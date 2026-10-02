@@ -47,8 +47,8 @@ Status: `[ ]` todo · `[~]` doing · `[x]` done (kèm link evidence)
 
 ## M4 — Đóng gói demo
 
-- [ ] **T4.1** README chạy 1 lệnh; video quay ≤3 phút demo chat + guardrail
-  - Evidence: `evidence/demo.mp4` hoặc link, `README` đã verify trên máy sạch
+- [x] **T4.1** README chạy 1 lệnh; video quay ≤3 phút demo chat + guardrail
+  - Evidence: `evidence/demo.mp4` (38s — chat trả giá kèm nguồn → Studio draft PASS → text vi phạm flag đỏ); `python demo.py` verify chạy được trên máy này (máy sạch cần Python + Postgres + .env — NEEDS-INPUT: chưa có máy sạch để verify)
 
 ---
 

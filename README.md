@@ -17,18 +17,28 @@ Tự tạo file `.env` (KHÔNG commit) — chỉ cần **1 key OpenRouter** (cha
 ```
 OPENROUTER_API_KEY=sk-or-...     # https://openrouter.ai/keys
 DATABASE_URL=postgresql://postgres:PASSWORD@localhost:5432/samsam
-OR_CHAT_MODEL=anthropic/claude-sonnet-4     # hoặc openai/gpt-4o-mini cho rẻ
+OR_CHAT_MODEL=openai/gpt-4o-mini
 OR_EMBED_MODEL=openai/text-embedding-3-small
 ```
 
 DB: cài PostgreSQL trên máy (nếu chưa có: installer EDB), tạo DB
-`createdb samsam` (hoặc pgAdmin), rồi chạy `docs/schema.sql` trong đó.
+`createdb samsam` (hoặc pgAdmin) — schema tự tạo khi chạy demo.
 
-## Chạy
+## Chạy — 1 lệnh
+
+```bash
+python demo.py
+```
+
+Script tự: check `.env` → cài deps còn thiếu → tạo schema + ingest
+`data/*.jsonl` nếu DB trống → mở Streamlit tại http://localhost:8501.
+(Chạy lần đầu bằng `.venv/Scripts/python.exe demo.py` nếu chưa activate venv.)
+
+## Chạy từng bước (dev)
 
 ```bash
 python -m crawler.collect          # M1: crawl site → data/*.jsonl
-python -m ingest.embed_store       # nạp vào pgvector
+python -m ingest.embed_store       # nạp vào Postgres (bảng chunks)
 streamlit run app/streamlit_app.py # M2/M3: demo chatbot + content studio
 pytest                             # gate
 ruff check .                       # lint
