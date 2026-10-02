@@ -36,10 +36,10 @@ Status: `[ ]` todo · `[~]` doing · `[x]` done (kèm link evidence)
 
 ## M3 — Content Studio + guardrail
 
-- [ ] **T3.1 Guardrail** — `check(text) -> {ok, violations[], matched_claims[]}`
+- [x] **T3.1 Guardrail** — `check(text) -> {ok, violations[], matched_claims[]}`
   - Boundary: `pipelines/guardrail.py`, `tests/test_guardrail.py`
   - Gate: pytest xanh; chặn đúng case "chữa khỏi tiểu đường" trong test
-  - Evidence: `evidence/m3_pytest.log`
+  - Evidence: `evidence/m3_pytest.log` — 9/9 passed; match có dấu + không dấu, approved claim miễn banned span con ("hỗ trợ hạ đường huyết" pass), "thuộc" không bị bắt nhầm "thuốc"
 - [ ] **T3.2 Draft pipeline** — ý tưởng → bài FB → qua guardrail → hiển thị violations
   - Boundary: `pipelines/content.py`, tab Content Studio trong `app/`
   - Gate: sinh được bài; bài cố tình vi phạm bị flag đỏ
