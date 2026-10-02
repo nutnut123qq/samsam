@@ -10,18 +10,18 @@ Status: `[ ]` todo · `[~]` doing · `[x]` done (kèm link evidence)
 
 ## M1 — Data pipeline (crawl → jsonl)
 
-- [ ] **T1.1 Crawl samsamngoclinh.com** (WooCommerce — ưu tiên `/wp-json/wp/v2/`, `wc/store/v1/products`)
+- [x] **T1.1 Crawl samsamngoclinh.com** (WooCommerce — ưu tiên `/wp-json/wp/v2/`, `wc/store/v1/products`)
   - Boundary: `crawler/collect.py`, `crawler/sources.py`, `data/products.jsonl`, `data/articles.jsonl`
   - Gate: `python -m crawler.collect` exit 0; ≥20 products đúng tên+giá; ≥20 articles
-  - Evidence: `data/*.jsonl` + `evidence/m1_crawl.log` (stdout)
-- [ ] **T1.2 Crawl samsam.net.vn** (NukeViet, fallback HTML parse)
+  - Evidence: `data/*.jsonl` + `evidence/m1_crawl.log` (stdout) — 27 products (18 wc + 9 shop net.vn; 15 có giá), 90 articles
+- [x] **T1.2 Crawl samsam.net.vn** (NukeViet, fallback HTML parse)
   - Boundary: `crawler/sources.py`, `data/about.jsonl`, `data/news.jsonl`
   - Gate: ≥10 records có title+body+url
-  - Evidence: jsonl + log
-- [ ] **T1.3 Claims whitelist** — trích công dụng ĐÃ CÔNG BỐ từng SKU từ text crawl được
+  - Evidence: jsonl + log — 4 about + 31 news (site chỉ chạy http, sitemap làm entry)
+- [x] **T1.3 Claims whitelist** — trích công dụng ĐÃ CÔNG BỐ từng SKU từ text crawl được
   - Boundary: `data/claims_whitelist.json`, `data/banned_words.txt`
   - Gate: mọi SKU trong products.jsonl có entry claims (hoặc "chưa có công bố — không suy diễn")
-  - Evidence: 2 file data
+  - Evidence: 2 file data — 10 SKU: 6 TPBVSK có CÔNG DỤNG+ĐKSP, 4 (rượu/củ) chưa có công bố
 
 ## M2 — Knowledge base + chatbot RAG
 
