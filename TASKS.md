@@ -40,10 +40,10 @@ Status: `[ ]` todo · `[~]` doing · `[x]` done (kèm link evidence)
   - Boundary: `pipelines/guardrail.py`, `tests/test_guardrail.py`
   - Gate: pytest xanh; chặn đúng case "chữa khỏi tiểu đường" trong test
   - Evidence: `evidence/m3_pytest.log` — 9/9 passed; match có dấu + không dấu, approved claim miễn banned span con ("hỗ trợ hạ đường huyết" pass), "thuộc" không bị bắt nhầm "thuốc"
-- [ ] **T3.2 Draft pipeline** — ý tưởng → bài FB → qua guardrail → hiển thị violations
+- [x] **T3.2 Draft pipeline** — ý tưởng → bài FB → qua guardrail → hiển thị violations
   - Boundary: `pipelines/content.py`, tab Content Studio trong `app/`
   - Gate: sinh được bài; bài cố tình vi phạm bị flag đỏ
-  - Evidence: `evidence/m3_studio.png` (cả case pass + case bị chặn)
+  - Evidence: `evidence/m3_studio.png` — draft PASS xanh + text "chữa khỏi tiểu đường" flag đỏ 7 violations; `content.draft()` có 1 lượt rewrite-khi-vi phạm rồi check() lại trước khi trả
 
 ## M4 — Đóng gói demo
 

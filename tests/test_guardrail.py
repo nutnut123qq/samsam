@@ -45,6 +45,22 @@ def test_wrong_sku_claim_flagged():
     assert any(v["type"] == "unverified_claim" for v in r["violations"])
 
 
+def test_disclaimer_phat_ly_pass():
+    """Câu disclaimer bắt buộc 'không phải là thuốc...' chứa từ cấm theo
+    nghĩa phủ định — không được flag."""
+    r = g.check("Sapentol hỗ trợ hạ đường huyết. Lưu ý: sản phẩm này không "
+                "phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.")
+    assert r["ok"], r["violations"]
+
+
+def test_thuoc_claim_van_chan():
+    """Nói sản phẩm LÀ thuốc (khẳng định) thì vẫn chặn — chỉ disclaimer
+    phủ định mới được miễn."""
+    r = g.check("Sapentol là thuốc đặc trị tiểu đường hiệu quả nhất")
+    assert not r["ok"]
+    assert any(v["type"] == "banned_word" for v in r["violations"])
+
+
 def test_empty_text_ok():
     assert g.check("")["ok"]
     assert g.check("   \n  ")["ok"]

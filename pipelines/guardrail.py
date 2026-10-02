@@ -26,6 +26,16 @@ CLAIM_VERBS = (
     "phòng ngừa", "cải thiện", "tốt cho", "ngăn ngừa", "bảo vệ",
 )
 
+# Disclaimer pháp lý BẮT BUỘC của quảng cáo TPBVSK — bản thân nó chứa từ
+# cấm ("thuốc", "chữa bệnh") nhưng dùng theo nghĩa phủ định. Banned span
+# nằm trong các cụm này thì miễn (giống approved claim).
+SAFE_PHRASES = (
+    "không phải là thuốc",
+    "không có tác dụng thay thế thuốc",
+    "thay thế thuốc chữa bệnh",
+    "không thay thế thuốc",
+)
+
 
 def _strip_len(s: str) -> str:
     """Bỏ dấu tiếng Việt (đ→d) nhưng GIỮ NGUYÊN độ dài — mỗi ký tự map
@@ -126,14 +136,22 @@ def check(text: str) -> dict:
     claim_hits = []
     for sku, claims in pool.items():
         for c in claims:
-            for h in _find_terms(text, [c]):
+            # Match nguyên văn HOẶC "claim core" (bỏ prefix động từ dẫn
+            # 'hỗ trợ'/'giúp') — substance công dụng phải đúng, động từ
+            # dẫn được phép đồng nghĩa.
+            core = re.sub(r"^(hỗ trợ|giúp)\s+", "", c.lower())
+            for h in _find_terms(text, [c] + ([core] if core != c.lower()
+                                              else [])):
                 claim_hits.append({"sku": sku, "claim": c,
                                    "start": h["start"], "end": h["end"]})
                 matched.append({"sku": sku, "claim": c})
 
-    # --- Lớp 1: banned words (trừ span nằm trong approved claim)
+    safe_hits = _find_terms(text, list(SAFE_PHRASES))
+
+    # --- Lớp 1: banned words (trừ span nằm trong approved claim /
+    # disclaimer pháp lý bắt buộc)
     for h in _find_terms(text, banned):
-        if any(_inside(c, h) for c in claim_hits):
+        if any(_inside(c, h) for c in claim_hits + safe_hits):
             continue
         violations.append({
             "type": "banned_word",

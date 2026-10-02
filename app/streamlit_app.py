@@ -47,4 +47,37 @@ with tab_chat:
              "sources": r["sources"]})
 
 with tab_studio:
-    st.info("T3.2 — chưa implement. Xem TASKS.md")
+    st.caption("Sinh bài từ brief — mọi text AI đều qua guardrail "
+               "trước khi hiển thị (banned words + claim whitelist TPBVSK).")
+    brief = st.text_area(
+        "Brief", placeholder="VD: Viết bài FB giới thiệu Sapentol cho người "
+        "tiểu đường, nhấn công dụng đã công bố...", height=100)
+    channel = st.selectbox("Kênh", ["facebook", "zalo", "blog"])
+
+    def _render_guardrail(g: dict):
+        if g["ok"]:
+            st.success("Guardrail: PASS — không vi phạm")
+        else:
+            for v in g["violations"]:
+                st.error(f"**{v['type']}** — {v['detail']}"
+                         + (f" → `{v['span']}`" if v.get("span") else ""))
+        if g.get("matched_claims"):
+            st.caption("Claim khớp whitelist: " + "; ".join(
+                f"{m['sku']}: {m['claim']}" for m in g["matched_claims"]))
+
+    if st.button("Sinh bài", type="primary", disabled=not brief.strip()):
+        with st.spinner("Đang viết + kiểm guardrail..."):
+            from pipelines.content import draft
+            st.session_state.last_draft = draft(brief, channel)
+    if r := st.session_state.get("last_draft"):
+        st.markdown("##### Draft")
+        st.markdown(r["text"])
+        _render_guardrail(r["guardrail"])
+
+    st.divider()
+    st.caption("Kiểm tra nhanh một đoạn text có sẵn (không qua LLM):")
+    raw = st.text_area("Text cần check", height=80, label_visibility="collapsed",
+                       placeholder="Dán text vào đây — VD: Saphraton chữa khỏi tiểu đường")
+    if st.button("Check guardrail") and raw.strip():
+        from pipelines.guardrail import check
+        _render_guardrail(check(raw))
