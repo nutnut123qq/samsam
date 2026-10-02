@@ -25,7 +25,7 @@ Status: `[ ]` todo · `[~]` doing · `[x]` done (kèm link evidence)
 
 ## M2 — Knowledge base + chatbot RAG
 
-- [ ] **T2.1 Supabase schema + ingest** (bật pgvector, bảng `chunks`)
+- [ ] **T2.1 Postgres local schema + ingest** (`createdb samsam` + chạy `docs/schema.sql`, bảng `chunks`)
   - Boundary: `ingest/`, `docs/schema.sql`
   - Gate: `python -m ingest.embed_store` nạp hết jsonl, `select count(*)` đúng
   - Evidence: `evidence/m2_ingest.log`

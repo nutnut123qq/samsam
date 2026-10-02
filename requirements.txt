@@ -2,12 +2,11 @@
 httpx>=0.27
 beautifulsoup4>=4.12
 
-# Storage (Supabase = Postgres + pgvector hosted)
-supabase>=2.7
+# DB — Postgres local (embedding lưu float8[], cosine tính bằng numpy)
 psycopg[binary]>=3.1
+numpy>=1.26
 
-# LLM + embeddings
-anthropic>=0.40
+# LLM + embeddings qua OpenRouter (openai client, base_url trỏ OpenRouter)
 openai>=1.40
 
 # App demo

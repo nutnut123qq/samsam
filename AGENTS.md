@@ -3,8 +3,10 @@
 ## Overview
 Pilot "chuyển đổi số + AI" cho Công ty TNHH Sâm Sâm (sâm Ngọc Linh, Quảng Nam/Đà Nẵng).
 Bản thu nhỏ của SOW (`SOW_SamSam_AI_6-thang.md`): crawl data public → knowledge base
-→ chatbot RAG + content studio có guardrail pháp lý TPBVSK. Python 3.12 + Supabase
-(Postgres+pgvector) + Claude/OpenAI API + Streamlit.
+→ chatbot RAG + content studio có guardrail pháp lý TPBVSK. Python 3.12 + Postgres
+local (embedding `float8[]`, cosine bằng numpy — chưa cần pgvector) + OpenRouter
+(1 key: `openai` client trỏ base_url `https://openrouter.ai/api/v1`, dùng cho cả
+chat lẫn embeddings) + Streamlit.
 
 ## Commands
 | Việc | Lệnh |
@@ -40,5 +42,6 @@ Bản thu nhỏ của SOW (`SOW_SamSam_AI_6-thang.md`): crawl data public → kn
 ## Gotchas
 - `samsam.net.vn` là NukeViet (HTML render phức tạp); `samsamngoclinh.com` là
   WooCommerce — **thử WP REST API `/wp-json/wp/v2/...` trước**, dễ hơn parse HTML.
-- pgvector cần bật extension trên Supabase trước khi ingest.
+- Embedding lưu `float8[]` — nếu sau này cài được pgvector thì đổi cột + index,
+  code retrieve tách hàm riêng để swap dễ.
 - Nội dung sâm hay bị phóng đại trên web — guardrail phải filter cả data ingest.
