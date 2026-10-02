@@ -8,6 +8,7 @@ create table if not exists chunks (
   chunk_index int not null,
   source_url text,                 -- bắt buộc: chatbot trích nguồn từ đây
   title text,
+  lang text,                       -- 'vi' | 'en' — records ngoclinh.com có bản 2 ngữ
   content text not null,
   embedding float8[],              -- text-embedding-3-small qua OpenRouter, 1536 dims
   unique (doc_id, chunk_index)

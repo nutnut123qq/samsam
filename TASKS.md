@@ -25,14 +25,14 @@ Status: `[ ]` todo · `[~]` doing · `[x]` done (kèm link evidence)
 
 ## M2 — Knowledge base + chatbot RAG
 
-- [ ] **T2.1 Postgres local schema + ingest** (`createdb samsam` + chạy `docs/schema.sql`, bảng `chunks`)
+- [x] **T2.1 Postgres local schema + ingest** (`createdb samsam` + chạy `docs/schema.sql`, bảng `chunks`)
   - Boundary: `ingest/`, `docs/schema.sql`
   - Gate: `python -m ingest.embed_store` nạp hết jsonl, `select count(*)` đúng
-  - Evidence: `evidence/m2_ingest.log`
-- [ ] **T2.2 Chat UI** — hỏi/đáp kèm link nguồn
+  - Evidence: `evidence/m2_ingest.log` — 816 chunks / 153 docs; thêm cột `lang` (audit M1: EN/VI dupes) + doc `catalog-products` tổng hợp
+- [x] **T2.2 Chat UI** — hỏi/đáp kèm link nguồn
   - Boundary: `app/streamlit_app.py` (tab Chat), `api/rag.py` nếu cần tách
   - Gate: **8/10 câu hỏi test** (`tests/questions.md`) trả đúng + có nguồn
-  - Evidence: `evidence/m2_qa.md` ghi 10 Q/A thật, ảnh màn hình `evidence/m2_chat.png`
+  - Evidence: `evidence/m2_qa.md` ghi 10 Q/A thật, ảnh màn hình `evidence/m2_chat.png` — 10/10 + 2/2 câu bẫy
 
 ## M3 — Content Studio + guardrail
 
