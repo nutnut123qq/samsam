@@ -159,12 +159,24 @@ def check(text: str) -> dict:
             "span": text[h["start"]:h["end"]],
         })
 
-    # --- Lớp 2: clause có động từ claim nhưng không khớp approved claim
-    matched_spans = [(c["start"], c["end"]) for c in claim_hits]
+    # --- Lớp 2: clause có động từ claim — trừ các span đã khớp whitelist;
+    # phần dư mà vẫn chứa động từ claim -> công dụng không công bố -> flag.
+    # (Fix lỗ hổng mệnh đề ghép: 'giảm ho VÀ làm đẹp da' từng pass vì
+    # cả clause được coi là covered khi overlap 1 claim.)
+    matched_spans = sorted((c["start"], c["end"]) for c in claim_hits)
     for start, end in _claim_spans(low):
-        covered = any(not (end <= ms or start >= me)
-                      for ms, me in matched_spans)
-        if not covered:
+        cur = start
+        leftovers = []
+        for ms, me in matched_spans:
+            if me <= start or ms >= end:
+                continue
+            if ms > cur:
+                leftovers.append(low[cur:ms])
+            cur = max(cur, me)
+        if cur < end:
+            leftovers.append(low[cur:end])
+        if any(_pat(v).search(seg) for seg in leftovers
+               for v in CLAIM_VERBS):
             violations.append({
                 "type": "unverified_claim",
                 "detail": "claim công dụng không nằm trong whitelist đã công bố",

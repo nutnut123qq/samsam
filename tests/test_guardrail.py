@@ -61,6 +61,22 @@ def test_thuoc_claim_van_chan():
     assert any(v["type"] == "banned_word" for v in r["violations"])
 
 
+def test_compound_clause_escape_1():
+    """Regression: 'giúp [claim đúng] VÀ [claim bịa]' — phần sau dấu 'và'
+    không được thoát check nhờ phần trước đã khớp."""
+    r = g.check("Savina giúp giảm ho và làm đẹp da cho phụ nữ.")
+    assert not r["ok"]
+    assert any(v["type"] == "unverified_claim" for v in r["violations"])
+
+
+def test_compound_clause_escape_2():
+    """Regression: claim whitelist đi trước 'và' không cứu được claim
+    bịa đi sau."""
+    r = g.check("Sapentol hỗ trợ hạ đường huyết và giúp tăng cường trí nhớ.")
+    assert not r["ok"]
+    assert any(v["type"] == "unverified_claim" for v in r["violations"])
+
+
 def test_empty_text_ok():
     assert g.check("")["ok"]
     assert g.check("   \n  ")["ok"]
