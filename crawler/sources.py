@@ -53,6 +53,23 @@ SOURCES = [
         "url": "http://samsam.net.vn/sitemap-vi.news.xml",
         "output": "news.jsonl",
     },
+    {
+        "name": "netvn:camnang",
+        "type": "html",
+        "kind": "nv_article",
+        "url": "http://samsam.net.vn/sitemap-vi.cam-nang-sam-ngoc-linh.xml",
+        "output": "news.jsonl",
+    },
+    {
+        # Trang listing Bricks + AJAX pagination: REST API chi tra title,
+        # dia chi chi render trong HTML sau JS -> render bang playwright,
+        # bam tung trang pagination. Khong co single page (CPT 301 ve home).
+        "name": "ngoclinh:distributors",
+        "type": "bricks_listing",
+        "kind": "bricks_loc",
+        "url": "https://samsamngoclinh.com/he-thong-phan-phoi/",
+        "output": "articles.jsonl",
+    },
 ]
 
 CRAWL_DELAY_S = 1.0  # luật: ≥1s giữa request

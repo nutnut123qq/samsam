@@ -22,6 +22,11 @@ Status: `[ ]` todo · `[~]` doing · `[x]` done (kèm link evidence)
   - Boundary: `data/claims_whitelist.json`, `data/banned_words.txt`
   - Gate: mọi SKU trong products.jsonl có entry claims (hoặc "chưa có công bố — không suy diễn")
   - Evidence: 2 file data — 10 SKU: 6 TPBVSK có CÔNG DỤNG+ĐKSP, 4 (rượu/củ) chưa có công bố
+- [x] **T1.4 Mở rộng M1b** — thêm hệ thống phân phối (13 điểm) + cẩm nang sâm (10 bài)
+  - Boundary: `crawler/`, `data/`, `evidence/` (không đụng ingest/ — gộp articles/news)
+  - Gate: collect exit 0, jsonl +23 records, bot trả được địa chỉ showroom kèm nguồn
+  - Evidence: `evidence/m1b_crawl.log` — articles 90→103, news 31→41; hỏi "Sâm Sâm có showroom ở đâu" → "425 Phan Bội Châu, phường Bàn Thạch, Thành Phố Đà Nẵng" + nguồn he-thong-phan-phoi
+  - Lý do gộp: schema `{id,title,body,url,published_at}` khớp articles; REST `wp/v2/he-thong-phan-phoi` chỉ trả title (acf rỗng, detail page 301 về home) → render listing Bricks AJAX bằng playwright, ghi record `dist-*` vào `articles.jsonl`; camnang = bài nv_article thường → `news.jsonl`. KHÔNG crawl slider-home/videos/phan-hoi.
 
 ## M2 — Knowledge base + chatbot RAG
 

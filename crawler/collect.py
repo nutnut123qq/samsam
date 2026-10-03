@@ -14,6 +14,7 @@ ghi warning rồi chạy tiếp.
 import json
 import re
 import time
+import unicodedata
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -158,10 +159,66 @@ def nv_shop(soup: BeautifulSoup, url: str) -> dict:
     }
 
 
+def bricks_loc(li: BeautifulSoup, page_url: str) -> dict:
+    """1 item `li.brxe-loop-builder-on` trong listing hệ thống phân phối ->
+    record dạng article: title = tên điểm, body = địa chỉ + loại + SĐT."""
+    h5 = li.find("h5")
+    divs = [d.get_text(" ", strip=True) for d in li.select("div.brxe-text-basic")]
+    tel = li.select_one('a[href^="tel:"]')
+    title = h5.get_text(strip=True) if h5 else ""
+    slug = re.sub(r"[^a-z0-9]+", "-",
+                  unicodedata.normalize("NFKD", title)
+                  .encode("ascii", "ignore").decode().lower()).strip("-")
+    body = (f"Địa chỉ: {divs[0] if divs else '—'}. "
+            f"Loại hình: {divs[-1] if len(divs) > 1 else '—'}. "
+            f"Điện thoại: {tel.get_text(strip=True) if tel else '—'}.")
+    return {"id": f"dist-{slug}", "title": title, "body": body,
+            "url": page_url, "published_at": None}
+
+
+def bricks_listing(src: dict) -> list[dict]:
+    """Render listing Bricks (AJAX pagination) bằng playwright — REST API
+    chỉ trả title, địa chỉ chỉ có trong DOM sau khi JS chạy. Thiếu
+    playwright -> warn + skip (không chết job)."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print(f"[warn] {src['name']}: thiếu playwright — bỏ qua source",
+              flush=True)
+        return []
+    recs, seen = [], set()
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(src["url"], timeout=45000)
+        page.wait_for_selector("li.brxe-loop-builder-on[data-map]",
+                               timeout=20000)
+        for _ in range(10):  # tối đa 10 trang pagination
+            time.sleep(CRAWL_DELAY_S)
+            soup = BeautifulSoup(page.content(), "html.parser")
+            new = 0
+            # [data-map]: chi item phan phoi co google-maps embed —
+            # tranh bat nham card khac neu click navigate sai trang.
+            for it in soup.select("li.brxe-loop-builder-on[data-map]"):
+                rec = bricks_loc(it, src["url"])
+                if (rec["id"] not in seen and rec["title"]
+                        and "Địa chỉ: —" not in rec["body"]):
+                    seen.add(rec["id"])
+                    recs.append(rec)
+                    new += 1
+            nxt = page.locator("a.next.page-numbers")
+            if not new or not nxt.count():
+                break
+            nxt.first.click()
+            page.wait_for_timeout(int(CRAWL_DELAY_S * 2000))
+        browser.close()
+    return recs
+
+
 PARSERS = {"wc_product": wc_product, "wp_post": wp_post,
            "nv_shop": nv_shop, "nv_article": nv_article, "nv_page": nv_page}
 
-ARTICLE_KINDS = {"wp_post", "nv_article", "nv_page"}
+ARTICLE_KINDS = {"wp_post", "nv_article", "nv_page", "bricks_loc"}
 
 
 def degenerate(kind: str, rec: dict) -> bool:
@@ -174,6 +231,8 @@ def degenerate(kind: str, rec: dict) -> bool:
 def crawl(client: httpx.Client, src: dict) -> list[dict]:
     """Crawl 1 source theo type/kind, trả list record (skip item lỗi/rỗng)."""
     kind = src["kind"]
+    if src["type"] == "bricks_listing":
+        return bricks_listing(src)
     parse = PARSERS[kind]
     if src["type"] == "wp_api":
         out = []
