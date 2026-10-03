@@ -181,37 +181,46 @@ def bricks_listing(src: dict) -> list[dict]:
     chỉ trả title, địa chỉ chỉ có trong DOM sau khi JS chạy. Thiếu
     playwright -> warn + skip (không chết job)."""
     try:
-        from playwright.sync_api import sync_playwright
+        from playwright.sync_api import Error, sync_playwright
     except ImportError:
         print(f"[warn] {src['name']}: thiếu playwright — bỏ qua source",
               flush=True)
         return []
     recs, seen = [], set()
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        page.goto(src["url"], timeout=45000)
-        page.wait_for_selector("li.brxe-loop-builder-on[data-map]",
-                               timeout=20000)
-        for _ in range(10):  # tối đa 10 trang pagination
-            time.sleep(CRAWL_DELAY_S)
-            soup = BeautifulSoup(page.content(), "html.parser")
-            new = 0
-            # [data-map]: chi item phan phoi co google-maps embed —
-            # tranh bat nham card khac neu click navigate sai trang.
-            for it in soup.select("li.brxe-loop-builder-on[data-map]"):
-                rec = bricks_loc(it, src["url"])
-                if (rec["id"] not in seen and rec["title"]
-                        and "Địa chỉ: —" not in rec["body"]):
-                    seen.add(rec["id"])
-                    recs.append(rec)
-                    new += 1
-            nxt = page.locator("a.next.page-numbers")
-            if not new or not nxt.count():
-                break
-            nxt.first.click()
-            page.wait_for_timeout(int(CRAWL_DELAY_S * 2000))
-        browser.close()
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            try:
+                page = browser.new_page()
+                page.goto(src["url"], timeout=45000)
+                page.wait_for_selector("li.brxe-loop-builder-on[data-map]",
+                                       timeout=20000)
+                for _ in range(10):  # tối đa 10 trang pagination
+                    time.sleep(CRAWL_DELAY_S)
+                    soup = BeautifulSoup(page.content(), "html.parser")
+                    new = 0
+                    # [data-map]: chi item phan phoi co google-maps embed —
+                    # tranh bat nham card khac neu click navigate sai trang.
+                    items = soup.select("li.brxe-loop-builder-on[data-map]")
+                    for it in items:
+                        rec = bricks_loc(it, src["url"])
+                        if (rec["id"] not in seen and rec["title"]
+                                and "Địa chỉ: —" not in rec["body"]):
+                            seen.add(rec["id"])
+                            recs.append(rec)
+                            new += 1
+                    nxt = page.locator("a.next.page-numbers")
+                    if not new or not nxt.count():
+                        break
+                    nxt.first.click()
+                    page.wait_for_timeout(int(CRAWL_DELAY_S * 2000))
+            finally:
+                browser.close()
+    except Error as e:
+        print(f"[warn] {src['name']}: playwright lỗi "
+              f"({type(e).__name__}: {str(e).splitlines()[0]}) — bỏ qua",
+              flush=True)
+        return []
     return recs
 
 
