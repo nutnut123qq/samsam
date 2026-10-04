@@ -55,6 +55,35 @@ Status: `[ ]` todo · `[~]` doing · `[x]` done (kèm link evidence)
 - [x] **T4.1** README chạy 1 lệnh; video quay ≤3 phút demo chat + guardrail
   - Evidence: `evidence/demo.mp4` (38s — chat trả giá kèm nguồn → Studio draft PASS → text vi phạm flag đỏ); `python demo.py` verify chạy được trên máy này (máy sạch cần Python + Postgres + .env — NEEDS-INPUT: chưa có máy sạch để verify)
 
+## M5 — Connector v0.2 (Zalo OA bot)
+
+Checklist/DoD chi tiết: `DONE.md` mục v0.2-connector. Quy ước: "CODE xong"
+≠ "PLATFORM duyệt" — không task nào treo chờ sàn.
+
+- [~] **C2.0 Platform prep** — submit Zalo OA webhook app + Shopee/TikTok
+  dev app NGÀY 1 (chạy nền, duyệt 1–2 tuần)
+  - Evidence: `evidence/v02_platform.md` — NEEDS-INPUT: owner submit trên
+    console sàn (agent không tạo tài khoản ngoài)
+- [x] **C2.1 Zalo webhook server** — `python -m connectors.zalo` :8788
+  - Boundary: `connectors/`, `tests/test_zalo.py` (stdlib http.server +
+    httpx có sẵn — 0 dep mới)
+  - Gate: verify `X-ZEvent-Signature` (sha256 spec Zalo), dedup msg_id
+    chống retry nhân đôi, ACK 200 nhanh + reply async thread
+    (answer() ~10s không block webhook)
+  - Evidence: `evidence/v02_pytest.log` — 11 case: signature ok/bad,
+    dedup, non-text ignore, ACK <1s khi reply sleep 2s
+- [x] **C2.2 Reply pipeline** — event → `answer()` → guardrail → send API
+  - Boundary: `connectors/zalo.py` (reuse `api/rag.py` + `guardrail.py`
+    nguyên trạng — không đụng)
+  - Gate: mọi outbound qua `check()`; flag → FALLBACK hotline thay text
+    vi phạm; reply kèm "Nguồn: <url>"
+  - Evidence: `evidence/v02_pytest.log` — 3 case pipeline mock
+- [ ] **C2.3 Mock E2E** — `scripts/zalo_mock.py` replay ≥3 hội thoại
+- [x] **C2.4 Human-gate** — `connectors/` không có endpoint đăng
+  bài/listing mới (verify bằng diff: chỉ nhận/reply)
+- [~] **C2.5 Gate + docs** — pytest 24/24, ruff clean; còn: verify
+  `python demo.py` + update lệnh AGENTS.md
+
 ---
 
 ## Lề (không đụng trong pilot)
