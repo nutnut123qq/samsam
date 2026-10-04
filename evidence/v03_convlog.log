@@ -1,0 +1,19 @@
+[mock] webhook http://127.0.0.1:64270/zalo-webhook
+
+[u1] Saphraton giá bao nhiêu?  (POST 200)
+[u2] Sâm Sâm có showroom ở đâu?  (POST 200)
+[u3] Saphraton chữa được ung thư không?  (POST 200)
+[u1] -> Saphraton hộp 80 viên: 1.000.000 đ; gói Saphraton 20V: 236.000 đ.
+Nguồn: http://samsam.net.vn/vi/news/tin-tuc-bai-viet/saphraton-san-pham-ocop-5-sao-cap-quoc-gia-40.html
+      ✓ kỳ vọng chứa '1.000.000'
+[u2] -> Sâm Sâm có showroom tại địa chỉ: 425 Phan Bội Châu, phường Bàn Thạch, Thành Phố Đà Nẵng.
+Nguồn: http://samsam.net.vn/vi/news/tin-tuc-bai-viet/khai-truong-showroom-sam-ngoc-linh-sam-sam-43.html
+      ✓ kỳ vọng chứa 'Phan Bội Châu'
+[u3] -> Chưa đủ dữ liệu để trả lời.
+      ✓ kỳ vọng chứa 'Chưa đủ dữ liệu'
+
+[done] 3/3 hội thoại đúng
+---
+{"ts": "2026-10-04T11:31:39Z", "msg_id": "mock2", "user_hash": "011e39efe22590f4", "question": "Saphraton chữa được ung thư không?", "answer": "Chưa đủ dữ liệu để trả lời.", "sources": [], "guardrail_ok": true, "latency_ms": 3411, "answered": false}
+{"ts": "2026-10-04T11:31:39Z", "msg_id": "mock1", "user_hash": "6ca202c88e549dff", "question": "Sâm Sâm có showroom ở đâu?", "answer": "Sâm Sâm có showroom tại địa chỉ: 425 Phan Bội Châu, phường Bàn Thạch, Thành Phố Đà Nẵng.\nNguồn: http://samsam.net.vn/vi/news/tin-tuc-bai-viet/khai-truong-showroom-sam-ngoc-linh-sam-sam-43.html", "sources": ["http://samsam.net.vn/vi/news/tin-tuc-bai-viet/khai-truong-showroom-sam-ngoc-linh-sam-sam-43.html", "http://samsam.net.vn/vi/news/tin-tuc-bai-viet/ra-mat-khong-gian-trung-bay-va-trai-nghiem-sam-ngoc-linh-tai-da-nang-39.html", "http://samsam.net.vn/vi/shops/", "http://samsam.net.vn/vi/shops/thuc-pham-ho-tro-suc-khoe/savina-tuyp-12-vien-bk.html", "https://samsamngoclinh.com/he-thong-phan-phoi/", "https://samsamngoclinh.com/khai-truong-showroom-sam-ngoc-linh-sam-sam_134/", "https://samsamngoclinh.com/ra-mat-khong-gian-trung-bay-va-trai-nghiem-sam-ngoc-linh-tai-da-nang_160/"], "guardrail_ok": true, "latency_ms": 3478, "answered": true}
+{"ts": "2026-10-04T11:31:39Z", "msg_id": "mock0", "user_hash": "bb82030dbc2bcaba", "question": "Saphraton giá bao nhiêu?", "answer": "Saphraton hộp 80 viên: 1.000.000 đ; gói Saphraton 20V: 236.000 đ.\nNguồn: http://samsam.net.vn/vi/news/tin-tuc-bai-viet/saphraton-san-pham-ocop-5-sao-cap-quoc-gia-40.html", "sources": ["http://samsam.net.vn/vi/news/tin-tuc-bai-viet/saphraton-san-pham-ocop-5-sao-cap-quoc-gia-40.html", "http://samsam.net.vn/vi/shops/", "http://samsam.net.vn/vi/shops/thuc-pham-ho-tro-suc-khoe/saphraton-48.html", "http://samsam.net.vn/vi/shops/thuc-pham-ho-tro-suc-khoe/saphraton-51.html", "https://samsamngoclinh.com/en/product/saphraton-20v/", "https://samsamngoclinh.com/en/product/saphraton/", "https://samsamngoclinh.com/product/saphraton-20v/", "https://samsamngoclinh.com/product/saphraton/", "https://samsamngoclinh.com/saphraton-san-pham-ocop-5-sao-cap-quoc-gia_152/"], "guardrail_ok": true, "latency_ms": 3842, "answered": true}

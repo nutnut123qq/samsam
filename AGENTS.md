@@ -17,6 +17,7 @@ chat lẫn embeddings) + Streamlit.
 | Demo UI | `streamlit run app/streamlit_app.py` (hoặc `python demo.py`) |
 | Zalo webhook | `python -m connectors.zalo` → :8788/zalo-webhook |
 | Mock E2E Zalo | `python scripts/zalo_mock.py` |
+| Eval RAG | `python scripts/eval_qa.py` (12 câu questions.md, ~90s, exit 0 nếu ≥10/12 + 2 bẫy pass) |
 | Test/lint | `pytest` · `ruff check .` |
 
 ## Structure
@@ -44,6 +45,9 @@ chat lẫn embeddings) + Streamlit.
 - Commit message ngắn, tiếng Việt hoặc Anh đều được, nói "why".
 
 ## Gotchas
+- **Console Windows cp1258**: script in tiếng Việt có dấu crash
+  `UnicodeEncodeError` — mọi script mới PHẢI có UTF-8 reconfigure guard
+  (copy pattern đầu `scripts/zalo_mock.py` / `scripts/eval_qa.py`).
 - `samsam.net.vn` là NukeViet (HTML render phức tạp); `samsamngoclinh.com` là
   WooCommerce — **thử WP REST API `/wp-json/wp/v2/...` trước**, dễ hơn parse HTML.
 - Embedding lưu `float8[]` — nếu sau này cài được pgvector thì đổi cột + index,

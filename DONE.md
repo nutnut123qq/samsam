@@ -4,8 +4,41 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **chưa có** — chờ owner submit dev app (C2.0 trong
-`evidence/v02_platform.md`); v0.3 mở khi có chỉ thị.
+Version đang mở: **v0.3-hardening** — sẵn sàng live khi OA duyệt + đo được
+chất lượng (contract duyệt 2026-10-04, audit `audit/2026-10-04.md`).
+
+## Checklist v0.3-hardening
+
+Khán giả: buổi gặp bác Lực / OA live khi dev app được duyệt — version này
+làm phần agent tự làm được trong lúc chờ external (C2.0 vẫn NEEDS-INPUT).
+
+- [x] **D3.1 Vá gate regression** — `ruff check .` clean; `python
+  scripts/zalo_mock.py` + mọi script in tiếng Việt chạy không crash trên
+  console Windows thường (xử lý encoding trong code, không bắt `-X utf8`)
+  — *(verify 2026-10-04: ruff clean + mock 3/3 exit 0)*
+- [x] **D3.2 Eval harness** — `python scripts/eval_qa.py` chạy 12 câu
+  `tests/questions.md`, in pass/fail từng câu, exit code theo ngưỡng
+  ≥10/12; evidence `evidence/v03_eval.log`
+  — *(chạy thật 12/12 PASS, Q11 NO_DATA + Q12 guardrail-clean)*
+- [x] **D3.3 Conversation log** — mọi event webhook (question, answer,
+  sources, guardrail ok/flag, latency, msg_id) ghi
+  `data/conversations.jsonl`; sau mock E2E log đủ 3 hội thoại đúng schema
+  — *(3 dòng đúng schema, user_hash sha256[:16], không raw user_id)*
+- [x] **D3.4 Unanswered log** — câu `NO_DATA` gắn cờ riêng
+  (`answered:false`) để đọc được KB đang thiếu gì
+  — *(dòng mock2 `answered:false` + test case riêng)*
+- [x] **D3.5 Dedup persistence** — `_seen` qua restart: webhook restart
+  giữa 2 event cùng `msg_id` không reply nhân đôi (test chứng minh)
+  — *(sqlite `data/zalo_seen.db` lazy-init; test đọc connection mới chứng
+    minh đĩa; 29/29 pytest)*
+- [x] **D3.6 Gate chung** — `pytest` toàn bộ xanh (26 case hiện có không
+  sửa để qua) + `ruff check .` clean
+  — *(29/29 xanh, ruff clean, data gốc không đổi)*
+
+External-dependency (không treo version): C2.0 owner submit dev app · hồ sơ
+công bố SKU thật thay whitelist tự trích · quyết VPS/tunnel deploy.
+Someday giữ nguyên + multi-turn context (M — cần cho OA live, user duyệt
+để ngoài v0.3).
 
 ## Checklist v0.2-connector
 
@@ -76,6 +109,17 @@ Quy ước DoD cho phase connector:
 - [x] Video demo ≤3 phút 1 mạch: chat + guardrail — *(evidence: `evidence/demo.mp4` 38s)*
 
 ## Someday (chưa vào version nào)
+
+- Multi-turn context cho `answer()`/Zalo (M — nhớ ≤4 lượt/user; user duyệt
+  để ngoài v0.3 nhưng cần trước OA live thật)
+- Convlog: thêm field `sent` (send fail giờ vẫn log như đã xử lý) + log cả
+  event `answer()` crash (hiện thread chết → mất vết câu hỏi) + giữ raw
+  text bị flag riêng để debug guardrail
+- PII trong `conversations.jsonl`: `question` lưu raw — khách gõ SĐT/tên
+  vào log; production cần mask/retention policy (pilot: local + gitignored)
+- `verify_signature` bypass khi thiếu `ZALO_APP_SECRET` — deploy public
+  phải refuse-to-serve khi `DEPLOY=1` mà không có secret
+- Log rotation cho `conversations.jsonl` (append vô hạn, rất chậm)
 
 - Chatbot production trên Fanpage (Messenger API, Pancake hook) — Zalo OA
   đang ở v0.2; live OA thật cũng nằm đây nếu duyệt không kịp version

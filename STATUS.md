@@ -1,4 +1,46 @@
-# STATUS — ca đêm M1→M4 (viết cho người đọc diff)
+# STATUS — v0.3-hardening (2026-10-04) + ca đêm M1→M4
+
+## v0.3 — ops: log + eval + gate (contract trong DONE.md)
+
+**6/6 mục xong, gate xanh.** `pytest` 29/29 (×3 lần, không flaky),
+`ruff check .` clean, `eval_qa` 12/12 ×2 lần chạy thật, mock E2E 3/3.
+
+```
+(uncommitted) — chờ duyệt đóng version ở cửa người 2
+```
+
+### Đọc diff cần biết
+
+- **`connectors/zalo.py`**: `_seen` dict → sqlite `data/zalo_seen.db`
+  (lazy init — file chỉ sinh ở dedup đầu, không phải lúc import);
+  `handle_text(u, q, msg_id="")` ghi `data/conversations.jsonl`
+  {ts,msg_id,user_hash,question,answer[:500],sources,guardrail_ok,
+  latency_ms,answered}. Dedup/non-text → không log. `answered` dùng
+  `NO_DATA not in answer` — khớp semantics rag.py.
+- **`scripts/eval_qa.py`** (mới): eval 12 câu questions.md — exit 0 iff
+  ≥10/12 VÀ 2 bẫy pass. EXPECTED hardcode theo số câu; sanity check
+  parse-vs-map bắt lệch file.
+- **`scripts/zalo_mock.py`**: UTF-8 stdout guard — console Windows
+  cp1258 crash khi in tiếng Việt; bỏ noqa E402 thừa (RUF100).
+- **`tests/test_zalo.py`**: autouse fixture trỏ SEEN_DB/CONV_LOG →
+  tmp_path; +3 case (persist-qua-restart, log schema, answered:false).
+- **`.gitignore`**: +`data/conversations.jsonl`, +`data/zalo_seen.db`
+  (runtime, có user_hash — không commit).
+- Reviewer độc lập KHÔNG chạy được (hết quota subagent) — coordinator
+  tự review: không blocker, 3 NIT đã ghi someday (convlog `sent`/
+  crash-log/raw-flag, PII trong question, signature-bypass-khi-deploy).
+
+### Evidence v0.3
+
+| Mục | File |
+|---|---|
+| D3.2 eval | `evidence/v03_eval.log` — 12/12 |
+| D3.3+D3.4 log | `evidence/v03_convlog.log` — mock + 3 dòng jsonl |
+| D3.5+D3.6 gate | `evidence/v03_pytest.log` — 29/29 + ruff clean |
+
+---
+
+## Ca đêm M1→M4 (viết cho người đọc diff)
 
 ## Kết quả
 

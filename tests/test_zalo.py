@@ -1,7 +1,9 @@
-"""Zalo webhook — signature, dedup retry, ACK nhanh, guardrail gate.
-Mock toàn bộ: không cần OA thật, không gọi send API ngoài."""
+"""Zalo webhook — signature, dedup retry, ACK nhanh, guardrail gate,
+conversation log, dedup persistence. Mock toàn bộ: không cần OA thật,
+không gọi send API ngoài."""
 import hashlib
 import json
+import sqlite3
 import threading
 import time
 
@@ -29,11 +31,29 @@ def _event(text="Saphraton giá bao nhiêu", event="user_send_text",
             "timestamp": "1700000000000"}
 
 
+def _reset_seen_conn() -> None:
+    """Đóng + quên connection dedup đang cache — tương đương 'restart'
+    process (mọi state còn lại phải nằm trên đĩa)."""
+    if zalo._seen_conn is not None:
+        zalo._seen_conn.close()
+        zalo._seen_conn = None
+
+
+@pytest.fixture(autouse=True)
+def _isolated_files(monkeypatch, tmp_path):
+    """SEEN_DB + CONV_LOG trỏ sang tmp_path mỗi test: không động vào
+    data/ thật, mỗi test bắt đầu với dedup/log rỗng."""
+    monkeypatch.setattr(zalo, "SEEN_DB", tmp_path / "zalo_seen.db")
+    monkeypatch.setattr(zalo, "CONV_LOG", tmp_path / "conversations.jsonl")
+    _reset_seen_conn()
+    yield
+    _reset_seen_conn()
+
+
 @pytest.fixture
 def server(monkeypatch):
     monkeypatch.setattr(zalo, "APP_SECRET", SECRET)
     monkeypatch.setattr(zalo, "ACCESS_TOKEN", "")
-    zalo._seen.clear()
     srv = zalo.ThreadingHTTPServer(("127.0.0.1", 0), zalo.Handler)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     yield f"http://127.0.0.1:{srv.server_address[1]}/zalo-webhook"
@@ -56,7 +76,8 @@ def test_signature_skip_when_no_secret(monkeypatch):
 def test_post_text_dispatches(server, monkeypatch):
     got, done = [], threading.Event()
     monkeypatch.setattr(zalo, "handle_text",
-                        lambda u, t: got.append((u, t)) or done.set())
+                        lambda u, t, m=None: got.append((u, t))
+                        or done.set())
     raw = json.dumps(_event()).encode()
     r = httpx.post(server, content=raw,
                    headers={"X-ZEvent-Signature": _sign(raw)})
@@ -67,7 +88,8 @@ def test_post_text_dispatches(server, monkeypatch):
 
 def test_dedup_same_msg_id(server, monkeypatch):
     got = []
-    monkeypatch.setattr(zalo, "handle_text", lambda u, t: got.append(u))
+    monkeypatch.setattr(zalo, "handle_text",
+                        lambda u, t, m=None: got.append(u))
     raw = json.dumps(_event(msg_id="dup1")).encode()
     for _ in range(2):  # Zalo retry khi timeout
         assert httpx.post(server, content=raw,
@@ -79,7 +101,8 @@ def test_dedup_same_msg_id(server, monkeypatch):
 
 def test_non_text_event_ignored(server, monkeypatch):
     got = []
-    monkeypatch.setattr(zalo, "handle_text", lambda u, t: got.append(u))
+    monkeypatch.setattr(zalo, "handle_text",
+                        lambda u, t, m=None: got.append(u))
     raw = json.dumps(_event(event="user_send_image")).encode()
     assert httpx.post(server, content=raw,
                       headers={"X-ZEvent-Signature": _sign(raw)}
@@ -96,7 +119,8 @@ def test_bad_signature_rejected(server):
 
 def test_ack_fast_while_reply_slow(server, monkeypatch):
     # answer() ~10s — webhook trả 200 ngay, reply chạy async.
-    monkeypatch.setattr(zalo, "handle_text", lambda u, t: time.sleep(2))
+    monkeypatch.setattr(zalo, "handle_text",
+                        lambda u, t, m=None: time.sleep(2))
     raw = json.dumps(_event()).encode()
     t0 = time.time()
     r = httpx.post(server, content=raw,
@@ -170,3 +194,73 @@ def test_every_outbound_passes_check(monkeypatch):
     monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
     zalo.handle_text("u", "x")
     assert calls == ["ok"]  # reply nào cũng qua check() trước khi gửi
+
+
+def test_dedup_persists_across_restart(tmp_path):
+    # D3.5: state dedup nằm trên đĩa — "restart" (drop toàn bộ in-memory)
+    # vẫn nhớ event đã xử lý, Zalo retry không gây reply nhân đôi.
+    assert not zalo._dedup("x")          # lần đầu: chưa thấy
+    _reset_seen_conn()                   # giả lập restart process
+    assert zalo._dedup("x")              # restart xong vẫn nhớ
+    # Chứng minh data thật sự ở file sqlite, không phải cache memory:
+    # mở connection mới hoàn toàn đọc lại.
+    rows = sqlite3.connect(tmp_path / "zalo_seen.db").execute(
+        "SELECT event_id FROM seen").fetchall()
+    assert rows == [("x",)]
+
+
+def _wait_log_lines(path, n, timeout=5):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if path.exists():
+            lines = path.read_text(encoding="utf-8").strip().splitlines()
+            if len(lines) >= n:
+                return [json.loads(x) for x in lines]
+        time.sleep(0.05)
+    return []
+
+
+def test_conversation_log_schema_and_dedup_skip(server, monkeypatch,
+                                                tmp_path):
+    # D3.3: event text -> đúng 1 dòng jsonl đủ schema; event trùng
+    # msg_id (Zalo retry) -> KHÔNG thêm dòng.
+    log = tmp_path / "conversations.jsonl"
+    monkeypatch.setattr("api.rag.answer",
+                        lambda q: {"answer": "Giá 1.000.000 đ",
+                                   "sources": ["http://x"]})
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
+    raw = json.dumps(_event(msg_id="m-log")).encode()
+    for _ in range(2):  # retry cùng msg_id
+        assert httpx.post(server, content=raw,
+                          headers={"X-ZEvent-Signature": _sign(raw)}
+                          ).status_code == 200
+    recs = _wait_log_lines(log, 1)
+    time.sleep(0.3)  # chắc chắn không có dòng thứ 2 trễ
+    assert len(recs) == 1
+    rec = recs[0]
+    assert rec["msg_id"] == "m-log"
+    assert rec["user_hash"] == hashlib.sha256(b"u1").hexdigest()[:16]
+    assert rec["question"] == "Saphraton giá bao nhiêu"
+    assert rec["answer"] == "Giá 1.000.000 đ\nNguồn: http://x"
+    assert rec["sources"] == ["http://x"]
+    assert rec["guardrail_ok"] is True
+    assert rec["answered"] is True
+    assert isinstance(rec["latency_ms"], int)
+    assert rec["ts"].endswith("Z")
+    assert '"u1"' not in json.dumps(rec)  # không lưu raw user_id (PII)
+
+
+def test_conversation_log_no_data_answered_false(monkeypatch, tmp_path):
+    # D3.4: reply là NO_DATA -> answered:false trong log.
+    from api.rag import NO_DATA
+    monkeypatch.setattr("api.rag.answer",
+                        lambda q: {"answer": NO_DATA, "sources": []})
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
+    zalo.handle_text("u9", "Saphraton chữa được ung thư không?",
+                     msg_id="m-nd")
+    log = tmp_path / "conversations.jsonl"
+    rec = json.loads(log.read_text(encoding="utf-8").strip())
+    assert rec["msg_id"] == "m-nd" and rec["answered"] is False
+    assert rec["answer"] == NO_DATA

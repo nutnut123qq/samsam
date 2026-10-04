@@ -17,8 +17,14 @@ from pathlib import Path
 
 import httpx
 
+# Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in tiếng
+# Việt có dấu. Ép UTF-8 cho stdout/stderr (no-op nếu đã là UTF-8).
+for _s in (sys.stdout, sys.stderr):
+    if hasattr(_s, "reconfigure"):
+        _s.reconfigure(encoding="utf-8", errors="replace")
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from connectors import zalo  # noqa: E402
+from connectors import zalo
 
 APP_ID, SECRET = "mock-app", "mock-secret"
 SENT: dict[str, str] = {}  # user_id -> reply text (thay send API)

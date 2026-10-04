@@ -87,6 +87,50 @@ Checklist/DoD chi tiết: `DONE.md` mục v0.2-connector. Quy ước: "CODE xong
 - [x] **C2.5 Gate + docs** — pytest 26/26, ruff clean; `python demo.py`
   verify :8501 HTTP 200; AGENTS.md thêm lệnh webhook + mock
 
+## M6 — Hardening v0.3 (ops: log + eval + gate)
+
+Checklist/DoD chi tiết: `DONE.md` mục v0.3-hardening. Audit gốc:
+`audit/2026-10-04.md`. Quy ước: mọi task giữ nguyên contract module —
+`api/rag.py` + `guardrail.py` đụng = bug, phải ghi lý do trong commit.
+
+- [x] **D3.1 Vá gate regression** — ruff RUF100 (`scripts/zalo_mock.py:21`)
+  + script in tiếng Việt an toàn trên console cp1258
+  - Boundary: `scripts/`, `demo.py` nếu cần
+  - Gate: `ruff check .` clean; `python scripts/zalo_mock.py` (không
+    `-X utf8`, không PYTHONIOENCODING) exit 0
+  - Evidence: 2026-10-04 — bỏ noqa thừa + reconfigure UTF-8 stdout/stderr;
+    verify: ruff clean + mock 3/3 exit 0 không cần `-X utf8`
+- [x] **D3.2 Eval harness** — `scripts/eval_qa.py` parse `tests/questions.md`,
+  chạy `answer()` từng câu, in pass/fail + exit code ≥10/12
+  - Boundary: `scripts/eval_qa.py`, `tests/` (chỉ thêm)
+  - Gate: chạy thật qua OpenRouter, ≥10/12 pass; câu bẫy phải NO_DATA
+  - Evidence: `evidence/v03_eval.log` — chạy thật 12/12 PASS (~90s),
+    Q11 NO_DATA + Q12 guardrail-clean; exit 0
+- [x] **D3.3 Conversation log** — webhook ghi `data/conversations.jsonl`
+  per event: {ts, msg_id, user_hash, question, answer, sources[],
+  guardrail_ok, latency_ms, answered}
+  - Boundary: `connectors/zalo.py` (+ helper mới nếu tách), `data/`
+  - Gate: mock E2E → log ≥3 dòng đúng schema; user_id hash (không lưu raw)
+  - Evidence: `evidence/v03_convlog.log` — mock 3/3, jsonl 3 dòng đúng
+    schema, user_hash sha256[:16] (verify: không có raw "u1/u2/u3")
+- [x] **D3.4 Unanswered flag** — `answered:false` khi NO_DATA trong log D3.3
+  - Boundary: cùng D3.3 (gộp chung lane)
+  - Gate: câu bẫy trong mock → dòng log `answered:false`
+  - Evidence: chung `v03_convlog.log` — dòng mock2 (câu bẫy ung thư)
+    `answered:false`; test `test_conversation_log_no_data_answered_false`
+- [x] **D3.5 Dedup persistence** — `_seen` survive restart (sqlite3 stdlib
+  hoặc jsonl append); Zalo retry sau restart không reply nhân đôi
+  - Boundary: `connectors/`, `tests/test_zalo.py` (thêm case)
+  - Gate: pytest case mới: dedup giữa 2 "restart" (xóa state memory) cùng
+    msg_id → True; không phá 11 case cũ
+  - Evidence: `evidence/v03_pytest.log` — 29/29 (26 cũ + 3 mới);
+    `test_dedup_persists_across_restart` đọc lại bằng connection sqlite
+    mới chứng minh state trên đĩa
+- [x] **D3.6 Gate chung** — pytest ≥26 xanh + ruff clean; data/*.jsonl
+  nguồn không đổi (conversations.jsonl là file mới, không đụng 4 file gốc)
+  - Evidence: `evidence/v03_pytest.log` — pytest 29/29, ruff clean,
+    `git status data/` trống + tick board
+
 ---
 
 ## Lề (không đụng trong pilot)
