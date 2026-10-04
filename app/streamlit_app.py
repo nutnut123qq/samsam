@@ -34,7 +34,11 @@ with tab_chat:
         with st.chat_message("assistant"):
             with st.spinner("Đang tra knowledge base..."):
                 from api.rag import answer
-                r = answer(q)
+                # [:-1] bỏ câu hiện tại (vừa append ở trên) — history chỉ
+                # gồm các lượt TRƯỚC; [-8:] = 4 lượt Q&A gần nhất.
+                history = [{"role": m["role"], "content": m["content"]}
+                           for m in st.session_state.messages[:-1][-8:]]
+                r = answer(q, history=history)
             st.write(r["answer"])
             if r["sources"]:
                 st.caption("Nguồn:")

@@ -42,11 +42,14 @@ def _reset_seen_conn() -> None:
 @pytest.fixture(autouse=True)
 def _isolated_files(monkeypatch, tmp_path):
     """SEEN_DB + CONV_LOG trỏ sang tmp_path mỗi test: không động vào
-    data/ thật, mỗi test bắt đầu với dedup/log rỗng."""
+    data/ thật, mỗi test bắt đầu với dedup/log rỗng. Xoá cả _histories —
+    state multi-turn in-memory không được rò sang test sau."""
     monkeypatch.setattr(zalo, "SEEN_DB", tmp_path / "zalo_seen.db")
     monkeypatch.setattr(zalo, "CONV_LOG", tmp_path / "conversations.jsonl")
+    zalo._histories.clear()
     _reset_seen_conn()
     yield
+    zalo._histories.clear()
     _reset_seen_conn()
 
 
@@ -264,3 +267,105 @@ def test_conversation_log_no_data_answered_false(monkeypatch, tmp_path):
     rec = json.loads(log.read_text(encoding="utf-8").strip())
     assert rec["msg_id"] == "m-nd" and rec["answered"] is False
     assert rec["answer"] == NO_DATA
+
+
+def test_startup_error_fail_closed(monkeypatch):
+    # D4.2: DEPLOY=1 + thiếu secret -> refuse to serve; dev local không
+    # secret vẫn chạy (bypass signature chỉ còn ở dev).
+    monkeypatch.setenv("DEPLOY", "1")
+    monkeypatch.setattr(zalo, "APP_SECRET", "")
+    assert zalo._startup_error() is not None
+    monkeypatch.setattr(zalo, "APP_SECRET", SECRET)
+    assert zalo._startup_error() is None
+    monkeypatch.delenv("DEPLOY")
+    monkeypatch.setattr(zalo, "APP_SECRET", "")
+    assert zalo._startup_error() is None
+
+
+def _mock_ok_answer(calls):
+    """answer giả ghi lại (question, history) từng lượt gọi."""
+    def fake(q, history=None):
+        calls.append((q, history))
+        return {"answer": f"trả lời: {q}", "sources": []}
+    return fake
+
+
+def test_multi_turn_history_per_user(monkeypatch):
+    # D4.1: lượt 2 cùng user_id phải thấy lượt 1 trong history.
+    calls = []
+    monkeypatch.setattr("api.rag.answer", _mock_ok_answer(calls))
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
+    zalo.handle_text("u1", "Saphraton giá bao nhiêu?")
+    zalo.handle_text("u1", "còn loại rẻ hơn?")
+    assert calls[0] == ("Saphraton giá bao nhiêu?", None)
+    assert calls[1][1] == [
+        {"role": "user", "content": "Saphraton giá bao nhiêu?"},
+        {"role": "assistant", "content": "trả lời: Saphraton giá bao nhiêu?"}]
+
+
+def test_flagged_turn_not_added_to_history(monkeypatch):
+    # Lượt bị guardrail flag không vào history — lượt sau chỉ thấy các
+    # lượt hợp lệ trước đó.
+    calls, guard = [], iter([{"ok": True}, {"ok": False}, {"ok": True}])
+    monkeypatch.setattr("api.rag.answer", _mock_ok_answer(calls))
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: next(guard))
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
+    for q in ("câu 1", "câu 2 bị flag", "câu 3"):
+        zalo.handle_text("u1", q)
+    # history của lượt 3 chỉ chứa lượt 1, không có "câu 2 bị flag"
+    assert calls[2][1] == [
+        {"role": "user", "content": "câu 1"},
+        {"role": "assistant", "content": "trả lời: câu 1"}]
+
+
+def test_conversation_log_sent_false_on_send_fail(monkeypatch, tmp_path):
+    # D4.4: send_text trả False -> log "sent": false, không ghi như đã xử lý.
+    monkeypatch.setattr("api.rag.answer",
+                        lambda q: {"answer": "ok", "sources": []})
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: False)
+    zalo.handle_text("u2", "câu hỏi", msg_id="m-sendfail")
+    log = tmp_path / "conversations.jsonl"
+    rec = json.loads(log.read_text(encoding="utf-8").strip())
+    assert rec["sent"] is False and rec["answered"] is True
+
+
+def test_answer_crash_logs_error_and_sends_fallback(monkeypatch, tmp_path):
+    # D4.4: answer() raise -> thread không chết câm: đúng 1 dòng log có
+    # `error` + `sent`, user nhận ERROR_FALLBACK.
+    sent = []
+
+    def boom(q, history=None):
+        raise RuntimeError("DB chết")
+
+    monkeypatch.setattr("api.rag.answer", boom)
+    monkeypatch.setattr(zalo, "send_text",
+                        lambda u, t: sent.append(t) or True)
+    r = zalo.handle_text("u3", "câu hỏi?", msg_id="m-crash")  # không propagate
+    assert sent == [zalo.ERROR_FALLBACK]
+    assert r["text"] == zalo.ERROR_FALLBACK
+    log = tmp_path / "conversations.jsonl"
+    recs = [json.loads(x) for x in
+            log.read_text(encoding="utf-8").strip().splitlines()]
+    assert len(recs) == 1
+    rec = recs[0]
+    assert rec["sent"] is True and "RuntimeError" in rec["error"]
+    assert rec["answer"] == "" and rec["answered"] is False
+    assert rec["question"] == "câu hỏi?"  # không mất vết câu hỏi
+
+
+def test_guardrail_flagged_text_kept_in_log(monkeypatch, tmp_path):
+    # D4.4: answer log = text THẬT gửi (FALLBACK); raw bị flag giữ riêng
+    # ở `flagged_text` để debug guardrail.
+    monkeypatch.setattr("api.rag.answer",
+                        lambda q: {"answer": "chữa khỏi ung thư",
+                                   "sources": []})
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": False})
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
+    zalo.handle_text("u4", "x", msg_id="m-flag")
+    log = tmp_path / "conversations.jsonl"
+    rec = json.loads(log.read_text(encoding="utf-8").strip())
+    assert rec["answer"] == zalo.FALLBACK
+    assert rec["flagged_text"] == "chữa khỏi ung thư"
+    assert rec["guardrail_ok"] is False

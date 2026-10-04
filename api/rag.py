@@ -79,9 +79,41 @@ def retrieve(question: str, k: int = TOP_K) -> list[dict]:
     return hits
 
 
-def answer(question: str) -> dict:
-    """Trả lời câu hỏi kèm nguồn. Thiếu context/score thấp -> NO_DATA."""
-    hits = retrieve(question)
+def _standalone(question: str, history: list[dict]) -> str:
+    """Rewrite câu follow-up thành câu độc lập đủ ngữ cảnh để retrieve —
+    vd "còn loại rẻ hơn?" sau lượt hỏi Saphraton -> "sản phẩm nào rẻ
+    hơn Saphraton?". Chỉ phục vụ retrieval; câu trả lời cuối vẫn do LLM
+    sinh từ câu hỏi GỐC của user."""
+    client, _, chat_model = _clients()
+    resp = client.chat.completions.create(
+        model=chat_model,
+        messages=[
+            {"role": "system", "content":
+                "Viết lại câu hỏi cuối của user thành một câu hỏi độc "
+                "lập, đủ ngữ cảnh để tra knowledge base, giữ nguyên "
+                "ngôn ngữ. Chỉ trả về câu hỏi đã viết lại, không giải "
+                "thích."},
+            *history,
+            {"role": "user", "content": question},
+        ],
+        temperature=0.0,
+        max_tokens=100,
+    )
+    return resp.choices[0].message.content.strip()
+
+
+def answer(question: str, history: list[dict] | None = None) -> dict:
+    """Trả lời câu hỏi kèm nguồn. Thiếu context/score thấp -> NO_DATA.
+
+    `history` = các lượt Q&A trước (OpenAI-style, caller giới hạn 4 lượt
+    gần nhất). Có history -> rewrite câu hỏi thành standalone trước khi
+    retrieve (câu trần follow-up retrieve về score thấp -> NO_DATA giả),
+    còn prompt trả lời vẫn giữ câu hỏi gốc + history. Không truyền ->
+    y hệt 1-turn, không tốn thêm LLM call."""
+    search_q = question
+    if history:
+        search_q = _standalone(question, history) or question
+    hits = retrieve(search_q)
     if not hits or hits[0]["score"] < MIN_SCORE:
         return {"answer": NO_DATA, "sources": []}
 
@@ -94,6 +126,7 @@ def answer(question: str) -> dict:
         model=chat_model,
         messages=[
             {"role": "system", "content": SYSTEM},
+            *(history or []),
             {"role": "user", "content":
                 f"NGỮ CẢNH:\n{context}\n\nCÂU HỎI: {question}"},
         ],

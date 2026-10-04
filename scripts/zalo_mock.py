@@ -57,7 +57,8 @@ def main() -> int:
     for i, (uid, q, _) in enumerate(CONVOS):
         ev = {"app_id": APP_ID, "sender": {"id": uid},
               "recipient": {"id": "oa1"}, "event_name": "user_send_text",
-              "message": {"msg_id": f"mock{i}", "text": q},
+              "message": {"msg_id": f"mock{i}-{int(time.time() * 1000)}",
+                          "text": q},
               "timestamp": str(int(time.time() * 1000))}
         raw = json.dumps(ev, ensure_ascii=False).encode()
         r = httpx.post(url, content=raw,

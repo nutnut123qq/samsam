@@ -11,6 +11,9 @@ trả lời async qua send API. Reply qua `pipelines.guardrail.check()`; bị fl
 -> gửi FALLBACK, không gửi text vi phạm. Chỉ inbox reply — không endpoint
 nào đăng bài/listing mới (C2.4).
 
+Multi-turn (D4.1): history hội thoại giữ in-memory per user (tối đa 4 lượt
+Q&A gần nhất) — restart process mất history, chấp nhận được cho pilot.
+
 Chạy: `python -m connectors.zalo` -> :8788/zalo-webhook (port qua
 ZALO_WEBHOOK_PORT). Env: ZALO_APP_ID, ZALO_APP_SECRET, ZALO_ACCESS_TOKEN.
 """
@@ -20,8 +23,10 @@ import hmac
 import json
 import os
 import sqlite3
+import sys
 import threading
 import time
+from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -40,6 +45,9 @@ SEND_URL = "https://openapi.zalo.me/v3.0/oa/message/cs"
 MAX_TEXT = 2000  # giới hạn text của Zalo CS message
 FALLBACK = ("Sâm Sâm xin lỗi, câu trả lời tự động chưa đạt kiểm duyệt nội "
             "bộ. Quý khách vui lòng gọi hotline 1800577732 để được hỗ trợ.")
+# Hằng an toàn viết tay — gửi khi answer() crash; không cần qua check().
+ERROR_FALLBACK = ("Sâm Sâm xin lỗi, hệ thống đang gặp sự cố. Quý khách "
+                  "vui lòng gọi hotline 1800577732 để được hỗ trợ.")
 
 SEEN_TTL_S = 3600
 SEEN_DB = ROOT / "data" / "zalo_seen.db"   # dedup sống qua restart (D3.5)
@@ -48,6 +56,20 @@ CONV_LOG = ROOT / "data" / "conversations.jsonl"  # log hội thoại (D3.3)
 _seen_lock = threading.Lock()
 _seen_conn: sqlite3.Connection | None = None  # lazy — không tạo file khi import
 _log_lock = threading.Lock()
+# user_id -> deque messages OpenAI-style; maxlen=8 = 4 cặp Q&A (D4.1)
+_hist_lock = threading.Lock()
+_histories: dict[str, deque] = {}
+
+
+def _startup_error() -> str | None:
+    """DEPLOY=1 mà thiếu ZALO_APP_SECRET -> refuse to serve: bypass
+    signature chỉ dành cho dev local, deploy quên env = webhook nhận
+    request giả mạo. Đọc DEPLOY lúc call (không lúc import) để test
+    monkeypatch env được."""
+    if os.environ.get("DEPLOY") == "1" and not APP_SECRET:
+        return ("[fatal] zalo: DEPLOY=1 nhưng thiếu ZALO_APP_SECRET — "
+                "webhook không verify signature được, từ chối serve")
+    return None
 
 
 def verify_signature(raw: bytes, header: str) -> bool:
@@ -126,25 +148,58 @@ def send_text(user_id: str, text: str) -> bool:
 def handle_text(user_id: str, question: str, msg_id: str = "") -> dict:
     """answer() -> guardrail -> send -> ghi conversation log. Lazy import
     vì api.rag nặng (numpy/psycopg/openai) — phần webhook thuần test
-    không cần nó."""
+    không cần nó. History per user truyền vào answer() để câu follow-up
+    ("còn loại kia?") resolve đúng ngữ cảnh."""
     from api.rag import NO_DATA, answer
     from pipelines.guardrail import check
 
     t0 = time.time()
-    res = answer(question)
+    with _hist_lock:
+        history = list(_histories.get(user_id, ()))
+    try:
+        # Chỉ truyền kwarg history khi đã có lượt trước — 1-turn gọi
+        # y hệt signature cũ (mock `lambda q:` trong test cũ vẫn dùng được).
+        res = (answer(question, history=history) if history
+               else answer(question))
+    except Exception as e:  # noqa: BLE001 — catch-all có chủ đích ở
+        # thread boundary (D4.4): MỌI crash của answer() phải log +
+        # fallback, thread không được chết câm mất vết câu hỏi.
+        sent = send_text(user_id, ERROR_FALLBACK)
+        _log_conversation({
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "msg_id": msg_id,
+            "user_hash": hashlib.sha256(user_id.encode()).hexdigest()[:16],
+            "question": question,
+            "answer": "",
+            "sources": [],
+            "guardrail_ok": False,
+            "latency_ms": int((time.time() - t0) * 1000),
+            "answered": False,
+            "sent": sent,
+            "error": repr(e)[:300],
+        })
+        return {"sent": sent, "text": ERROR_FALLBACK, "sources": []}
     latency_ms = int((time.time() - t0) * 1000)
-    text = res["answer"]
+    raw = res["answer"]
     # Check TRƯỚC khi append nguồn — URL là citation, slug tiếng Việt có
     # thể chứa từ cấm dạng viết trần ("chua-") và flag oan câu trả lời đúng.
-    guardrail_ok = check(text)["ok"]
+    guardrail_ok = check(raw)["ok"]
     if not guardrail_ok:
         print(f"[warn] zalo: reply bị guardrail chặn -> fallback "
               f"(user={user_id})", flush=True)
         text = FALLBACK
-    elif res["sources"]:
-        text += "\nNguồn: " + res["sources"][0]
+    else:
+        text = raw
+        if res["sources"]:
+            text += "\nNguồn: " + res["sources"][0]
+        # Lượt hợp lệ (kể cả NO_DATA) mới vào history — câu bị flag thì
+        # không cho LLM "nhớ" text vi phạm ở lượt sau.
+        with _hist_lock:
+            h = _histories.setdefault(user_id, deque(maxlen=8))
+            h.append({"role": "user", "content": question})
+            h.append({"role": "assistant", "content": raw})
     sent = send_text(user_id, text)
-    _log_conversation({
+    entry = {
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "msg_id": msg_id,
         "user_hash": hashlib.sha256(user_id.encode()).hexdigest()[:16],
@@ -155,8 +210,12 @@ def handle_text(user_id: str, question: str, msg_id: str = "") -> dict:
         "latency_ms": latency_ms,
         # `in` thay `==`: rag.py cũng coi NO_DATA-là-substring là không có
         # data (line `if NO_DATA in text: sources = []`).
-        "answered": NO_DATA not in res["answer"],
-    })
+        "answered": NO_DATA not in raw,
+        "sent": sent,  # send-fail khác "đã xử lý" — giữ riêng để đối soát
+    }
+    if not guardrail_ok:
+        entry["flagged_text"] = raw[:500]  # raw bị flag, debug guardrail
+    _log_conversation(entry)
     return {"sent": sent, "text": text, "sources": res["sources"]}
 
 
@@ -205,6 +264,9 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
+    if err := _startup_error():
+        print(err, flush=True)
+        sys.exit(1)
     srv = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
     print(f"[zalo] webhook :{PORT}/zalo-webhook "
           f"(secret={'set' if APP_SECRET else 'MISSING'}, "

@@ -13,19 +13,27 @@ Khán giả: khách nhắn Zalo OA thật (sau C2.0) + bác Lực xem hội tho�
 nhiều lượt tự nhiên. Code-side readiness — external không treo version
 (cùng pattern v0.3).
 
-- [ ] **D4.1 Multi-turn context** — `answer()`/Zalo nhớ ≤4 lượt gần
+- [x] **D4.1 Multi-turn context** — `answer()`/Zalo nhớ ≤4 lượt gần
   nhất per user; hỏi nối tiếp ("giá Saphraton?" → "còn loại rẻ hơn?")
   trả đúng ngữ cảnh; eval 12 câu không regression
-- [ ] **D4.2 Signature fail-closed** — `DEPLOY=1` mà thiếu
+  — *(verify 2026-10-05: `answer(q, history=None)` backward-compat +
+    `_standalone()` rewrite chỉ khi có history; live check T2
+    "con loai nao re hon?" → đúng Saphraton 20V rẻ hơn; pytest
+    test_rag 3 case + test_zalo history/flagged-skip)*
+- [x] **D4.2 Signature fail-closed** — `DEPLOY=1` mà thiếu
   `ZALO_APP_SECRET` → refuse to serve (không bind); dev local không
   secret vẫn chạy
-- [ ] **D4.3 Vá mock re-run** — `zalo_mock.py` chạy 2 lần liên tiếp
+  — *(`_startup_error()` + main() exit(1) trước bind; pytest 3 nhánh)*
+- [x] **D4.3 Vá mock re-run** — `zalo_mock.py` chạy 2 lần liên tiếp
   <1h đều exit 0 (msg_id unique per run)
-- [ ] **D4.4 Convlog v2** — field `sent` (send-fail ≠ đã xử lý); log cả
+  — *(verify: 2 run liên tiếp 3/3 exit 0, `evidence/v04_mock_rerun.log`)*
+- [x] **D4.4 Convlog v2** — field `sent` (send-fail ≠ đã xử lý); log cả
   event `answer()` crash (không mất vết câu hỏi); raw text bị guardrail
   flag giữ field riêng (`flagged_text`)
-- [ ] **D4.5 Gate chung** — pytest toàn bộ xanh · `ruff check .` clean
+  — *(pytest 3 case mới + log thật sau mock có `sent:true`)*
+- [x] **D4.5 Gate chung** — pytest toàn bộ xanh · `ruff check .` clean
   · `eval_qa.py` ≥10/12 + 2 bẫy pass
+  — *(38/38 ×2, ruff clean, eval 12/12 `evidence/v04_eval.log`)*
 
 External-dependency (không treo version): C2.0 owner submit → live
 verify `evidence/v02_zalo_live.png` · hồ sơ công bố SKU thật thay
@@ -135,16 +143,16 @@ Quy ước DoD cho phase connector:
 
 ## Someday (chưa vào version nào)
 
-- `zalo_mock.py` dùng msg_id cố định (`mock0-2`) → sau D3.5, re-run <1h
-  bị dedup → timeout fail giả (verify: `data/zalo_seen.db` giữ
-  `u*:mock*`). Vá: mock trỏ `SEEN_DB` sang tmp — mock không nên share
-  dedup db production; hoặc msg_id unique theo timestamp
-
-- Multi-turn context cho `answer()`/Zalo (M — nhớ ≤4 lượt/user; user duyệt
-  để ngoài v0.3 nhưng cần trước OA live thật)
-- Convlog: thêm field `sent` (send fail giờ vẫn log như đã xử lý) + log cả
-  event `answer()` crash (hiện thread chết → mất vết câu hỏi) + giữ raw
-  text bị flag riêng để debug guardrail
+- `test_ack_fast_while_reply_slow` flaky dưới load — threshold <1s quá
+  chặt cho localhost Windows (đo 2026-10-05: handler rỗng cũng 0.7-3.9s
+  khi máy nặng; status luôn 200, dispatch async đúng — probe sleep(10)
+  POST vẫn <4s). Vá: đổi sang assert event-based (reply-thread chưa set
+  event khi POST return) hoặc nới threshold
+- `_histories` dict không giới hạn số user — webhook public + user_id
+  spam → memory leak chậm (signature chặn user giả nên rủi ro thấp; cap
+  ~1000 user evict-oldest là đủ khi deploy thật)
+- `DEPLOY` chỉ check `== "1"` — deploy doc phải ghi đúng `DEPLOY=1`;
+  cân nhắc truthy check ("true","yes") khi viết deploy runbook
 - PII trong `conversations.jsonl`: `question` lưu raw — khách gõ SĐT/tên
   vào log; production cần mask/retention policy (pilot: local + gitignored)
 - `verify_signature` bypass khi thiếu `ZALO_APP_SECRET` — deploy public

@@ -138,28 +138,33 @@ phép mở rộng signature `answer()` — bắt buộc backward-compatible (cal
 cũ `answer(q)` không đổi hành vi); mọi đụng `guardrail.py` vẫn = bug,
 phải ghi lý do trong commit.
 
-- [ ] **D4.1 Multi-turn context** — `answer(q, history=None)` + per-user
+- [x] **D4.1 Multi-turn context** — `answer(q, history=None)` + per-user
   history ≤4 lượt trong zalo + streamlit truyền session history
   - Boundary: `api/rag.py`, `connectors/zalo.py`, `app/streamlit_app.py`,
     `tests/` (thêm case — file mới `tests/test_rag.py` nếu cần)
   - Gate: pytest case chứng minh history vào prompt + follow-up resolve
     ngữ cảnh; eval ≥10/12 không regression (chạy ở D4.5)
-  - Evidence: `evidence/v04_pytest.log`
-- [ ] **D4.2 Signature fail-closed** — `DEPLOY=1` thiếu `ZALO_APP_SECRET`
+  - Evidence: `evidence/v04_pytest.log` (38/38) + live check trong
+    `v04_eval.log` — `_standalone()` rewrite chỉ khi có history
+- [x] **D4.2 Signature fail-closed** — `DEPLOY=1` thiếu `ZALO_APP_SECRET`
   → refuse to serve
   - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
   - Gate: pytest case deploy-no-secret → startup error trước khi bind;
     dev local không secret vẫn serve (giữ `test_signature_skip_when_no_secret`)
-- [ ] **D4.3 Vá mock re-run** — msg_id unique per run trong mock
+  - Evidence: `test_startup_error_fail_closed` (3 nhánh)
+- [x] **D4.3 Vá mock re-run** — msg_id unique per run trong mock
   - Boundary: `scripts/zalo_mock.py` (chỉ file này)
   - Gate: `python scripts/zalo_mock.py` chạy 2 lần liên tiếp <1h đều
     exit 0 (verify ở D4.5 — mock đụng zalo.py của lane A)
-- [ ] **D4.4 Convlog v2** — `sent`, crash-log, `flagged_text`
+  - Evidence: `evidence/v04_mock_rerun.log` — 2 run liên tiếp 3/3
+- [x] **D4.4 Convlog v2** — `sent`, crash-log, `flagged_text`
   - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
   - Gate: pytest case mới cho cả 3 thay đổi; mọi field schema cũ giữ nguyên
-- [ ] **D4.5 Gate chung** — pytest xanh + ruff clean + eval ≥10/12+2 bẫy
+  - Evidence: 3 test mới + log thật sau mock có `sent:true`
+- [x] **D4.5 Gate chung** — pytest xanh + ruff clean + eval ≥10/12+2 bẫy
   + mock 2 lần exit 0
-  - Evidence: `evidence/v04_*.log`
+  - Evidence: `evidence/v04_pytest.log` (38/38 + ruff) · `v04_eval.log`
+    (12/12) · `v04_mock_rerun.log` (3/3 ×2)
 
 ---
 
