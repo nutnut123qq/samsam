@@ -48,6 +48,11 @@ chat lẫn embeddings) + Streamlit.
 - **Console Windows cp1258**: script in tiếng Việt có dấu crash
   `UnicodeEncodeError` — mọi script mới PHẢI có UTF-8 reconfigure guard
   (copy pattern đầu `scripts/zalo_mock.py` / `scripts/eval_qa.py`).
+- Runtime/state file mới trong `data/` (`conversations.jsonl`,
+  `zalo_seen.db`...) — gitignore NGAY khi thêm (có user_hash/PII-adjacent).
+  Test cho state-on-disk: isolate bằng monkeypatch đường dẫn → `tmp_path`
+  (xem `_isolated_files` trong `tests/test_zalo.py`), KHÔNG `clear()`
+  structure in-memory như khi state còn là dict.
 - `samsam.net.vn` là NukeViet (HTML render phức tạp); `samsamngoclinh.com` là
   WooCommerce — **thử WP REST API `/wp-json/wp/v2/...` trước**, dễ hơn parse HTML.
 - Embedding lưu `float8[]` — nếu sau này cài được pgvector thì đổi cột + index,
