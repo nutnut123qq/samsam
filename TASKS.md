@@ -78,11 +78,14 @@ Checklist/DoD chi tiết: `DONE.md` mục v0.2-connector. Quy ước: "CODE xong
   - Gate: mọi outbound qua `check()`; flag → FALLBACK hotline thay text
     vi phạm; reply kèm "Nguồn: <url>"
   - Evidence: `evidence/v02_pytest.log` — 3 case pipeline mock
-- [ ] **C2.3 Mock E2E** — `scripts/zalo_mock.py` replay ≥3 hội thoại
+- [x] **C2.3 Mock E2E** — `scripts/zalo_mock.py` replay ≥3 hội thoại
+  - Evidence: `evidence/v02_zalo_mock.log` — 3/3 đúng end-to-end: giá
+    Saphraton 2 quy cách + nguồn · showroom "425 Phan Bội Châu" + nguồn ·
+    câu bẫy "Chưa đủ dữ liệu để trả lời."
 - [x] **C2.4 Human-gate** — `connectors/` không có endpoint đăng
   bài/listing mới (verify bằng diff: chỉ nhận/reply)
-- [~] **C2.5 Gate + docs** — pytest 24/24, ruff clean; còn: verify
-  `python demo.py` + update lệnh AGENTS.md
+- [x] **C2.5 Gate + docs** — pytest 26/26, ruff clean; `python demo.py`
+  verify :8501 HTTP 200; AGENTS.md thêm lệnh webhook + mock
 
 ---
 

@@ -14,17 +14,21 @@ chat lẫn embeddings) + Streamlit.
 | Setup | `pip install -r requirements.txt` |
 | Crawl | `python -m crawler.collect` |
 | Ingest | `python -m ingest.embed_store` |
-| Demo UI | `streamlit run app/streamlit_app.py` |
+| Demo UI | `streamlit run app/streamlit_app.py` (hoặc `python demo.py`) |
+| Zalo webhook | `python -m connectors.zalo` → :8788/zalo-webhook |
+| Mock E2E Zalo | `python scripts/zalo_mock.py` |
 | Test/lint | `pytest` · `ruff check .` |
 
 ## Structure
 - `crawler/` — collect public site data → `data/*.jsonl`
+- `connectors/` — adapters ra kênh ngoài (Zalo OA webhook); chỉ nhận/reply,
+  KHÔNG đăng nội dung mới (human-gate C2.4)
 - `ingest/` — chunk + embed + nạp pgvector
 - `pipelines/` — content draft + guardrail check (claim whitelist + banned words)
 - `app/` — Streamlit demo (2 tab: Chat, Content Studio)
 - `data/` — jsonl dump, `claims_whitelist.json`, `banned_words.txt`
 - `tests/` — pytest
-- `TASKS.md` — task board M1–M4, boundary + gate + evidence từng task
+- `TASKS.md` — task board M1–M5, boundary + gate + evidence từng task
 - `SOW_SamSam_AI_6-thang.md` — hợp đồng draft là context gốc
 
 ## Invariants

@@ -30,7 +30,7 @@ Quy ước DoD cho phase connector:
   - DoD: `evidence/v02_platform.md` ghi ngày submit từng app (không secret).
     Bonus nếu OA duyệt kịp: `evidence/v02_zalo_live.png` (chat thật trên OA).
 
-- [ ] **C2.1 Zalo webhook server** — HTTP endpoint nhận OA message event
+- [x] **C2.1 Zalo webhook server** — HTTP endpoint nhận OA message event
   - Boundary: `connectors/` (package mới), `tests/test_zalo.py`.
     `requirements.txt` ưu tiên stdlib `http.server` + `httpx` có sẵn — chỉ
     thêm dep nếu chứng minh cần.
@@ -39,7 +39,7 @@ Quy ước DoD cho phase connector:
     `python -m connectors.zalo` serve được local.
   - Evidence: `evidence/v02_pytest.log`.
 
-- [ ] **C2.2 Reply pipeline** — event → `api.rag.answer()` → guardrail → send
+- [x] **C2.2 Reply pipeline** — event → `api.rag.answer()` → guardrail → send
   - Boundary: `connectors/zalo*.py`. `api/rag.py` + `pipelines/guardrail.py`
     chỉ reuse — đụng = bug, phải ghi lý do trong commit.
   - DoD: mock test pass — (a) hỏi giá Saphraton → reply đủ 2 giá + URL nguồn;
@@ -48,18 +48,18 @@ Quy ước DoD cho phase connector:
     (d) assert mọi outbound đều đã qua `check()` trước khi gọi send API.
   - Evidence: `evidence/v02_pytest.log`.
 
-- [ ] **C2.3 Mock E2E demo** — script replay event vào webhook local
+- [x] **C2.3 Mock E2E demo** — script replay event vào webhook local
   - Boundary: `scripts/zalo_mock.py`, `evidence/`.
   - DoD: `python scripts/zalo_mock.py` exit 0; log ≥3 hội thoại end-to-end:
     giá Saphraton + nguồn · showroom Đà Nẵng + nguồn · câu bẫy từ chối đúng.
   - Evidence: `evidence/v02_zalo_mock.log`.
 
-- [ ] **C2.4 Human-gate contract** — v0.2 KHÔNG có đường đăng nội dung mới
+- [x] **C2.4 Human-gate contract** — v0.2 KHÔNG có đường đăng nội dung mới
   - DoD (review diff): không hàm/path nào trong `connectors/` gọi API tạo
     bài/listing mới lên OA/sàn. Reply auto chỉ sau guardrail — xong.
   - Evidence: diff `connectors/` (không endpoint post/create nào).
 
-- [ ] **C2.5 Gate chung + docs** — baseline không regression
+- [x] **C2.5 Gate chung + docs** — baseline không regression
   - Boundary: `TASKS.md` (thêm block M5), `AGENTS.md` (commands mới nếu có),
     `DONE.md`.
   - DoD: `pytest -q` toàn bộ xanh (13 case cũ không sửa để qua) ·
