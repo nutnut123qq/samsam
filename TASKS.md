@@ -131,6 +131,36 @@ Checklist/DoD chi tiết: `DONE.md` mục v0.3-hardening. Audit gốc:
   - Evidence: `evidence/v03_pytest.log` — pytest 29/29, ruff clean,
     `git status data/` trống + tick board
 
+## M7 — Live-ready v0.4 (bot sẵn sàng live OA thật)
+
+Checklist/DoD chi tiết: `DONE.md` mục v0.4-live-ready. Quy ước: D4.1 được
+phép mở rộng signature `answer()` — bắt buộc backward-compatible (caller
+cũ `answer(q)` không đổi hành vi); mọi đụng `guardrail.py` vẫn = bug,
+phải ghi lý do trong commit.
+
+- [ ] **D4.1 Multi-turn context** — `answer(q, history=None)` + per-user
+  history ≤4 lượt trong zalo + streamlit truyền session history
+  - Boundary: `api/rag.py`, `connectors/zalo.py`, `app/streamlit_app.py`,
+    `tests/` (thêm case — file mới `tests/test_rag.py` nếu cần)
+  - Gate: pytest case chứng minh history vào prompt + follow-up resolve
+    ngữ cảnh; eval ≥10/12 không regression (chạy ở D4.5)
+  - Evidence: `evidence/v04_pytest.log`
+- [ ] **D4.2 Signature fail-closed** — `DEPLOY=1` thiếu `ZALO_APP_SECRET`
+  → refuse to serve
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
+  - Gate: pytest case deploy-no-secret → startup error trước khi bind;
+    dev local không secret vẫn serve (giữ `test_signature_skip_when_no_secret`)
+- [ ] **D4.3 Vá mock re-run** — msg_id unique per run trong mock
+  - Boundary: `scripts/zalo_mock.py` (chỉ file này)
+  - Gate: `python scripts/zalo_mock.py` chạy 2 lần liên tiếp <1h đều
+    exit 0 (verify ở D4.5 — mock đụng zalo.py của lane A)
+- [ ] **D4.4 Convlog v2** — `sent`, crash-log, `flagged_text`
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
+  - Gate: pytest case mới cho cả 3 thay đổi; mọi field schema cũ giữ nguyên
+- [ ] **D4.5 Gate chung** — pytest xanh + ruff clean + eval ≥10/12+2 bẫy
+  + mock 2 lần exit 0
+  - Evidence: `evidence/v04_*.log`
+
 ---
 
 ## Lề (không đụng trong pilot)

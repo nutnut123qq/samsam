@@ -4,8 +4,33 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **chưa có** — v0.3-hardening đóng 2026-10-04; v0.4 mở
-khi có chỉ thị (C2.0 owner submit dev app vẫn NEEDS-INPUT).
+Version đang mở: **v0.4-live-ready** — bot code-side sẵn sàng live OA
+thật ngay khi C2.0 duyệt (mở 2026-10-05, contract đã duyệt).
+
+## Checklist v0.4-live-ready
+
+Khán giả: khách nhắn Zalo OA thật (sau C2.0) + bác Lực xem hội thoại
+nhiều lượt tự nhiên. Code-side readiness — external không treo version
+(cùng pattern v0.3).
+
+- [ ] **D4.1 Multi-turn context** — `answer()`/Zalo nhớ ≤4 lượt gần
+  nhất per user; hỏi nối tiếp ("giá Saphraton?" → "còn loại rẻ hơn?")
+  trả đúng ngữ cảnh; eval 12 câu không regression
+- [ ] **D4.2 Signature fail-closed** — `DEPLOY=1` mà thiếu
+  `ZALO_APP_SECRET` → refuse to serve (không bind); dev local không
+  secret vẫn chạy
+- [ ] **D4.3 Vá mock re-run** — `zalo_mock.py` chạy 2 lần liên tiếp
+  <1h đều exit 0 (msg_id unique per run)
+- [ ] **D4.4 Convlog v2** — field `sent` (send-fail ≠ đã xử lý); log cả
+  event `answer()` crash (không mất vết câu hỏi); raw text bị guardrail
+  flag giữ field riêng (`flagged_text`)
+- [ ] **D4.5 Gate chung** — pytest toàn bộ xanh · `ruff check .` clean
+  · `eval_qa.py` ≥10/12 + 2 bẫy pass
+
+External-dependency (không treo version): C2.0 owner submit → live
+verify `evidence/v02_zalo_live.png` · hồ sơ công bố SKU thật thay
+whitelist tự trích · quyết VPS/tunnel deploy. Someday giữ nguyên + PII
+masking `question` + log rotation (chờ quyết deploy public).
 
 ## Checklist v0.3-hardening
 
