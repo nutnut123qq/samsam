@@ -17,7 +17,7 @@ def _sign(raw: bytes, secret: str = SECRET) -> str:
     """mac = sha256(app_id + raw_body + timestamp + secret) — đúng spec Zalo."""
     data = json.loads(raw)
     return "mac=" + hashlib.sha256(
-        (data["app_id"] + raw.decode() + data["timestamp"] + secret)
+        (data["app_id"] + raw.decode() + str(data["timestamp"]) + secret)
         .encode()).hexdigest()
 
 
@@ -133,6 +133,32 @@ def test_reply_guardrail_flag_sends_fallback(monkeypatch):
                         lambda u, t: sent.update(text=t) or True)
     zalo.handle_text("u1", "x")
     assert sent["text"] == zalo.FALLBACK
+
+
+def test_source_url_with_banned_slug_still_sends(monkeypatch):
+    # Regression: check() chạy trên answer TRƯỚC khi append nguồn — slug
+    # "chua" trong URL citation không được làm flag oan câu trả lời sạch.
+    # Dùng guardrail THẬT, không mock check.
+    sent = {}
+    monkeypatch.setattr("api.rag.answer", lambda q: {
+        "answer": "Saphraton: 1.000.000 đ",
+        "sources": ["http://samsam.net.vn/vi/news/bai-chua-benh-1.html"]})
+    monkeypatch.setattr(zalo, "send_text",
+                        lambda u, t: sent.update(text=t) or True)
+    zalo.handle_text("u1", "giá?")
+    assert sent["text"].startswith("Saphraton")
+    assert "Nguồn: http://samsam.net.vn/vi/news/bai-chua-benh-1.html" \
+        in sent["text"]
+
+
+def test_signature_timestamp_as_number(monkeypatch):
+    # Regression: timestamp là JSON number -> TypeError trước đây làm rớt
+    # connection thay vì verify sạch.
+    monkeypatch.setattr(zalo, "APP_SECRET", SECRET)
+    ev = _event()
+    ev["timestamp"] = 1700000000000  # number, không phải string
+    raw = json.dumps(ev).encode()
+    assert zalo.verify_signature(raw, _sign(raw))
 
 
 def test_every_outbound_passes_check(monkeypatch):

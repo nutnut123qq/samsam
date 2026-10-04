@@ -52,10 +52,10 @@ def verify_signature(raw: bytes, header: str) -> bool:
     try:
         data = json.loads(raw)
         expect = "mac=" + hashlib.sha256(
-            (data["app_id"] + raw.decode() + data["timestamp"] + APP_SECRET)
-            .encode()).hexdigest()
+            (data["app_id"] + raw.decode() + str(data["timestamp"])
+             + APP_SECRET).encode()).hexdigest()
         return hmac.compare_digest(header, expect)
-    except (KeyError, ValueError):
+    except (KeyError, ValueError, TypeError):
         return False
 
 
@@ -100,12 +100,14 @@ def handle_text(user_id: str, question: str) -> dict:
 
     res = answer(question)
     text = res["answer"]
-    if res["sources"]:
-        text += "\nNguồn: " + res["sources"][0]
+    # Check TRƯỚC khi append nguồn — URL là citation, slug tiếng Việt có
+    # thể chứa từ cấm dạng viết trần ("chua-") và flag oan câu trả lời đúng.
     if not check(text)["ok"]:
         print(f"[warn] zalo: reply bị guardrail chặn -> fallback "
               f"(user={user_id})", flush=True)
         text = FALLBACK
+    elif res["sources"]:
+        text += "\nNguồn: " + res["sources"][0]
     sent = send_text(user_id, text)
     return {"sent": sent, "text": text, "sources": res["sources"]}
 
