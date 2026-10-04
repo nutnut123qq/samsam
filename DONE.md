@@ -110,6 +110,11 @@ Quy ước DoD cho phase connector:
 
 ## Someday (chưa vào version nào)
 
+- `zalo_mock.py` dùng msg_id cố định (`mock0-2`) → sau D3.5, re-run <1h
+  bị dedup → timeout fail giả (verify: `data/zalo_seen.db` giữ
+  `u*:mock*`). Vá: mock trỏ `SEEN_DB` sang tmp — mock không nên share
+  dedup db production; hoặc msg_id unique theo timestamp
+
 - Multi-turn context cho `answer()`/Zalo (M — nhớ ≤4 lượt/user; user duyệt
   để ngoài v0.3 nhưng cần trước OA live thật)
 - Convlog: thêm field `sent` (send fail giờ vẫn log như đã xử lý) + log cả
