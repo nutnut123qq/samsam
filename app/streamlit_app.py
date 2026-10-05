@@ -1,25 +1,37 @@
 """Demo UI — `streamlit run app/streamlit_app.py`
 
-2 tab:
+3 tab:
   - "Chat Sâm Sâm": hỏi/đáp trên knowledge base, mỗi câu trả lời kèm
     link nguồn (RAG — retrieve từ pgvector, trả lời bằng Claude).
+    Answer qua guardrail như mọi kênh (invariant); NO_DATA → handoff
+    text + ghi convlog để vào queue nhân viên.
   - "Content Studio": nhập brief → pipelines.content.draft() → hiển thị
     bài + kết quả guardrail (violation tô đỏ).
+  - "Chưa trả lời": queue câu NO_DATA cho nhân viên follow-up / bổ
+    sung knowledge base (đọc convlog `answered:false`).
 
 Contract với UI: mọi câu trả lời chat phải render ít nhất 1 URL nguồn;
 không có nguồn → hiển thị "không đủ dữ liệu" thay vì để model bịa.
 """
 
+import time
+
 import streamlit as st
 
 st.set_page_config(page_title="Sâm Sâm AI Pilot", page_icon="🌿")
-tab_chat, tab_studio = st.tabs(["Chat Sâm Sâm", "Content Studio"])
+tab_chat, tab_studio, tab_queue = st.tabs(
+    ["Chat Sâm Sâm", "Content Studio", "Chưa trả lời"])
 
 with tab_chat:
     st.caption("Hỏi đáp trên knowledge base public của Sâm Sâm — "
                "câu trả lời luôn kèm nguồn; thiếu dữ liệu bot sẽ nói thẳng.")
     if "messages" not in st.session_state:
         st.session_state.messages = []
+    # History riêng cho answer() — parity zalo._histories: chỉ lượt hợp
+    # lệ (kể cả NO_DATA) vào và lưu RAW answer; lượt bị flag không vào.
+    # messages[] chỉ để render (lưu text user thấy = display).
+    if "history" not in st.session_state:
+        st.session_state.history = []
 
     for m in st.session_state.messages:
         with st.chat_message(m["role"]):
@@ -33,22 +45,75 @@ with tab_chat:
             st.write(q)
         with st.chat_message("assistant"):
             with st.spinner("Đang tra knowledge base..."):
-                from api.rag import answer
-                # [:-1] bỏ câu hiện tại (vừa append ở trên) — history chỉ
-                # gồm các lượt TRƯỚC; [-8:] = 4 lượt Q&A gần nhất.
-                history = [{"role": m["role"], "content": m["content"]}
-                           for m in st.session_state.messages[:-1][-8:]]
-                r = answer(q, history=history)
-            st.write(r["answer"])
-            if r["sources"]:
-                st.caption("Nguồn:")
-                for s in r["sources"]:
-                    st.markdown(f"- [{s}]({s})")
+                from api.rag import NO_DATA, answer
+                # [-8:] = 4 lượt Q&A gần nhất — giống deque(maxlen=8).
+                t0 = time.time()
+                r = answer(
+                    q, history=st.session_state.history[-8:] or None)
+                latency_ms = int((time.time() - t0) * 1000)
+
+            # Invariant: mọi text AI trước khi hiển thị phải qua
+            # guardrail.check() — giống pipeline reply của zalo.
+            from pipelines.guardrail import check
+            g = check(r["answer"])
+            if not g["ok"]:
+                from connectors.zalo import FALLBACK
+                display = FALLBACK
+            elif NO_DATA in r["answer"]:
+                # D6.1: handoff text có lối thoát thay câu NO_DATA trần
+                from connectors.zalo import HANDOFF_TEXT
+                display = HANDOFF_TEXT
             else:
-                st.caption("Không có nguồn — chưa đủ dữ liệu.")
+                display = r["answer"]
+            st.write(display)
+            if g["ok"]:
+                if NO_DATA in r["answer"]:
+                    st.caption("Không có nguồn — chưa đủ dữ liệu, đã "
+                               "chuyển nhân viên (xem tab 'Chưa trả lời').")
+                elif r["sources"]:
+                    st.caption("Nguồn:")
+                    for s in r["sources"]:
+                        st.markdown(f"- [{s}]({s})")
+            # Lượt bị flag: FALLBACK trần — không nguồn/caption "đã
+            # chuyển nhân viên" (entry flagged không vào queue).
+
+            # Cập nhật history theo semantics zalo: chỉ lượt hợp lệ, lưu
+            # raw — flagged không cho LLM nhớ text vi phạm lượt sau.
+            if g["ok"]:
+                st.session_state.history = (
+                    st.session_state.history
+                    + [{"role": "user", "content": q},
+                       {"role": "assistant", "content": r["answer"]}]
+                )[-8:]
+
+            # Ghi convlog như kênh Zalo — câu chưa trả lời vào queue
+            # (answered:false). Log fail không được chặn hiển thị.
+            try:
+                from connectors import zalo as _z
+                _z._log_conversation({
+                    "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                        time.gmtime()),
+                    "msg_id": "",
+                    "user_hash": _z._uhash("streamlit"),
+                    "question": _z._mask_pii(q),
+                    "answer": display[:500],
+                    "sources": r["sources"],
+                    "guardrail_ok": g["ok"],
+                    "latency_ms": latency_ms,
+                    "answered": NO_DATA not in r["answer"],
+                    "sent": False,  # kênh UI — không có send API
+                    **({"flagged_text": r["answer"][:500]}
+                       if not g["ok"] else {}),
+                })
+            except Exception as e:  # noqa: BLE001 — log không được chặn UI
+                print(f"[warn] convlog streamlit: {e!r}", flush=True)
+
         st.session_state.messages.append(
-            {"role": "assistant", "content": r["answer"],
-             "sources": r["sources"]})
+            {"role": "assistant", "content": display,
+             # Nguồn chỉ kèm câu trả lời thật — replay không render link
+             # dưới FALLBACK/handoff.
+             "sources": (r["sources"] if g["ok"] and NO_DATA
+                         not in r["answer"] else [])})
 
 with tab_studio:
     st.caption("Sinh bài từ brief — mọi text AI đều qua guardrail "
@@ -85,3 +150,19 @@ with tab_studio:
     if st.button("Check guardrail") and raw.strip():
         from pipelines.guardrail import check
         _render_guardrail(check(raw))
+
+with tab_queue:
+    st.caption("Câu khách hỏi mà bot chưa trả lời được (convlog "
+               "`answered:false`) — nhân viên follow-up / input cho vòng "
+               "bổ sung knowledge base. Mới nhất lên đầu.")
+    from connectors import zalo as _zalo
+    _recs = _zalo.unanswered()
+    if not _recs:
+        st.info("Chưa có câu nào chờ — mọi câu hỏi đều đã được trả lời.")
+    else:
+        st.dataframe(
+            [{"Thời gian (UTC)": e.get("ts", ""),
+              "Câu hỏi": e.get("question", ""),
+              "user_hash": e.get("user_hash", "")}
+             for e in reversed(_recs)],
+            use_container_width=True)

@@ -90,15 +90,21 @@ def test_post_text_dispatches(server, monkeypatch):
 
 
 def test_dedup_same_msg_id(server, monkeypatch):
-    got = []
+    # Zalo retry khi timeout -> cùng msg_id chỉ dispatch 1 lần. Wait
+    # event cho dispatch lượt 1 thay sleep-mò trước assert — thread
+    # startup >0.3s dưới load từng flake (v0.6 ship-pass).
+    got, done = [], threading.Event()
     monkeypatch.setattr(zalo, "handle_text",
-                        lambda u, t, m=None: got.append(u))
+                        lambda u, t, m=None: got.append(u) or done.set())
     raw = json.dumps(_event(msg_id="dup1")).encode()
-    for _ in range(2):  # Zalo retry khi timeout
-        assert httpx.post(server, content=raw,
-                          headers={"X-ZEvent-Signature": _sign(raw)}
-                          ).status_code == 200
-    time.sleep(0.3)
+    assert httpx.post(server, content=raw,
+                      headers={"X-ZEvent-Signature": _sign(raw)}
+                      ).status_code == 200
+    assert done.wait(5)  # lượt 1 đã dispatch xong
+    assert httpx.post(server, content=raw,
+                      headers={"X-ZEvent-Signature": _sign(raw)}
+                      ).status_code == 200
+    time.sleep(0.3)  # dup dispatch (nếu bug) cần cơ hội chạy trước assert
     assert got == ["u1"]
 
 
@@ -275,6 +281,8 @@ def test_conversation_log_schema_and_dedup_skip(server, monkeypatch,
 
 def test_conversation_log_no_data_answered_false(monkeypatch, tmp_path):
     # D3.4: reply là NO_DATA -> answered:false trong log.
+    # D6.1: answer trong log = text ĐÃ GỬI (HANDOFF_TEXT), `answered`
+    # vẫn tính trên raw NO_DATA của answer().
     from api.rag import NO_DATA
     monkeypatch.setattr("api.rag.answer",
                         lambda q: {"answer": NO_DATA, "sources": []})
@@ -285,7 +293,55 @@ def test_conversation_log_no_data_answered_false(monkeypatch, tmp_path):
     log = tmp_path / "conversations.jsonl"
     rec = json.loads(log.read_text(encoding="utf-8").strip())
     assert rec["msg_id"] == "m-nd" and rec["answered"] is False
-    assert rec["answer"] == NO_DATA
+    assert rec["answer"] == zalo.HANDOFF_TEXT
+
+
+def test_no_data_sends_handoff_text(monkeypatch):
+    # D6.1: answer() NO_DATA -> khách nhận HANDOFF_TEXT (có hotline),
+    # không phải câu "Chưa đủ dữ liệu" trần; lượt vẫn vào history.
+    from api.rag import NO_DATA
+    sent, calls = {}, []
+    monkeypatch.setattr("api.rag.answer",
+                        lambda q, history=None: calls.append((q, history))
+                        or {"answer": NO_DATA, "sources": []})
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+    monkeypatch.setattr(zalo, "send_text",
+                        lambda u, t: sent.update(text=t) or True)
+    r = zalo.handle_text("u10", "Saphraton chữa ung thư không?")
+    assert sent["text"] == zalo.HANDOFF_TEXT
+    assert r["text"] == zalo.HANDOFF_TEXT
+    assert "1800577732" in sent["text"]
+    # Lượt 2: history phải chứa lượt 1 (NO_DATA vẫn là lượt hợp lệ).
+    zalo.handle_text("u10", "vậy còn loại khác?")
+    assert calls[1][1] == [{"role": "user", "content": calls[0][0]},
+                           {"role": "assistant", "content": NO_DATA}]
+
+
+def test_unanswered_reads_queue(monkeypatch, tmp_path):
+    # D6.2: unanswered() đọc convlog + backup .1, trả đúng entry
+    # answered:false; dòng lỗi/answered:true bị bỏ qua.
+    log = tmp_path / "conversations.jsonl"
+    bak = tmp_path / "conversations.jsonl.1"
+    bak.write_text(json.dumps({"answered": False, "question": "cũ"}) + "\n",
+                   encoding="utf-8")
+    log.write_bytes(
+        (json.dumps({"answered": False, "question": "mới"}) + "\n"
+         + json.dumps({"answered": True, "question": "ok"}) + "\n"
+         + "dòng hỏng\n").encode() + b"\xff\xfe\n")
+    recs = zalo.unanswered()
+    assert [r["question"] for r in recs] == ["cũ", "mới"]
+
+
+def test_unanswered_missing_empty_bak_only(tmp_path):
+    # D6.2 edge: chưa có convlog -> [] (empty-state); chỉ có .1 (file
+    # mới sau rotate chưa ghi) -> vẫn đọc entry cũ; file rỗng -> [].
+    assert zalo.unanswered() == []
+    (tmp_path / "conversations.jsonl.1").write_text(
+        json.dumps({"answered": False, "question": "cũ"}) + "\n",
+        encoding="utf-8")
+    assert [r["question"] for r in zalo.unanswered()] == ["cũ"]
+    (tmp_path / "conversations.jsonl").write_bytes(b"")
+    assert [r["question"] for r in zalo.unanswered()] == ["cũ"]
 
 
 def test_startup_error_fail_closed(monkeypatch):

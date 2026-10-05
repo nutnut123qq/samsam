@@ -59,6 +59,12 @@ FALLBACK = ("Sâm Sâm xin lỗi, câu trả lời tự động chưa đạt ki�
 # Hằng an toàn viết tay — gửi khi answer() crash; không cần qua check().
 ERROR_FALLBACK = ("Sâm Sâm xin lỗi, hệ thống đang gặp sự cố. Quý khách "
                   "vui lòng gọi hotline 1800577732 để được hỗ trợ.")
+# Hằng viết tay — gửi khi answer() trả NO_DATA (D6.1): khách có lối
+# thoát thay vì câu NO_DATA trần; câu hỏi vẫn log answered:false vào
+# queue cho nhân viên follow-up. Không cần qua check() (text viết tay).
+HANDOFF_TEXT = ("Sâm Sâm chưa đủ dữ liệu để trả lời câu này — nhân "
+                "viên sẽ phản hồi sớm nhất. Quý khách cần gấp vui lòng "
+                "gọi hotline 1800577732 để được hỗ trợ.")
 
 SEEN_TTL_S = 3600
 SEEN_DB = ROOT / "data" / "zalo_seen.db"   # dedup sống qua restart (D3.5)
@@ -207,6 +213,29 @@ def _log_conversation(entry: dict) -> None:
             f.write(line)
 
 
+def unanswered() -> list[dict]:
+    """Queue câu chưa trả lời cho nhân viên (D6.2): đọc convlog (+ `.1`
+    backup nếu có — `.1` cũ hơn đọc trước), trả mọi entry
+    `answered:false`. Đọc BYTES + split `\\n` — byte lỗi/U+2028 trong
+    question không phá reader (bài học `_purge_convlog` v0.5.1). Reader
+    chỉ để hiển thị nên decode `replace` (U+FFFD) — surrogateescape chỉ
+    cần cho purge round-trip; lone surrogate làm crash st.dataframe."""
+    out = []
+    for p in (Path(str(CONV_LOG) + ".1"), CONV_LOG):
+        if not p.exists():
+            continue
+        for line in p.read_bytes().split(b"\n"):
+            if not line:
+                continue
+            try:
+                e = json.loads(line.decode("utf-8", "replace"))
+            except ValueError:
+                continue
+            if isinstance(e, dict) and e.get("answered") is False:
+                out.append(e)
+    return out
+
+
 def _history(user_id: str) -> deque:
     """Deque history của user: get-or-create + mark mới-dùng-nhất (LRU).
     PHẢI gọi dưới _hist_lock. Đầy HIST_MAX_USERS -> evict entry cũ nhất —
@@ -228,6 +257,12 @@ def _ulock(user_id: str) -> threading.Lock:
     return _ULOCKS[hash(user_id) % len(_ULOCKS)]
 
 
+def _uhash(user_id: str) -> str:
+    """user_hash như field convlog — mọi print/log chỉ được dùng hash
+    này, KHÔNG raw user_id (invariant: id thật không lọt ra stdout)."""
+    return hashlib.sha256(user_id.encode()).hexdigest()[:16]
+
+
 def _mask_pii(text: str) -> str:
     """Che SĐT/email user gõ vào câu hỏi trước khi ghi convlog — file đã
     gitignore nhưng vẫn nằm plaintext trên đĩa khi deploy. Tên người
@@ -240,7 +275,7 @@ def send_text(user_id: str, text: str) -> bool:
     test được qua mock)."""
     if not ACCESS_TOKEN:
         print(f"[warn] zalo: chưa có ZALO_ACCESS_TOKEN — không gửi "
-              f"(user={user_id})", flush=True)
+              f"(uh={_uhash(user_id)})", flush=True)
         return False
     try:
         r = httpx.post(SEND_URL, params={"access_token": ACCESS_TOKEN},
@@ -288,7 +323,7 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
         _log_conversation({
             "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "msg_id": msg_id,
-            "user_hash": hashlib.sha256(user_id.encode()).hexdigest()[:16],
+            "user_hash": _uhash(user_id),
             "question": _mask_pii(question),
             "answer": "",
             "sources": [],
@@ -308,14 +343,21 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
     guardrail_ok = check(raw)["ok"]
     if not guardrail_ok:
         print(f"[warn] zalo: reply bị guardrail chặn -> fallback "
-              f"(user={user_id})", flush=True)
+              f"(uh={_uhash(user_id)})", flush=True)
         text = FALLBACK
     else:
-        text = raw
-        if res["sources"]:
-            text += "\nNguồn: " + res["sources"][0]
-        # Lượt hợp lệ (kể cả NO_DATA) mới vào history — câu bị flag thì
-        # không cho LLM "nhớ" text vi phạm ở lượt sau.
+        if NO_DATA in raw:
+            # D6.1: khách nhận handoff text có lối thoát, không phải câu
+            # NO_DATA trần — câu hỏi vẫn log answered:false vào queue.
+            text = HANDOFF_TEXT
+            print(f"[handoff] zalo: NO_DATA -> handoff "
+                  f"(uh={_uhash(user_id)})", flush=True)
+        else:
+            text = raw
+            if res["sources"]:
+                text += "\nNguồn: " + res["sources"][0]
+        # Lượt hợp lệ (kể cả NO_DATA -> handoff) mới vào history — câu
+        # bị flag thì không cho LLM "nhớ" text vi phạm ở lượt sau.
         with _hist_lock:
             h = _history(user_id)
             h.append({"role": "user", "content": question})
@@ -324,7 +366,7 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
     entry = {
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "msg_id": msg_id,
-        "user_hash": hashlib.sha256(user_id.encode()).hexdigest()[:16],
+        "user_hash": _uhash(user_id),
         "question": _mask_pii(question),
         "answer": text[:500],
         "sources": res["sources"],
