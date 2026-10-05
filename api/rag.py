@@ -136,8 +136,10 @@ def answer(question: str, history: list[dict] | None = None) -> dict:
         max_tokens=500,
     )
     # content=None (refusal) -> NO_DATA, không bịa — D5.2, cùng lớp lỗi
-    # với _standalone ở trên.
-    text = (resp.choices[0].message.content or NO_DATA).strip()
+    # với _standalone ở trên. Whitespace-only (" ") cũng -> NO_DATA
+    # (D5.8): " " truthy nên `or NO_DATA` trước strip không bắt được —
+    # trả "" làm zalo gửi message rỗng.
+    text = (resp.choices[0].message.content or "").strip() or NO_DATA
     sources = sorted({h["url"] for h in hits if h["score"] >= MIN_SCORE and h["url"]})
     if NO_DATA in text:
         sources = []

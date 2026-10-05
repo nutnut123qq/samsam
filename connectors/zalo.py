@@ -64,9 +64,17 @@ SEEN_TTL_S = 3600
 SEEN_DB = ROOT / "data" / "zalo_seen.db"   # dedup sống qua restart (D3.5)
 CONV_LOG = ROOT / "data" / "conversations.jsonl"  # log hội thoại (D3.3)
 CONV_LOG_MAX = 5 * 1024 * 1024  # 5MB -> rotate sang .1 (D5.4)
-# SĐT VN (0 + 9-10 số) hoặc email trong câu hỏi -> mask trước khi log
-# (D5.3). Tên người không detect được bằng regex.
-_PII_RE = re.compile(r"0\d{9,10}|[\w.+-]+@[\w-]+\.[\w.]+")
+# Entry convlog (user_hash + question đã mask) không nằm lại >30 ngày
+# trên đĩa — purge lúc startup + ngay sau rotate (D5.11).
+RETAIN_DAYS = 30
+# SĐT VN (0 + >=9 số, kể cả viết cách "0901 234 567" / dash / dot —
+# D5.10) hoặc email trong câu hỏi -> mask trước khi log (D5.3).
+# `(?<!\d)` = số 0 mở đầu không được đứng sau chữ số khác -> giá
+# "10.050.000.000" không bị ăn giữa chừng; `{9,}` greedy mask hết cả
+# run dài bất thường, không lộ đuôi số. Separator tối đa 1 ký tự giữa
+# 2 số -> ngày "05.10.2026" (7 số) hay "1.500.000" không bị ăn.
+# Tên người + số không bắt đầu bằng 0 (+84...) không detect được.
+_PII_RE = re.compile(r"(?<!\d)0(?:[ .-]?\d){9,}|[\w.+-]+@[\w-]+\.[\w.]+")
 
 _seen_lock = threading.Lock()
 _seen_conn: sqlite3.Connection | None = None  # lazy — không tạo file khi import
@@ -145,19 +153,56 @@ def _dedup(event_id: str) -> bool:
         return cur.rowcount == 0  # 0 row = event_id đã tồn tại
 
 
+def _purge_convlog(path: Path) -> None:
+    """Rewrite `path` bỏ dòng có ts cũ hơn RETAIN_DAYS (D5.11) — ts
+    ISO-8601 Z so sánh lexicographic đúng. Đọc/ghi bytes: byte lỗi
+    (dòng ghi dở khi crash) hay U+2028 trong question không phá purge/
+    cắt đôi record. Dòng parse lỗi/thiếu ts giữ lại — thà giữ thừa còn
+    hơn phá log vì 1 dòng hỏng. Ghi tmp + os.replace để crash giữa
+    chừng không mất cả file."""
+    if not path.exists():
+        return
+    cutoff = time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                           time.gmtime(time.time() - RETAIN_DAYS * 86400))
+    kept = []
+    for line in path.read_bytes().split(b"\n"):
+        if not line:
+            continue
+        try:
+            obj = json.loads(line.decode("utf-8", "surrogateescape"))
+        except ValueError:
+            obj = None
+        ts = obj.get("ts") if isinstance(obj, dict) else None
+        if not isinstance(ts, str) or ts >= cutoff:
+            kept.append(line)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_bytes(b"\n".join(kept) + (b"\n" if kept else b""))
+    os.replace(tmp, path)
+
+
+# Purge file active tối đa 1 lần/ngày khi có ghi — process chạy lâu ít
+# traffic không giữ entry quá hạn tới tận restart (D5.11).
+_last_purge = 0.0
+
+
 def _log_conversation(entry: dict) -> None:
     """Append 1 dòng JSON vào conversations.jsonl; vượt CONV_LOG_MAX ->
-    rotate sang `.1` (xóa `.1` cũ — 1 backup đủ cho pilot, D5.4). Lock
-    vì nhiều thread reply song song; chỉ lưu user_hash, không lưu raw
-    user_id (PII)."""
+    rotate sang `.1` (xóa `.1` cũ — 1 backup đủ cho pilot, D5.4) rồi
+    purge entry quá hạn trong backup (D5.11). Lock vì nhiều thread reply
+    song song; chỉ lưu user_hash, không lưu raw user_id (PII)."""
+    global _last_purge
     CONV_LOG.parent.mkdir(parents=True, exist_ok=True)
     line = json.dumps(entry, ensure_ascii=False) + "\n"
     with _log_lock:
+        if time.time() - _last_purge > 86400:
+            _last_purge = time.time()
+            _purge_convlog(CONV_LOG)
         if (CONV_LOG.exists()
                 and CONV_LOG.stat().st_size > CONV_LOG_MAX):
             bak = Path(str(CONV_LOG) + ".1")
             bak.unlink(missing_ok=True)
             CONV_LOG.rename(bak)
+            _purge_convlog(bak)
         with CONV_LOG.open("a", encoding="utf-8") as f:
             f.write(line)
 
@@ -312,6 +357,11 @@ class Handler(BaseHTTPRequestHandler):
         self._json(404, {"error": "not found"})
 
     def do_POST(self) -> None:
+        # Chunked body không parse được (stdlib) — reject rõ 411 thay vì
+        # coi length=0 rồi 403/400 mập mờ; định nghĩa trước để lỡ bật
+        # keep-alive sau này không bị body sót đầu độc request kế (D5.9).
+        if "chunked" in (self.headers.get("Transfer-Encoding") or "").lower():
+            return self._json(411, {"error": "length required"})
         try:
             length = int(self.headers.get("Content-Length", 0))
         except ValueError:
@@ -353,6 +403,7 @@ def main() -> None:
     if err := _startup_error():
         print(err, flush=True)
         sys.exit(1)
+    _purge_convlog(CONV_LOG)  # retention theo tuổi mỗi lần boot (D5.11)
     srv = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
     print(f"[zalo] webhook :{PORT}/zalo-webhook "
           f"(secret={'set' if APP_SECRET else 'MISSING'}, "

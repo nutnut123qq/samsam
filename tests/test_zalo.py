@@ -474,3 +474,97 @@ def test_guardrail_flagged_text_kept_in_log(monkeypatch, tmp_path):
     assert rec["answer"] == zalo.FALLBACK
     assert rec["flagged_text"] == "chữa khỏi ung thư"
     assert rec["guardrail_ok"] is False
+
+
+def test_chunked_post_rejected_411(server):
+    # D5.9: request chunked (không Content-Length) -> 411 rõ ràng thay
+    # vì length=0 -> body bỏ sót/403 mập mờ. Hành vi định nghĩa trước
+    # khi ai đó bật keep-alive. Content=generator -> httpx thật sự gửi
+    # Transfer-Encoding: chunked và KHÔNG gửi Content-Length.
+    r = httpx.post(server, content=iter([b"chunk1", b"chunk2"]))
+    assert r.status_code == 411
+    assert "chunked" in r.request.headers.get("Transfer-Encoding", "")
+    assert "Content-Length" not in r.request.headers
+
+
+def test_convlog_masks_spaced_phone(monkeypatch, tmp_path):
+    # D5.10: SĐT viết cách (space/dash/dot) cũng phải mask — regex cũ
+    # chỉ bắt dính liền. Giá tiền "1.500.000" không bị ăn oan.
+    monkeypatch.setattr("api.rag.answer",
+                        lambda q: {"answer": "ok", "sources": []})
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
+    zalo.handle_text("u7",
+                     "gọi 0901 234 567 hoặc 0901-234-567, giá 1.500.000?",
+                     msg_id="m-pii2")
+    rec = json.loads((tmp_path / "conversations.jsonl")
+                     .read_text(encoding="utf-8").strip())
+    assert rec["question"] == "gọi *** hoặc ***, giá 1.500.000?"
+
+
+def test_mask_pii_regex_boundaries():
+    # D5.10 biên: không ăn số đứng trước (giá "10.050.000.000"), mask
+    # hết run số dài (không lộ đuôi), không đụng ngày "05.10.2026".
+    m = zalo._mask_pii
+    assert m("giá 10.050.000.000 đ") == "giá 10.050.000.000 đ"
+    assert m("giá 1.500.000") == "giá 1.500.000"
+    assert m("ngày 05.10.2026") == "ngày 05.10.2026"
+    assert m("090123456789012") == "***"          # run dài -> mask hết
+    assert m("0901 234 567 890") == "***"          # spaced run dài cũng vậy
+    assert m("2026 0901 234 567") == "2026 ***"    # phone sau số khác
+    assert m("0901234567") == "***"                # regression: dính liền
+    assert m("gọi 0901 234 567 giúp") == "gọi *** giúp"
+
+
+def test_convlog_purges_entries_older_than_retain_days(tmp_path,
+                                                      monkeypatch):
+    # D5.11: retention theo tuổi — dòng ts cũ hơn RETAIN_DAYS bị purge
+    # lúc rotate/startup; dòng mới + dòng hỏng (không ts) giữ lại.
+    # Byte lỗi UTF-8 (dòng ghi dở) + U+2028 trong question không được
+    # phá purge hay cắt đôi record.
+    log = tmp_path / "conversations.jsonl"
+    old_ts = time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                           time.gmtime(time.time() - (zalo.RETAIN_DAYS + 1)
+                                       * 86400))
+    new_ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    # ensure_ascii=False de U+2028 nam raw trong dong — splitlines()
+    # cua ban cu se cat doi record nay lam no song sot qua purge.
+    old_with_u2028 = json.dumps(
+        {"ts": old_ts, "question": "a b"}, ensure_ascii=False)
+    log.write_bytes(
+        (json.dumps({"ts": old_ts, "question": "cũ"}) + "\n"
+         + old_with_u2028 + "\n"
+         + json.dumps({"ts": new_ts, "question": "mới"}) + "\n"
+         + "dòng hỏng không phải json\n").encode()
+        + b"\xff\xfe byte loi\n")  # byte không decode được UTF-8
+    zalo._purge_convlog(log)
+    raw = log.read_bytes()
+    assert b"\xff\xfe" in raw  # dòng lỗi giữ lại, không crash
+    lines = [x for x in
+             raw.decode("utf-8", "surrogateescape").split("\n") if x]
+    assert len(lines) == 3
+    recs = [json.loads(x) for x in lines[:1]]
+    assert recs[0]["question"] == "mới"
+    assert lines[1] == "dòng hỏng không phải json"
+    assert "a b" not in raw.decode("utf-8", "surrogateescape")
+
+
+def test_log_write_triggers_daily_purge(monkeypatch, tmp_path):
+    # D5.11 (contract-gap): file ACTIVE cũng được purge khi có ghi mới
+    # mà lần purge trước >1 ngày — process chạy lâu không giữ entry
+    # quá hạn tới restart.
+    log = tmp_path / "conversations.jsonl"
+    old_ts = time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                           time.gmtime(time.time() - (zalo.RETAIN_DAYS + 1)
+                                       * 86400))
+    log.write_text(json.dumps({"ts": old_ts, "question": "cũ"}) + "\n",
+                   encoding="utf-8")
+    monkeypatch.setattr(zalo, "_last_purge", 0.0)
+    monkeypatch.setattr("api.rag.answer",
+                        lambda q: {"answer": "ok", "sources": []})
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
+    zalo.handle_text("u8", "câu mới")
+    recs = [json.loads(x) for x in
+            log.read_text(encoding="utf-8").splitlines()]
+    assert [r["question"] for r in recs] == ["câu mới"]  # entry cũ bị purge

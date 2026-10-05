@@ -63,7 +63,11 @@ thật để test được.
 ## State trên đĩa (đừng xóa)
 
 - `data/conversations.jsonl` — 1 dòng/event, rotate sang `.1` khi >5MB
-  (1 bản backup; `question` đã mask SĐT/email).
+  (1 bản backup; `question` đã mask SĐT/email — kể cả SĐT viết cách).
+  **Retention**: entry cũ hơn 30 ngày (`RETAIN_DAYS`) bị purge tự động
+  lúc process start, khi ghi log mới (tối đa 1 lần/ngày) và ngay sau
+  mỗi lần rotate — convlog chứa user_hash + PII-lite nên không để nằm
+  lại vô hạn.
 - `data/zalo_seen.db` — dedup `msg_id` (sqlite, TTL 1h). Xóa = Zalo
   retry có thể gây reply nhân đôi.
 - History hội thoại in-memory (`_histories`) mất khi restart — chấp

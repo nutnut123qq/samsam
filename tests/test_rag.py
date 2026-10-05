@@ -87,3 +87,13 @@ def test_answer_refusal_returns_no_data(monkeypatch):
     fake.ANSWER = None
     r = rag.answer("Saphraton giá bao nhiêu?")
     assert r == {"answer": rag.NO_DATA, "sources": []}
+
+
+def test_answer_whitespace_returns_no_data(monkeypatch):
+    # D5.8: LLM trả whitespace-only (" ") -> strip ra "" nhưng " " truthy
+    # nên `(x or NO_DATA)` không bắt — trả "" + sources làm zalo gửi
+    # message rỗng. Phải thành NO_DATA + sources rỗng như refusal.
+    fake, _ = _patch(monkeypatch)
+    fake.ANSWER = "   "
+    r = rag.answer("Saphraton giá bao nhiêu?")
+    assert r == {"answer": rag.NO_DATA, "sources": []}
