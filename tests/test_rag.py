@@ -68,3 +68,22 @@ def test_empty_history_behaves_like_no_history(monkeypatch):
     fake, queries = _patch(monkeypatch)
     rag.answer("giá?", history=[])
     assert len(fake.calls) == 1 and queries == ["giá?"]
+
+
+def test_standalone_refusal_falls_back_to_original(monkeypatch):
+    # D5.2: LLM rewrite trả content=None (refusal) -> retrieve câu GỐC
+    # thay vì AttributeError crash xuyên qua streamlit/zalo.
+    fake, queries = _patch(monkeypatch)
+    fake.STANDALONE = None
+    r = rag.answer("còn loại rẻ hơn?", history=HISTORY)
+    assert queries == ["còn loại rẻ hơn?"]
+    assert r["answer"] == _FakeChat.ANSWER
+
+
+def test_answer_refusal_returns_no_data(monkeypatch):
+    # D5.2: call trả lời trả content=None -> NO_DATA + sources rỗng,
+    # không crash (cùng lớp lỗi _standalone).
+    fake, _ = _patch(monkeypatch)
+    fake.ANSWER = None
+    r = rag.answer("Saphraton giá bao nhiêu?")
+    assert r == {"answer": rag.NO_DATA, "sources": []}

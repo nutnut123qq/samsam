@@ -280,15 +280,24 @@ def test_conversation_log_no_data_answered_false(monkeypatch, tmp_path):
 
 
 def test_startup_error_fail_closed(monkeypatch):
-    # D4.2: DEPLOY=1 + thiếu secret -> refuse to serve; dev local không
-    # secret vẫn chạy (bypass signature chỉ còn ở dev).
+    # D4.2 + D5.1: DEPLOY truthy (1/true/yes) mà thiếu secret HOẶC token
+    # -> refuse to serve; dev local (tắt/sai format) vẫn serve.
     monkeypatch.setenv("DEPLOY", "1")
     monkeypatch.setattr(zalo, "APP_SECRET", "")
-    assert zalo._startup_error() is not None
+    monkeypatch.setattr(zalo, "ACCESS_TOKEN", "")
+    assert zalo._startup_error() is not None   # thiếu secret
     monkeypatch.setattr(zalo, "APP_SECRET", SECRET)
+    assert zalo._startup_error() is not None   # thiếu token vẫn refuse
+    monkeypatch.setattr(zalo, "ACCESS_TOKEN", "tok")
+    assert zalo._startup_error() is None       # đủ env -> serve
+    for v in ("true", "YES"):                  # truthy variants (D5.1)
+        monkeypatch.setenv("DEPLOY", v)
+        monkeypatch.setattr(zalo, "APP_SECRET", "")
+        assert zalo._startup_error() is not None
+    monkeypatch.setenv("DEPLOY", "0")          # không phải truthy -> dev
+    monkeypatch.setattr(zalo, "ACCESS_TOKEN", "")
     assert zalo._startup_error() is None
     monkeypatch.delenv("DEPLOY")
-    monkeypatch.setattr(zalo, "APP_SECRET", "")
     assert zalo._startup_error() is None
 
 
@@ -344,6 +353,64 @@ def test_histories_cap_evicts_oldest_inactive(monkeypatch):
     zalo.handle_text("u4", "q")    # vượt cap -> evict u2
     assert sorted(zalo._histories) == ["u1", "u3", "u4"]
     assert len(zalo._histories["u1"]) == 4  # 2 lượt Q&A của u1 vẫn giữ
+
+
+def test_same_user_messages_serialize(monkeypatch):
+    # D5.5: 2 message concurrent cùng user xử lý tuần tự — lượt sau phải
+    # thấy lượt trước trong history (trước đây cả hai cùng snapshot rỗng,
+    # append sai thứ tự). answer chậm 0.2s để chắc chắn 2 thread overlap:
+    # code cũ -> calls[1][1] cũng None -> test này fail deterministic.
+    calls = []
+
+    def slow_answer(q, history=None):
+        calls.append((q, history))
+        time.sleep(0.2)
+        return {"answer": "a", "sources": []}
+
+    monkeypatch.setattr("api.rag.answer", slow_answer)
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
+    threads = [threading.Thread(target=zalo.handle_text,
+                                args=("u1", f"câu {i}"))
+               for i in (1, 2)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert calls[0][1] is None  # lượt đầu không có history
+    assert calls[1][1] == [{"role": "user", "content": calls[0][0]},
+                           {"role": "assistant", "content": "a"}]
+
+
+def test_convlog_question_masks_pii(monkeypatch, tmp_path):
+    # D5.3: question chứa SĐT/email -> log chỉ lưu bản đã mask.
+    monkeypatch.setattr("api.rag.answer",
+                        lambda q: {"answer": "ok", "sources": []})
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
+    zalo.handle_text("u5", "gọi 0901234567 hoặc a@b.com giúp tôi",
+                     msg_id="m-pii")
+    rec = json.loads((tmp_path / "conversations.jsonl")
+                     .read_text(encoding="utf-8").strip())
+    assert rec["question"] == "gọi *** hoặc *** giúp tôi"
+    assert "0901234567" not in rec["question"]
+    assert "a@b.com" not in rec["question"]
+
+
+def test_convlog_rotates_when_over_cap(monkeypatch, tmp_path):
+    # D5.4: file log vượt cap -> rotate sang .1, entry mới vào file mới.
+    monkeypatch.setattr(zalo, "CONV_LOG_MAX", 10)  # 10B — entry nào cũng vượt
+    monkeypatch.setattr("api.rag.answer",
+                        lambda q: {"answer": "ok", "sources": []})
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
+    zalo.handle_text("u6", "câu 1")
+    zalo.handle_text("u6", "câu 2")  # lúc này file đã > cap -> rotate
+    log = tmp_path / "conversations.jsonl"
+    bak = tmp_path / "conversations.jsonl.1"
+    assert bak.exists()
+    assert len(log.read_text(encoding="utf-8").splitlines()) == 1
+    assert "câu 1" in bak.read_text(encoding="utf-8")
 
 
 def test_conversation_log_sent_false_on_send_fail(monkeypatch, tmp_path):

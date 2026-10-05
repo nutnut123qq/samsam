@@ -17,12 +17,15 @@ mất history, chấp nhận được cho pilot.
 
 Chạy: `python -m connectors.zalo` -> :8788/zalo-webhook (port qua
 ZALO_WEBHOOK_PORT). Env: ZALO_APP_ID, ZALO_APP_SECRET, ZALO_ACCESS_TOKEN.
+DEPLOY=1/true/yes khi public -> fail-closed nếu thiếu secret/token (D5.1);
+mặc định dev bypass signature — runbook: docs/deploy.md.
 """
 
 import hashlib
 import hmac
 import json
 import os
+import re
 import sqlite3
 import sys
 import threading
@@ -59,6 +62,10 @@ ERROR_FALLBACK = ("Sâm Sâm xin lỗi, hệ thống đang gặp sự cố. Quý
 SEEN_TTL_S = 3600
 SEEN_DB = ROOT / "data" / "zalo_seen.db"   # dedup sống qua restart (D3.5)
 CONV_LOG = ROOT / "data" / "conversations.jsonl"  # log hội thoại (D3.3)
+CONV_LOG_MAX = 5 * 1024 * 1024  # 5MB -> rotate sang .1 (D5.4)
+# SĐT VN (0 + 9-10 số) hoặc email trong câu hỏi -> mask trước khi log
+# (D5.3). Tên người không detect được bằng regex.
+_PII_RE = re.compile(r"0\d{9,10}|[\w.+-]+@[\w-]+\.[\w.]+")
 
 _seen_lock = threading.Lock()
 _seen_conn: sqlite3.Connection | None = None  # lazy — không tạo file khi import
@@ -69,16 +76,29 @@ _log_lock = threading.Lock()
 HIST_MAX_USERS = 1000
 _hist_lock = threading.Lock()
 _histories: OrderedDict[str, deque] = OrderedDict()
+# Lock striping (D5.5): cùng user -> cùng lock -> 2 message concurrent
+# xử lý tuần tự (history append + reply đúng thứ tự). 64 lock bounded
+# sẵn — va chạm stripe chỉ serialize 2 user khác nhau, vô hại.
+_ULOCKS = [threading.Lock() for _ in range(64)]
+
+
+_DEPLOY_ON = ("1", "true", "yes")
 
 
 def _startup_error() -> str | None:
-    """DEPLOY=1 mà thiếu ZALO_APP_SECRET -> refuse to serve: bypass
-    signature chỉ dành cho dev local, deploy quên env = webhook nhận
-    request giả mạo. Đọc DEPLOY lúc call (không lúc import) để test
-    monkeypatch env được."""
-    if os.environ.get("DEPLOY") == "1" and not APP_SECRET:
-        return ("[fatal] zalo: DEPLOY=1 nhưng thiếu ZALO_APP_SECRET — "
+    """DEPLOY bật (1/true/yes) mà thiếu ZALO_APP_SECRET hoặc
+    ZALO_ACCESS_TOKEN -> refuse to serve: thiếu secret = webhook nhận
+    request giả mạo; thiếu token = ACK 200 nhưng reply không bao giờ tới
+    (khó chẩn đoán hơn crash — D5.1). Dev local (DEPLOY tắt) vẫn serve.
+    Đọc DEPLOY lúc call (không lúc import) để test monkeypatch env được."""
+    if os.environ.get("DEPLOY", "").strip().lower() not in _DEPLOY_ON:
+        return None
+    if not APP_SECRET:
+        return ("[fatal] zalo: DEPLOY bật nhưng thiếu ZALO_APP_SECRET — "
                 "webhook không verify signature được, từ chối serve")
+    if not ACCESS_TOKEN:
+        return ("[fatal] zalo: DEPLOY bật nhưng thiếu ZALO_ACCESS_TOKEN — "
+                "ACK được nhưng send API luôn fail, từ chối serve")
     return None
 
 
@@ -125,12 +145,20 @@ def _dedup(event_id: str) -> bool:
 
 
 def _log_conversation(entry: dict) -> None:
-    """Append 1 dòng JSON vào conversations.jsonl. Lock vì nhiều thread
-    reply song song; chỉ lưu user_hash, không lưu raw user_id (PII)."""
+    """Append 1 dòng JSON vào conversations.jsonl; vượt CONV_LOG_MAX ->
+    rotate sang `.1` (xóa `.1` cũ — 1 backup đủ cho pilot, D5.4). Lock
+    vì nhiều thread reply song song; chỉ lưu user_hash, không lưu raw
+    user_id (PII)."""
     CONV_LOG.parent.mkdir(parents=True, exist_ok=True)
     line = json.dumps(entry, ensure_ascii=False) + "\n"
-    with _log_lock, CONV_LOG.open("a", encoding="utf-8") as f:
-        f.write(line)
+    with _log_lock:
+        if (CONV_LOG.exists()
+                and CONV_LOG.stat().st_size > CONV_LOG_MAX):
+            bak = Path(str(CONV_LOG) + ".1")
+            bak.unlink(missing_ok=True)
+            CONV_LOG.rename(bak)
+        with CONV_LOG.open("a", encoding="utf-8") as f:
+            f.write(line)
 
 
 def _history(user_id: str) -> deque:
@@ -146,6 +174,19 @@ def _history(user_id: str) -> deque:
     else:
         _histories.move_to_end(user_id)
     return h
+
+
+def _ulock(user_id: str) -> threading.Lock:
+    """Lock per user qua striping — hash ổn định trong 1 process là đủ,
+    không cần persist."""
+    return _ULOCKS[hash(user_id) % len(_ULOCKS)]
+
+
+def _mask_pii(text: str) -> str:
+    """Che SĐT/email user gõ vào câu hỏi trước khi ghi convlog — file đã
+    gitignore nhưng vẫn nằm plaintext trên đĩa khi deploy. Tên người
+    không detect được bằng regex — production cần retention policy."""
+    return _PII_RE.sub("***", text)
 
 
 def send_text(user_id: str, text: str) -> bool:
@@ -171,6 +212,14 @@ def send_text(user_id: str, text: str) -> bool:
 
 
 def handle_text(user_id: str, question: str, msg_id: str = "") -> dict:
+    """Điểm vào từ webhook thread — serialize per user (D5.5): 2 message
+    concurrent cùng user_id xử lý tuần tự (lượt sau thấy history lượt
+    trước, reply ra đúng thứ tự); user khác nhau vẫn song song."""
+    with _ulock(user_id):
+        return _reply(user_id, question, msg_id)
+
+
+def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
     """answer() -> guardrail -> send -> ghi conversation log. Lazy import
     vì api.rag nặng (numpy/psycopg/openai) — phần webhook thuần test
     không cần nó. History per user truyền vào answer() để câu follow-up
@@ -194,7 +243,7 @@ def handle_text(user_id: str, question: str, msg_id: str = "") -> dict:
             "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "msg_id": msg_id,
             "user_hash": hashlib.sha256(user_id.encode()).hexdigest()[:16],
-            "question": question,
+            "question": _mask_pii(question),
             "answer": "",
             "sources": [],
             # null chứ không phải False — guardrail chưa chạy (crash
@@ -230,7 +279,7 @@ def handle_text(user_id: str, question: str, msg_id: str = "") -> dict:
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "msg_id": msg_id,
         "user_hash": hashlib.sha256(user_id.encode()).hexdigest()[:16],
-        "question": question,
+        "question": _mask_pii(question),
         "answer": text[:500],
         "sources": res["sources"],
         "guardrail_ok": guardrail_ok,

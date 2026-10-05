@@ -12,23 +12,31 @@ vận hành sẽ cắn khi webhook public; toàn code-side, không phụ thuộc
 Khán giả: bot chạy trên VPS/tunnel public thật — deploy quên env phải
 fail-closed, log không phình vô hạn, không rò PII khách vào file.
 
-- [ ] **D5.1 Deploy config cứng** — `DEPLOY` truthy (`1`/`true`/`yes`);
+- [x] **D5.1 Deploy config cứng** — `DEPLOY` truthy (`1`/`true`/`yes`);
   `DEPLOY` + thiếu `ZALO_ACCESS_TOKEN` → refuse to serve (hiện chỉ check
   secret); `docs/deploy.md` runbook (env, DEPLOY=1, tunnel option,
   webhook URL, token refresh tay ~25h, log file)
-- [ ] **D5.2 `_standalone` content=None → fallback câu gốc** — LLM
+  — *(pytest 7 nhánh; runbook gồm env table, tunnel, refresh tay)*
+- [x] **D5.2 `_standalone` content=None → fallback câu gốc** — LLM
   refusal trả content=None → dùng câu gốc cho retrieval thay crash;
   streamlit không hiển thị exception thô (đụng `api/rag.py` — ghi lý do
   trong commit theo quy ước M6/M7)
-- [ ] **D5.3 Convlog PII-lite** — mask SĐT/email trong `question` trước
+  — *(vá cả `answer()` cùng lớp lỗi → NO_DATA; pytest 2 case)*
+- [x] **D5.3 Convlog PII-lite** — mask SĐT/email trong `question` trước
   khi ghi jsonl (regex; tên người không detect được — ghi chú trong code)
-- [ ] **D5.4 Log rotation** — `conversations.jsonl` rotate sang `.1` khi
+  — *(pytest: "0901234567"+"a@b.com" → "***")*
+- [x] **D5.4 Log rotation** — `conversations.jsonl` rotate sang `.1` khi
   vượt size cap (1 bản backup là đủ cho pilot)
-- [ ] **D5.5 Per-user serialize** — 2 message concurrent cùng user_id
+  — *(cap 5MB; pytest cap=10B rotate đúng)*
+- [x] **D5.5 Per-user serialize** — 2 message concurrent cùng user_id
   append history đúng thứ tự + reply đúng thứ tự (lock per user quanh
   answer+append+send; striping để bounded)
-- [ ] **D5.6 Gate chung** — pytest xanh · ruff clean · eval ≥10/12+2 bẫy
+  — *(64-lock striping; `handle_text` wrapper → `_reply`; pytest thread
+    case fail-deterministic trên code cũ)*
+- [x] **D5.6 Gate chung** — pytest xanh · ruff clean · eval ≥10/12+2 bẫy
   · mock 2 lần exit 0
+  — *(44/44 + ruff `v05_pytest.log` · 12/12 `v05_eval.log` · 3/3×2
+    `v05_mock.log`; reviewer hết quota → coordinator tự review)*
 
 External-dependency (không treo version): OA duyệt → live verify ở
 version riêng · token auto-refresh (document manual trong runbook, auto

@@ -83,7 +83,9 @@ def _standalone(question: str, history: list[dict]) -> str:
     """Rewrite câu follow-up thành câu độc lập đủ ngữ cảnh để retrieve —
     vd "còn loại rẻ hơn?" sau lượt hỏi Saphraton -> "sản phẩm nào rẻ
     hơn Saphraton?". Chỉ phục vụ retrieval; câu trả lời cuối vẫn do LLM
-    sinh từ câu hỏi GỐC của user."""
+    sinh từ câu hỏi GỐC của user. LLM refusal trả content=None -> trả
+    "" -> caller fallback dùng câu gốc (D5.2 — trước đây AttributeError
+    crash xuyên qua streamlit/zalo)."""
     client, _, chat_model = _clients()
     resp = client.chat.completions.create(
         model=chat_model,
@@ -99,7 +101,7 @@ def _standalone(question: str, history: list[dict]) -> str:
         temperature=0.0,
         max_tokens=100,
     )
-    return resp.choices[0].message.content.strip()
+    return (resp.choices[0].message.content or "").strip()
 
 
 def answer(question: str, history: list[dict] | None = None) -> dict:
@@ -133,7 +135,9 @@ def answer(question: str, history: list[dict] | None = None) -> dict:
         temperature=0.0,
         max_tokens=500,
     )
-    text = resp.choices[0].message.content.strip()
+    # content=None (refusal) -> NO_DATA, không bịa — D5.2, cùng lớp lỗi
+    # với _standalone ở trên.
+    text = (resp.choices[0].message.content or NO_DATA).strip()
     sources = sorted({h["url"] for h in hits if h["score"] >= MIN_SCORE and h["url"]})
     if NO_DATA in text:
         sources = []
