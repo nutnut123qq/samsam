@@ -68,6 +68,15 @@ chat lẫn embeddings) + Streamlit.
   `0(?:[ .-]?\d){9,10}` bản đầu ăn giá "10.050.000.000" (thiếu `(?<!\d)`)
   và lộ đuôi số run dài (thiếu `{9,}` greedy). Reviewer bắt ở v0.5.1;
   test biên mẫu: `test_mask_pii_regex_boundaries`.
+  - **Nới sep/lặp trong regex → trace case sep-run NỐI 2 token khác
+    nhau** (range "A - B"), không chỉ single-token: v0.6.2 worker nới
+    `[ .-]?`→`[ .-]*` → " - " (space+dash+space) nối "50.000.000" +
+    "100.000.000" thành run ≥9 → mất cả khoảng giá/ngày (reviewer M1).
+    Fix pattern: sep lặp phải CÙNG-ký-tự `(?:([ .-])\1*)?\d` — sep
+    trộn không nối được. Vá cùng lớp lỗi ở MỌI alternative: reviewer
+    chỉ flag alt `0...`, alt `+84/84` cũng bridging y hệt — vá cả 2
+    + test "84 - 100.000.000". Test biên mẫu:
+    `test_mask_pii_vn_prefix_and_multi_sep` (19 assert).
 - Đọc/ghi file log do user ảnh hưởng nội dung (convlog/jsonl): dùng
   BYTES + split `\n` tường minh — `splitlines()` cắt U+2028/\x85/\x1c
   làm đôi record, `read_text` strict crash trên byte lỗi (dòng ghi dở),
