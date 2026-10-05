@@ -210,6 +210,43 @@ Checklist/DoD chi tiết: `DONE.md` mục v0.5-ops-ready. Quy ước: D5.2 đụ
     Reviewer độc lập không chạy được (hết quota) — coordinator tự
     adversarial-review diff; /cold-audit session lạ là cửa cuối
 
+## M8b — Patch v0.5.1 (vá NIT audit v0.5 + convlog hygiene)
+
+Checklist/DoD chi tiết: `DONE.md` mục v0.5.1 (contract user duyệt
+2026-10-05). Đụng `api/rag.py` được phép — vá edge-path, ghi lý do trong
+commit; `guardrail.py` cấm đụng.
+
+- [x] **D5.8 Whitespace-only answer → NO_DATA** — `api/rag.py`
+  - Boundary: `api/rag.py`, `tests/test_rag.py`
+  - Gate: pytest mock LLM trả `" "` → NO_DATA + `sources:[]` (không gửi
+    message rỗng)
+  - Evidence: `test_answer_whitespace_returns_no_data`
+- [x] **D5.9 Chunked body reject** — `do_POST` thiếu Content-Length mà
+  có `Transfer-Encoding: chunked` → 411 (hành vi định nghĩa trước
+  keep-alive)
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
+  - Gate: pytest chunked POST → 411
+  - Evidence: `test_chunked_post_rejected_411` (generator content →
+    chunked thật, không Content-Length)
+- [x] **D5.10 PII SĐT viết cách** — `_PII_RE` bắt "0901 234 567" /
+  dash / dot; regression số ngắn + giá "1.500.000" không bị ăn
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
+  - Gate: pytest masked "***" + case không over-match
+  - Evidence: `test_convlog_masks_spaced_phone` +
+    `test_mask_pii_regex_boundaries` (8 case biên từ reviewer findings)
+- [x] **D5.11 Convlog retention theo tuổi** — purge entry/backup cũ hơn
+  30 ngày (startup + daily-on-write + sau rotate) + retention policy
+  trong `docs/deploy.md`
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`, `docs/deploy.md`
+  - Gate: pytest purge đúng + deploy.md có mục retention
+  - Evidence: `test_convlog_purges_entries_older_than_retain_days`
+    (byte lỗi + U+2028) + `test_log_write_triggers_daily_purge`
+- [x] **D5.12 Gate chung** — pytest xanh + ruff clean
+  - Evidence: `evidence/v051_pytest.log` — 51/51 + ruff clean.
+    Reviewer độc lập: verdict FIX đợt 1 (blocker regex boundary + 2
+    major purge + test yếu), vá xong → pass; eval/mock skip theo
+    precedent patch (edge-path, không đụng happy path).
+
 ---
 
 ## Lề (không đụng trong pilot)

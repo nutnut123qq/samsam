@@ -4,9 +4,40 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **chưa có** — v0.5-ops-ready đóng 2026-10-05. Version
-kế mở khi có chỉ thị (C2.0 owner submit dev app vẫn NEEDS-INPUT → live
-verify khi OA được duyệt).
+Version đang mở: **v0.5.1 (patch)** — vá NIT audit v0.5 + PII/retention
+convlog trước khi deploy public (contract user duyệt 2026-10-05).
+
+## Checklist v0.5.1
+
+Khán giả: bot chuẩn bị live public — xóa hết lỗi edge-case audit v0.5 đã
+chỉ ra + giảm PII-on-disk. Quy ước: đụng `api/rag.py` được phép (vá
+edge-path, ghi lý do commit); `guardrail.py` cấm đụng. Skip eval/mock
+theo precedent patch v0.4.1 (edge-path, happy path không đổi, tốn credit).
+
+- [x] **D5.8 Whitespace-only answer → NO_DATA** — LLM trả `" "` →
+  `answer()` trả NO_DATA + `sources:[]` (hiện trả `""` + sources → zalo
+  gửi message rỗng). Gate: pytest mock content `" "` → NO_DATA, không nguồn
+  — *(`(content or "").strip() or NO_DATA`; test_answer_whitespace_returns_no_data)*
+- [x] **D5.9 Chunked body reject rõ** — `Transfer-Encoding: chunked` (ko
+  Content-Length) → 411 thay vì length=0 → 403/400 mập mờ; hành vi định
+  nghĩa trước khi bật keep-alive. Gate: pytest chunked → 411
+  — *(check header trước khi đọc Content-Length; test gửi chunked thật
+    qua generator, assert không có Content-Length)*
+- [x] **D5.10 PII SĐT viết cách** — `_PII_RE` bắt "0901 234 567" /
+  "0901-234-567" / "0901.234.567"; không over-match số ngắn/giá tiền.
+  Gate: pytest spaced → "***" + regression case không bị ăn
+  — *(`(?<!\d)0(?:[ .-]?\d){9,}`: ranh giới trái chặn "10.050.000.000",
+    `{9,}` greedy mask hết run dài không lộ đuôi — reviewer bắt 2 bug
+    boundary ở bản đầu, test_mask_pii_regex_boundaries 8 case)*
+- [x] **D5.11 Convlog retention theo tuổi** — ngoài bound size D5.4
+  (~10MB): purge entry cũ hơn 30d (`RETAIN_DAYS`) lúc startup + tối đa
+  1 lần/ngày khi ghi + sau rotate; policy ghi `docs/deploy.md`.
+  Gate: pytest purge đúng + deploy.md có mục retention
+  — *(`_purge_convlog` đọc/ghi bytes + os.replace atomic — reviewer bắt
+    UnicodeDecodeError crash lúc boot + U+2028 cắt đôi record ở bản đầu;
+    daily-purge-on-write vá hở "process chạy lâu giữ entry quá hạn")*
+- [x] **D5.12 Gate chung** — pytest toàn bộ xanh + ruff clean
+  — *(51/51 `evidence/v051_pytest.log` + ruff clean)*
 
 ## Checklist v0.5-ops-ready
 
@@ -184,17 +215,9 @@ Quy ước DoD cho phase connector:
 ## Someday (chưa vào version nào)
 
 - PII trong `conversations.jsonl`: `question` đã mask SĐT/email bằng
-  regex (v0.5) — còn lọt tên người + SĐT viết cách ("0901 234 567");
-  production cần retention policy + mask đầy đủ hơn (pilot: local +
+  regex (v0.5), SĐT viết cách + retention theo tuổi vá ở v0.5.1 — còn
+  lọt tên người; production cần mask đầy đủ hơn (pilot: local +
   gitignored)
-- `answer()` khi LLM trả whitespace-only (" ") → strip ra `""` — trả
-  answer rỗng + sources (không phải NO_DATA) → zalo gửi message rỗng;
-  `(x or NO_DATA)` không bắt whitespace-only (pre-existing, audit v0.5
-  NIT). Chặt thì check `text.strip() or NO_DATA` sau strip
-- `do_POST` request chunked-encoding (không Content-Length) → length=0
-  → 403 qua signature, body không đọc — hiện vô hại (HTTP/1.0 đóng
-  connection); nếu sau này bật keep-alive thì nhớ consume/discard body
-  (audit v0.5 NIT)
 
 - Chatbot production trên Fanpage (Messenger API, Pancake hook) — Zalo OA
   đang ở v0.2; live OA thật cũng nằm đây nếu duyệt không kịp version
