@@ -58,6 +58,27 @@ chat lẫn embeddings) + Streamlit.
   (đo 0.7–3.9s/POST lúc máy nặng) — assert event-based. Precedent:
   `test_ack_fast_while_reply_slow` vá ở v0.4.1 (reply block trên event,
   assert POST 200 trong khi reply còn block).
+- Test server REJECT-sớm/đóng connection giữa client stream body
+  (vd 411 chunked): httpx flake `ReadError` race client-side — dùng raw
+  socket (precedent `test_chunked_post_rejected_411` v0.5.1).
+- Regex match trên free text (`_PII_RE`, banned-words): phải trace case
+  match-đứng-giữa-chuỗi-lớn-hơn cả 2 phía trước khi viết test —
+  `0(?:[ .-]?\d){9,10}` bản đầu ăn giá "10.050.000.000" (thiếu `(?<!\d)`)
+  và lộ đuôi số run dài (thiếu `{9,}` greedy). Reviewer bắt ở v0.5.1;
+  test biên mẫu: `test_mask_pii_regex_boundaries`.
+- Đọc/ghi file log do user ảnh hưởng nội dung (convlog/jsonl): dùng
+  BYTES + split `\n` tường minh — `splitlines()` cắt U+2028/\x85/\x1c
+  làm đôi record, `read_text` strict crash trên byte lỗi (dòng ghi dở),
+  `write_text` trên Windows đổi `\n`→`\r\n`. Rewrite phải atomic:
+  tmp + `os.replace` (precedent `_purge_convlog` v0.5.1).
+- Retention/expiry impl chỉ gắn vào event hiếm (startup/rotate) → process
+  chạy lâu giữ data quá hạn vô hạn — không đạt intent "không nằm lại
+  >N ngày". Cần trigger định kỳ rẻ (precedent: purge daily-on-write trong
+  `_log_conversation`, `_last_purge` throttle).
+- Test data chứa ký tự vô hình (U+2028, ZWSP...) → viết escape
+  (`"a\u2028b"` + `ensure_ascii=False` khi cần raw char trong output);
+  KHÔNG nhúng literal vào source — vô hình khó review + edit tool fail
+  match (vấp v0.5.1).
 - Runtime/state file mới trong `data/` (`conversations.jsonl`,
   `zalo_seen.db`...) — gitignore NGAY khi thêm (có user_hash/PII-adjacent).
   Test cho state-on-disk: isolate bằng monkeypatch đường dẫn → `tmp_path`
