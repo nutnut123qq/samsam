@@ -217,10 +217,19 @@ Quy ước DoD cho phase connector:
 
 - PII trong `conversations.jsonl`: `question` đã mask SĐT/email bằng
   regex (v0.5), SĐT viết cách + retention theo tuổi vá ở v0.5.1 — còn
-  lọt tên người + SĐT không bắt đầu bằng 0 (+84...); dòng parse-lỗi
-  được giữ qua purge (có thể chứa PII quá hạn tới rotate kế — trade-off
-  có chủ đích); production cần mask đầy đủ hơn (pilot: local +
-  gitignored)
+  lọt tên người + SĐT không bắt đầu bằng 0 (+84...) + SĐT 2+ dấu cách
+  ("0901  234  567" — sep tối đa 1 ký tự, trade-off chủ đích); dòng
+  parse-lỗi được giữ qua purge (PII quá hạn tới rotate kế); production
+  cần mask đầy đủ hơn (pilot: local + gitignored)
+- Reject-sớm 411/413 không set `close_connection` — nếu sau này bật
+  HTTP/1.1 keep-alive, body sót (chunked chưa đọc / phần >1MB chưa đọc)
+  nhiễu request kế trên cùng connection. Hôm nay HTTP/1.0 close mặc
+  định nên đúng; nhớ `self.close_connection = True` khi bật keep-alive
+  (audit v0.5.1 NIT)
+- `_purge_convlog` throw (PermissionError/disk full) propagate qua
+  `_log_conversation` → giết reply thread SAU khi send thành công (mất
+  log); `_last_purge` set trước purge → fail thì 24h mới retry (audit
+  v0.5.1 NIT — cùng lớp rủi ro append hiện hữu, chỉ nâng surface)
 
 - Chatbot production trên Fanpage (Messenger API, Pancake hook) — Zalo OA
   đang ở v0.2; live OA thật cũng nằm đây nếu duyệt không kịp version
@@ -250,4 +259,4 @@ Quy ước DoD cho phase connector:
 | v0.4-live-ready | Bot code-side sẵn sàng live OA thật: multi-turn + fail-closed deploy + convlog v2 | 2026-10-05 | `evidence/v04_pytest.log` 38/38 · `v04_eval.log` 12/12 + live multi-turn (follow-up resolve đúng Saphraton) · `v04_mock_rerun.log` 3/3 ×2 liên tiếp; commits `edfb2c6` + FIX `5013dba` (UTF-8 guard `connectors/zalo.py` — cold-audit blocker) + `c03307d` (retro). Cold-audit session lạ: verdict FIX → vá xong, 3 NIT → someday (guardrail_ok null khi crash, history order concurrent, `_standalone` content=None) |
 | v0.4.1 (patch) | Vá 3 NIT cold-audit v0.4: convlog `guardrail_ok:null` khi crash (trước False = đếm nhầm violation), `_histories` LRU cap 1000 user, ack-test event-based hết flake | 2026-10-05 | `evidence/v041_pytest.log` 39/39 + ruff clean; commits `1ef151a` + `a6d8ee3` (DONE). Verdict supervisor PASS; xoá thêm someday entry stale (`verify_signature` bypass — đã vá ở D4.2 `_startup_error`) |
 | v0.5-ops-ready | Vá lỗ hổng vận hành trước khi webhook public: DEPLOY truthy+token fail-closed, `content=None` fallback, PII mask, log rotation, per-user serialize, payload cap | 2026-10-05 | `evidence/v05_pytest.log` 45/45 + ruff clean · `v05_eval.log` 12/12 · `v05_mock.log` 3/3 ×2; commits `589925f` (contract) + `62b27ab` + `1b0d2e4` (DONE+D5.7). Reviewer in-cycle hết quota → coordinator tự review; audit session lạ sau đó: verdict **PASS** 7/7 (pytest/eval tự chạy lại khớp), 2 NIT → someday (whitespace-only answer, chunked-body discard) |
-| v0.5.1 (patch) | Vá NIT audit v0.5 + convlog hygiene: whitespace answer → NO_DATA, chunked → 411, PII SĐT viết cách, retention 30d | 2026-10-05 | `evidence/v051_pytest.log` 51/51 ×5 + ruff clean; commits `524e171` + `0cbc025` (FIX chunked test raw socket — httpx ReadError race) + `30f7395` (board). Reviewer độc lập verdict FIX: blocker `_PII_RE` thiếu `(?<!\d)` (ăn giá "10.050.000.000") + `{9,}` lộ đuôi số, purge UnicodeDecodeError/U+2028/không-atomic + hở contract "file active chỉ purge lúc startup" — vá hết. eval/mock skip theo precedent patch |
+| v0.5.1 (patch) | Vá NIT audit v0.5 + convlog hygiene: whitespace answer → NO_DATA, chunked → 411, PII SĐT viết cách, retention 30d | 2026-10-05 | `evidence/v051_pytest.log` 51/51 ×5 + ruff clean; commits `524e171` + `0cbc025` (FIX chunked test raw socket — httpx ReadError race) + `30f7395` (board) + post-audit `gitignore`+test-escape fix. Reviewer độc lập verdict FIX: blocker `_PII_RE` thiếu `(?<!\d)` (ăn giá "10.050.000.000") + `{9,}` lộ đuôi số, purge UnicodeDecodeError/U+2028/không-atomic + hở contract "file active chỉ purge lúc startup" — vá hết. eval/mock skip theo precedent patch. Cold-audit session lạ: verdict **PASS** 5/5 claims (tự chạy lại pytest 51/51 + trace regex tay), 1 minor vá ngay (`.gitignore` thiếu `conversations.jsonl*` — file runtime PII-lite), 3 NIT → someday (close_connection khi keep-alive, purge throw giết reply thread, SĐT 2+ spaces) |

@@ -542,7 +542,7 @@ def test_convlog_purges_entries_older_than_retain_days(tmp_path,
     # ensure_ascii=False de U+2028 nam raw trong dong — splitlines()
     # cua ban cu se cat doi record nay lam no song sot qua purge.
     old_with_u2028 = json.dumps(
-        {"ts": old_ts, "question": "a b"}, ensure_ascii=False)
+        {"ts": old_ts, "question": "a\u2028b"}, ensure_ascii=False)
     log.write_bytes(
         (json.dumps({"ts": old_ts, "question": "cũ"}) + "\n"
          + old_with_u2028 + "\n"
@@ -558,7 +558,7 @@ def test_convlog_purges_entries_older_than_retain_days(tmp_path,
     recs = [json.loads(x) for x in lines[:1]]
     assert recs[0]["question"] == "mới"
     assert lines[1] == "dòng hỏng không phải json"
-    assert "a b" not in raw.decode("utf-8", "surrogateescape")
+    assert "a\u2028b" not in raw.decode("utf-8", "surrogateescape")
 
 
 def test_log_write_triggers_daily_purge(monkeypatch, tmp_path):
