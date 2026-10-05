@@ -270,6 +270,28 @@ cấm đụng.
   - Boundary: `scripts/zalo_mock.py`, `evidence/`
   - Evidence: `evidence/v06_pytest.log` + `evidence/v06_mock.log`
 
+## M10 — Patch v0.6.2 (convlog/PII hygiene — vá NIT audit)
+
+Checklist/DoD chi tiết: `DONE.md` mục v0.6.2 (contract user duyệt
+2026-10-06). `guardrail.py` cấm đụng; `api/rag.py` không cần đụng.
+
+- [ ] **D6.8 `sent: null` kênh UI** — streamlit convlog `False` → `null`
+  - Boundary: `app/streamlit_app.py`, `tests/`
+  - Gate: entry streamlit `sent is None`; pytest xanh
+- [ ] **D6.9 Purge không giết reply + retry đúng** — `_purge_convlog`
+  throw → warn không propagate; `_last_purge` set sau purge thành công
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
+  - Gate: pytest purge-throw → reply vẫn log/send + `_last_purge` không set
+- [ ] **D6.10 User hash per UI session** — `streamlit:{session_id}`
+  - Boundary: `app/streamlit_app.py`, `connectors/zalo.py` (helper),
+    `tests/test_zalo.py`
+  - Gate: 2 session → 2 hash; 1 session ổn định (helper pure test được)
+- [ ] **D6.11 PII: +84 + sep lặp** — `_PII_RE` bắt `+84`/`84` prefix và
+  sep ≥2 ký tự; không over-match giá/ngày/số ngắn
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
+  - Gate: pytest case mới + regression biên
+- [ ] **D6.12 Gate chung** — pytest xanh + ruff clean
+
 ---
 
 ## Lề (không đụng trong pilot)

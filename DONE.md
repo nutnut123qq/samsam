@@ -4,7 +4,45 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **không có** — v0.6.1 (patch) đóng 2026-10-06.
+Version đang mở: **v0.6.2 (patch)** — contract duyệt 2026-10-06.
+
+## Checklist v0.6.2 (patch)
+
+Khán giả: bot vận hành thật 2 writer (zalo + streamlit) — `sent` đếm
+đúng, purge không giết reply, phân biệt user UI, PII chặt hơn trước
+khi live. Nguồn: 4 NIT còn hỏng thật từ audit v0.5.1 + v0.6 (đã grep
+code chứng minh). Quy ước theo precedent patch: `guardrail.py` cấm
+đụng, `api/rag.py` không cần đụng, skip eval/mock (edge-path, tốn
+credit).
+
+- [ ] **D6.8 `sent: null` kênh UI** — streamlit convlog ghi `null`
+  thay `False` (D4.4: `sent:false` = send-FAIL; kênh UI không send
+  gì → đếm nhầm khi đối soát). Gate: entry streamlit `sent is None`;
+  pytest xanh
+- [ ] **D6.9 Purge không giết reply + retry đúng** — `_purge_convlog`
+  throw (PermissionError/disk full) hiện propagate qua
+  `_log_conversation` → giết reply thread SAU khi send thành công;
+  `_last_purge` set trước purge → fail kẹt 24h mới retry. Vá: purge
+  throw → warn, reply vẫn log/send; `_last_purge` chỉ set sau purge
+  thành công. Gate: pytest purge-throw → reply vẫn xong +
+  `_last_purge` không set
+- [ ] **D6.10 User hash per UI session** — `_uhash("streamlit")` cố
+  định gộp mọi UI user thành 1 trong queue. Vá: per-session id (uuid
+  trong session_state) → `streamlit:{id}`. Gate: 2 session → 2 hash;
+  1 session gọi lại → hash ổn định (helper pure test được)
+- [ ] **D6.11 PII: +84 prefix + sep lặp** — `_PII_RE` hiện lọt SĐT
+  dạng `+84...`/`84...` và sep ≥2 ký tự ("0901  234  567"). Gate:
+  case mới masked + regression biên KHÔNG over-match (giá
+  "1.500.000"/"8.400.000"/"10.050.000.000", ngày "05.10.2026", số
+  ngắn)
+- [ ] **D6.12 Gate chung** — `python -m pytest` xanh + `ruff check .`
+  clean
+
+Giữ someday (không vào version này): rotate race xuyên process (vá
+đúng = file-lock Windows — overkill pilot), close_connection khi
+keep-alive (chưa bật), tên người trong PII (regex không detect được),
+queue horizon 30d (intent retention — nêu khi demo), mọi mục external
+(C2.0/deploy/token/SKU).
 
 ## Checklist v0.6.1 (patch)
 
