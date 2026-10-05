@@ -15,28 +15,43 @@ code chứng minh). Quy ước theo precedent patch: `guardrail.py` cấm
 đụng, `api/rag.py` không cần đụng, skip eval/mock (edge-path, tốn
 credit).
 
-- [ ] **D6.8 `sent: null` kênh UI** — streamlit convlog ghi `null`
+- [x] **D6.8 `sent: null` kênh UI** — streamlit convlog ghi `null`
   thay `False` (D4.4: `sent:false` = send-FAIL; kênh UI không send
   gì → đếm nhầm khi đối soát). Gate: entry streamlit `sent is None`;
   pytest xanh
-- [ ] **D6.9 Purge không giết reply + retry đúng** — `_purge_convlog`
+  — *(`"sent": None` + comment; grep toàn repo không ai đọc field
+    `sent` để quyết định → đổi semantics an toàn)*
+- [x] **D6.9 Purge không giết reply + retry đúng** — `_purge_convlog`
   throw (PermissionError/disk full) hiện propagate qua
   `_log_conversation` → giết reply thread SAU khi send thành công;
   `_last_purge` set trước purge → fail kẹt 24h mới retry. Vá: purge
   throw → warn, reply vẫn log/send; `_last_purge` chỉ set sau purge
   thành công. Gate: pytest purge-throw → reply vẫn xong +
   `_last_purge` không set
-- [ ] **D6.10 User hash per UI session** — `_uhash("streamlit")` cố
+  — *(wrap try/except warn-only cả 3 chỗ gọi: daily-purge, purge(bak)
+    sau rotate, purge boot trong main(); test
+    `test_purge_failure_still_logs_and_retries` +
+    `test_rotate_purge_failure_still_appends`)*
+- [x] **D6.10 User hash per UI session** — `_uhash("streamlit")` cố
   định gộp mọi UI user thành 1 trong queue. Vá: per-session id (uuid
   trong session_state) → `streamlit:{id}`. Gate: 2 session → 2 hash;
   1 session gọi lại → hash ổn định (helper pure test được)
-- [ ] **D6.11 PII: +84 prefix + sep lặp** — `_PII_RE` hiện lọt SĐT
+  — *(`_ui_hash(session)` trong zalo.py — module sở hữu convlog
+    schema, streamlit_app.py không import được trong pytest;
+    `test_ui_hash_per_session_stable`)*
+- [x] **D6.11 PII: +84 prefix + sep lặp** — `_PII_RE` hiện lọt SĐT
   dạng `+84...`/`84...` và sep ≥2 ký tự ("0901  234  567"). Gate:
   case mới masked + regression biên KHÔNG over-match (giá
   "1.500.000"/"8.400.000"/"10.050.000.000", ngày "05.10.2026", số
   ngắn)
-- [ ] **D6.12 Gate chung** — `python -m pytest` xanh + `ruff check .`
+  — *(reviewer verdict FIX đợt 1: `[ .-]*` nuốt sep TRỘN " - " nối 2
+    số thành run ≥9 → mất khoảng giá/ngày ("50.000.000 - 100.000.000"
+    → "50.***"); vá bằng sep lặp CÙNG-ký-tự `(?:([ .-])\N*)?\d` ở cả
+    2 alternative; `test_mask_pii_vn_prefix_and_multi_sep` 19 assert
+    gồm 6 case khoảng)*
+- [x] **D6.12 Gate chung** — `python -m pytest` xanh + `ruff check .`
   clean
+  — *(58/58 ×2 lần sau vá + ruff clean — coordinator tự chạy)*
 
 Giữ someday (không vào version này): rotate race xuyên process (vá
 đúng = file-lock Windows — overkill pilot), close_connection khi
@@ -308,10 +323,12 @@ Quy ước DoD cho phase connector:
 ## Someday (chưa vào version nào)
 
 - PII trong `conversations.jsonl`: `question` đã mask SĐT/email bằng
-  regex (v0.5), SĐT viết cách + retention theo tuổi vá ở v0.5.1 — còn
-  lọt tên người + SĐT không bắt đầu bằng 0 (+84...) + SĐT 2+ dấu cách
-  ("0901  234  567" — sep tối đa 1 ký tự, trade-off chủ đích); dòng
-  parse-lỗi được giữ qua purge (PII quá hạn tới rotate kế); production
+  regex (v0.5), SĐT viết cách + retention theo tuổi vá ở v0.5.1,
+  `+84`/`84` prefix + sep lặp cùng-ký-tự vá ở v0.6.2 — còn lọt tên
+  người + SĐT dạng ngoặc "+84 (90) 123 4567"/"(+84) 901234567"; dòng
+  parse-lỗi được giữ qua purge (PII quá hạn tới rotate kế); over-mask
+  nhẹ chấp nhận được ("abc84901234567" → "abc***", "2.000.000.000.000"
+  → "2.***", "06.10.2026 09:30" → "***:30" — pre-existing); production
   cần mask đầy đủ hơn (pilot: local + gitignored)
 - Reject-sớm 411/413 không set `close_connection` — nếu sau này bật
   HTTP/1.1 keep-alive, body sót (chunked chưa đọc / phần >1MB chưa đọc)

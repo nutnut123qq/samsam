@@ -636,3 +636,90 @@ def test_log_write_triggers_daily_purge(monkeypatch, tmp_path):
     recs = [json.loads(x) for x in
             log.read_text(encoding="utf-8").splitlines()]
     assert [r["question"] for r in recs] == ["câu mới"]  # entry cũ bị purge
+
+
+def test_purge_failure_still_logs_and_retries(monkeypatch, tmp_path):
+    # D6.9: _purge_convlog throw (PermissionError/disk full) không được
+    # giết _log_conversation — entry vẫn append; _last_purge KHÔNG set
+    # nên lần ghi sau retry purge ngay (không kẹt 24h).
+    calls = []
+
+    def boom(path):
+        calls.append(path)
+        raise PermissionError("locked")
+
+    monkeypatch.setattr(zalo, "_last_purge", 0.0)  # ép nhánh daily purge
+    monkeypatch.setattr(zalo, "_purge_convlog", boom)
+    zalo._log_conversation({"ts": "t1", "question": "a"})
+    log = tmp_path / "conversations.jsonl"
+    recs = [json.loads(x) for x in
+            log.read_text(encoding="utf-8").splitlines()]
+    assert [r["question"] for r in recs] == ["a"]  # entry vẫn ghi được
+    assert zalo._last_purge == 0.0  # purge fail -> không đánh dấu
+    zalo._log_conversation({"ts": "t2", "question": "b"})
+    assert len(calls) == 2  # lần ghi kế retry purge ngay
+    recs = [json.loads(x) for x in
+            log.read_text(encoding="utf-8").splitlines()]
+    assert [r["question"] for r in recs] == ["a", "b"]
+
+
+def test_rotate_purge_failure_still_appends(monkeypatch, tmp_path):
+    # D6.9 cùng lớp lỗi: _purge_convlog(bak) throw trong nhánh rotate
+    # cũng chỉ warn — entry vẫn append, rotate xảy ra bình thường.
+    def boom(path):
+        raise PermissionError("locked")
+
+    monkeypatch.setattr(zalo, "CONV_LOG_MAX", 10)  # entry nào cũng vượt
+    monkeypatch.setattr(zalo, "_last_purge", time.time())  # skip daily
+    monkeypatch.setattr(zalo, "_purge_convlog", boom)
+    log = tmp_path / "conversations.jsonl"
+    bak = tmp_path / "conversations.jsonl.1"
+    zalo._log_conversation({"ts": "t1", "question": "a"})
+    zalo._log_conversation({"ts": "t2", "question": "b"})
+    assert bak.exists()  # rotate vẫn chạy
+    recs = [json.loads(x) for x in
+            log.read_text(encoding="utf-8").splitlines()]
+    assert [r["question"] for r in recs] == ["b"]
+
+
+def test_ui_hash_per_session_stable():
+    # D6.10: 2 session khác nhau -> 2 user_hash khác nhau (queue phân
+    # biệt user UI); cùng session gọi lại (Streamlit rerun) -> hash
+    # ổn định, vẫn đúng dạng sha256[:16].
+    s1, s2 = {}, {}
+    h1, h2 = zalo._ui_hash(s1), zalo._ui_hash(s2)
+    assert h1 != h2
+    assert zalo._ui_hash(s1) == h1
+    assert len(h1) == 16
+    assert h1 != zalo._uhash("streamlit")  # không còn gộp chung 1 hash
+
+
+def test_mask_pii_vn_prefix_and_multi_sep():
+    # D6.11: SĐT dạng +84/84 (không bắt đầu bằng 0) và sep lặp >=2 ký
+    # tự cũng mask; regression giá/ngày/số ngắn không bị ăn oan.
+    m = zalo._mask_pii
+    assert m("+84901234567") == "***"
+    assert m("84901234567") == "***"
+    assert m("gọi +84 901 234 567 giúp") == "gọi *** giúp"
+    assert m("0901  234  567") == "***"    # 2 dấu cách liền
+    assert m("0901--234--567") == "***"    # 2 gạch liền
+    # Regression biên — KHÔNG mask:
+    assert m("giá 1.500.000") == "giá 1.500.000"
+    assert m("giá 8.400.000") == "giá 8.400.000"
+    assert m("giá 10.050.000.000") == "giá 10.050.000.000"
+    assert m("giá 1.840.000") == "giá 1.840.000"
+    assert m("giá 84.500.000") == "giá 84.500.000"
+    assert m("ngày 05.10.2026") == "ngày 05.10.2026"
+    assert m("năm 1984") == "năm 1984"     # "84" sau digit -> chặn
+    assert m("mã 84") == "mã 84"           # "84" trần, không đủ số
+    # Khoảng giá/ngày nối bằng " - " (sep TRỘN) không được nối thành 1
+    # run — reviewer M1: `[ .-]*` cũ nuốt " - " -> mất cả khoảng.
+    assert (m("50.000.000 - 100.000.000 - 200.000.000")
+            == "50.000.000 - 100.000.000 - 200.000.000")
+    assert (m("từ 01.01.2026 - 05.01.2026")
+            == "từ 01.01.2026 - 05.01.2026")
+    assert (m("lô 20.10.2026 - 05.11.2026 - 30.12.2026")
+            == "lô 20.10.2026 - 05.11.2026 - 30.12.2026")
+    assert m("giá 84 - 100.000.000") == "giá 84 - 100.000.000"
+    assert (m("50.000.000 -100.000.000") == "50.000.000 -100.000.000")
+    assert (m("50.000.000- 100.000.000") == "50.000.000- 100.000.000")

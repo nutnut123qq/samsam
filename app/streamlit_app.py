@@ -99,14 +99,17 @@ with tab_chat:
                     "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ",
                                         time.gmtime()),
                     "msg_id": "",
-                    "user_hash": _z._uhash("streamlit"),
+                    "user_hash": _z._ui_hash(st.session_state),
                     "question": _z._mask_pii(q),
                     "answer": display[:500],
                     "sources": r["sources"],
                     "guardrail_ok": g["ok"],
                     "latency_ms": latency_ms,
                     "answered": NO_DATA not in r["answer"],
-                    "sent": False,  # kênh UI — không có send API
+                    # null chứ không phải False — kênh UI không có send
+                    # API; sent:false = send-FAIL, đếm nhầm khi đối
+                    # soát (D6.8, semantics D4.4).
+                    "sent": None,
                     **({"flagged_text": r["answer"][:500]}
                        if not g["ok"] else {}),
                 })

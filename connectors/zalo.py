@@ -30,6 +30,7 @@ import sqlite3
 import sys
 import threading
 import time
+import uuid
 from collections import OrderedDict, deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -73,14 +74,23 @@ CONV_LOG_MAX = 5 * 1024 * 1024  # 5MB -> rotate sang .1 (D5.4)
 # Entry convlog (user_hash + question đã mask) không nằm lại >30 ngày
 # trên đĩa — purge lúc startup + ngay sau rotate (D5.11).
 RETAIN_DAYS = 30
-# SĐT VN (0 + >=9 số, kể cả viết cách "0901 234 567" / dash / dot —
-# D5.10) hoặc email trong câu hỏi -> mask trước khi log (D5.3).
-# `(?<!\d)` = số 0 mở đầu không được đứng sau chữ số khác -> giá
-# "10.050.000.000" không bị ăn giữa chừng; `{9,}` greedy mask hết cả
-# run dài bất thường, không lộ đuôi số. Separator tối đa 1 ký tự giữa
-# 2 số -> ngày "05.10.2026" (7 số) hay "1.500.000" không bị ăn.
-# Tên người + số không bắt đầu bằng 0 (+84...) không detect được.
-_PII_RE = re.compile(r"(?<!\d)0(?:[ .-]?\d){9,}|[\w.+-]+@[\w-]+\.[\w.]+")
+# SĐT VN hoặc email trong câu hỏi -> mask trước khi log (D5.3).
+# Alternative 1 (D5.10 + D6.11): "0" + >=9 số, sep được LẶP nhiều ký tự
+# NHƯNG phải cùng 1 ký tự ("0901  234  567", "0901--234--567") — sep
+# trộn (" - ") không nối 2 số được, nên khoảng giá/ngày
+# "50.000.000 - 100.000.000" không bị ăn (reviewer M1: `[ .-]*` cũ
+# nuốt " - " -> 2 số dính thành run >=9 -> mất cả khoảng).
+# `(?<!\d)` = số 0 mở đầu không đứng sau chữ số khác -> giá
+# "10.050.000.000" không bị ăn giữa chừng; `{9,}` greedy mask hết
+# run dài, không lộ đuôi số.
+# Alternative 2 (D6.11): "+84"/"84" + >=8 số (VN mobile quốc tế),
+# cùng luật sep cùng-ký-tự; `(?<![\d+])` chặn "84" đứng sau digit/'+'.
+# Ngày "05.10.2026" (7 số) hay "1.500.000" quá ngắn -> không match.
+# Tên người vẫn không detect được bằng regex.
+_PII_RE = re.compile(
+    r"(?<!\d)0(?:(?:([ .-])\1*)?\d){9,}"
+    r"|(?<![\d+])(?:\+84|84)(?:(?:([ .-])\2*)?\d){8,}"
+    r"|[\w.+-]+@[\w-]+\.[\w.]+")
 
 _seen_lock = threading.Lock()
 _seen_conn: sqlite3.Connection | None = None  # lazy — không tạo file khi import
@@ -195,20 +205,31 @@ def _log_conversation(entry: dict) -> None:
     """Append 1 dòng JSON vào conversations.jsonl; vượt CONV_LOG_MAX ->
     rotate sang `.1` (xóa `.1` cũ — 1 backup đủ cho pilot, D5.4) rồi
     purge entry quá hạn trong backup (D5.11). Lock vì nhiều thread reply
-    song song; chỉ lưu user_hash, không lưu raw user_id (PII)."""
+    song song; chỉ lưu user_hash, không lưu raw user_id (PII). Purge
+    throw (PermissionError/disk full) chỉ warn — không được giết reply
+    thread sau khi send thành công (D6.9)."""
     global _last_purge
     CONV_LOG.parent.mkdir(parents=True, exist_ok=True)
     line = json.dumps(entry, ensure_ascii=False) + "\n"
     with _log_lock:
         if time.time() - _last_purge > 86400:
-            _last_purge = time.time()
-            _purge_convlog(CONV_LOG)
+            # _last_purge chỉ set SAU purge thành công — fail mà đánh
+            # dấu thì kẹt 24h mới retry (D6.9).
+            try:
+                _purge_convlog(CONV_LOG)
+                _last_purge = time.time()
+            except Exception as e:  # noqa: BLE001 — warn-only, vẫn log
+                print(f"[warn] zalo: purge convlog lỗi {e!r}", flush=True)
         if (CONV_LOG.exists()
                 and CONV_LOG.stat().st_size > CONV_LOG_MAX):
             bak = Path(str(CONV_LOG) + ".1")
             bak.unlink(missing_ok=True)
             CONV_LOG.rename(bak)
-            _purge_convlog(bak)
+            try:
+                _purge_convlog(bak)
+            except Exception as e:  # noqa: BLE001 — warn-only như trên
+                print(f"[warn] zalo: purge convlog backup lỗi {e!r}",
+                      flush=True)
         with CONV_LOG.open("a", encoding="utf-8") as f:
             f.write(line)
 
@@ -261,6 +282,15 @@ def _uhash(user_id: str) -> str:
     """user_hash như field convlog — mọi print/log chỉ được dùng hash
     này, KHÔNG raw user_id (invariant: id thật không lọt ra stdout)."""
     return hashlib.sha256(user_id.encode()).hexdigest()[:16]
+
+
+def _ui_hash(session) -> str:
+    """user_hash cho kênh streamlit — per-session uuid để queue phân
+    biệt user UI (D6.10). `session` là st.session_state (dict-like:
+    hỗ trợ `in` + `[]`/`[]=`)."""
+    if "convlog_uid" not in session:
+        session["convlog_uid"] = uuid.uuid4().hex[:8]
+    return _uhash(f"streamlit:{session['convlog_uid']}")
 
 
 def _mask_pii(text: str) -> str:
@@ -445,7 +475,12 @@ def main() -> None:
     if err := _startup_error():
         print(err, flush=True)
         sys.exit(1)
-    _purge_convlog(CONV_LOG)  # retention theo tuổi mỗi lần boot (D5.11)
+    # Retention theo tuổi mỗi lần boot (D5.11); throw chỉ warn — miss 1
+    # lần boot không đáng kill service, lần ghi sau retry (D6.9).
+    try:
+        _purge_convlog(CONV_LOG)
+    except Exception as e:  # noqa: BLE001 — warn-only ở boot
+        print(f"[warn] zalo: purge convlog lúc boot lỗi {e!r}", flush=True)
     srv = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
     print(f"[zalo] webhook :{PORT}/zalo-webhook "
           f"(secret={'set' if APP_SECRET else 'MISSING'}, "
