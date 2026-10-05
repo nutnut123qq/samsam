@@ -4,8 +4,35 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **chưa có** — v0.4-live-ready đóng 2026-10-05; version
-kế mở khi có chỉ thị (C2.0 owner submit dev app vẫn NEEDS-INPUT).
+Version đang mở: **v0.5-ops-ready** — duyệt 2026-10-05. Vá các lỗ hổng
+vận hành sẽ cắn khi webhook public; toàn code-side, không phụ thuộc OA.
+
+## Checklist v0.5-ops-ready
+
+Khán giả: bot chạy trên VPS/tunnel public thật — deploy quên env phải
+fail-closed, log không phình vô hạn, không rò PII khách vào file.
+
+- [ ] **D5.1 Deploy config cứng** — `DEPLOY` truthy (`1`/`true`/`yes`);
+  `DEPLOY` + thiếu `ZALO_ACCESS_TOKEN` → refuse to serve (hiện chỉ check
+  secret); `docs/deploy.md` runbook (env, DEPLOY=1, tunnel option,
+  webhook URL, token refresh tay ~25h, log file)
+- [ ] **D5.2 `_standalone` content=None → fallback câu gốc** — LLM
+  refusal trả content=None → dùng câu gốc cho retrieval thay crash;
+  streamlit không hiển thị exception thô (đụng `api/rag.py` — ghi lý do
+  trong commit theo quy ước M6/M7)
+- [ ] **D5.3 Convlog PII-lite** — mask SĐT/email trong `question` trước
+  khi ghi jsonl (regex; tên người không detect được — ghi chú trong code)
+- [ ] **D5.4 Log rotation** — `conversations.jsonl` rotate sang `.1` khi
+  vượt size cap (1 bản backup là đủ cho pilot)
+- [ ] **D5.5 Per-user serialize** — 2 message concurrent cùng user_id
+  append history đúng thứ tự + reply đúng thứ tự (lock per user quanh
+  answer+append+send; striping để bounded)
+- [ ] **D5.6 Gate chung** — pytest xanh · ruff clean · eval ≥10/12+2 bẫy
+  · mock 2 lần exit 0
+
+External-dependency (không treo version): OA duyệt → live verify ở
+version riêng · token auto-refresh (document manual trong runbook, auto
+sau khi có credential thật) · hồ sơ công bố SKU (owner).
 
 ## Checklist v0.4-live-ready
 

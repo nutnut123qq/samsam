@@ -166,6 +166,33 @@ phải ghi lý do trong commit.
   - Evidence: `evidence/v04_pytest.log` (38/38 + ruff) · `v04_eval.log`
     (12/12) · `v04_mock_rerun.log` (3/3 ×2)
 
+## M8 — Ops-ready v0.5 (vá lỗ hổng trước khi webhook public)
+
+Checklist/DoD chi tiết: `DONE.md` mục v0.5-ops-ready. Quy ước: D5.2 đụng
+`api/rag.py` được phép — fix crash-path, ghi lý do trong commit; mọi đụng
+`guardrail.py` vẫn = bug.
+
+- [ ] **D5.1 Deploy config cứng** — `DEPLOY` truthy (1/true/yes) +
+  thiếu `ZALO_ACCESS_TOKEN` lúc DEPLOY → refuse to serve; `docs/deploy.md`
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`, `docs/`
+  - Gate: pytest case DEPLOY variants (truthy + thiếu token + dev ok)
+- [ ] **D5.2 `_standalone` content=None fallback** — refusal → retrieval
+  dùng câu gốc, không AttributeError qua streamlit/zalo
+  - Boundary: `api/rag.py`, `tests/test_rag.py`
+  - Gate: pytest case mock LLM trả content=None
+- [ ] **D5.3 Convlog PII mask** — regex mask SĐT/email trong `question`
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
+  - Gate: pytest case question chứa SĐT → log không có số thật
+- [ ] **D5.4 Log rotation** — `conversations.jsonl` > cap → rotate `.1`
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
+  - Gate: pytest case file vượt cap → `.1` tồn tại + file mới ghi tiếp
+- [ ] **D5.5 Per-user serialize** — lock striping per user quanh
+  answer+append+send
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
+  - Gate: pytest case 2 thread cùng user → history đúng thứ tự append
+- [ ] **D5.6 Gate chung** — pytest + ruff + eval ≥10/12+2 bẫy + mock ×2
+  - Evidence: `evidence/v05_*.log`
+
 ---
 
 ## Lề (không đụng trong pilot)
