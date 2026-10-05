@@ -153,6 +153,16 @@ Quy ước DoD cho phase connector:
   ~1000 user evict-oldest là đủ khi deploy thật)
 - `DEPLOY` chỉ check `== "1"` — deploy doc phải ghi đúng `DEPLOY=1`;
   cân nhắc truthy check ("true","yes") khi viết deploy runbook
+- Convlog crash-path ghi `guardrail_ok: False` dù guardrail chưa chạy —
+  đối soát "số violation" sẽ đếm nhầm crash; cân nhắc `guardrail_ok:
+  null` cho entry có `error` (cold-audit v0.4 NIT)
+- 2 message concurrent cùng user_id có thể append `_histories` sai thứ
+  tự (snapshot trước answer, append sau) — bounded bởi deque, chấp nhận
+  pilot; nếu live cần per-user serialize (lock per user quanh cả
+  answer+append)
+- `_standalone` khi LLM trả `content=None` (refusal) → AttributeError —
+  zalo đã catch-all + ERROR_FALLBACK; streamlit raise ra UI (hiển thị
+  exception thô). Cân nhắc catch trong `_standalone` → fallback câu gốc
 - PII trong `conversations.jsonl`: `question` lưu raw — khách gõ SĐT/tên
   vào log; production cần mask/retention policy (pilot: local + gitignored)
 - `verify_signature` bypass khi thiếu `ZALO_APP_SECRET` — deploy public

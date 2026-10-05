@@ -33,6 +33,12 @@ from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 
+# Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in tiếng
+# Việt có dấu (fatal/warn prints). Ép UTF-8 — no-op nếu đã là UTF-8.
+for _s in (sys.stdout, sys.stderr):
+    if hasattr(_s, "reconfigure"):
+        _s.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 
