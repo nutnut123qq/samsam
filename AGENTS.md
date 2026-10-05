@@ -51,15 +51,19 @@ chat lẫn embeddings) + Streamlit.
   bắt) làm flag-path chết câm. Mọi file mới có print tiếng Việt PHẢI có
   UTF-8 reconfigure guard sau imports (copy `scripts/zalo_mock.py`); khi
   THÊM print có dấu vào file chưa có guard thì thêm luôn guard.
-- `test_ack_fast_while_reply_slow` assert ACK <1s — flake dưới load
-  (localhost Windows 0.7–3.9s/POST lúc máy nặng; dispatch async đúng,
-  status luôn 200). Gate đỏ chỉ ở test này → rerun là đủ, không phải
-  regression; vá đúng = assert event-based (someday).
+- Timing test trên localhost Windows: wall-clock assert flake dưới load
+  (đo 0.7–3.9s/POST lúc máy nặng) — assert event-based. Precedent:
+  `test_ack_fast_while_reply_slow` vá ở v0.4.1 (reply block trên event,
+  assert POST 200 trong khi reply còn block).
 - Runtime/state file mới trong `data/` (`conversations.jsonl`,
   `zalo_seen.db`...) — gitignore NGAY khi thêm (có user_hash/PII-adjacent).
   Test cho state-on-disk: isolate bằng monkeypatch đường dẫn → `tmp_path`
   (xem `_isolated_files` trong `tests/test_zalo.py`), KHÔNG `clear()`
   structure in-memory như khi state còn là dict.
+- DONE.md someday có thể chứa entry ĐÃ VÁ ở version trước (stale — ví dụ
+  "verify_signature bypass" sót lại sau D4.2, supervisor v0.4.1 bắt):
+  trước khi pick someday item làm, grep code chứng minh nó còn hỏng;
+  khi đóng version, rà someday xem mục nào thực ra version này đã vá.
 - `samsam.net.vn` là NukeViet (HTML render phức tạp); `samsamngoclinh.com` là
   WooCommerce — **thử WP REST API `/wp-json/wp/v2/...` trước**, dễ hơn parse HTML.
 - Embedding lưu `float8[]` — nếu sau này cài được pgvector thì đổi cột + index,
