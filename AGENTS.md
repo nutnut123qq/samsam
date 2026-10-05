@@ -43,6 +43,9 @@ chat lẫn embeddings) + Streamlit.
 - Tiếng Việt trong docstring/comment khi giải thích business; code English.
 - JSONL 1 dòng = 1 record, schema định nghĩa trong docstring module sinh ra nó.
 - Commit message ngắn, tiếng Việt hoặc Anh đều được, nói "why".
+- Vá bug theo idiom: trước khi đóng, grep cùng pattern trong repo — bug
+  hay đi theo cụm (v0.5: `.content.strip()` None-crash ở cả `_standalone`
+  LẪN `answer`; vá 1 bỏ 1 = nửa bug).
 
 ## Gotchas
 - **Console Windows cp1258**: mọi file .py in tiếng Việt có dấu đều crash
