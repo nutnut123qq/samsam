@@ -114,6 +114,15 @@ def test_non_text_event_ignored(server, monkeypatch):
     assert not got
 
 
+def test_payload_too_large_rejected(server, monkeypatch):
+    # Ship-pass v0.5: Content-Length vượt cap -> 413, không đọc body
+    # (trước đây read không cap — body khổng lồ = memory DoS).
+    monkeypatch.setattr(zalo, "MAX_BODY", 10)
+    r = httpx.post(server, content=b"x" * 100,
+                   headers={"X-ZEvent-Signature": "mac=whatever"})
+    assert r.status_code == 413
+
+
 def test_bad_signature_rejected(server):
     r = httpx.post(server, content=json.dumps(_event()).encode(),
                    headers={"X-ZEvent-Signature": "mac=bad"})

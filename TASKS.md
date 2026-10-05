@@ -199,8 +199,13 @@ Checklist/DoD chi tiết: `DONE.md` mục v0.5-ops-ready. Quy ước: D5.2 đụ
   - Evidence: `test_same_user_messages_serialize` — 64-lock striping,
     `handle_text` → `_ulock` → `_reply`; sleep 0.2s chứng minh code cũ
     fail deterministic
+- [x] **D5.7 Payload cap** (phát sinh ở ship-pass, user duyệt gộp) —
+  `Content-Length` không cap = memory DoS khi public; guard `>MAX_BODY`
+  → 413, `<0`/malformed → 400 (read(-1) đọc tới EOF)
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
+  - Gate: `test_payload_too_large_rejected` (MAX_BODY=10B → 413)
 - [x] **D5.6 Gate chung** — pytest + ruff + eval ≥10/12+2 bẫy + mock ×2
-  - Evidence: `evidence/v05_pytest.log` 44/44 + ruff clean ·
+  - Evidence: `evidence/v05_pytest.log` 45/45 + ruff clean ·
     `v05_eval.log` 12/12 · `v05_mock.log` 3/3 ×2 liên tiếp.
     Reviewer độc lập không chạy được (hết quota) — coordinator tự
     adversarial-review diff; /cold-audit session lạ là cửa cuối

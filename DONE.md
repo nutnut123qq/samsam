@@ -4,8 +4,9 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **v0.5-ops-ready** — duyệt 2026-10-05. Vá các lỗ hổng
-vận hành sẽ cắn khi webhook public; toàn code-side, không phụ thuộc OA.
+Version đang mở: **chưa có** — v0.5-ops-ready đóng 2026-10-05. Version
+kế mở khi có chỉ thị (C2.0 owner submit dev app vẫn NEEDS-INPUT → live
+verify khi OA được duyệt).
 
 ## Checklist v0.5-ops-ready
 
@@ -33,9 +34,13 @@ fail-closed, log không phình vô hạn, không rò PII khách vào file.
   answer+append+send; striping để bounded)
   — *(64-lock striping; `handle_text` wrapper → `_reply`; pytest thread
     case fail-deterministic trên code cũ)*
+- [x] **D5.7 Payload cap** (phát sinh ở ship-pass, duyệt gộp vào v0.5) —
+  `Content-Length` unbounded = memory DoS khi public; `>1MB` → 413,
+  `<0`/malformed → 400
+  — *(pytest `test_payload_too_large_rejected`)*
 - [x] **D5.6 Gate chung** — pytest xanh · ruff clean · eval ≥10/12+2 bẫy
   · mock 2 lần exit 0
-  — *(44/44 + ruff `v05_pytest.log` · 12/12 `v05_eval.log` · 3/3×2
+  — *(45/45 + ruff `v05_pytest.log` · 12/12 `v05_eval.log` · 3/3×2
     `v05_mock.log`; reviewer hết quota → coordinator tự review)*
 
 External-dependency (không treo version): OA duyệt → live verify ở
@@ -178,18 +183,10 @@ Quy ước DoD cho phase connector:
 
 ## Someday (chưa vào version nào)
 
-- `DEPLOY` chỉ check `== "1"` — deploy doc phải ghi đúng `DEPLOY=1`;
-  cân nhắc truthy check ("true","yes") khi viết deploy runbook
-- 2 message concurrent cùng user_id có thể append `_histories` sai thứ
-  tự (snapshot trước answer, append sau) — bounded bởi deque, chấp nhận
-  pilot; nếu live cần per-user serialize (lock per user quanh cả
-  answer+append)
-- `_standalone` khi LLM trả `content=None` (refusal) → AttributeError —
-  zalo đã catch-all + ERROR_FALLBACK; streamlit raise ra UI (hiển thị
-  exception thô). Cân nhắc catch trong `_standalone` → fallback câu gốc
-- PII trong `conversations.jsonl`: `question` lưu raw — khách gõ SĐT/tên
-  vào log; production cần mask/retention policy (pilot: local + gitignored)
-- Log rotation cho `conversations.jsonl` (append vô hạn, rất chậm)
+- PII trong `conversations.jsonl`: `question` đã mask SĐT/email bằng
+  regex (v0.5) — còn lọt tên người + SĐT viết cách ("0901 234 567");
+  production cần retention policy + mask đầy đủ hơn (pilot: local +
+  gitignored)
 
 - Chatbot production trên Fanpage (Messenger API, Pancake hook) — Zalo OA
   đang ở v0.2; live OA thật cũng nằm đây nếu duyệt không kịp version
@@ -218,3 +215,4 @@ Quy ước DoD cho phase connector:
 | v0.3-hardening | Ops: đo được chất lượng + sẵn sàng live (convlog + dedup persist + eval harness) | 2026-10-04 | `evidence/v03_pytest.log` 29/29 ×3 · `v03_eval.log` 12/12 ×2 (eval harness mới `scripts/eval_qa.py`) · `v03_convlog.log` mock 3/3 + jsonl đúng schema (`answered:false` câu bẫy) · audit `audit/2026-10-04.md` (~7.4/10); commit `7f44506`. Reviewer độc lập skip (hết quota) — coordinator tự review, 3 NIT → someday: convlog `sent`/crash-log/raw-flag, PII question, signature-bypass-khi-deploy |
 | v0.4-live-ready | Bot code-side sẵn sàng live OA thật: multi-turn + fail-closed deploy + convlog v2 | 2026-10-05 | `evidence/v04_pytest.log` 38/38 · `v04_eval.log` 12/12 + live multi-turn (follow-up resolve đúng Saphraton) · `v04_mock_rerun.log` 3/3 ×2 liên tiếp; commits `edfb2c6` + FIX `5013dba` (UTF-8 guard `connectors/zalo.py` — cold-audit blocker) + `c03307d` (retro). Cold-audit session lạ: verdict FIX → vá xong, 3 NIT → someday (guardrail_ok null khi crash, history order concurrent, `_standalone` content=None) |
 | v0.4.1 (patch) | Vá 3 NIT cold-audit v0.4: convlog `guardrail_ok:null` khi crash (trước False = đếm nhầm violation), `_histories` LRU cap 1000 user, ack-test event-based hết flake | 2026-10-05 | `evidence/v041_pytest.log` 39/39 + ruff clean; commits `1ef151a` + `a6d8ee3` (DONE). Verdict supervisor PASS; xoá thêm someday entry stale (`verify_signature` bypass — đã vá ở D4.2 `_startup_error`) |
+| v0.5-ops-ready | Vá lỗ hổng vận hành trước khi webhook public: DEPLOY truthy+token fail-closed, `content=None` fallback, PII mask, log rotation, per-user serialize, payload cap | 2026-10-05 | `evidence/v05_pytest.log` 45/45 + ruff clean · `v05_eval.log` 12/12 · `v05_mock.log` 3/3 ×2; commits `589925f` (contract) + `62b27ab` + D5.7 commit. Reviewer hết quota → coordinator tự review; chưa cold-audit |

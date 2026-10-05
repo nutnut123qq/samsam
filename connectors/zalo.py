@@ -53,6 +53,7 @@ PORT = int(os.environ.get("ZALO_WEBHOOK_PORT", "8788"))
 
 SEND_URL = "https://openapi.zalo.me/v3.0/oa/message/cs"
 MAX_TEXT = 2000  # giới hạn text của Zalo CS message
+MAX_BODY = 1024 * 1024  # 1MB — event Zalo là JSON nhỏ; body lớn = DoS
 FALLBACK = ("Sâm Sâm xin lỗi, câu trả lời tự động chưa đạt kiểm duyệt nội "
             "bộ. Quý khách vui lòng gọi hotline 1800577732 để được hỗ trợ.")
 # Hằng an toàn viết tay — gửi khi answer() crash; không cần qua check().
@@ -311,7 +312,16 @@ class Handler(BaseHTTPRequestHandler):
         self._json(404, {"error": "not found"})
 
     def do_POST(self) -> None:
-        raw = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+        except ValueError:
+            return self._json(400, {"error": "bad content-length"})
+        if length < 0:
+            # read(-1) = đọc tới EOF — client giữ connection mở được
+            return self._json(400, {"error": "bad content-length"})
+        if length > MAX_BODY:
+            return self._json(413, {"error": "payload too large"})
+        raw = self.rfile.read(length)
         if self.path != "/zalo-webhook":
             return self._json(404, {"error": "not found"})
         sig = self.headers.get("X-ZEvent-Signature", "")
