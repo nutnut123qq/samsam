@@ -18,7 +18,7 @@ chat lẫn embeddings) + Streamlit.
 | Zalo webhook | `python -m connectors.zalo` → :8788/zalo-webhook |
 | Mock E2E Zalo | `python scripts/zalo_mock.py` |
 | Eval RAG | `python scripts/eval_qa.py` (12 câu questions.md, ~90s, exit 0 nếu ≥10/12 + 2 bẫy pass) |
-| Test/lint | `pytest` · `ruff check .` |
+| Test/lint | `python -m pytest` · `ruff check .` |
 
 ## Structure
 - `crawler/` — collect public site data → `data/*.jsonl`
@@ -48,6 +48,8 @@ chat lẫn embeddings) + Streamlit.
   LẪN `answer`; vá 1 bỏ 1 = nửa bug).
 
 ## Gotchas
+- **`pytest` entry-script fail import** (`No module named 'pipelines'`) —
+  không add cwd vào sys.path; luôn chạy `python -m pytest`.
 - **Console Windows cp1258**: mọi file .py in tiếng Việt có dấu đều crash
   `UnicodeEncodeError` — KHÔNG chỉ scripts/: `connectors/zalo.py` (module,
   `python -m`) từng crash tại print fatal `DEPLOY=1` (v0.4, cold-audit

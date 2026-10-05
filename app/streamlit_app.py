@@ -36,6 +36,8 @@ with tab_chat:
     for m in st.session_state.messages:
         with st.chat_message(m["role"]):
             st.write(m["content"])
+            if m.get("caption"):
+                st.caption(m["caption"])
             for s in m.get("sources", []):
                 st.markdown(f"- [{s}]({s})")
 
@@ -66,12 +68,15 @@ with tab_chat:
             else:
                 display = r["answer"]
             st.write(display)
+            caption = None
             if g["ok"]:
                 if NO_DATA in r["answer"]:
-                    st.caption("Không có nguồn — chưa đủ dữ liệu, đã "
+                    caption = ("Không có nguồn — chưa đủ dữ liệu, đã "
                                "chuyển nhân viên (xem tab 'Chưa trả lời').")
+                    st.caption(caption)
                 elif r["sources"]:
-                    st.caption("Nguồn:")
+                    caption = "Nguồn:"
+                    st.caption(caption)
                     for s in r["sources"]:
                         st.markdown(f"- [{s}]({s})")
             # Lượt bị flag: FALLBACK trần — không nguồn/caption "đã
@@ -110,8 +115,9 @@ with tab_chat:
 
         st.session_state.messages.append(
             {"role": "assistant", "content": display,
-             # Nguồn chỉ kèm câu trả lời thật — replay không render link
-             # dưới FALLBACK/handoff.
+             # Caption + nguồn chỉ kèm lượt hợp lệ — replay giữ đúng
+             # hiển thị lượt live (flagged trần, handoff chỉ caption).
+             "caption": caption,
              "sources": (r["sources"] if g["ok"] and NO_DATA
                          not in r["answer"] else [])})
 
