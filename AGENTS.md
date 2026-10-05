@@ -79,6 +79,24 @@ chat lẫn embeddings) + Streamlit.
   (`"a\u2028b"` + `ensure_ascii=False` khi cần raw char trong output);
   KHÔNG nhúng literal vào source — vô hình khó review + edit tool fail
   match (vấp v0.5.1).
+- Print/log chứa identifier (user_id, SĐT...) phải qua `_uhash()`/
+  `_mask_pii()` ngay tại chỗ print — kể cả sửa code cũ. Reviewer v0.6
+  bắt: `[handoff]` print mới + `send_text`/guardrail warn cũ cùng lộ
+  raw user_id ra stdout (invariant "không log id thật" áp cho CẢ
+  stdout, không chỉ convlog).
+- Hai kênh share semantics (zalo `_histories` ↔ streamlit history cho
+  `answer()`) phải parity cấu trúc: cùng lưu raw answer, cùng bỏ lượt
+  flagged. Streamlit v0.6 lưu display text (HANDOFF_TEXT) vào history —
+  lệch hành vi follow-up. Render-model (`messages`) tách khỏi
+  history-model.
+- Decode file jsonl/log: chỉ REWRITE round-trip (purge) mới dùng
+  `surrogateescape`; READER hiển thị (`unanswered()`) phải
+  `errors="replace"` — lone surrogate `\udcXX` crash
+  `st.dataframe`/pyarrow UTF-8 encode.
+- Vá 1 flaky test theo class (wall-clock → event): grep `time.sleep`
+  toàn suite vá cùng pattern — `test_dedup_same_msg_id` sót lại sau
+  v0.4.1, flake thật ở v0.6 ship-pass (sleep-0.3s trước assert
+  `got==["u1"]` — thread dispatch chậm dưới load → `[]`).
 - Runtime/state file mới trong `data/` (`conversations.jsonl`,
   `zalo_seen.db`...) — gitignore NGAY khi thêm (có user_hash/PII-adjacent).
   Test cho state-on-disk: isolate bằng monkeypatch đường dẫn → `tmp_path`
