@@ -45,9 +45,16 @@ chat lẫn embeddings) + Streamlit.
 - Commit message ngắn, tiếng Việt hoặc Anh đều được, nói "why".
 
 ## Gotchas
-- **Console Windows cp1258**: script in tiếng Việt có dấu crash
-  `UnicodeEncodeError` — mọi script mới PHẢI có UTF-8 reconfigure guard
-  (copy pattern đầu `scripts/zalo_mock.py` / `scripts/eval_qa.py`).
+- **Console Windows cp1258**: mọi file .py in tiếng Việt có dấu đều crash
+  `UnicodeEncodeError` — KHÔNG chỉ scripts/: `connectors/zalo.py` (module,
+  `python -m`) từng crash tại print fatal `DEPLOY=1` (v0.4, cold-audit
+  bắt) làm flag-path chết câm. Mọi file mới có print tiếng Việt PHẢI có
+  UTF-8 reconfigure guard sau imports (copy `scripts/zalo_mock.py`); khi
+  THÊM print có dấu vào file chưa có guard thì thêm luôn guard.
+- `test_ack_fast_while_reply_slow` assert ACK <1s — flake dưới load
+  (localhost Windows 0.7–3.9s/POST lúc máy nặng; dispatch async đúng,
+  status luôn 200). Gate đỏ chỉ ở test này → rerun là đủ, không phải
+  regression; vá đúng = assert event-based (someday).
 - Runtime/state file mới trong `data/` (`conversations.jsonl`,
   `zalo_seen.db`...) — gitignore NGAY khi thêm (có user_hash/PII-adjacent).
   Test cho state-on-disk: isolate bằng monkeypatch đường dẫn → `tmp_path`
