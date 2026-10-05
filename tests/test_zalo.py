@@ -479,12 +479,24 @@ def test_guardrail_flagged_text_kept_in_log(monkeypatch, tmp_path):
 def test_chunked_post_rejected_411(server):
     # D5.9: request chunked (không Content-Length) -> 411 rõ ràng thay
     # vì length=0 -> body bỏ sót/403 mập mờ. Hành vi định nghĩa trước
-    # khi ai đó bật keep-alive. Content=generator -> httpx thật sự gửi
-    # Transfer-Encoding: chunked và KHÔNG gửi Content-Length.
-    r = httpx.post(server, content=iter([b"chunk1", b"chunk2"]))
-    assert r.status_code == 411
-    assert "chunked" in r.request.headers.get("Transfer-Encoding", "")
-    assert "Content-Length" not in r.request.headers
+    # khi ai đó bật keep-alive. Raw socket: httpx flake ReadError khi
+    # server reject sớm + đóng connection giữa chừng client stream body.
+    import socket
+    from urllib.parse import urlparse
+    u = urlparse(server)
+    with socket.create_connection((u.hostname, u.port), timeout=5) as s:
+        s.sendall(b"POST /zalo-webhook HTTP/1.1\r\n"
+                  b"Host: x\r\n"
+                  b"Content-Type: application/json\r\n"
+                  b"Transfer-Encoding: chunked\r\n\r\n"
+                  b"2\r\n{}\r\n0\r\n\r\n")
+        resp = b""
+        while b"\r\n\r\n" not in resp:
+            chunk = s.recv(4096)
+            if not chunk:
+                break
+            resp += chunk
+    assert resp.split(b"\r\n")[0].startswith(b"HTTP/1.0 411")
 
 
 def test_convlog_masks_spaced_phone(monkeypatch, tmp_path):
