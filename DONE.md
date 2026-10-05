@@ -143,19 +143,8 @@ Quy ước DoD cho phase connector:
 
 ## Someday (chưa vào version nào)
 
-- `test_ack_fast_while_reply_slow` flaky dưới load — threshold <1s quá
-  chặt cho localhost Windows (đo 2026-10-05: handler rỗng cũng 0.7-3.9s
-  khi máy nặng; status luôn 200, dispatch async đúng — probe sleep(10)
-  POST vẫn <4s). Vá: đổi sang assert event-based (reply-thread chưa set
-  event khi POST return) hoặc nới threshold
-- `_histories` dict không giới hạn số user — webhook public + user_id
-  spam → memory leak chậm (signature chặn user giả nên rủi ro thấp; cap
-  ~1000 user evict-oldest là đủ khi deploy thật)
 - `DEPLOY` chỉ check `== "1"` — deploy doc phải ghi đúng `DEPLOY=1`;
   cân nhắc truthy check ("true","yes") khi viết deploy runbook
-- Convlog crash-path ghi `guardrail_ok: False` dù guardrail chưa chạy —
-  đối soát "số violation" sẽ đếm nhầm crash; cân nhắc `guardrail_ok:
-  null` cho entry có `error` (cold-audit v0.4 NIT)
 - 2 message concurrent cùng user_id có thể append `_histories` sai thứ
   tự (snapshot trước answer, append sau) — bounded bởi deque, chấp nhận
   pilot; nếu live cần per-user serialize (lock per user quanh cả
@@ -195,3 +184,4 @@ Quy ước DoD cho phase connector:
 | v0.2-connector | Kênh CSKH số đầu tiên (Zalo OA bot, mock-verified) | 2026-10-04 | `evidence/v02_pytest.log` 26/26 · `v02_zalo_mock.log` 3/3 hội thoại (giá Saphraton + nguồn, showroom Đà Nẵng + nguồn, câu bẫy từ chối) · `v02_platform.md` NEEDS-INPUT chờ owner submit dev app; commits `17a1848` + `404e0d9` (check() trước khi append nguồn, sig timestamp number) + `7bc3266` |
 | v0.3-hardening | Ops: đo được chất lượng + sẵn sàng live (convlog + dedup persist + eval harness) | 2026-10-04 | `evidence/v03_pytest.log` 29/29 ×3 · `v03_eval.log` 12/12 ×2 (eval harness mới `scripts/eval_qa.py`) · `v03_convlog.log` mock 3/3 + jsonl đúng schema (`answered:false` câu bẫy) · audit `audit/2026-10-04.md` (~7.4/10); commit `7f44506`. Reviewer độc lập skip (hết quota) — coordinator tự review, 3 NIT → someday: convlog `sent`/crash-log/raw-flag, PII question, signature-bypass-khi-deploy |
 | v0.4-live-ready | Bot code-side sẵn sàng live OA thật: multi-turn + fail-closed deploy + convlog v2 | 2026-10-05 | `evidence/v04_pytest.log` 38/38 · `v04_eval.log` 12/12 + live multi-turn (follow-up resolve đúng Saphraton) · `v04_mock_rerun.log` 3/3 ×2 liên tiếp; commits `edfb2c6` + FIX `5013dba` (UTF-8 guard `connectors/zalo.py` — cold-audit blocker) + `c03307d` (retro). Cold-audit session lạ: verdict FIX → vá xong, 3 NIT → someday (guardrail_ok null khi crash, history order concurrent, `_standalone` content=None) |
+| v0.4.1 (patch) | Vá 3 NIT cold-audit v0.4: convlog `guardrail_ok:null` khi crash (trước False = đếm nhầm violation), `_histories` LRU cap 1000 user, ack-test event-based hết flake | 2026-10-05 | `evidence/v041_pytest.log` 39/39 + ruff clean; commit `1ef151a` |
