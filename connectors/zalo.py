@@ -12,7 +12,8 @@ trả lời async qua send API. Reply qua `pipelines.guardrail.check()`; bị fl
 nào đăng bài/listing mới (C2.4).
 
 Multi-turn (D4.1): history hội thoại giữ in-memory per user (tối đa 4 lượt
-Q&A gần nhất) — restart process mất history, chấp nhận được cho pilot.
+Q&A gần nhất, tối đa HIST_MAX_USERS user — LRU evict) — restart process
+mất history, chấp nhận được cho pilot.
 
 Chạy: `python -m connectors.zalo` -> :8788/zalo-webhook (port qua
 ZALO_WEBHOOK_PORT). Env: ZALO_APP_ID, ZALO_APP_SECRET, ZALO_ACCESS_TOKEN.
@@ -26,7 +27,7 @@ import sqlite3
 import sys
 import threading
 import time
-from collections import deque
+from collections import OrderedDict, deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -63,8 +64,11 @@ _seen_lock = threading.Lock()
 _seen_conn: sqlite3.Connection | None = None  # lazy — không tạo file khi import
 _log_lock = threading.Lock()
 # user_id -> deque messages OpenAI-style; maxlen=8 = 4 cặp Q&A (D4.1)
+# OrderedDict làm LRU: cap số user để dict không phình vô hạn khi webhook
+# public — evict user lâu hoạt động nhất (D-nit v0.4).
+HIST_MAX_USERS = 1000
 _hist_lock = threading.Lock()
-_histories: dict[str, deque] = {}
+_histories: OrderedDict[str, deque] = OrderedDict()
 
 
 def _startup_error() -> str | None:
@@ -129,6 +133,21 @@ def _log_conversation(entry: dict) -> None:
         f.write(line)
 
 
+def _history(user_id: str) -> deque:
+    """Deque history của user: get-or-create + mark mới-dùng-nhất (LRU).
+    PHẢI gọi dưới _hist_lock. Đầy HIST_MAX_USERS -> evict entry cũ nhất —
+    bound RAM khi public (signature đã chặn user giả, evict nhầm chỉ làm
+    mất context follow-up, không mất an toàn)."""
+    h = _histories.get(user_id)
+    if h is None:
+        if len(_histories) >= HIST_MAX_USERS:
+            _histories.popitem(last=False)
+        h = _histories[user_id] = deque(maxlen=8)
+    else:
+        _histories.move_to_end(user_id)
+    return h
+
+
 def send_text(user_id: str, text: str) -> bool:
     """Gọi Zalo CS message API. Thiếu token -> warn + False (pipeline vẫn
     test được qua mock)."""
@@ -161,7 +180,7 @@ def handle_text(user_id: str, question: str, msg_id: str = "") -> dict:
 
     t0 = time.time()
     with _hist_lock:
-        history = list(_histories.get(user_id, ()))
+        history = list(_history(user_id))
     try:
         # Chỉ truyền kwarg history khi đã có lượt trước — 1-turn gọi
         # y hệt signature cũ (mock `lambda q:` trong test cũ vẫn dùng được).
@@ -178,7 +197,9 @@ def handle_text(user_id: str, question: str, msg_id: str = "") -> dict:
             "question": question,
             "answer": "",
             "sources": [],
-            "guardrail_ok": False,
+            # null chứ không phải False — guardrail chưa chạy (crash
+            # trước check()); False sẽ đếm nhầm crash vào "violation".
+            "guardrail_ok": None,
             "latency_ms": int((time.time() - t0) * 1000),
             "answered": False,
             "sent": sent,
@@ -201,7 +222,7 @@ def handle_text(user_id: str, question: str, msg_id: str = "") -> dict:
         # Lượt hợp lệ (kể cả NO_DATA) mới vào history — câu bị flag thì
         # không cho LLM "nhớ" text vi phạm ở lượt sau.
         with _hist_lock:
-            h = _histories.setdefault(user_id, deque(maxlen=8))
+            h = _history(user_id)
             h.append({"role": "user", "content": question})
             h.append({"role": "assistant", "content": raw})
     sent = send_text(user_id, text)

@@ -121,14 +121,24 @@ def test_bad_signature_rejected(server):
 
 
 def test_ack_fast_while_reply_slow(server, monkeypatch):
-    # answer() ~10s — webhook trả 200 ngay, reply chạy async.
-    monkeypatch.setattr(zalo, "handle_text",
-                        lambda u, t, m=None: time.sleep(2))
+    # ACK 200 trong khi reply vẫn block -> dispatch async. Event-based
+    # thay assert <1s — flake dưới load (localhost POST đo tới ~4s lúc
+    # máy nặng). Nếu dispatch sync, reply block mãi -> post timeout fail.
+    started, release = threading.Event(), threading.Event()
+
+    def slow_reply(u, t, m=None):
+        started.set()
+        release.wait()
+
+    monkeypatch.setattr(zalo, "handle_text", slow_reply)
     raw = json.dumps(_event()).encode()
-    t0 = time.time()
-    r = httpx.post(server, content=raw,
-                   headers={"X-ZEvent-Signature": _sign(raw)})
-    assert r.status_code == 200 and time.time() - t0 < 1
+    try:
+        r = httpx.post(server, content=raw, timeout=10,
+                       headers={"X-ZEvent-Signature": _sign(raw)})
+        assert r.status_code == 200 and r.json()["ok"]
+        assert started.wait(10)  # reply thread thật sự đã chạy
+    finally:
+        release.set()  # nhả reply thread dù assert fail — không leak
 
 
 def test_send_text_without_token(monkeypatch, capsys):
@@ -319,6 +329,23 @@ def test_flagged_turn_not_added_to_history(monkeypatch):
         {"role": "assistant", "content": "trả lời: câu 1"}]
 
 
+def test_histories_cap_evicts_oldest_inactive(monkeypatch):
+    # _histories bounded: đầy HIST_MAX_USERS -> evict user ít hoạt động
+    # nhất (LRU); user vừa chat được refresh nên không bị evict oan.
+    monkeypatch.setattr(zalo, "HIST_MAX_USERS", 3)
+    monkeypatch.setattr("api.rag.answer",
+                        lambda q, history=None: {"answer": "a",
+                                                 "sources": []})
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
+    for u in ("u1", "u2", "u3"):
+        zalo.handle_text(u, "q")
+    zalo.handle_text("u1", "q2")   # refresh u1 -> u2 giờ là cũ nhất
+    zalo.handle_text("u4", "q")    # vượt cap -> evict u2
+    assert sorted(zalo._histories) == ["u1", "u3", "u4"]
+    assert len(zalo._histories["u1"]) == 4  # 2 lượt Q&A của u1 vẫn giữ
+
+
 def test_conversation_log_sent_false_on_send_fail(monkeypatch, tmp_path):
     # D4.4: send_text trả False -> log "sent": false, không ghi như đã xử lý.
     monkeypatch.setattr("api.rag.answer",
@@ -352,6 +379,8 @@ def test_answer_crash_logs_error_and_sends_fallback(monkeypatch, tmp_path):
     rec = recs[0]
     assert rec["sent"] is True and "RuntimeError" in rec["error"]
     assert rec["answer"] == "" and rec["answered"] is False
+    # crash trước check() -> null, không phải False (False = đã flag)
+    assert rec["guardrail_ok"] is None
     assert rec["question"] == "câu hỏi?"  # không mất vết câu hỏi
 
 
