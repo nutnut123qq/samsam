@@ -4,9 +4,45 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **chưa có** — v0.5.1 đóng 2026-10-05. Version kế mở
-khi có chỉ thị (C2.0 owner submit dev app vẫn NEEDS-INPUT → live verify
-khi OA được duyệt).
+Version đang mở: **v0.6-handoff** — NO_DATA → lối thoát cho người +
+unanswered queue cho nhân viên (contract user duyệt 2026-10-05).
+
+## Checklist v0.6-handoff
+
+Khán giả: bác Lực xem demo — "bot biết giới hạn, có lối thoát cho
+người"; nhân viên đọc queue biết KB thiếu gì. Quy ước: `api/rag.py`
+contract `NO_DATA` giữ nguyên (eval + `answered` semantics phụ thuộc);
+`guardrail.py` cấm đụng; `HANDOFF_TEXT` hằng viết tay như `FALLBACK`.
+Skip `eval_qa` (answer() không đổi — precedent patch).
+
+- [x] **D6.1 Handoff message ở zalo layer** — `NO_DATA in raw` → gửi
+  `HANDOFF_TEXT` (chưa đủ dữ liệu + nhân viên phản hồi + hotline
+  1800577732) thay câu NO_DATA trần; convlog `answer` = text đã gửi,
+  `answered:false` giữ (tính trên `raw`); `[handoff]` warn console.
+  Streamlit chat map NO_DATA → cùng hằng.
+  Gate: pytest NO_DATA → sent HANDOFF_TEXT + `answered:false`
+  — *(câu bẫy mock u3 nhận đúng HANDOFF_TEXT; streamlit verify live:
+    chat "có văn phòng tại Hà Nội không" → handoff + caption trỏ queue;
+    reviewer vá thêm: history streamlit lưu raw parity zalo, caption
+    "đã chuyển nhân viên" chỉ hiện đúng nhánh NO_DATA)*
+- [x] **D6.2 Unanswered queue UI** — Streamlit tab "Chưa trả lời":
+  đọc `conversations.jsonl` (+`.1`), filter `answered:false`, bảng
+  ts/question(đã mask)/user_hash; empty-state khi thiếu/rỗng.
+  Gate: UI chạy thật + screenshot bảng + empty-state
+  (`evidence/v06_queue.png`)
+  — *(`unanswered()` trong connectors/zalo.py — module sở hữu schema;
+    đọc bytes + decode `replace` (surrogateescape crash st.dataframe);
+    UI verify live: bảng 3 cột có entry streamlit+zalo, empty-state
+    `st.info` khi convlog vắng, 0 console error)*
+- [x] **D6.3 Mock E2E + gate chung** — `zalo_mock.py` câu bẫy đổi
+  expected sang substring HANDOFF_TEXT; mock 3/3 (~3 call OpenRouter);
+  pytest + ruff xanh
+  — *(evidence `evidence/v06_pytest.log` + `v06_mock.log`;
+    ship-pass bắt 1 flake `test_dedup_same_msg_id` sleep-0.3s →
+    event-based như precedent v0.4.1)*
+
+External-dependency (không treo version): notify nhân viên qua Zalo
+thật cần OA creds (C2.0 chưa submit) → someday.
 
 ## Checklist v0.5.1
 

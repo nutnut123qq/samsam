@@ -247,6 +247,29 @@ commit; `guardrail.py` cấm đụng.
     major purge + test yếu), vá xong → pass; eval/mock skip theo
     precedent patch (edge-path, không đụng happy path).
 
+## M9 — Handoff v0.6 (NO_DATA → lối thoát cho người + queue)
+
+Checklist/DoD chi tiết: `DONE.md` mục v0.6-handoff (contract user duyệt
+2026-10-05). `api/rag.py` contract `NO_DATA` giữ nguyên; `guardrail.py`
+cấm đụng.
+
+- [x] **D6.1 Handoff message** — zalo: `NO_DATA in raw` → gửi
+  `HANDOFF_TEXT` (hằng viết tay, có hotline); convlog `answer`=text
+  gửi, `answered:false` trên raw; streamlit chat cùng map
+  - Boundary: `connectors/zalo.py`, `app/streamlit_app.py`,
+    `tests/test_zalo.py`
+  - Gate: pytest NO_DATA → sent HANDOFF_TEXT + answered:false
+- [x] **D6.2 Unanswered queue UI** — tab "Chưa trả lời" đọc convlog
+  (+`.1`), filter answered:false → bảng ts/question/user_hash +
+  empty-state; loader tách module để test được
+  - Boundary: `connectors/zalo.py` (loader — module sở hữu schema
+    convlog), `app/`, `tests/`
+  - Gate: UI thật + screenshot `evidence/v06_queue.png` (bảng + empty)
+- [x] **D6.3 Mock E2E + gate** — `zalo_mock.py` câu bẫy expect substring
+  HANDOFF_TEXT; mock 3/3; pytest + ruff
+  - Boundary: `scripts/zalo_mock.py`, `evidence/`
+  - Evidence: `evidence/v06_pytest.log` + `evidence/v06_mock.log`
+
 ---
 
 ## Lề (không đụng trong pilot)

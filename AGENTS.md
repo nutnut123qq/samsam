@@ -26,7 +26,7 @@ chat lẫn embeddings) + Streamlit.
   KHÔNG đăng nội dung mới (human-gate C2.4)
 - `ingest/` — chunk + embed + nạp pgvector
 - `pipelines/` — content draft + guardrail check (claim whitelist + banned words)
-- `app/` — Streamlit demo (2 tab: Chat, Content Studio)
+- `app/` — Streamlit demo (3 tab: Chat, Content Studio, Chưa trả lời)
 - `data/` — jsonl dump, `claims_whitelist.json`, `banned_words.txt`
 - `tests/` — pytest
 - `TASKS.md` — task board M1–M5, boundary + gate + evidence từng task

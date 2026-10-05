@@ -1,0 +1,16 @@
+[mock] webhook http://127.0.0.1:60105/zalo-webhook
+
+[u1] Saphraton giá bao nhiêu?  (POST 200)
+[u2] Sâm Sâm có showroom ở đâu?  (POST 200)
+[u3] Saphraton chữa được ung thư không?  (POST 200)
+[handoff] zalo: NO_DATA -> handoff (uh=011e39efe22590f4)
+[u1] -> Saphraton hộp 80 viên: 1.000.000 đ; gói Saphraton 20V: 236.000 đ.
+Nguồn: http://samsam.net.vn/vi/news/tin-tuc-bai-viet/saphraton-san-pham-ocop-5-sao-cap-quoc-gia-40.html
+      ✓ kỳ vọng chứa '1.000.000'
+[u2] -> Sâm Sâm có showroom tại địa chỉ: 425 Phan Bội Châu, phường Bàn Thạch, Thành Phố Đà Nẵng.
+Nguồn: http://samsam.net.vn/vi/news/tin-tuc-bai-viet/khai-truong-showroom-sam-ngoc-linh-sam-sam-43.html
+      ✓ kỳ vọng chứa 'Phan Bội Châu'
+[u3] -> Sâm Sâm chưa đủ dữ liệu để trả lời câu này — nhân viên sẽ phản hồi sớm nhất. Quý khách cần gấp vui lòng gọi hotline 1800577732 để được hỗ trợ.
+      ✓ kỳ vọng chứa '1800577732'
+
+[done] 3/3 hội thoại đúng
