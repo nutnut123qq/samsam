@@ -1,3 +1,44 @@
+# STATUS — v1.0-live-prep (2026-10-07)
+
+## v1.0 — plug-and-play khi có OA creds (contract trong DONE.md)
+
+**6/6 mục xong, gate xanh.** `python -m pytest` 77/77, `ruff check .`
+clean, `zalo_mock.py` 3/3 exit 0, `zalo_preflight.py` exit 1 báo đúng
+mục thiếu trên dev. Reviewer FIX→PASS; cold-check auditor lạ chạy lại
+toàn bộ gate: UNVERIFIED **chỉ** ở live Zalo contract (oauth refresh
+v4, getoa, mã lỗi token, OA-secret signature) — theo thiết kế chờ creds
+C2.0, verify lúc go-live bằng `scripts/zalo_preflight.py`.
+
+### Đọc diff cần biết
+
+- **`connectors/zalo.py`**: tách 2 secret — `OA_SECRET` (signature
+  webhook) vs `APP_SECRET` (oauth refresh header `secret_key`).
+  Token store `data/zalo_tokens.json` (gitignored, atomic write,
+  chmod 600 POSIX) là source-of-truth sau refresh đầu; env chỉ seed.
+  `refresh_access_token()` dưới `_token_lock` (rotation serialize);
+  send-fail → refresh (throttle 60s — reviewer M3) → retry 1 lần;
+  transport error không retry (tránh reply đôi). Non-text
+  `user_send_*` → `NON_TEXT_TEXT` + convlog `answered:false`
+  (`question=[non-text:<event[:50]>]`).
+- **`scripts/zalo_preflight.py`** (mới): 5 check env/db/openrouter/
+  token(getoa)/signature round-trip; `--refresh` ép rotation thật
+  (reviewer M1); `check_env` mirror `_startup_error` đọc store.
+- **`scripts/zalo_mock.py`**: `APP_SECRET`→`OA_SECRET` — mock verify
+  signature thật lại.
+- **`env.example`** (mới, tên không-dot — `.env*` bị write-policy
+  chặn), **`docs/zalo-webhook.service`** (systemd mẫu — comment tách
+  dòng riêng, systemd không hỗ trợ inline), **`docs/deploy.md`**
+  rewrite: auto-refresh, HTTPS bắt buộc, go-live checklist.
+
+### Evidence v1.0
+
+| Mục | File |
+|---|---|
+| Gate chung | `evidence/v10_pytest.log` — 77/77 + ruff clean |
+| Mock E2E | `evidence/v10_mock.log` — 3/3 |
+
+---
+
 # STATUS — v0.3-hardening (2026-10-04) + ca đêm M1→M4
 
 ## v0.3 — ops: log + eval + gate (contract trong DONE.md)

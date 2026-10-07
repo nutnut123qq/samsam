@@ -4,7 +4,90 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **không có** — v0.6.2 (patch) đóng 2026-10-06.
+Version đang mở: **không có** — v1.0-live-prep đóng 2026-10-07
+(cold-check UNVERIFIED-chỉ-external: mọi thứ verify được trong repo
+PASS, live Zalo contract theo thiết kế chờ creds C2.0 — user duyệt
+push 2026-10-07).
+
+## Checklist v1.0-live-prep
+
+Khán giả: ngày C2.0 có creds → cắm vào `.env`, chạy preflight, mở
+endpoint → bot live KHÔNG cần vá code. Quy ước theo precedent patch:
+`guardrail.py` cấm đụng, `api/rag.py` không cần đụng, skip `eval_qa`
+(answer path không đổi — tiết kiệm credit), `zalo_mock` giữ.
+Token persist vào `data/zalo_tokens.json` (gitignore — secret-động tách
+khỏi `.env` config-tĩnh do user quản lý).
+
+- [x] **V1.1 Token store + auto-refresh** — `data/zalo_tokens.json`
+  {access_token, refresh_token, expires_at} làm source-of-truth, seed
+  từ `ZALO_ACCESS_TOKEN`+`ZALO_REFRESH_TOKEN` lần đầu. Refresh:
+  `POST oauth.zaloapp.com/v4/oa/access_token` header `secret_key:
+  $ZALO_APP_SECRET`, form `app_id`+`grant_type=refresh_token`+
+  `refresh_token` → response `{access_token, refresh_token,
+  expires_in}` — refresh_token ROTATE (dùng 1 lần) → persist cả hai.
+  `send_text` dùng token từ store; send fail → refresh → retry 1 lần;
+  refresh fail → False+warn, không crash reply path. `_startup_error`
+  DEPLOY: cần OA_SECRET + (ACCESS_TOKEN ∨ REFRESH_TOKEN+APP_ID+
+  APP_SECRET). Expose `refresh_access_token() -> bool` cho preflight.
+  Gate: pytest mock httpx — send-fail→refresh→retry ok; rotation
+  persist file; refresh-fail→send False; startup nhánh mới.
+  `.gitignore` +`data/zalo_tokens.json`
+  — *(+throttle ≤1 refresh/60s trên send-fail — reviewer M3: lỗi
+    không-liên-quan-token không burn rotation; chmod 0600 store POSIX;
+    `test_send_fail_refresh_throttled_within_interval`)*
+- [x] **V1.2 Tách 2 secret đúng contract** — webhook signature dùng
+  `ZALO_OA_SECRET` (OA secret key — spec `sha256(appId+data+timestamp+
+  OAsecretKey)`); oauth refresh header `secret_key` dùng
+  `ZALO_APP_SECRET` (app). `.env` chưa có ZALO_* → đổi sạch, không
+  backward-compat. Cập nhật `verify_signature`, `_startup_error`,
+  docstring, test nhánh env (7 nhánh hiện có viết lại)
+  Gate: pytest nhánh mới; deploy doc nêu nguồn lấy từng secret
+  — *(10 nhánh `_startup_error`; mock vá `APP_SECRET`→`OA_SECRET` để
+    signature verify chạy thật lại)*
+- [x] **V1.3 Preflight script** — `scripts/zalo_preflight.py` chạy
+  trên máy deploy trước khi mở public, in PASS/FAIL/SKIP từng mục +
+  exit code: env đủ cho DEPLOY · DB connect + `chunks` count ·
+  OpenRouter key set (không gọi API — tiết kiệm credit) · token sống
+  (`GET openapi.zalo.me/v2.0/oa/getoa` header access_token) · signature
+  round-trip tự ký · `--refresh` ép chạy refresh flow thật (test
+  rotate — qua `connectors.zalo.refresh_access_token()`). UTF-8 guard.
+  Gate: chạy dev thiếu ZALO_* → báo đúng mục thiếu + exit 1; pytest
+  mock nhánh
+  — *(11 test; reviewer M1: `--refresh` ép rotation kể cả khi token còn
+    sống; check_env mirror `_startup_error` đọc token store — reviewer
+    minor)*
+- [x] **V1.4 Non-text event → lối thoát** — `user_send_*` không phải
+  `text` (ảnh/file/sticker/gif/doodle/link/location/audio/video/
+  business_card) hiện rơi vào ignore → khách live gửi ảnh bị câm.
+  Reply hằng viết tay `NON_TEXT_TEXT` ("chỉ hỗ trợ tin nhắn văn bản +
+  hotline"), vẫn dedup + convlog `answered:false` (question log dạng
+  `[non-text:user_send_image]`). Event khác (follow…) vẫn ignore.
+  Gate: pytest event image → reply đúng + log
+  — *(+cap `event[:50]` — event_name client-controlled khi signature
+    bypass dev; reviewer minor)*
+- [x] **V1.5 Deploy artifacts + docs** — `env.example` đủ biến kèm
+  comment nguồn lấy từng secret *(đổi tên không-dot: `.env*` bị write-
+  policy chặn)*; `docs/zalo-webhook.service` systemd mẫu
+  (EnvironmentFile + Restart=always); `deploy.md` rewrite: token
+  auto-refresh (xóa hướng dẫn manual 25h), HTTPS bắt buộc khi đăng ký
+  webhook, phân biệt OA_SECRET vs APP_SECRET, preflight = bước go-live.
+  Gate: `env.example` khớp mọi `os.environ.get` trong code
+  — *(reviewer M2: systemd comment cuối dòng trong EnvironmentFile=
+    làm unit fail → tách ra dòng riêng)*
+- [x] **V1.6 Gate chung** — `python -m pytest` xanh + `ruff check .`
+  clean + `python scripts/zalo_mock.py` exit 0
+  — *(77/77 ×2 `evidence/v10_pytest.log` + ruff clean + mock 3/3
+    `evidence/v10_mock.log`; reviewer FIX→PASS rồi cold-check auditor
+    lạ chạy lại toàn bộ gate: UNVERIFIED chỉ ở live Zalo contract =
+    external-dependency theo thiết kế)*
+
+External-dependency (không treo version): OA creds thật → preflight
+thật → đăng ký webhook HTTPS → live-verify signature + reply. C2.0 vẫn
+NEEDS-INPUT. Someday giữ nguyên +4: refresh chủ động trước hết hạn
+(hiện lazy-on-fail), welcome message khi user follow OA, `_last_refresh`
+ghi cả attempt-fail → send-fail trong 60s sau retry với token hỏng
+(waste-only — cold-check v1.0 minor), `os.replace` fail mất token đã
+rotate (warn rõ, không recovery — Windows file-lock hiếm).
 
 ## Checklist v0.6.2 (patch)
 

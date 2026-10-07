@@ -1,0 +1,26 @@
+# Systemd unit mẫu — Zalo OA webhook (python -m connectors.zalo)
+# Copy sang /etc/systemd/system/zalo-webhook.service trên VPS rồi sửa
+# 3 chỗ đánh dấu <>: đường repo, user, đường python venv.
+#   systemctl daemon-reload && systemctl enable --now zalo-webhook
+# Log: journalctl -u zalo-webhook -f
+
+[Unit]
+Description=Samsam Zalo OA webhook
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=<deploy-user>
+WorkingDirectory=</path/to/samsam>
+# systemd không hỗ trợ comment cuối dòng trong giá trị — DEPLOY=1 + đủ
+# ZALO_* phải nằm trong .env.
+EnvironmentFile=</path/to/samsam>/.env
+ExecStart=</path/to/samsam>/.venv/bin/python -m connectors.zalo
+Restart=always
+RestartSec=5
+# data/ phải ghi được: convlog jsonl + zalo_tokens.json + zalo_seen.db.
+# Nếu siết sandbox: ProtectSystem=full + ReadWritePaths=</path>/data
+
+[Install]
+WantedBy=multi-user.target

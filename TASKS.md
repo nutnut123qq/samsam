@@ -292,6 +292,30 @@ Checklist/DoD chi tiết: `DONE.md` mục v0.6.2 (contract user duyệt
   - Gate: pytest case mới + regression biên
 - [x] **D6.12 Gate chung** — pytest xanh + ruff clean
 
+## M11 — Live-prep v1.0 (plug-and-play khi có OA creds)
+
+Checklist/DoD chi tiết: `DONE.md` mục v1.0-live-prep (contract user duyệt
+2026-10-06). `guardrail.py` cấm đụng; `api/rag.py` không cần đụng; skip
+eval_qa; `zalo_mock` giữ.
+
+- [x] **V1.1+V1.2+V1.4 Lane A** — `connectors/zalo.py`: token store
+  `data/zalo_tokens.json` + `refresh_access_token()` + send-retry;
+  tách `ZALO_OA_SECRET` (signature) / `ZALO_APP_SECRET` (oauth);
+  non-text `user_send_*` → `NON_TEXT_TEXT` + convlog
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`, `.gitignore`
+  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean
+- [x] **V1.3 Lane B** — `scripts/zalo_preflight.py` + test
+  - Boundary: `scripts/zalo_preflight.py`, `tests/test_preflight.py`
+    (nếu cần), `connectors/zalo.py` READ-ONLY (chỉ import
+    `refresh_access_token`)
+  - Gate: chạy dev → báo đúng mục thiếu ZALO_* + exit 1
+- [x] **V1.5 Lane C** — `env.example` (tên không-dot — `.env*` bị
+  write-policy chặn), `docs/zalo-webhook.service`, `docs/deploy.md`
+  - Boundary: `env.example`, `docs/` — KHÔNG đụng code
+  - Gate: `env.example` khớp `os.environ.get` trong code
+- [x] **V1.6 Gate chung** — pytest full + ruff + mock exit 0
+  (coordinator) — 77/77 + ruff clean + mock 3/3 `evidence/v10_*`
+
 ---
 
 ## Lề (không đụng trong pilot)

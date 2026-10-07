@@ -47,7 +47,7 @@ def _sign(raw: bytes) -> str:
 
 
 def main() -> int:
-    zalo.APP_ID, zalo.APP_SECRET = APP_ID, SECRET
+    zalo.APP_ID, zalo.OA_SECRET = APP_ID, SECRET  # V1.2: signature dùng OA_SECRET
     zalo.ACCESS_TOKEN = ""  # send_text gốc sẽ skip — thay bằng mock dưới
     zalo.send_text = lambda uid, text: SENT.update({uid: text}) or True
 
