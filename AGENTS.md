@@ -109,7 +109,15 @@ chat lẫn embeddings) + Streamlit.
   v0.4.1, flake thật ở v0.6 ship-pass (sleep-0.3s trước assert
   `got==["u1"]` — thread dispatch chậm dưới load → `[]`).
 - Runtime/state file mới trong `data/` (`conversations.jsonl`,
-  `zalo_seen.db`...) — gitignore NGAY khi thêm (có user_hash/PII-adjacent).
+  `zalo_seen.db`, `zalo_tokens.json`...) — gitignore NGAY khi thêm
+  (có user_hash/PII-adjacent/secret).
+- **`.env*` file write bị policy chặn** (kể cả `.env.example`/
+  `.env.sample`, scope grant cũng deny) — template env dùng
+  `env.example` không-dot (v1.0).
+- **Module-global mutable mới trong `zalo.py`** (`_last_refresh`,
+  `_last_purge`...) phải reset trong fixture `_isolated_files` —
+  state sót lại theo thứ tự test (v1.0: `_last_refresh` từ test
+  refresh trước làm test sau thấy "fresh" giả, retry không refresh).
   Test cho state-on-disk: isolate bằng monkeypatch đường dẫn → `tmp_path`
   (xem `_isolated_files` trong `tests/test_zalo.py`), KHÔNG `clear()`
   structure in-memory như khi state còn là dict.
