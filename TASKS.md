@@ -316,6 +316,24 @@ eval_qa; `zalo_mock` giữ.
 - [x] **V1.6 Gate chung** — pytest full + ruff + mock exit 0
   (coordinator) — 77/77 + ruff clean + mock 3/3 `evidence/v10_*`
 
+## M12 — Patch v1.1-oa-resilience (token + dispatch + welcome)
+
+Checklist/DoD chi tiết: `DONE.md` mục v1.1-oa-resilience (contract
+coordinator tự chọn qua /cycle 2026-10-08). `guardrail.py` cấm đụng;
+`api/rag.py` không đụng; skip eval_qa + zalo_mock.
+
+- [ ] **V2.1–V2.5 Lane A (1 worker)** — `connectors/zalo.py` +
+  `tests/test_zalo.py`: proactive refresh theo `expires_at`
+  (`REFRESH_AHEAD_S=300`), `_last_refresh_ok` tách attempt/success,
+  `_mem_tokens` persist-fail fallback (mem→store→env), non-text qua
+  `_ulock`, welcome `WELCOME_TEXT` khi `follow` (`follower.id`→fallback
+  `sender.id`, convlog `answered:null`). Globals mới reset trong
+  `_isolated_files`.
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
+  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean
+- [ ] **V2.6 Gate chung** — `python -m pytest` full + `ruff check .`
+  (coordinator)
+
 ---
 
 ## Lề (không đụng trong pilot)

@@ -4,10 +4,76 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **không có** — v1.0-live-prep đóng 2026-10-07
-(cold-check UNVERIFIED-chỉ-external: mọi thứ verify được trong repo
-PASS, live Zalo contract theo thiết kế chờ creds C2.0 — user duyệt
-push 2026-10-07).
+Version đang mở: **v1.1-oa-resilience** (patch) — contract coordinator
+tự chọn 2026-10-08 (cycle, user có thể phủ quyết).
+
+## Checklist v1.1-oa-resilience
+
+Khán giả: OA bot live trên creds thật — token không chết giữa ngày
+(refresh chủ động), reply không đảo thứ tự, khách follow nhận welcome;
+vá 5 someday đã grep chứng minh còn hỏng. Quy ước precedent patch:
+`guardrail.py` cấm đụng, `api/rag.py` không đụng, skip eval_qa +
+zalo_mock (answer/reply path không đổi — tiết kiệm credit). Module
+global mutable mới (`_last_refresh_ok`, `_mem_tokens`) PHẢI reset
+trong fixture `_isolated_files` (gotcha v1.0).
+
+- [ ] **V2.1 Refresh chủ động theo `expires_at`** — store ghi
+  `expires_at` nhưng không ai đọc: token hết hạn chỉ phát hiện khi
+  send fail (reply khách đầu tiên sau expiry chậm 1 oauth round-trip
+  hoặc mất nếu refresh lỗi). `send_text`: store có `expires_at` +
+  `now > expires_at - REFRESH_AHEAD_S` (300s) + `_can_refresh()` →
+  refresh TRƯỚC khi send; refresh fail vẫn send thử token hiện tại
+  (best-effort). Store thiếu/`expires_at` không parse → hành vi cũ.
+  Gate: pytest 3 nhánh — sắp hết hạn → refresh (mock httpx) rồi send
+  token mới; còn hạn xa → không gọi oauth; refresh fail → vẫn send
+  token cũ
+- [ ] **V2.2 `_last_refresh_ok` tách khỏi attempt** — `_last_refresh`
+  ghi cả attempt-fail → send-fail trong 60s sau refresh-fail retry với
+  token hỏng (waste — cold-check v1.0 minor). Thêm `_last_refresh_ok`
+  (set khi refresh ra token dùng được — kể cả nhánh mem-fallback V2.3).
+  Retry path `send_text`: recent-success (<60s) → retry token hiện
+  hành; không có attempt gần → refresh → retry nếu True; recent-failed-
+  attempt → return False KHÔNG retry stale. Throttle oauth giữ nguyên
+  (`_last_refresh` vẫn ghi mọi attempt).
+  Gate: pytest — refresh-fail rồi send-fail <60s → chỉ 1 `_send_once`
+  (không retry); recent-success → retry cùng token
+- [ ] **V2.3 `_mem_tokens` — persist-fail không mất rotated token** —
+  `_write_token_store` OSError → token đã rotate server-side mất hẳn,
+  store giữ refresh_token cũ đã vô hiệu → mọi refresh sau fail vĩnh
+  viễn. Vá: `_mem_tokens` {access_token, refresh_token, expires_at}
+  cập nhật mọi refresh thành công TRƯỚC persist; readers
+  (`_current_access_token`, `_current_refresh_token`, expires_at
+  cho V2.1) đọc mem → store → env. Persist-fail → warn "rotate OK,
+  persist lỗi — chỉ sống trong-process" + return True (token dùng
+  được). Restart vẫn mất (chấp nhận — comment rõ). Preflight cố tình
+  đọc store on-disk (báo đúng trạng thái persist).
+  Gate: pytest — `_write_token_store` throw → refresh True,
+  `_current_*_token` trả token mới, send sau dùng token mới, refresh
+  sau dùng rotated refresh_token
+- [ ] **V2.4 Non-text dispatch qua `_ulock`** — `_reply_non_text`
+  dispatch thẳng không lock (zalo.py ~L676 vs :506) → ảnh+text cùng
+  user reply đảo thứ tự (ordering/UX — cold-audit v1.0 minor). Thêm
+  `handle_non_text()` wrapper `with _ulock(user_id)` như `handle_text`.
+  Gate: pytest ordering event-based (mô phỏng
+  `test_same_user_messages_serialize`, không sleep)
+- [ ] **V2.5 Welcome khi follow** — `event_name == "follow"` hiện
+  ignore → khách follow OA không biết bot làm gì. Gửi `WELCOME_TEXT`
+  (hằng viết tay kiểu HANDOFF/NON_TEXT: cảm ơn + Sâm Sâm sâm Ngọc
+  Linh + hotline 1800577732). uid = `follower.id` fallback `sender.id`;
+  dispatch qua `_ulock`; convlog `question:"[event:follow]"`,
+  `answered:null` (không phải câu hỏi — ra khỏi queue, precedent
+  `guardrail_ok:null`), `guardrail_ok:null`, `sent`. Dedup
+  `f"{uid}:follow:{ts}"`; unfollow vẫn ignore. Mỗi follow đều welcome
+  (dedup chỉ chặn retry cùng ts — comment + someday note refollow
+  spam). Gate: pytest follow → sent WELCOME + convlog đúng schema;
+  unfollow/thiếu id → ignore
+- [ ] **V2.6 Gate chung** — `python -m pytest` xanh + `ruff check .`
+  clean (coordinator)
+
+External-dependency (không treo version): live-verify proactive
+refresh thật + payload shape `follower.id` của event follow — chờ creds
+C2.0 như mọi live-Zalo contract. Someday mới: welcome không dedup
+theo user (refollow → welcome lặp); PII SĐT dạng ngoặc vẫn mở.
 
 ## Checklist v1.0-live-prep
 
