@@ -875,7 +875,8 @@ def main() -> None:
         print(err, flush=True)
         sys.exit(1)
     # Retention theo tuổi mỗi lần boot (D5.11); throw chỉ warn — miss 1
-    # lần boot không đáng kill service, lần ghi sau retry (D6.9).
+    # lần boot không đáng kill service, lần ghi sau retry (throttle
+    # PURGE_RETRY_S — D6.9 + V4.1).
     try:
         _purge_convlog(CONV_LOG)
     except Exception as e:  # noqa: BLE001 — warn-only ở boot

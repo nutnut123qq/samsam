@@ -814,7 +814,6 @@ def test_log_write_triggers_daily_purge(monkeypatch, tmp_path):
                                        * 86400))
     log.write_text(json.dumps({"ts": old_ts, "question": "cũ"}) + "\n",
                    encoding="utf-8")
-    monkeypatch.setattr(zalo, "_last_purge", 0.0)
     monkeypatch.setattr("api.rag.answer",
                         lambda q: {"answer": "ok", "sources": []})
     monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
