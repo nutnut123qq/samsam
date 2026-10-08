@@ -4,8 +4,10 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **v1.2-convlog-hygiene** (contract coordinator tự
-chọn qua /cycle 2026-10-09).
+Version đang mở: **không có** — v1.2-convlog-hygiene đóng 2026-10-09
+(cold-check PASS kèm 3 MINOR/NIT → someday; NIT purge-partial-write đã
+verify purge chạy trong `_log_lock` nên chỉ còn race xuyên-process =
+someday "rotate race" cũ).
 
 ## Checklist v1.2-convlog-hygiene
 
@@ -542,10 +544,14 @@ Quy ước DoD cho phase connector:
 
 - PII trong `conversations.jsonl`: `question` đã mask SĐT/email bằng
   regex (v0.5), SĐT viết cách + retention theo tuổi vá ở v0.5.1,
-  `+84`/`84` prefix + sep lặp cùng-ký-tự vá ở v0.6.2 — còn lọt tên
-  người + SĐT dạng ngoặc "+84 (90) 123 4567"/"(+84) 901234567"; dòng
-  parse-lỗi được giữ qua purge (PII quá hạn tới rotate kế); over-mask
-  nhẹ chấp nhận được ("abc84901234567" → "abc***", "2.000.000.000.000"
+  `+84`/`84` prefix + sep lặp cùng-ký-tự vá ở v0.6.2, SĐT dạng ngoặc
+  vá ở v1.2 (unwrap digit-group), purge drop dòng không-ts cũng ở
+  v1.2 — còn lọt tên người; dạng ngoặc trộn sep `(0901) - (234)` và
+  `((0901))` lọt (cold-check v1.2 MINOR); unwrap digit-group làm biến
+  dạng text non-SĐT trong convlog ("đơn (12345)" → "đơn  12345") và
+  over-mask "giá 500.000 (10) 0901234567" → "giá 500.***" (che thừa,
+  không rò — cold-check v1.2 MINOR); over-mask nhẹ chấp nhận được
+  ("abc84901234567" → "abc***", "2.000.000.000.000"
   → "2.***", "06.10.2026 09:30" → "***:30" — pre-existing); production
   cần mask đầy đủ hơn (pilot: local + gitignored)
 - Reject-sớm 411/413 không set `close_connection` — nếu sau này bật
@@ -574,7 +580,9 @@ Quy ước DoD cho phase connector:
 - Đăng bài/listing mới lên OA/sàn — BẮT BUỘC human-approve step trong flow
   (guardrail chỉ là lưới heuristic, không thay người duyệt pháp lý)
 - Zalo OA product catalog sync (27 SKU, batch ≤500)
-- Zalo access_token refresh tự động (~25h expiry — hiện gán tay trong .env)
+- Welcome follow dedup theo SEEN_TTL_S (1h) — refollow sau TTL vẫn
+  welcome lại (re-engagement, chủ đích v1.2); muốn chặn lâu hơn cần
+  per-key TTL trong seen db
 - Deploy webhook public (tunnel/VPS) + verify signature trên endpoint thật
 - Agent vận hành vườn + agent báo cáo định kỳ
 - Dashboard số liệu kênh
@@ -601,3 +609,4 @@ Quy ước DoD cho phase connector:
 | v0.6.2 (patch) | Vá 4 NIT audit còn lại (convlog/PII hygiene): `sent:null` kênh UI, purge không giết reply + retry đúng, `_ui_hash` per-session, `_PII_RE` bắt `+84`/`84` + sep lặp cùng-ký-tự | 2026-10-06 | pytest 58/58 ×3 + ruff clean; commits `16dff2c` (contract) + `cee33f4` (code). Reviewer độc lập verdict FIX đợt 1 — major: `[ .-]*` nuốt sep TRỘN " - " nối 2 số → mất khoảng giá/ngày; vá `([ .-])\1*` cả 2 alternative. 3 NIT pre-existing → someday (SĐT dạng ngoặc, over-mask nhẹ abc84.../date+time). eval/mock skip theo precedent patch. Cold-audit session lạ: verdict **PASS** 5/5 claims (auditor tự chạy pytest 58/58 + trace regex + probe 12 case thêm), 1 NIT → someday (purge retry-per-write trong `_log_lock` khi fail dai dẳng); dọn 3 someday entry stale đã vá |
 | v1.0-live-prep | OA connector plug-and-play khi có creds: token store + auto-refresh + rotate persist, tách 2 secret đúng contract (OA_SECRET signature / APP_SECRET oauth), preflight script, non-text reply, deploy artifacts | 2026-10-07 | `evidence/v10_pytest.log` 77/77 ×2 + ruff clean · `v10_mock.log` 3/3 · preflight dev exit 1 báo đúng mục thiếu; commits `e6e2cf2` + `ba90c19` (retro) + `4039c11` (DONE). Reviewer bắt 3 MAJOR vá hết (throttle refresh, cap event_name, systemd comment). Cold-check auditor lạ: mọi claim repo verify được PASS; live-Zalo UNVERIFIED = external chờ C2.0. Someday +5 |
 | v1.1-oa-resilience (patch) | Vá 5 someday đã verify còn hỏng: proactive refresh theo `expires_at` (throttled), `_last_refresh_ok` tách attempt/success (chờ `_token_lock` khi refresh in-flight), `_mem_tokens` chỉ cover cửa sổ persist-fail, non-text qua `_ulock`, welcome `WELCOME_TEXT` khi `follow` | 2026-10-08 | `evidence/v11_pytest.log` 90/90 + `v11_ruff.log` clean; commits `5fe926f` (contract) + code. Lane worker chết connection-error giữa chừng → coordinator absorb. Reviewer FIX đợt 1: throttle proactive + `expires_in≤0`→expires_at=0 + chờ lock khi refresh in-flight + spy dispatch `handle_non_text`. Cold-check: FIX F1 major (mem đè store ghi bởi process khác → refresh token chết tới restart) → vá mem-chỉ-khi-persist-fail + test; re-audit **PASS**. F2/F3 minor → someday. eval/mock skip precedent patch |
+| v1.2-convlog-hygiene (patch) | Vá 3 someday còn hỏng: `_mask_pii` unwrap nhóm ngoặc toàn-digit (SĐT "+84 (90)..."/"(+84)..." mask được, giá ngoặc không bị bridging), dedup follow bỏ ts (welcome ≤1 lần/SEEN_TTL_S/user), `_purge_convlog` drop dòng strptime-fail/ts-outlier (đổi policy "giữ thừa" → retention 30d đóng hở PII quá hạn) | 2026-10-09 | `evidence/v12_pytest.log` 92/92 (auditor tự chạy lại 151.7s) + ruff clean; commits `a30762b` (contract) + `6ebece4` (code) + `b07a367` (board). Reviewer FIX đợt 1: normalize ngoặc→space tạo bridging mới "(1.500.000)(2.000.000)" → vá unwrap-digit-group; `len(ts)==20` không đủ → strptime + horizon +1d. Re-audit PASS. Cold-check auditor lạ: **PASS** — tự xác định diff-range, chạy lại pytest 92/92 + ruff, 3 MINOR/NIT → someday (unwrap biến dạng text non-SĐT, over-mask "500.000 (10) 0901234567", ngoặc-trộn-sep lọt). eval/mock skip precedent patch. Dọn someday stale: "token refresh tự động" đã xong từ v1.0 |
