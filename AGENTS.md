@@ -77,6 +77,15 @@ chat lẫn embeddings) + Streamlit.
     chỉ flag alt `0...`, alt `+84/84` cũng bridging y hệt — vá cả 2
     + test "84 - 100.000.000". Test biên mẫu:
     `test_mask_pii_vn_prefix_and_multi_sep` (19 assert).
+  - **Preprocess TRƯỚC regex cũng mở bridging** (v1.2, reviewer F1):
+    `_mask_pii` normalize `(`/`)`→space để bắt SĐT ngoặc — space LÀ
+    sep-class char nên `)(` thành space-run → "(1.500.000)(2.000.000)"
+    nối thành run ≥9 → ăn cả 2 giá. Quy tắc: ký tự thay thế trong
+    preprocess KHÔNG được thuộc sep class; vá đúng = unwrap chỉ nhóm
+    toàn-digit `re.sub(r"\((\+?\d+)\)", r" \1 ", ...)` — ngoặc bọc
+    non-digit giữ nguyên, `)` tự chặn bridge. Case phải test: giá/
+    số đứng LIỀN nhau qua ngoặc `(X)(Y)`, không chỉ `(X) - (Y)`
+    (sep trộn vốn đã chặn → test đó không bắt được lỗi).
 - Đọc/ghi file log do user ảnh hưởng nội dung (convlog/jsonl): dùng
   BYTES + split `\n` tường minh — `splitlines()` cắt U+2028/\x85/\x1c
   làm đôi record, `read_text` strict crash trên byte lỗi (dòng ghi dở),
