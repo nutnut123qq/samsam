@@ -343,15 +343,16 @@ Checklist/DoD chi tiết: `DONE.md` mục v1.2-convlog-hygiene (contract
 coordinator tự chọn qua /cycle 2026-10-09). `guardrail.py` cấm đụng;
 `api/rag.py` không đụng; skip eval_qa + zalo_mock.
 
-- [ ] **V3.1+V3.2+V3.3 Lane A** — `connectors/zalo.py` +
+- [x] **V3.1+V3.2+V3.3 Lane A** — `connectors/zalo.py` +
   `tests/test_zalo.py`: `_mask_pii` normalize `(`/`)`→space trước
   `_PII_RE` (SĐT dạng ngoặc); dedup follow key bỏ ts (welcome ≤1
   lần/SEEN_TTL_S/user); `_purge_convlog` drop dòng thiếu ts ISO-Z
   hợp lệ (đổi policy "giữ thừa" → retention đóng hở PII quá hạn).
   - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
-  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean
-- [ ] **V3.4 Gate chung** — `python -m pytest` full + `ruff check .`
-  (coordinator)
+  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean —
+    62/62 (worker)
+- [x] **V3.4 Gate chung** — `python -m pytest` full + `ruff check .`
+  (coordinator) — 92/92 `evidence/v12_pytest.log` + ruff clean
 
 ---
 

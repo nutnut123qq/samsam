@@ -14,32 +14,41 @@ cùng chủ đề privacy/hygiene convlog + dedup. Quy ước precedent patch:
 `guardrail.py` cấm đụng, `api/rag.py` không đụng, skip eval_qa +
 zalo_mock (answer/reply path không đổi — tiết kiệm credit).
 
-- [ ] **V3.1 PII SĐT dạng ngoặc** — `_PII_RE` sep class `[ .-]` không
+- [x] **V3.1 PII SĐT dạng ngoặc** — `_PII_RE` sep class `[ .-]` không
   chứa `(`/`)` → "+84 (90) 123 4567", "(+84) 901234567",
-  "(0901) 234 567" lọt mask. Vá: `_mask_pii` normalize `(`/`)` → space
-  TRƯỚC khi apply `_PII_RE` (regex giữ nguyên — KHÔNG nới sep class,
-  đã 2 lần vấp sep-trộn bridging "50.000.000 - 100.000.000" mất cả
-  khoảng). Gate: pytest case mới masked "***" + regression biên KHÔNG
-  over-match giá/ngày/khoảng-giá kể cả khi có ngoặc lân cận.
-- [ ] **V3.2 Refollow → welcome lặp** — dedup key
+  "(0901) 234 567" lọt mask. Vá: `_mask_pii` unwrap nhóm ngoặc
+  TOÀN-digit `\((\+?\d+)\)` → ` \1 ` TRƯỚC `_PII_RE` (regex giữ
+  nguyên — KHÔNG nới sep class). Ngoặc bọc non-digit (giá có ".")
+  giữ nguyên → `)` tự chặn bridging.
+  Gate: `test_mask_pii_parenthesized_phone` — 4 SĐT ngoặc → "***" +
+  7 regression biên không over-match
+  — *(reviewer FIX đợt 1: bản đầu normalize MỌI ngoặc → space tạo
+    bridging mới — ")(" → space-run cùng-ký-tự nối
+    "(1.500.000)(2.000.000)" thành run ≥9 → ăn cả 2 giá. Vá sang
+    unwrap-digit-group, re-audit PASS)*
+- [x] **V3.2 Refollow → welcome lặp** — dedup key
   `f"{uid}:follow:{ts}"`: refollow ts khác → gửi lại WELCOME_TEXT.
   Vá: key `f"{uid}:follow"` (bỏ ts) → welcome tối đa 1 lần/SEEN_TTL_S
   (1h)/user; refollow sau TTL = re-engagement, chủ đích vẫn welcome
-  (ghi comment + someday nếu muốn chặn lâu hơn). Retry cùng event vẫn
-  chặn (mạnh hơn key cũ — cùng uid đã thấy). Gate: pytest 2 follow
-  khác ts cùng uid → 1 welcome; uid khác → 2 welcome.
-- [ ] **V3.3 Purge drop dòng không-đọc-được-ts** — `_purge_convlog`
+  (someday: per-key TTL nếu muốn chặn lâu hơn). Retry cùng event vẫn
+  chặn (mạnh hơn key cũ). Gate: `test_follow_refollow_dedup_within_ttl`
+  — 2 follow khác ts cùng uid → 1 welcome; uid khác → 2 welcome
+- [x] **V3.3 Purge drop dòng không-đọc-được-ts** — `_purge_convlog`
   giữ dòng parse-lỗi/thiếu ts → PII quá hạn không bao giờ bị purge
   (trái intent retention 30d; reader `unanswered()` vốn skip dòng
   lỗi → giữ chỉ để rò PII). ĐỔI POLICY "thà giữ thừa" → "không chứng
-  minh được tuổi = không được nằm lại": keep iff ts là ISO-Z hợp lệ
-  (format cố định của writer) và `ts >= cutoff`; corrupt/ts-missing/
-  ts-malformed → drop. Purge chạy dưới `_log_lock` nên không có writer
-  concurrent trong process (cross-process race là someday riêng).
-  Gate: pytest purge drop dòng corrupt + thiếu ts + ts malformed;
-  dòng ts mới giữ; dòng ts cũ drop.
-- [ ] **V3.4 Gate chung** — `python -m pytest` xanh + `ruff check .`
+  minh được tuổi = không được nằm lại": keep iff `strptime(ts,
+  "%Y-%m-%dT%H:%M:%SZ")` parse được và `cutoff <= ts <= now+1d`
+  (slack clock-skew); corrupt/ts-missing/ts-malformed/ts-tương-lai-xa
+  → drop.
+  Gate: `test_convlog_purges_entries_older_than_retain_days` flip
+  contract (corrupt/byte-lỗi/thiếu-ts/malformed/"9999-99-99"/future+2d
+  drop; mới + skew+1h giữ)
+  — *(reviewer FIX đợt 1: `len(ts)==20` không đủ — "9999-99-99T99:99:99Z"
+    và ts tương lai xa vẫn nằm mãi; vá strptime + horizon +1d)*
+- [x] **V3.4 Gate chung** — `python -m pytest` xanh + `ruff check .`
   clean (coordinator)
+  — *(92/92 `evidence/v12_pytest.log` + ruff clean)*
 
 ## Checklist v1.1-oa-resilience
 
