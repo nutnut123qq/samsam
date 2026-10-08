@@ -192,6 +192,40 @@ def test_follow_sends_welcome(server, monkeypatch, tmp_path):
     assert rec["user_hash"] == zalo._uhash("u-fol")
 
 
+def test_follow_refollow_dedup_within_ttl(server, monkeypatch, tmp_path):
+    # V3.2: dedup key follow bỏ timestamp -> per-user. 2 event follow
+    # cùng uid nhưng ts KHÁC (user unfollow/refollow trong SEEN_TTL_S)
+    # -> chỉ 1 welcome / 1 dòng convlog; uid khác -> welcome riêng.
+    sent, done = [], threading.Event()
+    monkeypatch.setattr(zalo, "send_text",
+                        lambda u, t: sent.append(u) or done.set() or True)
+    ev = _event(event="follow")
+    del ev["message"]
+    ev["follower"] = {"id": "u-fol"}
+    ev["timestamp"] = "1700000000000"
+    raw1 = json.dumps(ev).encode()
+    raw2 = json.dumps(dict(ev, timestamp="1700000001000")).encode()
+    for raw in (raw1, raw2):  # lần 2 = refollow ts khác -> dedup
+        assert httpx.post(server, content=raw,
+                          headers={"X-ZEvent-Signature": _sign(raw)}
+                          ).status_code == 200
+    assert done.wait(5)
+    time.sleep(0.3)  # dup dispatch (nếu bug) cần cơ hội chạy trước assert
+    assert sent == ["u-fol"]
+    recs = _wait_log_lines(tmp_path / "conversations.jsonl", 1)
+    assert len(recs) == 1
+    # uid khác -> vẫn được welcome riêng (dedup per-user).
+    done.clear()
+    ev3 = dict(ev, timestamp="1700000002000")
+    ev3["follower"] = {"id": "u-fol2"}
+    raw3 = json.dumps(ev3).encode()
+    assert httpx.post(server, content=raw3,
+                      headers={"X-ZEvent-Signature": _sign(raw3)}
+                      ).status_code == 200
+    assert done.wait(5)
+    assert sent == ["u-fol", "u-fol2"]
+
+
 def test_follow_sender_fallback_and_no_id(server, monkeypatch):
     # V2.5 biên: thiếu `follower` -> fallback sender.id; không có id
     # nào -> ignore (không gửi, không crash).
@@ -710,15 +744,26 @@ def test_mask_pii_regex_boundaries():
 
 def test_convlog_purges_entries_older_than_retain_days(tmp_path,
                                                       monkeypatch):
-    # D5.11: retention theo tuổi — dòng ts cũ hơn RETAIN_DAYS bị purge
-    # lúc rotate/startup; dòng mới + dòng hỏng (không ts) giữ lại.
-    # Byte lỗi UTF-8 (dòng ghi dở) + U+2028 trong question không được
-    # phá purge hay cắt đôi record.
+    # D5.11 + V3.3: retention theo tuổi — dòng ts cũ hơn RETAIN_DAYS bị
+    # purge. ĐỔI CONTRACT v1.2 — trước "thà giữ thừa": giờ dòng corrupt /
+    # thiếu ts / ts sai format cũng bị DROP (không chứng minh được tuổi
+    # = không được nằm lại — dòng corrupt giữ PII mãi mãi mà unanswered()
+    # vốn skip nó). ts len-20 nhưng strptime fail + ts tương lai xa
+    # (> now+1d slack clock-skew) cũng drop; ts now+1h trong slack vẫn
+    # giữ. Byte lỗi UTF-8 (dòng ghi dở) + U+2028 trong question vẫn
+    # không được phá purge hay cắt đôi record: purge không throw trên
+    # input xấu, chỉ drop dòng.
     log = tmp_path / "conversations.jsonl"
     old_ts = time.strftime("%Y-%m-%dT%H:%M:%SZ",
                            time.gmtime(time.time() - (zalo.RETAIN_DAYS + 1)
                                        * 86400))
     new_ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    # F2: ts valid-format nhưng tương lai xa (now+2d > horizon now+1d)
+    # -> drop; ts now+1h trong slack clock-skew -> KEEP.
+    future_ts = time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                              time.gmtime(time.time() + 2 * 86400))
+    skew_ts = time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                            time.gmtime(time.time() + 3600))
     # ensure_ascii=False de U+2028 nam raw trong dong — splitlines()
     # cua ban cu se cat doi record nay lam no song sot qua purge.
     old_with_u2028 = json.dumps(
@@ -728,16 +773,27 @@ def test_convlog_purges_entries_older_than_retain_days(tmp_path,
          + old_with_u2028 + "\n"
          + json.dumps({"ts": new_ts, "question": "mới"}) + "\n"
          + "dòng hỏng không phải json\n").encode()
-        + b"\xff\xfe byte loi\n")  # byte không decode được UTF-8
+        + b"\xff\xfe byte loi\n"  # byte không decode được UTF-8 -> drop
+        # dict hợp lệ nhưng THIẾU ts -> drop; ts sai format -> drop
+        + json.dumps({"question": "không ts"}).encode() + b"\n"
+        + json.dumps({"ts": "không-phải-iso", "question": "x"}).encode()
+        + b"\n"
+        # F2: len 20 nhưng strptime fail -> drop; ts future xa -> drop;
+        # ts trong slack +1d -> KEEP.
+        + json.dumps({"ts": "9999-99-99T99:99:99Z",
+                      "question": "rác"}).encode() + b"\n"
+        + json.dumps({"ts": future_ts, "question": "xa"}).encode()
+        + b"\n"
+        + json.dumps({"ts": skew_ts, "question": "skew"}).encode()
+        + b"\n")
     zalo._purge_convlog(log)
     raw = log.read_bytes()
-    assert b"\xff\xfe" in raw  # dòng lỗi giữ lại, không crash
+    assert b"\xff\xfe" not in raw  # V3.3: dòng lỗi bị drop, không crash
     lines = [x for x in
              raw.decode("utf-8", "surrogateescape").split("\n") if x]
-    assert len(lines) == 3
-    recs = [json.loads(x) for x in lines[:1]]
-    assert recs[0]["question"] == "mới"
-    assert lines[1] == "dòng hỏng không phải json"
+    assert len(lines) == 2  # chỉ "mới" + "skew" (slack clock-skew) còn
+    recs = [json.loads(x) for x in lines]
+    assert [r["question"] for r in recs] == ["mới", "skew"]
     assert "a\u2028b" not in raw.decode("utf-8", "surrogateescape")
 
 
@@ -847,6 +903,30 @@ def test_mask_pii_vn_prefix_and_multi_sep():
     assert m("giá 84 - 100.000.000") == "giá 84 - 100.000.000"
     assert (m("50.000.000 -100.000.000") == "50.000.000 -100.000.000")
     assert (m("50.000.000- 100.000.000") == "50.000.000- 100.000.000")
+
+
+def test_mask_pii_parenthesized_phone():
+    # V3.1: SĐT dạng ngoặc — _mask_pii chỉ unwrap nhóm ngoặc TOÀN-digit
+    # (kèm '+' đầu) trước khi sub nên "+84 (90) ..." / "(0901) ..." vẫn
+    # mask; sep class `[ .-]` giữ nguyên (nới nó sẽ mở lại bridging).
+    m = zalo._mask_pii
+    for s in ("+84 (90) 123 4567", "(+84) 901234567",
+              "(0901) 234 567", "0 (901) 234 567"):
+        assert m(s).strip() == "***", s
+    # Regression biên — KHÔNG over-match khi có ngoặc lân cận: ngoặc
+    # bọc NON-digit (giá có '.') giữ nguyên văn -> ")" tự chặn bridging
+    # (reviewer F1: normalize mọi ngoặc -> space cũ làm ")(" -> sep-run
+    # nối "1.500.000"+"2.000.000" thành run >=9 -> ăn cả 2 giá).
+    assert (m("(50.000.000) - (100.000.000)")
+            == "(50.000.000) - (100.000.000)")
+    assert m("1.500.000 (đã gồm VAT)") == "1.500.000 (đã gồm VAT)"
+    assert m("05.10.2026") == "05.10.2026"
+    assert m("(1.500.000)(2.000.000)") == "(1.500.000)(2.000.000)"
+    assert (m("gia 1.500.000 (2.000.000)")
+            == "gia 1.500.000 (2.000.000)")
+    assert (m("(1.000.000) (2.000.000)") == "(1.000.000) (2.000.000)")
+    assert (m("(100.000.000)(50.000.000)")
+            == "(100.000.000)(50.000.000)")
 
 
 class _Resp:

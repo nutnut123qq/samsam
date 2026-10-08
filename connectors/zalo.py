@@ -121,6 +121,11 @@ RETAIN_DAYS = 30
 # Alternative 2 (D6.11): "+84"/"84" + >=8 số (VN mobile quốc tế),
 # cùng luật sep cùng-ký-tự; `(?<![\d+])` chặn "84" đứng sau digit/'+'.
 # Ngày "05.10.2026" (7 số) hay "1.500.000" quá ngắn -> không match.
+# V3.1: `_mask_pii` unwrap nhóm ngoặc TOÀN-digit ("(90)" -> " 90 ",
+# "(+84)" -> " +84 ") TRƯỚC khi match, nên SĐT dạng ngoặc
+# ("+84 (90) 123 4567", "(0901) 234 567") được bắt qua đường đó —
+# KHÔNG đưa ngoặc vào sep class (mở lại bridging ở trên) và không
+# normalize ngoặc non-digit (làm ")(" -> sep-run -> bridging mới).
 # Tên người vẫn không detect được bằng regex.
 _PII_RE = re.compile(
     r"(?<!\d)0(?:(?:([ .-])\1*)?\d){9,}"
@@ -240,13 +245,23 @@ def _purge_convlog(path: Path) -> None:
     """Rewrite `path` bỏ dòng có ts cũ hơn RETAIN_DAYS (D5.11) — ts
     ISO-8601 Z so sánh lexicographic đúng. Đọc/ghi bytes: byte lỗi
     (dòng ghi dở khi crash) hay U+2028 trong question không phá purge/
-    cắt đôi record. Dòng parse lỗi/thiếu ts giữ lại — thà giữ thừa còn
-    hơn phá log vì 1 dòng hỏng. Ghi tmp + os.replace để crash giữa
-    chừng không mất cả file."""
+    cắt đôi record. V3.3 ĐỔI POLICY "thà giữ thừa" -> "không chứng
+    minh được tuổi = không được nằm lại": dòng parse lỗi / thiếu ts /
+    ts sai format / ts tương lai xa (quá slack +1d clock-skew) bị
+    DROP — retention 30d là intent cứng, dòng corrupt giữ PII mãi mãi
+    mà reader `unanswered()` vốn skip nó nên giữ chỉ để rò PII. ts phải
+    strptime được đúng format writer ("%Y-%m-%dT%H:%M:%SZ") — len==20
+    thôi không đủ ("9999-99-99T99:99:99Z" cũng 20 ký tự). Ghi tmp +
+    os.replace để crash giữa chừng không mất cả file."""
     if not path.exists():
         return
+    now = time.time()
     cutoff = time.strftime("%Y-%m-%dT%H:%M:%SZ",
-                           time.gmtime(time.time() - RETAIN_DAYS * 86400))
+                           time.gmtime(now - RETAIN_DAYS * 86400))
+    # Slack +1 ngày cho clock-skew (writer trên máy giờ lệch nhẹ) — ts
+    # tương lai xa hơn horizon = không chứng minh được tuổi -> drop.
+    horizon = time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                            time.gmtime(now + 86400))
     kept = []
     for line in path.read_bytes().split(b"\n"):
         if not line:
@@ -256,8 +271,13 @@ def _purge_convlog(path: Path) -> None:
         except ValueError:
             obj = None
         ts = obj.get("ts") if isinstance(obj, dict) else None
-        if not isinstance(ts, str) or ts >= cutoff:
-            kept.append(line)
+        try:
+            time.strptime(ts, "%Y-%m-%dT%H:%M:%SZ")
+        except (TypeError, ValueError):
+            continue  # corrupt/thiếu ts/ts sai format -> drop
+        if ts < cutoff or ts > horizon:
+            continue  # quá hạn / tương lai xa -> drop
+        kept.append(line)
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_bytes(b"\n".join(kept) + (b"\n" if kept else b""))
     os.replace(tmp, path)
@@ -363,7 +383,14 @@ def _ui_hash(session) -> str:
 def _mask_pii(text: str) -> str:
     """Che SĐT/email user gõ vào câu hỏi trước khi ghi convlog — file đã
     gitignore nhưng vẫn nằm plaintext trên đĩa khi deploy. Tên người
-    không detect được bằng regex — production cần retention policy."""
+    không detect được bằng regex — production cần retention policy.
+    V3.1: chỉ unwrap nhóm ngoặc chứa TOÀN digit (kèm '+' đầu tùy chọn)
+    — "(90)" -> " 90 ", "(+84)" -> " +84 " — để bắt SĐT dạng ngoặc mà
+    KHÔNG normalize mọi ngoặc (normalize tràn làm ")(" -> space-run ->
+    bridging mới nối 2 số, reviewer F1). Ngoặc bọc non-digit (giá
+    "(1.500.000)" có '.') không match -> ngoặc giữ nguyên -> ")" tự
+    chặn bridging vì không thuộc sep class."""
+    text = re.sub(r"\((\+?\d+)\)", r" \1 ", text)
     return _PII_RE.sub("***", text)
 
 
@@ -733,7 +760,9 @@ def _reply_follow(user_id: str) -> dict:
     sent = send_text(user_id, WELCOME_TEXT)
     _log_conversation({
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "msg_id": "",  # event follow không có msg_id — dedup qua ts
+        # Event follow không có msg_id — dedup per-user ở Handler
+        # (key "uid:follow", V3.2), không qua msg_id.
+        "msg_id": "",
         "user_hash": _uhash(user_id),
         "question": "[event:follow]",
         "answer": WELCOME_TEXT[:500],  # text ĐÃ GỬI — parity HANDOFF
@@ -790,15 +819,17 @@ class Handler(BaseHTTPRequestHandler):
         event = ev.get("event_name") or ""
         if event == "follow":
             # V2.5: khách vừa follow OA -> welcome (uid ở follower.id
-            # theo spec; fallback sender.id phòng payload lệch). Mỗi
-            # follow đều gửi — dedup chỉ chặn retry cùng timestamp,
-            # refollow spam chưa throttle (someday); thiếu timestamp thì
-            # key "u:follow:" trùng nhau -> chặn refollow trong
-            # SEEN_TTL_S (hiếm — Zalo luôn gửi ts).
+            # theo spec; fallback sender.id phòng payload lệch). V3.2:
+            # dedup per-user bỏ timestamp — chặn welcome-spam khi user
+            # unfollow/refollow liên tục trong SEEN_TTL_S; retry cùng
+            # event vẫn chặn (mạnh hơn key cũ — cùng uid là đủ). Refollow
+            # SAU TTL vẫn welcome: coi là re-engagement, chủ đích.
+            # Someday: muốn chặn lâu hơn cần TTL riêng cho key này —
+            # cleanup hiện xóa theo SEEN_TTL_S chung, không phân biệt
+            # loại key.
             uid = ((ev.get("follower") or {}).get("id")
                    or (ev.get("sender") or {}).get("id") or "")
-            if uid and not _dedup(
-                    f"{uid}:follow:{ev.get('timestamp', '')}"):
+            if uid and not _dedup(f"{uid}:follow"):
                 threading.Thread(target=handle_follow, args=(uid,),
                                  daemon=True).start()
             return
