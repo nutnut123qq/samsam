@@ -871,14 +871,17 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
+    global _last_purge
     if err := _startup_error():
         print(err, flush=True)
         sys.exit(1)
     # Retention theo tuổi mỗi lần boot (D5.11); throw chỉ warn — miss 1
     # lần boot không đáng kill service, lần ghi sau retry (throttle
-    # PURGE_RETRY_S — D6.9 + V4.1).
+    # PURGE_RETRY_S — D6.9 + V4.1). Boot-purge thành công thì đánh dấu
+    # _last_purge — không để lần ghi đầu sau boot purge lại O(file).
     try:
         _purge_convlog(CONV_LOG)
+        _last_purge = time.time()
     except Exception as e:  # noqa: BLE001 — warn-only ở boot
         print(f"[warn] zalo: purge convlog lúc boot lỗi {e!r}", flush=True)
     srv = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)

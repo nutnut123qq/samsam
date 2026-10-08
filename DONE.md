@@ -4,8 +4,9 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **v1.3-ops-polish** (contract coordinator tự chọn
-qua /cycle 2026-10-09).
+Version đang mở: **không có** — v1.3-ops-polish đóng 2026-10-09
+(cold-check PASS 2 NIT: boot-purge-thành-công-không-set-`_last_purge`
+vá ngay; `time.time()` clock-skew → purge hoãn — someday, rủi ro thấp).
 
 ## Checklist v1.3-ops-polish
 
@@ -587,11 +588,11 @@ Quy ước DoD cho phase connector:
   nhiễu request kế trên cùng connection. Hôm nay HTTP/1.0 close mặc
   định nên đúng; nhớ `self.close_connection = True` khi bật keep-alive
   (audit v0.5.1 NIT)
-- Purge fail dai dẳng → `_last_purge` không set nên MỌI lần ghi retry
-  `_purge_convlog` TRONG `_log_lock` — O(file) dưới lock chung, mọi
-  reply thread xếp hàng chậm khi lỗi kéo dài (vd đĩa hỏng). Chấp nhận
-  ở pilot; production cân nhắc backoff/bỏ qua sau N lần fail liên tiếp
-  (audit v0.6.2 NIT)
+- `_purge_convlog`/`_last_purge*` dùng `time.time()` — đồng hồ hệ
+  thống lùi (clock-skew) làm purge hoãn lâu (hiệu số âm). Rủi ro thấp
+  (cùng hành vi với mọi throttle timestamp khác trong file — đổi sang
+  monotonic phải đổi cả semantic "86400 giây lịch"); production cân
+  nhắc `time.monotonic` cho interval (cold-check v1.3 NIT)
 - 2 process cùng ghi convlog (zalo + streamlit) → rotate race xuyên
   process (`_log_lock` chỉ trong-process) có thể mất file `.1`, cực
   hiếm ở pilot; nếu deploy 2 writer thật cần file-lock hoặc tách log
@@ -638,3 +639,4 @@ Quy ước DoD cho phase connector:
 | v1.0-live-prep | OA connector plug-and-play khi có creds: token store + auto-refresh + rotate persist, tách 2 secret đúng contract (OA_SECRET signature / APP_SECRET oauth), preflight script, non-text reply, deploy artifacts | 2026-10-07 | `evidence/v10_pytest.log` 77/77 ×2 + ruff clean · `v10_mock.log` 3/3 · preflight dev exit 1 báo đúng mục thiếu; commits `e6e2cf2` + `ba90c19` (retro) + `4039c11` (DONE). Reviewer bắt 3 MAJOR vá hết (throttle refresh, cap event_name, systemd comment). Cold-check auditor lạ: mọi claim repo verify được PASS; live-Zalo UNVERIFIED = external chờ C2.0. Someday +5 |
 | v1.1-oa-resilience (patch) | Vá 5 someday đã verify còn hỏng: proactive refresh theo `expires_at` (throttled), `_last_refresh_ok` tách attempt/success (chờ `_token_lock` khi refresh in-flight), `_mem_tokens` chỉ cover cửa sổ persist-fail, non-text qua `_ulock`, welcome `WELCOME_TEXT` khi `follow` | 2026-10-08 | `evidence/v11_pytest.log` 90/90 + `v11_ruff.log` clean; commits `5fe926f` (contract) + code. Lane worker chết connection-error giữa chừng → coordinator absorb. Reviewer FIX đợt 1: throttle proactive + `expires_in≤0`→expires_at=0 + chờ lock khi refresh in-flight + spy dispatch `handle_non_text`. Cold-check: FIX F1 major (mem đè store ghi bởi process khác → refresh token chết tới restart) → vá mem-chỉ-khi-persist-fail + test; re-audit **PASS**. F2/F3 minor → someday. eval/mock skip precedent patch |
 | v1.2-convlog-hygiene (patch) | Vá 3 someday còn hỏng: `_mask_pii` unwrap nhóm ngoặc toàn-digit (SĐT "+84 (90)..."/"(+84)..." mask được, giá ngoặc không bị bridging), dedup follow bỏ ts (welcome ≤1 lần/SEEN_TTL_S/user), `_purge_convlog` drop dòng strptime-fail/ts-outlier (đổi policy "giữ thừa" → retention 30d đóng hở PII quá hạn) | 2026-10-09 | `evidence/v12_pytest.log` 92/92 (auditor tự chạy lại 151.7s) + ruff clean; commits `a30762b` (contract) + `6ebece4` (code) + `b07a367` (board). Reviewer FIX đợt 1: normalize ngoặc→space tạo bridging mới "(1.500.000)(2.000.000)" → vá unwrap-digit-group; `len(ts)==20` không đủ → strptime + horizon +1d. Re-audit PASS. Cold-check auditor lạ: **PASS** — tự xác định diff-range, chạy lại pytest 92/92 + ruff, 3 MINOR/NIT → someday (unwrap biến dạng text non-SĐT, over-mask "500.000 (10) 0901234567", ngoặc-trộn-sep lọt). eval/mock skip precedent patch. Dọn someday stale: "token refresh tự động" đã xong từ v1.0 |
+| v1.3-ops-polish (patch) | Purge-fail backoff: `_last_purge_attempt` throttle daily-purge retry (PURGE_RETRY_S=3600 — đĩa hỏng dai dẳng không còn kéo mọi reply thread xếp hàng O(file) trong `_log_lock`); `_isolated_files` vá latent leak `_last_purge` | 2026-10-09 | `evidence/v13_pytest.log` 92/92 (auditor tự chạy lại 17.7s) + ruff clean; commits `b8ed6e5` (contract) + `f48364a` (code) + `a27647c` (NIT reviewer). Reviewer PASS đợt 1, 2 NIT vá ngay (comment throttle, setattr thừa). Cold-check auditor lạ: **PASS** — tự định diff-range + chạy lại pytest 92/92 + ruff; 2 NIT: boot-purge-không-set-`_last_purge` vá ngay (global + set sau purge boot OK), clock-skew `time.time()` → someday |
