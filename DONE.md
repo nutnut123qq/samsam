@@ -4,10 +4,36 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **không có** — v1.2-convlog-hygiene đóng 2026-10-09
-(cold-check PASS kèm 3 MINOR/NIT → someday; NIT purge-partial-write đã
-verify purge chạy trong `_log_lock` nên chỉ còn race xuyên-process =
-someday "rotate race" cũ).
+Version đang mở: **v1.3-ops-polish** (contract coordinator tự chọn
+qua /cycle 2026-10-09).
+
+## Checklist v1.3-ops-polish
+
+Khán giả: bot live public chịu được đĩa hỏng/đầy — purge fail dai dẳng
+không được kéo mọi reply thread xếp hàng O(file) trong `_log_lock`.
+Someday duy nhất còn là defect-vá-được (đã grep verify); phần còn lại
+là external-dep hoặc chấp-định có chủ đích. Quy ước precedent patch:
+`guardrail.py` cấm đụng, `api/rag.py` không đụng, skip eval_qa +
+zalo_mock. Global mutable mới (`_last_purge_attempt`) PHẢI reset trong
+`_isolated_files` — kèm fix latent leak `_last_purge` (chưa từng reset).
+
+- [ ] **V4.1 Purge-fail backoff** — `_log_conversation`: daily purge
+  hiện retry MỌI lần ghi khi purge throw (đĩa hỏng/đầy → O(file) dưới
+  lock chung, mọi reply thread chậm theo — audit v0.6.2 NIT). Vá theo
+  precedent `_last_refresh`/`_last_refresh_ok` (V2.2): thêm global
+  `_last_purge_attempt` — attempt purge chỉ khi
+  `now - _last_purge > 86400` VÀ `now - _last_purge_attempt >=
+  PURGE_RETRY_S` (const 3600); set attempt-stamp TRƯỚC try (attempt
+  throttled kể cả khi fail — đây là điểm vá); `_last_purge` vẫn chỉ
+  set khi purge thành công (D6.9 giữ). Rotate-purge (`.1`) không cần
+  throttle — chỉ chạy khi file >cap, tự bounded. Gate: pytest —
+  purge throw → reply vẫn log + `_last_purge_attempt` set; ghi tiếp
+  trong window → KHÔNG retry (spy count); `_last_purge_attempt` lùi
+  quá window → retry; success → `_last_purge` set. ĐỔI CONTRACT test
+  cũ `test_purge_failure_still_logs_and_retries` chủ đích (retry-ngay
+  → throttled — precedent flip test V2.5/V3.3).
+- [ ] **V4.2 Gate chung** — `python -m pytest` xanh + `ruff check .`
+  clean (coordinator)
 
 ## Checklist v1.2-convlog-hygiene
 
