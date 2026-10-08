@@ -127,6 +127,16 @@ chat lẫn embeddings) + Streamlit.
   `_last_purge`...) phải reset trong fixture `_isolated_files` —
   state sót lại theo thứ tự test (v1.0: `_last_refresh` từ test
   refresh trước làm test sau thấy "fresh" giả, retry không refresh).
+  Khi thêm global mới vào cùng nhóm, rà luôn global CŨ cùng vùng có
+  đang leak không — `_last_purge` tồn tại từ v0.5.1 nhưng chưa từng
+  reset, leak câm tới v1.3 mới lộ (worker vá kèm V4.1).
+- **Subagent chạy gate nặng trên máy này**: lệnh >~10s bị tool exec tự
+  đẩy xuống background — subagent có thể chạy chồng nhiều pytest nếu
+  không poll tới exit (cold-check v1.3: auditor chạy chồng 2-3 pytest,
+  may không BSOD). Prompt cho worker/reviewer chạy gate phải ghi rõ:
+  "lệnh nặng có thể bị đẩy nền — PHẢI đọc output tới khi process exit
+  trước khi chạy lệnh nặng kế tiếp; không retry mù khi chưa lấy được
+  output".
   Test cho state-on-disk: isolate bằng monkeypatch đường dẫn → `tmp_path`
   (xem `_isolated_files` trong `tests/test_zalo.py`), KHÔNG `clear()`
   structure in-memory như khi state còn là dict.
