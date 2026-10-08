@@ -83,11 +83,13 @@ khỏi `.env` config-tĩnh do user quản lý).
 
 External-dependency (không treo version): OA creds thật → preflight
 thật → đăng ký webhook HTTPS → live-verify signature + reply. C2.0 vẫn
-NEEDS-INPUT. Someday giữ nguyên +4: refresh chủ động trước hết hạn
+NEEDS-INPUT. Someday giữ nguyên +5: refresh chủ động trước hết hạn
 (hiện lazy-on-fail), welcome message khi user follow OA, `_last_refresh`
 ghi cả attempt-fail → send-fail trong 60s sau retry với token hỏng
 (waste-only — cold-check v1.0 minor), `os.replace` fail mất token đã
-rotate (warn rõ, không recovery — Windows file-lock hiếm).
+rotate (warn rõ, không recovery — Windows file-lock hiếm), non-text
+dispatch không qua `_ulock` (ảnh+text cùng user có thể reply đảo thứ
+tự — ordering/UX only, cold-audit v1.0 minor: zalo.py:676-680 vs :506).
 
 ## Checklist v0.6.2 (patch)
 
