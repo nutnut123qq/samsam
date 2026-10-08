@@ -4,8 +4,9 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **v1.1-oa-resilience** (patch) — contract coordinator
-tự chọn 2026-10-08 (cycle, user có thể phủ quyết).
+Version đang mở: **không có** — v1.1-oa-resilience đóng 2026-10-08
+(cold-check: FIX F1 — mem đè store ngoài — vá + re-audit PASS; live
+Zalo contract vẫn UNVERIFIED chờ C2.0, theo thiết kế).
 
 ## Checklist v1.1-oa-resilience
 
@@ -17,7 +18,7 @@ zalo_mock (answer/reply path không đổi — tiết kiệm credit). Module
 global mutable mới (`_last_refresh_ok`, `_mem_tokens`) PHẢI reset
 trong fixture `_isolated_files` (gotcha v1.0).
 
-- [ ] **V2.1 Refresh chủ động theo `expires_at`** — store ghi
+- [x] **V2.1 Refresh chủ động theo `expires_at`** — store ghi
   `expires_at` nhưng không ai đọc: token hết hạn chỉ phát hiện khi
   send fail (reply khách đầu tiên sau expiry chậm 1 oauth round-trip
   hoặc mất nếu refresh lỗi). `send_text`: store có `expires_at` +
@@ -27,7 +28,11 @@ trong fixture `_isolated_files` (gotcha v1.0).
   Gate: pytest 3 nhánh — sắp hết hạn → refresh (mock httpx) rồi send
   token mới; còn hạn xa → không gọi oauth; refresh fail → vẫn send
   token cũ
-- [ ] **V2.2 `_last_refresh_ok` tách khỏi attempt** — `_last_refresh`
+  — *(reviewer F1: throttle proactive trên `_last_refresh` — oauth sập
+    mà không throttle = mỗi send một call 15s-timeout; `expires_in<=0`
+    → `expires_at=0` "không biết" (ghi now() = mọi send đều rotate);
+    in-flight refresh → chờ `_token_lock` đọc lại token mới)*
+- [x] **V2.2 `_last_refresh_ok` tách khỏi attempt** — `_last_refresh`
   ghi cả attempt-fail → send-fail trong 60s sau refresh-fail retry với
   token hỏng (waste — cold-check v1.0 minor). Thêm `_last_refresh_ok`
   (set khi refresh ra token dùng được — kể cả nhánh mem-fallback V2.3).
@@ -37,12 +42,14 @@ trong fixture `_isolated_files` (gotcha v1.0).
   (`_last_refresh` vẫn ghi mọi attempt).
   Gate: pytest — refresh-fail rồi send-fail <60s → chỉ 1 `_send_once`
   (không retry); recent-success → retry cùng token
-- [ ] **V2.3 `_mem_tokens` — persist-fail không mất rotated token** —
+  — *(reviewer F2: nhánh "attempt gần đây" chờ `_token_lock` phân biệt
+    refresh đang chạy song song vs đã fail — in-flight xong mà thành
+    công thì retry token MỚI, không mất reply)*
+- [x] **V2.3 `_mem_tokens` — persist-fail không mất rotated token** —
   `_write_token_store` OSError → token đã rotate server-side mất hẳn,
   store giữ refresh_token cũ đã vô hiệu → mọi refresh sau fail vĩnh
-  viễn. Vá: `_mem_tokens` {access_token, refresh_token, expires_at}
-  cập nhật mọi refresh thành công TRƯỚC persist; readers
-  (`_current_access_token`, `_current_refresh_token`, expires_at
+  viễn. Vá: `_mem_tokens` giữ bản rotate khi persist fail; readers
+  (`_current_access_token`, `_current_refresh_token`, `_current_expires_at`
   cho V2.1) đọc mem → store → env. Persist-fail → warn "rotate OK,
   persist lỗi — chỉ sống trong-process" + return True (token dùng
   được). Restart vẫn mất (chấp nhận — comment rõ). Preflight cố tình
@@ -50,13 +57,22 @@ trong fixture `_isolated_files` (gotcha v1.0).
   Gate: pytest — `_write_token_store` throw → refresh True,
   `_current_*_token` trả token mới, send sau dùng token mới, refresh
   sau dùng rotated refresh_token
-- [ ] **V2.4 Non-text dispatch qua `_ulock`** — `_reply_non_text`
+  — *(cold-check F1 major: bản đầu set mem mọi refresh OK → mem đè
+    store ghi bởi process khác (preflight --refresh/operator) → refresh
+    bằng token đã rotate chết, fail tới restart = regression v1.0. Vá:
+    persist OK → `_mem_tokens = {}`, mem chỉ tồn tại trong cửa sổ
+    persist-fail; test `test_mem_tokens_cleared_after_successful_persist`
+    chứng minh store ngoài được tôn trọng. Rebind nguyên tử (không
+    clear+update) — reviewer F5)*
+- [x] **V2.4 Non-text dispatch qua `_ulock`** — `_reply_non_text`
   dispatch thẳng không lock (zalo.py ~L676 vs :506) → ảnh+text cùng
   user reply đảo thứ tự (ordering/UX — cold-audit v1.0 minor). Thêm
   `handle_non_text()` wrapper `with _ulock(user_id)` như `handle_text`.
   Gate: pytest ordering event-based (mô phỏng
   `test_same_user_messages_serialize`, không sleep)
-- [ ] **V2.5 Welcome khi follow** — `event_name == "follow"` hiện
+  — *(reviewer F3: spy `handle_non_text` trong test HTTP chứng minh
+    dispatch qua wrapper, không chỉ gọi thẳng hàm)*
+- [x] **V2.5 Welcome khi follow** — `event_name == "follow"` hiện
   ignore → khách follow OA không biết bot làm gì. Gửi `WELCOME_TEXT`
   (hằng viết tay kiểu HANDOFF/NON_TEXT: cảm ơn + Sâm Sâm sâm Ngọc
   Linh + hotline 1800577732). uid = `follower.id` fallback `sender.id`;
@@ -67,13 +83,22 @@ trong fixture `_isolated_files` (gotcha v1.0).
   (dedup chỉ chặn retry cùng ts — comment + someday note refollow
   spam). Gate: pytest follow → sent WELCOME + convlog đúng schema;
   unfollow/thiếu id → ignore
-- [ ] **V2.6 Gate chung** — `python -m pytest` xanh + `ruff check .`
+  — *(đổi contract có chủ đích: `test_other_events_still_ignored` cũ
+    assert follow bị ignore → sửa thành unfollow/`user_gets_feedback`;
+    thiếu timestamp → dedup key trùng chặn refollow 1h — hiếm, comment
+    ghi (reviewer F4))*
+- [x] **V2.6 Gate chung** — `python -m pytest` xanh + `ruff check .`
   clean (coordinator)
+  — *(90/90 `evidence/v11_pytest.log` + ruff clean `evidence/v11_ruff.log`;
+    mock/eval skip theo precedent patch)*
 
 External-dependency (không treo version): live-verify proactive
 refresh thật + payload shape `follower.id` của event follow — chờ creds
 C2.0 như mọi live-Zalo contract. Someday mới: welcome không dedup
-theo user (refollow → welcome lặp); PII SĐT dạng ngoặc vẫn mở.
+theo user (refollow → welcome lặp); retry-sau-refresh-ok áp cho mọi
+send-error kể cả lỗi không-liên-quan-token (waste 1 call — cold-check
+F2, liên quan someday whitelist error-code v1.0); PII SĐT dạng ngoặc
+vẫn mở.
 
 ## Checklist v1.0-live-prep
 
@@ -531,4 +556,6 @@ Quy ước DoD cho phase connector:
 | v0.5.1 (patch) | Vá NIT audit v0.5 + convlog hygiene: whitespace answer → NO_DATA, chunked → 411, PII SĐT viết cách, retention 30d | 2026-10-05 | `evidence/v051_pytest.log` 51/51 ×5 + ruff clean; commits `524e171` + `0cbc025` (FIX chunked test raw socket — httpx ReadError race) + `30f7395` (board) + post-audit `gitignore`+test-escape fix. Reviewer độc lập verdict FIX: blocker `_PII_RE` thiếu `(?<!\d)` (ăn giá "10.050.000.000") + `{9,}` lộ đuôi số, purge UnicodeDecodeError/U+2028/không-atomic + hở contract "file active chỉ purge lúc startup" — vá hết. eval/mock skip theo precedent patch. Cold-audit session lạ: verdict **PASS** 5/5 claims (tự chạy lại pytest 51/51 + trace regex tay), 1 minor vá ngay (`.gitignore` thiếu `conversations.jsonl*` — file runtime PII-lite), 3 NIT → someday (close_connection khi keep-alive, purge throw giết reply thread, SĐT 2+ spaces) |
 | v0.6-handoff | NO_DATA → lối thoát cho người (HANDOFF_TEXT có hotline) + tab "Chưa trả lời" cho nhân viên đọc queue | 2026-10-05 | `evidence/v06_pytest.log` 54/54 (×29 runs ship-pass) · `v06_mock.log` 3/3 (câu bẫy → handoff đúng) · `v06_queue.png` bảng 3 cột + empty-state verify live; commits `658d704` + `120c4df`. Reviewer verdict FIX → vá: print raw `user_id` → `_uhash()` (3 chỗ, kể cả bug cũ), streamlit history lưu raw parity zalo (flagged không vào), caption gắn đúng nhánh, `unanswered()` decode `replace`, test loader edge. Ship-pass bắt flake `test_dedup_same_msg_id` (sleep-0.3s dưới load) → event-based. Vá kèm invariant gap: streamlit chat trước đây hiển thị answer() không qua `check()`. eval_qa skip (answer() không đổi). OWASP diff sạch. User duyệt đóng + push. Cold-audit session lạ: verdict **PASS** 3/3 claims (auditor tự chạy pytest 54/54 + đối chiếu screenshot/mock log), 4 NIT → someday (`sent:null` kênh UI, user_hash cố định, rotate race xuyên process, queue horizon 30d) |
 | v0.6.1 (patch) | Dry-run demo + caption persist: nhãn "Nguồn:"/"đã chuyển nhân viên" không còn mất khi Streamlit rerun | 2026-10-06 | `evidence/dryrun_*.png` 5 ảnh (answer+sources, handoff+hotline, queue, guardrail flag, caption sau rerun) · pytest 54/54 + ruff clean. Supervisor verdict **PASS** ×2 (dry-run + fix). Dọn repo root: xóa 2 `v5-dossier-*.png` ngoại (md5 trùng nhau, project khác) + 3 `dryrun_*.png` lạc do relative-path screenshot |
-|| v0.6.2 (patch) | Vá 4 NIT audit còn lại (convlog/PII hygiene): `sent:null` kênh UI, purge không giết reply + retry đúng, `_ui_hash` per-session, `_PII_RE` bắt `+84`/`84` + sep lặp cùng-ký-tự | 2026-10-06 | pytest 58/58 ×3 + ruff clean; commits `16dff2c` (contract) + `cee33f4` (code). Reviewer độc lập verdict FIX đợt 1 — major: `[ .-]*` nuốt sep TRỘN " - " nối 2 số → mất khoảng giá/ngày; vá `([ .-])\1*` cả 2 alternative. 3 NIT pre-existing → someday (SĐT dạng ngoặc, over-mask nhẹ abc84.../date+time). eval/mock skip theo precedent patch. Cold-audit session lạ: verdict **PASS** 5/5 claims (auditor tự chạy pytest 58/58 + trace regex + probe 12 case thêm), 1 NIT → someday (purge retry-per-write trong `_log_lock` khi fail dai dẳng); dọn 3 someday entry stale đã vá |
+| v0.6.2 (patch) | Vá 4 NIT audit còn lại (convlog/PII hygiene): `sent:null` kênh UI, purge không giết reply + retry đúng, `_ui_hash` per-session, `_PII_RE` bắt `+84`/`84` + sep lặp cùng-ký-tự | 2026-10-06 | pytest 58/58 ×3 + ruff clean; commits `16dff2c` (contract) + `cee33f4` (code). Reviewer độc lập verdict FIX đợt 1 — major: `[ .-]*` nuốt sep TRỘN " - " nối 2 số → mất khoảng giá/ngày; vá `([ .-])\1*` cả 2 alternative. 3 NIT pre-existing → someday (SĐT dạng ngoặc, over-mask nhẹ abc84.../date+time). eval/mock skip theo precedent patch. Cold-audit session lạ: verdict **PASS** 5/5 claims (auditor tự chạy pytest 58/58 + trace regex + probe 12 case thêm), 1 NIT → someday (purge retry-per-write trong `_log_lock` khi fail dai dẳng); dọn 3 someday entry stale đã vá |
+| v1.0-live-prep | OA connector plug-and-play khi có creds: token store + auto-refresh + rotate persist, tách 2 secret đúng contract (OA_SECRET signature / APP_SECRET oauth), preflight script, non-text reply, deploy artifacts | 2026-10-07 | `evidence/v10_pytest.log` 77/77 ×2 + ruff clean · `v10_mock.log` 3/3 · preflight dev exit 1 báo đúng mục thiếu; commits `e6e2cf2` + `ba90c19` (retro) + `4039c11` (DONE). Reviewer bắt 3 MAJOR vá hết (throttle refresh, cap event_name, systemd comment). Cold-check auditor lạ: mọi claim repo verify được PASS; live-Zalo UNVERIFIED = external chờ C2.0. Someday +5 |
+| v1.1-oa-resilience (patch) | Vá 5 someday đã verify còn hỏng: proactive refresh theo `expires_at` (throttled), `_last_refresh_ok` tách attempt/success (chờ `_token_lock` khi refresh in-flight), `_mem_tokens` chỉ cover cửa sổ persist-fail, non-text qua `_ulock`, welcome `WELCOME_TEXT` khi `follow` | 2026-10-08 | `evidence/v11_pytest.log` 90/90 + `v11_ruff.log` clean; commits `5fe926f` (contract) + code. Lane worker chết connection-error giữa chừng → coordinator absorb. Reviewer FIX đợt 1: throttle proactive + `expires_in≤0`→expires_at=0 + chờ lock khi refresh in-flight + spy dispatch `handle_non_text`. Cold-check: FIX F1 major (mem đè store ghi bởi process khác → refresh token chết tới restart) → vá mem-chỉ-khi-persist-fail + test; re-audit **PASS**. F2/F3 minor → someday. eval/mock skip precedent patch |

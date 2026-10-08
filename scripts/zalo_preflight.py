@@ -131,6 +131,8 @@ def _getoa(access_token: str) -> dict:
 
 
 def _expiry_note(expires_at) -> str:
+    if not expires_at:
+        return ""  # 0/None = "không biết" (oauth thiếu expires_in)
     try:
         left = float(expires_at) - time.time()
     except (TypeError, ValueError):

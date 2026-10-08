@@ -322,17 +322,20 @@ Checklist/DoD chi tiết: `DONE.md` mục v1.1-oa-resilience (contract
 coordinator tự chọn qua /cycle 2026-10-08). `guardrail.py` cấm đụng;
 `api/rag.py` không đụng; skip eval_qa + zalo_mock.
 
-- [ ] **V2.1–V2.5 Lane A (1 worker)** — `connectors/zalo.py` +
+- [x] **V2.1–V2.5 Lane A** — `connectors/zalo.py` +
   `tests/test_zalo.py`: proactive refresh theo `expires_at`
-  (`REFRESH_AHEAD_S=300`), `_last_refresh_ok` tách attempt/success,
-  `_mem_tokens` persist-fail fallback (mem→store→env), non-text qua
-  `_ulock`, welcome `WELCOME_TEXT` khi `follow` (`follower.id`→fallback
-  `sender.id`, convlog `answered:null`). Globals mới reset trong
-  `_isolated_files`.
-  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
-  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean
-- [ ] **V2.6 Gate chung** — `python -m pytest` full + `ruff check .`
-  (coordinator)
+  (`REFRESH_AHEAD_S=300`, throttled + chờ `_token_lock` khi có refresh
+  in-flight), `_last_refresh_ok` tách attempt/success, `_mem_tokens`
+  CHỈ trong cửa sổ persist-fail (persist-ok → clear, store là
+  source-of-truth), non-text qua `_ulock`, welcome `WELCOME_TEXT` khi
+  `follow` (`follower.id`→fallback `sender.id`, convlog
+  `answered:null`). Globals mới reset trong `_isolated_files`.
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`,
+    `scripts/zalo_preflight.py` (guard `_expiry_note` cho expires_at=0)
+  - Gate: `python -m pytest tests/test_zalo.py -q` 59/59 + ruff clean
+- [x] **V2.6 Gate chung** — `python -m pytest` full 90/90 +
+  `ruff check .` clean (coordinator) — `evidence/v11_pytest.log` +
+  `v11_ruff.log`
 
 ---
 

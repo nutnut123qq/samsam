@@ -52,6 +52,11 @@ def _isolated_files(monkeypatch, tmp_path):
     # M3 throttle là module-global — test trước refresh xong sẽ để lại
     # mốc _last_refresh làm test sau thấy "fresh" giả -> reset mỗi test.
     monkeypatch.setattr(zalo, "_last_refresh", 0.0)
+    # V2.2/V2.3: _last_refresh_ok (throttle retry) + _mem_tokens (token
+    # fallback) cũng là module-global — sót lại làm test sau thấy token/
+    # mốc giả theo thứ tự chạy (gotcha v1.0).
+    monkeypatch.setattr(zalo, "_last_refresh_ok", 0.0)
+    monkeypatch.setattr(zalo, "_mem_tokens", {})
     zalo._histories.clear()
     _reset_seen_conn()
     yield
@@ -125,6 +130,16 @@ def test_non_text_event_sends_nontext_reply(server, monkeypatch,
                         lambda u, t: sent.append(t) or done.set() or True)
     monkeypatch.setattr(zalo, "handle_text",
                         lambda *a: sent.append("WRONG-PATH"))
+    # V2.4: dispatch phải qua wrapper handle_non_text (có _ulock), không
+    # phải _reply_non_text trần — spy call-through chứng minh đúng target.
+    dispatched = []
+    orig_nt = zalo.handle_non_text
+
+    def spy_nt(u, e, m=""):
+        dispatched.append(u)
+        return orig_nt(u, e, m)
+
+    monkeypatch.setattr(zalo, "handle_non_text", spy_nt)
     raw = json.dumps(_event(event="user_send_image",
                             msg_id="img1")).encode()
     for _ in range(2):  # lần 2 = Zalo retry cùng msg_id -> dedup
@@ -134,6 +149,7 @@ def test_non_text_event_sends_nontext_reply(server, monkeypatch,
     assert done.wait(5)
     time.sleep(0.3)  # dup dispatch (nếu bug) cần cơ hội chạy trước assert
     assert sent == [zalo.NON_TEXT_TEXT]
+    assert dispatched == ["u1"]  # qua wrapper handle_non_text (V2.4)
     recs = _wait_log_lines(tmp_path / "conversations.jsonl", 1)
     assert len(recs) == 1
     rec = recs[0]
@@ -145,16 +161,71 @@ def test_non_text_event_sends_nontext_reply(server, monkeypatch,
     assert rec["msg_id"] == "img1"
 
 
+def test_follow_sends_welcome(server, monkeypatch, tmp_path):
+    # V2.5: event "follow" -> khách nhận WELCOME_TEXT (đổi contract từ
+    # v1.0 — trước đây ignore). uid lấy follower.id theo spec Zalo;
+    # convlog answered:null (follow không phải câu hỏi — KHÔNG vào queue
+    # "Chưa trả lời"); dedup theo timestamp cho retry.
+    sent, done = [], threading.Event()
+    monkeypatch.setattr(zalo, "send_text",
+                        lambda u, t: sent.append((u, t)) or done.set()
+                        or True)
+    ev = _event(event="follow")
+    del ev["message"]                      # payload follow không có message
+    ev["follower"] = {"id": "u-fol"}       # spec: follower.id
+    raw = json.dumps(ev).encode()
+    for _ in range(2):  # Zalo retry cùng timestamp -> dedup
+        assert httpx.post(server, content=raw,
+                          headers={"X-ZEvent-Signature": _sign(raw)}
+                          ).status_code == 200
+    assert done.wait(5)
+    time.sleep(0.3)  # dup dispatch (nếu bug) cần cơ hội chạy trước assert
+    assert sent == [("u-fol", zalo.WELCOME_TEXT)]
+    recs = _wait_log_lines(tmp_path / "conversations.jsonl", 1)
+    assert len(recs) == 1
+    rec = recs[0]
+    assert rec["question"] == "[event:follow]"
+    assert rec["answer"] == zalo.WELCOME_TEXT
+    assert rec["answered"] is None    # null — không phải câu hỏi
+    assert rec["guardrail_ok"] is None
+    assert rec["sent"] is True
+    assert rec["user_hash"] == zalo._uhash("u-fol")
+
+
+def test_follow_sender_fallback_and_no_id(server, monkeypatch):
+    # V2.5 biên: thiếu `follower` -> fallback sender.id; không có id
+    # nào -> ignore (không gửi, không crash).
+    sent, done = [], threading.Event()
+    monkeypatch.setattr(zalo, "send_text",
+                        lambda u, t: sent.append(u) or done.set() or True)
+    raw = json.dumps(_event(event="follow", uid="u-sender")).encode()
+    assert httpx.post(server, content=raw,
+                      headers={"X-ZEvent-Signature": _sign(raw)}
+                      ).status_code == 200
+    assert done.wait(5)
+    assert sent == ["u-sender"]
+    ev = _event(event="follow")
+    ev["sender"] = {}
+    raw2 = json.dumps(ev).encode()
+    assert httpx.post(server, content=raw2,
+                      headers={"X-ZEvent-Signature": _sign(raw2)}
+                      ).status_code == 200
+    time.sleep(0.3)  # dispatch nhầm (nếu bug) cần cơ hội chạy
+    assert sent == ["u-sender"]
+
+
 def test_other_events_still_ignored(server, monkeypatch, tmp_path):
-    # V1.4: event không phải user_send_* (follow/unfollow/other) vẫn
+    # Event không phải user_send_*/follow (unfollow, oa_..., ...) vẫn
     # ignore hoàn toàn — không dispatch, không convlog.
     calls = []
     monkeypatch.setattr(zalo, "handle_text", lambda *a: calls.append(a))
     monkeypatch.setattr(zalo, "_reply_non_text", lambda *a: calls.append(a))
-    raw = json.dumps(_event(event="follow")).encode()
-    assert httpx.post(server, content=raw,
-                      headers={"X-ZEvent-Signature": _sign(raw)}
-                      ).status_code == 200
+    monkeypatch.setattr(zalo, "handle_follow", lambda *a: calls.append(a))
+    for event in ("unfollow", "user_gets_feedback"):
+        raw = json.dumps(_event(event=event)).encode()
+        assert httpx.post(server, content=raw,
+                          headers={"X-ZEvent-Signature": _sign(raw)}
+                          ).status_code == 200
     time.sleep(0.2)
     assert not calls
     assert not (tmp_path / "conversations.jsonl").exists()
@@ -981,3 +1052,254 @@ def test_send_fail_refresh_throttled_within_interval(monkeypatch):
     assert zalo.send_text("u1", "x") is False  # fail nữa — KHÔNG refresh
     assert calls.count(zalo.OAUTH_URL) == 1    # throttled
     assert calls.count(zalo.SEND_URL) == 4     # mỗi lần: try + retry
+
+
+def test_send_proactively_refreshes_expiring_token(monkeypatch):
+    # V2.1: store có expires_at sắp tới (< REFRESH_AHEAD_S) -> refresh
+    # TRƯỚC khi send, khách không ăn lượt reply fail khi token vừa chết.
+    _env_full_refresh(monkeypatch)
+    zalo._write_token_store({"access_token": "old-tok",
+                             "refresh_token": "old-rtok",
+                             "expires_at": time.time() + 60})
+    calls = []
+
+    def fake_post(url, **kw):
+        calls.append(url)
+        if url == zalo.OAUTH_URL:
+            assert kw["data"]["refresh_token"] == "old-rtok"
+            return _Resp(200, {"access_token": "new-tok",
+                               "refresh_token": "new-rtok",
+                               "expires_in": "3600"})
+        assert kw["params"]["access_token"] == "new-tok"  # send = token mới
+        return _Resp(200, {"error": 0})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    assert zalo.send_text("u1", "x") is True
+    assert calls == [zalo.OAUTH_URL, zalo.SEND_URL]  # refresh trước send
+
+
+def test_send_skips_refresh_when_token_fresh(monkeypatch):
+    # V2.1: expires_at còn xa REFRESH_AHEAD_S -> KHÔNG gọi oauth, send
+    # thẳng token hiện tại.
+    _env_full_refresh(monkeypatch)
+    zalo._write_token_store({"access_token": "old-tok",
+                             "refresh_token": "old-rtok",
+                             "expires_at": time.time() + 3600})
+    calls = []
+
+    def fake_post(url, **kw):
+        calls.append(url)
+        return _Resp(200, {"error": 0})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    assert zalo.send_text("u1", "x") is True
+    assert calls == [zalo.SEND_URL]  # không oauth
+
+
+def test_send_proactive_refresh_fail_still_sends_old(monkeypatch):
+    # V2.1 best-effort: proactive refresh fail (oauth 500) -> vẫn thử
+    # send bằng token hiện tại (expires_at có thể lạc quan).
+    _env_full_refresh(monkeypatch)
+    zalo._write_token_store({"access_token": "old-tok",
+                             "refresh_token": "old-rtok",
+                             "expires_at": time.time() + 60})
+    calls = []
+
+    def fake_post(url, **kw):
+        calls.append(url)
+        if url == zalo.OAUTH_URL:
+            return _Resp(500, {})
+        assert kw["params"]["access_token"] == "old-tok"  # fallback token cũ
+        return _Resp(200, {"error": 0})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    assert zalo.send_text("u1", "x") is True
+    assert calls == [zalo.OAUTH_URL, zalo.SEND_URL]
+
+
+def test_send_fail_after_failed_refresh_no_stale_retry(monkeypatch):
+    # V2.2: refresh attempt vừa fail (<REFRESH_MIN_INTERVAL_S) mà send
+    # cũng fail -> KHÔNG retry với token hỏng (waste). Code cũ đánh dấu
+    # _last_refresh cả attempt-fail -> nhánh "fresh" retry bằng token
+    # chết (SEND sẽ là 3 thay vì 2).
+    _env_full_refresh(monkeypatch)
+    calls = []
+
+    def fake_post(url, **kw):
+        calls.append(url)
+        if url == zalo.OAUTH_URL:
+            return _Resp(500, {})      # refresh luôn fail
+        return _Resp(200, {"error": -216, "message": "token expired"})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    assert zalo.send_text("u1", "x") is False
+    # Lần 1: send-fail -> không ai refresh gần -> attempt refresh (fail)
+    # -> không retry: SEND=1, OAUTH=1.
+    assert calls.count(zalo.SEND_URL) == 1
+    assert calls.count(zalo.OAUTH_URL) == 1
+    assert zalo.send_text("u1", "x") is False
+    # Lần 2 <60s: attempt-fail gần đây -> không rotate thêm, cũng không
+    # retry stale: SEND=2 (không phải 3), OAUTH vẫn 1 (throttle giữ).
+    assert calls.count(zalo.SEND_URL) == 2
+    assert calls.count(zalo.OAUTH_URL) == 1
+
+
+def test_refresh_persist_fail_keeps_tokens_in_memory(monkeypatch):
+    # V2.3: _write_token_store OSError (disk full/lock) sau khi server
+    # đã rotate refresh_token -> token chỉ còn bản MỚI trong _mem_tokens
+    # (bản trên đĩa/env đã vô hiệu). refresh vẫn trả True (token dùng
+    # được trong-process); refresh LẦN SAU phải gửi rotated token từ
+    # mem, không phải bản chết.
+    monkeypatch.setattr(zalo, "REFRESH_TOKEN", "old-rtok")
+    monkeypatch.setattr(zalo, "APP_ID", "app")
+    monkeypatch.setattr(zalo, "APP_SECRET", "sec")
+    seen_refresh = []
+
+    def fake_post(url, **kw):
+        seen_refresh.append(kw["data"]["refresh_token"])
+        n = len(seen_refresh)
+        return _Resp(200, {"access_token": f"at-{n}",
+                           "refresh_token": f"rt-{n}",
+                           "expires_in": "3600"})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+
+    def boom(obj):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(zalo, "_write_token_store", boom)
+    assert zalo.refresh_access_token() is True
+    assert zalo._current_access_token() == "at-1"
+    assert zalo._current_refresh_token() == "rt-1"   # từ mem, không phải env
+    assert zalo.refresh_access_token() is True
+    assert seen_refresh == ["old-rtok", "rt-1"]      # lần 2 gửi rotated
+    assert zalo._current_access_token() == "at-2"
+
+
+def test_mem_tokens_cleared_after_successful_persist(monkeypatch):
+    # V2.3 + cold-check v1.1 F1: persist OK -> _mem_tokens xoá, store
+    # lại là source-of-truth — process khác (preflight --refresh hay
+    # operator sửa tay data/zalo_tokens.json) ghi store mới phải được
+    # tôn trọng. Nếu mem đè store, server refresh bằng refresh_token đã
+    # bị rotate -> fail vĩnh viễn tới restart (regression v1.0).
+    monkeypatch.setattr(zalo, "REFRESH_TOKEN", "old-rtok")
+    monkeypatch.setattr(zalo, "APP_ID", "app")
+    monkeypatch.setattr(zalo, "APP_SECRET", "sec")
+    monkeypatch.setattr(httpx, "post", lambda url, **kw: _Resp(
+        200, {"access_token": "at-1", "refresh_token": "rt-1",
+              "expires_in": "3600"}))
+    assert zalo.refresh_access_token() is True
+    assert zalo._mem_tokens == {}              # persist OK -> mem trống
+    # Process khác ghi store trực tiếp (preflight rotate):
+    zalo._write_token_store({"access_token": "ext-tok",
+                             "refresh_token": "ext-rtok",
+                             "expires_at": time.time() + 3600})
+    assert zalo._current_access_token() == "ext-tok"   # không bị mem đè
+    assert zalo._current_refresh_token() == "ext-rtok"
+
+
+def test_non_text_waits_for_text_lock(monkeypatch):
+    # V2.4: handle_non_text đi qua cùng _ulock(user) với handle_text —
+    # ảnh đến trong lúc text reply đang chạy phải CHỜ, không chen gửi
+    # trước (code cũ dispatch _reply_non_text trần -> gửi NGAY trong
+    # lúc text còn đang answer -> đảo thứ tự).
+    entered, release = threading.Event(), threading.Event()
+    sent = []
+
+    def slow_answer(q, history=None):
+        entered.set()
+        release.wait(5)          # giữ _ulock trong khi answer chạy
+        return {"answer": "a", "sources": []}
+
+    monkeypatch.setattr("api.rag.answer", slow_answer)
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+    monkeypatch.setattr(zalo, "send_text",
+                        lambda u, t: sent.append(t) or True)
+    t1 = threading.Thread(target=zalo.handle_text, args=("u1", "q"))
+    t1.start()
+    assert entered.wait(5)       # t1 đang giữ _ulock bên trong answer()
+    t2 = threading.Thread(target=zalo.handle_non_text,
+                          args=("u1", "user_send_image"))
+    t2.start()
+    time.sleep(0.3)              # t2 không lock sẽ gửi NGAY trong lúc này
+    assert sent == []            # vẫn chờ lock -> chưa gửi gì
+    release.set()
+    t1.join()
+    t2.join()
+    assert sent == ["a", zalo.NON_TEXT_TEXT]  # đúng thứ tự dispatch
+
+
+def test_proactive_refresh_throttled_when_oauth_down(monkeypatch):
+    # V2.1+F1: token sắp hết + oauth sập -> send_text KHÔNG gọi oauth
+    # mỗi lần (mỗi call tới 15s-timeout = hammer + reply chậm); throttle
+    # trên _last_refresh (attempt) — send thứ 2 trong interval đi thẳng
+    # bằng token hiện tại.
+    _env_full_refresh(monkeypatch)
+    zalo._write_token_store({"access_token": "old-tok",
+                             "refresh_token": "old-rtok",
+                             "expires_at": time.time() + 60})
+    calls = []
+
+    def fake_post(url, **kw):
+        calls.append(url)
+        if url == zalo.OAUTH_URL:
+            return _Resp(500, {})      # oauth sập
+        return _Resp(200, {"error": 0})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    assert zalo.send_text("u1", "x") is True   # attempt refresh fail -> send cũ
+    assert zalo.send_text("u1", "x") is True   # throttled — không oauth lại
+    assert calls.count(zalo.OAUTH_URL) == 1
+    assert calls.count(zalo.SEND_URL) == 2
+
+
+def test_send_fail_waits_for_inflight_refresh(monkeypatch):
+    # V2.2+F2: send-fail trong lúc thread khác ĐANG refresh (_token_lock
+    # đang giữ, _last_refresh vừa set) -> chờ refresh xong rồi retry bằng
+    # token MỚI — không return False mất reply. Code cũ coi "attempt
+    # gần đây" = "đã fail" -> bỏ retry.
+    _env_full_refresh(monkeypatch)
+    entered, release = threading.Event(), threading.Event()
+    sent_tokens = []
+
+    def fake_post(url, **kw):
+        if url == zalo.OAUTH_URL:
+            entered.set()
+            release.wait(5)          # giữ _token_lock trong oauth call
+            return _Resp(200, {"access_token": "new-tok",
+                               "refresh_token": "new-rtok",
+                               "expires_in": "3600"})
+        tok = kw["params"]["access_token"]
+        sent_tokens.append(tok)
+        return _Resp(200, {"error": -216 if tok == "old-tok" else 0})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    t1 = threading.Thread(target=zalo.refresh_access_token)
+    t1.start()
+    assert entered.wait(5)           # t1 đang giữ _token_lock trong oauth
+    res = {}
+    t2 = threading.Thread(target=lambda: res.update(
+        ok=zalo.send_text("u1", "x")))
+    t2.start()
+    time.sleep(0.3)                  # t2 phải đang block trên _token_lock
+    assert "ok" not in res           # chưa return — đang chờ refresh
+    release.set()
+    t1.join(5)
+    t2.join(5)
+    assert res["ok"] is True         # retry bằng token mới thành công
+    assert sent_tokens == ["old-tok", "new-tok"]
+
+
+def test_refresh_expires_in_zero_stored_as_unknown(monkeypatch):
+    # V2.1+F1c: oauth thiếu/trả expires_in=0 -> expires_at = 0 ("không
+    # biết"), KHÔNG phải ~now — nếu không _token_expiring_soon luôn đúng
+    # và mọi send_text đều rotate token (poison qua proactive refresh).
+    monkeypatch.setattr(zalo, "REFRESH_TOKEN", "rtok")
+    monkeypatch.setattr(zalo, "APP_ID", "app")
+    monkeypatch.setattr(zalo, "APP_SECRET", "sec")
+    monkeypatch.setattr(httpx, "post", lambda url, **kw: _Resp(
+        200, {"access_token": "new-tok", "refresh_token": "new-rtok",
+              "expires_in": "0"}))
+    assert zalo.refresh_access_token() is True
+    assert zalo._current_expires_at() == 0.0
+    assert not zalo._token_expiring_soon()

@@ -20,7 +20,9 @@ mất history, chấp nhận được cho pilot.
 Access token Zalo hết hạn ~25h -> token store data/zalo_tokens.json là
 source-of-truth, seed từ env lần đầu; send API báo lỗi -> refresh qua
 oauth rồi retry 1 lần (V1.1). refresh_token ROTATE mỗi lần -> persist
-ngay, mất sync = mất khả năng refresh.
+ngay, mất sync = mất khả năng refresh. V2.1: đọc expires_at để refresh
+chủ động trước khi token chết; V2.3: persist-fail giữ token trong
+_mem_tokens (restart mất — chấp nhận); V2.5: event follow -> welcome.
 
 Chạy: `python -m connectors.zalo` -> :8788/zalo-webhook (port qua
 ZALO_WEBHOOK_PORT). Env (V1.2 — 2 secret khác nhau): ZALO_OA_SECRET
@@ -89,6 +91,12 @@ HANDOFF_TEXT = ("Sâm Sâm chưa đủ dữ liệu để trả lời câu này �
 # câm. Không qua check() (text viết tay).
 NON_TEXT_TEXT = ("Sâm Sâm hiện chỉ hỗ trợ trả lời tin nhắn văn bản. "
                  "Quý khách vui lòng gọi hotline 1800577732 để được hỗ trợ.")
+# Hằng viết tay theo mẫu HANDOFF_TEXT/NON_TEXT_TEXT — gửi khi user
+# follow OA (V2.5): cảm ơn + giới thiệu 1 dòng chuyên sâm Ngọc Linh +
+# hotline. Không qua check() (text viết tay).
+WELCOME_TEXT = ("Cảm ơn Quý khách đã theo dõi Sâm Sâm! Sâm Sâm chuyên "
+                "các sản phẩm sâm Ngọc Linh chính gốc. Quý khách cần hỗ "
+                "trợ vui lòng nhắn tin hoặc gọi hotline 1800577732.")
 
 SEEN_TTL_S = 3600
 SEEN_DB = ROOT / "data" / "zalo_seen.db"   # dedup sống qua restart (D3.5)
@@ -132,7 +140,21 @@ _token_lock = threading.Lock()
 # lần fail đều rotate = burn oauth vô ích. Whitelist mã lỗi Zalo chưa
 # chắc, sai whitelist = auto-refresh chết câm -> throttle an toàn hơn.
 _last_refresh = 0.0  # lần attempt refresh gần nhất (thành công hay không)
+# V2.2: mốc refresh THÀNH CÔNG gần nhất, tách khỏi _last_refresh (mọi
+# attempt) — attempt fail mà đánh dấu "fresh" làm send_text retry bằng
+# token cũ vô ích.
+_last_refresh_ok = 0.0
 REFRESH_MIN_INTERVAL_S = 60
+# V2.1: refresh chủ động khi expires_at còn <= REFRESH_AHEAD_S — không
+# chờ send-fail mới rotate (khách không ăn 1 lượt reply chậm/fail).
+REFRESH_AHEAD_S = 300.0
+# V2.3: fallback in-memory CHỈ trong cửa sổ _write_token_store fail —
+# server Zalo đã rotate refresh_token nên bản trên đĩa chết, mất mem =
+# mất luôn đường refresh. Persist OK thì mem xoá — store là source-of-
+# truth để process khác (preflight --refresh, sửa tay) được tôn trọng
+# (cold-check F1). Restart process vẫn mất token (giới hạn chấp nhận).
+# Reader precedence: mem -> store -> env.
+_mem_tokens: dict = {}
 # user_id -> deque messages OpenAI-style; maxlen=8 = 4 cặp Q&A (D4.1)
 # OrderedDict làm LRU: cap số user để dict không phình vô hạn khi webhook
 # public — evict user lâu hoạt động nhất (D-nit v0.4).
@@ -367,17 +389,45 @@ def _write_token_store(obj: dict) -> None:
 
 
 def _current_access_token() -> str:
-    """Access token hiện hành: token store ưu tiên (source-of-truth sau
-    refresh), fallback env seed ZALO_ACCESS_TOKEN khi store chưa có."""
+    """Access token hiện hành — precedence mem -> store -> env (V2.3):
+    _mem_tokens giữ token mới rotate khi persist fail; token store là
+    source-of-truth sau refresh; env ZALO_ACCESS_TOKEN chỉ là seed."""
+    tok = _mem_tokens.get("access_token")
+    if isinstance(tok, str) and tok:
+        return tok
     tok = _read_token_store().get("access_token")
     return tok if isinstance(tok, str) and tok else ACCESS_TOKEN
 
 
 def _current_refresh_token() -> str:
-    """Refresh token hiện hành — ROTATE mỗi lần refresh nên luôn đọc
+    """Refresh token hiện hành — ROTATE mỗi lần refresh nên đọc mem ->
     store trước; env ZALO_REFRESH_TOKEN chỉ là seed lần đầu."""
+    tok = _mem_tokens.get("refresh_token")
+    if isinstance(tok, str) and tok:
+        return tok
     tok = _read_token_store().get("refresh_token")
     return tok if isinstance(tok, str) and tok else REFRESH_TOKEN
+
+
+def _current_expires_at() -> float:
+    """expires_at (epoch) của token hiện hành — mem -> store -> 0.0
+    khi không biết (store trống/field hỏng). V2.1 đọc để quyết refresh
+    chủ động."""
+    exp = _mem_tokens.get("expires_at")
+    if exp is None:
+        exp = _read_token_store().get("expires_at")
+    try:
+        return float(exp)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _token_expiring_soon() -> bool:
+    """V2.1: expires_at còn <= REFRESH_AHEAD_S -> refresh chủ động trước
+    khi send thay vì chờ send-fail mới rotate. Không biết expires_at
+    (0) -> False: giữ lazy-on-fail cũ."""
+    exp = _current_expires_at()
+    return exp > 0 and time.time() > exp - REFRESH_AHEAD_S
 
 
 def _can_refresh() -> bool:
@@ -392,12 +442,15 @@ def refresh_access_token() -> bool:
     access_token + refresh_token MỚI + expires_at vào store ngay —
     refresh_token ROTATE mỗi lần, token cũ vô hiệu tức thì nên mất
     sync = mất khả năng refresh. Dưới _token_lock để 2 reply thread
-    không rotate song song. Mọi lỗi -> warn + False, KHÔNG throw:
-    reply path không được chết vì token hết hạn. Preflight (V1.3)
-    import hàm này để ép refresh flow thật."""
-    global _last_refresh
+    không rotate song song. Thành công -> persist store + _last_refresh_ok
+    (V2.2, throttle retry của send_text); persist-fail -> _mem_tokens
+    giữ bản vừa rotate (V2.3). Mọi lỗi oauth -> warn + False, KHÔNG
+    throw: reply path không được chết vì token hết hạn; persist-fail
+    riêng vẫn True (token usable trong-process).
+    Preflight (V1.3) import hàm này để ép refresh flow thật."""
+    global _last_refresh, _last_refresh_ok, _mem_tokens
     with _token_lock:
-        _last_refresh = time.time()  # mốc throttle cho send_text
+        _last_refresh = time.time()  # mốc throttle attempt cho send_text
         refresh_tok = _current_refresh_token()
         if not (refresh_tok and APP_ID and APP_SECRET):
             print("[warn] zalo: refresh thiếu credential "
@@ -429,21 +482,37 @@ def refresh_access_token() -> bool:
         except (TypeError, ValueError):
             expires_in = 0.0
         new_refresh = body.get("refresh_token")
+        tokens = {
+            "access_token": access,
+            # Spec luôn trả refresh_token mới; phòng thiếu field thì
+            # giữ token đang có — vẫn tốt hơn ghi None làm mất hẳn
+            # đường refresh.
+            "refresh_token": (new_refresh
+                              if isinstance(new_refresh, str)
+                              and new_refresh else refresh_tok),
+            # expires_in thiếu/<=0 -> 0 = "không biết": ghi now() sẽ làm
+            # _token_expiring_soon luôn đúng -> mọi send đều rotate
+            # (reviewer v1.1 F1).
+            "expires_at": (time.time() + expires_in
+                           if expires_in > 0 else 0.0),
+        }
+        # V2.3: persist fail -> _mem_tokens giữ bản token vừa rotate
+        # (server Zalo đã vô hiệu bản cũ — mất mem = mất luôn đường
+        # refresh cho tới khi user seed lại env). Persist OK -> xoá
+        # mem: store lại là source-of-truth để process khác (preflight
+        # --refresh, operator sửa tay) ghi store mới được tôn trọng —
+        # giữ mem sau persist-ok sẽ đè store ngoài = regression v1.0
+        # (cold-check F1). Rebind nguyên tử — reader không qua lock.
         try:
-            _write_token_store({
-                "access_token": access,
-                # Spec luôn trả refresh_token mới; phòng thiếu field thì
-                # giữ token đang có — vẫn tốt hơn ghi None làm mất hẳn
-                # đường refresh.
-                "refresh_token": (new_refresh
-                                  if isinstance(new_refresh, str)
-                                  and new_refresh else refresh_tok),
-                "expires_at": time.time() + expires_in,
-            })
+            _write_token_store(tokens)
         except OSError as e:
+            _mem_tokens = tokens
             print(f"[warn] zalo: ghi token store lỗi {e!r} — token đã "
-                  f"rotate nhưng chưa persist", flush=True)
-            return False
+                  f"rotate, chỉ giữ trong-process tới restart",
+                  flush=True)
+        else:
+            _mem_tokens = {}
+        _last_refresh_ok = time.time()  # V2.2: mốc THÀNH CÔNG
         return True
 
 
@@ -472,16 +541,30 @@ def _send_once(user_id: str, text: str, token: str) -> bool | None:
 
 
 def send_text(user_id: str, text: str) -> bool:
-    """Gửi text qua Zalo CS message API; access_token lấy từ token store
-    (fallback env seed — V1.1). Chưa có token mà đủ credential refresh
-    -> refresh trước rồi mới gửi. API báo lỗi rõ + còn đường refresh ->
-    refresh rồi retry ĐÚNG 1 lần; lỗi transport không retry (không rõ
+    """Gửi text qua Zalo CS message API; access_token lấy mem -> store
+    -> env seed (V2.3+V1.1). Chưa có token, hoặc có mà expires_at sắp
+    tới (V2.1 — refresh chủ động, khách không ăn lượt reply chậm/fail
+    khi token vừa chết), mà đủ credential -> refresh trước rồi mới gửi;
+    refresh fail vẫn send thử token hiện tại. API báo lỗi rõ + còn
+    đường refresh -> retry ĐÚNG 1 lần theo V2.2: refresh vừa THÀNH
+    CÔNG gần đây -> retry cùng token mới; attempt-fail gần đây -> bỏ
+    (không còn gì tốt hơn để thử, retry token hỏng là waste); còn lại
+    -> refresh rồi retry nếu được. Lỗi transport không retry (không rõ
     lượt trước có tới Zalo không)."""
     token = _current_access_token()
-    if not token and _can_refresh():
-        # Deploy chỉ với bộ refresh (không seed access token) vẫn tự
-        # lấy token lần đầu — nhánh _startup_error cho phép serve.
-        refresh_access_token()
+    if _can_refresh() and (not token or _token_expiring_soon()):
+        # Gộp bootstrap (chưa có token — nhánh _startup_error cho phép
+        # serve chỉ với bộ refresh) lẫn proactive (V2.1). Best-effort:
+        # fail thì cứ send token hiện tại. Throttle trên attempt
+        # (_last_refresh): oauth sập mà không throttle = mỗi send một
+        # call 15s-timeout (reviewer v1.1 F1).
+        if time.time() - _last_refresh > REFRESH_MIN_INTERVAL_S:
+            refresh_access_token()
+        else:
+            # Thread khác đang refresh (hoặc vừa fail) — chờ lock xong
+            # rồi đọc lại token mới nhất thay vì send bản cũ/mất lượt.
+            with _token_lock:
+                pass
         token = _current_access_token()
     if not token:
         print(f"[warn] zalo: chưa có access token "
@@ -490,12 +573,21 @@ def send_text(user_id: str, text: str) -> bool:
         return False
     res = _send_once(user_id, text, token)
     if res is False and _can_refresh():
-        # Vừa có attempt refresh trong REFRESH_MIN_INTERVAL_S -> retry
-        # ngay với token hiện hành, không rotate thêm (M3). Chưa ai
-        # refresh gần đây -> refresh rồi retry nếu thành công.
-        fresh = time.time() - _last_refresh <= REFRESH_MIN_INTERVAL_S
-        if fresh or refresh_access_token():
+        if (time.time() - _last_refresh > REFRESH_MIN_INTERVAL_S
+                # Lâu rồi không ai refresh -> thử rotate rồi retry.
+                and refresh_access_token()):
             res = _send_once(user_id, text, _current_access_token())
+        else:
+            # Attempt gần đây: thread khác ĐANG refresh, hoặc vừa fail
+            # — chờ _token_lock để phân biệt (in-flight thì chờ xong,
+            # reviewer v1.1 F2); fail xong rồi thì lock rảnh ngay.
+            with _token_lock:
+                pass
+            if time.time() - _last_refresh_ok <= REFRESH_MIN_INTERVAL_S:
+                # Refresh vừa THÀNH CÔNG -> retry 1 lần với token mới
+                # (throttle M3 giữ). Attempt-fail (_last_refresh_ok cũ)
+                # -> không retry bằng token hỏng (waste, V2.2).
+                res = _send_once(user_id, text, _current_access_token())
     return res is True
 
 
@@ -617,6 +709,43 @@ def _reply_non_text(user_id: str, event: str, msg_id: str = "") -> dict:
     return {"sent": sent, "text": NON_TEXT_TEXT, "sources": []}
 
 
+def handle_non_text(user_id: str, event: str, msg_id: str = "") -> dict:
+    """Wrapper _ulock cho _reply_non_text (V2.4) — text + ảnh/file cùng
+    user serialize, reply không đảo thứ tự (như handle_text)."""
+    with _ulock(user_id):
+        return _reply_non_text(user_id, event, msg_id)
+
+
+def handle_follow(user_id: str) -> dict:
+    """Wrapper _ulock cho _reply_follow (V2.5) — cùng striping với text/
+    non-text để mọi reply của 1 user ra đúng thứ tự."""
+    with _ulock(user_id):
+        return _reply_follow(user_id)
+
+
+def _reply_follow(user_id: str) -> dict:
+    """Event follow (V2.5): khách vừa theo dõi OA -> gửi WELCOME_TEXT
+    (hằng viết tay — không qua check()). Convlog `answered:null`:
+    follow không phải câu hỏi nên KHÔNG vào queue "Chưa trả lời"
+    (precedent `guardrail_ok:null` — null = "không áp dụng", khác
+    False = "bot bó tay")."""
+    t0 = time.time()
+    sent = send_text(user_id, WELCOME_TEXT)
+    _log_conversation({
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "msg_id": "",  # event follow không có msg_id — dedup qua ts
+        "user_hash": _uhash(user_id),
+        "question": "[event:follow]",
+        "answer": WELCOME_TEXT[:500],  # text ĐÃ GỬI — parity HANDOFF
+        "sources": [],
+        "guardrail_ok": None,
+        "latency_ms": int((time.time() - t0) * 1000),
+        "answered": None,
+        "sent": sent,
+    })
+    return {"sent": sent, "text": WELCOME_TEXT, "sources": []}
+
+
 class Handler(BaseHTTPRequestHandler):
     def _json(self, code: int, obj: dict) -> None:
         body = json.dumps(obj).encode()
@@ -659,8 +788,22 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(400, {"error": "bad json"})
         self._json(200, {"ok": True})  # ACK nhanh — reply async bên dưới
         event = ev.get("event_name") or ""
+        if event == "follow":
+            # V2.5: khách vừa follow OA -> welcome (uid ở follower.id
+            # theo spec; fallback sender.id phòng payload lệch). Mỗi
+            # follow đều gửi — dedup chỉ chặn retry cùng timestamp,
+            # refollow spam chưa throttle (someday); thiếu timestamp thì
+            # key "u:follow:" trùng nhau -> chặn refollow trong
+            # SEEN_TTL_S (hiếm — Zalo luôn gửi ts).
+            uid = ((ev.get("follower") or {}).get("id")
+                   or (ev.get("sender") or {}).get("id") or "")
+            if uid and not _dedup(
+                    f"{uid}:follow:{ev.get('timestamp', '')}"):
+                threading.Thread(target=handle_follow, args=(uid,),
+                                 daemon=True).start()
+            return
         if not event.startswith("user_send"):
-            return  # follow/unfollow/... — không phải tin nhắn -> ignore
+            return  # unfollow/... — không phải tin nhắn -> ignore
         msg, sender = ev.get("message") or {}, ev.get("sender") or {}
         uid, mid = sender.get("id", ""), msg.get("msg_id") or ""
         if event == "user_send_text":
@@ -673,7 +816,7 @@ class Handler(BaseHTTPRequestHandler):
             # NON_TEXT_TEXT + convlog answered:false, khách không bị câm.
             if not uid:
                 return
-            target, args = _reply_non_text, (uid, event, mid)
+            target, args = handle_non_text, (uid, event, mid)
         eid = f"{uid}:{mid or ev.get('timestamp', '')}"
         # Return sớm phía trên -> chỉ event thật sự xử lý mới tới dedup.
         if not _dedup(eid):
