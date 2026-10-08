@@ -125,6 +125,26 @@ chat lẫn embeddings) + Streamlit.
   "verify_signature bypass" sót lại sau D4.2, supervisor v0.4.1 bắt):
   trước khi pick someday item làm, grep code chứng minh nó còn hỏng;
   khi đóng version, rà someday xem mục nào thực ra version này đã vá.
+- **Nhánh CHỦ ĐỘNG thêm vào flow đã có throttle** (proactive refresh/
+  purge/retry): phải gate bằng cùng attempt-throttle của nhánh reactive
+  (`_last_refresh`) — không throttle = oauth sập thì MỌI send đều gọi
+  API 15s-timeout (reviewer v1.1 F1). Field từ API ngoài thiếu/≤0
+  (`expires_in`) → ghi sentinel "không biết" (`expires_at=0`), KHÔNG
+  ghi giá trị suy ra (`now()+0` làm `_token_expiring_soon` luôn đúng →
+  mọi send đều rotate). Race "đang refresh song song vs vừa fail" →
+  phân biệt bằng `with _token_lock: pass` (chờ in-flight xong) rồi đọc
+  lại `_last_refresh_ok`.
+- **Fallback in-memory cho state-on-disk** (vd `_mem_tokens`): chỉ tồn
+  tại trong cửa sổ persist-FAIL, xoá ngay khi persist OK — giữ mem sau
+  persist-ok sẽ đè ghi của process khác (preflight --refresh, operator
+  sửa tay) = regression "store không còn source-of-truth" (cold-check
+  v1.1 F1). Rebind nguyên tử `_mem = tokens`, không `clear()+update()`
+  (reader không qua lock thấy dict rỗng giữa chừng).
+- **Background worker chết giữa lane** (connection-error, không phải
+  tool-deny): verify `git diff` — nếu phần đã viết sạch (chỉ khai báo)
+  thì coordinator absorb phần còn lại theo spec, đừng respawn mù
+  (v1.1: worker viết được consts+docstring rồi chết; absorb + reviewer
+  vẫn bắt 2 MAJOR concurrency).
 - `samsam.net.vn` là NukeViet (HTML render phức tạp); `samsamngoclinh.com` là
   WooCommerce — **thử WP REST API `/wp-json/wp/v2/...` trước**, dễ hơn parse HTML.
 - Embedding lưu `float8[]` — nếu sau này cài được pgvector thì đổi cột + index,
