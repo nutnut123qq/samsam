@@ -284,8 +284,15 @@ def _purge_convlog(path: Path) -> None:
 
 
 # Purge file active tối đa 1 lần/ngày khi có ghi — process chạy lâu ít
-# traffic không giữ entry quá hạn tới tận restart (D5.11).
+# traffic không giữ entry quá hạn tới tận restart (D5.11). Purge-fail
+# backoff (V4.1): _last_purge chỉ set khi purge THÀNH CÔNG (D6.9);
+# _last_purge_attempt ghi MỌI attempt — fail dai dẳng (đĩa hỏng/đầy)
+# thì retry throttle PURGE_RETRY_S thay vì mỗi lần ghi một purge
+# O(file) trong _log_lock (mọi reply thread xếp hàng). Precedent
+# _last_refresh/_last_refresh_ok (V2.2).
+PURGE_RETRY_S = 3600.0
 _last_purge = 0.0
+_last_purge_attempt = 0.0
 
 
 def _log_conversation(entry: dict) -> None:
@@ -295,16 +302,21 @@ def _log_conversation(entry: dict) -> None:
     song song; chỉ lưu user_hash, không lưu raw user_id (PII). Purge
     throw (PermissionError/disk full) chỉ warn — không được giết reply
     thread sau khi send thành công (D6.9)."""
-    global _last_purge
+    global _last_purge, _last_purge_attempt
     CONV_LOG.parent.mkdir(parents=True, exist_ok=True)
     line = json.dumps(entry, ensure_ascii=False) + "\n"
     with _log_lock:
-        if time.time() - _last_purge > 86400:
-            # _last_purge chỉ set SAU purge thành công — fail mà đánh
-            # dấu thì kẹt 24h mới retry (D6.9).
+        now = time.time()
+        if (now - _last_purge > 86400
+                and now - _last_purge_attempt >= PURGE_RETRY_S):
+            # _last_purge chỉ set SAU purge thành công (D6.9);
+            # _last_purge_attempt set TRƯỚC try — fail dai dẳng thì
+            # retry throttle PURGE_RETRY_S, không phải mọi lần ghi đều
+            # purge O(file) trong _log_lock (V4.1).
+            _last_purge_attempt = now
             try:
                 _purge_convlog(CONV_LOG)
-                _last_purge = time.time()
+                _last_purge = now
             except Exception as e:  # noqa: BLE001 — warn-only, vẫn log
                 print(f"[warn] zalo: purge convlog lỗi {e!r}", flush=True)
         if (CONV_LOG.exists()

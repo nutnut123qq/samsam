@@ -17,7 +17,7 @@ là external-dep hoặc chấp-định có chủ đích. Quy ước precedent pa
 zalo_mock. Global mutable mới (`_last_purge_attempt`) PHẢI reset trong
 `_isolated_files` — kèm fix latent leak `_last_purge` (chưa từng reset).
 
-- [ ] **V4.1 Purge-fail backoff** — `_log_conversation`: daily purge
+- [x] **V4.1 Purge-fail backoff** — `_log_conversation`: daily purge
   hiện retry MỌI lần ghi khi purge throw (đĩa hỏng/đầy → O(file) dưới
   lock chung, mọi reply thread chậm theo — audit v0.6.2 NIT). Vá theo
   precedent `_last_refresh`/`_last_refresh_ok` (V2.2): thêm global
@@ -27,13 +27,15 @@ zalo_mock. Global mutable mới (`_last_purge_attempt`) PHẢI reset trong
   throttled kể cả khi fail — đây là điểm vá); `_last_purge` vẫn chỉ
   set khi purge thành công (D6.9 giữ). Rotate-purge (`.1`) không cần
   throttle — chỉ chạy khi file >cap, tự bounded. Gate: pytest —
-  purge throw → reply vẫn log + `_last_purge_attempt` set; ghi tiếp
-  trong window → KHÔNG retry (spy count); `_last_purge_attempt` lùi
-  quá window → retry; success → `_last_purge` set. ĐỔI CONTRACT test
-  cũ `test_purge_failure_still_logs_and_retries` chủ đích (retry-ngay
-  → throttled — precedent flip test V2.5/V3.3).
-- [ ] **V4.2 Gate chung** — `python -m pytest` xanh + `ruff check .`
+  `test_purge_failure_still_logs_and_retries` flip contract chủ đích
+  (ghi "ĐỔI CONTRACT v1.3"): throw → append + attempt set; trong
+  window → không retry; lùi stamp quá window → retry; success →
+  `_last_purge` set + daily gate chặn
+- [x] **V4.2 Gate chung** — `python -m pytest` xanh + `ruff check .`
   clean (coordinator)
+  — *(92/92 `evidence/v13_pytest.log` + ruff clean; `_isolated_files`
+    giờ reset cả `_last_purge` (latent leak — trước chưa từng reset) +
+    `_last_purge_attempt`)*
 
 ## Checklist v1.2-convlog-hygiene
 

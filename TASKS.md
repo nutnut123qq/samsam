@@ -360,15 +360,16 @@ Checklist/DoD chi tiết: `DONE.md` mục v1.3-ops-polish (contract
 coordinator tự chọn qua /cycle 2026-10-09). `guardrail.py` cấm đụng;
 `api/rag.py` không đụng; skip eval_qa + zalo_mock.
 
-- [ ] **V4.1 Lane A** — `connectors/zalo.py` + `tests/test_zalo.py`:
+- [x] **V4.1 Lane A** — `connectors/zalo.py` + `tests/test_zalo.py`:
   `_last_purge_attempt` throttle daily-purge retry (PURGE_RETRY_S=3600)
   theo precedent `_last_refresh`/`_last_refresh_ok`; reset global mới
   + `_last_purge` (latent leak) trong `_isolated_files`; flip contract
   `test_purge_failure_still_logs_and_retries` (retry-ngay → throttled).
   - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
-  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean
-- [ ] **V4.2 Gate chung** — `python -m pytest` full + `ruff check .`
-  (coordinator)
+  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean —
+    62/62 (worker)
+- [x] **V4.2 Gate chung** — `python -m pytest` full + `ruff check .`
+  (coordinator) — 92/92 `evidence/v13_pytest.log` + ruff clean
 
 ---
 

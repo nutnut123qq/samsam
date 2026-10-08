@@ -57,6 +57,13 @@ def _isolated_files(monkeypatch, tmp_path):
     # mốc giả theo thứ tự chạy (gotcha v1.0).
     monkeypatch.setattr(zalo, "_last_refresh_ok", 0.0)
     monkeypatch.setattr(zalo, "_mem_tokens", {})
+    # V4.1: daily-purge globals cũng module-global. _last_purge trước
+    # đây CHƯA từng reset (latent leak — test làm purge thành công để
+    # timestamp sót lại, test sau thấy "vừa purge" giả → skip daily
+    # nhánh theo thứ tự chạy); _last_purge_attempt (throttle retry
+    # purge-fail mới) cùng reset mỗi test.
+    monkeypatch.setattr(zalo, "_last_purge", 0.0)
+    monkeypatch.setattr(zalo, "_last_purge_attempt", 0.0)
     zalo._histories.clear()
     _reset_seen_conn()
     yield
@@ -820,15 +827,17 @@ def test_log_write_triggers_daily_purge(monkeypatch, tmp_path):
 
 def test_purge_failure_still_logs_and_retries(monkeypatch, tmp_path):
     # D6.9: _purge_convlog throw (PermissionError/disk full) không được
-    # giết _log_conversation — entry vẫn append; _last_purge KHÔNG set
-    # nên lần ghi sau retry purge ngay (không kẹt 24h).
+    # giết _log_conversation — entry vẫn append; _last_purge KHÔNG set.
+    # ĐỔI CONTRACT v1.3 (V4.1): trước đây lần ghi kế retry NGAY — đĩa
+    # hỏng dai dẳng kéo mọi reply thread xếp hàng O(file) trong
+    # _log_lock (audit v0.6.2 NIT). Giờ retry bị throttle PURGE_RETRY_S
+    # qua _last_purge_attempt (set TRƯỚC try, ghi MỌI attempt).
     calls = []
 
     def boom(path):
         calls.append(path)
         raise PermissionError("locked")
 
-    monkeypatch.setattr(zalo, "_last_purge", 0.0)  # ép nhánh daily purge
     monkeypatch.setattr(zalo, "_purge_convlog", boom)
     zalo._log_conversation({"ts": "t1", "question": "a"})
     log = tmp_path / "conversations.jsonl"
@@ -836,11 +845,29 @@ def test_purge_failure_still_logs_and_retries(monkeypatch, tmp_path):
             log.read_text(encoding="utf-8").splitlines()]
     assert [r["question"] for r in recs] == ["a"]  # entry vẫn ghi được
     assert zalo._last_purge == 0.0  # purge fail -> không đánh dấu
+    assert zalo._last_purge_attempt > 0.0  # attempt ĐÃ đánh dấu
+    # Ghi tiếp trong window PURGE_RETRY_S -> KHÔNG retry purge.
     zalo._log_conversation({"ts": "t2", "question": "b"})
-    assert len(calls) == 2  # lần ghi kế retry purge ngay
+    assert len(calls) == 1
+    # Lùi attempt-stamp quá window -> lần ghi kế retry purge.
+    monkeypatch.setattr(zalo, "_last_purge_attempt",
+                        time.time() - zalo.PURGE_RETRY_S - 1)
+    zalo._log_conversation({"ts": "t3", "question": "c"})
+    assert len(calls) == 2
+    # Purge thành công -> _last_purge set; ghi sau không attempt thêm.
+    ok_calls = []
+    monkeypatch.setattr(zalo, "_purge_convlog",
+                        lambda p: ok_calls.append(p))
+    monkeypatch.setattr(zalo, "_last_purge_attempt",
+                        time.time() - zalo.PURGE_RETRY_S - 1)
+    zalo._log_conversation({"ts": "t4", "question": "d"})
+    assert len(ok_calls) == 1
+    assert zalo._last_purge > 0.0  # thành công mới đánh dấu
+    zalo._log_conversation({"ts": "t5", "question": "e"})
+    assert len(ok_calls) == 1  # đã purge hôm nay -> daily gate chặn
     recs = [json.loads(x) for x in
             log.read_text(encoding="utf-8").splitlines()]
-    assert [r["question"] for r in recs] == ["a", "b"]
+    assert [r["question"] for r in recs] == ["a", "b", "c", "d", "e"]
 
 
 def test_rotate_purge_failure_still_appends(monkeypatch, tmp_path):
