@@ -368,10 +368,11 @@ mới.
   "((0901))234567"). `_PII_RE` giữ nguyên.
   - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
   - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean —
-    63/63; `test_mask_pii_paren_mixed_sep_and_nested` 16 leak-case →
-    "***" + 8 regression biên không over-match
+    65/65; `test_mask_pii_paren_mixed_sep_and_nested` 17 leak-case →
+    "***" + regression biên không over-match; cold-check FIX: scanner
+    1-pass O(n) thay fixpoint O(n·depth) + bound email-alt quadratic
 - [x] **V5.2 Gate chung** — `python -m pytest` full + `ruff check .`
-  (coordinator) — 93/93 `evidence/v14_pytest.log` + ruff clean
+  (coordinator) — 95/95 `evidence/v14_pytest.log` + ruff clean
 
 ## M14 — Patch v1.3-ops-polish (purge-fail backoff)
 

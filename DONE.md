@@ -37,10 +37,21 @@ paren+bare "(0901) - 234.567" (chưa flag, diminishing returns).
   chặn bridge như V3.1; (2) unwrap space-tolerant lặp
   `\(\s*(\+?\d[\d ]*?)\s*\)` → ` \1 ` — mở nesting + space-trong-ngoặc.
   `_PII_RE` giữ nguyên (sep cùng-ký-tự — KHÔNG nới sep class).
-  Gate: pytest 63/63 — `test_mask_pii_paren_mixed_sep_and_nested`:
+  Gate: pytest 65/65 — `test_mask_pii_paren_mixed_sep_and_nested`:
   16 leak-case → "***" (mixed-sep joints, `)(` dính, nested `(( ))`,
   space-trong-ngoặc, group "0" đơn, +84) + regression biên KHÔNG
   over-match (giá ngoặc, khoảng giá/ngày, <9 số, non-digit group)
+  — *(cold-check FIX: bản đầu fixpoint regex = O(n·depth) — "("*5000
+    đốt >10s trong _log_lock; vá thành scanner 1-pass depth-counting
+    + budget-rescan 4n ("(((…x" abort → emit raw). Số đo sau vá:
+    n=800 0.000s (trước 1.03s), n=5000 0.004s (trước >10s kill),
+    n=20000 0.015s, chain-100k 0.372s, opens-100k 0.068s, merge-30k
+    0.122s. MINOR-1 cap-32-leak tự hết (không còn cap). MINOR-2
+    over-mask "(500) - (0) - (000)…" → ACCEPT + test biên
+    `test_mask_pii_paren_merge_overmask_accepted` (vá rẻ loại vì phá
+    "(90)" giữa chuỗi). Vá kèm cùng-cụm: email alt `[\w.+-]+@` cũng
+    quadratic trên text dài không-'@' ('x'×50K=18.9s, ×100K=77.8s) —
+    bound RFC `{1,64}`/`{1,63}` → 900KB 'x' 1.27s)*
 - [x] **V5.2 Gate chung** — `python -m pytest` full xanh +
   `ruff check .` clean (coordinator)
   — *(93/93 `evidence/v14_pytest.log` — 16.8s — + ruff clean)*
