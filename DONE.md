@@ -4,13 +4,11 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **v1.6-ops-hardening** (contract coordinator tự chọn
-qua /cycle 3/5, 2026-10-09 — board sạch, pick 3 someday defect-vá-được
-đã probe-live chứng minh còn hỏng; rời `_mask_pii` — lớp leak rẻ cạn).
+Version đang mở: **không** — board sạch, chờ /cycle 4/5 chọn contract.
 
-v1.5-pii-hardening đóng 2026-10-09 (cold-check PASS đợt 1; 3 MINOR →
-someday: email label>253 lộ hẳn, ngoặc-neo kề giá over-mask ≥10 digit,
-thiếu test biên 257/254).
+v1.6-ops-hardening đóng 2026-10-09 (cold-check PASS đợt 1; 2 MINOR →
+someday: msg_id kết `:follow` nhận TTL 7d, do_GET 404 không đọc body;
+1 NIT test-key-format vá ngay).
 
 ## Checklist v1.6-ops-hardening
 
@@ -754,16 +752,17 @@ Quy ước DoD cho phase connector:
   "2.000.000.000.000" → "2.***", "06.10.2026 09:30" → "***:30" —
   pre-existing); production cần mask đầy đủ hơn (pilot: local +
   gitignored)
-- Reject-sớm 411/413 không set `close_connection` — nếu sau này bật
-  HTTP/1.1 keep-alive, body sót (chunked chưa đọc / phần >1MB chưa đọc)
-  nhiễu request kế trên cùng connection. Hôm nay HTTP/1.0 close mặc
-  định nên đúng; nhớ `self.close_connection = True` khi bật keep-alive
-  (audit v0.5.1 NIT)
-- `_purge_convlog`/`_last_purge*` dùng `time.time()` — đồng hồ hệ
-  thống lùi (clock-skew) làm purge hoãn lâu (hiệu số âm). Rủi ro thấp
-  (cùng hành vi với mọi throttle timestamp khác trong file — đổi sang
-  monotonic phải đổi cả semantic "86400 giây lịch"); production cân
-  nhắc `time.monotonic` cho interval (cold-check v1.3 NIT)
+- ~~Reject-sớm 411/413 không set `close_connection`~~ — vá ở v1.6
+  (V7.1): 411/400-CL/413 set `self.close_connection = True`. Residual:
+  `do_GET` 404 cũng không đọc body — latent nếu bật HTTP/1.1
+  keep-alive (cold-check v1.6 MINOR); khi đó vá cùng pattern
+- ~~`_purge_convlog`/`_last_purge*` dùng `time.time()`~~ — vá ở v1.6
+  (V7.2): mọi stamp interval trong-process đổi `time.monotonic()` +
+  init `-inf`; wall-clock chỉ giữ cho ts-persist/`expires_at`/ts ISO
+- `_dedup` CASE `%:follow` giả định msg_id Zalo numeric — một
+  `msg_id` kết `:follow` nhận TTL 7d, `msg_id=="follow"` trùng hẳn
+  key follow cùng uid. Payload đã qua HMAC nên không khai thác được
+  từ user; nếu Zalo đổi format mid thì rà lại (cold-check v1.6 MINOR)
 - 2 process cùng ghi convlog (zalo + streamlit) → rotate race xuyên
   process (`_log_lock` chỉ trong-process) có thể mất file `.1`, cực
   hiếm ở pilot; nếu deploy 2 writer thật cần file-lock hoặc tách log
@@ -786,9 +785,9 @@ Quy ước DoD cho phase connector:
 - Đăng bài/listing mới lên OA/sàn — BẮT BUỘC human-approve step trong flow
   (guardrail chỉ là lưới heuristic, không thay người duyệt pháp lý)
 - Zalo OA product catalog sync (27 SKU, batch ≤500)
-- Welcome follow dedup theo SEEN_TTL_S (1h) — refollow sau TTL vẫn
-  welcome lại (re-engagement, chủ đích v1.2); muốn chặn lâu hơn cần
-  per-key TTL trong seen db
+- ~~Welcome follow dedup per-key TTL~~ — vá ở v1.6 (V7.3): key
+  `:follow` sống FOLLOW_TTL_S 7d, refollow sau 7d vẫn welcome lại
+  (re-engagement, chủ đích)
 - Deploy webhook public (tunnel/VPS) + verify signature trên endpoint thật
 - Agent vận hành vườn + agent báo cáo định kỳ
 - Dashboard số liệu kênh
@@ -817,5 +816,6 @@ Quy ước DoD cho phase connector:
 | v1.1-oa-resilience (patch) | Vá 5 someday đã verify còn hỏng: proactive refresh theo `expires_at` (throttled), `_last_refresh_ok` tách attempt/success (chờ `_token_lock` khi refresh in-flight), `_mem_tokens` chỉ cover cửa sổ persist-fail, non-text qua `_ulock`, welcome `WELCOME_TEXT` khi `follow` | 2026-10-08 | `evidence/v11_pytest.log` 90/90 + `v11_ruff.log` clean; commits `5fe926f` (contract) + code. Lane worker chết connection-error giữa chừng → coordinator absorb. Reviewer FIX đợt 1: throttle proactive + `expires_in≤0`→expires_at=0 + chờ lock khi refresh in-flight + spy dispatch `handle_non_text`. Cold-check: FIX F1 major (mem đè store ghi bởi process khác → refresh token chết tới restart) → vá mem-chỉ-khi-persist-fail + test; re-audit **PASS**. F2/F3 minor → someday. eval/mock skip precedent patch |
 | v1.2-convlog-hygiene (patch) | Vá 3 someday còn hỏng: `_mask_pii` unwrap nhóm ngoặc toàn-digit (SĐT "+84 (90)..."/"(+84)..." mask được, giá ngoặc không bị bridging), dedup follow bỏ ts (welcome ≤1 lần/SEEN_TTL_S/user), `_purge_convlog` drop dòng strptime-fail/ts-outlier (đổi policy "giữ thừa" → retention 30d đóng hở PII quá hạn) | 2026-10-09 | `evidence/v12_pytest.log` 92/92 (auditor tự chạy lại 151.7s) + ruff clean; commits `a30762b` (contract) + `6ebece4` (code) + `b07a367` (board). Reviewer FIX đợt 1: normalize ngoặc→space tạo bridging mới "(1.500.000)(2.000.000)" → vá unwrap-digit-group; `len(ts)==20` không đủ → strptime + horizon +1d. Re-audit PASS. Cold-check auditor lạ: **PASS** — tự xác định diff-range, chạy lại pytest 92/92 + ruff, 3 MINOR/NIT → someday (unwrap biến dạng text non-SĐT, over-mask "500.000 (10) 0901234567", ngoặc-trộn-sep lọt). eval/mock skip precedent patch. Dọn someday stale: "token refresh tự động" đã xong từ v1.0 |
 | v1.5-pii-hardening (patch) | Vá 3 lớp leak còn lại trong `_mask_pii`/`_PII_RE` (cold-check v1.4 MINOR): budget-abort → đuôi còn `(` mask `***`; group ngoặc làm neo nối bare-run kề khi blob ≥10 digit ("(0901) - 234.567" mask được, "50.000.000 - 100.000.000" vẫn không bridge); email bound `{1,256}`/`{1,253}` | 2026-10-09 | `evidence/v15_pytest.log` 98/98 ×2 + ruff clean; commits `2249ad4` (contract) + `b2fd76d` (code) + `e3b9ffc` (board). Cold-check auditor lạ: **PASS** đợt 1 (tự chạy 98/98 17.6s, probe bridging/tail/email/budget sạch, perf linear 200K→0.68s) — 3 MINOR → someday (label>253 lộ hẳn, neo-ngoặc over-mask giá ≥10 digit, thiếu test biên 257/254) |
+| v1.6-ops-hardening (patch) | Vá 3 someday defect probe-verify còn hỏng: `close_connection=True` trên reject body-chưa-đọc (411/400-CL/413 — keep-alive HTTP/1.1 không bị sót body nhiễu request kế), stamp interval → `time.monotonic()` + init `-inf` (clock lùi không đóng băng purge/refresh-throttle), `_dedup` per-key TTL — `:follow` sống 7d chặn welcome-spam unfollow/refollow | 2026-10-09 | `evidence/v16_pytest.log` 101/101 + ruff clean; commits `287dfe8` (contract) + `9952020` (code/tests/board). Worker chết connection-error giữa lane → coordinator absorb 3 test mới; Cold-check auditor lạ: **PASS** đợt 1 (tự chạy 101/101 26s + trace -inf/close_connection/SQL-CASE, 3 test không pass-ảo) — 2 MINOR → someday (msg_id `:follow` suffix TTL 7d, do_GET 404 không đọc body) + 1 NIT test-key-format vá ngay |
 | v1.4-pii-evasion (patch) | Vá 2 lớp leak SĐT cold-check v1.2: `_mask_pii` scanner 1-pass `_paren_group_end` depth-counting (merge nhóm ngoặc-digit kề qua sep bất kỳ + unwrap ngoặc lồng/space-trong-ngoặc) thay fixpoint regex; bound email-alt `{1,64}`/`{1,63}` | 2026-10-09 | `evidence/v14_pytest.log` 95/95 + ruff clean; commits `205784c` (contract) + `d7b3a72` (code) + `d72ce2b` (board) + `cd9ab65`+`41be08d` (FIX). Cold-check đợt 1 FIX: MAJOR fixpoint O(n·depth) — "("*5000 đốt >10s trong `_log_lock`, inbound 1MB không cap → scanner 1-pass O(n) + budget-rescan 4n (n=20000→0.015s); MINOR cap-32-leak tự hết; MINOR over-mask nhóm ngoặc toàn-digit ACCEPT+test. Đợt 2 auditor lạ: **PASS** (tự chạy 95/95, perf 8 case <0.1s, không scope creep) — 2 MINOR mới → someday (budget-abort bypass, email RFC-bound edge) + NIT số stale |
 | v1.3-ops-polish (patch) | Purge-fail backoff: `_last_purge_attempt` throttle daily-purge retry (PURGE_RETRY_S=3600 — đĩa hỏng dai dẳng không còn kéo mọi reply thread xếp hàng O(file) trong `_log_lock`); `_isolated_files` vá latent leak `_last_purge` | 2026-10-09 | `evidence/v13_pytest.log` 92/92 (auditor tự chạy lại 17.7s) + ruff clean; commits `b8ed6e5` (contract) + `f48364a` (code) + `a27647c` (NIT reviewer). Reviewer PASS đợt 1, 2 NIT vá ngay (comment throttle, setattr thừa). Cold-check auditor lạ: **PASS** — tự định diff-range + chạy lại pytest 92/92 + ruff; 2 NIT: boot-purge-không-set-`_last_purge` vá ngay (global + set sau purge boot OK), clock-skew `time.time()` → someday |

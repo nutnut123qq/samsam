@@ -1653,6 +1653,6 @@ def test_follow_dedup_longer_ttl(monkeypatch):
     age("u1:follow", 8 * 86400)               # quá 7d -> re-engagement
     assert zalo._dedup("u1:follow") is False
     # Key msg thường KHÔNG được TTL dài — quá 1h vẫn cleanup/re-process.
-    assert zalo._dedup("u1:m1|1700000000000") is False
-    age("u1:m1|1700000000000", 3700)
-    assert zalo._dedup("u1:m1|1700000000000") is False  # row đã cleanup
+    assert zalo._dedup("u1:m1") is False
+    age("u1:m1", 3700)
+    assert zalo._dedup("u1:m1") is False  # row đã cleanup
