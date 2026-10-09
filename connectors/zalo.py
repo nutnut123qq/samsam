@@ -127,10 +127,34 @@ RETAIN_DAYS = 30
 # KHÔNG đưa ngoặc vào sep class (mở lại bridging ở trên) và không
 # normalize ngoặc non-digit (làm ")(" -> sep-run -> bridging mới).
 # Tên người vẫn không detect được bằng regex.
+# V5.1: 2 lớp lách còn lọt sau V3.1 (cold-check v1.2 MINOR):
+# (a) SĐT chia qua nhiều nhóm ngoặc nối sep TRỘN — "(0901) - (234) -
+# (567)": sau unwrap joint giữa các nhóm là " - " (sep trộn) nên không
+# bridge; (b) ngoặc lồng "((0901))" / ngoặc có space "( 0901 )" —
+# unwrap strict `\+?\d+` không bắt -> ")" chặn bridge.
+# Fix trong `_mask_pii`: fixpoint merge+unwrap — merge gộp 2 nhóm
+# ngoặc-toàn-digit KỀ NHAU qua sep-run bất kỳ (kể cả ")(" dính) thành
+# 1 group; unwrap space-tolerant mở từng lớp. Ngoặc bọc NON-digit
+# (giá "(1.500.000)" có '.') không merge/unwrap -> ")" vẫn chặn
+# bridge. `_PII_RE` giữ nguyên — không nới sep class.
 _PII_RE = re.compile(
     r"(?<!\d)0(?:(?:([ .-])\1*)?\d){9,}"
     r"|(?<![\d+])(?:\+84|84)(?:(?:([ .-])\2*)?\d){8,}"
     r"|[\w.+-]+@[\w-]+\.[\w.]+")
+# V5.1: merge "(0901) - (234" -> "(0901 234" — chỉ khi nhóm TRÁI toàn
+# digit/space/NGOẶC (lồng "((0901))" vẫn merge được — strict-digit-only
+# để "(234) - (567)" merge+unwrap thành bare digits trước khi nhóm
+# nested bên trái kịp gộp -> leak) VÀ nhóm phải mở '('+digit. Joint
+# `[ .-]*` bất kỳ kể cả rỗng (")(" dính) và trộn (" - "). Lặp tới
+# fixpoint để gộp cả chuỗi "(A) - (B) - (C)" — merge PHẢI xong trước
+# unwrap, vì unwrap biến nhóm thành bare digits và mất dấu "từng trong
+# ngoặc".
+_PAREN_MERGE_RE = re.compile(
+    r"\(\s*(\+?[\d (][\d ()]*?)\s*\)[ .-]*\(\s*(?=\+?\d)")
+# V5.1: unwrap space-tolerant (V3.1 chỉ `\+?\d+` strict — "( 0901 )"
+# và lớp ngoài của "((0901))" không bắt). Lặp qua outer loop trong
+# `_mask_pii` để bóc từng lớp ngoặc lồng.
+_PAREN_UNWRAP_RE = re.compile(r"\(\s*(\+?\d[\d ]*?)\s*\)")
 
 _seen_lock = threading.Lock()
 _seen_conn: sqlite3.Connection | None = None  # lazy — không tạo file khi import
@@ -401,8 +425,25 @@ def _mask_pii(text: str) -> str:
     KHÔNG normalize mọi ngoặc (normalize tràn làm ")(" -> space-run ->
     bridging mới nối 2 số, reviewer F1). Ngoặc bọc non-digit (giá
     "(1.500.000)" có '.') không match -> ngoặc giữ nguyên -> ")" tự
-    chặn bridging vì không thuộc sep class."""
-    text = re.sub(r"\((\+?\d+)\)", r" \1 ", text)
+    chặn bridging vì không thuộc sep class.
+    V5.1: fixpoint merge+unwrap — mỗi vòng merge các cặp nhóm ngoặc-
+    digit kề nhau (qua sep-run bất kỳ: ")(", " - ", "-") TỚI HẾT rồi
+    mới unwrap 1 lớp ngoặc (space-tolerant). Thứ tự bắt buộc — unwrap
+    sớm làm nhóm thành bare digits, không merge tiếp được với nhóm
+    ngoặc kế ("(A) - (B) - (C)"). Mỗi bước đổi text trừ >=1 cặp ngoặc
+    -> hội tụ; cap 32 vòng phòng input xấu (paren lồng sâu/chuỗi dài —
+    dư vòng chỉ để lại phần chưa mở, không sai)."""
+    for _ in range(32):
+        new = text
+        while True:  # merge tới fixpoint trước khi unwrap
+            merged = _PAREN_MERGE_RE.sub(r"(\1 ", new)
+            if merged == new:
+                break
+            new = merged
+        new = _PAREN_UNWRAP_RE.sub(r" \1 ", new)
+        if new == text:
+            break
+        text = new
     return _PII_RE.sub("***", text)
 
 

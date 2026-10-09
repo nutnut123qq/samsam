@@ -955,6 +955,47 @@ def test_mask_pii_parenthesized_phone():
             == "(100.000.000)(50.000.000)")
 
 
+def test_mask_pii_paren_mixed_sep_and_nested():
+    # V5.1: 2 lớp lách cold-check v1.2 flag (MINOR) — verify probe
+    # 2026-10-09 còn lọt trên code trước vá:
+    # (a) SĐT chia qua nhóm ngoặc nối sep TRỘN: "(0901) - (234) - (567)"
+    #     — sau unwrap, joint ") - (" thành " - " (space+dash+space) mà
+    #     luật sep cùng-ký-tự (D6.11) chặn -> từng cụm <9 số không mask.
+    # (b) ngoặc lồng / ngoặc có space trong: "((0901))234567",
+    #     "( 0901 ) 234 567" — unwrap strict `\+?\d+` của V3.1 không bắt
+    #     lớp ngoài -> ")" chặn bridge.
+    # Vá: merge nhóm ngoặc-digit KỀ NHAU (content cho phép ngoặc lồng)
+    # qua sep-run bất kỳ -> 1 group, rồi unwrap space-tolerant lặp —
+    # merge xong TRƯỚC unwrap mỗi vòng, unwrap sớm mất dấu ngoặc.
+    m = zalo._mask_pii
+    for s in ("(0901) - (234) - (567)", "(0901)-(234)-(567)",
+              "(0901).(234).(567)", "(0901) (234) (567)",
+              "(0901)((234))(567)", "(0) - (901) - (234) - (567)",
+              "(09) (01) (23) (45) (67)", "(+84) (901) - (234) - (567)",
+              "(0901) - (234) - (567) - (8901)",
+              "((0901)) 234 567", "(((0901))) 234 567",
+              "((0901)) - (234) - (567)",
+              "((0901)) - ((234)) - ((567))",
+              "call ((0901))234567 now", "x(0901) - (234) - (567)y",
+              "( 0901 ) 234 567", "(0 901) 234 567"):
+        assert "***" in m(s), s
+    # Regression biên — KHÔNG over-match: ngoặc bọc NON-digit (giá có
+    # '.') không merge -> ")" vẫn chặn bridge (lớp lỗi reviewer F1 v1.2).
+    assert (m("(50.000.000) - (100.000.000)")
+            == "(50.000.000) - (100.000.000)")
+    assert m("(1.500.000)(2.000.000)") == "(1.500.000)(2.000.000)"
+    assert (m("(1.000.000) (2.000.000)") == "(1.000.000) (2.000.000)")
+    assert m("gia 1.500.000 (2.000.000)") == "gia 1.500.000 (2.000.000)"
+    assert (m("50.000.000 - 100.000.000 - 200.000.000")
+            == "50.000.000 - 100.000.000 - 200.000.000")
+    assert m("từ 01.01.2026 - 05.01.2026") == "từ 01.01.2026 - 05.01.2026"
+    # Cụm ngoặc-digit đứng RIÊNG (không kề nhóm ngoặc khác / không đủ
+    # số) vẫn không bị cuốn: "(0901) - (234)" chỉ 7 số.
+    assert "12345" in m("đơn (12345)")          # distortion MINOR giữ
+    assert m("(0901) - (234)") == " 0901 234 "  # <9 số -> không mask
+    assert "(abc)" in m("(abc) (123)")          # non-digit group giữ
+
+
 class _Resp:
     """Response giả cho httpx.post mock — đủ 3 member zalo.py đọc."""
 
