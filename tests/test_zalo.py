@@ -964,9 +964,9 @@ def test_mask_pii_paren_mixed_sep_and_nested():
     # (b) ngoặc lồng / ngoặc có space trong: "((0901))234567",
     #     "( 0901 ) 234 567" — unwrap strict `\+?\d+` của V3.1 không bắt
     #     lớp ngoài -> ")" chặn bridge.
-    # Vá: merge nhóm ngoặc-digit KỀ NHAU (content cho phép ngoặc lồng)
-    # qua sep-run bất kỳ -> 1 group, rồi unwrap space-tolerant lặp —
-    # merge xong TRƯỚC unwrap mỗi vòng, unwrap sớm mất dấu ngoặc.
+    # r2 (cold-check v1.4): quét 1 lượt O(n) thay fixpoint regex (bản
+    # fixpoint O(n*depth) — DoS CPU) + không còn cap-32-vòng (MINOR 1:
+    # nesting >32 lọt — scanner khớp depth tùy ý).
     m = zalo._mask_pii
     for s in ("(0901) - (234) - (567)", "(0901)-(234)-(567)",
               "(0901).(234).(567)", "(0901) (234) (567)",
@@ -977,7 +977,9 @@ def test_mask_pii_paren_mixed_sep_and_nested():
               "((0901)) - (234) - (567)",
               "((0901)) - ((234)) - ((567))",
               "call ((0901))234567 now", "x(0901) - (234) - (567)y",
-              "( 0901 ) 234 567", "(0 901) 234 567"):
+              "( 0901 ) 234 567", "(0 901) 234 567",
+              # MINOR 1 cũ: nesting vượt cap-32 -> lọt; scanner không cap
+              "(" * 40 + "0901" + ")" * 40 + "234567"):
         assert "***" in m(s), s
     # Regression biên — KHÔNG over-match: ngoặc bọc NON-digit (giá có
     # '.') không merge -> ")" vẫn chặn bridge (lớp lỗi reviewer F1 v1.2).
@@ -994,6 +996,31 @@ def test_mask_pii_paren_mixed_sep_and_nested():
     assert "12345" in m("đơn (12345)")          # distortion MINOR giữ
     assert m("(0901) - (234)") == " 0901 234 "  # <9 số -> không mask
     assert "(abc)" in m("(abc) (123)")          # non-digit group giữ
+
+
+def test_mask_pii_paren_merge_overmask_accepted():
+    # cold-check v1.4 MINOR 2 — ACCEPT có chủ đích, ghi nhận bằng test:
+    # nhóm ngoặc toàn-digit không phải SĐT mà merge đủ >=9 số vẫn bị
+    # mask ("che thừa, không rò" — consistent someday over-mask nhẹ).
+    # Vá rẻ (gate first-digit 0/+/8) bị loại: phá group giữa-chuỗi
+    # "(90)" trong "+84 (90) 123 4567" — group con hợp lệ không tự
+    # biết nó là đầu hay giữa run (lookahead = phi tuyến).
+    m = zalo._mask_pii
+    assert m("giá (500) - (0) - (000) - (000) - (000)") == "giá  500 *** "
+    assert m("(01) - (02) - (2026) 0123") == " ***"
+
+
+def test_mask_pii_pathological_input_bounded():
+    # cold-check v1.4 MAJOR — perf contract: O(n), không quadratic.
+    # Event-based: scanner phải XONG (không treo) trên paren sâu/chuỗi
+    # dài; kết quả đúng khi input hợp lệ, raw-tail chấp nhận khi input
+    # pathological vượt budget.
+    m = zalo._mask_pii
+    assert "***" in m("(" * 800 + "0901" + ")" * 800 + "234567")
+    assert "***" in m("(0901) - " * 400 + "(234) - (567)")
+    # unclosed pathological — abort budget, không treo, không crash
+    out = m("(" * 5000 + "0901234567")
+    assert isinstance(out, str)
 
 
 class _Resp:

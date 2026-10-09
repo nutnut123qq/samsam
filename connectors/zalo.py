@@ -140,21 +140,23 @@ RETAIN_DAYS = 30
 _PII_RE = re.compile(
     r"(?<!\d)0(?:(?:([ .-])\1*)?\d){9,}"
     r"|(?<![\d+])(?:\+84|84)(?:(?:([ .-])\2*)?\d){8,}"
-    r"|[\w.+-]+@[\w-]+\.[\w.]+")
-# V5.1: merge "(0901) - (234" -> "(0901 234" — chỉ khi nhóm TRÁI toàn
-# digit/space/NGOẶC (lồng "((0901))" vẫn merge được — strict-digit-only
-# để "(234) - (567)" merge+unwrap thành bare digits trước khi nhóm
-# nested bên trái kịp gộp -> leak) VÀ nhóm phải mở '('+digit. Joint
-# `[ .-]*` bất kỳ kể cả rỗng (")(" dính) và trộn (" - "). Lặp tới
-# fixpoint để gộp cả chuỗi "(A) - (B) - (C)" — merge PHẢI xong trước
-# unwrap, vì unwrap biến nhóm thành bare digits và mất dấu "từng trong
-# ngoặc".
-_PAREN_MERGE_RE = re.compile(
-    r"\(\s*(\+?[\d (][\d ()]*?)\s*\)[ .-]*\(\s*(?=\+?\d)")
-# V5.1: unwrap space-tolerant (V3.1 chỉ `\+?\d+` strict — "( 0901 )"
-# và lớp ngoài của "((0901))" không bắt). Lặp qua outer loop trong
-# `_mask_pii` để bóc từng lớp ngoặc lồng.
-_PAREN_UNWRAP_RE = re.compile(r"\(\s*(\+?\d[\d ]*?)\s*\)")
+    r"|[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63})+")
+# V5.1: 2 lớp lách còn lọt sau V3.1 (cold-check v1.2 MINOR):
+# (a) SĐT chia qua nhiều nhóm ngoặc nối sep TRỘN — "(0901) - (234) -
+# (567)": sau unwrap joint giữa các nhóm là " - " (sep trộn) nên không
+# bridge; (b) ngoặc lồng "((0901))" / ngoặc có space "( 0901 )" —
+# unwrap strict `\+?\d+` không bắt -> ")" chặn bridge.
+# Vá bằng QUÉT 1 LƯỢT (cold-check v1.4 MAJOR: bản đầu dùng fixpoint
+# merge+unwrap = re-regex toàn văn mỗi vòng -> O(n*depth), "("*5000
+# đốt >10s CPU trong _log_lock = DoS qua webhook). Scanner dưới đây
+# O(n): mỗi vị trí quét <=1 lần — group parse xong nhảy qua, fail
+# thì bước 1; rescan sau group-fail chặn bởi budget (xem _mask_pii).
+# V5.1 r2 (cùng cụm DoS — cold-check vá theo cụm): email alternative
+# `[\w.+-]+@[\w-]+\.[\w.]+` cũng QUADRATIC trên text dài không-'@'
+# (probe: 'x'*50K=18.9s, *100K=77.8s — unbounded `+` backtrack per
+# position). Bound theo RFC: local <=64, label <=63 — email thật đủ,
+# per-position work <= ~150 char -> O(n) worst-case. Email local >64
+# char (RFC-invalid) mask phần đuôi — hướng che thừa giữ.
 
 _seen_lock = threading.Lock()
 _seen_conn: sqlite3.Connection | None = None  # lazy — không tạo file khi import
@@ -426,25 +428,82 @@ def _mask_pii(text: str) -> str:
     bridging mới nối 2 số, reviewer F1). Ngoặc bọc non-digit (giá
     "(1.500.000)" có '.') không match -> ngoặc giữ nguyên -> ")" tự
     chặn bridging vì không thuộc sep class.
-    V5.1: fixpoint merge+unwrap — mỗi vòng merge các cặp nhóm ngoặc-
-    digit kề nhau (qua sep-run bất kỳ: ")(", " - ", "-") TỚI HẾT rồi
-    mới unwrap 1 lớp ngoặc (space-tolerant). Thứ tự bắt buộc — unwrap
-    sớm làm nhóm thành bare digits, không merge tiếp được với nhóm
-    ngoặc kế ("(A) - (B) - (C)"). Mỗi bước đổi text trừ >=1 cặp ngoặc
-    -> hội tụ; cap 32 vòng phòng input xấu (paren lồng sâu/chuỗi dài —
-    dư vòng chỉ để lại phần chưa mở, không sai)."""
-    for _ in range(32):
-        new = text
-        while True:  # merge tới fixpoint trước khi unwrap
-            merged = _PAREN_MERGE_RE.sub(r"(\1 ", new)
-            if merged == new:
+    V5.1 (r2 — scanner tuyến tính thay fixpoint regex, cold-check v1.4
+    MAJOR: fixpoint re-regex toàn văn mỗi vòng = O(n*depth), "("*5000
+    đốt >10s CPU trong _log_lock = DoS qua webhook): 1 pass trái->phải.
+    Group digit hợp lệ -> emit ' ' + content với ngoặc -> ' ' (nested
+    tự bóc phẳng) + ' '; sau đó nếu tiếp là sep-run `[ .-]*` + group
+    digit khác -> MERGE — joint trộn sập thành ' ' -> sep cùng-ký-tự
+    -> `_PII_RE` bridge được, bắt "(A) - (B) - (C)" mà không đụng
+    "50.000.000 - 100.000.000" (merge chỉ nối giữa 2 GROUP ngoặc —
+    bare digits hai bên vẫn chịu luật sep cùng-ký-tự như cũ).
+    O(n): group khớp thì nhảy qua, fail thì bước 1; rescan sau
+    group-fail (inner '(' vẫn được cơ hội parse riêng) chặn bởi
+    `budget` — pathological "(((...x" hết ngân sách thì phần còn emit
+    raw — không-mask = hành vi cũ trên input rác, hướng an toàn."""
+    n = len(text)
+    out: list[str] = []
+    # Tổng ký tự các lần group-scan duyệt (thành công lẫn fail-rescan)
+    # — vượt budget -> dừng flatten, copy phần còn nguyên văn.
+    budget = 4 * n + 64
+    i = 0
+    while i < n and budget > 0:
+        if text[i] != '(':
+            out.append(text[i])
+            i += 1
+            continue
+        end, scanned = _paren_group_end(text, i)
+        budget -= max(scanned - i, 1)
+        if end < 0:
+            out.append('(')
+            i += 1
+            continue
+        # Emit chain: group đầu + mọi group nối bằng joint `[ .-]*`.
+        out.append(' ')
+        pos = i
+        while True:
+            out.append(text[pos + 1:end - 1]
+                       .replace('(', ' ').replace(')', ' '))
+            out.append(' ')
+            i = end
+            k = end
+            while k < n and text[k] in ' .-':
+                k += 1
+            if k >= n or text[k] != '(':
                 break
-            new = merged
-        new = _PAREN_UNWRAP_RE.sub(r" \1 ", new)
-        if new == text:
-            break
-        text = new
-    return _PII_RE.sub("***", text)
+            end, scanned = _paren_group_end(text, k)
+            budget -= max(scanned - k, 1)
+            if end < 0 or budget <= 0:
+                break
+            pos = k
+    if i < n:
+        out.append(text[i:])
+    return _PII_RE.sub("***", ''.join(out))
+
+
+def _paren_group_end(text: str, i: int) -> tuple[int, int]:
+    """text[i] == '('. Trả (end, scanned): end = index ngay SAU ')'
+    khớp nếu group "(...)" cân bằng và content toàn
+    [digit/space/'('/')'/'+'] với >=1 digit — nested "((0901))" khớp
+    trọn, "(50.000)" fail ngay ở '.', "(abc" fail ở 'a', unclosed fail
+    ở EOF. scanned = index quét tới — caller trừ budget rescan (group
+    fail được duyệt lại bởi các '(' bên trong)."""
+    depth, has_digit, n = 1, False, len(text)
+    j = i + 1
+    while j < n:
+        c = text[j]
+        if c == '(':
+            depth += 1
+        elif c == ')':
+            depth -= 1
+            if depth == 0:
+                return (j + 1 if has_digit else -1), j
+        elif '0' <= c <= '9':
+            has_digit = True
+        elif c != ' ' and c != '+':
+            return -1, j
+        j += 1
+    return -1, j
 
 
 def _read_token_store() -> dict:
