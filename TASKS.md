@@ -411,6 +411,26 @@ mutable mới.
 - [x] **V6.4 Gate chung** — `python -m pytest` full + `ruff check .`
   (coordinator) — 98/98 ×2 `evidence/v15_pytest.log` + ruff clean
 
+## M17 — Patch v1.6-ops-hardening (close_connection + monotonic + TTL follow)
+
+Checklist/DoD chi tiết: `DONE.md` mục v1.6-ops-hardening (contract
+coordinator tự chọn qua /cycle 3/5, 2026-10-09). `guardrail.py` cấm
+đụng; `api/rag.py` không đụng; skip eval_qa + zalo_mock. Không global
+mutable mới.
+
+- [ ] **V7.1–V7.3 Lane A** — `connectors/zalo.py` +
+  `tests/test_zalo.py` + `app/streamlit_app.py` (1 dòng t0):
+  `close_connection = True` trên reject body-chưa-đọc (411/400-CL/413);
+  stamp interval `time.monotonic()` + init `-inf` (`_last_refresh`,
+  `_last_refresh_ok`, `_last_purge`, `_last_purge_attempt`, latency t0);
+  `_dedup` cleanup per-key TTL (`%:follow` → FOLLOW_TTL_S 7d, msg →
+  SEEN_TTL_S 1h).
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`,
+    `app/streamlit_app.py`
+  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean
+- [ ] **V7.4 Gate chung** — `python -m pytest` full + `ruff check .`
+  (coordinator)
+
 ---
 
 ## Lề (không đụng trong pilot)

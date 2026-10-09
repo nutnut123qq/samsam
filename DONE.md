@@ -4,9 +4,70 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **không có** — v1.5-pii-hardening đóng 2026-10-09
-(cold-check PASS đợt 1; 3 MINOR → someday: email label>253 lộ hẳn,
-ngoặc-neo kề giá over-mask ≥10 digit, thiếu test biên 257/254).
+Version đang mở: **v1.6-ops-hardening** (contract coordinator tự chọn
+qua /cycle 3/5, 2026-10-09 — board sạch, pick 3 someday defect-vá-được
+đã probe-live chứng minh còn hỏng; rời `_mask_pii` — lớp leak rẻ cạn).
+
+v1.5-pii-hardening đóng 2026-10-09 (cold-check PASS đợt 1; 3 MINOR →
+someday: email label>253 lộ hẳn, ngoặc-neo kề giá over-mask ≥10 digit,
+thiếu test biên 257/254).
+
+## Checklist v1.6-ops-hardening
+
+Khán giả: bot live public — 3 defect ops còn hỏng đã probe-verify
+2026-10-09 (không phải entry someday stale): (a) `do_POST` reject-sớm
+411/400/413 không set `close_connection` — body sót chưa đọc sẽ đầu
+độc request kế nếu ai bật keep-alive (HTTP/1.0 close mặc định nên hôm
+nay đúng, nhưng someday note yêu cầu set sẵn); (b) stamp đo interval
+trong-process (`_last_refresh`, `_last_refresh_ok`, `_last_purge`,
+`_last_purge_attempt`) dùng `time.time()` — clock lùi (NTP/sửa giờ)
+đóng băng purge/refresh-throttle (probe: stamp tương lai → purge khoá,
+entry 40d sống sót); (c) `_dedup` cleanup dùng SEEN_TTL_S chung → key
+`:follow` quên sau 1h → unfollow/refollow spam welcome (probe: age
+3700s → refollow không dedup). Quy ước precedent patch: `guardrail.py`
+cấm đụng, `api/rag.py` không đụng, skip eval_qa + zalo_mock (không
+đụng answer/reply semantics). Không global mutable mới (FOLLOW_TTL_S
+là const; stamp init đổi 0.0 → `float("-inf")` vẫn reset trong
+`_isolated_files`). GIỮ someday: email label>253, test biên 257/254,
+neo-ngoặc over-mask giá ≥10 digit, bare-run "0901 - 234.567", unwrap
+distortion non-SĐT, tên người trong PII, rotate race xuyên process
+(file-lock overkill pilot), queue horizon 30d, mọi external.
+
+- [ ] **V7.1 `close_connection = True` trên reject body-chưa-đọc** —
+  `do_POST`: 411 chunked, 400 bad/negative Content-Length, 413
+  >MAX_BODY return mà không đọc body → set `self.close_connection =
+  True` để lỡ bật HTTP/1.1 keep-alive sau này không nhiễu request kế.
+  KHÔNG set ở 404/403/400-json (body đã đọc — keep-alive an toàn).
+  Gate: `test_early_reject_closes_connection` — monkeypatch
+  `Handler.protocol_version` = HTTP/1.1, raw socket: chunked → 411 →
+  EOF; CL>MAX_BODY → 413 → EOF; CL không-parse → 400 → EOF (code cũ:
+  connection sống, sót body parse thành request rác)
+- [ ] **V7.2 `time.monotonic()` cho stamp interval trong-process** —
+  `_last_refresh`/`_last_refresh_ok`/`_last_purge`/`_last_purge_attempt`
+  init `float("-inf")` (0.0 dưới monotonic = boot-time chứ không phải
+  "chưa từng" — uptime < interval thì 0.0 thành "vừa xảy ra" → flake
+  theo uptime máy), mọi đọc đổi sang `time.monotonic()`; latency `t0`
+  trong zalo.py (×3) + `app/streamlit_app.py` (×1) cùng đổi (skew làm
+  sai latency_ms). GIỮ `time.time()`: `_dedup` ts (persist đĩa qua
+  restart — monotonic vô nghĩa xuyên process), `expires_at` (epoch API),
+  `_purge_convlog` cutoff/horizon (so ts ISO tuyệt đối), convlog `ts`.
+  Test seed `time.monotonic()`/`float("-inf")` tương ứng.
+  Gate: `test_purge_failure_still_logs_and_retries` (seed monotonic) +
+  `test_stamps_use_monotonic` (sau write: `abs(_last_purge -
+  time.monotonic()) < 5`; skew probe: `_last_purge` set xa tương lai
+  dưới monotonic vẫn chặn — semantics giữ)
+- [ ] **V7.3 Per-key TTL follow dedup** — `_dedup` cleanup phân nhánh:
+  `event_id LIKE '%:follow'` sống `FOLLOW_TTL_S = 7*86400` (chặn
+  welcome-spam unfollow/refollow 7 ngày thay 1h — giá trị tự chọn:
+  refollow trong tuần = cùng engagement cycle, sau 7d = re-engagement
+  xứng welcome; flag TO), key khác giữ SEEN_TTL_S (3600). Không đổi
+  schema — CASE trong DELETE. Comment: msg eid `uid:mid|ts` không thể
+  kết `:follow` (Zalo id numeric).
+  Gate: `test_follow_dedup_longer_ttl` — follow → welcome; UPDATE row
+  ts -3700s → refollow vẫn dedup (1 welcome); ts -8d → welcome lại;
+  msg key ts -3700s → vẫn re-process (TTL msg không đổi)
+- [ ] **V7.4 Gate chung** — `python -m pytest` full xanh +
+  `ruff check .` clean (coordinator)
 
 ## Checklist v1.5-pii-hardening
 
