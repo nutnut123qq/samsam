@@ -86,6 +86,18 @@ chat lẫn embeddings) + Streamlit.
     non-digit giữ nguyên, `)` tự chặn bridge. Case phải test: giá/
     số đứng LIỀN nhau qua ngoặc `(X)(Y)`, không chỉ `(X) - (Y)`
     (sep trộn vốn đã chặn → test đó không bắt được lỗi).
+  - **Vòng lặp re-regex toàn-văn mỗi vòng = quadratic DoS** (v1.4,
+    cold-check MAJOR): fixpoint merge+unwrap trong `_mask_pii` chạy
+    lại regex trên cả text mỗi iteration → `"("*5000 đốt >10s TRONG
+    `_log_lock` (mọi reply thread xếp hàng). Inbound question tới
+    1MB (MAX_BODY) không cap — `MAX_TEXT` chỉ áp outbound. Vá đúng:
+    scanner 1-pass depth-counting (`_paren_group_end`) + rescan-budget
+    `4n`, KHÔNG cap-vòng (cap → tail emit raw = vẫn leak, trái comment
+    "không sai" — reviewer bắt). Vá DoS phải grep cùng cụm: email-alt
+    `[\w.+-]+@` trong cùng `_PII_RE` cũng quadratic → bound RFC
+    `{1,64}`/`{1,63}`. Khi thêm regex/loop trên input attacker-
+    controlled: probe pathological (nest-N, char-run, budget-abort)
+    trước khi claim xong.
 - Đọc/ghi file log do user ảnh hưởng nội dung (convlog/jsonl): dùng
   BYTES + split `\n` tường minh — `splitlines()` cắt U+2028/\x85/\x1c
   làm đôi record, `read_text` strict crash trên byte lỗi (dòng ghi dở),
