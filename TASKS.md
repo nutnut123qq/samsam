@@ -391,6 +391,22 @@ coordinator tự chọn qua /cycle 2026-10-09). `guardrail.py` cấm đụng;
 - [x] **V4.2 Gate chung** — `python -m pytest` full + `ruff check .`
   (coordinator) — 92/92 `evidence/v13_pytest.log` + ruff clean
 
+## M16 — Patch v1.5-pii-hardening (budget-abort + ngoặc↔bare + email bound)
+
+Checklist/DoD chi tiết: `DONE.md` mục v1.5-pii-hardening (contract
+coordinator tự chọn qua /cycle 2/5, 2026-10-09). `guardrail.py` cấm
+đụng; `api/rag.py` không đụng; skip eval_qa + zalo_mock. Không global
+mutable mới.
+
+- [ ] **V6.1–V6.3 Lane A** — `connectors/zalo.py` +
+  `tests/test_zalo.py`: budget-abort emit `***` cho đuôi còn `(`;
+  bridge group↔bare-run qua sep trộn khi blob ≥10 digit ("(0901) -
+  234.567", "0901 - (234) - (567)"); email bound 256/253.
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
+  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean
+- [ ] **V6.4 Gate chung** — `python -m pytest` full + `ruff check .`
+  (coordinator)
+
 ---
 
 ## Lề (không đụng trong pilot)

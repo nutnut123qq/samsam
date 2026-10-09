@@ -4,10 +4,54 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **không có** — v1.4-pii-evasion đóng 2026-10-09
-(cold-check đợt 2 PASS; đợt 1 FIX 1 MAJOR quadratic-CPU + 2 MINOR —
-vá hết; 2 MINOR mới → someday: budget-abort bypass, email RFC-bound
-edge).
+Version đang mở: **v1.5-pii-hardening** — contract coordinator tự
+chọn qua /cycle 2/5 (2026-10-09), chờ cold-check. v1.4-pii-evasion
+đóng 2026-10-09 (cold-check đợt 2 PASS; đợt 1 FIX 1 MAJOR
+quadratic-CPU + 2 MINOR — vá hết).
+
+## Checklist v1.5-pii-hardening
+
+Khán giả: bot live public — convlog plaintext trên đĩa, vá hết các
+lớp LEAK còn lại trong `_mask_pii` mà probe 2026-10-09 chứng minh còn
+hỏng (không phải entry someday stale): (a) budget-abort bypass —
+`"("*26 + "x" + "(0901) - (234) - (567)"` đốt budget 4n giữa chừng →
+đuôi emit raw → SĐT ngoặc lọt (cold-check v1.4 MINOR); (b) SĐT lẫn
+ngoặc+bare qua sep TRỘN — `"(0901) - 234.567"`, `"0901 - (234) -
+(567)"` lọt (group unwrap nhưng joint trộn không nối bare-run, `.` cắt
+run → mỗi cụm <10 số); (c) email local/label quá bound RFC
+(`{1,64}`/`{1,63}`) mask một phần → lộ đầu local (cold-check v1.4
+MINOR, hướng che-thừa). Quy ước precedent patch: `guardrail.py` cấm
+đụng, `api/rag.py` không đụng, skip eval_qa + zalo_mock. Không global
+mutable mới → `_isolated_files` không đổi. GIỮ someday: distortion
+non-SĐT ("đơn (12345)"), over-mask "giá 500.000 (10) 0901234567"
+(nay "giá 500 ***" — hướng che-thừa), bare-run "0901 - 234.567"
+không ngoặc (sửa = phá luật chống bridging khoảng giá — chấp định),
+email local >256 (residual RFC-invalid), group ngoặc chứa '.'
+("(0901.234.567)" đã mask qua regex; bare+invalid-group là lớp khác).
+
+- [ ] **V6.1 `_mask_pii` budget-abort → đuôi '***'** — budget cạn
+  (`4n`) trước đây emit đuôi raw → SĐT ngoặc trong đuôi lọt. Vá: đuôi
+  còn `(` → `***` (hướng không-rò); đuôi không ngoặc emit raw như cũ
+  (bare digit đã bị `_PII_RE` bắt).
+  Gate: `test_mask_pii_budget_abort_masks_tail` — 3 case pathological
+  → `***` có + "0901" không còn
+- [ ] **V6.2 Bridge group↔bare-run khi blob ≥10 digit** — chain merge
+  mở rộng: group ngoặc-digit là "mỏ neo", nối bare-run digit kề
+  trước/sau qua joint `[ .-]*` trộn vào blob sep ' ' CHỈ khi tổng
+  digit ≥10 (đủ hình SĐT); <10 emit như cũ (không normalize
+  "05.10 (2)"). 2 bare-run trần không có group vẫn không nối —
+  "50.000.000 - 100.000.000" an toàn. Run-scan + left-run scan-back
+  (chặn bởi `)` group trước) trừ budget → giữ O(n).
+  Gate: `test_mask_pii_paren_bare_mixed_bridge` — 9 leak-case → "***"
+  + biên <10 digit/2-bare-run/group non-digit không đổi
+- [ ] **V6.3 Email bound nới `{1,256}`/`{1,253}`** — local >64 hay
+  label >63 (RFC-invalid) trước mask một phần → lộ đầu. Bound cứng
+  giữ O(n) worst-case (probe 'x'×900k = 2.7s, trước unbounded 77.8s/
+  100k); residual local >256 chấp nhận.
+  Gate: `test_mask_pii_email_rfc_bound_edge` — biên 64/256/label-70
+  → "***" trọn + residual >256 ghi nhận
+- [ ] **V6.4 Gate chung** — `python -m pytest` full xanh +
+  `ruff check .` clean (coordinator)
 
 ## Checklist v1.4-pii-evasion
 
