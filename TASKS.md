@@ -437,6 +437,25 @@ mutable mới.
 - [x] **V7.4 Gate chung** — `python -m pytest` full + `ruff check .`
   (coordinator) — 101/101 `evidence/v16_pytest.log` + ruff clean
 
+## M18 — Patch v1.7-edge-hardening (GET body-poison + dedup namespace + email oversize)
+
+Checklist/DoD chi tiết: `DONE.md` mục v1.7-edge-hardening (contract
+coordinator tự chọn qua /cycle 4/5, 2026-10-09). `guardrail.py` cấm
+đụng; `api/rag.py` không đụng; skip eval_qa + zalo_mock. Không global
+mutable mới.
+
+- [ ] **V8.1–V8.3 Lane A** — `connectors/zalo.py` +
+  `tests/test_zalo.py`: `do_GET` set `close_connection` khi framing
+  báo body chưa đọc (chunked / CL≠0 / CL-bad — cover cả `/healthz`
+  lẫn 404); dedup key follow `uid:follow` → `follow:uid` + CASE
+  `'follow:%'` (msg mid "follow"/kết ":follow" không còn nuốt/
+  hưởng TTL 7d); email alt + `(?<![\w.+-])` chặn slide + post-pass
+  `_mask_email_oversize` mask run local>256 / label>253.
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
+  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean
+- [ ] **V8.4 Gate chung** — `python -m pytest` full + `ruff check .`
+  (coordinator)
+
 ---
 
 ## Lề (không đụng trong pilot)

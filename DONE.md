@@ -4,11 +4,78 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **không** — board sạch, chờ /cycle 4/5 chọn contract.
+Version đang mở: **v1.7-edge-hardening** (contract /cycle 4/5,
+2026-10-09).
 
 v1.6-ops-hardening đóng 2026-10-09 (cold-check PASS đợt 1; 2 MINOR →
 someday: msg_id kết `:follow` nhận TTL 7d, do_GET 404 không đọc body;
 1 NIT test-key-format vá ngay).
+
+## Checklist v1.7-edge-hardening
+
+Khán giả: bot live public — 3 defect còn hỏng đã probe-verify
+2026-10-09 (không phải entry someday stale): (a) `do_GET` không đọc
+body — GET kèm `Content-Length>0`/chunked để sót byte trên wire;
+dưới HTTP/1.1 keep-alive sót đó parse thành request rác kế (probe
+raw socket: `GET /healthz` + body `JUNK` + request kế → `501
+Unsupported method ('JUNKGET')`; cold-check v1.6 flag riêng 404
+nhưng `/healthz` cùng lớp lỗi — vá cả); (b) `_dedup` CASE
+`'%:follow'` — msg `mid=="follow"` cho eid `uid:follow` trùng hẳn
+key follow → tin BỊ NUỐT không dispatch, và mid kết `:follow`
+hưởng TTL 7d thay 1h (probe: `_dedup("u1:follow")` sau follow →
+msg đó dedup True; `u1:x:follow` age 3700s vẫn sống); (c) email
+bound residual — local>256 trượt match → lộ 44 ký tự đầu
+(`x*300@gmail.com` → `x*44***`), label>253 KHÔNG mask gì → lộ toàn
+bộ (cold-check v1.5 MINOR + someday "thiếu test biên 257/254").
+Quy ước precedent patch: `guardrail.py` cấm đụng, `api/rag.py`
+không đụng, skip eval_qa + zalo_mock. Không global mutable mới →
+`_isolated_files` không đổi. GIỮ someday: tên người trong PII,
+unwrap distortion non-SĐT, bare-run "0901 - 234.567" (chấp định —
+sửa phá luật chống bridging khoảng giá), neo-ngoặc over-mask giá
+≥10 digit (chấp định, che thừa convlog), rotate race xuyên process
+(file-lock overkill pilot), queue horizon 30d (nêu khi demo), mọi
+external.
+
+- [ ] **V8.1 `do_GET` đóng connection khi framing báo body chưa
+  đọc** — `/healthz` lẫn 404 đều return mà không đọc body: TE
+  chunked / `Content-Length` ≠0 / CL không-parse →
+  `self.close_connection = True` (cùng pattern V7.1 — HTTP/1.0
+  default-close nên hôm nay chỉ latent). GET sạch (CL=0/vắng)
+  giữ keep-alive.
+  Gate: `test_get_with_body_closes_connection` — monkeypatch
+  `protocol_version=HTTP/1.1`, raw socket + `Connection:
+  keep-alive` explicit (tránh pass-ảo default-close): GET+body
+  `/healthz` → 200→EOF; GET+body `/nope` → 404→EOF; control 2 GET
+  sạch pipelined cùng socket → 2×200 (keep-alive còn dùng được —
+  code hỏng sẽ trả 501 'JUNKGET' hay đóng oan)
+- [ ] **V8.2 Namespace key follow `follow:{uid}`** — nhánh follow
+  đổi `_dedup(f"{uid}:follow")` → `f"follow:{uid}"`, CASE
+  `'%:follow'` → `'follow:%'`: eid msg `uid:mid` không bao giờ
+  khớp (uid Zalo numeric → không thể là "follow"; `mid=="follow"`
+  hay mid kết ":follow" đều rơi TTL thường, không đụng key
+  welcome). Artifact migrate: key `uid:follow` cũ trên DB đang
+  chạy decay theo SEEN_TTL (CASE mới không match) — refollow trong
+  cửa sổ ~1h sau deploy welcome lại 1 lần (pilot chấp nhận, ghi
+  trong comment).
+  Gate: `test_dedup_follow_key_namespace` (follow:u1 giữ 7d;
+  `u1:follow`/`u1:x:follow` TTL 1h, không nuốt msg) +
+  `test_msg_id_follow_not_swallowed` (e2e do_POST: follow rồi
+  msg mid "follow" vẫn dispatch) + update key mới trong
+  `test_follow_dedup_longer_ttl` (đổi key, KHÔNG nới assert)
+- [ ] **V8.3 Email oversize → mask trọn run** — `_PII_RE` alt
+  email thêm lookbehind `(?<![\w.+-])` chặn slide partial-local
+  (local>256 giờ fail hẳn thay vì mask đuôi lộ đầu) + post-pass
+  `_mask_email_oversize` sau `_PII_RE.sub`: mỗi `@` còn sót
+  (email đã mask → `@` mất) scan left-run `[\w.+-]` + right-run
+  label `[\w-]+(\.[\w-]+)*` O(n) tổng; trông email-like (left≥1
+  VÀ có `.label`) mà local>256 hoặc label>253 → cả run `***`
+  (che thừa). `@` không email-like (`a@b` không dot, mention
+  `@samsam`, `tag@`) giữ nguyên — không over-mask mới.
+  Gate: `test_mask_pii_email_oversize` — biên local 256 (regex)/
+  257 (post-pass) đều `***`; label 253/254 đều `***`; "a@b",
+  "@samsam" giữ nguyên; probe pathological trong evidence
+- [ ] **V8.4 Gate chung** — `python -m pytest` full xanh +
+  `ruff check .` clean (coordinator)
 
 ## Checklist v1.6-ops-hardening
 
