@@ -1018,9 +1018,71 @@ def test_mask_pii_pathological_input_bounded():
     m = zalo._mask_pii
     assert "***" in m("(" * 800 + "0901" + ")" * 800 + "234567")
     assert "***" in m("(0901) - " * 400 + "(234) - (567)")
-    # unclosed pathological — abort budget, không treo, không crash
+    # unclosed pathological — abort budget, không treo, không crash;
+    # V6.1: đuôi còn '(' -> '***' (không emit raw -> không lọt digit).
     out = m("(" * 5000 + "0901234567")
     assert isinstance(out, str)
+    assert "0901234567" not in out
+
+
+def test_mask_pii_budget_abort_masks_tail():
+    # V6.1 (cold-check v1.4 MINOR): "(" * ~26 + ký tự lạ + SĐT ngoặc —
+    # mỗi '(' rescan tới 'x'/EOF, budget 4n cạn giữa chừng -> bản cũ
+    # emit đuôi RAW -> "(0901) - (234) - (567)" lọt trọn. Vá: đuôi còn
+    # '(' -> "***" (không-rò hơn mất context của input bệnh lý); đuôi
+    # không ngoặc vẫn emit raw (bare digit _PII_RE tự bắt).
+    m = zalo._mask_pii
+    for s in ("(" * 26 + "x" + "(0901) - (234) - (567)",
+              "(" * 26 + "x" + "(0901) 234 567",
+              "(" * 40 + "(0901) - (234) - (567)" + ")" * 30):
+        r = m(s)
+        assert "***" in r, s
+        assert "0901" not in r, s
+
+
+def test_mask_pii_paren_bare_mixed_bridge():
+    # V6.2: SĐT lẫn ngoặc + bare qua sep TRỘN — "(0901) - 234.567" và
+    # "0901 - (234) - (567)" trước lọt (group unwrap nhưng " - " trộn
+    # không nối bare-run, '.' cắt run -> mỗi cụm <10 số). Vá: group
+    # ngoặc là "mỏ neo", nối bare-run kề trước/sau vào blob sep ' '
+    # CHỈ khi tổng digit >= 10 — 2 bare-run trần vẫn không nối được
+    # (giữ luật chống bridging khoảng giá reviewer M1).
+    m = zalo._mask_pii
+    for s in ("(0901) - 234.567", "0901 - (234) - (567)",
+              "goi (0901) - 234.567 nhe", "(0901).234.567",
+              "0901- (234) -567", "+84 - (901) - 234567",
+              "(+84) - 901.234.567", "0901 - (234) - 567",
+              "(1) 0901 - (234) - (567)"):
+        assert "***" in m(s), s
+    # <10 digit -> KHÔNG bridge, hành vi cũ giữ nguyên.
+    assert m("(0901) - (234)") == " 0901 234 "
+    assert m("đơn 05.10 (2)") == "đơn 05.10  2 "
+    # 2 bare-run không có group neo vẫn không nối — khoảng giá an toàn.
+    assert m("0901 - 234.567") == "0901 - 234.567"
+    assert (m("50.000.000 - 100.000.000") == "50.000.000 - 100.000.000")
+    # Group non-digit (giá trong ngoặc) vẫn không làm mỏ neo.
+    assert (m("gia 1.500.000 (2.000.000)") == "gia 1.500.000 (2.000.000)")
+    assert "(abc)" in m("(abc) (123)")
+    # Over-mask hướng an toàn giữ: blob >=10 digit quanh group ngoặc
+    # vẫn bị che ("giá 50.000.000 - (1)" 9 số -> không bridge).
+    assert (m("gia 50.000.000 - (1)") == "gia 50.000.000 -  1 ")
+
+
+def test_mask_pii_email_rfc_bound_edge():
+    # V6.3 (cold-check v1.4 MINOR): local-part/label quá bound cũ
+    # ({1,64}/{1,63}) mask một phần -> lộ đầu local. Bound nới 256/253
+    # (vẫn bounded -> O(n), khác unbounded `+` quadratic); email thật
+    # đủ, RFC-invalid dài vẫn mask trọn — hướng che thừa.
+    m = zalo._mask_pii
+    assert m("mail a@b.com nhe") == "mail *** nhe"
+    assert m("a" * 64 + "@b.co") == "***"
+    assert m("a" * 70 + "@gmail.com") == "***"      # >64 cũ lộ đầu
+    assert m("a" * 256 + "@b.co") == "***"          # biên trong
+    assert m("u@" + "b" * 70 + ".com") == "***"     # label >63 cũ lọt
+    # Residual chấp nhận: local >256 vẫn lộ phần đầu (pathological,
+    # RFC-invalid) — nhưng domain + đuôi local vẫn bị che.
+    r = m("a" * 300 + "@x.co")
+    assert "***" in r and "@x.co" not in r
 
 
 class _Resp:

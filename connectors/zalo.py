@@ -140,7 +140,7 @@ RETAIN_DAYS = 30
 _PII_RE = re.compile(
     r"(?<!\d)0(?:(?:([ .-])\1*)?\d){9,}"
     r"|(?<![\d+])(?:\+84|84)(?:(?:([ .-])\2*)?\d){8,}"
-    r"|[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63})+")
+    r"|[\w.+-]{1,256}@[\w-]{1,253}(?:\.[\w-]{1,253})+")
 # V5.1: 2 lớp lách còn lọt sau V3.1 (cold-check v1.2 MINOR):
 # (a) SĐT chia qua nhiều nhóm ngoặc nối sep TRỘN — "(0901) - (234) -
 # (567)": sau unwrap joint giữa các nhóm là " - " (sep trộn) nên không
@@ -154,9 +154,11 @@ _PII_RE = re.compile(
 # V5.1 r2 (cùng cụm DoS — cold-check vá theo cụm): email alternative
 # `[\w.+-]+@[\w-]+\.[\w.]+` cũng QUADRATIC trên text dài không-'@'
 # (probe: 'x'*50K=18.9s, *100K=77.8s — unbounded `+` backtrack per
-# position). Bound theo RFC: local <=64, label <=63 — email thật đủ,
-# per-position work <= ~150 char -> O(n) worst-case. Email local >64
-# char (RFC-invalid) mask phần đuôi — hướng che thừa giữ.
+# position). Bound cứng (không phải unbounded `+`) giữ O(n) worst-case:
+# per-position work <= ~256 char. V6.3 nới 64/63 -> 256/253: local >64
+# hay label >63 đều RFC-invalid nhưng hướng che-thừa vẫn mask trọn
+# (bản {1,64} chỉ mask 64 cuối, lộ đầu local-part — cold-check v1.4
+# MINOR). Local >256 vẫn lộ đầu — residual hiếm, chấp nhận.
 
 _seen_lock = threading.Lock()
 _seen_conn: sqlite3.Connection | None = None  # lazy — không tạo file khi import
@@ -418,6 +420,12 @@ def _ui_hash(session) -> str:
     return _uhash(f"streamlit:{session['convlog_uid']}")
 
 
+# V6.2: ký tự ngoặc/sep trong blob nối -> ' ' (chuỗi dịch cho
+# str.translate — bare-run "234.567" -> "234 567", group "(0901)" ->
+# " 0901 " gồm cả ngoặc ngoài).
+_BLOB_SEP_TR = str.maketrans("().- ", "     ")
+
+
 def _mask_pii(text: str) -> str:
     """Che SĐT/email user gõ vào câu hỏi trước khi ghi convlog — file đã
     gitignore nhưng vẫn nằm plaintext trên đĩa khi deploy. Tên người
@@ -435,16 +443,26 @@ def _mask_pii(text: str) -> str:
     tự bóc phẳng) + ' '; sau đó nếu tiếp là sep-run `[ .-]*` + group
     digit khác -> MERGE — joint trộn sập thành ' ' -> sep cùng-ký-tự
     -> `_PII_RE` bridge được, bắt "(A) - (B) - (C)" mà không đụng
-    "50.000.000 - 100.000.000" (merge chỉ nối giữa 2 GROUP ngoặc —
-    bare digits hai bên vẫn chịu luật sep cùng-ký-tự như cũ).
-    O(n): group khớp thì nhảy qua, fail thì bước 1; rescan sau
-    group-fail (inner '(' vẫn được cơ hội parse riêng) chặn bởi
-    `budget` — pathological "(((...x" hết ngân sách thì phần còn emit
-    raw — không-mask = hành vi cũ trên input rác, hướng an toàn."""
+    "50.000.000 - 100.000.000".
+    V6.2: bare-run digit kề group qua joint sep TRỘN cũng nối vào blob
+    — "(0901) - 234.567" / "0901 - (234) - (567)" trước lọt (0901 |
+    234.567 đều <10 số). Group ngoặc là "mỏ neo": CHỈ bridge khi tổng
+    digit của blob >= 10 (đủ hình SĐT); ít hơn emit như cũ — không
+    normalize "05.10 (2)" hay nối 2 bare-run trần (giá
+    "50.000.000 - 100.000.000" vẫn an toàn vì bridge luôn cần group).
+    Residual: bare "0901 - 234.567" không ngoặc vẫn lọt (sửa = phá
+    luật chống nối khoảng giá — chấp nhận).
+    V6.1 (cold-check v1.4 MINOR): budget cạn trước đây emit đuôi RAW —
+    "("*26 + "x" + "(0901) - (234) - (567)" lọt trọn. Vá: đuôi còn '('
+    -> "***" (hướng không-rò); đuôi không ngoặc emit raw như cũ (bare
+    digit đã bị _PII_RE bắt).
+    O(n): mọi scan (group parse, run-scan, left-run) đều trừ `budget`
+    hoặc chặn bởi ')' group trước — pathological hết ngân sách thì đuôi
+    có ngoặc thành '***' thay vì lọt raw."""
     n = len(text)
     out: list[str] = []
-    # Tổng ký tự các lần group-scan duyệt (thành công lẫn fail-rescan)
-    # — vượt budget -> dừng flatten, copy phần còn nguyên văn.
+    # Tổng ký tự các lần scan duyệt (group + run + left-run) — vượt
+    # budget -> dừng flatten, đuôi còn '(' ghi '***' (V6.1).
     budget = 4 * n + 64
     i = 0
     while i < n and budget > 0:
@@ -458,26 +476,77 @@ def _mask_pii(text: str) -> str:
             out.append('(')
             i += 1
             continue
-        # Emit chain: group đầu + mọi group nối bằng joint `[ .-]*`.
-        out.append(' ')
-        pos = i
-        while True:
-            out.append(text[pos + 1:end - 1]
-                       .replace('(', ' ').replace(')', ' '))
-            out.append(' ')
-            i = end
-            k = end
+        # Group hợp lệ tại i. Left bare-run (V6.2): scan-back trên text
+        # thô, chặn bởi ')' của group trước/ký tự ngoài run -> tuyến
+        # tính tổng thể.
+        i0 = i
+        j = i0
+        while j > 0 and (text[j - 1].isdigit() or text[j - 1] in '+ .-'):
+            j -= 1
+        left = j if any(c.isdigit() for c in text[j:i0]) else i0
+        # Gom chain: group/bare-run xen kẽ qua joint `[ .-]*`.
+        # parts = (start, end, is_group) trên text THÔ.
+        parts: list[tuple[int, int, bool]] = [(i0, end, True)]
+        i = end
+        while i < n and budget > 0:
+            k = i
             while k < n and text[k] in ' .-':
                 k += 1
-            if k >= n or text[k] != '(':
+            if k >= n:
                 break
-            end, scanned = _paren_group_end(text, k)
-            budget -= max(scanned - k, 1)
-            if end < 0 or budget <= 0:
+            if text[k] == '(':
+                end2, scanned2 = _paren_group_end(text, k)
+                budget -= max(scanned2 - k, 1)
+                if end2 < 0 or budget <= 0:
+                    break
+                parts.append((k, end2, True))
+                i = end2
+            elif text[k].isdigit() or text[k] == '+':
+                m = k + 1
+                while m < n and (text[m].isdigit() or text[m] in '+ .-'):
+                    m += 1
+                while m > k and not (text[m - 1].isdigit()
+                                     or text[m - 1] == '+'):
+                    m -= 1
+                budget -= m - k
+                parts.append((k, m, False))
+                i = m
+            else:
                 break
-            pos = k
+        digits = sum(c.isdigit() for c in text[left:i0])
+        digits += sum(c.isdigit()
+                      for a, b, _ in parts for c in text[a:b])
+        if digits >= 10:
+            # Blob >=10 số: nối left-run + mọi part bằng ' ', sep/ngoặc
+            # trong part -> ' ' -> _PII_RE bắt trọn run. Pop left-run
+            # đã emit raw (run char không phải '(' nên 1 raw char = 1
+            # phần tử out — không đè group emit trước: ')' chặn run).
+            del out[len(out) - (i0 - left):]
+            chunks = []
+            if left < i0:
+                chunks.append(text[left:i0].translate(_BLOB_SEP_TR)
+                                .strip(' '))
+            chunks.extend(text[a:b].translate(_BLOB_SEP_TR).strip(' ')
+                          for a, b, _g in parts)
+            out.append(' ')
+            out.append(' '.join(chunks))
+            if parts[-1][2]:
+                out.append(' ')  # group emit cũ luôn kèm ' ' đuôi
+        else:
+            # <10 số: emit như trước — chỉ group parts (dừng ở bare-run
+            # đầu tiên), bare-run/group sau re-process bởi vòng ngoài.
+            out.append(' ')
+            i = i0
+            for a, b, g in parts:
+                if not g:
+                    break
+                out.append(text[a + 1:b - 1]
+                           .replace('(', ' ').replace(')', ' '))
+                out.append(' ')
+                i = b
     if i < n:
-        out.append(text[i:])
+        tail = text[i:]
+        out.append('***' if '(' in tail else tail)
     return _PII_RE.sub("***", ''.join(out))
 
 
