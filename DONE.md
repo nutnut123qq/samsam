@@ -4,10 +4,9 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **v1.5-pii-hardening** — contract coordinator tự
-chọn qua /cycle 2/5 (2026-10-09), chờ cold-check. v1.4-pii-evasion
-đóng 2026-10-09 (cold-check đợt 2 PASS; đợt 1 FIX 1 MAJOR
-quadratic-CPU + 2 MINOR — vá hết).
+Version đang mở: **không có** — v1.5-pii-hardening đóng 2026-10-09
+(cold-check PASS đợt 1; 3 MINOR → someday: email label>253 lộ hẳn,
+ngoặc-neo kề giá over-mask ≥10 digit, thiếu test biên 257/254).
 
 ## Checklist v1.5-pii-hardening
 
@@ -679,7 +678,11 @@ Quy ước DoD cho phase connector:
   (12345)" → "đơn  12345") và over-mask "giá 500.000 (10) 0901234567"
   → "giá 500 ***" (che thừa, không rò); bare-run không ngoặc
   "0901 - 234.567" vẫn lọt (sửa = phá luật chống bridging khoảng
-  giá — chấp định); email local >256 lộ đầu (residual RFC-invalid);
+  giá — chấp định); email local >256 lộ đầu và label >253 KHÔNG
+  mask gì cả — lộ cả local (residual RFC-invalid, cold-check v1.5);
+  neo-ngoặc V6.2 over-mask giá hợp lệ khi tổng digit ≥10
+  ("50.000.000 - (1) - 2.000.000 - 3.000.000" → "50 ***" — che
+  thừa convlog only, chấp định, thiếu test biên 257/label-254);
   over-mask nhẹ chấp nhận được ("abc84901234567" → "abc***",
   "2.000.000.000.000" → "2.***", "06.10.2026 09:30" → "***:30" —
   pre-existing); production cần mask đầy đủ hơn (pilot: local +
@@ -746,5 +749,6 @@ Quy ước DoD cho phase connector:
 | v1.0-live-prep | OA connector plug-and-play khi có creds: token store + auto-refresh + rotate persist, tách 2 secret đúng contract (OA_SECRET signature / APP_SECRET oauth), preflight script, non-text reply, deploy artifacts | 2026-10-07 | `evidence/v10_pytest.log` 77/77 ×2 + ruff clean · `v10_mock.log` 3/3 · preflight dev exit 1 báo đúng mục thiếu; commits `e6e2cf2` + `ba90c19` (retro) + `4039c11` (DONE). Reviewer bắt 3 MAJOR vá hết (throttle refresh, cap event_name, systemd comment). Cold-check auditor lạ: mọi claim repo verify được PASS; live-Zalo UNVERIFIED = external chờ C2.0. Someday +5 |
 | v1.1-oa-resilience (patch) | Vá 5 someday đã verify còn hỏng: proactive refresh theo `expires_at` (throttled), `_last_refresh_ok` tách attempt/success (chờ `_token_lock` khi refresh in-flight), `_mem_tokens` chỉ cover cửa sổ persist-fail, non-text qua `_ulock`, welcome `WELCOME_TEXT` khi `follow` | 2026-10-08 | `evidence/v11_pytest.log` 90/90 + `v11_ruff.log` clean; commits `5fe926f` (contract) + code. Lane worker chết connection-error giữa chừng → coordinator absorb. Reviewer FIX đợt 1: throttle proactive + `expires_in≤0`→expires_at=0 + chờ lock khi refresh in-flight + spy dispatch `handle_non_text`. Cold-check: FIX F1 major (mem đè store ghi bởi process khác → refresh token chết tới restart) → vá mem-chỉ-khi-persist-fail + test; re-audit **PASS**. F2/F3 minor → someday. eval/mock skip precedent patch |
 | v1.2-convlog-hygiene (patch) | Vá 3 someday còn hỏng: `_mask_pii` unwrap nhóm ngoặc toàn-digit (SĐT "+84 (90)..."/"(+84)..." mask được, giá ngoặc không bị bridging), dedup follow bỏ ts (welcome ≤1 lần/SEEN_TTL_S/user), `_purge_convlog` drop dòng strptime-fail/ts-outlier (đổi policy "giữ thừa" → retention 30d đóng hở PII quá hạn) | 2026-10-09 | `evidence/v12_pytest.log` 92/92 (auditor tự chạy lại 151.7s) + ruff clean; commits `a30762b` (contract) + `6ebece4` (code) + `b07a367` (board). Reviewer FIX đợt 1: normalize ngoặc→space tạo bridging mới "(1.500.000)(2.000.000)" → vá unwrap-digit-group; `len(ts)==20` không đủ → strptime + horizon +1d. Re-audit PASS. Cold-check auditor lạ: **PASS** — tự xác định diff-range, chạy lại pytest 92/92 + ruff, 3 MINOR/NIT → someday (unwrap biến dạng text non-SĐT, over-mask "500.000 (10) 0901234567", ngoặc-trộn-sep lọt). eval/mock skip precedent patch. Dọn someday stale: "token refresh tự động" đã xong từ v1.0 |
+| v1.5-pii-hardening (patch) | Vá 3 lớp leak còn lại trong `_mask_pii`/`_PII_RE` (cold-check v1.4 MINOR): budget-abort → đuôi còn `(` mask `***`; group ngoặc làm neo nối bare-run kề khi blob ≥10 digit ("(0901) - 234.567" mask được, "50.000.000 - 100.000.000" vẫn không bridge); email bound `{1,256}`/`{1,253}` | 2026-10-09 | `evidence/v15_pytest.log` 98/98 ×2 + ruff clean; commits `2249ad4` (contract) + `b2fd76d` (code) + `e3b9ffc` (board). Cold-check auditor lạ: **PASS** đợt 1 (tự chạy 98/98 17.6s, probe bridging/tail/email/budget sạch, perf linear 200K→0.68s) — 3 MINOR → someday (label>253 lộ hẳn, neo-ngoặc over-mask giá ≥10 digit, thiếu test biên 257/254) |
 | v1.4-pii-evasion (patch) | Vá 2 lớp leak SĐT cold-check v1.2: `_mask_pii` scanner 1-pass `_paren_group_end` depth-counting (merge nhóm ngoặc-digit kề qua sep bất kỳ + unwrap ngoặc lồng/space-trong-ngoặc) thay fixpoint regex; bound email-alt `{1,64}`/`{1,63}` | 2026-10-09 | `evidence/v14_pytest.log` 95/95 + ruff clean; commits `205784c` (contract) + `d7b3a72` (code) + `d72ce2b` (board) + `cd9ab65`+`41be08d` (FIX). Cold-check đợt 1 FIX: MAJOR fixpoint O(n·depth) — "("*5000 đốt >10s trong `_log_lock`, inbound 1MB không cap → scanner 1-pass O(n) + budget-rescan 4n (n=20000→0.015s); MINOR cap-32-leak tự hết; MINOR over-mask nhóm ngoặc toàn-digit ACCEPT+test. Đợt 2 auditor lạ: **PASS** (tự chạy 95/95, perf 8 case <0.1s, không scope creep) — 2 MINOR mới → someday (budget-abort bypass, email RFC-bound edge) + NIT số stale |
 | v1.3-ops-polish (patch) | Purge-fail backoff: `_last_purge_attempt` throttle daily-purge retry (PURGE_RETRY_S=3600 — đĩa hỏng dai dẳng không còn kéo mọi reply thread xếp hàng O(file) trong `_log_lock`); `_isolated_files` vá latent leak `_last_purge` | 2026-10-09 | `evidence/v13_pytest.log` 92/92 (auditor tự chạy lại 17.7s) + ruff clean; commits `b8ed6e5` (contract) + `f48364a` (code) + `a27647c` (NIT reviewer). Reviewer PASS đợt 1, 2 NIT vá ngay (comment throttle, setattr thừa). Cold-check auditor lạ: **PASS** — tự định diff-range + chạy lại pytest 92/92 + ruff; 2 NIT: boot-purge-không-set-`_last_purge` vá ngay (global + set sau purge boot OK), clock-skew `time.time()` → someday |
