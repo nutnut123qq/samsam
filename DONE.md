@@ -4,12 +4,10 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **v1.4-pii-evasion** (contract coordinator tự chọn
-qua /cycle 2026-10-09 — cycle 1/5).
-
-v1.3-ops-polish đóng 2026-10-09
-(cold-check PASS 2 NIT: boot-purge-thành-công-không-set-`_last_purge`
-vá ngay; `time.time()` clock-skew → purge hoãn — someday, rủi ro thấp).
+Version đang mở: **không có** — v1.4-pii-evasion đóng 2026-10-09
+(cold-check đợt 2 PASS; đợt 1 FIX 1 MAJOR quadratic-CPU + 2 MINOR —
+vá hết; 2 MINOR mới → someday: budget-abort bypass, email RFC-bound
+edge).
 
 ## Checklist v1.4-pii-evasion
 
@@ -54,7 +52,8 @@ paren+bare "(0901) - 234.567" (chưa flag, diminishing returns).
     bound RFC `{1,64}`/`{1,63}` → 900KB 'x' 1.27s)*
 - [x] **V5.2 Gate chung** — `python -m pytest` full xanh +
   `ruff check .` clean (coordinator)
-  — *(93/93 `evidence/v14_pytest.log` — 16.8s — + ruff clean)*
+  — *(95/95 `evidence/v14_pytest.log` + ruff clean; cold-check đợt 2
+    auditor lạ tự chạy lại 95/95 18.6s + perf probe 8 case đều <0.1s)*
 
 ## Checklist v1.3-ops-polish
 
@@ -650,6 +649,16 @@ Quy ước DoD cho phase connector:
   queue. Consistent với intent retention; đáng nêu khi demo (audit
   v0.6 NOTE)
 
+- `_mask_pii` budget-abort bypass (cold-check v1.4 MINOR): tiền tố
+  `(`×~26 + ký tự lạ + SĐT ngoặc "(0901) - (234) - (567)" → budget
+  4n cạn giữa chừng → đuôi emit raw, SĐT lọt. Không phải regression
+  (trước v1.4 case này vốn lọt) nhưng là lách có chủ đích. Hướng vá:
+  budget cạn → fallback `re.sub` unwrap cho phần đuôi, hoặc rescan
+  inner `(` chỉ khi group ngoài fail hết content hợp lệ
+- `_PII_RE` email bound `{1,64}`/`{1,63}` edge (cold-check v1.4 MINOR):
+  local-part >64 ký tự mask 64 cuối lộ đầu; label >63 không mask —
+  cả hai RFC-invalid, hiếm, hướng che-thừa nên chấp nhận; test biên
+  64/65 chưa có
 - Chatbot production trên Fanpage (Messenger API, Pancake hook) — Zalo OA
   đang ở v0.2; live OA thật cũng nằm đây nếu duyệt không kịp version
 - Shopee/TikTok connector (inbox + listing sync) — dev app đã submit từ
@@ -687,4 +696,5 @@ Quy ước DoD cho phase connector:
 | v1.0-live-prep | OA connector plug-and-play khi có creds: token store + auto-refresh + rotate persist, tách 2 secret đúng contract (OA_SECRET signature / APP_SECRET oauth), preflight script, non-text reply, deploy artifacts | 2026-10-07 | `evidence/v10_pytest.log` 77/77 ×2 + ruff clean · `v10_mock.log` 3/3 · preflight dev exit 1 báo đúng mục thiếu; commits `e6e2cf2` + `ba90c19` (retro) + `4039c11` (DONE). Reviewer bắt 3 MAJOR vá hết (throttle refresh, cap event_name, systemd comment). Cold-check auditor lạ: mọi claim repo verify được PASS; live-Zalo UNVERIFIED = external chờ C2.0. Someday +5 |
 | v1.1-oa-resilience (patch) | Vá 5 someday đã verify còn hỏng: proactive refresh theo `expires_at` (throttled), `_last_refresh_ok` tách attempt/success (chờ `_token_lock` khi refresh in-flight), `_mem_tokens` chỉ cover cửa sổ persist-fail, non-text qua `_ulock`, welcome `WELCOME_TEXT` khi `follow` | 2026-10-08 | `evidence/v11_pytest.log` 90/90 + `v11_ruff.log` clean; commits `5fe926f` (contract) + code. Lane worker chết connection-error giữa chừng → coordinator absorb. Reviewer FIX đợt 1: throttle proactive + `expires_in≤0`→expires_at=0 + chờ lock khi refresh in-flight + spy dispatch `handle_non_text`. Cold-check: FIX F1 major (mem đè store ghi bởi process khác → refresh token chết tới restart) → vá mem-chỉ-khi-persist-fail + test; re-audit **PASS**. F2/F3 minor → someday. eval/mock skip precedent patch |
 | v1.2-convlog-hygiene (patch) | Vá 3 someday còn hỏng: `_mask_pii` unwrap nhóm ngoặc toàn-digit (SĐT "+84 (90)..."/"(+84)..." mask được, giá ngoặc không bị bridging), dedup follow bỏ ts (welcome ≤1 lần/SEEN_TTL_S/user), `_purge_convlog` drop dòng strptime-fail/ts-outlier (đổi policy "giữ thừa" → retention 30d đóng hở PII quá hạn) | 2026-10-09 | `evidence/v12_pytest.log` 92/92 (auditor tự chạy lại 151.7s) + ruff clean; commits `a30762b` (contract) + `6ebece4` (code) + `b07a367` (board). Reviewer FIX đợt 1: normalize ngoặc→space tạo bridging mới "(1.500.000)(2.000.000)" → vá unwrap-digit-group; `len(ts)==20` không đủ → strptime + horizon +1d. Re-audit PASS. Cold-check auditor lạ: **PASS** — tự xác định diff-range, chạy lại pytest 92/92 + ruff, 3 MINOR/NIT → someday (unwrap biến dạng text non-SĐT, over-mask "500.000 (10) 0901234567", ngoặc-trộn-sep lọt). eval/mock skip precedent patch. Dọn someday stale: "token refresh tự động" đã xong từ v1.0 |
+| v1.4-pii-evasion (patch) | Vá 2 lớp leak SĐT cold-check v1.2: `_mask_pii` scanner 1-pass `_paren_group_end` depth-counting (merge nhóm ngoặc-digit kề qua sep bất kỳ + unwrap ngoặc lồng/space-trong-ngoặc) thay fixpoint regex; bound email-alt `{1,64}`/`{1,63}` | 2026-10-09 | `evidence/v14_pytest.log` 95/95 + ruff clean; commits `205784c` (contract) + `d7b3a72` (code) + `d72ce2b` (board) + `cd9ab65`+`41be08d` (FIX). Cold-check đợt 1 FIX: MAJOR fixpoint O(n·depth) — "("*5000 đốt >10s trong `_log_lock`, inbound 1MB không cap → scanner 1-pass O(n) + budget-rescan 4n (n=20000→0.015s); MINOR cap-32-leak tự hết; MINOR over-mask nhóm ngoặc toàn-digit ACCEPT+test. Đợt 2 auditor lạ: **PASS** (tự chạy 95/95, perf 8 case <0.1s, không scope creep) — 2 MINOR mới → someday (budget-abort bypass, email RFC-bound edge) + NIT số stale |
 | v1.3-ops-polish (patch) | Purge-fail backoff: `_last_purge_attempt` throttle daily-purge retry (PURGE_RETRY_S=3600 — đĩa hỏng dai dẳng không còn kéo mọi reply thread xếp hàng O(file) trong `_log_lock`); `_isolated_files` vá latent leak `_last_purge` | 2026-10-09 | `evidence/v13_pytest.log` 92/92 (auditor tự chạy lại 17.7s) + ruff clean; commits `b8ed6e5` (contract) + `f48364a` (code) + `a27647c` (NIT reviewer). Reviewer PASS đợt 1, 2 NIT vá ngay (comment throttle, setattr thừa). Cold-check auditor lạ: **PASS** — tự định diff-range + chạy lại pytest 92/92 + ruff; 2 NIT: boot-purge-không-set-`_last_purge` vá ngay (global + set sau purge boot OK), clock-skew `time.time()` → someday |
