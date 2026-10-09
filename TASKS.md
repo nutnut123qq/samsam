@@ -361,16 +361,17 @@ coordinator tự chọn qua /cycle 2026-10-09). `guardrail.py` cấm đụng;
 `api/rag.py` không đụng; skip eval_qa + zalo_mock. Không global mutable
 mới.
 
-- [ ] **V5.1 Lane A** — `connectors/zalo.py` + `tests/test_zalo.py`:
+- [x] **V5.1 Lane A** — `connectors/zalo.py` + `tests/test_zalo.py`:
   `_mask_pii` fixpoint merge nhóm ngoặc-digit kề nhau qua sep-run +
   unwrap space-tolerant lặp (nested `(())`, space-trong-ngoặc); vá 2
   lớp leak cold-check v1.2 flag ("(0901) - (234) - (567)",
   "((0901))234567"). `_PII_RE` giữ nguyên.
   - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
   - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean —
-    test mới assert leak → "***" + regression biên không over-match
-- [ ] **V5.2 Gate chung** — `python -m pytest` full + `ruff check .`
-  (coordinator)
+    63/63; `test_mask_pii_paren_mixed_sep_and_nested` 16 leak-case →
+    "***" + 8 regression biên không over-match
+- [x] **V5.2 Gate chung** — `python -m pytest` full + `ruff check .`
+  (coordinator) — 93/93 `evidence/v14_pytest.log` + ruff clean
 
 ## M14 — Patch v1.3-ops-polish (purge-fail backoff)
 

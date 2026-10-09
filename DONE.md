@@ -26,23 +26,24 @@ không đụng, skip eval_qa + zalo_mock. Không global mutable mới → fixtur
 ("đơn (12345)"), over-mask "giá 500.000 (10) 0901234567", SĐT lẫn
 paren+bare "(0901) - 234.567" (chưa flag, diminishing returns).
 
-- [ ] **V5.1 `_mask_pii` — merge nhóm ngoặc-digit kề nhau + unwrap
-  lặp** — fixpoint 2 bước luân phiên (cap ~32 vòng, parens giảm đơn
-  điệu): (1) merge `\(\s*(\+?\d[\d ]*?)\s*\)[ .-]*\(\s*(?=\+?\d)` →
+- [x] **V5.1 `_mask_pii` — merge nhóm ngoặc-digit kề nhau + unwrap
+  lặp** — fixpoint luân phiên (cap 32 vòng, parens giảm đơn điệu):
+  (1) merge `\(\s*(\+?[\d (][\d ()]*?)\s*\)[ .-]*\(\s*(?=\+?\d)` →
   `(\1 ` — gộp 2 nhóm ngoặc-toàn-digit kề nhau qua sep-run BẤT KỲ (kể
-  cả `)(` dính và " - " trộn) thành 1 group — chỉ khi CẢ HAI phía là
-  digit-group (ngoặc non-digit như giá "(1.500.000)" không merge → `)`
-  vẫn chặn bridge như V3.1); (2) unwrap space-tolerant lặp
-  `\(\s*(\+?\d[\d ]*?)\s*\)` → ` \1 ` — mở nesting "((0901))" và
-  "( 0901 )". `_PII_RE` giữ nguyên (sep cùng-ký-tự giữ — KHÔNG nới
-  sep class).
-  Gate: `python -m pytest tests/test_zalo.py -q` xanh —
-  test mới `test_mask_pii_paren_mixed_sep_and_nested`: chuỗi leak ở
-  trên → "***"; regression biên KHÔNG over-match "(1.500.000)
-  (2.000.000)", "(50.000) - (100.000)", "50.000.000 - 100.000.000",
-  ngày/giá cũ giữ nguyên
-- [ ] **V5.2 Gate chung** — `python -m pytest` full xanh +
+  cả `)(` dính và " - " trộn); content group trái cho phép ngoặc lồng
+  (`[\d ()]`) — strict-digit-only để nhóm phải merge+unwrap thành bare
+  digits trước khi nhóm nested trái kịp gộp ("((0901)) - (234) -
+  (567)" vẫn lọt); ngoặc non-digit (giá có '.') không merge → `)` vẫn
+  chặn bridge như V3.1; (2) unwrap space-tolerant lặp
+  `\(\s*(\+?\d[\d ]*?)\s*\)` → ` \1 ` — mở nesting + space-trong-ngoặc.
+  `_PII_RE` giữ nguyên (sep cùng-ký-tự — KHÔNG nới sep class).
+  Gate: pytest 63/63 — `test_mask_pii_paren_mixed_sep_and_nested`:
+  16 leak-case → "***" (mixed-sep joints, `)(` dính, nested `(( ))`,
+  space-trong-ngoặc, group "0" đơn, +84) + regression biên KHÔNG
+  over-match (giá ngoặc, khoảng giá/ngày, <9 số, non-digit group)
+- [x] **V5.2 Gate chung** — `python -m pytest` full xanh +
   `ruff check .` clean (coordinator)
+  — *(93/93 `evidence/v14_pytest.log` — 16.8s — + ruff clean)*
 
 ## Checklist v1.3-ops-polish
 
