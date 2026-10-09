@@ -29,13 +29,15 @@ không ngoặc (sửa = phá luật chống bridging khoảng giá — chấp đ
 email local >256 (residual RFC-invalid), group ngoặc chứa '.'
 ("(0901.234.567)" đã mask qua regex; bare+invalid-group là lớp khác).
 
-- [ ] **V6.1 `_mask_pii` budget-abort → đuôi '***'** — budget cạn
+- [x] **V6.1 `_mask_pii` budget-abort → đuôi '***'** — budget cạn
   (`4n`) trước đây emit đuôi raw → SĐT ngoặc trong đuôi lọt. Vá: đuôi
   còn `(` → `***` (hướng không-rò); đuôi không ngoặc emit raw như cũ
   (bare digit đã bị `_PII_RE` bắt).
   Gate: `test_mask_pii_budget_abort_masks_tail` — 3 case pathological
   → `***` có + "0901" không còn
-- [ ] **V6.2 Bridge group↔bare-run khi blob ≥10 digit** — chain merge
+  — *(probe: `"("*26+"x"+"(0901) - (234) - (567)"` → `(((…***`;
+    `"("*5000+"0901234567"` → `((((***`)*
+- [x] **V6.2 Bridge group↔bare-run khi blob ≥10 digit** — chain merge
   mở rộng: group ngoặc-digit là "mỏ neo", nối bare-run digit kề
   trước/sau qua joint `[ .-]*` trộn vào blob sep ' ' CHỈ khi tổng
   digit ≥10 (đủ hình SĐT); <10 emit như cũ (không normalize
@@ -44,14 +46,19 @@ email local >256 (residual RFC-invalid), group ngoặc chứa '.'
   (chặn bởi `)` group trước) trừ budget → giữ O(n).
   Gate: `test_mask_pii_paren_bare_mixed_bridge` — 9 leak-case → "***"
   + biên <10 digit/2-bare-run/group non-digit không đổi
-- [ ] **V6.3 Email bound nới `{1,256}`/`{1,253}`** — local >64 hay
+  — *(emit blob giữ format cũ: trailing ' ' chỉ khi part cuối là
+    group — `test_mask_pii_paren_merge_overmask_accepted` +
+    `(01)-(02)-(2026) 0123`==" ***" giữ nguyên; pathological probe:
+    chain-270k 0.118s, "(1) 9 - "×20k 0.090s)*
+- [x] **V6.3 Email bound nới `{1,256}`/`{1,253}`** — local >64 hay
   label >63 (RFC-invalid) trước mask một phần → lộ đầu. Bound cứng
   giữ O(n) worst-case (probe 'x'×900k = 2.7s, trước unbounded 77.8s/
   100k); residual local >256 chấp nhận.
   Gate: `test_mask_pii_email_rfc_bound_edge` — biên 64/256/label-70
   → "***" trọn + residual >256 ghi nhận
-- [ ] **V6.4 Gate chung** — `python -m pytest` full xanh +
+- [x] **V6.4 Gate chung** — `python -m pytest` full xanh +
   `ruff check .` clean (coordinator)
+  — *(98/98 ×2 `evidence/v15_pytest.log` + ruff clean)*
 
 ## Checklist v1.4-pii-evasion
 
@@ -666,14 +673,17 @@ Quy ước DoD cho phase connector:
   regex (v0.5), SĐT viết cách + retention theo tuổi vá ở v0.5.1,
   `+84`/`84` prefix + sep lặp cùng-ký-tự vá ở v0.6.2, SĐT dạng ngoặc
   vá ở v1.2 (unwrap digit-group), purge drop dòng không-ts cũng ở
-  v1.2 — còn lọt tên người; dạng ngoặc trộn sep `(0901) - (234)` và
-  `((0901))` lọt (cold-check v1.2 MINOR); unwrap digit-group làm biến
-  dạng text non-SĐT trong convlog ("đơn (12345)" → "đơn  12345") và
-  over-mask "giá 500.000 (10) 0901234567" → "giá 500.***" (che thừa,
-  không rò — cold-check v1.2 MINOR); over-mask nhẹ chấp nhận được
-  ("abc84901234567" → "abc***", "2.000.000.000.000"
-  → "2.***", "06.10.2026 09:30" → "***:30" — pre-existing); production
-  cần mask đầy đủ hơn (pilot: local + gitignored)
+  v1.2, ngoặc trộn-sep + nested vá ở v1.4, budget-abort tail +
+  ngoặc↔bare + email bound vá ở v1.5 — còn lọt tên người; unwrap
+  digit-group làm biến dạng text non-SĐT trong convlog ("đơn
+  (12345)" → "đơn  12345") và over-mask "giá 500.000 (10) 0901234567"
+  → "giá 500 ***" (che thừa, không rò); bare-run không ngoặc
+  "0901 - 234.567" vẫn lọt (sửa = phá luật chống bridging khoảng
+  giá — chấp định); email local >256 lộ đầu (residual RFC-invalid);
+  over-mask nhẹ chấp nhận được ("abc84901234567" → "abc***",
+  "2.000.000.000.000" → "2.***", "06.10.2026 09:30" → "***:30" —
+  pre-existing); production cần mask đầy đủ hơn (pilot: local +
+  gitignored)
 - Reject-sớm 411/413 không set `close_connection` — nếu sau này bật
   HTTP/1.1 keep-alive, body sót (chunked chưa đọc / phần >1MB chưa đọc)
   nhiễu request kế trên cùng connection. Hôm nay HTTP/1.0 close mặc
@@ -693,16 +703,12 @@ Quy ước DoD cho phase connector:
   queue. Consistent với intent retention; đáng nêu khi demo (audit
   v0.6 NOTE)
 
-- `_mask_pii` budget-abort bypass (cold-check v1.4 MINOR): tiền tố
-  `(`×~26 + ký tự lạ + SĐT ngoặc "(0901) - (234) - (567)" → budget
-  4n cạn giữa chừng → đuôi emit raw, SĐT lọt. Không phải regression
-  (trước v1.4 case này vốn lọt) nhưng là lách có chủ đích. Hướng vá:
-  budget cạn → fallback `re.sub` unwrap cho phần đuôi, hoặc rescan
-  inner `(` chỉ khi group ngoài fail hết content hợp lệ
-- `_PII_RE` email bound `{1,64}`/`{1,63}` edge (cold-check v1.4 MINOR):
-  local-part >64 ký tự mask 64 cuối lộ đầu; label >63 không mask —
-  cả hai RFC-invalid, hiếm, hướng che-thừa nên chấp nhận; test biên
-  64/65 chưa có
+- ~~`_mask_pii` budget-abort bypass~~ — vá ở v1.5 (V6.1): đuôi còn
+  `(` khi budget cạn → `***` thay emit raw
+- ~~`_PII_RE` email bound edge~~ — vá ở v1.5 (V6.3): nới
+  `{1,256}`/`{1,253}`; residual local >256 lộ đầu (RFC-invalid, chấp
+  nhận); ~~SĐT lẫn ngoặc+bare "(0901) - 234.567"~~ — vá ở v1.5 (V6.2):
+  bridge khi blob ≥10 digit
 - Chatbot production trên Fanpage (Messenger API, Pancake hook) — Zalo OA
   đang ở v0.2; live OA thật cũng nằm đây nếu duyệt không kịp version
 - Shopee/TikTok connector (inbox + listing sync) — dev app đã submit từ

@@ -398,14 +398,18 @@ coordinator tự chọn qua /cycle 2/5, 2026-10-09). `guardrail.py` cấm
 đụng; `api/rag.py` không đụng; skip eval_qa + zalo_mock. Không global
 mutable mới.
 
-- [ ] **V6.1–V6.3 Lane A** — `connectors/zalo.py` +
+- [x] **V6.1–V6.3 Lane A** — `connectors/zalo.py` +
   `tests/test_zalo.py`: budget-abort emit `***` cho đuôi còn `(`;
   bridge group↔bare-run qua sep trộn khi blob ≥10 digit ("(0901) -
   234.567", "0901 - (234) - (567)"); email bound 256/253.
   - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
-  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean
-- [ ] **V6.4 Gate chung** — `python -m pytest` full + `ruff check .`
-  (coordinator)
+  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean —
+    68/68; `test_mask_pii_budget_abort_masks_tail` +
+    `test_mask_pii_paren_bare_mixed_bridge` +
+    `test_mask_pii_email_rfc_bound_edge` (coordinator inline — loop
+    mode A không spawn worker)
+- [x] **V6.4 Gate chung** — `python -m pytest` full + `ruff check .`
+  (coordinator) — 98/98 ×2 `evidence/v15_pytest.log` + ruff clean
 
 ---
 
