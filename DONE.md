@@ -4,9 +4,45 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **không có** — v1.3-ops-polish đóng 2026-10-09
+Version đang mở: **v1.4-pii-evasion** (contract coordinator tự chọn
+qua /cycle 2026-10-09 — cycle 1/5).
+
+v1.3-ops-polish đóng 2026-10-09
 (cold-check PASS 2 NIT: boot-purge-thành-công-không-set-`_last_purge`
 vá ngay; `time.time()` clock-skew → purge hoãn — someday, rủi ro thấp).
+
+## Checklist v1.4-pii-evasion
+
+Khán giả: bot live public — convlog nằm plaintext trên đĩa, không được
+rò SĐT khách qua 2 lớp lách còn lại mà cold-check v1.2 đã flag (MINOR
+trên đĩa, verify lại 2026-10-09 bằng probe `_mask_pii`): (a) SĐT chia
+qua nhiều nhóm ngoặc nối sep TRỘN — "(0901) - (234) - (567)",
+"(0901)-(234)-(567)" lọt vì joint `) - (`/`)-(` không phải sep-run
+cùng-ký-tự; (b) ngoặc lồng/ngoặc có space bên trong — "((0901))234567",
+"( 0901 ) 234 567" lọt vì unwrap strict `\+?\d+` không bắt và `)` chặn
+bridge. Quy ước precedent patch: `guardrail.py` cấm đụng, `api/rag.py`
+không đụng, skip eval_qa + zalo_mock. Không global mutable mới → fixture
+`_isolated_files` không đổi. GIỮ someday: distortion text non-SĐT
+("đơn (12345)"), over-mask "giá 500.000 (10) 0901234567", SĐT lẫn
+paren+bare "(0901) - 234.567" (chưa flag, diminishing returns).
+
+- [ ] **V5.1 `_mask_pii` — merge nhóm ngoặc-digit kề nhau + unwrap
+  lặp** — fixpoint 2 bước luân phiên (cap ~32 vòng, parens giảm đơn
+  điệu): (1) merge `\(\s*(\+?\d[\d ]*?)\s*\)[ .-]*\(\s*(?=\+?\d)` →
+  `(\1 ` — gộp 2 nhóm ngoặc-toàn-digit kề nhau qua sep-run BẤT KỲ (kể
+  cả `)(` dính và " - " trộn) thành 1 group — chỉ khi CẢ HAI phía là
+  digit-group (ngoặc non-digit như giá "(1.500.000)" không merge → `)`
+  vẫn chặn bridge như V3.1); (2) unwrap space-tolerant lặp
+  `\(\s*(\+?\d[\d ]*?)\s*\)` → ` \1 ` — mở nesting "((0901))" và
+  "( 0901 )". `_PII_RE` giữ nguyên (sep cùng-ký-tự giữ — KHÔNG nới
+  sep class).
+  Gate: `python -m pytest tests/test_zalo.py -q` xanh —
+  test mới `test_mask_pii_paren_mixed_sep_and_nested`: chuỗi leak ở
+  trên → "***"; regression biên KHÔNG over-match "(1.500.000)
+  (2.000.000)", "(50.000) - (100.000)", "50.000.000 - 100.000.000",
+  ngày/giá cũ giữ nguyên
+- [ ] **V5.2 Gate chung** — `python -m pytest` full xanh +
+  `ruff check .` clean (coordinator)
 
 ## Checklist v1.3-ops-polish
 

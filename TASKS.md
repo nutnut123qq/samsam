@@ -354,6 +354,24 @@ coordinator tự chọn qua /cycle 2026-10-09). `guardrail.py` cấm đụng;
 - [x] **V3.4 Gate chung** — `python -m pytest` full + `ruff check .`
   (coordinator) — 92/92 `evidence/v12_pytest.log` + ruff clean
 
+## M15 — Patch v1.4-pii-evasion (SĐT ngoặc trộn-sep + ngoặc lồng)
+
+Checklist/DoD chi tiết: `DONE.md` mục v1.4-pii-evasion (contract
+coordinator tự chọn qua /cycle 2026-10-09). `guardrail.py` cấm đụng;
+`api/rag.py` không đụng; skip eval_qa + zalo_mock. Không global mutable
+mới.
+
+- [ ] **V5.1 Lane A** — `connectors/zalo.py` + `tests/test_zalo.py`:
+  `_mask_pii` fixpoint merge nhóm ngoặc-digit kề nhau qua sep-run +
+  unwrap space-tolerant lặp (nested `(())`, space-trong-ngoặc); vá 2
+  lớp leak cold-check v1.2 flag ("(0901) - (234) - (567)",
+  "((0901))234567"). `_PII_RE` giữ nguyên.
+  - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
+  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean —
+    test mới assert leak → "***" + regression biên không over-match
+- [ ] **V5.2 Gate chung** — `python -m pytest` full + `ruff check .`
+  (coordinator)
+
 ## M14 — Patch v1.3-ops-polish (purge-fail backoff)
 
 Checklist/DoD chi tiết: `DONE.md` mục v1.3-ops-polish (contract
