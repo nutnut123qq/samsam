@@ -49,10 +49,12 @@ with tab_chat:
             with st.spinner("Đang tra knowledge base..."):
                 from api.rag import NO_DATA, answer
                 # [-8:] = 4 lượt Q&A gần nhất — giống deque(maxlen=8).
-                t0 = time.time()
+                # monotonic cho latency_ms — elapsed-time, miễn clock
+                # skew (V7.2, parity zalo.py).
+                t0 = time.monotonic()
                 r = answer(
                     q, history=st.session_state.history[-8:] or None)
-                latency_ms = int((time.time() - t0) * 1000)
+                latency_ms = int((time.monotonic() - t0) * 1000)
 
             # Invariant: mọi text AI trước khi hiển thị phải qua
             # guardrail.check() — giống pipeline reply của zalo.

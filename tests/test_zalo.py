@@ -51,19 +51,22 @@ def _isolated_files(monkeypatch, tmp_path):
     monkeypatch.setattr(zalo, "TOKEN_STORE", tmp_path / "zalo_tokens.json")
     # M3 throttle là module-global — test trước refresh xong sẽ để lại
     # mốc _last_refresh làm test sau thấy "fresh" giả -> reset mỗi test.
-    monkeypatch.setattr(zalo, "_last_refresh", 0.0)
+    # V7.2: các stamp này đo interval bằng time.monotonic(); "chưa từng"
+    # là float("-inf") (0.0 dưới monotonic = boot-time — máy uptime <
+    # interval thì 0.0 đọc thành "vừa xảy ra" → flake theo uptime).
+    monkeypatch.setattr(zalo, "_last_refresh", float("-inf"))
     # V2.2/V2.3: _last_refresh_ok (throttle retry) + _mem_tokens (token
     # fallback) cũng là module-global — sót lại làm test sau thấy token/
     # mốc giả theo thứ tự chạy (gotcha v1.0).
-    monkeypatch.setattr(zalo, "_last_refresh_ok", 0.0)
+    monkeypatch.setattr(zalo, "_last_refresh_ok", float("-inf"))
     monkeypatch.setattr(zalo, "_mem_tokens", {})
     # V4.1: daily-purge globals cũng module-global. _last_purge trước
     # đây CHƯA từng reset (latent leak — test làm purge thành công để
     # timestamp sót lại, test sau thấy "vừa purge" giả → skip daily
     # nhánh theo thứ tự chạy); _last_purge_attempt (throttle retry
     # purge-fail mới) cùng reset mỗi test.
-    monkeypatch.setattr(zalo, "_last_purge", 0.0)
-    monkeypatch.setattr(zalo, "_last_purge_attempt", 0.0)
+    monkeypatch.setattr(zalo, "_last_purge", float("-inf"))
+    monkeypatch.setattr(zalo, "_last_purge_attempt", float("-inf"))
     zalo._histories.clear()
     _reset_seen_conn()
     yield
@@ -843,14 +846,17 @@ def test_purge_failure_still_logs_and_retries(monkeypatch, tmp_path):
     recs = [json.loads(x) for x in
             log.read_text(encoding="utf-8").splitlines()]
     assert [r["question"] for r in recs] == ["a"]  # entry vẫn ghi được
-    assert zalo._last_purge == 0.0  # purge fail -> không đánh dấu
+    # V7.2: stamp monotonic — "chưa từng" là -inf; seed quá khứ phải
+    # dùng time.monotonic() (seed time.time() = stamp tương lai xa dưới
+    # monotonic → throttle đọc sai).
+    assert zalo._last_purge == float("-inf")  # purge fail -> không đánh dấu
     assert zalo._last_purge_attempt > 0.0  # attempt ĐÃ đánh dấu
     # Ghi tiếp trong window PURGE_RETRY_S -> KHÔNG retry purge.
     zalo._log_conversation({"ts": "t2", "question": "b"})
     assert len(calls) == 1
     # Lùi attempt-stamp quá window -> lần ghi kế retry purge.
     monkeypatch.setattr(zalo, "_last_purge_attempt",
-                        time.time() - zalo.PURGE_RETRY_S - 1)
+                        time.monotonic() - zalo.PURGE_RETRY_S - 1)
     zalo._log_conversation({"ts": "t3", "question": "c"})
     assert len(calls) == 2
     # Purge thành công -> _last_purge set; ghi sau không attempt thêm.
@@ -858,7 +864,7 @@ def test_purge_failure_still_logs_and_retries(monkeypatch, tmp_path):
     monkeypatch.setattr(zalo, "_purge_convlog",
                         lambda p: ok_calls.append(p))
     monkeypatch.setattr(zalo, "_last_purge_attempt",
-                        time.time() - zalo.PURGE_RETRY_S - 1)
+                        time.monotonic() - zalo.PURGE_RETRY_S - 1)
     zalo._log_conversation({"ts": "t4", "question": "d"})
     assert len(ok_calls) == 1
     assert zalo._last_purge > 0.0  # thành công mới đánh dấu
@@ -876,7 +882,9 @@ def test_rotate_purge_failure_still_appends(monkeypatch, tmp_path):
         raise PermissionError("locked")
 
     monkeypatch.setattr(zalo, "CONV_LOG_MAX", 10)  # entry nào cũng vượt
-    monkeypatch.setattr(zalo, "_last_purge", time.time())  # skip daily
+    # V7.2: _last_purge là monotonic-stamp — seed time.time() (≈1.7e9)
+    # dưới monotonic = "tương lai xa", daily vẫn skip nhưng semantics sai.
+    monkeypatch.setattr(zalo, "_last_purge", time.monotonic())
     monkeypatch.setattr(zalo, "_purge_convlog", boom)
     log = tmp_path / "conversations.jsonl"
     bak = tmp_path / "conversations.jsonl.1"
@@ -1270,7 +1278,9 @@ def test_send_fail_refresh_throttled_within_interval(monkeypatch):
     # rotate lại (lỗi không-liên-quan-token không burn oauth); retry
     # vẫn 1 lần với token hiện hành (vừa rotate <interval trước).
     _env_full_refresh(monkeypatch)
-    monkeypatch.setattr(zalo, "_last_refresh", 0.0)
+    # V7.2: "chưa từng refresh" = -inf (0.0 dưới monotonic = boot-time,
+    # uptime <60s sẽ đọc nhầm thành "vừa attempt" → test flake theo máy).
+    monkeypatch.setattr(zalo, "_last_refresh", float("-inf"))
     calls = []
     n = itertools.count(1)
 
@@ -1539,3 +1549,110 @@ def test_refresh_expires_in_zero_stored_as_unknown(monkeypatch):
     assert zalo.refresh_access_token() is True
     assert zalo._current_expires_at() == 0.0
     assert not zalo._token_expiring_soon()
+
+
+def test_early_reject_closes_connection(server, monkeypatch):
+    # V7.1: reject-sớm khi CHƯA đọc body (chunked -> 411, CL không-parse
+    # / âm -> 400, CL >MAX_BODY -> 413) phải set close_connection — dưới
+    # HTTP/1.1 keep-alive, phần body sót sẽ parse thành request rác kế
+    # tiếp (audit v0.5.1 NIT; hôm nay HTTP/1.0 close mặc định nên "đúng
+    # nhờ may"). Raw socket + protocol_version=HTTP/1.1: sau response
+    # phải là EOF. Client KHÔNG gửi body sót -> close sạch không RST.
+    import socket
+    from urllib.parse import urlparse
+    monkeypatch.setattr(zalo.Handler, "protocol_version", "HTTP/1.1")
+    monkeypatch.setattr(zalo, "MAX_BODY", 10)
+    u = urlparse(server)
+
+    def exchange(req: bytes, want_eof: bool) -> bytes:
+        with socket.create_connection((u.hostname, u.port),
+                                      timeout=5) as s:
+            s.sendall(req)
+            resp = b""
+            while True:
+                try:
+                    chunk = s.recv(4096)
+                except TimeoutError:
+                    # Hết timeout mà chưa EOF -> connection còn sống.
+                    assert not want_eof, "server lẽ ra phải đóng connection"
+                    return resp
+                if not chunk:
+                    assert want_eof, "server đóng connection ngoài ý muốn"
+                    return resp
+                resp += chunk
+
+    r = exchange(b"POST /zalo-webhook HTTP/1.1\r\nHost: x\r\n"
+                 b"Connection: keep-alive\r\n"
+                 b"Transfer-Encoding: chunked\r\n\r\n", True)
+    assert r.startswith(b"HTTP/1.1 411")
+    r = exchange(b"POST /zalo-webhook HTTP/1.1\r\nHost: x\r\n"
+                 b"Connection: keep-alive\r\n"
+                 b"Content-Length: 100\r\n\r\n", True)
+    assert r.startswith(b"HTTP/1.1 413")
+    r = exchange(b"POST /zalo-webhook HTTP/1.1\r\nHost: x\r\n"
+                 b"Connection: keep-alive\r\n"
+                 b"Content-Length: abc\r\n\r\n", True)
+    assert r.startswith(b"HTTP/1.1 400")
+    r = exchange(b"POST /zalo-webhook HTTP/1.1\r\nHost: x\r\n"
+                 b"Connection: keep-alive\r\n"
+                 b"Content-Length: -5\r\n\r\n", True)
+    assert r.startswith(b"HTTP/1.1 400")
+    # Control: 403 sai-signature (body ĐÃ đọc hết) -> keep-alive sống.
+    raw = b"{}"  # < MAX_BODY=10 — qua duoc cap, toi cho verify
+    r = exchange(b"POST /zalo-webhook HTTP/1.1\r\nHost: x\r\n"
+                 b"Connection: keep-alive\r\n"
+                 b"Connection: keep-alive\r\n"
+                 b"X-ZEvent-Signature: mac=bad\r\nContent-Length: "
+                 + str(len(raw)).encode() + b"\r\n\r\n" + raw, False)
+    assert r.startswith(b"HTTP/1.1 403")
+
+
+def test_stamps_use_monotonic(monkeypatch):
+    # V7.2: stamp đo interval trong-process là time.monotonic() (miễn
+    # clock-skew NTP/sửa giờ); "chưa từng" = float("-inf") thay 0.0 —
+    # 0.0 dưới monotonic là boot-time, máy uptime < interval đọc nhầm
+    # thành "vừa xảy ra" -> flake theo uptime.
+    zalo._log_conversation({"ts": "t", "question": "q"})
+    # Ghi đầu -> daily-purge chạy (file chưa tồn tại = no-op) -> stamp
+    # là monotonic (~uptime, nhỏ), KHÔNG phải epoch time.time() (~1.7e9).
+    assert abs(zalo._last_purge - time.monotonic()) < 5
+    assert zalo._last_purge < 1e9
+    assert zalo._last_purge_attempt < 1e9
+    # Stamp "tương lai xa" dưới monotonic vẫn chặn daily gate (hiệu số
+    # âm = chưa tới hạn) — semantics giữ nguyên sau khi đổi đồng hồ.
+    monkeypatch.setattr(zalo, "_last_purge", time.monotonic() + 99999)
+    calls = []
+    monkeypatch.setattr(zalo, "_purge_convlog", lambda p: calls.append(p))
+    zalo._log_conversation({"ts": "t2", "question": "q2"})
+    assert not calls
+
+
+def test_follow_dedup_longer_ttl(monkeypatch):
+    # V7.3: key ':follow' sống FOLLOW_TTL_S (7d) thay SEEN_TTL_S (1h) —
+    # unfollow/refollow trong tuần = cùng engagement cycle, không spam
+    # welcome; refollow sau 7d = re-engagement -> welcome lại. Key msg
+    # thường giữ TTL 1h (cleanup/re-process sau 1h = hành vi cũ).
+    sent = []
+    monkeypatch.setattr(zalo, "send_text",
+                        lambda u, t: sent.append(u) or True)
+    conn = zalo._seen_db()
+
+    def age(eid: str, sec: float) -> None:
+        conn.execute("UPDATE seen SET ts = ts - ? WHERE event_id = ?",
+                     (sec, eid))
+        conn.commit()
+
+    # Flow thật: do_POST -> _dedup("u1:follow") False -> handle_follow
+    # -> welcome. Lần 2 (retry) -> dedup True -> không gửi thêm.
+    assert zalo._dedup("u1:follow") is False
+    zalo.handle_follow("u1")
+    assert sent == ["u1"]
+    assert zalo._dedup("u1:follow") is True
+    age("u1:follow", 3700)                    # >1h <7d — quá SEEN_TTL_S
+    assert zalo._dedup("u1:follow") is True   # vẫn dedup (TTL follow 7d)
+    age("u1:follow", 8 * 86400)               # quá 7d -> re-engagement
+    assert zalo._dedup("u1:follow") is False
+    # Key msg thường KHÔNG được TTL dài — quá 1h vẫn cleanup/re-process.
+    assert zalo._dedup("u1:m1|1700000000000") is False
+    age("u1:m1|1700000000000", 3700)
+    assert zalo._dedup("u1:m1|1700000000000") is False  # row đã cleanup

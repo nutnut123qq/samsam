@@ -99,6 +99,13 @@ WELCOME_TEXT = ("Cảm ơn Quý khách đã theo dõi Sâm Sâm! Sâm Sâm chuy�
                 "trợ vui lòng nhắn tin hoặc gọi hotline 1800577732.")
 
 SEEN_TTL_S = 3600
+# V7.3: TTL theo loại key dedup — key `*:follow` (welcome dedup, V2.5/
+# V3.2) sống 7 ngày thay 1h: unfollow/refollow trong cùng tuần coi là
+# cùng engagement cycle, không spam welcome; refollow sau 7d = re-
+# engagement thật -> welcome lại. Key msg thường giữ SEEN_TTL_S. Suffix
+# ":follow" chỉ do nhánh follow tạo — msg key `uid:mid|ts` không thể
+# khớp (mid/timestamp Zalo numeric).
+FOLLOW_TTL_S = 7 * 86400
 SEEN_DB = ROOT / "data" / "zalo_seen.db"   # dedup sống qua restart (D3.5)
 CONV_LOG = ROOT / "data" / "conversations.jsonl"  # log hội thoại (D3.3)
 # Token store (V1.1): {"access_token", "refresh_token", "expires_at"} —
@@ -172,11 +179,16 @@ _token_lock = threading.Lock()
 # send không chỉ là token hết hạn (user chặn OA, rate limit...) — mỗi
 # lần fail đều rotate = burn oauth vô ích. Whitelist mã lỗi Zalo chưa
 # chắc, sai whitelist = auto-refresh chết câm -> throttle an toàn hơn.
-_last_refresh = 0.0  # lần attempt refresh gần nhất (thành công hay không)
+# V7.2: mọi stamp đo KHOẢNG-thời-gian trong-process dùng
+# time.monotonic() (miễn clock-skew: NTP/sửa giờ lùi đông băng throttle);
+# init float("-inf") = "chưa từng" — monotonic 0.0 là lúc boot chứ không
+# phải never (uptime < interval thì 0.0 đọc thành "vừa xảy ra"). State
+# persist/epoch GIỮ time.time(): seen ts (qua restart), expires_at.
+_last_refresh = float("-inf")  # lần attempt refresh gần nhất (ok hay không)
 # V2.2: mốc refresh THÀNH CÔNG gần nhất, tách khỏi _last_refresh (mọi
 # attempt) — attempt fail mà đánh dấu "fresh" làm send_text retry bằng
 # token cũ vô ích.
-_last_refresh_ok = 0.0
+_last_refresh_ok = float("-inf")
 REFRESH_MIN_INTERVAL_S = 60
 # V2.1: refresh chủ động khi expires_at còn <= REFRESH_AHEAD_S — không
 # chờ send-fail mới rotate (khách không ăn 1 lượt reply chậm/fail).
@@ -257,11 +269,18 @@ def _seen_db() -> sqlite3.Connection:
 
 def _dedup(event_id: str) -> bool:
     """True nếu event đã xử lý — Zalo retry khi timeout sẽ nhân đôi reply.
-    Persist sqlite trên đĩa nên restart process không mất state."""
+    Persist sqlite trên đĩa nên restart process không mất state. ts phải
+    là wall-clock (time.time) vì sống qua restart — monotonic vô nghĩa
+    xuyên process (V7.2 chỉ đổi stamp interval trong-process). Cleanup
+    per-key TTL (V7.3): key ':follow' giữ FOLLOW_TTL_S, key khác giữ
+    SEEN_TTL_S."""
     now = time.time()
     with _seen_lock:
         conn = _seen_db()
-        conn.execute("DELETE FROM seen WHERE ts < ?", (now - SEEN_TTL_S,))
+        conn.execute(
+            "DELETE FROM seen WHERE ts < CASE WHEN event_id LIKE "
+            "'%:follow' THEN ? ELSE ? END",
+            (now - FOLLOW_TTL_S, now - SEEN_TTL_S))
         cur = conn.execute(
             "INSERT OR IGNORE INTO seen(event_id, ts) VALUES(?, ?)",
             (event_id, now))
@@ -319,8 +338,9 @@ def _purge_convlog(path: Path) -> None:
 # O(file) trong _log_lock (mọi reply thread xếp hàng). Precedent
 # _last_refresh/_last_refresh_ok (V2.2).
 PURGE_RETRY_S = 3600.0
-_last_purge = 0.0
-_last_purge_attempt = 0.0
+# V7.2: monotonic + "-inf" = chưa từng (xem _last_refresh).
+_last_purge = float("-inf")
+_last_purge_attempt = float("-inf")
 
 
 def _log_conversation(entry: dict) -> None:
@@ -334,7 +354,11 @@ def _log_conversation(entry: dict) -> None:
     CONV_LOG.parent.mkdir(parents=True, exist_ok=True)
     line = json.dumps(entry, ensure_ascii=False) + "\n"
     with _log_lock:
-        now = time.time()
+        # V7.2: monotonic — clock lùi (NTP/sửa giờ) trước đây đóng băng
+        # gate daily-purge/retry (hiệu số âm, probe: stamp tương lai →
+        # purge khoá mãi). Chỉ stamp interval trong-process mới đổi;
+        # ts trong entry/cutoff của _purge_convlog vẫn wall-clock.
+        now = time.monotonic()
         if (now - _last_purge > 86400
                 and now - _last_purge_attempt >= PURGE_RETRY_S):
             # _last_purge chỉ set SAU purge thành công (D6.9);
@@ -658,7 +682,7 @@ def refresh_access_token() -> bool:
     Preflight (V1.3) import hàm này để ép refresh flow thật."""
     global _last_refresh, _last_refresh_ok, _mem_tokens
     with _token_lock:
-        _last_refresh = time.time()  # mốc throttle attempt cho send_text
+        _last_refresh = time.monotonic()  # mốc throttle attempt (V7.2)
         refresh_tok = _current_refresh_token()
         if not (refresh_tok and APP_ID and APP_SECRET):
             print("[warn] zalo: refresh thiếu credential "
@@ -720,7 +744,7 @@ def refresh_access_token() -> bool:
                   flush=True)
         else:
             _mem_tokens = {}
-        _last_refresh_ok = time.time()  # V2.2: mốc THÀNH CÔNG
+        _last_refresh_ok = time.monotonic()  # V2.2: mốc THÀNH CÔNG
         return True
 
 
@@ -766,7 +790,7 @@ def send_text(user_id: str, text: str) -> bool:
         # fail thì cứ send token hiện tại. Throttle trên attempt
         # (_last_refresh): oauth sập mà không throttle = mỗi send một
         # call 15s-timeout (reviewer v1.1 F1).
-        if time.time() - _last_refresh > REFRESH_MIN_INTERVAL_S:
+        if time.monotonic() - _last_refresh > REFRESH_MIN_INTERVAL_S:
             refresh_access_token()
         else:
             # Thread khác đang refresh (hoặc vừa fail) — chờ lock xong
@@ -781,7 +805,7 @@ def send_text(user_id: str, text: str) -> bool:
         return False
     res = _send_once(user_id, text, token)
     if res is False and _can_refresh():
-        if (time.time() - _last_refresh > REFRESH_MIN_INTERVAL_S
+        if (time.monotonic() - _last_refresh > REFRESH_MIN_INTERVAL_S
                 # Lâu rồi không ai refresh -> thử rotate rồi retry.
                 and refresh_access_token()):
             res = _send_once(user_id, text, _current_access_token())
@@ -791,7 +815,8 @@ def send_text(user_id: str, text: str) -> bool:
             # reviewer v1.1 F2); fail xong rồi thì lock rảnh ngay.
             with _token_lock:
                 pass
-            if time.time() - _last_refresh_ok <= REFRESH_MIN_INTERVAL_S:
+            if (time.monotonic() - _last_refresh_ok
+                    <= REFRESH_MIN_INTERVAL_S):
                 # Refresh vừa THÀNH CÔNG -> retry 1 lần với token mới
                 # (throttle M3 giữ). Attempt-fail (_last_refresh_ok cũ)
                 # -> không retry bằng token hỏng (waste, V2.2).
@@ -815,7 +840,7 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
     from api.rag import NO_DATA, answer
     from pipelines.guardrail import check
 
-    t0 = time.time()
+    t0 = time.monotonic()  # latency_ms đo elapsed — monotonic (V7.2)
     with _hist_lock:
         history = list(_history(user_id))
     try:
@@ -837,13 +862,13 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
             # null chứ không phải False — guardrail chưa chạy (crash
             # trước check()); False sẽ đếm nhầm crash vào "violation".
             "guardrail_ok": None,
-            "latency_ms": int((time.time() - t0) * 1000),
+            "latency_ms": int((time.monotonic() - t0) * 1000),
             "answered": False,
             "sent": sent,
             "error": repr(e)[:300],
         })
         return {"sent": sent, "text": ERROR_FALLBACK, "sources": []}
-    latency_ms = int((time.time() - t0) * 1000)
+    latency_ms = int((time.monotonic() - t0) * 1000)
     raw = res["answer"]
     # Check TRƯỚC khi append nguồn — URL là citation, slug tiếng Việt có
     # thể chứa từ cấm dạng viết trần ("chua-") và flag oan câu trả lời đúng.
@@ -896,7 +921,7 @@ def _reply_non_text(user_id: str, event: str, msg_id: str = "") -> dict:
     Không gọi answer()/check() — text viết tay; convlog ghi
     answered:false + question dạng `[non-text:<event>]` để nhân viên
     thấy trong queue."""
-    t0 = time.time()
+    t0 = time.monotonic()
     sent = send_text(user_id, NON_TEXT_TEXT)
     _log_conversation({
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -910,7 +935,7 @@ def _reply_non_text(user_id: str, event: str, msg_id: str = "") -> dict:
         # guardrail không chạy (text viết tay) -> null như nhánh crash;
         # False sẽ đếm nhầm vào "violation".
         "guardrail_ok": None,
-        "latency_ms": int((time.time() - t0) * 1000),
+        "latency_ms": int((time.monotonic() - t0) * 1000),
         "answered": False,
         "sent": sent,
     })
@@ -937,7 +962,7 @@ def _reply_follow(user_id: str) -> dict:
     follow không phải câu hỏi nên KHÔNG vào queue "Chưa trả lời"
     (precedent `guardrail_ok:null` — null = "không áp dụng", khác
     False = "bot bó tay")."""
-    t0 = time.time()
+    t0 = time.monotonic()
     sent = send_text(user_id, WELCOME_TEXT)
     _log_conversation({
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -949,7 +974,7 @@ def _reply_follow(user_id: str) -> dict:
         "answer": WELCOME_TEXT[:500],  # text ĐÃ GỬI — parity HANDOFF
         "sources": [],
         "guardrail_ok": None,
-        "latency_ms": int((time.time() - t0) * 1000),
+        "latency_ms": int((time.monotonic() - t0) * 1000),
         "answered": None,
         "sent": sent,
     })
@@ -976,15 +1001,25 @@ class Handler(BaseHTTPRequestHandler):
         # coi length=0 rồi 403/400 mập mờ; định nghĩa trước để lỡ bật
         # keep-alive sau này không bị body sót đầu độc request kế (D5.9).
         if "chunked" in (self.headers.get("Transfer-Encoding") or "").lower():
+            self.close_connection = True  # V7.1: body sót chưa đọc
             return self._json(411, {"error": "length required"})
         try:
             length = int(self.headers.get("Content-Length", 0))
         except ValueError:
+            # V7.1: CL không parse được = không biết body dài bao nhiêu —
+            # dưới keep-alive phần sót sẽ parse thành request kế -> đóng
+            # connection luôn (HTTP/1.0 mặc định đã đóng — set sẵn để
+            # hành vi đúng khi ai đó bật protocol_version = "HTTP/1.1",
+            # audit v0.5.1 NIT).
+            self.close_connection = True
             return self._json(400, {"error": "bad content-length"})
         if length < 0:
             # read(-1) = đọc tới EOF — client giữ connection mở được
+            self.close_connection = True
             return self._json(400, {"error": "bad content-length"})
         if length > MAX_BODY:
+            # V7.1: không đọc phần body vượt cap -> đóng connection.
+            self.close_connection = True
             return self._json(413, {"error": "payload too large"})
         raw = self.rfile.read(length)
         if self.path != "/zalo-webhook":
@@ -1002,12 +1037,11 @@ class Handler(BaseHTTPRequestHandler):
             # V2.5: khách vừa follow OA -> welcome (uid ở follower.id
             # theo spec; fallback sender.id phòng payload lệch). V3.2:
             # dedup per-user bỏ timestamp — chặn welcome-spam khi user
-            # unfollow/refollow liên tục trong SEEN_TTL_S; retry cùng
-            # event vẫn chặn (mạnh hơn key cũ — cùng uid là đủ). Refollow
-            # SAU TTL vẫn welcome: coi là re-engagement, chủ đích.
-            # Someday: muốn chặn lâu hơn cần TTL riêng cho key này —
-            # cleanup hiện xóa theo SEEN_TTL_S chung, không phân biệt
-            # loại key.
+            # unfollow/refollow liên tục; retry cùng event vẫn chặn
+            # (mạnh hơn key cũ — cùng uid là đủ). V7.3: key ':follow'
+            # giữ FOLLOW_TTL_S (7d) thay SEEN_TTL_S (1h) — refollow trong
+            # tuần không spam welcome; refollow SAU TTL vẫn welcome: coi
+            # là re-engagement, chủ đích.
             uid = ((ev.get("follower") or {}).get("id")
                    or (ev.get("sender") or {}).get("id") or "")
             if uid and not _dedup(f"{uid}:follow"):
@@ -1050,7 +1084,7 @@ def main() -> None:
     # _last_purge — không để lần ghi đầu sau boot purge lại O(file).
     try:
         _purge_convlog(CONV_LOG)
-        _last_purge = time.time()
+        _last_purge = time.monotonic()  # V7.2: stamp interval = monotonic
     except Exception as e:  # noqa: BLE001 — warn-only ở boot
         print(f"[warn] zalo: purge convlog lúc boot lỗi {e!r}", flush=True)
     srv = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)

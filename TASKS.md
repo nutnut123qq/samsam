@@ -418,7 +418,7 @@ coordinator tự chọn qua /cycle 3/5, 2026-10-09). `guardrail.py` cấm
 đụng; `api/rag.py` không đụng; skip eval_qa + zalo_mock. Không global
 mutable mới.
 
-- [ ] **V7.1–V7.3 Lane A** — `connectors/zalo.py` +
+- [x] **V7.1–V7.3 Lane A** — `connectors/zalo.py` +
   `tests/test_zalo.py` + `app/streamlit_app.py` (1 dòng t0):
   `close_connection = True` trên reject body-chưa-đọc (411/400-CL/413);
   stamp interval `time.monotonic()` + init `-inf` (`_last_refresh`,
@@ -427,9 +427,15 @@ mutable mới.
   SEEN_TTL_S 1h).
   - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`,
     `app/streamlit_app.py`
-  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean
-- [ ] **V7.4 Gate chung** — `python -m pytest` full + `ruff check .`
-  (coordinator)
+  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean —
+    71/71; +3 test: `test_early_reject_closes_connection` (raw socket
+    HTTP/1.1+keep-alive: 4 reject → EOF, 403-control sống),
+    `test_stamps_use_monotonic`, `test_follow_dedup_longer_ttl`.
+    *(worker chết connection-error sau khi viết code — coordinator
+    absorb viết test + gate; vá kèm test-control bị MAX_BODY=10 bắt
+    413 trước 403, và ruff UP041 socket.timeout→TimeoutError)*
+- [x] **V7.4 Gate chung** — `python -m pytest` full + `ruff check .`
+  (coordinator) — 101/101 `evidence/v16_pytest.log` + ruff clean
 
 ---
 

@@ -33,7 +33,7 @@ neo-ngoặc over-mask giá ≥10 digit, bare-run "0901 - 234.567", unwrap
 distortion non-SĐT, tên người trong PII, rotate race xuyên process
 (file-lock overkill pilot), queue horizon 30d, mọi external.
 
-- [ ] **V7.1 `close_connection = True` trên reject body-chưa-đọc** —
+- [x] **V7.1 `close_connection = True` trên reject body-chưa-đọc** —
   `do_POST`: 411 chunked, 400 bad/negative Content-Length, 413
   >MAX_BODY return mà không đọc body → set `self.close_connection =
   True` để lỡ bật HTTP/1.1 keep-alive sau này không nhiễu request kế.
@@ -42,7 +42,7 @@ distortion non-SĐT, tên người trong PII, rotate race xuyên process
   `Handler.protocol_version` = HTTP/1.1, raw socket: chunked → 411 →
   EOF; CL>MAX_BODY → 413 → EOF; CL không-parse → 400 → EOF (code cũ:
   connection sống, sót body parse thành request rác)
-- [ ] **V7.2 `time.monotonic()` cho stamp interval trong-process** —
+- [x] **V7.2 `time.monotonic()` cho stamp interval trong-process** —
   `_last_refresh`/`_last_refresh_ok`/`_last_purge`/`_last_purge_attempt`
   init `float("-inf")` (0.0 dưới monotonic = boot-time chứ không phải
   "chưa từng" — uptime < interval thì 0.0 thành "vừa xảy ra" → flake
@@ -56,7 +56,7 @@ distortion non-SĐT, tên người trong PII, rotate race xuyên process
   `test_stamps_use_monotonic` (sau write: `abs(_last_purge -
   time.monotonic()) < 5`; skew probe: `_last_purge` set xa tương lai
   dưới monotonic vẫn chặn — semantics giữ)
-- [ ] **V7.3 Per-key TTL follow dedup** — `_dedup` cleanup phân nhánh:
+- [x] **V7.3 Per-key TTL follow dedup** — `_dedup` cleanup phân nhánh:
   `event_id LIKE '%:follow'` sống `FOLLOW_TTL_S = 7*86400` (chặn
   welcome-spam unfollow/refollow 7 ngày thay 1h — giá trị tự chọn:
   refollow trong tuần = cùng engagement cycle, sau 7d = re-engagement
@@ -66,8 +66,14 @@ distortion non-SĐT, tên người trong PII, rotate race xuyên process
   Gate: `test_follow_dedup_longer_ttl` — follow → welcome; UPDATE row
   ts -3700s → refollow vẫn dedup (1 welcome); ts -8d → welcome lại;
   msg key ts -3700s → vẫn re-process (TTL msg không đổi)
-- [ ] **V7.4 Gate chung** — `python -m pytest` full xanh +
+- [x] **V7.4 Gate chung** — `python -m pytest` full xanh +
   `ruff check .` clean (coordinator)
+  — *(101/101 `evidence/v16_pytest.log` 24-25s + ruff clean; worker
+    chết connection-error giữa lane → coordinator absorb viết 3 test
+    mới + gate; bắt kèm: control-case bị MAX_BODY=10 → 413 trước 403
+    (test phải gửi body ≤cap), `except socket.timeout` → TimeoutError
+    (ruff UP041), reject-test cần `Connection: keep-alive` explicit
+    nếu không stdlib default-close = "pass ảo" trên code cũ)*
 
 ## Checklist v1.5-pii-hardening
 
