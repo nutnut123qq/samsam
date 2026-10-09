@@ -1656,6 +1656,9 @@ def test_follow_dedup_longer_ttl(monkeypatch):
     assert zalo._dedup("follow:u1") is False
     # Key msg thường KHÔNG được TTL dài — quá 1h vẫn cleanup/re-process.
     assert zalo._dedup("u1:m1") is False
+    age("u1:m1", 3700)
+    assert zalo._dedup("u1:m1") is False   # row đã cleanup
+
 
 def test_get_with_body_closes_connection(server, monkeypatch):
     # V8.1: do_GET không đọc body — GET kèm CL>0/chunked để sót byte
@@ -1695,6 +1698,28 @@ def test_get_with_body_closes_connection(server, monkeypatch):
                  b"Transfer-Encoding: chunked\r\n\r\n"
                  b"4\r\nJUNK\r\n0\r\n\r\n", True)
     assert r.startswith(b"HTTP/1.1 200")
+    # CL không-parse -> đóng (framing mơ hồ = không tin được).
+    r = exchange(b"GET /healthz HTTP/1.1\r\nHost: x\r\n"
+                 b"Connection: keep-alive\r\n"
+                 b"Content-Length: abc\r\n\r\n", True)
+    assert r.startswith(b"HTTP/1.1 200")
+    # CL:0 = GET sạch -> GIỮ keep-alive (đóng oan = regression).
+    with socket.create_connection((u.hostname, u.port), timeout=5) as s:
+        s.sendall(b"GET /healthz HTTP/1.1\r\nHost: x\r\n"
+                  b"Connection: keep-alive\r\n"
+                  b"Content-Length: 0\r\n\r\n"
+                  b"GET /healthz HTTP/1.1\r\nHost: x\r\n"
+                  b"Connection: close\r\n\r\n")
+        resp = b""
+        while True:
+            try:
+                chunk = s.recv(4096)
+            except TimeoutError:
+                break
+            if not chunk:
+                break
+            resp += chunk
+        assert resp.count(b"HTTP/1.1 200") == 2
     # Control: 2 GET sạch (không body) pipelined cùng socket -> 2x200
     # — keep-alive còn dùng được, code hỏng sẽ đóng oan / parse rác.
     with socket.create_connection((u.hostname, u.port), timeout=5) as s:

@@ -4,12 +4,12 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **v1.7-edge-hardening** (contract /cycle 4/5,
-2026-10-09).
+Version đang mở: **không** — board sạch, chờ /cycle 5/5 chọn contract.
 
-v1.6-ops-hardening đóng 2026-10-09 (cold-check PASS đợt 1; 2 MINOR →
-someday: msg_id kết `:follow` nhận TTL 7d, do_GET 404 không đọc body;
-1 NIT test-key-format vá ngay).
+v1.7-edge-hardening đóng 2026-10-09 (cold-check PASS đợt 1; 2 MINOR
+vá ngay — khôi phục assert msg-key cleanup + thêm case CL `abc`/`0`
+vào test; 1 MINOR → someday: domain `b..c`/`@@b.com` dạng-lạ không
+mask).
 
 ## Checklist v1.7-edge-hardening
 
@@ -814,26 +814,30 @@ Quy ước DoD cho phase connector:
   (12345)" → "đơn  12345") và over-mask "giá 500.000 (10) 0901234567"
   → "giá 500 ***" (che thừa, không rò); bare-run không ngoặc
   "0901 - 234.567" vẫn lọt (sửa = phá luật chống bridging khoảng
-  giá — chấp định); email local >256 lộ đầu và label >253 KHÔNG
-  mask gì cả — lộ cả local (residual RFC-invalid, cold-check v1.5);
+  giá — chấp định); ~~email local >256 lộ đầu và label >253 KHÔNG
+  mask gì cả~~ — vá ở v1.7 (V8.3: lookbehind chặn slide + post-pass
+  `_mask_email_oversize`; residual domain `b..c`/`@@b.com` ghi mục
+  riêng dưới);
   neo-ngoặc V6.2 over-mask giá hợp lệ khi tổng digit ≥10
   ("50.000.000 - (1) - 2.000.000 - 3.000.000" → "50 ***" — che
-  thừa convlog only, chấp định, thiếu test biên 257/label-254);
+  thừa convlog only, chấp định, ~~thiếu test biên 257/label-254~~
+  — test biên đã có ở v1.7);
   over-mask nhẹ chấp nhận được ("abc84901234567" → "abc***",
   "2.000.000.000.000" → "2.***", "06.10.2026 09:30" → "***:30" —
   pre-existing); production cần mask đầy đủ hơn (pilot: local +
   gitignored)
 - ~~Reject-sớm 411/413 không set `close_connection`~~ — vá ở v1.6
-  (V7.1): 411/400-CL/413 set `self.close_connection = True`. Residual:
-  `do_GET` 404 cũng không đọc body — latent nếu bật HTTP/1.1
-  keep-alive (cold-check v1.6 MINOR); khi đó vá cùng pattern
+  (V7.1) cho do_POST + ~~`do_GET`~~ vá ở v1.7 (V8.1: framing báo
+  body — chunked/CL≠0/CL-bad — đóng connection cả `/healthz` lẫn 404)
 - ~~`_purge_convlog`/`_last_purge*` dùng `time.time()`~~ — vá ở v1.6
   (V7.2): mọi stamp interval trong-process đổi `time.monotonic()` +
   init `-inf`; wall-clock chỉ giữ cho ts-persist/`expires_at`/ts ISO
-- `_dedup` CASE `%:follow` giả định msg_id Zalo numeric — một
-  `msg_id` kết `:follow` nhận TTL 7d, `msg_id=="follow"` trùng hẳn
-  key follow cùng uid. Payload đã qua HMAC nên không khai thác được
-  từ user; nếu Zalo đổi format mid thì rà lại (cold-check v1.6 MINOR)
+- ~~`_dedup` CASE `%:follow` giả định msg_id Zalo numeric~~ — vá ở
+  v1.7 (V8.2): key `follow:{uid}` namespace prefix, eid msg `uid:mid`
+  không bao giờ khớp kể cả mid=="follow"/kết ":follow"
+- Email domain dạng-lạ quá bound còn lọt post-pass V8.3 — `x*300@b..c`,
+  `x*300@@b.com` (domain không hợp lệ → không "email-like" → giữ
+  nguyên); cùng class RFC-invalid, rò rất thấp (cold-check v1.7 MINOR)
 - 2 process cùng ghi convlog (zalo + streamlit) → rotate race xuyên
   process (`_log_lock` chỉ trong-process) có thể mất file `.1`, cực
   hiếm ở pilot; nếu deploy 2 writer thật cần file-lock hoặc tách log
@@ -888,5 +892,6 @@ Quy ước DoD cho phase connector:
 | v1.2-convlog-hygiene (patch) | Vá 3 someday còn hỏng: `_mask_pii` unwrap nhóm ngoặc toàn-digit (SĐT "+84 (90)..."/"(+84)..." mask được, giá ngoặc không bị bridging), dedup follow bỏ ts (welcome ≤1 lần/SEEN_TTL_S/user), `_purge_convlog` drop dòng strptime-fail/ts-outlier (đổi policy "giữ thừa" → retention 30d đóng hở PII quá hạn) | 2026-10-09 | `evidence/v12_pytest.log` 92/92 (auditor tự chạy lại 151.7s) + ruff clean; commits `a30762b` (contract) + `6ebece4` (code) + `b07a367` (board). Reviewer FIX đợt 1: normalize ngoặc→space tạo bridging mới "(1.500.000)(2.000.000)" → vá unwrap-digit-group; `len(ts)==20` không đủ → strptime + horizon +1d. Re-audit PASS. Cold-check auditor lạ: **PASS** — tự xác định diff-range, chạy lại pytest 92/92 + ruff, 3 MINOR/NIT → someday (unwrap biến dạng text non-SĐT, over-mask "500.000 (10) 0901234567", ngoặc-trộn-sep lọt). eval/mock skip precedent patch. Dọn someday stale: "token refresh tự động" đã xong từ v1.0 |
 | v1.5-pii-hardening (patch) | Vá 3 lớp leak còn lại trong `_mask_pii`/`_PII_RE` (cold-check v1.4 MINOR): budget-abort → đuôi còn `(` mask `***`; group ngoặc làm neo nối bare-run kề khi blob ≥10 digit ("(0901) - 234.567" mask được, "50.000.000 - 100.000.000" vẫn không bridge); email bound `{1,256}`/`{1,253}` | 2026-10-09 | `evidence/v15_pytest.log` 98/98 ×2 + ruff clean; commits `2249ad4` (contract) + `b2fd76d` (code) + `e3b9ffc` (board). Cold-check auditor lạ: **PASS** đợt 1 (tự chạy 98/98 17.6s, probe bridging/tail/email/budget sạch, perf linear 200K→0.68s) — 3 MINOR → someday (label>253 lộ hẳn, neo-ngoặc over-mask giá ≥10 digit, thiếu test biên 257/254) |
 | v1.6-ops-hardening (patch) | Vá 3 someday defect probe-verify còn hỏng: `close_connection=True` trên reject body-chưa-đọc (411/400-CL/413 — keep-alive HTTP/1.1 không bị sót body nhiễu request kế), stamp interval → `time.monotonic()` + init `-inf` (clock lùi không đóng băng purge/refresh-throttle), `_dedup` per-key TTL — `:follow` sống 7d chặn welcome-spam unfollow/refollow | 2026-10-09 | `evidence/v16_pytest.log` 101/101 + ruff clean; commits `287dfe8` (contract) + `9952020` (code/tests/board). Worker chết connection-error giữa lane → coordinator absorb 3 test mới; Cold-check auditor lạ: **PASS** đợt 1 (tự chạy 101/101 26s + trace -inf/close_connection/SQL-CASE, 3 test không pass-ảo) — 2 MINOR → someday (msg_id `:follow` suffix TTL 7d, do_GET 404 không đọc body) + 1 NIT test-key-format vá ngay |
+| v1.7-edge-hardening (patch) | Vá 3 someday defect probe-verify còn hỏng: `do_GET` `close_connection` khi framing báo body chưa đọc (chunked/CL≠0/CL-bad — cover `/healthz` lẫn 404, GET sạch giữ keep-alive); dedup namespace `follow:{uid}` (mid=="follow" không còn nuốt tin/hưởng nhầm TTL 7d); email oversize — `_PII_RE` + lookbehind chặn slide-partial + post-pass `_mask_email_oversize` mask run local>256/label>253 | 2026-10-09 | `evidence/v17_pytest.log` 105/105 (auditor tự chạy lại 30.9s) + ruff clean; commits `89f6460` (contract) + `6550049` (code/tests/board). Worker chết connection-error giữa lane → coordinator absorb V8.2 code + V8.3 + 4 test mới. Cold-check auditor lạ: **PASS** đợt 1 (probe tay email-bound/CL-lạ/perf-1MB sạch, không quadratic) — 2 MINOR vá ngay (khôi phục assert msg-key cleanup bị mất trong diff, thêm case CL `abc`/`0`), 1 MINOR → someday (domain `b..c`/`@@b.com` dạng-lạ không mask) |
 | v1.4-pii-evasion (patch) | Vá 2 lớp leak SĐT cold-check v1.2: `_mask_pii` scanner 1-pass `_paren_group_end` depth-counting (merge nhóm ngoặc-digit kề qua sep bất kỳ + unwrap ngoặc lồng/space-trong-ngoặc) thay fixpoint regex; bound email-alt `{1,64}`/`{1,63}` | 2026-10-09 | `evidence/v14_pytest.log` 95/95 + ruff clean; commits `205784c` (contract) + `d7b3a72` (code) + `d72ce2b` (board) + `cd9ab65`+`41be08d` (FIX). Cold-check đợt 1 FIX: MAJOR fixpoint O(n·depth) — "("*5000 đốt >10s trong `_log_lock`, inbound 1MB không cap → scanner 1-pass O(n) + budget-rescan 4n (n=20000→0.015s); MINOR cap-32-leak tự hết; MINOR over-mask nhóm ngoặc toàn-digit ACCEPT+test. Đợt 2 auditor lạ: **PASS** (tự chạy 95/95, perf 8 case <0.1s, không scope creep) — 2 MINOR mới → someday (budget-abort bypass, email RFC-bound edge) + NIT số stale |
 | v1.3-ops-polish (patch) | Purge-fail backoff: `_last_purge_attempt` throttle daily-purge retry (PURGE_RETRY_S=3600 — đĩa hỏng dai dẳng không còn kéo mọi reply thread xếp hàng O(file) trong `_log_lock`); `_isolated_files` vá latent leak `_last_purge` | 2026-10-09 | `evidence/v13_pytest.log` 92/92 (auditor tự chạy lại 17.7s) + ruff clean; commits `b8ed6e5` (contract) + `f48364a` (code) + `a27647c` (NIT reviewer). Reviewer PASS đợt 1, 2 NIT vá ngay (comment throttle, setattr thừa). Cold-check auditor lạ: **PASS** — tự định diff-range + chạy lại pytest 92/92 + ruff; 2 NIT: boot-purge-không-set-`_last_purge` vá ngay (global + set sau purge boot OK), clock-skew `time.time()` → someday |
