@@ -99,12 +99,16 @@ WELCOME_TEXT = ("Cảm ơn Quý khách đã theo dõi Sâm Sâm! Sâm Sâm chuy�
                 "trợ vui lòng nhắn tin hoặc gọi hotline 1800577732.")
 
 SEEN_TTL_S = 3600
-# V7.3: TTL theo loại key dedup — key `*:follow` (welcome dedup, V2.5/
+# V7.3: TTL theo loại key dedup — key `follow:*` (welcome dedup, V2.5/
 # V3.2) sống 7 ngày thay 1h: unfollow/refollow trong cùng tuần coi là
 # cùng engagement cycle, không spam welcome; refollow sau 7d = re-
-# engagement thật -> welcome lại. Key msg thường giữ SEEN_TTL_S. Suffix
-# ":follow" chỉ do nhánh follow tạo — msg key `uid:mid|ts` không thể
-# khớp (mid/timestamp Zalo numeric).
+# engagement thật -> welcome lại. Key msg thường giữ SEEN_TTL_S.
+# V8.2: key đổi `uid:follow` -> `follow:uid` — bản suffix cũ để msg
+# `mid=="follow"` (eid `uid:follow`) trùng hẳn key follow -> tin bị
+# nuốt, và mid kết ":follow" hưởng nhầm TTL 7d (cold-check v1.6
+# MINOR). Prefix "follow:" không thể là uid Zalo (numeric) -> eid msg
+# `uid:mid|ts` không bao giờ khớp. Migrate: row `uid:follow` cũ decay
+# theo SEEN_TTL — refollow trong ~1h sau deploy welcome lại 1 lần.
 FOLLOW_TTL_S = 7 * 86400
 SEEN_DB = ROOT / "data" / "zalo_seen.db"   # dedup sống qua restart (D3.5)
 CONV_LOG = ROOT / "data" / "conversations.jsonl"  # log hội thoại (D3.3)
@@ -147,7 +151,7 @@ RETAIN_DAYS = 30
 _PII_RE = re.compile(
     r"(?<!\d)0(?:(?:([ .-])\1*)?\d){9,}"
     r"|(?<![\d+])(?:\+84|84)(?:(?:([ .-])\2*)?\d){8,}"
-    r"|[\w.+-]{1,256}@[\w-]{1,253}(?:\.[\w-]{1,253})+")
+    r"|(?<![\w.+-])[\w.+-]{1,256}@[\w-]{1,253}(?:\.[\w-]{1,253})+")
 # V5.1: 2 lớp lách còn lọt sau V3.1 (cold-check v1.2 MINOR):
 # (a) SĐT chia qua nhiều nhóm ngoặc nối sep TRỘN — "(0901) - (234) -
 # (567)": sau unwrap joint giữa các nhóm là " - " (sep trộn) nên không
@@ -165,7 +169,9 @@ _PII_RE = re.compile(
 # per-position work <= ~256 char. V6.3 nới 64/63 -> 256/253: local >64
 # hay label >63 đều RFC-invalid nhưng hướng che-thừa vẫn mask trọn
 # (bản {1,64} chỉ mask 64 cuối, lộ đầu local-part — cold-check v1.4
-# MINOR). Local >256 vẫn lộ đầu — residual hiếm, chấp nhận.
+# MINOR). V8.3 thêm lookbehind `(?<![\w.+-])`: local >256 trước đây
+# SLIDE — engine bắt 256 ký tự cuối trước '@', lộ đầu local; giờ
+# fail hẳn -> '@' sót lại -> `_mask_email_oversize` che trọn run.
 
 _seen_lock = threading.Lock()
 _seen_conn: sqlite3.Connection | None = None  # lazy — không tạo file khi import
@@ -272,14 +278,14 @@ def _dedup(event_id: str) -> bool:
     Persist sqlite trên đĩa nên restart process không mất state. ts phải
     là wall-clock (time.time) vì sống qua restart — monotonic vô nghĩa
     xuyên process (V7.2 chỉ đổi stamp interval trong-process). Cleanup
-    per-key TTL (V7.3): key ':follow' giữ FOLLOW_TTL_S, key khác giữ
-    SEEN_TTL_S."""
+    per-key TTL (V7.3/V8.2): key 'follow:*' giữ FOLLOW_TTL_S, key khác
+    giữ SEEN_TTL_S."""
     now = time.time()
     with _seen_lock:
         conn = _seen_db()
         conn.execute(
             "DELETE FROM seen WHERE ts < CASE WHEN event_id LIKE "
-            "'%:follow' THEN ? ELSE ? END",
+            "'follow:%' THEN ? ELSE ? END",
             (now - FOLLOW_TTL_S, now - SEEN_TTL_S))
         cur = conn.execute(
             "INSERT OR IGNORE INTO seen(event_id, ts) VALUES(?, ?)",
@@ -571,7 +577,57 @@ def _mask_pii(text: str) -> str:
     if i < n:
         tail = text[i:]
         out.append('***' if '(' in tail else tail)
-    return _PII_RE.sub("***", ''.join(out))
+    return _mask_email_oversize(_PII_RE.sub("***", ''.join(out)))
+
+
+def _email_local_ch(c: str) -> bool:
+    return c.isalnum() or c in '_.+-'
+
+
+def _email_label_ch(c: str) -> bool:
+    return c.isalnum() or c in '_-'
+
+
+def _mask_email_oversize(text: str) -> str:
+    """Post-pass sau `_PII_RE.sub` (V8.3): email quá bound regex
+    (local >256, label >253 — đều RFC-invalid) giờ fail hẳn nhờ
+    lookbehind -> '@' còn sót lộ cả run. Mỗi '@' sót scan left-run
+    `[\\w.+-]` + right label-run `[\\w-]+(\\.[\\w-]+)*`: trông
+    email-like (left >=1 VÀ right có '.label') mà local >256 hoặc một
+    label >253 -> cả run '***' (che thừa). '@' không email-like
+    ('a@b' không dot, mention '@samsam', 'tag@') giữ nguyên — không
+    over-mask mới. O(n): run quanh '@' cắt ở mọi '@' nên mỗi char
+    duyệt <=2 lần; email đã mask mất '@' khỏi phạm vi."""
+    out: list[str] = []
+    i, n = 0, len(text)
+    while True:
+        at = text.find('@', i)
+        if at < 0:
+            out.append(text[i:])
+            break
+        ls = at
+        while ls > i and _email_local_ch(text[ls - 1]):
+            ls -= 1
+        has_dot, over, re_ = False, at - ls > 256, at + 1
+        while re_ < n and _email_label_ch(text[re_]):
+            le = re_
+            while le < n and _email_label_ch(text[le]):
+                le += 1
+            over = over or le - re_ > 253
+            re_ = le
+            if re_ + 1 < n and text[re_] == '.' \
+                    and _email_label_ch(text[re_ + 1]):
+                has_dot, re_ = True, re_ + 1
+            else:
+                break
+        if ls < at and has_dot and over:
+            out.append(text[i:ls])
+            out.append('***')
+            i = re_
+        else:
+            out.append(text[i:at + 1])
+            i = at + 1
+    return ''.join(out)
 
 
 def _paren_group_end(text: str, i: int) -> tuple[int, int]:
@@ -967,7 +1023,7 @@ def _reply_follow(user_id: str) -> dict:
     _log_conversation({
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         # Event follow không có msg_id — dedup per-user ở Handler
-        # (key "uid:follow", V3.2), không qua msg_id.
+        # (key "follow:uid", V3.2/V8.2), không qua msg_id.
         "msg_id": "",
         "user_hash": _uhash(user_id),
         "question": "[event:follow]",
@@ -992,6 +1048,23 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.flush()
 
     def do_GET(self) -> None:
+        # V8.1: do_GET KHÔNG đọc body — request kèm body để sót byte
+        # trên wire; dưới HTTP/1.1 keep-alive sót đó parse thành
+        # request rác kế (probe: "GET /healthz" + CL:4 + "JUNK" + GET
+        # kế -> 501 'JUNKGET'; cold-check v1.6 flag riêng 404 nhưng
+        # /healthz cùng lớp lỗi -> vá cả). Framing báo có body
+        # (chunked / CL != 0 / CL không parse) -> đóng connection —
+        # cùng pattern V7.1 ở do_POST (HTTP/1.0 default-close nên hôm
+        # nay chỉ latent). GET sạch (CL=0/vắng mặt) giữ keep-alive.
+        if "chunked" in (self.headers.get("Transfer-Encoding")
+                         or "").lower():
+            self.close_connection = True
+        else:
+            try:
+                if int(self.headers.get("Content-Length", 0)) != 0:
+                    self.close_connection = True
+            except ValueError:
+                self.close_connection = True
         if self.path == "/healthz":
             return self._json(200, {"status": "up"})
         self._json(404, {"error": "not found"})
@@ -1038,13 +1111,14 @@ class Handler(BaseHTTPRequestHandler):
             # theo spec; fallback sender.id phòng payload lệch). V3.2:
             # dedup per-user bỏ timestamp — chặn welcome-spam khi user
             # unfollow/refollow liên tục; retry cùng event vẫn chặn
-            # (mạnh hơn key cũ — cùng uid là đủ). V7.3: key ':follow'
-            # giữ FOLLOW_TTL_S (7d) thay SEEN_TTL_S (1h) — refollow trong
-            # tuần không spam welcome; refollow SAU TTL vẫn welcome: coi
-            # là re-engagement, chủ đích.
+            # (mạnh hơn key cũ — cùng uid là đủ). V7.3: TTL 7d. V8.2:
+            # key 'follow:{uid}' (prefix) thay '{uid}:follow' — eid msg
+            # 'uid:mid' không bao giờ khớp kể cả mid=="follow" hay mid
+            # kết ':follow' (cold-check v1.6 MINOR: bản suffix để msg
+            # mid=="follow" trùng hẳn key follow -> tin bị nuốt).
             uid = ((ev.get("follower") or {}).get("id")
                    or (ev.get("sender") or {}).get("id") or "")
-            if uid and not _dedup(f"{uid}:follow"):
+            if uid and not _dedup(f"follow:{uid}"):
                 threading.Thread(target=handle_follow, args=(uid,),
                                  daemon=True).start()
             return

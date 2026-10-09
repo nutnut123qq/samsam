@@ -36,7 +36,7 @@ sửa phá luật chống bridging khoảng giá), neo-ngoặc over-mask giá
 (file-lock overkill pilot), queue horizon 30d (nêu khi demo), mọi
 external.
 
-- [ ] **V8.1 `do_GET` đóng connection khi framing báo body chưa
+- [x] **V8.1 `do_GET` đóng connection khi framing báo body chưa
   đọc** — `/healthz` lẫn 404 đều return mà không đọc body: TE
   chunked / `Content-Length` ≠0 / CL không-parse →
   `self.close_connection = True` (cùng pattern V7.1 — HTTP/1.0
@@ -48,7 +48,7 @@ external.
   `/healthz` → 200→EOF; GET+body `/nope` → 404→EOF; control 2 GET
   sạch pipelined cùng socket → 2×200 (keep-alive còn dùng được —
   code hỏng sẽ trả 501 'JUNKGET' hay đóng oan)
-- [ ] **V8.2 Namespace key follow `follow:{uid}`** — nhánh follow
+- [x] **V8.2 Namespace key follow `follow:{uid}`** — nhánh follow
   đổi `_dedup(f"{uid}:follow")` → `f"follow:{uid}"`, CASE
   `'%:follow'` → `'follow:%'`: eid msg `uid:mid` không bao giờ
   khớp (uid Zalo numeric → không thể là "follow"; `mid=="follow"`
@@ -62,7 +62,7 @@ external.
   `test_msg_id_follow_not_swallowed` (e2e do_POST: follow rồi
   msg mid "follow" vẫn dispatch) + update key mới trong
   `test_follow_dedup_longer_ttl` (đổi key, KHÔNG nới assert)
-- [ ] **V8.3 Email oversize → mask trọn run** — `_PII_RE` alt
+- [x] **V8.3 Email oversize → mask trọn run** — `_PII_RE` alt
   email thêm lookbehind `(?<![\w.+-])` chặn slide partial-local
   (local>256 giờ fail hẳn thay vì mask đuôi lộ đầu) + post-pass
   `_mask_email_oversize` sau `_PII_RE.sub`: mỗi `@` còn sót
@@ -74,8 +74,12 @@ external.
   Gate: `test_mask_pii_email_oversize` — biên local 256 (regex)/
   257 (post-pass) đều `***`; label 253/254 đều `***`; "a@b",
   "@samsam" giữ nguyên; probe pathological trong evidence
-- [ ] **V8.4 Gate chung** — `python -m pytest` full xanh +
+- [x] **V8.4 Gate chung** — `python -m pytest` full xanh +
   `ruff check .` clean (coordinator)
+  — *(105/105 `evidence/v17_pytest.log` 26.6s + ruff clean; worker
+    chết connection-error giữa lane → coordinator absorb: V8.2 code
+    + V8.3 (`_PII_RE` lookbehind + `_mask_email_oversize`) + 4 test
+    mới; key test cũ `u1:follow` → `follow:u1` KHÔNG nới assert)*
 
 ## Checklist v1.6-ops-hardening
 

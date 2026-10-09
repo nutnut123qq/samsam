@@ -444,7 +444,7 @@ coordinator tự chọn qua /cycle 4/5, 2026-10-09). `guardrail.py` cấm
 đụng; `api/rag.py` không đụng; skip eval_qa + zalo_mock. Không global
 mutable mới.
 
-- [ ] **V8.1–V8.3 Lane A** — `connectors/zalo.py` +
+- [x] **V8.1–V8.3 Lane A** — `connectors/zalo.py` +
   `tests/test_zalo.py`: `do_GET` set `close_connection` khi framing
   báo body chưa đọc (chunked / CL≠0 / CL-bad — cover cả `/healthz`
   lẫn 404); dedup key follow `uid:follow` → `follow:uid` + CASE
@@ -452,9 +452,15 @@ mutable mới.
   hưởng TTL 7d); email alt + `(?<![\w.+-])` chặn slide + post-pass
   `_mask_email_oversize` mask run local>256 / label>253.
   - Boundary: `connectors/zalo.py`, `tests/test_zalo.py`
-  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean
-- [ ] **V8.4 Gate chung** — `python -m pytest` full + `ruff check .`
-  (coordinator)
+  - Gate: `python -m pytest tests/test_zalo.py -q` xanh + ruff clean —
+    +4 test: `test_get_with_body_closes_connection` (raw socket: GET
+    +CL/GET+chunked → EOF, control 2 GET sạch pipelined → 2×200),
+    `test_dedup_follow_key_namespace`, `test_msg_id_follow_not_
+    swallowed` (e2e), `test_mask_pii_email_oversize` (biên 256/257
+    + 253/254 + non-email giữ nguyên). *(worker chết giữa lane —
+    coordinator absorb V8.2 code + V8.3 + toàn bộ test)*
+- [x] **V8.4 Gate chung** — `python -m pytest` full + `ruff check .`
+  (coordinator) — 105/105 `evidence/v17_pytest.log` + ruff clean
 
 ---
 

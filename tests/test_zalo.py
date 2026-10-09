@@ -1628,7 +1628,7 @@ def test_stamps_use_monotonic(monkeypatch):
 
 
 def test_follow_dedup_longer_ttl(monkeypatch):
-    # V7.3: key ':follow' sống FOLLOW_TTL_S (7d) thay SEEN_TTL_S (1h) —
+    # V7.3/V8.2: key 'follow:' sống FOLLOW_TTL_S (7d) thay SEEN_TTL_S (1h) —
     # unfollow/refollow trong tuần = cùng engagement cycle, không spam
     # welcome; refollow sau 7d = re-engagement -> welcome lại. Key msg
     # thường giữ TTL 1h (cleanup/re-process sau 1h = hành vi cũ).
@@ -1642,17 +1642,144 @@ def test_follow_dedup_longer_ttl(monkeypatch):
                      (sec, eid))
         conn.commit()
 
-    # Flow thật: do_POST -> _dedup("u1:follow") False -> handle_follow
+    # Flow thật: do_POST -> _dedup("follow:u1") False -> handle_follow
     # -> welcome. Lần 2 (retry) -> dedup True -> không gửi thêm.
-    assert zalo._dedup("u1:follow") is False
+    # V8.2: key đổi "{uid}:follow" -> "follow:{uid}" (namespace
+    # prefix — msg eid "uid:mid" không bao giờ khớp dạng này).
+    assert zalo._dedup("follow:u1") is False
     zalo.handle_follow("u1")
     assert sent == ["u1"]
-    assert zalo._dedup("u1:follow") is True
-    age("u1:follow", 3700)                    # >1h <7d — quá SEEN_TTL_S
-    assert zalo._dedup("u1:follow") is True   # vẫn dedup (TTL follow 7d)
-    age("u1:follow", 8 * 86400)               # quá 7d -> re-engagement
-    assert zalo._dedup("u1:follow") is False
+    assert zalo._dedup("follow:u1") is True
+    age("follow:u1", 3700)                    # >1h <7d — quá SEEN_TTL_S
+    assert zalo._dedup("follow:u1") is True   # vẫn dedup (TTL follow 7d)
+    age("follow:u1", 8 * 86400)               # quá 7d -> re-engagement
+    assert zalo._dedup("follow:u1") is False
     # Key msg thường KHÔNG được TTL dài — quá 1h vẫn cleanup/re-process.
     assert zalo._dedup("u1:m1") is False
-    age("u1:m1", 3700)
-    assert zalo._dedup("u1:m1") is False  # row đã cleanup
+
+def test_get_with_body_closes_connection(server, monkeypatch):
+    # V8.1: do_GET không đọc body — GET kèm CL>0/chunked để sót byte
+    # trên wire; HTTP/1.1 keep-alive sẽ parse sót thành request rác
+    # kế (probe: 'GET /healthz' + CL:4 + 'JUNK' + GET kế -> 501
+    # 'JUNKGET'). Fix: framing báo body -> close_connection (cùng
+    # pattern V7.1). Gửi keep-alive explicit nếu không stdlib
+    # default-close -> pass ảo (bài học V7.1).
+    import socket
+    from urllib.parse import urlparse
+    monkeypatch.setattr(zalo.Handler, "protocol_version", "HTTP/1.1")
+    u = urlparse(server)
+
+    def exchange(req: bytes, want_eof: bool) -> bytes:
+        with socket.create_connection((u.hostname, u.port),
+                                      timeout=5) as s:
+            s.sendall(req)
+            resp = b""
+            while True:
+                try:
+                    chunk = s.recv(4096)
+                except TimeoutError:
+                    assert not want_eof, "server lẽ ra phải đóng connection"
+                    return resp
+                if not chunk:
+                    assert want_eof, "server đóng connection ngoài ý muốn"
+                    return resp
+                resp += chunk
+
+    for path, status in ((b"/healthz", b"200"), (b"/nope", b"404")):
+        r = exchange(b"GET " + path + b" HTTP/1.1\r\nHost: x\r\n"
+                     b"Connection: keep-alive\r\n"
+                     b"Content-Length: 4\r\n\r\nJUNK", True)
+        assert r.startswith(b"HTTP/1.1 " + status)
+    r = exchange(b"GET /healthz HTTP/1.1\r\nHost: x\r\n"
+                 b"Connection: keep-alive\r\n"
+                 b"Transfer-Encoding: chunked\r\n\r\n"
+                 b"4\r\nJUNK\r\n0\r\n\r\n", True)
+    assert r.startswith(b"HTTP/1.1 200")
+    # Control: 2 GET sạch (không body) pipelined cùng socket -> 2x200
+    # — keep-alive còn dùng được, code hỏng sẽ đóng oan / parse rác.
+    with socket.create_connection((u.hostname, u.port), timeout=5) as s:
+        s.sendall(b"GET /healthz HTTP/1.1\r\nHost: x\r\n"
+                  b"Connection: keep-alive\r\n\r\n"
+                  b"GET /healthz HTTP/1.1\r\nHost: x\r\n"
+                  b"Connection: close\r\n\r\n")
+        resp = b""
+        while True:
+            try:
+                chunk = s.recv(4096)
+            except TimeoutError:
+                break
+            if not chunk:
+                break
+            resp += chunk
+        assert resp.count(b"HTTP/1.1 200") == 2
+
+
+def test_dedup_follow_key_namespace(monkeypatch):
+    # V8.2: key follow namespace "follow:{uid}" — msg eid "uid:mid"
+    # không bao giờ khớp CASE 'follow:%' kể cả mid=="follow" hay mid
+    # kết ":follow". Code cũ (suffix '%:follow'): mid=="follow" cho
+    # eid "u1:follow" trùng HẲN key follow của u1 -> msg bị nuốt.
+    conn = zalo._seen_db()
+
+    def age(eid: str, sec: float) -> None:
+        conn.execute("UPDATE seen SET ts = ts - ? WHERE event_id = ?",
+                     (sec, eid))
+        conn.commit()
+
+    # Key follow mới giữ TTL 7d.
+    assert zalo._dedup("follow:u1") is False
+    assert zalo._dedup("follow:u1") is True
+    age("follow:u1", 3700)
+    assert zalo._dedup("follow:u1") is True     # >1h <7d — vẫn dedup
+    # eid msg "u1:follow" (mid=="follow") là key RIÊNG TTL 1h — không
+    # dedup do key follow:u1 tồn tại, và không hưởng TTL 7d.
+    assert zalo._dedup("u1:follow") is False
+    age("u1:follow", 3700)
+    assert zalo._dedup("u1:follow") is False    # row đã cleanup (1h)
+    # mid kết ':follow' cũng TTL 1h, không hưởng nhầm 7d.
+    assert zalo._dedup("u1:x:follow") is False
+    age("u1:x:follow", 3700)
+    assert zalo._dedup("u1:x:follow") is False
+
+
+def test_msg_id_follow_not_swallowed(server, monkeypatch):
+    # V8.2 e2e: follow u1 -> welcome; sau đó msg mid=="follow" (eid
+    # "u1:follow") phải dispatch handle_text bình thường — code cũ
+    # (key '{uid}:follow') dedup nhầm -> tin BỊ NUỐT.
+    calls, done = [], threading.Event()
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
+    monkeypatch.setattr(zalo, "handle_text",
+                        lambda *a: calls.append(a) or done.set())
+    ev = _event(event="follow", uid="u1")
+    del ev["message"]
+    ev["follower"] = {"id": "u1"}
+    raw1 = json.dumps(ev).encode()
+    assert httpx.post(server, content=raw1,
+                      headers={"X-ZEvent-Signature": _sign(raw1)}
+                      ).status_code == 200
+    raw2 = json.dumps(_event(msg_id="follow", uid="u1")).encode()
+    assert httpx.post(server, content=raw2,
+                      headers={"X-ZEvent-Signature": _sign(raw2)}
+                      ).status_code == 200
+    assert done.wait(5)  # msg mid=='follow' vẫn tới handle_text
+    assert len(calls) == 1
+
+
+def test_mask_pii_email_oversize():
+    # V8.3: email quá bound regex (local>256, label>253 — RFC-invalid)
+    # trước slide-partial lộ đầu / không mask gì -> post-pass che trọn.
+    m = zalo._mask_pii
+    assert m("mail " + "x" * 256 + "@gmail.com ok") == \
+        "mail *** ok"                     # biên 256 — regex bắt
+    assert m("mail " + "x" * 257 + "@gmail.com ok") == \
+        "mail *** ok"                     # 257 — post-pass
+    assert m("mail " + "x" * 300 + "@gmail.com ok") == "mail *** ok"
+    assert m("mail a@" + "b" * 253 + ".com ok") == "mail *** ok"
+    assert m("mail a@" + "b" * 254 + ".com ok") == "mail *** ok"
+    # Không email-like -> giữ nguyên (không over-mask mới).
+    assert m("ping a@b roi") == "ping a@b roi"
+    assert m("nhac @samsam nhe") == "nhac @samsam nhe"
+    assert m("tag@ cuoi cau") == "tag@ cuoi cau"
+    # Email thường vẫn mask; text không '@' không đổi.
+    assert m("mail foo@gmail.com ok") == "mail *** ok"
+    assert m("khong co email") == "khong co email"
