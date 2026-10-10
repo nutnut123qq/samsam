@@ -1,3 +1,63 @@
+# STATUS — v2.1-garden-log (2026-10-11)
+
+## v2.1 — WS3 thứ 2: agent nhật ký vùng trồng (contract trong DONE.md)
+
+**4/4 mục triển khai xong, gate xanh.** `python -m pytest -q` 159/159;
+`tests/test_garden.py` 12/12 ×3; `ruff check .` clean. CLI live trên
+DB thật: add KV-A01 → nhật ký #25 (source `manual:garden`, alias
+"kiem tra sau benh" → "kiểm tra sâu bệnh"); plot sai/trùng/thiếu-arg
+→ exit 2 warn friendly; `--check` in keyword anomalies; dead-host
+`10.255.255.1` → check exit 0 "chưa nạp" / add exit 2. Playwright
+(`.venv` + python global): live submit → row verify trong DB (canvas
+dataframe — gotcha đã ghi), dead-DB → st.info, console 0 lỗi cả hai
+nhánh — `v21_garden_tab.png`/`v21_garden_submit.png`/`v21_garden_dead.png`.
+Cold-check: **PASS coordinator self-review** đợt 1 — subagent quota
+cạn (precedent v0.3/v0.5). E2E bắt bug thật: `with conn.transaction()`
+trên conn đã-trong-tx chỉ là savepoint → INSERT rollback ngầm dù
+`returning id` trả id; vá `conn.commit()` tường minh + test assert
+committed. NIT → someday trong DONE.md.
+
+### Đọc diff cần biết
+
+- **`agents/garden.py`** (mới): `normalize_activity` (vocab 8 +
+  ALIASES fold NFD/bỏ-dấu; lạ → nguyên văn + warn, rỗng → "ghi nhận");
+  `add_log(conn, plot_id, ts, activity, detail, author, source)` →
+  (id|None, warns) — FK → "khoảnh không tồn tại", unique
+  `(plot_id,ts,activity)` → "đã có nhật ký trùng", KHÔNG raise;
+  **`conn.commit()` bắt buộc sau `with conn.transaction()`** — caller
+  có thể đang trong tx ngoài (UI đã SELECT) thì block chỉ là
+  savepoint; `flags_for` dùng `report.FLAG_KEYS` (không duplicate);
+  `anomaly_check(conn, gap_days=14, now=None)` → no-logs/gap/keyword;
+  `active_plots`, `recent_logs(limit=20)`; `_coerce_ts` (date/naive
+  →UTC/ISO 'Z'/ISO date). CLI `python -m agents.garden --plot P
+  --activity A [--detail --author --ts]` / `--check [--gap-days]`.
+  UTF-8 guard cho console cp1258. Không LLM → không cần guardrail
+  (invariant chỉ áp text AI sinh).
+- **`app/streamlit_app.py`** — tab thứ 6 "Nhật ký vườn": selectbox
+  khoảnh `id — location` từ `active_plots`; activity vocab +
+  "khác…"→free-text; `date_input` (guard None); submit → `add_log`
+  → success `#id` + warning vàng; panel "Cần chú ý" = anomaly_check;
+  bảng `recent_logs` (ts UTC string, canvas); `_pg.Error` → info.
+- **`tests/test_garden.py`** (mới, 12): fake-conn `_Conn` dispatch
+  theo substring+params (pattern `test_report.py`); `_ErrConn` raise
+  psycopg.errors.* cho FK/unique; `conn.committed` counter cho
+  savepoint-regression; anomaly_check inject `now` cho deterministic.
+
+### Evidence v2.1
+
+| Mục | File |
+|---|---|
+| CLI live + dead-host | `evidence/v21_garden.log` — #25 ghi thật, toàn bộ exit-code branch |
+| UI live + dead-DB | `evidence/v21_streamlit.log` + `v21_garden_tab.png` / `v21_garden_submit.png` / `v21_garden_dead.png` |
+| Gate chung | `evidence/v21_pytest.log` — focused 12/12 ×3, full 159/159, ruff clean |
+
+External: plots/nhật ký vườn hiện là **dữ liệu mẫu** (`sample:*`) +
+1 row demo `manual:garden` — nhãn mẫu khi demo; khoảnh thật chờ bàn
+giao SOW §5.2. Audit bù: `/cold-audit` range `1553e81..HEAD` khi
+quota subagent về (cover v2.0+v2.1 self-review).
+
+---
+
 # STATUS — v2.0-report-agent (2026-10-10)
 
 ## v2.0 — WS3: agent báo cáo định kỳ ra FILE (contract trong DONE.md)

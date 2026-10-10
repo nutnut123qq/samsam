@@ -1,6 +1,6 @@
 """Demo UI — `streamlit run app/streamlit_app.py`
 
-5 tabs:
+6 tabs:
   - "Chat Sâm Sâm": hỏi/đáp trên knowledge base, mỗi câu trả lời kèm
     link nguồn (RAG — retrieve từ pgvector, trả lời bằng Claude).
     Answer qua guardrail như mọi kênh (invariant); NO_DATA → handoff
@@ -16,6 +16,10 @@
     trong `data/reports/`; BẢN NHÁP cho người duyệt + gửi lãnh đạo,
     hệ thống KHÔNG tự gửi (C2.4). DB chết → vẫn sinh báo cáo degraded
     (phần convlog file-based vẫn có).
+  - "Nhật ký vườn": agent nhật ký vùng trồng (WS3) — form ghi hoạt
+    động vào `plot_logs` (source 'manual:garden'), chuẩn hóa hoạt
+    động + cảnh báo bất thường (khoảnh lâu chưa ghi / keyword sâu
+    bệnh). NGƯỜI ghi tay; DB chết → info, không crash.
 
 Contract với UI: mọi câu trả lời chat phải render ít nhất 1 URL nguồn;
 không có nguồn → hiển thị "không đủ dữ liệu" thay vì để model bịa.
@@ -27,9 +31,9 @@ from datetime import timezone
 import streamlit as st
 
 st.set_page_config(page_title="Sâm Sâm AI Pilot", page_icon="🌿")
-tab_chat, tab_studio, tab_queue, tab_leads, tab_report = st.tabs(
-    ["Chat Sâm Sâm", "Content Studio", "Chưa trả lời", "Leads",
-     "Báo cáo"])
+tab_chat, tab_studio, tab_queue, tab_leads, tab_report, tab_garden = (
+    st.tabs(["Chat Sâm Sâm", "Content Studio", "Chưa trả lời", "Leads",
+             "Báo cáo", "Nhật ký vườn"]))
 
 with tab_chat:
     st.caption("Hỏi đáp trên knowledge base public của Sâm Sâm — "
@@ -284,3 +288,87 @@ with tab_report:
         # File do chính agent ghi utf-8 — read_text strict được
         # (không phải file user-influenced như convlog).
         st.markdown(_pick.read_text(encoding="utf-8"))
+
+with tab_garden:
+    st.caption("Agent nhật ký vùng trồng (WS3) — nhân viên ghi hoạt "
+               "động theo khoảnh; hệ thống chuẩn hóa + cảnh báo bất "
+               "thường (khoảnh lâu chưa ghi, nhật ký có dấu hiệu sâu "
+               "bệnh). Nhật ký do NGƯỜI nhập — hệ thống không tự sinh. "
+               "CLI: `python -m agents.garden --check`.")
+    from datetime import datetime as _dt
+
+    import psycopg as _pg
+
+    from agents import garden as _g
+    from ingest.lead_store import connect as _ldb
+
+    _gconn = _ldb()
+    if _gconn is None:
+        st.info("Chưa nạp — không kết nối được Postgres (kiểm tra "
+                "DATABASE_URL). Nhật ký vườn cần DB.")
+    else:
+        try:
+            _plots = _g.active_plots(_gconn)
+            _anoms = _g.anomaly_check(_gconn)
+            _recent = _g.recent_logs(_gconn)
+        except _pg.Error:
+            _gconn = None
+            st.info("Lỗi đọc DB — thử tải lại trang.")
+    if _gconn is not None:
+        st.subheader("Ghi nhật ký")
+        _labels = [f"{pid} — {loc}" if loc else pid
+                   for pid, loc in _plots]
+        _pick_plot = (st.selectbox("Khoảnh", _labels)
+                      if _labels else None)
+        _act_pick = st.selectbox("Hoạt động",
+                                 list(_g.ACTIVITY_VOCAB) + ["khác…"])
+        _act_free = (st.text_input("Hoạt động khác (tự ghi)")
+                     if _act_pick == "khác…" else "")
+        _d = st.date_input("Ngày")
+        _det = st.text_area("Chi tiết", height=68)
+        _auth = st.text_input("Người ghi")
+        if st.button("Ghi nhật ký", type="primary"):
+            if not _pick_plot:
+                st.error("Chưa có khoảnh active nào trong DB.")
+            elif _d is None:
+                st.error("Chọn ngày cho nhật ký.")
+            else:
+                _pid = _pick_plot.split(" — ")[0]
+                _act = _act_free.strip() or _act_pick
+                _ts = _dt.combine(_d, _dt.now(timezone.utc).time(),
+                                  tzinfo=timezone.utc)
+                try:
+                    _lid, _warns = _g.add_log(
+                        _gconn, _pid, _ts, _act, _det.strip(),
+                        _auth.strip())
+                except _pg.Error:
+                    _lid, _warns = None, ["Lỗi DB khi ghi — thử lại."]
+                for _w in _warns:
+                    st.warning(_w)
+                if _lid is not None:
+                    st.success(f"Đã ghi nhật ký #{_lid}: {_pid} — {_act}")
+                else:
+                    st.error("Không ghi được — xem cảnh báo.")
+
+        st.subheader("Cần chú ý")
+        if _anoms:
+            for _a in _anoms:
+                st.warning(_a["msg"])
+        else:
+            st.info("Không có bất thường — mọi khoảnh active đều có "
+                    "nhật ký gần đây.")
+
+        st.subheader("Nhật ký gần nhất")
+        if _recent:
+            st.dataframe([
+                {"Thời gian (UTC)": (ts.astimezone(timezone.utc)
+                     .strftime("%Y-%m-%d %H:%M")
+                     if hasattr(ts, "astimezone") else str(ts)[:16]),
+                 "Khoảnh": pid, "Hoạt động": act,
+                 "Chi tiết": det or "", "Người ghi": au or "",
+                 "Nguồn": src}
+                for ts, pid, act, det, au, src in _recent],
+                hide_index=True)
+        else:
+            st.info("Chưa có nhật ký nào.")
+        _gconn.close()

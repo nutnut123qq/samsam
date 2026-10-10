@@ -1,0 +1,24 @@
+v2.1 test gate (2026-10-11)
+============================
+$ python -m pytest tests/test_garden.py -q  (x3)
+  12 passed in 0.38s
+  12 passed in 0.44s
+  12 passed in 0.34s
+
+$ python -m pytest -q
+  159 passed in 29.02s        (147 truoc + 12 test_garden)
+
+$ ruff check .
+  All checks passed!
+
+$ git diff --check
+  clean (chi warning CRLF chuan Windows)
+
+tests/test_garden.py — 12 test: normalize_activity (vocab/alias/
+khac/rong), _coerce_ts (date/naive/ISO 'Z'/ISO date/bad/None),
+flags_for (activity vs detail), add_log fake-conn (happy+normalized
+params / unknown-activity warn nhung insert / keyword flag trong
+warns / ForeignKeyViolation+UniqueViolation -> warn khong raise /
+bad input khong execute / commit() duoc goi), active_plots +
+recent_logs shape+limit, anomaly_check du nhanh no-logs/gap/fresh/
+keyword voi now inject.

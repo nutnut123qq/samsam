@@ -1,0 +1,96 @@
+v2.1-garden-log — evidence (2026-10-11)
+=========================================
+Contract: DONE.md section v2.1 (W4.1-W4.5) — agent nhat ky vung trong WS3:
+form/chat -> chuan hoa -> insert plot_logs (source 'manual:garden')
+-> canh bao bat thuong. KHONG tu dong gui ra ngoai (human-gate).
+
+Gate ket qua
+------------
+pytest tests/test_garden.py -q      : 12 passed (x3: 0.38s/0.44s/0.34s)
+python -m pytest -q                 : 159 passed in 29.02s
+ruff check .                        : All checks passed!
+git diff --check                    : clean (chi warning CRLF binh thuong)
+
+CLI gate W4.2 (DB that, Postgres local)
+---------------------------------------
+$ python -m agents.garden --check
+  [keyword] KV-A01: kiem tra sau benh — sau benh, rep, benh    exit 0
+  (khong co 'gap' vi sample plot_logs deu trong 14 ngay gan nhat;
+   nhanh no-logs/gap da cover bang unit test)
+
+$ python -m agents.garden --plot KV-A01 --activity "kiem tra sau benh"
+    --detail "phat hien rep vung ria, phun thuoc sinh hoc"
+    --author "Minh (demo)"
+  [warn] nhat ky co dau hieu can chu y: 'sau benh'
+  [warn] nhat ky co dau hieu can chu y: 'benh'
+  [done] nhat ky #25: KV-A01 — 2026-10-10 18:23 UTC              exit 0
+  => ghi that vao plot_logs, source='manual:garden', activity da
+     chuan hoa alias "kiem tra sau benh" -> "kiểm tra sâu bệnh"
+
+$ python -m agents.garden --plot KV-XX --activity "tưới"
+  [warn] khoanh 'KV-XX' khong ton tai trong bang plots — them
+         khoanh truoc                                           exit 2
+
+$ python -m agents.garden --plot KV-A01 --activity "kiểm tra sâu bệnh"
+    --ts 2026-10-10T18:23:00Z  (chay lai dung cung tham so)
+  [warn] da co nhat ky trung: KV-A01 2026-10-10 18:23
+         'kiem tra sau benh'                                    exit 2
+  => unique (plot_id,ts,activity) -> warn than thien, khong crash
+
+$ python -m agents.garden --activity "tưới"
+  error: ghi nhat ky can --plot va --activity                   exit 2
+
+$ DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m agents.garden --check
+  [warn] chua nap — khong ket noi duoc Postgres (DATABASE_URL
+         thieu hoac host chet)                                   exit 0
+
+$ DATABASE_URL=<chet> python -m agents.garden --plot KV-A01 --activity tuoi
+  [error] khong ket noi duoc Postgres — khong ghi duoc          exit 2
+
+UI gate W4.3 (Streamlit .venv :8501, Playwright Python truc tiep)
+-----------------------------------------------------------------
+Live branch: tab "Nhat ky vuon" render form (Khoanh selectbox
+"KV-A01 — Tra My, Quang Nam", Hoat dong, Ngay, Chi tiet, Nguoi ghi),
+block "Can chu y" hien anomaly vang, bang "Nhat ky gan nhat".
+Dien form + bam "Ghi nhat ky" -> banner "Da ghi nhat ky #33: KV-A01 —
+trong"; verify row that trong DB (trong, 'UI probe — phun suong sang',
+'Minh (demo)', 'manual:garden'). console_errors: [] -> PROBE-PASS
+Screenshots: v21_garden_tab.png, v21_garden_submit.png
+
+Dead-DB branch (:8502, DATABASE_URL tro host chet 10.255.255.1):
+tab hien st.info "Chua nap — khong ket noi duoc Postgres (kiem tra
+DATABASE_URL). Nhat ky vuon can DB." -> DEAD-PROBE-PASS,
+console_errors: [] — connect_timeout=3 nen khong hang tab.
+Screenshot: v21_garden_dead.png
+
+BUG THAT tim thay qua UI gate (da va truoc khi dong)
+----------------------------------------------------
+add_log dung `with conn.transaction()` — tren conn DA CO implicit tx
+(UI chay SELECT active_plots/recent_logs truoc) block do chi la
+SAVEPOINT; release khong commit, conn.close() rollback ngoai => row
+mat khoi DB du `returning id` van tra id (banner "Da ghi" hien ao).
+E2E bat duoc, unit-test fake-conn khong bat duoc. Va: them
+conn.commit() tuong minh sau block; test them assert conn.committed.
+Bang chung phu: sequence plot_logs.id nhay 25 -> 33 (id bi dot boi
+cac insert rollback) truoc khi fix xong thi #33 persist.
+Probe rows 'UI probe — phun suong sang' (#32,#33) da xoa sau khi
+chup screenshot; chi giu #25 lam demo manual:garden.
+
+Report integration (W4.4): nhat ky manual chay vao report v2.0 qua
+section farm tu dong (plot_logs); sources line se hien
+'manual:garden=1' (khong con *(mau)* — dung, vi da co data that).
+Khong sua report.py — no da doc plot_logs.
+
+Gioi han con lai (ghi vao someday)
+----------------------------------
+- flags_for match literal khong fold dau: detail viet khong dau
+  ("rep") lot flag (activity co fold qua alias). Giong semantics
+  report.FLAG_KEYS hien co -> nhat quan, NIT.
+- UI chon "khac…" ma bo trong free-text -> activity literal "khac…"
+  duoc ghi (co warn vocab) — chua block.
+- print/log nhat ky hien activity/detail tho (internal, nhan vien) —
+  chua mask; khong phai output AI nen chua qua guardrail.
+
+Self-review: COORDINATOR-INLINE (subagent quota can — precedent
+v0.3/v0.5, danh dau trong DONE/STATUS/CYCLE_LOOP; audit bu bang
+session /cold-audit range 1553e81..HEAD khi quota ve).

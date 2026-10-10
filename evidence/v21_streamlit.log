@@ -1,0 +1,29 @@
+v2.1 UI probe log (2026-10-11) — chi tiet day du trong v21_garden.log
+======================================================================
+Server: .venv/Scripts/python -m streamlit run app/streamlit_app.py
+  :8501 (live DB) + :8502 (DATABASE_URL=postgresql://u@10.255.255.1:5432/x)
+Runner: Python Playwright truc tiep (khong qua MCP — root allowlist
+khac repo, gotcha v1.9). Probe scripts _probe_v21*.py da xoa sau khi
+chay xong.
+
+LIVE (port 8501):
+  - tab "Nhat ky vuon" render: form Khoanh/Hoat dong/Ngay/Chi tiet/
+    Nguoi ghi + "Ghi nhat ky" button
+  - block "Can chu y": anomaly vang hien (keyword KV-A01)
+  - submit that: "Da ghi nhat ky #33: KV-A01 — trong" -> row verify
+    qua DB (trong / 'UI probe — phun suong sang' / 'Minh (demo)' /
+    'manual:garden'); bang recent = canvas nen verify data qua DB
+    (gotcha AGENTS.md)
+  - console_errors: []  => PROBE-PASS
+  - screenshots: v21_garden_tab.png, v21_garden_submit.png
+
+DEAD-DB (port 8502, host chet 10.255.255.1):
+  - tab render, st.info "Chua nap — khong ket noi duoc Postgres
+    (kiem tra DATABASE_URL). Nhat ky vuon can DB."
+  - khong hang tab (connect_timeout=3)
+  - console_errors: []  => DEAD-PROBE-PASS
+  - screenshot: v21_garden_dead.png
+
+Note: streamlit cache imported module — sua agents/garden.py phai
+restart server moi nhan fix (probe vong truoc fail vi server cu
+con code cu — rollback insert do savepoint).

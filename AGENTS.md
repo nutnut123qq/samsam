@@ -230,6 +230,21 @@ chat lẫn embeddings) + Streamlit.
   → .env lấp vào). Muốn nhánh connect→None: set `DATABASE_URL` trỏ
   host chết (vd `postgresql://u@10.255.255.1:5432/x`) khi spawn
   process, hoặc monkeypatch `connect` trong test.
+- **`with conn.transaction()` trên conn ĐÃ trong tx chỉ là SAVEPOINT**
+  (v2.1, UI E2E bắt): conn đã chạy SELECT (implicit tx mở) → block
+  transaction() release savepoint, KHÔNG commit — `conn.close()`
+  rollback tx ngoài → INSERT mất khỏi DB dù `returning id` vẫn trả
+  id (UI hiện "đã ghi" ảo). CLI conn mới thì transaction() là
+  outermost → commit đúng — fake-conn unit test KHÔNG bắt được, chỉ
+  E2E lộ. Ghi-tác-vụ trên conn chia sẻ phải `conn.commit()` tường
+  minh sau block (no-op khi conn mới). Dấu hiệu phụ: sequence id
+  nhảy cách (id đốt bởi insert rollback).
+- **Streamlit KHÔNG reload imported module** (v2.1): rerun chỉ chạy
+  lại file script; module đã import (`agents/garden.py`) giữ bản cũ
+  trong `sys.modules` — sửa module import phải RESTART streamlit
+  server mới verify được (probe fail "fix không tác động" vì server
+  đang chạy code cũ). `st.date_input` có thể trả None khi user xoá
+  ngày → guard trước `datetime.combine`.
 - **Reviewer/subagent quota-exhausted giữa cycle** (v2.0): cold-check
   không spawn được → coordinator tự audit adversarial (đọc diff + chạy
   lại gate + probe claim) và ghi rõ "coordinator self-review" trong

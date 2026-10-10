@@ -4,9 +4,15 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **v2.1-garden-log** (cycle 4/10 — WS3;
-coordinator-inline vì quota subagent cạn — self-review đánh dấu
-trong ledger, precedent v0.3/v0.5)
+Version đang mở: **(không — chờ /cycle tiếp; session mới vì context)**
+
+v2.1-garden-log đóng 2026-10-11 (cold-check **coordinator
+self-review** — subagent quota cạn, precedent v0.3/v0.5; coordinator
+tự chạy lại 159/159 + ruff + CLI live/dead-DB + Playwright UI khớp
+evidence; UI E2E bắt bug thật "transaction()-là-savepoint-khi-conn-
+đã-trong-tx" → INSERT rollback ngầm, vá `conn.commit()` trước khi
+đóng; NIT → someday). Audit bù: session `/cold-audit` range
+`1553e81..HEAD` khi quota subagent về (cover v2.0+v2.1 self-review).
 
 v2.0-report-agent đóng 2026-10-10 (cold-check **coordinator
 self-review** — reviewer subagent quota-exhausted, precedent
@@ -58,7 +64,7 @@ connect `connect_timeout=3`; nhánh DB-unavailable verify bằng host
 chết thật. Nhật ký là thao tác NGƯỜI ghi tay — hệ thống KHÔNG tự
 sinh/tự sửa nhật ký (human-gate đối xứng C2.4).
 
-- [ ] **W4.1 Module `agents/garden.py`** — `ACTIVITY_VOCAB` (trồng,
+- [x] **W4.1 Module `agents/garden.py`** — `ACTIVITY_VOCAB` (trồng,
   tưới, bón, làm cỏ, kiểm tra sâu bệnh, phun thuốc sinh học, thu
   hoạch, ghi nhận, khác) + alias map; `normalize_activity(raw)` →
   (activity, known: bool) — raw rỗng → `("ghi nhận", False)`;
@@ -76,7 +82,7 @@ sinh/tự sửa nhật ký (human-gate đối xứng C2.4).
   - Boundary: `agents/garden.py`
   - Gate: unit tests W4.4 xanh
   - Evidence: `evidence/v21_garden.log`
-- [ ] **W4.2 CLI `python -m agents.garden`** — `--plot P --activity A
+- [x] **W4.2 CLI `python -m agents.garden`** — `--plot P --activity A
   [--detail D --ts ISO --author]` → add_log in kết quả + flags;
   `--check [--gap-days N]` → in anomaly list; thiếu --plot/--activity
   khi add → usage error exit 2; DB down: add → exit 2 báo lỗi;
@@ -87,7 +93,7 @@ sinh/tự sửa nhật ký (human-gate đối xứng C2.4).
     friendly exit≠0; add trùng → warn "đã có"; `--check` in anomaly
     (ít nhất 1 'gap' vì KV-B01 sample cũ)
   - Evidence: `evidence/v21_garden.log`
-- [ ] **W4.3 Tab "Nhật ký vườn" (thứ 6) streamlit** — caption human-
+- [x] **W4.3 Tab "Nhật ký vườn" (thứ 6) streamlit** — caption human-
   ops; `active_plots` → selectbox khoảnh (id + location); selectbox
   activity vocab + "khác..." → text_input tự ghi; date_input mặc định
   hôm nay; detail + author; submit → `add_log` → success + warning
@@ -100,7 +106,7 @@ sinh/tự sửa nhật ký (human-gate đối xứng C2.4).
     DB-unavailable (spawn env DATABASE_URL host chết) → tab render +
     info, không hang; console errors=0
   - Evidence: `evidence/v21_streamlit.log`, `evidence/v21_garden_tab.png`
-- [ ] **W4.4 Tests + gate chung** — `tests/test_garden.py`: normalize
+- [x] **W4.4 Tests + gate chung** — `tests/test_garden.py`: normalize
   (vocab hit/alias/khác/rỗng); `add_log` fake-conn happy + bắt
   `ForeignKeyViolation`/`UniqueViolation` → warnings không raise;
   `flags_for` keyword trong activity vs detail; `anomaly_check` đủ
@@ -1231,6 +1237,17 @@ Quy ước DoD cho phase connector:
   hardcode zalo/streamlit — mở rộng `channel_of` thêm kênh sẽ KeyError,
   vá bằng defaultdict khi đó; (d) `report_name` edge 00:00 UTC + tab
   `read_text` race nếu file bị xoá giữa list↔read.
+- Garden agent v2.1 (coordinator self-review NIT): (a) `flags_for`
+  match literal KHÔNG fold dấu — detail viết không dấu ("rep") lọt
+  flag (activity fold qua alias nên đã bắt); giống semantics
+  `report.FLAG_KEYS` hiện có → nhất quán, vá thì fold cả hai cùng lúc;
+  (b) UI chọn "khác…" bỏ trống free-text → ghi activity literal
+  "khác…" (vẫn có warn vocab) — nên block; (c) `add_log` khi insert
+  fail (FK/unique) trả chỉ message lỗi — vocab/flag warns tích lũy bị
+  thay thế (nhỏ — resubmit sau khi sửa input sẽ thấy); (d) anomaly
+  msg/`[warn]` in verbatim activity người nhập, không bound độ dài;
+  (e) chat-intake ("nhắn Zalo ghi nhật ký") + nhắc định kỳ khi gap —
+  đã ghi trong external-dep contract, form-first.
 - WS2: ~~leads table + gom lead từ convlog; dashboard số liệu kênh~~
   (xong v1.9 — chỉ cover leads + convlog metrics, chưa phải social
   metrics); pipeline nội dung brief→draft→compliance→DUYỆT NGƯỜI→
@@ -1238,9 +1255,9 @@ Quy ước DoD cho phase connector:
   tự đăng (C2.4)
 - WS3: ~~agent báo cáo định kỳ ra file (không tự gửi)~~ — xong v2.0
   (markdown `data/reports/`; lịch chạy định kỳ = Task Scheduler/cron
-  someday, LLM commentary someday); agent nhật ký vùng trồng
-  form/chat→chuẩn hóa→cảnh báo bất thường (đã có bảng plot_logs);
-  trợ lý tri thức nội bộ
+  someday, LLM commentary someday); ~~agent nhật ký vùng trồng
+  form→chuẩn hóa→cảnh báo~~ — xong v2.1 (form tab + CLI; chat-intake
+  + nhắc định kỳ = someday trong contract); trợ lý tri thức nội bộ
 - WS4: playbook/SOP/kiến trúc hệ thống/Phụ lục D test-set nghiệm thu
 
 - PII trong `conversations.jsonl`: `question` đã mask SĐT/email bằng
@@ -1337,3 +1354,4 @@ Quy ước DoD cho phase connector:
 | v1.8-core-db | WS1 nền tảng SOW: schema 6 bảng lõi (products/claims_approved/plots/plot_logs/orders/assets) + `ingest/core_store` loader idempotent delete-by-source + Phụ lục A đếm thật (`scripts/data_audit.py`, `docs/phu-luc-a.md`) + sample data plots/orders "chờ bàn giao" | 2026-10-10 | `evidence/v18_schema.log` (apply ×2 → 7 bảng public) · `v18_core_store.log` (×2 giống hệt: 27/22/3/6/5/219, 9/10 sku link) · `v18_audit.log` (10 domain) · `v18_pytest.log` 118/118 (coordinator tự chạy lại 29.8s) + ruff clean; commits `2bbfe5a` (contract) + `06ee856` (code) + `df0fc7d` (board) + `6d9b6b5` + `d120185` (FIX). Cold-check đợt 1+2 FIX cùng lớp lỗi "delete-trắng" (file thiếu → skip; file rỗng/0-record → skip+warn) — vá hết; đợt 3 auditor lạ **PASS** (probe corrupt-JSON crash-không-xoá, atomic txn, không nới assert) — 3 MINOR + 1 NIT → someday |
 | v1.9-leads | WS2 nền SOW: bảng `leads` (dedup_key unique, insert-only — không delete-by-source vì convlog rotate/purge) + `ingest/lead_store` harvest convlog+`.1` (intent partner/order/price/contact, channel suy từ `msg_id`) + tab Leads Streamlit read-only (convlog stats luôn hiện, DB-lỗi → st.info, `connect_timeout=3`) | 2026-10-10 | `evidence/v19_schema.log` (8 bảng public ×2) · `v19_leads.log` (harvest thật ×2 dup-30; rollback-only temp-table probe chứng minh 30-new→30-dup, public 30→30) · `v19_streamlit.log` + `v19_dashboard.png` (live + DB-unavailable, console 0 lỗi) · `v19_pytest.log` (131/131, focused 13/13 ×3, ruff clean); commits `c3387a0` (contract) + `af8d314` (code/tests/evidence/board) + commit đóng. Cold-check auditor lạ: **PASS** đợt 1 (tự chạy 131/131 + ruff + harvest → 30 rows) — 2 MINOR (intent substring FP, 30 leads là mock/replay phải nhãn "dữ liệu mẫu" khi demo) + 1 NIT (`answered` truthiness) → someday. Worker chết rate-limit giữa lane → resume/absorb; DB-fallback hang → `connect_timeout=3`; UI verify qua temp venv + Python Playwright (MCP root trỏ workspace khác) |
 | v2.0-report-agent | WS3 đầu tiên: agent báo cáo định kỳ → FILE markdown `data/reports/` (package `agents/` mới; consume orders/leads/plot_logs/plots/products + convlog file-based; degraded khi DB chết; nhãn *(mẫu)* cho `source 'sample:*'`; `answered` strict `is True`; BẢN NHÁP human-gate, KHÔNG tự gửi) + tab Streamlit thứ 5 "Báo cáo" | 2026-10-10 | `evidence/v20_report.log` (CLI ×2 idempotent + `--until/--days` + dead-host `10.255.255.1` → degraded exit 0) · `v20_report.md` (report mẫu thật) · `v20_streamlit.log` + `v20_report_tab.png`/`v20_report_dead.png` (live + DB-unavailable, console 0 lỗi, warning DEGRADED) · `v20_pytest.log` (147/147, focused 16/16 ×3, ruff clean); commits `1553e81` (contract) + `6cb3da8` (impl) + `fb2f93b` (board) + commit đóng. Cold-check: reviewer subagent quota-exhausted → **PASS coordinator self-review** (precedent v0.3/v0.5 — tự chạy lại 147/147 84s + ruff + CLI live/dead-DB khớp evidence); 4 NIT → someday (collect_chat đếm record thiếu-field, verbatim data không qua guardrail, `by_channel*` hardcode 2 kênh, report_name edge-00:00 + read_text race) |
+| v2.1-garden-log | WS3 thứ 2: agent nhật ký vùng trồng — `agents/garden.py` (vocab+alias fold bỏ dấu, `add_log` insert `source='manual:garden'` FK/unique → warn friendly không raise, `anomaly_check` no-logs/gap/keyword dùng `report.FLAG_KEYS`) + CLI `add`/`--check` + tab Streamlit thứ 6 "Nhật ký vườn" (form + panel Cần chú ý + bảng recent; DB-down → st.info) — feed report v2.0 qua `plot_logs`, KHÔNG tự gửi | 2026-10-11 | `evidence/v21_garden.log` (CLI: add KV-A01→#25, plot-sai/trùng/thiếu-arg → exit 2 warn, dead-host → check exit 0/add exit 2) · `v21_streamlit.log` + `v21_garden_tab.png`/`v21_garden_submit.png`/`v21_garden_dead.png` (live submit → row verify qua DB; dead-DB info, console 0 lỗi) · `v21_pytest.log` (159/159, focused 12/12 ×3, ruff clean); commits `15dd559` (contract) + impl + commit đóng. Cold-check: **PASS coordinator self-review** đợt 1 — subagent quota cạn (precedent v0.3/v0.5); UI E2E bắt bug thật "savepoint-khi-conn-đã-trong-tx" → `conn.commit()` vá trước đóng; NIT → someday (flags_for không fold, "khác…" trống, warns-drop-khi-fail, activity không bound, chat-intake/nhắc-định-kỳ deferred). Audit bù `/cold-audit` range `1553e81..HEAD` khi quota về |
