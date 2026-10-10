@@ -109,3 +109,26 @@ create table if not exists assets (
   source text not null,
   created_at timestamptz not null default now()
 );
+
+-- ============================================================================
+-- DB lõi WS2 (SOW): leads — lead gom từ kênh chat (convlog) phục vụ
+-- dashboard/follow-up. KHÁC loader lõi WS1: KHÔNG delete-by-source —
+-- convlog là log xoay + purge 30d, lead là fact suy ra một lần nên
+-- `ingest.lead_store` chỉ `insert ... on conflict (dedup_key) do
+-- nothing`: chạy lại không nhân đôi, leads sống sót khi entry convlog
+-- gốc bị purge. `question`/`user_hash` đã mask/hash tại convlog — bảng
+-- này không lưu PII thêm. `status` nhân viên cập nhật ngoài UI.
+-- ============================================================================
+
+create table if not exists leads (
+  id bigint generated always as identity primary key,
+  dedup_key text not null unique,   -- 'convlog:<msg_id>' hoặc 'convlog:<hash16>'
+  ts timestamptz not null,          -- ts của entry convlog gốc
+  channel text not null,            -- zalo | streamlit (msg_id rỗng -> streamlit)
+  user_hash text not null,
+  question text,                    -- câu hỏi đã mask PII (tại convlog)
+  intent text not null,             -- partner | order | price | contact
+  status text not null default 'new',  -- new | contacted | won | lost
+  source text not null,             -- 'conversations.jsonl' | 'manual'
+  created_at timestamptz not null default now()
+);

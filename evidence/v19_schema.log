@@ -1,0 +1,15 @@
+W2.1 — schema apply idempotence + public tables/columns
+
+$ python scripts/apply_schema.py
+[done] schema applied — 8 bảng public: assets, chunks, claims_approved, leads, orders, plot_logs, plots, products
+
+$ python scripts/apply_schema.py
+[done] schema applied — 8 bảng public: assets, chunks, claims_approved, leads, orders, plot_logs, plots, products
+
+$ information_schema.tables (public BASE TABLES)
+[('assets',), ('chunks',), ('claims_approved',), ('leads',), ('orders',), ('plot_logs',), ('plots',), ('products',)]
+
+$ information_schema.columns (public.leads)
+[('id', 'bigint', 'NO', None), ('dedup_key', 'text', 'NO', None), ('ts', 'timestamp with time zone', 'NO', None), ('channel', 'text', 'NO', None), ('user_hash', 'text', 'NO', None), ('question', 'text', 'YES', None), ('intent', 'text', 'NO', None), ('status', 'text', 'NO', "'new'::text"), ('source', 'text', 'NO', None), ('created_at', 'timestamp with time zone', 'NO', 'now()')]
+
+No ALTER/DROP was run; only the idempotent leads table definition was added to docs/schema.sql. Existing seven public tables were preserved.

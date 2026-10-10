@@ -1,0 +1,19 @@
+W2.4 — final gate (2026-10-10)
+
+Initial focused run found a test-only drift-guard bug: the SQL count regex matched the phrase inside the schema comment. The guard was narrowed to line-anchored CREATE TABLE statements.
+
+$ python -m pytest tests/test_lead_store.py -q (ship stability, sequential)
+13 passed in 0.32s
+13 passed in 0.30s
+13 passed in 0.35s
+
+$ python -m pytest -q (final after DB connect-timeout change)
+131 passed in 27.92s
+
+$ ruff check .
+All checks passed!
+
+$ git diff --check
+Passed.
+
+Gates ran sequentially after checking for competing heavy processes. Full UI evidence is in evidence/v19_streamlit.log and screenshot evidence/v19_dashboard.png.

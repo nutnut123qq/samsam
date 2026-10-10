@@ -1,6 +1,6 @@
 """Demo UI — `streamlit run app/streamlit_app.py`
 
-3 tab:
+4 tabs:
   - "Chat Sâm Sâm": hỏi/đáp trên knowledge base, mỗi câu trả lời kèm
     link nguồn (RAG — retrieve từ pgvector, trả lời bằng Claude).
     Answer qua guardrail như mọi kênh (invariant); NO_DATA → handoff
@@ -9,18 +9,22 @@
     bài + kết quả guardrail (violation tô đỏ).
   - "Chưa trả lời": queue câu NO_DATA cho nhân viên follow-up / bổ
     sung knowledge base (đọc convlog `answered:false`).
+  - "Leads": dashboard số liệu kênh + leads (WS2) — convlog theo kênh
+    (file-based, luôn hiện) + bảng `leads` do `ingest.lead_store` nạp
+    (DB lỗi/chưa nạp → info, không crash). Read-only ở pilot.
 
 Contract với UI: mọi câu trả lời chat phải render ít nhất 1 URL nguồn;
 không có nguồn → hiển thị "không đủ dữ liệu" thay vì để model bịa.
 """
 
 import time
+from datetime import timezone
 
 import streamlit as st
 
 st.set_page_config(page_title="Sâm Sâm AI Pilot", page_icon="🌿")
-tab_chat, tab_studio, tab_queue = st.tabs(
-    ["Chat Sâm Sâm", "Content Studio", "Chưa trả lời"])
+tab_chat, tab_studio, tab_queue, tab_leads = st.tabs(
+    ["Chat Sâm Sâm", "Content Studio", "Chưa trả lời", "Leads"])
 
 with tab_chat:
     st.caption("Hỏi đáp trên knowledge base public của Sâm Sâm — "
@@ -177,3 +181,63 @@ with tab_queue:
               "user_hash": e.get("user_hash", "")}
              for e in reversed(_recs)],
             use_container_width=True)
+
+with tab_leads:
+    st.caption("Dashboard WS2: số liệu kênh chat + lead gom từ convlog "
+               "(câu hỏi có ý định mua/giá/địa-điểm/đại-lý → bảng "
+               "`leads`). Read-only ở pilot — cập nhật `status` qua DB.")
+    from ingest import lead_store as _ls
+
+    # Phần file-based luôn hiện được (kể cả khi DB lõi chưa nạp).
+    _conv = _ls.convlog_stats()
+    st.markdown("##### Kênh chat (convlog)")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Tin nhắn", _conv["total"])
+    _rate = (f"{round(100 * _conv['answered'] / _conv['total'])}%"
+             if _conv["total"] else "—")
+    c2.metric("Đã trả lời", _rate)
+    c3.metric("Zalo / Streamlit",
+              f"{_conv['by_channel'].get('zalo', 0)} / "
+              f"{_conv['by_channel'].get('streamlit', 0)}")
+
+    st.divider()
+    st.markdown("##### Leads (bảng `leads`)")
+    _conn = _ls.connect()
+    _stats = _ls.lead_stats(_conn) if _conn else None
+    if _conn:
+        _conn.close()
+    if _stats is None:
+        st.info("Chưa có dữ liệu leads — chạy `python "
+                "scripts/apply_schema.py` rồi `python -m "
+                "ingest.lead_store`.")
+    else:
+        c1, c2 = st.columns(2)
+        c1.metric("Tổng leads", _stats["total"])
+        c2.metric("Mới 7 ngày", _stats["new_7d"])
+        ic1, ic2, ic3 = st.columns(3)
+        for col, label, key in (
+                (ic1, "Theo kênh", "by_channel"),
+                (ic2, "Theo intent", "by_intent"),
+                (ic3, "Theo trạng thái", "by_status")):
+            counts = _stats[key]
+            summary = "; ".join(
+                f"{k}={v}" for k, v in sorted(counts.items())) or "—"
+            col.caption(f"{label}: {summary}")
+        if not _stats["recent"]:
+            st.info("Bảng leads trống — chạy `python -m ingest.lead_store`.")
+        else:
+            st.dataframe(
+                [{"Thời gian (UTC)": e[0].astimezone(timezone.utc)
+                  .strftime("%Y-%m-%d %H:%M"), "Kênh": e[1],
+                  "Intent": e[2], "Câu hỏi": e[3], "user_hash": e[4],
+                  "Trạng thái": e[5]}
+                 for e in _stats["recent"]],
+                use_container_width=True,
+                column_config={
+                    "Thời gian (UTC)": st.column_config.TextColumn(width=145),
+                    "Kênh": st.column_config.TextColumn(width=60),
+                    "Intent": st.column_config.TextColumn(width=70),
+                    "Câu hỏi": st.column_config.TextColumn(width=200),
+                    "user_hash": st.column_config.TextColumn(width=115),
+                    "Trạng thái": st.column_config.TextColumn(width=80),
+                })

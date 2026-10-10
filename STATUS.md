@@ -1,3 +1,45 @@
+# STATUS — v1.9-leads (2026-10-10)
+
+## v1.9 — WS2 nền: harvest lead từ convlog + dashboard (contract trong DONE.md)
+
+**4/4 mục triển khai xong, gate xanh.** `python -m pytest -q` 131/131;
+`tests/test_lead_store.py` 13/13 ×3; `ruff check .` clean. Playwright
+đã kiểm UI thật cả nhánh DB live và DB-unavailable; ảnh
+`evidence/v19_dashboard.png`.
+
+### Đọc diff cần biết
+
+- **`docs/schema.sql`**: +bảng `leads`, chỉ `create table if not exists`
+  (8 bảng public); unique `dedup_key`. Bảng lead insert-only, không
+  mirror/delete theo convlog vì log gốc rotate + purge 30 ngày.
+- **`ingest/lead_store.py`**: đọc convlog + `.1` bằng BYTES/split `\n`;
+  edge corrupt/missing/0-record/thiếu-field/ts-sai/`_doc` skip+đếm;
+  heuristic intent partner/order/price/contact; dedup `msg_id` hoặc
+  hash16(ts|user_hash|question); mỗi row `on conflict do nothing`.
+  DB connect timeout 3s; convlog stats vẫn đọc được khi DB unavailable.
+- **`app/streamlit_app.py`**: tab Leads read-only — convlog channel/answer
+  rate luôn hiện, lead metrics + latest 20 rows khi DB lên, info fallback
+  khi DB lỗi/thiếu bảng; timestamps UTC, columns sized to fit.
+- Lead `question`/`user_hash` persist beyond convlog retention; intent
+  heuristic có false-positive — ghi trong DONE Someday, cần retention/
+  privacy decision trước go-live (C2.0).
+
+### Evidence v1.9
+
+| Mục | File |
+|---|---|
+| Schema apply ×2 | `evidence/v19_schema.log` — 8 bảng public |
+| Harvester thật ×2 + PostgreSQL rollback probe | `evidence/v19_leads.log` — 30 rows; public table 30→30; temp transaction proves 30 new then 30 dup |
+| UI live + DB unavailable | `evidence/v19_streamlit.log` + `evidence/v19_dashboard.png` |
+| Gate chung | `evidence/v19_pytest.log` — focused 13/13 ×3, full 131/131, Ruff clean |
+
+External: leads thật cần OA live/C2.0; dashboard v1.9 chỉ cover convlog
+channel + leads, không phải social metrics. Content pipeline đa kênh +
+human-gate/lịch đăng, WS3 agents, WS4 playbook/SOP/Phụ lục D còn ở
+Someday theo SOW.
+
+---
+
 # STATUS — v1.8-core-db (2026-10-10)
 
 ## v1.8 — WS1 nền tảng: DB lõi + Phụ lục A (contract trong DONE.md)

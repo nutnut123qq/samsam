@@ -472,33 +472,38 @@ skip eval_qa + zalo_mock. Schema chỉ create-if-not-exists; leads
 insert-only `on conflict do nothing` (KHÔNG delete-by-source — convlog
 là log xoay/purge, lead là fact suy ra); convlog đọc BYTES + split `\n`.
 
-- [ ] **W2.1 Lane A** — `docs/schema.sql` +1 bảng `leads` (dedup_key
+- [x] **W2.1 Lane A** — `docs/schema.sql` +1 bảng `leads` (dedup_key
   unique, ts, channel, user_hash, question, intent, status='new',
   source, created_at) → apply ×2 = 8 bảng public.
   - Boundary: `docs/schema.sql`
   - Gate: `python scripts/apply_schema.py` ×2 → "8 bảng public"
   - Evidence: `evidence/v19_schema.log`
-- [ ] **W2.2 Lane B** — `ingest/lead_store.py`: harvest convlog (+`.1`)
+- [x] **W2.2 Lane B** — `ingest/lead_store.py`: harvest convlog (+`.1`)
   BYTES+split `\n` → lead rows (intent partner|order|price|contact,
   channel = streamlit khi msg_id rỗng) → `insert on conflict (dedup_key)
   do nothing` per-row → "mới N / trùng M"; edge đủ: thiếu file/0-record/
   corrupt/thiếu-field/ts-sai/`_doc` → skip+đếm, exit 0 không xóa leads.
-  + helpers `connect()`, `lead_stats(conn)`, `convlog_stats()`.
+  + helpers `connect()`, `lead_stats(conn)`, `convlog_stats()`; DB connect
+  timeout 3s.
   - Boundary: `ingest/lead_store.py`
-  - Gate: chạy ×2 convlog thật — mới>0 rồi mới=0, totals khớp
+  - Gate: harvest convlog thật ×2 — bảng sẵn có 30 leads nên hai run
+    public ra new=0/dup=30; first-new/second-dup được kiểm trong
+    PostgreSQL temp-table transaction có rollback (30/0 rồi 0/30; public
+    count giữ 30→30).
   - Evidence: `evidence/v19_leads.log`
-- [ ] **W2.3 Lane C** — streamlit tab thứ 4 "Leads": convlog_stats
+- [x] **W2.3 Lane C** — Streamlit tab thứ 4 "Leads": convlog_stats
   luôn hiện; lead_stats → metric + bảng mới nhất; DB lỗi/thiếu bảng →
-  st.info không crash; read-only.
+  st.info không crash; read-only. Timestamps UTC, 6 cột vừa vùng bảng.
   - Boundary: `app/streamlit_app.py`, `ingest/lead_store.py`
-  - Gate: streamlit headless :8501 HTTP 200
-  - Evidence: `evidence/v19_streamlit.log`
-- [ ] **W2.4 Lane D + gate chung** — `tests/test_lead_store.py` (~10
+  - Gate: headless HTTP 200; Playwright live DB + DB-unavailable
+    branch đều render; console errors=0.
+  - Evidence: `evidence/v19_streamlit.log`, `evidence/v19_dashboard.png`
+- [x] **W2.4 Lane D + gate chung** — `tests/test_lead_store.py` (13
   test: intent/channel/dedup/harvest-edge/fake-conn insert-only/schema
-  drift/convlog_stats) + `python -m pytest` + `ruff check .`
+  drift/convlog_stats/DB fallback) + `python -m pytest` + `ruff check .`
   (coordinator)
   - Boundary: `tests/test_lead_store.py`
-  - Gate: pytest xanh + ruff clean
+  - Gate: targeted 13/13 ×3; full 131/131; ruff clean
   - Evidence: `evidence/v19_pytest.log`
 
 ## M19 — v1.8-core-db (WS1 nền tảng: DB lõi + Phụ lục A)

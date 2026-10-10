@@ -1,0 +1,17 @@
+W2.3 — Streamlit + Playwright UI verification (2026-10-10)
+
+$ streamlit run app/streamlit_app.py --server.headless true --server.address 127.0.0.1 --server.port 8501 --browser.gatherUsageStats false
+Uvicorn server started on 127.0.0.1:8501
+
+$ curl -sS -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8501
+200
+
+Playwright Python 1.60 + Chromium — click tab "Leads", real local database:
+- Convlog metrics: 45 messages, 62% answered, Zalo 39 / Streamlit 6.
+- Leads: 30 total, 30 from last 7 days; by channel streamlit=6/zalo=24; by intent contact=14/order=2/price=14; status new=30.
+- Browser console errors: 0.
+- Screenshot: evidence/v19_dashboard.png (UTC timestamps; all six table columns visible).
+
+DB-unavailable branch — run a separate local Streamlit process with only its child-process DATABASE_URL set to an unreachable loopback port. After adding psycopg connect_timeout=3, the tab rendered the friendly "chưa có dữ liệu leads" message within the bounded connection attempt, while file-based convlog metrics remained visible. Playwright assertion passed; console errors: 0. No .env or repo config was changed.
+
+The system Python lacked the already-declared Streamlit dependency, so UI verification used an isolated temporary venv. Global protobuf was restored to its pre-test version; requirements.txt was unchanged.

@@ -39,7 +39,7 @@ suy ra: `msg_id` rỗng → streamlit (writer ghi `msg_id:""`), còn lại
 → zalo (trước era `sent`, đáng tin hơn `sent` key). Intent heuristic
 keyword — false-positive nhẹ chấp nhận ở pilot (ghi someday).
 
-- [ ] **W2.1 Schema `leads` + apply** — `docs/schema.sql` +1 bảng:
+- [x] **W2.1 Schema `leads` + apply** — `docs/schema.sql` +1 bảng:
   identity id, `dedup_key text not null unique`, `ts timestamptz`,
   `channel` (zalo|streamlit), `user_hash`, `question`, `intent`
   (partner|order|price|contact), `status` default 'new', `source`,
@@ -47,7 +47,7 @@ keyword — false-positive nhẹ chấp nhận ở pilot (ghi someday).
   - Boundary: `docs/schema.sql`
   - Gate: apply ×2 idempotent; `information_schema` đủ 8 bảng public
   - Evidence: `evidence/v19_schema.log`
-- [ ] **W2.2 Harvester `ingest/lead_store.py`** — `python -m
+- [x] **W2.2 Harvester `ingest/lead_store.py`** — `python -m
   ingest.lead_store` đọc `data/conversations.jsonl` (+`.1` nếu có)
   bằng BYTES + split `\n`; skip `_doc`/dòng corrupt/thiếu
   ts-question-user_hash/ts sai format → đếm skipped; question không
@@ -55,31 +55,34 @@ keyword — false-positive nhẹ chấp nhận ở pilot (ghi someday).
   `convlog:<hash16(ts|user_hash|question)>` khi msg_id rỗng; `insert
   ... on conflict (dedup_key) do nothing` per-row → in "mới N /
   trùng M"; file thiếu/0-record → warn + exit 0, KHÔNG xóa leads
-  đang có. Helper `connect()` (load .env → conn|None), `lead_stats
-  (conn)` (dict|None — UndefinedTable/OperationalError → None),
-  `convlog_stats()` (đếm theo kênh + answered, file thiếu → zeros).
+  đang có. `connect()`/CLI connection bounded 3s.
   - Boundary: `ingest/lead_store.py`
-  - Gate: chạy ×2 trên convlog thật — lần 1 mới>0, lần 2 mới=0;
-    totals khớp số lead suy ra
+  - Gate: harvest thật ×2, totals khớp; table đã có 30 lead nên public
+    runs ra new=0/dup=30 — không xóa existing rows để dựng fresh state.
+    Fresh insert được kiểm bằng cùng 30 harvest rows trong rollback-only
+    PostgreSQL temp-table transaction: run1 new=30, run2 dup=30; public
+    count 30→30 sau rollback.
   - Evidence: `evidence/v19_leads.log`
-- [ ] **W2.3 Tab "Leads" trong streamlit** — tab thứ 4: `convlog_
+- [x] **W2.3 Tab "Leads" trong streamlit** — tab thứ 4: `convlog_
   stats` luôn hiện (file-based, không cần DB): số tin theo kênh +
   %answered; `lead_store.connect()` → `lead_stats` → metric cards
   (tổng leads, mới 7d, theo channel/intent/status) + bảng leads mới
   nhất (ts/channel/intent/question/user_hash/status); DB lỗi/thiếu
   bảng → `st.info` "chưa nạp" không crash tab. Read-only — KHÔNG
-  sửa status từ UI (pilot).
+  sửa status từ UI (pilot). Timestamps UTC; widths fit đủ 6 cột.
   - Boundary: `app/streamlit_app.py`, `ingest/lead_store.py`
-  - Gate: `streamlit run` headless → :8501 HTTP 200, tab render
-  - Evidence: `evidence/v19_streamlit.log`
-- [ ] **W2.4 Tests + gate chung** — `tests/test_lead_store.py`:
+  - Gate: live DB + DB-unavailable UI qua Playwright; cả hai HTTP 200,
+    convlog stats vẫn hiện khi DB connection lỗi, console errors=0.
+  - Evidence: `evidence/v19_streamlit.log`, `evidence/v19_dashboard.png`
+- [x] **W2.4 Tests + gate chung** — `tests/test_lead_store.py`:
   classify từng intent + non-intent; channel/dedup_key 2 nhánh;
   harvest edge (missing/empty/corrupt-giữa-file/`.1`/`_doc`/thiếu
   field/ts sai); fake-conn insert on-conflict + KHÔNG có delete;
-  schema drift guard `leads`; convlog_stats zeros-khi-thiếu.
-  `python -m pytest` full xanh + `ruff check .` clean.
+  schema drift guard `leads`; convlog_stats zeros-khi-thiếu; DB
+  unavailable returns None; connection timeout.
   - Boundary: `tests/test_lead_store.py`
-  - Gate: pytest xanh + ruff clean
+  - Gate: targeted 13/13 ×3; `python -m pytest` full 131/131;
+    `ruff check .` clean.
   - Evidence: `evidence/v19_pytest.log`
 
 External-dependency (không treo version): lead THẬT cần OA live
@@ -87,6 +90,9 @@ External-dependency (không treo version): lead THẬT cần OA live
 substring → refine khi có data thật (ghi someday). Số liệu kênh đầy
 đủ (message/order volume, social metrics) thuộc báo cáo WS3/cycle
 sau — dashboard v1.9 chỉ cover leads + convlog theo kênh.
+Someday trước go-live: bảng leads insert-only giữ `question`/`user_hash`
+quá horizon convlog 30 ngày; quyết retention/redaction cho tên và dữ
+liệu user-influenced trước khi dùng dữ liệu khách thật (C2.0).
 
 ## Checklist v1.8-core-db
 

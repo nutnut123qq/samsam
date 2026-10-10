@@ -1,0 +1,13 @@
+W2.2 — real convlog harvest, insert-only idempotence
+
+Source: data/conversations.jsonl (45 records); conversations.jsonl.1 was absent. Intent classifier yielded 30 distinct lead rows, 13 intent misses, 2 in-file duplicate keys, with no missing-field, bad-ts, corrupt, _doc, or read-error records.
+
+$ python -m ingest.lead_store (run 1 in this continuation)
+[scan] convlog: 45 record — lead=30, intent-miss=13, fields-miss=0, ts-bad=0, corrupt=0, _doc=0, io-error=0, dup-in-file=2 — thiếu ['conversations.jsonl.1']
+[done] mới=0 trùng=30 — total leads=30 (streamlit=6, zalo=24)
+
+$ python -m ingest.lead_store (run 2 in this continuation)
+[scan] convlog: 45 record — lead=30, intent-miss=13, fields-miss=0, ts-bad=0, corrupt=0, _doc=0, io-error=0, dup-in-file=2 — thiếu ['conversations.jsonl.1']
+[done] mới=0 trùng=30 — total leads=30 (streamlit=6, zalo=24)
+
+The public leads table was already populated when this continuation harvested; both real runs saw all 30 keys as conflicts. I did not clear/reset existing rows to manufacture a fresh-load result. To prove the first-insert transition on PostgreSQL without touching persistent rows or the public identity sequence, I used the same 30 harvested rows with temporary probe keys against a transaction-scoped temporary `leads` table: first apply new=30/dup=0; second apply new=0/dup=30; temp table count=30. Explicit rollback followed by a query of public `leads` showed total 30 before and after. No permanent rows were added or removed.
