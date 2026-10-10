@@ -10,6 +10,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 import psycopg
+import pytest
 
 from pipelines import store
 
@@ -222,6 +223,10 @@ def test_schedule_past_and_bad_date_no_db_touch():
     ok, warn = store.schedule(conn, 1, TODAY - timedelta(days=1),
                               today=TODAY)
     assert not ok and "đã qua" in warn                 # quá khứ
+    ok, warn = store.schedule(conn, 1, "2026-10-14", today=TODAY)
+    assert not ok and "đã qua" in warn  # str quá khứ — CLI luôn truyền
+    # str; f-string format-spec trên str từng crash ValueError
+    # (cold-check v2.2 MAJOR, store.py:190).
     ok, warn = store.schedule(conn, 1, "20/10/2026", today=TODAY)
     assert not ok and "không hợp lệ" in warn           # sai format
     ok, warn = store.schedule(conn, 1, None, today=TODAY)
@@ -302,6 +307,20 @@ def test_schema_sql_has_content_drafts_table():
     assert len(re.findall(
         r"^create table if not exists", lower, re.MULTILINE)) == 9
     assert not re.search(r"\b(alter|drop)\s+table\b", lower)
+
+
+def test_cli_one_op_only():
+    """Cold-check v2.2 MINOR: nhiều op cùng lúc (`--approve 1
+    --reject 2`, `--pending --calendar`) trước đây op sau bị nuốt câm
+    — nay argparse error exit 2 trước khi connect."""
+    for argv in (["--approve", "1", "--reject", "2", "--by", "x"],
+                 ["--approve", "1", "--schedule", "1", "2026-10-20",
+                  "--by", "x"],
+                 ["--pending", "--calendar"],
+                 ["--pending", "--approve", "1", "--by", "x"]):
+        with pytest.raises(SystemExit) as e:
+            store.main(argv)
+        assert e.value.code == 2, argv
 
 
 def test_store_module_exports_contract():

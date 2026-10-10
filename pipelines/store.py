@@ -187,7 +187,7 @@ def schedule(conn, draft_id, day, today: date | None = None
                        f"YYYY-MM-DD")
     today = today or datetime.now(timezone.utc).date()
     if d < today:
-        return False, (f"ngày {day:%Y-%m-%d} đã qua — chỉ xếp lịch "
+        return False, (f"ngày {d:%Y-%m-%d} đã qua — chỉ xếp lịch "
                        f"từ hôm nay trở đi")
     try:
         did = int(draft_id)
@@ -291,14 +291,14 @@ def main(argv=None) -> int:
                     help=f"số ngày lịch (mặc định {DEFAULT_DAYS})")
     args = ap.parse_args(argv)
 
-    writes = [args.approve, args.reject, args.schedule]
-    if args.pending or args.calendar:
-        if any(w is not None for w in writes):
-            ap.error("--pending/--calendar không đi với "
-                     "--approve/--reject/--schedule")
-    elif not any(w is not None for w in writes):
+    n_ops = (sum(w is not None
+                 for w in (args.approve, args.reject, args.schedule))
+             + args.pending + args.calendar)
+    if n_ops == 0:
         ap.error("cần 1 thao tác: --pending | --calendar | "
                  "--approve | --reject | --schedule")
+    if n_ops > 1:
+        ap.error("chỉ 1 thao tác mỗi lần — tách lệnh")
     if (args.approve is not None or args.reject is not None) \
             and not (args.reviewer or "").strip():
         ap.error("--approve/--reject cần --by <tên người duyệt>")

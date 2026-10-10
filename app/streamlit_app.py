@@ -194,15 +194,20 @@ with tab_studio:
                            "(kiểm tra DATABASE_URL); draft chưa lưu "
                            "vào hàng duyệt.")
             else:
-                _ids, _errs = [], 0
+                _ids, _saved, _errs = [], [], 0
                 for _ch, _r in _drafts.items():
                     try:
                         _ids.append(_dstore.save_draft(
                             _sconn, st.session_state.last_brief, _ch,
                             _r["text"], _r["guardrail"]))
+                        _saved.append(_ch)
                     except _pg2.Error:
                         _errs += 1
                 _sconn.close()
+                # Bỏ kênh đã lưu khỏi session — bấm lại không nhân đôi
+                # draft (kênh lỗi ghi giữ lại để thử lại).
+                for _ch in _saved:
+                    _drafts.pop(_ch, None)
                 if _ids:
                     st.success("Đã lưu " + str(len(_ids)) + " draft vào "
                                "hàng duyệt (id: " + ", ".join(
