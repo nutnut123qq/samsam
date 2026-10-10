@@ -470,28 +470,38 @@ việc thật). `guardrail.py`/`api/rag.py`/`connectors/zalo.py` không đụng;
 skip eval_qa + zalo_mock. Chỉ thêm bảng — không sửa/drop `chunks`.
 Dữ liệu `sample_*` là MẪU chờ bàn giao (SOW §5.2); `orders` không PII.
 
-- [ ] **W1.1 Lane A** — `docs/schema.sql` +6 bảng (products,
+- [x] **W1.1 Lane A** — `docs/schema.sql` +6 bảng (products,
   claims_approved, plots, plot_logs, orders, assets) +
   `scripts/apply_schema.py` (UTF-8 guard; psycopg execute multi-stmt
   như `demo.py:52` — máy không có psql).
   - Boundary: `docs/schema.sql`, `scripts/apply_schema.py`
   - Gate: `python scripts/apply_schema.py` ×2 idempotent → 7 bảng public
-- [ ] **W1.2 Lane B** — `ingest/core_store.py` +
+  - Evidence: `evidence/v18_schema.log` — ×2 đều "7 bảng public"
+- [x] **W1.2 Lane B** — `ingest/core_store.py` +
   `data/sample_{plots,plot_logs,orders}.jsonl` (dòng `_doc`: "DỮ LIỆU
   MẪU — chờ bàn giao"; loader skip). Delete-by-source + insert →
   idempotent, không đè row manual.
   - Boundary: `ingest/core_store.py`, `data/sample_*.jsonl`
   - Gate: `python -m ingest.core_store` ×2 count giữ — products 27 /
     claims sku 10 / assets ≥140 / plots 3 / plot_logs ≥5 / orders ≥5
-- [ ] **W1.3 Lane C** — `scripts/data_audit.py` (bảng kê jsonl +
-  whitelist + core tables + chunks; DB lỗi → "chưa nạp", exit 0) +
-  `docs/phu-luc-a.md` draft Phụ lục A kèm cột "chờ bàn giao".
+  - Evidence: `evidence/v18_core_store.log` — ×2 giống hệt:
+    products=27, claims=22 (18 claim + 4 marker claim=NULL sku chưa
+    công bố), plots=3, plot_logs=6, orders=5, assets=219; 9/10 sku link
+    product_id (savitim NULL đúng — source là bài news)
+- [x] **W1.3 Lane C** — `scripts/data_audit.py` (bảng kê jsonl +
+  whitelist + core tables + chunks theo `source`; DB lỗi → "chưa nạp",
+  exit 0) + `docs/phu-luc-a.md` draft Phụ lục A kèm cột "chờ bàn giao".
   - Boundary: `scripts/data_audit.py`, `docs/phu-luc-a.md`
   - Gate: audit exit 0 đủ domain; số trong doc khớp evidence log
-- [ ] **W1.4 Lane D + gate chung** — `tests/test_core_store.py` +
-  `python -m pytest` full + `ruff check .` (coordinator)
+  - Evidence: `evidence/v18_audit.log` — 10 dòng domain, số khớp doc
+- [x] **W1.4 Lane D + gate chung** — `tests/test_core_store.py` (9 test:
+  transforms, `_doc` skip, link product qua URL segment, fake-conn
+  delete→insert + không đụng `chunks`, schema drift guard, sample
+  fields + FK) + `python -m pytest` full + `ruff check .` (coordinator)
   - Boundary: `tests/test_core_store.py`
   - Gate: pytest xanh + ruff clean
+  - Evidence: `evidence/v18_pytest.log` — 114/114 + ruff clean;
+    `test_core_store` ×3 ổn định
 
 ---
 

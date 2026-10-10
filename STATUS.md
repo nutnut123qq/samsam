@@ -1,3 +1,50 @@
+# STATUS — v1.8-core-db (2026-10-10)
+
+## v1.8 — WS1 nền tảng: DB lõi + Phụ lục A (contract trong DONE.md)
+
+**4/4 mục xong, gate xanh.** `python -m pytest` 114/114, `ruff check .`
+clean. Bắt đầu workstream SOW (WS1–WS4 chưa build = việc thật, override
+kết luận no-work của loop trước).
+
+### Đọc diff cần biết
+
+- **`docs/schema.sql`**: +6 bảng lõi WS1 (`products`, `claims_approved`,
+  `plots`, `plot_logs`, `orders`, `assets`) — chỉ `create if not exists`,
+  `chunks` nguyên. Mọi bảng có cột `source` = file/nguồn nạp; `orders`
+  KHÔNG có cột PII khách (quyết định pilot).
+- **`scripts/apply_schema.py`** (mới): apply schema.sql qua psycopg
+  multi-statement — máy không có psql; idempotent.
+- **`ingest/core_store.py`** (mới): `python -m ingest.core_store` nạp
+  products.jsonl→products+assets(image), articles/news→assets(article),
+  claims_whitelist.json→claims_approved (sku "chưa có công bố" → row
+  claim=NULL), sample_*.jsonl→plots/plot_logs/orders. Delete-by-source
+  2 pha (con trước cha sau) → idempotent + không đè `source='manual'`.
+  Claim→product link best-effort qua segment `<slug>.html` (9/10 sku
+  link; savitim NULL đúng — source là bài news). Edge ghi trong
+  docstring: row manual trỏ product do loader quản mất link sau reload.
+- **`data/sample_*.jsonl`** (mới): DỮ LIỆU MẪU chờ bàn giao (SOW §5.2),
+  dòng `_doc` đánh dấu + loader skip.
+- **`scripts/data_audit.py`** (mới): bảng kê Phụ lục A đếm thật theo
+  `source`; `docs/phu-luc-a.md` = draft Phụ lục A + cột "chờ bàn giao".
+
+### Evidence v1.8
+
+| Mục | File |
+|---|---|
+| Schema apply ×2 | `evidence/v18_schema.log` — 7 bảng public |
+| Loader ×2 idempotent | `evidence/v18_core_store.log` — products 27 / claims 22 / plots 3 / plot_logs 6 / orders 5 / assets 219 |
+| Phụ lục A | `evidence/v18_audit.log` — 10 dòng domain đếm theo source |
+| Gate chung | `evidence/v18_pytest.log` — 114/114 + ruff clean |
+
+### Cycle sau (SOW, đã ghi someday trong DONE.md)
+
+WS2: leads từ convlog + dashboard số liệu kênh; pipeline brief→draft→
+compliance→DUYỆT NGƯỜI→format đa kênh→lịch đăng (KHÔNG tự đăng). WS3:
+agent báo cáo định kỳ ra file + nhật ký vườn form/chat→chuẩn hóa→cảnh
+báo. WS4: playbook/SOP + Phụ lục D test-set.
+
+---
+
 # STATUS — v1.0-live-prep (2026-10-07)
 
 ## v1.0 — plug-and-play khi có OA creds (contract trong DONE.md)

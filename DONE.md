@@ -30,14 +30,14 @@ Phụ lục A; products/claims/assets nạp từ crawl + whitelist THẬT hiện
 có. Schema chỉ `create table if not exists` — không sửa/drop `chunks`,
 revert gọn. `orders` KHÔNG lưu PII khách (tên/SĐT) ở pilot.
 
-- [ ] **W1.1 Schema lõi + apply script** — `docs/schema.sql` +6 bảng;
+- [x] **W1.1 Schema lõi + apply script** — `docs/schema.sql` +6 bảng;
   `scripts/apply_schema.py` apply schema.sql qua psycopg (máy không có
   psql — precedent `demo.py:52` execute multi-statement; UTF-8 guard),
   in danh sách bảng public.
   - Boundary: `docs/schema.sql`, `scripts/apply_schema.py`
   - Gate: apply ×2 idempotent; `information_schema` đủ 7 bảng public
-  - Evidence: `evidence/v18_schema.log`
-- [ ] **W1.2 Loader `ingest/core_store.py` + sample jsonl** —
+  - Evidence: `evidence/v18_schema.log` — ×2 đều "7 bảng public"
+- [x] **W1.2 Loader `ingest/core_store.py` + sample jsonl** —
   `python -m ingest.core_store`: `products.jsonl`→products (+`images[]`
   →assets kind=image), `articles.jsonl`/`news.jsonl`→assets
   kind=article, `claims_whitelist.json`→claims_approved (`sku_key` =
@@ -49,8 +49,12 @@ revert gọn. `orders` KHÔNG lưu PII khách (tên/SĐT) ở pilot.
   - Boundary: `ingest/core_store.py`, `data/sample_*.jsonl`
   - Gate: chạy ×2 count giữ — products 27 · claims sku 10 · assets
     ≥140 · plots 3 · plot_logs ≥5 · orders ≥5
-  - Evidence: `evidence/v18_core_store.log`
-- [ ] **W1.3 Phụ lục A draft** — `scripts/data_audit.py` in bảng kê
+  - Evidence: `evidence/v18_core_store.log` — ×2 giống hệt:
+    products=27, claims=22 (18 claim + 4 marker claim=NULL), plots=3,
+    plot_logs=6, orders=5, assets=219; claims product_id link
+    deterministic qua URL `.html` (9/10 sku; savitim NULL đúng — source
+    trỏ bài news)
+- [x] **W1.3 Phụ lục A draft** — `scripts/data_audit.py` in bảng kê
   domain × số-lượng × nguồn × trạng-thái (jsonl + whitelist + bảng lõi
   + chunks; DB lỗi → in "chưa nạp", vẫn exit 0); `docs/phu-luc-a.md` =
   draft Phụ lục A (SOW §11): bảng kê từ script + domain "chờ bàn giao"
@@ -58,14 +62,16 @@ revert gọn. `orders` KHÔNG lưu PII khách (tên/SĐT) ở pilot.
   trong drive công ty).
   - Boundary: `scripts/data_audit.py`, `docs/phu-luc-a.md`
   - Gate: script exit 0 in đủ domain; số trong doc khớp log
-  - Evidence: `evidence/v18_audit.log`
-- [ ] **W1.4 Tests + gate chung** — `tests/test_core_store.py`:
+  - Evidence: `evidence/v18_audit.log` — 10 dòng domain, đếm theo
+    `source` (không nhầm khi nhiều file share bảng assets)
+- [x] **W1.4 Tests + gate chung** — `tests/test_core_store.py`:
   transforms thuần (product/asset/claim/log/order rows), `_doc` skip,
   link product qua URL segment, fake-conn chứng minh delete-by-source
   trước insert + không đụng `chunks`, schema.sql chứa đủ 6 `create
   table` (drift guard), sample files parse đủ field. `python -m pytest`
   full xanh + `ruff check .` clean.
-  - Evidence: `evidence/v18_pytest.log`
+  - Evidence: `evidence/v18_pytest.log` — 114/114 (105 cũ + 9 mới) +
+    ruff clean; test mới ×3 ổn định
 
 External-dependency (không treo version): data thật plots/orders/hồ sơ
 SKU chờ công ty bàn giao (SOW §5.2); vector index P0/P1 mới chỉ cover
