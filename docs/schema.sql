@@ -132,3 +132,32 @@ create table if not exists leads (
   source text not null,             -- 'conversations.jsonl' | 'manual'
   created_at timestamptz not null default now()
 );
+
+-- ============================================================================
+-- DB lõi WS2 (SOW): content_drafts — hàng duyệt + lịch đăng cho pipeline
+-- nội dung đa kênh. Draft do AI sinh (đã qua `pipelines.guardrail.check`
+-- lúc tạo — snapshot kết quả trong `guardrail`) chờ NGƯỜI duyệt từng bài.
+-- Status one-way: pending -> approved | rejected; approve chỉ hợp lệ khi
+-- guardrail->>'ok' = true (double-gate, không override). `scheduled_date`
+-- là kế hoạch cho NGƯỜI đăng tay — hệ thống KHÔNG tự đăng (C2.4).
+-- KHÁC loader lõi WS1: KHÔNG delete-by-source — draft là tài sản người
+-- tạo, chỉ update theo id, không xóa.
+-- ============================================================================
+
+create table if not exists content_drafts (
+  id bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  brief text not null,              -- brief người viết nhập ở Studio/CLI
+  channel text not null,            -- facebook | tiktok | blog | zalo
+  text text not null,               -- nội dung draft (đã qua guardrail)
+  guardrail jsonb not null,         -- snapshot check(): {ok, violations[], matched_claims[]}
+  status text not null default 'pending',  -- pending | approved | rejected
+  reviewer text,
+  reviewed_at timestamptz,
+  review_note text,
+  scheduled_date date,              -- ngày dự kiến đăng (người đăng tay)
+  source text not null              -- 'manual:studio' | 'cli'
+);
+
+create index if not exists content_drafts_status_idx
+  on content_drafts (status);

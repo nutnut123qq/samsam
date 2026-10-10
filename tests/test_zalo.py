@@ -279,9 +279,26 @@ def test_payload_too_large_rejected(server, monkeypatch):
     # Ship-pass v0.5: Content-Length vượt cap -> 413, không đọc body
     # (trước đây read không cap — body khổng lồ = memory DoS).
     monkeypatch.setattr(zalo, "MAX_BODY", 10)
-    r = httpx.post(server, content=b"x" * 100,
-                   headers={"X-ZEvent-Signature": "mac=whatever"})
-    assert r.status_code == 413
+    # Raw socket — server reject sớm + đóng conn giữa chừng client
+    # stream body → httpx flake ReadError WinError 10053 (cùng lớp
+    # lỗi `test_chunked_post_rejected_411` v0.5.1).
+    import socket
+    from urllib.parse import urlparse
+    u = urlparse(server)
+    with socket.create_connection((u.hostname, u.port), timeout=5) as s:
+        s.sendall(b"POST /zalo-webhook HTTP/1.1\r\n"
+                  b"Host: x\r\n"
+                  b"Content-Type: application/json\r\n"
+                  b"X-ZEvent-Signature: mac=whatever\r\n"
+                  b"Content-Length: 100\r\n\r\n"
+                  + b"x" * 100)
+        resp = b""
+        while b"\r\n\r\n" not in resp:
+            chunk = s.recv(4096)
+            if not chunk:
+                break
+            resp += chunk
+    assert resp.split(b"\r\n")[0].startswith(b"HTTP/1.0 413")
 
 
 def test_bad_signature_rejected(server):

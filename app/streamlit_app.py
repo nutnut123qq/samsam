@@ -1,12 +1,13 @@
 """Demo UI — `streamlit run app/streamlit_app.py`
 
-6 tabs:
+7 tabs:
   - "Chat Sâm Sâm": hỏi/đáp trên knowledge base, mỗi câu trả lời kèm
     link nguồn (RAG — retrieve từ pgvector, trả lời bằng Claude).
     Answer qua guardrail như mọi kênh (invariant); NO_DATA → handoff
     text + ghi convlog để vào queue nhân viên.
-  - "Content Studio": nhập brief → pipelines.content.draft() → hiển thị
-    bài + kết quả guardrail (violation tô đỏ).
+  - "Content Studio": nhập brief → pipelines.content.draft()/draft_multi()
+    (multiselect kênh) → hiển thị bài + kết quả guardrail (violation
+    tô đỏ) → nút "Lưu vào hàng duyệt" ghi `content_drafts`.
   - "Chưa trả lời": queue câu NO_DATA cho nhân viên follow-up / bổ
     sung knowledge base (đọc convlog `answered:false`).
   - "Leads": dashboard số liệu kênh + leads (WS2) — convlog theo kênh
@@ -20,6 +21,11 @@
     động vào `plot_logs` (source 'manual:garden'), chuẩn hóa hoạt
     động + cảnh báo bất thường (khoảnh lâu chưa ghi / keyword sâu
     bệnh). NGƯỜI ghi tay; DB chết → info, không crash.
+  - "Duyệt & Lịch": hàng duyệt content (WS2) — queue draft pending
+    (kênh/brief/text/guardrail), form duyệt-từ-chối của NGƯỜI
+    (approve chỉ khi guardrail PASS — double-gate, nút Duyệt
+    disabled khi violations), xếp lịch bài approved + bảng calendar
+    14 ngày. Hệ thống KHÔNG tự đăng (C2.4). DB chết → info.
 
 Contract với UI: mọi câu trả lời chat phải render ít nhất 1 URL nguồn;
 không có nguồn → hiển thị "không đủ dữ liệu" thay vì để model bịa.
@@ -31,9 +37,10 @@ from datetime import timezone
 import streamlit as st
 
 st.set_page_config(page_title="Sâm Sâm AI Pilot", page_icon="🌿")
-tab_chat, tab_studio, tab_queue, tab_leads, tab_report, tab_garden = (
-    st.tabs(["Chat Sâm Sâm", "Content Studio", "Chưa trả lời", "Leads",
-             "Báo cáo", "Nhật ký vườn"]))
+tab_chat, tab_studio, tab_queue, tab_leads, tab_report, tab_garden, \
+    tab_review = st.tabs(["Chat Sâm Sâm", "Content Studio",
+                          "Chưa trả lời", "Leads", "Báo cáo",
+                          "Nhật ký vườn", "Duyệt & Lịch"])
 
 with tab_chat:
     st.caption("Hỏi đáp trên knowledge base public của Sâm Sâm — "
@@ -145,7 +152,9 @@ with tab_studio:
     brief = st.text_area(
         "Brief", placeholder="VD: Viết bài FB giới thiệu Sapentol cho người "
         "tiểu đường, nhấn công dụng đã công bố...", height=100)
-    channel = st.selectbox("Kênh", ["facebook", "zalo", "blog"])
+    channels = st.multiselect(
+        "Kênh", ["facebook", "tiktok", "zalo", "blog"],
+        default=["facebook"])
 
     def _render_guardrail(g: dict):
         if g["ok"]:
@@ -158,14 +167,49 @@ with tab_studio:
             st.caption("Claim khớp whitelist: " + "; ".join(
                 f"{m['sku']}: {m['claim']}" for m in g["matched_claims"]))
 
-    if st.button("Sinh bài", type="primary", disabled=not brief.strip()):
-        with st.spinner("Đang viết + kiểm guardrail..."):
-            from pipelines.content import draft
-            st.session_state.last_draft = draft(brief, channel)
-    if r := st.session_state.get("last_draft"):
-        st.markdown("##### Draft")
-        st.markdown(r["text"])
-        _render_guardrail(r["guardrail"])
+    if st.button("Sinh bài", type="primary",
+                 disabled=not brief.strip() or not channels):
+        with st.spinner("Đang viết + kiểm guardrail từng kênh..."):
+            from pipelines.content import draft, draft_multi
+            # 1 kênh → draft() như cũ; nhiều kênh → draft_multi (mỗi
+            # kênh guardrail độc lập). Shape thống nhất {channel: res}.
+            st.session_state.last_drafts = (
+                {channels[0]: draft(brief, channels[0])}
+                if len(channels) == 1
+                else draft_multi(brief, channels))
+            st.session_state.last_brief = brief
+    if _drafts := st.session_state.get("last_drafts"):
+        for _ch, _r in _drafts.items():
+            st.markdown(f"##### Draft — {_ch}")
+            st.markdown(_r["text"])
+            _render_guardrail(_r["guardrail"])
+        if st.button("Lưu vào hàng duyệt"):
+            import psycopg as _pg2
+
+            from ingest.lead_store import connect as _ldc
+            from pipelines import store as _dstore
+            _sconn = _ldc()
+            if _sconn is None:
+                st.warning("Chưa nạp — không kết nối được Postgres "
+                           "(kiểm tra DATABASE_URL); draft chưa lưu "
+                           "vào hàng duyệt.")
+            else:
+                _ids, _errs = [], 0
+                for _ch, _r in _drafts.items():
+                    try:
+                        _ids.append(_dstore.save_draft(
+                            _sconn, st.session_state.last_brief, _ch,
+                            _r["text"], _r["guardrail"]))
+                    except _pg2.Error:
+                        _errs += 1
+                _sconn.close()
+                if _ids:
+                    st.success("Đã lưu " + str(len(_ids)) + " draft vào "
+                               "hàng duyệt (id: " + ", ".join(
+                                   f"#{i}" for i in _ids) + ") — qua tab "
+                               "'Duyệt & Lịch' để duyệt từng bài.")
+                if _errs:
+                    st.warning(f"{_errs} draft lỗi ghi DB — thử lại.")
 
     st.divider()
     st.caption("Kiểm tra nhanh một đoạn text có sẵn (không qua LLM):")
@@ -372,3 +416,102 @@ with tab_garden:
         else:
             st.info("Chưa có nhật ký nào.")
         _gconn.close()
+
+with tab_review:
+    st.caption("Hàng duyệt nội dung (WS2) — draft AI đã qua guardrail "
+               "lúc sinh chờ NGƯỜI duyệt từng bài; bài approved xếp "
+               "vào lịch đăng. Approve chỉ khi guardrail PASS "
+               "(double-gate SOW — không có duyệt-kèm-ghi-nhận). "
+               "Hệ thống KHÔNG tự đăng — lịch là kế hoạch cho người "
+               "đăng tay (C2.4). CLI: `python -m pipelines.store "
+               "--pending` / `--calendar`.")
+    from datetime import datetime as _dt_cls
+
+    import psycopg as _pg
+
+    from ingest.lead_store import connect as _ldr
+    from pipelines import store as _store
+
+    _rconn = _ldr()
+    if _rconn is None:
+        st.info("Chưa nạp — không kết nối được Postgres (kiểm tra "
+                "DATABASE_URL). Hàng duyệt cần DB.")
+    else:
+        try:
+            _pending = _store.list_drafts(_rconn, status="pending")
+            _cal = _store.calendar(_rconn, days=14)
+        except _pg.Error:
+            _rconn = None
+            st.info("Lỗi đọc DB — thử tải lại trang.")
+    if _rconn is not None:
+        st.subheader(f"Hàng chờ duyệt ({len(_pending)})")
+        if not _pending:
+            st.info("Hàng chờ trống — sinh draft ở tab 'Content "
+                    "Studio' rồi bấm 'Lưu vào hàng duyệt'.")
+        for _d in _pending:
+            _g = (_d["guardrail"]
+                  if isinstance(_d["guardrail"], dict) else {})
+            _gok = _g.get("ok") is True
+            with st.expander(
+                    f"#{_d['id']} [{_d['channel']}] "
+                    f"{_store._oneline(_d['brief'], 70)} — guardrail "
+                    f"{_store._fmt_guardrail(_d)}"):
+                st.markdown(_d["text"])
+                if _g:
+                    _render_guardrail(_g)
+                with st.form(f"review-{_d['id']}"):
+                    _by = st.text_input("Người duyệt *")
+                    _note = st.text_input("Ghi chú (tuỳ chọn)")
+                    _c1, _c2 = st.columns(2)
+                    _appr = _c1.form_submit_button(
+                        "Duyệt", disabled=not _gok,
+                        help=(None if _gok else "Guardrail vi phạm — "
+                              "phải từ chối hoặc viết lại"))
+                    _rej = _c2.form_submit_button("Từ chối")
+                if _appr or _rej:
+                    _target = "approved" if _appr else "rejected"
+                    _ok, _warn = _store.set_status(
+                        _rconn, _d["id"], _target, _by, _note)
+                    if _ok:
+                        st.success(f"Draft #{_d['id']} → {_target}")
+                        st.rerun()
+                    else:
+                        st.warning(_warn)
+
+        st.divider()
+        st.subheader("Lịch đăng 14 ngày")
+        if _cal["unscheduled"]:
+            _pick = st.selectbox(
+                "Bài đã duyệt chưa xếp lịch", _cal["unscheduled"],
+                format_func=lambda d: f"#{d['id']} [{d['channel']}] "
+                                      f"{_store._oneline(d['brief'])}")
+            _day = st.date_input(
+                "Ngày đăng",
+                value=_dt_cls.now(timezone.utc).date())
+            if st.button("Xếp lịch", type="primary"):
+                if _day is None:  # user xoá ngày → None (precedent v2.1)
+                    st.error("Chọn ngày đăng.")
+                else:
+                    _ok, _warn = _store.schedule(
+                        _rconn, _pick["id"], _day)
+                    if _ok:
+                        st.success(f"Draft #{_pick['id']} xếp lịch "
+                                   f"{_day:%Y-%m-%d} — người đăng tay.")
+                        st.rerun()
+                    else:
+                        st.warning(_warn)
+        else:
+            st.info("Không có bài approved nào đang chờ xếp lịch.")
+
+        if _cal["scheduled"]:
+            st.dataframe([
+                {"Ngày": str(_d["scheduled_date"]),
+                 "Kênh": _d["channel"],
+                 "Draft": f"#{_d['id']}",
+                 "Brief": _d["brief"],
+                 "Người duyệt": _d["reviewer"] or ""}
+                for _d in _cal["scheduled"]],
+                hide_index=True)
+        else:
+            st.info("Chưa có bài nào trong lịch 14 ngày tới.")
+        _rconn.close()

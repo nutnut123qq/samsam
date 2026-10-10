@@ -277,5 +277,5 @@ def test_schema_sql_has_leads_table():
     assert "dedup_key text not null unique" in columns
     assert "status text not null default 'new'" in columns
     assert len(re.findall(
-        r"^create table if not exists", lower, re.MULTILINE)) == 8
+        r"^create table if not exists", lower, re.MULTILINE)) == 9
     assert not re.search(r"\b(alter|drop)\s+table\b", lower)

@@ -1,7 +1,8 @@
-"""Pipeline sinh draft nội dung FB/Zalo/blog từ brief.
+"""Pipeline sinh draft nội dung FB/TikTok/Zalo/blog từ brief.
 
 Contract:
   draft(brief: str, channel: str = "facebook") -> {"text": str, "guardrail": dict}
+  draft_multi(brief: str, channels) -> {channel: {"text","guardrail"}}
 
   - Gọi LLM qua OpenRouter (OPENROUTER_API_KEY + OR_CHAT_MODEL, openai client)
     với system prompt chứa brand voice + claims_whitelist (chỉ được viết
@@ -9,6 +10,8 @@ Contract:
   - Output BẮT BUỘC qua pipelines.guardrail.check() trước khi trả về —
     trường "guardrail" chứa kết quả check. Không bao giờ trả text
     chưa-check.
+  - draft_multi: mỗi kênh 1 draft() riêng — guardrail độc lập; kênh lạ
+    fallback hint facebook như draft(). draft() giữ nguyên contract.
 """
 
 import json
@@ -25,6 +28,9 @@ load_dotenv(ROOT / ".env")
 
 CHANNEL_HINT = {
     "facebook": "bài đăng Facebook 120-180 chữ, 1-2 emoji, có CTA inbox/hotline",
+    "tiktok": ("kịch bản video TikTok ngắn 30-60 giây: hook 3 giây đầu "
+               "+ 2-3 cảnh (mỗi cảnh ghi mô tả hình ảnh + lời thoại/"
+               "text overlay) + CTA cuối"),
     "zalo": "tin nhắn Zalo OA ngắn 60-100 chữ, lịch sự, kèm CTA",
     "blog": "mở bài blog 200-300 chữ, có tiêu đề",
 }
@@ -92,3 +98,14 @@ LUẬT TPBVSK — vi phạm là bài bị loại:
                          "dùng claim whitelist nguyên văn, câu trang trí "
                          "không chứa động từ claim."}]
     return {"text": text, "guardrail": result}
+
+
+def draft_multi(brief: str, channels) -> dict:
+    """Sinh draft cho nhiều kênh → {channel: {"text","guardrail"}}.
+
+    Mỗi kênh qua `draft()` riêng — guardrail check độc lập từng bài
+    (invariant). Kênh lạ vẫn được draft() (fallback hint facebook như
+    draft() hiện). Trùng kênh trong `channels` tự gộp (giữ thứ tự)."""
+    if isinstance(channels, str):
+        channels = [channels]
+    return {ch: draft(brief, ch) for ch in dict.fromkeys(channels)}
