@@ -4,7 +4,8 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **(không — chờ /cycle tiếp; session mới vì context)**
+Version đang mở: **v2.2-content-pipeline** (contract coordinator tự
+chọn qua /cycle 2026-10-11 — checklist bên dưới)
 
 v2.1-garden-log đóng 2026-10-11 (cold-check **coordinator
 self-review** — subagent quota cạn, precedent v0.3/v0.5; coordinator
@@ -32,6 +33,108 @@ v1.7-edge-hardening đóng 2026-10-09 (cold-check PASS đợt 1; 2 MINOR
 vá ngay — khôi phục assert msg-key cleanup + thêm case CL `abc`/`0`
 vào test; 1 MINOR → someday: domain `b..c`/`@@b.com` dạng-lạ không
 mask).
+
+## Checklist v2.2-content-pipeline
+
+Khán giả: buổi đàm phán SOW / demo cho bác Lực — "nhân viên MKT nhập
+brief → AI sinh bài cho nhiều kênh → guardrail TPBVSK kiểm → NGƯỜI
+duyệt từng bài trong hàng chờ → bài đã duyệt xếp vào lịch đăng; hệ
+thống KHÔNG tự đăng gì" (SOW §WS2: "brief → AI draft → kiểm tra
+compliance → duyệt người → format đa kênh (Facebook, TikTok script,
+blog, Zalo OA) → lịch đăng"; risk table: "vi phạm QC TPBVSK → guardrail
+claim-whitelist + duyệt người" — 2 lớp). Đây là deliverable WS2 lớn
+nhất còn lại (v1.9 chỉ cover leads/dashboard). Cắt lát vừa 1 cycle:
+queue duyệt + lịch đăng là bảng `content_drafts` + module store; KHÔNG
+có auto-post/scheduler nền/API kênh (creds Phụ lục C chưa có — lịch là
+kế hoạch cho người đăng tay). Cụm bị loại: trợ lý tri thức nội bộ
+(đánh giá xong — chatbot RAG tab Chat đã trả lời kèm nguồn trên KB
+public, đúng contract "tra cứu kèm nguồn"; phần "nội bộ" cần SOP/hồ
+sơ công ty = data chưa bàn giao §5.2 → external-dep, build thêm chỉ
+trùng RAG); WS4 docs/test-set (để cuối khi tính năng ổn — còn v2.3+).
+
+Quy ước precedent: `guardrail.py`/`api/rag.py`/`connectors/zalo.py`
+KHÔNG đụng (lịch đăng = bản ghi kế hoạch, không có code gọi API đăng
+— C2.4); skip eval_qa + zalo_mock; không global mutable mới trong
+zalo.py; schema chỉ `create table if not exists` (→ 9 bảng public);
+mọi connect `connect_timeout=3` qua `ingest.lead_store.connect`;
+nhánh DB-down verify bằng host chết thật. `content_drafts` KHÔNG
+delete-by-source (draft là tài sản người tạo — update status theo id,
+không xóa). Status one-way `pending → approved|rejected`; **approve
+chỉ khi `guardrail->>'ok' = true`** — bài vi phạm phải reject/regen,
+không có override (double-gate SOW; quyết định coordinator, flag nếu
+bác Lực muốn duyệt-kèm-ghi-nhận). `schedule` chỉ trên approved.
+Draft do NGƯỜI duyệt — hệ thống không tự chuyển status/tự đăng.
+
+- [ ] **W5.1 Schema `content_drafts` + apply** — `docs/schema.sql`
+  +1 bảng: id identity, `created_at`, `brief`, `channel`
+  (facebook|tiktok|blog|zalo), `text`, `guardrail jsonb` (ok +
+  violations + matched_claims — snapshot lúc sinh), `status` default
+  'pending', `reviewer`, `reviewed_at`, `review_note`,
+  `scheduled_date date`, `source` ('manual:studio'|'cli').
+  `python scripts/apply_schema.py` → 9 bảng public ×2 idempotent.
+  - Boundary: `docs/schema.sql`
+  - Gate: apply ×2; `information_schema` đủ 9 bảng public
+  - Evidence: `evidence/v22_schema.log`
+- [ ] **W5.2 Module `pipelines/store.py` + CLI** — `save_draft(conn,
+  brief, channel, text, guardrail)` → id; `list_drafts(conn,
+  status=None, limit=50)`; `set_status(conn, id, status, reviewer,
+  note)` → (ok, warn) — reject sai-id/non-pending/approve-khi-
+  guardrail-không-ok → warn không raise; `schedule(conn, id, date)`
+  → (ok, warn) — chỉ approved, date không quá khứ; `calendar(conn,
+  days=14)` → approved có scheduled_date trong [today, today+days]
+  + mục "đã duyệt chưa xếp lịch". CLI `python -m pipelines.store`:
+  `--pending` / `--approve ID --by N [--note]` / `--reject ID --by N`
+  / `--schedule ID YYYY-MM-DD` / `--calendar [--days N]`; DB down:
+  đọc → "chưa nạp" exit 0 (report precedent), ghi → exit 2 (garden
+  precedent); UTF-8 guard.
+  - Boundary: `pipelines/store.py`
+  - Gate: unit tests W5.5 xanh; CLI smoke: save→pending→approve→
+    schedule→calendar hiện đúng; approve bài guardrail-fail → warn
+    exit≠0
+  - Evidence: `evidence/v22_store.log`
+- [ ] **W5.3 `content.py` kênh TikTok + `draft_multi`** —
+  CHANNEL_HINT += `tiktok` (kịch bản video ngắn: hook 3s + 2-3 cảnh
+  + lời thoại/overlay + CTA — đúng "TikTok script" SOW); `draft_multi
+  (brief, channels)` → `{channel: result}` — mỗi kênh qua draft()
+  riêng (guardrail độc lập), kênh lạ → fallback facebook hint như
+  draft() hiện. `draft()` contract giữ nguyên (caller cũ không đổi).
+  - Boundary: `pipelines/content.py`, `tests/` (thêm)
+  - Gate: test mock client — draft_multi 4 kênh trả đủ key, mỗi
+    result có text+guardrail; prompt tiktok chứa hint kịch bản
+  - Evidence: `evidence/v22_draft.log`
+- [ ] **W5.4 UI Studio lưu hàng duyệt + tab "Duyệt & Lịch đăng"
+  (thứ 7)** — Studio: multiselect kênh (thay selectbox đơn, mặc định
+  facebook) → draft_multi khi >1 kênh; nút "Lưu vào hàng duyệt" →
+  save_draft từng kênh. Tab 7: queue pending (expander/draft: kênh,
+  brief, text, guardrail result, form duyệt — tên người duyệt + note
+  + nút Duyệt (disabled khi violations) / Từ chối); lịch đăng:
+  date_input + nút "Xếp lịch" trên approved-chưa-lịch + bảng calendar
+  14 ngày. Caption human-gate "hệ thống KHÔNG tự đăng". DB down →
+  `st.info` không crash tab.
+  - Boundary: `app/streamlit_app.py`
+  - Gate: Playwright qua `.venv` — live DB: lưu draft → hiện pending
+    → duyệt → xếp lịch → calendar hiện; draft giả guardrail-fail
+    không duyệt được; DB-unavailable → tab render + info, không hang;
+    console errors=0
+  - Evidence: `evidence/v22_streamlit.log`, `evidence/v22_queue.png`
+- [ ] **W5.5 Tests + gate chung** — `tests/test_store.py`: save/
+  list/set_status transitions (pending→approved, pending→rejected,
+  sai-id, non-pending, approve-guardrail-fail), schedule (chỉ
+  approved, quá khứ reject), calendar shape + edge; schema drift
+  guard (schema.sql chứa `content_drafts`). `test_content.py` (mới
+  hoặc thêm): draft_multi keys + tiktok hint. `python -m pytest -q`
+  full + `ruff check .` + `git diff --check`.
+  - Boundary: `tests/test_store.py`, `tests/test_content.py`
+  - Gate: targeted xanh ×3; full suite xanh; ruff clean; diff sạch
+  - Evidence: `evidence/v22_pytest.log`
+
+External-dependency (không treo version): đăng thật FB/TikTok/Zalo OA
+chờ creds Phụ lục C — và KHÔNG nằm trong hệ thống (C2.4: đăng là bước
+NGƯỜI sau khi xem lịch). Scheduler nhắc lịch chủ động = someday (hiện
+xem khi mở tab/`--calendar`). Template Canva/CapCut + prompt library
+phần còn của WS2 = someday/WS4. Someday: duyệt-kèm-ghi-nhận khi
+guardrail flag (nếu bác Lực yêu cầu); sửa text draft sau duyệt (hiện
+approve đóng băng — regenerate thay vì sửa); metrics bài đã đăng.
 
 ## Checklist v2.1-garden-log
 
