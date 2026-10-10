@@ -462,6 +462,45 @@ mutable mới.
 - [x] **V8.4 Gate chung** — `python -m pytest` full + `ruff check .`
   (coordinator) — 105/105 `evidence/v17_pytest.log` + ruff clean
 
+## M20 — v1.9-leads (WS2 nền: leads table + harvest convlog + tab Dashboard)
+
+Checklist/DoD chi tiết: `DONE.md` mục v1.9-leads (contract coordinator
+tự chọn qua /cycle 2/10 — cụm "gom lead + dashboard" của WS2, nền rẻ
+nhất: convlog 45 dòng thật + DB lõi v1.8; content pipeline đa kênh để
+cycle sau). `guardrail.py`/`api/rag.py`/`connectors/zalo.py` không đụng;
+skip eval_qa + zalo_mock. Schema chỉ create-if-not-exists; leads
+insert-only `on conflict do nothing` (KHÔNG delete-by-source — convlog
+là log xoay/purge, lead là fact suy ra); convlog đọc BYTES + split `\n`.
+
+- [ ] **W2.1 Lane A** — `docs/schema.sql` +1 bảng `leads` (dedup_key
+  unique, ts, channel, user_hash, question, intent, status='new',
+  source, created_at) → apply ×2 = 8 bảng public.
+  - Boundary: `docs/schema.sql`
+  - Gate: `python scripts/apply_schema.py` ×2 → "8 bảng public"
+  - Evidence: `evidence/v19_schema.log`
+- [ ] **W2.2 Lane B** — `ingest/lead_store.py`: harvest convlog (+`.1`)
+  BYTES+split `\n` → lead rows (intent partner|order|price|contact,
+  channel = streamlit khi msg_id rỗng) → `insert on conflict (dedup_key)
+  do nothing` per-row → "mới N / trùng M"; edge đủ: thiếu file/0-record/
+  corrupt/thiếu-field/ts-sai/`_doc` → skip+đếm, exit 0 không xóa leads.
+  + helpers `connect()`, `lead_stats(conn)`, `convlog_stats()`.
+  - Boundary: `ingest/lead_store.py`
+  - Gate: chạy ×2 convlog thật — mới>0 rồi mới=0, totals khớp
+  - Evidence: `evidence/v19_leads.log`
+- [ ] **W2.3 Lane C** — streamlit tab thứ 4 "Leads": convlog_stats
+  luôn hiện; lead_stats → metric + bảng mới nhất; DB lỗi/thiếu bảng →
+  st.info không crash; read-only.
+  - Boundary: `app/streamlit_app.py`, `ingest/lead_store.py`
+  - Gate: streamlit headless :8501 HTTP 200
+  - Evidence: `evidence/v19_streamlit.log`
+- [ ] **W2.4 Lane D + gate chung** — `tests/test_lead_store.py` (~10
+  test: intent/channel/dedup/harvest-edge/fake-conn insert-only/schema
+  drift/convlog_stats) + `python -m pytest` + `ruff check .`
+  (coordinator)
+  - Boundary: `tests/test_lead_store.py`
+  - Gate: pytest xanh + ruff clean
+  - Evidence: `evidence/v19_pytest.log`
+
 ## M19 — v1.8-core-db (WS1 nền tảng: DB lõi + Phụ lục A)
 
 Checklist/DoD chi tiết: `DONE.md` mục v1.8-core-db (contract coordinator

@@ -4,7 +4,8 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **không** — board sạch, chờ /cycle 2/10 chọn contract.
+Version đang mở: **v1.9-leads** — WS2 nền: gom lead từ convlog +
+dashboard Leads (contract coordinator tự chọn qua /cycle 2/10).
 
 v1.8-core-db đóng 2026-10-10 (cold-check PASS đợt 3 — đợt 1+2 FIX cùng
 lớp lỗi "delete-trắng": file nguồn thiếu vá ở `6d9b6b5`, file rỗng/
@@ -14,6 +15,78 @@ v1.7-edge-hardening đóng 2026-10-09 (cold-check PASS đợt 1; 2 MINOR
 vá ngay — khôi phục assert msg-key cleanup + thêm case CL `abc`/`0`
 vào test; 1 MINOR → someday: domain `b..c`/`@@b.com` dạng-lạ không
 mask).
+
+## Checklist v1.9-leads
+
+Khán giả: buổi đàm phán SOW / demo cho bác Lực — "mỗi khách nhắn hỏi
+giá/mua/địa-chỉ qua Zalo OA hay UI đều tự thành lead trong DB, nhân
+viên mở tab Leads thấy danh sách + số liệu kênh" (SOW §WS2: "chatbot
+gom lead" + "dashboard số liệu kênh + leads"). Phần còn của WS2 —
+pipeline nội dung đa kênh + lịch đăng có human-gate — là cụm lớn hơn,
+để cycle sau. Quy ước precedent patch: `guardrail.py`/`api/rag.py`/
+`connectors/zalo.py` KHÔNG đụng (leads chỉ ĐỌC convlog — không đụng
+reply path, không đăng nội dung mới); skip eval_qa + zalo_mock; không
+global mutable mới trong zalo.py → `_isolated_files` giữ nguyên;
+schema chỉ `create table if not exists` (→ 8 bảng public, không
+sửa/drop 7 bảng cũ); convlog là file user-influenced → đọc BYTES +
+split `\n` tường minh (AGENTS.md). **leads KHÔNG dùng delete-by-
+source** của core_store: convlog là log xoay + purge 30d — lead là
+fact suy ra một lần, insert-only + `on conflict do nothing` theo
+`dedup_key` (mất khỏi convlog ≠ mất lead). Module `ingest/
+lead_store.py` riêng — không đụng `core_store.py` nên invariant
+"skip khi file thiếu/0-record" của loader lõi giữ nguyên. Channel
+suy ra: `msg_id` rỗng → streamlit (writer ghi `msg_id:""`), còn lại
+→ zalo (trước era `sent`, đáng tin hơn `sent` key). Intent heuristic
+keyword — false-positive nhẹ chấp nhận ở pilot (ghi someday).
+
+- [ ] **W2.1 Schema `leads` + apply** — `docs/schema.sql` +1 bảng:
+  identity id, `dedup_key text not null unique`, `ts timestamptz`,
+  `channel` (zalo|streamlit), `user_hash`, `question`, `intent`
+  (partner|order|price|contact), `status` default 'new', `source`,
+  `created_at`. `python scripts/apply_schema.py` → 8 bảng public ×2.
+  - Boundary: `docs/schema.sql`
+  - Gate: apply ×2 idempotent; `information_schema` đủ 8 bảng public
+  - Evidence: `evidence/v19_schema.log`
+- [ ] **W2.2 Harvester `ingest/lead_store.py`** — `python -m
+  ingest.lead_store` đọc `data/conversations.jsonl` (+`.1` nếu có)
+  bằng BYTES + split `\n`; skip `_doc`/dòng corrupt/thiếu
+  ts-question-user_hash/ts sai format → đếm skipped; question không
+  khớp intent → không phải lead; dedup_key = `convlog:<msg_id>` hoặc
+  `convlog:<hash16(ts|user_hash|question)>` khi msg_id rỗng; `insert
+  ... on conflict (dedup_key) do nothing` per-row → in "mới N /
+  trùng M"; file thiếu/0-record → warn + exit 0, KHÔNG xóa leads
+  đang có. Helper `connect()` (load .env → conn|None), `lead_stats
+  (conn)` (dict|None — UndefinedTable/OperationalError → None),
+  `convlog_stats()` (đếm theo kênh + answered, file thiếu → zeros).
+  - Boundary: `ingest/lead_store.py`
+  - Gate: chạy ×2 trên convlog thật — lần 1 mới>0, lần 2 mới=0;
+    totals khớp số lead suy ra
+  - Evidence: `evidence/v19_leads.log`
+- [ ] **W2.3 Tab "Leads" trong streamlit** — tab thứ 4: `convlog_
+  stats` luôn hiện (file-based, không cần DB): số tin theo kênh +
+  %answered; `lead_store.connect()` → `lead_stats` → metric cards
+  (tổng leads, mới 7d, theo channel/intent/status) + bảng leads mới
+  nhất (ts/channel/intent/question/user_hash/status); DB lỗi/thiếu
+  bảng → `st.info` "chưa nạp" không crash tab. Read-only — KHÔNG
+  sửa status từ UI (pilot).
+  - Boundary: `app/streamlit_app.py`, `ingest/lead_store.py`
+  - Gate: `streamlit run` headless → :8501 HTTP 200, tab render
+  - Evidence: `evidence/v19_streamlit.log`
+- [ ] **W2.4 Tests + gate chung** — `tests/test_lead_store.py`:
+  classify từng intent + non-intent; channel/dedup_key 2 nhánh;
+  harvest edge (missing/empty/corrupt-giữa-file/`.1`/`_doc`/thiếu
+  field/ts sai); fake-conn insert on-conflict + KHÔNG có delete;
+  schema drift guard `leads`; convlog_stats zeros-khi-thiếu.
+  `python -m pytest` full xanh + `ruff check .` clean.
+  - Boundary: `tests/test_lead_store.py`
+  - Gate: pytest xanh + ruff clean
+  - Evidence: `evidence/v19_pytest.log`
+
+External-dependency (không treo version): lead THẬT cần OA live
+(C2.0) — hiện harvest từ convlog mock/UI có sẵn; intent heuristic
+substring → refine khi có data thật (ghi someday). Số liệu kênh đầy
+đủ (message/order volume, social metrics) thuộc báo cáo WS3/cycle
+sau — dashboard v1.9 chỉ cover leads + convlog theo kênh.
 
 ## Checklist v1.8-core-db
 
