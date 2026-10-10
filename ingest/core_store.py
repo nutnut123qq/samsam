@@ -8,9 +8,11 @@ Contract:
     (con trước, cha sau) rồi insert lại (cha trước, con sau) → chạy n lần
     không nhân đôi, FK không bị `on delete set null` cắt link của row
     managed, và KHÔNG đè row nhập tay (`source` khác, vd 'manual').
-    File nguồn thiếu → domain đó KHÔNG được trả ra (v1.8.1): nếu vẫn
-    append với rows=[] thì pha delete chạy rồi insert 0 = xóa trắng
-    bảng đang có — `claims_approved` là nguồn sự thật guardrail.
+    File nguồn thiếu HOẶC 0 record → domain đó KHÔNG được trả ra
+    (v1.8.1): nếu vẫn append với rows=[] thì pha delete chạy rồi
+    insert 0 = xóa trắng bảng đang có — `claims_approved` là nguồn sự
+    thật guardrail. 0 record = file cắt cụt/crawl lỗi → giữ thống nhất
+    hành vi "không xóa rows đang có".
     Edge chấp nhận (ghi ở đây, someday): row `source='manual'` trỏ
     `product_id`/`plot_id` tới row do loader quản sẽ mất link (`set
     null`) hoặc bị cascade-xóa (plot_logs) sau mỗi reload — vá dài hạn
@@ -154,7 +156,8 @@ def order_row(rec: dict, source: str) -> dict:
 
 def collect_rows(data_dir: Path = DATA_DIR) -> list[tuple[str, str, list]]:
     """Đọc data dir → [(table, source, rows)] theo DOMAIN_ORDER (cha
-    trước). File thiếu → domain bị skip (warn), KHÔNG xóa rows đang có."""
+    trước). File thiếu HOẶC 0 record → domain bị skip (warn), KHÔNG
+    xóa rows đang có — giữ invariant "không xoá trắng bảng"."""
     domains: list[tuple[str, str, list]] = []
 
     products = (data_dir / "products.jsonl")
@@ -167,7 +170,11 @@ def collect_rows(data_dir: Path = DATA_DIR) -> list[tuple[str, str, list]]:
             url = rec.get("url") or ""
             if url.rstrip("/").endswith(".html"):
                 seg_to_pid[url_segment(url)] = rec["id"]
-        domains.append(("products", "products.jsonl", prod_rows))
+        if prod_rows:
+            domains.append(("products", "products.jsonl", prod_rows))
+        else:
+            print(f"[warn] {products} 0 record — bỏ qua như file thiếu",
+                  flush=True)
     else:
         print(f"[warn] thiếu {products} — bỏ qua", flush=True)
 
@@ -179,8 +186,12 @@ def collect_rows(data_dir: Path = DATA_DIR) -> list[tuple[str, str, list]]:
             if key.startswith("_"):
                 continue
             claim_rows_all.extend(claim_rows(key, entry, seg_to_pid))
-        domains.append(("claims_approved", "claims_whitelist.json",
-                        claim_rows_all))
+        if claim_rows_all:
+            domains.append(("claims_approved", "claims_whitelist.json",
+                            claim_rows_all))
+        else:
+            print(f"[warn] {wl_path} 0 SKU/claim — bỏ qua như file "
+                  f"thiếu", flush=True)
     else:
         print(f"[warn] thiếu {wl_path} — bỏ qua", flush=True)
 
@@ -192,8 +203,12 @@ def collect_rows(data_dir: Path = DATA_DIR) -> list[tuple[str, str, list]]:
         row_fn = {"plots": plot_row, "plot_logs": plot_log_row,
                   "orders": order_row}[table]
         if path.exists():
-            domains.append((table, src,
-                            [row_fn(r, src) for r in iter_jsonl(path)]))
+            rows = [row_fn(r, src) for r in iter_jsonl(path)]
+            if rows:
+                domains.append((table, src, rows))
+            else:
+                print(f"[warn] {path} 0 record — bỏ qua như file thiếu",
+                      flush=True)
         else:
             print(f"[warn] thiếu {path} — bỏ qua domain {table}",
                   flush=True)

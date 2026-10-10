@@ -62,6 +62,11 @@ revert gọn. `orders` KHÔNG lưu PII khách (tên/SĐT) ở pilot.
     nào đóng góp; +3 test file-thiếu/partial/no-ops. 2 MINOR →
     someday: manual-child mất link/cascade + assets 'multi' nguồn-rút-
     hẳn tồn đọng)*
+  — *(cold-check đợt 2 MAJOR vá: file TỒN TẠI nhưng 0 record (cắt
+    cụt/crawl lỗi) vẫn append domain → delete+insert-0 xoá trắng bảng
+    (probe `claims_whitelist.json`={} tái hiện). Vá: 0 record → skip
+    + warn như file thiếu; +1 test file-rỗng/`{}`/`_doc`-only. Mechanism
+    partial-reload + data_audit/updated_at/fake-conn e2e → someday)*
 - [x] **W1.3 Phụ lục A draft** — `scripts/data_audit.py` in bảng kê
   domain × số-lượng × nguồn × trạng-thái (jsonl + whitelist + bảng lõi
   + chunks; DB lỗi → in "chưa nạp", vẫn exit 0); `docs/phu-luc-a.md` =
@@ -890,9 +895,21 @@ Quy ước DoD cho phase connector:
   null`/cascade sau mỗi reload — `plot_logs` nhập tay mất row cùng plot,
   orders/assets mất product link. Vá dài hạn: upsert `on conflict` thay
   delete+insert (cold-check v1.8 MINOR; đã ghi 1 dòng giới hạn trong
-  `docs/schema.sql` + docstring loader). Cùng nhóm: domain `multi`
-  (assets) delete chỉ cover `source` có row trong lần chạy → file nguồn
-  rút hẳn (vd bỏ articles.jsonl) thì asset cũ của nguồn đó tồn đọng.
+  `docs/schema.sql` + docstring loader). Cùng nhóm (đợt 2):
+  (a) **partial-reload cắt link ngầm** — `products.jsonl` có mà
+  `claims_whitelist.json` thiếu → products delete+insert lại, mọi
+  `claims_approved.product_id` bị `set null` trong khi claims không
+  reload để nối lại; tương tự plots có/logs thiếu → cascade xoá
+  `plot_logs` kể cả `source='manual'`; (b) assets `source='multi'`:
+  nguồn rút hẳn row → asset cũ tồn đọng + `product_id=NULL` sau reload
+  products; (c) `data_audit.py` check `_doc` bằng `get("_doc")` truthy
+  vs loader `"_doc" in rec` → lệch đếm trên `{"_doc":""}`; và
+  `json.loads(l)["id"]` ở nhánh about-ids nằm NGOÀI except → file lỗi
+  crash script thay vì "chưa nạp"; (d) `updated_at` trong schema không
+  trigger/upsert → không bao giờ đổi; `apply_schema.py` chỉ bắt
+  `OperationalError` (lỗi SQL trong schema.sql sẽ propagate); (e) gate
+  test: `apply_rows` chưa chạy trên DB thật (fake-conn) → FK
+  cascade/set-null chưa verify end-to-end.
 - WS2: leads table + gom lead từ convlog; dashboard số liệu kênh;
   pipeline nội dung brief→draft→compliance→DUYỆT NGƯỜI→format đa kênh
   (FB/TikTok script/blog/Zalo OA)→lịch đăng — KHÔNG tự đăng (C2.4)
