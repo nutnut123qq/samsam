@@ -1,3 +1,59 @@
+# STATUS — v2.0-report-agent (2026-10-10)
+
+## v2.0 — WS3: agent báo cáo định kỳ ra FILE (contract trong DONE.md)
+
+**4/4 mục triển khai xong, gate xanh.** `python -m pytest -q` 147/147;
+`tests/test_report.py` 16/16 ×3; `ruff check .` clean. CLI ×2
+idempotent; dead-DB probe bằng host chết thật (10.255.255.1,
+connect_timeout=3) → báo cáo degraded "[chưa nạp]" ×3 + exit 0.
+Playwright (`.venv` + global python) kiểm UI thật cả nhánh DB live
+(5 tabs, sinh + render report, errors=0) lẫn DB-unavailable (warning
+DEGRADED, tab không hang) — `evidence/v20_report_tab.png` /
+`v20_report_dead.png`.
+
+### Đọc diff cần biết
+
+- **`agents/` (package mới)** — nhà cho 3 agent WS3. `agents/report.py`:
+  `python -m agents.report [--days N] [--until YYYY-MM-DD]` →
+  `data/reports/report-<since>_<end>.md` (atomic tmp+os.replace,
+  bytes utf-8; gitignored). Tổng hợp orders/leads/plot_logs/plots/
+  products + convlog (file-based — mục 3 luôn có khi DB chết).
+  Markdown 6 mục: bán hàng (đơn/doanh thu kỳ vs kỳ trước, kênh, top
+  SP "Ngoài catalog"), leads (mới/chờ xử lý/intent/kênh + 5 câu gần
+  nhất), kênh chat (in-period + all-time, `answered` strict `is
+  True`), vùng trồng (nhật ký + flag keyword sâu-bệnh), social
+  "chờ bàn giao", nguồn dữ liệu per-table. Bảng toàn `source
+  'sample:*'` → nhãn *(mẫu)* ngay trong báo cáo. Tái dùng
+  `lead_store.connect/iter_convlog/_parse_ts/channel_of`
+  (connect_timeout=3, BYTES+split `\n`).
+- **`app/streamlit_app.py`** — tab thứ 5 "Báo cáo": chọn kỳ 7/14/30
+  → "Sinh báo cáo" → `generate()`; list `data/reports/*.md` mới nhất
+  trước → xem rendered; degraded → warning vàng; dir trống → info.
+- **Human-gate**: báo cáo là BẢN NHÁP — duyệt + gửi lãnh đạo do
+  NGƯỜI (C2.4); hệ thống KHÔNG gửi Zalo/email. Không LLM → output
+  không cần guardrail check (invariant chỉ áp text AI sinh).
+- **Gotcha phát hiện**: `env -u DATABASE_URL` KHÔNG phải nhánh
+  degraded — `connect()` tự `load_dotenv(ROOT/.env)` nạp lại DSN;
+  nhánh connect→None verify bằng monkeypatch/dead-host.
+
+### Evidence v2.0
+
+|| Mục | File |
+|---|---|---|
+|| CLI ×2 + --until/--days + dead-DB probe | `evidence/v20_report.log` |
+|| Report mẫu sinh ra | `evidence/v20_report.md` |
+|| UI live + DB-unavailable | `evidence/v20_streamlit.log` + `v20_report_tab.png` + `v20_report_dead.png` |
+|| Gate chung | `evidence/v20_pytest.log` — focused 16/16 ×3, full 147/147, ruff clean |
+
+External: social metrics (FB/TikTok/OA) chờ Phụ lục C — mục 5 báo
+cáo là placeholder; gửi báo cáo cho lãnh đạo là bước NGƯỜI. Số liệu
+orders/plot_logs/plots đang là DỮ LIỆU MẪU (nhãn *(mẫu)* trong
+report). Someday: LLM commentary qua guardrail check, lịch định kỳ
+(Task Scheduler/cron), anomaly nhật ký vườn sâu hơn, leads
+retention/redaction (v1.9).
+
+---
+
 # STATUS — v1.9-leads (2026-10-10)
 
 ## v1.9 — WS2 nền: harvest lead từ convlog + dashboard (contract trong DONE.md)

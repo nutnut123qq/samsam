@@ -54,7 +54,7 @@ mới, không vá lead_store trong version này). Bảng toàn `source like
 KHÔNG được để người xem tưởng số vận hành thật (orders/plots/
 plot_logs hiện đều mẫu chờ bàn giao).
 
-- [ ] **W3.1 Module `agents/report.py`** — package mới `agents/`
+- [x] **W3.1 Module `agents/report.py`** — package mới `agents/`
   (nhà cho 3 agent WS3): `period_bounds(days, until)` → (since,
   until_excl) aware UTC; `collect_db(conn, since, until)` → sales
   (đơn/doanh thu kỳ + kỳ trước, theo kênh/trạng thái/top sản phẩm
@@ -79,7 +79,7 @@ plot_logs hiện đều mẫu chờ bàn giao).
   - Boundary: `agents/__init__.py`, `agents/report.py`
   - Gate: unit tests W3.4 xanh
   - Evidence: `evidence/v20_report.log`
-- [ ] **W3.2 CLI `python -m agents.report` + gitignore** — argparse
+- [x] **W3.2 CLI `python -m agents.report` + gitignore** — argparse
   `--days N` (default 7, ≥1), `--until YYYY-MM-DD` (mặc định hôm nay
   UTC, = ngày cuối kỳ inclusive), `--out-dir` (default
   `data/reports`); in kỳ + path + topline; DB down → `[warn]` + vẫn
@@ -90,7 +90,7 @@ plot_logs hiện đều mẫu chờ bàn giao).
     `DATABASE_URL` trỏ host chết → file degraded vẫn ghi, exit 0
   - Evidence: `evidence/v20_report.log` + report .md copy thành
     `evidence/v20_report.md`
-- [ ] **W3.3 Tab "Báo cáo" (thứ 5) trong streamlit** — caption
+- [x] **W3.3 Tab "Báo cáo" (thứ 5) trong streamlit** — caption
   human-gate; selectbox kỳ 7/14/30 + nút "Sinh báo cáo" →
   `generate()` → success path (warn vàng khi degraded); list
   `data/reports/*.md` mới nhất trước → selectbox → `st.markdown`
@@ -103,7 +103,7 @@ plot_logs hiện đều mẫu chờ bàn giao).
     giả — host chết thật): tab vẫn render + sinh được file degraded
   - Evidence: `evidence/v20_streamlit.log`,
     `evidence/v20_report_tab.png`
-- [ ] **W3.4 Tests + gate chung** — `tests/test_report.py`: period
+- [x] **W3.4 Tests + gate chung** — `tests/test_report.py`: period
   math (default now / `--until` → end-exclusive + since=-days);
   `_fmt_vnd`; `collect_db` fake-conn dispatch theo (substr, params)
   — period params đúng, prev-period query, `db_ok` flag, sample

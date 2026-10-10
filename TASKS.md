@@ -473,7 +473,7 @@ zalo.py` không đụng; skip eval_qa + zalo_mock. Không thêm bảng;
 check. `answered` convlog đếm strict `is True` (khác NIT truthiness
 v1.9 — fix-forward, không vá lead_store).
 
-- [ ] **W3.1 Lane A** — package `agents/` + `agents/report.py`:
+- [x] **W3.1 Lane A** — package `agents/` + `agents/report.py`:
   `period_bounds`/`collect_db` (sales+leads+farm+sources+sample,
   `psycopg.Error`→`db_ok=False`)/`collect_chat` (convlog theo kỳ,
   file-based)/`render` (markdown, nhãn *(mẫu)*, degraded "[chưa
@@ -483,21 +483,21 @@ v1.9 — fix-forward, không vá lead_store).
   - Boundary: `agents/__init__.py`, `agents/report.py`
   - Gate: unit tests W3.4 xanh
   - Evidence: `evidence/v20_report.log`
-- [ ] **W3.2 Lane B** — CLI `python -m agents.report` (`--days`,
+- [x] **W3.2 Lane B** — CLI `python -m agents.report` (`--days`,
   `--until YYYY-MM-DD`, `--out-dir`) + `.gitignore` += `data/
   reports/`; DB down → warn + file degraded + exit 0.
   - Boundary: `agents/report.py`, `.gitignore`
   - Gate: run ×2 idempotent (cùng filename ghi đè); `DATABASE_URL`
     host chết → file degraded vẫn ghi, exit 0
   - Evidence: `evidence/v20_report.log`, `evidence/v20_report.md`
-- [ ] **W3.3 Lane C** — Streamlit tab 5 "Báo cáo": sinh report qua
+- [x] **W3.3 Lane C** — Streamlit tab 5 "Báo cáo": sinh report qua
   nút (7/14/30 ngày) + list/xem lại file; hoạt động khi DB down.
   - Boundary: `app/streamlit_app.py`
   - Gate: Playwright qua `.venv` — DB live + DB-unavailable (env
     giả khi spawn) đều render/sinh được; console errors=0
   - Evidence: `evidence/v20_streamlit.log`,
     `evidence/v20_report_tab.png`
-- [ ] **W3.4 Lane D + gate chung** — `tests/test_report.py` +
+- [x] **W3.4 Lane D + gate chung** — `tests/test_report.py` +
   `python -m pytest -q` full + `ruff check .` + `git diff --check`.
   - Boundary: `tests/test_report.py`
   - Gate: targeted xanh ×3; full xanh; ruff clean
