@@ -503,6 +503,47 @@ v1.9 — fix-forward, không vá lead_store).
   - Gate: targeted xanh ×3; full xanh; ruff clean
   - Evidence: `evidence/v20_pytest.log`
 
+## M21 — v2.1-garden-log (WS3: agent nhật ký vùng trồng form → chuẩn hóa → cảnh báo)
+
+Checklist/DoD chi tiết: `DONE.md` mục v2.1-garden-log (contract
+coordinator tự chọn qua /cycle 4/10 — coordinator-inline vì quota
+subagent cạn; self-review precedent v0.3/v0.5). `guardrail.py`/
+`api/rag.py`/`connectors/zalo.py` không đụng; skip eval_qa +
+zalo_mock; KHÔNG thêm/sửa bảng — intake ghi `plot_logs` có sẵn với
+`source='manual:garden'`. Tái dùng `lead_store.connect` (timeout 3s)
++ `report.FLAG_KEYS` (import, không duplicate). Nhật ký = NGƯỜI ghi
+tay; hệ thống không tự sinh/tự sửa.
+
+- [ ] **W4.1 Module `agents/garden.py`** — `ACTIVITY_VOCAB` + alias;
+  `normalize_activity` → (activity, known); `add_log` INSERT với FK/
+  unique-violation → warnings friendly không raise; `flags_for` theo
+  `report.FLAG_KEYS`; `anomaly_check(gap_days=14)` →
+  no-logs/gap/keyword; `active_plots`, `recent_logs`. `psycopg.Error`
+  collect propagate lên caller.
+  - Boundary: `agents/garden.py`
+  - Gate: unit tests xanh
+  - Evidence: `evidence/v21_garden.log`
+- [ ] **W4.2 CLI `python -m agents.garden`** — add (`--plot --activity
+  --detail --ts --author`) / `--check [--gap-days]`; add DB-down →
+  exit 2, check DB-down → "chưa nạp" exit 0; UTF-8 guard.
+  - Boundary: `agents/garden.py`
+  - Gate: add KV-A01 thật → row trong recent_logs; plot sai → warn
+    exit≠0; add trùng → warn "đã có"; --check in ≥1 anomaly
+  - Evidence: `evidence/v21_garden.log`
+- [ ] **W4.3 Tab "Nhật ký vườn" thứ 6** — form (khoảnh selectbox,
+  activity vocab + "khác"→free text, date, detail, author) → add_log
+  → success/warning; panel anomaly warning boxes; recent_logs bảng;
+  DB down → st.info không crash.
+  - Boundary: `app/streamlit_app.py`
+  - Gate: Playwright `.venv` — live: submit → row trong bảng + panel;
+    dead-DB spawn → render + info; console errors=0
+  - Evidence: `evidence/v21_streamlit.log`, `evidence/v21_garden_tab.png`
+- [ ] **W4.4 Tests + gate chung** — `tests/test_garden.py` +
+  `python -m pytest -q` + `ruff check .` + `git diff --check`
+  - Boundary: `tests/test_garden.py`
+  - Gate: targeted ×3; full xanh; ruff clean
+  - Evidence: `evidence/v21_pytest.log`
+
 ## M20 — v1.9-leads (WS2 nền: leads table + harvest convlog + tab Dashboard)
 
 Checklist/DoD chi tiết: `DONE.md` mục v1.9-leads (contract coordinator

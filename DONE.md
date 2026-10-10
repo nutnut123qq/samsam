@@ -4,7 +4,9 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: *(không có — contract kế chọn ở cycle 4/10)*
+Version đang mở: **v2.1-garden-log** (cycle 4/10 — WS3;
+coordinator-inline vì quota subagent cạn — self-review đánh dấu
+trong ledger, precedent v0.3/v0.5)
 
 v2.0-report-agent đóng 2026-10-10 (cold-check **coordinator
 self-review** — reviewer subagent quota-exhausted, precedent
@@ -24,6 +26,98 @@ v1.7-edge-hardening đóng 2026-10-09 (cold-check PASS đợt 1; 2 MINOR
 vá ngay — khôi phục assert msg-key cleanup + thêm case CL `abc`/`0`
 vào test; 1 MINOR → someday: domain `b..c`/`@@b.com` dạng-lạ không
 mask).
+
+## Checklist v2.1-garden-log
+
+Khán giả: buổi đàm phán SOW / demo cho bác Lực — "nhân viên vườn mở
+tab, chọn khoảnh, ghi hoạt động (tưới/bón/làm cỏ/kiểm tra sâu bệnh...)
+→ hệ thống chuẩn hóa + báo ngay nếu nhật ký có dấu hiệu bất thường,
+và nhắc khoảnh nào lâu chưa có nhật ký" (SOW §WS3: "ghi nhật ký vùng
+trồng qua form/chat → chuẩn hóa → cảnh báo bất thường"). Agent thứ 2
+của WS3 — feed thẳng vào report agent v2.0 (mục 4 Vùng trồng đã đọc
+`plot_logs` + flag cùng `FLAG_KEYS`). Chọn cụm này: coherent vừa đủ
+cho coordinator-inline (quota subagent cạn — tự build + self-review
+theo precedent v0.3/v0.5), bảng `plots`/`plot_logs` + sample data có
+sẵn từ v1.8, không external dep. Cụm bị loại: WS2 content pipeline
+(lớn — format đa kênh + lịch đăng, để cycle sau khi có session
+subagent trở lại); trợ lý tri thức nội bộ (trùng RAG đã có); WS4
+docs (để cuối khi tính năng ổn).
+
+Quy ước precedent: `guardrail.py`/`api/rag.py`/`connectors/zalo.py`
+KHÔNG đụng; skip eval_qa + zalo_mock; không global mutable mới trong
+zalo.py; KHÔNG thêm/sửa bảng (intake ghi `plot_logs` có sẵn, FK
+`plot_id → plots`). Không LLM → output không cần guardrail check
+(invariant chỉ áp text AI sinh; message anomaly là template viết tay).
+Tái dùng `ingest.lead_store.connect` (connect_timeout=3) + tái dùng
+`agents.report.FLAG_KEYS` (import — KHÔNG duplicate keyword list giữa
+2 agent). Ghi DB thật: `source='manual:garden'` (khớp someday v1.8 —
+row manual KHÔNG bị loader delete-by-source đè; nhưng nhớ someday (a):
+manual plot_logs chết theo CASCADE nếu plots reload delete+insert —
+pilot chấp nhận, khi có khoảnh thật thì plots cũng nhập tay). Mọi
+connect `connect_timeout=3`; nhánh DB-unavailable verify bằng host
+chết thật. Nhật ký là thao tác NGƯỜI ghi tay — hệ thống KHÔNG tự
+sinh/tự sửa nhật ký (human-gate đối xứng C2.4).
+
+- [ ] **W4.1 Module `agents/garden.py`** — `ACTIVITY_VOCAB` (trồng,
+  tưới, bón, làm cỏ, kiểm tra sâu bệnh, phun thuốc sinh học, thu
+  hoạch, ghi nhận, khác) + alias map; `normalize_activity(raw)` →
+  (activity, known: bool) — raw rỗng → `("ghi nhận", False)`;
+  `add_log(conn, plot_id, ts, activity, detail, author)` → INSERT
+  `source='manual:garden'`, trả (id|None, warnings[]) — FK
+  `ForeignKeyViolation` → warn "khoảnh không tồn tại" (KHÔNG raise);
+  unique `(plot_id,ts,activity)` `UniqueViolation` → warn "đã có
+  nhật ký trùng"; `flags_for(activity, detail)` → keyword hits từ
+  `report.FLAG_KEYS`; `anomaly_check(conn, gap_days=14)` →
+  [{'type','plot','ts','msg'}]: active-plot không có log nào →
+  'no-logs'; `max(ts)` cũ hơn gap → 'gap'; log trong kỳ gap có
+  keyword → 'keyword'; `active_plots(conn)`, `recent_logs(conn,
+  limit=20)`. `psycopg.Error` tại tầng collect → propagate lên caller
+  (CLI/UI quyết degrade) — KHÔNG nuốt.
+  - Boundary: `agents/garden.py`
+  - Gate: unit tests W4.4 xanh
+  - Evidence: `evidence/v21_garden.log`
+- [ ] **W4.2 CLI `python -m agents.garden`** — `--plot P --activity A
+  [--detail D --ts ISO --author]` → add_log in kết quả + flags;
+  `--check [--gap-days N]` → in anomaly list; thiếu --plot/--activity
+  khi add → usage error exit 2; DB down: add → exit 2 báo lỗi;
+  check → in "chưa nạp" exit 0 (precedent data_audit); UTF-8 guard.
+  - Boundary: `agents/garden.py`
+  - Gate: add thật vào DB (plot KV-A01) → row hiện trong
+    `recent_logs` + `psql`/SELECT verify; add plot sai → warn
+    friendly exit≠0; add trùng → warn "đã có"; `--check` in anomaly
+    (ít nhất 1 'gap' vì KV-B01 sample cũ)
+  - Evidence: `evidence/v21_garden.log`
+- [ ] **W4.3 Tab "Nhật ký vườn" (thứ 6) streamlit** — caption human-
+  ops; `active_plots` → selectbox khoảnh (id + location); selectbox
+  activity vocab + "khác..." → text_input tự ghi; date_input mặc định
+  hôm nay; detail + author; submit → `add_log` → success + warning
+  vàng nếu `flags_for`/`warnings` có; panel "Cần chú ý" =
+  `anomaly_check` (warning boxes); bảng `recent_logs` (ts/plot/
+  activity/detail/author); DB down → `st.info` không crash tab.
+  - Boundary: `app/streamlit_app.py`
+  - Gate: Playwright qua `.venv` (có sẵn) — live DB: tab render,
+    submit 1 nhật ký → row xuất hiện trong bảng + anomaly panel hiện;
+    DB-unavailable (spawn env DATABASE_URL host chết) → tab render +
+    info, không hang; console errors=0
+  - Evidence: `evidence/v21_streamlit.log`, `evidence/v21_garden_tab.png`
+- [ ] **W4.4 Tests + gate chung** — `tests/test_garden.py`: normalize
+  (vocab hit/alias/khác/rỗng); `add_log` fake-conn happy + bắt
+  `ForeignKeyViolation`/`UniqueViolation` → warnings không raise;
+  `flags_for` keyword trong activity vs detail; `anomaly_check` đủ
+  nhánh (no-logs/gap/fresh/keyword) qua fake-conn dispatch; `recent_
+  logs`/`active_plots` shape. `python -m pytest -q` full + `ruff
+  check .` + `git diff --check`.
+  - Boundary: `tests/test_garden.py`
+  - Gate: targeted xanh ×3; full suite xanh; ruff clean; diff sạch
+  - Evidence: `evidence/v21_pytest.log`
+
+External-dependency (không treo version): khoảnh + nhật ký THẬT chờ
+bàn giao (SOW §5.2) — form hoạt động trên sample plots KV-*; khi có
+vườn thật, thêm khoảnh qua `plots` (manual hoặc loader). Chat-intake
+("nhắn Zalo ghi nhật ký") chưa làm — form-first, chat-parse để
+someday. Manual `plot_logs` sống sót reload chỉ khi plots cha là
+manual (someday v1.8 a). Lịch nhắc định kỳ (agent chủ động báo khi
+gap) = someday — hiện check chạy khi người mở tab/`--check`.
 
 ## Checklist v2.0-report-agent
 
