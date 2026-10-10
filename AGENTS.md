@@ -249,3 +249,23 @@ chat lẫn embeddings) + Streamlit.
   không spawn được → coordinator tự audit adversarial (đọc diff + chạy
   lại gate + probe claim) và ghi rõ "coordinator self-review" trong
   DONE/STATUS/ledger — precedent v0.3/v0.5; không giả vờ có auditor lạ.
+  Profile `reviewer` cạn nhưng `subagent_general` còn → spawn general
+  với prompt audit + "READ-ONLY" tường minh vẫn là auditor lạ hợp lệ
+  (v2.2 — đợt 1 bắt được MAJOR thật).
+- **f-string format-spec trên biến CHƯA coerce** (v2.2 cold-check
+  MAJOR): `f"{day:%Y-%m-%d}"` crash `ValueError` khi `day` là str —
+  CLI luôn truyền str còn test chỉ cover `date` object → lọt. Luật:
+  format-spec chỉ đặt trên biến ĐÃ coerce (output `_coerce_*`), và
+  test boundary phải cover đúng kiểu caller thật truyền (CLI = str).
+- **CLI nhiều flag cùng lúc → op sau nuốt câm** (v2.2 MINOR): chuỗi
+  if/elif `--approve`/`--reject`/`--schedule` chỉ chạy op đầu. Luật:
+  đếm `n_ops` toàn cục, `>1` → `ap.error` usage-exit-2 TRƯỚC khi
+  connect DB — kể cả combo đọc+đọc (`--pending --calendar`).
+- **Nút "lưu" đọc từ session_state trong Streamlit** (v2.2 MINOR):
+  không pop kênh đã lưu khỏi `st.session_state.last_drafts` →
+  re-click nhân đôi draft trong DB. Luật: sau save thành công phải
+  mutate session-state (pop từng kênh `_saved`, giữ kênh lỗi để
+  retry) — bản ghi DB là side-effect không tự rollback theo rerun.
+- **`evidence/*.log` bị `*.log` gitignore**: file evidence .log phải
+  `git add -f` mới vào commit (quy ước "evidence commit vào repo" —
+  file m2_*/v0*.log cũ đều tracked qua force-add).

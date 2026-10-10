@@ -1,0 +1,42 @@
+=== 1. SAVE draft guardrail-ok (qua save_draft) ===
+saved id = 1
+=== 2. --pending ===
+[pending] 1 draft chờ duyệt:
+  #1 [facebook] Bài FB giới thiệu Saphraton — guardrail PASS 10-11 01:57
+=== 3. approve #1 ===
+[done] draft #1 → approved (người duyệt: Test Reviewer)
+exit=0
+=== 4. approve #1 lần 2 (non-pending → warn) ===
+[warn] draft #1 đã ở trạng thái 'approved' — chỉ duyệt từ pending
+exit=2
+=== 5. schedule #1 hôm nay+3 ===
+[done] draft #1 xếp lịch 2026-10-14 — người đăng tay (hệ thống không tự đăng)
+exit=0
+=== 6. --calendar ===
+[calendar] 2026-10-10 → 2026-10-24:
+  2026-10-14  #1 [facebook] Bài FB giới thiệu Saphraton
+exit=0
+=== 7. SAVE draft guardrail-FAIL (banned word) ===
+guardrail ok = False
+saved id = 2
+=== 8. approve #2 (guardrail-fail → warn exit≠0) ===
+[warn] draft #2 vi phạm guardrail (ok != true) — phải reject hoặc viết lại; không có duyệt-kèm-ghi-nhận
+exit=2
+=== 9. schedule #2 (pending → warn) ===
+[warn] draft #2 đang 'pending' — chỉ xếp lịch bài đã approved
+exit=2
+=== 10. --pending (lại thấy #2) ===
+[pending] 1 draft chờ duyệt:
+  #2 [tiktok] Bài xấu cố tình — guardrail VI PHẠM (3) 10-11 01:57
+=== DEAD-DB: --pending (đọc → chưa nạp exit 0) ===
+[warn] chưa nạp — không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+exit=0
+=== DEAD-DB: --calendar (đọc → exit 0) ===
+[warn] chưa nạp — không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+exit=0
+=== DEAD-DB: --approve (ghi → exit 2) ===
+[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết) — không ghi được
+exit=2
+=== DEAD-DB: --schedule (ghi → exit 2) ===
+[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết) — không ghi được
+exit=2

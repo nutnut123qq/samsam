@@ -4,8 +4,17 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **v2.2-content-pipeline** (contract coordinator tự
-chọn qua /cycle 2026-10-11 — checklist bên dưới)
+Version đang mở: **(không — loop /cycle 10 tiếp, contract cycle kế
+ghi khi chốt)**
+
+v2.2-content-pipeline đóng 2026-10-11 (cold-check auditor lạ —
+profile reviewer quota cạn nên spawn `subagent_general` read-only
+làm auditor — đợt 1 FIX: 1 MAJOR `schedule()` crash ValueError
+format-spec `%Y-%m-%d` trên `day` str quá-khứ (CLI luôn truyền str,
+test chỉ cover date-object) + 2 MINOR (CLI nuốt câm op khi nhiều
+flag cùng lúc; Studio "Lưu vào hàng duyệt" không pop session →
+re-click nhân đôi draft) — vá `d1237db` → đợt 2 PASS, không finding.
+NIT → someday bên dưới).
 
 v2.1-garden-log đóng 2026-10-11 (cold-check **coordinator
 self-review** — subagent quota cạn, precedent v0.3/v0.5; coordinator
@@ -65,7 +74,7 @@ không có override (double-gate SOW; quyết định coordinator, flag nếu
 bác Lực muốn duyệt-kèm-ghi-nhận). `schedule` chỉ trên approved.
 Draft do NGƯỜI duyệt — hệ thống không tự chuyển status/tự đăng.
 
-- [ ] **W5.1 Schema `content_drafts` + apply** — `docs/schema.sql`
+- [x] **W5.1 Schema `content_drafts` + apply** — `docs/schema.sql`
   +1 bảng: id identity, `created_at`, `brief`, `channel`
   (facebook|tiktok|blog|zalo), `text`, `guardrail jsonb` (ok +
   violations + matched_claims — snapshot lúc sinh), `status` default
@@ -75,7 +84,7 @@ Draft do NGƯỜI duyệt — hệ thống không tự chuyển status/tự đă
   - Boundary: `docs/schema.sql`
   - Gate: apply ×2; `information_schema` đủ 9 bảng public
   - Evidence: `evidence/v22_schema.log`
-- [ ] **W5.2 Module `pipelines/store.py` + CLI** — `save_draft(conn,
+- [x] **W5.2 Module `pipelines/store.py` + CLI** — `save_draft(conn,
   brief, channel, text, guardrail)` → id; `list_drafts(conn,
   status=None, limit=50)`; `set_status(conn, id, status, reviewer,
   note)` → (ok, warn) — reject sai-id/non-pending/approve-khi-
@@ -92,7 +101,7 @@ Draft do NGƯỜI duyệt — hệ thống không tự chuyển status/tự đă
     schedule→calendar hiện đúng; approve bài guardrail-fail → warn
     exit≠0
   - Evidence: `evidence/v22_store.log`
-- [ ] **W5.3 `content.py` kênh TikTok + `draft_multi`** —
+- [x] **W5.3 `content.py` kênh TikTok + `draft_multi`** —
   CHANNEL_HINT += `tiktok` (kịch bản video ngắn: hook 3s + 2-3 cảnh
   + lời thoại/overlay + CTA — đúng "TikTok script" SOW); `draft_multi
   (brief, channels)` → `{channel: result}` — mỗi kênh qua draft()
@@ -102,7 +111,7 @@ Draft do NGƯỜI duyệt — hệ thống không tự chuyển status/tự đă
   - Gate: test mock client — draft_multi 4 kênh trả đủ key, mỗi
     result có text+guardrail; prompt tiktok chứa hint kịch bản
   - Evidence: `evidence/v22_draft.log`
-- [ ] **W5.4 UI Studio lưu hàng duyệt + tab "Duyệt & Lịch đăng"
+- [x] **W5.4 UI Studio lưu hàng duyệt + tab "Duyệt & Lịch đăng"
   (thứ 7)** — Studio: multiselect kênh (thay selectbox đơn, mặc định
   facebook) → draft_multi khi >1 kênh; nút "Lưu vào hàng duyệt" →
   save_draft từng kênh. Tab 7: queue pending (expander/draft: kênh,
@@ -117,7 +126,7 @@ Draft do NGƯỜI duyệt — hệ thống không tự chuyển status/tự đă
     không duyệt được; DB-unavailable → tab render + info, không hang;
     console errors=0
   - Evidence: `evidence/v22_streamlit.log`, `evidence/v22_queue.png`
-- [ ] **W5.5 Tests + gate chung** — `tests/test_store.py`: save/
+- [x] **W5.5 Tests + gate chung** — `tests/test_store.py`: save/
   list/set_status transitions (pending→approved, pending→rejected,
   sai-id, non-pending, approve-guardrail-fail), schedule (chỉ
   approved, quá khứ reject), calendar shape + edge; schema drift
@@ -135,6 +144,13 @@ xem khi mở tab/`--calendar`). Template Canva/CapCut + prompt library
 phần còn của WS2 = someday/WS4. Someday: duyệt-kèm-ghi-nhận khi
 guardrail flag (nếu bác Lực yêu cầu); sửa text draft sau duyệt (hiện
 approve đóng băng — regenerate thay vì sửa); metrics bài đã đăng.
+NIT cold-check v2.2 (không chặn): `_get` nuốt `psycopg.Error` → báo
+"không tìm thấy" khi conn chết giữa chừng (test đánh dấu intentional);
+`_rconn` tab 7 không close trên nhánh `st.rerun()`/`_pg.Error`;
+`_render_guardrail` index `g["ok"]` trực tiếp — draft ngoại lai thiếu
+key → KeyError; "today" theo UTC lệch biên ±1 ngày với TZ VN;
+`_drafts`/`last_brief` session-state không clear hẳn khi tất cả kênh
+lưu xong (unreachable, chỉ stale).
 
 ## Checklist v2.1-garden-log
 

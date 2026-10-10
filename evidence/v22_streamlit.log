@@ -1,0 +1,69 @@
+TABS: ['Chat Sâm Sâm', 'Content Studio', 'Chưa trả lời', 'Leads', 'Báo cáo', 'Nhật ký vườn', 'Duyệt & Lịch']
+llm_draft_ok: True
+studio save: OK
+queue: Hàng chờ duyệt (4) | keyboard_arrow_right |  | #6 [facebook] Bài FB giới thiệu Saphraton — câu chuyện thương hiệu sâm Ngọc Linh qu… — guardrail PASS |  | keyboard_arrow_right
+guardrail-fail Duyệt disabled: True
+approve target: keyboard_arrow_right #6 [facebook] Bài FB giới thiệu Saphraton — câu chuyện thươ
+approve: OK — pending 4 → 3
+unscheduled opts: ['#6 [facebook] Bài FB giới thiệu Saphraton — câu chuyện thương hiệu sâm Ng…', '#3 [blog] Mở bài blog Sâm Sâm mùa thu hoạch']
+schedule: '#6 [facebook] Bài FB giới thiệu Saphraton — câu chuyện thươn' đã xếp (verify DB sau)
+screenshot: D:\code\samsam\evidence\v22_queue.png
+calendar section present: True
+dataframe widgets: 8
+queue tail: Hàng chờ duyệt (3) | keyboard_arrow_right |  | #5 [facebook] Bài FB giới thiệu Saphraton — câu chuyện thương hiệu sâm Ngọc Linh qu… — guardrail PASS |  | keyboard_arrow_right |  | #4 [facebook] Bài FB giới thiệu Saphraton — câu chuyện thương hiệu sâm Ngọc Linh qu… — guardrail PASS
+console errors: 0
+TABS: ['Chat Sâm Sâm', 'Content Studio', 'Chưa trả lời', 'Leads', 'Báo cáo', 'Nhật ký vườn', 'Duyệt & Lịch']
+Traceback (most recent call last):
+  File "D:\code\samsam\_v22_ui_check.py", line 51, in <module>
+    assert "Chưa nạp" in body or "Lỗi đọc DB" in body, body[:800]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Stop
+Deploy
+
+Chat Sâm Sâm
+
+Content Studio
+
+Chưa trả lời
+
+Leads
+
+Báo cáo
+
+Nhật ký vườn
+
+Duyệt & Lịch
+
+Hàng duyệt nội dung (WS2) — draft AI đã qua guardrail lúc sinh chờ NGƯỜI duyệt từng bài; bài approved xếp vào lịch đăng. Approve chỉ khi guardrail PASS (double-gate SOW — không có duyệt-kèm-ghi-nhận). Hệ thống KHÔNG tự đăng — lịch là kế hoạch cho người đăng tay (C2.4). CLI: python -m pipelines.store --pending / --calendar.
+TABS: ['Chat Sâm Sâm', 'Content Studio', 'Chưa trả lời', 'Leads', 'Báo cáo', 'Nhật ký vườn', 'Duyệt & Lịch']
+[dead-db] tab render + info OK — không hang
+console errors: 0 []
+
+=== streamlit live server log (tail) ===
+2026-10-11 02:09:46.337 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-10-11 02:09:46.621 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-10-11 02:09:46.722 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+
+=== streamlit dead-db server log (tail) ===
+2026-10-11 02:10:22.130 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-10-11 02:10:48.916 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.

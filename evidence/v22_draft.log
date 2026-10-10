@@ -1,0 +1,35 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.7, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\hahuy\AppData\Local\Programs\Python\Python312\python.exe
+cachedir: .pytest_cache
+rootdir: D:\code\samsam
+plugins: anyio-4.12.1, langsmith-0.7.32, asyncio-1.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 25 items
+
+tests/test_content.py::test_draft_multi_all_channels_each_with_guardrail PASSED [  4%]
+tests/test_content.py::test_draft_multi_tiktok_prompt_has_script_hint PASSED [  8%]
+tests/test_content.py::test_draft_multi_unknown_channel_facebook_fallback PASSED [ 12%]
+tests/test_content.py::test_draft_multi_dedupe_and_str_input PASSED      [ 16%]
+tests/test_content.py::test_draft_contract_unchanged PASSED              [ 20%]
+tests/test_content.py::test_draft_retry_prompt_on_guardrail_fail PASSED  [ 24%]
+tests/test_store.py::test_save_draft_inserts_and_commits PASSED          [ 28%]
+tests/test_store.py::test_save_draft_source_cli PASSED                   [ 32%]
+tests/test_store.py::test_list_drafts_status_filter_and_shape PASSED     [ 36%]
+tests/test_store.py::test_set_status_approve_happy_atomic_guard PASSED   [ 40%]
+tests/test_store.py::test_set_status_reject_happy_no_guardrail_req PASSED [ 44%]
+tests/test_store.py::test_set_status_unknown_id_warns PASSED             [ 48%]
+tests/test_store.py::test_set_status_non_pending_warns PASSED            [ 52%]
+tests/test_store.py::test_set_status_approve_guardrail_fail_no_update PASSED [ 56%]
+tests/test_store.py::test_set_status_bad_inputs_no_db_touch PASSED       [ 60%]
+tests/test_store.py::test_set_status_race_no_row_warns PASSED            [ 64%]
+tests/test_store.py::test_schedule_approved_happy PASSED                 [ 68%]
+tests/test_store.py::test_schedule_only_approved PASSED                  [ 72%]
+tests/test_store.py::test_schedule_past_and_bad_date_no_db_touch PASSED  [ 76%]
+tests/test_store.py::test_schedule_unknown_id_warns PASSED               [ 80%]
+tests/test_store.py::test_calendar_shape_and_edges PASSED                [ 84%]
+tests/test_store.py::test_calendar_empty PASSED                          [ 88%]
+tests/test_store.py::test_coerce_date_variants PASSED                    [ 92%]
+tests/test_store.py::test_schema_sql_has_content_drafts_table PASSED     [ 96%]
+tests/test_store.py::test_store_module_exports_contract PASSED           [100%]
+
+============================= 25 passed in 1.08s ==============================
