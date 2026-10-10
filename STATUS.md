@@ -5,7 +5,8 @@
 **4/4 mục triển khai xong, gate xanh.** `python -m pytest -q` 131/131;
 `tests/test_lead_store.py` 13/13 ×3; `ruff check .` clean. Playwright
 đã kiểm UI thật cả nhánh DB live và DB-unavailable; ảnh
-`evidence/v19_dashboard.png`.
+`evidence/v19_dashboard.png`. Cold-check auditor lạ: **PASS** đợt 1 —
+2 MINOR + 1 NIT → someday trong DONE.md.
 
 ### Đọc diff cần biết
 
@@ -33,10 +34,11 @@
 | UI live + DB unavailable | `evidence/v19_streamlit.log` + `evidence/v19_dashboard.png` |
 | Gate chung | `evidence/v19_pytest.log` — focused 13/13 ×3, full 131/131, Ruff clean |
 
-External: leads thật cần OA live/C2.0; dashboard v1.9 chỉ cover convlog
-channel + leads, không phải social metrics. Content pipeline đa kênh +
-human-gate/lịch đăng, WS3 agents, WS4 playbook/SOP/Phụ lục D còn ở
-Someday theo SOW.
+External: 30 leads currently visible are mock/replay/UI-test data, not
+real customers — label them as sample in demos until OA live/C2.0;
+dashboard v1.9 only covers convlog channel + leads, not social metrics.
+Content pipeline đa kênh + human-gate/lịch đăng, WS3 agents, WS4
+playbook/SOP/Phụ lục D còn ở Someday theo SOW.
 
 ---
 

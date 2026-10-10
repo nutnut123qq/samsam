@@ -203,3 +203,24 @@ chat lẫn embeddings) + Streamlit.
 - Embedding lưu `float8[]` — nếu sau này cài được pgvector thì đổi cột + index,
   code retrieve tách hàm riêng để swap dễ.
 - Nội dung sâm hay bị phóng đại trên web — guardrail phải filter cả data ingest.
+- **psycopg `connect()` không timeout mặc định** (v1.9): UI có nhánh
+  "DB unavailable → st.info" vẫn HANG cả tab khi host unreachable —
+  browser test timeout mãi dù code có fallback. Mọi connect cho
+  dashboard/CLI phải truyền `connect_timeout=<giây>`; nhánh fallback
+  phải verify E2E bằng host chết thật (spawn server với env
+  `DATABASE_URL` giả, KHÔNG sửa `.env`) — test mock `connect()→None`
+  không bắt được hang chờ TCP.
+- **Playwright MCP ghi file theo root workspace KHÁC repo** (v1.9: root
+  = `D:\code\btc`, evidence png suýt rơi nhầm repo). Chụp evidence →
+  dùng Python Playwright trực tiếp với path tuyệt đối vào repo, hoặc
+  verify allowed-root trước; sau đó `git status` kiểm không có file lạc.
+- **Streamlit/deps nặng KHÔNG cài global khi interpreter dùng chung
+  thiếu** (v1.9): `pip install streamlit` kéo protobuf 7.x phá env
+  (conflict google-*/paddle) — verify UI bằng venv tạm (`python -m venv`
+  + install tối thiểu), xong bỏ; không sửa `requirements.txt` vì mục
+  đích test. `st.dataframe` render canvas → `page.inner_text()` không
+  chứa cell values: assert UI bằng screenshot/data-state, không grep
+  text DOM; print page-text về console cũng crash cp1258.
+- **File lạ trong `git status`** (vd `lv2-market-top.png` ở v1.9 — ảnh
+  project khác): xác minh nguồn trước khi stage; artifact không liên
+  quan giữ untracked, stage file theo danh sách tường minh không `add -A`.
