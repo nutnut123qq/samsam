@@ -9,7 +9,10 @@ connect_timeout=3) → báo cáo degraded "[chưa nạp]" ×3 + exit 0.
 Playwright (`.venv` + global python) kiểm UI thật cả nhánh DB live
 (5 tabs, sinh + render report, errors=0) lẫn DB-unavailable (warning
 DEGRADED, tab không hang) — `evidence/v20_report_tab.png` /
-`v20_report_dead.png`.
+`v20_report_dead.png`. Cold-check: **PASS coordinator self-review**
+(reviewer subagent quota-exhausted — precedent v0.3/v0.5): coordinator
+tự chạy lại 147/147 + ruff + live/dead-DB CLI probe khớp evidence;
+4 NIT → someday trong DONE.md.
 
 ### Đọc diff cần biết
 

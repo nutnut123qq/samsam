@@ -4,7 +4,12 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **v2.0-report-agent** (cycle 3/10 — WS3)
+Version đang mở: *(không có — contract kế chọn ở cycle 4/10)*
+
+v2.0-report-agent đóng 2026-10-10 (cold-check **coordinator
+self-review** — reviewer subagent quota-exhausted, precedent
+v0.3/v0.5; coordinator tự chạy lại 147/147 + ruff + probe live/
+dead-DB khớp evidence; 4 NIT → someday).
 
 v1.9-leads đóng 2026-10-10 (cold-check PASS đợt 1; 2 MINOR + 1 NIT
 → someday: intent substring ăn "đánh giá"/"ship"/"ở đâu", `convlog_stats`
@@ -1123,14 +1128,25 @@ Quy ước DoD cho phase connector:
   phải gọi rõ "dữ liệu mẫu". Bảng leads insert-only giữ `question`/
   `user_hash` quá retention convlog 30d → quyết retention/redaction
   trước khi nạp khách thật (C2.0).
+- Report agent v2.0 (coordinator self-review NIT): (a) `collect_chat`
+  đếm mọi dict hợp lệ làm "tin nhắn" — record thiếu question/user_hash
+  (event, sửa tay) vẫn tính total/in_period; (b) report trích verbatim
+  `question`/`detail` — không qua guardrail (data thô, vd "thuốc sinh
+  học" hợp lệ ở ngữ cảnh vườn) — human-gate banner cover, nhưng nếu tái
+  dùng text report ra public phải qua `check()`; (c) `by_channel*`
+  hardcode zalo/streamlit — mở rộng `channel_of` thêm kênh sẽ KeyError,
+  vá bằng defaultdict khi đó; (d) `report_name` edge 00:00 UTC + tab
+  `read_text` race nếu file bị xoá giữa list↔read.
 - WS2: ~~leads table + gom lead từ convlog; dashboard số liệu kênh~~
   (xong v1.9 — chỉ cover leads + convlog metrics, chưa phải social
   metrics); pipeline nội dung brief→draft→compliance→DUYỆT NGƯỜI→
   format đa kênh (FB/TikTok script/blog/Zalo OA)→lịch đăng — KHÔNG
   tự đăng (C2.4)
-- WS3: agent báo cáo định kỳ ra file (không tự gửi); agent nhật ký
-  vùng trồng form/chat→chuẩn hóa→cảnh báo bất thường (đã có bảng
-  plot_logs); trợ lý tri thức nội bộ
+- WS3: ~~agent báo cáo định kỳ ra file (không tự gửi)~~ — xong v2.0
+  (markdown `data/reports/`; lịch chạy định kỳ = Task Scheduler/cron
+  someday, LLM commentary someday); agent nhật ký vùng trồng
+  form/chat→chuẩn hóa→cảnh báo bất thường (đã có bảng plot_logs);
+  trợ lý tri thức nội bộ
 - WS4: playbook/SOP/kiến trúc hệ thống/Phụ lục D test-set nghiệm thu
 
 - PII trong `conversations.jsonl`: `question` đã mask SĐT/email bằng
@@ -1225,4 +1241,5 @@ Quy ước DoD cho phase connector:
 | v1.4-pii-evasion (patch) | Vá 2 lớp leak SĐT cold-check v1.2: `_mask_pii` scanner 1-pass `_paren_group_end` depth-counting (merge nhóm ngoặc-digit kề qua sep bất kỳ + unwrap ngoặc lồng/space-trong-ngoặc) thay fixpoint regex; bound email-alt `{1,64}`/`{1,63}` | 2026-10-09 | `evidence/v14_pytest.log` 95/95 + ruff clean; commits `205784c` (contract) + `d7b3a72` (code) + `d72ce2b` (board) + `cd9ab65`+`41be08d` (FIX). Cold-check đợt 1 FIX: MAJOR fixpoint O(n·depth) — "("*5000 đốt >10s trong `_log_lock`, inbound 1MB không cap → scanner 1-pass O(n) + budget-rescan 4n (n=20000→0.015s); MINOR cap-32-leak tự hết; MINOR over-mask nhóm ngoặc toàn-digit ACCEPT+test. Đợt 2 auditor lạ: **PASS** (tự chạy 95/95, perf 8 case <0.1s, không scope creep) — 2 MINOR mới → someday (budget-abort bypass, email RFC-bound edge) + NIT số stale |
 | v1.3-ops-polish (patch) | Purge-fail backoff: `_last_purge_attempt` throttle daily-purge retry (PURGE_RETRY_S=3600 — đĩa hỏng dai dẳng không còn kéo mọi reply thread xếp hàng O(file) trong `_log_lock`); `_isolated_files` vá latent leak `_last_purge` | 2026-10-09 | `evidence/v13_pytest.log` 92/92 (auditor tự chạy lại 17.7s) + ruff clean; commits `b8ed6e5` (contract) + `f48364a` (code) + `a27647c` (NIT reviewer). Reviewer PASS đợt 1, 2 NIT vá ngay (comment throttle, setattr thừa). Cold-check auditor lạ: **PASS** — tự định diff-range + chạy lại pytest 92/92 + ruff; 2 NIT: boot-purge-không-set-`_last_purge` vá ngay (global + set sau purge boot OK), clock-skew `time.time()` → someday |
 | v1.8-core-db | WS1 nền tảng SOW: schema 6 bảng lõi (products/claims_approved/plots/plot_logs/orders/assets) + `ingest/core_store` loader idempotent delete-by-source + Phụ lục A đếm thật (`scripts/data_audit.py`, `docs/phu-luc-a.md`) + sample data plots/orders "chờ bàn giao" | 2026-10-10 | `evidence/v18_schema.log` (apply ×2 → 7 bảng public) · `v18_core_store.log` (×2 giống hệt: 27/22/3/6/5/219, 9/10 sku link) · `v18_audit.log` (10 domain) · `v18_pytest.log` 118/118 (coordinator tự chạy lại 29.8s) + ruff clean; commits `2bbfe5a` (contract) + `06ee856` (code) + `df0fc7d` (board) + `6d9b6b5` + `d120185` (FIX). Cold-check đợt 1+2 FIX cùng lớp lỗi "delete-trắng" (file thiếu → skip; file rỗng/0-record → skip+warn) — vá hết; đợt 3 auditor lạ **PASS** (probe corrupt-JSON crash-không-xoá, atomic txn, không nới assert) — 3 MINOR + 1 NIT → someday |
-|| v1.9-leads | WS2 nền SOW: bảng `leads` (dedup_key unique, insert-only — không delete-by-source vì convlog rotate/purge) + `ingest/lead_store` harvest convlog+`.1` (intent partner/order/price/contact, channel suy từ `msg_id`) + tab Leads Streamlit read-only (convlog stats luôn hiện, DB-lỗi → st.info, `connect_timeout=3`) | 2026-10-10 | `evidence/v19_schema.log` (8 bảng public ×2) · `v19_leads.log` (harvest thật ×2 dup-30; rollback-only temp-table probe chứng minh 30-new→30-dup, public 30→30) · `v19_streamlit.log` + `v19_dashboard.png` (live + DB-unavailable, console 0 lỗi) · `v19_pytest.log` (131/131, focused 13/13 ×3, ruff clean); commits `c3387a0` (contract) + `af8d314` (code/tests/evidence/board) + commit đóng. Cold-check auditor lạ: **PASS** đợt 1 (tự chạy 131/131 + ruff + harvest → 30 rows) — 2 MINOR (intent substring FP, 30 leads là mock/replay phải nhãn "dữ liệu mẫu" khi demo) + 1 NIT (`answered` truthiness) → someday. Worker chết rate-limit giữa lane → resume/absorb; DB-fallback hang → `connect_timeout=3`; UI verify qua temp venv + Python Playwright (MCP root trỏ workspace khác) |
+| v1.9-leads | WS2 nền SOW: bảng `leads` (dedup_key unique, insert-only — không delete-by-source vì convlog rotate/purge) + `ingest/lead_store` harvest convlog+`.1` (intent partner/order/price/contact, channel suy từ `msg_id`) + tab Leads Streamlit read-only (convlog stats luôn hiện, DB-lỗi → st.info, `connect_timeout=3`) | 2026-10-10 | `evidence/v19_schema.log` (8 bảng public ×2) · `v19_leads.log` (harvest thật ×2 dup-30; rollback-only temp-table probe chứng minh 30-new→30-dup, public 30→30) · `v19_streamlit.log` + `v19_dashboard.png` (live + DB-unavailable, console 0 lỗi) · `v19_pytest.log` (131/131, focused 13/13 ×3, ruff clean); commits `c3387a0` (contract) + `af8d314` (code/tests/evidence/board) + commit đóng. Cold-check auditor lạ: **PASS** đợt 1 (tự chạy 131/131 + ruff + harvest → 30 rows) — 2 MINOR (intent substring FP, 30 leads là mock/replay phải nhãn "dữ liệu mẫu" khi demo) + 1 NIT (`answered` truthiness) → someday. Worker chết rate-limit giữa lane → resume/absorb; DB-fallback hang → `connect_timeout=3`; UI verify qua temp venv + Python Playwright (MCP root trỏ workspace khác) |
+| v2.0-report-agent | WS3 đầu tiên: agent báo cáo định kỳ → FILE markdown `data/reports/` (package `agents/` mới; consume orders/leads/plot_logs/plots/products + convlog file-based; degraded khi DB chết; nhãn *(mẫu)* cho `source 'sample:*'`; `answered` strict `is True`; BẢN NHÁP human-gate, KHÔNG tự gửi) + tab Streamlit thứ 5 "Báo cáo" | 2026-10-10 | `evidence/v20_report.log` (CLI ×2 idempotent + `--until/--days` + dead-host `10.255.255.1` → degraded exit 0) · `v20_report.md` (report mẫu thật) · `v20_streamlit.log` + `v20_report_tab.png`/`v20_report_dead.png` (live + DB-unavailable, console 0 lỗi, warning DEGRADED) · `v20_pytest.log` (147/147, focused 16/16 ×3, ruff clean); commits `1553e81` (contract) + `6cb3da8` (impl) + `fb2f93b` (board) + commit đóng. Cold-check: reviewer subagent quota-exhausted → **PASS coordinator self-review** (precedent v0.3/v0.5 — tự chạy lại 147/147 84s + ruff + CLI live/dead-DB khớp evidence); 4 NIT → someday (collect_chat đếm record thiếu-field, verbatim data không qua guardrail, `by_channel*` hardcode 2 kênh, report_name edge-00:00 + read_text race) |

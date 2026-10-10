@@ -224,3 +224,13 @@ chat lẫn embeddings) + Streamlit.
 - **File lạ trong `git status`** (vd `lv2-market-top.png` ở v1.9 — ảnh
   project khác): xác minh nguồn trước khi stage; artifact không liên
   quan giữ untracked, stage file theo danh sách tường minh không `add -A`.
+- **`env -u DATABASE_URL` KHÔNG phải nhánh "DB down"** (v2.0):
+  `lead_store.connect()` tự `load_dotenv(ROOT/.env)` nạp lại DSN thật
+  (load_dotenv không override biến đang có, nhưng biến đã -u thì trống
+  → .env lấp vào). Muốn nhánh connect→None: set `DATABASE_URL` trỏ
+  host chết (vd `postgresql://u@10.255.255.1:5432/x`) khi spawn
+  process, hoặc monkeypatch `connect` trong test.
+- **Reviewer/subagent quota-exhausted giữa cycle** (v2.0): cold-check
+  không spawn được → coordinator tự audit adversarial (đọc diff + chạy
+  lại gate + probe claim) và ghi rõ "coordinator self-review" trong
+  DONE/STATUS/ledger — precedent v0.3/v0.5; không giả vờ có auditor lạ.
