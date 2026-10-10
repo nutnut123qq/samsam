@@ -462,6 +462,37 @@ mutable mới.
 - [x] **V8.4 Gate chung** — `python -m pytest` full + `ruff check .`
   (coordinator) — 105/105 `evidence/v17_pytest.log` + ruff clean
 
+## M19 — v1.8-core-db (WS1 nền tảng: DB lõi + Phụ lục A)
+
+Checklist/DoD chi tiết: `DONE.md` mục v1.8-core-db (contract coordinator
+tự chọn qua /cycle 1/10 — override no-work: SOW WS1–WS4 chưa build =
+việc thật). `guardrail.py`/`api/rag.py`/`connectors/zalo.py` không đụng;
+skip eval_qa + zalo_mock. Chỉ thêm bảng — không sửa/drop `chunks`.
+Dữ liệu `sample_*` là MẪU chờ bàn giao (SOW §5.2); `orders` không PII.
+
+- [ ] **W1.1 Lane A** — `docs/schema.sql` +6 bảng (products,
+  claims_approved, plots, plot_logs, orders, assets) +
+  `scripts/apply_schema.py` (UTF-8 guard; psycopg execute multi-stmt
+  như `demo.py:52` — máy không có psql).
+  - Boundary: `docs/schema.sql`, `scripts/apply_schema.py`
+  - Gate: `python scripts/apply_schema.py` ×2 idempotent → 7 bảng public
+- [ ] **W1.2 Lane B** — `ingest/core_store.py` +
+  `data/sample_{plots,plot_logs,orders}.jsonl` (dòng `_doc`: "DỮ LIỆU
+  MẪU — chờ bàn giao"; loader skip). Delete-by-source + insert →
+  idempotent, không đè row manual.
+  - Boundary: `ingest/core_store.py`, `data/sample_*.jsonl`
+  - Gate: `python -m ingest.core_store` ×2 count giữ — products 27 /
+    claims sku 10 / assets ≥140 / plots 3 / plot_logs ≥5 / orders ≥5
+- [ ] **W1.3 Lane C** — `scripts/data_audit.py` (bảng kê jsonl +
+  whitelist + core tables + chunks; DB lỗi → "chưa nạp", exit 0) +
+  `docs/phu-luc-a.md` draft Phụ lục A kèm cột "chờ bàn giao".
+  - Boundary: `scripts/data_audit.py`, `docs/phu-luc-a.md`
+  - Gate: audit exit 0 đủ domain; số trong doc khớp evidence log
+- [ ] **W1.4 Lane D + gate chung** — `tests/test_core_store.py` +
+  `python -m pytest` full + `ruff check .` (coordinator)
+  - Boundary: `tests/test_core_store.py`
+  - Gate: pytest xanh + ruff clean
+
 ---
 
 ## Lề (không đụng trong pilot)

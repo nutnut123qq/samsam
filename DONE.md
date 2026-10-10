@@ -4,12 +4,79 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **không** — board sạch, chờ /cycle 5/5 chọn contract.
+Version đang mở: **v1.8-core-db** — WS1 nền tảng (contract /cycle 1/10
+2026-10-10; override kết luận no-work của loop trước — SOW WS1–WS4 chưa
+build là việc thật có contract, không phải bịa scope).
 
 v1.7-edge-hardening đóng 2026-10-09 (cold-check PASS đợt 1; 2 MINOR
 vá ngay — khôi phục assert msg-key cleanup + thêm case CL `abc`/`0`
 vào test; 1 MINOR → someday: domain `b..c`/`@@b.com` dạng-lạ không
 mask).
+
+## Checklist v1.8-core-db
+
+Khán giả: buổi đàm phán SOW — chứng minh nền dữ liệu lõi WS1 đứng được
+trên Postgres thật (SOW §WS1: bảng `products`, `claims_approved`,
+`plots`, `orders`, `assets` + quy trình nhập liệu mới cho nhật ký vườn
+→ bảng `plot_logs`), và bảng kê Phụ lục A được đếm từ dữ liệu thật thay
+vì ghi tay. Đây là nền cho WS2 (leads/đơn/dashboard) và WS3 (agent báo
+cáo + agent nhật ký vùng trồng) ở các cycle sau. Quy ước precedent
+patch: `guardrail.py`/`api/rag.py`/`connectors/zalo.py` không đụng;
+skip eval_qa + zalo_mock (answer/reply path không đổi); không global
+mutable mới trong zalo.py → `_isolated_files` giữ nguyên. Dữ liệu
+plots/plot_logs/orders là **MẪU** — công ty chưa bàn giao (SOW §5.2),
+đánh dấu `_doc` "DỮ LIỆU MẪU" trong từng file + cột "chờ bàn giao" của
+Phụ lục A; products/claims/assets nạp từ crawl + whitelist THẬT hiện
+có. Schema chỉ `create table if not exists` — không sửa/drop `chunks`,
+revert gọn. `orders` KHÔNG lưu PII khách (tên/SĐT) ở pilot.
+
+- [ ] **W1.1 Schema lõi + apply script** — `docs/schema.sql` +6 bảng;
+  `scripts/apply_schema.py` apply schema.sql qua psycopg (máy không có
+  psql — precedent `demo.py:52` execute multi-statement; UTF-8 guard),
+  in danh sách bảng public.
+  - Boundary: `docs/schema.sql`, `scripts/apply_schema.py`
+  - Gate: apply ×2 idempotent; `information_schema` đủ 7 bảng public
+  - Evidence: `evidence/v18_schema.log`
+- [ ] **W1.2 Loader `ingest/core_store.py` + sample jsonl** —
+  `python -m ingest.core_store`: `products.jsonl`→products (+`images[]`
+  →assets kind=image), `articles.jsonl`/`news.jsonl`→assets
+  kind=article, `claims_whitelist.json`→claims_approved (`sku_key` =
+  key whitelist; `product_id` best-effort qua segment URL cuối trong
+  `source`; claim NULL + note khi SKU "chưa có công bố"),
+  `data/sample_{plots,plot_logs,orders}.jsonl`→3 bảng (dòng `_doc` skip).
+  Idempotent: delete `where source = <file>` rồi insert — chạy lại
+  không nhân đôi, không đè row nguồn khác (nhập tay).
+  - Boundary: `ingest/core_store.py`, `data/sample_*.jsonl`
+  - Gate: chạy ×2 count giữ — products 27 · claims sku 10 · assets
+    ≥140 · plots 3 · plot_logs ≥5 · orders ≥5
+  - Evidence: `evidence/v18_core_store.log`
+- [ ] **W1.3 Phụ lục A draft** — `scripts/data_audit.py` in bảng kê
+  domain × số-lượng × nguồn × trạng-thái (jsonl + whitelist + bảng lõi
+  + chunks; DB lỗi → in "chưa nạp", vẫn exit 0); `docs/phu-luc-a.md` =
+  draft Phụ lục A (SOW §11): bảng kê từ script + domain "chờ bàn giao"
+  (hồ sơ pháp lý/ĐKSP gốc, sổ bán hàng, bản đồ khoảnh, media assets
+  trong drive công ty).
+  - Boundary: `scripts/data_audit.py`, `docs/phu-luc-a.md`
+  - Gate: script exit 0 in đủ domain; số trong doc khớp log
+  - Evidence: `evidence/v18_audit.log`
+- [ ] **W1.4 Tests + gate chung** — `tests/test_core_store.py`:
+  transforms thuần (product/asset/claim/log/order rows), `_doc` skip,
+  link product qua URL segment, fake-conn chứng minh delete-by-source
+  trước insert + không đụng `chunks`, schema.sql chứa đủ 6 `create
+  table` (drift guard), sample files parse đủ field. `python -m pytest`
+  full xanh + `ruff check .` clean.
+  - Evidence: `evidence/v18_pytest.log`
+
+External-dependency (không treo version): data thật plots/orders/hồ sơ
+SKU chờ công ty bàn giao (SOW §5.2); vector index P0/P1 mới chỉ cover
+jsonl crawl qua `chunks` — core tables phục vụ agent/dashboard cycle
+sau, chưa embed; ingest chunks hiện đọc data/*.jsonl theo glob tên cố
+định — sample_* không lọt vào chunks (đúng ý).
+
+Someday mới: leads table + gom lead từ convlog (WS2), pipeline nội dung
+đa kênh + lịch đăng có human-gate (WS2), agent báo cáo định kỳ ra file
+(WS3), form/chat nhật ký vườn + cảnh báo bất thường (WS3), playbook/
+SOP + Phụ lục D test-set (WS4).
 
 ## Checklist v1.7-edge-hardening
 
