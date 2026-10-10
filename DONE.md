@@ -4,7 +4,7 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: *(không có — contract kế chọn ở cycle 3/10)*
+Version đang mở: **v2.0-report-agent** (cycle 3/10 — WS3)
 
 v1.9-leads đóng 2026-10-10 (cold-check PASS đợt 1; 2 MINOR + 1 NIT
 → someday: intent substring ăn "đánh giá"/"ship"/"ở đâu", `convlog_stats`
@@ -19,6 +19,113 @@ v1.7-edge-hardening đóng 2026-10-09 (cold-check PASS đợt 1; 2 MINOR
 vá ngay — khôi phục assert msg-key cleanup + thêm case CL `abc`/`0`
 vào test; 1 MINOR → someday: domain `b..c`/`@@b.com` dạng-lạ không
 mask).
+
+## Checklist v2.0-report-agent
+
+Khán giả: buổi đàm phán SOW / demo cho bác Lực — "agent báo cáo định
+kỳ" là agent thứ 2 trong WS3 (SOW §WS3: "tổng hợp sales + social
+metrics → Zalo/email lãnh đạo"; bản pilot ra FILE markdown trong
+`data/reports/`, duyệt + gửi do NGƯỜI — human-gate C2.4, KHÔNG tự
+gửi). Chọn cụm này (gợi ý coordinator, xác nhận sau khảo sát) vì rẻ
+nhất + mạch tự nhiên: consume đúng DB lõi v1.8 (orders/plot_logs/
+plots/products) + leads/convlog v1.9 vừa build, ra file là evidence
+demo trực tiếp, KHÔNG phụ thuộc data/creds ngoài (social metrics =
+mục "chờ bàn giao" trong chính báo cáo). Cụm bị loại: pipeline nội
+dung đa kênh WS2 (lớn — format FB/TikTok/blog/Zalo OA + lịch đăng +
+flow duyệt, để cycle sau); agent nhật ký vườn WS3 (cần form/chat →
+chuẩn hóa — cụm riêng); trợ lý tri thức nội bộ (trùng chatbot RAG đã
+có — ít giá trị thêm).
+
+Quy ước precedent: `guardrail.py`/`api/rag.py`/`connectors/zalo.py`
+KHÔNG đụng; skip eval_qa + zalo_mock (answer/reply path không đổi);
+không global mutable mới trong zalo.py. KHÔNG thêm/sửa bảng — báo cáo
+là FILE runtime (`data/reports/`, gitignored, atomic tmp+`os.replace`,
+ghi bytes UTF-8 tránh `\n`→`\r\n` trên Windows). Không dùng LLM →
+output không cần guardrail check (invariant chỉ áp text AI sinh; LLM
+commentary để someday). Tái dùng từ `ingest.lead_store`: `connect`
+(DSN + `connect_timeout=3`), `iter_convlog` (BYTES + split `\n`,
+corrupt/`_doc`/io-error skip+đếm), `channel_of`, `_parse_ts`. Mọi
+connect `connect_timeout=3`; nhánh DB-unavailable verify bằng host
+chết thật (env `DATABASE_URL` giả khi spawn — KHÔNG mock
+`connect()→None`). `answered` convlog đếm STRICT `is True` — khác
+`convlog_stats` truthiness (NIT cold-check v1.9; fix-forward ở code
+mới, không vá lead_store trong version này). Bảng toàn `source like
+'sample:%'` → section gắn nhãn *(mẫu)* ngay trong báo cáo — demo
+KHÔNG được để người xem tưởng số vận hành thật (orders/plots/
+plot_logs hiện đều mẫu chờ bàn giao).
+
+- [ ] **W3.1 Module `agents/report.py`** — package mới `agents/`
+  (nhà cho 3 agent WS3): `period_bounds(days, until)` → (since,
+  until_excl) aware UTC; `collect_db(conn, since, until)` → sales
+  (đơn/doanh thu kỳ + kỳ trước, theo kênh/trạng thái/top sản phẩm
+  left-join products "Ngoài catalog" khi product_id null) + leads
+  (mới kỳ + kỳ trước, tổng, chờ xử lý, intent/channel, 5 câu hỏi
+  mới nhất) + farm (plot_logs kỳ, theo khoảnh/hoạt động, flag
+  bất-thường keyword sâu-bệnh, plots/cây đang quản) + `sources`
+  per-table + `sample` flag; `psycopg.Error` → `db_ok=False`.
+  `collect_chat(data_dir, since, until)` → convlog theo kỳ + toàn
+  thời gian (file-based, luôn có; ts hỏng/ngoài kỳ đếm riêng).
+  `render(rep)` → markdown tiếng Việt đủ section: bán hàng, leads,
+  kênh chat, vùng trồng, social "chờ bàn giao", nguồn dữ liệu +
+  DB status; degraded → phần DB "[chưa nạp — <err>]"; footer
+  human-gate "BẢN NHÁP — người duyệt, hệ thống KHÔNG tự gửi".
+  `report_name(since, until)` → `report-<since>_<end>.md`;
+  `write_report` atomic; `generate(days, until, out_dir, conn)`
+  → (path, rep); `list_reports`. Edge enumerate: DB down →
+  degraded; bảng thiếu (UndefinedTable) → degraded; kỳ 0-row →
+  số 0 không crash; convlog thiếu → zeros; `total_vnd`/`qty`/
+  `product_id` null → coalesce; out_dir chưa có → mkdir; viết
+  lại cùng kỳ → ghi đè idempotent.
+  - Boundary: `agents/__init__.py`, `agents/report.py`
+  - Gate: unit tests W3.4 xanh
+  - Evidence: `evidence/v20_report.log`
+- [ ] **W3.2 CLI `python -m agents.report` + gitignore** — argparse
+  `--days N` (default 7, ≥1), `--until YYYY-MM-DD` (mặc định hôm nay
+  UTC, = ngày cuối kỳ inclusive), `--out-dir` (default
+  `data/reports`); in kỳ + path + topline; DB down → `[warn]` + vẫn
+  ghi file degraded + **exit 0** (precedent `data_audit.py` "chưa
+  nạp, exit 0"). `.gitignore` += `data/reports/` (runtime artifact).
+  - Boundary: `agents/report.py`, `.gitignore`
+  - Gate: run ×2 → cùng filename ghi đè (idempotent); run với
+    `DATABASE_URL` trỏ host chết → file degraded vẫn ghi, exit 0
+  - Evidence: `evidence/v20_report.log` + report .md copy thành
+    `evidence/v20_report.md`
+- [ ] **W3.3 Tab "Báo cáo" (thứ 5) trong streamlit** — caption
+  human-gate; selectbox kỳ 7/14/30 + nút "Sinh báo cáo" →
+  `generate()` → success path (warn vàng khi degraded); list
+  `data/reports/*.md` mới nhất trước → selectbox → `st.markdown`
+  nội dung; dir trống → `st.info` không crash; DB down → tab vẫn
+  render + sinh được file degraded.
+  - Boundary: `app/streamlit_app.py`
+  - Gate: Playwright qua `.venv` (path tuyệt đối vào evidence/) —
+    DB live: tab render + sinh report + nội dung hiện, console
+    errors=0; DB-unavailable (spawn streamlit env `DATABASE_URL`
+    giả — host chết thật): tab vẫn render + sinh được file degraded
+  - Evidence: `evidence/v20_streamlit.log`,
+    `evidence/v20_report_tab.png`
+- [ ] **W3.4 Tests + gate chung** — `tests/test_report.py`: period
+  math (default now / `--until` → end-exclusive + since=-days);
+  `_fmt_vnd`; `collect_db` fake-conn dispatch theo (substr, params)
+  — period params đúng, prev-period query, `db_ok` flag, sample
+  detect `sample:%`; `collect_db` raise `psycopg.Error` →
+  `db_ok=False`; `collect_chat` period filter + edge (file thiếu/
+  corrupt/`_doc`/ts sai/ts ngoài kỳ/`answered` strict); `render`
+  đủ section + nhãn *(mẫu)* + degraded "[chưa nạp]" + footer
+  human-gate; `report_name` deterministic; `write_report` atomic +
+  ghi đè + không sót `.tmp`; `generate` end-to-end tmp_path — conn
+  giả → file có số liệu, `connect()→None` → file degraded.
+  `python -m pytest -q` full + `ruff check .` + `git diff --check`.
+  - Boundary: `tests/test_report.py`
+  - Gate: targeted xanh ×3; full suite xanh; ruff clean; diff sạch
+  - Evidence: `evidence/v20_pytest.log`
+
+External-dependency (không treo version): social metrics (Fanpage/
+TikTok/Zalo OA API) chờ creds Phụ lục C — báo cáo có mục "chờ bàn
+giao", tự điền khi có nguồn. Gửi báo cáo Zalo/email lãnh đạo là
+bước NGƯỜI (C2.4) — hệ thống chỉ ra file. Someday: LLM commentary
+(qua `guardrail.check()` theo invariant); chart/delta dài kỳ;
+schedule helper (Task Scheduler/cron snippet trong docstring);
+anomaly nhật ký vườn sâu hơn (thuộc agent nhật ký — cụm khác).
 
 ## Checklist v1.9-leads
 
