@@ -14,6 +14,8 @@ chat lẫn embeddings) + Streamlit.
 | Setup | `pip install -r requirements.txt` |
 | Crawl | `python -m crawler.collect` |
 | Ingest | `python -m ingest.embed_store` |
+| DB lõi WS1 | `python scripts/apply_schema.py` → `python -m ingest.core_store` |
+| Bảng kê Phụ lục A | `python scripts/data_audit.py` (output → `docs/phu-luc-a.md`) |
 | Demo UI | `streamlit run app/streamlit_app.py` (hoặc `python demo.py`) |
 | Zalo webhook | `python -m connectors.zalo` → :8788/zalo-webhook |
 | Mock E2E Zalo | `python scripts/zalo_mock.py` |
@@ -24,7 +26,9 @@ chat lẫn embeddings) + Streamlit.
 - `crawler/` — collect public site data → `data/*.jsonl`
 - `connectors/` — adapters ra kênh ngoài (Zalo OA webhook); chỉ nhận/reply,
   KHÔNG đăng nội dung mới (human-gate C2.4)
-- `ingest/` — chunk + embed + nạp pgvector
+- `ingest/` — chunk + embed + nạp chunks (`embed_store`); `core_store`
+  nạp DB lõi WS1 (products/claims_approved/plots/plot_logs/orders/assets,
+  delete-by-source idempotent — row `source='manual'` không bị đè)
 - `pipelines/` — content draft + guardrail check (claim whitelist + banned words)
 - `app/` — Streamlit demo (3 tab: Chat, Content Studio, Chưa trả lời)
 - `data/` — jsonl dump, `claims_whitelist.json`, `banned_words.txt`
