@@ -4,8 +4,8 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **(không — loop /cycle 10 tiếp, contract cycle kế
-ghi khi chốt)**
+Version đang mở: **v2.3-handover-docs** (contract coordinator tự
+chọn qua /cycle 2026-10-11 — checklist bên dưới)
 
 v2.2-content-pipeline đóng 2026-10-11 (cold-check auditor lạ —
 profile reviewer quota cạn nên spawn `subagent_general` read-only
@@ -42,6 +42,80 @@ v1.7-edge-hardening đóng 2026-10-09 (cold-check PASS đợt 1; 2 MINOR
 vá ngay — khôi phục assert msg-key cleanup + thêm case CL `abc`/`0`
 vào test; 1 MINOR → someday: domain `b..c`/`@@b.com` dạng-lạ không
 mask).
+
+## Checklist v2.3-handover-docs
+
+Khán giả: bàn giao cho công ty Sâm Sâm + buổi đàm phán SOW — WS4 "Bộ
+tài liệu bàn giao: SOP, tài khoản, kiến trúc hệ thống, prompt library"
++ "giáo trình tiếng Việt theo vai trò (MKT/sales-admin/vườn), tối
+thiểu 4 workshop + playbook từng vai trò" + Phụ lục D "bộ câu hỏi/
+test-set nghiệm thu chatbot & guardrail". Đây là deliverable SOW lớn
+cuối cùng chưa build (WS1 ✓ v1.8, WS2 ✓ v1.9+v2.2, WS3 ✓ v2.0+v2.1;
+trợ lý tri thức nội bộ đã đánh giá trùng RAG + thiếu data nội bộ →
+external-dep). Cắt lát: docs THẬT mô tả hệ thống ĐANG CHẠY (không viết
+lý tưởng) — mọi lệnh/SOP phải khớp AGENTS.md + code hiện có, mọi claim
+về tính năng phải grep được trong repo. KHÔNG code mới trừ test drift-
+guard; tài khoản trong SOP mô tả VAI TRÒ + chỗ đặt trong `.env`, không
+ghi giá trị thật (invariant: secret không vào git).
+
+Quy ước: tiếng Việt, mỗi doc mở đầu bằng 1 đoạn "dành cho ai / làm
+việc gì / cần gì". Nguồn sự thật prompt: `pipelines/content.py`
+(system prompt + CHANNEL_HINT) và `api/rag.py` — prompt-library TRÍCH
+đúng, ghi file:line gốc. Phụ lục D build từ `tests/questions.md` (12
+câu có sẵn, Q11/Q12 bẫy) + case guardrail trong `tests/` — mỗi mục
+ghi: id, câu/nhập, kỳ vọng, cách chạy (tự động qua eval_qa / tay).
+WS4 còn lại là external-dep: workshop THẬT + "2 tuần tự vận hành" là
+sự kiện với công ty — doc chỉ chuẩn bị giáo trình/outline.
+
+- [ ] **W6.1 Playbook 3 vai trò + 4 workshop outline** —
+  `docs/handover/playbook-{mkt,sales-admin,vuon}.md`: vai trò đó dùng
+  tab/CLI nào (MKT: Content Studio + Duyệt & Lịch + Báo cáo; sales-
+  admin: Chat/Leads/Chưa trả lời; vườn: Nhật ký vườn + --check), quy
+  trình ngày mẫu, khi nào gọi người khác. `docs/handover/workshops.md`:
+  4 buổi (W1 KB+chatbot, W2 content+guardrail+duyệt, W3 leads+báo cáo,
+  W4 vận hành+tự-chữa-lỗi) mỗi buổi mục tiêu/agenda/bài tập vận hành
+  thật trên app.
+  - Boundary: `docs/handover/`
+  - Gate: 4 file tồn tại; mọi tab/lệnh nhắc tới tồn tại thật trong
+    repo (tab name khớp streamlit_app.py, lệnh khớp AGENTS.md)
+  - Evidence: `evidence/v23_docs.log`
+- [ ] **W6.2 SOP + kiến trúc + prompt library** —
+  `docs/handover/sop.md` (vận hành hàng ngày: chạy app, crawl lại,
+  ingest, harvest leads, sinh báo cáo, backup DB, xử lý DB-down/
+  token-hết — mọi lệnh phải đúng như chạy thật); `docs/handover/
+  kien-truc.md` (sơ đồ luồng crawl→ingest→RAG→chat + connector Zalo +
+  bảng DB 9 bảng + agents + human-gate điểm nào); `docs/handover/
+  prompt-library.md` (system prompt content.py + rag.py trích nguyên
+  văn kèm file:line, brand-voice notes, template brief mẫu 3 loại).
+  - Boundary: `docs/handover/`
+  - Gate: lệnh trong sop.md đều chạy được/có trong repo (spot-check ≥5);
+    kien-truc.md liệt kê đúng 9 bảng + 6 tab; prompt trích đúng source
+  - Evidence: `evidence/v23_docs.log`
+- [ ] **W6.3 Phụ lục D — test-set nghiệm thu** — `docs/handover/
+  phu-luc-d.md`: bảng test chatbot (đủ 12 câu questions.md, đánh dấu
+  Q11/Q12 bẫy + kỳ vọng NO_DATA/guardrail) + bảng test guardrail
+  (banned word, claim ngoài whitelist, claim đúng whitelist pass —
+  trích case từ tests/) + hướng dẫn chạy (`python scripts/eval_qa.py`
+  ≥10/12) + tiêu chí đạt.
+  - Boundary: `docs/handover/`
+  - Gate: đủ 12 câu khớp questions.md (grep id), case guardrail khớp
+    tên test thật trong tests/test_guardrail.py
+  - Evidence: `evidence/v23_docs.log`
+- [ ] **W6.4 Drift-guard test + gate chung** — `tests/test_handover_
+  docs.py`: 7 file tồn tại + non-empty; mỗi playbook chứa đúng tab
+  name thật (đọc streamlit_app.py lấy st.tabs list); phu-luc-d chứa
+  đủ 12 id câu hỏi parse từ tests/questions.md; sop.md chứa các lệnh
+  cốt (`streamlit run`, `apply_schema`, `lead_store`, `agents.report`,
+  `agents.garden`, `pipelines.store`); kien-truc đếm đúng "9" bảng
+  hoặc list đủ tên 9 bảng. `python -m pytest -q` full + `ruff check .`.
+  - Boundary: `tests/test_handover_docs.py`
+  - Gate: targeted xanh ×3; full suite xanh; ruff clean
+  - Evidence: `evidence/v23_pytest.log`
+
+External-dependency (không treo version): workshop thật + nghiệm thu
+"2 tuần tự vận hành" + giáo trình giảng = sự kiện với công ty (T5-T6
+timeline); tài khoản/khóa thật chờ Phụ lục C. Someday: video hướng
+dẫn, bản EN, giáo trình slides.
 
 ## Checklist v2.2-content-pipeline
 
