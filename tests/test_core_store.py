@@ -3,6 +3,7 @@ schema drift + sample files hợp lệ. Không cần DB thật: `apply_rows` ch�
 trên fake conn ghi SQL để chứng minh delete-by-source trước insert và
 không đụng bảng `chunks`."""
 
+import json
 import re
 from pathlib import Path
 
@@ -80,13 +81,43 @@ def test_collect_rows_real_data():
     """collect_rows trên data/ thật: đủ domain, counts theo gate board."""
     domains = {t: (s, r) for t, s, r in cs.collect_rows(DATA)}
     assert set(domains) == set(cs.DOMAIN_ORDER)
-    assert len(domains["products"][1]) == 27
+    # Count gắn data crawl hiện tại — products >= vì crawl có thể thêm.
+    assert len(domains["products"][1]) >= 27
     skus = {r["sku_key"] for r in domains["claims_approved"][1]}
     assert len(skus) == 10
     assert len(domains["assets"][1]) >= 140
     assert len(domains["plots"][1]) == 3
     assert len(domains["plot_logs"][1]) >= 5
     assert len(domains["orders"][1]) >= 5
+
+
+def test_collect_rows_missing_file_skips_domain(tmp_path):
+    """MAJOR cold-check v1.8: file nguồn thiếu → domain KHÔNG được trả.
+    Nếu vẫn append source cố định + rows=[] thì apply_rows chạy
+    `delete where source=...` rồi insert 0 → xoá trắng bảng đang có
+    (claims_approved là nguồn sự thật guardrail — rủi ro cao)."""
+    tables = {t for t, _, _ in cs.collect_rows(tmp_path)}
+    assert not tables  # thư mục trống → không domain nào
+
+
+def test_collect_rows_partial_files(tmp_path):
+    """Có products.jsonl mà thiếu whitelist/sample → chỉ products+assets
+    được trả; domain thiếu-file vắng khỏi kết quả."""
+    (tmp_path / "products.jsonl").write_text(
+        json.dumps({"id": "p1", "name": "X", "price_vnd": 1,
+                    "url": "http://x/a.html", "images": ["http://x/i.png"]})
+        + "\n", encoding="utf-8")
+    tables = {t for t, _, _ in cs.collect_rows(tmp_path)}
+    assert tables == {"products", "assets"}
+    assert "claims_approved" not in tables
+
+
+def test_apply_rows_no_domains_no_ops():
+    """collect_rows trả rỗng (thiếu mọi file) → apply không chạy
+    statement nào, đặc biệt không delete."""
+    conn = _FakeConn()
+    cs.apply_rows(conn, [])
+    assert conn.ops == []
 
 
 def test_sample_files_have_required_fields():

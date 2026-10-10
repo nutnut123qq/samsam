@@ -54,6 +54,14 @@ revert gọn. `orders` KHÔNG lưu PII khách (tên/SĐT) ở pilot.
     plot_logs=6, orders=5, assets=219; claims product_id link
     deterministic qua URL `.html` (9/10 sku; savitim NULL đúng — source
     trỏ bài news)
+  — *(cold-check MAJOR vá: `collect_rows` trước append `products`/
+    `claims_approved` kèm source cố định DÙ FILE THIẾU → delete-by-
+    source + insert-0 xoá trắng bảng đang có (trái docstring "thiếu →
+    KHÔNG xóa"; `claims_approved` là nguồn sự thật guardrail). Vá: chỉ
+    append domain khi file tồn tại, assets cũng skip khi không file
+    nào đóng góp; +3 test file-thiếu/partial/no-ops. 2 MINOR →
+    someday: manual-child mất link/cascade + assets 'multi' nguồn-rút-
+    hẳn tồn đọng)*
 - [x] **W1.3 Phụ lục A draft** — `scripts/data_audit.py` in bảng kê
   domain × số-lượng × nguồn × trạng-thái (jsonl + whitelist + bảng lõi
   + chunks; DB lỗi → in "chưa nạp", vẫn exit 0); `docs/phu-luc-a.md` =
@@ -876,6 +884,22 @@ Quy ước DoD cho phase connector:
 - [x] Video demo ≤3 phút 1 mạch: chat + guardrail — *(evidence: `evidence/demo.mp4` 38s)*
 
 ## Someday (chưa vào version nào)
+
+- Loader `ingest/core_store` delete-then-insert: child row
+  `source='manual'` trỏ cha managed (products/plots) bị `on delete set
+  null`/cascade sau mỗi reload — `plot_logs` nhập tay mất row cùng plot,
+  orders/assets mất product link. Vá dài hạn: upsert `on conflict` thay
+  delete+insert (cold-check v1.8 MINOR; đã ghi 1 dòng giới hạn trong
+  `docs/schema.sql` + docstring loader). Cùng nhóm: domain `multi`
+  (assets) delete chỉ cover `source` có row trong lần chạy → file nguồn
+  rút hẳn (vd bỏ articles.jsonl) thì asset cũ của nguồn đó tồn đọng.
+- WS2: leads table + gom lead từ convlog; dashboard số liệu kênh;
+  pipeline nội dung brief→draft→compliance→DUYỆT NGƯỜI→format đa kênh
+  (FB/TikTok script/blog/Zalo OA)→lịch đăng — KHÔNG tự đăng (C2.4)
+- WS3: agent báo cáo định kỳ ra file (không tự gửi); agent nhật ký
+  vùng trồng form/chat→chuẩn hóa→cảnh báo bất thường (đã có bảng
+  plot_logs); trợ lý tri thức nội bộ
+- WS4: playbook/SOP/kiến trúc hệ thống/Phụ lục D test-set nghiệm thu
 
 - PII trong `conversations.jsonl`: `question` đã mask SĐT/email bằng
   regex (v0.5), SĐT viết cách + retention theo tuổi vá ở v0.5.1,

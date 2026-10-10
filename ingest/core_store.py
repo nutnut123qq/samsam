@@ -8,8 +8,14 @@ Contract:
     (con trước, cha sau) rồi insert lại (cha trước, con sau) → chạy n lần
     không nhân đôi, FK không bị `on delete set null` cắt link của row
     managed, và KHÔNG đè row nhập tay (`source` khác, vd 'manual').
-    Edge chấp nhận (ghi ở đây): row manual trỏ `product_id` tới product
-    do loader quản sẽ mất link sau reload (set null) — pilot chấp nhận.
+    File nguồn thiếu → domain đó KHÔNG được trả ra (v1.8.1): nếu vẫn
+    append với rows=[] thì pha delete chạy rồi insert 0 = xóa trắng
+    bảng đang có — `claims_approved` là nguồn sự thật guardrail.
+    Edge chấp nhận (ghi ở đây, someday): row `source='manual'` trỏ
+    `product_id`/`plot_id` tới row do loader quản sẽ mất link (`set
+    null`) hoặc bị cascade-xóa (plot_logs) sau mỗi reload — vá dài hạn
+    = upsert `on conflict`. Domain `multi` (assets) chỉ dọn `source`
+    có row trong lần chạy → file nguồn rút hẳn thì asset cũ tồn đọng.
   - Dòng `{"_doc": "..."}` trong jsonl là comment — skip.
   - `sample_*.jsonl` nạp với source 'sample:*' — DỮ LIỆU MẪU chờ công ty
     bàn giao (SOW §5.2); phải phân biệt rõ với data crawl thật.
@@ -161,22 +167,22 @@ def collect_rows(data_dir: Path = DATA_DIR) -> list[tuple[str, str, list]]:
             url = rec.get("url") or ""
             if url.rstrip("/").endswith(".html"):
                 seg_to_pid[url_segment(url)] = rec["id"]
+        domains.append(("products", "products.jsonl", prod_rows))
     else:
         print(f"[warn] thiếu {products} — bỏ qua", flush=True)
-    domains.append(("products", "products.jsonl", prod_rows))
 
     wl_path = data_dir / "claims_whitelist.json"
-    claim_rows_all = []
     if wl_path.exists():
         wl = json.loads(wl_path.read_text(encoding="utf-8"))
+        claim_rows_all = []
         for key, entry in wl.items():
             if key.startswith("_"):
                 continue
             claim_rows_all.extend(claim_rows(key, entry, seg_to_pid))
+        domains.append(("claims_approved", "claims_whitelist.json",
+                        claim_rows_all))
     else:
         print(f"[warn] thiếu {wl_path} — bỏ qua", flush=True)
-    domains.append(("claims_approved", "claims_whitelist.json",
-                    claim_rows_all))
 
     for table, fname in (("plots", "sample_plots.jsonl"),
                          ("plot_logs", "sample_plot_logs.jsonl"),
@@ -203,7 +209,9 @@ def collect_rows(data_dir: Path = DATA_DIR) -> list[tuple[str, str, list]]:
                               for r in iter_jsonl(path))
         else:
             print(f"[warn] thiếu {path} — bỏ qua", flush=True)
-    domains.append(("assets", "multi", asset_rows))
+    if asset_rows:
+        # Không file nào đóng góp → skip luôn domain (đừng delete-noop).
+        domains.append(("assets", "multi", asset_rows))
     return domains
 
 

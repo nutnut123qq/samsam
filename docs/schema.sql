@@ -22,6 +22,8 @@ create index if not exists chunks_doc_id_idx on chunks (doc_id);
 -- 'sample:plots.jsonl', 'manual'...) — loader chỉ xóa-nạp lại rows thuộc
 -- source của mình nên không đè dữ liệu nhập tay. `created_at` audit thời điểm
 -- nạp. Chỉ `create table if not exists`: không sửa/drop `chunks`.
+-- Giới hạn delete-then-insert của loader (someday: upsert on conflict):
+-- child row 'manual' trỏ cha managed bị set-null/cascade theo FK sau mỗi reload.
 -- ============================================================================
 
 create table if not exists products (

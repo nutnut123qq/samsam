@@ -487,7 +487,9 @@ Dữ liệu `sample_*` là MẪU chờ bàn giao (SOW §5.2); `orders` không PI
   - Evidence: `evidence/v18_core_store.log` — ×2 giống hệt:
     products=27, claims=22 (18 claim + 4 marker claim=NULL sku chưa
     công bố), plots=3, plot_logs=6, orders=5, assets=219; 9/10 sku link
-    product_id (savitim NULL đúng — source là bài news)
+    product_id (savitim NULL đúng — source là bài news). Cold-check
+    MAJOR vá: `collect_rows` chỉ append domain khi file tồn tại (thiếu
+    file → không delete+insert-0 xoá trắng bảng) + 3 test
 - [x] **W1.3 Lane C** — `scripts/data_audit.py` (bảng kê jsonl +
   whitelist + core tables + chunks theo `source`; DB lỗi → "chưa nạp",
   exit 0) + `docs/phu-luc-a.md` draft Phụ lục A kèm cột "chờ bàn giao".
@@ -501,7 +503,8 @@ Dữ liệu `sample_*` là MẪU chờ bàn giao (SOW §5.2); `orders` không PI
   - Boundary: `tests/test_core_store.py`
   - Gate: pytest xanh + ruff clean
   - Evidence: `evidence/v18_pytest.log` — 114/114 + ruff clean;
-    `test_core_store` ×3 ổn định
+    sau vá MAJOR cold-check: 117/117 + ruff clean (`test_core_store`
+    ×3 ổn định)
 
 ---
 
