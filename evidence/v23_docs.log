@@ -1,0 +1,62 @@
+=== v2.3-handover-docs — doc gates 2026-10-11 03:27:25 ===
+
+## Files
+ 
+0 .
+0 ..
+11403 kien-truc.md
+7275 phu-luc-d.md
+5601 playbook-mkt.md
+4662 playbook-sales-admin.md
+4899 playbook-vuon.md
+8271 prompt-library.md
+10671 sop.md
+9515 workshops.md
+
+## Tab names parsed from streamlit_app.py
+['Chat Sâm Sâm', 'Content Studio', 'Chưa trả lời', 'Leads', 'Báo cáo', 'Nhật ký vườn', 'Duyệt & Lịch']
+
+## Question ids parsed from tests/questions.md
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+## Tables parsed from docs/schema.sql
+['chunks', 'products', 'claims_approved', 'plots', 'plot_logs', 'orders', 'assets', 'leads', 'content_drafts']
+
+## Spot-check lệnh trong sop.md (DB local đang chạy)
+$ python -m pipelines.store --pending
+[pending] 3 draft chờ duyệt:
+  #5 [facebook] Bài FB giới thiệu Saphraton — câu chuyện thương hiệu sâm Ng… — guardrail PASS 10-11 02:08
+  #4 [facebook] Bài FB giới thiệu Saphraton — câu chuyện thương hiệu sâm Ng… — guardrail PASS 10-11 02:05
+  #2 [tiktok] Bài xấu cố tình — guardrail VI PHẠM (3) 10-11 01:57
+exit=0
+
+$ python -m pipelines.store --calendar
+[calendar] 2026-10-10 → 2026-10-24:
+  2026-10-10  #6 [facebook] Bài FB giới thiệu Saphraton — câu chuyện thương hiệu sâm Ng…
+  2026-10-14  #1 [facebook] Bài FB giới thiệu Saphraton
+[unscheduled] 1 draft đã duyệt chưa xếp lịch:
+  #3 [blog] Mở bài blog Sâm Sâm mùa thu hoạch — guardrail PASS 10-11 01:58
+exit=0
+
+$ python -m agents.garden --check
+[keyword] KV-A01: kiểm tra sâu bệnh — sâu bệnh, bệnh
+[keyword] KV-A01: kiểm tra sâu bệnh — sâu bệnh, rệp, bệnh
+exit=0
+
+$ python -m ingest.lead_store
+[scan] convlog: 45 record — lead=30, intent-miss=13, fields-miss=0, ts-bad=0, corrupt=0, _doc=0, io-error=0, dup-in-file=2 — thiếu ['conversations.jsonl.1']
+[done] mới=0 trùng=30 — total leads=30 (streamlit=6, zalo=24)
+exit=0
+
+$ python scripts/apply_schema.py
+[done] schema applied — 9 bảng public: assets, chunks, claims_approved, content_drafts, leads, orders, plot_logs, plots, products
+exit=0
+
+$ pg_dump --version (full path)
+pg_dump (PostgreSQL) 17.6
+exit=0
+
+$ python -m agents.report --days 7
+[report] kỳ 2026-10-03 → 2026-10-10 (7 ngày)
+[done] D:\code\samsam\data\reports\report-2026-10-03_2026-10-10.md — đơn=3 doanh-thu=6.720.000 ₫ leads-mới=30 nhật-ký=7 convlog-kỳ=45
+exit=0
