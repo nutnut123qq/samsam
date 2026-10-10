@@ -1,6 +1,6 @@
 """Demo UI — `streamlit run app/streamlit_app.py`
 
-4 tabs:
+5 tabs:
   - "Chat Sâm Sâm": hỏi/đáp trên knowledge base, mỗi câu trả lời kèm
     link nguồn (RAG — retrieve từ pgvector, trả lời bằng Claude).
     Answer qua guardrail như mọi kênh (invariant); NO_DATA → handoff
@@ -12,6 +12,10 @@
   - "Leads": dashboard số liệu kênh + leads (WS2) — convlog theo kênh
     (file-based, luôn hiện) + bảng `leads` do `ingest.lead_store` nạp
     (DB lỗi/chưa nạp → info, không crash). Read-only ở pilot.
+  - "Báo cáo": agent báo cáo định kỳ (WS3) — sinh/xem file markdown
+    trong `data/reports/`; BẢN NHÁP cho người duyệt + gửi lãnh đạo,
+    hệ thống KHÔNG tự gửi (C2.4). DB chết → vẫn sinh báo cáo degraded
+    (phần convlog file-based vẫn có).
 
 Contract với UI: mọi câu trả lời chat phải render ít nhất 1 URL nguồn;
 không có nguồn → hiển thị "không đủ dữ liệu" thay vì để model bịa.
@@ -23,8 +27,9 @@ from datetime import timezone
 import streamlit as st
 
 st.set_page_config(page_title="Sâm Sâm AI Pilot", page_icon="🌿")
-tab_chat, tab_studio, tab_queue, tab_leads = st.tabs(
-    ["Chat Sâm Sâm", "Content Studio", "Chưa trả lời", "Leads"])
+tab_chat, tab_studio, tab_queue, tab_leads, tab_report = st.tabs(
+    ["Chat Sâm Sâm", "Content Studio", "Chưa trả lời", "Leads",
+     "Báo cáo"])
 
 with tab_chat:
     st.caption("Hỏi đáp trên knowledge base public của Sâm Sâm — "
@@ -241,3 +246,41 @@ with tab_leads:
                     "user_hash": st.column_config.TextColumn(width=115),
                     "Trạng thái": st.column_config.TextColumn(width=80),
                 })
+
+with tab_report:
+    st.caption("Agent báo cáo định kỳ (WS3) — tổng hợp bán hàng + "
+               "leads + kênh chat + nhật ký vườn ra file markdown "
+               "trong `data/reports/`. Báo cáo là BẢN NHÁP: duyệt + "
+               "gửi lãnh đạo do NGƯỜI — hệ thống KHÔNG tự gửi (C2.4). "
+               "Chạy định kỳ ngoài UI: `python -m agents.report`.")
+    from agents import report as _rep
+
+    _days = st.selectbox("Kỳ báo cáo", [7, 14, 30],
+                         format_func=lambda d: f"{d} ngày gần nhất")
+    if st.button("Sinh báo cáo", type="primary"):
+        with st.spinner("Đang tổng hợp số liệu..."):
+            _path, _r = _rep.generate(days=_days)
+            st.session_state.report_path = str(_path)
+            st.session_state.report_db_ok = _r["db"].get("db_ok")
+    # Thông báo kết quả lần sinh gần nhất (persist qua rerun —
+    # report_path chỉ có sau khi đã bấm nút ít nhất 1 lần).
+    if st.session_state.get("report_path"):
+        if st.session_state.get("report_db_ok") is False:
+            st.warning("Đã ghi báo cáo DEGRADED — không kết nối "
+                       "được DB, phần DB đánh dấu [chưa nạp]: "
+                       + st.session_state.report_path)
+        else:
+            st.success("Đã ghi " + st.session_state.report_path)
+
+    st.divider()
+    _files = _rep.list_reports()
+    if not _files:
+        st.info("Chưa có báo cáo nào — bấm 'Sinh báo cáo' hoặc chạy "
+                "`python -m agents.report`.")
+    else:
+        _pick = st.selectbox(
+            "Báo cáo đã sinh (mới nhất trước)", _files,
+            format_func=lambda p: p.name)
+        # File do chính agent ghi utf-8 — read_text strict được
+        # (không phải file user-influenced như convlog).
+        st.markdown(_pick.read_text(encoding="utf-8"))

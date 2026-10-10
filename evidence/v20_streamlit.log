@@ -1,0 +1,30 @@
+=== W3.3 streamlit tab "Bao cao" gate — 2026-10-10 ===
+Runner: .venv/Scripts/python -m streamlit run app/streamlit_app.py
+        (streamlit 1.64.0 trong .venv — khong cai global)
+Probe:  python scripts/_v20_probe.py <url> <png> — Playwright sync
+        (global python co playwright + chromium), click role=tab
+        "Bao cao" -> "Sinh bao cao" -> cho "Da ghi|DEGRADED" ->
+        full-page screenshot + console errors.
+
+--- Case 1: DB live (.env DATABASE_URL that), port 8556 ---
+$ python scripts/_v20_probe.py http://127.0.0.1:8556 evidence/v20_report_tab.png
+BODY-SNIP: ... 5 tabs render (Chat | Content Studio | Chua tra loi |
+  Leads | Bao cao); click "Sinh bao cao" -> success
+  "Da ghi D:\code\samsam\data\reports\report-2026-10-03_..."
+HAS-REPORT-HEADER: True   (noi dung markdown report render trong tab)
+HAS-DEGRADED: False
+CONSOLE-ERRORS: 0
+-> evidence/v20_report_tab.png (177 KB, full-page)
+
+--- Case 2: DB chua chet that (spawn voi DATABASE_URL gia), port 8557 ---
+$ DATABASE_URL=postgresql://u@10.255.255.1:5432/x \
+    .venv/Scripts/python -m streamlit run app/streamlit_app.py \
+    --server.port 8557 --server.headless true
+$ python scripts/_v20_probe.py http://127.0.0.1:8557 evidence/v20_report_dead.png dead
+BODY-SNIP: ... tab render binh thuong; click "Sinh bao cao" ->
+  warning "Da ghi bao cao DEGRADED — khong ket noi duoc DB,
+  phan DB danh dau [chua nap]" — tab KHONG hang (connect_timeout=3)
+HAS-REPORT-HEADER: True   (file degraded van sinh + render)
+HAS-DEGRADED: True
+CONSOLE-ERRORS: 0
+-> evidence/v20_report_dead.png

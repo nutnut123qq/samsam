@@ -1,0 +1,39 @@
+=== W3.2 CLI gate — 2026-10-10T16:48:04Z ===
+--- run 1 (default 7d) ---
+[report] kỳ 2026-10-03 → 2026-10-10 (7 ngày)
+[done] D:\code\samsam\data\reports\report-2026-10-03_2026-10-10.md — đơn=3 doanh-thu=6.720.000 ₫ leads-mới=30 nhật-ký=6 convlog-kỳ=45
+exit=0
+--- run 2 (idempotent — cung filename ghi de) ---
+[report] kỳ 2026-10-03 → 2026-10-10 (7 ngày)
+[done] D:\code\samsam\data\reports\report-2026-10-03_2026-10-10.md — đơn=3 doanh-thu=6.720.000 ₫ leads-mới=30 nhật-ký=6 convlog-kỳ=45
+exit=0
+total 8
+drwxr-xr-x 1 hahuy 197609    0 Oct 10 23:48 .
+drwxr-xr-x 1 hahuy 197609    0 Oct 10 23:41 ..
+-rw-r--r-- 1 hahuy 197609 2654 Oct 10 23:48 report-2026-10-03_2026-10-10.md
+--- run 3 (--until 2026-10-05 --days 14 — ky khac -> file khac) ---
+[report] kỳ 2026-09-22 → 2026-10-05 (14 ngày)
+[done] D:\code\samsam\data\reports\report-2026-09-22_2026-10-05.md — đơn=3 doanh-thu=2.820.000 ₫ leads-mới=24 nhật-ký=2 convlog-kỳ=36
+exit=0
+report-2026-09-22_2026-10-05.md
+report-2026-10-03_2026-10-10.md
+--- run 4 (DATABASE_URL host chet that 10.255.255.1 — degraded + exit 0) ---
+ERROR: Invalid syntax. Default option is not allowed more than '1' time(s).
+Type "TIMEOUT /?" for usage.
+exit=1
+grep: /tmp/rep-dead2/report-*.md: No such file or directory
+--- no DATABASE_URL (env trong suot) ---
+[report] kỳ 2026-10-03 → 2026-10-10 (7 ngày)
+[done] C:\Users\hahuy\AppData\Local\Temp\rep-dead3\report-2026-10-03_2026-10-10.md — đơn=3 doanh-thu=6.720.000 ₫ leads-mới=30 nhật-ký=6 convlog-kỳ=45
+exit=0
+0
+--- run 4 (DATABASE_URL host chet that 10.255.255.1 — connect_timeout=3 -> degraded + exit 0) ---
+[report] kỳ 2026-10-03 → 2026-10-10 (7 ngày)
+[warn] DB không khả dụng — báo cáo degraded: không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+[done] C:\Users\hahuy\AppData\Local\Temp\rep-dead2\report-2026-10-03_2026-10-10.md — convlog trong kỳ 45
+exit=0
+so dong [chua nap] trong file degraded:
+3
+--- ghi chu: env -u DATABASE_URL KHONG phai nhanh degraded —
+    connect() tu load_dotenv(ROOT/.env) nap lai DSN; nhanh
+    connect()->None duoc unit-test bang monkeypatch.
