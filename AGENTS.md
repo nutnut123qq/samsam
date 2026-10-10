@@ -176,6 +176,18 @@ chat lẫn embeddings) + Streamlit.
   thì coordinator absorb phần còn lại theo spec, đừng respawn mù
   (v1.1: worker viết được consts+docstring rồi chết; absorb + reviewer
   vẫn bắt 2 MAJOR concurrency).
+- **Viết test/source chứa escape `
+` qua exec heredoc/`python -c`**
+  — escape bị xử lý 2 lần, `
+` thành CR/LF literal -> source
+  "unterminated string literal". Cách an toàn đã verify (v1.6/v1.7):
+  viết đoạn code vào FILE TẠM bằng write tool rồi `cat tmp >> file`
+  hoặc python ghép theo index — không nhúng raw-socket test vào
+  heredoc.
+- **Đổi key/format trong test cũ** (vd dedup `u1:follow` -> `follow:u1`
+  v1.7): block replace dễ làm MẤT assert coverage cuối test (v1.7
+  cold-check MINOR — `age("u1:m1")`+assert cleanup bị xoá kèm). Sau
+  khi sửa test cũ, diff lại đối chiếu số assert trước/sau.
 - `samsam.net.vn` là NukeViet (HTML render phức tạp); `samsamngoclinh.com` là
   WooCommerce — **thử WP REST API `/wp-json/wp/v2/...` trước**, dễ hơn parse HTML.
 - Embedding lưu `float8[]` — nếu sau này cài được pgvector thì đổi cột + index,
