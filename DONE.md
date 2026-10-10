@@ -4,9 +4,11 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **v1.8-core-db** — WS1 nền tảng (contract /cycle 1/10
-2026-10-10; override kết luận no-work của loop trước — SOW WS1–WS4 chưa
-build là việc thật có contract, không phải bịa scope).
+Version đang mở: **không** — board sạch, chờ /cycle 2/10 chọn contract.
+
+v1.8-core-db đóng 2026-10-10 (cold-check PASS đợt 3 — đợt 1+2 FIX cùng
+lớp lỗi "delete-trắng": file nguồn thiếu vá ở `6d9b6b5`, file rỗng/
+0-record vá ở `d120185`; 3 MINOR + 1 NIT → someday nhóm loader).
 
 v1.7-edge-hardening đóng 2026-10-09 (cold-check PASS đợt 1; 2 MINOR
 vá ngay — khôi phục assert msg-key cleanup + thêm case CL `abc`/`0`
@@ -909,7 +911,15 @@ Quy ước DoD cho phase connector:
   trigger/upsert → không bao giờ đổi; `apply_schema.py` chỉ bắt
   `OperationalError` (lỗi SQL trong schema.sql sẽ propagate); (e) gate
   test: `apply_rows` chưa chạy trên DB thật (fake-conn) → FK
-  cascade/set-null chưa verify end-to-end.
+  cascade/set-null chưa verify end-to-end. Đợt 3 (cold-check PASS
+  kèm): (f) domain con bị skip trong khi domain cha reload vẫn mất
+  dữ liệu con qua cascade/set-null — hướng vá ngoài upsert: skip
+  luôn domain cha khi domain con phụ thuộc bị skip; (g) file cha bị
+  cắt cụt MỘT PHẦN (products còn 1 record) vẫn xoá 26 record kia —
+  skip-khi-0 không bắt được, cần ngưỡng tụt bất thường; (h) `main()`
+  khi mọi domain đều skip vẫn exit 0 + in "[done] totals:" rỗng —
+  nên exit ≠0 hoặc warn rõ; (i) products bị skip → `seg_to_pid` rỗng
+  → claims nạp `product_id=NULL` (suy giảm link, không mất data).
 - WS2: leads table + gom lead từ convlog; dashboard số liệu kênh;
   pipeline nội dung brief→draft→compliance→DUYỆT NGƯỜI→format đa kênh
   (FB/TikTok script/blog/Zalo OA)→lịch đăng — KHÔNG tự đăng (C2.4)
@@ -1009,3 +1019,4 @@ Quy ước DoD cho phase connector:
 | v1.7-edge-hardening (patch) | Vá 3 someday defect probe-verify còn hỏng: `do_GET` `close_connection` khi framing báo body chưa đọc (chunked/CL≠0/CL-bad — cover `/healthz` lẫn 404, GET sạch giữ keep-alive); dedup namespace `follow:{uid}` (mid=="follow" không còn nuốt tin/hưởng nhầm TTL 7d); email oversize — `_PII_RE` + lookbehind chặn slide-partial + post-pass `_mask_email_oversize` mask run local>256/label>253 | 2026-10-09 | `evidence/v17_pytest.log` 105/105 (auditor tự chạy lại 30.9s) + ruff clean; commits `89f6460` (contract) + `6550049` (code/tests/board). Worker chết connection-error giữa lane → coordinator absorb V8.2 code + V8.3 + 4 test mới. Cold-check auditor lạ: **PASS** đợt 1 (probe tay email-bound/CL-lạ/perf-1MB sạch, không quadratic) — 2 MINOR vá ngay (khôi phục assert msg-key cleanup bị mất trong diff, thêm case CL `abc`/`0`), 1 MINOR → someday (domain `b..c`/`@@b.com` dạng-lạ không mask) |
 | v1.4-pii-evasion (patch) | Vá 2 lớp leak SĐT cold-check v1.2: `_mask_pii` scanner 1-pass `_paren_group_end` depth-counting (merge nhóm ngoặc-digit kề qua sep bất kỳ + unwrap ngoặc lồng/space-trong-ngoặc) thay fixpoint regex; bound email-alt `{1,64}`/`{1,63}` | 2026-10-09 | `evidence/v14_pytest.log` 95/95 + ruff clean; commits `205784c` (contract) + `d7b3a72` (code) + `d72ce2b` (board) + `cd9ab65`+`41be08d` (FIX). Cold-check đợt 1 FIX: MAJOR fixpoint O(n·depth) — "("*5000 đốt >10s trong `_log_lock`, inbound 1MB không cap → scanner 1-pass O(n) + budget-rescan 4n (n=20000→0.015s); MINOR cap-32-leak tự hết; MINOR over-mask nhóm ngoặc toàn-digit ACCEPT+test. Đợt 2 auditor lạ: **PASS** (tự chạy 95/95, perf 8 case <0.1s, không scope creep) — 2 MINOR mới → someday (budget-abort bypass, email RFC-bound edge) + NIT số stale |
 | v1.3-ops-polish (patch) | Purge-fail backoff: `_last_purge_attempt` throttle daily-purge retry (PURGE_RETRY_S=3600 — đĩa hỏng dai dẳng không còn kéo mọi reply thread xếp hàng O(file) trong `_log_lock`); `_isolated_files` vá latent leak `_last_purge` | 2026-10-09 | `evidence/v13_pytest.log` 92/92 (auditor tự chạy lại 17.7s) + ruff clean; commits `b8ed6e5` (contract) + `f48364a` (code) + `a27647c` (NIT reviewer). Reviewer PASS đợt 1, 2 NIT vá ngay (comment throttle, setattr thừa). Cold-check auditor lạ: **PASS** — tự định diff-range + chạy lại pytest 92/92 + ruff; 2 NIT: boot-purge-không-set-`_last_purge` vá ngay (global + set sau purge boot OK), clock-skew `time.time()` → someday |
+| v1.8-core-db | WS1 nền tảng SOW: schema 6 bảng lõi (products/claims_approved/plots/plot_logs/orders/assets) + `ingest/core_store` loader idempotent delete-by-source + Phụ lục A đếm thật (`scripts/data_audit.py`, `docs/phu-luc-a.md`) + sample data plots/orders "chờ bàn giao" | 2026-10-10 | `evidence/v18_schema.log` (apply ×2 → 7 bảng public) · `v18_core_store.log` (×2 giống hệt: 27/22/3/6/5/219, 9/10 sku link) · `v18_audit.log` (10 domain) · `v18_pytest.log` 118/118 (coordinator tự chạy lại 29.8s) + ruff clean; commits `2bbfe5a` (contract) + `06ee856` (code) + `df0fc7d` (board) + `6d9b6b5` + `d120185` (FIX). Cold-check đợt 1+2 FIX cùng lớp lỗi "delete-trắng" (file thiếu → skip; file rỗng/0-record → skip+warn) — vá hết; đợt 3 auditor lạ **PASS** (probe corrupt-JSON crash-không-xoá, atomic txn, không nới assert) — 3 MINOR + 1 NIT → someday |

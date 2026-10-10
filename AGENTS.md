@@ -50,6 +50,12 @@ chat lẫn embeddings) + Streamlit.
 - Vá bug theo idiom: trước khi đóng, grep cùng pattern trong repo — bug
   hay đi theo cụm (v0.5: `.content.strip()` None-crash ở cả `_standalone`
   LẪN `answer`; vá 1 bỏ 1 = nửa bug).
+- Vá lớp lỗi điều-kiện-biên (guarding I/O): enumerate TẤT CẢ biến thể
+  của điều kiện trước khi claim xong — file `missing` và file
+  `0-record` (rỗng/`{}`/chỉ `_doc`) là 2 case khác nhau mà cùng bug
+  "delete-trắng" (v1.8 tốn 2 vòng cold-check vì vá missing quên empty;
+  còn `corrupt`/`partial-truncate` ở someday). Bonus: biến gán trong
+  nhánh `exists()` → `UnboundLocalError` ở caller ngoài nhánh.
 
 ## Gotchas
 - **`pytest` entry-script fail import** (`No module named 'pipelines'`) —
