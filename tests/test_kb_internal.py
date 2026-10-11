@@ -169,3 +169,147 @@ def test_db_check_rejects_blank_approver_even_bypassing_cli(conn, fake_embed):
                                title="t", source_ref="x.md", text="MẪU",
                                approved_by="  ")
     conn.rollback()
+
+
+# --- v9.5 W95.3: tài liệu MẬT bị chặn trước connect/embed --------------------
+CO_KHI_MAU = Path(__file__).resolve().parent.parent / "data" / "co_khi" / "mau"
+
+
+@pytest.fixture
+def count_embed_all(monkeypatch):
+    n = {"embed_all": 0}
+
+    def fake(_c, _model, texts):
+        n["embed_all"] += 1
+        return [[0.1, 0.2] for _ in texts]
+    monkeypatch.setattr(kb_internal, "embed_all", fake)
+    return n
+
+
+@pytest.mark.parametrize("head", [
+    "confidential: true\n",
+    "Confidential: TRUE\n",
+    "   confidential :   true  \r\n",
+    "\ufeffconfidential: true\n",
+    "MẪU\n" * 19 + "confidential: true\n",   # dòng 20 vẫn quét
+    # fail-closed (cold-check v9.5): biến thể cú pháp từng lọt fullmatch
+    "confidential: true # mật\n",
+    'confidential: "true"\n',
+    "confidential: yes\n",
+    '"confidential": true,\n',
+    "- confidential: true\n",
+    "**confidential: true**\n",
+    "**confidential**: true\n",
+    "confidential=true\n",
+    "confidential:\n",                     # giá trị rỗng → chặn
+    "confidential: mật\n",                 # giá trị lạ → chặn
+])
+def test_confidential_front_matter_exit2(tmp_path, no_connect, fake_embed,
+                                         count_embed_all, head):
+    f = tmp_path / "ban_ve_MAU.md"
+    f.write_bytes((head + "MẪU tủ điện 3 pha\n").encode("utf-8"))
+    with pytest.raises(SystemExit) as e:
+        kb_internal.main(["--file", str(f), "--collection", "internal:co_khi",
+                          "--approved-by", BY])
+    assert e.value.code == 2
+    assert fake_embed.calls == 0 and count_embed_all["embed_all"] == 0
+
+
+def test_confidential_sample_doc_rejected(no_connect, count_embed_all):
+    with pytest.raises(SystemExit) as e:
+        kb_internal.main(["--file", str(CO_KHI_MAU / "ban-ve-tu-dien-xuong-mau.md"),
+                          "--collection", "internal:co_khi", "--approved-by", BY])
+    assert e.value.code == 2 and count_embed_all["embed_all"] == 0
+
+
+@pytest.mark.parametrize("head", [
+    "confidential: false\n",
+    "Confidential: FALSE # tài liệu thường\n",
+    'confidential: "false"\n',
+    "- confidential: no\n",
+    "confidential = 0\n",
+    "confidential: không\n",
+    "Confidentiality: thấp\n",             # khóa khác, không phải confidential
+    "Tài liệu này không confidential.\n",  # văn xuôi, không có [:=]
+])
+def test_confidential_false_passes(tmp_path, head):
+    f = tmp_path / "thuong_MAU.md"
+    f.write_text("MẪU\n" + head + "nội dung thường\n", encoding="utf-8")
+    a, text = kb_internal.parse_args(["--file", str(f), "--collection",
+                                      "internal:co_khi", "--approved-by", BY])
+    assert a.collection == "internal:co_khi" and "nội dung thường" in text
+
+
+def test_file_inside_ck_mat_dir_exit2(tmp_path, monkeypatch, no_connect,
+                                      count_embed_all):
+    mat = tmp_path / "mat"
+    (mat / "sub").mkdir(parents=True)
+    f = mat / "sub" / "manual_MAU.md"
+    f.write_text("MẪU manual không có front-matter\n", encoding="utf-8")
+    monkeypatch.setenv("CK_MAT_DIR", str(mat))
+    with pytest.raises(SystemExit) as e:
+        kb_internal.main(["--file", str(f), "--collection", "internal:co_khi",
+                          "--approved-by", BY])
+    assert e.value.code == 2 and count_embed_all["embed_all"] == 0
+    # resolve 2 phía: đường dẫn NGOÀI `mat` khi so chuỗi nhưng resolve vào
+    # trong (ngoai/../mat/...) vẫn chặn.
+    (tmp_path / "ngoai").mkdir()
+    sneaky = tmp_path / "ngoai" / ".." / "mat" / "sub" / "manual_MAU.md"
+    assert not sneaky.is_relative_to(mat)  # so chuỗi sẽ lọt
+    with pytest.raises(SystemExit) as e:
+        kb_internal.parse_args(["--file", str(sneaky), "--collection",
+                                "internal:co_khi", "--approved-by", BY])
+    assert e.value.code == 2
+    # phía CK_MAT_DIR cũng có '..' → vẫn phải resolve
+    monkeypatch.setenv("CK_MAT_DIR", str(tmp_path / "ngoai" / ".." / "mat"))
+    assert not f.is_relative_to(kb_internal.mat_dir())
+    with pytest.raises(SystemExit) as e:
+        kb_internal.parse_args(["--file", str(f), "--collection",
+                                "internal:co_khi", "--approved-by", BY])
+    assert e.value.code == 2
+    assert count_embed_all["embed_all"] == 0
+
+
+class _FakeIngestConn:
+    def __init__(self):
+        self.rows = []
+
+    def execute(self, sql, params=()):
+        return SimpleNamespace(fetchone=lambda: (None, None, 0, None))
+
+    def transaction(self):
+        import contextlib
+        return contextlib.nullcontext()
+
+    def cursor(self):
+        conn = self
+
+        class _Cur:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+            def executemany(self, sql, rows):
+                conn.rows.extend(rows)
+        return _Cur()
+
+    def commit(self):
+        pass
+
+
+def test_normal_mau_doc_loads_into_co_khi(count_embed_all):
+    a, text = kb_internal.parse_args(
+        ["--file", str(CO_KHI_MAU / "may-co-mang-ss-eq-03.md"),
+         "--collection", "internal:co_khi", "--approved-by", BY])
+    assert text.split("\n")[0].startswith("MẪU")
+    conn = _FakeIngestConn()
+    r = kb_internal.ingest_doc(conn, collection=a.collection, doc_id=a.doc_id,
+                               title=a.path.stem, source_ref=a.path.name,
+                               text=text, approved_by=a.approved_by)
+    assert r["status"] == "loaded" and r["chunks"] == len(conn.rows) > 0
+    assert count_embed_all["embed_all"] == 1
+    assert {row[0] for row in conn.rows} == {"internal:co_khi"}
+    assert {row[9] for row in conn.rows} == {BY}
+    assert a.doc_id == "may-co-mang-ss-eq-03"

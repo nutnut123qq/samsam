@@ -10,6 +10,12 @@ Contract:
     approved-by trống; collection sai `^internal:[a-z0-9_]{1,32}$`; file
     không tồn tại / 0 byte / chỉ trắng / đuôi khác .md|.txt / không phải
     UTF-8 / > 1MB; doc-id sai slug.
+  - Tài liệu MẬT (v9.5, CK-A1) bị TỪ CHỐI trước connect/embed (exit 2):
+    20 dòng đầu có khóa `confidential` theo sau `:`/`=` (FAIL-CLOSED: mọi
+    giá trị trừ false/no/0/off/không — chịu ngoặc kép, `#comment`, tiền tố
+    `- `/`**`, `"confidential":`; giá trị rỗng/lạ cũng chặn) HOẶC file nằm
+    trong `CK_MAT_DIR` (resolve cả 2 phía) — tài liệu mật chỉ tra cứu local
+    qua `agents.ck_mat`, không bao giờ embed qua mạng.
   - Bảng RIÊNG `chunks_internal` (chatbot khách `answer()` không đọc tới).
   - `doc_sha256` trùng bản đang có cùng (collection, doc_id) -> 0 embed,
     "không đổi"; đổi -> embed (qua gateway, `embed_store.embed_all`) xong
@@ -23,11 +29,13 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 import psycopg
 from dotenv import load_dotenv
 
+from agents.ck_mat import mat_dir
 from ingest.embed_store import CONNECT_TIMEOUT_S, DEFAULT_MODEL, chunk_text, embed_all
 from pipelines.llm_gateway import _strip_accents
 
@@ -40,12 +48,30 @@ ROOT = Path(__file__).resolve().parent.parent
 COLLECTION_RE = re.compile(r"internal:[a-z0-9_]{1,32}")
 DOC_ID_RE = re.compile(r"[a-z0-9][a-z0-9_-]{0,63}")
 MAX_BYTES = 1_000_000
+# Khóa `confidential` (không phải 'confidentiality') + `:`/`=`, cho phép
+# ngoặc/`*`/`_`/backtick bao quanh khóa (YAML/JSON/markdown bold).
+CONFIDENTIAL_RE = re.compile(r"(?<![a-z0-9_])confidential(?![a-z0-9_])"
+                             r"[\s\"'*_`]*[:=](?P<val>.*)")
+NOT_CONFIDENTIAL_RE = re.compile(
+    r"[\s\"'*_`]*(?:false|no|0|off|khong|không)[\s\"'*_`,;]*")
+CONFIDENTIAL_SCAN_LINES = 20
 SUFFIXES = {".md", ".txt"}
 
 
 def slug(stem: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "-", _strip_accents(stem).casefold())
     return s.strip("-")[:64]
+
+
+def is_confidential_line(line: str) -> bool:
+    """FAIL-CLOSED: dòng có khóa `confidential` [:=] mà giá trị KHÔNG tường
+    minh là false/no/0/off/không → True (mật)."""
+    # BOM (U+FEFF) không thuộc \s — bỏ trước để dòng 1 có BOM không lọt.
+    ln = unicodedata.normalize("NFC", line.replace("\ufeff", "")).casefold()
+    m = CONFIDENTIAL_RE.search(ln)
+    if m is None:
+        return False
+    return not NOT_CONFIDENTIAL_RE.fullmatch(m.group("val").split("#", 1)[0])
 
 
 def parse_args(argv=None) -> tuple[argparse.Namespace, str]:
@@ -67,6 +93,9 @@ def parse_args(argv=None) -> tuple[argparse.Namespace, str]:
         ap.error("--file chỉ nhận .md hoặc .txt")
     if not path.is_file():
         ap.error("--file không tồn tại")
+    if path.resolve().is_relative_to(mat_dir().resolve()):
+        ap.error("--file nằm trong CK_MAT_DIR (tài liệu MẬT) — chỉ tra cứu"
+                 " local bằng agents.ck_mat, không nạp/embed")
     size = path.stat().st_size
     if size == 0 or size > MAX_BYTES:
         ap.error(f"--file rỗng hoặc > {MAX_BYTES} byte")
@@ -76,6 +105,10 @@ def parse_args(argv=None) -> tuple[argparse.Namespace, str]:
         ap.error("--file không đọc được dạng UTF-8")
     if not text.strip():
         ap.error("--file chỉ có khoảng trắng")
+    if any(is_confidential_line(ln)
+           for ln in text.split("\n")[:CONFIDENTIAL_SCAN_LINES]):
+        ap.error("--file gắn confidential (tài liệu MẬT) — chỉ tra cứu"
+                 " local bằng agents.ck_mat, không nạp/embed")
     a.doc_id = a.doc_id if a.doc_id is not None else slug(path.stem)
     if not DOC_ID_RE.fullmatch(a.doc_id):
         ap.error("--doc-id phải là slug [a-z0-9_-] (<=64)")

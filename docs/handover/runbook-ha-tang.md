@@ -148,7 +148,9 @@ Mọi lời gọi LLM đi qua `pipelines/llm_gateway.py` theo `agent_id`. Agent
 hiện có: `chatbot` (trả lời khách web/Zalo), `content` (Content Studio),
 `ingest` (embedding knowledge base). Ngoài ra `smoke`: id dành riêng để
 tập kill switch (chỉ có trong cấu hình `data/llm_gateway.json`, không có
-luồng thật nào gọi). Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
+luồng thật nào gọi). `ck_mat` (v9.5, tra cứu tài liệu kỹ thuật MẬT cơ
+khí) KHÔNG BAO GIỜ gọi LLM: gateway luôn từ chối id này (`LOCAL_ONLY_AGENTS`
+— không cần và không thể kill/bật trong config). Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
 `embed("...")` và hằng `AGENT = "..."` trong `api/`, `pipelines/`,
 `ingest/`, `agents/`, `connectors/` (nhờ dev nếu cần).
 

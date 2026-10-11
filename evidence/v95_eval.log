@@ -1,0 +1,18 @@
+# v9.5 W95.7 eval MẪU co_khi — 2026-10-12T03:30:17+07:00 — bộ ca CHỜ KỸ SƯ TRƯỞNG SỬA, không phải nghiệm thu WP14
+
+$ python scripts/agent_eval.py --agent co_khi --no-record   # lần 1
+[co_khi:ck-f01] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Nhiệt độ buồng co của máy co màng SS-EQ-03 đặt bao nhiêu?"
+[co_khi:ck-f02] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Tốc độ băng tải máy co màng SS-EQ-03 là bao nhiêu mét mỗi phút?"
+[done] co_khi PASS 21/23 pass_rate=0.913 (ngưỡng 0.9) prompt_version=d2cdb51223d1 model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+
+$ python scripts/agent_eval.py --agent co_khi --no-record   # lần 2
+[co_khi:ck-f01] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Nhiệt độ buồng co của máy co màng SS-EQ-03 đặt bao nhiêu?"
+[co_khi:ck-f02] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Tốc độ băng tải máy co màng SS-EQ-03 là bao nhiêu mét mỗi phút?"
+[done] co_khi PASS 21/23 pass_rate=0.913 (ngưỡng 0.9) prompt_version=d2cdb51223d1 model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+
+$ cmp lần1 lần2
+giống hệt (tất định)

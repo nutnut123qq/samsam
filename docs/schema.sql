@@ -1508,3 +1508,58 @@ create table if not exists intel_items (
 );
 
 create index if not exists intel_items_fetched_idx on intel_items (fetched_at desc);
+
+-- ============================================================================
+-- ---------------------------------------------------------------------
+-- v9.5 CK-A2 — CMMS nhẹ trung tâm điện–cơ khí (agents/cmms.py).
+-- Sổ máy thật + biên bản kiểm kê = external-dep (Kỹ sư trưởng); KHÔNG
+-- có lệnh xóa máy (thôi dùng = active false). Mô tả sự cố đã _mask_pii;
+-- reported_by là MÃ nhân sự, không tên/SĐT.
+create table if not exists machines (
+  code text primary key check (code ~ '^SS-EQ-[0-9]{2,4}$'),
+  name text not null,
+  location text,
+  maker text,
+  year int check (year between 1950 and 2100),
+  thuoc_dien_kiem_dinh boolean not null default false,
+  han_kiem_dinh date,
+  la_phuong_tien_do boolean not null default false,
+  han_hieu_chuan date,
+  ho_so_gmp boolean not null default false,
+  active boolean not null default true,
+  source text not null default 'manual',
+  created_at timestamptz not null default now()
+);
+
+create table if not exists maintenance_plans (
+  id bigint generated always as identity primary key,
+  machine_code text not null references machines(code),
+  task text not null,
+  interval_days int not null check (interval_days between 1 and 3660),
+  major boolean not null default false,   -- việc lớn: cần Kỹ sư trưởng duyệt
+  start_on date not null default current_date,
+  last_done_on date,
+  last_done_by text,
+  last_approved_by text,
+  active boolean not null default true
+);
+
+create table if not exists incidents (
+  id bigint generated always as identity primary key,
+  machine_code text not null references machines(code),
+  started_at timestamptz not null,
+  ended_at timestamptz check (ended_at is null or ended_at >= started_at),
+  downtime_phut int check (downtime_phut >= 0),  -- NULL = sự cố đang mở
+  part text,
+  description text,                              -- ĐÃ _mask_pii
+  root_cause text not null default 'chờ xác nhận',
+  reported_by text check (reported_by ~ '^[A-Za-z0-9_-]{1,32}$'),
+  created_at timestamptz not null default now()
+);
+create index if not exists incidents_machine_started_idx
+  on incidents (machine_code, started_at);
+
+-- Nhật ký downtime (sự cố đã đóng) cho CK-A5 dự đoán sau này.
+create or replace view downtime_log as
+  select machine_code, started_at, ended_at, downtime_phut, part, root_cause
+  from incidents where ended_at is not null;
