@@ -1,0 +1,72 @@
+=== v7.3 W73.7 gate chung — 2026-10-12 03:00:45 +07 — git b35f3eb+dirty
+
+$ python -m pytest -q -rs tests/test_scenario.py tests/test_persona_sim.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py   (lần 1)
+..............................                                           [100%]
+102 passed in 11.70s
+exit=0
+
+$ python -m pytest -q -rs tests/test_scenario.py tests/test_persona_sim.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py   (lần 2)
+..............................                                           [100%]
+102 passed in 6.74s
+exit=0
+
+$ python -m pytest -q -rs tests/test_scenario.py tests/test_persona_sim.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py   (lần 3)
+..............................                                           [100%]
+102 passed in 7.39s
+exit=0
+
+--- VÒNG 1: full pytest FAIL (1) — tests/test_db_backup.py::test_cloud_readme_drift_guard: deploy/cloud/README.md thiếu bảng sim_runs ---
+  
+  tests\test_db_backup.py:332: AssertionError
+  1 failed, 922 passed in 189.63s (0:03:09)
+  exit=1
+--- sửa: thêm dòng `sim_runs` + '24 bảng'->'25 bảng' trong deploy/cloud/README.md (dây chuyền: drift-guard đọc schema.sql) — code không đổi nên kết quả targeted ×3 ở trên vẫn áp dụng ---
+
+$ python -m pytest -q -rs   (full, VÒNG 2 — 1 lần)
+........................................................................ [ 70%]
+........................................................................ [ 78%]
+........................................................................ [ 85%]
+........................................................................ [ 93%]
+...........................................................              [100%]
+923 passed in 238.30s (0:03:58)
+exit=0
+(baseline 831 → 923 = +92 test mới v7.3; 0 skipped)
+
+$ ruff check .
+All checks passed!
+exit=0
+
+$ python -m py_compile pipelines/scenario.py scripts/persona_sim.py
+exit=0
+
+$ git status --short
+ M AGENTS.md
+ M DONE.md
+ M data/llm_gateway.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/schema.sql
+?? data/personas.json
+?? data/scenario_assumptions.json
+?? data/sim_config.json
+?? pipelines/scenario.py
+?? scripts/persona_sim.py
+?? tests/test_persona_sim.py
+?? tests/test_scenario.py
+
+=== Vòng sửa nghiệm thu 5 MINOR — 2026-10-12 03:40:09 +07 ===
+$ python -m pytest -q   (full, 1 lần)
+943 passed in 333.47s (0:05:33)
+exit=0
+(923 -> 943: +20 test mới/tham số hóa; baseline 831)
+Sau full run: chỉ gom 4 điều kiện nối dòng trong pipelines/scenario.py thành ngoặc (không đổi logic) -> chạy lại targeted ×3 + ruff:
+$ python -m pytest -q tests/test_scenario.py tests/test_persona_sim.py   (lần 1, sau gom dòng nối bằng ngoặc)
+112 passed in 12.44s
+$ python -m pytest -q tests/test_scenario.py tests/test_persona_sim.py   (lần 2, sau gom dòng nối bằng ngoặc)
+112 passed in 11.66s
+$ python -m pytest -q tests/test_scenario.py tests/test_persona_sim.py   (lần 3, sau gom dòng nối bằng ngoặc)
+112 passed in 11.93s
+$ ruff check .
+All checks passed!
+ruff exit=0

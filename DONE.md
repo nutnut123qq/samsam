@@ -10,6 +10,327 @@ Nhánh `ai-infra`: M30 (v3.0–v3.10) đóng và gộp đủ 2026-10-12 — 24 b
 831 test. Đếm bảng trong test không còn hằng số (sàn `>= 24` / đọc
 schema.sql) để các version M31+ chạy song song không xung đột dòng này.
 
+## Checklist v7.3-gia-lap-kich-ban
+
+Khán giả/mục đích: WP09 (pmo.md dòng `| WP09`) — phần "Persona Simulation
+(gộp MKT-08)" + "Season Forecast (engine kịch bản chung với KD-A10, SX-A3,
+FP-Cash)"; worktree `D:\code\samsam-w73`. Hiện repo chưa có gì tính kịch
+bản mùa: mỗi agent sau (KD-A10 dự báo mùa, SX-A3 phân bổ tồn Tết trước
+10/12, FP-Cash 13 tuần × 3 kịch bản) sẽ tự viết lại công thức nếu không có
+engine chung. Sau version: (a) `pipelines/scenario.py` THUẦN (không DB,
+không LLM, không mạng) nhận baseline SKU×kênh×tuần + hệ số mùa 11.11 /
+12.12 / Tết Âm lịch 2027 (06/02/2027) + 3 mức thấp/cơ sở/cao từ
+`data/scenario_assumptions.json` → trả KHOẢNG (thấp ≤ cơ sở ≤ cao) từng tuần,
+không bao giờ 1 con số; rượu = 0 mọi kênh online; kênh online ngoài
+`allowed_channels` golden = 0 kèm ghi chú; CLI `python -m pipelines.scenario`
+in bảng. Các version sau GỌI LẠI `project()` — không viết lại. (b)
+`scripts/persona_sim.py`: nghiên cứu giả lập trên persona TỔNG HỢP (không
+dữ liệu khách thật), ma trận 3 model × 3 prompt × ≥5 lần lặp qua
+`pipelines.llm_gateway.chat` (agent_id `persona_sim`, cap tháng), có 1
+phương án ĐỐI CHỨNG cố tình yếu, kết quả dạng khoảng p10/p50/p90 + độ phân
+tán, mọi output LLM qua `guardrail.check()`, mỗi lời gọi × phương án = 1
+dòng bảng mới `sim_runs`. Cổng DPIA: `data/sim_config.json`
+`"dpia_signed": false` → từ chối chạy thật (exit 2), chỉ `--dry-run` với
+gateway giả (không gọi `llm_gateway`) được chạy. Agent KHÔNG đặt hàng,
+không đổi giá, không ghi `orders`/`products`/golden, không chi tiền.
+
+Quy ước: ponytail — stdlib (`datetime`, `json`, `statistics.quantiles`,
+`hashlib`, `random`, `uuid`) + `psycopg` sẵn có; KHÔNG pandas/numpy mới,
+KHÔNG lib âm lịch (Tết lấy từ bảng hằng `TET_DATES` có nguồn ghi comment:
+2026-02-17, 2027-02-06, 2028-01-26; năm ngoài bảng → lỗi rõ, không đoán).
+Tuần = tuần bắt đầu thứ Hai (`week_start(d) = d - timedelta(d.weekday())`);
+tuần Tết 2027 = tuần bắt đầu 2027-02-01. TÁI DÙNG: `ingest.golden_store.
+read_golden`/`validate`/`CHANNELS`/`CATEGORIES` (đọc file golden, không
+connect), `pipelines.llm_gateway.chat` (kill-switch + cap + mask PII),
+`pipelines.guardrail.check`, `pipelines.kb_filter.is_alcohol`,
+`pipelines.pii._mask_pii`, mẫu `prompt_version()` của
+`scripts/agent_eval.py` (sha256 CRLF→LF, 12 hex). Engine nhận `start: date`
+làm THAM SỐ — hàm thuần không đọc đồng hồ; chỉ CLI tính "thứ Hai tuần này"
+theo giờ VN (UTC+7) khi thiếu `--start`. Test thuần không wall-clock, không
+`time.sleep`. Config hỏng phải fail-closed với ĐỦ biến thể "không có dữ
+liệu" (gotcha v1.8): file thiếu / rỗng / JSON hỏng / `{}` / chỉ `_doc` →
+lỗi rõ, exit 1, không bao giờ trả 0 câm. Số trong config: `bool` không tính
+là số, âm/NaN/inf bị từ chối. Thiếu baseline cho SKU×kênh được phép → lỗi
+(không coi = 0). Print tiếng Việt → UTF-8 guard sau imports (copy
+`scripts/zalo_mock.py`). Mọi `psycopg.connect` có `connect_timeout`; ghi
+`sim_runs` = 1 transaction + `conn.commit()` tường minh (gotcha v2.1). Lỗi
+chỉ nêu id/tên field, KHÔNG in giá trị ô persona/phương án. Không file
+runtime mới trong `data/` (báo cáo in stdout; nếu thêm file output thì
+gitignore ngay). Schema chỉ THÊM (`create table if not exists`), không sửa
+bảng cũ, không assert đếm cứng số bảng.
+
+External-dep (KHÔNG giả lập, để `[ ]` ở mục riêng cuối): (1) số bán THẬT
+theo SKU×kênh×tuần + số đại lý theo tháng (GĐ bán hàng cung cấp) — baseline
+hiện là fixture GIẢ ĐỊNH; (2) GĐ KD/Tài chính chốt hệ số mùa + 3 mức kịch
+bản (file ghi `"status": "GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt"` tới khi có
+người thật chốt — version này KHÔNG đổi status); (3) DPIA/TIA ký (Pháp chế +
+TGĐ) → chỉ NGƯỜI thật đổi `dpia_signed` sang `true`, version này giữ
+`false`; (4) chọn 3 model khác nhà cung cấp (Gemini Flash, Claude Haiku)
+cần mở `provider_only` + giá trong `data/llm_gateway.json` — chờ hạ tầng/
+Pháp chế chốt ZDR; config hiện liệt kê 3 model dưới `provider_only` sẵn có
+và ghi rõ "ứng viên, chưa kiểm khả dụng/giá"; (5) Quản lý MXH duyệt báo cáo
+persona; (6) `trends_weekly`/`forecast_scenarios` + role DB `sim_runner`
+(INSERT `sim_runs`) trên cloud — version sau (KD-A10/Season Forecast).
+
+- [x] **W73.1 Engine kịch bản thuần + giả định mùa** —
+  `data/scenario_assumptions.json`: `{"_doc": "... GIẢ ĐỊNH — chờ GĐ KD/
+  Tài chính chốt ... baseline là fixture, không phải số bán thật ...",
+  "status": "GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt", "trend": {"low", "base",
+  "high"}, "baseline_units_per_week": {sku_key: {channel: số ≥ 0}},
+  "events": [{"id": "11.11", "date": "2026-11-11", "window": [{"offset":
+  int, "low", "base", "high"}...]}, {"id": "12.12", "date": "2026-12-12",
+  ...}, {"id": "tet_2027", "lunar_new_year": 2027, "window": [offset -6..+1
+  — mua quà trước Tết, tuần Tết thấp]}]}` (offset tính theo tuần chứa ngày
+  sự kiện). `pipelines/scenario.py` API công khai (version sau gọi lại):
+  `LEVELS = ("low","base","high")`, `OFFLINE = "offline"` (đại lý/cửa
+  hàng), `TET_DATES`, `tet_date(year) -> date`, `week_start(d) -> date`,
+  `load_assumptions(path=None) -> dict` (validate, raise `ScenarioError`),
+  `project(sku: dict, channel: str, start: date, weeks: int, assumptions:
+  dict) -> list[dict]` — mỗi phần tử `{"week_start": date, "events":
+  [id...], "low": int, "base": int, "high": int, "note": str|None}`. Công
+  thức: `baseline[sku][channel] × trend[level] × max(hệ số sự kiện[level]
+  của các sự kiện phủ tuần đó, mặc định 1)` — sự kiện chồng nhau lấy MAX
+  (không nhân chồng), làm tròn BẤT ĐỐI XỨNG sau `round(x, 6)` khử nhiễu
+  float: thấp = `floor`, cơ sở = `floor(x+0.5)`, cao = `ceil` (đơn điệu →
+  giữ thứ tự; baseline > 0 và trend thấp < cao ⇒ thấp < cao — baseline
+  nhỏ 2-3 đơn vị/tuần không sập khoảng thành 1 điểm; sửa sau nghiệm thu).
+  Event có `channels` tuỳ chọn (list ⊆ kênh hợp lệ, không rỗng/trùng;
+  thiếu = mọi kênh) → chỉ áp kênh đó: 11.11/12.12 = ngày sale sàn → chỉ
+  kênh online (golden `CHANNELS`), không nhân cầu đại lý `offline`; Tết
+  áp mọi kênh. Validator chặn thêm: `lunar_new_year` không phải int
+  (list/float/str), số khổng lồ (`10**400` → OverflowError), `|offset| >
+  104`; `project` raise `ScenarioError` khi tích tràn `inf`.
+  Validator bắt `low ≤ base ≤ high` ở `trend` VÀ mọi dòng `window` → mọi
+  output bảo đảm thấp ≤ cơ sở ≤ cao. Luật kênh (đặt TRƯỚC tra baseline):
+  `sku["category"] == "alcohol"` + kênh ∈ `golden_store.CHANNELS` (toàn bộ
+  là kênh online) → 3 mức = 0, note "rượu: chỉ kênh offline" — BẤT KỂ
+  `allowed_channels` (golden hiện vẫn ghi `["shopee"]` cho 2 SKU rượu = lệch
+  đã biết v3.2); SKU không rượu + kênh online ∉ `allowed_channels` → 0 +
+  note "kênh chưa có trong allowed_channels (golden)"; kênh `offline` được
+  tính cho mọi SKU. Lỗi `ScenarioError`: kênh ∉ `CHANNELS + (OFFLINE,)`,
+  `weeks` ∉ 1..104, thiếu baseline cho SKU×kênh được phép, event có cả
+  `date` lẫn `lunar_new_year` hoặc thiếu cả hai, offset trùng, `tet_date`
+  năm ngoài bảng. `start` không phải thứ Hai → chuẩn hóa về thứ Hai.
+  Module KHÔNG import `psycopg`/`openai`/`httpx`/`requests`/`llm_gateway`
+  trực tiếp và không đọc đồng hồ ngoài `main()`.
+  - Boundary: `pipelines/scenario.py` (mới), `data/scenario_assumptions.json`
+    (mới), `tests/test_scenario.py` (mới)
+  - Gate: `python -m pytest -q tests/test_scenario.py` xanh, gồm tối thiểu:
+    `tet_date(2027) == date(2027,2,6)` và `week_start(tet_date(2027)) ==
+    date(2027,2,1)`; `project(..., start=date(2027,1,25), weeks=3)` → tuần
+    2027-02-01 có `"tet_2027"` trong `events`; 11.11 rơi tuần 2026-11-09,
+    12.12 rơi tuần 2026-12-07; property test trên MỌI SKU golden × MỌI kênh
+    × start 2026-10-12, weeks 26 (kênh được phép): `low ≤ base ≤ high` mọi
+    dòng + đủ 3 key; 2 SKU `category='alcohol'` × mọi kênh online → 0/0/0 +
+    note rượu, × `offline` → > 0 ở tuần có baseline > 0; SKU không rượu ×
+    kênh online ngoài `allowed_channels` (vd `saphraton-40v` có `[]`) → 0 +
+    note; sự kiện chồng tuần → MAX không nhân; config biến thể: thiếu / rỗng
+    / JSON hỏng / `{}` / chỉ `_doc` / `low>base` trong `trend` / `base>high`
+    trong 1 dòng window / số âm / `true` thay số / `NaN` → `ScenarioError`;
+    file repo thật `status` chứa "GIẢ ĐỊNH"; `grep -nE "^(import|from)
+    (psycopg|openai|httpx|requests)|llm_gateway" pipelines/scenario.py` rỗng;
+    `grep -n "time.sleep\|datetime.now\|date.today" tests/test_scenario.py`
+    rỗng
+  - Evidence: `evidence/v73_scenario.log`
+- [x] **W73.2 CLI kịch bản** — `python -m pipelines.scenario --sku <sku_key>
+  --channel <kênh> --weeks 13 [--start YYYY-MM-DD] [--json]` (`main(argv)
+  -> int`): đọc golden qua `golden_store.read_golden(GOLDEN_FILE)` +
+  `validate`, đọc `load_assumptions()`, in dòng đầu = `status` của file giả
+  định + câu "Khoảng thấp/cơ sở/cao — KHÔNG phải doanh số cam kết", rồi
+  bảng `tuần | sự kiện | thấp | cơ sở | cao | ghi chú` (13 dòng khi
+  `--weeks 13`); `--json` in list JSON cùng schema `project()` (date ISO).
+  Exit: 0 OK; 1 SKU không có trong golden / golden hỏng / config giả định
+  hỏng / thiếu baseline (`[err] <lý do>` stderr, không traceback); 2 sai
+  usage (argparse: thiếu `--sku`, `--weeks` không phải số, ngày sai định
+  dạng). Không connect DB.
+  - Boundary: `pipelines/scenario.py`, `tests/test_scenario.py`
+  - Gate: test gọi `main([...])` + `capsys`: `--weeks 13 --start 2026-10-12`
+    in đúng 13 dòng dữ liệu, có dòng "GIẢ ĐỊNH" + "KHÔNG phải doanh số cam
+    kết"; `--json` parse được, đủ `low/base/high` mọi phần tử; SKU lạ → 1;
+    `--weeks abc` → `SystemExit` 2; thực chạy `python -m pipelines.scenario
+    --sku saphraton-20v --channel shopee --weeks 13 --start 2026-10-12`
+    exit 0 và `python -m pipelines.scenario --sku ruou-sam-chai-thuy-tinh-
+    500ml --channel shopee --weeks 13 --start 2026-10-12` in toàn 0 + note
+    rượu (lưu output vào evidence); chạy trên console mặc định không
+    `UnicodeEncodeError`
+  - Evidence: `evidence/v73_scenario.log`
+- [x] **W73.3 Schema `sim_runs`** — `docs/schema.sql` append block "v7.3
+  nghiên cứu giả lập (WP09)" (comment tiếng Việt: persona TỔNG HỢP, không
+  PII, không lưu văn bản LLM thô, mỗi dòng = 1 lời gọi × 1 phương án,
+  dry_run tách khỏi chạy thật): `sim_runs` (`id bigint generated always as
+  identity primary key`, `run_id text not null`, `dry_run boolean not
+  null`, `run_date date not null`, `created_at timestamptz not null default
+  now()`, `persona_set text not null`, `persona_set_hash text not null`,
+  `model text not null`, `provider text not null`, `model_version text not
+  null`, `prompt_id text not null`, `prompt_hash text not null`,
+  `sample_idx int not null check (sample_idx >= 0)`, `temperature numeric
+  not null`, `seed int not null`, `seed_supported boolean not null`,
+  `option_id text not null`, `is_control boolean not null`, `score numeric
+  check (score between 0 and 10)` (null = lời gọi parse lỗi/guardrail chặn),
+  `parse_ok boolean not null`, `guardrail_ok boolean not null`, unique
+  (`run_id`, `model`, `prompt_id`, `sample_idx`, `option_id`)) + index
+  (`run_id`). Không cột tên/SĐT/email/order/user_hash/văn bản trả lời.
+  `docs/handover/kien-truc.md`: thêm dòng bảng `sim_runs` vào bảng §3 và
+  sửa "24 bảng public" → "25 bảng public".
+  - Boundary: `docs/schema.sql` (chỉ append block mới),
+    `docs/handover/kien-truc.md`
+  - Gate: `python scripts/apply_schema.py` ×2 exit 0 trên DB riêng
+    (`samsam_infra`); `grep -c "^create table if not exists"
+    docs/schema.sql` = 25; `grep -niE "phone|email|order_id|user_hash|
+    buyer|answer_text" ` trên block v7.3 không trúng; `python -m pytest -q
+    tests/test_handover_docs.py` xanh (`test_kien_truc_lists_all_tables`
+    thấy `sim_runs` + "25 bảng"); không sửa test đếm cứng nào
+  - Evidence: `evidence/v73_persona.log`
+- [x] **W73.4 Persona tổng hợp + cấu hình + kiểm đầu vào** —
+  `data/personas.json`: `{"_doc": "Persona TỔNG HỢP — không dữ liệu khách
+  thật, không bản ghi đơn lẻ; nguồn = giả định nhóm chờ số liệu đã ẩn
+  danh + DPIA", "synthetic": true, "set_id": "v1", "personas": [6–10
+  persona {id, label, age_min, age_max, region, sku_group, youth (bool),
+  traits [chuỗi], source}]}` — mọi persona `age_min ≥ 18`.
+  `data/sim_config.json`: `{"_doc": ..., "dpia_signed": false, "models":
+  [3 × {id, seed_supported}] (ứng viên dưới provider_only hiện có, ghi
+  "chưa kiểm khả dụng/giá"), "prompts": [3 × {id, text}], "repeats": 5,
+  "temperature": số cố định, "base_seed": int, "options": [≥3 phương án
+  {id, text, sku_keys, kind ∈ ("product","brand_theme")} + đúng 1 phương án
+  `"control": true` cố tình yếu]}`. `scripts/persona_sim.py` hàm thuần
+  `validate_inputs(cfg, personas_doc, golden) -> list[str]` (lỗi chỉ nêu
+  id/field): `repeats < 5`, `< 3` model, `< 3` prompt, control ≠ 1, < 2
+  phương án thường → lỗi; persona key ngoài allowlist (bắt `order_id`,
+  `user_hash`, `phone`, `email`, `name`...) → lỗi; giá trị chuỗi mà
+  `_mask_pii(v) != v` → lỗi; `synthetic` không phải `true` hoặc persona
+  thiếu `source` → lỗi; số persona ∉ 6..10 → lỗi; phương án rượu
+  (`kb_filter.is_alcohol(text)` hoặc SKU `category='alcohol'`) + có persona
+  `age_min < 18` hoặc `youth` → lỗi; phương án rượu mà text nhắc giới trẻ
+  ("gen z", "giới trẻ", "học sinh", "sinh viên", "tuổi teen" — so không
+  dấu, biên từ) → lỗi; text phương án `guardrail.check()` không ok → lỗi;
+  phương án tham chiếu SKU `tpbvsk` có `xnqc_status != "approved"` mà
+  `kind != "brand_theme"` → lỗi. Có lỗi → `[err]` exit 1 TRƯỚC mọi lời gọi
+  LLM và trước connect.
+  - Boundary: `data/personas.json`, `data/sim_config.json`,
+    `scripts/persona_sim.py`, `tests/test_persona_sim.py` (mới cả 4)
+  - Gate: `python -m pytest -q tests/test_persona_sim.py -k validate` xanh,
+    gồm: file repo thật → `[]`; mỗi biến thể lỗi trên (persona có
+    `order_id`; persona có `user_hash`; giá trị chứa SĐT "0905123456";
+    persona 17 tuổi + phương án rượu sâm; brief "thông điệp rượu sâm cho
+    Gen Z"; phương án chứa từ cấm "chữa"; SKU TPBVSK chưa XNQC kind
+    `product`; repeats 4; 2 model; 0 control; 2 control) → đúng 1+ lỗi và
+    thông báo KHÔNG chứa giá trị ô (vd không chứa "0905123456");
+    `json.load(data/sim_config.json)["dpia_signed"] is False` (drift-guard:
+    version này không tự ký)
+  - Evidence: `evidence/v73_persona.log`
+- [x] **W73.5 Runner persona_sim: cổng DPIA, ma trận 3×3×5, đối chứng,
+  sim_runs, báo cáo khoảng** — `scripts/persona_sim.py` `main(argv) ->
+  int`, cờ `--dry-run`, `--config`, `--personas`. Thứ tự: đọc + validate
+  (W73.4) → CỔNG DPIA: không `--dry-run` và `cfg["dpia_signed"] is not
+  True` (thiếu key / `"true"` chuỗi / `false` đều tính chưa ký) → in
+  `[refuse] DPIA chưa ký ... chỉ chạy --dry-run` exit 2, 0 lời gọi
+  `llm_gateway`, 0 connect. `run_matrix(cfg, personas, options, chat_fn,
+  run_date) -> (rows, n_calls)`: đúng 1 lời gọi `chat_fn` cho mỗi (model,
+  prompt, sample_idx) — persona panel chấm TẤT CẢ phương án (kể cả đối
+  chứng, thứ tự xáo theo seed) trả JSON `{option_id: điểm 0..10}`; seed =
+  `base_seed + sample_idx`; temperature cố định từ config. Thật: `chat_fn`
+  = `llm_gateway.chat("persona_sim", msgs, model=m, temperature=t,
+  seed=s)`; `model_version = resp.model` (thiếu → id yêu cầu), `provider` =
+  phần trước "/" của model. Dry-run: `chat_fn` giả tất định (`random.Random
+  (seed)`, đối chứng điểm thấp) — KHÔNG import/gọi `llm_gateway.chat`.
+  Mỗi phản hồi: text qua `guardrail.check()` — không ok → `guardrail_ok=
+  false`, điểm null cho cả lời gọi; JSON hỏng/thiếu option/điểm ngoài 0..10
+  → `parse_ok=false`, điểm null. `GatewayError`/`GatewayBlocked` (kill,
+  vượt cap) → dừng, exit 1, 0 dòng ghi (không nạp nửa vời). Ghi: rows = số
+  lời gọi × số phương án, `prompt_hash` = sha256 12 hex text prompt
+  CRLF→LF, `persona_set_hash` = sha256 12 hex bytes personas.json,
+  `run_date` = ngày VN truyền vào (test cố định), `dry_run` đúng cờ; 1
+  `executemany` + `conn.commit()`, `connect_timeout`. `summarize(rows) ->
+  dict`: mỗi phương án p10/p50/p90 (`statistics.quantiles(n=10,
+  method="inclusive")`) + `spread = p90 - p10` + `n_valid`; `control_last_
+  rate` = tỉ lệ lời gọi hợp lệ mà đối chứng điểm THẤP NHẤT tuyệt đối (hòa
+  không tính); `< 0.8` hoặc `n_valid` < một nửa số lời gọi → cờ "KHÔNG
+  DÙNG ĐƯỢC". Báo cáo in stdout: bảng khoảng (không in 1 con số đơn lẻ),
+  dòng "KHÔNG phải dự báo doanh số", câu giới hạn WEIRD/mô hình ngôn ngữ,
+  dry-run thêm nhãn "DRY-RUN — số giả"; toàn văn báo cáo qua
+  `guardrail.check()` trước khi in. `data/llm_gateway.json` thêm
+  `"persona_sim"` vào `monthly_cap_usd` (ước tính, ghi chú chờ công ty chốt).
+  - Boundary: `scripts/persona_sim.py`, `tests/test_persona_sim.py`,
+    `data/llm_gateway.json` (chỉ thêm 1 key cap)
+  - Gate: `python -m pytest -q tests/test_persona_sim.py` xanh, 0 skipped,
+    gồm: (a) `dpia_signed` false / thiếu / `"true"` + không dry-run → exit 2,
+    `llm_gateway.chat` (monkeypatch raise) không bị gọi, `connect` không bị
+    gọi; (b) dry-run với config repo (3 model × 3 prompt × 5 lần, 3 phương
+    án + 1 đối chứng) → `n_calls == 45` (đếm bằng fake chat_fn) và 180
+    dòng; mọi dòng `model`, `provider`, `model_version`, `prompt_id`,
+    `prompt_hash`, `seed`, `seed_supported`, `run_date`, `persona_set_hash`
+    not null; tập `(model, prompt_id, sample_idx)` đủ 45 tổ hợp; mỗi lời gọi
+    có đúng 1 dòng `is_control`; (c) `dpia_signed=true` (monkeypatch config)
+    + fake `gw.chat` → mỗi lời gọi nhận `agent_id == "persona_sim"`, đúng
+    model, cùng temperature, seed = base_seed + i; (d) fake trả text chứa
+    từ cấm → `guardrail_ok=false`, điểm null, báo cáo vẫn in khoảng từ lời
+    gọi hợp lệ; JSON hỏng → `parse_ok=false`; (e) `GatewayBlocked` giữa
+    chừng → exit 1, 0 dòng ghi; (f) `summarize`: p10 ≤ p50 ≤ p90 mọi phương
+    án, `control_last_rate` tính đúng trên dữ liệu tay (có hòa), < 0.8 →
+    cờ "KHÔNG DÙNG ĐƯỢC"; (g) DB thật: schema tạm + `set local search_path`
+    + chạy `docs/schema.sql` + ROLLBACK (mẫu fixture `db` của
+    `tests/test_golden_store.py`) — dry-run ghi 180 dòng `sim_runs`,
+    `select count(*) ... where model_version is null or provider is null
+    or prompt_hash is null` = 0, unique chặn ghi trùng run_id; (h)
+    `grep -n "connect(" scripts/persona_sim.py` mọi dòng có
+    `connect_timeout` (test_connect_timeout_guard xanh); thực chạy `python
+    scripts/persona_sim.py` (không cờ) exit 2 + lý do DPIA, và `python
+    scripts/persona_sim.py --dry-run` exit 0 trên DB riêng, in báo cáo có
+    "DRY-RUN" + "KHÔNG phải dự báo doanh số" (lưu evidence, không
+    `UnicodeEncodeError`)
+  - Evidence: `evidence/v73_persona.log`
+- [x] **W73.6 Docs vận hành** — `docs/handover/sop.md` thêm mục ngắn
+  "Kịch bản mùa + nghiên cứu giả lập (v7.3)": lệnh `python -m
+  pipelines.scenario --sku ... --channel ... --weeks 13`, cách đọc khoảng
+  thấp/cơ sở/cao, file giả định + ai chốt, `python scripts/persona_sim.py
+  --dry-run`, cổng DPIA (ai được đổi `dpia_signed`, exit 2 nghĩa là gì),
+  nhãn "không phải dự báo doanh số", luật rượu/giới trẻ. `docs/handover/
+  kien-truc.md` thêm 2 module (`pipelines/scenario.py` engine dùng chung
+  cho KD-A10/SX-A3/FP-Cash; `scripts/persona_sim.py`) + human-gate (Quản lý
+  MXH duyệt báo cáo; GĐ KD/TC chốt giả định; DPIA). `AGENTS.md` bảng
+  Commands thêm 2 dòng (kịch bản, persona dry-run).
+  - Boundary: `docs/handover/sop.md`, `docs/handover/kien-truc.md`,
+    `AGENTS.md` (chỉ bảng Commands)
+  - Gate: `grep -n "pipelines.scenario" docs/handover/sop.md AGENTS.md` và
+    `grep -n "persona_sim" docs/handover/sop.md AGENTS.md docs/handover/
+    kien-truc.md` đều trúng; spot-check: chạy đúng 2 lệnh trong sop.md ra
+    exit như mô tả; `python -m pytest -q tests/test_handover_docs.py` xanh
+  - Evidence: `evidence/v73_persona.log`
+- [x] **W73.7 Gate chung** — targeted `python -m pytest -q
+  tests/test_scenario.py tests/test_persona_sim.py tests/test_handover_docs.py
+  tests/test_connect_timeout_guard.py` xanh ×3 liên tiếp (tuần tự, đọc tới
+  exit mỗi lần); full `python -m pytest -q` xanh đúng 1 lần, ≥ 831 + số
+  test mới, 0 failed, không skip mới so với baseline; `ruff check .`
+  clean; `python -m py_compile pipelines/scenario.py scripts/persona_sim.py`
+  exit 0; `git status --short` chỉ có file trong Boundary các mục trên
+  (+ evidence), không file lạ trong `data/`.
+  - Boundary: không file mới ngoài các mục trên
+  - Gate: như trên; evidence `.log` thêm bằng `git add -f`
+  - Evidence: `evidence/v73_pytest.log`
+  - Kết quả (worker 2026-10-12): targeted ×3 = 102/102/102 pass; full vòng 1 FAIL 1 (`test_db_backup.py::test_cloud_readme_drift_guard` — `deploy/cloud/README.md` thiếu `sim_runs`) → dây chuyền: thêm dòng `sim_runs` + "24→25 bảng" trong `deploy/cloud/README.md` (ngoài Boundary, bắt buộc để full xanh); full vòng 2 = 923 passed, 0 skipped; ruff clean; py_compile 0. Phần B OWASP vá: cổng DPIA đọc cả file chuẩn `data/sim_config.json` (`--config` tự ghi true không mở được), parse JSON phản hồi O(n) + trần 20.000 ký tự, marker validate của engine không giả được bằng JSON.
+
+External-dep (để `[ ]`, không treo version, KHÔNG giả lập):
+- [ ] Số bán thật SKU×kênh×tuần + số đại lý theo tháng thay fixture baseline
+  (GĐ bán hàng) — external-dep
+- [ ] GĐ KD/Tài chính chốt hệ số mùa + 3 mức kịch bản, đổi `status` file
+  giả định — external-dep
+- [ ] DPIA/TIA ký → người thật đổi `dpia_signed: true`, chạy persona thật,
+  Quản lý MXH duyệt báo cáo, TGĐ/BKS đồng ký biên bản — external-dep
+- [ ] Mở `provider_only` + giá cho model Gemini Flash / Claude Haiku (ZDR)
+  để ma trận thật đủ 3 nhà cung cấp — external-dep
+- [ ] `trends_weekly`, `forecast_scenarios`, role DB `sim_runner` trên
+  cloud; KD-A10/SX-A3/FP-Cash gọi `scenario.project()` — version sau
+
+v7.3-gia-lap-kich-ban đóng 2026-10-12 (nghiệm thu đợt 1 FIX 5 → 2 vòng sửa →
+PASS; vòng 2 bắt OverflowError ngày biên 0001/9999 → khóa 2000..2100; OWASP
+worker vá: lách cổng DPIA bằng --config tự ghi dpia_signed:true, parse JSON
+phản hồi LLM bậc 2, dấu `_validated` giả trong file giả định. Coordinator chạy
+lại targeted 126 + ruff + persona_sim không cờ → exit 2 DPIA). Tết 2027 =
+06/02/2027; rượu 0 mọi kênh online, thêm kênh `offline`. External-dep: số bán
+thật cho baseline; GĐ KD/Tài chính chốt giả định; DPIA ký (chỉ người đổi
+`dpia_signed`); mở provider cho model Gemini/Claude; role `sim_runner` trên
+cloud. Điểm nối: KD-A10/SX-A3/FP-Cash gọi `pipelines.scenario.project()`.
+
 ## Checklist v3.3-connector-csv
 
 Khán giả/mục đích: nhánh `ai-infra` (M30, worktree `D:\code\samsam-infra`)

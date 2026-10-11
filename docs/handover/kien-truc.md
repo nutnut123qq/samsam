@@ -60,15 +60,15 @@ Streamlit demo.
 | `crawler/` | `collect` — crawl site public → `data/*.jsonl` (delay ≥1s/request) |
 | `ingest/` | `embed_store` (chunk+embed→`chunks`), `core_store` (nạp DB lõi, delete-by-source idempotent), `lead_store` (convlog→`leads`, insert-only) |
 | `api/` | `rag.py` — `answer()` RAG: retrieve top-8 `chunks` bằng cosine numpy → LLM + nguồn; `NO_DATA` khi score thấp |
-| `pipelines/` | `guardrail.py` (banned words + claim whitelist — check trước mọi output AI), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py` |
+| `pipelines/` | `guardrail.py` (banned words + claim whitelist — check trước mọi output AI), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py`, `scenario.py` (v7.3 — engine kịch bản mùa THUẦN dùng chung cho KD-A10 dự báo mùa / SX-A3 phân bổ tồn / FP-Cash 13 tuần: baseline SKU×kênh×tuần × xu hướng × hệ số 11.11/12.12/Tết 2027 → khoảng thấp/cơ sở/cao; rượu = 0 kênh online; giả định `data/scenario_assumptions.json`) |
 | `connectors/` | `zalo.py` — webhook Zalo OA: verify signature, ACK 200 nhanh rồi reply async, dedup msg_id, token store + auto-refresh; **chỉ reply inbox** |
 | `agents/` | `report.py` (báo cáo định kỳ → file md), `garden.py` (nhật ký vùng trồng + cảnh báo) — không LLM, không tự gửi |
 | `app/` | `streamlit_app.py` — UI 7 tab (mục 4) |
-| `scripts/` | `apply_schema.py`, `data_audit.py`, `eval_qa.py`, `zalo_mock.py`, `zalo_preflight.py` |
+| `scripts/` | `apply_schema.py`, `data_audit.py`, `eval_qa.py`, `zalo_mock.py`, `zalo_preflight.py`, `persona_sim.py` (v7.3 — nghiên cứu giả lập persona tổng hợp 3 model × 3 prompt × ≥5 lần qua `llm_gateway` agent `persona_sim`, có đối chứng yếu, ghi `sim_runs`; cổng DPIA `data/sim_config.json`) |
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 24 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 25 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
@@ -96,6 +96,7 @@ Streamlit demo.
 | `job_runs` | 1 dòng/lần chạy job lịch (`job`,`started_at`,`finished_at`,`ok`,`detail` đã mask cắt 300,`host`) — bản tin sức khỏe đọc để báo job lỗi/không chạy | `pipelines.job_runs.job_run` (bọc `__main__` của `agents.report`, `ingest.lead_store`) — insert-only |
 | `documents` | Tài liệu số hóa (`sha256` PK = tên bản gốc bất biến `originals/<sha256>`,`doc_type`,`pages`,`text_source` pdf_text/ocr/none,`pii_flag`,`status` cho_ocr/pending_review/verified/rejected,`verified_by`) — KHÔNG lưu full text | `ingest.doc_intake` — insert-only theo hash; status verified/rejected chỉ do Pháp chế qua CLI `--verify/--reject --by` |
 | `document_fields` | Field pháp lý trích bằng regex (`so_giay`,`ngay_cap`,`ten_san_pham`; `confidence`,`verified` mặc định false) | `ingest.doc_intake` — không LLM; `verified=true` khi Pháp chế `--verify` |
+| `sim_runs` | (v7.3) Nghiên cứu giả lập persona TỔNG HỢP: 1 dòng = 1 lời gọi LLM (`model`,`provider`,`model_version`,`prompt_id`,`prompt_hash`,`sample_idx`,`temperature`,`seed`,`seed_supported`) × 1 phương án (`option_id`,`is_control` đối chứng yếu,`score` 0..10 hoặc null,`parse_ok`,`guardrail_ok`) + `run_id`,`run_date`,`persona_set`/`persona_set_hash`,`dry_run` — KHÔNG PII, KHÔNG văn bản LLM thô | `scripts/persona_sim.py` — insert-only; chạy thật chỉ sau DPIA ký, `--dry-run` = số giả |
 
 View (v3.2): `sku_readiness` (SKU × kênh online → `CAM` / `MO_TA` /
 `TP_THUONG` / `QC_DAY_DU`; rượu luôn `CAM`, kênh ngoài `allowed_channels`
@@ -150,6 +151,8 @@ idempotent theo kỳ (cùng kỳ → cùng tên file ghi đè).
 | Nhật ký vườn | Chuẩn hóa + cảnh báo bất thường | Ghi nhật ký tay; báo quản lý khi có cảnh báo |
 | Zalo OA | Chỉ TRẢ LỜI tin nhắn đến (reply), không chủ động nhắn, không đăng OA | — |
 | Bổ sung KB/claim | `core_store`/`embed_store` nạp lại khi được chạy | Soạn file nguồn + chạy lệnh nạp |
+| Giả định kịch bản mùa (v7.3) | `pipelines.scenario` tính khoảng thấp/cơ sở/cao từ `data/scenario_assumptions.json` (`status` "GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt"; baseline là fixture) — không phải doanh số cam kết | GĐ KD/Tài chính chốt hệ số + 3 mức, đổi `status`; GĐ bán hàng cấp số bán thật |
+| Nghiên cứu giả lập persona (v7.3) | `scripts/persona_sim.py` từ chối chạy thật (exit 2) khi `data/sim_config.json` `dpia_signed` khác `true`; báo cáo khoảng p10/p50/p90 có nhãn "KHÔNG phải dự báo doanh số" | Pháp chế + TGĐ ký DPIA/TIA rồi NGƯỜI đổi `dpia_signed`; Quản lý MXH duyệt báo cáo, TGĐ/BKS đồng ký biên bản |
 
 ## 6b. Phân quyền & đăng nhập (v3.4)
 
