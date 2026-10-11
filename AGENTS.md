@@ -19,6 +19,7 @@ chat lẫn embeddings) + Streamlit.
 | Demo UI | `streamlit run app/streamlit_app.py` (hoặc `python demo.py`) |
 | Zalo webhook | `python -m connectors.zalo` → :8788/zalo-webhook |
 | Mock E2E Zalo | `python scripts/zalo_mock.py` |
+| Số hóa tài liệu (F15.1) | `python -m ingest.doc_intake` (intake `DOC_INTAKE_DIR`) · `--pending` · `--verify <sha256> --by "<tên>"` · `--reject <sha256> --by "<tên>"` |
 | Eval RAG | `python scripts/eval_qa.py` (12 câu questions.md, ~90s, exit 0 nếu ≥10/12 + 2 bẫy pass) |
 | Test/lint | `python -m pytest` · `ruff check .` |
 

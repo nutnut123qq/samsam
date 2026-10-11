@@ -68,7 +68,7 @@ Streamlit demo.
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 10 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 12 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
@@ -82,6 +82,8 @@ Streamlit demo.
 | `leads` | Lead từ convlog (`dedup_key` unique,`channel`,`user_hash`,`question` đã mask,`intent`,`status`) | `ingest.lead_store` — insert-only, không xóa |
 | `content_drafts` | Hàng duyệt + lịch đăng (`brief`,`channel`,`text`,`guardrail` jsonb snapshot,`status`,`reviewer`,`scheduled_date`) | `pipelines.store` / Studio — update theo id |
 | `llm_usage` | 1 dòng/lời gọi LLM-embedding (`ts`,`agent_id`,`model`,`tokens_in/out`,`cost_usd` ước tính,`ok`,`error` đã mask) — không lưu prompt | `pipelines.llm_gateway` — insert-only; trần chi phí tháng theo agent đọc từ đây |
+| `documents` | Tài liệu số hóa (`sha256` PK = tên bản gốc bất biến `originals/<sha256>`,`doc_type`,`pages`,`text_source` pdf_text/ocr/none,`pii_flag`,`status` cho_ocr/pending_review/verified/rejected,`verified_by`) — KHÔNG lưu full text | `ingest.doc_intake` — insert-only theo hash; status verified/rejected chỉ do Pháp chế qua CLI `--verify/--reject --by` |
+| `document_fields` | Field pháp lý trích bằng regex (`so_giay`,`ngay_cap`,`ten_san_pham`; `confidence`,`verified` mặc định false) | `ingest.doc_intake` — không LLM; `verified=true` khi Pháp chế `--verify` |
 
 Quy ước chung: mọi bảng lõi có cột `source` = file/nguồn nạp; loader
 `core_store` chỉ delete+insert rows thuộc nguồn của mình → row nhập tay

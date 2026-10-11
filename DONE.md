@@ -8,6 +8,281 @@ Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
 Nhánh `ai-infra` (M30): version đang mở **v3.2-golden-master**.
 
+v3.8-ocr-intake đóng 2026-10-12 (worktree song song `infra-v38`; 3
+nghiệm thu đợt 1 FIX 3 → 1 vòng sửa → PASS; coordinator chạy lại
+307/307 + ruff, sửa 1 dòng return bị dính khoảng trắng). 5 PDF thật
+(chỉ đọc): số giấy 4/5, 1 bản scan → `cho_ocr`. External-dep: provider
+OCR có phí (FPT/Google, cần TIA, cấm cho tài liệu có PII), Pháp chế
+chạy `--verify` thật, allowlist liên hệ công ty, kho bản gốc cloud
+object-lock. Someday: provider nước ngoài bị bỏ qua câm (nên cảnh
+báo); lỗi provider tương lai làm dừng cả lô; junction Windows chưa có
+test (skip khi thiếu quyền symlink); TOCTOU giữa kiểm symlink và đọc
+file; `ten_san_pham` 0/4 trên giấy thật (không có nhãn "Tên sản
+phẩm:"); PDF chỉ có owner-password chưa thử decrypt(""); sop.md còn
+ghi "hiện 9" bảng.
+
+## Checklist v3.8-ocr-intake
+
+Khán giả/mục đích: nhánh `ai-infra` (worktree `D:\code\samsam-v38`) —
+WP04b, luồng F15.1 (flows_infra.md: scan → trích text → quét PII → trích
+field → Pháp chế xác nhận), agent "Số hóa tài liệu (OCR intake)"
+(plan_data_platform.md). Số hóa giấy tiếp nhận công bố, nhãn, hợp đồng
+đại lý, hồ sơ vùng trồng vào hệ thống CÓ KIỂM SOÁT: bản gốc bất biến
+theo sha256, field pháp lý trích TẤT ĐỊNH (regex, KHÔNG LLM) ở trạng
+thái chưa xác minh tới khi người thật chạy CLI xác nhận. Hiện repo
+chưa có gì: không bảng `documents`, không module intake; `pypdf` 6.14
+có sẵn trong interpreter nhưng CHƯA có trong `requirements.txt`;
+`reportlab` KHÔNG có (fixture PDF viết tay); `docs/schema.sql` đang 10
+bảng và `tests/test_handover_docs.py::test_kien_truc_lists_all_tables`
+khoá cứng `len(tables) == 10` + `"10 bảng"` trong
+`docs/handover/kien-truc.md` → thêm 2 bảng là dây chuyền bắt buộc sửa 2
+chỗ đó. Khảo sát chỉ-đọc 5 PDF thật (`Downloads/1. Giấy công bố sản phẩm
+- *.pdf`, chỉ đếm): 4 file có lớp text (mỗi file 1 số `…/ĐKSP`, ngày
+có cả dạng `dd/mm/yyyy` lẫn "ngày d tháng m năm yyyy"), 1 file scan
+(0 ký tự) → regex phải hỗ trợ cả 2 dạng ngày; cả 4 file text đều chứa
+chuỗi dạng SĐT → `pii_flag=true` là kỳ vọng ĐÚNG (allowlist liên hệ công
+ty chưa được Pháp chế duyệt → mặc định flows: mọi SĐT/email là PII).
+
+Quy ước: ponytail — stdlib + `pypdf` (thuần Python, thêm 1 dòng
+`requirements.txt` kèm lý do) + `psycopg` sẵn có; KHÔNG `reportlab`/
+`fitz`/`PIL` trong code hay test; cấm pip install global. KHÔNG gọi
+LLM/gateway/mạng ở bất kỳ nhánh nào của version này (field trích bằng
+regex; `ingest/doc_intake.py` không import `pipelines.llm_gateway`/
+`openai`/`httpx`). Tên module/CLI: `python -m ingest.doc_intake`.
+Cấu hình qua env (ghi vào `env.example`, không ghi `.env*`):
+`DOC_INTAKE_DIR` (mặc định `data/intake/`), `DOC_ORIGINALS_DIR` (mặc
+định `data/originals/`), `OCR_PROVIDER` (mặc định `none`). `doc_type`
+lấy từ thư mục con `intake/<loai>/` theo F15.1 (`giay_tiep_nhan`,
+`nhan`, `hop_dong_dai_ly`, `ho_so_vung_trong`; file ở gốc/thư mục lạ →
+`khac`). Đuôi nhận: `.pdf`, `.jpg`, `.jpeg`, `.png` (ảnh luôn đi nhánh
+OCR, pages=1); đuôi khác bỏ qua có đếm. Trạng thái `documents.status`:
+`cho_ocr` | `pending_review` | `verified` | `rejected` (check
+constraint); `text_source`: `pdf_text` | `ocr` | `none`; `pii_flag`
+NULL = chưa quét được text (scan chờ OCR), true/false = đã quét. Full
+text KHÔNG lưu DB, KHÔNG in ra stdout; stdout chỉ in `sha256[:12]`,
+`doc_type`, `status`, số đếm — KHÔNG in filename (tên file hợp đồng có
+thể chứa tên người) hay nội dung. Print tiếng Việt → UTF-8 guard sau
+imports (copy `scripts/zalo_mock.py`). DB qua
+`ingest.lead_store.connect()` (connect_timeout=3; None → thông báo +
+exit 1, không hang); ghi xong `conn.commit()` tường minh (gotcha
+SAVEPOINT v2.1). Thư mục runtime mới (`data/intake/`,
+`data/originals/`) gitignore NGAY. Test dùng `tmp_path` + monkeypatch
+đường dẫn/`connect` (fake conn ghi SQL như `tests/test_core_store.py`),
+không wall-clock, không chạm DB thật; E2E DB thật chỉ ở evidence trên
+`samsam_infra` với thư mục intake/originals trỏ vào scratchpad. Giấy tờ
+thật KHÔNG vào repo (kể cả `data/originals/` gitignored — evidence
+thật chạy hàm thuần, không intake vào repo).
+External-dep (không treo version): provider OCR có phí (FPT.AI Reader
+trong nước, Google Vision nước ngoài — chỉ cổng cấu hình, bật nước ngoài
+là phiếu tầng 2 + TIA); người Pháp chế thật chạy `--verify` (KHÔNG tự
+đánh dấu verified trên tài liệu thật); allowlist liên hệ công ty (hotline/
+MST/email) do Pháp chế duyệt; object storage cloud có object-lock (dùng
+dir local); rule `[TEN]` cho nhãn "Người đại diện" + bước trích field
+bằng LLM cho tài liệu Xanh (F15.1 bước 6) — ngoài phạm vi.
+
+- [x] **W38.1 Schema `documents` + `document_fields` (idempotent)** —
+  `docs/schema.sql` thêm `create table if not exists documents (sha256
+  text primary key check (sha256 ~ '^[0-9a-f]{64}$'), filename text not
+  null, doc_type text not null, pages int, text_source text not null
+  check in (pdf_text,ocr,none), pii_flag boolean, status text not null
+  default 'pending_review' check in (cho_ocr,pending_review,verified,
+  rejected), verified_by text, verified_at timestamptz, created_at
+  timestamptz not null default now())` + `create table if not exists
+  document_fields (sha256 text references documents(sha256) on delete
+  restrict, field text not null, value text not null, confidence
+  numeric check (0..1), verified boolean not null default false,
+  primary key (sha256, field))` + index `documents(status)`. Dây chuyền
+  bắt buộc: `tests/test_handover_docs.py` đổi `== 10` → `== 12` (chỉ
+  số + message, không xoá assert) và `docs/handover/kien-truc.md` đổi
+  "10 bảng" → "12 bảng" + thêm 2 dòng mô tả bảng mới.
+  - Boundary: `docs/schema.sql`, `tests/test_handover_docs.py` (1 hằng
+    số), `docs/handover/kien-truc.md` (mục 3 bảng DB)
+  - Gate: `python scripts/apply_schema.py` chạy 2 lần liên tiếp exit 0
+    trên DB samsam_infra và in có `documents`, `document_fields`;
+    `python -m pytest tests/test_handover_docs.py tests/test_core_store.py -q`
+    xanh; số assert trong `test_kien_truc_lists_all_tables` trước/sau
+    bằng nhau (diff)
+  - Evidence: `evidence/v38_ocr_intake.log`
+- [x] **W38.2 Intake: sha256 + kho bản gốc bất biến + ghi DB idempotent** —
+  `ingest/doc_intake.py`: `sha256_file(path)` (đọc theo khối);
+  `store_original(path, sha, originals_dir) -> bool` ghi
+  `originals/<sha256>` qua file tạm cùng thư mục rồi tạo đích ở chế độ
+  KHÔNG ghi đè (`open(...,'xb')`/`os.link`, không `os.replace`), đã tồn
+  tại → không đụng (trả False); file đích có sẵn mà hash ≠ tên → cảnh
+  báo "bản gốc lệch hash", KHÔNG ghi đè, tài liệu đó bỏ qua.
+  `intake(intake_dir, originals_dir, conn, ocr_provider)` quét đệ quy,
+  mỗi file: hash → bản gốc → trích text (W38.3) → PII (W38.4) → field
+  (W38.5) → `insert into documents ... on conflict (sha256) do nothing`
+  (trùng hash = log "trùng" + KHÔNG trích lại, KHÔNG ghi đè field đã
+  verified); trả dict đếm `{new, dup, cho_ocr, skipped, error}`. Biên
+  phải xử lý (enumerate, mỗi case 1 test): thư mục intake không tồn
+  tại → 0 file, không crash; thư mục rỗng; file 0 byte → skipped; đuôi
+  lạ → skipped; PDF hỏng/mã hoá (pypdf raise / `is_encrypted`) →
+  error, lô vẫn chạy tiếp file sau; cùng nội dung khác tên file → 1 bản
+  ghi. Intake KHÔNG xoá/di chuyển file trong thư mục intake.
+  - Boundary: `ingest/doc_intake.py` (mới), `tests/test_doc_intake.py`
+    (mới), `.gitignore` (`data/intake/`, `data/originals/`)
+  - Gate: test: intake ×2 cùng file (fake conn) → đúng 1 lần
+    `insert into documents` mang sha đó được thực thi với rowcount 1,
+    lần 2 đếm `dup=1`, `document_fields` không ghi lần 2; bản gốc: sau
+    lần 2 bytes + `st_mtime_ns` của `originals/<sha>` không đổi; đích
+    có sẵn nội dung khác → không bị ghi đè (bytes giữ nguyên) + đếm
+    error; 2 file khác tên cùng nội dung → 1 bản gốc, `new=1, dup=1`;
+    6 case biên trên đều có test xanh; `git check-ignore data/intake/x
+    data/originals/x` in cả 2 đường dẫn
+  - Evidence: `evidence/v38_ocr_intake.log`
+- [x] **W38.3 Trích text: pypdf cho PDF có lớp text + provider OCR cắm
+  được (mặc định `none`, không mạng)** — `extract_text(path) -> (text,
+  pages, text_source)`: PDF → `pypdf.PdfReader`, text NFC; tổng ký tự
+  không-trắng < ngưỡng (hằng số, đề xuất 20) coi là scan → gọi provider.
+  Provider = registry dict `name -> (callable(path)->str, domestic:
+  bool)`; có sẵn duy nhất `none` (domestic, trả `""`) → `text_source=
+  'none'`, `status='cho_ocr'`, `pii_flag=NULL`, không field. Tên provider
+  không có trong registry (vd `fpt`, `google_vision`) → lỗi cấu hình rõ
+  ràng TRƯỚC khi xử lý file (exit 2), ghi external-dep. Provider
+  `domestic=False` bị TỪ CHỐI cho mọi tài liệu (PII chưa biết trước khi
+  OCR → coi như có PII; bật nước ngoài = phiếu tầng 2 + TIA). Provider
+  trả text → `text_source='ocr'` rồi đi tiếp PII/field như pdf_text.
+  `requirements.txt` thêm `pypdf>=4` kèm comment lý do.
+  - Boundary: `ingest/doc_intake.py`, `requirements.txt`, `env.example`
+    (`DOC_INTAKE_DIR`, `DOC_ORIGINALS_DIR`, `OCR_PROVIDER` + comment
+    external-dep FPT/Google), `tests/test_doc_intake.py`
+  - Gate: test PDF scan (PDF viết tay 1 trang không content stream) và
+    1 file `.png` bất kỳ bytes → `status='cho_ocr'`, `text_source=
+    'none'`, `pii_flag` None, 0 field, với `socket.socket.connect`
+    monkeypatch raise (chứng minh không gọi mạng); fake provider
+    domestic trả text có số giấy → `text_source='ocr'` + có field;
+    fake provider `domestic=False` → không được gọi (đếm 0 call);
+    `OCR_PROVIDER=google_vision` → `main([])` exit 2, connect 0 lần;
+    `grep -nE "llm_gateway|openai|httpx|requests" ingest/doc_intake.py`
+    rỗng
+  - Evidence: `evidence/v38_ocr_intake.log`
+- [x] **W38.4 Quét PII → `pii_flag`, chặn đường tới LLM** —
+  `pii_flag = _mask_pii(text) != text` dùng `pipelines.pii._mask_pii`
+  KHÔNG allowlist (flows F15.1: allowlist chưa duyệt → mọi SĐT/email là
+  PII; CCCD 12 số đầu 0 cũng trúng alt SĐT). Docstring ghi rõ: tài liệu
+  `pii_flag` true/NULL KHÔNG được gửi LLM; version này không có lời gọi
+  LLM nào (W38.3 grep). Không log text/khớp PII; nếu cần in gì về PII
+  chỉ in đếm.
+  - Boundary: `ingest/doc_intake.py`, `tests/test_doc_intake.py`
+  - Gate: test: PDF text fixture có "Dien thoai: 0901234567" →
+    `pii_flag is True`; fixture có email → True; fixture chỉ có số
+    giấy/ngày/giá "1.500.000" → `pii_flag is False`; capsys: stdout của
+    `intake` không chứa "0901234567", filename fixture, hay câu text
+  - Evidence: `evidence/v38_ocr_intake.log`
+- [x] **W38.5 Trích field giấy tiếp nhận bằng regex tất định (không LLM)** —
+  `extract_fields(text) -> dict[field, (value, confidence)]` chỉ áp cho
+  `doc_type='giay_tiep_nhan'` và text có được: `so_giay` = `(?<!\d)\d{1,6}/
+  \d{4}/(ĐKSP|DKSP)` (không phân biệt hoa thường, giữ nguyên dạng gốc); `ngay_cap` = "ngày d
+  tháng m năm yyyy" ưu tiên, fallback `dd/mm/yyyy` (sep `/.-`), chuẩn
+  ISO `YYYY-MM-DD`, ngày không hợp lệ (31/02) bị loại qua `datetime`;
+  `ten_san_pham` = phần sau nhãn "Tên sản phẩm:" (có dấu/không dấu) tới
+  hết dòng, strip, cap 200 ký tự. Confidence: 1.0 nếu đúng 1 ứng viên
+  khác nhau, 0.5 nếu >1 (giữ ứng viên đầu); không khớp → không có dòng.
+  Ghi `document_fields` với `verified=false`; doc có field →
+  `status='pending_review'`; doc text nhưng 0 field → vẫn
+  `pending_review` (người rà).
+  - Boundary: `ingest/doc_intake.py`, `tests/test_doc_intake.py`
+  - Gate: test PDF text fixture viết tay ("So: 1234/2024/DKSP",
+    "ngay 05/03/2024", "Ten san pham: Sam Ngoc Linh X") qua
+    `extract_text`+`extract_fields` → `so_giay=="1234/2024/DKSP"`,
+    `ngay_cap=="2024-03-05"`, `ten_san_pham` đúng; chuỗi Unicode
+    "Số: 0123/2023/ĐKSP … ngày 7 tháng 11 năm 2023" →
+    `0123/2023/ĐKSP` + `2023-11-07`; "31/02/2024" không ra `ngay_cap`;
+    2 số giấy khác nhau → confidence 0.5; số giấy đứng sát chữ số khác
+    ("12345678/2024/DKSP", 8 chữ số) KHÔNG ra `so_giay` (không cắt
+    đuôi 6 số); mọi dòng field insert có `verified=false`. Evidence thật
+    (chỉ-đọc, hàm thuần, KHÔNG copy file, chỉ in số giấy + ngày + đếm):
+    5 PDF `Downloads/1. Giấy công bố sản phẩm - *.pdf` → kỳ vọng 4/5 ra
+    `so_giay`, 1/5 → `cho_ocr`
+  - Evidence: `evidence/v38_ocr_intake.log`, `evidence/v38_real_pdf.log`
+- [x] **W38.6 CLI xác nhận của Pháp chế — chỉ đổi trạng thái khi có
+  `--by`** — `python -m ingest.doc_intake` (không flag = chạy intake,
+  in đếm); `--pending` (liệt kê sha[:12]/doc_type/field chưa xác minh);
+  `--verify <sha256> --by "<tên>"` → trong 1 transaction: `documents`
+  set `status='verified', verified_by, verified_at=now()` CHỈ khi đang
+  `pending_review`, `document_fields.verified=true` cho sha đó, rồi
+  `conn.commit()`; `--reject <sha256> --by "<tên>"` → `status='rejected'`
+  (field giữ `verified=false`). `--by` thiếu/rỗng/toàn space → `ap.error`
+  exit 2 TRƯỚC khi connect DB; sha không đúng 64 hex → exit 2; sha
+  không tồn tại hoặc không ở `pending_review` (vd `cho_ocr`, đã
+  verified) → exit 1 + thông báo, không update; >1 op cùng lúc (kể cả
+  `--pending --verify`) → exit 2 (gotcha n_ops v2.2). Tên người duyệt
+  in ra được (người nội bộ tự nhập), sha in `[:12]`.
+  - Boundary: `ingest/doc_intake.py`, `tests/test_doc_intake.py`,
+    `AGENTS.md` (1 dòng bảng Commands), `docs/handover/sop.md` (1 mục
+    SOP số hóa tài liệu — chỉ lệnh có thật)
+  - Gate: test `main(argv)` với `connect` monkeypatch đếm lời gọi:
+    `--verify <sha>` không `--by` → SystemExit 2, connect 0 lần; `--by
+    "  "` → exit 2; sha 63 ký tự → exit 2; `--verify --reject` cùng lúc
+    → exit 2; fake conn sha `pending_review` + `--by "Pháp chế A"` →
+    exit 0, SQL update chứa `status = %s ... and status = 'pending_review'`
+    + update `document_fields` + `commit` gọi 1 lần; sha `cho_ocr` →
+    exit 1, 0 update. E2E DB thật (samsam_infra, thư mục scratchpad,
+    fixture tự tạo — KHÔNG tài liệu thật): intake ×2 → `select count(*)
+    from documents where sha256=…` = 1; `--verify` không `--by` → status
+    vẫn `pending_review`; có `--by "test-coordinator"` → `verified` +
+    fields verified; dọn row test sau evidence (`delete` theo sha fixture)
+  - Evidence: `evidence/v38_ocr_intake.log`
+- [x] **Gate chung** —
+  - targeted ×3: `python -m pytest tests/test_doc_intake.py tests/test_handover_docs.py tests/test_core_store.py -q`
+    3 lần liên tiếp xanh (lệnh nặng có thể bị đẩy nền — đọc output tới
+    khi exit rồi mới chạy lần kế, không chạy chồng, không retry mù)
+  - full: `python -m pytest -q` xanh, ≥ 258 + số test mới
+  - `ruff check .` sạch
+  - `python -m py_compile ingest/doc_intake.py scripts/apply_schema.py`
+  - `git status`: chỉ file trong Boundary W38.1–W38.6 + evidence;
+    `data/intake/`, `data/originals/` ignored; không PDF/ảnh nào được
+    track (`git ls-files | grep -iE "\.(pdf|png|jpe?g)$"` không có file
+    mới); `lv2-market-top.png` lạ giữ untracked
+  - External-dep: provider OCR có phí (FPT.AI Reader / Google Vision +
+    TIA) chỉ cổng cấu hình; Pháp chế thật chạy `--verify` trên tài liệu
+    thật; allowlist liên hệ công ty do Pháp chế duyệt; object storage
+    cloud + object-lock
+- Ghi chú worker v3.8 (lệch contract, có lý do):
+  - W38.1 dây chuyền contract bỏ sót: `tests/test_lead_store.py` +
+    `tests/test_store.py` cũng khoá `== 10` số `create table` → đổi 12
+    (chỉ hằng số; full vòng 2 đỏ 2 test này, vòng 3 xanh).
+  - W38.4 `pii_flag` = đếm token `***` tăng sau `_mask_pii` thay vì
+    `_mask_pii(text) != text`: `_mask_pii` unwrap "(1500)" → " 1500 "
+    làm text đổi dù không PII (báo oan) — test `Gia (1500) va (90)`.
+  - W38.6 `--pending` in sha256 ĐẦY ĐỦ (cần để chạy `--verify` 64 hex);
+    intake/verify vẫn in `[:12]`. `--by` thêm chặn >100 ký tự / ký tự
+    điều khiển (exit 2).
+  - OWASP (Phần B): trích text từ BẢN GỐC đã kiểm hash (không đọc lại
+    file intake); symlink/junction ra ngoài intake → skip;
+    `ten_san_pham` bỏ ký tự điều khiển (in ra terminal ở `--pending`).
+  - Evidence thật: so_giay 4/5, cho_ocr 1/5, ngay_cap 4/4;
+    `ten_san_pham` 0/4 — giấy tiếp nhận thật KHÔNG có nhãn
+    "Tên sản phẩm:" (regex theo contract không áp).
+  - Gate: targeted ×3 xanh 3 vòng; full 299 passed (258 + 41); ruff
+    sạch; E2E DB samsam_infra (intake ×2 → count 1, verify/reject, dọn
+    row). `evidence/v38_*.log` bị `*.log` ignore → coordinator `git add -f`.
+  - Fix nghiệm thu (3 MINOR): (A04) scan vs text quyết THEO TRANG,
+    `SCAN_MIN_CHARS` 20 tổng → 50/trang — 1 trang dưới ngưỡng (watermark
+    "Scanned with CamScanner" 21 ký tự, footer "Trang 1/10", bìa đánh máy
+    + trang scan) → cả tài liệu `cho_ocr`, `pii_flag` NULL (fail-closed;
+    trang chữ ký ngắn/trang trắng cũng sang `cho_ocr` — lệch an toàn);
+    test `test_scan_with_small_text_layer_cho_ocr_pii_null` ×4 +
+    `test_multi_page_all_text_is_pdf_text`; 5 PDF thật không đổi (4/5).
+    (A01) `test_junction_outside_intake_skipped` dùng
+    `_winapi.CreateJunction` (rglob đi vào junction, symlink-dir thì
+    không → test cũ không chạm guard). DB lỗi giữa lô:
+    `test_db_error_rolls_back_and_batch_continues` (`AbortingConn` mô
+    phỏng InFailedSqlTransaction tới khi rollback) +
+    `test_insert_race_rowcount0_dup_no_fields`. Mutation probe 5 mutant
+    (code cũ / tổng-50 / bỏ guard resolve / bỏ rollback / bỏ nhánh race)
+    đều đỏ; full 307 passed (299 + 8); ruff sạch.
+- [ ] **external-dep** Provider OCR có phí: FPT.AI Reader (trong nước —
+  báo giá + POC trước 25/10 theo flows) / Google Vision (nước ngoài —
+  phiếu tầng 2 + TIA, cấm cho tài liệu có PII). Hiện chỉ `none`.
+- [ ] **external-dep** Pháp chế thật xác nhận field (`--verify --by`) —
+  KHÔNG đánh dấu verified hộ trên tài liệu thật.
+- [ ] **external-dep** Allowlist liên hệ công ty (hotline/email/MST) cho
+  OCR do Pháp chế duyệt — chưa có thì mọi SĐT/email = PII (hiện trạng).
+- [ ] **external-dep** Kho bản gốc cloud trong nước có object-lock/
+  bucket policy cấm xoá — hiện dir local `DOC_ORIGINALS_DIR`.
+
 v3.1-llm-gateway đóng 2026-10-11 (3 nghiệm thu song song PASS vòng 0;
 coordinator vá thêm 3 điểm nghiệm thu ghi NIT nhưng ảnh hưởng khách/
 FinOps: (1) lọc sức khỏe bỏ "ho"/"gan" trần — "Ho Chi Minh", "gan"(=gần)

@@ -1,0 +1,21 @@
+# v3.8 W38.5 evidence that — 5 PDF 'Downloads/1. Giay cong bo san pham - *.pdf' CHI-DOC (ham thuan extract_text/extract_fields, KHONG copy, KHONG intake, KHONG DB); chi in so giay + ngay + dem — 2026-10-11T23:55:46+07:00
+files=5
+#1 pages=1 source=pdf_text status=pending_review chars=852 pii=True so_giay=('11129/2021/ĐKSP', 1.0) ngay_cap=('2021-12-29', 1.0) ten_san_pham_found=False
+#2 pages=1 source=pdf_text status=pending_review chars=725 pii=True so_giay=('5191/2020/ĐKSP', 1.0) ngay_cap=('2020-06-10', 1.0) ten_san_pham_found=False
+#3 pages=1 source=none status=cho_ocr chars=0 pii=None so_giay=None ngay_cap=None ten_san_pham_found=False
+#4 pages=1 source=pdf_text status=pending_review chars=920 pii=True so_giay=('8560/2019/ĐKSP', 1.0) ngay_cap=('2019-07-02', 0.5) ten_san_pham_found=False
+#5 pages=1 source=pdf_text status=pending_review chars=757 pii=True so_giay=('8014/2021/ĐKSP', 1.0) ngay_cap=('2021-09-07', 0.5) ten_san_pham_found=False
+[summary] so_giay=4/5 cho_ocr=1/5
+exit=0
+ghi chu: ten_san_pham 0/4 — giay tiep nhan that KHONG co nhan 'Ten san pham:' (ten SP nam trong cau van) -> regex theo contract khong ap; ngay_cap conf 0.5 o #4/#5 = co >1 ngay dang chu (nguoi ra soat chon). pii=True ca 4 file text = dung ky vong (allowlist lien he cong ty chua duyet).
+
+## chay lai sau fix A04 (scan quyet THEO TRANG, SCAN_MIN_CHARS=50/trang) — 2026-10-12T00:11:36+07:00
+files=5
+#1 pages=1 source=pdf_text status=pending_review chars=852 pii=True so_giay=('11129/2021/ĐKSP', 1.0) ngay_cap=('2021-12-29', 1.0) ten_san_pham_found=False
+#2 pages=1 source=pdf_text status=pending_review chars=725 pii=True so_giay=('5191/2020/ĐKSP', 1.0) ngay_cap=('2020-06-10', 1.0) ten_san_pham_found=False
+#3 pages=1 source=none status=cho_ocr chars=0 pii=None so_giay=None ngay_cap=None ten_san_pham_found=False
+#4 pages=1 source=pdf_text status=pending_review chars=920 pii=True so_giay=('8560/2019/ĐKSP', 1.0) ngay_cap=('2019-07-02', 0.5) ten_san_pham_found=False
+#5 pages=1 source=pdf_text status=pending_review chars=757 pii=True so_giay=('8014/2021/ĐKSP', 1.0) ngay_cap=('2021-09-07', 0.5) ten_san_pham_found=False
+[summary] so_giay=4/5 cho_ocr=1/5
+exit=0
+ghi chu: ket qua trung khop lan dau — 4 file text deu 1 trang 725-920 ky tu >> 50; khong regress.

@@ -1,0 +1,197 @@
+# v3.8-ocr-intake evidence — 2026-10-11T23:55:02+07:00 — worktree D:/code/samsam-v38, DB samsam_infra
+
+## W38.1 apply_schema x2
+$ python scripts/apply_schema.py  (lan 1)
+[done] schema applied — 12 bảng public: assets, chunks, claims_approved, content_drafts, document_fields, documents, leads, llm_usage, orders, plot_logs, plots, products
+exit=0
+$ python scripts/apply_schema.py  (lan 2)
+[done] schema applied — 12 bảng public: assets, chunks, claims_approved, content_drafts, document_fields, documents, leads, llm_usage, orders, plot_logs, plots, products
+exit=0
+
+## W38.6 E2E DB that (samsam_infra, intake/originals trong scratchpad, fixture tu tao: giay_tiep_nhan co SDT + 1 scan)
+$ python -m ingest.doc_intake  (lan 1)
+[new] db7016e24d2a giay_tiep_nhan pending_review fields=3
+[new] 0d509281e91d giay_tiep_nhan cho_ocr fields=0
+[done] new=2 dup=0 cho_ocr=1 skipped=0 error=0
+exit=0
+$ python -m ingest.doc_intake  (lan 2)
+[dup] db7016e24d2a trùng — bỏ qua
+[dup] 0d509281e91d trùng — bỏ qua
+[done] new=0 dup=2 cho_ocr=0 skipped=0 error=0
+exit=0
+db7016e24d2a count=1 doc=('giay_tiep_nhan', 'pdf_text', True, 'pending_review', None) fields=[('ngay_cap', '2024-03-05', Decimal('1'), False), ('so_giay', '1234/2024/DKSP', Decimal('1'), False), ('ten_san_pham', 'Sam Ngoc Linh X', Decimal('1'), False)]
+0d509281e91d count=1 doc=('giay_tiep_nhan', 'none', None, 'cho_ocr', None) fields=[]
+originals: 2 file
+$ python -m ingest.doc_intake --pending
+db7016e24d2ae2efd98304b70a31d96365a05909c27d68005deffdf986dbc48f giay_tiep_nhan pending_review pii ngay_cap=2024-03-05; so_giay=1234/2024/DKSP; ten_san_pham=Sam Ngoc Linh X
+0d509281e91d6d7cbfbcb4d16f5a205578e65765a11c59187b07b585d555b00d giay_tiep_nhan cho_ocr pii? 
+[done] 2 tài liệu chờ
+exit=0
+$ python -m ingest.doc_intake --verify db7016e24d2a… (khong --by)
+usage: python -m ingest.doc_intake [-h] [--pending] [--verify SHA256]
+                                   [--reject SHA256] [--by BY]
+python -m ingest.doc_intake: error: --by <tên người xác nhận> là bắt buộc
+exit=2
+db7016e24d2a count=1 doc=('giay_tiep_nhan', 'pdf_text', True, 'pending_review', None) fields=[('ngay_cap', '2024-03-05', Decimal('1'), False), ('so_giay', '1234/2024/DKSP', Decimal('1'), False), ('ten_san_pham', 'Sam Ngoc Linh X', Decimal('1'), False)]
+0d509281e91d count=1 doc=('giay_tiep_nhan', 'none', None, 'cho_ocr', None) fields=[]
+$ python -m ingest.doc_intake --verify db7016e24d2a… --by test-coordinator
+[ok] db7016e24d2a → verified bởi test-coordinator
+exit=0
+db7016e24d2a count=1 doc=('giay_tiep_nhan', 'pdf_text', True, 'verified', 'test-coordinator') fields=[('ngay_cap', '2024-03-05', Decimal('1'), True), ('so_giay', '1234/2024/DKSP', Decimal('1'), True), ('ten_san_pham', 'Sam Ngoc Linh X', Decimal('1'), True)]
+0d509281e91d count=1 doc=('giay_tiep_nhan', 'none', None, 'cho_ocr', None) fields=[]
+$ verify lan 2 (da verified)
+[err] db7016e24d2a không tồn tại hoặc không ở pending_review — không đổi gì
+exit=1
+$ OCR_PROVIDER=google_vision python -m ingest.doc_intake
+usage: python -m ingest.doc_intake [-h] [--pending] [--verify SHA256]
+                                   [--reject SHA256] [--by BY]
+python -m ingest.doc_intake: error: OCR_PROVIDER=google_vision chưa hỗ trợ (có: none) — provider có phí là external-dep
+exit=2
+## cleanup row test
+db7016e24d2a deleted fields=3 documents=1
+0d509281e91d deleted fields=0 documents=1
+remaining 0
+
+## Gate targeted x3 — Phan A vong 1
+$ python -m pytest tests/test_doc_intake.py tests/test_handover_docs.py tests/test_core_store.py -q  (lan 1)
+..........................................................               [100%]
+58 passed in 0.94s
+exit=0
+$ python -m pytest tests/test_doc_intake.py tests/test_handover_docs.py tests/test_core_store.py -q  (lan 2)
+..........................................................               [100%]
+58 passed in 0.92s
+exit=0
+$ python -m pytest tests/test_doc_intake.py tests/test_handover_docs.py tests/test_core_store.py -q  (lan 3)
+..........................................................               [100%]
+58 passed in 0.74s
+exit=0
+
+## Phan B OWASP fix (ten_san_pham bo ky tu dieu khien; trich tu ban goc da kiem hash; symlink/junction ra ngoai intake -> skip) -> Gate vong 2
+$ python -m pytest tests/test_doc_intake.py tests/test_handover_docs.py tests/test_core_store.py -q  (vong 2, lan 1)
+.............................................................            [100%]
+61 passed in 1.17s
+exit=0
+$ python -m pytest tests/test_doc_intake.py tests/test_handover_docs.py tests/test_core_store.py -q  (vong 2, lan 2)
+.............................................................            [100%]
+61 passed in 1.33s
+exit=0
+$ python -m pytest tests/test_doc_intake.py tests/test_handover_docs.py tests/test_core_store.py -q  (vong 2, lan 3)
+.............................................................            [100%]
+61 passed in 1.17s
+exit=0
+
+$ python -m pytest -q  (full, vong 2)
+=========================== short test summary info ===========================
+FAILED tests/test_lead_store.py::test_schema_sql_has_leads_table - AssertionE...
+FAILED tests/test_store.py::test_schema_sql_has_content_drafts_table - Assert...
+2 failed, 297 passed in 38.94s
+exit=1
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile ingest/doc_intake.py scripts/apply_schema.py tests/test_doc_intake.py tests/test_handover_docs.py
+exit=0
+$ grep -nE 'llm_gateway|openai|httpx|requests' ingest/doc_intake.py
+grep-exit=1 (1 = khong khop)
+$ git check-ignore data/intake/x data/originals/x
+data/intake/x
+data/originals/x
+$ git ls-files | grep -iE '\.(pdf|png|jpe?g)$'
+evidence/dryrun_answer_sources.png
+evidence/dryrun_caption_persist.png
+evidence/dryrun_guardrail.png
+evidence/dryrun_handoff.png
+evidence/dryrun_queue.png
+evidence/e2e_verify.png
+evidence/m2_chat.png
+evidence/m3_studio.png
+evidence/v06_queue.png
+evidence/v19_dashboard.png
+evidence/v20_report_dead.png
+evidence/v20_report_tab.png
+evidence/v21_garden_dead.png
+evidence/v21_garden_submit.png
+evidence/v21_garden_tab.png
+evidence/v22_queue.png
+(het danh sach)
+
+## Vong 2 full FAIL 2 test (test_lead_store/test_store khoa cung '== 10' create table — day chuyen contract bo sot) -> sua hang so 10->12 -> Gate vong 3
+$ python -m pytest tests/test_doc_intake.py tests/test_handover_docs.py tests/test_core_store.py tests/test_lead_store.py tests/test_store.py -q  (vong 3, lan 1)
+......................                                                   [100%]
+94 passed in 1.47s
+exit=0
+$ python -m pytest tests/test_doc_intake.py tests/test_handover_docs.py tests/test_core_store.py tests/test_lead_store.py tests/test_store.py -q  (vong 3, lan 2)
+......................                                                   [100%]
+94 passed in 1.75s
+exit=0
+$ python -m pytest tests/test_doc_intake.py tests/test_handover_docs.py tests/test_core_store.py tests/test_lead_store.py tests/test_store.py -q  (vong 3, lan 3)
+......................                                                   [100%]
+94 passed in 1.58s
+exit=0
+
+$ python -m pytest -q  (full, vong 3)
+...........                                                              [100%]
+299 passed in 35.70s
+exit=0
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile ingest/doc_intake.py scripts/apply_schema.py tests/test_doc_intake.py tests/test_handover_docs.py tests/test_lead_store.py tests/test_store.py
+exit=0
+
+## E2E DB that chay lai sau fix vong 2-3 (trich tu ban goc) — 2026-10-12T00:00:13+07:00
+$ python -m ingest.doc_intake (lan 1)
+[new] db7016e24d2a giay_tiep_nhan pending_review fields=3
+[new] 0d509281e91d giay_tiep_nhan cho_ocr fields=0
+[done] new=2 dup=0 cho_ocr=1 skipped=0 error=0
+exit=0
+$ python -m ingest.doc_intake (lan 2)
+[dup] db7016e24d2a trùng — bỏ qua
+[dup] 0d509281e91d trùng — bỏ qua
+[done] new=0 dup=2 cho_ocr=0 skipped=0 error=0
+exit=0
+db7016e24d2a count=1 doc=('giay_tiep_nhan', 'pdf_text', True, 'pending_review', None) fields=[('ngay_cap', '2024-03-05', Decimal('1'), False), ('so_giay', '1234/2024/DKSP', Decimal('1'), False), ('ten_san_pham', 'Sam Ngoc Linh X', Decimal('1'), False)]
+0d509281e91d count=1 doc=('giay_tiep_nhan', 'none', None, 'cho_ocr', None) fields=[]
+$ --verify db7016e24d2a… --by '   '
+python -m ingest.doc_intake: error: --by <tên người xác nhận> là bắt buộc
+exit=2
+$ --reject db7016e24d2a… --by test-coordinator
+[ok] db7016e24d2a → rejected bởi test-coordinator
+exit=0
+db7016e24d2a count=1 doc=('giay_tiep_nhan', 'pdf_text', True, 'rejected', 'test-coordinator') fields=[('ngay_cap', '2024-03-05', Decimal('1'), False), ('so_giay', '1234/2024/DKSP', Decimal('1'), False), ('ten_san_pham', 'Sam Ngoc Linh X', Decimal('1'), False)]
+0d509281e91d count=1 doc=('giay_tiep_nhan', 'none', None, 'cho_ocr', None) fields=[]
+## cleanup row test
+db7016e24d2a deleted fields=3 documents=1
+0d509281e91d deleted fields=0 documents=1
+remaining 0
+
+## Fix nghiem thu (A04 per-page scan, A01 junction test, DB-error/race test) — 2026-10-12T00:09:54+07:00
+$ python -m pytest tests/test_doc_intake.py tests/test_handover_docs.py tests/test_core_store.py tests/test_lead_store.py tests/test_store.py -q  (lan 1)
+..............................                                           [100%]
+102 passed in 1.17s
+exit=0
+$ python -m pytest tests/test_doc_intake.py tests/test_handover_docs.py tests/test_core_store.py tests/test_lead_store.py tests/test_store.py -q  (lan 2)
+..............................                                           [100%]
+102 passed in 1.32s
+exit=0
+$ python -m pytest tests/test_doc_intake.py tests/test_handover_docs.py tests/test_core_store.py tests/test_lead_store.py tests/test_store.py -q  (lan 3)
+..............................                                           [100%]
+102 passed in 1.17s
+exit=0
+$ python -m pytest -q  (full)
+........................................................................ [ 93%]
+...................                                                      [100%]
+307 passed in 35.11s
+exit=0
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile ingest/doc_intake.py tests/test_doc_intake.py
+exit=0
+## mutation probe (sua tam ingest/doc_intake.py, chay -k, khoi phuc ban fix; cmp = restored)
+M1 tong-nguong-20 (code cu): -k scan_with_small -> 3 failed, 1 passed, 45 deselected in 1.30s rc=1 RED(ok)
+M1b tong-nguong-50 (khong per-page): -k scan_with_small -> 2 failed, 2 passed, 45 deselected in 1.49s rc=1 RED(ok)
+M2 bo guard resolve: -k junction -> 1 failed, 48 deselected in 1.17s rc=1 RED(ok)
+M3 bo conn.rollback: -k db_error_rolls_back -> 1 failed, 48 deselected in 1.09s rc=1 RED(ok)
+M4 bo nhanh race: -k insert_race -> 1 failed, 48 deselected in 1.02s rc=1 RED(ok)
+restored

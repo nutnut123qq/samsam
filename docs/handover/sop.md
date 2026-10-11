@@ -62,6 +62,27 @@ Ghi chú vận hành:
   `claims_approved`. Đây là cách duy nhất "mở" claim cho guardrail —
   KHÔNG sửa guardrail để bỏ chặn.
 
+### Số hóa tài liệu công ty (giấy tiếp nhận, nhãn, hợp đồng, hồ sơ vùng trồng)
+
+Bỏ file PDF/ảnh vào `data/intake/<loai>/` (`giay_tiep_nhan`, `nhan`,
+`hop_dong_dai_ly`, `ho_so_vung_trong`) rồi chạy:
+
+```
+python -m ingest.doc_intake                                  # intake: hash → bản gốc data/originals/<sha256> → trích text/field → bảng documents
+python -m ingest.doc_intake --pending                        # Pháp chế xem tài liệu chờ xác nhận + field trích được
+python -m ingest.doc_intake --verify <sha256> --by "<tên>"   # Pháp chế xác nhận field đúng (chỉ khi pending_review)
+python -m ingest.doc_intake --reject <sha256> --by "<tên>"   # Pháp chế từ chối
+```
+
+- Chạy lại intake an toàn: trùng nội dung (sha256) → `dup`, bản gốc
+  không bao giờ bị ghi đè; intake không xoá file trong `data/intake/`.
+- PDF scan/ảnh ở trạng thái `cho_ocr` — chưa có provider OCR (FPT.AI
+  Reader là external-dep); tài liệu có SĐT/email (`pii` trong
+  `--pending`) KHÔNG được gửi LLM.
+- Field (số giấy, ngày cấp, tên sản phẩm) trích bằng regex, luôn ở
+  trạng thái chưa xác minh tới khi người Pháp chế chạy `--verify` —
+  KHÔNG ai xác nhận hộ. Đối chiếu field với bản gốc trước khi verify.
+
 ## 4. Hàng duyệt nội dung (MKT)
 
 Ưu tiên thao tác trên tab **Duyệt & Lịch**; CLI tương đương:

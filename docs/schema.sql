@@ -182,3 +182,37 @@ create table if not exists llm_usage (
 );
 
 create index if not exists llm_usage_agent_ts_idx on llm_usage (agent_id, ts);
+
+-- ============================================================================
+-- v3.8 WP04b / F15.1 số hóa tài liệu (`ingest/doc_intake.py`): bản gốc bất
+-- biến ở kho `originals/<sha256>` (dir local DOC_ORIGINALS_DIR); DB chỉ giữ
+-- metadata + field trích TẤT ĐỊNH (regex, không LLM) — KHÔNG lưu full text.
+-- Idempotent theo sha256 (on conflict do nothing). status: cho_ocr (chưa có
+-- text) | pending_review | verified | rejected — verified/rejected chỉ do
+-- người (CLI --verify/--reject --by). pii_flag NULL = chưa quét được text.
+-- ============================================================================
+
+create table if not exists documents (
+  sha256 text primary key check (sha256 ~ '^[0-9a-f]{64}$'),
+  filename text not null,           -- tên file gốc (có thể chứa tên người — không in stdout)
+  doc_type text not null,           -- giay_tiep_nhan | nhan | hop_dong_dai_ly | ho_so_vung_trong | khac
+  pages int,
+  text_source text not null check (text_source in ('pdf_text', 'ocr', 'none')),
+  pii_flag boolean,                 -- true = có SĐT/email -> CẤM gửi LLM; null = chưa quét
+  status text not null default 'pending_review'
+    check (status in ('cho_ocr', 'pending_review', 'verified', 'rejected')),
+  verified_by text,                 -- người Pháp chế xác nhận/từ chối
+  verified_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists documents_status_idx on documents (status);
+
+create table if not exists document_fields (
+  sha256 text references documents(sha256) on delete restrict,
+  field text not null,              -- so_giay | ngay_cap | ten_san_pham
+  value text not null,
+  confidence numeric check (confidence between 0 and 1),
+  verified boolean not null default false,
+  primary key (sha256, field)
+);
