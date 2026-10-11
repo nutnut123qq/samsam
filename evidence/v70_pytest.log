@@ -1,0 +1,97 @@
+### v7.0 gate — targeted x3 — 2026-10-12T03:07:13+07:00
+$ python -m pytest tests/test_intel.py tests/test_kb_filter.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py -q -rs  (lần 1)
+........................................................................ [ 97%]
+....                                                                     [100%]
+148 passed in 45.10s
+exit=0
+$ python -m pytest tests/test_intel.py tests/test_kb_filter.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py -q -rs  (lần 2)
+........................................................................ [ 97%]
+....                                                                     [100%]
+148 passed in 57.45s
+exit=0
+$ python -m pytest tests/test_intel.py tests/test_kb_filter.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py -q -rs  (lần 3)
+........................................................................ [ 97%]
+....                                                                     [100%]
+148 passed in 55.54s
+exit=0
+
+### full pytest (1 lần) — 2026-10-12T03:10:23+07:00
+$ python -m pytest -q
+
+tests\test_dr_drill.py:548: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_db_backup.py::test_cloud_readme_drift_guard - AssertionErro...
+FAILED tests/test_dr_drill.py::test_zz_no_dr_container_left - AssertionError:...
+2 failed, 922 passed in 369.03s (0:06:09)
+exit=1
+
+### vòng 1 full: 2 fail — (1) test_cloud_readme_drift_guard: deploy/cloud/README.md thiếu bảng intel_items (dây chuyền: thêm bảng → README cloud) → đã thêm dòng intel_items + 25 bảng; (2) test_zz_no_dr_container_left: container samsam-dr-* của worktree khác chạy song song (docker ps lúc 03:17: samsam-dr-20261012_031728-755f tạo SAU khi lượt pytest này xong) — môi trường dùng chung, không liên quan diff
+$ python -m pytest tests/test_db_backup.py::test_cloud_readme_drift_guard -q
+.                                                                        [100%]
+1 passed in 0.53s
+exit=0
+
+### vòng 2 — full pytest (1 lần) — 2026-10-12T03:18:17+07:00 (targeted x3 vòng 1 giữ nguyên: vòng 2 chỉ đổi deploy/cloud/README.md)
+$ python -m pytest -q
+E         Use -v to get more diff
+
+tests\test_dr_drill.py:548: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_dr_drill.py::test_zz_no_dr_container_left - AssertionError:...
+1 failed, 923 passed in 299.06s (0:04:59)
+exit=1
+$ docker ps -a samsam-dr-* sau lượt:
+
+### vòng 2: fail duy nhất test_zz_no_dr_container_left (kiểm docker toàn máy: 0 container samsam-dr-*). Diff v7.0 không đụng scripts/dr_drill.py/tests/test_dr_drill.py; 7 worktree chạy song song cùng docker host. Chạy lại riêng test đó khi máy không có drill khác:
+$ git diff --stat -- scripts/dr_drill.py tests/test_dr_drill.py scripts/db_backup.py
+(rỗng = không đổi)
+$ python -m pytest tests/test_dr_drill.py::test_zz_no_dr_container_left -q -rs
+.                                                                        [100%]
+1 passed in 1.68s
+exit=0
+
+### vòng 3 (sửa 6 finding nghiệm thu: guardrail sau clean_text, urljoin ValueError build_items/_get, parse_date cửa sổ 2000..now+2d + report '?', spy gzip max_length, test TOTAL_S) — 2026-10-11T20:48:23Z
+$ python -m pytest tests/test_intel.py tests/test_kb_filter.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py -q -rs  (lần 1)
+........................................................................ [ 86%]
+......................                                                   [100%]
+166 passed in 54.33s
+exit=0
+$ python -m pytest tests/test_intel.py tests/test_kb_filter.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py -q -rs  (lần 2)
+........................................................................ [ 86%]
+......................                                                   [100%]
+166 passed in 58.20s
+exit=0
+$ python -m pytest tests/test_intel.py tests/test_kb_filter.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py -q -rs  (lần 3)
+........................................................................ [ 86%]
+......................                                                   [100%]
+166 passed in 53.04s
+exit=0
+$ python -m pytest -q  (full, 1 lần, vòng 3)
+pre: dr containers=[]
+942 passed in 243.97s (0:04:03)
+exit=0
+$ ruff check .
+All checks passed!
+$ python -m py_compile crawler/intel.py crawler/collect.py crawler/sources.py
+exit=0
+
+### v7.0 fix vòng 4 (parse_date OverflowError) — 2026-10-12T04:13:08+07:00
+$ python -m pytest -q tests/test_intel.py -k 'parse_date or build_items'  (lần 1)
+18 passed, 99 deselected in 0.55s
+$ python -m pytest -q tests/test_intel.py -k 'parse_date or build_items'  (lần 2)
+18 passed, 99 deselected in 0.63s
+$ python -m pytest -q tests/test_intel.py -k 'parse_date or build_items'  (lần 3)
+18 passed, 99 deselected in 0.42s
+$ python -m pytest tests/test_intel.py -q
+117 passed in 45.13s
+$ python -m pytest -q  (full, 1 lần)
+E         Use -v to get more diff
+
+tests\test_dr_drill.py:548: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_dr_drill.py::test_zz_no_dr_container_left - AssertionError:...
+1 failed, 947 passed in 274.58s (0:04:34)
+# Ghi chú: test_zz_no_dr_container_left fail do container samsam-dr-* của worktree SONG SONG khác (docker namespace dùng chung; 'docker ps' lúc probe: samsam-dr-20261012_041251-db4c 'Up 6 seconds', tạo SAU khi full run của w70 kết thúc) — không liên quan crawler/intel; không xóa container của phiên khác. 947 test còn lại xanh (baseline 831 + intel).
+$ ruff check .
+All checks passed!
+# Mutant: bỏ OverflowError khỏi except rfc822 → 'pytest -k "parse_date_out_of_window or overflow_pubdate"' 6 failed, 7 passed; khôi phục → 13 passed.

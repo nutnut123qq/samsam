@@ -1,0 +1,29 @@
+{
+  "_doc": "Nguồn tin thị trường cho crawler.intel (v7.0, WP09). Danh sách ĐỀ XUẤT, chờ BGĐ/Quản lý MXH duyệt — mọi nguồn status 'cho_duyet' tới khi người thật đổi sang 'duyet' (agent KHÔNG tự đổi). Tầng A: RSS báo chính thống/cơ quan nhà nước; B: trang ngành/blog công khai có RSS; C: liệt kê để CHẶN (MXH cá nhân, trang cần đăng nhập, Shopee/TikTok/Lazada) — tầng C cấm thu tự động, url chỉ tượng trưng, không bao giờ chạy. Pháp chế cần xem điều khoản dùng RSS từng tòa soạn trước khi duyệt. Chỉ lưu tiêu đề + trích ≤300 ký tự + link (không toàn văn).",
+  "llm": {
+    "enabled": false,
+    "_doc": "chờ Pháp chế xác nhận bằng văn bản cho gửi tin công khai qua LLM (agent 'intel', cap tháng trong data/llm_gateway.json)"
+  },
+  "topics": {
+    "sam": ["sâm ngọc linh", "nhân sâm", "hồng sâm", "sâm hàn quốc", "sâm giả", "sâm lai châu", "sâm việt nam", "củ sâm", "rượu sâm", "trà sâm", "cao sâm", "ginseng", "KGC", "Panax"],
+    "tpbvsk": ["thực phẩm chức năng", "thực phẩm bảo vệ sức khỏe", "thực phẩm bảo vệ sức khoẻ", "thực phẩm bổ sung", "tự công bố sản phẩm", "bản công bố sản phẩm", "an toàn thực phẩm", "Cục An toàn thực phẩm", "TPBVSK", "TPCN", "ATTP"],
+    "gioi_tre": ["giới trẻ", "người trẻ", "trà sữa", "đồ ăn vặt", "đồ uống", "xu hướng ăn uống", "Gen Z", "healthy", "eat clean"],
+    "quang_cao": ["quảng cáo", "xác nhận nội dung quảng cáo", "luật quảng cáo", "quảng cáo sai sự thật", "người có ảnh hưởng", "XNQC", "KOL", "KOC", "livestream"],
+    "doi_thu": ["sâm ngọc linh trimico", "chính quan trang", "KGC", "Cheong Kwan Jang", "Trimico", "sâm K5"]
+  },
+  "sources": [
+    {"id": "vnexpress-suc-khoe", "name": "VnExpress — Sức khỏe", "tier": "A", "url": "https://vnexpress.net/rss/suc-khoe.rss", "kind": "rss", "topics_hint": ["tpbvsk", "sam"], "status": "cho_duyet", "note": "RSS công khai (trang vnexpress.net/rss)"},
+    {"id": "vnexpress-kinh-doanh", "name": "VnExpress — Kinh doanh", "tier": "A", "url": "https://vnexpress.net/rss/kinh-doanh.rss", "kind": "rss", "topics_hint": ["doi_thu", "gioi_tre"], "status": "cho_duyet", "note": "RSS công khai"},
+    {"id": "vnexpress-phap-luat", "name": "VnExpress — Pháp luật", "tier": "A", "url": "https://vnexpress.net/rss/phap-luat.rss", "kind": "rss", "topics_hint": ["quang_cao", "sam"], "status": "cho_duyet", "note": "RSS công khai — tin sâm giả, xử phạt quảng cáo"},
+    {"id": "tuoitre-suc-khoe", "name": "Tuổi Trẻ — Sức khỏe", "tier": "A", "url": "https://tuoitre.vn/rss/suc-khoe.rss", "kind": "rss", "topics_hint": ["tpbvsk"], "status": "cho_duyet", "note": "RSS công khai"},
+    {"id": "thanhnien-suc-khoe", "name": "Thanh Niên — Sức khỏe", "tier": "A", "url": "https://thanhnien.vn/rss/suc-khoe.rss", "kind": "rss", "topics_hint": ["tpbvsk"], "status": "cho_duyet", "note": "RSS công khai — URL chưa xác minh bằng lượt chạy thật"},
+    {"id": "dantri-suc-khoe", "name": "Dân trí — Sức khỏe", "tier": "A", "url": "https://dantri.com.vn/rss/suc-khoe.rss", "kind": "rss", "topics_hint": ["tpbvsk"], "status": "cho_duyet", "note": "RSS công khai — URL chưa xác minh bằng lượt chạy thật"},
+    {"id": "nutraingredients-asia", "name": "NutraIngredients-Asia (tin ngành TPCN, tiếng Anh)", "tier": "B", "url": "https://www.nutraingredients-asia.com/Info/RSS", "kind": "rss", "topics_hint": ["tpbvsk", "sam"], "status": "cho_duyet", "note": "trang ngành — URL RSS CHƯA xác minh, kiểm trước khi duyệt"},
+    {"id": "foodnavigator-asia", "name": "FoodNavigator-Asia (xu hướng thực phẩm, tiếng Anh)", "tier": "B", "url": "https://www.foodnavigator-asia.com/Info/RSS", "kind": "rss", "topics_hint": ["gioi_tre"], "status": "cho_duyet", "note": "trang ngành — URL RSS CHƯA xác minh, kiểm trước khi duyệt"},
+    {"id": "c-facebook", "name": "Facebook (trang/nhóm cá nhân)", "tier": "C", "url": "https://www.facebook.com/", "kind": "rss", "topics_hint": [], "status": "cho_duyet", "note": "MXH cá nhân — CẤM thu tự động"},
+    {"id": "c-tiktok", "name": "TikTok", "tier": "C", "url": "https://www.tiktok.com/", "kind": "rss", "topics_hint": [], "status": "cho_duyet", "note": "MXH/sàn — CẤM thu tự động; đối thủ chỉ nhập tay (Competitor Tracker)"},
+    {"id": "c-shopee", "name": "Shopee", "tier": "C", "url": "https://shopee.vn/", "kind": "rss", "topics_hint": [], "status": "cho_duyet", "note": "sàn — CẤM thu tự động; dữ liệu sàn qua file Seller Center (ingest.market_csv)"},
+    {"id": "c-lazada", "name": "Lazada", "tier": "C", "url": "https://www.lazada.vn/", "kind": "rss", "topics_hint": [], "status": "cho_duyet", "note": "sàn — CẤM thu tự động"},
+    {"id": "c-linkedin", "name": "LinkedIn", "tier": "C", "url": "https://www.linkedin.com/", "kind": "rss", "topics_hint": [], "status": "cho_duyet", "note": "trang cần đăng nhập — CẤM thu tự động"}
+  ]
+}

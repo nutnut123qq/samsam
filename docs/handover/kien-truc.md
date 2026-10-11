@@ -57,7 +57,7 @@ Streamlit demo.
 
 | Thư mục/file | Vai trò |
 |---|---|
-| `crawler/` | `collect` — crawl site public → `data/*.jsonl` (delay ≥1s/request) |
+| `crawler/` | `collect` — crawl site public → `data/*.jsonl` (delay ≥1s/request); `intel` (v7.0) — thu tin thị trường RSS/Atom tầng A/B → bảng `intel_items` (robots.txt, ≥1s/host, chặn cứng tầng C + sàn/MXH kể cả qua redirect, chỉ tiêu đề + trích ≤300 ký tự) |
 | `ingest/` | `embed_store` (chunk+embed→`chunks`), `core_store` (nạp DB lõi, delete-by-source idempotent), `lead_store` (convlog→`leads`, insert-only) |
 | `api/` | `rag.py` — `answer()` RAG: retrieve top-8 `chunks` bằng cosine numpy → LLM + nguồn; `NO_DATA` khi score thấp |
 | `pipelines/` | `guardrail.py` (banned words + claim whitelist — check trước mọi output AI), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py` |
@@ -68,7 +68,7 @@ Streamlit demo.
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 24 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 25 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
@@ -96,6 +96,7 @@ Streamlit demo.
 | `job_runs` | 1 dòng/lần chạy job lịch (`job`,`started_at`,`finished_at`,`ok`,`detail` đã mask cắt 300,`host`) — bản tin sức khỏe đọc để báo job lỗi/không chạy | `pipelines.job_runs.job_run` (bọc `__main__` của `agents.report`, `ingest.lead_store`) — insert-only |
 | `documents` | Tài liệu số hóa (`sha256` PK = tên bản gốc bất biến `originals/<sha256>`,`doc_type`,`pages`,`text_source` pdf_text/ocr/none,`pii_flag`,`status` cho_ocr/pending_review/verified/rejected,`verified_by`) — KHÔNG lưu full text | `ingest.doc_intake` — insert-only theo hash; status verified/rejected chỉ do Pháp chế qua CLI `--verify/--reject --by` |
 | `document_fields` | Field pháp lý trích bằng regex (`so_giay`,`ngay_cap`,`ten_san_pham`; `confidence`,`verified` mặc định false) | `ingest.doc_intake` — không LLM; `verified=true` khi Pháp chế `--verify` |
+| `intel_items` | (v7.0, WP09) Tin thị trường tầng A/B: `url` chuẩn hóa UNIQUE, `domain`, `source` (id nguồn), `tier` A/B, `title`/`snippet`/`summary` ≤300 ký tự (đã che SĐT/email), `published_at`, `content_sha256` UNIQUE, `topics` (≥1: sam/tpbvsk/gioi_tre/quang_cao/doi_thu), `flags` (`ruou`/`suc_khoe`/`llm_guardrail_fail`) — KHÔNG toàn văn, không cột body | `python -m crawler.intel --run` — insert-only, dedup url + hash nội dung; không ghi bảng khác |
 
 View (v3.2): `sku_readiness` (SKU × kênh online → `CAM` / `MO_TA` /
 `TP_THUONG` / `QC_DAY_DU`; rượu luôn `CAM`, kênh ngoài `allowed_channels`

@@ -1,0 +1,85 @@
+### v7.0 gate — 2026-10-12T03:04:48+07:00 — apply_schema x2
+$ python scripts/apply_schema.py  (lần 1)
+[done] schema applied — 25 bảng public: agent_action_log, approvals, assets, chunks, chunks_internal, claims_approved, content_drafts, document_fields, documents, eval_runs, golden_discrepancies, intel_items, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+exit=0
+$ python scripts/apply_schema.py  (lần 2)
+[done] schema applied — 25 bảng public: agent_action_log, approvals, assets, chunks, chunks_internal, claims_approved, content_drafts, document_fields, documents, eval_runs, golden_discrepancies, intel_items, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+exit=0
+$ grep -c '^create table if not exists' docs/schema.sql
+25
+
+### E2E fixture (python -m http.server 18770 --bind 127.0.0.1 --directory tests/fixtures/intel/site) — 2026-10-12T03:05:09+07:00
+$ python -m crawler.intel --run --source fx-a --source fx-private --sources tests/fixtures/intel/sources_e2e.json  (lần 1)
+[warn] fx-a: nguồn chưa duyệt — chạy thử
+[warn] fx-private: nguồn chưa duyệt — chạy thử
+[req] {"ts": "2026-10-11T20:05:13+00:00", "source": "fx-a", "host": "127.0.0.1", "kind": "robots", "url": "http://127.0.0.1:18770/robots.txt", "status": 200, "robots_ok": null, "bytes": 34, "ms": 122, "gap_s": null}
+[req] {"ts": "2026-10-11T20:05:14+00:00", "source": "fx-a", "host": "127.0.0.1", "kind": "feed", "url": "http://127.0.0.1:18770/feed.xml", "status": 200, "robots_ok": true, "bytes": 1063, "ms": 3, "gap_s": 1.0}
+[src] fx-a: 3 tin, 2 đúng chủ đề, mới 2
+[robots-deny] {"source": "fx-private", "url": "http://127.0.0.1:18770/private/feed.xml"}
+[done] sources=2 ok=1 requests=2 new=2 dup_url=0 dup_content=0 off_topic=1 blocked=0 robots_deny=1
+exit=0
+$ count(*) where source like 'fx-%'
+fx_rows= 2
+$ python -m crawler.intel --run --source fx-a --source fx-private --sources tests/fixtures/intel/sources_e2e.json  (lần 2)
+[warn] fx-a: nguồn chưa duyệt — chạy thử
+[warn] fx-private: nguồn chưa duyệt — chạy thử
+[req] {"ts": "2026-10-11T20:05:18+00:00", "source": "fx-a", "host": "127.0.0.1", "kind": "robots", "url": "http://127.0.0.1:18770/robots.txt", "status": 200, "robots_ok": null, "bytes": 34, "ms": 5, "gap_s": null}
+[req] {"ts": "2026-10-11T20:05:19+00:00", "source": "fx-a", "host": "127.0.0.1", "kind": "feed", "url": "http://127.0.0.1:18770/feed.xml", "status": 200, "robots_ok": true, "bytes": 1063, "ms": 9, "gap_s": 1.001}
+[src] fx-a: 3 tin, 2 đúng chủ đề, mới 0
+[robots-deny] {"source": "fx-private", "url": "http://127.0.0.1:18770/private/feed.xml"}
+[done] sources=2 ok=1 requests=2 new=0 dup_url=2 dup_content=0 off_topic=1 blocked=0 robots_deny=1
+exit=0
+$ count(*) where source like 'fx-%'
+fx_rows= 2
+$ python -m crawler.intel --run --source fx-c --sources tests/fixtures/intel/sources_e2e.json  (tầng C)
+[blocked] {"source": "fx-c", "host": "localhost", "reason": "tier_c"}
+exit=2
+$ python -m crawler.intel --report
+Tổng tin: 2
+Theo tầng: A=2
+Theo nguồn: fx-a=2
+Theo chủ đề: quang_cao=1, sam=1, tpbvsk=1
+Cờ: —
+10 tin mới nhất:
+  2026-10-11 [fx-a] quang_cao,tpbvsk | [fixture] Cục ATTP xử phạt quảng cáo TPBVSK | http://127.0.0.1:18770/bai/xu-phat
+  2026-10-12 [fx-a] sam | [fixture] Sâm Ngọc Linh giả bị thu giữ | http://127.0.0.1:18770/bai/sam-gia
+exit=0
+$ job_runs crawler.intel (2 dòng mới nhất)
+('crawler.intel', True, None, datetime.datetime(2026, 10, 12, 3, 5, 19, 558955, tzinfo=zoneinfo.ZoneInfo(key='Asia/Bangkok')))
+('crawler.intel', True, None, datetime.datetime(2026, 10, 12, 3, 5, 14, 35315, tzinfo=zoneinfo.ZoneInfo(key='Asia/Bangkok')))
+--- http.server access log (server nhận đúng các request này, không /bai/, không /private/)
+127.0.0.1 - - [12/Oct/2026 03:05:13] "GET /robots.txt HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2026 03:05:14] "GET /feed.xml HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2026 03:05:18] "GET /robots.txt HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2026 03:05:19] "GET /feed.xml HTTP/1.1" 200 -
+$ python -c (kiểm log E2E)
+req= 4 robots_deny_lines= 2 gaps= [1.0, 1.001] all>=1.0: True
+req_to_blocked_or_localhost= 0
+
+### Gate chung — 2026-10-12T03:24:19+07:00
+$ ruff check .
+All checks passed!
+$ python -m py_compile crawler/intel.py crawler/collect.py crawler/sources.py
+exit=0
+$ grep -nE 'content_drafts|pipelines\.store|pipelines\.content|save_draft|connectors\.' crawler/intel.py  (phải rỗng)
+rc=1
+$ grep -niE '(insert into|update|delete from) +[a-z_]+' crawler/intel.py  (chỉ intel_items)
+117:_INSERT = ("insert into intel_items (url, domain, source, tier, title,"
+$ grep -nE '^(import|from) +openai' crawler/intel.py  (phải rỗng)
+rc=1
+$ python -c dọn fixture fx-%
+deleted_fx= 2 con_lai_fx= 0 tin_that= 5
+
+$ git status --short (cuối gate)
+ M AGENTS.md
+ M DONE.md
+ M data/llm_gateway.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/schema.sql
+ M tests/test_handover_docs.py
+?? crawler/intel.py
+?? data/intel_sources.json
+?? tests/fixtures/intel/
+?? tests/test_intel.py

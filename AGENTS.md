@@ -13,6 +13,7 @@ chat lẫn embeddings) + Streamlit.
 |---|---|
 | Setup | `pip install -r requirements.txt` |
 | Crawl | `python -m crawler.collect` |
+| Tin thị trường (v7.0, WP09) | `python -m crawler.intel --run --source <id> [--max-requests N]` (RSS/Atom tầng A/B → `intel_items`; robots + ≥1s/host + chặn cứng tầng C/sàn/MXH; nguồn `data/intel_sources.json` chờ duyệt) · `--report` |
 | Ingest | `python -m ingest.embed_store` |
 | DB lõi WS1 | `python scripts/apply_schema.py` → `python -m ingest.core_store` |
 | Role DB + duyệt (v3.4) | `python scripts/apply_schema.py --roles` (schema + `docs/roles.sql`: `agent_writer`/`app_human`) · `python -m pipelines.store --verify-log` (kiểm hash chain `agent_action_log`) |
@@ -33,7 +34,9 @@ chat lẫn embeddings) + Streamlit.
 | Test/lint | `python -m pytest` · `ruff check .` |
 
 ## Structure
-- `crawler/` — collect public site data → `data/*.jsonl`
+- `crawler/` — collect public site data → `data/*.jsonl`; `intel`
+  thu tin thị trường RSS/Atom tầng A/B → `intel_items` (chỉ tiêu đề +
+  trích ≤300 ký tự + link, không toàn văn; không ghi bảng khác)
 - `connectors/` — adapters ra kênh ngoài (Zalo OA webhook); chỉ nhận/reply,
   KHÔNG đăng nội dung mới (human-gate C2.4)
 - `ingest/` — chunk + embed + nạp chunks (`embed_store`); `core_store`

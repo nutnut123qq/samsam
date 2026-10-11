@@ -812,3 +812,31 @@ begin
           jsonb_build_object('day', to_char(p_day, 'YYYY-MM-DD')));
 end $$;
 revoke execute on function schedule_draft(bigint, date, text) from public;
+
+-- ============================================================================
+-- v7.0 intel collector (WP09, `crawler/intel.py`): tin thị trường tầng A/B
+-- đọc từ RSS/Atom. KHÔNG lưu toàn văn bài báo (bản quyền) — chỉ tiêu đề +
+-- trích ≤300 ký tự + link; title/snippet đã che SĐT/email (_mask_pii) —
+-- không PII. Tầng C (MXH cá nhân, trang cần đăng nhập, sàn) không bao giờ
+-- vào bảng (check tier). Insert-only (on conflict do nothing): dedup theo
+-- url chuẩn hóa + sha256(title + snippet chuẩn hóa). summary = LLM tùy
+-- chọn (mặc định null), đã qua guardrail. Khối intel không ghi bảng khác.
+-- ============================================================================
+
+create table if not exists intel_items (
+  id bigint generated always as identity primary key,
+  url text not null unique,
+  domain text not null,
+  source text not null,
+  tier text not null check (tier in ('A', 'B')),
+  title text not null check (char_length(title) <= 300),
+  snippet text check (char_length(snippet) <= 300),
+  summary text check (char_length(summary) <= 300),
+  published_at timestamptz,
+  fetched_at timestamptz not null default now(),
+  content_sha256 text not null unique,
+  topics text[] not null check (cardinality(topics) > 0),
+  flags text[] not null default '{}'
+);
+
+create index if not exists intel_items_fetched_idx on intel_items (fetched_at desc);
