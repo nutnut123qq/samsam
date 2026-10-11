@@ -703,7 +703,7 @@ Quy trình mỗi version (chặt theo skill):
   duyệt), `approval_queue` 2 lớp, `approvals` có sha256, `agent_action_log`
   hash chain, đăng nhập Streamlit. Skip: SSO Cloudflare Access (cần DNS) →
   cổng header proxy để sẵn + đăng nhập local.
-- [ ] **v3.5-ci-eval-deploy** — harness nghiệm thu chung, GitHub Actions
+- [x] **v3.5-ci-eval-deploy** — harness nghiệm thu chung, GitHub Actions
   (pytest + ruff + Postgres service), cổng deploy theo commit SHA khi eval
   PASS + phiếu duyệt. Skip: chạy thật trên GitHub (không push), runner
   tự host.

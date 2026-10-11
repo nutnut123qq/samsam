@@ -1,0 +1,82 @@
+# v3.5 W35.4 evidence — 2026-10-11T23:57:45+07:00 — DB samsam_infra; config that: approvers=[] (external-dep)
+$ python scripts/deploy_gate.py --sha ffff...(40 f, khong co row) --approved-by "Ai Do"
+[deny] không deploy 'ffffffffffffffffffffffffffffffffffffffff':
+  - agent guardrail: chưa có eval_runs cho SHA này
+  - agent chatbot: chưa có eval_runs cho SHA này
+  - danh sách người duyệt chưa được công ty cấp (external-dep) — không ai duyệt được
+exit=1
+
+$ python scripts/deploy_gate.py --sha 66d00ad532b831d93ae0a77528301230af85e0aa --approved-by "Ai Do"   (HEAD: chi co row '-dirty' guardrail -> khong khop; approvers rong)
+[deny] không deploy '66d00ad532b831d93ae0a77528301230af85e0aa':
+  - agent guardrail: chưa có eval_runs cho SHA này
+  - agent chatbot: chưa có eval_runs cho SHA này
+  - danh sách người duyệt chưa được công ty cấp (external-dep) — không ai duyệt được
+exit=1
+
+$ python scripts/deploy_gate.py --sha 66d00ad532b831d93ae0a77528301230af85e0aa-dirty --approved-by "Ai Do"
+[deny] không deploy '66d00ad532b831d93ae0a77528301230af85e0aa-dirty':
+  - SHA '66d00ad532b831d93ae0a77528301230af85e0aa-dirty' không phải commit 40 hex
+  - danh sách người duyệt chưa được công ty cấp (external-dep) — không ai duyệt được
+exit=1
+
+$ python scripts/deploy_gate.py --sha 66d00ad532b831d93ae0a77528301230af85e0aa --today 2026-12-25   (dong bang, khong hotfix, khong duyet)
+[deny] không deploy '66d00ad532b831d93ae0a77528301230af85e0aa':
+  - agent guardrail: chưa có eval_runs cho SHA này
+  - agent chatbot: chưa có eval_runs cho SHA này
+  - danh sách người duyệt chưa được công ty cấp (external-dep) — không ai duyệt được
+  - 2026-12-25 trong cửa sổ đóng băng 2026-12-21..2027-02-10 — chỉ deploy hotfix (--hotfix)
+exit=1
+
+$ python scripts/deploy_gate.py --sha 66d00ad532b831d93ae0a77528301230af85e0aa --today 2026/12/25   (sai dinh dang)
+usage: deploy_gate.py [-h] --sha SHA [--approved-by APPROVED_BY] [--hotfix]
+                      [--today TODAY]
+deploy_gate.py: error: --today phải dạng YYYY-MM-DD hợp lệ
+exit=2
+
+$ DATABASE_URL=postgresql://u@10.255.255.1:5432/x python scripts/deploy_gate.py --sha 66d00ad532b831d93ae0a77528301230af85e0aa --approved-by "Ai Do"   (host chet, connect_timeout=5)
+[deny] không deploy '66d00ad532b831d93ae0a77528301230af85e0aa':
+  - DB lỗi (ConnectionTimeout) — không đọc được eval_runs, từ chối (fail-closed)
+  - danh sách người duyệt chưa được công ty cấp (external-dep) — không ai duyệt được
+exit=1 elapsed=5.7s
+
+$ python scripts/deploy_gate.py --help
+exit=0
+$ python scripts/agent_eval.py --help
+exit=0
+
+===== vong sua nghiem thu (2026-10-12) — MINOR plan state/smoke + required_agents fail-closed =====
+$ python -c "...deploy_gate.plan(SHA, X, False)"   (approvers that rong -> CLI khong toi duoc plan; in truc tiep)
+[plan] deploy cccccccccccccccccccccccccccccccccccccccc — duyệt bởi 'Nguoi Duyet Gia Lap (test)'. KHÔNG chạy gì — người vận hành làm tay:
+  0. PREV=$(readlink -f /opt/samsam/current)  (release đang chạy; lần đầu: đặt .env thật vào /opt/samsam/shared/.env)
+  1. git clone/fetch rồi checkout cccccccccccccccccccccccccccccccccccccccc vào /opt/samsam/releases/cccccccccccccccccccccccccccccccccccccccc
+  2. python3.12 -m venv /opt/samsam/releases/cccccccccccccccccccccccccccccccccccccccc/.venv && /opt/samsam/releases/cccccccccccccccccccccccccccccccccccccccc/.venv/bin/pip install -r /opt/samsam/releases/cccccccccccccccccccccccccccccccccccccccc/requirements.txt  (cài sạch, không dùng lại venv cũ)
+  3. ln -sfn /opt/samsam/shared/.env /opt/samsam/releases/cccccccccccccccccccccccccccccccccccccccc/.env  (.env dùng chung — unit EnvironmentFile=/opt/samsam/current/.env vẫn đúng sau khi đổi symlink)
+  4. systemctl stop zalo-webhook && mv $PREV/data/zalo_tokens.json $PREV/data/zalo_seen.db* $PREV/data/conversations.jsonl* /opt/samsam/releases/cccccccccccccccccccccccccccccccccccccccc/data/  (state runtime: refresh token rotate, dedup, convlog — file chưa có thì bỏ qua)
+  5. ln -sfn /opt/samsam/releases/cccccccccccccccccccccccccccccccccccccccc /opt/samsam/current && systemctl start zalo-webhook
+  6. smoke: curl -fsS http://127.0.0.1:8788/healthz && cd /opt/samsam/current && .venv/bin/python scripts/agent_eval.py --agent chatbot --no-record  (FAIL -> Rollback ngay)
+  7. ghi guardrail_ver=cccccccccccccccccccccccccccccccccccccccc (hậu kiểm F17.5 dùng đúng bản này)
+  8. giữ 10 release mới nhất trong /opt/samsam/releases, xoá bản cũ hơn (state đã chuyển sang release đang chạy, bản cũ không còn token/convlog)
+  Rollback: systemctl stop zalo-webhook && mv /opt/samsam/releases/cccccccccccccccccccccccccccccccccccccccc/data/zalo_tokens.json /opt/samsam/releases/cccccccccccccccccccccccccccccccccccccccc/data/zalo_seen.db* /opt/samsam/releases/cccccccccccccccccccccccccccccccccccccccc/data/conversations.jsonl* $PREV/data/ && ln -sfn $PREV /opt/samsam/current && systemctl start zalo-webhook  (mang state theo — refresh token cũ đã vô hiệu sau rotate)
+$ python -c "...deploy_gate.check(SHA, x, False, 2026-10-12, {required_agents: [], approvers: [x], freeze...})"   (probe A04 cua reviewer)
+['config không có required_agents — từ chối (fail-closed)']
+probe dot bien (sua tam, chay test_agent_eval+test_deploy_gate, khoi phuc): bo check required -> 3 failed; pip -r tuong doi -> 1 failed
+gate:
+$ python -m pytest tests/test_agent_eval.py tests/test_deploy_gate.py tests/test_ci_workflow.py tests/test_handover_docs.py tests/test_guardrail.py -q   (vong 1)
+112 passed in 3.71s
+exit=0
+$ python -m pytest tests/test_agent_eval.py tests/test_deploy_gate.py tests/test_ci_workflow.py tests/test_handover_docs.py tests/test_guardrail.py -q   (vong 2)
+112 passed in 3.21s
+exit=0
+$ python -m pytest tests/test_agent_eval.py tests/test_deploy_gate.py tests/test_ci_workflow.py tests/test_handover_docs.py tests/test_guardrail.py -q   (vong 3)
+112 passed in 3.74s
+exit=0
+$ python -m pytest -q
+........................................................................ [ 88%]
+....................................                                     [100%]
+324 passed in 38.17s
+exit=0
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile scripts/agent_eval.py scripts/deploy_gate.py
+exit=0

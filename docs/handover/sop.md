@@ -228,6 +228,34 @@ ruff check .            # lint
 python scripts/eval_qa.py   # 12 câu hỏi questions.md qua RAG thật — exit 0 khi ≥10/12 + 2 bẫy pass (xem phu-luc-d.md)
 ```
 
+**Nghiệm thu theo commit & cổng deploy (v3.5, F17.1):**
+
+```
+python scripts/agent_eval.py --agent guardrail   # bộ ca data/eval/guardrail.jsonl, không cần key — ghi eval_runs
+python scripts/agent_eval.py --agent chatbot     # 14 ca qua RAG thật (cần OPENROUTER_API_KEY)
+python scripts/deploy_gate.py --sha <SHA 40 hex> --approved-by "<tên>" [--hotfix]
+```
+
+- Ngưỡng + người duyệt + cửa sổ đóng băng ở `data/eval/config.json`
+  (chốt TRƯỚC khi chạy; bản hiện tại dev soạn, chưa được công ty duyệt).
+- `agent_eval` chỉ ghi khi working tree sạch và SHA = HEAD; `--allow-dirty`
+  ghi `<sha>-dirty` (không bao giờ mở deploy); `--no-record` chỉ chấm.
+- `deploy_gate` CHỈ IN kế hoạch (release `/opt/samsam/releases/<SHA>`,
+  `.env` symlink từ `/opt/samsam/shared/.env`, dừng service rồi `mv`
+  state `data/zalo_tokens.json`/`zalo_seen.db*`/`conversations.jsonl*`
+  sang release mới, đổi symlink `current`, smoke `/healthz` + eval
+  chatbot `--no-record`, fail → rollback mang state về, giữ 10 release)
+  khi: row `eval_runs` mới nhất của MỌI agent bắt buộc là PASS + người
+  duyệt thuộc `approvers` + ngoài đóng băng 21/12–10/02 (trong đó chỉ
+  `--hotfix`). DB lỗi hoặc `required_agents` rỗng → từ chối.
+- CI: `.github/workflows/ci.yml` — mỗi push/PR chạy ruff + pytest + eval
+  guardrail trên Postgres service; eval chatbot chỉ khi chạy tay
+  (workflow_dispatch) và có secret.
+- **External-dep (chưa có):** danh sách `approvers` thật (đang rỗng →
+  gate từ chối mọi deploy), secret `OPENROUTER_API_KEY` trên GitHub,
+  runner tự host, môi trường production, n8n ghi `eval_runs` qua webhook
+  HMAC, công ty/Pháp chế duyệt bộ ca.
+
 ## 9. Tài khoản & bí mật (vai trò — KHÔNG ghi giá trị)
 
 Tất cả nằm trong file `.env` ở root repo (`.env` đã gitignore; mẫu
