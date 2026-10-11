@@ -9,6 +9,314 @@ Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 Nhánh `ai-infra` (M30): version đang mở **v3.3-connector-csv**
 (song song ở worktree riêng: v3.5, v3.7, v3.8).
 
+## Checklist v3.9-kb-acl
+
+Khán giả/mục đích: nhánh `ai-infra` (M30, worktree `D:\code\samsam-v39`)
+— WP04b, luồng F15.3 (kho tri thức có phân quyền → đồng bộ chatbot,
+`flows_infra.md`), agent "Knowledge Base (RAG index)"
+(`plan_data_platform.md`). Nghiệm thu trước chỉ ra: `api/rag.py`
+`retrieve()` SELECT toàn bảng `chunks` không cột/bộ lọc nào, Zalo
+(`connectors/zalo.py` `_reply`) và tab Chat (`app/streamlit_app.py`)
+cùng gọi `answer()` → nạp tài liệu nội bộ vào `chunks` = lộ ra chatbot
+khách. Thêm: `ingest/embed_store.py` re-embed TOÀN BỘ mỗi lần, xóa-nạp
+chỉ theo doc_id có trong batch (docstring nói "record bị xóa khỏi jsonl
+cũng biến mất khỏi DB" là SAI — doc bị gỡ khỏi nguồn nằm lại vĩnh viễn),
+không lọc rượu: dry-run 2026-10-12 trên DB `samsam_v39` = **41/916
+chunk, 31 doc** nhắc rượu/wine (wc-158/159/990/991/2293/2296,
+nv-RUOU-*, nv-ruou-sam-ngoc-linh, bài showroom/lễ hội/tour wp-134,
+wp-160, wp-170, wp-191, wp-285, wp-2413, wp-2527...) và doc tổng hợp
+`catalog-products` chunk 0 liệt kê "Rượu Sâm Ngọc Linh No.5/7/9" — luật
+quảng cáo rượu ≥15 độ: kênh chatbot khách KHÔNG được trả. Sau version:
+`chunks` = corpus CÔNG KHAI duy nhất của chatbot khách, 0 chunk nhắc
+rượu; tài liệu nội bộ nằm ở bảng RIÊNG mà `answer()` không có đường
+nào đọc tới; chạy lại ingest không đổi gì = 0 lời gọi embed.
+
+Quyết định thiết kế (tối thiểu an toàn): bảng RIÊNG `chunks_internal`
+thay vì cột `acl` trên `chunks` — cách ly bằng CẤU TRÚC (quên 1 mệnh đề
+WHERE ở caller mới không lộ được), `zalo_preflight`/`data_audit`/
+`eval_qa` đếm/đọc `chunks` giữ nguyên ngữ nghĩa "corpus khách". Không
+làm version toàn kho N+1/`chunks_active`/staged/`kb_quarantine`/
+`kb_filter_log` (bước 7-10 F15.3 — mốc D 18/12, cần role DB cloud):
+version ở mức DOC (`doc_version` + `ingested_at`).
+
+Quy ước: ponytail — stdlib + `psycopg`/`numpy` sẵn có, KHÔNG dep mới,
+không pgvector. Schema chỉ THÊM (`alter table ... add column if not
+exists`, `create table|index if not exists`), không đổi kiểu/xóa cột cũ.
+Mọi embedding qua `pipelines.llm_gateway.embed("ingest", ...)` (đã có
+v3.1 — PII mask + privacy routing + ghi `llm_usage`); retrieve dùng
+`embed("chatbot", ...)` như cũ. Lọc rượu + báo cáo NO_DATA = 0 LLM (chỉ
+luật). Mọi `psycopg.connect` mới/đụng tới phải có `connect_timeout`;
+ghi DB = 1 transaction + `conn.commit()` tường minh (gotcha savepoint
+v2.1). File sửa/thêm có print tiếng Việt → UTF-8 reconfigure guard
+(`embed_store.py` hiện CHƯA có — thêm). Guard I/O nguồn: enumerate đủ
+biến thể `missing` / `0 byte` / chỉ dòng trắng / chỉ `{"_doc":...}` /
+dòng JSON hỏng — 4 biến thể đầu = KHÔNG xóa chunk của nguồn đó (gotcha
+delete-trắng v1.8), JSON hỏng = abort TRƯỚC embed và TRƯỚC mọi ghi DB.
+Test chạm DB thật: chỉ trên DB của worktree (`DATABASE_URL` từ
+`v39.env` = `samsam_v39`), skip khi không connect được nhưng gate yêu
+cầu file đó 0 skipped; row test dùng prefix `test-v39-` /
+`internal:test_v39` và dọn trong `finally` (retrieve mở conn riêng nên
+không dùng được rollback) + assert đã dọn. Test incremental KHÔNG ghi
+bảng `chunks` thật: dùng conn thật + `create temp table chunks (like
+public.chunks including all)` (pg_temp đứng trước public trong
+search_path → SQL không-qualify trúng bảng tạm) hoặc fake-conn; embed
+giả đếm lời gọi qua monkeypatch `ingest.embed_store.embed`. Test không
+wall-clock. `--approved-by` chỉ NGƯỜI thật truyền — agent/test chỉ dùng
+giá trị rõ là mẫu (`MAU-test`), KHÔNG tự đánh dấu trưởng phòng đã duyệt.
+
+External-dep (KHÔNG giả lập): tài liệu nội bộ THẬT của các phòng (chờ
+bàn giao — chỉ có file mẫu ghi rõ "MẪU"); trưởng phòng duyệt từng tài
+liệu (`--approved-by` người thật); Pháp chế duyệt `data/ruou_keywords.txt`
+(bản đầu do agent soạn, header ghi "CHỜ PHÁP CHẾ DUYỆT") + rule
+`ruou_cam_quang_cao` của Guardrail v2 (A3); role DB `webhook` không có
+quyền SELECT `chunks_internal` (GRANT trên cloud — local cách ly bằng
+bảng riêng + code); pgvector (P2); version toàn kho/`chunks_active`/
+cổng eval tự chuyển version + `kb_quarantine` cho Pháp chế (F15.3 bước
+7-10); systemd timer chạy đêm.
+
+- [x] **W39.1 Schema: `chunks_internal` + cột incremental trên `chunks`** —
+  `docs/schema.sql` thêm block "v3.9 kb-acl" (comment tiếng Việt: `chunks`
+  CHỈ chứa corpus công khai cho chatbot khách; nội bộ ở bảng riêng):
+  `alter table chunks add column if not exists source text` (file nguồn:
+  `products.jsonl`|`articles.jsonl`|`about.jsonl`|`news.jsonl`|`catalog`),
+  `doc_sha256 text`, `doc_version int not null default 1`, `ingested_at
+  timestamptz not null default now()`; `create table if not exists
+  chunks_internal (id uuid pk default gen_random_uuid(), collection text
+  not null check (collection ~ '^internal:[a-z0-9_]{1,32}$'), doc_id text
+  not null, chunk_index int not null, title text, source_ref text (tên
+  file gốc, không URL public), content text not null, embedding float8[],
+  doc_sha256 text not null, doc_version int not null default 1,
+  approved_by text not null check (btrim(approved_by) <> ''), approved_at
+  timestamptz not null default now(), ingested_at timestamptz not null
+  default now(), unique (collection, doc_id, chunk_index))` + index
+  `(collection)`. Dây chuyền drift-guard: `tests/test_handover_docs.py`
+  `test_kien_truc_lists_all_tables` đếm cứng 14 bảng → 15 +
+  `docs/handover/kien-truc.md` liệt kê `chunks_internal` + "15 bảng".
+  - Boundary: `docs/schema.sql`, `tests/test_handover_docs.py` (chỉ hằng
+    số bảng), `docs/handover/kien-truc.md`
+  - Gate: `python scripts/apply_schema.py` chạy 2 lần liên tiếp đều exit
+    0; `information_schema.columns` của `chunks` có đủ 4 cột mới và cột
+    cũ không đổi; test (DB thật, trong tx + ROLLBACK) INSERT
+    `chunks_internal` với collection `public` / `internal:` / `internal:KD`
+    / `internal:kd;x` và `approved_by` `''`/`'  '`/NULL đều bị CHECK/NOT
+    NULL chặn; `python -m pytest -q tests/test_handover_docs.py
+    tests/test_core_store.py` xanh
+  - Evidence: `evidence/v39_schema.log`
+  - Kết quả: apply_schema 2 lần exit 0 (15 bảng); `chunks` đủ 4 cột mới, 8 cột cũ giữ kiểu; 8 case CHECK/NOT NULL bị chặn (`tests/test_kb_acl_db.py`). Dây chuyền ngoài boundary: `tests/test_store.py` + `tests/test_lead_store.py` cũng đếm cứng 14 bảng VÀ cấm mọi `alter table` -> đổi 15 + chỉ cho ALTER dạng `add column if not exists` (vẫn cấm drop/alter khác) — không sửa thì full pytest đỏ.
+- [x] **W39.2 Bộ phát hiện rượu `pipelines/kb_filter.py` + `data/ruou_keywords.txt`** —
+  `is_alcohol(text) -> bool` (0 LLM): text NFC + casefold; cụm CÓ dấu so
+  trên text đó, cụm KHÔNG dấu so trên bản bỏ dấu (`đ`→`d`, có thể dùng lại
+  `llm_gateway._strip_accents`); biên từ `(?<!\w)…(?!\w)`; khoảng trắng
+  trong cụm khớp `\s+`. Nguồn cụm: `data/ruou_keywords.txt` (1 cụm/dòng,
+  `#` = comment; header "CHỜ PHÁP CHẾ DUYỆT"; bản đầu: `rượu`, `ngâm rượu`,
+  `độ cồn`, `nồng độ cồn`, `% vol`, `ruou`, `wine`, `liquor`, `samsam
+  no.5/no.7/no.9` + biến thể `no. 5`) + `name` của SKU `category ==
+  "alcohol"` trong `data/golden_skus.json` (v3.2). Cụm không dấu chỉ được
+  thêm khi KHÔNG mơ hồ (precedent "ho"/"gan" health — KHÔNG thêm `do con`
+  vì trùng "đó còn"). Fail-closed: `ruou_keywords.txt` missing / 0 byte /
+  chỉ comment-dòng trắng → raise `KbFilterError` (không bao giờ "0 cụm =
+  không lọc gì"); `golden_skus.json` thiếu/hỏng → chỉ dùng keyword file +
+  warn. Load 1 lần (cache, test reset được).
+  - Boundary: `pipelines/kb_filter.py` (mới), `data/ruou_keywords.txt`
+    (mới, tracked — không phải runtime state), `tests/test_kb_filter.py`
+  - Gate: `python -m pytest -q tests/test_kb_filter.py` xanh, gồm: HIT
+    "Rượu Sâm Ngọc Linh No. 9", "RƯỢU SAMSAM No.5", NFD "Ru\u031bo\u031b\u0323u
+    sâm" (viết escape, không literal), "ruou sam", "Ngoc Linh Ginseng Wine
+    No. 7", "nồng độ cồn 27,5%", "40% vol", tên 2 SKU alcohol golden; MISS
+    "đó còn", "độ cao 1.500m", "Hồ Chí Minh", "Saphraton 20 viên",
+    "swine"/"winery" (biên từ), câu hỏi giá Savina; 3 biến thể fail-closed
+    (missing/0 byte/chỉ comment) → `KbFilterError`; đếm trên DB thật
+    (read-only) ≥ 41 chunk HIT hiện tại (dry-run khớp lại)
+  - Evidence: `evidence/v39_filter.log`
+  - Kết quả: 29 test xanh. DB read-only trước ingest: 46 chunk HIT content|title (40 content-only; dry-run 41 = substring, thêm 1 FP `intertwined` ở wp-1842 mà biên từ loại đúng), 31 doc. External-dep: Pháp chế duyệt keyword file.
+- [x] **W39.3 Ingest incremental + lọc rượu trong `ingest/embed_store.py`** —
+  Tách phần đồng bộ thành hàm test được (vd `sync(conn, data_dir,
+  embed_fn=...) -> dict` thống kê), `main()` chỉ load env + connect
+  (`connect_timeout`) + gọi. Luồng: (1) đọc từng nguồn — nguồn đọc
+  OK + ≥1 record hợp lệ mới vào tập "nguồn tin cậy" (enumerate 4 biến
+  thể trống ở Quy ước), dòng JSON hỏng → raise trước embed/ghi DB;
+  (2) record product có `is_alcohol(name)` → bỏ cả record; mọi chunk
+  `is_alcohol(chunk)` → bỏ khỏi public (chặn thừa bài viết nhắc rượu =
+  chấp nhận theo F15.3); doc `catalog-products` dựng SAU khi bỏ SKU rượu
+  (chunk catalog không còn dòng "Rượu ..."); (3) `doc_sha256` = sha256
+  của (model embed, source, title, url, lang, danh sách chunk SAU lọc) —
+  đổi model/keyword lọc → hash đổi → embed lại doc đó; (4) so với
+  `doc_sha256` hiện có trong `chunks` → chỉ embed chunk của doc mới/đổi;
+  (5) MỘT transaction: delete+insert doc đổi (`doc_version` = cũ+1, mới =
+  1, `ingested_at` = now()), xóa doc không còn trong tập public của nguồn
+  tin cậy (gồm doc bị lọc trọn — wc-991...), dòng legacy `source is null`
+  không thuộc tập public chỉ xóa khi MỌI nguồn tin cậy (không để rượu
+  legacy sót lại); `conn.commit()` tường minh; embed lỗi giữa chừng → 0
+  ghi DB. In thống kê: doc mới/đổi/giữ/xóa, chunk bị lọc rượu theo
+  nguồn, số lời gọi embed. Sửa docstring sai về xóa-nạp. UTF-8 guard.
+  - Boundary: `ingest/embed_store.py`, `tests/test_embed_store.py` (mới)
+  - Gate: `python -m pytest -q tests/test_embed_store.py` xanh, gồm:
+    lần 2 không đổi gì = **0** lời gọi embed + 0 row đổi (`id`/
+    `ingested_at` y nguyên); sửa body 1 record → embed đúng số chunk của
+    doc đó, `doc_version` 2, doc khác không đổi `ingested_at`; gỡ 1 record
+    → chunk của nó bị xóa; mỗi biến thể missing/0 byte/chỉ trắng/chỉ
+    `_doc` của `products.jsonl` → 0 xóa chunk products LẪN `catalog`;
+    dòng JSON hỏng → raise, 0 lời gọi embed, 0 ghi; embed raise ở batch 2
+    → bảng không đổi; record rượu + chunk bài viết nhắc rượu không vào
+    `chunks`, catalog không chứa "rượu"; legacy row `source null` của doc
+    rượu bị xóa. DB thật `samsam_v39`: chạy `python -m
+    ingest.embed_store` lần 1 (re-embed vì legacy chưa có hash — ~vài
+    trăm chunk, < $0.01) rồi lần 2 → log lần 2 `0` lời gọi embed và
+    `select count(*) from llm_usage where agent_id='ingest'` trước/sau
+    lần 2 bằng nhau; quét toàn bảng `chunks` bằng `is_alcohol(content)`
+    và `is_alcohol(title)` = **0**; `count(*) where source is null` = 0;
+    chunk `catalog-products` chứa "Saphraton", không chứa "Rượu"
+  - Evidence: `evidence/v39_ingest.log`
+  - Kết quả: 14 test xanh. DB thật: lần 1 re-embed 871 chunk/167 doc (14 lời gọi, $0.0043), xóa 9 doc rượu; lần 2 `0` lời gọi, llm_usage ingest 14 -> 14; quét `is_alcohol` content/title = 0; `source is null` = 0; catalog có Saphraton, không có rượu.
+- [x] **W39.4 `retrieve()` DENY-BY-DEFAULT + chatbot không trả rượu** —
+  `api/rag.py`: `retrieve(question, k=TOP_K, *, collection="public")`;
+  validate `collection` TRƯỚC khi gọi embed: `"public"` → `select ... from
+  chunks` (không đổi) + bỏ row `is_alcohol(content)` hoặc
+  `is_alcohol(title)` trước khi chấm điểm (lớp phòng thủ cho row nạp
+  ngoài embed_store/legacy; pin `catalog-products` chỉ ở public);
+  `internal:<phong>` khớp `^internal:[a-z0-9_]{1,32}$` → `from
+  chunks_internal where collection = %s` (param, không f-string); giá
+  trị khác (kể cả None, `""`, `"Public"`, `"internal:"`, `"chunks"`,
+  `"internal:kd' or '1'='1"`) → `ValueError`, 0 lời gọi gateway. Connect
+  thêm `connect_timeout`. `answer()` KHÔNG có tham số collection (kênh
+  khách luôn public); sau check sức khỏe: `is_alcohol(question)` → trả
+  `{"answer": NO_DATA, "sources": [], "handoff": "alcohol"}` không gọi
+  LLM/embed (zalo + streamlit đã map NO_DATA → `HANDOFF_TEXT` hotline,
+  không mời mua — KHÔNG sửa 2 file đó); có history → câu rewrite
+  `_standalone` trúng rượu cũng trả như trên.
+  - Boundary: `api/rag.py`, `tests/test_kb_acl.py` (mới, unit),
+    `tests/test_kb_acl_db.py` (mới, DB thật)
+  - Gate: unit xanh: fake conn ghi SQL — public chỉ chạm `chunks`,
+    internal chỉ `chunks_internal` + param đúng collection; 7 giá trị
+    collection sai → ValueError + 0 embed; row rượu (score cao nhất) bị
+    loại khỏi hits/context; `"Rượu sâm giá bao nhiêu?"`, `"ruou sam No.9
+    mua o dau"`, `"ginseng wine price"` → handoff `alcohol` + 0 chat/
+    embed; câu thường giữ nguyên luồng (test_rag cũ xanh); `"collection"
+    not in inspect.signature(answer).parameters`. DB thật (0 skipped):
+    nạp 1 chunk `internal:test_v39` (nội dung "MẪU nội bộ ...", qua hàm
+    nạp của W39.5, embed giả = vector q) + 1 chunk public `test-v39-ruou`
+    "Rượu sâm ..." embedding = q; `rag.embed` giả trả q →
+    `retrieve(...)` mặc định KHÔNG có 2 chunk đó; `collection=
+    "internal:test_v39"` → top-1 là chunk mẫu; `finally` xóa + assert 0
+    row `test-v39-%` trong `chunks` và 0 row `internal:test_v39`. Grep:
+    `chunks_internal` trong `*.py` chỉ ở `api/rag.py`,
+    `ingest/kb_internal.py`, `tests/`; `grep -rn "collection="
+    connectors app scripts agents` rỗng; `git diff --stat
+    connectors/zalo.py app/streamlit_app.py` rỗng. Probe sống (2 lời
+    embed thật): `retrieve("Rượu sâm giá bao nhiêu?")` và
+    `retrieve("Sâm Sâm có những sản phẩm nào?")` → 0 hit `is_alcohol`
+  - Evidence: `evidence/v39_acl.log`
+  - Kết quả: unit + DB thật xanh (0 skipped), dọn + assert 0 row test; grep gate đạt; zalo/streamlit không đổi; probe sống 2 câu -> 0 hit rượu. Vòng 3 (OWASP/perf): lọc rượu theo thứ tự điểm tới đủ k thay quét cả bảng (~0.4s/câu), catalog rượu không ghim.
+- [x] **W39.5 CLI nạp tài liệu nội bộ đã duyệt `ingest/kb_internal.py`** —
+  `python -m ingest.kb_internal --file <.md|.txt> --collection
+  internal:<phong> --approved-by "<trưởng phòng>" [--doc-id <slug>]`.
+  Validate HẾT trước connect + trước embed (lỗi → `ap.error`/exit 2):
+  `--approved-by` bắt buộc, strip rỗng → lỗi; collection sai regex;
+  file không tồn tại / 0 byte / chỉ trắng / đuôi khác `.md`/`.txt` /
+  không decode UTF-8 strict / > 1MB. doc_id mặc định = slug stem file.
+  `chunk_text` của embed_store; `doc_sha256` trùng bản đang có cùng
+  (collection, doc_id) → 0 embed, in "không đổi"; đổi → delete+insert
+  1 transaction, `doc_version`+1, `approved_by`/`approved_at`, commit
+  tường minh. Print chỉ collection/doc_id/số chunk — KHÔNG in nội dung
+  file. UTF-8 guard. File mẫu `tests/fixtures/kb_noi_bo_MAU.md` dòng
+  đầu "MẪU — KHÔNG phải tài liệu thật của công ty".
+  - Boundary: `ingest/kb_internal.py` (mới), `tests/test_kb_internal.py`
+    (mới), `tests/fixtures/kb_noi_bo_MAU.md` (mới)
+  - Gate: `python -m pytest -q tests/test_kb_internal.py` xanh: mỗi lỗi
+    validate (thiếu/blank approved-by, 4 collection sai, missing/0 byte/
+    trắng/đuôi lạ/byte non-UTF-8) → SystemExit 2, `connect` giả KHÔNG bị
+    gọi, 0 embed; nạp lần 2 cùng file = 0 embed; sửa file → `doc_version`
+    2, số chunk mới đúng; chunk ghi vào `chunks_internal`, KHÔNG vào
+    `chunks`. Không chạy CLI này trên DB thật với tên người thật
+  - Evidence: `evidence/v39_internal.log`
+  - Kết quả: 18 test xanh (temp table, không ghi bảng thật); `chunks_internal` thật 0 row. External-dep: tài liệu thật + trưởng phòng duyệt (`--approved-by` người thật).
+- [x] **W39.6 Báo cáo câu NO_DATA lặp lại `scripts/kb_gaps.py`** — 0 LLM
+  (cụm bằng luật, F03d bước 6): đọc `data/conversations.jsonl` (+`.1`)
+  qua `ingest.lead_store.iter_convlog`/`CONV_FILES` (BYTES + split
+  `\n`), lấy record `answered is False`; khóa cụm = câu NFC + casefold +
+  gộp khoảng trắng + bỏ dấu câu cuối; mỗi cụm: số lần, số `user_hash`
+  khác nhau, ts gần nhất, cột "loại" (`sức khỏe` nếu
+  `is_health_question`, `rượu` nếu `is_alcohol` — KHÔNG bổ sung KB cho 2
+  loại này). `--min N` (mặc định 2), `--out <file.md>` (ghi atomic tmp +
+  `os.replace`) hoặc stdout. Câu hiển thị qua `_mask_pii` lần nữa (entry
+  cũ trước khi mask) + escape `|` cho bảng markdown. UTF-8 guard.
+  - Boundary: `scripts/kb_gaps.py` (mới), `tests/test_kb_gaps.py` (mới),
+    `AGENTS.md` (bảng Commands thêm 2 dòng `kb_internal`, `kb_gaps`)
+  - Gate: `python -m pytest -q tests/test_kb_gaps.py` xanh: convlog
+    tmp_path có câu lặp khác hoa/thường/khoảng trắng/dấu "?" gộp 1 cụm;
+    `answered` true/thiếu/"false" (str) không đếm; dòng hỏng + U+2028
+    (escape) không vỡ record; file thiếu → "0 câu" exit 0; SĐT trong
+    câu bị mask ở output; `llm_gateway.chat`/`embed` giả raise → vẫn chạy
+    xong (0 LLM); `python scripts/kb_gaps.py --min 1` trên convlog thật
+    exit 0 (output không chứa chuỗi số ≥9 chữ số liền)
+  - Evidence: `evidence/v39_gaps.log`
+  - Kết quả: 8 test xanh (thêm escape `<`/`>` sau Phần B); convlog thật `--min 1` exit 0, 3 cụm, 0 chuỗi >=9 chữ số.
+- [x] **W39.7 Gate chung** — chạy TUẦN TỰ, lệnh nặng có thể bị đẩy nền:
+  đọc output tới khi process exit trước lệnh kế; không chạy chồng pytest.
+  - Boundary: không file mới (chỉ evidence)
+  - Gate: (1) targeted ×3 `python -m pytest -q tests/test_kb_filter.py
+    tests/test_embed_store.py tests/test_kb_acl.py tests/test_kb_acl_db.py
+    tests/test_kb_internal.py tests/test_kb_gaps.py tests/test_rag.py
+    tests/test_handover_docs.py` — 3 lần 0 failed, 0 skipped; (2) full
+    `python -m pytest -q` xanh, tổng ≥ 308 + test mới, 0 failed; (3)
+    `ruff check .` clean; (4) `python -m py_compile pipelines/kb_filter.py
+    ingest/embed_store.py ingest/kb_internal.py api/rag.py
+    scripts/kb_gaps.py`; (5) DB thật sau mọi test: `chunks_internal` 0
+    row `internal:test_v39`, `chunks` 0 row `test-v39-%`, quét
+    `is_alcohol` trên `chunks` = 0; (6) `python scripts/eval_qa.py` exit
+    0 (≥10/12 + Q11/Q12 bẫy pass; LLM thật qua gateway, vài cent) — nếu
+    lọc rượu làm rớt câu (vd Q10 showroom nằm trong bài nhắc rượu) KHÔNG
+    nới bộ lọc, ghi lại; (7) `git status` không file lạ (stage theo danh
+    sách, không `add -A`; `lv2-market-top.png` giữ untracked), không
+    runtime file mới trong `data/`
+  - Evidence: `evidence/v39_pytest.log`, `evidence/v39_eval.log`
+    (`*.log` gitignore → `git add -f`)
+  - Kết quả: vòng 1 full đỏ 2 (drift-guard 14 bảng/cấm alter ở test_store/test_lead_store) -> vòng 2 xanh 407 -> vòng 3 (sau Phần B) targeted 114×3 xanh, full 409 passed 0 skipped, ruff sạch, py_compile OK, DB sạch. eval_qa 11/12 + 2 bẫy PASS, exit 0 (2 lần). Q5 (MST) FAIL do MST 4001036461 CHỈ nằm trong record rượu nv-RUOU-* đã lọc — KHÔNG nới bộ lọc; LLM BỊA MST khác nhau mỗi lần (0402021985 / 0402021234) — rủi ro bịa định danh có từ trước, cần bổ sung MST vào nguồn công khai không-rượu (chờ nguồn xác nhận).
+  - Vòng sửa nghiệm thu (3 MAJOR + 3 MINOR): (1) `ruou_keywords.txt` thêm
+    `alcohol`, `alcoholic`, `có cồn`, `đồ uống có cồn`, `liqueur`, `vodka`,
+    `whisky`, `whiskey`, `brandy`, `soju`, `ginseng spirit(s)`, `distilled
+    spirits` — KHÔNG thêm `spirits` đơn lẻ (truyền thuyết wp-1842 "forest
+    spirits") và KHÔNG thêm bản không dấu `co con` (quét độc lập: 9 FP "có
+    công"/"có con"/"đó còn"); vẫn CHỜ PHÁP CHẾ DUYỆT. embed_store lần 3:
+    chỉ wp-1844 đổi (bỏ 3 chunk alcoholic, embed lại 2 chunk, 1 lời gọi),
+    lần 4 = 0 lời gọi, llm_usage ingest 15→15. Gate rượu hết vòng tròn:
+    `test_public_corpus_has_no_alcohol_independent_scan` (regex Postgres
+    RIÊNG + `ilike '%alcohol%'` = 0, đỏ trước re-ingest với wp-1844) + quét
+    regex rộng không dấu in từng hit (28 hit, review tay đều FP). (2) MST
+    bịa — chọn hướng (b) hậu kiểm trong `answer()`: chuỗi ≥9 chữ số liền
+    không có nguyên văn trong context/câu hỏi/history (so cả bản bỏ 1
+    cách/chấm/gạch giữa 2 chữ số) → NO_DATA; eval Q5 nay NO_DATA (không
+    còn MST bịa), Q8 hotline 1800577732 vẫn PASS, 11/12 exit 0. Giới hạn
+    biết trước: số bịa viết có dấu chấm/cách ("0402.021.985") không bị bắt.
+    Hướng (a) doc công khai MST vẫn chờ nguồn không-rượu xác nhận. (3) Test
+    NFD viết escape + thêm case NFD chỉ-có-dấu ("nồng độ cồn", "đồ uống có
+    cồn") — mutation bỏ NFC nay đỏ 2 test; U+2028 literal ở test_embed_store/
+    test_kb_gaps đổi sang escape. Targeted 139×3 xanh, full 434 passed 0
+    skipped, ruff sạch; DB sạch row test.
+
+Someday (ngoài version): `--remove` thu hồi tài liệu nội bộ theo
+(collection, doc_id) — hiện xóa bằng SQL tay; chunk sản phẩm lấy giá từ
+`v_promotable`/golden thay dòng Giá crawl (F15.3 bước 5 — chờ GĐ duyệt
+giá); chunk nội bộ lớp Vàng chỉ index tsvector không embed ra ngoài
+(bước 6); `guardrail.check()` trên chunk public lúc ingest +
+`kb_quarantine` theo URL (bước 4d); trợ lý nội bộ dùng
+`retrieve(collection="internal:...")` (chưa có kênh tiêu thụ); câu hỏi
+rượu ghi convlog `answered:false` nên vào queue "Chưa trả lời" (W39.6
+gắn nhãn `rượu` để không bổ sung KB).
+
+v3.9-kb-acl đóng 2026-10-12 (3 nghiệm thu đợt 1 FIX 6 finding — 2 MAJOR:
+từ khóa rượu tiếng Anh/"có cồn" lọt bộ lọc; LLM bịa mã số thuế khi nguồn
+duy nhất là record rượu đã bị loại → thêm `_unverified_number` trong
+`answer()` (số ≥9 chữ số không có trong ngữ cảnh → NO_DATA) — 1 vòng sửa
+→ PASS; coordinator chạy lại 434/434 + ruff). `eval_qa` 11/12, 2 bẫy
+pass; Q5 (mã số thuế) giờ NO_DATA thay vì số bịa. Ingest DB thật lần 2
+= 0 lời gọi embed. External-dep: tài liệu nội bộ thật + trưởng phòng
+duyệt; Pháp chế duyệt `ruou_keywords.txt`; nguồn công khai xác nhận mã
+số thuế (không nhắc rượu); GRANT role `webhook` trên cloud; pgvector.
+Someday: số bịa viết có dấu chấm/cách ("0402.021.985") chưa bắt;
+`--remove` tài liệu nội bộ; câu hỏi rượu đang rơi vào queue "Chưa trả
+lời".
+
 v3.2-golden-master đóng 2026-10-12 (3 nghiệm thu đợt 1 FIX 8 finding →
 1 vòng sửa → PASS; coordinator chạy lại 308/308 + ruff, DB thật: 13
 SKU, 0 giá đã duyệt, `v_promotable` rỗng, rượu CAM mọi kênh).

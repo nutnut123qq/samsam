@@ -68,11 +68,12 @@ Streamlit demo.
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 14 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 15 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
-| `chunks` | Chunk văn bản + embedding `float8[]` cho RAG (`doc_id`,`chunk_index`,`source_url`,`title`,`lang`,`content`,`embedding`) | `ingest.embed_store` — xóa-nạp lại theo doc_id |
+| `chunks` | Chunk văn bản + embedding `float8[]` cho RAG (`doc_id`,`chunk_index`,`source_url`,`title`,`lang`,`content`,`embedding`) | `ingest.embed_store` — incremental theo `doc_sha256` (v3.9: chỉ embed doc đổi, `doc_version`/`ingested_at`, xóa doc gỡ khỏi nguồn đọc được, lọc rượu) — corpus CÔNG KHAI duy nhất của chatbot khách |
+| `chunks_internal` | Tài liệu NỘI BỘ đã duyệt theo phòng (`collection` `internal:<phong>`, `approved_by` bắt buộc, `doc_sha256`/`doc_version`) — bảng RIÊNG, `answer()` không có đường đọc | `python -m ingest.kb_internal --file ... --collection internal:<phong> --approved-by <trưởng phòng>` (CHỈ người thật duyệt) |
 | `products` | Sản phẩm (`id`,`name`,`price_vnd` null→"Liên hệ",`url`,`lang`) | `core_store` từ products.jsonl + nhập tay |
 | `claims_approved` | Công dụng ĐÃ CÔNG BỐ theo SKU — nguồn sự thật guardrail (`sku_key`,`claim` null="chưa công bố") | `core_store` từ `claims_whitelist.json` |
 | `plots` | Khoảnh vùng trồng (`id` vd 'KV-A01',`location`,`tree_count`,`status`) | `sample_plots.jsonl` (MẪU) + nhập tay |

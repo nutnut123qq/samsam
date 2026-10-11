@@ -1,0 +1,39 @@
+# CHỜ PHÁP CHẾ DUYỆT — bản đầu do agent soạn (v3.9-kb-acl), chưa có người duyệt.
+# Cụm nhận diện nội dung RƯỢU (luật quảng cáo rượu >=15 độ): chunk/câu hỏi
+# khớp bất kỳ cụm nào KHÔNG được trả cho chatbot khách.
+# Cú pháp: 1 cụm/dòng, '#' = comment. So khớp sau NFC + casefold, theo biên từ.
+# Cụm CÓ dấu so trên text gốc; cụm KHÔNG dấu so trên bản đã bỏ dấu.
+# Cụm không dấu chỉ thêm khi KHÔNG mơ hồ (KHÔNG thêm "do con" — trùng "đó còn").
+# Tên SKU category "alcohol" trong data/golden_skus.json được nạp tự động.
+rượu
+ngâm rượu
+độ cồn
+nồng độ cồn
+% vol
+ruou
+wine
+liquor
+# Bổ sung sau nghiệm thu v3.9 (wp-1844 EN "alcoholic beverages" từng lọt).
+# Biên từ 2 phía -> cần cả 2 dạng alcohol/alcoholic.
+alcohol
+alcoholic
+có cồn
+đồ uống có cồn
+liqueur
+vodka
+whisky
+whiskey
+brandy
+soju
+# "spirits" đơn lẻ KHÔNG thêm: corpus có truyền thuyết wp-1842 ("forest
+# spirits", "swear to the spirits") — chỉ chặn cụm rõ nghĩa rượu.
+ginseng spirits
+ginseng spirit
+distilled spirits
+# KHÔNG thêm bản không dấu "do uong co con"/"co con" (trùng "có còn").
+samsam no.5
+samsam no.7
+samsam no.9
+samsam no. 5
+samsam no. 7
+samsam no. 9

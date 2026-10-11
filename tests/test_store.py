@@ -305,8 +305,12 @@ def test_schema_sql_has_content_drafts_table():
     assert "status text not null default 'pending'" in columns
     assert "scheduled_date date" in columns
     assert len(re.findall(
-        r"^create table if not exists", lower, re.MULTILINE)) == 14
-    assert not re.search(r"\b(alter|drop)\s+table\b", lower)
+        r"^create table if not exists", lower, re.MULTILINE)) == 15
+    assert not re.search(r"\bdrop\s+table\b", lower)
+    # v3.9: ALTER chỉ được dạng THÊM cột idempotent (không đổi kiểu/xóa cột).
+    for m in re.finditer(r"\balter\s+table\b[^;]*;", lower):
+        assert re.fullmatch(r"alter\s+table\s+\w+\s+add\s+column\s+if\s+not"
+                            r"\s+exists\s+[^;,]+;", m.group(0)), m.group(0)
 
 
 def test_cli_one_op_only():
