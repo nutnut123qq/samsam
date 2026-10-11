@@ -1,5 +1,25 @@
 # STATUS — v2.1-garden-log (2026-10-11)
 
+## v4.1-guardrail-v2 — WP05/PC-A3 (nhánh M31, contract trong DONE.md)
+
+`pipelines/guardrail.py`: `check(text)` giữ signature + key cũ (mọi
+caller content/rag/zalo/streamlit/store/eval_qa không đổi), thêm chặn
+MỌI nội dung rượu (`kb_filter.is_alcohol`), chuẩn hóa NFC + casefold giữ
+độ dài, bắt từ cấm chèn ký tự (`th.uốc`, zero-width), field mới `code`/
+`severity`/`start`/`end` + `warnings`/`skus`/`required_labels`. Hàm mới
+`check_publish(text, *, channel, content_type, sku, is_ai, is_sponsored)`:
+TPBVSK chưa XNQC (readiness soi gương view `sku_readiness`, parity test
+với view thật), claim theo đúng SKU, câu khuyến cáo chuẩn (miễn từ cấm
+đúng span), nhãn AI/quảng cáo, "Ngọc Linh", kênh chưa mở (warning). Luật
+trong `data/guardrail_rules.json` (bản dev). Bộ ca `data/eval/guardrail.jsonl`
+132 ca (47 trap_critical, 11 trap_disclaimer), `agent_eval` ngưỡng 0.95 +
+3 kind bắt buộc 100%. **Lưu ý:** tới v4.2 `check_publish` chỉ chạy qua
+eval/test — CHƯA chặn luồng duyệt/đăng thật (`content.draft`,
+`store.set_status` approve, Studio vẫn gọi `check()`); phần rượu + NFC có
+hiệu lực ngay qua `check()`. External-dep: Pháp chế duyệt nhãn bộ ca,
+câu khuyến cáo, nhãn, `ngoc_linh`, severity; danh sách XNQC thật; ngưỡng
+0.95 do công ty chốt — chưa có người duyệt thật.
+
 ## v2.1 — WS3 thứ 2: agent nhật ký vùng trồng (contract trong DONE.md)
 
 **4/4 mục triển khai xong, gate xanh.** `python -m pytest -q` 159/159;

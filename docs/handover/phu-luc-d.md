@@ -91,6 +91,92 @@ Check tay trong app: tab **Content Studio** → ô "Text cần check" →
 dán text → "Check guardrail" → violation tô đỏ theo type + claim khớp
 whitelist hiện dưới caption.
 
+## 2b. Guardrail v2 (v4.1, WP05/PC-A3) — trạng thái: chờ Pháp chế duyệt nhãn
+
+`check(text)` (chat, mọi caller cũ) giữ signature + key cũ, thêm: chuẩn
+hóa NFC + casefold, bắt từ cấm bị chèn ký tự (`th.uốc`, `c-h-ữ-a`,
+zero-width), chặn MỌI nội dung rượu (`pipelines/kb_filter.py`), và field
+mới `code`/`severity`/`start`/`end` mỗi violation + `warnings`/`skus`/
+`required_labels`. `check_publish(text, *, channel, content_type, sku,
+is_ai, is_sponsored)` áp thêm luật đăng bài: TPBVSK chưa XNQC (readiness
+soi gương view `sku_readiness`), claim theo đúng SKU, câu khuyến cáo chuẩn
+"Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc
+chữa bệnh" (miễn từ cấm ĐÚNG span câu đó, không miễn cả văn bản), nhãn
+"Nội dung có sử dụng AI" + nhãn quảng cáo, "Ngọc Linh". Luật/nhãn/câu
+khuyến cáo: `data/guardrail_rules.json` (bản dev). **Tới v4.2
+`check_publish` chỉ chạy qua eval/test — chưa nối luồng duyệt/đăng.**
+
+| Code | Severity | Mode |
+|---|---|---|
+| `tu_cam` | critical | block |
+| `ruou_cam_quang_cao` | critical | block |
+| `sku_chua_xnqc` | critical | block |
+| `thieu_khuyen_cao` | critical | block |
+| `config` | critical | block |
+| `claim_ngoai_cong_bo` | major | block |
+| `claim_suc_khoe_tp_thuong` | major | block |
+| `claim_khong_ro_sku` | major | block |
+| `thieu_nhan_ai` | major | block |
+| `thieu_nhan_quang_cao` | major | block |
+| `ngoc_linh_chua_xac_nhan` | major | block |
+| `sku_chua_mo_kenh` | minor | warn (vào `warnings`, không đổi `ok`) |
+
+Bộ ca có nhãn `data/eval/guardrail.jsonl` (132 ca; ca mới mang
+`label_status: "chờ Pháp chế duyệt nhãn"`, nhãn `expect` theo Ý ĐỊNH pháp
+lý bản dev — ca biên được phép fail):
+
+| Kind | Số ca |
+|---|---|
+| `trap_block` | 29 |
+| `trap_critical` | 47 |
+| `trap_disclaimer` | 11 |
+| `edge` | 23 |
+| `pass` | 22 |
+
+`trap_critical` theo code: rượu 15 (gồm 3 ca chèn ký tự), chưa XNQC 10, thiếu khuyến cáo 10,
+từ cấm 12. Chấm: `python scripts/agent_eval.py --agent guardrail
+--no-record` — PASS khi tổng ≥ 0.95 VÀ 100% `trap_block` +
+`trap_critical` (bị chặn ĐÚNG code) + `trap_disclaimer` (0 bắt nhầm câu
+khuyến cáo). Ca biên đang fail (ý định pass, guardrail chặn bảo thủ):
+`v41-edge-01` "không chữa bệnh", `v41-edge-02` "thực phẩm bảo vệ sức
+khỏe" (động từ claim "bảo vệ" trong tên nhóm).
+
+Test `tests/test_guardrail_v2.py`: `test_check_signature_unchanged`,
+`test_nfd_banned_word_blocked_and_nfd_disclaimer_pass`,
+`test_case_and_filler_evasion_blocked`,
+`test_filler_pass_no_false_positive`,
+`test_filler_hit_inside_disclaimer_span_still_exempt_only_by_span`,
+`test_fold_preserves_length_and_spans_index_nfc_text`,
+`test_alcohol_keywords_and_golden_names_blocked`,
+`test_alcohol_span_exact`, `test_alcohol_filler_evasion_blocked`,
+`test_alcohol_filler_pass_no_false_positive`,
+`test_output_shape_all_fields`,
+`test_old_types_keep_names_new_types_equal_code`,
+`test_kb_filter_error_is_config_not_raise`,
+`test_internal_error_never_raises`, `test_rules_file_drift_guard`,
+`test_sku_detection`, `test_readiness_python_rules`,
+`test_readiness_parity_with_db_view`,
+`test_missing_rules_or_golden_is_config`,
+`test_zero_record_config_fail_closed`,
+`test_broken_rules_json_is_config`,
+`test_code_missing_in_rules_fail_closed`,
+`test_a3_1_savigout_koc_without_xnqc`,
+`test_a3_2_alcohol_by_text_internal_note_and_sku_meta`,
+`test_disclaimer_full_post_no_missing_no_banned`,
+`test_disclaimer_exempts_only_its_span`,
+`test_disclaimer_negated_or_variant_missing`,
+`test_disclaimer_forms_satisfy_requirement`, `test_labels_ai_and_ad`,
+`test_claims_bound_to_context_sku`, `test_ngoc_linh_rules`,
+`test_channel_not_open_is_warning_only`,
+`test_publish_bad_context_is_config`, `test_channel_alias_blog_is_web`,
+`test_tpbvsk_ad_without_claim_blocked_but_post_without_claim_ok`,
+`test_eval_cases_labeled_counts`.
+
+Chờ Pháp chế (external-dep, chưa ai duyệt): nhãn bộ ca, câu khuyến cáo
+chuẩn + biến thể chấp nhận, cụm nhãn AI/quảng cáo, `ngoc_linh.identity` +
+`confirmed_skus`, severity/mode từng code, ngưỡng 0.95; danh sách XNQC thật
+(golden `xnqc_status` đang `none`).
+
 ## 3. Tiêu chí đạt (nghiệm thu)
 
 | Hạng mục | Tiêu chí |
