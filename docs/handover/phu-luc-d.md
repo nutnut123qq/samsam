@@ -76,11 +76,14 @@ tên test dùng để tra cứu:
 | `test_compound_clause_escape_2` | "Sapentol hỗ trợ hạ đường huyết và giúp tăng cường trí nhớ." | `unverified_claim` (mệnh đề ghép — phần dư vẫn check) |
 | `test_empty_text_ok` | `""` / whitespace | `ok=True` |
 | `test_missing_config` | thiếu `data/banned_words.txt`/`claims_whitelist.json` (mô phỏng) | `ok=False`, violation type `config` — fail-closed |
+| `test_affirmative_thay_the_thuoc_flagged` | 18 câu bẫy (parametrize), vd "Dạ An Sâm có thể thay thế thuốc chữa bệnh mất ngủ.", bản không dấu, "Ai bảo sản phẩm không thay thế thuốc? Nó thay thế được.", "Khong ai bao san pham khong phai la thuoc.", "Sản phẩm không thay thế thuốc?" (dấu '?' đứng riêng), "Ai bảo sản phẩm không phải là thuốc." (cụm đảo nghĩa có dấu, không '?') | Mỗi câu `ok=False` có violation (khẳng định / phủ định kép / câu hỏi tu từ không được miễn như disclaimer) |
+| `test_disclaimer_variants_pass` | 8 câu (parametrize): "Sản phẩm không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh." (nguyên văn prompt `content.py`), bản không dấu, "Sản phẩm không thay thế thuốc chữa bệnh.", "Lưu ý: sản phẩm không phải là thuốc.", đoạn dài có disclaimer ở giữa + claim Sapentol, cụm "không ai" ở clause khác / đứng sau disclaimer | Mỗi câu `ok=True` |
+| `test_safe_phrases_all_negated` | hằng `guardrail.SAFE_PHRASES` | Mọi mục mở đầu bằng "không " (chặn tái phát mục trần "thay thế thuốc chữa bệnh") |
 
 ### Chạy guardrail test
 
 ```
-python -m pytest tests/test_guardrail.py -q     # 12 case trên
+python -m pytest tests/test_guardrail.py -q     # 15 test (39 case) trên
 python -m pytest -q                             # toàn bộ suite
 ```
 

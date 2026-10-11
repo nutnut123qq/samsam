@@ -682,7 +682,7 @@ Quy trình mỗi version (chặt theo skill):
 được làm tới mức chạy được local + có cổng cấu hình, rồi ghi
 "external-dep" — không giả lập như thật, không treo version.
 
-- [ ] **v3.0-guardrail-hotfix** — vá lỗ hổng SAFE_PHRASES miễn trừ luôn
+- [x] **v3.0-guardrail-hotfix** — vá lỗ hổng SAFE_PHRASES miễn trừ luôn
   câu khẳng định ("…có thể thay thế thuốc chữa bệnh…" → ok=True); bộ câu
   bẫy hồi quy. Boundary: `pipelines/guardrail.py`, `tests/test_guardrail.py`.
   Gate: câu bẫy ok=False, câu khuyến cáo phủ định vẫn ok=True, full xanh.

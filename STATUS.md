@@ -313,8 +313,12 @@ eb5fab7 M1: crawl 2 site public -> jsonl + claims whitelist        (ca truoc)
 - Approved claim là "vùng an toàn": banned span con trong claim đã công bố
   (vd "hỗ trợ hạ đường huyết" ⊃ "hạ đường huyết") không flag.
 - `SAFE_PHRASES`: disclaimer pháp lý bắt buộc TPBVSK ("không phải là
-  thuốc", "thay thế thuốc chữa bệnh") chứa từ cấm theo nghĩa phủ định →
-  miễn. Nếu không có exemption này, mọi bài hợp lệ đều bị flag.
+  thuốc", "không có tác dụng thay thế thuốc chữa bệnh") chứa từ cấm theo
+  nghĩa phủ định → miễn. Nếu không có exemption này, mọi bài hợp lệ đều
+  bị flag. Từ v3.0: chỉ cụm phủ định (mọi mục mở đầu "không "), chặn
+  phủ định kép/tu từ (`NEGATION_FLIPS` trước cụm trong cùng clause, hoặc
+  clause kết thúc bằng "?") — câu khẳng định "có thể thay thế thuốc chữa
+  bệnh" không còn được miễn.
 - Claim match theo SKU được nhắc trong text; không nhắc → pool tất cả SKU.
   Claim "cùng ý" (khác động từ dẫn hỗ trợ/giúp) match qua claim-core;
   substance phải nguyên văn → "tăng cường trí nhớ" vẫn flag.

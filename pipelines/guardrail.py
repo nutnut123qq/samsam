@@ -11,6 +11,7 @@
 API (contract — không đổi signature khi chưa cập nhật TASKS.md):
 """
 
+import bisect
 import json
 import re
 import unicodedata
@@ -28,13 +29,22 @@ CLAIM_VERBS = (
 
 # Disclaimer pháp lý BẮT BUỘC của quảng cáo TPBVSK — bản thân nó chứa từ
 # cấm ("thuốc", "chữa bệnh") nhưng dùng theo nghĩa phủ định. Banned span
-# nằm trong các cụm này thì miễn (giống approved claim).
+# nằm trong các cụm này thì miễn (giống approved claim). MỌI mục phải
+# mở đầu bằng "không " — mục trần "thay thế thuốc chữa bệnh" (v2.x) từng
+# miễn luôn câu KHẲNG ĐỊNH "có thể thay thế thuốc chữa bệnh" (v3.0 vá).
+# Mục dài "...thay thế thuốc chữa bệnh" là mục duy nhất bao được "chữa"
+# trong câu khuyến cáo chuẩn — đừng bỏ.
 SAFE_PHRASES = (
     "không phải là thuốc",
+    "không có tác dụng thay thế thuốc chữa bệnh",
     "không có tác dụng thay thế thuốc",
-    "thay thế thuốc chữa bệnh",
+    "không thay thế thuốc chữa bệnh",
     "không thay thế thuốc",
 )
+
+# Cụm đảo nghĩa đứng TRƯỚC disclaimer trong cùng clause -> phủ định kép/
+# câu tu từ ("Ai bảo sản phẩm không phải là thuốc") -> KHÔNG miễn.
+NEGATION_FLIPS = ("không ai", "ai bảo", "ai nói", "chẳng lẽ", "đâu phải")
 
 
 def _strip_len(s: str) -> str:
@@ -99,6 +109,29 @@ def _inside(outer: dict, inner: dict) -> bool:
     return outer["start"] <= inner["start"] and inner["end"] <= outer["end"]
 
 
+def _negated_hits(text: str, hits: list[dict]) -> list[dict]:
+    """Lọc safe hit — chỉ giữ hit đúng dạng khuyến cáo: clause chứa nó
+    (ngắt .,;:!?xuống dòng như `_claim_spans`) không kết thúc bằng '?'
+    và không có cụm đảo nghĩa (`NEGATION_FLIPS`, có dấu lẫn không dấu)
+    đứng TRƯỚC hit trong clause. Sep/flip tính 1 lần cho cả text rồi
+    bisect — không quét lại prefix mỗi hit (quadratic trên text dài)."""
+    seps = [m.start() for m in re.finditer(r"[.,;:!?\n]", text)]
+    flip_end = {}  # clause index -> end nhỏ nhất của cụm đảo nghĩa
+    for f in _find_terms(text, list(NEGATION_FLIPS)):
+        k = bisect.bisect_right(seps, f["start"])
+        flip_end[k] = min(flip_end.get(k, f["end"]), f["end"])
+    keep = []
+    for h in hits:
+        j = bisect.bisect_left(seps, h["end"])
+        if j < len(seps) and text[seps[j]] == "?":
+            continue  # câu hỏi tu từ, không phải khuyến cáo
+        k = bisect.bisect_right(seps, h["start"])
+        if flip_end.get(k, len(text) + 1) <= h["start"]:
+            continue  # phủ định kép: "ai bảo ... không phải là thuốc"
+        keep.append(h)
+    return keep
+
+
 def _claim_spans(low: str) -> list[tuple[int, int]]:
     """Span các clause (ngắt .,;:!?xuống dòng) chứa động từ claim."""
     spans = []
@@ -146,7 +179,7 @@ def check(text: str) -> dict:
                                    "start": h["start"], "end": h["end"]})
                 matched.append({"sku": sku, "claim": c})
 
-    safe_hits = _find_terms(text, list(SAFE_PHRASES))
+    safe_hits = _negated_hits(text, _find_terms(text, list(SAFE_PHRASES)))
 
     # --- Lớp 1: banned words (trừ span nằm trong approved claim /
     # disclaimer pháp lý bắt buộc)

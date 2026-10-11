@@ -8,6 +8,8 @@ Bắt drift giữa docs/handover/ và code/data thật:
   - sop.md chứa các lệnh cốt vận hành.
   - kien-truc.md liệt kê đủ tên bảng parse từ docs/schema.sql + đúng
     số lượng bảng.
+  - phu-luc-d.md ghi đúng số câu bẫy/disclaimer/tổng case guardrail
+    (parse AST tests/test_guardrail.py) — v3.0.
 """
 
 import re
@@ -130,3 +132,42 @@ def test_guardrail_test_names_in_phu_luc_d():
     body = _doc("phu-luc-d.md")
     for n in names:
         assert n in body, f"phu-luc-d.md thiếu case '{n}'"
+
+
+def test_guardrail_case_counts_in_phu_luc_d():
+    """Số câu bẫy / disclaimer / tổng case trong phu-luc-d khớp test thật.
+
+    Pháp chế duyệt 'bộ câu bẫy' theo doc này — số sai là drift (v3.0 vòng
+    3 thêm 4 câu, doc vẫn ghi 14/35). Parse AST, không import test module.
+    """
+    import ast
+
+    tree = ast.parse((ROOT / "tests" / "test_guardrail.py").read_text(
+        encoding="utf-8"))
+    lists = {
+        t.id: len(ast.literal_eval(node.value))
+        for node in tree.body if isinstance(node, ast.Assign)
+        for t in node.targets
+        if isinstance(t, ast.Name) and isinstance(node.value, ast.List)
+    }
+    n_tests = n_cases = 0
+    for fn in tree.body:
+        if not (isinstance(fn, ast.FunctionDef)
+                and fn.name.startswith("test_")):
+            continue
+        n_tests += 1
+        size = 1
+        for d in fn.decorator_list:
+            if (isinstance(d, ast.Call) and getattr(d.func, "attr", "")
+                    == "parametrize" and isinstance(d.args[1], ast.Name)):
+                size = lists[d.args[1].id]
+        n_cases += size
+    body = _doc("phu-luc-d.md")
+    n_aff = lists["AFFIRMATIVE_THAY_THE_THUOC"]
+    n_disc = lists["DISCLAIMER_VARIANTS"]
+    assert f"`test_affirmative_thay_the_thuoc_flagged` | {n_aff} câu bẫy" \
+        in body, f"phu-luc-d.md phải ghi {n_aff} câu bẫy"
+    assert f"`test_disclaimer_variants_pass` | {n_disc} câu" in body, \
+        f"phu-luc-d.md phải ghi {n_disc} câu disclaimer"
+    assert f"{n_tests} test ({n_cases} case)" in body, \
+        f"phu-luc-d.md phải ghi '{n_tests} test ({n_cases} case)'"

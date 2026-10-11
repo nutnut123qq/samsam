@@ -1,0 +1,42 @@
+# VÒNG 4 — mutation drift-guard count phu-luc-d (doc đổi lại số cũ -> test_guardrail_case_counts_in_phu_luc_d phải FAIL; restore -> pass) — 2026-10-11 22:58 +0700
+## mutation: s/| 18 câu bẫy/| 14 câu bẫy/
+E       AssertionError: phu-luc-d.md ph\u1ea3i ghi 18 c\xe2u b\u1eaby
+tests\test_handover_docs.py:166: AssertionError
+1 failed, 6 deselected in 0.47s
+## mutation: s/15 test (39 case)/15 test (35 case)/
+E       AssertionError: phu-luc-d.md ph\u1ea3i ghi '15 test (39 case)'
+tests\test_handover_docs.py:170: AssertionError
+1 failed, 6 deselected in 0.47s
+## mutation: s/| 8 câu (parametrize)/| 7 câu (parametrize)/
+E       AssertionError: phu-luc-d.md ph\u1ea3i ghi 8 c\xe2u disclaimer
+tests\test_handover_docs.py:168: AssertionError
+1 failed, 6 deselected in 0.47s
+## restored
+7 passed in 0.05s
+
+################ VÒNG 3 (giữ nguyên) ################
+# v3.0 mutation probe (vòng 3) — nạp guardrail.py đột biến vào sys.modules (file thật không sửa), chạy tests/test_guardrail.py
+# script: scratchpad/mut_v30.py; M_noq = bỏ nhánh '?'; M_noflip = bỏ nhánh cụm đảo nghĩa; M_ascii_flips = chỉ giữ flip match ASCII (bỏ flip có dấu)
+=== mutation none
+39 passed in 0.17s
+exit=0
+
+=== mutation M_noq
+FAILED tests/test_guardrail.py::test_affirmative_thay_the_thuoc_flagged[S\u1ea3n ph\u1ea9m kh\xf4ng thay th\u1ebf thu\u1ed1c?]
+FAILED tests/test_guardrail.py::test_affirmative_thay_the_thuoc_flagged[San pham khong phai la thuoc?]
+2 failed, 37 passed in 0.61s
+exit=1
+
+=== mutation M_noflip
+FAILED tests/test_guardrail.py::test_affirmative_thay_the_thuoc_flagged[Khong ai bao san pham khong phai la thuoc.]
+FAILED tests/test_guardrail.py::test_affirmative_thay_the_thuoc_flagged[Ai b\u1ea3o s\u1ea3n ph\u1ea9m kh\xf4ng ph\u1ea3i l\xe0 thu\u1ed1c.]
+FAILED tests/test_guardrail.py::test_affirmative_thay_the_thuoc_flagged[\u0110\xe2u ph\u1ea3i s\u1ea3n ph\u1ea9m kh\xf4ng thay th\u1ebf thu\u1ed1c.]
+3 failed, 36 passed in 0.65s
+exit=1
+
+=== mutation M_ascii_flips
+FAILED tests/test_guardrail.py::test_affirmative_thay_the_thuoc_flagged[Ai b\u1ea3o s\u1ea3n ph\u1ea9m kh\xf4ng ph\u1ea3i l\xe0 thu\u1ed1c.]
+FAILED tests/test_guardrail.py::test_affirmative_thay_the_thuoc_flagged[\u0110\xe2u ph\u1ea3i s\u1ea3n ph\u1ea9m kh\xf4ng thay th\u1ebf thu\u1ed1c.]
+2 failed, 37 passed in 0.63s
+exit=1
+

@@ -6,6 +6,197 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+Nhánh `ai-infra` (M30): version đang mở **v3.1-llm-gateway**.
+
+v3.0-guardrail-hotfix đóng 2026-10-11 (workflow: contract → worker
+/ship → 3 nghiệm thu song song → 2 vòng sửa → PASS; coordinator chạy
+lại 219/219 + ruff + 2 câu gate, `/code-review` low: 0 finding).
+External-dep: Pháp chế duyệt `SAFE_PHRASES`/`NEGATION_FLIPS`/bộ câu
+bẫy. Someday (NIT nghiệm thu, chưa vá):
+- **Unicode NFD lọt toàn bộ guardrail** (có từ trước): chữ dựng sẵn
+  dạng NFD qua `check()` ok=True — chuẩn hóa NFC đầu `check()`.
+- `NEGATION_FLIPS` danh sách đóng: "lẽ nào", "sai khi nói", "đừng
+  nghĩ", phủ định kép lồng vẫn lọt; '?' full-width/không dấu hỏi
+  ("…ư", "…sao") lọt; tag-question sau khuyến cáo đúng bị chặn nhầm.
+- `SAFE_PHRASES` không neo đuôi: "không phải là thuốc tây nên…" vẫn
+  miễn cụm "thuốc".
+- Vòng `_inside` cũ O(n·m) (~4s/100KB) — input thật ~2KB.
+- Test khẳng định chỉ assert `not ok`, chưa assert loại/span vi phạm;
+  bộ đếm case trong `test_handover_docs` giòn với parametrize dạng khác.
+
+## Checklist v3.0-guardrail-hotfix
+
+Khán giả/mục đích: nhánh `ai-infra` (M30 trong TASKS.md, worktree
+`D:\code\samsam-infra`). Đây là bản vá an toàn pháp lý TPBVSK phải
+xong trước mọi agent bán hàng/marketing. `SAFE_PHRASES` trong
+`pipelines/guardrail.py` có mục trần `"thay thế thuốc chữa bệnh"`,
+không có từ phủ định đi trước. Vì vậy mọi câu KHẲNG ĐỊNH chứa cụm này
+cũng được miễn kiểm từ cấm. Probe thật ngày 2026-10-11 trên HEAD
+`03c14a1` cho ra `ok=True`, 0 violation, với 7 câu:
+- "Dạ An Sâm có thể thay thế thuốc chữa bệnh mất ngủ."
+- "Da An Sam co the thay the thuoc chua benh mat ngu." (không dấu)
+- "Sản phẩm dùng để thay thế thuốc chữa bệnh."
+- "Uống sâm là đủ, thay thế thuốc chữa bệnh hoàn toàn."
+- "Sản phẩm không thay thế thuốc được thì sao, nó thay thế thuốc chữa
+  bệnh tốt."
+- "Không ai nói nó không phải là thuốc, nó thay thế thuốc chữa bệnh."
+- "Ai bảo sản phẩm không thay thế thuốc? Nó thay thế được." (phủ định
+  kép/tu từ)
+
+Các câu đã bị chặn sẵn, chỉ cần khóa hồi quy: "giúp thay thế thuốc…"
+(`unverified_claim`), "thay thuốc", "không cần uống thuốc"
+(`banned_word: thuốc`).
+
+Quy ước:
+- Giữ nguyên signature và shape trả về của `check(text) -> {"ok",
+  "violations", "matched_claims"}`. Không đổi `_find_terms`/`_inside`/
+  `_claim_spans`, trừ khi item dưới đây nêu rõ.
+- Không đụng `data/banned_words.txt`, `data/claims_whitelist.json`,
+  `pipelines/content.py`, `api/rag.py`, `connectors/zalo.py`.
+- Câu khuyến cáo bắt buộc (`pipelines/content.py:75-76`, "Sản phẩm
+  không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.")
+  vẫn phải `ok=True` khi đứng một mình, đứng giữa đoạn dài, và khi viết
+  không dấu.
+- Test viết dạng `pytest.mark.parametrize` để ít tên test mới.
+  Drift-guard `test_guardrail_test_names_in_phu_luc_d` buộc mọi tên
+  `def test_*` trong `tests/test_guardrail.py` phải có trong
+  `docs/handover/phu-luc-d.md`.
+- Không chạy `scripts/eval_qa.py` trong gate: nó gọi LLM có phí và
+  output không tất định. Q12 dùng `guardrail.check` và đã được unit
+  test cover.
+- External-dep: Pháp chế/người duyệt thật xác nhận danh sách câu
+  khuyến cáo được miễn (`SAFE_PHRASES`) và bộ câu bẫy. Ghi
+  "external-dep — chờ Pháp chế Sâm Sâm duyệt", KHÔNG đánh dấu đã duyệt.
+  Ngoài phần này, version thuần code, không cần công ty cấp gì.
+
+- [x] **W30.1 `SAFE_PHRASES` chỉ giữ dạng phủ định**
+  - Bỏ mục trần `"thay thế thuốc chữa bệnh"`.
+  - Mọi mục phải bắt đầu bằng từ phủ định `không`. Bộ tối thiểu:
+    `"không phải là thuốc"`, `"không có tác dụng thay thế thuốc chữa
+    bệnh"`, `"không có tác dụng thay thế thuốc"`, `"không thay thế
+    thuốc chữa bệnh"`, `"không thay thế thuốc"`.
+  - Phải có mục dài `"không có tác dụng thay thế thuốc chữa bệnh"`. Sau
+    khi bỏ mục trần, chỉ mục này còn bao được span `chữa` trong câu
+    khuyến cáo chuẩn.
+  - Sửa comment ở `guardrail.py:29-31` cho đúng: chỉ miễn khi cụm phủ
+    định đúng dạng khuyến cáo.
+  - Sau bản vá, các câu khẳng định sau phải bị flag `banned_word`
+    (`thuốc`/`chữa`) vì span nằm ngoài mọi safe hit: "có thể / dùng để
+    thay thế thuốc chữa bệnh", "không chỉ thay thế thuốc chữa bệnh",
+    "không phải là thuốc nhưng còn tốt hơn thuốc", và vế khẳng định
+    đứng sau một vế phủ định trong cùng đoạn.
+  - Boundary: `pipelines/guardrail.py` (hằng `SAFE_PHRASES` + comment)
+  - Gate: `python -c` in `check("Dạ An Sâm có thể thay thế thuốc chữa
+    bệnh mất ngủ.")["ok"]` → `False`, và `check("Thực phẩm này không
+    phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.")["ok"]`
+    → `True`. Chạy với `PYTHONPATH` = repo hoặc qua pytest. Stdout phải
+    có UTF-8 guard (`sys.stdout.reconfigure(encoding="utf-8")`).
+    Thêm test cấu trúc: `all(p.startswith("không ") for p in
+    g.SAFE_PHRASES)`.
+  - Evidence: `evidence/v30_probe.log`, gồm probe 7 câu lỗ hổng ở trên,
+    TRƯỚC bản vá (chạy probe trên HEAD trước khi sửa, KHÔNG dùng `git
+    stash`) và SAU bản vá.
+- [x] **W30.2 Chặn phủ định kép/tu từ trước cụm khuyến cáo**
+  - Một safe hit KHÔNG được miễn nếu trong cùng clause (ngắt theo
+    `[.,;:!?\n]` như `_claim_spans`), phần text đứng TRƯỚC hit chứa
+    một cụm đảo nghĩa: `không ai|ai bảo|ai nói|chẳng lẽ|đâu phải`.
+  - So khớp trên cả bản có dấu lẫn bản `_strip_len` (bắt
+    "khong ai"/"ai bao").
+  - Cũng KHÔNG miễn khi clause chứa hit kết thúc bằng `?`. Câu hỏi tu
+    từ "…không thay thế thuốc?" không phải khuyến cáo.
+  - Giải pháp tối thiểu: lọc `safe_hits` trước vòng banned-word. Không
+    thêm class/abstraction, không thêm dependency.
+  - Phải trace: câu khuyến cáo chuẩn có 2 safe hit trong cùng clause
+    (vế 2 có prefix "không phải là thuốc và"). Prefix này không chứa
+    cụm đảo nghĩa nào, nên vẫn `ok=True`.
+  - Boundary: `pipelines/guardrail.py` (bộ lọc `safe_hits` trong
+    `check()`, có thể thêm 1 hằng tuple + 1 helper nhỏ)
+  - Gate: test. "Ai bảo sản phẩm không thay thế thuốc? Nó thay thế
+    được.", "Chẳng lẽ sản phẩm không phải là thuốc?" và "Khong ai bao
+    san pham khong phai la thuoc." → `ok=False`. Toàn bộ câu khuyến cáo
+    đúng ở W30.3 vẫn `ok=True`.
+  - Evidence: `evidence/v30_probe.log` (phần SAU bản vá)
+- [x] **W30.3 Bộ câu bẫy hồi quy `tests/test_guardrail.py`**
+  - Giữ nguyên 12 test cũ, kể cả `test_disclaimer_phat_ly_pass` và
+    `test_thuoc_claim_van_chan`. Không xóa hay sửa assert cũ.
+  - Thêm `test_affirmative_thay_the_thuoc_flagged` (parametrize, ≥12
+    câu, mỗi câu `ok=False` và có violation). Gồm:
+    - 7 câu lỗ hổng ở trên
+    - "Sản phẩm giúp thay thế thuốc chữa bệnh."
+    - "Sản phẩm thay thuốc hiệu quả."
+    - "Dùng sâm thì không cần uống thuốc nữa."
+    - "Sản phẩm không chỉ thay thế thuốc chữa bệnh mà còn bồi bổ."
+    - "Sâm không phải là thuốc nhưng còn tốt hơn thuốc."
+    - "Chẳng lẽ sản phẩm không phải là thuốc?"
+    - "Khong ai bao san pham khong phai la thuoc."
+  - Thêm `test_disclaimer_variants_pass` (parametrize, ≥5 câu, mỗi câu
+    `ok=True`, in `violations` khi fail). Gồm:
+    - câu nguyên văn ở `content.py:75-76`
+    - "Thực phẩm này không phải là thuốc và không có tác dụng thay thế
+      thuốc chữa bệnh."
+    - bản không dấu của câu trên
+    - "Sản phẩm không thay thế thuốc chữa bệnh."
+    - "Lưu ý: sản phẩm không phải là thuốc."
+    - một đoạn dài ≥3 câu, câu khuyến cáo nằm GIỮA, đi kèm claim
+      whitelist Sapentol "hỗ trợ hạ đường huyết". Câu trang trí không
+      được có động từ claim.
+  - Thêm `test_safe_phrases_all_negated`: assert cấu trúc ở W30.1.
+  - Boundary: `tests/test_guardrail.py`
+  - Gate: `python -m pytest -q tests/test_guardrail.py` xanh ×3. Đếm
+    số assert/test cũ trước và sau bằng `git diff` (gotcha v1.7: không
+    làm mất coverage cũ).
+  - Evidence: `evidence/v30_pytest.log`
+- [x] **W30.4 Đồng bộ doc (dây chuyền drift-guard) + rà cùng lớp lỗi**
+  - `docs/handover/phu-luc-d.md`: thêm 3 dòng bảng guardrail cho 3 tên
+    test mới (text mẫu + kỳ vọng). Nếu thiếu,
+    `tests/test_handover_docs.py::test_guardrail_test_names_in_phu_luc_d`
+    sẽ fail.
+  - `STATUS.md` (khoảng dòng 315-317): sửa câu mô tả `SAFE_PHRASES`
+    đang trích mục trần đã bỏ, thành "chỉ cụm phủ định, chặn phủ định
+    kép/tu từ".
+  - Rà cùng idiom, theo AGENTS.md "vá theo cụm":
+    `grep -rn "SAFE_PHRASES\|_inside\|thay thế thuốc\|không phải là thuốc"`
+    trên `pipelines/ api/ agents/ connectors/ ingest/ app/ scripts/`.
+    Chứng minh không còn whitelist/miễn trừ nào khác cho cụm từ cấm
+    ngoài `guardrail.py`. `content.py:75-76` chỉ là prompt, không phải
+    exemption.
+  - Lối miễn còn lại là `claim_hits` (claim whitelist). Ghi nhận trong
+    log là nó ngoài phạm vi: claim do ĐKSP công bố, không chứa
+    "thuốc". Có lỗ thì ghi someday, KHÔNG vá trong version này.
+  - Boundary: `docs/handover/phu-luc-d.md`, `STATUS.md`
+  - Gate: `python -m pytest -q tests/test_handover_docs.py` xanh. Dán
+    output grep vào evidence.
+  - Evidence: `evidence/v30_probe.log` (mục "grep cùng lớp lỗi")
+
+- [ ] **External-dep — chờ Pháp chế Sâm Sâm duyệt** danh sách `SAFE_PHRASES` + `NEGATION_FLIPS` + bộ câu bẫy
+  (`tests/test_guardrail.py`). CHƯA có người duyệt thật — không đánh dấu đã duyệt.
+- Worker v3.0 (2026-10-11): vòng 1 ruff FAIL (ISC004, chuỗi nối ngầm trong list test) → vòng 2
+  xanh: targeted 41 passed ×3, full 214 passed (191 + 23 case mới), ruff sạch, py_compile OK,
+  gate thêm 2 câu đúng. Evidence `evidence/v30_probe.log`, `evidence/v30_pytest.log`.
+- Worker v3.0 vòng 3 (vá 2 MINOR nghiệm thu): +4 case khẳng định chốt riêng nhánh '?' (không kèm
+  flip) và flip CÓ DẤU (không '?'). Mutation M_noq / M_noflip / M_ascii_flips giờ đỏ 2 / 3 / 2 case
+  (trước: 0 / 1 / 0). Targeted 45 passed ×3, full 218 passed (191 + 27), ruff sạch.
+  Evidence `evidence/v30_pytest.log` (mục VÒNG 3), `evidence/v30_mutation.log`.
+- Worker v3.0 vòng 4 (vá MINOR drift doc): `docs/handover/phu-luc-d.md` 14→18 câu bẫy (+2 vd nhóm
+  mới), "15 test (35 case)"→"(39 case)". Drift-guard cũ chỉ check tên test → thêm
+  `test_guardrail_case_counts_in_phu_luc_d` (parse AST đếm câu bẫy/disclaimer/tổng case); mutation
+  đổi lại 14 / 35 / 7 → đỏ cả 3. Targeted 46 passed ×3, full 219 passed, ruff sạch.
+  Evidence `evidence/v30_pytest.log` (mục VÒNG 4), `evidence/v30_mutation.log` (mục VÒNG 4).
+
+Gate chung:
+- targeted ×3: `python -m pytest -q tests/test_guardrail.py
+  tests/test_handover_docs.py`
+- full: `python -m pytest -q`. Baseline 191, kỳ vọng 191 cộng số case
+  mới, 0 fail.
+- `ruff check .`
+- `python -m py_compile pipelines/guardrail.py`
+- Gate thêm, chạy riêng và log lại: câu "Dạ An Sâm có thể thay thế
+  thuốc chữa bệnh mất ngủ." → `ok=False`; câu khuyến cáo chuẩn → `ok=True`.
+
+Gate nặng có thể bị đẩy nền: đọc output tới khi process exit, không
+chạy chồng pytest. Evidence `evidence/v30_*.log` phải `git add -f`.
+Không commit/push; coordinator commit.
+
 v2.3-handover-docs đóng 2026-10-11 (cold-check **coordinator
 self-review** — quota subagent cạn rate-limit sau khi agent build
 xong, precedent v0.3/v0.5; coordinator đọc thật 8 file docs + chạy
