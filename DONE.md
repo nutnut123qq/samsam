@@ -1606,6 +1606,422 @@ thật cho baseline; GĐ KD/Tài chính chốt giả định; DPIA ký (chỉ ng
 `dpia_signed`); mở provider cho model Gemini/Claude; role `sim_runner` trên
 cloud. Điểm nối: KD-A10/SX-A3/FP-Cash gọi `pipelines.scenario.project()`.
 
+## Checklist v9.3-vung-trong
+
+Khán giả/mục đích: nhánh `ai-infra` (M31, worktree `D:\code\samsam-w93`)
+— phần VT của WP13 (pmo.md dòng `| WP13`, tiêu chí: "Kiểm được hash chain
+của plot_logs. sample:% = 0 sau khi GĐ vùng trồng ký … 100% ảnh trong bộ
+tư liệu đã gỡ EXIF/GPS"); agent `farming` trong final_plans.json: "Agent GĐ
+vùng trồng (điều phối)", "Số hóa hồ sơ khoảnh", "Nhật ký vườn (nâng cấp
+agents/garden.py)", "Nhắc lịch & giám sát gap", "Kho tư liệu vườn". Hiện
+trạng (đọc code): `plot_logs` (v1.8) UPDATE/DELETE tự do, sửa không ai phát
+hiện; `ingest/core_store.py::apply_rows` `delete from plots where source =
+'sample:sample_plots.jsonl'` → FK `on delete cascade` xóa luôn nhật ký
+`manual:garden` trỏ khoảnh mẫu (someday v1.8 a); dữ liệu mẫu `sample:*` lẫn
+dữ liệu thật, không có đường gỡ có người chịu trách nhiệm (và gỡ xong thì
+`python -m ingest.core_store` nạp lại); nhắc gap chỉ chạy khi mở tab/
+`--check`, không có lịch hoạt động định kỳ; không có chỗ nhận ảnh vườn (ảnh
+điện thoại mang GPS = tọa độ khoảnh). Sau version: (a) mọi nhật ký KHÔNG
+phải mẫu vào hash chain do trigger tính, sửa/xóa bị chặn, sửa lén (superuser
+tắt trigger) bị `verify_plot_logs()` phát hiện; (b) loader không bao giờ xóa
+dòng đã chain; (c) gỡ `sample:%` chỉ qua CLI có `--by` + ghi
+`agent_action_log`, agent không tự gỡ; (d) danh sách nhắc gap/hoạt động trễ
+tính bằng rule thuần trên `now` tham số; (e) ảnh vườn lưu ngoài repo theo
+sha256, 0 EXIF/GPS, metadata trong bảng `garden_media`; (f) bản tin tuần tất
+định (không LLM) cho GĐ vùng trồng.
+
+Quy ước: ponytail — stdlib + `psycopg` + Pillow (12.0.0 ĐÃ có trong
+interpreter; import LƯỜI trong hàm xử lý ảnh, thiếu → `[err]` exit 1 ghi
+external-dep; thêm 1 dòng `Pillow>=10` + comment lý do vào
+`requirements.txt`). KHÔNG LLM, KHÔNG gọi mạng, KHÔNG exiftool. Schema chỉ
+THÊM vào `docs/schema.sql` (block "v9.3 vùng trồng", comment tiếng Việt):
+`alter table plot_logs add column if not exists ...` (dạng DUY NHẤT được
+drift-guard `\b(alter|drop)\s+table\b` cho phép), `create table if not
+exists`, `create or replace function/trigger` + `revoke execute ... from
+public` sau mỗi function; SECURITY DEFINER dùng `set search_path from
+current` (mẫu v3.4). Hash canonical theo mẫu `action_log_row_hash` — epoch
+micro giây, KHÔNG `ts::text` (không phụ thuộc `TimeZone`/`DateStyle`).
+Chain chỉ READ COMMITTED + `pg_advisory_xact_lock(tg_relid::bigint)` + id
+cấp SAU khi giữ khóa (y hệt `agent_action_log_chain`). Dòng `source like
+'sample:%'` KHÔNG vào chain (plan: "genesis không chứa sample") → loader và
+CLI gỡ mẫu xóa được. KHÔNG sửa `agents/garden.py`, `app/streamlit_app.py`,
+`agents/report.py`, `pipelines/auth.py`, `docs/roles.sql`: `main` đã có
+193c68d/95bd98b (flags_for quét chỉ detail, warn ts tương lai) chưa gộp vào
+`ai-infra` — sửa cùng vùng = xung đột merge; `add_log` đi qua chain tự động
+nhờ trigger (signature giữ nguyên → tab "Nhật ký vườn" giữ hoạt động). Code
+mới quét keyword CHỈ trên detail: gọi `garden.flags_for("", detail)` (gotcha
+flags_for AGENTS.md), không quét tên activity. Ngày "hôm nay"/cửa sổ tuần
+theo giờ VN (UTC+7 cố định, precedent `VN_TZ`); mọi hàm thời gian nhận
+`now`/`until` tham số — test KHÔNG wall-clock; `until` từ CLI là str →
+coerce `date` TRƯỚC mọi format-spec (gotcha v2.2). Mọi connect qua
+`ingest.lead_store.connect` (connect_timeout=3) hoặc `connect_timeout=`
+tường minh; ghi trên conn = `with conn.transaction()` + `conn.commit()`
+tường minh (gotcha savepoint v2.1). Print tiếng Việt → UTF-8 guard. CLI nhiều
+op → đếm `n_ops`, `>1` hoặc `0` → `ap.error` exit 2 TRƯỚC connect (gotcha
+v2.2). Output (bản tin, stdout, DB) KHÔNG chứa tọa độ/GPS, `location`,
+`area_m2`; detail nhật ký in ra phải qua `pipelines.pii._mask_pii` + cắt 120
+ký tự. Test DB thật: 1 transaction + temp schema (`create schema` + `set local
+search_path to <tmp>, pg_temp` + `docs/schema.sql` ×2) rồi ROLLBACK
+(fixture `db` mẫu `tests/test_golden_store.py`); hàm gọi `conn.commit()` →
+bọc `_TxConn` (precedent v3.2); thử superuser tắt trigger bằng `set local
+session_replication_role = replica` trong savepoint; gate yêu cầu 0 skipped.
+KHÔNG gỡ mẫu / KHÔNG ghi `garden_media` / KHÔNG ghi `agent_action_log` trên
+DB public ngoài test rollback (agent không tự gỡ, không giả người duyệt).
+Mọi lệnh shell mở đầu bằng prefix nạp `w93.env` (DATABASE_URL = DB riêng
+`samsam_infra`); không in giá trị env. Đếm bảng: KHÔNG assert hằng số mới
+(sàn `>= 24` / đọc schema.sql).
+
+External-dep (KHÔNG giả lập, KHÔNG tự đánh dấu): GĐ vùng trồng ký gỡ dữ
+liệu mẫu (M1) — chỉ có CLI + precheck; lịch canh tác thật (data/
+garden_schedule.json là GIẢ ĐỊNH); ảnh vườn thật; tọa độ khoảnh (không đưa
+vào bất kỳ output nào); vai trò `gd_vung_trong` trong SSO/`pipelines/auth.py`
+(`--by` hiện là tên khai báo, ghi vào `agent_action_log.actor`); neo hash
+chain ra ngoài (email/OpenTimestamps — xóa dòng CUỐI chuỗi không phát hiện
+được bằng chuỗi thuần); gửi bản tin/nhắc qua Zalo/email (bản tin chỉ ghi
+file `data/reports/`).
+
+- [x] **W93.1 Schema: hash chain `plot_logs` + bảng `garden_media`** —
+  `docs/schema.sql` append block v9.3: `alter table plot_logs add column if
+  not exists prev_hash text`, `... add column if not exists row_hash text`;
+  `create unique index if not exists plot_logs_row_hash_idx on plot_logs
+  (row_hash)` (null nhiều dòng OK). `plot_log_row_hash(p_prev text, p_id
+  bigint, p_plot_id text, p_ts timestamptz, p_activity text, p_detail text,
+  p_author text, p_source text, p_created_at timestamptz) returns text` =
+  `encode(sha256(convert_to(p_prev || jsonb_build_array(p_id, p_plot_id,
+  epoch_us(p_ts), p_activity, p_detail, p_author, p_source,
+  epoch_us(p_created_at))::text,'UTF8')),'hex')` (epoch_us = `(extract(epoch
+  from x)*1000000)::bigint`, inline). Trigger `before insert` `plot_logs_chain()`
+  (SECURITY DEFINER): `source like 'sample:%'` → ép `prev_hash`/`row_hash` =
+  null, return (KHÔNG khóa, không chain) — NHƯNG nếu đã có marker gỡ mẫu
+  (`exists agent_action_log where action = 'garden_sample_purge'`) → raise
+  "dữ liệu mẫu đã được gỡ"; còn lại: kiểm READ COMMITTED (raise nếu khác),
+  `pg_advisory_xact_lock(tg_relid::bigint)`, cấp `new.id` từ sequence SAU
+  khóa, ép `created_at = now()`, `prev_hash` = `row_hash` của dòng chained
+  id lớn nhất (`row_hash is not null`) hoặc 64 `0`, tính `row_hash` — giá
+  trị client gửi bị ghi đè. Guard `plot_logs_guard()`: `before update or
+  delete for each row` → raise khi `old.row_hash is not null` (dòng
+  mẫu/chưa chain vẫn sửa/xóa được — ghi comment); `before truncate for each
+  statement` → raise nếu tồn tại dòng chained (chặn cả `truncate plots
+  cascade`). FK cascade từ `delete from plots` kích trigger row → xóa khoảnh
+  còn nhật ký chained bị chặn. Backfill legacy (do-block, idempotent): CHỈ
+  khi chưa dòng nào có `row_hash` → giữ advisory lock, chain các dòng
+  `source not like 'sample:%'` theo id tăng dần (giữ `created_at` cũ); có
+  chain rồi → no-op. `verify_plot_logs() returns table(id bigint, problem
+  text)` (SECURITY DEFINER, stable, revoke public): duyệt dòng `row_hash is
+  not null OR source not like 'sample:%'` theo id — `prev_hash` (dòng trước
+  bị xóa/chèn), `row_hash` (nội dung bị sửa), `unchained` (dòng không-mẫu
+  thiếu hash: chèn khi trigger tắt); rỗng = nguyên vẹn. `garden_media` (`id
+  bigint identity pk`, `sha256 text not null unique check (~
+  '^[0-9a-f]{64}$')`, `ext text not null check in ('jpg','png')`, `bytes
+  bigint not null check > 0`, `width int`, `height int`, `plot_id text not
+  null references plots(id)` (no action — khoảnh có ảnh không bị xóa câm),
+  `taken_on date not null`, `author text not null check (btrim <> '')`,
+  `exif_removed int not null default 0`, `had_gps boolean not null default
+  false`, `source text not null default 'cli:garden_media'`, `created_at
+  timestamptz not null default now()`) + index (plot_id, taken_on). KHÔNG
+  cột tọa độ/đường dẫn gốc/tên file gốc.
+  - Boundary: `docs/schema.sql` (append block), `tests/test_garden_chain.py`
+    (mới)
+  - Gate: `python scripts/apply_schema.py` ×2 exit 0, lần 2 in "25 bảng
+    public" có `garden_media`; `grep -c "^create table if not exists"
+    docs/schema.sql` = 25; `python -m pytest -q -rs
+    tests/test_garden_chain.py` xanh, 0 skipped, gồm: 3 insert
+    `manual:garden` → verify rỗng, dòng đầu `prev_hash` = 64 `0`, dòng k
+    `prev_hash` = `row_hash` dòng k-1; insert kèm `prev_hash`/`row_hash`/
+    `created_at` giả → bị ghi đè; insert `sample:x` → hash null, không làm
+    gãy chain; UPDATE/DELETE dòng chained (superuser, trigger bật) → lỗi;
+    `delete from plots` khoảnh có log chained → lỗi; `truncate plot_logs`
+    (có dòng chained) → lỗi; UPDATE/DELETE dòng `sample:x` → OK; replica
+    UPDATE `detail` dòng 2 → verify ∋ (id2,`row_hash`); replica DELETE dòng
+    2 → verify ∋ (id3,`prev_hash`); replica UPDATE dòng 2 `source='sample:x',
+    row_hash=null, prev_hash=null` (giấu khỏi chain) → verify ∋ (id3,
+    `prev_hash`); replica INSERT dòng `manual` → verify ∋ (id,`unchained`);
+    verify rỗng dưới `set local timezone 'UTC'` và `'Asia/Ho_Chi_Minh'` +
+    `datestyle 'SQL, DMY'`; `set transaction isolation level repeatable read`
+    trong tx mới → insert manual raise; backfill: replica insert 2 dòng
+    manual + 1 sample (chưa chain) → chạy lại schema.sql → verify rỗng, dòng
+    sample vẫn null, chạy lần nữa → `row_hash` không đổi; insert `sample:x`
+    sau khi có log `garden_sample_purge` → raise; `garden_media` sha sai
+    định dạng / ext lạ / author rỗng → lỗi CHECK; `add_log` (agents/garden.py
+    KHÔNG sửa) trên temp schema qua `_TxConn` → row có `row_hash` 64 hex
+  - Evidence: `evidence/v93_chain.log`
+  - Kết quả (worker, 2026-10-12): xong. Thêm 1 luật guard ngoài contract (rà OWASP A01/A08): UPDATE dòng chưa chain KHÔNG được đổi mẫu↔thật và KHÔNG gán hash cho dòng mẫu — chặn đường lách trigger không cần superuser (chèn `sample:x` với `created_at` giả → đổi source + tự tính hash thành đuôi chuỗi); test `test_guard_blocks_promoting_sample_to_chain`. 22 test, 0 skip.
+- [x] **W93.2 Loader `core_store` không xóa dòng đã chain + không nạp lại mẫu
+  sau gỡ** — `ingest/core_store.py::apply_rows`: pha delete `plots` thêm
+  điều kiện `and not exists (select 1 from plot_logs l where l.plot_id =
+  plots.id and l.row_hash is not null)`; pha insert `plots` thành `insert …
+  on conflict (id) do update set <cột> = excluded.<cột>, updated_at = now()
+  where plots.source = excluded.source` (khoảnh mẫu còn giữ vì có nhật ký
+  chained được cập nhật tại chỗ; khoảnh `manual` trùng id KHÔNG bị đè);
+  `plot_logs` mẫu vẫn delete-by-source (chưa chain). Trả thêm/in khoảnh bị
+  giữ lại do có nhật ký chained (`[keep] plots: KV-.. (n nhật ký đã
+  chain)`). `main()`: helper `sample_garden_purged(conn) -> bool` (exists
+  `agent_action_log` action `garden_sample_purge`; bảng chưa có →
+  `UndefinedTable` → False) → True thì BỎ domain `plots`/`plot_logs` nguồn
+  `sample:*` khỏi `domains` (không delete, không insert) + in `[skip]`.
+  `test_apply_rows_delete_by_source_then_insert` cũ giữ nguyên, xanh.
+  - Boundary: `ingest/core_store.py`, `tests/test_core_store.py`,
+    `tests/test_garden_chain.py`
+  - Gate: test DB (temp schema, rollback): nạp domains mẫu (KV-A01..) →
+    `add_log` 1 nhật ký `manual:garden` lên KV-A01 → `apply_rows` lại cùng
+    domains (đổi `tree_count` KV-A01) → không exception; nhật ký chained còn
+    nguyên (đúng id + `row_hash`), `tree_count` KV-A01 = giá trị mới, số
+    dòng `sample:sample_plot_logs.jsonl` = như lần 1 (không nhân đôi),
+    `verify_plot_logs()` rỗng; domains bỏ KV-A01 khỏi file mẫu → KV-A01
+    vẫn còn + báo keep; plot `manual` trùng id với mẫu → giữ `source=
+    'manual'` và giá trị cũ; sau insert log `garden_sample_purge` →
+    `sample_garden_purged` True và domains lọc còn 0 entry plots/plot_logs
+    `sample:*` (orders mẫu không bị ảnh hưởng); fake-conn test cũ xanh.
+    `python -m ingest.core_store` trên DB riêng exit 0 ×2 (chạy SAU W93.1
+    apply_schema), `--verify` (W93.6) sau đó rỗng
+  - Evidence: `evidence/v93_chain.log`
+  - Kết quả: xong. Lệch nhỏ so contract: báo keep tách hàm `kept_plots(conn, domains)` (main in `[keep] plots: ...`) thay vì nhét vào `apply_rows` — fake-conn test cũ `ops[6:]` unpack 3-tuple nên mọi `conn.execute` thêm trong `apply_rows` làm vỡ test phải giữ nguyên. Điều kiện giữ khoảnh mở rộng thêm `garden_media` (khoảnh mẫu có ảnh → FK no action → loader cũ sẽ crash ForeignKeyViolation); test `test_loader_keeps_plot_with_media`. `deploy/cloud/README.md` thêm `garden_media` (drift-guard `test_cloud_readme_drift_guard` fail vòng 1).
+- [x] **W93.3 Hồ sơ khoảnh: precheck + gỡ dữ liệu mẫu có `--by`** —
+  `agents/garden_director.py` (mới): `sample_precheck(conn) -> dict` (chỉ
+  đọc): số dòng `plots`/`plot_logs` `source like 'sample:%'` + danh sách
+  blocker = nhật ký KHÔNG-mẫu trỏ khoảnh mẫu (id, plot_id, ngày ts, source
+  — KHÔNG detail/author) + `garden_media` trỏ khoảnh mẫu (id, plot_id).
+  `purge_sample(conn, by) -> dict`: `by` rỗng/khoảng trắng → `ValueError`
+  (không connect, không ghi); trong 1 transaction: precheck lại → có
+  blocker → KHÔNG xóa, trả `{"ok": False, "blockers": [...]}`; không →
+  `delete from plot_logs where source like 'sample:%'` rồi `delete from
+  plots where source like 'sample:%'`, số dòng xóa ≠ precheck → raise →
+  rollback; insert `agent_action_log` (`actor` = by, `action =
+  'garden_sample_purge'`, `object_type = 'plots'`, `detail` = {plots: n,
+  plot_logs: m}); `conn.commit()`. CLI `--precheck` (exit 0, in số đếm +
+  blocker), `--purge-sample --by "<GĐ vùng trồng>"` (thiếu `--by` →
+  `ap.error` exit 2 TRƯỚC connect; blocker → exit 1; ok → exit 0). Agent/cron
+  KHÔNG gọi `purge_sample` (grep: chỉ CLI + test).
+  - Boundary: `agents/garden_director.py`, `tests/test_garden_director.py`,
+    `tests/test_garden_chain.py`
+  - Gate: `python -m agents.garden_director --purge-sample; echo $?` → 2,
+    stderr nhắc `--by` (test: monkeypatch `connect` raise nếu bị gọi →
+    không gọi); `--purge-sample --by "  "` → exit 2; `python -m
+    agents.garden_director --precheck` trên DB riêng exit 0, in số đếm,
+    không ghi (count `agent_action_log` trước/sau bằng nhau); test DB
+    (temp schema, `_TxConn`): nạp mẫu + 1 log `manual:garden` lên KV-A01 →
+    `purge_sample` trả ok False, blocker đúng id đó, count `sample:%`
+    không đổi, 0 log action mới; bỏ blocker (fixture không có log manual) →
+    ok True, `count(*) where source like 'sample:%'` = 0 trên plots và
+    plot_logs, đúng 1 dòng `agent_action_log` action `garden_sample_purge`
+    actor = by, `verify_action_log()` rỗng; sau đó insert `sample:x` → raise
+    (W93.1); `grep -rn "purge_sample(" --include=*.py .` chỉ ra
+    `agents/garden_director.py` + tests
+  - Evidence: `evidence/v93_director.log`
+  - Kết quả: xong (CLI + test). Gỡ mẫu thật trên DB = external-dep (GĐ vùng trồng ký) — KHÔNG chạy.
+- [x] **W93.4 Nhắc lịch + giám sát gap (rule thuần)** —
+  `data/garden_schedule.json` (mới, `_doc`: "GIẢ ĐỊNH — chờ GĐ vùng trồng
+  chốt lịch canh tác thật"): `{"gap_days": 14, "activities": {"tưới": 7,
+  "kiểm tra sâu bệnh": 7, "làm cỏ": 30, "bón": 60}}`.
+  `agents/garden_director.py`: `load_schedule(path) -> (dict, warnings)` —
+  enumerate điều kiện biên: file thiếu / rỗng / `{}` / chỉ `_doc` → lịch
+  rỗng + `gap_days` = `garden.DEFAULT_GAP_DAYS` + warning "chưa có lịch";
+  JSON hỏng / activity không thuộc `garden.ACTIVITY_VOCAB` / số ngày không
+  phải int 1..366 / `gap_days` sai → `ValueError` (CLI `[err]` exit 1).
+  `reminders(plots, last_any, last_by_activity, schedule, now) -> list[dict]`
+  THUẦN (không DB): `no-logs` (khoảnh active chưa có nhật ký nào — khi đó
+  KHÔNG sinh `overdue` cho khoảnh đó), `gap` (`now - last_any >
+  gap_days`, so sánh nghiêm ngặt), `overdue` (activity trong lịch: chưa
+  từng có hoặc `now - last > interval`), mỗi mục `{type, plot, activity,
+  last_ts, days}`, sắp xếp tất định (type, plot, activity). `due_reminders
+  (conn, schedule, now)` gom dữ liệu (plots active + `max(ts)` theo plot và
+  theo (plot, activity)) rồi gọi `reminders`. Cờ keyword trên nhật ký trong
+  kỳ: `garden.flags_for("", detail)` — CHỈ detail.
+  - Boundary: `agents/garden_director.py`, `data/garden_schedule.json`,
+    `tests/test_garden_director.py`
+  - Gate: test thuần với `now` cố định (2026-10-12T00:00+07): khoảnh chưa
+    log → đúng 1 `no-logs`, 0 `overdue`; last = now-14d → không `gap`,
+    now-14d-1s → `gap`; "tưới" last now-7d → không, now-8d → `overdue`;
+    activity lịch chưa từng có → `overdue` last None; output tất định (gọi 2
+    lần bằng nhau); `load_schedule` đủ 4 biến thể thiếu/rỗng/`{}`/chỉ `_doc`
+    + 3 biến thể lỗi; detail "kiểm tra sâu bệnh định kỳ" ở activity không
+    flag, detail "phát hiện rệp" flag `rệp`; không test nào gọi
+    `datetime.now` (grep `datetime.now` trong test file = 0)
+  - Evidence: `evidence/v93_director.log`
+  - Kết quả: xong. `load_schedule` 5 biến thể rỗng + 9 biến thể lỗi (`ScheduleError(ValueError)`); lịch `data/garden_schedule.json` là GIẢ ĐỊNH.
+- [x] **W93.5 Kho tư liệu vườn — gỡ EXIF/GPS, lưu theo sha256** —
+  `scripts/garden_media.py` (mới, UTF-8 guard): `strip_image(src_bytes) ->
+  (clean_bytes, ext, info)` — Pillow import lười; từ chối file > 25 MB,
+  không mở được, `DecompressionBombError`/`Warning` (coi là lỗi), format
+  ngoài JPEG/PNG/WEBP; `ImageOps.exif_transpose` rồi convert RGB/RGBA và
+  dựng ảnh MỚI từ pixel (`Image.frombytes(mode, size, tobytes())`) → save
+  JPEG (q=90) hoặc PNG (khi có alpha) KHÔNG truyền exif/icc/xmp/pnginfo;
+  `info` = {exif_removed: số thẻ EXIF gốc, had_gps: bool, width, height} —
+  KHÔNG giữ/trả giá trị GPS. `store(clean_bytes, ext, store_dir) -> (sha,
+  path)`: sha256 bản ĐÃ gỡ, file `<store>/<sha[:2]>/<sha>.<ext>`, ghi tmp +
+  `os.replace`, đã có → không ghi lại. `record(conn, ...)` insert
+  `garden_media` `on conflict (sha256) do nothing` + `conn.commit()`. CLI
+  `--file F --plot P --date YYYY-MM-DD --by "Tên" [--store DIR]` (store
+  mặc định env `GARDEN_MEDIA_DIR`; thiếu / nằm TRONG repo (`resolve()`
+  dưới ROOT) → exit 2): connect TRƯỚC (DB down → exit 2, 0 file ghi) →
+  strip → store → record; plot không tồn tại → FK → `[err]` friendly exit
+  1. stdout chỉ: sha[:12], số thẻ đã gỡ, "có GPS: có/không" — không in tọa
+  độ/đường dẫn nguồn. `env.example` thêm `GARDEN_MEDIA_DIR=` (comment: thư
+  mục NGOÀI repo). `requirements.txt` thêm `Pillow>=10`.
+  - Boundary: `scripts/garden_media.py`, `tests/test_garden_media.py`,
+    `env.example`, `requirements.txt`
+  - Gate: test sinh ảnh JPEG có EXIF GPS (IFD 0x8825 lat/lon) + Make/Model
+    + DateTimeOriginal + XMP, và PNG có `eXIf`/tEXt — tiền điều kiện assert
+    ảnh nguồn CÓ GPS; bản lưu: `Image.open(out).getexif()` rỗng, `info`
+    không có `exif`/`xmp`/`icc_profile`/text, bytes không chứa
+    `b"Exif\x00\x00"`, `b"GPS"`, `b"ns.adobe.com/xap"`; cùng ảnh nạp 2 lần
+    → 1 file, 1 dòng DB; file không phải ảnh / > giới hạn / bomb (monkeypatch
+    `Image.MAX_IMAGE_PIXELS` nhỏ) → từ chối, 0 file; `--store` trong repo
+    → exit 2; CLI với `DATABASE_URL=postgresql://u@10.255.255.1:5432/x`
+    (host chết thật, tmp store) → exit 2 trong ≤10s, store rỗng; DB temp
+    schema: record đúng plot/taken_on/author/had_gps true, capsys không
+    chứa số tọa độ fixture
+  - Evidence: `evidence/v93_media.log`
+  - Kết quả: xong. Thêm kiểm khoảnh tồn tại TRƯỚC khi ghi file (tránh file mồ côi khi plot sai); `--file` > 25 MB chặn bằng `stat` trước khi đọc. Evidence CLI không ghi `garden_media` lên DB public (đường DB chỉ chạy trong test rollback).
+- [x] **W93.6 Agent GĐ vùng trồng — bản tin tuần + verify + CLI** —
+  `agents/garden_director.py`: `build_bulletin(conn, until, days=7,
+  schedule=None) -> str` markdown tất định (không LLM): (1) toàn vẹn nhật
+  ký — kết quả `verify_plot_logs()` (OK / N vấn đề kèm id); (2) dữ liệu mẫu
+  còn lại — count `sample:%` plots/plot_logs + "chờ GĐ vùng trồng ký gỡ";
+  (3) nhắc lịch/gap — `due_reminders` với `now` = cuối ngày `until` VN;
+  (4) nhật ký mới trong kỳ theo khoảnh (tách mẫu/không-mẫu); (5) cảnh báo
+  keyword — `flags_for("", detail)`, detail qua `_mask_pii` + cắt 120;
+  (6) ảnh mới (`garden_media.created_at` trong kỳ) theo khoảnh. Mỗi mục kèm
+  khối "SQL đối chứng" (câu SQL tái lập con số). KHÔNG in `location`/
+  `area_m2`/author/tọa độ. CLI (đúng 1 op, `n_ops`): `--bulletin [--until
+  YYYY-MM-DD] [--days N] [--out-dir data/reports]` → ghi
+  `data/reports/garden-week-<until>.md` (atomic tmp + `os.replace`, đã
+  gitignore) + in path; `--remind [--schedule PATH]` in danh sách nhắc;
+  `--verify` exit 0 rỗng / exit 1 có vấn đề; `--precheck`/`--purge-sample`
+  (W93.3). DB down: `--bulletin`/`--remind`/`--precheck` → `[warn] chưa
+  nạp` exit 0; `--verify`/`--purge-sample` → exit 2.
+  - Boundary: `agents/garden_director.py`, `tests/test_garden_director.py`
+  - Gate: test fake-conn/temp schema với `until` str "2026-10-12" (kiểu CLI
+    thật) và `date`: đủ 6 mục, số liệu khớp SQL đối chứng chạy lại trên cùng
+    conn, location fixture ("Trà My") và author không xuất hiện, SĐT trong
+    detail bị mask; 2 lần build → chuỗi bằng nhau; `--bulletin --remind`
+    cùng lúc / không op → exit 2 trước connect; trên DB riêng: `python -m
+    agents.garden_director --verify` exit 0, `--remind` exit 0, `--bulletin
+    --until 2026-10-12` exit 0 → file tồn tại, `grep -c "Trà My"` = 0;
+    `DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m
+    agents.garden_director --remind` → exit 0 `[warn]` trong ≤10s,
+    `--verify` → exit 2; `python -m agents.garden --check` (cũ) vẫn exit 0
+  - Evidence: `evidence/v93_director.log`
+  - Kết quả: xong. DB down thật (10.255.255.1): `--remind`/`--precheck` exit 0 `[warn]` ~4s, `--verify` exit 2 ~4s.
+- [x] **W93.7 Docs** — `docs/handover/kien-truc.md`: "25 bảng public",
+  thêm dòng `garden_media` + cột `prev_hash`/`row_hash` của `plot_logs` +
+  function `verify_plot_logs`; bảng agent thêm `agents.garden_director`
+  và `scripts/garden_media.py`. `docs/handover/playbook-vuon.md`: bản tin
+  tuần, nhắc lịch, gửi ảnh (gỡ EXIF), "nhật ký đã ghi không sửa/xóa được —
+  ghi dòng mới kèm lý do" (đính chính có duyệt = someday). `docs/handover/
+  sop.md`: lệnh `--verify`/`--bulletin`/`--precheck` + thủ tục gỡ mẫu
+  (CHỈ GĐ vùng trồng, `--by`). `AGENTS.md` bảng Commands thêm 2 dòng
+  (garden_director, garden_media).
+  - Boundary: `docs/handover/kien-truc.md`, `docs/handover/playbook-vuon.md`,
+    `docs/handover/sop.md`, `AGENTS.md`
+  - Gate: `python -m pytest -q tests/test_handover_docs.py` xanh (đếm bảng
+    đọc schema.sql); mọi lệnh nhắc trong docs chạy được `--help` exit 0
+  - Evidence: `evidence/v93_docs.log`
+  - Kết quả: xong; `playbook-vuon.md` dòng "sửa trực tiếp trong DB" đổi thành "không sửa/xóa được — ghi dòng mới" (hash chain làm câu cũ sai).
+- [x] **W93.8 Gate chung** — targeted `python -m pytest -q -rs
+  tests/test_garden_chain.py tests/test_garden_director.py
+  tests/test_garden_media.py tests/test_core_store.py tests/test_garden.py`
+  xanh ×3, 0 skipped; full `python -m pytest -q` xanh ĐÚNG 1 lần (baseline
+  831 + test mới, 0 fail; lệnh có thể bị đẩy nền — đọc output tới khi
+  process exit, không chạy chồng); `ruff check .` clean; `python -m
+  py_compile agents/garden_director.py scripts/garden_media.py
+  ingest/core_store.py agents/garden.py app/streamlit_app.py` exit 0;
+  `git diff --check` sạch; `git diff --stat` KHÔNG chạm `agents/garden.py`,
+  `app/streamlit_app.py`, `agents/report.py`, `pipelines/auth.py`,
+  `docs/roles.sql`; `git status` không file lạ (ảnh test chỉ trong
+  `tmp_path`, không file nào dưới `data/` ngoài `garden_schedule.json`).
+  - Boundary: toàn bộ diff version
+  - Gate: như trên
+  - Evidence: `evidence/v93_pytest.log` (force-add `git add -f`)
+  - Kết quả: vòng 1 full 921 pass / 1 fail (`test_cloud_readme_drift_guard` — README cloud thiếu `garden_media`) → sửa → vòng 2: targeted 116 pass ×3 (0 skip), full 922 pass (831 + 91 mới), ruff sạch, py_compile 0, `git diff --check` sạch, 5 file cấm không đổi. Full pytest chạy 2 lần tổng (1 lần/vòng) do vòng 1 fail.
+
+- [x] **W93.9 Vòng sửa nghiệm thu (5 MINOR)**
+  - F1+F3 (blocker nhật ký đã chain không "chuyển sang khoảnh thật" được —
+    guard chặn cả UPDATE plot_id → `--purge-sample` kẹt vĩnh viễn): thêm op
+    `python -m agents.garden_director --adopt-plot <id> --by "<GĐ>"`
+    (`adopt_plot`: chỉ khoảnh `sample:%`, đổi `plots.source` →
+    `manual:adopted`, ghi `agent_action_log` `garden_plot_adopt`, commit
+    tường minh; thiếu `--by` → exit 2 trước connect; DB down → exit 2).
+    Thông báo `[blocker]` tách theo loại (nhật ký: KHÔNG chuyển được →
+    `--adopt-plot`; ảnh: chuyển `garden_media.plot_id` hoặc nhận khoảnh);
+    `sop.md`/`kien-truc.md`/`AGENTS.md` sửa theo. Test:
+    `test_guard_blocks_update_delete_truncate_on_chained` (+UPDATE plot_id
+    bị chặn), `test_adopt_plot_unblocks_purge` (nhật ký thật chain trên
+    KV-A01 + ảnh KV-B01 → adopt + chuyển ảnh → purge ok, `sample:%` = 0,
+    nhật ký thật còn, verify sạch), `test_adopt_plot_refusals`,
+    `test_adopt_cli_and_blocker_hint`, `test_adopt_cli_usage_exit2_before_connect`,
+    `test_adopt_cli_db_down_exit2`; grep-guard agent không gọi
+    `adopt_plot`.
+  - F2 (bản tin lọc theo ts → nhật ký ghi bù không bao giờ lên bản tin):
+    mục 4/5 lọc `(ts trong kỳ) OR (source not like 'sample:%' AND
+    created_at trong kỳ)`, SQL đối chứng khớp; cảnh báo ghi bù gắn
+    "(ghi bù)". Test `test_bulletin_includes_backfilled_log_by_created_at`
+    (mốc từ DB `now()`, không đồng hồ Python; mẫu vẫn chỉ theo ts).
+  - F4 (MPO điện thoại bị từ chối): `FORMATS` thêm `MPO` (chỉ dựng khung 0).
+    Test `test_mpo_multi_frame_phone_jpeg_stripped` (MPO 2 khung có GPS →
+    jpg 1 khung, 0 EXIF/GPS).
+  - F5 (`core_store.main()` nhánh sau gỡ mẫu chưa có test):
+    `test_loader_main_skips_samples_after_purge` (purge thật trong temp
+    schema → `main()` exit 0, `[skip]`, `sample:%` = 0, products/orders
+    vẫn nạp) + `test_loader_main_keeps_chained_sample_plot` (`[keep]
+    plots: KV-A01 (1 nhật ký đã chain, 0 ảnh)`).
+  - Đột biến: gỡ từng fix (nhánh skip main / lọc created_at / MPO) → đúng
+    test mới FAIL; đã khôi phục.
+  - Gate: targeted 136 pass ×3 (0 skip); full 934 pass (1 lần); ruff sạch;
+    py_compile 0; `git diff --check` sạch; 5 file cấm không đổi.
+  - Evidence: `evidence/v93_pytest.log`, `evidence/v93_director.log`,
+    `evidence/v93_media.log` (mục "VÒNG SỬA nghiệm thu").
+- [x] **W93.10 Vòng sửa nghiệm thu #2 (1 MINOR)** — khe còn lại của F2:
+  `--bulletin` không `--until` lấy kỳ kết thúc HÔM NAY (ngày chưa hết) →
+  nhật ký ghi sau giờ sinh bản tin trong ngày đó (ts + created_at đều
+  thuộc kỳ đã sinh, kỳ sau bắt đầu 0h hôm sau) không vào bản tin nào
+  (probe: cảnh báo rệp mất hẳn). Vá: `_default_until(now)` (tham số, chỉ
+  CLI đọc đồng hồ) = HÔM QUA giờ VN — kỳ chỉ gồm ngày đã hết; help
+  `--until`, docstring, comment `build_bulletin` và `playbook-vuon.md`
+  ("tuần kết thúc HÔM QUA — chạy sau 0h"; cảnh báo không truyền `--until`
+  = hôm nay). Test: `test_default_until_is_yesterday_vn` (VN sáng / UTC
+  23:30 hôm trước / sang năm), `test_default_until_naive_rejected`,
+  `test_cli_bulletin_without_until_uses_yesterday` (đồng hồ cố định qua
+  monkeypatch, file `garden-week-<hôm qua>.md`),
+  `test_log_written_after_default_bulletin_lands_next_week` (tái lập probe
+  trên temp schema rollback: không ở bản tin A, có ở mục 5 bản tin B).
+  Đột biến: `_default_until` trả hôm nay → 5/6 test mới FAIL; đã khôi
+  phục. Gate: targeted garden 121 pass ×3; full 939 pass + 1 fail
+  `test_zz_no_dr_container_left` (container `samsam-dr-*` của worktree
+  khác đang drill song song — docker namespace chung; chạy lại riêng
+  `tests/test_dr_drill.py` 27 pass, 0 container sót); ruff sạch.
+  Evidence: `evidence/v93_pytest.log`, `evidence/v93_director.log` (mục
+  "VÒNG SỬA #2").
+
+Treo external-dep v9.3 (KHÔNG giả lập, KHÔNG tự đánh dấu):
+- [ ] GĐ vùng trồng ký gỡ dữ liệu mẫu (`--purge-sample --by`; khoảnh mẫu có nhật ký thật → ký nhận `--adopt-plot <id> --by` trước, rồi cập nhật vị trí/diện tích/số cây thật) — mới có CLI + `--precheck` (DB riêng: 3 khoảnh, 6 nhật ký mẫu, 0 blocker).
+- [ ] Lịch canh tác thật thay `data/garden_schedule.json` (GIẢ ĐỊNH).
+- [ ] Ảnh vườn thật + thư mục `GARDEN_MEDIA_DIR` ngoài repo có backup (db_backup chưa sao lưu thư mục ảnh).
+- [ ] Tọa độ khoảnh — không đưa vào output nào (giữ nguyên).
+- [ ] Vai trò `gd_vung_trong` trong SSO/`pipelines/auth.py` (`--by` hiện là tên tự khai).
+- [ ] Neo hash chain ra ngoài (xóa dòng CUỐI chuỗi không phát hiện được; owner DB tự `disable trigger` rồi sửa vẫn bị verify bắt, nhưng xóa đuôi thì không).
+- [ ] Gửi bản tin/nhắc qua Zalo/email (hiện chỉ ghi `data/reports/`).
+
+Someday (không treo version): đính chính có duyệt (`plot_log_correction_
+requests` + view `plot_logs_current`, replace/void); test 20 insert đồng
+thời liên-transaction (temp schema rollback không chia sẻ được giữa
+connection); grant `plot_logs`/`garden_media`/`verify_plot_logs` cho
+`app_human` khi chuyển Streamlit sang role; tab Streamlit hiện trạng thái
+chuỗi + ảnh; video/HEIC (exiftool/ffmpeg); phát hiện người + giấy đồng ý +
+`sku_scope` bộ tư liệu; nhận nhật ký/ảnh qua Zalo allowlist; gộp vá
+flags_for-chỉ-detail từ `main` (193c68d) vào `ai-infra`.
+
+v9.3-vung-trong đóng 2026-10-12 (nghiệm thu đợt 1 FIX 5 → 2 vòng sửa → PASS;
+vòng 2: bản tin mặc định kết thúc HÔM QUA giờ VN để nhật ký không lọt giữa 2 kỳ;
+OWASP worker vá: user DB thường lách chain bằng chèn dòng `sample:` rồi đổi
+source; khoảnh mẫu có ảnh làm loader crash FK. Coordinator chạy lại targeted
+143 + ruff + `--verify` exit 0; 5 file cấm sửa không đổi). 25 bảng (+`garden_
+media`). External-dep: GĐ vùng trồng ký gỡ dữ liệu mẫu; lịch canh tác thật; ảnh
+vườn thật; tọa độ khoảnh; vai trò `gd_vung_trong` trong SSO; neo hash ra ngoài
+(xóa dòng cuối chuỗi chưa phát hiện được). Lưu ý merge: nhánh này cố ý không
+sửa `agents/garden.py`/`app/streamlit_app.py` vì `main` có commit flags_for chưa
+vào ai-infra.
+
 ## Checklist v3.3-connector-csv
 
 Khán giả/mục đích: nhánh `ai-infra` (M30, worktree `D:\code\samsam-infra`)

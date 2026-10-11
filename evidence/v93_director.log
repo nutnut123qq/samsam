@@ -1,0 +1,125 @@
+# v9.3 W93.3/W93.4/W93.6 CLI evidence — 2026-10-12T03:06:52+07:00 (DB riêng samsam_infra)
+$ python -m agents.garden_director --purge-sample
+usage: python -m agents.garden_director [-h] [--bulletin] [--remind]
+                                        [--verify] [--precheck]
+                                        [--purge-sample] [--by BY]
+                                        [--until UNTIL] [--days DAYS]
+                                        [--out-dir OUT_DIR]
+                                        [--schedule SCHEDULE]
+python -m agents.garden_director: error: --purge-sample cần --by "<tên GĐ vùng trồng>" (người thật ký — agent không tự gỡ)
+exit=2
+$ python -m agents.garden_director --purge-sample --by "  "
+usage: python -m agents.garden_director [-h] [--bulletin] [--remind]
+                                        [--verify] [--precheck]
+                                        [--purge-sample] [--by BY]
+                                        [--until UNTIL] [--days DAYS]
+                                        [--out-dir OUT_DIR]
+                                        [--schedule SCHEDULE]
+python -m agents.garden_director: error: --purge-sample cần --by "<tên GĐ vùng trồng>" (người thật ký — agent không tự gỡ)
+exit=2
+$ python -m agents.garden_director --bulletin --remind
+usage: python -m agents.garden_director [-h] [--bulletin] [--remind]
+                                        [--verify] [--precheck]
+                                        [--purge-sample] [--by BY]
+                                        [--until UNTIL] [--days DAYS]
+                                        [--out-dir OUT_DIR]
+                                        [--schedule SCHEDULE]
+python -m agents.garden_director: error: chọn đúng 1 thao tác: --bulletin | --remind | --verify | --precheck | --purge-sample
+exit=2
+$ python -m agents.garden_director (không op)
+usage: python -m agents.garden_director [-h] [--bulletin] [--remind]
+                                        [--verify] [--precheck]
+                                        [--purge-sample] [--by BY]
+                                        [--until UNTIL] [--days DAYS]
+                                        [--out-dir OUT_DIR]
+                                        [--schedule SCHEDULE]
+python -m agents.garden_director: error: chọn đúng 1 thao tác: --bulletin | --remind | --verify | --precheck | --purge-sample
+exit=2
+## precheck chỉ đọc
+agent_action_log count = 0
+$ python -m agents.garden_director --precheck
+[precheck] dữ liệu mẫu: 3 khoảnh, 6 nhật ký
+[precheck] không có blocker — GĐ vùng trồng có thể ký gỡ (--purge-sample --by)
+exit=0
+agent_action_log count = 0
+$ python -m agents.garden_director --verify
+[verify] OK — chuỗi nhật ký nguyên vẹn
+exit=0
+$ python -m agents.garden_director --remind
+[overdue] KV-A01: 'bón' trễ lịch (gần nhất chưa từng)
+[overdue] KV-A01: 'làm cỏ' trễ lịch (gần nhất chưa từng)
+[overdue] KV-A02: 'kiểm tra sâu bệnh' trễ lịch (gần nhất chưa từng)
+[overdue] KV-A02: 'tưới' trễ lịch (gần nhất chưa từng)
+[overdue] KV-B01: 'bón' trễ lịch (gần nhất chưa từng)
+[overdue] KV-B01: 'kiểm tra sâu bệnh' trễ lịch (gần nhất chưa từng)
+[overdue] KV-B01: 'làm cỏ' trễ lịch (gần nhất chưa từng)
+[overdue] KV-B01: 'tưới' trễ lịch (gần nhất chưa từng)
+exit=0
+$ python -m agents.garden_director --bulletin --until 2026-10-12
+[done] D:\code\samsam-w93\data\reports\garden-week-2026-10-12.md
+exit=0
+$ grep -c "Trà My" data/reports/garden-week-2026-10-12.md
+0
+$ grep -c "^## [1-6]\." data/reports/garden-week-2026-10-12.md
+6
+## host chết thật
+$ DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m agents.garden_director --remind
+[warn] chưa nạp — không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+exit=0 elapsed=4s
+$ DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m agents.garden_director --verify
+[err] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+exit=2 elapsed=4s
+$ DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m agents.garden_director --precheck
+[warn] chưa nạp — không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+exit=0 elapsed=4s
+$ python -m agents.garden --check (cũ)
+[keyword] KV-A01: kiểm tra sâu bệnh — sâu bệnh, rệp, bệnh
+exit=0
+$ grep -rn "purge_sample(" --include=*.py .
+./agents/garden_director.py:96:def purge_sample(conn, by) -> dict:
+./agents/garden_director.py:493:            res = purge_sample(conn, args.by)
+./tests/test_garden_director.py:149:            gd.purge_sample(Boom(), by)
+./tests/test_garden_director.py:200:    res = gd.purge_sample(tx, "Nguyễn GĐ")
+./tests/test_garden_director.py:213:    res = gd.purge_sample(tx, "  Nguyễn GĐ  ")
+./tests/test_garden_director.py:260:        if "purge_sample(" in p.read_text(encoding="utf-8", errors="replace"):
+
+=================== VÒNG SỬA nghiệm thu — --adopt-plot + blocker hint (DB riêng) ===================
+$ python -m agents.garden_director --precheck
+[precheck] dữ liệu mẫu: 3 khoảnh, 6 nhật ký
+[precheck] không có blocker — GĐ vùng trồng có thể ký gỡ (--purge-sample --by)
+exit=0
+$ python -m agents.garden_director --adopt-plot KV-A01   (thiếu --by)
+python -m agents.garden_director: error: --adopt-plot cần --by "<tên GĐ vùng trồng>" (người thật ký — agent không tự làm)
+exit=2
+$ DATABASE_URL=<host chết> python -m agents.garden_director --adopt-plot KV-A01 --by GĐ
+[err] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+exit=2
+(KHÔNG chạy --adopt-plot/--purge-sample thật trên DB — GĐ vùng trồng ký = external-dep; luồng adopt→purge kiểm bằng test temp schema rollback: test_adopt_plot_unblocks_purge, test_adopt_cli_and_blocker_hint)
+$ grep -rn "purge_sample(\|adopt_plot(" --include=*.py .
+./agents/garden_director.py:105:def purge_sample(conn, by) -> dict:
+./agents/garden_director.py:136:def adopt_plot(conn, plot_id, by) -> dict:
+./agents/garden_director.py:547:            res = purge_sample(conn, args.by)
+./agents/garden_director.py:558:            res = adopt_plot(conn, args.adopt_plot, args.by)
+./tests/test_garden_director.py:149:            gd.purge_sample(Boom(), by)
+./tests/test_garden_director.py:200:    res = gd.purge_sample(tx, "Nguyễn GĐ")
+./tests/test_garden_director.py:213:    res = gd.purge_sample(tx, "  Nguyễn GĐ  ")
+./tests/test_garden_director.py:262:        if "purge_sample(" in src or "adopt_plot(" in src:
+./tests/test_garden_director.py:428:    assert {b["kind"] for b in gd.purge_sample(_TxConn(db), "GĐ")["blockers"]
+./tests/test_garden_director.py:431:    res = gd.adopt_plot(tx, " KV-A01 ", "  Nguyễn GĐ ")
+./tests/test_garden_director.py:445:    res = gd.purge_sample(_TxConn(db), "Nguyễn GĐ")
+./tests/test_garden_director.py:460:    assert gd.adopt_plot(_TxConn(db), "KV-ZZ", "GĐ")["ok"] is False
+./tests/test_garden_director.py:461:    assert gd.adopt_plot(_TxConn(db), "KV-M1", "GĐ")["ok"] is False
+./tests/test_garden_director.py:464:            gd.adopt_plot(_TxConn(db), "KV-A01", by)
+./tests/test_garden_director.py:523:    assert gd.purge_sample(_TxConn(db), "Nguyễn GĐ")["ok"] is True
+
+## VÒNG SỬA #2 — --until mặc định = hôm qua VN (2026-10-12T04:14:00+07:00)
+$ python -m agents.garden_director --help  (đoạn --until)
+  --until UNTIL        YYYY-MM-DD ngày cuối kỳ (mặc định HÔM QUA giờ VN — kỳ
+                       chỉ gồm ngày đã hết; until = hôm nay thì nhật ký ghi
+                       sau giờ chạy không vào bản tin nào)
+$ python -m agents.garden_director --bulletin --out-dir <scratchpad>/w93_rep   (KHÔNG --until; hôm nay VN 2026-10-12)
+[done] <scratchpad>\w93_rep\garden-week-2026-10-11.md
+exit=0
+files: ['garden-week-2026-10-11.md']
+dòng 1: # Bản tin vùng trồng — 2026-10-05 → 2026-10-11 (7 ngày, giờ VN)
+=> kỳ mặc định kết thúc 2026-10-11 (hôm qua), không phải hôm nay.

@@ -1286,3 +1286,197 @@ create table if not exists sim_runs (
   unique (run_id, model, prompt_id, sample_idx, option_id)
 );
 create index if not exists sim_runs_run_idx on sim_runs (run_id);
+
+-- ============================================================================
+-- v9.3 vùng trồng (WP13 phần VT): hash chain nhật ký vườn + kho tư liệu ảnh.
+--   * `plot_logs.prev_hash/row_hash` — mọi nhật ký KHÔNG phải mẫu
+--     (`source not like 'sample:%'`) vào chuỗi băm do trigger tính (không tin
+--     client); dòng đã chain KHÔNG sửa/xóa được (kể cả FK cascade từ `delete
+--     from plots`, TRUNCATE). Sửa lén (superuser tắt trigger) bị
+--     `verify_plot_logs()` phát hiện. Giới hạn như agent_action_log: xóa dòng
+--     CUỐI chuỗi không phát hiện được bằng chuỗi thuần (neo ngoài =
+--     external-dep).
+--   * Dòng MẪU (`sample:%`) KHÔNG vào chuỗi ("genesis không chứa sample") —
+--     loader `ingest.core_store` và CLI gỡ mẫu (`agents.garden_director
+--     --purge-sample --by`) xóa được. Sau khi GĐ vùng trồng đã gỡ mẫu (có
+--     dòng agent_action_log `garden_sample_purge`) → chặn chèn mẫu mới.
+--   * Hash canonical theo mẫu `action_log_row_hash`: thời gian quy về epoch
+--     micro-giây, KHÔNG `ts::text` (không phụ thuộc TimeZone/DateStyle).
+--   * `garden_media` — ảnh vườn đã gỡ EXIF/GPS (`scripts/garden_media.py`),
+--     file lưu NGOÀI repo theo sha256. KHÔNG cột tọa độ/đường dẫn/tên file gốc.
+-- ============================================================================
+
+alter table plot_logs add column if not exists prev_hash text;
+alter table plot_logs add column if not exists row_hash text;
+create unique index if not exists plot_logs_row_hash_idx
+  on plot_logs (row_hash);
+
+-- Hash 1 nhật ký (dùng chung cho trigger INSERT, backfill và verify).
+create or replace function plot_log_row_hash(
+  p_prev text, p_id bigint, p_plot_id text, p_ts timestamptz,
+  p_activity text, p_detail text, p_author text, p_source text,
+  p_created_at timestamptz)
+returns text language sql stable as $$
+  select encode(sha256(convert_to(p_prev || jsonb_build_array(
+    p_id, p_plot_id, (extract(epoch from p_ts) * 1000000)::bigint,
+    p_activity, p_detail, p_author, p_source,
+    (extract(epoch from p_created_at) * 1000000)::bigint)::text, 'UTF8')),
+    'hex')
+$$;
+revoke execute on function plot_log_row_hash(text, bigint, text, timestamptz,
+  text, text, text, text, timestamptz) from public;
+
+-- INSERT nhật ký: dòng mẫu → hash null, không khóa (chặn hẳn sau khi đã gỡ
+-- mẫu). Còn lại y hệt agent_action_log_chain: chỉ READ COMMITTED, khóa
+-- advisory theo bảng, cấp id SAU khóa, ép created_at/prev_hash/row_hash —
+-- giá trị client gửi bị ghi đè.
+create or replace function plot_logs_chain() returns trigger
+language plpgsql security definer set search_path from current as $$
+declare
+  v_prev text;
+begin
+  if new.source like 'sample:%' then
+    if exists (select 1 from agent_action_log a
+               where a.action = 'garden_sample_purge') then
+      raise exception 'plot_logs: dữ liệu mẫu đã được gỡ '
+        '(garden_sample_purge) — không nạp lại mẫu';
+    end if;
+    new.prev_hash := null;
+    new.row_hash := null;
+    return new;
+  end if;
+  if current_setting('transaction_isolation') <> 'read committed' then
+    raise exception 'plot_logs: chỉ ghi trong READ COMMITTED (hash chain)';
+  end if;
+  perform pg_advisory_xact_lock(tg_relid::bigint);
+  new.id := nextval(pg_get_serial_sequence(
+    quote_ident(tg_table_schema) || '.' || quote_ident(tg_table_name), 'id'));
+  new.created_at := now();
+  select l.row_hash into v_prev from plot_logs l
+    where l.row_hash is not null order by l.id desc limit 1;
+  new.prev_hash := coalesce(v_prev, repeat('0', 64));
+  new.row_hash := plot_log_row_hash(new.prev_hash, new.id, new.plot_id,
+    new.ts, new.activity, new.detail, new.author, new.source,
+    new.created_at);
+  return new;
+end $$;
+revoke execute on function plot_logs_chain() from public;
+
+create or replace trigger plot_logs_chain_ins
+  before insert on plot_logs
+  for each row execute function plot_logs_chain();
+
+-- Chặn UPDATE/DELETE dòng ĐÃ chain (gồm DELETE do FK cascade khi xóa khoảnh)
+-- và TRUNCATE khi còn dòng đã chain (kể cả `truncate plots cascade`).
+-- Dòng mẫu / dòng legacy chưa chain vẫn sửa/xóa được — mẫu do loader quản,
+-- legacy được backfill bên dưới (UPDATE prev_hash/row_hash lần đầu).
+create or replace function plot_logs_guard() returns trigger
+language plpgsql as $$
+begin
+  if tg_op = 'TRUNCATE' then
+    if exists (select 1 from plot_logs l where l.row_hash is not null) then
+      raise exception 'plot_logs: TRUNCATE bị chặn — có nhật ký đã chain';
+    end if;
+    return null;
+  end if;
+  if old.row_hash is not null then
+    raise exception 'plot_logs #%: nhật ký đã chain — % bị chặn (ghi dòng '
+      'mới kèm lý do)', old.id, tg_op;
+  end if;
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  -- Dòng chưa chain: KHÔNG được đổi mẫu ↔ thật, KHÔNG gán hash tay cho dòng
+  -- mẫu — chặn đường lách trigger INSERT (chèn 'sample:x' với created_at
+  -- giả rồi đổi source + tự tính hash thành đuôi chuỗi hợp lệ).
+  if (old.source like 'sample:%') is distinct from (new.source like 'sample:%')
+     or (new.source like 'sample:%'
+         and (new.row_hash is not null or new.prev_hash is not null)) then
+    raise exception 'plot_logs #%: không đổi dòng mẫu ↔ thật / gán hash tay',
+      old.id;
+  end if;
+  return new;
+end $$;
+revoke execute on function plot_logs_guard() from public;
+
+create or replace trigger plot_logs_guard_row
+  before update or delete on plot_logs
+  for each row execute function plot_logs_guard();
+create or replace trigger plot_logs_guard_truncate
+  before truncate on plot_logs
+  for each statement execute function plot_logs_guard();
+
+-- Backfill legacy (idempotent): CHỈ khi chưa dòng nào có row_hash → chain các
+-- dòng không-mẫu theo id tăng dần, giữ created_at cũ. Có chain rồi → no-op.
+do $$
+declare
+  r record;
+  v_prev text := repeat('0', 64);
+begin
+  if exists (select 1 from plot_logs l where l.row_hash is not null) then
+    return;
+  end if;
+  perform pg_advisory_xact_lock('plot_logs'::regclass::oid::bigint);
+  if exists (select 1 from plot_logs l where l.row_hash is not null) then
+    return;
+  end if;
+  for r in select l.* from plot_logs l
+           where l.source not like 'sample:%' order by l.id loop
+    update plot_logs l set prev_hash = v_prev,
+      row_hash = plot_log_row_hash(v_prev, r.id, r.plot_id, r.ts,
+        r.activity, r.detail, r.author, r.source, r.created_at)
+      where l.id = r.id
+      returning l.row_hash into v_prev;
+  end loop;
+end $$;
+
+-- Kiểm chuỗi: rỗng = nguyên vẹn. 'row_hash' = nội dung dòng bị sửa;
+-- 'prev_hash' = dòng trước bị xóa/chèn/giấu khỏi chuỗi; 'unchained' = dòng
+-- không-mẫu thiếu hash (chèn khi trigger bị tắt).
+create or replace function verify_plot_logs()
+returns table (id bigint, problem text)
+language plpgsql stable security definer set search_path from current as $$
+declare
+  r record;
+  v_prev text := repeat('0', 64);
+begin
+  for r in select l.* from plot_logs l
+           where l.row_hash is not null or l.source not like 'sample:%'
+           order by l.id loop
+    if r.row_hash is null then
+      id := r.id; problem := 'unchained'; return next;
+      continue;
+    end if;
+    if r.prev_hash is distinct from v_prev then
+      id := r.id; problem := 'prev_hash'; return next;
+    end if;
+    if r.row_hash is distinct from plot_log_row_hash(r.prev_hash, r.id,
+        r.plot_id, r.ts, r.activity, r.detail, r.author, r.source,
+        r.created_at) then
+      id := r.id; problem := 'row_hash'; return next;
+    end if;
+    v_prev := r.row_hash;
+  end loop;
+end $$;
+revoke execute on function verify_plot_logs() from public;
+
+create table if not exists garden_media (
+  -- Kho tư liệu vườn: ảnh đã gỡ TOÀN BỘ EXIF/GPS, lưu ngoài repo theo
+  -- `<store>/<sha[:2]>/<sha>.<ext>`. KHÔNG lưu tọa độ / đường dẫn / tên file
+  -- gốc. plot_id no action — khoảnh có ảnh không bị xóa câm.
+  id bigint generated always as identity primary key,
+  sha256 text not null unique check (sha256 ~ '^[0-9a-f]{64}$'),
+  ext text not null check (ext in ('jpg', 'png')),
+  bytes bigint not null check (bytes > 0),
+  width int,
+  height int,
+  plot_id text not null references plots(id),
+  taken_on date not null,
+  author text not null check (btrim(author) <> ''),
+  exif_removed int not null default 0,   -- số thẻ EXIF gốc đã gỡ
+  had_gps boolean not null default false,
+  source text not null default 'cli:garden_media',
+  created_at timestamptz not null default now()
+);
+create index if not exists garden_media_plot_idx
+  on garden_media (plot_id, taken_on);

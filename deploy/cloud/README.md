@@ -96,7 +96,8 @@ bảng nào thì dừng, không bật app.
 | `products` | A | crawl web, `core_store` sở hữu |
 | `claims_approved` | A | từ `data/claims_whitelist.json` |
 | `plots` | A | |
-| `plot_logs` | B | nhật ký vườn thật không có trong repo |
+| `plot_logs` | B | nhật ký vườn thật không có trong repo; hash chain v9.3 — chỉ B giữ nguyên `prev_hash`/`row_hash` (restore xong chạy `python -m agents.garden_director --verify`) |
+| `garden_media` | B | metadata ảnh vườn (v9.3); file ảnh nằm ở `GARDEN_MEDIA_DIR` ngoài repo — sao lưu thư mục đó riêng |
 | `orders` | A | |
 | `assets` | A | |
 | `leads` | B | dữ liệu khách — PII, chỉ qua backup mã hóa |

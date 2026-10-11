@@ -1,0 +1,23 @@
+# v9.3 W93.5 evidence — 2026-10-12T03:07:37+07:00
+## strip trực tiếp (không DB) — ảnh test có GPS sinh trong scratchpad
+nguồn: số thẻ IFD0 = 5 | GPS IFD có 4 thẻ | XMP: True
+bản lưu: jpg | getexif() = 0 | info keys = ['jfif', 'jfif_density', 'jfif_unit', 'jfif_version'] | b'Exif\x00\x00' in bytes: False | b'GPS': False | xmp: False
+info trả về: {'exif_removed': 10, 'had_gps': True, 'width': 16, 'height': 32}
+
+## CLI --store trong repo → exit 2
+$ python scripts/garden_media.py --file <scratch>/gps.jpg --plot KV-A01 --date 2026-10-12 --by "Test" --store data/kho
+[err] thư mục kho nằm TRONG repo — ảnh vườn không được vào git; chọn thư mục ngoài repo
+exit=2
+ls: cannot access 'data/kho': No such file or directory
+
+## CLI host chết thật → exit 2, store rỗng
+[err] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết) — không ghi file
+exit=2 elapsed=4s
+store files: 0
+
+$ python scripts/garden_media.py --help
+exit=0
+
+=================== VÒNG SỬA nghiệm thu — MPO (JPEG nhiều khung điện thoại) ===================
+$ python -m pytest -q tests/test_garden_media.py -k mpo
+1 passed, 21 deselected in 0.73s

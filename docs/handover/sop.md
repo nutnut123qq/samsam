@@ -34,6 +34,8 @@ khác.
 | Xem lịch đăng sắp tới | `python -m pipelines.store --calendar` (mặc định 14 ngày; `--days N`) |
 | Backup DB + data | xem mục 6 |
 | Đối chiếu danh mục dữ liệu | `python scripts/data_audit.py` → cập nhật `docs/phu-luc-a.md` khi data đổi |
+| Bản tin vùng trồng (v9.3) | `python -m agents.garden_director --bulletin` → `data/reports/garden-week-<ngày>.md` — BẢN NHÁP cho GĐ vùng trồng |
+| Kiểm hash chain nhật ký vườn | `python -m agents.garden_director --verify` (exit 0 = nguyên vẹn; 1 = có dòng bị sửa/xóa — xem mục 7) |
 
 ## 3. Cập nhật knowledge base (KB)
 
@@ -82,6 +84,35 @@ python -m ingest.doc_intake --reject <sha256> --by "<tên>"   # Pháp chế từ
 - Field (số giấy, ngày cấp, tên sản phẩm) trích bằng regex, luôn ở
   trạng thái chưa xác minh tới khi người Pháp chế chạy `--verify` —
   KHÔNG ai xác nhận hộ. Đối chiếu field với bản gốc trước khi verify.
+
+### Vùng trồng: hồ sơ khoảnh, gỡ dữ liệu mẫu, kho ảnh (v9.3)
+
+- `plots`/`plot_logs` hiện còn dữ liệu MẪU (`sample:*`). Kiểm trước (chỉ
+  đọc, không ghi gì): `python -m agents.garden_director --precheck` → số
+  khoảnh/nhật ký mẫu + **blocker** (nhật ký thật hoặc ảnh đang trỏ khoảnh
+  mẫu). Xử lý theo loại:
+  - **Nhật ký thật** (vd ghi từ tab garden lên khoảnh mẫu KV-*): nhật ký
+    đã vào hash chain, KHÔNG sửa/xóa/chuyển khoảnh được (DB chặn cả đổi
+    `plot_id`). Đường duy nhất: GĐ vùng trồng ký **nhận khoảnh mẫu thành
+    khoảnh thật** — `python -m agents.garden_director --adopt-plot <mã
+    khoảnh> --by "<họ tên GĐ vùng trồng>"` (thiếu `--by` → exit 2; ghi
+    `agent_action_log` action `garden_plot_adopt`). Sau khi nhận, vị trí/
+    diện tích/số cây của khoảnh VẪN là giá trị mẫu — GĐ cập nhật số thật.
+  - **Ảnh** (`garden_media`): nhận khoảnh như trên, hoặc người quản trị DB
+    chuyển `garden_media.plot_id` sang khoảnh thật (ghi lý do).
+- **Gỡ dữ liệu mẫu CHỈ do GĐ vùng trồng ký**, chạy:
+  `python -m agents.garden_director --purge-sample --by "<họ tên GĐ vùng
+  trồng>"`. Thiếu `--by` → từ chối (exit 2); còn blocker → KHÔNG gỡ (exit
+  1); xong → ghi `agent_action_log` action `garden_sample_purge`, và từ đó
+  `python -m ingest.core_store` KHÔNG nạp lại mẫu (DB cũng chặn chèn mẫu).
+  Agent/lịch tự động KHÔNG bao giờ chạy lệnh này (cả `--adopt-plot`).
+  Người vận hành không tự điền tên người khác.
+- Kho ảnh vườn: đặt `GARDEN_MEDIA_DIR` (thư mục NGOÀI repo, có backup)
+  rồi `python scripts/garden_media.py --file <ảnh> --plot <khoảnh> --date
+  YYYY-MM-DD --by "<tên>"` — ảnh lưu đã gỡ EXIF/GPS, metadata bảng
+  `garden_media`.
+- Nhật ký đã ghi KHÔNG sửa/xóa được (hash chain) — `core_store` giữ lại
+  khoảnh mẫu còn nhật ký thật/ảnh (in `[keep] plots: ...`).
 
 ## 4. Hàng duyệt nội dung (MKT)
 
@@ -447,6 +478,16 @@ Nhật ký `agent_action_log` bị sửa (`row_hash`) hoặc xóa/chèn
 UPDATE/DELETE bằng trigger). KHÔNG tự "sửa cho khớp". Người phụ trách
 hạ tầng (vai trò `ha_tang`) lưu output + backup DB hiện tại, báo TGĐ;
 đối chiếu với backup gần nhất (mục 6) để xác định dòng bị đụng.
+
+### `--verify` vùng trồng báo lỗi (exit 1)
+
+`python -m agents.garden_director --verify` in `#id: row_hash` (nội dung
+nhật ký bị sửa), `prev_hash` (dòng trước bị xóa/chèn/giấu thành "mẫu")
+hoặc `unchained` (nhật ký thật chèn khi trigger bị tắt) — chỉ superuser DB
+làm được. KHÔNG "sửa cho khớp". Lưu output + backup DB hiện tại, báo GĐ
+vùng trồng + TGĐ; đối chiếu backup gần nhất (mục 6). Giới hạn: xóa dòng
+CUỐI chuỗi không phát hiện được bằng chuỗi thuần (neo hash ra ngoài =
+external-dep).
 
 ### Cập nhật status lead (pilot chưa có nút trên UI)
 

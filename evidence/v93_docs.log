@@ -1,0 +1,18 @@
+# v9.3 W93.7 docs evidence — 2026-10-12T03:07:54+07:00
+$ python -m pytest -q tests/test_handover_docs.py
+........                                                                 [100%]
+8 passed in 0.12s
+## --help các lệnh nhắc trong docs
+$ python -m agents.garden_director --help → exit=0
+$ python scripts/garden_media.py --help → exit=0
+$ python -m agents.garden --help → exit=0
+$ python -m ingest.core_store --help → exit=0 (GHI CHÚ: core_store không có argparse — lệnh này chạy loader thật trên DB riêng, idempotent; không phải --help)
+$ python scripts/apply_schema.py --help → exit=0
+$ grep -n "25 bảng public\|garden_media\|verify_plot_logs\|garden_director" docs/handover/kien-truc.md | cut -c1-120
+65:| `agents/` | `report.py` (báo cáo định kỳ → file md), `garden.py` (nhật ký vùng trồng + cảnh báo),
+67:| `scripts/` | `apply_schema.py`, `data_audit.py`, `eval_qa.py`, `zalo_mock.py`, `zalo_preflight.py`, `garden_media.p
+71:## 3. Cơ sở dữ liệu — 25 bảng public (`docs/schema.sql`)
+80:| `plot_logs` | Nhật ký vùng trồng (`plot_id` FK→plots,`ts`,`activity`,`detail`,`author`) + **hash chain** (v
+98:| `garden_media` | (v9.3) Kho tư liệu vườn: `sha256` UNIQUE (tên file trong kho NGOÀI repo `<sha[:2]>/<sha>.<
+140:| GĐ vùng trồng (v9.3) | `python -m agents.garden_director --bulletin [--until YYYY-MM-DD]` / `--remind` / `--ve
+141:| Kho tư liệu vườn (v9.3) | `python scripts/garden_media.py --file .. --plot .. --date .. --by ..` | Gỡ EXIF
