@@ -1,0 +1,26 @@
+{
+  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES. approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store).",
+  "block": "sales",
+  "name": "Giám đốc bán hàng + Sales (Phòng kinh doanh TMĐT)",
+  "director_agent": "Agent GĐ Kinh doanh TMĐT (điều phối)",
+  "approver_roles": [
+    "gd_ban_hang"
+  ],
+  "approvers": [],
+  "object_types": {
+    "price_change": {
+      "sla_hours": 24,
+      "risk": "high"
+    },
+    "b2b_quote": {
+      "sla_hours": 24,
+      "risk": "high"
+    },
+    "message_template": {
+      "sla_hours": 48,
+      "risk": "medium"
+    }
+  },
+  "digest_recipients": [],
+  "due_soon_hours": 8
+}

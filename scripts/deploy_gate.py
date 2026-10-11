@@ -11,8 +11,15 @@ Cho phép (exit 0) khi ĐỦ cả 4:
   3. `--approved-by` thuộc `approvers` (casefold/strip). approvers rỗng ->
      từ chối (danh sách người duyệt thật là external-dep) — KHÔNG tự coi
      ai đã duyệt.
-  4. Trong cửa sổ đóng băng (mặc định 21/12/2026–10/02/2027, gồm 2 đầu,
-     ngày Asia/Saigon) phải có `--hotfix` (hotfix vẫn cần 1–3).
+  4. Luật đóng băng (đã nối v4.0): `pipelines.freeze.check(kind, now)`
+     với kind "hotfix" (`--hotfix`) hoặc "feature" — lịch DUY NHẤT
+     `data/freeze_calendar.json` (21/12/2026–10/02/2027, gồm 2 đầu, giờ
+     Asia/Saigon) + break-glass còn hạn (env `BREAK_GLASS_LOG`, ghi bởi
+     `scripts/break_glass.py`). Lịch hỏng → fail-closed (feature bị chặn,
+     hotfix qua). Hotfix/break-glass vẫn cần đủ 1–3.
+     Mốc thời gian: không `--today` → giờ THẬT (cửa sổ break-glass mở
+     14:00 phải có hiệu lực lúc 15:00); `--today` → 12:00 VN ngày đó
+     (mô phỏng theo ngày, không mô phỏng giờ).
 Thiếu điều kiện -> exit 1, in TỪNG lý do. DB lỗi/down -> từ chối
 (fail-closed, connect_timeout). Tham số sai (--today) -> exit 2.
 
@@ -25,7 +32,7 @@ import json
 import os
 import re
 import sys
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time
 from pathlib import Path
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in tiếng
@@ -38,10 +45,13 @@ import psycopg
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))  # chạy `python scripts/deploy_gate.py`
+from pipelines import freeze
+from pipelines.freeze import VN_TZ
+
 CONFIG = ROOT / "data" / "eval" / "config.json"
 SHA_RE = re.compile(r"[0-9a-f]{40}")
 DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
-VN_TZ = timezone(timedelta(hours=7))  # VN không DST — không cần tzdata
 CONNECT_TIMEOUT_S = 5
 BASE = "/opt/samsam"
 RELEASES = f"{BASE}/releases"
@@ -82,8 +92,12 @@ def _parse_day(s: str) -> date:
 
 
 def check(sha: str, approved_by: str, hotfix: bool, today: date,
-          cfg: dict) -> list[str]:
-    """Trả list lý do từ chối (rỗng = cho phép)."""
+          cfg: dict, now: datetime | None = None,
+          notices: list[str] | None = None) -> list[str]:
+    """Trả list lý do từ chối (rỗng = cho phép). `now` None → 12:00 VN
+    của `today` (mô phỏng `--today`). `notices` (tùy chọn) nhận lý do
+    freeze CHO QUA nhưng bất thường (hotfix/break-glass trong đóng băng,
+    lịch hỏng) để main in `[warn]` — bypass không được câm."""
     reasons = []
     if not SHA_RE.fullmatch(sha):
         reasons.append(f"SHA {sha!r} không phải commit 40 hex")
@@ -116,11 +130,16 @@ def check(sha: str, approved_by: str, hotfix: bool, today: date,
     elif who not in approvers:
         reasons.append(f"{approved_by.strip()!r} không thuộc danh sách"
                        " người duyệt")
-    start = _parse_day(cfg["freeze"]["start"])
-    end = _parse_day(cfg["freeze"]["end"])
-    if start <= today <= end and not hotfix:
-        reasons.append(f"{today} trong cửa sổ đóng băng {start}..{end} —"
-                       " chỉ deploy hotfix (--hotfix)")
+    if now is None:
+        now = datetime.combine(today, time(12), VN_TZ)
+    try:
+        ok, why = freeze.check("hotfix" if hotfix else "feature", now)
+    except ValueError as e:  # lịch thiếu kind hotfix/feature → fail-closed
+        ok, why = False, f"lịch đóng băng lỗi ({e}) — fail-closed"
+    if not ok:
+        reasons.append(f"{why} (--hotfix hoặc break-glass)")
+    elif notices is not None and why != freeze.OUTSIDE_FREEZE:
+        notices.append(why)
     return reasons
 
 
@@ -172,21 +191,30 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--today", help="YYYY-MM-DD (mặc định hôm nay"
                     " Asia/Saigon) — mô phỏng ngày")
     args = ap.parse_args(argv)
+    now = None  # --today → mốc 12:00 VN của ngày đó (trong check)
     try:
-        today = (_parse_day(args.today) if args.today
-                 else datetime.now(VN_TZ).date())
+        if args.today:
+            today = _parse_day(args.today)
+        else:
+            now = datetime.now(VN_TZ)
+            today = now.date()
     except ValueError:
         ap.error("--today phải dạng YYYY-MM-DD hợp lệ")
 
     load_dotenv(ROOT / ".env")
     cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
     sha = args.sha.strip().lower()
-    reasons = check(sha, args.approved_by, args.hotfix, today, cfg)
+    notices: list[str] = []
+    reasons = check(sha, args.approved_by, args.hotfix, today, cfg, now,
+                    notices)
     if reasons:
         print(f"[deny] không deploy {sha!r}:", flush=True)
         for r in reasons:
             print(f"  - {r}", flush=True)
         return 1
+    for n in notices:
+        print(f"[warn] {n} — deploy cho qua TRONG đóng băng, ghi lại phiếu/"
+              "lý do", flush=True)
     print(plan(sha, args.approved_by, args.hotfix), flush=True)
     return 0
 

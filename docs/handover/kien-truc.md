@@ -60,7 +60,7 @@ Streamlit demo.
 | `crawler/` | `collect` — crawl site public → `data/*.jsonl` (delay ≥1s/request) |
 | `ingest/` | `embed_store` (chunk+embed→`chunks`), `core_store` (nạp DB lõi, delete-by-source idempotent), `lead_store` (convlog→`leads`, insert-only) |
 | `api/` | `rag.py` — `answer()` RAG: retrieve top-8 `chunks` bằng cosine numpy → LLM + nguồn; `NO_DATA` khi score thấp |
-| `pipelines/` | `guardrail.py` (banned words + claim whitelist — check trước mọi output AI), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py` |
+| `pipelines/` | `guardrail.py` (banned words + claim whitelist — check trước mọi output AI), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py`, `period.py` (kỳ ngày/tuần/tháng giờ VN — nguồn duy nhất, v4.0), `approval_queue.py` (hàng duyệt dùng chung mọi loại việc trừ content_draft, v4.0), `director.py` (mẫu agent GĐ khối: gom việc → bản tin, cấu hình `data/directors/<khối>.json`, v4.0), `red_alert.py` (cảnh báo đỏ tới người nhận độc lập, v4.0) |
 | `connectors/` | `zalo.py` — webhook Zalo OA: verify signature, ACK 200 nhanh rồi reply async, dedup msg_id, token store + auto-refresh; **chỉ reply inbox** |
 | `agents/` | `report.py` (báo cáo định kỳ → file md), `garden.py` (nhật ký vùng trồng + cảnh báo) — không LLM, không tự gửi |
 | `app/` | `streamlit_app.py` — UI 7 tab (mục 4) |
@@ -68,7 +68,7 @@ Streamlit demo.
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 24 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 29 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
@@ -88,6 +88,11 @@ Streamlit demo.
 | `price_list` | Giá theo SKU × kênh × `kind` floor/list/promo, `valid_from/valid_to`, `approved_by` — **APPEND-ONLY** (trigger chặn UPDATE giá/DELETE/TRUNCATE và INSERT sẵn-duyệt/sẵn-đóng; đổi giá = đóng dòng cũ + dòng mới chờ duyệt) | `golden_store` nạp `approved_by=null`; GĐ bán hàng duyệt bằng CLI |
 | `approvals` | (v3.4) Mỗi quyết định duyệt/từ chối 1 dòng: `object_type`,`object_id`,`content_sha256` (sha256 text ĐÚNG lúc duyệt),`decision`,`approved_by`,`approved_at`,`db_role` — **APPEND-ONLY** (trigger chặn UPDATE/DELETE/TRUNCATE) | Chỉ function duyệt (SECURITY DEFINER) ghi; `verify_publish` so bản phát hành với sha đã duyệt |
 | `agent_action_log` | (v3.4) Nhật ký hành động agent/người (`actor`,`action`,`object_*`,`detail` jsonb,`db_role`) + **hash chain** `prev_hash`→`row_hash` — APPEND-ONLY; trigger INSERT ép id/ts/db_role/hash | `save_draft` (`draft_create`) + function duyệt/xếp lịch; kiểm: `python -m pipelines.store --verify-log` |
+| `approval_queue` | (v4.0) Hàng duyệt DÙNG CHUNG mọi loại việc của agent nhân viên (CẤM `content_draft` — giữ đường v3.4): `object_type`,`object_id`,`block` (khối),`payload` + `content_sha256` (trigger ép = sha payload, BẤT BIẾN),`risk`,`guardrail` snapshot,`qa_status`,`created_by`,`due_at` (SLA),`status` pending→approved/rejected/expired MỘT lần,`lane` auto_policy/per_item,`decided_by` — không DELETE/TRUNCATE | Chỉ function: `enqueue_item` (agent), `decide_item` (người), `auto_approve_item` (luật đã ký), `expire_overdue`; CLI `python -m pipelines.approval_queue` |
+| `auto_policies` | (v4.0) Luật tự duyệt theo loại: `max_risk` CHỈ `low` (CHECK), bật phải có `signed_by`+`signed_at` — ship RỖNG (chủ khối ký = external-dep) | Chỉ owner DB ghi |
+| `decisions` | (v4.0) `override_qa` (ép trình bản QA FAIL: lý do ≥10 ký tự + người ≠ người tạo) và `expired` (hết SLA, không ai duyệt) — APPEND-ONLY | Function `override_qa` / `expire_overdue` |
+| `channel_snapshots` | (v4.0) Số liệu kênh theo kỳ (`channel`,`metric_id`,`period_kind` day/week/month,`period_start`,`value`,`source` manual_export/api,`captured_by`) — unique theo kỳ+nguồn; cho cockpit sau này | agent_writer INSERT (nhập tay từ file xuất / API) |
+| `red_alerts` | (v4.0) Cảnh báo đỏ (`source_agent`,`title`/`detail` đã mask PII,`recipients`,`route_error` khi thiếu người nhận độc lập) — APPEND-ONLY: role `app_human` không có quyền sửa/xóa + trigger chặn UPDATE/DELETE/TRUNCATE khi trigger còn bật (owner vẫn `DISABLE TRIGGER`, superuser vẫn `session_replication_role = replica` được); DB đóng dấu `ts`/`db_role` | `pipelines.red_alert.raise_alert` (agent); TGĐ/ha_tang KHÔNG xóa/sửa được CHỈ KHI kết nối bằng DSN `app_human` — không được giữ DSN owner/superuser (xem Giới hạn pilot dưới) |
 | `golden_discrepancies` | Phiếu lệch golden ↔ crawl (`kind`, `detail` giá trị theo từng nguồn, `status` pending/resolved/dismissed) — agent không chọn giá | `golden_store` dựng lại mỗi lần nạp; người xử lý cập nhật `status` |
 | `market_snapshots` | 1 dòng/file xuất Seller Center đã nạp (v3.3): `channel` shopee/tiktok, `export_kind` listing/order/ads, `file_name` (basename), `file_sha256` UNIQUE (nạp lại cùng file = bỏ qua), `row_count` | `ingest.market_csv --file` — insert-only |
 | `market_rows` | Dòng staging từ file sàn: `item_id`,`seller_sku`,`sku_key` (map golden, null = không map),`title`,`price_vnd`,`stock`,`status`,`ads_spend_vnd`,`qty`,`order_id_hash` (sha256, KHÔNG mã đơn gốc), `raw` jsonb CHỈ field allowlist — không cột tên/SĐT/địa chỉ người mua | `market_csv` — cột PII bỏ ngay khi đọc file |
@@ -149,6 +154,7 @@ idempotent theo kỳ (cùng kỳ → cùng tên file ghi đè).
 | Báo cáo lãnh đạo | Sinh file markdown BẢN NHÁP | Đọc/duyệt/sửa rồi gửi Zalo/email tay |
 | Nhật ký vườn | Chuẩn hóa + cảnh báo bất thường | Ghi nhật ký tay; báo quản lý khi có cảnh báo |
 | Zalo OA | Chỉ TRẢ LỜI tin nhắn đến (reply), không chủ động nhắn, không đăng OA | — |
+| Hàng duyệt dùng chung (v4.0) | Agent nhân viên đẩy việc qua `director.submit` (SLA/rủi ro theo cấu hình khối) → `approval_queue`; 2 lớp: `auto_policy` (mặc định TẮT/rỗng, chỉ rủi ro low + QA pass + chủ khối ký) và `per_item` (người, **người duyệt ≠ người tạo**, guardrail ok, kiểm lại payload); quá SLA → `expired` (KHÔNG BAO GIỜ tự duyệt); QA FAIL muốn trình phải `override_qa` có lý do + người; `red_alerts` append-only, người nhận độc lập (không TGĐ/ha_tang), thiếu → ghi `route_error` (fail-closed); bản tin GĐ khối là file BẢN NHÁP | Duyệt/từ chối/override từng mục (`--by`); chủ khối ký auto_policy; Pháp chế xác nhận người nhận cảnh báo đỏ (external-dep) |
 | Bổ sung KB/claim | `core_store`/`embed_store` nạp lại khi được chạy | Soạn file nguồn + chạy lệnh nạp |
 
 ## 6b. Phân quyền & đăng nhập (v3.4)
@@ -160,6 +166,8 @@ idempotent theo kỳ (cùng kỳ → cùng tên file ghi đè).
 |---|---|---|
 | `agent_writer` (agent AI) | SELECT `content_drafts`; INSERT draft 6 cột (`brief`,`channel`,`text`,`guardrail`,`source`,`created_by` → luôn `pending`); INSERT log 5 cột | UPDATE/DELETE mọi bảng (không tự duyệt được — `permission denied`), `approvals`, bảng khác, function duyệt |
 | `app_human` (người: Streamlit/CLI) | Kế thừa `agent_writer` + SELECT `approvals`/`agent_action_log` + EXECUTE `approve_draft`, `reject_draft`, `schedule_draft`, `verify_publish`, `verify_action_log` | UPDATE/DELETE trực tiếp |
+| `agent_writer` — thêm v4.0 | EXECUTE `enqueue_item`, `auto_approve_item` (fail-closed khi không có luật đã ký), `expire_overdue`; SELECT `approval_queue` CHỈ cột metadata (KHÔNG `payload`/`guardrail`/sha — payload 11 khối chỉ người đọc) + `decisions` (bản tin GĐ khối); INSERT `red_alerts` 5 cột (+ SELECT `id` cho RETURNING), `channel_snapshots` 8 cột | `decide_item`, `override_qa`, UPDATE/DELETE mọi bảng, `auto_policies` |
+| `app_human` — thêm v4.0 | SELECT `approval_queue` (đủ cột, gồm `payload`)/`auto_policies`/`channel_snapshots`/`red_alerts` + EXECUTE `decide_item`, `override_qa` | UPDATE/DELETE trực tiếp (TGĐ/ha_tang qua `app_human` KHÔNG xóa/sửa được cảnh báo đỏ; trigger chặn DML của owner khi còn bật, KHÔNG chặn owner tắt trigger/superuser replica) |
 
 Giới hạn pilot: máy local vẫn chạy bằng DSN owner — chặn quyền chỉ có
 hiệu lực khi app/agent dùng DSN theo role. CHƯA chuyển DSN Streamlit/agent
@@ -170,6 +178,12 @@ cho qua). DSN role hiện chỉ dùng cho tiến trình duyệt/ghi draft riêng
 `pipelines.store`); grant đủ bảng theo plan §5 = external-dep/someday
 (SOP mục 9). `--by` CLI vẫn free-text (tin người giữ DSN `app_human`);
 xóa dòng CUỐI log không phát hiện được bằng chuỗi thuần (cần neo ngoài).
+Cảnh báo đỏ (`red_alerts`) cũng vậy: "TGĐ/ha_tang không xóa được" chỉ đúng
+khi họ dùng DSN `app_human`; owner bảng `ALTER TABLE red_alerts DISABLE
+TRIGGER ...` rồi DELETE, superuser `set session_replication_role = replica`
+— hôm nay Quản lý hạ tầng AI giữ DSN owner. Yêu cầu khi chuyển DSN theo
+role: TGĐ và ha_tang KHÔNG giữ DSN owner/superuser (người khác giữ, vd
+Pháp chế/BKS); neo ngoài chống xóa (object-lock/WORM) = external-dep.
 
 **Đăng nhập Streamlit** (`pipelines/auth.py`, biến `AUTH_MODE`) — fail-closed:
 trống/lạ = chặn; `proxy` = email từ header

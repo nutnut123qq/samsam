@@ -1,0 +1,22 @@
+{
+  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES — khối chưa có vai trò riêng, TẠM map 'tgd' (external-dep: TGĐ chốt). approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store).",
+  "block": "intel",
+  "name": "Trung tâm tình báo thị trường (trực thuộc TGĐ, phục vụ Marketing/Sales)",
+  "director_agent": "Intel Director (GĐ Tình báo agent)",
+  "approver_roles": [
+    "tgd"
+  ],
+  "approvers": [],
+  "object_types": {
+    "intel_bulletin": {
+      "sla_hours": 24,
+      "risk": "low"
+    },
+    "competitor_report": {
+      "sla_hours": 72,
+      "risk": "low"
+    }
+  },
+  "digest_recipients": [],
+  "due_soon_hours": 8
+}

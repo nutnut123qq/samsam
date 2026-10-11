@@ -33,10 +33,13 @@ def _no_bg_env(monkeypatch):
 # ---------------- lịch ----------------
 
 def test_calendar_drift_guard_matches_v35():
-    """Khung phải khớp `freeze` của data/eval/config.json nhánh v3.5
-    (2026-12-21..2027-02-10) — đổi ngày phải sửa cả hai."""
+    """Khung 2026-12-21..2027-02-10 — nguồn lịch DUY NHẤT (v4.0:
+    deploy_gate đọc file này; key `freeze` của data/eval/config.json đã
+    bỏ — khóa không để lịch thứ hai mọc lại)."""
     raw = json.loads((ROOT / "data" / "freeze_calendar.json")
                      .read_text(encoding="utf-8"))
+    assert "freeze" not in json.loads(
+        (ROOT / "data" / "eval" / "config.json").read_text(encoding="utf-8"))
     assert [(w["start"], w["end"]) for w in raw["windows"]] == [
         ("2026-12-21", "2027-02-10")]
     cal = freeze.load_calendar()

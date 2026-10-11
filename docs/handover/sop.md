@@ -112,6 +112,48 @@ python -m pipelines.store --verify-log               # kiểm nhật ký hash ch
   `id=.. problem=row_hash|prev_hash` (xem mục 7); exit 2 = DB không
   kết nối được.
 
+## 4b. Hàng duyệt chung & bản tin GĐ khối (v4.0)
+
+Mọi việc cần người duyệt của agent nhân viên (đổi giá, báo giá B2B, chiến
+dịch ads, hồ sơ XNQC...) — TRỪ bài content (vẫn mục 4) — vào một hàng
+chung `approval_queue`. SLA và mức rủi ro theo cấu hình khối
+`data/directors/<khối>.json` (11 khối; danh sách người duyệt thật đang
+rỗng — TGĐ chốt, external-dep).
+
+```
+python -m pipelines.approval_queue --pending [--block sales]
+python -m pipelines.approval_queue --approve <ID> --by "<tên>" [--note "..."]
+python -m pipelines.approval_queue --reject <ID> --by "<tên>" [--note "..."]
+python -m pipelines.approval_queue --override-qa <ID> --by "<tên>" --reason "<lý do ≥10 ký tự>"
+python -m pipelines.approval_queue --expire
+python -m pipelines.director --block <khối>        # bản tin GĐ khối → data/reports/director-<khối>-<ngày>.md
+python -m pipelines.director --all --dry-run       # chỉ kiểm 11 file cấu hình, không DB
+python -m pipelines.red_alert --check-routing      # exit 1 = chưa có người nhận cảnh báo đỏ độc lập
+```
+
+- Người tạo KHÔNG tự duyệt được; mục vi phạm guardrail không duyệt được
+  (hệ thống kiểm lại nội dung); quá SLA → `expired` — KHÔNG BAO GIỜ tự
+  duyệt, việc đó phải đẩy lại từ đầu. Mục QA FAIL muốn trình vẫn phải
+  `--override-qa` (người khác người tạo, có lý do) rồi một người khác
+  `--approve`. Bản phát hành phải khớp sha256 bản đã duyệt.
+- Tự duyệt (`auto_policy`) mặc định TẮT: bảng `auto_policies` rỗng, chỉ áp
+  rủi ro `low` + QA pass khi chủ khối đã ký (external-dep).
+- Exit: 0 xong · 1 quyết định bị từ chối (đọc thông báo — vd quá hạn,
+  người tạo, guardrail) · 2 sai tham số hoặc DB down (xem mục 7).
+- Bản tin GĐ khối là BẢN NHÁP — hệ thống không tự gửi; người vận hành
+  chuyển tay. Chạy hằng ngày (Task Scheduler/cron) — mỗi lần chạy cũng
+  đánh expired mục quá hạn.
+- **Cảnh báo đỏ** (`red_alerts`): người kết nối bằng DSN `app_human` (kể
+  cả TGĐ và Quản lý hạ tầng AI) không xóa/sửa được; trigger chặn UPDATE/
+  DELETE/TRUNCATE khi còn bật. GIỚI HẠN: owner bảng vẫn `DISABLE TRIGGER`,
+  superuser vẫn `session_replication_role = replica` rồi xóa được — nên
+  khi chuyển DSN theo role, TGĐ và ha_tang KHÔNG được giữ DSN owner/
+  superuser; neo ngoài (object-lock) = external-dep. Hôm nay ha_tang còn
+  giữ DSN owner → chưa đạt. `--check-routing` exit 1 nghĩa là cảnh báo vẫn được
+  ghi nhưng CHƯA có người nhận độc lập: Pháp chế xác nhận người nhận rồi
+  dev điền `data/red_alert_routing.json` (chỉ nhận vai trò `phap_che`/
+  `bks`; `tgd`/`ha_tang` và vai trò khác bị loại tự động). Hiện hệ thống chỉ ghi bảng, chưa gửi email/Zalo (external-dep).
+
 ## 5. Kênh Zalo OA (khi chạy thật)
 
 ```
@@ -386,8 +428,11 @@ python scripts/agent_eval.py --agent chatbot     # 14 ca qua RAG thật (cần O
 python scripts/deploy_gate.py --sha <SHA 40 hex> --approved-by "<tên>" [--hotfix]
 ```
 
-- Ngưỡng + người duyệt + cửa sổ đóng băng ở `data/eval/config.json`
-  (chốt TRƯỚC khi chạy; bản hiện tại dev soạn, chưa được công ty duyệt).
+- Ngưỡng + người duyệt ở `data/eval/config.json` (chốt TRƯỚC khi chạy;
+  bản hiện tại dev soạn, chưa được công ty duyệt). Lịch đóng băng ở
+  `data/freeze_calendar.json` (v4.0 — 1 nguồn, `pipelines/freeze.py`) +
+  break-glass còn hạn (`python scripts/break_glass.py --open ...`, env
+  `BREAK_GLASS_LOG`); lịch hỏng → coi như đang đóng băng (chỉ hotfix).
 - `agent_eval` chỉ ghi khi working tree sạch và SHA = HEAD; `--allow-dirty`
   ghi `<sha>-dirty` (không bao giờ mở deploy); `--no-record` chỉ chấm.
 - `deploy_gate` CHỈ IN kế hoạch (release `/opt/samsam/releases/<SHA>`,
@@ -397,7 +442,9 @@ python scripts/deploy_gate.py --sha <SHA 40 hex> --approved-by "<tên>" [--hotfi
   chatbot `--no-record`, fail → rollback mang state về, giữ 10 release)
   khi: row `eval_runs` mới nhất của MỌI agent bắt buộc là PASS + người
   duyệt thuộc `approvers` + ngoài đóng băng 21/12–10/02 (trong đó chỉ
-  `--hotfix`). DB lỗi hoặc `required_agents` rỗng → từ chối.
+  `--hotfix` hoặc khi break-glass đang mở — tính theo giờ THẬT lúc chạy;
+  `--today` chỉ mô phỏng 12:00 ngày đó). DB lỗi hoặc `required_agents`
+  rỗng → từ chối.
 - CI: `.github/workflows/ci.yml` — mỗi push/PR chạy ruff + pytest + eval
   guardrail trên Postgres service; eval chatbot chỉ khi chạy tay
   (workflow_dispatch) và có secret.

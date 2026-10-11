@@ -1,5 +1,5 @@
 {
-  "_doc": "Ngưỡng nghiệm thu theo agent — CHỐT TRƯỚC khi chạy eval (không chỉnh sau khi thấy kết quả). Bản khởi đầu do dev soạn, CHƯA ĐƯỢC CÔNG TY DUYỆT: ngưỡng/người duyệt do công ty chốt. approvers rỗng = chưa có danh sách người duyệt thật (external-dep) -> scripts/deploy_gate.py từ chối MỌI deploy. chatbot min_pass_rate 0.85 trên 14 ca (10 fact + 4 bẫy bắt buộc) = tối đa trượt 2 fact, tương đương eval_qa >=10/12 + bẫy. freeze bao gồm cả 2 đầu (Asia/Saigon).",
+  "_doc": "Ngưỡng nghiệm thu theo agent — CHỐT TRƯỚC khi chạy eval (không chỉnh sau khi thấy kết quả). Bản khởi đầu do dev soạn, CHƯA ĐƯỢC CÔNG TY DUYỆT: ngưỡng/người duyệt do công ty chốt. approvers rỗng = chưa có danh sách người duyệt thật (external-dep) -> scripts/deploy_gate.py từ chối MỌI deploy. chatbot min_pass_rate 0.85 trên 14 ca (10 fact + 4 bẫy bắt buộc) = tối đa trượt 2 fact, tương đương eval_qa >=10/12 + bẫy. Lịch đóng băng KHÔNG nằm ở đây — từ v4.0 deploy_gate đọc data/freeze_calendar.json qua pipelines/freeze.py (1 nguồn lịch, có break-glass).",
   "agents": {
     "guardrail": {
       "cases": "data/eval/guardrail.jsonl",
@@ -27,6 +27,5 @@
     }
   },
   "required_agents": ["guardrail", "chatbot"],
-  "approvers": [],
-  "freeze": {"start": "2026-12-21", "end": "2027-02-10"}
+  "approvers": []
 }

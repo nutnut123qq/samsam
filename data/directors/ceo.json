@@ -1,0 +1,26 @@
+{
+  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES — khối chưa có vai trò riêng, TẠM map 'tgd' (external-dep: TGĐ chốt). approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store).",
+  "block": "ceo",
+  "name": "Tổng giám đốc + Hội đồng thành viên + Ban kiểm soát nội bộ",
+  "director_agent": "Agent Điều hành (Chief of Staff AI)",
+  "approver_roles": [
+    "tgd"
+  ],
+  "approvers": [],
+  "object_types": {
+    "weekly_report": {
+      "sla_hours": 48,
+      "risk": "medium"
+    },
+    "decision_record": {
+      "sla_hours": 48,
+      "risk": "medium"
+    },
+    "board_pack": {
+      "sla_hours": 72,
+      "risk": "high"
+    }
+  },
+  "digest_recipients": [],
+  "due_soon_hours": 8
+}

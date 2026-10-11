@@ -22,10 +22,11 @@ Thời gian luôn nhận tham số (`now`/`when`) — test không dùng đồng 
   (log sửa tay ghi 48h vẫn chỉ 4h), có record `close` trong
   [`opened_at`, `now`] → hết hiệu lực.
 
-Điểm nối sau khi gộp nhánh v3.5: `deploy_gate.check()` thay khối
-`cfg["freeze"]` bằng `freeze.check("hotfix" if hotfix else "feature",
-now=datetime.combine(today, time(12), VN_TZ))`; F17.5 bật lại agent dùng
-kind "restore".
+Điểm nối (đã nối v4.0): `scripts/deploy_gate.check()` gọi
+`freeze.check("hotfix" if hotfix else "feature", now)` — `now` là giờ
+THẬT khi chạy không `--today` (break-glass mở 14:00 có hiệu lực lúc
+15:00), `--today` → 12:00 VN ngày đó; key `freeze` của
+data/eval/config.json đã bỏ. F17.5 bật lại agent dùng kind "restore".
 """
 
 import json
@@ -41,6 +42,7 @@ VN_TZ = timezone(timedelta(hours=7))  # VN không DST — không cần tzdata
 # Dùng khi lịch hỏng (fail-closed): vẫn cho sửa khẩn/tắt/khôi phục.
 FALLBACK_ALLOWED = ("hotfix", "disable", "restore")
 DEFAULT_BG_MAX_HOURS = 4
+OUTSIDE_FREEZE = "ngoài khung đóng băng"  # lý do "cho qua bình thường"
 _DAY_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 _ALLOWED_TEXT = "chỉ hotfix/tắt agent/khôi phục"
 
@@ -254,7 +256,7 @@ def check(change_kind: str, now: datetime, calendar: dict | None = None,
                          f"{cal['known_kinds']}")
     w = frozen_window(now, cal)
     if w is None:
-        return True, "ngoài khung đóng băng"
+        return True, OUTSIDE_FREEZE
     span = f"{w['start']:%d/%m/%Y}–{w['end']:%d/%m/%Y} ({w['name']})"
     if change_kind in cal["allowed_in_freeze"]:
         return True, f"đang đóng băng {span} — '{change_kind}' được phép"
@@ -263,7 +265,8 @@ def check(change_kind: str, now: datetime, calendar: dict | None = None,
     bg = active_break_glass(windows, now, cal["break_glass_max_hours"])
     if bg is not None:
         exp = bg["expires_at"].astimezone(VN_TZ)
+        who = "" if bg.get("holder_verified") else " (người CHƯA xác minh)"
         return True, (f"đang đóng băng {span} — BREAK-GLASS mở bởi "
-                      f"{bg['by']} tới {exp:%H:%M %d/%m/%Y}")
+                      f"{bg['by']}{who} tới {exp:%H:%M %d/%m/%Y}")
     return False, (f"đang đóng băng {span}: {_ALLOWED_TEXT} — "
                    f"'{change_kind}' bị chặn")

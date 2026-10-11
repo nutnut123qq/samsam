@@ -85,7 +85,8 @@ def test_config_thresholds_and_trap_kinds():
     cfg = ae.load_config()
     assert cfg["required_agents"] == ["guardrail", "chatbot"]
     assert cfg["approvers"] == []  # external-dep: chưa ai được cấp quyền
-    assert cfg["freeze"] == {"start": "2026-12-21", "end": "2027-02-10"}
+    # v4.0: lịch đóng băng chỉ ở data/freeze_calendar.json (1 nguồn).
+    assert "freeze" not in cfg
     assert "người duyệt" in cfg["_doc"]
     for agent, acfg in cfg["agents"].items():
         _, cases = _rows(Path(acfg["cases"]).name)

@@ -56,3 +56,42 @@ grant execute on function
   verify_publish(text, text, text),
   verify_action_log()
   to app_human;
+
+-- v4.0 hàng duyệt dùng chung (WP03): agent đẩy việc + tự duyệt theo luật đã
+-- ký (fail-closed nếu không có) + đánh expired; người quyết/override QA.
+--   agent_writer — EXECUTE enqueue_item/auto_approve_item/expire_overdue;
+--                  SELECT approval_queue (CỘT metadata, KHÔNG payload)/
+--                  decisions (agent GĐ làm bản tin);
+--                  INSERT red_alerts (5 cột, + SELECT id cho RETURNING),
+--                  channel_snapshots (8 cột).
+--                  KHÔNG decide_item/override_qa, KHÔNG UPDATE/DELETE.
+--   app_human    — thêm SELECT approval_queue (đủ cột, gồm payload)/
+--                  auto_policies/channel_snapshots/red_alerts +
+--                  EXECUTE decide_item/override_qa. KHÔNG UPDATE/DELETE trực
+--                  tiếp (TGĐ/ha_tang là người = app_human → không xóa/sửa
+--                  được cảnh báo đỏ). auto_policies: chỉ owner ghi.
+-- agent_writer CHỈ đọc metadata hàng duyệt (bản tin GĐ không cần payload);
+-- payload 11 khối (pháp chế, tài chính, báo giá...) chỉ app_human đọc —
+-- mọi agent kể cả chatbot khách hàng KHÔNG đọc được (least privilege).
+grant select (id, object_type, object_id, block, title, risk, qa_status,
+  status, created_by, created_at, due_at, decided_by, decided_at, lane)
+  on approval_queue to agent_writer;
+grant select on decisions to agent_writer;
+grant insert (source_agent, title, detail, recipients, route_error)
+  on red_alerts to agent_writer;
+grant select (id) on red_alerts to agent_writer;  -- insert ... returning id
+grant insert (channel, metric_id, period_kind, period_start, value, source,
+  source_ref, captured_by)
+  on channel_snapshots to agent_writer;
+grant execute on function
+  enqueue_item(text, text, text, text, text, text, jsonb, text, text, int),
+  auto_approve_item(bigint),
+  expire_overdue(text)
+  to agent_writer;
+
+grant select on approval_queue, auto_policies, channel_snapshots,
+  red_alerts to app_human;
+grant execute on function
+  decide_item(bigint, text, text, text),
+  override_qa(bigint, text, text)
+  to app_human;

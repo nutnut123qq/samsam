@@ -8,14 +8,17 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import psycopg
+import pytest
 
 from agents import report as rep
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 UTC = timezone.utc
-S = datetime(2026, 10, 4, tzinfo=UTC)      # since
-U = datetime(2026, 10, 11, tzinfo=UTC)     # until_excl (kỳ tới 10/10)
+VN = timezone(timedelta(hours=7))
+# v4.0: kỳ cắt 00:00 giờ VN (trước đó 00:00 UTC).
+S = datetime(2026, 10, 4, tzinfo=VN)       # since
+U = datetime(2026, 10, 11, tzinfo=VN)      # until_excl (kỳ tới 10/10)
 PS = S - (U - S)                           # prev since = 2026-09-27
 
 
@@ -31,9 +34,10 @@ def _conv_rec(**kw):
 
 def test_period_bounds_date_until_is_end_inclusive():
     since, until = rep.period_bounds(7, date(2026, 10, 10))
-    assert since == datetime(2026, 10, 4, tzinfo=UTC)
-    # Ngày cuối kỳ inclusive → exclusive = hôm sau 00:00 UTC.
-    assert until == datetime(2026, 10, 11, tzinfo=UTC)
+    assert since == datetime(2026, 10, 4, tzinfo=VN)
+    # Ngày cuối kỳ inclusive → exclusive = hôm sau 00:00 giờ VN (v4.0 —
+    # trước là 00:00 UTC = 07:00 VN, lệch 7 giờ).
+    assert until == datetime(2026, 10, 11, tzinfo=VN)
     assert until.tzinfo is not None and since.tzinfo is not None
 
 
@@ -42,9 +46,11 @@ def test_period_bounds_default_and_datetime():
     assert until.tzinfo is not None
     assert until - since == timedelta(days=7)
     assert abs((datetime.now(UTC) - until).total_seconds()) < 60
-    # naive → coi UTC (DTZ001: cố ý tạo naive để test coerce).
+    # v4.0: naive → ValueError (luật "mix date local + giờ UTC" v2.4 —
+    # trước đây coi naive là UTC). DTZ001: cố ý tạo naive.
     naive = datetime(2026, 10, 11, 5, 30)  # noqa: DTZ001
-    assert rep.period_bounds(7, naive)[1] == naive.replace(tzinfo=UTC)
+    with pytest.raises(ValueError):
+        rep.period_bounds(7, naive)
     aware = datetime(2026, 10, 11, 5, 30, tzinfo=UTC)
     assert rep.period_bounds(7, aware)[1] == aware
 
@@ -58,6 +64,9 @@ def test_fmt_vnd():
 def test_report_name_deterministic():
     name = rep.report_name(S, U)
     assert name == "report-2026-10-04_2026-10-10.md"
+    assert rep.report_name(*rep.period_bounds(7, date(2026, 10, 10)))         == name
+    # Mốc UTC tương đương cùng tên (ngày lấy theo giờ VN).
+    assert rep.report_name(S.astimezone(UTC), U.astimezone(UTC)) == name
     assert rep.report_name(S, U) == name
     # Kỳ khác → tên khác (không đè lẫn nhau).
     assert rep.report_name(S - timedelta(days=7), S) != name
@@ -67,10 +76,11 @@ def test_report_name_deterministic():
 
 def test_collect_chat_period_filter_and_edges(tmp_path):
     inside = _conv_rec(msg_id="in", ts="2026-10-08T00:00:00Z")
-    edge_lo = _conv_rec(msg_id="lo", ts="2026-10-04T00:00:00Z",
+    # Biên theo giờ VN: 2026-10-03T17:00Z = 00:00 04/10 VN.
+    edge_lo = _conv_rec(msg_id="lo", ts="2026-10-03T17:00:00Z",
                         answered=False)          # biên dưới inclusive
-    edge_hi = _conv_rec(msg_id="hi", ts="2026-10-11T00:00:00Z")  # ngoài
-    before = _conv_rec(msg_id="bf", ts="2026-10-03T23:59:59Z")
+    edge_hi = _conv_rec(msg_id="hi", ts="2026-10-10T17:00:00Z")  # ngoài
+    before = _conv_rec(msg_id="bf", ts="2026-10-03T16:59:59Z")
     bad_ts = _conv_rec(msg_id="bt", ts="10/10/2026")
     str_false = _conv_rec(msg_id="sf", answered="false")  # truthy str
     lines = [json.dumps(r) for r in

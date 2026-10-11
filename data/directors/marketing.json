@@ -1,0 +1,26 @@
+{
+  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES. approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store).",
+  "block": "marketing",
+  "name": "Giám đốc marketing + Chuyên viên marketing + Chuyên viên SEO",
+  "director_agent": "MKT-00 Agent Giám đốc Marketing (điều phối, cân tải theo phút)",
+  "approver_roles": [
+    "gd_marketing"
+  ],
+  "approvers": [],
+  "object_types": {
+    "ad_campaign": {
+      "sla_hours": 24,
+      "risk": "high"
+    },
+    "listing_copy": {
+      "sla_hours": 48,
+      "risk": "medium"
+    },
+    "koc_brief": {
+      "sla_hours": 48,
+      "risk": "medium"
+    }
+  },
+  "digest_recipients": [],
+  "due_soon_hours": 8
+}
