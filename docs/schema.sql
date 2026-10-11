@@ -182,3 +182,21 @@ create table if not exists llm_usage (
 );
 
 create index if not exists llm_usage_agent_ts_idx on llm_usage (agent_id, ts);
+
+-- ============================================================================
+-- v3.7 ops monitoring (pipelines/job_runs.py): 1 dòng / lần chạy job lịch
+-- (ghi 1 INSERT lúc job kết thúc — process bị kill cứng thì không có dòng,
+-- bản tin sức khỏe báo "không chạy/trễ"). detail đã qua _mask_pii, cắt 300.
+-- ============================================================================
+
+create table if not exists job_runs (
+  id bigserial primary key,
+  job text not null,
+  started_at timestamptz not null,
+  finished_at timestamptz,
+  ok boolean,
+  detail text,
+  host text
+);
+
+create index if not exists job_runs_job_started_idx on job_runs (job, started_at);
