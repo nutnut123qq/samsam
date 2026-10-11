@@ -166,11 +166,16 @@ with tab_studio:
             if "ok" not in g:
                 st.warning("Guardrail: kết quả không đầy đủ "
                            "(snapshot thiếu key 'ok').")
-            for v in g.get("violations") or []:
-                if not isinstance(v, dict):
-                    continue
+            _viols = [v for v in (g.get("violations") or [])
+                      if isinstance(v, dict)]
+            for v in _viols:
                 st.error(f"**{v.get('type')}** — {v.get('detail')}"
                          + (f" → `{v['span']}`" if v.get("span") else ""))
+            # ok có mặt nhưng falsy + không violation chi tiết → vẫn
+            # báo VI PHẠM (parity _fmt_guardrail), không im câm.
+            if "ok" in g and not _viols:
+                st.error("Guardrail: VI PHẠM — không có chi tiết "
+                         "violation trong snapshot.")
         if g.get("matched_claims"):
             st.caption("Claim khớp whitelist: " + "; ".join(
                 f"{m.get('sku')}: {m.get('claim')}"

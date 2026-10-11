@@ -78,8 +78,11 @@ _PRICE_STOPS = ("đánh giá", "định giá", "giá trị")
 # "ở đâu" sau từ ngữ sinh học = hỏi phân bố cây (thông tin), không
 # phải hỏi địa điểm mua/liên hệ — veto riêng key "ở đâu" (các key
 # contact khác như "showroom"/"địa chỉ" vẫn match bình thường).
+# Lazy + chặn qua dấu câu cụm: chỉ nuốt span bio→'ở đâu' ĐẦU trong
+# cùng cụm — "trồng ở đâu bán ở đâu" hay "trồng ở Kon Tum, ở đâu
+# bán" vẫn giữ 'ở đâu' hỏi-địa-điểm phía sau (cold-check v2.4 MINOR).
 _WHERE_INFO_RE = re.compile(
-    r"(?:mọc|trồng|phân bố|sinh sống)[^.?!]{0,60}ở đâu")
+    r"(?:mọc|trồng|phân bố|sinh sống)[^.?!,;]{0,60}?ở đâu")
 
 
 def intent_of(question: str):
@@ -89,11 +92,12 @@ def intent_of(question: str):
     q_price = q
     for s in _PRICE_STOPS:
         q_price = q_price.replace(s, " ")
+    q_contact = _WHERE_INFO_RE.sub(" ", q)
     for intent, keys in INTENTS:
         for k in keys:
             if k not in (q_price if k == "giá" else q):
                 continue
-            if k == "ở đâu" and _WHERE_INFO_RE.search(q):
+            if k == "ở đâu" and "ở đâu" not in q_contact:
                 continue
             return intent
     return None

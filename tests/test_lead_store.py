@@ -61,6 +61,11 @@ def test_intent_false_positive_guards():
     # 'ở đâu' bị veto thì key contact khác vẫn match bình thường.
     assert ls.intent_of("showroom ở đâu") == "contact"
     assert ls.intent_of("địa chỉ cửa hàng ở đâu") == "contact"
+    # Recall giữ (cold-check đợt 1 MINOR): 'ở đâu' THỨ HAI/ngoài-cụm
+    # bio vẫn là hỏi-địa-điểm → không veto quá tay mất lead thật.
+    assert ls.intent_of("trồng ở đâu bán ở đâu") == "contact"
+    assert ls.intent_of("vườn sâm trồng ở Kon Tum, ở đâu bán") \
+        == "contact"
     # First-match giữ: 'mua' thắng trước nhánh contact.
     assert ls.intent_of("mua sâm ở đâu?") == "order"
 

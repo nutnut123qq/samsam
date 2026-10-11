@@ -1,6 +1,7 @@
-== v2.4-polish gate ==
-pytest targeted: tests/test_lead_store.py tests/test_store.py -> 36 passed
-pytest full: 194 passed in 23.86s
-ruff check . -> All checks passed
+== v2.4-polish gate (sau vá cold-check đợt 1) ==
+pytest full: 194 passed in 22.63s
+ruff check . -> clean
 git diff --check -> clean
-py_compile app/streamlit_app.py ingest/lead_store.py pipelines/store.py -> OK
+py_compile -> OK
+vá: _WHERE_INFO_RE lazy + chặn qua ,; — 'ở đâu' thứ hai/ngoài-cụm bio giữ contact (2 case reviewer vào test)
+vá NIT-2: _render_guardrail ok-falsy + violations rỗng -> error VI PHẠM (parity _fmt)
