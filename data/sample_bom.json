@@ -1,0 +1,14 @@
+{
+  "_doc": "MẪU — chờ GĐ SX/MKT cấp BOM hộp quà Tết thật (kèm vật tư bao bì: hộp, thiệp — chưa có ở version này). Mỗi combo: combo_key slug, name, channels (kênh bán của combo: golden CHANNELS hoặc 'offline'), items [{sku_key, qty}]. Luật: SKU thành phần phải có kênh online của combo trong allowed_channels golden; combo có rượu chỉ được kênh offline. Nạp: python -m pipelines.production bom --load data/sample_bom.json --source sample",
+  "status": "MẪU — số liệu và thành phần giả định, chưa phải BOM thật",
+  "combos": [
+    {"combo_key": "combo-saphraton-mat-ong-shopee", "name": "Combo Saphraton 20 viên + Mật ong sâm 120ml", "channels": ["shopee"], "items": [
+      {"sku_key": "saphraton-20v", "qty": 1},
+      {"sku_key": "mat-ong-sam-120ml-1hu", "qty": 1}
+    ]},
+    {"combo_key": "hop-qua-tet-sam-sam-mau", "name": "Hộp quà Tết Sâm Sâm (mẫu)", "channels": ["offline"], "items": [
+      {"sku_key": "saphraton-80v", "qty": 1},
+      {"sku_key": "mat-ong-sam-120ml-2hu", "qty": 1}
+    ], "note": "hộp/thiệp chưa có trong BOM — external-dep"}
+  ]
+}

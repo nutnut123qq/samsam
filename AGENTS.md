@@ -23,6 +23,8 @@ chat lẫn embeddings) + Streamlit.
 | Câu NO_DATA lặp (v3.9) | `python scripts/kb_gaps.py [--min 2] [--out file.md]` (0 LLM, nhãn sức khỏe/rượu = không bổ sung KB) |
 | Backup/diễn tập DB (v3.6) | `python scripts/db_backup.py` (env `BACKUP_DIR` ngoài repo) · `python scripts/db_restore_drill.py` (DB tạm, tự xóa) |
 | Kịch bản mùa (v7.3) | `python -m pipelines.scenario --sku <sku_key> --channel <kênh\|offline> --weeks 13 [--start YYYY-MM-DD] [--json]` (khoảng thấp/cơ sở/cao, thuần — giả định `data/scenario_assumptions.json` chờ GĐ KD/TC chốt) |
+| Tồn kho (v9.2) | `python -m ingest.inventory_csv --file <csv/xlsx> [--source manual_export\|sample]` (cột `sku_key,kho,qty,captured_at`; idempotent sha256, file lỗi exit 1 không nạp) |
+| Sản xuất P1 (v9.2) | `python -m pipelines.production allocate --cutoff <id>` · `approve\|reject --run <id> --by <tên>` · `bom --load <json>\|--check` · `lots --load <json>` · `intake --lot <mã> --result passed\|failed --by <tên>` · `bulletin` (chỉ đề xuất — không chuyển kho/lệnh SX; mốc `data/production_config.json` GIẢ ĐỊNH) |
 | Persona giả lập (v7.3) | `python scripts/persona_sim.py --dry-run` (số giả, ghi `sim_runs`); không cờ = exit 2 tới khi DPIA ký (`data/sim_config.json` `dpia_signed`, CHỈ người thật đổi) |
 | Bảng kê Phụ lục A | `python scripts/data_audit.py` (output → `docs/phu-luc-a.md`) |
 | Demo UI | `streamlit run app/streamlit_app.py` (hoặc `python demo.py`) |

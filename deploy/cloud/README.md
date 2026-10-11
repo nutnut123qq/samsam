@@ -3,7 +3,7 @@
 - **Dành cho ai:** Quản lý hạ tầng AI (hoặc đội triển khai khi chưa tuyển
   xong), người được TGĐ giao mở tài khoản cloud.
 - **Làm gì:** chọn nhà cung cấp Postgres managed trong nước, nối app vào
-  bằng TLS, đưa đủ 25 bảng lên, bật backup + diễn tập khôi phục.
+  bằng TLS, đưa đủ 30 bảng lên, bật backup + diễn tập khôi phục.
 - **Cần gì (external-dep — công ty cấp, repo này KHÔNG giả lập):** tài
   khoản + thẻ thanh toán nhà cung cấp; bật PITR/WAL; object storage
   S3-compatible + key; khóa mã hóa backup trong secret manager; VM ứng
@@ -62,14 +62,14 @@ Người làm 1 lần trên console: bật PITR/WAL, đặt retention WAL, đọ
 cấu hình để kiểm, lưu biên bản. Diễn tập PITR ra instance tạm của nhà
 cung cấp (mốc 30/11 và 18/12), đo RTO, xóa instance sau khi đo.
 
-## 4. Đưa 25 bảng lên cloud
+## 4. Đưa 30 bảng lên cloud
 
 Chọn 1 trong 2 đường cho từng bảng.
 
 ### Đường A — dựng mới từ nguồn trong repo
 
 ```
-python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ 25 bảng
+python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ 30 bảng
 python -m ingest.core_store         # products, claims_approved, plots, plot_logs, orders, assets
 python -m ingest.golden_store       # sku_master, sku_map, price_list, golden_discrepancies
 python -m ingest.embed_store        # chunks (gọi API embed — tốn phí)
@@ -82,7 +82,7 @@ Bảng sinh lúc chạy bắt đầu RỖNG theo đường A: `leads`, `content_
 ### Đường B — mang dữ liệu đang có
 
 ```
-python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts 25 bảng)
+python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts 30 bảng)
 pg_restore --no-owner --no-privileges --exit-on-error -d samsam <file .dump>   # vào DB cloud rỗng (PG* env, sslmode=require)
 ```
 
@@ -116,6 +116,11 @@ bảng nào thì dừng, không bật app.
 | `chunks_internal` | B | tài liệu nội bộ đã duyệt (`approved_by` người thật) |
 | `approvals` | B | append-only, quyết định duyệt + sha256 — không dựng lại được |
 | `agent_action_log` | B | hash chain — CHỈ đường B giữ được chuỗi; sau restore chạy `python -m pipelines.store --verify-log` |
+| `inventory_snapshots` | A (nạp lại file kho) hoặc B | tồn thành phẩm (v9.2) — repo chỉ có file MẪU, số thật theo đường B |
+| `allocation_proposals` | B | đề xuất phân bổ + quyết định GĐ SX — dựng lại sẽ mất lịch sử duyệt |
+| `bom_combos` | A (nạp lại file BOM) hoặc B | combo/hộp quà (v9.2) |
+| `bom_items` | A hoặc B | thành phần combo |
+| `production_lots` | B | hồ sơ lô + trạng thái kiểm nhập — không dựng lại được |
 | `sim_runs` | B | nghiên cứu giả lập persona (v7.3) — lịch sử chạy model/prompt/seed để kiểm toán, không PII |
 
 ## 5. Backup + diễn tập trên cloud (mẫu — external-dep)

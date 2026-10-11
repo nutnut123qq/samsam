@@ -1,0 +1,12 @@
+{
+  "_doc": "Cấu hình Sản xuất P1 (v9.2, WP13) cho pipelines/production.py. GIẢ ĐỊNH — 4 mốc chốt phân bổ và SLA do team triển khai đề xuất theo pmo.md WP13, chờ GĐ sản xuất chốt (NGƯỜI đổi 'status' khi chốt). cutoffs[].date = ngày chốt phân bổ; covers_until = nhu cầu tính tới ngày này (scenario.project). sla_hours = mục chờ duyệt quá hạn -> bản tin ghi 'đề xuất chuyển TGĐ'; remind_hours = mốc nhắc. Agent chỉ ĐỀ XUẤT: không chuyển kho, không đặt mua, không lệnh sản xuất.",
+  "status": "GIẢ ĐỊNH — chờ GĐ sản xuất chốt",
+  "cutoffs": [
+    {"id": "chot_11_11", "date": "2026-10-25", "covers_until": "2026-11-15", "label": "phân bổ TỒN HIỆN CÓ cho online 11.11 — không đề xuất sản xuất mới"},
+    {"id": "ke_hoach_tet", "date": "2026-11-01", "covers_until": "2027-02-14", "label": "kế hoạch hàng Tết 2027 (nhìn tồn hiện có so với nhu cầu tới sau Tết)"},
+    {"id": "chot_12_12", "date": "2026-11-15", "covers_until": "2026-12-20", "label": "phân bổ cho online 12.12"},
+    {"id": "chot_tet", "date": "2026-12-10", "covers_until": "2027-02-14", "label": "chốt phân bổ hàng Tết 2027 theo kênh"}
+  ],
+  "sla_hours": 48,
+  "remind_hours": 24
+}

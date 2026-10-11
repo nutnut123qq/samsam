@@ -58,9 +58,9 @@ Streamlit demo.
 | Thư mục/file | Vai trò |
 |---|---|
 | `crawler/` | `collect` — crawl site public → `data/*.jsonl` (delay ≥1s/request) |
-| `ingest/` | `embed_store` (chunk+embed→`chunks`), `core_store` (nạp DB lõi, delete-by-source idempotent), `lead_store` (convlog→`leads`, insert-only) |
+| `ingest/` | `embed_store` (chunk+embed→`chunks`), `core_store` (nạp DB lõi, delete-by-source idempotent), `lead_store` (convlog→`leads`, insert-only), `inventory_csv.py` (v9.2 — `python -m ingest.inventory_csv`: nạp file tồn kho xuất tay → `inventory_snapshots`, validate trước connect, idempotent sha256, append-only; `current_stock` = snapshot mới nhất mỗi SKU×kho) |
 | `api/` | `rag.py` — `answer()` RAG: retrieve top-8 `chunks` bằng cosine numpy → LLM + nguồn; `NO_DATA` khi score thấp |
-| `pipelines/` | `guardrail.py` (banned words + claim whitelist — check trước mọi output AI), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py`, `scenario.py` (v7.3 — engine kịch bản mùa THUẦN dùng chung cho KD-A10 dự báo mùa / SX-A3 phân bổ tồn / FP-Cash 13 tuần: baseline SKU×kênh×tuần × xu hướng × hệ số 11.11/12.12/Tết 2027 → khoảng thấp/cơ sở/cao; rượu = 0 kênh online; giả định `data/scenario_assumptions.json`) |
+| `pipelines/` | `guardrail.py` (banned words + claim whitelist — check trước mọi output AI), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py`, `scenario.py` (v7.3 — engine kịch bản mùa THUẦN dùng chung cho KD-A10 dự báo mùa / SX-A3 phân bổ tồn / FP-Cash 13 tuần: baseline SKU×kênh×tuần × xu hướng × hệ số 11.11/12.12/Tết 2027 → khoảng thấp/cơ sở/cao; rượu = 0 kênh online; giả định `data/scenario_assumptions.json`), `production.py` (v9.2 — `python -m pipelines.production`: SX-A3 phân bổ tồn theo mốc chốt — nhu cầu GỌI `scenario.project()`, không engine thứ 2, rượu 0 online; SX-A4 BOM combo/hộp quà kiểm luật kênh theo golden; SX-A5 hồ sơ lô + kiểm nhập `--by`, `qr_payload()` điểm nối QR v9.4; SX-A0 bản tin tuần SLA 48h — 0 LLM, chỉ đề xuất) |
 | `connectors/` | `zalo.py` — webhook Zalo OA: verify signature, ACK 200 nhanh rồi reply async, dedup msg_id, token store + auto-refresh; **chỉ reply inbox** |
 | `agents/` | `report.py` (báo cáo định kỳ → file md), `garden.py` (nhật ký vùng trồng + cảnh báo) — không LLM, không tự gửi |
 | `app/` | `streamlit_app.py` — UI 7 tab (mục 4) |
@@ -68,7 +68,7 @@ Streamlit demo.
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 25 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 30 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
@@ -96,6 +96,11 @@ Streamlit demo.
 | `job_runs` | 1 dòng/lần chạy job lịch (`job`,`started_at`,`finished_at`,`ok`,`detail` đã mask cắt 300,`host`) — bản tin sức khỏe đọc để báo job lỗi/không chạy | `pipelines.job_runs.job_run` (bọc `__main__` của `agents.report`, `ingest.lead_store`) — insert-only |
 | `documents` | Tài liệu số hóa (`sha256` PK = tên bản gốc bất biến `originals/<sha256>`,`doc_type`,`pages`,`text_source` pdf_text/ocr/none,`pii_flag`,`status` cho_ocr/pending_review/verified/rejected,`verified_by`) — KHÔNG lưu full text | `ingest.doc_intake` — insert-only theo hash; status verified/rejected chỉ do Pháp chế qua CLI `--verify/--reject --by` |
 | `document_fields` | Field pháp lý trích bằng regex (`so_giay`,`ngay_cap`,`ten_san_pham`; `confidence`,`verified` mặc định false) | `ingest.doc_intake` — không LLM; `verified=true` khi Pháp chế `--verify` |
+| `inventory_snapshots` | (v9.2) Tồn thành phẩm theo `sku_key` × `kho` (slug) × `captured_at`, `qty`, `source` manual_export/sample, `file_name`, `file_sha256`+`row_no` UNIQUE — append-only, không PII | `python -m ingest.inventory_csv --file ...` (file kho xuất tay thứ Sáu; repo chỉ có MẪU) |
+| `allocation_proposals` | (v9.2) Đề xuất phân bổ NHÁP: `run_id` (sha256 input), `cutoff_id`/`cutoff_date`, `start_week`, SKU × kênh, `stock_total` (null = chưa có số tồn), `demand_low/base/high` (từ `scenario.project`), `proposed_qty`, `note`, `status` pending/approved/rejected + `decided_by` (check: pending ⇔ chưa có người quyết) | `pipelines.production allocate` ghi pending; GĐ SX `approve`/`reject --by` (+`approvals`, hash chain) — không chuyển kho |
+| `bom_combos` | (v9.2) Combo/hộp quà: `combo_key`, `name` (qua guardrail), `channels` (kênh bán), `source` manual/sample, `note` | `pipelines.production bom --load` (sample không đè manual) |
+| `bom_items` | (v9.2) Thành phần combo: `combo_key` FK, `sku_key`, `qty` > 0 | `bom --load` thay toàn bộ items của combo trong file; `bom --check` kiểm lại theo golden hiện tại |
+| `production_lots` | (v9.2) Hồ sơ lô: `lot_code`, `sku_key`, `mfg_date`, `exp_date` (check `exp_date > mfg_date`), `qty`, `intake_status` pending/passed/failed, `checked_by`/`checked_at` (check: pending ⇔ chưa có người kiểm), `source`, `note` | `pipelines.production lots --load` (không ghi đè lô đã có); người kiểm nhập `intake --by` (+`approvals`, hash chain) |
 | `sim_runs` | (v7.3) Nghiên cứu giả lập persona TỔNG HỢP: 1 dòng = 1 lời gọi LLM (`model`,`provider`,`model_version`,`prompt_id`,`prompt_hash`,`sample_idx`,`temperature`,`seed`,`seed_supported`) × 1 phương án (`option_id`,`is_control` đối chứng yếu,`score` 0..10 hoặc null,`parse_ok`,`guardrail_ok`) + `run_id`,`run_date`,`persona_set`/`persona_set_hash`,`dry_run` — KHÔNG PII, KHÔNG văn bản LLM thô | `scripts/persona_sim.py` — insert-only; chạy thật chỉ sau DPIA ký, `--dry-run` = số giả |
 
 View (v3.2): `sku_readiness` (SKU × kênh online → `CAM` / `MO_TA` /
@@ -152,6 +157,9 @@ idempotent theo kỳ (cùng kỳ → cùng tên file ghi đè).
 | Zalo OA | Chỉ TRẢ LỜI tin nhắn đến (reply), không chủ động nhắn, không đăng OA | — |
 | Bổ sung KB/claim | `core_store`/`embed_store` nạp lại khi được chạy | Soạn file nguồn + chạy lệnh nạp |
 | Giả định kịch bản mùa (v7.3) | `pipelines.scenario` tính khoảng thấp/cơ sở/cao từ `data/scenario_assumptions.json` (`status` "GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt"; baseline là fixture) — không phải doanh số cam kết | GĐ KD/Tài chính chốt hệ số + 3 mức, đổi `status`; GĐ bán hàng cấp số bán thật |
+| Duyệt phân bổ tồn (v9.2) | `pipelines.production allocate` ghi đề xuất `pending` (khoảng thấp/cơ sở/cao, không phải doanh số cam kết) — agent không chuyển kho/đặt mua/lệnh sản xuất | GĐ sản xuất `approve`/`reject --run <id> --by <tên>` → function DB `decide_allocation_run` (SECURITY DEFINER) ghi `approvals` + `agent_action_log` hash chain; chuyển kho tay theo quyết định |
+| Duyệt BOM + chốt mốc/SLA (v9.2) | `bom --load`/`--check` kiểm luật kênh golden + tên qua guardrail; mốc + SLA ở `data/production_config.json` (`status` GIẢ ĐỊNH) | GĐ SX/MKT cấp + duyệt BOM hộp quà thật; GĐ SX chốt 4 mốc + SLA rồi đổi `status` |
+| Kiểm nhập lô (v9.2) | `production_lots` chặn hạn dùng ≤ ngày SX; lô mới luôn `pending`; bản tin nhắc lô chờ ≥ 24h, quá 48h ghi "đề xuất chuyển TGĐ" | Người kiểm nhập `intake --lot <mã> --result passed\|failed --by <tên>` → function DB `record_lot_intake` (SECURITY DEFINER) ghi `approvals` + hash chain |
 | Nghiên cứu giả lập persona (v7.3) | `scripts/persona_sim.py` từ chối chạy thật (exit 2) khi `data/sim_config.json` `dpia_signed` khác `true`; báo cáo khoảng p10/p50/p90 có nhãn "KHÔNG phải dự báo doanh số" | Pháp chế + TGĐ ký DPIA/TIA rồi NGƯỜI đổi `dpia_signed`; Quản lý MXH duyệt báo cáo, TGĐ/BKS đồng ký biên bản |
 
 ## 6b. Phân quyền & đăng nhập (v3.4)
@@ -162,7 +170,7 @@ idempotent theo kỳ (cùng kỳ → cùng tên file ghi đè).
 | Role | Được | Không được |
 |---|---|---|
 | `agent_writer` (agent AI) | SELECT `content_drafts`; INSERT draft 6 cột (`brief`,`channel`,`text`,`guardrail`,`source`,`created_by` → luôn `pending`); INSERT log 5 cột | UPDATE/DELETE mọi bảng (không tự duyệt được — `permission denied`), `approvals`, bảng khác, function duyệt |
-| `app_human` (người: Streamlit/CLI) | Kế thừa `agent_writer` + SELECT `approvals`/`agent_action_log` + EXECUTE `approve_draft`, `reject_draft`, `schedule_draft`, `verify_publish`, `verify_action_log` | UPDATE/DELETE trực tiếp |
+| `app_human` (người: Streamlit/CLI) | Kế thừa `agent_writer` + SELECT `approvals`/`agent_action_log` + EXECUTE `approve_draft`, `reject_draft`, `schedule_draft`, `verify_publish`, `verify_action_log`, `decide_allocation_run`, `record_lot_intake` (v9.2) — KHÔNG INSERT `approvals` (không role nào được grant: `verify_publish` tin bảng này) | UPDATE/DELETE trực tiếp |
 
 Giới hạn pilot: máy local vẫn chạy bằng DSN owner — chặn quyền chỉ có
 hiệu lực khi app/agent dùng DSN theo role. CHƯA chuyển DSN Streamlit/agent

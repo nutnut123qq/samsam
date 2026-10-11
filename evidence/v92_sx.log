@@ -1,0 +1,591 @@
+# v9.2-sx-ton-bom-lo evidence — 2026-10-11T21:25Z (DB riêng samsam_infra)
+
+## W92.1 schema
+$ python scripts/apply_schema.py
+[done] schema applied — 30 bảng public: agent_action_log, allocation_proposals, approvals, assets, bom_combos, bom_items, chunks, chunks_internal, claims_approved, content_drafts, document_fields, documents, eval_runs, golden_discrepancies, inventory_snapshots, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, production_lots, products, sim_runs, sku_map, sku_master
+[exit 0]
+
+$ python scripts/apply_schema.py
+[done] schema applied — 30 bảng public: agent_action_log, allocation_proposals, approvals, assets, bom_combos, bom_items, chunks, chunks_internal, claims_approved, content_drafts, document_fields, documents, eval_runs, golden_discrepancies, inventory_snapshots, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, production_lots, products, sim_runs, sku_map, sku_master
+[exit 0]
+
+$ grep -c '^create table if not exists' docs/schema.sql
+30
+$ sed -n '/v9.2 Sản xuất P1/,$p' docs/schema.sql | grep -niE 'phone|email|address|order_id|buyer|user_hash'
+[exit 1 — 1 = không trúng]
+
+## W92.2 nạp tồn
+$ python -m ingest.inventory_csv --file data/sample_inventory.csv --source sample
+[load] [MẪU] sample_inventory.csv: 16 dòng tồn (2 kho, 12 SKU) — chỉ ghi snapshot, không sửa tồn/chuyển kho.
+[done]
+[exit 0]
+
+$ python -m ingest.inventory_csv --file data/sample_inventory.csv --source sample
+[skip] file đã nạp (16 dòng) — không ghi gì.
+[exit 0]
+
+$ python -m ingest.inventory_csv --file C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/w73_bad_inventory.csv
+[err] dòng 2: kho (phải là slug ascii a-z0-9-); qty (số nguyên 0..2000000000); captured_at (trong 2000-01-01..hôm nay)
+[err] dòng 3: sku_key (không có trong golden); qty (số nguyên 0..2000000000)
+[err] 2 lỗi — không connect, không nạp gì.
+[exit 1]
+
+$ grep -rniE 'update inventory_snapshots|delete from inventory_snapshots' ingest/ pipelines/ scripts/
+[exit 1 — 1 = rỗng]
+
+## W92.3 phân bổ
+$ grep -nE 'from pipelines import scenario|from pipelines\.scenario import|import pipelines\.scenario' pipelines/production.py
+49:from pipelines import scenario  # engine kịch bản mùa dùng chung (v7.3)
+[exit 0]
+$ grep -nE 'scenario_assumptions|baseline|trend|lunar_new_year' pipelines/production.py
+[exit 1 — 1 = rỗng]
+$ python -m pipelines.production allocate --cutoff chot_11_11 --start 2026-10-12
+Giả định kịch bản: GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt · Cấu hình mốc: GIẢ ĐỊNH — chờ GĐ sản xuất chốt
+Khoảng thấp/cơ sở/cao — KHÔNG phải doanh số cam kết; ĐỀ XUẤT chờ GĐ sản xuất duyệt — không tự chuyển kho
+[MẪU] tồn kho từ dữ liệu mẫu (source='sample') — chưa phải số thật
+Mốc chot_11_11 (2026-10-25, nhu cầu tới 2026-11-15): phân bổ TỒN HIỆN CÓ cho online 11.11 — không đề xuất sản xuất mới
+chỉ phân bổ tồn hiện có — không đề xuất sản xuất mới. Tuần bắt đầu 2026-10-12 · run 368810aa0bf9
+[draft] 91 dòng pending trong allocation_proposals — chờ duyệt: approve/reject --run 368810aa0bf9 --by <tên>
+SKU | kênh | thấp | cơ sở | cao | đề xuất | ghi chú
+da-an-sam-30v | shopee | 21 | 30 | 41 | 30 | RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+da-an-sam-30v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+da-an-sam-30v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+da-an-sam-30v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+da-an-sam-30v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+da-an-sam-30v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+da-an-sam-30v | offline | 5 | 10 | 15 | 10 | RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | shopee | 64 | 89 | 120 | 89 | RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | offline | 40 | 50 | 60 | 50 | RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao; dự phòng chưa phân bổ 11
+mat-ong-sam-120ml-2hu | shopee | 26 | 36 | 48 | 36 | RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+mat-ong-sam-120ml-2hu | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+mat-ong-sam-120ml-2hu | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+mat-ong-sam-120ml-2hu | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+mat-ong-sam-120ml-2hu | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+mat-ong-sam-120ml-2hu | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+mat-ong-sam-120ml-2hu | offline | 15 | 20 | 25 | 20 | RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao; dự phòng chưa phân bổ 14
+mat-ong-sam-300ml | shopee | 32 | 47 | 65 | 0 | chưa có số tồn — không kết luận thiếu
+mat-ong-sam-300ml | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); chưa có số tồn — không kết luận thiếu
+mat-ong-sam-300ml | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); chưa có số tồn — không kết luận thiếu
+mat-ong-sam-300ml | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); chưa có số tồn — không kết luận thiếu
+mat-ong-sam-300ml | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); chưa có số tồn — không kết luận thiếu
+mat-ong-sam-300ml | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); chưa có số tồn — không kết luận thiếu
+mat-ong-sam-300ml | offline | 25 | 30 | 35 | 0 | chưa có số tồn — không kết luận thiếu
+ruou-sam-binh-su-do-500ml | shopee | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | tiktok | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | web | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | facebook | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | zalo | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | chatbot | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | offline | 10 | 15 | 20 | 12 | THIẾU (cơ sở) 3
+ruou-sam-chai-thuy-tinh-500ml | shopee | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | tiktok | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | web | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | facebook | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | zalo | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | chatbot | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | offline | 25 | 30 | 35 | 30 | dự phòng chưa phân bổ 10
+sapentol-30v | shopee | 16 | 23 | 33 | 21 | THIẾU (cơ sở) 3
+sapentol-30v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+sapentol-30v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+sapentol-30v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+sapentol-30v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+sapentol-30v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+sapentol-30v | offline | 10 | 15 | 20 | 14 | THIẾU (cơ sở) 3
+saphraton-20v | shopee | 53 | 71 | 95 | 45 | THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-20v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-20v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-20v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-20v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-20v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-20v | offline | 30 | 40 | 50 | 25 | THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-40v | shopee | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-40v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-40v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-40v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-40v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-40v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-40v | offline | 20 | 25 | 30 | 25 | RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-80v | shopee | 11 | 17 | 26 | 13 | THIẾU (cơ sở) 7
+saphraton-80v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 7
+saphraton-80v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 7
+saphraton-80v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 7
+saphraton-80v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 7
+saphraton-80v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 7
+saphraton-80v | offline | 10 | 15 | 20 | 12 | THIẾU (cơ sở) 7
+saphraton-combo-2x20v | shopee | 16 | 23 | 33 | 21 | THIẾU (cơ sở) 3
+saphraton-combo-2x20v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+saphraton-combo-2x20v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+saphraton-combo-2x20v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+saphraton-combo-2x20v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+saphraton-combo-2x20v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+saphraton-combo-2x20v | offline | 5 | 10 | 15 | 9 | THIẾU (cơ sở) 3
+savigout-30v | shopee | 21 | 30 | 41 | 30 | RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savigout-30v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savigout-30v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savigout-30v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savigout-30v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savigout-30v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savigout-30v | offline | 10 | 15 | 20 | 15 | RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savina-12v | shopee | 26 | 36 | 48 | 36 | RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+savina-12v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+savina-12v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+savina-12v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+savina-12v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+savina-12v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+savina-12v | offline | 15 | 20 | 25 | 20 | RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao; dự phòng chưa phân bổ 4
+Cảnh báo thiếu (12 SKU):
+- da-an-sam-30v: tồn 40 — RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+- mat-ong-sam-120ml-1hu: tồn 150 — RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+- mat-ong-sam-120ml-2hu: tồn 70 — RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+- mat-ong-sam-300ml: tồn None — chưa có số tồn — không kết luận thiếu
+- ruou-sam-binh-su-do-500ml: tồn 12 — THIẾU (cơ sở) 3
+- sapentol-30v: tồn 35 — THIẾU (cơ sở) 3
+- saphraton-20v: tồn 70 — THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+- saphraton-40v: tồn 25 — RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+- saphraton-80v: tồn 25 — THIẾU (cơ sở) 7
+- saphraton-combo-2x20v: tồn 30 — THIẾU (cơ sở) 3
+- savigout-30v: tồn 45 — RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+- savina-12v: tồn 60 — RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+[exit 0]
+
+$ python -m pipelines.production allocate --cutoff chot_11_11 --start 2026-10-12
+Giả định kịch bản: GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt · Cấu hình mốc: GIẢ ĐỊNH — chờ GĐ sản xuất chốt
+Khoảng thấp/cơ sở/cao — KHÔNG phải doanh số cam kết; ĐỀ XUẤT chờ GĐ sản xuất duyệt — không tự chuyển kho
+[MẪU] tồn kho từ dữ liệu mẫu (source='sample') — chưa phải số thật
+Mốc chot_11_11 (2026-10-25, nhu cầu tới 2026-11-15): phân bổ TỒN HIỆN CÓ cho online 11.11 — không đề xuất sản xuất mới
+chỉ phân bổ tồn hiện có — không đề xuất sản xuất mới. Tuần bắt đầu 2026-10-12 · run 368810aa0bf9
+[skip] run đã có (91 dòng) — không ghi thêm.
+SKU | kênh | thấp | cơ sở | cao | đề xuất | ghi chú
+da-an-sam-30v | shopee | 21 | 30 | 41 | 30 | RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+da-an-sam-30v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+da-an-sam-30v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+da-an-sam-30v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+da-an-sam-30v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+da-an-sam-30v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+da-an-sam-30v | offline | 5 | 10 | 15 | 10 | RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | shopee | 64 | 89 | 120 | 89 | RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | offline | 40 | 50 | 60 | 50 | RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao; dự phòng chưa phân bổ 11
+mat-ong-sam-120ml-2hu | shopee | 26 | 36 | 48 | 36 | RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+mat-ong-sam-120ml-2hu | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+mat-ong-sam-120ml-2hu | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+mat-ong-sam-120ml-2hu | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+mat-ong-sam-120ml-2hu | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+mat-ong-sam-120ml-2hu | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+mat-ong-sam-120ml-2hu | offline | 15 | 20 | 25 | 20 | RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao; dự phòng chưa phân bổ 14
+mat-ong-sam-300ml | shopee | 32 | 47 | 65 | 0 | chưa có số tồn — không kết luận thiếu
+mat-ong-sam-300ml | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); chưa có số tồn — không kết luận thiếu
+mat-ong-sam-300ml | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); chưa có số tồn — không kết luận thiếu
+mat-ong-sam-300ml | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); chưa có số tồn — không kết luận thiếu
+mat-ong-sam-300ml | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); chưa có số tồn — không kết luận thiếu
+mat-ong-sam-300ml | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); chưa có số tồn — không kết luận thiếu
+mat-ong-sam-300ml | offline | 25 | 30 | 35 | 0 | chưa có số tồn — không kết luận thiếu
+ruou-sam-binh-su-do-500ml | shopee | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | tiktok | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | web | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | facebook | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | zalo | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | chatbot | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | offline | 10 | 15 | 20 | 12 | THIẾU (cơ sở) 3
+ruou-sam-chai-thuy-tinh-500ml | shopee | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | tiktok | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | web | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | facebook | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | zalo | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | chatbot | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | offline | 25 | 30 | 35 | 30 | dự phòng chưa phân bổ 10
+sapentol-30v | shopee | 16 | 23 | 33 | 21 | THIẾU (cơ sở) 3
+sapentol-30v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+sapentol-30v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+sapentol-30v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+sapentol-30v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+sapentol-30v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+sapentol-30v | offline | 10 | 15 | 20 | 14 | THIẾU (cơ sở) 3
+saphraton-20v | shopee | 53 | 71 | 95 | 45 | THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-20v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-20v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-20v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-20v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-20v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-20v | offline | 30 | 40 | 50 | 25 | THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-40v | shopee | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-40v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-40v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-40v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-40v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-40v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-40v | offline | 20 | 25 | 30 | 25 | RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-80v | shopee | 11 | 17 | 26 | 13 | THIẾU (cơ sở) 7
+saphraton-80v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 7
+saphraton-80v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 7
+saphraton-80v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 7
+saphraton-80v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 7
+saphraton-80v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 7
+saphraton-80v | offline | 10 | 15 | 20 | 12 | THIẾU (cơ sở) 7
+saphraton-combo-2x20v | shopee | 16 | 23 | 33 | 21 | THIẾU (cơ sở) 3
+saphraton-combo-2x20v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+saphraton-combo-2x20v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+saphraton-combo-2x20v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+saphraton-combo-2x20v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+saphraton-combo-2x20v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); THIẾU (cơ sở) 3
+saphraton-combo-2x20v | offline | 5 | 10 | 15 | 9 | THIẾU (cơ sở) 3
+savigout-30v | shopee | 21 | 30 | 41 | 30 | RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savigout-30v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savigout-30v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savigout-30v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savigout-30v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savigout-30v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savigout-30v | offline | 10 | 15 | 20 | 15 | RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savina-12v | shopee | 26 | 36 | 48 | 36 | RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+savina-12v | tiktok | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+savina-12v | web | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+savina-12v | facebook | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+savina-12v | zalo | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+savina-12v | chatbot | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+savina-12v | offline | 15 | 20 | 25 | 20 | RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao; dự phòng chưa phân bổ 4
+Cảnh báo thiếu (12 SKU):
+- da-an-sam-30v: tồn 40 — RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+- mat-ong-sam-120ml-1hu: tồn 150 — RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+- mat-ong-sam-120ml-2hu: tồn 70 — RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+- mat-ong-sam-300ml: tồn None — chưa có số tồn — không kết luận thiếu
+- ruou-sam-binh-su-do-500ml: tồn 12 — THIẾU (cơ sở) 3
+- sapentol-30v: tồn 35 — THIẾU (cơ sở) 3
+- saphraton-20v: tồn 70 — THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+- saphraton-40v: tồn 25 — RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+- saphraton-80v: tồn 25 — THIẾU (cơ sở) 7
+- saphraton-combo-2x20v: tồn 30 — THIẾU (cơ sở) 3
+- savigout-30v: tồn 45 — RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+- savina-12v: tồn 60 — RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+[exit 0]
+
+$ python -m pipelines.production allocate --cutoff khong_co
+[err] không có mốc 'khong_co' trong config (chot_11_11, ke_hoach_tet, chot_12_12, chot_tet)
+[exit 1]
+
+## W92.4 BOM
+$ python -m pipelines.production bom --load data/sample_bom.json --source sample
+[load] [MẪU] 2 combo ghi (items thay toàn bộ)
+[exit 0]
+
+$ python -m pipelines.production bom --check
+[MẪU] 2 combo — số combo làm được tính trên tồn CHƯA trừ phân bổ — tham khảo:
+- combo-saphraton-mat-ong-shopee [shopee]: 70
+- hop-qua-tet-sam-sam-mau [offline]: 25
+[ok] BOM khớp luật kênh golden hiện tại.
+[exit 0]
+
+## W92.5 lô
+$ python -m pipelines.production lots --load data/sample_lots.json --source sample
+[load] [MẪU] 3 lô mới (pending — chờ người kiểm nhập)
+[exit 0]
+
+$ python -m pipelines.production lots --load data/sample_lots.json --source sample
+[load] [MẪU] 0 lô mới (pending — chờ người kiểm nhập)
+[skip] 3 lô đã có — không ghi đè.
+[exit 0]
+
+$ python -m pipelines.production intake --lot MAU-SAP20-260901 --result passed
+usage: python -m pipelines.production intake [-h] --lot LOT --result
+                                             {passed,failed} --by BY
+                                             [--note NOTE]
+python -m pipelines.production intake: error: the following arguments are required: --by
+[exit 2]
+
+## W92.6 bản tin
+$ python -m pipelines.production bulletin --date 2026-10-12
+# Bản tin Sản xuất tuần — 2026-10-12
+
+Cấu hình mốc/SLA: GIẢ ĐỊNH — chờ GĐ sản xuất chốt
+[MẪU] Có dữ liệu mẫu (source='sample') — số liệu chưa phải thật.
+KHÔNG phải doanh số cam kết — agent chỉ đề xuất; không chuyển kho, không đặt mua, không lệnh sản xuất.
+
+## Thiếu hàng theo mốc chốt
+Nguồn: `allocation_proposals` (run mới nhất mỗi mốc).
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · da-an-sam-30v: tồn 40, cơ sở 40 (thấp 26, cao 56) — RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · mat-ong-sam-120ml-1hu: tồn 150, cơ sở 139 (thấp 104, cao 180) — RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · mat-ong-sam-120ml-2hu: tồn 70, cơ sở 56 (thấp 41, cao 73) — RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · ruou-sam-binh-su-do-500ml: tồn 12, cơ sở 15 (thấp 10, cao 20) — THIẾU (cơ sở) 3
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · sapentol-30v: tồn 35, cơ sở 38 (thấp 26, cao 53) — THIẾU (cơ sở) 3
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · saphraton-20v: tồn 70, cơ sở 111 (thấp 83, cao 145) — THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · saphraton-40v: tồn 25, cơ sở 25 (thấp 20, cao 30) — RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · saphraton-80v: tồn 25, cơ sở 32 (thấp 21, cao 46) — THIẾU (cơ sở) 7
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · saphraton-combo-2x20v: tồn 30, cơ sở 33 (thấp 21, cao 48) — THIẾU (cơ sở) 3
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · savigout-30v: tồn 45, cơ sở 45 (thấp 31, cao 61) — RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · savina-12v: tồn 60, cơ sở 56 (thấp 41, cao 73) — RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+- chưa có số tồn — không kết luận thiếu: mat-ong-sam-300ml
+
+## Lô chờ kiểm nhập
+Nguồn: `production_lots` (pending).
+- MAU-MO120-260915 · mat-ong-sam-120ml-1hu · SX 2026-09-15 · HSD 2028-03-15 · 300
+- MAU-RUOU500-260820 · ruou-sam-chai-thuy-tinh-500ml · SX 2026-08-20 · HSD 2031-08-20 · 120
+- MAU-SAP20-260901 · saphraton-20v · SX 2026-09-01 · HSD 2028-09-01 · 500
+
+## BOM lỗi
+Nguồn: `bom_combos` + `bom_items` × golden file hiện tại.
+không có
+
+## Mục chờ duyệt & SLA
+Nguồn: `allocation_proposals` + `production_lots` (nhắc ≥ 24h, SLA 48h — chỉ là chữ trong bản tin, không tự chuyển/duyệt thay).
+- phân bổ 368810aa0bf9 — chờ 0h — trong hạn
+- lô MAU-MO120-260915 — chờ 0h — trong hạn
+- lô MAU-RUOU500-260820 — chờ 0h — trong hạn
+- lô MAU-SAP20-260901 — chờ 0h — trong hạn
+[exit 0]
+
+$ grep -n 'llm_gateway\|openai' pipelines/production.py ingest/inventory_csv.py
+[exit 1 — 1 = rỗng]
+
+## W92.7 docs
+$ grep -n 'ingest.inventory_csv' docs/handover/sop.md AGENTS.md docs/handover/kien-truc.md
+docs/handover/sop.md:242:   python -m ingest.inventory_csv --file <file.csv|.xlsx>
+AGENTS.md:26:| Tồn kho (v9.2) | `python -m ingest.inventory_csv --file <csv/xlsx> [--source manual_export\|sample]` (c
+docs/handover/kien-truc.md:61:| `ingest/` | `embed_store` (chunk+embed→`chunks`), `core_store` (nạp DB lõi, delete-
+docs/handover/kien-truc.md:99:| `inventory_snapshots` | (v9.2) Tồn thành phẩm theo `sku_key` × `kho` (slug) × `ca
+$ grep -n 'pipelines.production' docs/handover/sop.md AGENTS.md docs/handover/kien-truc.md
+docs/handover/sop.md:250:   python -m pipelines.production allocate --cutoff chot_11_11 [--start YYYY-MM-DD]
+docs/handover/sop.md:259:   python -m pipelines.production approve --run <run_id> --by "<tên GĐ SX>"
+docs/handover/sop.md:260:   python -m pipelines.production reject --run <run_id> --by "<tên>" --note "<lý do>"
+docs/handover/sop.md:264:   python -m pipelines.production bom --load <bom.json> [--source manual|sample]
+docs/handover/sop.md:265:   python -m pipelines.production bom --check
+docs/handover/sop.md:274:   python -m pipelines.production lots --load <lots.json> [--source manual|sample]
+docs/handover/sop.md:275:   python -m pipelines.production intake --lot <mã lô> --result passed|failed --by "<người
+docs/handover/sop.md:281:   python -m pipelines.production bulletin [--date YYYY-MM-DD]
+AGENTS.md:27:| Sản xuất P1 (v9.2) | `python -m pipelines.production allocate --cutoff <id>` · `approve\|reject --ru
+docs/handover/kien-truc.md:63:| `pipelines/` | `guardrail.py` (banned words + claim whitelist — check trước mọi o
+docs/handover/kien-truc.md:100:| `allocation_proposals` | (v9.2) Đề xuất phân bổ NHÁP: `run_id` (sha256 input),
+docs/handover/kien-truc.md:101:| `bom_combos` | (v9.2) Combo/hộp quà: `combo_key`, `name` (qua guardrail), `channels`
+docs/handover/kien-truc.md:103:| `production_lots` | (v9.2) Hồ sơ lô: `lot_code`, `sku_key`, `mfg_date`, `exp_date` 
+docs/handover/kien-truc.md:160:| Duyệt phân bổ tồn (v9.2) | `pipelines.production allocate` ghi đề xuất `pen
+$ python -m pipelines.production --help
+usage: python -m pipelines.production [-h]
+                                      {allocate,approve,reject,bom,lots,intake,bulletin}
+                                      ...
+
+Sản xuất P1: phân bổ tồn (đề xuất), BOM, hồ sơ lô, bản tin — không chuyển kho,
+không lệnh sản xuất.
+
+positional arguments:
+  {allocate,approve,reject,bom,lots,intake,bulletin}
+    allocate            đề xuất phân bổ tồn theo mốc chốt
+    approve             NGƯỜI duyệt 1 run phân bổ
+    reject              NGƯỜI từ chối 1 run phân bổ
+    bom                 nạp/kiểm BOM combo-hộp quà
+    lots                nạp hồ sơ lô (pending)
+    intake              NGƯỜI ghi kết quả kiểm nhập 1 lô
+    bulletin            bản tin tuần cho GĐ sản xuất
+
+options:
+  -h, --help            show this help message and exit
+[exit 0]
+
+$ for sub in allocate approve reject bom lots intake bulletin: grep trong sop.md + help
+allocate sop=1 help=3
+approve sop=1 help=3
+reject sop=1 help=3
+bom sop=2 help=3
+lots sop=1 help=3
+intake sop=1 help=3
+bulletin sop=1 help=3
+
+## spot-check 2 lệnh trong sop.md (exit như mô tả)
+$ python -m ingest.inventory_csv --file data/sample_inventory.csv --source sample
+[skip] file đã nạp (16 dòng) — không ghi gì.
+[exit 0]
+
+$ python -m pipelines.production bom --check
+[MẪU] 2 combo — số combo làm được tính trên tồn CHƯA trừ phân bổ — tham khảo:
+- combo-saphraton-mat-ong-shopee [shopee]: 70
+- hop-qua-tet-sam-sam-mau [offline]: 25
+[ok] BOM khớp luật kênh golden hiện tại.
+[exit 0]
+
+
+## Chạy lại sau vá OWASP (lọc ký tự điều khiển khi in, nhãn 'tồn chưa có', clamp tuổi âm) — 2026-10-11T21:26Z
+$ python -m pipelines.production allocate --cutoff chot_11_11 --start 2026-10-12
+Giả định kịch bản: GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt · Cấu hình mốc: GIẢ ĐỊNH — chờ GĐ sản xuất chốt
+Khoảng thấp/cơ sở/cao — KHÔNG phải doanh số cam kết; ĐỀ XUẤT chờ GĐ sản xuất duyệt — không tự chuyển kho
+[MẪU] tồn kho từ dữ liệu mẫu (source='sample') — chưa phải số thật
+Mốc chot_11_11 (2026-10-25, nhu cầu tới 2026-11-15): phân bổ TỒN HIỆN CÓ cho online 11.11 — không đề xuất sản xuất mới
+chỉ phân bổ tồn hiện có — không đề xuất sản xuất mới. Tuần bắt đầu 2026-10-12 · run 368810aa0bf9
+[skip] run đã có (91 dòng) — không ghi thêm.
+SKU | kênh | thấp | cơ sở | cao | đề xuất | ghi chú
+da-an-sam-30v | shopee | 21 | 30 | 41 | 30 | RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+da-an-sam-30v | offline | 5 | 10 | 15 | 10 | RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | shopee | 64 | 89 | 120 | 89 | RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+mat-ong-sam-120ml-1hu | offline | 40 | 50 | 60 | 50 | RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao; dự phòng chưa phân bổ 11
+mat-ong-sam-120ml-2hu | shopee | 26 | 36 | 48 | 36 | RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+mat-ong-sam-120ml-2hu | offline | 15 | 20 | 25 | 20 | RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao; dự phòng chưa phân bổ 14
+mat-ong-sam-300ml | shopee | 32 | 47 | 65 | 0 | chưa có số tồn — không kết luận thiếu
+mat-ong-sam-300ml | offline | 25 | 30 | 35 | 0 | chưa có số tồn — không kết luận thiếu
+ruou-sam-binh-su-do-500ml | shopee | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | tiktok | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | web | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | facebook | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | zalo | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | chatbot | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0; THIẾU (cơ sở) 3
+ruou-sam-binh-su-do-500ml | offline | 10 | 15 | 20 | 12 | THIẾU (cơ sở) 3
+ruou-sam-chai-thuy-tinh-500ml | shopee | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | tiktok | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | web | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | facebook | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | zalo | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | chatbot | 0 | 0 | 0 | 0 | rượu: chỉ kênh offline — đề xuất 0
+ruou-sam-chai-thuy-tinh-500ml | offline | 25 | 30 | 35 | 30 | dự phòng chưa phân bổ 10
+sapentol-30v | shopee | 16 | 23 | 33 | 21 | THIẾU (cơ sở) 3
+sapentol-30v | offline | 10 | 15 | 20 | 14 | THIẾU (cơ sở) 3
+saphraton-20v | shopee | 53 | 71 | 95 | 45 | THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-20v | offline | 30 | 40 | 50 | 25 | THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+saphraton-40v | shopee | 0 | 0 | 0 | 0 | kênh chưa có trong allowed_channels (golden); RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-40v | offline | 20 | 25 | 30 | 25 | RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+saphraton-80v | shopee | 11 | 17 | 26 | 13 | THIẾU (cơ sở) 7
+saphraton-80v | offline | 10 | 15 | 20 | 12 | THIẾU (cơ sở) 7
+saphraton-combo-2x20v | shopee | 16 | 23 | 33 | 21 | THIẾU (cơ sở) 3
+saphraton-combo-2x20v | offline | 5 | 10 | 15 | 9 | THIẾU (cơ sở) 3
+savigout-30v | shopee | 21 | 30 | 41 | 30 | RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savigout-30v | offline | 10 | 15 | 20 | 15 | RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+savina-12v | shopee | 26 | 36 | 48 | 36 | RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+savina-12v | offline | 15 | 20 | 25 | 20 | RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao; dự phòng chưa phân bổ 4
+Cảnh báo thiếu (12 SKU):
+- da-an-sam-30v: tồn 40 — RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+- mat-ong-sam-120ml-1hu: tồn 150 — RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+- mat-ong-sam-120ml-2hu: tồn 70 — RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+- mat-ong-sam-300ml: tồn chưa có — chưa có số tồn — không kết luận thiếu
+- ruou-sam-binh-su-do-500ml: tồn 12 — THIẾU (cơ sở) 3
+- sapentol-30v: tồn 35 — THIẾU (cơ sở) 3
+- saphraton-20v: tồn 70 — THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+- saphraton-40v: tồn 25 — RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+- saphraton-80v: tồn 25 — THIẾU (cơ sở) 7
+- saphraton-combo-2x20v: tồn 30 — THIẾU (cơ sở) 3
+- savigout-30v: tồn 45 — RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+- savina-12v: tồn 60 — RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+[exit 0]
+
+$ python -m pipelines.production bom --check
+[MẪU] 2 combo — số combo làm được tính trên tồn CHƯA trừ phân bổ — tham khảo:
+- combo-saphraton-mat-ong-shopee [shopee]: 70
+- hop-qua-tet-sam-sam-mau [offline]: 25
+[ok] BOM khớp luật kênh golden hiện tại.
+[exit 0]
+
+$ python -m pipelines.production bulletin --date 2026-10-12
+# Bản tin Sản xuất tuần — 2026-10-12
+
+Cấu hình mốc/SLA: GIẢ ĐỊNH — chờ GĐ sản xuất chốt
+[MẪU] Có dữ liệu mẫu (source='sample') — số liệu chưa phải thật.
+KHÔNG phải doanh số cam kết — agent chỉ đề xuất; không chuyển kho, không đặt mua, không lệnh sản xuất.
+
+## Thiếu hàng theo mốc chốt
+Nguồn: `allocation_proposals` (run mới nhất mỗi mốc).
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · da-an-sam-30v: tồn 40, cơ sở 40 (thấp 26, cao 56) — RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · mat-ong-sam-120ml-1hu: tồn 150, cơ sở 139 (thấp 104, cao 180) — RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · mat-ong-sam-120ml-2hu: tồn 70, cơ sở 56 (thấp 41, cao 73) — RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · ruou-sam-binh-su-do-500ml: tồn 12, cơ sở 15 (thấp 10, cao 20) — THIẾU (cơ sở) 3
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · sapentol-30v: tồn 35, cơ sở 38 (thấp 26, cao 53) — THIẾU (cơ sở) 3
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · saphraton-20v: tồn 70, cơ sở 111 (thấp 83, cao 145) — THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · saphraton-40v: tồn 25, cơ sở 25 (thấp 20, cao 30) — RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · saphraton-80v: tồn 25, cơ sở 32 (thấp 21, cao 46) — THIẾU (cơ sở) 7
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · saphraton-combo-2x20v: tồn 30, cơ sở 33 (thấp 21, cao 48) — THIẾU (cơ sở) 3
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · savigout-30v: tồn 45, cơ sở 45 (thấp 31, cao 61) — RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · savina-12v: tồn 60, cơ sở 56 (thấp 41, cao 73) — RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+- chưa có số tồn — không kết luận thiếu: mat-ong-sam-300ml
+
+## Lô chờ kiểm nhập
+Nguồn: `production_lots` (pending).
+- MAU-MO120-260915 · mat-ong-sam-120ml-1hu · SX 2026-09-15 · HSD 2028-03-15 · 300
+- MAU-RUOU500-260820 · ruou-sam-chai-thuy-tinh-500ml · SX 2026-08-20 · HSD 2031-08-20 · 120
+- MAU-SAP20-260901 · saphraton-20v · SX 2026-09-01 · HSD 2028-09-01 · 500
+
+## BOM lỗi
+Nguồn: `bom_combos` + `bom_items` × golden file hiện tại.
+không có
+
+## Mục chờ duyệt & SLA
+Nguồn: `allocation_proposals` + `production_lots` (nhắc ≥ 24h, SLA 48h — chỉ là chữ trong bản tin, không tự chuyển/duyệt thay).
+- phân bổ 368810aa0bf9 — chờ 0h — trong hạn
+- lô MAU-MO120-260915 — chờ 0h — trong hạn
+- lô MAU-RUOU500-260820 — chờ 0h — trong hạn
+- lô MAU-SAP20-260901 — chờ 0h — trong hạn
+[exit 0]
+
+
+############ v9.2 vòng sửa nghiệm thu (6 MINOR) — 2026-10-12 ############
+== mutation probe (đột biến pipelines/production.py, chạy test liên quan, khôi phục)
+KILLED F1 bỏ isinstance sku lô: 3 failed, 15 passed, 71 deselected in 4.00s
+KILLED F3 bỏ _clean combo_key bom --check: 1 failed, 88 deselected in 1.42s
+KILLED M1 plan_rows category=None: 1 failed, 32 passed, 56 deselected in 6.70s
+KILLED M2 bỏ join latest: 1 failed, 32 passed, 56 deselected in 5.29s
+KILLED F2 bỏ cảnh báo stale plan: 1 failed, 1 passed, 87 deselected in 2.60s
+restored True
+
+== apply_schema x2
+[done] schema applied — 30 bảng public: agent_action_log, allocation_proposals, approvals, assets, bom_combos, bom_items, chunks, chunks_internal, claims_approved, content_drafts, document_fields, documents, eval_runs, golden_discrepancies, inventory_snapshots, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, production_lots, products, sim_runs, sku_map, sku_master
+exit=0
+[done] schema applied — 30 bảng public: agent_action_log, allocation_proposals, approvals, assets, bom_combos, bom_items, chunks, chunks_internal, claims_approved, content_drafts, document_fields, documents, eval_runs, golden_discrepancies, inventory_snapshots, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, production_lots, products, sim_runs, sku_map, sku_master
+exit=0
+== F1 lots sku_key list, DB host chet
+[err] lô L-001: sku_key không có trong golden
+[err] lô L-002: sku_key không có trong golden
+[err] 2 lỗi hồ sơ lô — không connect, không nạp gì.
+exit=1
+== F4 approve run khong ton tai (qua function DB)
+[err] không có run 000000000000 — không ghi.
+exit=1
+== F4 intake lo khong ton tai
+[err] không có lô KHONG-CO — không ghi.
+exit=1
+== F4 intake thieu --by
+python -m pipelines.production intake: error: the following arguments are required: --by
+exit=2
+== approvals khong co dong probe
+0
+[('decide_allocation_run', True), ('record_lot_intake', True)]
+== allocate chot_11_11
+[MẪU] tồn kho từ dữ liệu mẫu (source='sample') — chưa phải số thật
+chỉ phân bổ tồn hiện có — không đề xuất sản xuất mới. Tuần bắt đầu 2026-10-12 · run 368810aa0bf9
+[skip] run đã có (91 dòng) — không ghi thêm.
+Cảnh báo thiếu (12 SKU):
+exit=0
+== bom --check
+[MẪU] 2 combo — số combo làm được tính trên tồn CHƯA trừ phân bổ — tham khảo:
+- combo-saphraton-mat-ong-shopee [shopee]: 70
+- hop-qua-tet-sam-sam-mau [offline]: 25
+[ok] BOM khớp luật kênh golden hiện tại.
+exit=0
+== bulletin
+# Bản tin Sản xuất tuần — 2026-10-12
+
+Cấu hình mốc/SLA: GIẢ ĐỊNH — chờ GĐ sản xuất chốt
+[MẪU] Có dữ liệu mẫu (source='sample') — số liệu chưa phải thật.
+KHÔNG phải doanh số cam kết — agent chỉ đề xuất; không chuyển kho, không đặt mua, không lệnh sản xuất.
+
+## Thiếu hàng theo mốc chốt
+Nguồn: `allocation_proposals` (run mới nhất mỗi mốc).
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · da-an-sam-30v: tồn 40, cơ sở 40 (thấp 26, cao 56) — RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · mat-ong-sam-120ml-1hu: tồn 150, cơ sở 139 (thấp 104, cao 180) — RỦI RO (kịch bản cao) thiếu 30 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · mat-ong-sam-120ml-2hu: tồn 70, cơ sở 56 (thấp 41, cao 73) — RỦI RO (kịch bản cao) thiếu 3 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · ruou-sam-binh-su-do-500ml: tồn 12, cơ sở 15 (thấp 10, cao 20) — THIẾU (cơ sở) 3
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · sapentol-30v: tồn 35, cơ sở 38 (thấp 26, cao 53) — THIẾU (cơ sở) 3
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · saphraton-20v: tồn 70, cơ sở 111 (thấp 83, cao 145) — THIẾU CẢ KỊCH BẢN THẤP (thiếu 41 so với cơ sở)
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · saphraton-40v: tồn 25, cơ sở 25 (thấp 20, cao 30) — RỦI RO (kịch bản cao) thiếu 5 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · saphraton-80v: tồn 25, cơ sở 32 (thấp 21, cao 46) — THIẾU (cơ sở) 7
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · saphraton-combo-2x20v: tồn 30, cơ sở 33 (thấp 21, cao 48) — THIẾU (cơ sở) 3
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · savigout-30v: tồn 45, cơ sở 45 (thấp 31, cao 61) — RỦI RO (kịch bản cao) thiếu 16 nếu bán theo mức cao
+- chot_11_11 (2026-10-25, còn 13 ngày) · run 368810aa0bf9 [pending] · savina-12v: tồn 60, cơ sở 56 (thấp 41, cao 73) — RỦI RO (kịch bản cao) thiếu 13 nếu bán theo mức cao
+- chưa có số tồn — không kết luận thiếu: mat-ong-sam-300ml
+exit=0
+== grep insert into approvals trong code client
+(rỗng)
+
+############ v9.2 vòng sửa 2 — stale cùng ngày (probe reviewer tái hiện bằng test DB) ############
+== tests/test_production.py::test_stale_stock_same_day_correction_file: mẫu 10-09 + p1 (savina-12v=5, saphraton-20v=9, kho-mau-da-nang, 10-10) + p2 cùng ngày chỉ savina-12v=4
+   → saphraton-20v {'qty': 9, 'stale': True}, stale==['kho-mau-da-nang']; allocate + bulletin in STALE_NOTE; p3 cùng ngày liệt kê đủ (saphraton-20v=0) → hết stale
+== trước fix (mutation): stale False → test FAILED; sau fix PASS

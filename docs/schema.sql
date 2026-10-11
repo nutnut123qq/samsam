@@ -847,3 +847,197 @@ create table if not exists sim_runs (
   unique (run_id, model, prompt_id, sample_idx, option_id)
 );
 create index if not exists sim_runs_run_idx on sim_runs (run_id);
+
+-- ============================================================================
+-- v9.2 Sản xuất P1 (WP13 SX-A3/A4/A5): tồn thành phẩm, đề xuất phân bổ theo
+-- mốc chốt, BOM combo/hộp quà, hồ sơ lô + kiểm nhập. Dữ liệu trong repo là
+-- MẪU (source='sample') tới khi kho/GĐ sản xuất cấp số thật. Agent CHỈ ĐỀ
+-- XUẤT (allocation_proposals 'pending'): không chuyển kho, không sửa tồn,
+-- không đặt mua, không lệnh sản xuất. Quyết định của người -> approvals +
+-- agent_action_log (hash chain v3.4). Không cột cá nhân/khách hàng.
+-- sku_key không FK: golden đọc từ file (như market_rows).
+-- ============================================================================
+create table if not exists inventory_snapshots (
+  id bigint generated always as identity primary key,
+  sku_key text not null,
+  kho text not null,
+  qty int not null check (qty >= 0),
+  captured_at date not null,
+  source text not null check (source in ('manual_export', 'sample')),
+  file_name text not null,
+  file_sha256 text not null,
+  row_no int not null,
+  imported_at timestamptz not null default now(),
+  unique (file_sha256, row_no)
+);
+create index if not exists inventory_snapshots_sku_idx
+  on inventory_snapshots (sku_key, kho, captured_at);
+
+create table if not exists allocation_proposals (
+  id bigint generated always as identity primary key,
+  run_id text not null,
+  cutoff_id text not null,
+  cutoff_date date not null,
+  start_week date not null,
+  sku_key text not null,
+  channel text not null,
+  stock_total int,                  -- null = SKU chưa có số tồn (không coi = 0)
+  demand_low int not null,
+  demand_base int not null,
+  demand_high int not null,
+  proposed_qty int not null check (proposed_qty >= 0),
+  note text,
+  status text not null default 'pending'
+    check (status in ('pending', 'approved', 'rejected')),
+  decided_by text,
+  decided_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (run_id, sku_key, channel),
+  check ((status = 'pending') = (decided_by is null)),
+  check (decided_by is null or btrim(decided_by) <> '')
+);
+create index if not exists allocation_proposals_cutoff_idx
+  on allocation_proposals (cutoff_id, created_at);
+
+create table if not exists bom_combos (
+  combo_key text primary key,
+  name text not null,
+  channels text[] not null check (cardinality(channels) > 0),
+  source text not null check (source in ('manual', 'sample')),
+  note text,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists bom_items (
+  combo_key text not null references bom_combos (combo_key) on delete cascade,
+  sku_key text not null,
+  qty int not null check (qty > 0),
+  primary key (combo_key, sku_key)
+);
+
+create table if not exists production_lots (
+  lot_code text primary key,
+  sku_key text not null,
+  mfg_date date not null,
+  exp_date date not null,
+  qty int not null check (qty > 0),
+  intake_status text not null default 'pending'
+    check (intake_status in ('pending', 'passed', 'failed')),
+  checked_by text,
+  checked_at timestamptz,
+  source text not null check (source in ('manual', 'sample')),
+  note text,
+  created_at timestamptz not null default now(),
+  check (exp_date > mfg_date),      -- hạn dùng <= ngày SX bị DB chặn
+  check ((intake_status = 'pending') = (checked_by is null)),
+  check (checked_by is null or btrim(checked_by) <> '')
+);
+
+-- Quyết định của NGƯỜI (duyệt phân bổ, kiểm nhập lô) CHỈ qua 2 function
+-- SECURITY DEFINER dưới — client KHÔNG insert thẳng `approvals` (precedent
+-- v3.4 approve_draft). TUYỆT ĐỐI không grant INSERT approvals cho role nào:
+-- `verify_publish` tin dòng approvals mới nhất → ai chèn được approvals là
+-- chèn được duyệt giả cho content_draft. object_type cố định trong function.
+-- content_sha256 = sha256(UTF-8 của jsonb::text) tính TRONG DB.
+
+-- Duyệt/từ chối CẢ 1 run phân bổ (mọi dòng pending). Không đụng
+-- inventory_snapshots (duyệt ≠ chuyển kho). Trả (id approvals, số dòng).
+create or replace function decide_allocation_run(p_run text, p_decision text,
+  p_by text, p_note text default null)
+returns table (out_approval_id bigint, out_rows integer)
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := btrim(coalesce(p_by, ''));
+  v_n integer;
+  v_sha text;
+  v_aid bigint;
+begin
+  if v_by = '' then
+    raise exception 'thiếu tên người quyết định';
+  end if;
+  if p_decision is null or p_decision not in ('approved', 'rejected') then
+    raise exception 'decision phải là approved|rejected';
+  end if;
+  perform 1 from allocation_proposals a
+    where a.run_id = p_run and a.status = 'pending' for update;
+  select count(*), encode(sha256(convert_to(coalesce(jsonb_agg(
+           jsonb_build_array(a.sku_key, a.channel, a.proposed_qty)
+           order by a.sku_key collate "C", a.channel collate "C"),
+           '[]'::jsonb)::text, 'UTF8')), 'hex')
+    into v_n, v_sha
+    from allocation_proposals a
+   where a.run_id = p_run and a.status = 'pending';
+  if v_n = 0 then
+    if exists (select 1 from allocation_proposals a where a.run_id = p_run)
+    then
+      raise exception 'run % không còn dòng pending', p_run;
+    end if;
+    raise exception 'không có run %', p_run;
+  end if;
+  update allocation_proposals a set status = p_decision, decided_by = v_by,
+         decided_at = now()
+   where a.run_id = p_run and a.status = 'pending';
+  insert into approvals (object_type, object_id, content_sha256, decision,
+                         approved_by, note)
+  values ('allocation_run', p_run, v_sha, p_decision, v_by, p_note)
+  returning approvals.id into v_aid;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, case p_decision when 'approved' then 'alloc_approve'
+                else 'alloc_reject' end, 'allocation_run', p_run,
+          jsonb_build_object('approval_id', v_aid, 'content_sha256', v_sha,
+                             'rows', v_n));
+  out_approval_id := v_aid;
+  out_rows := v_n;
+  return next;
+end $$;
+revoke execute on function decide_allocation_run(text, text, text, text)
+  from public;
+
+-- Kiểm nhập 1 lô: chỉ từ pending (lô đã kiểm không ghi lại). passed →
+-- approvals 'approved', failed → 'rejected'. Trả id approvals.
+create or replace function record_lot_intake(p_lot text, p_result text,
+  p_by text, p_note text default null)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  l production_lots%rowtype;
+  v_by text := btrim(coalesce(p_by, ''));
+  v_sha text;
+  v_aid bigint;
+begin
+  if v_by = '' then
+    raise exception 'thiếu tên người kiểm nhập';
+  end if;
+  if p_result is null or p_result not in ('passed', 'failed') then
+    raise exception 'result phải là passed|failed';
+  end if;
+  select * into l from production_lots p where p.lot_code = p_lot for update;
+  if not found then
+    raise exception 'không có lô %', p_lot;
+  end if;
+  if l.intake_status <> 'pending' then
+    raise exception 'lô % đã kiểm (%) — không ghi lại', p_lot,
+      l.intake_status;
+  end if;
+  v_sha := encode(sha256(convert_to(jsonb_build_object(
+    'lot_code', l.lot_code, 'sku_key', l.sku_key,
+    'mfg_date', to_char(l.mfg_date, 'YYYY-MM-DD'),
+    'exp_date', to_char(l.exp_date, 'YYYY-MM-DD'),
+    'qty', l.qty, 'source', l.source)::text, 'UTF8')), 'hex');
+  update production_lots p set intake_status = p_result, checked_by = v_by,
+         checked_at = now()
+   where p.lot_code = p_lot;
+  insert into approvals (object_type, object_id, content_sha256, decision,
+                         approved_by, note)
+  values ('lot_intake', p_lot, v_sha,
+          case p_result when 'passed' then 'approved' else 'rejected' end,
+          v_by, p_note)
+  returning approvals.id into v_aid;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'lot_intake', 'lot_intake', p_lot,
+          jsonb_build_object('approval_id', v_aid, 'content_sha256', v_sha,
+                             'result', p_result));
+  return v_aid;
+end $$;
+revoke execute on function record_lot_intake(text, text, text, text)
+  from public;
