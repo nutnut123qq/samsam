@@ -1,0 +1,15 @@
+=== python -m pytest -q tests/test_kb_gaps.py (2026-10-12T00:39:19+07:00)
+.......                                                                  [100%]
+7 passed in 0.11s
+=== python scripts/kb_gaps.py --min 1 (convlog thật)
+exit=0
+dòng output: 9; chuỗi >=9 chữ số liền: 0
+# Câu NO_DATA lặp lại (>= 1 lần) — 3 câu
+
+Loại `sức khỏe`/`rượu`: KHÔNG bổ sung KB (chuyển người / luật QC rượu).
+
+| # | Câu hỏi (đã mask) | Số lần | Số người | Gần nhất | Loại |
+|---|---|---|---|---|---|
+| 1 | Saphraton chữa được ung thư không? | 13 | 1 | 2026-10-08T09:33:22Z | sức khỏe |
+| 2 | Sâm Sâm có ship sang Mỹ không? | 2 | 1 | 2026-10-05T17:58:25Z |  |
+| 3 | Sâm Sâm có văn phòng tại Hà Nội không? | 2 | 1 | 2026-10-05T17:40:33Z |  |

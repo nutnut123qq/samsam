@@ -1,0 +1,174 @@
+=== python -m pytest -q tests/test_embed_store.py (2026-10-12T00:38:57+07:00)
+..............                                                           [100%]
+14 passed in 1.76s
+
+=== BEFORE (2026-10-12T00:36:27+07:00)
+db: samsam_v39
+llm_usage ingest rows: 0
+chunks: 916 docs: 176
+is_alcohol(content) hits: 40 | is_alcohol(title) hits: 18
+source is null: 916
+by source: [(None, 916)]
+catalog has Saphraton: True | catalog has 'rượu': True
+doc_version dist: [(1, 916)]
+test rows chunks test-v39-%: 0 | chunks_internal internal:test_v39: 0
+=== RUN 1: python -m ingest.embed_store
+[plan] doc mới 0 / đổi 167 / giữ 0 / xóa 9 — embed 871 chunk (14 lời gọi)
+[embed] batch 1: 64 texts
+[embed] batch 2: 64 texts
+[embed] batch 3: 64 texts
+[embed] batch 4: 64 texts
+[embed] batch 5: 64 texts
+[embed] batch 6: 64 texts
+[embed] batch 7: 64 texts
+[embed] batch 8: 64 texts
+[embed] batch 9: 64 texts
+[embed] batch 10: 64 texts
+[embed] batch 11: 64 texts
+[embed] batch 12: 64 texts
+[embed] batch 13: 64 texts
+[embed] batch 14: 39 texts
+[src] about.jsonl: 4 records, bỏ 0 record rượu
+[src] articles.jsonl: 103 records, bỏ 0 record rượu
+[src] news.jsonl: 41 records, bỏ 0 record rượu
+[src] products.jsonl: 27 records, bỏ 9 record rượu
+[filter] articles.jsonl: bỏ 19 chunk nhắc rượu
+[filter] news.jsonl: bỏ 8 chunk nhắc rượu
+[done] mới 0 / đổi 167 / giữ 0 / xóa 9 doc — embed 871 chunk, 14 lời gọi embed (table total: 871)
+exit=0
+=== AFTER RUN 1
+db: samsam_v39
+llm_usage ingest rows: 14
+chunks: 871 docs: 167
+is_alcohol(content) hits: 0 | is_alcohol(title) hits: 0
+source is null: 0
+by source: [('about.jsonl', 10), ('articles.jsonl', 610), ('catalog', 1), ('news.jsonl', 215), ('products.jsonl', 35)]
+catalog has Saphraton: True | catalog has 'rượu': False
+doc_version dist: [(2, 871)]
+test rows chunks test-v39-%: 0 | chunks_internal internal:test_v39: 0
+=== RUN 2: python -m ingest.embed_store (2026-10-12T00:37:50+07:00)
+[plan] doc mới 0 / đổi 0 / giữ 167 / xóa 0 — embed 0 chunk (0 lời gọi)
+[src] about.jsonl: 4 records, bỏ 0 record rượu
+[src] articles.jsonl: 103 records, bỏ 0 record rượu
+[src] news.jsonl: 41 records, bỏ 0 record rượu
+[src] products.jsonl: 27 records, bỏ 9 record rượu
+[filter] articles.jsonl: bỏ 19 chunk nhắc rượu
+[filter] news.jsonl: bỏ 8 chunk nhắc rượu
+[done] mới 0 / đổi 0 / giữ 167 / xóa 0 doc — embed 0 chunk, 0 lời gọi embed (table total: 871)
+exit=0
+=== AFTER RUN 2
+db: samsam_v39
+llm_usage ingest rows: 14
+chunks: 871 docs: 167
+is_alcohol(content) hits: 0 | is_alcohol(title) hits: 0
+source is null: 0
+by source: [('about.jsonl', 10), ('articles.jsonl', 610), ('catalog', 1), ('news.jsonl', 215), ('products.jsonl', 35)]
+catalog has Saphraton: True | catalog has 'rượu': False
+doc_version dist: [(2, 871)]
+test rows chunks test-v39-%: 0 | chunks_internal internal:test_v39: 0
+llm_usage ingest cost_usd total: (Decimal('0.004316'), 215828)
+chunks containing Phan Bội Châu: [('dist-sieu-thi-mini-thu-hong',), ('wp-134',), ('dist-showroom-samsam',), ('nv-khai-truong-showroom-sam-ngoc-linh-sam-sam-43',)]
+
+######## VÒNG SỬA nghiệm thu (keyword alcohol/alcoholic/có cồn/... + quét độc lập) ########
+=== BEFORE (2026-10-12T01:03:39+07:00)
+db: samsam_v39
+llm_usage ingest rows: 14
+chunks: 871 docs: 167
+is_alcohol(content) hits: 3 | is_alcohol(title) hits: 0
+source is null: 0
+by source: [('about.jsonl', 10), ('articles.jsonl', 610), ('catalog', 1), ('news.jsonl', 215), ('products.jsonl', 35)]
+catalog has Saphraton: True | catalog has 'rượu': False
+doc_version dist: [(2, 871)]
+test rows chunks test-v39-%: 0 | chunks_internal internal:test_v39: 0
+=== RUN 3: python -m ingest.embed_store (2026-10-12T01:03:44+07:00)
+[plan] doc mới 0 / đổi 1 / giữ 166 / xóa 0 — embed 2 chunk (1 lời gọi)
+[embed] batch 1: 2 texts
+[src] about.jsonl: 4 records, bỏ 0 record rượu
+[src] articles.jsonl: 103 records, bỏ 0 record rượu
+[src] news.jsonl: 41 records, bỏ 0 record rượu
+[src] products.jsonl: 27 records, bỏ 9 record rượu
+[filter] articles.jsonl: bỏ 22 chunk nhắc rượu
+[filter] news.jsonl: bỏ 8 chunk nhắc rượu
+[done] mới 0 / đổi 1 / giữ 166 / xóa 0 doc — embed 2 chunk, 1 lời gọi embed (table total: 868)
+exit=0
+=== AFTER RUN 3
+db: samsam_v39
+llm_usage ingest rows: 15
+chunks: 868 docs: 167
+is_alcohol(content) hits: 0 | is_alcohol(title) hits: 0
+source is null: 0
+by source: [('about.jsonl', 10), ('articles.jsonl', 607), ('catalog', 1), ('news.jsonl', 215), ('products.jsonl', 35)]
+catalog has Saphraton: True | catalog has 'rượu': False
+doc_version dist: [(2, 866), (3, 2)]
+test rows chunks test-v39-%: 0 | chunks_internal internal:test_v39: 0
+=== RUN 4: python -m ingest.embed_store (2026-10-12T01:03:56+07:00)
+[plan] doc mới 0 / đổi 0 / giữ 167 / xóa 0 — embed 0 chunk (0 lời gọi)
+[src] about.jsonl: 4 records, bỏ 0 record rượu
+[src] articles.jsonl: 103 records, bỏ 0 record rượu
+[src] news.jsonl: 41 records, bỏ 0 record rượu
+[src] products.jsonl: 27 records, bỏ 9 record rượu
+[filter] articles.jsonl: bỏ 22 chunk nhắc rượu
+[filter] news.jsonl: bỏ 8 chunk nhắc rượu
+[done] mới 0 / đổi 0 / giữ 167 / xóa 0 doc — embed 0 chunk, 0 lời gọi embed (table total: 868)
+exit=0
+=== AFTER RUN 4
+db: samsam_v39
+llm_usage ingest rows: 15
+chunks: 868 docs: 167
+is_alcohol(content) hits: 0 | is_alcohol(title) hits: 0
+source is null: 0
+by source: [('about.jsonl', 10), ('articles.jsonl', 607), ('catalog', 1), ('news.jsonl', 215), ('products.jsonl', 35)]
+catalog has Saphraton: True | catalog has 'rượu': False
+doc_version dist: [(2, 866), (3, 2)]
+test rows chunks test-v39-%: 0 | chunks_internal internal:test_v39: 0
+
+=== Quét ĐỘC LẬP (regex rộng, không dùng ruou_keywords) sau RUN 4 (2026-10-12T01:04:34+07:00)
+nv-nguyen-nhan-gay-ra-benh-tieu-duong-la-gi-va-cach-phong-ngua-21#5 content [co con]: ...p cho viec dieu tri benh lau dai. TPBVSK SAPENTOL co cong dung : - Ho tro phong ngua dai thao duong. - Ho ...
+nv-sam-ngoc-linh-ho-tro-dieu-tri-benh-tieu-duong-nhu-the-nao-8#3 content [co con]: ...c dung tang cuong mien dich. Tu do, sam Ngoc Linh co cong dung dac biet hieu qua doi voi benh nhan tieu du...
+nv-truyen-thuyet-sam-ngoc-linh-1#4 content [co con]: ...vui mung be cau be giao cho doi vo chong tre chua co con cham soc va tiep tuc bang qua 3 ngon nui 2 con so...
+wp-1842#0 content [wine]: ...inseng plant – a rare medicinal herb deeply intertwined with the mythical story passed down through gene...
+wp-1842#1 content [spirit]: ...ng the wildlife habitat and angering the mountain spirit. The villagers had broken their vow and were puni...
+wp-1842#1 content [spirit]: ...r vow and were punished. Each night, the mountain spirit sent wild animals to destroy their...
+wp-1842#2 content [spirit]: ...ere punished. Each night, the mountain spirit sent wild animals to destroy their crops, spreadi...
+wp-1842#4 content [spirit]: ...ild beasts in the deep forest. After the mountain spirit’s rage, the surviving Ngok Linh villagers gathere...
+wp-1842#6 content [spirit]: ...olating the sacred vow and incurring the mountain spirit’s punishment. Diseases like diarrhea and malaria ...
+wp-1842#10 content [spirit]: ...ronger than wild beasts and healthier than forest spirits.” Since acquiring the ginseng that sheltered and...
+wp-1842#10 content [spirit]: ...them, the villagers no longer feared the mountain spirit’s curses. Every year, around June and July, when ...
+wp-1842#10 content [spirit]: ...ect roots, and sow seeds. They would swear to the spirits to forever teach their descendants to protect th...
+wp-2330#2 content [drink]: ...s and seafood should absolutely not be used after drinking or eating Ngoc Linh Ginseng. Because radishes ...
+wp-2350#3 content [spirit]: ... medicinal industry. This is a recognition of the spirit of innovation, commitment to sustainable developm...
+wp-2356#1 content [Drink]: ...come uncontrolled, increasing insulin resistance. Drinking too much coffee: High levels of caffeine in th...
+wp-2423#3 content [co con]: ... nang, san pham cham soc suc khoe. Moi don vi deu co cong bo chat luong, tieu chuan kiem nghiem, giay phep...
+wp-2436#5 content [spirit]: ...ntains and forests, a national past, and a modern spirit.” Ngoc Linh ginseng is not just a health product....
+wp-2436#6 content [spirit]: ...isitors. A humble but proud journey – true to the spirit of this ginseng species itself....
+wp-2513#8 content [co con]: ... lam vung IV, cung bay to lo lang: “Chung ta chua co cong nghe giam sat rung hien dai. Hau het van trong c...
+wp-2527#5 content [do con]: ...eu rang, Ngoc Linh khong chi la ten mot loai sam, do con la ten goi cua ca mot khat vong gin giu, mot cach...
+wp-2542#2 content [drink]: ... chain: essence, capsules, functional foods, soft drinks, high-end cosmetics. When technology and researc...
+wp-2542#3 content [drink]: ...l foods, soft drinks, high-end cosmetics. When technology and researc...
+wp-2572#0 content [drink]: ...atic weather, dry and cold air, or talking a lot, drinking cold water regularly makes the throat vulnerab...
+wp-2618#3 content [drink]: ...medies such as sucking on honey, salted lemon, or drinking warm ginger water. But in the busy pace of lif...
+wp-2618#6 content [drink]: ... Mr. Huy Tam shared: “In the past, I often had to drink ginger honey water before each event. Now I just ...
+wp-265#5 content [co con]: ...p cho viec dieu tri benh lau dai. TPBVSK SAPENTOL co cong dung : Ho tro phong ngua dai thao duong. Ho tro ...
+wp-276#3 content [co con]: ...c dung tang cuong mien dich. Tu do, sam Ngoc Linh co cong dung dac biet hieu qua doi voi benh nhan tieu du...
+wp-280#4 content [co con]: ...vui mung be cau be giao cho doi vo chong tre chua co con cham soc va tiep tuc bang qua 3 ngon nui 2 con so...
+TOTAL broad hits: 28 / 868 chunks (review tay: chỉ được là FP)
+ilike '%alcohol%': 0
+wp-1844 chunks còn lại: [(0, 3), (1, 3)]
+=== Probe sống (2026-10-12T01:04:35+07:00)
+is_alcohol('Does Sam Sam sell alcohol?') = True | answer() handoff = alcohol
+is_alcohol('Do you sell alcoholic drinks?') = True | answer() handoff = alcohol
+is_alcohol('Sâm Sâm có bán đồ uống có cồn không?') = True | answer() handoff = alcohol
+is_alcohol('ginseng spirits') = True | answer() handoff = alcohol
+is_alcohol('Does Sam Sam sell alcoholic beverages made from Ngoc Linh ginseng?') = True | answer() handoff = alcohol
+retrieve('Does Sam Sam sell alcoholic beverages made from Ngoc Linh ginseng?') [embed thật, bỏ qua chặn câu hỏi]:
+  0.670 wp-1766 alcohol=False 'alcohol' in content=False
+  0.655 wp-1738 alcohol=False 'alcohol' in content=False
+  0.652 wp-1768 alcohol=False 'alcohol' in content=False
+  0.647 wp-2339 alcohol=False 'alcohol' in content=False
+  0.633 wp-2339 alcohol=False 'alcohol' in content=False
+  0.628 wp-2572 alcohol=False 'alcohol' in content=False
+  0.627 wp-1766 alcohol=False 'alcohol' in content=False
+  0.627 wp-1738 alcohol=False 'alcohol' in content=False
+  0.474 catalog-products alcohol=False 'alcohol' in content=False
+hits is_alcohol: 0
+exit=0

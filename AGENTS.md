@@ -17,6 +17,8 @@ chat lẫn embeddings) + Streamlit.
 | DB lõi WS1 | `python scripts/apply_schema.py` → `python -m ingest.core_store` |
 | Golden master (v3.2) | `python -m ingest.golden_store` (nạp `data/golden_skus.json` + phiếu lệch) · `--report` · `--approve-price <id> --by <tên>` (CHỈ người thật duyệt giá — agent không chạy) |
 | File sàn (v3.3, chỉ đọc) | `python -m ingest.market_csv --file <csv/xlsx> --channel shopee\|tiktok --kind listing\|order\|ads` (idempotent theo sha256 file, bỏ cột PII, mở/đóng `market_alerts`) · `--report` — mapping cột `data/market_csv_map.json` chưa xác minh với file thật |
+| KB nội bộ (v3.9) | `python -m ingest.kb_internal --file <.md\|.txt> --collection internal:<phong> --approved-by "<trưởng phòng>"` (bảng riêng `chunks_internal`, chatbot khách không đọc; CHỈ người thật duyệt — agent không điền tên) |
+| Câu NO_DATA lặp (v3.9) | `python scripts/kb_gaps.py [--min 2] [--out file.md]` (0 LLM, nhãn sức khỏe/rượu = không bổ sung KB) |
 | Bảng kê Phụ lục A | `python scripts/data_audit.py` (output → `docs/phu-luc-a.md`) |
 | Demo UI | `streamlit run app/streamlit_app.py` (hoặc `python demo.py`) |
 | Zalo webhook | `python -m connectors.zalo` → :8788/zalo-webhook |

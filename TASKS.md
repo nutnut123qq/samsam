@@ -716,7 +716,7 @@ Quy trình mỗi version (chặt theo skill):
 - [x] **v3.8-ocr-intake** — intake tài liệu: checksum, file gốc bất biến,
   trích text PDF số, quét PII, hàng Pháp chế xác nhận trường pháp lý.
   Skip: API OCR có phí (FPT/Google) → provider cắm sau.
-- [ ] **v3.9-kb-acl** — kho tri thức có quyền đọc theo đoạn, tách
+- [x] **v3.9-kb-acl** — kho tri thức có quyền đọc theo đoạn, tách
   `chunks_internal` khỏi chatbot khách (deny-by-default), nạp tăng dần,
   lọc nội dung rượu, version. Gate thêm: `scripts/eval_qa.py` ≥10/12.
 - [ ] **v3.10-dr-freeze** — diễn tập khôi phục trên Postgres docker

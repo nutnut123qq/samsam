@@ -5,15 +5,22 @@ Contract với UI (xem app/streamlit_app.py): answer() trả
 "không đủ dữ liệu", UI hiển thị thông báo thay vì bịa.
 v3.1: mọi lời gọi LLM/embedding qua `pipelines.llm_gateway` (agent_id
 "chatbot"); câu hỏi sức khỏe chặn TRƯỚC LLM -> thêm key "handoff".
+v3.9 (W39.4, F15.3): retrieve() DENY-BY-DEFAULT — mặc định chỉ đọc corpus
+CÔNG KHAI `chunks` (lọc thêm chunk nhắc rượu); `internal:<phong>` phải
+truyền tường minh và đọc bảng RIÊNG `chunks_internal`. answer() (kênh
+khách Zalo + tab Chat) KHÔNG có tham số collection. Câu hỏi về rượu ->
+NO_DATA + handoff="alcohol", không gọi LLM/embed (luật QC rượu >=15 độ).
 """
 
 import os
+import re
 from pathlib import Path
 
 import numpy as np
 import psycopg
 from dotenv import load_dotenv
 
+from pipelines.kb_filter import is_alcohol
 from pipelines.llm_gateway import chat, embed, is_health_question
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -23,6 +30,25 @@ TOP_K = 8
 MIN_SCORE = 0.25  # cosine dưới ngưỡng -> coi như KB không có thông tin
 NO_DATA = "Chưa đủ dữ liệu để trả lời."
 AGENT = "chatbot"
+CONNECT_TIMEOUT_S = 10
+_INTERNAL_RE = re.compile(r"internal:[a-z0-9_]{1,32}")
+_COLS = "title, source_url, lang, content, embedding, doc_id"
+_COLS_INTERNAL = "title, source_ref, null, content, embedding, doc_id"
+# Hậu kiểm định danh (nghiệm thu v3.9): MST thật chỉ nằm trong record rượu
+# đã lọc -> LLM bịa MST (0402021985...). Chuỗi >=9 chữ số liền trong câu
+# trả lời (MST/SĐT/STK) phải có nguyên văn trong ngữ cảnh/câu hỏi/history
+# (so cả bản bỏ 1 dấu cách/chấm/gạch giữa 2 chữ số: "0905.123.456").
+_LONG_NUM_RE = re.compile(r"(?<!\d)\d{9,}(?!\d)")
+_DIGIT_SEP_RE = re.compile(r"(?<=\d)[ .\-](?=\d)")
+
+
+def _unverified_number(text: str, grounding: str) -> bool:
+    """True nếu `text` có chuỗi >=9 chữ số liền không có trong `grounding`."""
+    nums = _LONG_NUM_RE.findall(text)
+    if not nums:
+        return False
+    pool = grounding + "\n" + _DIGIT_SEP_RE.sub("", grounding)
+    return any(n not in pool for n in nums)
 
 SYSTEM = """Bạn là trợ lý CSKH của Công ty TNHH Sâm Sâm (sâm Ngọc Linh).
 Trả lời bằng tiếng Việt, ngắn gọn, CHỈ dựa vào NGỮ CẢNH bên dưới.
@@ -46,25 +72,52 @@ Luật:
 """
 
 
-def retrieve(question: str, k: int = TOP_K) -> list[dict]:
-    """Top-k chunk theo cosine similarity, kèm score/url/title/content."""
+def _query(collection) -> tuple[str, tuple]:
+    """collection -> (SQL, params). Chỉ "public" hoặc internal:<phong>
+    (regex chặt); mọi giá trị khác -> ValueError (deny-by-default)."""
+    if isinstance(collection, str) and collection == "public":
+        return f"select {_COLS} from chunks", ()
+    if isinstance(collection, str) and _INTERNAL_RE.fullmatch(collection):
+        return ((f"select {_COLS_INTERNAL} from chunks_internal"
+                 " where collection = %s"), (collection,))
+    raise ValueError("collection không hợp lệ — chỉ 'public' hoặc"
+                     " 'internal:<phong>' ([a-z0-9_]{1,32})")
+
+
+def retrieve(question: str, k: int = TOP_K, *,
+             collection: str = "public") -> list[dict]:
+    """Top-k chunk theo cosine similarity, kèm score/url/title/content.
+    `collection` validate TRƯỚC khi gọi embed; public bỏ row nhắc rượu
+    (lớp phòng thủ cho row nạp ngoài embed_store/legacy)."""
+    sql, params = _query(collection)
+    public = collection == "public"
     qv = np.array(embed(AGENT, question).data[0].embedding)
-    with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
-        rows = conn.execute(
-            "select title, source_url, lang, content, embedding, doc_id"
-            " from chunks"
-        ).fetchall()
+    with psycopg.connect(os.environ["DATABASE_URL"],
+                         connect_timeout=CONNECT_TIMEOUT_S) as conn:
+        rows = conn.execute(sql, params).fetchall()
     if not rows:
         return []
     mat = np.array([r[4] for r in rows], dtype=np.float64)
     scores = mat @ qv / (np.linalg.norm(mat, axis=1) * np.linalg.norm(qv) + 1e-12)
-    top = scores.argsort()[::-1][:k]
+
+    def allowed(i) -> bool:
+        # Lọc rượu theo thứ tự điểm, dừng khi đủ k — quét cả bảng mỗi câu
+        # hỏi tốn ~0.4s/870 chunk, kết quả như nhau.
+        return not public or not (is_alcohol(rows[i][3]) or is_alcohol(rows[i][0]))
+
+    top = []
+    for i in scores.argsort()[::-1]:
+        if len(top) >= k:
+            break
+        if allowed(i):
+            top.append(i)
     hits = [{"title": rows[i][0], "url": rows[i][1], "lang": rows[i][2],
              "content": rows[i][3], "score": float(scores[i]),
              "doc_id": rows[i][5]} for i in top]
     # Doc "Danh mục sản phẩm" list đủ SKU+giá trong 1 chunk -> luôn ghim vào
     # context nếu liên quan (tránh model chỉ đọc 1 chunk giá rồi thiếu quy cách).
-    cat = [i for i, r in enumerate(rows) if r[5] == "catalog-products"]
+    cat = [i for i, r in enumerate(rows) if public and r[5] == "catalog-products"]
+    cat = [i for i in cat if allowed(i)]
     if cat and all(h["doc_id"] != "catalog-products" for h in hits):
         i = cat[int(np.argmax(scores[cat]))]
         if scores[i] >= 0.15:
@@ -108,12 +161,20 @@ def answer(question: str, history: list[dict] | None = None) -> dict:
     y hệt 1-turn, không tốn thêm LLM call.
 
     v3.1 (W31.5): câu hỏi sức khỏe -> KHÔNG gọi LLM/embedding, trả NO_DATA
-    + handoff="health" (zalo nhánh NO_DATA gửi HANDOFF_TEXT chuyển người)."""
+    + handoff="health" (zalo nhánh NO_DATA gửi HANDOFF_TEXT chuyển người).
+    v3.9 (W39.4): câu hỏi về rượu (kể cả câu rewrite) -> NO_DATA +
+    handoff="alcohol", không gọi LLM/embed, không mời mua. Kênh khách luôn
+    retrieve corpus public — KHÔNG có tham số collection. Câu trả lời chứa
+    chuỗi >=9 chữ số không có trong ngữ cảnh (MST/SĐT bịa) -> NO_DATA."""
     if is_health_question(question):
         return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+    if is_alcohol(question):
+        return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
     search_q = question
     if history:
         search_q = _standalone(question, history) or question
+        if is_alcohol(search_q):
+            return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
     hits = retrieve(search_q)
     if not hits or hits[0]["score"] < MIN_SCORE:
         return {"answer": NO_DATA, "sources": []}
@@ -138,6 +199,11 @@ def answer(question: str, history: list[dict] | None = None) -> dict:
     # (D5.8): " " truthy nên `or NO_DATA` trước strip không bắt được —
     # trả "" làm zalo gửi message rỗng.
     text = (resp.choices[0].message.content or "").strip() or NO_DATA
+    grounding = "\n".join([context, question, *(
+        m["content"] for m in history or []
+        if isinstance(m, dict) and isinstance(m.get("content"), str))])
+    if _unverified_number(text, grounding):
+        return {"answer": NO_DATA, "sources": []}
     sources = sorted({h["url"] for h in hits if h["score"] >= MIN_SCORE and h["url"]})
     if NO_DATA in text:
         sources = []

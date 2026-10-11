@@ -486,3 +486,37 @@ create table if not exists document_fields (
   verified boolean not null default false,
   primary key (sha256, field)
 );
+
+-- ============================================================================
+-- v3.9 kb-acl (WP04b, F15.3): `chunks` CHỈ chứa corpus CÔNG KHAI cho chatbot
+-- khách (Zalo + tab Chat cùng gọi api.rag.answer()). Tài liệu NỘI BỘ nằm ở
+-- bảng RIÊNG `chunks_internal` — cách ly bằng cấu trúc: caller mới quên 1
+-- mệnh đề WHERE cũng không đọc nhầm được. Chỉ THÊM cột/bảng, không đổi cũ.
+-- Cột incremental trên `chunks`: embed_store chỉ embed lại doc đổi hash.
+-- ============================================================================
+
+alter table chunks add column if not exists source text;  -- products.jsonl|articles.jsonl|about.jsonl|news.jsonl|catalog
+alter table chunks add column if not exists doc_sha256 text;  -- hash (model, source, title, url, lang, chunks sau lọc)
+alter table chunks add column if not exists doc_version int not null default 1;
+alter table chunks add column if not exists ingested_at timestamptz not null default now();
+
+-- Tài liệu nội bộ ĐÃ DUYỆT theo phòng — nạp bằng `python -m ingest.kb_internal`
+-- (bắt buộc --approved-by trưởng phòng). Chatbot khách KHÔNG có đường đọc.
+create table if not exists chunks_internal (
+  id uuid primary key default gen_random_uuid(),
+  collection text not null check (collection ~ '^internal:[a-z0-9_]{1,32}$'),
+  doc_id text not null,
+  chunk_index int not null,
+  title text,
+  source_ref text,                 -- tên file gốc, không phải URL public
+  content text not null,
+  embedding float8[],
+  doc_sha256 text not null,
+  doc_version int not null default 1,
+  approved_by text not null check (btrim(approved_by) <> ''),
+  approved_at timestamptz not null default now(),
+  ingested_at timestamptz not null default now(),
+  unique (collection, doc_id, chunk_index)
+);
+
+create index if not exists chunks_internal_collection_idx on chunks_internal (collection);
