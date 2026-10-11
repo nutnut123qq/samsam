@@ -3,7 +3,7 @@
 - **Dành cho ai:** Quản lý hạ tầng AI (hoặc đội triển khai khi chưa tuyển
   xong), người được TGĐ giao mở tài khoản cloud.
 - **Làm gì:** chọn nhà cung cấp Postgres managed trong nước, nối app vào
-  bằng TLS, đưa đủ 24 bảng lên, bật backup + diễn tập khôi phục.
+  bằng TLS, đưa đủ 25 bảng lên, bật backup + diễn tập khôi phục.
 - **Cần gì (external-dep — công ty cấp, repo này KHÔNG giả lập):** tài
   khoản + thẻ thanh toán nhà cung cấp; bật PITR/WAL; object storage
   S3-compatible + key; khóa mã hóa backup trong secret manager; VM ứng
@@ -62,14 +62,14 @@ Người làm 1 lần trên console: bật PITR/WAL, đặt retention WAL, đọ
 cấu hình để kiểm, lưu biên bản. Diễn tập PITR ra instance tạm của nhà
 cung cấp (mốc 30/11 và 18/12), đo RTO, xóa instance sau khi đo.
 
-## 4. Đưa 24 bảng lên cloud
+## 4. Đưa 25 bảng lên cloud
 
 Chọn 1 trong 2 đường cho từng bảng.
 
 ### Đường A — dựng mới từ nguồn trong repo
 
 ```
-python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ 24 bảng
+python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ 25 bảng
 python -m ingest.core_store         # products, claims_approved, plots, plot_logs, orders, assets
 python -m ingest.golden_store       # sku_master, sku_map, price_list, golden_discrepancies
 python -m ingest.embed_store        # chunks (gọi API embed — tốn phí)
@@ -82,7 +82,7 @@ Bảng sinh lúc chạy bắt đầu RỖNG theo đường A: `leads`, `content_
 ### Đường B — mang dữ liệu đang có
 
 ```
-python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts 24 bảng)
+python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts 25 bảng)
 pg_restore --no-owner --no-privileges --exit-on-error -d samsam <file .dump>   # vào DB cloud rỗng (PG* env, sslmode=require)
 ```
 
@@ -96,7 +96,8 @@ bảng nào thì dừng, không bật app.
 | `products` | A | crawl web, `core_store` sở hữu |
 | `claims_approved` | A | từ `data/claims_whitelist.json` |
 | `plots` | A | |
-| `plot_logs` | B | nhật ký vườn thật không có trong repo |
+| `plot_logs` | B | nhật ký vườn thật không có trong repo; hash chain v9.3 — chỉ B giữ nguyên `prev_hash`/`row_hash` (restore xong chạy `python -m agents.garden_director --verify`) |
+| `garden_media` | B | metadata ảnh vườn (v9.3); file ảnh nằm ở `GARDEN_MEDIA_DIR` ngoài repo — sao lưu thư mục đó riêng |
 | `orders` | A | |
 | `assets` | A | |
 | `leads` | B | dữ liệu khách — PII, chỉ qua backup mã hóa |

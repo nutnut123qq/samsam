@@ -22,6 +22,8 @@ chat lẫn embeddings) + Streamlit.
 | KB nội bộ (v3.9) | `python -m ingest.kb_internal --file <.md\|.txt> --collection internal:<phong> --approved-by "<trưởng phòng>"` (bảng riêng `chunks_internal`, chatbot khách không đọc; CHỈ người thật duyệt — agent không điền tên) |
 | Câu NO_DATA lặp (v3.9) | `python scripts/kb_gaps.py [--min 2] [--out file.md]` (0 LLM, nhãn sức khỏe/rượu = không bổ sung KB) |
 | Backup/diễn tập DB (v3.6) | `python scripts/db_backup.py` (env `BACKUP_DIR` ngoài repo) · `python scripts/db_restore_drill.py` (DB tạm, tự xóa) |
+| Vùng trồng (v9.3) | `python -m agents.garden_director --bulletin [--until YYYY-MM-DD]` · `--remind` · `--verify` (hash chain `plot_logs`) · `--precheck` · `--purge-sample --by "<GĐ vùng trồng>"` · `--adopt-plot <id> --by` (nhận khoảnh mẫu có nhật ký đã chain) (CHỈ người thật — agent không chạy) |
+| Kho ảnh vườn (v9.3) | `python scripts/garden_media.py --file <ảnh> --plot <khoảnh> --date YYYY-MM-DD --by "<tên>"` (gỡ EXIF/GPS, kho `GARDEN_MEDIA_DIR` ngoài repo) |
 | Bảng kê Phụ lục A | `python scripts/data_audit.py` (output → `docs/phu-luc-a.md`) |
 | Demo UI | `streamlit run app/streamlit_app.py` (hoặc `python demo.py`) |
 | Zalo webhook | `python -m connectors.zalo` → :8788/zalo-webhook |

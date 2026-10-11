@@ -62,13 +62,13 @@ Streamlit demo.
 | `api/` | `rag.py` — `answer()` RAG: retrieve top-8 `chunks` bằng cosine numpy → LLM + nguồn; `NO_DATA` khi score thấp |
 | `pipelines/` | `guardrail.py` (banned words + claim whitelist — check trước mọi output AI), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py` |
 | `connectors/` | `zalo.py` — webhook Zalo OA: verify signature, ACK 200 nhanh rồi reply async, dedup msg_id, token store + auto-refresh; **chỉ reply inbox** |
-| `agents/` | `report.py` (báo cáo định kỳ → file md), `garden.py` (nhật ký vùng trồng + cảnh báo) — không LLM, không tự gửi |
+| `agents/` | `report.py` (báo cáo định kỳ → file md), `garden.py` (nhật ký vùng trồng + cảnh báo), `garden_director.py` (v9.3 — Agent GĐ vùng trồng: bản tin tuần, nhắc lịch/gap, kiểm hash chain, gỡ dữ liệu mẫu có người ký) — không LLM, không tự gửi |
 | `app/` | `streamlit_app.py` — UI 7 tab (mục 4) |
-| `scripts/` | `apply_schema.py`, `data_audit.py`, `eval_qa.py`, `zalo_mock.py`, `zalo_preflight.py` |
+| `scripts/` | `apply_schema.py`, `data_audit.py`, `eval_qa.py`, `zalo_mock.py`, `zalo_preflight.py`, `garden_media.py` (v9.3 — kho tư liệu vườn, gỡ EXIF/GPS) |
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 24 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 25 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
@@ -77,7 +77,7 @@ Streamlit demo.
 | `products` | Sản phẩm (`id`,`name`,`price_vnd` null→"Liên hệ",`url`,`lang`) | `core_store` từ products.jsonl + nhập tay |
 | `claims_approved` | Công dụng ĐÃ CÔNG BỐ theo SKU — nguồn sự thật guardrail (`sku_key`,`claim` null="chưa công bố") | `core_store` từ `claims_whitelist.json` |
 | `plots` | Khoảnh vùng trồng (`id` vd 'KV-A01',`location`,`tree_count`,`status`) | `sample_plots.jsonl` (MẪU) + nhập tay |
-| `plot_logs` | Nhật ký vùng trồng (`plot_id` FK→plots,`ts`,`activity`,`detail`,`author`) | `agents.garden` `source='manual:garden'` + sample |
+| `plot_logs` | Nhật ký vùng trồng (`plot_id` FK→plots,`ts`,`activity`,`detail`,`author`) + **hash chain** (v9.3) `prev_hash`→`row_hash` cho mọi dòng KHÔNG mẫu — trigger INSERT tính hash, dòng đã chain không UPDATE/DELETE/TRUNCATE được (kể cả cascade khi xóa khoảnh); dòng `sample:%` ngoài chuỗi. Kiểm: function `verify_plot_logs()` (`python -m agents.garden_director --verify`) | `agents.garden` `source='manual:garden'` + sample (loader giữ khoảnh mẫu còn nhật ký đã chain/ảnh; sau khi gỡ mẫu không nạp lại) |
 | `orders` | Đơn hàng tối thiểu (`channel`,`product_id`,`qty`,`total_vnd`,`status`) — không PII | `sample_orders.jsonl` (MẪU) + nhập tay |
 | `assets` | Tài sản truyền thông (`kind` image/video/article/doc,`url`,`product_id`) | `core_store` từ products.images + jsonl |
 | `leads` | Lead từ convlog (`dedup_key` unique,`channel`,`user_hash`,`question` đã mask,`intent`,`status`) | `ingest.lead_store` — insert-only, không xóa |
@@ -95,6 +95,7 @@ Streamlit demo.
 | `eval_runs` | 1 dòng/lần nghiệm thu 1 agent tại 1 commit (`commit_sha`,`agent`,`n_total`,`n_pass`,`pass_rate`,`threshold`,`passed`,`model`,`prompt_version`) — `<sha>-dirty` = chạy trên tree bẩn, không mở deploy | `scripts/agent_eval.py` (CI/local) — insert-only; `scripts/deploy_gate.py` đọc row mới nhất |
 | `job_runs` | 1 dòng/lần chạy job lịch (`job`,`started_at`,`finished_at`,`ok`,`detail` đã mask cắt 300,`host`) — bản tin sức khỏe đọc để báo job lỗi/không chạy | `pipelines.job_runs.job_run` (bọc `__main__` của `agents.report`, `ingest.lead_store`) — insert-only |
 | `documents` | Tài liệu số hóa (`sha256` PK = tên bản gốc bất biến `originals/<sha256>`,`doc_type`,`pages`,`text_source` pdf_text/ocr/none,`pii_flag`,`status` cho_ocr/pending_review/verified/rejected,`verified_by`) — KHÔNG lưu full text | `ingest.doc_intake` — insert-only theo hash; status verified/rejected chỉ do Pháp chế qua CLI `--verify/--reject --by` |
+| `garden_media` | (v9.3) Kho tư liệu vườn: `sha256` UNIQUE (tên file trong kho NGOÀI repo `<sha[:2]>/<sha>.<ext>`),`ext` jpg/png,`bytes`,`width`,`height`,`plot_id` FK→plots (no action),`taken_on`,`author`,`exif_removed`,`had_gps` — ảnh đã gỡ TOÀN BỘ EXIF/GPS; KHÔNG cột tọa độ/đường dẫn/tên file gốc | `python scripts/garden_media.py --file .. --plot .. --date .. --by ..` (`GARDEN_MEDIA_DIR` ngoài repo) |
 | `document_fields` | Field pháp lý trích bằng regex (`so_giay`,`ngay_cap`,`ten_san_pham`; `confidence`,`verified` mặc định false) | `ingest.doc_intake` — không LLM; `verified=true` khi Pháp chế `--verify` |
 
 View (v3.2): `sku_readiness` (SKU × kênh online → `CAM` / `MO_TA` /
@@ -136,6 +137,8 @@ crash (mọi connect qua `ingest.lead_store.connect`, `connect_timeout=3`).
 |---|---|---|
 | Báo cáo định kỳ | `python -m agents.report [--days N] [--until YYYY-MM-DD]` | Tổng hợp orders/leads/convlog/plot_logs → `data/reports/report-*.md`; gắn nhãn *(mẫu)* khi nguồn toàn `sample:*`; DB chết → bản DEGRADED |
 | Nhật ký vùng trồng | `python -m agents.garden --plot .. --activity ..` / `--check [--gap-days N]` | Ghi `plot_logs` (chuẩn hóa hoạt động theo `ACTIVITY_VOCAB` + alias) + cảnh báo no-logs/gap/keyword (`FLAG_KEYS` chung với report) |
+| GĐ vùng trồng (v9.3) | `python -m agents.garden_director --bulletin [--until YYYY-MM-DD]` / `--remind` / `--verify` / `--precheck` / `--purge-sample --by "<GĐ vùng trồng>"` / `--adopt-plot <id> --by` | Bản tin tuần tất định `data/reports/garden-week-<until>.md` (toàn vẹn chuỗi, mẫu còn lại, nhắc lịch/gap theo `data/garden_schedule.json` — GIẢ ĐỊNH, nhật ký mới, cảnh báo keyword CHỈ trên detail, ảnh mới; mỗi mục kèm SQL đối chứng). Gỡ mẫu CHỈ người thật qua `--by` → ghi `agent_action_log` |
+| Kho tư liệu vườn (v9.3) | `python scripts/garden_media.py --file .. --plot .. --date .. --by ..` | Gỡ EXIF/GPS/XMP (dựng lại ảnh từ pixel), lưu ngoài repo theo sha256, metadata `garden_media` |
 
 Lập lịch định kỳ: Task Scheduler/cron chạy hai lệnh trên — report
 idempotent theo kỳ (cùng kỳ → cùng tên file ghi đè).
@@ -147,7 +150,8 @@ idempotent theo kỳ (cùng kỳ → cùng tên file ghi đè).
 | Duyệt content | Guardrail check lúc sinh + chạy LẠI trên text trước khi duyệt; chuyển trạng thái chỉ qua function DB `approve_draft` (SECURITY DEFINER: guardrail ok, có người tạo, **người duyệt ≠ người tạo**); mỗi quyết định ghi `approvals` kèm sha256 nội dung; `schedule_draft` từ chối nếu text đã sửa sau duyệt; mọi bước ghi `agent_action_log` hash chain | Duyệt/từ chối từng bài (identity đăng nhập) + note |
 | Đăng bài | `scheduled_date` + calendar là kế hoạch | Copy text đã duyệt, đăng tay lên kênh |
 | Báo cáo lãnh đạo | Sinh file markdown BẢN NHÁP | Đọc/duyệt/sửa rồi gửi Zalo/email tay |
-| Nhật ký vườn | Chuẩn hóa + cảnh báo bất thường | Ghi nhật ký tay; báo quản lý khi có cảnh báo |
+| Nhật ký vườn | Chuẩn hóa + cảnh báo bất thường; hash chain chặn sửa/xóa | Ghi nhật ký tay; báo quản lý khi có cảnh báo; sai thì ghi dòng MỚI kèm lý do |
+| Gỡ dữ liệu mẫu vườn | `--precheck` liệt kê blocker; agent KHÔNG tự gỡ | GĐ vùng trồng chạy `--purge-sample --by "<tên>"` (ghi `agent_action_log`); blocker nhật ký đã chain (không chuyển được) → `--adopt-plot <id> --by` nhận khoảnh thành khoảnh thật (`garden_plot_adopt`) |
 | Zalo OA | Chỉ TRẢ LỜI tin nhắn đến (reply), không chủ động nhắn, không đăng OA | — |
 | Bổ sung KB/claim | `core_store`/`embed_store` nạp lại khi được chạy | Soạn file nguồn + chạy lệnh nạp |
 
