@@ -1,0 +1,137 @@
+# v3.4-auth-approval — gate DB/grep (output thật) — 2026-10-12T00:37:52+07:00
+
+## W34.1/W34.2: python scripts/apply_schema.py --roles x2
+$ python scripts/apply_schema.py --roles  (lần 1)
+[done] schema applied — 16 bảng public: agent_action_log, approvals, assets, chunks, claims_approved, content_drafts, golden_discrepancies, leads, llm_usage, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+exit=0
+$ python scripts/apply_schema.py --roles  (lần 2)
+[done] schema applied — 16 bảng public: agent_action_log, approvals, assets, chunks, claims_approved, content_drafts, golden_discrepancies, leads, llm_usage, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+exit=0
+$ python scripts/apply_schema.py  (không cờ — như cũ)
+[done] schema applied — 16 bảng public: agent_action_log, approvals, assets, chunks, claims_approved, content_drafts, golden_discrepancies, leads, llm_usage, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+exit=0
+
+## grep -c '^create table if not exists' docs/schema.sql
+16
+
+## W34.2 role/function trên DB thật (read-only)
+roles: [('agent_writer', False), ('app_human', False)]
+fn agent_action_log_chain: prosecdef=True proconfig=['search_path=public, pg_temp']
+fn approve_draft: prosecdef=True proconfig=['search_path=public, pg_temp']
+fn reject_draft: prosecdef=True proconfig=['search_path=public, pg_temp']
+fn schedule_draft: prosecdef=True proconfig=['search_path=public, pg_temp']
+fn verify_action_log: prosecdef=True proconfig=['search_path=public, pg_temp']
+fn verify_publish: prosecdef=True proconfig=['search_path=public, pg_temp']
+has_function_privilege(agent_writer, approve_draft) = False
+has_function_privilege(app_human, approve_draft) = True
+has_function_privilege(public, approve_draft) = False
+has_table_privilege(agent_writer, content_drafts, UPDATE) = False
+has_column_privilege(agent_writer, content_drafts.status, INSERT) = False
+approvals rows = 0
+content_drafts status<>'pending' = 0
+content_drafts total = 0
+agent_action_log rows = 0
+leftover test schemas t_auth_% = 0
+exit=0
+
+## W34.3: grep -nE 'update +content_drafts' pipelines/store.py (phải rỗng)
+grep_exit=1 (1 = không khớp)
+
+## W34.4: import pipelines.auth không kéo streamlit
+exit=0
+
+## W34.5 grep
+st.stop() đầu tiên / st.tabs( :
+56:    st.stop()
+105:_tabs = dict(zip(_allowed, st.tabs(list(_allowed))))
+grep 'Người duyệt \*':
+grep_exit=1 (1 = rỗng)
+save_draft( có created_by=:
+4:269-                                created_by=_ident))
+python -m py_compile app/streamlit_app.py:
+exit=0
+
+## Gate chung — sau toàn bộ gate (targeted x3 + full) trên DB thật — 2026-10-12T00:40:06+07:00
+approvals rows = 0
+content_drafts status<>'pending' = 0
+content_drafts total = 0
+agent_action_log rows = 0
+leftover test schemas t_auth_% = 0
+$ python -m pipelines.store --verify-log
+[ok] chuỗi nguyên vẹn (0 dòng)
+exit=0
+$ python -m pipelines.store --approve 999999 --by X   (case âm — không tìm thấy)
+[warn] không tìm thấy draft #999999
+exit=2
+$ python -m pipelines.store --schedule 1 2026-10-20   (thiếu --by)
+python -m pipelines.store: error: --schedule cần --by <tên người xếp lịch>
+exit=2
+
+## git status --porcelain (+ untracked)
+ M .gitignore
+ M AGENTS.md
+ M DONE.md
+ M app/streamlit_app.py
+ M docs/deploy.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/schema.sql
+ M env.example
+ M pipelines/store.py
+ M scripts/apply_schema.py
+ M tests/test_handover_docs.py
+ M tests/test_lead_store.py
+ M tests/test_store.py
+?? data/users.example.json
+?? docs/roles.sql
+?? evidence/v34_ui_blocked.png
+?? evidence/v34_ui_local_gd_ban_hang.png
+?? evidence/v34_ui_locked.png
+?? pipelines/auth.py
+?? tests/test_auth.py
+?? tests/test_auth_approval.py
+data/users.json tracked? ->
+0
+diff chứa hash scrypt hợp lệ? (scrypt$<n>$<r>$<p>$<hex>$<hex>) ->
+warning: in the working copy of 'app/streamlit_app.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/schema.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipelines/store.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/apply_schema.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_handover_docs.py', LF will be replaced by CRLF the next time Git touches it
+0
+
+## Danh sách case (verbose 1 lần, sau gate x3): tests/test_auth_approval.py tests/test_auth.py
+tests/test_auth_approval.py::test_chain_three_rows_linked PASSED         [  3%]
+tests/test_auth_approval.py::test_chain_client_values_overwritten PASSED [  6%]
+tests/test_auth_approval.py::test_append_only_triggers_block_superuser PASSED [ 10%]
+tests/test_auth_approval.py::test_verify_detects_update_and_delete PASSED [ 13%]
+tests/test_auth_approval.py::test_hash_independent_of_timezone_datestyle PASSED [ 16%]
+tests/test_auth_approval.py::test_approvals_sha_check_and_parity PASSED  [ 20%]
+tests/test_auth_approval.py::test_functions_security_definer_pinned PASSED [ 23%]
+tests/test_auth_approval.py::test_agent_writer_cannot_self_approve PASSED [ 26%]
+tests/test_auth_approval.py::test_app_human_only_via_function PASSED     [ 30%]
+tests/test_auth_approval.py::test_store_flow_as_app_human PASSED         [ 33%]
+tests/test_auth_approval.py::test_store_snapshot_forged_not_approved PASSED [ 36%]
+tests/test_auth_approval.py::test_store_function_error_returns_warn PASSED [ 40%]
+tests/test_auth_approval.py::test_cli_real_db_negative_only PASSED       [ 43%]
+tests/test_auth.py::test_role_tab_matrix_6x7 PASSED                      [ 46%]
+tests/test_auth.py::test_approve_schedule_sets_and_unknown_role PASSED   [ 50%]
+tests/test_auth.py::test_auth_mode_fail_closed PASSED                    [ 53%]
+tests/test_auth.py::test_auth_mode_reads_os_environ PASSED               [ 56%]
+tests/test_auth.py::test_identity_from_headers_case_insensitive PASSED   [ 60%]
+tests/test_auth.py::test_identity_from_headers_rejects PASSED            [ 63%]
+tests/test_auth.py::test_hash_roundtrip_and_salt PASSED                  [ 66%]
+tests/test_auth.py::test_verify_password_broken_strings PASSED           [ 70%]
+tests/test_auth.py::test_load_users_broken_variants PASSED               [ 73%]
+tests/test_auth.py::test_load_users_env_path PASSED                      [ 76%]
+tests/test_auth.py::test_users_example_and_gitignore PASSED              [ 80%]
+tests/test_auth.py::test_lockout_after_max_fails PASSED                  [ 83%]
+tests/test_auth.py::test_lockout_unknown_user_and_reset_on_success PASSED [ 86%]
+tests/test_auth.py::test_check_login_bad_inputs PASSED                   [ 90%]
+tests/test_auth.py::test_lockout_state_bounded PASSED                    [ 93%]
+tests/test_auth.py::test_auth_does_not_import_streamlit PASSED           [ 96%]
+tests/test_auth.py::test_cli_hash_uses_getpass PASSED                    [100%]
+============================= 30 passed in 13.14s =============================
+exit=0

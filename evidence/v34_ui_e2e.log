@@ -1,0 +1,13 @@
+# v3.4 UI E2E (TÙY CHỌN W34.5) — 2026-10-12T00:36:49+07:00
+# streamlit 1.65.0 trong venv tạm NGOÀI repo (scratchpad/v34venv, --system-site-packages), không cài global, không sửa requirements
+# users file tạm ngoài repo, mật khẩu sinh lúc chạy (secrets.token_urlsafe), xóa sau chạy
+PASS blank: thông báo chặn
+PASS blank: 0 tab
+PASS local: chưa đăng nhập 0 tab
+PASS local: lần 6 mk đúng vẫn khóa
+ui_bh tabs: ['Chat Sâm Sâm', 'Chưa trả lời', 'Leads', 'Báo cáo']
+PASS local: gd_ban_hang đúng 4 tab theo ROLE_TABS
+PASS proxy: thiếu header → chặn, 0 tab
+NOTE proxy+header: chưa E2E (Playwright không gắn header vào WS handshake) — unit test thay thế
+[ui-e2e] 6/6 PASS
+exit=0

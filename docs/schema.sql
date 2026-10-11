@@ -346,3 +346,295 @@ join price_list p
  and (p.valid_to is null
       or p.valid_to > (now() at time zone 'Asia/Ho_Chi_Minh')::date)
 where r.readiness in ('TP_THUONG', 'QC_DAY_DU');
+
+-- ============================================================================
+-- v3.4 duyệt & log (WP03 "Hàng duyệt"): DB chặn tự duyệt bằng QUYỀN chứ không
+-- bằng quy ước.
+--   * `content_drafts.created_by` — người/agent tạo draft. null = draft trước
+--     v3.4 → approve_draft từ chối (fail-closed: không biết ai tạo thì không
+--     kiểm được "người duyệt ≠ người tạo").
+--   * `approvals` — mỗi quyết định duyệt/từ chối 1 dòng kèm sha256 nội dung
+--     ĐÚNG lúc duyệt; bản phát hành phải khớp sha (`verify_publish`). Chỉ
+--     function SECURITY DEFINER ghi; app_human đọc. Append-only (trigger).
+--   * `agent_action_log` — nhật ký hành động agent/người, append-only + hash
+--     chain (prev_hash → row_hash). Ai ghi: agent_writer (INSERT 5 cột) +
+--     function duyệt; ai đọc: app_human. Trigger INSERT ép id/ts/db_role/hash
+--     (không tin client). `verify_action_log()` phát hiện sửa/xóa GIỮA chuỗi.
+--     Giới hạn: xóa dòng CUỐI chuỗi không phát hiện được bằng chuỗi thuần —
+--     cần neo hash ra ngoài (object-lock, external-dep WP03 anchor).
+--   * Function duyệt: SECURITY DEFINER + search_path ghim `<schema>, pg_temp`
+--     (pg_temp CUỐI, chặn bảng tạm giả mạo) + revoke execute khỏi PUBLIC.
+--     Quyền role ở `docs/roles.sql` (agent_writer / app_human).
+-- Hash canonical KHÔNG phụ thuộc TimeZone/DateStyle của session: ts quy về
+-- epoch micro-giây (bigint), không dùng ts::text. sha256 nội dung byte-exact
+-- UTF-8 (== Python hashlib.sha256(t.encode('utf-8'))).
+-- Ngày "không quá khứ" tính theo giờ VN (bài học date-UTC v2.4).
+-- ============================================================================
+
+-- Ghim search_path = <schema hiện tại>, pg_temp cho các function SECURITY
+-- DEFINER bên dưới (`set search_path from current`), kể cả khi chạy tay bằng
+-- psql với search_path mặc định ("$user", public — pg_temp ngầm ĐỨNG ĐẦU).
+do $$
+begin
+  perform set_config('search_path',
+                     quote_ident(current_schema()) || ', pg_temp', false);
+end $$;
+
+alter table content_drafts add column if not exists created_by text;
+
+create table if not exists approvals (
+  id bigint generated always as identity primary key,
+  object_type text not null,        -- v3.4: 'content_draft'
+  object_id text not null,
+  content_sha256 text not null check (content_sha256 ~ '^[0-9a-f]{64}$'),
+  decision text not null check (decision in ('approved', 'rejected')),
+  approved_by text not null check (btrim(approved_by) <> ''),
+  approved_at timestamptz not null default now(),
+  db_role text not null default session_user,
+  note text
+);
+create index if not exists approvals_object_idx
+  on approvals (object_type, object_id, id);
+
+create table if not exists agent_action_log (
+  id bigint generated always as identity primary key,
+  ts timestamptz not null default now(),
+  actor text not null check (btrim(actor) <> ''),
+  action text not null,             -- draft_create | draft_approve | draft_reject | draft_schedule
+  object_type text,
+  object_id text,
+  detail jsonb not null default '{}',
+  db_role text not null default session_user,
+  prev_hash text not null,
+  row_hash text not null unique
+);
+
+-- Chặn UPDATE/DELETE/TRUNCATE cho bảng append-only (approvals, log).
+create or replace function append_only_guard() returns trigger
+language plpgsql as $$
+begin
+  raise exception '% append-only: % bị chặn', tg_table_name, tg_op;
+end $$;
+revoke execute on function append_only_guard() from public;
+
+create or replace trigger approvals_append_only_row
+  before update or delete on approvals
+  for each row execute function append_only_guard();
+create or replace trigger approvals_no_truncate
+  before truncate on approvals
+  for each statement execute function append_only_guard();
+create or replace trigger agent_action_log_append_only_row
+  before update or delete on agent_action_log
+  for each row execute function append_only_guard();
+create or replace trigger agent_action_log_no_truncate
+  before truncate on agent_action_log
+  for each statement execute function append_only_guard();
+
+-- Hash 1 dòng log (dùng chung cho trigger INSERT và verify).
+create or replace function action_log_row_hash(
+  p_prev text, p_id bigint, p_actor text, p_action text, p_object_type text,
+  p_object_id text, p_detail jsonb, p_db_role text, p_ts timestamptz)
+returns text language sql stable as $$
+  select encode(sha256(convert_to(p_prev || jsonb_build_array(
+    p_id, p_actor, p_action, p_object_type, p_object_id, p_detail, p_db_role,
+    (extract(epoch from p_ts) * 1000000)::bigint)::text, 'UTF8')), 'hex')
+$$;
+revoke execute on function action_log_row_hash(text, bigint, text, text, text,
+  text, jsonb, text, timestamptz) from public;
+
+-- INSERT log: khóa advisory theo bảng (tuần tự hóa chuỗi), cấp id SAU khi giữ
+-- khóa (id tăng đúng thứ tự chuỗi kể cả khi 2 transaction chèn song song —
+-- id lấy từ default trước khi chờ khóa có thể nhỏ hơn dòng tx kia vừa
+-- commit), ép ts/db_role/prev_hash/row_hash — giá trị client gửi bị ghi đè.
+-- Chỉ READ COMMITTED: snapshot REPEATABLE READ không thấy dòng vừa commit
+-- của tx khác → 2 dòng cùng prev_hash (rẽ nhánh chuỗi).
+create or replace function agent_action_log_chain() returns trigger
+language plpgsql security definer set search_path from current as $$
+declare
+  v_prev text;
+begin
+  if current_setting('transaction_isolation') <> 'read committed' then
+    raise exception 'agent_action_log: chỉ ghi trong READ COMMITTED (hash chain)';
+  end if;
+  perform pg_advisory_xact_lock(tg_relid::bigint);
+  new.id := nextval(pg_get_serial_sequence(
+    quote_ident(tg_table_schema) || '.' || quote_ident(tg_table_name), 'id'));
+  new.ts := now();
+  new.db_role := session_user;
+  new.detail := coalesce(new.detail, '{}'::jsonb);
+  select l.row_hash into v_prev from agent_action_log l
+    order by l.id desc limit 1;
+  new.prev_hash := coalesce(v_prev, repeat('0', 64));
+  new.row_hash := action_log_row_hash(new.prev_hash, new.id, new.actor,
+    new.action, new.object_type, new.object_id, new.detail, new.db_role,
+    new.ts);
+  return new;
+end $$;
+revoke execute on function agent_action_log_chain() from public;
+
+create or replace trigger agent_action_log_chain_ins
+  before insert on agent_action_log
+  for each row execute function agent_action_log_chain();
+
+-- Kiểm chuỗi: rỗng = nguyên vẹn. problem 'row_hash' = nội dung dòng bị sửa;
+-- 'prev_hash' = dòng ngay trước bị xóa/chèn/sửa hash.
+create or replace function verify_action_log()
+returns table (id bigint, problem text)
+language plpgsql stable security definer set search_path from current as $$
+declare
+  r record;
+  v_prev text := repeat('0', 64);
+begin
+  for r in select l.* from agent_action_log l order by l.id loop
+    if r.prev_hash is distinct from v_prev then
+      id := r.id; problem := 'prev_hash'; return next;
+    end if;
+    if r.row_hash is distinct from action_log_row_hash(r.prev_hash, r.id,
+        r.actor, r.action, r.object_type, r.object_id, r.detail, r.db_role,
+        r.ts) then
+      id := r.id; problem := 'row_hash'; return next;
+    end if;
+    v_prev := r.row_hash;
+  end loop;
+end $$;
+revoke execute on function verify_action_log() from public;
+
+-- Bản phát hành khớp bản đã duyệt? Quyết định MỚI NHẤT của object phải là
+-- 'approved' VÀ sha256(p_content) = content_sha256. Không có quyết định → false.
+create or replace function verify_publish(p_object_type text,
+  p_object_id text, p_content text)
+returns boolean
+language sql stable security definer set search_path from current as $$
+  select coalesce((
+    select a.decision = 'approved'
+       and p_content is not null
+       and a.content_sha256
+           = encode(sha256(convert_to(p_content, 'UTF8')), 'hex')
+    from approvals a
+    where a.object_type = p_object_type and a.object_id = p_object_id
+    order by a.id desc limit 1), false)
+$$;
+revoke execute on function verify_publish(text, text, text) from public;
+
+-- Duyệt draft: chỉ pending, guardrail ok, có người tạo, người duyệt ≠ người
+-- tạo (so khớp không phân biệt hoa thường/khoảng trắng). Cùng 1 transaction:
+-- đổi status + approvals (sha256 text hiện tại) + log. Trả id approvals.
+create or replace function approve_draft(p_id bigint, p_approver text,
+  p_note text default null)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  d content_drafts%rowtype;
+  v_by text := btrim(coalesce(p_approver, ''));
+  v_sha text;
+  v_aid bigint;
+begin
+  if v_by = '' then
+    raise exception 'thiếu tên người duyệt';
+  end if;
+  select * into d from content_drafts c where c.id = p_id for update;
+  if not found then
+    raise exception 'không tìm thấy draft #%', p_id;
+  end if;
+  if d.status <> 'pending' then
+    raise exception 'draft #% đã ở trạng thái %, chỉ duyệt từ pending',
+      p_id, d.status;
+  end if;
+  if coalesce(d.guardrail->>'ok', '') <> 'true' then
+    raise exception 'draft #% vi phạm guardrail (ok != true), không duyệt được',
+      p_id;
+  end if;
+  if btrim(coalesce(d.created_by, '')) = '' then
+    raise exception 'draft #% không có người tạo (trước v3.4), không duyệt được',
+      p_id;
+  end if;
+  if lower(btrim(d.created_by)) = lower(v_by) then
+    raise exception 'người duyệt trùng người tạo draft #%, cần người khác duyệt',
+      p_id;
+  end if;
+  v_sha := encode(sha256(convert_to(d.text, 'UTF8')), 'hex');
+  update content_drafts c set status = 'approved', reviewer = v_by,
+         reviewed_at = now(), review_note = p_note
+   where c.id = p_id;
+  insert into approvals (object_type, object_id, content_sha256, decision,
+                         approved_by, note)
+  values ('content_draft', p_id::text, v_sha, 'approved', v_by, p_note)
+  returning approvals.id into v_aid;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'draft_approve', 'content_draft', p_id::text,
+          jsonb_build_object('approval_id', v_aid, 'content_sha256', v_sha));
+  return v_aid;
+end $$;
+revoke execute on function approve_draft(bigint, text, text) from public;
+
+-- Từ chối: pending -> rejected. Người tạo tự rút bài được (không áp luật ≠).
+create or replace function reject_draft(p_id bigint, p_reviewer text,
+  p_note text default null)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  d content_drafts%rowtype;
+  v_by text := btrim(coalesce(p_reviewer, ''));
+  v_sha text;
+  v_aid bigint;
+begin
+  if v_by = '' then
+    raise exception 'thiếu tên người duyệt';
+  end if;
+  select * into d from content_drafts c where c.id = p_id for update;
+  if not found then
+    raise exception 'không tìm thấy draft #%', p_id;
+  end if;
+  if d.status <> 'pending' then
+    raise exception 'draft #% đã ở trạng thái %, chỉ từ chối từ pending',
+      p_id, d.status;
+  end if;
+  v_sha := encode(sha256(convert_to(d.text, 'UTF8')), 'hex');
+  update content_drafts c set status = 'rejected', reviewer = v_by,
+         reviewed_at = now(), review_note = p_note
+   where c.id = p_id;
+  insert into approvals (object_type, object_id, content_sha256, decision,
+                         approved_by, note)
+  values ('content_draft', p_id::text, v_sha, 'rejected', v_by, p_note)
+  returning approvals.id into v_aid;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'draft_reject', 'content_draft', p_id::text,
+          jsonb_build_object('approval_id', v_aid, 'content_sha256', v_sha));
+  return v_aid;
+end $$;
+revoke execute on function reject_draft(bigint, text, text) from public;
+
+-- Xếp lịch: chỉ draft approved, ngày ≥ hôm nay (giờ VN), và text hiện tại
+-- khớp sha bản đã duyệt (sửa text sau duyệt → không xếp lịch được).
+create or replace function schedule_draft(p_id bigint, p_day date,
+  p_by text)
+returns void
+language plpgsql security definer set search_path from current as $$
+declare
+  d content_drafts%rowtype;
+  v_by text := btrim(coalesce(p_by, ''));
+begin
+  if v_by = '' then
+    raise exception 'thiếu tên người xếp lịch';
+  end if;
+  if p_day is null
+     or p_day < (now() at time zone 'Asia/Ho_Chi_Minh')::date then
+    raise exception 'ngày % đã qua (giờ VN), chỉ xếp lịch từ hôm nay', p_day;
+  end if;
+  select * into d from content_drafts c where c.id = p_id for update;
+  if not found then
+    raise exception 'không tìm thấy draft #%', p_id;
+  end if;
+  if d.status <> 'approved' then
+    raise exception 'draft #% đang %, chỉ xếp lịch bài đã approved',
+      p_id, d.status;
+  end if;
+  if not verify_publish('content_draft', p_id::text, d.text) then
+    raise exception 'nội dung draft #% không khớp bản đã duyệt (sha256)', p_id;
+  end if;
+  update content_drafts c set scheduled_date = p_day where c.id = p_id;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'draft_schedule', 'content_draft', p_id::text,
+          jsonb_build_object('day', to_char(p_day, 'YYYY-MM-DD')));
+end $$;
+revoke execute on function schedule_draft(bigint, date, text) from public;

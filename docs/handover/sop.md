@@ -70,16 +70,26 @@ Ghi chú vận hành:
 python -m pipelines.store --pending                  # draft chờ duyệt
 python -m pipelines.store --approve 12 --by "Lan"    # duyệt (chỉ khi guardrail ok)
 python -m pipelines.store --reject 13 --by "Lan" --note "lý do"
-python -m pipelines.store --schedule 12 2026-11-05   # xếp lịch bài approved
+python -m pipelines.store --schedule 12 2026-11-05 --by "Lan"   # xếp lịch bài approved
 python -m pipelines.store --calendar                 # lịch 14 ngày
+python -m pipelines.store --verify-log               # kiểm nhật ký hash chain
 ```
 
 - Mỗi lệnh chỉ làm **1 thao tác** (cố gắn gộp flag → báo lỗi usage).
-- `--by <tên người duyệt>` bắt buộc khi approve/reject (audit).
+- `--by <tên>` bắt buộc khi approve/reject/schedule (audit). Trên UI
+  người duyệt = người đăng nhập (không gõ tên).
+- **Người duyệt phải KHÁC người tạo draft** (so không phân biệt hoa
+  thường) — DB từ chối nếu trùng. Draft cũ (trước v3.4) không có người
+  tạo → không duyệt được: từ chối rồi sinh lại.
 - Approve draft vi phạm guardrail → bị từ chối kèm cảnh báo (không có
-  override). Status chỉ đi một chiều `pending → approved|rejected`.
-- Xếp lịch chỉ được trên bài `approved` và ngày không quá khứ. **Lịch
-  là kế hoạch cho người đăng tay.**
+  override); guardrail được chạy LẠI trên text trước khi duyệt. Status
+  chỉ đi một chiều `pending → approved|rejected`.
+- Xếp lịch chỉ được trên bài `approved`, ngày không quá khứ (giờ VN) và
+  text còn khớp bản đã duyệt (sha256 — sửa text sau duyệt thì không xếp
+  lịch được). **Lịch là kế hoạch cho người đăng tay.**
+- `--verify-log`: exit 0 `[ok] chuỗi nguyên vẹn (N dòng)`; exit 1 in
+  `id=.. problem=row_hash|prev_hash` (xem mục 7); exit 2 = DB không
+  kết nối được.
 
 ## 5. Kênh Zalo OA (khi chạy thật)
 
@@ -160,6 +170,23 @@ trả None. Checklist:
 - Draft không hiện trong `--pending` → có thể đã duyệt/từ chối; status
   một chiều không quay lại.
 
+### Bị khóa đăng nhập ("tạm khóa đăng nhập do sai nhiều lần")
+
+Sai mật khẩu 5 lần liên tiếp (`AUTH_MODE=local`) → khóa 5 phút theo
+tên đăng nhập. Chờ hết 5 phút, hoặc quản trị restart Streamlit (khóa
+nằm trong RAM — restart xóa). Quên mật khẩu → quản trị tạo hash mới
+(`python -m pipelines.auth --hash`) và thay trong `data/users.json`.
+"Truy cập bị chặn: chưa cấu hình đăng nhập" = `AUTH_MODE` trống/sai
+(mục 9).
+
+### `--verify-log` báo lỗi (exit 1)
+
+Nhật ký `agent_action_log` bị sửa (`row_hash`) hoặc xóa/chèn
+(`prev_hash`) ngoài luồng — chỉ superuser DB làm được (bảng chặn
+UPDATE/DELETE bằng trigger). KHÔNG tự "sửa cho khớp". Người phụ trách
+hạ tầng (vai trò `ha_tang`) lưu output + backup DB hiện tại, báo TGĐ;
+đối chiếu với backup gần nhất (mục 6) để xác định dòng bị đụng.
+
 ### Cập nhật status lead (pilot chưa có nút trên UI)
 
 ```
@@ -198,6 +225,50 @@ SOW.
 | `ZALO_ACCESS_TOKEN` / `ZALO_REFRESH_TOKEN` | Seed token lần đầu | Sau refresh đầu, source-of-truth là `data/zalo_tokens.json` |
 | `ZALO_WEBHOOK_PORT` | Port webhook (mặc định 8788) | — |
 | `DEPLOY` | `1/true/yes` = production, verify signature bắt buộc | Mọi giá trị khác = dev, signature bypass — KHÔNG public |
+| `AUTH_MODE` | Đăng nhập Streamlit: `proxy` (header Cloudflare Access) / `local` (user+mật khẩu) / `dev` (máy dev, cấm khi `DEPLOY=1`) | Trống/sai = **chặn mọi truy cập** (fail-closed) |
+| `AUTH_USERS_FILE` | File users (mặc định `data/users.json`, gitignored) | File thiếu/hỏng = không ai đăng nhập được |
+
+**Đăng nhập Streamlit (v3.4):**
+
+1. Copy `data/users.example.json` → `data/users.json` (KHÔNG commit);
+   mỗi người 1 entry `{"role": ..., "password_hash": ...}`, role thuộc
+   `tgd | phap_che | gd_ban_hang | gd_marketing | mxh | ha_tang` (danh
+   sách người + vai trò do TGĐ chốt).
+2. Tạo hash mật khẩu: `python -m pipelines.auth --hash` (nhập ẩn 2 lần,
+   ≥10 ký tự) → dán chuỗi `scrypt$...` vào `password_hash`.
+3. `.env`: `AUTH_MODE=local` (hoặc `proxy` khi đã có Cloudflare Access —
+   Streamlit phải bind `127.0.0.1`, xem `docs/deploy.md`). `pipelines/auth.py`
+   tự đọc `.env` (biến môi trường process ưu tiên hơn) — `AUTH_MODE`,
+   `AUTH_USERS_FILE`, `DEPLOY` đặt trong `.env` có hiệu lực ngay lần chạy
+   đầu; `DEPLOY=1` trong `.env` ép `dev` → chặn.
+
+**Role DB (v3.4):** `python scripts/apply_schema.py --roles` tạo 2 role
+NOLOGIN `agent_writer` (agent: chỉ INSERT draft pending + log) và
+`app_human` (người: duyệt qua function). Login thật do hạ tầng tạo, mật
+khẩu đặt NGOÀI git, ví dụ (psql, thay `<...>`):
+
+```
+create role <ten_agent> login password '<mat-khau>' in role agent_writer;
+create role <ten_nguoi> login password '<mat-khau>' in role app_human;
+```
+
+**CHƯA đổi `DATABASE_URL` của Streamlit / agent / webhook sang DSN role.**
+`roles.sql` hiện CHỈ cấp quyền trên `content_drafts`, `approvals`,
+`agent_action_log` (+ function duyệt). Chuyển DSN bây giờ sẽ làm gãy:
+
+| Tiến trình dưới role | Bảng thiếu quyền | Hậu quả |
+|---|---|---|
+| Streamlit dưới `app_human` | `chunks`, `leads`, `plot_logs`/`plots`, `products`/`claims_approved`, `llm_usage`... | Tab Chat, Leads, Báo cáo, Nhật ký vườn lỗi DB |
+| Agent dưới `agent_writer` (qua `pipelines/llm_gateway.py`) | `llm_usage` (SELECT + INSERT) | **Trần chi phí LLM tháng TẮT CÂM** — `_month_spend` lỗi đọc thì "cho qua"; usage không còn được ghi |
+| Agent/ingest khác | `chunks`, `leads`, `plot_logs`, `sku_*`, `price_list`, `orders`... | Ghi/đọc lỗi |
+
+Hiện tại DSN role CHỈ dùng cho tiến trình duyệt/ghi draft riêng, ví dụ
+CLI `python -m pipelines.store` (login `in role app_human` duyệt/xếp
+lịch; login `in role agent_writer` lưu draft). Máy pilot vẫn chạy app/
+agent bằng DSN owner → chặn tự-duyệt ở tầng DB CHƯA có hiệu lực cho
+chúng (UI vẫn đi qua `approve_draft`). Chuyển hẳn sang role = grant đủ
+bảng theo plan §5 (external-dep/someday trong `DONE.md`), kiểm lại trần
+chi phí LLM dưới role agent trước khi đổi DSN.
 
 **Quy tắc:** không ai được ghi giá trị secret vào code/docs/git;
 `.env` nằm ngoài git; khi bàn giao chuyển `.env` + `data/zalo_tokens.json`

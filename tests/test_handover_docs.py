@@ -2,8 +2,9 @@
 
 Bắt drift giữa docs/handover/ và code/data thật:
   - 8 file handover tồn tại + non-empty.
-  - Tab names trong playbook/kien-truc khớp `st.tabs` trong
-    app/streamlit_app.py (parse source, không hardcode).
+  - Tab names trong playbook/kien-truc khớp `TABS` trong
+    pipelines/auth.py (v3.4: nguồn duy nhất — streamlit_app tạo tab theo
+    vai trò từ đó; parse AST, không import, không hardcode).
   - phu-luc-d.md chứa đủ id câu hỏi parse từ tests/questions.md.
   - sop.md chứa các lệnh cốt vận hành.
   - kien-truc.md liệt kê đủ tên bảng parse từ docs/schema.sql + đúng
@@ -30,7 +31,7 @@ DOC_FILES = (
 )
 
 # Tab nào thuộc vai trò nào — theo checklist W6.1. Tên phải khớp đúng
-# chuỗi trong st.tabs (assert chéo trong test_tab_names_real()).
+# chuỗi trong TABS (pipelines/auth.py — assert chéo trong test_tab_names_real()).
 PLAYBOOK_TABS = {
     "playbook-mkt.md": ("Content Studio", "Duyệt & Lịch", "Báo cáo"),
     "playbook-sales-admin.md": ("Chat Sâm Sâm", "Chưa trả lời", "Leads"),
@@ -38,7 +39,8 @@ PLAYBOOK_TABS = {
 }
 
 SOP_COMMANDS = ("streamlit run", "apply_schema", "lead_store",
-                "agents.report", "agents.garden", "pipelines.store")
+                "agents.report", "agents.garden", "pipelines.store",
+                "pipelines.auth")
 
 
 def _doc(name: str) -> str:
@@ -46,11 +48,20 @@ def _doc(name: str) -> str:
 
 
 def _tab_names() -> list[str]:
-    """Parse list tên tab thật từ st.tabs([...]) trong streamlit_app."""
-    src = (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
-    m = re.search(r"st\.tabs\(\s*\[(.*?)\]", src, re.DOTALL)
-    assert m, "không parse được st.tabs trong streamlit_app.py"
-    return re.findall(r'"([^"]+)"', m.group(1))
+    """Parse tuple tên tab thật `TABS = (...)` trong pipelines/auth.py
+    (AST, không import). streamlit_app phải tạo tab từ đó."""
+    import ast
+
+    src = (ROOT / "pipelines" / "auth.py").read_text(encoding="utf-8")
+    tabs = [ast.literal_eval(n.value) for n in ast.parse(src).body
+            if isinstance(n, ast.Assign) and any(
+                isinstance(t, ast.Name) and t.id == "TABS"
+                for t in n.targets)]
+    assert len(tabs) == 1, "không parse được TABS trong pipelines/auth.py"
+    app = (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
+    assert "st.tabs(" in app and "_auth.tabs_for(" in app, (
+        "streamlit_app.py không còn tạo tab từ pipelines.auth")
+    return list(tabs[0])
 
 
 def _question_ids() -> list[int]:
@@ -115,9 +126,9 @@ def test_sop_core_commands():
 def test_kien_truc_lists_all_tables():
     body = _doc("kien-truc.md")
     tables = _table_names()
-    assert len(tables) == 14, (
+    assert len(tables) == 16, (
         f"schema.sql có {len(tables)} bảng ({tables}) — contract "
-        "14 bảng đổi thì cập nhật kien-truc.md")
+        "16 bảng đổi thì cập nhật kien-truc.md")
     for t in tables:
         assert t in body, f"kien-truc.md thiếu bảng '{t}'"
     # Doc tuyên bố đúng số bảng hiện có (drift-guard số lượng).
@@ -171,3 +182,22 @@ def test_guardrail_case_counts_in_phu_luc_d():
         f"phu-luc-d.md phải ghi {n_disc} câu disclaimer"
     assert f"{n_tests} test ({n_cases} case)" in body, \
         f"phu-luc-d.md phải ghi '{n_tests} test ({n_cases} case)'"
+
+
+def test_sop_warns_role_dsn_while_grants_partial():
+    """roles.sql chưa grant đủ bảng → SOP/kiến trúc KHÔNG được hướng dẫn
+    đổi DSN app/agent sang role (gãy tab + trần chi phí LLM tắt câm do
+    `_month_spend` lỗi = cho qua). Grant đủ rồi thì sửa docs + test này."""
+    roles = (ROOT / "docs" / "roles.sql").read_text(encoding="utf-8")
+    granted = set()
+    for m in re.finditer(r"grant\s+[^;]*?\bon\s+(?!function)([\w\s,]+?)\s+to",
+                         roles, re.IGNORECASE):
+        granted |= {t.strip() for t in m.group(1).split(",")}
+    missing = set(_table_names()) - granted
+    assert "llm_usage" in missing and "chunks" in missing, granted
+    sop, kt = _doc("sop.md"), _doc("kien-truc.md")
+    assert "CHƯA đổi `DATABASE_URL`" in sop
+    assert "Rồi đổi `DATABASE_URL` của agent/app" not in sop
+    for body in (sop, kt):
+        assert "llm_usage" in body and "cho qua" in body
+    assert "CHƯA chuyển DSN Streamlit/agent" in kt

@@ -29,6 +29,11 @@
 
 Contract với UI: mọi câu trả lời chat phải render ít nhất 1 URL nguồn;
 không có nguồn → hiển thị "không đủ dữ liệu" thay vì để model bịa.
+
+Đăng nhập (v3.4, `pipelines/auth.py`): chặn TRƯỚC khi tạo tab —
+`AUTH_MODE` trống/lạ = không vào được (fail-closed). Chỉ tab trong
+`ROLE_TABS[role]` được tạo; khối code tab khác KHÔNG chạy (không query
+DB). Người duyệt/xếp lịch = identity đăng nhập (không còn ô gõ tên).
 """
 
 import time
@@ -36,487 +41,579 @@ from datetime import timezone
 
 import streamlit as st
 
+from pipelines import auth as _auth
+
 st.set_page_config(page_title="Sâm Sâm AI Pilot", page_icon="🌿")
-tab_chat, tab_studio, tab_queue, tab_leads, tab_report, tab_garden, \
-    tab_review = st.tabs(["Chat Sâm Sâm", "Content Studio",
-                          "Chưa trả lời", "Leads", "Báo cáo",
-                          "Nhật ký vườn", "Duyệt & Lịch"])
 
-with tab_chat:
-    st.caption("Hỏi đáp trên knowledge base public của Sâm Sâm — "
-               "câu trả lời luôn kèm nguồn; thiếu dữ liệu bot sẽ nói thẳng.")
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    # History riêng cho answer() — parity zalo._histories: chỉ lượt hợp
-    # lệ (kể cả NO_DATA) vào và lưu RAW answer; lượt bị flag không vào.
-    # messages[] chỉ để render (lưu text user thấy = display).
-    if "history" not in st.session_state:
-        st.session_state.history = []
+# ---------------- Đăng nhập (fail-closed) ----------------
+_mode = _auth.auth_mode()
+if _mode == "blocked":
+    st.error("Truy cập bị chặn: chưa cấu hình đăng nhập. Quản trị đặt "
+             "`AUTH_MODE=proxy` (sau reverse proxy/SSO) hoặc "
+             "`AUTH_MODE=local` (+ `data/users.json`) — xem "
+             "docs/handover/sop.md mục 9. (`AUTH_MODE=dev` chỉ cho máy "
+             "dev, bị chặn khi DEPLOY=1.)")
+    st.stop()
+elif _mode == "proxy":
+    _who = _auth.identity_from_headers(st.context.headers,
+                                       _auth.load_users())
+    if _who is None:
+        st.error("Truy cập bị chặn: không xác định được người dùng từ "
+                 "proxy đăng nhập, hoặc email chưa được cấp quyền.")
+        st.stop()
+    _ident, _role = _who
+elif _mode == "local":
+    _users = _auth.load_users()
+    _cur = st.session_state.get("auth_user")
+    # Re-validate mỗi lần chạy: user bị xóa/đổi vai trò trong file → out.
+    if _cur and (_users.get(_cur) or {}).get("role") \
+            != st.session_state.get("auth_role"):
+        for _k in ("auth_user", "auth_role"):
+            st.session_state.pop(_k, None)
+        _cur = None
+    if not _cur:
+        with st.form("login"):
+            st.subheader("Đăng nhập — Sâm Sâm AI Pilot")
+            _u = st.text_input("Tên đăng nhập")
+            _p = st.text_input("Mật khẩu", type="password")
+            _go = st.form_submit_button("Đăng nhập", type="primary")
+        if _go:
+            _user, _r, _msg = _auth.check_login(_u, _p, _users)
+            if _user:
+                st.session_state.auth_user = _user
+                st.session_state.auth_role = _r
+                st.rerun()
+            st.error(_msg)
+        st.stop()
+    _ident, _role = _cur, st.session_state.auth_role
+else:  # dev
+    st.warning("CHẾ ĐỘ DEV — không đăng nhập, không dùng thật "
+               "(identity `dev`, vai trò `tgd`).")
+    _ident, _role = "dev", "tgd"
 
-    for m in st.session_state.messages:
-        with st.chat_message(m["role"]):
-            st.write(m["content"])
-            if m.get("caption"):
-                st.caption(m["caption"])
-            for s in m.get("sources", []):
-                st.markdown(f"- [{s}]({s})")
+with st.sidebar:
+    st.caption(f"Đăng nhập: **{_ident}** — vai trò `{_role}`")
+    if _mode == "local" and st.button("Đăng xuất"):
+        for _k in ("auth_user", "auth_role"):
+            st.session_state.pop(_k, None)
+        st.rerun()
 
-    if q := st.chat_input("Hỏi về Sâm Sâm..."):
-        st.session_state.messages.append({"role": "user", "content": q})
-        with st.chat_message("user"):
-            st.write(q)
-        with st.chat_message("assistant"):
-            with st.spinner("Đang tra knowledge base..."):
-                from api.rag import NO_DATA, answer
-                # [-8:] = 4 lượt Q&A gần nhất — giống deque(maxlen=8).
-                # monotonic cho latency_ms — elapsed-time, miễn clock
-                # skew (V7.2, parity zalo.py).
-                t0 = time.monotonic()
-                r = answer(
-                    q, history=st.session_state.history[-8:] or None)
-                latency_ms = int((time.monotonic() - t0) * 1000)
+_allowed = _auth.tabs_for(_role)
+if not _allowed:
+    st.error(f"Vai trò `{_role}` chưa được cấp tab nào.")
+    st.stop()
+_tabs = dict(zip(_allowed, st.tabs(list(_allowed))))
 
-            # Invariant: mọi text AI trước khi hiển thị phải qua
-            # guardrail.check() — giống pipeline reply của zalo.
-            from pipelines.guardrail import check
-            g = check(r["answer"])
-            if not g["ok"]:
-                from connectors.zalo import FALLBACK
-                display = FALLBACK
-            elif NO_DATA in r["answer"]:
-                # D6.1: handoff text có lối thoát thay câu NO_DATA trần
-                from connectors.zalo import HANDOFF_TEXT
-                display = HANDOFF_TEXT
-            else:
-                display = r["answer"]
-            st.write(display)
-            caption = None
-            if g["ok"]:
-                if NO_DATA in r["answer"]:
-                    caption = ("Không có nguồn — chưa đủ dữ liệu, đã "
-                               "chuyển nhân viên (xem tab 'Chưa trả lời').")
-                    st.caption(caption)
-                elif r["sources"]:
-                    caption = "Nguồn:"
-                    st.caption(caption)
-                    for s in r["sources"]:
-                        st.markdown(f"- [{s}]({s})")
-            # Lượt bị flag: FALLBACK trần — không nguồn/caption "đã
-            # chuyển nhân viên" (entry flagged không vào queue).
 
-            # Cập nhật history theo semantics zalo: chỉ lượt hợp lệ, lưu
-            # raw — flagged không cho LLM nhớ text vi phạm lượt sau.
-            if g["ok"]:
-                st.session_state.history = (
-                    st.session_state.history
-                    + [{"role": "user", "content": q},
-                       {"role": "assistant", "content": r["answer"]}]
-                )[-8:]
-
-            # Ghi convlog như kênh Zalo — câu chưa trả lời vào queue
-            # (answered:false). Log fail không được chặn hiển thị.
-            try:
-                from connectors import zalo as _z
-                _z._log_conversation({
-                    "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ",
-                                        time.gmtime()),
-                    "msg_id": "",
-                    "user_hash": _z._ui_hash(st.session_state),
-                    "question": _z._mask_pii(q),
-                    "answer": display[:500],
-                    "sources": r["sources"],
-                    "guardrail_ok": g["ok"],
-                    "latency_ms": latency_ms,
-                    "answered": NO_DATA not in r["answer"],
-                    # null chứ không phải False — kênh UI không có send
-                    # API; sent:false = send-FAIL, đếm nhầm khi đối
-                    # soát (D6.8, semantics D4.4).
-                    "sent": None,
-                    **({"flagged_text": r["answer"][:500]}
-                       if not g["ok"] else {}),
-                })
-            except Exception as e:  # noqa: BLE001 — log không được chặn UI
-                print(f"[warn] convlog streamlit: {e!r}", flush=True)
-
-        st.session_state.messages.append(
-            {"role": "assistant", "content": display,
-             # Caption + nguồn chỉ kèm lượt hợp lệ — replay giữ đúng
-             # hiển thị lượt live (flagged trần, handoff chỉ caption).
-             "caption": caption,
-             "sources": (r["sources"] if g["ok"] and NO_DATA
-                         not in r["answer"] else [])})
-
-with tab_studio:
-    st.caption("Sinh bài từ brief — mọi text AI đều qua guardrail "
-               "trước khi hiển thị (banned words + claim whitelist TPBVSK).")
-    brief = st.text_area(
-        "Brief", placeholder="VD: Viết bài FB giới thiệu Sapentol cho người "
-        "tiểu đường, nhấn công dụng đã công bố...", height=100)
-    channels = st.multiselect(
-        "Kênh", ["facebook", "tiktok", "zalo", "blog"],
-        default=["facebook"])
-
-    def _render_guardrail(g: dict):
-        if g["ok"]:
-            st.success("Guardrail: PASS — không vi phạm")
-        else:
-            for v in g["violations"]:
-                st.error(f"**{v['type']}** — {v['detail']}"
-                         + (f" → `{v['span']}`" if v.get("span") else ""))
-        if g.get("matched_claims"):
-            st.caption("Claim khớp whitelist: " + "; ".join(
-                f"{m['sku']}: {m['claim']}" for m in g["matched_claims"]))
-
-    if st.button("Sinh bài", type="primary",
-                 disabled=not brief.strip() or not channels):
-        with st.spinner("Đang viết + kiểm guardrail từng kênh..."):
-            from pipelines.content import draft, draft_multi
-            # 1 kênh → draft() như cũ; nhiều kênh → draft_multi (mỗi
-            # kênh guardrail độc lập). Shape thống nhất {channel: res}.
-            st.session_state.last_drafts = (
-                {channels[0]: draft(brief, channels[0])}
-                if len(channels) == 1
-                else draft_multi(brief, channels))
-            st.session_state.last_brief = brief
-    if _drafts := st.session_state.get("last_drafts"):
-        for _ch, _r in _drafts.items():
-            st.markdown(f"##### Draft — {_ch}")
-            st.markdown(_r["text"])
-            _render_guardrail(_r["guardrail"])
-        if st.button("Lưu vào hàng duyệt"):
-            import psycopg as _pg2
-
-            from ingest.lead_store import connect as _ldc
-            from pipelines import store as _dstore
-            _sconn = _ldc()
-            if _sconn is None:
-                st.warning("Chưa nạp — không kết nối được Postgres "
-                           "(kiểm tra DATABASE_URL); draft chưa lưu "
-                           "vào hàng duyệt.")
-            else:
-                _ids, _saved, _errs = [], [], 0
-                for _ch, _r in _drafts.items():
-                    try:
-                        _ids.append(_dstore.save_draft(
-                            _sconn, st.session_state.last_brief, _ch,
-                            _r["text"], _r["guardrail"]))
-                        _saved.append(_ch)
-                    except _pg2.Error:
-                        _errs += 1
-                _sconn.close()
-                # Bỏ kênh đã lưu khỏi session — bấm lại không nhân đôi
-                # draft (kênh lỗi ghi giữ lại để thử lại).
-                for _ch in _saved:
-                    _drafts.pop(_ch, None)
-                if _ids:
-                    st.success("Đã lưu " + str(len(_ids)) + " draft vào "
-                               "hàng duyệt (id: " + ", ".join(
-                                   f"#{i}" for i in _ids) + ") — qua tab "
-                               "'Duyệt & Lịch' để duyệt từng bài.")
-                if _errs:
-                    st.warning(f"{_errs} draft lỗi ghi DB — thử lại.")
-
-    st.divider()
-    st.caption("Kiểm tra nhanh một đoạn text có sẵn (không qua LLM):")
-    raw = st.text_area("Text cần check", height=80, label_visibility="collapsed",
-                       placeholder="Dán text vào đây — VD: Saphraton chữa khỏi tiểu đường")
-    if st.button("Check guardrail") and raw.strip():
-        from pipelines.guardrail import check
-        _render_guardrail(check(raw))
-
-with tab_queue:
-    st.caption("Câu khách hỏi mà bot chưa trả lời được (convlog "
-               "`answered:false`) — nhân viên follow-up / input cho vòng "
-               "bổ sung knowledge base. Mới nhất lên đầu.")
-    from connectors import zalo as _zalo
-    _recs = _zalo.unanswered()
-    if not _recs:
-        st.info("Chưa có câu nào chờ — mọi câu hỏi đều đã được trả lời.")
+def _render_guardrail(g: dict):
+    if g["ok"]:
+        st.success("Guardrail: PASS — không vi phạm")
     else:
-        st.dataframe(
-            [{"Thời gian (UTC)": e.get("ts", ""),
-              "Câu hỏi": e.get("question", ""),
-              "user_hash": e.get("user_hash", "")}
-             for e in reversed(_recs)],
-            use_container_width=True)
+        for v in g["violations"]:
+            st.error(f"**{v['type']}** — {v['detail']}"
+                     + (f" → `{v['span']}`" if v.get("span") else ""))
+    if g.get("matched_claims"):
+        st.caption("Claim khớp whitelist: " + "; ".join(
+            f"{m['sku']}: {m['claim']}" for m in g["matched_claims"]))
 
-with tab_leads:
-    st.caption("Dashboard WS2: số liệu kênh chat + lead gom từ convlog "
-               "(câu hỏi có ý định mua/giá/địa-điểm/đại-lý → bảng "
-               "`leads`). Read-only ở pilot — cập nhật `status` qua DB.")
-    from ingest import lead_store as _ls
 
-    # Phần file-based luôn hiện được (kể cả khi DB lõi chưa nạp).
-    _conv = _ls.convlog_stats()
-    st.markdown("##### Kênh chat (convlog)")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Tin nhắn", _conv["total"])
-    _rate = (f"{round(100 * _conv['answered'] / _conv['total'])}%"
-             if _conv["total"] else "—")
-    c2.metric("Đã trả lời", _rate)
-    c3.metric("Zalo / Streamlit",
-              f"{_conv['by_channel'].get('zalo', 0)} / "
-              f"{_conv['by_channel'].get('streamlit', 0)}")
+if "Chat Sâm Sâm" in _tabs:
+    with _tabs["Chat Sâm Sâm"]:
+        st.caption("Hỏi đáp trên knowledge base public của Sâm Sâm — "
+                   "câu trả lời luôn kèm nguồn; thiếu dữ liệu bot sẽ nói thẳng.")
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
+        # History riêng cho answer() — parity zalo._histories: chỉ lượt hợp
+        # lệ (kể cả NO_DATA) vào và lưu RAW answer; lượt bị flag không vào.
+        # messages[] chỉ để render (lưu text user thấy = display).
+        if "history" not in st.session_state:
+            st.session_state.history = []
 
-    st.divider()
-    st.markdown("##### Leads (bảng `leads`)")
-    _conn = _ls.connect()
-    _stats = _ls.lead_stats(_conn) if _conn else None
-    if _conn:
-        _conn.close()
-    if _stats is None:
-        st.info("Chưa có dữ liệu leads — chạy `python "
-                "scripts/apply_schema.py` rồi `python -m "
-                "ingest.lead_store`.")
-    else:
-        c1, c2 = st.columns(2)
-        c1.metric("Tổng leads", _stats["total"])
-        c2.metric("Mới 7 ngày", _stats["new_7d"])
-        ic1, ic2, ic3 = st.columns(3)
-        for col, label, key in (
-                (ic1, "Theo kênh", "by_channel"),
-                (ic2, "Theo intent", "by_intent"),
-                (ic3, "Theo trạng thái", "by_status")):
-            counts = _stats[key]
-            summary = "; ".join(
-                f"{k}={v}" for k, v in sorted(counts.items())) or "—"
-            col.caption(f"{label}: {summary}")
-        if not _stats["recent"]:
-            st.info("Bảng leads trống — chạy `python -m ingest.lead_store`.")
-        else:
-            st.dataframe(
-                [{"Thời gian (UTC)": e[0].astimezone(timezone.utc)
-                  .strftime("%Y-%m-%d %H:%M"), "Kênh": e[1],
-                  "Intent": e[2], "Câu hỏi": e[3], "user_hash": e[4],
-                  "Trạng thái": e[5]}
-                 for e in _stats["recent"]],
-                use_container_width=True,
-                column_config={
-                    "Thời gian (UTC)": st.column_config.TextColumn(width=145),
-                    "Kênh": st.column_config.TextColumn(width=60),
-                    "Intent": st.column_config.TextColumn(width=70),
-                    "Câu hỏi": st.column_config.TextColumn(width=200),
-                    "user_hash": st.column_config.TextColumn(width=115),
-                    "Trạng thái": st.column_config.TextColumn(width=80),
-                })
+        for m in st.session_state.messages:
+            with st.chat_message(m["role"]):
+                st.write(m["content"])
+                if m.get("caption"):
+                    st.caption(m["caption"])
+                for s in m.get("sources", []):
+                    st.markdown(f"- [{s}]({s})")
 
-with tab_report:
-    st.caption("Agent báo cáo định kỳ (WS3) — tổng hợp bán hàng + "
-               "leads + kênh chat + nhật ký vườn ra file markdown "
-               "trong `data/reports/`. Báo cáo là BẢN NHÁP: duyệt + "
-               "gửi lãnh đạo do NGƯỜI — hệ thống KHÔNG tự gửi (C2.4). "
-               "Chạy định kỳ ngoài UI: `python -m agents.report`.")
-    from agents import report as _rep
+        if q := st.chat_input("Hỏi về Sâm Sâm..."):
+            st.session_state.messages.append({"role": "user", "content": q})
+            with st.chat_message("user"):
+                st.write(q)
+            with st.chat_message("assistant"):
+                with st.spinner("Đang tra knowledge base..."):
+                    from api.rag import NO_DATA, answer
+                    # [-8:] = 4 lượt Q&A gần nhất — giống deque(maxlen=8).
+                    # monotonic cho latency_ms — elapsed-time, miễn clock
+                    # skew (V7.2, parity zalo.py).
+                    t0 = time.monotonic()
+                    r = answer(
+                        q, history=st.session_state.history[-8:] or None)
+                    latency_ms = int((time.monotonic() - t0) * 1000)
 
-    _days = st.selectbox("Kỳ báo cáo", [7, 14, 30],
-                         format_func=lambda d: f"{d} ngày gần nhất")
-    if st.button("Sinh báo cáo", type="primary"):
-        with st.spinner("Đang tổng hợp số liệu..."):
-            _path, _r = _rep.generate(days=_days)
-            st.session_state.report_path = str(_path)
-            st.session_state.report_db_ok = _r["db"].get("db_ok")
-    # Thông báo kết quả lần sinh gần nhất (persist qua rerun —
-    # report_path chỉ có sau khi đã bấm nút ít nhất 1 lần).
-    if st.session_state.get("report_path"):
-        if st.session_state.get("report_db_ok") is False:
-            st.warning("Đã ghi báo cáo DEGRADED — không kết nối "
-                       "được DB, phần DB đánh dấu [chưa nạp]: "
-                       + st.session_state.report_path)
-        else:
-            st.success("Đã ghi " + st.session_state.report_path)
-
-    st.divider()
-    _files = _rep.list_reports()
-    if not _files:
-        st.info("Chưa có báo cáo nào — bấm 'Sinh báo cáo' hoặc chạy "
-                "`python -m agents.report`.")
-    else:
-        _pick = st.selectbox(
-            "Báo cáo đã sinh (mới nhất trước)", _files,
-            format_func=lambda p: p.name)
-        # File do chính agent ghi utf-8 — read_text strict được
-        # (không phải file user-influenced như convlog).
-        st.markdown(_pick.read_text(encoding="utf-8"))
-
-with tab_garden:
-    st.caption("Agent nhật ký vùng trồng (WS3) — nhân viên ghi hoạt "
-               "động theo khoảnh; hệ thống chuẩn hóa + cảnh báo bất "
-               "thường (khoảnh lâu chưa ghi, nhật ký có dấu hiệu sâu "
-               "bệnh). Nhật ký do NGƯỜI nhập — hệ thống không tự sinh. "
-               "CLI: `python -m agents.garden --check`.")
-    from datetime import datetime as _dt
-
-    import psycopg as _pg
-
-    from agents import garden as _g
-    from ingest.lead_store import connect as _ldb
-
-    _gconn = _ldb()
-    if _gconn is None:
-        st.info("Chưa nạp — không kết nối được Postgres (kiểm tra "
-                "DATABASE_URL). Nhật ký vườn cần DB.")
-    else:
-        try:
-            _plots = _g.active_plots(_gconn)
-            _anoms = _g.anomaly_check(_gconn)
-            _recent = _g.recent_logs(_gconn)
-        except _pg.Error:
-            _gconn = None
-            st.info("Lỗi đọc DB — thử tải lại trang.")
-    if _gconn is not None:
-        st.subheader("Ghi nhật ký")
-        _labels = [f"{pid} — {loc}" if loc else pid
-                   for pid, loc in _plots]
-        _pick_plot = (st.selectbox("Khoảnh", _labels)
-                      if _labels else None)
-        _act_pick = st.selectbox("Hoạt động",
-                                 list(_g.ACTIVITY_VOCAB) + ["khác…"])
-        _act_free = (st.text_input("Hoạt động khác (tự ghi)")
-                     if _act_pick == "khác…" else "")
-        _d = st.date_input("Ngày")
-        _det = st.text_area("Chi tiết", height=68)
-        _auth = st.text_input("Người ghi")
-        if st.button("Ghi nhật ký", type="primary"):
-            if not _pick_plot:
-                st.error("Chưa có khoảnh active nào trong DB.")
-            elif _d is None:
-                st.error("Chọn ngày cho nhật ký.")
-            else:
-                _pid = _pick_plot.split(" — ")[0]
-                _act = _act_free.strip() or _act_pick
-                _ts = _dt.combine(_d, _dt.now(timezone.utc).time(),
-                                  tzinfo=timezone.utc)
-                try:
-                    _lid, _warns = _g.add_log(
-                        _gconn, _pid, _ts, _act, _det.strip(),
-                        _auth.strip())
-                except _pg.Error:
-                    _lid, _warns = None, ["Lỗi DB khi ghi — thử lại."]
-                for _w in _warns:
-                    st.warning(_w)
-                if _lid is not None:
-                    st.success(f"Đã ghi nhật ký #{_lid}: {_pid} — {_act}")
+                # Invariant: mọi text AI trước khi hiển thị phải qua
+                # guardrail.check() — giống pipeline reply của zalo.
+                from pipelines.guardrail import check
+                g = check(r["answer"])
+                if not g["ok"]:
+                    from connectors.zalo import FALLBACK
+                    display = FALLBACK
+                elif NO_DATA in r["answer"]:
+                    # D6.1: handoff text có lối thoát thay câu NO_DATA trần
+                    from connectors.zalo import HANDOFF_TEXT
+                    display = HANDOFF_TEXT
                 else:
-                    st.error("Không ghi được — xem cảnh báo.")
+                    display = r["answer"]
+                st.write(display)
+                caption = None
+                if g["ok"]:
+                    if NO_DATA in r["answer"]:
+                        caption = ("Không có nguồn — chưa đủ dữ liệu, đã "
+                                   "chuyển nhân viên (xem tab 'Chưa trả lời').")
+                        st.caption(caption)
+                    elif r["sources"]:
+                        caption = "Nguồn:"
+                        st.caption(caption)
+                        for s in r["sources"]:
+                            st.markdown(f"- [{s}]({s})")
+                # Lượt bị flag: FALLBACK trần — không nguồn/caption "đã
+                # chuyển nhân viên" (entry flagged không vào queue).
 
-        st.subheader("Cần chú ý")
-        if _anoms:
-            for _a in _anoms:
-                st.warning(_a["msg"])
-        else:
-            st.info("Không có bất thường — mọi khoảnh active đều có "
-                    "nhật ký gần đây.")
+                # Cập nhật history theo semantics zalo: chỉ lượt hợp lệ, lưu
+                # raw — flagged không cho LLM nhớ text vi phạm lượt sau.
+                if g["ok"]:
+                    st.session_state.history = (
+                        st.session_state.history
+                        + [{"role": "user", "content": q},
+                           {"role": "assistant", "content": r["answer"]}]
+                    )[-8:]
 
-        st.subheader("Nhật ký gần nhất")
-        if _recent:
-            st.dataframe([
-                {"Thời gian (UTC)": (ts.astimezone(timezone.utc)
-                     .strftime("%Y-%m-%d %H:%M")
-                     if hasattr(ts, "astimezone") else str(ts)[:16]),
-                 "Khoảnh": pid, "Hoạt động": act,
-                 "Chi tiết": det or "", "Người ghi": au or "",
-                 "Nguồn": src}
-                for ts, pid, act, det, au, src in _recent],
-                hide_index=True)
-        else:
-            st.info("Chưa có nhật ký nào.")
-        _gconn.close()
+                # Ghi convlog như kênh Zalo — câu chưa trả lời vào queue
+                # (answered:false). Log fail không được chặn hiển thị.
+                try:
+                    from connectors import zalo as _z
+                    _z._log_conversation({
+                        "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                            time.gmtime()),
+                        "msg_id": "",
+                        "user_hash": _z._ui_hash(st.session_state),
+                        "question": _z._mask_pii(q),
+                        "answer": display[:500],
+                        "sources": r["sources"],
+                        "guardrail_ok": g["ok"],
+                        "latency_ms": latency_ms,
+                        "answered": NO_DATA not in r["answer"],
+                        # null chứ không phải False — kênh UI không có send
+                        # API; sent:false = send-FAIL, đếm nhầm khi đối
+                        # soát (D6.8, semantics D4.4).
+                        "sent": None,
+                        **({"flagged_text": r["answer"][:500]}
+                           if not g["ok"] else {}),
+                    })
+                except Exception as e:  # noqa: BLE001 — log không được chặn UI
+                    print(f"[warn] convlog streamlit: {e!r}", flush=True)
 
-with tab_review:
-    st.caption("Hàng duyệt nội dung (WS2) — draft AI đã qua guardrail "
-               "lúc sinh chờ NGƯỜI duyệt từng bài; bài approved xếp "
-               "vào lịch đăng. Approve chỉ khi guardrail PASS "
-               "(double-gate SOW — không có duyệt-kèm-ghi-nhận). "
-               "Hệ thống KHÔNG tự đăng — lịch là kế hoạch cho người "
-               "đăng tay (C2.4). CLI: `python -m pipelines.store "
-               "--pending` / `--calendar`.")
-    from datetime import datetime as _dt_cls
+            st.session_state.messages.append(
+                {"role": "assistant", "content": display,
+                 # Caption + nguồn chỉ kèm lượt hợp lệ — replay giữ đúng
+                 # hiển thị lượt live (flagged trần, handoff chỉ caption).
+                 "caption": caption,
+                 "sources": (r["sources"] if g["ok"] and NO_DATA
+                             not in r["answer"] else [])})
 
-    import psycopg as _pg
+if "Content Studio" in _tabs:
+    with _tabs["Content Studio"]:
+        st.caption("Sinh bài từ brief — mọi text AI đều qua guardrail "
+                   "trước khi hiển thị (banned words + claim whitelist TPBVSK).")
+        brief = st.text_area(
+            "Brief", placeholder="VD: Viết bài FB giới thiệu Sapentol cho người "
+            "tiểu đường, nhấn công dụng đã công bố...", height=100)
+        channels = st.multiselect(
+            "Kênh", ["facebook", "tiktok", "zalo", "blog"],
+            default=["facebook"])
 
-    from ingest.lead_store import connect as _ldr
-    from pipelines import store as _store
+        if st.button("Sinh bài", type="primary",
+                     disabled=not brief.strip() or not channels):
+            with st.spinner("Đang viết + kiểm guardrail từng kênh..."):
+                from pipelines.content import draft, draft_multi
+                # 1 kênh → draft() như cũ; nhiều kênh → draft_multi (mỗi
+                # kênh guardrail độc lập). Shape thống nhất {channel: res}.
+                st.session_state.last_drafts = (
+                    {channels[0]: draft(brief, channels[0])}
+                    if len(channels) == 1
+                    else draft_multi(brief, channels))
+                st.session_state.last_brief = brief
+        if _drafts := st.session_state.get("last_drafts"):
+            for _ch, _r in _drafts.items():
+                st.markdown(f"##### Draft — {_ch}")
+                st.markdown(_r["text"])
+                _render_guardrail(_r["guardrail"])
+            if st.button("Lưu vào hàng duyệt"):
+                import psycopg as _pg2
 
-    _rconn = _ldr()
-    if _rconn is None:
-        st.info("Chưa nạp — không kết nối được Postgres (kiểm tra "
-                "DATABASE_URL). Hàng duyệt cần DB.")
-    else:
-        try:
-            _pending = _store.list_drafts(_rconn, status="pending")
-            _cal = _store.calendar(_rconn, days=14)
-        except _pg.Error:
-            _rconn = None
-            st.info("Lỗi đọc DB — thử tải lại trang.")
-    if _rconn is not None:
-        st.subheader(f"Hàng chờ duyệt ({len(_pending)})")
-        if not _pending:
-            st.info("Hàng chờ trống — sinh draft ở tab 'Content "
-                    "Studio' rồi bấm 'Lưu vào hàng duyệt'.")
-        for _d in _pending:
-            _g = (_d["guardrail"]
-                  if isinstance(_d["guardrail"], dict) else {})
-            _gok = _g.get("ok") is True
-            with st.expander(
-                    f"#{_d['id']} [{_d['channel']}] "
-                    f"{_store._oneline(_d['brief'], 70)} — guardrail "
-                    f"{_store._fmt_guardrail(_d)}"):
-                st.markdown(_d["text"])
-                if _g:
-                    _render_guardrail(_g)
-                with st.form(f"review-{_d['id']}"):
-                    _by = st.text_input("Người duyệt *")
-                    _note = st.text_input("Ghi chú (tuỳ chọn)")
-                    _c1, _c2 = st.columns(2)
-                    _appr = _c1.form_submit_button(
-                        "Duyệt", disabled=not _gok,
-                        help=(None if _gok else "Guardrail vi phạm — "
-                              "phải từ chối hoặc viết lại"))
-                    _rej = _c2.form_submit_button("Từ chối")
-                if _appr or _rej:
-                    _target = "approved" if _appr else "rejected"
-                    _ok, _warn = _store.set_status(
-                        _rconn, _d["id"], _target, _by, _note)
-                    if _ok:
-                        st.success(f"Draft #{_d['id']} → {_target}")
-                        st.rerun()
-                    else:
-                        st.warning(_warn)
+                from ingest.lead_store import connect as _ldc
+                from pipelines import store as _dstore
+                _sconn = _ldc()
+                if _sconn is None:
+                    st.warning("Chưa nạp — không kết nối được Postgres "
+                               "(kiểm tra DATABASE_URL); draft chưa lưu "
+                               "vào hàng duyệt.")
+                else:
+                    _ids, _saved, _errs = [], [], 0
+                    for _ch, _r in _drafts.items():
+                        try:
+                            _ids.append(_dstore.save_draft(
+                                _sconn, st.session_state.last_brief, _ch,
+                                _r["text"], _r["guardrail"],
+                                created_by=_ident))
+                            _saved.append(_ch)
+                        except _pg2.Error:
+                            _errs += 1
+                    _sconn.close()
+                    # Bỏ kênh đã lưu khỏi session — bấm lại không nhân đôi
+                    # draft (kênh lỗi ghi giữ lại để thử lại).
+                    for _ch in _saved:
+                        _drafts.pop(_ch, None)
+                    if _ids:
+                        st.success("Đã lưu " + str(len(_ids)) + " draft vào "
+                                   "hàng duyệt (id: " + ", ".join(
+                                       f"#{i}" for i in _ids) + ") — qua tab "
+                                   "'Duyệt & Lịch' để duyệt từng bài.")
+                    if _errs:
+                        st.warning(f"{_errs} draft lỗi ghi DB — thử lại.")
 
         st.divider()
-        st.subheader("Lịch đăng 14 ngày")
-        if _cal["unscheduled"]:
-            _pick = st.selectbox(
-                "Bài đã duyệt chưa xếp lịch", _cal["unscheduled"],
-                format_func=lambda d: f"#{d['id']} [{d['channel']}] "
-                                      f"{_store._oneline(d['brief'])}")
-            _day = st.date_input(
-                "Ngày đăng",
-                value=_dt_cls.now(timezone.utc).date())
-            if st.button("Xếp lịch", type="primary"):
-                if _day is None:  # user xoá ngày → None (precedent v2.1)
-                    st.error("Chọn ngày đăng.")
-                else:
-                    _ok, _warn = _store.schedule(
-                        _rconn, _pick["id"], _day)
-                    if _ok:
-                        st.success(f"Draft #{_pick['id']} xếp lịch "
-                                   f"{_day:%Y-%m-%d} — người đăng tay.")
-                        st.rerun()
-                    else:
-                        st.warning(_warn)
-        else:
-            st.info("Không có bài approved nào đang chờ xếp lịch.")
+        st.caption("Kiểm tra nhanh một đoạn text có sẵn (không qua LLM):")
+        raw = st.text_area("Text cần check", height=80, label_visibility="collapsed",
+                           placeholder="Dán text vào đây — VD: Saphraton chữa khỏi tiểu đường")
+        if st.button("Check guardrail") and raw.strip():
+            from pipelines.guardrail import check
+            _render_guardrail(check(raw))
 
-        if _cal["scheduled"]:
-            st.dataframe([
-                {"Ngày": str(_d["scheduled_date"]),
-                 "Kênh": _d["channel"],
-                 "Draft": f"#{_d['id']}",
-                 "Brief": _d["brief"],
-                 "Người duyệt": _d["reviewer"] or ""}
-                for _d in _cal["scheduled"]],
-                hide_index=True)
+if "Chưa trả lời" in _tabs:
+    with _tabs["Chưa trả lời"]:
+        st.caption("Câu khách hỏi mà bot chưa trả lời được (convlog "
+                   "`answered:false`) — nhân viên follow-up / input cho vòng "
+                   "bổ sung knowledge base. Mới nhất lên đầu.")
+        from connectors import zalo as _zalo
+        _recs = _zalo.unanswered()
+        if not _recs:
+            st.info("Chưa có câu nào chờ — mọi câu hỏi đều đã được trả lời.")
         else:
-            st.info("Chưa có bài nào trong lịch 14 ngày tới.")
-        _rconn.close()
+            st.dataframe(
+                [{"Thời gian (UTC)": e.get("ts", ""),
+                  "Câu hỏi": e.get("question", ""),
+                  "user_hash": e.get("user_hash", "")}
+                 for e in reversed(_recs)],
+                use_container_width=True)
+
+if "Leads" in _tabs:
+    with _tabs["Leads"]:
+        st.caption("Dashboard WS2: số liệu kênh chat + lead gom từ convlog "
+                   "(câu hỏi có ý định mua/giá/địa-điểm/đại-lý → bảng "
+                   "`leads`). Read-only ở pilot — cập nhật `status` qua DB.")
+        from ingest import lead_store as _ls
+
+        # Phần file-based luôn hiện được (kể cả khi DB lõi chưa nạp).
+        _conv = _ls.convlog_stats()
+        st.markdown("##### Kênh chat (convlog)")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Tin nhắn", _conv["total"])
+        _rate = (f"{round(100 * _conv['answered'] / _conv['total'])}%"
+                 if _conv["total"] else "—")
+        c2.metric("Đã trả lời", _rate)
+        c3.metric("Zalo / Streamlit",
+                  f"{_conv['by_channel'].get('zalo', 0)} / "
+                  f"{_conv['by_channel'].get('streamlit', 0)}")
+
+        st.divider()
+        st.markdown("##### Leads (bảng `leads`)")
+        _conn = _ls.connect()
+        _stats = _ls.lead_stats(_conn) if _conn else None
+        if _conn:
+            _conn.close()
+        if _stats is None:
+            st.info("Chưa có dữ liệu leads — chạy `python "
+                    "scripts/apply_schema.py` rồi `python -m "
+                    "ingest.lead_store`.")
+        else:
+            c1, c2 = st.columns(2)
+            c1.metric("Tổng leads", _stats["total"])
+            c2.metric("Mới 7 ngày", _stats["new_7d"])
+            ic1, ic2, ic3 = st.columns(3)
+            for col, label, key in (
+                    (ic1, "Theo kênh", "by_channel"),
+                    (ic2, "Theo intent", "by_intent"),
+                    (ic3, "Theo trạng thái", "by_status")):
+                counts = _stats[key]
+                summary = "; ".join(
+                    f"{k}={v}" for k, v in sorted(counts.items())) or "—"
+                col.caption(f"{label}: {summary}")
+            if not _stats["recent"]:
+                st.info("Bảng leads trống — chạy `python -m ingest.lead_store`.")
+            else:
+                st.dataframe(
+                    [{"Thời gian (UTC)": e[0].astimezone(timezone.utc)
+                      .strftime("%Y-%m-%d %H:%M"), "Kênh": e[1],
+                      "Intent": e[2], "Câu hỏi": e[3], "user_hash": e[4],
+                      "Trạng thái": e[5]}
+                     for e in _stats["recent"]],
+                    use_container_width=True,
+                    column_config={
+                        "Thời gian (UTC)": st.column_config.TextColumn(width=145),
+                        "Kênh": st.column_config.TextColumn(width=60),
+                        "Intent": st.column_config.TextColumn(width=70),
+                        "Câu hỏi": st.column_config.TextColumn(width=200),
+                        "user_hash": st.column_config.TextColumn(width=115),
+                        "Trạng thái": st.column_config.TextColumn(width=80),
+                    })
+
+if "Báo cáo" in _tabs:
+    with _tabs["Báo cáo"]:
+        st.caption("Agent báo cáo định kỳ (WS3) — tổng hợp bán hàng + "
+                   "leads + kênh chat + nhật ký vườn ra file markdown "
+                   "trong `data/reports/`. Báo cáo là BẢN NHÁP: duyệt + "
+                   "gửi lãnh đạo do NGƯỜI — hệ thống KHÔNG tự gửi (C2.4). "
+                   "Chạy định kỳ ngoài UI: `python -m agents.report`.")
+        from agents import report as _rep
+
+        _days = st.selectbox("Kỳ báo cáo", [7, 14, 30],
+                             format_func=lambda d: f"{d} ngày gần nhất")
+        if st.button("Sinh báo cáo", type="primary"):
+            with st.spinner("Đang tổng hợp số liệu..."):
+                _path, _r = _rep.generate(days=_days)
+                st.session_state.report_path = str(_path)
+                st.session_state.report_db_ok = _r["db"].get("db_ok")
+        # Thông báo kết quả lần sinh gần nhất (persist qua rerun —
+        # report_path chỉ có sau khi đã bấm nút ít nhất 1 lần).
+        if st.session_state.get("report_path"):
+            if st.session_state.get("report_db_ok") is False:
+                st.warning("Đã ghi báo cáo DEGRADED — không kết nối "
+                           "được DB, phần DB đánh dấu [chưa nạp]: "
+                           + st.session_state.report_path)
+            else:
+                st.success("Đã ghi " + st.session_state.report_path)
+
+        st.divider()
+        _files = _rep.list_reports()
+        if not _files:
+            st.info("Chưa có báo cáo nào — bấm 'Sinh báo cáo' hoặc chạy "
+                    "`python -m agents.report`.")
+        else:
+            _pick = st.selectbox(
+                "Báo cáo đã sinh (mới nhất trước)", _files,
+                format_func=lambda p: p.name)
+            # File do chính agent ghi utf-8 — read_text strict được
+            # (không phải file user-influenced như convlog).
+            st.markdown(_pick.read_text(encoding="utf-8"))
+
+if "Nhật ký vườn" in _tabs:
+    with _tabs["Nhật ký vườn"]:
+        st.caption("Agent nhật ký vùng trồng (WS3) — nhân viên ghi hoạt "
+                   "động theo khoảnh; hệ thống chuẩn hóa + cảnh báo bất "
+                   "thường (khoảnh lâu chưa ghi, nhật ký có dấu hiệu sâu "
+                   "bệnh). Nhật ký do NGƯỜI nhập — hệ thống không tự sinh. "
+                   "CLI: `python -m agents.garden --check`.")
+        from datetime import datetime as _dt
+
+        import psycopg as _pg
+
+        from agents import garden as _g
+        from ingest.lead_store import connect as _ldb
+
+        _gconn = _ldb()
+        if _gconn is None:
+            st.info("Chưa nạp — không kết nối được Postgres (kiểm tra "
+                    "DATABASE_URL). Nhật ký vườn cần DB.")
+        else:
+            try:
+                _plots = _g.active_plots(_gconn)
+                _anoms = _g.anomaly_check(_gconn)
+                _recent = _g.recent_logs(_gconn)
+            except _pg.Error:
+                _gconn = None
+                st.info("Lỗi đọc DB — thử tải lại trang.")
+        if _gconn is not None:
+            st.subheader("Ghi nhật ký")
+            _labels = [f"{pid} — {loc}" if loc else pid
+                       for pid, loc in _plots]
+            _pick_plot = (st.selectbox("Khoảnh", _labels)
+                          if _labels else None)
+            _act_pick = st.selectbox("Hoạt động",
+                                     list(_g.ACTIVITY_VOCAB) + ["khác…"])
+            _act_free = (st.text_input("Hoạt động khác (tự ghi)")
+                         if _act_pick == "khác…" else "")
+            _d = st.date_input("Ngày")
+            _det = st.text_area("Chi tiết", height=68)
+            _g_author = st.text_input("Người ghi")
+            if st.button("Ghi nhật ký", type="primary"):
+                if not _pick_plot:
+                    st.error("Chưa có khoảnh active nào trong DB.")
+                elif _d is None:
+                    st.error("Chọn ngày cho nhật ký.")
+                else:
+                    _pid = _pick_plot.split(" — ")[0]
+                    _act = _act_free.strip() or _act_pick
+                    _ts = _dt.combine(_d, _dt.now(timezone.utc).time(),
+                                      tzinfo=timezone.utc)
+                    try:
+                        _lid, _warns = _g.add_log(
+                            _gconn, _pid, _ts, _act, _det.strip(),
+                            _g_author.strip())
+                    except _pg.Error:
+                        _lid, _warns = None, ["Lỗi DB khi ghi — thử lại."]
+                    for _w in _warns:
+                        st.warning(_w)
+                    if _lid is not None:
+                        st.success(f"Đã ghi nhật ký #{_lid}: {_pid} — {_act}")
+                    else:
+                        st.error("Không ghi được — xem cảnh báo.")
+
+            st.subheader("Cần chú ý")
+            if _anoms:
+                for _a in _anoms:
+                    st.warning(_a["msg"])
+            else:
+                st.info("Không có bất thường — mọi khoảnh active đều có "
+                        "nhật ký gần đây.")
+
+            st.subheader("Nhật ký gần nhất")
+            if _recent:
+                st.dataframe([
+                    {"Thời gian (UTC)": (ts.astimezone(timezone.utc)
+                         .strftime("%Y-%m-%d %H:%M")
+                         if hasattr(ts, "astimezone") else str(ts)[:16]),
+                     "Khoảnh": pid, "Hoạt động": act,
+                     "Chi tiết": det or "", "Người ghi": au or "",
+                     "Nguồn": src}
+                    for ts, pid, act, det, au, src in _recent],
+                    hide_index=True)
+            else:
+                st.info("Chưa có nhật ký nào.")
+            _gconn.close()
+
+if "Duyệt & Lịch" in _tabs:
+    with _tabs["Duyệt & Lịch"]:
+        st.caption("Hàng duyệt nội dung (WS2) — draft AI đã qua guardrail "
+                   "lúc sinh chờ NGƯỜI duyệt từng bài; bài approved xếp "
+                   "vào lịch đăng. Approve chỉ khi guardrail PASS "
+                   "(double-gate SOW — không có duyệt-kèm-ghi-nhận). "
+                   "Hệ thống KHÔNG tự đăng — lịch là kế hoạch cho người "
+                   "đăng tay (C2.4). CLI: `python -m pipelines.store "
+                   "--pending` / `--calendar`.")
+        import psycopg as _pg
+
+        from ingest.lead_store import connect as _ldr
+        from pipelines import store as _store
+
+        _rconn = _ldr()
+        if _rconn is None:
+            st.info("Chưa nạp — không kết nối được Postgres (kiểm tra "
+                    "DATABASE_URL). Hàng duyệt cần DB.")
+        else:
+            try:
+                _pending = _store.list_drafts(_rconn, status="pending")
+                _cal = _store.calendar(_rconn, days=14)
+            except _pg.Error:
+                _rconn = None
+                st.info("Lỗi đọc DB — thử tải lại trang.")
+        if _rconn is not None:
+            st.subheader(f"Hàng chờ duyệt ({len(_pending)})")
+            if not _pending:
+                st.info("Hàng chờ trống — sinh draft ở tab 'Content "
+                        "Studio' rồi bấm 'Lưu vào hàng duyệt'.")
+            for _d in _pending:
+                _gr = (_d["guardrail"]
+                       if isinstance(_d["guardrail"], dict) else {})
+                _gok = _gr.get("ok") is True
+                with st.expander(
+                        f"#{_d['id']} [{_d['channel']}] "
+                        f"{_store._oneline(_d['brief'], 70)} — guardrail "
+                        f"{_store._fmt_guardrail(_d)}"):
+                    # Bản THÔ (st.text, không markdown): approve ký sha256 của
+                    # đúng chuỗi này — markdown giấu URL link/ảnh tracker →
+                    # người duyệt phải thấy đúng bytes được hash (WYSIWYS).
+                    st.text(_d["text"])
+                    if _gr:
+                        _render_guardrail(_gr)
+                    # Người duyệt = identity đăng nhập (không gõ tay).
+                    _mine = _store._same_person(_d.get("created_by"),
+                                                _ident)
+                    _why = None   # lý do nút Duyệt bị khóa
+                    if not _gok:
+                        _why = ("Guardrail vi phạm — phải từ chối hoặc "
+                                "viết lại")
+                    elif not _auth.can_approve(_role):
+                        _why = f"Vai trò `{_role}` không có quyền duyệt"
+                    elif _mine:
+                        _why = ("Bạn là người tạo draft — cần người khác "
+                                "duyệt")
+                    elif not (_d.get("created_by") or "").strip():
+                        _why = ("Draft trước v3.4 không có người tạo — "
+                                "từ chối rồi tạo lại")
+                    _can_rej = _auth.can_approve(_role) or _mine
+                    # st.text (không markdown): created_by do agent ghi — chặn link giả.
+                    st.text(f"Tạo bởi: {_d.get('created_by') or '—'}")
+                    with st.form(f"review-{_d['id']}"):
+                        st.text_input("Người duyệt (đăng nhập)",
+                                      value=_ident, disabled=True)
+                        _note = st.text_input("Ghi chú (tuỳ chọn)")
+                        _c1, _c2 = st.columns(2)
+                        _appr = _c1.form_submit_button(
+                            "Duyệt", disabled=_why is not None, help=_why)
+                        _rej = _c2.form_submit_button(
+                            "Từ chối", disabled=not _can_rej,
+                            help=(None if _can_rej else
+                                  f"Vai trò `{_role}` không có quyền "
+                                  f"duyệt/từ chối"))
+                    if (_appr and _why is None) or (_rej and _can_rej):
+                        _target = "approved" if _appr else "rejected"
+                        _ok, _warn = _store.set_status(
+                            _rconn, _d["id"], _target, _ident, _note)
+                        if _ok:
+                            st.success(f"Draft #{_d['id']} → {_target}")
+                            st.rerun()
+                        else:
+                            st.warning(_warn)
+
+            st.divider()
+            st.subheader("Lịch đăng 14 ngày")
+            if _cal["unscheduled"] and not _auth.can_schedule(_role):
+                st.info(f"Vai trò `{_role}` không có quyền xếp lịch — "
+                        f"{len(_cal['unscheduled'])} bài đã duyệt đang chờ.")
+            elif _cal["unscheduled"]:
+                _pick = st.selectbox(
+                    "Bài đã duyệt chưa xếp lịch", _cal["unscheduled"],
+                    format_func=lambda d: f"#{d['id']} [{d['channel']}] "
+                                          f"{_store._oneline(d['brief'])}")
+                _day = st.date_input(
+                    "Ngày đăng",
+                    value=_store._vn_today())
+                if st.button("Xếp lịch", type="primary"):
+                    if _day is None:  # user xoá ngày → None (precedent v2.1)
+                        st.error("Chọn ngày đăng.")
+                    else:
+                        _ok, _warn = _store.schedule(
+                            _rconn, _pick["id"], _day, _ident)
+                        if _ok:
+                            st.success(f"Draft #{_pick['id']} xếp lịch "
+                                       f"{_day:%Y-%m-%d} — người đăng tay.")
+                            st.rerun()
+                        else:
+                            st.warning(_warn)
+            else:
+                st.info("Không có bài approved nào đang chờ xếp lịch.")
+
+            if _cal["scheduled"]:
+                st.dataframe([
+                    {"Ngày": str(_d["scheduled_date"]),
+                     "Kênh": _d["channel"],
+                     "Draft": f"#{_d['id']}",
+                     "Brief": _d["brief"],
+                     "Người duyệt": _d["reviewer"] or ""}
+                    for _d in _cal["scheduled"]],
+                    hide_index=True)
+            else:
+                st.info("Chưa có bài nào trong lịch 14 ngày tới.")
+            _rconn.close()
