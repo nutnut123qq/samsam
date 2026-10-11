@@ -54,7 +54,9 @@ grant execute on function
   reject_draft(bigint, text, text),
   schedule_draft(bigint, date, text),
   verify_publish(text, text, text),
-  verify_action_log()
+  verify_action_log(),
+  decide_allocation_run(text, text, text, text),
+  record_lot_intake(text, text, text, text)
   to app_human;
 
 -- v4.0 hàng duyệt dùng chung (WP03): agent đẩy việc + tự duyệt theo luật đã
@@ -95,3 +97,7 @@ grant execute on function
   decide_item(bigint, text, text, text),
   override_qa(bigint, text, text)
   to app_human;
+
+-- v9.2: duyệt phân bổ / kiểm nhập lô CHỈ qua 2 function trên. TUYỆT ĐỐI
+-- không grant INSERT approvals cho role nào (verify_publish tin approvals →
+-- chèn được là duyệt giả được content_draft).

@@ -1981,6 +1981,537 @@ thô 7 ngày; `_mask_pii` không che tên/địa chỉ/mã đơn; chưa có bả
 External-dep: Pháp chế/luật sư ký DPIA/TIA + 2 hợp đồng mẫu; quota duyệt thật;
 TGĐ duyệt JD/KPI.
 
+## Checklist v9.2-sx-ton-bom-lo
+
+Khán giả/mục đích: WP13 phần Sản xuất P1 (pmo.md dòng `| WP13` — "SX-A0
+điều phối (SLA 48h). SX-A3 phân bổ tồn và kịch bản (chốt 25/10, 01/11,
+15/11, 10/12). SX-A4 BOM combo và hộp quà. SX-A5 hồ sơ lô và kiểm nhập";
+tiêu chí "BOM không chứa SKU có allowed_channels không gồm kênh của combo
+(test)"); thiết kế agent A0/A3/A4/A5 khối `production` trong
+`ctx/final_plans.json`; worktree `D:\code\samsam-w73`, nhánh tách từ v7.3.
+Hiện repo chưa có tồn kho, BOM hay lô sản xuất: GĐ sản xuất không có chỗ
+xem "tồn hiện có đủ cho 11.11/12.12/Tết chưa", combo/hộp quà không được
+kiểm luật kênh, lô không có trạng thái kiểm nhập. Sau version: (a) nạp tồn
+thành phẩm từ file kho xuất tay vào `inventory_snapshots` (idempotent theo
+sha256 file, file lỗi → 0 dòng); (b) SX-A3 đề xuất phân bổ tồn hiện có theo
+kênh cho từng mốc chốt, nhu cầu lấy từ `pipelines.scenario.project()` (KHÔNG
+engine thứ 2), ghi NHÁP `pending` vào `allocation_proposals`, người duyệt
+bằng `--by`, KHÔNG BAO GIỜ chuyển kho/sửa tồn; (c) SX-A4 BOM combo/hộp quà
+(`bom_combos` + `bom_items`) kiểm luật kênh THEO DỮ LIỆU golden + tính số
+combo làm được từ tồn; (d) SX-A5 hồ sơ lô `production_lots` + CLI kiểm nhập
+bắt buộc `--by`, điểm nối QR (v9.4); (e) SX-A0 bản tin tuần tất định cho GĐ
+sản xuất (thiếu hàng, lô chờ kiểm, BOM lỗi, mục quá SLA). Agent KHÔNG đặt
+mua, không lệnh sản xuất, không đổi giá/listing, không ghi golden/`orders`/
+`products`, không gọi LLM (0 lời gọi `llm_gateway`), không hứa doanh số.
+
+Quy ước: ponytail — stdlib (`csv`, `json`, `hashlib`, `datetime`) +
+`psycopg` sẵn có; KHÔNG pandas/numpy/lib mới. 2 file code mới:
+`ingest/inventory_csv.py` (nạp tồn, mẫu `ingest/market_csv.py` v3.3) và
+`pipelines/production.py` (logic thuần + CLI subcommand `python -m
+pipelines.production allocate|approve|reject|bom|lots|intake|bulletin` —
+subparser nên không có lỗi "nhiều cờ, op sau nuốt câm" gotcha v2.2). TÁI
+DÙNG, không viết lại: `pipelines.scenario.project`/`load_assumptions`/
+`week_start`/`ALL_CHANNELS`/`OFFLINE`/`ScenarioError` (nhu cầu thấp/cơ sở/
+cao — mọi phép nhân hệ số mùa nằm trong scenario); `ingest.golden_store.
+read_golden`/`validate`/`GOLDEN_FILE`/`CHANNELS`/`_SLUG_RE`/`MAX_BY_LEN`
+(golden đọc từ FILE, không connect — như scenario CLI);
+`ingest.market_csv._table` (giải mã CSV/XLSX + trần MAX_ROWS/MAX_COLS) và
+`_to_int`; `pipelines.guardrail.check` (tên combo); bảng `approvals` +
+`agent_action_log` (hash chain tự động qua trigger v3.4) cho mọi quyết định
+của người. Hàm thuần nhận `today: date`/`now: datetime` làm THAM SỐ — chỉ
+`main()` đọc đồng hồ (ngày VN UTC+7, như `scenario.main`); test không
+wall-clock, không `time.sleep`. Fail-closed với ĐỦ biến thể "không có dữ
+liệu" (gotcha v1.8): file thiếu / rỗng / chỉ header / JSON hỏng / `{}` /
+chỉ `_doc` → lỗi rõ, exit 1, KHÔNG connect, 0 dòng ghi — không bao giờ trả 0
+câm. Số: `bool` không tính là số; âm/không nguyên/quá trần bị từ chối. Lỗi
+chỉ nêu số dòng / id / tên field, KHÔNG in giá trị ô. Print tiếng Việt →
+UTF-8 guard sau imports (copy `scripts/zalo_mock.py`). Mọi `psycopg.connect`
+có `connect_timeout` (guard `tests/test_connect_timeout_guard.py` tự quét);
+mỗi lệnh ghi = 1 transaction + `conn.commit()` tường minh (gotcha v2.1).
+Exit: 0 OK / `[skip]` idempotent; 1 dữ liệu/DB lỗi (`[err]`, không
+traceback); 2 sai usage (argparse). Schema chỉ THÊM (`create table if not
+exists`, block mới cuối `docs/schema.sql`), không sửa bảng cũ, không assert
+đếm cứng số bảng. Dữ liệu tồn/BOM/lô trong repo = MẪU: file tên `sample_*`,
+JSON có `"status": "MẪU — ..."`, nạp bằng `--source sample`, mọi output dựa
+trên dòng `source='sample'` in nhãn `[MẪU]`. File mới trong `data/` đều là
+input (không runtime) — không cần gitignore; nếu phát sinh file output thì
+gitignore ngay.
+
+Mốc chốt + SLA (cấu hình, GIẢ ĐỊNH tới khi GĐ SX chốt) —
+`data/production_config.json`: `{"_doc": ..., "status": "GIẢ ĐỊNH — chờ GĐ
+sản xuất chốt", "cutoffs": [{"id": "chot_11_11", "date": "2026-10-25",
+"covers_until": "2026-11-15", "label": "phân bổ TỒN HIỆN CÓ cho online
+11.11 — không đề xuất sản xuất mới"}, {"id": "ke_hoach_tet", "date":
+"2026-11-01", "covers_until": "2027-02-14", ...}, {"id": "chot_12_12",
+"date": "2026-11-15", "covers_until": "2026-12-20", ...}, {"id":
+"chot_tet", "date": "2026-12-10", "covers_until": "2027-02-14", ...}],
+"sla_hours": 48, "remind_hours": 24}`. Validator: id slug không trùng, ngày
+ISO trong `scenario.DATE_MIN..DATE_MAX`, `covers_until > date`, `0 <
+remind_hours < sla_hours` (int, không bool), số tuần từ `--start` tới
+`covers_until` ≤ `scenario.MAX_WEEKS`.
+
+External-dep (KHÔNG giả lập, để `[ ]` ở mục riêng cuối): (1) số tồn kho
+THẬT theo kho (nhân sự kho xuất file thứ Sáu) — repo chỉ có
+`data/sample_inventory.csv`; (2) BOM hộp quà Tết thật + vật tư bao bì
+(hộp, thiệp) — BOM version này chỉ gồm SKU golden; (3) hồ sơ lô thật + COA
+/ phiếu xuất xưởng; (4) GĐ sản xuất chốt mốc phân bổ + SLA (đổi `status`
+file cấu hình) và duyệt phân bổ/BOM/kiểm nhập (version này KHÔNG chạy
+`approve`/`intake` thành công trên DB nào ngoài schema test tạm); (5) danh
+tính người duyệt qua SSO — `--by` hiện là tên tự khai (như
+`golden_store --approve-price`); (6) role DB `prod_rw` / `prod_alloc_rw`
+trên cloud; (7) Pháp chế/GĐ SX chốt rượu có được đóng hộp quà OFFLINE
+không (luồng B2B trong `flows_final.json` ghi "không đóng trong hộp quà" —
+version này chỉ chặn combo rượu ở kênh online theo phạm vi giao, ghi rõ
+trong docs).
+
+- [x] **W92.1 Schema 5 bảng Sản xuất P1** — `docs/schema.sql` append block
+  "v9.2 Sản xuất P1 (WP13 SX-A3/A4/A5)" (comment tiếng Việt: dữ liệu mẫu tới
+  khi kho/GĐ SX cấp; agent chỉ ĐỀ XUẤT; không chuyển kho; không PII):
+  `inventory_snapshots` (`id bigint generated always as identity primary
+  key`, `sku_key text not null` (không FK — golden đọc từ file, như
+  `market_rows`), `kho text not null`, `qty int not null check (qty >= 0)`,
+  `captured_at date not null`, `source text not null check (source in
+  ('manual_export', 'sample'))`, `file_name text not null`, `file_sha256
+  text not null`, `row_no int not null`, `imported_at timestamptz not null
+  default now()`, unique (`file_sha256`, `row_no`)) + index (`sku_key`,
+  `kho`, `captured_at`); `allocation_proposals` (`id` identity pk, `run_id
+  text not null`, `cutoff_id text not null`, `cutoff_date date not null`,
+  `start_week date not null`, `sku_key text not null`, `channel text not
+  null`, `stock_total int`, `demand_low/demand_base/demand_high int not
+  null`, `proposed_qty int not null check (proposed_qty >= 0)`, `note
+  text`, `status text not null default 'pending' check (status in
+  ('pending','approved','rejected'))`, `decided_by text`, `decided_at
+  timestamptz`, `created_at timestamptz not null default now()`, unique
+  (`run_id`, `sku_key`, `channel`), check `(status = 'pending') = (decided_by
+  is null)`, check `decided_by is null or btrim(decided_by) <> ''`);
+  `bom_combos` (`combo_key text primary key`, `name text not null`,
+  `channels text[] not null check (cardinality(channels) > 0)`, `source
+  text not null check (source in ('manual','sample'))`, `note text`,
+  `updated_at timestamptz not null default now()`); `bom_items`
+  (`combo_key text not null references bom_combos(combo_key) on delete
+  cascade`, `sku_key text not null`, `qty int not null check (qty > 0)`,
+  primary key (`combo_key`, `sku_key`)); `production_lots` (`lot_code text
+  primary key`, `sku_key text not null`, `mfg_date date not null`,
+  `exp_date date not null`, `qty int not null check (qty > 0)`,
+  `intake_status text not null default 'pending' check (intake_status in
+  ('pending','passed','failed'))`, `checked_by text`, `checked_at
+  timestamptz`, `source text not null check (source in ('manual',
+  'sample'))`, `note text`, `created_at timestamptz not null default
+  now()`, check `(exp_date > mfg_date)` — hạn dùng ≤ ngày SX bị DB chặn,
+  check `(intake_status = 'pending') = (checked_by is null)`, check
+  `checked_by is null or btrim(checked_by) <> ''`). Không cột tên/SĐT/
+  email/địa chỉ/đơn hàng. `docs/handover/kien-truc.md` §3: thêm 5 dòng bảng
+  + sửa "N bảng public" thành N+5 (từ nền v7.3: "25 bảng public" → "30 bảng
+  public"); `deploy/cloud/README.md`: thêm 5 tên bảng trong backtick vào
+  bảng "Đường đề xuất" (A — dựng từ file mẫu / B — mang dữ liệu thật) + sửa
+  mọi "25 bảng" → "30 bảng" (dây chuyền drift-guard v7.3:
+  `test_cloud_readme_drift_guard` đòi README có đủ tên bảng).
+  - Boundary: `docs/schema.sql` (chỉ append block mới),
+    `docs/handover/kien-truc.md` (§3), `deploy/cloud/README.md`
+  - Gate: `python scripts/apply_schema.py` ×2 exit 0 trên DB riêng
+    (`samsam_infra`), lần 2 in đủ bảng; `grep -c "^create table if not
+    exists" docs/schema.sql` = 30 (nền 25 + 5); `grep -niE
+    "phone|email|address|order_id|buyer|user_hash"` trên block v9.2 không
+    trúng; `python -m pytest -q tests/test_handover_docs.py
+    tests/test_db_backup.py::test_cloud_readme_drift_guard` xanh
+    (`test_kien_truc_lists_all_tables` thấy 5 bảng mới + "30 bảng"); DB
+    constraint (test schema tạm, W92.5): insert lô `exp_date < mfg_date`
+    và `exp_date = mfg_date` → `CheckViolation`; lô `passed` với
+    `checked_by` null → `CheckViolation`; proposal `approved` thiếu
+    `decided_by` → `CheckViolation`; không sửa test đếm cứng nào
+  - Evidence: `evidence/v92_sx.log`
+  - Kết quả: apply_schema ×2 exit 0 in 30 bảng; grep create table = 30; grep PII block rỗng; CheckViolation (lô hạn < / = ngày SX, passed thiếu checked_by, pending có checked_by, proposal approved thiếu decided_by) xanh trong `test_lot_db_check_constraints`/`test_alloc_db_constraints`; kien-truc 30 bảng + cloud README 5 bảng, drift-guard xanh.
+- [x] **W92.2 Nạp tồn kho (SX-A3 đầu vào) — `ingest/inventory_csv.py`** —
+  `python -m ingest.inventory_csv --file F [--source manual_export|sample]`
+  (`main(argv) -> int`, mặc định `manual_export`). Hàm thuần
+  `read_inventory(path, golden_skus: dict, today: date) -> (rows, errors,
+  sha256)` (không DB; errors ≠ [] → rows = []): đuôi chỉ `.csv`/`.xlsx`
+  (giải mã + trần qua `market_csv._table`), header ĐÚNG tập `sku_key, kho,
+  qty, captured_at` (thiếu cột / cột lạ / header trùng → lỗi), `sku_key`
+  phải có trong golden file, `kho` khớp `golden_store._SLUG_RE` (slug ascii
+  — không chỗ cho tên/SĐT), `qty` số nguyên ≥ 0 qua `market_csv._to_int`
+  (trần 2·10⁹; "1.5", "-3", "abc", trống → lỗi), `captured_at` ISO
+  `YYYY-MM-DD` không ở tương lai so với `today` (VN) và ≥ `scenario.
+  DATE_MIN`, trùng (`sku_key`, `kho`, `captured_at`) trong file → lỗi; file
+  thiếu / rỗng / chỉ header / không UTF-8 → lỗi. Có lỗi → in tối đa
+  `MAX_PRINT_ERRS` dòng `[err]` (số dòng + tên cột, KHÔNG giá trị ô) + tổng,
+  exit 1, KHÔNG connect. OK → connect (`connect_timeout`), `file_sha256` đã
+  có → `[skip] file đã nạp` exit 0 0 ghi; mới → 1 `executemany` +
+  `conn.commit()`; `UniqueViolation` trên (`file_sha256`, `row_no`) do nạp
+  song song → rollback + `[skip]`. Tồn hiện có (dùng ở W92.3/W92.4) =
+  `current_stock(conn) -> dict[sku_key, {"qty": int, "kho": {...},
+  "sample": bool}]`: mỗi (`sku_key`, `kho`) lấy dòng `captured_at` mới nhất
+  (hòa → `id` lớn nhất, `distinct on`), cộng qua kho. Module KHÔNG
+  update/delete `inventory_snapshots` (append-only bằng code). Mẫu
+  `data/sample_inventory.csv`: ≥ 2 kho slug `kho-mau-*`, đủ 13 SKU golden
+  trừ ≥ 1 SKU (để thử nhánh "chưa có số tồn"), số GIẢ ĐỊNH.
+  - Boundary: `ingest/inventory_csv.py`, `data/sample_inventory.csv`,
+    `tests/test_inventory_csv.py` (mới cả 3)
+  - Gate: `python -m pytest -q tests/test_inventory_csv.py` xanh, gồm: file
+    mẫu repo → 0 lỗi; từng biến thể lỗi (thiếu file, rỗng, chỉ header, đuôi
+    `.txt`, cột lạ, thiếu cột `qty`, SKU lạ, kho "Kho Anh Nam 0905123456",
+    qty "-3"/"1.5"/"abc", ngày tương lai `today+1`, trùng khóa) → ≥ 1 lỗi,
+    `main()` exit 1 và `psycopg.connect` (monkeypatch raise) KHÔNG được gọi,
+    thông báo không chứa giá trị ô (vd không chứa "0905123456"); DB thật
+    (schema tạm + `set local search_path` + chạy `docs/schema.sql` +
+    ROLLBACK, mẫu fixture `db` của `tests/test_golden_store.py`): nạp 2 lần
+    cùng file → lần 2 `[skip]`, `count(*)` không đổi; 2 snapshot khác ngày
+    cùng (sku, kho) → `current_stock` lấy ngày mới nhất và cộng đúng qua
+    kho; `grep -nE "update inventory_snapshots|delete from
+    inventory_snapshots" ingest/ pipelines/ scripts/ -ri` rỗng. Thực chạy
+    trên DB riêng: `python -m ingest.inventory_csv --file
+    data/sample_inventory.csv --source sample` ×2 → exit 0 rồi `[skip]`;
+    file hỏng tạm (scratchpad) → exit 1 + "không nạp gì"; không
+    `UnicodeEncodeError` trên console mặc định
+  - Evidence: `evidence/v92_sx.log`
+  - Kết quả: 23 test xanh (0 skip); DB riêng: nạp mẫu exit 0 (16 dòng, 2 kho, 12 SKU) → lần 2 `[skip]`; file hỏng tạm exit 1 "không connect, không nạp gì" (không in giá trị ô); grep update/delete inventory_snapshots rỗng.
+- [x] **W92.3 SX-A3 phân bổ tồn theo mốc chốt (dùng `scenario.project`)** —
+  `pipelines/production.py`: `load_config(path=None) -> dict` (validate
+  `data/production_config.json`, raise `ProductionError(ValueError)`);
+  hàm thuần `demand_for(sku, start, until, assumptions) -> dict[channel,
+  {"low","base","high","note"}]` = với MỖI kênh trong `scenario.
+  ALL_CHANNELS` gọi `scenario.project(sku, channel, start, weeks,
+  assumptions)` (weeks = số tuần từ `week_start(start)` tới tuần chứa
+  `until`) rồi CỘNG từng mức — không tự nhân hệ số, không đọc
+  `scenario_assumptions.json` trực tiếp; `allocate(stock: int | None,
+  demand: dict, category: str) -> dict` thuần, tất định: kênh base = 0 →
+  0; `stock is None` (SKU không có dòng tồn) → mọi kênh 0 + cờ "chưa có số
+  tồn — không kết luận thiếu" (KHÔNG coi = 0); `stock ≥ Σbase` → mỗi kênh =
+  base, phần dư ghi "dự phòng chưa phân bổ" (không đẩy vào kênh nào); `stock
+  < Σbase` → chia tỉ lệ base, `floor` + phần dư lớn nhất, hòa theo thứ tự
+  `scenario.ALL_CHANNELS`, Σ = stock; chốt chặn thứ 2: `category ==
+  "alcohol"` → mọi kênh ≠ `scenario.OFFLINE` = 0 BẤT KỂ demand (golden
+  vẫn ghi `["shopee"]` cho 2 SKU rượu — lệch đã biết v3.2). Cờ thiếu từng
+  SKU: `Σlow > stock` → "THIẾU CẢ KỊCH BẢN THẤP"; `Σbase > stock` → "THIẾU
+  (cơ sở)" + số thiếu; chỉ `Σhigh > stock` → "RỦI RO (kịch bản cao)". CLI
+  `allocate --cutoff <id> [--start YYYY-MM-DD]` (mặc định ngày VN hôm nay):
+  đọc golden file + `scenario.load_assumptions()` + config TRƯỚC connect
+  (lỗi → exit 1), đọc `current_stock(conn)`, `run_id` = sha256 12 hex của
+  JSON canonical (`cutoff`, `start_week`, tồn dùng (sku, kho, qty,
+  captured_at), `status` + bytes file giả định, bytes golden) → cùng input
+  = cùng `run_id`; ghi MỌI SKU golden × MỌI kênh `ALL_CHANNELS` vào
+  `allocation_proposals` `status='pending'` (1 tx, `on conflict (run_id,
+  sku_key, channel) do nothing` → chạy lại `[skip] run đã có`). In: dòng 1
+  = `status` giả định scenario + `status` config, câu "Khoảng thấp/cơ
+  sở/cao — KHÔNG phải doanh số cam kết; ĐỀ XUẤT chờ GĐ sản xuất duyệt —
+  không tự chuyển kho", nhãn `[MẪU]` nếu tồn có dòng `source='sample'`,
+  mốc `chot_11_11` thêm "chỉ phân bổ tồn hiện có — không đề xuất sản xuất
+  mới", bảng SKU | kênh | thấp | cơ sở | cao | đề xuất | ghi chú + khối
+  cảnh báo thiếu. `approve --run <run_id> --by <tên>` / `reject --run
+  <run_id> --by <tên> [--note]`: `--by` bắt buộc (argparse, exit 2; chỉ
+  khoảng trắng hoặc > `golden_store.MAX_BY_LEN` → exit 2); 1 tx: update mọi
+  dòng `pending` của run → approved/rejected + `decided_by` +
+  `decided_at=now()`, insert 1 `approvals` (`object_type
+  'allocation_run'`, `object_id` run_id, `content_sha256` = sha256 JSON
+  canonical các dòng (sku, kênh, proposed_qty) đã sort, `decision`
+  approved|rejected, `approved_by`) + 1 `agent_action_log` (`action
+  'alloc_approve'|'alloc_reject'`), `conn.commit()`; run không tồn tại / không
+  còn dòng pending → exit 1. Duyệt KHÔNG đụng `inventory_snapshots`.
+  - Boundary: `pipelines/production.py` (mới), `data/production_config.json`
+    (mới), `tests/test_production.py` (mới)
+  - Gate: `python -m pytest -q tests/test_production.py -k "alloc or
+    demand or config"` xanh, gồm: (a) `grep -nE "from pipelines import
+    scenario|from pipelines\.scenario import|import pipelines\.scenario"
+    pipelines/production.py` trúng VÀ `grep -nE
+    "scenario_assumptions|baseline|trend|lunar_new_year"
+    pipelines/production.py` rỗng (không engine thứ 2); test monkeypatch
+    `scenario.project` bằng spy → `demand_for` gọi đúng 1 lần mỗi kênh
+    `ALL_CHANNELS` và tổng = tổng các dòng spy trả; (b) 2 SKU
+    `category='alcohol'` × mọi kênh online → `proposed_qty == 0` kể cả khi
+    demand giả (monkeypatch) > 0 cho shopee; × `offline` > 0 khi có tồn;
+    (c) `allocate`: stock 0 / stock < Σbase (Σ đề xuất == stock, hòa đúng
+    thứ tự) / stock ≥ Σbase (mỗi kênh = base, dư không phân) / stock None →
+    cờ "chưa có số tồn"; 3 mức cờ thiếu trên dữ liệu tay; (d) config biến
+    thể: thiếu / rỗng / JSON hỏng / `{}` / chỉ `_doc` / id trùng /
+    `covers_until <= date` / `remind_hours >= sla_hours` / `true` thay số →
+    `ProductionError`; file repo thật `status` chứa "GIẢ ĐỊNH" và có đủ 4 mốc
+    2026-10-25, 2026-11-01, 2026-11-15, 2026-12-10; (e) DB schema tạm:
+    allocate 2 lần cùng input → cùng `run_id`, `count(*)` không đổi;
+    `select count(*) from allocation_proposals where status <> 'pending'`
+    = 0 sau allocate; `approve` thiếu `--by` → `SystemExit` 2 và `--by "
+    "` → 2, dòng vẫn `pending`; `approve --by "GĐ SX test"` → mọi dòng run
+    `approved`, đúng 1 `approvals` + 1 `agent_action_log`, `select * from
+    verify_action_log()` rỗng, `inventory_snapshots` y nguyên (so trước/sau);
+    (f) `grep -n "time.sleep\|datetime.now\|date.today"
+    tests/test_production.py` rỗng. Thực chạy trên DB riêng (sau W92.2):
+    `python -m pipelines.production allocate --cutoff chot_11_11 --start
+    2026-10-12` ×2 → exit 0, lần 2 `[skip]`, output có "[MẪU]", "KHÔNG phải
+    doanh số cam kết", "không đề xuất sản xuất mới", dòng rượu × shopee = 0
+  - Evidence: `evidence/v92_sx.log`
+  - Kết quả: -k "alloc or demand or config" 40 xanh; grep import scenario trúng, grep engine-2 rỗng; spy 1 lần/kênh; DB riêng: allocate ×2 → run 368810aa0bf9, lần 2 `[skip]`, có [MẪU]/"KHÔNG phải doanh số cam kết"/"không đề xuất sản xuất mới", rượu × shopee = 0. Ghi chú: câu "chỉ phân bổ tồn hiện có — không đề xuất sản xuất mới" in cho MỌI mốc (agent không bao giờ đề xuất sản xuất), không chỉ chot_11_11.
+- [x] **W92.4 SX-A4 BOM combo/hộp quà** — `pipelines/production.py`: hàm
+  thuần `check_bom(combos: list[dict], golden_skus: dict) -> list[str]`
+  (lỗi chỉ nêu combo_key/sku_key/kênh): combo_key slug không trùng, `name`
+  không rỗng và `guardrail.check(name)["ok"]` (từ cấm "chữa"... → lỗi),
+  `channels` list không rỗng/không trùng ⊆ `scenario.ALL_CHANNELS`, `items`
+  không rỗng, `sku_key` có trong golden, không trùng trong combo, `qty` int
+  > 0 (không bool); LUẬT KÊNH THEO DỮ LIỆU: với mỗi kênh online `c` (∈
+  `golden_store.CHANNELS`) của combo, mọi SKU thành phần phải có `c` trong
+  `allowed_channels` golden → không thì lỗi "combo X kênh c: SKU y không có
+  c trong allowed_channels"; combo có SKU `category == "alcohol"` + bất kỳ
+  kênh online → lỗi "combo có rượu chỉ được kênh offline" BẤT KỂ
+  `allowed_channels` của SKU rượu; kênh `offline` hợp lệ cho mọi SKU (như
+  scenario). `buildable(items, stock) -> int` = `min(stock[sku] // qty)`,
+  SKU thiếu số tồn → 0 + cờ (không đoán); in kèm "tính trên tồn CHƯA trừ
+  phân bổ — tham khảo". CLI `bom --load FILE [--source manual|sample]`:
+  đọc + `check_bom` TRƯỚC connect → lỗi: exit 1, 0 dòng; OK: 1 tx upsert
+  `bom_combos` + thay toàn bộ `bom_items` của combo trong file (delete theo
+  combo_key rồi insert — chạy lại cùng file → cùng số dòng), `conn.commit()`;
+  `bom --check`: đọc combo trong DB + golden FILE hiện tại → in lỗi (BOM
+  hợp lệ lúc nạp có thể thành lỗi khi golden đổi) + số combo làm được từ
+  `current_stock`. Mẫu `data/sample_bom.json`: `{"_doc": "MẪU — chờ GĐ
+  SX/MKT cấp BOM hộp quà Tết thật", "status": "MẪU ...", "combos": [≥ 1
+  combo `shopee` hợp lệ (vd `saphraton-20v` + `mat-ong-sam-120ml-1hu`), ≥ 1
+  hộp quà Tết chỉ `offline`]}` — file mẫu phải `check_bom == []`.
+  - Boundary: `pipelines/production.py`, `data/sample_bom.json` (mới),
+    `tests/test_production.py`
+  - Gate: `python -m pytest -q tests/test_production.py -k bom` xanh, gồm:
+    file mẫu repo → `[]`; combo kênh `shopee` chứa `saphraton-40v`
+    (`allowed_channels` `[]`) → lỗi nêu đúng SKU + kênh; combo `tiktok` chứa
+    `saphraton-20v` (chỉ `["shopee"]`) → lỗi; combo `shopee` chứa
+    `ruou-sam-chai-thuy-tinh-500ml` (golden ghi `["shopee"]`) → VẪN lỗi
+    rượu; combo rượu chỉ `offline` → hợp lệ; chứng minh không hard-code:
+    golden fixture thêm `"tiktok"` vào `allowed_channels` của
+    `saphraton-20v` → combo `tiktok` hợp lệ; tên combo chứa từ cấm → lỗi;
+    biến thể qty 0 / `true` / SKU lạ / kênh lạ / combo không item → lỗi;
+    `buildable` dữ liệu tay (tồn 200 + 50, mỗi SKU qty 1 → 50; SKU thiếu
+    tồn → 0 + cờ); DB schema tạm: `bom --load` file lỗi → exit 1 và 0 dòng
+    `bom_combos`, `connect` không bị gọi; file mẫu ×2 → cùng `count(*)`
+    `bom_combos`/`bom_items`; nạp combo hợp lệ rồi đổi golden fixture (bỏ
+    `shopee` khỏi SKU thành phần) → `bom --check` in lỗi. Thực chạy trên DB
+    riêng: `python -m pipelines.production bom --load data/sample_bom.json
+    --source sample` exit 0 và `bom --check` exit 0 in số combo làm được +
+    "[MẪU]"
+  - Evidence: `evidence/v92_sx.log`
+  - Kết quả: -k bom 19 xanh; DB riêng: `bom --load` mẫu exit 0, `bom --check` exit 0 in [MẪU] + 70/25 combo. Lệch nhỏ so với chữ contract: `buildable()` trả `(số combo, [SKU thiếu số tồn])` thay vì int trần (cờ thiếu tồn nằm ở phần tử 2); `bom --check` có lỗi BOM → exit 1.
+- [x] **W92.5 SX-A5 hồ sơ lô + kiểm nhập** — `pipelines/production.py`:
+  hàm thuần `validate_lots(lots: list[dict], golden_skus: dict, today:
+  date) -> list[str]`: `lot_code` khớp `^[A-Z0-9][A-Z0-9-]{2,31}$` không
+  trùng, `sku_key` có trong golden, `mfg_date`/`exp_date` ISO, `mfg_date ≤
+  today` (VN), `exp_date > mfg_date` (hạn dùng < hoặc = ngày SX → lỗi —
+  chặn 2 lớp: Python + check DB W92.1), `qty` int > 0 (không bool), không
+  key lạ ngoài allowlist (`lot_code, sku_key, mfg_date, exp_date, qty,
+  note`). CLI `lots --load FILE [--source manual|sample]`: validate TRƯỚC
+  connect (lỗi → exit 1, 0 dòng); OK → 1 tx `insert ... on conflict
+  (lot_code) do nothing` — lô đã có KHÔNG bị ghi đè (kể cả trạng thái kiểm
+  nhập), in `[skip] n lô đã có`. `intake --lot <code> --result
+  passed|failed --by <tên> [--note]`: `--by` bắt buộc (argparse exit 2;
+  chỉ khoảng trắng / > `MAX_BY_LEN` → exit 2); chỉ từ `pending` (lô không
+  có / đã kiểm → exit 1, không ghi); 1 tx: update `intake_status`,
+  `checked_by`, `checked_at=now()` `where lot_code = %s and intake_status
+  = 'pending'` (rowcount 0 → rollback, exit 1 — chống 2 người kiểm cùng
+  lúc) + 1 `approvals` (`object_type 'lot_intake'`, `object_id` lot_code,
+  `content_sha256` = sha256 JSON canonical lô, `decision` passed→approved /
+  failed→rejected) + 1 `agent_action_log` (`action 'lot_intake'`),
+  `conn.commit()`. Điểm nối QR (v9.4): hàm thuần `qr_payload(lot: dict) ->
+  dict | None` → chỉ `{lot_code, sku_key, exp_date}` khi `intake_status ==
+  'passed'`, ngược lại `None` — không `checked_by`, không tọa độ/PII;
+  v9.4 sinh QR/trang từ hàm này (version này KHÔNG sinh QR). Mẫu
+  `data/sample_lots.json`: `{"_doc": "MẪU — chờ hồ sơ lô/COA thật",
+  "status": "MẪU ...", "lots": [≥ 3 lô mã `MAU-...`, ≥ 1 lô SKU rượu]}`.
+  - Boundary: `pipelines/production.py`, `data/sample_lots.json` (mới),
+    `tests/test_production.py`
+  - Gate: `python -m pytest -q tests/test_production.py -k "lot or intake
+    or qr"` xanh, gồm: file mẫu → `[]`; `exp_date < mfg_date` → lỗi và
+    `exp_date == mfg_date` → lỗi (Python) + insert thẳng DB → `CheckViolation`;
+    `mfg_date = today+1` → lỗi; lot_code chữ thường/có khoảng trắng/trùng
+    → lỗi; key lạ `"phone"` → lỗi; qty 0/`true` → lỗi; `lots --load` file
+    lỗi → exit 1, `connect` không bị gọi; DB schema tạm: nạp mẫu ×2 → lần 2
+    `[skip]`, đổi `qty` trong file rồi nạp lại → DB giữ bản cũ; `main(["intake",
+    "--lot", L, "--result", "passed"])` → `SystemExit` 2 và lô vẫn `pending`,
+    `checked_by` null; `--by "   "` → 2; `--by "QA test" --result passed` →
+    `passed`, đúng 1 `approvals` (`decision='approved'`) + 1
+    `agent_action_log`, `verify_action_log()` rỗng; intake lần 2 cùng lô →
+    exit 1, không thêm dòng `approvals`; `--result failed` → `decision=
+    'rejected'`; `qr_payload` lô pending → `None`, lô passed → đúng 3 key.
+    Thực chạy trên DB riêng: `python -m pipelines.production lots --load
+    data/sample_lots.json --source sample` exit 0, `intake --lot <mã mẫu>
+    --result passed` (thiếu `--by`) → exit 2 — KHÔNG chạy intake thành công
+    ngoài schema test (không đánh dấu người đã kiểm)
+  - Evidence: `evidence/v92_sx.log`
+  - Kết quả: -k "lot or intake or qr" 28 xanh; DB riêng: `lots --load` mẫu exit 0, lần 2 `[skip] 3 lô đã có`, `intake` thiếu `--by` exit 2 — KHÔNG chạy intake thành công ngoài schema test. Mã lô sai định dạng ở `intake --lot` → exit 2 (argparse) thay vì 1.
+- [x] **W92.6 SX-A0 bản tin tuần cho GĐ sản xuất (tất định, SLA 48h)** —
+  `pipelines/production.py`: `collect(conn) -> dict` (chỉ SQL, 0 LLM) +
+  hàm thuần `render_bulletin(data: dict, now: datetime, config: dict) ->
+  str` với 4 heading cố định theo thứ tự: "## Thiếu hàng theo mốc chốt"
+  (run MỚI NHẤT theo `created_at` của mỗi `cutoff_id` trong
+  `allocation_proposals`, SKU có cờ thiếu, kèm số ngày tới mốc), "## Lô chờ
+  kiểm nhập" (`production_lots` `pending`), "## BOM lỗi" (`check_bom` trên
+  combo DB × golden file hiện tại), "## Mục chờ duyệt & SLA" (run phân bổ
+  còn `pending` + lô `pending`: tuổi = `now - created_at`; ≥
+  `remind_hours` → "NHẮC"; ≥ `sla_hours` → "QUÁ SLA 48h — đề xuất chuyển
+  TGĐ" — chỉ là chữ trong bản tin, KHÔNG tự chuyển/duyệt thay). Mỗi mục ghi
+  bảng nguồn; mục rỗng ghi "không có"; bảng chưa tồn tại → "chưa có bảng —
+  chạy apply_schema". Đầu bản tin: ngày (`--date`, mặc định ngày VN), dòng
+  `status` config (GIẢ ĐỊNH), "[MẪU]" nếu dữ liệu nào `source='sample'`, câu
+  "KHÔNG phải doanh số cam kết — agent chỉ đề xuất". Sort tất định (mốc →
+  sku → kênh; tuổi giảm dần rồi id). CLI `bulletin [--date YYYY-MM-DD]`: in
+  stdout, không ghi file, không gửi đi (gửi = human-gate); DB không
+  connect được → `[err]` exit 1 (không treo — `connect_timeout`).
+  - Boundary: `pipelines/production.py`, `tests/test_production.py`
+  - Gate: `python -m pytest -q tests/test_production.py -k bulletin` xanh,
+    gồm: `render_bulletin` cùng `data` + cùng `now` gọi 2 lần → chuỗi y hệt;
+    đủ 4 heading đúng thứ tự; SLA trên dữ liệu tay: 3 mục tạo
+    `2026-10-12 09:00+07` → `now = D+1 08:59` không nhắc, `D+1 09:00` →
+    "NHẮC" cả 3, `D+2 09:01` → "QUÁ SLA" cả 3, không mục nào bị đổi trạng
+    thái (DB test: `status`/`intake_status` y nguyên sau `bulletin`); có run
+    thiếu hàng → SKU hiện trong mục 1; combo lỗi (golden fixture đổi) → mục
+    3; dữ liệu `source='sample'` → "[MẪU]"; bản tin không chứa
+    `checked_by`/`decided_by`; `connect` raise `OperationalError`
+    (monkeypatch) → exit 1 không traceback; `grep -n "llm_gateway\|openai"
+    pipelines/production.py ingest/inventory_csv.py` rỗng. Thực chạy trên
+    DB riêng: `python -m pipelines.production bulletin --date 2026-10-12`
+    exit 0, đủ 4 heading + "[MẪU]" + "KHÔNG phải doanh số cam kết", không
+    `UnicodeEncodeError`
+  - Evidence: `evidence/v92_sx.log`
+  - Kết quả: -k bulletin 7 xanh (tất định, 4 heading, SLA 08:59/09:00/D+2 09:01, DB không đổi trạng thái, không lộ tên người duyệt/kiểm, DB down exit 1); DB riêng: `bulletin --date 2026-10-12` exit 0, đủ 4 heading + [MẪU] + "KHÔNG phải doanh số cam kết", không UnicodeEncodeError.
+- [x] **W92.7 Docs vận hành** — `docs/handover/sop.md` thêm mục "Sản xuất
+  P1 — tồn, phân bổ, BOM, lô (v9.2)": nạp tồn thứ Sáu (`python -m
+  ingest.inventory_csv --file ...`), `allocate --cutoff ...` theo 4 mốc,
+  ai duyệt (`approve`/`reject --by`, GĐ SX), `bom --load`/`--check`, `lots
+  --load`, `intake ... --by` (người kiểm nhập), `bulletin` mỗi tuần; nhãn
+  MẪU/GIẢ ĐỊNH; luật rượu (0 online trong phân bổ, combo rượu chỉ offline —
+  câu hỏi mở hộp quà offline chờ Pháp chế); "không tự chuyển kho, không
+  đặt mua, không lệnh sản xuất". `docs/handover/kien-truc.md`: §2 thêm 2
+  module (`ingest/inventory_csv.py`; `pipelines/production.py` — gọi
+  `scenario.project()`), §6 thêm 3 dòng human-gate (duyệt phân bổ; duyệt
+  BOM + chốt mốc/SLA; kiểm nhập lô `--by` → `approvals` + hash chain).
+  `AGENTS.md` bảng Commands thêm 2 dòng (Tồn kho; Sản xuất P1).
+  - Boundary: `docs/handover/sop.md`, `docs/handover/kien-truc.md`,
+    `AGENTS.md` (chỉ bảng Commands)
+  - Gate: `grep -n "ingest.inventory_csv" docs/handover/sop.md AGENTS.md
+    docs/handover/kien-truc.md` và `grep -n "pipelines.production"
+    docs/handover/sop.md AGENTS.md docs/handover/kien-truc.md` đều trúng;
+    mọi subcommand nhắc trong sop.md (`allocate`, `approve`, `reject`,
+    `bom`, `lots`, `intake`, `bulletin`) có trong `python -m
+    pipelines.production --help`; spot-check chạy đúng 2 lệnh trong sop.md
+    ra exit như mô tả; `python -m pytest -q tests/test_handover_docs.py`
+    xanh
+  - Evidence: `evidence/v92_sx.log`
+  - Kết quả: grep inventory_csv/pipelines.production trúng cả 3 file; 7 subcommand sop.md đều có trong `--help`; spot-check `inventory_csv` nạp lại → `[skip]` exit 0, `bom --check` exit 0; test_handover_docs xanh.
+- [x] **W92.8 Gate chung** — targeted `python -m pytest -q
+  tests/test_inventory_csv.py tests/test_production.py tests/test_scenario.py
+  tests/test_handover_docs.py tests/test_db_backup.py::test_cloud_readme_drift_guard
+  tests/test_connect_timeout_guard.py` xanh ×3 liên tiếp (tuần tự, đọc tới
+  exit mỗi lần, 0 skipped trong 2 file mới khi có `DATABASE_URL`); full
+  `python -m pytest -q` xanh đúng 1 lần, ≥ 946 + số test mới, 0 failed,
+  không skip mới so với baseline; `ruff check .` clean; `python -m
+  py_compile ingest/inventory_csv.py pipelines/production.py` exit 0;
+  `python scripts/apply_schema.py` ×2 exit 0; `git status --short` chỉ có
+  file trong Boundary các mục trên (+ evidence), không file runtime lạ
+  trong `data/`.
+  - Boundary: không file mới ngoài các mục trên
+  - Gate: như trên; evidence `.log` thêm bằng `git add -f`
+  - Evidence: `evidence/v92_pytest.log`
+  - Kết quả: targeted 184 xanh ×3 (0 skip); full `python -m pytest -q` 1051 passed (946 + 105 mới), 0 skip, 0 failed; ruff clean; py_compile exit 0; apply_schema ×2 exit 0; git status chỉ file Boundary (evidence .log cần `git add -f`).
+
+
+- [x] **W92.9 Vòng sửa nghiệm thu (6 MINOR)** — evidence nối cuối
+  `evidence/v92_sx.log` (mutation probe + CLI DB riêng) và
+  `evidence/v92_pytest.log` (gate).
+  - F1 `validate_lots` sku_key list/dict → `TypeError` traceback: guard
+    `isinstance(sku, str)` (như `check_bom`); grep `.get(..) not in` /
+    `in seen|ids` trong 2 module mới — mọi chỗ khác đã guard, `inventory_csv`
+    ô từ `_table` luôn `str|None`. Test: 2 case param `test_lot_variants_
+    rejected` + file lô sku list/dict trong `test_bom_lot_bad_file_exit1_
+    no_connect`; CLI DB host chết → `[err]` exit 1, không traceback.
+  - F2 tồn cũ khi file kho mới bỏ sót SKU — NGỮ NGHĨA CHỌN (worker; GĐ SX
+    có thể đổi): giữ qty cũ (không đoán = 0, nhất quán "chưa có số tồn —
+    không kết luận thiếu") + đánh dấu `stale` khi `captured_at` của (sku,
+    kho) < snapshot mới nhất của CHÍNH kho đó; `allocate` (ghi chú dòng +
+    khối "Cảnh báo số tồn cũ…") và `bulletin` mục 1 in "số tồn cũ hơn file
+    kho mới nhất — kiểm lại". SOP 5d bước 1 + docstring `inventory_csv`:
+    file PHẢI liệt kê đủ SKU × kho từng có tồn, hết hàng ghi `qty` 0, kho
+    ngừng ghi 0. Kho ngừng hẳn mà không gửi file 0 thì KHÔNG tự phát hiện
+    (so theo từng kho) — dựa SOP. Test: `test_stale_stock_warned_in_
+    allocate_and_bulletin` (DB, 2 file, file 2 bỏ SKU),
+    `test_current_stock_latest_per_kho` (thêm stale), `test_bulletin_
+    render_stale_stock`.
+  - F3 `bom --check` in combo_key/channels/SKU thiếu từ DB không `_clean`:
+    bọc `_clean` cả 3 + dòng `[err]`. Test `test_bom_check_strips_control_
+    chars_from_db` (fake conn, `\x1b[2J`/OSC).
+  - F4 client insert thẳng `approvals`: chuyển sang 2 function SECURITY
+    DEFINER cuối block v9.2 `docs/schema.sql` — `decide_allocation_run(run,
+    decision, by, note)` và `record_lot_intake(lot, result, by, note)` (tự
+    `for update` + kiểm pending + update + approvals + log, object_type cố
+    định, sha tính trong DB; revoke PUBLIC); `docs/roles.sql` grant EXECUTE
+    cho `app_human` + comment "TUYỆT ĐỐI không grant INSERT approvals" (lý
+    do `verify_publish`); CLI gọi `select fn(...)` trong
+    `conn.transaction()` (RAISE → `[err]` exit 1, không ghi). sha phân bổ =
+    sha256(jsonb `[[sku, kênh, qty]]` sort `collate "C"`) — test so khớp
+    Python `json.dumps`. Docs: SOP 5d bước 3, kien-truc §6 + §6b. Test
+    `test_decisions_only_via_security_definer_functions` (grep 0 `insert
+    into approvals`, prosecdef + search_path ghim, app_human có EXECUTE,
+    agent_writer/public không, không role nào INSERT approvals, RAISE cho
+    người rỗng/kết quả lạ/không có lô-run). Lệch Boundary: thêm
+    `docs/roles.sql` (dây chuyền của fix).
+  - F5 chốt chặn rượu thứ 2 trên đường thật: `test_alloc_plan_rows_alcohol_
+    zero_online_real_category` (fake `project` online > 0 → `plan_rows` với
+    category golden → online 0 + ghi chú rượu).
+  - F6 bản tin chỉ run mới nhất: `test_bulletin_db_no_status_change` thêm
+    assert run mới có / run cũ (approved) không có trong mục 1 + mỗi SKU 1
+    dòng/mốc.
+  - Mutation probe (5 đột biến: bỏ guard F1, bỏ `_clean` F3, `plan_rows`
+    category None M1, bỏ `join latest` M2, bỏ cảnh báo stale F2) → cả 5
+    KILLED, file khôi phục.
+  - Gate: targeted (+`tests/test_auth_approval.py`) 207 xanh ×3; ruff clean;
+    py_compile exit 0; apply_schema ×2 exit 0 (30 bảng); full `python -m
+    pytest -q` 1 lần: 1057 passed + 1 failed `test_dr_drill.py::test_zz_no_
+    dr_container_left` — assert TOÀN CỤC docker, container `samsam-dr-…`
+    của worktree khác chạy DR drill song song (ngay sau `docker ps -a`
+    không còn), v9.2 không đụng docker; chạy lại riêng `tests/test_dr_drill.
+    py` 27 xanh. Tổng 1058 = 946 + 112 mới. DB riêng: `approve --run
+    000000000000` / `intake --lot KHONG-CO` → `[err]` exit 1 qua function,
+    0 dòng approvals; KHÔNG chạy approve/intake thành công ngoài schema test.
+
+- [x] **W92.10 Vòng sửa nghiệm thu 2 (1 MINOR — stale cùng ngày)** —
+  evidence nối cuối `evidence/v92_pytest.log` + `evidence/v92_sx.log`.
+  - Biến thể F2 bị sót: file đính chính CÙNG `captured_at` của cùng kho bỏ
+    SKU → SKU đó giữ qty file trước mà KHÔNG stale (so theo ngày mới nhất,
+    hòa ngày). Vá `ingest/inventory_csv.current_stock`: stale = KHÔNG thuộc
+    FILE mới nhất của kho — `captured_at < max(captured_at) over w OR
+    file_sha256 <> first_value(file_sha256) over w` (w = partition by kho
+    order by captured_at desc, id desc). Enumerate biến thể: (a) ngày cũ
+    hơn (F2 cũ), (b) cùng ngày file nạp trước (mới), (c) file nạp SAU mang
+    ngày CŨ hơn → file mới nhất vẫn là file ngày lớn nhất (không đảo),
+    (d) file đủ lại cùng ngày → hết stale. Giới hạn còn lại giữ nguyên:
+    kho ngừng hẳn không gửi file → không tự phát hiện (dựa SOP).
+  - Test `test_stale_stock_same_day_correction_file` (DB: mẫu + p1/p2 cùng
+    ngày 10-10 → saphraton-20v qty 9 stale==[kho]; allocate + bản tin mục
+    1 in `STALE_NOTE`; p3 cùng ngày đủ → hết stale). Mutation bỏ mệnh đề
+    sha → test FAILED (KILLED), file khôi phục.
+  - Gate: targeted (inventory_csv + production + auth_approval) 129 xanh
+    ×3; ruff clean; py_compile exit 0; full `python -m pytest -q` 1 lần
+    1059 passed (1058 + 1 mới), 0 failed. Docs: SOP 5d bước 1 + docstring
+    module/hàm nêu rõ file đính chính cùng ngày cũng phải đủ SKU.
+
+External-dep (để `[ ]`, không treo version, KHÔNG giả lập):
+- [ ] Số tồn kho thật theo kho (nhân sự kho xuất file thứ Sáu) thay
+  `data/sample_inventory.csv` — external-dep
+- [ ] BOM hộp quà Tết thật + vật tư bao bì (hộp, thiệp, MOQ/lead time nhà
+  cung cấp) — external-dep
+- [ ] Hồ sơ lô thật + COA/phiếu xuất xưởng; cổng 0 gia công vs GMP (QA
+  `qa_release`) — external-dep
+- [ ] GĐ sản xuất chốt 4 mốc + SLA (đổi `status` config), duyệt phân bổ/BOM,
+  ký kiểm nhập lô thật; SSO thay `--by` tự khai — external-dep
+- [ ] Role DB `prod_rw`/`prod_alloc_rw` trên cloud (grant EXECUTE
+  `decide_allocation_run`/`record_lot_intake`; TUYỆT ĐỐI không grant INSERT
+  `approvals`); n8n cron thứ Sáu 16:00 —
+  external-dep
+- [ ] Pháp chế/GĐ SX chốt rượu có được đóng hộp quà offline — external-dep
+- [ ] QR + trang truy xuất từ `qr_payload()` — version v9.4
+
+v9.2-sx-ton-bom-lo đóng 2026-10-12 (nghiệm thu đợt 1 FIX 6 → 2 vòng sửa → PASS;
+vòng 2: SKU vắng trong file sửa cùng ngày bị coi là tồn hiện tại → nay cờ cũ.
+Coordinator chạy lại targeted 192 + ruff). 30 bảng trên nhánh (+5). Phân bổ dùng
+`scenario.project()` (không engine thứ 2), rượu 0 mọi kênh online; đề xuất là
+NHÁP, duyệt/kiểm nhập cần --by + approvals + hash chain; không chuyển kho/đặt
+hàng/lệnh SX. CÂU HỎI MỞ cho Pháp chế/GĐ SX: rượu có được vào hộp quà OFFLINE
+không (flows B2B ghi 'không đóng trong hộp quà'; code hiện chỉ chặn online).
+External-dep: tồn kho thật; BOM hộp quà Tết + vật tư thật; hồ sơ lô + COA thật; GĐ
+SX chốt mốc/SLA; SSO thay --by; quyền 5 bảng mới cho role; n8n cron cloud.
+Someday: trigger chặn sửa `allocation_proposals` trước duyệt.
+
 ## Checklist v7.3-gia-lap-kich-ban
 
 Khán giả/mục đích: WP09 (pmo.md dòng `| WP09`) — phần "Persona Simulation

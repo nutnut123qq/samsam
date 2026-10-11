@@ -1,0 +1,173 @@
+# v9.2 gate — targeted x3 (tuần tự) + full 1 lần
+## targeted lần 1 — 21:27:00Z
+$ python -m pytest -q -rs tests/test_inventory_csv.py tests/test_production.py tests/test_scenario.py tests/test_handover_docs.py tests/test_db_backup.py::test_cloud_readme_drift_guard tests/test_connect_timeout_guard.py
+........................................................................ [ 39%]
+........................................................................ [ 78%]
+........................................                                 [100%]
+184 passed in 10.89s
+[exit 0]
+## targeted lần 2 — 21:27:17Z
+$ python -m pytest -q -rs tests/test_inventory_csv.py tests/test_production.py tests/test_scenario.py tests/test_handover_docs.py tests/test_db_backup.py::test_cloud_readme_drift_guard tests/test_connect_timeout_guard.py
+........................................................................ [ 39%]
+........................................................................ [ 78%]
+........................................                                 [100%]
+184 passed in 10.64s
+[exit 0]
+## targeted lần 3 — 21:27:34Z
+$ python -m pytest -q -rs tests/test_inventory_csv.py tests/test_production.py tests/test_scenario.py tests/test_handover_docs.py tests/test_db_backup.py::test_cloud_readme_drift_guard tests/test_connect_timeout_guard.py
+........................................................................ [ 39%]
+........................................................................ [ 78%]
+........................................                                 [100%]
+184 passed in 10.41s
+[exit 0]
+## -k theo mục contract
+$ python -m pytest -q tests/test_production.py -k "alloc or demand or config"
+40 passed, 42 deselected in 2.74s
+$ python -m pytest -q tests/test_production.py -k "bom"
+19 passed, 63 deselected in 2.60s
+$ python -m pytest -q tests/test_production.py -k "lot or intake or qr"
+28 passed, 54 deselected in 1.26s
+$ python -m pytest -q tests/test_production.py -k "bulletin"
+7 passed, 75 deselected in 0.99s
+$ python -m pytest -q tests/test_handover_docs.py tests/test_db_backup.py::test_cloud_readme_drift_guard
+9 passed in 0.28s
+$ grep -n 'time.sleep\|datetime.now\|date.today' tests/test_production.py
+[exit 1 — 1 = rỗng]
+## full pytest (1 lần) — 21:28:38Z
+$ python -m pytest -q -rs
+........................................................................ [  6%]
+........................................................................ [ 13%]
+........................................................................ [ 20%]
+........................................................................ [ 27%]
+........................................................................ [ 34%]
+........................................................................ [ 41%]
+........................................................................ [ 47%]
+........................................................................ [ 54%]
+........................................................................ [ 61%]
+........................................................................ [ 68%]
+........................................................................ [ 75%]
+........................................................................ [ 82%]
+........................................................................ [ 89%]
+........................................................................ [ 95%]
+...........................................                              [100%]
+1051 passed in 240.94s (0:04:00)
+[exit 0]
+(baseline 946 + 105 test mới = 1051; 0 skipped)
+
+$ ruff check .
+All checks passed!
+[exit 0]
+$ python -m py_compile ingest/inventory_csv.py pipelines/production.py
+[exit 0]
+$ git status --short
+ M AGENTS.md
+ M DONE.md
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/schema.sql
+?? data/production_config.json
+?? data/sample_bom.json
+?? data/sample_inventory.csv
+?? data/sample_lots.json
+?? ingest/inventory_csv.py
+?? pipelines/production.py
+?? tests/test_inventory_csv.py
+?? tests/test_production.py
+
+############ v9.2 vòng sửa nghiệm thu (6 MINOR) — 2026-10-12 ############
+== targeted ×3 (thêm tests/test_auth_approval.py vì đổi docs/roles.sql)
+== targeted run 1
+........................................................................ [ 69%]
+...............................................................          [100%]
+207 passed in 29.65s
+exit=0
+== targeted run 2
+........................................................................ [ 69%]
+...............................................................          [100%]
+207 passed in 23.19s
+exit=0
+== targeted run 3
+........................................................................ [ 69%]
+...............................................................          [100%]
+207 passed in 22.07s
+exit=0
+== ruff
+All checks passed!
+== py_compile
+exit=0
+== full python -m pytest -q -rs (1 lần)
+
+    def test_zz_no_dr_container_left(live):
+        """Ch\u1ea1y cu\u1ed1i file: 0 container samsam-dr-* c\xf2n l\u1ea1i."""
+>       assert _docker_names() == []
+E       AssertionError: assert ['samsam-dr-2..._045504-e0ad'] == []
+E         
+E         Left contains one more item: 'samsam-dr-20261012_045504-e0ad'
+E         Use -v to get more diff
+
+tests\test_dr_drill.py:548: AssertionError
+1 failed, 1057 passed in 287.27s (0:04:47)
+exit=1
+== ghi chú: 1 fail duy nhất test_dr_drill.py::test_zz_no_dr_container_left — assert TOÀN CỤC docker không còn container samsam-dr-*; container 'samsam-dr-20261012_045504-e0ad' là của worktree khác chạy DR drill SONG SONG (ngay sau đó docker ps -a không còn container samsam-dr-*). v9.2 không đụng docker/dr. Chạy lại riêng file đó:
+...........................                                              [100%]
+27 passed in 21.39s
+exit=0
+== git status --short
+ M AGENTS.md
+ M DONE.md
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/roles.sql
+ M docs/schema.sql
+?? data/production_config.json
+?? data/sample_bom.json
+?? data/sample_inventory.csv
+?? data/sample_lots.json
+?? ingest/inventory_csv.py
+?? pipelines/production.py
+?? tests/test_inventory_csv.py
+?? tests/test_production.py
+
+############ v9.2 vòng sửa nghiệm thu 2 (1 MINOR stale cùng ngày) — 2026-10-12 ############
+== mutation: bỏ mệnh đề 'or file_sha256 <> first_value(...)' → test_stale_stock_same_day_correction_file FAILED (assert stale True, got False) — KILLED, file khôi phục
+== targeted run 1 — 22:12:46Z
+.........................................................                [100%]
+129 passed in 27.00s
+== targeted run 2 — 22:13:22Z
+.........................................................                [100%]
+129 passed in 30.28s
+== targeted run 3 — 22:14:00Z
+.........................................................                [100%]
+129 passed in 26.93s
+== ruff
+All checks passed!
+== py_compile
+exit=0
+== full python -m pytest -q -rs (1 lần) — 22:14:43Z
+........................................................................ [ 61%]
+........................................................................ [ 67%]
+........................................................................ [ 74%]
+........................................................................ [ 81%]
+........................................................................ [ 88%]
+........................................................................ [ 95%]
+...................................................                      [100%]
+1059 passed in 260.98s (0:04:20)
+exit=0
+== git status --short
+ M AGENTS.md
+ M DONE.md
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/roles.sql
+ M docs/schema.sql
+?? data/production_config.json
+?? data/sample_bom.json
+?? data/sample_inventory.csv
+?? data/sample_lots.json
+?? ingest/inventory_csv.py
+?? pipelines/production.py
+?? tests/test_inventory_csv.py
+?? tests/test_production.py

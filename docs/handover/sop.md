@@ -341,6 +341,79 @@ python -m crawler.intel --report
 - LLM tóm tắt (`--llm`) mặc định TẮT: chỉ chạy khi `llm.enabled = true`
   trong file nguồn — chờ Pháp chế xác nhận bằng văn bản.
 
+## 5e. Sản xuất P1 — tồn, phân bổ, BOM, lô (v9.2)
+
+Agent SX-A0/A3/A4/A5 **chỉ đề xuất**: không tự chuyển kho, không đặt
+mua, không lệnh sản xuất, không gọi LLM. Dữ liệu trong repo
+(`data/sample_inventory.csv`, `data/sample_bom.json`,
+`data/sample_lots.json`) là **MẪU** — output in `[MẪU]`. Mốc chốt + SLA ở
+`data/production_config.json` (`status` "GIẢ ĐỊNH — chờ GĐ sản xuất
+chốt"; GĐ SX chốt rồi NGƯỜI đổi `status`).
+
+1. **Thứ Sáu — nạp tồn** (nhân sự kho xuất file cột `sku_key,kho,qty,
+   captured_at`; `kho` là slug như `kho-da-nang`):
+   ```
+   python -m ingest.inventory_csv --file <file.csv|.xlsx>
+   ```
+   File lỗi (cột lạ/thiếu, SKU ngoài golden, qty âm/lẻ, ngày tương lai,
+   trùng dòng) → `[err]` exit 1, **không nạp gì**; nạp lại cùng file →
+   `[skip]`. Tồn hiện có = snapshot mới nhất mỗi (SKU, kho).
+   **File phải liệt kê ĐỦ mọi SKU × kho từng có tồn — SKU hết hàng ghi
+   `qty` 0** (đừng bỏ dòng); kho ngừng dùng → ghi 0 cho mọi SKU của kho
+   đó. SKU bị bỏ khỏi file mới vẫn giữ số cũ (agent không đoán = 0) và
+   `allocate`/`bulletin` in "số tồn cũ hơn file kho mới nhất — kiểm lại"
+   — thấy dòng này thì bổ sung file với `qty` 0 rồi nạp lại. File đính
+   chính gửi lại CÙNG ngày cũng phải đủ mọi SKU của kho: agent so theo
+   FILE mới nhất của kho, SKU vắng trong file đó bị cảnh báo y như trên.
+2. **Đề xuất phân bổ theo 4 mốc** (`chot_11_11` 25/10, `ke_hoach_tet`
+   01/11, `chot_12_12` 15/11, `chot_tet` 10/12):
+   ```
+   python -m pipelines.production allocate --cutoff chot_11_11 [--start YYYY-MM-DD]
+   ```
+   Nhu cầu thấp/cơ sở/cao lấy từ `pipelines.scenario` (mục 5c) — KHÔNG
+   phải doanh số cam kết. Ghi NHÁP `pending` vào `allocation_proposals`
+   (cùng input → cùng `run_id`, chạy lại `[skip]`). SKU chưa có số tồn →
+   đề xuất 0 + "chưa có số tồn — không kết luận thiếu".
+3. **GĐ sản xuất duyệt** cả run (bắt buộc `--by`; ghi `approvals` + hash
+   chain CHỈ qua function DB `decide_allocation_run` — `intake` tương tự
+   qua `record_lot_intake`; khi tạo role cloud cho SX: grant EXECUTE 2
+   function này, **TUYỆT ĐỐI không grant INSERT `approvals`** cho role nào —
+   `verify_publish` tin bảng đó, chèn được là duyệt giả được nội dung;
+   duyệt KHÔNG chuyển kho — chuyển tay theo quyết định):
+   ```
+   python -m pipelines.production approve --run <run_id> --by "<tên GĐ SX>"
+   python -m pipelines.production reject --run <run_id> --by "<tên>" --note "<lý do>"
+   ```
+4. **BOM combo/hộp quà**:
+   ```
+   python -m pipelines.production bom --load <bom.json> [--source manual|sample]
+   python -m pipelines.production bom --check
+   ```
+   Kiểm luật kênh theo golden: kênh online của combo phải có trong
+   `allowed_channels` của MỌI SKU thành phần; tên combo qua guardrail.
+   `--check` chạy lại luật trên golden hiện tại (golden đổi → BOM cũ có
+   thể lỗi, exit 1) + số combo làm được (tính trên tồn CHƯA trừ phân bổ).
+5. **Hồ sơ lô + kiểm nhập** (người kiểm nhập ghi kết quả, bắt buộc
+   `--by`; lô đã kiểm không ghi lại):
+   ```
+   python -m pipelines.production lots --load <lots.json> [--source manual|sample]
+   python -m pipelines.production intake --lot <mã lô> --result passed|failed --by "<người kiểm nhập>"
+   ```
+   Hạn dùng ≤ ngày sản xuất bị chặn (Python + DB). Lô `passed` là đầu vào
+   QR truy xuất (v9.4).
+6. **Bản tin tuần cho GĐ sản xuất** (in stdout, không gửi — người gửi):
+   ```
+   python -m pipelines.production bulletin [--date YYYY-MM-DD]
+   ```
+   4 mục: thiếu hàng theo mốc, lô chờ kiểm nhập, BOM lỗi, mục chờ duyệt &
+   SLA (≥ 24h "NHẮC", ≥ 48h "QUÁ SLA 48h — đề xuất chuyển TGĐ" — chỉ là
+   chữ, không tự chuyển/duyệt thay).
+
+**Luật rượu:** phân bổ rượu = 0 mọi kênh online (bất kể golden còn ghi
+`shopee`); combo có rượu chỉ được kênh `offline`. Câu hỏi mở: rượu có được
+đóng hộp quà OFFLINE không (luồng B2B ghi "không đóng trong hộp quà") —
+chờ Pháp chế/GĐ SX chốt; tới lúc đó không đưa rượu vào hộp quà mẫu.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):
