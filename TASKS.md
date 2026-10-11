@@ -691,7 +691,7 @@ Quy trình mỗi version (chặt theo skill):
   whitelist, `data_collection=deny`, zdr), fail-closed, `llm_usage`, trần
   theo agent, cờ kill; chuyển `api/rag.py`, `pipelines/content.py`,
   `ingest/embed_store.py` sang gateway. Skip: DPIA/TIA ký (chỉ template).
-- [ ] **v3.2-golden-master** — dữ liệu chuẩn 100% SKU: `price_list`
+- [x] **v3.2-golden-master** — dữ liệu chuẩn 100% SKU: `price_list`
   append-only (list/promo, valid_from/to), `sku_readiness`,
   `v_promotable`, phiếu lệch, loader golden riêng (không đè row manual).
   Skip: xác nhận của GĐ bán hàng/Pháp chế → để `pending`, không tự duyệt.

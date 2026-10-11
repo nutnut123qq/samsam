@@ -15,6 +15,7 @@ chat lẫn embeddings) + Streamlit.
 | Crawl | `python -m crawler.collect` |
 | Ingest | `python -m ingest.embed_store` |
 | DB lõi WS1 | `python scripts/apply_schema.py` → `python -m ingest.core_store` |
+| Golden master (v3.2) | `python -m ingest.golden_store` (nạp `data/golden_skus.json` + phiếu lệch) · `--report` · `--approve-price <id> --by <tên>` (CHỈ người thật duyệt giá — agent không chạy) |
 | Bảng kê Phụ lục A | `python scripts/data_audit.py` (output → `docs/phu-luc-a.md`) |
 | Demo UI | `streamlit run app/streamlit_app.py` (hoặc `python demo.py`) |
 | Zalo webhook | `python -m connectors.zalo` → :8788/zalo-webhook |
@@ -28,7 +29,10 @@ chat lẫn embeddings) + Streamlit.
   KHÔNG đăng nội dung mới (human-gate C2.4)
 - `ingest/` — chunk + embed + nạp chunks (`embed_store`); `core_store`
   nạp DB lõi WS1 (products/claims_approved/plots/plot_logs/orders/assets,
-  delete-by-source idempotent — row `source='manual'` không bị đè)
+  delete-by-source idempotent — row `source='manual'` không bị đè);
+  `golden_store` nạp golden master (sku_master/sku_map/price_list
+  append-only/golden_discrepancies — upsert, không xóa trắng, chỉ đọc
+  products)
 - `pipelines/` — content draft + guardrail check (claim whitelist + banned words)
 - `app/` — Streamlit demo (3 tab: Chat, Content Studio, Chưa trả lời)
 - `data/` — jsonl dump, `claims_whitelist.json`, `banned_words.txt`

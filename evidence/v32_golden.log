@@ -1,0 +1,192 @@
+== v3.2 golden gate 2026-10-11T23:40:44+07:00
+== W32.1 apply_schema x2
+$ python scripts/apply_schema.py
+[done] schema applied — 14 bảng public: assets, chunks, claims_approved, content_drafts, golden_discrepancies, leads, llm_usage, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+[exit 0]
+
+$ python scripts/apply_schema.py
+[done] schema applied — 14 bảng public: assets, chunks, claims_approved, content_drafts, golden_discrepancies, leads, llm_usage, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+[exit 0]
+
+grep -c '^create table if not exists' docs/schema.sql = 14
+
+== W32.3/W32.4 golden_store x2
+$ python -m ingest.golden_store
+[load] sku_changed=13, map_changed=15, price_inserted=34, price_closed=0, price_same=0
+[disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+[exit 0]
+
+$ python C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v32/counts.py
+[counts] sku_master=13, sku_map=15, price_list=34, max_version=1, approved_prices=0, v_promotable=0, discrepancies=39, products=27
+[disc_by_kind] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[readiness] CAM=71, MO_TA=7
+[exit 0]
+
+$ python -m ingest.golden_store
+[load] sku_changed=0, map_changed=0, price_inserted=0, price_closed=0, price_same=34
+[disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+[exit 0]
+
+$ python C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v32/counts.py
+[counts] sku_master=13, sku_map=15, price_list=34, max_version=1, approved_prices=0, v_promotable=0, discrepancies=39, products=27
+[disc_by_kind] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[readiness] CAM=71, MO_TA=7
+[exit 0]
+
+== W32.3 file thiếu/rỗng/{}/_doc/skus:[]/JSON hỏng -> exit 1, số đếm không đổi
+$ python -m ingest.golden_store --file C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v32/bad/missing.json
+[warn] thiếu file C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v32\bad\missing.json — không connect, không ghi/xóa gì.
+[exit 1]
+
+$ python -m ingest.golden_store --file C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v32/bad/empty.json
+[warn] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v32\bad\empty.json rỗng — không connect, không ghi/xóa gì.
+[exit 1]
+
+$ python -m ingest.golden_store --file C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v32/bad/obj.json
+[warn] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v32\bad\obj.json không có SKU nào (0 record) — không nạp — không connect, không ghi/xóa gì.
+[exit 1]
+
+$ python -m ingest.golden_store --file C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v32/bad/doc_only.json
+[warn] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v32\bad\doc_only.json không có SKU nào (0 record) — không nạp — không connect, không ghi/xóa gì.
+[exit 1]
+
+$ python -m ingest.golden_store --file C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v32/bad/skus_empty.json
+[warn] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v32\bad\skus_empty.json không có SKU nào (0 record) — không nạp — không connect, không ghi/xóa gì.
+[exit 1]
+
+$ python -m ingest.golden_store --file C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v32/bad/broken.json
+[warn] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v32\bad\broken.json JSON hỏng: Expecting value: line 1 column 11 (char 10) — không connect, không ghi/xóa gì.
+[exit 1]
+
+$ python C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v32/counts.py
+[counts] sku_master=13, sku_map=15, price_list=34, max_version=1, approved_prices=0, v_promotable=0, discrepancies=39, products=27
+[disc_by_kind] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[readiness] CAM=71, MO_TA=7
+[exit 0]
+
+== W32.3 core_store sau golden -> golden không đổi
+$ python -m ingest.core_store
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+[done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+[exit 0]
+
+$ python C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v32/counts.py
+[counts] sku_master=13, sku_map=15, price_list=34, max_version=1, approved_prices=0, v_promotable=0, discrepancies=39, products=27
+[disc_by_kind] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[readiness] CAM=71, MO_TA=7
+[exit 0]
+
+== W32.4 grep ghi products trong golden_store (phải rỗng)
+[grep exit 1 — 1 = không match]
+
+== W32.4 --report (đầu)
+[report] 39 phiếu lệch pending (giá trị theo nguồn, agent không chọn):
+  #151 alcohol_online_listing sku=ruou-sam-binh-su-do-500ml product=None {"golden": {"allowed_channels": ["shopee"], "shopee_item_id": "26975028961"}}
+  #153 alcohol_online_listing sku=ruou-sam-chai-thuy-tinh-500ml product=None {"golden": {"allowed_channels": ["shopee"], "shopee_item_id": "27325048614"}}
+  #150 missing_price sku=ruou-sam-binh-su-do-500ml product=None {"golden": {"shopee": {}}, "missing": ["floor", "list", "promo"]}
+  #155 missing_price sku=saphraton-40v product=None {"golden": {"shopee": {"floor": 450000}}, "missing": ["list", "promo"]}
+  #122 price_mismatch sku=sapentol-30v product=nv-sapentol {"golden": {"shopee": {"floor": 280000, "list": 417000, "promo": 330000}}, "web": {"name": "Sapentol", "price_vnd": 280000, "product_id": "nv-sapentol"}}
+  #136 price_mismatch sku=sapentol-30v product=wc-2309 {"golden": {"shopee": {"floor": 280000, "list": 417000, "promo": 330000}}, "web": {"name": "Sapentol", "price_vnd": 280000, "product_id": "wc-2309"}}
+  #137 price_mismatch sku=sapentol-30v product=wc-324 {"golden": {"shopee": {"floor": 280000, "list": 417000, "promo": 330000}}, "web": {"name": "Sapentol", "price_vnd": 280000, "product_id": "wc-324"}}
+  #124 price_mismatch sku=saphraton-20v product=nv-saphraton-51 {"golden": {"shopee": {"floor": 236000, "list": 299000, "promo": 250000}}, "web": {"name": "SAPHRATON", "price_vnd": 236000, "product_id": "nv-saphraton-51"}}
+  #133 price_mismatch sku=saphraton-20v product=wc-2300 {"golden": {"shopee": {"floor": 236000, "list": 299000, "promo": 250000}}, "web": {"name": "Saphraton 20V", "price_vnd": 236000, "product_id": "wc-2300"}}
+  #140 price_mismatch sku=saphraton-20v product=wc-344 {"golden": {"shopee": {"floor": 236000, "list": 299000, "promo": 250000}}, "web": {"name": "Saphraton 20V", "price_vnd": 236000, "product_id": "wc-344"}}
+  #123 price_mismatch sku=saphraton-80v product=nv-saphraton-48 {"golden": {"shopee": {"floor": 1000000, "list": 1490000, "promo": 1100000}}, "web": {"name": "SAPHRATON", "price_vnd": 1000000, "product_id": "nv-saphraton-48"}}
+...
+  #151 alcohol_online_listing sku=ruou-sam-binh-su-do-500ml product=None {"golden": {"allowed_channels": ["shopee"], "shopee_item_id": "26975028961"}}
+  #153 alcohol_online_listing sku=ruou-sam-chai-thuy-tinh-500ml product=None {"golden": {"allowed_channels": ["shopee"], "shopee_item_id": "27325048614"}}
+  #150 missing_price sku=ruou-sam-binh-su-do-500ml product=None {"golden": {"shopee": {}}, "missing": ["floor", "list", "promo"]}
+  #155 missing_price sku=saphraton-40v product=None {"golden": {"shopee": {"floor": 450000}}, "missing": ["list", "promo"]}
+  #132 price_mismatch sku=savina-12v product=wc-2298 {"golden": {"shopee": {"floor": 128000, "list": 159000, "promo": 132000}}, "web": {"name": "SAVINA TUBE OF 12 TABLETS", "price_vnd": 128000, "product_id": "wc-2298"}}
+
+== W32.5 CLI usage exit 2 trước connect
+$ python -m ingest.golden_store --approve-price 1
+usage: python -m ingest.golden_store [-h] [--file FILE] [--report]
+                                     [--approve-price ID] [--by BY]
+python -m ingest.golden_store: error: --approve-price cần --by <tên người duyệt> không rỗng
+[exit 2]
+
+$ python -m ingest.golden_store --approve-price 1 --by    
+usage: python -m ingest.golden_store [-h] [--file FILE] [--report]
+                                     [--approve-price ID] [--by BY]
+python -m ingest.golden_store: error: --approve-price cần --by <tên người duyệt> không rỗng
+[exit 2]
+
+$ python -m ingest.golden_store --report --approve-price 1 --by X
+usage: python -m ingest.golden_store [-h] [--file FILE] [--report]
+                                     [--approve-price ID] [--by BY]
+python -m ingest.golden_store: error: chỉ được 1 thao tác mỗi lần (--file | --report | --approve-price)
+[exit 2]
+
+== W32.5 id không tồn tại -> exit 1, không ghi
+$ python -m ingest.golden_store --approve-price -1 --by Kiem thu
+[err] không có dòng giá id=-1 — không ghi.
+[exit 1]
+
+$ python C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v32/counts.py
+[counts] sku_master=13, sku_map=15, price_list=34, max_version=1, approved_prices=0, v_promotable=0, discrepancies=39, products=27
+[disc_by_kind] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[readiness] CAM=71, MO_TA=7
+[exit 0]
+
+
+######## SAU TOÀN BỘ GATE (vòng 2: targeted x3 + full pytest đã chạy trên samsam_infra) — DB thật không có row test sót, 0 giá duyệt ########
+$ python scripts/apply_schema.py
+[done] schema applied — 14 bảng public: assets, chunks, claims_approved, content_drafts, golden_discrepancies, leads, llm_usage, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+[exit 0]
+$ python scripts/apply_schema.py
+[done] schema applied — 14 bảng public: assets, chunks, claims_approved, content_drafts, golden_discrepancies, leads, llm_usage, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+[exit 0]
+$ python -m ingest.golden_store
+[load] sku_changed=0, map_changed=0, price_inserted=0, price_closed=0, price_same=34
+[disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+[exit 0]
+$ python -m ingest.golden_store
+[load] sku_changed=0, map_changed=0, price_inserted=0, price_closed=0, price_same=34
+[disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+[exit 0]
+$ python C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v32/counts.py
+[counts] sku_master=13, sku_map=15, price_list=34, max_version=1, approved_prices=0, v_promotable=0, discrepancies=39, products=27
+[disc_by_kind] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[readiness] CAM=71, MO_TA=7
+[exit 0]
+
+######## VÒNG VÁ NGHIỆM THU (8 MINOR) 2026-10-11T23:59:19+07:00 — DB thật public samsam_infra ########
+$ python scripts/apply_schema.py
+[done] schema applied — 14 bảng public: assets, chunks, claims_approved, content_drafts, golden_discrepancies, leads, llm_usage, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+[exit 0]
+$ python scripts/apply_schema.py
+[done] schema applied — 14 bảng public: assets, chunks, claims_approved, content_drafts, golden_discrepancies, leads, llm_usage, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+[exit 0]
+$ python -m ingest.golden_store
+[load] sku_changed=0, map_changed=0, price_inserted=0, price_closed=0, price_same=34
+[disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+[exit 0]
+$ python -m ingest.golden_store
+[load] sku_changed=0, map_changed=0, price_inserted=0, price_closed=0, price_same=34
+[disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+[exit 0]
+$ python C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v32/probe_fix.py
+[trigger] CREATE TRIGGER price_list_append_only_row BEFORE INSERT OR DELETE OR UPDATE ON public.price_list FOR EACH ROW EXECUTE FUNCTION price_list_append_only()
+[blocked] INSERT approved_by='X': price_list append-only: INSERT phải là dòng mở chưa duyệt (sku savina-12v)
+[blocked] INSERT approved_by='  ': price_list append-only: INSERT phải là dòng mở chưa duyệt (sku savina-12v)
+[blocked] INSERT approved_at=now(): price_list append-only: INSERT phải là dòng mở chưa duyệt (sku savina-12v)
+[blocked] INSERT valid_to=(now() at time zone 'Asia/Ho_Chi_Minh')::date: price_list append-only: INSERT phải là dòng mở chưa duyệt (sku savina-12v)
+[null-element, rollback] mat-ong-sam-300ml allowed={shopee,NULL}: {'chatbot': 'CAM', 'facebook': 'CAM', 'shopee': 'TP_THUONG', 'tiktok': 'CAM', 'web': 'CAM', 'zalo': 'CAM'}
+[exit 0]
+$ python C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v32/counts.py
+[counts] sku_master=13, sku_map=15, price_list=34, max_version=1, approved_prices=0, v_promotable=0, discrepancies=39, products=27
+[disc_by_kind] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[readiness] CAM=71, MO_TA=7
+[exit 0]

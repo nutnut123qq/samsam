@@ -36,7 +36,8 @@ def main() -> int:
             conn.execute(sql)
             tables = [r[0] for r in conn.execute(
                 "select table_name from information_schema.tables"
-                " where table_schema = 'public' order by 1")]
+                " where table_schema = 'public'"
+                " and table_type = 'BASE TABLE' order by 1")]
     except psycopg.OperationalError as e:
         print(f"[err] không kết nối được Postgres: {e}")
         return 1

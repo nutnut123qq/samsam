@@ -6,7 +6,314 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
-Nhánh `ai-infra` (M30): version đang mở **v3.2-golden-master**.
+Nhánh `ai-infra` (M30): version đang mở **v3.3-connector-csv**
+(song song ở worktree riêng: v3.5, v3.7, v3.8).
+
+v3.2-golden-master đóng 2026-10-12 (3 nghiệm thu đợt 1 FIX 8 finding →
+1 vòng sửa → PASS; coordinator chạy lại 308/308 + ruff, DB thật: 13
+SKU, 0 giá đã duyệt, `v_promotable` rỗng, rượu CAM mọi kênh).
+External-dep: GĐ bán hàng duyệt giá; Pháp chế xác nhận giấy tờ/XNQC/
+readiness; hồ sơ tự công bố mật ong; nồng độ rượu; giá rượu bình sứ đỏ
+và Saphraton 40v; Sản xuất duyệt `sku_map`; role `loader` trên cloud.
+Someday: `valid_to` tương lai làm loader không thấy dòng mở;
+`approved_at` không ràng buộc thời điểm; ticket đã resolve không mở
+lại khi lệch giá mới; `--file` tên `manual` khóa nguồn; `--report` in
+product_id thô; R3 `floor > list` (không promo) thiếu test; grep chặn
+ghi `products` còn yếu; test phụ thuộc giá crawl thật wc-2298.
+
+## Checklist v3.2-golden-master
+
+Khán giả/mục đích: nhánh `ai-infra` (M30, worktree `D:\code\samsam-infra`)
+— WP04a, luồng F15.2 (golden master data) + F14.2 `sku_readiness`, agent
+"Chuẩn hóa dữ liệu (Master Data)" (plan_data_platform.md, flows_infra.md).
+Hiện `products` chỉ có 27 dòng crawl web (`ingest/core_store.py` sở hữu,
+delete-by-source `products.jsonl`), thiếu Dạ An Sâm, mật ong sâm, Saphraton
+40v/80v (dạng SKU), không có giá chương trình, XNQC, kênh được phép. Sau
+version: golden = nguồn sự thật DUY NHẤT cho listing/giá/trạng thái pháp lý
+của 13 SKU, nằm ở bảng RIÊNG; `products` giữ nguyên là "giá web" để đối
+chiếu; agent lập phiếu lệch nhưng KHÔNG BAO GIỜ tự chọn giá; mọi giá nạp ở
+trạng thái chờ duyệt → `v_promotable` rỗng cho tới khi NGƯỜI thật duyệt.
+
+Quy ước: ponytail — stdlib + `psycopg` sẵn có, không dep mới (openpyxl
+3.1.5 có sẵn, CHỈ dùng đọc tay Excel tham khảo quy cách lúc soạn JSON, không
+import trong code, không copy file Excel vào repo, KHÔNG lấy công dụng/liều
+dùng vào golden). Schema chỉ THÊM (`create ... if not exists` / `create or
+replace view|function|trigger` — PG 17.6), không sửa bảng cũ. `sku_map.product_id`
+KHÔNG FK tới `products` (core_store delete-then-insert sẽ cascade/set-null
+xóa mapping mỗi lần reload — gotcha v1.8). Loader golden KHÔNG dùng
+delete-by-source; upsert theo khóa, file thiếu/rỗng/`{}`/chỉ `_doc`/JSON
+hỏng → 0 ghi DB (gotcha delete-trắng: enumerate đủ biến thể). Ngày hiệu lực
+tính theo `Asia/Ho_Chi_Minh` (`(now() at time zone 'Asia/Ho_Chi_Minh')::date`),
+không `current_date` của session (bài học date-UTC v2.4). Mọi connect có
+`connect_timeout`; CLI ghi phải `conn.commit()` tường minh (gotcha
+savepoint v2.1). Print tiếng Việt → UTF-8 guard. So giá bằng số nguyên
+(`list*100 <= floor*149`, `(list-promo)*100 <= list*49`) — nhiều SKU đúng
+biên 149% (745000/500000, 1490000/1000000, 2980000/2000000), so float sẽ
+lệch biên. Test DB thật: chạy trong 1 transaction và ROLLBACK cuối test
+(trigger chặn DELETE → row test lọt ra là KHÔNG dọn được); test skip khi
+không có `DATABASE_URL`/không connect được, nhưng gate yêu cầu file đó
+chạy với 0 skipped. KHÔNG chạy `--approve-price` trên DB thật ngoài test
+rollback — agent không được tự đánh dấu người thật đã duyệt.
+
+Dữ liệu golden (13 SKU; giá Shopee VND sàn/thường/KM → `kind` floor/list/
+promo, `channel='shopee'`):
+TPBVSK (`xnqc_status='none'`): Savina 12 viên 128000/159000/132000 (ID
+27357883504, ĐKSP 8014/2021/ĐKSP 07/09/2021); Saphraton 20 viên
+236000/299000/250000 (24825885894); Combo Saphraton 2x20 viên
+469000/698000/480000 (28003783932); Saphraton 40 viên CHỈ sàn 450000;
+Saphraton 80 viên 1000000/1490000/1100000 (29368491427) — Saphraton ĐKSP
+2778/2018/ĐKSP 22/05/2018; Savigout 30 viên 295000/439000/350000
+(24325987926, 8560/2019/ĐKSP 02/07/2019); Sapentol 30 viên
+280000/417000/330000 (27257950771, 5191/2020/ĐKSP 10/06/2020); Dạ An Sâm
+30 viên 340000/506000/399000 (26857946153, 11129/2021/ĐKSP 29/12/2021).
+Food (`self_declaration_ok=null`): Mật ong sâm 120ml 1 hũ
+500000/745000/550000 và 120ml 2 hũ 900000/1340000/950000 (cùng ID
+54916394790 — biến thể, KHÔNG unique theo item id); Mật ong sâm 300ml
+2000000/2980000/2100000 (29007947088). Alcohol: Rượu sâm chai thủy tinh
+500ml 500000/745000/550000 (27325048614); Rượu sâm bình sứ đỏ 500ml
+(26975028961) CHƯA có giá. Nồng độ rượu "27,5%" chỉ ghi `note` "chưa xác
+minh", không thành cột sự thật. Combo 2x20 và 40v giữ 2 sku_key riêng (không
+tự gộp) + `note` "chờ KD xác nhận có trùng nhau không". → `sku_master`=13,
+`price_list`=11×3+1=34 dòng.
+
+External-dep (KHÔNG giả lập, KHÔNG tự đánh dấu): GĐ bán hàng xác nhận
+giá (mọi dòng `approved_by=null`, chỉ có CLI cho người thật); Pháp chế
+xác nhận giấy tiếp nhận + XNQC + `sku_readiness`; hồ sơ tự công bố mật
+ong (`self_declaration_ok` giữ null); nồng độ rượu; giá rượu bình sứ đỏ;
+Sản xuất duyệt `sku_map` (đề xuất của agent, `approved_by=null`);
+`allowed_channels` chính thức của GĐ (golden ghi hiện trạng listing:
+`{shopee}` cho SKU có Shopee ID); tách role DB `loader` (quyền chỉ trên
+bảng golden) là việc hạ tầng cloud — local chặn bằng trigger.
+
+- [x] **W32.1 Schema golden: 4 bảng + trigger append-only + 2 view** —
+  `docs/schema.sql` thêm block "v3.2 golden master" (comment tiếng Việt
+  giải thích ownership: products = crawl, golden = bảng riêng):
+  `sku_master` (`sku_key text pk`, `name`, `category` check in
+  (`tpbvsk`,`food`,`alcohol`), `pack_spec`, `receipt_no`, `receipt_date
+  date`, `xnqc_status` check in (`none`,`pending`,`approved`) default
+  `none`, `self_declaration_ok boolean` null được, `allowed_channels
+  text[] not null default '{}'`, `shopee_item_id text`, `note`, `source
+  text not null`, `version int not null default 1`, `created_at`,
+  `updated_at`); `sku_map` (`product_id text not null unique` — KHÔNG FK
+  products, `sku_key` FK sku_master, `approved_by text`, `note`, `source`,
+  `created_at`); `price_list` (`id bigint identity pk`, `sku_key` FK,
+  `channel`, `kind` check in (`list`,`promo`,`floor`), `price_vnd bigint
+  not null check (>0)`, `program_id text`, `valid_from date not null`,
+  `valid_to date`, `approved_by text`, `approved_at timestamptz`,
+  `created_at`) + partial unique index 1 dòng MỞ / (sku_key, channel,
+  kind, coalesce(program_id,'')) `where valid_to is null`;
+  `golden_discrepancies` (`id`, `kind`, `sku_key`, `product_id`, `detail
+  jsonb` = giá trị theo TỪNG nguồn, `status` default `pending`
+  (pending|resolved|dismissed), `resolved_by`, `created_at`,
+  `updated_at`, `source`) + unique index (kind, coalesce(sku_key,''),
+  coalesce(product_id,'')). Trigger `price_list` append-only: `before
+  insert or update or delete for each row` + `before truncate for each
+  statement` → raise; INSERT chỉ được dòng mở chưa duyệt (`approved_by`/
+  `approved_at`/`valid_to` null — vá cold-check: INSERT sẵn-duyệt vượt
+  cổng người); UPDATE CHỈ cho qua đúng 2 chuyển trạng thái một-lần, mọi cột
+  khác `is not distinct from` old: (a) `approved_by` null→non-blank (+
+  `approved_at`), (b) `valid_to` null→date ≥ valid_from (đóng dòng khi
+  đổi giá). View `sku_readiness(sku_key, channel, readiness)` = sku_master
+  × kênh online cố định (`shopee`,`tiktok`,`web`,`facebook`,`zalo`,
+  `chatbot`): alcohol → `CAM` mọi kênh; kênh ∉ `allowed_channels` → `CAM`
+  (`coalesce(kênh = any(...), false)` — phần tử NULL trong mảng không
+  được làm fail-open);
+  tpbvsk `xnqc_status='approved'` → `QC_DAY_DU`; tpbvsk còn lại → `MO_TA`;
+  food `self_declaration_ok is true` → `TP_THUONG`; còn lại (food
+  null/false, thiếu dữ liệu) → `CAM` (fail-closed). View `v_promotable` =
+  readiness ∈ (`TP_THUONG`,`QC_DAY_DU`) VÀ có dòng `price_list` kind
+  `list` đang hiệu lực (valid_from ≤ hôm nay VN < valid_to hoặc null) cùng
+  (sku_key, channel) với `approved_by is not null`.
+  - Boundary: `docs/schema.sql` (chỉ append block mới)
+  - Gate: `python scripts/apply_schema.py` chạy 2 lần liên tiếp exit 0
+    trên samsam_infra, lần 2 in 14 bảng public (10 cũ + sku_master,
+    sku_map, price_list, golden_discrepancies); test DB thật (rollback):
+    UPDATE `price_vnd` → lỗi; UPDATE `approved_by` 'A'→'B' → lỗi; UPDATE
+    `valid_to` lần 2 → lỗi; DELETE → lỗi; TRUNCATE → lỗi; `approved_by`
+    null→'X' OK; `valid_to` null→ngày OK (mỗi case trong savepoint riêng
+    vì lỗi abort transaction)
+  - Evidence: `evidence/v32_golden.log`
+- [x] **W32.2 Nguồn golden `data/golden_skus.json` + validator giá** —
+  JSON `{"_doc": "...schema...", "skus": [...]}` đúng 13 SKU số liệu trên
+  (field: `sku_key` slug ascii, `name`, `category`, `pack_spec`,
+  `receipt_no`, `receipt_date` ISO, `xnqc_status`, `self_declaration_ok`,
+  `allowed_channels`, `shopee_item_id`, `product_ids` (đề xuất map crawl:
+  Savina↔wc-2298/wc-349/nv-savina-tuyp-12-vien-bk, Saphraton 20v↔wc-2300/
+  wc-344/nv-saphraton-51, Saphraton 80v↔wc-2307/wc-331/nv-saphraton-48
+  (suy từ giá web = sàn 80v — ghi note "chờ Sản xuất xác nhận"),
+  Savigout↔wc-2304/wc-336/nv-savigout-bk, Sapentol↔wc-2309/wc-324/
+  nv-sapentol; rượu No.5/7/9 + củ sâm KHÔNG map), `prices: {"shopee":
+  {"floor","list","promo"}}` (thiếu key = chưa có giá, không đoán),
+  `note`). Không công dụng/liều dùng, không secret. Hàm thuần
+  `validate(doc) -> list[str]` trong `ingest/golden_store.py`: schema
+  (key bắt buộc, category/xnqc hợp lệ, sku_key trùng, product_id trùng
+  giữa 2 SKU, giá nguyên dương) + 3 ràng buộc giá CHỈ khi đủ giá trị liên
+  quan: R1 `list*100 <= floor*149`; R2 `(list-promo)*100 <= list*49`;
+  R3 `floor <= promo <= list`. Mỗi lỗi nêu sku_key + mã rule.
+  - Boundary: `data/golden_skus.json` (mới), `ingest/golden_store.py`
+    (`validate`), `tests/test_golden_store.py` (mới)
+  - Gate: `validate(json thật)` == [] (gồm các SKU đúng biên 149%);
+    fixture 3 SKU cài sẵn mỗi cái vi phạm đúng 1 rule (vd list=floor*1.5,
+    promo giảm 50%, promo<floor) → đúng 3 lỗi, mã R1/R2/R3 mỗi mã 1 lần;
+    Saphraton 40v (chỉ floor) + bình sứ đỏ (không giá) không sinh lỗi;
+    test file golden: 13 SKU, đếm 34 giá, rượu = `alcohol`, mật ong
+    `self_declaration_ok is None`, mọi TPBVSK `xnqc_status=='none'` và có
+    `receipt_no` khớp 5 số ĐKSP trên; không chứa từ nào trong
+    `data/banned_words.txt`
+  - Evidence: `evidence/v32_golden.log`
+- [x] **W32.3 Loader `ingest/golden_store.py` (upsert, idempotent, không
+  xóa trắng)** — `python -m ingest.golden_store [--file PATH]`: đọc +
+  `validate` TOÀN file trước khi connect; có lỗi → in từng lỗi, exit 1,
+  0 ghi DB. File thiếu / rỗng / `{}` / chỉ `_doc` / `skus: []` / JSON hỏng
+  → `[warn]`, exit 1, KHÔNG connect, KHÔNG xóa gì. Hợp lệ → 1 transaction:
+  upsert `sku_master` `on conflict (sku_key) do update ... where
+  sku_master.source <> 'manual' and (cột dữ liệu) is distinct from
+  (excluded)` → `version+1`, `updated_at=now()` chỉ khi đổi thật; upsert
+  `sku_map` theo `product_id` (giữ row `manual`); giá: không có dòng mở
+  cùng (sku_key, channel, kind, program) → insert (`approved_by=null`,
+  `valid_from`=hôm nay VN); có dòng mở cùng giá → bỏ qua; khác giá → đóng
+  `valid_to`=hôm nay VN + insert dòng mới chờ duyệt (KHÔNG UPDATE giá).
+  SKU có trong DB mà vắng khỏi file → GIỮ NGUYÊN (ngừng bán là quyết định
+  người, ghi docstring). Docstring module tiếng Việt: contract, schema
+  JSON, ownership. UTF-8 guard; `connect_timeout`; `conn.commit()` tường
+  minh; lỗi connect/thiếu bảng → `[err]` gợi ý `apply_schema`, exit 1.
+  - Boundary: `ingest/golden_store.py`, `tests/test_golden_store.py`
+  - Gate: chạy 2 lần liên tiếp trên samsam_infra → cùng
+    `sku_master=13`, `sku_map=15`, `price_list=34`, `max(version)=1`
+    (in bằng `python -c` đếm, không in DSN); `--file` trỏ lần lượt file
+    thiếu / rỗng / `{}` / chỉ `_doc` / `skus: []` / JSON hỏng → exit 1 và
+    3 số đếm không đổi; test DB thật (rollback): row `sku_master`
+    `source='manual'` không bị đè; đổi giá 1 SKU trong fixture → dòng cũ
+    có `valid_to`, dòng mới `approved_by is null`, tổng dòng +1; sau đó
+    `python -m ingest.core_store` exit 0 và 3 số đếm golden không đổi
+    (products thuộc core_store, sku_map không FK)
+  - Evidence: `evidence/v32_golden.log`
+- [x] **W32.4 Phiếu lệch golden ↔ crawl (agent không chọn giá)** — cùng
+  lần nạp (sau upsert), dựng lại `golden_discrepancies` từ dữ liệu DB:
+  `price_mismatch` (products.price_vnd non-null ≠ giá `list` golden của
+  SKU map tới; `detail` ghi giá web + product_id + floor/list/promo golden
+  theo kênh — KHÔNG có trường "đề xuất/chọn"); `spec_mismatch` (số +
+  đơn vị viên|v|ml tách từ products.name khác `pack_spec` golden; tên
+  không có quy cách → bỏ qua); `product_unmapped` (products.id không có
+  trong sku_map — rượu No.5/7/9, củ sâm); `sku_no_product` (golden SKU
+  không dòng crawl nào — Dạ An Sâm, mật ong, combo, 40v, rượu);
+  `missing_price` (SKU thiếu floor/list/promo kênh shopee — 40v, bình sứ
+  đỏ); `alcohol_online_listing` (category alcohol có `shopee_item_id` —
+  phiếu cho Pháp chế, rượu không được có trên sàn). Upsert theo unique
+  key: `detail`/`updated_at` cập nhật, `status`/`resolved_by` KHÔNG đụng
+  (phiếu người đã xử lý không bị mở lại/đè). CLI `--report` in phiếu
+  pending (giá trị theo nguồn, không chọn).
+  - Boundary: `ingest/golden_store.py`, `tests/test_golden_store.py`
+  - Gate: sau gate W32.3 (×2): số phiếu không đổi giữa 2 lần; có
+    `price_mismatch` cho sku Savina với detail chứa 128000 (web) và
+    159000/132000/128000 (golden); có ≥1 `alcohol_online_listing`;
+    `missing_price` cho `saphraton-40v` + rượu bình sứ đỏ; test hàm thuần
+    tách quy cách ("SAVINA TUÝP 12 VIÊN"→12 viên, "Saphraton 20V"→20 viên,
+    "Saphraton"→None); test DB (rollback): set status 'resolved' rồi nạp
+    lại → vẫn 'resolved'; không có lệnh ghi vào `products`:
+    `grep -niE "(update|insert into|delete from) +products" ingest/golden_store.py` rỗng
+  - Evidence: `evidence/v32_golden.log`
+- [x] **W32.5 CLI duyệt giá cho NGƯỜI thật + readiness/promotable** —
+  `python -m ingest.golden_store --approve-price <id> --by <tên>`: `--by`
+  bắt buộc, strip rỗng → usage exit 2 TRƯỚC connect; nhiều op cùng lúc
+  (`--approve-price`/`--report`/nạp với `--file`... theo `n_ops`) →
+  `ap.error` exit 2 trước connect (gotcha v2.2); id không tồn tại / đã
+  duyệt / đã đóng `valid_to` → in lý do, exit 1, không ghi; hợp lệ →
+  `update ... set approved_by, approved_at=now() where id=%s and
+  approved_by is null` + `conn.commit()`, in id + sku_key + kind + giá.
+  Hàm `approve_price(conn, id, by)` tách riêng để test trên conn rollback.
+  - Boundary: `ingest/golden_store.py`, `tests/test_golden_store.py`
+  - Gate: sau gate W32.3 trên DB thật: `select count(*) from v_promotable`
+    = 0 và `select count(*) from price_list where approved_by is not null`
+    = 0 (agent không tự duyệt); test DB thật (rollback): nạp golden →
+    `v_promotable` rỗng; `approve_price` dòng `list` mật ong 120ml 1 hũ
+    → vẫn rỗng (self_declaration_ok null → CAM); set
+    `self_declaration_ok=true` → đúng 1 dòng (mat-ong 120ml 1 hũ,
+    shopee, TP_THUONG); TPBVSK có giá duyệt nhưng `xnqc_status='none'` →
+    `MO_TA`, không promotable; set `approved` → `QC_DAY_DU` + promotable;
+    rượu với allowed_channels mọi kênh + giá duyệt → `CAM` mọi kênh, không
+    bao giờ promotable; kênh ngoài `allowed_channels` → CAM; test argparse:
+    thiếu/blank `--by` → exit 2, 2 op cùng lúc → exit 2, connect không
+    được gọi (monkeypatch); id không tồn tại → exit 1
+  - Evidence: `evidence/v32_golden.log`
+- [x] **W32.6 Docs + drift-guard đếm bảng** — `docs/handover/kien-truc.md`
+  mục 3 đổi thành "14 bảng", thêm 4 dòng bảng golden (ai sở hữu, ai
+  duyệt, append-only) + 2 view `sku_readiness`/`v_promotable` + lệnh nạp/
+  duyệt; `tests/test_handover_docs.py::test_kien_truc_lists_all_tables`
+  đổi 10→14 (không xóa assert khác); `AGENTS.md` bảng Commands thêm dòng
+  `python -m ingest.golden_store` (+ `--report`, `--approve-price <id>
+  --by <tên>` — chỉ người thật) và Structure `ingest/` nhắc golden_store.
+  - Boundary: `docs/handover/kien-truc.md`, `tests/test_handover_docs.py`
+    (chỉ số đếm), `AGENTS.md` (Commands + Structure)
+  - Gate: `python -m pytest tests/test_handover_docs.py tests/test_core_store.py -q`
+    xanh; `grep -c "create table if not exists" docs/schema.sql` = 14;
+    đối chiếu số assert test_handover_docs trước/sau không giảm
+  - Evidence: `evidence/v32_pytest.log`
+- [x] **Gate chung** —
+  - `python scripts/apply_schema.py` ×2 exit 0 (14 bảng) → `python -m ingest.golden_store` ×2 (cùng số đếm)
+  - targeted ×3: `python -m pytest tests/test_golden_store.py tests/test_core_store.py tests/test_handover_docs.py -q -rs`
+    3 lần liên tiếp xanh, test DB thật **0 skipped** (đọc output tới
+    exit, không chạy chồng)
+  - full: `python -m pytest -q` xanh, ≥ 258 + test mới
+  - `ruff check .` sạch
+  - `python -m py_compile ingest/golden_store.py ingest/core_store.py scripts/apply_schema.py`
+  - sau toàn bộ gate trên DB thật: `price_list where approved_by is not
+    null` = 0, `v_promotable` = 0, không row test sót (`sku_master` = 13,
+    `price_list` = 34)
+  - `git status`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); không file runtime mới trong `data/`; không file
+    Excel trong repo
+  - External-dep (để `[ ]`): GĐ bán hàng duyệt giá; Pháp chế giấy tiếp
+    nhận/XNQC/readiness; hồ sơ tự công bố mật ong; nồng độ rượu; giá
+    rượu bình sứ đỏ; Sản xuất duyệt sku_map; role DB `loader` trên cloud
+- [ ] **external-dep** GĐ bán hàng xác nhận 34 dòng giá (chạy
+  `--approve-price` bằng tên thật) — chưa có, `approved_by` giữ null.
+- [ ] **external-dep** Pháp chế xác nhận giấy tiếp nhận + XNQC +
+  `sku_readiness`; hồ sơ tự công bố mật ong (`self_declaration_ok`);
+  nồng độ rượu 27,5%.
+- [ ] **external-dep** Giá rượu bình sứ đỏ 500ml; Saphraton 40v giá
+  thường/KM; KD xác nhận Combo 2x20 vs 40v; Sản xuất duyệt `sku_map`
+  (đặc biệt Saphraton web → 80v).
+- [ ] **external-dep** Pháp chế xác nhận số ĐKSP Savigout: file "TỔNG HỢP
+  TPBVSK 22.01.2026" ghi Savigout `5191/2020/ĐKSP` (TRÙNG số Sapentol),
+  lệch với `8560/2019/ĐKSP` đang nạp — ghi `note` trong golden, không tự
+  sửa. Role DB `loader` tách quyền trên cloud (local chỉ có trigger;
+  owner/superuser vẫn `disable trigger` được).
+
+Ghi chú worker v3.2 (lệch nhỏ so với chữ contract, đều có lý do):
+(1) gate `grep -c "create table if not exists" docs/schema.sql` ra 15 vì
+dòng comment cũ số 24 chứa cụm đó — đếm đúng là `grep -c "^create table if
+not exists"` = 14 (khớp regex drift-guard); (2) `scripts/apply_schema.py`
+lọc `table_type='BASE TABLE'` — information_schema.tables đếm cả 2 view
+(ra 16), gate "in 14 bảng" không đạt nếu không lọc; (3)
+`tests/test_lead_store.py` + `tests/test_store.py` cũng assert 10 bảng →
+đổi 10→14 (ngoài Boundary, không đổi thì full pytest đỏ); (4) `--report`
+in thêm danh sách giá chờ duyệt (id) — người duyệt cần id cho
+`--approve-price`; (5) phiếu `pending` của loader mà điều kiện hết đúng bị
+xóa khi dựng lại (phiếu resolved/dismissed không đụng); `sku_map` đổi
+`sku_key` thì xóa `approved_by` (duyệt cũ hết giá trị); trigger chặn duyệt
+dòng đã đóng. Evidence: `evidence/v32_golden.log`, `evidence/v32_pytest.log`
+(2 vòng: vòng 1 ruff 2 lỗi ở test → vòng 2 sạch). 299 pytest (258 + 41).
+Vòng vá nghiệm thu (8 MINOR): (a) `sku_readiness` fail-closed với phần tử
+NULL trong `allowed_channels` (`coalesce(... = any ..., false)`; CHECK
+constraint bỏ — bảng đã tạo trên DB cần `alter table`, drift-guard
+test_store/test_lead_store cấm `alter|drop table`, view coalesce đã đóng
+lỗ cho mọi nội dung mảng); (b) trigger chặn INSERT sẵn-duyệt/sẵn-đóng;
+(c) test DB chạy trong schema tạm (`create schema` + `set local
+search_path` + docs/schema.sql ×2 trong tx rollback) — độc lập giá đã
+duyệt/đổi trên public; (d) test trigger đổi cột bất biến KÈM chuyển
+trạng thái hợp lệ (8 cột × duyệt/đóng) + duyệt-và-đóng cùng lúc + đổi
+approved_* khi đóng; (e) CLI thành công (nạp/duyệt/report) trên conn thật
+bọc `_TxConn` ghi nhận commit; (f) test xóa phiếu pending cũ / giữ
+resolved + manual, remap sku_map xóa approved_by; (g) `EXPECTED` ghim số
+liệu theo từng SKU. Mutation probe 12/12 killed (`evidence/v32_pytest.log`).
+
+Someday (ngoài phạm vi v3.2, ghi để không cuốn vào): `dealers` + `v_golden`
++ NOTIFY `sku_changed` (F15.2 bước 9–10); Phụ lục A mở rộng mục golden
+(`scripts/data_audit.py`); chatbot/KB đọc giá từ golden thay `products`
+(F15.3); map `claims_approved.sku_key` (theo dòng SP) ↔ sku_key golden
+(theo quy cách); CLI duyệt `sku_map`/đóng phiếu lệch; staging Excel/CSV
+sàn (`intake/master/`).
 
 v3.1-llm-gateway đóng 2026-10-11 (3 nghiệm thu song song PASS vòng 0;
 coordinator vá thêm 3 điểm nghiệm thu ghi NIT nhưng ảnh hưởng khách/
