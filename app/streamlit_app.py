@@ -209,15 +209,17 @@ with tab_studio:
                            "vào hàng duyệt.")
             else:
                 _ids, _saved, _errs = [], [], 0
-                for _ch, _r in _drafts.items():
-                    try:
-                        _ids.append(_dstore.save_draft(
-                            _sconn, st.session_state.last_brief, _ch,
-                            _r["text"], _r["guardrail"]))
-                        _saved.append(_ch)
-                    except _pg2.Error:
-                        _errs += 1
-                _sconn.close()
+                try:
+                    for _ch, _r in _drafts.items():
+                        try:
+                            _ids.append(_dstore.save_draft(
+                                _sconn, st.session_state.last_brief, _ch,
+                                _r["text"], _r["guardrail"]))
+                            _saved.append(_ch)
+                        except _pg2.Error:
+                            _errs += 1
+                finally:
+                    _sconn.close()
                 # Bỏ kênh đã lưu khỏi session — bấm lại không nhân đôi
                 # draft (kênh lỗi ghi giữ lại để thử lại).
                 for _ch in _saved:
@@ -275,9 +277,11 @@ with tab_leads:
     st.divider()
     st.markdown("##### Leads (bảng `leads`)")
     _conn = _ls.connect()
-    _stats = _ls.lead_stats(_conn) if _conn else None
-    if _conn:
-        _conn.close()
+    try:
+        _stats = _ls.lead_stats(_conn) if _conn else None
+    finally:
+        if _conn:
+            _conn.close()
     if _stats is None:
         st.info("Chưa có dữ liệu leads — chạy `python "
                 "scripts/apply_schema.py` rồi `python -m "

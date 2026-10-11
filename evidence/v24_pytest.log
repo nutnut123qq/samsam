@@ -1,7 +1,4 @@
-== v2.4-polish gate (sau vá cold-check đợt 1) ==
-pytest full: 194 passed in 22.63s
-ruff check . -> clean
-git diff --check -> clean
-py_compile -> OK
-vá: _WHERE_INFO_RE lazy + chặn qua ,; — 'ở đâu' thứ hai/ngoài-cụm bio giữ contact (2 case reviewer vào test)
-vá NIT-2: _render_guardrail ok-falsy + violations rỗng -> error VI PHẠM (parity _fmt)
+== v2.4-polish gate (sau vá audit-bù) ==
+pytest full: 195 passed in 24.30s
+ruff clean; diff --check clean; py_compile OK
+vá audit-bù: flags_for quet chi detail (activity vocab 'kiem tra sau benh' khong tu flag — FP routine pest-check); report flags parity; --days cap 3660; add_log warn ts tuong lai; test_handover word-boundary Q-id/tab; _conn/_sconn try-finally

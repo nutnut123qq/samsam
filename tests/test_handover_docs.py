@@ -82,15 +82,19 @@ def test_tab_names_real():
     required = {t for names in PLAYBOOK_TABS.values() for t in names}
     assert required <= tabs, (
         f"tab checklist không còn trong st.tabs: {required - tabs}")
-    # Mỗi playbook chứa đúng tab của vai trò đó.
+    # Mỗi playbook chứa đúng tab của vai trò đó (word-boundary —
+    # substring 'Leads' trong 'misleads' không tính).
     for name, names in PLAYBOOK_TABS.items():
         body = _doc(name)
         for t in names:
-            assert t in body, f"{name} thiếu tab '{t}'"
+            assert re.search(
+                rf"(?<!\w){re.escape(t)}(?!\w)", body), \
+                f"{name} thiếu tab '{t}'"
     # kien-truc.md liệt kê đủ mọi tab (không sót tab nào).
     arch = _doc("kien-truc.md")
     for t in tabs:
-        assert t in arch, f"kien-truc.md thiếu tab '{t}'"
+        assert re.search(rf"(?<!\w){re.escape(t)}(?!\w)", arch), \
+            f"kien-truc.md thiếu tab '{t}'"
 
 
 def test_phu_luc_d_covers_all_questions():
@@ -99,7 +103,9 @@ def test_phu_luc_d_covers_all_questions():
     assert ids == sorted(ids) and len(ids) == 12, (
         f"questions.md parse được {ids} — contract 12 câu đổi?")
     for n in ids:
-        assert f"Q{n}" in body, f"phu-luc-d.md thiếu Q{n}"
+        # Word-boundary: 'Q1' phải khớp đúng 'Q1', không ăn ké 'Q10'
+        # (audit-bù MINOR — substring cũ pass-ảo khi mất Q1).
+        assert re.search(rf"\bQ{n}\b", body), f"phu-luc-d.md thiếu Q{n}"
     # 2 câu bẫy phải được đánh dấu rõ.
     assert "NO_DATA" in body and "bẫy" in body
 

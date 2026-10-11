@@ -124,8 +124,12 @@ def _coerce_ts(v):
 
 
 def flags_for(activity: str, detail) -> list[str]:
-    """Keyword FLAG_KEYS khớp trong activity+detail → list hit."""
-    hay = f"{activity} {detail or ''}".lower()
+    """Keyword FLAG_KEYS khớp trong `detail` → list hit. `activity`
+    KHÔNG quét — vocab chuẩn 'kiểm tra sâu bệnh' tự chứa 'sâu bệnh'
+    nên routine pest-check trước flag MỌI nhật ký (audit-bù v2.1
+    MAJOR); tham số giữ cho caller-compat. Triệu chứng thật phải ghi
+    ở detail."""
+    hay = str(detail or "").lower()
     return [k for k in FLAG_KEYS if k in hay]
 
 
@@ -146,6 +150,8 @@ def add_log(conn, plot_id, ts, activity, detail=None, author=None,
     if not known:
         warns.append(f"hoạt động '{act}' chưa có trong vocab — "
                      f"ghi nguyên văn")
+    if when > datetime.now(timezone.utc):
+        warns.append("ts ở tương lai — kiểm tra lại ngày nhật ký")
     warns += [f"nhật ký có dấu hiệu cần chú ý: '{k}'"
               for k in flags_for(act, detail)]
     params = (pid, when, act, (detail or None), (author or None),

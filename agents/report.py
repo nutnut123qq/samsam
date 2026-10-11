@@ -171,9 +171,12 @@ def collect_db(conn, since: datetime, until: datetime) -> dict:
     except psycopg.Error as e:
         return {"db_ok": False, "db_error": str(e).strip()[:300]}
 
+    # Flag chỉ quét detail — activity vocab 'kiểm tra sâu bệnh' tự
+    # chứa 'sâu bệnh' nên routine pest-check flag mọi nhật ký
+    # (audit-bù v2.1 MAJOR; parity agents.garden.flags_for).
     flags = [(ts, plot, act, detail) for ts, plot, act, detail
              in log_rows
-             if any(k in f"{act} {detail or ''}".lower()
+             if any(k in str(detail or "").lower()
                     for k in FLAG_KEYS)]
     return {
         "db_ok": True,
@@ -480,8 +483,9 @@ def main(argv=None) -> int:
     ap.add_argument("--out-dir", default=str(REPORTS_DIR),
                     help="thư mục ghi báo cáo")
     args = ap.parse_args(argv)
-    if args.days < 1:
-        ap.error("--days phải >= 1")
+    if not 1 <= args.days <= 3660:
+        ap.error("--days phải trong 1..3660 (quá lớn OverflowError "
+                 "trong period_bounds)")
     until = None
     if args.until:
         try:

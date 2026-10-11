@@ -97,9 +97,12 @@ def test_coerce_ts_variants():
 
 
 def test_flags_for_activity_and_detail():
-    # 'bệnh' là substring của 'sâu bệnh' → cả hai hit theo thứ tự list.
-    assert g.flags_for("kiểm tra sâu bệnh", None) == [
-        "sâu bệnh", "bệnh"]
+    # Flag chỉ quét detail — activity vocab 'kiểm tra sâu bệnh' tự
+    # chứa 'sâu bệnh' nên routine pest-check KHÔNG tự flag (audit-bù
+    # v2.1 MAJOR: trước flag mọi nhật ký → nhiễu cảnh báo thật).
+    assert g.flags_for("kiểm tra sâu bệnh", None) == []
+    assert g.flags_for("kiểm tra sâu bệnh", "vườn khỏe") == []
+    assert g.flags_for("kiểm tra sâu bệnh", "phát hiện rệp") == ["rệp"]
     assert g.flags_for("tưới", "phát hiện rệp vùng rìa") == ["rệp"]
     assert g.flags_for("tưới", "") == []
     assert g.flags_for("tưới", None) == []
@@ -137,6 +140,16 @@ def test_add_log_keyword_flag_in_warnings():
                            "phát hiện rệp")
     assert lid == 8
     assert any("cần chú ý" in w and "rệp" in w for w in warns)
+
+
+def test_add_log_future_ts_warns():
+    """audit-bù NIT: ts tương lai → warn (không reject — nhật ký
+    người ghi tay, warn là đủ ở pilot)."""
+    conn = _Conn([_route("insert into plot_logs", rows=[(9,)])])
+    lid, warns = g.add_log(conn, "KV-A01",
+                           NOW + timedelta(days=3), "tưới")
+    assert lid == 9
+    assert any("tương lai" in w for w in warns)
 
 
 def test_add_log_fk_violation_friendly_no_raise():
