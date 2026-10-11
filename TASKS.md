@@ -713,7 +713,7 @@ Quy trình mỗi version (chặt theo skill):
 - [x] **v3.7-ops-monitoring** — `job_runs`, bản tin sức khỏe 07:30, cảnh
   báo chi phí AI 80%/chặn 100% từ `llm_usage`, docker-compose n8n +
   Uptime Kuma chạy local. Skip: production, kênh email/Resend.
-- [ ] **v3.8-ocr-intake** — intake tài liệu: checksum, file gốc bất biến,
+- [x] **v3.8-ocr-intake** — intake tài liệu: checksum, file gốc bất biến,
   trích text PDF số, quét PII, hàng Pháp chế xác nhận trường pháp lý.
   Skip: API OCR có phí (FPT/Google) → provider cắm sau.
 - [ ] **v3.9-kb-acl** — kho tri thức có quyền đọc theo đoạn, tách

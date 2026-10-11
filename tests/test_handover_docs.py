@@ -117,9 +117,9 @@ def test_sop_core_commands():
 def test_kien_truc_lists_all_tables():
     body = _doc("kien-truc.md")
     tables = _table_names()
-    assert len(tables) == 19, (
+    assert len(tables) == 21, (
         f"schema.sql có {len(tables)} bảng ({tables}) — contract "
-        "19 bảng đổi thì cập nhật kien-truc.md")
+        "21 bảng đổi thì cập nhật kien-truc.md")
     for t in tables:
         assert t in body, f"kien-truc.md thiếu bảng '{t}'"
     # Doc tuyên bố đúng số bảng hiện có (drift-guard số lượng).
