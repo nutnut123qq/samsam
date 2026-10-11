@@ -1250,3 +1250,23 @@ begin
   return n;
 end $$;
 revoke execute on function expire_overdue(text) from public;
+
+-- ============================================================================
+-- v4.5 harness nghiệm thu chung (WP06): mở rộng eval_runs — KHÔNG bảng mới.
+-- Ai ghi: scripts/agent_eval.py (1 row/lần chấm 1 suite data/eval/suites/
+-- <agent>.json). Ai đọc: scripts/deploy_gate.py (row mới nhất), agent_eval
+-- (chốt version + chốt ngưỡng trước khi chấm), pipelines/director.py (bản tin
+-- GĐ khối owner_block — mục "Nghiệm thu QA hôm nay"; submit(qa_suite=) lấy
+-- qa_status từ row mới nhất không '-dirty'). Vì sao: mỗi run phải truy được
+-- model agent (cột model), model judge, prompt version, suite version + hash
+-- bộ ca, hash ngưỡng, ngày (ts), commit (commit_sha) — chống sửa đề/ngưỡng
+-- sau khi thấy điểm. Row cũ (v3.5) có cột mới null — không tính khi chốt.
+-- failed_cases = list id ca FAIL (cắt 50), không chứa text ca.
+-- ============================================================================
+
+alter table eval_runs add column if not exists judge_model text;
+alter table eval_runs add column if not exists suite_version int;
+alter table eval_runs add column if not exists suite_sha256 text;
+alter table eval_runs add column if not exists threshold_sha256 text;
+alter table eval_runs add column if not exists owner_block text;
+alter table eval_runs add column if not exists failed_cases jsonb;

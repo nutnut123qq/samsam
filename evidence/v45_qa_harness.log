@@ -1,0 +1,324 @@
+=== v4.5-qa-harness evidence (light gates) — 2026-10-12 04:32:40 +0700 — HEAD bee2b70 + working tree ===
+
+## W45.1 validate / chạy guardrail / skeleton / print-hash
+
+$ python scripts/agent_eval.py --validate
+[ok] chatbot v1 active owner=marketing qa=data_platform risk=high 14 ca
+[ok] ck_a6 v1 skeleton owner=mechanical qa=mechanical risk=medium 3 ca
+[ok] da_qa v1 skeleton owner=projects qa=projects risk=medium 3 ca
+[ok] fin_qa v1 skeleton owner=finance qa=finance risk=high 3 ca
+[ok] guardrail v1 active owner=legal_hr qa=data_platform risk=high 39 ca
+[ok] intel_qa v1 skeleton owner=intel qa=intel risk=medium 3 ca
+[ok] kd_a11 v1 skeleton owner=sales qa=sales risk=high 4 ca
+[ok] mkt_13 v1 skeleton owner=marketing qa=marketing risk=high 4 ca
+[ok] pc_a9 v1 skeleton owner=legal_hr qa=legal_hr risk=high 3 ca
+[ok] qa_cockpit v1 skeleton owner=ceo qa=ceo risk=medium 4 ca
+[ok] qa_vung_trong v1 skeleton owner=farming qa=farming risk=medium 3 ca
+[ok] sx_a8 v1 skeleton owner=production qa=production risk=medium 3 ca
+[done] 12/12 suite hợp lệ
+[rc=0]
+
+$ python scripts/agent_eval.py --agent guardrail --no-record
+[done] guardrail v1 PASS 39/39 pass_rate=1.0 (ngưỡng 1.0) prompt_version=833c0d8efc38 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối legal_hr: chưa cấu hình (external-dep)
+[rc=0]
+
+$ python scripts/agent_eval.py --agent kd_a11 --no-record
+[refuse] suite kd_a11 là khung (skeleton) — chờ code agent + công ty gán nhãn, chưa chạy được
+[rc=1]
+
+$ python scripts/agent_eval.py --print-hash guardrail
+0434137559b38c309df9458d51868054a4be5420781460902a5db5abf2adb959
+[rc=0]
+
+## W45.1 probe CLI thật: sửa 1 ký tự 1 ca, KHÔNG bump version
+sha256 trước: 5f1c86093e98db8c8d0e5d46031b0316a474f321b4d378e6adb7b3b7ec70014d
+đã sửa ca aff-01
+
+$ python scripts/agent_eval.py --agent guardrail --no-record
+[refuse] bộ ca đổi mà không bump version — suite guardrail v1: cases_sha256 lệch hash tính lại (sửa ca: tăng version + --print-hash)
+[rc=1]
+
+$ python scripts/agent_eval.py --print-hash guardrail
+7e98fa6f04f37e5ca1579cb8fc9c34316ef5f23620094b4ee25df6978a770ff6
+[rc=0]
+sha256 sau khi chép bak về: 5f1c86093e98db8c8d0e5d46031b0316a474f321b4d378e6adb7b3b7ec70014d
+
+$ python scripts/agent_eval.py --print-hash guardrail
+0434137559b38c309df9458d51868054a4be5420781460902a5db5abf2adb959
+[rc=0]
+
+$ git status --short data/eval/suites/guardrail.json
+?? data/eval/suites/guardrail.json
+[rc=0]
+
+## W45.2 schema: chỉ thêm alter add column
+
+$ grep -nE ^\s*(alter|drop)\s+table docs/schema.sql
+498:alter table chunks add column if not exists source text;  -- products.jsonl|articles.jsonl|about.jsonl|news.jsonl|catalog
+499:alter table chunks add column if not exists doc_sha256 text;  -- hash (model, source, title, url, lang, chunks sau lọc)
+500:alter table chunks add column if not exists doc_version int not null default 1;
+501:alter table chunks add column if not exists ingested_at timestamptz not null default now();
+557:alter table content_drafts add column if not exists created_by text;
+1267:alter table eval_runs add column if not exists judge_model text;
+1268:alter table eval_runs add column if not exists suite_version int;
+1269:alter table eval_runs add column if not exists suite_sha256 text;
+1270:alter table eval_runs add column if not exists threshold_sha256 text;
+1271:alter table eval_runs add column if not exists owner_block text;
+1272:alter table eval_runs add column if not exists failed_cases jsonb;
+[rc=0]
+
+$ python scripts/apply_schema.py --roles
+[done] schema applied — 29 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_snapshots, chunks, chunks_internal, claims_approved, content_drafts, decisions, document_fields, documents, eval_runs, golden_discrepancies, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, red_alerts, sku_map, sku_master
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[rc=0]
+
+$ python scripts/apply_schema.py --roles
+[done] schema applied — 29 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_snapshots, chunks, chunks_internal, claims_approved, content_drafts, decisions, document_fields, documents, eval_runs, golden_discrepancies, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, red_alerts, sku_map, sku_master
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[rc=0]
+
+## W45.4 không gọi OpenAI client trực tiếp
+$ grep -n 'OpenAI(' scripts/agent_eval.py
+[rc=1 — 1 = rỗng]
+
+## W45.5 director dry-run
+
+$ python -m pipelines.director --all --dry-run
+[ok] ceo — Tổng giám đốc + Hội đồng thành viên + Ban kiểm soát nội bộ · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] sales — Giám đốc bán hàng + Sales (Phòng kinh doanh TMĐT) · 3 loại việc · vai trò duyệt gd_ban_hang · người duyệt chưa cấu hình (external-dep)
+[ok] marketing — Giám đốc marketing + Chuyên viên marketing + Chuyên viên SEO · 3 loại việc · vai trò duyệt gd_marketing · người duyệt chưa cấu hình (external-dep)
+[ok] intel — Trung tâm tình báo thị trường (trực thuộc TGĐ, phục vụ Marketing/Sales) · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] finance — Giám đốc tài chính + Phòng kế toán + Phòng tài chính–kế hoạch · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] production — Giám đốc sản xuất + Nghiên cứu và sản xuất + Công nghệ sinh học · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] farming — Giám đốc vùng trồng + Nhân viên vùng trồng · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] projects — Giám đốc dự án + Chuyên viên dự án–xúc tiến đầu tư · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] legal_hr — Pháp chế nhân sự + Chuyên viên pháp chế–hành chính–nhân sự · 3 loại việc · vai trò duyệt phap_che · người duyệt chưa cấu hình (external-dep)
+[ok] mechanical — Trung tâm điện–cơ khí chế tạo máy + Kỹ sư điện–cơ khí · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] data_platform — Hạ tầng dữ liệu & AI (do Quản lý hạ tầng AI vận hành) · 2 loại việc · vai trò duyệt ha_tang,tgd · người duyệt chưa cấu hình (external-dep)
+[done] 11 khối hợp lệ (dry-run, không DB)
+[rc=0]
+
+## W45.8 CI tất định local + test workflow
+
+$ python scripts/agent_eval.py --deterministic --no-record
+[ok] chatbot v1 active owner=marketing qa=data_platform risk=high 14 ca
+[ok] ck_a6 v1 skeleton owner=mechanical qa=mechanical risk=medium 3 ca
+[ok] da_qa v1 skeleton owner=projects qa=projects risk=medium 3 ca
+[ok] fin_qa v1 skeleton owner=finance qa=finance risk=high 3 ca
+[ok] guardrail v1 active owner=legal_hr qa=data_platform risk=high 39 ca
+[ok] intel_qa v1 skeleton owner=intel qa=intel risk=medium 3 ca
+[ok] kd_a11 v1 skeleton owner=sales qa=sales risk=high 4 ca
+[ok] mkt_13 v1 skeleton owner=marketing qa=marketing risk=high 4 ca
+[ok] pc_a9 v1 skeleton owner=legal_hr qa=legal_hr risk=high 3 ca
+[ok] qa_cockpit v1 skeleton owner=ceo qa=ceo risk=medium 4 ca
+[ok] qa_vung_trong v1 skeleton owner=farming qa=farming risk=medium 3 ca
+[ok] sx_a8 v1 skeleton owner=production qa=production risk=medium 3 ca
+[done] 12/12 suite hợp lệ
+[done] guardrail v1 PASS 39/39 pass_rate=1.0 (ngưỡng 1.0) prompt_version=833c0d8efc38 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối legal_hr: chưa cấu hình (external-dep)
+[rc=0]
+
+$ python -m pytest -q tests/test_ci_workflow.py -rs
+......                                                                   [100%]
+6 passed in 0.15s
+[rc=0]
+
+## W45.9 docs
+$ grep -rn 'guardrail.jsonl\|chatbot.jsonl' AGENTS.md docs/ scripts/ tests/ .github/
+[rc=1 — 1 = rỗng]
+
+$ python -m pytest -q tests/test_handover_docs.py tests/test_runbook.py -rs
+................                                                         [100%]
+16 passed in 0.20s
+[rc=0]
+
+## W45.10 drift + deploy_gate + compile + ruff
+
+$ python -m pytest -q tests/test_store.py tests/test_lead_store.py -k drift -rs
+.                                                                        [100%]
+1 passed, 38 deselected in 0.40s
+[rc=0]
+
+$ python scripts/deploy_gate.py --help
+usage: deploy_gate.py [-h] --sha SHA [--approved-by APPROVED_BY] [--hotfix]
+                      [--today TODAY]
+
+W35.4 — Cổng deploy theo commit SHA (F17.1). CHỈ IN kế hoạch, không
+
+options:
+  -h, --help            show this help message and exit
+  --sha SHA
+  --approved-by APPROVED_BY
+  --hotfix
+  --today TODAY         YYYY-MM-DD (mặc định hôm nay Asia/Saigon) — mô phỏng
+                        ngày
+[rc=0]
+
+$ python -m py_compile scripts/agent_eval.py pipelines/director.py tests/test_qa_harness.py
+[rc=0]
+
+$ python -m ruff check .
+All checks passed!
+[rc=0]
+
+## W45.10 (1) targeted ×3 tuần tự — 04:33:57
+
+### lần 1 — 04:33:57
+$ python -m pytest -q tests/test_qa_harness.py tests/test_agent_eval.py tests/test_ci_workflow.py tests/test_director_framework.py tests/test_deploy_gate.py tests/test_freeze.py tests/test_store.py tests/test_lead_store.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py -rs
+........................................................................ [ 56%]
+........................................................................ [ 85%]
+.....................................                                    [100%]
+253 passed in 38.39s
+[rc=0]
+
+### lần 2 — 04:34:43
+$ python -m pytest -q tests/test_qa_harness.py tests/test_agent_eval.py tests/test_ci_workflow.py tests/test_director_framework.py tests/test_deploy_gate.py tests/test_freeze.py tests/test_store.py tests/test_lead_store.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py -rs
+........................................................................ [ 56%]
+........................................................................ [ 85%]
+.....................................                                    [100%]
+253 passed in 32.38s
+[rc=0]
+
+### lần 3 — 04:35:22
+$ python -m pytest -q tests/test_qa_harness.py tests/test_agent_eval.py tests/test_ci_workflow.py tests/test_director_framework.py tests/test_deploy_gate.py tests/test_freeze.py tests/test_store.py tests/test_lead_store.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py -rs
+........................................................................ [ 56%]
+........................................................................ [ 85%]
+.....................................                                    [100%]
+253 passed in 30.59s
+[rc=0]
+
+## VÒNG 2 — sửa test_qa_harness.py chứa literal "OpenAI(" (vướng guard test_llm_gateway::test_no_openai_constructor_outside_gateway); test_dr_drill::test_zz_no_dr_container_left: container samsam-dr-20261012_043927-* đã tự biến mất khi kiểm (docker ps -a không còn) — chạy lại trong full vòng 2
+## W45.10 (1) VÒNG 2 targeted ×3 — 04:41:28
+
+### vòng 2 lần 1 — 04:41:28
+....                                                                     [100%]
+292 passed in 33.75s
+[rc=0]
+
+### vòng 2 lần 2 — 04:42:10
+....                                                                     [100%]
+292 passed in 30.79s
+[rc=0]
+
+### vòng 2 lần 3 — 04:42:47
+....                                                                     [100%]
+292 passed in 29.35s
+[rc=0]
+
+## VÒNG 2 — gate cuối 04:46:59
+
+$ python -m ruff check .
+All checks passed!
+[rc=0]
+
+$ python -m py_compile scripts/agent_eval.py pipelines/director.py tests/test_qa_harness.py
+[rc=0]
+
+$ python scripts/agent_eval.py --validate
+[ok] qa_cockpit v1 skeleton owner=ceo qa=ceo risk=medium 4 ca
+[ok] qa_vung_trong v1 skeleton owner=farming qa=farming risk=medium 3 ca
+[ok] sx_a8 v1 skeleton owner=production qa=production risk=medium 3 ca
+[done] 12/12 suite hợp lệ
+[rc=0]
+
+$ python scripts/agent_eval.py --deterministic --no-record
+[done] 12/12 suite hợp lệ
+[done] guardrail v1 PASS 39/39 pass_rate=1.0 (ngưỡng 1.0) prompt_version=833c0d8efc38 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối legal_hr: chưa cấu hình (external-dep)
+[rc=0]
+
+$ python -m pytest -q tests/test_deploy_gate.py -rs -p no:cacheprovider
+.........................................                                [100%]
+41 passed in 0.80s
+[rc=0]
+
+## (7) DB thật samsam_infra sau gate
+eval_runs suite_version not null = 0
+approval_queue object_type eval_threshold = 0
+red_alerts source_agent like 'qa:%' = 0
+cột mới eval_runs = failed_cases,judge_model,owner_block,suite_sha256,suite_version,threshold_sha256
+schema tạm t_w45_ còn sót = 0
+[rc=0]
+
+$ git status --short
+ M .github/workflows/ci.yml
+ M AGENTS.md
+ M DONE.md
+ D data/eval/chatbot.jsonl
+ M data/eval/config.json
+ D data/eval/guardrail.jsonl
+ M data/llm_gateway.json
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/roles.sql
+ M docs/schema.sql
+ M pipelines/director.py
+ M scripts/agent_eval.py
+ M tests/test_agent_eval.py
+ M tests/test_ci_workflow.py
+?? data/eval/suites/
+?? tests/test_qa_harness.py
+
+## Phần B — tự rà OWASP trên diff (worker self-review, không phải auditor lạ)
+- A03 Injection SQL: mọi query mới tham số hoá (%s), không f-string SQL. OK.
+- A01/A05 env exfil: suite `agent_model: "env:X"` chỉ nhận allowlist env:OR_CHAT_MODEL (chặn env:DATABASE_URL ghi vào eval_runs.model / log) — vá trong lúc viết, test `test_validate_suite_rejects[agent_model]`.
+- A01 path traversal: `prompt_files` phải là file tương đối nằm trong ROOT (chặn `..`/tuyệt đối) — test `../outside.txt`.
+- A04 ReDoS: regex scorer từ suite đã commit (nguồn tin cậy), output agent cắt 20.000 ký tự trước khi search.
+- LLM01 prompt injection vào judge: rubric ở system, output agent bọc <case>/<output> + dặn là dữ liệu; verdict parse chặt. CÒN RỦI RO: output agent có thể thao túng judge — chưa có biện pháp mạnh hơn (judge thật chưa chạy được).
+- A09 log/PII: text ca + lý do judge in qua _short (_mask_pii); red_alerts detail chỉ run_id/owner/id ca/commit — test kiểm không chứa text ca.
+- A01 còn treo (không vá, giới hạn thiết kế có sẵn): `--by`/người override/duyệt là free-text (SSO external-dep); `director.submit(qa_suite=)` do caller chọn suite (chưa map loại việc→suite bằng cấu hình); eval_runs không append-only (owner DSN xoá được row FAIL để lách chốt ngưỡng).
+
+=== VÒNG 3 fix nghiệm thu — 2026-10-12 05:15:02 +0700 — HEAD bee2b70 + working tree ===
+$ ruff check .
+All checks passed!
+[rc=0]
+$ python scripts/agent_eval.py --validate
+[done] 12/12 suite hợp lệ
+[rc=0]
+$ python scripts/agent_eval.py --deterministic --no-record
+[done] 12/12 suite hợp lệ
+[done] guardrail v1 PASS 39/39 pass_rate=1.0 (ngưỡng 1.0) prompt_version=833c0d8efc38 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[rc=0]
+$ python scripts/agent_eval.py --help | grep propose
+                     (--agent {chatbot,ck_a6,da_qa,fin_qa,guardrail,intel_qa,kd_a11,mkt_13,pc_a9,qa_cockpit,qa_vung_trong,sx_a8} | --validate | --deterministic | --print-hash AGENT | --propose-threshold AGENT | --propose-suite AGENT)
+                     [--by BY] [--sha SHA] [--no-record] [--allow-dirty]
+--
+  --propose-threshold AGENT
+                        đề xuất ngưỡng mới vào hàng duyệt (sau run FAIL)
+  --propose-suite AGENT
+                        đề xuất bộ ca mới vào hàng duyệt (sau run FAIL)
+  --by BY               người đề xuất (--propose-*)
+  --sha SHA             commit SHA 40 hex (mặc định GITHUB_SHA rồi git HEAD) —
+# probe _family / judge_preflight (finding 1)
+'openrouter/auto'                family=None         -> [refuse]
+'azure/gpt-4o'                   family='openai'     -> [refuse]
+'~openai/y'                      family='openai'     -> [refuse]
+'openai:free/y'                  family='openai'     -> [refuse]
+'anthropic/claude-sonnet-4'      family='anthropic'  -> ok judge=anthropic/claude-sonnet-4
+# probe parse_judge (finding 2)
+{"verdict":"fail","verdict":"pass","reason":"x"} -> None
+{"verdict":"pass","reason":""} -> None
+{"verdict":"pass","reason":"ok"} -> {'verdict': 'pass', 'reason': 'ok'}
+# DB thật samsam_infra sau gate (mọi ghi chỉ trong tx test rollback)
+Traceback (most recent call last):
+  File "<string>", line 8, in <module>
+  File "C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1258.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1ea1' in position 8: character maps to <undefined>
+eval_runs suite_version not null = 0
+approval_queue eval_threshold|eval_suite = 0
+red_alerts qa:% = 0
+# grep secret evidence (finding 3) — phải rỗng
+grep: input file 'evidence/v45_qa_harness.log' is also the output
+[rc=2 — 1 = rỗng]
+# chạy lại dòng cuối (probe in tiếng Việt vướng cp1258 console, không phải lỗi code):
+schema tạm t_w45_% còn sót = 0
+# grep secret evidence (finding 3) — chạy lại, output ra file tạm (lần trên grep đọc chính file đang ghi)
+$ grep -nE 'postgres(ql)?://[^ ]*:[^*@]+@|sk-o[r]' evidence/v45_pytest.log evidence/v45_qa_harness.log
+[rc=1 — 1 = rỗng]

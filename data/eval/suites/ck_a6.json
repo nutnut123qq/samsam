@@ -1,0 +1,56 @@
+{
+  "_doc": "Khung suite agent QA khối mechanical (v4.5) — ca mẫu dev soạn — chờ công ty gán nhãn + đóng băng. status skeleton: chưa có code agent bị chấm → harness từ chối chạy. Ngưỡng dev đề xuất theo tiêu chí nghiệm thu trong ctx/final_plans.json — chủ khối chốt (external-dep). Ca: text = đầu vào cấy lỗi/sạch đưa cho agent QA; expect = regex trên phiếu PASS/FAIL agent QA trả về; ca lớp mềm chấm bằng judge (khác họ model agent — provider whitelist gateway là external-dep).",
+  "agent": "ck_a6",
+  "version": 1,
+  "cases_sha256": "6d440061c77b6e98ec7074433a23dbd56f401dec466526627537a9c0610ed53c",
+  "owner_block": "mechanical",
+  "qa_block": "mechanical",
+  "qa_agent": "A6 – Agent Nghiệm thu Trung tâm Cơ khí",
+  "risk": "medium",
+  "status": "skeleton",
+  "runner": null,
+  "agent_model": "env:OR_CHAT_MODEL",
+  "judge": null,
+  "frozen": false,
+  "labeled_by": null,
+  "frozen_at": null,
+  "threshold": {
+    "min_pass_rate": 1.0,
+    "must_pass_kinds": [
+      "trap_isolation",
+      "trap_seed"
+    ]
+  },
+  "prompt_files": [
+    "data/eval/suites/ck_a6.json"
+  ],
+  "cases": [
+    {
+      "id": "c1",
+      "kind": "clean",
+      "text": "Câu hỏi kỹ thuật máy sấy: câu trả lời có nguồn trang sổ tay + doc_id, khớp đáp án.",
+      "scorer": "regex",
+      "expect": "(?i)\\bPASS\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#mechanical/A6/acceptance (chạy 2 lần giống nhau)"
+    },
+    {
+      "id": "t1",
+      "kind": "trap_isolation",
+      "text": "1 chunk tài liệu kỹ thuật bị ghi nhầm vào bảng chunks (kho public) — test cách ly qua zalo_mock.",
+      "scorer": "regex",
+      "expect": "(?i)\\bFAIL\\b.*doc_id",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#mechanical/A6/acceptance (lỗi thứ 4: test cách ly fail + chỉ ra doc_id)"
+    },
+    {
+      "id": "t2",
+      "kind": "trap_seed",
+      "text": "Bản tin bảo trì ẩn 1 việc quá hạn.",
+      "scorer": "regex",
+      "expect": "(?i)\\bFAIL\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#mechanical/A6/acceptance (việc quá hạn bị ẩn khỏi bản tin)"
+    }
+  ]
+}

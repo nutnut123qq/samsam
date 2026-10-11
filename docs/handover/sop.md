@@ -423,13 +423,49 @@ python scripts/eval_qa.py   # 12 câu hỏi questions.md qua RAG thật — exit
 **Nghiệm thu theo commit & cổng deploy (v3.5, F17.1):**
 
 ```
-python scripts/agent_eval.py --agent guardrail   # bộ ca data/eval/guardrail.jsonl, không cần key — ghi eval_runs
-python scripts/agent_eval.py --agent chatbot     # 14 ca qua RAG thật (cần OPENROUTER_API_KEY)
+python scripts/agent_eval.py --validate          # kiểm MỌI suite data/eval/suites/*.json (không DB/LLM)
+python scripts/agent_eval.py --deterministic     # validate + suite tất định (guardrail) — CI chạy mỗi push
+python scripts/agent_eval.py --agent guardrail   # suite data/eval/suites/guardrail.json, không cần key — ghi eval_runs
+python scripts/agent_eval.py --agent chatbot     # 14 ca qua RAG thật (cần OPENROUTER_API_KEY) — tay/nightly
+python scripts/agent_eval.py --print-hash guardrail                  # cases_sha256 tính lại
+python scripts/agent_eval.py --propose-threshold guardrail --by "<tên>"   # đổi ngưỡng sau run FAIL
+python scripts/agent_eval.py --propose-suite guardrail --by "<tên>"       # đổi bộ ca sau run FAIL
 python scripts/deploy_gate.py --sha <SHA 40 hex> --approved-by "<tên>" [--hotfix]
 ```
 
-- Ngưỡng + người duyệt ở `data/eval/config.json` (chốt TRƯỚC khi chạy;
-  bản hiện tại dev soạn, chưa được công ty duyệt). Lịch đóng băng ở
+- **Suite (v4.5)** `data/eval/suites/<agent>.json` = ca + ngưỡng (chốt
+  TRƯỚC khi chạy) + `owner_block` (khối nhận báo cáo) + `risk`. 12 suite:
+  `guardrail`, `chatbot` (active) + 10 khung agent QA khối (`skeleton` —
+  harness từ chối chạy tới khi có code agent). Mọi suite `frozen: false`,
+  ca nhãn `dev_draft`: công ty gán nhãn + đóng băng bộ ca thật
+  (`labeled_by`/`frozen_at`) là external-dep.
+- **Sửa ca** = tăng `version` + cập nhật `cases_sha256` bằng
+  `--print-hash <agent>`. Hash lệch → `[refuse]`; cùng version đã chạy
+  với bộ ca khác (DB) → `[refuse]`.
+- **Đổi ngưỡng sau khi đã có run FAIL**: `--propose-threshold` tạo mục
+  `approval_queue` `eval_threshold` (QA fail) → người khác
+  `python -m pipelines.approval_queue --override-qa <id> --by .. --reason
+  ..` (≥10 ký tự) → người thứ ba `--approve <id>` → chạy lại eval. Thiếu
+  bước nào → `[refuse]`. Chưa có FAIL thì sửa ngưỡng = commit bình thường.
+- **Đổi bộ ca sau khi đã có run FAIL** (xóa ca, đổi kind ca bẫy, bỏ
+  frozen... kể cả đã bump version): cùng luồng với `--propose-suite`
+  (mục `eval_suite`, payload = tóm tắt + `cases_sha256` — người duyệt
+  đối chiếu `git diff` của suite theo hash).
+- **Giám khảo LLM** (ca `scorer: judge`): chỉ qua gateway `ci_judge`
+  (trần 1 USD/tháng), model judge (`judge.model` / env
+  `EVAL_JUDGE_MODEL`) phải KHÁC HỌ nhà sản xuất với model agent (allowlist
+  họ; `azure/` = openai; router `openrouter/auto`/alias lạ → từ chối);
+  output không đúng JSON `{verdict, reason}` (key trùng, reason rỗng...)
+  = ca FAIL. Hiện gateway
+  `provider_only` chỉ `openai, azure` → judge khác họ chưa gọi được
+  (thêm provider = ha_tang + Pháp chế xác nhận ZDR, external-dep).
+- **Báo cáo**: FAIL ở suite `risk: high` → `red_alerts` (người nhận độc
+  lập BKS/Pháp chế — chưa cấu hình, external-dep); còn lại → mục
+  "Nghiệm thu QA hôm nay" trong bản tin GĐ khối owner
+  (`python -m pipelines.director`). `director.submit(qa_suite=..)` lấy
+  QA từ `eval_runs` — bản QA FAIL chỉ đi tiếp qua override_qa.
+- Người duyệt deploy ở `data/eval/config.json` (`required_agents`,
+  `approvers` — bản hiện tại dev soạn, chưa được công ty duyệt). Lịch đóng băng ở
   `data/freeze_calendar.json` (v4.0 — 1 nguồn, `pipelines/freeze.py`) +
   break-glass còn hạn (`python scripts/break_glass.py --open ...`, env
   `BREAK_GLASS_LOG`); lịch hỏng → coi như đang đóng băng (chỉ hotfix).
