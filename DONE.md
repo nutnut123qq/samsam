@@ -6,7 +6,156 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
-Nhánh `ai-infra` (M30): version đang mở **v3.1-llm-gateway**.
+Nhánh `ai-infra` (M30): version đang mở **v3.2-golden-master**.
+
+v3.1-llm-gateway đóng 2026-10-11 (3 nghiệm thu song song PASS vòng 0;
+coordinator vá thêm 3 điểm nghiệm thu ghi NIT nhưng ảnh hưởng khách/
+FinOps: (1) lọc sức khỏe bỏ "ho"/"gan" trần — "Ho Chi Minh", "gan"(=gần)
+gõ không dấu bị chuyển người oan → giữ dạng cụm "bị ho", "men gan"...;
+(2) model chưa có giá tính theo giá cao nhất đã biết thay vì 0 (trần
+tháng không mất tác dụng); (3) GatewayBlocked ở chatbot Zalo → khách
+nhận HANDOFF_TEXT thay vì ERROR_FALLBACK. 258/258 + ruff; live smoke
+OpenRouter zdr=true route sang Azure. `/security-review` không chạy
+được (skill cần `origin/HEAD`) → coordinator tự rà OWASP trên gateway:
+sạch. External-dep: DPIA/TIA ký, bảng giá + trần thật do công ty chốt.
+Someday: cap TOCTOU khi gọi song song; 2 conn DB/lời gọi; `rag.retrieve`
+`psycopg.connect` chưa có connect_timeout (có từ trước); test PII chưa
+phủ "+84" và PII rải nhiều lượt history.
+
+## Checklist v3.1-llm-gateway
+
+Khán giả/mục đích: nhánh `ai-infra` (M30, worktree `D:\code\samsam-infra`)
+— WP01, luồng F17.3 FinOps + F17.5 kill-switch, agent "Gateway bảo mật,
+PII & đồng ý" + "FinOps LLM" (plan_data_platform.md). Hiện 3 chỗ tự tạo
+`OpenAI(`: `api/rag.py::_clients` (embeddings + chat `_standalone`/
+`answer`), `pipelines/content.py::draft`, `ingest/embed_store.py::main`;
+`connectors/zalo.py` gửi câu khách thô vào `rag.answer`. Sau version:
+MỌI lời gọi LLM/embedding đi qua 1 module `pipelines/llm_gateway.py`
+kèm `agent_id`; không còn `OpenAI(` ở nơi khác.
+
+Quy ước: ponytail — stdlib + `openai`/`psycopg` sẵn có, không dep mới.
+Return shape của `rag.answer`/`retrieve`, `content.draft`/`draft_multi`,
+`embed_store.embed_all` GIỮ NGUYÊN (chỉ được THÊM key, vd `handoff`).
+Test dùng fake client ghi payload (monkeypatch factory client trong
+gateway), không gọi mạng; không wall-clock. agent_id đề xuất:
+`chatbot` (rag.answer/_standalone/retrieve), `content` (draft),
+`ingest` (embed_store). Print tiếng Việt mới → UTF-8 guard; log không
+chứa id/SĐT thô (`_mask_pii`/`_uhash`). File runtime/state mới trong
+`data/` → gitignore ngay; config mặc định commit được thì không chứa
+secret. Connect DB của gateway có `connect_timeout`.
+External-dep: DPIA/TIA ký bởi Pháp chế (chỉ template nếu cần, KHÔNG
+đánh dấu đã ký); xác minh endpoint ZDR theo từng model là phía nhà cung
+cấp; trần chi phí/bảng giá thật do công ty chốt (mặc định là ước tính).
+
+- [x] **W31.1 Tách `_mask_pii` sang module dùng chung** — chuyển
+  `_mask_pii` (+ `_paren_group_end`, `_PII_RE`, budget) từ
+  `connectors/zalo.py` sang `pipelines/pii.py`; `zalo.py` import lại
+  cùng tên để test cũ không vỡ.
+  - Boundary: `pipelines/pii.py` (mới), `connectors/zalo.py` (chỉ đổi
+    import/xoá định nghĩa đã dời)
+  - Gate: `python -m pytest tests/test_zalo.py -q` xanh (gồm
+    `test_mask_pii_regex_boundaries`, `test_mask_pii_vn_prefix_and_multi_sep`);
+    `python -c "from connectors.zalo import _mask_pii; from pipelines.pii import _mask_pii as m; assert _mask_pii is m"`
+  - Evidence: `evidence/v31_gateway.log`
+- [x] **W31.2 Gateway: chat/embed + PII mask + privacy routing fail-closed** —
+  `pipelines/llm_gateway.py` với `chat(agent_id, messages, **kw)` và
+  `embed(agent_id, input)`; `OpenAI(base_url=openrouter)` CHỈ tạo ở
+  đây. Trước khi gửi: `_mask_pii` mọi `content` str của MỌI message
+  (system/history/user) và input embedding (str hoặc list). Chat gửi
+  `extra_body={"provider": {"data_collection": "deny", "zdr": True,
+  "allow_fallbacks": False, "only": [whitelist từ config]}}` (embed
+  cùng provider block nếu OpenRouter nhận; nếu không, ghi lý do trong
+  docstring). Whitelist rỗng/thiếu hoặc lỗi API → raise `GatewayError`
+  rõ nghĩa, KHÔNG retry sang provider/endpoint khác.
+  - Boundary: `pipelines/llm_gateway.py`, config `data/llm_gateway.json`
+    (whitelist provider, bảng giá USD/1M token theo model, cap mặc
+    định, kill list) + env override
+  - Gate: test fake client: payload gửi đi không match regex SĐT
+    (`0\d{9}`, `+84…`) và email dù input có ở system/history/user/embed;
+    `extra_body["provider"]` đúng 4 key/giá trị; whitelist rỗng →
+    `GatewayError` và fake client 0 call; fake raise lỗi → `GatewayError`,
+    client gọi đúng 1 lần
+  - Evidence: `evidence/v31_gateway.log`
+- [x] **W31.3 Bảng `llm_usage` + ghi usage không chặn dịch vụ** —
+  `docs/schema.sql` thêm `create table if not exists llm_usage (id,
+  ts timestamptz default now(), agent_id, model, tokens_in, tokens_out,
+  cost_usd numeric, ok boolean, error text)` + index `(agent_id, ts)`
+  idempotent; gateway ghi 1 dòng mỗi lời gọi (ok và err), cost =
+  tokens × giá cấu hình (model không có giá → 0 + cảnh báo). Ghi DB
+  lỗi/DB down → print cảnh báo, lời gọi vẫn trả kết quả.
+  - Boundary: `docs/schema.sql`, `pipelines/llm_gateway.py`
+  - Gate: `python scripts/apply_schema.py` chạy 2 lần liên tiếp exit 0
+    trên DB samsam_infra; test: usage row đúng agent_id/tokens/cost/ok;
+    monkeypatch connect raise → chat vẫn trả kết quả + có cảnh báo;
+    `DATABASE_URL` host chết (`postgresql://u@10.255.255.1:5432/x`) →
+    không hang (connect_timeout)
+  - Evidence: `evidence/v31_gateway.log`
+- [x] **W31.4 Trần chi phí tháng + kill-switch theo agent_id** —
+  cap USD/tháng theo agent_id (config, có mặc định); tổng tháng hiện
+  tại (múi giờ ghi rõ trong docstring) đọc từ `llm_usage`: ≥100% →
+  raise `GatewayBlocked` TRƯỚC khi gọi client; ≥80% → log cảnh báo rồi
+  vẫn gọi. Cờ kill theo agent_id (config file hoặc env
+  `LLM_KILL=a,b`) → từ chối ngay. DB không đọc được khi check cap →
+  chính sách ghi rõ (đề xuất: cho qua + cảnh báo, nhất quán W31.3) và
+  có test.
+  - Boundary: `pipelines/llm_gateway.py`, `data/llm_gateway.json`
+  - Gate: test: kill bật → `GatewayBlocked`, fake client 0 call; spend
+    giả = 100% cap → chặn, 0 call; 80% → gọi + cảnh báo; agent khác
+    không bị ảnh hưởng
+  - Evidence: `evidence/v31_gateway.log`
+- [x] **W31.5 Bộ lọc câu hỏi sức khỏe trước LLM ở chatbot khách** —
+  `is_health_question(text)` (từ khóa bệnh/triệu chứng/thuốc có dấu +
+  không dấu, NFC + casefold, word-boundary) gọi ĐẦU `api/rag.answer`
+  TRƯỚC `_standalone`/`retrieve`: trúng → không gọi gateway, trả
+  `{"answer": NO_DATA, "sources": [], "handoff": "health"}` —
+  `connectors/zalo.py` nhánh `NO_DATA in raw` đã gửi `HANDOFF_TEXT`
+  (nếu cần log `[handoff]` phân biệt lý do, id qua `_uhash`).
+  - Boundary: `pipelines/llm_gateway.py` (hoặc `pipelines/health_filter.py`),
+    `api/rag.py`, `connectors/zalo.py` (tối thiểu)
+  - Gate: test: `answer("bị gout uống Savigout được không")` với fake
+    gateway → 0 lời gọi LLM/embed, `handoff=="health"`; không dấu
+    "bi gout uong thuoc duoc khong" cũng trúng; "sâm Ngọc Linh giá bao
+    nhiêu" KHÔNG trúng; zalo test câu gout → khách nhận `HANDOFF_TEXT`
+  - Evidence: `evidence/v31_gateway.log`
+- [x] **W31.6 Migrate 3 call site, giữ hành vi** — `api/rag.py`
+  (`_clients` bỏ OpenAI; `retrieve` → `embed("chatbot")`,
+  `_standalone`/`answer` → `chat("chatbot")`), `pipelines/content.py::draft`
+  → `chat("content")`, `ingest/embed_store.py` (`embed_all`/`main`) →
+  `embed("ingest")`, cập nhật docstring embed_store dòng 5. Guardrail/
+  NO_DATA/None-content xử lý y như cũ.
+  - Boundary: `api/rag.py`, `pipelines/content.py`, `ingest/embed_store.py`,
+    test liên quan (`tests/test_rag.py`, `tests/test_content.py`) chỉ đổi
+    điểm monkeypatch, không xoá assert (đối chiếu số assert trước/sau)
+  - Gate: `grep -rn "OpenAI(" --include=*.py . | grep -v llm_gateway.py`
+    rỗng; `python -m pytest tests/test_rag.py tests/test_content.py -q`
+    xanh; `python scripts/zalo_mock.py` exit 0
+  - Evidence: `evidence/v31_gateway.log`
+- [x] **W31.7 Live smoke 1 lời gọi thật qua gateway** — 1 chat
+  `openai/gpt-4o-mini`, prompt không PII, max_tokens nhỏ, agent_id
+  `smoke`, qua routing params W31.2; ghi status/model/provider trả về +
+  dòng `llm_usage` (KHÔNG in key/DSN). OpenRouter báo không có provider
+  ZDR khớp whitelist → giữ fail-closed, ghi **external-dep** kèm lỗi.
+  - Boundary: lệnh `python -c`/script tạm (không vào test suite)
+  - Gate: exit 0 với response OK, hoặc lỗi provider rõ ràng ghi
+    external-dep (không nới routing cho pass)
+  - Evidence: `evidence/v31_live_smoke.log`
+- [x] **Gate chung** —
+  - targeted ×3: `python -m pytest tests/test_llm_gateway.py tests/test_rag.py tests/test_content.py tests/test_zalo.py -q`
+    3 lần liên tiếp xanh (đọc output tới exit, không chạy chồng)
+  - full: `python -m pytest -q` xanh, ≥ 219 + test mới
+  - `ruff check .` sạch
+  - `python -m py_compile pipelines/llm_gateway.py pipelines/pii.py api/rag.py pipelines/content.py ingest/embed_store.py connectors/zalo.py`
+  - `git status`: file runtime mới trong `data/` đã gitignore; không file lạ
+  - External-dep: DPIA/TIA ký Pháp chế; xác minh ZDR từng model phía
+    provider; bảng giá/cap thật do công ty chốt
+- [ ] **external-dep** DPIA/TIA ký bởi Pháp chế — chưa có, KHÔNG đánh dấu đã ký.
+- [ ] **external-dep** Xác minh ZDR từng model phía provider — live smoke
+  2026-10-11 chat gpt-4o-mini + embed text-embedding-3-small đều route
+  Azure dưới `zdr:true` (evidence/v31_live_smoke.log); cam kết hợp đồng
+  ZDR vẫn là việc phía nhà cung cấp.
+- [ ] **external-dep** Bảng giá USD/1M token + cap tháng thật do công ty
+  chốt (`data/llm_gateway.json` hiện là ước tính); `pii_allow` (hotline/
+  email công khai công ty) cần người phụ trách xác nhận.
 
 v3.0-guardrail-hotfix đóng 2026-10-11 (workflow: contract → worker
 /ship → 3 nghiệm thu song song → 2 vòng sửa → PASS; coordinator chạy

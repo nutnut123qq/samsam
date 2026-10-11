@@ -4,7 +4,8 @@ Contract:
   draft(brief: str, channel: str = "facebook") -> {"text": str, "guardrail": dict}
   draft_multi(brief: str, channels) -> {channel: {"text","guardrail"}}
 
-  - Gọi LLM qua OpenRouter (OPENROUTER_API_KEY + OR_CHAT_MODEL, openai client)
+  - Gọi LLM qua `pipelines.llm_gateway.chat("content", ...)` (v3.1 — PII
+    mask + privacy routing + usage/cap; model OR_CHAT_MODEL)
     với system prompt chứa brand voice + claims_whitelist (chỉ được viết
     công dụng trong whitelist).
   - Output BẮT BUỘC qua pipelines.guardrail.check() trước khi trả về —
@@ -15,13 +16,12 @@ Contract:
 """
 
 import json
-import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from openai import OpenAI
 
 from pipelines.guardrail import check
+from pipelines.llm_gateway import chat
 
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
@@ -54,9 +54,6 @@ def _whitelist_block() -> str:
 
 def draft(brief: str, channel: str = "facebook") -> dict:
     """Sinh draft theo brief -> qua guardrail -> trả {"text", "guardrail"}."""
-    client = OpenAI(base_url="https://openrouter.ai/api/v1",
-                    api_key=os.environ["OPENROUTER_API_KEY"])
-    model = os.environ.get("OR_CHAT_MODEL", "openai/gpt-4o-mini")
     fmt = CHANNEL_HINT.get(channel, CHANNEL_HINT["facebook"])
 
     system = f"""Bạn là copywriter của Công ty TNHH Sâm Sâm — thương hiệu sâm
@@ -84,8 +81,7 @@ LUẬT TPBVSK — vi phạm là bài bị loại:
     messages = [{"role": "system", "content": system},
                 {"role": "user", "content": f"BRIEF: {brief}"}]
     for _ in range(2):  # draft -> check; vi phạm -> 1 lượt sửa có feedback
-        resp = client.chat.completions.create(
-            model=model, messages=messages, temperature=0.3, max_tokens=600)
+        resp = chat("content", messages, temperature=0.3, max_tokens=600)
         text = resp.choices[0].message.content.strip()
         result = check(text)
         if result["ok"]:

@@ -161,3 +161,24 @@ create table if not exists content_drafts (
 
 create index if not exists content_drafts_status_idx
   on content_drafts (status);
+
+-- ============================================================================
+-- v3.1 LLM gateway (pipelines/llm_gateway.py): 1 dòng / lời gọi LLM/embedding.
+-- cost_usd = ước tính theo bảng giá data/llm_gateway.json (giá thật do công ty
+-- chốt). Trần chi phí tháng cộng cost theo agent_id từ bảng này. Không lưu
+-- prompt/response (chỉ số đếm) — error đã qua _mask_pii, cắt 300 ký tự.
+-- ============================================================================
+
+create table if not exists llm_usage (
+  id bigserial primary key,
+  ts timestamptz not null default now(),
+  agent_id text not null,
+  model text not null,
+  tokens_in int not null default 0,
+  tokens_out int not null default 0,
+  cost_usd numeric(12, 6) not null default 0,
+  ok boolean not null,
+  error text
+);
+
+create index if not exists llm_usage_agent_ts_idx on llm_usage (agent_id, ts);

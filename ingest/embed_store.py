@@ -2,8 +2,8 @@
 
 Contract:
   - Đọc OPENROUTER_API_KEY / DATABASE_URL / OR_EMBED_MODEL từ .env.
-  - LLM client: `openai.OpenAI(base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY)` — dùng chung cho chat lẫn embeddings.
+  - Embedding qua `pipelines.llm_gateway.embed("ingest", ...)` (v3.1 — cổng
+    LLM duy nhất: PII mask + privacy routing + ghi llm_usage).
   - Chunk mỗi record (body/description) ~500-800 ký tự, overlap ~80.
   - Embed bằng OR_EMBED_MODEL (mặc định openai/text-embedding-3-small, 1536 dims).
   - Bảng `chunks` — tạo bởi docs/schema.sql, KHÔNG tạo bảng từ code.
@@ -26,7 +26,8 @@ from pathlib import Path
 
 import psycopg
 from dotenv import load_dotenv
-from openai import OpenAI
+
+from pipelines.llm_gateway import embed
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
@@ -81,12 +82,14 @@ def chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) 
     return chunks
 
 
-def embed_all(client: OpenAI, model: str, texts: list[str]) -> list[list[float]]:
-    """Embed theo batch; lỗi API raise — ingest fail sớm còn hơn nạp thiếu."""
+def embed_all(client, model: str, texts: list[str]) -> list[list[float]]:
+    """Embed theo batch; lỗi API raise — ingest fail sớm còn hơn nạp thiếu.
+    `client` giữ trong signature cho tương thích (v3.1 bỏ qua — gọi qua
+    gateway agent_id "ingest")."""
     out = []
     for i in range(0, len(texts), EMBED_BATCH):
         batch = texts[i:i + EMBED_BATCH]
-        resp = client.embeddings.create(model=model, input=batch)
+        resp = embed("ingest", batch, model=model)
         out.extend(d.embedding for d in resp.data)
         print(f"[embed] batch {i // EMBED_BATCH + 1}: {len(batch)} texts", flush=True)
     return out
@@ -94,7 +97,6 @@ def embed_all(client: OpenAI, model: str, texts: list[str]) -> list[list[float]]
 
 def main() -> int:
     env = load_env()
-    client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=env["api_key"])
 
     # 1. Đọc jsonl -> danh sách (doc_id, title, url, lang, chunks)
     rows = []
@@ -147,7 +149,7 @@ def main() -> int:
 
     # 2. Embed toàn bộ chunk
     print(f"[embed] tổng {len(rows)} chunks, model {env['model']}", flush=True)
-    vectors = embed_all(client, env["model"], [r["content"] for r in rows])
+    vectors = embed_all(None, env["model"], [r["content"] for r in rows])
 
     # 3. Xóa-nạp lại theo doc_id (idempotent)
     doc_ids = sorted({r["doc_id"] for r in rows})

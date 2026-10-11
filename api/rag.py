@@ -3,6 +3,8 @@
 Contract với UI (xem app/streamlit_app.py): answer() trả
 {"answer": str, "sources": [url, ...]} — sources rỗng nghĩa là
 "không đủ dữ liệu", UI hiển thị thông báo thay vì bịa.
+v3.1: mọi lời gọi LLM/embedding qua `pipelines.llm_gateway` (agent_id
+"chatbot"); câu hỏi sức khỏe chặn TRƯỚC LLM -> thêm key "handoff".
 """
 
 import os
@@ -11,7 +13,8 @@ from pathlib import Path
 import numpy as np
 import psycopg
 from dotenv import load_dotenv
-from openai import OpenAI
+
+from pipelines.llm_gateway import chat, embed, is_health_question
 
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
@@ -19,6 +22,7 @@ load_dotenv(ROOT / ".env")
 TOP_K = 8
 MIN_SCORE = 0.25  # cosine dưới ngưỡng -> coi như KB không có thông tin
 NO_DATA = "Chưa đủ dữ liệu để trả lời."
+AGENT = "chatbot"
 
 SYSTEM = """Bạn là trợ lý CSKH của Công ty TNHH Sâm Sâm (sâm Ngọc Linh).
 Trả lời bằng tiếng Việt, ngắn gọn, CHỈ dựa vào NGỮ CẢNH bên dưới.
@@ -42,18 +46,9 @@ Luật:
 """
 
 
-def _clients() -> tuple[OpenAI, str, str]:
-    return (OpenAI(base_url="https://openrouter.ai/api/v1",
-                   api_key=os.environ["OPENROUTER_API_KEY"]),
-            os.environ.get("OR_EMBED_MODEL", "openai/text-embedding-3-small"),
-            os.environ.get("OR_CHAT_MODEL", "openai/gpt-4o-mini"))
-
-
 def retrieve(question: str, k: int = TOP_K) -> list[dict]:
     """Top-k chunk theo cosine similarity, kèm score/url/title/content."""
-    client, embed_model, _ = _clients()
-    qv = np.array(client.embeddings.create(model=embed_model,
-                                           input=question).data[0].embedding)
+    qv = np.array(embed(AGENT, question).data[0].embedding)
     with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
         rows = conn.execute(
             "select title, source_url, lang, content, embedding, doc_id"
@@ -86,10 +81,9 @@ def _standalone(question: str, history: list[dict]) -> str:
     sinh từ câu hỏi GỐC của user. LLM refusal trả content=None -> trả
     "" -> caller fallback dùng câu gốc (D5.2 — trước đây AttributeError
     crash xuyên qua streamlit/zalo)."""
-    client, _, chat_model = _clients()
-    resp = client.chat.completions.create(
-        model=chat_model,
-        messages=[
+    resp = chat(
+        AGENT,
+        [
             {"role": "system", "content":
                 "Viết lại câu hỏi cuối của user thành một câu hỏi độc "
                 "lập, đủ ngữ cảnh để tra knowledge base, giữ nguyên "
@@ -111,7 +105,12 @@ def answer(question: str, history: list[dict] | None = None) -> dict:
     gần nhất). Có history -> rewrite câu hỏi thành standalone trước khi
     retrieve (câu trần follow-up retrieve về score thấp -> NO_DATA giả),
     còn prompt trả lời vẫn giữ câu hỏi gốc + history. Không truyền ->
-    y hệt 1-turn, không tốn thêm LLM call."""
+    y hệt 1-turn, không tốn thêm LLM call.
+
+    v3.1 (W31.5): câu hỏi sức khỏe -> KHÔNG gọi LLM/embedding, trả NO_DATA
+    + handoff="health" (zalo nhánh NO_DATA gửi HANDOFF_TEXT chuyển người)."""
+    if is_health_question(question):
+        return {"answer": NO_DATA, "sources": [], "handoff": "health"}
     search_q = question
     if history:
         search_q = _standalone(question, history) or question
@@ -123,10 +122,9 @@ def answer(question: str, history: list[dict] | None = None) -> dict:
         f"[{i + 1}] {h['title']} ({h['url']})\n{h['content']}"
         for i, h in enumerate(hits)
     )
-    client, _, chat_model = _clients()
-    resp = client.chat.completions.create(
-        model=chat_model,
-        messages=[
+    resp = chat(
+        AGENT,
+        [
             {"role": "system", "content": SYSTEM},
             *(history or []),
             {"role": "user", "content":

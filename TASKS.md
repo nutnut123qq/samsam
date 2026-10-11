@@ -686,7 +686,7 @@ Quy trình mỗi version (chặt theo skill):
   câu khẳng định ("…có thể thay thế thuốc chữa bệnh…" → ok=True); bộ câu
   bẫy hồi quy. Boundary: `pipelines/guardrail.py`, `tests/test_guardrail.py`.
   Gate: câu bẫy ok=False, câu khuyến cáo phủ định vẫn ok=True, full xanh.
-- [ ] **v3.1-llm-gateway** — một client LLM duy nhất: che PII trước mọi
+- [x] **v3.1-llm-gateway** — một client LLM duy nhất: che PII trước mọi
   lời gọi, lọc câu sức khỏe → handoff, privacy routing (provider
   whitelist, `data_collection=deny`, zdr), fail-closed, `llm_usage`, trần
   theo agent, cờ kill; chuyển `api/rag.py`, `pipelines/content.py`,

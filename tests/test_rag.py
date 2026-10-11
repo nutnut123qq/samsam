@@ -1,9 +1,10 @@
 """Multi-turn (D4.1): answer(question, history) — câu follow-up được
 rewrite thành standalone trước retrieve, còn prompt trả lời giữ câu hỏi
-GỐC + history. Mock _clients + retrieve: không gọi OpenRouter/DB thật."""
+GỐC + history. Mock gateway client + retrieve: không gọi OpenRouter/DB thật."""
 from types import SimpleNamespace
 
 from api import rag
+from pipelines import llm_gateway
 
 HITS = [{"title": "Saphraton", "url": "http://x/saphraton", "lang": "vi",
          "content": "Saphraton — 1.000.000 đ", "score": 0.9,
@@ -33,10 +34,10 @@ class _FakeChat:
 
 
 def _patch(monkeypatch):
-    """Mock _clients (fake chat) + retrieve (hits giả, ghi query)."""
+    """Mock gateway `_client` (fake chat) + retrieve (hits giả, ghi query)."""
     fake = _FakeChat()
     queries = []
-    monkeypatch.setattr(rag, "_clients", lambda: (fake, "embed", "chat"))
+    monkeypatch.setattr(llm_gateway, "_client", lambda: fake)
     monkeypatch.setattr(rag, "retrieve",
                         lambda q: queries.append(q) or HITS)
     return fake, queries

@@ -6,7 +6,7 @@ không gọi mạng, guardrail chạy thật trên text sạch."""
 
 import types
 
-from pipelines import content
+from pipelines import content, llm_gateway
 
 SAFE_TEXT = "Sâm Ngọc Linh Quảng Nam — đặc sản quê hương, quà tặng sức khỏe."
 
@@ -32,12 +32,12 @@ class _FakeClient:
 
 
 def _patch_openai(monkeypatch, text=SAFE_TEXT):
-    """Mock `content.OpenAI` → log các `messages` call (log[i][0] =
+    """Mock gateway `_client` → log các `messages` call (log[i][0] =
     system prompt của call thứ i)."""
     log = []
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
-    monkeypatch.setattr(content, "OpenAI",
-                        lambda **kw: _FakeClient(log, text))
+    monkeypatch.setattr(llm_gateway, "_client",
+                        lambda: _FakeClient(log, text))
     return log
 
 
@@ -106,7 +106,7 @@ def test_draft_retry_prompt_on_guardrail_fail(monkeypatch):
             log.append(list(messages))
             return _resp(next(texts))
 
-    monkeypatch.setattr(content, "OpenAI", lambda **kw: Flaky())
+    monkeypatch.setattr(llm_gateway, "_client", lambda: Flaky())
     r = content.draft("x", "facebook")
     assert len(log) == 2                        # retry đúng 1 lần
     assert r["text"] == SAFE_TEXT and r["guardrail"]["ok"] is True
