@@ -1,0 +1,20 @@
+# v4.4 W44.5 evidence — 2026-10-11T20:04:15Z (UTC)
+## spot-check lenh KPI --help
+python scripts/health_bulletin.py --help exit=0
+python scripts/agent_eval.py --help exit=0
+python scripts/db_restore_drill.py --help exit=0
+python scripts/review_load.py --help exit=0
+python scripts/dpia_draft.py --help exit=0
+python -m pipelines.store --help exit=0
+python -m ingest.market_csv --help exit=0
+## grep 'đã tuân thủ' docs/legal (phai rong):
+grep exit=1 (1 = rong)
+## NHAP trong 15 dong dau:
+docs/legal/DPIA-nhap.md: 2
+docs/legal/README.md: 2
+docs/legal/TIA-nhap.md: 2
+docs/legal/form-dong-y-NHAP.md: 2
+docs/legal/mau-hop-dong-dai-ly-NHAP.md: 2
+docs/legal/mau-hop-dong-koc-NHAP.md: 2
+## test
+12 passed in 0.11s

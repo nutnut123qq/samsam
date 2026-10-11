@@ -10,6 +10,357 @@ Nhánh `ai-infra`: M30 (v3.0–v3.10) đóng và gộp đủ 2026-10-12 — 24 b
 831 test. Đếm bảng trong test không còn hằng số (sàn `>= 24` / đọc
 schema.sql) để các version M31+ chạy song song không xung đột dòng này.
 
+## Checklist v4.4-phap-che-dpo
+
+Khán giả/mục đích: nhánh M31 (worktree `D:\code\samsam-w44`) — phần
+Pháp chế–Nhân sự của WP05 (pmo.md dòng `| WP05`; plan_legal_hr.md §2,
+§5, §6, §9, §12, A0/A5/A6/A7; research_legal.md mục 3–7). Chuyên viên
+Pháp chế là người DUY NHẤT duyệt; hiện chưa có gì giúp họ: (1) không
+biết hàng duyệt có vượt trần ~25 mục/ngày (§2) hay không; (2) chưa có
+DPIA/TIA dù chatbot gửi câu hỏi khách sang OpenRouter (Mỹ) — chuyển dữ
+liệu xuyên biên giới theo Luật BVDLCN 91/2025; (3) chưa có hợp đồng mẫu
+KOC/đại lý có điều khoản cấm claim chữa bệnh/cấm quảng cáo rượu; (4)
+chưa có JD/KPI cho 2 người vận hành. Sau version: PC-A0 `python
+scripts/review_load.py` báo tải hàng duyệt so với quota đề xuất; PC-A5
+`data/data_flow_map.json` (bản đồ luồng dữ liệu THẬT, rà từ code) →
+`python scripts/dpia_draft.py` sinh `docs/legal/DPIA-nhap.md` +
+`TIA-nhap.md`, có drift-guard bắt module mới gửi dữ liệu ra ngoài mà
+chưa khai báo + form đồng ý mẫu; PC-A6 2 hợp đồng mẫu + `python
+scripts/contract_check.py` kiểm đủ điều khoản bắt buộc; PC-A7 JD/KPI trỏ
+tới chỉ số hệ thống thật. MỌI output là NHÁP chờ Pháp chế/luật sư/TGĐ —
+agent/doc KHÔNG kết luận "đã tuân thủ", không tự điền tên người ký,
+không tự phân việc cho người thật.
+
+Quy ước: ponytail — stdlib (`json`, `ast`, `re`, `argparse`, `pathlib`) +
+`psycopg` sẵn có; KHÔNG dep mới, KHÔNG gọi LLM/gateway/mạng trong cả 3
+script (template + luật tất định; nếu sau này cần LLM soạn nháp thì qua
+`pipelines.llm_gateway.chat` + `guardrail.check()` — ngoài phạm vi). KHÔNG
+thêm bảng (kien-truc.md "24 bảng public" giữ nguyên) — `review_load` chỉ
+SELECT `content_drafts` + `approvals`. Không file runtime mới trong
+`data/` (2 file JSON mới là cấu hình/khai báo, commit được, không PII).
+Mọi script: UTF-8 reconfigure guard sau imports (print tiếng Việt);
+connect qua `ingest.lead_store.connect()` (đã `connect_timeout`, guard
+`tests/test_connect_timeout_guard.py`); ghi file docs bằng bytes/`newline
+="\n"` (không để Windows đổi `\r\n` → `--check` lệch); tham số ngày nhận
+str từ CLI → coerce `date` TRƯỚC mọi format-spec (gotcha v2.2). Căn cứ
+pháp lý trích research_legal.md: Luật BVDLCN 91/2025/QH15 + NĐ 356/2025
+(cùng hiệu lực 01/01/2026, NĐ 356 thay NĐ 13/2023 — khung mục DPIA/TIA
+dựng theo cấu trúc hồ sơ đánh giá tác động của NĐ 13/2023 Điều 24–25 +
+Luật 91/2025; NGUYÊN VĂN và mẫu biểu của NĐ 356 CHƯA mở nguồn → ghi
+"CẦN LUẬT SƯ XÁC NHẬN" tại chỗ); Luật QC 75/2025 + NĐ 342/2025 (nhãn
+quảng cáo, gỡ 24h, nghĩa vụ người chuyển tải — nghĩa vụ KOC "chưa xác
+minh, luật sư rà"); Luật 44/2019 Đ5 k7/k9 (cấm QC/khuyến mại rượu ≥15
+độ); Luật AI 134/2025 (nhãn nội dung AI). Mọi doc trong `docs/legal/`
+mở đầu bằng khối "BẢN NHÁP — chưa có giá trị pháp lý; chờ <ai> rà/ký"
+và các ô người ký/ngày ký để TRỐNG (`{{...}}`), dữ liệu đối tác là
+placeholder `{{ten_doi_tac}}` — không tên/SĐT/MST người thật. Cụm "đã
+tuân thủ" bị cấm trong mọi output (test). Cả 3 script mới KHÔNG được
+nằm trong `egress_modules()` (W44.2) — tự chứng minh không gửi gì ra
+ngoài.
+
+External-dep (KHÔNG giả lập, để `[ ]`): Chuyên viên Pháp chế ký DPIA/TIA
++ luật sư rà trước khi nộp/công bố (đối chiếu NĐ 356/2025, ân hạn 5 năm
+DN nhỏ có áp dụng khi xử lý tin nhắn sức khỏe — dữ liệu nhạy cảm — hay
+không); luật sư xác nhận 2 hợp đồng mẫu (A6-1 "có xác nhận luật sư") và
+điền đối tác thật từ bảng `partners` (chưa có bảng — WP khác); quota
+duyệt THẬT + lịch vắng người duyệt do TGĐ chốt (file hiện là đề xuất
+§2); TGĐ duyệt JD/KPI + mức lương/phụ cấp trực; cơ chế ghi nhận đồng ý
+trong kênh chat (bảng `consent`, tin chào có link chính sách — thuộc
+gateway/Hạ tầng plan_data_platform §3, CHƯA có trong code → DPIA ghi là
+GAP, form đồng ý chưa gắn kênh live); ticket gỡ 24h/lịch trực (A0-3,
+A4) chưa có công cụ → KPI tương ứng ghi "CHƯA ĐO ĐƯỢC".
+
+- [x] **W44.1 PC-A0 mô hình tải người duyệt** — `data/review_quota.json`
+  `{"_doc": "ĐỀ XUẤT theo plan_legal_hr §2 (quỹ 120→240 phút/ngày), CHƯA
+  được TGĐ chốt — quota thật = external-dep", "status": "de_xuat",
+  "phases": [{"from": "2026-10-01", "to": "2026-10-31", "daily_cap": 25},
+  {"from": "2026-11-01", "to": "2026-11-15", "daily_cap": 35}, {"from":
+  "2026-11-16", "to": null, "daily_cap": 55}], "absent_days": []}` —
+  `daily_cap` = trần quyết định/ngày của MỖI người duyệt; `absent_days`
+  (ISO) → cap 0 ngày đó. `scripts/review_load.py` — hàm thuần
+  `load_quota(path) -> dict` (validate: JSON hỏng / phases rỗng / ngày
+  sai ISO / `daily_cap` không phải int ≥ 0 / khoảng chồng nhau →
+  `ValueError`), `cap_for(day: date, quota) -> int | None` (None = không
+  phase nào phủ), `collect(conn, today: date, days: int) -> dict` (CHỈ
+  SELECT, ngày theo `at time zone 'Asia/Ho_Chi_Minh'`): (a) hàng chờ =
+  `content_drafts` `status='pending'` tách 3 nhóm theo
+  `guardrail->>'ok'`: `true` → "vào hàng" (tính quota), `false` → "trả
+  tác giả" (KHÔNG tính quota — §6 bước 2), thiếu/khác → "KHÔNG RÕ" tính
+  VÀO hàng (fail-closed); + tuổi mục pending cũ nhất (ngày); (b) inflow =
+  số draft tạo theo ngày VN trong `days` ngày gần nhất (gồm hôm nay); (c)
+  throughput = số dòng `approvals` (mọi `object_type`, cả approved lẫn
+  rejected) theo (ngày VN của `approved_at`, `approved_by` btrim) trong
+  cửa sổ; `render(stats, quota, today) -> str`; `main()`. Cảnh báo
+  (dòng mở đầu `QUÁ TẢI` / `CẢNH BÁO`): hàng (vào hàng + KHÔNG RÕ) > cap
+  hôm nay → "cần ≥ ceil(n/cap) ngày duyệt"; 1 người duyệt có số quyết
+  định trong 1 ngày > cap ngày đó → "vượt trần — rủi ro duyệt vội"; TB
+  inflow/ngày > cap hôm nay → "nháp vào nhanh hơn trần — giảm volume,
+  không hạ chuẩn (§2)"; hôm nay ∈ `absent_days` và hàng > 0 → "người
+  duyệt vắng — pending giữ nguyên, không ai được duyệt thay". Report ghi
+  rõ "quota ĐỀ XUẤT, chưa TGĐ chốt" khi `status != "chot"`. KHÔNG
+  INSERT/UPDATE/DELETE, không gán người duyệt, không gọi `set_status`.
+  CLI: `[--today YYYY-MM-DD] [--days N] [--quota PATH]`; `--days` ngoài
+  1..366, `--today` sai ISO, quota hỏng, không phase phủ `today` →
+  `[err]` exit 2 TRƯỚC connect; DB không connect được / thiếu bảng →
+  "[err] DB không truy cập được" exit 1; còn lại exit 0 (cảnh báo chỉ in,
+  không đổi exit — A0 chỉ nhắc). Tên người duyệt in nguyên (nhân viên,
+  không phải khách); không in `text`/`brief` của draft.
+  - Boundary: `data/review_quota.json`, `scripts/review_load.py`,
+    `tests/test_review_load.py`
+  - Gate: `tests/test_review_load.py` — unit thuần: `load_quota` bắt
+    từng lỗi (≥5 case: JSON hỏng, phases rỗng, ngày sai, cap âm/str,
+    chồng khoảng); `cap_for` biên `2026-10-31`→25, `2026-11-01`→35,
+    `2026-11-16`→55, absent→0, ngày trước phase đầu→None; CLI
+    `--today 2026-13-01` / `--days 0` exit 2 với `connect` monkeypatch
+    raise (chứng minh chưa connect). DB THẬT (schema tạm + `set local
+    search_path` + docs/schema.sql + ROLLBACK, mẫu fixture `db` của
+    `tests/test_auth_approval.py`; gate yêu cầu 0 skipped): fixture
+    today=2026-10-12, days=7 — pending ok=true 26 + ok=false 3 + thiếu ok
+    1 + approved/rejected 4 (không vào hàng) → "vào hàng" 26, "trả tác
+    giả" 3, "KHÔNG RÕ" 1, tổng tính quota 27 > 25 → QUÁ TẢI "≥ 2 ngày";
+    approvals: `REVIEWER_A` 26 dòng ngày 2026-10-11 → QUÁ TẢI người,
+    `REVIEWER_B` 5 dòng → không cảnh báo; 1 dòng `approved_at`
+    2026-10-11 16:30 UTC (= 23:30 VN) tính ngày 11, 1 dòng 2026-10-11
+    17:30 UTC (= 00:30 VN 12/10) tính ngày 12; 1 dòng 2026-10-01 ngoài
+    cửa sổ không đếm — assert ĐÚNG từng số trong `collect()` + chuỗi
+    cảnh báo trong `render()`; sau `collect()` số dòng `content_drafts`/
+    `approvals` không đổi; fake-conn ghi lại MỌI câu SQL được execute →
+    tất cả bắt đầu bằng `select`/`with` (read-only). DB-down:
+    `DATABASE_URL=postgresql://u@10.255.255.1:5432/x` (gotcha v2.0 —
+    không `env -u`) → exit 1, không treo (≤ connect_timeout + vài giây).
+  - Evidence: `evidence/v44_review_load.log` (chạy thật `python
+    scripts/review_load.py` trên DB samsam_infra + output fixture)
+  - Kết quả: 37 passed (13 case load_quota, biên cap_for, CLI exit 2 trước connect, fixture DB thật đúng từng số: vào hàng 26/trả tác giả 3/KHÔNG RÕ 1 → 27 > 25 '≥ 2 ngày', REVIEWER_A 26 ngày 11 (gồm 23:30 VN + tên có khoảng trắng btrim), 00:30 VN tính ngày 12, dòng 01/10 ngoài cửa sổ; read-only fake-conn; DB chết exit 1 ~4s). DB samsam_infra thật: 0 draft → không cảnh báo. Thêm (OWASP A09): thay ký tự điều khiển trong tên người duyệt trước khi in. Quota thật do TGĐ chốt: external-dep `[ ]`.
+- [x] **W44.2 PC-A5 bản đồ luồng dữ liệu + drift-guard egress** —
+  `data/data_flow_map.json` `{"_doc": "...rà từ code ngày 2026-10-12;
+  sửa code thêm luồng ra ngoài PHẢI cập nhật file này (test đỏ)...",
+  "version": "2026-10-12", "classes": {"do": "...", "vang": "...", "xanh":
+  "..."}, "flows": [...]}` — định nghĩa lớp theo plan_data_platform.md §2:
+  Đỏ = orders, leads, liên hệ đại lý, log hội thoại, tin nhắn có yếu tố
+  sức khỏe, user_id thô; Vàng = câu hỏi thường SAU `_mask_pii`, tài liệu
+  nội bộ; Xanh = catalog/claims/chunk public. Mỗi flow: `id` (`DF-xx`,
+  unique), `name`, `modules` (đường dẫn posix tương đối, tồn tại),
+  `data` (loại dữ liệu), `class` ∈ {do,vang,xanh}, `subjects` (chủ thể),
+  `purpose`, `storage` (nơi lưu: file/bảng thật), `retention` (giá trị
+  THẬT từ code, vd convlog `RETAIN_DAYS = 30` zalo.py; `leads`
+  "không có hạn — GAP"; `_histories` "RAM, LRU 1000 user, mất khi
+  restart"; `zalo_seen.db` TTL 1h/7 ngày), `recipients` (bên nhận + nước),
+  `cross_border` (bool), `safeguards` (biện pháp có trong code: `_mask_pii`
+  ở gateway cho MỌI message kể cả history, `is_health_question` chặn
+  trước LLM, provider routing `data_collection=deny`/`zdr`/
+  `provider_only` từ `data/llm_gateway.json`, OCR nước ngoài bị từ chối
+  ở doc_intake, cột PII sàn bị drop + `order_id_hash`), `legal_basis`
+  (vd "đồng ý — CHƯA có cơ chế ghi nhận trong code: GAP"), `gaps` (list,
+  có thể rỗng). Luồng BẮT BUỘC có (rà từ code thật): Zalo nhận/trả lời
+  (`connectors/zalo.py` → openapi.zalo.me / oauth.zaloapp.com, VN);
+  preflight token (`scripts/zalo_preflight.py`); mock (`scripts/
+  zalo_mock.py`, localhost — `cross_border` false, ghi rõ chỉ test);
+  convlog `data/conversations.jsonl` (mask + `_uhash`, 30 ngày); leads
+  (`ingest/lead_store.py` → bảng `leads`); chatbot RAG (`api/rag.py` →
+  `pipelines/llm_gateway.py` → OpenRouter + provider whitelist, Mỹ —
+  `cross_border` true, gồm history 4 lượt + Streamlit `app/
+  streamlit_app.py`); content studio (`pipelines/content.py` → gateway,
+  brief do nhân viên nhập); embeddings KB public (`ingest/embed_store.py`,
+  Xanh, cross_border true); KB nội bộ (`ingest/kb_internal.py` →
+  embeddings qua gateway, Vàng, cross_border true); số hóa tài liệu
+  (`ingest/doc_intake.py`, local, OCR provider `none`, cross_border
+  false); file sàn (`ingest/market_csv.py`, local, PII drop); bản tin sức
+  khỏe (`scripts/health_bulletin.py` → SMTP/Telegram khi `--notify`, chỉ
+  số tổng hợp, Telegram cross_border true); crawl web công khai
+  (`crawler/collect.py`, GET trang public, không gửi dữ liệu cá nhân);
+  `llm_usage` (metadata token/chi phí, không nội dung); backup DB
+  (`scripts/db_backup.py`, offsite `dir:` local, `s3://` external-dep).
+  Hàm dùng chung đặt trong `scripts/dpia_draft.py`: `load_map(path) ->
+  dict` (validate: key thiếu / class lạ / id trùng / `cross_border` không
+  phải bool / `modules` rỗng hoặc trỏ file không tồn tại → `ValueError`
+  nêu id + field) và `egress_modules(root) -> set[str]` — quét `ast`
+  MỌI `*.py` dưới root (bỏ `tests`, `.venv`, `venv`, `__pycache__`,
+  `.git` — như `tests/test_connect_timeout_guard.py`), cả import LƯỜI
+  trong hàm: module có `import`/`from` gốc ∈ {`openai`, `httpx`,
+  `requests`, `smtplib`, `aiohttp`, `urllib3`, `ftplib`} hoặc dotted
+  `urllib.request` / `http.client` (kể cả `from urllib import request`)
+  — `urllib.parse` và `socket` (job_runs chỉ `gethostname`) KHÔNG tính,
+  comment lý do; hoặc module import tên `chat`/`embed` từ
+  `pipelines.llm_gateway` (gửi qua gateway). `importlib`/`__import__`
+  động: ngoài phạm vi, ghi giới hạn trong docstring.
+  - Boundary: `data/data_flow_map.json`, `scripts/dpia_draft.py` (phần
+    load_map/egress_modules), `tests/test_data_flow_map.py`
+  - Gate: `tests/test_data_flow_map.py`: `load_map` repo pass; mỗi lỗi
+    validate (≥5 case) raise; `egress_modules(ROOT)` ⊇ {`connectors/
+    zalo.py`, `crawler/collect.py`, `pipelines/llm_gateway.py`,
+    `scripts/health_bulletin.py`, `scripts/zalo_mock.py`, `scripts/
+    zalo_preflight.py`, `api/rag.py`, `pipelines/content.py`,
+    `ingest/embed_store.py`} (chống scanner rỗng) và MỌI phần tử nằm trong
+    `modules` của ≥1 flow; `egress_modules(ROOT)` KHÔNG chứa 3 script
+    mới (`review_load`, `dpia_draft`, `contract_check`); mọi flow bắt
+    buộc ở trên có mặt (tra theo module); tmp_path tree: `pkg/a.py`
+    `import requests`, `pkg/b.py` lười `def f(): import httpx`,
+    `pkg/c.py` `from urllib import request`, `pkg/d.py` `from
+    urllib.parse import urljoin`, `pkg/e.py` `import socket` → kết quả
+    = {a,b,c} đúng, d/e không có. MUTATION trên repo thật: tạo
+    `scripts/_mut_egress.py` chứa `import requests` → `python -m pytest
+    tests/test_data_flow_map.py -q` ĐỎ, message nêu
+    `scripts/_mut_egress.py`; xoá file → xanh (ghi cả 2 output vào
+    evidence; `git status` sau đó không còn file mutation).
+  - Evidence: `evidence/v44_dpia.log`
+  - Kết quả: egress_modules(ROOT) = đúng 9 module đã biết, 0 module chưa khai báo; mutation `scripts/_mut_egress.py` → 1 failed nêu tên module, xoá → 32 passed. Phát hiện khi rà code: `_uhash` là sha256 KHÔNG muối (bút danh, dò ngược được user_id số), `zalo_seen.db` lưu `follow:<user_id>` thô 7 ngày, `_mask_pii` chỉ che SĐT/email (không địa chỉ/mã đơn/tên) — đã ghi vào `gaps` của map (không sửa code ngoài boundary).
+- [x] **W44.3 PC-A5 DPIA/TIA nháp + form đồng ý** — `scripts/dpia_draft.py`
+  `render_dpia(m) -> str`, `render_tia(m) -> str`, `main()`: đọc map →
+  ghi `docs/legal/DPIA-nhap.md` + `docs/legal/TIA-nhap.md` TẤT ĐỊNH (không
+  timestamp chạy — ngày lấy `m["version"]`, chạy 2 lần byte-y-hệt);
+  `--out-dir` (mặc định `docs/legal`); `--check` = không ghi, so nội dung
+  sinh với file trên đĩa → lệch/thiếu exit 1 ("chạy lại dpia_draft");
+  map hỏng → `[err]` exit 2, KHÔNG ghi file nào (validate trước khi
+  ghi). DPIA: khối NHÁP đầu file ("chờ Chuyên viên Pháp chế ký, luật sư
+  rà — agent không kết luận tuân thủ"), 1 Bên kiểm soát/xử lý
+  (`{{ten_cong_ty}}`, `{{nguoi_phu_trach_dlcn}}` để trống), 2 Mô tả từng
+  hoạt động xử lý — MỖI flow 1 mục có `id`, mục đích, dữ liệu, lớp, chủ
+  thể, nơi lưu, retention, bên nhận, xuyên biên giới, biện pháp, căn cứ,
+  gap; 3 Đánh giá rủi ro (Đỏ → cao, Vàng → trung bình, Xanh → thấp — quy
+  tắc cố định, ghi "mức đề xuất, Pháp chế chốt"); 4 Tổng hợp GAP (gom
+  `gaps` mọi flow; tối thiểu: chưa có cơ chế đồng ý/bảng consent, leads
+  không hạn lưu, tên đứng tự do lọt mask = rủi ro tồn dư); 5 Câu hỏi cho
+  luật sư (NĐ 356/2025 thay NĐ 13/2023 — mẫu hồ sơ; ân hạn 5 năm DN nhỏ
+  khi có dữ liệu sức khỏe; mốc 72h báo sự cố "căn cứ chưa xác minh";
+  Zalo/VNG là bên xử lý hay bên nhận); 6 Ký (trống). TIA: chỉ flow
+  `cross_border` true — bên nhận/nước, dữ liệu gửi đi SAU biện pháp,
+  biện pháp kỹ thuật, rủi ro tồn dư, căn cứ (Luật 91/2025 — "CẦN LUẬT SƯ
+  XÁC NHẬN"); liệt kê flow không xuyên biên giới ở 1 dòng "không thuộc
+  TIA". `docs/legal/form-dong-y-NHAP.md`: 3 mục đích TÁCH RIÊNG (không
+  gộp 1 ô đồng ý): CSKH qua chatbot (Zalo/web — câu hỏi được che SĐT/
+  email/địa chỉ rồi gửi nhà cung cấp AI ở nước ngoài; câu hỏi sức khỏe
+  chuyển người, không gửi AI — khớp `is_health_question`), marketing
+  (opt-in riêng, mặc định KHÔNG), đại lý/KOC (liên hệ đối tác); mỗi mục:
+  dữ liệu, mục đích, bên nhận, chuyển ra nước ngoài, thời hạn lưu (khớp
+  map), quyền chủ thể (rút đồng ý, xem, xoá), cách rút,
+  `{{policy_version}}`; ghi rõ "chưa gắn kênh — chờ cơ chế consent (Hạ
+  tầng)".
+  - Boundary: `scripts/dpia_draft.py`, `docs/legal/DPIA-nhap.md`,
+    `docs/legal/TIA-nhap.md`, `docs/legal/form-dong-y-NHAP.md`,
+    `tests/test_dpia_draft.py`
+  - Gate: `python scripts/dpia_draft.py` exit 0 ra 2 file; chạy lần 2 →
+    `sha256sum` 2 file không đổi; `python scripts/dpia_draft.py --check`
+    exit 0; sửa tay 1 dòng DPIA → `--check` exit 1 (rồi sinh lại).
+    `tests/test_dpia_draft.py`: MỌI `flow.id` của map xuất hiện trong
+    DPIA (word-boundary `(?<!\w)DF-xx(?!\w)` — gotcha v2.3); MỌI flow
+    `cross_border` true có trong phần đánh giá chuyển giao của TIA, flow
+    false KHÔNG nằm trong phần đó; thêm 1 flow giả vào map tmp → render
+    có id đó (không hardcode danh sách); map tmp lỗi → exit 2 và
+    `--out-dir` tmp không có file nào; `--check` trên repo exit 0
+    (docs đồng bộ map); DPIA/TIA chứa "NHÁP" + ≥3 lần "CẦN LUẬT SƯ XÁC
+    NHẬN"; không chứa "đã tuân thủ"; ô ký còn `{{`; form đồng ý có đủ 3
+    mục đích, mỗi mục có "rút đồng ý", retention CSKH chứa
+    `f"{RETAIN_DAYS} ngày"` (import `connectors.zalo.RETAIN_DAYS`, không
+    hardcode), `pipelines.pii._PII_RE` không trúng chuỗi nào ngoài
+    placeholder `{{...}}` (không SĐT/email thật).
+  - Evidence: `evidence/v44_dpia.log`
+  - Kết quả: 2 lần chạy sha256 y hệt; `--check` 0 → sửa tay 1 dòng → 1 → sinh lại → 0; `--check` chịu CRLF (checkout core.autocrlf=true) nhưng vẫn bắt lệch nội dung (test). 15 DF trong DPIA, TIA mục 2 = 5 luồng cross_border (DF-06/07/08/09/12), 'CẦN LUẬT SƯ XÁC NHẬN' DPIA 13 / TIA 8. Form đồng ý: lệch có chủ đích so contract — ghi 'che SĐT và email' (KHÔNG ghi 'địa chỉ') vì `_mask_pii` thật chỉ che SĐT/email; tên/địa chỉ tự do ghi rõ CHƯA che. Pháp chế ký/luật sư rà: external-dep `[ ]`.
+- [x] **W44.4 PC-A6 hợp đồng mẫu KOC/đại lý + contract_check** —
+  `docs/legal/mau-hop-dong-koc-NHAP.md`, `docs/legal/mau-hop-dong-dai-ly-
+  NHAP.md` (khối NHÁP "chờ luật sư rà/Pháp chế duyệt", đối tác/giá/SKU là
+  `{{...}}`, phụ lục SKU được phép "chỉ SKU mức QC_DAY_DU hoặc TP_THUONG
+  không claim, KHÔNG rượu" — danh sách SKU thật để trống chờ
+  `sku_readiness`). Điều khoản bắt buộc (mỗi điều 1 đoạn riêng):
+  CHUNG 8 — `nhan_quang_cao` (gắn nhãn "quảng cáo"/"hợp tác" + nhãn nội
+  dung AI), `go_24h` (gỡ/ẩn trong 24 giờ khi nhận yêu cầu), `sku_duoc_phep`
+  (chỉ SKU trong phụ lục, đúng maket đóng băng), `cam_claim_suc_khoe`
+  (cấm nói chữa/điều trị/khỏi bệnh/claim ngoài nội dung XNQC + bắt buộc
+  câu khuyến cáo "không phải là thuốc"), `cam_ruou` (cấm quảng cáo,
+  khuyến mại rượu — Luật 44/2019 Đ5), `bao_ve_dlcn` (không thu/dùng dữ
+  liệu cá nhân khách ngoài mục đích, Luật 91/2025), `gia_toi_thieu`,
+  `cham_dut` (chấm dứt/đơn phương khi vi phạm); KOC thêm
+  `nghia_vu_nguoi_chuyen_tai` (kiểm tài liệu, đã dùng sản phẩm — "chưa
+  xác minh, luật sư rà"); đại lý thêm `cam_shop_trung_ten`.
+  `scripts/contract_check.py --kind koc|dai_ly --file <.md|.txt>`: luật
+  thuần (KHÔNG LLM) — `CLAUSES: dict[id, (nhãn, [nhóm regex])]`, điều
+  khoản "có" khi CÓ 1 đoạn (tách theo dòng trống) mà MỌI nhóm regex đều
+  trúng, so trên text đã bỏ dấu + lower (tái dùng
+  `pipelines.llm_gateway._strip_accents`) — vd `cam_ruou` = đoạn có
+  (`ruou`) VÀ (`cam|khong duoc`) VÀ (`quang cao|khuyen mai`); hàm thuần
+  `missing_clauses(text, kind) -> list[str]`. Exit 0 đủ ("đủ điều khoản
+  bắt buộc theo kiểm từ khóa — KHÔNG thay rà soát của Pháp chế/luật sư"),
+  1 thiếu (in id + nhãn từng điều thiếu), 2 usage (file không tồn tại /
+  0 byte / chỉ trắng / đuôi khác .md|.txt / không UTF-8 / > 1MB / kind
+  sai). KHÔNG in nội dung file (hợp đồng có thể chứa dữ liệu đối tác).
+  Lưu ý: file mẫu chứa chính từ cấm ("chữa", "điều trị", "thuốc") trong
+  điều khoản CẤM — đây là văn bản pháp lý nội bộ, KHÔNG đi qua
+  `guardrail.check()`/không đăng; không đưa `docs/legal/` vào ingest KB.
+  - Boundary: 2 file mẫu trên, `scripts/contract_check.py`,
+    `tests/test_contract_check.py`
+  - Gate: `python scripts/contract_check.py --kind koc --file docs/legal/
+    mau-hop-dong-koc-NHAP.md` exit 0, tương tự `dai_ly`; test
+    parametrize TỪNG id điều khoản × 2 kind: xoá đoạn chứa điều đó khỏi
+    mẫu → `missing_clauses` == [đúng id đó] và CLI exit 1 in đúng id;
+    negative: "Phụ lục: Rượu sâm 500ml" đứng riêng không thỏa `cam_ruou`,
+    từ khóa các nhóm nằm ở 2 đoạn khác nhau không thỏa; biến thể không
+    dấu vẫn bắt; 6 case usage exit 2; stdout không chứa chuỗi đặc trưng
+    của file test (không echo nội dung); `contract_check` không nằm
+    trong `egress_modules(ROOT)`.
+  - Evidence: `evidence/v44_contract.log`
+  - Kết quả: 2 mẫu exit 0 (đủ 9 điều/loại); test xoá TỪNG điều × 2 loại (18 case) → đúng 1 id thiếu + CLI exit 1; mỗi điều khoản đúng 1 đoạn; âm tính 'Rượu sâm 500ml'/tách 2 đoạn/'cam kết'/'chưa'; không dấu + CRLF vẫn bắt; 6 usage exit 2; không echo nội dung. Luật sư xác nhận mẫu: external-dep `[ ]`.
+- [x] **W44.5 PC-A7 JD + KPI 2 người vận hành** — `docs/handover/jd-kpi-
+  van-hanh.md`: khối "NHÁP — chờ TGĐ duyệt (lương công ty trả riêng, ngoài
+  1 tỷ)"; Quản lý hạ tầng AI (15 triệu/tháng, vai trò `ha_tang` trong
+  `pipelines/auth.py`): vận hành gateway/mask PII, DB/backup/cron/secret,
+  thực thi gỡ web khi có lệnh, báo sự cố dữ liệu trong 1 giờ; Quản lý MXH
+  –sàn (10 triệu/tháng, vai trò `mxh`): chỉ đăng bản đã approve, gắn nhãn
+  AI + nhãn quảng cáo, nạp file sàn, tuyến 1 trực GỠ/ẨN theo ủy quyền
+  văn bản — ghi rõ CẤM đăng/sửa/approve thay người duyệt. Bảng KPI mỗi
+  người: cột Chỉ tiêu | Ngưỡng | Nguồn đo (lệnh/bảng THẬT) — vd hạ tầng:
+  bản tin `python scripts/health_bulletin.py` 0 mục đỏ, job 24h
+  (`job_runs`), eval `python scripts/agent_eval.py --agent guardrail`
+  PASS (`eval_runs`), backup + diễn tập khôi phục `python scripts/
+  db_backup.py` / `python scripts/db_restore_drill.py`, chi phí AI ≤ trần
+  (`llm_usage`); MXH: hàng duyệt `python scripts/review_load.py` không
+  QUÁ TẢI do tồn đăng, lịch đăng `python -m pipelines.store --calendar`,
+  cảnh báo sàn `python -m ingest.market_csv --report` (`market_alerts`
+  S1 đóng trong ngày), 0 bài đăng lệch bản approve (`approvals` sha256 /
+  `verify_publish`). KPI chưa có công cụ đo (ticket gỡ 24h, % hậu kiểm ủy
+  quyền, bài kiểm tra tuân thủ ≥20 câu) ghi nguyên cụm "CHƯA ĐO ĐƯỢC" +
+  WP sẽ build — không bịa nguồn.
+  - Boundary: `docs/handover/jd-kpi-van-hanh.md`, `tests/test_legal_docs.py`
+  - Gate: `tests/test_legal_docs.py`: (a) mọi `docs/legal/*.md` (≥6 file)
+    chứa "NHÁP" trong 15 dòng đầu và không chứa "đã tuân thủ"; (b)
+    jd-kpi: chứa "NHÁP", "15 triệu", "10 triệu", "GỠ/ẨN", cụm cấm
+    "approve"; mọi `scripts/\w+\.py` và `python -m <mod>` nhắc tới tồn tại
+    file thật; mọi tên bảng trong cột Nguồn đo (backtick) có trong
+    `docs/schema.sql` (`create table if not exists <t>`); mỗi dòng bảng
+    KPI có lệnh/bảng thật HOẶC "CHƯA ĐO ĐƯỢC" (dòng rỗng nguồn → đỏ);
+    vai trò `ha_tang`/`mxh` có trong `pipelines.auth` (import, không
+    hardcode). Spot-check tay ≥3 lệnh KPI chạy được (`--help` exit 0).
+  - Evidence: `evidence/v44_docs.log`
+  - Kết quả: `tests/test_legal_docs.py` 12 passed (≥6 file docs/legal có NHÁP 15 dòng đầu; 14 dòng KPI, 4 dòng CHƯA ĐO ĐƯỢC; lệnh/bảng nguồn đo tồn tại). Spot-check `--help` exit 0: health_bulletin, agent_eval, db_restore_drill, review_load, dpia_draft, `-m pipelines.store`, `-m ingest.market_csv` (db_backup không có argparse — không spot-check). Bản tin sức khỏe không có khái niệm 'mục đỏ' → KPI ghi '0 mục CẢNH BÁO/ĐÃ CHẶN'. TGĐ duyệt JD/KPI/lương: external-dep `[ ]`.
+- [x] **W44.6 Gate chung** — không đụng file ngoài boundary các mục trên
+  (KHÔNG sửa AGENTS.md/kien-truc.md/schema.sql — version không thêm
+  bảng; lệnh mới nằm ở docstring + jd-kpi).
+  - Boundary: (tổng hợp W44.1–W44.5)
+  - Gate: targeted xanh ×3 TUẦN TỰ (`python -m pytest -q
+    tests/test_review_load.py tests/test_data_flow_map.py
+    tests/test_dpia_draft.py tests/test_contract_check.py
+    tests/test_legal_docs.py`, đọc output tới exit mới chạy lần kế; 0
+    skipped — DB thật có `DATABASE_URL`); full `python -m pytest -q`
+    ĐÚNG 1 lần: xanh, ≥ 831 + số test mới, 0 failed; `ruff check .`
+    sạch; `python -m py_compile scripts/review_load.py
+    scripts/dpia_draft.py scripts/contract_check.py`; `python
+    scripts/dpia_draft.py --check` exit 0; `grep -rn "đã tuân thủ"
+    docs/legal` rỗng; `git status --short` chỉ gồm file trong boundary
+    (không còn `scripts/_mut_egress.py`, không file lạ); evidence `.log`
+    `git add -f` (gitignore `*.log`). Ghi "coordinator self-review" nếu
+    không spawn được auditor lạ.
+  - Evidence: `evidence/v44_pytest.log`
+  - Kết quả (worker self-check, chưa có auditor lạ): targeted ×3 tuần tự 128 passed ×3, 0 skipped; full `python -m pytest -q` 1 lần 959 passed (831 + 128), 0 failed/skipped; ruff sạch; py_compile ok; `dpia_draft --check` exit 0; grep 'đã tuân thủ' rỗng; không còn `_mut_egress.py`. Lệch boundary: thêm `docs/legal/README.md` (mục lục NHÁP) để đạt sàn ≥6 file docs/legal của gate W44.5(a). Evidence `.log` cần `git add -f`.
+  - Vòng fix nghiệm thu 1 (5 MINOR): (a) contract_check "cấm" so trên text CÒN dấu (`cấm|không được`), fallback `cam` chỉ khi đoạn gõ không dấu + loại "cảm nhận/cảm ơn/phản cảm..." → test `test_cam_not_confused_with_cam_accentless` (10 case) + `test_cam_positive_forms` (7); nhãn AI khớp `AI` phân biệt hoa thường (không ăn đại từ "ai") → `test_ai_label_not_pronoun_ai`. (b) dpia_draft `_is_egress` gateway FAIL-CLOSED: `import pipelines.llm_gateway [as g]`, `from pipelines import llm_gateway`, tương đối, mọi tên ngoài allowlist `GATEWAY_SAFE` (`_client`/`_call`/`*`...) đều tính → `test_gateway_import_forms_are_egress` (12) + `test_gateway_safe_imports_not_egress` (7) + 3 file mới trong `test_egress_scanner_tmp_tree`. (c) test_review_load: fixture ép `set local timezone = 'UTC'` (DB dev là Asia/Bangkok +7 → bỏ `at time zone` vẫn pass ảo) + draft biên 05/10 16:30Z/17:30Z + mục cũ nhất 07/10 17:30Z. Mutation trong bộ nhớ (cam_old/ai_old/egress_old/inflow/queue/throughput) đều ĐỎ; targeted ×3 165 passed; full 996 passed (831 + 165); ruff sạch. Evidence `evidence/v44_fix1.log`, `evidence/v44_fix1_full.log`.
+
+v4.4-phap-che-dpo đóng 2026-10-12 (3 nghiệm thu đợt 1 FIX 5 MINOR — contract_check
+nhầm 'cảm'↔'cấm' khi bỏ dấu và đại từ 'ai' thành nhãn AI; drift-guard egress
+bỏ sót dạng import gateway khác → fail-closed — 1 vòng sửa → PASS;
+coordinator chạy lại targeted 173 + ruff + `dpia_draft --check`; full pytest
+chạy lúc gộp). Phát hiện khi rà, ghi vào gaps/DPIA (chưa vá): `_uhash` sha256
+không muối (user_id Zalo dò ngược được); `zalo_seen.db` giữ `follow:<user_id>`
+thô 7 ngày; `_mask_pii` không che tên/địa chỉ/mã đơn; chưa có bảng `consent`.
+External-dep: Pháp chế/luật sư ký DPIA/TIA + 2 hợp đồng mẫu; quota duyệt thật;
+TGĐ duyệt JD/KPI.
+
 ## Checklist v3.3-connector-csv
 
 Khán giả/mục đích: nhánh `ai-infra` (M30, worktree `D:\code\samsam-infra`)
