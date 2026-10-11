@@ -68,7 +68,7 @@ Streamlit demo.
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 14 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 17 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
@@ -86,6 +86,9 @@ Streamlit demo.
 | `sku_map` | Map `products.id` (crawl) ↔ `sku_key` golden — KHÔNG FK products; `approved_by` | `golden_store` (đề xuất agent) — Sản xuất duyệt |
 | `price_list` | Giá theo SKU × kênh × `kind` floor/list/promo, `valid_from/valid_to`, `approved_by` — **APPEND-ONLY** (trigger chặn UPDATE giá/DELETE/TRUNCATE và INSERT sẵn-duyệt/sẵn-đóng; đổi giá = đóng dòng cũ + dòng mới chờ duyệt) | `golden_store` nạp `approved_by=null`; GĐ bán hàng duyệt bằng CLI |
 | `golden_discrepancies` | Phiếu lệch golden ↔ crawl (`kind`, `detail` giá trị theo từng nguồn, `status` pending/resolved/dismissed) — agent không chọn giá | `golden_store` dựng lại mỗi lần nạp; người xử lý cập nhật `status` |
+| `market_snapshots` | 1 dòng/file xuất Seller Center đã nạp (v3.3): `channel` shopee/tiktok, `export_kind` listing/order/ads, `file_name` (basename), `file_sha256` UNIQUE (nạp lại cùng file = bỏ qua), `row_count` | `ingest.market_csv --file` — insert-only |
+| `market_rows` | Dòng staging từ file sàn: `item_id`,`seller_sku`,`sku_key` (map golden, null = không map),`title`,`price_vnd`,`stock`,`status`,`ads_spend_vnd`,`qty`,`order_id_hash` (sha256, KHÔNG mã đơn gốc), `raw` jsonb CHỈ field allowlist — không cột tên/SĐT/địa chỉ người mua | `market_csv` — cột PII bỏ ngay khi đọc file |
+| `market_alerts` | Cảnh báo sàn ↔ golden (`kind` alcohol_listed/tpbvsk_ads_no_xnqc S1, price_mismatch/item_unmapped S2; `detail` giá trị theo từng nguồn; `status` open/closed) — agent không sửa sàn/giá | `market_csv` mở/đóng theo export kế tiếp; `--report` cho người đọc |
 
 View (v3.2): `sku_readiness` (SKU × kênh online → `CAM` / `MO_TA` /
 `TP_THUONG` / `QC_DAY_DU`; rượu luôn `CAM`, kênh ngoài `allowed_channels`

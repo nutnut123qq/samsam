@@ -695,7 +695,7 @@ Quy trình mỗi version (chặt theo skill):
   append-only (list/promo, valid_from/to), `sku_readiness`,
   `v_promotable`, phiếu lệch, loader golden riêng (không đè row manual).
   Skip: xác nhận của GĐ bán hàng/Pháp chế → để `pending`, không tự duyệt.
-- [ ] **v3.3-connector-csv** — nạp CSV Seller Center Shopee/TikTok vào
+- [x] **v3.3-connector-csv** — nạp CSV Seller Center Shopee/TikTok vào
   staging, đối chiếu golden, cảnh báo rượu/giá lệch/TPBVSK có ads. Skip:
   file CSV thật (mapping cấu hình + fixture tổng hợp, "định dạng chưa
   xác minh").

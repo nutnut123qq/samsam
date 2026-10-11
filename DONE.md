@@ -6,8 +6,333 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
-Nhánh `ai-infra` (M30): version đang mở **v3.3-connector-csv**
-(song song ở worktree riêng: v3.5, v3.7, v3.8).
+Nhánh `ai-infra` (M30): v3.3 đã đóng; chờ gộp nhánh song song v3.5, v3.7,
+v3.8 (đang chạy: v3.4, v3.6, v3.9).
+
+## Checklist v3.3-connector-csv
+
+Khán giả/mục đích: nhánh `ai-infra` (M30, worktree `D:\code\samsam-infra`)
+— WP04a, luồng F01b (đối chiếu listing/giá/ads trên sàn với bản chuẩn),
+agent "Connector sàn (CSV P1 → API P2, chỉ đọc)" (plan_data_platform.md).
+Hiện chưa có gì nhận file sàn: golden v3.2 (`sku_master`, `price_list`,
+`sku_readiness`) có nhưng không ai đối chiếu với cái ĐANG bày trên
+Shopee/TikTok. Sau version: Quản lý MXH xuất tay CSV/XLSX từ Seller
+Center → `python -m ingest.market_csv` nạp vào staging (không PII người
+mua), đối chiếu golden bằng QUY TẮC (không LLM) và mở/đóng cảnh báo
+S1/S2 trong `market_alerts`. Agent CHỈ ĐỌC: không gọi sàn, không đổi giá,
+không ghi bảng golden, không ghi `products`.
+
+Quy ước: ponytail — stdlib `csv` + `hashlib` + `psycopg` sẵn có; `.xlsx`
+đọc bằng `openpyxl` (3.1.5 đã có trong interpreter) import LƯỜI trong hàm
+đọc xlsx, thiếu → `[err]` gợi ý xuất CSV, exit 1; thêm 1 dòng
+`openpyxl>=3.1` vào `requirements.txt` (dep nhẹ, lý do ghi comment). Không
+dep khác, không gọi mạng (không `httpx`/`requests`/`urllib` trong module).
+Schema chỉ THÊM (`create ... if not exists`), không sửa bảng cũ. Tên cột
+Shopee/TikTok trong mapping là GIẢ ĐỊNH — `_doc` của file mapping ghi rõ
+"chưa xác minh với file thật". Parse + kiểm TOÀN file TRƯỚC khi connect:
+thiếu cột bắt buộc / cột lạ (không thuộc `required`/`optional`/`drop`) /
+header trùng / file rỗng hoặc chỉ header / đuôi không phải `.csv`/`.xlsx` /
+CSV không decode được `utf-8-sig` / giá-số lượng-chi tiêu không parse được
+số nguyên ≥ 0 / dòng thiếu cả `item_id` lẫn `seller_sku` → `[err]`, exit 1,
+KHÔNG connect, 0 dòng nạp (không nạp nửa vời). PII: chỉ field trong
+allowlist mapping được giữ; cột tên/SĐT/địa chỉ người mua, ghi chú đơn,
+mã/tên buyer nằm trong `drop` và bị bỏ NGAY khi đọc — không vào `raw`,
+không vào cột nào, không in ra stdout; mã đơn chỉ lưu
+`order_id_hash` = sha256(`channel:order_id`)[:16]. Thông báo lỗi chỉ nêu
+số dòng + tên field, KHÔNG in giá trị ô. Mọi connect có
+`connect_timeout`; ghi = 1 transaction + `conn.commit()` tường minh (gotcha
+savepoint v2.1); print tiếng Việt → UTF-8 guard; `n_ops` > 1 → `ap.error`
+exit 2 trước connect (gotcha v2.2). Ngày "hôm nay" khi lấy giá golden =
+`(now() at time zone 'Asia/Ho_Chi_Minh')::date` (tái dùng
+`golden_store.TODAY_VN`). Test DB thật chạy trong schema tạm + ROLLBACK
+(mẫu fixture `db` của `tests/test_golden_store.py`), gate yêu cầu 0 skipped.
+Fixture tổng hợp `tests/fixtures/market/fixture_*.csv` — KHÔNG dữ liệu
+thật của khách (tên/SĐT/địa chỉ người mua trong fixture là chuỗi giả rõ
+ràng, vd "NGUOI MUA GIA", "0900000000"). File xuất thật để ở `data/raw/
+market/` (đã gitignore qua `data/raw/`), không copy vào repo.
+
+Ánh xạ item sàn → golden (thứ tự): (1) `seller_sku` trùng `sku_master.
+sku_key` → SKU đó; (2) channel `shopee` và `item_id` khớp ĐÚNG 1
+`sku_master.shopee_item_id` → SKU đó; khớp ≥2 (biến thể mật ong 120ml
+1 hũ/2 hũ chung item 54916394790) hoặc 0 → không map (`detail` ghi danh
+sách ứng viên nếu có, agent không tự chọn). Cảnh báo (rebuild trên
+snapshot vừa nạp của cùng (channel, export_kind)):
+`alcohol_listed` S1 — dòng listing map tới SKU `category='alcohol'` mà
+`status` không thuộc `inactive_status` của mapping (status lạ = coi như
+đang bán, fail-closed); `price_mismatch` S2 — dòng listing có giá ≠ giá
+`list` golden đang mở (valid_from ≤ hôm nay VN, `valid_to` null) cùng
+(sku_key, channel); `detail` ghi giá sàn, giá golden, `price_id`,
+`golden_approved` true/false + `approved_by` (hiện mọi giá golden CHƯA
+duyệt → ghi rõ "chưa duyệt"); không có giá golden → không cảnh báo, chỉ
+đếm trong `--report`; `tpbvsk_ads_no_xnqc` S1 — dòng ads map tới SKU
+`category='tpbvsk'`, `xnqc_status <> 'approved'`, `ads_spend_vnd > 0`;
+`item_unmapped` S2 — dòng listing/ads không map được. Export `order` chỉ
+nạp staging (giữ `status` để tách đơn hủy trong báo cáo), không sinh cảnh
+báo ở P1.
+
+External-dep (KHÔNG giả lập, để `[ ]`): file xuất THẬT từ Seller Center
+Shopee/TikTok Shop (cần người có tài khoản xuất) → xác minh tên cột,
+dòng header, định dạng giá/trạng thái trong `data/market_csv_map.json`;
+API Shopee Open Platform / TikTok Shop Partner Center scope read (P2);
+TTL file gốc do Pháp chế chốt + storage trong nước; gửi cảnh báo đồng
+thời GĐ bán hàng/Pháp chế/Quản lý MXH (n8n/email, F03c ticket); role DB
+`market_sync` (INSERT staging, SELECT golden) trên cloud; GĐ bán hàng duyệt
+giá golden (v3.2) — trước đó mọi `price_mismatch` so với giá CHƯA duyệt.
+
+- [x] **W33.1 Schema staging sàn: 3 bảng** — `docs/schema.sql` append block
+  "v3.3 connector sàn (F01b)" (comment tiếng Việt: chỉ đọc sàn, không PII,
+  idempotent theo hash file, không ghi golden/products):
+  `market_snapshots` (`id bigint identity pk`, `channel` check in
+  (`shopee`,`tiktok`), `export_kind` check in (`listing`,`order`,`ads`),
+  `file_name text not null` (basename, không đường dẫn), `file_sha256 text
+  not null unique`, `row_count int not null`, `imported_at timestamptz not
+  null default now()`); `market_rows` (`id` identity pk, `snapshot_id`
+  FK market_snapshots not null, `row_no int not null`, `channel`,
+  `export_kind`, `item_id text`, `seller_sku text`, `sku_key text` (null
+  = không map; không FK), `title text`, `price_vnd bigint`, `stock int`,
+  `status text`, `ads_spend_vnd bigint`, `qty int`, `order_id_hash text`,
+  `raw jsonb not null` (CHỈ field allowlist đã chuẩn hóa), unique
+  (`snapshot_id`, `row_no`)); `market_alerts` (`id` identity pk, `kind`
+  check in (`alcohol_listed`,`price_mismatch`,`tpbvsk_ads_no_xnqc`,
+  `item_unmapped`), `severity` check in (`S1`,`S2`), `channel`,
+  `export_kind`, `item_id`, `seller_sku`, `sku_key`, `detail jsonb not
+  null`, `status` check in (`open`,`closed`) default `open`, `snapshot_id`
+  (lần thấy gần nhất), `opened_at`, `updated_at`, `closed_at`) + unique
+  index (kind, channel, export_kind, coalesce(item_id,''),
+  coalesce(seller_sku,'')). Không cột tên/SĐT/địa chỉ/buyer nào.
+  - Boundary: `docs/schema.sql` (chỉ append block mới)
+  - Gate: `python scripts/apply_schema.py` ×2 exit 0, lần 2 in 17 bảng
+    (14 cũ + 3 mới); `grep -c "^create table if not exists" docs/schema.sql`
+    = 17; `grep -niE "buyer|nguoi_mua|phone|address|recipient" docs/schema.sql`
+    không trúng dòng nào trong block v3.3
+  - Evidence: `evidence/v33_market.log`
+- [x] **W33.2 Mapping cột + parser thuần (không DB)** —
+  `data/market_csv_map.json` `{"_doc": "... GIẢ ĐỊNH, chưa xác minh với file
+  thật ...", "shopee": {"listing"|"order"|"ads": {"required": {field:
+  header}, "optional": {field: header}, "drop": [header...],
+  "inactive_status": [...]}}, "tiktok": {...}}` — field chuẩn: `item_id`,
+  `seller_sku`, `title`, `price`, `stock`, `status`, `ads_spend`, `qty`,
+  `order_id`; `drop` của `order` liệt kê cột PII (tên người mua/người
+  nhận, SĐT, địa chỉ, ghi chú, tên đăng nhập buyer). `ingest/market_csv.py`
+  hàm thuần `read_export(path, channel, kind, mapping) -> (rows, errors)`:
+  `.csv` đọc bytes + decode `utf-8-sig` (strict → lỗi rõ), `.xlsx` qua
+  openpyxl `read_only=True, data_only=True` sheet đầu, header = dòng 1;
+  kiểm header (thiếu `required` / cột lạ / trùng) → errors nêu tên cột;
+  chuẩn hóa giá VND (bỏ `₫`, `.`, `,`, khoảng trắng; ô số xlsx nguyên) →
+  int ≥ 0; `order_id` → `order_id_hash` rồi bỏ giá trị gốc; mỗi row trả
+  về chỉ gồm field allowlist; `sha256` của bytes file tính 1 lần. Không
+  print giá trị ô.
+  - Boundary: `data/market_csv_map.json` (mới), `ingest/market_csv.py`
+    (mới), `requirements.txt` (+1 dòng openpyxl), `tests/test_market_csv.py`
+    (mới), `tests/fixtures/market/` (mới)
+  - Gate: test thuần: fixture listing/order/ads Shopee parse đúng số
+    dòng; fixture thiếu cột bắt buộc → errors nêu đúng tên cột, rows rỗng;
+    fixture thêm cột lạ (vd "Email người mua") → lỗi; header trùng → lỗi;
+    file rỗng / chỉ header / đuôi `.txt` / bytes không phải UTF-8 → lỗi;
+    giá "abc" hoặc âm → lỗi nêu số dòng; bản `.xlsx` sinh từ cùng fixture
+    (openpyxl trong `tmp_path`) parse ra rows bằng hệt bản CSV; order:
+    không row nào chứa chuỗi tên/SĐT/địa chỉ/mã đơn gốc của fixture
+    (`json.dumps(rows)` không chứa), có `order_id_hash` 16 hex; `_doc`
+    mapping chứa "chưa xác minh"
+  - Evidence: `evidence/v33_pytest.log`
+- [x] **W33.3 Nạp staging idempotent (CLI)** — `python -m
+  ingest.market_csv --file <path> --channel shopee|tiktok --kind
+  listing|order|ads`: parse+kiểm TOÀN file trước connect (lỗi → in từng
+  lỗi, exit 1, không connect); `file_sha256` đã có → `[skip]` nêu snapshot
+  id + channel/kind gốc, exit 0, 0 ghi; mới → 1 transaction: insert
+  `market_snapshots` + `market_rows` (map `sku_key` theo quy tắc trên) +
+  rebuild cảnh báo (W33.4) → `conn.commit()`; unique-violation
+  `file_sha256` (nạp song song) → rollback, báo skip. `--channel`/`--kind`
+  sai → argparse exit 2; `--file` thiếu `--channel`/`--kind` → exit 2;
+  `--file` cùng `--report` → exit 2 — tất cả trước connect. Thiếu bảng →
+  `[err]` gợi ý `apply_schema`; lỗi DB → rollback, exit 1. Docstring
+  module tiếng Việt: contract, schema mapping, quy tắc map + cảnh báo,
+  ownership (chỉ đọc golden, không ghi sàn/giá).
+  - Boundary: `ingest/market_csv.py`, `tests/test_market_csv.py`
+  - Gate: CLI trên samsam_infra: nạp `fixture_shopee_listing.csv` 2 lần
+    → lần 2 `[skip]`, `count(*)` `market_snapshots`/`market_rows` giống
+    hệt sau lần 1 (in bằng `python -c`, không in DSN); fixture thiếu cột
+    → exit 1 và 2 số đếm không đổi; test (monkeypatch connect → raise):
+    thiếu cột / cột lạ / file rỗng → exit 1, connect KHÔNG được gọi;
+    usage sai (4 combo trên) → exit 2, connect không gọi; test DB thật
+    (rollback): nạp cùng file 2 lần → 1 snapshot, số row = số dòng file;
+    nạp order fixture → `select count(*) from market_rows where raw::text
+    ~* '<tên giả>|0900000000|<địa chỉ giả>|<mã đơn gốc>'` = 0 và
+    `order_id_hash` not null mọi dòng; module không ghi golden/products/
+    sàn: `grep -niE "(update|insert into|delete from) +(price_list|sku_master|sku_map|products)" ingest/market_csv.py`
+    rỗng và `grep -nE "^(import|from) +(httpx|requests|urllib)" ingest/market_csv.py`
+    rỗng
+  - Evidence: `evidence/v33_market.log`
+- [x] **W33.4 Đối chiếu golden → `market_alerts` (mở/đóng, không đổi
+  giá)** — hàm `reconcile(conn, snapshot_id) -> dict` chạy trong cùng
+  transaction nạp, chỉ cho `listing`/`ads`: tính tập phát hiện theo 4 quy
+  tắc ở đầu checklist; upsert theo unique key → `status='open'`,
+  `closed_at=null`, `detail`/`snapshot_id`/`updated_at` cập nhật,
+  `opened_at` = now() khi mở mới hoặc mở lại; cảnh báo `open` cùng
+  (channel, export_kind) KHÔNG còn trong tập → `status='closed'`,
+  `closed_at=now()` (sàn đã sửa ở export kế tiếp) — *sửa nghiệm thu:*
+  CHỈ khi item (item_id, seller_sku) CÓ MẶT trong file mới; item vắng
+  mặt → giữ open + `[warn]` (vắng ≠ đã sửa). `detail` = giá trị
+  theo từng nguồn, KHÔNG có trường "đề xuất/giá nên đặt".
+  - Boundary: `ingest/market_csv.py`, `tests/test_market_csv.py`,
+    `tests/fixtures/market/`
+  - Gate: test DB thật (rollback, golden nạp từ `data/golden_skus.json`
+    trong schema tạm): nạp `fixture_shopee_listing.csv` (savina giá đúng
+    159000; Savigout 24325987926 giá 482900 = +10%; rượu chai thủy tinh
+    27325048614 status đang bán giá 745000; item 99900000001 không có
+    trong golden; mật ong 120ml item chung 54916394790 với `seller_sku`
+    = `mat-ong-sam-120ml-1hu` giá 745000) + `fixture_shopee_ads.csv`
+    (saphraton-20v spend > 0; savina spend 0; mật ong 300ml spend > 0) +
+    `fixture_shopee_order.csv` (có 1 đơn hủy) → đúng 4 cảnh báo `open`,
+    mỗi kind 1 lần: `alcohol_listed` S1 (ruou-sam-chai-thuy-tinh-500ml),
+    `price_mismatch` S2 (savigout-30v, detail 482900 + 439000 +
+    `golden_approved` false), `tpbvsk_ads_no_xnqc` S1 (saphraton-20v),
+    `item_unmapped` S2 (99900000001); nạp lại cả 3 file → vẫn 4, không
+    nhân đôi; nạp `fixture_shopee_listing_fixed.csv` (Savigout 439000,
+    rượu status thuộc `inactive_status`) → 2 cảnh báo đó `closed` +
+    `closed_at` not null, 2 cái còn lại vẫn `open`; test RIÊNG: item
+    54916394790 KHÔNG `seller_sku` → `item_unmapped` với detail 2 ứng
+    viên; giá golden không đổi suốt test (`price_list` count + `max(id)`
+    trước/sau bằng nhau, `approved_by is not null` = 0)
+  - Evidence: `evidence/v33_market.log`
+- [x] **W33.5 `--report` cho người đọc** — `python -m ingest.market_csv
+  --report`: cảnh báo `open` S1 trước S2 (kind, kênh, item/sku, detail
+  JSON, `opened_at`); snapshot mới nhất mỗi (channel, kind) kèm số ngày
+  tuổi; kênh có listing mà CHƯA có snapshot `ads` → dòng `[warn] <kênh>:
+  không đủ dữ liệu quảng cáo` (không im lặng); order snapshot mới nhất:
+  đếm theo `status` (đơn hủy hiện riêng); số dòng listing không có giá
+  golden để so. Không in `order_id_hash`/raw đơn.
+  - Boundary: `ingest/market_csv.py`, `tests/test_market_csv.py`
+  - Gate: test DB thật (rollback, capsys): sau 3 fixture → output có 4
+    cảnh báo, 2 dòng S1 đứng trước S2; chỉ nạp listing (không ads) → có
+    "không đủ dữ liệu quảng cáo"; có ads → không có dòng đó; output không
+    chứa chuỗi PII giả của fixture order
+  - Evidence: `evidence/v33_pytest.log`
+- [x] **W33.6 Docs + drift-guard đếm bảng** — `docs/handover/sop.md` thêm
+  mục "Nạp file sàn (Shopee/TikTok)": ai xuất, lưu ở `data/raw/market/`,
+  lệnh nạp 3 loại + `--report`, đọc S1/S2, ai sửa trên sàn (MXH sau khi
+  GĐ bán hàng/Pháp chế duyệt — agent không sửa), file lỗi schema thì làm
+  gì, ghi rõ mapping cột chưa xác minh; `docs/handover/kien-truc.md` mục 3
+  → "17 bảng" + 3 dòng bảng mới; `AGENTS.md` Commands thêm
+  `python -m ingest.market_csv ...` + Structure `ingest/` nhắc
+  market_csv; `tests/test_handover_docs.py`: đếm 14→17 + `SOP_COMMANDS`
+  thêm `"ingest.market_csv"`; `tests/test_lead_store.py` +
+  `tests/test_store.py` đếm 14→17 (chỉ số đếm, không xóa assert khác).
+  - Boundary: `docs/handover/sop.md`, `docs/handover/kien-truc.md`,
+    `AGENTS.md` (Commands + Structure), `tests/test_handover_docs.py`,
+    `tests/test_lead_store.py`, `tests/test_store.py` (chỉ số đếm/list lệnh)
+  - Gate: `python -m pytest tests/test_handover_docs.py tests/test_lead_store.py tests/test_store.py -q`
+    xanh; `grep -n "ingest.market_csv" docs/handover/sop.md AGENTS.md`
+    có kết quả ở cả 2 file; `grep -c "chưa xác minh" docs/handover/sop.md`
+    ≥ 1; đối chiếu số assert 3 file test trước/sau không giảm
+  - Evidence: `evidence/v33_pytest.log`
+- [x] **Gate chung** —
+  - `python scripts/apply_schema.py` ×2 exit 0 (17 bảng) → `python -m ingest.golden_store` exit 0 (golden 13/34 không đổi)
+  - E2E CLI trên samsam_infra: 3 fixture nạp ×2 (lần 2 `[skip]`, số đếm
+    không đổi) → `market_alerts` open = 4 → fixture thiếu cột exit 1, 0
+    dòng thêm → `--report` exit 0 (log vào evidence)
+  - targeted ×3: `python -m pytest tests/test_market_csv.py tests/test_golden_store.py tests/test_handover_docs.py -q -rs`
+    3 lần liên tiếp xanh, test DB thật **0 skipped** (đọc output tới
+    exit, không chạy chồng)
+  - full: `python -m pytest -q` xanh, ≥ 308 + test mới
+  - `ruff check .` sạch
+  - `python -m py_compile ingest/market_csv.py ingest/golden_store.py scripts/apply_schema.py`
+  - DỌN dữ liệu fixture khỏi samsam_infra sau E2E (DB dev không được
+    chứa cảnh báo giả như thật): xóa theo `snapshot_id` của file
+    `fixture_*` (alerts → rows → snapshots) bằng `python -c`; cuối gate
+    3 bảng market = 0 dòng; `price_list where approved_by is not null` =
+    0; `sku_master` = 13, `price_list` = 34
+  - `git status`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); không file xuất sàn thật / runtime mới trong
+    `data/` (ngoài `data/market_csv_map.json`); file lạ không thuộc
+    version → không stage
+  - Kết quả (worker, 2 vòng): vòng 1 xanh (89×3 targeted, full 340,
+    ruff, py_compile, E2E 4 cảnh báo); rà OWASP bắt A09 (header lạ /
+    dòng-đầu-là-dữ-liệu bị in nguyên văn → có thể lộ tên/SĐT khi file
+    order thiếu header) → vá (`_safe` = `_mask_pii` + bỏ ký tự điều khiển;
+    0 cột bắt buộc khớp → báo chung, không in ô; `_clean` cho
+    item/sku/file/detail trong `--report`) + test
+    `test_header_errors_never_echo_pii`; vòng 2: targeted 90×3 xanh 0
+    skipped, full 341 passed, ruff sạch, py_compile ok, E2E lại 4 cảnh
+    báo, skip ×3, thiếu cột exit 1 + 0 dòng; DỌN xong: 3 bảng market = 0,
+    sku_master 13, price_list 34, 0 giá duyệt. Evidence
+    `evidence/v33_market.log`, `evidence/v33_pytest.log` (cần `git add -f`).
+  - Lệch nhỏ so với chữ contract (ghi rõ): `read_export` trả 3-tuple
+    `(rows, errors, sha256)` để hash đúng bytes đã parse (1 lần đọc, không
+    TOCTOU); mapping thêm khóa `cancel_status` (order) để `--report` tách
+    đơn hủy; giá dạng thập phân ("12,5", "1.234,50") → lỗi thay vì bỏ dấu
+    phân cách (fail-closed, nhóm nghìn phải đúng 3 chữ số).
+  - Vòng sửa nghiệm thu (worker, 5 MINOR): (1) đóng cảnh báo chỉ khi
+    item CÓ MẶT trong snapshot mới mà hết lỗi — listing xuất 1 phần không
+    còn đóng oan S1 `alcohol_listed`; item vắng → giữ open, CLI in `[warn]
+    N cảnh báo ... GIỮ MỞ`; SOP 5b: xuất listing TOÀN BỘ sản phẩm, ads gồm
+    chiến dịch tạm dừng (test `test_db_partial_listing_keeps_absent_alerts_open`);
+    (2)+(4) ô float xlsx có phần lẻ → `f"{v:f}"` ("12.345000", không bao
+    giờ khớp `_INT_RE`) thay `repr` (12.345 từng thành 12345) → lỗi nêu
+    số dòng (`test_xlsx_float_cells_never_scaled`: 482900.0 → 482900;
+    12.345/1.234/250.125/482.9 giá + 250.125 ads_spend → lỗi, rows=[]);
+    (3) A04: duyệt LƯỜI, áp trần trong lúc đọc — `MAX_ROWS` 100.000 (đếm
+    cả dòng trống) / `MAX_COLS` 200; XLSX chặn used-range (`ws.max_row`/
+    `max_column`) TRƯỚC khi duyệt + `iter_rows(max_col=MAX_COLS+1)`; CSV
+    `TextIOWrapper` decode lười (bỏ bản UCS-4 của StringIO), dòng trống bỏ
+    ngay; probe sau vá: xlsx 4.9KB A1:Z200000 / A1:CV200000 /
+    A1:XFD1048576 → lỗi ngay 0.1MB/0.03s (trước 129MB/6.7s, 358MB/9.5s,
+    ước 100GB+); CSV 5MB dòng trống 20MB/0.8s (trước 1023MB/75s), 49MB
+    196MB/1s; còn lại 1 dòng cực rộng tuyến tính ~10× file (≤50MB) — câu
+    "file > 50MB bị từ chối" trong báo cáo A04 vòng trước KHÔNG đủ chống
+    DoS bộ nhớ, đã thay bằng trần dòng/cột (tests
+    `test_xlsx_inflated_used_range_rejected_before_iterating`,
+    `test_csv_row_and_col_caps_while_streaming`); (5) test
+    `test_db_other_channel_never_closes_alerts` (TikTok listing+ads cùng
+    item_id với cảnh báo Shopee → 4 cảnh báo Shopee vẫn open, closed_at
+    null). Mutation probe 6/6 KILLED (bỏ `a.channel`, bỏ điều kiện có mặt,
+    `repr` float, bỏ trần dòng, bỏ chặn used-range, bỏ trần cột). Gate:
+    targeted 95×3 xanh 0 skipped, full 346 passed, ruff sạch, py_compile
+    ok; E2E CLI listing → listing 1 phần: 3 cảnh báo giữ open + `[warn]`,
+    DỌN xong (3 bảng market = 0, sku_master 13, price_list 34, 0 duyệt).
+  - Vòng sửa nghiệm thu #2 (worker, 1 MINOR): XLSX `<dimension>` KHAI
+    THIẾU (A1:F2 nhưng có dòng 4) → read-only openpyxl dừng ở `max_row`
+    = cắt câm dòng rượu, không S1. Giữ chặn used-range phóng đại, rồi
+    `ws.reset_dimensions()` trước `iter_rows` → đọc tới hết sheet, trần
+    `MAX_ROWS`/`MAX_COLS+1` vẫn áp khi duyệt (probe: dim A1:F2 → đủ 3
+    dòng; không dimension + ô dòng 1.000.000 → lỗi trần 0.1MB/5.7s).
+    Test `test_xlsx_understated_dimension_reads_all_rows` (mutation bỏ
+    reset → FAILED). Gate: targeted 39×3 xanh, full 347 passed, ruff
+    sạch (`evidence/v33_pytest.log`, `evidence/v33_market.log`). Còn lại
+    (không chặn, ghi nhận): dimension khai thiếu CỘT + ô dữ liệu ở cột
+    > 201 bị `max_col` cắt câm — header bắt buộc ngoài 200 cột vẫn ra
+    lỗi thiếu cột (fail-closed), chỉ field optional (`seller_sku`/
+    `stock`/`status` ads) có thể mất.
+- [ ] **external-dep** File xuất THẬT Seller Center Shopee + TikTok Shop
+  (listing/order/ads) do người có tài khoản xuất → xác minh tên cột,
+  dòng header, định dạng giá/trạng thái, cột PII cần `drop` trong
+  `data/market_csv_map.json`; tới lúc đó mapping là giả định.
+- [ ] **external-dep** API Shopee Open Platform / TikTok Shop Partner
+  Center scope read (P2, chủ tài khoản tự cấp OAuth); TTL file gốc (Pháp
+  chế chốt) + storage trong nước + purge 02:00; gửi cảnh báo đồng thời 3
+  người + ticket SLA (n8n/F03c); role DB `market_sync` trên cloud.
+- [ ] **external-dep** GĐ bán hàng duyệt giá golden (v3.2) — trước đó
+  `price_mismatch` so với giá CHƯA duyệt (`detail.golden_approved=false`).
+
+Someday (ngoài phạm vi v3.3, ghi để không cuốn vào): export chương trình
+khuyến mãi (promo ≠ giá promo đã duyệt, voucher trên SKU không
+promotable); đối chiếu tiêu đề/mô tả/quy cách theo hash trường chuẩn
+hóa + guardrail banned-words trên title sàn; watermark file nộp muộn
+(file cũ nạp sau file mới đang đóng/mở cảnh báo theo thứ tự nạp); ads cho
+SKU food/alcohol readiness `CAM`; đơn sàn → `orders` lõi + upsert
+(channel, order_id); SKU TikTok chưa có item id trong golden (chỉ map qua
+`seller_sku`); cảnh báo "chưa có file hôm nay" 09:30; S2 mở >24h → ticket.
+
+v3.3-connector-csv đóng 2026-10-12 (3 nghiệm thu đợt 1 FIX 5 finding →
+2 vòng sửa → PASS; coordinator vá thêm 2 NIT: NBSP literal trong
+`_STRIP_RE`, `_clean` trạng thái đơn ở `--report`; chạy lại 347/347 +
+ruff). DB samsam_infra dọn fixture: 3 bảng market 0 dòng, golden giữ
+nguyên. External-dep: file xuất thật Seller Center (mapping cột
+"chưa xác minh"), API sàn P2, gửi cảnh báo cho người thật, role
+`market_sync`. Someday (NIT nghiệm thu): test reopen `opened_at`
+(now() hằng trong tx), test nhánh UniqueViolation/UndefinedTable,
+parametrize parser fail-closed (thừa ô, '1.490,000', hậu tố VND),
+pre-decode CSV tốn RAM, xlsx thiếu `<dimension>` bỏ cột >200.
 
 v3.2-golden-master đóng 2026-10-12 (3 nghiệm thu đợt 1 FIX 8 finding →
 1 vòng sửa → PASS; coordinator chạy lại 308/308 + ruff, DB thật: 13

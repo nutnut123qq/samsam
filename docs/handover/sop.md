@@ -100,6 +100,52 @@ unit `docs/zalo-webhook.service`). Tóm tắt sự cố thường gặp:
 - **`DEPLOY` bật mà thiếu `ZALO_OA_SECRET`** → process refuse-to-serve
   (đúng — cố ý, không "vá" bằng cách tắt DEPLOY khi đang public).
 
+## 5b. Nạp file sàn (Shopee/TikTok) — chỉ đọc, đối chiếu golden
+
+**Ai xuất:** Quản lý MXH tải tay từ Seller Center 3 loại file (listing,
+đơn hàng, báo cáo quảng cáo) — hằng ngày trong mùa cao điểm. Lưu ở
+`data/raw/market/` (đã gitignore — KHÔNG copy file thật vào repo, không
+gửi qua chat). Tên cột trong `data/market_csv_map.json` là GIẢ ĐỊNH,
+**chưa xác minh với file thật** — file thật đầu tiên rất có thể báo lỗi
+schema; khi đó gửi danh sách TÊN CỘT (không gửi dữ liệu) cho kỹ thuật để
+cập nhật mapping.
+
+```
+python -m ingest.market_csv --file data/raw/market/<file>.csv --channel shopee --kind listing
+python -m ingest.market_csv --file data/raw/market/<file>.xlsx --channel shopee --kind ads
+python -m ingest.market_csv --file data/raw/market/<file>.csv --channel tiktok --kind order
+python -m ingest.market_csv --report
+```
+
+- Nạp lại cùng file → `[skip]` (khóa = sha256 file), không nhân đôi.
+- File lỗi (thiếu cột / cột lạ / số sai / file rỗng) → `[err]` nêu số
+  dòng + tên cột, KHÔNG nạp dòng nào. Cột lạ bị chặn cả file (không lặng
+  lẽ bỏ qua) — sửa mapping sau khi xác minh, không sửa tay file xuất.
+- Cột tên/SĐT/địa chỉ người mua, ghi chú đơn bị bỏ ngay khi đọc; mã đơn
+  chỉ lưu dạng hash. Báo cáo không in mã đơn.
+- `--report`: cảnh báo đang mở, **S1 trước S2**:
+  - S1 `alcohol_listed` — SKU rượu đang bán trên sàn (cấm kênh online).
+  - S1 `tpbvsk_ads_no_xnqc` — TPBVSK chưa có giấy XNQC mà có chi phí ads.
+  - S2 `price_mismatch` — giá sàn ≠ giá `list` golden (`golden_approved`
+    false = so với giá CHƯA được GĐ bán hàng duyệt).
+  - S2 `item_unmapped` — item/SKU sàn không map được golden (item chung
+    nhiều biến thể mà thiếu SKU phân loại cũng rơi vào đây).
+  - `[warn] <kênh>: không đủ dữ liệu quảng cáo` — có listing nhưng chưa
+    nạp file ads, chưa kiểm được TPBVSK chạy quảng cáo.
+- **Ai sửa trên sàn:** Quản lý MXH, SAU KHI GĐ bán hàng duyệt (giá) hoặc
+  Pháp chế duyệt (tuân thủ). Agent KHÔNG sửa sàn, không đổi giá, không
+  ghi golden.
+- **Xuất listing TOÀN BỘ sản phẩm** (không lọc danh mục/tab, đủ mọi
+  trang, gồm cả sản phẩm đã ẩn); báo cáo quảng cáo gồm cả chiến dịch đã
+  tạm dừng. Cảnh báo chỉ tự đóng khi file xuất kế tiếp CÓ dòng của item
+  đó và dòng đó hết lỗi (rượu đã ẩn/xóa, giá khớp, chi phí ads = 0). Item
+  VẮNG mặt trong file → cảnh báo GIỮ MỞ, CLI in `[warn] N cảnh báo ...
+  không thấy item trong file — GIỮ MỞ` (vắng ≠ đã sửa).
+- Giới hạn file: ≤ 50MB, ≤ 100.000 dòng (tính cả dòng trống), ≤ 200 cột;
+  XLSX có ô định dạng/ô lạc ở xa phía dưới/bên phải (vùng dữ liệu vượt
+  trần) bị từ chối — xóa dòng/cột thừa hoặc xuất CSV. Ô số XLSX có phần
+  lẻ (vd 12,345) là lỗi, không tự đổi thành số nguyên.
+
 ## 6. Backup (tuần hoặc trước khi đụng schema/data)
 
 Postgres cài tại `C:\Program Files\PostgreSQL\17\` — `pg_dump`/`psql`

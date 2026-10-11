@@ -38,7 +38,8 @@ PLAYBOOK_TABS = {
 }
 
 SOP_COMMANDS = ("streamlit run", "apply_schema", "lead_store",
-                "agents.report", "agents.garden", "pipelines.store")
+                "agents.report", "agents.garden", "pipelines.store",
+                "ingest.market_csv")
 
 
 def _doc(name: str) -> str:
@@ -115,9 +116,9 @@ def test_sop_core_commands():
 def test_kien_truc_lists_all_tables():
     body = _doc("kien-truc.md")
     tables = _table_names()
-    assert len(tables) == 14, (
+    assert len(tables) == 17, (
         f"schema.sql có {len(tables)} bảng ({tables}) — contract "
-        "14 bảng đổi thì cập nhật kien-truc.md")
+        "17 bảng đổi thì cập nhật kien-truc.md")
     for t in tables:
         assert t in body, f"kien-truc.md thiếu bảng '{t}'"
     # Doc tuyên bố đúng số bảng hiện có (drift-guard số lượng).

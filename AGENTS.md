@@ -16,6 +16,7 @@ chat lẫn embeddings) + Streamlit.
 | Ingest | `python -m ingest.embed_store` |
 | DB lõi WS1 | `python scripts/apply_schema.py` → `python -m ingest.core_store` |
 | Golden master (v3.2) | `python -m ingest.golden_store` (nạp `data/golden_skus.json` + phiếu lệch) · `--report` · `--approve-price <id> --by <tên>` (CHỈ người thật duyệt giá — agent không chạy) |
+| File sàn (v3.3, chỉ đọc) | `python -m ingest.market_csv --file <csv/xlsx> --channel shopee\|tiktok --kind listing\|order\|ads` (idempotent theo sha256 file, bỏ cột PII, mở/đóng `market_alerts`) · `--report` — mapping cột `data/market_csv_map.json` chưa xác minh với file thật |
 | Bảng kê Phụ lục A | `python scripts/data_audit.py` (output → `docs/phu-luc-a.md`) |
 | Demo UI | `streamlit run app/streamlit_app.py` (hoặc `python demo.py`) |
 | Zalo webhook | `python -m connectors.zalo` → :8788/zalo-webhook |
@@ -32,7 +33,9 @@ chat lẫn embeddings) + Streamlit.
   delete-by-source idempotent — row `source='manual'` không bị đè);
   `golden_store` nạp golden master (sku_master/sku_map/price_list
   append-only/golden_discrepancies — upsert, không xóa trắng, chỉ đọc
-  products)
+  products); `market_csv` nạp file xuất Seller Center vào staging
+  (market_snapshots/market_rows/market_alerts — chỉ đọc golden, không
+  ghi sàn/giá, không PII người mua)
 - `pipelines/` — content draft + guardrail check (claim whitelist + banned words)
 - `app/` — Streamlit demo (3 tab: Chat, Content Studio, Chưa trả lời)
 - `data/` — jsonl dump, `claims_whitelist.json`, `banned_words.txt`

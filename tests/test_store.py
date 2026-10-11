@@ -305,7 +305,7 @@ def test_schema_sql_has_content_drafts_table():
     assert "status text not null default 'pending'" in columns
     assert "scheduled_date date" in columns
     assert len(re.findall(
-        r"^create table if not exists", lower, re.MULTILINE)) == 14
+        r"^create table if not exists", lower, re.MULTILINE)) == 17
     assert not re.search(r"\b(alter|drop)\s+table\b", lower)
 
 

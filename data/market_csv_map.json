@@ -1,0 +1,41 @@
+{
+  "_doc": "v3.3 mapping cột file xuất tay từ Seller Center → field chuẩn của ingest.market_csv. TÊN CỘT LÀ GIẢ ĐỊNH, chưa xác minh với file thật (external-dep: người có tài khoản Seller Center xuất 1 file mỗi loại để đối chiếu header, dòng header, định dạng giá/trạng thái). Mỗi kênh × loại export: required {field: header} (thiếu = lỗi schema), optional {field: header}, drop [header] (bỏ NGAY khi đọc — gồm mọi cột PII người mua/người nhận), inactive_status (listing: trạng thái coi là KHÔNG còn bán; trạng thái lạ = đang bán), cancel_status (order: trạng thái đơn hủy). Cột không thuộc required/optional/drop = cột lạ → chặn cả file. Field chuẩn: item_id, seller_sku, title, price, stock, status, ads_spend, qty, order_id.",
+  "shopee": {
+    "listing": {
+      "required": {"item_id": "Mã sản phẩm", "title": "Tên sản phẩm", "price": "Giá", "status": "Trạng thái"},
+      "optional": {"seller_sku": "SKU phân loại", "stock": "Kho hàng"},
+      "drop": ["Mô tả sản phẩm", "Ảnh bìa"],
+      "inactive_status": ["Đã ẩn", "Đã xóa", "Bị khóa", "Vi phạm"]
+    },
+    "order": {
+      "required": {"order_id": "Mã đơn hàng", "status": "Trạng thái đơn hàng", "title": "Tên sản phẩm", "qty": "Số lượng", "price": "Giá ưu đãi"},
+      "optional": {"seller_sku": "SKU phân loại hàng", "item_id": "Mã sản phẩm"},
+      "drop": ["Người mua", "Tên người mua", "Tên người nhận", "Số điện thoại", "Địa chỉ nhận hàng", "Tỉnh/Thành phố", "Quận/Huyện", "Phường/Xã", "Ghi chú", "Nhận xét từ người mua", "Mã vận đơn"],
+      "cancel_status": ["Đã hủy"]
+    },
+    "ads": {
+      "required": {"item_id": "Mã sản phẩm", "title": "Tên quảng cáo", "ads_spend": "Chi phí"},
+      "optional": {"status": "Trạng thái", "seller_sku": "SKU phân loại"},
+      "drop": ["Lượt xem", "Lượt click", "Doanh thu"]
+    }
+  },
+  "tiktok": {
+    "listing": {
+      "required": {"item_id": "Product ID", "title": "Product Name", "price": "Price", "status": "Status"},
+      "optional": {"seller_sku": "Seller SKU", "stock": "Quantity"},
+      "drop": ["Description", "Main Image"],
+      "inactive_status": ["Deactivated", "Deleted", "Suspended", "Draft", "Frozen"]
+    },
+    "order": {
+      "required": {"order_id": "Order ID", "status": "Order Status", "title": "Product Name", "qty": "Quantity", "price": "SKU Unit Original Price"},
+      "optional": {"seller_sku": "Seller SKU", "item_id": "Product ID"},
+      "drop": ["Buyer Username", "Buyer Message", "Recipient", "Phone #", "Detail Address", "Province", "District", "Zipcode", "Tracking ID"],
+      "cancel_status": ["Cancelled", "Canceled"]
+    },
+    "ads": {
+      "required": {"item_id": "Product ID", "title": "Campaign name", "ads_spend": "Cost"},
+      "optional": {"status": "Status", "seller_sku": "Seller SKU"},
+      "drop": ["Impressions", "Clicks", "Gross revenue"]
+    }
+  }
+}

@@ -346,3 +346,65 @@ join price_list p
  and (p.valid_to is null
       or p.valid_to > (now() at time zone 'Asia/Ho_Chi_Minh')::date)
 where r.readiness in ('TP_THUONG', 'QC_DAY_DU');
+
+-- ============================================================================
+-- v3.3 connector sàn (WP04a, F01b): staging file CSV/XLSX Quản lý MXH xuất
+-- tay từ Seller Center Shopee / TikTok Shop, nạp bởi `ingest.market_csv`.
+-- CHỈ ĐỌC sàn: agent không gọi sàn, không đổi giá/listing, KHÔNG ghi bảng
+-- golden (sku_master/sku_map/price_list) hay products — chỉ ghi 3 bảng dưới.
+-- Không PII người mua: cột tên/SĐT/địa chỉ/ghi chú bị bỏ ngay khi đọc file,
+-- mã đơn chỉ lưu hash (`order_id_hash`). Idempotent theo `file_sha256`
+-- (nạp lại cùng file = bỏ qua). `market_alerts` mở/đóng theo export kế tiếp;
+-- `detail` = giá trị theo TỪNG nguồn, không có "giá nên đặt".
+-- ============================================================================
+
+create table if not exists market_snapshots (
+  id bigint generated always as identity primary key,
+  channel text not null check (channel in ('shopee', 'tiktok')),
+  export_kind text not null check (export_kind in ('listing', 'order', 'ads')),
+  file_name text not null,          -- basename, không đường dẫn
+  file_sha256 text not null unique,
+  row_count int not null,
+  imported_at timestamptz not null default now()
+);
+
+create table if not exists market_rows (
+  id bigint generated always as identity primary key,
+  snapshot_id bigint not null references market_snapshots(id),
+  row_no int not null,              -- số dòng trong file (header = 1)
+  channel text not null,
+  export_kind text not null,
+  item_id text,
+  seller_sku text,
+  sku_key text,                     -- null = không map được golden; không FK
+  title text,
+  price_vnd bigint,
+  stock int,
+  status text,
+  ads_spend_vnd bigint,
+  qty int,
+  order_id_hash text,               -- sha256(channel:order_id)[:16]
+  raw jsonb not null,               -- CHỈ field allowlist đã chuẩn hóa
+  unique (snapshot_id, row_no)
+);
+
+create table if not exists market_alerts (
+  id bigint generated always as identity primary key,
+  kind text not null check (kind in ('alcohol_listed', 'price_mismatch',
+                                     'tpbvsk_ads_no_xnqc', 'item_unmapped')),
+  severity text not null check (severity in ('S1', 'S2')),
+  channel text not null,
+  export_kind text not null,
+  item_id text,
+  seller_sku text,
+  sku_key text,
+  detail jsonb not null,
+  status text not null default 'open' check (status in ('open', 'closed')),
+  snapshot_id bigint references market_snapshots(id),  -- lần thấy gần nhất
+  opened_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  closed_at timestamptz
+);
+create unique index if not exists market_alerts_key_idx
+  on market_alerts (kind, channel, export_kind, coalesce(item_id, ''),
+                    coalesce(seller_sku, ''));
