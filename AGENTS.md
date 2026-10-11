@@ -20,6 +20,8 @@ chat lẫn embeddings) + Streamlit.
 | Zalo webhook | `python -m connectors.zalo` → :8788/zalo-webhook |
 | Mock E2E Zalo | `python scripts/zalo_mock.py` |
 | Eval RAG | `python scripts/eval_qa.py` (12 câu questions.md, ~90s, exit 0 nếu ≥10/12 + 2 bẫy pass) |
+| Eval theo agent | `python scripts/agent_eval.py --agent guardrail\|chatbot` (ca `data/eval/`, ngưỡng `config.json`, ghi `eval_runs`; `--no-record`/`--allow-dirty`) |
+| Cổng deploy | `python scripts/deploy_gate.py --sha <SHA> --approved-by "<tên>" [--hotfix]` (chỉ in kế hoạch; cần PASS + người duyệt + ngoài đóng băng 21/12–10/02) |
 | Test/lint | `python -m pytest` · `ruff check .` |
 
 ## Structure

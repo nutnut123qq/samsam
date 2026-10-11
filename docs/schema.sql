@@ -182,3 +182,29 @@ create table if not exists llm_usage (
 );
 
 create index if not exists llm_usage_agent_ts_idx on llm_usage (agent_id, ts);
+
+-- ============================================================================
+-- v3.5 nghiệm thu (F17.1): 1 dòng / lần chạy scripts/agent_eval.py cho 1 agent
+-- tại 1 commit. scripts/deploy_gate.py chỉ cho deploy SHA khi row MỚI NHẤT
+-- của mọi agent bắt buộc có passed=true. commit_sha '<sha>-dirty' = chạy trên
+-- working tree bẩn — không bao giờ khớp deploy. Bản thật: n8n ghi qua webhook
+-- HMAC, role ci không quyền ghi (external-dep).
+-- ============================================================================
+
+create table if not exists eval_runs (
+  id bigserial primary key,
+  ts timestamptz not null default now(),
+  commit_sha text not null,
+  agent text not null,
+  n_total int,
+  n_pass int,
+  pass_rate numeric not null,
+  threshold numeric,
+  passed boolean not null,
+  model text,
+  prompt_version text,
+  note text
+);
+
+create index if not exists eval_runs_sha_agent_idx
+  on eval_runs (commit_sha, agent, ts);

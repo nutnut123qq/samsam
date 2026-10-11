@@ -1,0 +1,41 @@
+# v3.5 W35.1-W35.3 evidence — 2026-10-11T23:57:25+07:00 — worktree D:/code/samsam-v35, DB samsam_infra
+# HEAD=66d00ad532b831d93ae0a77528301230af85e0aa; working tree CHUA commit (thay doi v3.5) -> row ghi la '<HEAD>-dirty', KHONG mo duoc deploy
+$ python scripts/apply_schema.py   (lan 1)
+[done] schema applied — 11 bảng public: assets, chunks, claims_approved, content_drafts, eval_runs, leads, llm_usage, orders, plot_logs, plots, products
+exit=0
+$ python scripts/apply_schema.py   (lan 2)
+[done] schema applied — 11 bảng public: assets, chunks, claims_approved, content_drafts, eval_runs, leads, llm_usage, orders, plot_logs, plots, products
+exit=0
+
+$ python scripts/agent_eval.py --agent guardrail   (tree ban, khong --allow-dirty -> phai tu choi, 0 insert)
+[error] working tree bẩn (hoặc không đọc được git status) — kết quả không gắn được với commit; commit trước hoặc dùng --allow-dirty (ghi '<sha>-dirty', không mở được deploy)
+exit=1
+
+$ python scripts/agent_eval.py --agent guardrail --sha 0123 (sai dinh dang -> exit 2)
+usage: agent_eval.py [-h] --agent {chatbot,guardrail} [--sha SHA]
+                     [--no-record] [--allow-dirty]
+agent_eval.py: error: --sha/GITHUB_SHA phải là commit SHA đủ 40 ký tự hex
+exit=2
+
+$ python scripts/agent_eval.py --agent guardrail --allow-dirty
+[done] guardrail PASS 39/39 pass_rate=1.0 (ngưỡng 1.0) prompt_version=2211b47a3de6 model=rules
+[done] ghi eval_runs commit_sha=66d00ad532b831d93ae0a77528301230af85e0aa-dirty agent=guardrail passed=True
+exit=0
+
+$ python -c select eval_runs where commit_sha like HEAD% and agent='guardrail'
+(1, '66d00ad532b831d93ae0a77528301230af85e0aa-dirty', 'guardrail', 39, 39, Decimal('1'), Decimal('1'), True, 'rules', '2211b47a3de6', 'local')
+exit=0
+
+## Acceptance F17.1 (cay loi guardrail -> FAIL -> gate tu choi) — qua unit test fake conn:
+$ python -m pytest tests/test_agent_eval.py::test_removing_dieu_tri_fails tests/test_deploy_gate.py::test_one_agent_missing_pass tests/test_deploy_gate.py::test_pass_then_newer_fail_denied -v
+tests/test_agent_eval.py::test_removing_dieu_tri_fails PASSED            [ 33%]
+tests/test_deploy_gate.py::test_one_agent_missing_pass PASSED            [ 66%]
+tests/test_deploy_gate.py::test_pass_then_newer_fail_denied PASSED       [100%]
+============================== 3 passed in 0.72s ==============================
+
+===== vong sua nghiem thu (2026-10-12) — MINOR git that + nguong chatbot parity =====
+test moi: test_git_dirty_and_head_real_repo (git init repo tam: clean->False, untracked ngoai input->False, untracked trong data/eval->True, tracked sua->True, HEAD 40 hex, ROOT khong ton tai->None)
+test moi: test_chatbot_threshold_parity_eval_qa (2 fact truot -> PASS exit 0; 3 fact truot -> FAIL exit 1, trap_fail rong; (n-3)/n < min_pass_rate <= (n-2)/n)
+probe dot bien _git_dirty: bo status harness -> 1 failed; bo status tracked -> 1 failed; dao bool -> 1 failed
+probe dot bien config chatbot min_pass_rate 0.5 -> 1 failed; 0.8 -> xanh (dung: 11/14=0.786 < 0.8 <= 12/14, cung ngu nghia 'truot toi da 2')
+gate: xem evidence/v35_deploy_gate.log muc cung ngay (targeted x3 = 112/112 x3, full 324 passed, ruff sach)

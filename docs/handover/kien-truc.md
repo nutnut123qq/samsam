@@ -68,7 +68,7 @@ Streamlit demo.
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 10 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 11 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
@@ -82,6 +82,7 @@ Streamlit demo.
 | `leads` | Lead từ convlog (`dedup_key` unique,`channel`,`user_hash`,`question` đã mask,`intent`,`status`) | `ingest.lead_store` — insert-only, không xóa |
 | `content_drafts` | Hàng duyệt + lịch đăng (`brief`,`channel`,`text`,`guardrail` jsonb snapshot,`status`,`reviewer`,`scheduled_date`) | `pipelines.store` / Studio — update theo id |
 | `llm_usage` | 1 dòng/lời gọi LLM-embedding (`ts`,`agent_id`,`model`,`tokens_in/out`,`cost_usd` ước tính,`ok`,`error` đã mask) — không lưu prompt | `pipelines.llm_gateway` — insert-only; trần chi phí tháng theo agent đọc từ đây |
+| `eval_runs` | 1 dòng/lần nghiệm thu 1 agent tại 1 commit (`commit_sha`,`agent`,`n_total`,`n_pass`,`pass_rate`,`threshold`,`passed`,`model`,`prompt_version`) — `<sha>-dirty` = chạy trên tree bẩn, không mở deploy | `scripts/agent_eval.py` (CI/local) — insert-only; `scripts/deploy_gate.py` đọc row mới nhất |
 
 Quy ước chung: mọi bảng lõi có cột `source` = file/nguồn nạp; loader
 `core_store` chỉ delete+insert rows thuộc nguồn của mình → row nhập tay

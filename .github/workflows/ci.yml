@@ -1,0 +1,93 @@
+# v3.5 (WP06, F17.1) — CI nghiệm thu. Job test KHÔNG dùng secret (test
+# không gọi LLM thật); eval guardrail tất định ghi eval_runs vào DB service
+# (chỉ là tín hiệu CI — bản thật n8n ghi qua webhook HMAC, external-dep).
+# Job eval (chatbot, gọi LLM thật) chỉ chạy khi bấm tay + có secret.
+name: ci
+
+on:
+  push:
+    branches: [main, ai-infra]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: samsam_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/samsam_ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: ruff check .
+      - run: python scripts/apply_schema.py
+      - run: python -m ingest.core_store
+      - run: python -m pytest -q
+      - run: python scripts/agent_eval.py --agent guardrail
+
+  eval:
+    needs: test
+    # context `secrets` không dùng được trong if job-level -> map secret vào
+    # env rồi kiểm ở từng bước.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: samsam_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/samsam_ci
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - name: Kiểm secret
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "skip: chưa có secret OPENROUTER_API_KEY (external-dep)"
+          fi
+      - uses: actions/checkout@v4
+        if: env.OPENROUTER_API_KEY != ''
+      - uses: actions/setup-python@v5
+        if: env.OPENROUTER_API_KEY != ''
+        with:
+          python-version: "3.12"
+          cache: pip
+      - if: env.OPENROUTER_API_KEY != ''
+        run: pip install -r requirements.txt
+      - if: env.OPENROUTER_API_KEY != ''
+        run: python scripts/apply_schema.py
+      - if: env.OPENROUTER_API_KEY != ''
+        run: python -m ingest.embed_store
+      - if: env.OPENROUTER_API_KEY != ''
+        run: python scripts/agent_eval.py --agent chatbot
