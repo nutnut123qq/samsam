@@ -33,7 +33,7 @@ chat lẫn embeddings) + Streamlit.
 | Mock E2E Zalo | `python scripts/zalo_mock.py` |
 | Số hóa tài liệu (F15.1) | `python -m ingest.doc_intake` (intake `DOC_INTAKE_DIR`) · `--pending` · `--verify <sha256> --by "<tên>"` · `--reject <sha256> --by "<tên>"` |
 | Eval RAG | `python scripts/eval_qa.py` (12 câu questions.md, ~90s, exit 0 nếu ≥10/12 + 2 bẫy pass) |
-| Eval theo agent | `python scripts/agent_eval.py --agent guardrail\|chatbot` (ca `data/eval/`, ngưỡng `config.json`, ghi `eval_runs`; `--no-record`/`--allow-dirty`) |
+| Eval theo agent | `python scripts/agent_eval.py --agent <suite>` (suite `data/eval/suites/<agent>.json` = ca + ngưỡng + owner, ghi `eval_runs`; `--no-record`/`--allow-dirty`) · `--validate` (mọi suite) · `--deterministic` (CI: validate + suite tất định) · `--print-hash <agent>` (sửa ca = bump `version` + hash mới) · `--propose-threshold|--propose-suite <agent> --by <tên>` (đổi ngưỡng/bộ ca sau run FAIL → override_qa + duyệt) |
 | Cổng deploy | `python scripts/deploy_gate.py --sha <SHA> --approved-by "<tên>" [--hotfix]` (chỉ in kế hoạch; cần PASS + người duyệt + luật đóng băng theo lịch `data/freeze_calendar.json` qua `pipelines/freeze.py` — trong 21/12–10/02 chỉ `--hotfix` hoặc break-glass còn hạn) |
 | Hàng duyệt chung (v4.0) | `python -m pipelines.approval_queue --pending [--block K]` · `--approve/--reject ID --by "<tên>"` · `--override-qa ID --by "<tên>" --reason ".."` · `--expire` (mọi loại việc trừ content_draft; quá SLA → expired, không tự duyệt) |
 | Bản tin GĐ khối (v4.0) | `python -m pipelines.director --block K` · `--all --dry-run` (cấu hình `data/directors/<khối>.json`, 11 khối; bản tin → `data/reports/director-*.md`, không tự gửi) |
@@ -294,3 +294,8 @@ chat lẫn embeddings) + Streamlit.
 - **`evidence/*.log` bị `*.log` gitignore**: file evidence .log phải
   `git add -f` mới vào commit (quy ước "evidence commit vào repo" —
   file m2_*/v0*.log cũ đều tracked qua force-add).
+- **Traceback pytest in DSN có mật khẩu** (v4.5 reviewer MAJOR: fixture
+  `live` fail → DSN `postgresql://postgres:<pass>@...` lọt vào
+  `v45_pytest.log`). Output pytest ghi evidence phải pipe qua
+  `sed -E 's#(postgres(ql)?://[^:]+:)[^@]+@#\1***@#g'`; trước `git add -f`
+  grep evidence `postgres(ql)?://[^ ]*:[^*@]+@` và `sk-or` phải rỗng.

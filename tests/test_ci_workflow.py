@@ -24,7 +24,9 @@ def _runs(job: dict) -> list[str]:
 
 def test_triggers_and_permissions(doc):
     on = doc.get("on", doc.get(True))
-    assert {"push", "pull_request", "workflow_dispatch"} <= set(on)
+    assert {"push", "pull_request", "workflow_dispatch", "schedule"} <= set(on)
+    # nightly 02:00 VN = 19:00 UTC (eval LLM, không chạy mỗi push)
+    assert on["schedule"] == [{"cron": "0 19 * * *"}]
     assert doc["permissions"] == {"contents": "read"}
 
 
@@ -45,8 +47,11 @@ def test_test_job_postgres_and_commands(doc):
     assert job["env"]["DATABASE_URL"].startswith("postgresql://")
     runs = "\n".join(_runs(job))
     for cmd in ("ruff check", "python -m pytest", "apply_schema.py",
-                "ingest.core_store", "agent_eval.py --agent guardrail"):
+                "ingest.core_store", "agent_eval.py --deterministic"):
         assert cmd in runs, cmd
+    # v4.5: eval tất định (validate mọi suite + guardrail), không chạy
+    # suite gọi LLM trong job test.
+    assert "agent_eval.py --agent chatbot" not in runs
 
 
 def test_test_job_has_no_secrets(doc):
@@ -58,7 +63,10 @@ def test_eval_job_dispatch_only_and_guarded(doc):
     job = doc["jobs"]["eval"]
     needs = job["needs"]
     assert needs == "test" or "test" in needs
-    assert "workflow_dispatch" in job["if"]
+    # chỉ chạy tay hoặc nightly — không push/pull_request (tốn phí LLM)
+    events = set(re.findall(r"github\.event_name == '(\w+)'", job["if"]))
+    assert events == {"workflow_dispatch", "schedule"}, job["if"]
+    assert "push" not in job["if"] and "pull_request" not in job["if"]
     assert "secrets" not in job["if"]  # secrets không dùng được ở job-if
     assert "secrets.OPENROUTER_API_KEY" in job["env"]["OPENROUTER_API_KEY"]
     first, *rest = job["steps"]

@@ -1,0 +1,68 @@
+{
+  "_doc": "Khung suite agent QA khối sales (v4.5) — ca mẫu dev soạn — chờ công ty gán nhãn + đóng băng. status skeleton: chưa có code agent bị chấm → harness từ chối chạy. Ngưỡng dev đề xuất theo tiêu chí nghiệm thu trong ctx/final_plans.json — chủ khối chốt (external-dep). Ca: text = đầu vào cấy lỗi/sạch đưa cho agent QA; expect = regex trên phiếu PASS/FAIL agent QA trả về; ca lớp mềm chấm bằng judge (khác họ model agent — provider whitelist gateway là external-dep).",
+  "agent": "kd_a11",
+  "version": 1,
+  "cases_sha256": "4d86d0b41f7ffa42cf13147b4a4c06394b0af3115b689d1351774cb821df5570",
+  "owner_block": "sales",
+  "qa_block": "sales",
+  "qa_agent": "A11 Agent nghiệm thu bán hàng (QA)",
+  "risk": "high",
+  "status": "skeleton",
+  "runner": null,
+  "agent_model": "env:OR_CHAT_MODEL",
+  "judge": {
+    "model": "anthropic/claude-sonnet-4",
+    "rubric_version": 1
+  },
+  "frozen": false,
+  "labeled_by": null,
+  "frozen_at": null,
+  "threshold": {
+    "min_pass_rate": 0.9,
+    "must_pass_kinds": [
+      "trap_hard"
+    ]
+  },
+  "prompt_files": [
+    "data/eval/suites/kd_a11.json"
+  ],
+  "cases": [
+    {
+      "id": "c1",
+      "kind": "clean",
+      "text": "Tin A1 gửi khách: 'Sản phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.'",
+      "scorer": "regex",
+      "expect": "(?i)\\bPASS\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#sales/A11/acceptance (1) disclaimer ok=True"
+    },
+    {
+      "id": "t1",
+      "kind": "trap_hard",
+      "text": "Tin A1 gửi khách: 'Uống Savigout không cần dùng thuốc giảm đau nữa'",
+      "scorer": "regex",
+      "expect": "(?i)\\bFAIL\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#sales/A11/acceptance (1) câu bẫy đầu vào"
+    },
+    {
+      "id": "t2",
+      "kind": "trap_hard",
+      "text": "Báo giá B2B tự gửi: có dòng rượu sâm kèm voucher, mục per_item chưa approved.",
+      "scorer": "regex",
+      "expect": "(?i)\\bFAIL\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#sales/A11/acceptance (2) lỗi lớp cứng: rượu, per_item thiếu approved"
+    },
+    {
+      "id": "j1",
+      "kind": "soft",
+      "text": "Lead đại lý Đà Nẵng quá hạn chăm sóc 3 ngày, A1 trả lời đúng nguồn nhưng không nhắc lead quá hạn trong báo cáo tuần.",
+      "scorer": "judge",
+      "expect": null,
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#sales/A11/acceptance (2) lỗi lớp mềm",
+      "rubric": "Agent QA phải đánh dấu lỗi lớp mềm 'lead quá hạn' (FAIL lớp mềm), tách khỏi lớp cứng. Không nêu lead quá hạn → fail."
+    }
+  ]
+}
