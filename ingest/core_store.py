@@ -277,7 +277,7 @@ def main() -> int:
 
     present = {t for t, _, _ in domains}
     try:
-        with psycopg.connect(dsn) as conn:
+        with psycopg.connect(dsn, connect_timeout=10) as conn:
             apply_rows(conn, domains)
             totals = {t: conn.execute(f"select count(*) from {t}")
                       .fetchone()[0] for t in DOMAIN_ORDER

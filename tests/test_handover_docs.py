@@ -28,6 +28,7 @@ DOC_FILES = (
     "kien-truc.md",
     "prompt-library.md",
     "phu-luc-d.md",
+    "runbook-ha-tang.md",
 )
 
 # Tab nào thuộc vai trò nào — theo checklist W6.1. Tên phải khớp đúng
@@ -42,7 +43,9 @@ SOP_COMMANDS = ("streamlit run", "apply_schema", "lead_store",
                 "agents.report", "agents.garden", "pipelines.store",
                 "ingest.market_csv", "agent_eval", "deploy_gate",
                 "health_bulletin", "docker-compose.monitoring.yml",
-                "pipelines.auth")
+                "pipelines.auth",
+                "db_backup", "db_restore_drill", "dr_drill",
+                "break_glass")
 
 
 def _doc(name: str) -> str:

@@ -6,8 +6,9 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
-Nhánh `ai-infra` (M30): v3.3, v3.5, v3.7, v3.8 đã đóng và đã gộp;
-đang chạy song song: v3.4, v3.6, v3.9.
+Nhánh `ai-infra`: M30 (v3.0–v3.10) đóng và gộp đủ 2026-10-12 — 24 bảng,
+831 test. Đếm bảng trong test không còn hằng số (sàn `>= 24` / đọc
+schema.sql) để các version M31+ chạy song song không xung đột dòng này.
 
 ## Checklist v3.3-connector-csv
 
@@ -1000,6 +1001,708 @@ danh sách user/email thật; neo hash chain vào object-lock. Giới hạn đã
 nhận: local app vẫn connect bằng owner (DSN theo role chỉ dùng cho
 CLI duyệt cho tới khi grant đủ bảng); xóa dòng log cuối không phát
 hiện bằng chuỗi; `--by` CLI còn free-text.
+
+## Checklist v3.10-dr-freeze
+
+Khán giả/mục đích: nhánh `infra-v310` (M30, version cuối; worktree
+`D:\code\samsam-v36`, tách từ `infra-v36`; DB `samsam_infra`) — luồng
+F17.4 (diễn tập khôi phục, đo RPO/RTO) + luật đóng băng chung 21/12–10/02
+(flows_infra.md §5, áp cho F17.1/F17.5) + agent "Vận hành hạ tầng"
+(plan_data_platform.md) + bàn giao cho **người vận hành hạ tầng AI**
+(lương 15tr, không phải dev). Hiện có: `scripts/db_backup.py` +
+`scripts/db_restore_drill.py` (v3.6) khôi phục vào DB tạm trên CHÍNH
+server đang chạy — chưa mô phỏng "mất server, dựng server mới"; chưa đo
+RPO; lịch đóng băng chỉ nằm trong `data/eval/config.json` +
+`scripts/deploy_gate.py` ở nhánh `infra-v35` (CHƯA gộp vào nhánh này);
+không có break-glass; không có runbook hạ tầng. Sau version: (a) 1 lệnh
+diễn tập DR dựng Postgres MỚI trong container docker tạm từ image có sẵn,
+restore bản backup mới nhất, so số dòng manifest, đo RTO (gồm thời gian
+dựng server) + RPO (tuổi bản backup), luôn dọn container; (b) lịch đóng
+băng là 1 file data dùng chung + hàm thuần `pipelines/freeze.py` mà
+`deploy_gate` gọi được sau khi merge; (c) break-glass có hạn, bắt buộc
+lý do + người, append-only ngoài git, tự hết hạn; (d) runbook vận hành
+hạ tầng có drift-guard chống lệnh ma.
+
+Quy ước: ponytail — stdlib + `psycopg` + docker CLI sẵn có, KHÔNG dep
+mới, KHÔNG tzdata (giờ VN = `timezone(timedelta(hours=7))`, VN không
+DST). **TÁI DÙNG v3.6, không viết lại**: chọn manifest
+(`db_restore_drill.pick_manifest`), sha256/giải mã/pg_restore/đếm/drop
+(`db_restore_drill.run_drill`), resolver công cụ
+(`db_backup.resolve_tool`/`_docker_has_image`), `append_jsonl`,
+`scrub`, `inside_repo`/`dir_outside_repo`, `vn_now`, `private_umask`.
+Thay đổi duy nhất được phép ở file v3.6: thêm tham số tùy chọn
+`drill_server: str | None = None` cho `run_drill` (None → đọc
+`DRILL_DATABASE_URL`/`DATABASE_URL` như cũ) — test v3.6 phải xanh nguyên
+vẹn. KHÔNG tạo/sửa `scripts/deploy_gate.py`, `data/eval/` ở nhánh này
+(tránh xung đột merge với `infra-v35`); đọc tham chiếu bằng `git -C
+D:/code/samsam-v36 show infra-v35:scripts/deploy_gate.py`. Docker:
+KHÔNG `docker pull` (mọi `docker run` có `--pull never`); image =
+`postgres:<major>-alpine` với `<major>` từ `server_version` trong
+manifest (máy có `postgres:17-alpine`, docker 28.4 đang chạy — đã kiểm
+khi soạn contract). Mật khẩu container sinh ngẫu nhiên mỗi lần
+(`secrets.token_urlsafe`), truyền bằng `-e POSTGRES_PASSWORD` KHÔNG kèm
+giá trị (giá trị qua env subprocess), không in/ghi ra stdout/jsonl;
+cổng chỉ bind `127.0.0.1` (`-p 127.0.0.1::5432`, đọc cổng bằng `docker
+port`). Mọi subprocess có `timeout=`; mọi `psycopg.connect` có
+`connect_timeout` (guard AST `tests/test_connect_timeout_guard.py` tự
+quét file mới). Print tiếng Việt → UTF-8 guard. Nhật ký chạy là JSONL
+NGOÀI repo, append BYTES + `\n` tường minh (gotcha convlog); đọc lại thì
+bytes + split `\n` + `errors="replace"`, dòng hỏng bỏ qua có `[warn]`.
+Thời gian trong logic (RPO, freeze, break-glass hết hạn) nhận tham số
+`now` (aware datetime) — test KHÔNG dùng wall-clock/sleep. Test docker
+thật skip khi thiếu docker/image/DB, nhưng gate yêu cầu chạy với **0
+skipped** trên máy này.
+
+External-dep (KHÔNG giả lập, KHÔNG gọi thật): Postgres cloud thật +
+PITR phía nhà cung cấp (RPO ≤15 phút cho leads/orders/consent chỉ đạt
+được bằng PITR — pg_dump ngày chỉ cho RPO ≤24h); VM diễn tập riêng (tách
+runner CI); systemd timer 01:30/03:00; người ký biên bản diễn tập (Quản
+lý hạ tầng AI); danh sách người giữ quyền break-glass (TGĐ theo
+plan_data_platform — công ty cấp); kênh cảnh báo thật (n8n/Telegram,
+nhánh v3.7); image postgres major mới (docker pull cần user duyệt).
+
+- [x] **W310.1 `scripts/dr_drill.py` — DR drill trên Postgres docker
+  tạm** — `python scripts/dr_drill.py [--backup <manifest>]`. Đọc
+  `BACKUP_DIR` (ngoài repo — `bk.dir_outside_repo`, sai → usage exit 2),
+  `BACKUP_PASSPHRASE_FILE` (khi bản mã hóa), `DATABASE_URL` (chỉ để
+  guard tên; KHÔNG ghi gì vào server này), `DR_RPO_MAX_HOURS` (mặc định
+  24, phải là số > 0, sai → exit 2 trước mọi thao tác docker),
+  `load_dotenv(ROOT/.env)` trước khi đọc (như db_restore_drill.main).
+  Thứ tự: (0) chọn manifest (`pick_manifest`), lấy `<major>` từ
+  `server_version`; (1) probe `docker version --format
+  {{.Server.Version}}` (timeout 20s) + `bk._docker_has_image(image)` —
+  không có docker/daemon tắt/thiếu image → `[external-dep] ...` status
+  `khong_chay`, exit 3, KHÔNG thử cách khác, KHÔNG pull; (2) `docker run
+  -d --rm --pull never --name samsam-dr-<YYYYmmdd_HHMMSS>-<4 hex> -e
+  POSTGRES_PASSWORD -p 127.0.0.1::5432 <image>`; (3) đọc cổng `docker
+  port <name> 5432/tcp`; chờ sẵn sàng = `psycopg.connect(...,
+  connect_timeout=2)` + `select 1` thành công, hạn `DR_READY_TIMEOUT_S`
+  = 60 (quá hạn → fail); (4) gọi `run_drill(args, bdir, dsn,
+  drill_server=<DSN container dbname=postgres>)` — sha256, giải mã,
+  create DB `samsam_drill_...` TRONG container, pg_restore, đếm, drop đều
+  do code v3.6 làm; (5) RTO_total = giây từ bước (2) tới xong đếm (gồm
+  dựng server), giữ cả `restore_rto_seconds` của run_drill; RPO = `now -
+  manifest.created_at` (giây) — hàm thuần `rpo_seconds(manifest, now)`;
+  (6) `finally` (kể cả KeyboardInterrupt/exception bất kỳ): `docker rm
+  -f <name>` rồi kiểm `docker ps -a --filter name=^/<name>$ --format
+  {{.Names}}` rỗng → `container_removed`; còn → `[ALERT] container DR
+  <name> chưa dọn — còn bản sao dữ liệu` + exit 1. In bảng so sánh của
+  run_drill + `RTO`/`RPO` + so mục tiêu (RTO ≤ 4h, RPO ≤ DR_RPO_MAX_HOURS).
+  Append `dr_runs.jsonl` trong `BACKUP_DIR`: `ts`, `backup_file`,
+  `container`, `image`, `status` (ok|mismatch|fail|rpo_breach|khong_chay|
+  cleanup_failed|refused), `rto_seconds`, `restore_rto_seconds`,
+  `rpo_seconds`, `rpo_max_hours`, `tables_checked`, `mismatches`,
+  `container_removed` — KHÔNG DSN/mật khẩu/cổng. Exit: 0 khớp hết + RPO
+  trong mục tiêu + container đã dọn; 1 lệch/lỗi/RPO vượt mục tiêu
+  (restore vẫn chạy để kiểm)/container chưa dọn; 2 usage/guard; 3 không
+  chạy được vì docker (external-dep). Khởi động: thấy container
+  `samsam-dr-*` sót từ lần trước → `[warn]` liệt kê tên (KHÔNG tự xóa
+  container không phải của lần chạy này). Docstring tiếng Việt: khác gì
+  db_restore_drill (server MỚI vs DB tạm trên server cũ), biến env, exit
+  code, external-dep (VM diễn tập riêng/PITR).
+  - Boundary: `scripts/dr_drill.py` (mới), `scripts/db_restore_drill.py`
+    (chỉ tham số `drill_server` của `run_drill`), `tests/test_dr_drill.py`
+    (mới)
+  - Gate: (thật, `SCR=<scratchpad>`, `BACKUP_DIR=$SCR/v310_bk`) `python
+    scripts/db_backup.py` exit 0 → `python scripts/dr_drill.py` exit 0,
+    in 14 bảng khớp + `RTO` + `RPO`; `dr_runs.jsonl` dòng cuối
+    `status=ok`, `container_removed=true`, `tables_checked=14`; ngay sau
+    đó `docker ps -a --filter name=samsam-dr- --format {{.Names}}` rỗng;
+    trên server `DATABASE_URL`: `select count(*) from pg_database where
+    datname like 'samsam\_drill\_%'` = 0 và `count(*)` 14 bảng trước/sau
+    bằng nhau (drill KHÔNG đụng server thật); `grep -c` mật khẩu container
+    (test đọc từ env subprocess bị monkeypatch-capture) + mật khẩu
+    `DATABASE_URL` trong `dr_runs.jsonl` = 0. Test unit (không docker,
+    monkeypatch `subprocess.run`): argv `docker run` có `--pull never`,
+    `--rm`, `-p 127.0.0.1::5432`, `-e POSTGRES_PASSWORD` (không `=`), tên
+    khớp `^samsam-dr-\d{8}_\d{6}-[0-9a-f]{4}$`, KHÔNG chứa mật khẩu;
+    `docker` không có trên PATH / `docker version` exit≠0 / image thiếu →
+    exit 3 `status=khong_chay`, KHÔNG gọi `docker run`/`pull`;
+    `run_drill` raise giữa chừng → `docker rm -f` VẪN được gọi; `docker
+    ps -a` sau rm còn tên → exit 1 `status=cleanup_failed` + `[ALERT]`;
+    `rpo_seconds` với `now` = created_at + 30h và max 24 → `rpo_breach`
+    exit 1 (không wall-clock); `DR_RPO_MAX_HOURS=0`/`-1`/`abc` → exit 2
+    trước khi gọi docker. Test E2E docker thật (0 skipped): backup vào
+    tmp_path (pattern `clean_env` của `tests/test_db_backup.py` — chặn
+    `.env` BACKUP_* thật) → dr_drill exit 0, container đã dọn; manifest
+    sửa `row_counts` 1 bảng +1 → exit 1 `status=mismatch` và container
+    VẪN bị dọn; sau toàn bộ test: 0 container `samsam-dr-*`, 0 DB
+    `samsam_drill_%` trên server thật. `python -m pytest
+    tests/test_db_backup.py -q` vẫn xanh (run_drill tương thích ngược)
+  - Evidence: `evidence/v310_dr.log` — 14/14 bảng khớp, RTO 5.84s (restore
+    1.83s), RPO 1s, `status=ok`, `container_removed=true`; sau đó 0
+    container `samsam-dr-*`, 0 DB `samsam_drill_%`, số dòng 14 bảng
+    trước=sau; mật khẩu DB/DSN trong `dr_runs.jsonl` = 0 (mật khẩu
+    container: test E2E spy env subprocess). E2E docker thật 0 skipped.
+  - Fix-round nghiệm thu (MAJOR A04 volume + MAJOR drill_server + MINOR
+    flake pg_database): (1) image khai báo `VOLUME
+    /var/lib/postgresql/data` → mỗi `docker run` sinh anonymous volume,
+    `rm -f` không `-v` để lại bản sao dữ liệu khôi phục trên đĩa (auditor
+    thấy 2 volume `f554e763…`, `ff085997…` chứa WAL drill). Vá:
+    `docker run` mount `--tmpfs` lên mọi VOLUME của image
+    (`image_volumes`, đọc `docker image inspect .Config.Volumes`, lỗi →
+    PGDATA mặc định) → dữ liệu chỉ trong RAM; `cleanup` = `docker rm -f
+    -v` + ghi nhận volume (`container_volumes`, ngay sau run và trước
+    rm) + kiểm `docker volume ls` — còn volume → `container_removed=
+    false`, `cleanup_failed`, `[ALERT] ... docker volume rm`. Test:
+    `test_docker_run_argv_safe` (`--tmpfs`, `rm -f -v`),
+    `test_cleanup_checks_container_volumes`, `test_cleanup_volume_gone_ok`,
+    `test_image_volumes_fallback`; E2E `_assert_no_volume_left` (volume
+    container ngay sau run = ∅). (2) Khóa hồi quy "khôi phục vào
+    container, không vào server thật": unit
+    `test_run_drill_restores_into_drill_server` (mọi connect + env
+    pg_restore = drill_server, không `dsn`/`DRILL_DATABASE_URL`); E2E
+    fixture `trace` spy `psycopg.connect`/env pg_restore/`host_port` →
+    `_assert_restored_into_container` (mọi kết nối trong `dd.main` tới
+    `127.0.0.1:<docker port>`). (3) Bỏ `set(_drill_dbs) <= before`
+    (pg_database cluster-wide, worktree song song tạo
+    `samsam_drill_test_*` hợp lệ) → chỉ kiểm DB drill CỦA lần chạy này
+    (spy `rd.default_target`) không tồn tại trên server thật. Mutation
+    (plugin `pytest -p`, không sửa source): bỏ qua drill_server → 3 đỏ
+    (unit + 2 E2E); cleanup cũ → 3 đỏ; bỏ `--tmpfs` → 2 E2E đỏ. Chạy
+    thật: 0 volume mới, 0 container `samsam-dr-*`. 2 volume sót từ lần
+    chạy TRƯỚC fix KHÔNG tự xóa (xóa dữ liệu vĩnh viễn — chờ user
+    duyệt): `docker volume rm f554e76395d2… ff08599746eb…` (id đầy đủ
+    trong `evidence/v310_dr.log`).
+- [x] **W310.2 `data/freeze_calendar.json` + `pipelines/freeze.py` —
+  lịch đóng băng dùng chung** — File data (commit được, không secret):
+  `_doc` (nguồn: flows_infra.md §5, ngày Asia/Saigon gồm cả 2 đầu, bản
+  dev soạn CHƯA được công ty duyệt), `windows`: [{`name`, `start`
+  "2026-12-21", `end` "2027-02-10"}] (khớp `freeze` của
+  `infra-v35:data/eval/config.json`), `allowed_in_freeze`: ["hotfix",
+  "disable", "restore"] (hotfix tầng 2; tắt/hạ cấp agent; khôi phục
+  ĐÚNG trạng thái trước kill), `known_kinds`: thêm "feature", "promote",
+  "config", "migration", `break_glass_max_hours`: 4,
+  `break_glass_holders`: [] (external-dep). Module `pipelines/freeze.py`
+  (không I/O ngoài đọc 2 file, không print, không DB):
+  `load_calendar(path=CALENDAR) -> dict` — validate; `is_frozen(when,
+  calendar=None) -> bool` — `when` là `date` (ngày VN) hoặc `datetime`
+  AWARE (đổi sang +07:00 rồi lấy ngày); datetime naive → `ValueError`,
+  kiểu khác → `TypeError`; `check(change_kind, now, calendar=None,
+  windows=None) -> tuple[bool, str]` — kind không thuộc `known_kinds` →
+  `ValueError` (cả trong lẫn ngoài đóng băng); ngoài đóng băng → (True,
+  ...); trong đóng băng: kind ∈ allowed → (True, ...), có break-glass
+  còn hạn tại `now` → (True, lý do nêu người + giờ hết hạn), còn lại →
+  (False, lý do có khung ngày + "chỉ hotfix/tắt agent/khôi phục").
+  `windows=None` → đọc log break-glass theo env `BREAK_GLASS_LOG` (không
+  set → không có cửa sổ). Lịch hỏng → FAIL-CLOSED trong `check`: coi như
+  đang đóng băng (kind thường bị chặn, lý do "lịch đóng băng lỗi"), không
+  crash; `load_calendar`/`is_frozen` raise `FreezeConfigError`. Biến thể
+  lịch hỏng PHẢI enumerate đủ (gotcha missing≠0-record): file mất, file
+  rỗng 0 byte, `{}`, chỉ `_doc`, `windows: []`, JSON hỏng, `start > end`,
+  ngày sai định dạng (`"2026-12-21x"`, `"21/12/2026"`), kind trong
+  `allowed_in_freeze` không thuộc `known_kinds`. Điểm nối sau merge với
+  `infra-v35` (ghi ở đây, KHÔNG làm ở nhánh này): `deploy_gate.check()`
+  thay khối `cfg["freeze"]` bằng `freeze.check("hotfix" if hotfix else
+  "feature", now=datetime.combine(today, time(12), VN_TZ))`, bỏ key
+  `freeze` khỏi `data/eval/config.json` → 1 nguồn sự thật
+  `data/freeze_calendar.json`; F17.5 bật lại agent dùng kind "restore".
+  - Boundary: `data/freeze_calendar.json` (mới), `pipelines/freeze.py`
+    (mới), `tests/test_freeze.py` (mới)
+  - Gate: `python -m pytest tests/test_freeze.py -q` xanh, gồm: biên
+    ngày `2026-12-20T23:59:59+07:00` không đóng băng,
+    `2026-12-21T00:00:00+07:00` đóng băng, `2026-12-20T17:00:00+00:00`
+    (= 00:00 VN 21/12) đóng băng, `2027-02-10T23:59:59+07:00` đóng băng,
+    `2027-02-11T00:00:00+07:00` không, `date(2026,12,21)` đóng băng;
+    naive datetime → ValueError, str → TypeError; trong đóng băng
+    `check("feature")`/`"promote"`/`"config"`/`"migration"` → False,
+    `"hotfix"`/`"disable"`/`"restore"` → True; ngoài đóng băng
+    `"feature"` → True; `check("deploy_moi")` → ValueError; 9 biến thể
+    lịch hỏng → `check("feature", now trong lẫn NGOÀI khung)` → False
+    (fail-closed) và `check("hotfix")` → True; drift-guard: lịch chứa
+    đúng khung `2026-12-21`..`2027-02-10` (khớp v3.5 — đổi ngày phải sửa
+    cả hai). `grep -nE "print\(|psycopg|subprocess" pipelines/freeze.py`
+    rỗng (hàm thuần)
+  - Evidence: `evidence/v310_pytest.log` — 10 biến thể lịch hỏng (9 loại,
+    ngày sai định dạng 2 mẫu) fail-closed; lịch hỏng KHÔNG xét break-glass.
+- [x] **W310.3 `scripts/break_glass.py` — cửa sổ ngoại lệ có hạn** —
+  argparse nhóm loại trừ BẮT BUỘC đúng 1 op (gotcha CLI nhiều flag →
+  usage exit 2): `--open --reason "<lý do>" --by "<người>" [--hours
+  1..4]` (mặc định 2, trần = `break_glass_max_hours` của lịch), `--status`
+  (chỉ đọc), `--close --by "<người>" --reason "<lý do>"` (đóng sớm mọi
+  cửa sổ còn hạn). Log = env `BREAK_GLASS_LOG` (đường dẫn file, BẮT BUỘC,
+  NGOÀI repo — `bk.inside_repo`; thiếu/trong repo → exit 2, không tạo
+  file); append-only: chỉ mở `"ab"`, 1 dòng JSON/record (`action`
+  open|close, `ts`, `opened_at`, `expires_at` ISO +07:00, `hours`, `by`,
+  `reason`, `holder_verified`), KHÔNG bao giờ rewrite/xóa dòng. `reason`
+  bắt buộc ≥ 10 ký tự sau strip và qua `pipelines.pii._mask_pii` trước
+  khi ghi; `--by` bắt buộc, strip không rỗng, ≤ 80 ký tự. Holders: lịch
+  `break_glass_holders` rỗng → vẫn mở + `[CẢNH BÁO] danh sách người giữ
+  quyền break-glass chưa được công ty cấp (external-dep)` +
+  `holder_verified=false` (KHÔNG tự coi là đã xác minh); không rỗng mà
+  `--by` không thuộc (casefold/strip) → exit 2, không ghi. Mở thành công
+  in `[CẢNH BÁO] BREAK-GLASS mở tới <giờ VN> bởi <by> — mọi thay đổi
+  trong đóng băng được cho qua tới khi hết hạn`; mở ngoài khung đóng
+  băng → vẫn mở + `[warn]` không cần thiết. Reader ở `pipelines/freeze.py`:
+  `load_break_glass(path) -> list[dict]` (bytes + split `\n`, dòng hỏng/
+  thiếu key/datetime naive → bỏ qua) và `active_break_glass(records,
+  now) -> dict | None`: còn hạn khi `opened_at <= now < expires_at`, với
+  `expires_at` bị CẮT về `opened_at + break_glass_max_hours` (log sửa
+  tay ghi 48h vẫn chỉ 4h hiệu lực), `opened_at` ở tương lai → không hiệu
+  lực, có record `close` sau `opened_at` và ≤ `now` → hết hiệu lực.
+  `main(argv, now=None)` nhận `now` cho test.
+  - Boundary: `scripts/break_glass.py` (mới), `pipelines/freeze.py`
+    (reader), `tests/test_freeze.py`
+  - Gate: test (tmp_path, `now` tham số, 0 sleep): mở lúc T với 2h →
+    `check("feature", now=T+1h trong khung)` True, `now=T+2h` False (hết
+    hạn đúng biên), `now=T-1s` False; `--hours 5` / `0` → exit 2 không
+    ghi; record sửa tay `expires_at=T+48h` → tại T+5h không hiệu lực;
+    `--close` lúc T+30m → T+31m False; thiếu `--reason`/reason 9 ký tự/
+    thiếu `--by`/`--by "  "` → exit 2, file không đổi byte; `--open
+    --status` cùng lúc → exit 2; `BREAK_GLASS_LOG` trong repo → exit 2
+    không tạo file; log chứa dòng JSON hỏng + dòng ghi dở không `\n` +
+    reason có `\u2028` (viết escape trong test) → reader không crash, đọc
+    đúng record hợp lệ; reason chứa SĐT `0905 123 456` → log không còn
+    `0905123456`/`0905 123 456`; 2 lần `--open` → file chỉ dài thêm (byte
+    đầu giữ nguyên — append-only); holders `["Tên A"]` + `--by "Tên B"` →
+    exit 2. Chạy tay: `BREAK_GLASS_LOG=$SCR/v310_bg.jsonl python
+    scripts/break_glass.py --open --reason "..." --by "..." ` in cảnh báo;
+    `--status` liệt kê cửa sổ còn hạn
+  - Evidence: `evidence/v310_dr.log` (chạy tay open/status/close + usage
+    exit 2 + log trong repo exit 2) — vòng 2 OWASP: reader bỏ record có
+    `by` chứa ký tự điều khiển, `--status` thay ký tự điều khiển trong
+    reason, `main` chạy dưới `private_umask`.
+  - Fix-round nghiệm thu (2 MINOR): `test_reader_skips_bad_lines` trước
+    đó nhúng U+2028 LITERAL (vô hình khi review) → nay viết escape
+    `"dòng\u2028có ký tự lạ"` (0 byte e2 80 a8 trong source), assert byte
+    U+2028 thật có trong dòng log (`ensure_ascii=False`), reader đọc đúng
+    1 record giữ nguyên `\u2028`, `--status` không in raw U+2028 (thay
+    `?`). Mutation reader → `splitlines()`: test đỏ.
+- [x] **W310.4 `docs/handover/runbook-ha-tang.md` + drift-guard** —
+  tiếng Việt, mở đầu "dành cho ai / làm gì / cần gì" (người vận hành hạ
+  tầng AI, không phải dev). Mục: (1) lịch việc ngày/tuần/tháng (ngày:
+  đọc `backup_runs.jsonl` dòng cuối, bản tin sức khỏe; tuần Chủ nhật:
+  `db_restore_drill`; tháng + trước 30/11 và 18/12: `dr_drill` + soạn
+  biên bản để Quản lý hạ tầng AI ký — external-dep); (2) mức sự cố
+  S1/S2/S3 — mỗi mức: ví dụ cụ thể (S1: vi phạm guardrail tới khách / DB
+  mất / lộ dữ liệu cá nhân → báo TGĐ + Pháp chế, 72 giờ; S2: backup/drill
+  fail, job lỗi, chạm 80–100% trần; S3: cảnh báo lẻ), thời gian phản hồi,
+  ai được gọi, bước đầu tiên; (3) backup/drill/DR/khôi phục đè production
+  (tầng 2, người làm tay, không có lệnh tự động — trỏ `sop.md` mục 6);
+  RPO/RTO mục tiêu và giới hạn (pg_dump ngày → RPO ≤24h; ≤15 phút cần
+  PITR external-dep); (4) đóng băng 21/12–10/02 + loại thay đổi được
+  phép + break-glass (khi nào, ai, tối đa 4h, đóng sớm, đọc log); (5)
+  kill switch LLM: thêm agent_id vào `"kill"` trong
+  `data/llm_gateway.json` (đọc lại mỗi lời gọi — có hiệu lực không cần
+  restart) hoặc env `LLM_KILL` (cần restart tiến trình); danh sách
+  agent_id lấy bằng grep lời gọi `chat("...")`/`embed("...")` thật trong
+  repo; bật lại trong đóng băng = kind "restore" có RCA; (6) cap chi phí:
+  `monthly_cap_usd` theo agent, `LLM_CAP_DEFAULT_USD`, ngưỡng 80% cảnh
+  báo/100% chặn, cap 0 = tắt, câu SQL xem chi tiêu tháng từ bảng
+  `llm_usage`; (7) bản tin sức khỏe `python scripts/health_bulletin.py`
+  ghi "(nhánh khác: v3.7)"; cổng deploy `python scripts/deploy_gate.py`
+  ghi "(nhánh khác: v3.5)"; (8) checklist bàn giao `- [ ]` (≥ 6 mục: đọc
+  runbook, chạy 1 backup + 1 drill + 1 dr_drill có người kèm, thử
+  break-glass trên log tạm, thử kill switch trên agent `smoke`, nhận danh
+  sách người giữ break-glass/khóa mã hóa — external-dep, ký biên bản).
+  Không giá trị secret/DSN thật. `docs/handover/sop.md` thêm 1 đoạn ngắn
+  trỏ tới runbook + 2 lệnh `dr_drill`, `break_glass` (cuối mục 6, không
+  sửa nội dung cũ).
+  - Boundary: `docs/handover/runbook-ha-tang.md` (mới),
+    `docs/handover/sop.md` (thêm cuối mục 6), `tests/test_runbook.py`
+    (mới), `tests/test_handover_docs.py` (`DOC_FILES` thêm
+    `"runbook-ha-tang.md"`, `SOP_COMMANDS` thêm `"dr_drill"`,
+    `"break_glass"` — chỉ append, không xóa phần tử/assert cũ)
+  - Gate: `python -m pytest tests/test_runbook.py
+    tests/test_handover_docs.py -q` xanh. `tests/test_runbook.py`: (a)
+    trích mọi lệnh `python` (regex trên toàn văn: `python\s+-m\s+
+    ([\w.]+)` và `python\s+([\w./-]+\.py)`), bỏ `-m pytest|py_compile|
+    venv|pip`; mỗi lệnh phải trỏ file có thật (`a/b.py` hoặc
+    `a/b/__init__.py` cho `-m a.b`) HOẶC dòng chứa nó có `(nhánh khác:
+    v\d+\.\d+)`; đếm ≥ 10 lệnh được kiểm (guard không rỗng); (b) chống
+    pass-ảo: chạy cùng hàm kiểm trên chuỗi mẫu `python
+    scripts/khong_co.py` và `python -m agents.khong_co` → bị bắt; thêm
+    `(nhánh khác: v3.7)` cùng dòng → qua; (c) runbook chứa `S1`, `S2`,
+    `S3`, `LLM_KILL`, `data/llm_gateway.json`, `monthly_cap_usd`,
+    `21/12`, `10/02`, `break_glass`, `dr_drill`, `db_backup`,
+    `db_restore_drill`, `RPO`, `RTO`, `external-dep`; mỗi agent_id parse
+    từ code thật trong `api/`, `pipelines/`, `ingest/`, `agents/`,
+    `connectors/` — cả literal `chat("x"`/`embed("x"` (hiện: `content`,
+    `ingest`) lẫn hằng module `AGENT = "x"` (hiện: `api/rag.py` →
+    `chatbot`) — có mặt trong runbook (word-boundary — gotcha drift-guard
+    substring); parse ra < 3 id → test đỏ (guard không rỗng); `health_bulletin` và `deploy_gate` chỉ xuất
+    hiện trên dòng có `(nhánh khác: ...)`; ≥ 6 dòng `- [ ]`; (d) không
+    dòng nào khớp `postgresql://[^<\s:/]+:[^<\s@]+@` hoặc `sk-or-v1`.
+    Mutation ghi evidence: tạm đổi 1 lệnh trong runbook thành
+    `scripts/khong_co.py` → test đỏ, hoàn lại → xanh
+  - Evidence: `evidence/v310_pytest.log` — mutation `zalo_preflight.py`→
+    `khong_co.py` đỏ, hoàn lại xanh.
+  - Fix-round nghiệm thu (MINOR `smoke`): `smoke` không có luồng thật
+    nào gọi (chỉ là key cap trong `data/llm_gateway.json`) → runbook mục
+    5 sửa thành "id dành riêng để tập kill switch" + thêm lệnh kiểm chạy
+    được `python -c "from pipelines import llm_gateway as g;
+    g._gate('smoke'); ..."` (không gọi LLM): kill → `GatewayBlocked`,
+    chưa kill → `OK: smoke NOT blocked`; checklist bàn giao trỏ lệnh này.
+    Test `test_kill_switch_check_command_runs` exec đúng dòng lệnh trong
+    runbook ở cả 2 trạng thái (LLM_KILL env, `_month_spend` stub).
+- [x] **Gate chung** — (vòng 2: targeted 159 passed ×3, 0 skipped; full
+  460 passed; ruff sạch; diff deploy_gate/data/eval rỗng; 14 bảng 383
+  dòng trước=sau; `evidence/*.log` cần `git add -f`)
+  - đếm trước: `count(*)` 14 bảng `samsam_infra` (in bằng `python -c`,
+    không in DSN); `docker ps -a --filter name=samsam-dr-` rỗng
+  - targeted ×3: `python -m pytest tests/test_dr_drill.py tests/test_freeze.py tests/test_runbook.py tests/test_handover_docs.py tests/test_db_backup.py tests/test_connect_timeout_guard.py -q -rs`
+    3 lần liên tiếp xanh, **0 skipped** (gate nặng có thể bị đẩy nền —
+    đọc output tới khi process exit rồi mới chạy lần kế; không chạy chồng,
+    không retry mù)
+  - full: `python -m pytest -q` xanh, ≥ 360 + test mới (baseline 360)
+  - `ruff check .` sạch
+  - `python -m py_compile scripts/dr_drill.py scripts/break_glass.py pipelines/freeze.py scripts/db_restore_drill.py`
+  - `python -c "import json; json.load(open('data/freeze_calendar.json', encoding='utf-8'))"` OK
+  - `git diff --stat infra-v36 -- scripts/deploy_gate.py data/eval` rỗng
+    (không đụng file của v3.5)
+  - sau toàn bộ gate: `count(*)` 14 bảng `samsam_infra` bằng lúc đầu; 0
+    DB `samsam_drill_%`; 0 container `samsam-dr-*`; không file `*.dump*`/
+    `*.jsonl` mới trong repo (log break-glass, dr_runs nằm ở scratchpad)
+  - `git status`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); không file runtime mới trong `data/` (ngoài
+    `data/freeze_calendar.json` là config commit được)
+  - External-dep (để `[ ]`): xem các mục dưới
+- [ ] **external-dep** Postgres cloud thật + PITR phía nhà cung cấp; diễn
+  tập PITR ra instance tạm 30/11 và 18/12 (RPO ≤15 phút leads/orders/
+  consent chỉ đo được ở đây); VM diễn tập riêng tách runner CI thay cho
+  container docker trên máy dev.
+- [ ] **external-dep** systemd timer (backup 01:30, drill Chủ nhật 03:00,
+  dr_drill hằng tháng) trên VM; kênh cảnh báo thật cho `dr_runs`/
+  `drill_runs` (n8n/Telegram — nhánh v3.7).
+- [ ] **external-dep** Công ty duyệt lịch đóng băng + cấp danh sách người
+  giữ quyền break-glass (`break_glass_holders`); Quản lý hạ tầng AI ký
+  biên bản diễn tập DR; người vận hành hạ tầng AI nhận bàn giao theo
+  checklist runbook (ký).
+- [ ] **external-dep** Image postgres major mới khi server cloud đổi
+  major (docker pull cần duyệt); gộp `infra-v35` + nối `deploy_gate` vào
+  `pipelines/freeze.check` (điểm nối ghi ở W310.2).
+
+Someday (ngoài phạm vi v3.10, ghi để không cuốn vào): bảng
+`dr_runs`/`break_glass_log` trong DB (agent_action_log của v3.4) thay
+jsonl; tự soạn biên bản diễn tập từ `dr_runs.jsonl` qua `agents/report.py`;
+lịch đóng băng lặp hằng năm (hiện liệt kê từng khung); `deploy_gate`
+đọc break-glass; checksum mẫu nội dung + `test_core_store` trên DB DR;
+`dr_drill` khôi phục từng bảng + đo RTO theo bảng.
+
+## Checklist v3.6-cloud-db-backup
+
+Khán giả/mục đích: nhánh `ai-infra` (M30, worktree `D:\code\samsam-v36`,
+DB `samsam_v36`) — WP02 "Postgres managed trong nước", luồng F17.4
+(Backup, PITR, diễn tập khôi phục), agent "Vận hành hạ tầng"
+(plan_data_platform.md, flows_infra.md). Hiện DB chỉ chạy local, backup là
+1 lệnh `pg_dump` gõ tay trong `docs/handover/sop.md` mục 6, không manifest/
+sha256/retention/diễn tập; 7 chỗ `psycopg.connect` chưa có
+`connect_timeout` (gotcha v1.9: host chết là treo). Sau version: (a) mọi
+connect Postgres trong code có `connect_timeout`, có test chặn tái phát;
+(b) 1 lệnh backup ra file `pg_dump -Fc` nhất quán snapshot + manifest
+(sha256, size, số dòng 14 bảng) + retention + bản sao offsite qua adapter
++ mã hóa tùy chọn; (c) 1 lệnh diễn tập khôi phục bản mới nhất vào DB TẠM,
+so số dòng với manifest, đo RTO, xóa DB tạm, KHÔNG BAO GIỜ đè DB đang dùng;
+(d) tài liệu + env mẫu để chuyển lên Postgres managed trong nước khi công
+ty cấp tài khoản.
+
+Quy ước: ponytail — stdlib + `psycopg` sẵn có, KHÔNG dep mới (không boto3,
+không tzdata; giờ VN = `timezone(timedelta(hours=7))`, VN không có DST).
+Công cụ Postgres chọn theo thứ tự, ghi trong docstring + manifest
+(`tool`): (1) env `PG_BIN` (thư mục chứa `pg_dump`/`pg_restore`); (2)
+`shutil.which("pg_dump")`; (3) `C:/Program Files/PostgreSQL/<major>/bin`
+với `<major>` = major của server (máy này: PG 17.6, có sẵn `pg_dump.exe` +
+`pg_restore.exe` tại `C:\Program Files\PostgreSQL\17\bin`, KHÔNG trên PATH);
+(4) docker image `postgres:<major>-alpine` nếu `docker image inspect` thấy
+sẵn (máy có `postgres:17-alpine`) — KHÔNG `docker pull` tự động; host
+`localhost/127.0.0.1/::1` đổi thành `host.docker.internal`; không có công cụ
+nào → `[err]` exit 1. Major của `pg_dump --version` phải ≥ major server
+(nhỏ hơn → exit 1). Mật khẩu/DSN KHÔNG nằm trong argv subprocess (truyền
+qua env `PGHOST/PGPORT/PGUSER/PGPASSWORD/PGDATABASE/PGSSLMODE` tách bằng
+`psycopg.conninfo.conninfo_to_dict`; docker dùng `-e PGPASSWORD` không
+kèm giá trị), KHÔNG in/ghi DSN, host, user vào stdout/manifest/log. Mọi
+subprocess có `timeout=` và env `PGCONNECT_TIMEOUT=10` (gotcha
+connect_timeout áp cả cho công cụ ngoài). Thư mục backup do env
+`BACKUP_DIR` chỉ định, BẮT BUỘC nằm NGOÀI repo (resolve rồi so với ROOT;
+trong repo → usage exit 2, không tạo thư mục); `.gitignore` thêm `*.dump`,
+`*.dump.enc`, `backups/` phòng lỡ tay. Không thêm bảng DB (schema giữ 14
+bảng — tránh đụng drift-guard đếm bảng của các version song song): nhật
+ký chạy ghi JSONL trong `BACKUP_DIR` (`backup_runs.jsonl`,
+`drill_runs.jsonl`; append BYTES + `\n` tường minh — gotcha convlog), bảng
+`backup_runs`/`drill_runs` cho F17.2/n8n là someday. Ghi file manifest
+atomic (tmp + `os.replace`); dump ghi ra `*.partial` rồi mới rename khi
+xong, tên đích đã tồn tại → exit 1 (không đè). Print tiếng Việt → UTF-8
+guard (copy `scripts/zalo_preflight.py`/`apply_schema.py`). Test DB thật
+skip khi thiếu `DATABASE_URL`/không connect được/không có công cụ PG,
+nhưng gate yêu cầu chạy với **0 skipped**. Mọi DB diễn tập tên
+`samsam_drill_<YYYYmmdd_HHMMSS>_<4 hex>` và phải bị DROP sau mỗi lần chạy
+(kể cả test, kể cả nhánh lỗi).
+
+External-dep (KHÔNG giả lập, KHÔNG gọi thật): tài khoản Postgres managed
+trong nước (Bizfly/Viettel/FPT/VNPT/CMC/GreenNode — chọn sau báo giá) +
+thẻ thanh toán; bật PITR/WAL + retention phía nhà cung cấp và diễn tập
+PITR ra instance tạm (F17.4 bước 1, 6); object storage S3-compatible
+(Bizfly Simple Storage/Backblaze B2) + key + lifecycle daily/weekly/monthly;
+migrate dữ liệu lên cloud thật; khóa mã hóa do công ty giữ trong secret
+manager (flows chọn `age` — máy chưa có `age`, pilot dùng `openssl` có
+sẵn); role DB `backup` chỉ đọc; VM diễn tập tách biệt khỏi runner CI;
+systemd timer 01:30/03:00 trên VM; người ký biên bản diễn tập.
+
+- [x] **W36.1 `connect_timeout` toàn repo + guard AST** — vá 7 chỗ
+  `psycopg.connect` thiếu timeout: `api/rag.py:52` (`retrieve`, đường chat
+  → `connect_timeout=5`), `demo.py:44` + `demo.py:52` (`ensure_db` → 5),
+  `ingest/core_store.py:280`, `ingest/embed_store.py:156`,
+  `scripts/apply_schema.py:35`, `scripts/data_audit.py:63` (CLI → 10).
+  Không đổi hành vi khác (cùng nhánh except `OperationalError` sẵn có).
+  Test mới `tests/test_connect_timeout_guard.py`: duyệt `ast` mọi `*.py`
+  trong repo trừ `tests/`, `.venv/`, `venv/`; với mỗi file gom alias
+  `import psycopg [as X]`; mọi `Call` dạng `<alias>.connect(...)` phải có
+  keyword `connect_timeout`; cấm `from psycopg import connect`. Guard
+  không rỗng: đếm ≥ 12 lời gọi tìm được (5 có sẵn timeout ở `lead_store`
+  ×2, `golden_store`, `llm_gateway`, `zalo_preflight` + 7 chỗ vá) + 2 mẫu
+  nguồn tự tạo trong test (`import psycopg as p; p.connect(d)` và `from
+  psycopg import connect`) phải bị bắt (chống guard pass-ảo).
+  - Boundary: 7 file trên (chỉ dòng connect), `tests/test_connect_timeout_guard.py`
+  - Gate: `python -m pytest tests/test_connect_timeout_guard.py -q` xanh;
+    `grep -rnE "psycopg\.connect\(" --include=*.py . | grep -v "^./tests/" | grep -v connect_timeout`
+    rỗng (dòng `demo.py:52` bẻ dòng → kiểm bằng test AST, grep chỉ là
+    spot-check); mutation: tạm xóa `connect_timeout` ở `api/rag.py` →
+    test đỏ, hoàn lại → xanh (ghi vào evidence)
+  - Evidence: `evidence/v36_backup.log`
+- [x] **W36.2 `scripts/db_backup.py` — dump nhất quán + manifest +
+  sha256** — `python scripts/db_backup.py`: đọc `DATABASE_URL`
+  (`load_dotenv(ROOT/.env)` như apply_schema), `BACKUP_DIR`, `BACKUP_KEEP`
+  (mặc định 7). Mở conn (`connect_timeout=10`) `set transaction isolation
+  level repeatable read, read only` → `select pg_export_snapshot()` → đếm
+  `count(*)` MỌI bảng `information_schema.tables` `table_schema='public'
+  and table_type='BASE TABLE'` (tên quote bằng `psycopg.sql.Identifier`)
+  trong CÙNG snapshot → chạy `pg_dump -Fc --snapshot=<id>` khi tx còn mở
+  → đóng tx. Số đếm trong manifest vì vậy khớp đúng nội dung file dù có
+  ghi đồng thời. Tên file `<dbname>_<YYYYmmdd_HHMMSS>_vn.dump` (giờ VN
+  +07:00). Manifest `<tên dump>.manifest.json` đúng các key: `format`
+  (=1), `created_at` (ISO có `+07:00`), `db_name`, `server_version`,
+  `pg_dump_version`, `tool` (`native:<đường dẫn>` | `docker:<image>`),
+  `file`, `size_bytes`, `sha256` (của file cuối cùng trên đĩa),
+  `encrypted`, `cipher`, `row_counts` {bảng: số dòng}. Không key nào chứa
+  host/user/mật khẩu. Exit: 0 OK; 1 lỗi (thiếu DSN, connect lỗi, không có
+  công cụ, pg_dump exit≠0, tên đích tồn tại) — lỗi thì xóa `.partial`,
+  KHÔNG để lại manifest; 2 usage (thiếu `BACKUP_DIR`, `BACKUP_DIR` trong
+  repo, `BACKUP_KEEP` không phải số nguyên ≥1) — kiểm TRƯỚC khi connect.
+  Mỗi lần chạy (kể cả lỗi sau bước usage) append 1 dòng
+  `backup_runs.jsonl` (`ts`, `status` ok|fail|offsite_fail, `file`,
+  `size_bytes`, `sha256`, `offsite`, `error` đã rút gọn, không DSN).
+  Docstring tiếng Việt: contract, cách chọn công cụ, biến env, exit code.
+  - Boundary: `scripts/db_backup.py` (mới), `tests/test_db_backup.py` (mới),
+    `.gitignore` (3 dòng)
+  - Gate (DB `samsam_v36`, `SCR=<scratchpad>`): `BACKUP_DIR=$SCR/v36_bk
+    python scripts/db_backup.py` exit 0, in tên file + tool được chọn
+    (máy này: `native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe`);
+    `python -c` đọc manifest: `sha256(file) == manifest.sha256`,
+    `size_bytes == os.path.getsize`, `row_counts` có đúng 14 bảng và bằng
+    `count(*)` live từng bảng, file bắt đầu bằng magic `PGDMP`;
+    `grep -c` mật khẩu từ DSN (đọc trong python, không in) trong manifest
+    + `backup_runs.jsonl` = 0; `BACKUP_DIR=D:/code/samsam-v36/backups` →
+    exit 2 và thư mục KHÔNG được tạo; thiếu `BACKUP_DIR` → exit 2;
+    `BACKUP_KEEP=0`/`-1`/`abc` → exit 2 (cả 3 không gọi connect —
+    monkeypatch trong test); `DATABASE_URL` trỏ host chết
+    `postgresql://u@10.255.255.1:5432/x` → exit 1 trong < 30s (không
+    treo), không file `.dump`/manifest nào được tạo. Test unit: resolver
+    công cụ theo đúng 4 bước (monkeypatch `PG_BIN`/`which`/`exists`/docker
+    inspect); argv docker có `host.docker.internal`, `-e PGPASSWORD` và
+    KHÔNG chứa mật khẩu; major pg_dump < server → exit 1
+  - Evidence: `evidence/v36_backup.log`
+- [x] **W36.3 Mã hóa + retention + offsite adapter** — Mã hóa: bật khi
+  có env `BACKUP_PASSPHRASE_FILE` (file NGOÀI repo, trong repo → exit 2):
+  `openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 -pass file:<path>`
+  (passphrase không vào argv) → file `.dump.enc`, manifest
+  `encrypted=true`, `cipher="openssl-aes-256-cbc-pbkdf2"`, `sha256` của
+  file `.enc`; bản rõ `.dump` bị xóa trong `finally` (không còn file nào
+  bắt đầu `PGDMP` trong `BACKUP_DIR`). Có passphrase mà không tìm thấy
+  `openssl` → exit 1, KHÔNG ghi bản rõ (fail-closed). Không có passphrase
+  → `[warn] backup CHƯA mã hóa (external-dep: khóa công ty)`, vẫn exit 0.
+  Retention: chỉ chạy SAU khi bản mới thành công; giữ `BACKUP_KEEP` bản
+  mới nhất theo `created_at` trong manifest hợp lệ; xóa cặp dump+manifest
+  cũ hơn; KHÔNG đụng file không khớp mẫu tên, manifest hỏng JSON, file
+  `.partial`, `*.jsonl`. Offsite: env `BACKUP_OFFSITE` — rỗng → `[warn]
+  chưa cấu hình offsite`, exit 0; `dir:<path>` (path ngoài repo, trong
+  repo → exit 2) → copy dump + manifest qua tmp + `os.replace`, tính lại
+  sha256 bản sao phải khớp manifest, áp cùng retention ở thư mục offsite;
+  `s3://<bucket>/<prefix>` → KHÔNG gọi mạng, in `[external-dep] offsite
+  S3-compatible (Bizfly/Backblaze) chưa bật — cần key + công cụ
+  rclone/aws-cli`, exit 3; lỗi copy/sha lệch → exit 3, bản local GIỮ
+  NGUYÊN (flows F17.4: upload lỗi giữ bản cục bộ + cảnh báo). Exit 3 =
+  "local OK, offsite chưa xong" để giám sát phân biệt với lỗi dump.
+  - Boundary: `scripts/db_backup.py`, `tests/test_db_backup.py`
+  - Gate: chạy 4 lần với `BACKUP_KEEP=3 BACKUP_OFFSITE=dir:$SCR/v36_off`
+    → `$SCR/v36_bk` và `$SCR/v36_off` mỗi nơi đúng 3 dump + 3 manifest
+    (bản mới nhất còn, bản cũ nhất mất), sha256 bản offsite == manifest;
+    file lạ `notes.txt` + manifest hỏng đặt sẵn trong `v36_bk` vẫn còn sau
+    retention; `BACKUP_PASSPHRASE_FILE=$SCR/v36_pass.txt` → file `.dump.enc`
+    không bắt đầu `PGDMP`, `openssl enc -d` bằng đúng passphrase ra file
+    bắt đầu `PGDMP`, không còn `.dump` rõ; `BACKUP_OFFSITE=s3://b/p` → exit
+    3, dump local có, không import/gọi thư viện mạng (grep `boto3|requests|
+    httpx` trong `scripts/db_backup.py` rỗng); test unit retention trên
+    tmp_path với 5 manifest giả → giữ đúng 3 mới nhất theo `created_at`
+    (không theo mtime)
+  - Evidence: `evidence/v36_backup.log`
+- [x] **W36.4 `scripts/db_restore_drill.py` — diễn tập vào DB tạm, không
+  bao giờ đè** — `python scripts/db_restore_drill.py [--backup <manifest>]
+  [--target-db <tên>]`: chọn manifest hợp lệ mới nhất (theo `created_at`)
+  trong `BACKUP_DIR` (manifest hỏng → bỏ qua có `[warn]`; bản mới nhất mà
+  file dump mất hoặc sha256 lệch → FAIL exit 1, KHÔNG lùi sang bản cũ hơn
+  để che lỗi). Thứ tự: (1) guard TRƯỚC mọi thao tác: tên đích (mặc định
+  `samsam_drill_<YYYYmmdd_HHMMSS>_<4 hex>`) phải khớp
+  `^samsam_drill_[0-9a-z_]+$`, KHÁC dbname của `DATABASE_URL` (so tên,
+  không phụ thuộc host — chặn cả `localhost` vs `127.0.0.1`), và CHƯA tồn
+  tại trong `pg_database` → vi phạm: `[refuse]` exit 2, không create/
+  restore; (2) kiểm sha256; (3) giải mã ra file tạm (nếu `encrypted`,
+  cần `BACKUP_PASSPHRASE_FILE`; sai khóa → exit 1); (4) `create database`
+  (autocommit, `sql.Identifier`) trên server của `DRILL_DATABASE_URL` nếu
+  có (cloud: VM diễn tập riêng), không thì server của `DATABASE_URL`;
+  (5) `pg_restore --no-owner --no-privileges --exit-on-error -d <drill>`
+  (PG* env, không argv mật khẩu); (6) đếm `count(*)` mọi bảng trong
+  `row_counts` của manifest + phát hiện bảng thiếu/thừa; (7) RTO = giây
+  từ bước (2) tới xong (6); (8) `finally`: `drop database if exists ...
+  with (force)` + kiểm lại `pg_database` không còn tên đó, xóa file giải
+  mã tạm. In bảng so sánh + RTO; append `drill_runs.jsonl` (`ts`,
+  `backup_file`, `drill_db`, `status` ok|mismatch|fail|refused|
+  drop_failed, `rto_seconds`, `tables_checked`, `mismatches`
+  {bảng: [manifest, thực tế]}, `dropped`), không DSN. Exit: 0 khớp hết +
+  đã drop; 1 lệch/lỗi/drop thất bại (drop thất bại in `[ALERT] còn bản
+  sao dữ liệu ở DB tạm <tên>`); 2 bị guard từ chối/usage. Khôi phục ĐÈ
+  production KHÔNG có trong script (tầng 2, người làm tay — ghi docstring).
+  - Boundary: `scripts/db_restore_drill.py` (mới), `tests/test_db_backup.py`
+  - Gate (sau gate W36.2): `python scripts/db_restore_drill.py` exit 0, in
+    14 bảng khớp + `RTO` số giây; ngay sau đó `select count(*) from
+    pg_database where datname like 'samsam\_drill\_%'` = 0; `--target-db
+    samsam_v36` → exit 2 `[refuse]`, `drill_runs.jsonl` dòng cuối
+    `status=refused`, `count(*)` 14 bảng `samsam_v36` trước/sau bằng nhau;
+    `--target-db postgres` → exit 2; `--target-db` trùng 1 DB
+    `samsam_drill_...` tạo sẵn → exit 2 và DB đó KHÔNG bị drop/ghi (test tự
+    tạo rồi tự drop); test E2E (DB thật, 0 skipped): backup thường →
+    drill ok; backup mã hóa → drill ok với đúng passphrase, sai passphrase
+    → exit 1 và không DB drill nào được tạo; sửa 1 byte file dump → exit
+    1 trước `create database`; manifest sửa `row_counts` 1 bảng +1 → exit
+    1 `status=mismatch` và DB tạm VẪN bị drop; monkeypatch `subprocess.run`
+    trong ca refuse → pg_restore không được gọi; sau toàn bộ test: 0 DB
+    `samsam_drill_%`
+  - Evidence: `evidence/v36_backup.log`
+- [x] **W36.5 `deploy/cloud/` — README + env mẫu Postgres managed trong
+  nước** — `deploy/cloud/README.md` (tiếng Việt, mở đầu "dành cho ai /
+  làm gì / cần gì"): tiêu chí chọn nhà cung cấp theo F17.4 (BẮT BUỘC: dữ
+  liệu trong nước, PITR + khôi phục PITR ra instance tạm, mã hóa at-rest,
+  TLS; ưu tiên: object-lock, API bật/tắt VM) — ứng viên Bizfly/Viettel/
+  FPT/VNPT/CMC/GreenNode ghi "cần xác minh sau báo giá", không khẳng định
+  tính năng chưa kiểm; tham số kết nối `sslmode=require` (`verify-full` +
+  `sslrootcert` khi có CA nhà cung cấp), `connect_timeout`; 3 role đề
+  xuất (`app`, `backup` chỉ đọc, `loader` golden) — external-dep; PITR bật
+  phía nhà cung cấp + retention WAL (external-dep, người làm 1 lần, có
+  biên bản); checklist migrate ĐỦ 14 bảng theo 2 đường: (A) dựng mới:
+  `python scripts/apply_schema.py` ×2 (in 14 bảng) → `python -m
+  ingest.core_store` → `python -m ingest.golden_store` → `python -m
+  ingest.embed_store` (chunks, tốn phí embed) — bảng sinh lúc chạy
+  (`leads`, `content_drafts`, `plot_logs`, `llm_usage`,
+  `golden_discrepancies`...) bắt đầu rỗng; (B) mang dữ liệu: `python
+  scripts/db_backup.py` local → `pg_restore --no-owner` vào cloud → so
+  `row_counts` manifest (dùng lại phép đếm của drill) — mỗi bảng ghi
+  thuộc đường nào; backup/drill trên cloud (`BACKUP_DIR` trên VM,
+  `BACKUP_OFFSITE=s3://...` khi có key, `DRILL_DATABASE_URL` trỏ VM diễn
+  tập, systemd timer 01:30/03:00 — mẫu lệnh, external-dep). File
+  `deploy/cloud/env.cloud.example` (KHÔNG tên `.env*` — gotcha policy):
+  `DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/samsam?sslmode=require`,
+  `DRILL_DATABASE_URL`, `BACKUP_DIR`, `BACKUP_KEEP`, `BACKUP_OFFSITE`,
+  `BACKUP_PASSPHRASE_FILE`, `PG_BIN`, các key S3 để trống — chỉ
+  placeholder `<...>`, không secret.
+  - Boundary: `deploy/cloud/README.md`, `deploy/cloud/env.cloud.example`
+    (mới), `tests/test_db_backup.py` (drift-guard)
+  - Gate: test drift-guard: README chứa đủ 14 tên bảng parse từ
+    `docs/schema.sql` bằng `^create table if not exists (\w+)` (bảng mới
+    sau này → test đỏ nhắc cập nhật); README + env mẫu chứa
+    `sslmode=require`; env mẫu có đủ 7 key trên; không dòng nào khớp
+    `postgresql://[^<\s:/]+:[^<\s@]+@` (credential thật) hoặc `sk-or-v1`;
+    mọi lệnh `python ...` trong README trỏ file/module tồn tại trong repo
+  - Evidence: `evidence/v36_pytest.log`
+- [x] **W36.6 SOP + docs vận hành** — `docs/handover/sop.md` mục 6 viết
+  lại ngắn: backup = `python scripts/db_backup.py` (biến env, exit
+  0/1/2/3, file nằm ngoài repo, mã hóa khi có khóa), diễn tập =
+  `python scripts/db_restore_drill.py` (tuần, Chủ nhật; đọc RTO +
+  `drill_runs.jsonl`), khôi phục ĐÈ production = tầng 2 người làm tay +
+  báo TGĐ + đối chiếu danh sách phiếu xóa dữ liệu (DPIA 93 ngày), không có
+  lệnh tự động; giữ nguyên danh sách file trên đĩa cần backup cùng.
+  `docs/handover/workshops.md` dòng nhắc "lệnh `pg_dump` trong `sop.md`"
+  đổi sang `db_backup`/`db_restore_drill`. `AGENTS.md` bảng Commands thêm
+  1 dòng "Backup/diễn tập DB (v3.6)". `tests/test_handover_docs.py`
+  `SOP_COMMANDS` thêm `"db_backup"`, `"db_restore_drill"` (không xóa
+  phần tử/assert cũ).
+  - Boundary: `docs/handover/sop.md` (mục 6), `docs/handover/workshops.md`
+    (1 dòng), `AGENTS.md` (Commands), `tests/test_handover_docs.py`
+    (`SOP_COMMANDS`)
+  - Gate: `python -m pytest tests/test_handover_docs.py -q` xanh; số assert
+    trước/sau không giảm; `grep -n "pg_dump.exe" docs/handover/sop.md`
+    không còn là cách backup chính (chỉ được nhắc như công cụ bên dưới)
+  - Evidence: `evidence/v36_pytest.log`
+- [x] **Gate chung** —
+  - đếm trước: `count(*)` 14 bảng `samsam_v36` (in bằng `python -c`, không
+    in DSN)
+  - targeted ×3: `python -m pytest tests/test_db_backup.py tests/test_connect_timeout_guard.py tests/test_handover_docs.py -q -rs`
+    3 lần liên tiếp xanh, **0 skipped** (đọc output tới exit, không chạy
+    chồng)
+  - full: `python -m pytest -q` xanh, ≥ 308 + test mới (baseline 308)
+  - `ruff check .` sạch
+  - `python -m py_compile scripts/db_backup.py scripts/db_restore_drill.py api/rag.py demo.py ingest/core_store.py ingest/embed_store.py scripts/apply_schema.py scripts/data_audit.py`
+  - `python scripts/apply_schema.py` exit 0 (vẫn 14 bảng — v3.6 không
+    thêm bảng)
+  - sau toàn bộ gate: `count(*)` 14 bảng `samsam_v36` bằng lúc đầu; 0 DB
+    `samsam_drill_%`; không file `*.dump*` trong repo
+  - `git status`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); không file runtime mới trong `data/`; không file
+    backup/passphrase trong repo
+  - External-dep (để `[ ]`): xem các mục dưới
+  - Kết quả worker (2026-10-12): targeted ×3 = 40 passed ×3, 0 skipped;
+    full 341 passed; ruff sạch; py_compile 8 file OK; apply_schema 14 bảng;
+    row counts 14 bảng trước/sau bằng nhau; 0 DB `samsam_drill_%`; 0 file
+    `*.dump*` trong repo — `evidence/v36_backup.log`, `evidence/v36_pytest.log`
+    (cả 2 bị `*.log` ignore → `git add -f`). Thêm ngoài contract: umask 077
+    khi chạy 2 CLI (dump có PII chỉ chủ sở hữu đọc trên VM Linux).
+- [ ] **external-dep** Tài khoản Postgres managed trong nước (chọn nhà
+  cung cấp sau báo giá theo tiêu chí README) + thẻ thanh toán; migrate
+  14 bảng lên cloud thật theo `deploy/cloud/README.md`.
+- [ ] **external-dep** Bật PITR/WAL + retention phía nhà cung cấp (người
+  làm 1 lần, có biên bản); diễn tập PITR ra instance tạm 30/11 và 18/12.
+- [ ] **external-dep** Object storage S3-compatible (Bizfly/Backblaze) +
+  key + lifecycle daily 8 / weekly 35 / monthly 93 ngày + `test-lifecycle/`;
+  adapter `s3://` hiện chỉ là cổng cấu hình (exit 3).
+- [ ] **external-dep** Khóa mã hóa backup do công ty giữ (secret manager;
+  cân nhắc `age` theo F17.4); role DB `backup` chỉ đọc; VM diễn tập tách
+  khỏi runner CI; systemd timer 01:30 backup / 03:00 Chủ nhật diễn tập;
+  Quản lý hạ tầng AI ký biên bản diễn tập.
+
+Someday (ngoài phạm vi v3.6, ghi để không cuốn vào): bảng `backup_runs`/
+`drill_runs` trong DB cho F17.2 + n8n cảnh báo size lệch >30%; checksum
+mẫu nội dung + chạy `test_core_store` trên DB diễn tập (F17.4 bước 4);
+prefix daily/weekly/monthly; biên bản diễn tập do `agents/report.py` soạn;
+đối chiếu danh sách phiếu xóa trước khi khôi phục đè; backup file trên
+đĩa (`data/conversations.jsonl`, `zalo_tokens.json`...) vào cùng bộ.
+
+v3.10-dr-freeze đóng 2026-10-12 (3 nghiệm thu đợt 1 FIX 6 finding — 2
+MAJOR: drill docker để lại volume chứa bản sao dữ liệu trên đĩa → `--tmpfs`
++ `rm -f -v` + kiểm volume sót; chưa có test nào đỏ nếu drill restore nhầm
+vào server thật → thêm spy — 1 vòng sửa → PASS; coordinator chạy lại
+465/465 + ruff, 0 container `samsam-dr-*`, diff `deploy_gate`/`data/eval`
+so với infra-v36 rỗng). Drill thật: 14/14 bảng khớp, RTO ~6s, RPO 1s.
+Còn 1 volume docker từ lượt chạy TRƯỚC khi vá (`f554e763…`) chứa bản sao
+dữ liệu drill — chờ user duyệt xóa (xóa là vĩnh viễn). Điểm nối sau
+merge infra-v35: `deploy_gate` gọi `pipelines.freeze.check()` thay lịch
+freeze trong `data/eval/config.json`. External-dep: Postgres cloud +
+PITR (RPO ≤15 phút chỉ đạt bằng PITR), diễn tập 30/11 và 18/12, VM drill
+riêng, systemd timer, kênh cảnh báo thật; công ty duyệt lịch đóng băng
++ danh sách người giữ quyền break-glass; người ký biên bản; người nhận
+bàn giao. Someday: log break-glass/dr_runs vào bảng DB (ai ghi được file
+log tự thêm `open` được, đã cắt 4h); lịch đóng băng lặp hằng năm;
+biên bản diễn tập tự soạn.
+
+v3.6-cloud-db-backup đóng 2026-10-12 (3 nghiệm thu đợt 1 FIX 7 finding →
+2 vòng sửa → PASS; MAJOR vòng 2: test có thể chạy retention lên thư mục
+offsite thật khi `.env` có BACKUP_* — vá `clean_env` setenv rỗng; MINOR:
+file passphrase UTF-16 cắt khóa ở NUL → từ chối; coordinator chạy lại
+360/360 + ruff, 0 DB `samsam_drill_%` sót). Drill thật: 14/14 bảng khớp
+manifest, RTO <1s, DB tạm xóa; restore đè DB hiện tại bị từ chối exit 2.
+Mã hóa dùng openssl AES-256 pbkdf2 (age chưa cài). External-dep: tài
+khoản Postgres cloud + thanh toán; PITR phía nhà cung cấp + diễn tập
+30/11, 18/12; S3 + key + lifecycle; khóa mã hóa công ty giữ, role
+`backup` read-only, VM drill riêng, systemd timer, người ký biên bản
+drill. Someday: bảng `backup_runs`/`drill_runs` thay jsonl; checksum
+mẫu + `test_core_store` trên DB drill; prefix daily/weekly/monthly.
 
 v3.2-golden-master đóng 2026-10-12 (3 nghiệm thu đợt 1 FIX 8 finding →
 1 vòng sửa → PASS; coordinator chạy lại 308/308 + ruff, DB thật: 13

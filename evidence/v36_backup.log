@@ -1,0 +1,226 @@
+=== v3.6 gate 2026-10-12T00:34:02+07:00 ===
+--- [pre] row counts samsam_v36
+{"assets": 219, "chunks": 0, "claims_approved": 22, "content_drafts": 0, "golden_discrepancies": 39, "leads": 0, "llm_usage": 0, "orders": 5, "plot_logs": 6, "plots": 3, "price_list": 34, "products": 27, "sku_map": 15, "sku_master": 13}
+
+=== W36.1 connect_timeout ===
+..                                                                       [100%]
+2 passed in 0.18s
+--- grep spot-check (psycopg.connect( ngoài tests/ không có connect_timeout trên cùng dòng):
+./api/rag.py:52:    with psycopg.connect(os.environ["DATABASE_URL"],
+./demo.py:44:        with psycopg.connect(os.environ["DATABASE_URL"],
+./demo.py:53:        with psycopg.connect(os.environ["DATABASE_URL"],
+./scripts/apply_schema.py:35:        with psycopg.connect(dsn, autocommit=True,
+./scripts/db_restore_drill.py:81:    return psycopg.connect(dsn, autocommit=True,
+--- mutation: xóa connect_timeout ở api/rag.py
+E       AssertionError: api\rag.py:52 thiếu connect_timeout
+E       assert not ['api\\rag.py:52 thiếu connect_timeout']
+1 failed, 1 passed in 0.99s
+--- hoàn lại:
+2 passed in 0.21s
+ api/rag.py | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+=== W36.2 db_backup ===
+[done] samsam_v36_20261012_003417_vn.dump — 53790 bytes, sha256 3dd07fa27707550b…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe, 14 bảng
+[warn] backup CHƯA mã hóa (external-dep: khóa công ty)
+[warn] chưa cấu hình offsite (BACKUP_OFFSITE)
+exit=0
+file samsam_v36_20261012_003417_vn.dump tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe
+sha256 khớp: True
+size khớp: True
+magic PGDMP: True
+row_counts: 14 bảng; == live: True
+samsam_v36_20261012_003417_vn.dump.manifest.json đếm mật khẩu = 0 ; đếm DSN = 0
+backup_runs.jsonl đếm mật khẩu = 0 ; đếm DSN = 0
+--- BACKUP_DIR trong repo:
+[usage] BACKUP_DIR nằm trong repo — phải đặt NGOÀI repo
+exit=2
+thư mục không được tạo
+--- thiếu BACKUP_DIR:
+[usage] thiếu BACKUP_DIR
+exit=2
+--- BACKUP_KEEP=0:
+[usage] BACKUP_KEEP phải là số nguyên ≥ 1
+exit=2
+--- BACKUP_KEEP=-1:
+[usage] BACKUP_KEEP phải là số nguyên ≥ 1
+exit=2
+--- BACKUP_KEEP=abc:
+[usage] BACKUP_KEEP phải là số nguyên ≥ 1
+exit=2
+--- host chết:
+[err] backup lỗi: connection timeout expired
+exit=1 sau 11s
+file .dump/manifest trong v36_dead: 0
+
+=== W36.3 retention + offsite + mã hóa ===
+[done] samsam_v36_20261012_003435_vn.dump — 53790 bytes, sha256 e69616d4175adf6d…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe, 14 bảng
+[warn] backup CHƯA mã hóa (external-dep: khóa công ty)
+[offsite] đã chép + kiểm sha256
+exit=0
+[done] samsam_v36_20261012_003438_vn.dump — 53790 bytes, sha256 9207dfc06b82ea65…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe, 14 bảng
+[warn] backup CHƯA mã hóa (external-dep: khóa công ty)
+[offsite] đã chép + kiểm sha256
+exit=0
+[done] samsam_v36_20261012_003441_vn.dump — 53790 bytes, sha256 4a4cd914c6f3487b…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe, 14 bảng
+[warn] backup CHƯA mã hóa (external-dep: khóa công ty)
+[retention] giữ 3 bản, xóa: samsam_v36_20261012_003417_vn.dump
+[offsite] đã chép + kiểm sha256
+exit=0
+[done] samsam_v36_20261012_003444_vn.dump — 53790 bytes, sha256 f8e8fe8e1e942122…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe, 14 bảng
+[warn] backup CHƯA mã hóa (external-dep: khóa công ty)
+[retention] giữ 3 bản, xóa: samsam_v36_20261012_003435_vn.dump
+[offsite] đã chép + kiểm sha256
+exit=0
+v36_bk: dump=3 manifest=4
+v36_off: dump=3 manifest=3
+bản cũ nhất samsam_v36_20261012_003417_vn.dump còn? đã-xóa
+backup_runs.jsonl
+notes.txt
+samsam_v36_20200101_000000_vn.dump.manifest.json
+samsam_v36_20261012_003438_vn.dump
+samsam_v36_20261012_003438_vn.dump.manifest.json
+samsam_v36_20261012_003441_vn.dump
+samsam_v36_20261012_003441_vn.dump.manifest.json
+samsam_v36_20261012_003444_vn.dump
+samsam_v36_20261012_003444_vn.dump.manifest.json
+offsite samsam_v36_20261012_003444_vn.dump sha khớp: True
+offsite samsam_v36_20261012_003441_vn.dump sha khớp: True
+offsite samsam_v36_20261012_003438_vn.dump sha khớp: True
+--- mã hóa:
+[done] samsam_v36_20261012_003446_vn.dump.enc — 53808 bytes, sha256 683a1a2472c4f326…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe, 14 bảng
+[warn] chưa cấu hình offsite (BACKUP_OFFSITE)
+exit=0
+đầu file .enc:  S a l t e d _ _
+file .dump rõ còn: 0
+openssl -d exit=0
+đầu file giải mã: PGDMP
+"encrypted": true
+"cipher": "openssl-aes-256-cbc-pbkdf2"
+--- offsite s3:
+[done] samsam_v36_20261012_003448_vn.dump — 53790 bytes, sha256 881dc2cfdad2bbb8…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe, 14 bảng
+[warn] backup CHƯA mã hóa (external-dep: khóa công ty)
+[warn] offsite chưa xong, bản local giữ nguyên: [external-dep] offsite S3-compatible (Bizfly/Backblaze) chưa bật — cần key + công cụ rclone/aws-cli
+exit=3
+dump local trong v36_s3: 1
+grep boto3|requests|httpx trong db_backup.py: 0
+
+=== W36.4 restore drill ===
+[warn] bỏ qua manifest hỏng: samsam_v36_20200101_000000_vn.dump.manifest.json
+  assets                 manifest=    219 thực tế=    219  khớp
+  chunks                 manifest=      0 thực tế=      0  khớp
+  claims_approved        manifest=     22 thực tế=     22  khớp
+  content_drafts         manifest=      0 thực tế=      0  khớp
+  golden_discrepancies   manifest=     39 thực tế=     39  khớp
+  leads                  manifest=      0 thực tế=      0  khớp
+  llm_usage              manifest=      0 thực tế=      0  khớp
+  orders                 manifest=      5 thực tế=      5  khớp
+  plot_logs              manifest=      6 thực tế=      6  khớp
+  plots                  manifest=      3 thực tế=      3  khớp
+  price_list             manifest=     34 thực tế=     34  khớp
+  products               manifest=     27 thực tế=     27  khớp
+  sku_map                manifest=     15 thực tế=     15  khớp
+  sku_master             manifest=     13 thực tế=     13  khớp
+[drill] samsam_v36_20261012_003444_vn.dump → samsam_drill_20261012_003449_9e4d: 14/14 bảng khớp, RTO 0.78s
+exit=0
+samsam_drill_% DBs = 0
+--- drill bản mã hóa:
+  assets                 manifest=    219 thực tế=    219  khớp
+  chunks                 manifest=      0 thực tế=      0  khớp
+  claims_approved        manifest=     22 thực tế=     22  khớp
+  content_drafts         manifest=      0 thực tế=      0  khớp
+  golden_discrepancies   manifest=     39 thực tế=     39  khớp
+  leads                  manifest=      0 thực tế=      0  khớp
+  llm_usage              manifest=      0 thực tế=      0  khớp
+  orders                 manifest=      5 thực tế=      5  khớp
+  plot_logs              manifest=      6 thực tế=      6  khớp
+  plots                  manifest=      3 thực tế=      3  khớp
+  price_list             manifest=     34 thực tế=     34  khớp
+  products               manifest=     27 thực tế=     27  khớp
+  sku_map                manifest=     15 thực tế=     15  khớp
+  sku_master             manifest=     13 thực tế=     13  khớp
+[drill] samsam_v36_20261012_003446_vn.dump.enc → samsam_drill_20261012_003452_deec: 14/14 bảng khớp, RTO 1.05s
+exit=0
+--- --target-db samsam_v36:
+[refuse] tên đích 'samsam_v36' không khớp ^samsam_drill_[0-9a-z_]+$
+exit=2
+{"ts": "2026-10-12T00:34:55+07:00", "backup_file": null, "drill_db": "samsam_v36", "status": "refused", "rto_seconds": null, "tables_checked": 0, "mismatches": {}, "dropped": null}
+row counts samsam_v36 trước/sau refuse: BẰNG
+--- --target-db postgres:
+[refuse] tên đích 'postgres' không khớp ^samsam_drill_[0-9a-z_]+$
+exit=2
+samsam_drill_% DBs = 0
+
+=== apply_schema ===
+[done] schema applied — 14 bảng public: assets, chunks, claims_approved, content_drafts, golden_discrepancies, leads, llm_usage, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+exit=0
+
+=== [post] ===
+row counts 14 bảng trước/sau gate: BẰNG
+samsam_drill_% DBs = 0
+file *.dump* trong repo: 0
+=== sau toàn bộ gate (gồm pytest)
+<string>:6: SyntaxWarning: invalid escape sequence '\_'
+row counts 14 bảng == lúc đầu: True | samsam_drill_% DBs = 0
+file *.dump* trong repo: 0
+ghi chú W36.3: v36_bk manifest=4 = 3 manifest hợp lệ + 1 manifest hỏng đặt sẵn (cố ý giữ, retention không đụng)
+=== git status
+ M .gitignore
+ M AGENTS.md
+ M DONE.md
+ M api/rag.py
+ M demo.py
+ M docs/handover/sop.md
+ M docs/handover/workshops.md
+ M ingest/core_store.py
+ M ingest/embed_store.py
+ M scripts/apply_schema.py
+ M scripts/data_audit.py
+ M tests/test_handover_docs.py
+?? deploy/
+?? scripts/db_backup.py
+?? scripts/db_restore_drill.py
+?? tests/test_connect_timeout_guard.py
+?? tests/test_db_backup.py
+
+=== VÒNG FIX cold-check v3.6 (2026-10-12) — 7 MINOR
+F1 load_dotenv trước read_config (backup+drill) | F2 retention OSError → warn + retention_error | F3 passphrase dòng đầu trống/<16 ký tự → exit 2 (drill: _decrypt fail trước openssl)
+F4 test .partial bị xóa khi pg_dump/openssl lỗi sau khi đã ghi | F5 offsite dir: kiểm sha256 bản .partial TRƯỚC rename, test OSError + sha lệch → exit 3 | F6 test fail-closed khi thiếu openssl | F7 tên DB tạm test theo RUN=token_hex(3)
+--- mutation probe (scratchpad/v36_mut.py: sửa tạm từng chỗ, chạy -k, hoàn lại)
+F1 load_dotenv sau read_config: KILLED — 1 failed, 44 deselected in 1.85s
+F2 retention không bắt OSError: KILLED — 1 failed, 44 deselected in 3.15s
+F3 check_passfile no-op: KILLED — 6 failed, 39 deselected in 2.05s
+F4 finally không xóa .partial: KILLED — 2 failed, 43 deselected in 2.27s
+F5 bỏ kiểm sha offsite: KILLED — 1 failed, 1 passed, 43 deselected in 2.86s
+F6 bỏ fail-closed openssl: KILLED — 1 failed, 44 deselected in 2.45s
+ALL KILLED
+--- targeted x3: python -m pytest tests/test_db_backup.py tests/test_connect_timeout_guard.py -q
+47 passed in 31.43s
+47 passed in 24.34s
+47 passed in 22.64s
+--- full: python -m pytest -q -rs
+355 passed in 71.36s (0:01:11)
+(0 skipped)
+--- ruff check .
+All checks passed!
+--- smoke CLI (scratchpad/v36_fix_smoke.sh, BACKUP_DIR tạm trong scratchpad, đã xóa sau; exit= của bước có pipe là exit của sed)
+=== weak passphrase (dòng đầu trống) → exit 2
+[usage] dòng đầu BACKUP_PASSPHRASE_FILE trống hoặc ngắn hơn 16 ký tự (openssl chỉ dùng dòng đầu)
+exit=2
+=== backup mã hóa + offsite dir
+[done] samsam_v36_20261012_005721_vn.dump.enc — 53808 bytes, sha256 <..>…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe, 14 bảng
+[offsite] đã chép + kiểm sha256
+exit=0
+=== drill bản mới nhất (giải mã) → DB tạm
+  sku_master             manifest=     13 thực tế=     13  khớp
+[drill] samsam_v36_20261012_005721_vn.dump.enc → samsam_drill_20261012_005723_7eab: 14/14 bảng khớp, RTO 1.19s
+exit=0
+=== drill target = DB hiện tại → refuse
+[refuse] tên đích 'samsam_v36' không khớp ^samsam_drill_[0-9a-z_]+$
+exit=2
+=== nhật ký
+backup_runs.jsonl {'status': 'ok', 'offsite': 'dir', 'retention_error': None}
+drill_runs.jsonl {'status': 'ok', 'dropped': True, 'tables_checked': 14, 'mismatches': {}}
+drill_runs.jsonl {'status': 'refused', 'dropped': None, 'tables_checked': 0, 'mismatches': {}}
+samsam_drill_% DBs còn lại = 0
+file .partial = 0

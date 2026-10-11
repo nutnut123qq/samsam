@@ -1,0 +1,93 @@
+=== v3.10 W310.1 DR drill — 2026-10-12T01:35:41+07:00 (BACKUP_DIR=<scratchpad>/v310_bk) ===
+--- before: counts samsam DB + drill DBs
+tables 14 rows 383 [('assets', 219), ('chunks', 0), ('claims_approved', 22), ('content_drafts', 0), ('golden_discrepancies', 39), ('leads', 0), ('llm_usage', 0), ('orders', 5), ('plot_logs', 6), ('plots', 3), ('price_list', 34), ('products', 27), ('sku_map', 15), ('sku_master', 13)]
+drill_dbs 0
+--- before: docker ps -a samsam-dr-: []
+--- python scripts/db_backup.py
+[done] samsam_v36_20261012_013542_vn.dump — 53790 bytes, sha256 28edab2afd164b1d…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe, 14 bảng
+[warn] backup CHƯA mã hóa (external-dep: khóa công ty)
+[warn] chưa cấu hình offsite (BACKUP_OFFSITE)
+exit=0
+--- python scripts/dr_drill.py
+[dr] server mới postgres:17-alpine sẵn sàng sau 3.8s — khôi phục samsam_v36_20261012_013542_vn.dump
+  assets                 manifest=    219 thực tế=    219  khớp
+  chunks                 manifest=      0 thực tế=      0  khớp
+  claims_approved        manifest=     22 thực tế=     22  khớp
+  content_drafts         manifest=      0 thực tế=      0  khớp
+  golden_discrepancies   manifest=     39 thực tế=     39  khớp
+  leads                  manifest=      0 thực tế=      0  khớp
+  llm_usage              manifest=      0 thực tế=      0  khớp
+  orders                 manifest=      5 thực tế=      5  khớp
+  plot_logs              manifest=      6 thực tế=      6  khớp
+  plots                  manifest=      3 thực tế=      3  khớp
+  price_list             manifest=     34 thực tế=     34  khớp
+  products               manifest=     27 thực tế=     27  khớp
+  sku_map                manifest=     15 thực tế=     15  khớp
+  sku_master             manifest=     13 thực tế=     13  khớp
+[drill] samsam_v36_20261012_013542_vn.dump → samsam_drill_20261012_013548_705c: 14/14 bảng khớp, RTO 1.83s
+[dr] RTO 5.84s (gồm dựng server; restore 1.83s) — mục tiêu ≤ 4h: đạt
+[dr] RPO 0.00h (tuổi bản backup) — mục tiêu ≤ 24h: đạt
+exit=0
+--- dr_runs.jsonl last line
+{"ts": "2026-10-12T01:35:43+07:00", "backup_file": "samsam_v36_20261012_013542_vn.dump", "container": "samsam-dr-20261012_013543-2b84", "image": "postgres:17-alpine", "status": "ok", "rto_seconds": 5.84, "restore_rto_seconds": 1.83, "rpo_seconds": 1.0, "rpo_max_hours": 24.0, "tables_checked": 14, "mismatches": {}, "container_removed": true}
+--- after: docker ps -a samsam-dr-: []
+--- after: counts
+tables 14 rows 383 [('assets', 219), ('chunks', 0), ('claims_approved', 22), ('content_drafts', 0), ('golden_discrepancies', 39), ('leads', 0), ('llm_usage', 0), ('orders', 5), ('plot_logs', 6), ('plots', 3), ('price_list', 34), ('products', 27), ('sku_map', 15), ('sku_master', 13)]
+drill_dbs 0
+counts before==after: YES
+--- secret grep in dr_runs.jsonl (DATABASE_URL password, DSN prefix)
+db_password_hits 0 dsn_prefix_hits 0 POSTGRES_PASSWORD_hits 0
+
+=== v3.10 W310.3 break-glass chạy tay — 2026-10-12T01:36:05+07:00 (BREAK_GLASS_LOG=<scratchpad>/v310_bg.jsonl) ===
+--- python scripts/break_glass.py --open --reason "Diễn tập break-glass v3.10, gọi 0905 123 456" --by "Người vận hành (diễn tập)" --hours 2
+[CẢNH BÁO] danh sách người giữ quyền break-glass chưa được công ty cấp (external-dep) — ghi holder_verified=false
+[warn] hiện KHÔNG trong khung đóng băng — break-glass không cần thiết (vẫn mở theo yêu cầu)
+[CẢNH BÁO] BREAK-GLASS mở tới 03:36 12/10/2026 bởi Người vận hành (diễn tập) — mọi thay đổi trong đóng băng được cho qua tới khi hết hạn
+exit=0
+--- python scripts/break_glass.py --status
+[status] 01:36 12/10/2026 — ngoài khung đóng băng; 1 cửa sổ break-glass còn hạn
+  - mở 01:36 12/10/2026 → hết hạn 03:36 12/10/2026 bởi Người vận hành (diễn tập) (người CHƯA xác minh): Diễn tập break-glass v3.10, gọi ***
+exit=0
+--- --open --status cùng lúc (phải exit 2)
+usage: break_glass.py [-h] (--open | --status | --close) [--reason REASON]
+                      [--by BY] [--hours HOURS]
+break_glass.py: error: argument --status: not allowed with argument --open
+exit=2
+--- --hours 5 (phải exit 2)
+[usage] --hours phải trong 1..4
+exit=2
+--- BREAK_GLASS_LOG trong repo (phải exit 2, không tạo file)
+[usage] BREAK_GLASS_LOG nằm trong repo — phải đặt NGOÀI repo
+exit=2 file_exists=no
+--- python scripts/break_glass.py --close --reason "Kết thúc diễn tập break-glass" --by "Người vận hành (diễn tập)"
+[ok] đã đóng sớm 1 cửa sổ break-glass (Người vận hành (diễn tập))
+exit=0
+--- --status sau close
+[status] 01:36 12/10/2026 — ngoài khung đóng băng; 0 cửa sổ break-glass còn hạn
+exit=0
+--- log (append-only, SĐT đã che):
+{"action": "open", "ts": "2026-10-12T01:36:06+07:00", "opened_at": "2026-10-12T01:36:06+07:00", "expires_at": "2026-10-12T03:36:06+07:00", "hours": 2, "by": "Người vận hành (diễn tập)", "reason": "Diễn tập break-glass v3.10, gọi ***", "holder_verified": false}
+{"action": "close", "ts": "2026-10-12T01:36:09+07:00", "by": "Người vận hành (diễn tập)", "reason": "Kết thúc diễn tập break-glass", "closed": 1}
+phone_hits 0
+
+=== v3.10 fix-round (nghiệm thu: MAJOR volume DR + drill_server) — 2026-10-12T02:05:19+07:00 (BACKUP_DIR=<scratchpad>/v310_bk) ===
+--- before: docker ps -a samsam-dr-: []
+--- before: docker volume count 170
+--- python scripts/db_backup.py
+[done] samsam_v36_20261012_020521_vn.dump — 53790 bytes, sha256 ffc3b3e3c3f709f7…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe, 14 bảng
+[warn] backup CHƯA mã hóa (external-dep: khóa công ty)
+[warn] chưa cấu hình offsite (BACKUP_OFFSITE)
+exit=0
+--- python scripts/dr_drill.py
+[dr] server mới postgres:17-alpine sẵn sàng sau 2.2s — khôi phục samsam_v36_20261012_020521_vn.dump
+[drill] samsam_v36_20261012_020521_vn.dump → samsam_drill_20261012_020525_0b87: 14/14 bảng khớp, RTO 0.52s
+[dr] RTO 2.81s (gồm dựng server; restore 0.52s) — mục tiêu ≤ 4h: đạt
+[dr] RPO 0.00h (tuổi bản backup) — mục tiêu ≤ 24h: đạt
+exit=0
+--- dr_runs.jsonl last line
+{"ts": "2026-10-12T02:05:22+07:00", "backup_file": "samsam_v36_20261012_020521_vn.dump", "container": "samsam-dr-20261012_020522-78af", "image": "postgres:17-alpine", "status": "ok", "rto_seconds": 2.81, "restore_rto_seconds": 0.52, "rpo_seconds": 1.0, "rpo_max_hours": 24.0, "tables_checked": 14, "mismatches": {}, "container_removed": true}
+--- after: docker ps -a samsam-dr-: []
+--- after: docker volume count 170; NEW volumes: 0
+--- volume sót từ các lần chạy TRƯỚC fix (auditor báo; KHÔNG tự xóa — chờ user duyệt): 
+  f554e76395d2d148629128f0882cd70781022c5079cee9f133754cdf095277e3 created=2026-10-11T18:36:46Z
+  ff08599746eb673d22afeddc94da7d4e3361f54710558176717172e76f86be13 created=2026-10-11T18:39:24Z
