@@ -4,8 +4,17 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **v2.3-handover-docs** (contract coordinator tự
-chọn qua /cycle 2026-10-11 — checklist bên dưới)
+Version đang mở: **(không — loop /cycle 10 tiếp)**
+
+v2.3-handover-docs đóng 2026-10-11 (cold-check **coordinator
+self-review** — quota subagent cạn rate-limit sau khi agent build
+xong, precedent v0.3/v0.5; coordinator đọc thật 8 file docs + chạy
+lại 191/191 + ruff + đối chiếu từng claim: 12/12 câu Phụ lục D khớp
+questions.md, 12/12 tên test guardrail khớp, eval exit-condition +
+sources-check đúng, 9 bảng + 7 tab + lệnh SOP đúng code, không
+secret; 1 MINOR vá ngay `sop.md` default-model thiếu prefix
+`openai/`). Audit bù gộp vào `/cold-audit` khi quota về (range
+`1553e81..HEAD` giờ cover v2.0+v2.1+v2.3; v2.2 đã audit lạ).
 
 v2.2-content-pipeline đóng 2026-10-11 (cold-check auditor lạ —
 profile reviewer quota cạn nên spawn `subagent_general` read-only
@@ -67,7 +76,7 @@ ghi: id, câu/nhập, kỳ vọng, cách chạy (tự động qua eval_qa / tay)
 WS4 còn lại là external-dep: workshop THẬT + "2 tuần tự vận hành" là
 sự kiện với công ty — doc chỉ chuẩn bị giáo trình/outline.
 
-- [ ] **W6.1 Playbook 3 vai trò + 4 workshop outline** —
+- [x] **W6.1 Playbook 3 vai trò + 4 workshop outline** —
   `docs/handover/playbook-{mkt,sales-admin,vuon}.md`: vai trò đó dùng
   tab/CLI nào (MKT: Content Studio + Duyệt & Lịch + Báo cáo; sales-
   admin: Chat/Leads/Chưa trả lời; vườn: Nhật ký vườn + --check), quy
@@ -79,7 +88,7 @@ sự kiện với công ty — doc chỉ chuẩn bị giáo trình/outline.
   - Gate: 4 file tồn tại; mọi tab/lệnh nhắc tới tồn tại thật trong
     repo (tab name khớp streamlit_app.py, lệnh khớp AGENTS.md)
   - Evidence: `evidence/v23_docs.log`
-- [ ] **W6.2 SOP + kiến trúc + prompt library** —
+- [x] **W6.2 SOP + kiến trúc + prompt library** —
   `docs/handover/sop.md` (vận hành hàng ngày: chạy app, crawl lại,
   ingest, harvest leads, sinh báo cáo, backup DB, xử lý DB-down/
   token-hết — mọi lệnh phải đúng như chạy thật); `docs/handover/
@@ -91,7 +100,7 @@ sự kiện với công ty — doc chỉ chuẩn bị giáo trình/outline.
   - Gate: lệnh trong sop.md đều chạy được/có trong repo (spot-check ≥5);
     kien-truc.md liệt kê đúng 9 bảng + 6 tab; prompt trích đúng source
   - Evidence: `evidence/v23_docs.log`
-- [ ] **W6.3 Phụ lục D — test-set nghiệm thu** — `docs/handover/
+- [x] **W6.3 Phụ lục D — test-set nghiệm thu** — `docs/handover/
   phu-luc-d.md`: bảng test chatbot (đủ 12 câu questions.md, đánh dấu
   Q11/Q12 bẫy + kỳ vọng NO_DATA/guardrail) + bảng test guardrail
   (banned word, claim ngoài whitelist, claim đúng whitelist pass —
@@ -101,7 +110,7 @@ sự kiện với công ty — doc chỉ chuẩn bị giáo trình/outline.
   - Gate: đủ 12 câu khớp questions.md (grep id), case guardrail khớp
     tên test thật trong tests/test_guardrail.py
   - Evidence: `evidence/v23_docs.log`
-- [ ] **W6.4 Drift-guard test + gate chung** — `tests/test_handover_
+- [x] **W6.4 Drift-guard test + gate chung** — `tests/test_handover_
   docs.py`: 7 file tồn tại + non-empty; mỗi playbook chứa đúng tab
   name thật (đọc streamlit_app.py lấy st.tabs list); phu-luc-d chứa
   đủ 12 id câu hỏi parse từ tests/questions.md; sop.md chứa các lệnh
