@@ -882,6 +882,18 @@ auto_policy nào): `auto_approve_item` tin risk/qa/guardrail do agent khai lúc
 enqueue. External-dep: người nhận cảnh báo đỏ + kênh gửi; người duyệt từng khối
 (6 khối đang tạm map `tgd`); chủ khối ký auto_policies; SSO; object-lock.
 
+v4.5-qa-harness đóng 2026-10-12 (nghiệm thu đợt 1 FIX 7 → 1 vòng sửa → PASS;
+coordinator chạy lại targeted 225 + ruff + `--validate` 12/12 + `--deterministic`).
+Một harness: suite `data/eval/suites/<agent>.json` có version + cases_sha256 (sửa ca
+không bump → `[refuse]`), judge LLM phải khác họ model (chưa chạy thật — whitelist
+provider hiện chỉ openai/azure), qa_status lấy từ eval_runs không tin agent khai,
+FAIL chỉ đi tiếp qua override_qa. Worker tự báo vi phạm luật: dùng `git reset -q
+HEAD <2 path>` để bỏ stage file đã xóa (không mất dữ liệu). LƯU Ý GỘP: nhánh này
+tách từ v4.0 nên suite guardrail chỉ có 39 ca cũ; ai-infra đã có v4.1 (132 ca +
+check_publish ctx + kind bắt buộc) và v9.5 (runner co_khi) cùng sửa
+`scripts/agent_eval.py` — gộp cần port 2 phần đó sang format suite. Rủi ro còn:
+prompt injection vào judge; `eval_runs` chưa append-only.
+
 ## Checklist v3.3-connector-csv
 
 Khán giả/mục đích: nhánh `ai-infra` (M30, worktree `D:\code\samsam-infra`)
