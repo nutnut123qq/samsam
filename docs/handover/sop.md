@@ -148,6 +148,21 @@ gốc):
 - `data/claims_whitelist.json` + `data/banned_words.txt` (nguồn sự
   thật guardrail — đã trong git, nhưng backup cùng cho chắc)
 
+**Diễn tập thảm họa (DR) + đóng băng (v3.10):** quy trình đầy đủ cho
+người vận hành hạ tầng AI ở [`runbook-ha-tang.md`](runbook-ha-tang.md)
+(lịch việc, mức sự cố S1/S2/S3, kill switch, trần chi phí, bàn giao).
+Hai lệnh chính:
+
+```
+python scripts/dr_drill.py
+python scripts/break_glass.py --status
+```
+
+`dr_drill` dựng Postgres mới trong container docker tạm, khôi phục bản
+backup mới nhất, đo RTO/RPO rồi luôn xóa container (hằng tháng + trước
+30/11, 18/12). `break_glass` mở/đóng/xem cửa sổ ngoại lệ tối đa 4 giờ
+trong đóng băng 21/12–10/02 (`--open --reason ... --by ...`).
+
 ## 7. Xử lý sự cố thường gặp
 
 ### "Chưa nạp — không kết nối được Postgres" trên UI

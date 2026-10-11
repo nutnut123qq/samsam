@@ -135,8 +135,11 @@ def count_tables(dsn: str) -> dict:
         return bk._snapshot_counts(c)
 
 
-def run_drill(args, bdir: Path, dsn: str) -> tuple[int, dict]:
-    drill_server = os.environ.get("DRILL_DATABASE_URL") or dsn
+def run_drill(args, bdir: Path, dsn: str,
+              drill_server: str | None = None) -> tuple[int, dict]:
+    # v3.10: dr_drill truyền server container tạm; None → như cũ.
+    drill_server = (drill_server or os.environ.get("DRILL_DATABASE_URL")
+                    or dsn)
     target = args.target_db or default_target()
     rec = {"ts": bk.vn_now().isoformat(), "backup_file": None,
            "drill_db": target, "status": "fail", "rto_seconds": None,

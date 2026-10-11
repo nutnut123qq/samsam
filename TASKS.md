@@ -719,7 +719,7 @@ Quy trình mỗi version (chặt theo skill):
 - [ ] **v3.9-kb-acl** — kho tri thức có quyền đọc theo đoạn, tách
   `chunks_internal` khỏi chatbot khách (deny-by-default), nạp tăng dần,
   lọc nội dung rượu, version. Gate thêm: `scripts/eval_qa.py` ≥10/12.
-- [ ] **v3.10-dr-freeze** — diễn tập khôi phục trên Postgres docker
+- [x] **v3.10-dr-freeze** — diễn tập khôi phục trên Postgres docker
   local, công cụ đóng băng 21/12–10/02 (chặn deploy ngoài hotfix),
   break-glass, runbook bàn giao cho người vận hành hạ tầng.
 

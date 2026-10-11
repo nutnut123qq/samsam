@@ -1,0 +1,197 @@
+=== v3.10 W310.4 mutation drift-guard runbook — 2026-10-12T01:36:18+07:00 ===
+mutation: 'python scripts/zalo_preflight.py' -> 'python scripts/khong_co.py'
+E       assert not ['d\xf2ng 36: scripts/khong_co.py']
+
+tests\test_runbook.py:53: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_runbook.py::test_runbook_commands_exist - AssertionError: l...
+1 failed, 5 passed in 0.75s
+exit(mutated)=1
+restored; diff vs backup: identical
+......                                                                   [100%]
+6 passed in 0.05s
+exit(restored)=0
+
+=== targeted run 1/3 — 2026-10-12T01:36:34+07:00 ===
+python -m pytest tests/test_dr_drill.py tests/test_freeze.py tests/test_runbook.py tests/test_handover_docs.py tests/test_db_backup.py tests/test_connect_timeout_guard.py -q -rs
+........................................................................ [ 45%]
+........................................................................ [ 91%]
+..............                                                           [100%]
+158 passed in 40.15s
+exit=0
+
+=== targeted run 2/3 — 2026-10-12T01:37:17+07:00 ===
+python -m pytest tests/test_dr_drill.py tests/test_freeze.py tests/test_runbook.py tests/test_handover_docs.py tests/test_db_backup.py tests/test_connect_timeout_guard.py -q -rs
+........................................................................ [ 45%]
+........................................................................ [ 91%]
+..............                                                           [100%]
+158 passed in 43.55s
+exit=0
+
+=== targeted run 3/3 — 2026-10-12T01:38:05+07:00 ===
+python -m pytest tests/test_dr_drill.py tests/test_freeze.py tests/test_runbook.py tests/test_handover_docs.py tests/test_db_backup.py tests/test_connect_timeout_guard.py -q -rs
+........................................................................ [ 45%]
+........................................................................ [ 91%]
+..............                                                           [100%]
+158 passed in 39.94s
+exit=0
+
+=== full: python -m pytest -q — 2026-10-12T01:38:54+07:00 ===
+........................................................................ [ 62%]
+........................................................................ [ 78%]
+........................................................................ [ 94%]
+...........................                                              [100%]
+459 passed in 76.46s (0:01:16)
+exit=0
+
+=== static gates — 2026-10-12T01:40:25+07:00 ===
+--- ruff check .
+All checks passed!
+exit=0
+--- py_compile
+exit=0
+--- json calendar
+OK
+exit=0
+--- grep print(/psycopg/subprocess in pipelines/freeze.py (phải rỗng)
+grep_exit=1 (1 = không khớp)
+--- git diff --stat infra-v36 -- scripts/deploy_gate.py data/eval (phải rỗng)
+[end diff]
+--- after all gates: counts + drill DBs
+tables 14 rows 383 [('assets', 219), ('chunks', 0), ('claims_approved', 22), ('content_drafts', 0), ('golden_discrepancies', 39), ('leads', 0), ('llm_usage', 0), ('orders', 5), ('plot_logs', 6), ('plots', 3), ('price_list', 34), ('products', 27), ('sku_map', 15), ('sku_master', 13)]
+drill_dbs 0
+counts start==final: YES
+--- docker ps -a samsam-dr-: []
+--- *.dump*/*.jsonl mới trong repo (untracked):
+[end]
+--- git status --short
+ M DONE.md
+ M docs/handover/sop.md
+ M scripts/db_restore_drill.py
+ M tests/test_handover_docs.py
+?? data/freeze_calendar.json
+?? docs/handover/runbook-ha-tang.md
+?? pipelines/freeze.py
+?? scripts/break_glass.py
+?? scripts/dr_drill.py
+?? tests/test_dr_drill.py
+?? tests/test_freeze.py
+?? tests/test_runbook.py
+
+##### VÒNG 2 — sau vá OWASP (break_glass private_umask; reader bỏ record 'by' không in được; --status thay ký tự điều khiển trong reason) #####
+
+=== [vòng 2] targeted run 1/3 — 2026-10-12T01:41:41+07:00 ===
+...............                                                          [100%]
+159 passed in 41.03s
+exit=0
+
+=== [vòng 2] targeted run 2/3 — 2026-10-12T01:42:26+07:00 ===
+...............                                                          [100%]
+159 passed in 36.52s
+exit=0
+
+=== [vòng 2] targeted run 3/3 — 2026-10-12T01:43:06+07:00 ===
+...............                                                          [100%]
+159 passed in 36.98s
+exit=0
+
+=== [vòng 2] full: python -m pytest -q — 2026-10-12T01:43:56+07:00 ===
+............................                                             [100%]
+460 passed in 78.88s (0:01:18)
+exit=0
+--- ruff check .
+All checks passed!
+exit=0
+--- py_compile
+exit=0
+--- json calendar
+OK
+--- grep print(/psycopg/subprocess pipelines/freeze.py
+grep_exit=1 (1 = rỗng)
+--- git diff --stat infra-v36 -- scripts/deploy_gate.py data/eval
+[end diff]
+--- final counts
+tables 14 rows 383 [('assets', 219), ('chunks', 0), ('claims_approved', 22), ('content_drafts', 0), ('golden_discrepancies', 39), ('leads', 0), ('llm_usage', 0), ('orders', 5), ('plot_logs', 6), ('plots', 3), ('price_list', 34), ('products', 27), ('sku_map', 15), ('sku_master', 13)]
+drill_dbs 0
+counts start==final: YES
+--- docker ps -a samsam-dr-: []
+--- untracked *.dump*/*.jsonl trong repo:
+[end]
+--- git status --short
+ M DONE.md
+ M docs/handover/sop.md
+ M scripts/db_restore_drill.py
+ M tests/test_handover_docs.py
+?? data/freeze_calendar.json
+?? docs/handover/runbook-ha-tang.md
+?? pipelines/freeze.py
+?? scripts/break_glass.py
+?? scripts/dr_drill.py
+?? tests/test_dr_drill.py
+?? tests/test_freeze.py
+?? tests/test_runbook.py
+
+=== v3.10 fix-round — mutation (plugin pytest -p, KHÔNG sửa source) — 2026-10-12T02:05:44+07:00 ===
+--- M1 run_drill bỏ qua drill_server (unit + E2E docker)
+E       AssertionError: kết nối ra ngoài container: [('localhost', '5432', 'samsam_v36'), ('localhost', '5432', 'samsam_v36'), ('localhost', '5432', 'samsam_drill_20261012_020554_567b'), ('localhost', '5432', 'samsam_v36'), ('localhost', '5432', 'samsam_v36')]
+E       AssertionError: kết nối ra ngoài container: [('localhost', '5432', 'samsam_v36'), ('localhost', '5432', 'samsam_v36'), ('localhost', '5432', 'samsam_drill_20261012_020601_54e8'), ('localhost', '5432', 'samsam_v36'), ('localhost', '5432', 'samsam_v36')]
+FAILED tests/test_dr_drill.py::test_run_drill_restores_into_drill_server - As...
+FAILED tests/test_dr_drill.py::test_dr_drill_real_ok - AssertionError: kết nố...
+FAILED tests/test_dr_drill.py::test_dr_drill_real_mismatch_still_cleans - Ass...
+3 failed, 24 passed in 15.63s
+exit(mutated)=1
+--- M2 cleanup bản cũ: rm -f không -v, không kiểm volume (unit)
+        sao dữ liệu trên đĩa → cleanup_failed + ALERT nêu volume."""
+FAILED tests/test_dr_drill.py::test_docker_run_argv_safe - AssertionError: as...
+FAILED tests/test_dr_drill.py::test_cleanup_checks_container_volumes - assert...
+FAILED tests/test_dr_drill.py::test_cleanup_volume_gone_ok - AssertionError: ...
+3 failed, 21 passed, 3 deselected in 1.19s
+exit(mutated)=1
+--- M3 bỏ --tmpfs (E2E docker: anonymous volume xuất hiện)
+FAILED tests/test_dr_drill.py::test_dr_drill_real_ok - AssertionError: [{'96d...
+FAILED tests/test_dr_drill.py::test_dr_drill_real_mismatch_still_cleans - Ass...
+2 failed, 1 passed, 24 deselected in 15.44s
+exit(mutated)=1
+--- M4 reader break-glass dùng splitlines() (sửa tạm pipelines/freeze.py, khôi phục từ bản sao)
+mutated
+FAILED tests/test_freeze.py::test_reader_skips_bad_lines - assert (0 == 1)
+1 failed, 70 deselected in 0.86s
+restored; identical
+--- source tests/test_freeze.py: byte U+2028 literal = 0 (escape \u2028 = 3 dòng)
+--- after mutations: docker ps -a samsam-dr-: []
+--- NEW volumes so với trước fix-round: 0
+
+=== v3.10 fix-round — targeted ×3 (test_dr_drill/test_freeze/test_runbook/test_handover_docs) ===
+== targeted run 1
+........................................                                 [100%]
+112 passed in 13.54s
+== targeted run 2
+........................................                                 [100%]
+112 passed in 15.06s
+== targeted run 3
+........................................                                 [100%]
+112 passed in 15.00s
+
+=== v3.10 fix-round — full pytest (python -m pytest -q -rs) ===
+........................................................................ [ 46%]
+........................................................................ [ 61%]
+........................................................................ [ 77%]
+........................................................................ [ 92%]
+.................................                                        [100%]
+465 passed in 75.26s (0:01:15)
+--- ruff check .
+All checks passed!
+exit=0
+--- git status --short
+ M DONE.md
+ M docs/handover/sop.md
+ M scripts/db_restore_drill.py
+ M tests/test_handover_docs.py
+?? data/freeze_calendar.json
+?? docs/handover/runbook-ha-tang.md
+?? pipelines/freeze.py
+?? scripts/break_glass.py
+?? scripts/dr_drill.py
+?? tests/test_dr_drill.py
+?? tests/test_freeze.py
+?? tests/test_runbook.py
