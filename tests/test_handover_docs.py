@@ -188,6 +188,32 @@ def test_guardrail_case_counts_in_phu_luc_d():
         f"phu-luc-d.md phải ghi '{n_tests} test ({n_cases} case)'"
 
 
+def test_guardrail_v2_tests_and_case_counts_in_phu_luc_d():
+    """v4.1: mục Guardrail v2 liệt kê đủ tên test của
+    tests/test_guardrail_v2.py + số ca theo kind của
+    data/eval/guardrail.jsonl (word-boundary — gotcha v2.3)."""
+    import json
+    from collections import Counter
+
+    body = _doc("phu-luc-d.md")
+    assert "Guardrail v2" in body and "chờ Pháp chế duyệt nhãn" in body
+    src = (ROOT / "tests" / "test_guardrail_v2.py").read_text(
+        encoding="utf-8")
+    names = re.findall(r"def (test_\w+)\(", src)
+    assert names
+    for n in names:
+        assert re.search(rf"(?<!\w){n}(?!\w)", body), \
+            f"phu-luc-d.md thiếu test v2 '{n}'"
+    rows = [json.loads(line) for line in (ROOT / "data" / "eval"
+            / "guardrail.jsonl").read_text(encoding="utf-8").split("\n")
+            if line.strip()]
+    kinds = Counter(r["kind"] for r in rows if "_doc" not in r)
+    for kind, n in kinds.items():
+        assert re.search(rf"\|\s*`{kind}`\s*\|\s*{n}\s*\|", body), \
+            f"phu-luc-d.md phải ghi '| `{kind}` | {n} |'"
+    assert re.search(rf"(?<!\d){sum(kinds.values())} ca(?!\w)", body)
+
+
 def test_sop_warns_role_dsn_while_grants_partial():
     """roles.sql chưa grant đủ bảng → SOP/kiến trúc KHÔNG được hướng dẫn
     đổi DSN app/agent sang role (gãy tab + trần chi phí LLM tắt câm do

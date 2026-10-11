@@ -4,8 +4,10 @@
 `scripts/deploy_gate.py` chỉ cho deploy commit có row PASS mới nhất.
 
 Agent:
-  - guardrail: `guardrail.check(text)["ok"]` so `expect` — tất định, không
-    LLM, không key (CI chạy mỗi push).
+  - guardrail: `guardrail.check(text)["ok"]` (ca có `ctx` ->
+    `guardrail.check_publish(text, **ctx)`) so `expect`; ca block có `code`
+    phải bị chặn đúng code đó (v4.1) — tất định, không LLM, không key (CI
+    chạy mỗi push).
   - chatbot: `api.rag.answer(q)` THẬT (gateway agent_id "chatbot"); chấm
     bằng `eval_qa.check_question` (không nhân đôi EXPECTED); `trap_health`
     chấm `handoff == "health"`. Thiếu OPENROUTER_API_KEY -> exit 1, KHÔNG
@@ -90,19 +92,29 @@ def _short(text: str, cap: int = 120) -> str:
 
 
 def run_guardrail(cases: list[dict]) -> list[tuple[dict, bool, str]]:
+    """Ca có `ctx` -> `check_publish(text, **ctx)`, không có -> `check`.
+    Ca block có `code` chỉ pass khi bị chặn VÀ đúng code đó (v4.1)."""
     out = []
     for c in cases:
         try:
-            r = guardrail.check(c["text"])
+            ctx = c.get("ctx")
+            r = (guardrail.check_publish(c["text"], **ctx) if ctx
+                 else guardrail.check(c["text"]))
+            codes = [v.get("code") for v in r["violations"]]
         except Exception as e:  # noqa: BLE001 — ca lỗi = FAIL, chạy tiếp
             out.append((c, False, f"{type(e).__name__}"))
             continue
         got = "pass" if r["ok"] else "block"
-        detail = "" if got == c["expect"] else (
-            f"kỳ vọng {c['expect']}, guardrail {got} "
-            + "; ".join(v.get("detail", v.get("type", ""))
-                        for v in r["violations"]))
-        out.append((c, got == c["expect"], detail))
+        ok = got == c["expect"]
+        if ok and got == "block" and c.get("code"):
+            ok = c["code"] in codes
+        detail = "" if ok else (
+            f"kỳ vọng {c['expect']}"
+            + (f" ({c['code']})" if c.get("code") else "")
+            + f", guardrail {got} "
+            + "; ".join(f"{v.get('code', v.get('type', ''))}: "
+                        f"{v.get('detail', '')}" for v in r["violations"]))
+        out.append((c, ok, detail))
     return out
 
 

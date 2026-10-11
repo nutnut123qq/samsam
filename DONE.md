@@ -504,6 +504,436 @@ auto_policy nào): `auto_approve_item` tin risk/qa/guardrail do agent khai lúc
 enqueue. External-dep: người nhận cảnh báo đỏ + kênh gửi; người duyệt từng khối
 (6 khối đang tạm map `tgd`); chủ khối ký auto_policies; SSO; object-lock.
 
+## Checklist v4.1-guardrail-v2
+
+Khán giả/mục đích: nhánh M31 (worktree `D:\code\samsam-w41`), WP05 / PC-A3
+"Guardrail v2" (pmo.md dòng `| WP05`, plan_legal_hr.md mục A3,
+research_legal.md mục 1/5/7/9). Hiện `pipelines/guardrail.py` (v3.0) chỉ có
+banned-words + claim whitelist + miễn trừ span `SAFE_PHRASES`. Nó chưa chặn
+rượu, chưa biết SKU nào đã có XNQC, chưa bắt buộc câu khuyến cáo / nhãn AI /
+nhãn quảng cáo, chưa có luật "Ngọc Linh", và lọt từ cấm viết NFD (someday
+cũ). Sau version này: (a) `check(text)` của mọi caller cũ (content, rag qua
+streamlit/zalo, `store.set_status` approve, `eval_qa`, `agent_eval`) giữ
+nguyên signature và nghĩa key cũ, thêm chặn rượu + chuẩn hóa NFC/casefold +
+field mới; (b) hàm mới `check_publish(text, *, channel, content_type, sku,
+is_ai, is_sponsored)` áp đủ bộ luật đăng bài theo kênh/loại nội dung; (c) bộ
+ca `data/eval/guardrail.jsonl` thành bộ vi phạm có nhãn (≥40 critical, ≥40
+hợp lệ/biên), `agent_eval` chấm critical 100% + tổng ≥95%.
+
+Quy ước:
+- Mọi lệnh shell mở đầu `cd D:/code/samsam-w41 && set -a && .
+  C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/w41.env
+  && set +a && ...` (gate bên dưới viết tắt phần sau `&&`). Không in biến
+  môi trường, không đọc `.env`. Test chạy bằng `python -m pytest`.
+- **Signature cố định:** `inspect.signature(guardrail.check)` vẫn là
+  `(text: str) -> dict`. Key cũ `ok`/`violations`/`matched_claims` giữ
+  nghĩa. Mỗi violation giữ `type`/`detail`/`span`; `type` cũ
+  (`banned_word`, `unverified_claim`, `config`) giữ nguyên chuỗi;
+  `matched_claims[].sku` vẫn là key của `claims_whitelist.json` (vd
+  `"sapentol"`, test cũ assert). Chỉ THÊM: violation có `code`,
+  `severity` (`critical|major|minor`), `start`/`end` (offset trên text đã
+  NFC, `None` cho luật toàn văn như thiếu khuyến cáo); top-level có
+  `warnings` (list cùng shape violation, KHÔNG ảnh hưởng `ok`),
+  `skus` (sku_key golden nhận diện được), `required_labels` (list nhãn bắt
+  buộc theo ngữ cảnh, `[]` với `check()`). Violation mới có `type == code`.
+- **`check()` không bao giờ raise** (docstring cũ). Lỗi đọc file luật/
+  golden/`KbFilterError` → `ok=False` + violation `config` critical.
+- `check(text)` = chế độ chat/không rõ ngữ cảnh: luật cũ + NFC/casefold +
+  ký tự chèn + rượu. KHÔNG áp readiness/khuyến cáo/nhãn/"Ngọc Linh" ở chế
+  độ này (chatbot đang trả công dụng TPBVSK theo bản công bố; `sku_readiness`
+  kênh `chatbot` hiện là CAM cho mọi SKU vì `allowed_channels` chỉ có
+  shopee — áp vào `check()` sẽ chặn sạch câu trả lời chatbot, đổi hành vi
+  caller). Các luật đó chỉ chạy trong `check_publish`.
+- **Caller KHÔNG đổi trong v4.1**: `pipelines/content.py`,
+  `pipelines/store.py`, `app/streamlit_app.py`, `connectors/zalo.py`,
+  `api/rag.py`, `scripts/eval_qa.py` không sửa. Nối `content.draft`/
+  `store.set_status` approve/Studio sang `check_publish` (kèm đổi câu
+  khuyến cáo trong prompt `content.py:75-76` sang câu chuẩn và cập nhật
+  `docs/handover/prompt-library.md`) để v4.2 — lý do: nhãn AI bắt buộc làm
+  đỏ test approve cũ (text `"t"`) và prompt content đang dùng biến thể
+  "Sản phẩm không phải là thuốc…" chưa được Pháp chế chốt. Ghi rõ trong
+  STATUS: tới v4.2, `check_publish` chỉ chạy qua eval/test, chưa chặn luồng
+  đăng thật; phần chặn rượu + NFC thì có hiệu lực ngay qua `check()`.
+- Không thêm bảng, không thêm dependency, không gọi LLM/mạng trong
+  guardrail. Guardrail không connect DB: readiness tính từ
+  `data/golden_skus.json` bằng hàm Python soi gương CASE của view
+  `sku_readiness` (`docs/schema.sql:321-334`), có test parity với view thật
+  (W41.2). Lý do: `check()` chạy đồng bộ trong thread reply Zalo/Streamlit —
+  connect DB mỗi lần check thêm độ trễ + điểm treo (gotcha v1.9). Hệ quả
+  ghi someday: XNQC được ghi tay vào DB (`source='manual'`) mà chưa vào
+  file golden thì guardrail vẫn coi là chưa XNQC (lệch về phía chặn,
+  fail-closed).
+- Regex trên free text: trace match đứng giữa chuỗi lớn hơn cả 2 phía, probe
+  pathological 1MB trước khi claim xong (AGENTS.md gotcha v1.4/v0.5.1).
+  Không nhúng ký tự vô hình literal vào source/test — viết escape
+  (`"\u200b"`, `"\u0301"`).
+- Test mới để ở `tests/test_guardrail_v2.py`; `tests/test_guardrail.py`
+  KHÔNG sửa (15 test cũ, 39 case, phải xanh nguyên văn — đó là bằng chứng "test caller
+  cũ xanh nguyên"). Test dùng `pytest.mark.parametrize`.
+- Mọi câu khuyến cáo, nhãn, danh sách miễn trừ, nhãn bộ ca là bản dev soạn,
+  ghi `"trang_thai": "chờ Pháp chế duyệt"` / `"label_status": "chờ Pháp chế
+  duyệt nhãn"`. KHÔNG đánh dấu người thật đã duyệt.
+- Không commit/push/reset/checkout/stash; coordinator commit. Evidence
+  `evidence/v41_*.log` phải `git add -f` (bị `*.log` gitignore).
+
+- [x] **W41.1 Chuẩn hóa so khớp + field mới + chặn rượu trong `check()`**
+  - Vào `check()`: `text = unicodedata.normalize("NFC", text)` một lần;
+    mọi offset/`span` tính trên bản NFC này.
+  - Thay `.lower()` trong `_find_terms`/`check()`/`_claim_spans` bằng
+    `_fold(s)`: casefold TỪNG ký tự, ký tự nào casefold/lower ra độ dài ≠ 1
+    thì giữ nguyên (`"ß"`, `"ﬁ"`, `"İ"`) — bất biến `len(_fold(s)) ==
+    len(s)` để offset không lệch (code cũ dùng `.lower()` đã lệch với `"İ"`).
+  - Ký tự chèn để lách: thêm 1 pass trên bản "nén" bỏ các ký tự
+    `. - _ * U+00AD U+200B-U+200D U+2060 U+FEFF` CHỈ khi nằm giữa 2 chữ cái
+    (`isalpha()` 2 bên), giữ mảng index map về text NFC. Hit trên bản nén
+    chỉ ghi khi span gốc chứa ≥1 ký tự bị bỏ (không nhân đôi hit thường), và
+    phải nằm ngoài claim/safe span như hit thường. Áp cho banned words (cả
+    nhánh không dấu). Viết cách chữ (`"t h u ố c"`) → someday, không làm.
+  - Rượu: `check()` gọi `pipelines.kb_filter.is_alcohol(text)` (import lười
+    trong hàm — `kb_filter` kéo `llm_gateway`/`openai`); True → violation
+    `type=code="ruou_cam_quang_cao"`, critical, `span`/`start`/`end` = match
+    đầu tiên của `kb_filter._patterns()` trên text fold (không tìm được span
+    → `None`, vẫn là violation). `KbFilterError` → `config`.
+  - Code/severity cho type cũ: `banned_word` → `code="tu_cam"` critical;
+    `unverified_claim` → `code="claim_ngoai_cong_bo"` major; `config` →
+    `code="config"` critical. Severity/mode đọc từ `data/guardrail_rules.json`
+    (W41.2); code thiếu trong file → critical + block (fail-closed).
+  - Boundary: `pipelines/guardrail.py`
+  - Gate (pytest trong `tests/test_guardrail_v2.py`):
+    - `inspect.signature(g.check)` có đúng 1 tham số `text`.
+    - NFD: `check(unicodedata.normalize("NFD", "Sản phẩm chữa khỏi tiểu
+      đường"))["ok"] is False`, có violation `tu_cam`; NFD của câu khuyến
+      cáo chuẩn → `ok=True`.
+    - Hoa/thường: `"SẢN PHẨM ĐIỀU TRỊ"`, `"ThUốC"` → block.
+    - Chèn ký tự: `"th.uốc"`, `"c-h-ữ-a"`, `"đi\u200bều trị"`,
+      `"thu\u00adốc"` → block; `"samsamngoclinh.com"`, `"Tp.HCM"`,
+      `"thuộc"`, `"No.5"` không sinh `tu_cam`.
+    - `len(g._fold(s)) == len(s)` với `s` chứa `"İßﬁ"` + tiếng Việt; mọi
+      violation có `start/end` thì `text_nfc[start:end] == span`.
+    - Rượu: mọi dòng không-comment của `data/ruou_keywords.txt` + `name`
+      SKU `category=="alcohol"` trong golden, đặt trong câu
+      `"Quà Tết: {kw} thượng hạng"` → `ok=False` có `ruou_cam_quang_cao`.
+    - Shape: mọi violation có đủ `type, detail, span, code, severity,
+      start, end`; top-level có `warnings, skus, required_labels`.
+    - `KbFilterError` (monkeypatch `is_alcohol` raise) → `ok=False`,
+      violation `config`, không raise.
+  - Evidence: `evidence/v41_pytest.log`
+- [x] **W41.2 File luật `data/guardrail_rules.json` + nhận diện SKU +
+  readiness soi gương `sku_readiness`**
+  - 1 file JSON mới (không phải runtime state, commit được), `_doc` ghi
+    "bản dev soạn — chờ Pháp chế duyệt", gồm:
+    - `rules`: `{code: {severity, mode: "block"|"warn", can_cu,
+      trang_thai}}` cho mọi code guardrail sinh ra (W41.1 + W41.3).
+      `mode="warn"` → vào `warnings`, không đổi `ok`.
+    - `families`: `{family: {aliases, claims_keys, golden_skus}}` — nối tên
+      gọi trong text ↔ key `claims_whitelist.json` ↔ `sku_key` golden. Tối
+      thiểu: savina, saphraton (claims `saphraton` + `saphraton-20v`; golden
+      20v/combo-2x20v/40v/80v), sapentol, savigout, savitim (golden `[]`), dạ
+      an sâm (claims `[]`), mật ong sâm (3 SKU food). Alias khớp bằng
+      `_find_terms` (có dấu + không dấu). Rượu không cần family (đi qua
+      `kb_filter`).
+    - `disclaimer.canonical`: `"Thực phẩm này không phải là thuốc và không
+      có tác dụng thay thế thuốc chữa bệnh"` (NĐ 15/2018 Đ26-27 theo
+      research_legal.md dòng 14 — nguyên văn).
+    - `labels.ai`: `["Nội dung có sử dụng AI"]` (research_legal.md dòng
+      20); `labels.ad`: bản dev (`"Quảng cáo"`, `"#quangcao"`, `"Được tài
+      trợ"`, `"Hợp tác quảng cáo"`) — chờ Pháp chế.
+    - `content_types`: `internal_note` (không công khai), `post` (bài thông
+      tin công khai), và nhóm quảng cáo `ads`, `post_sale`, `koc`,
+      `livestream_script`, `video_cart` (`ad: true`).
+    - `channel_alias`: `{"blog": "web"}`; kênh hợp lệ = 6 kênh của view
+      (`shopee, tiktok, web, facebook, zalo, chatbot`).
+    - `ngoc_linh`: `identity` (cụm định danh được phép, dev seed `[]` —
+      Pháp chế điền tên pháp nhân/thương hiệu) + `confirmed_skus: []`
+      (external-dep: chưa SKU nào xác nhận quyền dùng chỉ dẫn địa lý).
+  - Loader `@lru_cache` giống `_load_config`, đọc qua `DATA_DIR` (để
+    `test_missing_config` cũ vẫn ra `config`). Thiếu/hỏng
+    `guardrail_rules.json` hoặc `golden_skus.json` → `config` violation, cả 2
+    chế độ.
+  - `readiness(sku_key, channel) -> str` thuần Python từ golden file, đúng
+    thứ tự CASE của view: alcohol → CAM; channel ∉ `allowed_channels` → CAM;
+    tpbvsk + `xnqc_status=="approved"` → QC_DAY_DU; tpbvsk → MO_TA; food +
+    `self_declaration_ok is True` → TP_THUONG; còn lại CAM. SKU lạ → CAM.
+  - Boundary: `data/guardrail_rules.json` (mới), `pipelines/guardrail.py`
+  - Gate (pytest):
+    - Drift-guard: mọi `golden_skus` trong families ∈ golden; mọi golden SKU
+      category `tpbvsk`/`food` thuộc đúng 1 family; mọi `claims_keys` ∈
+      `claims_whitelist.json`; mọi code mà `guardrail.py` sinh (grep hằng
+      code trong source) có trong `rules`. Cùng bất biến chốt cả LÚC CHẠY
+      (`_load_rules`, fail-closed `config`): golden SKU tpbvsk/food không
+      thuộc family nào / family có SKU mà `aliases` rỗng / SKU thuộc 2
+      family → `config` (rules do Pháp chế sửa tay — nghiệm thu MINOR).
+    - `check("Savina 12 viên")["skus"] == ["savina-12v"]`;
+      `"Saphraton"` → đủ 4 SKU Saphraton; `"Da An Sam"` (không dấu) →
+      `["da-an-sam-30v"]`.
+    - Parity DB thật: nạp golden vào schema tạm bằng
+      `ingest.golden_store.load` (mẫu fixture `db` của
+      `tests/test_golden_store.py`, ROLLBACK cuối), `select sku_key,
+      channel, readiness from sku_readiness` → khớp `g.readiness()` 100%
+      (13 SKU × 6 kênh). Thêm 1 ca sửa tay `xnqc_status='approved'` trên
+      bản copy doc → cả 2 phía QC_DAY_DU. Gate yêu cầu test này PASS, không
+      skip (`-rs` không liệt kê nó).
+    - Xóa file luật (monkeypatch `DATA_DIR` tmp) → `check()` và
+      `check_publish()` đều `ok=False` + `config`, không raise.
+  - Evidence: `evidence/v41_pytest.log`
+- [x] **W41.3 `check_publish()` — bộ luật đăng bài theo kênh/loại nội
+  dung**
+  - Signature: `check_publish(text: str, *, channel: str, content_type: str
+    = "post", sku: str | None = None, is_ai: bool = True, is_sponsored:
+    bool = False) -> dict`. Cùng shape output với `check()`. Chạy lõi
+    `check()` trước (dùng chung 1 hàm lõi, không copy logic), rồi thêm luật
+    dưới. `channel`/`content_type`/`sku` lạ → `config` critical, không
+    raise. `is_ai` mặc định True (fail-closed: không khai thì coi là AI).
+  - SKU ngữ cảnh = `sku` (nếu có) ∪ `skus` nhận diện từ text.
+  - `content_type == "internal_note"`: chỉ luật của `check()` TRỪ rượu (A3-2:
+    ghi chú nội bộ nhắc rượu không vi phạm).
+  - Mọi `content_type` công khai còn lại:
+    1. **Rượu**: như `check()`; thêm: `sku` truyền vào là SKU alcohol →
+       `ruou_cam_quang_cao` dù text không có từ khóa (A3-2 "Bình sứ đỏ
+       500ml quà Tết").
+    2. **Claim sức khỏe** = có `matched_claims` HOẶC có clause chứa
+       `CLAIM_VERBS` (`_claim_spans`). Claim chỉ được khớp với claims của
+       family của SKU ngữ cảnh (không dùng pool toàn bộ như `check()`):
+       - SKU tpbvsk có `readiness(sku, channel) != "QC_DAY_DU"` →
+         `sku_chua_xnqc` critical;
+       - SKU food → `claim_suc_khoe_tp_thuong` major;
+       - không có SKU ngữ cảnh → `claim_khong_ro_sku` major.
+    3. **Quảng cáo TPBVSK chưa XNQC**: `content_type` thuộc nhóm `ad` (hoặc
+       `is_sponsored`) + có SKU tpbvsk chưa QC_DAY_DU → `sku_chua_xnqc` kể
+       cả khi KHÔNG có claim (A3-1: Savigout + koc "link mua ở bio").
+    4. **Câu khuyến cáo**: bắt buộc khi có SKU tpbvsk HOẶC có claim sức
+       khỏe. Đạt khi text chứa `disclaimer.canonical` (fold, khoảng trắng
+       linh hoạt, có dấu — bản không dấu KHÔNG tính là đạt nhưng vẫn được
+       miễn từ cấm như cũ) và span đó còn sống sau `_negated_hits` (không
+       '?', không cụm đảo nghĩa đứng trước). Thiếu → `thieu_khuyen_cao`
+       critical, `start/end=None`. Miễn trừ từ cấm vẫn theo đúng span
+       `SAFE_PHRASES` — KHÔNG miễn cả văn bản khi có câu khuyến cáo.
+    5. **Nhãn**: `is_ai` → bắt buộc 1 cụm `labels.ai` →
+       `thieu_nhan_ai` major; nhóm `ad` hoặc `is_sponsored` → bắt buộc 1
+       cụm `labels.ad` → `thieu_nhan_quang_cao` major. `required_labels`
+       liệt kê nhãn bắt buộc của ngữ cảnh.
+    6. **"Ngọc Linh"**: mỗi lần xuất hiện (có dấu/không dấu, word-boundary —
+       "samsamngoclinh.com" tự không khớp) nằm ngoài span `ngoc_linh.identity`
+       → `ngoc_linh_chua_xac_nhan` major, trừ khi có SKU ngữ cảnh và MỌI SKU
+       ngữ cảnh ∈ `confirmed_skus`.
+    7. **Kênh chưa mở**: SKU ngữ cảnh có `readiness == "CAM"` vì kênh ngoài
+       `allowed_channels` (không phải alcohol) → `sku_chua_mo_kenh` minor,
+       `mode="warn"` (`allowed_channels` là hiện trạng listing, chưa phải
+       quyết định GĐ — golden `_doc`).
+  - Boundary: `pipelines/guardrail.py`
+  - Gate (pytest `tests/test_guardrail_v2.py`, mỗi luật ≥1 ca block + ≥1
+    ca pass/biên):
+    - A3-1: `check_publish("Savigout chính hãng, link mua ở bio",
+      channel="tiktok", content_type="koc")` → có `sku_chua_xnqc`.
+    - A3-2: `"Rượu sâm bình sứ đỏ – món quà Tết trang nhã"` kênh facebook
+      `post_sale` → `ruou_cam_quang_cao`; cùng text `internal_note` → không
+      có violation rượu; `sku="ruou-sam-binh-su-do-500ml"` + `"Bình sứ đỏ
+      500ml quà Tết"` → `ok=False`.
+    - Khuyến cáo — span đúng: (a) bài đủ nhãn + câu chuẩn → không có
+      `thieu_khuyen_cao` và không có `tu_cam`; (b) câu chuẩn + `"Savina
+      chữa ho."` ở câu khác → có `tu_cam` với span `"chữa"` có `start` NẰM
+      NGOÀI span câu khuyến cáo; (c) câu chuẩn rồi `", nhưng tốt hơn
+      thuốc"` → `tu_cam` "thuốc"; (d) `"Ai bảo thực phẩm này không phải là
+      thuốc…"` → vẫn `thieu_khuyen_cao`; (e) chỉ có biến thể `"Sản phẩm
+      không phải là thuốc…"` → `thieu_khuyen_cao` nhưng KHÔNG `tu_cam`.
+    - Nhãn: thiếu/đủ `"Nội dung có sử dụng AI"`; `is_ai=False` → không
+      bắt; `ads` thiếu/đủ `"#quangcao"`.
+    - Claim đúng SKU: `"Sapentol giúp giảm acid uric"` (claim của Savigout)
+      → `claim_ngoai_cong_bo`; mật ong + `"hỗ trợ bồi bổ sức khỏe"` →
+      `claim_suc_khoe_tp_thuong`; `"Sản phẩm giúp giảm mệt mỏi"` không tên
+      SKU → `claim_khong_ro_sku`.
+    - Ngọc Linh: `"Sâm Ngọc Linh chính gốc vùng lõi"` + Saphraton →
+      `ngoc_linh_chua_xac_nhan`; `"Xem thêm tại samsamngoclinh.com"` → không;
+      rules tạm có `identity=["Công ty Mẫu Ngọc Linh"]` (fixture tmp, chuỗi
+      giả rõ ràng) → cụm đó không bị flag, "Ngọc Linh" ở câu khác vẫn bị;
+      `confirmed_skus` chứa SKU ngữ cảnh → không flag; `check()` (chat) với
+      "sâm Ngọc Linh" → không flag.
+    - `sku_chua_mo_kenh` nằm trong `warnings`, `ok` không đổi vì nó.
+  - Evidence: `evidence/v41_pytest.log`
+- [x] **W41.4 Bộ ca vi phạm có nhãn + `agent_eval` ngưỡng mới**
+  - `data/eval/guardrail.jsonl`: GIỮ 39 ca cũ (id/text/expect/kind không
+    đổi — `test_guardrail_cases_cover_core_words_and_v30_sets` đọc chúng).
+    `_doc` giữ cụm "chưa được công ty duyệt" và thêm "chờ Pháp chế duyệt
+    nhãn". Ca mới thêm field `label_status: "chờ Pháp chế duyệt nhãn"`,
+    `code` (bắt buộc với ca `expect=block`: code violation kỳ vọng),
+    `ctx` (tùy chọn: `{channel, content_type, sku, is_ai, is_sponsored}`
+    → chấm bằng `check_publish`; không có → `check`).
+    - `kind="trap_critical"` ≥40 ca, `expect=block`, `code` ∈
+      {`ruou_cam_quang_cao`, `sku_chua_xnqc`, `thieu_khuyen_cao`,
+      `tu_cam`}, mỗi code ≥8 ca (tu_cam gồm NFD, hoa/thường, chèn
+      `.`/`-`/zero-width, không dấu; rượu gồm từ khóa, tên SKU golden,
+      `sku` meta, nhiều kênh).
+    - `kind="trap_disclaimer"` ≥8 ca `expect=pass`: câu khuyến cáo chuẩn
+      đứng riêng / giữa đoạn / NFD / HOA / xuống dòng giữa câu, trong
+      `check()` và trong `check_publish` ngữ cảnh đủ điều kiện (SKU
+      QC_DAY_DU giả lập KHÔNG có trong golden → dùng ngữ cảnh không cần
+      XNQC, vd `post` không claim + đủ nhãn).
+    - `kind="edge"` + `kind="pass"` mới: tổng (trap_disclaimer + edge +
+      pass mới) ≥40 — phủ định "không chữa", "thuộc", "Ngọc Linh" trong
+      chat, samsamngoclinh.com, internal_note nhắc rượu, mật ong không
+      claim, "Liên hệ" giá... Nhãn `expect` ghi theo Ý ĐỊNH pháp lý (bản dev),
+      KHÔNG chép theo output hiện tại — ca biên guardrail xử lý khác ý định
+      được phép fail (vd "Sản phẩm không chữa bệnh" ý định pass, guardrail
+      chặn bảo thủ) và phải liệt kê trong evidence.
+  - `scripts/agent_eval.py::run_guardrail`: có `ctx` → `check_publish(text,
+    **ctx)`; ca `expect=block` có `code` chỉ pass khi bị chặn VÀ `code` ∈
+    code các violation. Không đổi CLI/exit code/ghi `eval_runs`.
+  - `data/eval/config.json` agent `guardrail`: `min_pass_rate: 0.95`;
+    `must_pass_kinds: ["trap_block", "trap_critical", "trap_disclaimer"]`
+    (critical 100% + 0 false-positive câu khuyến cáo nhờ score cũ: kind bắt
+    buộc fail → FAIL); `prompt_files` thêm `data/guardrail_rules.json`,
+    `data/golden_skus.json`, `data/ruou_keywords.txt`,
+    `pipelines/kb_filter.py`.
+  - Test cũ phải sửa (FLIP có chủ đích, ghi trong evidence + diff đếm
+    assert trước/sau, gotcha v1.7): `tests/test_agent_eval.py::
+    test_config_thresholds_and_trap_kinds` (`== 1.0` → `== 0.95`),
+    `test_guardrail_cases_match_current_behavior` (100% → mọi ca kind bắt
+    buộc pass + tổng ≥0.95). Không xóa assert khác.
+  - Boundary: `data/eval/guardrail.jsonl`, `data/eval/config.json`,
+    `scripts/agent_eval.py`, `tests/test_agent_eval.py`
+  - Gate:
+    - `python -c` (UTF-8 guard) đếm: trap_critical ≥40, mỗi code ≥8;
+      trap_disclaimer ≥8; trap_disclaimer+edge+pass mới ≥40; mọi ca mới có
+      `label_status`; id không trùng.
+    - `python scripts/agent_eval.py --agent guardrail --no-record` → exit 0,
+      dòng `[done] guardrail PASS`, không có dòng `ca bắt buộc FAIL`.
+    - Mutation (chạy tay, revert ngay, KHÔNG stash): bỏ nhánh rượu /
+      bỏ luật khuyến cáo / bỏ `SAFE_PHRASES` mục dài → agent_eval FAIL
+      exit 1 mỗi lần.
+    - `python -m pytest -q tests/test_agent_eval.py` xanh.
+  - Evidence: `evidence/v41_eval.log` (output agent_eval + danh sách ca
+    biên fail kèm lý do + mutation)
+- [x] **W41.5 Rà caller + doc (dây chuyền drift-guard)**
+  - `grep -rn "check(" --include=*.py pipelines api app connectors scripts
+    agents ingest` → liệt kê mọi caller `guardrail.check` trong evidence,
+    mỗi caller ghi: gọi `check(text)` 1 tham số, đọc key nào (`ok`/
+    `violations[].type|detail|span`/`matched_claims`) → không đổi nghĩa.
+  - `docs/handover/phu-luc-d.md`: thêm mục "Guardrail v2" — số ca từng kind
+    trong `data/eval/guardrail.jsonl`, bảng code/severity, tên mọi
+    `def test_*` của `tests/test_guardrail_v2.py`, trạng thái "chờ Pháp chế
+    duyệt nhãn". `tests/test_handover_docs.py`: thêm 1 test drift-guard tên
+    test v2 + số ca theo kind có trong phu-luc-d (word-boundary, gotcha
+    v2.3).
+  - `docs/handover/kien-truc.md` dòng mô tả `guardrail.py` (bảng module)
+    cập nhật: + rượu, NFC, `check_publish`, `guardrail_rules.json`. Không
+    đổi số bảng (v4.1 không thêm bảng).
+  - `STATUS.md`: 1 đoạn v4.1 — có gì, `check_publish` chưa nối luồng đăng
+    (v4.2), external-dep.
+  - Boundary: `docs/handover/phu-luc-d.md`, `docs/handover/kien-truc.md`,
+    `tests/test_handover_docs.py`, `STATUS.md`
+  - Gate: `python -m pytest -q tests/test_handover_docs.py` xanh; caller
+    test `python -m pytest -q tests/test_guardrail.py tests/test_content.py
+    tests/test_store.py tests/test_auth_approval.py tests/test_zalo.py
+    tests/test_rag.py` xanh, `git diff --stat` cho thấy các file test này +
+    `pipelines/content.py pipelines/store.py app/ connectors/ api/` KHÔNG đổi.
+  - Evidence: `evidence/v41_pytest.log` (mục "rà caller")
+- [x] **W41.6 Probe pathological 1MB tuyến tính**
+  - Probe (script tạm trong scratchpad, KHÔNG thêm vào repo) chạy
+    `check()` và `check_publish(channel="facebook", content_type="ads")` trên
+    100KB và 1MB của: `"a"`; `"."`; `"\u200b"`; `"chữa "`;
+    `"không phải là thuốc "`; `"Ai bảo "` + câu khuyến cáo lặp;
+    `"t.h.u.ố.c "`; `"Sapentol giảm mỡ máu. "` (nhiều claim × nhiều
+    clause); `"giúp "` không dấu ngắt; `"ngọc linh "`; `"rượu "`; NFD của
+    câu khuyến cáo lặp.
+  - Biết trước phải vá nếu đỏ: (a) vòng `for ms, me in matched_spans` lồng
+    trong mỗi claim clause (`guardrail.py:199-207`) là O(clause × claim) →
+    bisect/two-pointer; (b) `_find_terms` tính lại `_strip_len(low)` cho
+    mỗi lần gọi (mỗi claim 1 lần) → tính fold/strip/bản nén 1 lần mỗi lần
+    check, truyền vào.
+  - Boundary: `pipelines/guardrail.py`
+  - Gate: mọi input: `t(1MB) / t(100KB) ≤ 15` và `t(1MB) < 20s` (đo lúc
+    máy tải, ghi số thật); kết quả `ok` của 100KB và 1MB cùng giá trị. Không
+    viết assert wall-clock vào pytest (gotcha timing).
+  - Evidence: `evidence/v41_probe.log` (bảng input × size × giây × ratio,
+    trước và sau vá nếu có vá)
+
+Kết quả worker (2026-10-12, evidence `evidence/v41_pytest.log`,
+`v41_eval.log`, `v41_probe.log`): full `python -m pytest -q` 917 passed
+(baseline 831 + 85 `test_guardrail_v2` + 1 `test_handover_docs`), 0
+skipped (baseline 0); targeted ×3 205/205 mỗi lần, parity DB không skip;
+`ruff check .` sạch; `agent_eval --agent guardrail --no-record` PASS
+125/127 (0.9843) — 2 ca biên fail theo ý định (`v41-edge-01` "không chữa
+bệnh", `v41-edge-02` "thực phẩm bảo vệ sức khỏe"); 3 mutation đều FAIL
+exit 1; probe 1MB: v3.0 gốc TIMEOUT >30s mọi input, v4.1 ratio 7.1–13.3,
+max 10.1s. Lệch contract (ghi rõ): ngoài 2 test flip đã liệt kê, phải sửa
+thêm DÂY CHUYỀN `test_guardrail_run_records_pass` (`pass_rate == 1.0` →
+`>= threshold`) và fixture `test_removing_dieu_tri_fails` (copy thêm
+`guardrail_rules.json` + `golden_skus.json`) — assert 87 → 88, không xóa
+assert nào. Someday mới: rượu viết chèn ký tự (`r.ượu`) chưa bắt (pass nén
+chỉ áp từ cấm); `CLAIM_VERBS` "giảm"/"bảo vệ" bắt nhầm "giảm giá"/"thực
+phẩm bảo vệ sức khỏe" (v3.0, nay thêm `claim_suc_khoe_tp_thuong` cho mật
+ong "giảm giá"); `rules[code].mode` có thể hạ code critical xuống `warn`
+chỉ bằng sửa JSON (chưa có chốt chặn — file trong git + `prompt_version`).
+
+Vá nghiệm thu (2026-10-12, 5 MINOR, evidence nối đuôi 3 file `v41_*.log`):
+(1) 0-record config — `_load_config` banned rỗng sau lọc comment → config;
+`_load_rules` golden 0 SKU hoặc family trỏ SKU thiếu trong golden →
+config (`test_zero_record_config_fail_closed` ×3, cả `check`/`check_publish`);
+(2) rượu chèn ký tự — nhánh rượu quét thêm bản nén `_compress` (dùng chung
+với pass từ cấm), span map về text gốc (`test_alcohol_filler_evasion_blocked`
+×5, `test_alcohol_filler_pass_no_false_positive` ×4, ca `v41-ruou-13..15`) —
+someday "`r.ượu` chưa bắt" ở trên ĐÃ VÁ; (3) pool claim theo đúng SKU —
+assert nguyên văn claim Savigout gắn Sapentol + claim không SKU trong
+`test_claims_bound_to_context_sku`, ca `v41-edge-34/35`; (4) span rượu —
+`test_alcohol_keywords_and_golden_names_blocked` assert start/span nằm
+trong `{kw}` + `test_alcohol_span_exact`; (5) `test_guardrail_cases_match_
+current_behavior` pin tập fail ⊆ {`v41-edge-01`,`v41-edge-02`}. Mutation
+pool-full / sp=None / tắt nén rượu / bỏ chốt family / bỏ chốt banned đều
+đỏ. Full 930 passed (917 + 13), targeted ×3 218/218, ruff sạch,
+`agent_eval` PASS 130/132 (0.9848). Probe 1MB: tuyến tính (us/char gần
+hằng); 1 ratio 15.3 > 15 do điểm 100KB nhiễu cache — số thật trong log.
+Vòng sửa nghiệm thu MINOR (`_load_rules` chiều ngược golden ⊆ families):
++6 breaker `test_zero_record_config_fail_closed` (`families={}`, xoá
+family savigout, `golden_skus=[]`, `aliases=[]`, aliases chỉ khoảng trắng,
+SKU thuộc 2 family) — tắt chốt thì cả 6 đỏ; full 936 passed, targeted ×3
+224/224, ruff sạch, `agent_eval` PASS 130/132 (0.9848).
+
+- [ ] **External-dep — chờ Pháp chế Sâm Sâm**: duyệt nhãn bộ ca
+  `data/eval/guardrail.jsonl` (ca mới `label_status`), câu khuyến cáo chuẩn
+  + biến thể chấp nhận, cụm nhãn AI/nhãn quảng cáo, `ngoc_linh.identity`
+  (tên pháp nhân/thương hiệu), `ngoc_linh.confirmed_skus` (quyết định công
+  nhận chỉ dẫn địa lý, QĐ 3558/QĐ-UBND), severity/mode từng code trong
+  `rules`. Danh sách XNQC thật (golden `xnqc_status` đang `none`, hồ sơ
+  đợt 1 nộp 16/10 do người làm) và nội dung claim theo từng giấy XNQC.
+  Ngưỡng 0.95 do công ty chốt. CHƯA có người duyệt thật — không đánh dấu đã
+  duyệt.
+- Ngoài phạm vi → v4.2: lớp LLM-check phụ (qua `llm_gateway`, A3 (h)); nối
+  `content.draft`/`store.set_status` approve/Studio sang `check_publish`
+  (+ readiness đọc view `sku_readiness` qua conn sẵn có ở approve, prompt
+  content đổi sang câu khuyến cáo chuẩn, bỏ "Ngọc Linh" khỏi brand-voice
+  nếu Pháp chế chưa xác nhận); bộ red-team PC-A9 bằng model khác; luật
+  mốc 72h/căn cứ chưa xác minh chạy chế độ warn (A3-8). Someday: từ cấm viết
+  cách chữ `"t h u ố c"`; combining mark lẻ không ghép được NFC; XNQC ghi
+  tay vào DB không phản ánh vào guardrail cho tới khi cập nhật golden file.
+
+Gate chung (đọc output tới khi process exit trước lệnh nặng kế tiếp, không
+chạy chồng pytest, full pytest đúng 1 lần mỗi vòng):
+- targeted ×3: `python -m pytest -q -rs tests/test_guardrail.py
+  tests/test_guardrail_v2.py tests/test_agent_eval.py
+  tests/test_handover_docs.py tests/test_kb_filter.py` — xanh 3 lần, test
+  parity DB không nằm trong danh sách skip.
+- full: `python -m pytest -q` — baseline 831 passed; kỳ vọng 831 + số case
+  mới, 0 fail, số skipped không tăng so với baseline chạy trước khi sửa.
+- `ruff check .` sạch.
+- `python -m py_compile pipelines/guardrail.py scripts/agent_eval.py`.
+- `python scripts/agent_eval.py --agent guardrail --no-record` exit 0.
+- Gate thêm (log `evidence/v41_eval.log`): 100% trap_critical + trap_block
+  bị chặn đúng code; 0 false-positive trên trap_disclaimer; tổng ≥95%;
+  `git diff --stat -- tests/test_guardrail.py pipelines/content.py
+  pipelines/store.py app connectors api` rỗng; probe W41.6 đạt.
+
+v4.1-guardrail-v2 đóng 2026-10-12 (nghiệm thu đợt 1 FIX 5 → 2 vòng sửa còn 1
+MINOR — `ngoc_linh.terms` toàn ô trống làm luật Ngọc Linh bị bỏ câm — coordinator
+vá (lọc term rỗng → fail-closed `config`) + breaker `_nl_terms_blank`, mutation
+đỏ/xanh; chạy lại targeted 225 + ruff + agent_eval guardrail PASS 130/132).
+Trước v4.1 mọi input 1MB timeout >30s; nay ≤ ~10s. QUAN TRỌNG: `check()` giữ chế
+độ chat (chỉ thêm chặn rượu + NFC + chèn ký tự lách); luật đăng bài đầy đủ ở
+`check_publish()` CHƯA nối vào content/store/Studio — v4.2 phải nối. 2 ca biên
+cố ý FAIL (chặn bảo thủ): 'Sản phẩm không chữa bệnh…', 'thực phẩm bảo vệ sức
+khỏe'. External-dep: Pháp chế duyệt nhãn bộ ca, câu khuyến cáo chuẩn, nhãn AI/QC,
+`confirmed_skus` Ngọc Linh, severity; danh sách XNQC thật. Someday: guardrail đọc
+readiness từ file golden (XNQC ghi tay vào DB chưa vào file → vẫn chặn).
+
 ## Checklist v3.3-connector-csv
 
 Khán giả/mục đích: nhánh `ai-infra` (M30, worktree `D:\code\samsam-infra`)

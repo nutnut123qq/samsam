@@ -1,0 +1,53 @@
+{
+  "_doc": "Guardrail v2 (v4.1, WP05/PC-A3) — bộ luật pháp lý cho pipelines/guardrail.py. BẢN DEV SOẠN — CHỜ PHÁP CHẾ DUYỆT: câu khuyến cáo, cụm nhãn AI/quảng cáo, mục 'Ngọc Linh', severity/mode từng code đều chưa có người duyệt thật. rules: code -> {severity critical|major|minor, mode block|warn (warn = vào 'warnings', không đổi ok), can_cu, trang_thai}. families: tên gọi trong text <-> key claims_whitelist.json <-> sku_key golden_skus.json (rượu không có family — đi qua pipelines/kb_filter). Code thiếu trong rules -> guardrail coi là critical + block (fail-closed).",
+  "rules": {
+    "tu_cam": {"severity": "critical", "mode": "block", "can_cu": "NĐ 15/2018 Đ26-27: TPBVSK không được quảng cáo như thuốc / có tác dụng chữa bệnh; data/banned_words.txt", "trang_thai": "chờ Pháp chế duyệt"},
+    "claim_ngoai_cong_bo": {"severity": "major", "mode": "block", "can_cu": "NĐ 15/2018 Đ26: chỉ nói đúng công dụng đã công bố; data/claims_whitelist.json", "trang_thai": "chờ Pháp chế duyệt"},
+    "config": {"severity": "critical", "mode": "block", "can_cu": "fail-closed: thiếu/hỏng file luật thì không cho qua", "trang_thai": "chờ Pháp chế duyệt"},
+    "ruou_cam_quang_cao": {"severity": "critical", "mode": "block", "can_cu": "Luật PCTH rượu, bia 44/2019 Đ5 k7/k9: cấm quảng cáo, khuyến mại rượu >=15 độ", "trang_thai": "chờ Pháp chế duyệt"},
+    "sku_chua_xnqc": {"severity": "critical", "mode": "block", "can_cu": "NĐ 15/2018 Đ26-27 + TTHC 1.006.424: TPBVSK phải có giấy XNQC trước khi quảng cáo (view sku_readiness != QC_DAY_DU)", "trang_thai": "chờ Pháp chế duyệt"},
+    "claim_suc_khoe_tp_thuong": {"severity": "major", "mode": "block", "can_cu": "Thực phẩm thường (tự công bố) không được nêu công dụng sức khỏe", "trang_thai": "chờ Pháp chế duyệt"},
+    "claim_khong_ro_sku": {"severity": "major", "mode": "block", "can_cu": "Không xác định được SKU thì không đối được claim với hồ sơ công bố/XNQC", "trang_thai": "chờ Pháp chế duyệt"},
+    "thieu_khuyen_cao": {"severity": "critical", "mode": "block", "can_cu": "NĐ 15/2018 Đ26-27: câu khuyến cáo bắt buộc cho quảng cáo TPBVSK", "trang_thai": "chờ Pháp chế duyệt"},
+    "thieu_nhan_ai": {"severity": "major", "mode": "block", "can_cu": "Luật AI 134/2025 + NĐ 142/2026 Đ18: nội dung AI đưa ra công chúng phải có nhãn", "trang_thai": "chờ Pháp chế duyệt"},
+    "thieu_nhan_quang_cao": {"severity": "major", "mode": "block", "can_cu": "Luật Quảng cáo sửa đổi 75/2025 + NĐ 342/2025: quảng cáo trên mạng/KOC phải có dấu hiệu nhận diện", "trang_thai": "chờ Pháp chế duyệt"},
+    "ngoc_linh_chua_xac_nhan": {"severity": "major", "mode": "block", "can_cu": "Chỉ dẫn địa lý 'Ngọc Linh' GCN 00049, QĐ 3558/QĐ-UBND: chỉ dùng khi có quyết định công nhận quyền sử dụng", "trang_thai": "chờ Pháp chế duyệt"},
+    "sku_chua_mo_kenh": {"severity": "minor", "mode": "warn", "can_cu": "golden allowed_channels là hiện trạng listing, CHƯA phải quyết định GĐ — chỉ cảnh báo", "trang_thai": "chờ Pháp chế duyệt"}
+  },
+  "families": {
+    "savina": {"aliases": ["savina"], "claims_keys": ["savina"], "golden_skus": ["savina-12v"]},
+    "saphraton": {"aliases": ["saphraton"], "claims_keys": ["saphraton", "saphraton-20v"], "golden_skus": ["saphraton-20v", "saphraton-combo-2x20v", "saphraton-40v", "saphraton-80v"]},
+    "sapentol": {"aliases": ["sapentol"], "claims_keys": ["sapentol"], "golden_skus": ["sapentol-30v"]},
+    "savigout": {"aliases": ["savigout"], "claims_keys": ["savigout"], "golden_skus": ["savigout-30v"]},
+    "savitim": {"aliases": ["savitim"], "claims_keys": ["savitim"], "golden_skus": []},
+    "da-an-sam": {"aliases": ["dạ an sâm"], "claims_keys": [], "golden_skus": ["da-an-sam-30v"]},
+    "mat-ong-sam": {"aliases": ["mật ong sâm"], "claims_keys": [], "golden_skus": ["mat-ong-sam-120ml-1hu", "mat-ong-sam-120ml-2hu", "mat-ong-sam-300ml"]}
+  },
+  "disclaimer": {
+    "canonical": "Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh",
+    "nguon": "NĐ 15/2018 Đ26-27 (research_legal.md mục 1) — nguyên văn",
+    "trang_thai": "chờ Pháp chế duyệt (câu chuẩn + biến thể chấp nhận)"
+  },
+  "labels": {
+    "ai": ["Nội dung có sử dụng AI"],
+    "ad": ["Quảng cáo", "#quangcao", "Được tài trợ", "Hợp tác quảng cáo"],
+    "trang_thai": "chờ Pháp chế duyệt — labels.ai theo research_legal.md mục 7; labels.ad là bản dev"
+  },
+  "content_types": {
+    "internal_note": {"public": false, "ad": false},
+    "post": {"public": true, "ad": false},
+    "ads": {"public": true, "ad": true},
+    "post_sale": {"public": true, "ad": true},
+    "koc": {"public": true, "ad": true},
+    "livestream_script": {"public": true, "ad": true},
+    "video_cart": {"public": true, "ad": true}
+  },
+  "channels": ["shopee", "tiktok", "web", "facebook", "zalo", "chatbot"],
+  "channel_alias": {"blog": "web"},
+  "ngoc_linh": {
+    "terms": ["ngọc linh"],
+    "identity": [],
+    "confirmed_skus": [],
+    "trang_thai": "external-dep: identity (tên pháp nhân/thương hiệu được phép) do Pháp chế điền; confirmed_skus rỗng = chưa SKU nào có quyết định công nhận quyền sử dụng chỉ dẫn địa lý (QĐ 3558/QĐ-UBND)"
+  }
+}

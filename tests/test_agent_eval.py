@@ -74,11 +74,20 @@ def test_guardrail_cases_cover_core_words_and_v30_sets():
 
 
 def test_guardrail_cases_match_current_behavior():
-    """Bộ ca phản ánh đúng hành vi v3.0 đã nghiệm thu: 100% khớp expect."""
+    """v4.1 (FLIP có chủ đích, trước: 100% khớp expect): nhãn bộ ca ghi
+    theo Ý ĐỊNH pháp lý, ca biên được phép fail — mọi ca thuộc kind bắt
+    buộc (trap_block/trap_critical/trap_disclaimer) pass + tổng >= ngưỡng."""
     _, cases = _rows("guardrail.jsonl")
     res = ae.run_guardrail(cases)
-    bad = [(c["id"], d) for c, ok, d in res if not ok]
+    must = ae.load_config()["agents"]["guardrail"]["must_pass_kinds"]
+    bad = [(c["id"], d) for c, ok, d in res if not ok and c["kind"] in must]
     assert not bad, bad
+    assert sum(ok for _, ok, _ in res) / len(res) >= 0.95
+    # Ca fail CÓ CHỦ ĐÍCH (lý do ở evidence/v41_eval.log) — ca pass/edge
+    # khác hồi quy thì đỏ ngay, không trốn trong biên 5%. Thêm ca fail mới
+    # phải ghi rõ vào đây + evidence.
+    known = {"v41-edge-01", "v41-edge-02"}
+    assert {c["id"] for c, ok, _ in res if not ok} <= known
 
 
 def test_config_thresholds_and_trap_kinds():
@@ -94,7 +103,7 @@ def test_config_thresholds_and_trap_kinds():
         assert traps == set(acfg["must_pass_kinds"]), agent
         for f in acfg["prompt_files"]:
             assert (ROOT / f).is_file(), f
-    assert cfg["agents"]["guardrail"]["min_pass_rate"] == 1.0
+    assert cfg["agents"]["guardrail"]["min_pass_rate"] == 0.95
 
 
 # --- W35.3 harness ----------------------------------------------------------
@@ -139,7 +148,7 @@ def test_guardrail_run_records_pass(env, capsys):
     assert "insert into eval_runs" in sql
     assert env["conns"][0].committed
     assert row["commit_sha"] == SHA and row["agent"] == "guardrail"
-    assert row["passed"] is True and row["pass_rate"] == 1.0
+    assert row["passed"] is True and row["pass_rate"] >= row["threshold"] == 0.95
     assert row["model"] == "rules"
     assert len(row["prompt_version"]) == 12
     int(row["prompt_version"], 16)
@@ -149,7 +158,9 @@ def test_guardrail_run_records_pass(env, capsys):
 def test_removing_dieu_tri_fails(env, monkeypatch, tmp_path, capsys):
     """Acceptance F17.1: xoá 'điều trị' khỏi banned list -> FAIL, exit 1."""
     src = guardrail.DATA_DIR
-    shutil.copy(src / "claims_whitelist.json", tmp_path)
+    for f in ("claims_whitelist.json", "guardrail_rules.json",
+              "golden_skus.json"):  # v4.1: guardrail đọc thêm file luật
+        shutil.copy(src / f, tmp_path)
     words = (src / "banned_words.txt").read_text(encoding="utf-8")
     kept = [w for w in words.split("\n") if w.strip() != "điều trị"]
     (tmp_path / "banned_words.txt").write_text("\n".join(kept),

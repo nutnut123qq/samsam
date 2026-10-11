@@ -1,0 +1,64 @@
+# v4.1-guardrail-v2 — evidence W41.4 (agent_eval guardrail + bộ ca + mutation)
+# 2026-10-12, worktree D:/code/samsam-w41, output thật (không chỉnh tay)
+
+## $ python scripts/agent_eval.py --agent guardrail --no-record
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail PASS 125/127 pass_rate=0.9843 (ngưỡng 0.95) prompt_version=767308e1c8f9 model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+
+## Ca biên fail (nhãn theo Ý ĐỊNH pháp lý bản dev — guardrail xử lý bảo thủ, được phép fail theo contract):
+- v41-edge-01 'Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe.' — ý định pass (phủ định 'không chữa'); guardrail chặn 'chữa' vì SAFE_PHRASES chỉ miễn cụm khuyến cáo chuẩn, không miễn mọi phủ định (tránh lỗ 'không chỉ chữa...').
+- v41-edge-02 'Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm.' — ý định pass (tên nhóm TPBVSK); guardrail flag unverified_claim vì 'bảo vệ' thuộc CLAIM_VERBS (v3.0, không đổi trong v4.1).
+
+## Gate đếm bộ ca (python -c, UTF-8 guard)
+tong 127 cu 39 moi 88
+trap_critical 44 {'ruou_cam_quang_cao': 12, 'sku_chua_xnqc': 10, 'thieu_khuyen_cao': 10, 'tu_cam': 12} moi code >=8: True
+trap_disclaimer 11 all pass: True
+trap_disclaimer+edge+pass moi 44 >=40: True
+moi ca moi co label_status: True
+id khong trung: True
+_doc co chua duoc cong ty duyet + cho Phap che duyet nhan: True True
+
+## Mutation (sửa tạm pipelines/guardrail.py -> agent_eval -> khôi phục bytes gốc NGAY, không git stash; script tạm scratchpad mutate.py)
+[mutation bo-nhanh-ruou] exit=1 FAIL-dung-ky-vong
+    [done] guardrail FAIL 113/127 pass_rate=0.8898 (ngưỡng 0.95) prompt_version=462ca40226aa model=rules
+    [done] ca bắt buộc FAIL: v41-ruou-01, v41-ruou-02, v41-ruou-03, v41-ruou-04, v41-ruou-05, v41-ruou-06, v41-ruou-07, v41-ruou-08, v41-ruou-09, v41-ruou-10, v41-ruou-11, v41-ruou-12
+    [done] --no-record: không ghi eval_runs
+[mutation bo-luat-khuyen-cao] exit=1 FAIL-dung-ky-vong
+    [done] guardrail FAIL 115/127 pass_rate=0.9055 (ngưỡng 0.95) prompt_version=1b222546edaa model=rules
+    [done] ca bắt buộc FAIL: v41-kc-01, v41-kc-02, v41-kc-03, v41-kc-04, v41-kc-05, v41-kc-06, v41-kc-07, v41-kc-08, v41-kc-09, v41-kc-10
+    [done] --no-record: không ghi eval_runs
+[mutation bo-safe-phrase-dai] exit=1 FAIL-dung-ky-vong
+    [done] guardrail FAIL 108/127 pass_rate=0.8504 (ngưỡng 0.95) prompt_version=c076e888f35b model=rules
+    [done] ca bắt buộc FAIL: v41-disc-01, v41-disc-02, v41-disc-03, v41-disc-04, v41-disc-05, v41-disc-06, v41-disc-07, v41-disc-08, v41-disc-09, v41-disc-10, v41-disc-11
+    [done] --no-record: không ghi eval_runs
+[mutation] restore sha256 khớp: True
+EXIT=0
+
+## FLIP test cũ có chủ đích (tests/test_agent_eval.py) — số assert trước 87 / sau 88 (grep -c '^\s*assert')
+- test_config_thresholds_and_trap_kinds: min_pass_rate == 1.0 -> == 0.95 (contract W41.4)
+- test_guardrail_cases_match_current_behavior: 100% khớp -> mọi ca kind bắt buộc pass + tổng >= 0.95 (contract W41.4; +1 assert)
+- test_guardrail_run_records_pass: pass_rate == 1.0 -> pass_rate >= threshold == 0.95 (DÂY CHUYỀN: bộ ca có 2 ca biên fail theo ý định -> 0.9843; ngoài 2 test contract liệt kê)
+- test_removing_dieu_tri_fails: copy thêm guardrail_rules.json + golden_skus.json vào tmp DATA_DIR (DÂY CHUYỀN: thiếu file luật -> mọi ca thành 'config' -> core-dieu-tri vẫn block -> test hỏng; không đổi assert)
+
+## Gate thêm: git diff --stat -- tests/test_guardrail.py pipelines/content.py pipelines/store.py app connectors api scripts/eval_qa.py (rỗng = không đổi)
+[rỗng ở trên] exit=0
+
+## VÁ NGHIỆM THU (2026-10-12) — +5 ca: v41-ruou-13..15 (trap_critical rượu chèn ZWSP/dấu chấm/gạch nối), v41-edge-34 (claim Savigout nguyên văn gắn Sapentol), v41-edge-35 (claim Savina, không SKU) — đều code bắt buộc khớp
+## $ python scripts/agent_eval.py --agent guardrail --no-record
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=e41fc86a27ab model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+## Ca fail CÓ CHỦ ĐÍCH được pin trong tests/test_agent_eval.py::test_guardrail_cases_match_current_behavior: {v41-edge-01, v41-edge-02} (lý do ở trên). Ca fail khác -> test đỏ.
+## Đếm: 132 ca — trap_critical 47 (rượu 15, tu_cam 12, sku_chua_xnqc 10, thieu_khuyen_cao 10), trap_block 29, trap_disclaimer 11, edge 23, pass 22
+
+## Vòng sửa nghiệm thu MINOR (_load_rules golden ⊆ families) — chạy lại
+## $ python scripts/agent_eval.py --agent guardrail --no-record  (exit=0)
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=9b586e6bc19f model=rules
+[done] --no-record: không ghi eval_runs
