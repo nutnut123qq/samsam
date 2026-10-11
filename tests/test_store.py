@@ -329,7 +329,9 @@ def test_store_module_exports_contract():
     for fn in ("save_draft", "list_drafts", "set_status", "schedule",
                "calendar"):
         assert callable(getattr(store, fn))
-    # psycopg.Error từ _get → warn không raise (conn chết giữa chừng).
+    # psycopg.Error từ _get PROPAGATE lên caller (v2.4 V9.3 — trước
+    # nuốt thành 'không tìm thấy' ảo khi conn chết giữa chừng);
+    # set_status/schedule bắt → warn 'lỗi DB', vẫn không raise.
     class Dead:
         def execute(self, *a):
             raise psycopg.OperationalError("dead")
@@ -339,4 +341,25 @@ def test_store_module_exports_contract():
             yield
 
     ok, warn = store.set_status(Dead(), 1, "approved", "Lan")
-    assert not ok and "không tìm thấy" in warn
+    assert not ok and "lỗi DB" in warn
+    ok, warn = store.schedule(Dead(), 1, "2026-10-20", today=TODAY)
+    assert not ok and "lỗi DB" in warn
+    with pytest.raises(psycopg.Error):
+        store._get(Dead(), 1)
+
+
+def test_fmt_guardrail_missing_ok_branch():
+    """v2.4 V9.4: snapshot guardrail thiếu key 'ok' (draft ngoại lai)
+    → 'KHÔNG RÕ' thay 'VI PHẠM'; ok=False violations thật vẫn
+    'VI PHẠM (n)'."""
+    assert store._fmt_guardrail({"guardrail": {"ok": True}}) == "PASS"
+    assert store._fmt_guardrail(
+        {"guardrail": {"ok": False,
+                       "violations": [{"type": "x"}, {"type": "y"}]}}) \
+        == "VI PHẠM (2)"
+    assert store._fmt_guardrail({"guardrail": {"ok": False}}) \
+        == "VI PHẠM"
+    assert store._fmt_guardrail(
+        {"guardrail": {"violations": [{"type": "x"}]}}) == "KHÔNG RÕ"
+    assert store._fmt_guardrail({"guardrail": None}) == "KHÔNG RÕ"
+    assert store._fmt_guardrail({}) == "KHÔNG RÕ"

@@ -32,6 +32,7 @@ không có nguồn → hiển thị "không đủ dữ liệu" thay vì để mo
 """
 
 import time
+from contextlib import suppress
 from datetime import timezone
 
 import streamlit as st
@@ -157,15 +158,23 @@ with tab_studio:
         default=["facebook"])
 
     def _render_guardrail(g: dict):
-        if g["ok"]:
+        # Draft ngoại lai có thể thiếu key "ok" — dùng .get, không
+        # index trực tiếp (NIT v2.2: KeyError trên queue tab).
+        if g.get("ok") is True:
             st.success("Guardrail: PASS — không vi phạm")
         else:
-            for v in g["violations"]:
-                st.error(f"**{v['type']}** — {v['detail']}"
+            if "ok" not in g:
+                st.warning("Guardrail: kết quả không đầy đủ "
+                           "(snapshot thiếu key 'ok').")
+            for v in g.get("violations") or []:
+                if not isinstance(v, dict):
+                    continue
+                st.error(f"**{v.get('type')}** — {v.get('detail')}"
                          + (f" → `{v['span']}`" if v.get("span") else ""))
         if g.get("matched_claims"):
             st.caption("Claim khớp whitelist: " + "; ".join(
-                f"{m['sku']}: {m['claim']}" for m in g["matched_claims"]))
+                f"{m.get('sku')}: {m.get('claim')}"
+                for m in g["matched_claims"] if isinstance(m, dict)))
 
     if st.button("Sinh bài", type="primary",
                  disabled=not brief.strip() or not channels):
@@ -361,6 +370,8 @@ with tab_garden:
             _anoms = _g.anomaly_check(_gconn)
             _recent = _g.recent_logs(_gconn)
         except _pg.Error:
+            with suppress(Exception):
+                _gconn.close()
             _gconn = None
             st.info("Lỗi đọc DB — thử tải lại trang.")
     if _gconn is not None:
@@ -446,6 +457,8 @@ with tab_review:
             _pending = _store.list_drafts(_rconn, status="pending")
             _cal = _store.calendar(_rconn, days=14)
         except _pg.Error:
+            with suppress(Exception):
+                _rconn.close()
             _rconn = None
             st.info("Lỗi đọc DB — thử tải lại trang.")
     if _rconn is not None:
@@ -479,6 +492,9 @@ with tab_review:
                         _rconn, _d["id"], _target, _by, _note)
                     if _ok:
                         st.success(f"Draft #{_d['id']} → {_target}")
+                        # st.rerun() raise RerunException — đóng conn
+                        # trước, không thì mỗi click leak 1 connection.
+                        _rconn.close()
                         st.rerun()
                     else:
                         st.warning(_warn)
@@ -502,6 +518,7 @@ with tab_review:
                     if _ok:
                         st.success(f"Draft #{_pick['id']} xếp lịch "
                                    f"{_day:%Y-%m-%d} — người đăng tay.")
+                        _rconn.close()
                         st.rerun()
                     else:
                         st.warning(_warn)

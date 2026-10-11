@@ -40,6 +40,31 @@ def test_intent_classify_each_class_and_none():
     assert ls.intent_of("") is None
 
 
+def test_intent_false_positive_guards():
+    """v2.4 V9.2 (MINOR v1.9): 'giá' trong cụm khác-nghĩa + 'ở đâu'
+    sau từ sinh học không còn false-positive; recall câu lead thật
+    giữ nguyên (chỉ xóa span cụm, chỉ veto riêng key 'ở đâu')."""
+    # FP cũ: substring 'giá' ăn trong đánh giá/định giá/giá trị.
+    for q in ("Tôi muốn đánh giá sản phẩm",
+              "định giá lô sâm này giúp tôi",
+              "giá trị của sâm Ngọc Linh là gì"):
+        assert ls.intent_of(q) is None, q
+    # FP cũ: 'ở đâu' trong câu hỏi phân bố/sinh học.
+    for q in ("sâm Ngọc Linh mọc ở đâu",
+              "sâm trồng ở đâu được",
+              "loại sâm này phân bố ở đâu",
+              "cây sâm sinh sống ở đâu"):
+        assert ls.intent_of(q) is None, q
+    # Recall: scrub chỉ xóa SPAN cụm — 'giá' ngoài cụm vẫn là price.
+    assert ls.intent_of("đánh giá tốt không, giá bao nhiêu?") == "price"
+    assert ls.intent_of("Saphraton giá bao nhiêu?") == "price"
+    # 'ở đâu' bị veto thì key contact khác vẫn match bình thường.
+    assert ls.intent_of("showroom ở đâu") == "contact"
+    assert ls.intent_of("địa chỉ cửa hàng ở đâu") == "contact"
+    # First-match giữ: 'mua' thắng trước nhánh contact.
+    assert ls.intent_of("mua sâm ở đâu?") == "order"
+
+
 def test_channel_of_msgid_empty_vs_present():
     assert ls.channel_of(_rec(msg_id="m1")) == "zalo"
     assert ls.channel_of(_rec(msg_id="")) == "streamlit"
@@ -232,6 +257,20 @@ def test_convlog_stats_counts_and_missing(tmp_path):
     assert s["total"] == 2 and s["answered"] == 1
     assert s["by_channel"] == {"zalo": 1, "streamlit": 1}
     assert s["skipped"] == 1
+
+
+def test_convlog_stats_answered_strict_true(tmp_path):
+    """v2.4 V9.1 (NIT v1.9): 'answered' đếm STRICT `is True` — entry
+    convlog ngoại lai 'answered:"false"'/'1'/1 không còn bị đếm như
+    đã trả lời (writer ghi bool; case này chỉ gặp ở log sửa tay)."""
+    (tmp_path / "conversations.jsonl").write_bytes(
+        json.dumps(_rec(msg_id="m1", answered=True)).encode() + b"\n"
+        + json.dumps(_rec(msg_id="m2", answered="false")).encode()
+        + b"\n"
+        + json.dumps(_rec(msg_id="m3", answered="1")).encode() + b"\n"
+        + json.dumps(_rec(msg_id="m4", answered=1)).encode() + b"\n")
+    s = ls.convlog_stats(tmp_path)
+    assert s["total"] == 4 and s["answered"] == 1
 
 
 def test_database_helpers_return_none_when_unavailable(monkeypatch,

@@ -30,6 +30,7 @@ Chạy: `python -m ingest.lead_store` → in mới/trùng + tổng leads.
 import hashlib
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -69,12 +70,31 @@ INSERT_SQL = (
     + ") on conflict (dedup_key) do nothing")
 
 
+# Chống FP (MINOR cold-check v1.9): "giá" nằm trong cụm khác-nghĩa —
+# scrub SPAN cụm trước khi match key "giá" (không veto cả câu:
+# "đánh giá tốt, giá bao nhiêu" vẫn là price).
+_PRICE_STOPS = ("đánh giá", "định giá", "giá trị")
+
+# "ở đâu" sau từ ngữ sinh học = hỏi phân bố cây (thông tin), không
+# phải hỏi địa điểm mua/liên hệ — veto riêng key "ở đâu" (các key
+# contact khác như "showroom"/"địa chỉ" vẫn match bình thường).
+_WHERE_INFO_RE = re.compile(
+    r"(?:mọc|trồng|phân bố|sinh sống)[^.?!]{0,60}ở đâu")
+
+
 def intent_of(question: str):
     """Phân loại intent thương mại theo keyword (first-match theo thứ
     tự INTENTS); None = không phải lead (câu hỏi thông tin/y tế)."""
     q = question.lower()
+    q_price = q
+    for s in _PRICE_STOPS:
+        q_price = q_price.replace(s, " ")
     for intent, keys in INTENTS:
-        if any(k in q for k in keys):
+        for k in keys:
+            if k not in (q_price if k == "giá" else q):
+                continue
+            if k == "ở đâu" and _WHERE_INFO_RE.search(q):
+                continue
             return intent
     return None
 
@@ -255,7 +275,7 @@ def convlog_stats(data_dir: Path = DATA_DIR) -> dict:
             continue
         for rec in iter_convlog(path, tmp):
             stats["total"] += 1
-            if rec.get("answered"):
+            if rec.get("answered") is True:
                 stats["answered"] += 1
             stats["by_channel"][channel_of(rec)] += 1
     stats["skipped"] = tmp["corrupt"] + tmp["doc"] + tmp["io_error"]

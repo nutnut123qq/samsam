@@ -102,12 +102,11 @@ def list_drafts(conn, status: str | None = None,
 
 
 def _get(conn, draft_id) -> dict | None:
-    """→ row dict | None khi không tìm thấy / id không phải số."""
-    try:
-        row = conn.execute(
-            _SELECT_SQL + " where id = %s", (draft_id,)).fetchone()
-    except psycopg.Error:
-        return None
+    """→ row dict | None khi không tìm thấy / id không phải số.
+    `psycopg.Error` PROPAGATE — caller phải phân biệt 'không có'
+    vs 'conn chết' thay vì báo 'không tìm thấy' ảo (NIT v2.2)."""
+    row = conn.execute(
+        _SELECT_SQL + " where id = %s", (draft_id,)).fetchone()
     return dict(zip(COLS, row)) if row else None
 
 
@@ -130,7 +129,10 @@ def set_status(conn, draft_id, status: str, reviewer: str,
         did = int(draft_id)
     except (TypeError, ValueError):
         return False, f"id '{draft_id}' không hợp lệ"
-    cur = _get(conn, did)
+    try:
+        cur = _get(conn, did)
+    except psycopg.Error as e:
+        return False, f"lỗi DB khi đọc draft #{did}: {e}"
     if cur is None:
         return False, f"không tìm thấy draft #{did}"
     if cur["status"] != "pending":
@@ -193,7 +195,10 @@ def schedule(conn, draft_id, day, today: date | None = None
         did = int(draft_id)
     except (TypeError, ValueError):
         return False, f"id '{draft_id}' không hợp lệ"
-    cur = _get(conn, did)
+    try:
+        cur = _get(conn, did)
+    except psycopg.Error as e:
+        return False, f"lỗi DB khi đọc draft #{did}: {e}"
     if cur is None:
         return False, f"không tìm thấy draft #{did}"
     if cur["status"] != "approved":
@@ -237,7 +242,11 @@ def _fmt_guardrail(d: dict) -> str:
     g = d.get("guardrail")
     if isinstance(g, dict) and g.get("ok") is True:
         return "PASS"
-    n = len(g.get("violations", [])) if isinstance(g, dict) else 0
+    if not isinstance(g, dict) or "ok" not in g:
+        # Snapshot ngoại lai/thiếu key — không gán 'vi phạm' cho
+        # dữ liệu không đủ cấu trúc.
+        return "KHÔNG RÕ"
+    n = len(g.get("violations") or [])
     return f"VI PHẠM ({n})" if n else "VI PHẠM"
 
 

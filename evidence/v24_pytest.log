@@ -1,0 +1,6 @@
+== v2.4-polish gate ==
+pytest targeted: tests/test_lead_store.py tests/test_store.py -> 36 passed
+pytest full: 194 passed in 23.86s
+ruff check . -> All checks passed
+git diff --check -> clean
+py_compile app/streamlit_app.py ingest/lead_store.py pipelines/store.py -> OK
