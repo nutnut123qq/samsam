@@ -300,6 +300,46 @@ python scripts/persona_sim.py --dry-run
   (chỉ được làm chủ đề thương hiệu).
 - **Quản lý MXH** duyệt báo cáo; TGĐ/BKS đồng ký biên bản trước khi dùng.
 
+## 5d. Thu tin thị trường (intel — v7.0, chỉ đọc)
+
+**Làm gì:** đọc RSS/Atom của báo chính thống/cơ quan nhà nước (tầng A) và
+trang ngành/blog công khai (tầng B) trong `data/intel_sources.json`, lọc
+theo chủ đề (sâm, TPBVSK/thực phẩm chức năng, đồ ăn giới trẻ, quảng cáo,
+đối thủ) bằng LUẬT, lưu bảng `intel_items`. Không gửi ai, không đăng gì,
+không ghi hàng duyệt nội dung.
+
+```
+python -m crawler.intel --run --source vnexpress-suc-khoe --source tuoitre-suc-khoe --max-requests 10
+python -m crawler.intel --run            # chỉ nguồn status "duyet" (hiện 0)
+python -m crawler.intel --report
+```
+
+- **Danh sách nguồn là ĐỀ XUẤT**: mọi nguồn `status: "cho_duyet"` tới khi
+  BGĐ/Quản lý MXH duyệt (đổi sang `"duyet"` là việc của người thật). Chạy
+  THỬ nguồn chưa duyệt bằng `--source <id>` (in `[warn] nguồn chưa duyệt`).
+- **Chặn cứng**: tầng C (MXH cá nhân, trang cần đăng nhập) và sàn/MXH
+  (Shopee, TikTok, Lazada, Tiki, Sendo, Facebook, Instagram, Threads, X,
+  Zalo) KHÔNG bao giờ được request — kể cả khi nguồn A/B redirect sang đó
+  hay cấu hình sai. `--source <tầng C>` → `[blocked]`, exit 2.
+- **Lịch sự với tòa soạn**: kiểm `robots.txt` TRƯỚC mỗi host (500/429/lỗi
+  → bỏ host cả lượt; 401/403 → coi như cấm), cách ≥1 giây giữa 2 request
+  cùng host (robots có `Crawl-delay` lớn hơn thì theo robots, tối đa 60s),
+  User-Agent `samsam-intel` có email liên hệ (env `INTEL_CONTACT`), gặp
+  429 thì dừng host đó, không thử lại. `--max-requests` (mặc định 60, tối
+  đa 200) là ngân sách TỔNG kể cả robots.txt và redirect.
+- **Không toàn văn (bản quyền)**: chỉ lưu tiêu đề + trích ≤300 ký tự (đã
+  che SĐT/email) + link; không bao giờ mở trang bài. Muốn đọc bài → bấm
+  link trên báo gốc.
+- Chạy lại không nhân đôi: trùng URL (bỏ `utm_*`/`fbclid`...) hoặc trùng
+  nội dung → đếm `dup_url`/`dup_content`, không ghi.
+- **Đọc log**: `[req] {...}` = 1 request đã gửi (`status`, `robots_ok`,
+  `gap_s` giây kể từ request trước cùng host — luôn ≥ 1.0); `[blocked]` =
+  bị chặn, KHÔNG có request; `[robots-deny]` = robots cấm, KHÔNG có
+  request; `[done] ... new=.. dup_url=.. off_topic=..` = tổng kết. Exit 1
+  khi mọi nguồn được thử đều lỗi — xem dòng `[warn]` phía trên.
+- LLM tóm tắt (`--llm`) mặc định TẮT: chỉ chạy khi `llm.enabled = true`
+  trong file nguồn — chờ Pháp chế xác nhận bằng văn bản.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):

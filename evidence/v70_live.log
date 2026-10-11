@@ -1,0 +1,53 @@
+### W70.9 chạy thật nhỏ — 2026-10-12T03:05:51+07:00 — lần 1
+$ python -m crawler.intel --run --source vnexpress-suc-khoe --source vnexpress-phap-luat --source tuoitre-suc-khoe --max-requests 10
+[warn] vnexpress-suc-khoe: nguồn chưa duyệt — chạy thử
+[warn] vnexpress-phap-luat: nguồn chưa duyệt — chạy thử
+[warn] tuoitre-suc-khoe: nguồn chưa duyệt — chạy thử
+[req] {"ts": "2026-10-11T20:05:56+00:00", "source": "vnexpress-suc-khoe", "host": "vnexpress.net", "kind": "robots", "url": "https://vnexpress.net/robots.txt", "status": 200, "robots_ok": null, "bytes": 454, "ms": 135, "gap_s": null}
+[req] {"ts": "2026-10-11T20:05:57+00:00", "source": "vnexpress-suc-khoe", "host": "vnexpress.net", "kind": "feed", "url": "https://vnexpress.net/rss/suc-khoe.rss", "status": 200, "robots_ok": true, "bytes": 13448, "ms": 80, "gap_s": 1.001}
+[src] vnexpress-suc-khoe: 60 tin, 1 đúng chủ đề, mới 1
+[req] {"ts": "2026-10-11T20:05:58+00:00", "source": "vnexpress-phap-luat", "host": "vnexpress.net", "kind": "feed", "url": "https://vnexpress.net/rss/phap-luat.rss", "status": 200, "robots_ok": true, "bytes": 15006, "ms": 48, "gap_s": 1.0}
+[src] vnexpress-phap-luat: 60 tin, 1 đúng chủ đề, mới 1
+[req] {"ts": "2026-10-11T20:05:58+00:00", "source": "tuoitre-suc-khoe", "host": "tuoitre.vn", "kind": "robots", "url": "https://tuoitre.vn/robots.txt", "status": 200, "robots_ok": null, "bytes": 198, "ms": 140, "gap_s": null}
+[req] {"ts": "2026-10-11T20:05:59+00:00", "source": "tuoitre-suc-khoe", "host": "tuoitre.vn", "kind": "feed", "url": "https://tuoitre.vn/rss/suc-khoe.rss", "status": 200, "robots_ok": true, "bytes": 13932, "ms": 57, "gap_s": 1.0}
+[src] tuoitre-suc-khoe: 50 tin, 3 đúng chủ đề, mới 3
+[done] sources=3 ok=3 requests=5 new=5 dup_url=0 dup_content=0 off_topic=165 blocked=0 robots_deny=0
+exit=0
+
+### W70.9 chạy thật nhỏ — 2026-10-12T03:06:07+07:00 — lần 2 (y hệt)
+$ python -m crawler.intel --run --source vnexpress-suc-khoe --source vnexpress-phap-luat --source tuoitre-suc-khoe --max-requests 10
+[warn] vnexpress-suc-khoe: nguồn chưa duyệt — chạy thử
+[warn] vnexpress-phap-luat: nguồn chưa duyệt — chạy thử
+[warn] tuoitre-suc-khoe: nguồn chưa duyệt — chạy thử
+[req] {"ts": "2026-10-11T20:06:15+00:00", "source": "vnexpress-suc-khoe", "host": "vnexpress.net", "kind": "robots", "url": "https://vnexpress.net/robots.txt", "status": 200, "robots_ok": null, "bytes": 454, "ms": 127, "gap_s": null}
+[req] {"ts": "2026-10-11T20:06:16+00:00", "source": "vnexpress-suc-khoe", "host": "vnexpress.net", "kind": "feed", "url": "https://vnexpress.net/rss/suc-khoe.rss", "status": 200, "robots_ok": true, "bytes": 13448, "ms": 84, "gap_s": 1.0}
+[src] vnexpress-suc-khoe: 60 tin, 1 đúng chủ đề, mới 0
+[req] {"ts": "2026-10-11T20:06:18+00:00", "source": "vnexpress-phap-luat", "host": "vnexpress.net", "kind": "feed", "url": "https://vnexpress.net/rss/phap-luat.rss", "status": 200, "robots_ok": true, "bytes": 15006, "ms": 185, "gap_s": 1.0}
+[src] vnexpress-phap-luat: 60 tin, 1 đúng chủ đề, mới 0
+[req] {"ts": "2026-10-11T20:06:18+00:00", "source": "tuoitre-suc-khoe", "host": "tuoitre.vn", "kind": "robots", "url": "https://tuoitre.vn/robots.txt", "status": 200, "robots_ok": null, "bytes": 198, "ms": 108, "gap_s": null}
+[req] {"ts": "2026-10-11T20:06:19+00:00", "source": "tuoitre-suc-khoe", "host": "tuoitre.vn", "kind": "feed", "url": "https://tuoitre.vn/rss/suc-khoe.rss", "status": 200, "robots_ok": true, "bytes": 14051, "ms": 101, "gap_s": 1.0}
+[src] tuoitre-suc-khoe: 50 tin, 3 đúng chủ đề, mới 0
+[done] sources=3 ok=3 requests=5 new=0 dup_url=5 dup_content=0 off_topic=165 blocked=0 robots_deny=0
+exit=0
+$ python -m crawler.intel --report
+Tổng tin: 7
+Theo tầng: A=7
+Theo nguồn: tuoitre-suc-khoe=3, fx-a=2, vnexpress-phap-luat=1, vnexpress-suc-khoe=1
+Theo chủ đề: tpbvsk=4, quang_cao=2, gioi_tre=1, sam=1
+Cờ: suc_khoe=1
+10 tin mới nhất:
+  ? [tuoitre-suc-khoe] tpbvsk | Dùng Salbutamol tạo nạc cho heo, bạn đọc kiến nghị kiểm soát chặt chất cấm | https://tuoitre.vn/dung-salbutamol-tao-nac-cho-heo-ban-doc-kien-nghi-kiem-soat-chat-chat-cam-100261007184046108.htm
+  ? [tuoitre-suc-khoe] tpbvsk | 10 nguyên tắc để sống lâu hơn | https://tuoitre.vn/10-nguyen-tac-de-song-lau-hon-100261007201741843.htm
+  ? [tuoitre-suc-khoe] tpbvsk | Đã có 105 người nghi ngộ độc sau khi ăn bánh mì Bà Được, Cục An toàn thực phẩm chỉ đạo 'hỏa tốc' | https://tuoitre.vn/da-co-105-nguoi-nghi-ngo-doc-sau-khi-an-banh-mi-ba-duoc-cuc-an-toan-thuc-pham-chi-dao-hoa-toc-100261011113914376.htm
+  2026-10-11 [vnexpress-phap-luat] quang_cao | Thắng 'Ật' bị bắt sau vụ livestream khiêu khích người ở Tràng An | https://vnexpress.net/thang-at-bi-bat-sau-vu-livestream-khieu-khich-nguoi-o-trang-an-5130970.html
+  2026-10-10 [vnexpress-suc-khoe] gioi_tre | Nghịch lý 'siêu kết nối nhưng cô độc' ở người trẻ | https://vnexpress.net/nghich-ly-sieu-ket-noi-nhung-co-doc-o-nguoi-tre-5129209.html
+  2026-10-11 [fx-a] quang_cao,tpbvsk | [fixture] Cục ATTP xử phạt quảng cáo TPBVSK | http://127.0.0.1:18770/bai/xu-phat
+  2026-10-12 [fx-a] sam | [fixture] Sâm Ngọc Linh giả bị thu giữ | http://127.0.0.1:18770/bai/sam-gia
+exit=0
+
+$ python -c (gate W70.9: đếm [req], robots trước nội dung, gap_s, host bị chặn, độ dài DB)
+req_lines= 10 <=20: True
+robots_truoc_noi_dung: True hosts= ['tuoitre.vn', 'vnexpress.net']
+gaps= [1.001, 1.0, 1.0, 1.0, 1.0, 1.0] all>=1.0: True
+host_bi_chan= 0
+max_len(snippet,title)= (146, 96)

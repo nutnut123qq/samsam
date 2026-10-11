@@ -487,6 +487,327 @@ snapshot (hiện Python re-check); `record_publish`/`approve_spend`/
 `schedule_slot`; chuyển `content_drafts` sang hàng chung; cockpit đọc
 `channel_snapshots` (WP10); `pipelines/freeze.py` dùng `period.VN_TZ`.
 
+## Checklist v7.0-collector-chung
+
+Khán giả/mục đích: WP09 (Trung tâm tình báo thị trường, `ctx/pmo.md` dòng
+`| WP09`) — agent "Collector (thu thập tầng A/B)" + phần luật của "Dedup &
+Classifier" (`ctx/final_plans.json` intel/agents[1..2]), luồng g4_intel
+bước 1–3 (`ctx/flows_final.json`). Hiện `crawler/collect.py` chỉ cào site
+của chính Sâm Sâm; chưa có gì thu tin NGOÀI (sâm, TPBVSK/thực phẩm chức
+năng, đồ ăn giới trẻ, luật quảng cáo, đối thủ) để DA-03, PC-A8, Red Alert
+dùng chung. Sau version: `python -m crawler.intel --run` đọc RSS/Atom của
+nguồn tầng A/B, kiểm robots.txt, nhịp ≥1s/host, CHẶN CỨNG tầng C + sàn/MXH
+(kể cả qua redirect), lọc theo chủ đề bằng LUẬT, lưu `intel_items` CHỈ
+tiêu đề + trích ≤300 ký tự + link (không toàn văn), dedup URL chuẩn hóa +
+hash nội dung; `--report` cho người đọc. Khối intel KHÔNG có đường ghi
+sang `content_drafts`. Tầng P1-Shadow: không gửi ai, không đăng gì.
+
+Quy ước: ponytail — MỞ RỘNG `crawler/` (module mới `crawler/intel.py`,
+tái dùng `crawler.collect.strip_html` + `crawler.sources.CRAWL_DELAY_S`),
+không viết lại collect. Chỉ stdlib + dep sẵn có: `httpx` (đã có),
+`urllib.robotparser`, `xml.etree.ElementTree` (KHÔNG thêm `feedparser`/
+`defusedxml`, KHÔNG sửa `requirements.txt`), `hashlib`, `email.utils`.
+Tái dùng: `pipelines.pii._mask_pii` (title/snippet trước khi lưu),
+`pipelines.kb_filter.is_alcohol` (cờ `ruou`), `pipelines.llm_gateway.
+is_health_question` + `_strip_accents` (cờ `suc_khoe`, bản không dấu),
+`pipelines.llm_gateway.chat` (LLM tùy chọn), `pipelines.guardrail.check`
+(mọi text LLM sinh), `pipelines.job_runs.job_run`. Schema chỉ THÊM
+(`create ... if not exists`). Mọi `psycopg.connect` có `connect_timeout`
+(guard `tests/test_connect_timeout_guard.py`); ghi = 1 transaction +
+`conn.commit()` tường minh (gotcha savepoint v2.1); print tiếng Việt →
+UTF-8 guard sau imports; regex/loop trên text ngoài: cắt `PRE_MAX`
+(1200 ký tự) TRƯỚC `_mask_pii` (gotcha DoS v1.4) rồi cắt 300 sau. Test
+mạng = `http.server` local chạy thread trong test; nhịp đo bằng clock/
+sleep GIẢ tiêm vào fetcher (KHÔNG assert wall-clock — gotcha timing). Test
+DB thật = schema tạm + ROLLBACK (mẫu fixture `db` `tests/test_golden_store.py`),
+0 skipped. Không file runtime mới trong `data/` (log request ra stdout,
+evidence bằng `tee`). Danh sách nguồn ĐỀ XUẤT — mọi nguồn `status:
+"cho_duyet"` tới khi BGĐ/Quản lý MXH duyệt (external-dep, KHÔNG tự đổi
+sang `"duyet"`).
+
+Luật CHẶN (cứng, không cấu hình nới được): hằng `HARD_BLOCK` trong
+`crawler/intel.py` = hậu tố domain sàn/MXH (`shopee.vn`, `shopee.com`,
+`shp.ee`, `tiktok.com`, `tiktokv.com`, `lazada.vn`, `lazada.com`,
+`lzd.co`, `tiki.vn`, `sendo.vn`, `facebook.com`, `fb.com`, `fb.watch`,
+`instagram.com`, `threads.net`, `x.com`, `twitter.com`, `zalo.me`) ∪ host
+của mọi nguồn tier `C` trong file nguồn. `is_blocked(host)`: host
+lowercase, bỏ dấu chấm cuối/port/userinfo, khớp khi `host == d` hoặc
+`host.endswith("." + d)` (KHÔNG substring: `shopee.vn.evil.com`,
+`notshopee.vn` không bị chặn bởi luật này). Kiểm TRƯỚC khi gửi request —
+cả URL nguồn, robots.txt lẫn MỌI hop redirect (`follow_redirects=False`,
+tự theo tối đa 3 hop, mỗi hop: scheme http/https, `is_blocked`, robots
+của host mới, nhịp riêng host mới). Nguồn tier A/B mà host trúng
+`HARD_BLOCK` (cấu hình sai) → `[blocked]`, bỏ nguồn đó, không request.
+
+- [x] **W70.1 Danh mục nguồn + chủ đề (`data/intel_sources.json`)** —
+  `{"_doc": "... ĐỀ XUẤT, chờ BGĐ/Quản lý MXH duyệt; tầng C cấm thu tự
+  động ...", "llm": {"enabled": false, "_doc": "chờ Pháp chế xác nhận
+  bằng văn bản cho gửi tin công khai qua LLM"}, "topics": {"sam": [...],
+  "tpbvsk": [...], "gioi_tre": [...], "quang_cao": [...], "doi_thu":
+  [...]}, "sources": [{"id", "name", "tier": "A"|"B"|"C", "url", "kind":
+  "rss"|"atom", "topics_hint": [...], "status": "cho_duyet"|"duyet",
+  "note"}]}`. Tier A: RSS chuyên mục báo chính thống/cơ quan nhà nước
+  (sức khỏe, pháp luật, kinh doanh); B: trang ngành/blog công khai có
+  RSS; C: liệt kê để CHẶN (MXH cá nhân, trang cần đăng nhập, Shopee/
+  TikTok/Lazada) với `url` tượng trưng — tầng C không bao giờ chạy. Chủ
+  đề: cụm CÓ dấu (vd "sâm ngọc linh", "nhân sâm", "thực phẩm chức năng",
+  "thực phẩm bảo vệ sức khỏe", "quảng cáo", "xác nhận nội dung quảng
+  cáo", "an toàn thực phẩm", "trà sữa", "giới trẻ") + cụm ASCII thuần
+  (`XNQC`, `TPBVSK`, `K5`, `KGC`, `Trimico`...). Hàm thuần
+  `load_sources(path) -> (cfg, errors)` fail-closed: file thiếu/JSON hỏng/
+  `sources` rỗng/`id` trùng/`tier` ngoài A,B,C/`url` không http(s)/
+  `kind` lạ/`status` lạ/`topics` rỗng hoặc chủ đề 0 cụm → errors nêu id +
+  field (không in giá trị dài).
+  - Boundary: `data/intel_sources.json` (mới), `crawler/intel.py` (mới),
+    `tests/test_intel.py` (mới), `tests/fixtures/intel/` (mới)
+  - Gate: `python -c` đọc file: mọi nguồn A/B `status == "cho_duyet"`,
+    có ≥1 nguồn C, `llm.enabled is False`, `_doc` chứa "chờ"; test thuần:
+    mỗi lỗi cấu hình ở trên → errors nêu đúng id/field, cfg None; file
+    thật `data/intel_sources.json` → 0 errors
+  - Evidence: `evidence/v70_pytest.log`
+- [x] **W70.2 Fetcher an toàn (robots, nhịp, chặn, trần)** — trong
+  `crawler/intel.py`: `BlockedDomain(Exception)`; `is_blocked(host,
+  extra=()) -> bool` (luật ở đầu checklist); lớp/hàm fetcher tiêm được
+  `sleep`/`clock`/`transport` cho test. User-Agent `samsam-intel/0.1
+  (+mailto:<INTEL_CONTACT>)` — env `INTEL_CONTACT`, mặc định email công
+  khai của công ty trong `data/llm_gateway.json` `pii_allow` (email domain
+  công ty = external-dep); token robots `samsam-intel`. Timeout
+  `httpx.Timeout(10.0)`. Trần: feed `MAX_BYTES` 2.000.000, robots
+  500.000 — `Content-Length` vượt → đóng trước khi đọc body; stream vượt
+  giữa chừng → hủy, status log `too_large`, không parse. robots.txt: tải
+  1 lần/host/lượt qua CHÍNH fetcher (UA, nhịp, trần, chặn, ≤3 hop) rồi
+  `RobotFileParser.parse()`; 2xx → luật file; 404/410 và 4xx khác (trừ
+  401/403/429) → cho tất cả; 401/403 → cấm tất cả; 429/5xx/timeout/
+  quá lớn/lỗi mạng → BỎ host cả lượt (fail-closed); `crawl_delay` của
+  robots > 1 → dùng `min(crawl_delay, 60)`. Nhịp: giữa 2 lần BẮT ĐẦU
+  request cùng host ≥ `CRAWL_DELAY_S` (1.0, tái dùng `crawler.sources`)
+  — robots.txt và hop redirect cũng tính. Tuần tự, không song song.
+  Content trả 429 → không retry, bỏ phần còn lại của host trong lượt.
+  `--max-requests` = ngân sách TỔNG (robots + hop + feed), hết → dừng,
+  `[warn]`. Mỗi request đã gửi in 1 dòng `[req] {json}` gồm `ts`,
+  `source`, `host`, `url`, `status`, `robots_ok`, `bytes`, `ms`, `gap_s`
+  (giây kể từ lần bắt đầu request trước cùng host, null nếu đầu tiên);
+  bị chặn in `[blocked] {"source","host","reason": "hard"|"tier_c"|"scheme"}`;
+  robots cấm in `[robots-deny] {"source","url"}` — 2 loại này KHÔNG có
+  request.
+  - Boundary: `crawler/intel.py`, `tests/test_intel.py`,
+    `tests/fixtures/intel/`
+  - Gate: test thuần `is_blocked`: `shopee.vn`, `m.shopee.vn`,
+    `SHOPEE.VN`, `shopee.vn.`, `vt.tiktok.com`, `www.facebook.com`,
+    `user@shopee.vn:443` (qua URL) → True; `shopee.vn.evil.com`,
+    `notshopee.vn`, `vnexpress.net` → False; fetch URL bị chặn → raise
+    `BlockedDomain` và spy transport (bọc `handle_request`) 0 lần gọi.
+    Test `http.server` local (thread, port 0): (a) robots `Disallow:
+    /private/` + 3 URL `/private/a`, `/private/b`, `/public/c` → server
+    nhận đúng `/robots.txt` + `/public/c`; (b) robots 500 → 0 request
+    nội dung tới host đó; robots 404 → cho phép; robots 403 → cấm hết;
+    (c) feed trả 429 → không retry, URL thứ 2 cùng host 0 request; (d)
+    redirect 302 sang host tầng C (host thứ 2 cấu hình tier C) và sang
+    `https://shopee.vn/x` → spy transport KHÔNG có host bị chặn nào,
+    handler host C đếm 0, log có `[blocked]`; redirect vòng/4 hop → dừng
+    ở 3; (e) `Content-Length` 5MB → hủy trước body, status `too_large`;
+    chunked không Content-Length vượt trần → hủy, không parse; (f) clock
+    giả: 20 URL cùng host → mọi `gap_s` ≥ 1.0 và chuỗi sleep giả cộng
+    đủ; robots `Crawl-delay: 3` → gap ≥ 3.0; (g) header `User-Agent`
+    server nhận chứa `samsam-intel` và `mailto:`; (h) `--max-requests 3`
+    → server nhận ≤ 3 request tổng (kể cả robots)
+  - Evidence: `evidence/v70_pytest.log`
+- [x] **W70.3 Parse feed + phân loại luật + trích ngắn** — `parse_feed(
+  data: bytes) -> list[dict]` (RSS 2.0 `channel/item`: title, link,
+  description, pubDate; Atom `entry`: title, `link[@rel=alternate or
+  no rel]/@href`, `summary` (chỉ `content` khi không có summary));
+  bytes có `<!DOCTYPE` → từ chối (chặn entity expansion), XML hỏng →
+  `[warn]` bỏ nguồn, lượt chạy tiếp; tối đa 200 entry/feed. CHỈ đọc feed
+  — KHÔNG bao giờ GET trang bài (`link` chỉ lưu). `published_at`:
+  RFC 822 (`email.utils.parsedate_to_datetime`) hoặc ISO 8601; naive →
+  gắn Asia/Ho_Chi_Minh; không parse được → null. Text: `strip_html`
+  (tái dùng `crawler.collect`) → gom khoảng trắng → cắt `PRE_MAX` →
+  `_mask_pii` → bỏ ký tự điều khiển → cắt ≤300 ký tự (title cũng ≤300).
+  `classify(title, snippet, topics) -> (topics, flags)`: text NFC
+  casefold; cụm có dấu khớp trên text có dấu với biên từ; cụm ASCII khớp
+  trên bản `_strip_accents`; bản không dấu TỰ SINH của cụm có dấu CHỈ áp
+  khi text hoàn toàn không dấu (cùng luật `is_health_question` — tránh
+  "săm lốp"→"sam"); `flags`: `ruou` nếu `kb_filter.is_alcohol`,
+  `suc_khoe` nếu `is_health_question`. `KbFilterError` → `[err]` exit 1
+  (fail-closed, không lưu tin thiếu cờ). Tin 0 chủ đề → KHÔNG lưu (đếm
+  `off_topic`).
+  - Boundary: `crawler/intel.py`, `tests/test_intel.py`,
+    `tests/fixtures/intel/`
+  - Gate: fixture `rss_sample.xml` + `atom_sample.xml` parse đúng số
+    entry/title/link/ngày; description 5.000 ký tự → snippet ≤ 300;
+    description có "0905 123 456" + "a.b@gmail.com" → snippet không chứa
+    2 chuỗi đó; giá "10.050.000.000" giữ nguyên; `<!DOCTYPE` + entity →
+    0 entry, không treo; XML hỏng → [] + warn; server test: sau lượt chạy
+    request tới path bài báo (`/bai/...`) = 0; classify: "Sâm Ngọc Linh
+    giả bị thu giữ" → `sam`; "sam ngoc linh gia re" (không dấu) → `sam`;
+    "Săm lốp xe máy tăng giá" → 0 chủ đề; "Cục ATTP xử phạt quảng cáo
+    TPBVSK" → `quang_cao` + `tpbvsk`; tin "rượu sâm 40 độ" → flag `ruou`;
+    tin nhắc "ung thư" → flag `suc_khoe`; keyword rượu rỗng (monkeypatch
+    `kb_filter.KEYWORDS_FILE` + `reset_cache`) → exit 1
+  - Evidence: `evidence/v70_pytest.log`
+- [x] **W70.4 Bảng `intel_items` + lưu dedup idempotent** —
+  `docs/schema.sql` append block "v7.0 intel collector (WP09)" (comment
+  tiếng Việt: không toàn văn — bản quyền; không PII; tầng C không vào
+  bảng; insert-only): `intel_items` (`id bigint identity pk`, `url text
+  not null unique` (đã chuẩn hóa), `domain text not null`, `source text
+  not null` (id nguồn), `tier text not null check (tier in ('A','B'))`,
+  `title text not null check (char_length(title) <= 300)`, `snippet
+  text check (char_length(snippet) <= 300)`, `summary text check
+  (char_length(summary) <= 300)` (LLM, null mặc định), `published_at
+  timestamptz`, `fetched_at timestamptz not null default now()`,
+  `content_sha256 text not null unique`, `topics text[] not null check
+  (cardinality(topics) > 0)`, `flags text[] not null default '{}'`).
+  KHÔNG cột `body`/`content`/`html`/`raw_text`. `normalize_url(url)`:
+  scheme/host lowercase, bỏ port mặc định, bỏ fragment, bỏ query `utm_*`/
+  `fbclid`/`gclid`/`zarsrc`, sort query còn lại, bỏ `/` cuối path (trừ
+  `/`). `content_sha256` = sha256 của title + "\n" + snippet SAU chuẩn hóa
+  (NFC, casefold, gom khoảng trắng). `store_items(conn, items) -> dict`
+  insert `on conflict do nothing` → đếm `new`/`dup` (dup tách
+  `dup_url`/`dup_content` bằng tra trước trong cùng tx), 1 tx +
+  `conn.commit()`.
+  - Boundary: `docs/schema.sql` (chỉ append), `crawler/intel.py`,
+    `tests/test_intel.py`
+  - Gate: `python scripts/apply_schema.py` ×2 exit 0 trên samsam_infra;
+    `grep -c "^create table if not exists" docs/schema.sql` = số cũ + 1
+    (25 tại worktree này); block v7.0 không có
+    `grep -niE "\b(body|content|html|raw_text)\b +text"`; test thuần
+    `normalize_url`: `HTTPS://Bao.VN:443/a/?utm_source=x&b=2&a=1#c` ==
+    `https://bao.vn/a?a=1&b=2`; test DB thật (rollback): chạy `store_items` 2 lần cùng lô →
+    lần 2 `new=0`, `count(*)` không đổi; cùng bài khác `utm_` + `/` cuối →
+    1 dòng; 2 URL khác nhau cùng title+snippet → 1 dòng (`dup_content=1`);
+    insert tay snippet 301 ký tự → `CheckViolation`; insert tier `C` →
+    `CheckViolation`
+  - Evidence: `evidence/v70_intel.log`, `evidence/v70_pytest.log`
+  - Kết quả: apply_schema ×2 exit 0 (25 bảng public); test DB thật (schema tạm + rollback) 0 skipped. Bổ sung dây chuyền: `deploy/cloud/README.md` thêm dòng `intel_items` + "25 bảng" (drift-guard `test_cloud_readme_drift_guard` đòi mọi bảng schema có trong README cloud).
+- [x] **W70.5 CLI `python -m crawler.intel`** — `--run [--source ID ...]
+  [--max-requests N] [--sources PATH] [--llm]` và `--report`. Thứ tự:
+  argparse + `n_ops` (đúng 1 trong `--run`/`--report`, khác → `ap.error`
+  exit 2) → `--max-requests` ngoài 1..200 → exit 2 → `load_sources`
+  (lỗi → `[err]`, exit 1) → `--source` không tồn tại → exit 2; `--source`
+  tier C → `[blocked]` exit 2 → connect DB (`connect_timeout=10`; lỗi/
+  thiếu DSN → `[err]` exit 1, 0 request mạng; thiếu bảng → `[err]` gợi ý
+  `apply_schema`, exit 1) → mới tới mạng. Mặc định `--max-requests` 60.
+  `--run` không `--source`: chỉ nguồn `status == "duyet"` (hiện 0 →
+  `[warn] 0 nguồn đã duyệt`, exit 0); `--source X` (lặp được) cho phép
+  chạy THỬ nguồn `cho_duyet` kèm `[warn] nguồn chưa duyệt — chạy thử`.
+  `--run` bọc `with job_run("crawler.intel")`. Cuối lượt in `[done]
+  sources=.. ok=.. requests=.. new=.. dup_url=.. dup_content=..
+  off_topic=.. blocked=.. robots_deny=..`. Exit 1 nếu ≥1 nguồn được thử
+  mà 0 nguồn thành công (fetch+parse), còn lại exit 0. `--report`: tổng
+  tin, theo tier/nguồn/chủ đề, số cờ `ruou`/`suc_khoe`, 10 tin mới nhất
+  (ngày, nguồn, chủ đề, title, url — qua `_clean` bỏ ký tự điều khiển);
+  0 dòng → "chưa có tin", exit 0. Docstring module tiếng Việt: contract,
+  luật chặn/robots/nhịp, schema `intel_items`, quyền sở hữu (chỉ ghi
+  `intel_items`; không ghi `content_drafts`, không đăng, không gửi).
+  - Boundary: `crawler/intel.py`, `tests/test_intel.py`
+  - Gate: test (monkeypatch connect + spy transport): `--run --report`,
+    không op, `--max-requests 0`/`201`, `--source khong-co`, `--source
+    <tier C>` → exit 2, connect KHÔNG gọi, transport 0; config hỏng →
+    exit 1, connect không gọi; connect raise → exit 1, transport 0; E2E
+    CLI trên samsam_infra với `--sources` trỏ file nguồn fixture (id
+    tiền tố `fx-`) phục vụ bởi `python -m http.server` trên
+    `tests/fixtures/intel/site/` (robots + feed + `/private/`): lần 1
+    `new>0`, lần 2 `new=0` và `count(*) where source like 'fx-%'` không
+    đổi; `--report` exit 0 (log vào evidence); `job_runs` có dòng
+    `crawler.intel` ok
+  - Evidence: `evidence/v70_intel.log`
+- [x] **W70.6 LLM tóm tắt tùy chọn — mặc định TẮT** — chỉ khi `--llm` VÀ
+  `cfg["llm"]["enabled"] is True`; thiếu 1 trong 2 → 0 lời gọi (có
+  `--llm` mà config tắt → `[warn] LLM tắt — chờ Pháp chế xác nhận`).
+  Gọi `llm_gateway.chat("intel", messages)` CHỈ cho tin MỚI (sau dedup),
+  tối đa `LLM_MAX_ITEMS` 20/lượt, input = title + snippet ĐÃ che; output
+  None/rỗng → không summary; `guardrail.check(summary)["ok"]` không
+  True → summary null + flag `llm_guardrail_fail`; cắt ≤300;
+  `GatewayBlocked`/`GatewayError` → `[warn]`, tắt LLM phần còn lại của
+  lượt, tin vẫn lưu. `data/llm_gateway.json` `monthly_cap_usd` thêm
+  `"intel": 1.0` (ước tính, công ty chốt).
+  - Boundary: `crawler/intel.py`, `data/llm_gateway.json` (+1 khóa cap),
+    `tests/test_intel.py`
+  - Gate: test (monkeypatch `llm_gateway.chat` đếm): mặc định → 0 gọi;
+    `--llm` + config tắt → 0 gọi + warn; config bật + `--llm` → gọi với
+    `agent_id == "intel"`, payload không chứa SĐT/email của fixture;
+    summary chứa "chữa" → summary null + flag `llm_guardrail_fail`;
+    `chat` raise `GatewayBlocked` → tin vẫn lưu, 1 gọi duy nhất; tin
+    trùng → 0 gọi; `grep -nE "^(import|from) +openai" crawler/intel.py`
+    rỗng
+  - Evidence: `evidence/v70_pytest.log`
+- [x] **W70.7 Cách ly: intel không có đường sang `content_drafts`** —
+  module intel chỉ ghi `intel_items` (+ `job_runs` qua `job_run`).
+  - Boundary: `tests/test_intel.py`
+  - Gate: `grep -nE "content_drafts|pipelines\.store|pipelines\.content|save_draft|connectors\." crawler/intel.py`
+    rỗng; `grep -niE "(insert into|update|delete from) +[a-z_]+" crawler/intel.py`
+    chỉ trúng `intel_items`; test AST: tập import của `crawler/intel.py`
+    ∩ {`pipelines.store`, `pipelines.content`, `connectors.zalo`,
+    `agents.report`} = ∅; test DB thật (rollback): `count(*)
+    content_drafts` + `agent_action_log` trước/sau 1 lượt `--run` E2E
+    bằng nhau
+  - Evidence: `evidence/v70_pytest.log`
+- [x] **W70.8 Docs + drift-guard** — `docs/handover/kien-truc.md` mục 2
+  dòng `crawler/` thêm `intel`; mục 3 thêm dòng `intel_items` + câu "N
+  bảng public" = số bảng `docs/schema.sql` (25 tại worktree này);
+  `docs/handover/sop.md` mục "Thu tin thị trường (intel)": lệnh `--run
+  --source`/`--report`, luật chặn tầng C/sàn, robots, ≥1s, không toàn
+  văn, nguồn "chờ duyệt", đọc `[req]`/`[blocked]`; `AGENTS.md` Commands
+  + Structure (`crawler/` nhắc `intel`); `tests/test_handover_docs.py`
+  `SOP_COMMANDS` thêm `"crawler.intel"` (không xóa assert khác).
+  - Boundary: `docs/handover/kien-truc.md`, `docs/handover/sop.md`,
+    `AGENTS.md` (Commands + Structure), `tests/test_handover_docs.py`
+  - Gate: `python -m pytest tests/test_handover_docs.py -q` xanh;
+    `grep -n "crawler.intel" docs/handover/sop.md AGENTS.md` trúng cả 2;
+    `grep -n "intel_items" docs/handover/kien-truc.md` có; đối chiếu số
+    assert `test_handover_docs.py` trước/sau không giảm
+  - Evidence: `evidence/v70_pytest.log`
+- [x] **W70.9 Chạy thật nhỏ (≤20 request)** — 2–3 nguồn RSS tier A công
+  khai trong `data/intel_sources.json` (worker kiểm robots bằng chính
+  CLI, không mở trình duyệt/không đăng nhập): `python -m crawler.intel
+  --run --source A --source B [--source C] --max-requests 10 | tee`
+  evidence, rồi chạy lại y hệt (lần 2 `new=0` trừ khi feed có bài mới —
+  ghi rõ). TỔNG 2 lần ≤ 20 dòng `[req]`. Tin thật để lại trong
+  samsam_infra (tiêu đề công khai + link, không toàn văn).
+  - Boundary: không sửa code; `evidence/v70_live.log`
+  - Gate: `python -c` đọc `evidence/v70_live.log`: số dòng `[req]` ≤ 20;
+    mọi host có request nội dung đều có request `/robots.txt` TRƯỚC đó;
+    mọi `gap_s` không null ≥ 1.0; 0 host trúng `is_blocked`; `select
+    max(char_length(snippet)), max(char_length(title)) from intel_items`
+    ≤ 300
+  - Evidence: `evidence/v70_live.log`
+  - Kết quả: 3 nguồn (vnexpress-suc-khoe, vnexpress-phap-luat, tuoitre-suc-khoe), 2 lần × 5 `[req]` = 10 ≤ 20; robots trước nội dung, gap_s ≥ 1.0, 0 host bị chặn; lần 1 new=5, lần 2 new=0 dup_url=5; max(snippet,title) = (146, 96). Treo: 3 tin tuoitre có `published_at` null (định dạng pubDate chưa rõ — không request thêm để soi); bộ từ khóa còn nhiễu ("livestream" gán `quang_cao` cho tin hình sự) — cần eval phân loại (someday).
+- [x] **Gate chung** — vòng 3 (sau 6 finding nghiệm thu): targeted ×3 = 166 passed ×3 (0 skipped); full `python -m pytest -q` = **942 passed, 0 failed** (trước chạy: 0 container `samsam-dr-*`); ruff sạch; py_compile OK. (Vòng 2: 923 passed + 1 fail `test_zz_no_dr_container_left` do container worktree khác — môi trường.) Evidence: `evidence/v70_pytest.log`
+  - Vá nghiệm thu vòng 3: `_Llm` clean_text TRƯỚC guardrail, lưu đúng chuỗi đã kiểm (entity `&#99;hữa`); `urljoin` ValueError bắt ở `build_items` (bỏ entry) + `_get` (`[warn] redirect Location hỏng`, None); `parse_date` ngoài [năm 2000, now+2 ngày] → None + `report` bắt OverflowError → '?'; test gzip spy `max_length == cap+1`; test trần tổng `TOTAL_S` (StepClock, server nhỏ giọt). Mỗi vá có mutant tương ứng làm test fail.
+  - Vá nghiệm thu vòng 4 (1 MINOR): `parse_date` bắt thêm `OverflowError` (trường số tràn C long/int: năm 2147483648, giờ/giây/ngày 20 chữ số, offset `+99999999999999999999` — `parsedate_to_datetime` raise OverflowError chứ không phải ValueError, lọt ra `build_items` → giết cả lượt run) ở CẢ 2 nhánh (rfc822 + `fromisoformat`) → None. Test: +5 case `test_parse_date_out_of_window_none`, `test_build_items_overflow_pubdate_does_not_kill_run` (entry độc giữ `published_at` None, entry hợp lệ sau vẫn giữ). Mutant bỏ OverflowError → 6 fail. Gate vòng 4: targeted ×3 = 18 passed ×3, `tests/test_intel.py` 117 passed, full = 947 passed + 1 fail `test_zz_no_dr_container_left` (container `samsam-dr-*` của worktree song song, 'Up 6 seconds' lúc probe — môi trường, không phải w70); ruff sạch.
+  - `python scripts/apply_schema.py` ×2 exit 0 (bảng mới `intel_items`)
+  - E2E fixture W70.5 (http.server local) ×2: lần 2 `new=0`; log có
+    `[robots-deny]` cho `/private/`, 0 `[req]` tới host tầng C, mọi
+    `gap_s` ≥ 1.0 (log vào `evidence/v70_intel.log`)
+  - targeted ×3: `python -m pytest tests/test_intel.py tests/test_kb_filter.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py -q -rs`
+    3 lần liên tiếp xanh, test DB thật **0 skipped** (đọc output tới
+    exit, không chạy chồng)
+  - full: `python -m pytest -q` xanh MỘT lần, ≥ 831 + test mới
+  - `ruff check .` sạch
+  - `python -m py_compile crawler/intel.py crawler/collect.py crawler/sources.py`
+  - W70.9 chạy thật ≤ 20 request có evidence
+  - DỌN fixture khỏi samsam_infra: `delete from intel_items where source
+    like 'fx-%'` → 0 dòng `fx-%`; tin thật W70.9 giữ
+  - `git status`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); không file runtime mới trong `data/`; file lạ
+    không thuộc version (vd `lv2-market-top.png`) → không stage
+- [ ] **external-dep** BGĐ/Quản lý MXH duyệt danh sách nguồn + tầng (đổi
+  `status` sang `"duyet"` là việc của người thật); Pháp chế xem điều khoản
+  sử dụng RSS từng tòa soạn.
+- [ ] **external-dep** Pháp chế xác nhận bằng văn bản cho gửi tin công
+  khai qua LLM (`llm.enabled`); email liên hệ trên domain công ty cho
+  User-Agent (`INTEL_CONTACT`).
+- [ ] **external-dep** Nguồn trả phí/API báo chí; social listening nhà
+  cung cấp (P2); dữ liệu Shopee/TikTok đối thủ chỉ nhập tay (tầng C, form
+  Competitor Tracker — version khác).
+
+Someday (ngoài phạm vi v7.0, ghi để không cuốn vào): ETag/If-None-Match +
+304; news-sitemap.xml; bảng `intel_sources`/`intel_fetch_log`/
+`host_fetch_state` (nhịp chung đa tiến trình, advisory lock, timer
+systemd full/light); hạn lưu 30/90 ngày + purge; NER che họ tên (lớp 2
+PII); simhash/cosine gom cụm; eval phân loại ≥200 tin + 6 nhãn rủi ro;
+SSRF redirect sang IP nội bộ/link-local; Summarizer & Bulletin, Red Alert.
+
 Nhánh `ai-infra`: M30 (v3.0–v3.10) đóng và gộp đủ 2026-10-12 — 24 bảng,
 831 test. Đếm bảng trong test không còn hằng số (sàn `>= 24` / đọc
 schema.sql) để các version M31+ chạy song song không xung đột dòng này.
@@ -2021,6 +2342,18 @@ vườn thật; tọa độ khoảnh; vai trò `gd_vung_trong` trong SSO; neo ha
 (xóa dòng cuối chuỗi chưa phát hiện được). Lưu ý merge: nhánh này cố ý không
 sửa `agents/garden.py`/`app/streamlit_app.py` vì `main` có commit flags_for chưa
 vào ai-infra.
+
+v7.0-collector-chung đóng 2026-10-12 (nghiệm thu đợt 1 FIX 6 → 2 vòng sửa → PASS;
+vòng 2: OverflowError khi `<pubDate>` năm/giờ 20 chữ số giết cả lượt chạy. Full
+pytest của worker có 1 đỏ `test_zz_no_dr_container_left` do container drill của
+worktree song song — không phải lỗi diff (diff không đụng dr_drill/db_backup);
+full pytest chạy lại lúc gộp. Coordinator chạy lại targeted 173 + ruff +
+`--report`). Chạy thật: 10 request tới 3 nguồn RSS tầng A (vnexpress sức khỏe/
+pháp luật, tuổi trẻ sức khỏe), robots trước, gap ≥1s, 0 host chặn; chỉ lưu tiêu
+đề + trích ≤300 ký tự + link. External-dep: BGĐ/QL MXH duyệt danh sách nguồn
+(đang `cho_duyet`); Pháp chế xem điều khoản RSS + cho gửi tin qua LLM; email công
+ty cho User-Agent. Someday: SSRF khi redirect sang IP nội bộ; NER che họ tên;
+hạn lưu/purge `intel_items`.
 
 ## Checklist v3.3-connector-csv
 
