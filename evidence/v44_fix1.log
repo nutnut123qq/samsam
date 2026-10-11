@@ -1,0 +1,53 @@
+# v4.4 vòng fix nghiệm thu 1 — 2026-10-12 03:31 +0700
+## Mutation probe (trong bộ nhớ, file repo không sửa): scratchpad/w44_mut_probe2.py
+MUTANT cam_old -> tests/test_contract_check.py
+FAILED tests/test_contract_check.py::test_cam_not_confused_with_cam_accentless[0-cam_ruou]
+FAILED tests/test_contract_check.py::test_cam_not_confused_with_cam_accentless[1-cam_ruou]
+FAILED tests/test_contract_check.py::test_cam_not_confused_with_cam_accentless[2-cam_ruou]
+FAILED tests/test_contract_check.py::test_cam_not_confused_with_cam_accentless[3-cam_ruou]
+FAILED tests/test_contract_check.py::test_cam_not_confused_with_cam_accentless[4-cam_claim_suc_khoe]
+FAILED tests/test_contract_check.py::test_cam_not_confused_with_cam_accentless[5-cam_claim_suc_khoe]
+FAILED tests/test_contract_check.py::test_cam_not_confused_with_cam_accentless[6-cam_shop_trung_ten]
+FAILED tests/test_contract_check.py::test_cam_not_confused_with_cam_accentless[7-cam_ruou]
+FAILED tests/test_contract_check.py::test_cam_not_confused_with_cam_accentless[8-cam_ruou]
+FAILED tests/test_contract_check.py::test_cam_not_confused_with_cam_accentless[9-cam_shop_trung_ten]
+10 failed, 41 passed, 1 warning in 2.00s
+RC 1
+MUTANT ai_old -> tests/test_contract_check.py
+FAILED tests/test_contract_check.py::test_ai_label_not_pronoun_ai - Assertion...
+1 failed, 50 passed, 1 warning in 1.59s
+RC 1
+MUTANT egress_old -> tests/test_data_flow_map.py
+FAILED tests/test_data_flow_map.py::test_egress_scanner_tmp_tree - AssertionE...
+FAILED tests/test_data_flow_map.py::test_gateway_import_forms_are_egress[import-as]
+FAILED tests/test_data_flow_map.py::test_gateway_import_forms_are_egress[import-plain]
+FAILED tests/test_data_flow_map.py::test_gateway_import_forms_are_egress[from-pkg]
+FAILED tests/test_data_flow_map.py::test_gateway_import_forms_are_egress[from-pkg-multi]
+FAILED tests/test_data_flow_map.py::test_gateway_import_forms_are_egress[rel-chat]
+FAILED tests/test_data_flow_map.py::test_gateway_import_forms_are_egress[rel-module]
+FAILED tests/test_data_flow_map.py::test_gateway_import_forms_are_egress[rel-parent]
+FAILED tests/test_data_flow_map.py::test_gateway_import_forms_are_egress[_client]
+FAILED tests/test_data_flow_map.py::test_gateway_import_forms_are_egress[_call]
+FAILED tests/test_data_flow_map.py::test_gateway_import_forms_are_egress[star]
+11 failed, 40 passed, 1 warning in 1.77s
+RC 1
+MUTANT inflow -> tests/test_review_load.py
+FAILED tests/test_review_load.py::test_collect_and_render_fixture - assert {d...
+1 failed, 36 passed, 1 warning in 8.21s
+RC 1
+MUTANT queue -> tests/test_review_load.py
+FAILED tests/test_review_load.py::test_collect_and_render_fixture - assert 5 ...
+1 failed, 36 passed, 1 warning in 7.86s
+RC 1
+MUTANT throughput -> tests/test_review_load.py
+FAILED tests/test_review_load.py::test_collect_and_render_fixture - Assertion...
+FAILED tests/test_review_load.py::test_cli_against_fixture - AssertionError: ...
+2 failed, 35 passed, 1 warning in 7.86s
+RC 1
+## Targeted x3
+### lần 1
+165 passed in 13.17s
+### lần 2
+165 passed in 11.14s
+### lần 3
+165 passed in 13.93s

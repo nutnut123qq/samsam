@@ -1,0 +1,47 @@
+# v4.4 W44.6 gate — 2026-10-11T20:06:27Z (UTC)
+## targeted lan 1
+........................................................                 [100%]
+128 passed in 9.72s
+exit=0
+## targeted lan 2
+........................................................                 [100%]
+128 passed in 8.92s
+exit=0
+## targeted lan 3
+........................................................                 [100%]
+128 passed in 8.22s
+exit=0
+## full pytest (1 lan) — 2026-10-11T20:07:26Z
+........................................................................ [ 60%]
+........................................................................ [ 67%]
+........................................................................ [ 75%]
+........................................................................ [ 82%]
+........................................................................ [ 90%]
+........................................................................ [ 97%]
+.......................                                                  [100%]
+959 passed in 274.01s (0:04:34)
+exit=0
+## ruff
+All checks passed!
+## py_compile
+exit=0
+## dpia --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+exit=0
+## grep 'đã tuân thủ' docs/legal
+grep exit=1 (1=rong)
+## git status --short
+ M DONE.md
+?? data/data_flow_map.json
+?? data/review_quota.json
+?? docs/handover/jd-kpi-van-hanh.md
+?? docs/legal/
+?? scripts/contract_check.py
+?? scripts/dpia_draft.py
+?? scripts/review_load.py
+?? tests/test_contract_check.py
+?? tests/test_data_flow_map.py
+?? tests/test_dpia_draft.py
+?? tests/test_legal_docs.py
+?? tests/test_review_load.py
+## _mut_egress con khong: 0

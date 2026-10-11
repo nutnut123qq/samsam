@@ -1,0 +1,39 @@
+# v4.4 W44.1 evidence — 2026-10-11T20:03:20Z (UTC)
+## 1. Chay that tren DB samsam_infra (DATABASE_URL tu w44.env, khong in gia tri)
+# Tải hàng duyệt — 2026-10-12 (cửa sổ 2026-10-06..2026-10-12, giờ VN)
+Quota ĐỀ XUẤT, chưa TGĐ chốt (plan_legal_hr §2).
+Trần hôm nay/người: 25
+Hàng chờ: vào hàng 0 · KHÔNG RÕ 0 (tính vào hàng) · trả tác giả 0 (không tính quota) → tính quota 0
+Mục chờ cũ nhất: —
+Nháp vào: 0 trong 7 ngày (TB 0.0/ngày)
+Quyết định duyệt theo ngày/người:
+  (không có)
+
+Không có cảnh báo tải.
+(Chỉ nhắc — không phân việc, không đổi trạng thái; người duyệt quyết.)
+exit=0
+## 2. Mac dinh (hom nay gio VN)
+# Tải hàng duyệt — 2026-10-12 (cửa sổ 2026-10-06..2026-10-12, giờ VN)
+Quota ĐỀ XUẤT, chưa TGĐ chốt (plan_legal_hr §2).
+Trần hôm nay/người: 25
+Hàng chờ: vào hàng 0 · KHÔNG RÕ 0 (tính vào hàng) · trả tác giả 0 (không tính quota) → tính quota 0
+Mục chờ cũ nhất: —
+Nháp vào: 0 trong 7 ngày (TB 0.0/ngày)
+Quyết định duyệt theo ngày/người:
+  (không có)
+
+Không có cảnh báo tải.
+(Chỉ nhắc — không phân việc, không đổi trạng thái; người duyệt quyết.)
+exit=0
+## 3. Usage exit 2 truoc connect
+[err] --today: ngày không hợp lệ '2026-13-01'
+exit=2
+[err] --days phải trong 1..366
+exit=2
+[err] không phase quota nào phủ 2026-09-01
+exit=2
+## 4. DB down (host chet 10.255.255.1, khong env -u)
+[err] DB không truy cập được
+exit=1 (~4s)
+## 5. Fixture DB that (schema tam + rollback) — test_review_load -v
+====================== 5 passed, 31 deselected in 4.62s =======================

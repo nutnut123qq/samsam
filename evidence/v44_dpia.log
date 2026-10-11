@@ -1,0 +1,37 @@
+# v4.4 W44.2/W44.3 evidence — 2026-10-11T20:02:45Z (UTC)
+## 1. dpia_draft lan 1
+[ok] ghi DPIA-nhap.md, TIA-nhap.md (15 luồng, 5 ra nước ngoài)
+exit=0
+f5b045dacc0e50913a373f9b65f805967f4dcc1ee17d7e6bdfb276a3e6d66130 *docs/legal/DPIA-nhap.md
+b47853d4ed95bb7ff5d87476cba2afed5378e57dfb8079d914dafc70e562138f *docs/legal/TIA-nhap.md
+## 2. dpia_draft lan 2 (sha256 phai y het)
+[ok] ghi DPIA-nhap.md, TIA-nhap.md (15 luồng, 5 ra nước ngoài)
+exit=0
+f5b045dacc0e50913a373f9b65f805967f4dcc1ee17d7e6bdfb276a3e6d66130 *docs/legal/DPIA-nhap.md
+b47853d4ed95bb7ff5d87476cba2afed5378e57dfb8079d914dafc70e562138f *docs/legal/TIA-nhap.md
+## 3. --check tren repo
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+exit=0
+## 4. sua tay 1 dong DPIA -> --check
+1
+[lệch] DPIA-nhap.md không khớp map — chạy lại dpia_draft
+exit=1
+## 5. sinh lai -> --check
+[ok] ghi DPIA-nhap.md, TIA-nhap.md (15 luồng, 5 ra nước ngoài)
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+exit=0
+## 6. so luong / ra nuoc ngoai / DF ids trong DPIA
+### DF-01 ### DF-02 ### DF-03 ### DF-04 ### DF-05 ### DF-06 ### DF-07 ### DF-08 ### DF-09 ### DF-10 ### DF-11 ### DF-12 ### DF-13 ### DF-14 ### DF-15 
+TIA muc 2:
+### DF-06 ### DF-07 ### DF-08 ### DF-09 ### DF-12 
+Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15.
+CAN LUAT SU XAC NHAN DPIA: 13 TIA: 8
+## 7. egress_modules(ROOT)
+['api/rag.py', 'connectors/zalo.py', 'crawler/collect.py', 'ingest/embed_store.py', 'pipelines/content.py', 'pipelines/llm_gateway.py', 'scripts/health_bulletin.py', 'scripts/zalo_mock.py', 'scripts/zalo_preflight.py']
+## 8. MUTATION: tao scripts/_mut_egress.py (import requests) -> test_data_flow_map PHAI DO
+E       AssertionError: module g\u1eedi d\u1eef li\u1ec7u ra ngo\xe0i CH\u01afA khai b\xe1o trong data/data_flow_map.json: ['scripts/_mut_egress.py']
+E       assert not ['scripts/_mut_egress.py']
+1 failed, 31 passed in 2.09s
+## 9. xoa file mutation -> XANH
+32 passed in 1.27s
+git status file mutation: 0 dong
