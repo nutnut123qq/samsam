@@ -158,6 +158,23 @@ def _ocr(path: Path, provider: str) -> str:
     return unicodedata.normalize("NFC", fn(path) or "")
 
 
+def pdf_page_texts(path: Path) -> list[str]:
+    """Text NFC từng trang PDF (pypdf, không mạng). PDF mã hoá/hỏng →
+    DocError. Tách ra từ `extract_text` (v9.5) để luồng MẬT `agents.ck_mat`
+    tái dùng mà không đi qua provider OCR/DB."""
+    try:
+        with open(path, "rb") as f:
+            reader = PdfReader(f)
+            if reader.is_encrypted:
+                raise DocError("PDF mã hoá")
+            return [unicodedata.normalize("NFC", p.extract_text() or "")
+                    for p in reader.pages]
+    except DocError:
+        raise
+    except Exception as e:  # noqa: BLE001 — pypdf raise đủ loại trên PDF hỏng
+        raise DocError(f"PDF hỏng: {type(e).__name__}") from None
+
+
 def extract_text(path: Path, provider: str = "none",
                  ext: str | None = None) -> tuple[str, int, str]:
     """→ (text NFC, pages, text_source pdf_text|ocr|none). PDF mã hoá /
@@ -165,17 +182,7 @@ def extract_text(path: Path, provider: str = "none",
     `ext` cho file không đuôi (bản gốc `originals/<sha256>`)."""
     ext = (ext or path.suffix).lower()
     if ext == PDF_EXT:
-        try:
-            with open(path, "rb") as f:
-                reader = PdfReader(f)
-                if reader.is_encrypted:
-                    raise DocError("PDF mã hoá")
-                texts = [unicodedata.normalize("NFC", p.extract_text() or "")
-                         for p in reader.pages]
-        except DocError:
-            raise
-        except Exception as e:  # noqa: BLE001 — pypdf raise đủ loại trên PDF hỏng
-            raise DocError(f"PDF hỏng: {type(e).__name__}") from None
+        texts = pdf_page_texts(path)
         pages = len(texts)
         # Quyết định scan THEO TRANG (xem SCAN_MIN_CHARS): mọi trang đủ
         # text mới là pdf_text; còn lại cả tài liệu chờ OCR.

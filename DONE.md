@@ -6,9 +6,388 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+## Checklist v9.5-co-khi
+
+Khán giả/mục đích: nhánh M31+ (worktree `D:\code\samsam-w95`) — WP14
+"Trung tâm điện–cơ khí (P1)" (`ctx/pmo.md` dòng `| WP14`), agent CK-A1..A4
+trong `ctx/final_plans.json` → `mechanical`. Người thật duy nhất của phòng:
+**Kỹ sư trưởng** (chưa có tài khoản/role trong `pipelines/auth.py` — mọi chỗ
+cần người duyệt dùng cờ `--approved-by "<tên người thật>"` như
+`ingest.kb_internal`; agent/test KHÔNG tự điền tên Kỹ sư trưởng). Hiện repo
+có 0 dòng code về thiết bị/bảo trì/đóng gói. Sau version: (1) tài liệu kỹ
+thuật MẬT tra cứu được HOÀN TOÀN local — 0 kết nối mạng, gateway từ chối
+agent mật, thiếu dữ liệu → NO_DATA; (2) tài liệu kỹ thuật THƯỜNG nạp vào
+`chunks_internal` collection `internal:co_khi` qua `ingest.kb_internal`
+(tái dùng v3.9, không đường mới) và tài liệu gắn `confidential: true` bị
+CLI đó từ chối trước khi embed; (3) CMMS nhẹ 3 bảng + CLI + nhắc đến hạn
+(`now` là tham số); (4) tính năng lực đóng gói hộp quà Tết từ config GIẢ
+ĐỊNH; (5) checklist điện/mạng điểm quay live markdown tất định; (6) bộ eval
+MẪU 20 + 3 bẫy chạy qua `scripts/agent_eval.py`. Mốc WP14 thật (sổ máy
+15/11, downtime 01/12, checklist 05/11, nghiệm thu 23/12) phụ thuộc dữ liệu
+công ty → external-dep, version này chỉ dựng máy chạy local.
+
+Quy ước: ponytail — stdlib + `pypdf`/`psycopg` sẵn có; KHÔNG dep mới, KHÔNG
+pip install vào Python global. OCR local: máy có `rapidocr-onnxruntime`
+1.4.4 (model `ch_PP-OCRv4` ĐÓNG GÓI SẴN trong wheel, không tải mạng; nhận
+dạng tiếng Việt có dấu CHƯA XÁC MINH — model Trung/Anh) → import LƯỜI trong
+hàm OCR, thiếu → trang scan ở trạng thái `cho_ocr` (không index, có đếm) +
+ghi external-dep; KHÔNG thêm vào `requirements.txt` (kéo onnxruntime+
+opencv — nặng, optional). `paddleocr` 2.10 có trên máy nhưng tải model qua
+mạng lần chạy đầu → CẤM dùng trong luồng mật; tesseract/pytesseract KHÔNG
+có. Không có `pipelines/scenario.py` trong worktree này (v7.3 làm song song)
+→ CK-A3 chỉ đặt hàm thuần làm điểm nối, KHÔNG import scenario. Module mật
+`agents/ck_mat.py` KHÔNG import (trực tiếp hay bắc cầu) `pipelines.
+llm_gateway`, `ingest.embed_store`, `api.rag`, `openai`, `httpx`,
+`requests`, `urllib3`, `urllib.request`, `google.cloud` (đã đo: `import
+ingest.doc_intake` sạch các module này — chỉ kéo `pipelines.pii`/
+`job_runs`/`psycopg`, không mở kết nối). Text hiển thị: template tất định,
+không LLM → không qua `guardrail.check()` (invariant chỉ áp text AI sinh);
+mọi print tiếng Việt có UTF-8 guard; mọi `psycopg.connect` có
+`connect_timeout` (`tests/test_connect_timeout_guard.py` quét AST toàn repo);
+ghi DB `conn.commit()` tường minh (gotcha v2.1); CLI nhiều op → `ap.error`
+exit 2 TRƯỚC connect (gotcha v2.2); ngày từ CLI (str) coerce
+`date.fromisoformat` trước khi format (gotcha v2.2); "hôm nay" mặc định theo
+UTC+7 bằng `timezone(timedelta(hours=7))` (không `zoneinfo` — Windows thiếu
+tzdata). Tài liệu/config mẫu tự tạo ghi rõ **MẪU**/**GIẢ ĐỊNH** trong `_doc`
+hoặc dòng đầu. Lệnh gate dưới đây chạy với tiền tố `cd D:/code/samsam-w95
+&& set -a && . <scratchpad>/w95.env && set +a &&` (DB riêng `samsam_infra`).
+Thêm bảng: KHÔNG assert đếm cứng — sửa `docs/handover/kien-truc.md` (tên
+bảng + câu "N bảng public"; drift-guard `test_kien_truc_lists_all_tables`
+đọc schema.sql).
+
+- [x] **W95.1 Gateway từ chối agent mật `ck_mat`** — `pipelines/
+  llm_gateway.py`: hằng `LOCAL_ONLY_AGENTS = frozenset({"ck_mat"})`; trong
+  `_gate()` kiểm NGAY sau validate `_AGENT_RE`, TRƯỚC `_config()` /
+  `_month_spend()` → `raise GatewayBlocked("agent 'ck_mat' là luồng MẬT —
+  chỉ chạy local, cấm LLM/mạng")`. Không config/env nào gỡ được (không đi
+  qua `kill`, `LLM_PROVIDER_ONLY` rỗng hay cap). Cập nhật docstring Contract.
+  - Boundary: `pipelines/llm_gateway.py`, `tests/test_llm_gateway.py`
+  - Gate: test mới `chat("ck_mat", ...)` và `embed("ck_mat", ...)` đều raise
+    `GatewayBlocked`, `_client` (monkeypatch đếm) gọi 0 lần, `_connect`/
+    `_month_spend` gọi 0 lần, `_record` 0 lần; config hỏng
+    (`CONFIG` trỏ file JSON lỗi) vẫn ra `GatewayBlocked` chứ không
+    `GatewayError` cấu hình (chứng minh kiểm trước `_config()`); agent khác
+    (`chatbot`) không đổi hành vi — `python -m pytest -q
+    tests/test_llm_gateway.py` xanh
+  - Evidence: `evidence/v95_pytest.log`
+- [x] **W95.2 CK-A1 luồng MẬT chạy local (`agents/ck_mat.py`)** —
+  - Thư mục nguồn `CK_MAT_DIR` (env, mặc định `data/co_khi_mat/` →
+    THÊM vào `.gitignore` ngay; ghi biến vào `env.example` kèm comment, không
+    ghi `.env*`). Đuôi nhận `.pdf` (text từng trang), `.md`/`.txt` (trang tách
+    bằng dòng `--- trang N ---`; không có dấu → cả file là trang 1),
+    `.jpg/.jpeg/.png` (OCR, trang 1). 0 byte / đuôi lạ / symlink / file >
+    `MAX_BYTES` (20 MB) → bỏ qua có đếm. Mọi file trong thư mục này mặc
+    định là `confidential=true`.
+  - Tái dùng `ingest/doc_intake.py`: tách hàm `pdf_page_texts(path) ->
+    list[str]` (NFC, PDF mã hoá/hỏng → `DocError`) ra khỏi `extract_text`,
+    `extract_text` gọi lại nó — hành vi v3.8 KHÔNG đổi (test_doc_intake
+    xanh nguyên); dùng lại `SCAN_MIN_CHARS`, `_nonspace_len`, `DocError`.
+    Trang PDF < `SCAN_MIN_CHARS` → OCR ảnh nhúng trong trang (`page.images`,
+    pypdf) bằng OCR local nếu có; không có engine → `cho_ocr` (không index).
+  - OCR local: hàm `_ocr_local(image_bytes) -> str` import lười
+    `rapidocr_onnxruntime`; `ImportError` → trả `None` (trang `cho_ocr`), in
+    1 dòng `[ck-mat] chưa có engine OCR local — trang scan chờ (external-dep)`.
+    TUYỆT ĐỐI không fallback provider mạng/`doc_intake.PROVIDERS` nước ngoài.
+  - Index trong bộ nhớ dựng mỗi lần chạy (≈300 trang — không persist, không
+    DB, không embed): chunk theo trang (cắt đoạn ≤ 800 ký tự giữ `file`,
+    `page`); tokenize = NFC casefold + bỏ dấu (hàm `_fold` CHÉP trong module,
+    không import `llm_gateway._strip_accents`) + tách `\w+`; BM25 thuần Python
+    (k1=1.5, b=0.75).
+  - `ask(question, root=None, k=3) -> {"answer", "sources": [{"file",
+    "page"}], "high_risk": bool}`. `NO_DATA` = hằng chép đúng chuỗi của
+    `api.rag.NO_DATA` (test drift-guard so khớp, module không import rag).
+    NO_DATA khi: thư mục thiếu; thư mục rỗng; chỉ có file bị bỏ qua / trang
+    `cho_ocr`; câu rỗng/chỉ dấu câu/chỉ stopword; trang tốt nhất phủ < 60%
+    term nội dung của câu; câu có mã máy `SS-EQ-\d+` mà không FILE nào
+    chứa đúng mã đó (ở trang bất kỳ hoặc trong tên file — lọc theo file,
+    mã tính 1 lần lúc index; mã không tính vào điểm BM25/độ phủ). Câu > 500 ký tự cắt trước tokenize. Trả lời = trích đoạn
+    nguyên văn (qua `pipelines.pii._mask_pii`) + `file` (tên tương đối) +
+    `page` — KHÔNG tổng hợp, không LLM.
+  - Chủ đề rủi ro cao (câu HOẶC trang trúng: "đấu nối", "đấu dây", "tủ
+    điện", "3 pha", "ba pha", "áp lực", "nồi hơi", "loto", "cao áp" — so sau
+    `_fold`, word-boundary): `high_risk=True`, `answer` CHỈ là tham chiếu
+    "Xem <file> trang <n> — kiểm tra với Kỹ sư trưởng", không trích đoạn,
+    không danh sách bước.
+  - CLI `python -m agents.ck_mat --ask "<câu>" [--dir PATH]` · `--stats`
+    (đếm file/trang/indexed/cho_ocr/skipped, KHÔNG in nội dung). Exit 0;
+    tham số sai 2. UTF-8 guard.
+  - Boundary: `agents/ck_mat.py`, `ingest/doc_intake.py` (chỉ tách
+    `pdf_page_texts`), `.gitignore`, `env.example`, `tests/test_ck_mat.py`
+  - Gate: (a) EGRESS — fixture chặn `socket.socket.connect`, `connect_ex`,
+    `socket.create_connection`, `socket.getaddrinfo` (ghi lại + raise):
+    dựng index từ tmp dir gồm PDF text 2 trang (helper `make_pdf_pages` như
+    `tests/test_doc_intake.py`), `.md` nhiều trang, ảnh `.png` với
+    `_ocr_local` monkeypatch trả text → `ask()` trúng / NO_DATA / high-risk
+    đều chạy, danh sách kết nối == `[]`; (b) subprocess `python -c "import
+    agents.ck_mat, sys; ..."` in danh sách module cấm đã nạp == `[]` (list
+    ở Quy ước); (c) `grep -nE "^\s*(import|from)\s+(openai|httpx|requests|
+    urllib|google|pipelines\.llm_gateway|ingest\.embed_store|api\.rag)"
+    agents/ck_mat.py` → 0 dòng; (d) NO_DATA đủ 6 biến thể biên ở trên (mỗi
+    biến thể 1 assert, `sources == []`, answer không chứa chữ số); (e) trúng:
+    câu về trang 2 file A trả đúng `file`+`page`; (f) high-risk: answer
+    không có trích đoạn trang, không có dòng bắt đầu bằng số thứ tự; (g)
+    `_ocr_local` khi `rapidocr_onnxruntime` không import được (monkeypatch
+    `sys.modules[...] = None`) → trang `cho_ocr`, không exception; (h) OCR
+    thật: `pytest.importorskip("rapidocr_onnxruntime")` + ảnh ASCII
+    "SS-EQ-03" vẽ bằng `cv2.putText` (opencv đi kèm rapidocr; skip nếu thiếu)
+    OCR ra chứa "SS-EQ-03" dưới fixture chặn socket; (i) `python -m pytest -q
+    tests/test_doc_intake.py tests/test_ck_mat.py` xanh; (j) `git
+    check-ignore data/co_khi_mat/x.pdf` → khớp
+  - Evidence: `evidence/v95_pytest.log`, `evidence/v95_egress.log` (output
+    test egress + subprocess module list + `--stats` trên `data/co_khi/mau/`)
+  - Kết quả: egress 0 kết nối (index PDF+md+ảnh, OCR rapidocr THẬT dưới chặn socket), subprocess 0 module cấm, grep 0 dòng; NO_DATA 6 biến thể. Rà OWASP thêm: `_chunks` cắt theo chỉ số (bản đầu quadratic — đo 20 MB một dòng ~97 s, nay 0.1 s), dấu `--- trang N ---` lặp gộp 1 trang, mở lại PDF lấy ảnh lỗi → `cho_ocr` thay vì crash. Stopword bỏ dấu KHÔNG chứa từ trùng chuyên môn (máy/bảo/co/độ/tủ/dầu/vệ/cân/hơi/bản/chứa).
+- [x] **W95.3 CK-A1 luồng THƯỜNG qua `chunks_internal` + chặn tài liệu mật**
+  — tài liệu MẪU `data/co_khi/mau/` (dòng đầu "MẪU — tài liệu giả định do
+  dev soạn, không phải manual thật"): `may-co-mang-ss-eq-03.md` (thường, ≥3
+  trang, chu kỳ bảo trì/nhiệt độ/thao tác vận hành giả định),
+  `may-dan-nhan-ss-eq-05.md` (thường), `ban-ve-tu-dien-xuong-mau.md` (dòng
+  front-matter `confidential: true`, có nội dung "tủ điện", "3 pha"),
+  `so-tay-dong-goi-hop-qua-mau.md` (thường). `ingest/kb_internal.py`
+  `parse_args`: TRƯỚC connect/embed, `ap.error` (exit 2) khi (a) 20 dòng đầu
+  file có khóa `confidential` + `:`/`=` mà giá trị KHÔNG tường minh là
+  false/no/0/off/không (FAIL-CLOSED — chịu ngoặc kép, `#comment`, tiền tố
+  `- `/`**`, `"confidential":`, `confidential=true`; casefold), hoặc
+  (b) `--file` resolve nằm trong `CK_MAT_DIR` (resolve cả 2 phía). Nạp
+  thường: `python -m ingest.kb_internal --file data/co_khi/mau/may-co-mang-
+  ss-eq-03.md --collection internal:co_khi --approved-by "<Kỹ sư trưởng>"`
+  (collection khớp `COLLECTION_RE` sẵn có — không sửa regex/bảng). Tra cứu
+  luồng thường dùng `api.rag.retrieve(q, collection="internal:co_khi")` sẵn
+  có (v3.9) — KHÔNG thêm đường đọc mới, `answer()` khách không đổi.
+  - Boundary: `ingest/kb_internal.py` (thêm check trong `parse_args`),
+    `data/co_khi/mau/*.md`, `tests/test_kb_internal.py`
+  - Gate: test: file có `confidential: true` → `SystemExit(2)`, `connect`
+    và `embed_all` (monkeypatch đếm) gọi 0 lần; biến thể `Confidential:
+    TRUE`, có khoảng trắng đầu dòng → vẫn chặn; `confidential: false` → qua;
+    file nằm trong tmp `CK_MAT_DIR` (monkeypatch env) không front-matter →
+    exit 2; file thường MẪU → `ingest_doc` với fake conn + `embed_all`
+    monkeypatch nạp `collection == "internal:co_khi"`, `approved_by` = giá trị
+    truyền vào; test cũ `tests/test_kb_internal.py` xanh nguyên (đối chiếu
+    số assert trước/sau — gotcha v1.7) — `python -m pytest -q
+    tests/test_kb_internal.py tests/test_kb_acl.py` xanh
+  - Evidence: `evidence/v95_pytest.log`
+  - Kết quả: chặn cả dòng có BOM đầu file; `..` trỏ vào CK_MAT_DIR vẫn chặn; 21 assert cũ giữ nguyên (chỉ append test). Còn hở (ghi nhận): file mật bị COPY ra ngoài CK_MAT_DIR và gỡ front-matter thì không nhận ra được — quy trình người.
+- [x] **W95.4 CK-A2 CMMS nhẹ — schema + `agents/cmms.py`** — `docs/
+  schema.sql` THÊM (chỉ `create ... if not exists`, không đổi bảng cũ):
+  - `machines` (`code` text PK check `^SS-EQ-[0-9]{2,4}$`, `name` not null,
+    `location`, `maker`, `year` int check 1950–2100, `thuoc_dien_kiem_dinh`
+    bool default false, `han_kiem_dinh` date, `la_phuong_tien_do` bool
+    default false, `han_hieu_chuan` date, `ho_so_gmp` bool default false,
+    `active` bool default true, `source` text default 'manual',
+    `created_at` timestamptz default now());
+  - `maintenance_plans` (`id` identity PK, `machine_code` FK→machines,
+    `task` not null, `interval_days` int check 1–3660, `major` bool default
+    false, `start_on` date not null default current_date, `last_done_on`
+    date, `last_done_by` text, `last_approved_by` text, `active` bool
+    default true);
+  - `incidents` (`id` identity PK, `machine_code` FK, `started_at`
+    timestamptz not null, `ended_at` timestamptz check `ended_at is null or
+    ended_at >= started_at`, `downtime_phut` int check `>= 0`, `part` text,
+    `description` text (ĐÃ `_mask_pii`), `root_cause` text not null default
+    'chờ xác nhận', `reported_by` text check `^[A-Za-z0-9_-]{1,32}$` (MÃ
+    nhân sự, không tên/SĐT), `created_at`);
+  - view `downtime_log` (`create or replace view`: incidents đã đóng —
+    `machine_code, started_at, ended_at, downtime_phut, part, root_cause`)
+    cho CK-A5 sau này.
+  `agents/cmms.py`: hàm thuần `due_items(plans, machines, today, horizon_days
+  =7, cert_days=30) -> list[dict]` (`next_due = coalesce(last_done_on,
+  start_on) + interval_days`; `overdue` khi `next_due < today`, `due` khi
+  `<= today + horizon`; `han_kiem_dinh`/`han_hieu_chuan` nhắc khi `han - today
+  <= cert_days` kể cả đã quá hạn; chỉ máy/plan `active`), `incomplete
+  (machines)` (thiếu `maker`/`year`/`location`, hoặc cờ kiểm định/phương tiện
+  đo bật mà thiếu hạn), `downtime_minutes(start, end)`. CLI `python -m
+  agents.cmms`: `--add-machine --code --name [--location --maker --year
+  --kiem-dinh --kiem-dinh-han --phuong-tien-do --hieu-chuan-han --gmp]`
+  (cờ kiểm định/phương tiện đo = cờ tường minh HOẶC có hạn) · `--add-plan --code --task
+  --every-days N [--major]` · `--done <plan_id> --on YYYY-MM-DD --by <mã_nv>
+  [--approved-by "<Kỹ sư trưởng>"]` (plan `major` HOẶC máy `ho_so_gmp` mà
+  thiếu `--approved-by` → exit 2, KHÔNG ghi; `--on` tương lai so với hôm nay
+  → exit 2) · `--incident --code --start ISO --end ISO --by <mã_nv> [--part
+  --desc]` (naive → +07:00; end<start → exit 2; thiếu end = sự cố đang mở,
+  `downtime_phut` NULL) · `--due [--now YYYY-MM-DD] [--horizon N]`
+  (`--now` CHỈ với `--due`; op ghi kèm `--now` → exit 2) ·
+  `--incomplete` · `--retire <code>` (`active=false`). KHÔNG có op xóa máy
+  (không `delete from machines` trong module). >1 op → `ap.error` trước
+  connect. Print chỉ mã máy/plan id/số đếm/ngày — không in `description`.
+  - Boundary: `docs/schema.sql`, `agents/cmms.py`, `tests/test_cmms.py`,
+    `docs/handover/kien-truc.md` (3 bảng mới + view + câu "N bảng public"
+    24 → 27 trên nền hiện tại)
+  - Gate: unit (không DB): plan hạn hôm qua → `overdue`; hạn hôm nay+7 →
+    `due`, +8 → không; `han_kiem_dinh` = today+25 và cân `han_hieu_chuan` =
+    today+10 → cả 2 nhắc; +30 nhắc, +31 không, -1 (quá hạn) nhắc; plan
+    `last_done_on` NULL tính từ `start_on`; máy `active=false` không nhắc;
+    `--now 2026-12-20` (str) chạy được, `--now 2026-13-01` exit 2;
+    sự cố 09:00→10:15 → 75 phút; 12 máy 1 thiếu `maker` → `incomplete` đúng
+    1; `--done` plan major thiếu `--approved-by` exit 2 và fake conn 0
+    execute ghi; `--due --incomplete` cùng lúc exit 2 trước connect; DB
+    (fixture skip khi không có DB, mã `SS-EQ-99xx`, cleanup incidents→
+    plans→machines): `python scripts/apply_schema.py` chạy 2 lần không lỗi;
+    add-machine/add-plan/incident/due vòng đầy đủ đọc lại đúng từ DB, view
+    `downtime_log` trả 75; insert `reported_by` có dấu cách bị check
+    constraint chặn; `grep -n "delete from machines" agents/cmms.py` → 0;
+    `python -m pytest -q tests/test_cmms.py tests/test_handover_docs.py`
+    xanh
+  - Evidence: `evidence/v95_pytest.log`, `evidence/v95_cmms.log` (CLI chạy
+    thật trên DB `samsam_infra` với máy MẪU `SS-EQ-9901` rồi `--retire`)
+  - Kết quả: evidence chạy trên DB riêng worktree (`w95.env` trỏ `samsam_w95`, không phải `samsam_infra` như ghi ở trên); máy MẪU SS-EQ-9901/9902 + plan #1 + 2 sự cố MẪU còn lại trong DB đó ở trạng thái `active=false` (không có op xóa — đúng thiết kế). `--part` cũng qua `_mask_pii`. Ngoài boundary (buộc phải sửa để full pytest xanh): `deploy/cloud/README.md` (3 dòng bảng mới + bỏ số đếm cứng '24 bảng') và `docs/handover/runbook-ha-tang.md` (agent_id `ck_mat`, drift-guard `test_runbook_lists_real_agent_ids`).
+- [x] **W95.5 CK-A3 năng lực đóng gói hộp quà Tết** — config `data/co_khi/
+  nang_luc.json` (`_doc`: "GIẢ ĐỊNH — số liệu dev đặt, chờ Kỹ sư trưởng đo
+  thực và ký"; `gia_cong` false; `stations` vd `dan_nhan` 200 hộp/ca × 1
+  máy, `co_mang`, `dong_hop_tay` 80 hộp/người/ca × N người — mỗi station có
+  `label` `"gia_dinh"`|`"do_thuc"`; `skus` hộp quà MẪU → danh sách station).
+  `agents/co_khi.py`: hàm thuần `capacity_for(cfg, sku, boxes) -> dict`
+  (`shifts_needed` mỗi station = `ceil(boxes / (rate × units))`, `bottleneck`
+  = station nhiều ca nhất, mỗi số kèm `label`, `status` = "chờ Kỹ sư trưởng
+  ký") — ĐÂY là điểm nối cho `pipelines.scenario` (v7.3): scenario gọi
+  `capacity_for`, module này không import scenario (ghi trong docstring).
+  `boxes` ≤0/không phải int, sku lạ, rate ≤0 → `ValueError`; `gia_cong`
+  true → `ValueError` "đóng gói gia công ngoài — CK-A3 không chạy".
+  CLI `python -m agents.co_khi nang-luc --sku <SKU> --boxes 500,1500,3000
+  [--config PATH]` → markdown 3 kịch bản; lỗi → exit 1 kèm lý do.
+  - Boundary: `agents/co_khi.py`, `data/co_khi/nang_luc.json`,
+    `tests/test_co_khi.py`
+  - Gate: 500/1500/3000 hộp với dán nhãn 200/ca → 3/8/15 ca dán nhãn; đóng
+    tay 80/người/ca × 4 người → 2/5/10 ca; bottleneck đúng station; mọi
+    số trong markdown có nhãn "giả định"/"đo thực"; output không chứa "cam
+    kết", "đảm bảo giao", "ngày giao" (casefold); `gia_cong=true` → không
+    tính, exit 1, có lý do; boxes `0`, `-5`, `"abc"` → lỗi; chạy 2 lần cùng
+    input → byte-identical — `python -m pytest -q tests/test_co_khi.py`
+    xanh
+  - Evidence: `evidence/v95_pytest.log`
+- [x] **W95.6 CK-A4 checklist điện/mạng điểm quay live** — config
+  `data/co_khi/live.json` (`_doc`: "ĐỀ XUẤT — ngưỡng chưa đối chiếu yêu cầu
+  TikTok/Shopee/FB Live; Kỹ sư trưởng + Quản lý MXH chốt"; `upload_mbps_min`
+  6, `loss_pct_max` 1, `sustain_min` 5; `sites` `da_nang`, `tra_linh` (tên
+  ghi GIẢ ĐỊNH); `items.do_duoc` (UPS, upload, mất gói, router 4G/5G dự
+  phòng — Quản lý MXH ký) và `items.dien` (tổng tải, aptomat, tiếp địa, dây
+  nối/ổ cắm — Kỹ sư trưởng duyệt qua ảnh)). `agents/co_khi.py`
+  `render_live_checklist(cfg, site, day, upload=None, loss=None) -> str`
+  markdown TẤT ĐỊNH (không `now()`, `day` bắt buộc). Phần mạng: đủ 2 số đo →
+  ĐẠT (`upload >= min` và `loss <= max`) / KHÔNG ĐẠT (+ dòng "bật router dự
+  phòng và đo lại"); thiếu số → CHƯA ĐO. Phần điện luôn "CHỜ KỸ SƯ TRƯỞNG
+  DUYỆT ẢNH"; tổng trạng thái tool KHÔNG BAO GIỜ in "SẴN SÀNG" (chỉ người
+  thật ký trên checklist). CLI `python -m agents.co_khi checklist-live
+  --site da_nang --day 2026-11-05 [--upload 6.5 --loss 0.5] [--config PATH]
+  [--out FILE]`; site lạ / day sai / số âm → exit 2.
+  - Boundary: `agents/co_khi.py`, `data/co_khi/live.json`,
+    `tests/test_co_khi.py`
+  - Gate: 1.5 Mbps → KHÔNG ĐẠT + dòng router dự phòng; 6.5/0.5 → ĐẠT phần
+    mạng; cfg `upload_mbps_min=8` → 6.5 KHÔNG ĐẠT (ngưỡng đọc từ config);
+    biên đúng 6.0/1.0 → ĐẠT; thiếu `--loss` → CHƯA ĐO; output không chứa
+    "SẴN SÀNG" đứng riêng (word-boundary — "CHƯA SẴN SÀNG" được phép);
+    đủ cả mục `do_duoc` lẫn `dien` của config; 2 lần render → byte-identical
+    — `python -m pytest -q tests/test_co_khi.py` xanh
+  - Evidence: `evidence/v95_pytest.log`, `evidence/v95_checklist_da_nang.md`
+  - Evidence `v95_checklist_da_nang.md` sinh KHÔNG có số đo (CHƯA ĐO) — chưa có buổi đo thật, không điền số giả.
+- [x] **W95.7 Bộ eval MẪU 20 + 3 bẫy qua `agent_eval`** — `data/eval/
+  co_khi.jsonl`: dòng `_doc` "Bộ ca MẪU do dev soạn trên tài liệu MẪU
+  `data/co_khi/mau/` — CHỜ KỸ SƯ TRƯỞNG SỬA (≥5 câu tự viết từ trang viết
+  tay/bản vẽ), không phải nghiệm thu WP14"; 17 ca `fact` (`expect_file`,
+  `expect_page`), 3 ca `high_risk` (đấu dây 3 pha, tủ điện…: kỳ vọng
+  `high_risk` true + đúng file/trang + không trích đoạn), 3 ca
+  `trap_no_data` (máy/mã không có trong tài liệu, vd `SS-EQ-99` — kỳ vọng
+  NO_DATA, `sources` rỗng, không chữ số). Mỗi ca có `source: "MẪU"`.
+  `scripts/agent_eval.py`: runner `run_co_khi` gọi `agents.ck_mat.ask(text,
+  root=ROOT/"data/co_khi/mau")` (luồng mật engine — không key, không LLM,
+  không mạng); thêm vào `RUNNERS`; `model = "rules"` cho `co_khi` như
+  guardrail. `data/eval/config.json`: agent `co_khi` (`cases`,
+  `min_pass_rate` 0.9 ⇔ ≥21/23 ⇔ ≥18/20 khi 3 bẫy pass,
+  `must_pass_kinds: ["trap_no_data"]`, `prompt_files`: `agents/ck_mat.py`,
+  `data/eval/co_khi.jsonl`, 4 file `data/co_khi/mau/*.md`) — KHÔNG thêm vào
+  `required_agents` (test hiện khóa `["guardrail","chatbot"]`; bộ MẪU chưa
+  duyệt không được chặn deploy). Cập nhật docstring harness.
+  - Boundary: `data/eval/co_khi.jsonl`, `data/eval/config.json`,
+    `scripts/agent_eval.py`, `tests/test_agent_eval.py`
+  - Gate: `python scripts/agent_eval.py --agent co_khi --no-record` exit 0,
+    in `PASS n/23`, chạy 2 lần output giống hệt (tất định); test: đúng 23
+    ca, 3 `trap_no_data`, id duy nhất; mỗi ca `fact`/`high_risk` có
+    `expect_file` tồn tại trong `data/co_khi/mau/`; bẫy fail → `score`
+    `passed False` (ca giả lập); `test_config_thresholds_and_trap_kinds` xanh
+    (traps == must_pass_kinds, prompt_files tồn tại) — `python -m pytest -q
+    tests/test_agent_eval.py` xanh
+  - Evidence: `evidence/v95_eval.log` (2 lần chạy `--no-record`)
+  - Kết quả: PASS 21/23 (0.913, sát ngưỡng 0.9) — 3 bẫy + 3 high_risk pass; 2 fact FAIL thật (ck-f01 nhiệt độ buồng co, ck-f02 tốc độ băng tải: BM25 chọn trang 4 'xử lý sự cố' vì trang đó cũng nhắc 'nhiệt độ buồng co'/'tốc độ băng tải'). KHÔNG chỉnh tài liệu/câu cho vừa — để Kỹ sư trưởng sửa bộ ca; cải thiện xếp hạng = someday.
+- [x] **W95.8 Gate chung** — targeted ×3 tuần tự: `python -m pytest -q
+  tests/test_llm_gateway.py tests/test_ck_mat.py tests/test_doc_intake.py
+  tests/test_kb_internal.py tests/test_kb_acl.py tests/test_cmms.py
+  tests/test_co_khi.py tests/test_agent_eval.py tests/test_handover_docs.py
+  tests/test_connect_timeout_guard.py` (lần 2–3 chỉ chạy khi lần trước đã
+  exit — gate nặng có thể bị đẩy nền, đọc output tới khi process exit,
+  không chạy chồng); full `python -m pytest -q` đúng 1 lần (baseline 831 →
+  ≥831 + test mới, 0 fail); `ruff check .` clean; `python -m py_compile
+  agents/ck_mat.py agents/cmms.py agents/co_khi.py ingest/doc_intake.py
+  ingest/kb_internal.py pipelines/llm_gateway.py scripts/agent_eval.py`;
+  `git status --short` chỉ chứa file trong Boundary các mục trên (không file
+  lạc, `lv2-market-top.png` không stage); `git check-ignore
+  data/co_khi_mat/` khớp.
+  - Boundary: (không file mới)
+  - Gate: như trên, mọi lệnh exit 0
+  - Evidence: `evidence/v95_pytest.log` (`git add -f` — `*.log` bị ignore)
+  - Kết quả: targeted ×3 = 274 passed ×3 (2 lượt ×3: trước và sau đổi BOM literal → escape); full vòng 1 = 2 FAIL drift-guard (runbook thiếu `ck_mat`, cloud README thiếu 3 bảng) → vá .md → full vòng 2 = 932 passed (baseline 831); ruff sạch; py_compile exit 0; check-ignore khớp. Full KHÔNG chạy lại sau đổi BOM (đổi literal→escape cùng nghĩa; targeted ×3 + ruff đã chạy lại).
+
+- [x] **W95.F1 Sửa phát hiện nghiệm thu (cold-check v9.5, 1 MAJOR + 8 MINOR)**
+  - MAJOR A04 DoS `ck_mat.ask`: mã máy từng trang tính MỘT lần trong
+    `build_index` (`idx["file_codes"]`), `ask` lọc theo tập file — không
+    `EQ_RE.findall` lại trang cho mỗi chunk. Test
+    `test_machine_code_question_no_per_chunk_page_rescan` (trang đơn ≥1 MB,
+    >1000 chunk, đếm findall == 1/câu — không wall-clock). Mutation trả lại
+    lọc theo trang-mỗi-chunk: test đỏ (chạy 90 s — chính là lỗi quadratic).
+  - MINOR lọc mã theo TRANG → theo FILE (trang bất kỳ + tên file); mã không
+    vào điểm BM25/độ phủ. Test `test_machine_code_only_on_first_page_found`
+    (mã chỉ ở trang 1 / chỉ ở tên file; mã lạ / mã file khác → NO_DATA).
+    Tài liệu MẪU `may-co-mang-ss-eq-03.md` bỏ mã khỏi trang 2–4 (eval vẫn
+    21/23 — 2 ca fail ck-f01/f02 là xếp hạng BM25 chọn trang 4, có từ
+    trước sửa, không liên quan lọc mã).
+  - MINOR ×2 confidential fail-open → `kb_internal.is_confidential_line`
+    fail-closed; test thêm 10 biến thể chặn + 8 biến thể qua (false/no/0/
+    không/`Confidentiality:`/văn xuôi).
+  - MINOR test `..` → đường dẫn `ngoai/../mat/...` (so chuỗi lọt) + phía
+    `CK_MAT_DIR` có `..`; assert `code == 2`. Mutation bỏ resolve → đỏ.
+  - MINOR nhánh rủi ro phía TRANG: ca câu "vô hại" (assert câu KHÔNG khớp
+    `_HIGH_RISK_RE`) trúng `B.md` trang 3 → chỉ tham chiếu; eval `ck-hr03`
+    đổi thành câu không từ rủi ro (vẫn 23 ca). Mutation `or False` → đỏ.
+  - MINOR OCR PDF scan: 3 test monkeypatch `pypdf.PdfReader` (OCR trúng +
+    egress 0; engine thiếu → `cho_ocr` + break + thông báo; `.images` raise
+    → `cho_ocr` không crash). Mutation `except ZeroDivisionError` → đỏ.
+  - MINOR CMMS `--kiem-dinh`/`--phuong-tien-do` (store_true) → `--incomplete`
+    báo thiếu hạn (test unit + DB vòng đầy đủ máy SS-EQ-9904).
+  - MINOR CMMS `--now` chỉ với `--due`; op ghi so với `today_vn()` thật;
+    test dùng fixture `fixed_today` (monkeypatch) thay `--now`; thêm ca
+    `--done --on 2099 --now 2099` / `--add-plan --now` / `--add-machine
+    --now` / `--incomplete --now` → exit 2.
+  - Evidence: `evidence/v95_fix.log` (targeted ×3, mutation, eval, full
+    pytest, ruff)
+
+External-dependency (không treo version, KHÔNG giả lập như thật): ~300
+trang tài liệu kỹ thuật thật + POC OCR 20 trang thật (chất lượng tiếng
+Việt của `rapidocr` model `ch_PP-OCRv4` chưa xác minh; máy khác thiếu engine
+→ trang scan `cho_ocr`); firewall chặn outbound máy chạy luồng mật (Quản lý
+hạ tầng AI); Kỹ sư trưởng sửa bộ eval + tự viết ≥5 câu + chốt ngưỡng
+`min_pass_rate` + ký; sổ máy thật + biên bản kiểm kê (khớp `machines`);
+quyết "tự đóng gói hay gia công" (cờ `gia_cong`) + số đo năng lực thực;
+ngưỡng mạng livestream chốt bởi Kỹ sư trưởng + Quản lý MXH + 2 buổi live
+thử 30 phút (Đà Nẵng, Trà Linh) trước 05/11; danh mục kiểm định/phương tiện
+đo/GMP do Pháp chế xác nhận; change request TGĐ ký trước 25/10; tài khoản/
+role Kỹ sư trưởng trong `pipelines/auth.py` + kênh nhắc nội bộ (email/nhóm
+chat — CLI `--due` hiện chỉ in). Someday: chuẩn hóa sự cố từ chat tự do qua
+LLM (qua gateway, đã mask PII); A0 bản tin tuần + `approval_log` đo giờ
+duyệt; tem QR mở hồ sơ máy sau đăng nhập; app/tab Kỹ thuật riêng (LAN);
+role DB tách khách khỏi bảng CMMS; persist index mật; A5 dự đoán; A6
+nghiệm thu độc lập; nối `capacity_for` vào `pipelines.scenario` khi v7.3 gộp.
+
 Nhánh `ai-infra`: M30 (v3.0–v3.10) đóng và gộp đủ 2026-10-12 — 24 bảng,
 831 test. Đếm bảng trong test không còn hằng số (sàn `>= 24` / đọc
 schema.sql) để các version M31+ chạy song song không xung đột dòng này.
+
+v9.5-co-khi đóng 2026-10-12 (nghiệm thu đợt 1 FIX 9 → 2 vòng sửa → PASS; vòng 2:
+ghép trang trùng marker bậc 2. Coordinator chạy lại targeted 281 + ruff +
+agent_eval co_khi --no-record; `data/co_khi_mat/` gitignored). Luồng mật: gateway
+từ chối `ck_mat` trước khi đọc config, 0 kết nối mạng kể cả OCR rapidocr local
+(model Trung/Anh — đọc tiếng Việt CHƯA kiểm), BM25 thuần Python trích trang,
+chủ đề rủi ro (tủ điện, 3 pha, thiết bị áp lực) chỉ trả file+trang + 'kiểm tra với
+Kỹ sư trưởng'. Eval MẪU 21/23 (2 ca fact FAIL thật, không chỉnh mẫu cho pass).
+External-dep: ~300 trang thật + POC OCR 20 trang; firewall máy chạy luồng mật; Kỹ
+sư trưởng sửa eval + ký; sổ máy + biên bản kiểm kê; tự đóng gói hay gia công;
+ngưỡng mạng + 2 lần test live 30 phút; danh mục GMP/kiểm định từ Pháp chế.
 
 ## Checklist v3.3-connector-csv
 

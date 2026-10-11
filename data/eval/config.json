@@ -24,6 +24,20 @@
         "data/claims_whitelist.json",
         "data/eval/chatbot.jsonl"
       ]
+    },
+    "co_khi": {
+      "_doc": "v9.5 CK-A1: bộ MẪU 20 + 3 bẫy trên tài liệu MẪU data/co_khi/mau/ — CHỜ KỸ SƯ TRƯỞNG SỬA. Ngưỡng 0.9 do dev đặt (>=21/23 ⇔ >=18/20 khi 3 bẫy pass). KHÔNG nằm trong required_agents: bộ chưa duyệt không được chặn deploy.",
+      "cases": "data/eval/co_khi.jsonl",
+      "min_pass_rate": 0.9,
+      "must_pass_kinds": ["trap_no_data"],
+      "prompt_files": [
+        "agents/ck_mat.py",
+        "data/eval/co_khi.jsonl",
+        "data/co_khi/mau/ban-ve-tu-dien-xuong-mau.md",
+        "data/co_khi/mau/may-co-mang-ss-eq-03.md",
+        "data/co_khi/mau/may-dan-nhan-ss-eq-05.md",
+        "data/co_khi/mau/so-tay-dong-goi-hop-qua-mau.md"
+      ]
     }
   },
   "required_agents": ["guardrail", "chatbot"],

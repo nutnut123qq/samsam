@@ -62,13 +62,13 @@ Streamlit demo.
 | `api/` | `rag.py` — `answer()` RAG: retrieve top-8 `chunks` bằng cosine numpy → LLM + nguồn; `NO_DATA` khi score thấp |
 | `pipelines/` | `guardrail.py` (banned words + claim whitelist — check trước mọi output AI), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py` |
 | `connectors/` | `zalo.py` — webhook Zalo OA: verify signature, ACK 200 nhanh rồi reply async, dedup msg_id, token store + auto-refresh; **chỉ reply inbox** |
-| `agents/` | `report.py` (báo cáo định kỳ → file md), `garden.py` (nhật ký vùng trồng + cảnh báo) — không LLM, không tự gửi |
+| `agents/` | `report.py` (báo cáo định kỳ → file md), `garden.py` (nhật ký vùng trồng + cảnh báo), v9.5 cơ khí: `ck_mat.py` (tra cứu tài liệu kỹ thuật MẬT hoàn toàn local — BM25, không LLM/mạng), `cmms.py` (sổ máy/bảo trì/sự cố + nhắc đến hạn), `co_khi.py` (năng lực đóng gói GIẢ ĐỊNH + checklist điện/mạng điểm live) — không LLM, không tự gửi |
 | `app/` | `streamlit_app.py` — UI 7 tab (mục 4) |
 | `scripts/` | `apply_schema.py`, `data_audit.py`, `eval_qa.py`, `zalo_mock.py`, `zalo_preflight.py` |
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 24 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 27 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
@@ -96,6 +96,9 @@ Streamlit demo.
 | `job_runs` | 1 dòng/lần chạy job lịch (`job`,`started_at`,`finished_at`,`ok`,`detail` đã mask cắt 300,`host`) — bản tin sức khỏe đọc để báo job lỗi/không chạy | `pipelines.job_runs.job_run` (bọc `__main__` của `agents.report`, `ingest.lead_store`) — insert-only |
 | `documents` | Tài liệu số hóa (`sha256` PK = tên bản gốc bất biến `originals/<sha256>`,`doc_type`,`pages`,`text_source` pdf_text/ocr/none,`pii_flag`,`status` cho_ocr/pending_review/verified/rejected,`verified_by`) — KHÔNG lưu full text | `ingest.doc_intake` — insert-only theo hash; status verified/rejected chỉ do Pháp chế qua CLI `--verify/--reject --by` |
 | `document_fields` | Field pháp lý trích bằng regex (`so_giay`,`ngay_cap`,`ten_san_pham`; `confidence`,`verified` mặc định false) | `ingest.doc_intake` — không LLM; `verified=true` khi Pháp chế `--verify` |
+| `machines` | (v9.5 CK-A2) Sổ máy điện–cơ khí (`code` PK dạng `SS-EQ-NN`,`name`,`location`,`maker`,`year`, cờ+hạn kiểm định / hiệu chuẩn phương tiện đo, `ho_so_gmp`,`active`) — không xóa, thôi dùng = `active=false` | `python -m agents.cmms --add-machine` / `--retire` (sổ máy thật = external-dep) |
+| `maintenance_plans` | Kế hoạch bảo trì theo chu kỳ (`machine_code` FK,`task`,`interval_days`,`major`,`start_on`,`last_done_on/by`,`last_approved_by`) — hạn kế = `coalesce(last_done_on,start_on)+interval_days` | `agents.cmms --add-plan` / `--done <id> --on --by [--approved-by]` (việc `major`/máy GMP bắt buộc Kỹ sư trưởng duyệt); `--due` nhắc đến hạn |
+| `incidents` | Sự cố máy (`started_at`,`ended_at`,`downtime_phut`,`part`,`description` ĐÃ mask PII,`root_cause` mặc định 'chờ xác nhận',`reported_by` MÃ nhân sự) + view `downtime_log` (sự cố đã đóng, cho CK-A5) | `agents.cmms --incident` |
 
 View (v3.2): `sku_readiness` (SKU × kênh online → `CAM` / `MO_TA` /
 `TP_THUONG` / `QC_DAY_DU`; rượu luôn `CAM`, kênh ngoài `allowed_channels`

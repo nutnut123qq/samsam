@@ -395,3 +395,60 @@ def test_git_dirty_and_head_real_repo(tmp_path, monkeypatch):
     assert ae._git_dirty(inputs) is True
     monkeypatch.setattr(ae, "ROOT", tmp_path / "khong-ton-tai")
     assert ae._git_head() is None and ae._git_dirty(inputs) is None
+
+
+# --- v9.5 W95.7 bộ ca MẪU co_khi ---------------------------------------------
+def test_co_khi_cases_shape():
+    docs, cases = _rows("co_khi.jsonl")
+    assert docs and "chờ kỹ sư trưởng sửa" in docs[0]["_doc"].casefold()
+    assert len(cases) == 23
+    ids = [c["id"] for c in cases]
+    assert len(ids) == len(set(ids))
+    kinds = [c["kind"] for c in cases]
+    assert kinds.count("fact") == 17 and kinds.count("high_risk") == 3
+    assert kinds.count("trap_no_data") == 3
+    assert all(c["source"] == "MẪU" and c["text"].strip() for c in cases)
+    for c in cases:
+        if c["kind"] != "trap_no_data":
+            assert (ae.CO_KHI_ROOT / c["expect_file"]).is_file(), c["id"]
+            assert isinstance(c["expect_page"], int) and c["expect_page"] >= 1
+    cfg = ae.load_config()
+    assert "co_khi" in cfg["agents"] and "co_khi" not in cfg["required_agents"]
+    assert cfg["agents"]["co_khi"]["min_pass_rate"] == 0.9
+
+
+def test_co_khi_runner_local_deterministic_and_threshold():
+    _, cases = _rows("co_khi.jsonl")
+    acfg = ae.load_config()["agents"]["co_khi"]
+    r1 = ae.run_co_khi(cases)
+    r2 = ae.run_co_khi(cases)
+    assert [(c["id"], ok, d) for c, ok, d in r1] == \
+        [(c["id"], ok, d) for c, ok, d in r2]
+    s = ae.score(r1, acfg)
+    assert s["passed"] is True and s["trap_fail"] == []
+    assert all(ok for c, ok, _ in r1 if c["kind"] != "fact")
+
+
+def test_co_khi_trap_fail_scored_failed(monkeypatch):
+    from agents import ck_mat
+    _, cases = _rows("co_khi.jsonl")
+    trap = next(c for c in cases if c["kind"] == "trap_no_data")
+    fake = {"answer": "Máy SS-EQ-99 bảo trì mỗi 30 ngày", "high_risk": False,
+            "sources": [{"file": "x.md", "page": 1}]}
+    monkeypatch.setattr(ck_mat, "ask", lambda *a, **k: fake)
+    res = ae.run_co_khi([trap])
+    assert res[0][1] is False
+    s = ae.score(res + [(c, True, "") for c in cases if c is not trap],
+                 ae.load_config()["agents"]["co_khi"])
+    assert s["passed"] is False and s["trap_fail"] == [trap["id"]]
+
+
+def test_co_khi_cli_no_record_twice_identical():
+    cmd = [sys.executable, str(ROOT / "scripts" / "agent_eval.py"), "--agent",
+           "co_khi", "--no-record"]
+    outs = [subprocess.run(cmd, cwd=ROOT, capture_output=True, timeout=120,
+                           check=False) for _ in range(2)]
+    assert [o.returncode for o in outs] == [0, 0]
+    assert outs[0].stdout == outs[1].stdout
+    assert b"co_khi PASS" in outs[0].stdout and b"/23" in outs[0].stdout
+    assert b"model=rules" in outs[0].stdout

@@ -10,6 +10,13 @@ Agent:
     bằng `eval_qa.check_question` (không nhân đôi EXPECTED); `trap_health`
     chấm `handoff == "health"`. Thiếu OPENROUTER_API_KEY -> exit 1, KHÔNG
     ghi row (chưa chấm != PASS).
+  - co_khi (v9.5, bộ MẪU chờ Kỹ sư trưởng sửa): `agents.ck_mat.ask(text,
+    root=data/co_khi/mau)` — engine luồng MẬT local (BM25, không LLM,
+    không key, không mạng). `fact` = nguồn đầu đúng file+trang, không
+    high_risk; `high_risk` = high_risk true + đúng file+trang + answer CHỈ
+    là tham chiếu (không trích đoạn); `trap_no_data` = NO_DATA, sources
+    rỗng, không chữ số. KHÔNG nằm trong `required_agents` (chưa duyệt
+    không chặn deploy).
 
 PASS = pass_rate >= min_pass_rate VÀ mọi ca thuộc `must_pass_kinds` pass
 (kind bắt buộc mà bộ ca không có ca nào -> FAIL, fail-closed).
@@ -133,7 +140,45 @@ def run_chatbot(cases: list[dict]) -> list[tuple[dict, bool, str]]:
     return out
 
 
-RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot}
+CO_KHI_ROOT = ROOT / "data" / "co_khi" / "mau"
+
+
+def _check_co_khi(c: dict, res: dict, no_data: str) -> tuple[bool, str]:
+    src = res.get("sources") or []
+    ans = res.get("answer", "")
+    if c["kind"] == "trap_no_data":
+        ok = ans == no_data and not src and not re.search(r"\d", ans)
+        return ok, "" if ok else f"kỳ vọng NO_DATA, nguồn={src}"
+    want = {"file": c["expect_file"], "page": c["expect_page"]}
+    got = src[0] if src else None
+    if c["kind"] == "high_risk":
+        ref = (f"Xem {want['file']} trang {want['page']} — kiểm tra với"
+               " Kỹ sư trưởng")
+        ok = res.get("high_risk") is True and got == want and ans == ref
+    else:
+        ok = res.get("high_risk") is False and got == want and ans != no_data
+    return ok, "" if ok else (f"kỳ vọng {want}, nguồn đầu={got},"
+                              f" high_risk={res.get('high_risk')}")
+
+
+def run_co_khi(cases: list[dict]) -> list[tuple[dict, bool, str]]:
+    from agents import ck_mat  # lazy: local, không mạng
+
+    idx = ck_mat.build_index(CO_KHI_ROOT)
+    out = []
+    for c in cases:
+        try:
+            ok, detail = _check_co_khi(c, ck_mat.ask(c["text"], index=idx),
+                                       ck_mat.NO_DATA)
+        except Exception as e:  # noqa: BLE001 — ca lỗi = FAIL, chạy tiếp
+            ok, detail = False, f"{type(e).__name__}"
+        out.append((c, ok, detail))
+    return out
+
+
+RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot,
+           "co_khi": run_co_khi}
+RULE_AGENTS = {"guardrail", "co_khi"}  # chấm bằng luật, không model
 
 
 def score(results: list[tuple[dict, bool, str]], agent_cfg: dict) -> dict:
@@ -251,7 +296,7 @@ def main(argv: list[str] | None = None) -> int:
                   f'{detail} | text="{_short(c["text"])}"', flush=True)
     s = score(results, acfg)
     pv = prompt_version(acfg["prompt_files"])
-    model = ("rules" if args.agent == "guardrail" else
+    model = ("rules" if args.agent in RULE_AGENTS else
              os.environ.get("OR_CHAT_MODEL", DEFAULT_CHAT_MODEL))
     verdict = "PASS" if s["passed"] else "FAIL"
     print(f"[done] {args.agent} {verdict} {s['n_pass']}/{s['n_total']}"

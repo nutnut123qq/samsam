@@ -1,0 +1,111 @@
+# v9.5 W95.4 CMMS — CLI chạy thật trên DB riêng của worktree (DATABASE_URL từ w95.env, db=samsam_w95) — 2026-10-12T03:10:25+07:00
+# Máy MẪU SS-EQ-9901/9902 (không phải sổ máy thật)
+
+$ python scripts/apply_schema.py
+[done] schema applied — 27 bảng public: agent_action_log, approvals, assets, chunks, chunks_internal, claims_approved, content_drafts, document_fields, documents, eval_runs, golden_discrepancies, incidents, job_runs, leads, llm_usage, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+exit=0
+
+$ python scripts/apply_schema.py
+[done] schema applied — 27 bảng public: agent_action_log, approvals, assets, chunks, chunks_internal, claims_approved, content_drafts, document_fields, documents, eval_runs, golden_discrepancies, incidents, job_runs, leads, llm_usage, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+exit=0
+
+$ python -m agents.cmms --add-machine --code SS-EQ-9901 --name Máy co màng MẪU --location xưởng MẪU --maker MẪU --year 2019 --kiem-dinh-han 2027-01-10
+[cmms] đã thêm máy SS-EQ-9901
+exit=0
+
+$ python -m agents.cmms --add-machine --code SS-EQ-9902 --name Máy MẪU thiếu hồ sơ
+[cmms] đã thêm máy SS-EQ-9902
+exit=0
+
+$ python -m agents.cmms --add-plan --code SS-EQ-9901 --task kiểm tra dây đai MẪU --every-days 30 --major --now 2026-11-25
+[cmms] plan #1 cho SS-EQ-9901: mỗi 30 ngày
+exit=0
+
+$ python -m agents.cmms --incident --code SS-EQ-9901 --start 2026-10-12T09:00 --end 2026-10-12T10:15 --by NV01 --part dao cắt MẪU --desc kẹt màng MẪU, gọi 0901234567
+[cmms] sự cố #1 máy SS-EQ-9901: downtime 75 phút
+exit=0
+
+$ python -m agents.cmms --incident --code SS-EQ-9901 --start 2026-10-12T11:00 --by NV01
+[cmms] sự cố #2 máy SS-EQ-9901: đang mở
+exit=0
+
+$ python -m agents.cmms --due --now 2026-12-20
+[cmms] hôm nay 2026-12-20 — 2 việc đến hạn trong 7 ngày (hạn kiểm định/hiệu chuẩn ≤30 ngày)
+  [due] SS-EQ-9901 bao_tri plan #1 hạn 2026-12-25 (+5 ngày)
+  [due] SS-EQ-9901 kiem_dinh hạn 2027-01-10 (+21 ngày)
+exit=0
+
+$ python -m agents.cmms --due --incomplete
+usage: python -m agents.cmms [-h] [--add-machine] [--add-plan]
+                             [--done PLAN_ID] [--incident] [--due]
+                             [--incomplete] [--retire CODE] [--code CODE]
+                             [--name NAME] [--location LOCATION]
+                             [--maker MAKER] [--year YEAR]
+                             [--kiem-dinh-han KIEM_DINH_HAN]
+                             [--hieu-chuan-han HIEU_CHUAN_HAN] [--gmp]
+                             [--task TASK] [--every-days EVERY_DAYS] [--major]
+                             [--on ON] [--by BY] [--approved-by APPROVED_BY]
+                             [--start START] [--end END] [--part PART]
+                             [--desc DESC] [--now NOW] [--horizon HORIZON]
+python -m agents.cmms: error: chọn đúng 1 thao tác: --add-machine | --add-plan | --done | --incident | --due | --incomplete | --retire
+exit=2
+
+$ python -m agents.cmms --incomplete
+[cmms] 1 máy thiếu hồ sơ
+  SS-EQ-9902: thiếu maker, year, location
+exit=0
+
+$ python -m agents.cmms --done 1 --on 2026-10-12 --by NV02
+[cmms] KHÔNG ghi: plan #1 là việc lớn / máy hồ sơ GMP — cần --approved-by (Kỹ sư trưởng)
+exit=2
+
+$ python -m agents.cmms --done 1 --on 2026-12-31 --by NV02 --approved-by MAU-test
+usage: python -m agents.cmms [-h] [--add-machine] [--add-plan]
+                             [--done PLAN_ID] [--incident] [--due]
+                             [--incomplete] [--retire CODE] [--code CODE]
+                             [--name NAME] [--location LOCATION]
+                             [--maker MAKER] [--year YEAR]
+                             [--kiem-dinh-han KIEM_DINH_HAN]
+                             [--hieu-chuan-han HIEU_CHUAN_HAN] [--gmp]
+                             [--task TASK] [--every-days EVERY_DAYS] [--major]
+                             [--on ON] [--by BY] [--approved-by APPROVED_BY]
+                             [--start START] [--end END] [--part PART]
+                             [--desc DESC] [--now NOW] [--horizon HORIZON]
+python -m agents.cmms: error: --on 2026-12-31 ở tương lai so với hôm nay 2026-10-12
+exit=2
+
+$ select downtime_log / description (đã mask)
+Traceback (most recent call last):
+  File "<string>", line 4, in <module>
+  File "C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1258.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u1edd' in position 23: character maps to <undefined>
+downtime_log: 
+$ python -m agents.cmms --retire SS-EQ-9901
+[cmms] SS-EQ-9901: đã ngừng dùng
+exit=0
+
+$ python -m agents.cmms --retire SS-EQ-9902
+[cmms] SS-EQ-9902: đã ngừng dùng
+exit=0
+
+$ python -m agents.cmms --due --now 2026-12-20
+[cmms] hôm nay 2026-12-20 — 0 việc đến hạn trong 7 ngày (hạn kiểm định/hiệu chuẩn ≤30 ngày)
+exit=0
+
+$ grep -nci "delete from machines" agents/cmms.py
+0
+
+# --- Bổ sung (2026-10-12T03:11:08+07:00): lần trên gõ nhầm --on tương lai (đúng là bị chặn exit 2) và đoạn query in lỗi cp1258 của script evidence (không phải code sản phẩm) — chạy lại 2 bước đó:
+
+$ python -m agents.cmms --done 1 --on 2026-10-12 --by NV02 --approved-by MAU-test
+[cmms] plan #1 xong ngày 2026-10-12
+exit=0
+
+$ select downtime_log / description (đã mask) / check reported_by
+downtime_log: [('SS-EQ-9901', 75, 'chờ xác nhận')]
+description/part còn SĐT gốc: False
+plan #1: (datetime.date(2026, 10, 12), 'NV02', 'MAU-test')
+machines active: [('SS-EQ-9901', False), ('SS-EQ-9902', False)]
+reported_by có dấu cách -> CheckViolation: incidents_reported_by_check
