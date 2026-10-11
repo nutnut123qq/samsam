@@ -699,7 +699,7 @@ Quy trình mỗi version (chặt theo skill):
   staging, đối chiếu golden, cảnh báo rượu/giá lệch/TPBVSK có ads. Skip:
   file CSV thật (mapping cấu hình + fixture tổng hợp, "định dạng chưa
   xác minh").
-- [ ] **v3.4-auth-approval** — vai trò + tách quyền DB (agent không tự
+- [x] **v3.4-auth-approval** — vai trò + tách quyền DB (agent không tự
   duyệt), `approval_queue` 2 lớp, `approvals` có sha256, `agent_action_log`
   hash chain, đăng nhập Streamlit. Skip: SSO Cloudflare Access (cần DNS) →
   cổng header proxy để sẵn + đăng nhập local.

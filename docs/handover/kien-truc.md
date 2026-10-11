@@ -60,7 +60,7 @@ Streamlit demo.
 | `crawler/` | `collect` — crawl site public → `data/*.jsonl` (delay ≥1s/request) |
 | `ingest/` | `embed_store` (chunk+embed→`chunks`), `core_store` (nạp DB lõi, delete-by-source idempotent), `lead_store` (convlog→`leads`, insert-only) |
 | `api/` | `rag.py` — `answer()` RAG: retrieve top-8 `chunks` bằng cosine numpy → LLM + nguồn; `NO_DATA` khi score thấp |
-| `pipelines/` | `guardrail.py` (banned words + claim whitelist — check trước mọi output AI), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts`), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py` |
+| `pipelines/` | `guardrail.py` (banned words + claim whitelist — check trước mọi output AI), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py` |
 | `connectors/` | `zalo.py` — webhook Zalo OA: verify signature, ACK 200 nhanh rồi reply async, dedup msg_id, token store + auto-refresh; **chỉ reply inbox** |
 | `agents/` | `report.py` (báo cáo định kỳ → file md), `garden.py` (nhật ký vùng trồng + cảnh báo) — không LLM, không tự gửi |
 | `app/` | `streamlit_app.py` — UI 7 tab (mục 4) |
@@ -68,7 +68,7 @@ Streamlit demo.
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 22 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 24 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
@@ -81,11 +81,13 @@ Streamlit demo.
 | `orders` | Đơn hàng tối thiểu (`channel`,`product_id`,`qty`,`total_vnd`,`status`) — không PII | `sample_orders.jsonl` (MẪU) + nhập tay |
 | `assets` | Tài sản truyền thông (`kind` image/video/article/doc,`url`,`product_id`) | `core_store` từ products.images + jsonl |
 | `leads` | Lead từ convlog (`dedup_key` unique,`channel`,`user_hash`,`question` đã mask,`intent`,`status`) | `ingest.lead_store` — insert-only, không xóa |
-| `content_drafts` | Hàng duyệt + lịch đăng (`brief`,`channel`,`text`,`guardrail` jsonb snapshot,`status`,`reviewer`,`scheduled_date`) | `pipelines.store` / Studio — update theo id |
+| `content_drafts` | Hàng duyệt + lịch đăng (`brief`,`channel`,`text`,`guardrail` jsonb snapshot,`status`,`reviewer`,`scheduled_date`, `created_by` người/agent tạo — v3.4, null = draft cũ không duyệt được) | `pipelines.store` / Studio — INSERT pending; đổi trạng thái CHỈ qua function `approve_draft`/`reject_draft`/`schedule_draft` |
 | `llm_usage` | 1 dòng/lời gọi LLM-embedding (`ts`,`agent_id`,`model`,`tokens_in/out`,`cost_usd` ước tính,`ok`,`error` đã mask) — không lưu prompt | `pipelines.llm_gateway` — insert-only; trần chi phí tháng theo agent đọc từ đây |
 | `sku_master` | Golden SKU (v3.2) — nguồn sự thật DUY NHẤT listing/pháp lý: `category` tpbvsk/food/alcohol, `pack_spec`, số+ngày giấy tiếp nhận, `xnqc_status`, `self_declaration_ok`, `allowed_channels`, `version` | `ingest.golden_store` từ `data/golden_skus.json` — upsert, giữ row `manual`; Pháp chế xác nhận pháp lý |
 | `sku_map` | Map `products.id` (crawl) ↔ `sku_key` golden — KHÔNG FK products; `approved_by` | `golden_store` (đề xuất agent) — Sản xuất duyệt |
 | `price_list` | Giá theo SKU × kênh × `kind` floor/list/promo, `valid_from/valid_to`, `approved_by` — **APPEND-ONLY** (trigger chặn UPDATE giá/DELETE/TRUNCATE và INSERT sẵn-duyệt/sẵn-đóng; đổi giá = đóng dòng cũ + dòng mới chờ duyệt) | `golden_store` nạp `approved_by=null`; GĐ bán hàng duyệt bằng CLI |
+| `approvals` | (v3.4) Mỗi quyết định duyệt/từ chối 1 dòng: `object_type`,`object_id`,`content_sha256` (sha256 text ĐÚNG lúc duyệt),`decision`,`approved_by`,`approved_at`,`db_role` — **APPEND-ONLY** (trigger chặn UPDATE/DELETE/TRUNCATE) | Chỉ function duyệt (SECURITY DEFINER) ghi; `verify_publish` so bản phát hành với sha đã duyệt |
+| `agent_action_log` | (v3.4) Nhật ký hành động agent/người (`actor`,`action`,`object_*`,`detail` jsonb,`db_role`) + **hash chain** `prev_hash`→`row_hash` — APPEND-ONLY; trigger INSERT ép id/ts/db_role/hash | `save_draft` (`draft_create`) + function duyệt/xếp lịch; kiểm: `python -m pipelines.store --verify-log` |
 | `golden_discrepancies` | Phiếu lệch golden ↔ crawl (`kind`, `detail` giá trị theo từng nguồn, `status` pending/resolved/dismissed) — agent không chọn giá | `golden_store` dựng lại mỗi lần nạp; người xử lý cập nhật `status` |
 | `market_snapshots` | 1 dòng/file xuất Seller Center đã nạp (v3.3): `channel` shopee/tiktok, `export_kind` listing/order/ads, `file_name` (basename), `file_sha256` UNIQUE (nạp lại cùng file = bỏ qua), `row_count` | `ingest.market_csv --file` — insert-only |
 | `market_rows` | Dòng staging từ file sàn: `item_id`,`seller_sku`,`sku_key` (map golden, null = không map),`title`,`price_vnd`,`stock`,`status`,`ads_spend_vnd`,`qty`,`order_id_hash` (sha256, KHÔNG mã đơn gốc), `raw` jsonb CHỈ field allowlist — không cột tên/SĐT/địa chỉ người mua | `market_csv` — cột PII bỏ ngay khi đọc file |
@@ -106,7 +108,9 @@ Quy ước chung: mọi bảng lõi có cột `source` = file/nguồn nạp; loa
 `core_store` chỉ delete+insert rows thuộc nguồn của mình → row nhập tay
 an toàn. `leads`/`content_drafts` KHÔNG delete-by-source (dữ liệu người
 tạo / fact suy ra một lần). Apply: `python scripts/apply_schema.py`
-(idempotent, toàn `create ... if not exists`).
+(idempotent, toàn `create ... if not exists` + `create or replace function`;
+ngoại lệ duy nhất `alter table content_drafts add column if not exists
+created_by`). `--roles` chạy thêm `docs/roles.sql` (mục 6b).
 
 ## 4. Giao diện — Streamlit `app/streamlit_app.py` (7 tab)
 
@@ -118,7 +122,10 @@ tạo / fact suy ra một lần). Apply: `python scripts/apply_schema.py`
 | 4 | Leads | Dashboard convlog (file-based, hiện cả khi DB chết) + bảng `leads` — read-only |
 | 5 | Báo cáo | Sinh/xem báo cáo `data/reports/` — BẢN NHÁP người gửi |
 | 6 | Nhật ký vườn | Form ghi `plot_logs` + panel "Cần chú ý" + nhật ký gần nhất |
-| 7 | Duyệt & Lịch | Hàng duyệt `content_drafts` (Duyệt disabled khi vi phạm) + xếp lịch + calendar 14 ngày |
+| 7 | Duyệt & Lịch | Hàng duyệt `content_drafts` — người duyệt = người đăng nhập (không gõ tên); Duyệt disabled khi vi phạm / vai trò không được duyệt / chính mình tạo draft; xếp lịch theo vai trò + calendar 14 ngày |
+
+Tab hiện theo vai trò đăng nhập (mục 6b) — tab không được phép KHÔNG
+được tạo (code tab đó không chạy, không query DB).
 
 Mọi tab có DB đều degrade nhẹ: DB chết → `st.info` "Chưa nạp", không
 crash (mọi connect qua `ingest.lead_store.connect`, `connect_timeout=3`).
@@ -137,12 +144,50 @@ idempotent theo kỳ (cùng kỳ → cùng tên file ghi đè).
 
 | Điểm | Hệ thống làm | NGƯỜI làm |
 |---|---|---|
-| Duyệt content | Guardrail check lúc sinh; `set_status` chặn approve khi vi phạm (cả Python lẫn SQL) | Duyệt/từ chối từng bài, ghi tên + note |
+| Duyệt content | Guardrail check lúc sinh + chạy LẠI trên text trước khi duyệt; chuyển trạng thái chỉ qua function DB `approve_draft` (SECURITY DEFINER: guardrail ok, có người tạo, **người duyệt ≠ người tạo**); mỗi quyết định ghi `approvals` kèm sha256 nội dung; `schedule_draft` từ chối nếu text đã sửa sau duyệt; mọi bước ghi `agent_action_log` hash chain | Duyệt/từ chối từng bài (identity đăng nhập) + note |
 | Đăng bài | `scheduled_date` + calendar là kế hoạch | Copy text đã duyệt, đăng tay lên kênh |
 | Báo cáo lãnh đạo | Sinh file markdown BẢN NHÁP | Đọc/duyệt/sửa rồi gửi Zalo/email tay |
 | Nhật ký vườn | Chuẩn hóa + cảnh báo bất thường | Ghi nhật ký tay; báo quản lý khi có cảnh báo |
 | Zalo OA | Chỉ TRẢ LỜI tin nhắn đến (reply), không chủ động nhắn, không đăng OA | — |
 | Bổ sung KB/claim | `core_store`/`embed_store` nạp lại khi được chạy | Soạn file nguồn + chạy lệnh nạp |
+
+## 6b. Phân quyền & đăng nhập (v3.4)
+
+**Role DB** (`docs/roles.sql`, NOLOGIN — login user thật do hạ tầng tạo
+`in role ...`, external-dep):
+
+| Role | Được | Không được |
+|---|---|---|
+| `agent_writer` (agent AI) | SELECT `content_drafts`; INSERT draft 6 cột (`brief`,`channel`,`text`,`guardrail`,`source`,`created_by` → luôn `pending`); INSERT log 5 cột | UPDATE/DELETE mọi bảng (không tự duyệt được — `permission denied`), `approvals`, bảng khác, function duyệt |
+| `app_human` (người: Streamlit/CLI) | Kế thừa `agent_writer` + SELECT `approvals`/`agent_action_log` + EXECUTE `approve_draft`, `reject_draft`, `schedule_draft`, `verify_publish`, `verify_action_log` | UPDATE/DELETE trực tiếp |
+
+Giới hạn pilot: máy local vẫn chạy bằng DSN owner — chặn quyền chỉ có
+hiệu lực khi app/agent dùng DSN theo role. CHƯA chuyển DSN Streamlit/agent
+sang role: `roles.sql` chỉ cấp 3 bảng trên → dưới role, Streamlit mất
+`chunks`/`leads`/`plot_logs`... (tab Chat/Leads/Báo cáo/Nhật ký vườn gãy)
+và agent mất `llm_usage` (trần chi phí LLM tắt câm vì `_month_spend` lỗi =
+cho qua). DSN role hiện chỉ dùng cho tiến trình duyệt/ghi draft riêng (CLI
+`pipelines.store`); grant đủ bảng theo plan §5 = external-dep/someday
+(SOP mục 9). `--by` CLI vẫn free-text (tin người giữ DSN `app_human`);
+xóa dòng CUỐI log không phát hiện được bằng chuỗi thuần (cần neo ngoài).
+
+**Đăng nhập Streamlit** (`pipelines/auth.py`, biến `AUTH_MODE`) — fail-closed:
+trống/lạ = chặn; `proxy` = email từ header
+`Cf-Access-Authenticated-User-Email` (Cloudflare Access — chỉ an toàn khi
+bind 127.0.0.1 sau proxy); `local` = user/mật khẩu scrypt trong
+`data/users.json` (gitignored), sai 5 lần khóa 5 phút; `dev` = không đăng
+nhập, cấm khi `DEPLOY=1`.
+
+6 vai trò × tab (ĐỀ XUẤT — TGĐ chốt):
+
+| Vai trò | Tab | Duyệt | Xếp lịch |
+|---|---|---|---|
+| `tgd` | cả 7 tab | có | có |
+| `phap_che` | Chat Sâm Sâm, Content Studio, Chưa trả lời, Báo cáo, Duyệt & Lịch | có | — |
+| `gd_ban_hang` | Chat Sâm Sâm, Chưa trả lời, Leads, Báo cáo | — | — |
+| `gd_marketing` | Chat Sâm Sâm, Content Studio, Leads, Báo cáo, Duyệt & Lịch | có | có |
+| `mxh` | Chat Sâm Sâm, Content Studio, Chưa trả lời, Leads, Duyệt & Lịch | — | có |
+| `ha_tang` | Chat Sâm Sâm, Chưa trả lời, Báo cáo, Nhật ký vườn | — | — |
 
 ## 7. Guardrail — 2 lớp (áp cho MỌI text AI sinh)
 

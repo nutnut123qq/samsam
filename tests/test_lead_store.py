@@ -277,9 +277,11 @@ def test_schema_sql_has_leads_table():
     assert "dedup_key text not null unique" in columns
     assert "status text not null default 'new'" in columns
     assert len(re.findall(
-        r"^create table if not exists", lower, re.MULTILINE)) >= 22
-    assert not re.search(r"\bdrop\s+table\b", lower)
-    # v3.9: ALTER chỉ được dạng THÊM cột idempotent (không đổi kiểu/xóa cột).
-    for m in re.finditer(r"\balter\s+table\b[^;]*;", lower):
-        assert re.fullmatch(r"alter\s+table\s+\w+\s+add\s+column\s+if\s+not"
-                            r"\s+exists\s+[^;,]+;", m.group(0)), m.group(0)
+        r"^create table if not exists", lower, re.MULTILINE)) >= 24
+    # v3.4: nới HẸP — chỉ `alter table <t> add column if not exists
+    # <c> ...;` (1 action) được phép; mọi alter/drop table khác bị bắt.
+    rest = re.sub(r"\balter\s+table\s+\w+\s+add\s+column\s+if\s+not"
+                  r"\s+exists\s+\w+[^;,]*;", "", lower)
+    assert not re.search(r"\b(alter|drop)\s+table\b", rest)
+    assert re.search(r"\b(alter|drop)\s+table\b",
+                     "alter table x drop column y;")  # guard còn sống

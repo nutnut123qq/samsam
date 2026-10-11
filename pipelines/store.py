@@ -7,11 +7,27 @@ Contract:
   - Status one-way `pending -> approved|rejected`: mọi chuyển khác
     (sai id, đã duyệt/từ chối trước đó) → `set_status` trả
     (False, warn) KHÔNG raise — UI/CLI hiện warn thân thiện.
-  - approve CHỈ khi `guardrail->>'ok' = true` (double-gate SOW):
-    bài vi phạm phải reject/regen — không có duyệt-kèm-ghi-nhận.
-    Check ở Python (warn rõ) VÀ trong WHERE của UPDATE (atomic,
-    chống race 2 người duyệt cùng lúc).
-  - `schedule` chỉ trên draft approved + date không quá khứ.
+  - v3.4: function DB là NGUỒN SỰ THẬT cho mọi chuyển trạng thái —
+    `approve_draft` / `reject_draft` / `schedule_draft` (SECURITY
+    DEFINER, docs/schema.sql). Module này KHÔNG chạy UPDATE lên bảng draft
+    trực tiếp; role `agent_writer` (agent) không có quyền UPDATE nên
+    không tự duyệt được, role `app_human` (người) chỉ đi qua function.
+  - approve CHỈ khi guardrail ok (double-gate SOW): bài vi phạm phải
+    reject/regen — không có duyệt-kèm-ghi-nhận. Python chạy LẠI
+    `pipelines.guardrail.check(text từ DB)` trước khi gọi function
+    (snapshot jsonb do agent ghi có thể giả `ok:true`); function kiểm
+    lại snapshot + `created_by` có + người duyệt ≠ người tạo (atomic,
+    `for update` — race 2 người duyệt thì người sau thua).
+  - Mỗi quyết định ghi `approvals` kèm sha256 text lúc duyệt;
+    `verify_publish(conn, id, text)` so bản phát hành với bản đã duyệt.
+  - `save_draft` bắt buộc `created_by` + ghi 1 dòng `agent_action_log`
+    (`draft_create`) cùng transaction. `--verify-log` kiểm hash chain.
+  - `schedule` chỉ trên draft approved + ngày ≥ hôm nay giờ VN + text
+    còn khớp sha bản đã duyệt; bắt buộc người xếp lịch (`--by`).
+  - Giới hạn (pilot): `--by`/`reviewer` vẫn là free-text — DB tin
+    người giữ DSN `app_human`; gắn login DB riêng từng người là
+    someday. Gọi thẳng `approve_draft` bằng DSN `app_human` (bỏ qua
+    module này) thì chỉ còn kiểm snapshot guardrail, không re-check.
   - Mọi ghi-tác-vụ: `conn.transaction()` + `conn.commit()` TƯỜNG
     MINH — trên conn chia sẻ đã-trong-tx (UI SELECT trước) block
     transaction() chỉ là savepoint, thiếu commit() → INSERT/UPDATE
@@ -27,11 +43,13 @@ Chạy:
   python -m pipelines.store --pending
   python -m pipelines.store --approve ID --by "Tên" [--note "..."]
   python -m pipelines.store --reject  ID --by "Tên" [--note "..."]
-  python -m pipelines.store --schedule ID YYYY-MM-DD
+  python -m pipelines.store --schedule ID YYYY-MM-DD --by "Tên"
   python -m pipelines.store --calendar [--days 14]
+  python -m pipelines.store --verify-log
 """
 
 import argparse
+import hashlib
 import sys
 from contextlib import contextmanager, suppress
 from datetime import date, datetime, timedelta, timezone
@@ -40,6 +58,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from ingest.lead_store import connect
+from pipelines.guardrail import check as guardrail_check
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in
 # tiếng Việt có dấu. Ép UTF-8 (no-op nếu đã UTF-8).
@@ -53,32 +72,66 @@ SOURCE_STUDIO = "manual:studio"
 SOURCE_CLI = "cli"
 DEFAULT_LIMIT = 50
 DEFAULT_DAYS = 14
+OBJECT_TYPE = "content_draft"
+# Việt Nam không có DST — offset cố định, không cần tzdata.
+VN_TZ = timezone(timedelta(hours=7))
 
 COLS = ("id", "created_at", "brief", "channel", "text", "guardrail",
         "status", "reviewer", "reviewed_at", "review_note",
-        "scheduled_date", "source")
+        "scheduled_date", "source", "created_by")
 
 _INSERT_SQL = (
-    "insert into content_drafts (brief, channel, text, guardrail, source) "
-    "values (%s, %s, %s, %s, %s) returning id")
+    "insert into content_drafts (brief, channel, text, guardrail, source, "
+    "created_by) values (%s, %s, %s, %s, %s, %s) returning id")
+
+_LOG_SQL = (
+    "insert into agent_action_log (actor, action, object_type, object_id, "
+    "detail) values (%s, %s, %s, %s, %s)")
+
+
+def content_sha256(text: str) -> str:
+    """sha256 hex byte-exact UTF-8, không normalize — khớp PG
+    `encode(sha256(convert_to(t, 'UTF8')), 'hex')`."""
+    return hashlib.sha256((text or "").encode("utf-8")).hexdigest()
+
+
+def _db_msg(e: Exception) -> str:
+    """Thông điệp lỗi function DB (raise tiếng Việt) — không kèm
+    context/SQL."""
+    diag = getattr(e, "diag", None)
+    return (getattr(diag, "message_primary", None) or str(e)).strip()
 
 _SELECT_SQL = f"select {', '.join(COLS)} from content_drafts"
 
 
 def save_draft(conn, brief: str, channel: str, text: str,
-               guardrail: dict, source: str = SOURCE_STUDIO):
+               guardrail: dict, source: str = SOURCE_STUDIO, *,
+               created_by: str | None = None):
     """INSERT 1 draft → id. `guardrail` = snapshot kết quả
     `pipelines.guardrail.check()` lúc sinh (jsonb). Channel lạ vẫn
     ghi nguyên văn (draft của người — DB không chặn vocab, queue
-    hiển thị đúng thứ đã lưu). commit() tường minh — xem docstring
-    module."""
+    hiển thị đúng thứ đã lưu). `created_by` BẮT BUỘC (rỗng →
+    ValueError trước khi chạm DB) — không có người tạo thì không kiểm
+    được "người duyệt ≠ người tạo". Ghi kèm 1 dòng log `draft_create`
+    cùng transaction. commit() tường minh — xem docstring module."""
+    by = (created_by or "").strip()
+    if not by:
+        raise ValueError("save_draft: thiếu created_by (người/agent tạo)")
+    text = text or ""
     with conn.transaction():
         row = conn.execute(
             _INSERT_SQL,
-            ((brief or "").strip(), (channel or "").strip(), text or "",
-             Jsonb(guardrail or {}), source)).fetchone()
+            ((brief or "").strip(), (channel or "").strip(), text,
+             Jsonb(guardrail or {}), source, by)).fetchone()
+        did = row[0] if row else None
+        if did is not None:
+            conn.execute(_LOG_SQL, (
+                by, "draft_create", OBJECT_TYPE, str(did),
+                Jsonb({"channel": (channel or "").strip(),
+                       "source": source,
+                       "content_sha256": content_sha256(text)})))
     conn.commit()
-    return row[0] if row else None
+    return did
 
 
 def _rows(cur) -> list[dict]:
@@ -111,15 +164,22 @@ def _get(conn, draft_id) -> dict | None:
     return dict(zip(COLS, row)) if row else None
 
 
+def _same_person(a, b) -> bool:
+    """So khớp người như function DB: lower(btrim(.))."""
+    return (a or "").strip().lower() == (b or "").strip().lower()
+
+
 def set_status(conn, draft_id, status: str, reviewer: str,
                note: str | None = None) -> tuple[bool, str | None]:
     """pending -> approved|rejected → (True, None) | (False, warn).
 
     Warn không raise: id không tồn tại / id không phải số / draft
-    không còn pending / approve khi guardrail chưa ok / thiếu tên
-    người duyệt (bắt buộc cho audit) / status đích lạ. UPDATE có
-    `where status='pending'` (+ `guardrail->>'ok'='true'` khi
-    approve) — race 2 người duyệt cùng lúc thì người sau thua."""
+    không còn pending / approve khi guardrail chưa ok (snapshot HOẶC
+    chạy lại check() trên text từ DB) / thiếu người tạo / người duyệt
+    = người tạo / thiếu tên người duyệt / status đích lạ / function DB
+    từ chối (thông điệp của function). Chuyển trạng thái CHỈ qua
+    `approve_draft` / `reject_draft` (DB là nguồn sự thật; pre-check
+    Python chỉ để warn thân thiện)."""
     status = (status or "").strip()
     if status not in ("approved", "rejected"):
         return False, (f"status đích '{status}' không hợp lệ — chỉ "
@@ -136,31 +196,35 @@ def set_status(conn, draft_id, status: str, reviewer: str,
     if cur["status"] != "pending":
         return False, (f"draft #{did} đã ở trạng thái "
                        f"'{cur['status']}' — chỉ duyệt từ pending")
-    g = cur["guardrail"]
-    g_ok = isinstance(g, dict) and g.get("ok") is True
-    if status == "approved" and not g_ok:
-        return False, (f"draft #{did} vi phạm guardrail (ok != true) "
-                       f"— phải reject hoặc viết lại; không có "
-                       f"duyệt-kèm-ghi-nhận")
-    # Guardrail-check LẶP LẠI trong WHERE (atomic): lỡ guardrail jsonb
-    # bị sửa giữa lúc đọc và ghi thì approve vẫn không lọt.
-    sql = ("update content_drafts set status = %s, reviewer = %s, "
-           "review_note = %s, reviewed_at = now() "
-           "where id = %s and status = 'pending'")
     if status == "approved":
-        sql += " and guardrail->>'ok' = 'true'"
-    sql += " returning id"
+        g = cur["guardrail"]
+        if not (isinstance(g, dict) and g.get("ok") is True):
+            return False, (f"draft #{did} vi phạm guardrail (ok != true) "
+                           f"— phải reject hoặc viết lại; không có "
+                           f"duyệt-kèm-ghi-nhận")
+        # Snapshot jsonb do agent ghi — có thể giả ok:true. Chạy LẠI
+        # guardrail trên text thật trong DB trước khi gọi function.
+        recheck = guardrail_check(cur["text"] or "")
+        if not recheck.get("ok"):
+            return False, (f"draft #{did} vi phạm guardrail khi kiểm lại "
+                           f"text ({len(recheck.get('violations', []))} "
+                           f"vi phạm) — snapshot lúc lưu không khớp; "
+                           f"phải reject hoặc viết lại")
+        if not (cur.get("created_by") or "").strip():
+            return False, (f"draft #{did} không có người tạo (draft trước "
+                           f"v3.4) — không duyệt được, reject rồi tạo lại")
+        if _same_person(cur.get("created_by"), reviewer):
+            return False, (f"bạn là người tạo draft #{did} — cần người "
+                           f"khác duyệt")
+        sql = "select approve_draft(%s, %s, %s)"
+    else:
+        sql = "select reject_draft(%s, %s, %s)"
     try:
         with conn.transaction():
-            row = conn.execute(
-                sql, (status, reviewer.strip(), (note or None), did)
-            ).fetchone()
+            conn.execute(sql, (did, reviewer.strip(), (note or None)))
         conn.commit()
     except psycopg.Error as e:
-        return False, f"lỗi DB khi cập nhật draft #{did}: {e}"
-    if not row:
-        return False, (f"draft #{did} vừa đổi trạng thái — tải lại "
-                       f"danh sách rồi thử lại")
+        return False, f"draft #{did}: {_db_msg(e)}"
     return True, None
 
 
@@ -176,16 +240,24 @@ def _coerce_date(v) -> date | None:
     return None
 
 
-def schedule(conn, draft_id, day, today: date | None = None
-             ) -> tuple[bool, str | None]:
+def _vn_today() -> date:
+    return datetime.now(VN_TZ).date()
+
+
+def schedule(conn, draft_id, day, by: str | None = None,
+             today: date | None = None) -> tuple[bool, str | None]:
     """Xếp lịch đăng → (True, None) | (False, warn). Chỉ draft
-    approved; `day` (date/ISO-str) không được quá khứ. `today`
-    inject được cho test."""
+    approved; `day` (date/ISO-str) không được quá khứ (giờ VN — function
+    DB kiểm lại); `by` = người xếp lịch, bắt buộc. Đi qua
+    `schedule_draft` (kiểm thêm text còn khớp sha bản đã duyệt).
+    `today` inject được cho test."""
+    if not (by or "").strip():
+        return False, "thiếu tên người xếp lịch (--by) — bắt buộc cho audit"
     d = _coerce_date(day)
     if d is None:
         return False, (f"ngày '{day}' không hợp lệ — định dạng "
                        f"YYYY-MM-DD")
-    today = today or datetime.now(timezone.utc).date()
+    today = today or _vn_today()
     if d < today:
         return False, (f"ngày {d:%Y-%m-%d} đã qua — chỉ xếp lịch "
                        f"từ hôm nay trở đi")
@@ -201,16 +273,34 @@ def schedule(conn, draft_id, day, today: date | None = None
                        f"xếp lịch bài đã approved")
     try:
         with conn.transaction():
-            row = conn.execute(
-                "update content_drafts set scheduled_date = %s "
-                "where id = %s and status = 'approved' returning id",
-                (d, did)).fetchone()
+            conn.execute("select schedule_draft(%s, %s, %s)",
+                         (did, d, by.strip()))
         conn.commit()
     except psycopg.Error as e:
-        return False, f"lỗi DB khi xếp lịch draft #{did}: {e}"
-    if not row:
-        return False, f"draft #{did} vừa đổi trạng thái — thử lại"
+        return False, f"draft #{did}: {_db_msg(e)}"
     return True, None
+
+
+def verify_publish(conn, draft_id, text: str) -> bool:
+    """Bản sắp đăng có đúng bản đã duyệt? → True chỉ khi quyết định mới
+    nhất của draft là approved VÀ sha256(text) khớp. Lỗi DB/id xấu →
+    False (fail-closed)."""
+    try:
+        did = int(draft_id)
+        row = conn.execute("select verify_publish(%s, %s, %s)",
+                           (OBJECT_TYPE, str(did), text)).fetchone()
+    except (TypeError, ValueError, psycopg.Error):
+        return False
+    return bool(row and row[0] is True)
+
+
+def verify_log(conn) -> tuple[int, list[tuple]]:
+    """Kiểm hash chain `agent_action_log` → (số dòng, [(id, problem)]).
+    List rỗng = nguyên vẹn (trừ xóa dòng CUỐI — cần neo ngoài)."""
+    n = conn.execute("select count(*) from agent_action_log").fetchone()[0]
+    probs = [tuple(r) for r in conn.execute(
+        "select id, problem from verify_action_log()").fetchall()]
+    return n, probs
 
 
 def calendar(conn, days: int = DEFAULT_DAYS,
@@ -279,8 +369,9 @@ def main(argv=None) -> int:
     ap.add_argument("--reject", type=int, metavar="ID",
                     help="từ chối draft")
     ap.add_argument("--by", dest="reviewer",
-                    help="tên người duyệt — bắt buộc với "
-                         "--approve/--reject")
+                    help="tên người duyệt/xếp lịch — bắt buộc với "
+                         "--approve/--reject/--schedule (free-text: DB "
+                         "tin người giữ DSN app_human)")
     ap.add_argument("--note", default=None, help="ghi chú duyệt")
     ap.add_argument("--schedule", nargs=2,
                     metavar=("ID", "YYYY-MM-DD"),
@@ -289,19 +380,24 @@ def main(argv=None) -> int:
                     help="xem lịch đăng sắp tới")
     ap.add_argument("--days", type=int, default=DEFAULT_DAYS,
                     help=f"số ngày lịch (mặc định {DEFAULT_DAYS})")
+    ap.add_argument("--verify-log", action="store_true",
+                    help="kiểm hash chain agent_action_log (exit 1 nếu "
+                         "phát hiện sửa/xóa)")
     args = ap.parse_args(argv)
 
     n_ops = (sum(w is not None
                  for w in (args.approve, args.reject, args.schedule))
-             + args.pending + args.calendar)
+             + args.pending + args.calendar + args.verify_log)
     if n_ops == 0:
         ap.error("cần 1 thao tác: --pending | --calendar | "
-                 "--approve | --reject | --schedule")
+                 "--approve | --reject | --schedule | --verify-log")
     if n_ops > 1:
         ap.error("chỉ 1 thao tác mỗi lần — tách lệnh")
     if (args.approve is not None or args.reject is not None) \
             and not (args.reviewer or "").strip():
         ap.error("--approve/--reject cần --by <tên người duyệt>")
+    if args.schedule is not None and not (args.reviewer or "").strip():
+        ap.error("--schedule cần --by <tên người xếp lịch>")
 
     with _conn_or_none() as (conn, err):
         # ---- ĐỌC: DB down → "chưa nạp" exit 0 (precedent report) ----
@@ -338,6 +434,26 @@ def main(argv=None) -> int:
                     _print_draft_line(d)
             return 0
 
+        if args.verify_log:
+            # Kiểm toàn vẹn: DB down → exit 2 (không kết luận được).
+            if conn is None:
+                print(f"[error] {err} — không kiểm được", file=sys.stderr)
+                return 2
+            try:
+                n, probs = verify_log(conn)
+            except psycopg.Error as e:
+                print(f"[error] lỗi DB khi kiểm log: {_db_msg(e)}",
+                      file=sys.stderr)
+                return 2
+            if not probs:
+                print(f"[ok] chuỗi nguyên vẹn ({n} dòng)")
+                return 0
+            print(f"[FAIL] hash chain agent_action_log hỏng — "
+                  f"{len(probs)} vấn đề / {n} dòng:")
+            for lid, prob in probs:
+                print(f"  id={lid} problem={prob}")
+            return 1
+
         # ---- GHI: DB down → exit 2 (precedent garden) ----
         if conn is None:
             print(f"[error] {err} — không ghi được", file=sys.stderr)
@@ -357,12 +473,13 @@ def main(argv=None) -> int:
             return 0
         # --schedule ID YYYY-MM-DD
         did, day_s = args.schedule
-        ok, warn = schedule(conn, did, day_s)
+        ok, warn = schedule(conn, did, day_s, args.reviewer)
         if not ok:
             print(f"[warn] {warn}", file=sys.stderr)
             return 2
-        print(f"[done] draft #{did} xếp lịch {day_s} — người đăng "
-              f"tay (hệ thống không tự đăng)")
+        print(f"[done] draft #{did} xếp lịch {day_s} (người xếp: "
+              f"{args.reviewer.strip()}) — người đăng tay (hệ thống "
+              f"không tự đăng)")
         return 0
 
 

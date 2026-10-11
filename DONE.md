@@ -642,6 +642,365 @@ Someday: số bịa viết có dấu chấm/cách ("0402.021.985") chưa bắt;
 `--remove` tài liệu nội bộ; câu hỏi rượu đang rơi vào queue "Chưa trả
 lời".
 
+## Checklist v3.4-auth-approval
+
+Khán giả/mục đích: nhánh `ai-infra` (M30, worktree `D:\code\samsam-v34`)
+— WP03 "khung điều phối, duyệt và log dùng chung" + phần đăng nhập của
+WP02 (integ_architecture.md hàng "Hàng duyệt"; plan_data_platform.md §5
+ma trận quyền DB + Mốc B "Streamlit có đăng nhập 6 vai trò"). Lỗ hiện có
+(reviewer v2.x bắt): `pipelines/store.py::set_status` nhận `reviewer`
+free-text (UI `st.text_input("Người duyệt *")`, CLI `--by`); mọi agent/app
+dùng chung `DATABASE_URL` (owner/superuser local) nên `update
+content_drafts set status='approved'` thẳng được — tự duyệt; không có bản
+ghi "đã duyệt ĐÚNG nội dung nào"; không log hành động agent; Streamlit
+không đăng nhập (ai mở URL cũng duyệt được); `content_drafts` không có cột
+người tạo. Sau version: (a) DB chặn tự duyệt bằng QUYỀN chứ không bằng quy
+ước — role `agent_writer` chỉ INSERT draft pending + SELECT; mọi chuyển
+trạng thái chỉ qua function SECURITY DEFINER kiểm guardrail ok + người
+duyệt ≠ người tạo; (b) mỗi quyết định ghi `approvals` kèm sha256 nội dung,
+`verify_publish` so bản phát hành với bản đã duyệt; (c) `agent_action_log`
+append-only có hash chain, sửa/xóa giữa chuỗi bị phát hiện; (d) Streamlit
+fail-closed: không cấu hình `AUTH_MODE` = không vào được; identity lấy từ
+header proxy hoặc đăng nhập local scrypt có khóa tạm; 6 vai trò map tab.
+
+Quy ước: ponytail — stdlib (`hashlib.scrypt`, `hmac.compare_digest`,
+`secrets`, `getpass`) + `psycopg` sẵn có, KHÔNG dep mới, KHÔNG cài
+streamlit global (gotcha v1.9). Schema chỉ THÊM: 2 bảng mới `create table
+if not exists` + `create or replace function/trigger` trong
+`docs/schema.sql`; ngoại lệ DUY NHẤT `alter table content_drafts add column
+if not exists created_by text` (không có cột người tạo thì không kiểm được
+"duyệt ≠ tạo"); drift-guard `\b(alter|drop)\s+table\b` ở
+`tests/test_store.py` + `tests/test_lead_store.py` nới HẸP: chỉ cho dạng
+`alter table <tên> add column if not exists`, vẫn cấm `drop table` và mọi
+`alter table` khác (drop/rename/alter column) — test thêm chuỗi cấm mẫu vẫn
+bị bắt. Role/grant ở file RIÊNG `docs/roles.sql` (idempotent: `do $$` +
+`if not exists (select from pg_roles ...)` → `create role ... nologin`;
+`revoke` rồi `grant` lại; `usage on schema` cấp trên `current_schema()`
+qua `format()` để chạy được trong temp schema của test). Role là NOLOGIN
+(group role) — login user + mật khẩu do hạ tầng tạo ngoài git (`create
+role <x> login password ... in role app_human`) → external-dep. Role là
+cluster-global (cluster local dùng chung với worktree khác): chỉ tạo đúng
+2 role `agent_writer`, `app_human`, không đụng/drop role khác. SECURITY
+DEFINER: `set search_path from current` với search_path lúc tạo =
+`<schema>, pg_temp` (pg_temp CUỐI — `scripts/apply_schema.py` và test đặt
+tường minh trước khi chạy schema.sql) + `revoke execute ... from public`
+ngay sau mỗi `create or replace function` (mặc định PG cho PUBLIC
+execute). Trigger hash-chain là SECURITY DEFINER (agent_writer không có
+SELECT log vẫn insert được). Hash canonical không phụ thuộc session
+`TimeZone`/`DateStyle`: `row_hash = sha256(prev_hash ||
+jsonb_build_array(id, actor, action, object_type, object_id, detail,
+db_role, (extract(epoch from ts)*1000000)::bigint)::text)` — KHÔNG dùng
+`ts::text`. sha256 nội dung byte-exact UTF-8, không normalize: PG
+`encode(sha256(convert_to(t,'UTF8')),'hex')` == Python
+`hashlib.sha256(t.encode('utf-8')).hexdigest()`. Ngày "không quá khứ"
+trong function tính `(now() at time zone 'Asia/Ho_Chi_Minh')::date` (bài
+học date-UTC v2.4). Mọi connect có `connect_timeout`; ghi trên conn chia
+sẻ phải `conn.commit()` tường minh (gotcha savepoint v2.1). Print tiếng
+Việt → UTF-8 guard. Test DB thật: 1 transaction + temp schema (`create
+schema` + `set local search_path to <tmp>, pg_temp` + docs/schema.sql ×2 +
+docs/roles.sql ×2) rồi ROLLBACK (precedent v3.2) — mỗi case lỗi trong
+savepoint riêng; thử quyền bằng `set local role agent_writer|app_human`;
+hàm store gọi `conn.commit()` → bọc `_TxConn` ghi nhận commit (precedent
+v3.2), không commit thật temp schema. Test skip khi không có DB nhưng gate
+yêu cầu 0 skipped. KHÔNG duyệt draft nào trên DB thật ngoài test rollback
+(agent không tự đánh dấu người thật đã duyệt); mật khẩu/hash thật KHÔNG
+vào git — test sinh mật khẩu lúc chạy. DB gate = DB riêng của worktree
+(`DATABASE_URL` trong v34.env, owner là superuser local).
+
+External-dep (KHÔNG giả lập, KHÔNG tự đánh dấu): SSO Cloudflare Access +
+Google Workspace (DNS/domain công ty) — chỉ có cổng `AUTH_MODE=proxy`;
+login user DB + mật khẩu và chạy `docs/roles.sql` trên cloud; TGĐ chốt ma
+trận vai trò × tab + danh sách người duyệt; danh sách user/email thật cho
+`data/users.json`; neo hash chain ra object-lock (WP03 anchor).
+
+- [x] **W34.1 Schema: `created_by` + `approvals` + `agent_action_log`
+  (hash chain, append-only)** — `docs/schema.sql` thêm block "v3.4 duyệt &
+  log" (comment tiếng Việt: ai ghi, ai đọc, vì sao append-only):
+  `alter table content_drafts add column if not exists created_by text`
+  (null = draft trước v3.4 → không duyệt được, fail-closed); `approvals`
+  (`id bigint identity pk`, `object_type text not null` (v3.4:
+  `content_draft`), `object_id text not null`, `content_sha256 text not
+  null check (~ '^[0-9a-f]{64}$')`, `decision text not null check in
+  ('approved','rejected')`, `approved_by text not null check (btrim <>
+  '')`, `approved_at timestamptz not null default now()`, `db_role text
+  not null default session_user`, `note text`) + index (object_type,
+  object_id, id); `agent_action_log` (`id bigint identity pk`, `ts
+  timestamptz not null default now()`, `actor text not null check (btrim
+  <> '')`, `action text not null`, `object_type text`, `object_id text`,
+  `detail jsonb not null default '{}'`, `db_role text not null default
+  session_user`, `prev_hash text not null`, `row_hash text not null
+  unique`). Trigger `approvals` + `agent_action_log`: `before update or
+  delete for each row` + `before truncate for each statement` → raise.
+  Trigger `before insert` trên `agent_action_log` (SECURITY DEFINER):
+  `pg_advisory_xact_lock(<hằng>)` tuần tự hóa, ÉP `ts=now()`,
+  `db_role=session_user` (không tin client), `prev_hash` = `row_hash` dòng
+  id lớn nhất hoặc 64 ký tự `0`, tính `row_hash` canonical (xem Quy ước) —
+  giá trị client truyền vào prev/row_hash bị ghi đè. Function
+  `verify_action_log()` returns table(`id bigint`, `problem text`) — rỗng =
+  nguyên vẹn; `row_hash` (nội dung dòng bị sửa) / `prev_hash` (dòng trước
+  bị xóa/chèn). Giới hạn ghi comment: xóa dòng CUỐI chuỗi không phát hiện
+  được bằng chuỗi thuần (cần neo ngoài — external-dep).
+  - Boundary: `docs/schema.sql` (append block + 1 dòng `alter ... add
+    column if not exists`), `scripts/apply_schema.py` (đặt `search_path to
+    public, pg_temp` trước khi chạy), `tests/test_auth_approval.py` (mới)
+  - Gate: `python scripts/apply_schema.py` ×2 exit 0, lần 2 in 16 bảng
+    (14 cũ + approvals, agent_action_log); `grep -c "^create table if not
+    exists" docs/schema.sql` = 16; test DB (temp schema, rollback): 3
+    insert → `verify_action_log()` rỗng, dòng đầu `prev_hash` = 64 `0`,
+    dòng k `prev_hash` = `row_hash` dòng k-1; insert kèm `row_hash`/
+    `prev_hash`/`ts`/`db_role` giả → bị ghi đè; UPDATE/DELETE/TRUNCATE log
+    và approvals (superuser, trigger bật) → lỗi; superuser `set local
+    session_replication_role = replica` rồi UPDATE `detail` dòng 2 →
+    verify trả (id2, `row_hash`); DELETE dòng 2 (replica) → verify trả
+    (id3, `prev_hash`); verify rỗng dưới cả `set local timezone 'UTC'` và
+    `'Asia/Ho_Chi_Minh'` + `datestyle 'SQL, DMY'`; `content_sha256` sai
+    định dạng → lỗi CHECK; parity sha PG ↔ Python cho chuỗi có dấu +
+    `"\r\n"` + emoji (escape trong source, gotcha ký tự vô hình)
+  - Evidence: `evidence/v34_auth.log`
+- [x] **W34.2 Role tách quyền + function duyệt SECURITY DEFINER** —
+  `docs/schema.sql` thêm function (SECURITY DEFINER, search_path ghim,
+  revoke public): `approve_draft(p_id bigint, p_approver text, p_note text
+  default null) returns bigint` (id approvals): `select ... for update`;
+  raise (thông điệp tiếng Việt) khi approver rỗng / không tìm thấy /
+  status ≠ pending / `guardrail->>'ok'` ≠ `'true'` / `created_by` null-rỗng
+  / `lower(btrim(created_by)) = lower(btrim(p_approver))`; OK → set
+  status/reviewer/reviewed_at/review_note + insert `approvals` (approved,
+  sha256 `text` hiện tại) + insert `agent_action_log` (`draft_approve`) —
+  cùng 1 transaction. `reject_draft(p_id, p_reviewer, p_note)` → pending →
+  rejected + approvals `rejected` + log (người tạo tự rút bài được — không
+  áp luật ≠). `schedule_draft(p_id bigint, p_day date, p_by text)` → chỉ
+  approved, `p_by` không rỗng, `p_day` ≥ hôm nay VN, VÀ
+  `verify_publish('content_draft', id, text hiện tại)` true → set
+  `scheduled_date` + log. `verify_publish(p_object_type text, p_object_id
+  text, p_content text) returns boolean` — quyết định MỚI NHẤT của object
+  là `approved` VÀ sha256(p_content) = `content_sha256`; không có quyết
+  định → false. `docs/roles.sql` (mới, idempotent): `agent_writer` —
+  usage schema; `select` content_drafts; `insert (brief, channel, text,
+  guardrail, source, created_by)` content_drafts; `insert (actor, action,
+  object_type, object_id, detail)` agent_action_log; KHÔNG gì khác (không
+  UPDATE/DELETE bảng nào, không approvals, không bảng khác, không execute
+  function duyệt). `app_human` — `grant agent_writer to app_human` +
+  `select` approvals, agent_action_log + `execute` approve_draft,
+  reject_draft, schedule_draft, verify_publish, verify_action_log; KHÔNG
+  UPDATE/DELETE trực tiếp. `scripts/apply_schema.py --roles` = schema.sql
+  rồi roles.sql, in thêm 2 role; không cờ = như cũ.
+  - Boundary: `docs/schema.sql`, `docs/roles.sql` (mới),
+    `scripts/apply_schema.py`, `tests/test_auth_approval.py`
+  - Gate: `python scripts/apply_schema.py --roles` ×2 exit 0; `python -c`
+    in `select rolname, rolcanlogin from pg_roles where rolname in
+    ('agent_writer','app_human')` → 2 dòng `False`; 4 function duyệt
+    `prosecdef` true và `proconfig` search_path kết thúc `pg_temp`;
+    `has_function_privilege('agent_writer','approve_draft(bigint,text,text)','execute')`
+    = false. Test DB (temp schema, rollback, mỗi case savepoint) —
+    `agent_writer`: `update content_drafts set status='approved'` →
+    `InsufficientPrivilege`; update `reviewer`/`reviewed_at`/`text` →
+    denied; insert kèm `status='approved'` → denied; insert 6 cột cho phép
+    → OK, status `pending`; insert approvals → denied; `select
+    approve_draft(...)` → denied; update/delete agent_action_log → denied;
+    `select * from leads` → denied. `app_human`: update content_drafts
+    trực tiếp → denied; approve_draft guardrail `ok=false` → lỗi;
+    approver = creator (cả biến thể `' Lan '` vs `'lan'`) → lỗi;
+    `created_by` null → lỗi; approver rỗng → lỗi; happy → status approved,
+    đúng 1 dòng approvals sha = Python sha, 1 dòng log, verify_action_log
+    rỗng; approve lần 2 → lỗi; schedule ngày hôm qua (VN) → lỗi; hôm nay
+    VN → OK; superuser sửa `text` sau duyệt (replica) → verify_publish
+    false + schedule_draft lỗi; reject → approvals `rejected`,
+    verify_publish false
+  - Evidence: `evidence/v34_auth.log`
+- [x] **W34.3 `pipelines/store.py` duyệt qua function + CLI** —
+  `save_draft(..., created_by=)` bắt buộc không rỗng (strip rỗng →
+  `ValueError` trước khi chạm DB), ghi `created_by` + 1 dòng log
+  `draft_create` cùng transaction. `set_status`: approve → chạy LẠI
+  `pipelines.guardrail.check(text từ DB)` (snapshot jsonb do agent ghi có
+  thể giả `ok:true`) — không ok → warn, KHÔNG gọi function; rồi `select
+  approve_draft(%s,%s,%s)`; reject → `reject_draft`. `schedule(conn, id,
+  day, by)` → `schedule_draft`. Lỗi function (`psycopg.Error`) → `(False,
+  diag.message_primary)`, không raise; giữ pre-check Python (warn thân
+  thiện). Hàm thuần `content_sha256(text)` + `verify_publish(conn,
+  draft_id, text) -> bool`. CLI: `--schedule ID YYYY-MM-DD` giờ bắt buộc
+  `--by` (thiếu/rỗng → usage exit 2 trước connect); op mới `--verify-log`
+  (exit 0 "[ok] chuỗi nguyên vẹn (N dòng)", exit 1 in (id, problem), DB
+  down → exit 2); `n_ops` đếm cả `--verify-log`. Docstring module cập nhật
+  contract (function DB là nguồn sự thật; CLI `--by` vẫn free-text — tin
+  người giữ DSN `app_human`, ghi rõ giới hạn).
+  - Boundary: `pipelines/store.py`, `tests/test_store.py` (fake conn cập
+    nhật), `tests/test_auth_approval.py`
+  - Gate: `grep -nE "update +content_drafts" pipelines/store.py` rỗng;
+    số test `tests/test_store.py` ≥ 20 (hiện có) và số `assert` không giảm
+    (đối chiếu trước/sau, gotcha v1.7); test: snapshot `ok:true` nhưng text
+    chứa "chữa" → warn, không gọi `approve_draft`; function raise →
+    `(False, msg)`; `save_draft` created_by rỗng → ValueError, 0 execute;
+    argparse: `--schedule` thiếu `--by` → exit 2, `--verify-log
+    --pending` → exit 2, connect không được gọi (monkeypatch); test DB
+    (rollback, `set local role app_human`, `_TxConn`): `save_draft` →
+    `set_status` approve bởi người khác → approved + `verify_publish` true
+    với đúng text, false với text sửa 1 ký tự; CLI trên DB thật CHỈ case
+    âm: `python -m pipelines.store --approve 999999 --by X` exit 2 (không
+    tìm thấy), `--verify-log` exit 0
+  - Evidence: `evidence/v34_auth.log`
+- [x] **W34.4 `pipelines/auth.py` — logic đăng nhập thuần (không import
+  streamlit)** — `TABS` (7 tên tab, nguồn duy nhất — streamlit_app
+  import), `ROLES = ('tgd','phap_che','gd_ban_hang','gd_marketing','mxh',
+  'ha_tang')`, `ROLE_TABS` (đề xuất, TGĐ chốt = external-dep): tgd 7 tab;
+  phap_che Chat, Content Studio, Chưa trả lời, Báo cáo, Duyệt & Lịch;
+  gd_ban_hang Chat, Chưa trả lời, Leads, Báo cáo; gd_marketing Chat,
+  Content Studio, Leads, Báo cáo, Duyệt & Lịch; mxh Chat, Content Studio,
+  Chưa trả lời, Leads, Duyệt & Lịch; ha_tang Chat, Chưa trả lời, Báo cáo,
+  Nhật ký vườn. `CAN_APPROVE = {tgd, phap_che, gd_marketing}`,
+  `CAN_SCHEDULE = {tgd, gd_marketing, mxh}`; role lạ → không tab, không
+  quyền. `auth_mode(env)` → `proxy|local|dev|blocked` (strip+lower; trống/
+  lạ → `blocked`; `dev` khi `DEPLOY` truthy 1/true/yes → `blocked`).
+  `identity_from_headers(headers, users)`: header
+  `Cf-Access-Authenticated-User-Email` không phân biệt hoa thường, email
+  strip+lower; thiếu/rỗng/không có trong users → None. `hash_password(pw)`
+  → `scrypt$n$r$p$salt_hex$dk_hex` (n=2**14, r=8, p=1, salt 16 byte
+  `secrets`); `verify_password` dùng `hmac.compare_digest`, chuỗi hỏng →
+  False không raise. `load_users(path)` (`AUTH_USERS_FILE`, mặc định
+  `data/users.json`) → {username_lower: {role, password_hash}}; file thiếu
+  / rỗng / `{}` / chỉ `_doc` / JSON hỏng / role lạ → bỏ entry hoặc `{}`,
+  không raise (không ai vào = fail-closed). `check_login(username, pw,
+  users, now)`: sai `MAX_FAILS=5` lần liên tiếp → khóa `LOCK_SECONDS=300`
+  theo `now` inject (không sleep); đang khóa thì mật khẩu ĐÚNG cũng từ
+  chối; hết khóa → thử lại được; đúng → reset đếm; user không tồn tại vẫn
+  đếm + chạy scrypt giả (đều timing), thông báo chung "sai tên đăng nhập
+  hoặc mật khẩu"; state module-level + `threading.Lock`; khóa theo
+  username (ghi docstring: DoS khóa 1 user chấp nhận ở pilot, state mất khi
+  restart). CLI `python -m pipelines.auth --hash` đọc mật khẩu bằng
+  `getpass` ×2 (không qua argv), in chuỗi hash. UTF-8 guard.
+  - Boundary: `pipelines/auth.py` (mới), `tests/test_auth.py` (mới),
+    `data/users.example.json` (mới), `.gitignore` (`data/users.json`),
+    `env.example` (`AUTH_MODE=`, `AUTH_USERS_FILE=` + chú thích)
+  - Gate: test ma trận đủ 6×7 (42 assert tab) + CAN_APPROVE/CAN_SCHEDULE;
+    `auth_mode`: `None`/`''`/`'  '`/`'xyz'` → blocked, `' PROXY '` → proxy,
+    `dev`+`DEPLOY=1` → blocked; header 3 biến thể hoa-thường; email ngoài
+    users → None; hash roundtrip, sai mk False, 2 hash cùng mk khác nhau,
+    chuỗi hỏng/`scrypt$REPLACE_ME` → False; lockout: 5 sai → lần 6 mk đúng
+    vẫn từ chối, `now+300` → OK, user không tồn tại cũng bị khóa, đúng →
+    reset; `load_users` đủ 6 biến thể file hỏng; `users.example.json`
+    không chứa hash hợp lệ và mọi role thuộc ROLES; `.gitignore` có
+    `data/users.json`; `python -c "import pipelines.auth, sys; assert
+    'streamlit' not in sys.modules"` exit 0
+  - Evidence: `evidence/v34_auth.log`
+- [x] **W34.5 Streamlit: chặn trước tab, tab theo vai trò, duyệt bằng
+  identity** — `app/streamlit_app.py`: trước `st.tabs`, `auth_mode` →
+  `blocked`: `st.error` hướng dẫn đặt `AUTH_MODE` + `st.stop()`; `proxy`:
+  `st.context.headers` → `identity_from_headers`, None → chặn; `local`:
+  `st.form` user/mật khẩu (`type="password"`) → `check_login`, lưu
+  identity+role vào `st.session_state` + nút đăng xuất; `dev`: banner
+  "CHẾ ĐỘ DEV — không dùng thật", identity `dev`, role `tgd`. `st.tabs`
+  chỉ tạo tab trong `ROLE_TABS[role]`; khối code tab không được phép KHÔNG
+  chạy (không query DB). Studio: `save_draft(..., created_by=identity)`.
+  Duyệt & Lịch: bỏ `text_input("Người duyệt *")` → hiện identity
+  read-only; nút Duyệt disabled khi role ∉ CAN_APPROVE hoặc identity ==
+  `created_by` (help nêu lý do); xếp lịch chỉ role ∈ CAN_SCHEDULE, truyền
+  identity làm `by`. `tests/test_handover_docs.py::_tab_names` đổi sang
+  đọc `TABS` từ `pipelines/auth.py` (regex/AST, không import streamlit) —
+  giữ mọi assert cũ.
+  - Boundary: `app/streamlit_app.py`, `tests/test_handover_docs.py`
+    (`_tab_names`)
+  - Gate: `python -m py_compile app/streamlit_app.py`; grep: `st.stop()`
+    xuất hiện trước `st.tabs(`; `grep -n "Người duyệt \*"
+    app/streamlit_app.py` rỗng; `save_draft(` trong app có
+    `created_by=`; test_handover_docs xanh. UI E2E (TÙY CHỌN — venv tạm
+    NGOÀI repo, không cài global, không sửa requirements): `AUTH_MODE=` →
+    trang chặn, không tab; `AUTH_MODE=local` + users file tạm → sai 5 lần
+    bị khóa, đúng → chỉ thấy tab theo role. Không dựng được venv → ghi "UI
+    E2E chưa chạy" trong evidence, KHÔNG đánh dấu đã verify UI
+  - Evidence: `evidence/v34_auth.log` (+ png nếu chạy E2E)
+- [x] **W34.6 Docs + drift-guard đếm bảng** —
+  `docs/handover/kien-truc.md`: "16 bảng", 2 dòng bảng mới + cột
+  `content_drafts.created_by`; mục Human-gate "Duyệt content" cập nhật
+  (function DB, người duyệt ≠ người tạo, sha256, log hash chain); mục mới
+  "Phân quyền & đăng nhập" (2 role DB, 6 vai trò × tab, `AUTH_MODE`).
+  `docs/handover/sop.md`: mục 4 (`--schedule ... --by`, `--verify-log`),
+  mục 7 (bị khóa đăng nhập → chờ 5 phút/restart; verify-log báo lỗi → ai
+  xử lý), mục 9 (`AUTH_MODE`, tạo `data/users.json` bằng `python -m
+  pipelines.auth --hash`, `apply_schema.py --roles`, tạo login user DB
+  `in role app_human|agent_writer` — lệnh mẫu không mật khẩu thật).
+  `docs/deploy.md`: `AUTH_MODE=proxy` chỉ an toàn khi Streamlit bind
+  `127.0.0.1` sau reverse proxy (header giả mạo được nếu lộ cổng).
+  `AGENTS.md` Commands: `apply_schema.py --roles`, `python -m
+  pipelines.auth --hash`, `python -m pipelines.store --verify-log`. Đếm
+  bảng 14→16 ở `tests/test_store.py`, `tests/test_lead_store.py`,
+  `tests/test_handover_docs.py` (chỉ số đếm + regex drift-guard nới hẹp
+  như Quy ước); `SOP_COMMANDS` thêm `pipelines.auth`.
+  - Boundary: `docs/handover/kien-truc.md`, `docs/handover/sop.md`,
+    `docs/deploy.md`, `AGENTS.md` (Commands), 3 test trên (số đếm/regex)
+  - Gate: `python -m pytest tests/test_handover_docs.py tests/test_store.py
+    tests/test_lead_store.py -q` xanh; test drift-guard: chuỗi mẫu `drop
+    table x` / `alter table x drop column y` / `alter table x rename to y`
+    vẫn bị bắt, `alter table x add column if not exists y text` qua; số
+    `assert` 3 file không giảm (đối chiếu trước/sau)
+  - Evidence: `evidence/v34_pytest.log`
+- [x] **Gate chung** —
+  - `python scripts/apply_schema.py --roles` ×2 exit 0 (16 bảng, 2 role)
+  - targeted ×3: `python -m pytest tests/test_auth.py tests/test_auth_approval.py tests/test_store.py tests/test_handover_docs.py tests/test_lead_store.py -q -rs`
+    3 lần liên tiếp xanh, test DB **0 skipped** (đọc output tới exit,
+    không chạy chồng)
+  - full: `python -m pytest -q` xanh, ≥ 308 + test mới
+  - `ruff check .` sạch
+  - `python -m py_compile pipelines/auth.py pipelines/store.py app/streamlit_app.py scripts/apply_schema.py`
+  - sau toàn bộ gate trên DB thật: `approvals` = 0 dòng, `content_drafts
+    where status <> 'pending'` = 0 (không row test sót, không tự duyệt);
+    `python -m pipelines.store --verify-log` exit 0
+  - `git status`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); `data/users.json` không tracked; diff không chứa
+    hash scrypt hợp lệ / mật khẩu
+  - External-dep (để `[ ]`): SSO Cloudflare Access + Google Workspace;
+    login user DB + roles.sql trên cloud; TGĐ chốt ma trận + người duyệt;
+    user/email thật; neo hash chain
+  - Kết quả worker (vòng 1, 2026-10-12): apply_schema --roles ×2 exit 0
+    (16 bảng, 2 role login=False); targeted ×3 = 76 passed ×3, 0 skipped;
+    full 344 passed (308 + 36 mới); ruff sạch; py_compile exit 0; DB thật
+    sau gate: approvals 0, draft non-pending 0, `--verify-log` exit 0;
+    assert test_store 65→93, test_lead_store 67→68, test_handover_docs
+    18→19. Evidence: `evidence/v34_auth.log`, `evidence/v34_pytest.log`,
+    `evidence/v34_ui_e2e.log` + 3 png (phải `git add -f` các .log).
+    UI E2E (tùy chọn) ĐÃ chạy bằng venv tạm ngoài repo (đã xóa): AUTH_MODE
+    trống → chặn 0 tab; local sai 5 lần → lần 6 mk đúng vẫn khóa; đúng →
+    gd_ban_hang 4 tab; proxy thiếu header → chặn. CHƯA E2E: proxy CÓ
+    header (Playwright không gắn header vào WebSocket handshake — chỉ unit
+    test) và form duyệt trong expander (DB thật 0 draft, không tạo draft
+    thật) — chỉ py_compile + test store.
+    Lệch nhỏ so contract (ghi rõ): id `agent_action_log` cách 2 (trigger
+    cấp id SAU advisory lock để thứ tự id = thứ tự chuỗi khi chèn song
+    song); trigger từ chối ghi log ngoài READ COMMITTED (chống rẽ nhánh
+    chuỗi); schema.sql tự ghim `search_path = <schema>, pg_temp` (DO block
+    đầu khối v3.4) cho cả khi chạy tay bằng psql; `python -m pipelines.auth
+    --hash` đòi mật khẩu ≥10 ký tự; khóa đăng nhập log stderr kèm
+    user_hash (không raw); nút Từ chối chỉ cho vai trò duyệt hoặc chính
+    người tạo (rút bài); ô ngày xếp lịch mặc định ngày VN.
+- [ ] **external-dep** SSO Cloudflare Access + Google Workspace (DNS/domain
+  công ty) — chỉ có cổng `AUTH_MODE=proxy` + test header; chưa có proxy thật.
+- [ ] **external-dep** Login user DB + mật khẩu (`in role app_human` /
+  `agent_writer`) và chạy `docs/roles.sql` trên Postgres cloud; app/agent
+  chuyển sang DSN theo role (local vẫn chạy bằng owner DSN — chặn quyền
+  chỉ có hiệu lực khi dùng DSN role).
+- [ ] **external-dep** TGĐ chốt ma trận 6 vai trò × tab + danh sách người
+  được duyệt; danh sách user/email thật cho `data/users.json`.
+- [ ] **external-dep** Neo hash chain ra object-lock (phát hiện xóa dòng
+  cuối) — WP03 anchor.
+
+Someday (ngoài phạm vi v3.4, ghi để không cuốn vào): `approval_queue` 2
+lớp (auto_policy/per_item), `decisions` (override_qa/expired),
+`record_publish`/`approve_spend`/`schedule_slot`; grant `app_human` cho
+bảng khác theo plan §5 (leads, plot_logs...) + role `agent_llm`/`webhook`/
+`loader`; lockout bền qua restart/đa process; gắn `session_user` ↔ người
+(login riêng từng người) thay `--by` free-text; function DB tự kiểm
+guardrail thay vì tin snapshot (hiện chỉ Python re-check — gọi thẳng
+`approve_draft` bằng DSN `app_human` vẫn tin snapshot).
+
+v3.4-auth-approval đóng 2026-10-12 (3 nghiệm thu đợt 1 FIX 7 finding —
+1 MAJOR: biến `_auth` bị đè trong app làm tab Duyệt crash — → 1 vòng
+sửa → PASS; coordinator chạy lại 355/355 + ruff + `--verify-log` exit
+0). UI E2E 6/6 + 8/8 bằng venv tạm (đã xóa). External-dep: Cloudflare
+Access + Google Workspace SSO; user đăng nhập DB + chạy `roles.sql`
+trên cloud; TGĐ duyệt ma trận vai trò × tab và danh sách người duyệt;
+danh sách user/email thật; neo hash chain vào object-lock. Giới hạn đã
+nhận: local app vẫn connect bằng owner (DSN theo role chỉ dùng cho
+CLI duyệt cho tới khi grant đủ bảng); xóa dòng log cuối không phát
+hiện bằng chuỗi; `--by` CLI còn free-text.
+
 v3.2-golden-master đóng 2026-10-12 (3 nghiệm thu đợt 1 FIX 8 finding →
 1 vòng sửa → PASS; coordinator chạy lại 308/308 + ruff, DB thật: 13
 SKU, 0 giá đã duyệt, `v_promotable` rỗng, rượu CAM mọi kênh).

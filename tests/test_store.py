@@ -2,7 +2,13 @@
 fake-conn, set_status transitions đủ nhánh (pending→approved,
 pending→rejected, sai-id, non-pending, approve-guardrail-fail, input
 xấu, race no-row), schedule (chỉ approved, quá khứ reject), calendar
-shape + edge, schema drift guard `content_drafts`. Không cần DB thật."""
+shape + edge, schema drift guard `content_drafts`. Không cần DB thật.
+
+v3.4: chuyển trạng thái đi qua function DB (`approve_draft` /
+`reject_draft` / `schedule_draft`) — fake-conn route theo `select
+<function>(`; save_draft bắt buộc created_by + log `draft_create`;
+drift-guard nới HẸP (chỉ `alter table <t> add column if not exists`).
+Test DB thật ở tests/test_auth_approval.py."""
 
 import re
 from contextlib import contextmanager
@@ -27,7 +33,7 @@ def _row(**kw):
                           "matched_claims": []},
             "status": "pending", "reviewer": None, "reviewed_at": None,
             "review_note": None, "scheduled_date": None,
-            "source": "manual:studio"}
+            "source": "manual:studio", "created_by": "agent:studio"}
     base.update(kw)
     return tuple(base[c] for c in COLS)
 
@@ -75,25 +81,48 @@ def _route(*subs, params=None, rows=()):
 
 # ---------- save_draft / list_drafts ----------
 
+def _save_routes(new_id):
+    return [_route("insert into content_drafts", rows=[(new_id,)]),
+            _route("insert into agent_action_log", rows=[])]
+
+
 def test_save_draft_inserts_and_commits():
-    conn = _Conn([_route("insert into content_drafts", rows=[(7,)])])
+    conn = _Conn(_save_routes(7))
     g = {"ok": True, "violations": [], "matched_claims": []}
-    did = store.save_draft(conn, "  brief x ", "facebook", "text bài", g)
+    did = store.save_draft(conn, "  brief x ", "facebook", "text bài", g,
+                           created_by=" Lan ")
     assert did == 7
     # Ghi trên conn chia sẻ phải commit() tường minh — v2.1 precedent.
     assert conn.committed == 1
     sql, params = conn.calls[0]
-    assert "returning id" in sql
+    assert "returning id" in sql and "created_by" in sql
     assert params[0] == "brief x" and params[1] == "facebook"
     assert params[2] == "text bài" and params[4] == "manual:studio"
+    assert params[5] == "Lan"
     # guardrail bọc Jsonb — fake-conn nhận wrapper, .obj là dict gốc.
     assert getattr(params[3], "obj", params[3]) == g
+    # v3.4: 1 dòng log draft_create cùng transaction, sha256 text.
+    lsql, lparams = conn.calls[1]
+    assert "insert into agent_action_log" in lsql
+    assert lparams[:4] == ("Lan", "draft_create", "content_draft", "7")
+    assert getattr(lparams[4], "obj", {})["content_sha256"] == \
+        store.content_sha256("text bài")
 
 
 def test_save_draft_source_cli():
-    conn = _Conn([_route("insert into content_drafts", rows=[(8,)])])
-    store.save_draft(conn, "b", "tiktok", "t", {}, source="cli")
+    conn = _Conn(_save_routes(8))
+    store.save_draft(conn, "b", "tiktok", "t", {}, source="cli",
+                     created_by="cli-user")
     assert conn.calls[0][1][4] == "cli"
+
+
+def test_save_draft_requires_created_by_no_db_touch():
+    for by in (None, "", "   "):
+        conn = _Conn([])
+        with pytest.raises(ValueError):
+            store.save_draft(conn, "b", "facebook", "t", {"ok": True},
+                             created_by=by)
+        assert conn.calls == [] and conn.committed == 0
 
 
 def test_list_drafts_status_filter_and_shape():
@@ -116,19 +145,19 @@ def test_list_drafts_status_filter_and_shape():
 
 # ---------- set_status ----------
 
-def test_set_status_approve_happy_atomic_guard():
+def test_set_status_approve_happy_via_function():
     conn = _Conn([
         _route("from content_drafts", "where id = %s", params=(1,),
                rows=[_row(id=1)]),
-        _route("update content_drafts set status", rows=[(1,)]),
+        _route("select approve_draft(", rows=[(11,)]),
     ])
-    ok, warn = store.set_status(conn, 1, "approved", "Lan", "đẹp")
+    ok, warn = store.set_status(conn, 1, "approved", " Lan ", "đẹp")
     assert (ok, warn) == (True, None)
     sql, params = conn.calls[1]
-    # Double-gate atomic: WHERE status='pending' + guardrail->>'ok'.
-    assert "status = 'pending'" in sql
-    assert "guardrail->>'ok' = 'true'" in sql
-    assert params == ("approved", "Lan", "đẹp", 1)
+    # v3.4: chuyển trạng thái CHỈ qua function DB (atomic + quyền).
+    assert "approve_draft(%s, %s, %s)" in sql
+    assert "update" not in sql.lower()
+    assert params == (1, "Lan", "đẹp")
     assert conn.committed == 1
 
 
@@ -137,14 +166,15 @@ def test_set_status_reject_happy_no_guardrail_req():
         _route("from content_drafts", "where id = %s", params=(2,),
                rows=[_row(id=2, guardrail={"ok": False,
                                            "violations": [{}]})]),
-        _route("update content_drafts set status", rows=[(2,)]),
+        _route("select reject_draft(", rows=[(12,)]),
     ])
     ok, warn = store.set_status(conn, 2, "rejected", "Lan")
     assert (ok, warn) == (True, None)
     sql, params = conn.calls[1]
-    assert params[0] == "rejected"
+    assert "reject_draft(%s, %s, %s)" in sql
+    assert params == (2, "Lan", None)
     # Reject không đòi guardrail ok (bài vi phạm VẪN reject được).
-    assert "guardrail->>'ok'" not in sql
+    assert "approve_draft" not in sql
 
 
 def test_set_status_unknown_id_warns():
@@ -182,17 +212,62 @@ def test_set_status_bad_inputs_no_db_touch():
     assert conn.calls == []
 
 
-def test_set_status_race_no_row_warns():
-    """SELECT thấy pending nhưng UPDATE returning rỗng (người khác
-    duyệt trước) → warn thay vì báo done ảo."""
-    conn = _Conn([
-        # Route SELECT phải có "from content_drafts" — UPDATE cũng chứa
-        # "where id = %s" nên route lỏng sẽ bắt nhầm cả UPDATE.
-        _route("from content_drafts", "where id = %s", rows=[_row()]),
-        _route("update content_drafts set status", rows=[]),
-    ])
+class _RaiseConn(_Conn):
+    """Function DB raise (race: người khác duyệt trước → function thấy
+    không còn pending) → (False, thông điệp function), không raise."""
+
+    def __init__(self, routes, fn, msg):
+        super().__init__(routes)
+        self.fn, self.msg = fn, msg
+
+    def execute(self, sql, params=None):
+        if self.fn in sql:
+            self.calls.append((sql, tuple(params or ())))
+            raise psycopg.errors.RaiseException(self.msg)
+        return super().execute(sql, params)
+
+
+def test_set_status_race_function_raises_warns():
+    conn = _RaiseConn(
+        [_route("from content_drafts", "where id = %s", rows=[_row()])],
+        "approve_draft(", "draft #1 đã ở trạng thái approved")
     ok, warn = store.set_status(conn, 1, "approved", "Lan")
-    assert not ok and "tải lại" in warn
+    assert not ok and "đã ở trạng thái approved" in warn
+    assert conn.committed == 0
+    conn = _RaiseConn(
+        [_route("from content_drafts", "where id = %s", rows=[_row()])],
+        "reject_draft(", "permission denied for function reject_draft")
+    ok, warn = store.set_status(conn, 1, "rejected", "Lan")
+    assert not ok and "permission denied" in warn
+
+
+def test_set_status_recheck_guardrail_snapshot_forged():
+    """Snapshot jsonb ok:true (agent tự ghi) nhưng text chứa từ cấm →
+    check() chạy lại trên text DB chặn — KHÔNG gọi approve_draft."""
+    conn = _Conn([_route("from content_drafts", "where id = %s",
+                         rows=[_row(text="Sâm giúp chữa bệnh tiểu đường")])])
+    ok, warn = store.set_status(conn, 1, "approved", "Lan")
+    assert not ok and "kiểm lại" in warn
+    assert len(conn.calls) == 1 and conn.committed == 0
+    assert not any("approve_draft" in c[0] for c in conn.calls)
+
+
+def test_set_status_creator_and_missing_creator_precheck():
+    for creator in ("lan", " LAN "):
+        conn = _Conn([_route("from content_drafts", "where id = %s",
+                             rows=[_row(created_by=creator)])])
+        ok, warn = store.set_status(conn, 1, "approved", "Lan ")
+        assert not ok and "người tạo" in warn, creator
+        assert len(conn.calls) == 1
+    conn = _Conn([_route("from content_drafts", "where id = %s",
+                         rows=[_row(created_by=None)])])
+    ok, warn = store.set_status(conn, 1, "approved", "Lan")
+    assert not ok and "không có người tạo" in warn
+    # Người tạo tự rút bài (reject) được — đi qua reject_draft.
+    conn = _Conn([_route("from content_drafts", "where id = %s",
+                         rows=[_row(created_by="Lan")]),
+                  _route("select reject_draft(", rows=[(3,)])])
+    assert store.set_status(conn, 1, "rejected", "lan") == (True, None)
 
 
 # ---------- schedule ----------
@@ -201,11 +276,12 @@ def test_schedule_approved_happy():
     conn = _Conn([
         _route("from content_drafts", "where id = %s", params=(1,),
                rows=[_row(id=1, status="approved")]),
-        _route("update content_drafts set scheduled_date", rows=[(1,)]),
+        _route("select schedule_draft(", rows=[("",)]),
     ])
-    ok, warn = store.schedule(conn, 1, "2026-10-20", today=TODAY)
+    ok, warn = store.schedule(conn, 1, "2026-10-20", "Hoa", today=TODAY)
     assert (ok, warn) == (True, None)
-    assert conn.calls[1][1] == (date(2026, 10, 20), 1)
+    assert "schedule_draft(%s, %s, %s)" in conn.calls[1][0]
+    assert conn.calls[1][1] == (1, date(2026, 10, 20), "Hoa")
     assert conn.committed == 1
 
 
@@ -213,37 +289,46 @@ def test_schedule_only_approved():
     for st in ("pending", "rejected"):
         conn = _Conn([_route("from content_drafts", "where id = %s",
                              rows=[_row(status=st)])])
-        ok, warn = store.schedule(conn, 1, TODAY, today=TODAY)
+        ok, warn = store.schedule(conn, 1, TODAY, "Hoa", today=TODAY)
         assert not ok and "approved" in warn, st
         assert conn.committed == 0
 
 
 def test_schedule_past_and_bad_date_no_db_touch():
     conn = _Conn([])
-    ok, warn = store.schedule(conn, 1, TODAY - timedelta(days=1),
+    ok, warn = store.schedule(conn, 1, TODAY - timedelta(days=1), "Hoa",
                               today=TODAY)
     assert not ok and "đã qua" in warn                 # quá khứ
-    ok, warn = store.schedule(conn, 1, "2026-10-14", today=TODAY)
+    ok, warn = store.schedule(conn, 1, "2026-10-14", "Hoa", today=TODAY)
     assert not ok and "đã qua" in warn  # str quá khứ — CLI luôn truyền
     # str; f-string format-spec trên str từng crash ValueError
     # (cold-check v2.2 MAJOR, store.py:190).
-    ok, warn = store.schedule(conn, 1, "20/10/2026", today=TODAY)
+    ok, warn = store.schedule(conn, 1, "20/10/2026", "Hoa", today=TODAY)
     assert not ok and "không hợp lệ" in warn           # sai format
-    ok, warn = store.schedule(conn, 1, None, today=TODAY)
+    ok, warn = store.schedule(conn, 1, None, "Hoa", today=TODAY)
     assert not ok and "không hợp lệ" in warn
+    for by in (None, "", "  "):                         # v3.4: thiếu --by
+        ok, warn = store.schedule(conn, 1, TODAY, by, today=TODAY)
+        assert not ok and "người xếp lịch" in warn
     assert conn.calls == []
     # Biên: hôm nay được phép (không quá khứ).
     conn2 = _Conn([
         _route("from content_drafts", "where id = %s", rows=[_row(status="approved")]),
-        _route("update content_drafts set scheduled_date", rows=[(1,)]),
+        _route("select schedule_draft(", rows=[("",)]),
     ])
-    assert store.schedule(conn2, 1, TODAY, today=TODAY)[0] is True
+    assert store.schedule(conn2, 1, TODAY, "Hoa", today=TODAY)[0] is True
 
 
 def test_schedule_unknown_id_warns():
     conn = _Conn([_route("from content_drafts", "where id = %s", rows=[])])
-    ok, warn = store.schedule(conn, 9, TODAY, today=TODAY)
+    ok, warn = store.schedule(conn, 9, TODAY, "Hoa", today=TODAY)
     assert not ok and "không tìm thấy" in warn
+    # Function từ chối (sha lệch sau khi sửa text) → warn, không raise.
+    conn = _RaiseConn([_route("from content_drafts", "where id = %s",
+                              rows=[_row(status="approved")])],
+                      "schedule_draft(", "nội dung draft #1 không khớp")
+    ok, warn = store.schedule(conn, 1, TODAY, "Hoa", today=TODAY)
+    assert not ok and "không khớp" in warn and conn.committed == 0
 
 
 # ---------- calendar ----------
@@ -304,13 +389,36 @@ def test_schema_sql_has_content_drafts_table():
     assert "guardrail jsonb not null" in columns
     assert "status text not null default 'pending'" in columns
     assert "scheduled_date date" in columns
+    assert "created_by text" in lower                  # v3.4 add column
     assert len(re.findall(
-        r"^create table if not exists", lower, re.MULTILINE)) >= 22
-    assert not re.search(r"\bdrop\s+table\b", lower)
-    # v3.9: ALTER chỉ được dạng THÊM cột idempotent (không đổi kiểu/xóa cột).
-    for m in re.finditer(r"\balter\s+table\b[^;]*;", lower):
-        assert re.fullmatch(r"alter\s+table\s+\w+\s+add\s+column\s+if\s+not"
-                            r"\s+exists\s+[^;,]+;", m.group(0)), m.group(0)
+        r"^create table if not exists", lower, re.MULTILINE)) >= 24
+    assert _forbidden_ddl(lower) == []
+
+
+# v3.4: drift-guard nới HẸP — chỉ cho `alter table <t> add column if not
+# exists <c> <type>;` (1 action, không dấu phẩy); mọi alter/drop khác bị bắt.
+_ALTER_ADD_OK = re.compile(
+    r"\balter\s+table\s+\w+\s+add\s+column\s+if\s+not\s+exists\s+\w+"
+    r"[^;,]*;")
+
+
+def _forbidden_ddl(lower: str) -> list[str]:
+    return re.findall(r"\b(?:alter|drop)\s+table\b",
+                      _ALTER_ADD_OK.sub("", lower))
+
+
+def test_drift_guard_narrow_alter_only():
+    for bad in ("drop table x;", "alter table x drop column y;",
+                "alter table x rename to y;",
+                "alter table x alter column y type int;",
+                ("alter table x add column if not exists y text, "
+                 "drop column z;"),
+                "alter table x add column y text;",
+                ("alter table x add column if not exists y text; "
+                 "drop table z;")):
+        assert _forbidden_ddl(bad), bad
+    assert _forbidden_ddl(
+        "alter table x add column if not exists y text;") == []
 
 
 def test_cli_one_op_only():
@@ -321,17 +429,52 @@ def test_cli_one_op_only():
                  ["--approve", "1", "--schedule", "1", "2026-10-20",
                   "--by", "x"],
                  ["--pending", "--calendar"],
-                 ["--pending", "--approve", "1", "--by", "x"]):
+                 ["--pending", "--approve", "1", "--by", "x"],
+                 ["--verify-log", "--pending"],
+                 ["--verify-log", "--approve", "1", "--by", "x"]):
         with pytest.raises(SystemExit) as e:
             store.main(argv)
         assert e.value.code == 2, argv
+
+
+def test_cli_schedule_requires_by_before_connect(monkeypatch):
+    """v3.4: --schedule thiếu/rỗng --by → usage exit 2, KHÔNG connect."""
+    called = []
+    monkeypatch.setattr(store, "connect", lambda: called.append(1))
+    for argv in (["--schedule", "1", "2026-10-20"],
+                 ["--schedule", "1", "2026-10-20", "--by", "  "],
+                 ["--verify-log", "--pending"]):
+        with pytest.raises(SystemExit) as e:
+            store.main(argv)
+        assert e.value.code == 2, argv
+    assert called == []
+
+
+def test_cli_verify_log_exit_codes(monkeypatch, capsys):
+    class _C(_Conn):
+        def close(self):
+            pass
+
+    ok_conn = _C([_route("count(*) from agent_action_log", rows=[(3,)]),
+                  _route("from verify_action_log()", rows=[])])
+    monkeypatch.setattr(store, "connect", lambda: ok_conn)
+    assert store.main(["--verify-log"]) == 0
+    assert "[ok] chuỗi nguyên vẹn (3 dòng)" in capsys.readouterr().out
+    bad = _C([_route("count(*) from agent_action_log", rows=[(3,)]),
+              _route("from verify_action_log()", rows=[(2, "row_hash")])])
+    monkeypatch.setattr(store, "connect", lambda: bad)
+    assert store.main(["--verify-log"]) == 1
+    assert "id=2 problem=row_hash" in capsys.readouterr().out
+    monkeypatch.setattr(store, "connect", lambda: None)
+    assert store.main(["--verify-log"]) == 2
 
 
 def test_store_module_exports_contract():
     """Contract theo checklist: đủ hàm + hằng channel đúng spec."""
     assert store.CHANNELS == ("facebook", "tiktok", "blog", "zalo")
     for fn in ("save_draft", "list_drafts", "set_status", "schedule",
-               "calendar"):
+               "calendar", "verify_publish", "verify_log",
+               "content_sha256"):
         assert callable(getattr(store, fn))
     # psycopg.Error từ _get → warn không raise (conn chết giữa chừng).
     class Dead:
