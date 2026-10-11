@@ -17,6 +17,11 @@ openai>=1.40
 # reportlab/fitz/PIL KHONG dung)
 pypdf>=4
 
+# v5.2 CRM contact_vault (ingest.crm) - Fernet ma hoa PII + HKDF khoa HMAC
+# tra trung SDT. Da co san (keo theo boi google-auth/paramiko) - khong
+# tu che crypto, khong pgcrypto (khoa lo trong SQL log)
+cryptography>=42
+
 # App demo
 streamlit>=1.38
 python-dotenv>=1.0

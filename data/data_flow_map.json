@@ -24,9 +24,9 @@
         "Câu hỏi sức khỏe (`is_health_question`) chuyển người, không gửi LLM",
         "Log/stdout chỉ in `_uhash(user_id)` + `_mask_pii` — không in user_id thô"
       ],
-      "legal_basis": "Đồng ý của khách — CHƯA có cơ chế ghi nhận trong code (bảng consent, tin chào có link chính sách): GAP",
+      "legal_basis": "Đồng ý của khách — bảng `consents` có (v5.2) nhưng CHƯA gắn kênh chat (tin chào có link chính sách): GAP",
       "gaps": [
-        "Chưa có cơ chế ghi nhận đồng ý (bảng consent) trước khi xử lý tin nhắn",
+        "Bảng `consents` đã có (v5.2, đồng ý theo mục đích cskh/marketing/dai_ly) nhưng CHƯA gắn kênh chat — chưa ghi nhận đồng ý trước khi xử lý tin nhắn",
         "`zalo_seen.db` lưu user_id thô trong khóa `follow:<user_id>` tới 7 ngày",
         "CẦN LUẬT SƯ XÁC NHẬN: Zalo/VNG là bên xử lý (cần hợp đồng xử lý) hay bên nhận độc lập"
       ]
@@ -91,7 +91,7 @@
       "id": "DF-05",
       "name": "Lead store (khách có nhu cầu mua/đại lý)",
       "modules": ["ingest/lead_store.py"],
-      "data": "user_hash, câu hỏi đã mask, intent (partner/order/price/contact), trạng thái chăm sóc",
+      "data": "user_hash, câu hỏi đã mask, intent (partner/order/price/contact), trạng thái chăm sóc; v5.2: `contact_id` (tham chiếu kho liên hệ — không PII trong `leads`), tỉnh, mã đại lý gán",
       "class": "do",
       "subjects": "Khách hàng, người hỏi làm đại lý",
       "purpose": "Bán hàng — chăm sóc lại khách có nhu cầu",
@@ -99,11 +99,11 @@
       "retention": "Không có hạn lưu trong code — GAP",
       "recipients": "Nội bộ (Sales/Admin) — không gửi ra ngoài",
       "cross_border": false,
-      "safeguards": ["Câu hỏi đã mask từ convlog", "Chỉ lưu user_hash"],
-      "legal_basis": "Đồng ý — CHƯA có cơ chế ghi nhận trong code: GAP",
+      "safeguards": ["Câu hỏi đã mask từ convlog", "Chỉ lưu user_hash", "v5.2: PII liên hệ KHÔNG nằm trong `leads` — chỉ `contact_id` trỏ `contacts` (mã hóa, DF-18)"],
+      "legal_basis": "Đồng ý theo mục đích — bảng `consents` (v5.2) cho contact đã gắn; lead từ chat chưa có đồng ý: GAP",
       "gaps": [
         "Bảng `leads` không có hạn lưu / job xóa — GAP",
-        "Chưa có cơ chế đồng ý riêng cho mục đích liên hệ bán hàng"
+        "Lead từ chat chỉ có user_hash — chỉ liên hệ khi người gán contact có consent (`can_contact`); đồng ý chưa thu ở kênh chat"
       ]
     },
     {
@@ -127,7 +127,7 @@
       "legal_basis": "Đồng ý cho chuyển dữ liệu ra nước ngoài — CHƯA có cơ chế ghi nhận trong code: GAP; hồ sơ TIA (bản nháp này)",
       "gaps": [
         "Tên người/địa chỉ đứng tự do lọt mask — rủi ro tồn dư khi chuyển ra nước ngoài",
-        "Chưa có bản ghi đồng ý trước lượt gọi LLM",
+        "Bảng `consents` có (v5.2) nhưng CHƯA gắn kênh chat — chưa có bản ghi đồng ý trước lượt gọi LLM",
         "Điều khoản xử lý dữ liệu (DPA) với OpenRouter/nhà cung cấp chưa được Pháp chế rà"
       ]
     },
@@ -278,6 +278,36 @@
       "safeguards": ["Mã hóa khi có BACKUP_PASSPHRASE_FILE", "sha256 manifest", "Diễn tập khôi phục vào DB tạm"],
       "legal_basis": "Nghĩa vụ bảo đảm an toàn dữ liệu — CẦN LUẬT SƯ XÁC NHẬN",
       "gaps": ["Mã hóa backup là tùy chọn — chưa bắt buộc", "Nếu bật offsite cloud nước ngoài phải bổ sung TIA"]
+    },
+    {
+      "id": "DF-18",
+      "name": "CRM contact_vault / đồng ý / đại lý (KD-A2)",
+      "modules": ["ingest/crm.py"],
+      "data": "Tên, SĐT, email, địa chỉ khách (nhập tay qua stdin) + người liên hệ của đại lý + bản ghi đồng ý theo mục đích (cskh/marketing/dai_ly, mã biên bản, phiên bản chính sách) + gán lead theo tỉnh/đại lý",
+      "class": "do",
+      "subjects": "Khách hàng để lại liên hệ, người liên hệ của đại lý",
+      "purpose": "Bán hàng — chăm sóc lead, chuyển lead cho đại lý phụ trách vùng khi khách đồng ý đích danh",
+      "storage": "Bảng `contacts` (PII mã hóa Fernet), `consents` (append-only), `dealers`, `leads` (contact_id/province/dealer_code) — Postgres",
+      "retention": "Không có hạn lưu trong code — GAP (TTL theo mục đích chưa build)",
+      "recipients": "Nội bộ (Sales/Admin); đại lý ĐÍCH DANH khi có consent dai_ly hiện hành — NGƯỜI chuyển tay payload `--handoff`, hệ thống không gửi",
+      "cross_border": false,
+      "safeguards": [
+        "Mã hóa tầng ứng dụng (Fernet) — khóa `CONTACT_VAULT_KEY` chỉ ở env, DB không thấy khóa/plaintext; thiếu khóa → không ghi PII",
+        "Tra trùng SĐT bằng HMAC-SHA256 có khóa (HKDF), không sha256 trần",
+        "DB check chặn plaintext lọt vào cột `*_enc`",
+        "`consents` append-only (trigger) — rút đồng ý = thêm dòng mới",
+        "`can_contact` mặc định False; dai_ly phải đích danh đại lý",
+        "Report không giải mã, không in PII; `agent_action_log` không chứa PII",
+        "Module không có đường gửi ra ngoài (drift-guard egress)"
+      ],
+      "legal_basis": "Đồng ý theo mục đích (bảng `consents`) — nội dung đồng ý CHỜ Pháp chế duyệt",
+      "gaps": [
+        "Chưa có TTL/xóa theo mục đích và theo yêu cầu chủ thể (quyền xóa/truy cập)",
+        "Khóa mã hóa do công ty giữ + quy trình backup khóa tách khỏi backup DB chưa có (mất khóa = mất PII)",
+        "Đồng ý chưa gắn kênh chat (Zalo/web) — chỉ ghi tay qua CLI",
+        "Đại lý ký cam kết xử lý dữ liệu chưa được kiểm trong code (chỉ kiểm consent đích danh)",
+        "Phân quyền DB cho bảng CRM (role sales) chưa cấp — external-dep"
+      ]
     }
   ]
 }

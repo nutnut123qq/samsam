@@ -1,0 +1,53 @@
+# v5.2 W52.7 — docs vận hành (2026-10-12T04:19:35+07:00)
+$ python -m ingest.crm --help
+exit=0
+## flag dùng trong sop/playbook/AGENTS/kien-truc có trong --help:
+ok --add-contact
+ok --assign
+ok --by
+ok --consent
+ok --dealer
+ok --evidence
+ok --grant
+ok --handoff
+ok --help
+ok --lead
+ok --load-dealers
+ok --policy-version
+ok --province
+ok --purpose
+ok --report
+ok --source
+ok --status
+ok --withdraw
+$ grep -n 'update leads set status' docs/handover/sop.md
+exit=1 (1 = rỗng)
+$ git diff HEAD -- env.example | grep CONTACT_VAULT_KEY=
+warning: in the working copy of 'env.example', LF will be replaced by CRLF the next time Git touches it
++CONTACT_VAULT_KEY=
+$ git diff HEAD | grep -E '^\+.*(gAAAAA|CONTACT_VAULT_KEY=[A-Za-z0-9])'
+warning: in the working copy of 'data/data_flow_map.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/legal/DPIA-nhap.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/legal/TIA-nhap.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/schema.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'env.example', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'requirements.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_data_flow_map.py', LF will be replaced by CRLF the next time Git touches it
++  có `check (<col> ~ '^gAAAAA[A-Za-z0-9_=-]+$')` khi not null — DB tự
++    dòng mới không khớp `_PII_RE` và không chứa HMAC/`gAAAAA`. stdout
++    không chứa các chuỗi đó, không chứa `gAAAAA`, không chứa
++    untracked); `git diff HEAD | grep -E "^\+.*(gAAAAA|CONTACT_VAULT_KEY=
++--     `*_enc` có check chỉ nhận token Fernet (`gAAAAA...`) → plaintext lọt
++  phone_enc text not null check (phone_enc ~ '^gAAAAA[A-Za-z0-9_=-]+$'),
++  name_enc text check (name_enc ~ '^gAAAAA[A-Za-z0-9_=-]+$'),
++  email_enc text check (email_enc ~ '^gAAAAA[A-Za-z0-9_=-]+$'),
++  address_enc text check (address_enc ~ '^gAAAAA[A-Za-z0-9_=-]+$'),
+exit=0 (1 = rỗng)
+$ python -m pytest -q tests/test_handover_docs.py
+8 passed in 0.16s
+## Lọc chính xác: diff dòng khớp ở trên là REGEX check trong schema.sql + text contract DONE.md (chuỗi 'gAAAAA' trong pattern), KHÔNG phải ciphertext. Token Fernet thật dài ~100 ký tự:
+$ git diff HEAD | grep -E '^\+.*gAAAAA[A-Za-z0-9_=-]{20,}' ; grep -rE 'gAAAAA[A-Za-z0-9_=-]{20,}|CONTACT_VAULT_KEY=[A-Za-z0-9]' <file mới untracked>
+diff exit=1 (1 = rỗng)
+untracked exit=123 (1 = rỗng)
+evidence exit=1 (1 = rỗng)
+(xargs exit 123 = mọi lần grep trả 1 = không file untracked nào khớp; evidence/*.log bị gitignore nên kiểm riêng ở dòng trên)

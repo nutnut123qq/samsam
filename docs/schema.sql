@@ -812,3 +812,118 @@ begin
           jsonb_build_object('day', to_char(p_day, 'YYYY-MM-DD')));
 end $$;
 revoke execute on function schedule_draft(bigint, date, text) from public;
+
+-- ============================================================================
+-- v5.2 CRM lead & đại lý theo vùng (WP07 agent KD-A2) — contact_vault +
+-- đồng ý theo mục đích + đại lý.
+--   * `contacts` = kho liên hệ (contact_vault): PII (SĐT/tên/email/địa chỉ)
+--     MÃ HÓA Ở TẦNG ỨNG DỤNG (`ingest/crm.py`, Fernet, khóa env
+--     `CONTACT_VAULT_KEY` — DB không bao giờ thấy khóa/plaintext). Mọi cột
+--     `*_enc` có check chỉ nhận token Fernet (`gAAAAA...`) → plaintext lọt
+--     vào là DB từ chối. Tra trùng bằng `phone_hmac` = HMAC-SHA256 có khóa
+--     (dẫn xuất HKDF từ cùng khóa) của SĐT chuẩn hóa — không phải sha256
+--     trần (SĐT VN chỉ ~10^9 giá trị, sha256 trần dò ngược được). Bảng
+--     khác chỉ giữ `contact_id`.
+--   * `dealers` = đại lý (mã, vùng, trạng thái, hoa hồng mặc định). Dữ
+--     liệu hiện là MẪU (`data/dealer_regions.json`); đại lý thật =
+--     external-dep. Người liên hệ của đại lý (nếu có) nằm trong vault.
+--   * `consents` = đồng ý theo mục đích cskh | marketing | dai_ly,
+--     APPEND-ONLY (rút đồng ý = thêm dòng granted=false, không UPDATE).
+--     `dai_ly` phải ĐÍCH DANH đại lý nhận; grant phải có mã biên bản
+--     (`evidence_ref`) + phiên bản chính sách. Trạng thái hiện hành =
+--     dòng mới nhất theo `id` (view `v_consent_current`).
+--   * `leads` mở rộng bằng ALTER (khối create giữ nguyên): `contact_id`,
+--     `province` (34 tỉnh sau sáp nhập), `dealer_code`, người/giờ gán.
+-- Quyền: roles.sql KHÔNG grant 3 bảng này cho agent_writer/app_human —
+-- phân quyền sales thật là external-dep (mặc định từ chối).
+-- ============================================================================
+
+create table if not exists contacts (
+  id bigint generated always as identity primary key,
+  phone_hmac text not null unique check (phone_hmac ~ '^[0-9a-f]{64}$'),
+  phone_enc text not null check (phone_enc ~ '^gAAAAA[A-Za-z0-9_=-]+$'),
+  name_enc text check (name_enc ~ '^gAAAAA[A-Za-z0-9_=-]+$'),
+  email_enc text check (email_enc ~ '^gAAAAA[A-Za-z0-9_=-]+$'),
+  address_enc text check (address_enc ~ '^gAAAAA[A-Za-z0-9_=-]+$'),
+  province text,                    -- 1 trong 34 tên (data/vn_provinces_2025.json) — không PII
+  source text not null,             -- 'manual' | 'form_giay' | ... (nguồn thu thập)
+  created_by text not null check (btrim(created_by) <> ''),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists dealers (
+  code text primary key check (code ~ '^[A-Z0-9_-]{2,20}$'),
+  name text not null,
+  region text not null,             -- mã vùng trong data/dealer_regions.json
+  status text not null default 'active'
+    check (status in ('active', 'paused', 'ended')),
+  commission_default numeric(5,2) not null default 0
+    check (commission_default between 0 and 100),
+  contact_id bigint references contacts(id),
+  source text not null,             -- 'dealer_regions.json' | 'manual' (manual không bị loader đè)
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists consents (
+  id bigint generated always as identity primary key,
+  contact_id bigint not null references contacts(id),
+  purpose text not null check (purpose in ('cskh', 'marketing', 'dai_ly')),
+  granted boolean not null,
+  recipient_dealer text references dealers(code),
+  source text not null check (source in
+    ('form_giay', 'zalo', 'web', 'dien_thoai', 'email', 'truc_tiep')),
+  evidence_ref text,                -- MÃ biên bản/scan — không phải PII
+  policy_version text,
+  recorded_by text not null check (btrim(recorded_by) <> ''),
+  ts timestamptz not null default now(),
+  check ((purpose = 'dai_ly') = (recipient_dealer is not null)),
+  check (not granted or (btrim(coalesce(evidence_ref, '')) <> ''
+                         and btrim(coalesce(policy_version, '')) <> ''))
+);
+create index if not exists consents_contact_purpose_idx
+  on consents (contact_id, purpose, id);
+
+create or replace trigger consents_append_only_row
+  before update or delete on consents
+  for each row execute function append_only_guard();
+create or replace trigger consents_no_truncate
+  before truncate on consents
+  for each statement execute function append_only_guard();
+
+-- Đồng ý hiện hành theo (contact, mục đích, đại lý): dòng mới nhất theo id
+-- (KHÔNG theo ts — ts ghi lùi không lật được trạng thái).
+create or replace view v_consent_current as
+select distinct on (contact_id, purpose, coalesce(recipient_dealer, ''))
+  contact_id, purpose, recipient_dealer, granted,
+  case when granted then ts end as granted_at,
+  case when not granted then ts end as withdrawn_at,
+  id as consent_id
+from consents
+order by contact_id, purpose, coalesce(recipient_dealer, ''), id desc;
+
+alter table leads add column if not exists contact_id bigint references contacts(id);
+alter table leads add column if not exists province text;
+alter table leads add column if not exists dealer_code text references dealers(code);
+alter table leads add column if not exists assigned_by text;
+alter table leads add column if not exists assigned_at timestamptz;
+
+-- Trạng thái lead (v5.2 thêm 'qualified'): trigger thay vì check
+-- constraint — drift-guard tests/test_lead_store.py chỉ cho lệnh ALTER
+-- dạng thêm cột (add column if not exists). Raise errcode check_violation (như
+-- check). Chỉ kiểm dòng mới/đổi status — DB cũ có status lạ vẫn
+-- apply_schema được. Thứ tự chuyển (chỉ tiến) ép ở `ingest.crm`.
+create or replace function leads_status_guard() returns trigger
+language plpgsql as $$
+begin
+  if new.status not in ('new', 'contacted', 'qualified', 'won', 'lost') then
+    raise exception using errcode = 'check_violation',
+      message = format('leads.status không hợp lệ: %s', new.status);
+  end if;
+  return new;
+end $$;
+revoke execute on function leads_status_guard() from public;
+
+create or replace trigger leads_status_check
+  before insert or update of status on leads
+  for each row execute function leads_status_guard();

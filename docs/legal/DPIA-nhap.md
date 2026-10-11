@@ -35,8 +35,8 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Bên nhận | Zalo/VNG — openapi.zalo.me (gửi tin), oauth.zaloapp.com (làm mới token) — Việt Nam |
 | Chuyển ra nước ngoài | Không |
 | Biện pháp bảo vệ (có trong code) | Xác thực chữ ký webhook (verify_signature) trước khi xử lý; Câu hỏi sức khỏe (`is_health_question`) chuyển người, không gửi LLM; Log/stdout chỉ in `_uhash(user_id)` + `_mask_pii` — không in user_id thô |
-| Căn cứ xử lý | Đồng ý của khách — CHƯA có cơ chế ghi nhận trong code (bảng consent, tin chào có link chính sách): GAP |
-| GAP | Chưa có cơ chế ghi nhận đồng ý (bảng consent) trước khi xử lý tin nhắn; `zalo_seen.db` lưu user_id thô trong khóa `follow:<user_id>` tới 7 ngày; CẦN LUẬT SƯ XÁC NHẬN: Zalo/VNG là bên xử lý (cần hợp đồng xử lý) hay bên nhận độc lập |
+| Căn cứ xử lý | Đồng ý của khách — bảng `consents` có (v5.2) nhưng CHƯA gắn kênh chat (tin chào có link chính sách): GAP |
+| GAP | Bảng `consents` đã có (v5.2, đồng ý theo mục đích cskh/marketing/dai_ly) nhưng CHƯA gắn kênh chat — chưa ghi nhận đồng ý trước khi xử lý tin nhắn; `zalo_seen.db` lưu user_id thô trong khóa `follow:<user_id>` tới 7 ngày; CẦN LUẬT SƯ XÁC NHẬN: Zalo/VNG là bên xử lý (cần hợp đồng xử lý) hay bên nhận độc lập |
 
 ### DF-02 — Preflight token Zalo trước khi mở public
 
@@ -99,16 +99,16 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mã luồng | DF-05 |
 | Module (code) | `ingest/lead_store.py` |
 | Mục đích | Bán hàng — chăm sóc lại khách có nhu cầu |
-| Dữ liệu | user_hash, câu hỏi đã mask, intent (partner/order/price/contact), trạng thái chăm sóc |
+| Dữ liệu | user_hash, câu hỏi đã mask, intent (partner/order/price/contact), trạng thái chăm sóc; v5.2: `contact_id` (tham chiếu kho liên hệ — không PII trong `leads`), tỉnh, mã đại lý gán |
 | Lớp | Đỏ |
 | Chủ thể | Khách hàng, người hỏi làm đại lý |
 | Nơi lưu | Bảng `leads` (Postgres) |
 | Thời hạn lưu | Không có hạn lưu trong code — GAP |
 | Bên nhận | Nội bộ (Sales/Admin) — không gửi ra ngoài |
 | Chuyển ra nước ngoài | Không |
-| Biện pháp bảo vệ (có trong code) | Câu hỏi đã mask từ convlog; Chỉ lưu user_hash |
-| Căn cứ xử lý | Đồng ý — CHƯA có cơ chế ghi nhận trong code: GAP |
-| GAP | Bảng `leads` không có hạn lưu / job xóa — GAP; Chưa có cơ chế đồng ý riêng cho mục đích liên hệ bán hàng |
+| Biện pháp bảo vệ (có trong code) | Câu hỏi đã mask từ convlog; Chỉ lưu user_hash; v5.2: PII liên hệ KHÔNG nằm trong `leads` — chỉ `contact_id` trỏ `contacts` (mã hóa, DF-18) |
+| Căn cứ xử lý | Đồng ý theo mục đích — bảng `consents` (v5.2) cho contact đã gắn; lead từ chat chưa có đồng ý: GAP |
+| GAP | Bảng `leads` không có hạn lưu / job xóa — GAP; Lead từ chat chỉ có user_hash — chỉ liên hệ khi người gán contact có consent (`can_contact`); đồng ý chưa thu ở kênh chat |
 
 ### DF-06 — Chatbot RAG gửi câu hỏi tới LLM qua gateway (OpenRouter)
 
@@ -126,7 +126,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Chuyển ra nước ngoài | CÓ — xem TIA |
 | Biện pháp bảo vệ (có trong code) | `_mask_pii` ở gateway cho MỌI message (system/history/user) và input embedding; `is_health_question` chặn câu hỏi sức khỏe TRƯỚC LLM (chuyển người); Provider routing data_collection=deny, zdr=true, allow_fallbacks=false, only=whitelist (fail-closed); Kill-switch + trần chi phí theo agent |
 | Căn cứ xử lý | Đồng ý cho chuyển dữ liệu ra nước ngoài — CHƯA có cơ chế ghi nhận trong code: GAP; hồ sơ TIA (bản nháp này) |
-| GAP | Tên người/địa chỉ đứng tự do lọt mask — rủi ro tồn dư khi chuyển ra nước ngoài; Chưa có bản ghi đồng ý trước lượt gọi LLM; Điều khoản xử lý dữ liệu (DPA) với OpenRouter/nhà cung cấp chưa được Pháp chế rà |
+| GAP | Tên người/địa chỉ đứng tự do lọt mask — rủi ro tồn dư khi chuyển ra nước ngoài; Bảng `consents` có (v5.2) nhưng CHƯA gắn kênh chat — chưa có bản ghi đồng ý trước lượt gọi LLM; Điều khoản xử lý dữ liệu (DPA) với OpenRouter/nhà cung cấp chưa được Pháp chế rà |
 
 ### DF-07 — Content Studio sinh nháp nội dung qua gateway
 
@@ -290,6 +290,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Nghĩa vụ bảo đảm an toàn dữ liệu — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Mã hóa backup là tùy chọn — chưa bắt buộc; Nếu bật offsite cloud nước ngoài phải bổ sung TIA |
 
+### DF-18 — CRM contact_vault / đồng ý / đại lý (KD-A2)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-18 |
+| Module (code) | `ingest/crm.py` |
+| Mục đích | Bán hàng — chăm sóc lead, chuyển lead cho đại lý phụ trách vùng khi khách đồng ý đích danh |
+| Dữ liệu | Tên, SĐT, email, địa chỉ khách (nhập tay qua stdin) + người liên hệ của đại lý + bản ghi đồng ý theo mục đích (cskh/marketing/dai_ly, mã biên bản, phiên bản chính sách) + gán lead theo tỉnh/đại lý |
+| Lớp | Đỏ |
+| Chủ thể | Khách hàng để lại liên hệ, người liên hệ của đại lý |
+| Nơi lưu | Bảng `contacts` (PII mã hóa Fernet), `consents` (append-only), `dealers`, `leads` (contact_id/province/dealer_code) — Postgres |
+| Thời hạn lưu | Không có hạn lưu trong code — GAP (TTL theo mục đích chưa build) |
+| Bên nhận | Nội bộ (Sales/Admin); đại lý ĐÍCH DANH khi có consent dai_ly hiện hành — NGƯỜI chuyển tay payload `--handoff`, hệ thống không gửi |
+| Chuyển ra nước ngoài | Không |
+| Biện pháp bảo vệ (có trong code) | Mã hóa tầng ứng dụng (Fernet) — khóa `CONTACT_VAULT_KEY` chỉ ở env, DB không thấy khóa/plaintext; thiếu khóa → không ghi PII; Tra trùng SĐT bằng HMAC-SHA256 có khóa (HKDF), không sha256 trần; DB check chặn plaintext lọt vào cột `*_enc`; `consents` append-only (trigger) — rút đồng ý = thêm dòng mới; `can_contact` mặc định False; dai_ly phải đích danh đại lý; Report không giải mã, không in PII; `agent_action_log` không chứa PII; Module không có đường gửi ra ngoài (drift-guard egress) |
+| Căn cứ xử lý | Đồng ý theo mục đích (bảng `consents`) — nội dung đồng ý CHỜ Pháp chế duyệt |
+| GAP | Chưa có TTL/xóa theo mục đích và theo yêu cầu chủ thể (quyền xóa/truy cập); Khóa mã hóa do công ty giữ + quy trình backup khóa tách khỏi backup DB chưa có (mất khóa = mất PII); Đồng ý chưa gắn kênh chat (Zalo/web) — chỉ ghi tay qua CLI; Đại lý ký cam kết xử lý dữ liệu chưa được kiểm trong code (chỉ kiểm consent đích danh); Phân quyền DB cho bảng CRM (role sales) chưa cấp — external-dep |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -311,19 +329,20 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-13 | Crawl website công khai của công ty | Xanh | thấp | không | 0 |
 | DF-14 | Nhật ký chi phí LLM (llm_usage) | Xanh | thấp | không | 0 |
 | DF-15 | Sao lưu và diễn tập khôi phục DB | Đỏ | cao | không | 2 |
+| DF-18 | CRM contact_vault / đồng ý / đại lý (KD-A2) | Đỏ | cao | không | 5 |
 
 ## 4. Tổng hợp GAP
 
-- [DF-01] Chưa có cơ chế ghi nhận đồng ý (bảng consent) trước khi xử lý tin nhắn
+- [DF-01] Bảng `consents` đã có (v5.2, đồng ý theo mục đích cskh/marketing/dai_ly) nhưng CHƯA gắn kênh chat — chưa ghi nhận đồng ý trước khi xử lý tin nhắn
 - [DF-01] `zalo_seen.db` lưu user_id thô trong khóa `follow:<user_id>` tới 7 ngày
 - [DF-01] CẦN LUẬT SƯ XÁC NHẬN: Zalo/VNG là bên xử lý (cần hợp đồng xử lý) hay bên nhận độc lập
 - [DF-04] Tên người, địa chỉ, mã đơn đứng tự do trong câu hỏi KHÔNG bị `_mask_pii` che (chỉ SĐT/email) — rủi ro tồn dư
 - [DF-04] Chưa có luồng xóa theo yêu cầu chủ thể (theo user_hash)
 - [DF-04] `_uhash` không muối — user_id Zalo dạng số có thể dò ngược ra hash (bút danh, không phải ẩn danh)
 - [DF-05] Bảng `leads` không có hạn lưu / job xóa — GAP
-- [DF-05] Chưa có cơ chế đồng ý riêng cho mục đích liên hệ bán hàng
+- [DF-05] Lead từ chat chỉ có user_hash — chỉ liên hệ khi người gán contact có consent (`can_contact`); đồng ý chưa thu ở kênh chat
 - [DF-06] Tên người/địa chỉ đứng tự do lọt mask — rủi ro tồn dư khi chuyển ra nước ngoài
-- [DF-06] Chưa có bản ghi đồng ý trước lượt gọi LLM
+- [DF-06] Bảng `consents` có (v5.2) nhưng CHƯA gắn kênh chat — chưa có bản ghi đồng ý trước lượt gọi LLM
 - [DF-06] Điều khoản xử lý dữ liệu (DPA) với OpenRouter/nhà cung cấp chưa được Pháp chế rà
 - [DF-07] Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email)
 - [DF-09] Tên nhân viên trong tài liệu không bị mask khi embedding
@@ -331,6 +350,11 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-11] Chưa có hạn lưu cho dữ liệu đơn sàn
 - [DF-15] Mã hóa backup là tùy chọn — chưa bắt buộc
 - [DF-15] Nếu bật offsite cloud nước ngoài phải bổ sung TIA
+- [DF-18] Chưa có TTL/xóa theo mục đích và theo yêu cầu chủ thể (quyền xóa/truy cập)
+- [DF-18] Khóa mã hóa do công ty giữ + quy trình backup khóa tách khỏi backup DB chưa có (mất khóa = mất PII)
+- [DF-18] Đồng ý chưa gắn kênh chat (Zalo/web) — chỉ ghi tay qua CLI
+- [DF-18] Đại lý ký cam kết xử lý dữ liệu chưa được kiểm trong code (chỉ kiểm consent đích danh)
+- [DF-18] Phân quyền DB cho bảng CRM (role sales) chưa cấp — external-dep
 
 ## 5. Câu hỏi cho luật sư
 

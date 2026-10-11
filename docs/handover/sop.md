@@ -177,6 +177,67 @@ python -m ingest.market_csv --report
   trần) bị từ chối — xóa dòng/cột thừa hoặc xuất CSV. Ô số XLSX có phần
   lẻ (vd 12,345) là lỗi, không tự đổi thành số nguyên.
 
+## 5c. CRM lead & đại lý (v5.2 — `python -m ingest.crm`)
+
+Người chạy: Sales-admin / GĐ bán hàng. Agent KHÔNG tự liên hệ khách hay
+đại lý — module không gửi gì ra ngoài; mọi lệnh ghi cần `--by "<tên
+người>"` và để lại 1 dòng `agent_action_log` (không chứa PII).
+
+**Khóa mã hóa (làm 1 lần, người phụ trách hạ tầng):**
+
+```
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+Dán giá trị vào `.env` dòng `CONTACT_VAULT_KEY=...` — KHÔNG commit, không
+gửi qua chat. **Backup khóa TÁCH khỏi backup DB** (két/password manager
+của công ty): mất khóa = mất toàn bộ SĐT/tên/email/địa chỉ trong
+`contacts` (không khôi phục được); lộ khóa + lộ backup DB = lộ PII. Thiếu
+hoặc sai khóa → lệnh cần khóa dừng `[err]` exit 2, không ghi gì. Khóa thật
+do công ty giữ = external-dep (hiện chỉ có khóa test).
+
+**Lệnh hằng ngày:**
+
+```
+python -m ingest.crm --load-dealers --by "<tên>"          # nạp đại lý MẪU từ data/dealer_regions.json (dòng manual không bị đè)
+python -m ingest.crm --add-contact - --lead 12 --by "<tên>"   # dán JSON vào stdin, Ctrl+Z Enter (Windows) / Ctrl+D
+python -m ingest.crm --consent 5 --purpose dai_ly --grant --source form_giay --evidence BB-2026-001 --policy-version v1 --dealer DLM01 --by "<tên>"
+python -m ingest.crm --consent 5 --purpose marketing --withdraw --source dien_thoai --by "<tên>"
+python -m ingest.crm --assign 12 --dealer DLM01 --by "<tên>" [--province "Quảng Nam"]
+python -m ingest.crm --status 12 qualified --by "<tên>"
+python -m ingest.crm --report
+python -m ingest.crm --handoff 12 --dealer DLM01 --by "<tên>"
+```
+
+- **Thêm liên hệ:** JSON `{"phone": "...", "name": "...", "email": "...",
+  "address": "...", "province": "...", "source": "manual"}` gõ/dán qua
+  stdin (`-`). KHÔNG gõ SĐT/tên trên dòng lệnh (lộ lịch sử shell), KHÔNG
+  lưu file JSON liên hệ trong repo (lệnh từ chối file nằm trong repo).
+  SĐT trùng (so bằng HMAC) → trả contact cũ, không ghi đè.
+- **Đồng ý:** mỗi lần ghi/rút là 1 dòng mới (không sửa/xóa được). Ghi đồng
+  ý cần mã biên bản/scan (`--evidence`, KHÔNG phải SĐT/email) + phiên
+  bản nội dung đồng ý (`--policy-version` — nội dung do Pháp chế duyệt,
+  external-dep). Rút đồng ý không cần evidence. `dai_ly` phải ghi ĐÍCH
+  DANH đại lý nhận (`--dealer`). Chưa có đồng ý = KHÔNG liên hệ
+  marketing / KHÔNG chuyển PII cho đại lý.
+- **Gán đại lý:** tỉnh suy từ câu hỏi lead (34 tỉnh sau sáp nhập, nhận cả
+  tên cũ — bảng `data/vn_provinces_2025.json` là GIẢ ĐỊNH chưa đối chiếu
+  văn bản chính thức); không suy được → truyền `--province`. Đại lý phải
+  active và phụ trách vùng của tỉnh. Lead đã gán đại lý khác → từ chối
+  (tranh chấp do GĐ bán hàng quyết, không gán đè).
+- **Report:** không cần khóa, không in PII — lead theo tỉnh/đại lý/trạng
+  thái + lead chưa gán kèm đại lý gợi ý theo vùng.
+- **Handoff:** in JSON để NGƯỜI tự chuyển cho đại lý (hệ thống không
+  gửi). Có SĐT/tên CHỈ khi khách đồng ý `dai_ly` đích danh đại lý đó và
+  chưa rút; ngược lại payload chỉ có tỉnh/intent/câu hỏi đã che. Đại lý
+  ký cam kết xử lý dữ liệu trước khi nhận PII (kiểm tay — chưa có trong
+  code).
+- Hoa hồng: `commission_default` của đại lý cho TPBVSK/thực phẩm; rượu
+  bán online luôn 0.
+- Exit: 0 ok · 1 DB không truy cập được / thiếu bảng (chạy
+  `python scripts/apply_schema.py`) / vi phạm nghiệp vụ · 2 sai cú pháp,
+  thiếu `--by`, thiếu/sai khóa.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):
@@ -359,10 +420,13 @@ hạ tầng (vai trò `ha_tang`) lưu output + backup DB hiện tại, báo TGĐ
 ### Cập nhật status lead (pilot chưa có nút trên UI)
 
 ```
-"C:\Program Files\PostgreSQL\17\bin\psql.exe" -U <user> -d samsam -c "update leads set status='contacted' where id=12;"
+python -m ingest.crm --status 12 contacted --by "<tên>"
 ```
 
-Status hợp lệ: `new` | `contacted` | `won` | `lost`.
+Status hợp lệ: `new` → `contacted` → `qualified` → `won`; mọi trạng thái
+chưa kết thúc → `lost`. Không lùi; `won`/`lost` là kết thúc (lệnh từ
+chối, exit 1). Không sửa status bằng SQL tay (mất `agent_action_log`).
+Chi tiết CRM: mục 5c.
 
 ### Báo cáo in "(mẫu)" khắp nơi
 
@@ -416,6 +480,7 @@ SOW.
 |---|---|---|
 | `DATABASE_URL` | Postgres local db `samsam` | RAG/draft/leads/agents không kết nối được |
 | `OPENROUTER_API_KEY` | 1 key cho cả chat + embeddings | Chatbot & Content Studio chết |
+| `CONTACT_VAULT_KEY` | Khóa Fernet mã hóa PII trong `contacts` (v5.2) — backup TÁCH khỏi backup DB | `ingest.crm --add-contact/--handoff` dừng exit 2, không ghi PII |
 | `OR_CHAT_MODEL` / `OR_EMBED_MODEL` | Model chat / embedding (có mặc định) | Dùng mặc định `openai/gpt-4o-mini` / `openai/text-embedding-3-small` |
 | `ZALO_APP_ID` / `ZALO_APP_SECRET` | OAuth refresh token Zalo OA | Webhook không send được khi token hết hạn |
 | `ZALO_OA_SECRET` | Verify chữ ký webhook Zalo | `DEPLOY` bật → refuse to serve |
