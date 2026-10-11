@@ -219,6 +219,56 @@ python -m ingest.market_csv --report
   trần) bị từ chối — xóa dòng/cột thừa hoặc xuất CSV. Ô số XLSX có phần
   lẻ (vd 12,345) là lỗi, không tự đổi thành số nguyên.
 
+## 5c. Kịch bản mùa + nghiên cứu giả lập (v7.3)
+
+**Kịch bản mùa** (engine chung cho dự báo mùa, phân bổ tồn Tết, dòng tiền
+13 tuần — không DB, không LLM):
+
+```
+python -m pipelines.scenario --sku saphraton-20v --channel shopee --weeks 13 [--start 2026-10-12] [--json]
+```
+
+- Mỗi tuần (thứ Hai) in 3 số **thấp / cơ sở / cao** — đây là KHOẢNG, không
+  phải doanh số cam kết; lập kế hoạch theo cả khoảng, không lấy riêng cột
+  "cơ sở". Cột "sự kiện" = 11.11, 12.12, `tet_2027` (Tết 06/02/2027 — tuần
+  01/02 thấp vì nghỉ Tết, 6 tuần trước Tết cao vì mua quà). 11.11/12.12
+  chỉ áp kênh online (ngày sale sàn, khóa `channels` trong file giả định);
+  kênh `offline` không nhân hệ số sàn. Tết áp mọi kênh.
+- Kênh `offline` = đại lý/cửa hàng. Rượu sâm luôn 0 ở mọi kênh online
+  (ghi chú "rượu: chỉ kênh offline"); SKU chưa có kênh trong
+  `allowed_channels` golden cũng ra 0 kèm ghi chú.
+- Giả định ở `data/scenario_assumptions.json` — dòng đầu output in
+  `status` "GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt". Baseline là số MẪU, chưa
+  phải số bán thật. **GĐ KD + Tài chính** chốt hệ số/3 mức rồi mới đổi
+  `status`; GĐ bán hàng cấp số bán thật để thay baseline.
+- Exit 1 = SKU không có trong golden / file giả định hỏng / thiếu baseline
+  cho SKU × kênh (báo lỗi, không bao giờ in 0 câm); exit 2 = sai tham số.
+
+**Nghiên cứu giả lập persona** (persona TỔNG HỢP `data/personas.json`,
+không dữ liệu khách thật):
+
+```
+python scripts/persona_sim.py --dry-run
+```
+
+- **Cổng DPIA:** `data/sim_config.json` `"dpia_signed": false` → chạy
+  không cờ in `[refuse] DPIA chưa ký` và **exit 2** (không gọi LLM, không
+  ghi DB). Chỉ NGƯỜI thật đổi `dpia_signed` sang `true` sau khi Pháp chế +
+  TGĐ ký DPIA/TIA — dev/agent không tự đổi.
+- `--dry-run` dùng gateway GIẢ (số giả, nhãn "DRY-RUN — số giả"), ghi
+  `sim_runs` với `dry_run=true`. Chạy thật: 3 model × 3 prompt × 5 lần qua
+  `llm_gateway` (agent `persona_sim`, trần tháng `monthly_cap_usd`).
+- Báo cáo = khoảng p10–p90 + p50 + độ phân tán theo phương án, luôn có
+  dòng "**KHÔNG phải dự báo doanh số**" — chỉ dùng để loại bớt phương án
+  yếu. Có 1 phương án đối chứng cố tình yếu: nếu nó không thấp nhất ở ≥80%
+  lời gọi hợp lệ → cờ `[KHÔNG DÙNG ĐƯỢC]`, không dùng kết quả.
+- Đầu vào bị chặn (exit 1, trước khi gọi LLM): persona có key ngoài danh
+  sách cho phép (mã đơn, user_hash, SĐT, email...), persona < 18 tuổi,
+  phương án rượu chạy với nhóm trẻ hoặc nhắc giới trẻ/sinh viên/Gen Z,
+  phương án có từ cấm, TPBVSK chưa có XNQC mà làm phương án sản phẩm
+  (chỉ được làm chủ đề thương hiệu).
+- **Quản lý MXH** duyệt báo cáo; TGĐ/BKS đồng ký biên bản trước khi dùng.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):

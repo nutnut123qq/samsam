@@ -121,6 +121,7 @@ bảng nào thì dừng, không bật app.
 | `decisions` | B | (v4.0) append-only — override_qa / expired |
 | `channel_snapshots` | B | (v4.0) số liệu kênh nhập tay/API theo kỳ |
 | `red_alerts` | B | (v4.0) append-only (trigger) — cảnh báo đỏ không được mất |
+| `sim_runs` | B | nghiên cứu giả lập persona (v7.3) — lịch sử chạy model/prompt/seed để kiểm toán, không PII |
 
 ## 5. Backup + diễn tập trên cloud (mẫu — external-dep)
 

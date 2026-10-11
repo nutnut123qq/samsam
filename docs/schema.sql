@@ -1250,3 +1250,39 @@ begin
   return n;
 end $$;
 revoke execute on function expire_overdue(text) from public;
+
+-- ============================================================================
+-- ============================================================
+-- v7.3 nghiên cứu giả lập (WP09, scripts/persona_sim.py)
+-- Persona TỔNG HỢP (data/personas.json) — không PII, không dữ liệu khách
+-- thật. KHÔNG lưu văn bản LLM thô: chỉ điểm 0..10 đã parse. Mỗi dòng = 1
+-- lời gọi LLM (model × prompt × lần lặp) × 1 phương án; `dry_run` tách số
+-- giả (gateway giả) khỏi chạy thật (chỉ sau khi DPIA ký). score null = lời
+-- gọi parse lỗi hoặc guardrail chặn. Đủ model/prompt_hash/seed/ngày/đối
+-- chứng để tái lập + kiểm toán.
+-- ============================================================
+create table if not exists sim_runs (
+  id bigint generated always as identity primary key,
+  run_id text not null,
+  dry_run boolean not null,
+  run_date date not null,
+  created_at timestamptz not null default now(),
+  persona_set text not null,
+  persona_set_hash text not null,
+  model text not null,
+  provider text not null,
+  model_version text not null,
+  prompt_id text not null,
+  prompt_hash text not null,
+  sample_idx int not null check (sample_idx >= 0),
+  temperature numeric not null,
+  seed int not null,
+  seed_supported boolean not null,
+  option_id text not null,
+  is_control boolean not null,
+  score numeric check (score between 0 and 10),
+  parse_ok boolean not null,
+  guardrail_ok boolean not null,
+  unique (run_id, model, prompt_id, sample_idx, option_id)
+);
+create index if not exists sim_runs_run_idx on sim_runs (run_id);
