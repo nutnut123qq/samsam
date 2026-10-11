@@ -812,3 +812,441 @@ begin
           jsonb_build_object('day', to_char(p_day, 'YYYY-MM-DD')));
 end $$;
 revoke execute on function schedule_draft(bigint, date, text) from public;
+
+-- ============================================================================
+-- v4.0 hàng duyệt dùng chung (WP03 "Khung điều phối, duyệt và log dùng chung"
+-- cho 11 agent giám đốc). Mở rộng mẫu v3.4 (`approvals` + `agent_action_log`
+-- + function SECURITY DEFINER) cho MỌI loại object — TRỪ `content_draft`
+-- (giữ đường `approve_draft` v3.4: nếu cho vào hàng chung, 1 approval với
+-- object_id = id draft làm `verify_publish`/`schedule_draft` của draft pass
+-- mà không qua `approve_draft`).
+--   * `approval_queue` — agent nhân viên/GĐ khối đẩy việc (`enqueue_item`),
+--     người duyệt từng mục (`decide_item`, lane per_item) hoặc luật tự duyệt
+--     đã ký (`auto_approve_item`, lane auto_policy). Nội dung (`payload`) +
+--     sha256 BẤT BIẾN (trigger); status chỉ đổi 1 lần pending → approved|
+--     rejected|expired; không xóa. Quá SLA (`due_at`) → `expire_overdue` đánh
+--     expired, KHÔNG BAO GIỜ tự duyệt. Ai ghi: function; ai đọc: app_human,
+--     agent_writer (agent GĐ đọc để làm bản tin).
+--   * `auto_policies` — luật tự duyệt theo loại; `max_risk` CHỈ 'low' (cấu
+--     trúc cấm tự duyệt medium/high); bật phải có người ký. Ship RỖNG — chủ
+--     khối ký phạm vi = external-dep. Chỉ owner ghi.
+--   * `decisions` — override_qa (ép trình bản QA FAIL: lý do ≥10 ký tự +
+--     người ≠ người tạo) và expired (hết SLA). Append-only.
+--   * `channel_snapshots` — số liệu kênh theo kỳ (nhập tay từ file xuất hoặc
+--     API) cho cockpit sau này. agent_writer insert, app_human đọc.
+--   * `red_alerts` — cảnh báo đỏ append-only (trigger chặn UPDATE/DELETE/
+--     TRUNCATE khi còn bật, cả DML của owner/superuser; owner vẫn DISABLE
+--     TRIGGER, superuser vẫn replica — neo ngoài object-lock là
+--     external-dep; TGĐ/ha_tang không được giữ DSN owner/superuser). Người nhận độc lập
+--     (không TGĐ/ha_tang) cấu hình ở `data/red_alert_routing.json`;
+--     thiếu người nhận → vẫn ghi dòng + `route_error` (fail-closed).
+-- Detail log chỉ id/sha/kind — KHÔNG payload, KHÔNG lý do.
+-- ============================================================================
+
+create table if not exists approval_queue (
+  id bigint generated always as identity primary key,
+  object_type text not null
+    check (object_type ~ '^[a-z][a-z0-9_]{1,39}$'
+           and object_type <> 'content_draft'),
+  object_id text not null check (btrim(object_id) <> ''),
+  block text not null check (block ~ '^[a-z][a-z_]{1,31}$'),
+  title text not null,
+  payload text not null,            -- nội dung sẽ phát hành — đúng bản được hash
+  content_sha256 text not null check (content_sha256 ~ '^[0-9a-f]{64}$'),
+  risk text not null check (risk in ('low', 'medium', 'high')),
+  guardrail jsonb not null,
+  qa_status text not null default 'none'
+    check (qa_status in ('none', 'pass', 'fail')),
+  created_by text not null check (btrim(created_by) <> ''),
+  created_at timestamptz not null default now(),
+  due_at timestamptz not null,
+  status text not null default 'pending'
+    check (status in ('pending', 'approved', 'rejected', 'expired')),
+  lane text check (lane in ('auto_policy', 'per_item')),
+  decided_by text,
+  decided_at timestamptz
+);
+create unique index if not exists approval_queue_pending_uq
+  on approval_queue (object_type, object_id) where status = 'pending';
+create index if not exists approval_queue_block_idx
+  on approval_queue (block, status, due_at);
+
+-- INSERT: ép sha256 = sha(payload), pending, chưa quyết định, created_at=now
+-- (không tin client). UPDATE: chỉ pending → approved|rejected|expired MỘT lần
+-- kèm lane/decided_by/decided_at; cột khác bất biến. DELETE → chặn.
+create or replace function approval_queue_guard() returns trigger
+language plpgsql as $$
+begin
+  if tg_op = 'INSERT' then
+    new.content_sha256 := encode(sha256(convert_to(new.payload, 'UTF8')),
+                                 'hex');
+    new.status := 'pending';
+    new.lane := null;
+    new.decided_by := null;
+    new.decided_at := null;
+    new.created_at := now();
+    return new;
+  end if;
+  if tg_op = 'DELETE' then
+    raise exception 'approval_queue: DELETE bị chặn (hàng duyệt không xóa)';
+  end if;
+  if old.status <> 'pending' then
+    raise exception 'approval_queue #%: đã %, không đổi được nữa',
+      old.id, old.status;
+  end if;
+  if new.status not in ('approved', 'rejected', 'expired') then
+    raise exception 'approval_queue #%: chỉ chuyển pending → approved|rejected|expired',
+      old.id;
+  end if;
+  if (new.id, new.object_type, new.object_id, new.block, new.title,
+      new.payload, new.content_sha256, new.risk, new.guardrail,
+      new.qa_status, new.created_by, new.created_at, new.due_at)
+     is distinct from
+     (old.id, old.object_type, old.object_id, old.block, old.title,
+      old.payload, old.content_sha256, old.risk, old.guardrail,
+      old.qa_status, old.created_by, old.created_at, old.due_at) then
+    raise exception 'approval_queue #%: nội dung/metadata bất biến, chỉ đổi status',
+      old.id;
+  end if;
+  if btrim(coalesce(new.decided_by, '')) = '' then
+    raise exception 'approval_queue #%: thiếu người quyết định', old.id;
+  end if;
+  new.decided_at := now();
+  return new;
+end $$;
+revoke execute on function approval_queue_guard() from public;
+
+create or replace trigger approval_queue_guard_row
+  before insert or update or delete on approval_queue
+  for each row execute function approval_queue_guard();
+create or replace trigger approval_queue_no_truncate
+  before truncate on approval_queue
+  for each statement execute function append_only_guard();
+
+create table if not exists auto_policies (
+  id text primary key check (id ~ '^[a-z0-9_]{1,40}$'),
+  object_type text not null,
+  max_risk text not null check (max_risk = 'low'),
+  enabled boolean not null default false,
+  signed_by text,
+  signed_at timestamptz,
+  note text,
+  check (not enabled or (btrim(coalesce(signed_by, '')) <> ''
+                         and signed_at is not null))
+);
+
+create table if not exists decisions (
+  id bigint generated always as identity primary key,
+  kind text not null check (kind in ('override_qa', 'expired')),
+  queue_id bigint not null references approval_queue (id),
+  decided_by text not null check (btrim(decided_by) <> ''),
+  -- >= 10 ký tự KHÔNG tính khoảng trắng (DB cũ giữ CHECK btrim — override_qa là chốt).
+  reason text not null
+    check (char_length(regexp_replace(reason, '\s', '', 'g')) >= 10),
+  created_at timestamptz not null default now(),
+  db_role text not null default session_user
+);
+create index if not exists decisions_queue_idx on decisions (queue_id, kind);
+
+create or replace trigger decisions_append_only_row
+  before update or delete on decisions
+  for each row execute function append_only_guard();
+create or replace trigger decisions_no_truncate
+  before truncate on decisions
+  for each statement execute function append_only_guard();
+
+create table if not exists channel_snapshots (
+  id bigint generated always as identity primary key,
+  channel text not null check (channel ~ '^[a-z][a-z0-9_]{1,31}$'),
+  metric_id text not null check (metric_id ~ '^[a-z][a-z0-9_.]{1,63}$'),
+  period_kind text not null check (period_kind in ('day', 'week', 'month')),
+  period_start date not null,
+  value numeric not null,
+  source text not null check (source in ('manual_export', 'api')),
+  source_ref text,
+  captured_by text not null check (btrim(captured_by) <> ''),
+  captured_at timestamptz not null default now(),
+  unique (channel, metric_id, period_kind, period_start, source)
+);
+
+create table if not exists red_alerts (
+  id bigint generated always as identity primary key,
+  ts timestamptz not null default now(),
+  source_agent text not null check (btrim(source_agent) <> ''),
+  title text not null check (btrim(title) <> ''),
+  detail jsonb not null default '{}',
+  recipients text[] not null default '{}',
+  route_error text,
+  db_role text not null default session_user
+);
+
+-- ts/db_role do DB đặt (không tin client — cảnh báo không lùi giờ được).
+create or replace function red_alerts_stamp() returns trigger
+language plpgsql as $$
+begin
+  new.ts := now();
+  new.db_role := session_user;
+  new.detail := coalesce(new.detail, '{}'::jsonb);
+  new.recipients := coalesce(new.recipients, '{}'::text[]);
+  return new;
+end $$;
+revoke execute on function red_alerts_stamp() from public;
+
+create or replace trigger red_alerts_stamp_ins
+  before insert on red_alerts
+  for each row execute function red_alerts_stamp();
+create or replace trigger red_alerts_append_only_row
+  before update or delete on red_alerts
+  for each row execute function append_only_guard();
+create or replace trigger red_alerts_no_truncate
+  before truncate on red_alerts
+  for each statement execute function append_only_guard();
+
+-- Đẩy 1 mục vào hàng duyệt. SLA 1..720 giờ → due_at = now() + SLA.
+-- Guardrail là snapshot do caller tính (pipelines.approval_queue.enqueue TỰ
+-- chạy guardrail.check, không nhận từ agent); decide_item kiểm lại snapshot,
+-- Python kiểm lại payload lần nữa trước khi gọi.
+create or replace function enqueue_item(p_object_type text, p_object_id text,
+  p_block text, p_title text, p_payload text, p_risk text, p_guardrail jsonb,
+  p_qa_status text, p_created_by text, p_sla_hours int)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := btrim(coalesce(p_created_by, ''));
+  v_id bigint;
+  v_sha text;
+begin
+  if v_by = '' then
+    raise exception 'thiếu người/agent tạo mục';
+  end if;
+  if p_sla_hours is null or p_sla_hours < 1 or p_sla_hours > 720 then
+    raise exception 'SLA % giờ ngoài khoảng 1..720', p_sla_hours;
+  end if;
+  insert into approval_queue (object_type, object_id, block, title, payload,
+    content_sha256, risk, guardrail, qa_status, created_by, due_at)
+  values (p_object_type, p_object_id, p_block, coalesce(p_title, ''),
+    p_payload, repeat('0', 64), p_risk, coalesce(p_guardrail, '{}'::jsonb),
+    coalesce(p_qa_status, 'none'), v_by,
+    now() + make_interval(hours => p_sla_hours))
+  returning approval_queue.id, approval_queue.content_sha256
+    into v_id, v_sha;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'queue_enqueue', p_object_type, p_object_id,
+          jsonb_build_object('queue_id', v_id, 'content_sha256', v_sha,
+                             'block', p_block));
+  return v_id;
+end $$;
+revoke execute on function enqueue_item(text, text, text, text, text, text,
+  jsonb, text, text, int) from public;
+
+-- Người quyết định từng mục (lane per_item). Approve: guardrail ok, QA FAIL
+-- phải có override_qa, người duyệt ≠ người tạo. Reject: người tạo tự rút
+-- được. Quá SLA → không quyết (chờ expire). Cùng transaction: status +
+-- approvals (sha bản trong hàng) + log. Trả id approvals.
+create or replace function decide_item(p_id bigint, p_decider text,
+  p_decision text, p_note text default null)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  q approval_queue%rowtype;
+  v_by text := btrim(coalesce(p_decider, ''));
+  v_aid bigint;
+begin
+  if v_by = '' then
+    raise exception 'thiếu tên người duyệt';
+  end if;
+  if p_decision is null or p_decision not in ('approved', 'rejected') then
+    raise exception 'quyết định % không hợp lệ — chỉ approved|rejected',
+      p_decision;
+  end if;
+  select * into q from approval_queue a where a.id = p_id for update;
+  if not found then
+    raise exception 'không tìm thấy mục #% trong hàng duyệt', p_id;
+  end if;
+  if q.status <> 'pending' then
+    raise exception 'mục #% đã ở trạng thái %, chỉ quyết từ pending',
+      p_id, q.status;
+  end if;
+  if now() >= q.due_at then
+    raise exception 'mục #% quá hạn SLA — chờ expire, không duyệt', p_id;
+  end if;
+  if p_decision = 'approved' then
+    if coalesce(q.guardrail->>'ok', '') <> 'true' then
+      raise exception 'mục #% vi phạm guardrail (ok != true), không duyệt được',
+        p_id;
+    end if;
+    if q.qa_status = 'fail' and not exists (
+        select 1 from decisions d
+         where d.queue_id = q.id and d.kind = 'override_qa') then
+      raise exception 'mục #% QA FAIL — cần override_qa có lý do trước khi duyệt',
+        p_id;
+    end if;
+    if lower(btrim(q.created_by)) = lower(v_by) then
+      raise exception 'người duyệt trùng người tạo mục #%, cần người khác duyệt',
+        p_id;
+    end if;
+  end if;
+  update approval_queue a set status = p_decision, lane = 'per_item',
+         decided_by = v_by
+   where a.id = p_id;
+  insert into approvals (object_type, object_id, content_sha256, decision,
+                         approved_by, note)
+  values (q.object_type, q.object_id, q.content_sha256, p_decision, v_by,
+          p_note)
+  returning approvals.id into v_aid;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, case when p_decision = 'approved' then 'queue_approve'
+                     else 'queue_reject' end,
+          q.object_type, q.object_id,
+          jsonb_build_object('queue_id', q.id, 'approval_id', v_aid,
+                             'content_sha256', q.content_sha256));
+  return v_aid;
+end $$;
+revoke execute on function decide_item(bigint, text, text, text) from public;
+
+-- Tự duyệt theo luật đã ký (lane auto_policy) — fail-closed: không policy
+-- bật cho đúng loại / risk ≠ low / guardrail không ok / QA ≠ pass (kể cả
+-- 'none') / quá hạn → raise. approved_by = 'auto_policy:<id>'.
+-- GIỚI HẠN (đọc trước khi bật policy nào): risk/qa_status/guardrail là giá
+-- trị caller ghi lúc enqueue_item — agent giữ DSN agent_writer gọi SQL thẳng
+-- có thể khai risk 'low' + qa 'pass' + guardrail ok giả. Hôm nay vô hại vì
+-- auto_policies RỖNG; trước khi chủ khối ký phải có nguồn tin cậy cho 3 giá
+-- trị này (guardrail/QA chạy phía DB hoặc service riêng — someday).
+create or replace function auto_approve_item(p_id bigint)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  q approval_queue%rowtype;
+  p auto_policies%rowtype;
+  v_by text;
+  v_aid bigint;
+begin
+  select * into q from approval_queue a where a.id = p_id for update;
+  if not found then
+    raise exception 'không tìm thấy mục #% trong hàng duyệt', p_id;
+  end if;
+  if q.status <> 'pending' then
+    raise exception 'mục #% đã ở trạng thái %, chỉ quyết từ pending',
+      p_id, q.status;
+  end if;
+  if now() >= q.due_at then
+    raise exception 'mục #% quá hạn SLA — chờ expire, không duyệt', p_id;
+  end if;
+  select * into p from auto_policies ap
+   where ap.object_type = q.object_type and ap.enabled
+   order by ap.id limit 1;
+  if not found then
+    raise exception 'không có auto_policy bật cho loại % — cần người duyệt (fail-closed)',
+      q.object_type;
+  end if;
+  if q.risk <> 'low' then
+    raise exception 'mục #% rủi ro %, auto_policy chỉ áp rủi ro low',
+      p_id, q.risk;
+  end if;
+  if coalesce(q.guardrail->>'ok', '') <> 'true' then
+    raise exception 'mục #% vi phạm guardrail (ok != true), không duyệt được',
+      p_id;
+  end if;
+  if q.qa_status <> 'pass' then
+    raise exception 'mục #% QA % — auto_policy chỉ duyệt mục QA pass',
+      p_id, q.qa_status;
+  end if;
+  v_by := 'auto_policy:' || p.id;
+  update approval_queue a set status = 'approved', lane = 'auto_policy',
+         decided_by = v_by
+   where a.id = p_id;
+  insert into approvals (object_type, object_id, content_sha256, decision,
+                         approved_by, note)
+  values (q.object_type, q.object_id, q.content_sha256, 'approved', v_by,
+          null)
+  returning approvals.id into v_aid;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'queue_auto_approve', q.object_type, q.object_id,
+          jsonb_build_object('queue_id', q.id, 'approval_id', v_aid,
+                             'content_sha256', q.content_sha256,
+                             'policy_id', p.id, 'signed_by', p.signed_by));
+  return v_aid;
+end $$;
+revoke execute on function auto_approve_item(bigint) from public;
+
+-- Ép trình bản QA FAIL: ghi decisions override_qa (lý do + người ≠ người
+-- tạo). KHÔNG đổi status — vẫn cần decide_item của người.
+create or replace function override_qa(p_id bigint, p_by text,
+  p_reason text)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  q approval_queue%rowtype;
+  v_by text := btrim(coalesce(p_by, ''));
+  v_did bigint;
+begin
+  if v_by = '' then
+    raise exception 'thiếu tên người override';
+  end if;
+  -- Đếm ký tự KHÔNG phải khoảng trắng: btrim chỉ cắt dấu cách nên lý do
+  -- toàn xuống-dòng/tab từng lọt qua. CHECK cũ của bảng decisions không
+  -- đổi được bằng `if not exists` nên function là chốt chặn.
+  if char_length(regexp_replace(coalesce(p_reason, ''), '\s', '', 'g'))
+       < 10 then
+    raise exception 'lý do override_qa phải ≥ 10 ký tự (không tính khoảng trắng)';
+  end if;
+  select * into q from approval_queue a where a.id = p_id for update;
+  if not found then
+    raise exception 'không tìm thấy mục #% trong hàng duyệt', p_id;
+  end if;
+  if q.status <> 'pending' then
+    raise exception 'mục #% đã ở trạng thái %, chỉ override mục pending',
+      p_id, q.status;
+  end if;
+  if q.qa_status <> 'fail' then
+    raise exception 'mục #% QA %, override_qa chỉ cho mục QA FAIL',
+      p_id, q.qa_status;
+  end if;
+  if lower(btrim(q.created_by)) = lower(v_by) then
+    raise exception 'người override trùng người tạo mục #%', p_id;
+  end if;
+  insert into decisions (kind, queue_id, decided_by, reason)
+  values ('override_qa', q.id, v_by,
+          btrim(p_reason, E' \t\r\n'))
+  returning decisions.id into v_did;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'queue_override_qa', q.object_type, q.object_id,
+          jsonb_build_object('queue_id', q.id, 'decision_id', v_did,
+                             'kind', 'override_qa'));
+  return v_did;
+end $$;
+revoke execute on function override_qa(bigint, text, text) from public;
+
+-- Hết SLA: mọi mục pending có due_at <= now() → expired + decisions expired
+-- + log. KHÔNG ghi approvals, KHÔNG BAO GIỜ approved. Trả số mục expire.
+create or replace function expire_overdue(p_by text default 'system:sla')
+returns int
+language plpgsql security definer set search_path from current as $$
+declare
+  r record;
+  v_by text := coalesce(nullif(btrim(coalesce(p_by, '')), ''), 'system:sla');
+  v_did bigint;
+  n int := 0;
+begin
+  for r in select a.id, a.object_type, a.object_id, a.due_at
+             from approval_queue a
+            where a.status = 'pending' and a.due_at <= now()
+            order by a.id for update loop
+    update approval_queue a set status = 'expired', lane = null,
+           decided_by = v_by
+     where a.id = r.id;
+    insert into decisions (kind, queue_id, decided_by, reason)
+    values ('expired', r.id, v_by,
+            'quá hạn SLA ' || to_char(r.due_at at time zone 'Asia/Ho_Chi_Minh',
+                                      'YYYY-MM-DD HH24:MI') || ' (giờ VN)')
+    returning decisions.id into v_did;
+    insert into agent_action_log (actor, action, object_type, object_id,
+                                  detail)
+    values (v_by, 'queue_expire', r.object_type, r.object_id,
+            jsonb_build_object('queue_id', r.id, 'decision_id', v_did,
+                               'kind', 'expired'));
+    n := n + 1;
+  end loop;
+  return n;
+end $$;
+revoke execute on function expire_overdue(text) from public;

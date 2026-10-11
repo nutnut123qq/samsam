@@ -1,10 +1,12 @@
 """W35.4 — scripts/deploy_gate.py: chỉ in kế hoạch khi đủ PASS + người
 duyệt + luật đóng băng. DB qua fake conn; approvers inject qua config tạm
-(NGƯỜI DUYỆT GIẢ LẬP TRONG TEST — không phải danh sách thật)."""
+(NGƯỜI DUYỆT GIẢ LẬP TRONG TEST — không phải danh sách thật).
+v4.0 W40.7: đóng băng qua `pipelines.freeze.check()` (lịch
+data/freeze_calendar.json + break-glass env BREAK_GLASS_LOG)."""
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import psycopg
@@ -45,6 +47,8 @@ def gate(monkeypatch, tmp_path):
     p.write_text(json.dumps(cfg), encoding="utf-8")
     monkeypatch.setattr(dg, "CONFIG", p)
     monkeypatch.setattr(dg, "load_dotenv", lambda *a, **k: None)
+    # .env thật không được lấp break-glass (setenv "" thay vì delenv).
+    monkeypatch.setenv("BREAK_GLASS_LOG", "")
     state = {"rows": [(SHA, "guardrail", True, T0, 1),
                       (SHA, "chatbot", True, T0, 2)], "cfg": p}
     monkeypatch.setattr(dg, "_connect", lambda: FakeConn(state["rows"]))
@@ -235,3 +239,104 @@ def test_default_today_is_vn_date(gate, monkeypatch):
     assert dg.main(["--sha", SHA, "--approved-by", APPROVER]) == 1
     assert dg.main(["--sha", SHA, "--approved-by", APPROVER,
                     "--hotfix"]) == 0
+
+
+# ---------- v4.0 W40.7: freeze.check + break-glass ----------
+
+VN = timezone(timedelta(hours=7))
+BG_OPEN = {"action": "open", "by": "Nguoi Giu Quyen Gia Lap (test)",
+           "reason": "sửa khẩn thử nghiệm",
+           "opened_at": datetime(2026, 12, 25, 14, 0, tzinfo=VN).isoformat(),
+           "expires_at": datetime(2026, 12, 25, 16, 0, tzinfo=VN).isoformat()}
+
+
+def _bg_log(monkeypatch, tmp_path, *records):
+    p = tmp_path / "break_glass.jsonl"
+    p.write_bytes(b"".join(json.dumps(r).encode() + b"\n" for r in records))
+    monkeypatch.setenv("BREAK_GLASS_LOG", str(p))
+
+
+def _real_now(monkeypatch, when):
+    class FakeDT(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return when.astimezone(tz)
+    monkeypatch.setattr(dg, "datetime", FakeDT)
+    return dg.main(["--sha", SHA, "--approved-by", APPROVER])
+
+
+def test_break_glass_open_window_uses_real_now(gate, monkeypatch, tmp_path,
+                                               capsys):
+    _bg_log(monkeypatch, tmp_path, BG_OPEN)
+    assert _real_now(monkeypatch,
+                     datetime(2026, 12, 25, 15, 0, tzinfo=VN)) == 0
+    out = capsys.readouterr().out
+    assert "deploy" in out
+    # Bypass KHÔNG câm: dòng [warn] BREAK-GLASS + người chưa xác minh,
+    # in TRƯỚC kế hoạch.
+    warn = next(ln for ln in out.splitlines() if ln.startswith("[warn]"))
+    assert "BREAK-GLASS" in warn and "CHƯA xác minh" in warn
+    assert "Nguoi Giu Quyen Gia Lap (test)" in warn and "16:00" in warn
+    assert out.index("[warn]") < out.index("[plan]")
+    assert _real_now(monkeypatch,
+                     datetime(2026, 12, 25, 16, 30, tzinfo=VN)) == 1
+    assert "đóng băng" in capsys.readouterr().out
+
+
+def test_break_glass_closed_denied(gate, monkeypatch, tmp_path):
+    close = {"action": "close", "by": "Nguoi Giu Quyen Gia Lap (test)",
+             "ts": datetime(2026, 12, 25, 14, 30, tzinfo=VN).isoformat()}
+    _bg_log(monkeypatch, tmp_path, BG_OPEN, close)
+    assert _real_now(monkeypatch,
+                     datetime(2026, 12, 25, 15, 0, tzinfo=VN)) == 1
+
+
+def test_today_flag_simulates_noon_not_window(gate, monkeypatch, tmp_path):
+    """--today = mốc 12:00 VN: cửa sổ 14–16h không mở lúc trưa → chặn."""
+    _bg_log(monkeypatch, tmp_path, BG_OPEN)
+    assert _run(today="2026-12-25") == 1
+    assert _run("--hotfix", today="2026-12-25") == 0
+
+
+def test_warn_only_when_inside_freeze(gate, capsys):
+    """Ngoài khung: không [warn]; hotfix trong khung: có [warn] đóng băng."""
+    assert _run(today="2026-11-01") == 0
+    assert "[warn]" not in capsys.readouterr().out
+    assert _run("--hotfix", today="2026-12-25") == 0
+    out = capsys.readouterr().out
+    assert "[warn]" in out and "đóng băng" in out and "BREAK-GLASS" not in out
+
+
+def test_verified_holder_no_unverified_tag(gate, monkeypatch, tmp_path,
+                                          capsys):
+    _bg_log(monkeypatch, tmp_path, {**BG_OPEN, "holder_verified": True})
+    assert _real_now(monkeypatch,
+                     datetime(2026, 12, 25, 15, 0, tzinfo=VN)) == 0
+    out = capsys.readouterr().out
+    assert "BREAK-GLASS" in out and "CHƯA xác minh" not in out
+
+
+def test_broken_calendar_fail_closed(gate, monkeypatch, tmp_path, capsys):
+    bad = tmp_path / "freeze_calendar.json"
+    bad.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(dg.freeze, "CALENDAR", bad)
+    assert _run(today="2026-11-01") == 1     # ngoài khung vẫn chặn feature
+    assert "fail-closed" in capsys.readouterr().out
+    assert _run("--hotfix", today="2026-11-01") == 0
+
+
+def test_freeze_wired_to_calendar_not_config():
+    src = (Path(dg.__file__)).read_text(encoding="utf-8")
+    assert 'cfg["freeze"]' not in src and "freeze.check(" in src
+
+
+def test_calendar_missing_kind_fail_closed(gate, monkeypatch, tmp_path,
+                                           capsys):
+    cal = json.loads((ROOT / "data" / "freeze_calendar.json").read_text(
+        encoding="utf-8"))
+    cal["known_kinds"] = ["hotfix", "disable", "restore"]
+    p = tmp_path / "freeze_calendar.json"
+    p.write_text(json.dumps(cal), encoding="utf-8")
+    monkeypatch.setattr(dg.freeze, "CALENDAR", p)
+    assert _run(today="2026-11-01") == 1          # không crash traceback
+    assert "fail-closed" in capsys.readouterr().out

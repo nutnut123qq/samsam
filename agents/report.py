@@ -45,6 +45,7 @@ from dotenv import load_dotenv
 
 from ingest.lead_store import CONV_FILES, _parse_ts, channel_of, connect, iter_convlog
 from pipelines.job_runs import job_run
+from pipelines.period import VN_TZ, rolling_bounds
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in
 # tiếng Việt có dấu. Ép UTF-8 (no-op nếu đã UTF-8).
@@ -65,18 +66,16 @@ FLAG_KEYS = ("sâu bệnh", "rệp", "bệnh", "chết", "héo", "vàng lá",
 
 
 def period_bounds(days: int, until: date | datetime | None = None):
-    """→ (since, until_excl) aware UTC. `until`:
-    None → now(); date → hết ngày đó (date+1 00:00 UTC, exclusive);
-    datetime → dùng trực tiếp (naive coi như UTC). since = until-days."""
-    if until is None:
-        until_excl = datetime.now(timezone.utc)
-    elif isinstance(until, datetime):
-        until_excl = (until if until.tzinfo
-                      else until.replace(tzinfo=timezone.utc))
-    else:
-        until_excl = datetime(until.year, until.month, until.day,
-                              tzinfo=timezone.utc) + timedelta(days=1)
-    return until_excl - timedelta(days=days), until_excl
+    """→ (since, until_excl) aware giờ VN (v4.0 — trước đó cắt 00:00 UTC,
+    lệch 7 giờ). Ủy quyền `pipelines.period.rolling_bounds`: None → now;
+    date → hết ngày đó giờ VN (00:00 VN hôm sau, exclusive); datetime
+    aware dùng trực tiếp; naive → ValueError. since = until-days."""
+    return rolling_bounds(days, until)
+
+
+def _vn_day_s(dt: datetime) -> str:
+    """Ngày VN của mốc aware (tên file/dòng in kỳ)."""
+    return dt.astimezone(VN_TZ).strftime("%Y-%m-%d")
 
 
 def _sample(sources: dict) -> bool:
@@ -268,13 +267,13 @@ def render(rep: dict) -> str:
     """rep → markdown tiếng Việt. Degraded (db_ok=False) → phần DB
     in '[chưa nạp — <err>]', phần convlog vẫn đầy đủ."""
     p = rep["period"]
-    since_s = p["since"].strftime("%Y-%m-%d")
-    end_s = (p["until"] - timedelta(seconds=1)).strftime("%Y-%m-%d")
+    since_s = _vn_day_s(p["since"])
+    end_s = _vn_day_s(p["until"] - timedelta(seconds=1))
     gen_s = rep["generated_at"].strftime("%Y-%m-%dT%H:%M:%SZ")
     db = rep["db"]
     chat = rep["chat"]
     L = ["# Báo cáo định kỳ — Sâm Sâm AI", "",
-         (f"**Kỳ:** {since_s} → {end_s} ({p['days']} ngày, UTC) · "
+         (f"**Kỳ:** {since_s} → {end_s} ({p['days']} ngày, giờ VN) · "
           f"**Sinh lúc:** {gen_s} · **Nguồn:** `agents/report.py`"),
          "",
          ("> **BẢN NHÁP — người duyệt trước khi gửi lãnh đạo.** "
@@ -413,8 +412,8 @@ def render(rep: dict) -> str:
 def report_name(since: datetime, until: datetime) -> str:
     """`report-<since>_<end>.md` — deterministic theo kỳ: chạy lại
     cùng kỳ → cùng tên → ghi đè (idempotent)."""
-    end = (until - timedelta(seconds=1)).date()
-    return f"report-{since.date()}_{end}.md"
+    end = _vn_day_s(until - timedelta(seconds=1))
+    return f"report-{_vn_day_s(since)}_{end}.md"
 
 
 def write_report(text: str, out_dir: Path, name: str) -> Path:
@@ -477,7 +476,7 @@ def main(argv=None) -> int:
                     help=f"số ngày trong kỳ (mặc định {DEFAULT_DAYS})")
     ap.add_argument("--until", default=None,
                     help="YYYY-MM-DD — ngày cuối kỳ (mặc định hôm "
-                         "nay UTC)")
+                         "nay giờ VN)")
     ap.add_argument("--out-dir", default=str(REPORTS_DIR),
                     help="thư mục ghi báo cáo")
     args = ap.parse_args(argv)
@@ -494,8 +493,8 @@ def main(argv=None) -> int:
     path, rep = generate(days=args.days, until=until,
                          out_dir=Path(args.out_dir))
     p = rep["period"]
-    end_s = (p["until"] - timedelta(seconds=1)).strftime("%Y-%m-%d")
-    print(f"[report] kỳ {p['since']:%Y-%m-%d} → {end_s} "
+    end_s = _vn_day_s(p["until"] - timedelta(seconds=1))
+    print(f"[report] kỳ {_vn_day_s(p['since'])} → {end_s} "
           f"({p['days']} ngày)", flush=True)
     db = rep["db"]
     if not db.get("db_ok"):

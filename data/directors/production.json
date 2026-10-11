@@ -1,0 +1,26 @@
+{
+  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES — khối chưa có vai trò riêng, TẠM map 'tgd' (external-dep: TGĐ chốt). approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store).",
+  "block": "production",
+  "name": "Giám đốc sản xuất + Nghiên cứu và sản xuất + Công nghệ sinh học",
+  "director_agent": "A0 – Agent Điều phối Sản xuất",
+  "approver_roles": [
+    "tgd"
+  ],
+  "approvers": [],
+  "object_types": {
+    "sku_record": {
+      "sla_hours": 48,
+      "risk": "medium"
+    },
+    "label_check": {
+      "sla_hours": 24,
+      "risk": "high"
+    },
+    "batch_record": {
+      "sla_hours": 48,
+      "risk": "high"
+    }
+  },
+  "digest_recipients": [],
+  "due_soon_hours": 8
+}

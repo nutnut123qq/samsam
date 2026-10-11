@@ -1,0 +1,22 @@
+{
+  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES — khối chưa có vai trò riêng, TẠM map 'tgd' (external-dep: TGĐ chốt). approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store).",
+  "block": "farming",
+  "name": "Giám đốc vùng trồng + Nhân viên vùng trồng",
+  "director_agent": "Agent GĐ vùng trồng (điều phối)",
+  "approver_roles": [
+    "tgd"
+  ],
+  "approvers": [],
+  "object_types": {
+    "plot_log_review": {
+      "sla_hours": 72,
+      "risk": "low"
+    },
+    "harvest_forecast": {
+      "sla_hours": 72,
+      "risk": "medium"
+    }
+  },
+  "digest_recipients": [],
+  "due_soon_hours": 8
+}

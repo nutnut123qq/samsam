@@ -114,9 +114,12 @@ Trong đóng băng chỉ được:
 Bị chặn: `feature` (tính năng mới), `promote` (nâng Shadow → Pilot → Vận
 hành), `config`, `migration`. Lịch hỏng/mất → hệ thống coi như ĐANG đóng
 băng (chỉ cho 3 loại trên) — báo dev sửa lịch, không tự sửa cho qua.
-Cổng deploy `python scripts/deploy_gate.py` (nhánh khác: v3.5) sẽ gọi
-`pipelines/freeze.py` sau khi gộp nhánh đó (dev làm, không phải việc vận
-hành).
+Cổng deploy `python scripts/deploy_gate.py` ĐÃ nối luật này (v4.0): gọi
+`pipelines.freeze.check()` với lịch `data/freeze_calendar.json` và cửa sổ
+break-glass còn hạn (`BREAK_GLASS_LOG`). Trong khung, `feature` bị chặn;
+`--hotfix` hoặc break-glass còn hạn được qua NHƯNG cổng in dòng `[warn]`
+(kèm "người CHƯA xác minh" khi danh sách người giữ quyền còn trống) — ghi
+lại phiếu/lý do.
 
 **Break-glass** — cửa sổ ngoại lệ có hạn, cho MỌI loại thay đổi qua:
 
@@ -201,8 +204,9 @@ group by agent_id order by usd desc;
 - Bản tin sức khỏe hằng ngày: `python scripts/health_bulletin.py` (nhánh khác: v3.7)
   — tổng hợp backup/drill/chi phí/guardrail; kênh gửi n8n/Telegram là
   **external-dep**. Khi chưa gộp nhánh: đọc tay các jsonl ở mục 1.
-- Cổng deploy: `python scripts/deploy_gate.py` (nhánh khác: v3.5) — kiểm eval PASS,
-  người duyệt, luật đóng băng trước mỗi deploy.
+- Cổng deploy: `python scripts/deploy_gate.py` — kiểm eval PASS, người
+  duyệt, luật đóng băng (`pipelines.freeze.check`, đã nối v4.0) trước mỗi
+  deploy.
 
 ## 8. Checklist bàn giao
 

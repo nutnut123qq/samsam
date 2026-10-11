@@ -94,12 +94,25 @@ def test_runbook_lists_real_agent_ids():
 
 def test_other_branch_tools_marked():
     lines = _body().splitlines()
-    for word in ("health_bulletin", "deploy_gate"):
+    for word in ("health_bulletin",):
         hits = [ln for ln in lines if word in ln]
         assert hits, f"runbook không nhắc {word}"
         for ln in hits:
             assert OTHER_BRANCH.search(ln), (
                 f"'{word}' ở dòng không đánh dấu nhánh khác: {ln.strip()}")
+
+
+def test_deploy_gate_marked_wired_not_other_branch():
+    """v4.0 đã nối deploy_gate ↔ pipelines.freeze — runbook không được còn
+    nói 'nhánh khác'/'sau khi gộp' (vận hành tưởng cổng chưa áp đóng băng)."""
+    body = _body()
+    hits = [ln for ln in body.splitlines() if "deploy_gate" in ln]
+    assert hits, "runbook không nhắc deploy_gate"
+    for ln in hits:
+        assert not OTHER_BRANCH.search(ln), ln.strip()
+    assert "sau khi gộp nhánh đó" not in body
+    assert re.search(r"deploy_gate\.py`[^\n]*ĐÃ nối", body)
+    assert "pipelines.freeze.check()" in body
 
 
 def test_runbook_no_secrets():

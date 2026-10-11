@@ -6,9 +6,503 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+## Checklist v4.0-director-framework
+
+Khán giả/mục đích: M31 (worktree `D:\code\samsam-w40`) — làm nốt WP03
+"Khung điều phối, duyệt và log dùng chung" (pmo.md dòng `| WP03`) trên nền
+v3.4 (`approvals`, `agent_action_log` hash chain, `approve_draft` SECURITY
+DEFINER, `pipelines/auth.py`) + nối đóng băng v3.10 vào `deploy_gate` v3.5.
+Hiện hàng duyệt chỉ có cho `content_drafts`; 11 agent giám đốc (khối
+`ceo, sales, marketing, intel, finance, production, farming, projects,
+legal_hr, mechanical, data_platform` — key của ctx/final_plans.json) chưa
+có chỗ gom việc của agent nhân viên, chưa có SLA/expired, override QA,
+cảnh báo đỏ không xóa được, `channel_snapshots` cho cockpit; `agents/
+report.py::period_bounds` cắt kỳ theo 00:00 **UTC** (lệch 7 giờ với VN);
+`scripts/deploy_gate.py` còn đọc khung `freeze` riêng trong
+`data/eval/config.json` (không biết break-glass). Sau version: mọi loại
+object (trừ `content_draft` — giữ đường v3.4) vào `approval_queue` 2 lớp
+(auto_policy mặc định TẮT / per_item), quyết định CHỈ qua function SECURITY
+DEFINER ghi `approvals` (sha256) + `agent_action_log`; quá SLA → `expired`
+(không bao giờ tự duyệt); ép trình bản QA FAIL phải có `decisions`
+override_qa kèm lý do + người; `red_alerts` append-only, người nhận độc lập
+(không phải TGĐ/ha_tang), thiếu người nhận → fail-closed báo thiếu; mẫu
+agent giám đốc đọc `data/directors/<khoi>.json` sinh bản tin markdown
+(KHÔNG tự gửi); 1 nguồn `period_bounds` giờ VN; deploy_gate dùng
+`pipelines.freeze.check()` (lịch `data/freeze_calendar.json` + break-glass).
+
+Quy ước: ponytail — stdlib + `psycopg` sẵn có, KHÔNG dep mới. Schema chỉ
+THÊM vào `docs/schema.sql` (block "v4.0 hàng duyệt dùng chung", comment
+tiếng Việt ai ghi/ai đọc/vì sao): `create table if not exists` + `create
+or replace function/trigger`, KHÔNG `alter table`/`drop` (drift-guard
+`tests/test_store.py` + `tests/test_lead_store.py` giữ nguyên); không assert
+đếm cứng số bảng (sàn `>= 24` / đọc schema.sql). Function mới theo đúng
+mẫu v3.4: `language plpgsql security definer set search_path from current`
++ `revoke execute ... from public` ngay sau; raise thông điệp tiếng Việt;
+sha256 byte-exact `encode(sha256(convert_to(t,'UTF8')),'hex')` == Python
+`hashlib.sha256(t.encode('utf-8')).hexdigest()`; mọi bước ghi
+`agent_action_log` (trigger hash chain v3.4 tự ép id/ts/hash); detail log
+KHÔNG chứa payload (chỉ id/sha/kind). Ngày/giờ VN: Python dùng
+`pipelines/period.py::VN_TZ` (UTC+7, VN không DST — không cần tzdata),
+SQL `now() at time zone 'Asia/Ho_Chi_Minh'`. Object_type `content_draft`
+bị CẤM trong `approval_queue` (nếu cho, 1 approval qua hàng chung với
+object_id = id draft làm `verify_publish`/`schedule_draft` của draft đó
+pass mà không qua `approve_draft`). Python ghi trên conn chia sẻ phải
+`conn.commit()` tường minh (gotcha savepoint v2.1); mọi connect có
+`connect_timeout` (guard `tests/test_connect_timeout_guard.py`); print
+tiếng Việt → UTF-8 guard; CLI nhiều op → `n_ops > 1` usage exit 2 TRƯỚC
+connect (gotcha v2.2); identity in stdout của alert/queue chỉ là tên người/
+agent, title/detail alert qua `_mask_pii` trước khi ghi. Test DB thật: 1
+transaction + schema tạm + `docs/schema.sql` ×2 + `docs/roles.sql` ×2 rồi
+ROLLBACK (fixture như `tests/test_auth_approval.py::db`), mỗi case lỗi
+trong savepoint, thử quyền bằng `set local role agent_writer|app_human`,
+đi tắt thời gian (due_at quá khứ) bằng superuser `set local
+session_replication_role = replica` (precedent v3.4); skip khi không DB
+nhưng gate đòi **0 skipped**. KHÔNG duyệt/expire/override mục nào trên DB
+thật ngoài test rollback; KHÔNG bật auto_policy nào (bảng `auto_policies`
+ship rỗng); KHÔNG điền người nhận/người duyệt thật (để `[]`).
+
+External-dep (KHÔNG giả lập, KHÔNG tự đánh dấu): người nhận cảnh báo đỏ
+thật (Pháp chế xác nhận) + kênh gửi thật (email/Zalo — version này chỉ ghi
+hàng `red_alerts` có danh sách người nhận, không gửi); danh sách người
+duyệt theo khối (TGĐ chốt) + vai trò riêng cho khối chưa có trong
+`auth.ROLES` (tài chính/sản xuất/vùng trồng/dự án/cơ khí/tình báo tạm map
+`tgd`); chủ khối ký phạm vi auto_policy (`auto_policies.enabled`); SSO thật
+(`approved_by` từ SSO — hiện `--by` free-text như v3.4); object-lock neo
+`agent_action_log`; BKS nhận báo override_qa (hiện chỉ log).
+
+- [x] **W40.1 Schema: `approval_queue`, `auto_policies`, `decisions`,
+  `channel_snapshots`, `red_alerts`** — `docs/schema.sql` block v4.0 (sau
+  block v3.4, dùng lại `append_only_guard()`):
+  `approval_queue` (`id bigint identity pk`, `object_type text not null
+  check (object_type ~ '^[a-z][a-z0-9_]{1,39}$' and object_type <>
+  'content_draft')`, `object_id text not null check (btrim <> '')`, `block
+  text not null check (~ '^[a-z][a-z_]{1,31}$')`, `title text not null`,
+  `payload text not null` (nội dung sẽ phát hành — đúng bản được hash),
+  `content_sha256 text not null check (~ '^[0-9a-f]{64}$')`, `risk text not
+  null check in ('low','medium','high')`, `guardrail jsonb not null`,
+  `qa_status text not null default 'none' check in ('none','pass','fail')`,
+  `created_by text not null check (btrim <> '')`, `created_at timestamptz
+  not null default now()`, `due_at timestamptz not null`, `status text not
+  null default 'pending' check in ('pending','approved','rejected',
+  'expired')`, `lane text check (lane in ('auto_policy','per_item'))`,
+  `decided_by text`, `decided_at timestamptz`) + unique partial index
+  `(object_type, object_id) where status = 'pending'` + index `(block,
+  status, due_at)`. Trigger `approval_queue_guard` (before update/delete +
+  before truncate): DELETE/TRUNCATE → raise; UPDATE chỉ cho `status`
+  pending → approved|rejected|expired (một lần) kèm `lane/decided_by/
+  decided_at`; mọi cột khác (`payload`, `content_sha256`, `created_by`,
+  `guardrail`, `risk`, `qa_status`, `due_at`, `block`...) bất biến;
+  INSERT: trigger ép `content_sha256` = sha256(`payload`), `status
+  ='pending'`, `lane/decided_*` null. `auto_policies` (`id text pk check (~
+  '^[a-z0-9_]{1,40}$')`, `object_type text not null`, `max_risk text not
+  null check (max_risk = 'low')` — cấu trúc cấm tự duyệt rủi ro medium/high,
+  `enabled boolean not null default false`, `signed_by text`, `signed_at
+  timestamptz`, `note text`, `check (not enabled or (btrim(coalesce(
+  signed_by,'')) <> '' and signed_at is not null))`) — ship RỖNG.
+  `decisions` (`id bigint identity pk`, `kind text not null check in
+  ('override_qa','expired')`, `queue_id bigint not null references
+  approval_queue(id)`, `decided_by text not null check (btrim <> '')`,
+  `reason text not null check (char_length(btrim(reason)) >= 10)`,
+  `created_at timestamptz not null default now()`, `db_role text not null
+  default session_user`) — append-only (trigger `append_only_guard`).
+  `channel_snapshots` (`id bigint identity pk`, `channel text not null check
+  (~ '^[a-z][a-z0-9_]{1,31}$')`, `metric_id text not null check (~
+  '^[a-z][a-z0-9_.]{1,63}$')`, `period_kind text not null check in ('day',
+  'week','month')`, `period_start date not null`, `value numeric not null`,
+  `source text not null check in ('manual_export','api')`, `source_ref
+  text`, `captured_by text not null check (btrim <> '')`, `captured_at
+  timestamptz not null default now()`, unique `(channel, metric_id,
+  period_kind, period_start, source)`). `red_alerts` (`id bigint identity
+  pk`, `ts timestamptz not null default now()`, `source_agent text not null
+  check (btrim <> '')`, `title text not null check (btrim <> '')`, `detail
+  jsonb not null default '{}'`, `recipients text[] not null default '{}'`,
+  `route_error text`, `db_role text not null default session_user`) —
+  trigger before insert ép `ts=now()`, `db_role=session_user`; trigger
+  before update/delete/truncate → raise (append-only với DML khi trigger
+  còn bật, cả của owner/superuser — KHÔNG chặn owner `DISABLE TRIGGER`/
+  superuser `session_replication_role = replica`; chốt thật cho TGĐ/
+  ha_tang là họ chỉ giữ DSN `app_human`, neo ngoài = external-dep).
+  - Boundary: `docs/schema.sql` (append block v4.0), `tests/
+    test_director_framework.py` (mới)
+  - Gate: `grep -nE "^\s*(alter|drop)\s+table" docs/schema.sql` chỉ ra các
+    dòng `alter table ... add column if not exists` CŨ (không dòng mới);
+    `python scripts/apply_schema.py` ×2 exit 0, lần 2 in đủ 5 bảng mới; test
+    DB (schema tạm, rollback): insert queue kèm `content_sha256` giả /
+    `status='approved'` → bị ép về sha thật + `pending`; insert
+    `object_type='content_draft'` → CheckViolation; 2 mục pending cùng
+    (object_type, object_id) → UniqueViolation, sau khi mục đầu
+    rejected/expired thì enqueue lại được; superuser UPDATE `payload` /
+    `created_by` / `due_at` / status approved→pending / DELETE / TRUNCATE
+    queue → RaiseException; insert `auto_policies` `max_risk='medium'` →
+    CheckViolation, `enabled=true` thiếu `signed_by` → CheckViolation;
+    `decisions.reason` 9 ký tự (sau btrim) → CheckViolation; UPDATE/DELETE/
+    TRUNCATE `decisions` + `red_alerts` (superuser) → RaiseException;
+    `channel_snapshots` source `'scrape'` → CheckViolation, trùng khóa →
+    UniqueViolation
+  - Evidence: `evidence/v40_framework.log`
+- [x] **W40.2 Function quyết định SECURITY DEFINER + quyền role** —
+  `docs/schema.sql`: `enqueue_item(p_object_type text, p_object_id text,
+  p_block text, p_title text, p_payload text, p_risk text, p_guardrail
+  jsonb, p_qa_status text, p_created_by text, p_sla_hours int) returns
+  bigint` (`p_sla_hours` 1..720 else raise; `due_at = now() + sla`; log
+  `queue_enqueue` detail {queue_id, sha, block}). `decide_item(p_id bigint,
+  p_decider text, p_decision text, p_note text default null) returns bigint`
+  (id approvals) — `for update`; raise khi decider rỗng / không tìm thấy /
+  status ≠ pending / `now() >= due_at` ("quá hạn SLA — chờ expire, không
+  duyệt") / decision ∉ (approved, rejected); `approved` thêm: `guardrail->>
+  'ok'` ≠ `'true'` → raise; `qa_status='fail'` VÀ chưa có `decisions`
+  override_qa cho mục → raise; `lower(btrim(created_by)) = lower(btrim(
+  decider))` → raise (reject thì người tạo tự rút được — như
+  `reject_draft`). OK → update queue (`lane='per_item'`) + insert
+  `approvals` (`object_type`/`object_id` của mục, sha = `content_sha256`,
+  decision) + log `queue_approve|queue_reject`, cùng transaction.
+  `auto_approve_item(p_id bigint) returns bigint` — chỉ khi có
+  `auto_policies` `enabled` cho đúng `object_type`, mục `risk='low'`,
+  guardrail ok, `qa_status='pass'` (không `none`), chưa quá hạn; approvals
+  `approved_by = 'auto_policy:' || policy.id` + log `queue_auto_approve`
+  (detail kèm `signed_by` policy), `lane='auto_policy'`; không policy →
+  raise (fail-closed). `override_qa(p_id bigint, p_by text, p_reason text)
+  returns bigint` — mục pending + `qa_status='fail'` + `p_by` ≠ người tạo +
+  lý do ≥ 10 ký tự sau btrim → insert `decisions` override_qa + log
+  `queue_override_qa`; KHÔNG đổi status (vẫn cần `decide_item` của người).
+  `expire_overdue(p_by text default 'system:sla') returns int` — mọi mục
+  pending có `due_at <= now()` → `expired` (`decided_by=p_by`) + `decisions`
+  expired (lý do "quá hạn SLA <due_at giờ VN>") + log `queue_expire`; KHÔNG
+  ghi approvals, không bao giờ approved. `verify_publish` v3.4 dùng lại
+  nguyên cho mục hàng chung. `docs/roles.sql` thêm: `agent_writer` —
+  execute `enqueue_item`, `auto_approve_item`, `expire_overdue`; insert
+  `(source_agent, title, detail, recipients, route_error)` red_alerts;
+  insert `(channel, metric_id, period_kind, period_start, value, source,
+  source_ref, captured_by)` channel_snapshots; KHÔNG `decide_item`/
+  `override_qa`, không UPDATE/DELETE bảng nào. `app_human` (kế thừa) —
+  select `approval_queue`, `auto_policies`, `decisions`, `channel_snapshots`,
+  `red_alerts` + execute `decide_item`, `override_qa`; KHÔNG UPDATE/DELETE
+  trực tiếp; `auto_policies` không ai ngoài owner ghi.
+  - Boundary: `docs/schema.sql`, `docs/roles.sql`, `scripts/
+    apply_schema.py` (không đổi trừ khi cần in thêm), `tests/
+    test_director_framework.py`
+  - Gate: `python scripts/apply_schema.py --roles` ×2 exit 0 (2 role
+    login=False); test DB: 5 function mới `prosecdef` true, `proconfig`
+    search_path kết thúc `pg_temp`, `has_function_privilege('public',...)`
+    false; `has_function_privilege('agent_writer','decide_item(bigint,text,
+    text,text)','execute')` = false và `override_qa(...)` = false.
+    `agent_writer`: `update approval_queue set status='approved'` /
+    insert approvals / delete red_alerts / `select decide_item(...)` →
+    InsufficientPrivilege. `app_human`: delete/update `red_alerts` →
+    InsufficientPrivilege (TGĐ/ha_tang là người = app_human); superuser
+    delete/update/truncate `red_alerts` → RaiseException (trigger) — cảnh
+    báo vẫn còn đủ. `decide_item` approve: guardrail `ok=false` → lỗi;
+    decider = creator (biến thể `' Lan '`/`'lan'`) → lỗi; decider rỗng →
+    lỗi; QA fail chưa override → lỗi; happy → status approved, 1 dòng
+    approvals sha = Python sha của payload, `verify_publish(object_type,
+    object_id, payload)` true, payload sửa 1 ký tự → false; approve lần 2
+    → lỗi. `override_qa` lý do rỗng / `'   ngắn   '` (<10 sau btrim) → lỗi;
+    người override = người tạo → lỗi; override hợp lệ → decisions 1 dòng,
+    status vẫn pending, rồi `decide_item` người khác → approved. Hết hạn:
+    replica set `due_at = now() - 1h` → `decide_item` approve lỗi "quá hạn",
+    `expire_overdue()` trả 1 → status `expired`, `decisions` expired 1 dòng,
+    `approvals` cho mục = 0 dòng, `verify_publish` false; gọi lại trả 0.
+    `auto_approve_item`: không policy → lỗi; policy `enabled=false` → lỗi;
+    policy bật + risk `medium` → lỗi; qa `none` → lỗi; risk low + qa pass +
+    guardrail ok → approved, `approved_by` bắt đầu `auto_policy:`. Sau mỗi
+    luồng `verify_action_log()` rỗng (sửa/xoá log vẫn bị phát hiện — test
+    v3.4 giữ xanh)
+  - Evidence: `evidence/v40_framework.log`
+- [x] **W40.3 `pipelines/approval_queue.py` — wrapper Python + CLI
+  người** — `enqueue(conn, *, object_type, object_id, block, title, payload,
+  risk, created_by, sla_hours, qa_status='none')`: TỰ chạy
+  `pipelines.guardrail.check(payload)` (không nhận guardrail từ caller —
+  agent không giả `ok:true` được), `created_by`/`payload` strip rỗng →
+  `ValueError` trước khi chạm DB, rồi `select enqueue_item(...)` +
+  `conn.commit()`. `decide(conn, item_id, decider, decision, note=None)`:
+  approve → đọc `payload` từ DB, chạy LẠI `guardrail.check` — không ok →
+  `(False, msg)` KHÔNG gọi function; lỗi function (`psycopg.Error`) →
+  `(False, diag.message_primary)` không raise. `override(conn, item_id, by,
+  reason)`, `auto_approve(conn, item_id)`, `expire_overdue(conn, by=
+  'system:sla') -> int`, `pending(conn, block=None)` (list dict, không kèm
+  payload đầy đủ — cắt 200 ký tự). `verify(conn, item_id, text) -> bool`
+  qua `verify_publish`. CLI `python -m pipelines.approval_queue`:
+  `--pending [--block K]` | `--approve ID --by` | `--reject ID --by
+  [--note]` | `--override-qa ID --by --reason` | `--expire`; `n_ops` > 1
+  hoặc thiếu `--by`/`--reason` → usage exit 2 trước connect; DB down →
+  exit 2 có thông báo; lỗi quyết định → exit 1. UTF-8 guard; connect
+  `connect_timeout=5`.
+  - Boundary: `pipelines/approval_queue.py` (mới), `tests/
+    test_approval_queue.py` (mới, fake conn + argparse), `tests/
+    test_director_framework.py` (đường DB)
+  - Gate: test fake conn: payload chứa "chữa" nhưng DB trả guardrail
+    `{"ok": true}` → `decide` approve trả `(False, ...)` và KHÔNG execute
+    `decide_item`; `enqueue` gọi `enqueue_item` với guardrail do
+    `guardrail.check` tính (assert param); created_by `'  '` → ValueError,
+    0 execute; function raise → `(False, msg)`; argparse: `--approve 1`
+    thiếu `--by` → exit 2, `--approve 1 --by X --expire` → exit 2,
+    `--override-qa 1 --by X` thiếu reason → exit 2 — connect không được
+    gọi (monkeypatch); test DB (`_TxConn` ghi nhận commit, `set local role
+    app_human`): enqueue (as agent_writer) → decide approve bởi người khác
+    → `verify` true đúng payload, false payload sửa; CLI trên DB thật CHỈ
+    case âm: `python -m pipelines.approval_queue --approve 999999999 --by X`
+    exit 1 (không tìm thấy), `--pending` exit 0
+  - Evidence: `evidence/v40_framework.log`
+- [x] **W40.4 Cảnh báo đỏ: `pipelines/red_alert.py` +
+  `data/red_alert_routing.json`** — config `{"_doc": ..., "recipients": [],
+  "excluded_roles": ["tgd", "ha_tang"]}` (recipients = list `{"name",
+  "role", "channel"}`; người thật = external-dep, Pháp chế xác nhận).
+  `load_routing(path=None)`: file thiếu/rỗng/JSON hỏng/`{}`/chỉ `_doc` →
+  recipients `[]` (không raise); recipient có `role` NGOÀI allowlist
+  `INDEPENDENT_ROLES` (`phap_che`, `bks`), thuộc `excluded_roles`, hoặc
+  thiếu name/channel → BỎ (độc lập với người có thể dập cảnh báo) + ghi
+  vào `problems`; `raise_alert` lọc LẠI routing truyền tay cùng luật. `raise_alert(conn, source_agent, title, detail=None,
+  routing=None) -> (routed: bool, msg)`: title/detail qua `_mask_pii`;
+  recipients rỗng → VẪN insert `red_alerts` với `recipients='{}'`,
+  `route_error='thiếu người nhận độc lập (external-dep)'`, trả `(False,
+  ...)` + in cảnh báo stderr (fail-closed: không im lặng, không gửi nhầm
+  TGĐ/ha_tang); đủ → insert recipients = tên, `(True, ...)`. KHÔNG gửi
+  thật (kênh gửi = external-dep). Mọi insert + 1 dòng log `red_alert_raise`
+  cùng transaction, `conn.commit()`. CLI `python -m pipelines.red_alert
+  --check-routing` → exit 0 nếu ≥1 người nhận hợp lệ, exit 1 in "thiếu
+  người nhận" (config thật hiện `[]` → exit 1 — đúng, ghi external-dep).
+  - Boundary: `pipelines/red_alert.py` (mới), `data/
+    red_alert_routing.json` (mới), `tests/test_red_alert.py` (mới), `tests/
+    test_director_framework.py` (đường DB)
+  - Gate: `load_routing` 5 biến thể file hỏng → `[]`; recipient role `tgd`
+    / `ha_tang` / `' TGD '` (strip+lower) bị loại; config thật
+    `recipients == []` (test khóa: không ai tự điền người thật); `raise_alert`
+    fake conn recipients rỗng → insert có `route_error`, trả False; title
+    chứa SĐT `0912 345 678` → giá trị insert đã mask; `python -m
+    pipelines.red_alert --check-routing` exit 1. DB (rollback): raise_alert
+    as `agent_writer` → 1 dòng red_alerts + 1 log; `app_human` + superuser
+    xóa/sửa → bị chặn (W40.2 gate)
+  - Evidence: `evidence/v40_framework.log`
+- [x] **W40.5 `pipelines/period.py` — period_bounds giờ VN dùng chung** —
+  `VN_TZ = timezone(timedelta(hours=7))`; `period_bounds(kind, ref) ->
+  (start, end_excl)` aware +07:00, `kind` ∈ `day|week|month` (tuần ISO thứ
+  Hai 00:00 VN), `ref` là `date` (ngày VN) hoặc `datetime` aware (đổi sang
+  VN rồi lấy ngày); naive datetime → `ValueError`, kind lạ → `ValueError`,
+  kiểu khác → `TypeError`. `rolling_bounds(days, until=None)` — thay thân
+  `agents/report.py::period_bounds`: `until` date → end_excl = (until+1)
+  00:00 VN; None → now; aware datetime giữ nguyên; naive → `ValueError`
+  (luật "mix date local + giờ UTC" v2.4). `agents.report.period_bounds`
+  giữ tên/chữ ký, gọi `rolling_bounds`; `report_name` + dòng in kỳ lấy ngày
+  theo VN; help `--until` "mặc định hôm nay giờ VN". `pipelines/freeze.py`
+  KHÔNG đổi (VN_TZ riêng giữ nguyên — tránh đụng v3.10).
+  - Boundary: `pipelines/period.py` (mới), `agents/report.py`
+    (`period_bounds`, `report_name`, help), `tests/test_period.py` (mới),
+    `tests/test_report.py` (flip 2 test period: kỳ ngày 10/10 → since
+    `2026-10-04 00:00+07`, until `2026-10-11 00:00+07`; naive → ValueError)
+  - Gate: tuần vắt 2 tháng: `period_bounds('week', date(2026,10,1))` →
+    (`2026-09-28 00:00+07`, `2026-10-05 00:00+07`); tuần vắt năm
+    `date(2027,1,1)` → (`2026-12-28`, `2027-01-04`); ranh giới 00:00 VN:
+    `datetime(2026,9,27,16,59,59,tzinfo=UTC)` → tuần bắt đầu 2026-09-21,
+    `datetime(2026,9,27,17,0,tzinfo=UTC)` → 2026-09-28; tháng:
+    `datetime(2026,12,31,17,0,tzinfo=UTC)` → tháng 01/2027; `day` của
+    `datetime(2026,10,11,16,59,tzinfo=UTC)` = 11/10 VN; naive → ValueError;
+    `rolling_bounds(7, date(2026,10,10))` = (04/10 00:00+07, 11/10
+    00:00+07); `test_report.py` số `assert` không giảm (đối chiếu trước/
+    sau, gotcha v1.7); `report_name` của kỳ trên = `report-2026-10-04_
+    2026-10-10.md`
+  - Evidence: `evidence/v40_framework.log`
+- [x] **W40.6 Mẫu agent giám đốc `pipelines/director.py` + 11 cấu hình**
+  — `BLOCKS` = 11 key (ceo, sales, marketing, intel, finance, production,
+  farming, projects, legal_hr, mechanical, data_platform);
+  `data/directors/<key>.json`: `{"_doc", "block", "name" (tên khối từ
+  final_plans.json), "director_agent" (tên agent level director),
+  "approver_roles" (⊂ `pipelines.auth.ROLES`; sales→gd_ban_hang,
+  marketing→gd_marketing, legal_hr→phap_che, data_platform→[ha_tang, tgd],
+  còn lại→tgd — tạm, TGĐ chốt), "approvers": [] (external-dep),
+  "object_types": {"<type>": {"sla_hours": int 1..720, "risk": "low|medium|
+  high"}} (không `content_draft`), "digest_recipients": [] (external-dep),
+  "due_soon_hours": int}`. `load_config(block)` / `load_all()` → lỗi cấu
+  trúc → `DirectorConfigError` (role lạ, sla ngoài khoảng, object_type
+  `content_draft`, block ≠ tên file). `submit(conn, block, object_type,
+  object_id, title, payload, created_by, qa_status='none')` — gom việc từ
+  agent nhân viên: SLA + risk lấy từ CONFIG (caller không tự đặt), gọi
+  `approval_queue.enqueue`; object_type ngoài config → ValueError.
+  `run(conn, block, now)`: `expire_overdue` → thử `auto_approve` các mục
+  pending risk low + qa pass (lỗi "không policy" = bình thường, bỏ qua) →
+  đọc hàng của khối → `digest(cfg, items, now) -> str` (THUẦN, test được):
+  markdown "Bản tin GĐ <name> — <ngày VN>": số pending/approved/rejected/
+  expired trong ngày (dùng `period.period_bounds('day', now)`), mục sắp
+  quá hạn (≤ due_soon_hours), mục expired hôm nay, override_qa hôm nay,
+  dòng "Người duyệt chưa cấu hình (external-dep)" khi `approvers` rỗng,
+  footer "BẢN NHÁP — hệ thống không tự gửi". Ghi `data/reports/director-
+  <block>-<YYYY-MM-DD>.md` bằng `agents.report.write_report` (atomic, đã
+  gitignore). CLI `python -m pipelines.director --block K | --all
+  [--dry-run]` (dry-run = chỉ load + validate config, không DB), `__main__`
+  bọc `job_run("pipelines.director")`; DB down → exit 2.
+  - Boundary: `pipelines/director.py` (mới), `data/directors/*.json` (11
+    file mới), `tests/test_director.py` (mới), `tests/
+    test_director_framework.py` (đường DB `submit`/`run`)
+  - Gate: `python -m pipelines.director --all --dry-run` exit 0 in 11 khối;
+    test: `load_all()` đúng 11 key = tên file, mọi `approver_roles` ⊂
+    `auth.ROLES`, mọi `approvers == []` và `digest_recipients == []` (khóa
+    không tự điền người thật); config hỏng (role `ke_toan`, sla 0, sla 721,
+    `content_draft`, block lệch tên file) → DirectorConfigError; `digest`
+    với `now = 2026-10-12T23:30+07` chỉ đếm mục trong ngày 12/10 VN (mục
+    `2026-10-12T16:59Z` = 23:59 VN tính, `2026-10-12T17:00Z` = 00:00 13/10
+    không tính); `submit` object_type lạ → ValueError, 0 execute; DB
+    (rollback): `submit` ghi `due_at - created_at` = sla config; `run` sau
+    khi đẩy 1 mục quá hạn (replica) → mục `expired`, bản tin có mục đó,
+    không approvals mới
+  - Evidence: `evidence/v40_framework.log`
+- [x] **W40.7 `scripts/deploy_gate.py` dùng `pipelines.freeze.check()`** —
+  bỏ khối `cfg["freeze"]`; `check(sha, approved_by, hotfix, today, cfg,
+  now=None)`: `kind = "hotfix" if hotfix else "feature"`, `now` None →
+  `datetime.combine(today, time(12), VN_TZ)` (mô phỏng `--today`); `main`
+  KHÔNG có `--today` → truyền `now = datetime.now(VN_TZ)` thật (break-glass
+  mở 14:00 phải có hiệu lực lúc 15:00 — mốc trưa cố định sẽ chặn oan);
+  `ok, why = freeze.check(kind, now)` → `not ok` → `reasons.append(why)`.
+  Break-glass đọc env `BREAK_GLASS_LOG` (như v3.10); lịch hỏng → fail-closed
+  của `freeze.check` (feature bị chặn, hotfix qua). Xóa key `freeze` khỏi
+  `data/eval/config.json` + sửa `_doc` của nó và của `data/
+  freeze_calendar.json` (1 nguồn lịch); docstring deploy_gate điểm 4 +
+  docstring "Điểm nối" trong `pipelines/freeze.py` cập nhật "đã nối v4.0".
+  Hotfix/break-glass vẫn cần đủ điều kiện 1–3.
+  - Boundary: `scripts/deploy_gate.py`, `data/eval/config.json`, `data/
+    freeze_calendar.json` (`_doc`), `pipelines/freeze.py` (docstring),
+    `tests/test_deploy_gate.py`, `tests/test_freeze.py` (docstring drift-
+    guard nếu nhắc config v3.5)
+  - Gate: `grep -n '"freeze"' data/eval/config.json` rỗng;
+    `grep -n 'cfg\["freeze"\]' scripts/deploy_gate.py` rỗng; fixture
+    `gate` đặt `BREAK_GLASS_LOG` rỗng (monkeypatch); 7 case
+    `test_freeze_window_boundaries` cũ giữ nguyên kết quả (20/12 0, 21/12 1,
+    15/01 1, 10/02 1, 11/02 0, hotfix 22/12 0, hotfix 10/02 0); break-glass:
+    log tạm có record open 14:00–16:00 VN ngày 25/12 + FakeDT now 15:00 VN
+    (không `--today`) → feature exit 0; now 16:30 → exit 1; record đã
+    `close` → exit 1; `--today 2026-12-25` (mốc trưa) với cửa sổ 14–16h →
+    exit 1 (mô phỏng không mở cửa sổ ngoài giờ trưa); lịch hỏng
+    (monkeypatch `freeze.CALENDAR` → file `{}`) → feature exit 1 lý do
+    "fail-closed", hotfix exit 0; `test_default_today_is_vn_date` giữ xanh;
+    hotfix vẫn cần PASS + người duyệt (2 test cũ xanh)
+  - Evidence: `evidence/v40_framework.log`
+- [x] **W40.8 Docs** — `docs/handover/kien-truc.md`: "N bảng public" với N
+  = số `create table if not exists` trong schema.sql (dự kiến 29 = 24 + 5),
+  5 dòng bảng mới; mục Human-gate thêm "Hàng duyệt dùng chung" (2 lớp,
+  expired không tự duyệt, override_qa, red_alerts append-only + người nhận
+  độc lập); mục 6b bảng role thêm quyền mới; module `period.py`,
+  `approval_queue.py`, `director.py`, `red_alert.py` vào bảng thư mục.
+  `docs/handover/sop.md`: mục mới "Hàng duyệt chung & bản tin GĐ khối
+  (v4.0)" (`python -m pipelines.approval_queue --pending/--approve/--reject/
+  --override-qa/--expire`, `python -m pipelines.director --block K`,
+  `python -m pipelines.red_alert --check-routing`, ai xử lý khi exit 1);
+  mục deploy: đóng băng theo `data/freeze_calendar.json` + break-glass.
+  `AGENTS.md` Commands: 3 dòng lệnh mới + sửa dòng "Cổng deploy" (lịch
+  `data/freeze_calendar.json` + break-glass). `tests/test_handover_docs.py`
+  `SOP_COMMANDS` thêm `pipelines.approval_queue`, `pipelines.director`,
+  `pipelines.red_alert`.
+  - Boundary: `docs/handover/kien-truc.md`, `docs/handover/sop.md`,
+    `AGENTS.md` (Commands), `tests/test_handover_docs.py` (`SOP_COMMANDS`)
+  - Gate: `python -m pytest tests/test_handover_docs.py -q` xanh (đủ tên
+    bảng parse từ schema.sql + đúng "N bảng"); grep 3 lệnh mới có trong
+    `AGENTS.md` và `sop.md`
+  - Evidence: `evidence/v40_pytest.log`
+- [x] **Gate chung** —
+  - `python scripts/apply_schema.py --roles` ×2 exit 0 (in đủ bảng mới, 2
+    role login=False)
+  - targeted ×3: `python -m pytest tests/test_director_framework.py tests/test_approval_queue.py tests/test_red_alert.py tests/test_period.py tests/test_director.py tests/test_report.py tests/test_deploy_gate.py tests/test_freeze.py tests/test_auth_approval.py tests/test_handover_docs.py tests/test_store.py tests/test_lead_store.py tests/test_connect_timeout_guard.py -q -rs`
+    3 lần liên tiếp xanh, test DB **0 skipped** (lệnh nặng có thể bị đẩy
+    nền — đọc output tới exit, không chạy chồng)
+  - full: `python -m pytest -q` xanh, ≥ 831 + test mới (ĐÚNG 1 lần/vòng)
+  - `ruff check .` sạch
+  - `python -m py_compile pipelines/period.py pipelines/approval_queue.py pipelines/director.py pipelines/red_alert.py agents/report.py scripts/deploy_gate.py`
+  - `python -m pipelines.director --all --dry-run` exit 0;
+    `python -m pipelines.red_alert --check-routing` exit 1 (thiếu người
+    nhận — đúng thiết kế); `python -m pipelines.store --verify-log` exit 0
+  - sau toàn bộ gate trên DB thật: `approval_queue`, `decisions`,
+    `red_alerts`, `channel_snapshots` = 0 dòng; `auto_policies` = 0 dòng;
+    `approvals` không tăng so với trước gate (không row test sót, không tự
+    duyệt)
+  - `git status`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); không file lạ (vd `lv2-market-top.png` giữ
+    untracked); `data/red_alert_routing.json` + `data/directors/*.json`
+    không chứa tên/email người thật
+- [ ] **external-dep** Người nhận cảnh báo đỏ thật (Pháp chế xác nhận) +
+  kênh gửi thật (email/Zalo) — hiện chỉ ghi `red_alerts`, routing `[]` →
+  `--check-routing` exit 1.
+- [ ] **external-dep** Danh sách người duyệt theo 11 khối + vai trò riêng
+  cho khối chưa có trong `auth.ROLES` (TGĐ chốt); chủ khối ký phạm vi
+  auto_policy (`auto_policies` ship rỗng).
+- [ ] **external-dep** SSO thật (`approved_by` từ SSO thay `--by`
+  free-text); object-lock neo `agent_action_log`; BKS nhận báo override_qa.
+
+Kết quả worker (2026-10-12, evidence `evidence/v40_framework.log` +
+`evidence/v40_pytest.log` — phải `git add -f`): apply_schema --roles ×2
+exit 0 (29 bảng, 2 role login=False); targeted 13 file ×3 = 277 passed ×3,
+0 skipped; full pytest vòng 1 FAIL 1 (drift-guard `test_db_backup` đòi
+`deploy/cloud/README.md` liệt kê bảng mới) → vá README → vòng 2 923 passed,
+0 skipped; ruff sạch; py_compile ok; director dry-run exit 0; red_alert
+--check-routing exit 1 (đúng thiết kế); --verify-log exit 0; DB thật sau
+gate: 6 bảng approvals/approval_queue/auto_policies/decisions/
+channel_snapshots/red_alerts = 0 dòng. Lệch contract (ghi rõ):
+(1) roles.sql thêm cho agent_writer `select (14 cột metadata — KHÔNG
+payload/guardrail/sha) on approval_queue`, `select on decisions` +
+`select (id) on red_alerts` — agent GĐ chạy `run` cần đọc metadata hàng,
+`insert ... returning id` cần SELECT cột id (payload chỉ app_human đọc —
+vòng sửa nghiệm thu); (2) CLI dùng lại
+`ingest.lead_store.connect` (connect_timeout=3, không phải 5); (3) file
+ngoài Boundary vá vì dây chuyền: `tests/test_agent_eval.py` (assert key
+`freeze` cũ → assert đã bỏ), `deploy/cloud/README.md` (5 bảng mới + "29
+bảng" — drift-guard test_db_backup); (4) thêm: deploy_gate bắt ValueError
+của freeze.check (lịch thiếu kind → fail-closed, không traceback);
+(5) `test_report.py` sửa thêm hằng S/U sang giờ VN + 3 mốc biên convlog
+(fake-conn route theo params kỳ VN), số dòng assert 71 → 72.
+auto_approve_item tin risk/qa/guardrail do caller khai (tiềm ẩn, vô hại khi
+auto_policies rỗng — PHẢI có nguồn tin cậy trước khi bật policy).
+
+Vòng sửa nghiệm thu (2026-10-12, 8 MINOR — evidence nối cuối
+`evidence/v40_framework.log` + `evidence/v40_pytest.log`):
+(1) override_qa lý do toàn `\n`/`\t` lọt (btrim chỉ cắt dấu cách) →
+function đếm ký tự không-khoảng-trắng (`regexp_replace(..., '\s', '',
+'g')`), lưu `btrim(p_reason, E' \t\r\n')`; CHECK `decisions.reason` (cài
+mới) cùng luật; Python `override()` chặn trước DB. (2) Docs bỏ "kể cả
+owner/superuser": chỉ đúng với `app_human` + DML khi trigger còn bật;
+owner DISABLE TRIGGER / superuser replica vẫn xóa được → TGĐ/ha_tang
+KHÔNG được giữ DSN owner/superuser (kien-truc.md, sop.md, schema.sql
+comment, red_alert.py docstring, W40.1). (3) deploy_gate in `[warn]`
+trước kế hoạch khi freeze cho qua TRONG khung (hotfix/break-glass/lịch
+hỏng); `freeze.check` gắn "(người CHƯA xác minh)" khi
+`holder_verified=false`. (4) agent_writer chỉ SELECT 14 cột metadata
+`approval_queue` (KHÔNG payload/guardrail/sha); app_human SELECT đủ;
+`decide()` đọc payload trong savepoint (role thiếu quyền không làm hỏng tx
+conn chia sẻ). (5)+(7) red_alert allowlist `INDEPENDENT_ROLES =
+("phap_che", "bks")` (không deny-list nhãn — 'TGĐ' có dấu/'tong_giam_doc'
+bị loại); helper `_valid_recipients` dùng chung `load_routing` VÀ
+`raise_alert` (routing truyền tay bị lọc lại). (6) test expire có mục còn
+SLA phải giữ pending (mutation bỏ `due_at <= now()` → 2 test FAIL).
+(8) runbook §4/§7 nói deploy_gate ĐÃ nối freeze (v4.0); test_runbook bỏ
+deploy_gate khỏi list "nhánh khác" + test dương. Gate: apply_schema
+--roles ×2 exit 0 (29 bảng); targeted 14 file ×3 = 299 passed ×3, 0
+skipped; mutation M1/M2/M3 đều bị test bắt; full pytest 937 passed + 1
+FAIL `test_dr_drill::test_zz_no_dr_container_left` (container
+`samsam-dr-*` của worktree khác drill song song — docker dùng chung; sau
+run `docker ps` sạch, `tests/test_dr_drill.py` chạy riêng 27 passed);
+ruff sạch; DB thật 5 bảng mới = 0 dòng. Treo (thấy, không làm): runbook
+dòng `health_bulletin` vẫn gắn "(nhánh khác: v3.7)" dù
+`scripts/health_bulletin.py` đã có trong worktree.
+
+Someday (ngoài v4.0, ghi để không cuốn vào): tab Streamlit "Hàng duyệt
+chung" (hiện CLI); gửi bản tin/cảnh báo thật qua `health_bulletin` notify;
+`red_alert_acks` (xác nhận đã nhận) + SLA 24h delivery_log; routing lưu DB
+có chữ ký Pháp chế thay file git; function DB tự kiểm guardrail thay vì tin
+snapshot (hiện Python re-check); `record_publish`/`approve_spend`/
+`schedule_slot`; chuyển `content_drafts` sang hàng chung; cockpit đọc
+`channel_snapshots` (WP10); `pipelines/freeze.py` dùng `period.VN_TZ`.
+
 Nhánh `ai-infra`: M30 (v3.0–v3.10) đóng và gộp đủ 2026-10-12 — 24 bảng,
 831 test. Đếm bảng trong test không còn hằng số (sàn `>= 24` / đọc
 schema.sql) để các version M31+ chạy song song không xung đột dòng này.
+
+v4.0-director-framework đóng 2026-10-12 (nghiệm thu đợt 1 FIX 8 MINOR — lý do
+override_qa toàn khoảng trắng, docs nói quá bảo vệ red_alerts (owner/superuser
+vẫn xóa được → ha_tang KHÔNG được giữ DSN owner), deploy cho qua bằng
+break-glass im lặng, agent_writer đọc mọi payload… — 1 vòng sửa → PASS;
+coordinator chạy lại targeted 311 + ruff + apply_schema --roles + director
+dry-run + verify-log). 29 bảng. `period_bounds` đổi ranh giới ngày UTC → giờ
+VN (2 test report flip). Lưu ý song song: `test_dr_drill::test_zz_no_dr_
+container_left` đỏ khi worktree khác đang chạy drill trên cùng docker host —
+không phải lỗi code, chạy lại riêng xanh. Mở (bắt buộc vá TRƯỚC khi bật bất kỳ
+auto_policy nào): `auto_approve_item` tin risk/qa/guardrail do agent khai lúc
+enqueue. External-dep: người nhận cảnh báo đỏ + kênh gửi; người duyệt từng khối
+(6 khối đang tạm map `tgd`); chủ khối ký auto_policies; SSO; object-lock.
 
 ## Checklist v3.3-connector-csv
 
