@@ -4,7 +4,24 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
+Version đang mở: **(không — loop /cycle 10 tiếp)**
+
+v2.4-polish đóng 2026-10-11 (cold-check auditor lạ profile reviewer
+— đợt 1 FIX 1 MINOR `_WHERE_INFO_RE` greedy nuốt 'ở đâu' thứ hai
+mất lead thật → vá lazy+chặn-dấu-câu-cụm + veto theo 'ở đâu' còn
+sót; đợt 2 PASS). **Audit bù thực hiện luôn trong session này**
+(quota về): reviewer lạ thứ hai audit range `1553e81..7986eb7`
+(v2.0+v2.1+v2.3 self-reviewed) — bắt 1 MAJOR thật `flags_for`/
+report-flags quét cả activity-name: vocab 'kiểm tra sâu bệnh' tự
+flag MỌI nhật ký routine → nhiễu cảnh báo, vá quét chỉ `detail`;
++ 1 MINOR drift-guard substring Q1↔Q10/tab (vá word-boundary) +
+2 NIT (--days OverflowError → cap 3660; add_log warn ts tương-lai)
+→ vá `193c68d` → re-audit PASS (vá thêm warn dung sai 1 ngày cho
+lệch VN+7/UTC + `95bd98b`). 195/195 pytest + ruff clean.
+Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
+(đúng review chỉ dựa code Python — quyết khi bàn giao); free-text
+activity chứa triệu chứng không flag (flags quét chỉ detail —
+ghi detail khi nhập).
 
 v2.3-handover-docs đóng 2026-10-11 (cold-check **coordinator
 self-review** — quota subagent cạn rate-limit sau khi agent build
@@ -60,12 +77,12 @@ khi mọi deliverable SOW build-được (contract coordinator tự chọn qua
 `guardrail.py`/`api/rag.py`/`connectors/zalo.py` KHÔNG đụng; skip
 eval_qa + zalo_mock; không thêm/sửa bảng; không global mutable mới.
 
-- [ ] **V9.1 `convlog_stats` answered strict** — `is True` thay
+- [x] **V9.1 `convlog_stats` answered strict** — `is True` thay
   truthiness (NIT cold-check v1.9): entry convlog ngoại lai
   `answered:"false"` không còn đếm như đã trả lời.
   - Boundary: `ingest/lead_store.py`, `tests/test_lead_store.py`
   - Gate: test — `"false"`/thiếu-key không đếm, `True` đếm
-- [ ] **V9.2 `intent_of` chống FP (MINOR v1.9)** — price: scrub cụm
+- [x] **V9.2 `intent_of` chống FP (MINOR v1.9)** — price: scrub cụm
   `đánh giá|định giá|giá trị` trước khi match key `giá` (chỉ xóa span
   cụm, không veto — "đánh giá tốt, giá bao nhiêu" vẫn price);
   contact: `ở đâu` info-veto khi đứng sau từ ngữ sinh học
@@ -74,14 +91,14 @@ eval_qa + zalo_mock; không thêm/sửa bảng; không global mutable mới.
   → order (first-match), "showroom ở đâu" → contact qua key khác.
   - Boundary: `ingest/lead_store.py`, `tests/test_lead_store.py`
   - Gate: test — FP case → None + recall case giữ intent đúng
-- [ ] **V9.3 `store._get` phân biệt conn-chết vs không-tìm-thấy** —
+- [x] **V9.3 `store._get` phân biệt conn-chết vs không-tìm-thấy** —
   `_get` KHÔNG nuốt `psycopg.Error` (propagate); `set_status`/
   `schedule` bắt → warn "lỗi DB khi đọc draft" thay "không tìm
   thấy" (NIT v2.2 — trước báo ảo "không tìm thấy" khi conn chết
   giữa chừng). Flip test Dead-conn đang đánh dấu intentional.
   - Boundary: `pipelines/store.py`, `tests/test_store.py`
   - Gate: test — Dead-conn → warn "lỗi DB"; rows=[] → "không tìm thấy"
-- [ ] **V9.4 Guardrail dict thiếu `"ok"`** — `_render_guardrail`
+- [x] **V9.4 Guardrail dict thiếu `"ok"`** — `_render_guardrail`
   dùng `.get` + nhánh "kết quả không đầy đủ" thay KeyError trên
   draft ngoại lai; `_fmt_guardrail` thiếu `ok` → "KHÔNG RÕ" thay
   "VI PHẠM" (ok=False violations thật vẫn "VI PHẠM").
@@ -89,7 +106,7 @@ eval_qa + zalo_mock; không thêm/sửa bảng; không global mutable mới.
     `tests/test_store.py`
   - Gate: test `_fmt_guardrail` 4 nhánh; UI verify code-read +
     py_compile (thay đổi phòng thủ, không đổi visual)
-- [ ] **V9.5 `_rconn`/`_gconn` close trên nhánh error/rerun** — tab
+- [x] **V9.5 `_rconn`/`_gconn` close trên nhánh error/rerun** — tab
   Duyệt&Lịch: conn đóng trước mỗi `st.rerun()` (2 chỗ) + đóng conn
   lỗi trong `except _pg.Error` (leak mỗi lần đọc DB fail / click
   duyệt/xếp-lịch). Vá cùng cụm ở tab Nhật ký vườn (`_gconn`

@@ -269,3 +269,20 @@ chat lẫn embeddings) + Streamlit.
 - **`evidence/*.log` bị `*.log` gitignore**: file evidence .log phải
   `git add -f` mới vào commit (quy ước "evidence commit vào repo" —
   file m2_*/v0*.log cũ đều tracked qua force-add).
+- **Regex veto/filter trên text tự do**: (a) span greedy nuốt cả
+  occurrence SAU → lazy `{0,n}?` + chặn qua dấu câu cụm `[^.?!,;]`;
+  (b) quyết veto theo "key còn sót sau `re.sub`" thay `search()` —
+  "trồng ở đâu bán ở đâu" phải giữ 'ở đâu' hỏi-địa-điểm (v2.4
+  cold-check MINOR, `_WHERE_INFO_RE`).
+- **Keyword-flag KHÔNG quét tên-vocab** — vocab chứa chính keyword:
+  `flags_for(activity, detail)` quét `activity` → 'kiểm tra sâu bệnh'
+  ∋ 'sâu bệnh' flag MỌI routine pest-check, nhiễu cảnh báo thật
+  (audit-bù v2.1 MAJOR). Flag chỉ quét `detail`; giữ param cho
+  caller-compat. Cùng lớp: test khóa hành-vi-xấu → vá phải FLIP test.
+- **Mix date local + giờ UTC** (date_input local + `now(UTC)`) sinh
+  ts tương-lai giả cho user VN+7 vào buổi sáng → default `date_input`
+  ngày UTC + warn dung sai 1 ngày (re-audit v2.4 MINOR).
+- **Drift-guard test assert substring id ngắn** (`"Q1" in body`) ăn ké
+  id dài ('Q10') — mất Q1 test vẫn xanh. Dùng word-boundary
+  `re.search(rf"\bQ{n}\b")` / `(?<!\w)name(?!\w)` cho tên thực thể
+  (v2.3 audit-bù MINOR).

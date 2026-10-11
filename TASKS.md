@@ -639,7 +639,7 @@ coordinator tự chọn qua /cycle 7/10). `guardrail.py`/`api/rag.py`/
 `connectors/zalo.py` cấm đụng; skip eval_qa + zalo_mock. Không
 thêm/sửa bảng; không global mutable mới.
 
-- [ ] **V9.1–V9.5 Lane inline** — `ingest/lead_store.py` +
+- [x] **V9.1–V9.5 Lane inline** — `ingest/lead_store.py` +
   `pipelines/store.py` + `app/streamlit_app.py` +
   `tests/test_lead_store.py` + `tests/test_store.py`:
   `convlog_stats` answered `is True`; `intent_of` scrub
@@ -652,7 +652,10 @@ thêm/sửa bảng; không global mutable mới.
   - Gate: `python -m pytest tests/test_lead_store.py
     tests/test_store.py -q` xanh; full `python -m pytest -q` +
     `ruff check .` + `py_compile` (coordinator) —
-    `evidence/v24_pytest.log`
+    `evidence/v24_pytest.log` — 195/195 + ruff clean;
+    cold-check đợt 1 FIX (veto 'ở đâu' quá tay) → vá → đợt 2 PASS;
+    audit bù 1553e81..7986eb7 đợt 1 FIX 1 MAJOR flags_for → vá
+    `193c68d` → re-audit PASS
 
 ---
 
