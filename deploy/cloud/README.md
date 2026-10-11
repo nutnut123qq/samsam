@@ -3,7 +3,7 @@
 - **Dành cho ai:** Quản lý hạ tầng AI (hoặc đội triển khai khi chưa tuyển
   xong), người được TGĐ giao mở tài khoản cloud.
 - **Làm gì:** chọn nhà cung cấp Postgres managed trong nước, nối app vào
-  bằng TLS, đưa đủ 29 bảng lên, bật backup + diễn tập khôi phục.
+  bằng TLS, đưa đủ 35 bảng lên, bật backup + diễn tập khôi phục.
   bằng TLS, đưa đủ bảng của `docs/schema.sql` lên, bật backup + diễn tập khôi phục.
 - **Cần gì (external-dep — công ty cấp, repo này KHÔNG giả lập):** tài
   khoản + thẻ thanh toán nhà cung cấp; bật PITR/WAL; object storage
@@ -63,7 +63,7 @@ Người làm 1 lần trên console: bật PITR/WAL, đặt retention WAL, đọ
 cấu hình để kiểm, lưu biên bản. Diễn tập PITR ra instance tạm của nhà
 cung cấp (mốc 30/11 và 18/12), đo RTO, xóa instance sau khi đo.
 
-## 4. Đưa 29 bảng lên cloud
+## 4. Đưa 35 bảng lên cloud
 ## 4. Đưa toàn bộ bảng lên cloud
 
 Chọn 1 trong 2 đường cho từng bảng.
@@ -71,7 +71,7 @@ Chọn 1 trong 2 đường cho từng bảng.
 ### Đường A — dựng mới từ nguồn trong repo
 
 ```
-python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ 29 bảng
+python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ 35 bảng
 python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ số bảng
 python -m ingest.core_store         # products, claims_approved, plots, plot_logs, orders, assets
 python -m ingest.golden_store       # sku_master, sku_map, price_list, golden_discrepancies
@@ -85,7 +85,7 @@ Bảng sinh lúc chạy bắt đầu RỖNG theo đường A: `leads`, `content_
 ### Đường B — mang dữ liệu đang có
 
 ```
-python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts 29 bảng)
+python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts 35 bảng)
 python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts mọi bảng)
 pg_restore --no-owner --no-privileges --exit-on-error -d samsam <file .dump>   # vào DB cloud rỗng (PG* env, sslmode=require)
 ```

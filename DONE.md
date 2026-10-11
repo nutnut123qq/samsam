@@ -6,6 +6,13 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+Nhánh `ai-infra`: M31 đợt gộp 2026-10-12 — v4.0, v4.1, v4.4, v7.0, v7.3, v9.3,
+v9.5 đã đóng + gộp (35 bảng). Tích hợp khi gộp: bổ sung DF-16 (intel) + DF-17
+(persona_sim) vào `data/data_flow_map.json` + sinh lại DPIA/TIA nháp; phương án
+rượu trong persona_sim nay bị guardrail v4.1 loại kể cả panel người lớn (flip
+`test_validate_specific_reasons`). Đang chạy song song: v4.2, v4.5, v5.2, v7.2,
+v9.2.
+
 ## Checklist v4.0-director-framework
 
 Khán giả/mục đích: M31 (worktree `D:\code\samsam-w40`) — làm nốt WP03

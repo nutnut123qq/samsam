@@ -295,7 +295,8 @@ python scripts/persona_sim.py --dry-run
   lời gọi hợp lệ → cờ `[KHÔNG DÙNG ĐƯỢC]`, không dùng kết quả.
 - Đầu vào bị chặn (exit 1, trước khi gọi LLM): persona có key ngoài danh
   sách cho phép (mã đơn, user_hash, SĐT, email...), persona < 18 tuổi,
-  phương án rượu chạy với nhóm trẻ hoặc nhắc giới trẻ/sinh viên/Gen Z,
+  MỌI phương án nhắc rượu (guardrail v4.1 chặn rượu — kể cả panel toàn
+  người lớn),
   phương án có từ cấm, TPBVSK chưa có XNQC mà làm phương án sản phẩm
   (chỉ được làm chủ đề thương hiệu).
 - **Quản lý MXH** duyệt báo cáo; TGĐ/BKS đồng ký biên bản trước khi dùng.

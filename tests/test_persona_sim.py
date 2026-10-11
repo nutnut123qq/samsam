@@ -141,9 +141,11 @@ def test_validate_specific_reasons():
     # TPBVSK chưa XNQC nhưng làm brand_theme -> hợp lệ.
     ok = _cfg(_add_opt("Câu chuyện vườn sâm", sku_keys=["saphraton-20v"]))
     assert _v(ok) == []
-    # Rượu với panel KHÔNG có persona trẻ, không nhắc giới trẻ -> hợp lệ.
+    # Gộp M31 (v4.1 guardrail v2 chặn MỌI nội dung rượu): phương án rượu bị
+    # loại kể cả với panel toàn người lớn — guardrail là nguồn quyết định.
     adult = _pers(lambda d: [p.update(youth=False) for p in d["personas"]])
-    assert _v(_cfg(_add_opt("Rượu sâm làm quà biếu đối tác")), adult) == []
+    errs = _v(_cfg(_add_opt("Rượu sâm làm quà biếu đối tác")), adult)
+    assert errs and all("guardrail" in e for e in errs)
     # So không dấu + biên từ: "sinh viên" không dấu cũng bắt.
     assert _v(_cfg(_add_opt("ruou sam cho sinh vien")), adult)
 

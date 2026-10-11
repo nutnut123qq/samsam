@@ -290,6 +290,42 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Nghĩa vụ bảo đảm an toàn dữ liệu — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Mã hóa backup là tùy chọn — chưa bắt buộc; Nếu bật offsite cloud nước ngoài phải bổ sung TIA |
 
+### DF-16 — Thu tin thị trường tầng A/B (intel — v7.0)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-16 |
+| Module (code) | `crawler/intel.py` |
+| Mục đích | Tình báo thị trường: tin về sâm, TPBVSK, đồ ăn giới trẻ, quảng cáo, đối thủ |
+| Dữ liệu | Tiêu đề + trích ≤300 ký tự + link tin RSS/Atom công khai (đã che SĐT/email); có thể nhắc tên người trong tin báo chí |
+| Lớp | Xanh |
+| Chủ thể | Người được nhắc tên trong tin báo chí công khai (nếu có) |
+| Nơi lưu | Bảng `intel_items` (không lưu toàn văn) |
+| Thời hạn lưu | Chưa có hạn lưu/purge — GAP |
+| Bên nhận | Chỉ GET tới nguồn RSS tầng A/B trong `data/intel_sources.json`; tóm tắt LLM (mặc định TẮT) qua gateway → OpenRouter (Mỹ) |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | robots.txt + delay ≥1s/host, chặn cứng sàn/MXH kể cả khi redirect; Chỉ tiêu đề + trích ≤300 ký tự, `_mask_pii` trước khi lưu; LLM tóm tắt chỉ chạy khi `llm.enabled` + `--llm`, qua gateway + guardrail |
+| Căn cứ xử lý | Thông tin công khai; nếu bật LLM thì cần Pháp chế xác nhận — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | Chưa che họ tên người trong tiêu đề/trích tin (NER); Chưa có hạn lưu/purge `intel_items` |
+
+### DF-17 — Nghiên cứu giả lập persona (v7.3)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-17 |
+| Module (code) | `scripts/persona_sim.py` |
+| Mục đích | Loại bớt phương án truyền thông yếu trước khi thử thật |
+| Dữ liệu | Persona TỔNG HỢP (không dữ liệu khách thật), phương án sản phẩm/thông điệp, điểm số model |
+| Lớp | Xanh |
+| Chủ thể | Không có — persona tổng hợp, validator chặn key PII/SĐT/email |
+| Nơi lưu | Bảng `sim_runs` (không lưu văn bản LLM thô, không PII) |
+| Thời hạn lưu | Không giới hạn — lịch sử kiểm toán model/prompt/seed |
+| Bên nhận | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `persona_sim`) |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | Cổng DPIA: `dpia_signed` false → từ chối chạy thật (exit 2, 0 lời gọi LLM); Validator đầu vào chặn persona <18 tuổi, key ngoài allowlist, PII; Mọi phương án qua guardrail trước khi gửi model |
+| Căn cứ xử lý | Không xử lý dữ liệu cá nhân thật; chạy sau khi DPIA ký — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | (không) |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -311,6 +347,8 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-13 | Crawl website công khai của công ty | Xanh | thấp | không | 0 |
 | DF-14 | Nhật ký chi phí LLM (llm_usage) | Xanh | thấp | không | 0 |
 | DF-15 | Sao lưu và diễn tập khôi phục DB | Đỏ | cao | không | 2 |
+| DF-16 | Thu tin thị trường tầng A/B (intel — v7.0) | Xanh | thấp | có | 2 |
+| DF-17 | Nghiên cứu giả lập persona (v7.3) | Xanh | thấp | có | 0 |
 
 ## 4. Tổng hợp GAP
 
@@ -331,6 +369,8 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-11] Chưa có hạn lưu cho dữ liệu đơn sàn
 - [DF-15] Mã hóa backup là tùy chọn — chưa bắt buộc
 - [DF-15] Nếu bật offsite cloud nước ngoài phải bổ sung TIA
+- [DF-16] Chưa che họ tên người trong tiêu đề/trích tin (NER)
+- [DF-16] Chưa có hạn lưu/purge `intel_items`
 
 ## 5. Câu hỏi cho luật sư
 

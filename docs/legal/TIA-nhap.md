@@ -76,6 +76,32 @@
 | Rủi ro tồn dư | (không) |
 | Căn cứ | Không xử lý dữ liệu cá nhân — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
+### DF-16 — Thu tin thị trường tầng A/B (intel — v7.0)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | Chỉ GET tới nguồn RSS tầng A/B trong `data/intel_sources.json`; tóm tắt LLM (mặc định TẮT) qua gateway → OpenRouter (Mỹ) |
+| Dữ liệu gửi đi (sau biện pháp) | Tiêu đề + trích ≤300 ký tự + link tin RSS/Atom công khai (đã che SĐT/email); có thể nhắc tên người trong tin báo chí |
+| Lớp | Xanh |
+| Mục đích | Tình báo thị trường: tin về sâm, TPBVSK, đồ ăn giới trẻ, quảng cáo, đối thủ |
+| Biện pháp kỹ thuật | robots.txt + delay ≥1s/host, chặn cứng sàn/MXH kể cả khi redirect; Chỉ tiêu đề + trích ≤300 ký tự, `_mask_pii` trước khi lưu; LLM tóm tắt chỉ chạy khi `llm.enabled` + `--llm`, qua gateway + guardrail |
+| Thời hạn lưu (theo map) | Chưa có hạn lưu/purge — GAP |
+| Rủi ro tồn dư | Chưa che họ tên người trong tiêu đề/trích tin (NER); Chưa có hạn lưu/purge `intel_items` |
+| Căn cứ | Thông tin công khai; nếu bật LLM thì cần Pháp chế xác nhận — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
+### DF-17 — Nghiên cứu giả lập persona (v7.3)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `persona_sim`) |
+| Dữ liệu gửi đi (sau biện pháp) | Persona TỔNG HỢP (không dữ liệu khách thật), phương án sản phẩm/thông điệp, điểm số model |
+| Lớp | Xanh |
+| Mục đích | Loại bớt phương án truyền thông yếu trước khi thử thật |
+| Biện pháp kỹ thuật | Cổng DPIA: `dpia_signed` false → từ chối chạy thật (exit 2, 0 lời gọi LLM); Validator đầu vào chặn persona <18 tuổi, key ngoài allowlist, PII; Mọi phương án qua guardrail trước khi gửi model |
+| Thời hạn lưu (theo map) | Không giới hạn — lịch sử kiểm toán model/prompt/seed |
+| Rủi ro tồn dư | (không) |
+| Căn cứ | Không xử lý dữ liệu cá nhân thật; chạy sau khi DPIA ký — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
 ## 3. Luồng không thuộc TIA
 
 Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15.

@@ -10,7 +10,9 @@
     {
       "id": "DF-01",
       "name": "Kênh Zalo OA — nhận tin và trả lời khách",
-      "modules": ["connectors/zalo.py"],
+      "modules": [
+        "connectors/zalo.py"
+      ],
       "data": "user_id Zalo thô, nội dung tin nhắn khách (có thể chứa SĐT, tên, địa chỉ, yếu tố sức khỏe), câu trả lời gửi lại",
       "class": "do",
       "subjects": "Khách hàng nhắn Zalo OA của công ty",
@@ -34,7 +36,9 @@
     {
       "id": "DF-02",
       "name": "Preflight token Zalo trước khi mở public",
-      "modules": ["scripts/zalo_preflight.py"],
+      "modules": [
+        "scripts/zalo_preflight.py"
+      ],
       "data": "Access/refresh token OA, thông tin OA (getoa) — không có dữ liệu khách",
       "class": "xanh",
       "subjects": "Không có chủ thể dữ liệu cá nhân (tài khoản OA của công ty)",
@@ -43,14 +47,18 @@
       "retention": "Token ghi đè mỗi lần làm mới; không lưu lịch sử",
       "recipients": "Zalo/VNG — openapi.zalo.me, oauth.zaloapp.com — Việt Nam",
       "cross_border": false,
-      "safeguards": ["Chỉ chạy tay trên máy deploy; không gọi OpenRouter (chỉ kiểm key non-empty)"],
+      "safeguards": [
+        "Chỉ chạy tay trên máy deploy; không gọi OpenRouter (chỉ kiểm key non-empty)"
+      ],
       "legal_basis": "Không xử lý dữ liệu cá nhân",
       "gaps": []
     },
     {
       "id": "DF-03",
       "name": "Mock E2E Zalo (chỉ test)",
-      "modules": ["scripts/zalo_mock.py"],
+      "modules": [
+        "scripts/zalo_mock.py"
+      ],
       "data": "Sự kiện giả (user_id, tin nhắn tự sinh) — không dữ liệu khách thật",
       "class": "xanh",
       "subjects": "Không có (dữ liệu giả)",
@@ -59,14 +67,21 @@
       "retention": "Theo convlog local nếu chạy cùng máy",
       "recipients": "localhost (127.0.0.1) — không ra Internet",
       "cross_border": false,
-      "safeguards": ["Chỉ gọi localhost"],
+      "safeguards": [
+        "Chỉ gọi localhost"
+      ],
       "legal_basis": "Không xử lý dữ liệu cá nhân thật",
       "gaps": []
     },
     {
       "id": "DF-04",
       "name": "Nhật ký hội thoại (convlog)",
-      "modules": ["connectors/zalo.py", "app/streamlit_app.py", "ingest/lead_store.py", "scripts/kb_gaps.py"],
+      "modules": [
+        "connectors/zalo.py",
+        "app/streamlit_app.py",
+        "ingest/lead_store.py",
+        "scripts/kb_gaps.py"
+      ],
       "data": "user_hash (sha256 KHÔNG muối của user_id, 16 hex — bút danh, vẫn là dữ liệu cá nhân), câu hỏi ĐÃ `_mask_pii`, câu trả lời, ts, cờ answered/flagged",
       "class": "do",
       "subjects": "Khách hàng chat Zalo/web, nhân viên thử trên Streamlit",
@@ -90,7 +105,9 @@
     {
       "id": "DF-05",
       "name": "Lead store (khách có nhu cầu mua/đại lý)",
-      "modules": ["ingest/lead_store.py"],
+      "modules": [
+        "ingest/lead_store.py"
+      ],
       "data": "user_hash, câu hỏi đã mask, intent (partner/order/price/contact), trạng thái chăm sóc",
       "class": "do",
       "subjects": "Khách hàng, người hỏi làm đại lý",
@@ -99,7 +116,10 @@
       "retention": "Không có hạn lưu trong code — GAP",
       "recipients": "Nội bộ (Sales/Admin) — không gửi ra ngoài",
       "cross_border": false,
-      "safeguards": ["Câu hỏi đã mask từ convlog", "Chỉ lưu user_hash"],
+      "safeguards": [
+        "Câu hỏi đã mask từ convlog",
+        "Chỉ lưu user_hash"
+      ],
       "legal_basis": "Đồng ý — CHƯA có cơ chế ghi nhận trong code: GAP",
       "gaps": [
         "Bảng `leads` không có hạn lưu / job xóa — GAP",
@@ -109,7 +129,12 @@
     {
       "id": "DF-06",
       "name": "Chatbot RAG gửi câu hỏi tới LLM qua gateway (OpenRouter)",
-      "modules": ["api/rag.py", "pipelines/llm_gateway.py", "app/streamlit_app.py", "connectors/zalo.py"],
+      "modules": [
+        "api/rag.py",
+        "pipelines/llm_gateway.py",
+        "app/streamlit_app.py",
+        "connectors/zalo.py"
+      ],
       "data": "Câu hỏi thường SAU `_mask_pii` + history 4 lượt gần nhất (cũng mask) + đoạn KB public làm ngữ cảnh",
       "class": "vang",
       "subjects": "Khách hàng chat Zalo/web",
@@ -134,7 +159,11 @@
     {
       "id": "DF-07",
       "name": "Content Studio sinh nháp nội dung qua gateway",
-      "modules": ["pipelines/content.py", "pipelines/llm_gateway.py", "pipelines/store.py"],
+      "modules": [
+        "pipelines/content.py",
+        "pipelines/llm_gateway.py",
+        "pipelines/store.py"
+      ],
       "data": "Brief do nhân viên nhập (quy trình: không đưa dữ liệu khách), claim đã duyệt, nháp nội dung",
       "class": "vang",
       "subjects": "Nhân viên MKT (tên người duyệt trong approvals)",
@@ -149,12 +178,16 @@
         "Duyệt người thật (approve_draft) trước khi đăng"
       ],
       "legal_basis": "Lợi ích hợp pháp/hợp đồng lao động với nhân viên — CẦN LUẬT SƯ XÁC NHẬN",
-      "gaps": ["Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email)"]
+      "gaps": [
+        "Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email)"
+      ]
     },
     {
       "id": "DF-08",
       "name": "Embedding KB public",
-      "modules": ["ingest/embed_store.py"],
+      "modules": [
+        "ingest/embed_store.py"
+      ],
       "data": "Đoạn văn bản public (sản phẩm, bài viết) đã crawl",
       "class": "xanh",
       "subjects": "Không có dữ liệu cá nhân",
@@ -163,14 +196,20 @@
       "retention": "Thay khi nạp lại",
       "recipients": "OpenRouter (Mỹ) — embeddings",
       "cross_border": true,
-      "safeguards": ["Qua gateway (mask + routing)", "`kb_filter` loại nội dung rượu/phóng đại"],
+      "safeguards": [
+        "Qua gateway (mask + routing)",
+        "`kb_filter` loại nội dung rượu/phóng đại"
+      ],
       "legal_basis": "Không xử lý dữ liệu cá nhân",
       "gaps": []
     },
     {
       "id": "DF-09",
       "name": "KB nội bộ (tài liệu nội bộ đã duyệt)",
-      "modules": ["ingest/kb_internal.py", "ingest/embed_store.py"],
+      "modules": [
+        "ingest/kb_internal.py",
+        "ingest/embed_store.py"
+      ],
       "data": "Tài liệu nội bộ đã duyệt (quy trình, chính sách) — có thể nhắc tên nhân viên",
       "class": "vang",
       "subjects": "Nhân viên (nếu tài liệu nhắc tên)",
@@ -179,14 +218,21 @@
       "retention": "Thay khi nạp bản mới (theo doc_sha256)",
       "recipients": "OpenRouter (Mỹ) — embeddings qua gateway",
       "cross_border": true,
-      "safeguards": ["Qua gateway (`_mask_pii` input embedding)", "Bảng riêng, phân quyền theo collection"],
+      "safeguards": [
+        "Qua gateway (`_mask_pii` input embedding)",
+        "Bảng riêng, phân quyền theo collection"
+      ],
       "legal_basis": "Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN",
-      "gaps": ["Tên nhân viên trong tài liệu không bị mask khi embedding"]
+      "gaps": [
+        "Tên nhân viên trong tài liệu không bị mask khi embedding"
+      ]
     },
     {
       "id": "DF-10",
       "name": "Số hóa tài liệu (doc intake)",
-      "modules": ["ingest/doc_intake.py"],
+      "modules": [
+        "ingest/doc_intake.py"
+      ],
       "data": "Bản gốc PDF/ảnh tài liệu công ty (có thể chứa SĐT/email/tên đối tác), text trích, cờ pii_flag",
       "class": "vang",
       "subjects": "Đối tác, nhân viên có tên trong tài liệu",
@@ -195,14 +241,21 @@
       "retention": "Không giới hạn (bản gốc bất biến theo sha256)",
       "recipients": "Không — OCR provider mặc định `none`; provider OCR nước ngoài bị TỪ CHỐI",
       "cross_border": false,
-      "safeguards": ["OCR nước ngoài bị từ chối", "pii_flag true/NULL không được gửi LLM"],
+      "safeguards": [
+        "OCR nước ngoài bị từ chối",
+        "pii_flag true/NULL không được gửi LLM"
+      ],
       "legal_basis": "Lợi ích hợp pháp/hợp đồng — CẦN LUẬT SƯ XÁC NHẬN",
-      "gaps": ["Chưa có hạn lưu cho bản gốc"]
+      "gaps": [
+        "Chưa có hạn lưu cho bản gốc"
+      ]
     },
     {
       "id": "DF-11",
       "name": "Nạp file đơn/sản phẩm từ sàn TMĐT",
-      "modules": ["ingest/market_csv.py"],
+      "modules": [
+        "ingest/market_csv.py"
+      ],
       "data": "Dòng đơn hàng sàn sau khi DROP cột PII (tên/SĐT/địa chỉ người mua, ghi chú); order_id → order_id_hash",
       "class": "do",
       "subjects": "Người mua trên sàn",
@@ -211,14 +264,22 @@
       "retention": "Không giới hạn — GAP",
       "recipients": "Không gửi ra ngoài (file do người tải từ Seller Center)",
       "cross_border": false,
-      "safeguards": ["Allowlist cột — cột PII bị bỏ ngay khi đọc", "`order_id_hash`", "Lỗi chỉ nêu số dòng/tên cột, không giá trị ô"],
+      "safeguards": [
+        "Allowlist cột — cột PII bị bỏ ngay khi đọc",
+        "`order_id_hash`",
+        "Lỗi chỉ nêu số dòng/tên cột, không giá trị ô"
+      ],
       "legal_basis": "Hợp đồng mua bán (thực hiện đơn) — CẦN LUẬT SƯ XÁC NHẬN",
-      "gaps": ["Chưa có hạn lưu cho dữ liệu đơn sàn"]
+      "gaps": [
+        "Chưa có hạn lưu cho dữ liệu đơn sàn"
+      ]
     },
     {
       "id": "DF-12",
       "name": "Bản tin sức khỏe hệ thống",
-      "modules": ["scripts/health_bulletin.py"],
+      "modules": [
+        "scripts/health_bulletin.py"
+      ],
       "data": "Chỉ số tổng hợp vận hành (job, eval, chi phí, số mục) — không có dữ liệu cá nhân",
       "class": "xanh",
       "subjects": "Không có",
@@ -227,14 +288,20 @@
       "retention": "Không giới hạn (file báo cáo)",
       "recipients": "Khi `--notify`: máy chủ SMTP cấu hình (email) hoặc Telegram (api.telegram.org — nước ngoài)",
       "cross_border": true,
-      "safeguards": ["Mặc định KHÔNG gửi — cần `--notify` + env kênh", "Chỉ số tổng hợp, không nội dung chat"],
+      "safeguards": [
+        "Mặc định KHÔNG gửi — cần `--notify` + env kênh",
+        "Chỉ số tổng hợp, không nội dung chat"
+      ],
       "legal_basis": "Không xử lý dữ liệu cá nhân",
       "gaps": []
     },
     {
       "id": "DF-13",
       "name": "Crawl website công khai của công ty",
-      "modules": ["crawler/collect.py", "crawler/sources.py"],
+      "modules": [
+        "crawler/collect.py",
+        "crawler/sources.py"
+      ],
       "data": "Trang public (sản phẩm, bài viết) — không thu dữ liệu cá nhân",
       "class": "xanh",
       "subjects": "Không có",
@@ -243,14 +310,18 @@
       "retention": "Ghi đè khi crawl lại",
       "recipients": "Chỉ GET tới samsamngoclinh.com, samsam.net.vn — không gửi dữ liệu cá nhân",
       "cross_border": false,
-      "safeguards": ["Delay ≥1s/request, chỉ trang public"],
+      "safeguards": [
+        "Delay ≥1s/request, chỉ trang public"
+      ],
       "legal_basis": "Không xử lý dữ liệu cá nhân",
       "gaps": []
     },
     {
       "id": "DF-14",
       "name": "Nhật ký chi phí LLM (llm_usage)",
-      "modules": ["pipelines/llm_gateway.py"],
+      "modules": [
+        "pipelines/llm_gateway.py"
+      ],
       "data": "agent_id, model, số token, chi phí ước tính, lỗi đã mask (≤300 ký tự) — không lưu prompt/response",
       "class": "xanh",
       "subjects": "Không có",
@@ -259,14 +330,19 @@
       "retention": "Không giới hạn (metadata)",
       "recipients": "Nội bộ",
       "cross_border": false,
-      "safeguards": ["Không lưu nội dung; lỗi qua `_mask_pii`"],
+      "safeguards": [
+        "Không lưu nội dung; lỗi qua `_mask_pii`"
+      ],
       "legal_basis": "Không xử lý dữ liệu cá nhân",
       "gaps": []
     },
     {
       "id": "DF-15",
       "name": "Sao lưu và diễn tập khôi phục DB",
-      "modules": ["scripts/db_backup.py", "scripts/db_restore_drill.py"],
+      "modules": [
+        "scripts/db_backup.py",
+        "scripts/db_restore_drill.py"
+      ],
       "data": "Toàn bộ DB (gồm bảng lớp Đỏ: leads, orders...)",
       "class": "do",
       "subjects": "Mọi chủ thể có trong DB",
@@ -275,9 +351,63 @@
       "retention": "Giữ BACKUP_KEEP (mặc định 7) bản mới nhất",
       "recipients": "Nội bộ; offsite `s3://` chưa bật (external-dep — script exit 3, không gọi mạng)",
       "cross_border": false,
-      "safeguards": ["Mã hóa khi có BACKUP_PASSPHRASE_FILE", "sha256 manifest", "Diễn tập khôi phục vào DB tạm"],
+      "safeguards": [
+        "Mã hóa khi có BACKUP_PASSPHRASE_FILE",
+        "sha256 manifest",
+        "Diễn tập khôi phục vào DB tạm"
+      ],
       "legal_basis": "Nghĩa vụ bảo đảm an toàn dữ liệu — CẦN LUẬT SƯ XÁC NHẬN",
-      "gaps": ["Mã hóa backup là tùy chọn — chưa bắt buộc", "Nếu bật offsite cloud nước ngoài phải bổ sung TIA"]
+      "gaps": [
+        "Mã hóa backup là tùy chọn — chưa bắt buộc",
+        "Nếu bật offsite cloud nước ngoài phải bổ sung TIA"
+      ]
+    },
+    {
+      "id": "DF-16",
+      "name": "Thu tin thị trường tầng A/B (intel — v7.0)",
+      "modules": [
+        "crawler/intel.py"
+      ],
+      "data": "Tiêu đề + trích ≤300 ký tự + link tin RSS/Atom công khai (đã che SĐT/email); có thể nhắc tên người trong tin báo chí",
+      "class": "xanh",
+      "subjects": "Người được nhắc tên trong tin báo chí công khai (nếu có)",
+      "purpose": "Tình báo thị trường: tin về sâm, TPBVSK, đồ ăn giới trẻ, quảng cáo, đối thủ",
+      "storage": "Bảng `intel_items` (không lưu toàn văn)",
+      "retention": "Chưa có hạn lưu/purge — GAP",
+      "recipients": "Chỉ GET tới nguồn RSS tầng A/B trong `data/intel_sources.json`; tóm tắt LLM (mặc định TẮT) qua gateway → OpenRouter (Mỹ)",
+      "cross_border": true,
+      "safeguards": [
+        "robots.txt + delay ≥1s/host, chặn cứng sàn/MXH kể cả khi redirect",
+        "Chỉ tiêu đề + trích ≤300 ký tự, `_mask_pii` trước khi lưu",
+        "LLM tóm tắt chỉ chạy khi `llm.enabled` + `--llm`, qua gateway + guardrail"
+      ],
+      "legal_basis": "Thông tin công khai; nếu bật LLM thì cần Pháp chế xác nhận — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Chưa che họ tên người trong tiêu đề/trích tin (NER)",
+        "Chưa có hạn lưu/purge `intel_items`"
+      ]
+    },
+    {
+      "id": "DF-17",
+      "name": "Nghiên cứu giả lập persona (v7.3)",
+      "modules": [
+        "scripts/persona_sim.py"
+      ],
+      "data": "Persona TỔNG HỢP (không dữ liệu khách thật), phương án sản phẩm/thông điệp, điểm số model",
+      "class": "xanh",
+      "subjects": "Không có — persona tổng hợp, validator chặn key PII/SĐT/email",
+      "purpose": "Loại bớt phương án truyền thông yếu trước khi thử thật",
+      "storage": "Bảng `sim_runs` (không lưu văn bản LLM thô, không PII)",
+      "retention": "Không giới hạn — lịch sử kiểm toán model/prompt/seed",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider qua gateway (agent `persona_sim`)",
+      "cross_border": true,
+      "safeguards": [
+        "Cổng DPIA: `dpia_signed` false → từ chối chạy thật (exit 2, 0 lời gọi LLM)",
+        "Validator đầu vào chặn persona <18 tuổi, key ngoài allowlist, PII",
+        "Mọi phương án qua guardrail trước khi gửi model"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân thật; chạy sau khi DPIA ký — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": []
     }
   ]
 }
