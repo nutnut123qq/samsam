@@ -632,6 +632,28 @@ Dữ liệu `sample_*` là MẪU chờ bàn giao (SOW §5.2); `orders` không PI
     sau vá MAJOR cold-check: 117/117 + ruff clean (`test_core_store`
     ×3 ổn định)
 
+## M22 — Patch v2.4-polish (5 someday: leads stats/intent FP + store._get + guardrail-missing-ok + conn-close)
+
+Checklist/DoD chi tiết: `DONE.md` mục v2.4-polish (contract
+coordinator tự chọn qua /cycle 7/10). `guardrail.py`/`api/rag.py`/
+`connectors/zalo.py` cấm đụng; skip eval_qa + zalo_mock. Không
+thêm/sửa bảng; không global mutable mới.
+
+- [ ] **V9.1–V9.5 Lane inline** — `ingest/lead_store.py` +
+  `pipelines/store.py` + `app/streamlit_app.py` +
+  `tests/test_lead_store.py` + `tests/test_store.py`:
+  `convlog_stats` answered `is True`; `intent_of` scrub
+  `đánh giá|định giá|giá trị` trước key `giá` + veto `ở đâu`
+  sau từ sinh học (mọc/trồng/phân bố/sinh sống); `_get`
+  propagate `psycopg.Error` → `set_status`/`schedule` warn
+  "lỗi DB"; `_render_guardrail`/`_fmt_guardrail` chịu dict
+  thiếu `ok` ("KHÔNG RÕ"); `_rconn`/`_gconn` close trên
+  error/rerun.
+  - Gate: `python -m pytest tests/test_lead_store.py
+    tests/test_store.py -q` xanh; full `python -m pytest -q` +
+    `ruff check .` + `py_compile` (coordinator) —
+    `evidence/v24_pytest.log`
+
 ---
 
 ## Lề (không đụng trong pilot)

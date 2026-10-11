@@ -4,7 +4,7 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **(không — loop /cycle 10 tiếp)**
+Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
 v2.3-handover-docs đóng 2026-10-11 (cold-check **coordinator
 self-review** — quota subagent cạn rate-limit sau khi agent build
@@ -51,6 +51,54 @@ v1.7-edge-hardening đóng 2026-10-09 (cold-check PASS đợt 1; 2 MINOR
 vá ngay — khôi phục assert msg-key cleanup + thêm case CL `abc`/`0`
 vào test; 1 MINOR → someday: domain `b..c`/`@@b.com` dạng-lạ không
 mask).
+
+## Checklist v2.4-polish
+
+Khán giả: hệ thống đang chạy — patch nhỏ vá 5 someday còn treo sau
+khi mọi deliverable SOW build-được (contract coordinator tự chọn qua
+/cycle 7/10; candidate rà sẵn từ handoff). Quy ước precedent patch:
+`guardrail.py`/`api/rag.py`/`connectors/zalo.py` KHÔNG đụng; skip
+eval_qa + zalo_mock; không thêm/sửa bảng; không global mutable mới.
+
+- [ ] **V9.1 `convlog_stats` answered strict** — `is True` thay
+  truthiness (NIT cold-check v1.9): entry convlog ngoại lai
+  `answered:"false"` không còn đếm như đã trả lời.
+  - Boundary: `ingest/lead_store.py`, `tests/test_lead_store.py`
+  - Gate: test — `"false"`/thiếu-key không đếm, `True` đếm
+- [ ] **V9.2 `intent_of` chống FP (MINOR v1.9)** — price: scrub cụm
+  `đánh giá|định giá|giá trị` trước khi match key `giá` (chỉ xóa span
+  cụm, không veto — "đánh giá tốt, giá bao nhiêu" vẫn price);
+  contact: `ở đâu` info-veto khi đứng sau từ ngữ sinh học
+  (`mọc|trồng|phân bố|sinh sống` trong cùng cụm) — "sâm mọc ở đâu"
+  là câu thông tin, không phải hỏi địa chỉ. Giữ recall: "mua ở đâu"
+  → order (first-match), "showroom ở đâu" → contact qua key khác.
+  - Boundary: `ingest/lead_store.py`, `tests/test_lead_store.py`
+  - Gate: test — FP case → None + recall case giữ intent đúng
+- [ ] **V9.3 `store._get` phân biệt conn-chết vs không-tìm-thấy** —
+  `_get` KHÔNG nuốt `psycopg.Error` (propagate); `set_status`/
+  `schedule` bắt → warn "lỗi DB khi đọc draft" thay "không tìm
+  thấy" (NIT v2.2 — trước báo ảo "không tìm thấy" khi conn chết
+  giữa chừng). Flip test Dead-conn đang đánh dấu intentional.
+  - Boundary: `pipelines/store.py`, `tests/test_store.py`
+  - Gate: test — Dead-conn → warn "lỗi DB"; rows=[] → "không tìm thấy"
+- [ ] **V9.4 Guardrail dict thiếu `"ok"`** — `_render_guardrail`
+  dùng `.get` + nhánh "kết quả không đầy đủ" thay KeyError trên
+  draft ngoại lai; `_fmt_guardrail` thiếu `ok` → "KHÔNG RÕ" thay
+  "VI PHẠM" (ok=False violations thật vẫn "VI PHẠM").
+  - Boundary: `app/streamlit_app.py`, `pipelines/store.py`,
+    `tests/test_store.py`
+  - Gate: test `_fmt_guardrail` 4 nhánh; UI verify code-read +
+    py_compile (thay đổi phòng thủ, không đổi visual)
+- [ ] **V9.5 `_rconn`/`_gconn` close trên nhánh error/rerun** — tab
+  Duyệt&Lịch: conn đóng trước mỗi `st.rerun()` (2 chỗ) + đóng conn
+  lỗi trong `except _pg.Error` (leak mỗi lần đọc DB fail / click
+  duyệt/xếp-lịch). Vá cùng cụm ở tab Nhật ký vườn (`_gconn`
+  except — cùng pattern, luật vá-theo-cụm).
+  - Boundary: `app/streamlit_app.py`
+  - Gate: py_compile + pytest full xanh (UI path verify code-read)
+
+Gate chung: `python -m pytest -q` full + `ruff check .` +
+`py_compile app/streamlit_app.py`. Evidence: `evidence/v24_pytest.log`.
 
 ## Checklist v2.3-handover-docs
 
