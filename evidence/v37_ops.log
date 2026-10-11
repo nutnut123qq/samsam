@@ -1,0 +1,147 @@
+v3.7-ops-monitoring gate — 2026-10-12T00:02:27+07:00
+
+===== W37.1 apply_schema lan 1 =====
+[done] schema applied — 11 bảng public: assets, chunks, claims_approved, content_drafts, job_runs, leads, llm_usage, orders, plot_logs, plots, products
+exit=0
+
+===== W37.1 apply_schema lan 2 =====
+[done] schema applied — 11 bảng public: assets, chunks, claims_approved, content_drafts, job_runs, leads, llm_usage, orders, plot_logs, plots, products
+exit=0
+
+===== W37.1 job_run DB song: ghi 1 dong that =====
+exit=0
+('gate.v37.smoke', True, True, True)
+
+===== W37.1 job_run host chet (time, khong assert trong test) =====
+[job-runs] ghi job_runs lỗi (ConnectionTimeout) — job vẫn chạy bình thường
+body xong
+exit=0
+
+real	0m6.145s
+user	0m0.015s
+sys	0m0.031s
+
+===== W37.2 count job_runs truoc =====
+[('agents.report', 1), ('ingest.lead_store', 1)]
+
+===== W37.2 python -m agents.report (DB song) =====
+[report] kỳ 2026-10-04 → 2026-10-11 (7 ngày)
+[done] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v37\reports\report-2026-10-04_2026-10-11.md — đơn=3 doanh-thu=6.720.000 ₫ leads-mới=28 nhật-ký=5 convlog-kỳ=42
+exit=0
+
+===== W37.2 python -m ingest.lead_store (DB song) =====
+[scan] convlog: 45 record — lead=30, intent-miss=13, fields-miss=0, ts-bad=0, corrupt=0, _doc=0, io-error=0, dup-in-file=2 — thiếu ['conversations.jsonl.1']
+[done] mới=0 trùng=30 — total leads=30 (streamlit=6, zalo=24)
+exit=0
+
+===== W37.2 count job_runs sau + 2 dong moi nhat =====
+[('agents.report', 2), ('ingest.lead_store', 2)]
+[('ingest.lead_store', True, None), ('agents.report', True, None)]
+
+===== W37.2 agents.report host chet =====
+[report] kỳ 2026-10-04 → 2026-10-11 (7 ngày)
+[warn] DB không khả dụng — báo cáo degraded: không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+[done] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v37\reports\report-2026-10-04_2026-10-11.md — convlog trong kỳ 42
+[job-runs] ghi job_runs lỗi (ConnectionTimeout) — job vẫn chạy bình thường
+exit=0
+
+real	0m9.114s
+user	0m0.000s
+sys	0m0.031s
+
+===== W37.3 health_bulletin DB song =====
+# Bản tin sức khỏe hệ thống — 2026-10-12
+
+_Sinh lúc 2026-10-12 00:02 giờ VN — số liệu từ SQL, không dùng LLM. Bản tin chỉ BÁO, không tự xử lý._
+
+## 1. DB
+
+- DB: sống (connect + query OK)
+
+## 2. Job 24h
+
+_Nguồn: bảng `job_runs` (24h qua)._
+
+| Job | OK | Lỗi |
+|---|---:|---:|
+| agents.report | 2 | 0 |
+| gate.v37.smoke | 2 | 0 |
+| ingest.lead_store | 2 | 0 |
+
+## 3. Chi phí AI tháng này theo agent
+
+_Nguồn: bảng `llm_usage` (`sum(cost_usd)` từ 00:00 ngày 1 giờ VN) + trần `data/llm_gateway.json` `monthly_cap_usd`. Ngưỡng: ≥80% cảnh báo, ≥100% gateway chặn._
+
+| Agent | Đã dùng (USD) | Trần (USD) | % | Trạng thái |
+|---|---:|---:|---:|---|
+| chatbot | 0.0000 | 20.00 | 0% | OK |
+| content | 0.0000 | 10.00 | 0% | OK |
+| ingest | 0.0000 | 5.00 | 0% | OK |
+| smoke | 0.0000 | 0.50 | 0% | OK |
+
+## 4. Lời gọi LLM lỗi 24h
+
+_Nguồn: bảng `llm_usage` `ok = false` (24h qua)._
+
+- Tổng: 0
+
+## 5. Hàng chờ duyệt
+
+_Nguồn: bảng `content_drafts` `status = 'pending'`._
+
+- Draft chờ duyệt: 0
+
+[done] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v37\live\health-2026-10-12.md
+[notify] bỏ qua (chưa cấu hình — cần --notify)
+exit=0
+
+===== W37.3 spot-check so lieu bang query tay =====
+pending= 0
+llm_err_24h= 0
+spend_month= []
+jobs_24h= [('agents.report', 2, 0), ('gate.v37.smoke', 2, 0), ('ingest.lead_store', 2, 0)]
+
+===== W37.3 health_bulletin host chet =====
+# Bản tin sức khỏe hệ thống — 2026-10-12
+
+_Sinh lúc 2026-10-12 00:02 giờ VN — số liệu từ SQL, không dùng LLM. Bản tin chỉ BÁO, không tự xử lý._
+
+## 1. DB
+
+- **DB không truy cập được** (ConnectionTimeout) — kiểm service Postgres / `DATABASE_URL` (SOP mục 7).
+
+## 2. Job 24h
+
+_Nguồn: bảng `job_runs` (24h qua)._
+
+- không có số liệu (DB không truy cập được)
+
+## 3. Chi phí AI tháng này theo agent
+
+_Nguồn: bảng `llm_usage` (`sum(cost_usd)` từ 00:00 ngày 1 giờ VN) + trần `data/llm_gateway.json` `monthly_cap_usd`. Ngưỡng: ≥80% cảnh báo, ≥100% gateway chặn._
+
+- không có số liệu (DB không truy cập được)
+
+## 4. Lời gọi LLM lỗi 24h
+
+_Nguồn: bảng `llm_usage` `ok = false` (24h qua)._
+
+- không có số liệu (DB không truy cập được)
+
+## 5. Hàng chờ duyệt
+
+_Nguồn: bảng `content_drafts` `status = 'pending'`._
+
+- không có số liệu (DB không truy cập được)
+
+[done] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v37\down\health-2026-10-12.md
+[notify] bỏ qua (chưa cấu hình — cần --notify)
+exit=0
+
+real	0m6.042s
+user	0m0.031s
+sys	0m0.015s
+
+===== W37.6 spot-check lenh SOP =====
+help exit=0
+deploy/docker-compose.monitoring.yml

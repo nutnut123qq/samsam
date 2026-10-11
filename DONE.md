@@ -6,8 +6,8 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
-Nhánh `ai-infra` (M30): v3.3, v3.5 đã đóng và đã gộp; chờ gộp nhánh song
-song v3.7, v3.8 (đang chạy: v3.4, v3.6, v3.9).
+Nhánh `ai-infra` (M30): v3.3, v3.5, v3.7 đã đóng và đã gộp; chờ gộp
+nhánh song song v3.8 (đang chạy: v3.4, v3.6, v3.9).
 
 ## Checklist v3.3-connector-csv
 
@@ -912,6 +912,228 @@ duyệt thật theo tầng, gán nhãn bộ ca bởi công ty.
 - [ ] **external-dep** CI thật (push GitHub, secret `OPENROUTER_API_KEY`,
   self-hosted runner, gateway-staging agent_id `ci`), n8n ghi
   `eval_runs`, `harness_registry`, môi trường production để deploy.
+
+v3.7-ops-monitoring đóng 2026-10-12 (worktree song song `infra-v37`;
+3 nghiệm thu đợt 1 FIX 5 → 1 vòng sửa → PASS; coordinator vá thêm 2
+NIT an toàn: `clean_detail` che DSN libpq `password=...` (A09, có
+test), nhãn bản tin cap 0 = "ĐÃ CHẶN" cho khớp gateway; 297/297 +
+ruff). Compose chỉ kiểm `config` — chưa `up` vì image chưa có trên máy
+(tải về chưa được duyệt). External-dep: server production + lịch 07:30
+thật, SMTP/Resend/Telegram thật, Uptime Kuma theo dõi URL production,
+trần chi phí thật. Someday: `--help` ghi job_runs ok; EXPECTED_JOBS
+chưa có grace; image pin theo tag chưa theo digest; `docker compose
+config` in ra secret đã resolve (SOP nên cảnh báo); vài mutation test
+còn sống (late_jobs biên, detail SystemExit, close conn); sop.md còn
+ghi "9 bảng".
+
+## Checklist v3.7-ops-monitoring
+
+Khán giả/mục đích: Quản lý hạ tầng AI (worktree `D:\code\samsam-v37`) —
+luồng F17.2 (giám sát job lỗi + bản tin sức khỏe 07:30) và F17.3 (FinOps:
+cảnh báo 80% trần) trong flows_infra.md; agent "Vận hành hạ tầng" + "FinOps
+LLM" (plan_data_platform.md). Hiện trạng: có `llm_usage` + trần tháng
+`monthly_cap_usd` trong `data/llm_gateway.json`, gateway đã CHẶN ≥100% và
+cảnh báo ≥80% ngay trong request (`pipelines/llm_gateway.py::_gate`,
+`WARN_RATIO`, `_SPEND_SQL` tháng theo giờ Asia/Ho_Chi_Minh); có
+`content_drafts.status='pending'`; job CLI chạy tay `agents.report`
+(tuần), `ingest.lead_store` (ngày) — CHƯA có bảng lịch sử chạy job, chưa
+có bản tin sức khỏe, chưa có stack giám sát. Sau version: job ghi lần
+chạy vào `job_runs`; `python scripts/health_bulletin.py` ra bản tin
+markdown chỉ-số (mọi số từ SQL, 0 lời gọi LLM — chế độ P1 của F17.2),
+sống sót khi DB chết; có compose n8n + Uptime Kuma chạy local.
+
+Quy ước: ponytail — stdlib + `psycopg`/`python-dotenv` sẵn có, KHÔNG dep
+mới, không `pip install` global. Mọi `psycopg.connect` mới có
+`connect_timeout` (≤5s). Print tiếng Việt mới → UTF-8 reconfigure guard
+(copy `scripts/zalo_mock.py`). `detail` lỗi job qua
+`pipelines.pii._mask_pii` + cắt 300 ký tự (như `llm_usage.error`); bản
+tin không chứa user_id/SĐT/nội dung tin nhắn khách. Ghi `job_runs` lỗi/DB
+down → cảnh báo, job VẪN chạy và giữ exit code cũ (không phá hành vi).
+Test không wall-clock, không gọi mạng, không ghi vào DB thật (monkeypatch
+connect/fake conn hoặc `tmp_path`); test DB-down dùng `DATABASE_URL` host
+chết `postgresql://u@10.255.255.1:5432/x` (KHÔNG `env -u` — gotcha v2.0).
+Bản tin ghi vào `data/reports/` (đã gitignore). Template biến môi trường
+mới ghi vào `env.example` (không-dot), không giá trị thật. Hệ thống KHÔNG
+tự gửi bản tin (human-gate C2.4) — adapter gửi chỉ là cổng cấu hình.
+Lịch 07:30 chỉ GHI HƯỚNG DẪN (schtasks/cron) trong SOP, không tạo
+scheduled task thật trên máy.
+External-dep (SKIP, không giả lập như thật): server production + lịch
+chạy thật 07:30; SMTP/Resend/Telegram bot thật + người nhận; Uptime Kuma
+theo dõi URL production (`/zalo-webhook` HTTPS, Streamlit); trần chi phí
+thật (cap trong `data/llm_gateway.json` vẫn là ước tính v3.1).
+
+- [x] **W37.1 Bảng `job_runs` + helper ghi lần chạy (context manager)** —
+  `docs/schema.sql` thêm idempotent `create table if not exists job_runs
+  (id bigserial primary key, job text not null, started_at timestamptz
+  not null, finished_at timestamptz, ok boolean, detail text, host text)`
+  + `create index if not exists job_runs_job_started_idx on job_runs
+  (job, started_at)`. Module mới `pipelines/job_runs.py`: `job_run(job:
+  str)` context manager — đo started/finished (timezone-aware UTC),
+  `host=socket.gethostname()`, yield dict `run` để body set
+  `run["ok"]=False`/`run["detail"]` (vd exit code ≠0); exception trong
+  body → ghi `ok=false`, `detail="<TênLỗi>: <msg>"` đã `_mask_pii` + cắt
+  300, rồi RE-RAISE nguyên exception; `SystemExit(0|None)` = ok. Ghi 1
+  INSERT lúc kết thúc (ponytail; process bị kill cứng → không có dòng →
+  bản tin báo "không chạy"). Connect qua `DATABASE_URL` +
+  `connect_timeout`; thiếu DSN/connect lỗi/insert lỗi → print cảnh báo
+  (không lộ DSN), job không bị ảnh hưởng.
+  - Boundary: `docs/schema.sql`, `pipelines/job_runs.py` (mới),
+    `tests/test_job_runs.py` (mới); drift-guard dây chuyền:
+    `tests/test_handover_docs.py::test_kien_truc_lists_all_tables`
+    (`== 10` → `11`) + `docs/handover/kien-truc.md` ("11 bảng" + mô tả
+    `job_runs`) — không sửa thì full pytest đỏ.
+  - Gate: `python scripts/apply_schema.py` chạy 2 lần liên tiếp exit 0,
+    in có `job_runs`; test (fake conn ghi lệnh): body OK → 1 insert
+    `ok=True`, đúng `job`, `finished_at >= started_at`, host không rỗng;
+    body raise `ValueError("gọi 0905123456")` → exception lan ra, row
+    `ok=False`, detail không match `0\d{9}`, len ≤300; body set
+    `run["ok"]=False` → row ok=False; connect raise → body vẫn chạy, giá
+    trị trả về giữ, có cảnh báo; `DATABASE_URL` host chết → `with
+    job_run("x"): pass` xong ≤10s (đo bằng `time` ở lệnh gate, KHÔNG
+    assert wall-clock trong test); 1 lần chạy thật trên DB samsam_infra
+    → `select job, ok from job_runs order by id desc limit 1` thấy dòng.
+  - Evidence: `evidence/v37_ops.log`
+  - KẾT QUẢ: apply_schema ×2 exit 0 (11 bảng, có `job_runs`); 1 dòng thật `('gate.v37.smoke', True, finished>=started, host≠'')`; host chết → cảnh báo `ConnectionTimeout`, body xong, 6.1s; test fake conn 13 case (thêm che DSN/sk-/Bearer trong detail — OWASP A09). Dây chuyền thêm: `tests/test_lead_store.py` + `tests/test_store.py` cũng đếm `== 10` bảng → `11`.
+- [x] **W37.2 Áp `job_run` vào job lịch hiện có, không phá hành vi** —
+  bọc ĐÚNG ở khối `if __name__ == "__main__":` của `agents/report.py`
+  (job `agents.report`) và `ingest/lead_store.py` (job
+  `ingest.lead_store`): `with job_run(...) as run: rc = main();
+  run["ok"] = rc == 0` rồi `raise SystemExit(rc)`. `main()`/`generate()`
+  /`harvest()` GIỮ NGUYÊN chữ ký + output + exit code (report degraded
+  khi DB chết vẫn exit 0 → ghi ok=true kèm detail "degraded" nếu đơn
+  giản, không bắt buộc). Không bọc job khác trong version này
+  (embed_store/core_store/crawler chạy tay theo sự kiện — ghi someday).
+  - Boundary: `agents/report.py`, `ingest/lead_store.py` (chỉ khối
+    `__main__` + import)
+  - Gate: `python -m pytest tests/test_report.py tests/test_lead_store.py -q`
+    xanh, số test/assert không giảm; `python -m agents.report` exit 0 và
+    `python -m ingest.lead_store` exit code như trước (0 hoặc 1 tùy
+    data) → `job_runs` có 2 dòng mới đúng tên job; chạy
+    `python -m agents.report` với `DATABASE_URL` host chết → exit 0, báo
+    cáo degraded như cũ, có cảnh báo job_runs, xong ≤15s.
+  - Evidence: `evidence/v37_ops.log`
+  - KẾT QUẢ: report exit 0 + lead_store exit 0 → `job_runs` +1 dòng mỗi job (ok=true); report host chết → degraded như cũ, cảnh báo job_runs, exit 0, 9.1s. Không ghi detail "degraded" (tùy chọn, bỏ). Biết trước: `--help` (SystemExit 0) cũng ghi 1 dòng ok.
+- [x] **W37.3 `scripts/health_bulletin.py` — bản tin sức khỏe chỉ-số** —
+  CLI `python scripts/health_bulletin.py [--out-dir DIR] [--date
+  YYYY-MM-DD]`, ngày mặc định = hôm nay giờ VN (Asia/Ho_Chi_Minh, tzdata
+  đã có). Hàm thuần tách riêng (`collect(conn)`, `render(data) -> str`,
+  `cost_rows(spend: dict, caps: dict) -> list`) để test không DB. Mục
+  bắt buộc trong markdown (heading cố định để test grep):
+  (1) **DB**: connect `connect_timeout` ≤5s → "sống" / "DB không truy cập
+  được" (+ tên lỗi, không in DSN);
+  (2) **Job 24h**: từ `job_runs` 24h qua — số lần OK/lỗi theo job, liệt
+  kê job lỗi + `detail`; hằng `EXPECTED_JOBS = {"ingest.lead_store": 24,
+  "agents.report": 24*8}` (giờ) → job không có lần chạy OK trong khoảng
+  đó báo "không chạy/trễ";
+  (3) **Chi phí AI tháng này theo agent**: tổng `llm_usage.cost_usd`
+  theo `agent_id` từ đầu tháng giờ VN (cùng biểu thức mốc tháng với
+  `_SPEND_SQL`) so với cap đọc qua `pipelines.llm_gateway._config()
+  ["monthly_cap_usd"]` (giữ env override + key `default`): % dùng, nhãn
+  "CẢNH BÁO" khi ≥80% (`WARN_RATIO`), "ĐÃ CHẶN (gateway)" khi ≥100% —
+  bản tin chỉ báo, việc chặn đã do gateway làm; cap 0 → "tắt";
+  (4) **Lời gọi lỗi 24h**: count `llm_usage` `ok=false` (theo agent);
+  (5) **Hàng chờ duyệt**: count `content_drafts` `status='pending'`.
+  Mỗi số ghi kèm bảng nguồn (F17.2: "bản tin có ghi query nguồn"). Thiếu
+  bảng (UndefinedTable) → mục đó ghi "chưa có bảng — chạy apply_schema",
+  các mục khác vẫn ra. 0 lời gọi gateway/LLM. Output: ghi
+  `<out-dir>/health-<YYYY-MM-DD>.md` (mặc định `data/reports/`, đã
+  gitignore) + in stdout; DB chết → vẫn ghi file + stdout có "DB không
+  truy cập được", exit 0. UTF-8 guard.
+  - Boundary: `scripts/health_bulletin.py` (mới),
+    `tests/test_health_bulletin.py` (mới)
+  - Gate: test `cost_rows`: spend 0.79×cap → không cảnh báo, 0.80×cap →
+    "CẢNH BÁO", 1.0×cap → "ĐÃ CHẶN", agent không có cap riêng dùng
+    `default`, cap 0 không chia 0; test render với fake data có đủ 5
+    heading; test job thiếu lần chạy trong `EXPECTED_JOBS` → "không
+    chạy"; test monkeypatch connect raise → markdown có "DB không truy
+    cập được", main trả 0; chạy thật DB sống
+    `python scripts/health_bulletin.py --out-dir <scratch>` exit 0, file
+    có đủ 5 mục với số khớp query tay (spot-check ≥2 số bằng `psql`-
+    tương đương `python -c` select); `time DATABASE_URL=postgresql://u@10.255.255.1:5432/x python scripts/health_bulletin.py --out-dir <scratch>`
+    → exit 0, ≤10s, stdout có "DB không truy cập được".
+  - Evidence: `evidence/v37_ops.log` + bản tin mẫu
+    `evidence/v37_bulletin_live.md`, `evidence/v37_bulletin_dbdown.md`
+  - KẾT QUẢ: DB sống exit 0, đủ 5 mục, spot-check khớp query tay (pending=0, lỗi LLM 24h=0, job 24h 2/0 mỗi job); host chết → exit 0, 6.0s, "DB không truy cập được (ConnectionTimeout)". `CONNECT_TIMEOUT_S=3` (≤5s, chừa thời gian import). DB samsam_infra chưa có dòng `llm_usage` tháng này → nhãn 80%/100% chỉ chứng minh bằng test (79/80/99/100/150%, default, cap 0).
+- [x] **W37.4 Adapter gửi bản tin — cổng cấu hình, KHÔNG gửi thật** —
+  trong `scripts/health_bulletin.py`: `--notify` (mặc định TẮT) + env
+  `HEALTH_NOTIFY=email|telegram` và biến kênh (`SMTP_HOST`, `SMTP_PORT`,
+  `SMTP_USER`, `SMTP_PASSWORD`, `HEALTH_MAIL_TO`; `TELEGRAM_BOT_TOKEN`,
+  `TELEGRAM_CHAT_ID`) — stdlib `smtplib`/`urllib` với timeout. Không có
+  `--notify` hoặc thiếu biến → không mở kết nối mạng nào, in "[notify]
+  bỏ qua (chưa cấu hình)". Gửi lỗi → cảnh báo, bản tin file/stdout vẫn
+  ra, exit 0. Không log token/mật khẩu. Thêm tên biến (không giá trị)
+  vào `env.example`.
+  - Boundary: `scripts/health_bulletin.py`, `env.example`,
+    `tests/test_health_bulletin.py`
+  - Gate: test monkeypatch `smtplib.SMTP`/`urllib.request.urlopen` bằng
+    fake ghi lời gọi: không `--notify` → 0 lời gọi; `--notify` + env
+    telegram đủ → đúng 1 lời gọi, payload là nội dung bản tin, URL không
+    bị in ra stdout; fake raise → exit 0 + cảnh báo. KHÔNG chạy gửi thật.
+  - Evidence: `evidence/v37_ops.log`
+  - KẾT QUẢ: 6 test fake (không flag → 0 lời gọi; --notify chưa cấu hình → 0; telegram đủ → 1 lời gọi, payload = bản tin, token/URL không ra stdout; email STARTTLS→login→send; gửi lỗi → exit 0). Không gửi thật.
+  - **external-dep**: SMTP/Resend/Telegram bot thật + danh sách người
+    nhận + quyết định Telegram làm kênh thứ 2 (F17.2 depends_on).
+- [x] **W37.5 `deploy/docker-compose.monitoring.yml` — n8n Community +
+  Uptime Kuma local** — 2 service image PIN version cụ thể (không
+  `latest`): `n8nio/n8n:<x.y.z>` + `louislam/uptime-kuma:<1.x.y>`; cổng
+  bind CHỈ `127.0.0.1` (`127.0.0.1:5678:5678`, `127.0.0.1:3001:3001`);
+  named volume cho data; KHÔNG mật khẩu/khóa mặc định trong file — biến
+  bí mật đọc từ env bắt buộc dạng `${N8N_ENCRYPTION_KEY:?...}` (tài khoản
+  owner n8n + admin Kuma tạo ở lần mở đầu, không seed); `TZ=Asia/Ho_Chi_Minh`,
+  `GENERIC_TIMEZONE` cho n8n (cron 07:30 đúng giờ VN). Thêm tên biến vào
+  `env.example`. Ghi chú đầu file: local pilot, production/Kuma trên VM
+  runner riêng là external-dep.
+  - Boundary: `deploy/docker-compose.monitoring.yml` (mới), `env.example`
+  - Gate: `N8N_ENCRYPTION_KEY=dummy docker compose -f deploy/docker-compose.monitoring.yml config`
+    exit 0; thiếu biến → `config` lỗi rõ ràng (exit ≠0); grep mọi
+    `ports:` đều `127.0.0.1:`; không có `:latest`; nếu docker sẵn (máy có
+    Docker 28.4 / Compose v2.39) VÀ được phép pull image: `up -d` →
+    `docker compose ps` 2 service running + `curl -s -o /dev/null -w
+    "%{http_code}" http://127.0.0.1:3001` và `:5678` trả mã HTTP →
+    `down -v` → `docker ps -a --filter label=com.docker.compose.project=<project>`
+    rỗng (KHÔNG để container chạy lại sau gate). Không pull được → ghi lý
+    do, chỉ gate `config`.
+  - Evidence: `evidence/v37_compose.log`
+  - KẾT QUẢ: `config` exit 0 (env dummy + qua `--env-file`), thiếu biến exit 1 lỗi rõ; 2 port 127.0.0.1; không `:latest` (n8n 2.4.0, kuma 1.23.17 — tag xác minh tồn tại bằng `docker manifest inspect`); `restart: "no"`. `up -d`/`down -v` CHƯA CHẠY: image chưa có local, pull = tải file cần user cho phép — 0 container của stack trước/sau gate.
+  - **external-dep**: Uptime Kuma theo dõi URL production + heartbeat
+    hai chiều n8n↔Kuma + workflow n8n gửi cảnh báo thật.
+- [x] **W37.6 SOP mục giám sát** — `docs/handover/sop.md` thêm mục ngắn
+  "Giám sát vận hành": chạy `python scripts/health_bulletin.py`, đọc 5
+  mục + ngưỡng 80%/100%, xem `job_runs` khi job lỗi, lệnh compose up/
+  down stack giám sát, hướng dẫn lịch 07:30 (Task Scheduler `schtasks
+  /create ... /st 07:30` hoặc cron `30 7 * * *` TZ VN; n8n ghi rõ
+  external-dep — image không có python/repo/DSN, Execute Command tắt mặc
+  định ở n8n 2.x) — chỉ hướng dẫn; `--notify` cần cấu hình external-dep.
+  Mọi lệnh khớp code thật.
+  - Boundary: `docs/handover/sop.md`; drift-guard
+    `tests/test_handover_docs.py` thêm `health_bulletin` vào danh sách
+    lệnh cốt của `test_sop_core_commands`
+  - Gate: `python -m pytest tests/test_handover_docs.py -q` xanh; spot-
+    check mọi lệnh trong mục mới tồn tại (`python scripts/health_bulletin.py --help` exit 0, file compose tồn tại)
+  - Evidence: `evidence/v37_ops.log`
+  - KẾT QUẢ: mục `## 6b. Giám sát vận hành` trong sop.md; drift-guard thêm `health_bulletin` + `docker-compose.monitoring.yml`; `--help` exit 0; lệnh compose dùng `--env-file .env`.
+- [x] **Gate chung** —
+  - targeted ×3: `python -m pytest tests/test_job_runs.py tests/test_health_bulletin.py tests/test_report.py tests/test_lead_store.py tests/test_handover_docs.py tests/test_llm_gateway.py -q`
+    3 lần liên tiếp xanh (đọc output tới exit, không chạy chồng)
+  - full: `python -m pytest -q` xanh, ≥ 258 + test mới
+    (`evidence/v37_pytest.log`)
+  - `ruff check .` sạch
+  - `python -m py_compile pipelines/job_runs.py scripts/health_bulletin.py agents/report.py ingest/lead_store.py`
+  - `docker compose -f deploy/docker-compose.monitoring.yml config` hợp lệ
+    (env dummy); sau gate `docker ps` không còn container của stack
+  - `git status`: không file runtime mới ngoài `data/reports/` (đã
+    gitignore); evidence `.log` cần `git add -f`; không file lạ
+  - External-dep (không treo version): production server + lịch 07:30
+    thật; SMTP/Resend/Telegram thật; Uptime Kuma theo dõi URL production;
+    trần chi phí thật do công ty chốt.
+  - KẾT QUẢ (vòng 2; vòng 1 đỏ 2 drift-guard đếm bảng + 1 ruff): targeted ×3 109/109 xanh; full 292 passed (258 + 34 mới); ruff sạch; py_compile 4 file exit 0; compose config OK. `evidence/v37_pytest.log`.
+  - VÁ NGHIỆM THU (5 MINOR): `clean_detail` cắt `PRE_MAX`=1200 TRƯỚC regex (DoS bậc 2 `_SECRET_RE`) + bỏ token dở ở mép cắt (mask làm chuỗi ngắn lại → SĐT dở lọt); SMTP `starttls(context=ssl.create_default_context())`; test gather() thiếu bảng với FakeConn mô phỏng tx aborted khi không autocommit; SOP bỏ phương án n8n Execute Command (ghi external-dep). Mutation 4/4 bị bắt; targeted ×3 113/113; full 296 passed; ruff sạch. `evidence/v37_pytest.log`.
+- [ ] **external-dep** Server production + lịch chạy bản tin 07:30 thật
+  (systemd timer/n8n trên VM runner) — chưa có, KHÔNG đánh dấu đã chạy.
+- [ ] **external-dep** Kênh gửi cảnh báo/bản tin thật (SMTP/Resend,
+  Telegram bot) + người nhận — chỉ có cổng cấu hình.
+- [ ] **external-dep** Uptime Kuma giám sát `/zalo-webhook` HTTPS +
+  Streamlit production (SLO ≥99%) — chỉ chạy thử stack local.
 
 v3.1-llm-gateway đóng 2026-10-11 (3 nghiệm thu song song PASS vòng 0;
 coordinator vá thêm 3 điểm nghiệm thu ghi NIT nhưng ảnh hưởng khách/

@@ -1,0 +1,74 @@
+(vong 2 — vong 1 fail: 2 drift-guard dem bang ==10 trong test_lead_store/test_store + 1 ruff ISC004; da va)
+v3.7 gate test — 2026-10-12T00:00:44+07:00
+
+===== targeted lan 1 =====
+........................................................................ [ 66%]
+.....................................                                    [100%]
+109 passed in 8.80s
+exit=0
+
+===== targeted lan 2 =====
+........................................................................ [ 66%]
+.....................................                                    [100%]
+109 passed in 13.08s
+exit=0
+
+===== targeted lan 3 =====
+........................................................................ [ 66%]
+.....................................                                    [100%]
+109 passed in 12.32s
+exit=0
+
+===== full python -m pytest -q =====
+........................................................................ [ 49%]
+........................................................................ [ 73%]
+........................................................................ [ 98%]
+....                                                                     [100%]
+292 passed in 38.38s
+exit=0
+
+===== ruff check . =====
+All checks passed!
+exit=0
+
+===== py_compile =====
+exit=0
+END 2026-10-12T00:02:20+07:00
+
+v3.7 vong va nghiem thu (5 MINOR) — 2026-10-12T00:16:20+07:00
+
+===== mutation (moi fix bi test bat; file da khoi phuc) =====
+M1 bo cat-truoc-regex -> test_clean_detail_precut_before_regex FAIL (52.30s: regex bac 2 chay that tren 100KB)
+M2 cat-truoc ngay tho (khong bo token do o mep) -> test_clean_detail_cut_edge_no_partial_phone FAIL
+M3 bo autocommit=True trong gather() -> 2 test FAIL (gather_missing_table_needs_autocommit, main_db_down_still_writes)
+M4 starttls() tran -> test_notify_email FAIL
+
+===== probe clean_detail sau va =====
+a.*50000 -> len 300, 0.007s
+a.*500000 -> len 300, 0.006s
+
+===== targeted lan 1 =====
+.........................................                                [100%]
+113 passed in 9.63s
+exit=0
+===== targeted lan 2 =====
+.........................................                                [100%]
+113 passed in 9.86s
+exit=0
+===== targeted lan 3 =====
+.........................................                                [100%]
+113 passed in 9.96s
+exit=0
+
+===== full pytest =====
+........                                                                 [100%]
+296 passed in 35.65s
+exit=0
+
+===== ruff check . =====
+All checks passed!
+exit=0
+
+===== py_compile job_runs + health_bulletin =====
+exit=0
+END 2026-10-12T00:16:20+07:00

@@ -710,7 +710,7 @@ Quy trình mỗi version (chặt theo skill):
 - [ ] **v3.6-cloud-db-backup** — backup/restore (pg_dump + bản sao ngoài),
   kiểm `connect_timeout` mọi connect, script triển khai cloud trong nước
   ở dạng cấu hình. Skip: tài khoản cloud Bizfly + thẻ.
-- [ ] **v3.7-ops-monitoring** — `job_runs`, bản tin sức khỏe 07:30, cảnh
+- [x] **v3.7-ops-monitoring** — `job_runs`, bản tin sức khỏe 07:30, cảnh
   báo chi phí AI 80%/chặn 100% từ `llm_usage`, docker-compose n8n +
   Uptime Kuma chạy local. Skip: production, kênh email/Resend.
 - [ ] **v3.8-ocr-intake** — intake tài liệu: checksum, file gốc bất biến,

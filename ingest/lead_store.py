@@ -37,6 +37,8 @@ from pathlib import Path
 import psycopg
 from dotenv import load_dotenv
 
+from pipelines.job_runs import job_run
+
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in
 # tiếng Việt có dấu. Ép UTF-8 (no-op nếu đã UTF-8).
 for _s in (sys.stdout, sys.stderr):
@@ -307,4 +309,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    # v3.7: ghi lần chạy vào job_runs (bản tin sức khỏe F17.2) —
+    # main() giữ nguyên chữ ký/output/exit code.
+    with job_run("ingest.lead_store") as run:
+        rc = main()
+        run["ok"] = rc == 0
+    raise SystemExit(rc)

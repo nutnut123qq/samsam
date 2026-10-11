@@ -172,6 +172,71 @@ gốc):
 - `data/claims_whitelist.json` + `data/banned_words.txt` (nguồn sự
   thật guardrail — đã trong git, nhưng backup cùng cho chắc)
 
+## 6b. Giám sát vận hành (Quản lý hạ tầng AI — v3.7)
+
+**Bản tin sức khỏe hằng ngày** (chỉ số SQL, không dùng LLM, không tự gửi):
+
+```
+python scripts/health_bulletin.py                  # in stdout + ghi data/reports/health-<ngày>.md
+python scripts/health_bulletin.py --out-dir <thư mục> --date 2026-10-11
+python scripts/health_bulletin.py --help
+```
+
+Đọc 5 mục theo thứ tự:
+
+1. **DB** — "sống" hoặc "DB không truy cập được" (bản tin vẫn ra, exit 0
+   → xử lý theo mục 7 "Chưa nạp — không kết nối được Postgres").
+2. **Job 24h** — số lần OK/lỗi theo job từ bảng `job_runs`; dòng "LỖI"
+   kèm `detail` (đã che SĐT/email/URL); "KHÔNG CHẠY/TRỄ" khi
+   `ingest.lead_store` quá 24 giờ hoặc `agents.report` quá 8 ngày chưa có
+   lần OK. Chỉ 2 job này ghi `job_runs` (khi chạy bằng `python -m`).
+3. **Chi phí AI tháng này theo agent** — so với trần `monthly_cap_usd` trong
+   `data/llm_gateway.json`: ≥80% "CẢNH BÁO" (xem lại lưu lượng/model,
+   cân nhắc nâng trần — trần thật do công ty chốt); ≥100% "ĐÃ CHẶN
+   (gateway)" — gateway đã tự chặn agent đó tới đầu tháng sau hoặc khi
+   nâng trần. Bản tin chỉ báo, không tự chặn/mở.
+4. **Lời gọi LLM lỗi 24h** — đếm `llm_usage` `ok = false` theo agent;
+   tăng đột biến → xem mục 7 "Chatbot / Content Studio không trả lời".
+5. **Hàng chờ duyệt** — số `content_drafts` `pending` (MKT duyệt ở tab
+   "Duyệt & Lịch").
+
+Job lỗi → xem chi tiết:
+
+```
+"C:\Program Files\PostgreSQL\17\bin\psql.exe" -U <user> -d samsam -c "select job, started_at, ok, detail, host from job_runs order by id desc limit 20;"
+```
+
+**Lịch 07:30 giờ VN** (chỉ hướng dẫn — máy pilot KHÔNG tạo sẵn lịch;
+server production + lịch thật là external-dep). Chọn MỘT trong hai:
+
+- Windows Task Scheduler (chạy trong thư mục repo):
+  `schtasks /create /tn "SamSam health bulletin" /sc daily /st 07:30 /tr "cmd /c cd /d <repo> && python scripts/health_bulletin.py"`
+- cron (Linux, máy giờ VN hoặc khai `CRON_TZ=Asia/Ho_Chi_Minh`):
+  `30 7 * * * cd <repo> && python scripts/health_bulletin.py`
+
+n8n trong stack giám sát dưới đây KHÔNG chạy được bản tin (image không có
+python, không mount repo/DSN; n8n 2.x tắt node Execute Command mặc định).
+Lịch qua n8n chỉ khả thi khi n8n chạy trên VM runner có repo + python +
+env, hoặc gọi sang host qua SSH/HTTP — external-dep, chưa dựng.
+
+**Gửi bản tin**: mặc định không gửi. `--notify` + `HEALTH_NOTIFY=email|telegram`
+và biến kênh trong `.env` (xem `env.example`) mới gửi; SMTP/Telegram bot
+thật + người nhận do công ty cấp (external-dep). Gửi lỗi không làm mất bản
+tin (vẫn có file/stdout).
+
+**Stack giám sát local** (n8n + Uptime Kuma, cổng chỉ 127.0.0.1 — bắt buộc
+đặt `N8N_ENCRYPTION_KEY` trong `.env`; tài khoản owner n8n/admin Kuma tạo ở
+lần mở UI đầu):
+
+```
+docker compose --env-file .env -f deploy/docker-compose.monitoring.yml config   # kiểm cấu hình
+docker compose --env-file .env -f deploy/docker-compose.monitoring.yml up -d    # n8n http://127.0.0.1:5678 · Kuma http://127.0.0.1:3001
+docker compose --env-file .env -f deploy/docker-compose.monitoring.yml down     # dừng (thêm -v = xóa dữ liệu)
+```
+
+Uptime Kuma theo dõi URL production (`/zalo-webhook` HTTPS, Streamlit) là
+external-dep — cần server production.
+
 ## 7. Xử lý sự cố thường gặp
 
 ### "Chưa nạp — không kết nối được Postgres" trên UI
