@@ -150,7 +150,10 @@ def add_log(conn, plot_id, ts, activity, detail=None, author=None,
     if not known:
         warns.append(f"hoạt động '{act}' chưa có trong vocab — "
                      f"ghi nguyên văn")
-    if when > datetime.now(timezone.utc):
+    # Dung sai 1 ngày: UI ghép date (local) + giờ UTC nên user VN
+    # (+7) nhập "hôm nay" lúc sáng sớm tạo ts tương-lai giả ≤ 7h —
+    # chỉ warn khi tương lai thật (>1 ngày).
+    if when > datetime.now(timezone.utc) + timedelta(days=1):
         warns.append("ts ở tương lai — kiểm tra lại ngày nhật ký")
     warns += [f"nhật ký có dấu hiệu cần chú ý: '{k}'"
               for k in flags_for(act, detail)]

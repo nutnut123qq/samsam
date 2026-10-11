@@ -393,7 +393,10 @@ with tab_garden:
                                  list(_g.ACTIVITY_VOCAB) + ["khác…"])
         _act_free = (st.text_input("Hoạt động khác (tự ghi)")
                      if _act_pick == "khác…" else "")
-        _d = st.date_input("Ngày")
+        # Mặc định ngày UTC — ts ghép giờ UTC; tránh date local (VN+7)
+        # sớm hơn UTC 1 ngày sinh ts tương-lai giả (re-audit v2.4).
+        _d = st.date_input("Ngày",
+                           value=_dt.now(timezone.utc).date())
         _det = st.text_area("Chi tiết", height=68)
         _auth = st.text_input("Người ghi")
         if st.button("Ghi nhật ký", type="primary"):
@@ -412,6 +415,10 @@ with tab_garden:
                         _auth.strip())
                 except _pg.Error:
                     _lid, _warns = None, ["Lỗi DB khi ghi — thử lại."]
+                except BaseException:
+                    with suppress(Exception):
+                        _gconn.close()
+                    raise
                 for _w in _warns:
                     st.warning(_w)
                 if _lid is not None:

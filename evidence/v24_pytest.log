@@ -1,4 +1,4 @@
-== v2.4-polish gate (sau vá audit-bù) ==
-pytest full: 195 passed in 24.30s
+== v2.4-polish gate (final) ==
+pytest full: 195 passed in 22.44s
 ruff clean; diff --check clean; py_compile OK
-vá audit-bù: flags_for quet chi detail (activity vocab 'kiem tra sau benh' khong tu flag — FP routine pest-check); report flags parity; --days cap 3660; add_log warn ts tuong lai; test_handover word-boundary Q-id/tab; _conn/_sconn try-finally
+vá cuối: warn ts-tuong-lai dung sai 1 ngay (VN+7 vs UTC); date_input mac dinh ngay UTC; _gconn close tren BaseException
