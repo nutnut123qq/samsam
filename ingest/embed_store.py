@@ -153,7 +153,7 @@ def main() -> int:
 
     # 3. Xóa-nạp lại theo doc_id (idempotent)
     doc_ids = sorted({r["doc_id"] for r in rows})
-    with psycopg.connect(env["dsn"]) as conn:
+    with psycopg.connect(env["dsn"], connect_timeout=10) as conn:
         conn.execute("delete from chunks where doc_id = any(%s)", (doc_ids,))
         with conn.cursor() as cur:
             cur.executemany(

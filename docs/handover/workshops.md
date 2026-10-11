@@ -157,7 +157,7 @@ Agenda:
      `python -m crawler.collect` + `python -m ingest.embed_store`.
 4. (15') Backup + file trên đĩa đừng-xóa: `data/conversations.jsonl`,
    `data/zalo_tokens.json`, `data/zalo_seen.db`, `data/reports/` — và
-   lệnh `pg_dump` trong `sop.md`.
+   lệnh `db_backup`/`db_restore_drill` trong `sop.md` mục 6.
 5. (15') Ôn lại toàn bộ human-gate: không tự đăng/gửi/gọi khách —
    ai làm gì ở điểm nào (`kien-truc.md` mục human-gate).
 6. (10') Chốt lịch "2 tuần tự vận hành" + kênh hỗ trợ.

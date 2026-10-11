@@ -32,7 +32,8 @@ def main() -> int:
         return 1
     sql = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
     try:
-        with psycopg.connect(dsn, autocommit=True) as conn:
+        with psycopg.connect(dsn, autocommit=True,
+                             connect_timeout=10) as conn:
             conn.execute(sql)
             tables = [r[0] for r in conn.execute(
                 "select table_name from information_schema.tables"

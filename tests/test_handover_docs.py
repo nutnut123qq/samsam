@@ -38,7 +38,8 @@ PLAYBOOK_TABS = {
 }
 
 SOP_COMMANDS = ("streamlit run", "apply_schema", "lead_store",
-                "agents.report", "agents.garden", "pipelines.store")
+                "agents.report", "agents.garden", "pipelines.store",
+                "db_backup", "db_restore_drill")
 
 
 def _doc(name: str) -> str:

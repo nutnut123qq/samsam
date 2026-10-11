@@ -9,6 +9,314 @@ Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 Nhánh `ai-infra` (M30): version đang mở **v3.3-connector-csv**
 (song song ở worktree riêng: v3.5, v3.7, v3.8).
 
+## Checklist v3.6-cloud-db-backup
+
+Khán giả/mục đích: nhánh `ai-infra` (M30, worktree `D:\code\samsam-v36`,
+DB `samsam_v36`) — WP02 "Postgres managed trong nước", luồng F17.4
+(Backup, PITR, diễn tập khôi phục), agent "Vận hành hạ tầng"
+(plan_data_platform.md, flows_infra.md). Hiện DB chỉ chạy local, backup là
+1 lệnh `pg_dump` gõ tay trong `docs/handover/sop.md` mục 6, không manifest/
+sha256/retention/diễn tập; 7 chỗ `psycopg.connect` chưa có
+`connect_timeout` (gotcha v1.9: host chết là treo). Sau version: (a) mọi
+connect Postgres trong code có `connect_timeout`, có test chặn tái phát;
+(b) 1 lệnh backup ra file `pg_dump -Fc` nhất quán snapshot + manifest
+(sha256, size, số dòng 14 bảng) + retention + bản sao offsite qua adapter
++ mã hóa tùy chọn; (c) 1 lệnh diễn tập khôi phục bản mới nhất vào DB TẠM,
+so số dòng với manifest, đo RTO, xóa DB tạm, KHÔNG BAO GIỜ đè DB đang dùng;
+(d) tài liệu + env mẫu để chuyển lên Postgres managed trong nước khi công
+ty cấp tài khoản.
+
+Quy ước: ponytail — stdlib + `psycopg` sẵn có, KHÔNG dep mới (không boto3,
+không tzdata; giờ VN = `timezone(timedelta(hours=7))`, VN không có DST).
+Công cụ Postgres chọn theo thứ tự, ghi trong docstring + manifest
+(`tool`): (1) env `PG_BIN` (thư mục chứa `pg_dump`/`pg_restore`); (2)
+`shutil.which("pg_dump")`; (3) `C:/Program Files/PostgreSQL/<major>/bin`
+với `<major>` = major của server (máy này: PG 17.6, có sẵn `pg_dump.exe` +
+`pg_restore.exe` tại `C:\Program Files\PostgreSQL\17\bin`, KHÔNG trên PATH);
+(4) docker image `postgres:<major>-alpine` nếu `docker image inspect` thấy
+sẵn (máy có `postgres:17-alpine`) — KHÔNG `docker pull` tự động; host
+`localhost/127.0.0.1/::1` đổi thành `host.docker.internal`; không có công cụ
+nào → `[err]` exit 1. Major của `pg_dump --version` phải ≥ major server
+(nhỏ hơn → exit 1). Mật khẩu/DSN KHÔNG nằm trong argv subprocess (truyền
+qua env `PGHOST/PGPORT/PGUSER/PGPASSWORD/PGDATABASE/PGSSLMODE` tách bằng
+`psycopg.conninfo.conninfo_to_dict`; docker dùng `-e PGPASSWORD` không
+kèm giá trị), KHÔNG in/ghi DSN, host, user vào stdout/manifest/log. Mọi
+subprocess có `timeout=` và env `PGCONNECT_TIMEOUT=10` (gotcha
+connect_timeout áp cả cho công cụ ngoài). Thư mục backup do env
+`BACKUP_DIR` chỉ định, BẮT BUỘC nằm NGOÀI repo (resolve rồi so với ROOT;
+trong repo → usage exit 2, không tạo thư mục); `.gitignore` thêm `*.dump`,
+`*.dump.enc`, `backups/` phòng lỡ tay. Không thêm bảng DB (schema giữ 14
+bảng — tránh đụng drift-guard đếm bảng của các version song song): nhật
+ký chạy ghi JSONL trong `BACKUP_DIR` (`backup_runs.jsonl`,
+`drill_runs.jsonl`; append BYTES + `\n` tường minh — gotcha convlog), bảng
+`backup_runs`/`drill_runs` cho F17.2/n8n là someday. Ghi file manifest
+atomic (tmp + `os.replace`); dump ghi ra `*.partial` rồi mới rename khi
+xong, tên đích đã tồn tại → exit 1 (không đè). Print tiếng Việt → UTF-8
+guard (copy `scripts/zalo_preflight.py`/`apply_schema.py`). Test DB thật
+skip khi thiếu `DATABASE_URL`/không connect được/không có công cụ PG,
+nhưng gate yêu cầu chạy với **0 skipped**. Mọi DB diễn tập tên
+`samsam_drill_<YYYYmmdd_HHMMSS>_<4 hex>` và phải bị DROP sau mỗi lần chạy
+(kể cả test, kể cả nhánh lỗi).
+
+External-dep (KHÔNG giả lập, KHÔNG gọi thật): tài khoản Postgres managed
+trong nước (Bizfly/Viettel/FPT/VNPT/CMC/GreenNode — chọn sau báo giá) +
+thẻ thanh toán; bật PITR/WAL + retention phía nhà cung cấp và diễn tập
+PITR ra instance tạm (F17.4 bước 1, 6); object storage S3-compatible
+(Bizfly Simple Storage/Backblaze B2) + key + lifecycle daily/weekly/monthly;
+migrate dữ liệu lên cloud thật; khóa mã hóa do công ty giữ trong secret
+manager (flows chọn `age` — máy chưa có `age`, pilot dùng `openssl` có
+sẵn); role DB `backup` chỉ đọc; VM diễn tập tách biệt khỏi runner CI;
+systemd timer 01:30/03:00 trên VM; người ký biên bản diễn tập.
+
+- [x] **W36.1 `connect_timeout` toàn repo + guard AST** — vá 7 chỗ
+  `psycopg.connect` thiếu timeout: `api/rag.py:52` (`retrieve`, đường chat
+  → `connect_timeout=5`), `demo.py:44` + `demo.py:52` (`ensure_db` → 5),
+  `ingest/core_store.py:280`, `ingest/embed_store.py:156`,
+  `scripts/apply_schema.py:35`, `scripts/data_audit.py:63` (CLI → 10).
+  Không đổi hành vi khác (cùng nhánh except `OperationalError` sẵn có).
+  Test mới `tests/test_connect_timeout_guard.py`: duyệt `ast` mọi `*.py`
+  trong repo trừ `tests/`, `.venv/`, `venv/`; với mỗi file gom alias
+  `import psycopg [as X]`; mọi `Call` dạng `<alias>.connect(...)` phải có
+  keyword `connect_timeout`; cấm `from psycopg import connect`. Guard
+  không rỗng: đếm ≥ 12 lời gọi tìm được (5 có sẵn timeout ở `lead_store`
+  ×2, `golden_store`, `llm_gateway`, `zalo_preflight` + 7 chỗ vá) + 2 mẫu
+  nguồn tự tạo trong test (`import psycopg as p; p.connect(d)` và `from
+  psycopg import connect`) phải bị bắt (chống guard pass-ảo).
+  - Boundary: 7 file trên (chỉ dòng connect), `tests/test_connect_timeout_guard.py`
+  - Gate: `python -m pytest tests/test_connect_timeout_guard.py -q` xanh;
+    `grep -rnE "psycopg\.connect\(" --include=*.py . | grep -v "^./tests/" | grep -v connect_timeout`
+    rỗng (dòng `demo.py:52` bẻ dòng → kiểm bằng test AST, grep chỉ là
+    spot-check); mutation: tạm xóa `connect_timeout` ở `api/rag.py` →
+    test đỏ, hoàn lại → xanh (ghi vào evidence)
+  - Evidence: `evidence/v36_backup.log`
+- [x] **W36.2 `scripts/db_backup.py` — dump nhất quán + manifest +
+  sha256** — `python scripts/db_backup.py`: đọc `DATABASE_URL`
+  (`load_dotenv(ROOT/.env)` như apply_schema), `BACKUP_DIR`, `BACKUP_KEEP`
+  (mặc định 7). Mở conn (`connect_timeout=10`) `set transaction isolation
+  level repeatable read, read only` → `select pg_export_snapshot()` → đếm
+  `count(*)` MỌI bảng `information_schema.tables` `table_schema='public'
+  and table_type='BASE TABLE'` (tên quote bằng `psycopg.sql.Identifier`)
+  trong CÙNG snapshot → chạy `pg_dump -Fc --snapshot=<id>` khi tx còn mở
+  → đóng tx. Số đếm trong manifest vì vậy khớp đúng nội dung file dù có
+  ghi đồng thời. Tên file `<dbname>_<YYYYmmdd_HHMMSS>_vn.dump` (giờ VN
+  +07:00). Manifest `<tên dump>.manifest.json` đúng các key: `format`
+  (=1), `created_at` (ISO có `+07:00`), `db_name`, `server_version`,
+  `pg_dump_version`, `tool` (`native:<đường dẫn>` | `docker:<image>`),
+  `file`, `size_bytes`, `sha256` (của file cuối cùng trên đĩa),
+  `encrypted`, `cipher`, `row_counts` {bảng: số dòng}. Không key nào chứa
+  host/user/mật khẩu. Exit: 0 OK; 1 lỗi (thiếu DSN, connect lỗi, không có
+  công cụ, pg_dump exit≠0, tên đích tồn tại) — lỗi thì xóa `.partial`,
+  KHÔNG để lại manifest; 2 usage (thiếu `BACKUP_DIR`, `BACKUP_DIR` trong
+  repo, `BACKUP_KEEP` không phải số nguyên ≥1) — kiểm TRƯỚC khi connect.
+  Mỗi lần chạy (kể cả lỗi sau bước usage) append 1 dòng
+  `backup_runs.jsonl` (`ts`, `status` ok|fail|offsite_fail, `file`,
+  `size_bytes`, `sha256`, `offsite`, `error` đã rút gọn, không DSN).
+  Docstring tiếng Việt: contract, cách chọn công cụ, biến env, exit code.
+  - Boundary: `scripts/db_backup.py` (mới), `tests/test_db_backup.py` (mới),
+    `.gitignore` (3 dòng)
+  - Gate (DB `samsam_v36`, `SCR=<scratchpad>`): `BACKUP_DIR=$SCR/v36_bk
+    python scripts/db_backup.py` exit 0, in tên file + tool được chọn
+    (máy này: `native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe`);
+    `python -c` đọc manifest: `sha256(file) == manifest.sha256`,
+    `size_bytes == os.path.getsize`, `row_counts` có đúng 14 bảng và bằng
+    `count(*)` live từng bảng, file bắt đầu bằng magic `PGDMP`;
+    `grep -c` mật khẩu từ DSN (đọc trong python, không in) trong manifest
+    + `backup_runs.jsonl` = 0; `BACKUP_DIR=D:/code/samsam-v36/backups` →
+    exit 2 và thư mục KHÔNG được tạo; thiếu `BACKUP_DIR` → exit 2;
+    `BACKUP_KEEP=0`/`-1`/`abc` → exit 2 (cả 3 không gọi connect —
+    monkeypatch trong test); `DATABASE_URL` trỏ host chết
+    `postgresql://u@10.255.255.1:5432/x` → exit 1 trong < 30s (không
+    treo), không file `.dump`/manifest nào được tạo. Test unit: resolver
+    công cụ theo đúng 4 bước (monkeypatch `PG_BIN`/`which`/`exists`/docker
+    inspect); argv docker có `host.docker.internal`, `-e PGPASSWORD` và
+    KHÔNG chứa mật khẩu; major pg_dump < server → exit 1
+  - Evidence: `evidence/v36_backup.log`
+- [x] **W36.3 Mã hóa + retention + offsite adapter** — Mã hóa: bật khi
+  có env `BACKUP_PASSPHRASE_FILE` (file NGOÀI repo, trong repo → exit 2):
+  `openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 -pass file:<path>`
+  (passphrase không vào argv) → file `.dump.enc`, manifest
+  `encrypted=true`, `cipher="openssl-aes-256-cbc-pbkdf2"`, `sha256` của
+  file `.enc`; bản rõ `.dump` bị xóa trong `finally` (không còn file nào
+  bắt đầu `PGDMP` trong `BACKUP_DIR`). Có passphrase mà không tìm thấy
+  `openssl` → exit 1, KHÔNG ghi bản rõ (fail-closed). Không có passphrase
+  → `[warn] backup CHƯA mã hóa (external-dep: khóa công ty)`, vẫn exit 0.
+  Retention: chỉ chạy SAU khi bản mới thành công; giữ `BACKUP_KEEP` bản
+  mới nhất theo `created_at` trong manifest hợp lệ; xóa cặp dump+manifest
+  cũ hơn; KHÔNG đụng file không khớp mẫu tên, manifest hỏng JSON, file
+  `.partial`, `*.jsonl`. Offsite: env `BACKUP_OFFSITE` — rỗng → `[warn]
+  chưa cấu hình offsite`, exit 0; `dir:<path>` (path ngoài repo, trong
+  repo → exit 2) → copy dump + manifest qua tmp + `os.replace`, tính lại
+  sha256 bản sao phải khớp manifest, áp cùng retention ở thư mục offsite;
+  `s3://<bucket>/<prefix>` → KHÔNG gọi mạng, in `[external-dep] offsite
+  S3-compatible (Bizfly/Backblaze) chưa bật — cần key + công cụ
+  rclone/aws-cli`, exit 3; lỗi copy/sha lệch → exit 3, bản local GIỮ
+  NGUYÊN (flows F17.4: upload lỗi giữ bản cục bộ + cảnh báo). Exit 3 =
+  "local OK, offsite chưa xong" để giám sát phân biệt với lỗi dump.
+  - Boundary: `scripts/db_backup.py`, `tests/test_db_backup.py`
+  - Gate: chạy 4 lần với `BACKUP_KEEP=3 BACKUP_OFFSITE=dir:$SCR/v36_off`
+    → `$SCR/v36_bk` và `$SCR/v36_off` mỗi nơi đúng 3 dump + 3 manifest
+    (bản mới nhất còn, bản cũ nhất mất), sha256 bản offsite == manifest;
+    file lạ `notes.txt` + manifest hỏng đặt sẵn trong `v36_bk` vẫn còn sau
+    retention; `BACKUP_PASSPHRASE_FILE=$SCR/v36_pass.txt` → file `.dump.enc`
+    không bắt đầu `PGDMP`, `openssl enc -d` bằng đúng passphrase ra file
+    bắt đầu `PGDMP`, không còn `.dump` rõ; `BACKUP_OFFSITE=s3://b/p` → exit
+    3, dump local có, không import/gọi thư viện mạng (grep `boto3|requests|
+    httpx` trong `scripts/db_backup.py` rỗng); test unit retention trên
+    tmp_path với 5 manifest giả → giữ đúng 3 mới nhất theo `created_at`
+    (không theo mtime)
+  - Evidence: `evidence/v36_backup.log`
+- [x] **W36.4 `scripts/db_restore_drill.py` — diễn tập vào DB tạm, không
+  bao giờ đè** — `python scripts/db_restore_drill.py [--backup <manifest>]
+  [--target-db <tên>]`: chọn manifest hợp lệ mới nhất (theo `created_at`)
+  trong `BACKUP_DIR` (manifest hỏng → bỏ qua có `[warn]`; bản mới nhất mà
+  file dump mất hoặc sha256 lệch → FAIL exit 1, KHÔNG lùi sang bản cũ hơn
+  để che lỗi). Thứ tự: (1) guard TRƯỚC mọi thao tác: tên đích (mặc định
+  `samsam_drill_<YYYYmmdd_HHMMSS>_<4 hex>`) phải khớp
+  `^samsam_drill_[0-9a-z_]+$`, KHÁC dbname của `DATABASE_URL` (so tên,
+  không phụ thuộc host — chặn cả `localhost` vs `127.0.0.1`), và CHƯA tồn
+  tại trong `pg_database` → vi phạm: `[refuse]` exit 2, không create/
+  restore; (2) kiểm sha256; (3) giải mã ra file tạm (nếu `encrypted`,
+  cần `BACKUP_PASSPHRASE_FILE`; sai khóa → exit 1); (4) `create database`
+  (autocommit, `sql.Identifier`) trên server của `DRILL_DATABASE_URL` nếu
+  có (cloud: VM diễn tập riêng), không thì server của `DATABASE_URL`;
+  (5) `pg_restore --no-owner --no-privileges --exit-on-error -d <drill>`
+  (PG* env, không argv mật khẩu); (6) đếm `count(*)` mọi bảng trong
+  `row_counts` của manifest + phát hiện bảng thiếu/thừa; (7) RTO = giây
+  từ bước (2) tới xong (6); (8) `finally`: `drop database if exists ...
+  with (force)` + kiểm lại `pg_database` không còn tên đó, xóa file giải
+  mã tạm. In bảng so sánh + RTO; append `drill_runs.jsonl` (`ts`,
+  `backup_file`, `drill_db`, `status` ok|mismatch|fail|refused|
+  drop_failed, `rto_seconds`, `tables_checked`, `mismatches`
+  {bảng: [manifest, thực tế]}, `dropped`), không DSN. Exit: 0 khớp hết +
+  đã drop; 1 lệch/lỗi/drop thất bại (drop thất bại in `[ALERT] còn bản
+  sao dữ liệu ở DB tạm <tên>`); 2 bị guard từ chối/usage. Khôi phục ĐÈ
+  production KHÔNG có trong script (tầng 2, người làm tay — ghi docstring).
+  - Boundary: `scripts/db_restore_drill.py` (mới), `tests/test_db_backup.py`
+  - Gate (sau gate W36.2): `python scripts/db_restore_drill.py` exit 0, in
+    14 bảng khớp + `RTO` số giây; ngay sau đó `select count(*) from
+    pg_database where datname like 'samsam\_drill\_%'` = 0; `--target-db
+    samsam_v36` → exit 2 `[refuse]`, `drill_runs.jsonl` dòng cuối
+    `status=refused`, `count(*)` 14 bảng `samsam_v36` trước/sau bằng nhau;
+    `--target-db postgres` → exit 2; `--target-db` trùng 1 DB
+    `samsam_drill_...` tạo sẵn → exit 2 và DB đó KHÔNG bị drop/ghi (test tự
+    tạo rồi tự drop); test E2E (DB thật, 0 skipped): backup thường →
+    drill ok; backup mã hóa → drill ok với đúng passphrase, sai passphrase
+    → exit 1 và không DB drill nào được tạo; sửa 1 byte file dump → exit
+    1 trước `create database`; manifest sửa `row_counts` 1 bảng +1 → exit
+    1 `status=mismatch` và DB tạm VẪN bị drop; monkeypatch `subprocess.run`
+    trong ca refuse → pg_restore không được gọi; sau toàn bộ test: 0 DB
+    `samsam_drill_%`
+  - Evidence: `evidence/v36_backup.log`
+- [x] **W36.5 `deploy/cloud/` — README + env mẫu Postgres managed trong
+  nước** — `deploy/cloud/README.md` (tiếng Việt, mở đầu "dành cho ai /
+  làm gì / cần gì"): tiêu chí chọn nhà cung cấp theo F17.4 (BẮT BUỘC: dữ
+  liệu trong nước, PITR + khôi phục PITR ra instance tạm, mã hóa at-rest,
+  TLS; ưu tiên: object-lock, API bật/tắt VM) — ứng viên Bizfly/Viettel/
+  FPT/VNPT/CMC/GreenNode ghi "cần xác minh sau báo giá", không khẳng định
+  tính năng chưa kiểm; tham số kết nối `sslmode=require` (`verify-full` +
+  `sslrootcert` khi có CA nhà cung cấp), `connect_timeout`; 3 role đề
+  xuất (`app`, `backup` chỉ đọc, `loader` golden) — external-dep; PITR bật
+  phía nhà cung cấp + retention WAL (external-dep, người làm 1 lần, có
+  biên bản); checklist migrate ĐỦ 14 bảng theo 2 đường: (A) dựng mới:
+  `python scripts/apply_schema.py` ×2 (in 14 bảng) → `python -m
+  ingest.core_store` → `python -m ingest.golden_store` → `python -m
+  ingest.embed_store` (chunks, tốn phí embed) — bảng sinh lúc chạy
+  (`leads`, `content_drafts`, `plot_logs`, `llm_usage`,
+  `golden_discrepancies`...) bắt đầu rỗng; (B) mang dữ liệu: `python
+  scripts/db_backup.py` local → `pg_restore --no-owner` vào cloud → so
+  `row_counts` manifest (dùng lại phép đếm của drill) — mỗi bảng ghi
+  thuộc đường nào; backup/drill trên cloud (`BACKUP_DIR` trên VM,
+  `BACKUP_OFFSITE=s3://...` khi có key, `DRILL_DATABASE_URL` trỏ VM diễn
+  tập, systemd timer 01:30/03:00 — mẫu lệnh, external-dep). File
+  `deploy/cloud/env.cloud.example` (KHÔNG tên `.env*` — gotcha policy):
+  `DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/samsam?sslmode=require`,
+  `DRILL_DATABASE_URL`, `BACKUP_DIR`, `BACKUP_KEEP`, `BACKUP_OFFSITE`,
+  `BACKUP_PASSPHRASE_FILE`, `PG_BIN`, các key S3 để trống — chỉ
+  placeholder `<...>`, không secret.
+  - Boundary: `deploy/cloud/README.md`, `deploy/cloud/env.cloud.example`
+    (mới), `tests/test_db_backup.py` (drift-guard)
+  - Gate: test drift-guard: README chứa đủ 14 tên bảng parse từ
+    `docs/schema.sql` bằng `^create table if not exists (\w+)` (bảng mới
+    sau này → test đỏ nhắc cập nhật); README + env mẫu chứa
+    `sslmode=require`; env mẫu có đủ 7 key trên; không dòng nào khớp
+    `postgresql://[^<\s:/]+:[^<\s@]+@` (credential thật) hoặc `sk-or-v1`;
+    mọi lệnh `python ...` trong README trỏ file/module tồn tại trong repo
+  - Evidence: `evidence/v36_pytest.log`
+- [x] **W36.6 SOP + docs vận hành** — `docs/handover/sop.md` mục 6 viết
+  lại ngắn: backup = `python scripts/db_backup.py` (biến env, exit
+  0/1/2/3, file nằm ngoài repo, mã hóa khi có khóa), diễn tập =
+  `python scripts/db_restore_drill.py` (tuần, Chủ nhật; đọc RTO +
+  `drill_runs.jsonl`), khôi phục ĐÈ production = tầng 2 người làm tay +
+  báo TGĐ + đối chiếu danh sách phiếu xóa dữ liệu (DPIA 93 ngày), không có
+  lệnh tự động; giữ nguyên danh sách file trên đĩa cần backup cùng.
+  `docs/handover/workshops.md` dòng nhắc "lệnh `pg_dump` trong `sop.md`"
+  đổi sang `db_backup`/`db_restore_drill`. `AGENTS.md` bảng Commands thêm
+  1 dòng "Backup/diễn tập DB (v3.6)". `tests/test_handover_docs.py`
+  `SOP_COMMANDS` thêm `"db_backup"`, `"db_restore_drill"` (không xóa
+  phần tử/assert cũ).
+  - Boundary: `docs/handover/sop.md` (mục 6), `docs/handover/workshops.md`
+    (1 dòng), `AGENTS.md` (Commands), `tests/test_handover_docs.py`
+    (`SOP_COMMANDS`)
+  - Gate: `python -m pytest tests/test_handover_docs.py -q` xanh; số assert
+    trước/sau không giảm; `grep -n "pg_dump.exe" docs/handover/sop.md`
+    không còn là cách backup chính (chỉ được nhắc như công cụ bên dưới)
+  - Evidence: `evidence/v36_pytest.log`
+- [x] **Gate chung** —
+  - đếm trước: `count(*)` 14 bảng `samsam_v36` (in bằng `python -c`, không
+    in DSN)
+  - targeted ×3: `python -m pytest tests/test_db_backup.py tests/test_connect_timeout_guard.py tests/test_handover_docs.py -q -rs`
+    3 lần liên tiếp xanh, **0 skipped** (đọc output tới exit, không chạy
+    chồng)
+  - full: `python -m pytest -q` xanh, ≥ 308 + test mới (baseline 308)
+  - `ruff check .` sạch
+  - `python -m py_compile scripts/db_backup.py scripts/db_restore_drill.py api/rag.py demo.py ingest/core_store.py ingest/embed_store.py scripts/apply_schema.py scripts/data_audit.py`
+  - `python scripts/apply_schema.py` exit 0 (vẫn 14 bảng — v3.6 không
+    thêm bảng)
+  - sau toàn bộ gate: `count(*)` 14 bảng `samsam_v36` bằng lúc đầu; 0 DB
+    `samsam_drill_%`; không file `*.dump*` trong repo
+  - `git status`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); không file runtime mới trong `data/`; không file
+    backup/passphrase trong repo
+  - External-dep (để `[ ]`): xem các mục dưới
+  - Kết quả worker (2026-10-12): targeted ×3 = 40 passed ×3, 0 skipped;
+    full 341 passed; ruff sạch; py_compile 8 file OK; apply_schema 14 bảng;
+    row counts 14 bảng trước/sau bằng nhau; 0 DB `samsam_drill_%`; 0 file
+    `*.dump*` trong repo — `evidence/v36_backup.log`, `evidence/v36_pytest.log`
+    (cả 2 bị `*.log` ignore → `git add -f`). Thêm ngoài contract: umask 077
+    khi chạy 2 CLI (dump có PII chỉ chủ sở hữu đọc trên VM Linux).
+- [ ] **external-dep** Tài khoản Postgres managed trong nước (chọn nhà
+  cung cấp sau báo giá theo tiêu chí README) + thẻ thanh toán; migrate
+  14 bảng lên cloud thật theo `deploy/cloud/README.md`.
+- [ ] **external-dep** Bật PITR/WAL + retention phía nhà cung cấp (người
+  làm 1 lần, có biên bản); diễn tập PITR ra instance tạm 30/11 và 18/12.
+- [ ] **external-dep** Object storage S3-compatible (Bizfly/Backblaze) +
+  key + lifecycle daily 8 / weekly 35 / monthly 93 ngày + `test-lifecycle/`;
+  adapter `s3://` hiện chỉ là cổng cấu hình (exit 3).
+- [ ] **external-dep** Khóa mã hóa backup do công ty giữ (secret manager;
+  cân nhắc `age` theo F17.4); role DB `backup` chỉ đọc; VM diễn tập tách
+  khỏi runner CI; systemd timer 01:30 backup / 03:00 Chủ nhật diễn tập;
+  Quản lý hạ tầng AI ký biên bản diễn tập.
+
+Someday (ngoài phạm vi v3.6, ghi để không cuốn vào): bảng `backup_runs`/
+`drill_runs` trong DB cho F17.2 + n8n cảnh báo size lệch >30%; checksum
+mẫu nội dung + chạy `test_core_store` trên DB diễn tập (F17.4 bước 4);
+prefix daily/weekly/monthly; biên bản diễn tập do `agents/report.py` soạn;
+đối chiếu danh sách phiếu xóa trước khi khôi phục đè; backup file trên
+đĩa (`data/conversations.jsonl`, `zalo_tokens.json`...) vào cùng bộ.
+
+v3.6-cloud-db-backup đóng 2026-10-12 (3 nghiệm thu đợt 1 FIX 7 finding →
+2 vòng sửa → PASS; MAJOR vòng 2: test có thể chạy retention lên thư mục
+offsite thật khi `.env` có BACKUP_* — vá `clean_env` setenv rỗng; MINOR:
+file passphrase UTF-16 cắt khóa ở NUL → từ chối; coordinator chạy lại
+360/360 + ruff, 0 DB `samsam_drill_%` sót). Drill thật: 14/14 bảng khớp
+manifest, RTO <1s, DB tạm xóa; restore đè DB hiện tại bị từ chối exit 2.
+Mã hóa dùng openssl AES-256 pbkdf2 (age chưa cài). External-dep: tài
+khoản Postgres cloud + thanh toán; PITR phía nhà cung cấp + diễn tập
+30/11, 18/12; S3 + key + lifecycle; khóa mã hóa công ty giữ, role
+`backup` read-only, VM drill riêng, systemd timer, người ký biên bản
+drill. Someday: bảng `backup_runs`/`drill_runs` thay jsonl; checksum
+mẫu + `test_core_store` trên DB drill; prefix daily/weekly/monthly.
+
 v3.2-golden-master đóng 2026-10-12 (3 nghiệm thu đợt 1 FIX 8 finding →
 1 vòng sửa → PASS; coordinator chạy lại 308/308 + ruff, DB thật: 13
 SKU, 0 giá đã duyệt, `v_promotable` rỗng, rượu CAM mọi kênh).

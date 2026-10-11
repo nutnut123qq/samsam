@@ -707,7 +707,7 @@ Quy trình mỗi version (chặt theo skill):
   (pytest + ruff + Postgres service), cổng deploy theo commit SHA khi eval
   PASS + phiếu duyệt. Skip: chạy thật trên GitHub (không push), runner
   tự host.
-- [ ] **v3.6-cloud-db-backup** — backup/restore (pg_dump + bản sao ngoài),
+- [x] **v3.6-cloud-db-backup** — backup/restore (pg_dump + bản sao ngoài),
   kiểm `connect_timeout` mọi connect, script triển khai cloud trong nước
   ở dạng cấu hình. Skip: tài khoản cloud Bizfly + thẻ.
 - [ ] **v3.7-ops-monitoring** — `job_runs`, bản tin sức khỏe 07:30, cảnh

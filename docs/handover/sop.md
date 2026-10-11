@@ -100,18 +100,40 @@ unit `docs/zalo-webhook.service`). Tóm tắt sự cố thường gặp:
 - **`DEPLOY` bật mà thiếu `ZALO_OA_SECRET`** → process refuse-to-serve
   (đúng — cố ý, không "vá" bằng cách tắt DEPLOY khi đang public).
 
-## 6. Backup (tuần hoặc trước khi đụng schema/data)
+## 6. Backup + diễn tập khôi phục (v3.6)
 
-Postgres cài tại `C:\Program Files\PostgreSQL\17\` — `pg_dump`/`psql`
-KHÔNG nằm trên PATH, gọi bằng đường dẫn đầy đủ:
+**Backup** (hằng ngày, hoặc trước khi đụng schema/data):
 
 ```
-"C:\Program Files\PostgreSQL\17\bin\pg_dump.exe" -U <user> -d samsam -f backup-samsam.sql
+python scripts/db_backup.py
 ```
 
-(`<user>` + mật khẩu: lấy trong `DATABASE_URL` ở `.env` — không ghi
-vào tài liệu này. Có thể kiểm tra schema bằng
-`"C:\Program Files\PostgreSQL\17\bin\psql.exe" -U <user> -d samsam`.)
+- Biến env (đặt trong `.env` hoặc env tiến trình): `BACKUP_DIR` (BẮT
+  BUỘC, thư mục NGOÀI repo), `BACKUP_KEEP` (mặc định 7 bản),
+  `BACKUP_PASSPHRASE_FILE` (có khóa → file `.dump.enc` mã hóa; dòng
+  đầu ≥16 ký tự; chưa có → `[warn]` bản chưa mã hóa), `BACKUP_OFFSITE`
+  (`dir:<thư mục 2>`; `s3://...` chờ key — external-dep).
+- Ra 1 file `pg_dump -Fc` + `*.manifest.json` (sha256, size, số dòng 14
+  bảng); nhật ký `backup_runs.jsonl` trong `BACKUP_DIR`.
+- Exit: 0 OK · 1 lỗi (DB/công cụ/dump) · 2 cấu hình sai · 3 local OK
+  nhưng offsite chưa xong (vẫn phải xử lý).
+- `pg_dump.exe` (`C:\Program Files\PostgreSQL\17\bin`) chỉ là công cụ
+  bên dưới — script tự tìm, không gõ tay.
+
+**Diễn tập khôi phục** (tuần, Chủ nhật):
+
+```
+python scripts/db_restore_drill.py
+```
+
+Khôi phục bản mới nhất vào DB TẠM `samsam_drill_...`, so số dòng với
+manifest, in `RTO`, rồi xóa DB tạm. Đọc kết quả ở dòng cuối
+`drill_runs.jsonl` (`status=ok`, `rto_seconds`). Script từ chối (exit 2)
+nếu tên đích trùng DB đang dùng.
+
+**Khôi phục ĐÈ production**: KHÔNG có lệnh tự động. Tầng 2 — người làm
+tay, báo TGĐ trước, đối chiếu danh sách phiếu xóa dữ liệu (DPIA, 93 ngày)
+để không khôi phục lại dữ liệu đã xóa theo yêu cầu.
 
 File trên đĩa cần backup cùng (copy sang chỗ an toàn, đừng xóa bản
 gốc):

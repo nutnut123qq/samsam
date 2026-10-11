@@ -49,7 +49,8 @@ Luật:
 def retrieve(question: str, k: int = TOP_K) -> list[dict]:
     """Top-k chunk theo cosine similarity, kèm score/url/title/content."""
     qv = np.array(embed(AGENT, question).data[0].embedding)
-    with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+    with psycopg.connect(os.environ["DATABASE_URL"],
+                         connect_timeout=5) as conn:
         rows = conn.execute(
             "select title, source_url, lang, content, embedding, doc_id"
             " from chunks"

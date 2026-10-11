@@ -60,7 +60,7 @@ def db_counts() -> dict | None:
     if not dsn:
         return None
     try:
-        with psycopg.connect(dsn) as conn:
+        with psycopg.connect(dsn, connect_timeout=10) as conn:
             out = {}
             for key, table, source in (
                     ("products.jsonl", "products", "products.jsonl"),
