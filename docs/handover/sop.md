@@ -414,6 +414,51 @@ chốt"; GĐ SX chốt rồi NGƯỜI đổi `status`).
 đóng hộp quà OFFLINE không (luồng B2B ghi "không đóng trong hộp quà") —
 chờ Pháp chế/GĐ SX chốt; tới lúc đó không đưa rượu vào hộp quà mẫu.
 
+## 5f. Lô + QR truy xuất (v9.4 — thí điểm mật ong)
+
+Chỉ SKU trong `pilot_skus` của `data/qr_config.json` (nhãn **GIẢ ĐỊNH** —
+chờ GĐ vùng trồng + Pháp chế chốt `region_text`, mốc phương án B). Lô
+trong repo là **MẪU** (`[MẪU]` — không dùng in tem). Danh tính `--by` hiện
+tự khai + allowlist `data/qr_signers.json` (ship RỖNG — SSO thật là
+external-dep: chưa điền thì `sign` từ chối).
+
+Thứ tự (mọi bước ghi cần `--by`, ghi `approvals`/`agent_action_log`):
+
+```bash
+# 1. GĐ Sản xuất ánh xạ lô ↔ nhật ký "thu hoạch" ĐÃ CHAIN (+ ≤3 ảnh kho tư liệu cùng khoảnh)
+python -m pipelines.qr_trace link --lot <mã lô> --log <id nhật ký> [--media <sha256> ...] --by "<tên>"
+python -m pipelines.qr_trace unlink --lot <mã lô> --log <id> --by "<tên>"   # gỡ khi ánh xạ nhầm
+# 2. Xem lời văn trang + sha + guardrail kênh qr + vai đã ký/còn thiếu (chỉ đọc, exit 0)
+python -m pipelines.qr_trace preview --lot <mã lô>
+# 3. Ba NGƯỜI KHÁC NHAU ký cùng bản (GĐ SX, GĐ vùng trồng, Pháp chế/QA)
+python -m pipelines.qr_trace sign --lot <mã lô> --role gd_san_xuat --by "<tên>"
+python -m pipelines.qr_trace sign --lot <mã lô> --role gd_vung_trong --by "<tên>"
+python -m pipelines.qr_trace sign --lot <mã lô> --role phap_che_qa --by "<tên>"
+# 4. Phát hành mã (DB kiểm đủ 3 chữ ký trên bản HIỆN TẠI, lô passed còn hạn)
+python -m pipelines.qr_trace issue --lot <mã lô> --by "<tên>"
+# 5. Sinh trang tĩnh data/qr_site/<code>/index.html (gitignored) — cần env GARDEN_MEDIA_DIR nếu có ảnh
+python -m pipelines.qr_trace site [--out <thư mục>]
+# 6. Thu hồi mã (trang chuyển "đã thu hồi" sau khi chạy lại site)
+python -m pipelines.qr_trace revoke --code <mã> --by "<tên>" [--reason "..."]
+# Bản tin phương án B (in stdout, không ghi DB) — chạy mỗi ngày từ 20/11
+python -m pipelines.qr_trace planb [--date YYYY-MM-DD]
+```
+
+- **Đổi ánh xạ / ảnh / ngày lô / lời văn (`region_text`) sau khi ký = ký
+  lại**: chữ ký gắn với `snapshot_sha256` + `text_sha256`; `preview` sẽ báo
+  thiếu cả 3 vai. Lô đang có mã còn hiệu lực → `link`/`unlink` bị chặn
+  (thu hồi trước). `site` thấy nội dung lệch bản đã ký → KHÔNG ghi trang
+  đó, exit 1 ("cần thu hồi + ký lại").
+- Trang KHÔNG có tọa độ, mã/vị trí khoảnh, tên/SĐT/email người (nhật ký, ảnh,
+  người ký); text fail guardrail kênh `qr` → không ký/phát hành/ghi trang.
+- **Không sinh ảnh QR** (lib QR không có trong interpreter): `issue` in URL
+  (`public_base_url` rỗng = chưa có domain — external-dep); nhà in tạo QR từ
+  URL. Đưa `data/qr_site/` lên hosting tĩnh = việc Hạ tầng (external-dep);
+  KHÔNG có trang liệt kê mã (chống dò mã).
+- `planb`: trước mốc → "còn N ngày"; từ mốc → "ĐỀ XUẤT phương án B" + lời
+  văn tem KHÔNG QR cho lô đã passed. GĐ vùng trồng quyết, báo Sales + Hạ
+  tầng — agent KHÔNG tự đổi tem.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):

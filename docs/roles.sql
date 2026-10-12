@@ -101,3 +101,16 @@ grant execute on function
 -- v9.2: duyệt phân bổ / kiểm nhập lô CHỈ qua 2 function trên. TUYỆT ĐỐI
 -- không grant INSERT approvals cho role nào (verify_publish tin approvals →
 -- chèn được là duyệt giả được content_draft).
+
+-- v9.4 lô + QR truy xuất: app_human (GĐ SX / GĐ vùng trồng / Pháp chế-QA qua
+-- CLI) CHỈ EXECUTE 5 function ghi + hàm bản chụp. KHÔNG grant INSERT/UPDATE
+-- approvals / lot_origins / qr_signatures / qr_codes cho role nào; agent_writer
+-- KHÔNG ký/phát hành/thu hồi.
+grant execute on function
+  qr_lot_snapshot_sha(text),
+  link_lot_origin(text, bigint, text[], text),
+  unlink_lot_origin(text, bigint, text),
+  sign_qr_lot(text, text, text, text, text),
+  issue_qr(text, text, text, text),
+  revoke_qr(text, text, text)
+  to app_human;

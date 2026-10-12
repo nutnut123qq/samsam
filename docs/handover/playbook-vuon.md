@@ -128,6 +128,21 @@ python scripts/garden_media.py --file anh.jpg --plot KV-A01 --date 2026-10-12 --
   video/HEIC chưa nhận (đổi sang JPEG trước).
 - Đừng gửi ảnh gốc qua kênh khác (Zalo nhóm, email) — gửi bản trong kho.
 
+## Tem QR truy xuất (v9.4 — thí điểm mật ong)
+
+- Bạn ký vai **`gd_vung_trong`** (GĐ vùng trồng) — cùng GĐ Sản xuất và Pháp
+  chế/QA, mỗi lô cần 3 NGƯỜI khác nhau; 1 người không ký 2 vai:
+  `python -m pipelines.qr_trace preview --lot <mã lô>` (đọc lời văn) rồi
+  `python -m pipelines.qr_trace sign --lot <mã lô> --role gd_vung_trong --by "<tên>"`.
+- Nguồn lô chỉ lấy từ nhật ký **thu hoạch** đã ghi (hash chain) — nhật ký
+  ghi thiếu/sai thì ghi dòng MỚI trước khi GĐ SX ánh xạ.
+- Ảnh công khai trên trang QR (`--media` khi ánh xạ, tối đa 3 ảnh, cùng
+  khoảnh): chọn ảnh vườn/cây — **không ảnh có người/khuôn mặt** (chưa có
+  giấy đồng ý). Trang chỉ ghi vùng mức tỉnh (`region_text`), không tọa độ.
+- **Phương án B (mốc 27/11 — GIẢ ĐỊNH)**: `python -m pipelines.qr_trace planb`
+  in bản tin; từ mốc mà chưa đủ 3 chữ ký → agent ĐỀ XUẤT tem không QR, **bạn
+  quyết** và báo Sales + Hạ tầng.
+
 ## Khi nào gọi người khác
 
 | Tình huống | Gọi ai |

@@ -18,7 +18,12 @@ from pathlib import Path
 
 import psycopg
 import pytest
-from psycopg.errors import CheckViolation, InsufficientPrivilege, RaiseException
+from psycopg.errors import (
+    CheckViolation,
+    FeatureNotSupported,
+    InsufficientPrivilege,
+    RaiseException,
+)
 from psycopg.types.json import Jsonb
 
 from pipelines import store
@@ -152,7 +157,15 @@ def test_append_only_triggers_block_superuser(db):
     for t, col in (("agent_action_log", "action"), ("approvals", "note")):
         _raises(db, f"update {t} set {col} = {col}")
         _raises(db, f"delete from {t}")
-        _raises(db, f"truncate {t}")
+        # v9.4: approvals bị FK qr_signatures tham chiếu → TRUNCATE thường
+        # bị FK chặn trước trigger; CASCADE tới trigger — phải assert đúng
+        # tên bảng (qr_signatures cũng có trigger append-only, nếu không
+        # check message thì mất trigger approvals test vẫn xanh).
+        if t == "agent_action_log":
+            assert f"{t} append-only" in _raises(db, f"truncate {t}")
+        else:
+            _raises(db, f"truncate {t}", exc=FeatureNotSupported)  # FK
+        assert f"{t} append-only" in _raises(db, f"truncate {t} cascade")
 
 
 def test_verify_detects_update_and_delete(db):

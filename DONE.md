@@ -13,6 +13,483 @@ rượu trong persona_sim nay bị guardrail v4.1 loại kể cả panel ngườ
 `test_validate_specific_reasons`). Đang chạy song song: v4.2, v4.5, v5.2, v7.2,
 v9.2.
 
+## Checklist v9.4-qr-truy-xuat
+
+Khán giả/mục đích: WP13 phần VT "Lô và QR truy xuất (thí điểm mật ong, 3
+chữ ký, phương án B 27/11)" (pmo.md dòng `| WP13`; tiêu chí: "Tem QR chỉ
+sinh khi có ánh xạ lô sản xuất và đủ 3 danh tính SSO ký. Trang QR không có
+tọa độ hay PII"); agent `farming` "Lô & QR" + cổng đồng ký chéo phòng trong
+`ctx/final_plans.json` (GĐ Sản xuất ký ánh xạ lô; Pháp chế ký lời văn trang;
+"mỗi lô QR cần 3 danh tính khác nhau"; "một danh tính không được ký hai vai
+trên cùng một lô"; 27/11 chưa đủ chữ ký → agent ĐỀ XUẤT phương án B, GĐ
+quyết). Worktree `D:\code\samsam-w73`, nhánh `ai-infra` (có v9.3 `plot_logs`
+hash chain + `verify_plot_logs()` + `garden_media` gỡ EXIF) + gộp v9.2
+(`production_lots`, `record_lot_intake`, `qr_payload()`). Hiện trạng (đọc
+code): `qr_payload()` trả `{lot_code, sku_key, exp_date}` cho lô `passed`
+nhưng không ai gọi; không có liên kết lô ↔ nhật ký thu hoạch; không có chỗ
+ký/phát hành/thu hồi mã; guardrail `data/guardrail_rules.json` không biết
+kênh `qr` (`check_publish(channel="qr")` → `config` fail); `qrcode`/`segno`
+KHÔNG cài (`pip show` → not found). Sau version: (a) GĐ SX ánh xạ lô ↔ nhật
+ký `thu hoạch` ĐÃ CHAIN (`lot_origins`); (b) 3 vai trò ký trên CÙNG bản chụp
+dữ liệu + CÙNG lời văn trang (`qr_signatures` + `approvals` +
+`agent_action_log`), thiếu/trùng người/trùng vai → từ chối ở DB; (c) phát
+hành mã ngẫu nhiên `secrets.token_urlsafe(16)` (`qr_codes`), 1 mã còn hiệu
+lực/lô; (d) trang tĩnh `data/qr_site/<code>/index.html` (gitignored) qua
+guardrail kênh `qr`, không tọa độ/PII/tên người/mã khoảnh; thu hồi → trang
+"đã thu hồi"; (e) bản tin phương án B tất định theo mốc cấu hình. KHÔNG sinh
+ảnh QR (lib chưa cài — xuất URL, nhà in tạo QR: external-dep), không gửi,
+không in, không gọi LLM.
+
+Quy ước: ponytail — stdlib (`secrets`, `hashlib`, `html`, `json`,
+`shutil`, `os.replace`) + `psycopg`; KHÔNG pip install, KHÔNG lib QR, KHÔNG
+JS/CDN trong trang. 1 module mới `pipelines/qr_trace.py` (CLI subcommand
+`python -m pipelines.qr_trace link|unlink|preview|sign|issue|revoke|site|
+planb` — subparser, không lỗi "nhiều cờ op sau nuốt câm" gotcha v2.2). TÁI
+DÙNG, không viết lại: `ingest.golden_store.read_golden`/`GOLDEN_FILE`/
+`MAX_BY_LEN` (tên SKU, category — đọc FILE, không connect);
+`pipelines.guardrail.check_publish` (kênh `qr`); `pipelines.pii._mask_pii`
+(probe PII); `verify_plot_logs()` (v9.3) gọi TRONG function SQL;
+`production_lots.intake_status` (v9.2) làm điều kiện; `approvals` +
+`agent_action_log` (trigger hash chain v3.4 tự ép id/ts/hash);
+`append_only_guard()` (v3.4); `ingest.lead_store.connect` hoặc
+`connect_timeout=` tường minh (guard `tests/test_connect_timeout_guard.py`).
+Mọi quyết định của NGƯỜI (link/unlink/sign/issue/revoke) CHỈ qua function
+SECURITY DEFINER mới trong block "v9.4 lô + QR truy xuất" cuối
+`docs/schema.sql` — mẫu `record_lot_intake`: `language plpgsql security
+definer set search_path from current` + `revoke execute ... from public`
+ngay sau, raise tiếng Việt, client KHÔNG insert thẳng `approvals`/
+`qr_signatures`/`qr_codes`; `docs/roles.sql` grant EXECUTE 5 function cho
+`app_human` (KHÔNG `agent_writer`, KHÔNG grant INSERT/UPDATE bảng mới cho
+role nào). Schema chỉ THÊM (`create table if not exists`, `create or
+replace function/trigger`, index `if not exists`), không `alter`/`drop`,
+không assert đếm cứng số bảng (sàn `>= 24` / đọc schema.sql). Hàm thuần
+nhận `today: date` tham số — chỉ `main()` đọc đồng hồ (ngày VN UTC+7,
+`pipelines.production.TZ_VN`); test không wall-clock, không `time.sleep`.
+`--by` bắt buộc ở mọi op ghi (argparse exit 2; chỉ khoảng trắng / >
+`MAX_BY_LEN` → exit 2) — danh tính tự khai, SSO = external-dep. Fail-closed
+đủ biến thể "không có dữ liệu" (gotcha v1.8) cho 2 file cấu hình: thiếu /
+rỗng / JSON hỏng / `{}` / chỉ `_doc` → `[err]` exit 1 TRƯỚC connect. Exit: 0
+OK; 1 từ chối nghiệp vụ / dữ liệu / DB lỗi (`[err]`, không traceback); 2
+usage. Print tiếng Việt → UTF-8 guard sau imports (copy
+`scripts/zalo_mock.py`). Ghi trên conn = `with conn.transaction()` +
+`conn.commit()` tường minh (gotcha savepoint v2.1). stdout/`agent_action_log.
+detail` KHÔNG chứa tên người ký khác ngoài `actor`, không detail/author nhật
+ký, không tọa độ/`location`. File output trang = runtime → `data/qr_site/`
+thêm vào `.gitignore` NGAY (gotcha runtime file). Test DB thật: 1
+transaction + schema tạm + `docs/schema.sql` ×2 + `docs/roles.sql` rồi
+ROLLBACK (fixture mẫu `tests/test_production.py::db` + `TxConn`), thử quyền
+bằng `set local role agent_writer|app_human`, mỗi case lỗi trong savepoint;
+gate đòi 0 skipped khi có `DATABASE_URL`. KHÔNG link/sign/issue/revoke thành
+công trên DB riêng `samsam_infra` ngoài test rollback (không giả người ký);
+`data/qr_signers.json` ship với danh sách RỖNG.
+
+Cấu hình (GIẢ ĐỊNH tới khi GĐ vùng trồng/Pháp chế chốt):
+`data/qr_config.json` = `{"_doc", "status": "GIẢ ĐỊNH — chờ GĐ vùng trồng +
+Pháp chế chốt", "pilot_skus": ["mat-ong-sam-120ml-1hu",
+"mat-ong-sam-120ml-2hu", "mat-ong-sam-300ml"], "region_text": "<mức tỉnh/xã
+chung>", "plan_b_deadline": "2026-11-27", "public_base_url": ""}` —
+validator: `pilot_skus` ⊆ golden, không trùng, không SKU `category ==
+"alcohol"`; `region_text` 1..120 ký tự, KHÔNG chữ số (chặn tọa độ/số nhà),
+không chứa "ngọc linh" (casefold — `confirmed_skus` rỗng, guardrail
+`ngoc_linh_chua_xac_nhan` sẽ chặn), qua `guardrail.check()` ok;
+`plan_b_deadline` ISO; `public_base_url` rỗng (= chưa có domain,
+external-dep) hoặc `https://...` không query. `data/qr_signers.json` = `{"_doc",
+"status": "external-dep — danh tính SSO thật chưa cấp", "roles":
+{"gd_san_xuat": [], "gd_vung_trong": [], "phap_che_qa": []}}` — đúng 3 key
+vai trò; tên chuẩn hóa (NFC + casefold + gộp khoảng trắng) không được xuất
+hiện ở 2 vai trò; vai trò rỗng → `sign` vai đó `[err] chưa cấu hình người ký
+(external-dep SSO)` exit 1 trước connect.
+
+External-dep (KHÔNG giả lập, để `[ ]` ở mục riêng cuối): 3 danh tính SSO
+thật + chữ ký thật (GĐ SX, GĐ vùng trồng, Pháp chế/QA) — `--by` hiện tự khai,
+allowlist JSON rỗng; domain công khai + hosting tĩnh cho trang QR
+(`public_base_url` rỗng); ảnh QR + nhà in tem (`qrcode`/`segno` không có
+trong interpreter — KHÔNG cài global; xuất URL); dữ liệu lô/thu hoạch mật ong
+thật (repo chỉ có lô MẪU `MAU-MO120-260915` đang `pending`, nhật ký mẫu
+`sample:%` không chain → không link được); Pháp chế xác nhận trang truy xuất
+có là quảng cáo hay không + lời văn trang + `region_text`; ảnh công khai có
+người/khuôn mặt (giấy đồng ý — v9.3 someday) do người ký chọn `--media`; GĐ
+vùng trồng quyết phương án B ngày 27/11 và báo Sales + Hạ tầng.
+
+- [x] **W94.1 Schema: `lot_origins`, `qr_signatures`, `qr_codes` + 5
+  function** — `docs/schema.sql` append block "v9.4 lô + QR truy xuất (WP13
+  VT)" (comment tiếng Việt: ai ghi/ai đọc/vì sao; không cột PII):
+  `lot_origins` (`id bigint generated always as identity primary key`,
+  `lot_code text not null references production_lots(lot_code)`,
+  `plot_log_id bigint not null references plot_logs(id)`, `media_sha256
+  text[] not null default '{}' check (cardinality(media_sha256) <= 3)`,
+  `linked_by text not null check (btrim(linked_by) <> '')`, `linked_at
+  timestamptz not null default now()`, unique (`lot_code`, `plot_log_id`))
+  — KHÔNG cột plot_id/location (suy từ nhật ký đã chain, bất biến);
+  `qr_signatures` (`id` identity pk, `lot_code` FK `production_lots`, `role
+  text not null check (role in ('gd_san_xuat','gd_vung_trong',
+  'phap_che_qa'))`, `signer text not null check (btrim(signer) <> '')`,
+  `signer_norm text not null`, `snapshot_sha256`/`text_sha256 text not null
+  check (~ '^[0-9a-f]{64}$')`, `approval_id bigint not null references
+  approvals(id)`, `signed_at timestamptz not null default now()`, unique
+  (`lot_code`, `snapshot_sha256`, `text_sha256`, `role`), unique
+  (`lot_code`, `snapshot_sha256`, `text_sha256`, `signer_norm`)) + trigger
+  `append_only_guard()` before update/delete/truncate; `qr_codes` (`code
+  text primary key check (code ~ '^[A-Za-z0-9_-]{22,64}$')`, `lot_code` FK
+  `production_lots`, `snapshot_sha256`, `text_sha256` (hex64), `issued_by
+  text not null check (btrim <> '')`, `issued_at timestamptz not null
+  default now()`, `revoked_at timestamptz`, `revoked_by text`,
+  `revoke_reason text`, check `(revoked_at is null) = (revoked_by is
+  null)`, check `revoked_by is null or btrim(revoked_by) <> ''`) + `create
+  unique index if not exists qr_codes_one_active_idx on qr_codes (lot_code)
+  where revoked_at is null` + trigger guard: DELETE/TRUNCATE raise; UPDATE
+  chỉ khi `old.revoked_at is null` và chỉ đổi 3 cột `revoked_*`.
+  Function (SECURITY DEFINER, `set search_path from current`, revoke public):
+  `qr_lot_snapshot_sha(p_lot text) returns text` (stable) = sha256 UTF-8 của
+  jsonb {lot_code, sku_key, mfg_date, exp_date (`to_char` ISO), source,
+  origins: [plot_log_id, plot_id, row_hash, ngày thu hoạch VN (`ts at time
+  zone 'Asia/Ho_Chi_Minh'`), media sort] sort theo plot_log_id};
+  `link_lot_origin(p_lot, p_plot_log_id, p_media text[], p_by) returns
+  bigint` — raise khi: by rỗng; lô không có / `failed`; lô đang có mã còn
+  hiệu lực; nhật ký không có / `row_hash is null` / `source like 'sample:%'`
+  / `activity <> 'thu hoạch'` / khoảnh `source like 'sample:%'` / ngày thu
+  hoạch VN > `mfg_date`; `exists (select 1 from verify_plot_logs())` (chuỗi
+  có vấn đề → không dùng dòng nào); media không 64-hex / không có trong
+  `garden_media` / `garden_media.plot_id` ≠ khoảnh của nhật ký / > 3; ghi
+  `lot_origins` + `agent_action_log` (`action 'qr_lot_link'`, detail chỉ
+  plot_log_id + số ảnh); `unlink_lot_origin(p_lot, p_plot_log_id, p_by)` —
+  chỉ khi lô không có mã còn hiệu lực, log `qr_lot_unlink`;
+  `sign_qr_lot(p_lot, p_role, p_by, p_text_sha, p_note) returns bigint` —
+  raise khi by rỗng / role lạ / text_sha sai định dạng / lô không `passed` /
+  0 nguồn / vai trò đã ký trên cùng (snapshot, text) / CÙNG người
+  (`signer_norm` = `lower(regexp_replace(btrim(normalize(p_by, NFC)),
+  '\s+', ' ', 'g'))`) đã ký vai khác trên cùng (snapshot, text); ghi 1
+  `approvals` (`object_type 'qr_lot_sign'`, `object_id` lot_code,
+  `content_sha256` = sha256(snapshot_sha || ':' || text_sha), `decision
+  'approved'`, `note` = role) + 1 `qr_signatures` + 1 `agent_action_log`
+  (`qr_lot_sign`); `issue_qr(p_lot, p_code, p_text_sha, p_by) returns text`
+  — raise khi lô không `passed` / `exp_date <= current_date` (giờ VN) / 0
+  nguồn / `verify_plot_logs()` không rỗng / chưa đủ 3 dòng
+  `qr_signatures` với `snapshot_sha256` = snapshot HIỆN TẠI và `text_sha256`
+  = p_text_sha (đủ 3 role khác nhau VÀ 3 `signer_norm` khác nhau) / đã có
+  mã còn hiệu lực; insert `qr_codes` + log `qr_issue` (`object_id` = code);
+  `revoke_qr(p_code, p_by, p_reason)` — mã không có / đã thu hồi → raise;
+  update `revoked_*` + log `qr_revoke`. `docs/roles.sql`: grant EXECUTE 5
+  function ghi + `qr_lot_snapshot_sha` cho `app_human`, comment "KHÔNG grant
+  INSERT approvals/qr_*". `docs/handover/kien-truc.md` §3: 3 dòng bảng mới +
+  "40 bảng public" → "43 bảng public"; `deploy/cloud/README.md`: 3 tên bảng
+  trong backtick vào bảng "Đường đề xuất" + mọi "40 bảng" → "43 bảng" (dây
+  chuyền drift-guard `test_cloud_readme_drift_guard`; các dòng lặp do merge
+  ở đầu README KHÔNG dọn trong version này — ghi someday).
+  - Boundary: `docs/schema.sql` (chỉ append block), `docs/roles.sql` (chỉ
+    append grant), `docs/handover/kien-truc.md` (§3),
+    `deploy/cloud/README.md`, `tests/test_qr_trace.py` (mới)
+  - Gate: `python scripts/apply_schema.py` ×2 exit 0 trên DB riêng, lần 2
+    in 43 bảng; `grep -c "^create table if not exists" docs/schema.sql` =
+    43; `grep -niE "phone|email|address|location|lat|lon|author"` trên
+    block v9.4 chỉ trúng comment giải thích "KHÔNG" (đọc tay, ghi vào
+    evidence); `python -m pytest -q tests/test_handover_docs.py
+    tests/test_db_backup.py::test_cloud_readme_drift_guard` xanh; DB schema
+    tạm (`python -m pytest -q -rs tests/test_qr_trace.py -k "schema or
+    role"`): insert thẳng `qr_signatures`/`qr_codes`/`approvals` dưới `set
+    local role app_human` và `agent_writer` → `InsufficientPrivilege`;
+    `agent_writer` gọi `sign_qr_lot`/`issue_qr` → `InsufficientPrivilege`;
+    UPDATE/DELETE `qr_signatures` (superuser) → raise; DELETE `qr_codes` →
+    raise; UPDATE `qr_codes.lot_code` → raise; UPDATE mã đã thu hồi → raise;
+    `prosecdef` = true + `proconfig` có search_path cho 6 function;
+    `select * from verify_action_log()` rỗng sau mọi case
+  - Evidence: `evidence/v94_qr.log`
+- [x] **W94.2 Ánh xạ lô ↔ nguồn vùng trồng (chỉ nhật ký chain hợp lệ)** —
+  `pipelines/qr_trace.py`: `load_config(path=None)`/`load_signers(path=None)`
+  (raise `QrError(ValueError)`, enumerate biến thể ở phần Cấu hình); CLI
+  `link --lot L --log ID [--media SHA ...] --by NAME` (lô ∉ `pilot_skus` →
+  `[err]` exit 1 trước khi gọi function; gọi `select link_lot_origin(...)`
+  trong `conn.transaction()` + `conn.commit()`; RAISE → `[err] <thông điệp
+  function>` exit 1, 0 dòng) và `unlink --lot L --log ID --by NAME`.
+  - Boundary: `pipelines/qr_trace.py` (mới), `data/qr_config.json` (mới),
+    `data/qr_signers.json` (mới), `tests/test_qr_trace.py`
+  - Gate: `python -m pytest -q -rs tests/test_qr_trace.py -k "link or
+    config"` xanh, 0 skipped, gồm (schema tạm, khoảnh `manual` + nhật ký
+    `manual:garden` qua `agents.garden.add_log` → chain thật): link nhật ký
+    `thu hoạch` đã chain → OK, 1 `agent_action_log` `qr_lot_link`; từ chối
+    từng biến thể: nhật ký `sample:x` (hash null), activity `tưới`, thu
+    hoạch SAU `mfg_date`, khoảnh `sample:%`, lô `failed`, lô không có,
+    media không thuộc khoảnh / sha lạ / 4 ảnh, `--by "  "` (exit 2) và
+    thiếu `--by` (exit 2, `connect` monkeypatch raise → không bị gọi); chuỗi
+    hỏng (superuser `set local session_replication_role = replica` UPDATE
+    `detail` 1 dòng chained bất kỳ) → link raise "chuỗi nhật ký" kể cả với
+    nhật ký khác dòng hỏng; lô đang có mã còn hiệu lực → link/unlink raise;
+    unlink rồi link lại → OK; SKU rượu / SKU ngoài `pilot_skus` → exit 1
+    trước connect; config biến thể thiếu / rỗng / hỏng / `{}` / chỉ `_doc`
+    / `region_text` có chữ số / chứa "Ngọc Linh" / `pilot_skus` có rượu /
+    tên ký trùng ở 2 vai trò → `QrError`; file repo thật: `status` chứa
+    "GIẢ ĐỊNH", `plan_b_deadline == "2026-11-27"`, 3 vai trò đều `[]`.
+    Thực chạy DB riêng: `python -m pipelines.qr_trace link --lot
+    MAU-MO120-260915 --log 1 --by "test"` → exit 1 `[err]` (nhật ký mẫu
+    không chain / không phải thu hoạch), `count(*) lot_origins` = 0
+  - Evidence: `evidence/v94_qr.log`
+- [x] **W94.3 Lời văn trang + guardrail kênh `qr` + 3 chữ ký** —
+  `data/guardrail_rules.json`: `channel_alias` thêm `"qr": "web"` (trang
+  truy xuất = trang web công khai → luật kênh web; 1 key, không đổi
+  `channels` — `test_guardrail_v2` assert `channels == CHANNELS` giữ
+  nguyên). `qr_trace.py` hàm thuần: `page_text(lot, origins, product,
+  config) -> str` tất định — tên SKU golden, "Lô: …", "Ngày sản xuất:
+  dd/mm/yyyy", "Hạn sử dụng: dd/mm/yyyy", "Vùng nguyên liệu: <region_text>",
+  "Thu hoạch: tháng mm/yyyy" (tháng khác nhau, sort), số ảnh tư liệu; dòng
+  `[MẪU] dữ liệu mẫu — không dùng in tem` khi `source='sample'`; câu khuyến
+  cáo `guardrail` canonical KHI `category == "tpbvsk"`; KHÔNG plot_id,
+  `location`, detail/author nhật ký, tên người ký, giá, công dụng.
+  `text_sha(text)` = sha256 UTF-8. `check_page(text, sku) -> list[str]` =
+  `check_publish(text, channel="qr", content_type="post", sku=sku,
+  is_ai=False)` không ok → mã vi phạm; cộng probe nội bộ: `_mask_pii(text)
+  != text` → "pii"; regex tọa độ thập phân `\d{1,3}[.,]\d{4,}` → "toa_do".
+  CLI `preview --lot L` (chỉ đọc: in lời văn + text_sha + snapshot_sha +
+  kết quả guardrail + VAI TRÒ đã ký/còn thiếu — không in tên người ký);
+  `sign --lot L --role gd_san_xuat|gd_vung_trong|phap_che_qa --by NAME
+  [--note]`: `--by` phải thuộc allowlist vai đó trong `qr_signers.json`
+  (chuẩn hóa NFC+casefold) — không thì exit 1 TRƯỚC connect; render lời
+  văn HIỆN TẠI → `check_page` fail → exit 1 KHÔNG ký; OK → `select
+  sign_qr_lot(...)` + commit.
+  - Boundary: `pipelines/qr_trace.py`, `data/guardrail_rules.json` (chỉ
+    `channel_alias`), `tests/test_qr_trace.py`
+  - Gate: `python -m pytest -q -rs tests/test_qr_trace.py -k "page or
+    sign or guardrail"` + `python -m pytest -q tests/test_guardrail_v2.py`
+    xanh, gồm: `check_publish("x", channel="qr")` không còn `config`; trang
+    lô mật ong mẫu → `check_page == []`; TPBVSK (fixture config
+    `pilot_skus` có `savina-12v`) → trang chứa câu khuyến cáo canonical và
+    pass; monkeypatch bỏ câu khuyến cáo → `thieu_khuyen_cao`; `page_text`
+    gọi 2 lần → bằng nhau; fixture cài `plots.location = "Trà My 15.0123,
+    107.9876"`, detail nhật ký "gọi 0905123456 a@b.vn", author "Nguyễn Văn
+    Vườn", media author "Lê Thị Ảnh" → trang không chứa chuỗi nào trong
+    số đó, không chứa plot_id, `_mask_pii(page) == page`, regex tọa độ 0
+    match, 0 từ trong `data/banned_words.txt`, không "ngọc linh"; ký: vai
+    đủ 3 người khác nhau → 3 dòng `qr_signatures` + 3 `approvals`
+    (`qr_lot_sign`) + 3 log; CÙNG người ký vai thứ 2 (khác hoa/thường +
+    khoảng trắng thừa, dạng NFD) → raise, không thêm dòng; ký trùng vai →
+    raise; người ngoài allowlist → exit 1 không connect; vai trò allowlist
+    rỗng (file repo thật) → exit 1 "external-dep"; lô `pending` → raise;
+    guardrail fail (monkeypatch `page_text` chèn "chữa bệnh") → exit 1, 0
+    dòng `qr_signatures`; đổi ánh xạ (unlink/link) hoặc đổi `region_text`
+    sau 2 chữ ký → `preview` báo thiếu 3 vai (chữ ký cũ không tính)
+  - Evidence: `evidence/v94_qr.log`
+- [x] **W94.4 Phát hành + thu hồi mã (không suy ra được lot_code)** — CLI
+  `issue --lot L --by NAME`: render lời văn → `check_page` fail → exit 1
+  KHÔNG phát hành; `code = secrets.token_urlsafe(16)` (22 ký tự, 128 bit,
+  KHÔNG dẫn xuất từ lot_code/hash/thời gian); `select issue_qr(lot, code,
+  text_sha, by)` + commit; in URL `<public_base_url>/<code>/` hoặc
+  "chưa có domain (external-dep) — đường dẫn `<code>/`" + "ảnh QR: nhà in
+  tạo từ URL (lib QR không có — external-dep)". `revoke --code C --by NAME
+  [--reason]` → `revoke_qr` + commit. `qr_payload()` của v9.2 dùng làm cổng
+  Python (None → exit 1 "lô chưa kiểm nhập passed") trước khi gọi function.
+  - Boundary: `pipelines/qr_trace.py`, `tests/test_qr_trace.py`
+  - Gate: `python -m pytest -q -rs tests/test_qr_trace.py -k "issue or
+    revoke or code"` xanh, gồm (schema tạm): thiếu 1 chữ ký (2/3) → raise,
+    0 `qr_codes`; 3 chữ ký nhưng 2 cùng người — superuser insert thẳng
+    dòng `qr_signatures` có `signer` trùng người (khác hoa/thường) nhưng
+    `signer_norm` GIẢ khác (unique không chặn được) → `issue_qr` tự chuẩn
+    hóa lại từ `signer`, KHÔNG tin cột `signer_norm` → raise; lô `pending`/`failed` → từ chối; lô 0 nguồn →
+    từ chối; chuỗi plot_logs hỏng sau khi ký → `issue` raise; `exp_date`
+    quá khứ → raise; trang fail `check_page` → exit 1, 0 `qr_codes`; đủ
+    điều kiện → 1 mã, `grep` lot_code không nằm trong code, code khớp
+    `^[A-Za-z0-9_-]{22}$`; issue lần 2 khi còn mã hiệu lực → raise; revoke
+    rồi issue lại (ký lại không cần vì snapshot/text không đổi) → mã MỚI ≠
+    mã cũ; 100 lần `new_code()` không trùng và không chứa lot_code; `grep -nE
+    "token_urlsafe" pipelines/qr_trace.py` trúng và `grep -nE
+    "sha256\(.*lot|lot_code.*hexdigest" pipelines/qr_trace.py` không trúng
+    dòng sinh mã; revoke thiếu `--by` → exit 2, mã vẫn hiệu lực; revoke 2
+    lần → exit 1; `verify_action_log()` rỗng. Thực chạy DB riêng: `issue
+    --lot MAU-MO120-260915 --by "test"` → exit 1 (lô chưa passed), 0 dòng
+    `qr_codes`
+  - Evidence: `evidence/v94_qr.log`
+- [x] **W94.5 Trang truy xuất tĩnh + ảnh đã gỡ EXIF** — CLI `site [--out
+  DIR]` (mặc định `data/qr_site/`, thêm `data/qr_site/` vào `.gitignore`):
+  với MỌI dòng `qr_codes` → `DIR/<code>/index.html` (ghi tmp + `os.replace`);
+  mã còn hiệu lực: render lại lời văn, `text_sha` PHẢI bằng
+  `qr_codes.text_sha256` và snapshot hiện tại bằng `snapshot_sha256` —
+  lệch → KHÔNG ghi trang đó, `[err] nội dung đổi sau khi ký — cần thu hồi +
+  ký lại`, exit 1; `check_page` fail → không ghi, exit 1; mã đã thu hồi →
+  trang chỉ có "Mã truy xuất này đã thu hồi" + ngày thu hồi (không lô/ảnh).
+  HTML: `html.escape` mọi giá trị, `<meta name="robots" content="noindex">`,
+  CSS inline, 0 `<script>`, 0 URL ngoài; KHÔNG `DIR/index.html` liệt kê mã
+  (chống dò mã). Ảnh: copy `GARDEN_MEDIA_DIR/<sha[:2]>/<sha>.<ext>` →
+  `DIR/media/<sha>.<ext>` chỉ sau khi sha256 bytes == sha trong DB và bytes
+  không chứa `b"Exif\x00\x00"`/`b"GPS"`/`b"ns.adobe.com/xap"`; thiếu env/file
+  → không ghi trang đó, exit 1 (ảnh nằm trong bản đã ký — không phát hành
+  thiếu).
+  - Boundary: `pipelines/qr_trace.py`, `.gitignore` (1 dòng),
+    `tests/test_qr_trace.py`
+  - Gate: `python -m pytest -q -rs tests/test_qr_trace.py -k "site or
+    html or media"` xanh, gồm (schema tạm + `tmp_path`, ảnh thật qua
+    `scripts/garden_media.strip_image`/`store` từ JPEG có GPS): trang có tên
+    SKU, lô, NSX, HSD, `region_text`; grep trang + mọi file trong `DIR`
+    KHÔNG chứa: regex tọa độ, SĐT, email (`_mask_pii(html) == html` sau
+    bỏ thẻ), tên 3 người ký, author nhật ký/ảnh, `location`, plot_id,
+    detail nhật ký; ảnh copy không có EXIF/GPS (`Image.open().getexif()`
+    rỗng); file ảnh bị tráo (sha lệch) → exit 1, trang không ghi; đổi
+    `region_text` sau phát hành → `site` exit 1 và trang cũ không bị ghi đè;
+    revoke có `--by` → chạy lại `site` → trang chứa "đã thu hồi", không còn
+    lô/HSD/ảnh; `DIR/index.html` không tồn tại; 0 `<script`, 0 `http`
+    trong HTML; `git check-ignore data/qr_site/x/index.html` exit 0. Thực
+    chạy DB riêng: `site --out <scratchpad>/qr_site` exit 0, 0 trang
+  - Evidence: `evidence/v94_qr.log`
+- [x] **W94.6 Phương án B (mốc 27/11) — bản tin đề xuất, tem không QR** —
+  hàm thuần `plan_b_report(lots, signed_roles, today, config, golden) ->
+  str` tất định: với mỗi lô SKU thuộc `pilot_skus` chưa có mã còn hiệu lực
+  — điều kiện còn thiếu (kiểm nhập passed / nguồn chain / vai trò chưa ký
+  trên bản hiện tại — CHỈ tên vai, không tên người); `today <
+  plan_b_deadline` → "còn N ngày tới mốc dd/mm/yyyy"; `today >=` mốc →
+  "ĐỀ XUẤT phương án B — GĐ vùng trồng quyết, báo Sales + Hạ tầng; agent
+  KHÔNG tự đổi tem" + với lô đã `passed`: lời văn tem KHÔNG QR (tên SKU, Lô,
+  NSX, HSD, + câu khuyến cáo nếu TPBVSK, `[MẪU]` nếu mẫu) qua `check_page`;
+  lô chưa passed → "chưa đủ điều kiện in tem"; lô đã phát hành → mục "đã
+  phát hành". CLI `planb [--date YYYY-MM-DD]` (mặc định ngày VN): in stdout,
+  không ghi DB, không gửi.
+  - Boundary: `pipelines/qr_trace.py`, `tests/test_qr_trace.py`
+  - Gate: `python -m pytest -q -rs tests/test_qr_trace.py -k planb` xanh,
+    gồm: `today` 2026-11-26 → "còn 1 ngày", không có lời văn tem; 2026-11-27
+    và 2026-11-28 → "ĐỀ XUẤT phương án B" + lời văn tem không chứa "http"/
+    code; lô đủ 3 chữ ký + đã phát hành → không vào đề xuất; gọi 2 lần →
+    chuỗi bằng nhau; output không chứa tên người ký fixture; DB schema tạm:
+    `planb` không đổi `count(*)` mọi bảng v9.4 + `approvals`; `grep -n
+    "datetime.now\|date.today\|time.sleep" tests/test_qr_trace.py` rỗng.
+    Thực chạy DB riêng: `python -m pipelines.qr_trace planb --date
+    2026-11-27` exit 0, có lô `MAU-MO120-260915` + "[MẪU]" + "chưa đủ điều
+    kiện in tem", không `UnicodeEncodeError`
+  - Evidence: `evidence/v94_qr.log`
+- [x] **W94.7 Docs vận hành** — `docs/handover/sop.md` mục mới "5f. Lô + QR
+  truy xuất (v9.4)": thứ tự `link` (GĐ SX) → `preview` → `sign` ×3 vai
+  (GĐ SX, GĐ vùng trồng, Pháp chế/QA — 3 người khác nhau) → `issue` → `site`
+  → đưa `data/qr_site/` lên hosting (Hạ tầng, external-dep) → `revoke` khi
+  thu hồi; "đổi ánh xạ/lời văn sau khi ký = ký lại"; `planb` từ 20/11 mỗi
+  ngày; nhãn GIẢ ĐỊNH/MẪU; "không sinh ảnh QR — nhà in tạo từ URL".
+  `docs/handover/playbook-vuon.md`: GĐ vùng trồng ký vai `gd_vung_trong`,
+  chọn ảnh `--media` (không ảnh có người), quyết phương án B.
+  `docs/handover/kien-truc.md`: §2 module `pipelines/qr_trace.py`, §6 thêm
+  dòng human-gate (link GĐ SX; 3 chữ ký; issue/revoke; phương án B do GĐ
+  quyết). `AGENTS.md` bảng Commands thêm 1 dòng "Lô + QR truy xuất".
+  - Boundary: `docs/handover/sop.md`, `docs/handover/playbook-vuon.md`,
+    `docs/handover/kien-truc.md`, `AGENTS.md` (chỉ bảng Commands)
+  - Gate: `grep -n "pipelines.qr_trace"` trúng cả 4 file; mọi subcommand
+    nhắc trong sop.md (`link`, `unlink`, `preview`, `sign`, `issue`,
+    `revoke`, `site`, `planb`) có trong `python -m pipelines.qr_trace
+    --help`; spot-check 2 lệnh trong sop.md (`preview`, `planb`) ra exit như
+    mô tả; `python -m pytest -q tests/test_handover_docs.py` xanh
+  - Evidence: `evidence/v94_docs.log`
+- [x] **W94.8 Gate chung** — targeted `python -m pytest -q -rs
+  tests/test_qr_trace.py tests/test_production.py tests/test_garden_chain.py
+  tests/test_guardrail_v2.py tests/test_handover_docs.py
+  tests/test_db_backup.py::test_cloud_readme_drift_guard
+  tests/test_connect_timeout_guard.py tests/test_auth_approval.py` xanh ×3
+  liên tiếp (tuần tự, đọc output tới khi process exit mỗi lần, 0 skipped
+  trong `test_qr_trace.py`); full `python -m pytest -q` xanh ĐÚNG 1 lần
+  (baseline ~1790 + test mới, 0 failed; `test_zz_no_dr_container_left` đỏ
+  do container drill worktree song song → ghi rõ + chạy lại riêng
+  `tests/test_dr_drill.py`, precedent v9.2/v9.3); `ruff check .` clean;
+  `python -m py_compile pipelines/qr_trace.py` exit 0; `python
+  scripts/apply_schema.py` ×2 exit 0 (43 bảng); `git diff --check` sạch;
+  `git status --short` chỉ file trong Boundary các mục trên + evidence (không
+  `data/qr_site/`, không ảnh lạ; `lv2-market-top.png` nếu có KHÔNG stage);
+  trên DB riêng `select count(*)` của `lot_origins`, `qr_signatures`,
+  `qr_codes` = 0 và `approvals where object_type = 'qr_lot_sign'` = 0 (không
+  giả người ký).
+  - Boundary: không file mới ngoài các mục trên
+  - Gate: như trên; evidence `.log` thêm bằng `git add -f`
+  - Evidence: `evidence/v94_pytest.log`
+
+Kết quả (worker vòng sửa — code + test + evidence, 2026-10-12):
+- W94.1: block "v9.4 lô + QR truy xuất" cuối `docs/schema.sql` (3 bảng + guard
+  `qr_codes_guard` + append-only `qr_signatures` + 6 function SECURITY DEFINER
+  + helper `qr_signer_norm`), grant `docs/roles.sql`; 43 bảng (`apply_schema`
+  ×2). Test: `test_schema_role_privileges`, `test_tables_append_only_guards`.
+  Dây chuyền: FK mới (`lot_origins`→`plot_logs`, `qr_signatures`→`approvals`)
+  làm `truncate plot_logs`/`truncate approvals` bị FK chặn TRƯỚC trigger
+  (`FeatureNotSupported` thay `RaiseException`) → sửa 2 test cũ
+  (`test_guard_blocks_update_delete_truncate_on_chained`,
+  `test_append_only_triggers_block_superuser`): TRUNCATE thường vẫn phải
+  lỗi + thêm biến thể `cascade` để vẫn chạm trigger.
+- W94.2: `test_link_ok_and_refusals` (gồm biên giờ VN 15/09 00:30 nhận,
+  16/09 00:30 từ chối), `test_link_media_variants`,
+  `test_link_refused_when_chain_broken`, `test_config_variants_rejected`
+  (21), `test_signers_variants_rejected` (11), `test_config_repo_file`,
+  `test_signers_repo_file_empty`.
+- W94.3: `test_guardrail_qr_channel_alias`, `test_page_text_deterministic_
+  and_clean`, `test_page_tpbvsk_canonical`, `test_check_page_flags`,
+  `test_sign_three_people_and_refusals`, `test_sign_refused_pending_and_
+  guardrail`, `test_signatures_invalidated_by_change[relink|region]`,
+  `test_sign_allowlist_before_connect`.
+- W94.4: `test_issue_gates_and_revoke`, `test_issue_refuses_forged_signer_norm`,
+  `test_issue_refusals[pending|failed|no_origin|chain_broken|expired|
+  guardrail]`, `test_new_code_random_not_derived`, `test_cli_usage_exit2`.
+- W94.5: `test_site_pages_media_revoke`, `test_html_render_static_escaped`,
+  `test_has_metadata_parses_segments`,
+  `test_has_metadata_catches_exif_hidden_after_sos_or_eoi` (vòng sửa
+  nghiệm thu: thêm lại marker `Exif\0\0`/`ns.adobe.com/xap` toàn file +
+  đuôi thừa sau EOI/IEND — mutation 3/3 killed); `.gitignore`
+  `data/qr_site/` (`git check-ignore` exit 0 — evidence).
+- Vòng sửa nghiệm thu: `test_append_only_triggers_block_superuser` assert
+  message `<bảng> append-only` cho `truncate ... cascade` (approvals) và
+  `truncate agent_action_log` (RaiseException) — drop trigger
+  `approvals_no_truncate` thì message là `qr_signatures ...` → test fail.
+  Evidence cuối `evidence/v94_pytest.log`: full 1878 passed, 3 skipped; ruff OK.
+- W94.6: `test_planb_before_deadline`, `test_planb_on_after_deadline`,
+  `test_planb_db_read_only`.
+- W94.7: `test_docs_mention_cli` + `evidence/v94_docs.log`.
+- W94.8: targeted ×3 = 330 passed ×3; full `python -m pytest` 1 lần =
+  1877 passed, 3 skipped (DR drill thiếu docker image — môi trường), 0
+  skipped trong `test_qr_trace.py` (85 test); `ruff check .` sạch; DB
+  riêng: `lot_origins`/`qr_signatures`/`qr_codes`/`approvals qr_lot_sign`
+  = 0 (`evidence/v94_qr.log`, `evidence/v94_pytest.log` — cần `git add -f`).
+- Mutation thủ công (không commit): bỏ đếm 3 NGƯỜI trong `issue_qr` →
+  `test_issue_refuses_forged_signer_norm` đỏ; tắt kiểm "1 người 2 vai" trong
+  `sign_qr_lot` → `test_sign_three_people_and_refusals` đỏ; tắt
+  `verify_plot_logs()` trong link/issue → 2 test chain đỏ.
+
+Lệch so với spec (cố ý, kèm lý do):
+- Kiểm ảnh trước khi copy lên trang: duyệt marker JPEG (tới SOS) / chunk PNG
+  (tới IEND), chặn APP1/APP13/COM/eXIf/tEXt/zTXt/iTXt — KHÔNG dò chuỗi byte
+  `b"GPS"` trên cả file: dữ liệu nén entropy cao, ảnh vài MB có ~10% xác
+  suất chứa 3 byte "GPS" ngẫu nhiên → chặn nhầm. Test vẫn assert ảnh copy
+  `getexif()` rỗng + không chứa `Exif\x00\x00`/`ns.adobe.com/xap`.
+- Luật "1 người không ký 2 vai" áp trên CẢ lô (mọi bản chụp), chặt hơn spec
+  (chỉ cùng bản) — đúng câu gốc final_plans "trên cùng một lô".
+- `issue_qr` còn chặn mã chứa `lot_code` (phòng client tự đặt mã lộ lô).
+- `site` gỡ ảnh trong `DIR/media/` không còn trang nào dùng (chỉ khi lần
+  chạy 0 lỗi) — để mã đã thu hồi không còn ảnh truy cập được.
+- Thực chạy DB riêng: nạp lô MẪU `data/sample_lots.json --source sample`
+  (pending, không phải quyết định người) để `link`/`issue`/`planb` có lô thật
+  để từ chối; `link --log 7` (nhật ký mẫu có thật, id 1 không tồn tại).
+
+Someday (ghi lại, không làm): dọn các dòng lặp do merge ở đầu
+`deploy/cloud/README.md`; `qr_signer_norm` dùng `lower()` theo locale DB —
+DB cloud ctype `C` thì `lower()` chỉ ASCII ("TRẦN" ≠ "trần") → 1 người
+đổi hoa/thường chữ có dấu có thể lọt kiểm "3 người khác nhau" ở DB (allowlist
+Python vẫn casefold + cấm 1 người ở 2 vai); khi lên cloud kiểm datctype hoặc
+dùng collation ICU.
+
+External-dep (để `[ ]`, không treo version, KHÔNG giả lập):
+- [ ] 3 danh tính SSO thật (GĐ SX, GĐ vùng trồng, Pháp chế/QA) điền
+  `data/qr_signers.json` / thay `--by` tự khai + chữ ký thật trên lô thí
+  điểm — external-dep
+- [ ] Domain công khai + hosting tĩnh cho `data/qr_site/` (`public_base_url`)
+  — external-dep (Hạ tầng đưa live)
+- [ ] Ảnh QR + nhà in tem 20 tem thử (lib `qrcode`/`segno` không có;
+  không cài global) — external-dep
+- [ ] Dữ liệu lô + nhật ký thu hoạch mật ong THẬT (đã chain) thay lô MẪU
+  — external-dep
+- [ ] Pháp chế: trang truy xuất có là quảng cáo không, lời văn trang,
+  `region_text`, alias kênh `qr` → `web`; ảnh có người cần giấy đồng ý —
+  external-dep
+- [ ] GĐ vùng trồng quyết phương án B ngày 27/11, báo Sales + Hạ tầng —
+  external-dep
+
+v9.4-qr-truy-xuat đóng 2026-10-12 (nghiệm thu đợt 1 FIX 8 → 2 vòng sửa → PASS;
+build lần chạy lại đứt ECONNRESET ở cuối, nghiệm thu + sửa chạy trên code đã
+ghi; coordinator chạy lại targeted 313 + ruff; `data/qr_site/` gitignored). 43
+bảng trên nhánh (+lot_origins, qr_signatures, qr_codes). Tem QR chỉ phát hành
+khi lô passed + nguồn vùng trồng chain hợp lệ + đủ 3 chữ ký 3 người khác vai trò
+(chữ ký phủ cả snapshot dữ liệu lẫn text trang); mã = token_urlsafe(16); trang
+tĩnh không tọa độ/SĐT/email/tên; qua check_publish kênh 'qr' (alias web).
+Chưa có lib qrcode/segno → in URL, nhà in làm QR. NIT someday: test 'expired'
+phụ thuộc ngày thật; `site` OSError chưa bắt; `region_text` in '(mức tỉnh)' ra
+trang công khai; giới hạn pilot_skus chỉ ở Python. External-dep: SSO + chữ ký
+thật; domain/hosting; nhà in; lô/thu hoạch mật ong thật; Pháp chế duyệt trang;
+quyết định phương án B 27/11.
+
 ## Checklist v4.0-director-framework
 
 Khán giả/mục đích: M31 (worktree `D:\code\samsam-w40`) — làm nốt WP03
