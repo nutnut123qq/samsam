@@ -243,6 +243,13 @@ def test_new_code_random_not_derived():
     assert "lot" not in gen.split('"""')[-1]
 
 
+def test_new_code_never_leading_dash(monkeypatch):
+    """Mã '-xxx' làm argparse `revoke --code -xxx` lỗi (flake 1/64)."""
+    seq = iter(["-" + "a" * 21, "b" * 22])
+    monkeypatch.setattr(q.secrets, "token_urlsafe", lambda n: next(seq))
+    assert q.new_code() == "b" * 22
+
+
 def test_html_render_static_escaped():
     t = "Tiêu đề\nSP <script>alert(1)</script>\nLô: X & Y\n"
     h = q.page_html(t, [("b" * 64, "jpg"), ("../x", "jpg"), ("c" * 64, "exe")])

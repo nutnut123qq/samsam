@@ -272,8 +272,11 @@ def check_page(text: str, sku: str) -> list[str]:
 
 
 def new_code() -> str:
-    """Mã công khai: 128 bit ngẫu nhiên — không dẫn xuất từ lô/thời gian."""
-    return secrets.token_urlsafe(16)
+    """Mã công khai: 128 bit ngẫu nhiên — không dẫn xuất từ lô/thời gian.
+    Không bắt đầu bằng '-' (argparse `revoke --code -x` đọc thành option)."""
+    while (code := secrets.token_urlsafe(16)).startswith("-"):
+        pass
+    return code
 
 
 _CSS = ("body{font-family:system-ui,sans-serif;max-width:40rem;margin:0 auto;"
