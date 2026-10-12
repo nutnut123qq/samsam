@@ -2796,3 +2796,72 @@ create table if not exists opex_entries (
   unique (file_sha256, row_no)
 );
 create index if not exists opex_entries_month_idx on opex_entries (month);
+
+-- ============================================================================
+-- v8.3 phòng Dự án (WP11 DA) — 3 bảng, KHÔNG PII, KHÔNG alter bảng cũ.
+-- * `programs` — DA-03 radar chương trình: `agents/da_radar.py --scan` ghi
+--   (insert-only, `on conflict (intel_item_id) do nothing`) từ `intel_items`
+--   chủ đề `chuong_trinh` (thu bằng collector v7.0 — không collector thứ 2).
+--   Đọc: `da_radar --list` (nhắc hạn T-7/T-2), `agents/da_hoso.py` (DA-04).
+-- * `org_prospects` — DA-05 tổ chức mua quà Tết: `agents/da_b2b.py --import`
+--   ghi từ CSV NHẬP TAY (chỉ thông tin TỔ CHỨC công khai — KHÔNG cột SĐT/
+--   email/tên người/địa chỉ/liên hệ). Chỉ đổi `status`/`batch_queue_id`/
+--   `handed_at` qua `--submit-batch`/`--handover` (lô phải được NGƯỜI duyệt
+--   trong `approval_queue` và khớp sha256). Hệ thống KHÔNG tự liên hệ.
+-- * `project_milestones` — DA-01 sổ mốc: `agents/da_pmo.py --seed` từ
+--   `data/projects/milestones.json` (`on conflict (code) do nothing` — sửa
+--   tay không bị đè); đổi hạn chỉ qua mục `milestone_change` đã duyệt.
+--   `owner_role` = vai trò, không tên người.
+-- Quyền: `docs/roles.sql` KHÔNG grant 3 bảng này (agent_writer/app_human bị
+-- từ chối mặc định) — CLI chạy DSN chủ sở hữu; grant hẹp = someday.
+-- ============================================================================
+
+create table if not exists programs (
+  id bigint generated always as identity primary key,
+  intel_item_id bigint not null unique references intel_items(id),
+  title text not null check (char_length(title) between 1 and 300),
+  organizer text not null default 'chưa công bố'
+    check (char_length(organizer) <= 200),
+  deadline date,
+  deadline_text text check (char_length(deadline_text) <= 120),
+  url text not null check (url ~ '^https?://'),
+  source text not null,
+  tier text not null check (tier in ('A', 'B')),
+  flags text[] not null default '{}',
+  first_seen timestamptz not null default now()
+);
+
+create table if not exists org_prospects (
+  id bigint generated always as identity primary key,
+  dedup_key text not null unique check (dedup_key ~ '^b2b:[0-9a-f]{64}$'),
+  org_name text not null check (char_length(btrim(org_name)) between 2 and 200),
+  org_type text not null check (org_type in ('doanh_nghiep', 'khach_san',
+    'su_kien_hoi_nghi', 'hiep_hoi', 'co_quan', 'khac')),
+  region text not null,
+  website text check (website ~ '^https?://'),
+  source_url text not null check (source_url ~ '^https?://'),
+  fit_reason text check (char_length(fit_reason) <= 300),
+  source text not null,
+  created_by text not null check (btrim(created_by) <> ''),
+  created_at timestamptz not null default now(),
+  status text not null default 'moi'
+    check (status in ('moi', 'cho_duyet', 'chuyen_sales')),
+  batch_queue_id bigint,
+  handed_at timestamptz
+);
+
+create table if not exists project_milestones (
+  code text primary key check (code ~ '^[A-Z][A-Z0-9_.-]{1,31}$'),
+  title text not null,
+  wp text,
+  owner_role text not null,
+  due_date date not null,
+  gate text not null check (btrim(gate) <> ''),
+  evidence text,
+  status text not null default 'chua_bat_dau'
+    check (status in ('chua_bat_dau', 'dang_lam', 'xong', 'tam_dung')),
+  source text not null,
+  updated_by text,
+  updated_at timestamptz default now(),
+  check (status <> 'xong' or btrim(coalesce(evidence, '')) <> '')
+);

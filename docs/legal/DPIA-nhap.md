@@ -506,6 +506,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Nghĩa vụ kế toán + lợi ích hợp pháp quản trị nội bộ — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Giá vốn thật + người lập/duyệt thật = external-dep (bảng `cogs_versions` trên DB thật để trống); Hóa đơn cloud/SaaS thật (thay `opex_MAU.csv`) = external-dep; Ngưỡng biên, hệ số ngân sách, trần chi phí, ngưỡng X, tỷ giá, chi cố định, độ trễ tiền sàn, số dư đầu kỳ (`data/fpa_config.json`) — GĐ tài chính chốt; TGĐ ký khoản vượt X + danh sách người/vai trò thật (`data/users.json`); Doanh thu đại lý/B2B từ MISA cho P&L kênh offline |
 
+### DF-28 — Hồ sơ tham gia chương trình — viết lại thư đăng ký bằng LLM (v8.3 DA-04, tùy chọn)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-28 |
+| Module (code) | `agents/da_hoso.py` |
+| Mục đích | Soạn NHÁP thư đăng ký tham gia hội chợ/OCOP/xúc tiến cho GĐ dự án duyệt (DA-04) |
+| Dữ liệu | Tên/đơn vị tổ chức/hạn chương trình công khai (từ `programs`, gốc tin RSS tầng A/B) + tên SKU được phép (food, TPBVSK đã XNQC) — KHÔNG PII, KHÔNG file nội bộ (checklist/câu hỏi Pháp chế) |
+| Lớp | Xanh |
+| Chủ thể | Không có dữ liệu cá nhân — thông tin chương trình công khai và catalog |
+| Nơi lưu | Bản nộp (payload) trong `approval_queue` khối `projects` (`program_application`, sha256 bất biến); nháp + file nội bộ ở `data/reports/` (gitignored) |
+| Thời hạn lưu | Theo `approval_queue` (hồ sơ duyệt); file nháp `data/reports/` theo dọn báo cáo |
+| Bên nhận | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `projects`, cap tháng riêng) — CHỈ khi chạy `--llm` (mặc định TẮT) |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | Mặc định TẮT — chỉ khi `--llm`; Prompt chỉ dữ kiện công khai (không gửi checklist/câu hỏi Pháp chế); Thư LLM qua CÙNG cổng `check_publish` + lọc rượu + SKU bị loại; trượt → thư template; Agent không tự nộp/gửi — bản nộp phải khớp sha256 bản người duyệt (`--verify-submit`) |
+| Căn cứ xử lý | Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | (không) |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -539,6 +557,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-25 | Đối soát quyết toán sàn — ACC-Recon (v9.0) | Đỏ | cao | không | 2 |
 | DF-26 | Rà bài đăng kênh sở hữu từ file xuất tay (v4.3 PC-A4) | Xanh | thấp | không | 2 |
 | DF-27 | FP&A tài chính–kế hoạch — giá vốn, P&L, ngân sách ads, chi phí vận hành, dòng tiền (v9.1) | Vàng | trung bình | không | 5 |
+| DF-28 | Hồ sơ tham gia chương trình — viết lại thư đăng ký bằng LLM (v8.3 DA-04, tùy chọn) | Xanh | thấp | có | 0 |
 
 ## 4. Tổng hợp GAP
 

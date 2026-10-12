@@ -674,6 +674,29 @@
         "TGĐ ký khoản vượt X + danh sách người/vai trò thật (`data/users.json`)",
         "Doanh thu đại lý/B2B từ MISA cho P&L kênh offline"
       ]
+    },
+    {
+      "id": "DF-28",
+      "name": "Hồ sơ tham gia chương trình — viết lại thư đăng ký bằng LLM (v8.3 DA-04, tùy chọn)",
+      "modules": [
+        "agents/da_hoso.py"
+      ],
+      "data": "Tên/đơn vị tổ chức/hạn chương trình công khai (từ `programs`, gốc tin RSS tầng A/B) + tên SKU được phép (food, TPBVSK đã XNQC) — KHÔNG PII, KHÔNG file nội bộ (checklist/câu hỏi Pháp chế)",
+      "class": "xanh",
+      "subjects": "Không có dữ liệu cá nhân — thông tin chương trình công khai và catalog",
+      "purpose": "Soạn NHÁP thư đăng ký tham gia hội chợ/OCOP/xúc tiến cho GĐ dự án duyệt (DA-04)",
+      "storage": "Bản nộp (payload) trong `approval_queue` khối `projects` (`program_application`, sha256 bất biến); nháp + file nội bộ ở `data/reports/` (gitignored)",
+      "retention": "Theo `approval_queue` (hồ sơ duyệt); file nháp `data/reports/` theo dọn báo cáo",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider qua gateway (agent `projects`, cap tháng riêng) — CHỈ khi chạy `--llm` (mặc định TẮT)",
+      "cross_border": true,
+      "safeguards": [
+        "Mặc định TẮT — chỉ khi `--llm`",
+        "Prompt chỉ dữ kiện công khai (không gửi checklist/câu hỏi Pháp chế)",
+        "Thư LLM qua CÙNG cổng `check_publish` + lọc rượu + SKU bị loại; trượt → thư template",
+        "Agent không tự nộp/gửi — bản nộp phải khớp sha256 bản người duyệt (`--verify-submit`)"
+      ],
+      "legal_basis": "Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": []
     }
   ]
 }

@@ -49,7 +49,10 @@ SOP_COMMANDS = ("streamlit run", "apply_schema", "lead_store",
                 "pipelines.director", "pipelines.red_alert", "crawler.intel",
                 "pipelines.cockpit", "agents.ceo_report",
                 "ingest.intel_import", "intel_weekly",
-                "pipelines.content --listing", "agents.sales_director")
+                "pipelines.content --listing", "agents.sales_director",
+                # v8.3 phòng Dự án (WP11 DA)
+                "agents.da_radar", "agents.da_hoso", "agents.da_b2b",
+                "agents.da_pmo", "agents.da_cr")
 
 
 def _doc(name: str) -> str:

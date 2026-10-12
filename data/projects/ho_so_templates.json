@@ -1,0 +1,42 @@
+{
+  "_doc": "Template hồ sơ tham gia chương trình (DA-04, agents/da_hoso.py, v8.3) — BẢN DEV SOẠN, chờ GĐ dự án + Pháp chế chốt. company_intro.text CHỈ thông tin doanh nghiệp công khai, KHÔNG nêu 'Ngọc Linh' (guardrail ngoc_linh_chua_xac_nhan chặn tới khi Pháp chế xác nhận), KHÔNG công dụng, KHÔNG số liệu chưa nguồn. letter: placeholder {program_title} {organizer} {deadline} {products} (thay 1 lượt, giá trị không bị mở rộng lại). checklist.owner ∈ du_an|phap_che|tai_chinh|san_xuat — checklist là file NỘI BỘ, không vào hàng duyệt.",
+  "company_intro": {
+    "text": "Công ty TNHH Sâm Sâm là doanh nghiệp tại Đà Nẵng (Quảng Nam cũ), sản xuất và phân phối sản phẩm từ sâm và mật ong; có khu sản xuất tại Khu Công nghiệp Tam Thăng.",
+    "source_url": "http://samsam.net.vn/vi/about/ve-chung-toi.html"
+  },
+  "templates": {
+    "hoi_cho": {
+      "name": "Hội chợ / triển lãm thương mại",
+      "checklist": [
+        {"id": "dk_kinh_doanh", "item": "Bản sao giấy chứng nhận đăng ký doanh nghiệp", "owner": "phap_che", "required": true},
+        {"id": "cong_bo_sp", "item": "Bản tự công bố / giấy tiếp nhận của từng sản phẩm trưng bày", "owner": "phap_che", "required": true},
+        {"id": "don_dang_ky", "item": "Đơn đăng ký gian hàng theo mẫu ban tổ chức (GĐ dự án ký)", "owner": "du_an", "required": true},
+        {"id": "phi_gian_hang", "item": "Dự toán phí gian hàng + chi phí vận chuyển, lưu trú", "owner": "tai_chinh", "required": true},
+        {"id": "hang_trung_bay", "item": "Danh sách hàng trưng bày + số lượng xuất kho", "owner": "san_xuat", "required": true},
+        {"id": "an_pham", "item": "Ấn phẩm giới thiệu đã qua duyệt nội dung", "owner": "du_an", "required": false}
+      ],
+      "letter": "Kính gửi Ban tổ chức {program_title} ({organizer}),\n\nCông ty TNHH Sâm Sâm xin đăng ký tham gia gian hàng tại {program_title}. Sản phẩm dự kiến giới thiệu: {products}.\n\nCông ty sẽ hoàn thiện hồ sơ theo yêu cầu của Ban tổ chức trước hạn {deadline}.\n\nTrân trọng."
+    },
+    "ocop": {
+      "name": "Chương trình OCOP / đánh giá phân hạng sản phẩm",
+      "checklist": [
+        {"id": "dk_kinh_doanh", "item": "Bản sao giấy chứng nhận đăng ký doanh nghiệp", "owner": "phap_che", "required": true},
+        {"id": "phieu_dang_ky_ocop", "item": "Phiếu đăng ký sản phẩm tham gia OCOP theo mẫu địa phương", "owner": "du_an", "required": true},
+        {"id": "ho_so_chat_luong", "item": "Phiếu kiểm nghiệm chất lượng còn hiệu lực", "owner": "san_xuat", "required": true},
+        {"id": "cong_bo_sp", "item": "Bản tự công bố / giấy tiếp nhận sản phẩm", "owner": "phap_che", "required": true},
+        {"id": "phuong_an_kd", "item": "Phương án sản xuất kinh doanh sản phẩm", "owner": "tai_chinh", "required": true}
+      ],
+      "letter": "Kính gửi {organizer},\n\nCông ty TNHH Sâm Sâm xin đăng ký tham gia {program_title} với sản phẩm: {products}.\n\nCông ty sẽ nộp đủ hồ sơ theo hướng dẫn trước hạn {deadline}.\n\nTrân trọng."
+    },
+    "xuc_tien_tmdt": {
+      "name": "Chương trình xúc tiến / kết nối giao thương",
+      "checklist": [
+        {"id": "dk_kinh_doanh", "item": "Bản sao giấy chứng nhận đăng ký doanh nghiệp", "owner": "phap_che", "required": true},
+        {"id": "danh_muc_sp", "item": "Danh mục sản phẩm giới thiệu (chỉ sản phẩm đủ điều kiện)", "owner": "du_an", "required": true},
+        {"id": "nang_luc_cung_ung", "item": "Năng lực cung ứng theo tháng của từng sản phẩm", "owner": "san_xuat", "required": true},
+        {"id": "chi_phi", "item": "Dự toán chi phí tham gia", "owner": "tai_chinh", "required": false}
+      ],
+      "letter": "Kính gửi {organizer},\n\nCông ty TNHH Sâm Sâm xin đăng ký tham gia {program_title}. Sản phẩm giới thiệu kết nối: {products}.\n\nĐầu mối của công ty sẽ phản hồi theo hướng dẫn của Ban tổ chức trước hạn {deadline}.\n\nTrân trọng."
+    }
+  }
+}

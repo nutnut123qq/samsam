@@ -1,5 +1,5 @@
 {
-  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES — khối chưa có vai trò riêng, TẠM map 'tgd' (external-dep: TGĐ chốt). approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store).",
+  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES — khối chưa có vai trò riêng, TẠM map 'tgd' (external-dep: TGĐ chốt). approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store). v8.3 (WP11 DA, nguồn: final_plans projects §3 — DA-00 điều phối): loại việc của 5 agent phòng Dự án — change_request (DA-02 agents/da_cr.py), program_application (DA-04 agents/da_hoso.py — bản nộp phải khớp sha256 bản duyệt), org_prospect_batch (DA-05 agents/da_b2b.py — lô tổ chức, hệ thống không tự liên hệ), weekly_board (DA-01 agents/da_pmo.py bảng tuần), milestone_change (DA-01 đổi hạn mốc). BẢN DEV SOẠN, chờ GĐ dự án chốt.",
   "block": "projects",
   "name": "Giám đốc dự án + Chuyên viên dự án–xúc tiến đầu tư",
   "director_agent": "DA-00 Agent Giám đốc dự án (điều phối)",
@@ -15,6 +15,18 @@
     "program_application": {
       "sla_hours": 72,
       "risk": "high"
+    },
+    "org_prospect_batch": {
+      "sla_hours": 72,
+      "risk": "medium"
+    },
+    "weekly_board": {
+      "sla_hours": 48,
+      "risk": "medium"
+    },
+    "milestone_change": {
+      "sla_hours": 72,
+      "risk": "medium"
     }
   },
   "digest_recipients": [],

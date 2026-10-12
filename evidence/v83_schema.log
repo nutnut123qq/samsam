@@ -1,0 +1,92 @@
+# v8.3 W83.1 schema gate — 2026-10-12T14:31:47+07:00
+## DB thật trước (đếm dòng)
+programs=MISSING(UndefinedTable) org_prospects=MISSING(UndefinedTable) project_milestones=MISSING(UndefinedTable) approval_queue=0 approvals=0 intel_items=0 llm_usage=41
+## python scripts/apply_schema.py (lần 1)
+[done] schema applied — 47 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_snapshots, chunks, chunks_internal, claims_approved, competitor_observations, consents, contacts, content_drafts, dealers, decisions, document_fields, documents, eval_runs, garden_media, golden_discrepancies, incidents, intel_imports, intel_items, job_runs, leads, llm_usage, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, orders, org_prospects, plot_logs, plots, price_list, products, programs, project_milestones, red_alert_acks, red_alerts, sim_runs, sku_map, sku_master, social_mentions, trends_related, trends_weekly
+exit=0
+## python scripts/apply_schema.py (lần 2)
+[done] schema applied — 47 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_snapshots, chunks, chunks_internal, claims_approved, competitor_observations, consents, contacts, content_drafts, dealers, decisions, document_fields, documents, eval_runs, garden_media, golden_discrepancies, incidents, intel_imports, intel_items, job_runs, leads, llm_usage, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, orders, org_prospects, plot_logs, plots, price_list, products, programs, project_milestones, red_alert_acks, red_alerts, sim_runs, sku_map, sku_master, social_mentions, trends_related, trends_weekly
+exit=0
+## DB thật sau apply_schema
+programs=0 org_prospects=0 project_milestones=0 approval_queue=0 approvals=0 intel_items=0 llm_usage=41
+## grep alter/drop trên phần diff schema.sql (dòng thêm)
+count=0
+## git diff --stat docs/roles.sql crawler/ (phải rỗng)
+(hết)
+
+## pytest -v tests/test_da_schema.py (schema tạm + ROLLBACK)
+tests/test_da_schema.py::test_block_no_alter_drop_and_three_tables PASSED [  0%]
+tests/test_da_schema.py::test_tables_and_no_pii_columns PASSED           [  0%]
+tests/test_da_schema.py::test_check_violations[insert into org_prospects (dedup_key, org_name, org_type, region, source_url, source, created_by) values ('b2b:abc', 'T\u1ed5 ch\u1ee9c', 'khac', '\u0110\xe0 N\u1eb5ng', 'https://a.vn', 'manual', 'x')-None] PASSED [  0%]
+tests/test_da_schema.py::test_check_violations[insert into org_prospects (dedup_key, org_name, org_type, region, source_url, source, created_by) values (%s, 'T\u1ed5 ch\u1ee9c', 'khac', '\u0110\xe0 N\u1eb5ng', 'facebook.com/x', 'manual', 'x')-params1] PASSED [  1%]
+tests/test_da_schema.py::test_check_violations[insert into org_prospects (dedup_key, org_name, org_type, region, source_url, source, created_by) values (%s, 'T\u1ed5 ch\u1ee9c', 'ca_nhan', '\u0110\xe0 N\u1eb5ng', 'https://a.vn', 'manual', 'x')-params2] PASSED [  1%]
+tests/test_da_schema.py::test_check_violations[insert into project_milestones (code, title, owner_role, due_date, gate, status, source) values ('DA-04', 't', 'gd_du_an', '2026-11-14', 'g', 'xong', 's')-None] PASSED [  1%]
+tests/test_da_schema.py::test_check_violations[insert into project_milestones (code, title, owner_role, due_date, gate, source) values ('da-04', 't', 'gd_du_an', '2026-11-14', 'g', 's')-None] PASSED [  2%]
+tests/test_da_schema.py::test_programs_tier_c_and_unique PASSED          [  2%]
+tests/test_da_schema.py::test_milestone_xong_with_evidence_ok PASSED     [  2%]
+tests/test_da_schema.py::test_new_tables_not_granted_to_roles PASSED     [  2%]
+
+## pytest -v tests/test_handover_docs.py tests/test_db_backup.py
+tests/test_handover_docs.py::test_doc_files_exist_nonempty PASSED        [ 80%]
+tests/test_handover_docs.py::test_tab_names_real PASSED                  [ 80%]
+tests/test_handover_docs.py::test_phu_luc_d_covers_all_questions PASSED  [ 80%]
+tests/test_handover_docs.py::test_sop_core_commands PASSED               [ 81%]
+tests/test_handover_docs.py::test_kien_truc_lists_all_tables PASSED      [ 81%]
+tests/test_handover_docs.py::test_guardrail_test_names_in_phu_luc_d PASSED [ 81%]
+tests/test_handover_docs.py::test_guardrail_case_counts_in_phu_luc_d PASSED [ 82%]
+tests/test_handover_docs.py::test_guardrail_v2_tests_and_case_counts_in_phu_luc_d PASSED [ 82%]
+tests/test_handover_docs.py::test_sop_warns_role_dsn_while_grants_partial PASSED [ 82%]
+tests/test_handover_docs.py::test_redteam_llm_check_section_in_phu_luc_d PASSED [ 82%]
+tests/test_db_backup.py::test_usage_exit2_before_connect[env0] PASSED    [ 83%]
+tests/test_db_backup.py::test_usage_exit2_before_connect[env1] PASSED    [ 83%]
+tests/test_db_backup.py::test_usage_exit2_before_connect[env2] PASSED    [ 83%]
+tests/test_db_backup.py::test_usage_exit2_before_connect[env3] PASSED    [ 84%]
+tests/test_db_backup.py::test_usage_exit2_before_connect[env4] PASSED    [ 84%]
+tests/test_db_backup.py::test_usage_exit2_before_connect[env5] PASSED    [ 84%]
+tests/test_db_backup.py::test_usage_exit2_before_connect[env6] PASSED    [ 85%]
+tests/test_db_backup.py::test_usage_exit2_before_connect[env7] PASSED    [ 85%]
+tests/test_db_backup.py::test_find_tool_order PASSED                     [ 85%]
+tests/test_db_backup.py::test_docker_argv_no_password PASSED             [ 85%]
+tests/test_db_backup.py::test_scrub_hides_secrets PASSED                 [ 86%]
+tests/test_db_backup.py::test_retention_by_created_at_not_mtime PASSED   [ 86%]
+tests/test_db_backup.py::test_manifest_file_must_match_name PASSED       [ 86%]
+tests/test_db_backup.py::test_guard_name_unit PASSED                     [ 87%]
+tests/test_db_backup.py::test_no_network_libs_in_backup PASSED           [ 87%]
+tests/test_db_backup.py::test_dotenv_backup_vars_loaded_before_config PASSED [ 87%]
+tests/test_db_backup.py::test_clean_env_blocks_dotenv_backup_vars PASSED [ 87%]
+tests/test_db_backup.py::test_weak_passphrase_file_refused[\n] PASSED    [ 88%]
+tests/test_db_backup.py::test_weak_passphrase_file_refused[\r\n] PASSED  [ 88%]
+tests/test_db_backup.py::test_weak_passphrase_file_refused[   \n] PASSED [ 88%]
+tests/test_db_backup.py::test_weak_passphrase_file_refused[\ndung-passphrase-o-dong-hai\n] PASSED [ 89%]
+tests/test_db_backup.py::test_weak_passphrase_file_refused[ngan-qua\n] PASSED [ 89%]
+tests/test_db_backup.py::test_weak_passphrase_file_refused[] PASSED      [ 89%]
+tests/test_db_backup.py::test_weak_passphrase_file_refused[\xff\xfeM\x00a\x00t\x00K\x00h\x00a\x00u\x00R\x00a\x00t\x00D\x00a\x00i\x00V\x00a\x00M\x00a\x00n\x00h\x002\x000\x002\x006\x00\n\x00] PASSED [ 90%]
+tests/test_db_backup.py::test_weak_passphrase_file_refused[\x00M\x00a\x00t\x00K\x00h\x00a\x00u\x00R\x00a\x00t\x00D\x00a\x00i\x00V\x00a\x00M\x00a\x00n\x00h\x002\x000\x002\x006\x00\n] PASSED [ 90%]
+tests/test_db_backup.py::test_weak_passphrase_file_refused[\xfe\xff\x00M\x00a\x00t\x00K\x00h\x00a\x00u\x00R\x00a\x00t\x00D\x00a\x00i\x00V\x00a\x00M\x00a\x00n\x00h\x002\x000\x002\x006\x00\n] PASSED [ 90%]
+tests/test_db_backup.py::test_weak_passphrase_file_refused[0123456789abcdef\x00tail\n] PASSED [ 90%]
+tests/test_db_backup.py::test_passphrase_first_line_ok PASSED            [ 91%]
+tests/test_db_backup.py::test_cloud_readme_drift_guard PASSED            [ 91%]
+tests/test_db_backup.py::test_backup_manifest_matches_live PASSED        [ 91%]
+tests/test_db_backup.py::test_backup_dead_host_exit1_no_files PASSED     [ 92%]
+tests/test_db_backup.py::test_backup_tool_major_too_old PASSED           [ 92%]
+tests/test_db_backup.py::test_retention_and_offsite_dir PASSED           [ 92%]
+tests/test_db_backup.py::test_encrypted_backup_and_drill PASSED          [ 92%]
+tests/test_db_backup.py::test_offsite_s3_exit3_keeps_local PASSED        [ 93%]
+tests/test_db_backup.py::test_drill_ok_and_dropped PASSED                [ 93%]
+tests/test_db_backup.py::test_drill_refuses_current_db[samsam_v36] PASSED [ 93%]
+tests/test_db_backup.py::test_drill_refuses_current_db[postgres] PASSED  [ 94%]
+tests/test_db_backup.py::test_drill_refuses_current_db[CURRENT] PASSED   [ 94%]
+tests/test_db_backup.py::test_drill_refuses_existing_drill_db PASSED     [ 94%]
+tests/test_db_backup.py::test_drill_corrupt_byte_fails_before_create PASSED [ 95%]
+tests/test_db_backup.py::test_drill_newest_broken_no_fallback PASSED     [ 95%]
+tests/test_db_backup.py::test_drill_mismatch_still_drops PASSED          [ 95%]
+tests/test_db_backup.py::test_retention_error_does_not_block_offsite_or_log PASSED [ 95%]
+tests/test_db_backup.py::test_failure_after_partial_cleans_up[pg_dump] PASSED [ 96%]
+tests/test_db_backup.py::test_failure_after_partial_cleans_up[openssl] PASSED [ 96%]
+tests/test_db_backup.py::test_offsite_dir_failure_exit3_keeps_local[oserror] PASSED [ 96%]
+tests/test_db_backup.py::test_offsite_dir_failure_exit3_keeps_local[sha_mismatch] PASSED [ 97%]
+tests/test_db_backup.py::test_passphrase_without_openssl_fails_closed PASSED [ 97%]
+tests/test_db_backup.py::test_no_drill_db_left PASSED                    [ 97%]
+
+## tổng lượt -v
+======================= 340 passed in 249.22s (0:04:09) =======================

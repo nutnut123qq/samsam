@@ -151,7 +151,7 @@ def test_real_sources_file_gate():
     assert cfg["llm"]["enabled"] is False
     assert "chờ" in cfg["_doc"] and "chờ" in cfg["llm"]["_doc"]
     assert set(cfg["topics"]) == {"sam", "tpbvsk", "gioi_tre", "quang_cao",
-                                  "doi_thu"}
+                                  "doi_thu", "chuong_trinh"}
     # Host tầng C được thêm vào danh sách chặn.
     c_hosts = intel.tier_c_hosts(cfg)
     assert "linkedin.com" in c_hosts
@@ -708,7 +708,8 @@ def test_cli_no_approved_sources_warn_exit0(db, monkeypatch, capsys):
 
 
 def test_cli_missing_table_exit1(db, monkeypatch, capsys):
-    db.execute("drop table intel_items")
+    # cascade: v8.3 `programs.intel_item_id` FK → intel_items (schema tạm).
+    db.execute("drop table intel_items cascade")
     monkeypatch.setenv("DATABASE_URL", "postgresql://fake")
     monkeypatch.setattr(intel, "_connect", lambda _d: TxConn(db))
     spy = Spy()

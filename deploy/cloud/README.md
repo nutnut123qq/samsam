@@ -153,6 +153,9 @@ bảng nào thì dừng, không bật app.
 | `channel_posts` | B | (v4.3) snapshot bài kênh sở hữu + đợt vi phạm/hạn 24h — B giữ lịch sử đóng đúng hạn/trễ (A: nạp lại file xuất tay chỉ có hiện trạng) |
 | `cogs_versions` | B | giá vốn đã duyệt (v9.1) — người lập/duyệt + lịch sử hiệu lực không dựng lại được |
 | `opex_entries` | B | chi phí cloud/SaaS nhập tay (v9.1) — không tên người; khoản > X gắn chữ ký TGĐ trong `approval_queue` (đường B) — dựng lại lệch khoản đã ký |
+| `programs` | A (chạy lại `python -m agents.da_radar --scan` trên `intel_items`) hoặc B | chương trình xúc tiến (v8.3) — B giữ `first_seen` (ngày phát hiện → nhắc hạn) |
+| `org_prospects` | B | tổ chức mua quà (v8.3) nhập tay — trạng thái lô/chuyển sales không dựng lại được; không cột định danh cá nhân |
+| `project_milestones` | B (hoặc A: `python -m agents.da_pmo --seed` — mất trạng thái/evidence/hạn đã duyệt đổi) | sổ mốc phòng Dự án (v8.3) |
 
 ## 5. Backup + diễn tập trên cloud (mẫu — external-dep)
 

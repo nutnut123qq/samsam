@@ -228,3 +228,20 @@ def test_digest_extra_inserted_before_approvers_default_unchanged():
     assert block in md and md.replace(block, "", 1) == base
     assert md.index("## Công nợ đại lý quá hạn") < md.index("## Người duyệt")
     assert md.index("## Override QA") < md.index("## Công nợ đại lý")
+
+
+
+def test_projects_object_types_v83():
+    """v8.3 W83.8 — khối projects đủ loại việc 5 agent phòng Dự án; không
+    người thật."""
+    c = dr.load_config("projects")
+    types = c["object_types"]
+    assert {"change_request", "program_application", "org_prospect_batch",
+            "weekly_board", "milestone_change"} <= set(types)
+    assert "content_draft" not in types
+    assert all(1 <= t["sla_hours"] <= 720 for t in types.values())
+    assert types["change_request"] == {"sla_hours": 48, "risk": "high"}
+    assert types["program_application"] == {"sla_hours": 72, "risk": "high"}
+    assert types["org_prospect_batch"]["risk"] == "medium"
+    assert c["approvers"] == [] and c["digest_recipients"] == []
+    assert c["approver_roles"] == ["tgd"]

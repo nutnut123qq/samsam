@@ -21,6 +21,491 @@ Gate: apply_schema 2 lần sạch (57 bảng), ruff sạch, full pytest 2880 pas
 3 skipped (test_dr_drill — Docker Desktop hỏng engine, môi trường) —
 `evidence/m31_dot4_*.log`.
 
+## Checklist v8.3-du-an-radar
+
+Khán giả/mục đích: M31 (worktree `D:\code\samsam-w73`) — làm phần DA của
+WP11 "B2B quà Tết và phòng Dự án" (pmo.md dòng `| WP11`; key `projects`
+trong ctx/final_plans.json: DA-00 điều phối, DA-01 PMO tiến độ, DA-02 gợi ý
+phạm vi/CR, DA-03 radar chương trình, DA-04 hồ sơ tham gia go-live 14/11,
+DA-05 tìm tổ chức mua quà go-live 21/11). Nền ai-infra đã gộp: collector
+`crawler/intel.py` v7.0 (robots.txt, ≥1s/host, `HARD_BLOCK` + `tier_c_hosts`,
+chỉ RSS/Atom → `intel_items`), `pipelines/director.py` + `data/directors/
+projects.json` (v4.0, đã có `change_request`/`program_application`),
+`pipelines/approval_queue.py` (`enqueue`/`decide`/`verify` →
+`verify_publish` sha256 bản duyệt), `pipelines/guardrail.py`
+(`check`/`check_publish`), `pipelines/kb_filter.is_alcohol`,
+`ingest/golden_store.read_golden` (`category` tpbvsk/food/alcohol,
+`xnqc_status`), `pipelines/pii._mask_pii`, `ingest/crm.province_of`,
+`pipelines/llm_gateway.chat`. Hiện phòng Dự án có cấu hình khối nhưng 0
+agent nhân viên ghi gì. Sau version: (1) DA-03 đọc `intel_items` chủ đề mới
+`chuong_trinh` (nguồn tầng A/B ĐỀ XUẤT `cho_duyet`, thu bằng CHÍNH
+`crawler.intel` — không collector thứ 2) → phân loại luật → bảng `programs`
+(hạn nộp, đơn vị tổ chức, link) + nhắc T-7/T-2/"phát hiện muộn"; (2) DA-04
+checklist hồ sơ theo template + NHÁP bản nộp (template tất định, LLM agent
+`projects` tùy chọn) qua `check_publish` + lọc rượu/SKU chưa XNQC → hàng
+duyệt `program_application`; bản xuất/bản nộp phải khớp hash bản duyệt; (3)
+DA-05 bảng `org_prospects` (chỉ thông tin TỔ CHỨC, dedup `b2b:<sha256>`) nạp
+CSV nhập tay → lô vào hàng duyệt, KHÔNG liên hệ; (4) DA-01 sổ mốc
+`project_milestones` + bảng tuần, DA-02 gợi ý phân loại CR theo luật trích SOW
++ nháp CR; (5) khối `projects` đủ loại việc.
+
+Quy ước: ponytail — stdlib + `psycopg` + `openai` (chỉ qua gateway) +
+`cryptography` (đã có, gián tiếp qua `ingest.crm`) — KHÔNG dep mới. 5 module
+mới, mỗi agent 1 file: `agents/da_radar.py` (DA-03), `agents/da_hoso.py`
+(DA-04), `agents/da_b2b.py` (DA-05), `agents/da_pmo.py` (DA-01),
+`agents/da_cr.py` (DA-02). CHỈ `agents/da_hoso.py` được có egress (import
+`pipelines.llm_gateway`); 4 module còn lại KHÔNG import `httpx`/`requests`/
+`urllib.request`/`http.client`/`socket`/`smtplib`/`email.mime`/gateway (kiểm
+bằng `scripts/dpia_draft.egress_modules` + grep). Radar KHÔNG tự ra mạng: thu
+tin = `python -m crawler.intel --run --source <id>` (code collector KHÔNG
+sửa); `da_radar` chỉ đọc `intel_items`. 3 bảng mới trong block mới cuối
+`docs/schema.sql` (`create table if not exists`, KHÔNG `alter`/`drop` bảng cũ):
+`programs`, `org_prospects`, `project_milestones` — KHÔNG thêm assert đếm cứng
+số bảng (test dùng sàn ≥ 24 / parse schema.sql); `docs/handover/kien-truc.md`
+liệt kê 3 tên + sửa câu "N bảng public" khớp số parse được (44 → 47 tại thời
+điểm soạn; gộp song song thì đếm lại); `deploy/cloud/README.md` thêm 3 dòng
+bảng (drift-guard `test_cloud_readme_drift_guard`). KHÔNG sửa `docs/roles.sql`
+(3 bảng mới không grant → mặc định từ chối agent_writer/app_human; CLI ghi
+chạy DSN chủ sở hữu — ghi rõ kien-truc, grant hẹp = someday). Không thêm bảng
+CR riêng: sổ CR = hàng `approval_queue` khối `projects` loại `change_request`
+(trạng thái pending/approved/rejected/expired = quyết định TGĐ). Mọi tài liệu
+đối ngoại (bản nộp hồ sơ, lô tổ chức) là PAYLOAD trong `approval_queue` — đúng
+chuỗi được hash; người duyệt qua `python -m pipelines.approval_queue
+--approve/--reject` (KHÔNG có đường agent tự duyệt). Connect qua
+`ingest.lead_store.connect` (connect_timeout; guard `tests/test_connect_
+timeout_guard.py`); print tiếng Việt → UTF-8 guard; CLI nhiều op → `n_ops > 1`
+usage exit 2 TRƯỚC connect; ghi trên conn chia sẻ → `conn.commit()` tường minh;
+format-spec chỉ trên biến đã coerce (CLI truyền str); ngày "hôm nay" theo giờ VN
+(`pipelines.period.VN_TZ`); job định kỳ (`da_radar --scan`, `da_pmo --board`)
+bọc `pipelines.job_runs.job_run(...)`. Print/log định danh qua `_mask_pii`.
+CSV lỗi: in số dòng + tên cột + lý do, KHÔNG in giá trị ô. File báo cáo/nháp →
+`data/reports/` (đã gitignore) qua `agents.report.write_report` (atomic,
+bytes). Test DB thật: fixture schema tạm + `docs/schema.sql` + `docs/roles.sql`
+rồi ROLLBACK (như `tests/test_director_framework.py::db`), code gọi
+`conn.commit()` → bọc `_TxConn`/`TxConn` (precedent `tests/test_auth_
+approval.py`, `tests/test_intel.py`); skip khi không DB nhưng gate đòi **0
+skipped**. Không assert wall-clock (đồng hồ/sleep tiêm như `tests/
+test_intel.py::Clock`). KHÔNG ghi `programs`/`org_prospects`/
+`project_milestones`/`approval_queue`/`intel_items` trên DB thật ngoài test
+rollback (CLI DB thật chỉ `--dry-run`/đọc/case âm); `apply_schema` ×2 trên DB
+riêng `samsam_infra` được phép (tạo bảng).
+
+External-dep (KHÔNG giả lập như thật, KHÔNG tự đánh dấu): danh sách nguồn
+chương trình được duyệt (mọi nguồn `chuong_trinh` ship `cho_duyet`, URL RSS
+chưa xác minh — GĐ dự án/BGĐ đổi `duyet`); bộ test phân loại SOW do công ty
+(TGĐ/Pháp chế) gán nhãn — version này chỉ bộ MẪU dev
+`tests/fixtures/du_an/cr_cases_MAU.json` (`labeled_by: "dev_MAU"`, không phải
+nghiệm thu 18/20); GĐ dự án/GĐ bán hàng ký (`approvers: []`, `digest_
+recipients: []` giữ rỗng); thông tin liên hệ tổ chức thật (bảng không có cột
+liên hệ — GĐ bán hàng/đại lý tự tìm và liên hệ); Pháp chế xác nhận XNQC/
+"Ngọc Linh"/nồng độ rượu (golden hiện mọi SKU `xnqc_status: none` → hồ sơ chỉ
+giới thiệu được mật ong sâm); kiểm tay 20 mẫu/lô tổ chức (tên người trong
+`fit_reason` không bắt được bằng regex); DA-QA chấm độc lập (suite
+`data/eval/suites/da_qa.json` vẫn `skeleton`).
+
+- [x] **W83.1 Schema 3 bảng phòng Dự án** — block mới cuối
+  `docs/schema.sql` có comment "v8.3 phòng Dự án (WP11 DA)": ai ghi/ai đọc,
+  insert-only, không PII.
+  `programs` (`id` identity pk, `intel_item_id bigint not null unique
+  references intel_items(id)`, `title` ≤300 not null, `organizer text not null
+  default 'chưa công bố'`, `deadline date` null, `deadline_text` ≤120 null,
+  `url text not null` check `^https?://`, `source text not null`, `tier` check
+  `A|B`, `flags text[] not null default '{}'`, `first_seen timestamptz not
+  null default now()`). `org_prospects` (`id` identity pk, `dedup_key text not
+  null unique` check `^b2b:[0-9a-f]{64}$`, `org_name` 2..200 ký tự,
+  `org_type` check ∈ `doanh_nghiep|khach_san|su_kien_hoi_nghi|hiep_hoi|
+  co_quan|khac`, `region text not null`, `website` null check `^https?://`,
+  `source_url text not null` check `^https?://`, `fit_reason` ≤300 null,
+  `source text not null`, `created_by` not blank, `created_at`, `status text
+  not null default 'moi'` check ∈ `moi|cho_duyet|chuyen_sales`,
+  `batch_queue_id bigint` null, `handed_at timestamptz` null) — KHÔNG có cột
+  SĐT/email/tên người/địa chỉ/liên hệ. `project_milestones` (`code text
+  primary key` check `^[A-Z][A-Z0-9_.-]{1,31}$`, `title` not null, `wp` text,
+  `owner_role text not null` (vai trò, không tên người), `due_date date not
+  null`, `gate text not null` check not blank, `evidence` text, `status text
+  not null default 'chua_bat_dau'` check ∈ `chua_bat_dau|dang_lam|xong|
+  tam_dung`, check `status <> 'xong' or btrim(coalesce(evidence,'')) <> ''`,
+  `source text not null`, `updated_by` text, `updated_at timestamptz default
+  now()`).
+  - Boundary: `docs/schema.sql` (block mới), `docs/handover/kien-truc.md`
+    (3 dòng bảng + "N bảng public" + mục quyền: 3 bảng chưa grant),
+    `deploy/cloud/README.md` (3 dòng bảng, đường A/B), `tests/test_da_schema.py`
+    (mới)
+  - Gate: `python scripts/apply_schema.py` ×2 exit 0 trên DB riêng; test
+    (schema tạm rollback): schema.sql + roles.sql chạy ×2 idempotent; cột
+    `org_prospects` (đọc `information_schema.columns`) == đúng tập liệt kê trên
+    và KHÔNG cột nào khớp `(?i)phone|sdt|email|mail|contact|lien_he|nguoi|
+    person|address|dia_chi`; insert `dedup_key='b2b:abc'` → CheckViolation;
+    `programs.tier='C'` → CheckViolation; `project_milestones` status `xong`
+    thiếu evidence → CheckViolation; `python -m pytest tests/test_handover_
+    docs.py tests/test_db_backup.py -q` xanh (tên + số bảng parse từ
+    schema.sql); `grep -c "^alter table\|drop table" ` trên phần diff
+    schema.sql = 0
+  - Evidence: `evidence/v83_schema.log`
+- [x] **W83.2 DA-03 nguồn chương trình qua collector v7.0** —
+  `data/intel_sources.json`: `topics` thêm `chuong_trinh` (cụm có dấu + ASCII:
+  "hội chợ", "triển lãm", "xúc tiến thương mại", "phiên chợ", "OCOP", "kết nối
+  cung cầu", "chương trình hỗ trợ doanh nghiệp", "hỗ trợ nông sản", "đăng ký
+  tham gia", "hạn đăng ký", "gian hàng"...); `sources` thêm ≥4 nguồn tầng A/B
+  ĐỀ XUẤT chủ đề chương trình (cơ quan xúc tiến thương mại/Bộ, Sở Công Thương
+  Đà Nẵng, cổng OCOP, báo ngành nông nghiệp) — `status: "cho_duyet"`,
+  `topics_hint: ["chuong_trinh"]`, `note` ghi "URL RSS CHƯA xác minh — GĐ dự án
+  duyệt" (KHÔNG bịa là đã chạy thật); `_doc` thêm câu "nguồn chuong_trinh
+  phục vụ DA-03 (v8.3), chờ GĐ dự án duyệt". KHÔNG sửa `crawler/intel.py`.
+  `tests/test_intel.py::test_real_sources_file_gate` cập nhật tập topics (+
+  `chuong_trinh`), các assert khác giữ nguyên (diff lại số assert trước/sau).
+  - Boundary: `data/intel_sources.json`, `tests/test_intel.py` (1 dòng tập
+    topics), `tests/test_da_radar.py` (mới), `tests/fixtures/du_an/`
+    (mới: feed fixture chương trình)
+  - Gate: `git diff --stat crawler/` rỗng; `python -m crawler.intel --report`
+    vẫn exit 0/1 như cũ (không đổi contract); test `load_sources` file thật OK,
+    mọi nguồn có hint `chuong_trinh` là tầng A/B + `cho_duyet`; classify
+    "Hội chợ xúc tiến thương mại Đà Nẵng 2026" → có `chuong_trinh`, "Săm lốp
+    giảm giá" → không. **E2E collector** (tái dùng `Server`/`Spy`/`Clock` của
+    `tests/test_intel.py`, DB rollback): sources tmp = 1 nguồn A chương trình
+    (feed fixture 4 tin: hội chợ có hạn, OCOP không hạn, "hội chợ rượu vang"
+    → cờ `ruou`, 1 tin lạc đề) + robots `Disallow: /admin/` và 1 nguồn trỏ
+    `/admin/feed.xml` + 1 nguồn tầng C (localhost) + 1 nguồn `https://
+    shopee.vn/...` → `crawler.intel.main(["--run", "--source", ...])`: 0 request
+    tới host tầng C/shopee (spy), 0 request path `/admin/`, mọi cặp request
+    cùng host `gap_s ≥ 1.0` (Clock tiêm), `intel_items` có đúng 3 tin
+    `chuong_trinh`
+  - Evidence: `evidence/v83_radar.log`
+- [x] **W83.3 DA-03 radar luật → `programs` + nhắc hạn** — `agents/
+  da_radar.py`: `deadline_of(text, published_at) -> (date | None, str |
+  None)` THUẦN: chỉ nhận ngày đứng SAU từ khóa hạn (`hạn|hạn chót|hạn đăng ký|
+  trước ngày|đến hết ngày|đăng ký đến|deadline`, có dấu/không dấu, lazy, không
+  vượt dấu `.;`), dạng `dd/mm[/yyyy]` / `dd-mm-yyyy` / `dd.mm.yyyy` với ranh
+  giới `(?<![\d.,/-])` … `(?![\d.,/-]?\d)` (không ăn giá "10.050.000", SĐT đã
+  mask, khoảng "2025-2026"); thiếu năm → năm của `published_at` (giờ VN), nhỏ
+  hơn ngày đăng → +1 năm; ngày sai lịch → None. `organizer_of(text)` THUẦN:
+  regex lazy "(do|bởi) (Sở|Bộ|Cục|UBND|Hội|Hiệp hội|Trung tâm|Ban|Liên minh)
+  …" dừng ở `tổ chức|phối hợp|[,.;]`, ≤120 ký tự; không khớp → `'chưa công
+  bố'`. Sửa sau nghiệm thu: "hạn" trần loại cụm khác nghĩa (hạn chế, giới
+  hạn, thời hạn, hạn hán, hạn mức, hữu hạn...), bản không dấu ngày phải đứng
+  ngay sau ("Han Quoc" không phải hạn); "từ X đến Y"/"X - Y" → Y; `--list`
+  có cột trích hạn (`deadline_text`). `scan(conn, *, since_days=30, now=None,
+  cfg=None) -> dict`: đọc
+  `intel_items` có `'chuong_trinh' = any(topics)` và `fetched_at` trong
+  `since_days`; BỎ tin cờ `ruou` (đếm `skipped_ruou`); BỎ url thuộc
+  `crawler.intel.is_blocked(url, tier_c_hosts(cfg))` (in `[blocked]`, đếm —
+  phòng thủ thêm lớp); insert `programs` `on conflict (intel_item_id) do
+  nothing`; `conn.commit()`. `reminders(programs, today) -> list[dict]` THUẦN:
+  hạn − ngày phát hiện (VN) ≥ 7 → nhắc ngày T-7 và T-2; < 7 → nhắc NGAY ngày
+  phát hiện kèm cờ `phat_hien_muon` + T-2 nếu T-2 > ngày phát hiện; hạn đã qua
+  → không nhắc; không hạn → mục "chưa công bố hạn". CLI `python -m
+  agents.da_radar --scan [--days N] [--dry-run]` | `--list [--date YYYY-MM-
+  DD] [--out-dir DIR]` (→ `data/reports/da-radar-<date>.md`: bảng chương trình
+  có tên/đơn vị/hạn/link/nguồn + nhắc hôm nay + "BẢN NHÁP — KHÔNG tự đăng ký/
+  gửi"); DB down → exit 2; `--scan` bọc `job_run("agents.da_radar")`.
+  - Boundary: `agents/da_radar.py` (mới), `tests/test_da_radar.py`
+  - Gate: `deadline_of` ≥ 10 ca: "Hạn đăng ký: 25/10/2026" → 2026-10-25;
+    "đăng ký trước ngày 5/11" (đăng 2026-10-12) → 2026-11-05; "hạn chót 10/01"
+    (đăng 2026-12-20) → 2027-01-10; "giá 10.050.000 đồng, hạn 30/11/2026" →
+    2026-11-30; "phí 1.500.000 đ" → None; "hạn 31/02/2026" → None; "diễn ra
+    20-22/11/2026" (không từ khóa) → None; "giai đoạn 2025-2026" → None; "han
+    dang ky 15/11/2026" (không dấu) → 2026-11-15; hạn thứ hai ở câu khác
+    không bị nuốt. `reminders`: A hạn 25/10/2026 phát hiện 12/10 → đúng
+    [18/10, 23/10]; B hạn 16/10 phát hiện 13/10 → [13/10 `phat_hien_muon`,
+    14/10]; hạn 12/10 phát hiện 12/10 → [12/10 muộn] (không T-2 quá khứ). DB
+    (rollback): sau E2E W83.2, `scan` → `programs` 2 dòng (hội chợ có
+    `deadline`, OCOP `deadline` null), tin `ruou` không vào; `intel_items` url
+    `https://shopee.vn/x` tier B chèn tay → không vào `programs`; `scan` ×2 →
+    lần 2 inserted 0, `count(*)` không đổi; `da_radar` chạy với
+    `httpx.Client.__init__` monkeypatch raise → vẫn chạy (0 request mạng). CLI
+    DB thật: `--scan --dry-run` exit 0, `--list --out-dir <scratchpad>` exit 0
+  - Evidence: `evidence/v83_radar.log`
+- [x] **W83.4 DA-04 checklist + nháp hồ sơ tham gia** — `data/projects/
+  ho_so_templates.json` (mới, BẢN DEV SOẠN chờ GĐ dự án/Pháp chế):
+  `{"_doc", "company_intro": {"text", "source_url"}, "templates": {"hoi_cho"|
+  "ocop"|"xuc_tien_tmdt": {"name", "checklist": [{"id", "item", "owner"
+  (du_an|phap_che|tai_chinh|san_xuat), "required"}], "letter": "<thư đăng ký
+  có placeholder {program_title}/{organizer}/{deadline}/{products}>"}}}` —
+  `company_intro.text` KHÔNG chứa "Ngọc Linh"/công dụng/số liệu chưa nguồn
+  (guardrail `ngoc_linh_chua_xac_nhan` chặn tới khi Pháp chế xác nhận).
+  `agents/da_hoso.py`: `eligible_skus(golden) -> (allowed, legal_questions)`
+  THUẦN: `alcohol` → loại khỏi MỌI phần (kể cả câu hỏi); `tpbvsk` có
+  `xnqc_status != 'approved'` (hoặc thiếu field) → loại khỏi bản nộp, sinh câu
+  hỏi Pháp chế (theo `sku_key`); `food` → allowed. `build(program, template,
+  golden, *, llm=False) -> {payload, internal, problems}`: `payload` (= BẢN
+  NỘP, chuỗi được hash) gồm thông tin chương trình (tên, đơn vị, hạn, URL),
+  giới thiệu DN + nguồn, sản phẩm allowed, thư đăng ký, dòng "Nội dung có sử
+  dụng AI"; `internal` (file nội bộ, KHÔNG vào hàng duyệt) = checklist giấy
+  tờ + câu hỏi Pháp chế. Cổng payload: `guardrail.check_publish(payload,
+  channel="web", content_type="post")` ok VÀ `kb_filter.is_alcohol(payload)`
+  False VÀ không chứa tên SKU bị loại (đối chiếu `name` golden) — trượt →
+  `problems` không rỗng. `--llm` (mặc định TẮT): `llm_gateway.chat("projects",
+  …)` chỉ viết lại thư từ dữ kiện công khai (tên/đơn vị/hạn chương trình + tên
+  SKU allowed — KHÔNG gửi `internal`), kết quả qua CÙNG cổng; trượt/
+  `GatewayError`/rỗng → dùng thư template + dòng "Thư LLM bị loại: <lý do>"
+  trong `internal`. CLI `python -m agents.da_hoso --checklist PROGRAM_ID
+  --template T` | `--draft PROGRAM_ID --template T [--llm] [--submit]
+  [--out-dir DIR]`: program không tồn tại → exit 1; template lạ → exit 2 trước
+  connect; ghi `da-hoso-<id>-<T>.md` + `da-hoso-<id>-<T>-noi-bo.md`;
+  `problems` → file có "CẢNH BÁO" đầu trang, `--submit` bị TỪ CHỐI exit 1;
+  `--submit` sạch → `pipelines.director.submit(conn, "projects",
+  "program_application", object_id=f"program:{id}:{T}", title, payload,
+  created_by="agent:da_hoso")` (pending, KHÔNG tự duyệt; trùng pending → in
+  lỗi exit 1). `data/llm_gateway.json` `monthly_cap_usd` thêm `"projects":
+  0.5`.
+  - Boundary: `agents/da_hoso.py` (mới), `data/projects/ho_so_templates.json`
+    (mới), `data/llm_gateway.json` (cap), `tests/test_da_hoso.py` (mới)
+  - Gate: fixture "Hội chợ Tết Đà Nẵng 2027" + golden thật (`data/
+    golden_skus.json`: Savigout 30v `none`, mật ong sâm 300ml, 2 rượu sâm) →
+    payload KHÔNG chứa "Savigout"/"Rượu"/"rượu" (và `is_alcohol` False), CÓ
+    "Mật ong sâm 300ml", `check_publish` ok, 0 từ `data/banned_words.txt`;
+    `internal` có câu hỏi Pháp chế cho `savigout-30v`; golden tmp có SKU
+    tpbvsk thiếu `xnqc_status` → bị loại (coi `none`); golden tmp đổi Savigout
+    → `approved` → được vào. Template tmp có "Ngọc Linh" → `problems` có
+    `ngoc_linh_chua_xac_nhan`, `--submit` exit 1, `director.submit` 0 lần
+    (monkeypatch đếm). **LLM tắt**: monkeypatch `llm_gateway.chat` đếm →
+    `build(llm=False)` 0 lời gọi; LLM bật fake trả thư có "rượu sâm" → bị
+    loại, thư template, `problems` rỗng; fake raise `GatewayError` → không
+    crash; agent_id = `"projects"`; prompt KHÔNG chứa chuỗi nào của
+    `internal`. DB (rollback): `--submit` tạo đúng 1 mục `approval_queue`
+    block `projects` loại `program_application` `pending`, `approvals` không
+    tăng; `--submit` lần 2 → exit 1 (trùng pending)
+  - Evidence: `evidence/v83_hoso.log`
+- [x] **W83.5 DA-04 cổng bản nộp khớp hash bản duyệt** — `agents/da_hoso.py`:
+  `--export QUEUE_ID --out FILE`: mục phải `block='projects'`, loại
+  `program_application`, `status='approved'` VÀ `approval_queue.verify(conn,
+  qid, payload)` True → ghi BYTES utf-8 đúng payload (không đổi `\n`→`\r\n`,
+  atomic tmp + `os.replace`) → exit 0; ngược lại exit 1, KHÔNG tạo file.
+  `--verify-submit QUEUE_ID FILE`: đọc file bytes (decode strict; lỗi → exit
+  1), `approval_queue.verify(conn, qid, text)` → True: exit 0 "KHỚP bản đã
+  duyệt — GĐ dự án tự nộp"; False: exit 1 "LỆCH bản duyệt — KHÔNG nộp". Agent
+  KHÔNG có lệnh nộp/gửi (không email, không form, không HTTP ra ban tổ chức).
+  - Boundary: `agents/da_hoso.py`, `tests/test_da_hoso.py`
+  - Gate: test DB (rollback, `_TxConn`, người duyệt ≠ người tạo qua
+    `approval_queue.decide`): pending → `--export` exit 1 không file; approve
+    → `--export` exit 0, `--verify-submit` file đó exit 0; file sửa 1 ký tự /
+    thêm `\r\n` cuối / thêm khoảng trắng → exit 1; file byte `\xff` → exit 1
+    không crash; mục rejected → exit 1; mục `approved` nhưng loại khác
+    (`change_request`) → `--export` exit 1; mutation thử bỏ nhánh verify →
+    test đỏ (ghi vào evidence). Grep: `grep -nE "smtplib|email\.mime|httpx|
+    requests|urllib\.request|webbrowser" agents/da_hoso.py` rỗng
+  - Evidence: `evidence/v83_hoso.log`
+- [x] **W83.6 DA-05 `org_prospects` — tổ chức mua quà, không PII, không
+  liên hệ** — `agents/da_b2b.py`: `dedup_key(org_name, region)` = `"b2b:" +
+  sha256(norm(org_name) + "|" + norm(region))` (norm: NFKC → casefold → bỏ dấu,
+  `đ`→`d` → gom ký tự không chữ-số thành 1 khoảng trắng → strip) — "Khách sạn
+  MẪU A" / "khach  san mau-a" cùng key. `read_csv(path) -> (rows, errors)`
+  THUẦN, toàn file trước connect: ≤1 MB, UTF-8/BOM (byte lỗi → lỗi); header
+  ĐÚNG `org_name,org_type,region,website,source_url,fit_reason`; `org_type`
+  ∈ enum W83.1; `region` → `ingest.crm.province_of` (None/mơ hồ → lỗi);
+  `website`/`source_url` http(s) và host KHÔNG thuộc `crawler.intel.is_blocked`
+  (MXH/sàn — Facebook/Zalo/TikTok... → lỗi "nguồn tầng C"); mọi ô có
+  `_mask_pii(cell) != cell` → lỗi "chứa SĐT/email — chỉ nhập thông tin tổ
+  chức" (KHÔNG in giá trị); `fit_reason` có `kb_filter.is_alcohol` → lỗi
+  "không gợi ý rượu"; trùng key trong file → lỗi. CLI `python -m agents.da_b2b
+  --import FILE --by "<người nhập>"` (lỗi → exit 1, KHÔNG connect, 0 dòng; OK
+  → insert `on conflict (dedup_key) do nothing`, `source='manual:<basename>'`,
+  in inserted/dup) | `--submit-batch [--limit N]` (dòng `moi` → payload
+  markdown bảng tổ chức + footer "Hệ thống KHÔNG tự liên hệ — GĐ bán hàng/đại
+  lý liên hệ sau khi duyệt" → `director.submit(conn, "projects",
+  "org_prospect_batch", object_id="b2b-batch:<sha12 các key>", …,
+  created_by="agent:da_b2b")`; dòng → `cho_duyet` + `batch_queue_id`; 0 dòng
+  → exit 0 "không có lô") | `--handover QUEUE_ID --by` (mục approved VÀ
+  `approval_queue.verify(conn, qid, render_batch(dòng của lô từ DB))` True →
+  dòng `chuyen_sales` + `handed_at`; mục rejected → dòng về `moi` +
+  `batch_queue_id` null; mục expired (hết SLA) → như rejected, dòng về `moi`
+  (sửa sau nghiệm thu — không để kẹt `cho_duyet`); pending/lệch hash → exit
+  1, 0 dòng đổi; chạy lại → 0 đổi) | `--list [--status S]`. Sửa sau nghiệm
+  thu: `data/intel_sources.json` hỏng → lỗi cả file (fail-closed, không bỏ
+  qua tầng C như linkedin.com); ô trượt `guardrail.check` (từ cấm "thuốc"/
+  "chữa"/"ung thư"...) → lỗi "dòng N cột K" (lô chứa ô đó không duyệt được,
+  quay lại mãi). KHÔNG nối `leads` (bảng lead chat,
+  `user_hash` not null — someday).
+  - Boundary: `agents/da_b2b.py` (mới), `tests/test_da_b2b.py` (mới),
+    `tests/fixtures/du_an/to_chuc_MAU.csv` (tổ chức BỊA rõ "MẪU", ≥15 dòng),
+    `tests/fixtures/du_an/to_chuc_loi.csv` (mới)
+  - Gate: `read_csv` ≥ 10 biến thể lỗi (header sai, org_type lạ, tỉnh không
+    nhận ra, website `https://facebook.com/x`, source_url `https://zalo.me/…`,
+    fit_reason có "0905 123 456", có "abc@gmail.com", có "rượu sâm", trùng
+    key khác hoa/dấu, byte `\xff`) → mỗi cái ≥1 lỗi có số dòng, message KHÔNG
+    chứa giá trị ô; `--import to_chuc_loi.csv --by X` exit 1 và `connect` không
+    được gọi. DB (rollback): `--import to_chuc_MAU.csv` ×2 → lần 2 inserted 0,
+    `count(*)` không đổi; regex `_PII_RE` trên MỌI cột text mọi dòng = 0 hit;
+    lô 15 dòng `--submit-batch` → 1 mục pending, 0 dòng `chuyen_sales`;
+    `--handover` khi pending → exit 1; approve (người ≠ tạo) → `--handover` →
+    đúng 15 dòng `chuyen_sales`, lần 2 → 0 đổi; sửa 1 `fit_reason` bằng
+    superuser trước handover → verify False → exit 1, 0 dòng đổi; batch
+    rejected → dòng về `moi`. Grep egress: `grep -nE "smtplib|email\.mime|
+    httpx|requests|urllib\.request|socket|llm_gateway" agents/da_b2b.py` rỗng
+  - Evidence: `evidence/v83_b2b.log`
+- [x] **W83.7 DA-01 sổ mốc + bảng tuần; DA-02 gợi ý phân loại CR** —
+  `data/projects/milestones.json` (mới, BẢN DEV SOẠN từ pmo.md/final_plans,
+  chờ GĐ dự án chốt): ≥8 mốc tuyệt đối — DA-01/DA-02/DA-QA go-live
+  24/10/2026, DA-03 + DA-00 31/10/2026, DA-04 14/11/2026, form B2B KD-A3
+  16/11/2026, DA-05 21/11/2026, Mốc C 30/11/2026, Mốc D 18/12/2026, TT3
+  23/12/2026 — mỗi mốc `code`, `title`, `wp`, `owner_role`, `due_date`, `gate`.
+  `agents/da_pmo.py`: `--seed [--dry-run]` (insert `on conflict (code) do
+  nothing` — sửa tay trên DB không bị đè), `--set-status CODE --status S --by
+  NAME [--evidence REF]` (`xong` thiếu evidence → exit 1), `--board [--date
+  YYYY-MM-DD] [--out-dir DIR] [--submit]` (`render_board(rows, today)` THUẦN:
+  bảng mã/việc/owner/hạn dd/mm/yyyy/gate/evidence-hoặc-"chưa có"/trạng thái;
+  quá hạn chưa `xong` → **TRỄ** + vào mục "Mốc trễ"; nhắc T-7/T-2; `--submit`
+  → `director.submit(..., "weekly_board", object_id="board:<YYYY-Www>")`;
+  bảng trượt guardrail → exit 1 KHÔNG đẩy; title/gate mốc không dùng chữ
+  nhóm rượu/từ cấm),
+  `--propose-due CODE --due YYYY-MM-DD --by` (KHÔNG đổi DB — đẩy mục
+  `milestone_change`, payload tất định `code/old_due/new_due/by`;
+  `created_by` = người đề xuất đã mask → người đó không tự duyệt được) và
+  `--apply-due QUEUE_ID --by` (mục approved VÀ `verify` khớp payload dựng
+  lại VÀ `due_date` hiện tại == `old_due` → cập nhật; lệch/chưa duyệt/stale →
+  exit 1; chạy lại → no-op exit 0). `data/projects/sow_scope.json` (mới): luật
+  `{id, label: trong_sow|can_cr, keywords[], sow_ref, sow_quote}` —
+  `sow_quote` phải là chuỗi con NGUYÊN VĂN của `SOW_SamSam_AI_6-thang.md`
+  (loader kiểm, lệch → lỗi cấu hình). `agents/da_cr.py`: `classify(text,
+  scope) -> {suggestion: trong_sow|can_cr|chua_ro, rule_id, sow_ref,
+  sow_quote}` THUẦN (casefold + bỏ dấu, ranh giới từ; khớp cả 2 nhãn →
+  `can_cr` thắng; không khớp → `chua_ro`, KHÔNG mặc định `trong_sow`);
+  `draft_cr(text, result)` markdown: mô tả (đã `_mask_pii`), gợi ý + trích
+  SOW, effort "chưa ước tính", dòng "Giá/phạm vi do TGĐ chốt — agent KHÔNG đặt
+  giá", dòng bắt buộc "Xung đột lợi ích: agent do đơn vị thực hiện SOW xây
+  dựng — phân loại chỉ là GỢI Ý". CLI `python -m agents.da_cr --classify
+  "<yêu cầu>"` | `--cr "<yêu cầu>" [--submit]` (→ `change_request`,
+  object_id `cr:<sha12>`; nháp trượt guardrail, vd "chữa lỗi" → `--submit`
+  exit 1 trước connect, hướng dẫn diễn đạt lại) | `--eval [--cases FILE]` (in độ khớp trên bộ MẪU +
+  dòng "MẪU dev — không phải nghiệm thu; bộ thật do TGĐ/Pháp chế gán nhãn";
+  exit 1 khi < 0.9) | `--list` (sổ CR = `approval_queue` loại
+  `change_request` khối `projects` + trạng thái).
+  - Boundary: `agents/da_pmo.py`, `agents/da_cr.py` (mới),
+    `data/projects/milestones.json`, `data/projects/sow_scope.json` (mới),
+    `tests/fixtures/du_an/cr_cases_MAU.json` (≥15 ca, `labeled_by:
+    "dev_MAU"`, gồm "chạy quảng cáo Shopee" → `can_cr` WS2 ngoài phạm vi,
+    "làm ERP bán hàng" → `can_cr` Mục 9, "vector index dữ liệu P0" →
+    `trong_sow` WS1, "đào tạo workshop" → `trong_sow` WS4, 1 ca không khớp →
+    `chua_ro`), `tests/test_da_pmo.py`, `tests/test_da_cr.py` (mới)
+  - Gate: `python -m agents.da_cr --eval` exit 0 (≥0.9 trên MẪU, in rõ
+    "MẪU"); mọi `sow_quote` trong file thật ⊂ SOW (test); scope tmp có quote
+    bịa → lỗi cấu hình; "chạy ads TikTok" → `can_cr` trích WS2; nháp CR có
+    dòng "Xung đột lợi ích", không có số tiền (`\d[\d.,]*\s*(đ|đồng|VND|
+    triệu|tỷ)` 0 hit). `render_board` fixture `today=2026-10-25`: mốc 24/10
+    chưa xong → **TRỄ** trong "Mốc trễ"; mốc 14/11 xong không bị tô; T-7 của
+    31/10 = 24/10 không nhắc lại sau ngày; mọi hạn dạng dd/mm/yyyy. DB
+    (rollback): `--seed` ×2 → lần 2 inserted 0; sửa tay `due_date` 1 mốc rồi
+    `--seed` → giữ bản sửa; `--set-status DA-04 --status xong` thiếu evidence
+    → exit 1; `--propose-due` → 1 mục pending, `due_date` KHÔNG đổi;
+    `--apply-due` khi pending → exit 1; approve → `--apply-due` → đổi đúng 1
+    dòng; lần 2 → no-op; mục approved nhưng `due_date` đã bị đổi khác
+    `old_due` → exit 1. Grep egress 2 file rỗng như W83.6. CLI DB thật:
+    `python -m agents.da_pmo --seed --dry-run` exit 0, `--board --out-dir
+    <scratchpad>` exit 0
+  - Evidence: `evidence/v83_pmo.log`
+- [x] **W83.8 DA-00 khối `projects` + bản đồ dữ liệu + DPIA** — `data/
+  directors/projects.json` giữ `change_request` (48, high),
+  `program_application` (72, high) và thêm `org_prospect_batch` (72, medium),
+  `weekly_board` (48, medium), `milestone_change` (72, medium); `_doc` thêm
+  nguồn (final_plans projects §3) + "BẢN DEV SOẠN, chờ GĐ dự án chốt";
+  `approvers: []`, `digest_recipients: []`, `approver_roles: ["tgd"]` (khối
+  chưa có vai trò riêng — external-dep) giữ nguyên. `data/data_flow_map.json`
+  thêm 1 luồng (id kế tiếp còn trống — DF-25 lúc soạn; trùng khi gộp thì
+  coordinator đổi số): module `agents/da_hoso.py`, dữ liệu = tên/đơn vị/hạn
+  chương trình công khai + tên SKU được phép, KHÔNG PII/không `internal`,
+  OpenRouter qua gateway agent `projects`, chỉ khi `--llm`, `cross_border:
+  true`, `class: xanh`; sinh lại `docs/legal/DPIA-nhap.md`/`TIA-nhap.md` bằng
+  `python scripts/dpia_draft.py`. `tests/test_data_flow_map.py`
+  `NEW_SCRIPTS` thêm `agents/da_radar.py`, `agents/da_b2b.py`,
+  `agents/da_pmo.py`, `agents/da_cr.py` (khóa "không gửi gì ra ngoài").
+  - Boundary: `data/directors/projects.json`, `data/data_flow_map.json`,
+    `docs/legal/DPIA-nhap.md`, `docs/legal/TIA-nhap.md` (sinh lại),
+    `tests/test_data_flow_map.py` (NEW_SCRIPTS), `tests/test_director.py`
+    (1 test tập loại việc projects)
+  - Gate: `python -m pipelines.director --all --dry-run` exit 0; test
+    projects `object_types` ⊇ 5 loại trên, không `content_draft`, sla 1..720,
+    `approvers == []`; `python scripts/dpia_draft.py --check` exit 0;
+    `tests/test_data_flow_map.py` + `tests/test_dpia_draft.py` xanh; python
+    `dpia_draft.egress_modules(ROOT)` ∩ 4 module DA không-egress = ∅ và
+    `agents/da_hoso.py` ∈ egress và đã khai báo
+  - Evidence: `evidence/v83_pmo.log`
+- [x] **W83.9 Docs** — `docs/handover/sop.md` mục mới "Phòng Dự án (v8.3)":
+  thứ tự (thu tin `crawler.intel --run` nguồn đã duyệt → `da_radar --scan` →
+  `--list` sáng; hồ sơ: `da_hoso --checklist` → `--draft --submit` → người
+  duyệt `approval_queue --approve` → `--export` → `--verify-submit` trước khi
+  GĐ dự án TỰ nộp; B2B: `da_b2b --import --by` → `--submit-batch` → duyệt →
+  `--handover`; PMO thứ Hai: `da_pmo --board --submit`; CR: `da_cr --cr
+  --submit`), exit code nghĩa là gì, "LỆCH bản duyệt" xử lý thế nào (không
+  nộp, soạn lại + duyệt lại), cấm nhập SĐT/email/tên người vào CSV tổ chức,
+  `--llm` mặc định tắt. `docs/handover/kien-truc.md`: 3 bảng (W83.1) + bảng
+  thư mục thêm 5 module `agents/da_*.py` + `data/projects/`. `AGENTS.md`
+  Commands: 1 dòng "Phòng Dự án (v8.3, WP11)" liệt kê 5 lệnh.
+  `tests/test_handover_docs.py` `SOP_COMMANDS` thêm `agents.da_radar`,
+  `agents.da_hoso`, `agents.da_b2b`, `agents.da_pmo`, `agents.da_cr`.
+  - Boundary: `docs/handover/sop.md`, `docs/handover/kien-truc.md`,
+    `AGENTS.md` (Commands), `tests/test_handover_docs.py`
+  - Gate: `python -m pytest tests/test_handover_docs.py -q` xanh; `grep -c
+    "agents.da_" AGENTS.md docs/handover/sop.md` ≥ 1 mỗi file
+  - Evidence: `evidence/v83_pytest.log`
+- [x] **Gate chung** —
+  - targeted ×3: `python -m pytest tests/test_da_schema.py tests/test_da_radar.py tests/test_da_hoso.py tests/test_da_b2b.py tests/test_da_pmo.py tests/test_da_cr.py tests/test_intel.py tests/test_director.py tests/test_director_framework.py tests/test_approval_queue.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_db_backup.py tests/test_lead_store.py tests/test_store.py tests/test_kb_filter.py tests/test_llm_gateway.py tests/test_connect_timeout_guard.py -q -rs`
+    3 lần liên tiếp xanh, test DB **0 skipped** (lệnh nặng có thể bị đẩy nền —
+    đọc output tới khi process exit, không chạy chồng, không retry mù)
+  - full: `python -m pytest -q` xanh, ≥ 2338 (baseline) + test mới — ĐÚNG 1
+    lần/vòng
+  - `ruff check .` sạch
+  - `python -m py_compile agents/da_radar.py agents/da_hoso.py agents/da_b2b.py agents/da_pmo.py agents/da_cr.py`
+  - Radar chỉ qua collector: `git diff --stat crawler/` rỗng; `grep -rnE
+    "import (httpx|requests|socket|smtplib)|from (httpx|requests|smtplib|
+    urllib\.request|http\.client)|urllib\.request|email\.mime|webbrowser"
+    agents/da_*.py` rỗng; E2E W83.2 0 request tầng C/HARD_BLOCK/robots-deny
+  - Không đường liên hệ: grep trên áp cả 5 file; `dpia_draft.egress_modules`
+    chỉ chứa `agents/da_hoso.py` trong 5 module (qua gateway, đã khai DF)
+  - Rượu: test W83.4 (payload không rượu với golden có 2 SKU rượu + LLM fake
+    trả rượu) và W83.6 (`fit_reason` rượu bị từ chối) xanh
+  - CLI: `python -m agents.da_radar --scan --dry-run` exit 0; `--list
+    --out-dir <scratchpad>` exit 0; `python -m agents.da_b2b --import
+    tests/fixtures/du_an/to_chuc_loi.csv --by X` exit 1; `python -m
+    agents.da_cr --eval` exit 0; `python -m agents.da_pmo --seed --dry-run`
+    exit 0; `python -m pipelines.director --all --dry-run` exit 0; `python
+    scripts/dpia_draft.py --check` exit 0; mọi CLI 2 op cùng lúc → exit 2
+  - DB thật trước/sau toàn bộ gate: `programs`, `org_prospects`,
+    `project_milestones`, `approval_queue`, `approvals`, `intel_items`,
+    `llm_usage` số dòng KHÔNG đổi (không row test sót, không tự nộp/duyệt, 0
+    lời gọi LLM)
+  - `git diff --stat`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); không đụng `docs/roles.sql`, `crawler/`;
+    `lv2-market-top.png` giữ untracked; `data/directors/projects.json` +
+    fixture CSV không chứa tên/SĐT/email người thật
+- **Kết quả worker (2026-10-12, 2 vòng /ship)** — vòng 1: targeted ×3
+  xanh (643/643, 0 skipped) nhưng full đỏ 1 test (`test_runbook_lists_
+  real_agent_ids`: agent_id `projects` chưa có trong runbook) → vá; vòng 2:
+  targeted ×3 xanh 643/643 0 skipped, full `2519 passed, 3 skipped` (3
+  skipped = `tests/test_dr_drill.py` không có docker — MÔI TRƯỜNG), ruff
+  sạch, py_compile OK, CLI gate đúng exit, DB thật 7 bảng không đổi số dòng
+  (`evidence/v83_pytest.log`). Lệch/mở rộng so với contract (ghi để
+  coordinator duyệt): (1) `tests/test_intel.py` đổi 2 dòng thay vì 1 —
+  thêm `drop table intel_items cascade` vì FK `programs.intel_item_id →
+  intel_items` làm `test_cli_missing_table_exit1` đỏ (dây chuyền FK);
+  (2) `docs/handover/runbook-ha-tang.md` (ngoài Boundary) thêm 1 câu agent_id
+  `projects` (dây chuyền test_runbook); (3) `da_hoso`: TPBVSK đã XNQC →
+  bản nộp kèm câu khuyến cáo bắt buộc lấy từ `data/guardrail_rules.json`
+  (không có thì `thieu_khuyen_cao` chặn mãi, "được vào" không thành);
+  `--verify-submit` đòi mục `approved` (verify_publish chỉ so bản duyệt mới
+  nhất của object — mục pending cùng object từng báo "KHỚP" — OWASP A01);
+  URL chương trình qua `_oneline` trong bản nộp; (4) `da_cr --list` che
+  `decided_by` qua `_mask_pii`; (5) `da_b2b` lỗi byte UTF-8 có số dòng;
+  (6) test W83.6 quét `_PII_RE` trên mọi cột text TRỪ `dedup_key` (hash hex
+  khớp giả regex SĐT — thay bằng kiểm `^b2b:[0-9a-f]{64}$`); (7) fixture
+  `to_chuc_MAU.csv` 16 dòng, lô test dùng `--submit-batch --limit 15`.
+  Ghi chú cho someday: `tests/fixtures/intel/sources_e2e.json` hướng dẫn dọn
+  `delete from intel_items where source like 'fx-%'` sẽ vướng FK nếu
+  `da_radar --scan` đã chạy trên tin fixture (programs insert-only).
+- [ ] **external-dep** GĐ dự án/BGĐ duyệt danh sách nguồn chương trình
+  (`chuong_trinh` ship `cho_duyet`, URL RSS chưa xác minh bằng lượt chạy thật).
+- [ ] **external-dep** Bộ test 20 yêu cầu phân loại SOW do TGĐ/Pháp chế gán
+  nhãn (chỉ bộ MẪU dev; nghiệm thu 18/20 chưa đo).
+- [ ] **external-dep** GĐ dự án + GĐ bán hàng ký (người duyệt khối
+  `projects` `approvers: []`); Pháp chế xác nhận XNQC/"Ngọc Linh"/rượu; liên
+  hệ tổ chức thật + kiểm tay 20 mẫu/lô do người làm.
+
+Ngoài phạm vi (WP11 còn lại, ghi để không cuốn vào): KD-A3 báo giá B2B/
+form B2B/catalog PDF; DA-06 hồ sơ gọi vốn (P2); DA-QA chấm thật (suite
+`da_qa` skeleton); combo quà 0,5–2 triệu; nối `org_prospects` → `leads`;
+link-checker retry 3 lần; bảng `product_compliance` riêng (dùng golden
+`xnqc_status`/`category` thay); đo tải duyệt giờ/tuần GĐ dự án; grant
+`roles.sql` hẹp cho 3 bảng mới.
+
 Nhánh `ai-infra`: M31 đợt gộp 3 (2026-10-12) — v4.2, v4.5i (v4.5 + tích hợp),
 v5.2, v7.1, v7.2, v8.0 đã gộp (44 bảng). Tích hợp khi gộp: bản đồ dữ liệu gộp 3
 chiều theo id luồng (CRM DF-18, cockpit DF-21, judge QA DF-22) + khai thêm DF-23
