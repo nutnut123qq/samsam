@@ -54,6 +54,24 @@ def test_test_job_postgres_and_commands(doc):
     assert "agent_eval.py --agent chatbot" not in runs
 
 
+def test_deterministic_suites_are_guardrail_and_co_khi():
+    """v4.5i: --deterministic (job test, mỗi push) chạy đúng suite active
+    có runner tất định (guardrail + co_khi); chatbot (RAG/LLM thật) + 10
+    khung skeleton KHÔNG chạy."""
+    import sys
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import agent_eval as ae
+
+    det = {n for n in ae.suite_names() if ae._deterministic(ae.load_suite(n))}
+    assert det == {"guardrail", "co_khi"}
+    assert not ae._deterministic(ae.load_suite("chatbot"))
+    skel = [n for n in ae.suite_names()
+            if ae.load_suite(n)["status"] == "skeleton"]
+    assert len(skel) == 10 and not any(
+        ae._deterministic(ae.load_suite(n)) for n in skel)
+    assert "guardrail + co_khi" in CI.read_text(encoding="utf-8")
+
+
 def test_test_job_has_no_secrets(doc):
     blob = yaml.safe_dump(doc["jobs"]["test"])
     assert "OPENROUTER" not in blob and "secrets." not in blob

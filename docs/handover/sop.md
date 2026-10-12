@@ -556,8 +556,9 @@ python scripts/eval_qa.py   # 12 câu hỏi questions.md qua RAG thật — exit
 
 ```
 python scripts/agent_eval.py --validate          # kiểm MỌI suite data/eval/suites/*.json (không DB/LLM)
-python scripts/agent_eval.py --deterministic     # validate + suite tất định (guardrail) — CI chạy mỗi push
+python scripts/agent_eval.py --deterministic     # validate + suite tất định (guardrail + co_khi) — CI chạy mỗi push
 python scripts/agent_eval.py --agent guardrail   # suite data/eval/suites/guardrail.json, không cần key — ghi eval_runs
+python scripts/agent_eval.py --agent co_khi --no-record   # 23 ca MẪU agent tra cứu cơ khí CK-A1 (luật, local)
 python scripts/agent_eval.py --agent chatbot     # 14 ca qua RAG thật (cần OPENROUTER_API_KEY) — tay/nightly
 python scripts/agent_eval.py --print-hash guardrail                  # cases_sha256 tính lại
 python scripts/agent_eval.py --propose-threshold guardrail --by "<tên>"   # đổi ngưỡng sau run FAIL
@@ -566,9 +567,12 @@ python scripts/deploy_gate.py --sha <SHA 40 hex> --approved-by "<tên>" [--hotfi
 ```
 
 - **Suite (v4.5)** `data/eval/suites/<agent>.json` = ca + ngưỡng (chốt
-  TRƯỚC khi chạy) + `owner_block` (khối nhận báo cáo) + `risk`. 12 suite:
-  `guardrail`, `chatbot` (active) + 10 khung agent QA khối (`skeleton` —
-  harness từ chối chạy tới khi có code agent). Mọi suite `frozen: false`,
+  TRƯỚC khi chạy) + `owner_block` (khối nhận báo cáo) + `risk`. 13 suite:
+  `guardrail`, `chatbot`, `co_khi` (active) + 10 khung agent QA khối
+  (`skeleton` — harness từ chối chạy tới khi có code agent). `co_khi` =
+  suite chấm agent tra cứu CK-A1 (`agents/ck_mat.py`); `ck_a6` = khung
+  agent QA A6 khối Cơ khí — khác vai trò, giữ cả hai; `co_khi` không nằm
+  trong `required_agents`. Mọi suite `frozen: false`,
   ca nhãn `dev_draft`: công ty gán nhãn + đóng băng bộ ca thật
   (`labeled_by`/`frozen_at`) là external-dep.
 - **Sửa ca** = tăng `version` + cập nhật `cases_sha256` bằng

@@ -326,6 +326,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Không xử lý dữ liệu cá nhân thật; chạy sau khi DPIA ký — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | (không) |
 
+### DF-18 — Nghiệm thu QA — giám khảo LLM của harness (agent_eval, v4.5)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-18 |
+| Module (code) | `scripts/agent_eval.py` |
+| Mục đích | Chấm ca lớp mềm khi nghiệm thu agent theo commit (cổng deploy F17.1) |
+| Dữ liệu | Ca kiểm thử (đề + rubric do dev/công ty soạn) và output của agent bị chấm (vd câu trả lời chatbot trên KB public) — chỉ ca có scorer judge |
+| Lớp | Xanh |
+| Chủ thể | Không có — ca kiểm thử tổng hợp, không dữ liệu khách thật; log FAIL qua `_mask_pii` |
+| Nơi lưu | Bảng `eval_runs` (số liệu + id ca FAIL; không lưu văn bản output/judge) |
+| Thời hạn lưu | Không giới hạn — lịch sử nghiệm thu theo commit (kiểm toán deploy) |
+| Bên nhận | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `ci_judge`, trần 1 USD/tháng) |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | Chỉ qua `pipelines.llm_gateway` agent `ci_judge` — không gọi client LLM trực tiếp (test khóa); Model judge phải KHÁC HỌ nhà sản xuất với model agent (allowlist họ; router/alias lạ → từ chối trước mọi lời gọi); CI mỗi push (`--deterministic`) chỉ chạy suite luật (guardrail + co_khi) — 0 lời gọi LLM; hiện chưa suite active nào có ca judge |
+| Căn cứ xử lý | Không xử lý dữ liệu cá nhân thật (ca kiểm thử tổng hợp) — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep) |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -349,6 +367,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-15 | Sao lưu và diễn tập khôi phục DB | Đỏ | cao | không | 2 |
 | DF-16 | Thu tin thị trường tầng A/B (intel — v7.0) | Xanh | thấp | có | 2 |
 | DF-17 | Nghiên cứu giả lập persona (v7.3) | Xanh | thấp | có | 0 |
+| DF-18 | Nghiệm thu QA — giám khảo LLM của harness (agent_eval, v4.5) | Xanh | thấp | có | 1 |
 
 ## 4. Tổng hợp GAP
 
@@ -371,6 +390,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-15] Nếu bật offsite cloud nước ngoài phải bổ sung TIA
 - [DF-16] Chưa che họ tên người trong tiêu đề/trích tin (NER)
 - [DF-16] Chưa có hạn lưu/purge `intel_items`
+- [DF-18] Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep)
 
 ## 5. Câu hỏi cho luật sư
 

@@ -408,6 +408,30 @@
       ],
       "legal_basis": "Không xử lý dữ liệu cá nhân thật; chạy sau khi DPIA ký — CẦN LUẬT SƯ XÁC NHẬN",
       "gaps": []
+    },
+    {
+      "id": "DF-18",
+      "name": "Nghiệm thu QA — giám khảo LLM của harness (agent_eval, v4.5)",
+      "modules": [
+        "scripts/agent_eval.py"
+      ],
+      "data": "Ca kiểm thử (đề + rubric do dev/công ty soạn) và output của agent bị chấm (vd câu trả lời chatbot trên KB public) — chỉ ca có scorer judge",
+      "class": "xanh",
+      "subjects": "Không có — ca kiểm thử tổng hợp, không dữ liệu khách thật; log FAIL qua `_mask_pii`",
+      "purpose": "Chấm ca lớp mềm khi nghiệm thu agent theo commit (cổng deploy F17.1)",
+      "storage": "Bảng `eval_runs` (số liệu + id ca FAIL; không lưu văn bản output/judge)",
+      "retention": "Không giới hạn — lịch sử nghiệm thu theo commit (kiểm toán deploy)",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider qua gateway (agent `ci_judge`, trần 1 USD/tháng)",
+      "cross_border": true,
+      "safeguards": [
+        "Chỉ qua `pipelines.llm_gateway` agent `ci_judge` — không gọi client LLM trực tiếp (test khóa)",
+        "Model judge phải KHÁC HỌ nhà sản xuất với model agent (allowlist họ; router/alias lạ → từ chối trước mọi lời gọi)",
+        "CI mỗi push (`--deterministic`) chỉ chạy suite luật (guardrail + co_khi) — 0 lời gọi LLM; hiện chưa suite active nào có ca judge"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân thật (ca kiểm thử tổng hợp) — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep)"
+      ]
     }
   ]
 }

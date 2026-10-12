@@ -11,7 +11,8 @@ MỌI nội dung rượu (`kb_filter.is_alcohol`), chuẩn hóa NFC + casefold g
 TPBVSK chưa XNQC (readiness soi gương view `sku_readiness`, parity test
 với view thật), claim theo đúng SKU, câu khuyến cáo chuẩn (miễn từ cấm
 đúng span), nhãn AI/quảng cáo, "Ngọc Linh", kênh chưa mở (warning). Luật
-trong `data/guardrail_rules.json` (bản dev). Bộ ca `data/eval/guardrail.jsonl`
+trong `data/guardrail_rules.json` (bản dev). Bộ ca (từ v4.5i: suite
+`data/eval/suites/guardrail.json` v2)
 132 ca (47 trap_critical, 11 trap_disclaimer), `agent_eval` ngưỡng 0.95 +
 3 kind bắt buộc 100%. **Lưu ý:** tới v4.2 `check_publish` chỉ chạy qua
 eval/test — CHƯA chặn luồng duyệt/đăng thật (`content.draft`,

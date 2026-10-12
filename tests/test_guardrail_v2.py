@@ -611,9 +611,11 @@ def test_tpbvsk_ad_without_claim_blocked_but_post_without_claim_ok():
 # ---------- W41.4 bộ ca có nhãn ----------
 
 def test_eval_cases_labeled_counts():
-    cases = [json.loads(line) for line in (DATA / "eval" / "guardrail.jsonl")
-             .read_text(encoding="utf-8").split("\n") if line.strip()]
-    doc, cases = cases[0], cases[1:]
+    """v4.5i: bộ ca nằm ở suite data/eval/suites/guardrail.json (format
+    v4.5) thay jsonl v4.1 — cùng 132 ca, cùng assert."""
+    doc = json.loads((DATA / "eval" / "suites" / "guardrail.json")
+                     .read_text(encoding="utf-8"))
+    cases = doc["cases"]
     assert "chờ pháp chế duyệt nhãn" in doc["_doc"].casefold()
     ids = [c["id"] for c in cases]
     assert len(ids) == len(set(ids))

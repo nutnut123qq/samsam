@@ -13,6 +13,256 @@ rượu trong persona_sim nay bị guardrail v4.1 loại kể cả panel ngườ
 `test_validate_specific_reasons`). Đang chạy song song: v4.2, v4.5, v5.2, v7.2,
 v9.2.
 
+## Checklist v4.5i-tich-hop-qa
+
+Khán giả/mục đích: M31 tích hợp sau gộp (worktree `D:\code\samsam-w40`, nhánh
+`infra-v45i` = `ai-infra` (M30 + v4.0/4.1/4.4/7.0/7.3/9.3/9.5) + merge
+`infra-v45` commit `c2be1ae`). Khi gộp, coordinator lấy bản v4.5 cho các khối
+XUNG ĐỘT của `scripts/agent_eval.py`, `tests/test_agent_eval.py`,
+`data/eval/config.json`; hunk không xung đột của v4.1/v9.5 vẫn còn → file
+đang LAI. Hiện trạng đo được (trước version): `data/eval/guardrail.jsonl`
+(132 ca v4.1 — 53 ca có `ctx` (key ⊆ channel/content_type/sku/is_ai/
+is_sponsored, luôn có channel), 55 ca có `code` (đều `expect: block`; 29 ca
+block không code; 48 ca pass), kind trap_critical 47/trap_block 29/edge 23/
+pass 22/trap_disclaimer 11) + `data/eval/co_khi.jsonl`
+(23 ca v9.5 — fact 17/high_risk 3/trap_no_data 3, field `expect_file`/
+`expect_page`) vẫn còn song song với `data/eval/suites/guardrail.json` (v4.5:
+version 1, CHỈ 39 ca cũ, ngưỡng 1.0 + `trap_block`, chấm `guardrail.check`
+— mất check_publish/code/3 kind của v4.1); `agent_eval.py` có `run_co_khi
+(cases)` (thiếu tham số `judge_model` mà `_score_and_record` truyền),
+`RUNNERS["co_khi"]` nhưng `RUNNER_SCORERS`/`SCORERS`/`DETERMINISTIC_RUNNERS`
+không có co_khi, `RULE_AGENTS` chết; `config.json` đã bỏ `agents` nhưng test
+v4.1/v9.5 còn đọc `load_config()["agents"]`. Targeted đo 2026-10-12: 8 FAIL
+(`test_agent_eval.py`: guardrail_cases_match_current_behavior,
+guardrail_run_records_pass, 4 test co_khi; `test_qa_harness.py`:
+migrated_cases_identical_to_v35, db_high_risk_fail_raises_red_alert_and_
+digest — `_guardrail_broken` chưa chép `guardrail_rules.json`/
+`golden_skus.json`). Sau version: MỘT harness sạch đọc `data/eval/suites/`
+duy nhất, guardrail 132 ca chấm như v4.1 trong format v4.5, co_khi thành
+suite thật, 0 file `data/eval/*.jsonl`, toàn bộ test xanh.
+
+Quy ước: hành vi ĐÃ CHỐT ở DONE v4.1-guardrail-v2 (W41.4: ngưỡng 0.95 + 3
+kind 100%, ca có `ctx` → `check_publish`, ca block có `code` chỉ pass khi
+chặn ĐÚNG code; kết quả chuẩn PASS 130/132 = 0.9848, 2 ca biên fail theo ý
+định), v9.5-co-khi (W95.7: runner luật `agents.ck_mat`, 0.9 + `trap_no_data`,
+KHÔNG vào `required_agents`; kết quả chuẩn PASS 21/23 = 0.913, ck-f01/ck-f02
+FAIL thật — KHÔNG sửa tài liệu/câu cho vừa) và v4.5-qa-harness (suite/hash/
+version/judge khác họ/report_route/qa_status/threshold+suite lock qua
+approval_queue/`--deterministic`/`--validate`) — tích hợp là CHUYỂN format,
+không đổi ý định nhãn. Dữ liệu ca chuyển NGUYÊN VĂN (`id`, `text`, `kind`,
+`expect`, `code`, `ctx`, `label_status`, `source`, `expect_file`,
+`expect_page` giữ byte-giống — so bằng script, không chép tay), chỉ THÊM
+`scorer` + `label: "dev_draft"`. Hash: `python scripts/agent_eval.py
+--print-hash <agent>` (canonical JSON v4.5), KHÔNG tự tính kiểu khác. KHÔNG
+bảng mới / KHÔNG alter schema (giữ câu "N bảng public" trong
+`docs/handover/kien-truc.md`). Ponytail: stdlib, 0 dep mới, không module
+eval thứ hai. Probe CLI luôn `--no-record` (không ghi `eval_runs`/
+`red_alerts`/`approval_queue` vào DB thật ngoài transaction test rollback).
+Test sửa: diff đối chiếu số assert trước/sau (gotcha v1.7); test khóa hành
+vi cũ đổi theo version (39 ca → 132, v1 → v2, ngưỡng 1.0 → 0.95) phải FLIP
+có lý do trong docstring, không xóa.
+
+External-dep (KHÔNG giả lập, KHÔNG tự đánh dấu): Pháp chế gán nhãn + đóng
+băng suite guardrail (`label_status` vẫn "chờ Pháp chế duyệt nhãn",
+`frozen: false`, `labeled_by: null`); Kỹ sư trưởng sửa bộ ca co_khi MẪU
+(≥5 câu tự viết) + đóng băng; ngưỡng chính thức 0.95/0.9 do chủ khối chốt
+(SOW mục 7 — bản dev); judge LLM thật (provider whitelist + ZDR, như v4.5);
+`ck_a6` vẫn skeleton tới khi có code agent A6.
+
+- [x] **W45i.1 Suite guardrail v2 = 132 ca v4.1 trong format v4.5** —
+  `data/eval/suites/guardrail.json`: `version` 2 (bộ ca đổi → bump), `cases`
+  = 132 ca của `data/eval/guardrail.jsonl` theo ĐÚNG thứ tự file (39 ca đầu
+  trùng 39 ca suite v1), mỗi ca thêm `scorer: "guardrail"` + `label:
+  "dev_draft"`, giữ nguyên `code`/`ctx`/`label_status`; `cases_sha256` từ
+  `--print-hash guardrail`; `owner_block` `legal_hr`, `qa_block`
+  `data_platform`, `risk` high, `runner` guardrail, `agent_model` rules,
+  `threshold` `{"min_pass_rate": 0.95, "must_pass_kinds": ["trap_block",
+  "trap_critical", "trap_disclaimer"]}`; `prompt_files` = 4 file v4.5 +
+  `data/guardrail_rules.json`, `data/golden_skus.json`,
+  `data/ruou_keywords.txt`, `pipelines/kb_filter.py` (như config v4.1);
+  `_doc` gộp nghĩa `_doc` jsonl v4.1 (giữ cụm "chờ Pháp chế duyệt nhãn",
+  "CHƯA ĐƯỢC CÔNG TY DUYỆT", ca biên được phép fail, 0.95 bản dev). Xóa
+  `data/eval/guardrail.jsonl`. `_validate_case` scorer guardrail kiểm thêm:
+  `ctx` (nếu có) là object, key ⊆ {channel, content_type, sku, is_ai,
+  is_sponsored} và có `channel`; `code` (nếu có) chuỗi không rỗng và chỉ đi
+  với `expect: "block"`.
+  - Boundary: `data/eval/suites/guardrail.json`, `data/eval/guardrail.jsonl`
+    (xóa), `scripts/agent_eval.py` (`_validate_case`)
+  - Gate: script so 132 ca suite vs `git show HEAD:data/eval/guardrail.jsonl`
+    (bỏ dòng `_doc`) → mọi field gốc bằng nhau, chỉ thêm scorer/label, in
+    `132 identical`; `python scripts/agent_eval.py --print-hash guardrail` ==
+    `cases_sha256`; `python scripts/agent_eval.py --agent guardrail
+    --no-record` exit 0, in `guardrail v2 PASS 130/132` (≥0.95) và KHÔNG có
+    dòng "ca bắt buộc FAIL"; ca FAIL chỉ thuộc kind `edge`; test validate:
+    ctx key lạ / thiếu channel / code với expect pass → lỗi
+  - Evidence: `evidence/v45i_eval.log`
+- [x] **W45i.2 Suite co_khi (CK-A1) thật, tách vai với ck_a6** —
+  `data/eval/suites/co_khi.json`: `agent` co_khi, `version` 1, 23 ca của
+  `data/eval/co_khi.jsonl` nguyên văn (giữ `expect_file`/`expect_page`) +
+  `scorer: "co_khi"`, `expect: null`, `label: "dev_draft"`; `owner_block`
+  `mechanical`, `qa_block` `data_platform`, `qa_agent` "Agent Nghiệm thu
+  (QA/Eval)" (harness chung chạy suite), `risk` medium, `status` active,
+  `runner` co_khi, `agent_model` rules, `judge` null, `threshold`
+  `{"min_pass_rate": 0.9, "must_pass_kinds": ["trap_no_data"]}`,
+  `prompt_files` = `agents/ck_mat.py` + 4 file `data/co_khi/mau/*.md` +
+  `data/eval/suites/co_khi.json`; `_doc` giữ "CHỜ KỸ SƯ TRƯỞNG SỬA", ghi rõ:
+  co_khi = suite chấm agent tra cứu CK-A1 (`agents.ck_mat`, luật, không
+  LLM); `ck_a6` = khung suite của agent QA A6 khối Cơ khí (skeleton, chấm
+  phiếu PASS/FAIL của A6) — KHÁC vai trò, giữ CẢ HAI. Xóa
+  `data/eval/co_khi.jsonl`. `SCORERS` thêm `co_khi`; `_validate_case`
+  scorer co_khi: kind fact|high_risk cần `expect_file` (file có thật trong
+  `data/co_khi/mau/`, không `..`) + `expect_page` int ≥1; `trap_no_data`
+  KHÔNG có 2 field đó; `expect` null. `config.json` `required_agents` vẫn
+  `["guardrail", "chatbot"]` (KHÔNG thêm co_khi).
+  - Boundary: `data/eval/suites/co_khi.json` (mới), `data/eval/co_khi.jsonl`
+    (xóa), `scripts/agent_eval.py`
+  - Gate: script so 23 ca vs `git show HEAD:data/eval/co_khi.jsonl` → `23
+    identical`; `python scripts/agent_eval.py --agent co_khi --no-record`
+    exit 0, in `co_khi v1 PASS 21/23`, chạy 2 lần stdout byte-giống; `ck_a6`
+    vẫn skeleton (`--agent ck_a6 --no-record` exit 1 `[refuse]`); test:
+    `"co_khi" not in load_config()["required_agents"]`; validate bắt
+    expect_file lạ/page 0/trap có expect_file
+  - Evidence: `evidence/v45i_eval.log`
+- [x] **W45i.3 `scripts/agent_eval.py` 1 bản sạch** — giữ NGUYÊN mọi tính
+  năng v4.5 (suite/hash/version lock, `preflight_db` chốt version + ngưỡng +
+  bộ ca qua `approval_queue`/`--propose-threshold`/`--propose-suite`, judge
+  khác họ + `parse_judge`, `report_route`, `report` red_alert/digest,
+  `qa_status`, `--deterministic`, `--validate`, `--print-hash`,
+  `--allow-dirty`, metadata `eval_runs`); runner guardrail: ca có `ctx` →
+  `guardrail.check_publish(text, **ctx)`, không có → `guardrail.check(text)`;
+  ca `expect: block` có `code` chỉ pass khi bị chặn VÀ `code` ∈ code các
+  violation; detail FAIL ghi code kỳ vọng + `code: detail` từng violation
+  (như v4.1, qua `_short`); runner `run_co_khi(cases, judge_model=None)`
+  (cùng chữ ký mọi runner); `RUNNER_SCORERS` = {guardrail: {guardrail},
+  chatbot: {...như v4.5}, co_khi: {co_khi}} và là nguồn duy nhất của tên
+  runner hợp lệ (`RUNNERS.keys() == RUNNER_SCORERS.keys()`);
+  `DETERMINISTIC_RUNNERS = ("guardrail", "co_khi")`; XÓA `RULE_AGENTS` và
+  mọi nhánh/hàm không còn caller; docstring module cập nhật (runner co_khi,
+  guardrail ctx/code, không nhắc `.jsonl`/`config["agents"]`).
+  - Boundary: `scripts/agent_eval.py`
+  - Gate: `grep -rnE '^(<<<<<<< |>>>>>>> )|^=======$' --exclude-dir=.git
+    --exclude-dir=evidence .` rỗng (loại `evidence/` vì log pytest có dòng
+    `=====` hợp lệ); `grep -n 'RULE_AGENTS\|\.jsonl\|\["agents"\]'
+    scripts/agent_eval.py` rỗng; `ruff check scripts/agent_eval.py` sạch;
+    `python scripts/agent_eval.py --validate` exit 0 in `[done] 13/13 suite
+    hợp lệ` (guardrail 132 ca, co_khi 23 ca); `python scripts/agent_eval.py
+    --deterministic --no-record` exit 0 chạy guardrail + co_khi, KHÔNG chạy
+    chatbot/skeleton; test: `RUNNERS.keys() == RUNNER_SCORERS.keys()`, mọi
+    runner gọi được với `(cases, None)`
+  - Evidence: `evidence/v45i_eval.log`
+- [x] **W45i.4 Hợp nhất test, không mất assert** — `tests/test_agent_eval.py`:
+  bỏ mọi `load_config()["agents"]`/`_rows("*.jsonl")`, đọc ngưỡng/ca từ
+  `ae.load_suite(...)`; giữ assert v4.1 (ngưỡng 0.95, 3 kind bắt buộc 100%,
+  ca block có code bị chặn đúng code, `test_removing_dieu_tri_fails` chép
+  `claims_whitelist.json` + `guardrail_rules.json` + `golden_skus.json`) và
+  v9.5 (co_khi shape/tất định/bẫy fail/CLI ×2 byte-giống); FLIP test khóa
+  v1/39 ca. `tests/test_qa_harness.py`: `_guardrail_broken` chép thêm
+  `guardrail_rules.json` + `golden_skus.json` (dây chuyền v4.1);
+  `test_migrated_cases_identical_to_v35` giữ fingerprint `OLD_GUARDRAIL` trên
+  39 ca ĐẦU + assert tổng 132 + `glob("*.jsonl") == []`;
+  `test_active_suites_metadata` flip ngưỡng 0.95 + 3 kind, thêm metadata
+  co_khi; đếm suite 12 → 13 (`[ok]` ×13, `[done] 13/13 suite hợp lệ` ở
+  test validate + deterministic); `"guardrail v1 PASS 39/39"` → `"guardrail
+  v2 PASS 130/132"`, title `"QA FAIL guardrail v1"` → `v2`; deterministic
+  assert ghi 2 row (guardrail + co_khi). `tests/test_guardrail_v2.py::
+  test_eval_cases_labeled_counts` + `tests/test_handover_docs.py::
+  test_guardrail_v2_tests_and_case_counts_in_phu_luc_d` đọc
+  `suites/guardrail.json` thay jsonl (giữ đủ assert).
+  - Boundary: `tests/test_agent_eval.py`, `tests/test_qa_harness.py`,
+    `tests/test_guardrail_v2.py`, `tests/test_handover_docs.py`,
+    `tests/test_ci_workflow.py` (chỉ nếu W45i.6 cần)
+  - Gate: script đếm assert THEO TỪNG `def test_` trên `git show
+    infra-v41|infra-v45|infra-v95|ai-infra:tests/test_agent_eval.py` (đo
+    2026-10-12: v4.1 89, v4.5 90, v9.5 106, ai-infra 108 dòng; hợp tên = 30
+    test; Σ max-theo-tên = 112; HEAD lai = 111) → tập tên `def test_` sau
+    version ⊇ 30 tên đó, mỗi test có số assert ≥ max cùng tên qua 4 nhánh
+    (trừ test FLIP có lý do trong docstring), tổng dòng `assert` ≥ 112;
+    `tests/test_qa_harness.py` ≥ 181 dòng assert; `tests/test_guardrail_v2.py`
+    ≥ 128; `tests/test_handover_docs.py` ≥ 28 (in bảng đếm trước/sau theo
+    file + theo test vào evidence); `python -m pytest -q tests/test_agent_eval.py
+    tests/test_qa_harness.py tests/test_guardrail_v2.py
+    tests/test_handover_docs.py tests/test_ci_workflow.py
+    tests/test_deploy_gate.py` xanh, DB test **0 skipped**
+  - Evidence: `evidence/v45i_pytest.log`
+- [x] **W45i.5 config.json + docs trỏ suite mới** — `data/eval/config.json`
+  format v4.5 (KHÔNG key `agents`, KHÔNG `freeze` — đã ở
+  `pipelines/freeze.py`, `tests/test_freeze.py` + `test_agent_eval.py`
+  khóa; giữ `required_agents` ["guardrail",
+  "chatbot"], `approvers` []), `_doc` thêm: ngưỡng guardrail 0.95 + 3 kind
+  bắt buộc nằm trong `suites/guardrail.json` (bản dev, chờ công ty chốt);
+  co_khi không bắt buộc deploy (bộ MẪU chưa duyệt). Docs: `docs/handover/
+  phu-luc-d.md` (mục Guardrail v2: đường dẫn `data/eval/suites/
+  guardrail.json`, 132 ca, bảng kind giữ số; thêm dòng suite co_khi 23 ca),
+  `docs/handover/sop.md` (mục eval ~dòng 555-580: thêm lệnh `--agent co_khi
+  --no-record`; chú thích `--deterministic` "(guardrail)" → "(guardrail +
+  co_khi)"; "12 suite: guardrail, chatbot (active) + 10 khung" → "13 suite:
+  guardrail, chatbot, co_khi (active) + 10 khung", nói rõ co_khi ≠ ck_a6), `docs/handover/kien-truc.md`
+  (chỉ nếu đang nhắc jsonl/sai runner — KHÔNG đổi số bảng), `STATUS.md`
+  dòng nhắc `guardrail.jsonl`.
+  - Boundary: `data/eval/config.json`, `docs/handover/phu-luc-d.md`,
+    `docs/handover/sop.md`, `docs/handover/kien-truc.md`, `STATUS.md`
+  - Gate: `grep -rn 'guardrail\.jsonl\|co_khi\.jsonl\|chatbot\.jsonl'
+    --include=*.md --include=*.py --include=*.json --include=*.yml .` chỉ còn
+    trong DONE.md (lịch sử) + `_doc` suite nói "chuyển từ"; `python -c`
+    load config.json: không key `agents`, `required_agents` đúng 2 agent;
+    `python -m pytest -q tests/test_handover_docs.py tests/test_legal_docs.py
+    tests/test_deploy_gate.py` xanh
+  - Evidence: `evidence/v45i_pytest.log`
+- [x] **W45i.6 CI tất định gồm guardrail + co_khi** — `.github/workflows/
+  ci.yml` job `test` giữ bước `python scripts/agent_eval.py
+  --deterministic` (chạy mọi suite active có runner ∈
+  `DETERMINISTIC_RUNNERS` → guardrail + co_khi; chatbot vẫn chỉ ở job
+  `eval` có key); comment đầu file cập nhật nếu đang liệt kê runner.
+  `tests/test_ci_workflow.py` thêm assert: `ae._deterministic` đúng cho
+  suite guardrail + co_khi, sai cho chatbot + 10 skeleton.
+  - Boundary: `.github/workflows/ci.yml`, `tests/test_ci_workflow.py`
+  - Gate: `python -m pytest -q tests/test_ci_workflow.py` xanh;
+    `python scripts/agent_eval.py --deterministic --no-record` exit 0, output
+    có `guardrail v2 PASS` và `co_khi v1 PASS`, không có `[done] chatbot`
+  - Evidence: `evidence/v45i_eval.log`
+- [x] **W45i.7 Gate chung** — targeted ×3 (`python -m pytest -q
+  tests/test_agent_eval.py tests/test_qa_harness.py tests/test_guardrail_v2.py
+  tests/test_handover_docs.py tests/test_ci_workflow.py
+  tests/test_deploy_gate.py tests/test_legal_docs.py` — 3 lần liên tiếp
+  xanh, chạy TUẦN TỰ, đọc output tới exit); full `python -m pytest -q` ĐÚNG 1
+  lần: 0 failed/0 error, passed ≥ baseline coordinator (ai-infra 1682 + test
+  v4.5), DB test 0 skipped; `ruff check .` sạch; `python -m py_compile
+  scripts/agent_eval.py`; `ls data/eval/*.jsonl` không có file; grep marker
+  xung đột rỗng; `git status --short` chỉ file trong Boundary các mục trên
+  (+ `evidence/v45i_*.log`, `git add -f` vì `*.log` gitignore).
+  - Boundary: `evidence/v45i_eval.log`, `evidence/v45i_pytest.log`
+  - Gate: như trên, mọi lệnh exit 0
+  - Evidence: `evidence/v45i_pytest.log`
+  - Ghi chú worker (kết quả thật): `--validate` 13/13; guardrail v2 PASS
+    130/132 (chỉ `v41-edge-01/02` kind edge FAIL), co_khi v1 PASS 21/23
+    ×2 byte-giống, ck_a6 `[refuse]`; 132 + 23 ca identical; assert
+    test_agent_eval 125 (≥112, 0 test dưới max nhánh), qa_harness 193,
+    guardrail_v2 128, handover_docs 29, ci_workflow 27. Targeted: vòng 1
+    lần 2 ERROR `LockNotAvailable` (setup DB, máy chạy song song — chưa
+    xác minh nguyên nhân) → vòng 2 ×3 xanh, vòng 3 ×3 xanh (289 passed).
+    Full lần 1: 3 FAIL — (a) `test_data_flow_map` egress
+    `scripts/agent_eval.py` (import `llm_gateway` cho judge có từ v4.5
+    merge) → DÂY CHUYỀN "toàn bộ test xanh": thêm DF-18 vào
+    `data/data_flow_map.json` + sinh lại `docs/legal/DPIA-nhap.md`,
+    `TIA-nhap.md` (`dpia_draft.py`, `--check` khớp) — NGOÀI Boundary đã
+    liệt kê; (b) `test_db_backup` ×2: DB `samsam_w40` thiếu 6 bảng M31 →
+    `python scripts/apply_schema.py` (môi trường, không đổi code). Full
+    vòng 3: 1764 passed, 3 skipped (`test_dr_drill` — không có
+    docker/image postgres, môi trường máy; DB test khác 0 skipped).
+
+External-dependency (không treo version): Pháp chế gán nhãn/đóng băng suite
+guardrail; Kỹ sư trưởng sửa + đóng băng bộ co_khi MẪU; chủ khối chốt ngưỡng
+chính thức; judge LLM thật. Someday: cải thiện xếp hạng BM25 ck_mat cho
+ck-f01/ck-f02 (v9.5 ghi), 2 ca biên guardrail `edge` (v4.1 ghi).
+
+v4.5i-tich-hop-qa đóng 2026-10-12 (nghiệm thu đợt 1 → PASS sau sửa; có gián
+đoạn giới hạn phiên, chạy lại từ đầu — contract nháp lần trước được rà + sửa 6
+điểm thay vì chèn lần 2; worker tự báo đã dùng `git checkout-index -f` 1 lần).
+Coordinator chạy lại ruff + `--validate` 13/13 + guardrail v2 130/132 + co_khi
+21/23; worker full 1764 passed. 132 ca guardrail + 23 ca co_khi chuyển nguyên văn
+sang suite; `agent_eval.py` 1 bản sạch; không còn data/eval/*.jsonl. Luồng judge
+LLM khai DF-18 (sẽ đánh số lại khi gộp).
+
 ## Checklist v4.0-director-framework
 
 ## Checklist v4.5-qa-harness

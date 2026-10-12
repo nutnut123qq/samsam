@@ -55,9 +55,14 @@ def _fp(rows) -> str:
 # --- W45.1 suite format + chuyển dữ liệu ------------------------------------
 
 def test_migrated_cases_identical_to_v35():
+    """v4.5i: suite guardrail v2 = 132 ca v4.1 — 39 ca ĐẦU giữ nguyên dấu
+    vân tay v3.5 (không mất/đổi ca cũ), tổng 132."""
     g = ae.load_suite("guardrail")["cases"]
-    assert (len(g), _fp([[c["id"], c["kind"], c["text"], c["expect"]]
-                         for c in g])) == OLD_GUARDRAIL
+    assert len(g) == 132
+    assert (OLD_GUARDRAIL[0], _fp([[c["id"], c["kind"], c["text"],
+                                    c["expect"]]
+                                   for c in g[:OLD_GUARDRAIL[0]]])) == \
+        OLD_GUARDRAIL
     c = ae.load_suite("chatbot")["cases"]
     assert (len(c), _fp([[x["id"], x["kind"], x["text"]] for x in c])) == \
         OLD_CHATBOT
@@ -70,12 +75,31 @@ def test_migrated_cases_identical_to_v35():
 
 
 def test_active_suites_metadata():
+    """FLIP v4.5i: ngưỡng guardrail 1.0 + trap_block (v4.5, 39 ca) →
+    0.95 + 3 kind bắt buộc (v4.1 W41.4, 132 ca). Thêm suite co_khi (CK-A1,
+    v9.5) — khác vai trò ck_a6 (khung agent QA A6)."""
     g, c = ae.load_suite("guardrail"), ae.load_suite("chatbot")
     assert (g["owner_block"], g["qa_block"], g["risk"], g["runner"],
             g["agent_model"]) == ("legal_hr", "data_platform", "high",
                                   "guardrail", "rules")
-    assert g["threshold"] == {"min_pass_rate": 1.0,
-                              "must_pass_kinds": ["trap_block"]}
+    assert g["threshold"] == {"min_pass_rate": 0.95,
+                              "must_pass_kinds": ["trap_block",
+                                                  "trap_critical",
+                                                  "trap_disclaimer"]}
+    assert g["version"] == 2
+    for f in ("data/guardrail_rules.json", "data/golden_skus.json",
+              "data/ruou_keywords.txt", "pipelines/kb_filter.py"):
+        assert f in g["prompt_files"], f
+    k = ae.load_suite("co_khi")
+    assert (k["owner_block"], k["qa_block"], k["risk"], k["runner"],
+            k["agent_model"], k["status"], k["judge"]) == (
+        "mechanical", "data_platform", "medium", "co_khi", "rules",
+        "active", None)
+    assert k["threshold"] == {"min_pass_rate": 0.9,
+                              "must_pass_kinds": ["trap_no_data"]}
+    assert "agents/ck_mat.py" in k["prompt_files"]
+    assert "ck_a6" in k["_doc"] and "CK-A1" in k["_doc"]
+    assert ae.load_suite("ck_a6")["status"] == "skeleton"
     assert (c["owner_block"], c["qa_block"], c["risk"], c["runner"],
             c["agent_model"]) == ("marketing", "data_platform", "high",
                                   "chatbot", "env:OR_CHAT_MODEL")
@@ -203,15 +227,17 @@ def test_validate_suite_rejects(mutate, needle):
 def test_validate_cli_all_suites(capsys):
     assert ae.main(["--validate"]) == 0
     out = capsys.readouterr().out
-    assert len(re.findall(r"^\[ok\] ", out, re.MULTILINE)) == 12
-    assert "[done] 12/12 suite hợp lệ" in out
+    assert len(re.findall(r"^\[ok\] ", out, re.MULTILINE)) == 13
+    assert "[done] 13/13 suite hợp lệ" in out
+    assert re.search(r"^\[ok\] guardrail v2 .* 132 ca$", out, re.MULTILINE)
+    assert re.search(r"^\[ok\] co_khi v1 .* 23 ca$", out, re.MULTILINE)
 
 
 # --- W45.7 khung 10 agent QA ------------------------------------------------
 
 def test_skeleton_suites_cover_all_blocks():
     names = ae.suite_names()
-    assert set(names) == set(SKELETONS) | {"guardrail", "chatbot"}
+    assert set(names) == set(SKELETONS) | {"guardrail", "chatbot", "co_khi"}
     suites = {n: ae.load_suite(n) for n in names}
     assert {s["qa_block"] for s in suites.values()} == set(director.BLOCKS)
     owners = [suites[n]["owner_block"] for n in SKELETONS]
@@ -439,11 +465,13 @@ def test_deterministic_skips_llm_runners(env, monkeypatch, capsys):
                         lambda *a, **k: pytest.fail("LLM"))
     assert ae.main(["--deterministic", "--no-record"]) == 0
     out = capsys.readouterr().out
-    assert "[done] 12/12 suite hợp lệ" in out
-    assert "guardrail v1 PASS 39/39" in out and "[done] chatbot" not in out
+    assert "[done] 13/13 suite hợp lệ" in out
+    assert "guardrail v2 PASS 130/132" in out and "[done] chatbot" not in out
+    assert "co_khi v1 PASS 21/23" in out and "[done] ck_a6" not in out
     assert ae.main(["--deterministic"]) == 0
-    [row] = _inserted(env)
-    assert row["agent"] == "guardrail" and row["commit_sha"] == SHA
+    rows = _inserted(env)
+    assert [r["agent"] for r in rows] == ["co_khi", "guardrail"]
+    assert all(r["commit_sha"] == SHA for r in rows)
 
 
 # --- DB thật (schema tạm, rollback) ------------------------------------------
@@ -520,7 +548,9 @@ def _n_runs(db) -> int:
 def _guardrail_broken(tmp_path, monkeypatch):
     """Bỏ 'điều trị' khỏi banned list → guardrail suite FAIL (F17.1)."""
     src = guardrail.DATA_DIR
-    shutil.copy(src / "claims_whitelist.json", tmp_path)
+    for f in ("claims_whitelist.json", "guardrail_rules.json",
+              "golden_skus.json"):  # v4.1: guardrail đọc thêm file luật
+        shutil.copy(src / f, tmp_path)
     words = (src / "banned_words.txt").read_text(encoding="utf-8")
     kept = [w for w in words.split("\n") if w.strip() != "điều trị"]
     (tmp_path / "banned_words.txt").write_text("\n".join(kept),
@@ -558,11 +588,14 @@ def test_db_run_records_full_metadata(dbenv):
      n) = row[0]
     assert sha == SHA and ts is not None and model == "rules"
     assert re.fullmatch(r"[0-9a-f]{12}", pv)
-    assert ver == 1 and re.fullmatch(r"[0-9a-f]{64}", s_sha)
+    assert ver == suite["version"] == 2 and re.fullmatch(r"[0-9a-f]{64}",
+                                                          s_sha)
     assert s_sha == ae.sha256_json(suite["cases"]) == suite["cases_sha256"]
     assert t_sha == ae.sha256_json(suite["threshold"])
-    assert owner == "legal_hr" and judge is None and failed == []
-    assert passed is True and n == 39
+    # 2 ca biên kind edge fail theo ý định (DONE v4.1) — vẫn PASS ≥ 0.95
+    assert owner == "legal_hr" and judge is None and failed == [
+        "v41-edge-01", "v41-edge-02"]
+    assert passed is True and n == 132
     assert _one(db, "select count(*) from red_alerts") == 0
 
 
@@ -578,8 +611,10 @@ def test_db_chatbot_model_is_runtime_env(dbenv, monkeypatch):
 
 
 def test_db_same_version_other_hash_refused(dbenv, capsys):
+    """v4.5i: version hiện tại đọc từ suite (guardrail v2) — không cứng 1."""
     db = dbenv.db
-    _insert_run(db, passed=True, ver=1, s_sha="0" * 64)
+    ver = ae.load_suite("guardrail")["version"]
+    _insert_run(db, passed=True, ver=ver, s_sha="0" * 64)
     _insert_run(db, passed=True, ver=None, s_sha=None)   # row v3.5 cũ
     assert ae.main(["--agent", "guardrail"]) == 1
     out = capsys.readouterr().out
@@ -651,7 +686,8 @@ def test_db_other_agent_rows_do_not_lock(dbenv, capsys):
     không chặn guardrail."""
     db = dbenv.db
     other = {"min_pass_rate": 0.5, "must_pass_kinds": ["x"]}
-    _insert_run(db, passed=True, ver=1, s_sha="0" * 64, agent="chatbot")
+    ver = ae.load_suite("guardrail")["version"]   # CÙNG version guardrail
+    _insert_run(db, passed=True, ver=ver, s_sha="0" * 64, agent="chatbot")
     _insert_run(db, passed=False, th_sha=ae.sha256_json(other),
                 s_sha="2" * 64, ver=None, agent="chatbot")
     assert ae.main(["--agent", "guardrail"]) == 0
@@ -676,13 +712,14 @@ def test_db_suite_change_after_fail_needs_override(dbenv, tmp_path,
     đúng → vẫn [refuse] tới khi --propose-suite + override_qa + duyệt."""
     db, tx = dbenv.db, dbenv.tx
     old = ae.load_suite("guardrail")
-    _insert_run(db, passed=False, ver=1, s_sha=old["cases_sha256"],
+    v = old["version"]
+    _insert_run(db, passed=False, ver=v, s_sha=old["cases_sha256"],
                 th_sha=ae.sha256_json(old["threshold"]))
     d = _copy_suites(tmp_path, monkeypatch)
 
     def bump(s):
         mutate(s)
-        s["version"] = 2
+        s["version"] = v + 1
         _rehash(s)
     new = _edit(d / "guardrail.json", bump)
     assert ae.validate_suite(new, d / "guardrail.json") == []
@@ -702,7 +739,7 @@ def test_db_suite_change_after_fail_needs_override(dbenv, tmp_path,
     assert (status, qa, block) == ("pending", "fail", "legal_hr")
     p = json.loads(payload)
     assert p["cases_sha256"] == new["cases_sha256"]
-    assert (p["version"], p["n_cases"]) == (2, len(new["cases"]))
+    assert (p["version"], p["n_cases"]) == (v + 1, len(new["cases"]))
 
     ok, msg = aq.decide(tx, qid, "Truong Khoi Gia Lap (test)", "approved")
     assert not ok and "QA FAIL" in msg
@@ -718,13 +755,14 @@ def test_db_suite_change_after_fail_needs_override(dbenv, tmp_path,
     assert "[refuse]" not in capsys.readouterr().out
     assert db.execute("select suite_version, suite_sha256 from eval_runs"
                       " order by id desc limit 1").fetchone() == (
-        2, new["cases_sha256"])
+        v + 1, new["cases_sha256"])
     assert _one(db, "select count(*) from decisions where queue_id = %s"
                     " and kind = 'override_qa'", (qid,)) == 1
 
     # đã duyệt bản Y — sửa tiếp sang Z (bump v3) không có mục duyệt → refuse
     _edit(d / "guardrail.json",
-          lambda s: (s["cases"].pop(), s.update(version=3), _rehash(s)))
+          lambda s: (s["cases"].pop(), s.update(version=v + 2),
+                     _rehash(s)))
     assert ae.main(["--agent", "guardrail"]) == 1
     assert "bộ ca guardrail đổi sau run FAIL" in capsys.readouterr().out
 
@@ -741,7 +779,7 @@ def test_db_high_risk_fail_raises_red_alert_and_digest(dbenv, tmp_path,
     assert len(rows) == 1
     src, title, detail, rcpt, err = rows[0]
     assert src == "qa:guardrail" and rcpt == [] and err
-    assert title == "QA FAIL guardrail v1"
+    assert title == "QA FAIL guardrail v2"
     assert detail["owner_block"] == "legal_hr"
     assert "core-dieu-tri" in detail["failed_cases"]
     assert detail["commit"] == SHA[:12]
@@ -757,7 +795,7 @@ def test_db_high_risk_fail_raises_red_alert_and_digest(dbenv, tmp_path,
     _, other = director.run(tx, "sales", now=now, out_dir=tmp_path)
     db.execute("reset role")
     sec = text.split("## Nghiệm thu QA hôm nay")[1].split("##")[0]
-    assert "`guardrail` v1 FAIL" in sec and "core-dieu-tri" in sec
+    assert "`guardrail` v2 FAIL" in sec and "core-dieu-tri" in sec
     assert f"commit {SHA[:7]}" in sec
     assert "guardrail" not in other.split("## Nghiệm thu QA hôm nay")[1
                                                                       ].split(
