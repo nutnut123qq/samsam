@@ -14,6 +14,7 @@ chat lẫn embeddings) + Streamlit.
 | Setup | `pip install -r requirements.txt` |
 | Crawl | `python -m crawler.collect` |
 | Tin thị trường (v7.0, WP09) | `python -m crawler.intel --run --source <id> [--max-requests N]` (RSS/Atom tầng A/B → `intel_items`; robots + ≥1s/host + chặn cứng tầng C/sàn/MXH; nguồn `data/intel_sources.json` chờ duyệt) · `--report` |
+| Đối thủ / Trend / MXH (v7.2, WP09) | `python -m ingest.intel_import --competitor F` · `--trend F [--seed KW]` · `--social F --channel fanpage\|zalo_oa\|tiktok` (file NHẬP TAY, kiểm toàn file trước connect, idempotent sha256; social cần `INTEL_HASH_SALT`) · `python scripts/intel_weekly.py [--week YYYY-MM-DD] [--llm]` (báo cáo tuần tất định, chỉ đọc) |
 | Ingest | `python -m ingest.embed_store` |
 | DB lõi WS1 | `python scripts/apply_schema.py` → `python -m ingest.core_store` |
 | Role DB + duyệt (v3.4) | `python scripts/apply_schema.py --roles` (schema + `docs/roles.sql`: `agent_writer`/`app_human`) · `python -m pipelines.store --verify-log` (kiểm hash chain `agent_action_log`) |
@@ -46,7 +47,9 @@ chat lẫn embeddings) + Streamlit.
   append-only/golden_discrepancies — upsert, không xóa trắng, chỉ đọc
   products); `market_csv` nạp file xuất Seller Center vào staging
   (market_snapshots/market_rows/market_alerts — chỉ đọc golden, không
-  ghi sàn/giá, không PII người mua)
+  ghi sàn/giá, không PII người mua); `intel_import` (v7.2) nạp file
+  intel nhập tay (đối thủ/Google Trends/comment kênh sở hữu) vào 5 bảng
+  intel v7.2 — không request mạng, chỉ đọc golden, bỏ cột định danh
 - `pipelines/` — content draft + guardrail check (claim whitelist + banned words)
 - `app/` — Streamlit demo (3 tab: Chat, Content Studio, Chưa trả lời)
 - `data/` — jsonl dump, `claims_whitelist.json`, `banned_words.txt`

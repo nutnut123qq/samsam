@@ -6,6 +6,407 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+## Checklist v7.2-doi-thu-trend-social
+
+Khán giả/mục đích: WP09 (`ctx/pmo.md` dòng `| WP09`) — 3 agent "Competitor
+Tracker", "Trend", "Social Listening" P1 (`ctx/final_plans.json`
+intel/plan/agents) + báo cáo tuần intel. Nền v7.0 đã có `crawler/intel.py`
+(collector RSS tầng A/B, `HARD_BLOCK`, bảng `intel_items`) — version này
+KHÔNG viết collector thứ hai, KHÔNG gửi request mạng nào: mọi dữ liệu đối
+thủ trên sàn / Google Trends / comment-inbox kênh sở hữu đi vào bằng FILE
+XUẤT TAY do Quản lý MXH chuẩn bị. Sau version: `python -m
+ingest.intel_import --competitor F | --trend F [--seed KW] | --social F
+--channel C` kiểm toàn file TRƯỚC khi connect (lỗi → exit 1, 0 dòng), nạp
+idempotent theo sha256 file (mẫu `ingest/market_csv.py` v3.3);
+`python scripts/intel_weekly.py [--week YYYY-MM-DD]` in báo cáo tuần
+Markdown TẤT ĐỊNH (đối thủ lệch giá golden, trend + spike, đếm social theo
+nhãn, tin `intel_items` mới theo chủ đề). Tầng P1-Shadow: không trả lời
+comment/inbox (đó là A1), không đăng, không gửi ai, không có đường sang
+`content_drafts`.
+
+Quy ước: ponytail — 1 module nạp `ingest/intel_import.py` (3 loại file, 1
+bảng import chung cho idempotency) + 1 script báo cáo. Tái dùng (import,
+KHÔNG chép): `ingest.market_csv._table`/`_TableError`/`_to_int`/`_clean`/
+`MAX_FILE_BYTES` (đọc CSV/XLSX lười + trần dòng/cột + số VND),
+`ingest.golden_store.TODAY_VN`/`CHANNELS` + bảng `sku_master`/`price_list`
+(CHỈ ĐỌC), `pipelines.pii._mask_pii`, `pipelines.kb_filter.is_alcohol`,
+`pipelines.llm_gateway.is_health_question`/`chat`/`GatewayError`,
+`pipelines.guardrail.check`, `crawler.intel.load_sources` (cờ
+`llm.enabled` dùng chung — cùng chờ Pháp chế), `crawler.intel.HARD_BLOCK`/
+`is_blocked` (chỉ để test, không request). Không dep mới (CẤM `pytrends`;
+`pandas` không cần — stdlib `csv`/`statistics.median`/`hashlib`); không sửa
+`requirements.txt`. Schema chỉ THÊM (`create table if not exists`). Mọi
+`psycopg.connect` có `connect_timeout` (guard
+`tests/test_connect_timeout_guard.py`); ghi = 1 transaction + `conn.commit()`
+tường minh (gotcha savepoint v2.1); print tiếng Việt → UTF-8 guard sau
+imports; lỗi file chỉ nêu số dòng + tên cột, KHÔNG in giá trị ô; text từ
+file ngoài: cắt `PRE_MAX` TRƯỚC `_mask_pii` (gotcha DoS v1.4). CLI nhiều op
+→ `ap.error` exit 2 trước khi connect (gotcha v2.2). Test DB thật = schema
+tạm + ROLLBACK (mẫu fixture `db` trong `tests/test_golden_store.py`), 0
+skipped. Fixture tổng hợp ghi rõ "MAU" trong tên file; tên đối thủ trong
+fixture là nhãn giả (`DOI-THU-MAU-1`...) — KHÔNG gán giá bịa cho công ty
+thật (K5/Trimico/KGC). Không file runtime mới trong `data/` (evidence bằng
+`tee`). Thêm bảng: KHÔNG assert đếm cứng số bảng; tên bảng mới vào
+`docs/handover/kien-truc.md` + `deploy/cloud/README.md`, câu "N bảng" =
+`grep -c "^create table if not exists" docs/schema.sql` (25 → 30 tại
+worktree này).
+
+- [x] **W72.1 Bảng v7.2 (`docs/schema.sql` append block "v7.2 đối thủ /
+  trend / social (WP09)")** — comment tiếng Việt: chỉ nhập tay, không cào
+  sàn; không cột định danh người dùng; mọi con số có nguồn. 5 bảng:
+  `intel_imports` (`id bigint identity pk`, `kind text not null check (kind
+  in ('competitor','trend_timeline','trend_related','social'))`, `channel
+  text` (social), `file_name text not null` (basename), `file_sha256 text
+  not null unique`, `row_count int not null`, `imported_at timestamptz not
+  null default now()`); `competitor_observations` (`id`, `import_id bigint
+  not null references intel_imports(id)`, `row_no int not null`,
+  `competitor text not null`, `channel text not null check (channel in
+  ('shopee','tiktok','lazada','tiki','web','khac'))`, `product_name text
+  not null`, `sku_key text` (SKU tương đương của mình, không FK — mẫu
+  `market_rows`), `price_vnd bigint not null check (price_vnd > 0)`,
+  `promo_price_vnd bigint check (promo_price_vnd > 0)`, `promo_text text
+  check (char_length(promo_text) <= 200)`, `rating numeric(2,1) check
+  (rating between 0 and 5)`, `review_count int check (review_count >= 0)`,
+  `observed_on date not null`, `source_ref text not null check
+  (char_length(source_ref) between 1 and 500)` (URL hoặc "ảnh chụp
+  <tên file>"), `unique (import_id, row_no)`); `trends_weekly` (`id`,
+  `import_id` FK, `query_id text not null` (= sha256 file [:16] — cùng
+  thang 0–100 trong 1 file), `keyword text not null`, `anchor text not
+  null`, `geo text not null`, `week date not null`, `value smallint not null
+  check (value between 0 and 100)`, `unique (query_id, keyword, geo,
+  week)`); `trends_related` (`id`, `import_id` FK, `seed text not null`,
+  `section text not null check (section in ('top','rising'))`, `query text
+  not null check (char_length(query) <= 200)`, `value text not null`
+  ("100" | "+250%" | "Breakout"), `flags text[] not null default '{}'`
+  (`ruou`)); `social_mentions` (`id`, `import_id` FK, `channel text not null
+  check (channel in ('fanpage','zalo_oa','tiktok'))`, `kind text not null
+  check (kind in ('comment','inbox','review'))`, `posted_at timestamptz not
+  null`, `msg_hash text not null unique` (sha256 có MUỐI — dedup giữa các
+  file xuất chồng ngày), `labels text[] not null check (cardinality(labels)
+  > 0)`, `sensitive boolean not null`, `excerpt text check
+  (char_length(excerpt) <= 200)`). KHÔNG có cột tên/ID/SĐT/email/profile
+  người dùng ở bất kỳ bảng nào.
+  - Boundary: `docs/schema.sql` (chỉ append), `tests/test_intel_import.py`
+    (mới)
+  - Gate: `python scripts/apply_schema.py` ×2 exit 0 trên samsam_infra (in
+    30 bảng); `grep -c "^create table if not exists" docs/schema.sql` = 30;
+    block v7.2 không trúng `grep -niE "\b(author|user_id|user_name|ten_nguoi|sdt|phone|email|profile|id_nguoi_dung)\w* +(text|bigint)"`;
+    test đọc `docs/schema.sql`: tập cột `social_mentions` ∩ {author*,
+    user*, name, phone, email, profile} = ∅; test DB thật (rollback):
+    insert tay `price_vnd 0`, `rating 5.5`, `value 101`, `channel
+    'facebook'` (social), `labels '{}'` → mỗi cái `CheckViolation`;
+    `msg_hash` trùng → `UniqueViolation`
+  - Evidence: `evidence/v72_intel.log`, `evidence/v72_pytest.log`
+- [x] **W72.2 Competitor Tracker — nạp CSV đối thủ nhập tay** —
+  `ingest/intel_import.py` (mới). Header chuẩn (ASCII snake, template do
+  Quản lý MXH ghi/xuất): bắt buộc `doi_thu, kenh, ten_san_pham, gia_vnd,
+  ngay_ghi, nguon`; tùy chọn `sku_tuong_duong, gia_km_vnd, khuyen_mai,
+  rating, so_danh_gia, ghi_chu` (`ghi_chu` đọc rồi BỎ). Hàm thuần
+  `read_competitor(path) -> (rows, errors, sha)`: đuôi ≠ .csv/.xlsx, file
+  rỗng/chỉ header, thiếu cột bắt buộc, cột lạ, header trùng, `kenh` ngoài
+  6 giá trị, `gia_vnd`/`gia_km_vnd` không phải số nguyên > 0 (qua
+  `_to_int`), `gia_km_vnd ≥ gia_vnd`, `rating` ngoài 0–5 (1 chữ số lẻ, dấu
+  `.` hoặc `,`), `so_danh_gia` âm/không số, `ngay_ghi` không ISO
+  `YYYY-MM-DD` hoặc > hôm nay VN (+1 ngày dung sai), `nguon` rỗng hoặc >500
+  ký tự, `kenh` ∈ sàn mà `nguon` không phải http(s) URL và không bắt đầu
+  "ảnh chụp" → errors (số dòng + tên cột), rows = []. Text (`doi_thu`,
+  `ten_san_pham`, `khuyen_mai`, `nguon`): cắt `PRE_MAX` → `_mask_pii` → bỏ
+  ký tự điều khiển → cắt trần cột. Khi nạp (đã connect): `sku_tuong_duong`
+  không có trong `sku_master` → `[err] dòng N: sku_tuong_duong không có
+  trong golden`, rollback, exit 1, 0 dòng. `nguon` là URL sàn chỉ được LƯU
+  làm dẫn chứng — module không có hàm/biến nào gửi request.
+  - Boundary: `ingest/intel_import.py` (mới), `tests/test_intel_import.py`,
+    `tests/fixtures/intel_import/` (mới: `competitor_MAU.csv` + các file
+    lỗi `competitor_bad_*_MAU.csv`)
+  - Gate: test thuần: mỗi lỗi ở trên → errors nêu đúng dòng/cột, rows [],
+    và chuỗi lỗi KHÔNG chứa giá trị ô (vd giá "abc123xyz" không xuất hiện);
+    `nguon` chứa "0905 123 456" → giá trị lưu không chứa chuỗi đó; test
+    CLI (monkeypatch `_connect` đếm): file lỗi → exit 1, connect 0 lần;
+    test DB thật (rollback): `competitor_MAU.csv` nạp 2 lần → lần 2
+    `[skip]`, `count(*) competitor_observations` không đổi; SKU lạ → exit
+    1, 0 dòng `competitor_observations` cho file đó và `intel_imports`
+    không thêm dòng
+  - Evidence: `evidence/v72_pytest.log`, `evidence/v72_intel.log`
+- [x] **W72.3 Bảng lệch giá/KM theo tuần (so golden v3.2, CHỈ ĐỌC)** —
+  hàm `competitor_gaps(conn, week_start) -> list[dict]` (trong
+  `ingest/intel_import.py`): mỗi quan sát có `sku_key` trong tuần
+  [thứ Hai, Chủ nhật] → giá golden = dòng `price_list` `kind='list'`,
+  `program_id is null`, hiệu lực tại `observed_on` (`valid_from <= d and
+  (valid_to is null or valid_to > d)`), ưu tiên cùng `channel` (nếu kênh ∈
+  `golden_store.CHANNELS`) rồi `web`; không có → `golden_vnd: None` + lý
+  do "chưa có giá golden". Dòng kết quả: `week`, `competitor`, `channel`,
+  `product_name`, `sku_key`, `price_vnd` + `promo_price_vnd` (nguồn:
+  `obs#<id>` + `source_ref`), `golden_vnd` (nguồn: `price_list#<id>`,
+  `golden_approved` true/false theo `approved_by`), `gap_pct` =
+  round((giá KM nếu có, không thì giá) / golden − 1, 3). Không có cột "giá
+  nên đặt"; module KHÔNG có `insert/update/delete` vào `sku_master`/
+  `price_list`/`products`.
+  - Boundary: `ingest/intel_import.py`, `tests/test_intel_import.py`
+  - Gate: test DB thật (rollback, golden tự insert trong schema tạm): giá
+    đối thủ 90.000 vs golden 100.000 → `gap_pct == -0.1`; có KM 80.000 →
+    `-0.2`; golden đóng `valid_to` = `observed_on` + dòng mới cùng ngày →
+    lấy dòng mới; kênh `lazada` không có golden lazada → dùng `web`; không
+    golden → `golden_vnd is None` + lý do; mỗi dòng có `obs#` và (khi có
+    golden) `price_list#`; `grep -niE "(insert into|update|delete from) +(sku_master|price_list|products)" ingest/intel_import.py`
+    rỗng
+  - Evidence: `evidence/v72_pytest.log`
+- [x] **W72.4 Trend — nạp Google Trends xuất tay + spike theo luật** —
+  `data/trend_keywords.json` (mới): `{"_doc": "... ĐỀ XUẤT, MKT/SEO chốt;
+  file xuất TAY từ trends.google.com, cấm pytrends/API không chính thức",
+  "anchor": "quà tết", "keywords": {"<từ khóa>": "<nhóm>"}` (nhóm:
+  `qua_tang`/`sam`/`gioi_tre`; ít nhất "quà tết", "sâm ngọc linh", "nhân
+  sâm", "đồ ăn healthy giới trẻ"), `"spike": {"window_weeks": 8, "ratio":
+  2.0, "min_delta": 10}}`; `load_trend_config(path) -> (cfg, errors)`
+  fail-closed: anchor không nằm trong keywords, nhóm lạ, spike thiếu/≤0,
+  từ khóa nhóm `gioi_tre` mà `is_alcohol` → errors. `--trend F` tự nhận
+  dạng: (a) multiTimeline — bỏ dòng "Category: ..." + dòng trống, header
+  `Week,<kw>: (<geo>),...` (header `Day`/`Month` → lỗi "chỉ nhận chuỗi
+  tuần"); ≤5 cột từ khóa, mỗi từ khóa phải có trong `keywords`, PHẢI có
+  cột anchor (thiếu → lỗi "thiếu neo 'quà tết'"); 1 geo/file; `week` ISO,
+  không trùng; giá trị int 0–100 hoặc "<1" → 0; khác → lỗi dòng/cột. Lưu
+  MỌI cột (kể cả anchor) vào `trends_weekly` với `query_id` = sha[:16],
+  `anchor` = cfg anchor. (b) relatedQueries — section `TOP`/`RISING`, dòng
+  `query,value`; cần `--seed KW` (thiếu/không có trong keywords → exit 2
+  trước connect); query cắt `PRE_MAX` → `_mask_pii` → ≤200;
+  `is_alcohol(query)` → flag `ruou`. Không nhận dạng → lỗi exit 1. Hàm thuần
+  `find_spikes(series, window, ratio, min_delta) -> list[(week, value,
+  median)]`: series = [(week, value)] sắp theo tuần trong CÙNG
+  (`query_id`, `keyword`, `geo`); tuần có ≥ `window` tuần trước đó, m =
+  `statistics.median` của `window` tuần liền trước; spike khi `value >=
+  ratio*m` VÀ `value - m >= min_delta` (m = 0 → chỉ cần `value >=
+  min_delta`).
+  - Boundary: `data/trend_keywords.json` (mới), `ingest/intel_import.py`,
+    `tests/test_intel_import.py`, `tests/fixtures/intel_import/`
+    (`multiTimeline_MAU.csv` ≥ 12 tuần 3 từ khóa + anchor, 1 spike cài
+    sẵn ở tuần biết trước + 1 tuần "gần spike" 2→6 (ratio đạt, delta < 10);
+    `multiTimeline_no_anchor_MAU.csv`; `multiTimeline_daily_MAU.csv`;
+    `relatedQueries_MAU.csv` có 1 query chứa "rượu sâm")
+  - Gate: `grep -rniE "pytrends|trends\.google\.[a-z]+/trends/api" --include=*.py ingest scripts crawler pipelines agents app api`
+    rỗng và `grep -ni pytrends requirements.txt` rỗng; test AST: import
+    của `ingest/intel_import.py` + `scripts/intel_weekly.py` ∩
+    {`pytrends`, `httpx`, `requests`, `urllib.request`, `http.client`,
+    `socket`} = ∅; test thuần: fixture MẪU → `find_spikes` trả ĐÚNG 1 tuần
+    (tuần cài sẵn), tuần "gần spike" không bị bắt, < window tuần → không
+    spike; file không anchor / daily / >5 từ khóa / từ khóa lạ / giá trị
+    "abc" → errors, exit 1, connect 0 lần; `--trend relatedQueries` thiếu
+    `--seed` → exit 2; query "rượu sâm" → flag `ruou`; config nhóm
+    `gioi_tre` chứa "rượu sâm giới trẻ" → errors; test DB thật (rollback):
+    nạp timeline 2 lần → lần 2 `[skip]`, `count(*) trends_weekly` không
+    đổi; mọi dòng có `anchor = 'quà tết'` và `query_id` không null
+  - Evidence: `evidence/v72_pytest.log`, `evidence/v72_intel.log`
+- [x] **W72.5 Social Listening P1 — kênh SỞ HỮU, PII che khi đọc** —
+  `data/social_rules.json` (mới): `{"_doc": "... luật từ khóa ĐỀ XUẤT, QL
+  MXH chốt; không trả lời tự động (A1)", "dpia_signed": false, "labels":
+  {"khen": [...], "che": [...], "hoi_gia": [...], "khieu_nai": [...]}}`;
+  `dpia_signed` CHỈ người đổi sau khi Pháp chế ký DPIA (external-dep).
+  `--social F --channel fanpage|zalo_oa|tiktok` (thiếu `--channel` → exit
+  2). Header: bắt buộc `thoi_gian, noi_dung`; tùy chọn `loai`
+  (comment|inbox|review, mặc định comment), `ma_tin`; cột ĐỊNH DANH đọc rồi
+  bỏ ngay: `id_nguoi_dung` (chỉ dùng trong hash dedup), `ten_nguoi_dung`,
+  `sdt`, `email`, `link_profile`, `avatar`; cột lạ → lỗi (fail-closed — cột
+  lạ có thể là PII). Thiếu env `INTEL_HASH_SALT` (≥16 ký tự) → `[err]`
+  exit 1 TRƯỚC connect. `msg_hash` = sha256(salt + "|" + channel + "|" +
+  (`ma_tin` nếu có, không thì `id_nguoi_dung` + "|" + `thoi_gian` + "|" +
+  `noi_dung`)). `noi_dung`: cắt `PRE_MAX` → `_mask_pii` NGAY khi đọc (mọi
+  bước sau chỉ thấy bản đã che) → phân loại LUẬT: `labels` từ
+  `social_rules.json` (khớp biên từ, NFC casefold) + `hoi_suc_khoe` nếu
+  `is_health_question` + `hoi_ruou` nếu `is_alcohol`; 0 nhãn → `khac`;
+  `sensitive = 'hoi_suc_khoe' in labels`. `excerpt` (≤200, bản đã che) CHỈ
+  lưu khi `dpia_signed is True` VÀ không `sensitive`; mặc định null.
+  Insert `on conflict (msg_hash) do nothing` → in `new`/`dup`. Module
+  không gọi LLM với nội dung bình luận (P1), không có hàm gửi/trả lời.
+  `env.example` thêm dòng `INTEL_HASH_SALT=` (không giá trị thật).
+  - Boundary: `data/social_rules.json` (mới), `ingest/intel_import.py`,
+    `env.example` (+1 khóa), `tests/test_intel_import.py`,
+    `tests/fixtures/intel_import/` (`social_fanpage_MAU.csv` ≥ 20 dòng có
+    cột `ten_nguoi_dung`/`id_nguoi_dung`/`sdt`, nội dung chứa SĐT + email
+    + câu hỏi "uống sâm có chữa tiểu đường không", "giá hộp 30 viên bao
+    nhiêu", "rượu sâm còn không", khiếu nại giao chậm;
+    `social_bad_*_MAU.csv`)
+  - Gate: test DB thật (rollback): nạp fixture → dump TOÀN BỘ `select
+    row_to_json(s)::text from social_mentions s` + `intel_imports` không
+    chứa bất kỳ tên/ID người dùng nào của fixture, không chứa SĐT/email
+    của fixture (dạng gốc); mặc định `count(*) where excerpt is not null`
+    = 0; config `dpia_signed: true` (tmp file) → excerpt có cho dòng
+    thường, null cho dòng `sensitive`, và excerpt không chứa SĐT/email; nhãn
+    đúng: câu tiểu đường → `hoi_suc_khoe` + `sensitive`; "giá ... bao
+    nhiêu" → `hoi_gia`; "rượu sâm" → `hoi_ruou`; khiếu nại → `khieu_nai`;
+    nạp lại cùng file → `[skip]`; file khác chồng 5 dòng cũ → `dup=5`,
+    `count(*)` tăng đúng số dòng mới; salt khác → hash khác (test thuần);
+    thiếu salt / cột lạ / `thoi_gian` hỏng → exit 1, connect 0 lần; spy
+    `llm_gateway.chat` 0 lần gọi trong suốt `--social`
+  - Evidence: `evidence/v72_pytest.log`, `evidence/v72_intel.log`
+- [x] **W72.6 CLI `python -m ingest.intel_import`** — đúng 1 op trong
+  `--competitor F`/`--trend F`/`--social F` (khác → `ap.error` exit 2);
+  `--seed` chỉ đi với `--trend`, `--channel` chỉ đi với `--social` (sai →
+  exit 2). Thứ tự: argparse → load config (`trend_keywords.json`/
+  `social_rules.json`, lỗi → exit 1) → đọc + validate TOÀN file (lỗi →
+  `[err]` ≤30 dòng + tổng, exit 1, KHÔNG connect) → salt (social) →
+  connect (`connect_timeout=10`; thiếu DSN/lỗi → exit 1; thiếu bảng →
+  `[err]` gợi ý `apply_schema`, exit 1) → `file_sha256` đã có → `[skip]`
+  exit 0 → 1 tx insert `intel_imports` + rows → `conn.commit()`;
+  `UniqueViolation` trên `file_sha256` (nạp song song) → `[skip]` exit 0.
+  Cuối in `[load] <kind> #<import_id> <file>: N dòng` (+ `new=.. dup=..`
+  cho social). Docstring module tiếng Việt: contract, schema 3 loại file,
+  quyền sở hữu (ghi DUY NHẤT 5 bảng v7.2; CHỈ ĐỌC golden; không request
+  mạng; không ghi `content_drafts`).
+  - Boundary: `ingest/intel_import.py`, `tests/test_intel_import.py`
+  - Gate: test (monkeypatch `_connect` đếm): 2 op cùng lúc, không op,
+    `--seed` với `--competitor`, `--social` thiếu `--channel` → exit 2,
+    connect 0; connect raise → exit 1; E2E CLI trên samsam_infra (tee vào
+    evidence): 4 file MẪU mỗi file nạp 2 lần → lần 2 `[skip]`; 1 file lỗi
+    mỗi loại → exit 1 và `count(*)` 5 bảng trước/sau bằng nhau
+  - Evidence: `evidence/v72_intel.log`
+- [x] **W72.7 Báo cáo tuần `scripts/intel_weekly.py` (tất định)** —
+  `--week YYYY-MM-DD` (ngày bất kỳ → tuần thứ Hai..Chủ nhật chứa nó; mặc
+  định tuần ĐỦ gần nhất theo giờ VN; ngày hỏng → exit 2) → Markdown ra
+  stdout, 4 mục: (1) Đối thủ — bảng `competitor_gaps` (mỗi số kèm `obs#`/
+  `source_ref` và `price_list#`/duyệt hay chưa); (2) Trend — giá trị tuần
+  mới nhất ≤ tuần báo cáo từng từ khóa (series `query_id` mới nhất chứa từ
+  khóa) + spike trong tuần (`find_spikes`, ghi median + `query_id`), related
+  RISING của import mới nhất, query cờ `ruou` ghi "(rượu — không dùng cho
+  nhóm giới trẻ)"; (3) Social — đếm theo kênh × nhãn trong tuần,
+  `sensitive` riêng, KHÔNG in nội dung bình luận; (4) Tin `intel_items`
+  `fetched_at` trong tuần theo chủ đề (đếm + ≤5 tiêu đề/chủ đề + url, qua
+  `_clean`). Mục rỗng → "chưa có dữ liệu tuần này". Sắp xếp ổn định
+  (khóa tường minh), không in `now()`. `--llm`: chỉ khi
+  `load_sources()["llm"]["enabled"] is True` (cùng cổng Pháp chế v7.0),
+  thiếu → `[warn]`, 0 gọi; input = mục 1+2+4 đã render (KHÔNG mục 3 /
+  không text social); `chat("intel", ...)` 1 lần; output qua
+  `guardrail.check` — `ok` không True → bỏ tóm tắt + `[warn]`;
+  `GatewayError` → `[warn]`, báo cáo vẫn in, exit 0. Connect
+  `connect_timeout=10`, chỉ SELECT (conn `read_only = True`). UTF-8 guard.
+  - Boundary: `scripts/intel_weekly.py` (mới), `tests/test_intel_weekly.py`
+    (mới)
+  - Gate: test DB thật (rollback, nạp fixture MẪU qua hàm của W72.2–5 +
+    vài `intel_items`): chạy `main` 2 lần cùng `--week` → stdout BYTE-y-hệt;
+    có đủ 4 tiêu đề mục; spike tuần cài sẵn xuất hiện, tuần khác không;
+    output không chứa SĐT/email/tên của fixture social; mặc định 0 gọi
+    `chat`; `--llm` + config tắt → 0 gọi + warn; config bật → đúng 1 gọi
+    `agent_id == "intel"` và payload không chứa chuỗi nào của fixture
+    social; tóm tắt chứa "chữa" → không in + warn; `chat` raise
+    `GatewayBlocked` → exit 0, báo cáo vẫn đủ 4 mục; `--week 2026-13-40` →
+    exit 2, connect 0
+  - Evidence: `evidence/v72_pytest.log`, `evidence/v72_intel.log` (1 báo
+    cáo tuần thật trên samsam_infra sau E2E W72.6)
+- [x] **W72.8 Cách ly + không cào sàn** — 2 module mới chỉ ghi 5 bảng v7.2
+  (`intel_weekly` không ghi gì).
+  - Boundary: `tests/test_intel_import.py`, `tests/test_intel_weekly.py`
+  - Gate: `grep -nE "content_drafts|pipelines\.store|pipelines\.content|save_draft|connectors\." ingest/intel_import.py scripts/intel_weekly.py`
+    rỗng; `grep -niE "(insert into|update|delete from) +[a-z_]+" ingest/intel_import.py`
+    chỉ trúng `intel_imports`/`competitor_observations`/`trends_weekly`/
+    `trends_related`/`social_mentions`; cùng grep trên
+    `scripts/intel_weekly.py` rỗng; test AST: import của 2 module ∩
+    {`pipelines.store`, `pipelines.content`, `connectors.zalo`,
+    `agents.report`} = ∅; test DB thật (rollback): `count(*)`
+    `content_drafts` + `agent_action_log` + `approvals` trước/sau (nạp 4
+    file + chạy báo cáo) bằng nhau; test drift `HARD_BLOCK`:
+    `crawler.intel.is_blocked` True cho `shopee.vn`, `vt.tiktok.com`,
+    `lazada.vn` (v7.0 vẫn chặn — không nới)
+  - Evidence: `evidence/v72_pytest.log`
+- [x] **W72.9 Docs + drift-guard** — `docs/handover/kien-truc.md`: mục 2
+  dòng `ingest/` thêm `intel_import`, dòng `scripts/` thêm `intel_weekly`;
+  mục 3 thêm 5 dòng bảng mới + câu "N bảng public" = số bảng schema (30);
+  `deploy/cloud/README.md`: 5 dòng bảng mới (đường A/B + ghi chú "không cột
+  định danh") + mọi câu "25 bảng" → số mới (drift-guard
+  `test_cloud_readme_drift_guard` đòi mọi bảng có trong README);
+  `docs/handover/sop.md` mục "Đối thủ / Trend / MXH (v7.2)": lệnh 3 loại
+  nạp + báo cáo tuần, quy tắc chỉ nhập tay (không cào sàn, cấm pytrends),
+  template cột, cổng DPIA (`dpia_signed`), `INTEL_HASH_SALT`; `AGENTS.md`
+  Commands (2 lệnh) + Structure (`ingest/` nhắc `intel_import`);
+  `tests/test_handover_docs.py` `SOP_COMMANDS` thêm `"ingest.intel_import"`,
+  `"intel_weekly"` (không xóa assert khác).
+  - Boundary: `docs/handover/kien-truc.md`, `docs/handover/sop.md`,
+    `deploy/cloud/README.md`, `AGENTS.md` (Commands + Structure),
+    `tests/test_handover_docs.py`
+  - Gate: `python -m pytest tests/test_handover_docs.py tests/test_db_backup.py::test_cloud_readme_drift_guard -q`
+    xanh; `grep -n "competitor_observations\|trends_weekly\|trends_related\|social_mentions\|intel_imports" docs/handover/kien-truc.md deploy/cloud/README.md`
+    trúng đủ 5 bảng ở cả 2 file; `grep -n "25 bảng" docs/handover/kien-truc.md deploy/cloud/README.md`
+    rỗng; đối chiếu số assert `test_handover_docs.py` trước/sau không giảm
+  - Evidence: `evidence/v72_pytest.log`
+- [x] **Gate chung**
+  - `python scripts/apply_schema.py` ×2 exit 0 (30 bảng)
+  - E2E W72.6 + báo cáo W72.7 trên samsam_infra (`tee evidence/v72_intel.log`)
+  - targeted ×3: `python -m pytest tests/test_intel_import.py tests/test_intel_weekly.py tests/test_intel.py tests/test_market_csv.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py -q -rs`
+    3 lần liên tiếp xanh, test DB thật **0 skipped** (đọc output tới exit,
+    không chạy chồng)
+  - full: `python -m pytest -q` xanh MỘT lần, ≥ 942 + test mới (trước chạy
+    kiểm 0 container `samsam-dr-*` của worktree khác; đỏ
+    `test_zz_no_dr_container_left` do container song song = môi trường,
+    ghi rõ)
+  - `ruff check .` sạch
+  - `python -m py_compile ingest/intel_import.py scripts/intel_weekly.py ingest/market_csv.py crawler/intel.py`
+  - grep gate W72.4 (pytrends) + W72.8 (cách ly) rỗng
+  - DỌN fixture khỏi samsam_infra: xóa dòng 4 bảng con có `import_id`
+    thuộc `intel_imports.file_name like '%MAU%'` rồi chính các import đó →
+    0 dòng MẪU còn lại
+  - `git status`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); không file runtime mới trong `data/`; file lạ
+    (vd `lv2-market-top.png`) → không stage
+  - Kết quả (worker, 2026-10-12): `apply_schema` ×2 exit 0 (30 bảng);
+    E2E 4 file MẪU ×2 → lần 2 `[skip]`, file chồng `new=3 dup=5`, 6 file
+    lỗi + thiếu `--seed` + thiếu muối → exit 1/2, count 5 bảng không đổi;
+    báo cáo tuần thật 2 lần `cmp` byte-y-hệt; targeted ×3 = 247 passed ×3,
+    0 skipped; full `python -m pytest -q` 1029 passed (0 container
+    `samsam-dr-*` lúc chạy); `ruff` sạch; py_compile OK; grep gate rỗng;
+    dọn MẪU → 0 dòng. Evidence `evidence/v72_intel.log`,
+    `evidence/v72_pytest.log`. DB chạy = `DATABASE_URL` của w70.env (DB
+    `samsam_w70`, không phải tên `samsam_infra`). Ghi chú lệch nhỏ so
+    contract: `[warn]` của `intel_weekly` in ra stderr (stdout chỉ báo cáo
+    tất định); related RISING = import `trend_related` mới nhất (không lọc
+    theo ngày nạp); golden nạp từ file có `valid_from` = ngày nạp nên quan
+    sát tuần trước ra "chưa có giá golden" trên DB thật (đúng ngữ nghĩa
+    hiệu lực theo `observed_on`). Tự rà OWASP: vá `load_dotenv` trước cổng
+    muối (muối trong `.env` trước đây không bao giờ được đọc), trần 200 ký
+    tự ô header Trends trước regex (O(n²) đo được 1.86s/40K ký tự), tên file
+    lưu `intel_imports` qua `_safe` (che SĐT/email).
+- [x] **Vòng fix nghiệm thu (7 MINOR)** — `classify_social`: thêm luật
+  hỏi CÔNG DỤNG (công dụng/tác dụng/sức khỏe|khoẻ/bồi bổ/bổ không/bổ gì/
+  tốt cho + không dấu khi cả câu không dấu) → `hoi_suc_khoe` nhạy cảm, không
+  excerpt; scrub 'đánh giá/định giá/giá trị/đáng giá/quý giá/vô giá' trước
+  khi xét `hoi_gia`; xlsx competitor: ô ngày datetime nửa đêm + rating float
+  ("4.500000") nạp được, 4.55/5.5/giờ ≠ 0h vẫn lỗi. Test mới: health-usage
+  (5 + read_social dpia), price-scrub (5), xlsx, header-cap-bites, file-name
+  PII (DB), tuần SAU spike không in lại, gaps có cả giá web cùng SKU. Mutation
+  probe 9/9 KILLED (`evidence/v72_pytest.log`).
+- [x] **Vòng fix nghiệm thu 2 (2 MINOR)** — evidence: failure-dump pytest
+  làm lộ mật khẩu DSN trong `v72_pytest.log` → đã che `://user:***@`; output
+  gate từ nay lọc sed che DSN + `--tb=line -p no:cacheprovider`. Test
+  price-scrub thêm 4 ca CHỈ có 'giá' mang nhãn (không 'bao nhiêu': 'cho xin
+  giá hộp quà', 'đánh giá tốt, cho xin giá sỉ', 'Giá hộp quà?', 'giá?') —
+  mutant scrub-mọi-'giá' nay ĐỎ 4/9 (trước 0).
+- [ ] **external-dep** File xuất THẬT: sàn (giá đối thủ do Quản lý MXH
+  ghi), Google Trends (`multiTimeline`/`relatedQueries`), export comment/
+  inbox Fanpage / Zalo OA / TikTok kênh công ty — tên cột thật chưa xác
+  minh (template v7.2 là GIẢ ĐỊNH; cần map cột khi có file).
+- [ ] **external-dep** GĐ KD/MKT chốt danh sách đối thủ chính thức + SKU
+  tương đương; MKT/SEO chốt `data/trend_keywords.json`; QL MXH chốt luật
+  nhãn `data/social_rules.json`.
+- [ ] **external-dep** Pháp chế ký DPIA (đổi `dpia_signed` — việc của người
+  thật) + xác nhận cho gửi dữ liệu qua LLM (`llm.enabled`); muối
+  `INTEL_HASH_SALT` do Quản lý hạ tầng AI sinh và giữ trong `.env`.
+- [ ] **external-dep** Social listening nhà cung cấp (P2); Graph API /
+  YouTube Data API chỉ đọc (Meta App Review); Google Trends API chính thức.
+
+Someday (ngoài phạm vi v7.2, ghi để không cuốn vào): snapshot HTML web công
+khai đối thủ + evidence_hash (cần collector v7.0 thêm kind "page" — không
+viết collector thứ hai); form Streamlit nhập tay + upload ảnh chụp bắt buộc;
+cờ đối thủ có công khai số XNQC; luật cấp tỉnh (chỉ khi trung vị 52 tuần
+toàn quốc ≥ 10) + chuẩn hóa thang giữa các file qua anchor; gợi ý từ khóa
+SEO (loại SKU TPBVSK chưa XNQC); báo đỏ social tiêu cực → Red Alert; NER che
+họ tên trong nội dung bình luận (lớp 2 PII); hạn lưu/purge `social_mentions`;
+eval phân loại nhãn social trên bộ đóng băng.
+
+v7.2-doi-thu-trend-social đóng 2026-10-12 (nghiệm thu đợt 1 FIX 7 → 2 vòng sửa
+→ PASS — có gián đoạn do chạm giới hạn phiên, chạy lại từ bước nghiệm thu;
+coordinator chạy lại targeted 225 + ruff). +5 bảng (30 trên nhánh). Đối thủ/
+trend/social đều từ file XUẤT TAY, 0 request mạng, cấm pytrends; social bỏ cột
+tên/ID ngay khi đọc, dedup bằng hash có muối `INTEL_HASH_SALT`, KHÔNG lưu trích
+comment tới khi DPIA ký; báo cáo tuần tất định (2 lần chạy byte-y-hệt), không
+đường sang content_drafts. External-dep: file xuất thật sàn/Google Trends/
+Fanpage/Zalo OA/TikTok + mapping cột thật; danh sách đối thủ + từ khóa chính
+thức; Pháp chế ký DPIA + duyệt LLM; muối thật; social listening P2 + API.
+
 ## Checklist v7.0-collector-chung
 
 Khán giả/mục đích: WP09 (Trung tâm tình báo thị trường, `ctx/pmo.md` dòng

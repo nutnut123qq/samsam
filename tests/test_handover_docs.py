@@ -45,7 +45,8 @@ SOP_COMMANDS = ("streamlit run", "apply_schema", "lead_store",
                 "health_bulletin", "docker-compose.monitoring.yml",
                 "pipelines.auth",
                 "db_backup", "db_restore_drill", "dr_drill",
-                "break_glass", "crawler.intel")
+                "break_glass", "crawler.intel",
+                "ingest.intel_import", "intel_weekly")
 
 
 def _doc(name: str) -> str:

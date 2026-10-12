@@ -1,0 +1,206 @@
+### v7.2 gate — 2026-10-12 04:47:39 +0700
+$ python scripts/apply_schema.py  (lần 1)
+[done] schema applied — 30 bảng public: agent_action_log, approvals, assets, chunks, chunks_internal, claims_approved, competitor_observations, content_drafts, document_fields, documents, eval_runs, golden_discrepancies, intel_imports, intel_items, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, sku_map, sku_master, social_mentions, trends_related, trends_weekly
+exit=0
+$ python scripts/apply_schema.py  (lần 2)
+[done] schema applied — 30 bảng public: agent_action_log, approvals, assets, chunks, chunks_internal, claims_approved, competitor_observations, content_drafts, document_fields, documents, eval_runs, golden_discrepancies, intel_imports, intel_items, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, sku_map, sku_master, social_mentions, trends_related, trends_weekly
+exit=0
+$ grep -c "^create table if not exists" docs/schema.sql
+30
+
+### E2E W72.6 CLI (DB = samsam_w70 của worktree, INTEL_HASH_SALT giả cho E2E)
+counts {'intel_imports': 0, 'competitor_observations': 0, 'trends_weekly': 0, 'trends_related': 0, 'social_mentions': 0, 'content_drafts': 0, 'agent_action_log': 0, 'approvals': 0}
+$ python -m ingest.intel_import --competitor tests/fixtures/intel_import/competitor_MAU.csv  (lần 1)
+[load] competitor #1 competitor_MAU.csv: 5 dòng
+[done]
+exit=0
+$ python -m ingest.intel_import --competitor tests/fixtures/intel_import/competitor_MAU.csv  (lần 2)
+[skip] file đã nạp: import #1 (competitor) — không ghi gì.
+exit=0
+$ python -m ingest.intel_import --trend tests/fixtures/intel_import/multiTimeline_MAU.csv  (lần 1)
+[load] trend_timeline #2 multiTimeline_MAU.csv: 14 dòng
+[spike] sâm ngọc linh tuần 2026-10-11: 55 (trung vị 20.5)
+[done]
+exit=0
+$ python -m ingest.intel_import --trend tests/fixtures/intel_import/multiTimeline_MAU.csv  (lần 2)
+[skip] file đã nạp: import #2 (trend_timeline) — không ghi gì.
+exit=0
+$ python -m ingest.intel_import --trend tests/fixtures/intel_import/relatedQueries_MAU.csv --seed nhân sâm  (lần 1)
+[load] trend_related #3 relatedQueries_MAU.csv: 6 dòng
+[done]
+exit=0
+$ python -m ingest.intel_import --trend tests/fixtures/intel_import/relatedQueries_MAU.csv --seed nhân sâm  (lần 2)
+[skip] file đã nạp: import #3 (trend_related) — không ghi gì.
+exit=0
+$ python -m ingest.intel_import --social tests/fixtures/intel_import/social_fanpage_MAU.csv --channel fanpage  (lần 1)
+[load] social #4 social_fanpage_MAU.csv: 21 dòng new=21 dup=0
+[done]
+exit=0
+$ python -m ingest.intel_import --social tests/fixtures/intel_import/social_fanpage_MAU.csv --channel fanpage  (lần 2)
+[skip] file đã nạp: import #4 (social) — không ghi gì.
+exit=0
+$ python -m ingest.intel_import --social tests/fixtures/intel_import/social_fanpage_2_MAU.csv --channel fanpage  (file chồng 5 dòng)
+[load] social #5 social_fanpage_2_MAU.csv: 8 dòng new=3 dup=5
+[done]
+exit=0
+counts {'intel_imports': 5, 'competitor_observations': 5, 'trends_weekly': 56, 'trends_related': 6, 'social_mentions': 24, 'content_drafts': 0, 'agent_action_log': 0, 'approvals': 0}
+--- file lỗi mỗi loại (count trước/sau phải bằng nhau)
+$ python -m ingest.intel_import --competitor tests/fixtures/intel_import/competitor_bad_gia_MAU.csv
+[err] dòng 2: cột 'gia_vnd' không hợp lệ
+[err] 1 lỗi — không connect, không nạp gì.
+exit=1
+$ python -m ingest.intel_import --competitor tests/fixtures/intel_import/competitor_bad_sku_MAU.csv
+[err] dòng 2: sku_tuong_duong không có trong golden
+[err] 1 lỗi — đã rollback, không nạp gì.
+exit=1
+$ python -m ingest.intel_import --trend tests/fixtures/intel_import/multiTimeline_no_anchor_MAU.csv
+[err] thiếu neo 'quà tết' — luôn xuất kèm từ khóa neo
+[err] 1 lỗi — không connect, không nạp gì.
+exit=1
+$ python -m ingest.intel_import --trend tests/fixtures/intel_import/multiTimeline_daily_MAU.csv
+[err] dòng 3: chỉ nhận chuỗi tuần (Week) — xuất lại với khoảng thời gian 1–5 năm
+[err] 1 lỗi — không connect, không nạp gì.
+exit=1
+$ python -m ingest.intel_import --social tests/fixtures/intel_import/social_bad_cot_la_MAU.csv --channel fanpage
+[err] cột lạ 'ghi_chu_noi_bo' (ngoài template)
+[err] 1 lỗi — không connect, không nạp gì.
+exit=1
+$ python -m ingest.intel_import --social tests/fixtures/intel_import/social_bad_thoi_gian_MAU.csv --channel fanpage
+[err] dòng 2: cột 'thoi_gian' không hợp lệ
+[err] 1 lỗi — không connect, không nạp gì.
+exit=1
+$ python -m ingest.intel_import --trend tests/fixtures/intel_import/relatedQueries_MAU.csv  (thiếu --seed)
+python -m ingest.intel_import: error: file relatedQueries cần --seed <từ khóa gốc>
+exit=2
+$ (unset INTEL_HASH_SALT) python -m ingest.intel_import --social tests/fixtures/intel_import/social_fanpage_MAU.csv --channel fanpage
+[err] thiếu INTEL_HASH_SALT (≥16 ký tự) trong .env — không nạp social.
+exit=1
+counts {'intel_imports': 5, 'competitor_observations': 5, 'trends_weekly': 56, 'trends_related': 6, 'social_mentions': 24, 'content_drafts': 0, 'agent_action_log': 0, 'approvals': 0}
+
+### sau vá (load_dotenv trước cổng muối): INTEL_HASH_SALT rỗng → exit 1, không connect
+$ INTEL_HASH_SALT= python -m ingest.intel_import --social tests/fixtures/intel_import/social_fanpage_MAU.csv --channel fanpage
+[err] thiếu INTEL_HASH_SALT (≥16 ký tự) trong .env — không nạp social.
+exit=1
+
+### W72.7 báo cáo tuần thật (DB samsam_w70 sau E2E)
+$ python scripts/intel_weekly.py   (mặc định = tuần đủ gần nhất)
+exit=0
+# Báo cáo tuần intel 2026-10-05 → 2026-10-11
+
+Nguồn: file nhập tay (đối thủ, Google Trends, export kênh sở hữu) + collector RSS v7.0. Tầng P1-Shadow: chỉ đọc, không gửi ai.
+
+## 1. Đối thủ — lệch giá/KM so giá golden (chỉ đọc)
+
+| Ngày | Đối thủ | Kênh | Sản phẩm | SKU mình | Giá đối thủ (nguồn) | Giá KM | Golden (nguồn) | Lệch |
+|---|---|---|---|---|---|---|---|---|
+| 2026-10-06 | DOI-THU-MAU-1 | shopee | Viên sâm MẪU 12 viên | savina-12v | 150.000 (obs#1: https://shopee.vn/product/DOI-THU-MAU-1/111) | — | chưa có giá golden | — |
+| 2026-10-07 | DOI-THU-MAU-1 | shopee | Viên sâm MẪU 20 viên | saphraton-20v | 320.000 (obs#2: https://shopee.vn/product/DOI-THU-MAU-1/222) | 280.000 | chưa có giá golden | — |
+| 2026-10-08 | DOI-THU-MAU-2 | lazada | Viên sâm MẪU 30 viên | savigout-30v | 399.000 (obs#3: ảnh chụp doi_thu_mau_2_lazada.png) | — | chưa có giá golden | — |
+| 2026-10-09 | DOI-THU-MAU-2 | web | Mật ong sâm MẪU 120ml | mat-ong-sam-120ml-1hu | 690.000 (obs#4: https://doi-thu-mau-2.example.com/mat-ong-sam) | 650.000 | chưa có giá golden | — |
+
+Ghi chú: số liệu đối thủ do người ghi tay — agent không cào sàn, không đề xuất giá.
+
+## 2. Trend — Google Trends (file xuất tay)
+
+Giá trị mới nhất (thang 0–100, chỉ so được trong cùng query_id):
+- nhân sâm (Việt Nam): 44 — tuần 2026-10-11 [query_id 7aac3b69ba3118e9]
+- quà tết (Việt Nam): 15 — tuần 2026-10-11 [query_id 7aac3b69ba3118e9]
+- sâm ngọc linh (Việt Nam): 55 — tuần 2026-10-11 [query_id 7aac3b69ba3118e9]
+- đồ ăn healthy giới trẻ (Việt Nam): 3 — tuần 2026-10-11 [query_id 7aac3b69ba3118e9]
+
+Tăng đột biến trong tuần:
+- TĂNG ĐỘT BIẾN sâm ngọc linh (Việt Nam) tuần 2026-10-11: 55 so trung vị 20.5 của 8 tuần trước [query_id 7aac3b69ba3118e9]
+
+Truy vấn liên quan đang tăng (RISING, file mới nhất):
+- [nhân sâm] sâm ngọc linh quảng nam: +350%
+- [nhân sâm] rượu sâm ngọc linh: +120% (rượu — không dùng cho nhóm giới trẻ)
+- [nhân sâm] nhân sâm tươi: Breakout
+
+## 3. Social — kênh sở hữu (chỉ đếm, không trích nội dung)
+
+| Kênh | Tổng tin | Theo nhãn | Nhạy cảm (hỏi sức khỏe) |
+|---|---|---|---|
+| fanpage | 24 | che=1, hoi_gia=5, hoi_ruou=1, hoi_suc_khoe=3, khac=5, khen=5, khieu_nai=4 | 3 |
+
+Tin nhạy cảm chuyển người (CSKH/Pháp chế) — agent không trả lời tự động.
+
+## 4. Tin thị trường mới (intel_items) theo chủ đề
+
+_chưa có dữ liệu tuần này_
+
+$ python scripts/intel_weekly.py --week 2026-10-08  (lần 2, so byte)
+exit=0
+cmp: byte-identical
+  w72_r1.md
+  w72_r2.md
+$ python scripts/intel_weekly.py --week 2026-10-08 --llm   (llm.enabled=false)
+[warn] llm.enabled chưa bật (chờ Pháp chế) — không gọi LLM
+exit=0
+$ python scripts/intel_weekly.py --week 2026-13-40
+python scripts/intel_weekly.py: error: --week phải là ngày YYYY-MM-DD hợp lệ
+exit=2
+
+### DỌN fixture MẪU khỏi DB
+import MAU: [1, 2, 3, 4, 5]
+xóa competitor_observations: 5
+xóa trends_weekly: 56
+xóa trends_related: 6
+xóa social_mentions: 24
+xóa intel_imports: 5
+còn lại import MAU: 0 {'competitor_observations': 0, 'trends_weekly': 0, 'trends_related': 0, 'social_mentions': 0}
+exit=0
+
+### grep gate
+$ grep -rniE "pytrends|trends\.google\.[a-z]+/trends/api" --include=*.py ingest scripts crawler pipelines agents app api
+rc=1 (1 = rỗng)
+$ grep -ni pytrends requirements.txt
+rc=1
+$ grep -nE "content_drafts|pipelines\.store|pipelines\.content|save_draft|connectors\." ingest/intel_import.py scripts/intel_weekly.py
+rc=1
+$ grep -niE "(insert into|update|delete from) +[a-z_]+" ingest/intel_import.py
+587:        "insert into intel_imports (kind, channel, file_name, file_sha256,"
+606:            "insert into competitor_observations (import_id, row_no,"
+623:            "insert into trends_weekly (import_id, query_id, keyword, anchor,"
+634:            "insert into trends_related (import_id, seed, section, query,"
+647:            "insert into social_mentions (import_id, channel, kind, posted_at,"
+$ grep -niE "(insert into|update|delete from) +[a-z_]+" scripts/intel_weekly.py
+rc=1
+$ grep -niE "(insert into|update|delete from) +(sku_master|price_list|products)" ingest/intel_import.py
+rc=1
+$ v7.2 block identity-column grep
+rc=1
+$ grep -n "25 bảng" docs/handover/kien-truc.md deploy/cloud/README.md
+rc=1
+$ grep -c (5 bảng mới) kien-truc / README
+docs/handover/kien-truc.md intel_imports 1
+docs/handover/kien-truc.md competitor_observations 1
+docs/handover/kien-truc.md trends_weekly 1
+docs/handover/kien-truc.md trends_related 1
+docs/handover/kien-truc.md social_mentions 1
+deploy/cloud/README.md intel_imports 1
+deploy/cloud/README.md competitor_observations 1
+deploy/cloud/README.md trends_weekly 1
+deploy/cloud/README.md trends_related 1
+deploy/cloud/README.md social_mentions 1
+$ python -m py_compile ingest/intel_import.py scripts/intel_weekly.py ingest/market_csv.py crawler/intel.py
+exit=0
+$ ruff check .
+All checks passed!
+exit=0
+
+### chạy lại sau vá OWASP (MAX_HEADER, _safe file_name) — 2026-10-12 05:02:12 +0700
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile ingest/intel_import.py scripts/intel_weekly.py ingest/market_csv.py crawler/intel.py
+exit=0
+$ grep pytrends / cách ly / ghi golden (rỗng = rc 1)
+rc=1
+rc=1
+rc=1
+rc=1
+591:insert into intel_imports
+610:insert into competitor_observations
+627:insert into trends_weekly
+638:insert into trends_related
+651:insert into social_mentions

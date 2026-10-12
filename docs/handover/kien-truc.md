@@ -58,17 +58,17 @@ Streamlit demo.
 | Thư mục/file | Vai trò |
 |---|---|
 | `crawler/` | `collect` — crawl site public → `data/*.jsonl` (delay ≥1s/request); `intel` (v7.0) — thu tin thị trường RSS/Atom tầng A/B → bảng `intel_items` (robots.txt, ≥1s/host, chặn cứng tầng C + sàn/MXH kể cả qua redirect, chỉ tiêu đề + trích ≤300 ký tự) |
-| `ingest/` | `embed_store` (chunk+embed→`chunks`), `core_store` (nạp DB lõi, delete-by-source idempotent), `lead_store` (convlog→`leads`, insert-only) |
+| `ingest/` | `embed_store` (chunk+embed→`chunks`), `core_store` (nạp DB lõi, delete-by-source idempotent), `lead_store` (convlog→`leads`, insert-only), `intel_import` (v7.2 — nạp file NHẬP TAY: giá đối thủ, Google Trends xuất tay, export comment/inbox kênh sở hữu → 5 bảng intel v7.2; không request mạng, chỉ đọc golden) |
 | `api/` | `rag.py` — `answer()` RAG: retrieve top-8 `chunks` bằng cosine numpy → LLM + nguồn; `NO_DATA` khi score thấp |
 | `pipelines/` | `guardrail.py` (banned words + claim whitelist — check trước mọi output AI), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py` |
 | `connectors/` | `zalo.py` — webhook Zalo OA: verify signature, ACK 200 nhanh rồi reply async, dedup msg_id, token store + auto-refresh; **chỉ reply inbox** |
 | `agents/` | `report.py` (báo cáo định kỳ → file md), `garden.py` (nhật ký vùng trồng + cảnh báo) — không LLM, không tự gửi |
 | `app/` | `streamlit_app.py` — UI 7 tab (mục 4) |
-| `scripts/` | `apply_schema.py`, `data_audit.py`, `eval_qa.py`, `zalo_mock.py`, `zalo_preflight.py` |
+| `scripts/` | `apply_schema.py`, `data_audit.py`, `eval_qa.py`, `zalo_mock.py`, `zalo_preflight.py`, `intel_weekly.py` (v7.2 — báo cáo tuần intel Markdown tất định, chỉ đọc) |
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 25 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 30 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
@@ -97,6 +97,11 @@ Streamlit demo.
 | `documents` | Tài liệu số hóa (`sha256` PK = tên bản gốc bất biến `originals/<sha256>`,`doc_type`,`pages`,`text_source` pdf_text/ocr/none,`pii_flag`,`status` cho_ocr/pending_review/verified/rejected,`verified_by`) — KHÔNG lưu full text | `ingest.doc_intake` — insert-only theo hash; status verified/rejected chỉ do Pháp chế qua CLI `--verify/--reject --by` |
 | `document_fields` | Field pháp lý trích bằng regex (`so_giay`,`ngay_cap`,`ten_san_pham`; `confidence`,`verified` mặc định false) | `ingest.doc_intake` — không LLM; `verified=true` khi Pháp chế `--verify` |
 | `intel_items` | (v7.0, WP09) Tin thị trường tầng A/B: `url` chuẩn hóa UNIQUE, `domain`, `source` (id nguồn), `tier` A/B, `title`/`snippet`/`summary` ≤300 ký tự (đã che SĐT/email), `published_at`, `content_sha256` UNIQUE, `topics` (≥1: sam/tpbvsk/gioi_tre/quang_cao/doi_thu), `flags` (`ruou`/`suc_khoe`/`llm_guardrail_fail`) — KHÔNG toàn văn, không cột body | `python -m crawler.intel --run` — insert-only, dedup url + hash nội dung; không ghi bảng khác |
+| `intel_imports` | (v7.2, WP09) 1 dòng/file intel nhập tay đã nạp: `kind` competitor/trend_timeline/trend_related/social, `channel` (social), `file_name` (basename), `file_sha256` UNIQUE (nạp lại cùng file = `[skip]`), `row_count` | `python -m ingest.intel_import` — insert-only |
+| `competitor_observations` | (v7.2) Giá/KM đối thủ do NGƯỜI ghi tay: `competitor`, `channel` shopee/tiktok/lazada/tiki/web/khac, `product_name`, `sku_key` (SKU tương đương của mình, không FK), `price_vnd`, `promo_price_vnd`, `promo_text`, `rating`, `review_count`, `observed_on`, `source_ref` (URL / "ảnh chụp ...") — agent KHÔNG cào sàn | `ingest.intel_import --competitor F` — so golden bằng `competitor_gaps` (chỉ đọc) |
+| `trends_weekly` | (v7.2) Google Trends multiTimeline xuất tay: `query_id` (= sha256 file[:16] — thang 0–100 chỉ so trong cùng file), `keyword`, `anchor` (từ khóa neo), `geo`, `week`, `value` 0–100 | `ingest.intel_import --trend F` — cấm thư viện/API Trends không chính thức |
+| `trends_related` | (v7.2) Google Trends relatedQueries: `seed`, `section` top/rising, `query` ≤200, `value` ("100"/"+250%"/"Breakout"), `flags` (`ruou`) | `ingest.intel_import --trend F --seed KW` |
+| `social_mentions` | (v7.2) Comment/inbox/review kênh SỞ HỮU (P1): `channel` fanpage/zalo_oa/tiktok, `kind`, `posted_at`, `msg_hash` UNIQUE (sha256 CÓ MUỐI `INTEL_HASH_SALT`), `labels` (khen/che/hoi_gia/hoi_suc_khoe/hoi_ruou/khieu_nai/khac), `sensitive`, `excerpt` (đã che, CHỈ khi DPIA đã ký) — KHÔNG cột tên/ID/SĐT/email người dùng | `ingest.intel_import --social F --channel C` — không trả lời tự động; báo cáo chỉ đếm |
 
 View (v3.2): `sku_readiness` (SKU × kênh online → `CAM` / `MO_TA` /
 `TP_THUONG` / `QC_DAY_DU`; rượu luôn `CAM`, kênh ngoài `allowed_channels`
