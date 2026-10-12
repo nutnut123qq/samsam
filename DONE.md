@@ -748,6 +748,412 @@ DSN owner như `crawler.intel`); tin gõ KHÔNG dấu không phân biệt giá/g
 thừa (lệch về phía báo dư, người nhận `--ack`; có từ cụm `sâm giả` gốc,
 vá nghiệm thu thêm `ngọc linh giả` nới thêm) — cần Pháp chế/MXH chọn khi
 duyệt bộ từ khóa.
+## Checklist v5.0-gd-kinh-doanh
+
+Khán giả/mục đích: M31 (worktree `D:\code\samsam-w95`, nhánh `ai-infra`) —
+phần "Agent GĐ Kinh doanh TMĐT (approval_queue, SLA handoff A 2h và B 4h)"
+của WP07 (pmo.md dòng `| WP07`; final_plans.json khối `sales` — sơ đồ "Agent
+GĐ KD TMĐT (điều phối, báo cáo sáng, approval_queue)"; flows_final.json
+`g1_sales` luồng `F03c` "Handoff A / B…, SLA, escalation"). Đây là agent
+giám đốc ĐẦU TIÊN cấu hình THẬT trên khung v4.0 (`pipelines/director.py`,
+`pipelines/approval_queue.py`, `pipelines/red_alert.py`,
+`data/directors/sales.json`) — làm MẪU cho 10 khối còn lại. Hiện trạng (đọc
+code): `sales.json` chỉ có 3 loại việc (`price_change`/`b2b_quote` SLA 24h,
+`message_template` 48h), không có lớp handoff A/B; SLA của
+`approval_queue.due_at` = `now() + sla_hours` giờ ĐỒNG HỒ (`enqueue_item`,
+`docs/schema.sql`), không có khái niệm giờ làm việc; `pipelines/period.py`
+chỉ cắt kỳ ngày/tuần/tháng; không có gì đọc `market_alerts` (v3.3),
+`golden_discrepancies` (v3.2), lead tồn (`leads.status='new'`) hay câu
+chatbot chưa trả lời (convlog `answered:false`) để đẩy thành việc cho khối
+KD; không có leo thang khi quá hạn ngoài `expire_overdue`. Sau version:
+(a) `sales.json` đủ loại việc của khối KD, mỗi loại có rủi ro + lớp handoff
+A (2 giờ làm việc) / B (4 giờ làm việc) + vai trò nhận; (b) giờ làm việc VN
+(ca + ngày làm + ngày nghỉ, cấu hình) tính trong `pipelines/period.py`,
+ngoài giờ đồng hồ SLA dừng, bắt đầu lại từ đầu ca sau; (c) 4 nguồn việc thật
+→ mục hàng duyệt (idempotent) hoặc nhắc trong bản tin; (d) quá SLA giờ làm
+việc → nhắc + leo thang (loại A → `red_alert`, loại B → TGĐ dự phòng), quá
+hạn tuyệt đối → `expired` qua `expire_overdue` (KHÔNG bao giờ tự duyệt);
+(e) bản tin GĐ KD ngày/tuần tất định, không LLM, không PII; (f) CLI
+`python -m agents.sales_director --run [--dry-run] --bulletin` + `job_runs`;
+(g) bộ eval MẪU khối KD cho định tuyến SLA/rủi ro theo format
+`scripts/agent_eval.py`.
+
+Quy ước: ponytail — stdlib + `psycopg` sẵn có, KHÔNG dep mới, KHÔNG LLM
+(bản tin là bảng số + id; phần nhận xét LLM của F03c bước 5 = someday).
+TÁI DÙNG, không viết lại: `pipelines.director.load_config/submit` (SLA +
+risk lấy từ cấu hình, agent không tự đặt), `pipelines.approval_queue.
+expire_overdue/pending` (agent KHÔNG gọi `decide`/`override`/
+`auto_approve`), `pipelines.red_alert.raise_alert` (người nhận độc lập,
+fail-closed khi thiếu), `pipelines.period` (`VN_TZ`, `period_bounds`),
+`pipelines.job_runs.job_run`, `ingest.lead_store` (`connect` có
+`connect_timeout`, `iter_convlog`, `dedup_key`, `channel_of`, `CONV_FILES`),
+`pipelines.pii._mask_pii`, `agents.report.write_report` (atomic, bytes),
+`pipelines.store._db_msg/_oneline`. Mọi hàm thời gian nhận `now` tham số
+(aware; naive → `ValueError`) — chỉ CLI đọc đồng hồ. Schema chỉ THÊM block
+v5.0 cuối `docs/schema.sql` (`create table if not exists` + dùng lại
+`append_only_guard()`), KHÔNG `alter`/`drop`; không assert đếm cứng số bảng
+(sàn `>= 24` / đọc schema.sql). Ghi trên conn chia sẻ: `conn.commit()`
+tường minh (gotcha savepoint v2.1). Print tiếng Việt → UTF-8 guard; CLI usage
+sai → exit 2 TRƯỚC connect (gotcha v2.2). Test DB thật: fixture như
+`tests/test_director_framework.py::db` (1 transaction + schema tạm +
+`docs/schema.sql` ×2 + `docs/roles.sql` ×2 rồi ROLLBACK), thử quyền bằng
+`set local role agent_writer`, đi tắt `created_at`/`due_at` bằng superuser
+`set local session_replication_role = replica` (precedent `_overdue`);
+skip khi không DB nhưng gate đòi **0 skipped**. KHÔNG enqueue/expire/leo
+thang trên DB thật ngoài test rollback (evidence CLI dùng `--dry-run` +
+`--bulletin`, chỉ ghi 1 dòng `job_runs`); KHÔNG điền người duyệt/người nhận
+thật (`approvers`/`digest_recipients` giữ `[]`); KHÔNG bật auto_policy.
+
+External-dep (KHÔNG giả lập, KHÔNG tự đánh dấu): người duyệt thật của khối
+KD + người trực handoff A (Quản lý MXH/sàn) + tuyến dự phòng (TGĐ chốt —
+`approvers` rỗng); ca làm việc thật + lịch nghỉ lễ/Tết (cấu hình ship là
+GIẢ ĐỊNH 08:00–18:00 thứ Hai–thứ Sáu, `holidays: []` — GĐ KD chốt); kênh gửi
+bản tin/nhắc/leo thang thật (Zalo/email — version này chỉ ghi file bản tin +
+hàng `sla_escalations`/`red_alerts`, KHÔNG gửi); người nhận cảnh báo đỏ độc
+lập (`data/red_alert_routing.json` vẫn `[]` → `route_error`, fail-closed
+v4.0); bảng map vùng–đại lý thật (bản ship là từ khóa tỉnh GIẢ ĐỊNH); lịch
+cron thật (n8n 15 phút/07:00 — KHÔNG thêm `agents.sales_director` vào
+`EXPECTED_JOBS` của `scripts/health_bulletin.py` khi chưa có lịch, tránh báo
+trễ giả); DSN theo role (pilot chạy DSN owner; grant `agent_writer` trong
+roles.sql là chuẩn bị). Ngoài phạm vi: A1–A11 (agent nhân viên), tickets/
+overflow_queue/làn gợi ý của F03c, đo giờ GĐ/MXH.
+
+- [x] **W50.1 Giờ làm việc VN — `pipelines/period.py`** — thêm (không đổi
+  hàm cũ): `parse_shift(cfg) -> dict` kiểm `{"start": "HH:MM", "end":
+  "HH:MM", "workdays": [0..6], "holidays": ["YYYY-MM-DD"...]}` (start <
+  end cùng ngày — không hỗ trợ ca qua đêm; workdays ≥1 phần tử, không trùng,
+  ⊂ 0..6 với 0 = thứ Hai; holidays ≤ 366 ngày ISO hợp lệ; sai → `ValueError`
+  thông điệp tiếng Việt); `business_deadline(start, hours, shift) ->
+  datetime` (cộng N giờ làm việc; `start` ngoài ca → đếm từ đầu ca kế tiếp;
+  kết quả aware +07:00); `business_minutes(a, b, shift) -> int` (số phút làm
+  việc trong `[a, b)`, `b <= a` → 0). Input naive → `ValueError` (luật v2.4
+  mix local/UTC), datetime múi khác (UTC) đổi sang VN trước khi tính. Vòng
+  quét ngày có trần (≤ 400 ngày) → hết trần (vd mọi ngày là holiday) →
+  `ValueError`, KHÔNG lặp vô hạn.
+  - Boundary: `pipelines/period.py`, `tests/test_period.py` (thêm case)
+  - Gate: `python -m pytest -q tests/test_period.py` xanh, gồm biên (ca mặc
+    định 08:00–18:00, T2–T6): `business_deadline(T6 17:59, 2)` = T2 09:59;
+    `(T2 08:00, 2)` = T2 10:00; `(T2 07:59, 2)` = T2 10:00; `(T2 18:00, 2)`
+    = T3 10:00; `(T2 16:00, 4)` = T3 10:00; `(T7 10:00, 4)` và `(CN 23:00,
+    4)` = T2 12:00; T2 là holiday → T3; `start` UTC 2026-10-12T01:00Z (=
+    08:00 VN) cho cùng kết quả như 08:00+07:00; `business_minutes(T6 17:00,
+    T2 09:00)` = 120, `(T7 09:00, CN 17:00)` = 0, `(17:59, 18:00)` = 1;
+    naive → `ValueError`; `parse_shift` từ chối end ≤ start / workdays rỗng
+    / workday 7 / holiday sai định dạng / > 366 holiday; ca mà MỌI ngày là
+    holiday trong 400 ngày → `ValueError` trong < 1s (probe vòng có trần);
+    hàm cũ `period_bounds`/`rolling_bounds` không đổi (test cũ xanh nguyên).
+  - Evidence: `evidence/v50_period.log`
+- [x] **W50.2 Cấu hình `data/directors/sales.json` + kiểm cấu hình khối
+  KD** — giữ đủ khóa v4.0 (`block`, `name`, `director_agent`,
+  `approver_roles: ["gd_ban_hang"]`, `approvers: []`, `digest_recipients:
+  []`, `due_soon_hours`) + `_doc` ghi rõ "BẢN DEV SOẠN, CHƯA ĐƯỢC TGĐ/GĐ KD
+  DUYỆT; ca làm việc là GIẢ ĐỊNH". `object_types` (mỗi loại `sla_hours`
+  tuyệt đối 1..720, `risk`, `handoff` `A|B`, `label` tiếng Việt):
+  `cskh_handoff` (câu chatbot NO_DATA/handoff chưa trả lời — A, medium),
+  `cskh_reply` (trả lời CSKH cần duyệt, cho A1 sau này — A, medium),
+  `market_alert_s1` (cảnh báo sàn S1 — A, **high**), `market_alert_s2`
+  (cảnh báo sàn S2 — B, medium), `price_review` (phiếu lệch giá golden chờ
+  GĐ duyệt — B, high), `price_change` (đổi giá đề xuất — B, high),
+  `listing_change` (đổi listing — B, high), `b2b_quote` (B, high),
+  `affiliate_program` (chương trình affiliate — B, high),
+  `message_template` (B, medium) — GIỮ tên `price_change`/`b2b_quote`/
+  `message_template` (test v4.0 dùng). Khối mới: `handoff_classes` {`A`:
+  {`business_hours`: 2, `assignee_role`: `mxh`, `escalate_to_role`:
+  `gd_ban_hang`, `red_alert`: true, `due_soon_minutes`: 30}, `B`:
+  {`business_hours`: 4, `assignee_role`: `gd_ban_hang`, `escalate_to_role`:
+  `tgd`, `red_alert`: false, `due_soon_minutes`: 60}}; `business_hours`
+  (ca GIẢ ĐỊNH 08:00–18:00, workdays [0..4], holidays []); `sources`
+  {`convlog_lookback_hours`: 72, `lead_stale_business_hours`: 8,
+  `price_discrepancy_kinds`: ["price_mismatch", "missing_price"]};
+  `regions` {tên vùng: [từ khóa tỉnh]} GIẢ ĐỊNH. `agents/sales_director.py::
+  load_sales_config(base_dir=None)` = `pipelines.director.load_config
+  ("sales")` (luật v4.0 giữ nguyên) + kiểm thêm → `DirectorConfigError`:
+  mọi loại có `handoff` ∈ {A,B} và `label`; `handoff_classes` A=2, B=4 giờ
+  (khóa cứng theo WP07 — đổi phải sửa code + test); role ⊂
+  `pipelines.auth.ROLES`; `market_alert_s1.risk` PHẢI `high` (S1 không bao
+  giờ vào lane tự duyệt); `business_hours` qua `period.parse_shift`;
+  `sla_hours` tuyệt đối của MỖI loại ≥ thời lượng đồng hồ tệ nhất của SLA giờ
+  làm việc lớp đó trên 1 tuần không lễ (quét mốc mỗi 15 phút — vd A: T6 17:59
+  → T2 09:59 ≈ 64h ⇒ `sla_hours` ≥ 64) — để mục luôn được leo thang TRƯỚC
+  khi expired; `regions` từ khóa không rỗng.
+  - Boundary: `data/directors/sales.json`, `agents/sales_director.py` (mới,
+    phần config), `tests/test_sales_director.py` (mới)
+  - Gate: `python -m pipelines.director --all --dry-run` exit 0 vẫn 11 dòng
+    `[ok]`; `tests/test_director.py` + `tests/test_director_framework.py`
+    xanh nguyên (không sửa test cũ); test mới: config ship hợp lệ; tham số
+    hóa đột biến (`market_alert_s1.risk` = `low`/`medium`, handoff `C`,
+    thiếu `label`, A `business_hours` 3, role lạ `giam_doc`, `sla_hours` 24
+    cho loại A (< 64h tệ nhất), ca end ≤ start, workdays rỗng) → mỗi case
+    `DirectorConfigError`; `approvers` và `digest_recipients` của file ship
+    = `[]` (assert — không tự điền người thật).
+  - Evidence: `evidence/v50_config.log`
+- [x] **W50.3 Schema `sla_escalations` + grant least-privilege** —
+  `docs/schema.sql` block "v5.0 leo thang SLA khối KD" cuối file (comment
+  tiếng Việt ai ghi/ai đọc/vì sao): `sla_escalations` (`id bigint identity
+  pk`, `queue_id bigint not null unique references approval_queue(id)` — 1
+  lần leo thang/mục, idempotent bằng `on conflict (queue_id) do nothing`,
+  `block text not null`, `handoff_class text not null check in ('A','B')`,
+  `assignee_role text not null`, `escalate_to_role text not null`,
+  `business_due_at timestamptz not null`, `red_alert boolean not null`,
+  `created_by text not null check (btrim <> '')`, `created_at timestamptz
+  not null default now()`) + trigger `append_only_guard()` (chặn UPDATE/
+  DELETE/TRUNCATE như `decisions`). KHÔNG cột payload/nội dung khách.
+  `docs/roles.sql` block v5.0: `agent_writer` được `insert` (cột trừ id/
+  created_at) + `select (id, queue_id)` trên `sla_escalations`; `select`
+  CỘT trên nguồn: `market_alerts (id, kind, severity, channel, export_kind,
+  item_id, status, opened_at)`, `golden_discrepancies (id, kind, sku_key,
+  status, created_at)`, `leads (id, ts, channel, intent, status,
+  question)` — KHÔNG `detail`/`user_hash`/`raw`; `app_human` select toàn
+  bảng `sla_escalations`. Không đổi grant cũ (test `_denied(AW, "select
+  title from red_alerts")` v4.0 vẫn xanh). Tên bảng mới vào `docs/handover/
+  kien-truc.md` (câu "35 bảng public" → 36) + `deploy/cloud/README.md`
+  (drift-guard `test_cloud_readme_drift_guard`).
+  - Boundary: `docs/schema.sql`, `docs/roles.sql`, `tests/
+    test_sales_director.py`
+  - Gate: `grep -nE "^\s*(alter|drop)\s+table" docs/schema.sql` không có
+    dòng mới so với HEAD (`git diff -U0 docs/schema.sql | grep -E
+    "^\+\s*(alter|drop)"` rỗng); `python scripts/apply_schema.py` ×2 exit 0
+    trên DB `samsam_infra`; test DB (rollback): insert 2 lần cùng `queue_id`
+    → lần 2 `on conflict do nothing` trả 0 dòng; UPDATE/DELETE
+    `sla_escalations` → raise; dưới `set local role agent_writer`: insert
+    được, `select detail from market_alerts` / `select user_hash from
+    leads` / `select payload from approval_queue` → InsufficientPrivilege;
+    `tests/test_db_backup.py::test_cloud_readme_drift_guard`,
+    `tests/test_dr_drill.py`, `tests/test_handover_docs.py` xanh.
+  - Evidence: `evidence/v50_schema.log`
+- [x] **W50.4 Nguồn việc thật → hàng duyệt / nhắc** — `agents/
+  sales_director.py::collect(conn, now, cfg, data_dir=DATA_DIR) -> list
+  [dict]` (THUẦN đọc — trả danh sách mục SẼ đẩy, không ghi) +
+  `enqueue_new(conn, items, cfg) -> int` (ghi qua `pipelines.director.
+  submit`, `created_by="agent:sales_director"`). Nguồn: (1) `market_alerts`
+  `status='open'` → `market_alert_s1|s2` theo `severity`, `object_id`
+  `ma:<id>`; (2) `golden_discrepancies` `status='pending'` và `kind` ∈
+  `sources.price_discrepancy_kinds` → `price_review`, `object_id` `gd:<id>`;
+  (3) convlog (`ingest.lead_store.iter_convlog` trên `CONV_FILES` của
+  `data_dir`) entry `answered is False` có `ts` parse được trong
+  `[now - convlog_lookback_hours, now]` → `cskh_handoff`, `object_id` =
+  `ingest.lead_store.dedup_key(rec)`; (4) `leads` `status='new'` quá
+  `lead_stale_business_hours` giờ làm việc kể từ `ts` → CHỈ nhắc trong bản
+  tin (KHÔNG thành mục duyệt — không có gì để phát hành). Idempotent: bỏ qua
+  khi `(object_type, object_id)` đã có trong `approval_queue` Ở BẤT KỲ
+  status (mục đã duyệt/từ chối/expired không bị đẩy lại); chạy 2 lần liên
+  tiếp → lần 2 đẩy 0. `payload` dựng từ TEMPLATE cố định chỉ gồm mã/loại/
+  kênh/severity/id/giờ VN (KHÔNG câu hỏi khách, KHÔNG tiêu đề listing,
+  KHÔNG `sku_key`/`seller_sku`/`detail`) — để `guardrail.check(payload)`
+  ok và người duyệt được (nếu payload chứa từ khóa rượu, `decide` approve
+  bị chặn vĩnh viễn); `title` chỉ nhãn loại + mã (không text khách). Agent
+  KHÔNG đổi status `market_alerts`/`golden_discrepancies`/`leads`.
+  - Boundary: `agents/sales_director.py`, `tests/test_sales_director.py`
+  - Gate: test DB (rollback, `set local role agent_writer` cho phần đọc +
+    enqueue): fixture 1 S1 (`alcohol_listed`, `sku_key` chứa 'ruou') + 1
+    S2 open + 1 alert closed + 1 phiếu `price_mismatch` pending + 1
+    `spec_mismatch` pending + 1 phiếu resolved + convlog tmp (2 entry
+    `answered:false` trong cửa sổ — 1 chứa SĐT/email/tên, 1 ngoài cửa sổ, 1
+    `answered:true`, 1 dòng corrupt) → đúng 4 mục (`market_alert_s1` risk
+    high, `market_alert_s2` medium, `price_review` high, `cskh_handoff`
+    medium) với `due_at - created_at` = `sla_hours` cấu hình; mọi payload
+    `guardrail.check(...)["ok"] is True`; payload/title KHÔNG chứa 'ruou',
+    SĐT, email, tên trong câu hỏi fixture; chạy lại → 0 mục mới; mục đã
+    `rejected` không bị đẩy lại; status 3 bảng nguồn không đổi; lead
+    `new` 9 giờ làm việc tuổi → vào danh sách nhắc, 7 giờ → không.
+  - Evidence: `evidence/v50_sources.log`
+  - *Vòng 3 (nghiệm thu MAJOR + 2 MINOR A04):* `object_id` S1/S2 =
+    `ma:<id>:<opened_at UTC>` theo ĐỢT (market_csv reopen cùng dòng đặt
+    `opened_at` mới → đợt tái phát = mục mới; cùng đợt vẫn không đẩy lại);
+    `price_review` giữ `gd:<id>` (golden_store xóa phiếu pending khi hết
+    lệch, tái phát INSERT id mới). `cskh_handoff` gom 1 mục/`user_hash`/
+    ngày VN (`cskh_object_id`; thiếu user_hash → `dedup_key`) + trần
+    `sources.max_cskh_per_run` (30) mục mới/lần, phần vượt chờ lần sau
+    (đếm trong kết quả run/dry-run + bản tin). Test:
+    `test_market_alert_reopen_is_new_episode[rejected|expired]`,
+    `test_cskh_flood_grouped_per_user_day_and_capped`.
+  - *Vòng 4 (nghiệm thu MINOR — gom CSKH chưa theo ĐỢT):* nhóm
+    khách/ngày chỉ coi là đã có mục khi còn mục PENDING (tin dồn/sticker
+    nuốt vào) hoặc mọi câu ≤ `decided_at` muộn nhất của nhóm (kể cả
+    expired); câu SAU lần quyết → đợt mới `cskh:<nhóm>:<ts đầu đợt UTC>`
+    có SLA lớp A mới (`_cskh_state` + lọc trong `_collect`). Test DB:
+    `test_cskh_new_episode_after_decided_same_day` (pending + 60 sticker
+    → 0 mục; duyệt 10:00 → câu 14:00 → 1 mục mới, chạy lại → 0; từ chối
+    15:30 → câu 16:00 → đợt 3) — mutation hành vi cũ làm test FAIL.
+- [x] **W50.5 Handoff SLA: nhắc + leo thang + expired** — `sla_state(item,
+  cfg, now) -> dict` (THUẦN: `handoff_class`, `business_due_at` =
+  `period.business_deadline(created_at, hours lớp, shift)`, `state` ∈
+  `on_time|due_soon|overdue` — `overdue` khi `now >= business_due_at`,
+  `due_soon` khi còn ≤ `due_soon_minutes` phút làm việc) + `sweep(conn,
+  now, cfg) -> dict`: (1) `approval_queue.expire_overdue(conn,
+  "system:sla:sales")` (quá hạn TUYỆT ĐỐI `due_at` → `expired`, không bao giờ
+  approved); (2) mục `pending` khối `sales` ở `overdue` → `insert into
+  sla_escalations ... on conflict (queue_id) do nothing returning id`; nếu
+  vừa chèn VÀ lớp có `red_alert: true` (loại A) → `pipelines.red_alert.
+  raise_alert(conn, "agents.sales_director", "Quá SLA loại A — mục #<id>",
+  {"queue_id", "object_type", "business_due_at"})` — insert leo thang chạy
+  trên implicit tx rồi `raise_alert` commit CẢ HAI (lỗi giữa chừng →
+  `conn.rollback()`, không mất cảnh báo, lần sau thử lại); loại B → chỉ dòng
+  `sla_escalations` (`escalate_to_role='tgd'`) + mục "Leo thang TGĐ" trong
+  bản tin. Agent KHÔNG gọi `decide`/`auto_approve`/`override` (grep-guard).
+  - Boundary: `agents/sales_director.py`, `tests/test_sales_director.py`
+  - Gate: test DB (rollback, `now` tham số, `created_at` đặt bằng replica):
+    mục `market_alert_s1` tạo T2 08:00 VN → `now` T2 09:59 không leo thang,
+    `now` T2 10:00 → 1 dòng `sla_escalations` + 1 dòng `red_alerts`
+    (`route_error` = thiếu người nhận vì routing `[]`) + 1 log
+    `red_alert_raise`; sweep lần 2 cùng `now` → vẫn 1/1 (idempotent); mục
+    loại A tạo T6 17:59 → `now` T7 12:00 và CN 12:00 và T2 09:58 không leo
+    thang, T2 09:59 leo thang; mục `price_review` (B) quá 4 giờ làm việc → 1
+    dòng `sla_escalations` `escalate_to_role='tgd'`, 0 dòng `red_alerts`
+    mới; monkeypatch `raise_alert` raise sau insert → `sla_escalations`
+    rollback về 0, chạy lại → 1 + 1; mục có `due_at` quá khứ (replica) →
+    `expired`, `decisions` kind `expired` + log `queue_expire`; sau đó
+    `approval_queue.decide(..., "approved")` → `(False, ...)`, status vẫn
+    `expired`, `approvals` không thêm dòng; S1 + `auto_policies` bật/ký
+    cho `market_alert_s1` (owner insert trong test) → `aq.auto_approve`
+    `(False, ...)` và `pipelines.director.run(..., "sales")` để nguyên
+    `pending`; `rg -n "decide\(|auto_approve|override\(|decide_item"
+    agents/sales_director.py` rỗng; `select verify_action_log()` sạch.
+  - Evidence: `evidence/v50_sla.log`
+  - *Vòng 3 (nghiệm thu 2 MINOR):* ứng viên leo thang = mục khối `sales`
+    CHƯA có dòng `sla_escalations` mà (a) pending quá SLA giờ làm việc
+    (`reason: sla`) HOẶC (b) đã quá `due_at` — pending hoặc ĐÃ expired
+    (bởi sweep, `director.run`, `approval_queue --expire`, cron chết, lễ
+    Tết) với `due_at` trong `EXPIRED_LOOKBACK` 7 ngày (`reason: expired`,
+    title "Hết hạn tuyệt đối chưa ai xử lý"). `plan()` cùng ứng viên (bỏ
+    lọc `due_at > now`). Cảnh báo đỏ theo lô: S1 1 cảnh báo/mục; loại A
+    khác (cskh_*) GOM 1 cảnh báo/loại/lần quét (`queue_ids` ≤ 100 + `n`).
+    Test: `test_sweep_escalates_items_past_due_before_business_due`,
+    `test_sweep_red_alert_aggregated_for_cskh_per_item_for_s1` (50 cskh + 2
+    S1 → 52 leo thang, 3 cảnh báo đỏ); `test_dry_run_writes_nothing` nay
+    kỳ vọng `escalate == 2`. Probe đột biến (scratchpad `w95_mut.py`): 6/6
+    đột biến bị test bắt.
+- [x] **W50.6 Bản tin GĐ KD ngày/tuần** — `gather(conn, now, cfg, period,
+  data_dir) -> dict` (chỉ SELECT) + `render_bulletin(cfg, data, now,
+  period) -> str` (THUẦN, tất định — cùng input ⇒ cùng chuỗi). Kỳ:
+  `day` = ngày VN hôm qua, `week` = tuần ISO trước (`period_bounds`); ảnh
+  chụp hàng chờ tại `now`. Mục: (1) Hàng chờ theo SLA — đếm + danh sách
+  `#id` · nhãn loại · lớp A/B · hạn giờ làm việc (giờ VN) theo
+  `quá hạn (đã leo thang lúc …)` / `sắp quá hạn` / `đúng hạn`; (2)
+  expired + đã duyệt/từ chối trong kỳ (đếm); (3) cảnh báo sàn đang mở S1/S2
+  theo `kind` × `channel` (đếm, S1 trước); (4) lead mới trong kỳ theo vùng
+  (từ khóa `regions` khớp `(?<!\w)kw(?!\w)` trên `question` casefold —
+  không khớp → "chưa rõ vùng"; chỉ in SỐ, không in câu) + lead `new` quá
+  hạn nhắc (đếm + `id`); (5) giá chờ duyệt (phiếu `price_review`/
+  `price_change` pending + số phiếu lệch golden pending). Chân: vai trò
+  duyệt, "Người duyệt/người nhận chưa cấu hình (external-dep)", ca làm việc
+  GIẢ ĐỊNH, "BẢN NHÁP — hệ thống không tự gửi". KHÔNG in: câu hỏi khách,
+  `user_hash`, `title` tự do của agent khác (chỉ nhãn loại từ cấu hình),
+  `created_by`/`decided_by` (tên nhân viên), `payload`. File `data/reports/
+  sales-director-<day|week>-<YYYY-MM-DD>.md` qua `write_report`
+  (gitignored).
+  - Boundary: `agents/sales_director.py`, `tests/test_sales_director.py`
+  - Gate: test thuần: data fixture có `title`/câu hỏi/lead chứa "Nguyễn Văn
+    An", "0912345678", "an@example.com", 1 `user_hash` → bản tin KHÔNG chứa
+    chuỗi nào trong 4 chuỗi đó; render 2 lần cùng input → bằng nhau; ranh
+    giới ngày VN: `now` = 2026-10-13T06:59+07:00 → kỳ `day` = 12/10 (lead
+    `ts` 2026-10-11T17:30Z = 12/10 00:30 VN được tính, 2026-10-11T16:59Z =
+    11/10 23:59 VN không); `period="week"` T2 → tuần ISO trước; số liệu
+    khớp SQL đối chứng trên DB rollback (đếm pending/overdue/S1/S2/giá chờ
+    viết tay); từ khóa vùng "Huế" không ăn "Thuế" (word-boundary, gotcha
+    drift-guard v2.3); `"BẢN NHÁP" in text and "external-dep" in text`.
+  - Evidence: `evidence/v50_bulletin.log`
+- [x] **W50.7 CLI + dry-run + job_runs** — `python -m agents.sales_director
+  --run [--dry-run] [--bulletin] [--period day|week] [--out-dir DIR]
+  [--now ISO-aware]` và `--bulletin` riêng. `--run` = collect → enqueue →
+  sweep; `--bulletin` = gather → render → file (kèm in đường dẫn + số liệu
+  tổng, KHÔNG in nội dung khách). `--run --dry-run`: chỉ ĐỌC — in kế hoạch
+  (số mục sẽ đẩy theo loại, số mục sẽ leo thang/red_alert, số mục sẽ expire
+  = pending có `due_at <= now`), KHÔNG enqueue/expire/insert
+  `sla_escalations`/`red_alerts`/`agent_action_log`, KHÔNG `job_run`; kèm
+  `--bulletin` thì in bản tin ra stdout, KHÔNG ghi file. Usage (exit 2
+  TRƯỚC connect): không có `--run`/`--bulletin`; `--dry-run` thiếu `--run`;
+  `--now` thiếu `--dry-run` (không ghi DB theo đồng hồ giả) hoặc `--now`
+  naive/sai định dạng. Cấu hình lỗi → exit 1 trước connect; DB down → exit
+  2 `[error]`; `psycopg.Error` → exit 2 `_db_msg`. Không dry-run: `main()`
+  bọc `job_run("agents.sales_director")` (`ok = rc == 0`) để bản tin sức
+  khỏe (`scripts/health_bulletin.py`, mục "Job 24h") thấy.
+  - Boundary: `agents/sales_director.py`, `tests/test_sales_director.py`
+  - Gate: test DB rollback: đếm `approval_queue`, `sla_escalations`,
+    `red_alerts`, `agent_action_log`, `decisions`, `job_runs` trước/sau
+    `run(conn, now, cfg, dry_run=True)` (fixture có S1 open + mục loại A quá
+    hạn + mục quá `due_at`) → bằng nhau, đồng thời kế hoạch trả về KHÔNG rỗng
+    (chứng minh có tính); CLI unit: monkeypatch `job_run` → gọi đúng 1 lần
+    tên `agents.sales_director` khi `--run`, 0 lần khi `--run --dry-run`;
+    các case usage → exit 2 và `connect` không được gọi; config hỏng (base
+    dir tmp) → exit 1; DB down: subprocess với `DATABASE_URL=postgresql://
+    u@10.255.255.1:5432/x` (gotcha v2.0 — không `env -u`) → exit 2 trong <
+    `connect_timeout` + vài giây; stdout/stderr CLI trên fixture PII không
+    chứa SĐT/email/tên; `python -m agents.sales_director --run --dry-run
+    --bulletin` và `--bulletin` trên DB `samsam_infra` exit 0, sau đó
+    `select count(*) from job_runs where job = 'agents.sales_director'`
+    tăng 1 (chỉ lần `--bulletin`) và `python scripts/health_bulletin.py
+    --out-dir <tmp>` có dòng `agents.sales_director`; `tests/
+    test_connect_timeout_guard.py` xanh.
+  - Evidence: `evidence/v50_cli.log`
+  - *Vòng 3 (nghiệm thu MINOR):* `test_cli_job_run_only_when_not_dry` nay
+    assert cờ `ok` (`_FakeRun.last`): DB down rc 2 → `ok is False`; `_main`
+    giả rc 0 → `True`, rc 1 → `False` (đột biến xóa `r["ok"] = rc == 0`
+    bị bắt).
+- [x] **W50.8 Eval MẪU khối KD (định tuyến SLA/rủi ro)** —
+  `data/eval/sales_director.jsonl`: dòng `_doc` ("Bộ ca MẪU do dev soạn —
+  CHỜ GĐ KD sửa; không phải nghiệm thu WP07") + ≥ 20 ca: `route`
+  (object_type/severity → `handoff`, `risk`, `assignee_role`), `sla`
+  (`created_at`, `now` aware → `state` + `business_due_at`),
+  `trap_offhours` (≥ 6: T6 17:59, T2 08:00, T2 07:59, T2 18:00, T7, CN),
+  `trap_no_auto` (S1 → risk `high`; mọi loại risk ≠ `low` → không đủ điều
+  kiện auto). `scripts/agent_eval.py`: runner `run_sales_director(cases)`
+  gọi `agents.sales_director.sla_state`/route trên `data/directors/
+  sales.json` THẬT (eval khóa drift cấu hình), thêm vào `RUNNERS` +
+  `RULE_AGENTS` (luật, không LLM/mạng/key). `data/eval/config.json`:
+  `sales_director` (`min_pass_rate` 1.0 — tất định, `must_pass_kinds`
+  ["trap_offhours", "trap_no_auto"], `prompt_files` gồm
+  `agents/sales_director.py`, `pipelines/period.py`, `data/directors/
+  sales.json`, `data/eval/sales_director.jsonl`) — KHÔNG vào
+  `required_agents` (bộ chưa duyệt không chặn deploy, precedent co_khi).
+  - Boundary: `data/eval/sales_director.jsonl`, `data/eval/config.json`,
+    `scripts/agent_eval.py`, `tests/test_agent_eval.py`
+  - Gate: `python scripts/agent_eval.py --agent sales_director --no-record`
+    exit 0 ×2, stdout giống hệt nhau, có `sales_director PASS` và `/<n>`
+    đúng số ca trong file; test: đổi 1 ca `trap_offhours` sang kỳ vọng sai → FAIL;
+    `required_agents == ["guardrail", "chatbot"]` giữ nguyên; mọi
+    `prompt_files` tồn tại (test cũ dòng `for f in acfg["prompt_files"]`).
+  - Evidence: `evidence/v50_eval.log`
+- [x] **W50.9 Docs** — `docs/handover/sop.md` mục "4c. Agent GĐ Kinh doanh
+  TMĐT (v5.0)": lệnh `--run --dry-run --bulletin` / `--run` / `--bulletin
+  --period week`, bảng loại việc (nhãn, lớp A/B, rủi ro, người nhận), giờ làm
+  việc GIẢ ĐỊNH + cách sửa ca/ngày lễ trong `sales.json`, leo thang (A →
+  cảnh báo đỏ, B → TGĐ), expired không tự duyệt, GĐ duyệt bằng `python -m
+  pipelines.approval_queue --pending --block sales` / `--approve ID --by`,
+  external-dep. `docs/handover/kien-truc.md`: bảng `sla_escalations` + câu
+  "36 bảng public" + module `agents/sales_director.py` trong sơ đồ agent.
+  `deploy/cloud/README.md`: thêm `` `sla_escalations` ``. `AGENTS.md`: dòng
+  Commands `python -m agents.sales_director --run [--dry-run] --bulletin` +
+  Structure + 1 gotcha nếu phát sinh thật trong version (không bịa).
+  - Boundary: `docs/handover/sop.md`, `docs/handover/kien-truc.md`,
+    `deploy/cloud/README.md`, `AGENTS.md`, `tests/test_handover_docs.py`
+    (thêm assert `agents.sales_director` trong sop.md)
+  - Gate: `tests/test_handover_docs.py` (kien-truc đủ tên bảng parse từ
+    schema.sql + đúng số), `tests/test_db_backup.py`, `tests/
+    test_dr_drill.py` xanh; mọi lệnh trong mục 4c chạy được (spot-check
+    `--help` exit 0 + `--run --dry-run` exit 0).
+  - Evidence: `evidence/v50_docs.log`
+- [ ] **W50.10 Gate chung** *(vòng 4 sau sửa MINOR CSKH theo đợt: targeted ×3 xanh 283 passed + 3 skipped; full 1776 passed + 3 skipped, 0 fail, EXIT 0; ruff/py_compile/director --all/red_alert exit 1/agent_eval sales_director PASS 26/26/`--run --dry-run --bulletin` exit 0/diff --check/core-modules/grep-guard sạch — `evidence/v50_pytest.log` mục VÒNG 4. VẪN TREO: worker đã khởi động Docker Desktop nhưng backend crash khi start ('initializing Inference manager … remove …Docker/run/dockerInference: The file cannot be accessed by the system', WSL docker-desktop Stopped) → 3 skipped `tests/test_dr_drill.py` 504/528/546; cần người trên máy gỡ file socket kẹt/restart Docker rồi chạy lại targeted (code không đổi thì không cần full).)* *(vòng 3 sau sửa nghiệm thu: targeted ×3 xanh 282 passed + 3 skipped; full 1775 passed + 3 skipped, 0 fail, EXIT 0; ruff/py_compile/director --all (11 ok)/red_alert exit 1/agent_eval sales_director PASS 26/26/`--run --dry-run --bulletin` exit 0/diff --check/core-modules/grep-guard sạch — `evidence/v50_pytest.log` mục VÒNG 3. VẪN TREO cùng lý do: Docker Desktop engine tắt → 3 skipped `tests/test_dr_drill.py` 504/528/546; worker KHÔNG tự bật Docker. Chốt '0 skipped' = chạy lại targeted khi docker bật, không cần chạy lại full nếu code không đổi.)* *(vòng 2: targeted ×3 xanh 275 passed + 3 skipped; full 1768 passed + 3 skipped, 0 fail; ruff/py_compile/director --all/red_alert exit 1/diff --check/core-modules sạch. CÒN TREO: 3 skipped = `tests/test_dr_drill.py` 504/528/546 'không có docker' — Docker Desktop engine tắt trên máy lúc chạy; file ngoài diff v5.0; vòng 1 lần 1–2 (docker bật) 278 passed 0 skipped. Chạy lại targeted khi Docker bật để chốt '0 skipped'.)* — targeted `python -m pytest -q -rs
+  tests/test_sales_director.py tests/test_period.py tests/test_director.py
+  tests/test_director_framework.py tests/test_approval_queue.py
+  tests/test_agent_eval.py tests/test_handover_docs.py tests/
+  test_db_backup.py tests/test_dr_drill.py` xanh ×3, **0 skipped**; full
+  `python -m pytest -q` xanh ĐÚNG 1 lần mỗi vòng (baseline 1682 + test mới,
+  0 fail; lệnh có thể bị đẩy nền — đọc output tới khi process exit, không
+  chạy chồng, không retry mù); `ruff check .` clean; `python -m py_compile
+  agents/sales_director.py pipelines/period.py scripts/agent_eval.py
+  pipelines/director.py` exit 0; `python -m pipelines.director --all
+  --dry-run` exit 0; `python -m pipelines.red_alert --check-routing` vẫn
+  exit 1 (người nhận thật chưa có — KHÔNG được "sửa" thành 0); `git diff
+  --check` sạch; `git diff --stat` KHÔNG chạm `pipelines/approval_queue.py`,
+  `pipelines/red_alert.py`, `pipelines/director.py`, `pipelines/
+  guardrail.py`, `ingest/lead_store.py`, `ingest/market_csv.py`,
+  `ingest/golden_store.py`, `scripts/health_bulletin.py`; `git status`
+  không file lạ (bản tin test chỉ trong `tmp_path`; `data/reports/` đã
+  gitignore; `lv2-market-top.png` nếu có giữ untracked).
+  - Boundary: toàn bộ diff version
+  - Gate: như trên
+  - Evidence: `evidence/v50_pytest.log` (force-add `git add -f`)
 
 Nhánh `ai-infra`: M31 đợt gộp 2026-10-12 — v4.0, v4.1, v4.4, v7.0, v7.3, v9.3,
 v9.5 đã đóng + gộp (35 bảng). Tích hợp khi gộp: bổ sung DF-16 (intel) + DF-17

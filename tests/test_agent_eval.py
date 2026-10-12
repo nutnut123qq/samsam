@@ -671,3 +671,59 @@ def test_mkt02_golden_mismatch_fails():
          "fields": {"name": "a", "pack_spec": "x", "receipt_no": None,
                     "price": "Liên hệ"}, "text": "Quy cách: x"}
     assert "name" in ae._golden_exact(c, r, {c["sku"]: gold})
+
+
+# --- v5.0 W50.8 bộ ca MẪU sales_director --------------------------------------
+def test_sales_director_cases_shape():
+    docs, cases = _rows("sales_director.jsonl")
+    assert docs and "chờ gđ kd sửa" in docs[0]["_doc"].casefold()
+    assert len(cases) >= 20
+    ids = [c["id"] for c in cases]
+    assert len(ids) == len(set(ids))
+    kinds = [c["kind"] for c in cases]
+    assert kinds.count("trap_offhours") >= 6 and "trap_no_auto" in kinds
+    assert {"route", "sla"} <= set(kinds)
+    assert all(c["text"].strip() and c["expect"] for c in cases)
+    cfg = ae.load_config()
+    acfg = cfg["agents"]["sales_director"]
+    assert "sales_director" not in cfg["required_agents"]
+    assert acfg["min_pass_rate"] == 1.0
+    assert acfg["must_pass_kinds"] == ["trap_offhours", "trap_no_auto"]
+    assert "sales_director" in ae.RULE_AGENTS
+
+
+def test_sales_director_runner_deterministic_pass():
+    _, cases = _rows("sales_director.jsonl")
+    acfg = ae.load_config()["agents"]["sales_director"]
+    r1 = ae.run_sales_director(cases)
+    r2 = ae.run_sales_director(cases)
+    assert [(c["id"], ok, d) for c, ok, d in r1] == \
+        [(c["id"], ok, d) for c, ok, d in r2]
+    s = ae.score(r1, acfg)
+    assert s["passed"] is True and s["n_pass"] == len(cases), [
+        (c["id"], d) for c, ok, d in r1 if not ok]
+
+
+def test_sales_director_wrong_offhours_expectation_fails():
+    _, cases = _rows("sales_director.jsonl")
+    trap = next(c for c in cases if c["kind"] == "trap_offhours"
+                and c["expect"]["state"] == "on_time")
+    bad = dict(trap, expect=dict(trap["expect"], state="overdue"))
+    res = ae.run_sales_director([bad])
+    assert res[0][1] is False
+    s = ae.score(res + [(c, True, "") for c in cases if c is not trap],
+                 ae.load_config()["agents"]["sales_director"])
+    assert s["passed"] is False and s["trap_fail"] == [trap["id"]]
+
+
+def test_sales_director_cli_no_record_twice_identical():
+    _, cases = _rows("sales_director.jsonl")
+    cmd = [sys.executable, str(ROOT / "scripts" / "agent_eval.py"), "--agent",
+           "sales_director", "--no-record"]
+    outs = [subprocess.run(cmd, cwd=ROOT, capture_output=True, timeout=120,
+                           check=False) for _ in range(2)]
+    assert [o.returncode for o in outs] == [0, 0]
+    assert outs[0].stdout == outs[1].stdout
+    assert b"sales_director PASS" in outs[0].stdout
+    assert f"/{len(cases)} ".encode() in outs[0].stdout
+    assert b"model=rules" in outs[0].stdout

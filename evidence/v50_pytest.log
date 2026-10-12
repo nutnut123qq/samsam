@@ -1,0 +1,303 @@
+# W50.10 gate chung — vòng 1 — 2026-10-12T05:15:45+07:00
+## targeted lần 1
+$ python -m pytest -q -rs tests/test_sales_director.py tests/test_period.py tests/test_director.py tests/test_director_framework.py tests/test_approval_queue.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_db_backup.py tests/test_dr_drill.py
+........................................................................ [ 51%]
+........................................................................ [ 77%]
+..............................................................           [100%]
+278 passed in 179.17s (0:02:59)
+exit=0
+
+## targeted lần 2
+..............................................................           [100%]
+278 passed in 255.10s (0:04:15)
+exit=0
+
+## targeted lần 3
+tests\test_dr_drill.py:548: AssertionError
+1 failed, 277 passed in 247.72s (0:04:07)
+exit=1
+
+## targeted lần 4 (chẩn đoán lần 3 — output đầy đủ)
+E       AssertionError: assert ['samsam-dr-2..._053146-0fad'] == []
+E         
+E         Left contains one more item: 'samsam-dr-20261012_053146-0fad'
+E         Use -v to get more diff
+1 failed, 277 passed in 232.10s (0:03:52)
+exit=1
+Chẩn đoán: test_zz_no_dr_container_left (tests/test_dr_drill.py:548) assert 0 container 'samsam-dr-*' trên docker TOÀN MÁY; lúc đó container của worktree khác đang chạy dr_drill song song:
+(file test + scripts/dr_drill.py KHÔNG nằm trong diff v5.0 — lỗi môi trường chạy song song, không phải code version này)
+Quan sát trực tiếp (docker ps -a lúc 2026-10-12 05:32:04 +07, KHÔNG có pytest nào của w95 đang chạy): samsam-dr-20261012_053203-9666 Up 1 second — container drill của worktree khác.
+
+# W50.10 gate chung — vòng 2 (worker chạy lại) — 2026-10-12T10:43:15+07:00
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile agents/sales_director.py pipelines/period.py scripts/agent_eval.py pipelines/director.py
+exit=0
+$ python -m pipelines.director --all --dry-run
+[ok] ceo — Tổng giám đốc + Hội đồng thành viên + Ban kiểm soát nội bộ · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] sales — Giám đốc bán hàng + Sales (Phòng kinh doanh TMĐT) · 10 loại việc · vai trò duyệt gd_ban_hang · người duyệt chưa cấu hình (external-dep)
+[ok] marketing — Giám đốc marketing + Chuyên viên marketing + Chuyên viên SEO · 3 loại việc · vai trò duyệt gd_marketing · người duyệt chưa cấu hình (external-dep)
+[ok] intel — Trung tâm tình báo thị trường (trực thuộc TGĐ, phục vụ Marketing/Sales) · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] finance — Giám đốc tài chính + Phòng kế toán + Phòng tài chính–kế hoạch · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] production — Giám đốc sản xuất + Nghiên cứu và sản xuất + Công nghệ sinh học · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] farming — Giám đốc vùng trồng + Nhân viên vùng trồng · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] projects — Giám đốc dự án + Chuyên viên dự án–xúc tiến đầu tư · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] legal_hr — Pháp chế nhân sự + Chuyên viên pháp chế–hành chính–nhân sự · 3 loại việc · vai trò duyệt phap_che · người duyệt chưa cấu hình (external-dep)
+[ok] mechanical — Trung tâm điện–cơ khí chế tạo máy + Kỹ sư điện–cơ khí · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] data_platform — Hạ tầng dữ liệu & AI (do Quản lý hạ tầng AI vận hành) · 2 loại việc · vai trò duyệt ha_tang,tgd · người duyệt chưa cấu hình (external-dep)
+[done] 11 khối hợp lệ (dry-run, không DB)
+exit=0
+$ python -m pipelines.red_alert --check-routing  (kỳ vọng exit 1)
+[FAIL] thiếu người nhận độc lập (external-dep) — cảnh báo đỏ vẫn được ghi bảng red_alerts nhưng chưa có ai nhận; Pháp chế xác nhận người nhận rồi điền data/red_alert_routing.json
+exit=1
+$ git diff --check
+warning: in the working copy of 'AGENTS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'data/directors/sales.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'data/eval/config.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy/cloud/README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/handover/kien-truc.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/handover/sop.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/roles.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/schema.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'pipelines/period.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/agent_eval.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_agent_eval.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_handover_docs.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_period.py', LF will be replaced by CRLF the next time Git touches it
+exit=0
+$ git diff --stat -- core modules (kỳ vọng rỗng)
+(hết)
+$ git status --short
+ M AGENTS.md
+ M DONE.md
+ M data/directors/sales.json
+ M data/eval/config.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/roles.sql
+ M docs/schema.sql
+ M pipelines/period.py
+ M scripts/agent_eval.py
+ M tests/test_agent_eval.py
+ M tests/test_handover_docs.py
+ M tests/test_period.py
+?? agents/sales_director.py
+?? data/eval/sales_director.jsonl
+?? tests/test_sales_director.py
+
+## vòng 2 — targeted lần 1 — 2026-10-12T10:43:56+07:00
+$ python -m pytest -q -rs tests/test_sales_director.py tests/test_period.py tests/test_director.py tests/test_director_framework.py tests/test_approval_queue.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_db_backup.py tests/test_dr_drill.py
+........................................................................ [ 25%]
+........................................................................ [ 51%]
+........................................................................ [ 77%]
+...........................................................sss           [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+275 passed, 3 skipped in 212.56s (0:03:32)
+exit=0
+
+## vòng 2 — targeted lần 2 — 2026-10-12T10:47:43+07:00
+$ python -m pytest -q -rs tests/test_sales_director.py tests/test_period.py tests/test_director.py tests/test_director_framework.py tests/test_approval_queue.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_db_backup.py tests/test_dr_drill.py
+........................................................................ [ 25%]
+........................................................................ [ 51%]
+........................................................................ [ 77%]
+...........................................................sss           [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+275 passed, 3 skipped in 186.20s (0:03:06)
+exit=0
+
+## vòng 2 — targeted lần 3 — 2026-10-12T10:51:03+07:00
+$ python -m pytest -q -rs tests/test_sales_director.py tests/test_period.py tests/test_director.py tests/test_director_framework.py tests/test_approval_queue.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_db_backup.py tests/test_dr_drill.py
+........................................................................ [ 25%]
+........................................................................ [ 51%]
+........................................................................ [ 77%]
+...........................................................sss           [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+275 passed, 3 skipped in 153.71s (0:02:33)
+exit=0
+TARGETED_DONE
+
+Ghi chú vòng 2: 3 skipped ở 3 lần targeted = tests/test_dr_drill.py:504/528/546 'không có docker' — Docker Desktop engine KHÔNG chạy trên máy lúc này (docker info: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified). File test_dr_drill.py/scripts/dr_drill.py không nằm trong diff v5.0; vòng 1 lần 1–2 (docker còn chạy) 278 passed 0 skipped trên cùng code.
+
+## vòng 2 — full pytest (1 lần) — 2026-10-12T11:20:59+07:00
+$ python -m pytest -q -rs
+........................................................................ [  4%]
+........................................................................ [  8%]
+........................................................................ [ 12%]
+........................................................................ [ 16%]
+........................................................................ [ 20%]
+........................................................................ [ 24%]
+........................................................................ [ 28%]
+..........................................sss........................... [ 32%]
+........................................................................ [ 36%]
+........................................................................ [ 40%]
+........................................................................ [ 44%]
+........................................................................ [ 48%]
+........................................................................ [ 52%]
+........................................................................ [ 56%]
+........................................................................ [ 60%]
+........................................................................ [ 65%]
+........................................................................ [ 69%]
+........................................................................ [ 73%]
+........................................................................ [ 77%]
+........................................................................ [ 81%]
+........................................................................ [ 85%]
+........................................................................ [ 89%]
+........................................................................ [ 93%]
+........................................................................ [ 97%]
+...........................................                              [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+1768 passed, 3 skipped in 502.51s (0:08:22)
+exit=0
+FULL_DONE
+
+## vòng 2 — Phần B: tự rà OWASP Top 10 trên diff v5.0 (worker)
+- A01 Access control: agent không gọi decide/auto_approve/override (grep-guard test); grant agent_writer theo CỘT (không detail/user_hash/sku_key/payload); sla_escalations append-only (trigger) — OK.
+- A03 Injection: mọi SQL tham số hóa (%s / any(%s)); regex vùng re.escape từ cấu hình; bản tin chỉ in số/#id/nhãn cấu hình, channel/export_kind qua _code() allowlist [a-z0-9_.-] — OK.
+- A04/A05 Thiết kế: S1 risk high khóa trong validate_sales; expired không bao giờ approved (test DB); business_deadline vòng quét có trần 400 ngày — OK.
+- A09 Logging/PII: payload/title template (không câu hỏi khách); warn sweep chỉ in tên lớp lỗi; raise_alert detail chỉ queue_id/object_type/hạn — OK.
+- LOW (không sửa — input operator, không phải lỗ hổng): `--now` cực trị (vd năm 0001, chỉ đi với --dry-run) → business_minutes quét ~5.9s/mục pending và period_of OverflowError traceback (probe pure function đo được).
+- LOW (không sửa — cấu hình operator): workdays=[0] + 366 holidays phủ mọi thứ Hai trong 400 ngày → business_deadline ValueError lúc chạy (validate_sales quét worst_clock_hours bỏ holidays nên không bắt).
+Kết luận: không có lỗi bảo mật thật cần vá trong diff.
+
+=== VÒNG 3 (sửa nghiệm thu: F1 MAJOR reopen theo đợt, F2 leo thang mục quá due_at/đã expired, F3/F5 gom CSKH + trần + gộp cảnh báo đỏ, F6 test ok job_run) — 2026-10-12T12:15:06+07:00
+--- targeted ×3 (-rs)
+=== targeted lần 1 (2026-10-12T11:56:48+07:00)
+........................................................................ [ 50%]
+........................................................................ [ 75%]
+..................................................................sss    [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+282 passed, 3 skipped in 155.71s (0:02:35)
+=== targeted lần 2 (2026-10-12T11:59:29+07:00)
+........................................................................ [ 50%]
+........................................................................ [ 75%]
+..................................................................sss    [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+282 passed, 3 skipped in 204.68s (0:03:24)
+=== targeted lần 3 (2026-10-12T12:03:00+07:00)
+........................................................................ [ 50%]
+........................................................................ [ 75%]
+..................................................................sss    [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+282 passed, 3 skipped in 180.56s (0:03:00)
+--- full pytest (1 lần)
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+1775 passed, 3 skipped in 495.82s (0:08:15)
+EXIT=0
+--- ruff
+All checks passed!
+--- py_compile
+py_compile exit 0
+--- director --all --dry-run
+11
+exit 0
+--- red_alert --check-routing (phải exit 1)
+exit 1
+--- agent_eval sales_director
+[done] sales_director PASS 26/26 pass_rate=1.0 (ngưỡng 1.0) prompt_version=57f844229746 model=rules
+[done] --no-record: không ghi eval_runs
+--- sales_director --run --dry-run --bulletin
+[dry-run] sẽ đẩy: cskh_handoff 3, price_review 17 · CSKH vượt trần chờ lần sau 0 · sẽ expire 0 · sẽ leo thang 0 (cảnh báo đỏ 0) · lead quá hạn nhắc 0 — KHÔNG ghi DB
+exit 0
+--- git diff --check
+sạch
+--- core modules không chạm
+0
+--- grep-guard decide/auto_approve
+0
+--- docker
+
+
+error during connect: Get "http://%2F%2F.%2Fpipe%2FdockerDesktopLinuxEngine/v1.51/info": open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+=> W50.10 VẪN TREO: Docker Desktop engine tắt → 3 skipped test_dr_drill (ngoài diff v5.0); chạy lại targeted khi docker bật.
+
+=== VÒNG 4 (sửa nghiệm thu: MINOR cskh_handoff theo ĐỢT — nhóm khách/ngày đã quyết mà khách hỏi tiếp sau decided_at → mục mới cskh:<nhóm>:<ts đầu đợt UTC>; pending vẫn nuốt tin dồn) — 2026-10-12T13:05:26+07:00
+--- test bắt lỗi: tests/test_sales_director.py::test_cskh_new_episode_after_decided_same_day (mutation 'if pend or last is not None' = hành vi cũ → FAIL tại assert đợt 14:00; khôi phục → PASS)
+--- targeted ×3 (-rs)
+=== targeted lần 1 (2026-10-12T12:50:41+07:00)
+...................................................................sss   [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+283 passed, 3 skipped in 149.65s (0:02:29)
+EXIT=0
+=== targeted lần 2 (2026-10-12T12:53:17+07:00)
+...................................................................sss   [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+283 passed, 3 skipped in 154.89s (0:02:34)
+EXIT=0
+=== targeted lần 3 (2026-10-12T12:56:00+07:00)
+...................................................................sss   [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+283 passed, 3 skipped in 155.48s (0:02:35)
+EXIT=0
+DONE
+--- full (1 lần)
+=== full (2026-10-12T12:58:50+07:00)
+........................................................................ [ 93%]
+........................................................................ [ 97%]
+...................................................                      [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+1776 passed, 3 skipped in 358.20s (0:05:58)
+EXIT=0
+DONE
+--- ruff
+All checks passed!
+--- py_compile
+py_compile exit 0
+--- director --all --dry-run
+exit 0
+--- red_alert --check-routing (phải exit 1)
+exit 1
+--- agent_eval sales_director
+[done] sales_director PASS 26/26 pass_rate=1.0 (ngưỡng 1.0) prompt_version=0e1a153324b8 model=rules
+[done] --no-record: không ghi eval_runs
+--- sales_director --run --dry-run --bulletin
+[dry-run] sẽ đẩy: cskh_handoff 3, price_review 17 · CSKH vượt trần chờ lần sau 0 · sẽ expire 0 · sẽ leo thang 0 (cảnh báo đỏ 0) · lead quá hạn nhắc 0 — KHÔNG ghi DB
+exit 0
+--- git diff --check
+sạch
+--- core modules không chạm
+0
+--- grep-guard decide/auto_approve
+0
+--- docker
+
+error during connect: Get "http://%2F%2F.%2Fpipe%2FdockerDesktopLinuxEngine/v1.51/info": open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+Docker Desktop đã được khởi động lại lúc vòng 4 (Start-Process) nhưng backend crash ngay: log com.docker.backend.exe 05:33:29Z 'starting services: initializing Inference manager: listening on unix://<HOME>\AppData\Local\Docker\run\dockerInference: remove ...: The file cannot be accessed by the system' — WSL distro docker-desktop Stopped. Lỗi môi trường máy (file socket kẹt ngoài repo), worker không sửa file của Docker.
+=> W50.10 VẪN TREO: 3 skipped test_dr_drill 504/528/546 (docker không lên); code v5.0 xanh: targeted 283 passed ×3, full 1776 passed, 0 fail.

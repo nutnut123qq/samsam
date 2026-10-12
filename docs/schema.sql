@@ -2556,3 +2556,38 @@ create table if not exists dealer_ar (
                    when 'thanh_toan' then amount_vnd < 0
                    else amount_vnd <> 0 end)
 );
+
+-- ============================================================================
+-- v5.0 leo thang SLA khối KD (WP07, `agents/sales_director.py`, luồng F03c
+-- "Handoff A/B, SLA, escalation"). 1 dòng / mục hàng duyệt bị QUÁ SLA GIỜ LÀM
+-- VIỆC (A = 2 giờ, B = 4 giờ — `data/directors/sales.json`). `queue_id`
+-- unique → `insert ... on conflict (queue_id) do nothing` = chạy lại không
+-- leo thang 2 lần (agent_writer KHÔNG đọc được red_alerts/agent_action_log
+-- nên không dò trùng qua đó được). Loại A kèm 1 dòng `red_alerts` (cùng
+-- transaction); loại B chỉ dòng này (`escalate_to_role='tgd'`) + mục trong
+-- bản tin GĐ KD. Leo thang KHÔNG đổi status mục — quá hạn tuyệt đối vẫn đi
+-- `expire_overdue` (không bao giờ tự duyệt).
+-- Ai ghi: agent_writer (INSERT cột metadata). Ai đọc: agent GĐ KD (id,
+-- queue_id, created_at — làm bản tin), app_human (đủ cột). Append-only:
+-- trigger chặn UPDATE/DELETE/TRUNCATE. KHÔNG cột payload/nội dung khách.
+-- ============================================================================
+
+create table if not exists sla_escalations (
+  id bigint generated always as identity primary key,
+  queue_id bigint not null unique references approval_queue (id),
+  block text not null,
+  handoff_class text not null check (handoff_class in ('A', 'B')),
+  assignee_role text not null,
+  escalate_to_role text not null,
+  business_due_at timestamptz not null,
+  red_alert boolean not null,
+  created_by text not null check (btrim(created_by) <> ''),
+  created_at timestamptz not null default now()
+);
+
+create or replace trigger sla_escalations_append_only_row
+  before update or delete on sla_escalations
+  for each row execute function append_only_guard();
+create or replace trigger sla_escalations_no_truncate
+  before truncate on sla_escalations
+  for each statement execute function append_only_guard();

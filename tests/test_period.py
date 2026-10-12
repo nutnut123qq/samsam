@@ -84,3 +84,92 @@ def test_rolling_bounds():
     assert e.utcoffset() == timedelta(hours=7)
     assert e - s == timedelta(days=1)
     assert abs((datetime.now(UTC) - e).total_seconds()) < 60
+
+
+# ---------- v5.0 W50.1 giờ làm việc VN (SLA handoff WP07) ----------
+
+SHIFT = {"start": "08:00", "end": "18:00", "workdays": [0, 1, 2, 3, 4],
+         "holidays": []}
+# 2026-10-12 là thứ Hai.
+MON, TUE, FRI, SAT, SUN = 12, 13, 16, 17, 18
+
+
+def _t(d, hh, mm=0, month=10):
+    return datetime(2026, month, d, hh, mm, tzinfo=VN)
+
+
+@pytest.mark.parametrize("start, hours, want", [
+    (_t(FRI, 17, 59), 2, _t(19, 9, 59)),          # T6 17:59 → T2 09:59
+    (_t(MON, 8), 2, _t(MON, 10)),
+    (_t(MON, 7, 59), 2, _t(MON, 10)),             # trước ca → đầu ca
+    (_t(MON, 18), 2, _t(TUE, 10)),                # 18:00 là ngoài ca
+    (_t(MON, 16), 4, _t(TUE, 10)),
+    (_t(SAT, 10), 4, _t(19, 12)),
+    (_t(SUN, 23), 4, _t(19, 12)),
+    (_t(MON, 17, 59), 0, _t(MON, 17, 59)),
+    (_t(MON, 16), 2, _t(MON, 18)),                # vừa hết ca
+])
+def test_business_deadline_boundaries(start, hours, want):
+    got = period.business_deadline(start, hours, SHIFT)
+    assert got == want and got.utcoffset() == timedelta(hours=7)
+
+
+def test_business_deadline_holiday_and_utc_input():
+    hol = dict(SHIFT, holidays=["2026-10-12"])
+    assert period.business_deadline(_t(MON, 8), 2, hol) == _t(TUE, 10)
+    utc = datetime(2026, 10, 12, 1, 0, tzinfo=UTC)      # = 08:00 VN
+    assert period.business_deadline(utc, 2, SHIFT) == \
+        period.business_deadline(_t(MON, 8), 2, SHIFT)
+
+
+def test_business_minutes():
+    assert period.business_minutes(_t(FRI, 17), _t(19, 9), SHIFT) == 120
+    assert period.business_minutes(_t(SAT, 9), _t(SUN, 17), SHIFT) == 0
+    assert period.business_minutes(_t(MON, 17, 59), _t(MON, 18), SHIFT) == 1
+    assert period.business_minutes(_t(MON, 10), _t(MON, 9), SHIFT) == 0
+    assert period.business_minutes(_t(MON, 7), _t(MON, 8), SHIFT) == 0
+    # 1 tuần đủ = 5 × 600 phút.
+    assert period.business_minutes(_t(MON, 0), _t(19, 0), SHIFT) == 3000
+
+
+def test_business_naive_rejected():
+    naive = datetime(2026, 10, 12, 8, 0)  # noqa: DTZ001 — cố ý naive
+    with pytest.raises(ValueError):
+        period.business_deadline(naive, 2, SHIFT)
+    with pytest.raises(ValueError):
+        period.business_minutes(naive, _t(MON, 9), SHIFT)
+    with pytest.raises(ValueError):
+        period.business_minutes(_t(MON, 9), naive, SHIFT)
+
+
+@pytest.mark.parametrize("mut", [
+    {"end": "08:00"}, {"end": "07:00"}, {"workdays": []}, {"workdays": [7]},
+    {"workdays": [1, 1]}, {"workdays": [True]}, {"start": "8:00"},
+    {"start": "24:00"}, {"holidays": ["12/10/2026"]},
+    {"holidays": ["2026-13-01"]}, {"holidays": ["20261012"]},
+    {"holidays": [20261012]}, {"holidays": "2026-10-12"},
+    {"holidays": ["2026-01-01"] * 367},
+])
+def test_parse_shift_rejects(mut):
+    with pytest.raises(ValueError):
+        period.parse_shift(dict(SHIFT, **mut))
+
+
+def test_parse_shift_ok_and_idempotent():
+    s = period.parse_shift(SHIFT)
+    assert s["start_min"] == 480 and s["end_min"] == 1080
+    assert period.parse_shift(s) is s
+    with pytest.raises(ValueError):
+        period.parse_shift(None)
+
+
+def test_all_days_holiday_bounded():
+    """Mọi ngày trong 400 ngày là lễ → ValueError (vòng có trần)."""
+    import time
+    d0 = date(2026, 10, 12)
+    allhol = dict(SHIFT, workdays=[0], holidays=[
+        (d0 + timedelta(days=7 * i)).isoformat() for i in range(60)])
+    t0 = time.perf_counter()
+    with pytest.raises(ValueError):
+        period.business_deadline(_t(MON, 8), 2, allhol)
+    assert time.perf_counter() - t0 < 1.0

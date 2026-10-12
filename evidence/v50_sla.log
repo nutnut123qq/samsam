@@ -1,0 +1,29 @@
+# W50.5 handoff SLA: nhắc + leo thang + expired — 2026-10-12T05:13:43+07:00
+$ python -m pytest -v tests/test_sales_director.py -k "sweep or s1_never or decision_functions or sla_state or route"
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 57 items / 40 deselected / 17 selected
+
+tests/test_sales_director.py::test_route_and_alert_type PASSED           [  5%]
+tests/test_sales_director.py::test_sla_state_class_a[created0-now0-on_time] PASSED [ 11%]
+tests/test_sales_director.py::test_sla_state_class_a[created1-now1-due_soon] PASSED [ 17%]
+tests/test_sales_director.py::test_sla_state_class_a[created2-now2-due_soon] PASSED [ 23%]
+tests/test_sales_director.py::test_sla_state_class_a[created3-now3-overdue] PASSED [ 29%]
+tests/test_sales_director.py::test_sla_state_class_a[created4-now4-on_time] PASSED [ 35%]
+tests/test_sales_director.py::test_sla_state_class_a[created5-now5-on_time] PASSED [ 41%]
+tests/test_sales_director.py::test_sla_state_class_a[created6-now6-due_soon] PASSED [ 47%]
+tests/test_sales_director.py::test_sla_state_class_a[created7-now7-overdue] PASSED [ 52%]
+tests/test_sales_director.py::test_sla_state_class_b_and_naive PASSED    [ 58%]
+tests/test_sales_director.py::test_agent_never_calls_decision_functions PASSED [ 64%]
+tests/test_sales_director.py::test_sweep_class_a_escalates_red_alert_idempotent PASSED [ 70%]
+tests/test_sales_director.py::test_sweep_weekend_not_counted PASSED      [ 76%]
+tests/test_sales_director.py::test_sweep_class_b_escalates_tgd_no_red_alert PASSED [ 82%]
+tests/test_sales_director.py::test_sweep_raise_alert_failure_rolls_back_then_retries PASSED [ 88%]
+tests/test_sales_director.py::test_sweep_expires_absolute_never_approves PASSED [ 94%]
+tests/test_sales_director.py::test_s1_never_auto_approved_even_with_signed_policy PASSED [100%]
+
+====================== 17 passed, 40 deselected in 8.79s ======================
+exit=0
+
+$ grep -nE "decide\(|auto_approve|override\(|decide_item" agents/sales_director.py  (rỗng)
+grep_exit=1 (1 = không có dòng)
+(verify_action_log() sạch: assert trong test_sweep_class_a…, test_sweep_expires…, test_collect…)

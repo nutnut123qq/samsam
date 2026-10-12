@@ -47,6 +47,7 @@ chat lẫn embeddings) + Streamlit.
 | Báo cáo TGĐ (v8.0) | `python -m agents.ceo_report [--period week\|month] [--ref YYYY-MM-DD] [--llm] [--submit] [--out-dir DIR]` (→ `data/reports/ceo-<kỳ>.md`; số do code điền; `--llm` mặc định tắt; `--submit` vào hàng chờ khối ceo, không tự duyệt/gửi) |
 | Cảnh báo đỏ intel (v7.1) | `python -m pipelines.intel_alert --run` (luật GIẢ ĐỊNH `data/intel_alert_rules.json` → `red_alerts`, leo thang sau 2 giờ chưa xác nhận; exit 1 khi thiếu người nhận — fail-closed) · `--open` · `--ack ID --by "<tên>"` (CHỈ người thật) |
 | Bản tin intel (v7.1) | `python scripts/intel_bulletin.py --period day\|week [--date YYYY-MM-DD] [--llm] [--suggest]` (→ `data/reports/intel-bulletin-*.md` BẢN NHÁP; LLM chỉ khi `llm.enabled`; `--suggest` → `approval_queue` loại `intel_topic` cho Quản lý MXH duyệt) |
+| GĐ Kinh doanh TMĐT (v5.0) | `python -m agents.sales_director --run [--dry-run] --bulletin` (dry-run CHỈ ĐỌC, in kế hoạch + bản tin) · `--run` (nguồn thật → hàng duyệt khối sales + quét SLA A 2h/B 4h giờ làm việc → `sla_escalations`/cảnh báo đỏ) · `--bulletin [--period week]` (→ `data/reports/sales-director-*.md`, không PII, không tự gửi) |
 | Test/lint | `python -m pytest` · `ruff check .` |
 
 ## Structure
@@ -70,6 +71,10 @@ chat lẫn embeddings) + Streamlit.
   (`data/vn_provinces_2025.json` GIẢ ĐỊNH, `data/dealer_regions.json` MẪU)
   — không gửi gì ra ngoài
 - `pipelines/` — content draft + guardrail check (claim whitelist + banned words)
+- `agents/` — agent báo cáo / GĐ khối; `sales_director` (v5.0) = agent GĐ
+  Kinh doanh TMĐT, MẪU cấu hình thật cho 10 khối còn lại: nguồn thật →
+  `approval_queue` (template, không nội dung khách), SLA giờ làm việc
+  (`pipelines.period`), leo thang `sla_escalations`/`red_alerts`, bản tin
 - `app/` — Streamlit demo (3 tab: Chat, Content Studio, Chưa trả lời)
 - `data/` — jsonl dump, `claims_whitelist.json`, `banned_words.txt`
 - `tests/` — pytest
@@ -268,6 +273,25 @@ chat lẫn embeddings) + Streamlit.
 - **File lạ trong `git status`** (vd `lv2-market-top.png` ở v1.9 — ảnh
   project khác): xác minh nguồn trước khi stage; artifact không liên
   quan giữ untracked, stage file theo danh sách tường minh không `add -A`.
+- **Hàm tự `conn.commit()` bên trong (`red_alert.raise_alert`,
+  `aq.enqueue`) KHÔNG bọc được trong `with conn.transaction()`** (psycopg
+  cấm commit trong transaction block) — ghi nhiều bảng "cùng tx" thì để
+  câu trước chạy trên implicit tx rồi hàm đó commit cả cụm, lỗi →
+  `conn.rollback()` (v5.0 `sweep`). Fake conn test có `rollback()` no-op
+  KHÔNG chứng minh được nhánh rollback — `_TxConn(sp=...)` rollback về
+  savepoint (`tests/test_sales_director.py`).
+- **Khóa idempotent "đã đẩy ở bất kỳ status" theo id dòng nguồn** (v5.0
+  nghiệm thu MAJOR): nguồn REOPEN cùng dòng (`market_alerts` upsert
+  status→open + `opened_at` mới) → đợt tái phát bị nuốt câm. Khóa phải
+  theo ĐỢT (`ma:<id>:<opened_at UTC>`). Cùng lớp: hành động "cuối đời"
+  (leo thang trước expire) chỉ gắn vào trạng thái pending → mục bị
+  expire bởi đường khác/lễ/cron chết thoát leo thang — chọn ứng viên theo
+  "chưa có dòng leo thang" kể cả đã expired (có cửa sổ). Nguồn do KHÁCH
+  điều khiển (convlog, sticker) → gom theo khách/ngày + trần mỗi lần chạy
+  + gộp cảnh báo đỏ/lần quét — 1 tin ≠ 1 cảnh báo. Nhưng gom vẫn phải
+  theo ĐỢT (vòng 3 nghiệm thu MINOR): nhóm đã có mục ĐÃ QUYẾT thì câu hỏi
+  SAU `decided_at` mở đợt mới (`cskh:<nhóm>:<ts đầu đợt>`), chỉ mục
+  PENDING mới nuốt tin dồn — 'seen ở mọi status' = câu chiều bị câm SLA.
 - **`env -u DATABASE_URL` KHÔNG phải nhánh "DB down"** (v2.0):
   `lead_store.connect()` tự `load_dotenv(ROOT/.env)` nạp lại DSN thật
   (load_dotenv không override biến đang có, nhưng biến đã -u thì trống

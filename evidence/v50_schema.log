@@ -1,0 +1,43 @@
+# W50.3 schema sla_escalations + grant — 2026-10-12T05:13:12+07:00
+$ git diff -U0 docs/schema.sql | grep -E "^\+\s*(alter|drop)"  (rỗng = không alter/drop mới)
+warning: in the working copy of 'docs/schema.sql', LF will be replaced by CRLF the next time Git touches it
+grep_exit=1 (1 = không có dòng)
+
+$ python scripts/apply_schema.py  ×2 (DB riêng worktree)
+[done] schema applied — 36 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_snapshots, chunks, chunks_internal, claims_approved, content_drafts, decisions, document_fields, documents, eval_runs, garden_media, golden_discrepancies, incidents, intel_items, job_runs, leads, llm_usage, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, red_alerts, sim_runs, sku_map, sku_master, sla_escalations
+exit=0
+[done] schema applied — 36 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_snapshots, chunks, chunks_internal, claims_approved, content_drafts, decisions, document_fields, documents, eval_runs, garden_media, golden_discrepancies, incidents, intel_items, job_runs, leads, llm_usage, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, red_alerts, sim_runs, sku_map, sku_master, sla_escalations
+exit=0
+
+$ python -m pytest -v tests/test_sales_director.py -k schema + drift guards
+============================= test session starts =============================
+platform win32 -- Python 3.12.7, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\hahuy\AppData\Local\Programs\Python\Python312\python.exe
+rootdir: D:\code\samsam-w95
+plugins: anyio-4.12.1, langsmith-0.7.32, asyncio-1.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 67 items / 66 deselected / 1 selected
+
+tests/test_sales_director.py::test_sla_escalations_schema_and_grants PASSED [100%]
+
+====================== 1 passed, 66 deselected in 1.79s =======================
+exit=0
+(tests/test_dr_drill.py + test_db_backup.py đủ file: xem evidence/v50_pytest.log — chạy trong targeted ×3)
+
+$ python -m pytest -v tests/test_db_backup.py::test_cloud_readme_drift_guard tests/test_handover_docs.py
+plugins: anyio-4.12.1, langsmith-0.7.32, asyncio-1.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 10 items
+
+tests/test_db_backup.py::test_cloud_readme_drift_guard PASSED            [ 10%]
+tests/test_handover_docs.py::test_doc_files_exist_nonempty PASSED        [ 20%]
+tests/test_handover_docs.py::test_tab_names_real PASSED                  [ 30%]
+tests/test_handover_docs.py::test_phu_luc_d_covers_all_questions PASSED  [ 40%]
+tests/test_handover_docs.py::test_sop_core_commands PASSED               [ 50%]
+tests/test_handover_docs.py::test_kien_truc_lists_all_tables PASSED      [ 60%]
+tests/test_handover_docs.py::test_guardrail_test_names_in_phu_luc_d PASSED [ 70%]
+tests/test_handover_docs.py::test_guardrail_case_counts_in_phu_luc_d PASSED [ 80%]
+tests/test_handover_docs.py::test_guardrail_v2_tests_and_case_counts_in_phu_luc_d PASSED [ 90%]
+tests/test_handover_docs.py::test_sop_warns_role_dsn_while_grants_partial PASSED [100%]
+
+============================= 10 passed in 0.62s ==============================
+exit=0
