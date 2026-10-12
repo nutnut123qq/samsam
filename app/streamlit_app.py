@@ -7,7 +7,10 @@
     text + ghi convlog để vào queue nhân viên.
   - "Content Studio": nhập brief → pipelines.content.draft()/draft_multi()
     (multiselect kênh) → hiển thị bài + kết quả guardrail (violation
-    tô đỏ) → nút "Lưu vào hàng duyệt" ghi `content_drafts`.
+    tô đỏ) → nút "Lưu vào hàng duyệt" ghi `content_drafts`. v6.1: chọn
+    SKU + loại content (`listing` → content.listing theo kênh sàn, thông
+    số golden); bản bị từ chối (rượu/readiness/XNQC) chỉ cảnh báo, không
+    lưu; lưu kèm meta (content_type/sku/is_ai/prompt_version/sha).
   - "Chưa trả lời": queue câu NO_DATA cho nhân viên follow-up / bổ
     sung knowledge base (đọc convlog `answered:false`).
   - "Leads": dashboard số liệu kênh + leads (WS2) — convlog theo kênh
@@ -225,35 +228,99 @@ if "Content Studio" in _tabs:
     with _tabs["Content Studio"]:
         st.caption("Sinh bài từ brief — mọi text AI đều qua guardrail "
                    "trước khi hiển thị (banned words + claim whitelist TPBVSK).")
-        brief = st.text_area(
-            "Brief", placeholder="VD: Viết bài FB giới thiệu Sapentol cho người "
-            "tiểu đường, nhấn công dụng đã công bố...", height=100)
-        channels = st.multiselect(
-            "Kênh", ["facebook", "tiktok", "zalo", "blog"],
-            default=["facebook"])
+        import json as _json
+        from pathlib import Path as _P
+        _data = _P(__file__).resolve().parent.parent / "data"
+        try:
+            _rules_doc = _json.loads((_data / "guardrail_rules.json")
+                                     .read_text(encoding="utf-8"))
+            _ctypes = list(_rules_doc["content_types"]) or ["post"]
+            _pub_types = [k for k in _ctypes if isinstance(
+                _rules_doc["content_types"][k], dict)
+                and _rules_doc["content_types"][k].get("public")] or ["post"]
+        except (OSError, ValueError, KeyError, TypeError):
+            _ctypes = _pub_types = ["post"]  # file hỏng: guardrail báo "config"
+        try:
+            _sku_keys = [s_["sku_key"] for s_ in _json.loads(
+                (_data / "golden_skus.json").read_text(encoding="utf-8")
+            )["skus"]]
+        except (OSError, ValueError, KeyError, TypeError):
+            _sku_keys = []
+        _NO_SKU = "(không gắn SKU)"
+        # v6.1 (MKT-02): chọn SKU + loại content; `listing` = khung golden
+        # theo kênh sàn (content.listing) — thông số/giá do code dựng.
+        _s1, _s2 = st.columns(2)
+        _sku_pick = _s1.selectbox("SKU", [_NO_SKU] + _sku_keys,
+                                  key="studio_sku")
+        _ct_pick = _s2.selectbox("Loại content", _pub_types,
+                                 index=_pub_types.index("post")
+                                 if "post" in _pub_types else 0,
+                                 key="studio_ctype")
+        _sku_v = None if _sku_pick == _NO_SKU else _sku_pick
+        _is_listing = _ct_pick == "listing"
+        if _is_listing:
+            brief = ""
+            st.caption("Listing: tên/quy cách/số ĐKSP/giá lấy từ golden — "
+                       "LLM chỉ viết phần chữ (bị lọc chữ số) khi SKU đủ "
+                       "mức; rượu và SKU chưa đủ readiness kênh bị từ chối. "
+                       "Nháp tải lên sàn TAY sau khi duyệt.")
+            channels = st.multiselect("Kênh sàn", ["shopee", "tiktok", "web"],
+                                      default=["shopee"],
+                                      key="studio_ch_listing")
+        else:
+            brief = st.text_area(
+                "Brief", placeholder="VD: Viết bài FB giới thiệu Sapentol "
+                "cho người tiểu đường, nhấn công dụng đã công bố...",
+                height=100)
+            channels = st.multiselect(
+                "Kênh", ["facebook", "tiktok", "zalo", "blog"],
+                default=["facebook"], key="studio_ch_content")
 
         if st.button("Sinh bài", type="primary",
-                     disabled=not brief.strip() or not channels):
+                     disabled=not channels or (
+                         not _sku_v if _is_listing else not brief.strip())):
             with st.spinner("Đang viết + kiểm guardrail từng kênh..."):
-                from pipelines.content import draft, draft_multi
+                from pipelines.content import draft, draft_multi, listing
                 from pipelines.store import readiness_now
                 # v4.2: readiness XNQC đọc view sku_readiness (DB chết ->
                 # None = golden file, fail-closed) — cùng nguồn với bước
                 # lưu/duyệt, không thì bài claim SKU đã XNQC bị chặn oan.
                 _rmap = readiness_now()
-                # 1 kênh → draft() như cũ; nhiều kênh → draft_multi (mỗi
-                # kênh guardrail độc lập). Shape thống nhất {channel: res}.
-                st.session_state.last_drafts = (
-                    {channels[0]: draft(brief, channels[0],
-                                        readiness=_rmap)}
-                    if len(channels) == 1
-                    else draft_multi(brief, channels, readiness=_rmap))
-                st.session_state.last_brief = brief
+                if _is_listing:
+                    st.session_state.last_drafts = {
+                        _ch: listing(_sku_v, _ch, readiness=_rmap)
+                        for _ch in channels}
+                    st.session_state.last_brief = f"listing {_sku_v}"
+                else:
+                    # 1 kênh → draft() như cũ; nhiều kênh → draft_multi
+                    # (mỗi kênh guardrail độc lập). Shape {channel: res}.
+                    st.session_state.last_drafts = (
+                        {channels[0]: draft(brief, channels[0],
+                                            readiness=_rmap, sku=_sku_v,
+                                            content_type=_ct_pick)}
+                        if len(channels) == 1
+                        else draft_multi(brief, channels, readiness=_rmap,
+                                         sku=_sku_v, content_type=_ct_pick))
+                    st.session_state.last_brief = brief
         if _drafts := st.session_state.get("last_drafts"):
             for _ch, _r in _drafts.items():
                 st.markdown(f"##### Draft — {_ch}")
-                st.markdown(_r["text"])
+                _ref = (_r.get("meta") or {}).get("refused")
+                if _ref:
+                    # Từ chối trước khi gọi LLM — không có bài, không lưu.
+                    st.warning(f"Từ chối ({_ref.get('code')}): "
+                               f"{_ref.get('reason')}")
+                    continue
+                if _r.get("fields"):
+                    # Listing: hiện nguyên văn (sàn không render markdown;
+                    # phần chữ LLM không được render link/ảnh tracker).
+                    st.text(_r["text"])
+                else:
+                    st.markdown(_r["text"])
                 _render_guardrail(_r["guardrail"])
+                if _r.get("fields"):
+                    st.table({k: [str(v)] for k, v in _r["fields"].items()
+                              if v is not None})
             if st.button("Lưu vào hàng duyệt"):
                 import psycopg as _pg2
 
@@ -265,13 +332,24 @@ if "Content Studio" in _tabs:
                                "(kiểm tra DATABASE_URL); draft chưa lưu "
                                "vào hàng duyệt.")
                 else:
-                    _ids, _saved, _errs = [], [], 0
+                    _ids, _saved, _errs, _dups = [], [], 0, 0
                     for _ch, _r in _drafts.items():
+                        _m = _r.get("meta") or {}
+                        if _m.get("refused"):
+                            continue          # bản từ chối không lưu
                         try:
                             _ids.append(_dstore.save_draft(
                                 _sconn, st.session_state.last_brief, _ch,
                                 _r["text"], _r["guardrail"],
-                                created_by=_ident))
+                                created_by=_ident,
+                                content_type=_m.get("content_type") or "post",
+                                sku=_m.get("sku"),
+                                is_ai=_m.get("is_ai") is not False,
+                                prompt_version=_m.get("prompt_version"),
+                                prompt_sha256=_m.get("prompt_sha256")))
+                            _saved.append(_ch)
+                        except _pg2.errors.UniqueViolation:
+                            _dups += 1        # đã có nháp listing sống
                             _saved.append(_ch)
                         except _pg2.Error:
                             _errs += 1
@@ -285,6 +363,9 @@ if "Content Studio" in _tabs:
                                    "hàng duyệt (id: " + ", ".join(
                                        f"#{i}" for i in _ids) + ") — qua tab "
                                    "'Duyệt & Lịch' để duyệt từng bài.")
+                    if _dups:
+                        st.info(f"{_dups} listing đã có nháp chờ duyệt cùng "
+                                "SKU/kênh/phiên bản prompt — không tạo thêm.")
                     if _errs:
                         st.warning(f"{_errs} draft lỗi ghi DB — thử lại.")
 
@@ -293,15 +374,6 @@ if "Content Studio" in _tabs:
                    "(không qua LLM):")
         raw = st.text_area("Text cần check", height=80, label_visibility="collapsed",
                            placeholder="Dán text vào đây — VD: Saphraton chữa khỏi tiểu đường")
-        import json as _json
-        from pathlib import Path as _P
-        try:
-            _ctypes = list(_json.loads(
-                (_P(__file__).resolve().parent.parent / "data"
-                 / "guardrail_rules.json").read_text(encoding="utf-8")
-            )["content_types"]) or ["post"]
-        except (OSError, ValueError, KeyError, TypeError):
-            _ctypes = ["post"]   # file hỏng: check_publish tự báo "config"
         _c1, _c2, _c3 = st.columns(3)
         _chk_ch = _c1.selectbox("Kênh", ["facebook", "tiktok", "zalo", "blog"],
                                 key="chk_channel")

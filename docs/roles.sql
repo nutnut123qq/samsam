@@ -9,7 +9,7 @@
 -- này CHỈ tạo/grant đúng 2 role dưới, không đụng/drop role khác.
 --
 --   agent_writer — agent AI: đọc content_drafts + view sku_readiness (v4.2),
---                  INSERT draft (6 cột — status
+--                  INSERT draft (11 cột, v6.1 — status
 --                  luôn default 'pending'), INSERT log (5 cột — trigger ép
 --                  id/ts/db_role/hash). KHÔNG UPDATE/DELETE bảng nào, KHÔNG
 --                  approvals, KHÔNG bảng khác, KHÔNG function duyệt.
@@ -46,7 +46,12 @@ grant select on content_drafts to agent_writer;
 -- v4.2: store đọc readiness (guardrail đăng bài) — thiếu grant thì đường
 -- DB chết câm dưới DSN role (fallback golden file). app_human kế thừa.
 grant select on sku_readiness to agent_writer;
-grant insert (brief, channel, text, guardrail, source, created_by)
+-- v6.1: thêm 5 cột ngữ cảnh draft (content_type/sku/is_ai/prompt_*) —
+-- thiếu grant thì save_draft dưới DSN role chết `permission denied`.
+-- is_ai do agent ghi được -> CHỈ truy vết: store.set_status duyệt luôn
+-- bắt nhãn AI (is_ai cố định true khi kiểm lại), không tin cột này.
+grant insert (brief, channel, text, guardrail, source, created_by,
+              content_type, sku, is_ai, prompt_version, prompt_sha256)
   on content_drafts to agent_writer;
 grant insert (actor, action, object_type, object_id, detail)
   on agent_action_log to agent_writer;

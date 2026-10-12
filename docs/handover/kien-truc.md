@@ -62,7 +62,7 @@ Streamlit demo.
 | `crawler/` | `collect` — crawl site public → `data/*.jsonl` (delay ≥1s/request) |
 | `ingest/` | `embed_store` (chunk+embed→`chunks`), `core_store` (nạp DB lõi, delete-by-source idempotent), `lead_store` (convlog→`leads`, insert-only) |
 | `api/` | `rag.py` — `answer()` RAG: retrieve top-8 `chunks` bằng cosine numpy → LLM + nguồn; `NO_DATA` khi score thấp |
-| `pipelines/` | `guardrail.py` (banned words + claim whitelist + chặn rượu, chuẩn hóa NFC/casefold/ký tự chèn — `check()` trước mọi output AI; v4.1 `check_publish()` luật đăng bài theo kênh/loại: XNQC/readiness, câu khuyến cáo, nhãn AI/quảng cáo, "Ngọc Linh" — luật trong `data/guardrail_rules.json`; v4.2 nối content/store/Studio, `readiness` map view DB do caller truyền, vá homoglyph/emoji/khoảng trắng), `guardrail_llm.py` (v4.2: lớp LLM-check phụ `check_publish_llm` — agent `guardrail_llm`, chỉ CHẶN THÊM, lỗi → `llm_check_unavailable` fail-closed), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py` |
+| `pipelines/` | `guardrail.py` (banned words + claim whitelist + chặn rượu, chuẩn hóa NFC/casefold/ký tự chèn — `check()` trước mọi output AI; v4.1 `check_publish()` luật đăng bài theo kênh/loại: XNQC/readiness, câu khuyến cáo, nhãn AI/quảng cáo, "Ngọc Linh" — luật trong `data/guardrail_rules.json`; v4.2 nối content/store/Studio, `readiness` map view DB do caller truyền, vá homoglyph/emoji/khoảng trắng), `guardrail_llm.py` (v4.2: lớp LLM-check phụ `check_publish_llm` — agent `guardrail_llm`, chỉ CHẶN THÊM, lỗi → `llm_check_unavailable` fail-closed), `content.py` (draft đa kênh; v6.1 MKT-02: template kênh `data/prompts/` + manifest version/sha, `precheck` từ chối rượu/readiness/XNQC trước LLM, `listing()` khung golden theo kênh sàn + phần chữ LLM lọc chữ số, batch CLI `--listing` idempotent), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py` |
 | `connectors/` | `zalo.py` — webhook Zalo OA: verify signature, ACK 200 nhanh rồi reply async, dedup msg_id, token store + auto-refresh; **chỉ reply inbox** |
 | `agents/` | `report.py` (báo cáo định kỳ → file md), `garden.py` (nhật ký vùng trồng + cảnh báo) — không LLM, không tự gửi |
 | `app/` | `streamlit_app.py` — UI 7 tab (mục 4) |
@@ -83,7 +83,7 @@ Streamlit demo.
 | `orders` | Đơn hàng tối thiểu (`channel`,`product_id`,`qty`,`total_vnd`,`status`) — không PII | `sample_orders.jsonl` (MẪU) + nhập tay |
 | `assets` | Tài sản truyền thông (`kind` image/video/article/doc,`url`,`product_id`) | `core_store` từ products.images + jsonl |
 | `leads` | Lead từ convlog (`dedup_key` unique,`channel`,`user_hash`,`question` đã mask,`intent`,`status`) | `ingest.lead_store` — insert-only, không xóa |
-| `content_drafts` | Hàng duyệt + lịch đăng (`brief`,`channel`,`text`,`guardrail` jsonb snapshot,`status`,`reviewer`,`scheduled_date`, `created_by` người/agent tạo — v3.4, null = draft cũ không duyệt được) | `pipelines.store` / Studio — INSERT pending; đổi trạng thái CHỈ qua function `approve_draft`/`reject_draft`/`schedule_draft` |
+| `content_drafts` | Hàng duyệt + lịch đăng (`brief`,`channel`,`text`,`guardrail` jsonb snapshot,`status`,`reviewer`,`scheduled_date`, `created_by` người/agent tạo — v3.4, null = draft cũ không duyệt được; v6.1 `content_type` (mặc định post), `sku`, `is_ai`, `prompt_version`, `prompt_sha256` — luật lưu/duyệt chạy theo đúng loại/SKU của dòng; unique index `content_drafts_listing_key_idx` (sku, channel, prompt_version) cho listing chưa bị reject) | `pipelines.store` / Studio — INSERT pending; đổi trạng thái CHỈ qua function `approve_draft`/`reject_draft`/`schedule_draft` |
 | `llm_usage` | 1 dòng/lời gọi LLM-embedding (`ts`,`agent_id`,`model`,`tokens_in/out`,`cost_usd` ước tính,`ok`,`error` đã mask) — không lưu prompt | `pipelines.llm_gateway` — insert-only; trần chi phí tháng theo agent đọc từ đây |
 | `sku_master` | Golden SKU (v3.2) — nguồn sự thật DUY NHẤT listing/pháp lý: `category` tpbvsk/food/alcohol, `pack_spec`, số+ngày giấy tiếp nhận, `xnqc_status`, `self_declaration_ok`, `allowed_channels`, `version` | `ingest.golden_store` từ `data/golden_skus.json` — upsert, giữ row `manual`; Pháp chế xác nhận pháp lý |
 | `sku_map` | Map `products.id` (crawl) ↔ `sku_key` golden — KHÔNG FK products; `approved_by` | `golden_store` (đề xuất agent) — Sản xuất duyệt |
@@ -112,7 +112,7 @@ an toàn. `leads`/`content_drafts` KHÔNG delete-by-source (dữ liệu người
 tạo / fact suy ra một lần). Apply: `python scripts/apply_schema.py`
 (idempotent, toàn `create ... if not exists` + `create or replace function`;
 ngoại lệ duy nhất `alter table content_drafts add column if not exists
-created_by`). `--roles` chạy thêm `docs/roles.sql` (mục 6b).
+created_by` + v6.1 5 cột ngữ cảnh draft). `--roles` chạy thêm `docs/roles.sql` (mục 6b).
 
 ## 4. Giao diện — Streamlit `app/streamlit_app.py` (7 tab)
 
@@ -160,7 +160,7 @@ idempotent theo kỳ (cùng kỳ → cùng tên file ghi đè).
 
 | Role | Được | Không được |
 |---|---|---|
-| `agent_writer` (agent AI) | SELECT `content_drafts` + view `sku_readiness` (v4.2); INSERT draft 6 cột (`brief`,`channel`,`text`,`guardrail`,`source`,`created_by` → luôn `pending`); INSERT log 5 cột | UPDATE/DELETE mọi bảng (không tự duyệt được — `permission denied`), `approvals`, bảng khác, function duyệt |
+| `agent_writer` (agent AI) | SELECT `content_drafts` + view `sku_readiness` (v4.2); INSERT draft 11 cột (`brief`,`channel`,`text`,`guardrail`,`source`,`created_by` + v6.1 `content_type`,`sku`,`is_ai`,`prompt_version`,`prompt_sha256` → luôn `pending`); INSERT log 5 cột | UPDATE/DELETE mọi bảng (không tự duyệt được — `permission denied`), `approvals`, bảng khác, function duyệt |
 | `app_human` (người: Streamlit/CLI) | Kế thừa `agent_writer` + SELECT `approvals`/`agent_action_log` + EXECUTE `approve_draft`, `reject_draft`, `schedule_draft`, `verify_publish`, `verify_action_log` | UPDATE/DELETE trực tiếp |
 
 Giới hạn pilot: máy local vẫn chạy bằng DSN owner — chặn quyền chỉ có

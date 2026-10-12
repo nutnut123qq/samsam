@@ -12,6 +12,12 @@ Agent:
     bằng `eval_qa.check_question` (không nhân đôi EXPECTED); `trap_health`
     chấm `handoff == "health"`. Thiếu OPENROUTER_API_KEY -> exit 1, KHÔNG
     ghi row (chưa chấm != PASS).
+  - mkt02 (v6.1, Agent Content & Listing): `content.listing(llm=False)`
+    (op listing) / `content.precheck` (op draft — cổng từ chối của
+    draft()) TẤT ĐỊNH: 0 lời gọi LLM (lớp LLM-check tắt trong lúc chấm),
+    không key, không DB. `golden_exact` pass <=> ok + fields == golden
+    (name/pack_spec/receipt_no/giá list) + dòng `Quy cách:` nguyên văn +
+    không lộ giá floor/promo; ca refuse pass <=> refused.code == code.
 
 PASS = pass_rate >= min_pass_rate VÀ mọi ca thuộc `must_pass_kinds` pass
 (kind bắt buộc mà bộ ca không có ca nào -> FAIL, fail-closed).
@@ -145,7 +151,79 @@ def run_chatbot(cases: list[dict]) -> list[tuple[dict, bool, str]]:
     return out
 
 
-RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot}
+def _vnd(v) -> str:
+    return f"{v:,}".replace(",", ".")
+
+
+def _golden_exact(c: dict, r: dict, gold: dict) -> str:
+    """'' khi listing khớp golden; ngược lại lý do (không kèm text)."""
+    if r.get("ok") is not True:
+        return "listing không ok: " + ", ".join(
+            str(v.get("code")) for v in r["guardrail"].get("violations", []))
+    g, f = gold[c["sku"]], r["fields"]
+    prices = (g.get("prices") or {}).get(c["channel"]) or {}
+    want = {"name": g["name"], "pack_spec": g.get("pack_spec"),
+            "receipt_no": g.get("receipt_no") if g["category"] == "tpbvsk"
+            else None,
+            "price": (_vnd(prices["list"]) + " đ") if "list" in prices
+            else f["price"]}
+    bad = [k for k, v in want.items() if f.get(k) != v]
+    if bad:
+        return f"fields lệch golden: {bad}"
+    if f"Quy cách: {g.get('pack_spec')}" not in r["text"].split("\n"):
+        return "thiếu dòng 'Quy cách:' nguyên văn golden"
+    for kind in ("floor", "promo"):
+        v = prices.get(kind)
+        if v is not None and v != prices.get("list") and (
+                _vnd(v) in r["text"] or str(v) in r["text"]):
+            return f"lộ giá {kind}"
+    return ""
+
+
+def run_mkt02(cases: list[dict]) -> list[tuple[dict, bool, str]]:
+    """Chấm tất định MKT-02 — tắt lớp LLM-check (GUARDRAIL_LLM_MODEL) trong
+    lúc chấm, listing llm=False, op draft chỉ chạy precheck."""
+    from ingest.golden_store import read_golden
+    from pipelines import content
+
+    doc, err = read_golden(ROOT / "data" / "golden_skus.json")
+    gold = {s["sku_key"]: s for s in (doc or {}).get("skus", [])}
+    saved = os.environ.pop("GUARDRAIL_LLM_MODEL", None)
+    out = []
+    try:
+        for c in cases:
+            try:
+                rmap = ({(a, b): m for a, b, m in c["readiness"]}
+                        if c.get("readiness") else None)
+                if c["op"] == "draft":
+                    ref = content.precheck(c["sku"], c["channel"],
+                                           c["content_type"], readiness=rmap)
+                    r = {"refused": ref}
+                else:
+                    r = content.listing(c["sku"], c["channel"],
+                                        readiness=rmap, llm=False)
+                ref = r.get("refused")
+                if c["expect"] == "refuse":
+                    ok = bool(ref) and ref.get("code") == c.get("code")
+                    detail = "" if ok else (
+                        f"kỳ vọng từ chối {c.get('code')}, được "
+                        f"{ref.get('code') if ref else 'sinh listing'}")
+                elif ref:
+                    ok, detail = False, f"bị từ chối {ref.get('code')}"
+                else:
+                    detail = (err or _golden_exact(c, r, gold))
+                    ok = not detail
+            except Exception as e:  # noqa: BLE001 — ca lỗi = FAIL, đi tiếp
+                ok, detail = False, type(e).__name__
+            out.append((c, ok, detail))
+    finally:
+        if saved is not None:
+            os.environ["GUARDRAIL_LLM_MODEL"] = saved
+    return out
+
+
+RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot,
+           "mkt02": run_mkt02}
 
 
 def score(results: list[tuple[dict, bool, str]], agent_cfg: dict) -> dict:
@@ -259,11 +337,13 @@ def main(argv: list[str] | None = None) -> int:
     results = RUNNERS[args.agent](load_cases(ROOT / acfg["cases"]))
     for c, ok, detail in results:
         if not ok:
+            # mkt02: ca không có text -> in "sku × kênh".
+            what = c.get("text") or f"{c.get('sku')} × {c.get('channel')}"
             print(f"[{args.agent}:{c['id']}] FAIL ({c.get('kind')}) — "
-                  f'{detail} | text="{_short(c["text"])}"', flush=True)
+                  f'{detail} | text="{_short(what)}"', flush=True)
     s = score(results, acfg)
     pv = prompt_version(acfg["prompt_files"])
-    model = ("rules" if args.agent == "guardrail" else
+    model = ("rules" if args.agent in ("guardrail", "mkt02") else
              os.environ.get("OR_CHAT_MODEL", DEFAULT_CHAT_MODEL))
     verdict = "PASS" if s["passed"] else "FAIL"
     print(f"[done] {args.agent} {verdict} {s['n_pass']}/{s['n_total']}"

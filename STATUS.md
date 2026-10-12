@@ -1,5 +1,33 @@
 # STATUS — v2.1-garden-log (2026-10-11)
 
+## v6.1-content-listing — WP08 MKT-02 content + listing (contract trong DONE.md)
+
+**Có gì:** `pipelines/content.py` mở rộng (không pipeline thứ hai) —
+`listing(sku, kênh)` dựng listing chuẩn theo kênh sàn (shopee/tiktok/web):
+tên/quy cách/số ĐKSP/giá list/hạn dùng do CODE render từ golden (không
+bao giờ floor/promo), phần chữ LLM chỉ ở mức TP_THUONG/QC_DAY_DU và bị lọc
+mọi câu/mục có chữ số; rượu và SKU chưa đủ readiness bị từ chối TRƯỚC LLM;
+nhãn AI/QC + câu khuyến cáo do code nối theo `check_publish`. Template
+prompt theo kênh ở `data/prompts/` (manifest version + sha256, lưu kèm
+draft). `content_drafts` thêm `content_type/sku/is_ai/prompt_version/
+prompt_sha256` + unique index listing — `store` lưu/duyệt chạy luật đúng
+loại/SKU của dòng. Batch `python -m pipelines.content --listing --sku all
+--channel shopee` idempotent. Eval `agent_eval --agent mkt02` (14 ca, tất
+định). Studio chọn SKU + loại content (gồm `listing`). Mọi output là nháp
+`pending` — agent không đăng, không sửa sàn.
+
+**Số liệu hiện tại:** golden có 7 cặp SKU × kênh đủ readiness listing (7
+TPBVSK mức MO_TA trên shopee — khung cố định, 0 lời gọi LLM); mật ong
+(tự công bố chưa xác minh), Saphraton 40 viên (allowed `[]`), mọi kênh
+tiktok/web → từ chối `readiness`; 2 SKU rượu → `ruou`.
+
+**External-dep (chưa có người thật duyệt):** giới hạn ký tự/từ khóa cấm
+thật từng sàn (`data/listing_rules.json` là GIẢ ĐỊNH); hồ sơ
+`marketplace_docs` TikTok Shop; GĐ Marketing duyệt template; Pháp chế
+quyết listing sàn là "mô tả" hay "quảng cáo" (`content_types.listing.ad`
+— đổi `true` là mọi TPBVSK chưa XNQC tự bị chặn); GĐ bán hàng duyệt giá;
+field hạn dùng/khối lượng trong golden; ảnh sản phẩm (v6.2); asset XNQC.
+
 ## v4.2-guardrail-noi-llm-redteam — WP05 PC-A3 + PC-A9 (contract trong DONE.md)
 
 **Guardrail đăng bài đã nối luồng thật:** `pipelines/content.py` (sinh

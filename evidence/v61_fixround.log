@@ -1,0 +1,65 @@
+# v6.1 fix-round nghiem thu (6 MINOR: _spec_like loc thong so LLM listing, _system price_rule, set_status is_ai co dinh True, test gioi han kenh) — 2026-10-12T12:27:33+07:00
+## targeted lan 1: python -m pytest -q -rs tests/test_listing.py tests/test_content.py tests/test_store.py tests/test_auth_approval.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_guardrail_v2.py tests/test_guardrail_llm.py
+........................................................................ [ 63%]
+........................................................................ [ 84%]
+......................................................                   [100%]
+342 passed in 41.84s
+exit=0
+## targeted lan 2: python -m pytest -q -rs tests/test_listing.py tests/test_content.py tests/test_store.py tests/test_auth_approval.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_guardrail_v2.py tests/test_guardrail_llm.py
+........................................................................ [ 63%]
+........................................................................ [ 84%]
+......................................................                   [100%]
+342 passed in 43.01s
+exit=0
+## targeted lan 3: python -m pytest -q -rs tests/test_listing.py tests/test_content.py tests/test_store.py tests/test_auth_approval.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_guardrail_v2.py tests/test_guardrail_llm.py
+........................................................................ [ 63%]
+........................................................................ [ 84%]
+......................................................                   [100%]
+342 passed in 38.33s
+exit=0
+## full: python -m pytest -q
+........................................................................ [ 77%]
+........................................................................ [ 84%]
+........................................................................ [ 90%]
+........................................................................ [ 96%]
+..................................                                       [100%]
+1111 passed, 3 skipped in 286.04s (0:04:46)
+exit=0
+## ruff check .
+All checks passed!
+exit=0
+## mutation probe (in-process monkeypatch, scratchpad w41mut/mut.py + mut2.py; -k cac test moi)
+# _spec_like -> chi \d                      : 2 failed (spec_words..., spec_like_unit_cases) -> KILLED
+# _cut_words -> identity                    : 1 failed (channel_limits) -> KILLED
+# recheck is_ai doc tu dong (False)         : 1 failed (ads_row_missing_ad_label_blocked) -> KILLED
+# bo cap bullets_max / desc_max / keywords_max: moi cai 1 failed (channel_limits) -> KILLED
+# control (khong mutate)                    : 4 passed
+## sau sua docs prompt-library (sau full): python -m pytest -q tests/test_handover_docs.py
+...........                                                              [100%]
+11 passed in 0.26s
+exit=0
+## sau sua docs prompt-library lan 2 (file that da doi): python -m pytest -q tests/test_handover_docs.py
+11 passed in 0.27s
+exit=0
+
+# ===== fix-round 2 (nghiem thu MINOR: _spec_like khong fold nhu guardrail) =====
+## sua: pipelines/content.py _spec_like — bo ky tu Cf, NFC -> guardrail._fold (NFKC+casefold+homoglyph) -> NFC; khop _SPEC_RE tren ban fold VA ban guardrail._FILLER_RE.sub("") (bo ky tu chen giua 2 chu cai)
+## test moi: tests/test_listing.py::test_listing_llm_obfuscated_frame_label_stripped (E2E probe reviewer: bullets Gia+ZWSP 'Lien he hotline', Gia Cyrillic-i 'si', fullwidth gi, 'Gi.a') + test_spec_like_unit_cases them 12 ca duong (ZWSP/Cyrillic i/fullwidth/'.'/' '/soft-hyphen/U+2063/a+U+0301/Cyrillic o+dau to hop/HSD) + 2 ca am (homoglyph 'gia tri' ngoai le, 'te.Sang')
+## hygiene: escape thay literal vo hinh/confusable trong tests/test_listing.py (Edit tool ghi raw char -> doi lai escape uXXXX, ke ca fullwidth digit cu dong 247/254/342; ast.parse ok)
+## targeted x3: python -m pytest -q tests/test_listing.py tests/test_content.py
+61 passed in 7.66s
+61 passed in 6.95s
+61 passed in 6.98s
+exit=0 (x3)
+## mutation probe: monkeypatch _spec_like ve ban cu (NFC casefold) qua plugin tam -> python -m pytest -q tests/test_listing.py -k "obfuscated or spec_like_unit"
+FAILED tests/test_listing.py::test_listing_llm_obfuscated_frame_label_stripped
+FAILED tests/test_listing.py::test_spec_like_unit_cases
+2 failed -> KILLED (plugin tam da xoa)
+## full: python -m pytest -q -p no:cacheprovider
+........................................................................ [ 96%]
+...................................                                      [100%]
+1112 passed, 3 skipped in 236.55s (0:03:56)
+exit=0
+## ruff check .
+All checks passed!
+exit=0

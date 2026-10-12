@@ -1,0 +1,12 @@
+{
+  "_doc": "v6.1 (MKT-02) — luật dựng listing theo kênh cho pipelines/content.listing(). GIẢ ĐỊNH — chờ xác minh Seller Center (Shopee/TikTok Shop) và chính sách website: title_max/desc_max (ký tự), bullets_max/keywords_max (số mục) là số dev ước lượng, CHƯA đối chiếu chính sách sàn thật. Tên/quy cách/số ĐKSP/giá/hạn dùng do CODE render từ data/golden_skus.json — không LLM. missing_price: thiếu giá list của kênh; missing_attr: golden chưa có field (hạn dùng). brand_keywords: từ khóa thương hiệu luôn có (KHÔNG thêm 'Ngọc Linh' — chỉ dẫn địa lý chờ Pháp chế).",
+  "trang_thai": "GIẢ ĐỊNH — chờ xác minh Seller Center",
+  "channels": {
+    "shopee": {"title_max": 120, "desc_max": 3000, "bullets_max": 5, "keywords_max": 10},
+    "tiktok": {"title_max": 255, "desc_max": 3000, "bullets_max": 5, "keywords_max": 10},
+    "web": {"title_max": 150, "desc_max": 5000, "bullets_max": 6, "keywords_max": 12}
+  },
+  "missing_price": "Liên hệ",
+  "missing_attr": "Xem trên bao bì",
+  "brand_keywords": ["Sâm Sâm"]
+}
