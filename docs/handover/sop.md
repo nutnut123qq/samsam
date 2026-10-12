@@ -462,6 +462,51 @@ python scripts/intel_bulletin.py --period week --suggest   # bản tin tuần + 
   bằng `python -m pipelines.approval_queue --pending --block intel` rồi
   `--approve/--reject ID --by "<tên>"`. Gợi ý KHÔNG phải bản nháp nội dung.
 
+## 5f. Đối thủ / Trend / MXH (v7.2, chỉ nhập tay)
+
+**Làm gì:** Quản lý MXH đưa 3 loại file XUẤT/GHI TAY vào DB, rồi đọc báo
+cáo tuần. Agent KHÔNG cào sàn (Shopee/TikTok/Lazada — vẫn chặn cứng như
+v7.0), KHÔNG dùng thư viện/API Google Trends không chính thức (cấm
+pytrends), KHÔNG trả lời comment/inbox (đó là A1), không đăng, không gửi ai.
+
+```
+python -m ingest.intel_import --competitor doi_thu_tuan41.csv
+python -m ingest.intel_import --trend multiTimeline.csv
+python -m ingest.intel_import --trend relatedQueries.csv --seed "nhân sâm"
+python -m ingest.intel_import --social fanpage_export.csv --channel fanpage
+python scripts/intel_weekly.py --week 2026-10-08     # mặc định: tuần đủ gần nhất
+```
+
+- **Template cột (GIẢ ĐỊNH — chưa xác minh với file thật):**
+  - Đối thủ (CSV/XLSX, 1 dòng = 1 lần ghi): bắt buộc `doi_thu, kenh,
+    ten_san_pham, gia_vnd, ngay_ghi, nguon`; tùy chọn `sku_tuong_duong,
+    gia_km_vnd, khuyen_mai, rating, so_danh_gia, ghi_chu`. `kenh` ∈
+    shopee/tiktok/lazada/tiki/web/khac; `ngay_ghi` dạng 2026-10-08; `nguon`
+    = link trang hoặc "ảnh chụp <tên file>" (kênh sàn bắt buộc 1 trong 2);
+    `sku_tuong_duong` phải có trong golden (`sku_master`), sai → không nạp gì.
+  - Google Trends: xuất tay từ trends.google.com, chuỗi TUẦN (khoảng 1–5
+    năm), ≤5 từ khóa/file, LUÔN kèm từ khóa neo "quà tết"; mọi từ khóa phải
+    có trong `data/trend_keywords.json` (MKT/SEO chốt). File relatedQueries
+    cần `--seed`. Truy vấn nhắc rượu được gắn cờ — không dùng cho nhóm giới trẻ.
+  - Comment/inbox kênh sở hữu: bắt buộc `thoi_gian, noi_dung`; tùy chọn
+    `loai` (comment/inbox/review), `ma_tin`; cột `id_nguoi_dung,
+    ten_nguoi_dung, sdt, email, link_profile, avatar` bị BỎ ngay khi đọc;
+    cột khác → lỗi (có thể là dữ liệu cá nhân).
+- **Kiểm trước, nạp sau:** file lỗi → `[err] dòng N: cột '...'` (không in
+  giá trị ô), exit 1, KHÔNG ghi gì. Nạp lại đúng file đó → `[skip]`.
+- **Social — dữ liệu cá nhân:** SĐT/email trong nội dung bị che NGAY khi
+  đọc; DB chỉ giữ nhãn (khen/che/hoi_gia/hoi_suc_khoe/hoi_ruou/khieu_nai/khac)
+  + hash có muối. Cần `INTEL_HASH_SALT` trong `.env` (≥16 ký tự, Quản lý hạ
+  tầng AI sinh và giữ cố định). Trích nội dung (`excerpt`) CHỈ lưu khi
+  `"dpia_signed": true` trong `data/social_rules.json` — người đổi cờ là
+  người thật SAU khi Pháp chế ký DPIA; tin hỏi sức khỏe không bao giờ lưu trích.
+- **Báo cáo tuần** 4 mục: đối thủ lệch giá golden (mỗi số kèm `obs#`/nguồn
+  và `price_list#`/đã duyệt hay chưa — không có "giá nên đặt"), trend +
+  tăng đột biến (so trung vị 8 tuần trước), social chỉ ĐẾM theo nhãn, tin
+  `intel_items` mới theo chủ đề. `--llm` chỉ chạy khi `llm.enabled = true`
+  trong `data/intel_sources.json` (chờ Pháp chế), không gửi mục social, tóm
+  tắt phải qua guardrail.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):

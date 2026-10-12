@@ -1607,3 +1607,89 @@ create unique index if not exists red_alerts_intel_item_uq
 create unique index if not exists red_alerts_escalation_uq
   on red_alerts ((detail->>'escalation_of'))
   where source_agent = 'intel_red_alert' and detail ? 'escalation_of';
+
+-- ============================================================================
+-- v7.2 đối thủ / trend / social (WP09, `ingest/intel_import.py`): Competitor
+-- Tracker, Trend, Social Listening P1. MỌI dữ liệu vào bằng FILE XUẤT TAY
+-- (Quản lý MXH ghi giá đối thủ trên sàn; Google Trends xuất tay; export
+-- comment/inbox kênh SỞ HỮU) — KHÔNG cào sàn/MXH, không request mạng.
+-- KHÔNG có cột tên/ID/SĐT/email/profile người dùng ở bất kỳ bảng nào:
+-- cột định danh bị bỏ khi đọc, nội dung đã che SĐT/email, dedup social bằng
+-- `msg_hash` sha256 CÓ MUỐI. Mọi con số có nguồn (`source_ref`, `import_id`
+-- → file gốc). Idempotent theo `intel_imports.file_sha256`. Insert-only;
+-- module chỉ ĐỌC golden (`sku_master`/`price_list`), không ghi bảng khác.
+-- ============================================================================
+
+create table if not exists intel_imports (
+  id bigint generated always as identity primary key,
+  kind text not null
+    check (kind in ('competitor', 'trend_timeline', 'trend_related', 'social')),
+  channel text,                     -- social: fanpage | zalo_oa | tiktok
+  file_name text not null,          -- basename file đã nạp
+  file_sha256 text not null unique, -- nạp lại cùng file = [skip]
+  row_count int not null,
+  imported_at timestamptz not null default now()
+);
+
+create table if not exists competitor_observations (
+  -- Giá/KM đối thủ do NGƯỜI ghi (CSV nhập tay) — agent không cào sàn.
+  id bigint generated always as identity primary key,
+  import_id bigint not null references intel_imports(id),
+  row_no int not null,
+  competitor text not null,
+  channel text not null
+    check (channel in ('shopee', 'tiktok', 'lazada', 'tiki', 'web', 'khac')),
+  product_name text not null,
+  sku_key text,                     -- SKU tương đương của mình (không FK — mẫu market_rows)
+  price_vnd bigint not null check (price_vnd > 0),
+  promo_price_vnd bigint check (promo_price_vnd > 0),
+  promo_text text check (char_length(promo_text) <= 200),
+  rating numeric(2,1) check (rating between 0 and 5),
+  review_count int check (review_count >= 0),
+  observed_on date not null,
+  source_ref text not null
+    check (char_length(source_ref) between 1 and 500), -- URL hoặc "ảnh chụp <tên file>"
+  unique (import_id, row_no)
+);
+
+create table if not exists trends_weekly (
+  -- Google Trends multiTimeline (xuất tay). Thang 0–100 chỉ so được TRONG
+  -- cùng 1 file → query_id = sha256 file [:16]; anchor = từ khóa neo.
+  id bigint generated always as identity primary key,
+  import_id bigint not null references intel_imports(id),
+  query_id text not null,
+  keyword text not null,
+  anchor text not null,
+  geo text not null,
+  week date not null,
+  value smallint not null check (value between 0 and 100),
+  unique (query_id, keyword, geo, week)
+);
+
+create table if not exists trends_related (
+  -- Google Trends relatedQueries (xuất tay) của 1 từ khóa gốc (`seed`).
+  id bigint generated always as identity primary key,
+  import_id bigint not null references intel_imports(id),
+  seed text not null,
+  section text not null check (section in ('top', 'rising')),
+  query text not null check (char_length(query) <= 200),
+  value text not null,              -- "100" | "+250%" | "Breakout"
+  flags text[] not null default '{}' -- 'ruou' = không dùng cho nhóm giới trẻ
+);
+
+create table if not exists social_mentions (
+  -- Comment/inbox/review kênh SỞ HỮU (P1, chỉ đọc — không trả lời tự động).
+  -- excerpt (đã che, ≤200) CHỈ lưu khi DPIA đã ký và tin không nhạy cảm.
+  id bigint generated always as identity primary key,
+  import_id bigint not null references intel_imports(id),
+  channel text not null check (channel in ('fanpage', 'zalo_oa', 'tiktok')),
+  kind text not null check (kind in ('comment', 'inbox', 'review')),
+  posted_at timestamptz not null,
+  msg_hash text not null unique,    -- sha256 có MUỐI (INTEL_HASH_SALT)
+  labels text[] not null check (cardinality(labels) > 0),
+  sensitive boolean not null,       -- true = hỏi sức khỏe
+  excerpt text check (char_length(excerpt) <= 200)
+);
+
+create index if not exists social_mentions_posted_idx on social_mentions (posted_at);
+create index if not exists competitor_observations_on_idx on competitor_observations (observed_on);

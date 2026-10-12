@@ -5,6 +5,7 @@
 - **Làm gì:** chọn nhà cung cấp Postgres managed trong nước, nối app vào
   bằng TLS, đưa đủ 35 bảng lên, bật backup + diễn tập khôi phục.
   bằng TLS, đưa đủ bảng của `docs/schema.sql` lên, bật backup + diễn tập khôi phục.
+  bằng TLS, đưa đủ 30 bảng lên, bật backup + diễn tập khôi phục.
 - **Cần gì (external-dep — công ty cấp, repo này KHÔNG giả lập):** tài
   khoản + thẻ thanh toán nhà cung cấp; bật PITR/WAL; object storage
   S3-compatible + key; khóa mã hóa backup trong secret manager; VM ứng
@@ -65,6 +66,7 @@ cung cấp (mốc 30/11 và 18/12), đo RTO, xóa instance sau khi đo.
 
 ## 4. Đưa 35 bảng lên cloud
 ## 4. Đưa toàn bộ bảng lên cloud
+## 4. Đưa 30 bảng lên cloud
 
 Chọn 1 trong 2 đường cho từng bảng.
 
@@ -73,6 +75,7 @@ Chọn 1 trong 2 đường cho từng bảng.
 ```
 python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ 35 bảng
 python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ số bảng
+python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ 30 bảng
 python -m ingest.core_store         # products, claims_approved, plots, plot_logs, orders, assets
 python -m ingest.golden_store       # sku_master, sku_map, price_list, golden_discrepancies
 python -m ingest.embed_store        # chunks (gọi API embed — tốn phí)
@@ -87,6 +90,7 @@ Bảng sinh lúc chạy bắt đầu RỖNG theo đường A: `leads`, `content_
 ```
 python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts 35 bảng)
 python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts mọi bảng)
+python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts 30 bảng)
 pg_restore --no-owner --no-privileges --exit-on-error -d samsam <file .dump>   # vào DB cloud rỗng (PG* env, sslmode=require)
 ```
 
@@ -132,6 +136,11 @@ bảng nào thì dừng, không bật app.
 | `machines` | B | sổ máy cơ khí (v9.5) — nhập tay, không có nguồn dựng lại |
 | `maintenance_plans` | B | lịch bảo trì + người duyệt việc lớn |
 | `incidents` | B | sự cố/downtime (view `downtime_log` tự có khi apply schema) |
+| `intel_imports` | B (hoặc A: nạp lại file gốc bằng `python -m ingest.intel_import`) | sổ file intel nhập tay đã nạp (v7.2) — giữ để `[skip]` không nạp trùng |
+| `competitor_observations` | B | giá đối thủ do người ghi tay — file gốc có thể không còn; không cột định danh |
+| `trends_weekly` | A (nạp lại file Google Trends xuất tay) hoặc B | không cột định danh |
+| `trends_related` | A hoặc B | không cột định danh |
+| `social_mentions` | B | chỉ nhãn + hash có muối (+ trích đã che khi DPIA ký) — không cột định danh; GIỮ đúng `INTEL_HASH_SALT` cũ để dedup tiếp |
 
 ## 5. Backup + diễn tập trên cloud (mẫu — external-dep)
 
