@@ -1,0 +1,47 @@
+# v9.0 W90.2/W90.3 evidence — CLI thật trên DB riêng (DATABASE_URL w90, giá trị không in) — 2026-10-12 12:12:18 +0700
+
+$ python -m ingest.market_csv --file tests/fixtures/finance/order_shopee_MAU.csv --channel shopee --kind order
+[load] snapshot #9 shopee/order order_shopee_MAU.csv: 15 dòng, map golden 15
+[alerts] export order — không đối chiếu ở P1
+[done]
+[exit 0]
+
+$ python -m ingest.settlement_csv --file tests/fixtures/finance/settlement_shopee_MAU.csv --channel shopee
+[load] quyết toán shopee settlement_shopee_MAU.csv: 16 dòng; đối chiếu: khop=9, lech=3, thieu_chung_tu=2, hoan=2
+[warn] 2 dòng chưa thấy đơn sàn — nạp file đơn (`python -m ingest.market_csv --kind order`) rồi chạy `--reconcile`.
+[done]
+[exit 0]
+
+$ python -m ingest.settlement_csv --file tests/fixtures/finance/settlement_shopee_MAU.csv --channel shopee
+[skip] file quyết toán đã nạp — không ghi gì.
+[exit 0]
+
+$ python -m ingest.settlement_csv --reconcile
+[reconcile] khop=9, lech=3, thieu_chung_tu=2, hoan=2
+[exit 0]
+
+$ python -m ingest.settlement_csv --report
+[report] đối soát quyết toán sàn — CHỈ BÁO CÁO, không bút toán:
+  shopee: 16 dòng — khop=9, lech=3, thieu_chung_tu=2, hoan=2
+    thực nhận theo file 6.910.920đ; tính lại 6.915.920đ; chênh -5.000đ; affiliate sàn khấu trừ 68.400đ; đơn ở ≥2 file quyết toán: 0
+    [hoan] settlement_shopee_MAU.csv dòng 14: phi_co_dinh chênh -11.960đ; phi_thanh_toan chênh -14.950đ; phi_dich_vu chênh -8.970đ
+    [hoan] settlement_shopee_MAU.csv dòng 15: -
+    [lech] settlement_shopee_MAU.csv dòng 11: thuc_nhan chênh -5.000đ
+    [lech] settlement_shopee_MAU.csv dòng 12: phi_co_dinh chênh 23.920đ
+    [lech] settlement_shopee_MAU.csv dòng 13: gia_tri_don chênh 20.000đ
+    [thieu_chung_tu] settlement_shopee_MAU.csv dòng 16: -
+    [thieu_chung_tu] settlement_shopee_MAU.csv dòng 17: -
+  tiktok: chưa có file quyết toán
+[exit 0]
+
+$ python -m ingest.settlement_csv --file tests/fixtures/finance/settlement_shopee_MAU.csv --channel tiktok
+[err] dòng đầu không khớp header quyết toán tiktok (17 cột, 0/6 cột bắt buộc) — sai kênh/loại file hoặc thiếu dòng header
+[err] 1 lỗi — không connect, không nạp gì.
+[exit 1]
+
+$ python -m ingest.settlement_csv --file tests/fixtures/finance/settlement_shopee_MAU.csv --channel shopee --report
+usage: python -m ingest.settlement_csv [-h] [--file FILE]
+                                       [--channel {shopee,tiktok}]
+                                       [--reconcile] [--report]
+python -m ingest.settlement_csv: error: chỉ được 1 thao tác mỗi lần (--file | --reconcile | --report)
+[exit 2]

@@ -157,7 +157,7 @@ python -m pipelines.approval_queue --approve <ID> --by "<tên>" [--note "..."]
 python -m pipelines.approval_queue --reject <ID> --by "<tên>" [--note "..."]
 python -m pipelines.approval_queue --override-qa <ID> --by "<tên>" --reason "<lý do ≥10 ký tự>"
 python -m pipelines.approval_queue --expire
-python -m pipelines.director --block <khối>        # bản tin GĐ khối → data/reports/director-<khối>-<ngày>.md
+python -m pipelines.director --block <khối>        # bản tin GĐ khối → data/reports/director-<khối>-<ngày>.md (khối finance: dùng `python -m agents.acc_ar --bulletin` — mục 5e; director ghi đè mất mục nợ quá hạn)
 python -m pipelines.director --all --dry-run       # chỉ kiểm 11 file cấu hình, không DB
 python -m pipelines.red_alert --check-routing      # exit 1 = chưa có người nhận cảnh báo đỏ độc lập
 ```
@@ -684,6 +684,89 @@ python -m pipelines.qr_trace planb [--date YYYY-MM-DD]
 - `planb`: trước mốc → "còn N ngày"; từ mốc → "ĐỀ XUẤT phương án B" + lời
   văn tem KHÔNG QR cho lô đã passed. GĐ vùng trồng quyết, báo Sales + Hạ
   tầng — agent KHÔNG tự đổi tem.
+## 5j. Kế toán (v9.0) — đối soát sàn, lô hóa đơn nháp, công nợ đại lý
+
+**Làm gì:** 3 agent kế toán tất định (không LLM, không gọi mạng, không gửi
+gì ra ngoài). Hệ thống chỉ BÁO CÁO và lập NHÁP: không bút toán, không ghi
+sổ MISA, không phát hành hóa đơn, không lệnh chi, không thư nhắc nợ.
+
+**Đối soát quyết toán sàn (ACC-Recon).** Kế toán xuất TAY file quyết toán
+(income/settlement) từ Seller Center rồi nạp; nạp file đơn sàn trước (mục
+5b, `--kind order`) — nếu file đơn tới sau thì nạp xong chạy `--reconcile`.
+
+```
+python -m ingest.settlement_csv --file <file quyết toán .csv/.xlsx> --channel shopee
+python -m ingest.settlement_csv --reconcile
+python -m ingest.settlement_csv --report
+```
+
+- Mỗi dòng đúng 1 nhãn: `khop` / `lech` (kèm lý do `thuc_nhan`,
+  `phi_co_dinh`, `phi_thanh_toan`, `phi_dich_vu`, `gia_tri_don`) /
+  `thieu_chung_tu` (chưa thấy đơn sàn) / `hoan` (có hoàn tiền).
+- File lỗi (thiếu cột, cột lạ, ô tiền sai, mã đơn trùng) → exit 1, không
+  nạp gì; lỗi chỉ nêu số dòng + tên cột. Nạp lại cùng file → `[skip]`.
+- `--report` trỏ dòng bằng `tên file dòng N` — mở file gốc để xem; không
+  in mã đơn / thông tin người mua.
+
+**Lô hóa đơn NHÁP (ACC-Invoice).** Mỗi ngày gom đơn đạt mốc lập hóa đơn
+thành 1 lô vào hàng duyệt chung (`invoice_batch`, khối `finance`).
+
+```
+python -m agents.acc_invoice --batch --day 2026-10-12
+python -m agents.acc_invoice --batch --yeu-cau <file yêu cầu xuất HĐ> --channel shopee
+python -m pipelines.approval_queue --pending --block finance
+python -m pipelines.approval_queue --approve <id> --by "<người duyệt>"
+python -m agents.acc_invoice --verify-draft <id> --file data/reports/hoa-don-nhap/lo-<batch_key>.csv
+```
+
+- File nháp `data/reports/hoa-don-nhap/lo-<batch_key>.csv` chứa tên/MST/
+  địa chỉ/email người mua (chỉ đơn có yêu cầu xuất HĐ) — thư mục gitignored,
+  KHÔNG gửi qua chat/email; hàng duyệt chỉ có hash rút gọn + số tiền.
+- Trước khi nhập tay vào phần mềm HĐĐT: `--verify-draft` PHẢI in `[ok]`
+  (lô đã duyệt + file đúng bản đã duyệt). `[fail]` → không nhập.
+- Đã có lô chờ duyệt trong ngày → `[skip]`; lô bị từ chối → chạy lại sẽ
+  gom lại các đơn đó (lô mới, "Lần lập 2"). Đơn đã thuộc lô duyệt mà trả
+  hàng → dòng `dieu_chinh` ở lô sau, ghi lô gốc. Cột người mua của dòng
+  điều chỉnh ghi "THEO HĐ GỐC lô …" (gốc là HĐ doanh nghiệp → thêm "gốc
+  cần MST"): lấy tên/MST/địa chỉ từ HĐ gốc, KHÔNG dùng "Người mua không
+  lấy hóa đơn"; hoặc cấp lại qua `--yeu-cau`. Số tiền điều chỉnh ghi DƯƠNG
+  = giá trị giảm (quy ước GIẢ ĐỊNH, chờ mẫu file NCC HĐĐT).
+
+**Công nợ đại lý (ACC-AR).**
+
+```
+python -m agents.acc_ar --load <sổ công nợ .csv/.xlsx>
+python -m agents.acc_ar --aging --as-of 2026-10-12
+python -m agents.acc_ar --commission --from 2026-10-01 --to 2026-10-31
+python -m agents.acc_ar --bulletin
+```
+
+- File công nợ: header cố định `dealer_code, dealer_type, kind, doc_ref,
+  doc_date, due_date, amount_vnd, sku_key, channel` — chỉ MÃ đại lý, không
+  tên/SĐT; thanh toán ghi số âm. Nạp lại cùng file → `[skip]`.
+- Tuổi nợ 0-30/31-60/61-90/>90 ngày, khoản trả trừ vào nợ cũ nhất trước;
+  quá hạn khi qua `due_date` (trống → `term_days` của cấu hình).
+- Hoa hồng là BẢN NHÁP — không phải lệnh chi; rượu bán online = 0; cờ
+  `thieu_sku` (SKU không có trong golden → 0), `tncn` (hộ kinh doanh/cá
+  nhân — kế toán xử lý thuế TNCN).
+- `--bulletin` ghi bản tin GĐ tài chính `data/reports/director-finance-
+  <ngày>.md` có mục "Công nợ đại lý quá hạn" — người đọc rồi chuyển tay.
+  Với khối finance, lệnh này THAY cho `python -m pipelines.director
+  --block finance` (cùng file, ghi đè): chạy director (hoặc `--all`) SAU
+  `--bulletin` trong cùng ngày sẽ làm MẤT mục nợ quá hạn — nếu lỡ chạy,
+  chạy lại `python -m agents.acc_ar --bulletin` (director in `[warn]`).
+
+**GIẢ ĐỊNH (sửa khi có thật):** tên cột `data/settlement_map.json`; biểu
+phí `data/settlement_fees.json`; mốc `invoice_trigger` + format CSV
+`data/invoice_config.json`; chính sách hoa hồng `data/dealer_commission.json`
+(MẪU).
+
+**External-dep (công ty cấp, hệ thống không giả lập):** file quyết toán
+thật ≥2 tuần mỗi sàn; biểu phí sàn thật theo ngày hiệu lực; tư vấn thuế chốt
+mốc lập hóa đơn (hạn 25/10/2026); nhà cung cấp HĐĐT + mẫu file nhập + chữ
+ký số; số dư công nợ thật (MISA) + chính sách hoa hồng đã ký; người duyệt
+lô (`data/directors/finance.json` `approvers` đang rỗng); GĐ tài chính ký
+biên bản đối soát; hạn lưu + quyền thư mục file nháp hóa đơn.
 
 ## 6. Backup + diễn tập khôi phục (v3.6)
 

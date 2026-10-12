@@ -1,0 +1,16 @@
+{
+  "_doc": "v9.0 ACC-Invoice — GIẢ ĐỊNH — invoice_trigger chờ tư vấn thuế chốt (hạn 25/10/2026, confirmed_by null = CHƯA chốt); format CSV chờ nhà cung cấp HĐĐT (mẫu file nhập thật = external-dep). invoice_trigger ∈ giao_thanh_cong | ban_giao_van_chuyen (mốc lập hóa đơn); trigger_status {kênh: {mốc: [trạng thái đơn sàn đạt mốc]}}; return_status {kênh: [trạng thái trả hàng/hoàn tiền]} — đơn ĐÃ thuộc lô approved mà nay ở trạng thái này → dòng điều chỉnh; đơn hủy lấy cancel_status của data/market_csv_map.json. request_columns = header file yêu cầu xuất hóa đơn (GIẢ ĐỊNH — mỗi dòng PHẢI có MST 10 hoặc 10-3 số; yêu cầu không MST chưa hỗ trợ). csv_columns = thứ tự cột file NHÁP (tên cột GIẢ ĐỊNH). retail_buyer = tên người mua bán lẻ không lấy hóa đơn. Agent KHÔNG có chữ ký số, KHÔNG phát hành, KHÔNG gửi — kế toán nhập tay vào phần mềm HĐĐT sau khi lô được duyệt và --verify-draft pass.",
+  "invoice_trigger": "giao_thanh_cong",
+  "confirmed_by": null,
+  "trigger_status": {
+    "shopee": {"giao_thanh_cong": ["Hoàn thành"], "ban_giao_van_chuyen": ["Đang giao", "Hoàn thành"]},
+    "tiktok": {"giao_thanh_cong": ["Delivered", "Completed"], "ban_giao_van_chuyen": ["Shipped", "In transit", "Delivered", "Completed"]}
+  },
+  "return_status": {
+    "shopee": ["Trả hàng/Hoàn tiền"],
+    "tiktok": ["Returned", "Refunded"]
+  },
+  "request_columns": {"order_id": "Mã đơn hàng", "buyer_name": "Tên đơn vị mua", "tax_code": "Mã số thuế", "address": "Địa chỉ xuất hóa đơn", "email": "Email nhận hóa đơn"},
+  "csv_columns": ["lan_lap", "ma_tham_chieu", "ngay_lap", "kenh", "loai", "ten_nguoi_mua", "mst", "dia_chi", "email", "ten_hang", "so_luong", "don_gia", "thanh_tien", "lo_goc"],
+  "retail_buyer": "Người mua không lấy hóa đơn"
+}

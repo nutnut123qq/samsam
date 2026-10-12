@@ -1,0 +1,68 @@
+# v9.0 vòng sửa 1 (7 finding MINOR cold-check) — 2026-10-12 12:42:28 +0700 — worktree D:/code/samsam-w70 (DATABASE_URL riêng, không in)
+
+## mutation probe (sửa tạm rồi khôi phục, cmp xác nhận nguyên bản)
+# bỏ 'imported_at < end' · dieu_chinh ép retail_buyer · bỏ except OSError (acc_invoice + acc_ar) · having >=3 · affiliate→voucher SUM
+# → 7 failed: test_adjustment_buyer_points_to_original_invoice[can_mst|thuong], test_db_snapshot_cutoff_end_of_day, test_db_draft_write_error_exit1_hint, test_db_bulletin_write_error_exit1_no_traceback, test_db_load_reconcile_idempotent_report, test_db_report_order_in_two_settlement_files
+
+## targeted lần 1
+$ python -m pytest -q -rs tests/test_acc_invoice.py tests/test_acc_ar.py tests/test_settlement_csv.py tests/test_director.py tests/test_fin_qa.py tests/test_data_flow_map.py
+........................................................................ [ 87%]
+....................                                                     [100%]
+164 passed in 14.42s
+
+## targeted lần 2
+$ python -m pytest -q -rs tests/test_acc_invoice.py tests/test_acc_ar.py tests/test_settlement_csv.py tests/test_director.py tests/test_fin_qa.py tests/test_data_flow_map.py
+........................................................................ [ 87%]
+....................                                                     [100%]
+164 passed in 15.18s
+
+## targeted lần 3
+$ python -m pytest -q -rs tests/test_acc_invoice.py tests/test_acc_ar.py tests/test_settlement_csv.py tests/test_director.py tests/test_fin_qa.py tests/test_data_flow_map.py
+........................................................................ [ 87%]
+....................                                                     [100%]
+164 passed in 12.88s
+
+## full pytest (đúng 1 lần)
+$ python -m pytest -q
+start 12:43:33
+1768 passed, 3 skipped in 326.91s (0:05:26)
+exit 0 end 12:49:05
+# 1759 (vòng trước) → 1768 passed (+9 test mới); 3 skipped = test_dr_drill cần docker (môi trường, có từ trước)
+
+## ruff
+$ ruff check .
+All checks passed!
+
+## dpia
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+[exit 0]
+
+## grep mạng/LLM (kỳ vọng 0 dòng → exit 1)
+[exit 1]
+
+## git status --short
+ M AGENTS.md
+ M DONE.md
+ M data/data_flow_map.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/legal/DPIA-nhap.md
+ M docs/legal/TIA-nhap.md
+ M docs/schema.sql
+ M pipelines/director.py
+ M tests/test_data_flow_map.py
+ M tests/test_director.py
+?? agents/acc_ar.py
+?? agents/acc_invoice.py
+?? data/dealer_commission.json
+?? data/invoice_config.json
+?? data/settlement_fees.json
+?? data/settlement_map.json
+?? ingest/settlement_csv.py
+?? tests/fixtures/finance/
+?? tests/test_acc_ar.py
+?? tests/test_acc_invoice.py
+?? tests/test_fin_qa.py
+?? tests/test_settlement_csv.py

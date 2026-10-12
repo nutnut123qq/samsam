@@ -2439,3 +2439,96 @@ begin
   return now();
 end $$;
 revoke execute on function revoke_qr(text, text, text) from public;
+
+-- ============================================================================
+-- v9.0 kế toán (WP12 — ACC-Recon / ACC-Invoice / ACC-AR). Chỉ BÁO CÁO + NHÁP:
+-- không bút toán, không ghi sổ MISA, không phát hành hóa đơn, không lệnh chi.
+--   * `settlement_rows` — ai ghi: `python -m ingest.settlement_csv --file`
+--     (file quyết toán kế toán xuất TAY từ Seller Center, idempotent theo
+--     `file_sha256`); ai đọc: đối soát + `--report`. Số tiền đã chuẩn hóa
+--     dấu: cột khấu trừ DƯƠNG = sàn trừ, ÂM = sàn bù. KHÔNG cột người mua
+--     (tên/SĐT/địa chỉ bị bỏ ngay khi đọc), mã đơn chỉ lưu hash như
+--     `market_rows`.
+--   * `recon_results` — đúng 1 nhãn/dòng settlement (khop/lech/
+--     thieu_chung_tu/hoan) + lý do; `--reconcile` tính lại (upsert) khi file
+--     đơn tới sau file quyết toán.
+--   * `invoice_lines` — dòng lô hóa đơn NHÁP (`agents.acc_invoice --batch`):
+--     `batch_key` = object_id mục `invoice_batch` trong `approval_queue`
+--     (KHÔNG FK). KHÔNG thông tin người mua — tên/MST/địa chỉ/email chỉ nằm
+--     trong file CSV nháp gitignored `data/reports/hoa-don-nhap/`.
+--   * `dealer_ar` — sổ công nợ đại lý nạp tay (`agents.acc_ar --load`), dấu
+--     số tiền theo loại; KHÔNG tên/SĐT đại lý (khóa nối CRM = `dealer_code`).
+-- ============================================================================
+
+create table if not exists settlement_rows (
+  id bigint generated always as identity primary key,
+  file_sha256 text not null check (file_sha256 ~ '^[0-9a-f]{64}$'),
+  file_name text not null,          -- basename, không đường dẫn
+  channel text not null check (channel in ('shopee', 'tiktok')),
+  row_no int not null check (row_no >= 2),   -- số dòng trong file (header = 1)
+  order_id_hash text not null check (order_id_hash ~ '^[0-9a-f]{16}$'),
+  order_amount_vnd bigint not null check (order_amount_vnd >= 0),
+  fixed_fee_vnd bigint not null default 0,
+  payment_fee_vnd bigint not null default 0,
+  service_fee_vnd bigint not null default 0,
+  shipping_fee_vnd bigint not null default 0,
+  voucher_seller_vnd bigint not null default 0,
+  affiliate_vnd bigint not null default 0,
+  refund_vnd bigint not null default 0 check (refund_vnd >= 0),
+  payout_vnd bigint not null,       -- thực nhận trên file, có thể âm
+  settled_on date,
+  imported_at timestamptz not null default now(),
+  unique (file_sha256, row_no)
+);
+
+create table if not exists recon_results (
+  id bigint generated always as identity primary key,
+  settlement_row_id bigint not null unique references settlement_rows(id),
+  label text not null
+    check (label in ('khop', 'lech', 'thieu_chung_tu', 'hoan')),
+  reasons jsonb not null default '[]',      -- [{code, expected, actual}]
+  expected_payout_vnd bigint not null,
+  order_amount_vnd bigint,                  -- tổng từ đơn sàn; null = không thấy đơn
+  reconciled_at timestamptz not null default now(),
+  check ((label <> 'khop' or reasons = '[]'::jsonb)
+         and (label <> 'lech' or reasons <> '[]'::jsonb))
+);
+
+create table if not exists invoice_lines (
+  id bigint generated always as identity primary key,
+  batch_key text not null
+    check (batch_key ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9a-f]{12}$'),
+  batch_date date not null,
+  channel text not null check (channel in ('shopee', 'tiktok')),
+  order_id_hash text not null check (order_id_hash ~ '^[0-9a-f]{16}$'),
+  kind text not null check (kind in ('thuong', 'can_mst', 'dieu_chinh')),
+  amount_vnd bigint not null check (amount_vnd >= 0),
+  ref_batch_key text,               -- điều chỉnh: lô gốc đã duyệt
+  created_at timestamptz not null default now(),
+  check ((kind = 'dieu_chinh') = (ref_batch_key is not null)),
+  unique (batch_key, order_id_hash, kind)
+);
+
+create table if not exists dealer_ar (
+  id bigint generated always as identity primary key,
+  file_sha256 text not null check (file_sha256 ~ '^[0-9a-f]{64}$'),
+  file_name text not null,
+  row_no int not null,
+  dealer_code text not null check (dealer_code ~ '^[A-Z0-9_-]{2,32}$'),
+  dealer_type text not null
+    check (dealer_type in ('doanh_nghiep', 'ho_kinh_doanh', 'ca_nhan')),
+  kind text not null
+    check (kind in ('so_du_dau', 'phat_sinh', 'thanh_toan', 'dieu_chinh')),
+  doc_ref text,
+  doc_date date not null,
+  due_date date check (due_date is null or due_date >= doc_date),
+  amount_vnd bigint not null,
+  sku_key text,                     -- không FK (như market_rows)
+  channel text check (channel is null or channel in ('offline', 'online')),
+  imported_at timestamptz not null default now(),
+  unique (file_sha256, row_no),
+  check (case kind when 'so_du_dau' then amount_vnd > 0
+                   when 'phat_sinh' then amount_vnd > 0
+                   when 'thanh_toan' then amount_vnd < 0
+                   else amount_vnd <> 0 end)
+);

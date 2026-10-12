@@ -33,7 +33,9 @@ REQUIRED_MODULES = [
     "app/streamlit_app.py", "pipelines/content.py", "ingest/embed_store.py",
     "ingest/kb_internal.py", "ingest/doc_intake.py", "ingest/market_csv.py",
     "scripts/health_bulletin.py", "crawler/collect.py", "scripts/db_backup.py",
-    "ingest/crm.py"]
+    "ingest/crm.py",
+    # v9.0 kế toán — luồng có PII người mua hóa đơn / mã đơn / công nợ
+    "ingest/settlement_csv.py", "agents/acc_invoice.py", "agents/acc_ar.py"]
 
 
 def _declared(m):

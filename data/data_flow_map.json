@@ -539,6 +539,83 @@
       ],
       "legal_basis": "Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN",
       "gaps": []
+    },
+    {
+      "id": "DF-19",
+      "name": "Lô hóa đơn điện tử NHÁP — ACC-Invoice (v9.0)",
+      "modules": [
+        "agents/acc_invoice.py"
+      ],
+      "data": "Tên đơn vị mua, MST, địa chỉ, email nhận hóa đơn — CHỈ của đơn có yêu cầu xuất hóa đơn (file yêu cầu kế toán cung cấp); số tiền + tên hàng từ đơn sàn",
+      "class": "do",
+      "subjects": "Người mua yêu cầu xuất hóa đơn (doanh nghiệp/hộ kinh doanh/cá nhân có MST)",
+      "purpose": "Chuẩn bị danh sách hóa đơn để kế toán nhập tay vào phần mềm HĐĐT sau khi lô được duyệt",
+      "storage": "Thông tin người mua CHỈ trong file nháp gitignored `data/reports/hoa-don-nhap/lo-<batch_key>.csv`; DB (`invoice_lines`, `approval_queue`) chỉ hash + số tiền + cờ; không vào log/stdout/payload",
+      "retention": "File nháp chưa có hạn xóa tự động — GAP (external-dep: kế toán chốt hạn + quyền thư mục)",
+      "recipients": "Nội bộ — kế toán; agent KHÔNG gửi, KHÔNG gọi API nhà cung cấp HĐĐT, không ký số",
+      "cross_border": false,
+      "safeguards": [
+        "Payload hàng duyệt chỉ có hash rút gọn + số tiền + `csv_sha256`; test quét chuỗi người mua GIẢ",
+        "`--verify-draft` chỉ pass khi lô đã duyệt và sha256 file khớp",
+        "Module không import thư viện mạng/gateway LLM (test_fin_qa)",
+        "Ô CSV chống formula injection"
+      ],
+      "legal_basis": "Nghĩa vụ lập hóa đơn theo pháp luật thuế — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Retention file nháp + quyền thư mục `data/reports/hoa-don-nhap/` = external-dep",
+        "Nhà cung cấp HĐĐT + format nhập + chữ ký số = external-dep",
+        "Mốc `invoice_trigger` chờ tư vấn thuế chốt (hạn 25/10/2026)"
+      ]
+    },
+    {
+      "id": "DF-20",
+      "name": "Công nợ đại lý + hoa hồng — ACC-AR (v9.0)",
+      "modules": [
+        "agents/acc_ar.py"
+      ],
+      "data": "Mã đại lý (`dealer_code`), loại đại lý, chứng từ công nợ, số tiền, SKU, kênh — KHÔNG tên/SĐT đại lý",
+      "class": "do",
+      "subjects": "Đại lý (doanh nghiệp, hộ kinh doanh, cá nhân)",
+      "purpose": "Tuổi nợ, cảnh báo nợ quá hạn vào bản tin GĐ tài chính, tính hoa hồng NHÁP",
+      "storage": "Bảng `dealer_ar` (insert-only theo sha256 file); bản tin `data/reports/director-finance-<ngày>.md` (gitignored)",
+      "retention": "Chưa đặt hạn — theo hạn lưu chứng từ kế toán (cần chốt)",
+      "recipients": "Nội bộ — kế toán / GĐ tài chính; không gửi thư nhắc nợ, không lệnh chi, không LLM",
+      "cross_border": false,
+      "safeguards": [
+        "Chỉ mã đại lý, header cố định — cột lạ (vd tên) chặn cả file",
+        "Bản tin chỉ in mã đại lý + số tiền, không chi tiết chứng từ",
+        "Hoa hồng là BẢN NHÁP theo chính sách MẪU chưa ký"
+      ],
+      "legal_basis": "Thực hiện hợp đồng đại lý + nghĩa vụ kế toán — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Sổ công nợ thật (MISA) + chính sách hoa hồng đã ký = external-dep",
+        "Nối bảng `dealers` CRM v5.2 khi gộp (khóa `dealer_code`)"
+      ]
+    },
+    {
+      "id": "DF-25",
+      "name": "Đối soát quyết toán sàn — ACC-Recon (v9.0)",
+      "modules": [
+        "ingest/settlement_csv.py"
+      ],
+      "data": "Mã đơn (chỉ lưu hash sha256[:16]) + số tiền đơn/phí sàn/hoàn/thực nhận từ file quyết toán Seller Center; cột tên/SĐT/địa chỉ/username người mua bị bỏ ngay khi đọc",
+      "class": "do",
+      "subjects": "Người mua trên sàn (gián tiếp qua mã đơn đã hash)",
+      "purpose": "Đối soát tiền thực nhận + phí sàn với đơn đã nạp, phát hiện thu sai — chỉ báo cáo, không bút toán",
+      "storage": "Bảng `settlement_rows` + `recon_results` (không cột người mua); file nguồn do kế toán giữ ngoài repo",
+      "retention": "Chưa đặt hạn — theo hạn lưu chứng từ kế toán (cần kế toán trưởng chốt)",
+      "recipients": "Nội bộ — kế toán / GĐ tài chính đọc `--report`; không gửi ra ngoài, không LLM",
+      "cross_border": false,
+      "safeguards": [
+        "Kiểm toàn file trước khi connect; lỗi chỉ nêu số dòng + tên field, không in giá trị ô",
+        "Cột người mua thuộc `drop` bị bỏ khi đọc; mã đơn chỉ lưu hash",
+        "Báo cáo trỏ dòng bằng `file dòng N`, không in mã đơn/hash"
+      ],
+      "legal_basis": "Nghĩa vụ kế toán/thuế + thực hiện hợp đồng mua bán — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Mapping cột + biểu phí là GIẢ ĐỊNH — chờ file settlement thật ≥2 tuần mỗi sàn",
+        "Hạn lưu `settlement_rows` chưa chốt"
+      ]
     }
   ]
 }

@@ -1,0 +1,5 @@
+{
+  "_doc": "v9.0 ACC-Recon — BIỂU PHÍ GIẢ ĐỊNH — chờ biểu phí thật theo ngày hiệu lực + kế toán xác nhận (external-dep). Mỗi kênh: fixed_fee_pct / payment_fee_pct / service_fee_pct (tỷ lệ trên giá trị đơn trên file, 0..0.5) để phát hiện sàn thu sai; tolerance_vnd (0..100000) = sai số làm tròn chấp nhận được cho cả thực nhận lẫn từng phí. Phí tính bằng Decimal, làm tròn ROUND_HALF_UP về đồng. Biểu phí thật thay đổi theo ngành hàng/chương trình/ngày — bản này 1 mức/kênh, chỉ để chạy luồng.",
+  "shopee": {"fixed_fee_pct": 0.04, "payment_fee_pct": 0.05, "service_fee_pct": 0.03, "tolerance_vnd": 100},
+  "tiktok": {"fixed_fee_pct": 0.05, "payment_fee_pct": 0.05, "service_fee_pct": 0.02, "tolerance_vnd": 100}
+}
