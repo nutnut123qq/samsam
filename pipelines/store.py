@@ -21,15 +21,24 @@ Contract:
     function; function kiểm lại snapshot + `created_by` có + người duyệt
     ≠ người tạo (atomic, `for update` — race 2 người duyệt thì người sau
     thua).
-  - v4.2 ngữ cảnh draft cố định: `content_drafts` chưa có cột
-    content_type/sku/is_ai/is_sponsored -> luôn `post`, sku None, is_ai
-    True (fail-closed: bài viết tay cũng phải mang nhãn AI tới khi có
-    cột), không tài trợ. Kênh `blog` -> `web` (alias); kênh lạ -> "config"
-    -> không duyệt được.
-  - Readiness (v4.2): đọc view `sku_readiness` (`readiness_from_db`, trong
-    savepoint) CHỈ khi text nhắc SKU (map chỉ ảnh hưởng luật theo SKU
-    nhận diện trong text — draft không có cột sku); lỗi DB / conn None ->
-    soi gương golden file (fail-closed: file chưa SKU nào XNQC).
+  - v6.1 ngữ cảnh draft THEO CỘT: `content_type` (mặc định `post`),
+    `sku` (None = không gắn SKU), `is_ai` (mặc định True — fail-closed),
+    `prompt_version`/`prompt_sha256` (template data/prompts/). Lưu và
+    duyệt chạy `check_publish` với đúng loại/SKU của draft — lúc duyệt
+    đọc TỪ DÒNG DB (`.get` — dòng thiếu cột coi như mặc định), không tin
+    caller. Riêng `is_ai`: lúc DUYỆT luôn True (fail-closed như v4.2) —
+    cột chỉ để truy vết, vì agent_writer ghi được cột (is_ai=false sẽ tự
+    bỏ yêu cầu nhãn AI). Bỏ cố định khi có đường ghi is_ai=false chỉ
+    dành cho người (app_human). Không tài trợ (`is_sponsored` chưa có
+    cột). Kênh `blog` -> `web` (alias); kênh lạ -> "config" -> không duyệt được.
+  - Readiness (v4.2/v6.1): đọc view `sku_readiness` (`readiness_from_db`,
+    trong savepoint) khi text nhắc SKU HOẶC draft có cột `sku`; lỗi DB /
+    conn None -> soi gương golden file (fail-closed: file chưa SKU nào
+    XNQC).
+  - v6.1 listing: partial unique index (sku, channel, prompt_version)
+    với `content_type='listing'` và status ≠ rejected — INSERT trùng raise
+    `psycopg.errors.UniqueViolation` cho caller (batch content coi là
+    `skipped`).
   - `save_draft` (v4.2) chạy lại LUẬT đăng bài (không gọi LLM) và lưu
     snapshot không bao giờ lỏng hơn luật hay snapshot caller.
   - Mỗi quyết định ghi `approvals` kèm sha256 text lúc duyệt;
@@ -93,11 +102,13 @@ VN_TZ = timezone(timedelta(hours=7))
 
 COLS = ("id", "created_at", "brief", "channel", "text", "guardrail",
         "status", "reviewer", "reviewed_at", "review_note",
-        "scheduled_date", "source", "created_by")
+        "scheduled_date", "source", "created_by",
+        "content_type", "sku", "is_ai", "prompt_version", "prompt_sha256")
 
 _INSERT_SQL = (
     "insert into content_drafts (brief, channel, text, guardrail, source, "
-    "created_by) values (%s, %s, %s, %s, %s, %s) returning id")
+    "created_by, content_type, sku, is_ai, prompt_version, prompt_sha256) "
+    "values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) returning id")
 
 _LOG_SQL = (
     "insert into agent_action_log (actor, action, object_type, object_id, "
@@ -145,18 +156,32 @@ def readiness_now() -> dict | None:
         return readiness_from_db(conn)
 
 
-def _publish_check(conn, text: str, channel, *, llm: bool) -> dict:
-    """Guardrail đăng bài cho draft (ngữ cảnh cố định — docstring module).
-    Readiness DB chỉ đọc khi text nhắc SKU (luật readiness chỉ áp SKU nhận
-    diện trong text). `llm=False` -> chỉ luật (bước lưu)."""
-    rules = guardrail.check_publish(text, channel=channel)
-    rmap = readiness_from_db(conn) if rules.get("skus") else None
+def _publish_check(conn, text: str, channel, *, llm: bool,
+                   content_type="post", sku=None, is_ai=True) -> dict:
+    """Guardrail đăng bài cho draft theo ngữ cảnh draft (loại/SKU/is_ai —
+    docstring module). Readiness DB đọc khi text nhắc SKU HOẶC draft gắn
+    `sku`. `llm=False` -> chỉ luật (bước lưu)."""
+    ctx = {"channel": channel, "content_type": content_type, "sku": sku,
+           "is_ai": is_ai}
+    rules = guardrail.check_publish(text, **ctx)
+    rmap = (readiness_from_db(conn)
+            if rules.get("skus") or sku is not None else None)
     if not llm:
-        return (rules if rmap is None
-                else guardrail.check_publish(text, channel=channel,
-                                             readiness=rmap))
-    return guardrail_llm.check_publish_llm(text, channel=channel,
-                                           readiness=rmap)
+        res = (rules if rmap is None
+               else guardrail.check_publish(text, readiness=rmap, **ctx))
+    else:
+        res = guardrail_llm.check_publish_llm(text, readiness=rmap, **ctx)
+    # v6.1 (rà OWASP A01): loại `public: false` (internal_note) bỏ qua luật
+    # đăng bài (rượu/XNQC/nhãn) — dòng mang loại đó không được vào hàng
+    # duyệt ĐĂNG (agent_writer ghi được cột content_type) -> chặn "config".
+    cfg, _err = guardrail._load_rules(guardrail.DATA_DIR)
+    ctype = (cfg["content_types"].get(content_type)
+             if cfg and isinstance(content_type, str) else None)
+    if isinstance(ctype, dict) and not ctype.get("public", True):
+        res = guardrail.with_violation(
+            res, "config", f"loại nội dung {content_type!r} không công khai "
+            "— không vào hàng duyệt đăng bài")
+    return res
 
 
 def _merge_snapshot(rules: dict, caller) -> dict:
@@ -196,7 +221,10 @@ def _merge_snapshot(rules: dict, caller) -> dict:
 
 def save_draft(conn, brief: str, channel: str, text: str,
                guardrail: dict, source: str = SOURCE_STUDIO, *,
-               created_by: str | None = None):
+               created_by: str | None = None, content_type: str = "post",
+               sku: str | None = None, is_ai: bool = True,
+               prompt_version: str | None = None,
+               prompt_sha256: str | None = None):
     """INSERT 1 draft → id. `guardrail` = snapshot kết quả guardrail lúc
     sinh (caller); v4.2 LƯU snapshot = luật `check_publish` chạy lại trên
     text với kênh draft (readiness DB nếu có) gộp chặt-nhất với snapshot
@@ -205,25 +233,33 @@ def save_draft(conn, brief: str, channel: str, text: str,
     hiển thị đúng thứ đã lưu). `created_by` BẮT BUỘC (rỗng →
     ValueError trước khi chạm DB) — không có người tạo thì không kiểm
     được "người duyệt ≠ người tạo". Ghi kèm 1 dòng log `draft_create`
-    cùng transaction. commit() tường minh — xem docstring module."""
+    cùng transaction. commit() tường minh — xem docstring module.
+    v6.1: `content_type`/`sku`/`is_ai`/`prompt_*` ghi vào cột và là ngữ
+    cảnh luật lúc lưu (mặc định = hành vi cũ: post, None, True)."""
     by = (created_by or "").strip()
     if not by:
         raise ValueError("save_draft: thiếu created_by (người/agent tạo)")
     text = text or ""
     ch = (channel or "").strip()
-    snap = _merge_snapshot(_publish_check(conn, text, ch, llm=False),
-                           guardrail)
+    is_ai = is_ai is not False
+    snap = _merge_snapshot(
+        _publish_check(conn, text, ch, llm=False, content_type=content_type,
+                       sku=sku, is_ai=is_ai), guardrail)
     with conn.transaction():
         row = conn.execute(
             _INSERT_SQL,
             ((brief or "").strip(), ch, text,
-             Jsonb(snap), source, by)).fetchone()
+             Jsonb(snap), source, by, content_type, sku, is_ai,
+             prompt_version, prompt_sha256)).fetchone()
         did = row[0] if row else None
         if did is not None:
             conn.execute(_LOG_SQL, (
                 by, "draft_create", OBJECT_TYPE, str(did),
                 Jsonb({"channel": ch,
                        "source": source,
+                       "content_type": content_type,
+                       "sku": sku,
+                       "prompt_version": prompt_version,
                        "content_sha256": content_sha256(text)})))
     conn.commit()
     return did
@@ -307,8 +343,15 @@ def set_status(conn, draft_id, status: str, reviewer: str,
         # Snapshot jsonb do agent ghi — có thể giả ok:true. Chạy LẠI
         # guardrail ĐĂNG BÀI (kênh draft + readiness DB + LLM-check nếu
         # cấu hình) trên text thật trong DB trước khi gọi function.
+        # v6.1: ngữ cảnh luật đọc TỪ DÒNG DB (`.get` — dòng thiếu cột coi
+        # như mặc định post/None), không tin caller. `is_ai` CỐ ĐỊNH True
+        # (fail-closed như v4.2): cột is_ai chỉ để truy vết — agent_writer
+        # ghi được cột này, tin nó = agent tự bỏ yêu cầu nhãn AI.
         recheck = _publish_check(conn, cur["text"] or "", cur["channel"],
-                                 llm=True)
+                                 llm=True,
+                                 content_type=cur.get("content_type")
+                                 or "post",
+                                 sku=cur.get("sku"), is_ai=True)
         if recheck.get("ok") is not True:
             vs = [v for v in recheck.get("violations") or []
                   if isinstance(v, dict)]

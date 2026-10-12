@@ -48,7 +48,8 @@ SOP_COMMANDS = ("streamlit run", "apply_schema", "lead_store",
                 "break_glass", "pipelines.approval_queue",
                 "pipelines.director", "pipelines.red_alert", "crawler.intel",
                 "pipelines.cockpit", "agents.ceo_report",
-                "ingest.intel_import", "intel_weekly")
+                "ingest.intel_import", "intel_weekly",
+                "pipelines.content --listing")
 
 
 def _doc(name: str) -> str:
@@ -273,3 +274,20 @@ def test_redteam_llm_check_section_in_phu_luc_d():
     # mặc định tắt + dẫn evidence đo thật (tỷ lệ bắt không tự suy ra).
     sec = body[body.index("2c. Red-team PC-A9"):body.index("## 3.")]
     assert "mặc định TẮT" in sec and "evidence/v42_llm.log" in sec
+
+
+def test_prompt_library_lists_every_template_in_manifest():
+    """v6.1: mọi tên + version template trong data/prompts/manifest.json có
+    trong prompt-library (word-boundary — gotcha v2.3: 'content_zalo@1'
+    không ăn ké 'content_zalo@10')."""
+    import json
+
+    man = json.loads((ROOT / "data" / "prompts" / "manifest.json")
+                     .read_text(encoding="utf-8"))
+    body = _doc("prompt-library.md")
+    assert man["templates"], "manifest rỗng"
+    for name, ent in man["templates"].items():
+        for token in (name, ent["version"], ent["sha256"][:12]):
+            assert re.search(rf"(?<![\w@]){re.escape(token)}(?![\w@])",
+                             body), f"prompt-library thiếu {token}"
+    assert "chờ GĐ Marketing duyệt" in body

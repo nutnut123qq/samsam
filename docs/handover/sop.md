@@ -143,6 +143,28 @@ python -m pipelines.store --verify-log               # kiểm nhật ký hash ch
   `id=.. problem=row_hash|prev_hash` (xem mục 7); exit 2 = DB không
   kết nối được.
 
+### Sinh listing hàng loạt (MKT-02, v6.1)
+
+```
+python -m pipelines.content --listing --sku all --channel shopee
+python -m pipelines.content --listing --sku savina-12v --channel shopee --channel web --no-llm
+```
+
+- Sinh NHÁP listing cho mỗi cặp SKU × kênh (`shopee|tiktok|web`) vào hàng
+  duyệt (`pending`, `content_type=listing`) — duyệt ở tab **Duyệt &
+  Lịch**; sau khi duyệt, NGƯỜI tải lên sàn tay. Agent KHÔNG đăng, KHÔNG
+  sửa listing trên sàn.
+- Mỗi dòng in 1 cặp: `created #id` (nháp mới), `skipped #id` (đã có nháp
+  listing chờ duyệt/đã duyệt cùng SKU/kênh/phiên bản prompt — chạy lại
+  không nhân đôi), `refused <code>: <lý do>` (rượu `ruou`, SKU chưa đủ
+  readiness kênh `readiness`, SKU lạ `sku_la` — không gọi LLM, không
+  ghi), `failed: <codes>` (guardrail không qua — KHÔNG ghi, chạy lại được).
+- Exit 0 = không có `failed`; 1 = có `failed`; 2 = sai tham số hoặc DB
+  không kết nối được (kiểm DB TRƯỚC khi gọi LLM).
+- Thông số/giá lấy từ golden (`python -m ingest.golden_store` nạp trước);
+  giá đang chờ GĐ bán hàng duyệt → người duyệt nháp phải soát giá. Muốn
+  sinh lại 1 listing: từ chối nháp cũ (`--reject`) rồi chạy lại lệnh.
+
 ## 4b. Hàng duyệt chung & bản tin GĐ khối (v4.0)
 
 Mọi việc cần người duyệt của agent nhân viên (đổi giá, báo giá B2B, chiến

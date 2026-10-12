@@ -1,0 +1,106 @@
+# v6.1 gate â€” vong 1 â€” 2026-10-12T12:02:00+07:00
+# baseline full pytest TRUOC khi sua (do luc bat dau): 1057 passed, 3 skipped
+## targeted lan 1: python -m pytest -q -rs tests/test_listing.py tests/test_content.py tests/test_store.py tests/test_auth_approval.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_guardrail_v2.py tests/test_guardrail_llm.py
+........................................................................ [ 21%]
+........................................................................ [ 42%]
+........................................................................ [ 63%]
+........................................................................ [ 84%]
+...................................................                      [100%]
+339 passed in 31.98s
+exit=0
+## targeted lan 2: python -m pytest -q -rs tests/test_listing.py tests/test_content.py tests/test_store.py tests/test_auth_approval.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_guardrail_v2.py tests/test_guardrail_llm.py
+........................................................................ [ 21%]
+........................................................................ [ 42%]
+........................................................................ [ 63%]
+........................................................................ [ 84%]
+...................................................                      [100%]
+339 passed in 28.74s
+exit=0
+## targeted lan 3: python -m pytest -q -rs tests/test_listing.py tests/test_content.py tests/test_store.py tests/test_auth_approval.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_guardrail_v2.py tests/test_guardrail_llm.py
+........................................................................ [ 21%]
+........................................................................ [ 42%]
+........................................................................ [ 63%]
+........................................................................ [ 84%]
+...................................................                      [100%]
+339 passed in 30.73s
+exit=0
+## full: python -m pytest -q
+........................................................................ [ 64%]
+........................................................................ [ 71%]
+........................................................................ [ 77%]
+........................................................................ [ 84%]
+........................................................................ [ 90%]
+........................................................................ [ 97%]
+...............................                                          [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+1108 passed, 3 skipped in 259.63s (0:04:19)
+exit=0
+## ruff check .
+All checks passed!
+exit=0
+## python -m py_compile pipelines/content.py pipelines/store.py app/streamlit_app.py scripts/agent_eval.py
+exit=0
+## git diff --stat -- pipelines/guardrail.py pipelines/guardrail_llm.py connectors api scripts/eval_qa.py tests/test_guardrail.py pipelines/auth.py (phai rong)
+(het)
+## grep -nE 'set_status|approve_draft|schedule|requests|httpx|urllib' pipelines/content.py (phai rong)
+grep-exit=1 (1 = khong khop)
+## W61.6 grep app/streamlit_app.py
+291:                        _ch: listing(_sku_v, _ch, readiness=_rmap)
+300:                                            content_type=_ct_pick)}
+303:                                         sku=_sku_v, content_type=_ct_pick))
+345:                                content_type=_m.get("content_type") or "post",
+389:                                            content_type=_chk_ct,
+111:def _render_guardrail(g):
+112:    """v4.2: chá»‰ map `store.guardrail_lines(g)` (code/severity/span) ra
+115:    from pipelines.store import guardrail_lines, md_plain
+118:    for level, line in guardrail_lines(g):
+320:                _render_guardrail(_r["guardrail"])
+388:            _render_guardrail(check_publish(raw, channel=_chk_ch,
+638:                        _render_guardrail(_gr)
+## dem assert truoc/sau (FLIP: test_content::test_draft_contract_unchanged; test_store Studio count 2->3; test_agent_eval trap-kinds)
+-- truoc:
+tests/test_content.py 44 asserts, 12 tests
+tests/test_store.py 160 asserts, 41 tests
+tests/test_agent_eval.py 89 asserts, 26 tests
+tests/test_handover_docs.py 35 asserts, 10 tests
+tests/test_auth_approval.py 79 asserts, 16 tests
+-- sau:
+tests/test_content.py 44 asserts, 12 tests
+tests/test_store.py 160 asserts, 41 tests
+tests/test_agent_eval.py 112 asserts, 31 tests
+tests/test_handover_docs.py 38 asserts, 11 tests
+tests/test_auth_approval.py 79 asserts, 16 tests
+tests/test_listing.py 148 asserts, 35 tests
+## git status --short
+ M DONE.md
+ M STATUS.md
+ M app/streamlit_app.py
+ M data/eval/config.json
+ M data/guardrail_rules.json
+ M docs/handover/kien-truc.md
+ M docs/handover/prompt-library.md
+ M docs/handover/sop.md
+ M docs/roles.sql
+ M docs/schema.sql
+ M pipelines/content.py
+ M pipelines/store.py
+ M scripts/agent_eval.py
+ M tests/test_agent_eval.py
+ M tests/test_content.py
+ M tests/test_handover_docs.py
+ M tests/test_store.py
+?? data/eval/mkt02.jsonl
+?? data/listing_rules.json
+?? data/prompts/
+?? tests/test_listing.py
+
+## (W61.1) output apply_schema 2 lan â€” chep tu evidence/v61_apply_schema.log
+## python scripts/apply_schema.py (lan 1)
+[done] schema applied â€” 24 báº£ng public: agent_action_log, approvals, assets, chunks, chunks_internal, claims_approved, content_drafts, document_fields, documents, eval_runs, golden_discrepancies, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+exit=0
+## python scripts/apply_schema.py (lan 2)
+[done] schema applied â€” 24 báº£ng public: agent_action_log, approvals, assets, chunks, chunks_internal, claims_approved, content_drafts, document_fields, documents, eval_runs, golden_discrepancies, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+exit=0

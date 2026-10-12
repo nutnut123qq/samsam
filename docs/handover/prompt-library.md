@@ -5,16 +5,19 @@
 file:line để đối chiếu — khi sửa prompt ở source, cập nhật lại doc
 này), ghi chú brand voice, và 3 template brief mẫu.
 **Cần gì:** nguồn sự thật là code — `pipelines/content.py` (system
-prompt content + `CHANNEL_HINT`) và `api/rag.py` (system prompt chat).
+prompt content + `CHANNEL_HINT`, v6.1 template kênh `data/prompts/`) và
+`api/rag.py` (system prompt chat).
 Doc này chỉ là bản sao phục vụ đào tạo/bàn giao.
 
-## 1. System prompt — sinh nội dung (`pipelines/content.py:95-118`)
+## 1. System prompt — sinh nội dung (`pipelines/content.py:248-274`)
 
-Prompt trong hàm `draft()`. `{fmt}` = hint theo kênh (mục 2);
+Prompt trong hàm `_system()` (dùng chung `draft()` và phần chữ
+`listing()`). `{fmt}` = template theo kênh (mục 2, v6.1 đọc từ
+`data/prompts/`);
 `{_whitelist_block()}` = claims whitelist render từ
 `data/claims_whitelist.json` (mỗi SKU 1 dòng `- sku: claim1; claim2`
 hoặc `- sku: CHƯA CÓ công dụng công bố — không được nêu công dụng`,
-code ở `pipelines/content.py:47-60`). v4.2: `{canon}` = NGUYÊN VĂN
+code ở `pipelines/content.py:124-137`). v4.2: `{canon}` = NGUYÊN VĂN
 `disclaimer.canonical` và `{ai_label}` = `labels.ai[0]` đọc từ
 `data/guardrail_rules.json` (`_publish_texts()`, không chép tay — bản dev
 chờ Pháp chế duyệt). Bỏ "Ngọc Linh" khỏi brand voice: chỉ dẫn địa lý chưa
@@ -46,28 +49,75 @@ LUẬT TPBVSK — vi phạm là bài bị loại:
   không phải cụm claim whitelist nguyên văn thì VIẾT LẠI câu đó.
 ```
 
-User message kèm theo: `BRIEF: {brief}` (`pipelines/content.py:120`).
+User message kèm theo: `BRIEF: {brief}` (+ dòng `SẢN PHẨM: <tên golden>
+(mã <sku>)` khi gắn SKU — v6.1) (`pipelines/content.py:300-303`).
 Khi output vi phạm guardrail, hệ thống tự thêm 1 lượt sửa có feedback
-(`pipelines/content.py:121-136`) rồi trả bản cuối kèm kết quả guardrail.
+(`pipelines/content.py:308-317`) rồi trả bản cuối kèm kết quả guardrail.
 v4.2: mỗi lượt nối nhãn AI nếu thiếu (tất định) rồi chạy
 `guardrail_llm.check_publish_llm(text, channel=<kênh>)` — luật đăng bài
 (XNQC, câu khuyến cáo, nhãn AI, "Ngọc Linh") + lớp LLM-check phụ nếu
 cấu hình `GUARDRAIL_LLM_MODEL`; feedback lượt sửa liệt kê `code: span`.
 
-## 2. Channel hint (`pipelines/content.py:37-44`)
+## 2. Template theo kênh (`data/prompts/`, v6.1)
 
-Dict `CHANNEL_HINT` — `{fmt}` ở trên lấy từ đây; kênh lạ fallback
-facebook (`content.py:91`):
+`{fmt}` ở mục 1 đọc từ file `data/prompts/<tên>.md` qua
+`content.load_template(name)` (`pipelines/content.py:99-118`). Dict
+`CHANNEL_HINT` (`pipelines/content.py:121`) giữ làm VIEW đọc từ template
+content_* (tên cũ còn dùng ở test); kênh lạ fallback `content_facebook`
+(`content.py:292`). Version + sha256 mỗi template ở
+`data/prompts/manifest.json` và được LƯU KÈM draft
+(`content_drafts.prompt_version` / `prompt_sha256`) để truy bản prompt nào
+ra bài nào.
 
-```python
-CHANNEL_HINT = {
-    "facebook": "bài đăng Facebook 120-180 chữ, 1-2 emoji, có CTA inbox/hotline",
-    "tiktok": ("kịch bản video TikTok ngắn 30-60 giây: hook 3 giây đầu "
-               "+ 2-3 cảnh (mỗi cảnh ghi mô tả hình ảnh + lời thoại/"
-               "text overlay) + CTA cuối"),
-    "zalo": "tin nhắn Zalo OA ngắn 60-100 chữ, lịch sự, kèm CTA",
-    "blog": "mở bài blog 200-300 chữ, có tiêu đề",
-}
+| Template | Version | sha256 (12 hex đầu) | Trạng thái |
+|---|---|---|---|
+| `content_facebook` | `content_facebook@1` | `be83e6bc6f76` | chờ GĐ Marketing duyệt |
+| `content_zalo` | `content_zalo@1` | `0e02dfeceb3c` | chờ GĐ Marketing duyệt |
+| `content_tiktok` | `content_tiktok@1` | `ad1d6269a98b` | chờ GĐ Marketing duyệt |
+| `content_blog` | `content_blog@1` | `e7e70342ded5` | chờ GĐ Marketing duyệt |
+| `listing_shopee` | `listing_shopee@1` | `a577eb61f3b0` | chờ GĐ Marketing duyệt |
+| `listing_tiktok` | `listing_tiktok@1` | `6d7ddf0c6980` | chờ GĐ Marketing duyệt |
+| `listing_web` | `listing_web@1` | `f2858677a77e` | chờ GĐ Marketing duyệt |
+
+**Quy tắc sửa template:** sửa 1 byte nội dung (trừ CRLF↔LF — sha tính sau
+khi đổi CRLF→LF) mà không cập nhật manifest → `load_template` raise
+`ValueError` ("template đổi mà chưa bump version") — app/CLI dừng chứ không
+chạy prompt lạ. Sửa đúng: đổi file → bump `version` (`<tên>@N+1`) → cập
+nhật `sha256` trong manifest → cập nhật bảng trên. Bump version listing =
+batch coi là bản mới (sinh lại nháp cho cùng SKU × kênh). Luật TPBVSK /
+whitelist / câu khuyến cáo KHÔNG nằm trong template — vẫn ở system prompt
+trong code (mục 1).
+
+**Luật listing (`content.listing()`, `pipelines/content.py:477`):**
+- Tên, quy cách, số ĐKSP (chỉ TPBVSK), giá (`prices[<kênh>].list` — KHÔNG
+  BAO GIỜ giá sàn floor/promo), hạn sử dụng do CODE dựng từ
+  `data/golden_skus.json`; thiếu giá → "Liên hệ", golden chưa có field hạn
+  dùng → "Xem trên bao bì" (`data/listing_rules.json` — giới hạn ký tự sàn
+  là GIẢ ĐỊNH, chờ xác minh Seller Center).
+- LLM chỉ viết hook/mô tả/gạch đầu dòng/từ khóa (template listing_*, trả
+  JSON) khi SKU mức `TP_THUONG`/`QC_DAY_DU`; mọi câu/mục chạm thông số
+  bị LOẠI (`content._spec_like`): ký tự số mọi loại (fullwidth, ①, ², Ⅻ),
+  nhãn khung (giá/quy cách/ĐKSP/hạn dùng/khối lượng/dung tích), số viết
+  bằng chữ (mươi/trăm/nghìn/triệu...; một..chín kèm đơn vị), đơn vị đo
+  (gram/ml/lít/vnđ...); xuống dòng bị gộp (không giả được dòng `Giá:`).
+  System prompt listing là biến thể `_system(fmt, price_rule=False)`: bỏ
+  câu "Không bịa giá ... ghi Liên hệ", thay "KHÔNG viết giá, quy cách,
+  khối lượng, hạn dùng hay bất kỳ con số nào". JSON sai shape / gateway lỗi / vi phạm guardrail sau 1 lượt sửa
+  → bỏ phần LLM, giữ khung (`meta.llm_part = dropped:*`).
+- TPBVSK mức `MO_TA` = khung cố định, 0 lời gọi LLM.
+- Rượu (golden `category = alcohol`) bị TỪ CHỐI mọi kênh kể cả khi map
+  readiness ghi QC_DAY_DU; SKU mức `CAM` trên kênh → từ chối `readiness`.
+- Nhãn AI / nhãn quảng cáo / câu khuyến cáo do CODE nối khi
+  `check_publish` báo thiếu (`content._with_required`) — không trông LLM.
+
+Nội dung các template content_* (chuyển nguyên nghĩa từ `CHANNEL_HINT`
+v2.2):
+
+```text
+content_facebook: bài đăng Facebook 120-180 chữ, 1-2 emoji, có CTA inbox/hotline
+content_tiktok:   kịch bản video TikTok ngắn 30-60 giây: hook 3 giây đầu + 2-3 cảnh (mỗi cảnh ghi mô tả hình ảnh + lời thoại/text overlay) + CTA cuối
+content_zalo:     tin nhắn Zalo OA ngắn 60-100 chữ, lịch sự, kèm CTA
+content_blog:     mở bài blog 200-300 chữ, có tiêu đề
 ```
 
 ## 3. System prompt — chatbot CSKH (`api/rag.py:23-42`)

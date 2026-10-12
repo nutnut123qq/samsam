@@ -36,7 +36,10 @@ def _row(**kw):
                           "matched_claims": []},
             "status": "pending", "reviewer": None, "reviewed_at": None,
             "review_note": None, "scheduled_date": None,
-            "source": "manual:studio", "created_by": "agent:studio"}
+            "source": "manual:studio", "created_by": "agent:studio",
+            # v6.1: cột ngữ cảnh draft (mặc định = draft cũ).
+            "content_type": "post", "sku": None, "is_ai": True,
+            "prompt_version": None, "prompt_sha256": None}
     base.update(kw)
     return tuple(base[c] for c in COLS)
 
@@ -832,7 +835,8 @@ def test_streamlit_studio_calls_check_publish_drift_guard():
     assert not re.search(r"(?<![\w.])check\(", studio)
     assert re.search(r"_render_guardrail\(check_publish\(", studio)
     assert "readiness=readiness_now()" in studio
-    assert studio.count("readiness=_rmap") == 2      # draft + draft_multi
+    # v6.1 FLIP có chủ đích: + listing(sku, kênh, readiness=_rmap).
+    assert studio.count("readiness=_rmap") == 3  # draft + multi + listing
     rg = src[src.index("def _render_guardrail"):chat_i]
     assert "guardrail_lines(g)" in rg and "md_plain(line)" in rg
     assert "def _md_plain" not in src           # 1 bản escape duy nhất (store)

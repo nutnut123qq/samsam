@@ -556,6 +556,30 @@ end $$;
 
 alter table content_drafts add column if not exists created_by text;
 
+-- v6.1 (MKT-02 content + listing): ngữ cảnh draft theo CỘT — store chạy luật
+-- đăng bài (check_publish) đúng loại/SKU của draft lúc lưu và lúc duyệt.
+-- Draft cũ tự thành 'post' / is_ai=true (= ngữ cảnh cố định v4.2).
+--   content_type  — loại nội dung (key content_types data/guardrail_rules.json:
+--                   post | ads | listing | ...)
+--   sku           — sku_key golden (null = không gắn SKU)
+--   is_ai         — nội dung do AI sinh (mặc định true fail-closed). CHỈ
+--                   truy vết: lúc duyệt store luôn bắt nhãn AI (agent_writer
+--                   ghi được cột này — không tin để bỏ nhãn)
+--   prompt_version / prompt_sha256 — template data/prompts/ dùng để sinh
+--                   (manifest.json) — truy vết bản prompt nào ra bài nào
+alter table content_drafts add column if not exists content_type text not null default 'post';
+alter table content_drafts add column if not exists sku text;
+alter table content_drafts add column if not exists is_ai boolean not null default true;
+alter table content_drafts add column if not exists prompt_version text;
+alter table content_drafts add column if not exists prompt_sha256 text;
+
+-- Batch listing idempotent: 1 nháp listing sống / (sku, kênh, prompt_version)
+-- — chặn nhân đôi cả khi 2 batch chạy song song; bản bị reject thì sinh lại
+-- được.
+create unique index if not exists content_drafts_listing_key_idx
+  on content_drafts (sku, channel, prompt_version)
+  where content_type = 'listing' and status <> 'rejected';
+
 create table if not exists approvals (
   id bigint generated always as identity primary key,
   object_type text not null,        -- v3.4: 'content_draft'

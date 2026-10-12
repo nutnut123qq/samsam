@@ -582,3 +582,92 @@ def test_validate_co_khi_case(mutate, needle):
     mutate(c)
     errs = ae._validate_case(c, 0, d)
     assert any(needle in e for e in errs), errs
+
+
+# --- v6.1 W61.5 mkt02 (Agent Content & Listing) ----------------------------
+
+def _mkt02_counting_client(monkeypatch):
+    """Gateway giả đếm call — runner mkt02 phải 0 call (kể cả khi env bật
+    lớp LLM-check)."""
+    import types
+
+    from pipelines import llm_gateway
+
+    calls = []
+
+    def _create(**kw):
+        calls.append(kw)
+        raise AssertionError("mkt02 runner không được gọi LLM")
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    monkeypatch.setenv("GUARDRAIL_LLM_MODEL", "google/gemini-test")
+    monkeypatch.setattr(llm_gateway, "_client", lambda: types.SimpleNamespace(
+        chat=types.SimpleNamespace(
+            completions=types.SimpleNamespace(create=_create))))
+    return calls
+
+
+def test_mkt02_cases_shape_and_unapproved():
+    docs, cases = _rows("mkt02.jsonl")
+    assert docs and "chưa được công ty duyệt" in docs[0]["_doc"].casefold()
+    ids = [c["id"] for c in cases]
+    assert len(ids) == len(set(ids)) and len(cases) >= 12
+    kinds = [c["kind"] for c in cases]
+    assert kinds.count("golden_exact") == 7
+    assert kinds.count("trap_alcohol") >= 2
+    assert kinds.count("trap_readiness") >= 2
+    assert kinds.count("trap_xnqc") >= 1
+    assert all(c.get("label_status") for c in cases)
+    alc = [c for c in cases if c["kind"] == "trap_alcohol"]
+    assert len({c["sku"] for c in alc}) >= 2
+    assert any(c.get("readiness") for c in alc)     # map tiêm QC_DAY_DU
+    assert ae.load_cases(EVAL_DIR / "mkt02.jsonl") == cases
+
+
+def test_mkt02_runner_all_pass_zero_llm_calls(env, monkeypatch, capsys):
+    import os
+
+    calls = _mkt02_counting_client(monkeypatch)
+    _, cases = _rows("mkt02.jsonl")
+    res = ae.run_mkt02(cases)
+    assert [(c["id"], d) for c, ok, d in res if not ok] == []
+    assert calls == []
+    assert os.environ["GUARDRAIL_LLM_MODEL"] == "google/gemini-test"
+    assert ae.main(["--agent", "mkt02", "--no-record"]) == 0
+    out = capsys.readouterr().out
+    assert "[done] mkt02 PASS" in out and "model=rules" in out
+    assert calls == []
+
+
+def test_mkt02_flipped_alcohol_case_fails(env, monkeypatch, capsys):
+    _, cases = _rows("mkt02.jsonl")
+    for c in cases:
+        if c["kind"] == "trap_alcohol":
+            c["expect"] = "listing"
+            break
+    monkeypatch.setattr(ae, "load_cases", lambda p: cases)
+    assert ae.main(["--agent", "mkt02", "--no-record"]) == 1
+    out = capsys.readouterr().out
+    assert "FAIL (trap_alcohol)" in out and "ruou" in out
+
+
+def test_mkt02_missing_required_kind_fails(env, monkeypatch, capsys):
+    _, cases = _rows("mkt02.jsonl")
+    cases = [c for c in cases if c["kind"] != "trap_xnqc"]
+    monkeypatch.setattr(ae, "load_cases", lambda p: cases)
+    assert ae.main(["--agent", "mkt02", "--no-record"]) == 1
+    assert "trap_xnqc" in capsys.readouterr().out
+
+
+def test_mkt02_golden_mismatch_fails():
+    """Ca golden_exact với SKU khác -> fields lệch golden -> FAIL."""
+    _, cases = _rows("mkt02.jsonl")
+    c = dict(next(c for c in cases if c["kind"] == "golden_exact"))
+    good = ae.run_mkt02([c])
+    assert good[0][1] is True
+    gold = {"sku_key": c["sku"], "name": "TÊN KHÁC", "category": "tpbvsk",
+            "pack_spec": "x", "receipt_no": None, "prices": {}}
+    r = {"ok": True, "guardrail": {"violations": []},
+         "fields": {"name": "a", "pack_spec": "x", "receipt_no": None,
+                    "price": "Liên hệ"}, "text": "Quy cách: x"}
+    assert "name" in ae._golden_exact(c, r, {c["sku"]: gold})

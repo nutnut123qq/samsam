@@ -92,7 +92,7 @@ def test_draft_multi_dedupe_and_str_input(monkeypatch):
 def test_draft_contract_unchanged(monkeypatch):
     log = _patch_openai(monkeypatch)
     r = content.draft("x", "blog")
-    assert set(r) == {"text", "guardrail"}
+    assert set(r) == {"text", "guardrail", "meta"}   # v6.1 FLIP: + meta
     assert r["guardrail"]["ok"] is True
     assert "blog" in log[0][0]["content"]
 

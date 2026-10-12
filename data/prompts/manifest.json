@@ -1,0 +1,40 @@
+{
+  "_doc": "v6.1 (MKT-02) — template prompt theo kênh cho pipelines/content.py. sha256 tính trên byte UTF-8 của file SAU khi đổi CRLF->LF (checkout Windows autocrlf không làm lệch). Sửa nội dung template => PHẢI bump version (<tên>@N+1) + cập nhật sha256 — content.load_template từ chối (ValueError) template lệch sha. version lưu kèm draft (content_drafts.prompt_version/prompt_sha256). BẢN DEV — chờ GĐ Marketing duyệt, chưa có người duyệt thật.",
+  "templates": {
+    "content_facebook": {
+      "version": "content_facebook@1",
+      "sha256": "be83e6bc6f7632b4bb647d1d962928bbc3179a989162df6de7bc162e70fb21da",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "content_zalo": {
+      "version": "content_zalo@1",
+      "sha256": "0e02dfeceb3cf43600c6c34698b4a985be0120188cad177030478601da4fff4d",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "content_tiktok": {
+      "version": "content_tiktok@1",
+      "sha256": "ad1d6269a98be1cb45f3f5f55c1907edd6472520faef14b1f30f5f2ffa3d2579",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "content_blog": {
+      "version": "content_blog@1",
+      "sha256": "e7e70342ded5c97c115547fd2f12976053068883ba2829bd7b82de458f6d3afc",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "listing_shopee": {
+      "version": "listing_shopee@1",
+      "sha256": "a577eb61f3b077592be5bbc3988e49709858e559d69fabcf0477c301287107e0",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "listing_tiktok": {
+      "version": "listing_tiktok@1",
+      "sha256": "6d7ddf0c6980aca436148e2580fc2ed71a37f2c15a272a227441a9da6bfeff0e",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "listing_web": {
+      "version": "listing_web@1",
+      "sha256": "f2858677a77e2f238311d3f22f5beb0ae064c6934fd61109c02749ed371d73d6",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    }
+  }
+}

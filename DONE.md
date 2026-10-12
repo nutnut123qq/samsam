@@ -3897,6 +3897,491 @@ không phải lỗi code, chạy lại riêng xanh. Mở (bắt buộc vá TRƯ�
 auto_policy nào): `auto_approve_item` tin risk/qa/guardrail do agent khai lúc
 enqueue. External-dep: người nhận cảnh báo đỏ + kênh gửi; người duyệt từng khối
 (6 khối đang tạm map `tgd`); chủ khối ký auto_policies; SSO; object-lock.
+## Checklist v6.1-content-listing
+
+Khán giả/mục đích: nhánh M31 (worktree `D:\code\samsam-w41`, tách từ v4.2 đã
+đóng), WP08 phần MKT-02 "Agent Content & Listing" (pmo.md dòng `| WP08`:
+"Listing chuẩn cho 100% SKU đủ điều kiện kênh", "Không agent nào có quyền chi
+tiền hay đăng bài"; final_plans.json `marketing.plan.agents[2]` acceptance
+(1)(2)(4)). Hiện `pipelines/content.py` chỉ có `draft()`/`draft_multi()` sinh
+bài từ brief với `content_type="post"`, `sku=None` cố định, hint kênh là dict
+`CHANNEL_HINT` trong code, không có listing, `content_drafts` không lưu
+loại/SKU/prompt. Sau version này: (a) listing chuẩn theo kênh cho SKU đủ
+readiness, thông số/giá LẤY TỪ golden do CODE dựng (LLM không chạm số), rượu
+và SKU chưa đủ readiness bị từ chối TRƯỚC khi gọi LLM/ghi DB; (b) content theo
+kênh đọc template `data/prompts/` (version + sha256 lưu kèm draft), nhãn AI/QC
++ câu khuyến cáo do code chèn theo kết quả `check_publish`; (c) `content_drafts`
+có `content_type`/`sku`/`is_ai`/`prompt_version`/`prompt_sha256` và luật
+lưu/duyệt chạy theo đúng loại/SKU của draft; (d) batch CLI idempotent; (e) bộ
+eval MKT-02 tất định; (f) Studio chọn SKU + loại content. Mọi output chỉ là
+nháp `pending` — agent KHÔNG đăng, KHÔNG sửa listing trên sàn.
+
+Quy ước:
+- Mọi lệnh shell mở đầu `cd D:/code/samsam-w41 && set -a && .
+  C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/w41.env
+  && set +a && ...` (gate bên dưới viết tắt phần sau `&&`). Không in biến
+  môi trường, không đọc `.env`. Test chạy bằng `python -m pytest`. Lệnh nặng
+  có thể bị đẩy nền — đọc output tới khi process exit trước lệnh nặng kế
+  tiếp; full pytest đúng 1 lần mỗi vòng (máy chạy tới 7 version song song).
+- **Mở rộng `pipelines/content.py`, KHÔNG viết pipeline thứ hai**; tái dùng
+  `llm_gateway.chat("content", ...)` (cap `content` sẵn có), `guardrail_llm.
+  check_publish_llm`, `guardrail.check_publish`/`readiness`/`with_violation`,
+  `store.readiness_from_db`/`save_draft`, `ingest.golden_store.read_golden`.
+  **`pipelines/guardrail.py` và `pipelines/guardrail_llm.py` KHÔNG sửa**
+  (luật mới cho listing đi qua config `data/guardrail_rules.json`). Gate:
+  `git diff --stat -- pipelines/guardrail.py pipelines/guardrail_llm.py
+  connectors api scripts/eval_qa.py tests/test_guardrail.py` rỗng.
+- **Readiness = nguồn quyết định kênh**: map view `sku_readiness` qua
+  `store.readiness_from_db(conn)` khi có conn, else `guardrail.readiness(sku,
+  channel)` (soi gương golden file — fail-closed); map có mà thiếu key = CAM.
+  Listing chỉ cho mức `MO_TA`/`TP_THUONG`/`QC_DAY_DU`. **Rượu** (golden
+  `category == "alcohol"`) bị từ chối listing MỌI kênh kể cả khi map bị sửa
+  thành `QC_DAY_DU` (kiểm category trước readiness). Từ chối = 0 lời gọi LLM,
+  0 dòng `content_drafts`, trả lý do.
+- **Số liệu thuộc golden, không thuộc LLM**: tên/quy cách/số ĐKSP/giá trong
+  listing do code render từ golden (`name`, `pack_spec`, `receipt_no`,
+  `prices[<kênh>]["list"]`); KHÔNG BAO GIỜ đưa `floor`/`promo` vào listing
+  (giá sàn là nội bộ); thiếu giá → `"Liên hệ"`; golden chưa có field hạn
+  dùng/khối lượng riêng → hằng `"Xem trên bao bì"` (khối lượng nằm trong
+  `pack_spec`), không suy diễn. Phần LLM (đoạn mô tả, gạch đầu dòng, hook
+  tiêu đề, từ khóa) bị LOẠI bỏ từng câu/bullet/từ khóa chứa chữ số (`\d`
+  Unicode — gồm cả số fullwidth). Agent không sở hữu giá: giá golden đang
+  "chờ GĐ bán hàng duyệt" → người duyệt draft kiểm.
+- **TPBVSK mức `MO_TA` = khung cố định, 0 lời gọi LLM** (MKT-02 acceptance
+  (2): chỉ tên, quy cách, giá, số ĐKSP, câu khuyến cáo nguyên văn, 0 động từ
+  claim). LLM chỉ viết phần chữ khi mức `TP_THUONG` (thực phẩm thường: cảm
+  quan/nguồn gốc/quy cách, không công dụng) hoặc `QC_DAY_DU` (claim whitelist
+  nguyên văn). Golden hiện tại: 7 SKU TPBVSK `MO_TA` trên shopee, mọi SKU
+  khác/kênh khác `CAM` → đường LLM chỉ chạy trong test với map readiness
+  tiêm vào (không giả lập golden thật).
+- **Content type `listing`** thêm vào `data/guardrail_rules.json`
+  `content_types`: `{"public": true, "ad": false, "trang_thai": "chờ Pháp chế
+  — listing sàn coi là mô tả SP; nếu Pháp chế coi là quảng cáo thì đổi ad:true
+  (mọi TPBVSK chưa XNQC tự bị chặn sku_chua_xnqc)"}`. Không thêm content type
+  khác.
+- **Nhãn/câu khuyến cáo do CODE chèn**: chạy `check_publish` trên bản nháp;
+  với mỗi code `thieu_nhan_ai` / `thieu_nhan_quang_cao` / `thieu_khuyen_cao`
+  → nối tương ứng `labels.ai[0]` / `labels.ad[0]` / `disclaimer.canonical +
+  "."` (đọc từ `data/guardrail_rules.json`, không chép tay) rồi chạy lại
+  `check_publish_llm` trên text cuối. Không trông LLM nhớ.
+- Nháp đi qua `store.save_draft` (status DB mặc định `pending`); content.py
+  KHÔNG import/gọi `set_status`/`approve_draft`/`schedule`/HTTP client nào.
+  Batch CHỈ lưu bản có `guardrail.ok is True` (bản fail báo lỗi, không ghi —
+  chạy lại được). Studio giữ hành vi cũ (lưu cả bản vi phạm để người sửa;
+  không duyệt được).
+- Không thêm bảng (kien-truc giữ "24 bảng public"); chỉ `alter table
+  content_drafts add column if not exists` + 1 partial unique index + mở
+  grant insert cột mới cho `agent_writer`. Không thêm dependency, không env
+  mới.
+- Template prompt + giới hạn ký tự sàn + `listing` content type là BẢN DEV:
+  ghi `"trang_thai": "chờ GĐ Marketing duyệt"` (template) / `"GIẢ ĐỊNH — chờ
+  xác minh Seller Center"` (giới hạn sàn) / chờ Pháp chế (content type);
+  KHÔNG đánh dấu người thật đã duyệt.
+- Test FLIP có chủ đích (gotcha v1.7 — evidence ghi số `assert` trước/sau
+  từng file, không xóa assert nào ngoài danh sách): chỉ
+  `tests/test_content.py::test_draft_contract_unchanged` (set key thêm
+  `"meta"`). Mọi file mới có print tiếng Việt có UTF-8 guard (copy
+  `scripts/zalo_mock.py`); thêm print vào `pipelines/content.py` → thêm guard.
+- Không commit/push/reset/checkout/stash; coordinator commit. Evidence
+  `evidence/v61_*.log` phải `git add -f`.
+
+- [x] **W61.1 `content_drafts` thêm cột loại/SKU/prompt + store chạy luật theo
+  đúng ngữ cảnh draft**
+  - `docs/schema.sql` (sau dòng `alter table content_drafts add column if not
+    exists created_by text;`): `content_type text not null default 'post'`,
+    `sku text`, `is_ai boolean not null default true`, `prompt_version text`,
+    `prompt_sha256 text` — mỗi cột 1 `alter table content_drafts add column if
+    not exists` (draft cũ tự thành `post`/`is_ai=true` = đúng ngữ cảnh cố
+    định v4.2). Partial unique index `content_drafts_listing_key_idx on
+    content_drafts (sku, channel, prompt_version) where content_type =
+    'listing' and status <> 'rejected'` (chặn nhân đôi khi 2 batch chạy song
+    song; bị reject thì sinh lại được). Comment cột tiếng Việt.
+  - `docs/roles.sql`: grant insert của `agent_writer` thêm 5 cột mới (thiếu
+    → `permission denied` câm dưới DSN role).
+  - `pipelines/store.py`:
+    - `COLS` thêm 5 cột; `save_draft(conn, brief, channel, text, guardrail,
+      source=SOURCE_STUDIO, *, created_by=None, content_type="post",
+      sku=None, is_ai=True, prompt_version=None, prompt_sha256=None)` — kwarg
+      mới mặc định = hành vi cũ; INSERT ghi đủ 11 cột; log `draft_create`
+      `detail` thêm `content_type`/`sku`/`prompt_version`.
+    - `_publish_check(conn, text, channel, *, llm, content_type="post",
+      sku=None, is_ai=True)` truyền ngữ cảnh vào `check_publish`/
+      `check_publish_llm`; readiness DB đọc khi text nhắc SKU **hoặc**
+      `sku` khác None.
+    - `set_status(..., "approved")` re-check dùng ngữ cảnh ĐỌC TỪ DÒNG DB
+      (`cur.get("content_type") or "post"`, `cur.get("sku")`,
+      `cur.get("is_ai") is not False`) — `.get` để fake row cũ ngắn hơn
+      `COLS` trong `tests/test_store.py` không KeyError. Docstring module
+      bỏ đoạn "v4.2 ngữ cảnh draft cố định", thay bằng ngữ cảnh theo cột.
+  - Boundary: `docs/schema.sql`, `docs/roles.sql`, `pipelines/store.py`,
+    `tests/test_store.py`, `tests/test_listing.py` (mới, phần DB)
+  - Gate:
+    - `python scripts/apply_schema.py` chạy 2 lần liên tiếp exit 0
+      (idempotent) trên DB của w41.env.
+    - pytest fake conn: save_draft không truyền kwarg mới → tham số INSERT y
+      hệt cũ + 5 giá trị mặc định (`post`, None, True, None, None); approve
+      draft `content_type="listing"`, `sku="savina-12v"`, channel `shopee`,
+      text khung hợp lệ → re-check gọi `check_publish_llm` với đúng
+      `content_type`/`sku` (spy); draft `content_type="ads"` text Savina
+      thiếu nhãn QC → chặn `thieu_nhan_quang_cao` (trước đây không chặn vì
+      luôn `post`).
+    - DB thật (fixture `db` + `_TxConn` mẫu `tests/test_auth_approval.py`,
+      schema tạm, ROLLBACK): `set local role agent_writer` save_draft listing
+      ghi đủ cột (không `permission denied`); INSERT thứ 2 cùng (sku, kênh,
+      prompt_version, listing) → `psycopg.errors.UniqueViolation`; reject
+      bản đầu → INSERT lại được; draft `post` cùng sku không bị index chặn.
+      Test PASS, không nằm trong `-rs` skip.
+    - `python -m pytest -q tests/test_store.py tests/test_auth_approval.py`
+      xanh, không assert nào bị xóa (đếm trước/sau).
+  - Evidence: `evidence/v61_pytest.log` (+ output `apply_schema` 2 lần)
+- [x] **W61.2 Template prompt theo kênh `data/prompts/` + content theo SKU/loại**
+  - `data/prompts/`: `content_facebook.md`, `content_zalo.md`,
+    `content_tiktok.md` (caption + kịch bản ngắn), `content_blog.md`,
+    `listing_shopee.md`, `listing_tiktok.md`, `listing_web.md` — nội dung =
+    hướng dẫn định dạng kênh (chuyển từ `CHANNEL_HINT`, không đổi nghĩa) +
+    với listing: yêu cầu trả DUY NHẤT JSON `{"hook": str, "description":
+    str, "bullets": [str], "keywords": [str]}`, cấm chữ số/giá/thông số.
+    `data/prompts/manifest.json`: `{"_doc", "templates": {<tên>: {"version":
+    "<tên>@1", "sha256": <hex>, "trang_thai": "chờ GĐ Marketing duyệt"}}}`.
+  - `content.py`: `load_template(name) -> (text, version, sha256)` — sha256
+    trên UTF-8 sau CRLF→LF (checkout Windows autocrlf không làm lệch); sha
+    lệch manifest / thiếu file / tên lạ → `ValueError` ("template đổi mà
+    chưa bump version"). Luật TPBVSK/whitelist/câu khuyến cáo GIỮ trong code
+    (system prompt v4.2) — template chỉ thay `{fmt}`. `CHANNEL_HINT` giữ làm
+    view đọc từ template (test cũ + prompt-library dẫn tên này).
+  - `precheck(sku, channel, content_type, *, readiness=None) -> dict | None`
+    (thuần, 0 LLM): `{"code", "reason"}` khi từ chối — `sku_la` (không có
+    trong golden), `kenh_la`, `ruou` (category alcohol, mọi content_type
+    public), `xnqc` (content_type có `ad: true` + SKU TPBVSK readiness ≠
+    `QC_DAY_DU` — đằng nào cũng bị `sku_chua_xnqc`), với `listing` thêm
+    `readiness` (mức `CAM`, lý do nêu mức + kênh). None = được sinh.
+  - `draft(brief, channel="facebook", *, readiness=None, sku=None,
+    content_type="post")`: precheck từ chối → `{"text": "", "guardrail":
+    {"ok": False, ...violation code từ chối}, "meta": {..., "refused":
+    {code, reason}}}`, 0 lời gọi LLM. Ngược lại sinh như v4.2 với `{fmt}`
+    từ template, check bằng `check_publish_llm(text, channel=, content_type=,
+    sku=, is_ai=True, readiness=)`, chèn nhãn/khuyến cáo bằng code (quy ước),
+    vòng sửa 1 lượt giữ nguyên. Trả `{"text", "guardrail", "meta"}` với
+    `meta = {"content_type", "sku", "is_ai": True, "prompt_version",
+    "prompt_sha256", "refused": None}`. `draft_multi` truyền `sku`/
+    `content_type` xuống.
+  - Test FLIP: `tests/test_content.py::test_draft_contract_unchanged` — set
+    key mong đợi thêm `"meta"` (assert khác giữ nguyên).
+  - Boundary: `data/prompts/` (mới), `pipelines/content.py`,
+    `tests/test_content.py`, `tests/test_listing.py`
+  - Gate (pytest, client giả `_patch_openai` như `tests/test_content.py`):
+    - Mỗi template trong manifest: sha khớp file; sửa 1 byte (tmp copy,
+      monkeypatch thư mục) → `ValueError`; file CRLF cùng nội dung → cùng sha.
+    - Prompt kênh `tiktok`/`zalo`/`blog`/`facebook` chứa nguyên văn phần
+      template tương ứng; `meta.prompt_version`/`prompt_sha256` = manifest.
+    - `draft(..., sku="ruou-sam-binh-su-do-500ml")` mọi kênh → `refused.code
+      == "ruou"`, fake 0 call; `draft(..., sku="savina-12v",
+      content_type="ads", channel="facebook")` → `xnqc`, 0 call; cùng SKU
+      `content_type="ads"` với map `{("savina-12v","facebook"):
+      "QC_DAY_DU"}` → có gọi LLM.
+    - LLM trả text claim Savina whitelist nguyên văn không câu khuyến cáo,
+      `content_type="ads"`, map QC_DAY_DU → `r["text"]` chứa NGUYÊN VĂN
+      canonical + `labels.ad[0]` + `labels.ai[0]` do code chèn, `ok=True`,
+      1 call (không tốn lượt sửa).
+    - Mọi test cũ `tests/test_content.py` xanh.
+  - Evidence: `evidence/v61_pytest.log` (+ đếm assert `test_content.py`
+    trước/sau)
+- [x] **W61.3 Listing chuẩn theo kênh — khung golden + phần chữ LLM đã lọc số**
+  - `data/listing_rules.json` (`_doc`: "GIẢ ĐỊNH — chờ xác minh Seller
+    Center"): `channels` `shopee`/`tiktok`/`web` mỗi kênh `title_max`,
+    `bullets_max`, `keywords_max`, `desc_max`; `missing_price: "Liên hệ"`,
+    `missing_attr: "Xem trên bao bì"`, `brand_keywords: ["Sâm Sâm"]` (không
+    "Ngọc Linh").
+  - `data/guardrail_rules.json`: thêm content type `listing` (quy ước).
+  - `content.listing(sku, channel, *, readiness=None, llm=True) -> dict`:
+    1. `precheck(sku, channel, "listing", readiness=)` → từ chối: `{"ok":
+       False, "refused": {code, reason}, "text": "", ...}`, 0 LLM.
+    2. `fields` từ golden (`read_golden` data/golden_skus.json): `name`,
+       `pack_spec`, `receipt_no` (chỉ TPBVSK, None → bỏ dòng), `price` =
+       `f"{v:,}".replace(",", ".") + " đ"` của `prices[channel]["list"]` hoặc
+       `missing_price`, `han_dung` = `missing_attr`.
+    3. Khung (code): tiêu đề = `name` (+ " – " + hook LLM nếu có, cắt theo
+       từ để ≤ `title_max`; `name` dài hơn `title_max` → từ chối `config`);
+       khối "Thông tin sản phẩm" mỗi field 1 dòng cố định (`Tên sản phẩm:`,
+       `Quy cách:`, `Số ĐKSP:`, `Giá:`, `Hạn sử dụng:`); `Từ khóa:` = `name`
+       + `brand_keywords` (+ từ khóa LLM, dedupe casefold, ≤ `keywords_max`).
+    4. Phần LLM chỉ khi `llm` VÀ mức `TP_THUONG`/`QC_DAY_DU`: 1 call
+       `chat("content", ...)` với template `listing_<kênh>`; parse JSON chặt
+       (sai shape → bỏ phần LLM, `meta.llm_part = "dropped:parse"`); loại
+       câu/bullet/từ khóa/hook chứa `\d`; cắt `bullets_max`/`desc_max`.
+    5. Chèn nhãn/khuyến cáo bằng code → `check_publish_llm(text,
+       channel=, content_type="listing", sku=, is_ai=True, readiness=)`.
+       Fail và có phần LLM → 1 lượt sửa có feedback; vẫn fail → bỏ phần LLM,
+       check lại khung thuần (`llm_part = "dropped:guardrail"`).
+    Trả `{"ok", "refused", "text", "fields", "guardrail", "meta"}` (`meta`
+    như W61.2 với `content_type="listing"`, `llm_part` ∈ `none|used|
+    dropped:<lý do>`).
+  - Boundary: `data/listing_rules.json` (mới), `data/guardrail_rules.json`
+    (1 content type), `pipelines/content.py`, `tests/test_listing.py`
+  - Gate (pytest `tests/test_listing.py`, client giả đếm call):
+    - **Golden byte-by-byte**: với MỌI SKU golden × shopee mà readiness ≠
+      CAM (7 SKU TPBVSK): `fields["pack_spec"] == golden["pack_spec"]`,
+      `fields["name"] == golden["name"]`, `receipt_no` == golden; text chứa
+      nguyên dòng `Quy cách: <pack_spec>`; chữ số trong dòng `Giá:` ==
+      `str(golden prices.shopee.list)`; chuỗi số `floor`/`promo` (định dạng
+      có dấu chấm và không dấu) KHÔNG có trong text; `ok=True`; 0 call LLM;
+      0 động từ claim (`guardrail.CLAIM_VERBS` không khớp ngoài câu khuyến
+      cáo).
+    - **LLM trả số sai bị loại**: map tiêm `{("mat-ong-sam-300ml","shopee"):
+      "TP_THUONG"}`, fake trả JSON có description "Quy cách 999ml, giá chỉ
+      99.000đ. Vị ngọt dịu.", bullet "Hộp ９９９ml", keyword "giá 1 triệu",
+      hook "Size 500ml" → text KHÔNG chứa "999"/"９９９"/"99.000"/"500ml"/
+      "1 triệu", CÓ "Vị ngọt dịu", dòng `Quy cách: 300ml x 1 hũ` và `Giá:
+      2.980.000 đ` nguyên văn golden; `llm_part="used"`.
+    - **Rượu**: mọi SKU `category=alcohol` × `shopee|tiktok|web` × (map None |
+      map tiêm `QC_DAY_DU`) → `refused.code == "ruou"`, 0 call, text rỗng.
+    - **Readiness**: `savina-12v` × `tiktok` → `readiness` (CAM, ngoài
+      allowed_channels); `saphraton-40v` × `shopee` (allowed `[]`) →
+      `readiness`; `mat-ong-sam-120ml-1hu` × shopee (food chưa xác minh) →
+      `readiness`; SKU lạ → `sku_la`; kênh `facebook` → `kenh_la`; 0 call.
+    - Fake trả rác / raise `GatewayError` ở mức TP_THUONG → khung thuần
+      `ok=True`, `llm_part` bắt đầu `dropped:`; fake trả description chứa
+      "Ngọc Linh" 2 lần → `dropped:guardrail`, text không chứa "Ngọc Linh".
+    - Config-switch: monkeypatch `listing` `ad: true` (tmp rules) → listing
+      Savina MO_TA bị chặn `sku_chua_xnqc` (chứng minh Pháp chế đổi 1 chỗ là
+      đủ).
+    - Env `GUARDRAIL_LLM_MODEL` + fake flag true → listing `ok=False`
+      `llm_ngam_y_suc_khoe` (lớp LLM-check áp cho listing).
+  - Evidence: `evidence/v61_pytest.log`
+- [x] **W61.4 Batch CLI `python -m pipelines.content --listing` idempotent**
+  - `listing_batch(conn, skus, channels, *, by, readiness=None, llm=True) ->
+    list[dict]`: mỗi cặp (sku, kênh) → `status` ∈ `created` (+`id`) |
+    `skipped` (đã có nháp listing cùng `sku`/`channel`/`prompt_version`
+    status ≠ rejected, + `id`) | `refused` (+code/reason) | `failed`
+    (+lý do: guardrail không ok — KHÔNG ghi). Kiểm `skipped` bằng SELECT
+    TRƯỚC khi gọi LLM; `UniqueViolation` lúc INSERT (race) → `skipped`.
+    `readiness=None` + conn → `store.readiness_from_db(conn)`. Ghi qua
+    `store.save_draft(..., source="cli", created_by=by, content_type=
+    "listing", sku=, is_ai=True, prompt_version=, prompt_sha256=)`, brief =
+    `"listing <sku> <kênh>"`.
+  - `main(argv)`: `--listing` (bắt buộc — mode duy nhất), `--sku` lặp được
+    (`all` = mọi SKU golden), `--channel` lặp được (`shopee|tiktok|web`,
+    argparse choices), `--by` (mặc định `agent:mkt02`), `--no-llm`. In 1
+    dòng/cặp (`sku × kênh: created #id | skipped #id | refused <code>: <lý
+    do> | failed: <codes>`) + dòng tổng. Exit 0 khi không có `failed`; 1 khi
+    có `failed`; 2 khi usage sai hoặc DB không kết nối được (ghi-tác-vụ,
+    precedent garden — kiểm conn TRƯỚC mọi call LLM). Conn qua
+    `store._conn_or_none` (có `connect_timeout`). UTF-8 guard.
+  - Boundary: `pipelines/content.py`, `tests/test_listing.py`
+  - Gate:
+    - pytest DB thật (fixture `db` + `_TxConn`, golden nạp bằng
+      `ingest.golden_store.load` trong schema tạm, sửa tay
+      `self_declaration_ok=true` cho `mat-ong-sam-300ml` để có 1 cặp
+      TP_THUONG đi đường LLM): lần 1 `listing_batch(skus=all,
+      channels=[shopee, tiktok, web])` → 8 `created` (7 TPBVSK MO_TA + mật ong
+      300ml), còn lại `refused`, fake call = 1; lần 2 cùng tham số → 0
+      `created`, 8 `skipped`, fake call = 0, `count(*) from content_drafts`
+      không đổi; mọi dòng `status='pending'`, `content_type='listing'`,
+      `sku`/`prompt_version` đúng; reject 1 dòng → lần 3 tạo lại đúng 1.
+    - `main(["--sku","all","--channel","shopee"])` (thiếu `--listing`) → exit
+      2; `--channel facebook` → exit 2; `DATABASE_URL=postgresql://u@10.255.255.1:5432/x
+      python -m pipelines.content --listing --sku all --channel shopee` →
+      exit 2, 0 call LLM (gotcha v2.0: host chết, KHÔNG `env -u`).
+    - Không đường đăng: `grep -nE "set_status|approve_draft|schedule|requests|httpx|urllib"
+      pipelines/content.py` rỗng.
+    - Chạy thật trên DB w41.env (sau `apply_schema` + `python -m
+      ingest.golden_store`): `python -m pipelines.content --listing --sku all
+      --channel shopee --channel tiktok --channel web` 2 lần → lần 1: 7
+      `created` (golden hiện tại chỉ 7 cặp đủ readiness, 0 call LLM — không
+      cần key), lần 2: 7 `skipped`, exit 0 cả hai. Draft ở lại `pending`
+      (không xóa — draft là tài sản người, invariant store).
+  - Evidence: `evidence/v61_batch.log` (output 2 lần chạy + `select
+    content_type, sku, channel, status, prompt_version, count(*) ... group
+    by` trước/sau)
+- [x] **W61.5 Bộ eval MKT-02 (`agent_eval --agent mkt02`)**
+  - `data/eval/mkt02.jsonl` (`_doc`: "bản dev — chờ GĐ Marketing/Pháp chế
+    duyệt nhãn"; mọi ca `label_status`): mỗi ca `id`, `kind`, `op`
+    (`listing`|`draft`), `sku`, `channel`, `content_type`, tùy chọn
+    `readiness` (list `[sku, kênh, mức]` → map), `expect` (`listing`|
+    `refuse`), `code` (ca refuse). ≥12 ca: `golden_exact` ×7 (mọi cặp đủ
+    readiness), `trap_alcohol` ≥2 (2 SKU rượu, 1 ca có map tiêm QC_DAY_DU),
+    `trap_readiness` ≥2 (savina tiktok, saphraton-40v shopee), `trap_xnqc`
+    ≥1 (`op=draft` Savina `ads` facebook → `xnqc`).
+  - `scripts/agent_eval.py`: `RUNNERS["mkt02"]` chạy TẤT ĐỊNH (`llm=False`,
+    `use_llm` off, 0 lời gọi, không key, không DB): `golden_exact` pass ⇔
+    `ok=True` + `fields` == golden (name/pack_spec/receipt_no/giá list) +
+    dòng `Quy cách:` nguyên văn trong text; ca refuse pass ⇔ `refused.code ==
+    code`. `model` ghi `"rules"` như guardrail. `data/eval/config.json`
+    `agents.mkt02`: `min_pass_rate` 1.0, `must_pass_kinds` [`golden_exact`,
+    `trap_alcohol`, `trap_readiness`, `trap_xnqc`], `prompt_files` (content.py,
+    listing_rules.json, prompts/manifest.json, golden_skus.json,
+    guardrail_rules.json, mkt02.jsonl). KHÔNG thêm vào `required_agents`
+    (`tests/test_agent_eval.py` pin `["guardrail","chatbot"]`; deploy gate
+    giữ nguyên — someday).
+  - Boundary: `data/eval/mkt02.jsonl` (mới), `data/eval/config.json`,
+    `scripts/agent_eval.py`, `tests/test_agent_eval.py`
+  - Gate:
+    - `python scripts/agent_eval.py --agent mkt02 --no-record` exit 0, dòng
+      `[done] mkt02 PASS`; `--agent guardrail --no-record` vẫn exit 0.
+    - pytest `tests/test_agent_eval.py`: fake client đếm 0 call khi chạy
+      runner mkt02; sửa 1 ca rượu thành `expect: listing` (tmp copy) → FAIL;
+      bộ ca thiếu kind bắt buộc → FAIL (fail-closed như guardrail).
+  - Evidence: `evidence/v61_eval.log`
+- [x] **W61.6 Content Studio: chọn SKU + loại content, listing, hiển thị vi phạm**
+  - Trong tab "Content Studio" sẵn có (KHÔNG thêm tab — `auth.TABS` giữ
+    nguyên): selectbox "SKU" (`(không gắn SKU)` + key golden), selectbox
+    "Loại content" (content type `public` trong `guardrail_rules.json`,
+    gồm `listing`). `listing` → kênh chọn trong `shopee|tiktok|web`, nút
+    gọi `content.listing(sku, kênh, readiness=readiness_now())`; loại khác →
+    `draft`/`draft_multi(..., sku=, content_type=)` như cũ. Từ chối →
+    `st.warning(reason)`; kết quả → `_render_guardrail` (đã map
+    `store.guardrail_lines`) + bảng `fields` cho listing.
+  - Nút "Lưu vào hàng duyệt" truyền `meta` (content_type/sku/is_ai/
+    prompt_version/prompt_sha256) vào `save_draft`; bản từ chối không lưu;
+    giữ pop session sau lưu (gotcha v2.2).
+  - Boundary: `app/streamlit_app.py`, `tests/test_listing.py` (test thuần
+    nếu tách helper)
+  - Gate: `python -m py_compile app/streamlit_app.py`; `grep -n
+    "content_type=\|listing(" app/streamlit_app.py` có; `grep -n
+    "guardrail_lines\|_render_guardrail" app/streamlit_app.py` có;
+    `git diff -- pipelines/auth.py` rỗng. UI E2E (streamlit venv tạm, gotcha
+    v1.9) chỉ làm nếu máy rảnh — không bắt buộc; nếu làm, screenshot
+    `evidence/v61_studio.png`.
+  - Evidence: `evidence/v61_pytest.log` (mục grep)
+- [x] **W61.7 Docs prompt-library / sop / kien-truc + drift-guard**
+  - `docs/handover/prompt-library.md`: mục mới "Template theo kênh
+    (`data/prompts/`, v6.1)" — bảng mọi template trong manifest (tên,
+    version, sha256 12 hex đầu, trạng thái "chờ GĐ Marketing duyệt"), quy
+    tắc bump version khi sửa template, luật listing (số từ golden, LLM bị lọc
+    chữ số, TPBVSK MO_TA = khung không LLM, rượu từ chối); mục CHANNEL_HINT
+    cũ cập nhật dòng file:line.
+  - `docs/handover/sop.md`: mục "Sinh listing hàng loạt" với lệnh
+    `python -m pipelines.content --listing --sku all --channel shopee`,
+    ý nghĩa `created/skipped/refused/failed`, exit code, nháp vào tab
+    "Duyệt & Lịch" (người tải lên sàn tay — agent không đăng).
+  - `docs/handover/kien-truc.md`: dòng `content_drafts` thêm 5 cột + index
+    listing; dòng `agent_writer` "INSERT draft 6 cột" → 11 cột; dòng
+    `content.py` thêm listing/template/precheck; "24 bảng public" giữ.
+  - `STATUS.md`: 1 đoạn v6.1 — có gì, số SKU×kênh đủ readiness hiện tại (7),
+    external-dep.
+  - `tests/test_handover_docs.py`: `SOP_COMMANDS` thêm `pipelines.content
+    --listing`; test mới mọi tên + version template trong manifest có trong
+    prompt-library (word-boundary `(?<!\w)…(?!\w)`, gotcha v2.3).
+  - Boundary: `docs/handover/prompt-library.md`, `docs/handover/sop.md`,
+    `docs/handover/kien-truc.md`, `STATUS.md`, `tests/test_handover_docs.py`
+  - Gate: `python -m pytest -q tests/test_handover_docs.py` xanh (gồm
+    `test_kien_truc_lists_all_tables` — số bảng không đổi).
+  - Evidence: `evidence/v61_pytest.log`
+
+- Kết quả worker v6.1 (vòng 1 đạt, evidence `evidence/v61_pytest.log`,
+  `v61_eval.log`, `v61_batch.log`, `v61_apply_schema.log` — cần `git add
+  -f`): targeted ×3 = 339 passed ×3, 0 skip; full = 1108 passed, 3 skipped
+  (baseline đo lúc bắt đầu 1057 passed, 3 skipped — 3 skip là docker
+  dr_drill, không đổi); ruff sạch; py_compile ok; agent_eval mkt02 PASS
+  14/14, guardrail PASS 130/132 (2 edge biết trước v4.1); redteam PASS;
+  diff guardrail/guardrail_llm/connectors/api/eval_qa/test_guardrail/auth
+  rỗng; grep đường đăng trong content.py rỗng. Chạy thật DB w41: lần 1
+  created 7, lần 2 skipped 7, exit 0 cả hai, 0 dòng llm_usage.
+  Lệch/bổ sung so với contract (ghi rõ, không giấu):
+  - Thêm 2 FLIP có chủ đích ngoài danh sách (không xóa assert, đếm
+    trước/sau trong evidence): `tests/test_store.py::
+    test_streamlit_studio_calls_check_publish_drift_guard` đếm
+    `readiness=_rmap` 2→3 (thêm lời gọi `listing(..., readiness=_rmap)`);
+    `tests/test_agent_eval.py::test_config_thresholds_and_trap_kinds` —
+    so `trap_*` với phần `trap_*` của must_pass_kinds + mọi kind bắt buộc
+    phải có ca (vì `golden_exact` không phải trap). `tests/test_store.py::
+    _row` thêm default 5 cột mới (fake row dựng từ `store.COLS`).
+  - precheck có thêm mã `loai_la` (loại content lạ) và `config` (file
+    luật/listing_rules hỏng, tên SKU dài hơn title_max). Golden/luật đọc
+    qua `guardrail._load_rules(guardrail.DATA_DIR)` (cùng nguồn
+    check_publish — config-switch test đổi 1 thư mục là đủ); eval runner
+    đối chiếu bằng `ingest.golden_store.read_golden` độc lập.
+  - Mã từ chối map sang code violation: `ruou`→`ruou_cam_quang_cao`,
+    `xnqc`→`sku_chua_xnqc`; mã khác giữ nguyên làm code (critical block).
+  - Rà OWASP (A01) vá thêm: dòng `content_drafts` có `content_type`
+    public=false (`internal_note` — bỏ luật rượu/XNQC/nhãn) giờ bị
+    `store._publish_check` chặn `config` ở cả lưu lẫn duyệt (agent_writer
+    ghi được cột content_type). Studio hiện listing bằng `st.text` (không
+    render markdown link/ảnh từ phần chữ LLM). `is_ai=false` do
+    agent_writer ghi: ĐÃ VÁ ở fix-round nghiệm thu (dưới).
+  - Fix-round nghiệm thu (6 MINOR, evidence `evidence/v61_fixround.log`):
+    - (A01, 3 finding trùng) `store.set_status` kiểm lại lúc duyệt với
+      `is_ai=True` CỐ ĐỊNH (fail-closed như v4.2) — cột `is_ai` chỉ truy
+      vết (agent_writer vẫn ghi được, không còn tác dụng bỏ nhãn). Giữ
+      grant is_ai (save_draft vẫn ghi cột) — bỏ cố định khi có đường ghi
+      is_ai=false chỉ dành cho app_human. Ghi ở docstring store,
+      comment schema.sql/roles.sql. Test FLIP
+      `test_approve_ads_row_missing_ad_label_blocked`: dòng is_ai=False
+      thiếu nhãn AI -> `thieu_nhan_ai`, 0 lời gọi approve_draft; có nhãn
+      AI thì duyệt được (trước đây khóa hành vi fail-open).
+    - (A04) `content._spec_like` thay `_DIGIT_RE`: loại câu/bullet/từ
+      khóa/hook có ký tự số mọi loại (`str.isnumeric` — ０-９ ①②③ ² Ⅻ)
+      hoặc khớp `_SPEC_RE` trên NFC casefold: nhãn khung (giá/quy cách/
+      ĐKSP/hạn dùng/khối lượng/dung tích...), số viết bằng chữ (mươi/
+      trăm/nghìn/triệu/mười...; số nhỏ một..chín CHỈ khi kèm đơn vị —
+      "một món quà" giữ), đơn vị đo (gram/ml/lít/vnđ...). Ngoại lệ hẹp:
+      "giá trị", "đánh giá", "tỉ mỉ". `_system(fmt, price_rule=False)`
+      cho listing: bỏ câu "Không bịa giá ... ghi Liên hệ", thay "KHÔNG
+      viết giá/quy cách/... — hệ thống tự điền" (draft giữ nguyên).
+      Test: `test_listing_llm_spec_words_and_unicode_numerics_stripped`,
+      `test_spec_like_unit_cases`.
+    - Test giới hạn kênh `test_listing_channel_limits_enforced`
+      (listing_rules tmp title 30/desc 40/bullets 2/keywords 3 + tên >
+      title_max -> `config`, 0 LLM). Mutation probe: digit-only filter,
+      `_cut_words` identity, bỏ cap bullets/desc/keywords, recheck tin
+      is_ai dòng -> đều bị test mới bắt (log).
+    - Gate: targeted ×3 342 passed; full 1111 passed, 3 skipped; ruff
+      sạch.
+  - UI E2E Studio (không bắt buộc) CHƯA làm — chỉ grep + py_compile.
+- [ ] **External-dep — chờ công ty / sàn / Pháp chế** (GIỮ [ ] — chưa có
+  người duyệt thật; worker không đánh dấu): giới hạn ký tự tiêu đề/mô tả/từ
+  khóa cấm THẬT từng sàn (xác minh Seller Center Shopee/TikTok Shop —
+  `data/listing_rules.json` là giả định); hồ sơ ngành hàng `marketplace_docs`
+  TikTok Shop (MKT-02 acceptance (3) — chưa có dữ liệu, chưa làm); GĐ
+  Marketing duyệt template `data/prompts/`; Pháp chế xác nhận listing sàn
+  TPBVSK chưa XNQC (khung mô tả) là "mô tả" hay "quảng cáo" (`listing.ad`);
+  GĐ bán hàng duyệt giá golden đang dùng trong listing; Sản xuất bổ sung
+  field hạn dùng/khối lượng vào golden; ảnh sản phẩm (v6.2); asset XNQC
+  `xnqc_records` cho content QC TPBVSK (MKT-02 acceptance (4) — v6.1 chỉ từ
+  chối). CHƯA có người duyệt thật.
+- Ngoài phạm vi → someday: xuất CSV theo mẫu upload sàn; `mkt02` vào
+  `required_agents` + bước CI; tier duyệt theo trigger DB (MKT-02 review
+  issue 1); số viết bằng chữ ("mười hai viên") trong phần LLM — chỉ prompt
+  cấm + LLM-check, chưa lọc; Phụ lục D mục listing.
+
+Gate chung (đọc output tới khi process exit trước lệnh nặng kế tiếp, không
+chạy chồng pytest, full pytest đúng 1 lần mỗi vòng):
+- targeted ×3: `python -m pytest -q -rs tests/test_listing.py
+  tests/test_content.py tests/test_store.py tests/test_auth_approval.py
+  tests/test_agent_eval.py tests/test_handover_docs.py
+  tests/test_guardrail_v2.py tests/test_guardrail_llm.py` — xanh 3 lần, test
+  DB thật (W61.1/W61.4) không nằm trong danh sách skip.
+- full: `python -m pytest -q` — baseline đo trước khi sửa (≥1049 passed);
+  kỳ vọng baseline + số test mới, 0 fail, skipped không tăng.
+- `ruff check .` sạch.
+- `python -m py_compile pipelines/content.py pipelines/store.py
+  app/streamlit_app.py scripts/agent_eval.py`.
+- `python scripts/agent_eval.py --agent mkt02 --no-record` exit 0;
+  `python scripts/agent_eval.py --agent guardrail --no-record` exit 0;
+  `python scripts/redteam.py` exit 0 (guardrail không đổi → tỷ lệ lọt như
+  v4.2).
+- Gate thêm: `git diff --stat -- pipelines/guardrail.py
+  pipelines/guardrail_llm.py connectors api scripts/eval_qa.py
+  tests/test_guardrail.py pipelines/auth.py` rỗng; `grep -nE
+  "set_status|approve_draft|schedule|requests|httpx|urllib"
+  pipelines/content.py` rỗng; evidence có đếm assert trước/sau file test
+  FLIP; `git status` không có file lạ ngoài boundary (artifact không liên
+  quan như `lv2-market-top.png` giữ untracked); file runtime mới trong
+  `data/` (nếu có) đã gitignore.
+
+v6.1-content-listing đóng 2026-10-12 (nghiệm thu đợt 1 FIX 6 → 2 vòng sửa → PASS;
+coordinator chạy lại targeted 294 + ruff + agent_eval mkt02 14/14). content_drafts
++5 cột (content_type, sku, is_ai, prompt_version, prompt_sha256); listing: thông số
+do code render từ golden (LLM mất câu có chữ số), rượu từ chối theo category, SKU
+chưa đủ readiness từ chối, 0 LLM với khung TPBVSK mức MO_TA; batch idempotent
+(thật trên DB w41: 7 created → 7 skipped, 0 lời gọi LLM); mọi nháp pending, không
+đường đăng. OWASP vá: content_type không công khai do agent ghi bị chặn khi lưu/
+duyệt; listing hiển thị st.text. CÒN (chờ quyết): agent_writer ghi được is_ai=false
+→ bài đó không bị bắt nhãn AI khi duyệt (chưa code nào ghi false). LƯU Ý GỘP:
+nhánh này tách từ v4.2 (trước v4.5) nên eval mkt02 ở dạng data/eval/mkt02.jsonl —
+gộp vào ai-infra phải chuyển sang suite v4.5. External-dep: giới hạn ký tự sàn thật;
+GĐ MKT duyệt template; Pháp chế phân định listing có là quảng cáo; GĐ bán hàng duyệt
+giá; field hạn dùng/khối lượng trong golden; ảnh (v6.2).
 
 ## Checklist v4.2-guardrail-noi-llm-redteam
 
