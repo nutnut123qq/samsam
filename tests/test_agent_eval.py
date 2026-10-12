@@ -521,14 +521,15 @@ def test_runners_single_source_and_same_signature():
     """RUNNER_SCORERS là nguồn duy nhất tên runner; mọi runner gọi được
     với (cases, None) — _score_and_record truyền judge_model."""
     assert ae.RUNNERS.keys() == ae.RUNNER_SCORERS.keys()
-    # gộp M31 đợt 4: + mkt02 (v6.1) + sales_director (v5.0) — đều luật.
+    # gộp M31 đợt 4: + mkt02 (v6.1) + sales_director (v5.0) — đều luật;
+    # gộp đợt 5: + cskh (v5.1, gateway giả — tất định).
     assert set(ae.DETERMINISTIC_RUNNERS) == {"guardrail", "co_khi", "mkt02",
-                                             "sales_director"}
+                                             "sales_director", "cskh"}
     assert not hasattr(ae, "RULE_AGENTS")
     for name, fn in ae.RUNNERS.items():
         if name == "chatbot":
             continue  # RAG thật — chữ ký kiểm qua test chatbot fake
-        d = ae.load_suite(name)
+        d = ae.load_suite("kd_a1" if name == "cskh" else name)
         [(c, ok, _)] = fn(d["cases"][:1], None)
         assert c is d["cases"][0] and isinstance(ok, bool), name
 

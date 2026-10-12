@@ -636,6 +636,19 @@ def test_chatbot_beyond_convlog_retention_is_error_not_number(tmp_path, kind,
         assert any(e.startswith(f"{m}:") and "hạn lưu" in e for e in errors)
 
 
+def test_chatbot_snapshot_ignores_consent_replies(tmp_path):
+    # v5.1 fix: snapshot insert-only không được đóng băng "Đồng ý" như
+    # 1 câu hỏi chưa trả lời (trước fix: questions=2, unanswered=1).
+    (tmp_path / "conversations.jsonl").write_bytes(
+        b'{"ts": "2026-10-06T01:00:00Z", "answered": true}\n'
+        b'{"ts": "2026-10-06T01:01:00Z", "answered": null,'
+        b' "route": "consent_granted"}\n')
+    rows, _ = ck.collect_internal(_FailConn(), "week", date(2026, 10, 5),
+                                  data_dir=tmp_path, now=NOW)
+    v = _vals(rows)
+    assert v["chatbot.questions"] == 1 and v["chatbot.unanswered"] == 0
+
+
 def test_chatbot_within_retention_still_counted(tmp_path):
     _conv(tmp_path)
     rows, errors = ck.collect_internal(_FailConn(), "week", date(2026, 10, 5),

@@ -95,7 +95,8 @@ def test_collect_chat_period_filter_and_edges(tmp_path):
     # in+lo+sf trong kỳ (zalo); hi/before ngoài; bt ts hỏng.
     assert st["in_period"] == 3
     assert st["answered_period"] == 1            # chỉ `inside`
-    assert st["by_channel_period"] == {"zalo": 3, "streamlit": 0}
+    assert st["by_channel_period"] == {"zalo": 3, "messenger": 0,
+                                       "streamlit": 0}
     assert st["total"] == 6
     # "false" (str) KHÔNG đếm answered — strict `is True`:
     # in+hi+bf+bt(True, ts hỏng vẫn đếm all-time) = 4.
@@ -110,6 +111,32 @@ def test_collect_chat_missing_and_empty(tmp_path):
     (tmp_path / "conversations.jsonl").write_bytes(b"")
     st = rep.collect_chat(tmp_path, S, U)
     assert st["total"] == 0
+
+
+def test_collect_chat_skips_consent_replies(tmp_path):
+    # v5.1 fix: "Đồng ý"/"Không đồng ý" (route consent_granted/withdrawn/
+    # withdrawn_fail, answered:null) KHÔNG phải câu hỏi — trước fix
+    # 1 câu đã trả lời + 1 consent_granted → in_period=2, unanswered=1.
+    # consent_required GIỮ (câu hỏi thật bị chặn khi cờ bật).
+    recs = [_conv_rec(msg_id="q1", answered=True, channel="zalo"),
+            _conv_rec(msg_id="c1", answered=None, route="consent_granted",
+                      channel="zalo")]
+    p = tmp_path / "conversations.jsonl"
+    p.write_bytes(b"".join(json.dumps(r).encode() + b"\n" for r in recs))
+    st = rep.collect_chat(tmp_path, S, U)
+    assert st["in_period"] == 1 and st["answered_period"] == 1
+    assert st["in_period"] - st["answered_period"] == 0
+    assert st["total"] == 1 and st["by_channel"]["zalo"] == 1
+    more = [_conv_rec(msg_id="c2", answered=None, route="consent_withdrawn"),
+            _conv_rec(msg_id="c3", answered=None,
+                      route="consent_withdrawn_fail"),
+            _conv_rec(msg_id="r1", answered=False, route="consent_required"),
+            _conv_rec(msg_id="x1", answered=False, route=["corrupt"])]
+    with p.open("ab") as f:
+        f.write(b"".join(json.dumps(r).encode() + b"\n" for r in more))
+    st = rep.collect_chat(tmp_path, S, U)
+    # consent_required + route corrupt (list, không hash) vẫn là câu hỏi.
+    assert st["in_period"] == 3 and st["answered_period"] == 1
 
 
 # ---------- collect_db qua fake-conn ----------

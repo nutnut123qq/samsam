@@ -67,6 +67,9 @@ def _isolated_files(monkeypatch, tmp_path):
     # purge-fail mới) cùng reset mỗi test.
     monkeypatch.setattr(zalo, "_last_purge", float("-inf"))
     monkeypatch.setattr(zalo, "_last_purge_attempt", float("-inf"))
+    # v5.1: không muối -> lớp kênh KHÔNG chạm DB (consent/handoff bỏ qua)
+    # — DATABASE_URL thật trong env không được dính vào test webhook.
+    monkeypatch.delenv("CHANNEL_HASH_SALT", raising=False)
     zalo._histories.clear()
     _reset_seen_conn()
     yield
@@ -460,7 +463,11 @@ def test_conversation_log_no_data_answered_false(monkeypatch, tmp_path):
                         lambda q: {"answer": NO_DATA, "sources": []})
     monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
     monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
-    zalo.handle_text("u9", "Saphraton chữa được ung thư không?",
+    # FLIP v5.1: câu cũ "Saphraton chữa được ung thư không?" là câu SỨC
+    # KHỎE -> nay chặn ở channels.pre_route (template sức khỏe, 0 lời gọi
+    # answer — khóa ở test_reply_health_routes_without_answer). Đổi câu
+    # hỏi trung tính để test vẫn khóa đúng nhánh NO_DATA; assert giữ nguyên.
+    zalo.handle_text("u9", "Saphraton có bán ở Mỹ không?",
                      msg_id="m-nd")
     log = tmp_path / "conversations.jsonl"
     rec = json.loads(log.read_text(encoding="utf-8").strip())
@@ -479,7 +486,10 @@ def test_no_data_sends_handoff_text(monkeypatch):
     monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
     monkeypatch.setattr(zalo, "send_text",
                         lambda u, t: sent.update(text=t) or True)
-    r = zalo.handle_text("u10", "Saphraton chữa ung thư không?")
+    # FLIP v5.1: câu cũ "Saphraton chữa ung thư không?" là câu SỨC KHỎE ->
+    # nay chặn ở pre_route (không answer, không history). Câu trung tính
+    # giữ nhánh NO_DATA -> HANDOFF_TEXT + history; 4 assert giữ nguyên.
+    r = zalo.handle_text("u10", "Saphraton có bán ở Mỹ không?")
     assert sent["text"] == zalo.HANDOFF_TEXT
     assert r["text"] == zalo.HANDOFF_TEXT
     assert "1800577732" in sent["text"]
@@ -1825,3 +1835,86 @@ def test_mask_pii_email_oversize():
     # Email thường vẫn mask; text không '@' không đổi.
     assert m("mail foo@gmail.com ok") == "mail *** ok"
     assert m("khong co email") == "khong co email"
+
+# --- v5.1 KD-A1: lớp kênh (connectors/channels.py) nối vào _reply ----------
+
+def _counting_answer(calls):
+    def fake(q, history=None):
+        calls.append((q, history))
+        return {"answer": "Saphraton: 1.000.000 đ", "sources": ["http://x"]}
+    return fake
+
+
+@pytest.mark.parametrize("q,key", [
+    ("Rượu sâm giá bao nhiêu?", "alcohol"),
+    ("ruou sam co ban ko", "alcohol"),
+    ("Rượu sâm chữa tiểu đường không?", "alcohol"),   # rượu trước sức khỏe
+    ("Dạ An Sâm uống thay thuốc ngủ được không, tôi mất ngủ 2 năm", "health"),
+    ("Saphraton chữa được ung thư không?", "health"),
+])
+def test_reply_alcohol_health_routes_without_answer(monkeypatch, tmp_path,
+                                                     q, key):
+    from connectors import channels
+    calls, sent = [], []
+    monkeypatch.setattr("api.rag.answer", _counting_answer(calls))
+    monkeypatch.setattr(zalo, "send_text",
+                        lambda u, t: sent.append(t) or True)
+    zalo.handle_text("u1", "Saphraton giá?")          # lượt thường trước
+    hist_before = list(zalo._histories["u1"])
+    r = zalo.handle_text("u1", q, msg_id="m-r")
+    assert len(calls) == 1                           # 0 lời gọi cho q
+    assert sent[-1] == r["text"] == channels.template(key)
+    assert list(zalo._histories["u1"]) == hist_before  # history không đổi
+    rec = json.loads((tmp_path / "conversations.jsonl").read_text(
+        encoding="utf-8").strip().splitlines()[-1])
+    assert rec["route"] == key and rec["answered"] is False
+    assert rec["guardrail_ok"] is None and rec["channel"] == "zalo"
+    assert rec["answer"] == channels.template(key)
+
+
+def test_reply_normal_question_text_identical_to_before(monkeypatch,
+                                                        tmp_path):
+    """Câu thường: đúng 1 lời gọi answer, text gửi byte-y-hệt trước v5.1
+    (không muối → không tiền tố câu chào), convlog thêm `channel`."""
+    calls, sent = [], []
+    monkeypatch.setattr("api.rag.answer", _counting_answer(calls))
+    monkeypatch.setattr(zalo, "send_text",
+                        lambda u, t: sent.append(t) or True)
+    r = zalo.handle_text("u2", "gọi 0901234567 giúp, Saphraton giá?",
+                         msg_id="m-n")
+    assert len(calls) == 1
+    assert sent == ["Saphraton: 1.000.000 đ\nNguồn: http://x"] == [r["text"]]
+    rec = json.loads((tmp_path / "conversations.jsonl").read_text(
+        encoding="utf-8").strip())
+    assert rec["question"] == "gọi *** giúp, Saphraton giá?"
+    assert rec["channel"] == "zalo" and "route" not in rec
+    assert rec["answered"] is True and rec["guardrail_ok"] is True
+    assert len(zalo.unanswered()) == 0               # reader cũ vẫn đọc
+
+
+def test_reply_custom_send_and_channel_messenger(monkeypatch, tmp_path):
+    """Messenger dùng chung _reply qua send=/channel= — send_text Zalo
+    không bị gọi; convlog ghi channel messenger."""
+    got = []
+    monkeypatch.setattr("api.rag.answer", _counting_answer([]))
+    monkeypatch.setattr(zalo, "send_text",
+                        lambda u, t: pytest.fail("không được gửi qua Zalo"))
+    r = zalo.handle_text("messenger:123", "Saphraton giá?", "mid.1",
+                         channel="messenger",
+                         send=lambda u, t: got.append((u, t)) or True)
+    assert got == [("messenger:123",
+                    "Saphraton: 1.000.000 đ\nNguồn: http://x")]
+    assert r["sent"] is True
+    rec = json.loads((tmp_path / "conversations.jsonl").read_text(
+        encoding="utf-8").strip())
+    assert rec["channel"] == "messenger" and "123" not in rec["user_hash"]
+
+
+def test_reply_unknown_channel_falls_back_not_crash(monkeypatch):
+    sent = []
+    monkeypatch.setattr("api.rag.answer",
+                        lambda q: pytest.fail("không được gọi"))
+    monkeypatch.setattr(zalo, "send_text",
+                        lambda u, t: sent.append(t) or True)
+    r = zalo.handle_text("u3", "x", channel="sms")
+    assert sent == [zalo.ERROR_FALLBACK] and r["text"] == zalo.ERROR_FALLBACK

@@ -1,0 +1,197 @@
+# v5.1-cskh-da-kenh — evidence W51.9 Gate chung (output thật; worktree D:/code/samsam-w40, DB samsam_infra, máy chạy song song nhiều version)
+
+## VÒNG 1 — targeted ×3
+=== targeted lần 1 — 2026-10-12T14:35:54+07:00
+$ python -m pytest -q tests/test_channels.py tests/test_messenger.py tests/test_zalo.py tests/test_agent_eval.py tests/test_qa_harness.py tests/test_data_flow_map.py tests/test_director_framework.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_legal_docs.py tests/test_runbook.py
+........................................................................ [ 81%]
+........................................................................ [ 97%]
+............                                                             [100%]
+444 passed in 102.17s (0:01:42)
+exit=0
+
+=== targeted lần 2 — 2026-10-12T14:37:43+07:00
+$ python -m pytest -q tests/test_channels.py tests/test_messenger.py tests/test_zalo.py tests/test_agent_eval.py tests/test_qa_harness.py tests/test_data_flow_map.py tests/test_director_framework.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_legal_docs.py tests/test_runbook.py
+........................................................................ [ 81%]
+........................................................................ [ 97%]
+............                                                             [100%]
+444 passed in 105.74s (0:01:45)
+exit=0
+
+=== targeted lần 3 — 2026-10-12T14:39:35+07:00
+$ python -m pytest -q tests/test_channels.py tests/test_messenger.py tests/test_zalo.py tests/test_agent_eval.py tests/test_qa_harness.py tests/test_data_flow_map.py tests/test_director_framework.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_legal_docs.py tests/test_runbook.py
+........................................................................ [ 81%]
+........................................................................ [ 97%]
+............                                                             [100%]
+444 passed in 100.77s (0:01:40)
+exit=0
+
+## VÒNG 1 — full pytest (1 lần) — FAIL 3: test_llm_gateway::test_zalo_health_question_gets_handoff (hành vi cũ sức khỏe → FLIP), test_db_backup::test_cloud_readme_drift_guard (README thiếu bảng chat_consents → thêm dòng), test_ci_workflow::test_deterministic_suites_are_guardrail_and_co_khi (lần đầu chỉ lưu tail nên không thấy tên; vòng 2 lưu đủ output mới lộ → FLIP + ci.yml)
+=== full pytest (1 lần) — 2026-10-12T14:43:07+07:00
+$ python -m pytest -q -rs
+E       AssertionError: assert 'D\u1ea1, S\xe2m S\xe2m ...e 1800577732.' == 'S\xe2m S\xe2m ch\u01b0a... \u0111\u01b0\u1ee3c h\u1ed7 tr\u1ee3.'
+E         
+E         - S\xe2m S\xe2m ch\u01b0a \u0111\u1ee7 d\u1eef li\u1ec7u \u0111\u1ec3 tr\u1ea3 l\u1eddi c\xe2u n\xe0y \u2014 nh\xe2n vi\xean s\u1ebd ph\u1ea3n h\u1ed3i s\u1edbm nh\u1ea5t. Qu\xfd kh\xe1ch c\u1ea7n g\u1ea5p vui l\xf2ng g\u1ecdi hotline 1800577732 \u0111\u1ec3 \u0111\u01b0\u1ee3c h\u1ed7 tr\u1ee3.
+E         + D\u1ea1, S\xe2m S\xe2m kh\xf4ng t\u01b0 v\u1ea5n v\u1ec1 t\xecnh tr\u1ea1ng s\u1ee9c kh\u1ecfe qua tin nh\u1eafn t\u1ef1 \u0111\u1ed9ng. Qu\xfd kh\xe1ch vui l\xf2ng h\u1ecfi \xfd ki\u1ebfn b\xe1c s\u0129 v\u1ec1 t\xecnh tr\u1ea1ng c\u1ee7a m\xecnh. Nh\xe2n vi\xean S\xe2m S\xe2m s\u1ebd ph\u1ea3n h\u1ed3i Qu\xfd kh\xe1ch s\u1edbm nh\u1ea5t; c\u1ea7n g\u1ea5p vui l\xf2ng g\u1ecdi hotline 1800577732.
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+3 failed, 2477 passed, 3 skipped in 567.44s (0:09:27)
+exit=1
+end 2026-10-12T14:52:43+07:00
+
+## VÒNG 2 — targeted ×3 (lần 2: 1 ERROR LockNotAvailable — output lần này chỉ lọc dòng tóm tắt nên KHÔNG có tên test; trong bộ chỉ test_director_framework/test_qa_harness đặt lock_timeout (fixture DB áp docs/roles.sql — role cấp CLUSTER, nhiều worktree song song cùng grant) → nghi tranh khóa môi trường, diff v5.1 không đụng roles.sql/fixture; lần 1, lần 3 và cả 3 lần vòng 3 xanh)
+=== VÒNG 2 targeted lần 1 — 2026-10-12T15:07:11+07:00
+$ python -m pytest -q tests/test_channels.py tests/test_messenger.py tests/test_zalo.py tests/test_agent_eval.py tests/test_qa_harness.py tests/test_data_flow_map.py tests/test_director_framework.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_legal_docs.py tests/test_runbook.py tests/test_llm_gateway.py tests/test_db_backup.py
+534 passed in 271.02s (0:04:31)
+exit=0
+
+=== VÒNG 2 targeted lần 2 — 2026-10-12T15:11:51+07:00
+$ python -m pytest -q tests/test_channels.py tests/test_messenger.py tests/test_zalo.py tests/test_agent_eval.py tests/test_qa_harness.py tests/test_data_flow_map.py tests/test_director_framework.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_legal_docs.py tests/test_runbook.py tests/test_llm_gateway.py tests/test_db_backup.py
+E           psycopg.errors.LockNotAvailable: canceling statement due to lock timeout
+533 passed, 1 error in 349.75s (0:05:49)
+exit=1
+
+=== VÒNG 2 targeted lần 3 — 2026-10-12T15:17:51+07:00
+$ python -m pytest -q tests/test_channels.py tests/test_messenger.py tests/test_zalo.py tests/test_agent_eval.py tests/test_qa_harness.py tests/test_data_flow_map.py tests/test_director_framework.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_legal_docs.py tests/test_runbook.py tests/test_llm_gateway.py tests/test_db_backup.py
+534 passed in 248.28s (0:04:08)
+exit=0
+
+## VÒNG 2 — full pytest (1 lần) — FAIL 1 test_ci_workflow (xem trên)
+=== VÒNG 2 full pytest (1 lần) — 2026-10-12T15:22:23+07:00
+$ python -m pytest -q -rs
+================================== FAILURES ===================================
+_____________ test_deterministic_suites_are_guardrail_and_co_khi ______________
+E       AssertionError: assert {'co_khi', 'g...ail', 'kd_a1'} == {'co_khi', 'guardrail'}
+E         
+E         Extra items in the left set:
+E         'kd_a1'
+E         Use -v to get more diff
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+1 failed, 2479 passed, 3 skipped in 541.16s (0:09:01)
+exit=1
+end 2026-10-12T15:31:29+07:00
+
+## VÒNG 3 — targeted ×3 (code cuối)
+=== VÒNG 3 targeted lần 1 — 2026-10-12T15:35:20+07:00
+$ python -m pytest -q tests/test_channels.py tests/test_messenger.py tests/test_zalo.py tests/test_agent_eval.py tests/test_qa_harness.py tests/test_data_flow_map.py tests/test_director_framework.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_legal_docs.py tests/test_runbook.py tests/test_llm_gateway.py tests/test_db_backup.py tests/test_ci_workflow.py
+541 passed in 246.70s (0:04:06)
+exit=0
+=== VÒNG 3 targeted lần 2 — 2026-10-12T15:39:33+07:00
+$ python -m pytest -q tests/test_channels.py tests/test_messenger.py tests/test_zalo.py tests/test_agent_eval.py tests/test_qa_harness.py tests/test_data_flow_map.py tests/test_director_framework.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_legal_docs.py tests/test_runbook.py tests/test_llm_gateway.py tests/test_db_backup.py tests/test_ci_workflow.py
+541 passed in 290.52s (0:04:50)
+exit=0
+=== VÒNG 3 targeted lần 3 — 2026-10-12T15:44:33+07:00
+$ python -m pytest -q tests/test_channels.py tests/test_messenger.py tests/test_zalo.py tests/test_agent_eval.py tests/test_qa_harness.py tests/test_data_flow_map.py tests/test_director_framework.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_legal_docs.py tests/test_runbook.py tests/test_llm_gateway.py tests/test_db_backup.py tests/test_ci_workflow.py
+541 passed in 249.14s (0:04:09)
+exit=0
+
+## VÒNG 3 — full pytest (1 lần, code cuối)
+=== VÒNG 3 full pytest (1 lần) — 2026-10-12T15:49:20+07:00
+$ python -m pytest -q -rs
+2483 passed in 777.55s (0:12:57)
+exit=0
+end 2026-10-12T16:02:28+07:00
+(baseline 2338 pass → 2483 pass, 0 fail; vòng này docker có sẵn nên 3 test test_dr_drill chạy được — vòng 1/2 skip 'không có docker' = môi trường)
+
+## ruff + py_compile (code cuối)
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile connectors/channels.py connectors/messenger.py connectors/zalo.py scripts/agent_eval.py
+exit=0
+
+## agent_eval tất định + dpia --check: xem v51_eval.log, v51_docs.log
+
+## git status + secret grep
+$ git status --porcelain
+ M .github/workflows/ci.yml
+ M AGENTS.md
+ M DONE.md
+ M connectors/zalo.py
+ M data/data_flow_map.json
+ M data/directors/sales.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/legal/DPIA-nhap.md
+ M docs/legal/TIA-nhap.md
+ M docs/schema.sql
+ M env.example
+ M scripts/agent_eval.py
+ M tests/conftest.py
+ M tests/test_agent_eval.py
+ M tests/test_ci_workflow.py
+ M tests/test_data_flow_map.py
+ M tests/test_llm_gateway.py
+ M tests/test_qa_harness.py
+ M tests/test_zalo.py
+?? connectors/channels.py
+?? connectors/messenger.py
+?? data/channels.json
+?? data/eval/suites/kd_a1.json
+?? tests/test_channels.py
+?? tests/test_messenger.py
+$ git status --porcelain --ignored data/ | grep -v "^ M"  (runtime trong data/ phải bị ignore)
+?? data/channels.json
+?? data/eval/suites/kd_a1.json
+!! data/conversations.jsonl
+!! data/zalo_seen.db
+$ grep secret/token cứng trong diff + file mới ngoài tests/
+warning: in the working copy of 'docs/legal/DPIA-nhap.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/legal/TIA-nhap.md', LF will be replaced by CRLF the next time Git touches it
+(không có)
+$ grep chuỗi test-secret trong tests/ (chỉ giả)
+tests/test_channels.py:20:SALT = "test-salt-0123456789abcdef"
+tests/test_messenger.py:24:    secret = secrets.token_hex(16)
+tests/test_messenger.py:25:    monkeypatch.setenv("MESSENGER_APP_SECRET", secret)
+tests/test_messenger.py:26:    monkeypatch.setenv("MESSENGER_VERIFY_TOKEN", "verify-test")
+tests/test_messenger.py:119:        monkeypatch.setenv("MESSENGER_APP_SECRET", "")
+tests/test_messenger.py:133:    monkeypatch.delenv("MESSENGER_APP_SECRET")
+tests/test_messenger.py:140:                                 "hub.verify_token": "verify-test",
+tests/test_messenger.py:148:                                  "hub.verify_token": "verify-test",
+tests/test_messenger.py:152:                                   "hub.verify_token": "verify-test",
+tests/test_messenger.py:235:    monkeypatch.setenv("MESSENGER_PAGE_TOKEN", "PAGE-TOKEN-TEST")
+tests/test_messenger.py:246:    assert "PAGE-TOKEN-TEST" not in seen["url"]
+tests/test_messenger.py:248:    assert seen["headers"] == {"Authorization": "Bearer PAGE-TOKEN-TEST"}
+
+
+## VÒNG FIX NGHIỆM THU (9 finding: 7 trong v51_open.json + 2 lăng kính mới) — 2026-10-12T17:25:21+07:00
+$ python -m pytest -q -rs tests/test_channels.py tests/test_messenger.py tests/test_zalo.py tests/test_lead_store.py tests/test_report.py tests/test_agent_eval.py tests/test_qa_harness.py tests/test_data_flow_map.py  (×3 tuần tự)
+== run 1
+451 passed in 82.88s (0:01:22)
+== run 2
+451 passed in 91.37s (0:01:31)
+== run 3
+451 passed in 90.01s (0:01:30)
+$ python -m pytest -q -rs  (full, 1 lần)
+2521 passed in 557.21s (0:09:17)
+(0 skipped trong lần chạy này — kể cả tests/test_dr_drill.py)
+$ ruff check .
+All checks passed!
+
+
+## VÒNG FIX NGHIỆM THU 2 (MINOR: trả lời đồng ý phình KPI chat) — 2026-10-12T17:55:07+07:00
+Sửa: ingest/lead_store.py CONSENT_REPLY_ROUTES (consent_granted/consent_withdrawn/consent_withdrawn_fail; giữ consent_required) — collect_chat (agents/report.py) + convlog_stats bỏ qua record có route này.
+Test mới: tests/test_report.py::test_collect_chat_skips_consent_replies, tests/test_lead_store.py::test_convlog_stats_skips_consent_replies, tests/test_cockpit.py::test_chatbot_snapshot_ignores_consent_replies
+$ (mutation: CONSENT_REPLY_ROUTES = () ở cả 2 module) pytest 3 test mới
+E       assert (2 == 1)
+E       assert (5 == 2)
+E       AssertionError: assert (Decimal('2') == 1)
+3 failed in 0.94s
+$ python -m pytest -q tests/test_report.py tests/test_lead_store.py tests/test_cockpit.py tests/test_zalo.py tests/test_channels.py  (×3 tuần tự)
+== run 1
+321 passed in 32.50s
+== run 2
+321 passed in 33.10s
+== run 3
+321 passed in 30.02s
+$ python -m pytest -q -rs  (full, 1 lần)
+2524 passed in 388.07s (0:06:28)
+exit=0
+(0 skipped trong lần chạy này — kể cả tests/test_dr_drill.py)
+$ ruff check .
+All checks passed!

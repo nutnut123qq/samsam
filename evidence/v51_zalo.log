@@ -1,0 +1,45 @@
+# v5.1-cskh-da-kenh — evidence (output thật của lệnh; worktree D:/code/samsam-w40, DB samsam_infra, 2026-10-12)
+## W51.2 — số assert test cũ trước/sau (AST, git show HEAD vs working tree)
+test_zalo.py: test cũ 75 -> giữ 75, mất [], thêm 4
+  assert test cũ: trước 323 / sau 323; đổi số assert: {}
+test_agent_eval.py: test cũ 34 -> giữ 34, mất [], thêm 6
+  assert test cũ: trước 127 / sau 127; đổi số assert: {}
+test_qa_harness.py: test cũ 31 -> giữ 31, mất [], thêm 0
+  assert test cũ: trước 192 / sau 194; đổi số assert: {'test_validate_cli_all_suites': (5, 6), 'test_deterministic_skips_llm_runners': (7, 8)}
+test_data_flow_map.py: test cũ 10 -> giữ 10, mất [], thêm 2
+  assert test cũ: trước 15 / sau 15; đổi số assert: {}
+FLIP test_conversation_log_no_data_answered_false: assert trước 2 / sau 2 (chỉ đổi câu hỏi sức khỏe -> câu trung tính)
+FLIP test_no_data_sends_handoff_text: assert trước 4 / sau 4 (chỉ đổi câu hỏi sức khỏe -> câu trung tính)
+
+
+## FLIP ngoài boundary (full pytest vòng 1 bắt): tests/test_llm_gateway.py::test_zalo_health_question_gets_handoff — câu sức khỏe nay ra channels.template('health') (2 assert → 2)
+
+## git diff -U0 connectors/zalo.py — hunk headers (chỉ handle_text/_reply + helper _reply_fixed liền kề)
+$ git diff --stat connectors/zalo.py
+ connectors/zalo.py | 127 +++++++++++++++++++++++++++++++++++++++++------------
+ 1 file changed, 99 insertions(+), 28 deletions(-)
+$ git diff -U0 connectors/zalo.py | grep "^@@"
+@@ -628 +628,2 @@ def send_text(user_id: str, text: str) -> bool:
+@@ -631 +632,3 @@ def handle_text(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -633 +636 @@ def handle_text(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -636 +639,2 @@ def handle_text(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -640 +644,6 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -642 +651 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -643,0 +653 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -645,2 +655 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -648,4 +657,12 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -660 +677 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -674,0 +692 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -676,0 +695,8 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -680,2 +706,5 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -685 +713,0 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -687 +715 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -690 +717,0 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -693,4 +719,0 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -698,6 +721,10 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -716,0 +744 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -720,0 +749,5 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+@@ -723,0 +757,38 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+
+
+## test_zalo nằm trong bộ targeted ×3 — xem v51_pytest.log

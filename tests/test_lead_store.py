@@ -50,6 +50,23 @@ def test_channel_of_msgid_empty_vs_present():
     assert ls.channel_of(old) == "streamlit"
 
 
+def test_channel_of_messenger_key_and_stats(tmp_path):
+    """v5.1: Messenger ghi chung convlog kèm key `channel` — lead/KPI phải
+    ra 'messenger', không suy 'zalo' từ msg_id (nghiệm thu MINOR)."""
+    m = _rec(msg_id="mid.1", channel="messenger")
+    assert ls.channel_of(m) == "messenger"
+    row, _skip = ls.lead_row({**m, "question": "Saphraton giá bao nhiêu?"})
+    assert row["channel"] == "messenger"
+    assert ls.channel_of(_rec(msg_id="m1", channel="zalo")) == "zalo"
+    # key lạ/không phải chuỗi → luật cũ theo msg_id
+    assert ls.channel_of(_rec(msg_id="m1", channel="shopee")) == "zalo"
+    assert ls.channel_of(_rec(msg_id="", channel=["x"])) == "streamlit"
+    (tmp_path / "conversations.jsonl").write_bytes(
+        json.dumps(m).encode() + b"\n")
+    assert ls.convlog_stats(tmp_path)["by_channel"] == {
+        "zalo": 0, "messenger": 1, "streamlit": 0}
+
+
 def test_dedup_key_msgid_vs_hash():
     assert ls.dedup_key(_rec(msg_id="m1")) == "convlog:m1"
     r = _rec(msg_id="")
@@ -171,7 +188,7 @@ def test_harvest_real_convlog_smoke():
     for r in rows:
         assert set(ls.LEAD_COLS) <= r.keys()
         assert r["ts"].tzinfo is not None
-        assert r["channel"] in ("zalo", "streamlit")
+        assert r["channel"] in ("zalo", "messenger", "streamlit")
         assert r["intent"] in ("partner", "order", "price", "contact")
 
 
@@ -230,8 +247,27 @@ def test_convlog_stats_counts_and_missing(tmp_path):
         + b"{bad\n")
     s = ls.convlog_stats(tmp_path)
     assert s["total"] == 2 and s["answered"] == 1
-    assert s["by_channel"] == {"zalo": 1, "streamlit": 1}
+    assert s["by_channel"] == {"zalo": 1, "messenger": 0, "streamlit": 1}
     assert s["skipped"] == 1
+
+
+def test_convlog_stats_skips_consent_replies(tmp_path):
+    # v5.1 fix: trả lời đồng ý/rút đồng ý không phải câu hỏi; giữ
+    # consent_required (câu hỏi thật bị chặn).
+    recs = [_rec(msg_id="q1", answered=True, channel="zalo"),
+            _rec(msg_id="c1", answered=None, route="consent_granted",
+                 channel="zalo"),
+            _rec(msg_id="c2", answered=None, route="consent_withdrawn",
+                 channel="messenger"),
+            _rec(msg_id="c3", answered=None, route="consent_withdrawn_fail",
+                 channel="messenger"),
+            _rec(msg_id="r1", answered=False, route="consent_required",
+                 channel="messenger")]
+    (tmp_path / "conversations.jsonl").write_bytes(
+        b"".join(json.dumps(r).encode() + b"\n" for r in recs))
+    s = ls.convlog_stats(tmp_path)
+    assert s["total"] == 2 and s["answered"] == 1
+    assert s["by_channel"] == {"zalo": 1, "messenger": 1, "streamlit": 0}
 
 
 def test_database_helpers_return_none_when_unavailable(monkeypatch,

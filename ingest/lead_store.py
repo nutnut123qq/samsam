@@ -14,7 +14,8 @@ Contract:
     `_doc` / dòng corrupt JSON / rec không phải dict / thiếu
     question-ts-user_hash / ts sai ISO / question không khớp intent →
     skip + đếm, exit 0 — KHÔNG xóa leads đang có.
-  - `channel`: `msg_id` rỗng → 'streamlit' (writer streamlit ghi
+  - `channel`: key `channel` ∈ zalo/messenger (v5.1) → dùng nguyên;
+    không có thì `msg_id` rỗng → 'streamlit' (writer streamlit ghi
     `msg_id:""`); còn lại → 'zalo'. Không dùng field `sent` vì entry
     convlog cũ (trước D4.4) không có key đó.
   - `dedup_key`: `convlog:<msg_id>` khi có msg_id (mock re-run cùng id
@@ -49,6 +50,15 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 CONV_FILES = ("conversations.jsonl", "conversations.jsonl.1")
 CONNECT_TIMEOUT_S = 3
+# Kênh chat ghi convlog qua pipeline chung zalo._reply (v5.1, key `channel`).
+CHAT_CHANNELS = ("zalo", "messenger")
+# v5.1: route của câu trả lời đồng ý/rút đồng ý ("Đồng ý"/"Không đồng ý")
+# — không phải câu hỏi, reader KPI chat bỏ qua. KHÔNG gồm
+# `consent_required` (cờ bật → câu hỏi thật bị chặn, đúng là chưa trả lời).
+# Tuple (so ==) chứ không set: route corrupt kiểu list/dict không hash
+# được → `in set` raise TypeError làm chết reader.
+CONSENT_REPLY_ROUTES = (
+    "consent_granted", "consent_withdrawn", "consent_withdrawn_fail")
 
 LEAD_COLS = ("dedup_key", "ts", "channel", "user_hash", "question",
              "intent", "status", "source")
@@ -82,7 +92,11 @@ def intent_of(question: str):
 
 
 def channel_of(rec: dict) -> str:
-    """streamlit ghi msg_id:"" — msg_id rỗng/thiếu → 'streamlit'."""
+    """v5.1: entry có key `channel` zalo/messenger (pipeline chung ghi) →
+    dùng nguyên; còn lại suy từ msg_id như cũ — streamlit ghi msg_id:""
+    → 'streamlit', entry Zalo cũ (trước v5.1, không key channel) → 'zalo'."""
+    if rec.get("channel") in CHAT_CHANNELS:
+        return rec["channel"]
     msg_id = rec.get("msg_id")
     return "zalo" if isinstance(msg_id, str) and msg_id.strip() else "streamlit"
 
@@ -247,15 +261,18 @@ def lead_stats(conn) -> dict | None:
 
 def convlog_stats(data_dir: Path = DATA_DIR) -> dict:
     """Số liệu kênh từ convlog (file-based — hiện được cả khi DB chưa
-    nạp): total, answered, theo kênh. File thiếu → zeros."""
+    nạp): total, answered, theo kênh. File thiếu → zeros. Bỏ qua
+    record trả lời đồng ý (`CONSENT_REPLY_ROUTES`) — không phải câu hỏi."""
     stats = {"total": 0, "answered": 0,
-             "by_channel": {"zalo": 0, "streamlit": 0}}
+             "by_channel": {"zalo": 0, "messenger": 0, "streamlit": 0}}
     tmp = {"corrupt": 0, "doc": 0, "io_error": 0}
     for name in CONV_FILES:
         path = data_dir / name
         if not path.exists():
             continue
         for rec in iter_convlog(path, tmp):
+            if rec.get("route") in CONSENT_REPLY_ROUTES:
+                continue  # trả lời đồng ý, không phải câu hỏi
             stats["total"] += 1
             if rec.get("answered"):
                 stats["answered"] += 1

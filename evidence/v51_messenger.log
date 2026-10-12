@@ -1,0 +1,18 @@
+# v5.1-cskh-da-kenh — evidence (output thật của lệnh; worktree D:/code/samsam-w40, DB samsam_infra, 2026-10-12)
+## test_messenger ×3 (vòng 3)
+$ python -m pytest -q tests/test_messenger.py (vòng 3, lần 1): 23 passed in 15.50s
+$ python -m pytest -q tests/test_messenger.py (vòng 3, lần 2): 23 passed in 15.01s
+$ python -m pytest -q tests/test_messenger.py (vòng 3, lần 3): 23 passed in 17.28s
+
+## Smoke tay: DEPLOY= python -m connectors.messenger (port 18789, secret TEST sinh ngẫu nhiên trong env lệnh, không ghi file) + client ký giả lập
+--- client (scratchpad/v51_msgr_client.py)
+POST chữ ký đúng -> 200 {"ok": true}
+POST chữ ký sai -> 403 {"error": "bad signature"}
+GET verify đúng token -> 200 424242
+
+--- server stdout
+[messenger] webhook :18789/messenger-webhook (app_secret=set, page_token=MISSING, verify_token=set, salt=MISSING, deploy=OFF (dry-run))
+[route] messenger: alcohol (uh=2b58a13f3123978f)
+[dry-run] messenger: DEPLOY tắt — không gửi (uh=2b58a13f3123978f)
+[warn] channels: thiếu CHANNEL_HASH_SALT — không tạo mục handoff (alcohol)
+

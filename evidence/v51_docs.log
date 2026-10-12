@@ -1,0 +1,34 @@
+# v5.1-cskh-da-kenh — evidence (output thật của lệnh; worktree D:/code/samsam-w40, DB samsam_infra, 2026-10-12)
+## W51.8 — dpia --check + spot-check lệnh mới
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+exit=0
+
+$ python -m connectors.messenger --help
+usage: python -m connectors.messenger [-h]
+
+Messenger webhook (Facebook Page) — dùng chung pipeline Zalo; DEPLOY tắt =
+không gửi gì ra Meta
+exit=0
+$ python -m connectors.channels --help
+usage: python -m connectors.channels [-h] [--suggest {shopee,tiktok}]
+                                     [--by BY] [--eval-real] [--limit LIMIT]
+
+exit=0
+$ python scripts/agent_eval.py --print-hash kd_a1
+064b6edd004214ad86ff8deba28b38b0bb576ca7cd98bb7a10582e929df929b8
+exit=0
+$ python -m pipelines.approval_queue --help
+usage: python -m pipelines.approval_queue [-h] [--pending] [--block BLOCK]
+                                          [--approve ID] [--reject ID]
+exit=0
+
+$ PYTHONIOENCODING=utf-8 python -c "<đếm luồng map>"
+DF-01 False ['connectors/zalo.py', 'connectors/channels.py'] | Kênh Zalo OA — nhận tin và trả lời khách
+DF-04 False ['connectors/zalo.py', 'connectors/messenger.py', 'app/streamlit_app.py', 'ingest/lead_store.py', 'scripts/kb_gaps.py'] | Nhật ký hội thoại (convlog)
+DF-25 True ['connectors/messenger.py', 'connectors/zalo.py', 'connectors/channels.py'] | Kênh Messenger (Facebook Page) — nhận tin và trả lời khách (v5.1)
+DF-26 True ['connectors/channels.py'] | Gợi ý trả lời chat sàn Shopee/TikTok — MXH dán tay (v5.1)
+tổng luồng 24
+
+
+## docs tests (test_data_flow_map/dpia_draft/handover_docs/legal_docs/runbook) nằm trong bộ targeted ×3 — xem v51_pytest.log

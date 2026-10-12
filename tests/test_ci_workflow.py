@@ -65,14 +65,16 @@ def test_deterministic_suites_are_guardrail_and_co_khi():
     import agent_eval as ae
 
     det = {n for n in ae.suite_names() if ae._deterministic(ae.load_suite(n))}
-    assert det == {"guardrail", "co_khi", "mkt02", "sales_director"}
+    assert det == {"guardrail", "co_khi", "mkt02", "sales_director",
+                   "kd_a1"}
     assert not ae._deterministic(ae.load_suite("chatbot"))
     skel = [n for n in ae.suite_names()
             if ae.load_suite(n)["status"] == "skeleton"]
     assert len(skel) == 10 and not any(
         ae._deterministic(ae.load_suite(n)) for n in skel)
     ci = CI.read_text(encoding="utf-8")
-    assert "guardrail + co_khi" in ci and "mkt02 + sales_director" in ci
+    assert "guardrail + co_khi" in ci and "mkt02 + sales_director" in ci \
+        and "+ kd_a1 — v4.5i/v5.1" in ci
 
 
 def test_test_job_has_no_secrets(doc):

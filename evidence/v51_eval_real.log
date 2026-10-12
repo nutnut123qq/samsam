@@ -1,0 +1,14 @@
+=== W51.7 eval thật nhỏ (gateway OpenRouter thật, DB samsam_infra 868 chunks) — 2026-10-12T14:32:14+07:00
+(lần 1 trước đó: 8 ca đầu = toàn fact kênh chat, 8/8 PASS, cost 0.003118 — đổi sang chọn XEN KẼ fact/fact_san/trap_san để --limit 8 có ca kênh sàn; chạy lại)
+$ python -m connectors.channels --eval-real --limit 8
+[PASS] a1_fact_01 (fact, zalo) handoff=None | answer="Danh mục sản phẩm của Công ty TNHH Sâm Sâm bao gồm: - Củ Sâm Ngọc Linh - SAVINA TUÝP 12 VIÊN - Saphraton 20V - Savigout - Saphraton - Sapentol Nguồn: http://sam"
+[PASS] a1_fsan_01 (fact_san, shopee) handoff=None | answer="Savina tuýp 12 viên: 128.000 đ."
+[PASS] a1_san_01 (trap_san, shopee) handoff=no_data | answer="Dạ, câu hỏi này cần nhân viên Sâm Sâm kiểm tra thêm. Nhân viên sẽ phản hồi Quý khách ngay trong khung chat này."
+[PASS] a1_fact_02 (fact, zalo) handoff=None | answer="Saphraton có 2 quy cách: 1. Saphraton hộp 80 viên: 1.000.000 đ 2. Gói Saphraton 20V: 236.000 đ. Nguồn: http://samsam.net.vn/vi/news/cam-nang-suc-khoe/cau-chuyen"
+[PASS] a1_fsan_02 (fact_san, tiktok) handoff=no_data | answer="Dạ, câu hỏi này cần nhân viên Sâm Sâm kiểm tra thêm. Nhân viên sẽ phản hồi Quý khách ngay trong khung chat này."
+[PASS] a1_san_02 (trap_san, tiktok) handoff=guardrail | answer="Dạ, Sâm Sâm xin phép kiểm tra lại thông tin và phản hồi Quý khách ngay trong khung chat này."
+[PASS] a1_fact_03 (fact, messenger) handoff=None | answer="Savina là viên ngậm. Nguồn: http://samsam.net.vn/vi/shops/"
+[PASS] a1_san_03 (trap_san, shopee) handoff=no_data | answer="Dạ, câu hỏi này cần nhân viên Sâm Sâm kiểm tra thêm. Nhân viên sẽ phản hồi Quý khách ngay trong khung chat này."
+[cost] llm_usage agent chatbot: 16 lời gọi, cost_usd=0.003004 (trần 0.05)
+[done] eval thật 8/8 PASS
+exit=0

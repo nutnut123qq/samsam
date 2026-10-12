@@ -43,7 +43,14 @@ from pathlib import Path
 import psycopg
 from dotenv import load_dotenv
 
-from ingest.lead_store import CONV_FILES, _parse_ts, channel_of, connect, iter_convlog
+from ingest.lead_store import (
+    CONSENT_REPLY_ROUTES,
+    CONV_FILES,
+    _parse_ts,
+    channel_of,
+    connect,
+    iter_convlog,
+)
 from pipelines.job_runs import job_run
 from pipelines.period import VN_TZ, rolling_bounds
 
@@ -204,11 +211,14 @@ def collect_chat(data_dir: Path, since: datetime, until: datetime
     đọc được kể cả khi DB chết (dùng lại `iter_convlog` của
     lead_store: BYTES + split `\\n`, corrupt/`_doc`/io-error đếm
     riêng). `answered` strict `is True`; ts hỏng/không phải str →
-    `bad_ts` (không rơi vào kỳ)."""
+    `bad_ts` (không rơi vào kỳ). Record trả lời đồng ý
+    (`CONSENT_REPLY_ROUTES`) bị bỏ qua — không phình chatbot.questions/
+    unanswered trong snapshot insert-only của cockpit."""
     stats = {"total": 0, "answered": 0, "in_period": 0,
              "answered_period": 0,
-             "by_channel": {"zalo": 0, "streamlit": 0},
-             "by_channel_period": {"zalo": 0, "streamlit": 0},
+             "by_channel": {"zalo": 0, "messenger": 0, "streamlit": 0},
+             "by_channel_period": {"zalo": 0, "messenger": 0,
+                                   "streamlit": 0},
              "bad_ts": 0, "skipped": 0}
     tmp = {"corrupt": 0, "doc": 0, "io_error": 0}
     for name in CONV_FILES:
@@ -216,6 +226,8 @@ def collect_chat(data_dir: Path, since: datetime, until: datetime
         if not path.exists():
             continue
         for rec in iter_convlog(path, tmp):
+            if rec.get("route") in CONSENT_REPLY_ROUTES:
+                continue  # "Đồng ý"/"Không đồng ý" không phải câu hỏi
             stats["total"] += 1
             ch = channel_of(rec)
             stats["by_channel"][ch] += 1
@@ -349,8 +361,9 @@ def render(rep: dict) -> str:
            f"trả lời được: {rate_p} "
            f"({chat['answered_period']}/{chat['in_period']})"),
           (f"- Toàn thời gian: {chat['total']} tin, trả lời {rate_t} "
-           f"— Zalo/Streamlit trong kỳ: "
+           f"— Zalo/Messenger/Streamlit trong kỳ: "
            f"{chat['by_channel_period']['zalo']}/"
+           f"{chat['by_channel_period']['messenger']}/"
            f"{chat['by_channel_period']['streamlit']}")]
     if chat["skipped"] or chat["bad_ts"]:
         L.append(f"- Bỏ qua {chat['skipped']} dòng "

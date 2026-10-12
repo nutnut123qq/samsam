@@ -360,6 +360,81 @@ unit `docs/zalo-webhook.service`). Tóm tắt sự cố thường gặp:
 - **`DEPLOY` bật mà thiếu `ZALO_OA_SECRET`** → process refuse-to-serve
   (đúng — cố ý, không "vá" bằng cách tắt DEPLOY khi đang public).
 
+## 5a. CSKH đa kênh — Messenger, gợi ý sàn, handoff (v5.1)
+
+Lớp kênh chung `connectors/channels.py` (KD-A1) áp CÙNG luật cho Zalo,
+Messenger, Shopee, TikTok, chạy TRƯỚC LLM:
+
+- Câu hỏi về **rượu** → template cố định (`data/channels.json`), không
+  mời mua online, không gọi LLM — 100% mọi kênh.
+- Câu hỏi **sức khỏe** → template "hỏi ý kiến bác sĩ" + chuyển người,
+  không gọi LLM.
+- Kênh **sàn**: câu trả lời KHÔNG được chứa domain, link, SĐT/hotline,
+  Zalo/Facebook, địa chỉ cửa hàng (chính sách sàn) — vi phạm thì thay CẢ
+  câu bằng câu cố định "phản hồi trong khung chat này".
+- Mọi câu khách thấy (template, câu chào + link chính sách) là **NHÁP chờ
+  Pháp chế** trong `data/channels.json` — đổi chữ sửa JSON, không sửa code.
+
+**Messenger (Fanpage) — chưa mở cho khách thật** (cần Meta app review +
+page token + webhook HTTPS public + DPIA/TIA ký — external-dep):
+
+```
+python -m connectors.messenger   # webhook :8789/messenger-webhook (MESSENGER_WEBHOOK_PORT)
+```
+
+- Verify webhook: Meta gọi GET `hub.mode=subscribe` + `hub.verify_token`
+  (= `MESSENGER_VERIFY_TOKEN`) → trả `hub.challenge`. Token sai/trống → 403.
+- Mọi POST phải có chữ ký `X-Hub-Signature-256` khớp `MESSENGER_APP_SECRET`
+  — sai/thiếu → 403, không xử lý (KHÔNG có bypass dev).
+- `DEPLOY` tắt → KHÔNG gửi gì ra Meta (log `[dry-run] messenger`). `DEPLOY`
+  bật mà thiếu `MESSENGER_APP_SECRET`/`MESSENGER_PAGE_TOKEN`/
+  `MESSENGER_VERIFY_TOKEN`/`CHANNEL_HASH_SALT` → từ chối serve (exit 1).
+- Messenger dùng CHUNG pipeline Zalo (history, convlog `_uhash`+mask,
+  dedup `data/zalo_seen.db` khóa `msgr:`).
+
+**Gợi ý trả lời chat sàn (MXH dán tay — không gọi API sàn):**
+
+```
+echo "<tin buyer>" | python -m connectors.channels --suggest shopee --by "<tên MXH>"
+```
+
+- Tin buyer đưa qua STDIN (không gõ vào dòng lệnh — lộ lịch sử shell).
+- Output là `[GỢI Ý — NHÁP ...]`: MXH ĐỌC/SỬA rồi mới dán trên Seller
+  Center. Dòng `handoff=` = câu cần người trả lời (rượu/sức khỏe/thiếu dữ
+  liệu); `blocked=` = câu LLM bị chặn vì vi phạm chính sách sàn.
+- Không ghi DB, không tạo mục handoff (MXH đang trực tiếp trong chat).
+
+**Đồng ý tư vấn chat (Zalo/Messenger):** tin đầu của khách mới nhận câu
+chào + link chính sách (ghi `prompted` vào `chat_consents` — chỉ khi
+gửi được); CHỈ khi khách nhắn "Đồng ý" tường minh mới ghi `granted`.
+Câu rút ngắn ("Không đồng ý", "ko đồng ý", "rút đồng ý"...) → `withdrawn`
++ xóa ngữ cảnh hội thoại + DỪNG LLM cho khách đó, bất kể cờ, tới khi khách
+nhắn lại "Đồng ý" — CHỈ KHI ghi được dòng `withdrawn`. Thiếu
+`CHANNEL_HASH_SALT` hoặc DB down lúc khách rút → khách nhận câu "chưa ghi
+nhận được, vui lòng gọi hotline" (không hứa dừng) và tin sau vẫn tới LLM
+khi cờ tắt: hotline phải ghi nhận tay; Zalo DEPLOY nên có muối. Cờ `require_consent_for_llm` (mặc định `false`
+— Pháp chế quyết) bật = chưa đồng ý thì chỉ gửi câu chào, không gọi LLM.
+Thiếu `CHANNEL_HASH_SALT` → không ghi đồng ý/handoff (cảnh báo `[warn]`).
+
+**Xử lý handoff `cskh_handoff` (Quản lý MXH / GĐ bán hàng, SLA 2 giờ):**
+
+```
+python -m pipelines.approval_queue --pending --block sales
+python -m pipelines.approval_queue --approve ID --by "<tên>"   # đã liên hệ/xử lý xong
+python -m pipelines.approval_queue --reject ID --by "<tên>"    # không cần xử lý
+```
+
+Payload mục chỉ có kênh, mã lý do (`san_pham_han_che` = câu về rượu,
+`suc_khoe`, `thieu_du_lieu`, `kiem_duyet`), `user_hash` có muối, mã tin,
+giờ — KHÔNG có nội dung tin/SĐT. Tìm hội thoại trong hộp thư Zalo OA /
+Fanpage theo kênh + giờ `ts` (convlog dùng `_uhash` không muối, KHÁC
+`user_hash` trong mục — chưa nối, someday). Mỗi khách chỉ 1 mục chờ (tin
+sau không nhân đôi).
+
+**Eval A1:** `python scripts/agent_eval.py --agent kd_a1 --no-record`
+(tất định, gateway giả, 43 ca); lần thật nhỏ `python -m connectors.channels
+--eval-real --limit 8` (gọi LLM thật, trần 0,05 USD).
+
 ## 5b. Nạp file sàn (Shopee/TikTok) — chỉ đọc, đối chiếu golden
 
 **Ai xuất:** Quản lý MXH tải tay từ Seller Center 3 loại file (listing,
@@ -1306,7 +1381,7 @@ python scripts/eval_qa.py   # 12 câu hỏi questions.md qua RAG thật — exit
 
 ```
 python scripts/agent_eval.py --validate          # kiểm MỌI suite data/eval/suites/*.json (không DB/LLM)
-python scripts/agent_eval.py --deterministic     # validate + suite tất định (guardrail + co_khi) — CI chạy mỗi push
+python scripts/agent_eval.py --deterministic     # validate + suite tất định (guardrail + co_khi + kd_a1) — CI chạy mỗi push
 python scripts/agent_eval.py --agent guardrail   # suite data/eval/suites/guardrail.json, không cần key — ghi eval_runs
 python scripts/agent_eval.py --agent co_khi --no-record   # 23 ca MẪU agent tra cứu cơ khí CK-A1 (luật, local)
 python scripts/agent_eval.py --agent chatbot     # 14 ca qua RAG thật (cần OPENROUTER_API_KEY) — tay/nightly
@@ -1391,6 +1466,9 @@ SOW.
 | `ZALO_OA_SECRET` | Verify chữ ký webhook Zalo | `DEPLOY` bật → refuse to serve |
 | `ZALO_ACCESS_TOKEN` / `ZALO_REFRESH_TOKEN` | Seed token lần đầu | Sau refresh đầu, source-of-truth là `data/zalo_tokens.json` |
 | `ZALO_WEBHOOK_PORT` | Port webhook (mặc định 8788) | — |
+| `MESSENGER_APP_SECRET` / `MESSENGER_PAGE_TOKEN` / `MESSENGER_VERIFY_TOKEN` | (v5.1) Chữ ký webhook / gửi tin (header Bearer) / verify GET của Messenger — giá trị thật sau Meta app review | Secret trống → mọi POST 403; `DEPLOY` bật thiếu biến → refuse to serve |
+| `MESSENGER_WEBHOOK_PORT` | Port webhook Messenger (mặc định 8789) | — |
+| `CHANNEL_HASH_SALT` | (v5.1) Muối HMAC `user_hash` cho `chat_consents` + mục `cskh_handoff` (≥16 ký tự, công ty giữ, KHÔNG đổi sau khi chạy) | Zalo: không ghi đồng ý/handoff (`[warn]`); Messenger `DEPLOY` bật → refuse to serve |
 | `DEPLOY` | `1/true/yes` = production, verify signature bắt buộc | Mọi giá trị khác = dev, signature bypass — KHÔNG public |
 | `AUTH_MODE` | Đăng nhập Streamlit: `proxy` (header Cloudflare Access) / `local` (user+mật khẩu) / `dev` (máy dev, cấm khi `DEPLOY=1`) | Trống/sai = **chặn mọi truy cập** (fail-closed) |
 | `AUTH_USERS_FILE` | File users (mặc định `data/users.json`, gitignored) | File thiếu/hỏng = không ai đăng nhập được |
