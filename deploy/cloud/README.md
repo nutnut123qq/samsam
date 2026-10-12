@@ -151,6 +151,8 @@ bảng nào thì dừng, không bật app.
 | `dealer_ar` | B | sổ công nợ đại lý nạp tay (v9.0) — chỉ mã đại lý |
 | `xnqc_dossiers` | B | (v4.3) sổ hồ sơ XNQC — trạng thái `da_cap` do Pháp chế xác nhận, không có nguồn dựng lại |
 | `channel_posts` | B | (v4.3) snapshot bài kênh sở hữu + đợt vi phạm/hạn 24h — B giữ lịch sử đóng đúng hạn/trễ (A: nạp lại file xuất tay chỉ có hiện trạng) |
+| `cogs_versions` | B | giá vốn đã duyệt (v9.1) — người lập/duyệt + lịch sử hiệu lực không dựng lại được |
+| `opex_entries` | B | chi phí cloud/SaaS nhập tay (v9.1) — không tên người; khoản > X gắn chữ ký TGĐ trong `approval_queue` (đường B) — dựng lại lệch khoản đã ký |
 
 ## 5. Backup + diễn tập trên cloud (mẫu — external-dep)
 

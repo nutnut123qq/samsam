@@ -1,0 +1,291 @@
+# evidence/v91_pnl.log — v9.1 FP-COGS-PnL + FP-AdsBudget + FIN-Director
+# Chạy: 2026-10-12 14:47:00 +0700 trên DB RIÊNG của worktree samsam-w70 (DATABASE_URL từ w90.env, không in).
+# GIÁ VỐN TRONG LOG LÀ MẪU (note 'MẪU evidence v9.1 — không phải giá vốn thật'); người lập/duyệt là tên DEV.
+# Bảng cogs_versions APPEND-ONLY (trigger chặn DELETE/TRUNCATE) nên dòng MẪU để lại trên DB dev, có ghi chú trong cột note.
+# Mục hàng duyệt KHÔNG được duyệt — cuối log reject bởi tên dev, note 'dọn MẪU'.
+
+$ python scripts/apply_schema.py
+[done] schema applied — 41 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_snapshots, chunks, chunks_internal, claims_approved, cogs_versions, content_drafts, dealer_ar, decisions, document_fields, documents, eval_runs, garden_media, golden_discrepancies, incidents, intel_items, invoice_lines, job_runs, leads, llm_usage, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, opex_entries, orders, plot_logs, plots, price_list, products, recon_results, red_alerts, settlement_rows, sim_runs, sku_map, sku_master
+[exit=0]
+
+$ python -m ingest.market_csv --file tests/fixtures/finance/order_shopee_multi_MAU.csv --channel shopee --kind order
+[load] snapshot #11 shopee/order order_shopee_multi_MAU.csv: 2 dòng, map golden 2
+[alerts] export order — không đối chiếu ở P1
+[done]
+[exit=0]
+
+$ python -m ingest.settlement_csv --file tests/fixtures/finance/settlement_shopee_multi_MAU.csv --channel shopee
+[load] quyết toán shopee settlement_shopee_multi_MAU.csv: 1 dòng; đối chiếu: khop=1, lech=0, thieu_chung_tu=0, hoan=0
+[done]
+[exit=0]
+
+$ python -m agents.fp_pnl --cogs-add --sku savina-12v --cost 50000 --from 2026-10-01 --by Dev Lap MAU --note MẪU evidence v9.1 — không phải giá vốn thật
+[cogs-add] giá vốn #1: savina-12v 50.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[exit=0]
+
+$ python -m agents.fp_pnl --cogs-add --sku saphraton-20v --cost 90000 --from 2026-10-01 --by Dev Lap MAU --note MẪU evidence v9.1 — không phải giá vốn thật
+[cogs-add] giá vốn #2: saphraton-20v 90.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[exit=0]
+
+$ python -m agents.fp_pnl --cogs-add --sku savigout-30v --cost 130000 --from 2026-10-01 --by Dev Lap MAU --note MẪU evidence v9.1 — không phải giá vốn thật
+[cogs-add] giá vốn #3: savigout-30v 130.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[exit=0]
+
+$ python -m agents.fp_pnl --cogs-add --sku mat-ong-sam-120ml-1hu --cost 70000 --from 2026-10-01 --by Dev Lap MAU --note MẪU evidence v9.1 — không phải giá vốn thật
+[cogs-add] giá vốn #4: mat-ong-sam-120ml-1hu 70.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[exit=0]
+
+$ python -m agents.fp_pnl --cogs-add --sku mat-ong-sam-300ml --cost 180000 --from 2026-10-01 --by Dev Lap MAU --note MẪU evidence v9.1 — không phải giá vốn thật
+[cogs-add] giá vốn #5: mat-ong-sam-300ml 180.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[exit=0]
+
+$ python -m agents.fp_pnl --cogs-add --sku sapentol-30v --cost 110000 --from 2026-10-01 --by Dev Lap MAU --note MẪU evidence v9.1 — không phải giá vốn thật
+[cogs-add] giá vốn #6: sapentol-30v 110.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[exit=0]
+
+# người duyệt = người lập (khác hoa thường/khoảng trắng) → phải exit 1 'trùng người lập'
+$ python -m agents.fp_pnl --cogs-approve 1 --by   dev LAP mau 
+[err] giá vốn #1: người duyệt trùng người lập giá vốn #1, cần người khác duyệt
+[exit=1]
+
+# người khác duyệt 5/6 SKU — sapentol-30v để CHỜ DUYỆT (thấy 'chưa có giá vốn duyệt')
+$ python -m agents.fp_pnl --cogs-approve 1 --by Dev Duyet MAU
+[cogs-approve] giá vốn #1 đã duyệt.
+[exit=0]
+
+$ python -m agents.fp_pnl --cogs-approve 2 --by Dev Duyet MAU
+[cogs-approve] giá vốn #2 đã duyệt.
+[exit=0]
+
+$ python -m agents.fp_pnl --cogs-approve 3 --by Dev Duyet MAU
+[cogs-approve] giá vốn #3 đã duyệt.
+[exit=0]
+
+$ python -m agents.fp_pnl --cogs-approve 4 --by Dev Duyet MAU
+[cogs-approve] giá vốn #4 đã duyệt.
+[exit=0]
+
+$ python -m agents.fp_pnl --cogs-approve 5 --by Dev Duyet MAU
+[cogs-approve] giá vốn #5 đã duyệt.
+[exit=0]
+
+$ python -m agents.fp_pnl --cogs-list
+[cogs-list] giá vốn ĐÃ duyệt hiệu lực ngày 2026-10-12 + dòng chờ duyệt:
+  mat-ong-sam-120ml-1hu: 70.000đ
+  mat-ong-sam-300ml: 180.000đ
+  sapentol-30v: chưa có giá vốn duyệt
+  saphraton-20v: 90.000đ
+  savigout-30v: 130.000đ
+  savina-12v: 50.000đ
+  [chờ duyệt] #6 sapentol-30v 110.000đ từ 2026-10-01
+[exit=0]
+
+$ python -m agents.fp_pnl --pnl --month 2026-10
+# P&L theo SKU × kênh — tháng 10/2026
+
+**BẢN NHÁP — chỉ thành chính thức khi GĐ tài chính ký.**
+
+Nguồn: thực nhận quyết toán sàn (`settlement_rows`, theo ngày quyết toán giờ VN) phân bổ theo dòng đơn sàn; giá vốn = dòng ĐÃ duyệt (`cogs_versions`) hiệu lực tại ngày quyết toán.
+
+| SKU | Kênh | Doanh thu | Khấu trừ sàn | Hoàn | Thực nhận | Giá vốn | Lãi gộp | Biên gộp |
+|---|---|---|---|---|---|---|---|---|
+| `(chưa rõ SKU)` | shopee | — | — | — | 704.000đ | — | — | — |
+| `mat-ong-sam-120ml-1hu` | shopee | 735.000đ | 112.700đ | 0đ | 622.300đ | 210.000đ | 412.300đ | 56.1% |
+| `mat-ong-sam-300ml` | shopee | 1.794.000đ | 254.200đ | 0đ | 1.539.800đ | 540.000đ | 999.800đ | 55.7% |
+| `sapentol-30v` | shopee | 1.187.000đ | 142.440đ | 0đ | 1.044.560đ | chưa có giá vốn duyệt | — | — |
+| `saphraton-20v` | shopee | 1.794.000đ | 206.249đ | 299.000đ | 1.288.751đ | 540.000đ | 748.751đ | 41.7% |
+| `savigout-30v` | shopee | 1.756.000đ | 264.620đ | 100.000đ | 1.391.380đ | 520.000đ | 871.380đ | 49.6% |
+| `savina-12v` | shopee | 1.113.000đ | 136.711đ | 0đ | 971.289đ | 350.000đ | 621.289đ | 55.8% |
+
+- Tổng thực nhận: 7.562.080đ (17 dòng quyết toán trong tháng — khớp tổng thực nhận ACC-Recon)
+- Tổng lãi gộp (chỉ ô có giá vốn duyệt): 3.653.520đ
+- 1 SKU bị loại vì chưa có giá vốn duyệt: `sapentol-30v`
+- Dòng chưa thấy đơn sàn (vào ô (chưa rõ SKU)): 2; dòng hoàn: 2
+- Dòng thiếu ngày quyết toán (không vào tháng nào): 0
+- GIẢ ĐỊNH thận trọng: dòng hoàn vẫn tính giá vốn theo số lượng đơn (hàng hoàn nhập kho lại chưa có nguồn).
+- Chưa có doanh thu đại lý/B2B (MISA — external-dep): P&L chỉ kênh sàn.
+
+[pnl] → pnl-2026-10.md (BẢN NHÁP, không tự gửi)
+[exit=0]
+
+$ python -m agents.fp_pnl --pnl --month 2026-13
+usage: python -m agents.fp_pnl [-h] [--cogs-add] [--cogs-approve ID]
+                               [--cogs-list] [--pnl] [--sku SKU] [--cost COST]
+                               [--from VALID_FROM] [--by BY] [--note NOTE]
+                               [--month MONTH] [--channel {shopee,tiktok}]
+python -m agents.fp_pnl: error: --pnl cần --month YYYY-MM (tháng 01..12)
+[exit=2]
+
+$ python -m agents.fp_pnl --pnl --cogs-list
+usage: python -m agents.fp_pnl [-h] [--cogs-add] [--cogs-approve ID]
+                               [--cogs-list] [--pnl] [--sku SKU] [--cost COST]
+                               [--from VALID_FROM] [--by BY] [--note NOTE]
+                               [--month MONTH] [--channel {shopee,tiktok}]
+python -m agents.fp_pnl: error: chỉ 1 thao tác mỗi lần (--cogs-add | --cogs-approve | --cogs-list | --pnl)
+[exit=2]
+
+$ python -m agents.fp_ads --propose --month 2026-10
+[propose] mục hàng duyệt #2 (budget_change, CHỜ NGƯỜI DUYỆT) — CHAN_CAM=19, CHAN_XNQC=7, CHO_DU_LIEU=0, DUOI_NGUONG=0, AM_BIEN=0, DE_XUAT=0
+[propose] tổng đề xuất 0đ — agent không chi tiền, không cài ngân sách.
+[exit=0]
+
+$ python -m agents.fp_ads --propose --month 2026-10
+[skip] đã có đề xuất ngân sách ads tháng 2026-10 đang chờ duyệt — không tạo thêm.
+[exit=0]
+
+$ python -m pipelines.approval_queue --pending --block finance
+[pending] 1 mục chờ duyệt:
+  #2 [finance/budget_change] Đề xuất ngân sách ads tháng 10/2026 — tổng 0đ — rủi ro high, QA none, guardrail PASS, tạo bởi agent:fp_ads, hạn 10-14 14:47
+[exit=0]
+
+# ---- FIN-Director bản tin tuần ----
+$ python -m agents.fin_director --weekly --as-of 2026-10-12
+[weekly] bản tin GĐ tài chính tính tới 2026-10-12 → director-finance-2026-10-12.md (BẢN NHÁP, không tự gửi; 0 mục chưa có dữ liệu)
+[exit=0]
+
+$ head -80 data/reports/director-finance-2026-10-12.md
+# Bản tin GĐ Giám đốc tài chính + Phòng kế toán + Phòng tài chính–kế hoạch — 12/10/2026
+
+Agent: FIN-Director (CFO agent điều phối) · khối `finance` · giờ VN
+
+## Số liệu trong ngày
+
+| Chỉ số | Số |
+|---|---|
+| Mới vào hàng | 4 |
+| Đang chờ duyệt (tồn) | 3 |
+| Đã duyệt | 0 |
+| Từ chối | 1 |
+| Hết hạn SLA (expired) | 0 |
+
+## Sắp quá hạn (≤ 8 giờ)
+
+- (không có)
+
+## Hết hạn hôm nay (không ai duyệt — KHÔNG tự duyệt)
+
+- (không có)
+
+## Override QA hôm nay (ép trình bản QA FAIL)
+
+- (không có)
+
+## Công nợ đại lý quá hạn (tính tới 12/10/2026)
+
+| Đại lý | Quá hạn | 31-60 | 61-90 | >90 |
+|---|---|---|---|---|
+| `DL-HN01` | 10.000.000đ | 10.000.000đ | 0đ | 0đ |
+| `DL-DN02` | 4.000.000đ | 0đ | 0đ | 4.000.000đ |
+
+Tổng quá hạn: 14.000.000đ — nguồn: sổ công nợ nạp tay (`dealer_ar`); thư nhắc nợ do kế toán gửi tay, agent không gửi.
+
+## P&L tháng 10/2026
+
+- Tổng thực nhận: 7.562.080đ (17 dòng quyết toán trong tháng)
+- Tổng lãi gộp (chỉ ô có giá vốn duyệt): 3.653.520đ
+- 1 SKU chưa có giá vốn duyệt: `sapentol-30v`
+- BẢN NHÁP — chi tiết: `python -m agents.fp_pnl --pnl --month 2026-10`
+
+## Chi phí vận hành tháng 10/2026
+
+- [CẢNH BÁO 80%] `cloud`: 3.300.000đ / trần 4.000.000đ
+- [VƯỢT TRẦN 100%] `saas`: 7.200.000đ / trần 7.000.000đ
+- Khoản > ngưỡng X (5.000.000đ) đang chờ TGĐ ký: 2
+- Trần/ngưỡng là GIẢ ĐỊNH (`data/fpa_config.json`) — agent không chi, không tắt key
+
+## Dòng tiền 13 tuần
+
+- Tuần đầu tiên số dư kịch bản thấp < 0đ: (không có)
+- Số tuần âm ở kịch bản thấp: 0/13
+- Số dư cuối kỳ (tuần 04/01): thấp 317.122.302đ · cơ sở 620.423.590đ · cao 965.113.256đ
+- chưa có số dư đầu kỳ thật — số dư = dòng tiền ròng lũy kế từ 0
+- Khoảng trên GIẢ ĐỊNH — chi tiết: `python -m agents.fp_cash --forecast`
+
+## Đề xuất ngân sách ads
+
+- Mục `budget_change` đang chờ duyệt: 1 — ĐỀ XUẤT, agent không chi tiền; duyệt qua `python -m pipelines.approval_queue`
+
+## Người duyệt
+
+- Vai trò duyệt: tgd
+- Người duyệt chưa cấu hình (external-dep)
+- Người nhận bản tin chưa cấu hình (external-dep)
+
+---
+*BẢN NHÁP — hệ thống không tự gửi. Người đọc rồi chuyển tay cho GĐ khối.*
+
+# ---- dọn MẪU: reject (KHÔNG duyệt) các mục FP&A vừa tạo ----
+$ python -m pipelines.approval_queue --reject 2 --by Dev Don MAU --note dọn MẪU
+[done] mục #2 → rejected (người duyệt: Dev Don MAU)
+[exit=0]
+
+$ python -m pipelines.approval_queue --reject 3 --by Dev Don MAU --note dọn MẪU
+[done] mục #3 → rejected (người duyệt: Dev Don MAU)
+[exit=0]
+
+$ python -m pipelines.approval_queue --reject 4 --by Dev Don MAU --note dọn MẪU
+[done] mục #4 → rejected (người duyệt: Dev Don MAU)
+[exit=0]
+
+$ python -m pipelines.approval_queue --pending --block finance
+[pending] hàng duyệt chung trống
+[exit=0]
+
+
+# ==== VÁ NGHIỆM THU v9.1 (re-run 2026-10-12 15:31:02 +0700) ====
+# Lọc --channel ghi file RIÊNG pnl-<tháng>-<kênh>.md, số đếm theo đúng kênh;
+# file toàn kênh pnl-2026-10.md không bị đè (sha256 trước/sau bằng nhau).
+$ python -m agents.fp_pnl --pnl --month 2026-10
+# P&L theo SKU × kênh — tháng 10/2026
+
+**BẢN NHÁP — chỉ thành chính thức khi GĐ tài chính ký.**
+
+Nguồn: thực nhận quyết toán sàn (`settlement_rows`, theo ngày quyết toán giờ VN) phân bổ theo dòng đơn sàn; giá vốn = dòng ĐÃ duyệt (`cogs_versions`) hiệu lực tại ngày quyết toán.
+
+| SKU | Kênh | Doanh thu | Khấu trừ sàn | Hoàn | Thực nhận | Giá vốn | Lãi gộp | Biên gộp |
+|---|---|---|---|---|---|---|---|---|
+| `(chưa rõ SKU)` | shopee | — | — | — | 704.000đ | — | — | — |
+| `mat-ong-sam-120ml-1hu` | shopee | 735.000đ | 112.700đ | 0đ | 622.300đ | 210.000đ | 412.300đ | 56.1% |
+| `mat-ong-sam-300ml` | shopee | 1.794.000đ | 254.200đ | 0đ | 1.539.800đ | 540.000đ | 999.800đ | 55.7% |
+| `sapentol-30v` | shopee | 1.187.000đ | 142.440đ | 0đ | 1.044.560đ | chưa có giá vốn duyệt | — | — |
+| `saphraton-20v` | shopee | 1.794.000đ | 206.249đ | 299.000đ | 1.288.751đ | 540.000đ | 748.751đ | 41.7% |
+| `savigout-30v` | shopee | 1.756.000đ | 264.620đ | 100.000đ | 1.391.380đ | 520.000đ | 871.380đ | 49.6% |
+| `savina-12v` | shopee | 1.113.000đ | 136.711đ | 0đ | 971.289đ | 350.000đ | 621.289đ | 55.8% |
+
+- Tổng thực nhận: 7.562.080đ (17 dòng quyết toán trong tháng — khớp tổng thực nhận ACC-Recon)
+- Tổng lãi gộp (chỉ ô có giá vốn duyệt): 3.653.520đ
+- 1 SKU bị loại vì chưa có giá vốn duyệt: `sapentol-30v`
+- Dòng chưa thấy đơn sàn (vào ô (chưa rõ SKU)): 2; dòng hoàn: 2
+- Dòng thiếu ngày quyết toán (không vào tháng nào): 0
+- GIẢ ĐỊNH thận trọng: dòng hoàn vẫn tính giá vốn theo số lượng đơn (hàng hoàn nhập kho lại chưa có nguồn).
+- Chưa có doanh thu đại lý/B2B (MISA — external-dep): P&L chỉ kênh sàn.
+
+[pnl] → pnl-2026-10.md (BẢN NHÁP, không tự gửi)
+[exit=0]
+
+# sha256 pnl-2026-10.md TRƯỚC khi lọc kênh: 84279f970d74bb19f14962104a5d788674393a3544419967f88a46afbb8a5472
+$ python -m agents.fp_pnl --pnl --month 2026-10 --channel tiktok
+# P&L theo SKU × kênh — tháng 10/2026
+
+**BẢN NHÁP — chỉ thành chính thức khi GĐ tài chính ký.**
+
+Nguồn: thực nhận quyết toán sàn (`settlement_rows`, theo ngày quyết toán giờ VN) phân bổ theo dòng đơn sàn; giá vốn = dòng ĐÃ duyệt (`cogs_versions`) hiệu lực tại ngày quyết toán. Lọc kênh: tiktok.
+
+| SKU | Kênh | Doanh thu | Khấu trừ sàn | Hoàn | Thực nhận | Giá vốn | Lãi gộp | Biên gộp |
+|---|---|---|---|---|---|---|---|---|
+| (không có dòng quyết toán trong tháng) | | | | | | | | |
+
+- Tổng thực nhận: 0đ (0 dòng quyết toán trong tháng)
+- Tổng lãi gộp (chỉ ô có giá vốn duyệt): 0đ
+- 0 SKU bị loại vì chưa có giá vốn duyệt: (không có)
+- Dòng chưa thấy đơn sàn (vào ô (chưa rõ SKU)): 0; dòng hoàn: 0
+- Dòng thiếu ngày quyết toán (không vào tháng nào): 0
+- GIẢ ĐỊNH thận trọng: dòng hoàn vẫn tính giá vốn theo số lượng đơn (hàng hoàn nhập kho lại chưa có nguồn).
+- Chưa có doanh thu đại lý/B2B (MISA — external-dep): P&L chỉ kênh sàn.
+
+[pnl] → pnl-2026-10-tiktok.md (BẢN NHÁP, không tự gửi)
+[exit=0]
+
+# sha256 pnl-2026-10.md SAU khi lọc kênh:   84279f970d74bb19f14962104a5d788674393a3544419967f88a46afbb8a5472
+# file lọc kênh: data/reports/pnl-2026-10-tiktok.md data/reports/pnl-2026-10.md 
+

@@ -488,6 +488,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Nội dung công khai của chính công ty, không phải dữ liệu cá nhân — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Thời hạn lưu `channel_posts` chưa chốt; Quyền đọc kênh qua API thật chưa có — chỉ file xuất tay (external-dep) |
 
+### DF-27 — FP&A tài chính–kế hoạch — giá vốn, P&L, ngân sách ads, chi phí vận hành, dòng tiền (v9.1)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-27 |
+| Module (code) | `agents/fp_pnl.py`; `agents/fp_ads.py`; `agents/fp_opscost.py`; `agents/fp_cash.py`; `agents/fin_director.py` |
+| Mục đích | P&L theo SKU/kênh, đề xuất ngân sách quảng cáo theo biên gộp, cảnh báo chi phí vận hành so trần, dòng tiền 13 tuần, bản tin tuần GĐ tài chính |
+| Dữ liệu | Số liệu tổng hợp theo SKU × kênh × tháng (thực nhận quyết toán, giá vốn, lãi gộp), chi phí AI theo agent (`llm_usage`), chi phí dịch vụ cloud/SaaS nhập tay (mã dịch vụ + số tiền), dự báo dòng tiền theo tuần; tên người lập/duyệt giá vốn (nhân viên) — KHÔNG dữ liệu người mua, KHÔNG tên/SĐT đại lý cá nhân |
+| Lớp | Vàng |
+| Chủ thể | Nhân viên lập/duyệt giá vốn (GĐ sản xuất, GĐ tài chính); không có chủ thể là khách hàng |
+| Nơi lưu | Bảng `cogs_versions` (append-only, duyệt qua function), `opex_entries` (insert-only theo sha256 file); báo cáo `data/reports/pnl-<tháng>.md` + `data/reports/director-finance-<ngày>.md` (gitignored); đề xuất/khoản vượt X trong `approval_queue` |
+| Thời hạn lưu | Chưa đặt hạn — theo hạn lưu chứng từ kế toán (cần chốt) |
+| Bên nhận | Nội bộ — GĐ tài chính / TGĐ; không gửi tự động, không LLM, không gọi API quảng cáo/nhà cung cấp |
+| Chuyển ra nước ngoài | Không |
+| Biện pháp bảo vệ (có trong code) | 0 import mạng/LLM (test FIN-QA subprocess `python -I`); mọi text FP&A qua `_mask_pii` không đổi; Giá vốn: người duyệt ≠ người lập chặn ở DB (function SECURITY DEFINER), bảng append-only; Đề xuất ads + khoản vượt ngưỡng X là mục chờ NGƯỜI duyệt (risk high, auto_policy không áp); khoản > X chỉ 'được chi' khi vai trò tgd duyệt; Báo cáo chỉ sku_key/kênh/số tiền — không mã đơn/hash, không tên người lập/duyệt |
+| Căn cứ xử lý | Nghĩa vụ kế toán + lợi ích hợp pháp quản trị nội bộ — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | Giá vốn thật + người lập/duyệt thật = external-dep (bảng `cogs_versions` trên DB thật để trống); Hóa đơn cloud/SaaS thật (thay `opex_MAU.csv`) = external-dep; Ngưỡng biên, hệ số ngân sách, trần chi phí, ngưỡng X, tỷ giá, chi cố định, độ trễ tiền sàn, số dư đầu kỳ (`data/fpa_config.json`) — GĐ tài chính chốt; TGĐ ký khoản vượt X + danh sách người/vai trò thật (`data/users.json`); Doanh thu đại lý/B2B từ MISA cho P&L kênh offline |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -520,6 +538,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-20 | Công nợ đại lý + hoa hồng — ACC-AR (v9.0) | Đỏ | cao | không | 2 |
 | DF-25 | Đối soát quyết toán sàn — ACC-Recon (v9.0) | Đỏ | cao | không | 2 |
 | DF-26 | Rà bài đăng kênh sở hữu từ file xuất tay (v4.3 PC-A4) | Xanh | thấp | không | 2 |
+| DF-27 | FP&A tài chính–kế hoạch — giá vốn, P&L, ngân sách ads, chi phí vận hành, dòng tiền (v9.1) | Vàng | trung bình | không | 5 |
 
 ## 4. Tổng hợp GAP
 
@@ -559,6 +578,11 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-25] Hạn lưu `settlement_rows` chưa chốt
 - [DF-26] Thời hạn lưu `channel_posts` chưa chốt
 - [DF-26] Quyền đọc kênh qua API thật chưa có — chỉ file xuất tay (external-dep)
+- [DF-27] Giá vốn thật + người lập/duyệt thật = external-dep (bảng `cogs_versions` trên DB thật để trống)
+- [DF-27] Hóa đơn cloud/SaaS thật (thay `opex_MAU.csv`) = external-dep
+- [DF-27] Ngưỡng biên, hệ số ngân sách, trần chi phí, ngưỡng X, tỷ giá, chi cố định, độ trễ tiền sàn, số dư đầu kỳ (`data/fpa_config.json`) — GĐ tài chính chốt
+- [DF-27] TGĐ ký khoản vượt X + danh sách người/vai trò thật (`data/users.json`)
+- [DF-27] Doanh thu đại lý/B2B từ MISA cho P&L kênh offline
 
 ## 5. Câu hỏi cho luật sư
 

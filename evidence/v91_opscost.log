@@ -1,0 +1,110 @@
+# evidence/v91_opscost.log — v9.1 FP-OpsCost
+# Chạy: 2026-10-12 14:47:27 +0700 trên DB RIÊNG của worktree samsam-w70; opex_MAU.csv là MẪU; trần/ngưỡng X/tỷ giá GIẢ ĐỊNH (data/fpa_config.json).
+# llm_usage là dữ liệu sẵn có trên DB dev. Không duyệt mục nào — reject 'dọn MẪU' ở cuối v91_pnl.log.
+
+$ python -m agents.fp_opscost --load tests/fixtures/finance/opex_MAU.csv
+[load] 7 dòng chi phí từ opex_MAU.csv
+[exit=0]
+
+$ python -m agents.fp_opscost --load tests/fixtures/finance/opex_MAU.csv
+[skip] file chi phí đã nạp — không ghi gì.
+[exit=0]
+
+$ python -m agents.fp_opscost --report --month 2026-10
+# Chi phí vận hành tháng 10/2026 — so trần (GIẢ ĐỊNH)
+
+Tỷ giá quy đổi chi phí AI 25.000đ/USD; cảnh báo 80% / 100% trần; ngưỡng X 5.000.000đ — `data/fpa_config.json` chờ GĐ tài chính chốt.
+
+| Phạm vi | Thực chi | Trần | % trần |
+|---|---|---|---|
+| `ads` | 12.000.000đ | 20.000.000đ | 60.0% |
+| `ai` | 260đ | 5.000.000đ | 0.0% |
+| `ai:chatbot` | 39đ | chưa có trần | — |
+| `ai:ingest` | 221đ | chưa có trần | — |
+| `cloud` | 3.300.000đ | 4.000.000đ | 82.5% |
+| `khac` | 400.000đ | 2.000.000đ | 20.0% |
+| `saas` | 7.200.000đ | 7.000.000đ | 102.9% |
+| `tong` | 22.900.260đ | 35.000.000đ | 65.4% |
+
+Cảnh báo:
+- [CẢNH BÁO 80%] `cloud`: 3.300.000đ / trần 4.000.000đ
+- [VƯỢT TRẦN 100%] `saas`: 7.200.000đ / trần 7.000.000đ
+
+Khoản > ngưỡng X: 2 — đang chờ TGĐ ký: 2, được chi: 0.
+
+Agent chỉ cảnh báo — không chi, không tắt key, không đổi hạn mức; người quyết theo quy trình tài chính.
+
+[exit=0]
+
+$ python -m agents.fp_opscost --submit-over-x --month 2026-10
+[submit] khoản #4 → mục hàng duyệt #3 (opex_over_x, CHỜ TGĐ KÝ)
+[submit] khoản #5 → mục hàng duyệt #4 (opex_over_x, CHỜ TGĐ KÝ)
+[submit] 2 mục mới — agent không chi, không tắt key, không đổi limit.
+[exit=0]
+
+$ python -m agents.fp_opscost --submit-over-x --month 2026-10
+[submit] 0 mục mới — agent không chi, không tắt key, không đổi limit.
+[exit=0]
+
+$ python -m agents.fp_opscost --status --month 2026-10
+[status] khoản > ngưỡng X 5.000.000đ tháng 10/2026:
+  khoản #4 saas/misa-amis 6.000.000đ: cho_tgd_ky
+  khoản #5 ads/shopee-ads 12.000.000đ: cho_tgd_ky
+[exit=0]
+
+$ python -m agents.fp_opscost --report --status --month 2026-10
+usage: python -m agents.fp_opscost [-h] [--load FILE] [--report]
+                                   [--submit-over-x] [--status]
+                                   [--month MONTH]
+python -m agents.fp_opscost: error: chỉ 1 thao tác mỗi lần (--load | --report | --submit-over-x | --status)
+[exit=2]
+
+
+# ==== VÁ NGHIỆM THU v9.1 (re-run 2026-10-12 15:31:04 +0700) ====
+# object_id mục opex_over_x = khóa tự nhiên opex-<sha256 file[:16]>-<số dòng> (không id tự tăng);
+# chữ ký TGĐ chỉ tính khi mục của agent:fp_opscost, khối finance, content_sha256 = payload dựng lại.
+# Mục cũ #3/#4 (object_id dạng opex-<id>, đã reject 'dọn MẪU') không còn khớp khóa nào.
+# KHÔNG duyệt mục nào trên DB dev — cuối mục này reject 'dọn MẪU'.
+$ python -m agents.fp_opscost --status --month 2026-10
+[status] khoản > ngưỡng X 5.000.000đ tháng 10/2026:
+  khoản #4 saas/misa-amis 6.000.000đ: cho_tgd_ky — chưa có mục chờ TGĐ ký (hoặc đã bị từ chối/hết hạn)
+  khoản #5 ads/shopee-ads 12.000.000đ: cho_tgd_ky — chưa có mục chờ TGĐ ký (hoặc đã bị từ chối/hết hạn)
+[exit=0]
+
+$ python -m agents.fp_opscost --submit-over-x --month 2026-10
+[submit] khoản #4 → mục hàng duyệt #5 (opex_over_x, CHỜ TGĐ KÝ)
+[submit] khoản #5 → mục hàng duyệt #6 (opex_over_x, CHỜ TGĐ KÝ)
+[submit] 2 mục mới — agent không chi, không tắt key, không đổi limit.
+[exit=0]
+
+$ python -m agents.fp_opscost --submit-over-x --month 2026-10
+[submit] 0 mục mới — agent không chi, không tắt key, không đổi limit.
+[exit=0]
+
+$ python -m agents.fp_opscost --status --month 2026-10
+[status] khoản > ngưỡng X 5.000.000đ tháng 10/2026:
+  khoản #4 saas/misa-amis 6.000.000đ: cho_tgd_ky — đang chờ TGĐ ký
+  khoản #5 ads/shopee-ads 12.000.000đ: cho_tgd_ky — đang chờ TGĐ ký
+[exit=0]
+
+$ (select id, object_id, block, created_by, status from approval_queue where object_type='opex_over_x' order by id)
+   3 opex-4 finance agent:fp_opscost rejected
+   4 opex-5 finance agent:fp_opscost rejected
+   5 opex-692324c7318acc18-5 finance agent:fp_opscost pending
+   6 opex-692324c7318acc18-6 finance agent:fp_opscost pending
+
+# ---- dọn MẪU: reject (KHÔNG duyệt) các mục opex_over_x vừa tạo ----
+$ python -m pipelines.approval_queue --reject 5 --by Dev Don MAU --note dọn MẪU
+[done] mục #5 → rejected (người duyệt: Dev Don MAU)
+[exit=0]
+
+$ python -m pipelines.approval_queue --reject 6 --by Dev Don MAU --note dọn MẪU
+[done] mục #6 → rejected (người duyệt: Dev Don MAU)
+[exit=0]
+
+$ python -m agents.fp_opscost --status --month 2026-10
+[status] khoản > ngưỡng X 5.000.000đ tháng 10/2026:
+  khoản #4 saas/misa-amis 6.000.000đ: cho_tgd_ky — chưa có mục chờ TGĐ ký (hoặc đã bị từ chối/hết hạn)
+  khoản #5 ads/shopee-ads 12.000.000đ: cho_tgd_ky — chưa có mục chờ TGĐ ký (hoặc đã bị từ chối/hết hạn)
+[exit=0]
+
