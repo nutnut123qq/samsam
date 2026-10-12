@@ -245,3 +245,13 @@ def test_projects_object_types_v83():
     assert types["org_prospect_batch"]["risk"] == "medium"
     assert c["approvers"] == [] and c["digest_recipients"] == []
     assert c["approver_roles"] == ["tgd"]
+
+
+@pytest.mark.parametrize("argv", [["--block", "ceo"], ["--all"]])
+def test_cli_ceo_warns_overwrites_ceo_report_bulletin(monkeypatch, capsys,
+                                                      argv):
+    # v8.1: director-ceo-<ngày>.md dùng chung với ceo_report --bulletin
+    monkeypatch.setattr(dr, "connect", lambda: None)
+    assert dr.main(argv) == 2
+    err = capsys.readouterr().err
+    assert "[warn] khối ceo" in err and "ceo_report --bulletin" in err

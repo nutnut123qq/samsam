@@ -2961,3 +2961,86 @@ create table if not exists image_assets (
   check (not ai_generated or (label_text like '%Nội dung có sử dụng AI%'
          and model is not null and prompt_sha256 is not null))
 );
+
+-- ============================================================================
+-- v8.1 Sổ quyết định TGĐ (WP10 — Agent Tiến độ & Sổ quyết định).
+-- * `decision_log` — 1 dòng `quyet_dinh` = 1 quyết định của TGĐ/HĐTV (ngày,
+--   chủ đề, quyết định, người quyết, căn cứ: id `approval_queue`/`approvals`/
+--   `decisions` hoặc `van_ban` mô tả ≥ 10 ký tự, hạn thực hiện). Theo dõi
+--   thực hiện = dòng `cap_nhat` MỚI trỏ `parent_id` (trạng thái hiện tại =
+--   dòng mới nhất theo id của chuỗi) — KHÔNG UPDATE. APPEND-ONLY bằng
+--   `append_only_guard()` (chặn UPDATE/DELETE/TRUNCATE, kể cả owner khi
+--   trigger còn bật).
+-- Ai ghi: CLI `python -m agents.ceo_decisions --record|--follow` (DSN chủ sở
+-- hữu) do NGƯỜI chạy với `--by` (CHECK chặn 'agent:'/'system:' ở cả người
+-- quyết lẫn người ghi); agent CHỈ đề xuất (`--propose`, chỉ đọc). Ai đọc:
+-- cockpit TGĐ (`agents.ceo_report`), bản tin GĐ khối ceo. Ship RỖNG — quyết
+-- định thật của TGĐ là external-dep. `docs/roles.sql` KHÔNG grant (agent_
+-- writer/app_human bị từ chối mặc định) — grant hẹp = someday.
+-- ============================================================================
+
+create table if not exists decision_log (
+  id bigint generated always as identity primary key,
+  entry_kind text not null check (entry_kind in ('quyet_dinh', 'cap_nhat')),
+  parent_id bigint references decision_log (id),
+  decided_on date,
+  topic text check (char_length(topic) between 1 and 200),
+  decision text check (char_length(decision) between 1 and 2000),
+  decided_by text check (decided_by is null
+                         or decided_by !~* '^\s*(agent|system)\s*:'),
+  basis_kind text check (basis_kind in ('approval_queue', 'approvals',
+                                        'decisions', 'van_ban')),
+  basis_id bigint,
+  due_date date,
+  follow_status text not null default 'mo'
+    check (follow_status in ('mo', 'dang_lam', 'xong', 'huy')),
+  note text check (char_length(note) <= 500),
+  recorded_by text not null check (btrim(recorded_by) <> ''
+                                   and recorded_by !~* '^\s*(agent|system)\s*:'),
+  recorded_at timestamptz not null default now(),
+  db_role text not null default session_user,
+  check ((entry_kind = 'quyet_dinh') = (parent_id is null)),
+  check (entry_kind <> 'quyet_dinh'
+         or (decided_on is not null and topic is not null
+             and decision is not null and basis_kind is not null
+             and btrim(coalesce(decided_by, '')) <> '')),
+  check (entry_kind <> 'cap_nhat' or (basis_kind is null and basis_id is null)),
+  check (basis_kind is null or basis_kind = 'van_ban' or basis_id is not null),
+  check (due_date is null or decided_on is null or due_date >= decided_on),
+  check (entry_kind <> 'cap_nhat' or follow_status <> 'xong'
+         or btrim(coalesce(note, '')) <> ''),
+  check (basis_kind is distinct from 'van_ban'
+         or char_length(btrim(coalesce(note, ''))) >= 10)
+);
+-- 1 căn cứ hệ thống → đúng 1 mục quyết định (2 người ghi song song cũng chặn).
+create unique index if not exists decision_log_basis_uq
+  on decision_log (basis_kind, basis_id)
+  where entry_kind = 'quyet_dinh' and basis_id is not null;
+create index if not exists decision_log_parent_idx
+  on decision_log (parent_id, id);
+
+-- recorded_at/db_role do DB đặt (không tin client — không lùi giờ ghi được);
+-- `cap_nhat` phải trỏ một dòng `quyet_dinh` (không nối chuỗi cập nhật).
+create or replace function decision_log_stamp() returns trigger
+language plpgsql as $$
+begin
+  new.recorded_at := now();
+  new.db_role := session_user;
+  if new.entry_kind = 'cap_nhat' and not exists (
+      select 1 from decision_log p
+       where p.id = new.parent_id and p.entry_kind = 'quyet_dinh') then
+    raise exception 'decision_log: cap_nhat phải trỏ parent_id là dòng quyet_dinh';
+  end if;
+  return new;
+end $$;
+revoke execute on function decision_log_stamp() from public;
+
+create or replace trigger decision_log_stamp_ins
+  before insert on decision_log
+  for each row execute function decision_log_stamp();
+create or replace trigger decision_log_append_only_row
+  before update or delete on decision_log
+  for each row execute function append_only_guard();
+create or replace trigger decision_log_no_truncate
+  before truncate on decision_log
+  for each statement execute function append_only_guard();

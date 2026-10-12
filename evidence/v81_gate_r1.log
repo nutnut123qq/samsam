@@ -1,0 +1,129 @@
+# v8.1 gate chung — 2026-10-12 22:05:42 +0700
+## DB thật TRƯỚC gate (đếm dòng)
+decision_log=0 approval_queue=0 approvals=0 decisions=0 channel_posts=0 market_rows=0 red_alerts=0 content_drafts=1 llm_usage=41
+## file targeted không tồn tại (bỏ khỏi lệnh):
+[end]
+## targeted lần 1 — 2026-10-12 22:05:48 +0700
+........................................................................ [ 60%]
+........................................................................ [ 70%]
+........................................................................ [ 80%]
+........................................................................ [ 90%]
+...................................................................      [100%]
+715 passed in 719.38s (0:11:59)
+rc=0
+## targeted lần 2 — 2026-10-12 22:18:19 +0700
+........................................................................ [ 60%]
+........................................................................ [ 70%]
+........................................................................ [ 80%]
+........................................................................ [ 90%]
+...................................................................      [100%]
+715 passed in 1042.75s (0:17:22)
+rc=0
+## targeted lần 3 — 2026-10-12 22:35:57 +0700
+........................................................................ [ 60%]
+........................................................................ [ 70%]
+........................................................................ [ 80%]
+........................................................................ [ 90%]
+...................................................................      [100%]
+715 passed in 1627.97s (0:27:07)
+rc=0
+## ruff check .
+All checks passed!
+rc=0
+## py_compile
+rc=0
+## grep egress (rỗng)
+[end grep]
+## dpia_draft.egress_modules ∩ 3 module (rỗng)
+[]
+## git diff --stat data/data_flow_map.json data/eval/suites/ crawler/ connectors/ ingest/ (rỗng)
+[end]
+## CLI DB thật (chỉ đọc / case âm)
+[đề xuất] 0 mục khối ceo đã quyết trong 30 ngày chưa có trong sổ — agent KHÔNG tự ghi; NGƯỜI chạy lệnh --record:
+rc=0
+[sổ quyết định] 0 mục — ngày 12/10/2026 (giờ VN)
+[mốc trễ phòng Dự án] 0
+rc=0
+usage: python -m agents.ceo_decisions [-h] [--propose] [--record]
+                                      [--follow ID] [--list] [--days DAYS]
+                                      [--now NOW] [--topic TOPIC]
+                                      [--decision DECISION] [--by BY]
+                                      [--decided-by DECIDED_BY]
+                                      [--basis BASIS] [--note NOTE]
+                                      [--date DATE] [--due DUE]
+                                      [--status {dang_lam,xong,huy}]
+python -m agents.ceo_decisions: error: --by phải là tên NGƯỜI — không nhận 'agent:'/'system:'
+rc=2 (kỳ vọng 2)
+[done] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v81\ceo-risk-2026-10-12.md — đỏ 2, vàng 8, xanh 0
+rc=0
+[done] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v81\ceo-audit-2026-10-12.md — 0 mục trong mẫu số, 0 phát hiện
+rc=0
+usage: python -m agents.ceo_decisions [-h] [--propose] [--record]
+                                      [--follow ID] [--list] [--days DAYS]
+                                      [--now NOW] [--topic TOPIC]
+                                      [--decision DECISION] [--by BY]
+                                      [--decided-by DECIDED_BY]
+                                      [--basis BASIS] [--note NOTE]
+                                      [--date DATE] [--due DUE]
+                                      [--status {dang_lam,xong,huy}]
+python -m agents.ceo_decisions: error: chọn đúng 1 thao tác: --propose | --record | --follow | --list
+rc=2 (2 op, kỳ vọng 2)
+usage: python -m agents.ceo_report [-h] [--period {week,month}] [--ref REF]
+                                   [--llm] [--submit] [--bulletin] [--now NOW]
+                                   [--out-dir OUT_DIR]
+python -m agents.ceo_report: error: --bulletin không đi với --submit/--llm/--period/--ref
+rc=2 (kỳ vọng 2)
+usage: python -m agents.ceo_risk [-h] [--report] [--now NOW]
+                                 [--out-dir OUT_DIR]
+python -m agents.ceo_risk: error: --now sai định dạng ISO
+rc=2 (kỳ vọng 2)
+usage: python -m agents.ceo_audit [-h] [--report] [--now NOW]
+                                  [--out-dir OUT_DIR]
+python -m agents.ceo_audit: error: cần --report
+rc=2 (thiếu op, kỳ vọng 2)
+## DSN host chết (10.255.255.1) — exit 2 trong connect_timeout
+agents.ceo_decisions --propose → rc=2, 6s
+agents.ceo_risk --report --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v81 → rc=2, 12s
+agents.ceo_audit --report --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v81 → rc=2, 11s
+agents.ceo_report --bulletin --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v81 → rc=2, 11s
+[done] 11 khối hợp lệ (dry-run, không DB)
+rc=0
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+rc=0
+## full pytest (1 lần) — 2026-10-12 23:04:44 +0700
+                           cwd=ROOT, capture_output=True, timeout=60,
+                           encoding="utf-8", errors="replace", check=False)
+>       assert r.returncode == 0 and "--sync-golden" in r.stdout
+E       AssertionError: assert (3221225794 == 0)
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'agents.xnqc', '--help'], returncode=3221225794, stdout='', stderr='').returncode
+
+tests\test_xnqc.py:139: AssertionError
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+41 failed, 3588 passed, 3 skipped in 1019.90s (0:16:59)
+rc=1
+## DB thật SAU gate (đếm dòng)
+decision_log=0 approval_queue=0 approvals=0 decisions=0 channel_posts=0 market_rows=0 red_alerts=0 content_drafts=1 llm_usage=41
+## DB thật lúc bắt đầu worker (trước mọi CLI)
+decision_log=0 approval_queue=0 approvals=0 decisions=0 channel_posts=0 market_rows=0 red_alerts=0 content_drafts=1 llm_usage=41
+## git status --short
+ M DONE.md
+ M agents/ceo_report.py
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/schema.sql
+ M pipelines/director.py
+ M tests/test_ceo_report.py
+ M tests/test_director.py
+?? agents/ceo_audit.py
+?? agents/ceo_decisions.py
+?? agents/ceo_risk.py
+?? data/ceo_risk.json
+?? tests/fixtures/ceo_audit/
+?? tests/test_ceo_audit.py
+?? tests/test_ceo_decisions.py
+?? tests/test_ceo_risk.py
+# end — 2026-10-12 23:22:06 +0700

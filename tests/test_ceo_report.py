@@ -559,3 +559,213 @@ def test_bad_snapshot_values_skipped_not_crash(routing_red):
     lead = next(r for r in _table_rows(page) if r[0] == "Lead mới (leads.new)")
     assert lead[2] == lead[3] == cr.NO_DATA
     assert "Bỏ qua 2 số hỏng" in page
+
+
+# ------------------------------------------------------------ v8.1 W81.5
+# 3 section mới (Sổ quyết định / Rủi ro pháp lý / Audit outside-in) do CODE
+# dựng — fixture W81.2–W81.4 (tên người giả lập) + snapshot cockpit.
+
+V81_HEADS = ("## Tiến độ & Sổ quyết định", "## Rủi ro pháp lý mở",
+             "## Audit outside-in (P1)")
+
+
+def _v81_seed(db, tmp_path):
+    from agents import ceo_decisions as cd
+    from tests.test_ceo_audit import seed
+
+    tc = _TxConn(db)
+    m = ck.load_metrics()
+    ck.store(tc, [{"channel": "noi_bo", "metric_id": "leads.new",
+                   "period_kind": "week", "period_start": ps,
+                   "value": Decimal(n), "source": "api",
+                   "source_ref": "db:leads"}
+                  for ps, n in ((W40, 120), (W41, 137))],
+             "agent:cockpit", metrics=m)
+    info = seed(db, tmp_path)
+    cd.record(tc, topic="Triển khai quầy quà Tết", decision="Đồng ý",
+              by="Thư Ký Giả Lập", basis_kind="van_ban",
+              decided_by="TGĐ Giả Lập", note="Biên bản họp HĐTV số 05",
+              decided_on=date(2026, 10, 1), due=date(2026, 10, 5),
+              today=NOW.date())
+    db.execute("insert into project_milestones (code, title, owner_role,"
+               " due_date, gate, status, source) values ('XNQC-NOP', 'Nộp"
+               " hồ sơ XNQC', 'phap_che', '2026-10-09', 'biên nhận',"
+               " 'dang_lam', 'test')")
+    return tc, info
+
+
+def _expected_sections(tc):
+    from agents import ceo_audit, ceo_decisions, ceo_risk
+
+    cur, tr = ceo_risk.compute(tc, NOW)
+    return ["\n".join(ceo_decisions.render_section(ceo_decisions.read(tc),
+                                                   NOW.date())),
+            "\n".join(ceo_risk.render_section(cur, tr, NOW)),
+            "\n".join(ceo_audit.render_section(
+                ceo_audit.collect(tc),
+                report_name="ceo-audit-2026-10-12.md"))]
+
+
+def test_v81_page_has_three_code_sections(db, tmp_path, monkeypatch, capsys):
+    tc, info = _v81_seed(db, tmp_path)
+    monkeypatch.setattr(cr, "connect", lambda: tc)
+    out = tmp_path / "out"
+    assert cr.main(["--ref", "2026-10-05", "--out-dir", str(out)],
+                   now=NOW) == 0
+    page = (out / "ceo-2026-W41.md").read_bytes().decode("utf-8")
+    pos = [page.index(h) for h in ("## Thời gian duyệt của TGĐ", *V81_HEADS,
+                                   "## Nhận xét")]
+    assert pos == sorted(pos)
+    # mọi số trong 3 section == hàm thuần trên cùng fixture
+    for block in _expected_sections(tc):
+        assert block in page
+    assert ("quá hạn thực hiện: 1" in page
+            and "**TRỄ** XNQC-NOP" in page)
+    assert "| facebook | 4 | 1 | 25% |" in page
+    assert "| shopee | 4 | 1 | 25% |" in page
+    assert "khớp 2/8 (25%)" in page
+    assert "| ĐỎ | TUYEN-CANH-BAO |" in page
+    # trang sạch guardrail dù fixture có bài lệch; không chép text bài
+    assert "CẢNH BÁO GUARDRAIL" not in page
+    rep = cr.build(tc, "week", W41, now=NOW,
+                   sections=cr.compute_sections(tc, NOW))
+    assert cr.finalize(rep)[1] is True
+    for t in info["texts"].values():
+        assert t not in page
+    for t in info["titles"]:
+        assert t not in page
+    assert "0905123456" not in page
+    # --submit: payload = trang có 3 section, sha256 = sha(payload)
+    capsys.readouterr()
+    assert cr.main(["--ref", "2026-10-05", "--submit", "--out-dir",
+                    str(out)], now=NOW) == 0
+    payload, sha = db.execute(
+        "select payload, content_sha256 from approval_queue where"
+        " object_type = 'weekly_report'").fetchone()
+    assert all(h in payload for h in V81_HEADS)
+    import hashlib
+    assert sha == hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    assert payload == (out / "ceo-2026-W41.md").read_bytes().decode("utf-8")
+
+
+def test_v81_bare_ascii_db_strings_do_not_fail_page(db, tmp_path):
+    """Cold-check MAJOR: guardrail gập dấu → chữ TRẦN 'chua'/'thuoc' trong
+    slug URL bài bị audit bắt, decided_by, mã mốc trễ bị coi là từ cấm
+    → finalize ok=False, chặn --submit. Section chỉ chép #id / thay chuỗi
+    trượt bằng HIDDEN; URL đầy đủ chỉ ở file ceo-audit-<ngày>.md."""
+    from agents import ceo_audit
+    from agents import ceo_decisions as cd
+    from agents.ra_kenh import HIDDEN
+
+    tc, _ = _v81_seed(db, tmp_path)
+    # slug sort TRƯỚC posts/p3 → nằm trong 5 phát hiện hiện trên trang
+    url = "https://www.facebook.com/samsam/posts/sam-ngoc-linh-chua-qua"
+    pid = db.execute(
+        "insert into channel_posts (url, channel, content_type, is_ai, text,"
+        " text_sha256, guardrail, codes, imported_by, scanned_at) values"
+        " (%s, 'facebook', 'post', true, 'bài mẫu', %s, '{}', %s, 'Người Test',"
+        " %s) returning id",
+        (url, "0" * 64, ["thieu_ban_duyet"], NOW)).fetchone()[0]
+    cd.record(tc, topic="Mở quầy mới", decision="Đồng ý", by="Thư Ký Giả Lập",
+              basis_kind="van_ban", decided_by="Nguyen Van Thuoc",
+              note="Biên bản họp HĐTV số 06", decided_on=date(2026, 10, 1),
+              due=date(2026, 10, 6), today=NOW.date())
+    db.execute("insert into project_milestones (code, title, owner_role,"
+               " due_date, gate, status, source) values ('CHUA-KY-HD', 'Ký"
+               " hợp đồng', 'kho thuoc', '2026-10-08', 'biên bản',"
+               " 'dang_lam', 'test')")
+    data = ceo_audit.collect(tc)
+    assert ("facebook", "thieu_ban_duyet", url) in {
+        (f["channel"], f["code"], f["ref"])
+        for f in ceo_audit.findings(data["items"])}
+    secs = cr.compute_sections(tc, NOW)
+    page = "\n".join("\n".join(s) for s in secs)
+    for raw in ("sam-ngoc-linh-chua", "Thuoc", "CHUA-KY-HD", "kho thuoc",
+                "samsam/posts/"):
+        assert raw not in page, raw
+    assert f"thieu_ban_duyet — post #{pid}" in page
+    assert re.search(r"— listing market_rows #\d+$", page, re.MULTILINE)
+    assert f"người quyết {HIDDEN}" in page and f"**TRỄ** {HIDDEN}" in page
+    rep = cr.build(tc, "week", W41, now=NOW, sections=secs)
+    text, ok = cr.finalize(rep)
+    assert ok is True and "CẢNH BÁO GUARDRAIL" not in text
+    # bản tin chép cùng section
+    assert guardrail_ok("\n".join(cr.bulletin_extra(secs)))
+    # file report (không qua finalize) vẫn giữ URL đầy đủ để tra
+    full = "\n".join(ceo_audit.render_section(data, limit=None,
+                                              full_ref=True))
+    assert url in full
+
+
+def guardrail_ok(text) -> bool:
+    from pipelines.guardrail import check
+    return check(text)["ok"] is True
+
+
+def test_v81_llm_prompt_unchanged_by_sections():
+    base = _rep()
+    with_sec = _rep(sections=[["## Rủi ro pháp lý mở", "", "Đỏ 3 · 12%"]])
+    assert cr.llm_prompt(base) == cr.llm_prompt(with_sec)
+    assert cr.commentary_values(base) == cr.commentary_values(with_sec)
+    assert cr.rule_commentary(base) == cr.rule_commentary(with_sec)
+    page = cr.render(with_sec)
+    assert page.index("## Rủi ro pháp lý mở") < page.index("## Nhận xét")
+    assert cr.render(base) == cr.render(_rep(sections=None))
+    assert "## Rủi ro pháp lý mở" not in cr.render(base)
+
+
+def test_v81_section_failure_isolated(db, tmp_path, monkeypatch):
+    from agents import ceo_decisions, ceo_risk
+
+    tc, _ = _v81_seed(db, tmp_path)
+
+    def boom(*a, **k):
+        raise ValueError("data/ceo_risk.json hỏng: JSONDecodeError")
+
+    def bad_sql(conn, today):     # lỗi DB giữa section → chỉ savepoint hỏng
+        conn.execute("select * from bang_khong_ton_tai")
+
+    monkeypatch.setattr(ceo_risk, "section", boom)
+    monkeypatch.setattr(ceo_decisions, "section", bad_sql)
+    monkeypatch.setattr(cr, "connect", lambda: tc)
+    out = tmp_path / "o2"
+    assert cr.main(["--ref", "2026-10-05", "--out-dir", str(out)],
+                   now=NOW) == 0
+    page = (out / "ceo-2026-W41.md").read_bytes().decode("utf-8")
+    assert ("## Rủi ro pháp lý mở\n\n*(không đọc được: ValueError: "
+            "data/ceo_risk.json hỏng: JSONDecodeError)*") in page
+    assert "## Tiến độ & Sổ quyết định\n\n*(không đọc được:" in page
+    assert "bang_khong_ton_tai" in page
+    assert "| facebook | 4 | 1 | 25% |" in page        # audit vẫn ra
+    assert "## Nhận xét" in page and "137 lead" in page
+
+
+def test_v81_bulletin_db(db, tmp_path, monkeypatch, capsys):
+    tc, _ = _v81_seed(db, tmp_path)
+    monkeypatch.setattr(cr, "connect", lambda: tc)
+    out = tmp_path / "b"
+    assert cr.main(["--bulletin", "--now", "2026-10-12T09:00", "--out-dir",
+                    str(out)]) == 0
+    md = (out / "director-ceo-2026-10-12.md").read_bytes().decode("utf-8")
+    pos = [md.index(h) for h in V81_HEADS]
+    assert pos == sorted(pos) and pos[-1] < md.index("## Người duyệt")
+    assert md.startswith("# Bản tin GĐ ")
+    assert "| facebook | 4 | 1 | 25% |" in md
+    assert "[bulletin]" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("argv", [
+    ["--bulletin", "--submit"], ["--bulletin", "--llm"],
+    ["--bulletin", "--period", "week"], ["--bulletin", "--ref", "2026-10-05"],
+    ["--bulletin", "--now", "12/10/2026"], ["--now", "2026-10-12T09:00"]])
+def test_v81_bulletin_usage_exit2_before_connect(monkeypatch, argv):
+    monkeypatch.setattr(cr, "connect", _no_connect)
+    with pytest.raises(SystemExit) as e:
+        cr.main(argv, now=NOW)
+    assert e.value.code == 2
+
+
+def test_v81_bulletin_db_down(monkeypatch, tmp_path):
+    monkeypatch.setattr(cr, "connect", lambda: None)
+    assert cr.main(["--bulletin", "--out-dir", str(tmp_path)], now=NOW) == 2
+    assert list(tmp_path.iterdir()) == []

@@ -279,6 +279,59 @@ python -m pipelines.cockpit --metrics                  # xem từ điển chỉ 
   `weekly_report` trong hàng chờ (`python -m pipelines.approval_queue
   --pending --block ceo`). Số doanh thu thật từ Seller Center/kế toán và
   người nhận cảnh báo đỏ thật là external-dep.
+
+### Sổ quyết định, sổ rủi ro, audit outside-in (v8.1)
+
+Ba phần còn lại của cockpit WP10 — mọi số do CODE tính lại từ dữ liệu thật
+mỗi lần chạy (không nhập tay song song), không LLM, không mạng; agent KHÔNG
+sửa/gỡ bài, KHÔNG đổi listing/giá. Báo cáo tuần `python -m agents.ceo_report`
+tự chèn 3 mục "Tiến độ & Sổ quyết định", "Rủi ro pháp lý mở", "Audit
+outside-in (P1)" giữa "Thời gian duyệt" và "Nhận xét" (mục nào lỗi → dòng
+"*(không đọc được: …)*", trang vẫn ra).
+
+```
+python -m agents.ceo_decisions --propose                # agent ĐỀ XUẤT mục khối ceo đã quyết chưa vào sổ (chỉ đọc)
+python -m agents.ceo_decisions --record --basis approval_queue:<id> --topic "<chủ đề>" --decision "<quyết định>" --by "<tên người ghi>" [--due YYYY-MM-DD]
+python -m agents.ceo_decisions --record --basis van_ban --decided-by "<người quyết>" --note "<số/ngày văn bản ≥10 ký tự>" --topic ... --decision ... --by "<tên>"
+python -m agents.ceo_decisions --follow <id> --status dang_lam|xong|huy --by "<tên>" [--note "<bằng chứng>"]
+python -m agents.ceo_decisions --list                   # sổ + quyết định quá hạn + mốc trễ phòng Dự án
+python -m agents.ceo_risk --report                      # → data/reports/ceo-risk-<ngày>.md
+python -m agents.ceo_audit --report                     # → data/reports/ceo-audit-<ngày>.md
+python -m agents.ceo_report --bulletin                  # bản tin GĐ khối ceo + 3 mục → director-ceo-<ngày>.md
+```
+
+- **Ai ghi gì:** sổ `decision_log` chỉ NGƯỜI ghi (`--by` tên người; 'agent:'/
+  'system:' bị từ chối cả ở CLI lẫn DB). Agent chỉ đề xuất. Sổ append-only:
+  không sửa/xóa — theo dõi thực hiện bằng `--follow` (thêm dòng mới; `xong`
+  phải có `--note` bằng chứng). Căn cứ hàng duyệt: người quyết + ngày quyết
+  lấy từ mục đã duyệt (`--decided-by` khác → từ chối); 1 căn cứ chỉ ghi 1
+  lần. Chủ đề/quyết định/ghi chú qua guardrail trước khi ghi (trang TGĐ chép
+  chủ đề) và lưu bản đã che SĐT/email.
+- **Sổ rủi ro** đọc tracker Pháp chế: hồ sơ XNQC (đếm ngược mốc phí
+  T-30/T-14/T-7 tới 31/12/2026), bài kênh vi phạm đang mở/quá 24h, cảnh báo
+  đỏ gốc chưa xác nhận, DPIA chưa ký, tuyến cảnh báo đỏ. Mức theo luật
+  `data/ceo_risk.json` (BẢN DEV SOẠN — Pháp chế duyệt ngưỡng + URL nguồn
+  phí); xu hướng so với 7 ngày trước. Hồ sơ XNQC chưa có lịch sử trạng
+  thái → xu hướng hồ sơ tính theo trạng thái hiện tại. Agent không tư vấn
+  pháp lý.
+- **Audit outside-in P1:** bài đang đăng (file xuất tay nạp qua
+  `python -m agents.ra_kenh --file`) + listing sàn (file Seller Center qua
+  `python -m ingest.market_csv`) so với bản đã duyệt (sha256 `approvals` /
+  dòng đầu listing đã duyệt) → tỷ lệ tuân thủ theo kênh (mẫu số 0 hiện "—",
+  không 0%). Bài đã gỡ và bài đăng trước ngày áp dụng quy trình duyệt nằm
+  ngoài mẫu số. GIỚI HẠN P1: chỉ so tiêu đề listing (file sàn không có mô
+  tả); giá xem cảnh báo `price_mismatch`. Có phát hiện vẫn exit 0 — audit
+  là báo, xử lý theo quy trình rà kênh (ticket 24h của Pháp chế).
+- **DSN:** `decision_log` chưa grant cho `agent_writer`/`app_human` → chạy
+  bằng DSN chủ sở hữu; `ceo_risk`/`ceo_audit` mở kết nối `read_only`.
+- `python -m pipelines.director --block ceo` GHI ĐÈ bản tin của
+  `ceo_report --bulletin` (in `[warn]`) — dùng lệnh `ceo_report --bulletin`.
+- **External-dep:** tracker Pháp chế thật + Pháp chế duyệt ngưỡng/URL
+  nguồn phí; quyết định thật của TGĐ (sổ ship rỗng); danh sách bài đang
+  đăng + file listing Seller Center thật; DPIA ký; người nhận cảnh báo đỏ
+  độc lập; role DB chỉ-đọc cho cockpit; P2: khung giá–voucher, audit
+  inside-out, neo hash object-lock.
+
 ## 4d. Agent GĐ Kinh doanh TMĐT (v5.0)
 
 Agent giám đốc đầu tiên cấu hình thật trên hàng duyệt chung (mục 4b): gom

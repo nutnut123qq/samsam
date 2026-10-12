@@ -1,0 +1,47 @@
+# v8.1 W81.2 ceo_decisions — 2026-10-12 22:01:45 +0700
+## grep -nE 'insert into|update |delete from' agents/ceo_decisions.py
+85:    "insert into decision_log (entry_kind, parent_id, decided_on, topic,"
+## pytest tests/test_ceo_decisions.py -v
+tests/test_ceo_decisions.py::test_schema_append_only_and_checks PASSED   [  2%]
+tests/test_ceo_decisions.py::test_schema_block_no_alter_drop PASSED      [  5%]
+tests/test_ceo_decisions.py::test_current_status_and_chains PASSED       [  7%]
+tests/test_ceo_decisions.py::test_overdue_vn_day_boundary PASSED         [ 10%]
+tests/test_ceo_decisions.py::test_late_milestones_parity_with_da_pmo_board PASSED [ 12%]
+tests/test_ceo_decisions.py::test_render_section_counts_and_caps PASSED  [ 15%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--record --topic Ch\u1ee7 \u0111\u1ec1 --decision \u0110\u1ed3ng \xfd --basis approval_q0] PASSED [ 17%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--record --topic Ch\u1ee7 \u0111\u1ec1 --decision \u0110\u1ed3ng \xfd --basis approval_q1] PASSED [ 20%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--record --topic Ch\u1ee7 \u0111\u1ec1 --decision \u0110\u1ed3ng \xfd --basis approval_q2] PASSED [ 23%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--record --topic Ch\u1ee7 \u0111\u1ec1 --decision \u0110\u1ed3ng \xfd --basis approval_q3] PASSED [ 25%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--record --topic Ch\u1ee7 \u0111\u1ec1 --decision \u0110\u1ed3ng \xfd --basis approval_q4] PASSED [ 28%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--record --topic Ch\u1ee7 \u0111\u1ec1 --decision \u0110\u1ed3ng \xfd --basis approval_q5] PASSED [ 30%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--follow 1 --status dang_lam --by agent:ceo] PASSED [ 33%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--follow 1 --status xong --by Th\u01b0 K\xfd Gi\u1ea3 L\u1eadp] PASSED [ 35%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--propose --list] PASSED [ 38%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[] PASSED [ 41%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--record --list] PASSED [ 43%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--record --topic Ch\u1ee7 \u0111\u1ec1 --decision \u0110\u1ed3ng \xfd --basis approval_q6] PASSED [ 46%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--record --topic Ch\u1ee7 \u0111\u1ec1 --decision \u0110\u1ed3ng \xfd --basis approval_q7] PASSED [ 48%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--record --topic Ch\u1ee7 \u0111\u1ec1 --decision \u0110\u1ed3ng \xfd --basis approvals:] PASSED [ 51%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--record --topic x --decision y --by Th\u01b0 K\xfd Gi\u1ea3 L\u1eadp --note n] PASSED [ 53%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--record --topic x --decision y --by Th\u01b0 K\xfd Gi\u1ea3 L\u1eadp --note B] PASSED [ 56%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--record --topic xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx] PASSED [ 58%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--record --topic Ch\u1ee7 \u0111\u1ec1 --decision \u0110\u1ed3ng \xfd --basis approval_q8] PASSED [ 61%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--list --topic x] PASSED [ 64%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--list --days 5] PASSED [ 66%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--propose --days 0] PASSED [ 69%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--list --now 12/10/2026] PASSED [ 71%]
+tests/test_ceo_decisions.py::test_cli_usage_exit2_before_connect[--follow 1 --by Th\u01b0 K\xfd Gi\u1ea3 L\u1eadp] PASSED [ 74%]
+tests/test_ceo_decisions.py::test_cli_db_down_exit2 PASSED               [ 76%]
+tests/test_ceo_decisions.py::test_cli_dead_host_subprocess PASSED        [ 79%]
+tests/test_ceo_decisions.py::test_grep_only_insert_decision_log_no_egress PASSED [ 82%]
+tests/test_ceo_decisions.py::test_propose_record_follow_e2e PASSED       [ 84%]
+tests/test_ceo_decisions.py::test_list_overdue_and_section PASSED        [ 87%]
+tests/test_ceo_decisions.py::test_decisions_expired_basis_rejected PASSED [ 89%]
+tests/test_ceo_decisions.py::test_topic_markup_rejected[Xem https://evil.example/x] PASSED [ 92%]
+tests/test_ceo_decisions.py::test_topic_markup_rejected[B\u1ea5m [\u0111\xe2y](javascript:alert)] PASSED [ 94%]
+tests/test_ceo_decisions.py::test_topic_markup_rejected[<img src=x onerror=alert(1)>] PASSED [ 97%]
+tests/test_ceo_decisions.py::test_topic_markup_rejected[Ch\u1ee7 \u0111\u1ec1 `code`] PASSED [100%]
+============================= 39 passed in 26.84s =============================
+
+## vòng 2 (2026-10-13): thêm chặn markup ở --decided-by (OWASP A03) + test_decided_by_markup_rejected
+python -m pytest tests/test_ceo_decisions.py -q -rs → 40 passed in 67.44s (0:01:07)

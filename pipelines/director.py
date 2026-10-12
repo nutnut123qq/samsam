@@ -320,6 +320,13 @@ def main(argv=None) -> int:
               "agents.acc_ar --bulletin` (mất mục 'Công nợ đại lý quá hạn')"
               " — dùng lệnh acc_ar thay, hoặc chạy lại nó sau lệnh này.",
               file=sys.stderr)
+    if "ceo" in blocks:
+        # v8.1: cùng file director-ceo-<ngày>.md với ceo_report --bulletin.
+        print("[warn] khối ceo: bản tin này GHI ĐÈ bản của `python -m "
+              "agents.ceo_report --bulletin` (mất 3 mục Tiến độ & Sổ quyết "
+              "định / Rủi ro pháp lý / Audit outside-in) — dùng lệnh "
+              "ceo_report thay, hoặc chạy lại nó sau lệnh này.",
+              file=sys.stderr)
     conn = connect()
     if conn is None:
         print("[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc"

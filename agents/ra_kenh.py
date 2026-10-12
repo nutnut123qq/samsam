@@ -110,6 +110,17 @@ def safe(s) -> str:
                    for c in str(s if s is not None else ""))
 
 
+HIDDEN = "(ẩn: trượt guardrail)"
+
+
+def page_safe(s: str, alt: str = HIDDEN) -> str:
+    """Chuỗi từ DB/cấu hình chép vào trang TGĐ/bản tin (đi qua guardrail
+    toàn trang ở `ceo_report.finalize`): guardrail gập dấu nên chữ TRẦN như
+    slug URL `...-chua-...`/`thuoc`, mã `CHUA-...` bị coi là từ cấm → cả
+    trang trượt. Chuỗi tự nó trượt guardrail → thay `alt`."""
+    return s if guardrail.check(s).get("ok") is True else alt
+
+
 def _iso_date(v, what: str) -> date:
     if isinstance(v, date) and not isinstance(v, datetime):
         return v
