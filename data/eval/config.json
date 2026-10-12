@@ -42,6 +42,18 @@
         "data/co_khi/mau/may-dan-nhan-ss-eq-05.md",
         "data/co_khi/mau/so-tay-dong-goi-hop-qua-mau.md"
       ]
+    },
+    "sales_director": {
+      "_doc": "v5.0 WP07: bộ MẪU định tuyến SLA/rủi ro agent GĐ KD — CHỜ GĐ KD SỬA. Tất định (luật trên data/directors/sales.json thật) nên ngưỡng 1.0. KHÔNG nằm trong required_agents: bộ chưa duyệt không được chặn deploy.",
+      "cases": "data/eval/sales_director.jsonl",
+      "min_pass_rate": 1.0,
+      "must_pass_kinds": ["trap_offhours", "trap_no_auto"],
+      "prompt_files": [
+        "agents/sales_director.py",
+        "pipelines/period.py",
+        "data/directors/sales.json",
+        "data/eval/sales_director.jsonl"
+      ]
     }
   },
   "required_agents": ["guardrail", "chatbot"],

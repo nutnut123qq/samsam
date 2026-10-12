@@ -33,11 +33,12 @@ chat lẫn embeddings) + Streamlit.
 | Mock E2E Zalo | `python scripts/zalo_mock.py` |
 | Số hóa tài liệu (F15.1) | `python -m ingest.doc_intake` (intake `DOC_INTAKE_DIR`) · `--pending` · `--verify <sha256> --by "<tên>"` · `--reject <sha256> --by "<tên>"` |
 | Eval RAG | `python scripts/eval_qa.py` (12 câu questions.md, ~90s, exit 0 nếu ≥10/12 + 2 bẫy pass) |
-| Eval theo agent | `python scripts/agent_eval.py --agent guardrail\|chatbot` (ca `data/eval/`, ngưỡng `config.json`, ghi `eval_runs`; `--no-record`/`--allow-dirty`) |
+| Eval theo agent | `python scripts/agent_eval.py --agent guardrail\|chatbot\|co_khi\|sales_director` (ca `data/eval/`, ngưỡng `config.json`, ghi `eval_runs`; `--no-record`/`--allow-dirty`) |
 | Cổng deploy | `python scripts/deploy_gate.py --sha <SHA> --approved-by "<tên>" [--hotfix]` (chỉ in kế hoạch; cần PASS + người duyệt + luật đóng băng theo lịch `data/freeze_calendar.json` qua `pipelines/freeze.py` — trong 21/12–10/02 chỉ `--hotfix` hoặc break-glass còn hạn) |
 | Hàng duyệt chung (v4.0) | `python -m pipelines.approval_queue --pending [--block K]` · `--approve/--reject ID --by "<tên>"` · `--override-qa ID --by "<tên>" --reason ".."` · `--expire` (mọi loại việc trừ content_draft; quá SLA → expired, không tự duyệt) |
 | Bản tin GĐ khối (v4.0) | `python -m pipelines.director --block K` · `--all --dry-run` (cấu hình `data/directors/<khối>.json`, 11 khối; bản tin → `data/reports/director-*.md`, không tự gửi) |
 | Cảnh báo đỏ (v4.0) | `python -m pipelines.red_alert --check-routing` (exit 1 = chưa có người nhận độc lập — `data/red_alert_routing.json`, external-dep) |
+| GĐ Kinh doanh TMĐT (v5.0) | `python -m agents.sales_director --run [--dry-run] --bulletin` (dry-run CHỈ ĐỌC, in kế hoạch + bản tin) · `--run` (nguồn thật → hàng duyệt khối sales + quét SLA A 2h/B 4h giờ làm việc → `sla_escalations`/cảnh báo đỏ) · `--bulletin [--period week]` (→ `data/reports/sales-director-*.md`, không PII, không tự gửi) |
 | Test/lint | `python -m pytest` · `ruff check .` |
 
 ## Structure
@@ -55,6 +56,10 @@ chat lẫn embeddings) + Streamlit.
   (market_snapshots/market_rows/market_alerts — chỉ đọc golden, không
   ghi sàn/giá, không PII người mua)
 - `pipelines/` — content draft + guardrail check (claim whitelist + banned words)
+- `agents/` — agent báo cáo / GĐ khối; `sales_director` (v5.0) = agent GĐ
+  Kinh doanh TMĐT, MẪU cấu hình thật cho 10 khối còn lại: nguồn thật →
+  `approval_queue` (template, không nội dung khách), SLA giờ làm việc
+  (`pipelines.period`), leo thang `sla_escalations`/`red_alerts`, bản tin
 - `app/` — Streamlit demo (3 tab: Chat, Content Studio, Chưa trả lời)
 - `data/` — jsonl dump, `claims_whitelist.json`, `banned_words.txt`
 - `tests/` — pytest
@@ -249,6 +254,25 @@ chat lẫn embeddings) + Streamlit.
 - **File lạ trong `git status`** (vd `lv2-market-top.png` ở v1.9 — ảnh
   project khác): xác minh nguồn trước khi stage; artifact không liên
   quan giữ untracked, stage file theo danh sách tường minh không `add -A`.
+- **Hàm tự `conn.commit()` bên trong (`red_alert.raise_alert`,
+  `aq.enqueue`) KHÔNG bọc được trong `with conn.transaction()`** (psycopg
+  cấm commit trong transaction block) — ghi nhiều bảng "cùng tx" thì để
+  câu trước chạy trên implicit tx rồi hàm đó commit cả cụm, lỗi →
+  `conn.rollback()` (v5.0 `sweep`). Fake conn test có `rollback()` no-op
+  KHÔNG chứng minh được nhánh rollback — `_TxConn(sp=...)` rollback về
+  savepoint (`tests/test_sales_director.py`).
+- **Khóa idempotent "đã đẩy ở bất kỳ status" theo id dòng nguồn** (v5.0
+  nghiệm thu MAJOR): nguồn REOPEN cùng dòng (`market_alerts` upsert
+  status→open + `opened_at` mới) → đợt tái phát bị nuốt câm. Khóa phải
+  theo ĐỢT (`ma:<id>:<opened_at UTC>`). Cùng lớp: hành động "cuối đời"
+  (leo thang trước expire) chỉ gắn vào trạng thái pending → mục bị
+  expire bởi đường khác/lễ/cron chết thoát leo thang — chọn ứng viên theo
+  "chưa có dòng leo thang" kể cả đã expired (có cửa sổ). Nguồn do KHÁCH
+  điều khiển (convlog, sticker) → gom theo khách/ngày + trần mỗi lần chạy
+  + gộp cảnh báo đỏ/lần quét — 1 tin ≠ 1 cảnh báo. Nhưng gom vẫn phải
+  theo ĐỢT (vòng 3 nghiệm thu MINOR): nhóm đã có mục ĐÃ QUYẾT thì câu hỏi
+  SAU `decided_at` mở đợt mới (`cskh:<nhóm>:<ts đầu đợt>`), chỉ mục
+  PENDING mới nuốt tin dồn — 'seen ở mọi status' = câu chiều bị câm SLA.
 - **`env -u DATABASE_URL` KHÔNG phải nhánh "DB down"** (v2.0):
   `lead_store.connect()` tự `load_dotenv(ROOT/.env)` nạp lại DSN thật
   (load_dotenv không override biến đang có, nhưng biến đã -u thì trống

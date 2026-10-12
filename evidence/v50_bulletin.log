@@ -1,0 +1,14 @@
+# W50.6 bản tin GĐ KD — 2026-10-12T05:14:00+07:00
+$ python -m pytest -v tests/test_sales_director.py -k "bulletin or region or period_of or gather"
+collecting ... collected 57 items / 52 deselected / 5 selected
+
+tests/test_sales_director.py::test_region_counts_word_boundary PASSED    [ 20%]
+tests/test_sales_director.py::test_period_of_vn_boundaries PASSED        [ 40%]
+tests/test_sales_director.py::test_render_bulletin_pure_no_pii_markers PASSED [ 60%]
+tests/test_sales_director.py::test_gather_matches_sql_and_bulletin_no_pii PASSED [ 80%]
+tests/test_sales_director.py::test_cli_dry_run_bulletin_no_pii_output PASSED [100%]
+
+====================== 5 passed, 52 deselected in 2.59s =======================
+exit=0
+
+Bản tin thật (dry-run, DB riêng worktree): xem evidence/v50_cli.log

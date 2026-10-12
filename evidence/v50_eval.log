@@ -1,0 +1,22 @@
+# W50.8 eval MẪU khối KD — 2026-10-12T05:15:04+07:00
+$ python scripts/agent_eval.py --agent sales_director --no-record  (lần 1)
+exit=0
+[done] sales_director PASS 26/26 pass_rate=1.0 (ngưỡng 1.0) prompt_version=bffd5b4acba3 model=rules
+[done] --no-record: không ghi eval_runs
+$ python scripts/agent_eval.py --agent sales_director --no-record  (lần 2)
+exit=0
+[done] sales_director PASS 26/26 pass_rate=1.0 (ngưỡng 1.0) prompt_version=bffd5b4acba3 model=rules
+[done] --no-record: không ghi eval_runs
+stdout 2 lần GIỐNG HỆT
+số ca trong file: 26
+
+$ python -m pytest -v tests/test_agent_eval.py -k "sales_director or config_thresholds"
+
+tests/test_agent_eval.py::test_config_thresholds_and_trap_kinds PASSED   [ 20%]
+tests/test_agent_eval.py::test_sales_director_cases_shape PASSED         [ 40%]
+tests/test_agent_eval.py::test_sales_director_runner_deterministic_pass PASSED [ 60%]
+tests/test_agent_eval.py::test_sales_director_wrong_offhours_expectation_fails PASSED [ 80%]
+tests/test_agent_eval.py::test_sales_director_cli_no_record_twice_identical PASSED [100%]
+
+====================== 5 passed, 30 deselected in 2.96s =======================
+exit=0

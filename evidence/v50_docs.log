@@ -1,0 +1,35 @@
+# W50.9 docs — 2026-10-12T05:15:21+07:00
+$ python -m pytest -v tests/test_handover_docs.py
+
+tests/test_handover_docs.py::test_doc_files_exist_nonempty PASSED        [ 11%]
+tests/test_handover_docs.py::test_tab_names_real PASSED                  [ 22%]
+tests/test_handover_docs.py::test_phu_luc_d_covers_all_questions PASSED  [ 33%]
+tests/test_handover_docs.py::test_sop_core_commands PASSED               [ 44%]
+tests/test_handover_docs.py::test_kien_truc_lists_all_tables PASSED      [ 55%]
+tests/test_handover_docs.py::test_guardrail_test_names_in_phu_luc_d PASSED [ 66%]
+tests/test_handover_docs.py::test_guardrail_case_counts_in_phu_luc_d PASSED [ 77%]
+tests/test_handover_docs.py::test_guardrail_v2_tests_and_case_counts_in_phu_luc_d PASSED [ 88%]
+tests/test_handover_docs.py::test_sop_warns_role_dsn_while_grants_partial PASSED [100%]
+
+============================== 9 passed in 0.19s ==============================
+exit=0
+(tests/test_db_backup.py + tests/test_dr_drill.py: chạy trong targeted ×3 — evidence/v50_pytest.log)
+
+Spot-check lệnh mục 4c sop.md:
+$ python -m agents.sales_director --help
+exit=0
+$ python -m agents.sales_director --run --dry-run
+[dry-run] sẽ đẩy: cskh_handoff 5, price_review 17 · sẽ expire 0 · sẽ leo thang 0 (cảnh báo đỏ 0) · lead quá hạn nhắc 0 — KHÔNG ghi DB
+exit=0
+$ python -m agents.sales_director --run --dry-run --bulletin --period week | head -1
+# Bản tin GĐ Kinh doanh TMĐT — tuần 05/10–11/10/2026
+exit=0
+$ python -m pipelines.approval_queue --pending --block sales
+[pending] hàng duyệt chung trống
+exit=0
+
+$ grep -c "36 bảng" docs/handover/kien-truc.md deploy/cloud/README.md
+docs/handover/kien-truc.md:1
+deploy/cloud/README.md:4
+$ grep -n "^## 4c" docs/handover/sop.md
+188:## 4c. Agent GĐ Kinh doanh TMĐT (v5.0)

@@ -1,5 +1,5 @@
 {
-  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES. approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store).",
+  "_doc": "Cấu hình agent GĐ Kinh doanh TMĐT (v4.0 khung pipelines/director.py + v5.0 agents/sales_director.py) — BẢN DEV SOẠN, CHƯA ĐƯỢC TGĐ/GĐ KD DUYỆT; ca làm việc là GIẢ ĐỊNH (08:00–18:00 thứ Hai–thứ Sáu, chưa có lịch lễ/Tết — GĐ KD chốt). approver_roles ⊂ pipelines.auth.ROLES. approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc khối KD vào hàng duyệt chung — sla_hours = hạn TUYỆT ĐỐI giờ đồng hồ 1..720 (quá → expired, không bao giờ tự duyệt; phải ≥ thời lượng tệ nhất của SLA giờ làm việc lớp handoff để mục luôn được leo thang trước khi expired), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng; S1 luôn high), handoff A|B. handoff_classes: A = 2 giờ làm việc (Quản lý MXH/sàn nhận, quá hạn → cảnh báo đỏ), B = 4 giờ làm việc (GĐ bán hàng nhận, quá hạn → leo thang TGĐ) — khóa cứng theo WP07. regions: từ khóa tỉnh GIẢ ĐỊNH (bảng map vùng–đại lý thật = external-dep). sources.max_cskh_per_run: trần mục cskh_handoff MỚI mỗi lần chạy (kênh inbound khách kiểm soát được — chống spam ngập hàng duyệt; phần vượt chờ lần sau, đếm trong bản tin); cskh_handoff gom theo khách/ngày VN, 1 mục mỗi ĐỢT (đang pending → tin mới dồn vào; đã quyết mà khách hỏi tiếp → mục mới). Không dùng 'content_draft' (giữ đường pipelines.store).",
   "block": "sales",
   "name": "Giám đốc bán hàng + Sales (Phòng kinh doanh TMĐT)",
   "director_agent": "Agent GĐ Kinh doanh TMĐT (điều phối)",
@@ -8,18 +8,103 @@
   ],
   "approvers": [],
   "object_types": {
+    "cskh_handoff": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Câu hỏi chatbot chưa trả lời (chuyển người)"
+    },
+    "cskh_reply": {
+      "sla_hours": 72,
+      "risk": "medium",
+      "handoff": "A",
+      "label": "Trả lời CSKH cần duyệt"
+    },
+    "market_alert_s1": {
+      "sla_hours": 72,
+      "risk": "high",
+      "handoff": "A",
+      "label": "Xử lý cảnh báo sàn S1"
+    },
+    "market_alert_s2": {
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Xử lý cảnh báo sàn S2"
+    },
+    "price_review": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Phiếu lệch giá golden chờ duyệt"
+    },
     "price_change": {
-      "sla_hours": 24,
-      "risk": "high"
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Đổi giá đề xuất"
+    },
+    "listing_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Đổi listing đề xuất"
     },
     "b2b_quote": {
-      "sla_hours": 24,
-      "risk": "high"
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Báo giá B2B"
+    },
+    "affiliate_program": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Chương trình affiliate"
     },
     "message_template": {
-      "sla_hours": 48,
-      "risk": "medium"
+      "sla_hours": 96,
+      "risk": "medium",
+      "handoff": "B",
+      "label": "Mẫu tin nhắn"
     }
+  },
+  "handoff_classes": {
+    "A": {
+      "business_hours": 2,
+      "assignee_role": "mxh",
+      "escalate_to_role": "gd_ban_hang",
+      "red_alert": true,
+      "due_soon_minutes": 30
+    },
+    "B": {
+      "business_hours": 4,
+      "assignee_role": "gd_ban_hang",
+      "escalate_to_role": "tgd",
+      "red_alert": false,
+      "due_soon_minutes": 60
+    }
+  },
+  "business_hours": {
+    "start": "08:00",
+    "end": "18:00",
+    "workdays": [0, 1, 2, 3, 4],
+    "holidays": []
+  },
+  "sources": {
+    "convlog_lookback_hours": 72,
+    "lead_stale_business_hours": 8,
+    "max_cskh_per_run": 30,
+    "price_discrepancy_kinds": [
+      "price_mismatch",
+      "missing_price"
+    ]
+  },
+  "regions": {
+    "Quảng Nam – Đà Nẵng": ["quảng nam", "đà nẵng", "hội an", "tam kỳ", "trà my"],
+    "Miền Trung – Tây Nguyên khác": ["huế", "quảng ngãi", "quảng trị", "quảng bình", "bình định", "kon tum", "gia lai", "đắk lắk", "nha trang", "khánh hòa"],
+    "Hà Nội – miền Bắc": ["hà nội", "hải phòng", "quảng ninh", "bắc ninh", "nghệ an", "thanh hóa"],
+    "TP.HCM – miền Nam": ["hồ chí minh", "tp.hcm", "tphcm", "sài gòn", "cần thơ", "bình dương", "đồng nai", "vũng tàu"]
   },
   "digest_recipients": [],
   "due_soon_hours": 8

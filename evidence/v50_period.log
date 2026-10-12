@@ -1,0 +1,48 @@
+# W50.1 giờ làm việc VN — 2026-10-12T05:12:00+07:00
+$ python -m pytest -v tests/test_period.py
+platform win32 -- Python 3.12.7, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\hahuy\AppData\Local\Programs\Python\Python312\python.exe
+rootdir: D:\code\samsam-w95
+plugins: anyio-4.12.1, langsmith-0.7.32, asyncio-1.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 37 items
+
+tests/test_period.py::test_vn_tz_is_plus7 PASSED                         [  2%]
+tests/test_period.py::test_week_spanning_two_months PASSED               [  5%]
+tests/test_period.py::test_week_spanning_year PASSED                     [  8%]
+tests/test_period.py::test_week_boundary_midnight_vn[ref0-start0] PASSED [ 10%]
+tests/test_period.py::test_week_boundary_midnight_vn[ref1-start1] PASSED [ 13%]
+tests/test_period.py::test_month_boundary_new_year_vn PASSED             [ 16%]
+tests/test_period.py::test_day_of_utc_evening_is_vn_day PASSED           [ 18%]
+tests/test_period.py::test_bad_inputs PASSED                             [ 21%]
+tests/test_period.py::test_rolling_bounds PASSED                         [ 24%]
+tests/test_period.py::test_business_deadline_boundaries[start0-2-want0] PASSED [ 27%]
+tests/test_period.py::test_business_deadline_boundaries[start1-2-want1] PASSED [ 29%]
+tests/test_period.py::test_business_deadline_boundaries[start2-2-want2] PASSED [ 32%]
+tests/test_period.py::test_business_deadline_boundaries[start3-2-want3] PASSED [ 35%]
+tests/test_period.py::test_business_deadline_boundaries[start4-4-want4] PASSED [ 37%]
+tests/test_period.py::test_business_deadline_boundaries[start5-4-want5] PASSED [ 40%]
+tests/test_period.py::test_business_deadline_boundaries[start6-4-want6] PASSED [ 43%]
+tests/test_period.py::test_business_deadline_boundaries[start7-0-want7] PASSED [ 45%]
+tests/test_period.py::test_business_deadline_boundaries[start8-2-want8] PASSED [ 48%]
+tests/test_period.py::test_business_deadline_holiday_and_utc_input PASSED [ 51%]
+tests/test_period.py::test_business_minutes PASSED                       [ 54%]
+tests/test_period.py::test_business_naive_rejected PASSED                [ 56%]
+tests/test_period.py::test_parse_shift_rejects[mut0] PASSED              [ 59%]
+tests/test_period.py::test_parse_shift_rejects[mut1] PASSED              [ 62%]
+tests/test_period.py::test_parse_shift_rejects[mut2] PASSED              [ 64%]
+tests/test_period.py::test_parse_shift_rejects[mut3] PASSED              [ 67%]
+tests/test_period.py::test_parse_shift_rejects[mut4] PASSED              [ 70%]
+tests/test_period.py::test_parse_shift_rejects[mut5] PASSED              [ 72%]
+tests/test_period.py::test_parse_shift_rejects[mut6] PASSED              [ 75%]
+tests/test_period.py::test_parse_shift_rejects[mut7] PASSED              [ 78%]
+tests/test_period.py::test_parse_shift_rejects[mut8] PASSED              [ 81%]
+tests/test_period.py::test_parse_shift_rejects[mut9] PASSED              [ 83%]
+tests/test_period.py::test_parse_shift_rejects[mut10] PASSED             [ 86%]
+tests/test_period.py::test_parse_shift_rejects[mut11] PASSED             [ 89%]
+tests/test_period.py::test_parse_shift_rejects[mut12] PASSED             [ 91%]
+tests/test_period.py::test_parse_shift_rejects[mut13] PASSED             [ 94%]
+tests/test_period.py::test_parse_shift_ok_and_idempotent PASSED          [ 97%]
+tests/test_period.py::test_all_days_holiday_bounded PASSED               [100%]
+
+============================= 37 passed in 0.25s ==============================
+exit=0

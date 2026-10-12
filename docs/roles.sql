@@ -95,3 +95,23 @@ grant execute on function
   decide_item(bigint, text, text, text),
   override_qa(bigint, text, text)
   to app_human;
+
+-- v5.0 agent GĐ Kinh doanh TMĐT (WP07, agents/sales_director.py): đọc nguồn
+-- việc của khối KD theo CỘT (không detail/user_hash/raw/sku_key — payload
+-- hàng duyệt dựng từ template mã/loại/kênh, không cần nội dung) + ghi leo
+-- thang SLA (append-only).
+--   agent_writer — INSERT sla_escalations (8 cột, trừ id/created_at) +
+--                  SELECT (id, queue_id, created_at) cho on-conflict/bản tin;
+--                  SELECT cột market_alerts / golden_discrepancies / leads.
+--   app_human    — SELECT sla_escalations đủ cột.
+grant insert (queue_id, block, handoff_class, assignee_role, escalate_to_role,
+  business_due_at, red_alert, created_by)
+  on sla_escalations to agent_writer;
+grant select (id, queue_id, created_at) on sla_escalations to agent_writer;
+grant select (id, kind, severity, channel, export_kind, status, opened_at)
+  on market_alerts to agent_writer;
+grant select (id, kind, status, created_at)
+  on golden_discrepancies to agent_writer;
+grant select (id, ts, channel, intent, status, question)
+  on leads to agent_writer;
+grant select on sla_escalations to app_human;

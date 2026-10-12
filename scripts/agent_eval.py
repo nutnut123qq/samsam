@@ -19,6 +19,10 @@ Agent:
     là tham chiếu (không trích đoạn); `trap_no_data` = NO_DATA, sources
     rỗng, không chữ số. KHÔNG nằm trong `required_agents` (chưa duyệt
     không chặn deploy).
+  - sales_director (v5.0, bộ MẪU chờ GĐ KD sửa): định tuyến SLA handoff
+    A/B + rủi ro qua `agents.sales_director.route/sla_state` trên
+    `data/directors/sales.json` THẬT — luật, không LLM/mạng/key/DB. Không
+    nằm trong `required_agents`.
 
 PASS = pass_rate >= min_pass_rate VÀ mọi ca thuộc `must_pass_kinds` pass
 (kind bắt buộc mà bộ ca không có ca nào -> FAIL, fail-closed).
@@ -188,9 +192,51 @@ def run_co_khi(cases: list[dict]) -> list[tuple[dict, bool, str]]:
     return out
 
 
+def _check_sales(c: dict, cfg: dict, sd) -> tuple[bool, str]:
+    from datetime import datetime
+
+    exp = c["expect"]
+    if c.get("all_types"):
+        bad = [t for t in cfg["object_types"]
+               if sd.route(cfg, t)["auto_eligible"] is not exp["auto_eligible"]
+               or cfg["object_types"][t]["risk"] == "low"]
+        return not bad, "" if not bad else f"loại đủ điều kiện tự duyệt: {bad}"
+    ot = c.get("object_type") or sd.alert_type(c["severity"])
+    if c["kind"] in ("route", "trap_no_auto"):
+        r = sd.route(cfg, ot)
+        got = {k: r[k] for k in exp}
+        return got == exp, "" if got == exp else f"kỳ vọng {exp}, có {got}"
+    st = sd.sla_state({"object_type": ot,
+                       "created_at": datetime.fromisoformat(c["created_at"])},
+                      cfg, datetime.fromisoformat(c["now"]))
+    due = datetime.fromisoformat(exp["business_due_at"])
+    ok = st["state"] == exp["state"] and st["business_due_at"] == due
+    return ok, "" if ok else (f"kỳ vọng {exp['state']} hạn {due:%d/%m %H:%M}"
+                              f", có {st['state']} hạn "
+                              f"{st['business_due_at']:%d/%m %H:%M}")
+
+
+def run_sales_director(cases: list[dict]) -> list[tuple[dict, bool, str]]:
+    """v5.0 (bộ MẪU chờ GĐ KD sửa): định tuyến SLA/rủi ro qua
+    `agents.sales_director.route/sla_state` trên data/directors/sales.json
+    THẬT — luật, không LLM/mạng/key/DB."""
+    from agents import sales_director as sd  # lazy
+
+    cfg = sd.load_sales_config()
+    out = []
+    for c in cases:
+        try:
+            ok, detail = _check_sales(c, cfg, sd)
+        except Exception as e:  # noqa: BLE001 — ca lỗi = FAIL, chạy tiếp
+            ok, detail = False, f"{type(e).__name__}"
+        out.append((c, ok, detail))
+    return out
+
+
 RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot,
-           "co_khi": run_co_khi}
-RULE_AGENTS = {"guardrail", "co_khi"}  # chấm bằng luật, không model
+           "co_khi": run_co_khi, "sales_director": run_sales_director}
+# chấm bằng luật, không model
+RULE_AGENTS = {"guardrail", "co_khi", "sales_director"}
 
 
 def score(results: list[tuple[dict, bool, str]], agent_cfg: dict) -> dict:

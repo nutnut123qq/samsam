@@ -185,6 +185,68 @@ python -m pipelines.red_alert --check-routing      # exit 1 = chưa có người
   dev điền `data/red_alert_routing.json` (chỉ nhận vai trò `phap_che`/
   `bks`; `tgd`/`ha_tang` và vai trò khác bị loại tự động). Hiện hệ thống chỉ ghi bảng, chưa gửi email/Zalo (external-dep).
 
+## 4c. Agent GĐ Kinh doanh TMĐT (v5.0)
+
+Agent giám đốc đầu tiên cấu hình thật trên hàng duyệt chung (mục 4b): gom
+việc khối KD từ nguồn thật vào `approval_queue` (khối `sales`), theo dõi
+SLA handoff theo GIỜ LÀM VIỆC, leo thang khi quá hạn, làm bản tin ngày/tuần.
+Không LLM, không tự gửi, không tự duyệt.
+
+```
+python -m agents.sales_director --run --dry-run --bulletin   # CHỈ ĐỌC: in kế hoạch + bản tin ra màn hình
+python -m agents.sales_director --run                        # đẩy việc mới + quét SLA/leo thang (15 phút/lần khi có lịch)
+python -m agents.sales_director --bulletin                   # bản tin hôm qua → data/reports/sales-director-day-<ngày>.md
+python -m agents.sales_director --bulletin --period week     # bản tin tuần ISO trước
+python -m pipelines.approval_queue --pending --block sales   # GĐ xem hàng chờ khối KD
+python -m pipelines.approval_queue --approve <ID> --by "<tên GĐ bán hàng>"
+```
+
+Loại việc (cấu hình `data/directors/sales.json` — BẢN DEV, chờ GĐ KD/TGĐ
+duyệt):
+
+| Loại | Nhãn | Lớp | Rủi ro | Người nhận → leo thang |
+|---|---|---|---|---|
+| `cskh_handoff` | Câu hỏi chatbot chưa trả lời (chuyển người) | A | medium | Quản lý MXH (`mxh`) → GĐ bán hàng + cảnh báo đỏ |
+| `cskh_reply` | Trả lời CSKH cần duyệt | A | medium | `mxh` → GĐ bán hàng + cảnh báo đỏ |
+| `market_alert_s1` | Xử lý cảnh báo sàn S1 | A | high | `mxh` → GĐ bán hàng + cảnh báo đỏ |
+| `market_alert_s2` | Xử lý cảnh báo sàn S2 | B | medium | GĐ bán hàng → TGĐ |
+| `price_review` | Phiếu lệch giá golden chờ duyệt | B | high | GĐ bán hàng → TGĐ |
+| `price_change` / `listing_change` / `b2b_quote` / `affiliate_program` | Đổi giá / đổi listing / báo giá B2B / affiliate | B | high | GĐ bán hàng → TGĐ |
+| `message_template` | Mẫu tin nhắn | B | medium | GĐ bán hàng → TGĐ |
+
+- **SLA giờ làm việc**: lớp A = 2 giờ, lớp B = 4 giờ (khóa theo WP07). Ca
+  ship là GIẢ ĐỊNH 08:00–18:00 thứ Hai–thứ Sáu, chưa có ngày lễ: ngoài ca
+  đồng hồ SLA dừng, chạy lại từ đầu ca kế tiếp (tạo thứ Sáu 17:59 → hạn
+  thứ Hai 09:59). Sửa ca/ngày lễ ở khóa `business_hours` của
+  `sales.json` (`start`/`end` "HH:MM", `workdays` 0 = thứ Hai, `holidays`
+  "YYYY-MM-DD") rồi chạy `python -m agents.sales_director --run --dry-run`
+  để kiểm — cấu hình sai thì exit 1 kèm lý do.
+- **Leo thang**: quá SLA → 1 dòng `sla_escalations` (mỗi mục 1 lần). Lớp A
+  kèm cảnh báo đỏ (`red_alerts` — hôm nay chưa có người nhận độc lập,
+  xem 4b): S1 mỗi mục 1 cảnh báo; câu hỏi CSKH gom 1 cảnh báo/lần quét kèm
+  danh sách mã mục (khách spam không làm ngập kênh cảnh báo đỏ). Lớp B vào
+  mục "Leo thang TGĐ" của bản tin. Mục hết hạn tuyệt đối mà chưa leo thang
+  (lễ/Tết, cron dừng, hoặc bị expire bởi lệnh khác) vẫn được leo thang với
+  lý do "Hết hạn tuyệt đối chưa ai xử lý" (trong 7 ngày). Lead `new` quá 8
+  giờ làm việc chỉ được nhắc trong bản tin (không thành mục duyệt).
+- **Nguồn**: cảnh báo sàn đóng rồi mở lại (bán lại listing) = mục MỚI, SLA
+  mới. Câu chatbot chưa trả lời gom theo khách/ngày: đang có mục chờ thì
+  tin mới dồn vào mục đó; mục đã quyết (duyệt/từ chối/hết hạn) mà khách
+  hỏi tiếp → mục MỚI, SLA mới. Mỗi lần chạy đẩy tối
+  đa `sources.max_cskh_per_run` mục CSKH mới, phần vượt chờ lần sau (bản
+  tin có dòng đếm).
+- **Hạn tuyệt đối** (`sla_hours`, ≥ 64–66 giờ đồng hồ để luôn kịp leo thang)
+  hết → `expired`, KHÔNG BAO GIỜ tự duyệt; việc phải đẩy lại từ đầu. Cảnh
+  báo S1 luôn rủi ro high — không vào lane tự duyệt kể cả khi có luật ký.
+- Mục trong hàng chỉ chứa mã/loại/kênh/giờ (không câu hỏi khách, không tên
+  listing): người duyệt mở tab "Chưa trả lời", file sàn hoặc phiếu golden
+  theo mã trong mục. Bản tin chỉ có số đếm + `#id` — không SĐT/email/tên.
+- External-dep: người duyệt thật + người trực handoff A + tuyến dự phòng
+  (TGĐ chốt — `approvers` rỗng); ca làm việc + lịch lễ/Tết thật; kênh gửi
+  bản tin/nhắc (Zalo/email — hôm nay chỉ ghi file + bảng); người nhận cảnh
+  báo đỏ độc lập; bảng vùng–đại lý thật (từ khóa tỉnh trong `regions` là
+  GIẢ ĐỊNH); lịch cron (chưa đưa vào `EXPECTED_JOBS` của bản tin sức khỏe).
+
 ## 5. Kênh Zalo OA (khi chạy thật)
 
 ```

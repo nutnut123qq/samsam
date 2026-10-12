@@ -3,7 +3,7 @@
 - **Dành cho ai:** Quản lý hạ tầng AI (hoặc đội triển khai khi chưa tuyển
   xong), người được TGĐ giao mở tài khoản cloud.
 - **Làm gì:** chọn nhà cung cấp Postgres managed trong nước, nối app vào
-  bằng TLS, đưa đủ 35 bảng lên, bật backup + diễn tập khôi phục.
+  bằng TLS, đưa đủ 36 bảng lên, bật backup + diễn tập khôi phục.
   bằng TLS, đưa đủ bảng của `docs/schema.sql` lên, bật backup + diễn tập khôi phục.
 - **Cần gì (external-dep — công ty cấp, repo này KHÔNG giả lập):** tài
   khoản + thẻ thanh toán nhà cung cấp; bật PITR/WAL; object storage
@@ -63,7 +63,7 @@ Người làm 1 lần trên console: bật PITR/WAL, đặt retention WAL, đọ
 cấu hình để kiểm, lưu biên bản. Diễn tập PITR ra instance tạm của nhà
 cung cấp (mốc 30/11 và 18/12), đo RTO, xóa instance sau khi đo.
 
-## 4. Đưa 35 bảng lên cloud
+## 4. Đưa 36 bảng lên cloud
 ## 4. Đưa toàn bộ bảng lên cloud
 
 Chọn 1 trong 2 đường cho từng bảng.
@@ -71,7 +71,7 @@ Chọn 1 trong 2 đường cho từng bảng.
 ### Đường A — dựng mới từ nguồn trong repo
 
 ```
-python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ 35 bảng
+python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ 36 bảng
 python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ số bảng
 python -m ingest.core_store         # products, claims_approved, plots, plot_logs, orders, assets
 python -m ingest.golden_store       # sku_master, sku_map, price_list, golden_discrepancies
@@ -85,7 +85,7 @@ Bảng sinh lúc chạy bắt đầu RỖNG theo đường A: `leads`, `content_
 ### Đường B — mang dữ liệu đang có
 
 ```
-python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts 35 bảng)
+python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts 36 bảng)
 python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts mọi bảng)
 pg_restore --no-owner --no-privileges --exit-on-error -d samsam <file .dump>   # vào DB cloud rỗng (PG* env, sslmode=require)
 ```
@@ -126,6 +126,7 @@ bảng nào thì dừng, không bật app.
 | `decisions` | B | (v4.0) append-only — override_qa / expired |
 | `channel_snapshots` | B | (v4.0) số liệu kênh nhập tay/API theo kỳ |
 | `red_alerts` | B | (v4.0) append-only (trigger) — cảnh báo đỏ không được mất |
+| `sla_escalations` | B | (v5.0) append-only — leo thang SLA khối KD (đã leo thang mục nào, lúc nào) không dựng lại được |
 | `sim_runs` | B | nghiên cứu giả lập persona (v7.3) — lịch sử chạy model/prompt/seed để kiểm toán, không PII |
 | `intel_items` | A (chạy lại `python -m crawler.intel --run`) hoặc B | tin thị trường công khai (v7.0) — chỉ tiêu đề + trích ≤300 ký tự + link; B giữ tin cũ đã trôi khỏi RSS |
 | `machines` | B | sổ máy cơ khí (v9.5) — nhập tay, không có nguồn dựng lại |
