@@ -2912,3 +2912,52 @@ select distinct on (user_hash, channel)
 from chat_consents
 where action in ('granted', 'withdrawn')
 order by user_hash, channel, id desc;
+
+-- ============================================================================
+-- v6.2 (MKT-03 ảnh AI, WP08): 1 dòng / file ảnh nháp do
+-- `pipelines.image_studio` ghép (packshot THẬT dán nguyên khối lên nền tất
+-- định hoặc nền do API sinh ảnh tạo). File PNG nằm ngoài DB
+-- (`IMAGE_OUT_DIR/<file_sha256>.png` + sidecar `.json`); bảng giữ metadata
+-- truy vết + liên kết nháp `content_drafts` (content_type 'image', pending —
+-- người duyệt, người đăng tay). Insert-only: agent_writer chỉ SELECT/INSERT
+-- (docs/roles.sql), KHÔNG update/delete, không delete-by-source.
+--   ai_generated  — nền do provider AI sinh (provider <> 'none'). Ràng buộc
+--                   DB: ảnh AI LUÔN có nhãn "Nội dung có sử dụng AI" trong
+--                   label_text + model + prompt_sha256 (acceptance WP08
+--                   "100% asset AI có nhãn + metadata model/prompt/ngày" —
+--                   ngày = created_at). Chuỗi nhãn phải trùng labels.ai[0]
+--                   của data/guardrail_rules.json (drift-guard trong test).
+--   packshot_sha256 — sha256 file packshot gốc công ty cấp (vùng nhãn bao bì
+--                   được kiểm khớp pixel tuyệt đối trước khi ghi) — của
+--                   TỪNG dòng (2 SKU có thể dùng 2 file packshot khác bytes
+--                   mà cùng pixel -> cùng ảnh).
+--   meta          — sidecar JSON đầy đủ (labels, box, background, created_at;
+--                   sidecar mô tả FILE: không chứa sku/kênh/format/sha file
+--                   packshot gốc — các thứ đó ở cột của dòng; meta MỌI dòng
+--                   cùng ảnh == sidecar).
+-- Danh tính asset = (file_sha256, sku, channel, format) = đúng 1 mục CLI
+-- (SKU × kênh × format) trên 1 ảnh: cùng 1 ảnh cho 2 kênh / 2 SKU (packshot
+-- y hệt) / 2 format cùng cỡ = 2 dòng / 2 nháp (chung file PNG + sidecar);
+-- chạy lại cùng mục -> skipped (unique chặn cả race 2 process).
+create table if not exists image_assets (
+  id bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  file_sha256 text not null,
+  file_name text not null,
+  sku text not null,
+  channel text not null,
+  format text not null,
+  ai_generated boolean not null,
+  label_text text not null,
+  provider text not null,
+  model text,
+  prompt_sha256 text,
+  prompt_version text,
+  packshot_sha256 text not null,
+  draft_id bigint not null references content_drafts(id),
+  meta jsonb not null,
+  created_by text not null,
+  unique (file_sha256, sku, channel, format),
+  check (not ai_generated or (label_text like '%Nội dung có sử dụng AI%'
+         and model is not null and prompt_sha256 is not null))
+);

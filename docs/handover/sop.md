@@ -341,6 +341,51 @@ duyệt):
   báo đỏ độc lập; bảng vùng–đại lý thật (từ khóa tỉnh trong `regions` là
   GIẢ ĐỊNH); lịch cron (chưa đưa vào `EXPECTED_JOBS` của bản tin sức khỏe).
 
+### Sinh ảnh nháp (MKT-03, v6.2)
+
+Chuẩn bị: packshot THẬT do công ty cấp đặt tại
+`<PACKSHOT_DIR>/<sku_key>.png` (PNG nền trong suốt; mặc định
+`data/packshots/`, gitignored) — ví dụ `data/packshots/mat-ong-sam-300ml.png`.
+Ảnh mẫu "MẪU" chỉ dùng cho test, không đăng.
+
+```
+python -m pipelines.image_studio --sku mat-ong-sam-300ml --channel facebook --format 1:1 --headline "Quà tặng từ núi rừng"
+python -m pipelines.image_studio --sku all --channel facebook --channel shopee --format 1:1 --format 9:16 --headline "..."
+```
+
+- Mỗi dòng in 1 ảnh (SKU × kênh × format): `created #id <sha>.png` (nháp
+  mới, `content_type=image`, `pending`; cùng 1 ảnh cho 2 kênh, cho 2 SKU
+  có packshot y hệt, hay 2 format cùng cỡ = 2 nháp riêng, chung file
+  `<sha>.png`), `skipped <sha>.png` (ảnh y hệt đã có nháp CÙNG SKU + kênh
+  + format — chạy lại không nhân đôi; kể cả nháp đó đã bị reject: muốn sinh
+  lại thì đổi headline/`--scene` để ra ảnh mới; kèm "nháp mồ côi #id" nếu
+  2 lần chạy song song cùng mục → người **reject** nháp đó),
+  `refused <code>: <lý do>`
+  (không gọi provider, không ghi file/DB), `failed: <lý do>` (lỗi ghi
+  file/DB — chạy lại được).
+- Mã từ chối: `ruou` (rượu — cấm mọi kênh), `maket_xnqc` (MỌI SKU TPBVSK —
+  creative TPBVSK phải dùng maket XNQC), `readiness` (SKU chưa đủ điều kiện
+  kênh: cần tự công bố đã xác minh / XNQC + kênh trong allowed_channels),
+  `kenh_la`/`format_la`/`sku_la`, `headline` (chữ trên ảnh vi phạm
+  guardrail / dài quá), `prompt_cam` (mô tả nền `--scene` có người/y tế/chữ/
+  nhãn/logo/bao bì/sức khỏe), `font` (thiếu font tiếng Việt),
+  `packshot_thieu`/`packshot_loi` (thiếu/hỏng ảnh sản phẩm),
+  `packshot_lech` (vùng sản phẩm bị vẽ đè — ảnh bị loại), `provider`,
+  `config`.
+- Exit 0 = không có `failed`; 1 = có `failed`; 2 = sai tham số,
+  `IMAGE_PROVIDER` chưa cắm (chỉ `none`), hoặc DB không kết nối được (kiểm
+  TRƯỚC khi dựng ảnh).
+- Nháp vào tab **Duyệt & Lịch** (text = chữ trên ảnh + tên file `<sha>.png`
+  → sha bản duyệt ràng cả ảnh). Sau khi duyệt, NGƯỜI tải ảnh
+  `data/image_assets/<sha>.png` (hoặc `IMAGE_OUT_DIR`) lên kênh tay — agent
+  KHÔNG đăng. Sidecar `<sha>.json` cạnh ảnh ghi model/prompt/ngày/sha
+  packshot đã thu nhỏ (mô tả FILE, không chứa SKU/kênh/format/sha file
+  packshot gốc — các thứ đó ở nháp/bảng `image_assets` từng dòng; `meta`
+  của mọi dòng cùng ảnh == sidecar).
+- Golden hiện tại: 0 SKU đủ điều kiện sinh ảnh thật (8 TPBVSK cần maket
+  XNQC, 3 mật ong chưa xác minh tự công bố, 2 rượu cấm) — lệnh chạy ra toàn
+  `refused` là ĐÚNG cho tới khi Pháp chế/Sản xuất cập nhật golden.
+
 ## 5. Kênh Zalo OA (khi chạy thật)
 
 ```
@@ -988,7 +1033,7 @@ python -m agents.mkt_director --bulletin
   (TGĐ), người duyệt thật + SSO (`approvers` đang rỗng), XNQC/channel
   policy per SKU (Pháp chế) — chưa có thì lịch thật ra ít ô kèm SKU.
 
-## 5f. Tài chính–kế hoạch (v9.1) — giá vốn, P&L, ngân sách ads, chi phí vận hành, dòng tiền
+## 5l. Tài chính–kế hoạch (v9.1) — giá vốn, P&L, ngân sách ads, chi phí vận hành, dòng tiền
 
 **Làm gì:** 5 agent FP&A tất định (không LLM, không gọi mạng, không gửi gì
 ra ngoài). Chỉ BÁO CÁO + ĐỀ XUẤT vào hàng duyệt: không lệnh chi, không cài
@@ -1088,7 +1133,7 @@ management key OpenRouter (`key_usage_master`) cho đối chiếu chi phí key;
 Quản lý MXH cài trần ngân sách trên nền tảng ads; GĐ tài chính ký P&L/bản
 tin/nghiệm thu WP12.
 
-## 5h. Phòng Dự án (v8.3 — WP11 DA, agent KHÔNG tự nộp/gửi/liên hệ)
+## 5m. Phòng Dự án (v8.3 — WP11 DA, agent KHÔNG tự nộp/gửi/liên hệ)
 
 **Radar chương trình (DA-03, sáng hằng ngày):**
 1. Thu tin: `python -m crawler.intel --run` (chỉ nguồn đã duyệt; nguồn

@@ -1,5 +1,36 @@
 # STATUS — v2.1-garden-log (2026-10-11)
 
+## v6.2-anh-ai — WP08 MKT-03 ảnh AI (contract trong DONE.md)
+
+**Có gì:** `pipelines/image_studio.py` ghép packshot THẬT (file công ty cấp,
+`PACKSHOT_DIR`) lên nền: nền tất định gradient (provider `none`, mặc định,
+0 mạng) hoặc nền do API sinh ảnh tạo qua cổng `generate_background(prompt,
+size)` — provider chỉ nhận prompt + kích thước, không bao giờ nhận ảnh sản
+phẩm. Packshot dán SAU CÙNG, chỉ thu nhỏ; file PNG ghi xong được đọc lại và
+so MỌI pixel đặc của packshot — lệch 1 pixel là loại ảnh. Nhãn "Nội dung có
+sử dụng AI" (+ nhãn QC) luôn vẽ trên ảnh; metadata model/prompt sha+version/
+ngày/sha packshot ở sidecar JSON (mô tả file: sha pixel packshot đã thu
+nhỏ) + bảng mới `image_assets` (1 dòng/SKU × kênh × format, sha file
+packshot gốc từng dòng; CHECK DB: ảnh AI
+phải có nhãn + model + prompt); ảnh không EXIF/GPS. Rượu, MỌI SKU TPBVSK
+(cần maket XNQC), SKU chưa đủ readiness kênh, headline vi phạm guardrail,
+mô tả nền cấm ("bác sĩ áo blouse...") → từ chối trước khi gọi provider.
+Output chỉ là nháp `content_type=image` `pending` — agent không đăng. CLI
+`python -m pipelines.image_studio`; eval `agent_eval --agent mkt03` (15 ca,
+tất định).
+
+**Số liệu hiện tại:** golden có 0 SKU đủ điều kiện sinh ảnh thật — 8 TPBVSK
+→ `maket_xnqc`, 3 mật ong → `readiness` (tự công bố chưa xác minh / kênh
+ngoài allowed_channels), 2 rượu → `ruou`. Ảnh mẫu evidence dùng packshot
+"MẪU" tự sinh + map readiness tiêm, không phải ảnh thật.
+
+**External-dep (chưa có người thật duyệt):** key + hợp đồng API sinh ảnh
+(chọn sau, có phí — cắm provider phải bọc kill/cap/usage như llm_gateway);
+packshot thật từng SKU; GĐ Marketing duyệt layout/màu/template
+`image_background` + lô ảnh; font thương hiệu; Pháp chế quyết quy cách nhãn
+AI, nền tất định có cần nhãn AI không, ảnh là "quảng cáo"; `xnqc_records`
+(maket XNQC) cho TPBVSK; xác minh tự công bố mật ong; lưu trữ cloud asset.
+
 ## v6.1-content-listing — WP08 MKT-02 content + listing (contract trong DONE.md)
 
 **Có gì:** `pipelines/content.py` mở rộng (không pipeline thứ hai) —

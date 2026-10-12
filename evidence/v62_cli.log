@@ -1,0 +1,83 @@
+# v6.2 W62.4 gate — CLI chay that tren DB w41 (DATABASE_URL tu w41.env, khong in DSN) — 2026-10-12T14:44:22+07:00
+## python -m ingest.golden_store
+[load] sku_changed=0, map_changed=0, price_inserted=0, price_closed=0, price_same=34
+[disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+exit=0
+## packshot MAU cho moi SKU (scratchpad, khong vao repo)
+packshot mau: 13
+exit=0
+## so dem TRUOC
+image_assets: 0
+content_drafts by content_type: [('listing', 7)]
+## PACKSHOT_DIR=<scratchpad>/cli_pk IMAGE_OUT_DIR=<scratchpad>/cli_out IMAGE_PROVIDER=(unset) python -m pipelines.image_studio --sku all --channel facebook --channel shopee --format 1:1 --headline "Quà tặng từ núi rừng"
+savina-12v × facebook × 1:1: refused maket_xnqc: savina-12v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+savina-12v × shopee × 1:1: refused maket_xnqc: savina-12v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+saphraton-20v × facebook × 1:1: refused maket_xnqc: saphraton-20v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+saphraton-20v × shopee × 1:1: refused maket_xnqc: saphraton-20v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+saphraton-combo-2x20v × facebook × 1:1: refused maket_xnqc: saphraton-combo-2x20v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+saphraton-combo-2x20v × shopee × 1:1: refused maket_xnqc: saphraton-combo-2x20v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+saphraton-40v × facebook × 1:1: refused maket_xnqc: saphraton-40v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+saphraton-40v × shopee × 1:1: refused maket_xnqc: saphraton-40v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+saphraton-80v × facebook × 1:1: refused maket_xnqc: saphraton-80v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+saphraton-80v × shopee × 1:1: refused maket_xnqc: saphraton-80v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+savigout-30v × facebook × 1:1: refused maket_xnqc: savigout-30v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+savigout-30v × shopee × 1:1: refused maket_xnqc: savigout-30v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+sapentol-30v × facebook × 1:1: refused maket_xnqc: sapentol-30v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+sapentol-30v × shopee × 1:1: refused maket_xnqc: sapentol-30v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+da-an-sam-30v × facebook × 1:1: refused maket_xnqc: da-an-sam-30v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+da-an-sam-30v × shopee × 1:1: refused maket_xnqc: da-an-sam-30v là TPBVSK — creative TPBVSK phải dùng maket XNQC (hồ sơ XNQC chưa có — external-dep); agent không tạo biến thể ảnh
+mat-ong-sam-120ml-1hu × facebook × 1:1: refused readiness: mat-ong-sam-120ml-1hu mức CAM trên kênh facebook — chưa đủ điều kiện ảnh quảng cáo (cần TP_THUONG/QC_DAY_DU: tự công bố đã xác minh + kênh trong allowed_channels)
+mat-ong-sam-120ml-1hu × shopee × 1:1: refused readiness: mat-ong-sam-120ml-1hu mức CAM trên kênh shopee — chưa đủ điều kiện ảnh quảng cáo (cần TP_THUONG/QC_DAY_DU: tự công bố đã xác minh + kênh trong allowed_channels)
+mat-ong-sam-120ml-2hu × facebook × 1:1: refused readiness: mat-ong-sam-120ml-2hu mức CAM trên kênh facebook — chưa đủ điều kiện ảnh quảng cáo (cần TP_THUONG/QC_DAY_DU: tự công bố đã xác minh + kênh trong allowed_channels)
+mat-ong-sam-120ml-2hu × shopee × 1:1: refused readiness: mat-ong-sam-120ml-2hu mức CAM trên kênh shopee — chưa đủ điều kiện ảnh quảng cáo (cần TP_THUONG/QC_DAY_DU: tự công bố đã xác minh + kênh trong allowed_channels)
+mat-ong-sam-300ml × facebook × 1:1: refused readiness: mat-ong-sam-300ml mức CAM trên kênh facebook — chưa đủ điều kiện ảnh quảng cáo (cần TP_THUONG/QC_DAY_DU: tự công bố đã xác minh + kênh trong allowed_channels)
+mat-ong-sam-300ml × shopee × 1:1: refused readiness: mat-ong-sam-300ml mức CAM trên kênh shopee — chưa đủ điều kiện ảnh quảng cáo (cần TP_THUONG/QC_DAY_DU: tự công bố đã xác minh + kênh trong allowed_channels)
+ruou-sam-chai-thuy-tinh-500ml × facebook × 1:1: refused ruou: ruou-sam-chai-thuy-tinh-500ml là rượu — cấm quảng cáo/khuyến mại rượu (Luật 44/2019), không sinh nội dung/listing online
+ruou-sam-chai-thuy-tinh-500ml × shopee × 1:1: refused ruou: ruou-sam-chai-thuy-tinh-500ml là rượu — cấm quảng cáo/khuyến mại rượu (Luật 44/2019), không sinh nội dung/listing online
+ruou-sam-binh-su-do-500ml × facebook × 1:1: refused ruou: ruou-sam-binh-su-do-500ml là rượu — cấm quảng cáo/khuyến mại rượu (Luật 44/2019), không sinh nội dung/listing online
+ruou-sam-binh-su-do-500ml × shopee × 1:1: refused ruou: ruou-sam-binh-su-do-500ml là rượu — cấm quảng cáo/khuyến mại rượu (Luật 44/2019), không sinh nội dung/listing online
+[done] 26 ảnh — created 0, skipped 0, refused 26, failed 0 (nháp pending — người duyệt ở tab 'Duyệt & Lịch', người tải ảnh lên kênh tay; agent không đăng)
+exit=0
+## so dem SAU
+image_assets: 0
+content_drafts by content_type: [('listing', 7)]
+## file trong IMAGE_OUT_DIR: 0 (thu muc ton tai: khong)
+## IMAGE_PROVIDER=openai -> exit 2
+[error] IMAGE_PROVIDER='openai' chưa cắm — API sinh ảnh là external-dep; hỗ trợ: none
+exit=2
+## DATABASE_URL=postgresql://u@10.255.255.1:5432/x (host chet) -> exit 2
+[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết) — không ghi được nháp
+exit=2
+## thieu --headline -> exit 2
+usage: python -m pipelines.image_studio [-h] [--sku SKU]
+                                        [--channel {facebook,zalo,tiktok,shopee,web}]
+                                        [--format {1:1,4:5,9:16,banner}]
+                                        --headline HEADLINE [--scene SCENE]
+                                        [--by BY]
+python -m pipelines.image_studio: error: the following arguments are required: --headline
+exit=2
+## --channel chatbot -> exit 2
+usage: python -m pipelines.image_studio [-h] [--sku SKU]
+                                        [--channel {facebook,zalo,tiktok,shopee,web}]
+                                        [--format {1:1,4:5,9:16,banner}]
+                                        --headline HEADLINE [--scene SCENE]
+                                        [--by BY]
+python -m pipelines.image_studio: error: argument --channel: invalid choice: 'chatbot' (choose from 'facebook', 'zalo', 'tiktok', 'shopee', 'web')
+exit=2
+## file trong IMAGE_OUT_DIR sau cac lenh exit 2: 0
+
+# vong sua nghiem thu v6.2 — chay lai CLI that tren DB w41 SAU khi doi rang buoc unique (sha, kenh) — 2026-10-12T08:45:00+00:00
+## truoc
+image_assets 0 | drafts image 0
+## python -m pipelines.image_studio --sku all --channel facebook --channel shopee --format 1:1 --headline 'Quà tặng từ núi rừng'
+[done] 26 ảnh — created 0, skipped 0, refused 26, failed 0 (nháp pending — người duyệt ở tab 'Duyệt & Lịch', người tải ảnh lên kênh tay; agent không đăng)
+exit=0
+file trong out: 0
+## sau
+image_assets 0 | drafts image 0
+## anh mau evidence sinh lai (scratchpad v62_samples.py) — sidecar bo 'channel'
+none_1x1 sha 6dfecb27a97a png giữ nguyên bytes: True | channel trong sidecar: False
+   verify_packshot: True
+fake_9x16 sha d0b9771ed020 png giữ nguyên bytes: True | channel trong sidecar: False
+   verify_packshot: True

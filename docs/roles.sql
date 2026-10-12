@@ -11,8 +11,10 @@
 --   agent_writer — agent AI: đọc content_drafts + view sku_readiness (v4.2),
 --                  INSERT draft (11 cột, v6.1 — status
 --                  luôn default 'pending'), INSERT log (5 cột — trigger ép
---                  id/ts/db_role/hash). KHÔNG UPDATE/DELETE bảng nào, KHÔNG
---                  approvals, KHÔNG bảng khác, KHÔNG function duyệt.
+--                  id/ts/db_role/hash), v6.2 SELECT + INSERT image_assets
+--                  (15 cột — metadata ảnh nháp MKT-03, insert-only).
+--                  KHÔNG UPDATE/DELETE bảng nào, KHÔNG approvals, KHÔNG
+--                  bảng khác, KHÔNG function duyệt.
 --   app_human    — người (Streamlit/CLI): kế thừa agent_writer + đọc
 --                  approvals/log + execute function duyệt/xếp lịch/kiểm.
 --                  KHÔNG UPDATE/DELETE trực tiếp — mọi chuyển trạng thái đi
@@ -55,6 +57,15 @@ grant insert (brief, channel, text, guardrail, source, created_by,
   on content_drafts to agent_writer;
 grant insert (actor, action, object_type, object_id, detail)
   on agent_action_log to agent_writer;
+-- v6.2 (MKT-03 ảnh AI): agent ghi metadata ảnh nháp + đọc để idempotent
+-- theo (file_sha256, sku, channel, format). KHÔNG UPDATE/DELETE
+-- (insert-only; nháp mồ côi do race
+-- thì người reject draft, không xóa dòng).
+grant select on image_assets to agent_writer;
+grant insert (file_sha256, file_name, sku, channel, format, ai_generated,
+              label_text, provider, model, prompt_sha256, prompt_version,
+              packshot_sha256, draft_id, meta, created_by)
+  on image_assets to agent_writer;
 
 grant agent_writer to app_human;
 grant select on approvals, agent_action_log to app_human;

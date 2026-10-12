@@ -96,6 +96,7 @@ Streamlit demo.
 | `content_drafts` | Hàng duyệt + lịch đăng (`brief`,`channel`,`text`,`guardrail` jsonb snapshot,`status`,`reviewer`,`scheduled_date`, `created_by` người/agent tạo — v3.4, null = draft cũ không duyệt được; v6.1 `content_type` (mặc định post), `sku`, `is_ai`, `prompt_version`, `prompt_sha256` — luật lưu/duyệt chạy theo đúng loại/SKU của dòng; unique index `content_drafts_listing_key_idx` (sku, channel, prompt_version) cho listing chưa bị reject) | `pipelines.store` / Studio — INSERT pending; đổi trạng thái CHỈ qua function `approve_draft`/`reject_draft`/`schedule_draft` |
 | `chat_consents` | (v5.1) Đồng ý tư vấn qua chat Zalo/Messenger (bảng riêng vì `consents` bắt buộc `contact_id` — khách chat chưa để lại liên hệ): `user_hash` HMAC có muối 32 hex (KHÔNG user_id/psid), `channel` zalo/messenger, `action` prompted/granted/withdrawn, `policy_version`, `evidence_ref` = sha256(msg_id)[:16] — **APPEND-ONLY** (trigger `append_only_guard`); view `v_chat_consent_current` (granted/withdrawn mới nhất theo `id`) | `connectors.channels.record_consent` từ `zalo._reply` — CHỈ khi khách gõ TRỌN "Đồng ý"/"Không đồng ý" (không suy diễn), `prompted` khi gửi câu chào tin đầu; cờ `require_consent_for_llm` (data/channels.json) |
 | `content_drafts` | Hàng duyệt + lịch đăng (`brief`,`channel`,`text`,`guardrail` jsonb snapshot,`status`,`reviewer`,`scheduled_date`, `created_by` người/agent tạo — v3.4, null = draft cũ không duyệt được) | `pipelines.store` / Studio — INSERT pending; đổi trạng thái CHỈ qua function `approve_draft`/`reject_draft`/`schedule_draft` |
+| `image_assets` | (v6.2 MKT-03) 1 dòng/(ảnh × SKU × kênh × format) nháp = 1 mục CLI: UNIQUE (`file_sha256`,`sku`,`channel`,`format`) — `file_sha256` = tên file `<sha>.png` ngoài DB, cùng ảnh cho 2 kênh / 2 SKU packshot y hệt / 2 format cùng cỡ = 2 dòng/2 nháp chung file + sidecar, `sku`,`channel`,`format`,`ai_generated`,`label_text`,`provider`,`model`,`prompt_sha256`,`prompt_version`,`packshot_sha256` (sha file packshot gốc của dòng),`draft_id` FK→`content_drafts`,`meta` jsonb (sidecar — mô tả file, không chứa sku/kênh/format/sha file packshot gốc; `meta` mọi dòng cùng ảnh == sidecar),`created_by` — CHECK: `ai_generated` ⇒ nhãn "Nội dung có sử dụng AI" + model + prompt_sha256; insert-only | `python -m pipelines.image_studio` (`save_image`) — agent chỉ SELECT/INSERT |
 | `llm_usage` | 1 dòng/lời gọi LLM-embedding (`ts`,`agent_id`,`model`,`tokens_in/out`,`cost_usd` ước tính,`ok`,`error` đã mask) — không lưu prompt | `pipelines.llm_gateway` — insert-only; trần chi phí tháng theo agent đọc từ đây |
 | `sku_master` | Golden SKU (v3.2) — nguồn sự thật DUY NHẤT listing/pháp lý: `category` tpbvsk/food/alcohol, `pack_spec`, số+ngày giấy tiếp nhận, `xnqc_status`, `self_declaration_ok`, `allowed_channels`, `version` | `ingest.golden_store` từ `data/golden_skus.json` — upsert, giữ row `manual`; Pháp chế xác nhận pháp lý |
 | `sku_map` | Map `products.id` (crawl) ↔ `sku_key` golden — KHÔNG FK products; `approved_by` | `golden_store` (đề xuất agent) — Sản xuất duyệt |
@@ -233,10 +234,12 @@ idempotent theo kỳ (cùng kỳ → cùng tên file ghi đè).
 | `app_human` — thêm v5.0 | SELECT `sla_escalations` đủ cột | UPDATE/DELETE (append-only) |
 
 v8.3: 3 bảng phòng Dự án (`programs`, `org_prospects`, `project_milestones`) CHƯA grant cho `agent_writer`/`app_human` (`roles.sql` không đổi → mặc định bị từ chối); CLI `agents.da_*` chạy DSN chủ sở hữu — grant hẹp = someday.
+| `agent_writer` (agent AI) | SELECT `content_drafts` + view `sku_readiness` (v4.2); INSERT draft 11 cột (`brief`,`channel`,`text`,`guardrail`,`source`,`created_by` + v6.1 `content_type`,`sku`,`is_ai`,`prompt_version`,`prompt_sha256` → luôn `pending`); INSERT log 5 cột; v6.2 SELECT + INSERT `image_assets` (15 cột, insert-only) | UPDATE/DELETE mọi bảng (không tự duyệt được — `permission denied`), `approvals`, bảng khác, function duyệt |
+| `app_human` (người: Streamlit/CLI) | Kế thừa `agent_writer` + SELECT `approvals`/`agent_action_log` + EXECUTE `approve_draft`, `reject_draft`, `schedule_draft`, `verify_publish`, `verify_action_log` | UPDATE/DELETE trực tiếp |
 
 Giới hạn pilot: máy local vẫn chạy bằng DSN owner — chặn quyền chỉ có
 hiệu lực khi app/agent dùng DSN theo role. CHƯA chuyển DSN Streamlit/agent
-sang role: `roles.sql` chỉ cấp 3 bảng trên → dưới role, Streamlit mất
+sang role: `roles.sql` chỉ cấp vài bảng trên → dưới role, Streamlit mất
 `chunks`/`leads`/`plot_logs`... (tab Chat/Leads/Báo cáo/Nhật ký vườn gãy)
 và agent mất `llm_usage` (trần chi phí LLM tắt câm vì `_month_spend` lỗi =
 cho qua). DSN role hiện chỉ dùng cho tiến trình duyệt/ghi draft riêng (CLI
@@ -290,6 +293,8 @@ snapshot + lúc duyệt, ô check tay Studio) dùng `check_publish` (+ lớp
 `data/conversations.jsonl` (rotate `.1` >5MB, purge >30d) ·
 `data/zalo_tokens.json` (token hiện hành, gitignored) ·
 `data/zalo_seen.db` (dedup msg_id TTL) · `data/reports/` ·
+`data/image_assets/` (ảnh nháp `<sha>.png` + sidecar `.json`, v6.2) ·
+`data/packshots/` (packshot thật công ty cấp, v6.2 — cả 2 gitignored) ·
 `_histories` in-memory (mất khi restart — chấp nhận).
 
 ## 9. Giới hạn pilot (đọc trước khi hứa thêm)

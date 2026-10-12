@@ -120,6 +120,63 @@ content_zalo:     tin nhắn Zalo OA ngắn 60-100 chữ, lịch sự, kèm CTA
 content_blog:     mở bài blog 200-300 chữ, có tiêu đề
 ```
 
+## 2b. Ảnh AI (MKT-03, v6.2 — `pipelines/image_studio.py`)
+
+Ảnh marketing NHÁP = packshot THẬT (ảnh sản phẩm công ty cấp) dán nguyên
+khối lên một nền. AI (nếu có) chỉ vẽ NỀN — không bao giờ nhận ảnh sản phẩm,
+không sửa nhãn bao bì. Layout/màu/font ở `data/image_studio.json` (bản dev —
+chờ GĐ Marketing duyệt; font thương hiệu chưa có).
+
+| Template | Version | sha256 (12 hex đầu) | Trạng thái |
+|---|---|---|---|
+| `image_background` | `image_background@1` | `fe0fd85f3967` | chờ GĐ Marketing duyệt |
+
+Template `image_background` chỉ mô tả bối cảnh/ánh sáng/chất liệu, "không
+người, không chữ, không logo, không bao bì sản phẩm", chừa khoảng trống cho
+sản phẩm; `{scene}` (mô tả nền người nhập, rỗng → `default_scene` của
+config) thay bằng `str.replace`. Prompt cuối + sha256 + version lưu ở sidecar
+và bảng `image_assets` (truy vết).
+
+**Luật prompt nền (`image_studio.check_scene`):** `scene` bị trả về
+(`prompt_cam`) khi chứa từ `prompt_banned` (bác sĩ, blouse, dược sĩ, y tá,
+bệnh viện, phòng khám, ống nghe, chữ, nhãn, logo, bao bì, trước sau... — khớp
+chuẩn hóa như guardrail: hoa/thường, có/không dấu, ký tự chèn), câu nhắc
+sức khỏe/bệnh (`llm_gateway.is_health_question`) hoặc `guardrail.check`
+không ok (vd nhắc rượu). Ví dụ "bác sĩ áo blouse cầm sản phẩm" → trả về.
+
+**Provider nền:** env `IMAGE_PROVIDER`, mặc định `none` = gradient tất định 2
+màu `brand_colors`, 0 lời gọi mạng, `ai_generated=false`. Provider thật
+(OpenAI/Google/Stability… — có phí) = **external-dep**, CHƯA cắm: hàm
+`fn(prompt, size) -> (PIL.Image, {"model": str})` đăng ký vào
+`image_studio.PROVIDERS` SAU khi có key + hợp đồng, và PHẢI bọc như
+`llm_gateway` (kill-switch `LLM_KILL` + trần chi phí tháng agent `image`
+trong `data/llm_gateway.json` + ghi `llm_usage`). Provider trả sai kích
+thước / lỗi / không khai model → từ chối `provider` (không resize ngầm).
+
+**Luật nhãn:** nhãn AI `labels.ai[0]` ("Nội dung có sử dụng AI") LUÔN vẽ
+trên tấm nền ở `label_box` — kể cả nền tất định (lúc duyệt store kiểm lại
+với is_ai cố định, thiếu nhãn = không duyệt được; Pháp chế quyết sau có cần
+không). Loại `image` là quảng cáo (`ad: true`) → nhãn QC `labels.ad[0]`
+cũng vẽ. Cỡ chữ nhãn = max(`font_px_min`, `font_ratio` × cao ảnh) — không
+vừa ô → từ chối `config` (không thu nhỏ nhãn). Font phải đủ glyph mọi ký
+tự (kiểm từng ký tự) — thiếu → từ chối `font`, không vẽ ô vuông. MỌI chữ
+trên ảnh (headline + nhãn) = `text_layer`, qua `check_publish_llm`.
+
+**Luật packshot:** dán SAU CÙNG bằng alpha của chính nó, chỉ THU NHỎ (không
+phóng) 1 lần; ô headline/nhãn không được giao ô packshot (`config`). Sau khi
+ghi PNG, đọc lại và so MỌI pixel đặc (alpha 255) của packshot đã thu nhỏ
+với ảnh — lệch 1 pixel → `packshot_lech`, xóa file, không ghi DB. Output
+chỉ PNG, dựng mới từ pixel → không EXIF/GPS/XMP/ICC.
+
+**Từ chối trước khi gọi provider (0 file, 0 dòng DB):** rượu (`ruou`, mọi
+kênh/format kể cả map QC_DAY_DU), MỌI SKU TPBVSK (`maket_xnqc` — "creative
+TPBVSK phải dùng maket XNQC", hồ sơ XNQC chưa có), SKU chưa đủ readiness
+kênh (`readiness` — cần TP_THUONG/QC_DAY_DU), kênh/format lạ, headline vi
+phạm/dài (`headline`), prompt nền cấm (`prompt_cam`), thiếu font, packshot
+thiếu/hỏng (`packshot_thieu`/`packshot_loi`). Eval: `python
+scripts/agent_eval.py --agent mkt03 --no-record` (bộ ca
+`data/eval/mkt03.jsonl`, chờ GĐ Marketing/Pháp chế duyệt nhãn).
+
 ## 3. System prompt — chatbot CSKH (`api/rag.py:23-42`)
 
 Hằng `SYSTEM` dùng trong `answer()`; sentinel `NO_DATA = "Chưa đủ dữ
