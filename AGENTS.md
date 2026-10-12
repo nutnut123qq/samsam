@@ -32,6 +32,7 @@ chat lẫn embeddings) + Streamlit.
 | Demo UI | `streamlit run app/streamlit_app.py` (hoặc `python demo.py`) |
 | Zalo webhook | `python -m connectors.zalo` → :8788/zalo-webhook |
 | Mock E2E Zalo | `python scripts/zalo_mock.py` |
+| CRM lead & đại lý (v5.2) | `python -m ingest.crm --load-dealers --by <tên>` · `--add-contact - [--lead ID] --by <tên>` (JSON qua stdin, cần `CONTACT_VAULT_KEY`) · `--consent ID --purpose cskh\|marketing\|dai_ly --grant\|--withdraw --source S [--evidence REF --policy-version V] [--dealer CODE] --by <tên>` · `--assign LEAD --dealer CODE [--province TÊN] --by <tên>` · `--status LEAD STATE --by <tên>` · `--report` · `--handoff LEAD --dealer CODE --by <tên>` (chỉ IN payload cho người chuyển) |
 | Số hóa tài liệu (F15.1) | `python -m ingest.doc_intake` (intake `DOC_INTAKE_DIR`) · `--pending` · `--verify <sha256> --by "<tên>"` · `--reject <sha256> --by "<tên>"` |
 | Eval RAG | `python scripts/eval_qa.py` (12 câu questions.md, ~90s, exit 0 nếu ≥10/12 + 2 bẫy pass) |
 | Eval theo agent | `python scripts/agent_eval.py --agent guardrail\|chatbot` (ca `data/eval/`, ngưỡng `config.json`, ghi `eval_runs`; `--no-record`/`--allow-dirty`) |
@@ -61,6 +62,10 @@ chat lẫn embeddings) + Streamlit.
   ghi sàn/giá, không PII người mua); `intel_import` (v7.2) nạp file
   intel nhập tay (đối thủ/Google Trends/comment kênh sở hữu) vào 5 bảng
   intel v7.2 — không request mạng, chỉ đọc golden, bỏ cột định danh
+  ghi sàn/giá, không PII người mua); `crm` (v5.2) kho liên hệ mã hóa
+  `contacts` + `consents` append-only + `dealers` + gán lead theo 34 tỉnh
+  (`data/vn_provinces_2025.json` GIẢ ĐỊNH, `data/dealer_regions.json` MẪU)
+  — không gửi gì ra ngoài
 - `pipelines/` — content draft + guardrail check (claim whitelist + banned words)
 - `app/` — Streamlit demo (3 tab: Chat, Content Studio, Chưa trả lời)
 - `data/` — jsonl dump, `claims_whitelist.json`, `banned_words.txt`
@@ -74,6 +79,10 @@ chat lẫn embeddings) + Streamlit.
 - Từ cấm tuyệt đối trong output: "chữa", "điều trị", "thuốc", "khỏi bệnh" — list đầy đủ ở `data/banned_words.txt`.
 - Tài khoản/keys đọc từ `.env`; secret không vào code/git.
 - Crawl delay ≥1s/request, chỉ trang public.
+- PII khách (SĐT/tên/email/địa chỉ) chỉ nằm trong `contacts` dạng
+  ciphertext (Fernet, khóa `CONTACT_VAULT_KEY`); bảng khác tham chiếu
+  `contact_id`. Liên hệ marketing / chuyển PII cho đại lý chỉ khi
+  `ingest.crm.can_contact()` True (mặc định False; `dai_ly` đích danh).
 
 ## Conventions
 - Tiếng Việt trong docstring/comment khi giải thích business; code English.

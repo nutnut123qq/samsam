@@ -1,0 +1,76 @@
+{
+  "_doc": "MẪU — bảng vùng → tỉnh (34 tỉnh mới, mỗi tỉnh đúng 1 vùng) và đại lý MẪU cho pilot CRM (ingest.crm --load-dealers). KHÔNG phải đại lý thật: danh sách đại lý/vùng thật + hoa hồng do GĐ bán hàng duyệt = external-dep. Không chứa tên/SĐT người thật. commission_default (%) áp cho tpbvsk/food; rượu (alcohol) kênh online luôn 0 bất kể số ở đây (ingest.crm.commission_rate).",
+  "status": "mau",
+  "regions": {
+    "MIEN_BAC": [
+      "Hà Nội",
+      "Hải Phòng",
+      "Quảng Ninh",
+      "Cao Bằng",
+      "Lạng Sơn",
+      "Lai Châu",
+      "Điện Biên",
+      "Sơn La",
+      "Tuyên Quang",
+      "Lào Cai",
+      "Thái Nguyên",
+      "Phú Thọ",
+      "Bắc Ninh",
+      "Hưng Yên",
+      "Ninh Bình"
+    ],
+    "MIEN_TRUNG": [
+      "Thanh Hóa",
+      "Nghệ An",
+      "Hà Tĩnh",
+      "Quảng Trị",
+      "Huế",
+      "Đà Nẵng",
+      "Quảng Ngãi",
+      "Gia Lai",
+      "Khánh Hòa",
+      "Đắk Lắk",
+      "Lâm Đồng"
+    ],
+    "MIEN_NAM": [
+      "TP. Hồ Chí Minh",
+      "Đồng Nai",
+      "Tây Ninh",
+      "Cần Thơ",
+      "Vĩnh Long",
+      "Đồng Tháp",
+      "Cà Mau",
+      "An Giang"
+    ]
+  },
+  "dealers": [
+    {
+      "code": "DLM01",
+      "name": "Đại lý MẪU 01",
+      "region": "MIEN_TRUNG",
+      "status": "active",
+      "commission_default": 10
+    },
+    {
+      "code": "DLM02",
+      "name": "Đại lý MẪU 02",
+      "region": "MIEN_TRUNG",
+      "status": "active",
+      "commission_default": 8
+    },
+    {
+      "code": "DLM03",
+      "name": "Đại lý MẪU 03",
+      "region": "MIEN_NAM",
+      "status": "active",
+      "commission_default": 10
+    },
+    {
+      "code": "DLM04",
+      "name": "Đại lý MẪU 04",
+      "region": "MIEN_BAC",
+      "status": "active",
+      "commission_default": 10
+    }
+  ]
+}

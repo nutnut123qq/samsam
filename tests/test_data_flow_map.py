@@ -18,8 +18,9 @@ import dpia_draft
 
 MAP_PATH = ROOT / "data" / "data_flow_map.json"
 RAW = json.loads(MAP_PATH.read_bytes().decode("utf-8"))
+# Module KHÔNG có đường gửi ra ngoài (v5.2: CRM — agent không tự liên hệ).
 NEW_SCRIPTS = {"scripts/review_load.py", "scripts/dpia_draft.py",
-               "scripts/contract_check.py"}
+               "scripts/contract_check.py", "ingest/crm.py"}
 KNOWN_EGRESS = {
     "connectors/zalo.py", "crawler/collect.py", "pipelines/llm_gateway.py",
     "scripts/health_bulletin.py", "scripts/zalo_mock.py",
@@ -31,7 +32,8 @@ REQUIRED_MODULES = [
     "ingest/lead_store.py", "api/rag.py", "pipelines/llm_gateway.py",
     "app/streamlit_app.py", "pipelines/content.py", "ingest/embed_store.py",
     "ingest/kb_internal.py", "ingest/doc_intake.py", "ingest/market_csv.py",
-    "scripts/health_bulletin.py", "crawler/collect.py", "scripts/db_backup.py"]
+    "scripts/health_bulletin.py", "crawler/collect.py", "scripts/db_backup.py",
+    "ingest/crm.py"]
 
 
 def _declared(m):
@@ -55,7 +57,8 @@ def test_every_egress_module_declared():
 
 
 def test_new_scripts_send_nothing_out():
-    assert not NEW_SCRIPTS & dpia_draft.egress_modules(ROOT)
+    bad = sorted(NEW_SCRIPTS & dpia_draft.egress_modules(ROOT))
+    assert not bad, f"module phải KHÔNG gửi gì ra ngoài nhưng có egress: {bad}"
 
 
 @pytest.mark.parametrize("mod", REQUIRED_MODULES)

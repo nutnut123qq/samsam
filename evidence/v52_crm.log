@@ -1,0 +1,121 @@
+# v5.2 W52.1 — apply_schema ×2 trên DB samsam_infra (2026-10-12T04:13:27+07:00)
+$ python scripts/apply_schema.py   # lần 1
+[done] schema applied — 27 bảng public: agent_action_log, approvals, assets, chunks, chunks_internal, claims_approved, consents, contacts, content_drafts, dealers, document_fields, documents, eval_runs, golden_discrepancies, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+exit=0
+$ python scripts/apply_schema.py   # lần 2
+[done] schema applied — 27 bảng public: agent_action_log, approvals, assets, chunks, chunks_internal, claims_approved, consents, contacts, content_drafts, dealers, document_fields, documents, eval_runs, golden_discrepancies, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+exit=0
+$ kiểm public: 3 bảng + view + trigger status + FK leads không nhân đôi
+tables [('consents',), ('contacts',), ('dealers',), ('v_consent_current',)]
+leads FK count [(2,)]
+triggers [('consents_append_only_row',), ('consents_no_truncate',), ('leads_status_check',)]
+public contacts rows [(0,)]
+
+# Ghi chú: lần chạy E2E đầu (trước vá) phát hiện '{"phone": "09xx-12x-***** (SĐT mẫu có chữ cái)"}' được CHẤP NHẬN (normalize_phone bỏ chữ cái rồi coi là hợp lệ) — đã vá: chỉ nhận chữ số ASCII + ' \t().-' + '+' đầu; test thêm case. Dưới đây là lần chạy SAU vá.
+
+# v5.2 E2E CLI trong schema tạm (PGOPTIONS search_path=crm_evd_758d2193c2) — 2026-10-12T04:17:06+07:00
+[setup] schema tạm crm_evd_758d2193c2 + schema.sql + lead #1 (câu hỏi mẫu không PII)
+[key] khóa test sinh tại chỗ trong shell (không in, không ghi file)
+$ python -m ingest.crm --load-dealers --by Evidence
+[ok] đại lý: mới=4 cập nhật=0 giữ nguyên=0
+exit=0
+$ python -m ingest.crm --load-dealers --by Evidence   # lần 2
+[ok] đại lý: mới=0 cập nhật=0 giữ nguyên=4
+exit=0
+$ CONTACT_VAULT_KEY='' python -m ingest.crm --add-contact - --lead 1 --by Evidence   # thiếu khóa (stdin = JSON đã che)
+[err] thiếu CONTACT_VAULT_KEY — không ghi/đọc PII (xem sop mục CRM để sinh khóa)
+exit=2
+count contacts = 0
+$ python -m ingest.crm --add-contact - --lead 1 --by Evidence   # stdin JSON (không in ở đây)
+[ok] contact #1 (mới) — gắn lead #1
+exit=0
+$ python -m ingest.crm --add-contact - --by Evidence   # cùng SĐT dạng +84, tên khác
+[ok] contact #1 (đã có)
+exit=0
+$ python -m ingest.crm --add-contact - --by Evidence   # SĐT sai — không echo
+[err] SĐT không hợp lệ — không ghi gì.
+exit=2
+$ python -m ingest.crm --handoff 1 --dealer DLM01 --by Evidence   # chưa gán
+[err] lead #1 không gán cho DLM01 — không ghi.
+exit=1
+$ python -m ingest.crm --assign 1 --dealer DLM03 --by Evidence   # đại lý vùng khác
+[err] đại lý DLM03 (vùng MIEN_NAM) không phụ trách Đà Nẵng — không ghi.
+exit=1
+$ python -m ingest.crm --assign 1 --dealer DLM01 --by Evidence
+[ok] lead #1 → DLM01 (Đà Nẵng)
+exit=0
+$ python -m ingest.crm --handoff 1 --dealer DLM01 --by Evidence   # CHƯA có consent dai_ly
+[ok] payload cho NGƯỜI chuyển tới đại lý (hệ thống không gửi):
+{
+  "lead_id": 1,
+  "dealer": "DLM01",
+  "province": "Đà Nẵng",
+  "intent": "order",
+  "question": "Tôi muốn đặt mua sâm giao về Quảng Nam"
+}
+exit=0
+$ CONTACT_VAULT_KEY='' python -m ingest.crm --consent 1 --purpose dai_ly --grant --source form_giay --evidence BB-EVD-001 --policy-version v0-nhap --dealer DLM01 --by Evidence
+[ok] consent #1: contact #1 dai_ly/DLM01 ĐỒNG Ý
+exit=0
+$ python -m ingest.crm --handoff 1 --dealer DLM01 --by Evidence   # CÓ consent dai_ly đích danh DLM01 (PII che *** trong log)
+[ok] payload cho NGƯỜI chuyển tới đại lý (hệ thống không gửi):
+{
+  "lead_id": 1,
+  "dealer": "DLM01",
+  "province": "Đà Nẵng",
+  "intent": "order",
+  "question": "Tôi muốn đặt mua sâm giao về Quảng Nam",
+  "phone": "***",
+  "name": "***",
+  "email": "***",
+  "address": "***"
+}
+exit=0
+$ python -m ingest.crm --handoff 1 --dealer DLM02 --by Evidence   # DL02 cùng vùng
+[err] lead #1 không gán cho DLM02 — không ghi.
+exit=1
+$ python -m ingest.crm --status 1 contacted --by Evidence
+[ok] lead #1: new → contacted
+exit=0
+$ python -m ingest.crm --status 1 new --by Evidence   # lùi
+[err] không lùi/giữ trạng thái contacted → new — không ghi.
+exit=1
+$ python -m ingest.crm --consent 1 --purpose dai_ly --withdraw --source dien_thoai --dealer DLM01 --by Evidence
+[ok] consent #2: contact #1 dai_ly/DLM01 RÚT
+exit=0
+$ python -m ingest.crm --handoff 1 --dealer DLM01 --by Evidence   # sau khi RÚT
+[ok] payload cho NGƯỜI chuyển tới đại lý (hệ thống không gửi):
+{
+  "lead_id": 1,
+  "dealer": "DLM01",
+  "province": "Đà Nẵng",
+  "intent": "order",
+  "question": "Tôi muốn đặt mua sâm giao về Quảng Nam"
+}
+exit=0
+$ CONTACT_VAULT_KEY='' python -m ingest.crm --report   # không cần khóa
+# CRM — lead & đại lý (không chứa PII)
+Liên hệ trong vault: 1
+Đồng ý hiện hành (mục đích: đồng ý / đã rút):
+  cskh: 0 / 0
+  marketing: 0 / 0
+  dai_ly: 0 / 1
+Lead theo tỉnh:
+  Đà Nẵng: 1
+Lead theo đại lý:
+  DLM01: 1
+Lead theo trạng thái:
+  contacted: 1
+Lead CHƯA gán (0 — tối đa 50):
+exit=0
+$ select thô contacts / leads / consents / agent_action_log (ciphertext KHÔNG in nguyên văn)
+contact #1 phone_hmac=c6d04b9e5476… phone_enc_la_token_fernet=True (len 100) name_enc_la_token=True select_tho_thay_PII=False province=Đà Nẵng
+count contacts = 1
+leads: [(1, 'Đà Nẵng', 'DLM01', 'contacted', True)]
+consents: [(1, 'dai_ly', True, 'DLM01'), (2, 'dai_ly', False, 'DLM01')]
+agent_action_log: [('crm_dealer_load', 'dealer', '*', '{"new": 4, "kept": 0, "updated": 0}'), ('crm_dealer_load', 'dealer', '*', '{"new": 0, "kept": 4, "updated": 0}'), ('crm_contact_add', 'contact', '1', '{"new": true, "lead_id": 1, "province": "Đà Nẵng"}'), ('crm_contact_add', 'contact', '1', '{"new": false, "lead_id": null, "province": null}'), ('crm_assign', 'lead', '1', '{"dealer": "DLM01", "province": "Đà Nẵng"}'), ('crm_handoff', 'lead', '1', '{"dealer": "DLM01", "lead_id": 1, "pii_included": false}'), ('crm_consent', 'contact', '1', '{"dealer": "DLM01", "granted": true, "purpose": "dai_ly", "consent_id": 1}'), ('crm_handoff', 'lead', '1', '{"dealer": "DLM01", "lead_id": 1, "pii_included": true}'), ('crm_status', 'lead', '1', '{"to": "contacted", "from": "new"}'), ('crm_consent', 'contact', '1', '{"dealer": "DLM01", "granted": false, "purpose": "dai_ly", "consent_id": 2}'), ('crm_handoff', 'lead', '1', '{"dealer": "DLM01", "lead_id": 1, "pii_included": false}')]
+[drop] crm_evd_758d2193c2 còn=0; public contacts/consents/dealers = (0, 0, 0)
+
+$ DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m ingest.crm --report   # DB chết (không env -u)
+[err] DB không truy cập được — kiểm DATABASE_URL / chạy `python scripts/apply_schema.py`
+exit=1 (8s, connect_timeout=3)

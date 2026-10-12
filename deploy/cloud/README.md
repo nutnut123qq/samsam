@@ -109,6 +109,9 @@ bảng nào thì dừng, không bật app.
 | `orders` | A | |
 | `assets` | A | |
 | `leads` | B | dữ liệu khách — PII, chỉ qua backup mã hóa |
+| `contacts` | B | (v5.2) PII đã mã hóa Fernet — vô dụng nếu thiếu `CONTACT_VAULT_KEY`; mang khóa theo đường RIÊNG, không cùng file backup |
+| `consents` | B | (v5.2) append-only — bằng chứng đồng ý, dựng lại = mất |
+| `dealers` | A (`ingest.crm --load-dealers`) hoặc B | B giữ dòng `source='manual'` |
 | `content_drafts` | B | draft + trạng thái duyệt |
 | `llm_usage` | B | chi phí đã dùng (trần tháng) |
 | `sku_master` | A | `golden_store` |

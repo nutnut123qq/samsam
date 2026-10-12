@@ -2790,6 +2790,443 @@ khỏe'. External-dep: Pháp chế duyệt nhãn bộ ca, câu khuyến cáo chu
 `confirmed_skus` Ngọc Linh, severity; danh sách XNQC thật. Someday: guardrail đọc
 readiness từ file golden (XNQC ghi tay vào DB chưa vào file → vẫn chặn).
 
+## Checklist v5.2-crm-lead-dai-ly
+
+Khán giả/mục đích: nhánh M31 (worktree `D:\code\samsam-w44`, tách từ
+v4.4) — agent KD-A2 "CRM lead và đại lý theo vùng" của WP07 (pmo.md
+dòng `| WP07`; final_plans.json `sales.plan.agents[2]` + acceptance
+(1)(5)). Người dùng: GĐ bán hàng / sales-admin (vai trò `gd_ban_hang`
+trong `pipelines/auth.py`). Hiện trạng: bảng `leads` (`ingest/
+lead_store.py`) chỉ có `user_hash` + câu hỏi đã mask, `status` sửa bằng
+SQL tay (sop.md dòng ~362), không có chỗ lưu SĐT/tên khách an toàn,
+không có đồng ý theo mục đích (DPIA v4.4 ghi GAP "chưa có bảng
+consent"), không có đại lý/vùng. Sau version: (1) `contacts` = kho liên
+hệ (contact_vault) — PII mã hóa tầng ứng dụng, tra trùng bằng HMAC có
+khóa, bảng khác chỉ giữ `contact_id`; (2) `consents` append-only theo
+mục đích `cskh|marketing|dai_ly` + `can_contact()` mặc định KHÔNG; (3)
+lead gán tỉnh (34 tỉnh sau sáp nhập) → vùng → đại lý phụ trách, trạng
+thái `new/contacted/qualified/won/lost` qua CLI có `--by`; (4) bảng
+`dealers` (dữ liệu MẪU) + hoa hồng (rượu online luôn 0); (5) bản đồ
+luồng dữ liệu + DPIA/TIA sinh lại có luồng CRM. Agent KHÔNG tự liên hệ
+khách/đại lý: module không gửi gì ra ngoài (drift-guard egress v4.4
+chứng minh), mọi thao tác ghi là NGƯỜI chạy CLI với `--by <tên>`.
+
+Quy ước: ponytail — 1 module `ingest/crm.py` (vault + consent + vùng +
+CLI) + 1 file cấu hình mẫu `data/dealer_regions.json` + 1 file tỉnh
+`data/vn_provinces_2025.json`; KHÔNG viết lại `lead_store` (import
+`connect`, `CONNECT_TIMEOUT_S`), KHÔNG viết lại mask (import
+`pipelines.pii._PII_RE`/`_mask_pii`), bỏ dấu dùng
+`pipelines.llm_gateway._strip_accents` (đã trong `GATEWAY_SAFE` — không
+tính egress). Mã hóa: thư viện `cryptography` (ĐÃ cài — 46.0.3, kéo
+theo bởi google-auth/paramiko; thêm `cryptography>=42` vào
+`requirements.txt` kèm comment lý do) — `Fernet` cho PII,
+`HKDF(SHA256, info=b"samsam/contact_vault/lookup/v1")` dẫn xuất khóa
+HMAC tra trùng từ cùng `CONTACT_VAULT_KEY`, `hmac`+`hashlib.sha256`
+stdlib cho lookup. KHÔNG tự chế crypto, KHÔNG dùng pgcrypto (khóa sẽ
+đi trong câu SQL → lộ ở log/pg_stat_statements — ghi lý do vào
+docstring). `CONTACT_VAULT_KEY` = khóa Fernet (urlsafe-base64 32 byte),
+chỉ đọc từ `os.environ` SAU một lần `load_dotenv(ROOT/".env")` trong
+`main()`; thiếu/rỗng/sai định dạng → `VaultKeyError` → CLI `[err]` exit
+2 TRƯỚC connect, không ghi gì (fail-closed). Khóa test: test sinh
+khóa bằng `Fernet.generate_key()` trong fixture; evidence dùng khóa
+test sinh tại chỗ trong shell (KHÔNG ghi vào file repo, KHÔNG commit).
+PII đầu vào của `--add-contact` đọc từ JSON qua stdin (`-`) hoặc file
+ngoài repo — KHÔNG nhận SĐT/tên qua argv (lộ shell history/process
+list); thông báo lỗi KHÔNG echo giá trị PII. Ghi DB trên conn mới →
+`conn.commit()` tường minh sau mỗi tác vụ (gotcha v2.1). CLI nhiều op
+cùng lúc → `ap.error` exit 2 trước connect (gotcha v2.2 `n_ops`). `--by`
+validate như `ingest/golden_store.py` (`MAX_BY_LEN = 100`, btrim không
+rỗng, chỉ ký tự in được). Mọi thao tác ghi (add-contact, consent,
+assign, status, handoff) chèn 1 dòng `agent_action_log` (actor = `--by`,
+`detail` jsonb KHÔNG chứa PII/HMAC/ciphertext — chỉ id, purpose, mã đại
+lý, tỉnh, trạng thái). UTF-8 reconfigure guard sau imports. Không file
+runtime mới trong `data/` (2 JSON mới là cấu hình mẫu, không PII).
+Thêm bảng: KHÔNG sửa khối `create table if not exists leads (...)` (test
+`tests/test_lead_store.py:272-278` khóa nguyên văn cột) — mở rộng bằng
+`alter table leads add column if not exists`; không assert đếm cứng số
+bảng; thêm tên 3 bảng mới vào `docs/handover/kien-truc.md` và sửa "24
+bảng public" → "27 bảng public" (`tests/test_handover_docs.py::
+test_kien_truc_lists_all_tables` tự kiểm). KHÔNG sửa
+`deploy/cloud/README.md` ("24 bảng" — để coordinator chỉnh lúc gộp các
+nhánh song song, tránh xung đột).
+
+Quyết định `_uhash` không muối (gap v4.4): NGOÀI đường đi của version —
+ghi rõ, KHÔNG vá. Lý do (1 câu): CRM tra trùng bằng HMAC-khóa của SĐT
+chuẩn hóa, lead↔contact nối bằng `contact_id` do người gán, `contacts`
+KHÔNG lưu `user_id`/`user_hash` Zalo — nên không gate nào của version
+phụ thuộc `_uhash`; đổi `_uhash` sẽ gãy liên tục `user_hash` trong
+convlog cũ / `leads.dedup_key` / đếm user `scripts/kb_gaps.py` (cần
+migration riêng). Giữ gap trong `data/data_flow_map.json` (DF-04) +
+DPIA mục 5 câu 5; ghi someday "muối `_uhash` (HMAC khóa env) + migration
+convlog/leads".
+
+GIẢ ĐỊNH tỉnh/thành (không có trong research ctx — ghi tại chỗ trong
+`_doc` của file): 34 đơn vị cấp tỉnh theo Nghị quyết 202/2025/QH15 (sắp
+xếp từ 12/6/2025, vận hành 01/7/2025): 6 thành phố (Hà Nội, Huế, Hải
+Phòng, Đà Nẵng, TP. Hồ Chí Minh, Cần Thơ) + 28 tỉnh; bảng map 63 tên cũ
+→ 34 tên mới (vd Quảng Nam→Đà Nẵng, Kon Tum→Quảng Ngãi, Bình Dương/Bà
+Rịa–Vũng Tàu→TP. Hồ Chí Minh, Hà Nam/Nam Định→Ninh Bình, Long An→Tây
+Ninh, Thừa Thiên Huế→Huế). `"status": "gia_dinh"` + "chưa đối chiếu văn
+bản chính thức — external-dep xác minh"; sai tên thì sửa file JSON,
+không sửa code.
+
+External-dep (KHÔNG giả lập, để `[ ]`): danh sách đại lý/khách THẬT
+(file chỉ có `DLM01..` "Đại lý MẪU"); khóa mã hóa THẬT do công ty giữ +
+quy trình backup khóa tách khỏi backup DB (mất khóa = mất PII — ghi
+sop); Pháp chế duyệt nội dung đồng ý + `policy_version` thật (form v4.4
+`docs/legal/form-dong-y-NHAP.md` GIỮ NGUYÊN, vẫn "chưa gắn kênh");
+đại lý ký cam kết xử lý dữ liệu (hiện chỉ kiểm consent đích danh); bảng
+sáp nhập tỉnh chính thức; phân quyền DB thật (role `app_human`/sales)
+cho 3 bảng mới (roles.sql v3.4 không grant → agent_writer bị từ chối
+mặc định). Ngoài phạm vi (someday, ghi DONE): TTL/xóa contact theo mục
+đích (acceptance (7) WP07 — ngày 31), quyền xóa/ truy cập của chủ thể,
+gắn consent vào kênh chat Zalo (bot gọi LLM sau "ĐỒNG Ý" — plan_data_
+platform §3, thuộc Hạ tầng), hàng duyệt tranh chấp 2 đại lý (acceptance
+(3)), lead sàn Shopee/TikTok (acceptance (2)), gửi tin OA/ZNS cho đại lý
+(acceptance (6)), xoay khóa (MultiFernet), kiểm `policy_version` hiện
+hành trong `can_contact`.
+
+- [x] **W52.1 Schema CRM: contacts / dealers / consents + mở rộng leads** —
+  `docs/schema.sql` thêm khối có comment tiếng Việt (thứ tự tạo theo
+  FK): `contacts` (`id` identity pk, `phone_hmac text not null unique
+  check (phone_hmac ~ '^[0-9a-f]{64}$')`, `phone_enc text not null`,
+  `name_enc`/`email_enc`/`address_enc text` null được, MỌI cột `*_enc`
+  có `check (<col> ~ '^gAAAAA[A-Za-z0-9_=-]+$')` khi not null — DB tự
+  chặn plaintext lọt vào cột mã hóa; `province text` (1 trong 34 tên —
+  thô, không PII), `source text not null`, `created_by text not null
+  check (btrim(created_by) <> '')`, `created_at`); `dealers` (`code text
+  primary key check (code ~ '^[A-Z0-9_-]{2,20}$')`, `name text not
+  null`, `region text not null`, `status text not null default 'active'
+  check (status in ('active','paused','ended'))`, `commission_default
+  numeric(5,2) not null default 0 check (commission_default between 0
+  and 100)`, `contact_id bigint references contacts(id)` — người liên hệ
+  của đại lý nằm trong vault, `source text not null`, `created_at`,
+  `updated_at`); `consents` append-only (`id` identity pk, `contact_id
+  bigint not null references contacts(id)`, `purpose text not null check
+  (purpose in ('cskh','marketing','dai_ly'))`, `granted boolean not
+  null`, `recipient_dealer text references dealers(code)` + `check
+  ((purpose = 'dai_ly') = (recipient_dealer is not null))` — đồng ý chia
+  sẻ cho đại lý phải ĐÍCH DANH, `source text not null check (source in
+  ('form_giay','zalo','web','dien_thoai','email','truc_tiep'))`,
+  `evidence_ref text`, `policy_version text`, `check (not granted or
+  (btrim(coalesce(evidence_ref,'')) <> '' and btrim(coalesce(
+  policy_version,'')) <> ''))`, `recorded_by text not null check
+  (btrim(recorded_by) <> '')`, `ts timestamptz not null default now()`)
+  + index `(contact_id, purpose, id)` + trigger TÁI DÙNG
+  `append_only_guard()` (row update/delete + statement truncate, cùng
+  mẫu `approvals`); view `v_consent_current` = `distinct on (contact_id,
+  purpose, coalesce(recipient_dealer,''))` theo `id desc` → `granted`,
+  `granted_at` (ts khi dòng cuối granted), `withdrawn_at` (ts khi dòng
+  cuối granted=false). `leads`: `alter table leads add column if not
+  exists` `contact_id bigint references contacts(id)`, `province text`,
+  `dealer_code text references dealers(code)`, `assigned_by text`,
+  `assigned_at timestamptz`; check trạng thái thêm bằng khối `do $$ ...
+  if not exists (select 1 from pg_constraint where conname =
+  'leads_status_check') ...` (idempotent) với `status in ('new',
+  'contacted','qualified','won','lost')`. KHÔNG sửa khối create leads.
+  `docs/handover/kien-truc.md`: thêm 3 dòng bảng (vai trò + lệnh nạp
+  `python -m ingest.crm ...`) + view, sửa "24 bảng public" → "27 bảng
+  public", thêm mũi tên luồng CRM vào sơ đồ.
+  - Boundary: `docs/schema.sql`, `docs/handover/kien-truc.md`
+  - Gate: trong `tests/test_crm.py` fixture `db` theo mẫu
+    `tests/test_auth_approval.py::db` (schema tạm `t_crm_<hex>` + `set
+    local search_path` + `docs/schema.sql` ×2 idempotent + `docs/
+    roles.sql` + ROLLBACK; gate yêu cầu 0 skipped): 3 bảng + view tồn
+    tại; INSERT `contacts.phone_enc = '0905123456'` → `CheckViolation`;
+    `consents` UPDATE/DELETE/TRUNCATE → lỗi "append-only"; `dai_ly`
+    thiếu `recipient_dealer` / `cskh` có `recipient_dealer` →
+    `CheckViolation`; granted=true thiếu `evidence_ref` → `CheckViolation`;
+    `update leads set status='bogus'` → `CheckViolation`; `set local role
+    agent_writer` + `select * from contacts` → `InsufficientPrivilege`
+    (roles.sql không grant). `python -m pytest -q
+    tests/test_handover_docs.py tests/test_lead_store.py` xanh (đếm bảng
+    27 + cột leads nguyên văn); `python scripts/apply_schema.py` chạy 2
+    lần trên DB samsam_infra exit 0.
+  - Evidence: `evidence/v52_crm.log`
+  - Kết quả (worker 2026-10-12): 3 bảng + view + trigger append-only consents; `apply_schema` ×2 trên samsam_infra exit 0 (27 bảng public, FK leads = 2 — không nhân đôi). LỆCH contract (có lý do): check trạng thái lead làm bằng TRIGGER `leads_status_check` (`leads_status_guard()`, raise errcode `check_violation` → psycopg `CheckViolation` như check) thay vì `alter table ... add constraint` — drift-guard `tests/test_lead_store.py::test_schema_sql_has_leads_table` + `tests/test_store.py` chỉ cho ALTER dạng thêm cột. Chỉ kiểm dòng mới/đổi status (như NOT VALID). `dealers.region` không có FK/check ở DB (vùng sống trong `data/dealer_regions.json`, `assign_lead` kiểm).
+- [x] **W52.2 contact_vault: khóa, mã hóa, HMAC tra trùng, thêm liên hệ** —
+  `ingest/crm.py`: `class VaultKeyError(Exception)`; `load_vault_key(env
+  =os.environ) -> tuple[Fernet, bytes]` (Fernet + khóa lookup HKDF; thiếu
+  / chỉ trắng / không phải khóa Fernet hợp lệ → `VaultKeyError`, message
+  KHÔNG chứa giá trị env); `normalize_phone(raw) -> str` (bỏ ký tự
+  không phải số; `+84`/`84` đầu → `0`; hợp lệ khi `^0\d{9,10}$`, else
+  `ValueError("SĐT không hợp lệ")` không kèm giá trị); `phone_lookup(
+  phone_norm, lookup_key) -> str` = `hmac.new(lookup_key, phone_norm.
+  encode(), sha256).hexdigest()`; `seal(f, value)` (None/rỗng → None) /
+  `unseal(f, token)` (`InvalidToken` → `VaultKeyError("khóa không khớp
+  dữ liệu")`); `add_contact(conn, rec: dict, keys, by, lead_id=None) ->
+  tuple[int, bool]` — `rec` = `{"phone" (bắt buộc), "name", "email",
+  "address", "province", "source"}` (key lạ → `ValueError`; `province`
+  qua `province_of` W52.4, không nhận ra → `ValueError`); `insert ... on
+  conflict (phone_hmac) do nothing returning id`, trùng → trả id cũ +
+  `False`, KHÔNG ghi đè PII cũ; `lead_id` → `update leads set
+  contact_id` (lead không tồn tại → `ValueError`, rollback cả contact).
+  CLI `--add-contact {-|PATH} --by TÊN [--lead ID]` in `[ok] contact #id
+  (mới|đã có)` — không in PII.
+  - Boundary: `ingest/crm.py` (phần vault), `requirements.txt`
+    (`cryptography>=42` + comment), `tests/test_crm.py`
+  - Gate: `tests/test_crm.py` unit: `normalize_phone` — "0905 123 456",
+    "+84 905.123.456", "84905123456", "(0905) 123-456" → cùng
+    `"0905123456"`; "12345", "0905abc", "" → `ValueError` và
+    `str(exc)` không chứa chuỗi số đầu vào; `phone_lookup` cùng SĐT 2 khóa
+    khác nhau → khác nhau, ≠ `hashlib.sha256(b"0905123456").hexdigest()`
+    (chứng minh không phải sha256 trần), 64 hex; `load_vault_key` với env
+    `{}`, `{"CONTACT_VAULT_KEY": ""}`, `"   "`, `"not-a-key"` →
+    `VaultKeyError`, message không chứa `"not-a-key"`; seal→unseal
+    round-trip tiếng Việt có dấu; unseal bằng khóa khác → `VaultKeyError`.
+    CLI: `CONTACT_VAULT_KEY=""` (KHÔNG `delenv` — `load_dotenv` sẽ lấp lại,
+    gotcha v2.0) + `lead_store.connect` monkeypatch raise → `--add-contact
+    -` exit 2, `[err]` nhắc thiếu khóa, connect KHÔNG được gọi. DB thật
+    (fixture `db`): add "Nguyễn Văn Mẫu" / "0905 123 456" /
+    "mau@example.com" / "12 Lê Duẩn" / "Quảng Nam" → `select c::text from
+    contacts c` KHÔNG chứa "0905123456", "905123456", "Nguyễn", "Mẫu",
+    "mau@example", "Lê Duẩn" (ciphertext thật); `province` = "Đà Nẵng";
+    add lại "+84905123456" tên khác → cùng id, `False`, `count(*)` = 1,
+    `name_enc` không đổi; `--lead` id không tồn tại → `ValueError` và
+    `contacts` không thêm dòng; `agent_action_log.detail::text` của các
+    dòng mới không khớp `_PII_RE` và không chứa HMAC/`gAAAAA`. stdout
+    CLI (capsys) không chứa SĐT/tên/email; SĐT sai trong stdin → exit 2
+    không echo.
+  - Evidence: `evidence/v52_crm.log` (E2E CLI thật trên DB samsam_infra
+    trong schema tạm qua `PGOPTIONS='-c search_path=crm_evd_<hex>'` +
+    khóa test sinh tại chỗ; in `select phone_hmac, phone_enc, name_enc
+    from contacts` cho thấy ciphertext; cuối `drop schema crm_evd_<hex>
+    cascade` — public không thêm dòng nào)
+  - Kết quả: đạt gate. Vòng E2E đầu phát hiện bug THẬT: SĐT có chữ cái giữa số (`09xx-12x-xxxxx`) được chấp nhận (bỏ chữ rồi coi hợp lệ) → vá `normalize_phone` chỉ nhận chữ số ASCII + ` \t().-` + `+` đầu (thêm case `\u2028`, chữ số Ả Rập — `\d` Unicode lách HMAC tra trùng). Thiếu khóa → exit 2, `count contacts` = 0. File JSON trong repo bị từ chối (exit 2).
+- [x] **W52.3 Consent theo mục đích + can_contact** — `record_consent(
+  conn, contact_id, purpose, granted, source, by, evidence_ref=None,
+  policy_version=None, dealer_code=None) -> int` (validate app-level
+  TRƯỚC khi ghi — purpose/source lạ, `dai_ly` thiếu dealer, mục đích
+  khác có dealer, grant thiếu evidence/policy_version, `evidence_ref`
+  > 200 ký tự hoặc khớp `pipelines.pii._PII_RE` (evidence là MÃ tham
+  chiếu biên bản/scan, không phải SĐT/email) → `ValueError`; contact/
+  dealer không tồn tại → `ValueError`); `can_contact(conn, contact_id,
+  purpose, dealer_code=None) -> bool` — đọc `v_consent_current`: True
+  CHỈ khi dòng mới nhất (theo `id`, KHÔNG theo `ts`) của đúng (contact,
+  purpose, dealer) là `granted`; chưa có dòng nào → False; `dai_ly` mà
+  không truyền dealer → False; purpose lạ → `ValueError`; DB lỗi →
+  raise (caller quyết, không nuốt thành True/False). CLI `--consent
+  CONTACT_ID --purpose P (--grant|--withdraw) --source S --by TÊN
+  [--evidence REF] [--policy-version V] [--dealer CODE]`; rút đồng ý
+  không bắt buộc evidence (rút phải dễ).
+  - Boundary: `ingest/crm.py` (phần consent), `tests/test_crm.py`
+  - Gate: DB thật: contact mới → `can_contact` False cho cả 3 mục đích;
+    grant marketing → True; withdraw → False; grant lại → True (3 dòng,
+    không UPDATE); `v_consent_current.withdrawn_at` có giá trị sau
+    withdraw; grant `dai_ly` cho `DLM01` → `can_contact(...,'dai_ly',
+    'DLM01')` True, `'DLM02'` False, không dealer False; grant cskh KHÔNG
+    làm marketing True (tách mục đích); backdate: dòng grant ghi sau
+    nhưng `ts` cũ hơn dòng withdraw → vẫn theo `id` (True); 7 case
+    `ValueError` của `record_consent` không ghi dòng nào (`count`
+    không đổi); `evidence_ref="0905123456"` bị từ chối. CLI `--consent`
+    `--purpose dai_ly` thiếu `--dealer` → exit 2 trước connect; KHÔNG cần
+    `CONTACT_VAULT_KEY` (chạy với key rỗng vẫn exit 0).
+  - Evidence: `evidence/v52_crm.log`
+  - Kết quả: đạt gate (9 case ValueError, `count` không đổi; backdate theo id).
+- [x] **W52.4 Tỉnh/thành 34 + vùng + đại lý mẫu + hoa hồng** —
+  `data/vn_provinces_2025.json` `{"_doc": "GIẢ ĐỊNH NQ 202/2025/QH15 ...
+  external-dep xác minh", "status": "gia_dinh", "provinces": [34 tên],
+  "aliases": {"<tên cũ/biến thể>": "<tên mới>"}}` — đủ 63 tên tỉnh cũ +
+  biến thể thường gặp (`"TP HCM"`, `"HCM"`, `"Sài Gòn"`, `"Đắk Lắk"/
+  "Daklak"`, `"Thừa Thiên Huế"`...). `data/dealer_regions.json` `{"_doc":
+  "MẪU — đại lý thật = external-dep", "status": "mau", "regions":
+  {"<mã vùng>": [tên tỉnh mới]}, "dealers": [{"code": "DLM01", "name":
+  "Đại lý MẪU 01", "region": ..., "status": "active",
+  "commission_default": 10}, ...]}` — ≥3 đại lý, trong đó 2 đại lý cùng
+  vùng có Đà Nẵng (test đích danh DL01/DL02 của acceptance (1)), 1 vùng
+  khác; KHÔNG tên/SĐT người thật. `province_of(text) -> str | None`:
+  NFC + casefold, khớp có dấu với ranh giới từ `(?<!\w)...(?!\w)`, tên
+  dài khớp trước; fallback không dấu (`_strip_accents`) CHỈ khi text
+  không có ký tự có dấu nào (tránh "hoa huệ"→Huế, "sơn là"→Sơn La); >1
+  tỉnh MỚI khác nhau → None (mơ hồ, để người gán); "Việt Nam"/"miền
+  Nam" không phải tỉnh. `load_regions(path)` validate (tỉnh ngoài 34,
+  tỉnh thuộc 2 vùng, tỉnh không thuộc vùng nào, dealer trỏ vùng lạ, code
+  sai mẫu, commission ngoài 0..100 → `ValueError` nêu field).
+  `commission_rate(dealer: dict, category: str, online: bool) ->
+  Decimal`: `category == 'alcohol'` (khớp `sku_master.category`) và
+  `online` → 0; category lạ/None → 0 (fail-closed); dealer không
+  `active` → 0; còn lại `commission_default`. CLI `--load-dealers [PATH]
+  --by TÊN` upsert `dealers` theo `code` (`source='dealer_regions.json'`;
+  dòng `source='manual'` KHÔNG bị đè), in số mới/cập nhật.
+  - Boundary: `data/vn_provinces_2025.json`, `data/dealer_regions.json`,
+    `ingest/crm.py` (phần vùng/đại lý), `tests/test_crm.py`,
+    `tests/fixtures/crm_province_cases.json`
+  - Gate: file tỉnh: đúng 34 tên duy nhất; alias phủ đủ 63 tên cũ (danh
+    sách 63 trong test, không đọc từ file), mọi alias trỏ vào 34;
+    `tests/fixtures/crm_province_cases.json` ≥ 24 câu lead mẫu (câu hỏi
+    kiểu convlog) → tỉnh kỳ vọng, đúng 100% (acceptance (5) "20/20") gồm:
+    "đại lý ở Quảng Nam" → Đà Nẵng, "Kon Tum" → Quảng Ngãi, "giao về
+    Bình Dương" → TP. Hồ Chí Minh, "dai ly o da nang" → Đà Nẵng, "ship
+    Sài Gòn" → TP. Hồ Chí Minh, "Hà Nam" → Ninh Bình (không nhầm Hà Nội),
+    "hoa huệ" → None, "sơn là gì" → None, "Việt Nam" → None, "Hà Nội và
+    Đà Nẵng" → None (mơ hồ), "Quảng Nam Đà Nẵng" → Đà Nẵng (cùng tỉnh
+    mới); `load_regions` repo pass + ≥5 case lỗi; mỗi tỉnh 34 thuộc đúng
+    1 vùng; `commission_rate` alcohol online 0, alcohol offline = default,
+    category None 0, dealer `paused` 0, tpbvsk online = default; DB:
+    `--load-dealers` 2 lần → lần 2 0 mới; dòng `manual` cùng code giữ
+    nguyên.
+  - Evidence: `evidence/v52_crm.log`
+  - Kết quả: đạt gate — fixture 28 câu đúng 100%; 63 tên cũ → tỉnh mới (danh sách độc lập trong test); `load_regions` 9 case lỗi. Bảng 34 tỉnh = GIẢ ĐỊNH (`status: gia_dinh`).
+- [x] **W52.5 Lead theo vùng: gán đại lý, trạng thái, report, handoff** —
+  `assign_lead(conn, lead_id, dealer_code, by, province=None)`: tỉnh =
+  `province` (qua `province_of`, nhận cả tên cũ) hoặc suy từ
+  `leads.question`; không xác định → `ValueError("chưa xác định tỉnh —
+  truyền --province")`; dealer phải `active` và vùng phủ tỉnh, else
+  `ValueError`; lead đã có `dealer_code` khác → `ValueError` ("đã gán —
+  tranh chấp chuyển người duyệt", someday hàng tranh chấp); ghi
+  `province`, `dealer_code`, `assigned_by`, `assigned_at`.
+  `set_lead_status(conn, lead_id, status, by)`: thứ tự `new → contacted
+  → qualified → won`, mọi trạng thái chưa kết thúc → `lost`; KHÔNG lùi,
+  `won`/`lost` là kết thúc (đổi → `ValueError`). `report(conn) -> str`:
+  tổng contacts, consent hiện hành theo mục đích (granted/withdrawn), lead
+  theo tỉnh (gồm "chưa xác định"), theo đại lý, theo trạng thái, danh
+  sách lead CHƯA gán (id, ngày, intent, tỉnh suy ra, đại lý gợi ý theo
+  vùng) — KHÔNG in `question`, `user_hash`, PII, HMAC, ciphertext; KHÔNG
+  cần `CONTACT_VAULT_KEY` (không giải mã); CHỈ SELECT.
+  `handoff_payload(conn, lead_id, dealer_code, keys) -> dict` (acceptance
+  (1)): lead phải đang gán đúng `dealer_code` (else `ValueError`);
+  payload luôn có `lead_id`, `province`, `intent`, `question` qua
+  `_mask_pii`; chỉ khi lead có `contact_id` VÀ `can_contact(contact,
+  'dai_ly', dealer_code)` mới thêm `name`/`phone`/`email`/`address` giải
+  mã — ngược lại các key PII KHÔNG có mặt (không phải chuỗi rỗng). CLI
+  `--assign LEAD --dealer CODE --by TÊN [--province TÊN]`, `--status
+  LEAD STATE --by TÊN`, `--report`, `--handoff LEAD --dealer CODE --by
+  TÊN` (in JSON payload cho NGƯỜI tự chuyển — hệ thống không gửi; ghi
+  `agent_action_log` action `crm_handoff` detail `{lead_id, dealer,
+  pii_included: bool}`). Exit: 0 ok; 1 DB không truy cập được / thiếu
+  bảng ("[err] DB không truy cập được — chạy apply_schema") / vi phạm
+  nghiệp vụ (`ValueError` → `[err] <lý do>`); 2 usage/khóa (trước
+  connect).
+  - Boundary: `ingest/crm.py` (phần lead/report/handoff + `main`),
+    `tests/test_crm.py`
+  - Gate: DB thật: lead "đại lý ở Quảng Nam" → assign `DLM01` OK,
+    `province`="Đà Nẵng"; assign dealer vùng khác → `ValueError`, lead
+    không đổi; assign lần 2 dealer khác → `ValueError`; lead câu không
+    có tỉnh + không `--province` → `ValueError`; status `new→contacted→
+    qualified→won` OK, `won→new` / `qualified→contacted` / `won→lost` →
+    `ValueError`; `contacted→lost` OK. Handoff (acceptance (1)): lead
+    intent order Đà Nẵng có contact — không consent → payload không có
+    key `phone`/`name`/`email`/`address` và `json.dumps(payload)` không
+    chứa "0905123456"; consent `dai_ly` đích danh `DLM01` → payload
+    `DLM01` có `phone == "0905123456"`; lead gán `DLM01` mà gọi handoff
+    `DLM02` → `ValueError`; withdraw → lần sau không còn PII. Report trên
+    fixture có contact "Nguyễn Văn Mẫu"/"0905123456"/email/địa chỉ: output
+    không chứa các chuỗi đó, không chứa `gAAAAA`, không chứa
+    `phone_hmac`, `_PII_RE.search(output)` None; chạy `--report` với
+    `CONTACT_VAULT_KEY=""` exit 0; fake-conn ghi SQL → mọi câu của
+    `report()` bắt đầu `select`/`with`. CLI: 2 op cùng lúc (`--report
+    --assign 1 ...`) exit 2 trước connect; `--status 1 bogus` exit 2;
+    `--by` rỗng/ >100 ký tự exit 2. DB-down:
+    `DATABASE_URL=postgresql://u@10.255.255.1:5432/x` (không `env -u`)
+    `--report` → exit 1, không treo (≤ connect_timeout + vài giây).
+    `egress_modules(ROOT)` KHÔNG chứa `ingest/crm.py` (không có đường
+    gửi ra ngoài — agent không tự liên hệ).
+  - Evidence: `evidence/v52_crm.log` (chuỗi CLI thật trong schema tạm:
+    load-dealers → add-contact (stdin) --lead → consent grant dai_ly
+    DLM01 → assign → status → handoff DLM01 (có PII, ĐÃ che bằng `***`
+    khi ghi vào evidence) / DLM02 (exit 1) → report; drop schema)
+  - Kết quả: đạt gate. Thêm: `handoff_payload` từ chối đại lý không active; `--dealer` sai mẫu → exit 2 trước connect (không echo input tùy ý); `--status` LEAD chỉ chữ số ASCII (`'²'.isdigit()` = True làm `int()` crash). DB chết → exit 1 sau ~5–8s (connect_timeout 3 + import).
+- [x] **W52.6 Bản đồ luồng dữ liệu + DPIA/TIA sinh lại** —
+  `data/data_flow_map.json`: thêm flow `DF-16` "CRM contact_vault /
+  đồng ý / đại lý" (`modules` `["ingest/crm.py"]`, `class` `do`, `data`
+  tên/SĐT/email/địa chỉ khách + liên hệ đại lý + đồng ý, `storage`
+  bảng `contacts`/`consents`/`dealers`/`leads`, `retention` "không có
+  hạn — GAP (TTL theo mục đích chưa build)", `recipients` "nội bộ;
+  đại lý đích danh khi có consent dai_ly (người chuyển tay)",
+  `cross_border` false, `safeguards` Fernet tầng ứng dụng + khóa env +
+  HMAC-khóa tra trùng + DB check chặn plaintext + consent append-only +
+  `can_contact` mặc định False + report không giải mã, `legal_basis`
+  "đồng ý theo mục đích (bảng consents) — nội dung đồng ý CHỜ Pháp chế
+  duyệt", `gaps` gồm TTL/xóa theo yêu cầu chủ thể chưa có, khóa do
+  công ty giữ + backup khóa chưa có quy trình, consent chưa gắn kênh
+  chat, đại lý ký cam kết xử lý dữ liệu chưa kiểm trong code). Cập nhật
+  `DF-05` (leads có `contact_id`/`province`/`dealer_code`; gap "chưa có
+  cơ chế đồng ý riêng cho liên hệ bán hàng" → "lead từ chat chỉ có
+  user_hash — chỉ liên hệ khi người gán contact có consent"). Gap
+  "chưa có bảng consent" ở DF-01/DF-06 sửa thành "bảng `consents` có
+  (v5.2) nhưng CHƯA gắn kênh chat" — vẫn chứa "consent"/"đồng ý" (test
+  `tests/test_dpia_draft.py:76`). `tests/test_data_flow_map.py`: thêm
+  `ingest/crm.py` vào `REQUIRED_MODULES` + vào danh sách "không gửi gì ra
+  ngoài" (cùng `review_load`/`dpia_draft`/`contract_check`). Sinh lại
+  `python scripts/dpia_draft.py` → `docs/legal/DPIA-nhap.md` +
+  `TIA-nhap.md` (DF-16 ở DPIA; TIA liệt kê DF-16 ở dòng "không thuộc
+  TIA"). KHÔNG sửa `scripts/dpia_draft.py`, KHÔNG sửa form đồng ý.
+  - Boundary: `data/data_flow_map.json`, `docs/legal/DPIA-nhap.md`,
+    `docs/legal/TIA-nhap.md`, `tests/test_data_flow_map.py`
+  - Gate: `python -m pytest -q tests/test_data_flow_map.py
+    tests/test_dpia_draft.py tests/test_legal_docs.py` xanh; `python
+    scripts/dpia_draft.py --check` exit 0; `grep -c "DF-16"
+    docs/legal/DPIA-nhap.md` ≥ 1; mutation: tạm thêm `import httpx` vào
+    cuối `ingest/crm.py` → `tests/test_data_flow_map.py` ĐỎ nêu
+    `ingest/crm.py` (nằm trong danh sách không-egress) → gỡ → xanh (ghi
+    2 output vào evidence; `git diff ingest/crm.py` sau đó không còn
+    dòng mutation).
+  - Evidence: `evidence/v52_dpia.log`
+  - Kết quả: đạt gate (mutation đỏ nêu `ingest/crm.py` → gỡ → xanh; `grep -c MUTATION` = 0). Assert `test_new_scripts_send_nothing_out` thêm message nêu tên module.
+- [x] **W52.7 Docs vận hành** — `docs/handover/sop.md`: mục "CRM lead
+  & đại lý" (sinh khóa `python -c "from cryptography.fernet import
+  Fernet; print(Fernet.generate_key().decode())"` → đặt `CONTACT_VAULT_KEY`
+  trong `.env`, KHÔNG commit, backup khóa TÁCH khỏi backup DB, mất khóa
+  = mất PII; nạp đại lý mẫu; thêm liên hệ qua stdin (không gõ SĐT trên
+  dòng lệnh, không lưu file JSON trong repo); ghi/rút đồng ý; gán đại
+  lý; đổi trạng thái; report; handoff do NGƯỜI chuyển) — dòng `update
+  leads set status=...` bằng psql (sop.md ~362) thay bằng `python -m
+  ingest.crm --status <id> <trạng thái> --by <tên>`. `AGENTS.md`: bảng
+  Commands thêm dòng CRM, Structure nhắc `ingest/crm.py`, Invariants
+  thêm "PII khách chỉ nằm trong `contacts` (ciphertext); bảng khác tham
+  chiếu `contact_id`; liên hệ marketing/đại lý chỉ khi `can_contact`
+  True". `env.example`: `CONTACT_VAULT_KEY=` (rỗng) + comment cách sinh.
+  `docs/handover/playbook-sales-admin.md`: 1 đoạn quy trình CRM ngày.
+  - Boundary: `docs/handover/sop.md`, `docs/handover/playbook-sales-
+    admin.md`, `AGENTS.md`, `env.example`
+  - Gate: mọi lệnh `python -m ingest.crm ...` trong sop/AGENTS/playbook
+    dùng flag có thật (`python -m ingest.crm --help` exit 0 và chứa
+    từng flag); `grep -n "update leads set status" docs/handover/sop.md`
+    rỗng; `git diff HEAD -- env.example` không có giá trị khóa sau
+    `CONTACT_VAULT_KEY=`; `tests/test_handover_docs.py` xanh.
+  - Evidence: `evidence/v52_docs.log`
+  - Kết quả: đạt gate; thêm dòng `CONTACT_VAULT_KEY` vào bảng biến sop mục 9.
+- [x] **W52.8 Gate chung** — không đụng file ngoài boundary W52.1–W52.7
+  (KHÔNG sửa `ingest/lead_store.py`, `connectors/zalo.py` (`_uhash`),
+  `pipelines/pii.py`, `scripts/dpia_draft.py`, `docs/legal/form-dong-y-
+  NHAP.md`, `app/streamlit_app.py`, `deploy/cloud/README.md`).
+  - Boundary: (tổng hợp W52.1–W52.7)
+  - Gate: baseline đếm bằng `python -m pytest --collect-only -q | tail
+    -1` TRƯỚC khi sửa (task ghi 959; v4.4 fix1 ghi 996 — lấy số thật của
+    HEAD). Targeted xanh ×3 TUẦN TỰ (`python -m pytest -q tests/test_crm.py
+    tests/test_data_flow_map.py tests/test_dpia_draft.py
+    tests/test_legal_docs.py tests/test_handover_docs.py
+    tests/test_lead_store.py tests/test_connect_timeout_guard.py`, đọc
+    output tới khi process exit mới chạy lần kế; 0 skipped — DB thật có
+    `DATABASE_URL`); full `python -m pytest -q` ĐÚNG 1 lần: xanh, = baseline
+    + số test mới, 0 failed/skipped mới; `ruff check .` sạch; `python -m
+    py_compile ingest/crm.py`; `python scripts/dpia_draft.py --check` exit
+    0; `python scripts/apply_schema.py` exit 0 (×2); `git status --short`
+    chỉ gồm file trong boundary + evidence (không file mutation, không
+    file JSON contact, không file khóa; `lv2-market-top.png` nếu có giữ
+    untracked); `git diff HEAD | grep -E "^\+.*(gAAAAA|CONTACT_VAULT_KEY=
+    [A-Za-z0-9])"` rỗng (không commit ciphertext/khóa); evidence `.log`
+    `git add -f` (gitignore `*.log`) và đã che PII (`***`). Lệnh nặng có
+    thể bị đẩy nền — PHẢI đọc output tới exit, không chạy chồng pytest.
+    Ghi "coordinator self-review" nếu không spawn được auditor lạ.
+  - Evidence: `evidence/v52_pytest.log`
+  - Kết quả: baseline HEAD = 996 (đo trước khi sửa). Vòng 1: targeted ×3 xanh (243), full 1 lần ĐỎ 1 test — `tests/test_db_backup.py::test_cloud_readme_drift_guard` đòi `deploy/cloud/README.md` liệt kê mọi bảng → LỆCH boundary (dây chuyền thật: không sửa thì gate full không xanh): thêm 3 dòng `contacts`/`consents`/`dealers` cạnh `leads`, GIỮ NGUYÊN chữ "24 bảng" (coordinator chỉnh khi gộp). Vòng 2: targeted (+test_db_backup) ×3 xanh (293), full 1 lần **1139 passed** (= 996 + 142 test_crm + 1 param), 0 skipped; ruff sạch; py_compile; dpia --check exit 0. Grep `gAAAAA` literal của gate khớp REGEX check trong schema.sql + text contract (không phải ciphertext) — lọc token thật `gAAAAA[...]{20,}` trên diff + file untracked + evidence: rỗng. Evidence `.log` CHƯA stage — coordinator `git add -f evidence/v52_*.log`. Rà OWASP: worker self-review (không phải auditor lạ) — cần cold-check.
+  - VÁ NGHIỆM THU (5 MINOR): (1+2) `normalize_phone` chuẩn hóa `+84 (0) 905…`/`+84 0905…`/`84 0905…`/`840905…`/`(+84) 0905…` → `0905…` (bỏ `84` giữ 0 trung kế khi `840` + len 12/13), kết quả phải khớp `0[1-9][0-9]{8,9}` → `00905…`/`0090 5123 456`/`0084 …` bị từ chối — trước đó ra `00905123456` = HMAC khác → contact thứ 2 cùng người, rút đồng ý ghi nhầm contact (A04); test `test_normalize_phone_variants` +6, `_bad_no_echo` +3, `test_add_contact_ciphertext_dedup_and_log` add 3 dạng `+84 (0)` → cùng id `new=False`, count vẫn 1. (3) param U+2028 literal → escape `"0905 123456"` + thêm `"0905\x85123456"` (đã quét: test_crm.py không còn ký tự vô hình raw). (4) `test_assign_status` đại lý `paused` → `ValueError` 'đang paused', lead không bị gán; `test_handoff_acceptance_1` DLM01 `paused` dù consent dai_ly hiện hành → `ValueError` 'không active', message không chứa PII. (5) `test_add_contact_ciphertext_dedup_and_log` lead đã gắn contact → add SĐT khác với `lead_id` → `ValueError`, `contact_id` không đổi, count contacts không tăng (rollback). Mutation 4/4 bị bắt (normalize cũ / bỏ guard handoff / bỏ guard assign / bỏ nhánh 'đã gắn contact khác'). Targeted ×3 204/204; full 1 lần **1149 passed** (1139 + 10 param mới); ruff sạch. `evidence/v52_pytest.log`.
+- [ ] **External-dep W52 (giữ mở — không giả lập):** danh sách đại lý/khách THẬT; khóa `CONTACT_VAULT_KEY` thật do công ty giữ + quy trình backup khóa tách DB; Pháp chế duyệt nội dung đồng ý + `policy_version` thật; đại lý ký cam kết xử lý dữ liệu; bảng sáp nhập 34 tỉnh chính thức (đối chiếu NQ 202/2025/QH15); phân quyền DB (role sales) cho `contacts`/`consents`/`dealers`.
+- [ ] **Someday W52:** muối `_uhash` (HMAC khóa env) + migration convlog/leads; TTL/xóa contact theo mục đích (WP07 acceptance (7)) + quyền xóa/truy cập của chủ thể; consent gắn kênh chat; hàng duyệt tranh chấp 2 đại lý (acceptance (3)); lead sàn (acceptance (2)); tin OA/ZNS cho đại lý (acceptance (6)); xoay khóa (MultiFernet); `can_contact` kiểm `policy_version` hiện hành; `--by` là tên tự khai (chưa gắn danh tính đăng nhập).
+
+v5.2-crm-lead-dai-ly đóng 2026-10-12 (nghiệm thu đợt 1 FIX 5 MINOR — chuẩn hóa
+SĐT `+84 0…`/`00…` lách tra trùng, U+2028 literal trong test… — 1 vòng sửa → PASS;
+coordinator đổi mã luồng CRM DF-16 → DF-18 (ai-infra đã dùng DF-16/17 cho intel/
+persona) + sinh lại DPIA, chạy lại targeted 278 + ruff + `dpia_draft --check`).
+PII mã hóa Fernet tầng ứng dụng (cryptography 46), tra trùng HMAC khóa dẫn xuất
+HKDF; thiếu `CONTACT_VAULT_KEY` → exit 2 trước connect; consent append-only,
+`can_contact` mặc định False; handoff đại lý chỉ khi consent đích danh. `_uhash`
+không muối: NGOÀI phạm vi (contacts không lưu Zalo id; đổi sẽ phá hash cũ) — còn
+gap. 34 tỉnh sau sáp nhập = GIẢ ĐỊNH (NQ 202/2025/QH15, chưa xác minh).
+External-dep: danh sách đại lý/khách thật; khóa công ty + quy trình backup khóa;
+Pháp chế duyệt câu đồng ý; đại lý ký cam kết xử lý dữ liệu; quyền DB thật.
+
 ## Checklist v4.4-phap-che-dpo
 
 Khán giả/mục đích: nhánh M31 (worktree `D:\code\samsam-w44`) — phần
