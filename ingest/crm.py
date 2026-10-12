@@ -12,7 +12,9 @@ Contract:
     giá trị → dò ngược trong vài phút.
   - Thiếu/sai khóa → `VaultKeyError` → CLI exit 2 TRƯỚC khi connect, không
     ghi gì (fail-closed). Mất khóa = mất PII (sop: backup khóa tách DB).
-  - Đồng ý (`consents`) append-only theo mục đích cskh|marketing|dai_ly;
+  - Đồng ý (`consents`) append-only theo mục đích cskh|marketing|dai_ly|
+    b2b (v8.2: b2b = gửi báo giá cho người liên hệ của TỔ CHỨC — ghi bởi
+    `connectors.b2b_form`);
     `can_contact()` mặc định False — chỉ True khi dòng MỚI NHẤT (theo id)
     của đúng (contact, mục đích, đại lý) là granted. `dai_ly` phải đích
     danh đại lý nhận.
@@ -66,7 +68,7 @@ REGIONS_FILE = DATA_DIR / "dealer_regions.json"
 
 KEY_ENV = "CONTACT_VAULT_KEY"
 LOOKUP_INFO = b"samsam/contact_vault/lookup/v1"
-PURPOSES = ("cskh", "marketing", "dai_ly")
+PURPOSES = ("cskh", "marketing", "dai_ly", "b2b")
 CONSENT_SOURCES = ("form_giay", "zalo", "web", "dien_thoai", "email",
                    "truc_tiep")
 LEAD_FLOW = ("new", "contacted", "qualified", "won")

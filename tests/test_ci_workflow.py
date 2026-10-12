@@ -66,7 +66,7 @@ def test_deterministic_suites_are_guardrail_and_co_khi():
 
     det = {n for n in ae.suite_names() if ae._deterministic(ae.load_suite(n))}
     assert det == {"guardrail", "co_khi", "mkt02", "mkt03", "sales_director",
-                   "kd_a1"}
+                   "kd_a1", "kd_a3"}
     assert not ae._deterministic(ae.load_suite("chatbot"))
     skel = [n for n in ae.suite_names()
             if ae.load_suite(n)["status"] == "skeleton"]
@@ -74,7 +74,8 @@ def test_deterministic_suites_are_guardrail_and_co_khi():
         ae._deterministic(ae.load_suite(n)) for n in skel)
     ci = CI.read_text(encoding="utf-8")
     assert "guardrail + co_khi" in ci and "mkt02 + sales_director" in ci \
-        and "+ kd_a1 — v4.5i/v5.1" in ci and "+ mkt03 — gộp v6.2" in ci
+        and "+ kd_a1 — v4.5i/v5.1" in ci and "+ mkt03 — gộp v6.2" in ci \
+        and "+ kd_a3 — v8.2" in ci
 
 
 def test_test_job_has_no_secrets(doc):

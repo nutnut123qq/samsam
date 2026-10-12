@@ -116,7 +116,7 @@ DEFAULT_CHAT_MODEL = "openai/gpt-4o-mini"
 RISKS = ("low", "medium", "high")
 STATUSES = ("active", "skeleton")
 SCORERS = ("guardrail", "co_khi", "mkt02", "mkt03", "sales_director",
-           "eval_qa", "handoff", "exact", "regex", "judge", "cskh")
+           "eval_qa", "handoff", "exact", "regex", "judge", "cskh", "kd_a3")
 # Nguồn DUY NHẤT của tên runner hợp lệ (RUNNERS.keys() phải trùng).
 RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "chatbot": {"eval_qa", "handoff", "exact", "regex",
@@ -125,9 +125,10 @@ RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "mkt02": {"mkt02"},
                   "mkt03": {"mkt03"},
                   "sales_director": {"sales_director"},
-                  "cskh": {"cskh"}}
+                  "cskh": {"cskh"},
+                  "kd_a3": {"kd_a3"}}
 DETERMINISTIC_RUNNERS = ("guardrail", "co_khi", "mkt02", "mkt03",
-                         "sales_director", "cskh")
+                         "sales_director", "cskh", "kd_a3")
 # Hit giả mặc định của runner cskh (ca không khai `fake_hits`).
 CSKH_DEFAULT_HIT = {"title": "Sản phẩm Sâm Sâm", "lang": "vi",
                     "url": "https://samsamngoclinh.com/san-pham",
@@ -139,7 +140,7 @@ GUARDRAIL_CTX_KEYS = {"channel", "content_type", "sku", "is_ai",
 CO_KHI_KINDS = ("fact", "high_risk", "trap_no_data")
 # v6.1 mkt02: ca không có `text` (đầu vào = op × sku × kênh); v6.2 mkt03
 # cũng vậy (đầu vào = sku × kênh × format × headline).
-NO_TEXT_SCORERS = {"mkt02", "mkt03"}
+NO_TEXT_SCORERS = {"mkt02", "mkt03", "kd_a3"}
 MKT02_OPS = ("listing", "draft")
 # v6.2 mkt03: kind ca expect=image (chấm theo kind trong _score_mkt03);
 # provider CHỈ nền tất định / provider giả eval_stub — suite không được kéo
@@ -148,6 +149,16 @@ MKT03_IMAGE_KINDS = ("ai_label_meta", "packshot_intact", "tamper_detect",
                      "no_exif")
 MKT03_PROVIDERS = ("none", "eval_stub")
 SALES_KINDS = ("route", "sla", "trap_offhours", "trap_no_auto")
+# v8.2: loại DUY NHẤT khối KD được risk low (báo giá KD-A3 trong ma trận —
+# lane auto_policy chỉ chạy khi chủ khối ký auto_policies). Ca bẫy
+# all_types: loại ngoài tập phải risk ≠ low + không tự duyệt; loại trong
+# tập phải đúng risk low (lệch = drift cấu hình).
+SALES_AUTO_LANE = frozenset({"b2b_quote_matrix"})
+# v8.2 kd_a3: ca không `text` (đầu vào = items × giá vốn × ngày × patch ma
+# trận); expect quyết định + mã lý do/mã chặn.
+KD_A3_EXPECT = ("within_matrix", "per_item", "refuse")
+KD_A3_PATCH_KEYS = {"finance_confirmed", "sales_confirmed", "items",
+                    "min_margin_pct", "tiers"}
 LABELS = ("dev_draft", "company")
 # agent_model "env:X" chỉ đọc biến trong allowlist — suite không được đọc
 # env tùy ý (DATABASE_URL...) rồi ghi vào eval_runs.model / in ra log.
@@ -385,6 +396,68 @@ def _validate_cskh_case(c: dict, cid, exp) -> list[str]:
     return errs
 
 
+def _validate_kd_a3_case(c: dict, cid, exp) -> list[str]:
+    """v8.2: items list 1..10 object có key; day ISO; cogs list {sku_key,
+    cost_vnd>0, valid_from ISO, approved_by str|null}; discount 0..50;
+    matrix_patch ⊂ KD_A3_PATCH_KEYS; extra_combos list object; expect ∈
+    KD_A3_EXPECT; refuse cần expect_code; còn lại expect_reasons ⊂ mã
+    lý do của agents.kd_quote."""
+    from datetime import date
+
+    from agents.kd_quote import REASONS
+
+    errs = []
+    items = c.get("items")
+    if not (isinstance(items, list) and 1 <= len(items) <= 10 and all(
+            isinstance(x, dict) and "key" in x for x in items)):
+        errs.append(f"ca {cid}: items phải list 1..10 object có key")
+    try:
+        date.fromisoformat(c.get("day"))
+    except (TypeError, ValueError):
+        errs.append(f"ca {cid}: day phải YYYY-MM-DD")
+    cogs = c.get("cogs", [])
+    for v in cogs if isinstance(cogs, list) else [None]:
+        try:
+            ok = (isinstance(v, dict) and _nonempty(v.get("sku_key"))
+                  and _is_int(v.get("cost_vnd")) and v["cost_vnd"] > 0
+                  and bool(date.fromisoformat(v.get("valid_from")))
+                  and (v.get("approved_by") is None
+                       or isinstance(v["approved_by"], str)))
+        except (TypeError, ValueError):
+            ok = False
+        if not ok:
+            errs.append(f"ca {cid}: cogs phải list {{sku_key, cost_vnd>0,"
+                        " valid_from, approved_by}")
+            break
+    if "discount" in c and not (_is_int(c["discount"])
+                                and 0 <= c["discount"] <= 50):
+        errs.append(f"ca {cid}: discount phải số nguyên 0..50")
+    mp = c.get("matrix_patch", {})
+    if not isinstance(mp, dict) or set(mp) - KD_A3_PATCH_KEYS:
+        errs.append(f"ca {cid}: matrix_patch chỉ gồm "
+                    f"{sorted(KD_A3_PATCH_KEYS)}")
+    xc = c.get("extra_combos", [])
+    if not (isinstance(xc, list) and all(isinstance(x, dict) for x in xc)):
+        errs.append(f"ca {cid}: extra_combos phải list object")
+    if "org_name" in c and not _nonempty(c["org_name"]):
+        errs.append(f"ca {cid}: org_name phải chuỗi khác rỗng")
+    if exp not in KD_A3_EXPECT:
+        errs.append(f"ca {cid}: kd_a3 expect phải {KD_A3_EXPECT}")
+    elif exp == "refuse":
+        if not _nonempty(c.get("expect_code")) or "expect_reasons" in c:
+            errs.append(f"ca {cid}: ca refuse cần expect_code (không"
+                        " expect_reasons)")
+    else:
+        er = c.get("expect_reasons")
+        if not (isinstance(er, list) and set(er) <= set(REASONS)) \
+                or "expect_code" in c:
+            errs.append(f"ca {cid}: cần expect_reasons ⊂ {REASONS} (không"
+                        " expect_code)")
+        elif (exp == "within_matrix") != (er == []):
+            errs.append(f"ca {cid}: within_matrix ⇔ expect_reasons rỗng")
+    return errs
+
+
 def _validate_case(c, i: int, d: dict) -> list[str]:
     if not isinstance(c, dict):
         return [f"cases[{i}] không phải object"]
@@ -420,6 +493,8 @@ def _validate_case(c, i: int, d: dict) -> list[str]:
         errs += _validate_sales_case(c, cid, exp)
     elif sc == "cskh":
         errs += _validate_cskh_case(c, cid, exp)
+    elif sc == "kd_a3":
+        errs += _validate_kd_a3_case(c, cid, exp)
     elif sc == "eval_qa" and (not _is_int(cid) or exp is not None):
         errs.append(f"ca {cid}: eval_qa cần id số (questions.md) + expect"
                     " null")
@@ -868,7 +943,10 @@ def _score_sales(case: dict, out: dict) -> tuple[bool, str]:
     exp = case["expect"]
     if "all_types" in out:
         bad = [t for t, (auto, risk) in out["all_types"].items()
-               if auto is not exp["auto_eligible"] or risk == "low"]
+               if ((risk != "low" or auto is not True)
+                   if t in SALES_AUTO_LANE
+                   else (auto is not exp["auto_eligible"]
+                         or risk == "low"))]
         return not bad, "" if not bad else f"loại đủ điều kiện tự duyệt: {bad}"
     if "route" in out:
         got = {k: out["route"][k] for k in exp}
@@ -879,6 +957,23 @@ def _score_sales(case: dict, out: dict) -> tuple[bool, str]:
     return ok, "" if ok else (f"kỳ vọng {exp['state']} hạn {due:%d/%m %H:%M}"
                               f", có {st['state']} hạn "
                               f"{st['business_due_at']:%d/%m %H:%M}")
+
+
+def _score_kd_a3(case: dict, out: dict) -> tuple[bool, str]:
+    """v8.2: quyết định (within_matrix | per_item | refuse) phải khớp;
+    per_item/within: tập mã lý do KHỚP ĐÚNG expect_reasons; refuse:
+    expect_code ∈ mã chặn (problems agent hoặc cổng tài liệu)."""
+    exp = case["expect"]
+    if out["decision"] != exp:
+        return False, (f"kỳ vọng {exp}, có {out['decision']} "
+                       f"({', '.join(out['codes']) or '—'})")
+    if exp == "refuse":
+        ok = case["expect_code"] in out["codes"]
+        return ok, "" if ok else (f"thiếu mã {case['expect_code']}, có "
+                                  f"{out['codes']}")
+    ok = set(out["codes"]) == set(case["expect_reasons"])
+    return ok, "" if ok else (f"lý do kỳ vọng {case['expect_reasons']}, có "
+                              f"{out['codes']}")
 
 
 def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
@@ -896,6 +991,8 @@ def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
         return _score_sales(case, out)
     if sc == "cskh":
         return channels.score_cskh(case, out)
+    if sc == "kd_a3":
+        return _score_kd_a3(case, out)
     if sc == "eval_qa":
         import eval_qa  # scripts/ — tái dùng luật chấm Q1-12
         return eval_qa.check_question(int(case["id"]), out)
@@ -1092,9 +1189,62 @@ def run_cskh(cases, judge_model=None):
     return _run(cases, produce, judge_model)
 
 
+def _kd_a3_out(c: dict, kq, golden, matrix, combos) -> dict:
+    """1 ca KD-A3: classify (ma trận THẬT + patch ca) → problems → refuse;
+    build_quote → cổng tài liệu đối ngoại → refuse; còn lại phân loại."""
+    import copy
+    from datetime import date
+
+    m = copy.deepcopy(matrix)
+    m.update(copy.deepcopy(c.get("matrix_patch") or {}))
+    versions = [{"id": i, "sku_key": v["sku_key"], "cost_vnd": v["cost_vnd"],
+                 "valid_from": date.fromisoformat(v["valid_from"]),
+                 "approved_by": v.get("approved_by")}
+                for i, v in enumerate(c.get("cogs") or [], 1)]
+    cb = list(combos) + list(c.get("extra_combos") or [])
+    day = date.fromisoformat(c["day"])
+    res = kq.classify(c["items"], m, golden, cb, versions, day,
+                      discount=c.get("discount"))
+    if res["problems"]:
+        return {"decision": "refuse", "codes": res["problems"]}
+    req = {"id": 1, "org_name": c.get("org_name", "Công ty MẪU Eval"),
+           "org_type": "doanh_nghiep", "region": "Đà Nẵng", "need_by": None}
+    built = kq.build_quote(req, res, golden, day, m)
+    errs = kq.gate_quote(built["payload"], kq.alcohol_names(golden),
+                         kq.readiness_map(golden), ids=[built["quote_no"]])
+    if errs:
+        return {"decision": "refuse", "codes": errs}
+    return {"decision": "within_matrix" if res["within_matrix"]
+            else "per_item", "codes": res["reasons"]}
+
+
+def run_kd_a3(cases, judge_model=None):
+    """v8.2 KD-A3 (bộ MẪU chờ GĐ bán hàng/tài chính gán nhãn): golden +
+    ma trận file THẬT + BOM mẫu + patch theo ca — 0 DB/mạng/LLM (tắt lớp
+    LLM-check guardrail trong lúc chấm, khôi phục env sau đó)."""
+    from agents import kd_quote as kq  # lazy
+    from ingest.golden_store import GOLDEN_FILE, read_golden
+    from pipelines.production import read_json
+
+    golden, why = read_golden(GOLDEN_FILE)
+    matrix, why2 = kq.read_matrix(kq.MATRIX_FILE)
+    if golden is None or matrix is None:
+        raise RuntimeError(why or why2)
+    combos = read_json(ROOT / "data" / "sample_bom.json", "combos")["combos"]
+    saved = os.environ.pop("GUARDRAIL_LLM_MODEL", None)
+    try:
+        return _run(cases, lambda c: _kd_a3_out(c, kq, golden, matrix,
+                                                combos),
+                    judge_model, show_answer=False)
+    finally:
+        if saved is not None:
+            os.environ["GUARDRAIL_LLM_MODEL"] = saved
+
+
 RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot,
            "co_khi": run_co_khi, "mkt02": run_mkt02, "mkt03": run_mkt03,
-           "sales_director": run_sales_director, "cskh": run_cskh}
+           "sales_director": run_sales_director, "cskh": run_cskh,
+           "kd_a3": run_kd_a3}
 
 
 def score(results: list[tuple[dict, bool, str]], threshold: dict) -> dict:

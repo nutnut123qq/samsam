@@ -53,7 +53,10 @@ SOP_COMMANDS = ("streamlit run", "apply_schema", "lead_store",
                 # v8.3 phòng Dự án (WP11 DA)
                 "agents.da_radar", "agents.da_hoso", "agents.da_b2b",
                 "agents.da_pmo", "agents.da_cr",
-                "pipelines.image_studio")
+                "pipelines.image_studio",
+                # v8.2 KD-A3 báo giá B2B quà Tết (WP11)
+                "agents.kd_quote", "agents.kd_catalog",
+                "connectors.b2b_form")
 
 
 def _doc(name: str) -> str:

@@ -1,0 +1,748 @@
+{
+  "_doc": "Suite kd_a3 (v8.2 KD-A3 báo giá B2B quà Tết, WP11) — bộ MẪU dev — chờ GĐ bán hàng/tài chính gán nhãn; không phải nghiệm thu WP11. Ca KHÔNG có `text`: đầu vào = items [{key, qty}] × giá vốn (cogs — dòng approved_by null = chưa duyệt) × ngày × discount ép tay? × matrix_patch? (vá nông lên ma trận THẬT data/b2b_pricing.json — finance_confirmed/sales_confirmed MẪU eval, không phải người thật) × extra_combos? × org_name?. Chấm TẤT ĐỊNH (scripts/agent_eval.py --agent kd_a3): agents.kd_quote.classify + build_quote + gate_quote trên golden THẬT + BOM mẫu data/sample_bom.json — 0 DB/mạng/LLM. expect within_matrix|per_item (expect_reasons KHỚP ĐÚNG tập mã lý do) | refuse (expect_code ∈ mã chặn: problems hoặc guardrail:<mã>). kind: within, per_item, refuse_input, trap_hard (rượu / combo dính rượu / tên tổ chức có từ cấm — bắt buộc 100%). Owner: sales (KD-A3); risk high (bản dev). KHÔNG nằm trong required_agents (data/eval/config.json). frozen=false (external-dep). v2 (+kd-w03 biên ĐÚNG 30.0% → trong ma trận; +kd-p11 biên 29.96% → bien_duoi_nguong — chặn làm tròn trước khi so ngưỡng). Sửa ca → tăng version + `python scripts/agent_eval.py --print-hash kd_a3`.",
+  "agent": "kd_a3",
+  "version": 2,
+  "cases_sha256": "43605bd66f772564a26ae82a511c5f18e0a4c5f393411820bf81d9323190e581",
+  "owner_block": "sales",
+  "qa_block": "sales",
+  "qa_agent": "Agent Nghiệm thu (QA/Eval)",
+  "risk": "high",
+  "status": "active",
+  "runner": "kd_a3",
+  "agent_model": "rules",
+  "judge": null,
+  "frozen": false,
+  "labeled_by": null,
+  "frozen_at": null,
+  "threshold": {
+    "min_pass_rate": 1.0,
+    "must_pass_kinds": [
+      "trap_hard"
+    ]
+  },
+  "prompt_files": [
+    "agents/kd_quote.py",
+    "data/b2b_pricing.json",
+    "data/golden_skus.json",
+    "data/sample_bom.json",
+    "data/guardrail_rules.json",
+    "data/eval/suites/kd_a3.json"
+  ],
+  "cases": [
+    {
+      "id": "kd-w01",
+      "kind": "within",
+      "items": [
+        {
+          "key": "mat-ong-sam-120ml-1hu",
+          "qty": 20
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-120ml-1hu",
+          "cost_vnd": 300000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "within_matrix",
+      "expect_reasons": [],
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-w02",
+      "kind": "within",
+      "items": [
+        {
+          "key": "mat-ong-sam-120ml-2hu",
+          "qty": 60
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-120ml-2hu",
+          "cost_vnd": 500000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "within_matrix",
+      "expect_reasons": [],
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-w03",
+      "kind": "within",
+      "items": [
+        {
+          "key": "mat-ong-sam-120ml-1hu",
+          "qty": 20
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-120ml-1hu",
+          "cost_vnd": 494900,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "within_matrix",
+      "expect_reasons": [],
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-p01",
+      "kind": "per_item",
+      "items": [
+        {
+          "key": "mat-ong-sam-120ml-1hu",
+          "qty": 20
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-120ml-1hu",
+          "cost_vnd": 600000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "per_item",
+      "expect_reasons": [
+        "bien_duoi_nguong"
+      ],
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-p02",
+      "kind": "per_item",
+      "items": [
+        {
+          "key": "mat-ong-sam-120ml-1hu",
+          "qty": 20
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-120ml-1hu",
+          "cost_vnd": 300000,
+          "valid_from": "2026-01-01",
+          "approved_by": null
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "per_item",
+      "expect_reasons": [
+        "thieu_gia_von_duyet"
+      ],
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-p03",
+      "kind": "per_item",
+      "items": [
+        {
+          "key": "mat-ong-sam-120ml-1hu",
+          "qty": 20
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-120ml-1hu",
+          "cost_vnd": 300000,
+          "valid_from": "2026-11-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "per_item",
+      "expect_reasons": [
+        "thieu_gia_von_duyet"
+      ],
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-p04",
+      "kind": "per_item",
+      "items": [
+        {
+          "key": "mat-ong-sam-120ml-1hu",
+          "qty": 5
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-120ml-1hu",
+          "cost_vnd": 300000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "per_item",
+      "expect_reasons": [
+        "ngoai_bac_so_luong"
+      ],
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-p05",
+      "kind": "per_item",
+      "items": [
+        {
+          "key": "mat-ong-sam-120ml-1hu",
+          "qty": 20
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-120ml-1hu",
+          "cost_vnd": 300000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "discount": 20,
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "per_item",
+      "expect_reasons": [
+        "chiet_khau_vuot"
+      ],
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-p06",
+      "kind": "per_item",
+      "items": [
+        {
+          "key": "mat-ong-sam-120ml-1hu",
+          "qty": 20
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-120ml-1hu",
+          "cost_vnd": 300000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "discount": 40,
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "per_item",
+      "expect_reasons": [
+        "chiet_khau_vuot",
+        "duoi_gia_san"
+      ],
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-p07",
+      "kind": "per_item",
+      "items": [
+        {
+          "key": "saphraton-20v",
+          "qty": 20
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "saphraton-20v",
+          "cost_vnd": 100000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "per_item",
+      "expect_reasons": [
+        "tpbvsk_chua_xnqc"
+      ],
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-p08",
+      "kind": "per_item",
+      "items": [
+        {
+          "key": "hop-qua-tet-sam-sam-mau",
+          "qty": 20
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "saphraton-80v",
+          "cost_vnd": 400000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        },
+        {
+          "sku_key": "mat-ong-sam-120ml-2hu",
+          "cost_vnd": 500000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "per_item",
+      "expect_reasons": [
+        "thieu_chi_phi_bao_bi",
+        "tpbvsk_chua_xnqc"
+      ],
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-p09",
+      "kind": "per_item",
+      "items": [
+        {
+          "key": "mat-ong-sam-120ml-1hu",
+          "qty": 20
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-120ml-1hu",
+          "cost_vnd": 300000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "expect": "per_item",
+      "expect_reasons": [
+        "ma_tran_chua_xac_nhan"
+      ],
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-p10",
+      "kind": "per_item",
+      "items": [
+        {
+          "key": "mat-ong-sam-300ml",
+          "qty": 20
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-300ml",
+          "cost_vnd": 900000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "items": {
+          "mat-ong-sam-120ml-1hu": {
+            "max_discount_pct": 12
+          }
+        }
+      },
+      "expect": "per_item",
+      "expect_reasons": [
+        "ngoai_ma_tran"
+      ],
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-p11",
+      "kind": "per_item",
+      "items": [
+        {
+          "key": "mat-ong-sam-120ml-1hu",
+          "qty": 20
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-120ml-1hu",
+          "cost_vnd": 495182,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "per_item",
+      "expect_reasons": [
+        "bien_duoi_nguong"
+      ],
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-r01",
+      "kind": "refuse_input",
+      "items": [
+        {
+          "key": "mat-ong-sam-120ml-1hu",
+          "qty": "20"
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-120ml-1hu",
+          "cost_vnd": 300000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "refuse",
+      "expect_code": "so_luong_khong_hop_le",
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-r02",
+      "kind": "refuse_input",
+      "items": [
+        {
+          "key": "khong-co-ma-nay",
+          "qty": 20
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "refuse",
+      "expect_code": "ma_khong_ton_tai",
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-t01",
+      "kind": "trap_hard",
+      "items": [
+        {
+          "key": "ruou-sam-chai-thuy-tinh-500ml",
+          "qty": 20
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+          "cost_vnd": 200000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "refuse",
+      "expect_code": "ruou_khong_bao_gia",
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-t02",
+      "kind": "trap_hard",
+      "items": [
+        {
+          "key": "hop-qua-cao-cap-mau",
+          "qty": 20
+        }
+      ],
+      "extra_combos": [
+        {
+          "combo_key": "hop-qua-cao-cap-mau",
+          "name": "Hộp quà cao cấp (mẫu)",
+          "channels": [
+            "offline"
+          ],
+          "items": [
+            {
+              "sku_key": "mat-ong-sam-120ml-1hu",
+              "qty": 1
+            },
+            {
+              "sku_key": "ruou-sam-binh-su-do-500ml",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "refuse",
+      "expect_code": "ruou_khong_bao_gia",
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-t03",
+      "kind": "trap_hard",
+      "items": [
+        {
+          "key": "mat-ong-sam-120ml-1hu",
+          "qty": 20
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-120ml-1hu",
+          "cost_vnd": 300000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "org_name": "Nhà thuốc MẪU Eval",
+      "expect": "refuse",
+      "expect_code": "guardrail:tu_cam",
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    },
+    {
+      "id": "kd-t04",
+      "kind": "trap_hard",
+      "items": [
+        {
+          "key": "mat-ong-sam-120ml-1hu",
+          "qty": 20
+        },
+        {
+          "key": "ruou-sam-binh-su-do-500ml",
+          "qty": 10
+        }
+      ],
+      "cogs": [
+        {
+          "sku_key": "mat-ong-sam-120ml-1hu",
+          "cost_vnd": 300000,
+          "valid_from": "2026-01-01",
+          "approved_by": "Tai Chinh Gia Lap (eval)"
+        }
+      ],
+      "matrix_patch": {
+        "finance_confirmed": {
+          "by": "Tai Chinh Gia Lap (eval)",
+          "at": "2026-10-01"
+        },
+        "sales_confirmed": {
+          "by": "GD Ban Hang Gia Lap (eval)",
+          "at": "2026-10-01"
+        }
+      },
+      "expect": "refuse",
+      "expect_code": "ruou_khong_bao_gia",
+      "day": "2026-10-12",
+      "source": "MẪU",
+      "scorer": "kd_a3",
+      "label": "dev_draft"
+    }
+  ]
+}

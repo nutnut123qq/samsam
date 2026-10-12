@@ -1,0 +1,40 @@
+===== v82 CLI gate 2026-10-12 22:44:00 =====
+$ python -m agents.kd_quote --check-matrix
+[ok] ma trận v1 hợp lệ · 6 mã · 3 bậc · tài chính CHƯA xác nhận · GĐ bán hàng CHƯA xác nhận (GIẢ ĐỊNH — chờ GĐ bán hàng + tài chính chốt chiết khấu, ngưỡng biên, VAT, chi phí bao bì)
+exit=0
+
+$ python -m agents.kd_quote --requests
+[done] 0 yêu cầu báo giá
+exit=0
+
+$ python -m agents.kd_quote --quote 999999999 --dry-run
+[warn] không thấy yêu cầu YC-999999999
+exit=1
+
+$ python -m agents.kd_quote --verify-send 999999999 C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v82/cli_out/x.md
+[warn] mục #999999999: LỆCH — KHÔNG gửi (chưa duyệt / sai loại / file khác bản duyệt)
+exit=1
+
+$ python -m agents.kd_quote --requests --quote 1
+usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+                                 [--quote REQ_ID] [--export QID]
+                                 [--verify-send QID FILE] [--discount PCT]
+                                 [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+                                 [--submit] [--dry-run]
+python -m agents.kd_quote: error: cần đúng 1 thao tác: --check-matrix | --requests | --quote | --export | --verify-send
+exit=2
+
+$ python -m agents.kd_quote --export 1 --verify-send 1 C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v82/cli_out/x.md --out C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v82/cli_out/y.md
+usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+                                 [--quote REQ_ID] [--export QID]
+                                 [--verify-send QID FILE] [--discount PCT]
+                                 [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+                                 [--submit] [--dry-run]
+python -m agents.kd_quote: error: cần đúng 1 thao tác: --check-matrix | --requests | --quote | --export | --verify-send
+exit=2
+
+== grep egress/email (rỗng = đạt)
+grep exit=1 (1 = không khớp)
+grep exit=1 (1 = không khớp)
+== key rượu trong ma trận thật
+key ruou: []

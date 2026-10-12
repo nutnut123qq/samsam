@@ -1,0 +1,24 @@
+{
+  "_doc": "Ma trận báo giá B2B quà Tết (v8.2 KD-A3, WP11) — BẢN DEV SOẠN, GIẢ ĐỊNH, chờ GĐ bán hàng + tài chính chốt. Giá gốc = golden prices[base.channel][base.kind] (combo = tổng giá gốc thành phần × số lượng); bậc chiết khấu theo số lượng từng dòng; đơn giá = làm tròn XUỐNG bội rounding_vnd của giá gốc × (100 − CK) / 100; biên = (tổng − giá vốn ĐÃ DUYỆT v9.1) × 100 / tổng. finance_confirmed/sales_confirmed = null → MỌI báo giá đi per_item (GĐ bán hàng duyệt từng mục); chỉ NGƯỜI thật điền {\"by\": tên, \"at\": YYYY-MM-DD} — hệ thống không tự điền. packaging_cost_vnd (chỉ combo) null = chưa biết chi phí hộp/thiệp (external-dep). KHÔNG BAO GIỜ thêm SKU/combo rượu (validate_matrix chặn). Kiểm: python -m agents.kd_quote --check-matrix",
+  "status": "GIẢ ĐỊNH — chờ GĐ bán hàng + tài chính chốt chiết khấu, ngưỡng biên, VAT, chi phí bao bì",
+  "version": 1,
+  "finance_confirmed": null,
+  "sales_confirmed": null,
+  "base": {"channel": "shopee", "kind": "list"},
+  "min_margin_pct": 30,
+  "rounding_vnd": 1000,
+  "quote_valid_days": 14,
+  "tiers": [
+    {"min_qty": 10, "max_qty": 49, "discount_pct": 5},
+    {"min_qty": 50, "max_qty": 199, "discount_pct": 8},
+    {"min_qty": 200, "max_qty": 1000, "discount_pct": 12}
+  ],
+  "items": {
+    "mat-ong-sam-120ml-1hu": {"max_discount_pct": 12},
+    "mat-ong-sam-120ml-2hu": {"max_discount_pct": 12},
+    "mat-ong-sam-300ml": {"max_discount_pct": 12},
+    "saphraton-20v": {"max_discount_pct": 12},
+    "saphraton-80v": {"max_discount_pct": 12},
+    "hop-qua-tet-sam-sam-mau": {"max_discount_pct": 12, "packaging_cost_vnd": null}
+  }
+}

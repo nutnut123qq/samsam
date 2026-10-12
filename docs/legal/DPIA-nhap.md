@@ -560,6 +560,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Chưa có căn cứ `staff_assist_dpia_v1` cho gợi ý LLM trên tin buyer sàn: GAP |
 | GAP | Chưa có căn cứ xử lý `staff_assist_dpia_v1` (F03b bước 3) — CẦN LUẬT SƯ XÁC NHẬN trước khi dùng thường xuyên; Chưa có trần lượt dán/ngày + thống kê (someday) |
 
+### DF-31 — Form B2B yêu cầu báo giá + báo giá KD-A3 (v8.2)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-31 |
+| Module (code) | `connectors/b2b_form.py`; `agents/kd_quote.py`; `ingest/crm.py` |
+| Mục đích | Nhận yêu cầu báo giá quà Tết B2B; lập báo giá NHÁP cho GĐ bán hàng duyệt rồi NGƯỜI tự gửi (đồng ý mục đích `b2b`) |
+| Dữ liệu | Tên + loại + tỉnh của TỔ CHỨC, tên/SĐT/email NGƯỜI LIÊN HỆ của tổ chức (vault Fernet), sản phẩm/số lượng/ngày cần hàng, IP người gửi (chỉ băm sha256 in-memory cho rate-limit, không ghi đĩa) |
+| Lớp | Đỏ |
+| Chủ thể | Người liên hệ của doanh nghiệp/khách sạn/đơn vị sự kiện/hiệp hội/cơ quan đặt quà Tết |
+| Nơi lưu | Postgres: `contacts` (tên/SĐT/email MÃ HÓA Fernet, tra trùng HMAC), `consents` (mục đích `b2b`, nguồn `web`, `policy_version` b2b-v0-nhap), `b2b_requests` (insert-only — chỉ `contact_id`/`consent_id`, không PII người); báo giá trong `approval_queue` (KHÔNG tên/SĐT/email người liên hệ) + nháp `data/reports/bao-gia-*` (gitignored) |
+| Thời hạn lưu | GIẢ ĐỊNH — Pháp chế chốt thời hạn giữ yêu cầu báo giá/người liên hệ; chưa có job xóa theo hạn: GAP |
+| Bên nhận | Không — hệ thống không gửi; GĐ bán hàng tự gửi báo giá đã duyệt (`--verify-send` KHỚP sha256) |
+| Chuyển ra nước ngoài | Không |
+| Biện pháp bảo vệ (có trong code) | Endpoint mặc định TẮT (`B2B_FORM_ENABLED` env tiến trình, .env không bật được), bind 127.0.0.1 mặc định; Rate-limit 5 lượt/IP/giờ + 60 lượt/giờ toàn form, body ≤ 8 KB, chặn chunked/Content-Type lạ, honeypot — kiểm TRƯỚC khi đọc body/DB; Không echo input ở trang lỗi; log stdout chỉ mã + hash IP + mã YC; lỗi kết nối/ngoại lệ bất ngờ → stderr chỉ hash IP + tên lớp lỗi (không IP thô/traceback); Đồng ý mục đích `b2b` bắt buộc (append-only), PII chỉ trong vault mã hóa; Báo giá do template + code tính (0 LLM, 0 egress), qua `check_publish` + quét PII/rượu trước khi vào hàng duyệt; Rượu không bao giờ vào form/báo giá/catalog |
+| Căn cứ xử lý | Đồng ý của người liên hệ (mục đích `b2b`, câu đồng ý NHÁP b2b-v0-nhap chờ Pháp chế): GAP tới khi Pháp chế chốt câu đồng ý + `policy_version` |
+| GAP | `policy_version` b2b-v0-nhap + câu đồng ý là NHÁP — Pháp chế chốt; Tên hộ kinh doanh có thể là tên người (cột `org_name` không mã hóa) — kiểm mẫu tay; Chưa grant role DB hẹp cho form public (chạy DSN chủ sở hữu) — external-dep; DPIA luồng form chưa ký — KHÔNG bật endpoint trước khi ký; Chưa có job xóa theo thời hạn lưu (retention); Consent web KHÔNG xác minh SĐT (OTP/double opt-in = external-dep): người lạ gõ SĐT người khác tạo được yêu cầu + đồng ý b2b; SĐT trùng contact đã RÚT b2b → bỏ qua 0 ghi (code chặn), contact cũ giữ tên/email trong vault — GĐ bán hàng gọi xác minh danh tính trước khi gửi báo giá |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -596,6 +614,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-28 | Hồ sơ tham gia chương trình — viết lại thư đăng ký bằng LLM (v8.3 DA-04, tùy chọn) | Xanh | thấp | có | 0 |
 | DF-29 | Kênh Messenger (Facebook Page) — nhận tin và trả lời khách (v5.1) | Đỏ | cao | có | 4 |
 | DF-30 | Gợi ý trả lời chat sàn Shopee/TikTok — MXH dán tay (v5.1) | Đỏ | cao | có | 2 |
+| DF-31 | Form B2B yêu cầu báo giá + báo giá KD-A3 (v8.2) | Đỏ | cao | không | 6 |
 
 ## 4. Tổng hợp GAP
 
@@ -648,6 +667,12 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-29] Câu chào + chính sách NHÁP chờ Pháp chế (chung Zalo)
 - [DF-30] Chưa có căn cứ xử lý `staff_assist_dpia_v1` (F03b bước 3) — CẦN LUẬT SƯ XÁC NHẬN trước khi dùng thường xuyên
 - [DF-30] Chưa có trần lượt dán/ngày + thống kê (someday)
+- [DF-31] `policy_version` b2b-v0-nhap + câu đồng ý là NHÁP — Pháp chế chốt
+- [DF-31] Tên hộ kinh doanh có thể là tên người (cột `org_name` không mã hóa) — kiểm mẫu tay
+- [DF-31] Chưa grant role DB hẹp cho form public (chạy DSN chủ sở hữu) — external-dep
+- [DF-31] DPIA luồng form chưa ký — KHÔNG bật endpoint trước khi ký
+- [DF-31] Chưa có job xóa theo thời hạn lưu (retention)
+- [DF-31] Consent web KHÔNG xác minh SĐT (OTP/double opt-in = external-dep): người lạ gõ SĐT người khác tạo được yêu cầu + đồng ý b2b; SĐT trùng contact đã RÚT b2b → bỏ qua 0 ghi (code chặn), contact cũ giữ tên/email trong vault — GĐ bán hàng gọi xác minh danh tính trước khi gửi báo giá
 
 ## 5. Câu hỏi cho luật sư
 
