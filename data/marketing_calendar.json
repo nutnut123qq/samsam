@@ -1,0 +1,51 @@
+{
+  "_doc": "Lịch mùa vụ marketing (MKT-01, v6.0 — đọc bởi pipelines/mkt_calendar.py + agents/mkt_director.py). TOÀN BỘ là GIẢ ĐỊNH do dev soạn từ kế hoạch WP08, CHƯA được GĐ Marketing chốt — lịch chiến dịch thật, mùa thu hoạch thật (GĐ vùng trồng), trần duyệt thật là external-dep. lead: giờ đăng + đệm duyệt/nháp (giờ) + giờ làm việc VN; mốc brief/nháp/duyệt LÙI từ ngày đăng, né T7/CN/non_working_days. Tết dùng 'lunar_new_year' (ngày lấy từ pipelines.scenario.tet_date — không ghi ngày dương lịch ở đây); 'off_days' = ngày nghỉ tính theo offset từ mùng 1 (GIẢ ĐỊNH, chờ thông báo nghỉ Tết chính thức). campaigns.skus: 'auto' = mọi SKU golden đủ readiness kênh × định dạng; rượu KHÔNG BAO GIỜ vào kênh online. review_caps.gd_marketing_daily = trần duyệt brief/ngày của GĐ Marketing (GIẢ ĐỊNH).",
+  "status": "GIẢ ĐỊNH — chờ GĐ Marketing chốt",
+  "lead": {
+    "publish_hour": 9,
+    "approve_buffer_hours": 24,
+    "draft_review_hours": 48,
+    "work_start_hour": 8,
+    "work_end_hour": 17
+  },
+  "non_working_days": ["2027-01-01", "2027-04-30", "2027-05-01"],
+  "reminder_days": [14, 7, 3],
+  "review_caps": {"gd_marketing_daily": 3},
+  "events": [
+    {"id": "20.10", "kind": "holiday", "date": "2026-10-20", "remind": false},
+    {"id": "11.11", "kind": "sale", "date": "2026-11-11", "remind": true},
+    {"id": "20.11", "kind": "holiday", "date": "2026-11-20", "remind": false},
+    {"id": "harvest_2026", "kind": "harvest", "date": "2026-11-25", "remind": false,
+     "status": "GIẢ ĐỊNH — chờ GĐ vùng trồng xác nhận"},
+    {"id": "12.12", "kind": "sale", "date": "2026-12-12", "remind": true},
+    {"id": "24.12", "kind": "holiday", "date": "2026-12-24", "remind": false},
+    {"id": "01.01", "kind": "holiday", "date": "2027-01-01", "remind": false},
+    {"id": "tet_2027", "kind": "tet", "lunar_new_year": 2027, "remind": true,
+     "off_days": [-2, -1, 0, 1, 2, 3, 4]}
+  ],
+  "campaigns": [
+    {"id": "c-2010-2026", "event": "20.10", "publish_offset_days": -3,
+     "channels": ["facebook", "zalo"], "formats": ["post"], "skus": "auto",
+     "pillar": "Quà tặng 20/10 — sâm Ngọc Linh cho phái đẹp"},
+    {"id": "c-1111-2026", "event": "11.11", "publish_offset_days": 0,
+     "channels": ["shopee", "tiktok"], "formats": ["listing", "ads", "livestream"],
+     "skus": "auto", "pillar": "Mùa sale 11.11 trên sàn"},
+    {"id": "c-2011-2026", "event": "20.11", "publish_offset_days": -2,
+     "channels": ["facebook", "zalo"], "formats": ["post"],
+     "skus": ["saphraton-20v", "mat-ong-sam-300ml"],
+     "pillar": "Tri ân thầy cô 20/11"},
+    {"id": "c-harvest-2026", "event": "harvest_2026", "publish_offset_days": 0,
+     "channels": ["facebook", "tiktok"], "formats": ["post"], "skus": [],
+     "pillar": "Câu chuyện mùa thu hoạch vùng trồng"},
+    {"id": "c-1212-2026", "event": "12.12", "publish_offset_days": 0,
+     "channels": ["shopee"], "formats": ["listing", "ads", "koc"],
+     "skus": "auto", "pillar": "Mùa sale 12.12 trên sàn"},
+    {"id": "c-tet-2027-san", "event": "tet_2027", "publish_offset_days": -21,
+     "channels": ["shopee", "web"], "formats": ["listing", "post", "ads"],
+     "skus": "auto", "pillar": "Quà Tết Đinh Mùi trên sàn + web"},
+    {"id": "c-tet-2027-qua-bieu", "event": "tet_2027", "publish_offset_days": -14,
+     "channels": ["facebook", "zalo"], "formats": ["post", "koc"],
+     "skus": ["saphraton-20v", "ruou-sam-binh-su-do-500ml", "mat-ong-sam-300ml"],
+     "pillar": "Quà biếu Tết cho đối tác"}
+  ]
+}

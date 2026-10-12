@@ -74,6 +74,22 @@ python -m agents.report                        # sinh báo cáo 7 ngày
 
 (Flag đầy đủ: `--days N` cho calendar/report; 1 lệnh chỉ làm 1 thao tác.)
 
+## Lịch tuần + bản tin + duyệt brief (v6.0)
+
+- **Lịch tuần:** `python -m pipelines.mkt_calendar --weeks 4` in lịch
+  chiến dịch ĐỀ XUẤT (GIẢ ĐỊNH tới khi GĐ Marketing chốt): mỗi ô kênh ×
+  định dạng, SKU được phép, hạn brief/nháp/duyệt/đăng (giờ VN). Viết bài
+  đúng hạn "nháp" để Pháp chế kịp duyệt trước hạn "duyệt". Ô ghi "câu
+  chuyện thương hiệu — không nêu tên SKU" = không được nêu tên sản phẩm.
+  Muốn lịch trên điện thoại: thêm `--ics` rồi import file `.ics`.
+- **Bản tin thứ Hai:** người vận hành chạy `python -m agents.mkt_director
+  --bulletin` → `data/reports/mkt-week-<thứ Hai>.md`: chiến dịch 28 ngày
+  tới, việc trễ hạn, tải duyệt so với quota, SKU bị chặn kênh.
+- **Duyệt brief:** brief chiến dịch do agent đẩy vào hàng duyệt chung ở
+  trạng thái chờ — chỉ **GĐ Marketing** duyệt (`python -m
+  pipelines.approval_queue --approve ID --by "<tên>"`). Agent không duyệt,
+  không đăng, không chi tiền; cảnh báo "VƯỢT QUOTA" chỉ là đề xuất dời.
+
 ## Khi nào gọi người khác
 
 | Tình huống | Gọi ai |

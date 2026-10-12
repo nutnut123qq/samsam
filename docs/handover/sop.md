@@ -34,6 +34,7 @@ khác.
 | Xem lịch đăng sắp tới | `python -m pipelines.store --calendar` (mặc định 14 ngày; `--days N`) |
 | Backup DB + data | xem mục 6 |
 | Đối chiếu danh mục dữ liệu | `python scripts/data_audit.py` → cập nhật `docs/phu-luc-a.md` khi data đổi |
+| Lịch mùa vụ + brief + bản tin Marketing (v6.0) | sáng thứ Hai: `python -m agents.mkt_director --briefs` rồi `--bulletin` → `data/reports/mkt-week-<thứ Hai>.md` — xem mục 5e |
 | Bản tin vùng trồng (v9.3) | `python -m agents.garden_director --bulletin` → `data/reports/garden-week-<ngày>.md` — BẢN NHÁP cho GĐ vùng trồng |
 | Kiểm hash chain nhật ký vườn | `python -m agents.garden_director --verify` (exit 0 = nguyên vẹn; 1 = có dòng bị sửa/xóa — xem mục 7) |
 
@@ -340,6 +341,68 @@ python -m crawler.intel --report
   khi mọi nguồn được thử đều lỗi — xem dòng `[warn]` phía trên.
 - LLM tóm tắt (`--llm`) mặc định TẮT: chỉ chạy khi `llm.enabled = true`
   trong file nguồn — chờ Pháp chế xác nhận bằng văn bản.
+
+## 5e. Lịch mùa vụ + điều phối Marketing (v6.0)
+
+**MKT-01 lịch mùa vụ** (không DB, không LLM — chỉ đọc
+`data/marketing_calendar.json` + `data/golden_skus.json` +
+`data/directors/marketing.json`):
+
+```
+python -m pipelines.mkt_calendar --start 2026-10-12 --weeks 4
+python -m pipelines.mkt_calendar --start 2026-10-12 --weeks 26 --by month
+python -m pipelines.mkt_calendar --start 2026-10-12 --weeks 18 --ics data/reports/mkt-calendar-2026-10-12.ics
+```
+
+- Dòng đầu in `status` lịch ("GIẢ ĐỊNH — chờ GĐ Marketing chốt") + "Lịch ĐỀ
+  XUẤT — GĐ Marketing duyệt trước khi chạy". Mỗi chiến dịch × kênh ×
+  định dạng kèm SKU đủ readiness + 4 mốc giờ VN: brief → nháp → duyệt →
+  đăng, LÙI từ ngày đăng (đệm duyệt 24h, nháp 48h, SLA brief 48h từ
+  `campaign_brief` trong `marketing.json`), né T7/CN/ngày nghỉ, trong giờ
+  8–17. Ngày đăng được rơi cuối tuần (sale sàn T7).
+- Tết 2027 lấy từ `pipelines.scenario.tet_date` (không ghi lại ngày Tết
+  trong file lịch). Nhắc trước 14/7/3 ngày cho 11.11, 12.12, Tết.
+- Rượu KHÔNG BAO GIỜ có ô kênh online (chỉ nằm ở mục "SKU bị chặn kênh").
+  TPBVSK chưa XNQC chỉ vào `listing` (mô tả); ads/KOC/livestream/post cần
+  `QC_DAY_DU`/`TP_THUONG`. Ô post/livestream không còn SKU → "câu chuyện
+  thương hiệu — không nêu tên SKU".
+- `.ics` (mặc định `data/reports/`, gitignored) import được vào Google/
+  Outlook Calendar — chỉ là lịch nhắc, KHÔNG hẹn đăng bài. `--json` cho
+  máy đọc. Exit 1 = lịch/golden/cấu hình hỏng (`[err] ...`); 2 = sai
+  tham số.
+
+**MKT-00 điều phối** (tất định, không LLM; không duyệt, không đăng, không
+chi tiền):
+
+```
+python -m agents.mkt_director --briefs --dry-run
+python -m agents.mkt_director --briefs [--today YYYY-MM-DD] [--horizon-days 14]
+python -m agents.mkt_director --load --today 2026-11-02 --days 28
+python -m agents.mkt_director --bulletin
+```
+
+- **Nhịp:** sáng thứ Hai chạy `--briefs` rồi `--bulletin`; trước mùa cao
+  điểm chạy thêm `--load`.
+- `--briefs`: đẩy "brief chiến dịch" (`campaign_brief`, rủi ro medium, SLA
+  48h) có mốc brief trong 14 ngày tới vào hàng duyệt chung — chạy lại
+  không đẩy trùng. Mục vào hàng ở `pending`; **GĐ Marketing duyệt**:
+  `python -m pipelines.approval_queue --pending --block marketing` rồi
+  `python -m pipelines.approval_queue --approve ID --by "<tên GĐ>"` (hoặc
+  `--reject ID --by ... --note ...`). Quá SLA → `expired`, không tự duyệt.
+  Exit 2 = DB down.
+- `--load`: dự báo số mục duyệt/ngày (Pháp chế: 1 mục/ô tại ngày mốc
+  duyệt; GĐ Marketing: 1 brief/chiến dịch tại ngày mốc nháp) so với quota
+  `data/review_quota.json` + trần GĐ trong file lịch → `VƯỢT QUOTA ...` +
+  "ĐỀ XUẤT dời ... — GĐ Marketing quyết". **Lịch không bị dời tự động** —
+  GĐ sửa file lịch nếu đồng ý. Quota hỏng → exit 2.
+- `--bulletin`: `data/reports/mkt-week-<thứ Hai>.md` — chiến dịch 28 ngày
+  tới, việc trễ hạn, tải duyệt 14 ngày vs quota, SKU bị chặn kênh. DB
+  down → vẫn sinh, mục trễ hạn ghi "nguồn DB thiếu". BẢN NHÁP — người
+  chuyển tay cho GĐ Marketing.
+- **External-dep / GIẢ ĐỊNH:** lịch chiến dịch thật (GĐ Marketing chốt rồi
+  đổi `status`), mùa thu hoạch thật (GĐ vùng trồng), quota duyệt thật
+  (TGĐ), người duyệt thật + SSO (`approvers` đang rỗng), XNQC/channel
+  policy per SKU (Pháp chế) — chưa có thì lịch thật ra ít ô kèm SKU.
 
 ## 6. Backup + diễn tập khôi phục (v3.6)
 

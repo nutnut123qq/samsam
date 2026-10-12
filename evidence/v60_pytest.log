@@ -1,0 +1,117 @@
+# v6.0 W60.8 gate â€” 2026-10-12T12:48:53+07:00
+## targeted lan 1
+$ python -m pytest -q -rs tests/test_mkt_calendar.py tests/test_mkt_director.py tests/test_director.py tests/test_scenario.py tests/test_review_load.py tests/test_handover_docs.py
+........................................................................ [ 96%]
+.........                                                                [100%]
+225 passed in 9.49s
+[exit=0]
+
+## targeted lan 2
+$ python -m pytest -q -rs tests/test_mkt_calendar.py tests/test_mkt_director.py tests/test_director.py tests/test_scenario.py tests/test_review_load.py tests/test_handover_docs.py
+........................................................................ [ 96%]
+.........                                                                [100%]
+225 passed in 9.49s
+[exit=0]
+
+## targeted lan 3
+$ python -m pytest -q -rs tests/test_mkt_calendar.py tests/test_mkt_director.py tests/test_director.py tests/test_scenario.py tests/test_review_load.py tests/test_handover_docs.py
+........................................................................ [ 96%]
+.........                                                                [100%]
+225 passed in 9.12s
+[exit=0]
+
+## full pytest (1 lan) â€” 2026-10-12T12:49:50+07:00
+$ python -m pytest -q -rs
+........................................................................ [ 24%]
+........................................................................ [ 28%]
+......................................sss............................... [ 32%]
+........................................................................ [ 36%]
+........................................................................ [ 40%]
+........................................................................ [ 44%]
+........................................................................ [ 48%]
+........................................................................ [ 52%]
+........................................................................ [ 56%]
+........................................................................ [ 61%]
+........................................................................ [ 65%]
+........................................................................ [ 69%]
+........................................................................ [ 73%]
+........................................................................ [ 77%]
+........................................................................ [ 81%]
+........................................................................ [ 85%]
+........................................................................ [ 89%]
+........................................................................ [ 93%]
+........................................................................ [ 97%]
+.........................................                                [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: khÃ´ng cÃ³ docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: khÃ´ng cÃ³ docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: khÃ´ng cÃ³ docker/image postgres:<major>-alpine
+1766 passed, 3 skipped in 356.61s (0:05:56)
+[exit=0]
+end 2026-10-12T12:55:52+07:00
+
+$ ruff check .
+All checks passed!
+[exit=0]
+
+$ python -m py_compile pipelines/mkt_calendar.py agents/mkt_director.py
+[exit=0]
+
+$ python -c "import json; json.load(open('data/marketing_calendar.json', encoding='utf-8'))"
+json ok
+[exit=0]
+
+$ python -m pytest -q tests/test_connect_timeout_guard.py
+..                                                                       [100%]
+2 passed in 1.01s
+
+$ git status --porcelain
+ M DONE.md
+ M data/directors/marketing.json
+ M docs/handover/kien-truc.md
+ M docs/handover/playbook-mkt.md
+ M docs/handover/sop.md
+?? agents/mkt_director.py
+?? data/marketing_calendar.json
+?? pipelines/mkt_calendar.py
+?? tests/test_mkt_calendar.py
+?? tests/test_mkt_director.py
+
+# vong fix nghiem thu (3 MINOR test yeu) â€” 2026-10-12T13:07:57+07:00
+## targeted lan 1
+$ python -m pytest -q -rs tests/test_mkt_calendar.py tests/test_mkt_director.py tests/test_director.py tests/test_scenario.py tests/test_review_load.py tests/test_handover_docs.py
+........................................................................ [ 95%]
+...........                                                              [100%]
+227 passed in 10.29s
+[exit=0]
+
+## targeted lan 2
+$ python -m pytest -q -rs tests/test_mkt_calendar.py tests/test_mkt_director.py tests/test_director.py tests/test_scenario.py tests/test_review_load.py tests/test_handover_docs.py
+........................................................................ [ 95%]
+...........                                                              [100%]
+227 passed in 12.70s
+[exit=0]
+
+## targeted lan 3
+$ python -m pytest -q -rs tests/test_mkt_calendar.py tests/test_mkt_director.py tests/test_director.py tests/test_scenario.py tests/test_review_load.py tests/test_handover_docs.py
+........................................................................ [ 95%]
+...........                                                              [100%]
+227 passed in 11.84s
+[exit=0]
+
+## full pytest (1 lan) â€” 2026-10-12T13:08:46+07:00
+$ python -m pytest -q -rs
+........................................................................ [ 93%]
+........................................................................ [ 97%]
+...........................................                              [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+1768 passed, 3 skipped in 284.55s (0:04:44)
+[exit=0]
+end 2026-10-12T13:13:36+07:00
+
+$ ruff check .
+All checks passed!
+[exit=0]
