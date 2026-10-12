@@ -1,0 +1,73 @@
+# v53 W53.9 docs — 2026-10-12T22:17:24+07:00
+$ python -m pytest tests/test_handover_docs.py -q -rs
+...........                                                              [100%]
+11 passed in 1.04s
+[exit 0]
+
+$ python -m agents.kd_listing --help
+usage: python -m agents.kd_listing [-h] [--run] [--report] [--dry-run]
+                                   [--out-dir OUT_DIR]
+
+KD-A4 — so listing đang chạy trên sàn với bản duyệt + golden → NHÁP hàng duyệt
+(agent KHÔNG sửa sàn)
+
+options:
+  -h, --help         show this help message and exit
+  --run              đẩy mục lệch mới vào hàng duyệt khối KD
+  --report           báo cáo catalog-sync-<ngày>.md → data/reports/
+  --dry-run          với --run: chỉ đọc, in kế hoạch
+  --out-dir OUT_DIR
+[exit 0]
+
+$ python -m agents.kd_price --help
+usage: python -m agents.kd_price [-h] [--run] [--report] [--dry-run]
+                                 [--plan PLAN] [--as-of AS_OF]
+                                 [--out-dir OUT_DIR]
+
+KD-A5 — giám sát giá + khuyến mãi theo giá sàn/list golden, biên, trần KM →
+NHÁP hàng duyệt (agent KHÔNG đổi giá)
+
+options:
+  -h, --help         show this help message and exit
+  --run              đẩy phát hiện mới vào hàng duyệt khối KD
+  --report           báo cáo price-watch-<ngày>.md → data/reports/
+  --dry-run          với --run: chỉ đọc, in kế hoạch
+  --plan PLAN        CSV kế hoạch khuyến mãi (nhập tay, utf-8)
+  --as-of AS_OF      ngày kiểm YYYY-MM-DD (giờ VN) — chỉ với --report hoặc
+                     --run --dry-run
+  --out-dir OUT_DIR
+[exit 0]
+
+$ python -m pipelines.approval_queue --help
+usage: python -m pipelines.approval_queue [-h] [--pending] [--block BLOCK]
+                                          [--approve ID] [--reject ID]
+                                          [--override-qa ID] [--expire]
+                                          [--by BY] [--note NOTE]
+                                          [--reason REASON]
+
+Hàng duyệt dùng chung — NGƯỜI duyệt từng mục; quá SLA → expired, không tự
+duyệt
+
+options:
+  -h, --help        show this help message and exit
+  --pending         liệt kê mục đang chờ
+  --block BLOCK     lọc theo khối (với --pending)
+  --approve ID
+  --reject ID
+  --override-qa ID  ép trình mục QA FAIL (cần --reason, vẫn phải người khác
+                    --approve)
+  --expire          đánh expired mọi mục quá SLA
+  --by BY           tên người quyết (free-text — SSO là external-dep)
+  --note NOTE
+  --reason REASON   lý do override QA (≥ 10 ký tự)
+[exit 0]
+
+$ grep -n '5n\.' docs/handover/sop.md
+1211:## 5n. Catalog/listing đa sàn + giám sát giá & KM (v5.3 — agent KHÔNG đổi giá/listing)
+
+$ grep -c 'kd_listing\|kd_price' AGENTS.md docs/handover/kien-truc.md docs/handover/sop.md
+AGENTS.md:2
+docs/handover/kien-truc.md:2
+docs/handover/sop.md:8
+$ grep -n '66 bảng' docs/handover/kien-truc.md
+80:## 3. Cơ sở dữ liệu — 66 bảng public (`docs/schema.sql`)

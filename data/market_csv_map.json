@@ -1,9 +1,9 @@
 {
-  "_doc": "v3.3 mapping cột file xuất tay từ Seller Center → field chuẩn của ingest.market_csv. TÊN CỘT LÀ GIẢ ĐỊNH, chưa xác minh với file thật (external-dep: người có tài khoản Seller Center xuất 1 file mỗi loại để đối chiếu header, dòng header, định dạng giá/trạng thái). Mỗi kênh × loại export: required {field: header} (thiếu = lỗi schema), optional {field: header}, drop [header] (bỏ NGAY khi đọc — gồm mọi cột PII người mua/người nhận), inactive_status (listing: trạng thái coi là KHÔNG còn bán; trạng thái lạ = đang bán), cancel_status (order: trạng thái đơn hủy). Cột không thuộc required/optional/drop = cột lạ → chặn cả file. Field chuẩn: item_id, seller_sku, title, price, stock, status, ads_spend, qty, order_id.",
+  "_doc": "v3.3 mapping cột file xuất tay từ Seller Center → field chuẩn của ingest.market_csv. TÊN CỘT LÀ GIẢ ĐỊNH, chưa xác minh với file thật (external-dep: người có tài khoản Seller Center xuất 1 file mỗi loại để đối chiếu header, dòng header, định dạng giá/trạng thái). Mỗi kênh × loại export: required {field: header} (thiếu = lỗi schema), optional {field: header}, drop [header] (bỏ NGAY khi đọc — gồm mọi cột PII người mua/người nhận), inactive_status (listing: trạng thái coi là KHÔNG còn bán; trạng thái lạ = đang bán), cancel_status (order: trạng thái đơn hủy). Cột không thuộc required/optional/drop = cột lạ → chặn cả file. Field chuẩn: item_id, seller_sku, title, price, stock, status, ads_spend, qty, order_id, sale_price. v5.3: sale_price (listing, tùy chọn — giá sau khuyến mãi; header 'Giá khuyến mãi' / 'Sale Price' GIẢ ĐỊNH, chưa xác minh với file thật) chỉ lưu trong market_rows.raw, agents.kd_price đọc làm giá bán thực.",
   "shopee": {
     "listing": {
       "required": {"item_id": "Mã sản phẩm", "title": "Tên sản phẩm", "price": "Giá", "status": "Trạng thái"},
-      "optional": {"seller_sku": "SKU phân loại", "stock": "Kho hàng"},
+      "optional": {"seller_sku": "SKU phân loại", "stock": "Kho hàng", "sale_price": "Giá khuyến mãi"},
       "drop": ["Mô tả sản phẩm", "Ảnh bìa"],
       "inactive_status": ["Đã ẩn", "Đã xóa", "Bị khóa", "Vi phạm"]
     },
@@ -22,7 +22,7 @@
   "tiktok": {
     "listing": {
       "required": {"item_id": "Product ID", "title": "Product Name", "price": "Price", "status": "Status"},
-      "optional": {"seller_sku": "Seller SKU", "stock": "Quantity"},
+      "optional": {"seller_sku": "Seller SKU", "stock": "Quantity", "sale_price": "Sale Price"},
       "drop": ["Description", "Main Image"],
       "inactive_status": ["Deactivated", "Deleted", "Suspended", "Draft", "Frozen"]
     },

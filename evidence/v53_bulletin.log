@@ -1,0 +1,90 @@
+# v53 W53.7 bản tin GĐ KD mục 6 — 2026-10-12T22:14:47+07:00
+$ python -m pytest tests/test_sales_director.py -q -rs
+....................................................................     [100%]
+68 passed in 62.46s (0:01:02)
+[exit 0]
+
+$ python -m agents.sales_director --run --dry-run --bulletin --now 2026-10-12T09:00+07:00
+[dry-run] sẽ đẩy: cskh_handoff 3, price_review 17 · CSKH vượt trần chờ lần sau 0 · sẽ expire 0 · sẽ leo thang 0 (cảnh báo đỏ 0) · lead quá hạn nhắc 0 — KHÔNG ghi DB
+# Bản tin GĐ Kinh doanh TMĐT — ngày 11/10/2026
+
+Agent: Agent GĐ Kinh doanh TMĐT (điều phối) · khối `sales` · ảnh chụp hàng chờ lúc 12/10/2026 09:00 (giờ VN)
+
+## 1. Hàng chờ theo SLA giờ làm việc
+
+| Trạng thái | Số |
+|---|---|
+| Quá hạn | 0 |
+| Sắp quá hạn | 0 |
+| Đúng hạn | 0 |
+| Tổng đang chờ | 0 |
+
+- (không có)
+
+### Leo thang TGĐ (lớp B quá hạn)
+
+- (không có)
+
+## 2. Kết quả trong kỳ (ngày 11/10/2026)
+
+| Kết quả | Số |
+|---|---|
+| Đã duyệt | 0 |
+| Từ chối | 0 |
+| Hết hạn tuyệt đối (expired — KHÔNG tự duyệt) | 0 |
+
+## 3. Cảnh báo sàn đang mở
+
+| Mức | Loại | Kênh | Số |
+|---|---|---|---|
+| — | — | — | 0 |
+
+Tổng: S1 0 · S2 0
+
+## 4. Lead mới trong kỳ theo vùng (tổng 0)
+
+| Vùng | Số lead |
+|---|---|
+| Quảng Nam – Đà Nẵng | 0 |
+| Miền Trung – Tây Nguyên khác | 0 |
+| Hà Nội – miền Bắc | 0 |
+| TP.HCM – miền Nam | 0 |
+| chưa rõ vùng | 0 |
+
+Lead `new` quá 8 giờ làm việc chưa xử lý: 0
+Câu chatbot chưa trả lời (72 giờ qua): 5
+Nhóm khách chưa trả lời vượt trần 30 mục/lần chạy (chờ lần sau): 0
+
+## 5. Giá chờ duyệt
+
+- Mục giá đang chờ trong hàng duyệt: 0
+- Phiếu lệch golden (giá) đang pending: 17
+
+## 6. Catalog & giá (A4/A5)
+
+| Agent | Lần chạy gần nhất (giờ VN) | Kết quả |
+|---|---|---|
+| A4 Catalog/listing đa sàn | chưa chạy | — |
+| A5 Giá & khuyến mãi | chưa chạy | — |
+
+| Agent | Loại việc | Mục chờ duyệt |
+|---|---|---|
+| — | — | 0 |
+
+## Người duyệt
+
+- Vai trò duyệt: gd_ban_hang
+- Người duyệt/người nhận chưa cấu hình (external-dep)
+- Ca làm việc GIẢ ĐỊNH: 08:00–18:00, T2, T3, T4, T5, T6, 0 ngày lễ — GĐ KD chốt
+
+---
+*BẢN NHÁP — hệ thống không tự gửi. Người đọc rồi chuyển tay cho GĐ Kinh doanh.*
+
+[exit 0]
+
+$ python scripts/agent_eval.py --agent sales_director --no-record
+[done] sales_director v1 PASS 26/26 pass_rate=1.0 (ngưỡng 1.0) prompt_version=bd3a3e0541e8 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[exit 0]
+

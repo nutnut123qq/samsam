@@ -1,0 +1,27 @@
+# v53 W53.3 A4 kd_listing — 2026-10-12T22:09:52+07:00
+$ python -m pytest tests/test_kd_listing.py -q -rs
+....................                                                     [100%]
+20 passed in 17.72s
+[exit 0]
+
+## DB thật samsam_infra: dry-run, đếm bảng trước/sau
+[counts] {'approval_queue': 0, 'price_list': 34, 'market_alerts': 0, 'sku_master': 13, 'market_rows': 0, 'agent_action_log': 1}
+$ python -m agents.kd_listing --run --dry-run
+[warn] chưa có file listing shopee
+[warn] chưa có file listing tiktok
+[A4] 0 phát hiện (S1 0) · dòng chưa map 0
+[dry-run] sẽ đẩy 0 mục mới · đã có 0 · trùng cảnh báo sàn 0 — KHÔNG ghi DB
+[exit 0]
+
+[counts] {'approval_queue': 0, 'price_list': 34, 'market_alerts': 0, 'sku_master': 13, 'market_rows': 0, 'agent_action_log': 1}
+## 2 thao tác cùng lúc → exit 2 trước connect (host chết, không treo)
+$ env DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m agents.kd_listing --run --report
+usage: python -m agents.kd_listing [-h] [--run] [--report] [--dry-run]
+                                   [--out-dir OUT_DIR]
+python -m agents.kd_listing: error: chỉ được 1 thao tác mỗi lần (--run | --report)
+[exit 2]
+
+## DSN host chết → exit 2, không treo
+$ DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m agents.kd_listing --run --dry-run
+[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+[exit 2] sau 5s

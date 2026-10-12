@@ -1,5 +1,5 @@
 {
-  "_doc": "Cấu hình agent GĐ Kinh doanh TMĐT (v4.0 khung pipelines/director.py + v5.0 agents/sales_director.py) — BẢN DEV SOẠN, CHƯA ĐƯỢC TGĐ/GĐ KD DUYỆT; ca làm việc là GIẢ ĐỊNH (08:00–18:00 thứ Hai–thứ Sáu, chưa có lịch lễ/Tết — GĐ KD chốt). approver_roles ⊂ pipelines.auth.ROLES. approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc khối KD vào hàng duyệt chung — sla_hours = hạn TUYỆT ĐỐI giờ đồng hồ 1..720 (quá → expired, không bao giờ tự duyệt; phải ≥ thời lượng tệ nhất của SLA giờ làm việc lớp handoff để mục luôn được leo thang trước khi expired), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng; S1 luôn high), handoff A|B. handoff_classes: A = 2 giờ làm việc (Quản lý MXH/sàn nhận, quá hạn → cảnh báo đỏ), B = 4 giờ làm việc (GĐ bán hàng nhận, quá hạn → leo thang TGĐ) — khóa cứng theo WP07. regions: từ khóa tỉnh GIẢ ĐỊNH (bảng map vùng–đại lý thật = external-dep). sources.max_cskh_per_run: trần mục cskh_handoff MỚI mỗi lần chạy (kênh inbound khách kiểm soát được — chống spam ngập hàng duyệt; phần vượt chờ lần sau, đếm trong bản tin); cskh_handoff gom theo khách/ngày VN, 1 mục mỗi ĐỢT (đang pending → tin mới dồn vào; đã quyết mà khách hỏi tiếp → mục mới). Không dùng 'content_draft' (giữ đường pipelines.store).",
+  "_doc": "Cấu hình agent GĐ Kinh doanh TMĐT (v4.0 khung pipelines/director.py + v5.0 agents/sales_director.py) — BẢN DEV SOẠN, CHƯA ĐƯỢC TGĐ/GĐ KD DUYỆT; ca làm việc là GIẢ ĐỊNH (08:00–18:00 thứ Hai–thứ Sáu, chưa có lịch lễ/Tết — GĐ KD chốt). approver_roles ⊂ pipelines.auth.ROLES. approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc khối KD vào hàng duyệt chung — sla_hours = hạn TUYỆT ĐỐI giờ đồng hồ 1..720 (quá → expired, không bao giờ tự duyệt; phải ≥ thời lượng tệ nhất của SLA giờ làm việc lớp handoff để mục luôn được leo thang trước khi expired), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng; S1 luôn high), handoff A|B. handoff_classes: A = 2 giờ làm việc (Quản lý MXH/sàn nhận, quá hạn → cảnh báo đỏ), B = 4 giờ làm việc (GĐ bán hàng nhận, quá hạn → leo thang TGĐ) — khóa cứng theo WP07. regions: từ khóa tỉnh GIẢ ĐỊNH (bảng map vùng–đại lý thật = external-dep). sources.max_cskh_per_run: trần mục cskh_handoff MỚI mỗi lần chạy (kênh inbound khách kiểm soát được — chống spam ngập hàng duyệt; phần vượt chờ lần sau, đếm trong bản tin); cskh_handoff gom theo khách/ngày VN, 1 mục mỗi ĐỢT (đang pending → tin mới dồn vào; đã quyết mà khách hỏi tiếp → mục mới). Không dùng 'content_draft' (giữ đường pipelines.store). v5.3: listing_sync (A4 agents.kd_listing — listing đang chạy trên sàn lệch bản duyệt/golden) và promo_change (A5 agents.kd_price — khuyến mãi dự kiến phá trần/chồng/không kiểm được) là NHÁP lớp B risk high; nháp đổi giá A5 dùng price_change, S1 của A4/A5 dùng market_alert_s1.",
   "block": "sales",
   "name": "Giám đốc bán hàng + Sales (Phòng kinh doanh TMĐT)",
   "director_agent": "Agent GĐ Kinh doanh TMĐT (điều phối)",
@@ -67,6 +67,18 @@
       "risk": "medium",
       "handoff": "B",
       "label": "Mẫu tin nhắn"
+    },
+    "listing_sync": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Lệch listing sàn so với bản duyệt"
+    },
+    "promo_change": {
+      "sla_hours": 96,
+      "risk": "high",
+      "handoff": "B",
+      "label": "Khuyến mãi dự kiến cần xem lại"
     }
   },
   "handoff_classes": {

@@ -65,7 +65,7 @@ def test_ship_config_valid_and_no_real_people():
     for t in ("cskh_handoff", "cskh_reply", "market_alert_s1",
               "market_alert_s2", "price_review", "price_change",
               "listing_change", "b2b_quote", "affiliate_program",
-              "message_template"):
+              "message_template", "listing_sync", "promo_change"):
         assert types[t]["handoff"] in ("A", "B") and types[t]["label"]
     assert types["market_alert_s1"]["risk"] == "high"
     assert {t for t, s in types.items() if s["handoff"] == "A"} == {
@@ -990,3 +990,86 @@ def test_cskh_new_episode_after_decided_same_day(db, tmp_path):
         f"{base}:20261012T090000Z"]
     # Tin cũ trước decided_at không mở lại đợt; khách khác không bị ảnh hưởng.
     assert _count(db, "approval_queue", "object_type = 'cskh_handoff'") == 2
+
+
+# ---------------------------------------------------------------- v5.3 mục 6 Catalog & giá
+
+def _catalog():
+    return {"pending": {("a4", "listing_sync"): [12, 11],
+                        ("a5", "promo_change"): [15],
+                        ("a5", "market_alert_s1"): [14]},
+            "jobs": {"agents.kd_listing": (_t(12, 8, 30), True),
+                     "agents.kd_price": (_t(12, 9), False)}}
+
+
+def _sec6(text):
+    return text.split("## 6. Catalog & giá (A4/A5)")[1].split(
+        "## Người duyệt")[0]
+
+
+def test_render_bulletin_catalog_section_v53():
+    now = datetime(2026, 10, 13, 6, 59, tzinfo=VN)
+    q = [*_data()["queue"],
+         {"id": 15, "object_type": "promo_change", "handoff_class": "B",
+          "business_due_at": _t(13, 12), "state": "on_time",
+          "escalated_at": None}]
+    t = sd.render_bulletin(CFG, _data(queue=q, catalog=_catalog()), now)
+    assert t == sd.render_bulletin(CFG, _data(queue=q, catalog=_catalog()),
+                                   now)
+    sec = _sec6(t)
+    assert "| A4 Catalog/listing đa sàn | 12/10/2026 08:30 | ok |" in sec
+    assert "| A5 Giá & khuyến mãi | 12/10/2026 09:00 | lỗi |" in sec
+    assert ("| A4 Catalog/listing đa sàn | Lệch listing sàn so với bản duyệt"
+            " | 2 — #11, #12 |") in sec
+    assert ("| A5 Giá & khuyến mãi | Khuyến mãi dự kiến cần xem lại | 1 —"
+            " #15 |") in sec
+    assert "| A5 Giá & khuyến mãi | Xử lý cảnh báo sàn S1 | 1 — #14 |" in sec
+    # Mục 5 "Giá chờ duyệt" đếm thêm promo_change.
+    assert "Mục giá đang chờ trong hàng duyệt: 2 — #9, #15" in t
+    assert t.index("## 5. Giá chờ duyệt") < t.index("## 6. Catalog") < \
+        t.index("## Người duyệt")
+
+
+def test_render_bulletin_catalog_missing_or_no_privilege():
+    now = datetime(2026, 10, 13, 6, 59, tzinfo=VN)
+    old = sd.render_bulletin(CFG, _data(), now)      # caller cũ: không khóa
+    assert "(chưa có số liệu)" in _sec6(old)
+    t = sd.render_bulletin(CFG, _data(catalog={"pending": {}, "jobs": None}),
+                           now)
+    assert "không đọc được (role thiếu quyền job_runs)" in _sec6(t)
+    assert "| — | — | 0 |" in _sec6(t)
+    t = sd.render_bulletin(CFG, _data(catalog={"pending": {}, "jobs": {}}),
+                           now)
+    assert "| A4 Catalog/listing đa sàn | chưa chạy | — |" in _sec6(t)
+
+
+def test_gather_catalog_counts_a4_a5_db(db, tmp_path):
+    now = datetime(2026, 10, 13, 6, 59, tzinfo=VN)
+    a4 = _item(db, "listing_sync", "a4:title_drift:shopee:1001:0123456789ab",
+               _t(12, 9))
+    a5 = _item(db, "market_alert_s1", "a5:promo_banned:shopee:KM1:0123456789ab",
+               _t(12, 9))
+    _item(db, "price_change", "gd:other", _t(12, 9))       # không phải A4/A5
+    db.execute("insert into job_runs (job, started_at, finished_at, ok)"
+               " values ('agents.kd_listing', %s, %s, true),"
+               " ('agents.kd_listing', %s, %s, false)",
+               (_t(11, 8), _t(11, 8, 1), _t(12, 8), _t(12, 8, 2)))
+    data = sd.gather(_TxConn(db), now, CFG, "day", tmp_path)
+    cat = data["catalog"]
+    assert cat["pending"] == {("a4", "listing_sync"): [a4],
+                              ("a5", "market_alert_s1"): [a5]}
+    assert cat["jobs"] == {"agents.kd_listing": (_t(12, 8, 2), False)}
+    text = sd.render_bulletin(CFG, data, now)
+    sec = _sec6(text)
+    assert "| A4 Catalog/listing đa sàn | 12/10/2026 08:02 | lỗi |" in sec
+    assert "| A5 Giá & khuyến mãi | chưa chạy | — |" in sec
+    assert f"#{a4}" in sec and f"#{a5}" in sec
+    for s in ("ruou", "rượu", "Rượu", "KM1", "1001", "title_drift"):
+        assert s not in sec, s
+    # Role least-privilege (agent_writer) không đọc job_runs → không crash,
+    # tx chia sẻ vẫn dùng tiếp được.
+    with _role(db, AW):
+        d2 = sd.gather(_TxConn(db), now, CFG, "day", tmp_path)
+        assert d2["catalog"]["jobs"] is None
+        assert d2["catalog"]["pending"] == cat["pending"]
+        assert _one(db, "select count(*) from approval_queue") >= 3

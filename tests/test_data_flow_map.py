@@ -24,7 +24,9 @@ NEW_SCRIPTS = {"scripts/review_load.py", "scripts/dpia_draft.py",
                "scripts/contract_check.py", "ingest/crm.py",
                # v8.3 phòng Dự án: 4 agent KHÔNG gửi gì ra ngoài
                "agents/da_radar.py", "agents/da_b2b.py", "agents/da_pmo.py",
-               "agents/da_cr.py", "connectors/channels.py"}
+               "agents/da_cr.py", "connectors/channels.py",
+               # v5.3 KD-A4/A5: agent luật, KHÔNG gửi gì ra ngoài
+               "agents/kd_listing.py", "agents/kd_price.py"}
 KNOWN_EGRESS = {
     "connectors/zalo.py", "crawler/collect.py", "pipelines/llm_gateway.py",
     "scripts/health_bulletin.py", "scripts/zalo_mock.py",
