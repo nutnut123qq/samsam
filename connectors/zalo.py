@@ -625,30 +625,47 @@ def send_text(user_id: str, text: str) -> bool:
     return res is True
 
 
-def handle_text(user_id: str, question: str, msg_id: str = "") -> dict:
+def handle_text(user_id: str, question: str, msg_id: str = "", *,
+                channel: str = "zalo", send=None) -> dict:
     """Điểm vào từ webhook thread — serialize per user (D5.5): 2 message
     concurrent cùng user_id xử lý tuần tự (lượt sau thấy history lượt
-    trước, reply ra đúng thứ tự); user khác nhau vẫn song song."""
+    trước, reply ra đúng thứ tự); user khác nhau vẫn song song.
+    v5.1: `channel`/`send` cho Messenger dùng chung pipeline (mặc định
+    Zalo — gọi cũ không đổi)."""
     with _ulock(user_id):
-        return _reply(user_id, question, msg_id)
+        return _reply(user_id, question, msg_id, channel=channel, send=send)
 
 
-def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
+def _reply(user_id: str, question: str, msg_id: str = "", *,
+           channel: str = "zalo", send=None) -> dict:
     """answer() -> guardrail -> send -> ghi conversation log. Lazy import
     vì api.rag nặng (numpy/psycopg/openai) — phần webhook thuần test
     không cần nó. History per user truyền vào answer() để câu follow-up
-    ("còn loại kia?") resolve đúng ngữ cảnh."""
+    ("còn loại kia?") resolve đúng ngữ cảnh.
+    v5.1 (KD-A1): `channels.pre_route` TRƯỚC answer() — đồng ý/rút đồng ý,
+    rượu → template cố định, sức khỏe → template + handoff (0 lời gọi
+    answer, không vào history); `channels.consent_gate` thêm câu chào +
+    chính sách ở tin đầu; text gửi qua `channels.format_reply`; handoff/
+    đồng ý ghi DB SAU khi gửi (DB down chỉ warn)."""
     from api.rag import NO_DATA, answer
-    from pipelines.guardrail import check
+    from connectors import channels
 
+    send = send or send_text  # tra lúc gọi — test monkeypatch send_text
     t0 = time.monotonic()  # latency_ms đo elapsed — monotonic (V7.2)
-    with _hist_lock:
-        history = list(_history(user_id))
+    route = gate = None
     try:
-        # Chỉ truyền kwarg history khi đã có lượt trước — 1-turn gọi
-        # y hệt signature cũ (mock `lambda q:` trong test cũ vẫn dùng được).
-        res = (answer(question, history=history) if history
-               else answer(question))
+        inb = channels.normalize(channel, user_id, question)
+        route = channels.pre_route(inb)
+        if route is None:
+            gate = channels.consent_gate(inb)
+        if route is None and not gate.block:
+            with _hist_lock:
+                history = list(_history(user_id))
+            # Chỉ truyền kwarg history khi đã có lượt trước — 1-turn gọi
+            # y hệt signature cũ (mock `lambda q:` trong test cũ vẫn
+            # dùng được).
+            res = (answer(question, history=history) if history
+                   else answer(question))
     except Exception as e:  # noqa: BLE001 — catch-all có chủ đích ở
         # thread boundary (D4.4): MỌI crash của answer() phải log +
         # fallback, thread không được chết câm mất vết câu hỏi.
@@ -657,7 +674,7 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
         from pipelines.llm_gateway import GatewayBlocked
         fallback = (HANDOFF_TEXT if isinstance(e, GatewayBlocked)
                     else ERROR_FALLBACK)
-        sent = send_text(user_id, fallback)
+        sent = send(user_id, fallback)
         _log_conversation({
             "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "msg_id": msg_id,
@@ -672,35 +689,45 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
             "answered": False,
             "sent": sent,
             "error": repr(e)[:300],
+            "channel": channel,
         })
         return {"sent": sent, "text": fallback, "sources": []}
+    if route is not None:
+        return _reply_fixed(user_id, question, msg_id, inb, route.kind,
+                            route.text, send, t0, handoff=route.handoff)
+    if gate.block:
+        # require_consent_for_llm bật + chưa đồng ý: chỉ câu chào, 0 LLM.
+        return _reply_fixed(user_id, question, msg_id, inb,
+                            "consent_required", gate.prefix, send, t0,
+                            prompted=gate.prompted)
     latency_ms = int((time.monotonic() - t0) * 1000)
     raw = res["answer"]
     # Check TRƯỚC khi append nguồn — URL là citation, slug tiếng Việt có
-    # thể chứa từ cấm dạng viết trần ("chua-") và flag oan câu trả lời đúng.
-    guardrail_ok = check(raw)["ok"]
+    # thể chứa từ cấm dạng viết trần ("chua-") và flag oan câu trả lời
+    # đúng. v5.1: check + chọn text theo kênh trong channels.format_reply
+    # (chat = y hệt hành vi cũ; handoff rượu/sức khỏe lớp 2 → template).
+    text, meta = channels.format_reply(channel, res)
+    guardrail_ok = meta["guardrail_ok"]
     if not guardrail_ok:
         print(f"[warn] zalo: reply bị guardrail chặn -> fallback "
               f"(uh={_uhash(user_id)})", flush=True)
-        text = FALLBACK
     else:
-        if NO_DATA in raw:
+        if meta["handoff"] == "no_data":
             # D6.1: khách nhận handoff text có lối thoát, không phải câu
             # NO_DATA trần — câu hỏi vẫn log answered:false vào queue.
-            text = HANDOFF_TEXT
             print(f"[handoff] zalo: NO_DATA -> handoff "
                   f"(uh={_uhash(user_id)})", flush=True)
-        else:
-            text = raw
-            if res["sources"]:
-                text += "\nNguồn: " + res["sources"][0]
         # Lượt hợp lệ (kể cả NO_DATA -> handoff) mới vào history — câu
-        # bị flag thì không cho LLM "nhớ" text vi phạm ở lượt sau.
-        with _hist_lock:
-            h = _history(user_id)
-            h.append({"role": "user", "content": question})
-            h.append({"role": "assistant", "content": raw})
-    sent = send_text(user_id, text)
+        # bị flag thì không cho LLM "nhớ" text vi phạm ở lượt sau; lượt
+        # rượu/sức khỏe cũng không (parity nhánh pre_route).
+        if meta["handoff"] not in ("alcohol", "health"):
+            with _hist_lock:
+                h = _history(user_id)
+                h.append({"role": "user", "content": question})
+                h.append({"role": "assistant", "content": raw})
+    if gate.prefix:
+        text = gate.prefix + "\n\n" + text
+    sent = send(user_id, text)
     entry = {
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "msg_id": msg_id,
@@ -714,11 +741,63 @@ def _reply(user_id: str, question: str, msg_id: str = "") -> dict:
         # data (line `if NO_DATA in text: sources = []`).
         "answered": NO_DATA not in raw,
         "sent": sent,  # send-fail khác "đã xử lý" — giữ riêng để đối soát
+        "channel": channel,
     }
     if not guardrail_ok:
         entry["flagged_text"] = raw[:500]  # raw bị flag, debug guardrail
     _log_conversation(entry)
+    # Ghi DB SAU khi đã gửi — DB down chỉ warn, khách không câm.
+    if meta["handoff"]:
+        channels.record_handoff(inb, meta["handoff"], msg_id)
+    # `prompted` chỉ khi câu chào ĐÃ tới khách — gửi lỗi mà ghi thì bảng
+    # append-only giữ bằng chứng "đã báo" sai, tin sau mất câu chào.
+    if gate.prompted and sent:
+        channels.record_consent(inb, "prompted", msg_id)
     return {"sent": sent, "text": text, "sources": res["sources"]}
+
+
+def _reply_fixed(user_id: str, question: str, msg_id: str, inb, kind: str,
+                 text: str, send, t0: float, *, handoff: str | None = None,
+                 prompted: bool = False) -> dict:
+    """v5.1: gửi text cố định của lớp kênh (template rượu/sức khỏe, ack
+    đồng ý, câu chào khi chặn LLM) — 0 lời gọi answer(), không vào
+    history, guardrail_ok null (text viết tay, chờ Pháp chế duyệt)."""
+    from connectors import channels
+
+    print(f"[route] {inb.channel}: {kind} (uh={_uhash(user_id)})",
+          flush=True)
+    if kind == "consent_withdrawn":
+        with _hist_lock:  # rút đồng ý → bỏ ngữ cảnh hội thoại in-memory
+            _histories.pop(user_id, None)
+        # GHI TRƯỚC rồi mới chọn câu: thiếu muối / DB down → không có dòng
+        # withdrawn → tin sau vẫn tới LLM, nên KHÔNG được gửi câu cam kết
+        # "đã ghi nhận/ngừng xử lý" (A04 fail-open) — gửi câu chưa ghi nhận.
+        if channels.record_consent(inb, "withdrawn", msg_id) is None:
+            kind, text = ("consent_withdrawn_fail",
+                          channels.template("consent_withdrawn_fail"))
+    sent = send(user_id, text)
+    _log_conversation({
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "msg_id": msg_id,
+        "user_hash": _uhash(user_id),
+        "question": _mask_pii(question),
+        "answer": text[:500],
+        "sources": [],
+        "guardrail_ok": None,
+        "latency_ms": int((time.monotonic() - t0) * 1000),
+        # rượu/sức khỏe = cần người (queue); đồng ý/câu chào = không áp dụng
+        "answered": False if handoff else None,
+        "sent": sent,
+        "route": kind,
+        "channel": inb.channel,
+    })
+    if handoff:
+        channels.record_handoff(inb, handoff, msg_id)
+    if kind == "consent_granted":
+        channels.record_consent(inb, "granted", msg_id)
+    elif prompted and sent:
+        channels.record_consent(inb, "prompted", msg_id)
+    return {"sent": sent, "text": text, "sources": []}
 
 
 def _reply_non_text(user_id: str, event: str, msg_id: str = "") -> dict:

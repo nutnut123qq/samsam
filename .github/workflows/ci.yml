@@ -1,7 +1,8 @@
 # v3.5 (WP06, F17.1) — CI nghiệm thu. Job test KHÔNG dùng secret (test
 # không gọi LLM thật); v4.5: `agent_eval.py --deterministic` validate MỌI
 # suite data/eval/suites/ + chạy suite active tất định (guardrail + co_khi
-# — v4.5i, DETERMINISTIC_RUNNERS) và ghi
+# + kd_a1 — v4.5i/v5.1, DETERMINISTIC_RUNNERS; kd_a1 = runner cskh gateway
+# giả, không LLM/secret) và ghi
 # eval_runs vào DB service (chỉ là tín hiệu CI — bản thật n8n ghi qua
 # webhook HMAC, external-dep). Job eval (chatbot + suite có judge LLM, tốn
 # phí) chỉ chạy khi bấm tay hoặc nightly 02:00 VN + có secret.

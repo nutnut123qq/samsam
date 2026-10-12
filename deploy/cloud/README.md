@@ -103,6 +103,7 @@ bảng nào thì dừng, không bật app.
 | `leads` | B | dữ liệu khách — PII, chỉ qua backup mã hóa |
 | `contacts` | B | (v5.2) PII đã mã hóa Fernet — vô dụng nếu thiếu `CONTACT_VAULT_KEY`; mang khóa theo đường RIÊNG, không cùng file backup |
 | `consents` | B | (v5.2) append-only — bằng chứng đồng ý, dựng lại = mất |
+| `chat_consents` | B | (v5.1) append-only — bằng chứng đồng ý tư vấn chat Zalo/Messenger (user_hash có muối — mang `CHANNEL_HASH_SALT` theo đường riêng, đổi muối = mất liên kết), dựng lại = mất |
 | `dealers` | A (`ingest.crm --load-dealers`) hoặc B | B giữ dòng `source='manual'` |
 | `content_drafts` | B | draft + trạng thái duyệt |
 | `llm_usage` | B | chi phí đã dùng (trần tháng) |

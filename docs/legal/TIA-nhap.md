@@ -123,7 +123,7 @@
 | Dữ liệu gửi đi (sau biện pháp) | Ca kiểm thử (đề + rubric do dev/công ty soạn) và output của agent bị chấm (vd câu trả lời chatbot trên KB public) — chỉ ca có scorer judge |
 | Lớp | Xanh |
 | Mục đích | Chấm ca lớp mềm khi nghiệm thu agent theo commit (cổng deploy F17.1) |
-| Biện pháp kỹ thuật | Chỉ qua `pipelines.llm_gateway` agent `ci_judge` — không gọi client LLM trực tiếp (test khóa); Model judge phải KHÁC HỌ nhà sản xuất với model agent (allowlist họ; router/alias lạ → từ chối trước mọi lời gọi); CI mỗi push (`--deterministic`) chỉ chạy suite luật (guardrail + co_khi) — 0 lời gọi LLM; hiện chưa suite active nào có ca judge |
+| Biện pháp kỹ thuật | Chỉ qua `pipelines.llm_gateway` agent `ci_judge` — không gọi client LLM trực tiếp (test khóa); Model judge phải KHÁC HỌ nhà sản xuất với model agent (allowlist họ; router/alias lạ → từ chối trước mọi lời gọi); CI mỗi push (`--deterministic`) chỉ chạy suite luật (guardrail + co_khi + kd_a1 — kd_a1 gateway giả) — 0 lời gọi LLM; hiện chưa suite active nào có ca judge |
 | Thời hạn lưu (theo map) | Không giới hạn — lịch sử nghiệm thu theo commit (kiểm toán deploy) |
 | Rủi ro tồn dư | Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep) |
 | Căn cứ | Không xử lý dữ liệu cá nhân thật (ca kiểm thử tổng hợp) — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
@@ -153,6 +153,32 @@
 | Thời hạn lưu (theo map) | Theo `content_drafts` (hồ sơ duyệt) |
 | Rủi ro tồn dư | (không) |
 | Căn cứ | Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
+### DF-25 — Kênh Messenger (Facebook Page) — nhận tin và trả lời khách (v5.1)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | Meta Platforms — graph.facebook.com (Send API, header Bearer page token) — Meta nhận tin khách trực tiếp từ Messenger và câu trả lời từ hệ thống (máy chủ ngoài Việt Nam) |
+| Dữ liệu gửi đi (sau biện pháp) | PSID Messenger thô (trong RAM/khóa lock), nội dung tin nhắn khách (có thể chứa SĐT, tên, địa chỉ, yếu tố sức khỏe), câu trả lời gửi lại |
+| Lớp | Đỏ |
+| Mục đích | Chăm sóc khách hàng (CSKH) — trả lời câu hỏi sản phẩm qua chatbot, dùng chung pipeline Zalo |
+| Biện pháp kỹ thuật | Chữ ký HMAC `X-Hub-Signature-256` (app secret) bắt buộc — sai/thiếu → 403, không parse; KHÔNG có bypass dev; DEPLOY tắt → `send_text` không gọi Graph API (chỉ [dry-run]); DEPLOY bật thiếu secret/token/muối → không serve; `channels.pre_route` trước LLM: rượu → template cố định, sức khỏe → template + chuyển người (không gọi LLM); Convlog/stdout chỉ `_uhash` + `_mask_pii` — không in PSID thô; page token ở header, không vào URL/log |
+| Thời hạn lưu (theo map) | `_histories`: RAM, LRU, mất khi restart; `zalo_seen.db`: TTL 1 giờ (SEEN_TTL_S) cho mid; convlog 30 ngày (RETAIN_DAYS) |
+| Rủi ro tồn dư | Chưa có Meta app review + page token thật + webhook HTTPS public (external-dep) — kênh CHƯA mở cho khách thật; DPIA/TIA CHƯA KÝ — phải ký trước khi bật Messenger cho khách thật; CẦN LUẬT SƯ XÁC NHẬN: vai trò Meta (bên xử lý hay bên nhận độc lập) và căn cứ chuyển dữ liệu ra nước ngoài; Câu chào + chính sách NHÁP chờ Pháp chế (chung Zalo) |
+| Căn cứ | Đồng ý của khách — `chat_consents` (kênh messenger) ghi đồng ý tường minh; cờ `require_consent_for_llm` mặc định TẮT: GAP — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
+### DF-26 — Gợi ý trả lời chat sàn Shopee/TikTok — MXH dán tay (v5.1)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `chatbot`, `_mask_pii` + ZDR) — chỉ khi câu không bị chặn trước LLM; sàn KHÔNG nhận gì từ hệ thống (người dán) |
+| Dữ liệu gửi đi (sau biện pháp) | Tin nhắn buyer sàn do Quản lý MXH dán vào CLI qua STDIN (có thể chứa SĐT/tên/địa chỉ), câu gợi ý trả lời |
+| Lớp | Đỏ |
+| Mục đích | Gợi ý câu trả lời CSKH để nhân viên đọc/sửa rồi DÁN TAY trên Seller Center (không gọi API sàn) |
+| Biện pháp kỹ thuật | `pre_route`: rượu/sức khỏe → template kênh sàn, không gọi LLM; Lọc chính sách sàn `san_violations` (url/domain/SĐT/zalo/facebook/địa chỉ cửa hàng) — vi phạm → thay CẢ câu bằng câu cố định; Tin buyer nhận qua STDIN (không argv/shell history), không in lại tin thô; Không gọi API sàn, không ghi DB — nhân viên đọc/sửa trước khi dán |
+| Thời hạn lưu (theo map) | Không lưu nội dung |
+| Rủi ro tồn dư | Chưa có căn cứ xử lý `staff_assist_dpia_v1` (F03b bước 3) — CẦN LUẬT SƯ XÁC NHẬN trước khi dùng thường xuyên; Chưa có trần lượt dán/ngày + thống kê (someday) |
+| Căn cứ | Chưa có căn cứ `staff_assist_dpia_v1` cho gợi ý LLM trên tin buyer sàn: GAP — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
 ## 3. Luồng không thuộc TIA
 

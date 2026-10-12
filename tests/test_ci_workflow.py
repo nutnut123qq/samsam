@@ -64,13 +64,16 @@ def test_deterministic_suites_are_guardrail_and_co_khi():
     import agent_eval as ae
 
     det = {n for n in ae.suite_names() if ae._deterministic(ae.load_suite(n))}
-    assert det == {"guardrail", "co_khi"}
+    # FLIP v5.1: + kd_a1 (KD-A1 CSKH, runner cskh — gateway giả, không
+    # LLM/secret) chạy trong job test mỗi push.
+    assert det == {"guardrail", "co_khi", "kd_a1"}
     assert not ae._deterministic(ae.load_suite("chatbot"))
     skel = [n for n in ae.suite_names()
             if ae.load_suite(n)["status"] == "skeleton"]
     assert len(skel) == 10 and not any(
         ae._deterministic(ae.load_suite(n)) for n in skel)
-    assert "guardrail + co_khi" in CI.read_text(encoding="utf-8")
+    ci = CI.read_text(encoding="utf-8")
+    assert "guardrail + co_khi" in ci and "+ kd_a1 — v4.5i/v5.1" in ci
 
 
 def test_test_job_has_no_secrets(doc):

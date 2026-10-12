@@ -32,6 +32,9 @@ chat lẫn embeddings) + Streamlit.
 | Demo UI | `streamlit run app/streamlit_app.py` (hoặc `python demo.py`) |
 | Zalo webhook | `python -m connectors.zalo` → :8788/zalo-webhook |
 | Mock E2E Zalo | `python scripts/zalo_mock.py` |
+| Messenger webhook (v5.1) | `python -m connectors.messenger` → :8789/messenger-webhook (HMAC `X-Hub-Signature-256` bắt buộc; `DEPLOY` tắt = không gửi gì ra Meta) |
+| Gợi ý chat sàn (v5.1) | `echo "<tin buyer>" \| python -m connectors.channels --suggest shopee\|tiktok --by "<tên MXH>"` (STDIN, MXH dán tay, không gọi API sàn) |
+| Eval KD-A1 CSKH (v5.1) | `python scripts/agent_eval.py --agent kd_a1 --no-record` (tất định, gateway giả, 43 ca) · lần thật nhỏ `python -m connectors.channels --eval-real --limit 8` |
 | CRM lead & đại lý (v5.2) | `python -m ingest.crm --load-dealers --by <tên>` · `--add-contact - [--lead ID] --by <tên>` (JSON qua stdin, cần `CONTACT_VAULT_KEY`) · `--consent ID --purpose cskh\|marketing\|dai_ly --grant\|--withdraw --source S [--evidence REF --policy-version V] [--dealer CODE] --by <tên>` · `--assign LEAD --dealer CODE [--province TÊN] --by <tên>` · `--status LEAD STATE --by <tên>` · `--report` · `--handoff LEAD --dealer CODE --by <tên>` (chỉ IN payload cho người chuyển) |
 | Số hóa tài liệu (F15.1) | `python -m ingest.doc_intake` (intake `DOC_INTAKE_DIR`) · `--pending` · `--verify <sha256> --by "<tên>"` · `--reject <sha256> --by "<tên>"` |
 | Eval RAG | `python scripts/eval_qa.py` (12 câu questions.md, ~90s, exit 0 nếu ≥10/12 + 2 bẫy pass) |
@@ -50,8 +53,11 @@ chat lẫn embeddings) + Streamlit.
 - `crawler/` — collect public site data → `data/*.jsonl`; `intel`
   thu tin thị trường RSS/Atom tầng A/B → `intel_items` (chỉ tiêu đề +
   trích ≤300 ký tự + link, không toàn văn; không ghi bảng khác)
-- `connectors/` — adapters ra kênh ngoài (Zalo OA webhook); chỉ nhận/reply,
-  KHÔNG đăng nội dung mới (human-gate C2.4)
+- `connectors/` — adapters ra kênh ngoài (Zalo OA webhook, Messenger webhook
+  v5.1); chỉ nhận/reply, KHÔNG đăng nội dung mới (human-gate C2.4).
+  `channels.py` (v5.1) = lớp kênh THUẦN dùng chung: luật trước LLM (rượu →
+  template, sức khỏe → handoff), luật kênh sàn (không domain/SĐT/link),
+  đồng ý chat `chat_consents`, handoff `cskh_handoff`; text ở `data/channels.json`
 - `ingest/` — chunk + embed + nạp chunks (`embed_store`); `core_store`
   nạp DB lõi WS1 (products/claims_approved/plots/plot_logs/orders/assets,
   delete-by-source idempotent — row `source='manual'` không bị đè);

@@ -16,3 +16,7 @@ def _no_gateway_db(monkeypatch):
     monkeypatch.delenv("LLM_CAP_DEFAULT_USD", raising=False)
     for k in ("GUARDRAIL_LLM_MODEL", "GUARDRAIL_LLM_TIMEOUT", "REDTEAM_MODEL"):
         monkeypatch.delenv(k, raising=False)
+    # v5.1: không muối lớp kênh → zalo._reply KHÔNG đọc/ghi DB thật
+    # (chat_consents/approval_queue) dù .env máy dev có CHANNEL_HASH_SALT;
+    # test cần muối tự setenv.
+    monkeypatch.delenv("CHANNEL_HASH_SALT", raising=False)

@@ -1,0 +1,91 @@
+# v5.1-cskh-da-kenh — evidence (output thật của lệnh; worktree D:/code/samsam-w40, DB samsam_infra, 2026-10-12)
+=== W51.5 E2E chat_consents (DB samsam_infra) — 2026-10-12T14:28:58+07:00
+$ python scripts/apply_schema.py  (lần 1)
+[done] schema applied — 45 bảng public: agent_action_log
+exit=0
+$ python scripts/apply_schema.py  (lần 2 — idempotent)
+[done] schema applied — 45 bảng public: agent_action_log
+exit=0
+$ python <scratchpad>/v51_probe_consent.py
+consent_state ban đầu: none
+[PASS] view sau chỉ 'prompted' = None (prompted không đổi trạng thái): None
+[PASS] view sau prompted→granted = granted
+[PASS] view sau granted→withdrawn = withdrawn
+[PASS] consent_state = withdrawn
+id dòng: prompted=1 granted=2 withdrawn=3
+dòng granted: evidence_ref=29c1b289e7522195 policy_version=nhap-2026-10 purpose=tu_van_chat
+[PASS] update chat_consents → RaiseException: chat_consents append-only: UPDATE bị chặn
+[PASS] delete chat_consents → RaiseException: chat_consents append-only: DELETE bị chặn
+[PASS] truncate chat_consents → RaiseException: chat_consents append-only: TRUNCATE bị chặn
+[PASS] insert user_hash='abc' → CheckViolation: new row for relation "chat_consents" violates check constraint "chat_consents_user_hash_check"
+[PASS] insert channel='shopee' → CheckViolation: new row for relation "chat_consents" violates check constraint "chat_consents_channel_check"
+[PASS] insert policy_version=' ' → CheckViolation: new row for relation "chat_consents" violates check constraint "chat_consents_policy_version_check"
+[PASS] insert action='maybe' → CheckViolation: new row for relation "chat_consents" violates check constraint "chat_consents_action_check"
+[PASS] còn đủ 3 dòng probe sau các lệnh bị chặn: 3
+[done] E2E consent 12/12 PASS
+exit=0
+
+
+## -k consent ×3 (vòng 3 — sau sửa OWASP: withdrawn chặn LLM bất kể cờ)
+$ python -m pytest -q tests/test_channels.py -k consent  (vòng 3, lần 1): 22 passed, 73 deselected in 0.72s
+$ python -m pytest -q tests/test_channels.py -k consent  (vòng 3, lần 2): 22 passed, 73 deselected in 0.77s
+$ python -m pytest -q tests/test_channels.py -k consent  (vòng 3, lần 3): 22 passed, 73 deselected in 0.76s
+
+## VÒNG FIX NGHIỆM THU — test DB thật chat_consents + probe đột biến in-memory (plugin pytest, không sửa source) — 2026-10-12T17:25:21+07:00
+Test mới: test_chat_consents_real_db_state_view_append_only_checks (DB worktree, schema tạm rollback), test_consent_flag_off_prompted_once_then_plain_answers, test_consent_prompted_only_when_greeting_sent[False/True], test_consent_withdraw_not_recorded_no_false_ack[no_salt/db_down/db_error], test_consent_withdraw_recorded_before_ack_even_if_send_fails, test_consent_prompt_tells_how_to_withdraw, test_parse_consent (+15 ca)
+$ MUT=<x> python -m pytest -q -p mutplug tests/test_channels.py tests/test_messenger.py tests/test_lead_store.py tests/test_agent_eval.py::test_kd_a1_deterministic_pass_twice_identical
+== MUT=sanity_none
+169 passed in 19.82s
+== MUT=order_asc
+FAILED tests/test_channels.py::test_chat_consents_real_db_state_view_append_only_checks
+1 failed, 168 passed in 21.00s
+== MUT=no_commit
+FAILED tests/test_channels.py::test_chat_consents_real_db_state_view_append_only_checks
+1 failed, 168 passed in 24.39s
+== MUT=prompted_repeat
+FAILED tests/test_channels.py::test_consent_san_channel_never_written
+FAILED tests/test_channels.py::test_consent_required_flag_blocks_llm
+FAILED tests/test_channels.py::test_consent_flag_off_prompted_once_then_plain_answers
+3 failed, 166 passed in 23.29s
+== MUT=old_san
+>       assert s["passed"] and s["n_pass"] == 43, s
+E       AssertionError: {'failed_cases': ['a1_san_11'], 'missing_kinds': [], 'n_pass': 42, 'n_total': 43, ...}
+FAILED tests/test_channels.py::test_san_violations_positive[G\u1ecdi (0235) 3699 899 nh\xe9-phone]
+FAILED tests/test_channels.py::test_san_violations_positive[G\u1ecdi (0235)3699899-phone]
+FAILED tests/test_channels.py::test_san_violations_positive[(+84) 905 115 709-phone]
+FAILED tests/test_channels.py::test_san_violations_positive[Li\xean h\u1ec7 (0905) 123 456 nh\xe9.-phone]
+FAILED tests/test_channels.py::test_san_violations_positive[Email: lienhe@samsamngoclinh.asia-email]
+FAILED tests/test_channels.py::test_san_violations_positive[a@b.xyz-email]
+FAILED tests/test_channels.py::test_san_violations_positive[a@b.co-email]
+FAILED tests/test_channels.py::test_san_violations_positive[g\u1ecdi 0905*123*456-phone]
+FAILED tests/test_agent_eval.py::test_kd_a1_deterministic_pass_twice_identical
+9 failed, 160 passed in 23.18s
+== MUT=prompted_ignore_sent
+FAILED tests/test_channels.py::test_consent_sequence_explicit_only
+FAILED tests/test_channels.py::test_consent_prompted_only_when_greeting_sent[False]
+FAILED tests/test_channels.py::test_consent_prompted_only_when_greeting_sent[True]
+3 failed, 166 passed in 21.08s
+== MUT=ack_always
+FAILED tests/test_channels.py::test_consent_withdraw_not_recorded_no_false_ack[no_salt]
+FAILED tests/test_channels.py::test_consent_withdraw_not_recorded_no_false_ack[db_down]
+FAILED tests/test_channels.py::test_consent_withdraw_not_recorded_no_false_ack[db_error]
+3 failed, 166 passed in 20.67s
+== MUT=channel_of_old
+FAILED tests/test_lead_store.py::test_channel_of_messenger_key_and_stats
+1 failed, 168 passed in 21.41s
+== MUT=parse_old
+FAILED tests/test_channels.py::test_parse_consent[T\xf4i kh\xf4ng \u0111\u1ed3ng \xfd \u1ea1-withdrawn]
+FAILED tests/test_channels.py::test_parse_consent[M\xecnh kh\xf4ng \u0111\u1ed3ng \xfd-withdrawn]
+FAILED tests/test_channels.py::test_parse_consent[ko \u0111\u1ed3ng \xfd-withdrawn]
+FAILED tests/test_channels.py::test_parse_consent[k \u0111\u1ed3ng \xfd-withdrawn]
+FAILED tests/test_channels.py::test_parse_consent[kh\xf4ng \u0111\u1ed3ng \xfd n\u1eefa-withdrawn]
+FAILED tests/test_channels.py::test_parse_consent[r\xfat l\u1ea1i \u0111\u1ed3ng \xfd-withdrawn]
+FAILED tests/test_channels.py::test_parse_consent[t\xf4i mu\u1ed1n r\xfat \u0111\u1ed3ng \xfd-withdrawn]
+FAILED tests/test_channels.py::test_parse_consent[\u0110\u1ed3ng \xfd \u1ea1-granted]
+FAILED tests/test_channels.py::test_parse_consent[D\u1ea1 \u0111\u1ed3ng \xfd-granted]
+FAILED tests/test_channels.py::test_parse_consent[v\xe2ng, em \u0111\u1ed3ng \xfd nh\xe9-granted]
+FAILED tests/test_channels.py::test_consent_withdraw_not_recorded_no_false_ack[no_salt]
+FAILED tests/test_channels.py::test_consent_withdraw_not_recorded_no_false_ack[db_down]
+FAILED tests/test_channels.py::test_consent_withdraw_not_recorded_no_false_ack[db_error]
+FAILED tests/test_channels.py::test_consent_withdraw_recorded_before_ack_even_if_send_fails
+14 failed, 155 passed in 21.32s

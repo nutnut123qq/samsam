@@ -279,7 +279,11 @@ def test_zalo_health_question_gets_handoff(fake, monkeypatch):
     monkeypatch.setattr(zalo, "send_text", lambda u, t: sent.update(t=t) or True)
     monkeypatch.setattr(zalo, "_histories", type(zalo._histories)())
     zalo.handle_text("u1", "bị gout uống Savigout được không")
-    assert sent["t"] == zalo.HANDOFF_TEXT
+    # FLIP v5.1: câu sức khỏe chặn ở connectors.channels.pre_route TRƯỚC
+    # answer() → template sức khỏe (hỏi ý kiến bác sĩ + chuyển người), không
+    # còn HANDOFF_TEXT chung; vẫn 0 lời gọi LLM. 2 assert giữ nguyên số.
+    from connectors import channels
+    assert sent["t"] == channels.template("health")
     assert fake.calls == []
 
 

@@ -19,13 +19,15 @@ import dpia_draft
 MAP_PATH = ROOT / "data" / "data_flow_map.json"
 RAW = json.loads(MAP_PATH.read_bytes().decode("utf-8"))
 # Module KHÔNG có đường gửi ra ngoài (v5.2: CRM — agent không tự liên hệ).
+# v5.1: lớp kênh CSKH thuần — việc gửi là của adapter (zalo/messenger).
 NEW_SCRIPTS = {"scripts/review_load.py", "scripts/dpia_draft.py",
-               "scripts/contract_check.py", "ingest/crm.py"}
+               "scripts/contract_check.py", "ingest/crm.py",
+               "connectors/channels.py"}
 KNOWN_EGRESS = {
     "connectors/zalo.py", "crawler/collect.py", "pipelines/llm_gateway.py",
     "scripts/health_bulletin.py", "scripts/zalo_mock.py",
     "scripts/zalo_preflight.py", "api/rag.py", "pipelines/content.py",
-    "ingest/embed_store.py"}
+    "ingest/embed_store.py", "connectors/messenger.py"}
 # Luồng BẮT BUỘC (rà từ code thật) — tra theo module.
 REQUIRED_MODULES = [
     "connectors/zalo.py", "scripts/zalo_preflight.py", "scripts/zalo_mock.py",
@@ -33,7 +35,7 @@ REQUIRED_MODULES = [
     "app/streamlit_app.py", "pipelines/content.py", "ingest/embed_store.py",
     "ingest/kb_internal.py", "ingest/doc_intake.py", "ingest/market_csv.py",
     "scripts/health_bulletin.py", "crawler/collect.py", "scripts/db_backup.py",
-    "ingest/crm.py"]
+    "ingest/crm.py", "connectors/messenger.py", "connectors/channels.py"]
 
 
 def _declared(m):
@@ -190,3 +192,36 @@ def test_gateway_import_forms_are_egress(src):
         "other-sibling", "pkg-only"])
 def test_gateway_safe_imports_not_egress(src):
     assert _egress(src) is False
+
+
+def test_v51_messenger_flow_facts():
+    """v5.1: Messenger là luồng MỚI ra Meta (cross-border); gợi ý sàn không
+    lưu; DF-01 ghi đồng ý chat tường minh nhưng còn GAP cờ tắt."""
+    by_mod = {}
+    for f in RAW["flows"]:
+        for mod in f["modules"]:
+            by_mod.setdefault(mod, []).append(f)
+    [msgr] = [f for f in by_mod["connectors/messenger.py"]
+              if f["name"].startswith("Kênh Messenger")]
+    assert msgr["cross_border"] is True and msgr["class"] == "do"
+    assert "graph.facebook.com" in msgr["recipients"]
+    assert any("X-Hub-Signature-256" in s for s in msgr["safeguards"])
+    assert any("DEPLOY" in s for s in msgr["safeguards"])
+    assert any("DPIA" in g for g in msgr["gaps"])
+    san = [f for f in by_mod["connectors/channels.py"]
+           if "sàn" in f["name"]]
+    assert san and "staff_assist_dpia_v1" in san[0]["legal_basis"]
+    df01 = next(f for f in RAW["flows"] if f["id"] == "DF-01")
+    assert "chat_consents" in df01["legal_basis"]
+    assert "GAP" in df01["legal_basis"]
+
+
+def test_v51_probe_messenger_flow_removed_is_caught(tmp_path):
+    """Probe: bản copy map bỏ luồng Messenger → logic drift-guard báo thiếu
+    `connectors/messenger.py` (không sửa file thật)."""
+    p = _bad(tmp_path, lambda m: m.update(flows=[
+        f for f in m["flows"]
+        if "connectors/messenger.py" not in f["modules"]]))
+    egress = dpia_draft.egress_modules(ROOT)
+    undeclared = egress - _declared(dpia_draft.load_map(p))
+    assert "connectors/messenger.py" in undeclared

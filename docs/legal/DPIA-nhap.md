@@ -25,18 +25,18 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-01 |
-| Module (code) | `connectors/zalo.py` |
+| Module (code) | `connectors/zalo.py`; `connectors/channels.py` |
 | Mục đích | Chăm sóc khách hàng (CSKH) — trả lời câu hỏi sản phẩm qua chatbot |
 | Dữ liệu | user_id Zalo thô, nội dung tin nhắn khách (có thể chứa SĐT, tên, địa chỉ, yếu tố sức khỏe), câu trả lời gửi lại |
 | Lớp | Đỏ |
 | Chủ thể | Khách hàng nhắn Zalo OA của công ty |
-| Nơi lưu | RAM `_histories` (deque 8 message = 4 lượt Q&A/user); `data/zalo_seen.db` (khóa dedup msg_id và `follow:<user_id>` thô); `data/zalo_tokens.json` (token OA — secret, không phải DLCN) |
-| Thời hạn lưu | `_histories`: RAM, LRU 1000 user (HIST_MAX_USERS), mất khi restart; `zalo_seen.db`: TTL 1 giờ (SEEN_TTL_S) cho msg, 7 ngày (FOLLOW_TTL_S) cho khóa follow |
+| Nơi lưu | RAM `_histories` (deque 8 message = 4 lượt Q&A/user); `data/zalo_seen.db` (khóa dedup msg_id và `follow:<user_id>` thô); `data/zalo_tokens.json` (token OA — secret, không phải DLCN); bảng `chat_consents` (v5.1, append-only: `user_hash` HMAC có muối `CHANNEL_HASH_SALT` 32 hex, kênh, prompted/granted/withdrawn, `policy_version`, `evidence_ref` = sha256(msg_id)[:16] — không nội dung tin); mục `approval_queue` loại `cskh_handoff` (payload cố định: kênh, mã lý do, user_hash có muối, msg_ref, ts — không câu hỏi/câu trả lời/user_id) |
+| Thời hạn lưu | `_histories`: RAM, LRU 1000 user (HIST_MAX_USERS), mất khi restart; `zalo_seen.db`: TTL 1 giờ (SEEN_TTL_S) cho msg, 7 ngày (FOLLOW_TTL_S) cho khóa follow; `chat_consents`: lưu lâu dài làm bằng chứng đồng ý (append-only, chưa có hạn — GAP); mục `cskh_handoff`: theo hồ sơ duyệt `approval_queue` |
 | Bên nhận | Zalo/VNG — openapi.zalo.me (gửi tin), oauth.zaloapp.com (làm mới token) — Việt Nam |
 | Chuyển ra nước ngoài | Không |
-| Biện pháp bảo vệ (có trong code) | Xác thực chữ ký webhook (verify_signature) trước khi xử lý; Câu hỏi sức khỏe (`is_health_question`) chuyển người, không gửi LLM; Log/stdout chỉ in `_uhash(user_id)` + `_mask_pii` — không in user_id thô |
-| Căn cứ xử lý | Đồng ý của khách — bảng `consents` có (v5.2) nhưng CHƯA gắn kênh chat (tin chào có link chính sách): GAP |
-| GAP | Bảng `consents` đã có (v5.2, đồng ý theo mục đích cskh/marketing/dai_ly) nhưng CHƯA gắn kênh chat — chưa ghi nhận đồng ý trước khi xử lý tin nhắn; `zalo_seen.db` lưu user_id thô trong khóa `follow:<user_id>` tới 7 ngày; CẦN LUẬT SƯ XÁC NHẬN: Zalo/VNG là bên xử lý (cần hợp đồng xử lý) hay bên nhận độc lập |
+| Biện pháp bảo vệ (có trong code) | Xác thực chữ ký webhook (verify_signature) trước khi xử lý; v5.1 `channels.pre_route` TRƯỚC LLM: câu sức khỏe → template + chuyển người (mục `cskh_handoff`), câu về rượu → template cố định — cả hai KHÔNG gọi `answer()`/LLM; Log/stdout chỉ in `_uhash(user_id)` + `_mask_pii` — không in user_id thô; Đồng ý tư vấn chat chỉ ghi khi khách gõ "Đồng ý" tường minh (không suy diễn); rút đồng ý (câu ngắn phủ định/rút/hủy + "đồng ý") = dòng withdrawn + xóa history RAM + DỪNG LLM cho khách đó (bất kể cờ) tới khi nhắn lại "Đồng ý" — CHỈ KHI ghi được dòng withdrawn (có CHANNEL_HASH_SALT + DB lên); ghi lỗi → khách nhận câu "chưa ghi nhận được, gọi hotline" (không hứa dừng) và tin sau vẫn tới LLM khi cờ tắt; Thiếu muối `CHANNEL_HASH_SALT` → không ghi đồng ý/handoff (fail-closed), không dùng hash không muối |
+| Căn cứ xử lý | Đồng ý của khách — v5.1 có `chat_consents` ghi đồng ý TƯỜNG MINH qua chat (câu chào + link chính sách ở tin đầu, NHÁP chờ Pháp chế); cờ `require_consent_for_llm` mặc định TẮT = vẫn xử lý tin trước khi khách đồng ý: GAP |
+| GAP | `require_consent_for_llm` mặc định tắt — tin nhắn vẫn qua LLM trước khi khách đồng ý; Pháp chế quyết bật; Câu chào + `policy_url` + `policy_version` trong `data/channels.json` là NHÁP — `policy_url` chưa xác minh trang tồn tại; chờ Pháp chế duyệt; `chat_consents` chưa nối `consents` v5.2 khi khách để lại liên hệ; chưa có hạn lưu; `zalo_seen.db` lưu user_id thô trong khóa `follow:<user_id>` tới 7 ngày; CẦN LUẬT SƯ XÁC NHẬN: Zalo/VNG là bên xử lý (cần hợp đồng xử lý) hay bên nhận độc lập |
 
 ### DF-02 — Preflight token Zalo trước khi mở public
 
@@ -79,11 +79,11 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-04 |
-| Module (code) | `connectors/zalo.py`; `app/streamlit_app.py`; `ingest/lead_store.py`; `scripts/kb_gaps.py` |
+| Module (code) | `connectors/zalo.py`; `connectors/messenger.py`; `app/streamlit_app.py`; `ingest/lead_store.py`; `scripts/kb_gaps.py` |
 | Mục đích | Đo chất lượng trả lời, tìm câu chưa trả lời (bổ sung KB), trích lead |
-| Dữ liệu | user_hash (sha256 KHÔNG muối của user_id, 16 hex — bút danh, vẫn là dữ liệu cá nhân), câu hỏi ĐÃ `_mask_pii`, câu trả lời, ts, cờ answered/flagged |
+| Dữ liệu | user_hash (sha256 KHÔNG muối của user_id, 16 hex — bút danh, vẫn là dữ liệu cá nhân), câu hỏi ĐÃ `_mask_pii`, câu trả lời, ts, cờ answered/flagged; v5.1: thêm `channel` (zalo/messenger) và `route` (alcohol/health/consent_*) — Messenger ghi CHUNG file qua `zalo._reply` |
 | Lớp | Đỏ |
-| Chủ thể | Khách hàng chat Zalo/web, nhân viên thử trên Streamlit |
+| Chủ thể | Khách hàng chat Zalo/Messenger/web, nhân viên thử trên Streamlit |
 | Nơi lưu | `data/conversations.jsonl` (+ `.1` khi rotate), máy chủ chạy webhook |
 | Thời hạn lưu | 30 ngày (RETAIN_DAYS = 30, purge hằng ngày khi ghi) |
 | Bên nhận | Nội bộ (Quản lý hạ tầng AI, MKT xem tab Chưa trả lời) — không gửi ra ngoài |
@@ -376,7 +376,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Thời hạn lưu | Không giới hạn — lịch sử nghiệm thu theo commit (kiểm toán deploy) |
 | Bên nhận | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `ci_judge`, trần 1 USD/tháng) |
 | Chuyển ra nước ngoài | CÓ — xem TIA |
-| Biện pháp bảo vệ (có trong code) | Chỉ qua `pipelines.llm_gateway` agent `ci_judge` — không gọi client LLM trực tiếp (test khóa); Model judge phải KHÁC HỌ nhà sản xuất với model agent (allowlist họ; router/alias lạ → từ chối trước mọi lời gọi); CI mỗi push (`--deterministic`) chỉ chạy suite luật (guardrail + co_khi) — 0 lời gọi LLM; hiện chưa suite active nào có ca judge |
+| Biện pháp bảo vệ (có trong code) | Chỉ qua `pipelines.llm_gateway` agent `ci_judge` — không gọi client LLM trực tiếp (test khóa); Model judge phải KHÁC HỌ nhà sản xuất với model agent (allowlist họ; router/alias lạ → từ chối trước mọi lời gọi); CI mỗi push (`--deterministic`) chỉ chạy suite luật (guardrail + co_khi + kd_a1 — kd_a1 gateway giả) — 0 lời gọi LLM; hiện chưa suite active nào có ca judge |
 | Căn cứ xử lý | Không xử lý dữ liệu cá nhân thật (ca kiểm thử tổng hợp) — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep) |
 
@@ -416,13 +416,49 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | (không) |
 
+### DF-25 — Kênh Messenger (Facebook Page) — nhận tin và trả lời khách (v5.1)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-25 |
+| Module (code) | `connectors/messenger.py`; `connectors/zalo.py`; `connectors/channels.py` |
+| Mục đích | Chăm sóc khách hàng (CSKH) — trả lời câu hỏi sản phẩm qua chatbot, dùng chung pipeline Zalo |
+| Dữ liệu | PSID Messenger thô (trong RAM/khóa lock), nội dung tin nhắn khách (có thể chứa SĐT, tên, địa chỉ, yếu tố sức khỏe), câu trả lời gửi lại |
+| Lớp | Đỏ |
+| Chủ thể | Khách hàng nhắn Fanpage Messenger của công ty |
+| Nơi lưu | RAM `_histories` chung Zalo (khóa `messenger:<psid>`); `data/zalo_seen.db` (khóa dedup `msgr:<mid>`); convlog `data/conversations.jsonl` (`_uhash` + `_mask_pii`); `chat_consents` + mục `cskh_handoff` (user_hash có muối, chung Zalo) |
+| Thời hạn lưu | `_histories`: RAM, LRU, mất khi restart; `zalo_seen.db`: TTL 1 giờ (SEEN_TTL_S) cho mid; convlog 30 ngày (RETAIN_DAYS) |
+| Bên nhận | Meta Platforms — graph.facebook.com (Send API, header Bearer page token) — Meta nhận tin khách trực tiếp từ Messenger và câu trả lời từ hệ thống (máy chủ ngoài Việt Nam) |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | Chữ ký HMAC `X-Hub-Signature-256` (app secret) bắt buộc — sai/thiếu → 403, không parse; KHÔNG có bypass dev; DEPLOY tắt → `send_text` không gọi Graph API (chỉ [dry-run]); DEPLOY bật thiếu secret/token/muối → không serve; `channels.pre_route` trước LLM: rượu → template cố định, sức khỏe → template + chuyển người (không gọi LLM); Convlog/stdout chỉ `_uhash` + `_mask_pii` — không in PSID thô; page token ở header, không vào URL/log |
+| Căn cứ xử lý | Đồng ý của khách — `chat_consents` (kênh messenger) ghi đồng ý tường minh; cờ `require_consent_for_llm` mặc định TẮT: GAP |
+| GAP | Chưa có Meta app review + page token thật + webhook HTTPS public (external-dep) — kênh CHƯA mở cho khách thật; DPIA/TIA CHƯA KÝ — phải ký trước khi bật Messenger cho khách thật; CẦN LUẬT SƯ XÁC NHẬN: vai trò Meta (bên xử lý hay bên nhận độc lập) và căn cứ chuyển dữ liệu ra nước ngoài; Câu chào + chính sách NHÁP chờ Pháp chế (chung Zalo) |
+
+### DF-26 — Gợi ý trả lời chat sàn Shopee/TikTok — MXH dán tay (v5.1)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-26 |
+| Module (code) | `connectors/channels.py` |
+| Mục đích | Gợi ý câu trả lời CSKH để nhân viên đọc/sửa rồi DÁN TAY trên Seller Center (không gọi API sàn) |
+| Dữ liệu | Tin nhắn buyer sàn do Quản lý MXH dán vào CLI qua STDIN (có thể chứa SĐT/tên/địa chỉ), câu gợi ý trả lời |
+| Lớp | Đỏ |
+| Chủ thể | Người mua trên Shopee/TikTok Shop nhắn shop |
+| Nơi lưu | Không lưu — CLI in ra màn hình, không ghi DB/convlog; câu hỏi đi gateway ghi `llm_usage` (số liệu, không nội dung) |
+| Thời hạn lưu | Không lưu nội dung |
+| Bên nhận | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `chatbot`, `_mask_pii` + ZDR) — chỉ khi câu không bị chặn trước LLM; sàn KHÔNG nhận gì từ hệ thống (người dán) |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | `pre_route`: rượu/sức khỏe → template kênh sàn, không gọi LLM; Lọc chính sách sàn `san_violations` (url/domain/SĐT/zalo/facebook/địa chỉ cửa hàng) — vi phạm → thay CẢ câu bằng câu cố định; Tin buyer nhận qua STDIN (không argv/shell history), không in lại tin thô; Không gọi API sàn, không ghi DB — nhân viên đọc/sửa trước khi dán |
+| Căn cứ xử lý | Chưa có căn cứ `staff_assist_dpia_v1` cho gợi ý LLM trên tin buyer sàn: GAP |
+| GAP | Chưa có căn cứ xử lý `staff_assist_dpia_v1` (F03b bước 3) — CẦN LUẬT SƯ XÁC NHẬN trước khi dùng thường xuyên; Chưa có trần lượt dán/ngày + thống kê (someday) |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
 
 | Mã | Hoạt động | Lớp | Mức rủi ro đề xuất | Ra nước ngoài | Số GAP |
 |---|---|---|---|---|---|
-| DF-01 | Kênh Zalo OA — nhận tin và trả lời khách | Đỏ | cao | không | 3 |
+| DF-01 | Kênh Zalo OA — nhận tin và trả lời khách | Đỏ | cao | không | 5 |
 | DF-02 | Preflight token Zalo trước khi mở public | Xanh | thấp | không | 0 |
 | DF-03 | Mock E2E Zalo (chỉ test) | Xanh | thấp | không | 0 |
 | DF-04 | Nhật ký hội thoại (convlog) | Đỏ | cao | không | 3 |
@@ -444,10 +480,14 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-22 | Nghiệm thu QA — giám khảo LLM của harness (agent_eval, v4.5) | Xanh | thấp | có | 1 |
 | DF-23 | Đối thủ / Google Trends / MXH kênh sở hữu nhập tay + báo cáo tuần (v7.2) | Vàng | trung bình | có | 2 |
 | DF-24 | Guardrail LLM-check phụ + red-team sinh biến thể (v4.2) | Vàng | trung bình | có | 0 |
+| DF-25 | Kênh Messenger (Facebook Page) — nhận tin và trả lời khách (v5.1) | Đỏ | cao | có | 4 |
+| DF-26 | Gợi ý trả lời chat sàn Shopee/TikTok — MXH dán tay (v5.1) | Đỏ | cao | có | 2 |
 
 ## 4. Tổng hợp GAP
 
-- [DF-01] Bảng `consents` đã có (v5.2, đồng ý theo mục đích cskh/marketing/dai_ly) nhưng CHƯA gắn kênh chat — chưa ghi nhận đồng ý trước khi xử lý tin nhắn
+- [DF-01] `require_consent_for_llm` mặc định tắt — tin nhắn vẫn qua LLM trước khi khách đồng ý; Pháp chế quyết bật
+- [DF-01] Câu chào + `policy_url` + `policy_version` trong `data/channels.json` là NHÁP — `policy_url` chưa xác minh trang tồn tại; chờ Pháp chế duyệt
+- [DF-01] `chat_consents` chưa nối `consents` v5.2 khi khách để lại liên hệ; chưa có hạn lưu
 - [DF-01] `zalo_seen.db` lưu user_id thô trong khóa `follow:<user_id>` tới 7 ngày
 - [DF-01] CẦN LUẬT SƯ XÁC NHẬN: Zalo/VNG là bên xử lý (cần hợp đồng xử lý) hay bên nhận độc lập
 - [DF-04] Tên người, địa chỉ, mã đơn đứng tự do trong câu hỏi KHÔNG bị `_mask_pii` che (chỉ SĐT/email) — rủi ro tồn dư
@@ -474,6 +514,12 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-22] Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep)
 - [DF-23] Chưa có hạn lưu `social_mentions`
 - [DF-23] Mapping cột export thật chưa xác minh
+- [DF-25] Chưa có Meta app review + page token thật + webhook HTTPS public (external-dep) — kênh CHƯA mở cho khách thật
+- [DF-25] DPIA/TIA CHƯA KÝ — phải ký trước khi bật Messenger cho khách thật
+- [DF-25] CẦN LUẬT SƯ XÁC NHẬN: vai trò Meta (bên xử lý hay bên nhận độc lập) và căn cứ chuyển dữ liệu ra nước ngoài
+- [DF-25] Câu chào + chính sách NHÁP chờ Pháp chế (chung Zalo)
+- [DF-26] Chưa có căn cứ xử lý `staff_assist_dpia_v1` (F03b bước 3) — CẦN LUẬT SƯ XÁC NHẬN trước khi dùng thường xuyên
+- [DF-26] Chưa có trần lượt dán/ngày + thống kê (someday)
 
 ## 5. Câu hỏi cho luật sư
 

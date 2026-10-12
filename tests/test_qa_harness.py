@@ -230,8 +230,11 @@ def test_validate_suite_rejects(mutate, needle):
 def test_validate_cli_all_suites(capsys):
     assert ae.main(["--validate"]) == 0
     out = capsys.readouterr().out
-    assert len(re.findall(r"^\[ok\] ", out, re.MULTILINE)) == 13
-    assert "[done] 13/13 suite hợp lệ" in out
+    # FLIP v5.1: +1 suite kd_a1 (KD-A1 CSKH đa kênh) → 14.
+    assert len(re.findall(r"^\[ok\] ", out, re.MULTILINE)) == 14
+    assert "[done] 14/14 suite hợp lệ" in out
+    assert re.search(r"^\[ok\] kd_a1 v2 active owner=sales .* 43 ca$", out,
+                     re.MULTILINE)
     assert re.search(r"^\[ok\] guardrail v2 .* 132 ca$", out, re.MULTILINE)
     assert re.search(r"^\[ok\] co_khi v1 .* 23 ca$", out, re.MULTILINE)
 
@@ -240,7 +243,9 @@ def test_validate_cli_all_suites(capsys):
 
 def test_skeleton_suites_cover_all_blocks():
     names = ae.suite_names()
-    assert set(names) == set(SKELETONS) | {"guardrail", "chatbot", "co_khi"}
+    # FLIP v5.1: thêm suite active kd_a1 (runner cskh tất định).
+    assert set(names) == set(SKELETONS) | {"guardrail", "chatbot", "co_khi",
+                                           "kd_a1"}
     suites = {n: ae.load_suite(n) for n in names}
     assert {s["qa_block"] for s in suites.values()} == set(director.BLOCKS)
     owners = [suites[n]["owner_block"] for n in SKELETONS]
@@ -468,12 +473,14 @@ def test_deterministic_skips_llm_runners(env, monkeypatch, capsys):
                         lambda *a, **k: pytest.fail("LLM"))
     assert ae.main(["--deterministic", "--no-record"]) == 0
     out = capsys.readouterr().out
-    assert "[done] 13/13 suite hợp lệ" in out
+    assert "[done] 14/14 suite hợp lệ" in out   # FLIP v5.1: +kd_a1
+    assert "kd_a1 v2 PASS 43/43" in out
     assert "guardrail v2 PASS 130/132" in out and "[done] chatbot" not in out
     assert "co_khi v1 PASS 21/23" in out and "[done] ck_a6" not in out
     assert ae.main(["--deterministic"]) == 0
     rows = _inserted(env)
-    assert [r["agent"] for r in rows] == ["co_khi", "guardrail"]
+    # FLIP v5.1: kd_a1 là suite tất định (runner cskh) → cũng được ghi.
+    assert [r["agent"] for r in rows] == ["co_khi", "guardrail", "kd_a1"]
     assert all(r["commit_sha"] == SHA for r in rows)
 
 

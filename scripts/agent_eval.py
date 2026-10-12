@@ -28,8 +28,11 @@ Runner: `guardrail` (tất định, không LLM — CI mỗi push; ca có `ctx` �
 `guardrail.check_publish(text, **ctx)`, không có → `guardrail.check(text)`;
 ca `expect: block` có `code` chỉ pass khi bị chặn ĐÚNG code đó — v4.1),
 `co_khi` (tất định — luật trên `agents.ck_mat.ask`, local, không LLM/mạng;
-agent tra cứu CK-A1 v9.5), `chatbot` (`api.rag.answer` THẬT, cần
-OPENROUTER_API_KEY). Scorer từng ca: guardrail | co_khi | eval_qa |
+agent tra cứu CK-A1 v9.5), `cskh` (tất định — KD-A1 v5.1: lớp kênh
+`connectors.channels.respond` với `api.rag.answer` THẬT nhưng "gateway giả" =
+patch `api.rag.retrieve`/`api.rag.chat` theo `fake_hits`/`fake_llm` của ca,
+đếm lời gọi LLM), `chatbot` (`api.rag.answer` THẬT, cần
+OPENROUTER_API_KEY). Scorer từng ca: guardrail | co_khi | cskh | eval_qa |
 handoff | exact | regex | judge. Giám khảo LLM CHỈ qua
 `pipelines.llm_gateway.chat("ci_judge")`, model khác HỌ (nhà sản xuất theo
 allowlist `_FAMILIES`; router/alias lạ → từ chối) với model agent; output
@@ -50,6 +53,7 @@ thiếu key / DB lỗi / tree bẩn; 2 tham số sai.
 Chạy:
   python scripts/agent_eval.py --agent guardrail [--no-record]
   python scripts/agent_eval.py --agent co_khi --no-record
+  python scripts/agent_eval.py --agent kd_a1 --no-record
   python scripts/agent_eval.py --validate
   python scripts/agent_eval.py --deterministic [--no-record]
   python scripts/agent_eval.py --print-hash guardrail
@@ -80,6 +84,7 @@ import psycopg
 from dotenv import load_dotenv
 from psycopg.types.json import Jsonb
 
+from connectors import channels
 from pipelines import guardrail, llm_gateway
 from pipelines.director import BLOCKS
 from pipelines.pii import _mask_pii
@@ -94,13 +99,19 @@ DEFAULT_CHAT_MODEL = "openai/gpt-4o-mini"
 RISKS = ("low", "medium", "high")
 STATUSES = ("active", "skeleton")
 SCORERS = ("guardrail", "co_khi", "eval_qa", "handoff", "exact", "regex",
-           "judge")
+           "judge", "cskh")
 # Nguồn DUY NHẤT của tên runner hợp lệ (RUNNERS.keys() phải trùng).
 RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "chatbot": {"eval_qa", "handoff", "exact", "regex",
                               "judge"},
-                  "co_khi": {"co_khi"}}
-DETERMINISTIC_RUNNERS = ("guardrail", "co_khi")
+                  "co_khi": {"co_khi"},
+                  "cskh": {"cskh"}}
+DETERMINISTIC_RUNNERS = ("guardrail", "co_khi", "cskh")
+# Hit giả mặc định của runner cskh (ca không khai `fake_hits`).
+CSKH_DEFAULT_HIT = {"title": "Sản phẩm Sâm Sâm", "lang": "vi",
+                    "url": "https://samsamngoclinh.com/san-pham",
+                    "content": "Danh mục sản phẩm sâm Ngọc Linh",
+                    "score": 0.9, "doc_id": "eval-fake"}
 # key ctx hợp lệ = tham số keyword của guardrail.check_publish (v4.1).
 GUARDRAIL_CTX_KEYS = {"channel", "content_type", "sku", "is_ai",
                       "is_sponsored"}
@@ -219,6 +230,36 @@ def _validate_co_khi_case(c: dict, cid, exp) -> list[str]:
     return errs
 
 
+def _validate_cskh_case(c: dict, cid, exp) -> list[str]:
+    """v5.1: channel ∈ CHANNELS; expect ⊂ CSKH_EXPECT_KEYS (regex biên
+    dịch được); fake_llm chuỗi (bắt buộc trừ ca max_llm_calls 0);
+    fake_hits (nếu có) là list object."""
+    errs = []
+    if c.get("channel") not in channels.CHANNELS:
+        errs.append(f"ca {cid}: channel phải {channels.CHANNELS}")
+    if not isinstance(exp, dict) or not exp:
+        return errs + [f"ca {cid}: cskh expect phải object khác rỗng"]
+    bad = sorted(set(exp) - channels.CSKH_EXPECT_KEYS)
+    if bad:
+        errs.append(f"ca {cid}: expect key lạ {bad}")
+    for k in ("text_regex", "forbid_regex"):
+        if k in exp:
+            try:
+                re.compile(exp[k])
+            except (re.error, TypeError):
+                errs.append(f"ca {cid}: {k} không biên dịch được")
+    m = exp.get("max_llm_calls")
+    if "max_llm_calls" in exp and not (_is_int(m) and m >= 0):
+        errs.append(f"ca {cid}: max_llm_calls phải số nguyên ≥ 0")
+    if m != 0 and not isinstance(c.get("fake_llm"), str):
+        errs.append(f"ca {cid}: thiếu fake_llm (chuỗi)")
+    hits = c.get("fake_hits")
+    if "fake_hits" in c and not (isinstance(hits, list) and all(
+            isinstance(h, dict) for h in hits)):
+        errs.append(f"ca {cid}: fake_hits phải list object")
+    return errs
+
+
 def _validate_case(c, i: int, d: dict) -> list[str]:
     if not isinstance(c, dict):
         return [f"cases[{i}] không phải object"]
@@ -244,6 +285,8 @@ def _validate_case(c, i: int, d: dict) -> list[str]:
         errs += _validate_guardrail_case(c, cid, exp)
     elif sc == "co_khi":
         errs += _validate_co_khi_case(c, cid, exp)
+    elif sc == "cskh":
+        errs += _validate_cskh_case(c, cid, exp)
     elif sc == "eval_qa" and (not _is_int(cid) or exp is not None):
         errs.append(f"ca {cid}: eval_qa cần id số (questions.md) + expect"
                     " null")
@@ -539,6 +582,8 @@ def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
     if sc == "co_khi":
         from agents import ck_mat
         return _score_co_khi(case, out, ck_mat.NO_DATA)
+    if sc == "cskh":
+        return channels.score_cskh(case, out)
     if sc == "eval_qa":
         import eval_qa  # scripts/ — tái dùng luật chấm Q1-12
         return eval_qa.check_question(int(case["id"]), out)
@@ -604,8 +649,38 @@ def run_co_khi(cases, judge_model=None):
                 judge_model, show_answer=False)
 
 
+def _fake_completion(content):
+    from types import SimpleNamespace
+    return SimpleNamespace(choices=[SimpleNamespace(
+        message=SimpleNamespace(content=content))])
+
+
+def run_cskh(cases, judge_model=None):
+    """v5.1 KD-A1: answer() THẬT (luật sức khỏe/rượu/MIN_SCORE/số bịa
+    đều chạy) trên retrieve/chat GIẢ theo ca → tất định, không mạng/DB."""
+    from unittest import mock
+
+    from api import rag
+
+    def produce(c):
+        calls = []
+        hits = c.get("fake_hits", [CSKH_DEFAULT_HIT])
+
+        def fake_chat(agent, messages, **kw):
+            calls.append(agent)
+            return _fake_completion(c.get("fake_llm"))
+
+        with mock.patch.object(rag, "retrieve",
+                               lambda q, *a, **k: [dict(h) for h in hits]), \
+                mock.patch.object(rag, "chat", fake_chat):
+            out = channels.respond(c["channel"], f"eval:{c['id']}", c["text"])
+        return {**out, "llm_calls": len(calls)}
+
+    return _run(cases, produce, judge_model)
+
+
 RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot,
-           "co_khi": run_co_khi}
+           "co_khi": run_co_khi, "cskh": run_cskh}
 
 
 def score(results: list[tuple[dict, bool, str]], threshold: dict) -> dict:

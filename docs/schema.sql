@@ -124,7 +124,7 @@ create table if not exists leads (
   id bigint generated always as identity primary key,
   dedup_key text not null unique,   -- 'convlog:<msg_id>' hoặc 'convlog:<hash16>'
   ts timestamptz not null,          -- ts của entry convlog gốc
-  channel text not null,            -- zalo | streamlit (msg_id rỗng -> streamlit)
+  channel text not null,            -- zalo | messenger (v5.1, key `channel` convlog) | streamlit (msg_id rỗng)
   user_hash text not null,
   question text,                    -- câu hỏi đã mask PII (tại convlog)
   intent text not null,             -- partner | order | price | contact
@@ -1828,3 +1828,50 @@ alter table eval_runs add column if not exists suite_sha256 text;
 alter table eval_runs add column if not exists threshold_sha256 text;
 alter table eval_runs add column if not exists owner_block text;
 alter table eval_runs add column if not exists failed_cases jsonb;
+
+-- ============================================================================
+-- v5.1 KD-A1 CSKH đa kênh (WP07): đồng ý tư vấn qua chat Zalo/Messenger.
+-- Ai ghi: connectors/channels.py (`record_consent`, gọi từ connectors/zalo.py
+-- _reply — dùng chung cho Messenger) CHỈ khi khách gõ đồng ý/rút đồng ý TRỌN
+-- tin ("Đồng ý" / "Không đồng ý"), hoặc `prompted` khi gửi câu chào + link
+-- chính sách ở tin đầu. KHÔNG suy diễn đồng ý từ tin khác. Ai đọc:
+-- `consent_state` (cờ `require_consent_for_llm` trong data/channels.json).
+-- Vì sao bảng riêng (không dùng `consents` v5.2): `consents` bắt buộc
+-- `contact_id` (cần SĐT trong vault) trong khi đồng ý tư vấn chat xảy ra
+-- trước khi khách để lại liên hệ. `user_hash` = HMAC-SHA256 có muối
+-- (env CHANNEL_HASH_SALT) 32 hex — KHÔNG user_id/psid thô; `evidence_ref` =
+-- sha256(msg_id)[:16], không phải nội dung tin. APPEND-ONLY (rút đồng ý =
+-- thêm dòng withdrawn); trạng thái hiện hành = dòng granted/withdrawn mới
+-- nhất theo `id` (view `v_chat_consent_current`). Sàn (Shopee/TikTok)
+-- không có consent — check channel chặn ghi nhầm.
+-- ============================================================================
+
+create table if not exists chat_consents (
+  id bigint generated always as identity primary key,
+  user_hash text not null check (user_hash ~ '^[0-9a-f]{32}$'),
+  channel text not null check (channel in ('zalo', 'messenger')),
+  purpose text not null default 'tu_van_chat'
+    check (purpose = 'tu_van_chat'),
+  action text not null check (action in ('prompted', 'granted', 'withdrawn')),
+  policy_version text not null check (btrim(policy_version) <> ''),
+  evidence_ref text,                -- sha256(msg_id)[:16] — không phải nội dung tin
+  ts timestamptz not null default now()
+);
+create index if not exists chat_consents_user_channel_idx
+  on chat_consents (user_hash, channel, id);
+
+create or replace trigger chat_consents_append_only_row
+  before update or delete on chat_consents
+  for each row execute function append_only_guard();
+create or replace trigger chat_consents_no_truncate
+  before truncate on chat_consents
+  for each statement execute function append_only_guard();
+
+-- Đồng ý chat hiện hành: dòng granted/withdrawn mới nhất theo id (KHÔNG
+-- theo ts) mỗi (user_hash, channel); `prompted` không đổi trạng thái.
+create or replace view v_chat_consent_current as
+select distinct on (user_hash, channel)
+  user_hash, channel, action, ts, id as consent_id
+from chat_consents
+where action in ('granted', 'withdrawn')
+order by user_hash, channel, id desc;
