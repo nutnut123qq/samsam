@@ -27,7 +27,7 @@ import psycopg
 import pytest
 
 from crawler import intel
-from pipelines import guardrail, kb_filter, llm_gateway
+from pipelines import guardrail, job_runs, kb_filter, llm_gateway
 
 ROOT = Path(__file__).resolve().parent.parent
 FIX = ROOT / "tests" / "fixtures" / "intel"
@@ -794,6 +794,36 @@ def test_cli_all_sources_fail_exit1(db, monkeypatch, servers, tmp_path):
     rc, _, _ = _cli(db, monkeypatch, ["--run", "--source", "fx-private",
                                       "--sources", str(p)])
     assert rc == 1
+
+
+def test_cli_job_detail_reports_failed_source(db, monkeypatch, servers,
+                                              tmp_path):
+    """v7.1 W71.3: job_runs.detail mang id nguồn lỗi cho bản tin intel."""
+    s = _site(servers)
+    bad = servers({"/robots.txt": ROBOTS_OK,
+                   "/feed.xml": (500, {}, b"loi")})
+    src500 = {"id": "fx-500", "name": "x", "tier": "B",
+              "url": bad.url("/feed.xml"), "kind": "rss",
+              "status": "cho_duyet"}
+    p = _sources_file(tmp_path, s, extra=[src500])
+    runs = []
+
+    @contextmanager
+    def capture(name):
+        run = {"ok": True, "detail": None}
+        yield run
+        runs.append((name, run))
+    monkeypatch.setattr(intel, "job_run", capture)
+    rc, _, _ = _cli(db, monkeypatch, ["--run", "--source", "fx-a",
+                                      "--source", "fx-500", "--source",
+                                      "fx-private", "--sources", str(p)])
+    assert rc == 0 and len(runs) == 1
+    name, run = runs[0]
+    detail = job_runs.clean_detail(run["detail"])
+    assert name == "crawler.intel" and run["ok"] is True
+    assert detail.startswith("fail=fx-500,fx-private ")
+    assert "robots_deny=1" in detail and "blocked=0" in detail
+    assert "http" not in detail and "127.0.0.1" not in detail
 
 
 def test_cli_budget_stops(db, monkeypatch, capsys, servers, tmp_path):

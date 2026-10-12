@@ -126,6 +126,7 @@ bảng nào thì dừng, không bật app.
 | `decisions` | B | (v4.0) append-only — override_qa / expired |
 | `channel_snapshots` | B | (v4.0) số liệu kênh nhập tay/API theo kỳ |
 | `red_alerts` | B | (v4.0) append-only (trigger) — cảnh báo đỏ không được mất |
+| `red_alert_acks` | B | (v7.1) append-only — ai xác nhận cảnh báo đỏ intel lúc nào; mất bảng = cảnh báo đã xác nhận lại hiện là "chưa xác nhận" |
 | `sim_runs` | B | nghiên cứu giả lập persona (v7.3) — lịch sử chạy model/prompt/seed để kiểm toán, không PII |
 | `intel_items` | A (chạy lại `python -m crawler.intel --run`) hoặc B | tin thị trường công khai (v7.0) — chỉ tiêu đề + trích ≤300 ký tự + link; B giữ tin cũ đã trôi khỏi RSS |
 | `machines` | B | sổ máy cơ khí (v9.5) — nhập tay, không có nguồn dựng lại |

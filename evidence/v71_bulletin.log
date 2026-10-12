@@ -1,0 +1,81 @@
+=== E2E v7.1 Bản tin — DB samsam_w71 (2026-10-12T11:28:12+07:00)
+--- python scripts/intel_bulletin.py --period day --llm --suggest
+[warn] LLM tắt — chờ Pháp chế xác nhận (bản tin tất định)
+[done] D:\code\samsam-w93\data\reports\intel-bulletin-day-2026-10-12.md items=5 open_alerts=1 suggested_new=2 suggested_total=2 llm_summaries=0 llm_guardrail_fail=0
+exit=0
+--- chạy lại --suggest (không trùng)
+[done] D:\code\samsam-w93\data\reports\intel-bulletin-day-2026-10-12.md items=5 open_alerts=1 suggested_new=0 suggested_total=2 llm_summaries=0 llm_guardrail_fail=0
+exit=0
+--- --period week
+[done] D:\code\samsam-w93\data\reports\intel-bulletin-week-2026-10-12.md items=5 open_alerts=1 suggested_new=0 suggested_total=0 llm_summaries=0 llm_guardrail_fail=0
+exit=0
+--- --date 2026-13-01
+python scripts/intel_bulletin.py: error: --date sai định dạng YYYY-MM-DD
+exit=2
+--- heading chủ đề trong data/reports/intel-bulletin-day-2026-10-12.md: 5
+--- nội dung data/reports/intel-bulletin-day-2026-10-12.md
+# Bản tin thị trường (intel) — ngày 12/10/2026
+
+Kỳ giờ VN · 5 tin mới · nguồn: bảng `intel_items` (tiêu đề + trích ≤300 ký tự + link, không toàn văn)
+
+## Cảnh báo đỏ đang mở (chưa xác nhận)
+
+- #1 — 0.0 giờ — chưa leo thang — \[BÁO ĐỎ intel\] Thu hồi lô sâm Sâm Sâm nghi giả mạo — CHƯA AI NHẬN (thiếu người nhận độc lập)
+
+Xác nhận: `python -m pipelines.intel_alert --ack ID --by "Tên"`
+
+## Tin theo chủ đề
+
+### 1. Sâm & thị trường sâm — 2 tin
+
+> **NỘI BỘ – trích nguồn, KHÔNG dùng làm nội dung**
+> - Giá sâm Ngọc Linh vụ thu hoạch mới tăng — fx71-src2 · 12/10/2026 · <https://fx71.example.test/tin-2>
+> - Thu hồi lô sâm Sâm Sâm nghi giả mạo — fx71-src1 · 12/10/2026 · <https://fx71.example.test/tin-1>
+
+### 2. TPBVSK — quy định & thị trường thực phẩm chức năng — 2 tin
+
+> **NỘI BỘ – trích nguồn, KHÔNG dùng làm nội dung**
+> - Doanh nghiệp TPBVSK mở rộng kênh nhà thuốc — fx71-src4 · 12/10/2026 · <https://fx71.example.test/tin-4>
+> - Thị trường thực phẩm chức năng nhập khẩu tăng trưởng — fx71-src3 · 12/10/2026 · <https://fx71.example.test/tin-3>
+
+### 3. Giới trẻ & xu hướng tiêu dùng — 0 tin
+
+- (không có tin mới)
+
+### 4. Quảng cáo & người có ảnh hưởng — 0 tin
+
+- (không có tin mới)
+
+### 5. Đối thủ — 1 tin
+
+> **NỘI BỘ – trích nguồn, KHÔNG dùng làm nội dung**
+> - Đối thủ khai trương cửa hàng mới tại Đà Nẵng — fx71-src5 · 12/10/2026 · <https://fx71.example.test/tin-5>
+
+## Gợi ý chủ đề nội dung (chờ Quản lý MXH duyệt)
+
+- #1 `intel_topic` Sâm & thị trường sâm — đã có — chờ Quản lý MXH duyệt
+- #2 `intel_topic` TPBVSK — quy định & thị trường thực phẩm chức năng — đã có — chờ Quản lý MXH duyệt
+
+## Nguồn lỗi / robots chặn
+
+- Lượt `crawler.intel` trong kỳ: 0 (lỗi 0)
+- Nguồn lỗi trong kỳ: (không có)
+- Chi tiết lượt gần nhất: —
+- Nguồn A/B chưa duyệt: 8/8
+
+---
+*BẢN NHÁP — hệ thống không tự gửi. Người đọc rồi chuyển tay; khối trích nguồn chỉ để đọc nội bộ.*
+--- approval_queue intel_topic
+(1, 'intel', 'day-20261012-sam', 'pending', 'medium', 'true')
+(2, 'intel', 'day-20261012-tpbvsk', 'pending', 'medium', 'true')
+content_drafts 0
+--- python -m pipelines.director --block intel --dry-run
+[ok] intel — Trung tâm tình báo thị trường (trực thuộc TGĐ, phục vụ Marketing/Sales) · 3 loại việc · vai trò duyệt mxh · người duyệt chưa cấu hình (external-dep)
+[done] 1 khối hợp lệ (dry-run, không DB)
+exit=0
+--- python -m pipelines.director --block intel
+[done] intel → D:\code\samsam-w93\data\reports\director-intel-2026-10-12.md
+exit=0
+=== dọn fixture E2E (DB samsam_w71 )
+intel_items fx71 đã xóa: 5
+append-only giữ lại (không xóa được): red_alerts ids [1] · approval_queue intel_topic ids [1, 2] · red_alert_acks 0

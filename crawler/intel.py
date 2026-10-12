@@ -735,20 +735,25 @@ def _connect(dsn: str):
 
 
 def run(conn, cfg: dict, sources: list[dict], fetcher: Fetcher,
-        use_llm: bool) -> int:
+        use_llm: bool, health: dict | None = None) -> int:
+    """`health` (tùy chọn) nhận `detail` = "fail=<id,...> robots_deny=N
+    blocked=N" — chỉ id cấu hình, cho bản tin intel báo nguồn lỗi (v7.1)."""
     st = dict.fromkeys(("ok", "new", "dup_url", "dup_content", "off_topic"), 0)
     enrich = _Llm() if use_llm else None
+    fails = []
     for src in sources:
         sid = src["id"]
         try:
             r = fetcher.fetch(src["url"], sid)
         except BlockedDomain:
+            fails.append(sid)
             continue
         except BudgetExhausted:
             print(f"[warn] hết ngân sách --max-requests {fetcher.budget} — "
                   "dừng lượt", flush=True)
             break
         if r is None or r.status != 200 or r.body is None:
+            fails.append(sid)
             if r is not None:
                 print(f"[warn] {sid}: feed status {r.status} — bỏ nguồn",
                       flush=True)
@@ -757,6 +762,7 @@ def run(conn, cfg: dict, sources: list[dict], fetcher: Fetcher,
             entries = _parse(r.body)
         except FeedError as e:
             print(f"[warn] {sid}: {e} — bỏ nguồn", flush=True)
+            fails.append(sid)
             continue
         items, off = build_items(entries, src, src["url"], cfg["topics"])
         res = store_items(conn, items, enrich)
@@ -771,6 +777,10 @@ def run(conn, cfg: dict, sources: list[dict], fetcher: Fetcher,
           f"dup_content={st['dup_content']} off_topic={st['off_topic']} "
           f"blocked={fetcher.blocked} robots_deny={fetcher.robots_deny}",
           flush=True)
+    if health is not None:
+        health["detail"] = (f"fail={','.join(fails) or '-'} "
+                            f"robots_deny={fetcher.robots_deny} "
+                            f"blocked={fetcher.blocked}")
     return 1 if sources and st["ok"] == 0 else 0
 
 
@@ -867,9 +877,12 @@ def main(argv=None, *, transport=None, sleep=time.sleep,
             report(conn)
             return 0
         with job_run("crawler.intel") as jr:
+            health = {}
             rc = _run_cli(conn, cfg, args, picked, by_id, transport, sleep,
-                          clock)
+                          clock, health)
             jr["ok"] = rc == 0
+            if health.get("detail"):
+                jr["detail"] = health["detail"]
         return rc
     except psycopg.Error as e:
         print(f"[err] lỗi DB: {type(e).__name__}", flush=True)
@@ -878,7 +891,8 @@ def main(argv=None, *, transport=None, sleep=time.sleep,
         conn.close()
 
 
-def _run_cli(conn, cfg, args, picked, by_id, transport, sleep, clock) -> int:
+def _run_cli(conn, cfg, args, picked, by_id, transport, sleep, clock,
+             health=None) -> int:
     if picked:
         sources = [by_id[s] for s in picked]
         for s in sources:
@@ -901,7 +915,7 @@ def _run_cli(conn, cfg, args, picked, by_id, transport, sleep, clock) -> int:
     with Fetcher(args.max_requests, tier_c_hosts(cfg), transport, sleep,
                  clock) as f:
         try:
-            return run(conn, cfg, sources, f, use_llm)
+            return run(conn, cfg, sources, f, use_llm, health)
         except kb_filter.KbFilterError as e:
             print(f"[err] bộ lọc rượu hỏng: {e}", flush=True)
             return 1
