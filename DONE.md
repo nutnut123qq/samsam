@@ -6,6 +6,14 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+Nhánh `ai-infra`: M31 đợt gộp 5 (2026-10-12) — v4.3, v9.1, v8.3, v5.1, v6.2 đã gộp
+(66 bảng; full pytest 3530 pass + 3 đỏ tích hợp đã vá). Tích hợp: mã luồng DF-26
+(v4.3), DF-27 (v9.1), DF-28 (v8.3), DF-29/30 (v5.1) + DPIA/TIA 30 luồng; lô B2B
+v8.3 ghi created_by = người nhập, mỗi lô 1 người nhập (chặn tự duyệt — quyết định
+user); cskh_handoff theo mô hình SLA v5.0 (A = 2 giờ làm việc, hạn tuyệt đối 72h,
+risk medium ≠ low); mkt03 chuyển sang suite (17 suite); SOP đánh lại 5l (FP&A), 5m
+(Dự án); test v4.3 dùng bài mẫu có nhãn AI (duyệt từ v6.1 luôn kiểm như AI).
+
 Nhánh `ai-infra`: M31 đợt gộp 4 (2026-10-12) — v9.4 (kèm v9.2), v9.0, v6.1,
 v6.0, v5.0 đã gộp (57 bảng). Tích hợp khi gộp: bộ chấm MKT-02 (v6.1, 14 ca) +
 sales_director (v5.0, 26 ca) chuyển NGUYÊN VĂN từ jsonl sang suite v4.5

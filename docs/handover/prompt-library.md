@@ -174,8 +174,8 @@ TPBVSK phải dùng maket XNQC", hồ sơ XNQC chưa có), SKU chưa đủ readi
 kênh (`readiness` — cần TP_THUONG/QC_DAY_DU), kênh/format lạ, headline vi
 phạm/dài (`headline`), prompt nền cấm (`prompt_cam`), thiếu font, packshot
 thiếu/hỏng (`packshot_thieu`/`packshot_loi`). Eval: `python
-scripts/agent_eval.py --agent mkt03 --no-record` (bộ ca
-`data/eval/mkt03.jsonl`, chờ GĐ Marketing/Pháp chế duyệt nhãn).
+scripts/agent_eval.py --agent mkt03 --no-record` (suite
+`data/eval/suites/mkt03.json`, chờ GĐ Marketing/Pháp chế duyệt nhãn).
 
 ## 3. System prompt — chatbot CSKH (`api/rag.py:23-42`)
 

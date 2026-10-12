@@ -105,7 +105,7 @@ def test_config_thresholds_and_trap_kinds():
     """FLIP v4.5i: ngưỡng guardrail 1.0 (suite v1, 39 ca) → 0.95 + 3 kind
     bắt buộc (suite v2 = 132 ca v4.1, DONE v4.1 W41.4). Ca bẫy = kind bắt
     buộc soát trên MỌI suite active (gồm co_khi — v9.5; mkt02 v6.1,
-    sales_director v5.0 — gộp M31 đợt 4)."""
+    sales_director v5.0 — gộp M31 đợt 4; mkt03 v6.2)."""
     cfg = ae.load_config()
     assert cfg["required_agents"] == ["guardrail", "chatbot"]
     assert cfg["approvers"] == []  # external-dep: chưa ai được cấp quyền
@@ -522,9 +522,11 @@ def test_runners_single_source_and_same_signature():
     với (cases, None) — _score_and_record truyền judge_model."""
     assert ae.RUNNERS.keys() == ae.RUNNER_SCORERS.keys()
     # gộp M31 đợt 4: + mkt02 (v6.1) + sales_director (v5.0) — đều luật;
-    # gộp đợt 5: + cskh (v5.1, gateway giả — tất định).
+    # gộp đợt 5: + cskh (v5.1, gateway giả — tất định); gộp v6.2: + mkt03
+    # (provider giả eval_stub — tất định).
     assert set(ae.DETERMINISTIC_RUNNERS) == {"guardrail", "co_khi", "mkt02",
-                                             "sales_director", "cskh"}
+                                             "mkt03", "sales_director",
+                                             "cskh"}
     assert not hasattr(ae, "RULE_AGENTS")
     for name, fn in ae.RUNNERS.items():
         if name == "chatbot":
@@ -719,6 +721,160 @@ def test_validate_mkt02_case(mutate, needle):
     """Ca mkt02 hợp lệ không cần `text`; có `text` thì phải khác rỗng."""
     d = ae.load_suite("mkt02")
     c = dict(next(x for x in d["cases"] if x["kind"] == "golden_exact"))
+    assert ae._validate_case(c, 0, d) == []
+    mutate(c)
+    errs = ae._validate_case(c, 0, d)
+    assert any(needle in e for e in errs), errs
+
+
+# --- v6.2 W62.5 mkt03 (Agent Ảnh AI) ---------------------------------------
+# Gộp v6.2 vào ai-infra: bộ ca chuyển từ data/eval/mkt03.jsonl sang suite
+# v4.5 (data/eval/suites/mkt03.json) — giữ nguyên 15 ca + mọi assert v6.2.
+
+MKT03_KINDS = {"ai_label_meta", "packshot_intact", "tamper_detect", "no_exif",
+               "trap_alcohol", "trap_tpbvsk_maket", "trap_prompt",
+               "trap_readiness", "trap_headline"}
+
+
+def test_mkt03_cases_shape_and_unapproved():
+    docs, cases = _rows("mkt03")
+    d = docs[0]
+    assert "chưa được công ty duyệt" in d.casefold()
+    assert "chờ GĐ Marketing/Pháp chế duyệt nhãn" in d
+    ids = [c["id"] for c in cases]
+    assert len(ids) == len(set(ids)) and len(cases) >= 14
+    assert len(cases) == 15   # chuyển nguyên văn từ jsonl v6.2
+    kinds = [c["kind"] for c in cases]
+    assert set(kinds) == MKT03_KINDS
+    ai = [c for c in cases if c["kind"] == "ai_label_meta"]
+    assert len(ai) == 4 and {c["format"] for c in ai} == {
+        "1:1", "4:5", "9:16", "banner"}
+    assert all(c["provider"] == "eval_stub" for c in ai)
+    assert kinds.count("trap_alcohol") >= 2
+    assert any(c.get("readiness") for c in cases
+               if c["kind"] == "trap_alcohol")          # map tiêm QC_DAY_DU
+    assert any(c.get("scene") == "bác sĩ áo blouse cầm sản phẩm"
+               for c in cases if c["kind"] == "trap_prompt")
+    assert any(c["sku"] == "sapentol-30v" and c["format"] == "banner"
+               for c in cases if c["kind"] == "trap_tpbvsk_maket")
+    assert all(c.get("label_status") for c in cases)
+    # format suite: scorer/label/source thêm khi chuyển, ca không có text
+    assert all(c["scorer"] == "mkt03" and c["label"] == "dev_draft"
+               and "text" not in c for c in cases)
+    s = ae.load_suite("mkt03")
+    assert ae.validate_suite(s, EVAL_DIR / "suites" / "mkt03.json") == []
+    assert (s["owner_block"], s["runner"], s["agent_model"], s["status"],
+            s["frozen"], s["labeled_by"]) == (
+        "marketing", "mkt03", "rules", "active", False, None)
+    # ngưỡng v6.2 (config.json "agents.mkt03") chuyển vào threshold suite
+    assert set(s["threshold"]["must_pass_kinds"]) == MKT03_KINDS
+    assert s["threshold"]["min_pass_rate"] == 1.0
+    assert "mkt03" not in ae.load_config()["required_agents"]
+    assert not (EVAL_DIR / "mkt03.jsonl").exists()
+
+
+def test_mkt03_runner_all_pass_zero_llm_and_stub_removed(env, monkeypatch,
+                                                         capsys):
+    import os
+
+    from pipelines import image_studio as ims
+
+    calls = _mkt02_counting_client(monkeypatch)   # bật GUARDRAIL_LLM_MODEL
+    before = dict(ims.PROVIDERS)
+    _, cases = _rows("mkt03")
+    res = ae.run_mkt03(cases)
+    assert [(c["id"], d) for c, ok, d in res if not ok] == []
+    assert calls == [] and ims.PROVIDERS == before
+    assert os.environ["GUARDRAIL_LLM_MODEL"] == "google/gemini-test"
+    assert ae.main(["--agent", "mkt03", "--no-record"]) == 0
+    out = capsys.readouterr().out
+    assert "[done] mkt03 v1 PASS 15/15" in out and "model=rules" in out
+    assert calls == [] and ims.PROVIDERS == before
+
+
+def test_mkt03_flipped_alcohol_case_fails(env, monkeypatch, capsys):
+    _, cases = _rows("mkt03")
+    cases = [dict(c) for c in cases]
+    c = next(c for c in cases if c["kind"] == "trap_alcohol")
+    c["expect"] = "image"
+    _patched_suite(monkeypatch, "mkt03", cases)
+    assert ae.main(["--agent", "mkt03", "--no-record"]) == 1
+    out = capsys.readouterr().out
+    assert "FAIL (trap_alcohol)" in out and "ruou" in out
+    # ca không có text → dòng FAIL in "sku × kênh"
+    assert f'text="{c["sku"]} × {c["channel"]}"' in out
+
+
+@pytest.mark.parametrize("kind", ["trap_tpbvsk_maket", "tamper_detect"])
+def test_mkt03_missing_required_kind_fails(env, monkeypatch, capsys, kind):
+    _, cases = _rows("mkt03")
+    cases = [c for c in cases if c["kind"] != kind]
+    _patched_suite(monkeypatch, "mkt03", cases)
+    assert ae.main(["--agent", "mkt03", "--no-record"]) == 1
+    assert kind in capsys.readouterr().out
+
+
+def test_mkt03_unlabeled_image_fails(env, monkeypatch, capsys):
+    """Ảnh thiếu nhãn AI đứng đầu (labels bị đổi) -> ca ai_label_meta FAIL."""
+    from pipelines import image_studio as ims
+
+    real = ims.compose
+
+    def no_label(*a, **k):
+        r = real(*a, **k)
+        if r["ok"]:
+            r["meta"] = {**r["meta"], "labels": r["meta"]["labels"][1:]}
+        return r
+
+    monkeypatch.setattr(ims, "compose", no_label)
+    _, cases = _rows("mkt03")
+    res = ae.run_mkt03([c for c in cases if c["kind"] == "ai_label_meta"])
+    assert res and not any(ok for _, ok, _ in res)
+    assert all("nhãn AI" in d for _, _, d in res)
+
+
+def test_mkt03_plate_without_label_text_fails(env, monkeypatch):
+    """Nghiệm thu v6.2: đột biến bỏ CHỮ nhãn, giữ tấm nền (meta/text_layer
+    vẫn có nhãn) — kiểm cũ "vùng nhãn khác nền" chấm 4/4 PASS; kiểm pixel
+    màu chữ nhãn phải FAIL cả 4 format."""
+    from PIL import ImageDraw
+
+    from pipelines import content
+
+    ai = content._publish_texts()[1][0]
+    real = ImageDraw.ImageDraw.multiline_text
+
+    def no_label(self, xy, text, *a, **kw):
+        if ai in text:
+            return None
+        return real(self, xy, text, *a, **kw)
+
+    monkeypatch.setattr(ImageDraw.ImageDraw, "multiline_text", no_label)
+    _, cases = _rows("mkt03")
+    res = ae.run_mkt03([c for c in cases if c["kind"] == "ai_label_meta"])
+    assert len(res) == 4 and not any(ok for _, ok, _ in res)
+    assert all("không có chữ nhãn" in d for _, _, d in res), res
+
+
+@pytest.mark.parametrize("mutate,needle", [
+    (lambda c: c.pop("headline"), "thiếu 'headline'"),
+    (lambda c: c.update(format=""), "thiếu 'format'"),
+    (lambda c: c.update(provider="openai"), "provider phải"),
+    (lambda c: c.update(scene=""), "scene phải"),
+    (lambda c: c.update(packshot_exif="yes"), "packshot_exif phải bool"),
+    (lambda c: c.update(expect="pass"), "expect phải image|refuse"),
+    (lambda c: c.update(expect="refuse"), "ca refuse cần code"),
+    (lambda c: c.update(code="ruou"), "code chỉ đi với expect refuse"),
+    (lambda c: c.update(kind="trap_alcohol"), "ca image cần kind"),
+    (lambda c: c.update(readiness=[["a", "b"]]), "readiness phải"),
+    (lambda c: c.pop("source"), "thiếu 'source'"),
+    (lambda c: c.update(text=""), "thiếu 'text'"),
+])
+def test_validate_mkt03_case(mutate, needle):
+    """Ca mkt03 hợp lệ không cần `text`; provider chỉ none|eval_stub (runner
+    tất định — không kéo provider thật/mạng)."""
+    d = ae.load_suite("mkt03")
+    c = dict(next(x for x in d["cases"] if x["kind"] == "ai_label_meta"))
     assert ae._validate_case(c, 0, d) == []
     mutate(c)
     errs = ae._validate_case(c, 0, d)

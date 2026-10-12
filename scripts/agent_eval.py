@@ -34,15 +34,20 @@ Listing: `content.listing(llm=False)` (op listing) / `content.precheck`
 trong lúc chấm), không key, không DB; `golden_exact` pass <=> ok + fields ==
 golden (name/pack_spec/receipt_no/giá list) + dòng `Quy cách:` nguyên văn
 + không lộ giá floor/promo; ca refuse pass <=> refused.code == code; ca
-KHÔNG có `text`), `sales_director` (tất định — v5.0: định tuyến SLA
+KHÔNG có `text`), `mkt03` (tất định — v6.2 Agent Ảnh AI:
+`image_studio.compose` trên packshot MẪU + out dir trong thư mục tạm,
+provider AI giả `eval_stub` đăng ký TẠM (gỡ trong finally), 0 mạng/0 LLM/
+không DB; kind ảnh chấm nhãn AI + metadata / toàn vẹn packshot / phát hiện
+sửa 1 pixel / không EXIF; ca refuse pass <=> refused.code == code; ca KHÔNG
+có `text`), `sales_director` (tất định — v5.0: định tuyến SLA
 handoff A/B + rủi ro qua `agents.sales_director.route/sla_state` trên
 `data/directors/sales.json` THẬT, không LLM/mạng/key/DB), `cskh` (tất định — KD-A1 v5.1: lớp kênh
 `connectors.channels.respond` với `api.rag.answer` THẬT nhưng "gateway giả" =
 patch `api.rag.retrieve`/`api.rag.chat` theo `fake_hits`/`fake_llm` của ca,
 đếm lời gọi LLM), `chatbot`
 (`api.rag.answer` THẬT, cần OPENROUTER_API_KEY). Scorer từng ca: guardrail
-| co_khi | mkt02 | sales_director | cskh | eval_qa | handoff | exact | regex |
-judge. Giám khảo LLM CHỈ qua
+| co_khi | mkt02 | mkt03 | sales_director | cskh | eval_qa | handoff | exact |
+regex | judge. Giám khảo LLM CHỈ qua
 `pipelines.llm_gateway.chat("ci_judge")`, model khác HỌ (nhà sản xuất theo
 allowlist `_FAMILIES`; router/alias lạ → từ chối) với model agent; output
 judge parse chặt — lỗi = ca FAIL, không bỏ qua.
@@ -63,6 +68,7 @@ Chạy:
   python scripts/agent_eval.py --agent guardrail [--no-record]
   python scripts/agent_eval.py --agent co_khi --no-record
   python scripts/agent_eval.py --agent mkt02 --no-record
+  python scripts/agent_eval.py --agent mkt03 --no-record
   python scripts/agent_eval.py --agent sales_director --no-record
   python scripts/agent_eval.py --agent kd_a1 --no-record
   python scripts/agent_eval.py --validate
@@ -109,18 +115,19 @@ CONNECT_TIMEOUT_S = 5
 DEFAULT_CHAT_MODEL = "openai/gpt-4o-mini"
 RISKS = ("low", "medium", "high")
 STATUSES = ("active", "skeleton")
-SCORERS = ("guardrail", "co_khi", "mkt02", "sales_director", "eval_qa",
-           "handoff", "exact", "regex", "judge", "cskh")
+SCORERS = ("guardrail", "co_khi", "mkt02", "mkt03", "sales_director",
+           "eval_qa", "handoff", "exact", "regex", "judge", "cskh")
 # Nguồn DUY NHẤT của tên runner hợp lệ (RUNNERS.keys() phải trùng).
 RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "chatbot": {"eval_qa", "handoff", "exact", "regex",
                               "judge"},
                   "co_khi": {"co_khi"},
                   "mkt02": {"mkt02"},
+                  "mkt03": {"mkt03"},
                   "sales_director": {"sales_director"},
                   "cskh": {"cskh"}}
-DETERMINISTIC_RUNNERS = ("guardrail", "co_khi", "mkt02", "sales_director",
-                         "cskh")
+DETERMINISTIC_RUNNERS = ("guardrail", "co_khi", "mkt02", "mkt03",
+                         "sales_director", "cskh")
 # Hit giả mặc định của runner cskh (ca không khai `fake_hits`).
 CSKH_DEFAULT_HIT = {"title": "Sản phẩm Sâm Sâm", "lang": "vi",
                     "url": "https://samsamngoclinh.com/san-pham",
@@ -130,9 +137,16 @@ CSKH_DEFAULT_HIT = {"title": "Sản phẩm Sâm Sâm", "lang": "vi",
 GUARDRAIL_CTX_KEYS = {"channel", "content_type", "sku", "is_ai",
                       "is_sponsored"}
 CO_KHI_KINDS = ("fact", "high_risk", "trap_no_data")
-# v6.1 mkt02: ca không có `text` (đầu vào = op × sku × kênh).
-NO_TEXT_SCORERS = {"mkt02"}
+# v6.1 mkt02: ca không có `text` (đầu vào = op × sku × kênh); v6.2 mkt03
+# cũng vậy (đầu vào = sku × kênh × format × headline).
+NO_TEXT_SCORERS = {"mkt02", "mkt03"}
 MKT02_OPS = ("listing", "draft")
+# v6.2 mkt03: kind ca expect=image (chấm theo kind trong _score_mkt03);
+# provider CHỈ nền tất định / provider giả eval_stub — suite không được kéo
+# provider thật (mạng) vào runner tất định.
+MKT03_IMAGE_KINDS = ("ai_label_meta", "packshot_intact", "tamper_detect",
+                     "no_exif")
+MKT03_PROVIDERS = ("none", "eval_stub")
 SALES_KINDS = ("route", "sla", "trap_offhours", "trap_no_auto")
 LABELS = ("dev_draft", "company")
 # agent_model "env:X" chỉ đọc biến trong allowlist — suite không được đọc
@@ -252,6 +266,16 @@ def _nonempty(v) -> bool:
     return isinstance(v, str) and bool(v.strip())
 
 
+def _readiness_errs(c: dict, cid) -> list[str]:
+    """`readiness` tùy chọn (mkt02/mkt03): list [sku, kênh, mức] → map tiêm."""
+    r = c.get("readiness")
+    if "readiness" in c and not (isinstance(r, list) and r and all(
+            isinstance(x, list) and len(x) == 3
+            and all(_nonempty(y) for y in x) for x in r)):
+        return [f"ca {cid}: readiness phải list [sku, kênh, mức]"]
+    return []
+
+
 def _validate_mkt02_case(c: dict, cid, exp) -> list[str]:
     """v6.1: op listing|draft + sku/channel/content_type; expect
     listing|refuse; refuse cần `code`; readiness tùy chọn [[sku,kênh,mức]]."""
@@ -267,13 +291,33 @@ def _validate_mkt02_case(c: dict, cid, exp) -> list[str]:
         errs.append(f"ca {cid}: ca refuse cần code")
     elif exp == "listing" and "code" in c:
         errs.append(f"ca {cid}: code chỉ đi với expect refuse")
-    if "readiness" in c:
-        r = c["readiness"]
-        if not (isinstance(r, list) and r and all(
-                isinstance(x, list) and len(x) == 3
-                and all(_nonempty(y) for y in x) for x in r)):
-            errs.append(f"ca {cid}: readiness phải list [sku, kênh, mức]")
-    return errs
+    return errs + _readiness_errs(c, cid)
+
+
+def _validate_mkt03_case(c: dict, cid, exp) -> list[str]:
+    """v6.2: sku/channel/format/headline; expect image|refuse; refuse cần
+    `code`; image cần kind ∈ MKT03_IMAGE_KINDS; provider (mặc định none)
+    ∈ MKT03_PROVIDERS; scene/packshot_exif/readiness tùy chọn."""
+    errs = []
+    for k in ("sku", "channel", "format", "headline"):
+        if not _nonempty(c.get(k)):
+            errs.append(f"ca {cid}: mkt03 thiếu '{k}'")
+    if "scene" in c and not _nonempty(c["scene"]):
+        errs.append(f"ca {cid}: scene phải chuỗi khác rỗng")
+    if c.get("provider", "none") not in MKT03_PROVIDERS:
+        errs.append(f"ca {cid}: mkt03 provider phải {MKT03_PROVIDERS}")
+    if "packshot_exif" in c and not isinstance(c["packshot_exif"], bool):
+        errs.append(f"ca {cid}: packshot_exif phải bool")
+    if exp not in ("image", "refuse"):
+        errs.append(f"ca {cid}: mkt03 expect phải image|refuse")
+    elif exp == "refuse" and not _nonempty(c.get("code")):
+        errs.append(f"ca {cid}: ca refuse cần code")
+    elif exp == "image":
+        if "code" in c:
+            errs.append(f"ca {cid}: code chỉ đi với expect refuse")
+        if c.get("kind") not in MKT03_IMAGE_KINDS:
+            errs.append(f"ca {cid}: ca image cần kind {MKT03_IMAGE_KINDS}")
+    return errs + _readiness_errs(c, cid)
 
 
 def _iso_ok(v) -> bool:
@@ -370,6 +414,8 @@ def _validate_case(c, i: int, d: dict) -> list[str]:
         errs += _validate_co_khi_case(c, cid, exp)
     elif sc == "mkt02":
         errs += _validate_mkt02_case(c, cid, exp)
+    elif sc == "mkt03":
+        errs += _validate_mkt03_case(c, cid, exp)
     elif sc == "sales_director":
         errs += _validate_sales_case(c, cid, exp)
     elif sc == "cskh":
@@ -714,6 +760,107 @@ def _score_mkt02(case: dict, r: dict, gold: dict,
     return not detail, detail
 
 
+def _mkt03_stub(prompt, size):
+    """Provider AI GIẢ tất định cho eval MKT-03 (model ghi 'eval_stub' —
+    không giả làm model thật): nền đặc + khối đỏ vẽ ĐÈ đúng packshot_box
+    của format (mô phỏng nền AI cố vẽ vào vùng sản phẩm)."""
+    from PIL import Image, ImageDraw
+
+    from pipelines import image_studio as ims
+
+    cfg, err = ims.load_config()
+    if err:
+        raise RuntimeError(err)
+    img = Image.new("RGB", size, (60, 90, 70))
+    for name, wh in cfg["formats"].items():
+        if tuple(wh) == tuple(size):
+            x, y, w, h = ims._px(cfg["layout"][name]["packshot_box"], size)
+            ImageDraw.Draw(img).rectangle((x, y, x + w - 1, y + h - 1),
+                                          fill=(255, 0, 0))
+    return img, {"model": "eval_stub"}
+
+
+def _mkt03_ai_label() -> str:
+    """Nhãn AI (dòng đầu khối AI của content._publish_texts) — "\\x00" khi
+    không có (ca ai_label_meta khi đó FAIL, không pass ảo)."""
+    from pipelines import content
+
+    _, ai, _ = content._publish_texts()
+    return ai[0] if ai else "\x00"
+
+
+def _mkt03_check(c: dict, r: dict, ai_label: str) -> str:
+    """'' khi ca expect=image đạt theo kind; ngược lại lý do (không text)."""
+    from datetime import datetime
+
+    from PIL import Image
+
+    from pipelines import image_studio as ims
+
+    m = r["meta"]
+    with Image.open(r["path"]) as im:
+        img = im.convert("RGB")
+        meta_keys = {"exif", "xmp", "XML:com.adobe.xmp",
+                     "icc_profile"} & set(im.info)
+        exif = dict(im.getexif())
+    fitted, xy = r["fitted"], r["packshot_xy"]
+    if not ims.verify_packshot(img, fitted, xy):
+        return "vùng packshot lệch packshot gốc"
+    kind = c["kind"]
+    if kind == "ai_label_meta":
+        bg = m["background"]
+        if not (m["ai_generated"] is True and m["labels"][:1] == [ai_label]
+                and ai_label in r["text_layer"].split("\n")):
+            return "thiếu nhãn AI đứng đầu / ai_generated"
+        if not (bg.get("model") and bg.get("prompt_sha256")
+                and bg.get("prompt_version") and m.get("created_at")):
+            return "sidecar thiếu model/prompt_sha256/prompt_version/ngày"
+        if datetime.fromisoformat(m["created_at"]).utcoffset() is None:
+            return "created_at không có múi giờ"
+        plain, _ = _mkt03_stub(bg["prompt"], img.size)
+        x, y, w, h = m["label_box"]
+        box = (x, y, x + w, y + h)
+        if ims._changed_ratio(img.crop(box), plain.crop(box)) < 0.01:
+            return "vùng nhãn không khác nền (nhãn không hiển thị)"
+        # Riêng tấm nền đã khác nền 100% -> đếm pixel đúng màu chữ nhãn
+        # (thật ≥0.12% ở banner, bỏ chữ giữ tấm nền = 0%).
+        cfg, _ = ims.load_config()
+        mask = ims._color_mask(img.crop(box), cfg["label"]["text_rgb"])
+        if mask.histogram()[255] < 0.0005 * w * h:
+            return "vùng nhãn chỉ có tấm nền, không có chữ nhãn"
+    elif kind == "tamper_detect":
+        solid = ims._solid(fitted)
+        i = next(i for i, a in enumerate(solid.getdata()) if a == 255)
+        p = (xy[0] + i % solid.width, xy[1] + i // solid.width)
+        px = img.getpixel(p)
+        img.putpixel(p, ((px[0] + 1) % 256, px[1], px[2]))
+        if ims.verify_packshot(img, fitted, xy):
+            return "sửa 1 pixel vùng packshot mà verify_packshot vẫn True"
+    elif kind == "no_exif":
+        data = Path(r["path"]).read_bytes()
+        if exif or meta_keys or b"eXIf" in data:
+            return "ảnh output còn EXIF/XMP/ICC"
+    return ""
+
+
+def _score_mkt03(case: dict, r: dict, ai_label: str) -> tuple[bool, str]:
+    """v6.2: ca refuse pass <=> refused.code == code (trap_tpbvsk_maket thêm
+    reason chứa 'maket XNQC'); ca image pass <=> không bị từ chối + đạt
+    kiểm theo kind (`_mkt03_check`) trên file ảnh đọc lại."""
+    ref = r.get("refused")
+    if case["expect"] == "refuse":
+        ok = bool(ref) and ref.get("code") == case.get("code")
+        if ok and case["kind"] == "trap_tpbvsk_maket":
+            ok = "maket XNQC" in ref.get("reason", "")
+        return ok, "" if ok else (
+            f"kỳ vọng từ chối {case.get('code')}, được "
+            f"{ref.get('code') if ref else 'sinh ảnh'}")
+    if ref:
+        return False, f"bị từ chối {ref.get('code')}"
+    detail = _mkt03_check(case, r, ai_label)
+    return not detail, detail
+
+
 def _score_sales(case: dict, out: dict) -> tuple[bool, str]:
     """v5.0: so output route/sla_state của agent GĐ KD với expect."""
     from datetime import datetime
@@ -743,6 +890,8 @@ def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
         return _score_co_khi(case, out, ck_mat.NO_DATA)
     if sc == "mkt02":
         return _score_mkt02(case, out, *_mkt02_gold())
+    if sc == "mkt03":
+        return _score_mkt03(case, out, _mkt03_ai_label())
     if sc == "sales_director":
         return _score_sales(case, out)
     if sc == "cskh":
@@ -838,6 +987,53 @@ def run_mkt02(cases, judge_model=None):
             os.environ["GUARDRAIL_LLM_MODEL"] = saved
 
 
+def _mkt03_out(c: dict, base: Path) -> dict:
+    """1 ca MKT-03: packshot MẪU (tùy chọn nhúng EXIF/GPS) + compose ra
+    `base/out` — `base` nằm trong thư mục tạm của run_mkt03."""
+    from pipelines import image_studio as ims
+
+    sku = c.get("sku")
+    if isinstance(sku, str) and sku:
+        ims.make_sample_packshot(base / "pk" / f"{sku}.png", sku,
+                                 exif_gps=bool(c.get("packshot_exif")))
+    rmap = ({(a, b): lv for a, b, lv in c["readiness"]}
+            if c.get("readiness") else None)
+    return ims.compose(sku, c["channel"], c["headline"], fmt=c["format"],
+                       scene=c.get("scene"), readiness=rmap,
+                       provider=c.get("provider", "none"),
+                       packshot_dir=base / "pk", out_dir=base / "out")
+
+
+def run_mkt03(cases, judge_model=None):
+    """Chấm tất định MKT-03 (v6.2): 0 mạng/0 LLM (tắt lớp LLM-check trong
+    lúc chấm), không key, không DB. Packshot MẪU + out dir trong thư mục
+    tạm (chấm ngay sau compose — file còn trên đĩa); provider `eval_stub`
+    đăng ký TẠM vào image_studio.PROVIDERS và được gỡ trong finally
+    (PROVIDERS sau == trước)."""
+    import itertools
+    import tempfile
+
+    from pipelines import image_studio as ims
+
+    saved = os.environ.pop("GUARDRAIL_LLM_MODEL", None)
+    had = "eval_stub" in ims.PROVIDERS
+    prev = ims.PROVIDERS.get("eval_stub")
+    ims.PROVIDERS["eval_stub"] = _mkt03_stub
+    try:
+        with tempfile.TemporaryDirectory(prefix="mkt03-") as td:
+            n = itertools.count()
+            return _run(cases,
+                        lambda c: _mkt03_out(c, Path(td) / f"c{next(n)}"),
+                        judge_model, show_answer=False)
+    finally:
+        if had:
+            ims.PROVIDERS["eval_stub"] = prev
+        else:
+            ims.PROVIDERS.pop("eval_stub", None)
+        if saved is not None:
+            os.environ["GUARDRAIL_LLM_MODEL"] = saved
+
+
 def _sales_out(c: dict, cfg: dict, sd) -> dict:
     """Output agent GĐ KD cho 1 ca: route() (mọi loại khi all_types) hoặc
     sla_state() trên cấu hình thật."""
@@ -897,7 +1093,7 @@ def run_cskh(cases, judge_model=None):
 
 
 RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot,
-           "co_khi": run_co_khi, "mkt02": run_mkt02,
+           "co_khi": run_co_khi, "mkt02": run_mkt02, "mkt03": run_mkt03,
            "sales_director": run_sales_director, "cskh": run_cskh}
 
 
@@ -1190,7 +1386,7 @@ def _score_and_record(suite, model, judge_model, sha, conn) -> int:
     results = RUNNERS[suite["runner"]](suite["cases"], judge_model)
     for c, ok, detail in results:
         if not ok:
-            # mkt02: ca không có text -> in "sku × kênh".
+            # mkt02/mkt03: ca không có text -> in "sku × kênh".
             what = c.get("text") or f"{c.get('sku')} × {c.get('channel')}"
             print(f"[{agent}:{c['id']}] FAIL ({c.get('kind')}) — "
                   f'{detail} | text="{_short(what)}"', flush=True)

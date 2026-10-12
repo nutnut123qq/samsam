@@ -38,8 +38,10 @@ U = {1: "https://samsamngoclinh.com/", 2: "http://samsam.net.vn/",
      5: "https://samsam.net.vn/"}
 T0 = datetime(2026, 10, 12, 9, 0, tzinfo=VN_TZ)
 H = "url,kenh,is_ai,ngay_dang,draft_id,text\n"
+# Gộp M31 đợt 5: từ v6.1 bước duyệt luôn kiểm như nội dung AI → bài mẫu mang
+# sẵn nhãn AI để duyệt được (luật không nới).
 NEUTRAL = ("Sâm Sâm chúc quý khách một tuần vui vẻ. Mời ghé cửa hàng xem"
-           " sản phẩm mới.")
+           " sản phẩm mới. Nội dung có sử dụng AI.")
 
 
 def _csv(tmp_path, body: str, name="x.csv", head=H, enc="utf-8") -> Path:

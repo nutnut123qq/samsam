@@ -77,7 +77,7 @@ Streamlit demo.
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored); `projects/` (v8.3 — `ho_so_templates.json`, `milestones.json`, `sow_scope.json`: BẢN DEV SOẠN chờ GĐ dự án/TGĐ chốt) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 65 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 66 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|

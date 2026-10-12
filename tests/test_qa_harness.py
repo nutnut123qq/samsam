@@ -231,8 +231,11 @@ def test_validate_cli_all_suites(capsys):
     assert ae.main(["--validate"]) == 0
     out = capsys.readouterr().out
     # gộp M31 đợt 4: + mkt02 (v6.1) + sales_director (v5.0) → 15 suite; gộp đợt 5 + kd_a1 → 16
-    assert len(re.findall(r"^\[ok\] ", out, re.MULTILINE)) == 16
-    assert "[done] 16/16 suite hợp lệ" in out
+    # gộp v6.2: + mkt03 (Agent Ảnh AI) → 17
+    assert len(re.findall(r"^\[ok\] ", out, re.MULTILINE)) == 17
+    assert "[done] 17/17 suite hợp lệ" in out
+    assert re.search(r"^\[ok\] mkt03 v1 active owner=marketing .* 15 ca$",
+                     out, re.MULTILINE)
     assert re.search(r"^\[ok\] kd_a1 v2 active owner=sales .* 43 ca$", out,
                      re.MULTILINE)
     assert re.search(r"^\[ok\] guardrail v2 .* 132 ca$", out, re.MULTILINE)
@@ -244,7 +247,8 @@ def test_validate_cli_all_suites(capsys):
 def test_skeleton_suites_cover_all_blocks():
     names = ae.suite_names()
     assert set(names) == set(SKELETONS) | {"guardrail", "chatbot", "co_khi",
-                                           "mkt02", "sales_director", "kd_a1"}
+                                           "mkt02", "mkt03", "sales_director",
+                                           "kd_a1"}
     suites = {n: ae.load_suite(n) for n in names}
     assert {s["qa_block"] for s in suites.values()} == set(director.BLOCKS)
     owners = [suites[n]["owner_block"] for n in SKELETONS]
@@ -472,16 +476,17 @@ def test_deterministic_skips_llm_runners(env, monkeypatch, capsys):
                         lambda *a, **k: pytest.fail("LLM"))
     assert ae.main(["--deterministic", "--no-record"]) == 0
     out = capsys.readouterr().out
-    assert "[done] 16/16 suite hợp lệ" in out
+    assert "[done] 17/17 suite hợp lệ" in out
     assert "kd_a1 v2 PASS 43/43" in out
     assert "guardrail v2 PASS 130/132" in out and "[done] chatbot" not in out
     assert "co_khi v1 PASS 21/23" in out and "[done] ck_a6" not in out
     assert "mkt02 v1 PASS 14/14" in out
+    assert "mkt03 v1 PASS 15/15" in out
     assert "sales_director v1 PASS 26/26" in out
     assert ae.main(["--deterministic"]) == 0
     rows = _inserted(env)
     assert [r["agent"] for r in rows] == ["co_khi", "guardrail", "kd_a1",
-                                          "mkt02", "sales_director"]
+                                          "mkt02", "mkt03", "sales_director"]
     assert all(r["commit_sha"] == SHA for r in rows)
 
 

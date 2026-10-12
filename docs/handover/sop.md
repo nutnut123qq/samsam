@@ -1426,7 +1426,7 @@ python scripts/eval_qa.py   # 12 câu hỏi questions.md qua RAG thật — exit
 
 ```
 python scripts/agent_eval.py --validate          # kiểm MỌI suite data/eval/suites/*.json (không DB/LLM)
-python scripts/agent_eval.py --deterministic     # validate + suite tất định (guardrail + co_khi + kd_a1) — CI chạy mỗi push
+python scripts/agent_eval.py --deterministic     # validate + suite tất định (guardrail + co_khi + kd_a1 + mkt02 + mkt03 + sales_director) — CI chạy mỗi push
 python scripts/agent_eval.py --agent guardrail   # suite data/eval/suites/guardrail.json, không cần key — ghi eval_runs
 python scripts/agent_eval.py --agent co_khi --no-record   # 23 ca MẪU agent tra cứu cơ khí CK-A1 (luật, local)
 python scripts/agent_eval.py --agent chatbot     # 14 ca qua RAG thật (cần OPENROUTER_API_KEY) — tay/nightly

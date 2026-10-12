@@ -223,7 +223,8 @@ def test_fpa_flows_no_llm_and_every_text_pii_clean(monkeypatch, capsys):
 def test_sop_5f_commands_point_to_real_modules():
     import re
     sop = (ROOT / "docs" / "handover" / "sop.md").read_bytes().decode("utf-8")
-    sec = sop.split("## 5f.")[1].split("\n## ")[0]
+    # Gộp M31 đợt 5: mục FP&A đánh số lại 5f → 5l (trùng số với v7.2).
+    sec = sop.split("## 5l.")[1].split("\n## ")[0]
     mods = set(re.findall(r"python -m ([\w.]+)", sec))
     assert {"agents.fp_pnl", "agents.fp_ads", "agents.fp_opscost",
             "agents.fp_cash", "agents.fin_director"} <= mods
