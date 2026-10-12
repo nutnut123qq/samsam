@@ -275,8 +275,9 @@ def _bulletin_fixture(db):
     garden.add_log(tx, "KV-A02", "2026-10-11T03:00:00Z", "ghi nhận",
                    "phát hiện rệp, gọi 0901234567 báo", "Nguyễn Văn Bí")
     db.execute("insert into garden_media (sha256, ext, bytes, plot_id,"
-               " taken_on, author) values (%s, 'jpg', 9, 'KV-A01',"
-               " '2026-10-11', 'Nguyễn Văn Bí')", ("c" * 64,))
+               " taken_on, author, created_at) values (%s, 'jpg', 9,"
+               " 'KV-A01', '2026-10-11', 'Nguyễn Văn Bí',"
+               " '2026-10-11T03:00:00Z')", ("c" * 64,))  # cố định, không now()
 
 
 def _sql_blocks(text):
