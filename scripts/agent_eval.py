@@ -45,12 +45,16 @@ có `text`), `mkt_seo` (tất định — v6.5 MKT-11 SEO sàn:
 ⊂ refused/present/absent/rejected/title_limit; ca KHÔNG có `text`),
 `sales_director` (tất định — v5.0: định tuyến SLA
 handoff A/B + rủi ro qua `agents.sales_director.route/sla_state` trên
-`data/directors/sales.json` THẬT, không LLM/mạng/key/DB), `cskh` (tất định — KD-A1 v5.1: lớp kênh
+`data/directors/sales.json` THẬT, không LLM/mạng/key/DB), `kd_a5` (tất định
+— v5.3 luật giá/KM: `agents.kd_price.check_listing_prices`/`check_promos`
+THUẦN trên input inline của ca + `data/price_watch.json` THẬT; chấm loại
+phát hiện, loại việc, payload qua guardrail, cấm chuỗi trong payload (giá
+đối thủ) — 0 DB/LLM/mạng/key; ca KHÔNG có `text`), `cskh` (tất định — KD-A1 v5.1: lớp kênh
 `connectors.channels.respond` với `api.rag.answer` THẬT nhưng "gateway giả" =
 patch `api.rag.retrieve`/`api.rag.chat` theo `fake_hits`/`fake_llm` của ca,
 đếm lời gọi LLM), `chatbot`
 (`api.rag.answer` THẬT, cần OPENROUTER_API_KEY). Scorer từng ca: guardrail
-| co_khi | mkt02 | mkt03 | mkt_seo | sales_director | cskh | eval_qa |
+| co_khi | mkt02 | mkt03 | mkt_seo | sales_director | kd_a5 | cskh | eval_qa |
 handoff | exact |
 regex | judge. Giám khảo LLM CHỈ qua
 `pipelines.llm_gateway.chat("ci_judge")`, model khác HỌ (nhà sản xuất theo
@@ -76,6 +80,7 @@ Chạy:
   python scripts/agent_eval.py --agent mkt03 --no-record
   python scripts/agent_eval.py --agent mkt_seo --no-record
   python scripts/agent_eval.py --agent sales_director --no-record
+  python scripts/agent_eval.py --agent kd_a5 --no-record
   python scripts/agent_eval.py --agent kd_a1 --no-record
   python scripts/agent_eval.py --validate
   python scripts/agent_eval.py --deterministic [--no-record]
@@ -123,7 +128,7 @@ RISKS = ("low", "medium", "high")
 STATUSES = ("active", "skeleton")
 SCORERS = ("guardrail", "co_khi", "mkt02", "mkt03", "sales_director",
            "eval_qa", "handoff", "exact", "regex", "judge", "cskh",
-           "mkt_seo")
+           "mkt_seo", "kd_a5")
 # Nguồn DUY NHẤT của tên runner hợp lệ (RUNNERS.keys() phải trùng).
 RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "chatbot": {"eval_qa", "handoff", "exact", "regex",
@@ -133,9 +138,10 @@ RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "mkt03": {"mkt03"},
                   "mkt_seo": {"mkt_seo"},
                   "sales_director": {"sales_director"},
-                  "cskh": {"cskh"}}
+                  "cskh": {"cskh"},
+                  "kd_a5": {"kd_a5"}}
 DETERMINISTIC_RUNNERS = ("guardrail", "co_khi", "mkt02", "mkt03",
-                         "sales_director", "cskh", "mkt_seo")
+                         "sales_director", "cskh", "mkt_seo", "kd_a5")
 # Hit giả mặc định của runner cskh (ca không khai `fake_hits`).
 CSKH_DEFAULT_HIT = {"title": "Sản phẩm Sâm Sâm", "lang": "vi",
                     "url": "https://samsamngoclinh.com/san-pham",
@@ -147,7 +153,7 @@ GUARDRAIL_CTX_KEYS = {"channel", "content_type", "sku", "is_ai",
 CO_KHI_KINDS = ("fact", "high_risk", "trap_no_data")
 # v6.1 mkt02: ca không có `text` (đầu vào = op × sku × kênh); v6.2 mkt03
 # cũng vậy (đầu vào = sku × kênh × format × headline).
-NO_TEXT_SCORERS = {"mkt02", "mkt03", "mkt_seo"}
+NO_TEXT_SCORERS = {"mkt02", "mkt03", "mkt_seo", "kd_a5"}
 # v6.5 mkt_seo (MKT-11 SEO sàn): kind + khóa expect hợp lệ.
 MKT_SEO_KINDS = ("keyword_in", "keyword_out", "title_limit", "trap_alcohol",
                  "trap_ngoc_linh", "trap_banned")
@@ -161,6 +167,14 @@ MKT03_IMAGE_KINDS = ("ai_label_meta", "packshot_intact", "tamper_detect",
                      "no_exif")
 MKT03_PROVIDERS = ("none", "eval_stub")
 SALES_KINDS = ("route", "sla", "trap_offhours", "trap_no_auto")
+# v5.3 kd_a5: kind ca (loại luật + bẫy); expect.kinds ⊂ kd_price.SEVERITY.
+KD_A5_KINDS = ("below_floor", "negative_margin", "no_cogs", "list_deviation",
+               "listing_promo_over_cap", "cam_skip", "promo_stacked",
+               "promo_below_floor", "promo_over_cap", "promo_negative_margin",
+               "promo_unverifiable", "window", "trap_floor", "trap_banned",
+               "trap_no_race")
+KD_A5_OTYPES = ("market_alert_s1", "price_change", "promo_change")
+KD_A5_LEVELS = ("CAM", "MO_TA", "TP_THUONG", "QC_DAY_DU")
 LABELS = ("dev_draft", "company")
 # agent_model "env:X" chỉ đọc biến trong allowlist — suite không được đọc
 # env tùy ý (DATABASE_URL...) rồi ghi vào eval_runs.model / in ra log.
@@ -408,6 +422,77 @@ def _validate_sales_case(c: dict, cid, exp) -> list[str]:
     return errs
 
 
+def _int_pos(v) -> bool:
+    return _is_int(v) and v > 0
+
+
+def _validate_kd_a5_case(c: dict, cid, exp) -> list[str]:
+    """v5.3: op listing|promo; today ISO; golden {list?, floor?} số > 0;
+    readiness ∈ mức view; expect {kinds ⊂ luật kd_price, object_types?,
+    info?, forbid_in_payload?}; listing {price_vnd, sale_price?}; promos
+    [{program_id, loai_km, start, end, giam_pct | gia_km_vnd}]."""
+    from agents import kd_price  # lazy: chỉ khi có suite kd_a5
+
+    errs = []
+    if c.get("kind") not in KD_A5_KINDS:
+        errs.append(f"ca {cid}: kd_a5 kind phải {KD_A5_KINDS}")
+    if c.get("op") not in ("listing", "promo"):
+        errs.append(f"ca {cid}: op phải listing|promo")
+    try:
+        kd_price.coerce_day(c.get("today"))
+    except ValueError:
+        errs.append(f"ca {cid}: today phải YYYY-MM-DD")
+    g = c.get("golden")
+    if not (isinstance(g, dict) and set(g) <= {"list", "floor",
+                                               "list_approved",
+                                               "floor_approved"}
+            and all(_int_pos(g[k]) for k in ("list", "floor") if k in g)):
+        errs.append(f"ca {cid}: golden phải {{list?, floor?}} số nguyên > 0")
+    if c.get("readiness") not in KD_A5_LEVELS:
+        errs.append(f"ca {cid}: readiness phải {KD_A5_LEVELS}")
+    if c.get("cogs") is not None and not _int_pos(c.get("cogs")):
+        errs.append(f"ca {cid}: cogs phải null hoặc số nguyên > 0")
+    if not (isinstance(exp, dict) and isinstance(exp.get("kinds"), list)
+            and set(exp) <= {"kinds", "object_types", "info",
+                             "forbid_in_payload"}):
+        return errs + [f"ca {cid}: expect phải {{kinds: [...], ...}}"]
+    if not set(exp["kinds"]) <= set(kd_price.SEVERITY):
+        errs.append(f"ca {cid}: expect.kinds lạ")
+    if not set(exp.get("object_types", [])) <= set(KD_A5_OTYPES):
+        errs.append(f"ca {cid}: expect.object_types phải ⊂ {KD_A5_OTYPES}")
+    if not set(exp.get("info", [])) <= {"no_cogs"}:
+        errs.append(f"ca {cid}: expect.info chỉ nhận no_cogs")
+    fb = exp.get("forbid_in_payload", [])
+    if not (isinstance(fb, list) and all(_nonempty(x) for x in fb)):
+        errs.append(f"ca {cid}: forbid_in_payload phải list chuỗi")
+    if c.get("op") == "listing":
+        li = c.get("listing")
+        if not (isinstance(li, dict) and _int_pos(li.get("price_vnd"))
+                and (li.get("sale_price") is None
+                     or _int_pos(li["sale_price"]))):
+            errs.append(f"ca {cid}: listing cần price_vnd (+ sale_price?)")
+    elif c.get("op") == "promo":
+        if not isinstance(c.get("promotable"), bool):
+            errs.append(f"ca {cid}: promo cần promotable true|false")
+        ps = c.get("promos")
+        if not (isinstance(ps, list) and ps and all(
+                isinstance(p, dict) and _nonempty(p.get("program_id"))
+                and p.get("loai_km") in kd_price.PROMO_KINDS
+                and (("giam_pct" in p) != ("gia_km_vnd" in p))
+                for p in ps)):
+            errs.append(f"ca {cid}: promos phải list {{program_id, loai_km,"
+                        " start, end, giam_pct | gia_km_vnd}}")
+        else:
+            for p in ps:
+                try:
+                    if kd_price.coerce_day(p.get("end")) < \
+                            kd_price.coerce_day(p.get("start")):
+                        errs.append(f"ca {cid}: promo end < start")
+                except ValueError:
+                    errs.append(f"ca {cid}: promo start/end phải ISO")
+    return errs
+
+
 def _validate_cskh_case(c: dict, cid, exp) -> list[str]:
     """v5.1: channel ∈ CHANNELS; expect ⊂ CSKH_EXPECT_KEYS (regex biên
     dịch được); fake_llm chuỗi (bắt buộc trừ ca max_llm_calls 0);
@@ -475,6 +560,8 @@ def _validate_case(c, i: int, d: dict) -> list[str]:
         errs += _validate_sales_case(c, cid, exp)
     elif sc == "cskh":
         errs += _validate_cskh_case(c, cid, exp)
+    elif sc == "kd_a5":
+        errs += _validate_kd_a5_case(c, cid, exp)
     elif sc == "eval_qa" and (not _is_int(cid) or exp is not None):
         errs.append(f"ca {cid}: eval_qa cần id số (questions.md) + expect"
                     " null")
@@ -993,6 +1080,8 @@ def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
         return _score_mkt_seo(case, out)
     if sc == "cskh":
         return channels.score_cskh(case, out)
+    if sc == "kd_a5":
+        return _score_kd_a5(case, out)
     if sc == "eval_qa":
         import eval_qa  # scripts/ — tái dùng luật chấm Q1-12
         return eval_qa.check_question(int(case["id"]), out)
@@ -1159,6 +1248,90 @@ def run_sales_director(cases, judge_model=None):
                 show_answer=False)
 
 
+def _kd_a5_out(c: dict, ctx: dict) -> dict:
+    """1 ca A5: input inline → hàm THUẦN kd_price (0 DB/LLM/mạng). Giá đối
+    thủ của ca (nếu có) KHÔNG được truyền vào hàm luật nào — bẫy
+    trap_no_race kiểm điều đó qua payload."""
+    from datetime import date
+
+    kp, cfg = ctx["kp"], ctx["cfg"]
+    sku, ch = c.get("sku", "sku-mau"), c.get("channel", "shopee")
+    today = kp.coerce_day(c["today"])
+    g = c["golden"]
+    gp = {(sku, ch): {k: {"price": g[k], "id": i,
+                          "approved": g.get(f"{k}_approved", True)}
+                      for i, k in enumerate(("list", "floor"), 1) if k in g}}
+    readiness = {(sku, ch): c["readiness"]}
+    cogs = ([] if c.get("cogs") is None else
+            [{"id": 1, "sku_key": sku, "cost_vnd": c["cogs"],
+              "valid_from": date(2000, 1, 1), "approved_by": "MẪU"}])
+    if c["op"] == "listing":
+        li = c["listing"]
+        fs = kp.check_listing_prices(
+            [{"channel": ch, "item_id": c.get("item_id", "9000000001"),
+              "seller_sku": None, "sku_key": sku,
+              "price_vnd": li["price_vnd"],
+              "sale_price": li.get("sale_price")}],
+            gp, cogs, ctx["net"], ctx["watch"], today, readiness)
+    else:
+        rows = [{"row_no": i + 2, "program_id": p["program_id"],
+                 "channel": ch, "sku_key": sku, "kind": p["loai_km"],
+                 "start": kp.coerce_day(p["start"]),
+                 "end": kp.coerce_day(p["end"]),
+                 "pct": p.get("giam_pct"), "price": p.get("gia_km_vnd"),
+                 "event": None, "event_date": None}
+                for i, p in enumerate(c["promos"])]
+        prom = {(sku, ch)} if c.get("promotable") else set()
+        fs = kp.check_promos(rows, gp, readiness, prom, cogs, ctx["net"],
+                             ctx["watch"], today)
+    return {"findings": fs, "items": kp.to_items(fs, cfg)}
+
+
+def _score_kd_a5(case: dict, out: dict) -> tuple[bool, str]:
+    """v5.3: tập loại phát hiện (S1/S2) == expect.kinds; loại việc đẩy;
+    nhãn info; mọi payload guardrail ok; chuỗi cấm ∉ title/payload."""
+    exp = case["expect"]
+    kinds = sorted({f["kind"] for f in out["findings"]
+                    if f["severity"] != "INFO"})
+    bad = []
+    if kinds != sorted(set(exp["kinds"])):
+        bad.append(f"kỳ vọng {sorted(set(exp['kinds']))}, có {kinds}")
+    if "object_types" in exp:
+        ots = sorted({i["object_type"] for i in out["items"]})
+        if ots != sorted(set(exp["object_types"])):
+            bad.append(f"loại việc kỳ vọng {sorted(exp['object_types'])},"
+                       f" có {ots}")
+    if "info" in exp:
+        info = sorted({f["kind"] for f in out["findings"]
+                       if f["severity"] == "INFO"})
+        if info != sorted(set(exp["info"])):
+            bad.append(f"info kỳ vọng {exp['info']}, có {info}")
+    for it in out["items"]:
+        if guardrail.check(it["payload"])["ok"] is not True:
+            bad.append(f"payload {it['object_type']} không qua guardrail")
+        for s in exp.get("forbid_in_payload", []):
+            if s in it["payload"] or s in it["title"]:
+                bad.append("payload chứa chuỗi cấm (giá đối thủ)")
+    return not bad, "; ".join(bad)
+
+
+def run_kd_a5(cases, judge_model=None):
+    """v5.3 (bộ MẪU chờ GĐ bán hàng sửa): luật giá/KM THUẦN trên cấu hình
+    THẬT data/price_watch.json + fpa_config + sales.json — 0 DB/LLM/mạng."""
+    from agents import kd_price as kp  # lazy
+    from pipelines import director
+
+    watch, why = kp.load_watch()
+    net, why2 = (kp.load_net_ratio(watch["channels"]) if watch
+                 else (None, why))
+    if watch is None or net is None:
+        raise RuntimeError(f"cấu hình kd_a5 lỗi: {why or why2}")
+    ctx = {"kp": kp, "watch": watch, "net": net,
+           "cfg": director.load_config("sales")}
+    return _run(cases, lambda c: _kd_a5_out(c, ctx), judge_model,
+                show_answer=False)
+
+
 def _fake_completion(content):
     from types import SimpleNamespace
     return SimpleNamespace(choices=[SimpleNamespace(
@@ -1215,7 +1388,7 @@ def run_mkt_seo(cases, judge_model=None):
 RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot,
            "co_khi": run_co_khi, "mkt02": run_mkt02, "mkt03": run_mkt03,
            "sales_director": run_sales_director, "cskh": run_cskh,
-           "mkt_seo": run_mkt_seo}
+           "mkt_seo": run_mkt_seo, "kd_a5": run_kd_a5}
 
 
 def score(results: list[tuple[dict, bool, str]], threshold: dict) -> dict:

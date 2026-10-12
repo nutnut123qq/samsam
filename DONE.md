@@ -328,6 +328,389 @@ marketing (`approvers: []`). Someday (NIT): tách "tự rút" khỏi tỷ lệ t
 aborted làm thông điệp mục 5 lệch; test thiếu nhánh submit refused + CLI DB lỗi;
 `_dict_nums` lỏng; escape `|` ô bảng; `is_own` không kiểm port.
 
+## Checklist v5.3-listing-gia-km
+
+Khán giả/mục đích: M31 (worktree `D:\code\samsam-w40`) — làm phần KD-A4
+"catalog & listing đa sàn" + KD-A5 "giám sát giá & khuyến mãi" của WP07
+(pmo.md dòng `| WP07`: tiêu chí "A5 báo lệch đúng trên fixture"; key
+`sales` trong ctx/final_plans.json: agent A4/A5 — "agent chỉ đọc, GĐ duyệt
+mọi thay đổi giá và voucher", "credential A5 UPDATE price_list → permission
+denied", "SKU rượu / TPBVSK chưa XNQC → 0 đề xuất KM"). Mùa 11.11 là lõi:
+GĐ bán hàng cần biết TRƯỚC ngày chạy KM nào phá giá sàn/biên, listing nào
+trên sàn đã trôi khỏi bản Pháp chế/GĐ duyệt. Nền ai-infra đã gộp (TÁI DÙNG,
+không viết lại): `ingest/market_csv.py` v3.3 (`market_snapshots`/
+`market_rows`/`market_alerts`, `load_mapping`, `map_sku`, `inactive_status`
+— đã có `alcohol_listed` S1 + `price_mismatch` S2 "lệch bất kỳ"),
+`ingest/golden_store.py` v3.2 (`sku_master`, `price_list` kind
+`list|promo|floor` + `program_id`, `TODAY_VN`, R1–R3), view `sku_readiness`
+/ `v_promotable`, `pipelines/content.py` v6.1 (nháp listing
+`content_drafts.content_type='listing'`, dòng đầu = tiêu đề, dòng
+`Giá: <n> đ`), `competitor_observations` v7.2 (`ingest/intel_import.py`),
+`agents/sales_director.py` v5.0 (`route`, `director.submit`, `gather`/
+`render_bulletin`, `RED_PER_ITEM`), `agents/fp_pnl.py` v9.1 (`cogs_at`,
+`fetch_versions`, `read_config`), `data/fpa_config.json`
+(`cash.net_ratio_default`), `pipelines/mkt_calendar.py` v6.0
+(`load_calendar`, `event_date` — Tết qua `scenario.tet_date`),
+`pipelines/approval_queue.py`, `pipelines/job_runs.job_run`,
+`agents/report.write_report`, `scripts/agent_eval.py` v4.5.
+
+Sau version: (1) `python -m agents.kd_listing` (A4) so listing ĐANG CHẠY
+(snapshot listing mới nhất mỗi kênh) với nháp listing ĐÃ DUYỆT + golden →
+danh sách lệch → mục `listing_sync` (lệch nội dung) / `market_alert_s1`
+(SKU không đủ readiness / rượu đang bán) vào hàng duyệt khối `sales`; (2)
+`python -m agents.kd_price` (A5) kiểm giá bán thực trên sàn + kế hoạch KM
+dự kiến (CSV nhập tay, gắn sự kiện lịch mùa 11.11/12.12/Tết) theo floor,
+giá list đã duyệt, biên ước tính từ giá vốn đã duyệt (FP&A) và trần KM
+cấu hình → phát hiện S1/S2 + NHÁP đề xuất (`price_change`/`promo_change`/
+`market_alert_s1`, risk high) — agent KHÔNG BAO GIỜ đổi giá/KM/listing,
+KHÔNG ghi golden/`price_list`/sàn; giá đối thủ chỉ là THÔNG TIN trong báo
+cáo; (3) bản tin GĐ KD (v5.0) có mục "Catalog & giá (A4/A5)" tất định;
+(4) suite eval mẫu `kd_a5` (runner tất định) cho luật giá/KM.
+
+Quy ước: ponytail — stdlib + `psycopg` (đã có), KHÔNG dep mới, KHÔNG LLM
+(2 agent luật tất định → không import `pipelines.llm_gateway`/
+`pipelines.content`/`httpx`/`requests`/`urllib.request`/`http.client`/
+`socket`/`smtplib`). 2 module mới, mỗi agent 1 file: `agents/kd_listing.py`
+(A4), `agents/kd_price.py` (A5; được import hàm đọc listing đang chạy từ
+`kd_listing`). **KHÔNG thêm bảng** (findings tính lại tất định mỗi lần chạy;
+trạng thái xử lý = `approval_queue`; kế hoạch KM = file CSV nhập tay) →
+`docs/schema.sql`/`docs/roles.sql` KHÔNG đổi, câu "66 bảng public" trong
+`docs/handover/kien-truc.md` giữ nguyên (gộp song song thì đếm lại theo
+parse). Ghi DB DUY NHẤT qua `director.submit` (→ `approval_queue.enqueue`,
+guardrail do module hàng duyệt tự chạy); object_id theo ĐỢT, idempotent
+như `sales_director._collect` (đã có `(object_type, object_id)` ở BẤT KỲ
+status → không đẩy lại): `a4:<loại>:<kênh>:<item_id|sku>:<sha256(bằng
+chứng)[:12]>`, `a5:...` tương tự — bằng chứng đổi (giá khác) = đợt mới.
+Không nhân đôi việc v3.3: phát hiện trùng `market_alerts` OPEN cùng
+(kênh, item_id, seller_sku) và loại tương ứng (`alcohol_listed` ↔ A4
+rượu đang bán; `price_mismatch` ↔ A5 lệch niêm yết) → vẫn có trong báo
+cáo kèm "(đã có cảnh báo sàn #id)" nhưng KHÔNG enqueue. `payload`/`title`
+dựng từ TEMPLATE: nhãn loại + kênh + item_id sàn + số liệu golden/sàn;
+SKU nhóm cấm bán online KHÔNG in `sku_key`/tiêu đề listing (chứa từ khóa
+rượu → guardrail chặn approve vĩnh viễn — precedent `ALERT_LABELS` v5.0);
+mọi payload phải `guardrail.check(payload)["ok"] is True`. Số trong đề
+xuất CHỈ lấy từ golden (floor/list đã nạp) hoặc file sàn — agent không tự
+tính "giá nên đặt", không bao giờ dùng giá đối thủ. Connect qua
+`ingest.lead_store.connect` (connect_timeout; guard `tests/test_connect_
+timeout_guard.py`); print tiếng Việt → UTF-8 guard; CLI nhiều op →
+`n_ops > 1` usage exit 2 TRƯỚC connect; cấu hình/CSV hỏng → exit 1 TRƯỚC
+connect, không bao giờ "0 phát hiện" câm; CSV lỗi in số dòng + tên cột +
+lý do, KHÔNG in giá trị ô; ngày "hôm nay" = giờ VN (`pipelines.period.
+VN_TZ`), `--as-of YYYY-MM-DD` coerce str→date TRƯỚC format-spec; hàm thuần
+nhận `today: date`/`now` aware, chỉ CLI đọc đồng hồ; `--run` bọc
+`job_run("agents.kd_listing")`/`job_run("agents.kd_price")`; báo cáo →
+`data/reports/` (đã gitignore) qua `agents.report.write_report`. Test DB
+thật: fixture schema tạm + `docs/schema.sql` + `docs/roles.sql` rồi
+ROLLBACK (precedent `tests/test_director_framework.py::db`,
+`tests/test_sales_director.py`), code gọi `conn.commit()` → bọc `TxConn`
+(precedent `tests/test_auth_approval.py`); test DB **0 skipped**; không
+assert wall-clock. KHÔNG ghi `approval_queue`/`market_*`/golden trên DB
+thật ngoài test rollback (CLI trên DB thật chỉ `--dry-run`/case âm).
+
+External-dep (KHÔNG giả lập như thật, KHÔNG tự đánh dấu): file listing/
+ads/KM THẬT xuất từ Seller Center (header `sale_price` GIẢ ĐỊNH); floor giá
++ trần KM + ngưỡng lệch niêm yết THẬT do GĐ bán hàng chốt
+(`data/price_watch.json` ship `confirmed_by: null`); giá vốn ĐÃ DUYỆT thật
+(`cogs_versions` trống → biên "chưa có giá vốn duyệt", KHÔNG suy 0); tỷ lệ
+thực nhận sàn (`fpa_config.cash.net_ratio_default` GIẢ ĐỊNH v9.1); kế
+hoạch KM thật 11.11/12.12/Tết do MXH/GĐ KD nhập (version này chỉ CSV MẪU
+`tests/fixtures/kd_price/`); cột thuộc tính listing (file sàn hiện chỉ có
+tiêu đề/giá/tồn/trạng thái — so thuộc tính chờ header thật); GĐ bán hàng ký
+nghiệm thu A4/A5 + gán nhãn suite (`frozen=false`, `labeled_by=null`).
+
+- [x] **W53.1 Cấu hình giám sát giá + loại việc khối sales** (evidence/v53_config.log: config 41 pass; director --all --dry-run exit 0; B worst 66h ≤ 96) —
+  `data/price_watch.json` mới: `_doc` (GIẢ ĐỊNH — chờ GĐ bán hàng chốt),
+  `status`, `confirmed_by: null`, `channels` ⊂ `market_csv.CHANNELS`,
+  `list_deviation_pct` (số nguyên 1..50 — lệch |giá sàn − list golden| / list
+  vượt ngưỡng → S2), `max_discount_pct {kênh: 1..49}` (trần giảm/1 KM VÀ
+  tổng KM chồng; ≤ 49 khớp R2 golden), `max_stacked_promos` (số KM chồng
+  tối đa cùng SKU×kênh×ngày, mặc định 1), `promo_kinds` (`voucher|
+  flash_sale|giam_gia`), `lookahead_days` (1..120). `kd_price.load_watch()`
+  validate: thiếu/rỗng/JSON hỏng/`{}`/chỉ `_doc`/sai kiểu/ngoài khoảng/
+  bool-as-int → `(None, lý do)` → CLI exit 1 trước connect.
+  `data/directors/sales.json` thêm 2 loại việc (handoff B, risk high,
+  `sla_hours` 96, `label` tiếng Việt): `listing_sync` ("Lệch listing sàn
+  so với bản duyệt") và `promo_change` ("Khuyến mãi dự kiến cần xem lại");
+  `price_change` (đã có) dùng cho nháp đổi giá A5; S1 của A4/A5 dùng lại
+  `market_alert_s1` (A, high, cảnh báo đỏ từng mục — `RED_PER_ITEM`).
+  `_doc` sales.json bổ sung 1 câu về 2 loại mới.
+  - Boundary: `data/price_watch.json` (mới), `data/directors/sales.json`,
+    `tests/test_kd_price.py` (phần config), `tests/test_sales_director.py`
+    (vòng lặp loại việc thêm 2 tên — tập loại A GIỮ NGUYÊN
+    `{cskh_handoff, cskh_reply, market_alert_s1}`)
+  - Gate: `python -m pytest tests/test_kd_price.py -k config
+    tests/test_sales_director.py -q` xanh; parametrize ≥ 8 biến thể config
+    hỏng (missing, rỗng, `{}`, chỉ `_doc`, `max_discount_pct` 50, `true`
+    thay số, kênh lạ, `list_deviation_pct` 0) đều trả lý do; `python -m
+    pipelines.director --all --dry-run` exit 0 (load_sales_config chấp
+    nhận 2 loại mới, `worst_clock_hours` B ≤ 96)
+  - Evidence: `evidence/v53_config.log`
+- [x] **W53.2 market_csv nhận field tùy chọn `sale_price`** (evidence/v53_market_csv.log: 43 pass, test cũ 0 dòng xóa) — thêm
+  `sale_price` vào `FIELDS` + `NUM_MAX` (10**15) của `ingest/market_csv.py`;
+  `data/market_csv_map.json` thêm header optional GIẢ ĐỊNH cho listing
+  (shopee `"Giá khuyến mãi"`, tiktok `"Sale Price"`) + câu `_doc` "chưa xác
+  minh". Giá trị nằm trong `market_rows.raw` (jsonb) — KHÔNG đổi schema
+  bảng, KHÔNG đổi `find_alerts`/`reconcile` (cảnh báo v3.3 giữ nguyên ngữ
+  nghĩa theo `price`).
+  - Boundary: `ingest/market_csv.py` (2 hằng + docstring field chuẩn),
+    `data/market_csv_map.json`, `tests/test_market_csv.py` (+ test mới),
+    `tests/fixtures/market/` (file mẫu mới có cột KM)
+  - Gate: `python -m pytest tests/test_market_csv.py -q` xanh, 0 test cũ bị
+    sửa assert (diff chỉ thêm test); file cũ KHÔNG có cột KM parse ra
+    `sale_price: None` và cùng số dòng/cảnh báo như trước; `"1.290.000"` →
+    1290000; `"12,5"` → lỗi dòng không in giá trị ô; file có cột KM nạp →
+    `raw->>'sale_price'` đúng (test DB rollback)
+  - Evidence: `evidence/v53_market_csv.log`
+- [x] **W53.3 A4 `agents/kd_listing.py` — đồng bộ catalog/listing** (evidence/v53_kd_listing.log: 20 pass 0 skipped; DB thật dry-run đếm bảng trước=sau; host chết exit 2 sau 5s) —
+  `running_listings(conn)`: dòng `market_rows` của snapshot `listing` MỚI
+  NHẤT mỗi kênh, status KHÔNG thuộc `inactive_status` của mapping (status
+  lạ/None = đang bán, fail-closed như v3.3); kênh chưa có snapshot → `[warn]
+  chưa có file listing <kênh>` và KHÔNG sinh "thiếu listing" (vắng file ≠
+  thiếu listing). `approved_drafts(conn)`: `content_drafts` `content_type=
+  'listing'`, `status='approved'`, bản mới nhất mỗi (sku, kênh) theo
+  `reviewed_at, id`; tiêu đề = dòng đầu, giá = dòng `Giá:` parse VND
+  (`Liên hệ` → None). Hàm THUẦN `diff_catalog(listings, drafts, golden,
+  readiness, prices) → [finding]`, loại:
+  `title_drift` (tiêu đề sàn ≠ tiêu đề bản duyệt sau NFC + gộp khoảng trắng
+  + casefold) · `price_drift` (giá niêm yết sàn ≠ giá bản duyệt) ·
+  `draft_stale` (giá bản duyệt ≠ giá list golden đang mở cùng kênh — bản
+  duyệt cũ, cần sinh lại qua `pipelines.content --listing`) ·
+  `no_approved_draft` (listing đang chạy map SKU nhưng chưa có bản duyệt) ·
+  `missing_listing` (SKU readiness ∈ `MO_TA|TP_THUONG|QC_DAY_DU` trên kênh
+  có snapshot mà không có dòng đang bán) → `listing_sync` (risk high) ·
+  `unready_listed` S1 (listing đang bán map SKU readiness `CAM` — gồm rượu,
+  TPBVSK/thực phẩm ngoài `allowed_channels`) → `market_alert_s1`. Dòng
+  không map SKU → chỉ đếm (đã là `item_unmapped` v3.3). Payload
+  `listing_sync` nêu việc cần làm bằng tay ("MXH sửa trên Seller Center
+  SAU KHI GĐ bán hàng duyệt" / "sinh lại nháp listing"), KHÔNG chép mô tả.
+  CLI: `--run [--dry-run]` (dry-run: in phát hiện + kế hoạch đẩy, 0 ghi),
+  `--report [--out-dir D]` (file `catalog-sync-<YYYY-MM-DD>.md`).
+  - Boundary: `agents/kd_listing.py` (mới), `tests/test_kd_listing.py`
+    (mới), `tests/fixtures/kd_listing/` (mới nếu cần)
+  - Gate: `python -m pytest tests/test_kd_listing.py -q` xanh 0 skipped;
+    fixture đủ 6 loại + case âm (tiêu đề chỉ khác hoa/thường/khoảng trắng
+    → không lệch; listing status inactive → không tính đang bán; kênh không
+    có snapshot → 0 `missing_listing`); rượu đang listing online → S1
+    `market_alert_s1` (fixture golden có SKU `alcohol`) và payload KHÔNG
+    chứa `sku_key`/tiêu đề rượu, `guardrail.check(payload)["ok"] is True`;
+    rượu đã có `market_alerts` open `alcohol_listed` cùng item → có trong
+    báo cáo, 0 enqueue; chạy `--run` 2 lần trên cùng dữ liệu → lần 2 0 mục
+    mới (idempotent mọi status); mục đẩy: `block='sales'`, `status=
+    'pending'`, `risk='high'`; `python -m agents.kd_listing --run --dry-run`
+    trên DB thật exit 0 và đếm `approval_queue` trước/sau bằng nhau; 2 op
+    cùng lúc → exit 2 trước connect; DSN host chết (`postgresql://u@10.255.
+    255.1:5432/x`) → exit 2 trong ≤ connect_timeout, không treo
+  - Evidence: `evidence/v53_kd_listing.log`
+- [x] **W53.4 A5 `agents/kd_price.py` — giá đang chạy trên sàn** (evidence/v53_kd_price.log: 57 pass 0 skipped) — hàm
+  THUẦN `check_listing_prices(listings, golden_prices, cogs, net_ratio,
+  watch, today) → [finding]` trên `kd_listing.running_listings`: giá bán
+  thực = `raw.sale_price` nếu có, không thì `price_vnd`. Luật:
+  `below_floor` **S1** (giá thực < floor mở của SKU×kênh; floor chưa duyệt
+  vẫn xét, detail `floor_approved: false`) · `negative_margin` **S1**
+  (giá thực × `net_ratio_default[kênh]` − `cogs_at(versions, sku, today)`
+  < 0; giá vốn chưa duyệt → None, ghi "chưa có giá vốn duyệt", KHÔNG suy 0,
+  KHÔNG cảnh báo) · `list_deviation` **S2** (|`price_vnd` − list golden| ×
+  100 > list × `list_deviation_pct` — số nguyên, không float) ·
+  `listing_promo_over_cap` **S2** (giảm từ list xuống giá thực > trần
+  `max_discount_pct[kênh]`). Rượu / SKU readiness `CAM` không xét giá (là
+  việc A4 S1). Đẩy: S1 → `market_alert_s1`, S2 → `price_change`; payload =
+  phát hiện + NHÁP đề xuất "đưa về ≥ giá sàn <floor golden>" / "đưa về giá
+  niêm yết <list golden>" kèm "agent KHÔNG tự đổi giá — GĐ bán hàng duyệt,
+  MXH sửa tay". Giá đối thủ (`competitor_observations` dòng mới nhất mỗi
+  (sku_key, kênh)) CHỈ vào mục "Tham khảo đối thủ" của báo cáo — không là
+  input của luật nào.
+  - Boundary: `agents/kd_price.py` (mới), `tests/test_kd_price.py` (mới),
+    `tests/fixtures/kd_price/` (mới)
+  - Gate: `python -m pytest tests/test_kd_price.py -q` xanh 0 skipped;
+    fixture: giá dưới floor → S1; biên âm (giá vốn đã duyệt > giá × net
+    ratio) → S1; giá vốn chỉ có bản CHƯA duyệt → 0 cảnh báo biên + nhãn
+    "chưa có giá vốn duyệt"; lệch niêm yết đúng ngưỡng → KHÔNG, ngưỡng+1đ
+    → S2; `sale_price` sâu hơn trần KM → S2; giá đối thủ thấp hơn 50% →
+    0 finding mới, 0 mục mới, và không payload nào chứa giá đối thủ (assert
+    chuỗi số đối thủ ∉ payload); `price_mismatch` open cùng item → lệch
+    niêm yết có trong báo cáo, 0 enqueue; mọi mục đẩy `status='pending'`,
+    `risk='high'`, `decided_by is null` (không auto)
+  - Evidence: `evidence/v53_kd_price.log`
+- [x] **W53.5 A5 — kế hoạch KM dự kiến + lịch mùa** (evidence/v53_kd_price.log; bổ sung: `--as-of` chỉ đi với `--report` hoặc `--run --dry-run` — không ghi hàng duyệt theo ngày giả, precedent `--now` v5.0; KM đang chạy → hạn 'ngay (đang chạy)') — `read_plan(path) →
+  (rows, errs)` THUẦN, đọc TOÀN file TRƯỚC connect: CSV `utf-8-sig`, cột
+  bắt buộc `program_id, kenh, sku_key, loai_km, ngay_bat_dau, ngay_ket_thuc`
+  + đúng 1 trong `giam_pct` (1..99) / `gia_km_vnd` (> 0) + tùy chọn
+  `su_kien` (∈ id sự kiện `data/marketing_calendar.json` qua
+  `mkt_calendar.load_calendar`, ngày sự kiện qua `event_date` — Tết từ
+  `scenario.tet_date`); cột lạ/header trùng/rỗng/chỉ header/ngày sai/kết
+  thúc < bắt đầu/vượt MAX_ROWS → lỗi (số dòng + tên cột, KHÔNG giá trị ô),
+  exit 1, 0 ghi. Hàm THUẦN `check_promos(rows, golden, readiness,
+  promotable, cogs, net_ratio, watch, today)` chỉ xét dòng `ngay_ket_thuc
+  ≥ today` và `ngay_bat_dau ≤ today + lookahead_days`, nhãn "dự kiến T-n"
+  / "đang chạy": `promo_banned` **S1** (SKU rượu, hoặc SKU×kênh không thuộc
+  `v_promotable` — TPBVSK chưa XNQC, thực phẩm chưa tự công bố, giá list
+  chưa duyệt; KM cho SKU không quảng bá được = sai luật quảng cáo) ·
+  `promo_below_floor` **S1** (giá sau KM — gộp mọi KM chồng cùng ngày,
+  áp lần lượt trên list golden — < floor) · `promo_negative_margin` **S1**
+  · `promo_stacked` **S2** (> `max_stacked_promos` KM cùng SKU×kênh có
+  khoảng ngày giao nhau) · `promo_over_cap` **S2** (giảm 1 KM hoặc tổng
+  chồng > trần) · `promo_unverifiable` **S2** (không có list/floor golden
+  để kiểm). Đẩy: S1 → `market_alert_s1`, S2 → `promo_change`; payload NHÁP
+  "đề nghị GĐ bán hàng xem lại/hủy KM <program_id> trước <ngày>" — KHÔNG
+  tự sửa kế hoạch, KHÔNG đề xuất KM mới, KHÔNG gợi ý mức giảm theo đối thủ.
+  CLI `python -m agents.kd_price --run|--report [--dry-run] [--plan CSV]
+  [--as-of YYYY-MM-DD]` (thiếu `--plan` → chỉ kiểm giá đang chạy + dòng
+  "[info] chưa có kế hoạch KM"); báo cáo `price-watch-<YYYY-MM-DD>.md`:
+  S1 trước S2, mục "Sự kiện mùa trong N ngày tới" (11.11/12.12/Tết: ngày,
+  số dòng KM gắn, số phát hiện), mục "Tham khảo đối thủ (KHÔNG dùng để đề
+  xuất giá)".
+  - Boundary: `agents/kd_price.py`, `tests/test_kd_price.py`,
+    `tests/fixtures/kd_price/promo_plan_MAU.csv` + các CSV lỗi (MẪU, ghi rõ
+    "MẪU dev — không phải kế hoạch thật" trong dòng đầu README/tên file)
+  - Gate: `python -m pytest tests/test_kd_price.py -q` xanh; fixture: 2 KM
+    chồng cùng ngày (`max_stacked_promos=1`) → S2 `promo_stacked`; KM chồng
+    làm giá xuống dưới floor → thêm S1 `promo_below_floor`; giảm 1 KM vượt
+    trần → S2; KM cho SKU rượu / TPBVSK `xnqc_status=none` → S1
+    `promo_banned`, 0 mục `promo_change`/`price_change` cho 2 SKU này; KM
+    đã kết thúc trước `--as-of` → bỏ qua; `su_kien: tet_2027` → ngày Tết
+    đúng `scenario.tet_date(2027)`; `--as-of 2026-10-12` vs `2026-11-12`
+    đổi nhãn T-n tất định (CLI truyền str); ≥ 8 CSV lỗi parametrize → exit
+    1, 0 connect (monkeypatch `connect` đếm lời gọi = 0), output không
+    chứa giá trị ô
+  - Evidence: `evidence/v53_kd_price.log`
+- [x] **W53.6 Không đường ghi giá/sàn + không tự duyệt** (evidence/v53_guard.log: 2 grep rỗng, egress False, agent_writer UPDATE/INSERT price_list + UPDATE sku_master → InsufficientPrivilege ở BẢNG, diff schema/roles/golden/crawler rỗng) — 2 module chỉ
+  SELECT + `director.submit`; không gọi `aq.decide`/`auto_approve`/
+  `override`/`approve_price`/`approve_cogs`; quyền DB: role `agent_writer`
+  (docs/roles.sql hiện hành) `UPDATE price_list` / `INSERT price_list` /
+  `UPDATE sku_master` → `InsufficientPrivilege` (test `set role
+  agent_writer` trong tx rollback — khớp acceptance A5 (2) final_plans).
+  - Boundary: `tests/test_kd_price.py`, `tests/test_kd_listing.py`,
+    `tests/test_data_flow_map.py` (thêm 2 module vào `NEW_SCRIPTS` —
+    module KHÔNG gửi ra ngoài)
+  - Gate: `grep -niE "insert into|update |delete from|truncate|alter
+    table|decide\(|auto_approve|override\(|approve_price|approve_cogs"
+    agents/kd_listing.py agents/kd_price.py` → rỗng; `grep -nE "import
+    (httpx|requests|socket|smtplib)|from (httpx|requests|smtplib|urllib\.
+    request|http\.client)|llm_gateway|pipelines\.content|pipelines import
+    content" agents/kd_listing.py agents/kd_price.py` → rỗng; `python -m
+    pytest tests/test_data_flow_map.py -q` xanh (`dpia_draft.egress_modules`
+    không chứa 2 module); test role `agent_writer` UPDATE price_list →
+    permission denied xanh 0 skipped; `git diff --stat docs/schema.sql
+    docs/roles.sql ingest/golden_store.py` rỗng
+  - Evidence: `evidence/v53_guard.log`
+- [x] **W53.7 Bản tin GĐ KD có mục Catalog & giá (A4/A5)** (evidence/v53_bulletin.log: 68 pass. Lưu ý: role agent_writer KHÔNG có SELECT job_runs và roles.sql giữ nguyên theo contract → đọc job_runs trong savepoint, thiếu quyền thì mục 6 in 'không đọc được (role thiếu quyền job_runs)', không crash; chạy bằng DSN chủ DB thì đọc được) —
+  `sales_director.gather` thêm (CHỈ SELECT) `catalog`: số mục `pending`
+  khối sales có `object_id` tiền tố `a4:`/`a5:` theo loại việc, và lần
+  chạy gần nhất (giờ VN + ok/lỗi) của job `agents.kd_listing`/
+  `agents.kd_price` từ `job_runs` ("chưa chạy" nếu không có);
+  `render_bulletin` thêm mục "## 6. Catalog & giá (A4/A5)" — tất định,
+  chỉ số đếm + `#id` + nhãn cấu hình, KHÔNG sku_key/tiêu đề/payload/giá đối
+  thủ; `data` thiếu khóa `catalog` (caller cũ) → mục in "(chưa có số liệu)"
+  không crash. Mục 5 "Giá chờ duyệt" đếm thêm `promo_change`.
+  - Boundary: `agents/sales_director.py` (`gather`, `render_bulletin`),
+    `tests/test_sales_director.py` (+ test mới; test cũ chỉ được thêm
+    assert, đối chiếu số assert trước/sau)
+  - Gate: `python -m pytest tests/test_sales_director.py -q` xanh 0
+    skipped; render 2 lần cùng input → chuỗi bằng nhau; test DB: đẩy 1 mục
+    A4 + 1 mục A5 rồi `gather` → mục 6 đếm đúng; bản tin không chứa
+    `ruou`/`rượu`/sku_key fixture; `python -m agents.sales_director --run
+    --dry-run --bulletin` trên DB thật exit 0; `python scripts/agent_eval.py
+    --agent sales_director --no-record` vẫn PASS
+  - Evidence: `evidence/v53_bulletin.log`
+- [x] **W53.8 Suite eval mẫu `kd_a5` (luật giá/KM)** (evidence/v53_eval.log: 21 ca, hash khớp, validate 18/18, PASS 21/21, probe tmp FAIL exit 1, deterministic exit 0, không vào required_agents) —
+  `data/eval/suites/kd_a5.json` format v4.5: `owner_block: sales`,
+  `qa_block: data_platform`, `risk: high`, `status: active`, `runner:
+  kd_a5`, `agent_model: rules`, `judge: null`, `frozen: false`,
+  `labeled_by: null`, `threshold {min_pass_rate: 1.0, must_pass_kinds:
+  [trap_floor, trap_banned, trap_no_race]}`, ≥ 16 ca MẪU (`source: MẪU`,
+  `label: dev_draft`) gồm mọi loại W53.4/W53.5 + bẫy: dưới floor đúng 1đ,
+  KM rượu, giá đối thủ thấp → kỳ vọng 0 đề xuất; ca không có `text`
+  (thêm `kd_a5` vào `NO_TEXT_SCORERS`). `scripts/agent_eval.py`: scorer +
+  runner `kd_a5` gọi hàm THUẦN `kd_price.check_listing_prices`/
+  `check_promos` trên input inline của ca (0 DB/LLM/mạng/key) — đăng ký ở
+  `SCORERS`, `RUNNER_SCORERS`, `RUNNERS`, `DETERMINISTIC_RUNNERS`, nhánh
+  `validate_suite`; docstring thêm 1 dòng. KHÔNG vào `required_agents`
+  (bộ dev chưa duyệt không chặn deploy).
+  - Boundary: `data/eval/suites/kd_a5.json` (mới), `scripts/agent_eval.py`,
+    `tests/test_agent_eval.py` (tập `DETERMINISTIC_RUNNERS`),
+    `tests/test_qa_harness.py` (17 → 18 suite), `tests/test_ci_workflow.py`
+    + `.github/workflows/ci.yml` (comment danh sách suite tất định) nếu
+    drift-guard đòi
+  - Gate: `python scripts/agent_eval.py --print-hash kd_a5` khớp
+    `cases_sha256`; `python scripts/agent_eval.py --validate` exit 0
+    "[done] 18/18"; `python scripts/agent_eval.py --agent kd_a5 --no-record`
+    PASS 100%; probe: sửa 1 ca `trap_floor` kỳ vọng sai trong bản tạm
+    (tmp dir) → FAIL exit 1 (suite thật không đổi); `python scripts/
+    agent_eval.py --deterministic --no-record` exit 0
+  - Evidence: `evidence/v53_eval.log`
+- [x] **W53.9 Docs vận hành + kiến trúc** (evidence/v53_docs.log: 11 pass, --help exit 0; tên mục 5n cần kiểm trùng khi gộp song song) — `docs/handover/sop.md` mục mới
+  "5n. Catalog/listing đa sàn + giám sát giá & KM (v5.3 — agent KHÔNG đổi
+  giá/listing)": lệnh `python -m agents.kd_listing --run --dry-run`,
+  `--report`, `python -m agents.kd_price --report --plan <CSV> --as-of
+  <ngày>`, `--run`; định dạng CSV kế hoạch KM; ai duyệt (GĐ bán hàng qua
+  `python -m pipelines.approval_queue --approve/--reject`), MXH sửa tay
+  trên Seller Center; external-dep. `docs/handover/kien-truc.md`: 2 module
+  + 2 loại việc mới + "không thêm bảng" (giữ "66 bảng"); `AGENTS.md` bảng
+  Commands thêm 2 dòng. `tests/test_handover_docs.py` `SOP_COMMANDS` thêm
+  `agents.kd_listing`, `agents.kd_price`.
+  - Boundary: `docs/handover/sop.md`, `docs/handover/kien-truc.md`,
+    `AGENTS.md` (bảng Commands), `tests/test_handover_docs.py`
+  - Gate: `python -m pytest tests/test_handover_docs.py -q` xanh; mọi lệnh
+    trong mục 5n chạy được với `--help` exit 0
+  - Evidence: `evidence/v53_docs.log`
+- [x] **W53.10 Gate chung** [đỏ ngoài boundary đã vá riêng trên `ai-infra`: date-bomb garden 19dc153, QR '-' 8b37b97] (evidence/v53_pytest.log: targeted ×3 = 467/467/467 pass 0 skipped; ruff sạch; py_compile ok; --deterministic exit 0; kd_a5 PASS 21/21; director --all exit 0; dpia --check exit 0; CLI DB thật dry-run exit 0, CSV lỗi exit 1, 2 op exit 2, đếm approval_queue/price_list/market_alerts/sku_master trước = sau; grep W53.6 rỗng; diff schema/roles/golden/crawler rỗng. CÒN TREO: full pytest chưa 0 failed — vòng 1: 3615 pass + 2 failed `test_qr_trace` (flake 1/64: mã token_urlsafe bắt đầu '-' → argparse `--code -x` lỗi; probe tái lập), vòng 2: 3616 pass + 1 failed `test_garden_director::test_bulletin_numbers_match_reference_sql` (bom hẹn giờ: created_at=now() rơi ngoài kỳ cố định 2026-10-12 khi đồng hồ sang 13/10 VN — tất định). Cả 2 file KHÔNG đổi trong version này → ngoài phạm vi, coordinator quyết) —
+  - mọi lệnh chạy với prefix `cd D:/code/samsam-w40 && set -a && .
+    <scratchpad>/v53.env && set +a` (DB riêng `samsam_infra`); lệnh nặng có
+    thể bị đẩy nền — đọc output tới khi process exit, không chạy chồng,
+    không retry mù
+  - targeted ×3 (tuần tự): `python -m pytest -q -rs tests/test_kd_listing.py
+    tests/test_kd_price.py tests/test_market_csv.py tests/test_sales_director.py
+    tests/test_agent_eval.py tests/test_qa_harness.py tests/test_ci_workflow.py
+    tests/test_data_flow_map.py tests/test_handover_docs.py
+    tests/test_director_framework.py tests/test_approval_queue.py
+    tests/test_connect_timeout_guard.py` — 3 lần xanh, test DB 0 skipped
+  - full: `python -m pytest -q` ĐÚNG 1 lần/vòng — 0 failed, passed ≥ 3533
+    (baseline) + số test mới; skipped chỉ chấp nhận `tests/test_dr_drill.py`
+    khi Docker hỏng (môi trường, ghi rõ)
+  - `ruff check .` sạch; `python -m py_compile agents/kd_listing.py
+    agents/kd_price.py agents/sales_director.py ingest/market_csv.py
+    scripts/agent_eval.py`
+  - `python scripts/agent_eval.py --deterministic --no-record` exit 0;
+    `python scripts/agent_eval.py --agent kd_a5 --no-record` PASS;
+    `python -m pipelines.director --all --dry-run` exit 0; `python
+    scripts/dpia_draft.py --check` exit 0
+  - CLI DB thật: `python -m agents.kd_listing --run --dry-run` exit 0;
+    `python -m agents.kd_price --run --dry-run --plan
+    tests/fixtures/kd_price/promo_plan_MAU.csv --as-of 2026-10-12` exit 0;
+    CSV lỗi → exit 1; 2 op → exit 2; đếm `approval_queue`/`price_list`/
+    `market_alerts`/`sku_master` trước = sau
+  - grep W53.6 rỗng; `git diff --stat docs/schema.sql docs/roles.sql
+    ingest/golden_store.py crawler/` rỗng; `git status --porcelain` không
+    file runtime mới chưa gitignore trong `data/`, không file lạc
+    (`lv2-market-top.png` không thuộc version — stage theo danh sách tường
+    minh); evidence `.log` thêm bằng `git add -f`
+  - Boundary: không file mới ngoài các mục trên
+  - Evidence: `evidence/v53_pytest.log`
+- [ ] **W53.X External-dep (để `[ ]`, KHÔNG tự đánh dấu)** — file listing/
+  ads/KM thật từ Seller Center (xác minh header `sale_price`, trạng thái);
+  GĐ bán hàng chốt floor + trần KM + ngưỡng lệch (`price_watch.json`
+  `confirmed_by`) và duyệt giá trong `price_list`; GĐ tài chính duyệt giá
+  vốn (`cogs_versions`) + tỷ lệ thực nhận; MXH/GĐ KD nhập kế hoạch KM thật
+  11.11/12.12/Tết; cột thuộc tính listing để so thuộc tính; GĐ bán hàng gán
+  nhãn + đóng băng suite `kd_a5` và ký nghiệm thu A4/A5 (người duyệt thật
+  `approvers` vẫn rỗng).
+
+v5.3 đóng 2026-10-13 (workflow resume từ build; vòng 0: PASS/PASS/FIX 1 MINOR
+— biên cửa sổ check_promos chưa test → thêm test biên inclusive + mutation
+check; vòng 1 PASS, 0 mở). Coordinator tự vá NIT: bảng "Tham khảo đối thủ" in
+sku_key SKU nhóm CAM (rượu) trái docstring → analyze thay None, render "(nhóm
+CAM)" + test (kiểm ngược: bỏ vá → đỏ). Gate coordinator chạy lại: ruff sạch,
+test_kd_price + test_kd_listing 81 pass. Full pytest đỏ ngoài boundary (garden
+date-bomb, QR mã '-' flake, dr_drill container worktree song song) — 2 cái đầu
+vá trên `ai-infra`. External-dep: file listing/ads/KM thật Seller Center (xác
+minh header sale_price), GĐ bán hàng chốt giá sàn/trần KM/ngưỡng lệch +
+duyệt price_list, giá vốn đã duyệt + tỷ lệ thực nhận, kế hoạch KM 11.11/12.12/
+Tết, cột thuộc tính listing, gán nhãn + đóng băng suite kd_a5, ký A4/A5.
+Someday: Fraction cộng dồn KM % chồng nhiều dòng (chậm khi file sai);
+lookahead_days=45 bỏ Tết tới khi còn 45 ngày (chờ GĐ bán hàng); object_id
+unready_listed fallback seller_sku/sku_key rượu khi thiếu item_id; test kd_price
+đọc config thật (đổi khi chốt số); assert wall-clock <60s test CLI DB down.
+
 Nhánh `ai-infra`: M31 đợt gộp 5 (2026-10-12) — v4.3, v9.1, v8.3, v5.1, v6.2 đã gộp
 (66 bảng; full pytest 3530 pass + 3 đỏ tích hợp đã vá). Tích hợp: mã luồng DF-26
 (v4.3), DF-27 (v9.1), DF-28 (v8.3), DF-29/30 (v5.1) + DPIA/TIA 30 luồng; lô B2B

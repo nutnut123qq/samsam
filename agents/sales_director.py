@@ -40,6 +40,9 @@ Contract:
   - Bản tin (`gather` chỉ SELECT + `render_bulletin` THUẦN, tất định): chỉ
     số đếm + `#id` + nhãn loại từ cấu hình — KHÔNG in câu hỏi khách,
     user_hash, title tự do, tên nhân viên, payload. KHÔNG LLM, KHÔNG tự gửi.
+    v5.3: mục 6 "Catalog & giá (A4/A5)" — số mục pending `a4:`/`a5:` theo
+    loại việc + lần chạy gần nhất `agents.kd_listing`/`agents.kd_price`
+    (`job_runs`); mục 5 đếm cả `promo_change`.
   - Mọi hàm thời gian nhận `now` aware (naive → ValueError); chỉ CLI đọc
     đồng hồ.
 
@@ -106,6 +109,9 @@ STATE_ORDER = ("overdue", "due_soon", "on_time")
 # Loại A cảnh báo đỏ TỪNG mục (pháp lý, nguồn do hệ thống sinh); loại A khác
 # (cskh_* — đầu vào khách kiểm soát) gom 1 cảnh báo/loại/lần quét.
 RED_PER_ITEM = frozenset({"market_alert_s1"})
+# v5.3 mục 6 bản tin: agent luật A4/A5 đẩy mục `object_id` tiền tố a4:/a5:.
+CATALOG_AGENTS = (("a4", "agents.kd_listing", "A4 Catalog/listing đa sàn"),
+                  ("a5", "agents.kd_price", "A5 Giá & khuyến mãi"))
 EXPIRED_LOOKBACK = timedelta(days=7)    # mục quá due_at chưa leo thang
 MAX_ALERT_IDS = 100                     # queue_ids trong 1 cảnh báo gộp
 _CODE_RE = re.compile(r"[a-z0-9][a-z0-9_.-]{0,31}")
@@ -626,6 +632,31 @@ def region_counts(cfg: dict, questions: list) -> list[tuple[str, int]]:
                                                cnt["chưa rõ vùng"])]
 
 
+def catalog_stats(conn) -> dict:
+    """v5.3 — CHỈ SELECT: mục pending khối KD của A4/A5 theo (tiền tố, loại
+    việc) → [id], và lần chạy gần nhất mỗi job từ `job_runs`. Role chạy
+    bản tin không có quyền đọc `job_runs` (agent_writer — least privilege,
+    roles.sql không cấp) → `jobs` None ("không đọc được"), không crash: đọc
+    trong savepoint để lỗi quyền không hủy tx chia sẻ."""
+    pend: dict = {}
+    for pre, ot, qid in conn.execute(
+            "select split_part(object_id, ':', 1), object_type, id from"
+            " approval_queue where block = %s and status = 'pending' and"
+            " object_id like any(%s) order by id",
+            (BLOCK, [f"{p}:%" for p, _, _ in CATALOG_AGENTS])).fetchall():
+        pend.setdefault((pre, ot), []).append(qid)
+    try:
+        with conn.transaction():
+            jobs = {j: (ts, ok) for j, ts, ok in conn.execute(
+                "select distinct on (job) job, coalesce(finished_at,"
+                " started_at), ok from job_runs where job = any(%s)"
+                " order by job, started_at desc, id desc",
+                ([j for _, j, _ in CATALOG_AGENTS],)).fetchall()}
+    except psycopg.errors.InsufficientPrivilege:
+        jobs = None
+    return {"pending": pend, "jobs": jobs}
+
+
 def gather(conn, now: datetime, cfg: dict, period_kind: str = "day",
            data_dir: Path = DATA_DIR) -> dict:
     """CHỈ SELECT → số liệu bản tin (không câu hỏi/tên/payload)."""
@@ -662,7 +693,8 @@ def gather(conn, now: datetime, cfg: dict, period_kind: str = "day",
             "golden_pending": golden,
             "unanswered": sum(u["n"] for u in _unanswered(now, cfg,
                                                            data_dir)),
-            "cskh_deferred": _collect(conn, now, cfg, data_dir)[1]}
+            "cskh_deferred": _collect(conn, now, cfg, data_dir)[1],
+            "catalog": catalog_stats(conn)}
 
 
 def _state_text(q: dict) -> str:
@@ -740,13 +772,15 @@ def render_bulletin(cfg: dict, data: dict, now: datetime,
            f"{cfg['sources']['max_cskh_per_run']} mục/lần chạy (chờ lần "
            f"sau): {data.get('cskh_deferred', 0)}"), "",
           "## 5. Giá chờ duyệt", ""]
-    price = [q for q in queue if q["object_type"] in ("price_review",
-                                                      "price_change")]
+    price = [q for q in queue if q["object_type"] in (
+        "price_review", "price_change", "promo_change")]
     L += [f"- Mục giá đang chờ trong hàng duyệt: {len(price)}"
           + (" — " + ", ".join(f"#{q['id']}" for q in price) if price
              else ""),
           f"- Phiếu lệch golden (giá) đang pending: {data['golden_pending']}",
-          "", "## Người duyệt", "",
+          ""]
+    L += _catalog_lines(cfg, data.get("catalog"))
+    L += ["", "## Người duyệt", "",
           f"- Vai trò duyệt: {', '.join(cfg['approver_roles'])}"]
     if not cfg["approvers"] or not cfg["digest_recipients"]:
         L.append("- Người duyệt/người nhận chưa cấu hình (external-dep)")
@@ -754,6 +788,39 @@ def render_bulletin(cfg: dict, data: dict, now: datetime,
           "", "---", ("*BẢN NHÁP — hệ thống không tự gửi. Người đọc rồi "
                       "chuyển tay cho GĐ Kinh doanh.*"), ""]
     return "\n".join(L)
+
+
+def _catalog_lines(cfg: dict, cat) -> list[str]:
+    """Mục 6 (v5.3) — chỉ số đếm + #id + nhãn cấu hình (không sku_key/tiêu
+    đề/payload/giá đối thủ). Caller cũ không có `catalog` → chưa có số
+    liệu."""
+    L = ["## 6. Catalog & giá (A4/A5)", ""]
+    if not isinstance(cat, dict):
+        return L + ["- (chưa có số liệu)"]
+    types = cfg["object_types"]
+    L += ["| Agent | Lần chạy gần nhất (giờ VN) | Kết quả |", "|---|---|---|"]
+    jobs = cat.get("jobs")
+    for _, job, name in CATALOG_AGENTS:
+        if jobs is None:
+            L.append(f"| {name} | không đọc được (role thiếu quyền job_runs)"
+                     " | — |")
+            continue
+        ts, ok = jobs.get(job, (None, None))
+        L.append(f"| {name} | {_fmt_vn(ts) if ts else 'chưa chạy'} | "
+                 + ("—" if ts is None else ("ok" if ok else "lỗi")) + " |")
+    L += ["", "| Agent | Loại việc | Mục chờ duyệt |", "|---|---|---|"]
+    pend = cat.get("pending") or {}
+    rows = []
+    for pre, _, name in CATALOG_AGENTS:
+        for (p, ot), ids in sorted(pend.items()):
+            if p != pre:
+                continue
+            ids = sorted(ids)
+            label = types[ot]["label"] if ot in types else "loại khác"
+            rows.append(f"| {name} | {label} | {len(ids)} — "
+                        + ", ".join(f"#{i}" for i in ids[:50])
+                        + (" …" if len(ids) > 50 else "") + " |")
+    return L + (rows or ["| — | — | 0 |"])
 
 
 def bulletin_name(kind: str, start: datetime) -> str:

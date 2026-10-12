@@ -1264,6 +1264,61 @@ website; file listing thật; ngưỡng SEO (`data/seo_rules.json` GIẢ ĐỊNH
 hạn ký tự sàn thật; GĐ Marketing ký nghiệm thu WP08; người duyệt khối
 marketing (`approvers: []`).
 
+## 5o. Catalog/listing đa sàn + giám sát giá & KM (v5.3 — agent KHÔNG đổi giá/listing)
+
+Hai agent LUẬT (không LLM, không gọi sàn) của khối KD. Chỉ ĐỌC file sàn đã
+nạp (mục 5b), golden (giá list/floor), bản listing đã duyệt (MKT-02), giá
+vốn đã duyệt (mục 5l) — mọi việc là NHÁP trong hàng duyệt khối `sales`
+(risk high). Agent KHÔNG ghi `price_list`/golden, KHÔNG sửa sàn.
+
+**A4 — đồng bộ catalog/listing (`agents.kd_listing`):**
+1. Nạp file listing mới nhất mỗi kênh (mục 5b — xuất TOÀN BỘ sản phẩm).
+2. `python -m agents.kd_listing --run --dry-run` → in phát hiện + số mục sẽ
+   đẩy, KHÔNG ghi DB. Loại: listing nhóm CAM đang bán (rượu, SKU ngoài kênh
+   cho phép — S1), tiêu đề/giá trên sàn khác bản duyệt, bản duyệt cũ so với
+   giá golden (sinh lại bằng `python -m pipelines.content --listing`), listing
+   chưa có bản duyệt, SKU đủ điều kiện mà chưa có listing. Kênh chưa có file
+   listing → `[warn]`, không báo "thiếu listing".
+3. `python -m agents.kd_listing --run` → đẩy mục mới (`listing_sync` /
+   `market_alert_s1`; chạy lại không đẩy trùng). `--report [--out-dir D]` →
+   `data/reports/catalog-sync-<ngày>.md`.
+
+**A5 — giám sát giá & khuyến mãi (`agents.kd_price`):**
+1. Ngưỡng ở `data/price_watch.json` (GIẢ ĐỊNH — GĐ bán hàng chốt, ghi
+   `confirmed_by`): lệch niêm yết %, trần chiết khấu %/kênh (≤ 49), số KM chồng
+   tối đa, số ngày nhìn trước. Giá sàn/list lấy từ golden `price_list`.
+2. Kế hoạch KM = CSV nhập tay (utf-8), header:
+   `program_id,kenh,sku_key,loai_km,ngay_bat_dau,ngay_ket_thuc,giam_pct,gia_km_vnd,su_kien`
+   — mỗi dòng điền ĐÚNG 1 trong `giam_pct` (1..99) / `gia_km_vnd`; `loai_km`
+   ∈ voucher|flash_sale|giam_gia; ngày `YYYY-MM-DD`; `su_kien` (tùy chọn) =
+   id trong `data/marketing_calendar.json` (vd `11.11`, `12.12`,
+   `tet_2027`). CSV lỗi → exit 1, in số dòng + tên cột (không in giá trị
+   ô), KHÔNG connect. Mẫu dev: `tests/fixtures/kd_price/promo_plan_MAU.csv`
+   (KHÔNG phải kế hoạch thật).
+3. `python -m agents.kd_price --report --plan <CSV> --as-of <ngày>` →
+   `data/reports/price-watch-<ngày>.md`: S1 (dưới giá sàn, biên âm, KM cho
+   SKU không được quảng bá) trước S2 (lệch niêm yết, vượt trần chiết khấu,
+   KM chồng, không kiểm được), sự kiện mùa trong N ngày tới, "Tham khảo đối
+   thủ (KHÔNG dùng để đề xuất giá)". Thiếu `--plan` → chỉ kiểm giá đang chạy.
+4. `python -m agents.kd_price --run --dry-run --plan <CSV>` (in kế hoạch) →
+   `python -m agents.kd_price --run --plan <CSV>` đẩy `market_alert_s1` /
+   `price_change` / `promo_change`. `--as-of` chỉ đi với `--report` hoặc
+   `--run --dry-run`.
+
+**Ai duyệt:** GĐ bán hàng qua `python -m pipelines.approval_queue --approve
+<ID> --by "<tên>"` / `--reject <ID> --by "<tên>"`; sau khi duyệt, Quản lý
+MXH sửa TAY trên Seller Center. Agent không bao giờ đề xuất giá theo đối thủ;
+giá vốn chưa duyệt → báo "chưa có giá vốn duyệt", không cảnh báo biên.
+Bản tin GĐ KD (`agents.sales_director --bulletin`) mục 6 đếm mục A4/A5 chờ
+duyệt + lần chạy gần nhất.
+
+External-dep: file listing/KM thật từ Seller Center (header `Giá khuyến
+mãi`/`Sale Price` GIẢ ĐỊNH), ngưỡng thật + `confirmed_by`, giá vốn + tỷ lệ
+thực nhận thật (GĐ tài chính), kế hoạch KM thật 11.11/12.12/Tết, cột thuộc
+tính listing, GĐ bán hàng ký nghiệm thu + gán nhãn suite `kd_a5`.
+
+Exit: 0 ok · 1 cấu hình/CSV lỗi (trước connect) · 2 tham số sai / DB down.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):

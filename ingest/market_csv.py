@@ -25,8 +25,10 @@ Mapping cột: `data/market_csv_map.json` (tên cột GIẢ ĐỊNH — chưa x�
 file thật). `{kênh: {loại: {required: {field: header}, optional: {...},
 drop: [header], inactive_status: [...], cancel_status: [...]}}}`. Field
 chuẩn: item_id, seller_sku, title, price, stock, status, ads_spend, qty,
-order_id. PII: chỉ field allowlist được giữ; cột `drop` (tên/SĐT/địa chỉ
-người mua, ghi chú...) bị bỏ ngay khi đọc; `order_id` → `order_id_hash` =
+order_id, sale_price (v5.3: giá sau khuyến mãi của listing, TÙY CHỌN — chỉ
+nằm trong `market_rows.raw`, không có cột riêng; cảnh báo v3.3 vẫn so theo
+`price`; agents.kd_price đọc làm giá bán thực). PII: chỉ field allowlist
+được giữ; cột `drop` (tên/SĐT/địa chỉ người mua, ghi chú...) bị bỏ ngay khi đọc; `order_id` → `order_id_hash` =
 sha256("kênh:mã đơn")[:16], giá trị gốc không giữ.
 
 Ánh xạ item sàn → golden: (1) `seller_sku` = `sku_master.sku_key`; (2) kênh
@@ -80,10 +82,10 @@ MAP_FILE = ROOT / "data" / "market_csv_map.json"
 CHANNELS = ("shopee", "tiktok")
 KINDS = ("listing", "order", "ads")
 FIELDS = ("item_id", "seller_sku", "title", "price", "stock", "status",
-          "ads_spend", "qty", "order_id")
+          "ads_spend", "qty", "order_id", "sale_price")
 # field số → trần giá trị (cột bigint tiền VND / int số lượng).
 NUM_MAX = {"price": 10**15, "ads_spend": 10**15, "stock": 2 * 10**9,
-           "qty": 2 * 10**9}
+           "qty": 2 * 10**9, "sale_price": 10**15}
 MAX_FILE_BYTES = 50 * 1024 * 1024
 # Trần duyệt (áp TRONG lúc đọc, không dựng cả bảng trong RAM): MAX_FILE_BYTES
 # chỉ chặn byte trên đĩa — xlsx 5KB có dimension A1:XFD1048576 hay CSV toàn

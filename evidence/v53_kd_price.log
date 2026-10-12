@@ -1,0 +1,47 @@
+# v53 W53.4/W53.5 A5 kd_price — 2026-10-12T22:10:53+07:00
+$ python -m pytest tests/test_kd_price.py -q -rs
+.........................................................                [100%]
+57 passed in 23.41s
+[exit 0]
+
+## DB thật samsam_infra: dry-run + kế hoạch KM MẪU, đếm bảng trước/sau
+[counts] {'approval_queue': 0, 'price_list': 34, 'market_alerts': 0, 'sku_master': 13, 'market_rows': 0, 'agent_action_log': 1}
+$ python -m agents.kd_price --run --dry-run --plan tests/fixtures/kd_price/promo_plan_MAU.csv --as-of 2026-10-12
+[A5] ngày 2026-10-12: S1 5 · S2 0 · kênh có file listing: chưa có
+  [S1] khuyến mãi cho SKU không được quảng bá trên kênh — kênh shopee, chương trình KM1111-D
+  [S1] khuyến mãi cho SKU không được quảng bá trên kênh — kênh shopee, chương trình KM1111-A
+  [S1] khuyến mãi cho SKU không được quảng bá trên kênh — kênh shopee, chương trình KM1111-B
+  [S1] khuyến mãi cho SKU không được quảng bá trên kênh — kênh shopee, chương trình KM1111-C
+  [S1] khuyến mãi cho SKU không được quảng bá trên kênh — kênh shopee, chương trình KM1111-E
+[dry-run] sẽ đẩy 5 mục mới · đã có 0 · trùng cảnh báo sàn 0 — KHÔNG ghi DB
+[exit 0]
+
+[counts] {'approval_queue': 0, 'price_list': 34, 'market_alerts': 0, 'sku_master': 13, 'market_rows': 0, 'agent_action_log': 1}
+## CSV lỗi → exit 1 trước connect (DATABASE_URL host chết: không connect nên không treo)
+$ env DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m agents.kd_price --report --plan C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v53_bad_plan.csv --as-of 2026-10-12
+[error] dòng 2: cột ngay_bat_dau không hợp lệ
+[error] 1 lỗi — không connect, không ghi gì.
+[exit 1]
+
+## 2 thao tác → exit 2
+$ python -m agents.kd_price --run --report
+usage: python -m agents.kd_price [-h] [--run] [--report] [--dry-run]
+                                 [--plan PLAN] [--as-of AS_OF]
+                                 [--out-dir OUT_DIR]
+python -m agents.kd_price: error: chỉ được 1 thao tác mỗi lần (--run | --report)
+[exit 2]
+
+## 2 thao tác cùng lúc → exit 2 trước connect (host chết, không treo)
+$ env DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m agents.kd_listing --run --report
+usage: python -m agents.kd_listing [-h] [--run] [--report] [--dry-run]
+                                   [--out-dir OUT_DIR]
+python -m agents.kd_listing: error: chỉ được 1 thao tác mỗi lần (--run | --report)
+[exit 2]
+
+
+=== fix MINOR window-edge (2026-10-13): test_check_promos_window_inclusive_edges x3 ===
+4 passed, 57 deselected in 0.46s
+4 passed, 57 deselected in 0.61s
+4 passed, 57 deselected in 0.55s
+mutation end>=today -> end>today: 1 failed, 3 passed (caught); start<=horizon -> start<horizon: 1 failed, 3 passed (caught); source restored, line 470 unchanged
+tests/test_kd_price.py full x3: 61 passed / 61 passed / 61 passed

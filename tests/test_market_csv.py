@@ -679,3 +679,56 @@ def test_db_report(db, monkeypatch, capsys):
         "select order_id_hash from market_rows where order_id_hash is not"
         " null")]
     assert hashes and not any(h in out for h in hashes)
+
+
+# ---------- v5.3 W53.2: field tùy chọn sale_price (giá sau KM) ----------
+
+LISTING_KM = FIX / "fixture_shopee_listing_km.csv"
+KM_HDR = ("Mã sản phẩm,Tên sản phẩm,SKU phân loại,Giá,Giá khuyến mãi,"
+          "Kho hàng,Trạng thái")
+
+
+def test_sale_price_optional_absent_is_none():
+    """File cũ KHÔNG có cột KM: cùng số dòng, sale_price None, cảnh báo y
+    như trước (find_alerts không đổi ngữ nghĩa theo `price`)."""
+    m = _map()
+    assert m["shopee"]["listing"]["optional"]["sale_price"] == \
+        "Giá khuyến mãi"
+    assert m["tiktok"]["listing"]["optional"]["sale_price"] == "Sale Price"
+    rows, errs, _ = _read(LISTING)
+    assert errs == [] and len(rows) == 5
+    assert all(r["sale_price"] is None for r in rows)
+    skus = {"savigout-30v": {"category": "tpbvsk", "xnqc_status": "none",
+                             "shopee_item_id": "24325987926"}}
+    prices = {"savigout-30v": (439000, 1, None)}
+    got = mc.find_alerts(rows, "shopee", "listing", skus, prices, [])
+    assert {k[0] for k in got} == {"price_mismatch", "item_unmapped"}
+
+
+def test_sale_price_parsed_vnd():
+    rows, errs, _ = _read(LISTING_KM)
+    assert errs == [] and len(rows) == 3
+    by = {r["item_id"]: r for r in rows}
+    assert by["29007947088"]["sale_price"] == 1290000      # "1.290.000"
+    assert by["29007947088"]["price"] == 2980000
+    assert by["27357883504"]["sale_price"] == 120000
+    assert by["24325987926"]["sale_price"] is None          # ô trống
+
+
+def test_sale_price_bad_number_reports_row_not_value(tmp_path):
+    p = _write(tmp_path, "km.csv", KM_HDR + "\n1,a,,100,\"12,5\",1,X\n")
+    rows, errs, _ = _read(p)
+    assert rows == [] and errs == [
+        "dòng 2: field 'sale_price' không phải số nguyên ≥ 0 hợp lệ"]
+    assert "12,5" not in " ".join(errs)
+
+
+def test_db_sale_price_in_raw(db, monkeypatch):
+    assert _run(db, monkeypatch, LISTING_KM, "listing") == (0, 1)
+    got = dict(db.execute(
+        "select item_id, raw->>'sale_price' from market_rows"))
+    assert got == {"27357883504": "120000", "29007947088": "1290000",
+                   "24325987926": None}
+    # Cột riêng không đổi — chỉ nằm trong raw.
+    assert db.execute("select count(*) from information_schema.columns"
+                      " where column_name = 'sale_price'").fetchone()[0] == 0

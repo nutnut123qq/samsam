@@ -52,6 +52,8 @@ chat lẫn embeddings) + Streamlit.
 | Báo cáo TGĐ (v8.0) | `python -m agents.ceo_report [--period week\|month] [--ref YYYY-MM-DD] [--llm] [--submit] [--out-dir DIR]` (→ `data/reports/ceo-<kỳ>.md`; số do code điền; `--llm` mặc định tắt; `--submit` vào hàng chờ khối ceo, không tự duyệt/gửi) |
 | Cảnh báo đỏ intel (v7.1) | `python -m pipelines.intel_alert --run` (luật GIẢ ĐỊNH `data/intel_alert_rules.json` → `red_alerts`, leo thang sau 2 giờ chưa xác nhận; exit 1 khi thiếu người nhận — fail-closed) · `--open` · `--ack ID --by "<tên>"` (CHỈ người thật) |
 | Bản tin intel (v7.1) | `python scripts/intel_bulletin.py --period day\|week [--date YYYY-MM-DD] [--llm] [--suggest]` (→ `data/reports/intel-bulletin-*.md` BẢN NHÁP; LLM chỉ khi `llm.enabled`; `--suggest` → `approval_queue` loại `intel_topic` cho Quản lý MXH duyệt) |
+| Catalog/listing KD-A4 (v5.3) | `python -m agents.kd_listing --run --dry-run` (chỉ đọc) · `--run` (lệch listing sàn ↔ bản duyệt/golden → hàng duyệt `listing_sync`/`market_alert_s1`, agent KHÔNG sửa sàn) · `--report` |
+| Giá & KM KD-A5 (v5.3) | `python -m agents.kd_price --report --plan <CSV> --as-of <ngày>` · `--run [--dry-run] [--plan CSV]` (floor/biên/lệch niêm yết/trần KM/KM chồng → NHÁP `price_change`/`promo_change`/S1; KHÔNG đổi giá, ngưỡng `data/price_watch.json` GIẢ ĐỊNH) |
 | GĐ Kinh doanh TMĐT (v5.0) | `python -m agents.sales_director --run [--dry-run] --bulletin` (dry-run CHỈ ĐỌC, in kế hoạch + bản tin) · `--run` (nguồn thật → hàng duyệt khối sales + quét SLA A 2h/B 4h giờ làm việc → `sla_escalations`/cảnh báo đỏ) · `--bulletin [--period week]` (→ `data/reports/sales-director-*.md`, không PII, không tự gửi) |
 | Test/lint | `python -m pytest` · `ruff check .` |
 

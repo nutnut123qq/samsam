@@ -1,0 +1,210 @@
+## targeted run 1
+$ python -m pytest -q -rs tests/test_kd_listing.py tests/test_kd_price.py tests/test_market_csv.py tests/test_sales_director.py tests/test_agent_eval.py tests/test_qa_harness.py tests/test_ci_workflow.py tests/test_data_flow_map.py tests/test_handover_docs.py tests/test_director_framework.py tests/test_approval_queue.py tests/test_connect_timeout_guard.py
+........................................................................ [ 15%]
+........................................................................ [ 30%]
+........................................................................ [ 46%]
+........................................................................ [ 61%]
+........................................................................ [ 77%]
+........................................................................ [ 92%]
+...................................                                      [100%]
+467 passed in 437.27s (0:07:17)
+[exit 0]
+
+## targeted run 2
+........................................................................ [ 77%]
+........................................................................ [ 92%]
+...................................                                      [100%]
+467 passed in 430.42s (0:07:10)
+[exit 0]
+
+## targeted run 3
+........................................................................ [ 77%]
+........................................................................ [ 92%]
+...................................                                      [100%]
+467 passed in 275.49s (0:04:35)
+[exit 0]
+
+## full: python -m pytest -q -rs
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:1933: in parse_known_args
+    self.error(str(err))
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2672: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='python -m pipelines.qr_trace revoke', usage=None, description=None, formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = 'python -m pipelines.qr_trace revoke: error: argument --code: expected one argument\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2659: SystemExit
+---------------------------- Captured stderr call -----------------------------
+usage: python -m pipelines.qr_trace revoke [-h] --code CODE --by BY
+                                           [--reason REASON]
+python -m pipelines.qr_trace revoke: error: argument --code: expected one argument
+usage: python -m pipelines.qr_trace revoke [-h] --code CODE --by BY
+                                           [--reason REASON]
+python -m pipelines.qr_trace revoke: error: argument --code: expected one argument
+2 failed, 3615 passed in 2286.28s (0:38:06)
+[exit 1]
+
+## ghi chú full vòng 1: 2 failed — truy ra tests/test_qr_trace.py (pipelines.qr_trace, KHÔNG thuộc v5.3): mã token_urlsafe(16) bắt đầu '-' (1/64) → argparse '--code -xxx' lỗi 'expected one argument'. Probe ép mã '-aaa..' → test_issue_gates_and_revoke + test_site_pages_media_revoke SystemExit 2; chạy riêng tests/test_qr_trace.py: 86 passed.
+
+## gate phụ
+đếm trước:
+{'approval_queue': 0, 'price_list': 34, 'market_alerts': 0, 'sku_master': 13}
+$ ruff check .
+All checks passed!
+[exit 0]
+$ python -m py_compile agents/kd_listing.py agents/kd_price.py agents/sales_director.py ingest/market_csv.py scripts/agent_eval.py
+[exit 0]
+$ python scripts/agent_eval.py --deterministic --no-record
+[ok] chatbot v1 active owner=marketing qa=data_platform risk=high 14 ca
+[ok] ck_a6 v1 skeleton owner=mechanical qa=mechanical risk=medium 3 ca
+[ok] co_khi v1 active owner=mechanical qa=data_platform risk=medium 23 ca
+[ok] da_qa v1 skeleton owner=projects qa=projects risk=medium 3 ca
+[ok] fin_qa v1 skeleton owner=finance qa=finance risk=high 3 ca
+[ok] guardrail v2 active owner=legal_hr qa=data_platform risk=high 132 ca
+[ok] intel_qa v1 skeleton owner=intel qa=intel risk=medium 3 ca
+[ok] kd_a1 v2 active owner=sales qa=sales risk=high 43 ca
+[ok] kd_a11 v1 skeleton owner=sales qa=sales risk=high 4 ca
+[ok] kd_a5 v1 active owner=sales qa=data_platform risk=high 21 ca
+[ok] mkt02 v1 active owner=marketing qa=data_platform risk=high 14 ca
+[ok] mkt03 v1 active owner=marketing qa=data_platform risk=high 15 ca
+[ok] mkt_13 v1 skeleton owner=marketing qa=marketing risk=high 4 ca
+[ok] pc_a9 v1 skeleton owner=legal_hr qa=legal_hr risk=high 3 ca
+[ok] qa_cockpit v1 skeleton owner=ceo qa=ceo risk=medium 4 ca
+[ok] qa_vung_trong v1 skeleton owner=farming qa=farming risk=medium 3 ca
+[ok] sales_director v1 active owner=sales qa=data_platform risk=medium 26 ca
+[ok] sx_a8 v1 skeleton owner=production qa=production risk=medium 3 ca
+[done] 18/18 suite hợp lệ
+[co_khi:ck-f01] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Nhiệt độ buồng co của máy co màng SS-EQ-03 đặt bao nhiêu?"
+[co_khi:ck-f02] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Tốc độ băng tải máy co màng SS-EQ-03 là bao nhiêu mét mỗi phút?"
+[done] co_khi v1 PASS 21/23 pass_rate=0.913 (ngưỡng 0.9) prompt_version=2a0de120b8ba model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối mechanical: chưa cấu hình (external-dep)
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail v2 PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=757372efdabb model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối legal_hr: chưa cấu hình (external-dep)
+[done] kd_a1 v2 PASS 43/43 pass_rate=1.0 (ngưỡng 0.86) prompt_version=1978fb4c6d50 model=fake_gateway judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a5 v1 PASS 21/21 pass_rate=1.0 (ngưỡng 1.0) prompt_version=4c8adf3127ef model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] mkt02 v1 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=43569adb57d0 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt03 v1 PASS 15/15 pass_rate=1.0 (ngưỡng 1.0) prompt_version=08d094392738 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] sales_director v1 PASS 26/26 pass_rate=1.0 (ngưỡng 1.0) prompt_version=bd3a3e0541e8 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[exit 0]
+$ python scripts/agent_eval.py --agent kd_a5 --no-record
+[done] kd_a5 v1 PASS 21/21 pass_rate=1.0 (ngưỡng 1.0) prompt_version=4c8adf3127ef model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[exit 0]
+$ python -m pipelines.director --all --dry-run
+[ok] ceo — Tổng giám đốc + Hội đồng thành viên + Ban kiểm soát nội bộ · 6 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] sales — Giám đốc bán hàng + Sales (Phòng kinh doanh TMĐT) · 12 loại việc · vai trò duyệt gd_ban_hang · người duyệt chưa cấu hình (external-dep)
+[ok] marketing — Giám đốc marketing + Chuyên viên marketing + Chuyên viên SEO · 4 loại việc · vai trò duyệt gd_marketing · người duyệt chưa cấu hình (external-dep)
+[ok] intel — Trung tâm tình báo thị trường (trực thuộc TGĐ, phục vụ Marketing/Sales) · 3 loại việc · vai trò duyệt mxh · người duyệt chưa cấu hình (external-dep)
+[ok] finance — Giám đốc tài chính + Phòng kế toán + Phòng tài chính–kế hoạch · 4 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] production — Giám đốc sản xuất + Nghiên cứu và sản xuất + Công nghệ sinh học · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] farming — Giám đốc vùng trồng + Nhân viên vùng trồng · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] projects — Giám đốc dự án + Chuyên viên dự án–xúc tiến đầu tư · 5 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] legal_hr — Pháp chế nhân sự + Chuyên viên pháp chế–hành chính–nhân sự · 5 loại việc · vai trò duyệt phap_che · người duyệt chưa cấu hình (external-dep)
+[ok] mechanical — Trung tâm điện–cơ khí chế tạo máy + Kỹ sư điện–cơ khí · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] data_platform — Hạ tầng dữ liệu & AI (do Quản lý hạ tầng AI vận hành) · 3 loại việc · vai trò duyệt ha_tang,tgd · người duyệt chưa cấu hình (external-dep)
+[done] 11 khối hợp lệ (dry-run, không DB)
+[exit 0]
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+[exit 0]
+$ python -m agents.kd_listing --run --dry-run
+[warn] chưa có file listing shopee
+[warn] chưa có file listing tiktok
+[A4] 0 phát hiện (S1 0) · dòng chưa map 0
+[dry-run] sẽ đẩy 0 mục mới · đã có 0 · trùng cảnh báo sàn 0 — KHÔNG ghi DB
+[exit 0]
+$ python -m agents.kd_price --run --dry-run --plan tests/fixtures/kd_price/promo_plan_MAU.csv --as-of 2026-10-12
+[A5] ngày 2026-10-12: S1 5 · S2 0 · kênh có file listing: chưa có
+  [S1] khuyến mãi cho SKU không được quảng bá trên kênh — kênh shopee, chương trình KM1111-D
+  [S1] khuyến mãi cho SKU không được quảng bá trên kênh — kênh shopee, chương trình KM1111-A
+  [S1] khuyến mãi cho SKU không được quảng bá trên kênh — kênh shopee, chương trình KM1111-B
+  [S1] khuyến mãi cho SKU không được quảng bá trên kênh — kênh shopee, chương trình KM1111-C
+  [S1] khuyến mãi cho SKU không được quảng bá trên kênh — kênh shopee, chương trình KM1111-E
+[dry-run] sẽ đẩy 5 mục mới · đã có 0 · trùng cảnh báo sàn 0 — KHÔNG ghi DB
+[exit 0]
+$ python -m agents.kd_price --report --plan C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/d88fba75-117d-4fd0-8a9d-e701448ee362/scratchpad/bad.csv
+[error] thiếu cột bắt buộc: sku_key, loai_km, ngay_bat_dau, ngay_ket_thuc
+[error] cần cột giam_pct hoặc gia_km_vnd
+[error] 2 lỗi — không connect, không ghi gì.
+[exit 1]
+$ python -m agents.kd_price --run --report
+usage: python -m agents.kd_price [-h] [--run] [--report] [--dry-run]
+                                 [--plan PLAN] [--as-of AS_OF]
+                                 [--out-dir OUT_DIR]
+python -m agents.kd_price: error: chỉ được 1 thao tác mỗi lần (--run | --report)
+[exit 2]
+$ python -m agents.kd_listing --run --report
+usage: python -m agents.kd_listing [-h] [--run] [--report] [--dry-run]
+                                   [--out-dir OUT_DIR]
+python -m agents.kd_listing: error: chỉ được 1 thao tác mỗi lần (--run | --report)
+[exit 2]
+đếm sau:
+{'approval_queue': 0, 'price_list': 34, 'market_alerts': 0, 'sku_master': 13}
+$ git status --porcelain
+ M .github/workflows/ci.yml
+ M AGENTS.md
+ M DONE.md
+ M agents/sales_director.py
+ M data/directors/sales.json
+ M data/market_csv_map.json
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M ingest/market_csv.py
+ M scripts/agent_eval.py
+ M tests/test_agent_eval.py
+ M tests/test_ci_workflow.py
+ M tests/test_data_flow_map.py
+ M tests/test_handover_docs.py
+ M tests/test_market_csv.py
+ M tests/test_qa_harness.py
+ M tests/test_sales_director.py
+?? agents/kd_listing.py
+?? agents/kd_price.py
+?? data/eval/suites/kd_a5.json
+?? data/price_watch.json
+?? tests/fixtures/kd_price/
+?? tests/fixtures/market/fixture_shopee_listing_km.csv
+?? tests/test_kd_listing.py
+?? tests/test_kd_price.py
+$ git diff --stat docs/schema.sql docs/roles.sql ingest/golden_store.py crawler/
+[rỗng = không đổi]
+
+## full vòng 2: python -m pytest -q -rfEs
+FAILED tests/test_garden_director.py::test_bulletin_numbers_match_reference_sql
+1 failed, 3616 passed in 3580.31s (0:59:40)
+[exit 1]
+
+## ghi chú full vòng 2: 1 failed tests/test_garden_director.py::test_bulletin_numbers_match_reference_sql
+- Chạy riêng lại: vẫn fail (tất định) — assert sqls[8] == [("KV-A01", 1)] nhận [].
+- Nguyên nhân: test bom hẹn giờ ngoài v5.3 — fixture ghi nhật ký thật created_at = now() (trigger chain ép), bản tin cố định until 2026-10-12 (kỳ kết thúc 2026-10-13 00:00 VN). Đồng hồ máy đã sang 2026-10-13 giờ VN → dòng rơi ngoài kỳ. agents/garden_director.py + tests/test_garden_director.py KHÔNG đổi trong worktree (git status rỗng).
+- Vòng 1 (2 failed) = tests/test_qr_trace.py flake 1/64 (mã token_urlsafe bắt đầu '-'), file không đổi trong worktree.
+- Kết luận: 0 lỗi thuộc v5.3; targeted ×3 xanh 467/467; full 3616 passed + 1 failed ngoài phạm vi (baseline 3533 → tổng 3617 test). Không có skipped (Docker drill chạy được lần này).
+
+=== re-gate after window-edge fix (2026-10-13) ===
+ruff check . -> All checks passed!
+python -m pytest -q: 2 failed, 3619 passed in 2158.77s (0:35:58)
+FAILED tests/test_dr_drill.py::test_zz_no_dr_container_left -> passes in isolation (1 passed); leftover DR container from other parallel worktrees sharing docker = environment
+FAILED tests/test_garden_director.py::test_bulletin_numbers_match_reference_sql -> pre-existing wall-clock time bomb outside v5.3: fixture garden_media.created_at=now() (2026-10-13 VN) falls outside the as-of 2026-10-12 window [10-06,10-13) of q6; the file and agents/garden_director.py are not in the v5.3 diff; fails since the date rolled to 2026-10-13
