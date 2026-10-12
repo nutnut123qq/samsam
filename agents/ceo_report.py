@@ -22,9 +22,18 @@ Contract:
     kèm dòng cảnh báo đầu trang và KHÔNG `--submit`.
   - `--submit` → hàng chờ khối `ceo` (`pipelines.director.submit`) — TGĐ
     duyệt; hệ thống KHÔNG tự duyệt, KHÔNG tự gửi.
+  - v8.1 (WP10 phần còn lại): 3 section do CODE dựng chèn giữa "Thời gian
+    duyệt" và "Nhận xét" — "Tiến độ & Sổ quyết định" (`agents.ceo_decisions`),
+    "Rủi ro pháp lý mở" (`agents.ceo_risk`), "Audit outside-in (P1)"
+    (`agents.ceo_audit`). Mỗi section đọc trong savepoint; lỗi DB/cấu hình →
+    1 dòng "*(không đọc được: …)*", các section khác vẫn ra (không crash,
+    không im lặng). LLM KHÔNG thấy section (prompt/`ground` không đổi).
+    `--bulletin` → bản tin GĐ khối `ceo` (`director.run(..., extra=<3
+    section>)`) → `data/reports/director-ceo-<ngày>.md`.
 
 Chạy: python -m agents.ceo_report [--period week|month] [--ref YYYY-MM-DD]
       [--llm] [--submit] [--out-dir DIR]
+      python -m agents.ceo_report --bulletin [--now ISO] [--out-dir DIR]
 Exit: 0 ok · 1 từ điển lỗi / nộp hàng chờ lỗi · 2 tham số sai / kỳ chưa
 đóng / DB down.
 """
@@ -40,6 +49,8 @@ from pathlib import Path
 
 import psycopg
 
+from agents import ceo_audit, ceo_decisions, ceo_risk
+from agents.ra_kenh import parse_now
 from agents.report import REPORTS_DIR, write_report
 from ingest.lead_store import connect
 from pipelines import director
@@ -55,6 +66,7 @@ from pipelines.cockpit import (
 from pipelines.guardrail import check as guardrail_check
 from pipelines.job_runs import job_run
 from pipelines.period import VN_TZ, period_bounds
+from pipelines.pii import _mask_pii
 from pipelines.red_alert import load_routing
 from pipelines.store import _db_msg
 
@@ -202,8 +214,10 @@ def _rows(metrics: dict, picked: dict, cur_d, prev_d) -> tuple[list, int]:
 
 
 def build(conn, kind: str, ref, *, now=None, llm: bool = False,
-          routing=None, metrics=None) -> dict:
-    """→ rep (dict). Kỳ chưa đóng / kind lạ → ValueError."""
+          routing=None, metrics=None, sections=None) -> dict:
+    """→ rep (dict). Kỳ chưa đóng / kind lạ → ValueError. `sections` (v8.1)
+    = list các khối dòng markdown do code dựng (`compute_sections`); None →
+    trang y hệt v8.0."""
     if kind not in ("week", "month"):
         raise ValueError("kind phải week|month")
     start, end = _closed(kind, ref, now)
@@ -222,7 +236,8 @@ def build(conn, kind: str, ref, *, now=None, llm: bool = False,
                          "n": len(r["recipients"]),
                          "problems": len(r["problems"])},
            "generated_at": now or datetime.now(VN_TZ),
-           "llm_used": False, "llm_note": None, "guardrail_violations": []}
+           "llm_used": False, "llm_note": None, "guardrail_violations": [],
+           "sections": sections}
     if llm:
         text, why = llm_commentary(rep)
         if text is None:
@@ -463,6 +478,8 @@ def render(rep: dict) -> str:
           ("Từ hàng chờ duyệt khối `ceo`: tạo → quyết định. Tuần không có "
            "quyết định thì không có số giờ (không ghi 0)."), ""]
     L += _table([r for r in rep["rows"] if r["section"] == "ceo"])
+    for sec in rep.get("sections") or ():
+        L += ["", *sec]
     L += ["", "## Nhận xét", "",
           ("*Nhận xét do LLM viết bằng placeholder, code điền số.*"
            if rep.get("llm_used") else
@@ -499,21 +516,75 @@ def report_name(rep: dict) -> str:
     return f"ceo-{rep['label']}.md"
 
 
+# ---------------------------------------------------------------- v8.1
+
+SECTION_HEADS = ("## Tiến độ & Sổ quyết định", "## Rủi ro pháp lý mở",
+                 "## Audit outside-in (P1)")
+
+
+def _sections_fns():
+    # Gọi qua thuộc tính module lúc chạy (test monkeypatch được).
+    return (lambda c, n: ceo_decisions.section(c, n.astimezone(VN_TZ).date()),
+            lambda c, n: ceo_risk.section(c, n),
+            lambda c, n: ceo_audit.section(c, n))
+
+
+def compute_sections(conn, now: datetime) -> list[list[str]]:
+    """3 section v8.1, mỗi cái trong savepoint `conn.transaction()`. Lỗi
+    `psycopg.Error`/`ValueError` → section 1 dòng "không đọc được" (không
+    crash, không im lặng); section khác vẫn ra."""
+    out = []
+    for head, fn in zip(SECTION_HEADS, _sections_fns()):
+        try:
+            with conn.transaction():
+                out.append(list(fn(conn, now)))
+        # Ngoài psycopg.Error/ValueError (DB/cấu hình) còn lỗi lạ (conn giả,
+        # dữ liệu sai kiểu): trang TGĐ vẫn phải ra — lỗi HIỆN trên trang.
+        except Exception as e:  # noqa: BLE001
+            why = _db_msg(e) if isinstance(e, psycopg.Error) else str(e)
+            why = _cell(_mask_pii(f"{type(e).__name__}: {why}"))[:160]
+            out.append([head, "", f"*(không đọc được: {why})*"])
+    return out
+
+
+def bulletin_extra(sections: list[list[str]]) -> list[str]:
+    out: list[str] = []
+    for sec in sections:
+        out += ([""] if out else []) + list(sec)
+    return out
+
+
 # ---------------------------------------------------------------- CLI
 
 def main(argv=None, now=None) -> int:
     ap = argparse.ArgumentParser(
         prog="python -m agents.ceo_report",
         description="Báo cáo tuần/tháng cho TGĐ (BẢN NHÁP — không tự gửi)")
-    ap.add_argument("--period", choices=("week", "month"), default="week")
+    ap.add_argument("--period", choices=("week", "month"), default=None)
     ap.add_argument("--ref", default=None, help="YYYY-MM-DD (ngày VN)")
     ap.add_argument("--llm", action="store_true",
                     help="nhận xét qua LLM gateway agent 'cockpit' (mặc định "
                          "TẮT)")
     ap.add_argument("--submit", action="store_true",
                     help="nộp trang vào hàng chờ khối ceo để TGĐ duyệt")
+    ap.add_argument("--bulletin", action="store_true",
+                    help="bản tin GĐ khối ceo kèm 3 section v8.1 → "
+                         "data/reports/director-ceo-<ngày>.md")
+    ap.add_argument("--now", default=None,
+                    help="ISO CHỈ cho --bulletin; thiếu múi giờ = giờ VN")
     ap.add_argument("--out-dir", default=str(REPORTS_DIR))
     args = ap.parse_args(argv)
+    if args.bulletin:
+        if args.submit or args.llm or args.period or args.ref:
+            ap.error("--bulletin không đi với --submit/--llm/--period/--ref")
+        try:
+            now = parse_now(args.now) if args.now else now
+        except ValueError:
+            ap.error("--now sai định dạng ISO")
+        return _bulletin(now or datetime.now(VN_TZ), Path(args.out_dir))
+    if args.now is not None:
+        ap.error("--now chỉ đi với --bulletin")
+    args.period = args.period or "week"
     try:
         ref = (date.fromisoformat(args.ref) if args.ref
                else last_closed_ref(args.period, now))
@@ -533,8 +604,9 @@ def main(argv=None, now=None) -> int:
         return 2
     try:
         try:
+            secs = compute_sections(conn, now or datetime.now(VN_TZ))
             rep = build(conn, args.period, ref, now=now, llm=args.llm,
-                        metrics=metrics)
+                        metrics=metrics, sections=secs)
         except psycopg.Error as e:
             print(f"[error] lỗi DB: {_db_msg(e)[:300]}", file=sys.stderr)
             return 2
@@ -574,6 +646,29 @@ def main(argv=None, now=None) -> int:
     finally:
         with suppress(Exception):
             conn.close()
+
+
+def _bulletin(now: datetime, out_dir: Path) -> int:
+    conn = connect()
+    if conn is None:
+        print("[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc"
+              " host chết)", file=sys.stderr)
+        return 2
+    try:
+        secs = compute_sections(conn, now)
+        path, _ = director.run(conn, "ceo", now, out_dir=out_dir,
+                               extra=bulletin_extra(secs))
+    except (psycopg.Error, director.DirectorConfigError) as e:
+        msg = _db_msg(e) if isinstance(e, psycopg.Error) else str(e)
+        print(f"[error] bản tin khối ceo: {_cell(msg)[:300]}",
+              file=sys.stderr)
+        return 2
+    finally:
+        with suppress(Exception):
+            conn.close()
+    print(f"[bulletin] {path} — bản tin GĐ khối ceo + 3 section (BẢN NHÁP, "
+          "không tự gửi)")
+    return 0
 
 
 if __name__ == "__main__":

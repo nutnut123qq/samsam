@@ -1,0 +1,126 @@
+# v8.1 gate chung (vòng 2) — 2026-10-13 01:08:19 +0700
+## DB thật TRƯỚC gate (đếm dòng)
+decision_log=0 approval_queue=0 approvals=0 decisions=0 channel_posts=0 market_rows=0 red_alerts=0 content_drafts=1 llm_usage=41
+## file targeted không tồn tại (bỏ khỏi lệnh):
+[end]
+## targeted lần 1 — 2026-10-13 01:08:25 +0700
+........................................................................ [ 60%]
+........................................................................ [ 70%]
+........................................................................ [ 80%]
+........................................................................ [ 90%]
+....................................................................     [100%]
+716 passed in 1112.32s (0:18:32)
+rc=0
+## targeted lần 2 — 2026-10-13 01:27:23 +0700
+........................................................................ [ 60%]
+........................................................................ [ 70%]
+........................................................................ [ 80%]
+........................................................................ [ 90%]
+....................................................................     [100%]
+716 passed in 965.78s (0:16:05)
+rc=0
+## targeted lần 3 — 2026-10-13 01:43:47 +0700
+........................................................................ [ 60%]
+........................................................................ [ 70%]
+........................................................................ [ 80%]
+........................................................................ [ 90%]
+....................................................................     [100%]
+716 passed in 1389.78s (0:23:09)
+rc=0
+## ruff check .
+All checks passed!
+rc=0
+## py_compile
+rc=0
+## grep egress (rỗng)
+[end grep]
+## dpia_draft.egress_modules ∩ 3 module (rỗng)
+[]
+## git diff --stat data/data_flow_map.json data/eval/suites/ crawler/ connectors/ ingest/ (rỗng)
+[end]
+## CLI DB thật (chỉ đọc / case âm)
+[đề xuất] 0 mục khối ceo đã quyết trong 30 ngày chưa có trong sổ — agent KHÔNG tự ghi; NGƯỜI chạy lệnh --record:
+rc=0
+[sổ quyết định] 0 mục — ngày 13/10/2026 (giờ VN)
+[mốc trễ phòng Dự án] 0
+rc=0
+usage: python -m agents.ceo_decisions [-h] [--propose] [--record]
+                                      [--follow ID] [--list] [--days DAYS]
+                                      [--now NOW] [--topic TOPIC]
+                                      [--decision DECISION] [--by BY]
+                                      [--decided-by DECIDED_BY]
+                                      [--basis BASIS] [--note NOTE]
+                                      [--date DATE] [--due DUE]
+                                      [--status {dang_lam,xong,huy}]
+python -m agents.ceo_decisions: error: --by phải là tên NGƯỜI — không nhận 'agent:'/'system:'
+rc=2 (kỳ vọng 2)
+[done] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v81\ceo-risk-2026-10-13.md — đỏ 2, vàng 8, xanh 0
+rc=0
+[done] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v81\ceo-audit-2026-10-13.md — 0 mục trong mẫu số, 0 phát hiện
+rc=0
+usage: python -m agents.ceo_decisions [-h] [--propose] [--record]
+                                      [--follow ID] [--list] [--days DAYS]
+                                      [--now NOW] [--topic TOPIC]
+                                      [--decision DECISION] [--by BY]
+                                      [--decided-by DECIDED_BY]
+                                      [--basis BASIS] [--note NOTE]
+                                      [--date DATE] [--due DUE]
+                                      [--status {dang_lam,xong,huy}]
+python -m agents.ceo_decisions: error: chọn đúng 1 thao tác: --propose | --record | --follow | --list
+rc=2 (2 op, kỳ vọng 2)
+usage: python -m agents.ceo_report [-h] [--period {week,month}] [--ref REF]
+                                   [--llm] [--submit] [--bulletin] [--now NOW]
+                                   [--out-dir OUT_DIR]
+python -m agents.ceo_report: error: --bulletin không đi với --submit/--llm/--period/--ref
+rc=2 (kỳ vọng 2)
+usage: python -m agents.ceo_risk [-h] [--report] [--now NOW]
+                                 [--out-dir OUT_DIR]
+python -m agents.ceo_risk: error: --now sai định dạng ISO
+rc=2 (kỳ vọng 2)
+usage: python -m agents.ceo_audit [-h] [--report] [--now NOW]
+                                  [--out-dir OUT_DIR]
+python -m agents.ceo_audit: error: cần --report
+rc=2 (thiếu op, kỳ vọng 2)
+## DSN host chết (10.255.255.1) — exit 2 trong connect_timeout
+agents.ceo_decisions --propose → rc=2, 4s
+agents.ceo_risk --report --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v81 → rc=2, 10s
+agents.ceo_audit --report --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v81 → rc=2, 11s
+agents.ceo_report --bulletin --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v81 → rc=2, 12s
+[done] 11 khối hợp lệ (dry-run, không DB)
+rc=0
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+rc=0
+## full pytest (1 lần) — 2026-10-13 02:08:45 +0700
+rc=1
+FAILED tests/test_dr_drill.py::test_zz_no_dr_container_left - AssertionError:...
+FAILED tests/test_garden_director.py::test_bulletin_numbers_match_reference_sql
+FAILED tests/test_garden_director.py::test_bulletin_numbers_match_reference_sql
+2 failed, 3631 passed in 3788.26s (1:03:08)
+## DB thật SAU gate (đếm dòng)
+decision_log=0 approval_queue=0 approvals=0 decisions=0 channel_posts=0 market_rows=0 red_alerts=0 content_drafts=1 llm_usage=41
+## DB thật lúc bắt đầu worker (trước mọi CLI)
+decision_log=0 approval_queue=0 approvals=0 decisions=0 channel_posts=0 market_rows=0 red_alerts=0 content_drafts=1 llm_usage=41
+## git status --short
+ M DONE.md
+ M agents/ceo_report.py
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/schema.sql
+ M pipelines/director.py
+ M tests/test_ceo_report.py
+ M tests/test_director.py
+?? agents/ceo_audit.py
+?? agents/ceo_decisions.py
+?? agents/ceo_risk.py
+?? data/ceo_risk.json
+?? tests/fixtures/ceo_audit/
+?? tests/test_ceo_audit.py
+?? tests/test_ceo_decisions.py
+?? tests/test_ceo_risk.py
+# end — 2026-10-13 03:12:22 +0700
+
+## Phân tích 2 FAILED full pytest vòng 2 (worker, 2026-10-13)
+- tests/test_garden_director.py::test_bulletin_numbers_match_reference_sql — chạy lại riêng: vẫn FAIL (tất định). Nguyên nhân: test cũ v9.3 phụ thuộc đồng hồ thật — fixture insert garden_media (created_at = now() DB = 2026-10-13) nhưng bản tin cố định until=2026-10-12 → mục (6) "ảnh mới" lọc created_at < 2026-10-13 00:00 VN → [] (chỉ pass khi chạy trong 06–12/10/2026). KHÔNG liên quan diff v8.1 (không đụng garden/garden_director). Ngoài boundary — báo coordinator.
+- tests/test_dr_drill.py::test_zz_no_dr_container_left — container 'samsam-dr-20261013_024709-291a' của lượt drill song song (Docker dùng chung cho các worktree chạy song song); sau đó `docker ps -a` không còn container samsam-dr-* → race môi trường, không phải lỗi v8.1.
+- Vòng 1 (v81_gate_r1.log): 41 failed do subprocess returncode 3221225794 (0xC0000142 STATUS_DLL_INIT_FAILED — máy quá tải khi spawn process), vòng 2 hết → môi trường.

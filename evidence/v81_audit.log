@@ -1,0 +1,17 @@
+# v8.1 W81.4 ceo_audit — 2026-10-12 22:03:24 +0700
+## grep -nE 'insert into|update |delete from|raise_alert|submit\(|mark_removed|ingest\(' agents/ceo_audit.py (rỗng)
+[end grep]
+## pytest tests/test_ceo_audit.py -v
+tests/test_ceo_audit.py::test_wp10_acceptance_outside_in_fixture PASSED  [  8%]
+tests/test_ceo_audit.py::test_collect_inside_read_only_transaction PASSED [ 16%]
+tests/test_ceo_audit.py::test_report_cli_masks_and_no_post_text PASSED   [ 25%]
+tests/test_ceo_audit.py::test_rate_and_compliance_pure PASSED            [ 33%]
+tests/test_ceo_audit.py::test_cli_usage_exit2_before_connect[argv0] PASSED [ 41%]
+tests/test_ceo_audit.py::test_cli_usage_exit2_before_connect[argv1] PASSED [ 50%]
+tests/test_ceo_audit.py::test_cli_usage_exit2_before_connect[argv2] PASSED [ 58%]
+tests/test_ceo_audit.py::test_cli_usage_exit2_before_connect[argv3] PASSED [ 66%]
+tests/test_ceo_audit.py::test_cli_db_down_exit2 PASSED                   [ 75%]
+tests/test_ceo_audit.py::test_cli_dead_host_subprocess PASSED            [ 83%]
+tests/test_ceo_audit.py::test_grep_read_only_no_egress PASSED            [ 91%]
+tests/test_ceo_audit.py::test_ref_rendered_inline_code_no_markdown_link PASSED [100%]
+============================= 12 passed in 20.69s =============================

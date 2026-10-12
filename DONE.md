@@ -1683,6 +1683,460 @@ testimonial không số lọt phụ đề; script_banned literal (regex cửa s�
 test bắt; test_find_ffmpeg_order lỏng; test_ci_workflow:78 dòng dính space;
 `channels._warn` crash cp1258 trong thread (ngoài diff).
 
+## Checklist v8.1-quyet-dinh-rui-ro-audit
+
+Khán giả/mục đích: M31 (worktree `D:\code\samsam-w73`) — làm NỐT phần còn lại
+của WP10 "Cockpit điều hành TGĐ, HĐTV, BKS" (pmo.md dòng `| WP10`: "Tiến độ
+và Sổ quyết định. Sổ rủi ro pháp lý (đọc tracker của Pháp chế). Audit nội bộ
+outside-in P1"; nghiệm thu: "Audit outside-in phát hiện đúng bài lệch bản
+approved trên fixture"). Thiết kế: ctx/final_plans.json key `ceo` → 3 agent
+nhân viên "Agent Tiến độ & Sổ quyết định", "Agent Sổ rủi ro pháp lý mở",
+"Agent Kiểm soát nội bộ – Audit" (phần P1 outside-in). Nền ai-infra đã gộp
+(đọc code thật, TÁI DÙNG): `agents/ceo_report.py` (v8.0 — `build`/`render`/
+`finalize`, guardrail toàn trang, `--submit` khối `ceo`), `pipelines/
+cockpit.py` + `channel_snapshots`, `pipelines/approval_queue.py` +
+`approval_queue`/`decisions`/`approvals` (v3.4/v4.0), `pipelines/director.py`
+(`run(..., extra=...)` — precedent `agents/acc_ar.py`/`fin_director.py`),
+`agents/ra_kenh.py` (v4.3 — `channel_posts`, `by_error`, `load_config`
+đọc `data/phap_che.json`, mã `lech_ban_duyet`/`thieu_ban_duyet`),
+`agents/xnqc.py` (`list_dossiers`, `tpbvsk_skus`, `_valid_cap`),
+`pipelines/store.py` (`verify_publish`, `_same_person`, `save_draft`/
+`set_status`), `ingest/market_csv.py` (`market_snapshots`/`market_rows`,
+`read_export`/`load`), `agents/da_pmo.py` (`project_milestones`, luật "TRỄ"
+= `due_date < today and status <> 'xong'`), `pipelines/intel_alert.py`
+(`red_alerts` + `red_alert_acks`), `pipelines/red_alert.load_routing`,
+`scripts/dpia_draft.load_map` (`data/data_flow_map.json` `gaps`),
+`data/sim_config.json` (`dpia_signed`). Sau version: (1) **Sổ quyết định
+TGĐ** — bảng `decision_log` append-only, NGƯỜI ghi qua CLI `--by`; agent chỉ
+ĐỀ XUẤT mục từ hàng duyệt khối `ceo` đã quyết; liên kết tiến độ (mốc
+`project_milestones` trễ + quyết định quá hạn thực hiện); (2) **Sổ rủi ro
+pháp lý** — bảng xếp hạng TẤT ĐỊNH, CHỈ ĐỌC tracker Pháp chế (XNQC, bài kênh
+vi phạm mở/quá 24h, cảnh báo đỏ chưa xác nhận, DPIA chưa ký, tuyến cảnh báo
+đỏ), có mức + xu hướng tuần, `now` tham số; (3) **Audit outside-in P1** —
+bài đang đăng (`channel_posts`) + listing sàn (`market_rows`) so với bản đã
+duyệt (`verify_publish` sha256 / tiêu đề bản listing đã duyệt) → phát hiện
+bài/listing KHÔNG có bản duyệt hoặc LỆCH + tỷ lệ tuân thủ quy trình duyệt
+THEO KÊNH, CHỈ ĐỌC; (4) 3 phần thành 3 section mới của báo cáo TGĐ
+(`ceo_report`) + bản tin GĐ khối `ceo` (`--bulletin`), mọi số do code điền.
+
+Quy ước: ponytail — stdlib + `psycopg` (KHÔNG dep mới, KHÔNG LLM, KHÔNG
+mạng). 3 module mới, mỗi agent 1 file: `agents/ceo_decisions.py` (Tiến độ &
+Sổ quyết định), `agents/ceo_risk.py` (Sổ rủi ro), `agents/ceo_audit.py`
+(Audit outside-in P1). CẢ 3 KHÔNG import `httpx`/`requests`/
+`urllib.request`/`http.client`/`socket`/`smtplib`/`email.mime`/
+`pipelines.llm_gateway`/`openai` (kiểm `scripts/dpia_draft.egress_modules`
++ grep) → KHÔNG thêm luồng DF, `data/data_flow_map.json` KHÔNG đổi.
+`ceo_risk`/`ceo_audit` CHỈ SELECT (không `insert`/`update`/`delete`/gọi
+function ghi; chạy được trong transaction `read only`); `ceo_decisions` chỉ
+ghi `decision_log`. KHÔNG đường sửa/gỡ bài, KHÔNG đổi giá/listing sàn, KHÔNG
+ghi `channel_posts`/`market_*`/`xnqc_dossiers`/`approval_queue`/`approvals`/
+`red_alerts`/golden. 1 bảng mới `decision_log` trong block mới cuối
+`docs/schema.sql` (`create table if not exists`, KHÔNG `alter`/`drop` bảng
+cũ), append-only bằng CHÍNH `append_only_guard()` có sẵn — KHÔNG assert đếm
+cứng số bảng (test dùng sàn ≥ 24 / parse schema.sql); `docs/handover/
+kien-truc.md` thêm `decision_log` + sửa câu "N bảng public" khớp số parse được
+(66 → 67 tại thời điểm soạn; gộp song song thì đếm lại); `deploy/cloud/
+README.md` thêm 1 dòng bảng (drift-guard `test_cloud_readme_drift_guard`).
+KHÔNG sửa `docs/roles.sql` (bảng mới không grant → agent_writer/app_human bị
+từ chối mặc định; CLI chạy DSN chủ sở hữu — ghi rõ kien-truc + SOP, grant
+hẹp = someday). Luật `--by`/người quyết = NGƯỜI: tái dùng
+`agents.ra_kenh.by_error` (rỗng / ký tự điều khiển / `agent:`/`system:` không
+phân biệt hoa thường + khoảng trắng đầu / > 100 ký tự) — DB CHECK chặn thêm
+lớp `!~* '^\s*(agent|system)\s*:'` (precedent `xnqc_dossiers`). Connect qua
+`ingest.lead_store.connect` (connect_timeout; guard `tests/
+test_connect_timeout_guard.py`); print tiếng Việt → UTF-8 guard sau imports;
+CLI nhiều op → `n_ops > 1` usage exit 2 TRƯỚC connect; ghi trên conn chia sẻ
+→ `conn.commit()` tường minh; format-spec chỉ trên biến đã coerce (CLI truyền
+str — test boundary truyền str); ngày "hôm nay" theo giờ VN
+(`pipelines.period.VN_TZ`); `--now` CHỈ cho thao tác đọc (risk/audit/
+propose/list/bulletin-test), thao tác GHI dùng giờ thật. Job đọc định kỳ
+(`ceo_risk --report`, `ceo_audit --report`) bọc `pipelines.job_runs.job_run`.
+Print/log/section: URL, tên người, text tự do qua `_mask_pii` + thay ký tự
+điều khiển (`ra_kenh.safe`); section trong trang TGĐ KHÔNG chép text bài,
+KHÔNG chép tiêu đề listing (chỉ mã/kênh/id/URL đã mask + số đếm) — trang vẫn
+phải qua `guardrail.check` của `finalize`. File báo cáo → `data/reports/`
+(đã gitignore) qua `agents.report.write_report`. Test DB thật: fixture schema
+tạm + `docs/schema.sql` + `docs/roles.sql` ×2 rồi ROLLBACK (như `tests/
+test_director_framework.py::db`), code gọi `conn.commit()` → bọc `_TxConn`
+(precedent `tests/test_ra_kenh.py`); skip khi không DB nhưng gate đòi **0
+skipped**. Không assert wall-clock; `red_alerts.ts`/`red_alert_acks.acked_at`
+do DB đặt (`now()` = mốc đầu transaction) → test lấy `select now()` của tx
+làm mốc rồi truyền `now` = mốc ± offset. KHÔNG ghi bảng nào trên DB thật ngoài
+test rollback (CLI DB thật chỉ đọc / `--dry-run` / case âm); `apply_schema`
+×2 trên DB riêng `samsam_infra` được phép (tạo bảng).
+
+Quyết định phạm vi (ghi để coordinator duyệt): KHÔNG thêm bảng `risk_register`/
+`audit_findings` — sổ rủi ro và kết quả audit là TÍNH LẠI mỗi lần chạy từ
+tracker thật (plan acceptance (5) "không có bản nhập tay song song"); lưu vết
+= file báo cáo + trang TGĐ đã duyệt (sha256 trong `approval_queue`). Suite
+`data/eval/suites/qa_cockpit.json` GIỮ `skeleton` (ca của suite là memo để
+Agent Nghiệm thu cockpit chấm PASS/FAIL — agent đó chưa có code; kiểm tất định
+v8.1 nằm trong pytest) — file KHÔNG đổi. Khung giá–voucher (`campaign_price_
+frames`), audit inside-out, neo hash/bucket object-lock, gửi thật tới người
+nhận độc lập = P2/external-dep, ngoài version.
+
+External-dep (KHÔNG giả lập như thật, KHÔNG tự đánh dấu): tracker Pháp chế
+THẬT (hồ sơ XNQC thật, bài vi phạm thật — version chỉ đọc bảng v4.3 đang có);
+quyết định THẬT của TGĐ (`decision_log` ship RỖNG trên DB vận hành, không
+seed mục nào; mọi mục test chỉ trong schema tạm rollback); danh sách bài đang
+đăng THẬT + file listing Seller Center thật (fixture chỉ là MẪU `*_MAU.csv`);
+Pháp chế duyệt ngưỡng mức rủi ro + URL nguồn phí XNQC trong `data/
+ceo_risk.json` (BẢN DEV SOẠN); ký DPIA (`dpia_signed` giữ `false`); người
+nhận cảnh báo đỏ độc lập (`data/red_alert_routing.json` không đổi); role DB
+chỉ-đọc cho cockpit (someday).
+
+- [x] **W81.1 Schema `decision_log` append-only** — block mới cuối
+  `docs/schema.sql` comment "v8.1 Sổ quyết định TGĐ (WP10)": ai ghi (CLI
+  `agents/ceo_decisions.py`, DSN chủ sở hữu, NGƯỜI `--by`), ai đọc (cockpit/
+  bản tin), append-only, trạng thái theo dõi = dòng `cap_nhat` mới (không
+  UPDATE). Cột: `id` identity pk; `entry_kind text not null` check ∈
+  `quyet_dinh|cap_nhat`; `parent_id bigint references decision_log(id)`;
+  check `(entry_kind = 'quyet_dinh') = (parent_id is null)`; `decided_on
+  date`; `topic text` check `char_length 1..200`; `decision text` check
+  `char_length 1..2000`; `decided_by text`; check `entry_kind <>
+  'quyet_dinh' or (decided_on is not null and topic is not null and decision
+  is not null and btrim(coalesce(decided_by,'')) <> '')`; check `decided_by
+  is null or decided_by !~* '^\s*(agent|system)\s*:'`; `basis_kind text`
+  check ∈ `approval_queue|approvals|decisions|van_ban` (null cho
+  `cap_nhat`); `basis_id bigint`; check `basis_kind is null or basis_kind =
+  'van_ban' or basis_id is not null`; `due_date date`; check `due_date is
+  null or decided_on is null or due_date >= decided_on`; `follow_status text
+  not null default 'mo'` check ∈ `mo|dang_lam|xong|huy`; `note text` check
+  `char_length <= 500`; check `entry_kind <> 'cap_nhat' or follow_status <>
+  'xong' or btrim(coalesce(note,'')) <> ''` (xong phải có bằng chứng);
+  check `basis_kind <> 'van_ban' or char_length(btrim(coalesce(note,''))) >=
+  10` (căn cứ ngoài hệ thống phải mô tả); `recorded_by text not null` check
+  not blank và `!~* '^\s*(agent|system)\s*:'`; `recorded_at timestamptz not
+  null default now()`; `db_role text not null default session_user`. Partial
+  unique index `(basis_kind, basis_id) where entry_kind = 'quyet_dinh' and
+  basis_id is not null` (1 căn cứ → 1 mục). Trigger BEFORE INSERT
+  `decision_log_stamp()` ép `recorded_at := now()`, `db_role :=
+  session_user`, và `cap_nhat` phải trỏ `parent_id` là dòng `quyet_dinh`
+  (raise nếu không); trigger `before update or delete` + `before truncate`
+  dùng `append_only_guard()` có sẵn.
+  - Boundary: `docs/schema.sql` (block mới), `docs/handover/kien-truc.md`
+    (dòng bảng + "N bảng public" + mục quyền: chưa grant),
+    `deploy/cloud/README.md` (1 dòng bảng, đường B — quyết định TGĐ không
+    dựng lại được), `tests/test_ceo_decisions.py` (mới — phần schema)
+  - Gate: `python scripts/apply_schema.py` ×2 exit 0 trên DB riêng; test
+    (schema tạm rollback): schema.sql + roles.sql ×2 idempotent; insert mục
+    hợp lệ OK + `recorded_at` client gửi bị ghi đè; `UPDATE`, `DELETE`,
+    `TRUNCATE decision_log` → mỗi lệnh raise thông điệp "append-only" (kể cả
+    owner); `decided_by='agent:ceo'` / `recorded_by='  System: x'` →
+    CheckViolation; `quyet_dinh` thiếu `topic` → CheckViolation; `cap_nhat`
+    không `parent_id` / trỏ dòng `cap_nhat` → lỗi; `cap_nhat` `xong` không
+    `note` → CheckViolation; `due_date < decided_on` → CheckViolation;
+    `van_ban` note < 10 ký tự → CheckViolation; 2 mục `quyet_dinh` cùng
+    (`approval_queue`, id) → UniqueViolation; role `agent_writer` insert →
+    InsufficientPrivilege; `python -m pytest tests/test_handover_docs.py
+    tests/test_db_backup.py -q` xanh (tên + số bảng parse từ schema.sql);
+    `git diff docs/schema.sql | grep -cE "^\+.*(alter table|drop table)"` = 0;
+    `git diff --stat docs/roles.sql` rỗng
+  - Evidence: `evidence/v81_schema.log`
+- [x] **W81.2 Sổ quyết định + liên kết tiến độ (`agents/ceo_decisions.py`)**
+  — CLI:
+  `--propose [--days 30] [--now ISO]` CHỈ ĐỌC: mục `approval_queue` khối
+  `ceo` `status ∈ (approved, rejected)` quyết trong `days` ngày CHƯA có
+  `decision_log` (`basis_kind='approval_queue'`, `basis_id`) → in đề xuất
+  (id, loại, tiêu đề qua `_mask_pii` ≤ 80 ký tự, người quyết, ngày VN) + lệnh
+  `--record` mẫu; 0 ghi. `--record --topic T --decision D --by NGƯỜI_GHI
+  [--decided-by NGƯỜI_QUYẾT] [--basis approval_queue:ID|approvals:ID|
+  decisions:ID|van_ban] [--note ..] [--date YYYY-MM-DD] [--due YYYY-MM-DD]`:
+  `--by` và người quyết qua `ra_kenh.by_error` (lỗi → exit 2 trước connect);
+  căn cứ phải TỒN TẠI (`approval_queue` phải `approved|rejected` — pending/
+  expired → exit 1; `approvals`/`decisions` theo id); căn cứ
+  `approval_queue` → người quyết mặc định = `decided_by` của mục, truyền
+  `--decided-by` khác (so bằng `store._same_person`) → exit 1; `decided_on`
+  mặc định = ngày VN của `decided_at` (căn cứ hàng) / hôm nay VN; `--date`
+  tương lai → exit 1; `topic`+`decision`+`note` qua `guardrail.check`
+  TRƯỚC khi ghi (không ok → exit 1, 0 dòng — trang TGĐ chép topic nên mục
+  trượt guardrail làm hỏng trang) rồi lưu bản đã `_mask_pii`; trùng căn cứ →
+  exit 1 "đã ghi (#id)". `--follow ID --status dang_lam|xong|huy --by NGƯỜI
+  [--note ..]`: chỉ trên mục `quyet_dinh` chưa đóng (trạng thái hiện tại =
+  dòng mới nhất của chuỗi ∈ `mo|dang_lam`), `xong` thiếu `--note` → exit 2
+  trước connect. `--list [--now ISO]` in sổ. Hàm THUẦN `current_status(rows)`
+  (dòng mới nhất theo `id` trong chuỗi), `overdue(decisions, today)` (hạn <
+  hôm nay VN và trạng thái ∈ `mo|dang_lam`), `late_milestones(rows, today)`
+  (CÙNG luật `agents/da_pmo.render_board`: `due_date < today and status <>
+  'xong'`), `render_section(data, today) -> list[str]` ("## Tiến độ & Sổ
+  quyết định": số mục mở / quá hạn / ghi trong 7 ngày, ≤ 5 dòng quá hạn mới
+  nhất kèm người quyết + hạn dd/mm/yyyy, "### Mốc trễ (phòng Dự án)" ≤ 5
+  dòng + "…và N mốc khác"; rỗng → "- (không có)"); `section(conn, today)`
+  đọc DB → `render_section`. Không mạng, không LLM.
+  - Boundary: `agents/ceo_decisions.py` (mới), `tests/test_ceo_decisions.py`
+  - Gate: **agent không tự ghi**: `--record ... --by "agent:ceo"` /
+    `--by " SYSTEM:cron"` / `--decided-by "agent:x"` / `--by ""` / `--by`
+    có `\x1b` → exit 2, 0 dòng (kiểm cả trước connect: monkeypatch
+    `connect` đếm 0 lần gọi); `grep -nE "insert into|update |delete from"
+    agents/ceo_decisions.py` chỉ ra `insert into decision_log`; `--propose`
+    trên fixture (3 mục ceo: 1 approved đã ghi, 1 rejected chưa ghi, 1
+    pending) → đề xuất ĐÚNG 1 mục (rejected), số dòng `decision_log` trước =
+    sau; record từ mục approved → `decided_by`/`decided_on` lấy từ hàng, chạy
+    lại → exit 1 trùng; căn cứ pending → exit 1; `--decided-by` khác người
+    duyệt → exit 1; topic chứa từ cấm (`data/banned_words.txt`) → exit 1, 0
+    dòng; topic có SĐT "0905 123 456" → lưu dạng đã mask; `--follow` xong
+    không note → exit 2; follow mục đã `xong` → exit 1; `current_status`
+    chuỗi mo→dang_lam→xong = xong; `overdue`: hạn hôm qua + `dang_lam` → có,
+    hạn hôm qua + `xong` → không, hạn hôm nay → không (ranh giới ngày VN:
+    `now` 2026-10-20T00:30+07:00 ⇒ today 20/10 kể cả khi UTC còn 19/10);
+    `late_milestones` == tập mã trong mục "Mốc trễ" của
+    `da_pmo.render_board` trên CÙNG fixture (parity, gồm ca mốc "nộp XNQC" hạn
+    15/10/2026, today 20/10/2026 → trễ 5 ngày kèm `owner_role`); CLI 2 op
+    (`--propose --list`) → exit 2 trước connect; `--date 2026-13-01` (str) →
+    exit 2 không traceback
+  - Evidence: `evidence/v81_decisions.log`
+- [x] **W81.3 Sổ rủi ro pháp lý (`agents/ceo_risk.py` + `data/
+  ceo_risk.json`)** — config BẢN DEV SOẠN chờ Pháp chế duyệt (`_doc` ghi
+  rõ): `xnqc_phi_moc: "2026-12-31"`, `xnqc_phi_text` ("550.000 đồng/hồ sơ đến
+  hết 31/12/2026, 1.100.000 đồng/hồ sơ từ 01/01/2027" — nguồn ctx
+  plan_legal_hr/research_legal), `xnqc_phi_nguon_url` (URL TTHC Hải Phòng
+  trong ctx/plan_legal_hr.md, "mở 11/10/2026", CHƯA Pháp chế xác nhận),
+  `nhac_moc_ngay: [30, 14, 7]`, `do_khi_con_ngay: 7`; loader fail-closed
+  (thiếu/hỏng/`{}`/chỉ `_doc`/ngày sai/list rỗng → ValueError). Hạn đợt 2 +
+  cảnh báo giấy hết hạn đọc từ `data/phap_che.json` qua
+  `ra_kenh.load_config` (KHÔNG chép lại số). `collect(conn, as_of) -> facts`
+  CHỈ SELECT, as-of: hồ sơ `xnqc_dossiers` (`created_at <= as_of`, trạng
+  thái HIỆN TẠI — chưa có lịch sử, ghi chú cuối section) + SKU TPBVSK
+  (`xnqc.tpbvsk_skus()`); bài kênh vi phạm MỞ tại `as_of` (dòng mới nhất
+  theo URL trong các dòng `scanned_at <= as_of`, `severity` not null, `closed_at
+  is null or closed_at > as_of`); `red_alerts` gốc (KHÔNG tính dòng có
+  `detail ? 'escalation_of'`) `ts <= as_of` chưa có `red_alert_acks.acked_at
+  <= as_of`; `dpia_signed` (`data/sim_config.json`) + tổng `gaps` (`dpia_draft.
+  load_map`); tuyến cảnh báo (`red_alert.load_routing`, chỉ đếm người nhận).
+  `rank(facts, now, cfg) -> list[dict]` THUẦN (mỗi rủi ro: `code`, `level`
+  ∈ `do|vang|xanh`, `title` template code, `owner_role`, `due`/`days_left`,
+  `marker`, `source`): `XNQC-CHUA-NOP:<sku>` (TPBVSK không giấy hiệu lực
+  `_valid_cap` và không `da_nop|bo_sung`) — `do` khi min(ngày tới mốc phí,
+  ngày tới hạn đợt 2) ≤ `do_khi_con_ngay` (kể cả đã quá), còn lại `vang`;
+  `marker` T-30/T-14/T-7 theo ngày tới mốc phí (≤30/≤14/≤7, quá → "QUÁ MỐC
+  PHÍ"), dòng kèm `xnqc_phi_text` + URL nguồn; `XNQC-CHO-CAP:<sku>` (đã
+  nộp/bổ sung) `xanh`; `XNQC-HET-HAN:<id>` `da_cap` hết hạn → `do`, còn ≤
+  `het_han_canh_bao_ngay` → `vang`; `KENH:<channel>` (gộp theo kênh, kèm số
+  S1/S2/quá 24h) `do` khi có S1 hoặc `due_at < now`, còn lại `vang`;
+  `CANH-BAO-DO` (≥1 cảnh báo gốc chưa xác nhận) `do`; `DPIA` `do` khi
+  `dpia_signed` false, `vang` khi true mà còn gaps; `TUYEN-CANH-BAO` `do` khi
+  0 người nhận độc lập. Xếp hạng: (`do` > `vang` > `xanh`, `days_left` tăng
+  dần — None cuối, `code`) — tất định. `trend(cur, prev)` THUẦN: so
+  `rank(collect(as_of=now))` với `rank(collect(as_of=now-7 ngày))` → mỗi mã
+  `mới`/`↑`/`↓`/`=`, mã tuần trước có mà nay hết → "đã hết trong tuần: N".
+  `render_section(ranked, trend, now)` ("## Rủi ro pháp lý mở": bảng Mức |
+  Mã | Rủi ro | Owner (vai trò) | Hạn | Xu hướng — ≤ 8 dòng + "…và N"; số do
+  code). CLI `--report [--now ISO] [--out-dir DIR]` → `data/reports/
+  ceo-risk-<YYYY-MM-DD>.md`; exit 0 ok · 2 usage/config hỏng/DB down.
+  KHÔNG tư vấn pháp lý, KHÔNG đổi mức thay Pháp chế (chỉ luật trong config).
+  - Boundary: `agents/ceo_risk.py` (mới), `data/ceo_risk.json` (mới),
+    `tests/test_ceo_risk.py` (mới)
+  - Gate: **countdown (thuần, plan acceptance (1))**: SKU TPBVSK không hồ
+    sơ, `now` 2026-12-01 / 2026-12-17 / 2026-12-24 (giờ VN) → marker đúng
+    `T-30` / `T-14` / `T-7`, dòng chứa "550.000 đồng/hồ sơ đến hết 31/12/2026"
+    + "1.100.000 đồng/hồ sơ từ 01/01/2027" + URL nguồn; 2027-01-02 → "QUÁ MỐC
+    PHÍ" mức `do`; **xếp hạng fixture (thuần, `now` tham số)**: facts gồm SKU
+    A không hồ sơ, B `da_nop`, C `da_cap` hết hạn sau 10 ngày, D `da_cap` đã
+    hết hạn, kênh facebook 1 S1, web 1 S2 quá hạn, shopee 1 S2 còn hạn, 2 cảnh
+    báo gốc chưa xác nhận + 1 bản leo thang, `dpia_signed=false`, routing 0
+    người → danh sách `code` theo thứ tự ĐÚNG bằng list kỳ vọng viết sẵn trong
+    test (không tính lại bằng chính `rank`), bản leo thang không đếm,
+    `XNQC-CHO-CAP:B` mức `xanh` cuối; đảo thứ tự facts đầu vào → kết quả y
+    hệt; **xu hướng**: tuần trước có `KENH:web` vàng nay đỏ → `↑`, mã mới →
+    `mới`, mã tuần trước có nay hết → "đã hết trong tuần: 1"; **DB as-of
+    (rollback)**: bài vi phạm `closed_at` sau `as_of` vẫn tính mở tại `as_of`,
+    đóng trước → không; cảnh báo có ack trước `as_of` → không tính;
+    `collect` chạy trong `begin read only` không lỗi (chứng minh chỉ đọc);
+    config: file thiếu / `{}` / chỉ `_doc` / ngày sai → ValueError, CLI exit 2;
+    section/report không chứa tên người thật (owner = vai trò), không chứa text
+    bài; `grep -nE "insert into|update |delete from|raise_alert|submit\("
+    agents/ceo_risk.py` rỗng
+  - Evidence: `evidence/v81_risk.log`
+  - Lệch contract (có lý do): mã `XNQC-CHUA-NOP` đổi thành `XNQC-CHO-NOP` —
+    guardrail gập dấu coi "CHUA" là từ cấm "chữa" → trang TGĐ trượt `finalize`.
+- [x] **W81.4 Audit outside-in P1 (`agents/ceo_audit.py`)** — CHỈ ĐỌC.
+  `collect(conn) -> dict`: (a) **bài đang đăng**: dòng `channel_posts` mới
+  nhất theo URL; `close_reason = 'da_go'` → đã gỡ (đếm riêng, KHÔNG vào mẫu
+  số); `draft_id is null` và `posted_on <` `quy_trinh_duyet_tu`
+  (`ra_kenh.load_config`) → `truoc_quy_trinh` (đếm riêng, KHÔNG vào mẫu số;
+  ngày trống = bài mới, fail-closed như `ra_kenh.scan_row`); còn lại TÍNH
+  LẠI tại thời điểm audit (KHÔNG tin `codes` đã lưu — bản duyệt có thể bị
+  reject sau đó): `store.verify_publish(conn, draft_id, text)` True → `khop`;
+  `draft_id` có quyết định mới nhất `approved` nhưng sha lệch → `lech_ban_duyet`;
+  không `draft_id` / quyết định mới nhất không phải approved / draft không tồn
+  tại → `thieu_ban_duyet`. (b) **listing sàn**: snapshot `listing` mới nhất
+  mỗi kênh (`market_snapshots` theo `imported_at desc, id desc`) → mọi
+  `market_rows`: `sku_key` null → `khong_xac_dinh_sku` (VÀO mẫu số —
+  fail-closed); bản duyệt = `content_drafts` `content_type='listing'`, cùng
+  `sku`+`channel`, `store.verify_publish(id, text)` True; không có → `thieu_
+  ban_duyet`; có → so tiêu đề listing với DÒNG ĐẦU bản duyệt (NFC + casefold +
+  gộp khoảng trắng) khớp bất kỳ bản → `khop`, không → `lech_ban_duyet`. GIỚI
+  HẠN P1 ghi rõ trong docstring + report: file xuất sàn chỉ có tiêu đề/giá —
+  mô tả listing chưa so được; giá đã có `market_alerts price_mismatch` (v3.3,
+  không làm lại — section chỉ đếm cảnh báo giá đang mở). `compliance(items)`
+  THUẦN → theo kênh {mẫu số, khớp, tỷ lệ `khop/mẫu số` (mẫu số 0 → "—",
+  KHÔNG 0%), số theo mã}; kênh trong `market_csv.CHANNELS` không có snapshot
+  → dòng "chưa có dữ liệu quan sát (chỉ file xuất tay)". `render_section`
+  ("## Audit outside-in (P1)": bảng theo kênh + tổng finding theo mã, CHỈ số +
+  id/URL đã mask, không text bài/tiêu đề listing, ≤ 5 finding + "…và N (xem
+  ceo-audit-<ngày>.md)"); CLI `--report [--now ISO] [--out-dir DIR]` →
+  `data/reports/ceo-audit-<YYYY-MM-DD>.md` (danh sách đủ finding: kênh, mã,
+  URL/`item_id`/`seller_sku` qua `_mask_pii`+`safe`); exit 0 kể cả có finding
+  (audit là báo, không chặn) · 2 usage/DB down. KHÔNG mở ticket/cảnh báo
+  (`ra_kenh` đã làm phần đó), KHÔNG ghi gì.
+  - Boundary: `agents/ceo_audit.py` (mới), `tests/test_ceo_audit.py` (mới),
+    `tests/fixtures/ceo_audit/` (mới: `posts_MAU.csv` định dạng `ra_kenh`
+    `url,kenh,is_ai,text,loai_noi_dung,ngay_dang,draft_id,sku,
+    is_sponsored`; `listing_shopee_MAU.csv` header Seller Center theo mapping
+    hiện hành của `ingest.market_csv`; `README.md` mô tả từng dòng + kỳ vọng;
+    KHÔNG tên/SĐT/email người thật, text bài sạch guardrail)
+  - Gate: **nghiệm thu WP10 trên fixture (DB rollback, đi ĐÚNG đường thật)**:
+    tạo draft bằng `store.save_draft` + duyệt bằng `store.set_status(...,
+    'approved', <người khác>)`; nạp bài bằng `ra_kenh.ingest` từ
+    `posts_MAU.csv` (test sinh bản tmp với `draft_id` thật); nạp listing bằng
+    `market_csv.read_export` + `load`. Fixture: facebook P1 đúng bản duyệt →
+    `khop`; P2 bản duyệt + sửa 1 ký tự → `lech_ban_duyet`; P3 không
+    `draft_id`, ngày ≥ `quy_trinh_duyet_tu` → `thieu_ban_duyet`; P4 không
+    `draft_id`, ngày 2026-09-01 → `truoc_quy_trinh` (ngoài mẫu số); P5 draft bị
+    reject SAU khi đã nạp (text trùng hash cũ) → `thieu_ban_duyet` (chứng minh
+    tính lại, không tin `codes` lưu); P6 đã `--mark-removed` → đã gỡ (ngoài mẫu
+    số); shopee L1 tiêu đề == dòng đầu listing đã duyệt → `khop`; L2 có bản
+    duyệt nhưng tiêu đề khác → `lech_ban_duyet`; L3 SKU không có listing duyệt
+    → `thieu_ban_duyet`; L4 không map SKU → `khong_xac_dinh_sku`. Kỳ vọng: tập
+    (kênh, mã, URL/item) finding == ĐÚNG tập viết sẵn trong test (P2, P3, P5,
+    L2, L3, L4 — không thừa, không sót); facebook mẫu số 4 khớp 1 (25%),
+    shopee mẫu số 4 khớp 1 (25%); tiktok "chưa có dữ liệu quan sát"; mẫu số 0
+    → "—"; **chỉ đọc**: `collect` chạy trong `begin read only` OK; số dòng
+    `channel_posts`/`market_rows`/`approval_queue`/`approvals`/`red_alerts`/
+    `content_drafts` trước = sau `collect`+`--report`; `grep -nE "insert
+    into|update |delete from|raise_alert|submit\(|mark_removed|ingest\("
+    agents/ceo_audit.py` rỗng; report/section không chứa text bài P1–P6 lẫn
+    tiêu đề listing (assert substring âm), URL có SĐT giả bị mask; CLI 2 op /
+    `--now` sai → exit 2 trước connect
+  - Evidence: `evidence/v81_audit.log`
+  - Vá cold-check MAJOR (vòng 2): guardrail gập dấu coi chữ TRẦN trong
+    slug URL (`...-chua-...`, `thuoc`)/`seller_sku` là từ cấm → trang TGĐ
+    trượt `finalize`, chặn `--submit`, bản tin dính theo. Section trang
+    TGĐ/bản tin giờ CHỈ ghi `post #<channel_posts.id>` / `listing
+    market_rows #<id>`; URL/item_id đã che PII chỉ còn trong file
+    `ceo-audit-<ngày>.md` (`render_section(full_ref=True)`, không qua
+    finalize). Vá theo cụm: `ra_kenh.page_safe` (chuỗi tự trượt guardrail →
+    "(ẩn: trượt guardrail)") cho mọi ô `ceo_risk.risk_row` (sku_key/kênh/
+    URL nguồn) và `ceo_decisions.render_section` (topic, decided_by, mã
+    mốc, owner_role). Test: `test_ceo_report::test_v81_bare_ascii_db_
+    strings_do_not_fail_page` (DB thật: bài slug 'chua' bị bắt
+    thieu_ban_duyet + decided_by 'Thuoc' + mốc `CHUA-KY-HD` → finalize ok,
+    bản tin sạch), `test_ceo_audit::test_section_ids_only_bare_ascii_slug_
+    passes_guardrail`, `test_ceo_risk::test_risk_row_bare_ascii_cell_
+    hidden_not_page_failing`. Evidence: `evidence/v81_fix_r2.log`
+- [x] **W81.5 Gắn 3 section vào báo cáo TGĐ + bản tin khối `ceo`** —
+  `agents/ceo_report.py`: `build(..., sections=None)` — `main` LUÔN tính
+  `sections` = [`ceo_decisions.section`, `ceo_risk.section`,
+  `ceo_audit.section`] (mỗi cái trong savepoint `conn.transaction()`; lỗi
+  `psycopg.Error`/`ValueError` → section chỉ 1 dòng "*(không đọc được: <lý do
+  ngắn>)*" — KHÔNG crash, KHÔNG im lặng, các section khác vẫn ra); `render`
+  chèn 3 section sau "## Thời gian duyệt của TGĐ" và trước "## Nhận xét";
+  `sections=None` → trang y hệt v8.0 (test cũ KHÔNG sửa assert). Section là
+  markdown do CODE dựng; `llm_prompt`/`commentary_values`/`ground` KHÔNG đổi
+  (LLM không thấy section). Thêm op `--bulletin [--now ISO]` →
+  `director.run(conn, "ceo", now, extra=<3 section>)` → `data/reports/
+  director-ceo-<ngày>.md` (cùng mẫu `acc_ar --bulletin`); `--bulletin` kết hợp
+  `--submit`/`--llm`/`--period`/`--ref` → exit 2 trước connect.
+  `pipelines/director.py` `main`: khối `ceo` in `[warn]` "bản tin ghi đè bản
+  của `python -m agents.ceo_report --bulletin`" (parity cảnh báo finance v9.0)
+  — chỉ thêm nhánh warn, không đổi logic khác.
+  - Boundary: `agents/ceo_report.py`, `pipelines/director.py` (1 nhánh warn),
+    `tests/test_ceo_report.py` (CHỈ THÊM test, không sửa/xoá assert cũ — diff
+    đối chiếu số assert trước/sau), `tests/test_director.py` (thêm 1 test warn)
+  - Gate: test cũ `tests/test_ceo_report.py` xanh nguyên (số assert cũ không
+    giảm); DB rollback (fixture W81.2–W81.4 + snapshot cockpit như
+    `test_db_build_render_and_submit`): `main(["--ref", ..., "--out-dir",
+    tmp])` → file có ĐỦ 3 heading "## Tiến độ & Sổ quyết định", "## Rủi ro
+    pháp lý mở", "## Audit outside-in (P1)" theo đúng thứ tự giữa "Thời gian
+    duyệt" và "Nhận xét"; mọi số trong 3 section == số tính bằng hàm thuần
+    trên cùng fixture (không hard-code trong render); `finalize` ok=True
+    (trang sạch guardrail dù fixture có bài lệch); `--submit` → payload mục
+    `weekly_report` chứa 3 section và `content_sha256 = sha256(payload)`;
+    `llm_prompt(rep)` có/không `sections` GIỐNG HỆT; monkeypatch
+    `ceo_risk.section` raise ValueError → trang vẫn ghi, dòng "không đọc
+    được", 2 section kia còn; `--bulletin` (rollback, `now` tham số) → file
+    `director-ceo-<ngày>.md` chứa 3 section trước "## Người duyệt";
+    `--bulletin --submit` → exit 2, `connect` 0 lần gọi;
+    `python -m pipelines.director --block ceo` (DB down giả) in warn ceo trên
+    stderr
+  - Evidence: `evidence/v81_report.log`
+- [x] **W81.6 Docs** — `docs/handover/sop.md` mục 4c thêm tiểu mục "Sổ quyết
+  định, sổ rủi ro, audit outside-in (v8.1)": lệnh `python -m
+  agents.ceo_decisions --propose|--record|--follow|--list`, `python -m
+  agents.ceo_risk --report`, `python -m agents.ceo_audit --report`, `python -m
+  agents.ceo_report --bulletin`; ai ghi gì (NGƯỜI `--by`, agent chỉ đề xuất),
+  sổ rủi ro/audit tính lại từ tracker (không nhập tay song song), giới hạn P1
+  (chỉ so tiêu đề listing; xnqc chưa có lịch sử nên xu hướng hồ sơ theo hiện
+  tại), DSN chủ sở hữu (chưa grant), external-dep. `docs/handover/
+  kien-truc.md`: `decision_log` + "N bảng public" + 3 module agent khối ceo.
+  `deploy/cloud/README.md`: dòng `decision_log` (đường B).
+  - Boundary: `docs/handover/sop.md`, `docs/handover/kien-truc.md`,
+    `deploy/cloud/README.md`
+  - Gate: `python -m pytest tests/test_handover_docs.py
+    tests/test_db_backup.py -q` xanh (SOP core commands, bảng đủ, drift-guard
+    README: mọi `python -m X` trỏ file có thật); `python scripts/dpia_draft.py
+    --check` exit 0 (map không đổi); docs không chứa tên/SĐT người thật
+  - Evidence: `evidence/v81_docs.log`
+- [x] **Gate chung** — (đỏ ngoài boundary: garden date-bomb vá `ai-infra` 19dc153, dr_drill = môi trường; vòng 2, `evidence/v81_gate.log`: targeted ×3 = 716 passed ×3, 0 skipped; ruff sạch; CLI/DB trước=sau OK; full `2 failed, 3631 passed` — 2 fail NGOÀI v8.1: `test_garden_director::test_bulletin_numbers_match_reference_sql` date-bomb wall-clock có sẵn từ v9.3 (fail tất định từ 13/10/2026), `test_dr_drill::test_zz_no_dr_container_left` container drill của worktree song song = môi trường; vòng 1 41 fail 0xC0000142 = máy quá tải)
+  - targeted ×3: `python -m pytest tests/test_ceo_decisions.py tests/test_ceo_risk.py tests/test_ceo_audit.py tests/test_ceo_report.py tests/test_cockpit.py tests/test_ra_kenh.py tests/test_xnqc.py tests/test_da_pmo.py tests/test_director.py tests/test_director_framework.py tests/test_approval_queue.py tests/test_store.py tests/test_market_csv.py tests/test_intel_alert.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_db_backup.py tests/test_connect_timeout_guard.py -q -rs`
+    (file nào không tồn tại thì bỏ khỏi lệnh và ghi rõ) 3 lần liên tiếp xanh,
+    test DB **0 skipped** (lệnh nặng có thể bị đẩy nền — đọc output tới khi
+    process exit, không chạy chồng, không retry mù)
+  - full: `python -m pytest -q` xanh, ≥ 3533 (baseline) + test mới — ĐÚNG 1
+    lần/vòng (skip chỉ chấp nhận `tests/test_dr_drill.py` do Docker — môi
+    trường, ghi rõ)
+  - `ruff check .` sạch
+  - `python -m py_compile agents/ceo_decisions.py agents/ceo_risk.py agents/ceo_audit.py agents/ceo_report.py pipelines/director.py`
+  - Không egress/không đường sửa bài-sàn: `grep -nE "import
+    (httpx|requests|socket|smtplib|openai)|from (httpx|requests|smtplib|
+    urllib\.request|http\.client|openai)|urllib\.request|email\.mime|
+    webbrowser|llm_gateway" agents/ceo_decisions.py agents/ceo_risk.py
+    agents/ceo_audit.py` rỗng; `scripts/dpia_draft.egress_modules()` không
+    chứa 3 module; `git diff --stat data/data_flow_map.json
+    data/eval/suites/ crawler/ connectors/ ingest/` rỗng
+  - CLI (DB thật, CHỈ ĐỌC/case âm): `python -m agents.ceo_decisions
+    --propose` exit 0; `--list` exit 0; `--record --topic x --decision y
+    --by "agent:x"` exit 2; `python -m agents.ceo_risk --report --out-dir
+    <scratchpad>` exit 0; `python -m agents.ceo_audit --report --out-dir
+    <scratchpad>` exit 0; mọi CLI 2 op → exit 2; `DATABASE_URL` trỏ host chết
+    (`postgresql://u@10.255.255.1:5432/x`) → exit 2 trong ≤ connect_timeout
+    (không hang); `python -m pipelines.director --all --dry-run` exit 0;
+    `python scripts/dpia_draft.py --check` exit 0
+  - DB thật trước/sau toàn bộ gate: `decision_log` (0 dòng), `approval_queue`,
+    `approvals`, `decisions`, `channel_posts`, `market_rows`, `red_alerts`,
+    `content_drafts`, `llm_usage` số dòng KHÔNG đổi (không row test sót,
+    không tự ghi quyết định, 0 lời gọi LLM)
+  - `git diff --stat`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); không đụng `docs/roles.sql`, `data/sim_config.json`,
+    `data/red_alert_routing.json`, `data/phap_che.json`; `lv2-market-top.png`
+    giữ untracked; fixture/config không chứa tên/SĐT/email người thật
+- [ ] **external-dep** Tracker Pháp chế thật (hồ sơ XNQC/bài vi phạm thật) +
+  Pháp chế duyệt ngưỡng mức + URL nguồn phí trong `data/ceo_risk.json`.
+- [ ] **external-dep** Quyết định thật của TGĐ ghi vào `decision_log` (ship
+  rỗng) + role DB chỉ-đọc/ghi hẹp cho cockpit (`docs/roles.sql` chưa grant).
+- [ ] **external-dep** Danh sách bài đang đăng thật + file listing Seller
+  Center thật (fixture chỉ MẪU); DPIA ký (`dpia_signed`), người nhận cảnh báo
+  đỏ độc lập; P2: khung giá–voucher, inside-out, neo hash object-lock.
+
+v8.1 đóng 2026-10-13 (workflow resume từ build; worker tự vá A03 `--decided-by`
+markdown link; vòng 0: FIX/PASS/PASS — 1 MAJOR: chuỗi không dấu từ DB (slug
+'chua', tên 'Thuoc', mốc CHUA-...) làm trang TGĐ trượt finalize → section chỉ ghi
+id nội bộ (`post #id`, `listing market_rows #id`), `ra_kenh.page_safe` thay ô trượt
+guardrail bằng "(ẩn: trượt guardrail)", áp cụm ceo_risk/ceo_decisions + test DB
+thật; vòng 1 PASS, 0 mở). Lệch contract có lý do: mã `XNQC-CHUA-NOP` →
+`XNQC-CHO-NOP` (bỏ dấu khớp từ cấm "chữa"). Full pytest worker: 3631 pass + đỏ
+ngoài boundary (garden date-bomb — vá `ai-infra` 19dc153; dr_drill container
+worktree song song). Gate coordinator chạy lại: ruff sạch, test ceo_*/director/
+ra_kenh xanh, `dpia_draft --check`. External-dep: tracker Pháp chế thật + duyệt
+ngưỡng/URL nguồn phí `data/ceo_risk.json`, quyết định thật TGĐ (`decision_log`
+ship rỗng), role DB chỉ-đọc/ghi hẹp cho cockpit, danh sách bài đang đăng + file
+listing Seller Center thật, ký DPIA, người nhận cảnh báo đỏ độc lập; P2: khung
+giá–voucher, audit inside-out, neo hash object-lock. Someday: `who` từ dòng căn
+cứ chưa qua _MARKUP_RE; `--propose` in object_type thô; ceo_audit channel thô
+trong bảng (đã whitelist lúc nhập); thiếu test bài không ngày đăng + ack sau
+as_of; page_safe thay cả ô title code-built khi sku_key chứa từ trần; dòng lỗi
+DB `str(e)` chưa qua page_safe (có thể làm trang trượt finalize).
+
 Nhánh `ai-infra`: M31 đợt gộp 5 (2026-10-12) — v4.3, v9.1, v8.3, v5.1, v6.2 đã gộp
 (66 bảng; full pytest 3530 pass + 3 đỏ tích hợp đã vá). Tích hợp: mã luồng DF-26
 (v4.3), DF-27 (v9.1), DF-28 (v8.3), DF-29/30 (v5.1) + DPIA/TIA 30 luồng; lô B2B

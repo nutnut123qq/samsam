@@ -1,0 +1,28 @@
+# v8.1 fix cold-check MAJOR (chu tran ASCII trong section TGD) - targeted x3 2026-10-13T04:12:46+07:00
+## targeted run 1
+........................................................................ [ 67%]
+......................................................................   [100%]
+214 passed in 120.94s (0:02:00)
+## targeted run 2
+........................................................................ [ 67%]
+......................................................................   [100%]
+214 passed in 106.87s (0:01:46)
+## targeted run 3
+........................................................................ [ 67%]
+......................................................................   [100%]
+214 passed in 112.59s (0:01:52)
+## full pytest 2026-10-13T04:18:58+07:00
+>       assert db.execute(sqls[8]).fetchall() == [("KV-A01", 1)]
+E       AssertionError: assert [] == [('KV-A01', 1)]
+E         
+E         Right contains one more item: ('KV-A01', 1)
+E         Use -v to get more diff
+
+tests\test_garden_director.py:329: AssertionError
+1 failed, 3635 passed in 1711.20s (0:28:31)
+## ruff check .
+All checks passed!
+## ghi chu worker
+- 1 failed = tests/test_garden_director.py::test_bulletin_numbers_match_reference_sql: date-bomb wall-clock co san tu v9.3 (fail tat dinh tu 13/10/2026), NGOAI v8.1 — da ghi o Gate chung vong 2 (evidence/v81_gate.log); khong lien quan file sua vong nay.
+- 0 skipped trong lan full nay.
+- ruff: 3 loi lint test moi (re.M -> re.MULTILINE, import sort) da --fix TRUOC khi buoc ruff cua gate chay; ket qua gate "All checks passed!".

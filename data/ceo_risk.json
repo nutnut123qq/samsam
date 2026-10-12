@@ -1,0 +1,8 @@
+{
+  "_doc": "BẢN DEV SOẠN — CHỜ PHÁP CHẾ DUYỆT (v8.1 WP10, agents/ceo_risk.py — Sổ rủi ro pháp lý mở cho TGĐ). xnqc_phi_moc: mốc đổi phí thẩm định hồ sơ XNQC TPBVSK (thủ tục 1.006.424); xnqc_phi_text: mức phí trước/sau mốc; xnqc_phi_nguon_url: nguồn dev đọc (TTHC Hải Phòng, mở 11/10/2026) — CHƯA được Pháp chế xác nhận, Pháp chế thay bằng nguồn chính thức Đà Nẵng/Quảng Nam nếu khác. nhac_moc_ngay: các mốc nhắc T-N trước mốc phí (giảm dần). do_khi_con_ngay: SKU TPBVSK chưa nộp mà còn ≤ N ngày tới mốc phí hoặc hạn đợt 2 → mức đỏ. Hạn đợt 2 + ngưỡng giấy sắp hết hạn đọc từ data/phap_che.json (không chép lại). Agent KHÔNG tư vấn pháp lý, KHÔNG đổi mức thay Pháp chế — chỉ áp luật trong file này. Loader fail-closed: thiếu/hỏng/rỗng/chỉ _doc/ngày sai/list rỗng → từ chối.",
+  "xnqc_phi_moc": "2026-12-31",
+  "xnqc_phi_text": "550.000 đồng/hồ sơ đến hết 31/12/2026, 1.100.000 đồng/hồ sơ từ 01/01/2027",
+  "xnqc_phi_nguon_url": "https://cdn.haiphong.gov.vn/gov-hpg/6853/tintuc/2026/6/noi-dung639183431659039750.docx",
+  "nhac_moc_ngay": [30, 14, 7],
+  "do_khi_con_ngay": 7
+}
