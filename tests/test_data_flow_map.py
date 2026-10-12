@@ -33,7 +33,10 @@ REQUIRED_MODULES = [
     "ingest/kb_internal.py", "ingest/doc_intake.py", "ingest/market_csv.py",
     "scripts/health_bulletin.py", "crawler/collect.py", "scripts/db_backup.py",
     # v9.0 kế toán — luồng có PII người mua hóa đơn / mã đơn / công nợ
-    "ingest/settlement_csv.py", "agents/acc_invoice.py", "agents/acc_ar.py"]
+    "ingest/settlement_csv.py", "agents/acc_invoice.py", "agents/acc_ar.py",
+    # v9.1 FP&A — số liệu tổng hợp + tên người lập/duyệt giá vốn
+    "agents/fp_pnl.py", "agents/fp_ads.py", "agents/fp_opscost.py",
+    "agents/fp_cash.py", "agents/fin_director.py"]
 
 
 def _declared(m):

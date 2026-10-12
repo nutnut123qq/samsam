@@ -131,6 +131,8 @@ bảng nào thì dừng, không bật app.
 | `recon_results` | A (`python -m ingest.settlement_csv --reconcile`) hoặc B | nhãn đối soát dựng lại được từ `settlement_rows` + đơn sàn |
 | `invoice_lines` | B | dòng lô hóa đơn NHÁP gắn mục `approval_queue` — dựng lại sẽ lệch lô đã duyệt |
 | `dealer_ar` | B | sổ công nợ đại lý nạp tay (v9.0) — chỉ mã đại lý |
+| `cogs_versions` | B | giá vốn đã duyệt (v9.1) — người lập/duyệt + lịch sử hiệu lực không dựng lại được |
+| `opex_entries` | B | chi phí cloud/SaaS nhập tay (v9.1) — không tên người; khoản > X gắn chữ ký TGĐ trong `approval_queue` (đường B) — dựng lại lệch khoản đã ký |
 
 ## 5. Backup + diễn tập trên cloud (mẫu — external-dep)
 

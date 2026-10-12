@@ -1,0 +1,40 @@
+{
+  "_doc": "v9.1 FP&A (WP12) — cấu hình FP-AdsBudget / FP-OpsCost / FP-Cash. GIẢ ĐỊNH — chờ GĐ tài chính chốt (external-dep): mọi ngưỡng, hệ số, trần, tỷ giá, chi cố định, độ trễ tiền sàn về, số dư đầu kỳ là ước lượng của team triển khai, KHÔNG phải số thật. confirmed_by = null tới khi GĐ tài chính ký. ads: min_gross_margin_pct (0..1, biên gộp tối thiểu để được đề xuất ngân sách), budget_share_of_margin (0..1, ngân sách đề xuất = lãi gộp tháng tham chiếu × hệ số), channels (kênh online được chấm). opscost: usd_vnd (tỷ giá quy chi phí AI), budget_vnd {scope: trần tháng VND} với scope ai:<agent_id> | ai | cloud | saas | ads | khac | tong, warn_pct/stop_pct (mức cảnh báo %), threshold_x_vnd (khoản chi > X chỉ 'được chi' khi TGĐ ký trong hàng duyệt). cash: weeks, payout_lag_weeks {kênh: tuần tiền về sau khi bán}, net_ratio_default {kênh: tỷ lệ thực nhận khi chưa đo được từ settlement}, offline_price_ratio (giá đại lý so giá list shopee golden), unit_price_vnd {sku: {kênh: giá}} ghi đè, fixed_outflows [{name, amount_vnd, every_weeks, first_week}], one_off [{name, amount_vnd, week_start YYYY-MM-DD}], min_balance_vnd, opening_balance_vnd (null = chưa có số dư thật).",
+  "confirmed_by": null,
+  "ads": {
+    "min_gross_margin_pct": 0.3,
+    "budget_share_of_margin": 0.2,
+    "channels": ["shopee", "tiktok"]
+  },
+  "opscost": {
+    "usd_vnd": 25000,
+    "budget_vnd": {
+      "ai": 5000000,
+      "cloud": 4000000,
+      "saas": 7000000,
+      "ads": 20000000,
+      "khac": 2000000,
+      "tong": 35000000
+    },
+    "warn_pct": 80,
+    "stop_pct": 100,
+    "threshold_x_vnd": 5000000
+  },
+  "cash": {
+    "weeks": 13,
+    "payout_lag_weeks": {"shopee": 2, "tiktok": 2, "offline": 4},
+    "net_ratio_default": {"shopee": 0.85, "tiktok": 0.85, "offline": 1.0},
+    "offline_price_ratio": 0.7,
+    "unit_price_vnd": {},
+    "fixed_outflows": [
+      {"name": "luong-van-phong", "amount_vnd": 60000000, "every_weeks": 4, "first_week": 2},
+      {"name": "thue-mat-bang", "amount_vnd": 15000000, "every_weeks": 4, "first_week": 0},
+      {"name": "chi-phi-ai-cloud", "amount_vnd": 3000000, "every_weeks": 4, "first_week": 0}
+    ],
+    "one_off": [
+      {"name": "nhap-hang-tet", "amount_vnd": 300000000, "week_start": "2026-12-14"}
+    ],
+    "min_balance_vnd": 0,
+    "opening_balance_vnd": null
+  }
+}

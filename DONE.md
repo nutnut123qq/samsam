@@ -13,6 +13,490 @@ rượu trong persona_sim nay bị guardrail v4.1 loại kể cả panel ngườ
 `test_validate_specific_reasons`). Đang chạy song song: v4.2, v4.5, v5.2, v7.2,
 v9.2.
 
+## Checklist v9.1-fpa
+
+Khán giả/mục đích: nhánh M31+ (worktree `D:\code\samsam-w70`, tách từ v9.0)
+— WP12 "Khối Tài chính" phần TÀI CHÍNH–KẾ HOẠCH (`ctx/pmo.md` dòng `| WP12`:
+"Giá vốn bị từ chối khi người lập trùng người duyệt", "FP-OpsCost cảnh báo ở
+mức 80% và 100%", "Khoản vượt ngưỡng X không chuyển sang 'được chi' khi thiếu
+chữ ký TGĐ"), agent FIN-Director, FP-COGS-PnL, FP-AdsBudget, FP-OpsCost,
+FP-Cash trong `ctx/final_plans.json` → `finance`. Nền đã có: đối soát
+settlement v9.0 (`settlement_rows` + `recon_results`, `ingest/
+settlement_csv.py::_ORDER_SQL` quy tắc "snapshot đơn MỚI NHẤT chứa hash",
+`round_half_up`), đơn sàn v3.3 (`market_rows` `export_kind='order'`,
+`sku_key`, `price_vnd`, `qty`), golden v3.2 (`sku_master.category`/
+`xnqc_status`/`self_declaration_ok`, view `sku_readiness` CAM/MO_TA/TP_THUONG/
+QC_DAY_DU — guardrail soi gương `_readiness_of`), engine kịch bản v7.3
+(`pipelines/scenario.py::project` — ĐƠN VỊ/tuần thấp/cơ sở/cao, docstring
+đã hẹn "FP-Cash GỌI LẠI project()"), `llm_usage` v3.1 (`cost_usd` theo
+`agent_id`), hàng duyệt v4.0 (`pipelines/director.py::submit` →
+`approval_queue`, `auto_policies.max_risk` chỉ `'low'`, `decide_item` chặn
+người duyệt = người tạo), bản tin GĐ tài chính v9.0 (`pipelines.director.run(
+..., extra=...)`, `agents/acc_ar.py::overdue_section`), `data/directors/
+finance.json` (`budget_change` risk high 48h, `pnl_report` medium 72h). Sau
+version: (1) FP-COGS-PnL — giá vốn theo SKU APPEND-ONLY có hiệu lực, người
+lập ≠ người duyệt chặn ở DB (function SECURITY DEFINER khuôn `approve_draft`);
+P&L SKU × kênh × tháng từ thực nhận settlement − giá vốn ĐÃ DUYỆT, thiếu giá
+vốn → ghi "chưa có giá vốn duyệt", không điền 0; (2) FP-AdsBudget — đề xuất
+ngân sách ads theo SKU × kênh CHỈ khi biên gộp ≥ ngưỡng cấu hình và
+readiness cho phép quảng cáo (rượu / TPBVSK chưa XNQC = 0), output là 1 mục
+ĐỀ XUẤT trong `approval_queue`, agent không chi tiền, không cài ngân sách;
+(3) FP-OpsCost — chi phí AI theo agent (`llm_usage`) + cloud/SaaS nhập tay
+CSV so trần tháng → cảnh báo 80%/100%; khoản > ngưỡng X chỉ "được chi" khi có
+mục duyệt per_item của người vai trò `tgd`; (4) FP-Cash — dòng tiền 13 tuần
+dựng trên `scenario.project()` (KHÔNG engine thứ 2) → khoảng số dư cuối tuần
+thấp/cơ sở/cao, cảnh báo tuần âm ở kịch bản thấp; (5) FIN-Director bản tin
+tuần GĐ tài chính gom 4 phần trên + công nợ quá hạn v9.0; (6) FIN-QA — 0
+import mạng/LLM, mọi payload/báo cáo FP&A qua `_mask_pii` không đổi.
+
+Quy ước: ponytail — stdlib + `psycopg` sẵn có, KHÔNG dep mới, KHÔNG LLM ở bất
+kỳ bước nào (phép tính tất định Python/SQL). TÁI DÙNG, không viết lại:
+`pipelines.scenario` (`load_assumptions`, `project`, `week_start`, `LEVELS`),
+`ingest.golden_store` (`read_golden`, `GOLDEN_FILE`), view `sku_readiness`
+(đọc DB — không chép CASE lần 3), `ingest.settlement_csv.round_half_up` +
+quy tắc snapshot của `_ORDER_SQL`, `agents.acc_ar` (`aging`,
+`fetch_entries`, `overdue_section`, `load_config`), `pipelines.director`
+(`submit`, `run(extra=)`), `pipelines.approval_queue` (`pending`,
+`auto_approve`), `pipelines.auth.load_users` (vai trò người duyệt),
+`pipelines.period` (`VN_TZ`, `vn_date`, `period_bounds("month"|"week")`),
+`agents.report.write_report` (ghi file atomic), `pipelines.pii._mask_pii`,
+`ingest.market_csv` (`_table`, `_cell`, `_to_int`, `_nfc`, trần
+`MAX_FILE_BYTES`/`MAX_ROWS`/`MAX_COLS`) cho file CSV nhập tay. 1 file cấu
+hình duy nhất `data/fpa_config.json` (`_doc` ghi **GIẢ ĐỊNH — chờ GĐ tài chính
+chốt**, `confirmed_by: null`; mục `ads`, `opscost`, `cash`) — mỗi module
+validate mục của mình TRƯỚC connect, sai → exit 1, 0 connect. Schema chỉ THÊM
+vào `docs/schema.sql` (block "v9.1 FP&A", comment tiếng Việt ai ghi/ai đọc/vì
+sao): `create table if not exists` / `create or replace`, KHÔNG `alter`/`drop`
+bảng; không assert đếm cứng số bảng (test đọc `schema.sql`). Tiền VND =
+`bigint` số nguyên đồng; phép nhân tỉ lệ dùng `Decimal(str(x))` +
+`round_half_up`; phân bổ theo trọng số giữ TỔNG chính xác (phần dư dồn dòng
+cuối theo thứ tự `row_no`). Mọi hàm có thời gian nhận `month`/`as_of`/
+`start`/`now` tham số — chỉ CLI đọc đồng hồ (mặc định hôm nay VN); tham số
+ngày/tháng từ CLI (str) coerce trước khi format (`date.fromisoformat`,
+`YYYY-MM` regex) → sai exit 2 (gotcha v2.2 f-string). Print tiếng Việt →
+UTF-8 guard; ghi DB `conn.commit()` tường minh (gotcha v2.1); CLI >1 thao
+tác → `ap.error` exit 2 TRƯỚC connect (gotcha v2.2); CLI connect qua
+`ingest.lead_store.connect` hoặc `psycopg.connect(..., connect_timeout=10)`
+(guard `tests/test_connect_timeout_guard.py`). Payload `approval_queue` phải
+qua guardrail `ok: true` (đã thử: guardrail v4.1 chặn MỌI chữ "rượu"/"ruou"/
+"alcohol" kể cả trong `sku_key`) → payload KHÔNG nêu tên/`sku_key` SKU rượu,
+chỉ số đếm "N SKU readiness CAM — ngân sách 0". Test DB: schema tạm + rollback
+như `tests/test_settlement_csv.py::db` (skip khi không DB nhưng gate đòi **0
+skipped** cho test DB của version này trên máy có DB), nạp golden thật
+(`golden_store.load`) rồi chỉnh `sku_master` trong schema tạm khi cần case
+`QC_DAY_DU`/`TP_THUONG`. Lệnh gate chạy với tiền tố `cd D:/code/samsam-w70 &&
+set -a && . <scratchpad>/w90.env && set +a &&` (DB riêng, không in biến môi
+trường). KHÔNG commit/push (coordinator).
+
+External-dep (KHÔNG giả lập, KHÔNG tự đánh dấu): giá vốn THẬT theo SKU + người
+lập (GĐ sản xuất) và người duyệt (GĐ tài chính) thật — repo chỉ có fixture
+MẪU trong test, `cogs_versions` trên DB thật để trống; chi phí cloud/SaaS
+thật (hóa đơn nhà cung cấp — `tests/fixtures/finance/opex_MAU.csv` là MẪU);
+ngưỡng biên gộp tối thiểu, hệ số ngân sách ads, trần chi phí tháng, ngưỡng X,
+tỷ giá USD/VND, chi cố định 13 tuần, độ trễ tiền sàn về, số dư tiền mặt đầu
+kỳ (`fpa_config.json` GIẢ ĐỊNH, `confirmed_by: null`, `opening_balance_vnd:
+null`); TGĐ ký khoản vượt X (users thật `data/users.json` gitignored — vai trò
+`tgd` do TGĐ chốt); người duyệt khối (`finance.json` `approvers: []`); doanh
+thu đại lý/B2B từ MISA cho P&L kênh offline; combo/phương án voucher của
+marketing (chấm phương án theo phiếu — chưa có nguồn); `key_usage_master`
+(management key OpenRouter) cho đối chiếu key thiếu dữ liệu; cấu hình trần
+trên nền tảng ads (quản lý MXH cài tay); GĐ tài chính ký P&L/bản tin/nghiệm
+thu WP12. Phần ACC-* (v9.0) KHÔNG sửa trong version này ngoài việc gọi lại hàm
+đã có.
+
+- [x] **W91.1 Schema FP&A 2 bảng + duyệt giá vốn SECURITY DEFINER + docs bảng**
+  — `docs/schema.sql` block v9.1 (sau block v9.0):
+  `cogs_versions` (`id bigint identity pk`, `sku_key text not null references
+  sku_master(sku_key)`, `cost_vnd bigint not null check (> 0)`, `valid_from
+  date not null`, `created_by text not null check (btrim <> '')` (người lập),
+  `approved_by text`, `approved_at timestamptz`, `note text`, `created_at
+  timestamptz not null default now()`, check `(approved_by is null) =
+  (approved_at is null)`) — APPEND-ONLY bằng trigger khuôn
+  `price_list_append_only`: DELETE/TRUNCATE chặn; INSERT phải
+  `approved_by`/`approved_at` null (không INSERT sẵn-duyệt vượt cổng người);
+  UPDATE chỉ đúng 1 chuyển trạng thái `approved_by` null → non-blank (+
+  `approved_at`), mọi cột khác giữ nguyên. Function `approve_cogs(p_id
+  bigint, p_approver text, p_note text default null) returns bigint` —
+  `language plpgsql security definer set search_path from current` (khuôn
+  `approve_draft`): thiếu tên → raise; không thấy → raise; đã duyệt → raise;
+  `lower(btrim(created_by)) = lower(btrim(p_approver))` → raise 'người duyệt
+  trùng người lập giá vốn #%, cần người khác duyệt'; hợp lệ → cùng transaction
+  update + `approvals` (`object_type='cogs_version'`, `object_id=id::text`,
+  `content_sha256` = sha256 của `sku_key|cost_vnd|valid_from`, `decision=
+  'approved'`) + `agent_action_log` (`action='cogs_approve'`); trả id
+  approvals; `revoke execute ... from public`. `opex_entries` (`id bigint
+  identity pk`, `file_sha256 text not null check (hex64)`, `file_name text not
+  null`, `row_no int not null check (>= 2)`, `month date not null check
+  (extract(day from month) = 1)`, `category text not null check in ('cloud',
+  'saas','ads','khac')`, `service text not null check (~
+  '^[a-z0-9][a-z0-9_.-]{1,39}$')`, `amount_vnd bigint not null check (> 0)`,
+  `doc_ref text`, `imported_at timestamptz not null default now()`, unique
+  `(file_sha256, row_no)`) — chi phí cloud/SaaS nhập tay, không tên người.
+  `docs/roles.sql`: `grant execute on function approve_cogs(bigint, text,
+  text) to app_human`; `grant select, insert (sku_key, cost_vnd, valid_from,
+  created_by, note) on cogs_versions to app_human`; agent_writer KHÔNG
+  execute `approve_cogs`. `docs/handover/kien-truc.md`: 2 dòng bảng mới (chứa
+  gì / nguồn nạp) + câu "39 bảng public" → "41 bảng public" (trên nền hiện
+  tại; coordinator chỉnh khi gộp) + dòng module mới ở mục 2.
+  `deploy/cloud/README.md`: dòng `` `cogs_versions` `` (B — giá vốn đã duyệt
+  không dựng lại được) + `` `opex_entries` `` (A nạp lại CSV hoặc B)
+  (drift-guard `tests/test_db_backup.py::test_cloud_readme_drift_guard`).
+  `data/directors/finance.json`: thêm object_type `opex_over_x` (`sla_hours`
+  72, `risk` `"high"`).
+  - Boundary: `docs/schema.sql`, `docs/roles.sql`, `docs/handover/
+    kien-truc.md`, `deploy/cloud/README.md`, `data/directors/finance.json`,
+    `tests/test_fp_pnl.py` (mới — test schema)
+  - Gate: `git diff docs/schema.sql | grep -nE "^\+\s*(alter|drop)\s+table"`
+    → 0 dòng; `python scripts/apply_schema.py` ×2 exit 0; test DB (schema
+    tạm, rollback): INSERT `cogs_versions` có sẵn `approved_by` →
+    RaiseException; UPDATE `cost_vnd` / DELETE → RaiseException; `select
+    approve_cogs(id, 'NguYen A ')` khi `created_by='nguyen a'` →
+    RaiseException chứa "trùng người lập", dòng vẫn `approved_by is null`;
+    người khác → approved + đúng 1 dòng `approvals` `object_type=
+    'cogs_version'` + `verify_action_log()` vẫn hợp lệ; duyệt lần 2 →
+    RaiseException; `docs/roles.sql` ×2 rồi `set role agent_writer` gọi
+    `approve_cogs` → InsufficientPrivilege (khuôn `tests/
+    test_auth_approval.py`); `opex_entries` `month` ngày 15 / `amount_vnd` 0
+    / `service` có dấu cách → CheckViolation; `python -m pytest -q
+    tests/test_handover_docs.py::test_kien_truc_lists_all_tables
+    tests/test_db_backup.py::test_cloud_readme_drift_guard
+    tests/test_director_framework.py` xanh
+  - Evidence: `evidence/v91_pytest.log`
+  - Kết quả (worker): schema.sql block v9.1 (`cogs_versions` append-only + `approve_cogs` SECURITY DEFINER — so người lập/duyệt sau khi gộp MỌI khoảng trắng, chặt hơn btrim; `opex_entries`), roles.sql, kien-truc "41 bảng public" + 2 dòng bảng + dòng module, README cloud, finance.json `opex_over_x`; `apply_schema.py` ×2 exit 0; 0 dòng alter/drop table; test schema trong `tests/test_fp_pnl.py` (0 skipped) — `evidence/v91_pytest.log`.
+- [x] **W91.2 FP-COGS-PnL giá vốn + P&L SKU × kênh × tháng
+  (`agents/fp_pnl.py`)** — CLI người dùng: `--cogs-add --sku K --cost N
+  --from YYYY-MM-DD --by "Tên"` (người lập; SKU phải có trong `sku_master`,
+  cost số nguyên > 0 qua `market_csv._to_int`, sai → exit 2 trước connect) |
+  `--cogs-approve ID --by "Tên" [--note ..]` (gọi `approve_cogs` — lỗi
+  function → in thông điệp tiếng Việt, exit 1, không traceback) |
+  `--cogs-list` (giá vốn đang hiệu lực + dòng chờ duyệt) | `--pnl --month
+  YYYY-MM [--channel shopee|tiktok]`. Hàm THUẦN: `cogs_at(versions, sku_key,
+  day) -> int | None` = dòng ĐÃ DUYỆT có `valid_from` lớn nhất ≤ `day` (hòa →
+  `id` lớn nhất); chưa duyệt / chưa hiệu lực → None (KHÔNG suy, KHÔNG 0).
+  `allocate(total, weights) -> list[int]` = phân bổ tỉ lệ ROUND_HALF_UP, dư
+  dồn phần tử cuối, `sum == total` tuyệt đối, weights toàn 0 → chia đều theo
+  cùng luật. `pnl(rows, lines, versions, month) -> dict`: rows =
+  `settlement_rows` có `settled_on` trong tháng (giờ VN qua
+  `period_bounds("month")`) + nhãn `recon_results`; lines = dòng đơn
+  `market_rows` của snapshot `order` MỚI NHẤT chứa hash (cùng quy tắc
+  `settlement_csv._ORDER_SQL`, trả từng dòng `sku_key, qty, price_vnd`). Mỗi
+  dòng settlement phân bổ theo trọng số `price_vnd × qty` các dòng đơn:
+  `doanh_thu` (= `order_amount_vnd`), `khau_tru_san` (fixed + payment +
+  service + shipping + voucher_seller + affiliate), `hoan` (`refund_vnd`),
+  `thuc_nhan` (`payout_vnd`); `gia_von` = Σ `qty × cogs_at(sku, settled_on)`;
+  `lai_gop = thuc_nhan − gia_von`; `bien_gop_pct = lai_gop / doanh_thu`
+  (Decimal, 1 số lẻ). Ô (SKU × kênh × tháng) có ≥1 đơn vị thiếu giá vốn duyệt
+  → `gia_von`/`lai_gop`/`bien_gop_pct` = None + nhãn `chưa có giá vốn duyệt`;
+  dòng settlement không có đơn sàn (`thieu_chung_tu`) hoặc dòng đơn
+  `sku_key` null → ô `(chưa rõ SKU)` chỉ có `thuc_nhan`; `settled_on` null →
+  đếm riêng "thiếu ngày quyết toán", không vào tháng nào. Dòng nhãn `hoan`
+  vẫn tính giá vốn theo qty đơn (GIẢ ĐỊNH thận trọng — hàng hoàn nhập kho lại
+  chưa có nguồn, ghi trong báo cáo). Tổng: `thuc_nhan` toàn kênh = Σ
+  `payout_vnd` các dòng trong tháng (khớp ACC-Recon 100%); "tổng lãi gộp" chỉ
+  cộng ô có giá vốn + dòng "N SKU bị loại vì chưa có giá vốn duyệt: <sku_key
+  ...>". `--pnl` in markdown + ghi `data/reports/pnl-<YYYY-MM>.md` qua
+  `write_report` (gitignored), đầu file "BẢN NHÁP — chỉ thành chính thức khi
+  GĐ tài chính ký"; chỉ `sku_key`/kênh/số tiền — không `order_id_hash`, không
+  `file_name dòng N`, không tên người lập/duyệt.
+  - Boundary: `agents/fp_pnl.py` (mới), `tests/test_fp_pnl.py`,
+    `tests/fixtures/finance/order_shopee_multi_MAU.csv` (mới — ≥1 đơn 2 dòng
+    SKU khác nhau, khớp 1 dòng settlement mới trong
+    `settlement_shopee_multi_MAU.csv`)
+  - Gate: unit thuần — giá vốn SKU X: A hiệu lực 01/11, B hiệu lực 15/11 (cả
+    2 đã duyệt) → `cogs_at` ngày 10/11 = A, 14/11 = A, 15/11 = B, 20/11 = B,
+    31/10 = None; B chưa duyệt → 20/11 = A; `allocate(100, [1,1,1])` =
+    `[33,33,34]`, `allocate(0, ...)` toàn 0, ngẫu nhiên 200 bộ (seed cố định)
+    luôn `sum == total`; ô thiếu giá vốn → None + "chưa có giá vốn duyệt", KHÔNG
+    có số 0 ở `gia_von` (assert `is None`); xóa giá vốn 1 SKU khỏi input →
+    báo cáo ghi "1 SKU bị loại" + đúng `sku_key` đó. DB (schema tạm,
+    rollback): nạp `order_shopee_MAU.csv` + multi qua `market_csv.load` rồi
+    settlement fixture qua `settlement_csv` (load + reconcile) + giá vốn MẪU
+    (`--cogs-add` bởi "lap A", `--cogs-approve` bởi "duyet B") → `--pnl
+    --month 2026-10`: Σ `thuc_nhan` các ô == `select sum(payout_vnd) from
+    settlement_rows where settled_on` trong tháng; đơn 2 dòng: tổng phân bổ
+    2 ô == số trên dòng settlement; Σ trọng số dòng đơn == `recon_results.
+    order_amount_vnd` của dòng đó (cùng quy tắc snapshot); `--cogs-approve`
+    bởi chính "lap A" (khác hoa thường/khoảng trắng) → exit 1 "trùng người
+    lập", giá vốn không dùng trong P&L; `--pnl --month 2026-13` exit 2;
+    `--pnl --cogs-list` cùng lúc exit 2 trước connect (monkeypatch connect
+    đếm 0); stdout + file báo cáo không chứa `order_id_hash` nào, mã đơn gốc
+    `FAKESET…`, PII GIẢ của fixture, tên "lap A"/"duyet B" — `python -m
+    pytest -q tests/test_fp_pnl.py` xanh
+  - Evidence: `evidence/v91_pnl.log` (CLI thật trên DB riêng với fixture MẪU:
+    `--cogs-add`, `--cogs-approve` cùng tên → exit 1, người khác → ok,
+    `--pnl --month 2026-10`; ghi rõ dòng giá vốn là MẪU — dọn hoặc để lại có
+    ghi chú, KHÔNG để giá vốn MẪU lẫn số thật)
+  - Kết quả (worker): `agents/fp_pnl.py` + fixture `order_shopee_multi_MAU.csv` + `settlement_shopee_multi_MAU.csv`; CLI thật `evidence/v91_pnl.log`: duyệt cùng người lập → exit 1 'trùng người lập', người khác → ok, `--pnl --month 2026-10` Σ thực nhận 7.562.080đ = Σ payout, 1 SKU bị loại (`sapentol-30v`). Dòng giá vốn trên DB dev là MẪU (note 'MẪU evidence v9.1 — không phải giá vốn thật', bảng append-only nên để lại có ghi chú).
+  - Vá nghiệm thu (worker): `--pnl --channel K` → file riêng `pnl-<YYYY-MM>-<K>.md` (không đè bản toàn kênh), `pnl(..., channel)` lọc dòng quyết toán TRƯỚC khi tính → `n_rows`/`thieu_chung_tu`/`hoan`/`thieu_ngay` đúng kênh, `render` lấy kênh từ kết quả (test `test_pnl_channel_filter_counts_match_channel`, `test_db_pnl_flow` sha file toàn kênh không đổi); quy tắc snapshot MỚI NHẤT có test thật `test_db_lines_take_newest_order_snapshot_only` (đơn FAKESET0201 trong 2 snapshot, bản mới saphraton qty 1) — đột biến bỏ CTE `latest` / đảo `desc` đều đỏ; re-run CLI cuối `evidence/v91_pnl.log`.
+- [x] **W91.3 FP-AdsBudget đề xuất ngân sách ads theo biên
+  (`agents/fp_ads.py`)** — `fpa_config.json` mục `ads`:
+  `min_gross_margin_pct` (0..1, GIẢ ĐỊNH), `budget_share_of_margin` (0..1 —
+  ngân sách đề xuất = lãi gộp tháng tham chiếu × hệ số, ROUND_HALF_UP),
+  `channels` (⊂ `golden_store.CHANNELS`). Hàm THUẦN `propose(cells,
+  readiness, cfg) -> list[dict]` (cells = ô P&L W91.2 của tháng tham chiếu;
+  readiness = `{(sku_key, channel): mức}` đọc từ view `sku_readiness`), mỗi
+  SKU × kênh đúng 1 mã, ưu tiên: readiness `CAM` → 0 `CHAN_CAM` (rượu, kênh
+  ngoài allowed, food chưa xác minh tự công bố) > `MO_TA` → 0 `CHAN_XNQC`
+  (TPBVSK chưa XNQC) > ô không có / `bien_gop_pct` None → 0 `CHO_DU_LIEU`
+  (không tính) > `bien_gop_pct < min` → 0 `DUOI_NGUONG` (+ số biên) > lãi gộp
+  ≤ 0 → 0 `AM_BIEN` > còn lại `DE_XUAT` = lãi gộp × hệ số; SKU không có
+  trong view (lạ) → `CHAN_CAM` (fail-closed). CLI `python -m agents.fp_ads
+  --propose --month YYYY-MM` (tháng tham chiếu P&L): đã có mục
+  `budget_change` pending cùng tháng → `[skip]` exit 0; còn lại →
+  `director.submit(conn, "finance", "budget_change", f"ads-{YYYY-MM}-
+  {sha[:12]}", title, payload, created_by="agent:fp_ads")` (risk/SLA từ
+  `finance.json`, `auto_policies` không áp vì risk high). Payload markdown:
+  bảng các dòng `DE_XUAT`/`CHO_DU_LIEU`/`DUOI_NGUONG`/`AM_BIEN`/`CHAN_XNQC`
+  theo `sku_key` + kênh + số + mã; SKU `CHAN_CAM` CHỈ số đếm (không tên —
+  guardrail chặn chữ rượu); dòng "ĐỀ XUẤT — agent không chi tiền, không bật
+  voucher, không đổi giá, không cài ngân sách trên nền tảng; quản lý MXH cài
+  tay sau khi duyệt". Module KHÔNG có lời gọi API ads/voucher nào.
+  - Boundary: `agents/fp_ads.py` (mới), `data/fpa_config.json` (mới — mục
+    `ads`), `tests/test_fp_ads.py` (mới)
+  - Gate: unit thuần — SKU rượu (category alcohol, kể cả biên 90%) → 0
+    `CHAN_CAM`; TPBVSK `xnqc_status` none/pending biên cao → 0 `CHAN_XNQC`;
+    TPBVSK đổi `approved` + allowed kênh (schema tạm) biên ≥ ngưỡng → >0
+    `DE_XUAT`; food `self_declaration_ok` null → 0 `CHAN_CAM`, true + biên ≥
+    ngưỡng → >0; biên đúng bằng ngưỡng → `DE_XUAT`, thấp hơn 0,1 điểm →
+    `DUOI_NGUONG`; ô thiếu giá vốn → `CHO_DU_LIEU`; đổi
+    `min_gross_margin_pct` trong cfg test lật kết quả (ngưỡng đọc từ cfg);
+    Σ ngân sách cho mọi SKU `category='alcohol'` hoặc readiness `MO_TA` == 0.
+    DB (schema tạm, rollback): `--propose` → đúng 1 mục `approval_queue`
+    (`object_type='budget_change'`, `block='finance'`, `risk='high'`,
+    `status='pending'`, `guardrail->>'ok' = 'true'`); chạy lại → `[skip]`;
+    bật 1 dòng `auto_policies` (owner, `object_type='budget_change'`) rồi
+    `approval_queue.auto_approve` → (False, …), mục vẫn pending; payload
+    không chứa "rượu"/"ruou"/"alcohol"/`sku_key` rượu nào; `grep -nE
+    "smtplib|httpx|requests|urllib|llm_gateway|openai" agents/fp_ads.py` → 0
+    dòng — `python -m pytest -q tests/test_fp_ads.py` xanh
+  - Evidence: `evidence/v91_pnl.log` (cùng phiên CLI: `--propose --month
+    2026-10`, `python -m pipelines.approval_queue --pending --block
+    finance`; KHÔNG duyệt mục nào trên DB thật — để pending hoặc reject bởi
+    tên dev ghi "dọn MẪU")
+  - Kết quả (worker): `agents/fp_ads.py`; `--propose --month 2026-10` → 1 mục `budget_change` high pending guardrail PASS, chạy lại `[skip]`, tạo song song → unique pending chặn → `[skip]`; mục MẪU đã reject 'dọn MẪU' (không duyệt) — `evidence/v91_pnl.log`.
+- [x] **W91.4 FP-OpsCost chi phí AI + cloud/SaaS so trần, khoản vượt X chờ
+  TGĐ (`agents/fp_opscost.py`)** — `fpa_config.json` mục `opscost`:
+  `usd_vnd` (int > 0, GIẢ ĐỊNH), `budget_vnd {scope: int > 0}` với scope ∈
+  `ai:<agent_id>` | `ai` (tổng AI) | `cloud` | `saas` | `ads` | `khac` |
+  `tong`, `warn_pct` = 80, `stop_pct` = 100 (đọc từ cfg, mặc định theo WP12),
+  `threshold_x_vnd` (int > 0). File nhập tay CSV header cố định ghi trong
+  docstring `month, category, service, amount_vnd, doc_ref` (`month` =
+  `YYYY-MM`) — kiểm toàn file TRƯỚC connect (trần byte/dòng/cột như
+  market_csv, cột lạ/thiếu, số tiền sai → lỗi nêu số dòng + tên field, KHÔNG
+  in giá trị ô; ≥1 lỗi → exit 1, 0 dòng); sha đã nạp → `[skip]`. Hàm THUẦN:
+  `ai_vnd(spend_usd, usd_vnd)` = ROUND_HALF_UP(`Decimal(str(usd)) × rate`);
+  `budget_alerts(actuals, budgets, warn_pct, stop_pct) -> list[dict]` — mỗi
+  scope có ngân sách ĐÚNG ≤1 cảnh báo, mức cao nhất đạt: `spent × 100 ≥
+  budget × stop_pct` → `100` "VƯỢT TRẦN", `≥ budget × warn_pct` → `80` "CẢNH
+  BÁO" (so số nguyên, không float); scope không ngân sách → không cảnh báo
+  (liệt kê "chưa có trần"). `spend_status(entry, items, users, x) -> str`:
+  `amount_vnd ≤ x` → `trong_nguong` (theo quy trình chi thường, ngoài agent);
+  `> x` → `duoc_chi` CHỈ khi ∃ mục `approval_queue` `object_type=
+  'opex_over_x'`, `object_id=opex_key(entry)` (= `opex-<file_sha256[:16]>-
+  <row_no>`, khóa tự nhiên — vá nghiệm thu, thay `opex-{id}`), `block=
+  'finance'`, `created_by='agent:fp_opscost'`, `content_sha256` = sha256
+  payload dựng lại từ entry hiện tại, `status='approved'`, `lane=
+  'per_item'` VÀ `users[decided_by.strip().lower()]["role"] == "tgd"`
+  (`pipelines.auth.load_users()`, file thiếu → `{}` → không ai là TGĐ); mọi
+  trường hợp khác → `cho_tgd_ky` (fail-closed: duyệt bởi vai trò khác, lane
+  `auto_policy`, rejected/expired, users rỗng). CLI `python -m
+  agents.fp_opscost --load FILE` | `--report --month YYYY-MM` (AI theo agent
+  từ `llm_usage` trong tháng giờ VN + `opex_entries` theo category → bảng
+  thực chi/trần/% + cảnh báo) | `--submit-over-x --month YYYY-MM` (mỗi entry >
+  X chưa có chữ ký TGĐ hợp lệ và chưa có mục pending hợp lệ — mục approved
+  bởi vai trò khác/auto_policy KHÔNG chặn đẩy lại → `director.submit(conn,
+  "finance", "opex_over_x", opex_key(e), …, created_by="agent:fp_opscost")`,
+  payload tháng/category/service/số tiền + "CHỜ TGĐ KÝ — agent không chi,
+  không tắt key, không đổi limit" (ngưỡng X ở tiêu đề, không trong payload
+  hash); mục lạ pending chiếm unique → `[chặn]`) | `--status --month
+  YYYY-MM` (kèm lý do, vd "đã duyệt bởi vai trò khác — cần TGĐ"). Agent chỉ cảnh
+  báo — không gọi API nhà cung cấp, không đụng `data/llm_gateway.json`.
+  - Boundary: `agents/fp_opscost.py` (mới), `data/fpa_config.json` (mục
+    `opscost`), `tests/test_fp_opscost.py` (mới), `tests/fixtures/finance/
+    opex_MAU.csv` (mới)
+  - Gate: unit thuần — ngân sách `ai:content` 5.000.000đ, `usd_vnd` 25.000:
+    usage 3.999.999đ → 0 cảnh báo; 4.000.000đ → đúng 1 cảnh báo mức 80;
+    4.100.000đ → đúng 1 mức 80; 4.999.999đ → 80; 5.000.000đ → đúng 1 mức 100
+    (KHÔNG kèm 80); 5.050.000đ → đúng 1 mức 100; đổi `warn_pct` trong cfg
+    test lật kết quả; `spend_status`: X đúng bằng → `trong_nguong`, X+1 không
+    mục → `cho_tgd_ky`, approved bởi user vai trò `gd_ban_hang` →
+    `cho_tgd_ky`, approved bởi user `tgd` (khác hoa thường/khoảng trắng) →
+    `duoc_chi`, cùng mục nhưng users `{}` → `cho_tgd_ky`, lane `auto_policy`
+    → `cho_tgd_ky`, rejected → `cho_tgd_ky`. DB (schema tạm, rollback):
+    fixture `llm_usage` (insert `cost_usd` cho 2 agent, 1 dòng tháng trước
+    giờ VN — ts 2026-09-30 23:30+07 không tính vào tháng 10) → `--report
+    --month 2026-10` ra đúng mức 80/100 kỳ vọng; `--load opex_MAU.csv` ×2 →
+    lần 2 `[skip]`; file lỗi (amount âm, category lạ) → exit 1, connect 0 lần;
+    `--submit-over-x` → mục `opex_over_x` risk high cho đúng các entry > X,
+    chạy lại không nhân đôi; bật `auto_policies` cho `opex_over_x` +
+    `auto_approve` → (False, …) vẫn pending → `--status` `cho_tgd_ky`;
+    `decide` approved bởi người KHÔNG phải tgd (users fixture tmp) →
+    `cho_tgd_ky`; approved bởi tgd → `duoc_chi`; `--report --status` cùng lúc
+    exit 2 trước connect; `grep -nE "smtplib|httpx|requests|urllib|
+    llm_gateway|openai" agents/fp_opscost.py` → 0 dòng — `python -m pytest
+    -q tests/test_fp_opscost.py` xanh
+  - Evidence: `evidence/v91_opscost.log` (CLI thật trên DB riêng: `--load`
+    ×2, `--report --month 2026-10`, `--submit-over-x`, `--status`; không
+    duyệt mục nào trên DB thật)
+  - Kết quả (worker): `agents/fp_opscost.py` + `opex_MAU.csv`; `evidence/v91_opscost.log`: `--load` ×2 (lần 2 `[skip]`), cảnh báo cloud 80% / saas 100%, 2 khoản > X → `opex_over_x` high, chạy lại 0 mục mới, `--status` `cho_tgd_ky`; mục MẪU reject 'dọn MẪU' cuối `v91_pnl.log`.
+  - Vá nghiệm thu (worker): chữ ký TGĐ gắn khóa tự nhiên + nội dung (`opex_key` = `opex-<sha file[:16]>-<dòng>`, so `content_sha256` với payload dựng lại; chỉ mục `block='finance'` + `created_by='agent:fp_opscost'`) — restore lệch id / mục giả của agent khác / payload số nhỏ → `cho_tgd_ky`; `submit_over_x` đẩy lại khi mục approved bởi vai trò khác (hết kẹt), báo `[chặn]` khi mục lạ pending chiếm unique; `--status` in lý do; README cloud `opex_entries` chỉ đường B; test biên tháng VN thật (01/10 03:00+07 tính, 01/11 03:00+07 không, session UTC). Test: `test_signature_bound_to_natural_key_and_content`, `test_verdict_reasons`, `test_db_forged_item_never_counts`, `test_db_report_load_submit_status` (banhang duyệt → đẩy lại → TGĐ duyệt mục mới → `duoc_chi`); re-run CLI cuối `evidence/v91_opscost.log`.
+- [x] **W91.5 FP-Cash dòng tiền 13 tuần trên `scenario.project()`
+  (`agents/fp_cash.py`)** — `fpa_config.json` mục `cash`: `weeks` 13,
+  `payout_lag_weeks {kênh: int 0..8}` (GIẢ ĐỊNH — "chưa xác minh" tới khi đo
+  từ dữ liệu thật), `net_ratio_default {kênh: 0..1}` (dùng khi chưa có
+  settlement), `offline_price_ratio` (0..1, giá đại lý so giá `list` shopee
+  golden, GIẢ ĐỊNH), `unit_price_vnd {sku: {kênh: int}}` (tùy chọn, ghi đè),
+  `fixed_outflows [{name, amount_vnd, every_weeks, first_week}]`, `one_off
+  [{name, amount_vnd, week_start}]` (nhập hàng Tết, thuế tự nộp — GIẢ ĐỊNH),
+  `min_balance_vnd` (mặc định 0), `opening_balance_vnd: null`. Hàm THUẦN
+  `forecast(skus, assumptions, prices, net_ratio, cfg, start, opening) ->
+  dict`: với mỗi SKU × kênh có trong `assumptions["baseline_units_per_week"]`
+  gọi `scenario.project(sku, kênh, start − lag tuần, weeks, assumptions)`
+  (đơn vị bán tuần i − lag → tiền về tuần i; KHÔNG tự nhân trend/sự kiện) ×
+  đơn giá × `net_ratio[kênh]`; đơn giá thiếu → SKU × kênh vào danh sách "thiếu
+  giá — loại khỏi dự báo" (KHÔNG coi 0 im lặng); rượu online đã = 0 từ
+  engine. Chi = cố định + one-off theo tuần (giống nhau 3 kịch bản). Mỗi tuần
+  ra `{week_start, in: {low, base, high}, out, close: {low, base, high}}`,
+  luôn `low ≤ base ≤ high`; `opening` None → số dư = dòng tiền ròng lũy kế từ
+  0 + ghi "chưa có số dư đầu kỳ thật"; cảnh báo mọi tuần `close.low <
+  min_balance_vnd` ("tuần âm ở kịch bản thấp"); danh sách giả định kèm nguồn
+  (`scenario_assumptions.json` status, `fpa_config.json` GIẢ ĐỊNH, net ratio
+  "đo từ settlement N dòng" hoặc "chưa xác minh"). `net_ratio` đo từ DB: Σ
+  `payout_vnd` / Σ `order_amount_vnd` của `settlement_rows` 8 tuần trước
+  `start` theo kênh (Σ order = 0 → default + "chưa xác minh"). CLI `python -m
+  agents.fp_cash --forecast [--start YYYY-MM-DD] [--opening N] [--json]`
+  (assumptions/golden/cfg sai → exit 1 trước connect; DB down → vẫn chạy với
+  net ratio default + `[warn]`, exit 0). Không đề xuất vay/chuyển khoản/dời
+  hạn thanh toán.
+  - Boundary: `agents/fp_cash.py` (mới), `data/fpa_config.json` (mục
+    `cash`), `tests/test_fp_cash.py` (mới)
+  - Gate: `grep -nE "from pipelines(\.| import )scenario|scenario\.project"
+    agents/fp_cash.py` ≥1 dòng VÀ `grep -nE "trend|math\.floor|math\.ceil|
+    events" agents/fp_cash.py` → 0 dòng (không engine thứ 2); unit thuần với
+    assumptions + cfg fixture: đủ 13 tuần, mọi tuần có 3 mức + `low ≤ base ≤
+    high` cho cả `in` và `close`; monkeypatch `scenario.project` đếm lời gọi
+    → = số cặp SKU × kênh trong baseline (có giá); lag 2 tuần: tiền tuần 0 =
+    đơn vị `project(start − 2 tuần)[0]` × giá × ratio; one-off nhập hàng 500tr
+    tuần 5 làm `close.low` âm → đúng tuần đó (và các tuần sau còn âm) có cảnh
+    báo, `close.high` không âm thì không cảnh báo ở mức cao; thiếu giá 1 SKU →
+    nằm trong "thiếu giá", không làm crash, không 0 im lặng; rượu × shopee →
+    tiền 0 (engine); `opening` None → có dòng "chưa có số dư đầu kỳ thật";
+    `--start 2026-02-30` exit 2; `--forecast` với `DATABASE_URL` trỏ host
+    chết (`postgresql://u@10.255.255.1:5432/x`, subprocess, timeout) → exit 0
+    + "[warn]" + "chưa xác minh" (gotcha v2.0/v1.9). DB (schema tạm,
+    rollback): settlement fixture → net ratio shopee = Σpayout/Σorder đúng số,
+    nguồn "đo từ settlement" — `python -m pytest -q tests/test_fp_cash.py
+    tests/test_scenario.py` xanh
+  - Evidence: `evidence/v91_cash.log` (CLI thật: `--forecast --start
+    2026-10-12` — bảng 13 tuần × 3 mức + cảnh báo + danh sách giả định)
+  - Kết quả (worker): `agents/fp_cash.py`; grep scenario = 5 dòng, grep engine-2 = 0; `evidence/v91_cash.log` (13 tuần × 3 mức, net ratio shopee đo từ settlement 17 dòng, host chết → exit 0 + `[warn]`).
+  - Vá nghiệm thu (worker): `test_lag_shifts_units_into_later_weeks` có sự kiện ×3 ở tuần START−2 + spy `scenario.project` (start == START − 2 tuần) — đột biến bỏ lag giờ đỏ.
+- [x] **W91.6 FIN-Director bản tin tuần GĐ tài chính
+  (`agents/fin_director.py`)** — `python -m agents.fin_director --weekly
+  [--as-of YYYY-MM-DD]`: gom `extra` theo thứ tự cố định: "## Công nợ đại lý
+  quá hạn" (`acc_ar.aging` + `overdue_section` — gọi lại, không chép), "## P&L
+  tháng <M>" (tháng chứa `as_of`: tổng thực nhận, tổng lãi gộp ô có giá vốn,
+  danh sách SKU chưa có giá vốn duyệt — từ `fp_pnl`), "## Chi phí vận hành
+  tháng" (cảnh báo 80/100 + số khoản > X đang `cho_tgd_ky` — từ
+  `fp_opscost`), "## Dòng tiền 13 tuần" (tuần đầu tiên `close.low` <
+  ngưỡng + số tuần âm kịch bản thấp — từ `fp_cash`), "## Đề xuất ngân sách
+  ads" (số mục `budget_change` pending của khối) → `pipelines.director.run(
+  conn, "finance", now, extra=...)` → `data/reports/director-finance-<ngày>.md`
+  (KHÔNG gửi). Mỗi phần lỗi dữ liệu (cfg thiếu mục, bảng trống) → phần đó
+  ghi "(chưa có dữ liệu: <lý do ngắn>)", bản tin vẫn ra; cfg JSON hỏng → exit
+  1 trước connect. Không sửa `pipelines/director.py` (đã có `extra`) và
+  `agents/acc_ar.py`; `acc_ar --bulletin` (hằng ngày) giữ nguyên — bản tuần là
+  superset cùng file ngày, ghi trong sop.md.
+  - Boundary: `agents/fin_director.py` (mới), `tests/test_fin_director.py`
+    (mới)
+  - Gate: DB (schema tạm, rollback, fixture W91.2–W91.4 + `dealer_ar_MAU.csv`):
+    `--weekly --as-of 2026-10-12` sinh file chứa đủ 5 heading trên theo đúng
+    thứ tự, trước "## Người duyệt"; có mã đại lý quá hạn của fixture, cảnh
+    báo mức 80/100 của fixture, chữ "chưa có giá vốn duyệt" khi xóa giá vốn
+    1 SKU; bảng `cogs_versions` trống → phần P&L vẫn ra với danh sách SKU
+    thiếu giá vốn, exit 0; `_mask_pii(text) == text` trên toàn bản tin; bản
+    tin không chứa `order_id_hash` nào/mã đơn gốc/PII GIẢ; `--weekly
+    --as-of 2026-13-01` exit 2; `tests/test_director.py` +
+    `tests/test_acc_ar.py` xanh nguyên (không sửa) — `python -m pytest -q
+    tests/test_fin_director.py tests/test_director.py tests/test_acc_ar.py`
+    xanh
+  - Evidence: `evidence/v91_pnl.log` (cuối phiên: `--weekly --as-of
+    2026-10-12` + `head` file bản tin)
+  - Kết quả (worker): `agents/fin_director.py`; `--weekly --as-of 2026-10-12` → đủ 5 mục đúng thứ tự trước "## Người duyệt", 0 mục chưa có dữ liệu — cuối `evidence/v91_pnl.log`; test_director/test_acc_ar không sửa, xanh.
+- [x] **W91.7 FIN-QA + bản đồ dữ liệu + DPIA + docs** — `tests/
+  test_fin_qa.py`: thêm `agents.fp_pnl`, `agents.fp_ads`,
+  `agents.fp_opscost`, `agents.fp_cash`, `agents.fin_director` vào
+  `FIN_MODULES`/`FIN_FILES` (subprocess `python -I` → không `openai`/
+  `httpx`/`requests`/`smtplib`/`urllib.request`/`http.client`/
+  `pipelines.llm_gateway` trong `sys.modules`; `dpia_draft.egress_modules`
+  không chứa 5 file); test mới chạy luồng fixture W91.2–W91.6 với
+  `llm_gateway.chat`/`embed` monkeypatch raise → 0 lời gọi, và MỌI text
+  FP&A sinh ra (payload `approval_queue` ads + opex, file P&L, bản tin tuần,
+  stdout CLI) thỏa `_mask_pii(x) == x` (quét PII 100% payload — mặc định
+  không gửi LLM; nếu sau này thêm LLM, đây là chỗ cắm). `data/
+  data_flow_map.json`: DF-21 "FP&A tài chính–kế hoạch (v9.1)" — modules 5
+  file, class `vang`, dữ liệu = số liệu tổng hợp theo SKU/kênh/tháng, chi phí
+  AI theo agent, chi phí dịch vụ, tên người lập/duyệt giá vốn (nhân viên) —
+  KHÔNG dữ liệu người mua/đại lý cá nhân, lưu `cogs_versions`/
+  `opex_entries`/`data/reports/` (gitignored), recipients nội bộ GĐ tài
+  chính/TGĐ, `cross_border` false, gaps = external-dep ở trên; `version`/
+  `_doc` giữ khuôn. `tests/test_data_flow_map.py`: thêm 5 module vào
+  `REQUIRED_MODULES`. Sinh lại `docs/legal/DPIA-nhap.md` + `docs/legal/
+  TIA-nhap.md` bằng `python scripts/dpia_draft.py` (KHÔNG sửa tay).
+  `docs/handover/sop.md`: mục "5f. Tài chính–kế hoạch (v9.1) — giá vốn, P&L,
+  ngân sách ads, chi phí vận hành, dòng tiền" — lệnh lập/duyệt giá vốn (2
+  người khác nhau), `--pnl`, `--propose` + duyệt qua `pipelines.
+  approval_queue`, nạp chi phí + `--report`/`--submit-over-x`/`--status`
+  (TGĐ ký qua `--approve ... --by <email vai trò tgd>`), `--forecast`,
+  `--weekly`; danh sách GIẢ ĐỊNH + external-dep.
+  - Boundary: `tests/test_fin_qa.py`, `data/data_flow_map.json`,
+    `tests/test_data_flow_map.py`, `docs/legal/DPIA-nhap.md`,
+    `docs/legal/TIA-nhap.md`, `docs/handover/sop.md`
+  - Gate: `python scripts/dpia_draft.py --check` exit 0; `python -m pytest
+    -q tests/test_fin_qa.py tests/test_data_flow_map.py
+    tests/test_dpia_draft.py tests/test_handover_docs.py` xanh; mọi lệnh
+    `python -m ...` trong mục 5f của sop.md trỏ module tồn tại
+  - Evidence: `evidence/v91_pytest.log`
+  - Kết quả (worker): `tests/test_fin_qa.py` 8 module (subprocess `python -I`) + test quét `_mask_pii` 100% text FP&A + test lệnh sop 5f trỏ module thật; DF-21 (class vang); DPIA/TIA sinh lại, `--check` exit 0; sop 5f.
+- [x] **W91.8 Gate chung** — targeted ×3 TUẦN TỰ: `python -m pytest -q
+  tests/test_fp_pnl.py tests/test_fp_ads.py tests/test_fp_opscost.py
+  tests/test_fp_cash.py tests/test_fin_director.py tests/test_fin_qa.py
+  tests/test_scenario.py tests/test_settlement_csv.py tests/test_acc_ar.py
+  tests/test_director.py tests/test_director_framework.py
+  tests/test_approval_queue.py tests/test_auth_approval.py
+  tests/test_data_flow_map.py tests/test_dpia_draft.py
+  tests/test_handover_docs.py tests/test_connect_timeout_guard.py` (lệnh
+  nặng có thể bị đẩy nền — đọc output tới khi process exit rồi mới chạy lần
+  kế, không chạy chồng, không retry mù); full `python -m pytest -q` ĐÚNG 1 lần
+  (baseline 1759 → ≥1759 + test mới, 0 fail; skip chỉ được là 3
+  `test_dr_drill` cần docker có từ trước, test DB của v9.1 0 skipped); `ruff
+  check .` clean; `python -m py_compile agents/fp_pnl.py agents/fp_ads.py
+  agents/fp_opscost.py agents/fp_cash.py agents/fin_director.py`; `python
+  scripts/dpia_draft.py --check` exit 0; `python scripts/apply_schema.py`
+  exit 0; `grep -nE "smtplib|httpx|requests|urllib|llm_gateway|openai"
+  agents/fp_pnl.py agents/fp_ads.py agents/fp_opscost.py agents/fp_cash.py
+  agents/fin_director.py` → 0 dòng; `git status --short` chỉ chứa file trong
+  Boundary các mục trên + evidence (không file lạc, không `data/reports/`,
+  không `data/users.json`; `lv2-market-top.png` không stage).
+  - Boundary: (không file mới ngoài evidence)
+  - Gate: như trên, mọi lệnh exit 0
+  - Evidence: `evidence/v91_pytest.log` (`git add -f` — `*.log` bị ignore),
+    `evidence/v91_pnl.log`, `evidence/v91_opscost.log`, `evidence/
+    v91_cash.log`
+  - Kết quả (worker): targeted ×3 tuần tự: 379/379/379 passed, 0 skipped; full pytest 1 lần: 1861 passed, 3 skipped (test_dr_drill — không có docker = MÔI TRƯỜNG; baseline 1759 → +102); ruff clean; py_compile ok; grep mạng 0; dpia --check + apply_schema exit 0; git status chỉ file trong boundary — `evidence/v91_pytest.log` (coordinator `git add -f` evidence/*.log).
+  - Vá nghiệm thu (worker): 14 đột biến đều làm test tương ứng FAIL; targeted ×3 tuần tự (thêm `test_db_backup.py::test_cloud_readme_drift_guard`): 385/385/385 passed, 0 skipped; full pytest 1 lần: 1869 passed, 0 skipped (3 `test_dr_drill` chạy được lần này — docker có mặt); ruff clean; py_compile ok; grep mạng 0; dpia --check + apply_schema exit 0 — cuối `evidence/v91_pytest.log`.
+- [ ] **External-dep v9.1 (KHÔNG làm, KHÔNG giả lập — công ty cấp)**: giá vốn
+  thật theo SKU + GĐ sản xuất lập / GĐ tài chính duyệt trên `cogs_versions`;
+  hóa đơn cloud/SaaS thật (thay `opex_MAU.csv`); GĐ tài chính chốt ngưỡng biên
+  ads, hệ số ngân sách, trần chi phí tháng, ngưỡng X, tỷ giá, chi cố định,
+  độ trễ tiền sàn, số dư tiền mặt đầu kỳ (`fpa_config.json` `confirmed_by`
+  null); TGĐ ký khoản vượt X + danh sách người/vai trò thật (`data/
+  users.json`); người duyệt khối (`finance.json` `approvers: []`); doanh thu
+  đại lý/B2B từ MISA cho P&L offline; phiếu phương án voucher/combo của
+  marketing; `key_usage_master` (management key) cho đối chiếu key; quản lý
+  MXH cài trần ngân sách trên nền tảng; GĐ tài chính ký P&L/bản tin/nghiệm
+  thu WP12.
+
 ## Checklist v9.0-doi-soat-hoa-don
 
 Khán giả/mục đích: nhánh M31+ (worktree `D:\code\samsam-w70`) — WP12 "Khối

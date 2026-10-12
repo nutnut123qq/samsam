@@ -1656,3 +1656,135 @@ create table if not exists dealer_ar (
                    when 'thanh_toan' then amount_vnd < 0
                    else amount_vnd <> 0 end)
 );
+
+-- ============================================================================
+-- v9.1 FP&A (WP12 — FP-COGS-PnL / FP-OpsCost). Chỉ BÁO CÁO + ĐỀ XUẤT: không
+-- lệnh chi, không cài ngân sách ads, không tắt key. P&L / đề xuất ads / dòng
+-- tiền tính khi đọc (không lưu bảng); đề xuất + khoản vượt ngưỡng X đi qua
+-- `approval_queue` (risk high — auto_policy không áp).
+--   * `cogs_versions` — giá vốn theo SKU có ngày hiệu lực, APPEND-ONLY
+--     (trigger khuôn `price_list`): ai ghi: người lập (GĐ sản xuất) qua
+--     `python -m agents.fp_pnl --cogs-add` (INSERT chưa duyệt); duyệt CHỈ qua
+--     function `approve_cogs` (SECURITY DEFINER) — người duyệt ≠ người lập
+--     (so không phân biệt hoa thường/khoảng trắng), cùng transaction ghi
+--     `approvals` (`object_type='cogs_version'`) + `agent_action_log`. Ai
+--     đọc: P&L (`agents.fp_pnl --pnl`) — chỉ dòng ĐÃ duyệt; thiếu → "chưa có
+--     giá vốn duyệt", không điền 0. Đổi giá vốn = thêm dòng mới, không sửa.
+--   * `opex_entries` — chi phí cloud/SaaS/ads/khác nhập tay từ CSV (`python
+--     -m agents.fp_opscost --load`, idempotent theo `file_sha256`), không tên
+--     người. Ai đọc: so trần tháng (cảnh báo 80%/100%) + khoản > ngưỡng X.
+-- ============================================================================
+
+create table if not exists cogs_versions (
+  id bigint generated always as identity primary key,
+  sku_key text not null references sku_master(sku_key),
+  cost_vnd bigint not null check (cost_vnd > 0),
+  valid_from date not null,
+  created_by text not null check (btrim(created_by) <> ''),   -- người lập
+  approved_by text,                 -- null = chờ duyệt (chỉ approve_cogs ghi)
+  approved_at timestamptz,
+  note text,
+  created_at timestamptz not null default now(),
+  check ((approved_by is null) = (approved_at is null))
+);
+create index if not exists cogs_versions_sku_idx
+  on cogs_versions (sku_key, valid_from);
+
+-- Append-only: chặn DELETE/TRUNCATE; INSERT phải CHƯA duyệt (không INSERT
+-- sẵn-duyệt vượt cổng người); UPDATE chỉ đúng 1 chuyển trạng thái
+-- approved_by null -> non-blank (+ approved_at), mọi cột khác giữ nguyên.
+create or replace function cogs_versions_append_only() returns trigger
+language plpgsql as $$
+begin
+  if tg_op = 'INSERT' then
+    if new.approved_by is not null or new.approved_at is not null then
+      raise exception 'cogs_versions append-only: INSERT phải là dòng chưa duyệt (sku %)', new.sku_key;
+    end if;
+    return new;
+  end if;
+  if tg_op <> 'UPDATE' then
+    raise exception 'cogs_versions append-only: % bị chặn', tg_op;
+  end if;
+  if (new.id, new.sku_key, new.cost_vnd, new.valid_from, new.created_by,
+      new.note, new.created_at)
+     is distinct from
+     (old.id, old.sku_key, old.cost_vnd, old.valid_from, old.created_by,
+      old.note, old.created_at) then
+    raise exception 'cogs_versions append-only: chỉ được duyệt dòng (id %)', old.id;
+  end if;
+  if old.approved_by is null and old.approved_at is null
+     and new.approved_by is not null and btrim(new.approved_by) <> ''
+     and new.approved_at is not null then
+    return new;
+  end if;
+  raise exception 'cogs_versions append-only: UPDATE không hợp lệ (id %)', old.id;
+end $$;
+
+create or replace trigger cogs_versions_append_only_row
+  before insert or update or delete on cogs_versions
+  for each row execute function cogs_versions_append_only();
+create or replace trigger cogs_versions_no_truncate
+  before truncate on cogs_versions
+  for each statement execute function cogs_versions_append_only();
+
+-- Duyệt giá vốn (khuôn approve_draft): thiếu tên / không thấy / đã duyệt /
+-- người duyệt trùng người lập → raise. Hợp lệ → cùng transaction: update +
+-- approvals (sha256 của `sku_key|cost_vnd|valid_from`, ngày to_char — không
+-- phụ thuộc DateStyle) + log. Trả id approvals.
+create or replace function approve_cogs(p_id bigint, p_approver text,
+  p_note text default null)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  c cogs_versions%rowtype;
+  -- gộp mọi khoảng trắng (tab/xuống dòng/nhiều dấu cách) trước khi so —
+  -- "nguyen  a" / "Nguyen\ta" vẫn là cùng người lập.
+  v_by text := btrim(regexp_replace(coalesce(p_approver, ''), '\s+', ' ',
+                                    'g'));
+  v_sha text;
+  v_aid bigint;
+begin
+  if v_by = '' then
+    raise exception 'thiếu tên người duyệt';
+  end if;
+  select * into c from cogs_versions g where g.id = p_id for update;
+  if not found then
+    raise exception 'không tìm thấy giá vốn #%', p_id;
+  end if;
+  if c.approved_by is not null then
+    raise exception 'giá vốn #% đã được duyệt, không duyệt lại', p_id;
+  end if;
+  if lower(btrim(regexp_replace(c.created_by, '\s+', ' ', 'g')))
+     = lower(v_by) then
+    raise exception 'người duyệt trùng người lập giá vốn #%, cần người khác duyệt',
+      p_id;
+  end if;
+  v_sha := encode(sha256(convert_to(c.sku_key || '|' || c.cost_vnd::text
+    || '|' || to_char(c.valid_from, 'YYYY-MM-DD'), 'UTF8')), 'hex');
+  update cogs_versions g set approved_by = v_by, approved_at = now()
+   where g.id = p_id;
+  insert into approvals (object_type, object_id, content_sha256, decision,
+                         approved_by, note)
+  values ('cogs_version', p_id::text, v_sha, 'approved', v_by, p_note)
+  returning approvals.id into v_aid;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'cogs_approve', 'cogs_version', p_id::text,
+          jsonb_build_object('approval_id', v_aid, 'content_sha256', v_sha));
+  return v_aid;
+end $$;
+revoke execute on function approve_cogs(bigint, text, text) from public;
+
+create table if not exists opex_entries (
+  id bigint generated always as identity primary key,
+  file_sha256 text not null check (file_sha256 ~ '^[0-9a-f]{64}$'),
+  file_name text not null,          -- basename, không đường dẫn
+  row_no int not null check (row_no >= 2),
+  month date not null check (extract(day from month) = 1),
+  category text not null check (category in ('cloud', 'saas', 'ads', 'khac')),
+  service text not null check (service ~ '^[a-z0-9][a-z0-9_.-]{1,39}$'),
+  amount_vnd bigint not null check (amount_vnd > 0),
+  doc_ref text,
+  imported_at timestamptz not null default now(),
+  unique (file_sha256, row_no)
+);
+create index if not exists opex_entries_month_idx on opex_entries (month);

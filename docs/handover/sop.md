@@ -425,6 +425,106 @@ ký số; số dư công nợ thật (MISA) + chính sách hoa hồng đã ký; 
 lô (`data/directors/finance.json` `approvers` đang rỗng); GĐ tài chính ký
 biên bản đối soát; hạn lưu + quyền thư mục file nháp hóa đơn.
 
+## 5f. Tài chính–kế hoạch (v9.1) — giá vốn, P&L, ngân sách ads, chi phí vận hành, dòng tiền
+
+**Làm gì:** 5 agent FP&A tất định (không LLM, không gọi mạng, không gửi gì
+ra ngoài). Chỉ BÁO CÁO + ĐỀ XUẤT vào hàng duyệt: không lệnh chi, không cài
+ngân sách quảng cáo, không bật voucher, không đổi giá, không tắt key. Mọi
+file báo cáo là BẢN NHÁP trong `data/reports/` (gitignored) — người đọc rồi
+chuyển tay.
+
+**Giá vốn (FP-COGS-PnL) — 2 người khác nhau.** Người lập (GĐ sản xuất) thêm
+dòng giá vốn có ngày hiệu lực; người duyệt (GĐ tài chính) duyệt. DB chặn
+người duyệt trùng người lập (không phân biệt hoa thường/khoảng trắng). Đổi
+giá vốn = thêm dòng mới (bảng append-only), không sửa dòng cũ.
+
+```
+python -m agents.fp_pnl --cogs-add --sku savina-12v --cost 50000 --from 2026-10-01 --by "<người lập>"
+python -m agents.fp_pnl --cogs-approve <id> --by "<người duyệt khác người lập>"
+python -m agents.fp_pnl --cogs-list
+python -m agents.fp_pnl --pnl --month 2026-10
+```
+
+- `--pnl` ghi `data/reports/pnl-<YYYY-MM>.md`: thực nhận quyết toán sàn
+  (mục 5e) phân bổ về SKU × kênh theo dòng đơn, trừ giá vốn ĐÃ duyệt hiệu
+  lực tại ngày quyết toán. SKU chưa có giá vốn duyệt → ghi "chưa có giá vốn
+  duyệt", KHÔNG điền 0, và bị loại khỏi tổng lãi gộp (dòng "N SKU bị loại").
+  Thêm `--channel shopee|tiktok` → file riêng `pnl-<YYYY-MM>-<kênh>.md`, mọi
+  số đếm theo đúng kênh; bản toàn kênh để GĐ tài chính ký không bị đè.
+- Đơn không thấy trên file đơn sàn → ô "(chưa rõ SKU)" chỉ có thực nhận;
+  dòng hoàn vẫn tính giá vốn theo số lượng đơn (GIẢ ĐỊNH thận trọng).
+
+**Đề xuất ngân sách ads (FP-AdsBudget).** Chấm biên gộp P&L tháng tham
+chiếu → 1 mục `budget_change` (rủi ro high, khối `finance`) chờ người duyệt.
+SKU bị cấm quảng bá (readiness CAM) hoặc TPBVSK chưa XNQC → ngân sách 0.
+Sau khi duyệt, Quản lý MXH tự cài trên nền tảng — agent không chi tiền.
+
+```
+python -m agents.fp_ads --propose --month 2026-10
+python -m pipelines.approval_queue --pending --block finance
+python -m pipelines.approval_queue --approve <id> --by "<người duyệt>"
+```
+
+**Chi phí vận hành (FP-OpsCost).** Chi phí AI theo agent lấy từ `llm_usage`
+(quy VND theo tỷ giá cấu hình) + chi phí cloud/SaaS/ads/khác nạp tay từ CSV
+(header `month, category, service, amount_vnd, doc_ref`) → so trần tháng,
+cảnh báo 80% và 100%. Khoản > ngưỡng X → mục `opex_over_x` chờ TGĐ ký;
+khoản đó chỉ hiện `duoc_chi` khi người có vai trò `tgd` (trong
+`data/users.json`) duyệt đúng mục — người vai trò khác duyệt vẫn là
+`cho_tgd_ky` (`--status` ghi "đã duyệt bởi vai trò khác — cần TGĐ"; chạy lại
+`--submit-over-x` để đẩy mục mới cho TGĐ). Chữ ký gắn với đúng dòng file chi
+phí + nội dung khoản (không theo số thứ tự khoản); mục do agent/khối khác tạo
+không bao giờ được tính — nếu `--submit-over-x` báo `[chặn]`, người duyệt
+reject mục lạ đó rồi chạy lại.
+
+```
+python -m agents.fp_opscost --load <file chi phí .csv/.xlsx>
+python -m agents.fp_opscost --report --month 2026-10
+python -m agents.fp_opscost --submit-over-x --month 2026-10
+python -m pipelines.approval_queue --approve <id> --by "<email vai trò tgd>"
+python -m agents.fp_opscost --status --month 2026-10
+```
+
+**Dòng tiền 13 tuần (FP-Cash).** Dựng trên engine kịch bản chung (mục 5c,
+`pipelines.scenario`) → mỗi tuần khoảng thấp/cơ sở/cao; cảnh báo tuần số dư
+âm ở kịch bản thấp. Chưa có số dư tiền mặt thật → số dư = dòng tiền ròng lũy
+kế từ 0 (`--opening` khi có số thật). DB không kết nối được vẫn chạy với tỷ
+lệ thực nhận mặc định (`[warn]`, "chưa xác minh").
+
+```
+python -m agents.fp_cash --forecast --start 2026-10-12
+python -m agents.fp_cash --forecast --start 2026-10-12 --opening <số dư VND> --json
+```
+
+**Bản tin tuần GĐ tài chính (FIN-Director).** Gom công nợ quá hạn (mục 5e)
++ P&L tháng + chi phí vận hành + dòng tiền + số đề xuất ads đang chờ →
+`data/reports/director-finance-<ngày>.md`. Cùng tên file với
+`python -m agents.acc_ar --bulletin` (bản ngày, chỉ mục công nợ): bản tuần
+là SUPERSET — chạy `--weekly` SAU `--bulletin` trong ngày. Mục nào thiếu dữ
+liệu ghi "(chưa có dữ liệu: …)", bản tin vẫn ra.
+
+```
+python -m agents.fin_director --weekly
+python -m agents.fin_director --weekly --as-of 2026-10-12
+```
+
+**GIẢ ĐỊNH (sửa khi có thật):** `data/fpa_config.json` (`confirmed_by`
+null) — ngưỡng biên gộp tối thiểu + hệ số ngân sách ads, trần chi phí
+tháng, ngưỡng X, tỷ giá USD/VND, chi cố định 13 tuần + khoản một lần, độ trễ
+tiền sàn về, tỷ lệ giá đại lý, số dư đầu kỳ; kịch bản bán
+`data/scenario_assumptions.json`.
+
+**External-dep (công ty cấp, hệ thống không giả lập):** giá vốn thật theo
+SKU + GĐ sản xuất lập / GĐ tài chính duyệt (bảng `cogs_versions` trên DB
+thật đang trống); hóa đơn cloud/SaaS thật (`tests/fixtures/finance/
+opex_MAU.csv` chỉ là MẪU); GĐ tài chính chốt các GIẢ ĐỊNH trên; TGĐ ký khoản
+vượt X + danh sách người/vai trò thật (`data/users.json`); người duyệt khối
+(`data/directors/finance.json` `approvers` đang rỗng); doanh thu đại lý/B2B
+từ MISA cho P&L kênh offline; phiếu phương án voucher/combo của marketing;
+management key OpenRouter (`key_usage_master`) cho đối chiếu chi phí key;
+Quản lý MXH cài trần ngân sách trên nền tảng ads; GĐ tài chính ký P&L/bản
+tin/nghiệm thu WP12.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):

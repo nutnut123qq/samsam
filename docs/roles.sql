@@ -95,3 +95,11 @@ grant execute on function
   decide_item(bigint, text, text, text),
   override_qa(bigint, text, text)
   to app_human;
+
+-- v9.1 FP&A (WP12): người lập (GĐ sản xuất) thêm dòng giá vốn chưa duyệt;
+-- duyệt CHỈ qua approve_cogs (người duyệt khác người lập — chặn trong
+-- function). agent_writer KHÔNG execute approve_cogs, KHÔNG insert giá vốn
+-- (agent không tự lập/duyệt giá vốn). opex_entries chỉ owner (CLI nạp).
+grant select, insert (sku_key, cost_vnd, valid_from, created_by, note)
+  on cogs_versions to app_human;
+grant execute on function approve_cogs(bigint, text, text) to app_human;
