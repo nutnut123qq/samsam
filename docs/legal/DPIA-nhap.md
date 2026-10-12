@@ -560,6 +560,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Chưa có căn cứ `staff_assist_dpia_v1` cho gợi ý LLM trên tin buyer sàn: GAP |
 | GAP | Chưa có căn cứ xử lý `staff_assist_dpia_v1` (F03b bước 3) — CẦN LUẬT SƯ XÁC NHẬN trước khi dùng thường xuyên; Chưa có trần lượt dán/ngày + thống kê (someday) |
 
+### DF-31 — Rà SEO website công ty (v6.5)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-31 |
+| Module (code) | `agents/seo_web.py` |
+| Mục đích | Phát hiện lỗi SEO/nội dung vi phạm trên website công ty để người quản trị web sửa TAY sau khi GĐ Marketing duyệt |
+| Dữ liệu | HTML công khai các trang của chính website công ty (title, meta description, H1, thẻ img/alt, link nội bộ, mã HTTP) + dữ liệu đã crawl data/*.jsonl; không có dữ liệu cá nhân |
+| Lớp | Xanh |
+| Chủ thể | Không có chủ thể dữ liệu cá nhân (nội dung website của công ty) |
+| Nơi lưu | `data/reports/seo-web-<ngày>.md` (gitignore) + 1 mục `approval_queue` khối marketing (`seo_web_fix`, payload chỉ URL + code + đề xuất) |
+| Thời hạn lưu | Báo cáo ghi đè theo ngày; mục hàng duyệt theo vòng đời approval_queue |
+| Bên nhận | website của chính công ty (GET qua collector, robots + ≥1s) |
+| Chuyển ra nước ngoài | Không |
+| Biện pháp bảo vệ (có trong code) | Mặc định `--from-crawl` 0 request; `--fetch` chỉ GET qua `crawler.intel.Fetcher` (robots.txt, ≥1s/host, ngân sách ≤200, chặn host ngoài `web.own_hosts` kể cả hop redirect); Không có đường ghi website (không POST/PUT, không WP REST ghi); không gọi LLM; Payload hàng duyệt không trích text vi phạm; URL có slug bị guardrail chặn → mã băm |
+| Căn cứ xử lý | Không xử lý dữ liệu cá nhân |
+| GAP | (không) |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -596,6 +614,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-28 | Hồ sơ tham gia chương trình — viết lại thư đăng ký bằng LLM (v8.3 DA-04, tùy chọn) | Xanh | thấp | có | 0 |
 | DF-29 | Kênh Messenger (Facebook Page) — nhận tin và trả lời khách (v5.1) | Đỏ | cao | có | 4 |
 | DF-30 | Gợi ý trả lời chat sàn Shopee/TikTok — MXH dán tay (v5.1) | Đỏ | cao | có | 2 |
+| DF-31 | Rà SEO website công ty (v6.5) | Xanh | thấp | không | 0 |
 
 ## 4. Tổng hợp GAP
 

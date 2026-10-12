@@ -90,6 +90,21 @@ python -m agents.report                        # sinh báo cáo 7 ngày
   pipelines.approval_queue --approve ID --by "<tên>"`). Agent không duyệt,
   không đăng, không chi tiền; cảnh báo "VƯỢT QUOTA" chỉ là đề xuất dời.
 
+## Đo lường + SEO hằng tuần (v6.5)
+
+- **Thứ Hai — đọc mục 5 "Marketing"** của báo cáo định kỳ (`python -m
+  agents.report --days 7`): tỷ lệ nháp bị trả lại theo kênh × loại, thời gian
+  duyệt trung vị/p90, vi phạm guardrail theo code (code nào lặp nhiều = viết
+  lại brief/template), hiệu quả kênh tuần trước. Số `(MẪU)` là dữ liệu mẫu;
+  Search Console/GA4 chờ bàn giao.
+- **Rà SEO website** (`python -m agents.seo_web`, thêm `--submit` để gửi đề
+  xuất vào hàng duyệt): tiêu đề trùng/dài, sản phẩm thiếu ảnh, trang có câu
+  vi phạm luật. GĐ Marketing duyệt → người quản trị web sửa TAY trên CMS.
+- **Gợi ý tiêu đề sàn** (`python -m agents.seo_san --run --dry-run` xem
+  trước, bỏ `--dry-run` để tạo nháp listing chờ duyệt): từ khóa lấy từ
+  Google Trends xuất tay; từ khóa rượu, "Ngọc Linh", từ cấm tự bị loại. Sau
+  duyệt, sửa TAY trên Seller Center.
+
 ## Khi nào gọi người khác
 
 | Tình huống | Gọi ai |

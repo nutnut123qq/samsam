@@ -759,6 +759,28 @@
         "Chưa có căn cứ xử lý `staff_assist_dpia_v1` (F03b bước 3) — CẦN LUẬT SƯ XÁC NHẬN trước khi dùng thường xuyên",
         "Chưa có trần lượt dán/ngày + thống kê (someday)"
       ]
+    },
+    {
+      "id": "DF-31",
+      "name": "Rà SEO website công ty (v6.5)",
+      "modules": [
+        "agents/seo_web.py"
+      ],
+      "data": "HTML công khai các trang của chính website công ty (title, meta description, H1, thẻ img/alt, link nội bộ, mã HTTP) + dữ liệu đã crawl data/*.jsonl; không có dữ liệu cá nhân",
+      "class": "xanh",
+      "subjects": "Không có chủ thể dữ liệu cá nhân (nội dung website của công ty)",
+      "purpose": "Phát hiện lỗi SEO/nội dung vi phạm trên website công ty để người quản trị web sửa TAY sau khi GĐ Marketing duyệt",
+      "storage": "`data/reports/seo-web-<ngày>.md` (gitignore) + 1 mục `approval_queue` khối marketing (`seo_web_fix`, payload chỉ URL + code + đề xuất)",
+      "retention": "Báo cáo ghi đè theo ngày; mục hàng duyệt theo vòng đời approval_queue",
+      "recipients": "website của chính công ty (GET qua collector, robots + ≥1s)",
+      "cross_border": false,
+      "safeguards": [
+        "Mặc định `--from-crawl` 0 request; `--fetch` chỉ GET qua `crawler.intel.Fetcher` (robots.txt, ≥1s/host, ngân sách ≤200, chặn host ngoài `web.own_hosts` kể cả hop redirect)",
+        "Không có đường ghi website (không POST/PUT, không WP REST ghi); không gọi LLM",
+        "Payload hàng duyệt không trích text vi phạm; URL có slug bị guardrail chặn → mã băm"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân",
+      "gaps": []
     }
   ]
 }

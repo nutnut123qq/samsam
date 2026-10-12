@@ -1,0 +1,18 @@
+## python scripts/agent_eval.py --validate
+[ok] sales_director v1 active owner=sales qa=data_platform risk=medium 26 ca
+[ok] sx_a8 v1 skeleton owner=production qa=production risk=medium 3 ca
+[done] 18/18 suite hợp lệ
+exit=0
+
+## --agent mkt_seo --no-record
+[done] mkt_seo v1 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=d605d69393b2 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+exit=0
+
+## --print-hash mkt_seo (== cases_sha256 trong suite)
+4b6ed3d83d628668c5c229c2d8475c7c5fdf2b6cd9fdb1f52a14c14d81bcafa6
+4b6ed3d83d628668c5c229c2d8475c7c5fdf2b6cd9fdb1f52a14c14d81bcafa6
+
+## required_agents (không có mkt_seo)
+['guardrail', 'chatbot']

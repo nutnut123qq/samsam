@@ -8,6 +8,14 @@ Contract:
   - Nguồn số liệu: DB lõi v1.8 (`orders`, `leads`, `plot_logs`,
     `plots`, `products`) + convlog `data/conversations.jsonl`(+`.1`)
     — file-based nên phần kênh chat luôn có kể cả khi DB chết.
+  - v6.5 MKT-09 — mục 5 "Marketing" (thay placeholder "Social metrics"):
+    `pipelines.mkt_metrics.collect` (SAU `collect_db`, cùng conn) — tỷ lệ
+    nháp bị trả lại theo kênh × loại (`content_drafts`, quyết định trong
+    kỳ), thời gian duyệt trung vị/p90/max (nháp + hàng chờ
+    `approval_queue` khối marketing), nháp theo agent, vi phạm guardrail
+    theo CODE (không trích text), hiệu quả kênh tuần ISO đã đóng từ
+    `channel_snapshots` (manual_export; nguồn `sample:` → `(MẪU)`). Mọi
+    số do code tính — 0 LLM. Lỗi DB mục 5 → chỉ mục 5 "[chưa nạp]".
   - Output: `data/reports/report-<since>_<end>.md` — atomic tmp +
     `os.replace`, ghi BYTES utf-8 (tránh `\\n`→`\\r\\n` Windows);
     gitignored (runtime artifact). Chạy lại cùng kỳ → cùng tên file,
@@ -51,6 +59,7 @@ from ingest.lead_store import (
     connect,
     iter_convlog,
 )
+from pipelines import mkt_metrics
 from pipelines.job_runs import job_run
 from pipelines.period import VN_TZ, rolling_bounds
 
@@ -275,6 +284,100 @@ def _src_line(table: str, sources: dict) -> str:
             + _mark(_sample(sources)))
 
 
+def collect_marketing(conn, since: datetime, until: datetime) -> dict:
+    """Số mục 5 (`mkt_metrics.collect`). conn None / `psycopg.Error` →
+    {"ok": False, "error"} — chỉ mục 5 degraded, mục khác giữ số."""
+    if conn is None:
+        return {"ok": False, "error": "không kết nối được Postgres"}
+    try:
+        return mkt_metrics.collect(conn, since, until)
+    except psycopg.Error as e:
+        return {"ok": False, "error": str(e).strip()[:300]}
+
+
+_NO_DATA = "[chưa có dữ liệu]"
+
+
+def _pct(v) -> str:
+    return "—" if v is None else f"{v}%"
+
+
+def _rate_rows(by: dict, total: dict, head: str) -> list[str]:
+    """Bảng trả lại/đã quyết + % + còn chờ cuối kỳ (mẫu số 0 → "—")."""
+    L = [f"| {head} | Trả lại / Đã quyết | Tỷ lệ trả lại | Còn chờ cuối kỳ |",
+         "|---|---|---|---|"]
+    for key in sorted(by, key=str):
+        b = by[key]
+        name = " · ".join(key) if isinstance(key, tuple) else key
+        L.append(f"| {name} | {b['rejected']}/{b['decided']} | "
+                 f"{_pct(b['rate'])} | {b['pending_end']} |")
+    L.append(f"| **Tổng** | {total['rejected']}/{total['decided']} | "
+             f"{_pct(total['rate'])} | {total['pending_end']} |")
+    return L
+
+
+def _hours_line(label: str, h: dict) -> str:
+    if not h["n"]:
+        line = f"- {label}: {_NO_DATA}"
+    else:
+        line = (f"- {label}: trung vị {h['median_h']} giờ · p90 "
+                f"{h['p90_h']} giờ · lâu nhất {h['max_h']} giờ "
+                f"(n={h['n']})")
+    if h.get("bad_ts"):
+        line += f" — loại {h['bad_ts']} mục mốc thời gian hỏng"
+    return line
+
+
+def _counts(d: dict) -> str:
+    items = sorted(d.items(), key=lambda kv: (-kv[1], kv[0]))
+    return " · ".join(f"`{str(k).replace('`', chr(39))}` {v}"
+                      for k, v in items)
+
+
+def _cell_num(v) -> str:
+    return _NO_DATA if v is None else str(v)
+
+
+def render_marketing(m) -> list[str]:
+    """Mục 5 — mọi số lấy từ dict `m` (code tính, không LLM)."""
+    L = ["## 5. Marketing", ""]
+    if not isinstance(m, dict) or not m.get("ok"):
+        err = m.get("error") if isinstance(m, dict) else None
+        return L + [f"*[chưa nạp — {err or 'chưa thu số marketing'}]*", ""]
+    L += [("**Tỷ lệ nháp bị trả lại** (nháp nội dung có quyết định trong "
+           "kỳ; nháp còn chờ không vào mẫu số):"), ""]
+    L += _rate_rows(m["drafts"], m["drafts_total"], "Kênh · Loại") + [""]
+    L += ["**Hàng chờ khối marketing** (theo loại việc):", ""]
+    L += _rate_rows(m["queue"], m["queue_total"], "Loại việc") + [""]
+    L += [("- Hết hạn không ai duyệt (không tính trả lại): "
+           f"{m['queue_expired']}"), ""]
+    L += ["**Thời gian duyệt** (giờ, tạo → quyết định):",
+          _hours_line("Nháp nội dung", m["drafts_hours"]),
+          _hours_line("Hàng chờ khối marketing", m["queue_hours"]), ""]
+    L.append("- Nháp tạo trong kỳ theo agent/người: "
+             + (_counts(m["by_agent"]) or "không có"))
+    L.append("- Vi phạm guardrail theo code (nháp tạo trong kỳ): "
+             + (_counts(m["guardrail_codes"]) or "không có"))
+    ch = m["channels"]
+    L += ["", (f"**Hiệu quả kênh — tuần {ch['week']}** (số xuất tay "
+               "`manual_export`):"), ""]
+    if not ch["rows"]:
+        L.append(f"- {_NO_DATA} — chưa nạp số kênh tuần này "
+                 "(`python -m pipelines.cockpit --import FILE --by ...`)")
+    else:
+        L += [("| Kênh | Tiếp cận | Tương tác | Đơn hoàn thành | "
+               "Tỷ lệ tương tác |"), "|---|---|---|---|---|"]
+        for r in ch["rows"]:
+            name = r["channel"] + (" (MẪU)" if r["sample"] else "")
+            er = _NO_DATA if r["eng_rate"] is None else f"{r['eng_rate']}%"
+            L.append(f"| {name} | {_cell_num(r['reach'])} | "
+                     f"{_cell_num(r['engagement'])} | "
+                     f"{_cell_num(r['orders'])} | {er} |")
+    L += [("- Search Console/GA4, số kênh thật — chờ bàn giao "
+           "(external-dep)."), ""]
+    return L
+
+
 def render(rep: dict) -> str:
     """rep → markdown tiếng Việt. Degraded (db_ok=False) → phần DB
     in '[chưa nạp — <err>]', phần convlog vẫn đầy đủ."""
@@ -397,12 +500,8 @@ def render(rep: dict) -> str:
             L.append("- Không có nhật ký nào trong kỳ.")
         L.append("")
 
-    # --- 5. Social metrics (external — chờ bàn giao)
-    L += ["## 5. Social metrics", "",
-          ("- *Chờ bàn giao:* creds Fanpage/TikTok/Zalo OA (Phụ lục "
-           "C — điều kiện tiên quyết phía công ty). Mục này tự điền "
-           "khi có nguồn; hệ thống KHÔNG tự lấy/gửi gì ra ngoài."),
-          ""]
+    # --- 5. Marketing (v6.5 MKT-09 — số do code tính)
+    L += render_marketing(rep.get("marketing"))
 
     # --- 6. Nguồn dữ liệu & chất lượng
     L += ["## 6. Nguồn dữ liệu", ""]
@@ -415,6 +514,10 @@ def render(rep: dict) -> str:
         L.append(f"- **DB:** không khả dụng — {_db_err(db)}")
     L.append(f"- `conversations.jsonl`: {chat['total']} record "
              f"(+{chat['skipped']} bỏ qua)")
+    L.append("- Mục Marketing: `content_drafts` (quyết định theo "
+             "`reviewed_at`), `approval_queue` khối marketing (theo "
+             "`decided_at`), `channel_snapshots` (manual_export, tuần đã "
+             "đóng)")
     L += ["", "---",
           ("*Sinh tự động bởi agent báo cáo định kỳ (`python -m "
            "agents.report`). Kiểm chứng số liệu trước khi trích dẫn "
@@ -469,6 +572,7 @@ def generate(days: int = DEFAULT_DAYS, until=None,
                      {"db_ok": False,
                       "db_error": "không kết nối được Postgres "
                       "(DATABASE_URL thiếu hoặc host chết)"})
+        rep["marketing"] = collect_marketing(conn, since, until_excl)
     finally:
         if own and conn is not None:
             # Đóng conn không được giết agent sau khi số liệu đã có.
@@ -478,6 +582,15 @@ def generate(days: int = DEFAULT_DAYS, until=None,
     path = write_report(render(rep), out_dir,
                         report_name(since, until_excl))
     return path, rep
+
+
+def _tra_lai(rep: dict) -> str:
+    """Topline CLI: tra-lai=<rejected>/<decided> nháp nội dung trong kỳ."""
+    m = rep.get("marketing") or {}
+    if not m.get("ok"):
+        return "tra-lai=[chưa nạp]"
+    t = m["drafts_total"]
+    return f"tra-lai={t['rejected']}/{t['decided']}"
 
 
 def main(argv=None) -> int:
@@ -514,14 +627,15 @@ def main(argv=None) -> int:
         print(f"[warn] DB không khả dụng — báo cáo degraded: "
               f"{_db_err(db)}", flush=True)
         print(f"[done] {path} — convlog trong kỳ "
-              f"{rep['chat']['in_period']}", flush=True)
+              f"{rep['chat']['in_period']} {_tra_lai(rep)}", flush=True)
         return 0
     s, leads, farm = db["sales"], db["leads"], db["farm"]
     print(f"[done] {path} — đơn={s['count']} "
           f"doanh-thu={_fmt_vnd(s['revenue'])} "
           f"leads-mới={leads['new']} "
           f"nhật-ký={farm['count']} "
-          f"convlog-kỳ={rep['chat']['in_period']}", flush=True)
+          f"convlog-kỳ={rep['chat']['in_period']} {_tra_lai(rep)}",
+          flush=True)
     return 0
 
 

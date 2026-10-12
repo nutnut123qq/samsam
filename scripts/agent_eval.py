@@ -39,14 +39,19 @@ KHÔNG có `text`), `mkt03` (tất định — v6.2 Agent Ảnh AI:
 provider AI giả `eval_stub` đăng ký TẠM (gỡ trong finally), 0 mạng/0 LLM/
 không DB; kind ảnh chấm nhãn AI + metadata / toàn vẹn packshot / phát hiện
 sửa 1 pixel / không EXIF; ca refuse pass <=> refused.code == code; ca KHÔNG
-có `text`), `sales_director` (tất định — v5.0: định tuyến SLA
+có `text`), `mkt_seo` (tất định — v6.5 MKT-11 SEO sàn:
+`agents.seo_san.suggest` trên `related` (Trends) của ca, luật
+`data/seo_rules.json` + `data/listing_rules.json` THẬT; 0 mạng/LLM/DB; expect
+⊂ refused/present/absent/rejected/title_limit; ca KHÔNG có `text`),
+`sales_director` (tất định — v5.0: định tuyến SLA
 handoff A/B + rủi ro qua `agents.sales_director.route/sla_state` trên
 `data/directors/sales.json` THẬT, không LLM/mạng/key/DB), `cskh` (tất định — KD-A1 v5.1: lớp kênh
 `connectors.channels.respond` với `api.rag.answer` THẬT nhưng "gateway giả" =
 patch `api.rag.retrieve`/`api.rag.chat` theo `fake_hits`/`fake_llm` của ca,
 đếm lời gọi LLM), `chatbot`
 (`api.rag.answer` THẬT, cần OPENROUTER_API_KEY). Scorer từng ca: guardrail
-| co_khi | mkt02 | mkt03 | sales_director | cskh | eval_qa | handoff | exact |
+| co_khi | mkt02 | mkt03 | mkt_seo | sales_director | cskh | eval_qa |
+handoff | exact |
 regex | judge. Giám khảo LLM CHỈ qua
 `pipelines.llm_gateway.chat("ci_judge")`, model khác HỌ (nhà sản xuất theo
 allowlist `_FAMILIES`; router/alias lạ → từ chối) với model agent; output
@@ -69,6 +74,7 @@ Chạy:
   python scripts/agent_eval.py --agent co_khi --no-record
   python scripts/agent_eval.py --agent mkt02 --no-record
   python scripts/agent_eval.py --agent mkt03 --no-record
+  python scripts/agent_eval.py --agent mkt_seo --no-record
   python scripts/agent_eval.py --agent sales_director --no-record
   python scripts/agent_eval.py --agent kd_a1 --no-record
   python scripts/agent_eval.py --validate
@@ -116,7 +122,8 @@ DEFAULT_CHAT_MODEL = "openai/gpt-4o-mini"
 RISKS = ("low", "medium", "high")
 STATUSES = ("active", "skeleton")
 SCORERS = ("guardrail", "co_khi", "mkt02", "mkt03", "sales_director",
-           "eval_qa", "handoff", "exact", "regex", "judge", "cskh")
+           "eval_qa", "handoff", "exact", "regex", "judge", "cskh",
+           "mkt_seo")
 # Nguồn DUY NHẤT của tên runner hợp lệ (RUNNERS.keys() phải trùng).
 RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "chatbot": {"eval_qa", "handoff", "exact", "regex",
@@ -124,10 +131,11 @@ RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "co_khi": {"co_khi"},
                   "mkt02": {"mkt02"},
                   "mkt03": {"mkt03"},
+                  "mkt_seo": {"mkt_seo"},
                   "sales_director": {"sales_director"},
                   "cskh": {"cskh"}}
 DETERMINISTIC_RUNNERS = ("guardrail", "co_khi", "mkt02", "mkt03",
-                         "sales_director", "cskh")
+                         "sales_director", "cskh", "mkt_seo")
 # Hit giả mặc định của runner cskh (ca không khai `fake_hits`).
 CSKH_DEFAULT_HIT = {"title": "Sản phẩm Sâm Sâm", "lang": "vi",
                     "url": "https://samsamngoclinh.com/san-pham",
@@ -139,7 +147,12 @@ GUARDRAIL_CTX_KEYS = {"channel", "content_type", "sku", "is_ai",
 CO_KHI_KINDS = ("fact", "high_risk", "trap_no_data")
 # v6.1 mkt02: ca không có `text` (đầu vào = op × sku × kênh); v6.2 mkt03
 # cũng vậy (đầu vào = sku × kênh × format × headline).
-NO_TEXT_SCORERS = {"mkt02", "mkt03"}
+NO_TEXT_SCORERS = {"mkt02", "mkt03", "mkt_seo"}
+# v6.5 mkt_seo (MKT-11 SEO sàn): kind + khóa expect hợp lệ.
+MKT_SEO_KINDS = ("keyword_in", "keyword_out", "title_limit", "trap_alcohol",
+                 "trap_ngoc_linh", "trap_banned")
+MKT_SEO_EXPECT_KEYS = {"refused", "present", "absent", "rejected",
+                       "title_limit"}
 MKT02_OPS = ("listing", "draft")
 # v6.2 mkt03: kind ca expect=image (chấm theo kind trong _score_mkt03);
 # provider CHỈ nền tất định / provider giả eval_stub — suite không được kéo
@@ -320,6 +333,46 @@ def _validate_mkt03_case(c: dict, cid, exp) -> list[str]:
     return errs + _readiness_errs(c, cid)
 
 
+def _validate_mkt_seo_case(c: dict, cid, exp) -> list[str]:
+    """v6.5: sku/channel; related = list {seed, section top|rising, query,
+    value, flags?}; current_title tùy chọn; expect object khác rỗng với
+    khóa ⊂ MKT_SEO_EXPECT_KEYS; readiness tùy chọn."""
+    errs = []
+    if c.get("kind") not in MKT_SEO_KINDS:
+        errs.append(f"ca {cid}: mkt_seo kind phải {MKT_SEO_KINDS}")
+    for k in ("sku", "channel"):
+        if not _nonempty(c.get(k)):
+            errs.append(f"ca {cid}: mkt_seo thiếu '{k}'")
+    if "current_title" in c and not isinstance(c["current_title"], str):
+        errs.append(f"ca {cid}: current_title phải chuỗi")
+    rel = c.get("related")
+    if not (isinstance(rel, list) and all(
+            isinstance(r, dict) and all(_nonempty(r.get(k)) for k in
+                                        ("seed", "query", "value"))
+            and r.get("section") in ("top", "rising")
+            and isinstance(r.get("flags", []), list) for r in rel)):
+        errs.append(f"ca {cid}: related phải list {{seed, section "
+                    "top|rising, query, value, flags?}")
+    if not (isinstance(exp, dict) and exp):
+        return errs + [f"ca {cid}: mkt_seo expect phải object khác rỗng"]
+    bad = sorted(set(exp) - MKT_SEO_EXPECT_KEYS)
+    if bad:
+        errs.append(f"ca {cid}: expect key lạ {bad}")
+    for k in ("present", "absent"):
+        if k in exp and not (isinstance(exp[k], list)
+                             and all(_nonempty(x) for x in exp[k])):
+            errs.append(f"ca {cid}: expect.{k} phải list chuỗi")
+    rj = exp.get("rejected")
+    if "rejected" in exp and not (isinstance(rj, dict) and rj and all(
+            _nonempty(k) and _nonempty(v) for k, v in rj.items())):
+        errs.append(f"ca {cid}: expect.rejected phải {{query: code}}")
+    if "refused" in exp and not _nonempty(exp["refused"]):
+        errs.append(f"ca {cid}: expect.refused phải code")
+    if "title_limit" in exp and exp["title_limit"] is not True:
+        errs.append(f"ca {cid}: expect.title_limit chỉ nhận true")
+    return errs + _readiness_errs(c, cid)
+
+
 def _iso_ok(v) -> bool:
     from datetime import datetime
     try:
@@ -416,6 +469,8 @@ def _validate_case(c, i: int, d: dict) -> list[str]:
         errs += _validate_mkt02_case(c, cid, exp)
     elif sc == "mkt03":
         errs += _validate_mkt03_case(c, cid, exp)
+    elif sc == "mkt_seo":
+        errs += _validate_mkt_seo_case(c, cid, exp)
     elif sc == "sales_director":
         errs += _validate_sales_case(c, cid, exp)
     elif sc == "cskh":
@@ -881,6 +936,46 @@ def _score_sales(case: dict, out: dict) -> tuple[bool, str]:
                               f"{st['business_due_at']:%d/%m %H:%M}")
 
 
+def _seo_key(s) -> str:
+    import unicodedata
+    return unicodedata.normalize("NFC", str(s)).casefold().strip()
+
+
+def _score_mkt_seo(case: dict, out: dict) -> tuple[bool, str]:
+    """v6.5: so `seo_san.suggest` với expect (refused/present/absent/
+    rejected/title_limit). Ca không khai refused mà bị từ chối / failed →
+    FAIL; ca refused mà vẫn có từ khóa → FAIL."""
+    exp, errs = case["expect"], []
+    ref = out.get("refused")
+    kws = {_seo_key(k) for k in out.get("keywords") or []}
+    title = out.get("title") or ""
+    if "refused" in exp:
+        if not ref or ref.get("code") != exp["refused"]:
+            errs.append(f"kỳ vọng từ chối {exp['refused']}, có "
+                        f"{(ref or {}).get('code')}")
+        if kws or title:
+            errs.append("bị từ chối nhưng vẫn có gợi ý")
+    elif ref:
+        errs.append(f"bị từ chối {ref.get('code')}")
+    elif out.get("failed"):
+        errs.append(f"toàn văn không qua guardrail {out['failed']}")
+    for q in exp.get("present", []):
+        if _seo_key(q) not in kws:
+            errs.append(f"thiếu từ khóa {q!r}")
+    for q in exp.get("absent", []):
+        if _seo_key(q) in kws or _seo_key(q) in _seo_key(title):
+            errs.append(f"từ khóa cấm/loại lọt vào gợi ý {q!r}")
+    rej = {_seo_key(r["query"]): r["codes"] for r in out.get("rejected", [])}
+    for q, code in exp.get("rejected", {}).items():
+        if code not in rej.get(_seo_key(q), []):
+            errs.append(f"{q!r} không bị loại bằng {code}")
+    if exp.get("title_limit"):
+        lim = out.get("title_max")
+        if not title or lim is None or len(title) > lim:
+            errs.append(f"tiêu đề {len(title)} ký tự > {lim}")
+    return not errs, "; ".join(errs)
+
+
 def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
     sc = case.get("scorer", "guardrail")
     if sc == "guardrail":
@@ -894,6 +989,8 @@ def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
         return _score_mkt03(case, out, _mkt03_ai_label())
     if sc == "sales_director":
         return _score_sales(case, out)
+    if sc == "mkt_seo":
+        return _score_mkt_seo(case, out)
     if sc == "cskh":
         return channels.score_cskh(case, out)
     if sc == "eval_qa":
@@ -1092,9 +1189,33 @@ def run_cskh(cases, judge_model=None):
     return _run(cases, produce, judge_model)
 
 
+def run_mkt_seo(cases, judge_model=None):
+    """v6.5 MKT-11: `seo_san.suggest` THUẦN trên luật thật — 0 mạng/LLM/DB.
+    `title_max` của kênh gắn vào output để chấm title_limit."""
+    from agents import seo_san, seo_web
+    from pipelines import content
+
+    rules = seo_web.load_rules()
+    lrules, err = content._listing_rules()
+    if err:
+        raise RuntimeError(err)
+
+    def produce(c):
+        rmap = ({(a, b): m for a, b, m in c["readiness"]}
+                if c.get("readiness") else None)
+        out = seo_san.suggest(c["sku"], c["channel"], c.get("current_title"),
+                              c["related"], rules=rules,
+                              listing_rules=lrules, readiness=rmap)
+        lim = lrules["channels"].get(c["channel"])
+        return {**out, "title_max": lim["title_max"] if lim else None}
+
+    return _run(cases, produce, judge_model, show_answer=False)
+
+
 RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot,
            "co_khi": run_co_khi, "mkt02": run_mkt02, "mkt03": run_mkt03,
-           "sales_director": run_sales_director, "cskh": run_cskh}
+           "sales_director": run_sales_director, "cskh": run_cskh,
+           "mkt_seo": run_mkt_seo}
 
 
 def score(results: list[tuple[dict, bool, str]], threshold: dict) -> dict:
