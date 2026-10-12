@@ -185,6 +185,78 @@ python -m pipelines.red_alert --check-routing      # exit 1 = chưa có người
   dev điền `data/red_alert_routing.json` (chỉ nhận vai trò `phap_che`/
   `bks`; `tgd`/`ha_tang` và vai trò khác bị loại tự động). Hiện hệ thống chỉ ghi bảng, chưa gửi email/Zalo (external-dep).
 
+## 4c. Cockpit TGĐ (v8.0)
+
+Báo cáo tuần cho TGĐ — mọi con số do CODE điền từ bảng `channel_snapshots`
+(không ai/không LLM gõ số). Sáng thứ Hai, theo thứ tự:
+
+```
+python -m ingest.lead_store                            # 0a. gom lead convlog tới hết Chủ nhật TRƯỚC khi chụp
+python -m pipelines.approval_queue --expire            # 0b. đánh expired mục quá hạn TRƯỚC khi chụp
+python -m pipelines.cockpit --collect                  # chụp số nội bộ tuần VỪA ĐÓNG (giờ VN)
+python -m pipelines.cockpit --collect --period month   # đầu tháng: chụp tháng vừa đóng
+python -m pipelines.cockpit --import <file.csv> --by "<người xuất file>"   # số kênh ngoài
+python -m agents.ceo_report                            # → data/reports/ceo-<YYYY-Www>.md
+python -m agents.ceo_report --submit                   # nộp trang vào hàng chờ khối ceo (TGĐ duyệt)
+python -m pipelines.cockpit --metrics                  # xem từ điển chỉ số data/metrics.json
+```
+
+- **Bước 0 bắt buộc:** sổ `channel_snapshots` chỉ ghi thêm (insert-only) —
+  chụp trước khi gom lead/expire thì `leads.new`/`approvals.ceo_expired`
+  của tuần bị thiếu và chụp lại sau đó KHÔNG sửa được (chỉ báo conflict).
+- **Chatbot (convlog giữ 30 ngày):** `chatbot.questions`/
+  `chatbot.unanswered` chỉ chụp được khi đầu kỳ còn trong 30 ngày gần
+  nhất. Kỳ cũ hơn (backfill tuần cũ, và cả THÁNG — chụp ngày 1 tháng sau
+  thì ngày đầu tháng trước đã quá 30 ngày) → `[warn] thiếu nguồn ... vượt
+  hạn lưu`, báo cáo hiện `[chưa có dữ liệu]` (không ghi số thiếu). Số chat
+  theo tháng: cộng các tuần đã chụp.
+- **Kỳ:** chỉ chụp/báo cáo kỳ ĐÃ ĐÓNG (tuần ISO thứ Hai 00:00 giờ VN;
+  tháng ngày 1). Kỳ đang chạy → exit 2. Thêm `--ref YYYY-MM-DD` để chọn
+  kỳ chứa ngày đó; `--collect --dry-run` chỉ in số, không ghi.
+- **CSV kênh ngoài** (UTF-8, ≤ 2 MB), header ĐÚNG
+  `channel,metric_id,period_kind,period_start,value`; `metric_id` phải là
+  metric `external` trong `data/metrics.json` và kênh nằm trong danh sách
+  của metric; `period_start` là thứ Hai (tuần) / ngày 1 (tháng); `value`
+  số nguyên KHÔNG dấu nghìn (`21585320`, không `21.585.320`). File có
+  lỗi → in `dòng N, cột X: <lý do>` (không in giá trị ô), **exit 1, 0
+  dòng được nạp**, chưa kết nối DB — sửa file rồi chạy lại. Nạp lại
+  cùng file = không thêm dòng (idempotent). `--sample` chỉ dùng cho file
+  MẪU (báo cáo gắn `(MẪU)`) và **tên file phải có `MAU`/`sample`** — file
+  tên MẪU thiếu `--sample`, hoặc file thật có `--sample` → exit 2. KHÔNG nạp
+  file MẪU vào DB vận hành (sổ insert-only: số mẫu sẽ chặn vĩnh viễn file
+  thật cùng kỳ) — trên DB thật chỉ chạy thử ở DB dev/test.
+- **Role DB (DSN) từng lệnh:** `--import` bằng role `agent_writer` CHỈ
+  nạp được file toàn dòng MỚI (role chỉ INSERT sổ, không đọc được số đã
+  có). File có BẤT KỲ dòng nào trùng khóa đã nạp — kể cả file y nguyên,
+  hay file Seller Center xuất lại đã SỬA số — → hủy cả file, exit 1,
+  `[fail] N dòng đã có trong sổ ... số mới KHÔNG được nạp` (agent_writer
+  không phân biệt được "y nguyên" với "đã sửa số"; không bao giờ báo
+  `[done]` câm). Chạy lại bằng DSN có quyền SELECT `channel_snapshots`
+  để biết: y nguyên → exit 0 `unchanged=N`; khác số → conflict (dưới).
+  `--collect` cần quyền ĐỌC `leads`/`approvals`/`market_alerts`/`job_runs`/
+  `llm_usage` mà `agent_writer` chưa có → hiện chạy bằng DSN chủ sở hữu
+  (thiếu quyền → metric vào `[warn] thiếu nguồn`, không thành 0).
+  `agents.ceo_report` đọc `channel_snapshots` → cần `app_human` (role này
+  có cả quyền duyệt `decide_item`); role chỉ-đọc riêng cho cockpit là việc
+  chờ (someday — `docs/roles.sql` không đổi ở v8.0).
+- **Conflict** = số mới KHÁC số đã chụp cùng kỳ/kênh/metric. Hệ thống
+  KHÔNG sửa đè (chống "lọc số"): CSV → hủy cả file (exit 1, với MỌI
+  role — dưới `agent_writer` mọi dòng trùng khóa đều hủy file, xem trên);
+  collector nội bộ → giữ bản cũ + `[warn]`. Báo người quản trị DB kiểm tra nguồn
+  nào đúng — sửa số đã chụp có người duyệt là việc ngoài phạm vi v8.0.
+- **Dòng ĐỎ "chưa có người nhận cảnh báo độc lập"** ở đầu báo cáo = file
+  `data/red_alert_routing.json` chưa có người nhận hợp lệ (`phap_che`/
+  `bks`). Pháp chế xác nhận người nhận thật rồi dev điền file — trước đó
+  dòng ĐỎ luôn hiện (không im lặng).
+- **Nhận xét:** mặc định theo luật (không gọi LLM). `--llm` bật nhận xét
+  qua gateway agent `cockpit` (trần 0,5 USD/tháng): LLM chỉ được viết
+  placeholder `{metric:kỳ}`; văn bản có chữ số/%/trăm-nghìn-triệu-tỷ tự
+  viết → bị loại, dùng nhận xét theo luật và ghi "Nhận xét LLM bị loại".
+- Báo cáo là BẢN NHÁP: hệ thống không tự gửi; TGĐ duyệt mục
+  `weekly_report` trong hàng chờ (`python -m pipelines.approval_queue
+  --pending --block ceo`). Số doanh thu thật từ Seller Center/kế toán và
+  người nhận cảnh báo đỏ thật là external-dep.
+
 ## 5. Kênh Zalo OA (khi chạy thật)
 
 ```

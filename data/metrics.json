@@ -1,0 +1,25 @@
+{
+  "_doc": "Từ điển chỉ số cockpit TGĐ (v8.0 W80.1, WP10) — đọc bởi pipelines/cockpit.py (load_metrics) và agents/ceo_report.py. Mỗi metric_id khớp CHECK của bảng channel_snapshots (^[a-z][a-z0-9_.]{1,63}$). kind=internal: số tự tính từ DB/convlog đã có, ghi channel='noi_bo', source='api' (= máy đọc — CHECK v4.0 chỉ cho manual_export|api), nguồn thật ở source_ref ('db:<bảng>' hoặc 'file:conversations.jsonl'). kind=external: số kênh ngoài nạp từ CSV xuất tay (source='manual_export', python -m pipelines.cockpit --import FILE --by ...), channels = kênh được phép. better: up = tăng là tốt, down = giảm là tốt, none = chỉ theo dõi. integer: true = giá trị phải là số nguyên (CSV chặn dấu nghìn/thập phân mơ hồ). per_agent: chỉ ai.cost_usd — có thêm dòng ai.cost_usd.<agent_id đã chuẩn hóa>. Tên metric KHÔNG chứa chữ số (nhận xét tự động bị loại khi có chữ số ngoài placeholder). Số đã chụp KHÔNG bị ghi đè (insert thường, trùng khóa → giữ bản cũ). chatbot.*: convlog chỉ giữ 30 ngày (connectors/zalo.py RETAIN_DAYS) — kỳ có đầu kỳ quá 30 ngày trước lúc chụp (tuần cũ, mọi tháng chụp sau khi đóng) KHÔNG được chụp (thiếu số, không ghi 0). BẢN DEV SOẠN — danh mục chỉ số chờ TGĐ chốt.",
+  "metrics": {
+    "leads.new": {"name": "Lead mới", "unit": "lead", "kind": "internal", "source": "db:leads", "better": "up", "integer": true, "channels": ["noi_bo"]},
+    "chatbot.questions": {"name": "Câu hỏi chatbot", "unit": "câu", "kind": "internal", "source": "file:conversations.jsonl", "better": "none", "integer": true, "channels": ["noi_bo"]},
+    "chatbot.unanswered": {"name": "Câu chatbot chưa trả lời được", "unit": "câu", "kind": "internal", "source": "file:conversations.jsonl", "better": "down", "integer": true, "channels": ["noi_bo"]},
+    "content.drafts_created": {"name": "Nháp nội dung mới", "unit": "bản", "kind": "internal", "source": "db:content_drafts", "better": "none", "integer": true, "channels": ["noi_bo"]},
+    "content.drafts_approved": {"name": "Nháp nội dung được duyệt", "unit": "bản", "kind": "internal", "source": "db:approvals", "better": "up", "integer": true, "channels": ["noi_bo"]},
+    "content.drafts_pending_end": {"name": "Nháp chờ duyệt cuối kỳ", "unit": "bản", "kind": "internal", "source": "db:content_drafts", "better": "down", "integer": true, "channels": ["noi_bo"]},
+    "market.alerts_open_end": {"name": "Cảnh báo sàn còn mở cuối kỳ", "unit": "cảnh báo", "kind": "internal", "source": "db:market_alerts", "better": "down", "integer": true, "channels": ["noi_bo"]},
+    "ai.cost_usd": {"name": "Chi phí AI", "unit": "USD", "kind": "internal", "source": "db:llm_usage", "better": "down", "integer": false, "channels": ["noi_bo"], "per_agent": true},
+    "jobs.failed": {"name": "Job lịch lỗi", "unit": "job", "kind": "internal", "source": "db:job_runs", "better": "down", "integer": true, "channels": ["noi_bo"]},
+    "approvals.overdue": {"name": "Mục duyệt quá hạn SLA (mọi khối)", "unit": "mục", "kind": "internal", "source": "db:approval_queue", "better": "down", "integer": true, "channels": ["noi_bo"]},
+    "approvals.ceo_decided": {"name": "Mục TGĐ đã quyết", "unit": "mục", "kind": "internal", "source": "db:approval_queue", "better": "none", "integer": true, "channels": ["noi_bo"]},
+    "approvals.ceo_hours_median": {"name": "Thời gian duyệt TGĐ — trung vị", "unit": "giờ", "kind": "internal", "source": "db:approval_queue", "better": "down", "integer": false, "channels": ["noi_bo"]},
+    "approvals.ceo_hours_max": {"name": "Thời gian duyệt TGĐ — lâu nhất", "unit": "giờ", "kind": "internal", "source": "db:approval_queue", "better": "down", "integer": false, "channels": ["noi_bo"]},
+    "approvals.ceo_expired": {"name": "Mục TGĐ hết hạn không ai duyệt", "unit": "mục", "kind": "internal", "source": "db:approval_queue", "better": "down", "integer": true, "channels": ["noi_bo"]},
+    "sales.gmv_vnd": {"name": "GMV đặt — không phải doanh thu thực nhận", "unit": "VND", "kind": "external", "source": "manual_export", "better": "up", "integer": true, "channels": ["shopee", "tiktok_shop", "website"]},
+    "sales.orders_completed": {"name": "Đơn hoàn thành", "unit": "đơn", "kind": "external", "source": "manual_export", "better": "up", "integer": true, "channels": ["shopee", "tiktok_shop", "website"]},
+    "sales.orders_cancelled": {"name": "Đơn hủy", "unit": "đơn", "kind": "external", "source": "manual_export", "better": "down", "integer": true, "channels": ["shopee", "tiktok_shop", "website"]},
+    "sales.settlement_vnd": {"name": "Tiền sàn quyết toán", "unit": "VND", "kind": "external", "source": "manual_export", "better": "up", "integer": true, "channels": ["shopee", "tiktok_shop"]},
+    "social.followers": {"name": "Người theo dõi", "unit": "người", "kind": "external", "source": "manual_export", "better": "up", "integer": true, "channels": ["facebook", "youtube", "zalo_oa", "tiktok_shop"]},
+    "social.reach": {"name": "Lượt tiếp cận", "unit": "lượt", "kind": "external", "source": "manual_export", "better": "up", "integer": true, "channels": ["facebook", "youtube", "zalo_oa", "tiktok_shop"]}
+  }
+}
