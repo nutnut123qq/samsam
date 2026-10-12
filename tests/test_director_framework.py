@@ -217,7 +217,11 @@ def test_auto_policies_decisions_snapshots_constraints(db):
     for t, col in (("decisions", "reason"), ("red_alerts", "title")):
         _raises(db, f"update {t} set {col} = {col}")
         _raises(db, f"delete from {t}")
-        _raises(db, f"truncate {t}")
+        # cascade: v7.1 red_alert_acks FK → red_alerts (truncate trần lỗi FK
+        # trước trigger). Cascade kéo cả red_alert_acks (cũng append-only) —
+        # assert ĐÚNG bảng chặn, không thì gỡ trigger gốc vẫn xanh.
+        msg = _raises(db, f"truncate {t} cascade")
+        assert msg.startswith(f"{t} append-only"), msg
     assert _one(db, "select count(*) from decisions") == 1
     assert _one(db, "select count(*) from red_alerts") == 1
 
@@ -310,7 +314,10 @@ def test_red_alerts_human_and_superuser_cannot_erase(db):
     _denied(db, AH, "truncate red_alerts")
     _raises(db, "delete from red_alerts")
     _raises(db, "update red_alerts set recipients = '{}'")
-    _raises(db, "truncate red_alerts")
+    # v7.1: FK từ acks → cascade; assert trigger GỐC chặn, không phải
+    # trigger của red_alert_acks bị cascade kéo theo.
+    msg = _raises(db, "truncate red_alerts cascade")
+    assert msg.startswith("red_alerts append-only"), msg
     assert _one(db, "select count(*) from red_alerts") == 1
 
 

@@ -413,6 +413,55 @@ python -m crawler.intel --report
 - LLM tóm tắt (`--llm`) mặc định TẮT: chỉ chạy khi `llm.enabled = true`
   trong file nguồn — chờ Pháp chế xác nhận bằng văn bản.
 
+## 5e. Cảnh báo đỏ + bản tin thị trường (intel — v7.1)
+
+**Làm gì:** đọc tin đã thu ở mục 5d (`intel_items`) để (1) ghi CẢNH BÁO ĐỎ
+khi tin khớp luật — thương hiệu Sâm Sâm/"sâm Ngọc Linh" bị nhắc tiêu cực
+(giả mạo, thu hồi, ngộ độc, xử phạt...), quy định mới về TPBVSK/quảng
+cáo/rượu, đối thủ bị xử phạt; (2) soạn bản tin ngày/tuần BẢN NHÁP. Hệ
+thống KHÔNG gửi ai, KHÔNG liên hệ ai ngoài hệ thống, KHÔNG đăng gì.
+
+```
+python -m crawler.intel --run                        # thu tin (mục 5d)
+python -m pipelines.intel_alert --run                # quét luật + leo thang
+python -m pipelines.intel_alert --open               # cảnh báo chưa xác nhận
+python -m pipelines.intel_alert --ack <ID> --by "<họ tên>" [--note ".."]
+python scripts/intel_bulletin.py --period day        # bản tin ngày
+python scripts/intel_bulletin.py --period week --suggest   # bản tin tuần + gợi ý chủ đề
+```
+
+- **Lịch chạy đề xuất** (cron/systemd trên máy chủ = external-dep):
+  `crawler.intel --run` mỗi 60 phút 07:00–22:00 (mở mạng tới nguồn
+  ngoài); `pipelines.intel_alert --run` mỗi 30 phút SUỐT 24/7 (chỉ
+  đọc/ghi DB, không mở mạng, rẻ) — leo thang 2 giờ chỉ chạy bên trong
+  `--run`, nên nếu gói `--run` vào khung ban ngày thì cảnh báo phát sinh
+  sau ~20:00 phải chờ tới 07:00 hôm sau mới leo thang (trễ 9–11 giờ, vỡ
+  tiêu chí WP09 "leo thang 2h"); `intel_bulletin.py --period day` 06:00
+  hằng ngày; `--period week` sáng thứ Hai. Người TRỰC nhận bản leo thang
+  ban đêm (chuỗi trực MXH → Pháp chế) = external-dep.
+- **Luật cảnh báo** ở `data/intel_alert_rules.json` — `status: "gia_dinh"`
+  (GIẢ ĐỊNH) tới khi Pháp chế/Quản lý MXH duyệt bộ từ khóa (đổi status là
+  việc người thật). File hỏng/thiếu nhóm → exit 1, KHÔNG quét.
+- **Leo thang**: cảnh báo gốc quá 2 giờ chưa ai `--ack` → 1 cảnh báo leo
+  thang nhãn "CHƯA XÁC NHẬN" (1 cấp, không lặp). Xác nhận đúng id GỐC (id
+  bản leo thang bị từ chối, kèm id gốc). Xác nhận ghi bảng
+  `red_alert_acks` (không sửa/xóa được).
+- **Người nhận**: dùng chung `data/red_alert_routing.json` (v4.0 — chỉ
+  Pháp chế/BKS; TGĐ/Quản lý hạ tầng luôn bị loại). Đang rỗng → `--run` in
+  `[RED-ALERT][warn] ... thiếu người nhận độc lập` + exit 1 (fail-closed —
+  cảnh báo vẫn ghi bảng). Chuỗi trực MXH → Pháp chế → TGĐ = external-dep.
+- **Bản tin** → `data/reports/intel-bulletin-<day|week>-<ngày>.md`: 5 chủ
+  đề, khối "NỘI BỘ – trích nguồn, KHÔNG dùng làm nội dung" (tiêu đề +
+  link báo gốc — KHÔNG chép vào bài đăng), cảnh báo đỏ đang mở, nguồn
+  lỗi/robots chặn. `--llm` chỉ tóm tắt khi `llm.enabled = true` trong
+  `data/intel_sources.json` (mặc định tắt — chờ Pháp chế); tóm tắt vi phạm
+  guardrail bị loại, ghi "[đã loại ...]".
+- **Gợi ý chủ đề** (`--suggest`): mỗi chủ đề có ≥2 tin → 1 gợi ý mẫu
+  (không trích tin, không tên/giá SKU) vào hàng duyệt chung loại
+  `intel_topic` (rủi ro medium — không bao giờ tự duyệt). Quản lý MXH duyệt
+  bằng `python -m pipelines.approval_queue --pending --block intel` rồi
+  `--approve/--reject ID --by "<tên>"`. Gợi ý KHÔNG phải bản nháp nội dung.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):

@@ -40,6 +40,8 @@ chat lẫn embeddings) + Streamlit.
 | Cảnh báo đỏ (v4.0) | `python -m pipelines.red_alert --check-routing` (exit 1 = chưa có người nhận độc lập — `data/red_alert_routing.json`, external-dep) |
 | Cockpit TGĐ (v8.0) | `python -m pipelines.cockpit --metrics` · `--collect [--period week\|month] [--ref YYYY-MM-DD] [--dry-run]` (chỉ kỳ ĐÃ ĐÓNG giờ VN) · `--import FILE --by "<người xuất>" [--sample]` (CSV `manual_export`, lỗi → exit 1, 0 dòng) — ghi `channel_snapshots` insert-only |
 | Báo cáo TGĐ (v8.0) | `python -m agents.ceo_report [--period week\|month] [--ref YYYY-MM-DD] [--llm] [--submit] [--out-dir DIR]` (→ `data/reports/ceo-<kỳ>.md`; số do code điền; `--llm` mặc định tắt; `--submit` vào hàng chờ khối ceo, không tự duyệt/gửi) |
+| Cảnh báo đỏ intel (v7.1) | `python -m pipelines.intel_alert --run` (luật GIẢ ĐỊNH `data/intel_alert_rules.json` → `red_alerts`, leo thang sau 2 giờ chưa xác nhận; exit 1 khi thiếu người nhận — fail-closed) · `--open` · `--ack ID --by "<tên>"` (CHỈ người thật) |
+| Bản tin intel (v7.1) | `python scripts/intel_bulletin.py --period day\|week [--date YYYY-MM-DD] [--llm] [--suggest]` (→ `data/reports/intel-bulletin-*.md` BẢN NHÁP; LLM chỉ khi `llm.enabled`; `--suggest` → `approval_queue` loại `intel_topic` cho Quản lý MXH duyệt) |
 | Test/lint | `python -m pytest` · `ruff check .` |
 
 ## Structure

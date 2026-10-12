@@ -295,7 +295,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-16 |
-| Module (code) | `crawler/intel.py` |
+| Module (code) | `crawler/intel.py`; `scripts/intel_bulletin.py` |
 | Mục đích | Tình báo thị trường: tin về sâm, TPBVSK, đồ ăn giới trẻ, quảng cáo, đối thủ |
 | Dữ liệu | Tiêu đề + trích ≤300 ký tự + link tin RSS/Atom công khai (đã che SĐT/email); có thể nhắc tên người trong tin báo chí |
 | Lớp | Xanh |
@@ -304,7 +304,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Thời hạn lưu | Chưa có hạn lưu/purge — GAP |
 | Bên nhận | Chỉ GET tới nguồn RSS tầng A/B trong `data/intel_sources.json`; tóm tắt LLM (mặc định TẮT) qua gateway → OpenRouter (Mỹ) |
 | Chuyển ra nước ngoài | CÓ — xem TIA |
-| Biện pháp bảo vệ (có trong code) | robots.txt + delay ≥1s/host, chặn cứng sàn/MXH kể cả khi redirect; Chỉ tiêu đề + trích ≤300 ký tự, `_mask_pii` trước khi lưu; LLM tóm tắt chỉ chạy khi `llm.enabled` + `--llm`, qua gateway + guardrail |
+| Biện pháp bảo vệ (có trong code) | robots.txt + delay ≥1s/host, chặn cứng sàn/MXH kể cả khi redirect; Chỉ tiêu đề + trích ≤300 ký tự, `_mask_pii` trước khi lưu; LLM tóm tắt chỉ chạy khi `llm.enabled` + `--llm`, qua gateway + guardrail; Bản tin v7.1 (`scripts/intel_bulletin.py --llm`): tóm tắt theo chủ đề CHỈ từ tiêu đề + trích đã lưu (≤300 ký tự/tin, bỏ link, ≤10 tin), cùng cờ `llm.enabled` (mặc định TẮT) + guardrail; bản tin là file nội bộ, không gửi |
 | Căn cứ xử lý | Thông tin công khai; nếu bật LLM thì cần Pháp chế xác nhận — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Chưa che họ tên người trong tiêu đề/trích tin (NER); Chưa có hạn lưu/purge `intel_items` |
 

@@ -1563,3 +1563,47 @@ create index if not exists incidents_machine_started_idx
 create or replace view downtime_log as
   select machine_code, started_at, ended_at, downtime_phut, part, root_cause
   from incidents where ended_at is not null;
+
+-- ============================================================================
+-- v7.1 Red Alert intel (WP09, `pipelines/intel_alert.py`): luật tất định quét
+-- `intel_items` → cảnh báo đỏ qua `pipelines.red_alert.raise_alert` (người
+-- nhận độc lập v4.0) + LEO THANG 1 cấp sau 2 giờ chưa xác nhận.
+--   * `red_alert_acks` — người xác nhận đã xử lý cảnh báo gốc (1 lần/cảnh
+--     báo, append-only). `acked_at` do DB đặt (không lùi giờ được);
+--     `agent_writer` KHÔNG ghi được (agent không tự xác nhận).
+--   * 2 unique index partial trên `red_alerts`: 1 cảnh báo / tin intel và
+--     1 bản leo thang / cảnh báo gốc — chạy song song không báo trùng.
+-- ============================================================================
+
+create table if not exists red_alert_acks (
+  id bigint generated always as identity primary key,
+  alert_id bigint not null unique references red_alerts (id),
+  acked_by text not null check (btrim(acked_by) <> ''),
+  acked_at timestamptz not null default now(),
+  note text
+);
+
+create or replace function red_alert_acks_stamp() returns trigger
+language plpgsql as $$
+begin
+  new.acked_at := now();
+  return new;
+end $$;
+revoke execute on function red_alert_acks_stamp() from public;
+
+create or replace trigger red_alert_acks_stamp_ins
+  before insert on red_alert_acks
+  for each row execute function red_alert_acks_stamp();
+create or replace trigger red_alert_acks_append_only_row
+  before update or delete on red_alert_acks
+  for each row execute function append_only_guard();
+create or replace trigger red_alert_acks_no_truncate
+  before truncate on red_alert_acks
+  for each statement execute function append_only_guard();
+
+create unique index if not exists red_alerts_intel_item_uq
+  on red_alerts ((detail->>'intel_item_id'))
+  where source_agent = 'intel_red_alert' and detail ? 'intel_item_id';
+create unique index if not exists red_alerts_escalation_uq
+  on red_alerts ((detail->>'escalation_of'))
+  where source_agent = 'intel_red_alert' and detail ? 'escalation_of';

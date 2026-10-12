@@ -415,6 +415,332 @@ duyệt) — hoặc grant `agent_writer` SELECT cột khóa `channel_snapshots` 
 giá trị khi nạp lại; `--collect` cảnh báo khi `ingest.lead_store` chưa chạy
 sau hết kỳ.
 
+## Checklist v7.1-ban-tin-red-alert
+
+Khán giả/mục đích: WP09 (`ctx/pmo.md` dòng `| WP09`: "Summarizer & Bulletin.
+Red Alert (leo thang 2h)" + "Khối trích nguồn không có đường export sang
+content_drafts (test). Khối gợi ý chủ đề có guardrail ok=True") — agent
+"Red Alert agent (báo đỏ)", "Summarizer & Bulletin agent", "Intel Director"
+trong `ctx/final_plans.json` → `intel.plan.agents`. v7.0 đã thu tin vào
+`intel_items` nhưng chưa ai ĐỌC: không có bản tin, không có báo đỏ. Sau
+version: (1) `python -m pipelines.intel_alert --run` quét `intel_items` bằng
+LUẬT tất định (`data/intel_alert_rules.json`, GIẢ ĐỊNH chờ Pháp chế/Quản lý
+MXH) → ghi cảnh báo đỏ qua `pipelines.red_alert.raise_alert` (người nhận độc
+lập v4.0, thiếu → `route_error` fail-closed) và LEO THANG sau 2 giờ chưa
+xác nhận (bảng `red_alert_acks`); (2) `python scripts/intel_bulletin.py
+--period day|week` ra bản tin markdown BẢN NHÁP theo 5 chủ đề + cảnh báo
+đỏ mở + sức khỏe nguồn, tóm tắt LLM CHỈ khi `llm.enabled` (mặc định tắt →
+bản tin tất định 0 lời gọi gateway); (3) `--suggest` đẩy gợi ý chủ đề
+(guardrail ok=True) vào `approval_queue` loại `intel_topic` cho Quản lý
+MXH duyệt — không tự duyệt; (4) Intel Director (`data/directors/intel.json`,
+vai trò duyệt `mxh`) chạy qua `python -m pipelines.director --block intel`.
+Tầng P1-Shadow: KHÔNG gửi ai, KHÔNG liên hệ ai ngoài hệ thống, KHÔNG đăng.
+
+Quy ước: ponytail — TÁI DÙNG, không viết lại: `pipelines.red_alert.
+raise_alert`/`load_routing`/`MISSING` (v4.0 — KHÔNG sửa allowlist
+`INDEPENDENT_ROLES`, KHÔNG nới `ALWAYS_EXCLUDED`), `pipelines.director.
+submit`/`run`/`load_config`, `pipelines.approval_queue` (enqueue tự chạy
+guardrail; agent KHÔNG gọi `decide`/`auto_approve`), `crawler.intel.
+classify` (khớp cụm có dấu/không dấu, "săm lốp" ≠ "sâm") + `clean_text` +
+`SOURCES_FILE`/`load_sources` (cờ `llm.enabled`), `pipelines.llm_gateway.
+chat("intel", ...)` (cap tháng `intel` = 1.0 USD có sẵn trong
+`data/llm_gateway.json` — không sửa), `pipelines.guardrail.check`,
+`pipelines.period.period_bounds` (giờ VN), `pipelines.job_runs.job_run`,
+`agents.report.write_report` (atomic → `data/reports/` đã gitignore),
+`ingest.lead_store.connect` (connect_timeout có sẵn), `pipelines.store.
+_oneline`, `pipelines.pii._mask_pii`. Chỉ stdlib + dep sẵn có, KHÔNG sửa
+`requirements.txt`. Schema chỉ THÊM (`create ... if not exists`, `create
+unique index if not exists`). Ghi trên conn chia sẻ: `conn.transaction()` +
+`conn.commit()` tường minh (gotcha savepoint v2.1). Print tiếng Việt →
+UTF-8 guard sau imports. Test DB thật = schema tạm + ROLLBACK + wrapper
+`_TxConn` nuốt commit (mẫu `db` + `_TxConn` trong
+`tests/test_director_framework.py`), **0 skipped**. Thời gian: mọi hàm
+nhận `now` (aware) làm tham số — test KHÔNG assert wall-clock, KHÔNG
+`time.sleep`. Không file runtime mới trong `data/` (bản tin ra
+`data/reports/` đã gitignore; log stdout → `tee` evidence). Thêm bảng:
+KHÔNG assert đếm cứng số bảng; thêm tên bảng mới vào `docs/handover/
+kien-truc.md` + sửa câu "35 bảng public" → "36 bảng public" (drift-guard
+`test_kien_truc_lists_all_tables` tự đếm).
+
+Mâu thuẫn kế hoạch ↔ invariant v4.0 (ghi rõ, KHÔNG tự giải): kế hoạch Red
+Alert gửi Quản lý MXH rồi leo thang Pháp chế → TGĐ; v4.0 chỉ cho người nhận
+`phap_che`/`bks` và LUÔN loại `tgd`/`ha_tang` (người có thể dập cảnh báo).
+Version này giữ v4.0: cảnh báo gốc + bản leo thang đều đi `raise_alert` với
+cùng routing độc lập; chuỗi trực MXH → Pháp chế → TGĐ = external-dep (cần
+Pháp chế xác nhận + sửa code allowlist, không qua file).
+
+- [x] **W71.1 Luật cảnh báo + bảng xác nhận (`data/intel_alert_rules.json`,
+  schema, quyền)** — File luật `{"_doc": "GIẢ ĐỊNH — chờ Pháp chế/Quản lý
+  MXH duyệt ...", "status": "gia_dinh", "lookback_hours": 48, "groups":
+  {"brand": [...], "negative": [...], "regulation": [...], "penalty":
+  [...]}}` — cụm CÓ dấu (vd brand: "sâm sâm", "samsam", "sâm ngọc linh";
+  negative: "giả mạo", "hàng giả", "sâm giả", "thu hồi", "ngộ độc", "xử
+  phạt", "bị phạt", "lừa đảo"; regulation: "nghị định", "thông tư", "dự
+  thảo", "quy định mới"; penalty: "xử phạt", "bị phạt", "thu hồi", "đình
+  chỉ"). 3 luật CỨNG trong code (`RULES`), từ khóa trong file:
+  `brand_negative` = brand ∧ negative; `regulation` = regulation ∧ (tin có
+  topic `tpbvsk`|`quang_cao` hoặc cờ `ruou`); `competitor_penalty` = topic
+  `doi_thu` ∧ penalty. `docs/schema.sql` (khối mới cuối file, comment
+  tiếng Việt): bảng `red_alert_acks` (`id` identity, `alert_id bigint not
+  null unique references red_alerts(id)`, `acked_by text not null check
+  (btrim(acked_by) <> '')`, `acked_at timestamptz not null default
+  now()`, `note text`) + trigger append-only (`append_only_guard` cho
+  UPDATE/DELETE/TRUNCATE như `decisions`); 2 unique index partial trên
+  `red_alerts` chống báo trùng khi chạy song song: `((detail->>
+  'intel_item_id')) where source_agent = 'intel_red_alert' and detail ?
+  'intel_item_id'` và `((detail->>'escalation_of')) where source_agent =
+  'intel_red_alert' and detail ? 'escalation_of'`. `docs/roles.sql`:
+  `app_human` SELECT `red_alert_acks` + INSERT CHỈ cột `(alert_id,
+  acked_by, note)` (acked_at do DB đặt — không lùi giờ được);
+  `agent_writer` KHÔNG ghi `red_alert_acks` (agent không tự xác nhận).
+  - Boundary: `data/intel_alert_rules.json`, `docs/schema.sql`,
+    `docs/roles.sql`, `docs/handover/kien-truc.md` (bảng
+    `red_alert_acks` + "36 bảng public" + dòng module mới mục 2)
+  - Gate: `python scripts/apply_schema.py` ×2 exit 0 (idempotent);
+    test DB: INSERT `red_alert_acks` 2 lần cùng `alert_id` → UniqueViolation;
+    UPDATE/DELETE `red_alert_acks` → bị chặn; `set local role app_human`
+    INSERT có cột `acked_at` → permission denied, không cột → ok và
+    `acked_at` not null (DB đặt); `set local role agent_writer` INSERT →
+    permission denied; 2 dòng `red_alerts` cùng `intel_item_id` (source
+    `intel_red_alert`) → UniqueViolation, khác source_agent → không;
+    `python -m pytest tests/test_handover_docs.py -q` xanh
+  - Evidence: `evidence/v71_pytest.log`
+- [x] **W71.2 Red Alert intel (`pipelines/intel_alert.py`)** —
+  `load_rules(path=None) -> dict` → `IntelAlertConfigError` (fail-closed,
+  KHÔNG quét "0 luật" im lặng) cho MỌI biến thể: file thiếu, rỗng, JSON
+  hỏng, UTF-8 lỗi, `{}`, chỉ `_doc`, `groups` thiếu 1 nhóm hoặc nhóm `[]`,
+  `lookback_hours` ngoài 1..720/bool. `match(item, rules) -> list[str]`
+  (THUẦN; item = dict title/snippet/topics/flags từ DB — dùng
+  `crawler.intel.classify(title, snippet, groups)` để khớp nhóm từ khóa,
+  KHÔNG mở URL, KHÔNG import/gọi `Fetcher`/`httpx`). `scan(conn, now,
+  rules=None, routing=None) -> dict` đọc `intel_items` có `fetched_at >=
+  now - lookback_hours`, bỏ tin đã có cảnh báo (`detail->>'intel_item_id'`),
+  mỗi tin khớp → ĐÚNG 1 `raise_alert(conn, "intel_red_alert", title=f"[BÁO
+  ĐỎ intel] {title}", detail={"intel_item_id", "rules", "url", "source",
+  "published_at", "fetched_at"}, routing=routing)`; UniqueViolation (race)
+  → đếm `dup`, không crash. `escalate(conn, now, routing=None) -> dict`:
+  cảnh báo gốc `intel_red_alert` (có `intel_item_id`) với `ts + 2 giờ <=
+  now`, CHƯA có dòng `red_alert_acks`, CHƯA có bản leo thang → `raise_alert`
+  title `"[LEO THANG — CHƯA XÁC NHẬN] ..."`, detail `{"escalation_of":
+  id, "url", "label": "CHƯA XÁC NHẬN"}` (1 cấp, không lặp).
+  `ESCALATE_AFTER = timedelta(hours=2)` là hằng code (không cấu hình nới).
+  `ack(conn, alert_id, by, note=None) -> (bool, msg)`: `by` rỗng / id lạ /
+  không phải cảnh báo gốc intel (bản leo thang → báo "xác nhận id gốc #N")
+  / đã xác nhận → (False, msg) không raise. `open_alerts(conn, now) ->
+  list[dict]` (gốc chưa ack, kèm `escalated` bool, `age_h`). CLI `python -m
+  pipelines.intel_alert` — nhóm loại trừ bắt buộc `--run` (scan + escalate,
+  bọc `job_run("pipelines.intel_alert")`) | `--ack ID --by "Tên" [--note]`
+  | `--open`; argparse lỗi → exit 2 TRƯỚC khi connect; luật hỏng → exit 1
+  trước connect; DB down / thiếu bảng → exit 1; có ≥1 cảnh báo/leo thang
+  ghi được nhưng thiếu người nhận → in `[RED-ALERT][warn]` + exit 1
+  (fail-closed, không im lặng); còn lại exit 0. Không SMTP/HTTP/connector:
+  module không import `httpx`/`smtplib`/`requests`/`connectors`/`openai`.
+  - Boundary: `pipelines/intel_alert.py`, `tests/test_intel_alert.py`
+  - Gate (test DB thật, `now` tham số): tin fixture "Thu hồi lô sâm Sâm Sâm
+    nghi giả mạo" (topics `sam`) → `scan` tạo đúng 1 dòng `red_alerts`
+    `source_agent='intel_red_alert'`, `detail->>'intel_item_id'` đúng;
+    `scan` lần 2 → 0 dòng mới; `escalate(now=ts+1h30m)` → 0;
+    `escalate(now=ts+2h01m)` → đúng 1 dòng leo thang (`escalation_of` =
+    id gốc, title chứa "CHƯA XÁC NHẬN"); `escalate` lần 2 → 0; nhánh có
+    `ack` trước → `escalate(now=ts+3h)` → 0 và `open_alerts` không còn id
+    đó; thiếu người nhận (routing thật `[]`) → dòng vẫn ghi,
+    `route_error == red_alert.MISSING`, `recipients == []`, CLI exit 1;
+    routing tmp hợp lệ (`phap_che`) → `recipients` có tên, `route_error`
+    null; routing có `tgd`/`ha_tang` → vẫn bị lọc (fail-closed v4.0).
+    Luật: ≥6 tin dương (đủ 3 luật + 1 bản KHÔNG dấu "thu hoi lo sam Sam
+    Sam") đều khớp; ≥6 tin trung tính ("Sâm Sâm ra mắt hộp quà Tết", "thu
+    hồi vốn đầu tư", "săm lốp xe bị thu hồi", "Samsung bị phạt", tin TPBVSK
+    không có từ quy định, đối thủ khai trương) → 0 khớp; `load_rules`
+    parametrize ≥9 biến thể hỏng → `IntelAlertConfigError`; CLI 2 op cùng
+    lúc → exit 2; grep module: 0 `httpx|smtplib|requests|connectors|openai`
+  - Evidence: `evidence/v71_pytest.log`, `evidence/v71_alert.log`
+- [x] **W71.3 Sức khỏe nguồn cho bản tin (sửa tối thiểu `crawler/intel.py`)**
+  — chuỗi bắt buộc: bản tin phải báo "nguồn lỗi/robots chặn" mà v7.0 chỉ
+  in stdout, `job_runs.detail` của `crawler.intel` luôn null khi không
+  exception. `run()` gom id nguồn lỗi (feed status ≠ 200 / parse lỗi /
+  bị chặn) và `_run_cli`/`main` gán `jr["detail"] = "fail=<id,...>
+  robots_deny=N blocked=N"` (chỉ id cấu hình — không URL/PII; `job_runs.
+  clean_detail` tự mask + cắt 300). KHÔNG đổi exit code, log `[req]`/
+  `[done]`, bảng ghi.
+  - Boundary: `crawler/intel.py`, `tests/test_intel.py` (thêm test, không
+    sửa/xóa assert cũ — đối chiếu số assert trước/sau)
+  - Gate: E2E fixture http.server (mẫu `servers` có sẵn) 1 nguồn 200 + 1
+    nguồn 500 → dòng `job_runs` job `crawler.intel` có `detail` chứa
+    `fail=` + id nguồn 500, không chứa `http`; `tests/test_intel.py` toàn
+    bộ xanh (gồm `test_no_path_to_content_drafts_grep/_ast` — writes vẫn
+    chỉ `{"intel_items"}`)
+  - Evidence: `evidence/v71_pytest.log`
+- [x] **W71.4 Bản tin + Summarizer (`scripts/intel_bulletin.py`)** — `python
+  scripts/intel_bulletin.py --period day|week [--date YYYY-MM-DD] [--llm]
+  [--suggest]`. `--date` là STR → coerce `date` trước mọi format-spec
+  (gotcha v2.2), sai định dạng → exit 2 trước connect. Kỳ =
+  `period_bounds(period, ref)` giờ VN. `collect(conn, start, end, now)`
+  đọc: tin `intel_items` có `fetched_at` trong kỳ, nhóm theo thứ tự
+  `TOPICS = ("sam", "tpbvsk", "gioi_tre", "quang_cao", "doi_thu")` (trần
+  20 tin/chủ đề + "(+N tin nữa)"); cảnh báo đỏ mở (`intel_alert.
+  open_alerts`); `job_runs` job `crawler.intel` trong kỳ (số lượt, số
+  fail, `detail` gần nhất) + số nguồn `status != "duyet"` từ
+  `load_sources`. `render(data, start, end, summaries) -> str` THUẦN:
+  tiêu đề kỳ; khối **"NỘI BỘ – trích nguồn, KHÔNG dùng làm nội dung"**
+  (QuoteBlock: tiêu đề `_oneline` + nguồn + ngày VN + URL, giữ nguyên từ
+  ngữ nguồn); khối tóm tắt; "Cảnh báo đỏ đang mở" (id, tuổi giờ, đã leo
+  thang?); "Nguồn lỗi / robots chặn"; footer "BẢN NHÁP — hệ thống không tự
+  gửi". Ghi `write_report(text, REPORTS_DIR, f"intel-bulletin-{period}-
+  {start:%Y-%m-%d}.md")`, in path; bọc `job_run("scripts.intel_bulletin")`.
+  Summarizer: CHỈ khi `--llm` VÀ `cfg["llm"]["enabled"] is True` (mặc định
+  false → in `[warn] LLM tắt — chờ Pháp chế`, KHÔNG gọi gateway); mỗi chủ
+  đề có tin → 1 `llm_gateway.chat("intel", msgs, max_tokens=...)`, input
+  CHỈ title + snippet đã lưu (≤300, ≤10 tin/chủ đề), không URL fetch; đầu
+  ra `clean_text` TRƯỚC rồi `guardrail.check(...).get("ok") is True` mới
+  dùng (bài học entity v7.0); fail → BỎ tóm tắt + dòng "[đã loại: tóm tắt
+  vi phạm guardrail]" + đếm `llm_guardrail_fail` in `[done]`;
+  `GatewayError` → tắt LLM phần còn lại, bản tin vẫn ra (tất định).
+  - Boundary: `scripts/intel_bulletin.py`, `tests/test_intel_bulletin.py`
+    (import qua `importlib.util.spec_from_file_location` như
+    `tests/test_health_bulletin.py`)
+  - Gate: LLM tắt (cấu hình thật) + `--llm` → monkeypatch `llm_gateway.chat`
+    đếm = **0 lời gọi**, bản tin có đủ 5 heading chủ đề + tiêu đề + URL tin
+    fixture; LLM bật (cfg tmp `enabled: true`) + gateway GIẢ trả 1 tóm tắt
+    sạch + 1 tóm tắt chứa "chữa" + 1 dạng entity `&#99;hữa` → bản tin chứa
+    tóm tắt sạch, KHÔNG chứa 2 tóm tắt bẩn, có dòng "[đã loại ...]" ×2;
+    message gửi gateway: mọi đoạn tin ≤ 300 ký tự, không chứa "http";
+    gateway raise `GatewayError` → exit 0 + bản tin tất định; `render`
+    thuần: kỳ week giờ VN (tin `fetched_at` 2026-10-11T23:30+07 thuộc tuần
+    05/10, 2026-10-12T00:10+07 thuộc tuần 12/10); job_runs fixture
+    `detail='fail=fx-src robots_deny=1 blocked=0'` → mục nguồn lỗi có
+    `fx-src`; `--date 2026-13-01` → exit 2; DB down (DSN host chết qua
+    monkeypatch `connect`→None) → exit 1
+  - Evidence: `evidence/v71_pytest.log`, `evidence/v71_bulletin.log`
+- [x] **W71.5 Gợi ý chủ đề → `approval_queue` (`intel_topic`) + Intel
+  Director** — `--suggest`: mỗi chủ đề có ≥2 tin trong kỳ → 1 gợi ý từ
+  TEMPLATE tất định (nhãn chủ đề + số tin + góc nội dung thương hiệu/vùng
+  trồng chung — KHÔNG trích tiêu đề/URL/snippet tin, KHÔNG nêu tên/alias/
+  giá SKU; LLM không sinh gợi ý ở version này). Payload qua `guardrail.
+  check` → chỉ `ok is True` mới `director.submit(conn, "intel",
+  "intel_topic", object_id=f"{period}-{start:%Y%m%d}-{topic}", title,
+  payload, created_by="agent:intel_bulletin")`; fail → bỏ + `[warn]`.
+  Đã có mục pending cùng `(intel_topic, object_id)` → bỏ qua (chạy lại
+  không trùng, không crash). Module KHÔNG gọi `decide`/`auto_approve`/
+  `override`. Bản tin liệt kê "#id chờ Quản lý MXH duyệt". `data/
+  directors/intel.json`: `approver_roles: ["mxh"]` (Quản lý MXH — chủ
+  khối theo final_plans; `mxh` ∈ `pipelines.auth.ROLES`), `approvers: []`
+  + `digest_recipients: []` (external-dep, KHÔNG tự điền), `object_types`
+  giữ `intel_bulletin`, `competitor_report` + thêm `intel_topic`
+  `{"sla_hours": 48, "risk": "medium"}` (medium ⇒ `auto_policies.max_risk
+  = 'low'` không bao giờ tự duyệt được), `_doc` cập nhật.
+  - Boundary: `scripts/intel_bulletin.py`, `data/directors/intel.json`,
+    `tests/test_intel_bulletin.py`
+  - Gate: test DB: `--suggest` trên fixture 2 chủ đề ×2 tin → đúng 2 dòng
+    `approval_queue` `object_type='intel_topic'`, `block='intel'`,
+    `status='pending'`, `risk='medium'`, `guardrail->>'ok' = 'true'`;
+    payload không chứa "http", không chứa tiêu đề tin fixture, không chứa
+    `name`/`sku_key` nào trong `data/golden_skus.json`; chạy lại → vẫn 2;
+    `approval_queue.auto_approve(id)` → (False, ...) và status vẫn
+    pending; `director.run(conn, "intel", now)` → digest có `intel_topic`,
+    mục vẫn `pending`; template bị ép chứa "chữa" (monkeypatch) → 0 dòng
+    mới; `python -m pipelines.director --block intel --dry-run` exit 0 in
+    "vai trò duyệt mxh" + "3 loại việc"; `python -m pytest
+    tests/test_director.py tests/test_director_framework.py -q` xanh
+  - Evidence: `evidence/v71_pytest.log`, `evidence/v71_bulletin.log`
+- [x] **W71.6 Cách ly: khối trích nguồn không có đường sang
+  `content_drafts`** — `tests/test_intel_bulletin.py` (+ phần cách ly
+  trong `tests/test_intel_alert.py`): grep nguồn `scripts/intel_bulletin.py`
+  + `pipelines/intel_alert.py`: 0 khớp `content_drafts|pipelines\.store|
+  pipelines\.content|save_draft|connectors\.|smtplib|httpx`; mọi
+  `insert into|update|delete from` trong 2 file ⊂ `{"red_alert_acks"}`
+  (ghi khác đi qua `raise_alert`/`director.submit`); AST import 2 file ∩
+  `{"pipelines.store", "pipelines.content", "connectors.zalo"}` = ∅; test
+  DB đếm dòng: chạy trọn `--run` + bản tin `--llm` (gateway giả) +
+  `--suggest` → `count(content_drafts)` trước == sau, `approval_queue`
+  chỉ tăng dòng `intel_topic`, `intel_items` không đổi (bản tin chỉ đọc).
+  - Boundary: `tests/test_intel_bulletin.py`, `tests/test_intel_alert.py`
+  - Gate: các test trên xanh; mutant thử (thêm `"insert into
+    content_drafts"` vào chuỗi trong bản sao tạm) làm test grep FAIL
+    (ghi vào evidence, không commit mutant)
+  - Evidence: `evidence/v71_pytest.log`
+- [x] **W71.7 Docs + drift-guard** — `docs/handover/kien-truc.md` (mục 2
+  module `pipelines/intel_alert.py` + `scripts/intel_bulletin.py`; mục 3
+  bảng `red_alert_acks` + "36 bảng public"; mục human-gate: xác nhận báo
+  đỏ bằng `--ack`, gợi ý chủ đề do Quản lý MXH duyệt);
+  `docs/handover/sop.md` (lịch chạy đề xuất: `python -m crawler.intel
+  --run` mỗi 60 phút 07–22h; `python -m pipelines.intel_alert --run` mỗi
+  30 phút 24/7 — leo thang 2h chỉ chạy trong `--run`, gói ban ngày thì
+  cảnh báo sau ~20:00 trễ tới 07:00 (vá nghiệm thu MINOR);
+  `python scripts/intel_bulletin.py --period day` 06:00; `--period week`
+  thứ Hai; xác nhận `--ack`; cron/systemd thật = external-dep); `AGENTS.md`
+  Commands thêm 2 dòng.
+  - Boundary: `docs/handover/kien-truc.md`, `docs/handover/sop.md`,
+    `AGENTS.md` (Commands)
+  - Gate: `python -m pytest tests/test_handover_docs.py -q` xanh; `grep -n
+    "intel_alert\|intel_bulletin" docs/handover/sop.md AGENTS.md` trúng
+    cả 2; `grep -c "red_alert_acks" docs/handover/kien-truc.md` ≥ 1
+  - Evidence: `evidence/v71_pytest.log`
+- [x] **Gate chung**
+  - `python scripts/apply_schema.py` ×2 exit 0 (bảng mới `red_alert_acks`
+    + 2 index trên `red_alerts`)
+  - E2E local (DB `samsam_infra`, tin fixture `source like 'fx71-%'`):
+    `python -m pipelines.intel_alert --run | tee evidence/v71_alert.log`
+    → 1 báo đỏ, `route_error` thiếu người nhận, exit 1 (fail-closed —
+    routing thật rỗng); `--open` liệt kê; `python scripts/intel_bulletin.py
+    --period day --llm --suggest | tee evidence/v71_bulletin.log` → exit 0,
+    `[warn] LLM tắt`, file `data/reports/intel-bulletin-day-2026-10-12.md`
+    có 5 heading chủ đề; `python -m pipelines.director --block intel`
+    exit 0
+  - targeted ×3: `python -m pytest tests/test_intel_alert.py
+    tests/test_intel_bulletin.py tests/test_intel.py tests/test_red_alert.py
+    tests/test_director.py tests/test_director_framework.py
+    tests/test_handover_docs.py tests/test_connect_timeout_guard.py -q -rs`
+    3 lần liên tiếp xanh, test DB thật **0 skipped** (lệnh nặng có thể bị
+    đẩy nền — đọc output tới khi process exit trước lệnh kế; không chạy
+    chồng, không retry mù)
+  - full: `python -m pytest -q` xanh MỘT lần, ≥ 1682 (baseline) + test mới;
+    trước chạy kiểm 0 container `samsam-dr-*` (fail
+    `test_zz_no_dr_container_left` do worktree khác = môi trường, ghi rõ)
+  - `ruff check .` sạch
+  - `python -m py_compile pipelines/intel_alert.py scripts/intel_bulletin.py
+    crawler/intel.py`
+  - DỌN fixture khỏi samsam_infra: `intel_items` `source like 'fx71-%'`
+    xóa được; `red_alerts`/`red_alert_acks`/`approval_queue` append-only
+    KHÔNG xóa được → E2E chỉ chạy trên DB riêng `samsam_infra` (không
+    DB khác), ghi id dòng fixture vào evidence
+  - `git status`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); không file runtime mới trong `data/`; file lạ
+    không thuộc version (vd `lv2-market-top.png`) → không stage
+  - Kết quả (worker v7.1): targeted vòng 1 = 2/3 xanh (lần 2: 1 error
+    LockNotAvailable — tranh khóa fixture với pytest worktree khác), vòng 2
+    = 3/3 xanh 264 passed 0 skipped; full 1749 passed 3 skipped (test_dr_drill
+    cần docker — daemon không chạy); ruff/py_compile sạch; E2E chạy trên DB
+    riêng worktree `samsam_w71` (env w71 — không phải tên `samsam_infra`):
+    red_alerts #1, approval_queue #1 #2 (append-only, giữ lại), intel_items
+    fx71 ×5 đã xóa. Evidence: `evidence/v71_pytest.log`, `v71_alert.log`,
+    `v71_bulletin.log`, `v71_schema.log`.
+- [ ] **external-dep** Người nhận cảnh báo đỏ thật + kênh gửi (email
+  transactional/Zalo) — Pháp chế xác nhận rồi điền `data/red_alert_routing.
+  json` (v4.0); chuỗi trực MXH → Pháp chế → TGĐ + lịch trực cuối tuần/Tết
+  (cần sửa allowlist code + Pháp chế ký).
+- [ ] **external-dep** Pháp chế/Quản lý MXH duyệt bộ từ khóa
+  `data/intel_alert_rules.json` (đổi `status` khỏi `"gia_dinh"` là việc
+  người thật).
+- [ ] **external-dep** Bật LLM tóm tắt (`llm.enabled` trong
+  `data/intel_sources.json`) — chờ Pháp chế xác nhận bằng văn bản;
+  người duyệt thật vai trò `mxh` cho `data/directors/intel.json`
+  (`approvers`/`digest_recipients`); cron/systemd chạy lịch 06:00/14:00/
+  60 phút (crawl 07–22h) + 30 phút 24/7 (`intel_alert --run`) trên máy
+  chủ; người trực nhận leo thang ban đêm.
+
+Someday (ngoài phạm vi v7.1, ghi để không cuốn vào): t0 = min(published_at,
+fetched_at) + cờ giờ thiếu múi/tương lai + SLA báo ≤90 phút; eval 30 tin
+rủi ro / 50 tin trung tính (≤10% báo nhầm); leo thang nhiều cấp; gửi tin
+nội bộ 10:00 nhãn "CHƯA DUYỆT" + chống gửi đôi; sổ giờ duyệt `review_hours`
++ chế độ giảm tải; luật XNQC theo SKU trong gợi ý (đọc `claims_approved`/
+`xnqc_status`) + gợi ý sinh bởi LLM; kiểm URL 2xx lúc soạn; Social
+Listening → báo đỏ; quyền `agent_writer` đọc `red_alerts` (hiện quét chạy
+DSN owner như `crawler.intel`); tin gõ KHÔNG dấu không phân biệt giá/giả —
+"Sam Sam gia 500k" khớp bản tự sinh `sam gia`/`ngoc linh gia` → báo đỏ
+thừa (lệch về phía báo dư, người nhận `--ack`; có từ cụm `sâm giả` gốc,
+vá nghiệm thu thêm `ngọc linh giả` nới thêm) — cần Pháp chế/MXH chọn khi
+duyệt bộ từ khóa.
+
 Nhánh `ai-infra`: M31 đợt gộp 2026-10-12 — v4.0, v4.1, v4.4, v7.0, v7.3, v9.3,
 v9.5 đã đóng + gộp (35 bảng). Tích hợp khi gộp: bổ sung DF-16 (intel) + DF-17
 (persona_sim) vào `data/data_flow_map.json` + sinh lại DPIA/TIA nháp; phương án
@@ -434,6 +760,17 @@ trúc (#, ---) lọt từ LLM; OverflowError `--ref 9999-12-31`; TOCTOU hash CSV
 2 lần; ký tự số Unicode/chữ số bằng chữ ('chục','nửa'); `source_ref` từ DB chưa
 lọc link/HTML. External-dep: doanh thu/đơn thật; TGĐ ký trang tuần đầu; người
 nhận cảnh báo đỏ thật.
+
+v7.1-ban-tin-red-alert đóng 2026-10-12 (nghiệm thu đợt 1 FIX 4 → 1 vòng sửa →
+PASS — có gián đoạn giới hạn phiên, chạy lại build; coordinator chạy lại targeted
+320 + ruff + `dpia_draft --check`). 36 bảng trên nhánh (+`red_alert_acks`). Tin
+'thu hồi lô sâm Sâm Sâm' → đúng 1 báo đỏ; leo thang sau 2h chưa ack (test now
+tham số); thiếu người nhận → `route_error` + exit 1; gợi ý chủ đề đi approval_queue
+risk medium (auto_policy không áp được); LLM tắt mặc định. Mâu thuẫn để ngỏ: kế
+hoạch muốn leo thang MXH → Pháp chế → TGĐ nhưng v4.0 loại `tgd` khỏi người nhận
+đỏ. Flake 1 lần `LockNotAvailable` khi chạy song song (grant role trong fixture) —
+chưa tái hiện. External-dep: người nhận + kênh + lịch trực; Pháp chế/MXH duyệt
+từ khóa cảnh báo; bật LLM; người duyệt `mxh`; cron máy chủ; SSO cho `--ack --by`.
 
 ## Checklist v4.0-director-framework
 

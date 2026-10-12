@@ -95,3 +95,9 @@ grant execute on function
   decide_item(bigint, text, text, text),
   override_qa(bigint, text, text)
   to app_human;
+
+-- v7.1 xác nhận cảnh báo đỏ intel (WP09): CHỈ người (app_human) xác nhận —
+-- INSERT 3 cột, `acked_at` do DB đặt (không lùi giờ). agent_writer KHÔNG có
+-- quyền gì trên red_alert_acks (agent không tự xác nhận cảnh báo của mình).
+grant select on red_alert_acks to app_human;
+grant insert (alert_id, acked_by, note) on red_alert_acks to app_human;
