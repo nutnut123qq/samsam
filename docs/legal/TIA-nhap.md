@@ -102,6 +102,19 @@
 | Rủi ro tồn dư | (không) |
 | Căn cứ | Không xử lý dữ liệu cá nhân thật; chạy sau khi DPIA ký — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
+### DF-21 — Nhận xét báo cáo TGĐ qua LLM (cockpit — v8.0, chỉ khi --llm)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `cockpit`, trần 0,5 USD/tháng) |
+| Dữ liệu gửi đi (sau biện pháp) | metric_id + tên chỉ số + chiều tốt + xu hướng (tăng/giảm/không đổi) + nhãn kỳ — KHÔNG số tuyệt đối, KHÔNG PII |
+| Lớp | Xanh |
+| Mục đích | Viết phần nhận xét báo cáo tuần/tháng cho TGĐ bằng placeholder; code điền số |
+| Biện pháp kỹ thuật | Mặc định TẮT — chỉ chạy khi `python -m agents.ceo_report --llm`; Prompt chỉ có metric_id/tên/chiều tốt/xu hướng, không số tuyệt đối; `ground()`: văn bản LLM còn chữ số/%/trăm-nghìn-triệu-tỷ ngoài placeholder → bị loại, dùng nhận xét theo luật; qua guardrail |
+| Thời hạn lưu (theo map) | Theo file báo cáo local — chưa có hạn lưu riêng |
+| Rủi ro tồn dư | (không) |
+| Căn cứ | Không xử lý dữ liệu cá nhân — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
 ## 3. Luồng không thuộc TIA
 
 Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15.

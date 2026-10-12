@@ -408,6 +408,28 @@
       ],
       "legal_basis": "Không xử lý dữ liệu cá nhân thật; chạy sau khi DPIA ký — CẦN LUẬT SƯ XÁC NHẬN",
       "gaps": []
+    },
+    {
+      "id": "DF-21",
+      "name": "Nhận xét báo cáo TGĐ qua LLM (cockpit — v8.0, chỉ khi --llm)",
+      "modules": [
+        "agents/ceo_report.py"
+      ],
+      "data": "metric_id + tên chỉ số + chiều tốt + xu hướng (tăng/giảm/không đổi) + nhãn kỳ — KHÔNG số tuyệt đối, KHÔNG PII",
+      "class": "xanh",
+      "subjects": "Không có — số liệu vận hành tổng hợp, không dữ liệu cá nhân",
+      "purpose": "Viết phần nhận xét báo cáo tuần/tháng cho TGĐ bằng placeholder; code điền số",
+      "storage": "Không lưu prompt/response (llm_usage chỉ đếm token/chi phí); văn bản đã điền nằm trong file data/reports/ceo-<kỳ>.md (gitignored)",
+      "retention": "Theo file báo cáo local — chưa có hạn lưu riêng",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider qua gateway (agent `cockpit`, trần 0,5 USD/tháng)",
+      "cross_border": true,
+      "safeguards": [
+        "Mặc định TẮT — chỉ chạy khi `python -m agents.ceo_report --llm`",
+        "Prompt chỉ có metric_id/tên/chiều tốt/xu hướng, không số tuyệt đối",
+        "`ground()`: văn bản LLM còn chữ số/%/trăm-nghìn-triệu-tỷ ngoài placeholder → bị loại, dùng nhận xét theo luật; qua guardrail"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": []
     }
   ]
 }

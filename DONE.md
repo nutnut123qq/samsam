@@ -6,12 +6,434 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+## Checklist v8.0-cockpit-bao-cao
+
+Khán giả/mục đích: M31 (worktree `D:\code\samsam-w44`) — làm WP10 "Cockpit
+điều hành TGĐ, HĐTV, BKS (P1)" (pmo.md dòng `| WP10`; Agent Điều hành /
+Chief of Staff AI — key `ceo` trong ctx/final_plans.json) trên nền ai-infra
+đã gộp: `channel_snapshots` + `pipelines/period.py` + `pipelines/director.py`
++ `pipelines/red_alert.py` (v4.0), `market_alerts` (v3.3), `llm_usage` +
+`pipelines/llm_gateway.py` (v3.1), `job_runs` (v3.7), `approval_queue`/
+`approvals` (v3.4/v4.0). Hiện `channel_snapshots` có bảng nhưng 0 người
+ghi/0 người đọc; `agents/report.py` là báo cáo vận hành 7 ngày trượt, không
+có bảng so kỳ, không có số kênh ngoài, không đo thời gian duyệt của TGĐ,
+không biết tuyến cảnh báo đỏ thiếu người nhận. Sau version: (1) collector
+`pipelines/cockpit.py` chụp số nội bộ của kỳ ĐÃ ĐÓNG vào `channel_snapshots`
++ nạp CSV `manual_export` số kênh ngoài (validate toàn file trước connect,
+idempotent); mọi metric có `metric_id` trong `data/metrics.json`; (2)
+`agents/ceo_report.py` sinh 1 trang tuần/tháng cho TGĐ (markdown) đọc
+`channel_snapshots`: bảng số kỳ này / kỳ trước / Δ / đánh giá theo chiều tốt
+/ nguồn; phần NHẬN XÉT tất định theo luật, hoặc (cờ `--llm`, mặc định TẮT)
+LLM qua gateway agent `cockpit` chỉ được viết placeholder `{metric_id:nhãn
+kỳ}` — code điền số, văn bản LLM còn chữ số ngoài placeholder → bị loại, rơi
+về nhận xét theo luật; (3) preflight tuyến cảnh báo đỏ → dòng ĐỎ trong báo
+cáo khi chưa có người nhận độc lập; (4) thời gian duyệt của TGĐ theo tuần
+(hàng `approval_queue` khối `ceo`: `created_at` → `decided_at`); (5)
+`data/directors/ceo.json` có đủ loại việc cockpit.
+
+Quy ước: ponytail — stdlib + `psycopg` + `openai` (qua gateway) sẵn có,
+KHÔNG dep mới, KHÔNG bảng mới (35 bảng giữ nguyên — `kien-truc.md` "35 bảng
+public" không đổi), KHÔNG sửa `docs/schema.sql`/`docs/roles.sql`. Số nội bộ
+ghi `channel='noi_bo'`, `source='api'` (= máy đọc; CHECK v4.0 chỉ cho
+`manual_export|api` và drift-guard cấm `alter table` → không thêm giá trị
+`internal`), nguồn thật nằm ở `source_ref` (`db:<bảng>` / `file:
+conversations.jsonl`) — ghi rõ trong `data/metrics.json` `_doc` +
+`kien-truc.md`. Chỉ chụp kỳ ĐÃ ĐÓNG (`end_excl <= now` giờ VN) — kỳ đang
+chạy → từ chối (exit 2). `channel_snapshots` coi như sổ ghi lần chụp: ghi
+`insert ... on conflict do nothing` (KHÔNG `do update` — agent_writer chỉ có
+INSERT, và sửa số âm thầm = đúng rủi ro "lọc dữ liệu từ channel_snapshots"
+mà ceo plan Mục 5 nêu); trùng khóa cùng giá trị = `unchanged`, khác giá trị
+= `conflict` (CSV: rollback cả file, exit 1; nội bộ: giữ bản cũ + `[warn]`).
+Kỳ + ranh giới CHỈ qua `pipelines.period.period_bounds` (Asia/Saigon, tuần
+ISO thứ Hai 00:00 VN); nhãn kỳ tuần `YYYY-Www` (`date.isocalendar()`), tháng
+`YYYY-MM`. Số trong báo cáo/nhận xét CHỈ do code điền từ `channel_snapshots`;
+thiếu số → `[chưa có dữ liệu]` (KHÔNG hiện 0). Connect qua
+`ingest.lead_store.connect` (connect_timeout=3; guard
+`tests/test_connect_timeout_guard.py`); print tiếng Việt → UTF-8 guard; CLI
+nhiều op → `n_ops > 1` usage exit 2 TRƯỚC connect (gotcha v2.2); ghi trên
+conn chia sẻ → `conn.commit()` tường minh (gotcha savepoint v2.1); format-
+spec chỉ trên biến đã coerce (gotcha v2.2); `__main__` bọc
+`pipelines.job_runs.job_run(...)`. CSV lỗi: in số dòng + tên cột, KHÔNG in
+giá trị ô (precedent `ingest/market_csv.py`). Test DB thật: fixture schema
+tạm + `docs/schema.sql` + `docs/roles.sql` rồi ROLLBACK (như
+`tests/test_director_framework.py::db`), đi tắt thời gian (`created_at`/
+`decided_at` quá khứ) bằng superuser `set local session_replication_role =
+replica` (precedent v4.0); code gọi `conn.commit()` → bọc `_TxConn` (precedent
+`tests/test_auth_approval.py`); skip khi không DB nhưng gate đòi **0
+skipped**. KHÔNG ghi `channel_snapshots`/`approval_queue` trên DB thật ngoài
+test rollback (CLI trên DB thật chỉ `--dry-run`/case âm/báo cáo đọc).
+
+External-dep (KHÔNG giả lập như thật, KHÔNG tự đánh dấu): số doanh thu/đơn/
+quyết toán THẬT từ Seller Center/kế toán (version này chỉ fixture MẪU
+`tests/fixtures/cockpit/kenh_MAU.csv`, nạp với `--sample` → `source_ref`
+`sample:...` → báo cáo gắn `(MẪU)`); TGĐ ký trang báo cáo tuần đầu tiên (chỉ
+có đường `--submit` vào `approval_queue` khối `ceo`, không ai duyệt hộ);
+người nhận cảnh báo đỏ thật (Pháp chế xác nhận — `data/red_alert_routing.json`
+giữ `[]` → báo cáo hiện dòng ĐỎ); người duyệt thật của khối `ceo`
+(`approvers: []`); collector API sàn/Meta/YouTube (chỉ CSV `manual_export`).
+
+- [x] **W80.1 Từ điển chỉ số `data/metrics.json` + loader** — `{"_doc",
+  "metrics": {"<metric_id>": {"name", "unit" (`lead|câu|bản|cảnh báo|USD|
+  job|mục|giờ|VND|đơn|người|lượt`), "kind" (`internal|external`),
+  "source" (internal: `db:<bảng>`/`file:conversations.jsonl`; external:
+  `manual_export`), "better" (`up|down|none`), "integer" (bool), "channels"
+  (external: list kênh cho phép; internal: `["noi_bo"]`), "per_agent"
+  (tùy chọn, chỉ `ai.cost_usd`)}}}`. Internal tối thiểu: `leads.new`
+  (`leads.ts` trong kỳ), `chatbot.questions` + `chatbot.unanswered`
+  (convlog trong kỳ — tái dùng `agents.report.collect_chat`: `in_period`,
+  `in_period - answered_period`), `content.drafts_created`,
+  `content.drafts_approved` (`approvals` object_type `content_draft`
+  decision approved trong kỳ), `content.drafts_pending_end` (draft
+  `created_at < end` chưa có `approvals` nào `approved_at < end`),
+  `market.alerts_open_end` (`opened_at < end` và (`closed_at` null hoặc
+  `>= end`)), `ai.cost_usd` (+ `ai.cost_usd.<agent>` theo `llm_usage.
+  agent_id` đã chuẩn hóa `[^a-z0-9_]`→`_`), `jobs.failed` (`job_runs`
+  `ok is not true`, `started_at` trong kỳ), `approvals.overdue` (mọi khối:
+  `due_at` trong kỳ và `status in ('expired','pending')` và `due_at <=
+  now()`), `approvals.ceo_decided`, `approvals.ceo_hours_median`,
+  `approvals.ceo_hours_max`, `approvals.ceo_expired` (W80.4). External tối
+  thiểu: `sales.gmv_vnd` (name ghi rõ "GMV đặt — không phải doanh thu thực
+  nhận"), `sales.orders_completed`, `sales.orders_cancelled` (better
+  `down`), `sales.settlement_vnd`, `social.followers`, `social.reach`;
+  kênh ⊂ `shopee, tiktok_shop, facebook, youtube, zalo_oa, website`.
+  `pipelines/cockpit.py::load_metrics(path=None) -> dict` → lỗi cấu trúc
+  raise `MetricsError` (id không khớp regex `^[a-z][a-z0-9_.]{1,63}$` của
+  CHECK DB, thiếu name/unit, `better`/`kind` lạ, external không có
+  channels, internal channels ≠ `["noi_bo"]`, kênh không khớp regex
+  `^[a-z][a-z0-9_]{1,31}$`); `metric_spec(metrics, metric_id)` tra đúng
+  key hoặc prefix `ai.cost_usd.` khi `per_agent`.
+  - Boundary: `data/metrics.json` (mới), `pipelines/cockpit.py` (mới),
+    `tests/test_cockpit.py` (mới)
+  - Gate: `python -m pipelines.cockpit --metrics` exit 0 in số metric
+    internal/external; test: file thật load OK, đủ các id liệt kê ở trên
+    (assert tập con, không đếm cứng); mọi id khớp regex CHECK
+    `channel_snapshots`; 6 biến thể hỏng (id `Leads.New`, `better:'cao'`,
+    `kind:'x'`, external thiếu channels, internal channels `['shopee']`,
+    JSON hỏng/`{}`) → `MetricsError`; `metric_spec(..., 'ai.cost_usd.
+    chatbot')` trả spec `ai.cost_usd`, `'ai.cost_usdx'` → None
+  - Evidence: `evidence/v80_cockpit.log`
+- [x] **W80.2 Collector nội bộ `collect_internal` + ghi `store`** —
+  `collect_internal(conn, kind, ref, *, data_dir=DATA_DIR, now=None) ->
+  (rows, errors)`: `start, end = period.period_bounds(kind, ref)`; `end >
+  now` → `ValueError("kỳ chưa đóng")`; mỗi metric 1 query trong savepoint
+  (`conn.transaction()`), lỗi `psycopg.Error` (thiếu bảng) → metric vào
+  `errors`, KHÔNG thành 0; row = `{channel:'noi_bo', metric_id,
+  period_kind, period_start: start.date(), value, source:'api',
+  source_ref:'db:<bảng>'|'file:conversations.jsonl'}`; mọi so sánh thời
+  gian truyền `start`/`end` aware +07:00 làm tham số (không `date_trunc`
+  UTC trong SQL). `store(conn, rows, captured_by) -> {inserted, unchanged,
+  conflict}`: validate từng row qua `metric_spec` (metric lạ / kênh ngoài
+  `channels` → `ValueError`, 0 execute), `insert ... on conflict (channel,
+  metric_id, period_kind, period_start, source) do nothing returning id`;
+  không returning → đọc giá trị cũ: bằng (so `Decimal`) → unchanged, khác
+  → conflict (giữ bản cũ); `conn.commit()`. CLI `python -m
+  pipelines.cockpit --collect [--period week|month] [--ref YYYY-MM-DD]
+  [--dry-run]`: mặc định kỳ vừa đóng tính theo `datetime.now(VN_TZ)`; kỳ
+  chưa đóng → exit 2; `--dry-run` in bảng metric/giá trị, KHÔNG ghi; DB
+  down → exit 2; conflict > 0 → `[warn]` exit 0; `captured_by =
+  'agent:cockpit'`.
+  - Boundary: `pipelines/cockpit.py`, `tests/test_cockpit.py`
+  - Gate: test pure/fake: kỳ chưa đóng (`now = 2026-10-12T09:00+07`, ref
+    `2026-10-12` week) → ValueError, 0 execute; default kỳ của now đó =
+    tuần `2026-10-05` (nhãn `2026-W41`) / tháng `2026-09-01`; `store` metric
+    lạ → ValueError 0 execute. Test DB (rollback, `_TxConn`) **tuần vắt 2
+    tháng giờ VN**: ref `2026-10-01` week → kỳ `2026-09-28..2026-10-05`;
+    leads ts `2026-09-27T16:59:59Z` (= 23:59:59 27/09 VN) KHÔNG tính,
+    `2026-09-27T17:00Z` tính, `2026-10-04T16:59:59Z` tính, `2026-10-04T17:00Z`
+    KHÔNG tính → `leads.new = 2`; tháng: lead `2026-09-30T17:00Z` thuộc
+    tháng 10 không thuộc tháng 9; convlog fixture `tmp_path` (answered
+    True/False/None) → `chatbot.questions`/`chatbot.unanswered` đúng;
+    `content.drafts_pending_end`, `market.alerts_open_end`
+    (alert đóng trước/sau `end`), `ai.cost_usd` + `ai.cost_usd.<agent>`,
+    `jobs.failed` (`ok` false + null tính, true không), `approvals.overdue`
+    đúng trên fixture; bảng thiếu (drop trong schema tạm, savepoint) →
+    metric vào `errors`, không có row value 0; `store` ×2 cùng rows → lần 2
+    `inserted=0, unchanged=N`, số dòng không đổi; đổi 1 value → `conflict=1`,
+    giá trị DB giữ bản cũ. CLI DB thật CHỈ `--collect --period week --ref
+    2026-10-05 --dry-run` exit 0 và `--collect --period week --ref
+    2026-10-12` exit 2 (kỳ chưa đóng — trước connect)
+  - Evidence: `evidence/v80_cockpit.log`
+- [x] **W80.3 Nạp CSV kênh ngoài `manual_export`** — `read_csv(path,
+  metrics, *, now=None) -> (rows, errors)` THUẦN, chạy toàn file trước khi
+  connect: file ≤ 2 MB, UTF-8/UTF-8-BOM (byte lỗi → lỗi, không crash);
+  header ĐÚNG `channel,metric_id,period_kind,period_start,value` (thiếu/thừa
+  cột → lỗi); 0 dòng dữ liệu → lỗi; mỗi dòng: metric phải `kind=external`,
+  kênh ∈ `channels` của metric, `period_kind ∈ week|month|day`,
+  `period_start` ISO date và == `period_bounds(kind, d)[0].date()` (tuần
+  phải thứ Hai, tháng phải ngày 1), kỳ đã đóng; `value` metric `integer` →
+  `^\d{1,15}$` (chặn "21.585.320"/"21,5" mơ hồ dấu nghìn), không integer →
+  `^\d{1,15}(\.\d{1,6})?$`; âm/NaN/rỗng → lỗi; trùng khóa trong file → lỗi.
+  Lỗi in `dòng N, cột X: <lý do>` KHÔNG in giá trị ô. CLI `python -m
+  pipelines.cockpit --import FILE --by "<người xuất>" [--sample]`: thiếu
+  `--by`/`--by '  '` → exit 2 trước đọc file; có lỗi → in lỗi, exit 1,
+  KHÔNG connect, 0 dòng; OK → 1 transaction `store` với `source=
+  'manual_export'`, `source_ref = '<basename>#sha256:<12 hex>'` (`--sample`
+  → tiền tố `sample:`), `captured_by = --by`; conflict > 0 → rollback CẢ
+  file, exit 1 "khác giá trị đã nạp — 0 dòng"; DB down → exit 2. Fixture
+  `tests/fixtures/cockpit/kenh_MAU.csv` (số MẪU bịa rõ ràng, tên file
+  có `MAU` — không chép số thật) + `tests/fixtures/cockpit/kenh_loi.csv`
+  (lỗi cho gate CLI).
+  - Boundary: `pipelines/cockpit.py`, `tests/test_cockpit.py`,
+    `tests/fixtures/cockpit/` (mới)
+  - Gate: test `read_csv` ≥ 12 biến thể lỗi (header sai, thiếu cột, 0 dòng,
+    metric internal `leads.new`, metric lạ, kênh không cho phép, tuần bắt
+    đầu thứ Ba, tháng ngày 2, kỳ chưa đóng, `21.585.320`, `-5`, `nan`, trùng
+    khóa, byte `\xff` không UTF-8) → mỗi cái ≥1 lỗi có số dòng, và message
+    KHÔNG chứa giá trị ô (assert chuỗi giá trị không xuất hiện); BOM OK;
+    `python -m pipelines.cockpit --import tests/fixtures/cockpit/kenh_loi.csv
+    --by X` exit 1 và `connect` không được gọi (monkeypatch trong test;
+    CLI DB thật: exit 1, `channel_snapshots` không tăng); `--import ... `
+    thiếu `--by` → exit 2; `--import F --collect` → exit 2 (n_ops). Test DB
+    (rollback): nạp `kenh_MAU.csv --sample` ×2 → lần 1 inserted = số dòng,
+    lần 2 inserted 0 unchanged N, `count(*)` không đổi (idempotent); file
+    sửa 1 value cùng khóa → exit 1, `count(*)` và các value không đổi (0
+    dòng của file mới vào); `source_ref` bắt đầu `sample:`
+  - Evidence: `evidence/v80_cockpit.log`
+- [x] **W80.4 Thời gian duyệt của TGĐ theo tuần** — `approval_times(conn,
+  start, end, block='ceo') -> dict` (trong `pipelines/cockpit.py`): đọc
+  `approval_queue` `block = %s` và `decided_at >= start and decided_at <
+  end`; approved/rejected → giờ = `(decided_at - created_at)` ; expired →
+  đếm riêng; `summarize_hours(list[float]) -> {n, median_h, max_h}` THUẦN
+  (`statistics.median`, làm tròn 1 chữ số; n = 0 → median/max `None` — KHÔNG
+  0). `collect_internal` ghi 4 metric `approvals.ceo_decided`,
+  `approvals.ceo_hours_median`, `approvals.ceo_hours_max` (bỏ qua khi
+  None — thiếu số ≠ 0 giờ), `approvals.ceo_expired`. Khối lấy từ
+  `pipelines.director.load_config('ceo')["block"]`.
+  - Boundary: `pipelines/cockpit.py`, `tests/test_cockpit.py`
+  - Gate: `summarize_hours([])` → n 0, median None; `[2, 30]` → median 16.0,
+    max 30.0. Test DB (rollback, replica đặt mốc): tuần W41 (`2026-10-05..
+    2026-10-12` VN) — mục ceo tạo 05/10 08:00 VN quyết 05/10 10:00 (2h),
+    tạo 06/10 09:00 quyết 07/10 15:00 (30h), tạo 09/10 20:00 quyết
+    12/10 00:30 VN (tuần sau — KHÔNG tính), quyết `2026-10-04T16:59Z`
+    (= 23:59 04/10 VN — KHÔNG tính), 1 mục ceo expired trong tuần, 1 mục
+    `marketing` quyết trong tuần (KHÔNG tính) → `n=2, median_h=16.0,
+    max_h=30.0, expired=1`; tuần không có quyết định → không có row
+    `approvals.ceo_hours_median` (không ghi 0)
+  - Evidence: `evidence/v80_cockpit.log`
+- [x] **W80.5 Báo cáo tuần/tháng `agents/ceo_report.py`** — `build(conn,
+  kind, ref, *, now=None, llm=False, routing=None, metrics=None) -> dict`
+  (kỳ đã đóng; kỳ trước = `period_bounds(kind, start - 1 ngày)`; đọc
+  `channel_snapshots` 2 kỳ, ưu tiên `source='manual_export'` > `api` khi
+  cùng (channel, metric)); `render(rep) -> str` THUẦN. Trang: tiêu đề
+  "Báo cáo <tuần 2026-W41 | tháng 2026-09> — TGĐ" + khoảng ngày VN; dòng
+  preflight (W80.6) ở ĐẦU trang; bảng `Chỉ số | Kênh | Kỳ này | Kỳ trước |
+  Δ | Đánh giá | Nguồn` — Δ do code tính (tuyệt đối + % khi kỳ trước ≠ 0),
+  Đánh giá theo `better` (tốt/xấu/không đổi/—), Nguồn = `source` +
+  `source_ref` + ngày chụp VN, row `sample:` gắn `(MẪU)`; thiếu số →
+  `[chưa có dữ liệu]` (không 0); mục "Thời gian duyệt của TGĐ" từ 4 metric
+  W80.4; mục NHẬN XÉT (W80.7); footer "BẢN NHÁP — chờ TGĐ ký; hệ thống KHÔNG
+  tự gửi". Định dạng VND `21.585.320 đ`, USD 2 chữ số thập phân — format
+  chỉ trên `Decimal` đã coerce. File `data/reports/ceo-<nhãn kỳ>.md` qua
+  `agents.report.write_report` (atomic, đã gitignore; chạy lại cùng kỳ ghi
+  đè). CLI `python -m agents.ceo_report [--period week|month] [--ref
+  YYYY-MM-DD] [--llm] [--submit] [--out-dir DIR]`: mặc định kỳ vừa đóng;
+  kỳ chưa đóng → exit 2 trước connect; DB down → exit 2, không file;
+  `--submit` → `pipelines.director.submit(conn, 'ceo', 'weekly_report'|
+  'monthly_report', object_id=<nhãn kỳ>, title, payload=<markdown>,
+  created_by='agent:ceo_report')` (vào hàng chờ TGĐ, KHÔNG tự duyệt; trùng
+  pending → in lỗi exit 1). Toàn trang qua `guardrail.check()` trước khi
+  ghi — không ok → vẫn ghi file nhưng thêm dòng cảnh báo vi phạm đầu trang
+  và KHÔNG `--submit`.
+  - Boundary: `agents/ceo_report.py` (mới), `tests/test_ceo_report.py` (mới)
+  - Gate: test `render` fixture dict: mọi giá trị số hiển thị trong bảng
+    đều đến từ fixture (parse lại bảng so `Decimal`); metric thiếu kỳ trước →
+    Δ `—`, không `0`; metric thiếu cả 2 kỳ → `[chưa có dữ liệu]`; row
+    `sample:` có `(MẪU)`; nhãn tuần `2026-W40` cho ref `2026-10-01`, tháng
+    trước của `2027-01` = `2026-12`; footer có "KHÔNG tự gửi". Test DB
+    (rollback): nạp snapshot 2 tuần W40/W41 → `build` + `render` đúng Δ và
+    nguồn; `--submit` tạo đúng 1 mục `approval_queue` block `ceo` object_type
+    `weekly_report`, `status='pending'`, `approvals` không tăng; CLI DB
+    thật: `python -m agents.ceo_report --period week --ref 2026-10-05
+    --out-dir <scratchpad>` exit 0, file có dòng ĐỎ (W80.6) và
+    `[chưa có dữ liệu]`, không có ô số `0` bịa
+  - Evidence: `evidence/v80_report.log`
+- [x] **W80.6 Preflight tuyến cảnh báo đỏ trong báo cáo** — `build` gọi
+  `pipelines.red_alert.load_routing(path)` (KHÔNG gửi, KHÔNG ghi
+  `red_alerts`): `recipients` hợp lệ rỗng → dòng đầu trang `**ĐỎ — chưa có
+  người nhận cảnh báo độc lập** (data/red_alert_routing.json, external-dep:
+  Pháp chế xác nhận)` + số `problems`; có ≥1 người hợp lệ (`phap_che`/`bks`)
+  → dòng "Tuyến cảnh báo đỏ: N người nhận độc lập" (chỉ đếm, không in tên).
+  - Boundary: `agents/ceo_report.py`, `tests/test_ceo_report.py`
+  - Gate: config thật (`recipients: []`) → render chứa đúng chuỗi "ĐỎ — chưa
+    có người nhận cảnh báo độc lập"; routing tmp chỉ có role `tgd` /
+    `ha_tang` → VẪN dòng ĐỎ (bị lọc); routing tmp 1 người `phap_che` đủ
+    name/channel → không dòng ĐỎ, có "1 người nhận độc lập", tên KHÔNG xuất
+    hiện trong trang; file routing hỏng → dòng ĐỎ (không crash);
+    `python -m pipelines.red_alert --check-routing` vẫn exit 1 (không đổi)
+  - Evidence: `evidence/v80_report.log`
+- [x] **W80.7 Nhận xét grounded: placeholder + code điền số** —
+  `agents/ceo_report.py`: `PLACEHOLDER_RE = \{([a-z][a-z0-9_.]{1,63}):
+  ([0-9A-Za-z-]{4,8})\}`; `ground(template, values, labels) -> (text |
+  None, reasons)`: (1) mọi placeholder phải có `metric_id` trong `values`
+  và token kỳ ∈ {nhãn kỳ này, nhãn kỳ trước, `delta`} có giá trị — thiếu/
+  lạ → loại; (2) xóa placeholder, phần còn lại chứa chữ số bất kỳ (`\d`
+  Unicode) hoặc `%` hoặc từ số `trăm|nghìn|ngàn|triệu|tỷ|tỉ` (casefold, NFC)
+  → loại "LLM tự viết số"; (3) điền số bằng formatter của W80.5; (4)
+  `guardrail.check(filled)` không ok → loại; > 1200 ký tự → loại.
+  `rule_commentary(rep) -> str` (TẤT ĐỊNH, LLM tắt): mỗi metric có cả 2 kỳ
+  → câu template "<tên> <tăng|giảm|không đổi> từ {m:prev} lên {m:cur}
+  ({m:delta}) — <tốt|cần xem>" rồi qua CÙNG `ground()`. `llm_commentary(rep)`
+  (chỉ khi `llm=True`): gọi `pipelines.llm_gateway.chat('cockpit', ...)`,
+  prompt chỉ đưa metric_id/tên/chiều tốt/xu hướng (KHÔNG số tuyệt đối) +
+  luật placeholder; `GatewayError`/rỗng/bị `ground` loại → dùng
+  `rule_commentary` + ghi dòng "Nhận xét LLM bị loại: <lý do>". Mặc định
+  `llm=False` → KHÔNG import-gọi gateway. `data/llm_gateway.json`
+  `monthly_cap_usd` thêm `"cockpit": 0.5`. `data/data_flow_map.json` thêm
+  DF-18 (module `agents/ceo_report.py`, dữ liệu = metric_id + xu hướng, KHÔNG
+  số tuyệt đối/PII, OpenRouter qua gateway agent `cockpit`, chỉ khi
+  `--llm`, `cross_border: true`, `class: xanh`) + sinh lại
+  `docs/legal/DPIA-nhap.md`/`TIA-nhap.md` bằng `python scripts/dpia_draft.py`.
+  - Boundary: `agents/ceo_report.py`, `tests/test_ceo_report.py`,
+    `data/llm_gateway.json` (cap), `data/data_flow_map.json` (DF-18),
+    `docs/legal/DPIA-nhap.md`, `docs/legal/TIA-nhap.md` (sinh lại)
+  - Gate: **grounding**: `ground("Lead {leads.new:2026-W41} tăng 15%", …)`
+    → None + lý do "tự viết số"; biến thể `"tăng mười lăm phần trăm"`
+    (chứa "trăm") → loại; chữ số full-width `"１５"` → loại; placeholder
+    metric lạ `{sales.foo:2026-W41}` → loại; placeholder đúng cú pháp nhưng
+    giá trị thiếu → loại; template sạch → text đã điền, và MỌI cụm chữ số
+    trong text = 1 giá trị được điền (assert: xóa các chuỗi giá trị đã điền
+    → không còn `\d`); `rule_commentary` trên 3 fixture (đủ/thiếu/ kỳ trước
+    0) luôn qua `ground` (0 lý do). **LLM tắt**: monkeypatch
+    `pipelines.llm_gateway.chat` đếm lời gọi → `build(llm=False)` = 0 lời
+    gọi, báo cáo vẫn đủ bảng + nhận xét + preflight; LLM bật với fake chat
+    trả "GMV tăng 12%" → nhận xét = rule_commentary + dòng "bị loại"; fake
+    raise `GatewayError` → rule_commentary, không crash; fake trả template
+    hợp lệ → nhận xét = bản đã điền; test kiểm agent_id truyền vào chat =
+    `'cockpit'` và prompt KHÔNG chứa chuỗi giá trị nào của fixture.
+    `python scripts/dpia_draft.py --check` exit 0;
+    `tests/test_data_flow_map.py` + `tests/test_dpia_draft.py` xanh
+  - Evidence: `evidence/v80_report.log`
+- [x] **W80.8 `data/directors/ceo.json` loại việc cockpit** — `object_types`
+  giữ `weekly_report`, `decision_record`, `board_pack` và thêm
+  `monthly_report` (sla 72, medium), `change_request` (sla 48, high),
+  `price_voucher_frame` (sla 48, high — khung giá–voucher theo chiến dịch);
+  `_doc` ghi nguồn (ceo plan §2) + "BẢN DEV SOẠN, chờ TGĐ chốt";
+  `approvers: []`, `digest_recipients: []` giữ nguyên (external-dep).
+  - Boundary: `data/directors/ceo.json`, `tests/test_director.py` (thêm 1
+    test tập loại việc ceo)
+  - Gate: `python -m pipelines.director --all --dry-run` exit 0 (11 khối);
+    test: ceo `object_types` ⊇ 6 loại trên, không `content_draft`, mọi sla
+    1..720; `approvers == []` (khóa không tự điền người thật — test v4.0
+    giữ xanh)
+  - Evidence: `evidence/v80_report.log`
+- [x] **W80.9 Docs** — `docs/handover/sop.md` mục mới "Cockpit TGĐ (v8.0)":
+  thứ tự sáng thứ Hai (`python -m pipelines.cockpit --collect` → nạp CSV
+  `--import FILE --by` → `python -m agents.ceo_report [--submit]`), định
+  dạng CSV + cách đọc lỗi exit 1, conflict nghĩa là gì (không sửa đè — báo
+  người quản trị DB), dòng ĐỎ nghĩa là gì + ai xử lý (Pháp chế), `--llm`
+  mặc định tắt. `docs/handover/kien-truc.md`: dòng `channel_snapshots` bỏ
+  "cho cockpit sau này", ghi `noi_bo`/`source='api'`+`source_ref` +
+  insert-only on-conflict-do-nothing; bảng thư mục thêm `pipelines/cockpit.py`
+  và `agents/ceo_report.py`; "35 bảng public" GIỮ NGUYÊN. `AGENTS.md`
+  Commands: 2 dòng (`pipelines.cockpit`, `agents.ceo_report`).
+  `tests/test_handover_docs.py` `SOP_COMMANDS` thêm `pipelines.cockpit`,
+  `agents.ceo_report`.
+  - Boundary: `docs/handover/sop.md`, `docs/handover/kien-truc.md`,
+    `AGENTS.md` (Commands), `tests/test_handover_docs.py`
+  - Gate: `python -m pytest tests/test_handover_docs.py -q` xanh (đủ bảng
+    parse từ schema.sql, "35 bảng"); `grep -n "pipelines.cockpit\|
+    agents.ceo_report" AGENTS.md docs/handover/sop.md` có ở cả 2 file
+  - Evidence: `evidence/v80_pytest.log`
+- [x] **Gate chung** —
+  - targeted ×3: `python -m pytest tests/test_cockpit.py tests/test_ceo_report.py tests/test_director.py tests/test_period.py tests/test_red_alert.py tests/test_report.py tests/test_llm_gateway.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_store.py tests/test_connect_timeout_guard.py -q -rs`
+    3 lần liên tiếp xanh, test DB **0 skipped** (lệnh nặng có thể bị đẩy
+    nền — đọc output tới khi process exit, không chạy chồng, không retry mù)
+  - full: `python -m pytest -q` xanh, ≥ 1682 (baseline) + test mới — ĐÚNG 1
+    lần/vòng
+  - `ruff check .` sạch
+  - `python -m py_compile pipelines/cockpit.py agents/ceo_report.py`
+  - CLI: `python -m pipelines.cockpit --metrics` exit 0; `--collect
+    --period week --ref 2026-10-05 --dry-run` exit 0; `--collect --period
+    week --ref 2026-10-12` exit 2; `--import tests/fixtures/cockpit/
+    kenh_loi.csv --by X` exit 1; `python -m agents.ceo_report --period week
+    --ref 2026-10-05 --out-dir <scratchpad>` exit 0 (có dòng ĐỎ);
+    `python -m pipelines.director --all --dry-run` exit 0;
+    `python scripts/dpia_draft.py --check` exit 0
+  - DB thật trước/sau toàn bộ gate: `channel_snapshots`, `approval_queue`,
+    `approvals`, `red_alerts`, `llm_usage` số dòng KHÔNG đổi (không row test
+    sót, không tự nộp/duyệt, 0 lời gọi LLM)
+  - `git diff --stat`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); không đụng `docs/schema.sql`/`docs/roles.sql`;
+    `lv2-market-top.png` giữ untracked; `data/red_alert_routing.json` +
+    `data/directors/ceo.json` không chứa tên/email người thật
+- [ ] **external-dep** Số doanh thu/đơn/quyết toán thật từ Seller Center/
+  kế toán (chỉ fixture MẪU nạp `--sample`); collector API sàn/Meta/YouTube.
+- [ ] **external-dep** TGĐ ký trang báo cáo tuần đầu tiên tạo từ hệ thống
+  (chỉ có mục `weekly_report` pending qua `--submit`; người duyệt khối `ceo`
+  `approvers: []`).
+- [ ] **external-dep** Người nhận cảnh báo đỏ độc lập thật do Pháp chế xác
+  nhận (routing `[]` → báo cáo hiện dòng ĐỎ, `--check-routing` exit 1).
+
+Vòng sửa nghiệm thu (10 finding: 1 MAJOR + 9 MINOR) — evidence
+`evidence/v80_cockpit.log` (CLI chạy lại trên code hiện tại),
+`evidence/v80_report.log` (mới: ceo_report/red_alert/director/dpia/
+py_compile/pytest), `evidence/v80_pytest.log` (DB trước/sau gate, targeted
+×3 = 337 passed ×3, full 1799 passed / 3 skipped baseline, ruff sạch):
+- MAJOR convlog 30 ngày: `collect_internal` — đầu kỳ < now − `connectors.
+  zalo.RETAIN_DAYS` → `chatbot.*` vào `errors` (không ghi số thiếu thành số
+  thật); test `test_chatbot_beyond_convlog_retention_is_error_not_number`
+  (tháng 09 chụp 12/10, tuần 07/09) + `test_chatbot_within_retention_still_
+  counted` (W41 + mốc biên ±1s). Ghi giới hạn ở `data/metrics.json` `_doc`,
+  SOP 4c, kien-truc.
+- Grounding ký tự số Unicode (2 finding trùng): `_has_number` chặn mọi ký tự
+  category `N*` (Nd/No/Nl) + `%`/`‰`/từ số sau NFKC; `test_ground_rejects`
+  thêm ¹⁵, ①, ½, ², Ⅻ, ‰.
+- SOP 4c: bước 0a `ingest.lead_store` + 0b `approval_queue --expire` trước
+  `--collect` (sổ insert-only — chụp sớm là thiếu vĩnh viễn).
+- Least privilege: `store()` bỏ ON CONFLICT/RETURNING → INSERT thường +
+  savepoint từng dòng; trùng khóa: role có SELECT → so giá trị (unchanged/
+  conflict), role không SELECT → `unverified` (CSV: có BẤT KỲ dòng
+  unverified → rollback cả file exit 1, fail-closed — kể cả file y nguyên,
+  vì agent_writer không phân biệt được file đã sửa số; fix nghiệm thu
+  MINOR: trước đó toàn-unverified → exit 0 `[done]` câm, số sửa không nạp).
+  Test `test_store_and_import_under_agent_writer` (`set local role
+  agent_writer`, CLI `--import` ×4: lần đầu, y nguyên → exit 1, SỬA 1 số
+  GMV cùng khóa → exit 1 + sổ giữ số cũ, thêm dòng mới → exit 1). SOP + kien-truc
+  ghi role từng lệnh; `roles.sql` KHÔNG đổi.
+- A08 MẪU: `_cli_import` — tên file có `mau/mẫu/sample` mà thiếu `--sample`,
+  hoặc `--sample` trên file không có dấu hiệu MẪU → exit 2 trước đọc/connect;
+  test `test_is_sample_name` + `test_cli_import_sample_flag_must_match_
+  filename`; SOP cấm nạp file MẪU vào DB vận hành.
+- `--submit` bị chặn khi guardrail vi phạm: `test_cli_guardrail_violation_
+  blocks_submit` chạy `main([... '--submit'])` (rc 1, `director.submit` 0
+  lần, file vẫn có CẢNH BÁO; đối chứng trang sạch → 1 lần). Mutation xóa
+  nhánh `if not ok: return 1` → test đỏ (đã thử).
+- `_pick` manual_export > api: `test_pick_manual_export_wins_any_order` 2
+  thứ tự; mutation bỏ guard → case `manual-truoc` đỏ (đã thử).
+- Evidence thiếu (2 finding trùng): đã ghi 3 file log + tick checklist.
+
+Ngoài phạm vi (WP10 còn lại, ghi để không cuốn vào): Tiến độ P0–P3 + Sổ
+quyết định có memo; Sổ rủi ro pháp lý đọc tracker Pháp chế; Audit
+outside-in P1 (bài lệch bản approved); gói HĐTV tháng PDF; tab Streamlit
+cockpit; sửa số `channel_snapshots` có người duyệt (hiện conflict = giữ bản
+cũ); từ số đọc bằng chữ ("một/hai...") trong nhận xét LLM chưa bị chặn (đã
+chặn mọi ký tự số Unicode, `%`/`‰`, trăm/nghìn/triệu/tỷ). Someday (roles.sql
+khóa ở v8.0): role CHỈ-ĐỌC cho cockpit (SELECT `channel_snapshots` + leads/
+approvals/market_alerts/job_runs/llm_usage) để `--collect` và
+`agents.ceo_report` không phải chạy bằng DSN chủ sở hữu/`app_human` (có quyền
+duyệt) — hoặc grant `agent_writer` SELECT cột khóa `channel_snapshots` để so
+giá trị khi nạp lại; `--collect` cảnh báo khi `ingest.lead_store` chưa chạy
+sau hết kỳ.
+
 Nhánh `ai-infra`: M31 đợt gộp 2026-10-12 — v4.0, v4.1, v4.4, v7.0, v7.3, v9.3,
 v9.5 đã đóng + gộp (35 bảng). Tích hợp khi gộp: bổ sung DF-16 (intel) + DF-17
 (persona_sim) vào `data/data_flow_map.json` + sinh lại DPIA/TIA nháp; phương án
 rượu trong persona_sim nay bị guardrail v4.1 loại kể cả panel người lớn (flip
 `test_validate_specific_reasons`). Đang chạy song song: v4.2, v4.5, v5.2, v7.2,
 v9.2.
+
+v8.0-cockpit-bao-cao đóng 2026-10-12 (nghiệm thu đợt 1 FIX 10 → 2 vòng sửa →
+PASS; build lần chạy lại bị đứt ECONNRESET ở cuối nhưng nghiệm thu + sửa chạy
+trên code đã ghi; coordinator đổi mã luồng cockpit DF-18 → DF-21 (tránh trùng
+v5.2/v9.0) + sinh lại DPIA, chạy lại targeted 293 + ruff + `dpia_draft --check`).
+Không thêm bảng. Số nội bộ ghi channel_snapshots `channel='noi_bo'`,
+`source='api'` (CHECK v4.0 không có 'internal'); không ghi đè số đã chụp; chỉ
+chụp kỳ đã đóng. Nhận xét LLM chỉ được viết placeholder — chữ số/%/trăm-nghìn-
+triệu-tỷ bị loại (ground()); LLM mặc định tắt. NIT còn (someday): markdown cấu
+trúc (#, ---) lọt từ LLM; OverflowError `--ref 9999-12-31`; TOCTOU hash CSV đọc
+2 lần; ký tự số Unicode/chữ số bằng chữ ('chục','nửa'); `source_ref` từ DB chưa
+lọc link/HTML. External-dep: doanh thu/đơn thật; TGĐ ký trang tuần đầu; người
+nhận cảnh báo đỏ thật.
 
 ## Checklist v4.0-director-framework
 

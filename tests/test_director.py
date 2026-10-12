@@ -185,3 +185,18 @@ def test_cli_module_dry_run_subprocess():
                        timeout=60, encoding="utf-8", errors="replace",
                        check=False)
     assert r.returncode == 0 and "11 khối hợp lệ" in r.stdout, r.stderr
+
+
+def test_ceo_cockpit_object_types():
+    """v8.0 W80.8 — khối ceo đủ loại việc cockpit; không người thật."""
+    c = dr.load_config("ceo")
+    types = c["object_types"]
+    assert {"weekly_report", "decision_record", "board_pack",
+            "monthly_report", "change_request",
+            "price_voucher_frame"} <= set(types)
+    assert "content_draft" not in types
+    assert all(1 <= t["sla_hours"] <= 720 for t in types.values())
+    assert types["monthly_report"] == {"sla_hours": 72, "risk": "medium"}
+    assert types["change_request"]["risk"] == "high"
+    assert types["price_voucher_frame"]["risk"] == "high"
+    assert c["approvers"] == [] and c["digest_recipients"] == []

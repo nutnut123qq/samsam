@@ -326,6 +326,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Không xử lý dữ liệu cá nhân thật; chạy sau khi DPIA ký — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | (không) |
 
+### DF-21 — Nhận xét báo cáo TGĐ qua LLM (cockpit — v8.0, chỉ khi --llm)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-21 |
+| Module (code) | `agents/ceo_report.py` |
+| Mục đích | Viết phần nhận xét báo cáo tuần/tháng cho TGĐ bằng placeholder; code điền số |
+| Dữ liệu | metric_id + tên chỉ số + chiều tốt + xu hướng (tăng/giảm/không đổi) + nhãn kỳ — KHÔNG số tuyệt đối, KHÔNG PII |
+| Lớp | Xanh |
+| Chủ thể | Không có — số liệu vận hành tổng hợp, không dữ liệu cá nhân |
+| Nơi lưu | Không lưu prompt/response (llm_usage chỉ đếm token/chi phí); văn bản đã điền nằm trong file data/reports/ceo-<kỳ>.md (gitignored) |
+| Thời hạn lưu | Theo file báo cáo local — chưa có hạn lưu riêng |
+| Bên nhận | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `cockpit`, trần 0,5 USD/tháng) |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | Mặc định TẮT — chỉ chạy khi `python -m agents.ceo_report --llm`; Prompt chỉ có metric_id/tên/chiều tốt/xu hướng, không số tuyệt đối; `ground()`: văn bản LLM còn chữ số/%/trăm-nghìn-triệu-tỷ ngoài placeholder → bị loại, dùng nhận xét theo luật; qua guardrail |
+| Căn cứ xử lý | Không xử lý dữ liệu cá nhân — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | (không) |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -349,6 +367,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-15 | Sao lưu và diễn tập khôi phục DB | Đỏ | cao | không | 2 |
 | DF-16 | Thu tin thị trường tầng A/B (intel — v7.0) | Xanh | thấp | có | 2 |
 | DF-17 | Nghiên cứu giả lập persona (v7.3) | Xanh | thấp | có | 0 |
+| DF-21 | Nhận xét báo cáo TGĐ qua LLM (cockpit — v8.0, chỉ khi --llm) | Xanh | thấp | có | 0 |
 
 ## 4. Tổng hợp GAP
 

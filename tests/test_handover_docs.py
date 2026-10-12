@@ -46,7 +46,8 @@ SOP_COMMANDS = ("streamlit run", "apply_schema", "lead_store",
                 "pipelines.auth",
                 "db_backup", "db_restore_drill", "dr_drill",
                 "break_glass", "pipelines.approval_queue",
-                "pipelines.director", "pipelines.red_alert", "crawler.intel")
+                "pipelines.director", "pipelines.red_alert", "crawler.intel",
+                "pipelines.cockpit", "agents.ceo_report")
 
 
 def _doc(name: str) -> str:
