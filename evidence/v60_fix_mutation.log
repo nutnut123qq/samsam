@@ -1,0 +1,20 @@
+# v6.0 vong fix nghiem thu — mutation check 2026-10-12T13:07:36+07:00
+DATABASE_URL set: yes (gia tri khong in)
+== M1 to_workday xet ngay theo tz dau vao (bo astimezone)
+$ python -m pytest -q tests/test_mkt_calendar.py -k to_workday
+FAILED tests/test_mkt_calendar.py::test_to_workday_utc_input_and_holiday - as...
+1 failed, 1 passed, 64 deselected in 1.19s
+KILLED
+== M2 _ics_text chi escape newline (bo \\ ; ,)
+$ python -m pytest -q tests/test_mkt_calendar.py -k ics
+FAILED tests/test_mkt_calendar.py::test_ics_escape_and_fold_roundtrip - Asser...
+1 failed, 2 passed, 63 deselected in 0.86s
+KILLED
+== M3 _EXISTING_SQL chi pending
+$ python -m pytest -q tests/test_mkt_director.py -k brief
+FAILED tests/test_mkt_director.py::test_brief_db_decided_not_requeued[approved]
+FAILED tests/test_mkt_director.py::test_brief_db_decided_not_requeued[rejected]
+2 failed, 9 passed, 12 deselected in 2.77s
+KILLED
+ALL KILLED, nguon da khoi phuc nguyen byte
+[exit=0]

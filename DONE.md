@@ -1929,6 +1929,353 @@ sha; chống công thức Excel trong CSV. Công nợ đại lý: tuổi nợ bi
 Luồng DF-18/19/20 sẽ đánh số lại khi gộp. External-dep: file settlement thật ≥2
 tuần + bảng phí thật; trigger HĐ (tư vấn thuế 25/10); nhà cung cấp HĐĐT + chữ ký
 số; sổ MISA; chính sách hoa hồng ký; bảng dealers v5.2; GĐ tài chính ký.
+## Checklist v6.0-mkt-lich-mua
+
+Khán giả/mục đích: WP08 (pmo.md dòng `| WP08`) — phần **MKT-00 Agent GĐ
+Marketing (điều phối + cân tải duyệt)** và **MKT-01 Agent Lịch mùa vụ**
+(final_plans.json `marketing.plan.agents[0..1]`); worktree
+`D:\code\samsam-w44`. Hiện repo có khung GĐ khối (`pipelines/director.py` +
+`data/directors/marketing.json`, v4.0), hàng duyệt chung
+(`pipelines/approval_queue.py`), engine mùa (`pipelines/scenario.py`
+`TET_DATES`/`tet_date`, v7.3), quota duyệt (`scripts/review_load.py`
+`load_quota`/`cap_for` + `data/review_quota.json`, v4.4), readiness SKU×kênh
+(`pipelines/guardrail._readiness_of` soi gương view `sku_readiness`) — nhưng
+CHƯA có lịch chiến dịch: không ai biết brief/nháp/duyệt phải xong lúc nào để
+kịp 11.11, 12.12, Tết 2027, và tải duyệt mùa cao điểm chỉ thấy khi đã quá
+tải. Sau version: (a) `pipelines/mkt_calendar.py` THUẦN (không DB/LLM/mạng)
+dựng lịch chiến dịch từ `data/marketing_calendar.json` + golden: mỗi chiến
+dịch × kênh × định dạng có SKU đủ readiness, mốc brief/nháp/duyệt/đăng LÙI từ
+ngày đăng theo SLA (giờ VN, né cuối tuần/ngày nghỉ), nhắc trước 14/7/3 ngày;
+xuất markdown tuần/tháng + `.ics` (stdlib); (b) `agents/mkt_director.py`
+(MKT-00, tất định, KHÔNG LLM): đẩy "brief chiến dịch" vào `approval_queue` qua
+`director.submit` (không tự duyệt), dự báo tải duyệt/ngày so với quota →
+cảnh báo + ĐỀ XUẤT dời (không tự dời), bản tin tuần GĐ Marketing. Không
+agent nào đăng bài, hẹn lịch đăng, sinh nháp hay chi tiền.
+
+Quy ước: ponytail — stdlib (`datetime`, `json`, `argparse`, `hashlib`) +
+`psycopg` sẵn có; KHÔNG lib lịch/âm lịch/`icalendar`/pandas, KHÔNG pip
+install. TÁI DÙNG (không viết lại): `pipelines.scenario.tet_date`/`week_start`
+(Tết 2027 KHÔNG được ghi lại thành hằng ngày thứ hai ở module/JSON mới —
+JSON dùng `"lunar_new_year": 2027` như `scenario_assumptions.json`);
+`pipelines.period.VN_TZ`; `ingest.golden_store.read_golden`/`validate`/
+`CHANNELS`/`GOLDEN_FILE`; `pipelines.guardrail._readiness_of` (KHÔNG chép lại
+CASE readiness); `pipelines.director.load_config`/`submit`;
+`pipelines.approval_queue.pending`; `scripts.review_load.load_quota`/`cap_for`
+(bắt `ValueError` — `QuotaError` là subclass); `agents.report.write_report`
+(atomic, bytes UTF-8); `ingest.lead_store.connect` (đã có `connect_timeout`).
+Hàm thuần nhận `now`/`today`/`start` làm THAM SỐ — chỉ `main()` đọc đồng hồ
+(`datetime.now(VN_TZ)`); test không wall-clock, không `time.sleep`. Mọi mốc
+là `datetime` tz-aware giờ VN; phán "cuối tuần/ngoài giờ" trên NGÀY/GIỜ VN
+(đầu vào UTC phải đổi sang VN trước khi xét). Config hỏng fail-closed đủ biến
+thể (gotcha v1.8): file thiếu / rỗng / JSON hỏng / `{}` / chỉ `_doc` → lỗi
+rõ, exit 1, không bao giờ ra lịch rỗng câm; số: `bool` không là số, âm/NaN
+bị từ chối. Print tiếng Việt → UTF-8 guard sau imports (copy
+`scripts/zalo_mock.py`). Output runtime chỉ vào `data/reports/` (đã
+gitignore) — không file runtime mới khác trong `data/`. KHÔNG thêm bảng DB
+(brief dùng `approval_queue` sẵn có) → kien-truc giữ "35 bảng". Lỗi/bản tin
+chỉ nêu id chiến dịch/sku_key/tên field — không PII (lịch không chứa dữ liệu
+khách). Mọi ghi DB: `conn.transaction()` + `conn.commit()` tường minh (đã nằm
+trong `approval_queue.enqueue`).
+
+External-dep (KHÔNG giả lập, để `[ ]` ở mục riêng cuối): (1) lịch chiến dịch
+THẬT do GĐ Marketing chốt — file ship `"status": "GIẢ ĐỊNH — chờ GĐ Marketing
+chốt"`, version này KHÔNG đổi status; (2) mùa thu hoạch thật do GĐ vùng trồng
+xác nhận (mục harvest có `status` GIẢ ĐỊNH riêng); (3) quota duyệt thật (TGĐ
+chốt `review_quota.json` `status: chot`; trần GĐ Marketing trong
+`marketing_calendar.json` là GIẢ ĐỊNH); (4) người duyệt thật —
+`marketing.json` `approvers`/`digest_recipients` giữ `[]`, không tự điền,
+không đánh dấu ai đã duyệt; (5) `xnqc_records` (ô có SKU TPBVSK trỏ asset
+XNQC) + `channel_policy` per SKU do Pháp chế/TGĐ ký — chưa có bảng, version
+này chỉ dựa readiness golden (hiện mọi TPBVSK `xnqc_status=none` → `MO_TA`,
+mật ong `self_declaration_ok` chưa có → `CAM`: lịch thật sẽ ra ít ô có SKU —
+đúng hiện trạng, không "sửa" golden cho đẹp); (6) shot-list vùng trồng, trần
+PHÚT theo tier (định mức 2/12/25 phút), timesheet/log Studio, gửi bản tin qua
+kênh thật, cron n8n — version sau.
+
+- [x] **W60.1 Cấu hình lịch mùa vụ + loader fail-closed** —
+  `data/marketing_calendar.json`: `{"_doc": "... MKT-01 ... GIẢ ĐỊNH ...",
+  "status": "GIẢ ĐỊNH — chờ GĐ Marketing chốt", "lead": {"publish_hour": 9,
+  "approve_buffer_hours": 24, "draft_review_hours": 48, "work_start_hour": 8,
+  "work_end_hour": 17}, "non_working_days": [YYYY-MM-DD...],
+  "reminder_days": [14, 7, 3], "review_caps": {"gd_marketing_daily": int}
+  (GIẢ ĐỊNH), "events": [{"id", "kind": "sale"|"holiday"|"tet"|"harvest",
+  "date": "YYYY-MM-DD" HOẶC "lunar_new_year": 2027 (+ tuỳ chọn
+  "offset_days"), "remind": bool, "status"? (bắt buộc với harvest, chứa
+  "GIẢ ĐỊNH")}...], "campaigns": [{"id", "event", "publish_offset_days":
+  int ≤ 0, "channels": [⊆ golden_store.CHANNELS], "formats": [⊆ FORMATS],
+  "skus": "auto" | [sku_key...], "pillar": str}...]}`. Sự kiện tối thiểu:
+  `20.10` (Phụ nữ VN), `11.11`, `20.11` (Nhà giáo), `12.12`, `24.12` (Noel),
+  `01.01` (Tết dương 2027), `tet_2027` (`lunar_new_year: 2027`), ≥1 mùa thu
+  hoạch (GIẢ ĐỊNH chờ GĐ vùng trồng); `remind: true` cho 11.11, 12.12,
+  tet_2027. Chiến dịch ≥1 cho mỗi 11.11/12.12/tet_2027 + 1 chiến dịch câu
+  chuyện thu hoạch (format `post`, `skus: []`). `pipelines/mkt_calendar.py`:
+  `FORMATS = ("listing", "post", "ads", "koc", "livestream")`,
+  `CalendarError(ValueError)`, `load_calendar(path=None) -> dict`
+  (validate), `event_date(ev) -> date` (Tết qua `scenario.tet_date`; năm ngoài
+  `TET_DATES` → `CalendarError`, không đoán). Validator chặn: `id` sự kiện/
+  chiến dịch trùng; chiến dịch trỏ `event` không tồn tại; event có cả `date`
+  lẫn `lunar_new_year` hoặc thiếu cả hai; kênh ∉ `CHANNELS`; format ∉
+  `FORMATS`; `publish_offset_days` > 0 hoặc |…| > 60; giờ ngoài 0..23 /
+  `work_start_hour ≥ work_end_hour`; số âm/`true`/NaN; harvest thiếu `status`
+  GIẢ ĐỊNH; ngày sai định dạng.
+  - Boundary: `pipelines/mkt_calendar.py` (mới), `data/marketing_calendar.json`
+    (mới), `tests/test_mkt_calendar.py` (mới)
+  - Gate: `python -m pytest -q tests/test_mkt_calendar.py -k "load or
+    event"` xanh, gồm: `event_date(<tet_2027>) == scenario.tet_date(2027)`;
+    `event_date` cho `lunar_new_year: 2031` → `CalendarError`; biến thể
+    thiếu / rỗng / `{bad` / `{}` / chỉ `_doc` / trùng id / event lạ / kênh lạ
+    / format lạ / offset dương / `true` thay số / `NaN` / harvest thiếu
+    status → `CalendarError`; file repo thật load OK, `status` chứa "GIẢ
+    ĐỊNH", đủ id sự kiện tối thiểu (so khớp tập, không substring). Grep chống
+    hằng ngày Tết thứ hai: `grep -nE "2027-0?2-0?6|2027, *2, *6|\"02-06\""
+    pipelines/mkt_calendar.py agents/mkt_director.py
+    data/marketing_calendar.json` rỗng VÀ `grep -n "tet_date"
+    pipelines/mkt_calendar.py` có dòng `from pipelines.scenario import` /
+    `scenario.tet_date`
+  - Evidence: `evidence/v60_calendar.log`
+- [x] **W60.2 Engine lịch MKT-01 thuần: kênh × SKU readiness + lùi mốc theo
+  SLA** — `to_workday(dt, lead, non_working) -> datetime` (đổi sang VN_TZ
+  trước; nếu ngày VN là T7/CN/`non_working_days` hoặc giờ < `work_start_hour`
+  → lùi về ngày làm việc TRƯỚC đó lúc `work_end_hour`:00; giờ >
+  `work_end_hour` → cùng ngày `work_end_hour`:00; chỉ LÙI, không bao giờ
+  đẩy muộn hơn). `milestones(publish_day, lead, brief_sla_hours,
+  non_working) -> {"publish", "approve", "draft", "brief"}`: publish =
+  ngày đăng `publish_hour`:00 VN (được rơi cuối tuần — sàn sale T7);
+  approve = `to_workday(publish − approve_buffer_hours)`; draft =
+  `to_workday(approve − draft_review_hours)`; brief = `to_workday(draft −
+  brief_sla_hours)` với `brief_sla_hours` = `object_types["campaign_brief"]
+  ["sla_hours"]` đọc từ `director.load_config("marketing")` (KHÔNG hằng số
+  thứ hai). `build(cal, golden, start: date, weeks: int, brief_sla_hours:
+  int) -> dict` → `{"campaigns": [{id, event, pillar, publish_day,
+  milestones, cells: [{channel, format, skus: [...], note}], blocked:
+  [{sku_key, channel, format, readiness, reason}]}], "reminders": [{event,
+  days_before, day}], "status"}` — chỉ chiến dịch có publish_day trong
+  [start, start + 7·weeks). Luật ô (đặt trước mọi thứ khác): SKU
+  `category == "alcohol"` → KHÔNG BAO GIỜ vào `skus` của bất kỳ ô nào (mọi
+  kênh trong `CHANNELS` đều online) — luôn vào `blocked` reason "rượu: không
+  kênh online", kể cả khi config liệt kê đích danh và golden ghi
+  `allowed_channels: ["shopee"]` (lệch đã biết v3.2); readiness =
+  `guardrail._readiness_of(sku, channel)`; format `listing` nhận
+  `MO_TA|TP_THUONG|QC_DAY_DU`; `post|ads|koc|livestream` chỉ nhận
+  `TP_THUONG|QC_DAY_DU`; `skus: "auto"` = mọi SKU golden đủ readiness;
+  `listing|ads|koc` không còn SKU nào → ô bị bỏ, ghi `blocked`;
+  `post|livestream` không SKU → giữ ô với note "câu chuyện thương hiệu —
+  không nêu tên SKU". Nhắc mốc: mỗi event `remind: true` sinh 3 nhắc
+  `day = event_date − {14,7,3}` (theo `reminder_days`).
+  - Boundary: `pipelines/mkt_calendar.py`, `tests/test_mkt_calendar.py`
+  - Gate: `python -m pytest -q tests/test_mkt_calendar.py` xanh, gồm tối
+    thiểu (lead fixture 9/24/48, brief SLA 48, giờ 8–17): đăng
+    2026-11-11 (T4) → approve 2026-11-10 09:00, draft CN 08/11 → lùi
+    **2026-11-06 17:00** (T6), brief 2026-11-04 17:00; đăng 2026-12-12 (T7)
+    → publish giữ T7 09:00, approve 2026-12-11 09:00, draft 2026-12-09
+    09:00, brief 2026-12-07 09:00; đăng 2026-11-16 (T2) → approve CN →
+    2026-11-13 17:00; `publish_hour: 7` đăng 2026-11-11 → approve
+    2026-11-10 07:00 trước giờ làm → 2026-11-09 17:00; đầu vào UTC
+    `datetime(2026,11,13,23,30,tzinfo=UTC)` (= T7 06:30 VN) →
+    `to_workday` = 2026-11-13 17:00+07 (bắt bug xét ngày theo UTC);
+    `non_working_days: ["2027-01-01"]` mốc rơi 01/01 → 2026-12-31 17:00;
+    property: mọi mốc mọi chiến dịch repo thật `brief ≤ draft ≤ approve ≤
+    publish`, mọi brief/draft/approve rơi T2–T6 VN trong giờ làm, mọi mốc
+    `tzinfo` offset +07:00; repo thật + golden thật: `ruou-sam-*` không có
+    trong `skus` của ô nào, có trong `blocked` khi được liệt kê/`auto`;
+    fixture golden có 1 TPBVSK `xnqc_status: approved` → vào `ads`; TPBVSK
+    `MO_TA` (`savigout-30v`) → vào `listing` shopee, bị chặn `ads`/`koc`/
+    `livestream`; SKU `allowed_channels: []` (`saphraton-40v`) → `CAM` mọi
+    kênh; nhắc 11.11/12.12/tet_2027 có đủ `days_before ∈ {14,7,3}` với
+    tet_2027 → 2027-01-23/01-30/02-03; `grep -nE "^(import|from)
+    (psycopg|openai|httpx|requests)" pipelines/mkt_calendar.py` rỗng;
+    `grep -n "time.sleep\|datetime.now\|date.today"
+    tests/test_mkt_calendar.py` rỗng
+  - Evidence: `evidence/v60_calendar.log`
+- [x] **W60.3 Xuất lịch tuần/tháng + .ics + CLI MKT-01** —
+  `render_markdown(plan, by="week"|"month") -> str` (dòng đầu = `status`
+  file lịch + "Lịch ĐỀ XUẤT — GĐ Marketing duyệt trước khi chạy"; mỗi tuần
+  (bắt đầu thứ Hai, `scenario.week_start`) / tháng: bảng `ngày | chiến dịch |
+  kênh | định dạng | SKU | mốc` + nhắc mốc + mục "SKU bị chặn kênh");
+  `render_ics(plan, now) -> str` stdlib RFC 5545: `BEGIN:VCALENDAR`,
+  `VERSION:2.0`, `PRODID`, mỗi mốc (brief/draft/approve/publish) + mỗi nhắc
+  = 1 `VEVENT` với `UID` ổn định (`<campaign>-<milestone>@samsam`, chạy lại
+  ra cùng UID), `DTSTAMP` từ tham số `now`, `DTSTART` đổi sang UTC dạng
+  `YYYYMMDDTHHMMSSZ`, `SUMMARY` escape `\\` `,` `;` xuống dòng; dòng kết thúc
+  CRLF, gập dòng >75 octet. CLI `python -m pipelines.mkt_calendar [--start
+  YYYY-MM-DD] [--weeks 4] [--by week|month] [--ics PATH] [--json]` (`main(argv)
+  -> int`; thiếu `--start` → thứ Hai tuần này giờ VN; `--ics` mặc định ghi
+  qua `write_report` vào `data/reports/`). Exit 0 OK · 1 lịch/golden/
+  director config hỏng (`[err] <lý do>` stderr, không traceback) · 2 usage
+  (ngày sai, `--weeks` ∉ 1..26, `--by` lạ). Không connect DB.
+  - Boundary: `pipelines/mkt_calendar.py`, `tests/test_mkt_calendar.py`
+  - Gate: test `main([...])` + `capsys`: `--start 2026-10-12 --weeks 4` có
+    dòng "GIẢ ĐỊNH" + "ĐỀ XUẤT", có tuần 2026-11-09 chứa 11.11; `--by month
+    --weeks 26` có tiêu đề tháng 2027-02; `--json` parse được, mọi mốc ISO có
+    `+07:00`; .ics: parse lại bằng parser stdlib trong test (unfold CRLF +
+    space, tách `BEGIN:VEVENT`…`END:VEVENT`) → số VEVENT = Σ mốc + nhắc, mọi
+    VEVENT có UID/DTSTAMP/DTSTART/SUMMARY, UID không trùng, mốc đăng 11.11
+    09:00 VN → `DTSTART:20261111T020000Z`; mọi dòng kết thúc `\r\n` và ≤75
+    octet; SUMMARY chứa `,;` round-trip đúng; 2 lần render cùng `now` →
+    byte-identical; usage sai → `SystemExit(2)`; lịch hỏng → 1. Lệnh thật:
+    `python -m pipelines.mkt_calendar --start 2026-10-12 --weeks 18 --ics
+    data/reports/mkt-calendar-2026-10-12.ics` exit 0 và `git status
+    --porcelain data/` không có file mới
+  - Evidence: `evidence/v60_calendar.log`
+- [x] **W60.4 MKT-00 điều phối: brief chiến dịch vào approval_queue (không
+  tự duyệt)** — `data/directors/marketing.json` THÊM `object_types.
+  campaign_brief = {"sla_hours": 48, "risk": "medium"}` (KHÔNG `low` → không
+  bao giờ vào làn auto_policy; giữ `approvers`/`digest_recipients` `[]`).
+  `agents/mkt_director.py`: `brief_text(campaign) -> str` tất định (KHÔNG
+  LLM): tên chiến dịch, sự kiện, trụ, kênh × định dạng, SKU đủ readiness,
+  SKU bị chặn + lý do, 4 mốc giờ VN, nguồn (`data/marketing_calendar.json`
+  + `data/golden_skus.json`, status GIẢ ĐỊNH) — không từ cấm, không claim
+  công dụng. `enqueue_briefs(conn, plan, now, horizon_days=14, cfg=None) ->
+  {"enqueued": [...], "skipped": [...]}`: chỉ chiến dịch `publish > now` và
+  `brief ≤ now + horizon`; `object_id = campaign id`; đã có dòng
+  `approval_queue` cùng `object_type='campaign_brief'` + `object_id` với
+  status `pending|approved|rejected` → bỏ qua (idempotent — SELECT trước,
+  index `approval_queue_pending_uq` là chốt cuối); gọi
+  `director.submit(conn, "marketing", "campaign_brief", ..., created_by=
+  "agent:MKT-00")` (guardrail do `enqueue` tự tính). Module KHÔNG gọi
+  `decide`/`auto_approve`/`override`/`approve_draft`/`set_status`/`schedule`/
+  `save_draft`/`record_publish`. CLI `python -m agents.mkt_director --briefs
+  [--today YYYY-MM-DD] [--horizon-days N] [--dry-run]` (dry-run: in brief sẽ
+  đẩy, không connect DB). Exit 0 OK · 1 config hỏng · 2 usage / DB down.
+  - Boundary: `agents/mkt_director.py` (mới), `data/directors/marketing.json`,
+    `tests/test_mkt_director.py` (mới)
+  - Gate: `python -m pytest -q tests/test_mkt_director.py -k brief` xanh,
+    gồm: `director.load_config("marketing")["object_types"]
+    ["campaign_brief"]["risk"] != "low"`; `test_director.py::
+    test_eleven_blocks_no_real_people` vẫn xanh; brief_text repo thật qua
+    `guardrail.check()` → `ok is True`, không chứa `ruou-sam-` trong dòng
+    SKU đủ readiness; DB thật (pattern schema tạm + rollback như
+    `tests/test_director_framework.py`, 0 skipped khi có `DATABASE_URL`):
+    chạy `enqueue_briefs` 2 lần cùng `now` → lần 2 `enqueued == []`, số dòng
+    `approval_queue` `object_type='campaign_brief'` không đổi; mọi dòng
+    `status='pending'`, `lane is null`, `decided_by is null`, `created_by =
+    'agent:MKT-00'`, `due_at − created_at = 48h`; chạy thêm
+    `director.run(conn, "marketing")` → các dòng vẫn `pending` (không auto);
+    fake-conn: horizon lọc đúng (brief ngoài horizon / publish đã qua → không
+    đẩy); `--dry-run` với `connect` monkeypatch `pytest.fail` → exit 0; DB
+    down → exit 2. `grep -nE "decide\(|auto_approve|override\(|approve_draft|
+    set_status|schedule\(|save_draft|record_publish" agents/mkt_director.py`
+    rỗng
+  - Evidence: `evidence/v60_director.log`
+- [x] **W60.5 Cân tải duyệt: dự báo theo lịch vs quota → cảnh báo + đề xuất
+  dời (không tự dời)** — `forecast_load(plan, quota, gd_cap, start, days) ->
+  {"days": [{day, phap_che: n, gd_marketing: n, cap_phap_che, cap_gd}],
+  "warnings": [str], "suggestions": [str]}` (THUẦN, không DB): mỗi ô của
+  chiến dịch = 1 mục duyệt nháp Pháp chế tính vào NGÀY VN của mốc `approve`;
+  mỗi chiến dịch = 1 mục duyệt brief GĐ Marketing tính vào ngày mốc `draft`.
+  Trần Pháp chế = `review_load.cap_for(day, load_quota(...))` (ngày vắng →
+  0; không phase phủ → cảnh báo "không có quota", không coi = vô hạn); trần
+  GĐ = `review_caps.gd_marketing_daily`. Vượt trần → warning
+  `VƯỢT QUOTA <role> <YYYY-MM-DD>: <n> mục > trần <cap>` + suggestion "ĐỀ
+  XUẤT dời mốc duyệt <campaign> sang <ngày làm việc sớm hơn gần nhất còn
+  trống, không sau mốc đăng> — GĐ Marketing quyết" (không còn ngày trống
+  trong 7 ngày trước → "đề xuất giảm số ô"). Hàm KHÔNG sửa `plan` (dict
+  truyền vào giữ nguyên), không ghi DB/file. CLI `python -m
+  agents.mkt_director --load [--today] [--days 28] [--quota PATH]` in bảng
+  tải + cảnh báo + câu "Chỉ đề xuất — lịch không bị dời tự động"; exit 0 cả
+  khi có cảnh báo; quota hỏng → 2 trước khi đọc lịch.
+  - Boundary: `agents/mkt_director.py`, `tests/test_mkt_director.py`
+  - Gate: `python -m pytest -q tests/test_mkt_director.py -k load` xanh,
+    gồm: fixture 3 chiến dịch cùng ngày duyệt, quota `daily_cap: 2` → có
+    warning `VƯỢT QUOTA phap_che` đúng ngày + ≥1 suggestion chứa "ĐỀ XUẤT";
+    `copy.deepcopy(plan) == plan` sau khi gọi (không tự dời); ngày trong
+    `absent_days` có ≥1 mục → warning trần 0; ngày ngoài mọi phase →
+    warning "không có quota"; tải dưới trần → `warnings == []`; đếm đúng:
+    chiến dịch 2 kênh × 2 định dạng (đủ SKU) = 4 mục Pháp chế; mục đếm theo
+    ngày VN của mốc (mốc 23:30 UTC = ngày VN hôm sau); quota hỏng → CLI
+    exit 2 trước `connect`; `grep -n "connect\|execute" ` trong thân
+    `forecast_load` rỗng (hàm thuần)
+  - Evidence: `evidence/v60_director.log`
+- [x] **W60.6 Bản tin tuần GĐ Marketing** — `bulletin(plan, load, queue_items
+  | None, now) -> str` THUẦN + CLI `python -m agents.mkt_director --bulletin
+  [--today YYYY-MM-DD] [--out-dir data/reports]` → `write_report` ra
+  `data/reports/mkt-week-<thứ Hai VN>.md` (cùng tuần → cùng tên, ghi đè).
+  Các mục: (1) chiến dịch 28 ngày tới + 4 mốc giờ VN + nhắc 14/7/3 ngày rơi
+  trong tuần; (2) việc trễ hạn: mục `approval_queue.pending(conn,
+  "marketing")` có `due_at < now` + chiến dịch đã qua mốc `brief` mà chưa có
+  brief trong hàng; (3) tải duyệt dự báo vs quota 14 ngày (từ W60.5) kèm
+  cảnh báo/đề xuất; (4) SKU bị chặn kênh (gộp sku_key × kênh × readiness ×
+  lý do — rượu, MO_TA với ads/KOC/livestream, CAM); (5) dòng cuối "Agent
+  không duyệt, không đăng, không chi tiền — quyết định thuộc GĐ Marketing".
+  DB down (`connect()` None hoặc `psycopg.Error`) → vẫn sinh bản tin, mục
+  (2) ghi "nguồn DB thiếu", exit 0. `title` mục hàng duyệt in qua
+  `_mask_pii` + cắt 80 ký tự.
+  - Boundary: `agents/mkt_director.py`, `tests/test_mkt_director.py`
+  - Gate: `python -m pytest -q tests/test_mkt_director.py -k bulletin` xanh,
+    gồm: `queue_items=None` → có "nguồn DB thiếu", vẫn đủ 4 mục còn lại; mục
+    pending `due_at` trước `now` → nằm trong "trễ hạn", sau `now` → không;
+    bản tin repo thật có `ruou-sam-` CHỈ trong mục "SKU bị chặn kênh"; có
+    dòng "không chi tiền"; CLI với `connect` monkeypatch → None ghi file vào
+    `tmp_path`, exit 0, tên `mkt-week-2026-10-12.md` khi `--today
+    2026-10-14`. E2E degraded (evidence, không pytest): `DATABASE_URL=
+    postgresql://u@10.255.255.1:5432/x python -m agents.mkt_director
+    --bulletin --today 2026-10-12 --out-dir <scratchpad>` exit 0 trong ≤60s
+    và file chứa "nguồn DB thiếu" (KHÔNG sửa `.env`)
+  - Evidence: `evidence/v60_director.log`
+- [x] **W60.7 Docs sop/kien-truc/playbook-mkt** — `docs/handover/sop.md` mục
+  mới "5e. Lịch mùa vụ + điều phối Marketing (v6.0)": lệnh `python -m
+  pipelines.mkt_calendar ...`, `python -m agents.mkt_director --briefs |
+  --load | --bulletin`, nhịp chạy (thứ Hai sáng), GĐ duyệt brief bằng
+  `python -m pipelines.approval_queue --approve ID --by ...`, mọi thứ GIẢ
+  ĐỊNH/external-dep; `docs/handover/kien-truc.md`: dòng module
+  `pipelines/mkt_calendar.py` + agent MKT-00 trong bảng Agents mục 5, điểm
+  human-gate "brief chiến dịch → GĐ Marketing duyệt trong approval_queue",
+  câu "35 bảng public" GIỮ NGUYÊN (không thêm bảng);
+  `docs/handover/playbook-mkt.md`: đoạn ngắn "lịch tuần + bản tin + duyệt
+  brief". Mọi lệnh trong docs chạy được thật.
+  - Boundary: `docs/handover/sop.md`, `docs/handover/kien-truc.md`,
+    `docs/handover/playbook-mkt.md`
+  - Gate: `python -m pytest -q tests/test_handover_docs.py` xanh; `grep -n
+    "mkt_calendar\|mkt_director" docs/handover/sop.md
+    docs/handover/kien-truc.md` có dòng; `grep -n "35 bảng"
+    docs/handover/kien-truc.md` còn; spot-check ≥3 lệnh trong mục 5e chạy
+    exit 0/2 đúng (ghi output vào evidence)
+  - Evidence: `evidence/v60_docs.log`
+- [x] **W60.8 Gate chung** — targeted ×3 tuần tự: `python -m pytest -q
+  tests/test_mkt_calendar.py tests/test_mkt_director.py tests/test_director.py
+  tests/test_scenario.py tests/test_review_load.py tests/test_handover_docs.py`
+  (đọc output tới exit mỗi lần); full `python -m pytest -q` ĐÚNG 1 lần —
+  xanh, ≥ 1682 + test mới, 0 failed, không skipped mới do thiếu DB; `ruff
+  check .` clean; `python -m py_compile pipelines/mkt_calendar.py
+  agents/mkt_director.py`; `python -c "import json; json.load(open(
+  'data/marketing_calendar.json', encoding='utf-8'))"`; `git status
+  --porcelain` chỉ có file trong Boundary + `evidence/v60_*.log` (force-add
+  — `*.log` bị gitignore), không file lạ trong `data/`; `tests/
+  test_connect_timeout_guard.py` xanh (mọi connect có timeout).
+  - Boundary: toàn bộ ở trên
+  - Gate: như trên
+  - Evidence: `evidence/v60_pytest.log`
+
+Ghi chú worker (lệch/diễn giải contract, có lý do):
+- W60.2 cửa sổ `build`: lấy chiến dịch có ngày đăng ≥ `start` VÀ mốc
+  brief < `start + 7·weeks` (không chỉ publish trong kỳ) — bắt buộc để
+  gate W60.3 "`--weeks 4` từ 12/10 có tuần 09/11 chứa 11.11" pass (brief
+  11.11 = 04/11 nằm trong kỳ; GĐ cần thấy việc phải làm trong kỳ).
+  Test `test_window_filter` khóa luật mới.
+- Thêm khóa ngoài contract: event `off_days` (ngày nghỉ Tết tính theo
+  offset từ mùng 1 — GIẢ ĐỊNH, không ghi ngày Tết dương lịch), chiến dịch
+  `dropped` (ô listing/ads/koc bị bỏ vì không còn SKU); lý do CAM tách 3
+  loại (ngoài allowed_channels / thực phẩm chưa tự công bố / khác).
+- W60.4 `brief_text`: SKU rượu KHÔNG nêu tên trong brief (guardrail v4.1
+  chặn mọi nhắc rượu kể cả sku_key → brief ok=False thì GĐ không duyệt
+  được) — chỉ đếm "N SKU chỉ bán offline"; danh sách đủ ở bản tin GĐ.
+- W60.6 việc trễ hạn đọc hàng bằng SELECT cột metadata (`_QUEUE_SQL`)
+  thay `approval_queue.pending` — `pending` đọc `payload` mà role
+  `agent_writer` không có quyền (least privilege); test DB chạy dưới
+  `agent_writer`.
+- W60.4 không chạy `--briefs` thật lên DB dùng chung `samsam_infra` (tránh
+  để lại mục pending thật); hành vi DB verify bằng test schema tạm +
+  rollback (0 skipped), CLI verify `--dry-run` + DB down.
+
+External-dep (để `[ ]`, không treo version):
+- [ ] Lịch chiến dịch thật do GĐ Marketing chốt (đổi `status` file lịch)
+- [ ] Mùa thu hoạch thật do GĐ vùng trồng xác nhận
+- [ ] Quota duyệt thật (TGĐ chốt `review_quota.json`; trần GĐ Marketing)
+- [ ] Người duyệt thật + SSO (`marketing.json` `approvers`), gửi bản tin qua
+  kênh thật
+- [ ] `xnqc_records` + `channel_policy` per SKU (Pháp chế/TGĐ ký); shot-list
+  vùng trồng, trần phút theo tier + timesheet (MKT-00 acceptance 2/3) — version
+  sau
 
 ## Checklist v4.0-director-framework
 

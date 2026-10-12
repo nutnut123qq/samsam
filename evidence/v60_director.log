@@ -1,0 +1,188 @@
+# v6.0 W60.4-W60.6 evidence — 2026-10-12T12:47:54+07:00
+DATABASE_URL set: yes (gia tri khong in)
+$ python -m pytest -q -rs tests/test_mkt_director.py -k brief
+.........                                                                [100%]
+9 passed, 12 deselected in 1.05s
+[exit=0]
+
+$ python -m pytest -q -rs tests/test_mkt_director.py -k load
+........                                                                 [100%]
+8 passed, 13 deselected in 0.27s
+[exit=0]
+
+$ python -m pytest -q -rs tests/test_mkt_director.py -k bulletin
+.....                                                                    [100%]
+5 passed, 16 deselected in 0.89s
+[exit=0]
+
+$ python -m pytest -q -rs tests/test_director.py::test_eleven_blocks_no_real_people
+.                                                                        [100%]
+1 passed in 0.14s
+[exit=0]
+
+$ grep -nE "decide\(|auto_approve|override\(|approve_draft|set_status|schedule\(|save_draft|record_publish" agents/mkt_director.py  (phai rong)
+[grep exit=1 (1 = rong)]
+
+$ python -m agents.mkt_director --briefs --today 2026-10-26 --dry-run
+--- [dry-run] sẽ đẩy campaign_brief c-1111-2026 ---
+Brief chiến dịch c-1111-2026 — sự kiện 11.11
+Trụ nội dung: Mùa sale 11.11 trên sàn
+Ngày đăng: 11/11/2026
+
+Mốc (giờ VN):
+- brief: 04/11/2026 17:00
+- nháp: 06/11/2026 17:00
+- duyệt: 10/11/2026 09:00
+- đăng: 11/11/2026 09:00
+
+Ô kênh × định dạng:
+- shopee / listing: savina-12v, saphraton-20v, saphraton-combo-2x20v, saphraton-80v, savigout-30v, sapentol-30v, da-an-sam-30v
+- shopee / livestream: câu chuyện thương hiệu — không nêu tên SKU
+- tiktok / livestream: câu chuyện thương hiệu — không nêu tên SKU
+
+SKU bị chặn kênh:
+- saphraton-40v / shopee (listing, ads, livestream): CAM: kênh chưa có trong allowed_channels (golden)
+- mat-ong-sam-120ml-1hu / shopee (listing, ads, livestream): CAM: thực phẩm chưa có tự công bố (self_declaration_ok)
+- mat-ong-sam-120ml-2hu / shopee (listing, ads, livestream): CAM: thực phẩm chưa có tự công bố (self_declaration_ok)
+- mat-ong-sam-300ml / shopee (listing, ads, livestream): CAM: thực phẩm chưa có tự công bố (self_declaration_ok)
+- savina-12v / shopee (ads, livestream): MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả
+- saphraton-20v / shopee (ads, livestream): MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả
+- saphraton-combo-2x20v / shopee (ads, livestream): MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả
+- saphraton-80v / shopee (ads, livestream): MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả
+- savigout-30v / shopee (ads, livestream): MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả
+- sapentol-30v / shopee (ads, livestream): MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả
+- da-an-sam-30v / shopee (ads, livestream): MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả
+- savina-12v / tiktok (listing, ads, livestream): CAM: kênh chưa có trong allowed_channels (golden)
+- saphraton-20v / tiktok (listing, ads, livestream): CAM: kênh chưa có trong allowed_channels (golden)
+- saphraton-combo-2x20v / tiktok (listing, ads, livestream): CAM: kênh chưa có trong allowed_channels (golden)
+- saphraton-40v / tiktok (listing, ads, livestream): CAM: kênh chưa có trong allowed_channels (golden)
+- saphraton-80v / tiktok (listing, ads, livestream): CAM: kênh chưa có trong allowed_channels (golden)
+- savigout-30v / tiktok (listing, ads, livestream): CAM: kênh chưa có trong allowed_channels (golden)
+- sapentol-30v / tiktok (listing, ads, livestream): CAM: kênh chưa có trong allowed_channels (golden)
+- da-an-sam-30v / tiktok (listing, ads, livestream): CAM: kênh chưa có trong allowed_channels (golden)
+- mat-ong-sam-120ml-1hu / tiktok (listing, ads, livestream): CAM: kênh chưa có trong allowed_channels (golden)
+- mat-ong-sam-120ml-2hu / tiktok (listing, ads, livestream): CAM: kênh chưa có trong allowed_channels (golden)
+- mat-ong-sam-300ml / tiktok (listing, ads, livestream): CAM: kênh chưa có trong allowed_channels (golden)
+- 2 SKU chỉ bán offline (luật kênh) — không đưa vào kênh online; chi tiết trong bản tin GĐ Marketing
+
+Nguồn: data/marketing_calendar.json + data/golden_skus.json (GIẢ ĐỊNH — chờ GĐ Marketing chốt)
+Lịch ĐỀ XUẤT — GĐ Marketing duyệt brief trước khi soạn nháp.
+[dry-run] 1 brief — không connect DB
+[exit=0]
+
+$ python -m agents.mkt_director --load --today 2026-11-02 --days 28
+# Tải duyệt dự báo 02/11/2026 + 28 ngày (lịch: GIẢ ĐỊNH — chờ GĐ Marketing chốt; quota: de_xuat)
+
+| ngày | Pháp chế | trần | GĐ Marketing | trần |
+|---|---|---|---|---|
+| T2 02/11 | 0 | 35 | 0 | 3 |
+| T3 03/11 | 0 | 35 | 0 | 3 |
+| T4 04/11 | 0 | 35 | 0 | 3 |
+| T5 05/11 | 0 | 35 | 0 | 3 |
+| T6 06/11 | 0 | 35 | 1 | 3 |
+| T7 07/11 | 0 | 35 | 0 | 3 |
+| CN 08/11 | 0 | 35 | 0 | 3 |
+| T2 09/11 | 0 | 35 | 0 | 3 |
+| T3 10/11 | 3 | 35 | 0 | 3 |
+| T4 11/11 | 0 | 35 | 0 | 3 |
+| T5 12/11 | 0 | 35 | 0 | 3 |
+| T6 13/11 | 0 | 35 | 1 | 3 |
+| T7 14/11 | 0 | 35 | 0 | 3 |
+| CN 15/11 | 0 | 35 | 0 | 3 |
+| T2 16/11 | 0 | 55 | 0 | 3 |
+| T3 17/11 | 2 | 55 | 0 | 3 |
+| T4 18/11 | 0 | 55 | 0 | 3 |
+| T5 19/11 | 0 | 55 | 0 | 3 |
+| T6 20/11 | 0 | 55 | 1 | 3 |
+| T7 21/11 | 0 | 55 | 0 | 3 |
+| CN 22/11 | 0 | 55 | 0 | 3 |
+| T2 23/11 | 0 | 55 | 0 | 3 |
+| T3 24/11 | 2 | 55 | 0 | 3 |
+| T4 25/11 | 0 | 55 | 0 | 3 |
+| T5 26/11 | 0 | 55 | 0 | 3 |
+| T6 27/11 | 0 | 55 | 0 | 3 |
+| T7 28/11 | 0 | 55 | 0 | 3 |
+| CN 29/11 | 0 | 55 | 0 | 3 |
+
+Cảnh báo:
+- (không có)
+
+Đề xuất:
+- (không có)
+
+*Chỉ đề xuất — lịch không bị dời tự động.*
+[exit=0]
+
+$ python -m agents.mkt_director --load --quota C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/w60/bad_quota.json
+[err] quota: quota.phases rỗng hoặc không phải list
+[exit=2]
+
+$ DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m agents.mkt_director --bulletin --today 2026-10-12 --out-dir <scratchpad>/bulletin_out  (host chet, .env khong sua)
+[ok] bản tin: C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\w60\bulletin_out\mkt-week-2026-10-12.md
+[exit=0] [elapsed=4s]
+mkt-week-2026-10-12.md
+$ grep -n "nguồn DB thiếu\|không chi tiền" <file>
+16:- nguồn DB thiếu — không đọc được hàng duyệt (chạy lại khi DB lên)
+103:*Agent không duyệt, không đăng, không chi tiền — quyết định thuộc GĐ Marketing. BẢN NHÁP — hệ thống không tự gửi.*
+
+--- noi dung ban tin (degraded) ---
+# Bản tin tuần GĐ Marketing — tuần 12/10/2026
+
+Agent: MKT-00 · giờ VN · lịch: GIẢ ĐỊNH — chờ GĐ Marketing chốt (ĐỀ XUẤT)
+
+## 1. Chiến dịch 28 ngày tới
+
+| chiến dịch | sự kiện | ô | brief | nháp | duyệt | đăng |
+|---|---|---|---|---|---|---|
+| c-2010-2026 | 20.10 | facebook/post, zalo/post | 12/10 09:00 | 14/10 09:00 | 16/10 09:00 | 17/10 09:00 |
+
+Nhắc mốc trong tuần:
+- (không có)
+
+## 2. Việc trễ hạn
+
+- nguồn DB thiếu — không đọc được hàng duyệt (chạy lại khi DB lên)
+
+## 3. Tải duyệt dự báo vs quota (14 ngày)
+
+| ngày | Pháp chế | trần | GĐ Marketing | trần |
+|---|---|---|---|---|
+| T2 12/10 | 0 | 25 | 0 | 3 |
+| T3 13/10 | 0 | 25 | 0 | 3 |
+| T4 14/10 | 0 | 25 | 1 | 3 |
+| T5 15/10 | 0 | 25 | 0 | 3 |
+| T6 16/10 | 2 | 25 | 0 | 3 |
+| T7 17/10 | 0 | 25 | 0 | 3 |
+| CN 18/10 | 0 | 25 | 0 | 3 |
+| T2 19/10 | 0 | 25 | 0 | 3 |
+| T3 20/10 | 0 | 25 | 0 | 3 |
+| T4 21/10 | 0 | 25 | 0 | 3 |
+| T5 22/10 | 0 | 25 | 0 | 3 |
+| T6 23/10 | 0 | 25 | 0 | 3 |
+| T7 24/10 | 0 | 25 | 0 | 3 |
+| CN 25/10 | 0 | 25 | 0 | 3 |
+
+Cảnh báo:
+- (không có)
+
+Đề xuất:
+- (không có)
+
+*Chỉ đề xuất — lịch không bị dời tự động.*
+
+## 4. SKU bị chặn kênh
+
+| SKU | kênh | readiness | lý do | định dạng |
+|---|---|---|---|---|
+| da-an-sam-30v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| da-an-sam-30v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, livestream |
+| da-an-sam-30v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| da-an-sam-30v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-1hu | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-1hu | shopee | CAM | CAM: thực phẩm chưa có tự công bố (self_declaration_ok) | ads, listing, livestream |
+| mat-ong-sam-120ml-1hu | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| mat-ong-sam-120ml-1hu | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-2hu | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-2hu | shopee | CAM | CAM: thực phẩm chưa có tự công bố (self_declaration_ok) | ads, listing, livestream |
+| mat-ong-sam-120ml-2hu | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| mat-ong-sam-120ml-2hu | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
