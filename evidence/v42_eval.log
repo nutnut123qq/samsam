@@ -1,0 +1,6 @@
+# v4.2 — agent_eval guardrail sau vá luật (W42.7), 2026-10-12. Đối chiếu v4.1: 130/132 cùng 2 ca biên v41-edge-01/02 (không bắt nhầm thêm ca nào).
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=7ab8ded9c12f model=rules
+[done] --no-record: không ghi eval_runs
+EXIT=0

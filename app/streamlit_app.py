@@ -105,16 +105,15 @@ if not _allowed:
 _tabs = dict(zip(_allowed, st.tabs(list(_allowed))))
 
 
-def _render_guardrail(g: dict):
-    if g["ok"]:
-        st.success("Guardrail: PASS — không vi phạm")
-    else:
-        for v in g["violations"]:
-            st.error(f"**{v['type']}** — {v['detail']}"
-                     + (f" → `{v['span']}`" if v.get("span") else ""))
-    if g.get("matched_claims"):
-        st.caption("Claim khớp whitelist: " + "; ".join(
-            f"{m['sku']}: {m['claim']}" for m in g["matched_claims"]))
+def _render_guardrail(g):
+    """v4.2: chỉ map `store.guardrail_lines(g)` (code/severity/span) ra
+    widget — snapshot cũ (v3/v4.1) vẫn hiển thị, không KeyError. Mỗi dòng
+    qua `store.md_plain` (span/lý do LLM không render link/ảnh)."""
+    from pipelines.store import guardrail_lines, md_plain
+    show = {"success": st.success, "error": st.error,
+            "warning": st.warning, "info": st.caption}
+    for level, line in guardrail_lines(g):
+        show.get(level, st.caption)(md_plain(line))
 
 
 if "Chat Sâm Sâm" in _tabs:
@@ -237,12 +236,18 @@ if "Content Studio" in _tabs:
                      disabled=not brief.strip() or not channels):
             with st.spinner("Đang viết + kiểm guardrail từng kênh..."):
                 from pipelines.content import draft, draft_multi
+                from pipelines.store import readiness_now
+                # v4.2: readiness XNQC đọc view sku_readiness (DB chết ->
+                # None = golden file, fail-closed) — cùng nguồn với bước
+                # lưu/duyệt, không thì bài claim SKU đã XNQC bị chặn oan.
+                _rmap = readiness_now()
                 # 1 kênh → draft() như cũ; nhiều kênh → draft_multi (mỗi
                 # kênh guardrail độc lập). Shape thống nhất {channel: res}.
                 st.session_state.last_drafts = (
-                    {channels[0]: draft(brief, channels[0])}
+                    {channels[0]: draft(brief, channels[0],
+                                        readiness=_rmap)}
                     if len(channels) == 1
-                    else draft_multi(brief, channels))
+                    else draft_multi(brief, channels, readiness=_rmap))
                 st.session_state.last_brief = brief
         if _drafts := st.session_state.get("last_drafts"):
             for _ch, _r in _drafts.items():
@@ -284,12 +289,34 @@ if "Content Studio" in _tabs:
                         st.warning(f"{_errs} draft lỗi ghi DB — thử lại.")
 
         st.divider()
-        st.caption("Kiểm tra nhanh một đoạn text có sẵn (không qua LLM):")
+        st.caption("Kiểm tra nhanh một đoạn text có sẵn theo luật ĐĂNG BÀI "
+                   "(không qua LLM):")
         raw = st.text_area("Text cần check", height=80, label_visibility="collapsed",
                            placeholder="Dán text vào đây — VD: Saphraton chữa khỏi tiểu đường")
+        import json as _json
+        from pathlib import Path as _P
+        try:
+            _ctypes = list(_json.loads(
+                (_P(__file__).resolve().parent.parent / "data"
+                 / "guardrail_rules.json").read_text(encoding="utf-8")
+            )["content_types"]) or ["post"]
+        except (OSError, ValueError, KeyError, TypeError):
+            _ctypes = ["post"]   # file hỏng: check_publish tự báo "config"
+        _c1, _c2, _c3 = st.columns(3)
+        _chk_ch = _c1.selectbox("Kênh", ["facebook", "tiktok", "zalo", "blog"],
+                                key="chk_channel")
+        _chk_ct = _c2.selectbox("Loại nội dung", _ctypes,
+                                index=_ctypes.index("post")
+                                if "post" in _ctypes else 0,
+                                key="chk_ctype")
+        _chk_ai = _c3.checkbox("Nội dung AI", value=True, key="chk_ai")
         if st.button("Check guardrail") and raw.strip():
-            from pipelines.guardrail import check
-            _render_guardrail(check(raw))
+            from pipelines.guardrail import check_publish
+            from pipelines.store import readiness_now
+            _render_guardrail(check_publish(raw, channel=_chk_ch,
+                                            content_type=_chk_ct,
+                                            is_ai=_chk_ai,
+                                            readiness=readiness_now()))
 
 if "Chưa trả lời" in _tabs:
     with _tabs["Chưa trả lời"]:

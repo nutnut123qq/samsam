@@ -45,6 +45,8 @@ jobs:
       - run: python -m ingest.core_store
       - run: python -m pytest -q
       - run: python scripts/agent_eval.py --agent guardrail
+      # v4.2 PC-A9: bộ red-team cố định (luật thuần, không LLM/secret)
+      - run: python scripts/redteam.py
 
   eval:
     needs: test

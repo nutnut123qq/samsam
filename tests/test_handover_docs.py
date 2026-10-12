@@ -230,3 +230,41 @@ def test_sop_warns_role_dsn_while_grants_partial():
     for body in (sop, kt):
         assert "llm_usage" in body and "cho qua" in body
     assert "CHƯA chuyển DSN Streamlit/agent" in kt
+
+
+def test_redteam_llm_check_section_in_phu_luc_d():
+    """v4.2: mục 2c liệt kê đủ tên test của test_guardrail_llm.py +
+    test_redteam.py, số ca theo attack (| `attack` | tổng | chặn | gap |) và
+    mọi id known-gap của data/eval/redteam.jsonl (word-boundary — gotcha
+    v2.3: 'rt-ws-0' không được ăn ké 'rt-ws-06')."""
+    import json
+    from collections import Counter
+
+    body = _doc("phu-luc-d.md")
+    assert "2c. Red-team PC-A9" in body and "chờ Pháp chế duyệt nhãn" in body
+    for f in ("test_guardrail_llm.py", "test_redteam.py"):
+        src = (ROOT / "tests" / f).read_text(encoding="utf-8")
+        names = re.findall(r"def (test_\w+)\(", src)
+        assert names, f
+        for n in names:
+            assert re.search(rf"(?<!\w){n}(?!\w)", body), \
+                f"phu-luc-d.md thiếu test '{n}' ({f})"
+    rows = [json.loads(line) for line in (ROOT / "data" / "eval"
+            / "redteam.jsonl").read_text(encoding="utf-8").split("\n")
+            if line.strip()]
+    cases = [r for r in rows if "_doc" not in r]
+    tot = Counter(c["attack"] for c in cases)
+    gap = Counter(c["attack"] for c in cases if "known_gap" in c)
+    for a, n in tot.items():
+        pat = (rf"\|\s*`{a}`\s*\|\s*{n}\s*\|\s*{n - gap[a]}\s*\|"
+               rf"\s*{gap[a]}\s*\|")
+        assert re.search(pat, body), f"phu-luc-d.md sai dòng attack '{a}'"
+    for c in cases:
+        if "known_gap" in c:
+            assert re.search(rf"`{re.escape(c['id'])}`", body), c["id"]
+    n, ng = len(cases), sum("known_gap" in c for c in cases)
+    assert f"{ng}/{n} = {ng / n:.1%}" in body
+    # Fix nghiệm thu: không overclaim độ phủ LLM-check — phải nói lớp LLM
+    # mặc định tắt + dẫn evidence đo thật (tỷ lệ bắt không tự suy ra).
+    sec = body[body.index("2c. Red-team PC-A9"):body.index("## 3.")]
+    assert "mặc định TẮT" in sec and "evidence/v42_llm.log" in sec

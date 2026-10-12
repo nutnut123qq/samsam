@@ -3,9 +3,10 @@
   "provider_only": ["openai", "azure"],
   "prices_usd_per_1m": {
     "openai/gpt-4o-mini": {"in": 0.15, "out": 0.60},
-    "openai/text-embedding-3-small": {"in": 0.02, "out": 0.0}
+    "openai/text-embedding-3-small": {"in": 0.02, "out": 0.0},
+    "google/gemini-2.5-flash-lite": {"in": 0.10, "out": 0.40}
   },
-  "monthly_cap_usd": {"default": 5.0, "chatbot": 20.0, "content": 10.0, "ingest": 5.0, "smoke": 0.5},
+  "monthly_cap_usd": {"default": 5.0, "chatbot": 20.0, "content": 10.0, "ingest": 5.0, "smoke": 0.5, "guardrail_llm": 2.0, "redteam": 0.5},
   "kill": [],
   "pii_allow": ["0235 3699 899", "vnsamsam@gmail.com"]
 }

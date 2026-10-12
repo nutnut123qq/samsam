@@ -38,10 +38,12 @@ Streamlit demo.
 │  brief (tab "Content Studio") ──> pipelines.content draft()/draft_multi()
 │      (system prompt: brand voice + whitelist claim + CHANNEL_HINT theo
 │       kênh facebook/tiktok/zalo/blog; vi phạm → 1 lượt viết lại)
-│      ──> guardrail.check() BẮT BUỘC trước khi trả text
+│      ──> guardrail_llm.check_publish_llm(kênh) BẮT BUỘC trước khi trả
+│          text (luật đăng bài + LLM-check phụ chỉ chặn thêm, v4.2)
 │      ──> "Lưu vào hàng duyệt" ──> bảng content_drafts (pending)
 │      ──> NGƯỜI duyệt (tab "Duyệt & Lịch" / pipelines.store)
-│          approve CHỈ khi guardrail ok ──> approved ──> xếp lịch
+│          approve CHỈ khi guardrail ok + chạy LẠI check_publish_llm
+│          (kênh draft, readiness view sku_readiness) ──> approved ──> lịch
 │          ──> NGƯỜI đăng tay lên kênh (hệ thống KHÔNG đăng)
 │
 ├─ VƯỜN (WS3) ───────────────────────────────────────────────────────
@@ -60,11 +62,11 @@ Streamlit demo.
 | `crawler/` | `collect` — crawl site public → `data/*.jsonl` (delay ≥1s/request) |
 | `ingest/` | `embed_store` (chunk+embed→`chunks`), `core_store` (nạp DB lõi, delete-by-source idempotent), `lead_store` (convlog→`leads`, insert-only) |
 | `api/` | `rag.py` — `answer()` RAG: retrieve top-8 `chunks` bằng cosine numpy → LLM + nguồn; `NO_DATA` khi score thấp |
-| `pipelines/` | `guardrail.py` (banned words + claim whitelist + chặn rượu, chuẩn hóa NFC/casefold/ký tự chèn — `check()` trước mọi output AI; v4.1 `check_publish()` luật đăng bài theo kênh/loại: XNQC/readiness, câu khuyến cáo, nhãn AI/quảng cáo, "Ngọc Linh" — luật trong `data/guardrail_rules.json`, chưa nối luồng duyệt tới v4.2), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py` |
+| `pipelines/` | `guardrail.py` (banned words + claim whitelist + chặn rượu, chuẩn hóa NFC/casefold/ký tự chèn — `check()` trước mọi output AI; v4.1 `check_publish()` luật đăng bài theo kênh/loại: XNQC/readiness, câu khuyến cáo, nhãn AI/quảng cáo, "Ngọc Linh" — luật trong `data/guardrail_rules.json`; v4.2 nối content/store/Studio, `readiness` map view DB do caller truyền, vá homoglyph/emoji/khoảng trắng), `guardrail_llm.py` (v4.2: lớp LLM-check phụ `check_publish_llm` — agent `guardrail_llm`, chỉ CHẶN THÊM, lỗi → `llm_check_unavailable` fail-closed), `content.py` (draft đa kênh), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py` |
 | `connectors/` | `zalo.py` — webhook Zalo OA: verify signature, ACK 200 nhanh rồi reply async, dedup msg_id, token store + auto-refresh; **chỉ reply inbox** |
 | `agents/` | `report.py` (báo cáo định kỳ → file md), `garden.py` (nhật ký vùng trồng + cảnh báo) — không LLM, không tự gửi |
 | `app/` | `streamlit_app.py` — UI 7 tab (mục 4) |
-| `scripts/` | `apply_schema.py`, `data_audit.py`, `eval_qa.py`, `zalo_mock.py`, `zalo_preflight.py` |
+| `scripts/` | `apply_schema.py`, `data_audit.py`, `eval_qa.py`, `zalo_mock.py`, `zalo_preflight.py`, `redteam.py` (v4.2 PC-A9: bộ red-team cố định `data/eval/redteam.jsonl` trong CI + `--generate` biến thể bằng model khác họ qua gateway agent `redteam`) |
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored) |
 | `tests/` | pytest (`python -m pytest`) |
 
@@ -144,7 +146,7 @@ idempotent theo kỳ (cùng kỳ → cùng tên file ghi đè).
 
 | Điểm | Hệ thống làm | NGƯỜI làm |
 |---|---|---|
-| Duyệt content | Guardrail check lúc sinh + chạy LẠI trên text trước khi duyệt; chuyển trạng thái chỉ qua function DB `approve_draft` (SECURITY DEFINER: guardrail ok, có người tạo, **người duyệt ≠ người tạo**); mỗi quyết định ghi `approvals` kèm sha256 nội dung; `schedule_draft` từ chối nếu text đã sửa sau duyệt; mọi bước ghi `agent_action_log` hash chain | Duyệt/từ chối từng bài (identity đăng nhập) + note |
+| Duyệt content | Guardrail check lúc sinh + chạy LẠI trên text trước khi duyệt (v4.2: re-check = `check_publish` theo kênh draft + readiness view `sku_readiness` + LLM-check phụ nếu cấu hình `GUARDRAIL_LLM_MODEL`); chuyển trạng thái chỉ qua function DB `approve_draft` (SECURITY DEFINER: guardrail ok, có người tạo, **người duyệt ≠ người tạo**); mỗi quyết định ghi `approvals` kèm sha256 nội dung; `schedule_draft` từ chối nếu text đã sửa sau duyệt; mọi bước ghi `agent_action_log` hash chain | Duyệt/từ chối từng bài (identity đăng nhập) + note |
 | Đăng bài | `scheduled_date` + calendar là kế hoạch | Copy text đã duyệt, đăng tay lên kênh |
 | Báo cáo lãnh đạo | Sinh file markdown BẢN NHÁP | Đọc/duyệt/sửa rồi gửi Zalo/email tay |
 | Nhật ký vườn | Chuẩn hóa + cảnh báo bất thường | Ghi nhật ký tay; báo quản lý khi có cảnh báo |
@@ -158,7 +160,7 @@ idempotent theo kỳ (cùng kỳ → cùng tên file ghi đè).
 
 | Role | Được | Không được |
 |---|---|---|
-| `agent_writer` (agent AI) | SELECT `content_drafts`; INSERT draft 6 cột (`brief`,`channel`,`text`,`guardrail`,`source`,`created_by` → luôn `pending`); INSERT log 5 cột | UPDATE/DELETE mọi bảng (không tự duyệt được — `permission denied`), `approvals`, bảng khác, function duyệt |
+| `agent_writer` (agent AI) | SELECT `content_drafts` + view `sku_readiness` (v4.2); INSERT draft 6 cột (`brief`,`channel`,`text`,`guardrail`,`source`,`created_by` → luôn `pending`); INSERT log 5 cột | UPDATE/DELETE mọi bảng (không tự duyệt được — `permission denied`), `approvals`, bảng khác, function duyệt |
 | `app_human` (người: Streamlit/CLI) | Kế thừa `agent_writer` + SELECT `approvals`/`agent_action_log` + EXECUTE `approve_draft`, `reject_draft`, `schedule_draft`, `verify_publish`, `verify_action_log` | UPDATE/DELETE trực tiếp |
 
 Giới hạn pilot: máy local vẫn chạy bằng DSN owner — chặn quyền chỉ có
@@ -201,8 +203,10 @@ nhập, cấm khi `DEPLOY=1`.
 
 `check(text) → {"ok","violations","matched_claims"}` — không raise;
 thiếu file config → `ok=False` violation "config". Áp ở: `api.rag`
-output (trước hiển thị/gửi), `pipelines.content` (lúc sinh + snapshot
-vào `content_drafts.guardrail`), connector Zalo (trước send).
+output (trước hiển thị/gửi), connector Zalo (trước send). v4.2: luồng
+ĐĂNG BÀI (`pipelines.content` lúc sinh, `pipelines.store` lúc lưu
+snapshot + lúc duyệt, ô check tay Studio) dùng `check_publish` (+ lớp
+`guardrail_llm` ở sinh/duyệt) — phụ lục D mục 2c.
 
 ## 8. File state trên đĩa (đừng xóa — chi tiết `sop.md` mục 6)
 

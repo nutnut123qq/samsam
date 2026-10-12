@@ -13,11 +13,25 @@ Contract:
     trực tiếp; role `agent_writer` (agent) không có quyền UPDATE nên
     không tự duyệt được, role `app_human` (người) chỉ đi qua function.
   - approve CHỈ khi guardrail ok (double-gate SOW): bài vi phạm phải
-    reject/regen — không có duyệt-kèm-ghi-nhận. Python chạy LẠI
-    `pipelines.guardrail.check(text từ DB)` trước khi gọi function
-    (snapshot jsonb do agent ghi có thể giả `ok:true`); function kiểm
-    lại snapshot + `created_by` có + người duyệt ≠ người tạo (atomic,
-    `for update` — race 2 người duyệt thì người sau thua).
+    reject/regen — không có duyệt-kèm-ghi-nhận. Python chạy LẠI guardrail
+    CHẾ ĐỘ ĐĂNG BÀI (v4.2) trên text từ DB với kênh của draft —
+    `guardrail_llm.check_publish_llm(text, channel=<draft.channel>,
+    readiness=<view sku_readiness>)` (luật + lớp LLM-check nếu cấu hình;
+    snapshot jsonb do agent ghi có thể giả `ok:true`) trước khi gọi
+    function; function kiểm lại snapshot + `created_by` có + người duyệt
+    ≠ người tạo (atomic, `for update` — race 2 người duyệt thì người sau
+    thua).
+  - v4.2 ngữ cảnh draft cố định: `content_drafts` chưa có cột
+    content_type/sku/is_ai/is_sponsored -> luôn `post`, sku None, is_ai
+    True (fail-closed: bài viết tay cũng phải mang nhãn AI tới khi có
+    cột), không tài trợ. Kênh `blog` -> `web` (alias); kênh lạ -> "config"
+    -> không duyệt được.
+  - Readiness (v4.2): đọc view `sku_readiness` (`readiness_from_db`, trong
+    savepoint) CHỈ khi text nhắc SKU (map chỉ ảnh hưởng luật theo SKU
+    nhận diện trong text — draft không có cột sku); lỗi DB / conn None ->
+    soi gương golden file (fail-closed: file chưa SKU nào XNQC).
+  - `save_draft` (v4.2) chạy lại LUẬT đăng bài (không gọi LLM) và lưu
+    snapshot không bao giờ lỏng hơn luật hay snapshot caller.
   - Mỗi quyết định ghi `approvals` kèm sha256 text lúc duyệt;
     `verify_publish(conn, id, text)` so bản phát hành với bản đã duyệt.
   - `save_draft` bắt buộc `created_by` + ghi 1 dòng `agent_action_log`
@@ -50,6 +64,7 @@ Chạy:
 
 import argparse
 import hashlib
+import re
 import sys
 from contextlib import contextmanager, suppress
 from datetime import date, datetime, timedelta, timezone
@@ -58,7 +73,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from ingest.lead_store import connect
-from pipelines.guardrail import check as guardrail_check
+from pipelines import guardrail, guardrail_llm
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in
 # tiếng Việt có dấu. Ép UTF-8 (no-op nếu đã UTF-8).
@@ -103,12 +118,89 @@ def _db_msg(e: Exception) -> str:
 
 _SELECT_SQL = f"select {', '.join(COLS)} from content_drafts"
 
+_READINESS_SQL = "select sku_key, channel, readiness from sku_readiness"
+
+
+def readiness_from_db(conn) -> dict | None:
+    """Map (sku_key, channel) -> readiness từ view `sku_readiness`.
+
+    Đọc trong `conn.transaction()` (savepoint nếu conn đã trong tx — lỗi
+    không làm hỏng tx ngoài, gotcha v2.1). conn None / lỗi DB / hàng sai
+    shape -> None (= guardrail soi gương golden file, fail-closed)."""
+    if conn is None:
+        return None
+    try:
+        with conn.transaction():
+            rows = conn.execute(_READINESS_SQL).fetchall()
+        return {(str(k), str(c)): str(r) for k, c, r in rows}
+    except (psycopg.Error, TypeError, ValueError):
+        return None
+
+
+def readiness_now() -> dict | None:
+    """Mở conn ngắn (`connect` có connect_timeout) đọc view `sku_readiness`
+    cho caller không giữ conn (Studio: sinh bài + ô check tay). DB chết /
+    lỗi -> None (= soi gương golden file, fail-closed)."""
+    with _conn_or_none() as (conn, _err):
+        return readiness_from_db(conn)
+
+
+def _publish_check(conn, text: str, channel, *, llm: bool) -> dict:
+    """Guardrail đăng bài cho draft (ngữ cảnh cố định — docstring module).
+    Readiness DB chỉ đọc khi text nhắc SKU (luật readiness chỉ áp SKU nhận
+    diện trong text). `llm=False` -> chỉ luật (bước lưu)."""
+    rules = guardrail.check_publish(text, channel=channel)
+    rmap = readiness_from_db(conn) if rules.get("skus") else None
+    if not llm:
+        return (rules if rmap is None
+                else guardrail.check_publish(text, channel=channel,
+                                             readiness=rmap))
+    return guardrail_llm.check_publish_llm(text, channel=channel,
+                                           readiness=rmap)
+
+
+def _merge_snapshot(rules: dict, caller) -> dict:
+    """Snapshot lưu = kết quả luật + violation `llm_*` của caller (thêm qua
+    `with_violation`, chỉ chặn thêm) + `llm_check`/`llm_model` caller. ok =
+    luật.ok VÀ caller.ok is True — không bao giờ lỏng hơn bên nào.
+    ok False mà không còn violation nào (caller chặn bằng luật mà lần chạy
+    lại không lặp lại, vd caller soi file còn lưu dùng view DB) -> chép
+    violation của caller kèm "(snapshot lúc sinh)"; caller không có chi
+    tiết -> violation `config` — UI không bao giờ hiện "KHÔNG RÕ"."""
+    out = dict(rules)
+    c = caller if isinstance(caller, dict) else {}
+    viols = c.get("violations")
+    for v in viols if isinstance(viols, list) else []:
+        code = v.get("code") if isinstance(v, dict) else None
+        if isinstance(code, str) and code.startswith("llm_"):
+            out = guardrail.with_violation(
+                out, code, v.get("detail"), v.get("span"), v.get("start"),
+                v.get("end"))
+    for k in ("llm_check", "llm_model"):
+        if isinstance(c.get(k), str):
+            out[k] = c[k][:100]
+    out["ok"] = out.get("ok") is True and c.get("ok") is True
+    if out["ok"] is False and not out.get("violations"):
+        for v in viols if isinstance(viols, list) else []:
+            if isinstance(v, dict) and isinstance(v.get("code"), str):
+                out = guardrail.with_violation(
+                    out, v["code"][:64],
+                    f"(snapshot lúc sinh) {v.get('detail') or ''}",
+                    v.get("span"), v.get("start"), v.get("end"))
+        if not out.get("violations"):
+            out = guardrail.with_violation(
+                out, "config", "snapshot lúc sinh ok != true, không có chi "
+                "tiết vi phạm — sinh/kiểm lại bài trước khi lưu")
+    return out
+
 
 def save_draft(conn, brief: str, channel: str, text: str,
                guardrail: dict, source: str = SOURCE_STUDIO, *,
                created_by: str | None = None):
-    """INSERT 1 draft → id. `guardrail` = snapshot kết quả
-    `pipelines.guardrail.check()` lúc sinh (jsonb). Channel lạ vẫn
+    """INSERT 1 draft → id. `guardrail` = snapshot kết quả guardrail lúc
+    sinh (caller); v4.2 LƯU snapshot = luật `check_publish` chạy lại trên
+    text với kênh draft (readiness DB nếu có) gộp chặt-nhất với snapshot
+    caller (`_merge_snapshot`) — không gọi LLM ở bước lưu. Channel lạ vẫn
     ghi nguyên văn (draft của người — DB không chặn vocab, queue
     hiển thị đúng thứ đã lưu). `created_by` BẮT BUỘC (rỗng →
     ValueError trước khi chạm DB) — không có người tạo thì không kiểm
@@ -118,16 +210,19 @@ def save_draft(conn, brief: str, channel: str, text: str,
     if not by:
         raise ValueError("save_draft: thiếu created_by (người/agent tạo)")
     text = text or ""
+    ch = (channel or "").strip()
+    snap = _merge_snapshot(_publish_check(conn, text, ch, llm=False),
+                           guardrail)
     with conn.transaction():
         row = conn.execute(
             _INSERT_SQL,
-            ((brief or "").strip(), (channel or "").strip(), text,
-             Jsonb(guardrail or {}), source, by)).fetchone()
+            ((brief or "").strip(), ch, text,
+             Jsonb(snap), source, by)).fetchone()
         did = row[0] if row else None
         if did is not None:
             conn.execute(_LOG_SQL, (
                 by, "draft_create", OBJECT_TYPE, str(did),
-                Jsonb({"channel": (channel or "").strip(),
+                Jsonb({"channel": ch,
                        "source": source,
                        "content_sha256": content_sha256(text)})))
     conn.commit()
@@ -175,9 +270,10 @@ def set_status(conn, draft_id, status: str, reviewer: str,
 
     Warn không raise: id không tồn tại / id không phải số / draft
     không còn pending / approve khi guardrail chưa ok (snapshot HOẶC
-    chạy lại check() trên text từ DB) / thiếu người tạo / người duyệt
-    = người tạo / thiếu tên người duyệt / status đích lạ / function DB
-    từ chối (thông điệp của function). Chuyển trạng thái CHỈ qua
+    chạy lại `check_publish_llm` với kênh draft trên text từ DB — chạy
+    SAU các pre-check rẻ để không tốn lời gọi LLM) / thiếu người tạo /
+    người duyệt = người tạo / thiếu tên người duyệt / status đích lạ /
+    function DB từ chối (thông điệp của function). Chuyển trạng thái CHỈ qua
     `approve_draft` / `reject_draft` (DB là nguồn sự thật; pre-check
     Python chỉ để warn thân thiện)."""
     status = (status or "").strip()
@@ -202,20 +298,25 @@ def set_status(conn, draft_id, status: str, reviewer: str,
             return False, (f"draft #{did} vi phạm guardrail (ok != true) "
                            f"— phải reject hoặc viết lại; không có "
                            f"duyệt-kèm-ghi-nhận")
-        # Snapshot jsonb do agent ghi — có thể giả ok:true. Chạy LẠI
-        # guardrail trên text thật trong DB trước khi gọi function.
-        recheck = guardrail_check(cur["text"] or "")
-        if not recheck.get("ok"):
-            return False, (f"draft #{did} vi phạm guardrail khi kiểm lại "
-                           f"text ({len(recheck.get('violations', []))} "
-                           f"vi phạm) — snapshot lúc lưu không khớp; "
-                           f"phải reject hoặc viết lại")
         if not (cur.get("created_by") or "").strip():
             return False, (f"draft #{did} không có người tạo (draft trước "
                            f"v3.4) — không duyệt được, reject rồi tạo lại")
         if _same_person(cur.get("created_by"), reviewer):
             return False, (f"bạn là người tạo draft #{did} — cần người "
                            f"khác duyệt")
+        # Snapshot jsonb do agent ghi — có thể giả ok:true. Chạy LẠI
+        # guardrail ĐĂNG BÀI (kênh draft + readiness DB + LLM-check nếu
+        # cấu hình) trên text thật trong DB trước khi gọi function.
+        recheck = _publish_check(conn, cur["text"] or "", cur["channel"],
+                                 llm=True)
+        if recheck.get("ok") is not True:
+            vs = [v for v in recheck.get("violations") or []
+                  if isinstance(v, dict)]
+            codes = ", ".join(dict.fromkeys(
+                str(v.get("code") or v.get("type")) for v in vs)) or "?"
+            return False, (f"draft #{did} vi phạm guardrail khi kiểm lại "
+                           f"text ({len(vs)} vi phạm: {codes}) — snapshot "
+                           f"lúc lưu không khớp; phải reject hoặc viết lại")
         sql = "select approve_draft(%s, %s, %s)"
     else:
         sql = "select reject_draft(%s, %s, %s)"
@@ -321,6 +422,63 @@ def calendar(conn, days: int = DEFAULT_DAYS,
         "order by created_at desc, id desc"))
     return {"today": today, "days": days,
             "scheduled": scheduled, "unscheduled": unscheduled}
+
+
+def _vline(v: dict) -> str:
+    sev = v.get("severity")
+    code = v.get("code") or v.get("type") or "?"
+    line = (f"[{sev}] " if sev else "") + f"{code} — {v.get('detail') or ''}"
+    if v.get("span"):
+        line += f' → "{v["span"]}"'
+        if isinstance(v.get("start"), int) and isinstance(v.get("end"), int):
+            line += f" ({v['start']}–{v['end']})"
+    return line
+
+
+_MD_SPECIAL_RE = re.compile(r"([\\`*_{}\[\]()#+\-.!<>|~$:])")
+
+
+def md_plain(s) -> str:
+    """Escape markdown cho dòng guardrail render trong widget Streamlit:
+    span/detail lấy từ text draft hoặc lý do LLM — không để link/ảnh
+    tracker (`[x](u)`, `![a](u)`), màu `:red[..]` render (WYSIWYS)."""
+    return _MD_SPECIAL_RE.sub(r"\\\1", str(s))
+
+
+def guardrail_lines(g) -> list[tuple[str, str]]:
+    """Formatter thuần cho UI: [(level, text)], level ∈ success|error|
+    warning|info. Mỗi violation `[severity] code — detail → "span"
+    (start–end)` (snapshot cũ thiếu `code` dùng `type`); warnings ->
+    warning; llm_check/required_labels/claim khớp -> info. Non-dict /
+    thiếu ok / ok falsy mà không có violation -> error "KHÔNG RÕ" (parity
+    `_fmt_guardrail`). Không raise."""
+    if not isinstance(g, dict):
+        return [("error", "Guardrail: KHÔNG RÕ — snapshot không đọc được")]
+    viols = g.get("violations")
+    viols = ([v for v in viols if isinstance(v, dict)]
+             if isinstance(viols, list) else [])
+    out = []
+    if g.get("ok") is True and not viols:
+        out.append(("success", "Guardrail: PASS — không vi phạm"))
+    elif not viols:
+        out.append(("error", ("Guardrail: KHÔNG RÕ — ok != true, không "
+                              "có chi tiết vi phạm")))
+    out += [("error", _vline(v)) for v in viols]
+    warns = g.get("warnings")
+    out += [("warning", _vline(w)) for w in
+            (warns if isinstance(warns, list) else []) if isinstance(w, dict)]
+    if g.get("llm_check"):
+        out.append(("info", f"Lớp LLM-check: {g['llm_check']}"
+                    + (f" ({g['llm_model']})" if g.get("llm_model") else "")))
+    labels = g.get("required_labels")
+    if isinstance(labels, list) and labels:
+        out.append(("info", "Nhãn bắt buộc: " + "; ".join(map(str, labels))))
+    mc = g.get("matched_claims")
+    if isinstance(mc, list) and mc:
+        out.append(("info", "Claim khớp whitelist: " + "; ".join(
+            f"{m.get('sku')}: {m.get('claim')}" for m in mc
+            if isinstance(m, dict))))
+    return out
 
 
 def _fmt_guardrail(d: dict) -> str:

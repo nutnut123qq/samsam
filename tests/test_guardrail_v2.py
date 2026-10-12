@@ -72,7 +72,7 @@ def test_check_signature_unchanged():
     assert list(params) == ["text"]
     sig = inspect.signature(g.check_publish)
     assert list(sig.parameters) == ["text", "channel", "content_type", "sku",
-                                    "is_ai", "is_sponsored"]
+                                    "is_ai", "is_sponsored", "readiness"]
     assert sig.parameters["is_ai"].default is True
     assert sig.parameters["content_type"].default == "post"
 
@@ -634,3 +634,173 @@ def test_eval_cases_labeled_counts():
         if "ctx" in c:
             assert set(c["ctx"]) <= {"channel", "content_type", "sku",
                                      "is_ai", "is_sponsored"}
+
+
+# ---------- v4.2 W42.1: readiness truyền vào + with_violation + code LLM ----------
+
+SAVINA_OK = f"Savina 12 viên hỗ trợ giảm ho. {CANON}.{AI}"
+
+
+def test_publish_readiness_param_default_none():
+    sig = inspect.signature(g.check_publish)
+    assert sig.parameters["readiness"].default is None
+    assert sig.parameters["readiness"].kind is inspect.Parameter.KEYWORD_ONLY
+
+
+def test_publish_readiness_map_from_db_route():
+    # Không map -> soi gương golden file (savina chưa XNQC) -> chặn.
+    r = g.check_publish(SAVINA_OK, channel="facebook")
+    assert "sku_chua_xnqc" in _codes(r)
+    # Map view DB nói QC_DAY_DU -> luật XNQC qua (đường DB có tác dụng).
+    r = g.check_publish(SAVINA_OK, channel="facebook",
+                        readiness={("savina-12v", "facebook"): "QC_DAY_DU"})
+    assert "sku_chua_xnqc" not in _codes(r)
+    assert r["ok"] is True, r["violations"]
+    assert _codes(r, "warnings") == ["sku_chua_mo_kenh"]  # luật 7 vẫn file
+    # Map rỗng / thiếu key -> CAM (fail-closed).
+    for m in ({}, {("savina-12v", "shopee"): "QC_DAY_DU"}):
+        r = g.check_publish(SAVINA_OK, channel="facebook", readiness=m)
+        assert "sku_chua_xnqc" in _codes(r), m
+        assert "CAM" in next(v["detail"] for v in r["violations"]
+                             if v["code"] == "sku_chua_xnqc")
+
+
+def test_publish_readiness_alias_before_lookup():
+    m = {("savina-12v", "web"): "QC_DAY_DU"}
+    r = g.check_publish(SAVINA_OK, channel="blog", readiness=m)
+    assert "sku_chua_xnqc" not in _codes(r) and r["ok"] is True
+    r = g.check_publish(SAVINA_OK, channel="blog",
+                        readiness={("savina-12v", "blog"): "QC_DAY_DU"})
+    assert "sku_chua_xnqc" in _codes(r)
+
+
+@pytest.mark.parametrize("bad", ["x", ["savina-12v"], 1,
+                                 {("savina-12v", "web"): "BOGUS"},
+                                 {("savina-12v", "web"): None}])
+def test_publish_readiness_bad_is_config(bad):
+    r = g.check_publish(SAVINA_OK, channel="web", readiness=bad)
+    assert r["ok"] is False and _codes(r) == ["config"]
+
+
+def test_with_violation_only_adds_block():
+    ok = g.check_publish("Quà biếu gia đình." + AI, channel="web")
+    assert ok["ok"] is True
+    snap = copy.deepcopy(ok)
+    out = g.with_violation(ok, "llm_ngam_y_suc_khoe", "ẩn ý", "Quà", 0, 3)
+    assert ok == snap                                  # không mutate
+    assert out is not ok and out["ok"] is False
+    v = out["violations"][-1]
+    assert set(v) == SHAPE and v["code"] == "llm_ngam_y_suc_khoe"
+    assert (v["severity"], v["span"], v["start"], v["end"]) == \
+        ("major", "Quà", 0, 3)
+    # Trên kết quả đã chặn: vẫn False, violations cũ ⊆ mới.
+    bad = g.check_publish("Savina chữa ho." + AI, channel="web")
+    out2 = g.with_violation(bad, "llm_check_unavailable", "lỗi")
+    assert out2["ok"] is False
+    assert bad["violations"] == out2["violations"][:len(bad["violations"])]
+    # Code thiếu luật -> critical block (fail-closed như flag()).
+    out3 = g.with_violation(ok, "khong_co_luat", "x")
+    assert out3["ok"] is False
+    assert out3["violations"][-1]["severity"] == "critical"
+    # Input rác -> dict ok False, không raise.
+    for junk in (None, "x", {"ok": "true"}, {"ok": 1, "violations": "x"}):
+        r = g.with_violation(junk, "llm_check_unavailable", "x")
+        assert r["ok"] is False and r["violations"][-1]["code"] == \
+            "llm_check_unavailable"
+
+
+def test_with_violation_warn_mode_keeps_ok(tmp_data):
+    _, write = tmp_data
+    write(lambda d: d["rules"]["llm_check_unavailable"].update(mode="warn"))
+    ok = g.check_publish("Quà biếu gia đình." + AI, channel="web")
+    out = g.with_violation(ok, "llm_check_unavailable", "timeout")
+    assert out["ok"] is True and out["violations"] == []
+    assert _codes(out, "warnings") == ["llm_check_unavailable"]
+    # warn KHÔNG nâng ok của kết quả đã chặn.
+    bad = {"ok": False, "violations": [{"code": "tu_cam"}], "warnings": []}
+    assert g.with_violation(bad, "llm_check_unavailable", "x")["ok"] is False
+
+
+def test_llm_codes_drift_guard():
+    """Code mà lớp LLM (pipelines/guardrail_llm.py) dùng phải có trong
+    rules — mở rộng drift-guard v4.1 sang module mới."""
+    doc = _rules()
+    src = (ROOT / "pipelines" / "guardrail_llm.py").read_text(
+        encoding="utf-8")
+    codes = set(re.findall(r'^CODE_\w+\s*=\s*"([a-z_]+)"', src,
+                           re.MULTILINE))
+    codes |= set(re.findall(r'with_violation\([^,]+,\s*"([a-z_]+)"', src))
+    assert {"llm_ngam_y_suc_khoe", "llm_check_unavailable"} <= codes
+    assert codes <= set(doc["rules"]), codes - set(doc["rules"])
+    for c in codes:
+        assert doc["rules"][c]["mode"] == "block", c   # bản dev fail-closed
+        assert "chờ pháp chế" in doc["rules"][c]["trang_thai"].casefold()
+
+
+# ---------- v4.2 W42.7: vá ca lọt red-team (homoglyph, emoji, khoảng trắng) ----------
+
+@pytest.mark.parametrize("text", [
+    "thuố\u0441 quý",                       # Cyrillic \u0441
+    "\u0441hữa mất ngủ",                    # Cyrillic \u0441 đầu từ
+    "\u0442huốc tự nhiên",                  # Cyrillic \u0442
+    "\uff54\uff48\uff55ố\uff43 bổ",         # fullwidth
+    "th\U0001f48auốc quý",                  # emoji chèn giữa chữ
+    "Đ\u2764\ufe0fiều trị mệt mỏi",         # emoji + variation selector
+    "thu\u2009ốc bổ",                       # thin space giữa chữ
+    "t h u ố c bổ",                         # chữ đơn cách đơn
+    "c h ữ a mất ngủ",
+    "khỏi bịnh lun",                        # teencode (banned_words v4.2)
+    "thay thuốk luôn", "đìu trị mệt mỏi",
+])
+def test_redteam_patched_evasions_blocked(text):
+    for r in (g.check(text), g.check_publish(text + AI, channel="web")):
+        assert "tu_cam" in _codes(r), text
+        v = next(v for v in r["violations"] if v["code"] == "tu_cam")
+        nfc = unicodedata.normalize("NFC", text)
+        assert nfc[v["start"]:v["end"]] == v["span"]
+
+
+@pytest.mark.parametrize("text", [
+    "Quà Tết: ru\u043eu sâm 40 độ",           # homoglyph trong 'ruou'
+    "R\u03c5\u043eu sâm",                    # Greek upsilon + Cyrillic o
+    "Rựu sâm nhà làm",                       # teencode (ruou_keywords v4.2)
+    "r ư ợ u sâm",                           # chữ đơn cách đơn
+])
+def test_redteam_patched_alcohol_blocked(text):
+    r = g.check_publish(text + AI, channel="facebook")
+    assert "ruou_cam_quang_cao" in _codes(r), text
+
+
+@pytest.mark.parametrize("text", [
+    "Sản phẩm thuộc dòng quà biếu.",          # thuộc ≠ thuốc
+    "Xem thêm tại samsamngoclinh.com",
+    "Sâm \U0001f33f Sâm — quà biếu",         # emoji có khoảng trắng 2 bên
+    "Vitamin A B C cho bé",                   # chữ đơn cách đơn không ra từ cấm
+    "\u041c\u043e\u0441\u043a\u0432\u0430 \u0438 \u0410\u0444\u0438\u043d\u044b",                         # Cyrillic/Greek thật
+    "Tp. HCM, No.5, \uff11\uff12\uff13",      # fullwidth số
+    "Quà Tết\u2009sang trọng\u00a0cho cả nhà",
+])
+def test_redteam_patches_no_false_positive(text):
+    assert "tu_cam" not in _codes(g.check(text)), text
+    r = g.check_publish(text + AI, channel="web")
+    assert not ({"tu_cam", "ruou_cam_quang_cao"} & set(_codes(r))), text
+
+
+def test_fold_homoglyph_fullwidth_keeps_length():
+    for s in ("\u0441\u043e\u0440\u0442\u03c4\u03bf\uff54\uff21",
+              "ß ﬁ İ İ \U0001f48a", "Thực phẩm này"):
+        assert len(g._fold(s)) == len(s)
+    assert g._fold("\u0441\u03bf\uff54") == "cot"
+
+
+def test_redteam_whitespace_runs_and_dotted_words_not_merged():
+    # Biến thể LLM thật (W42.7): chuỗi trắng Unicode trộn giữa chữ đơn.
+    for text in ("Uống sâm c \u2009 h ữ a mất ngủ",
+                 "Uống sâm c \u2003 \u2002 h ữ a mất ngủ",
+                 "Sâm — t h u ố c."):
+        assert "tu_cam" in _codes(g.check(text)), ascii(text)
+    # Nhánh chữ-đơn KHÔNG nối các từ viết chấm liền nhau (v4.1 vẫn bắt).
+    r = g.check("uống t.h.u.o.c t.h.u.o.c nhé")
+    assert [v["span"] for v in r["violations"]] == ["t.h.u.o.c"] * 2
+    # Giới hạn đã ghi known-gap rt-ws-06: nhiều từ cách chữ liền nhau.
+    assert g._compress("t h u ố c t r ị")[0] == "thuốctrị"

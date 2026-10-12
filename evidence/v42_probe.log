@@ -1,0 +1,84 @@
+# v4.2 W42.7 — probe pathological 100KB/1MB sau vá guardrail.py (script tạm scratchpad w42/scale_probe.py, KHÔNG vào repo), 2026-10-12
+# Gate (W41.6): t(1MB)/t(100KB) <= 15, t(1MB) < 20s, ok(100KB) == ok(1MB). Máy tải nhiều version song song — số giây là số thật lúc đo.
+# Input v4.1 cũ (a/dot/zwsp/t.h.u.o.c/khong-phai-thuoc/nfd-canon) + input mới của vá v4.2 (chữ đơn cách, emoji, thin space, homoglyph, fullwidth, chuỗi trắng trộn, chữ chấm liền nhau).
+# 'ok True' ở 't h u o c'/'r u o u' lặp liền = giới hạn đã ghi known-gap rt-ws-06 (nhiều từ cách chữ liền nhau gộp mất biên từ).
+
+## Lần đo A — sau vá homoglyph/emoji/khoảng trắng (trước khi tối ưu _compress): 1 dòng FAIL ratio 16.2 (r u o u / publish)
+input              fn         t100KB     t1MB  ratio  ok100K   ok1M verdict
+a                  check       0.483    5.531   11.5    True   True OK
+a                  publish     0.358    4.396   12.3   False  False OK
+dot                check       0.694    8.211   11.8    True   True OK
+dot                publish     0.625    6.220    9.9   False  False OK
+zwsp               check       0.451    5.644   12.5    True   True OK
+zwsp               publish     0.397    4.525   11.4   False  False OK
+t.h.u.o.c          check       0.819    7.467    9.1   False  False OK
+t.h.u.o.c          publish     0.559    7.029   12.6   False  False OK
+khong-phai-thuoc   check       0.598    6.702   11.2    True   True OK
+khong-phai-thuoc   publish     0.370    4.919   13.3   False  False OK
+nfd-canon          check       0.783    7.205    9.2    True   True OK
+nfd-canon          publish     0.497    5.849   11.8   False  False OK
+single-letters     check       0.501    4.838    9.6    True   True OK
+single-letters     publish     0.288    4.241   14.7   False  False OK
+t h u o c          check       0.387    4.756   12.3    True   True OK
+t h u o c          publish     0.377    4.012   10.6   False  False OK
+emoji-run          check       0.341    4.693   13.8    True   True OK
+emoji-run          publish     0.294    4.240   14.4   False  False OK
+emoji-dense        check       0.348    4.218   12.1    True   True OK
+emoji-dense        publish     0.332    3.041    9.2   False  False OK
+thin-space         check       0.577    5.877   10.2    True   True OK
+thin-space         publish     0.390    5.229   13.4   False  False OK
+homoglyph          check       0.409    3.737    9.1    True   True OK
+homoglyph          publish     0.343    3.189    9.3   False  False OK
+fullwidth          check       0.395    3.236    8.2    True   True OK
+fullwidth          publish     0.258    3.299   12.8   False  False OK
+r u o u            check       0.450    5.997   13.3    True   True OK
+r u o u            publish     0.340    5.517   16.2   False  False FAIL
+space-run          check       0.329    3.475   10.6    True   True OK
+space-run          publish     0.236    2.720   11.5   False  False OK
+mixed-ws-letters   check       0.817    6.801    8.3    True   True OK
+mixed-ws-letters   publish     0.647    5.317    8.2   False  False OK
+dotted-words       check       0.721    9.415   13.1   False  False OK
+dotted-words       publish     0.753    8.444   11.2   False  False OK
+[probe] FAIL — 1 dòng fail
+EXIT=1
+
+## Vá: _compress dùng mặt nạ bytearray + itertools.compress thay vòng append/extend mỗi run (văn bản toàn chữ đơn có ~n/2 run).
+
+## Lần đo B — bản cuối
+input              fn         t100KB     t1MB  ratio  ok100K   ok1M verdict
+a                  check       0.500    4.674    9.3    True   True OK
+a                  publish     0.322    3.540   11.0   False  False OK
+dot                check       0.676    5.945    8.8    True   True OK
+dot                publish     0.492    7.103   14.4   False  False OK
+zwsp               check       0.650    6.382    9.8    True   True OK
+zwsp               publish     0.582    5.816   10.0   False  False OK
+t.h.u.o.c          check       0.934    9.478   10.1   False  False OK
+t.h.u.o.c          publish     0.659    7.523   11.4   False  False OK
+khong-phai-thuoc   check       0.680    7.243   10.6    True   True OK
+khong-phai-thuoc   publish     0.460    4.984   10.8   False  False OK
+nfd-canon          check       0.765    7.183    9.4    True   True OK
+nfd-canon          publish     0.506    6.002   11.9   False  False OK
+single-letters     check       0.463    5.751   12.4    True   True OK
+single-letters     publish     0.570    4.673    8.2   False  False OK
+t h u o c          check       0.616    7.781   12.6    True   True OK
+t h u o c          publish     0.601    6.090   10.1   False  False OK
+emoji-run          check       0.664    6.826   10.3    True   True OK
+emoji-run          publish     0.556    5.689   10.2   False  False OK
+emoji-dense        check       0.571    5.580    9.8    True   True OK
+emoji-dense        publish     0.417    4.124    9.9   False  False OK
+thin-space         check       0.794    8.786   11.1    True   True OK
+thin-space         publish     0.676    7.208   10.7   False  False OK
+homoglyph          check       0.639    6.122    9.6    True   True OK
+homoglyph          publish     0.514    5.012    9.7   False  False OK
+fullwidth          check       0.594    5.901    9.9    True   True OK
+fullwidth          publish     0.457    4.975   10.9   False  False OK
+r u o u            check       0.874    8.847   10.1    True   True OK
+r u o u            publish     0.562    7.309   13.0   False  False OK
+space-run          check       0.371    4.350   11.7    True   True OK
+space-run          publish     0.311    3.020    9.7   False  False OK
+mixed-ws-letters   check       0.806    7.588    9.4    True   True OK
+mixed-ws-letters   publish     0.672    6.674    9.9   False  False OK
+dotted-words       check       0.915    8.903    9.7   False  False OK
+dotted-words       publish     0.755    8.152   10.8   False  False OK
+[probe] PASS — 0 dòng fail
+EXIT=0
