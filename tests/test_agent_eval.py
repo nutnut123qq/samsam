@@ -500,3 +500,116 @@ def test_mkt02_golden_mismatch_fails():
          "fields": {"name": "a", "pack_spec": "x", "receipt_no": None,
                     "price": "Liên hệ"}, "text": "Quy cách: x"}
     assert "name" in ae._golden_exact(c, r, {c["sku"]: gold})
+
+
+# --- v6.2 W62.5 mkt03 (Agent Ảnh AI) ---------------------------------------
+
+MKT03_KINDS = {"ai_label_meta", "packshot_intact", "tamper_detect", "no_exif",
+               "trap_alcohol", "trap_tpbvsk_maket", "trap_prompt",
+               "trap_readiness", "trap_headline"}
+
+
+def test_mkt03_cases_shape_and_unapproved():
+    docs, cases = _rows("mkt03.jsonl")
+    d = docs[0]["_doc"]
+    assert "chưa được công ty duyệt" in d.casefold()
+    assert "chờ GĐ Marketing/Pháp chế duyệt nhãn" in d
+    ids = [c["id"] for c in cases]
+    assert len(ids) == len(set(ids)) and len(cases) >= 14
+    kinds = [c["kind"] for c in cases]
+    assert set(kinds) == MKT03_KINDS
+    ai = [c for c in cases if c["kind"] == "ai_label_meta"]
+    assert len(ai) == 4 and {c["format"] for c in ai} == {
+        "1:1", "4:5", "9:16", "banner"}
+    assert all(c["provider"] == "eval_stub" for c in ai)
+    assert kinds.count("trap_alcohol") >= 2
+    assert any(c.get("readiness") for c in cases
+               if c["kind"] == "trap_alcohol")          # map tiêm QC_DAY_DU
+    assert any(c.get("scene") == "bác sĩ áo blouse cầm sản phẩm"
+               for c in cases if c["kind"] == "trap_prompt")
+    assert any(c["sku"] == "sapentol-30v" and c["format"] == "banner"
+               for c in cases if c["kind"] == "trap_tpbvsk_maket")
+    assert all(c.get("label_status") for c in cases)
+    cfg = ae.load_config()
+    assert set(cfg["agents"]["mkt03"]["must_pass_kinds"]) == MKT03_KINDS
+    assert cfg["agents"]["mkt03"]["min_pass_rate"] == 1.0
+    assert "mkt03" not in cfg["required_agents"]
+
+
+def test_mkt03_runner_all_pass_zero_llm_and_stub_removed(env, monkeypatch,
+                                                         capsys):
+    import os
+
+    from pipelines import image_studio as ims
+
+    calls = _mkt02_counting_client(monkeypatch)   # bật GUARDRAIL_LLM_MODEL
+    before = dict(ims.PROVIDERS)
+    _, cases = _rows("mkt03.jsonl")
+    res = ae.run_mkt03(cases)
+    assert [(c["id"], d) for c, ok, d in res if not ok] == []
+    assert calls == [] and ims.PROVIDERS == before
+    assert os.environ["GUARDRAIL_LLM_MODEL"] == "google/gemini-test"
+    assert ae.main(["--agent", "mkt03", "--no-record"]) == 0
+    out = capsys.readouterr().out
+    assert "[done] mkt03 PASS" in out and "model=rules" in out
+    assert calls == [] and ims.PROVIDERS == before
+
+
+def test_mkt03_flipped_alcohol_case_fails(env, monkeypatch, capsys):
+    _, cases = _rows("mkt03.jsonl")
+    next(c for c in cases if c["kind"] == "trap_alcohol")["expect"] = "image"
+    monkeypatch.setattr(ae, "load_cases", lambda p: cases)
+    assert ae.main(["--agent", "mkt03", "--no-record"]) == 1
+    out = capsys.readouterr().out
+    assert "FAIL (trap_alcohol)" in out and "ruou" in out
+
+
+@pytest.mark.parametrize("kind", ["trap_tpbvsk_maket", "tamper_detect"])
+def test_mkt03_missing_required_kind_fails(env, monkeypatch, capsys, kind):
+    _, cases = _rows("mkt03.jsonl")
+    cases = [c for c in cases if c["kind"] != kind]
+    monkeypatch.setattr(ae, "load_cases", lambda p: cases)
+    assert ae.main(["--agent", "mkt03", "--no-record"]) == 1
+    assert kind in capsys.readouterr().out
+
+
+def test_mkt03_unlabeled_image_fails(env, monkeypatch, capsys):
+    """Ảnh thiếu nhãn AI đứng đầu (labels bị đổi) -> ca ai_label_meta FAIL."""
+    from pipelines import image_studio as ims
+
+    real = ims.compose
+
+    def no_label(*a, **k):
+        r = real(*a, **k)
+        if r["ok"]:
+            r["meta"] = {**r["meta"], "labels": r["meta"]["labels"][1:]}
+        return r
+
+    monkeypatch.setattr(ims, "compose", no_label)
+    _, cases = _rows("mkt03.jsonl")
+    res = ae.run_mkt03([c for c in cases if c["kind"] == "ai_label_meta"])
+    assert res and not any(ok for _, ok, _ in res)
+    assert all("nhãn AI" in d for _, _, d in res)
+
+
+def test_mkt03_plate_without_label_text_fails(env, monkeypatch):
+    """Nghiệm thu v6.2: đột biến bỏ CHỮ nhãn, giữ tấm nền (meta/text_layer
+    vẫn có nhãn) — kiểm cũ "vùng nhãn khác nền" chấm 4/4 PASS; kiểm pixel
+    màu chữ nhãn phải FAIL cả 4 format."""
+    from PIL import ImageDraw
+
+    from pipelines import content
+
+    ai = content._publish_texts()[1][0]
+    real = ImageDraw.ImageDraw.multiline_text
+
+    def no_label(self, xy, text, *a, **kw):
+        if ai in text:
+            return None
+        return real(self, xy, text, *a, **kw)
+
+    monkeypatch.setattr(ImageDraw.ImageDraw, "multiline_text", no_label)
+    _, cases = _rows("mkt03.jsonl")
+    res = ae.run_mkt03([c for c in cases if c["kind"] == "ai_label_meta"])
+    assert len(res) == 4 and not any(ok for _, ok, _ in res)
+    assert all("không có chữ nhãn" in d for _, _, d in res), res

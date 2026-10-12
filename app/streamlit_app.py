@@ -235,9 +235,12 @@ if "Content Studio" in _tabs:
             _rules_doc = _json.loads((_data / "guardrail_rules.json")
                                      .read_text(encoding="utf-8"))
             _ctypes = list(_rules_doc["content_types"]) or ["post"]
+            # v6.2: "image" chỉ sinh qua pipelines.image_studio (cần file
+            # ảnh packshot) — Studio chữ không tạo nháp ảnh không-có-ảnh.
             _pub_types = [k for k in _ctypes if isinstance(
                 _rules_doc["content_types"][k], dict)
-                and _rules_doc["content_types"][k].get("public")] or ["post"]
+                and _rules_doc["content_types"][k].get("public")
+                and k != "image"] or ["post"]
         except (OSError, ValueError, KeyError, TypeError):
             _ctypes = _pub_types = ["post"]  # file hỏng: guardrail báo "config"
         try:

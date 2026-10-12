@@ -92,7 +92,8 @@ def _codes(g):
 def test_manifest_sha_matches_every_template():
     assert set(MANIFEST["templates"]) == {
         "content_facebook", "content_zalo", "content_tiktok", "content_blog",
-        "listing_shopee", "listing_tiktok", "listing_web"}
+        "listing_shopee", "listing_tiktok", "listing_web",
+        "image_background"}                     # v6.2 MKT-03 prompt nền
     for name, ent in MANIFEST["templates"].items():
         raw = (ROOT / "data" / "prompts" / f"{name}.md").read_bytes()
         sha = hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()

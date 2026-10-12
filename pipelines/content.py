@@ -36,6 +36,8 @@ Contract:
     (mọi loại nội dung public) / loại có `ad: true` cho TPBVSK chưa
     QC_DAY_DU / listing ở mức CAM -> từ chối kèm lý do, KHÔNG gọi LLM.
     `draft()` không gắn SKU và loại `post` giữ nguyên hành vi v4.2.
+    v6.2: `draft(content_type="image")` -> từ chối `loai_la` (0 LLM) — ảnh
+    chỉ sinh qua `pipelines.image_studio` (ghép packshot thật + nhãn AI).
   - v6.1 listing: tên/quy cách/số ĐKSP/giá list của kênh/hạn dùng do CODE
     dựng từ golden (data/golden_skus.json) — KHÔNG BAO GIỜ đưa giá
     floor/promo. Phần chữ LLM (hook/mô tả/gạch đầu dòng/từ khóa) chỉ khi
@@ -329,6 +331,14 @@ def draft(brief: str, channel: str = "facebook", *,
         CONTENT_TEMPLATES.get(channel, CONTENT_TEMPLATES["facebook"]))
     meta = {"content_type": content_type, "sku": sku, "is_ai": True,
             "prompt_version": ver, "prompt_sha256": sha, "refused": None}
+    if content_type == "image":
+        # v6.2: nháp ảnh PHẢI có file ảnh (packshot thật ghép + nhãn AI) —
+        # draft() chỉ sinh chữ, không được tạo nháp "image" không-có-ảnh.
+        ref = {"code": "loai_la", "reason": "ảnh đi qua pipelines."
+               "image_studio (ghép packshot thật) — draft() không sinh "
+               "nháp ảnh"}
+        return {"text": "", "guardrail": _refused_guardrail(ref),
+                "meta": {**meta, "refused": ref}}
     if sku is not None or content_type != "post":
         ref = precheck(sku, channel, content_type, readiness=readiness)
         if ref:

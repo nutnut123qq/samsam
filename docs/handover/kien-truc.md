@@ -62,7 +62,7 @@ Streamlit demo.
 | `crawler/` | `collect` — crawl site public → `data/*.jsonl` (delay ≥1s/request) |
 | `ingest/` | `embed_store` (chunk+embed→`chunks`), `core_store` (nạp DB lõi, delete-by-source idempotent), `lead_store` (convlog→`leads`, insert-only) |
 | `api/` | `rag.py` — `answer()` RAG: retrieve top-8 `chunks` bằng cosine numpy → LLM + nguồn; `NO_DATA` khi score thấp |
-| `pipelines/` | `guardrail.py` (banned words + claim whitelist + chặn rượu, chuẩn hóa NFC/casefold/ký tự chèn — `check()` trước mọi output AI; v4.1 `check_publish()` luật đăng bài theo kênh/loại: XNQC/readiness, câu khuyến cáo, nhãn AI/quảng cáo, "Ngọc Linh" — luật trong `data/guardrail_rules.json`; v4.2 nối content/store/Studio, `readiness` map view DB do caller truyền, vá homoglyph/emoji/khoảng trắng), `guardrail_llm.py` (v4.2: lớp LLM-check phụ `check_publish_llm` — agent `guardrail_llm`, chỉ CHẶN THÊM, lỗi → `llm_check_unavailable` fail-closed), `content.py` (draft đa kênh; v6.1 MKT-02: template kênh `data/prompts/` + manifest version/sha, `precheck` từ chối rượu/readiness/XNQC trước LLM, `listing()` khung golden theo kênh sàn + phần chữ LLM lọc chữ số, batch CLI `--listing` idempotent), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py` |
+| `pipelines/` | `guardrail.py` (banned words + claim whitelist + chặn rượu, chuẩn hóa NFC/casefold/ký tự chèn — `check()` trước mọi output AI; v4.1 `check_publish()` luật đăng bài theo kênh/loại: XNQC/readiness, câu khuyến cáo, nhãn AI/quảng cáo, "Ngọc Linh" — luật trong `data/guardrail_rules.json`; v4.2 nối content/store/Studio, `readiness` map view DB do caller truyền, vá homoglyph/emoji/khoảng trắng), `guardrail_llm.py` (v4.2: lớp LLM-check phụ `check_publish_llm` — agent `guardrail_llm`, chỉ CHẶN THÊM, lỗi → `llm_check_unavailable` fail-closed), `content.py` (draft đa kênh; v6.1 MKT-02: template kênh `data/prompts/` + manifest version/sha, `precheck` từ chối rượu/readiness/XNQC trước LLM, `listing()` khung golden theo kênh sàn + phần chữ LLM lọc chữ số, batch CLI `--listing` idempotent), `store.py` (hàng duyệt + lịch `content_drafts` — chuyển trạng thái qua function DB), `image_studio.py` (v6.2 MKT-03 ảnh AI: ghép packshot THẬT dán sau cùng lên nền tất định / nền provider AI qua cổng `generate_background(prompt, size)` — provider thật external-dep, kiểm pixel vùng packshot tuyệt đối, nhãn "Nội dung có sử dụng AI" luôn vẽ, PNG không EXIF/GPS, từ chối rượu/TPBVSK-maket XNQC/readiness/headline trước khi gọi provider, nháp `content_type=image` pending + `image_assets`; env `IMAGE_PROVIDER` (mặc định `none`), `PACKSHOT_DIR`, `IMAGE_OUT_DIR`, `IMAGE_FONT`), `auth.py` (đăng nhập + 6 vai trò × tab, v3.4), `llm_gateway.py` (cổng LLM duy nhất: PII mask, privacy routing, kill/cap, `llm_usage`), `pii.py` |
 | `connectors/` | `zalo.py` — webhook Zalo OA: verify signature, ACK 200 nhanh rồi reply async, dedup msg_id, token store + auto-refresh; **chỉ reply inbox** |
 | `agents/` | `report.py` (báo cáo định kỳ → file md), `garden.py` (nhật ký vùng trồng + cảnh báo) — không LLM, không tự gửi |
 | `app/` | `streamlit_app.py` — UI 7 tab (mục 4) |
@@ -70,7 +70,7 @@ Streamlit demo.
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 24 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 25 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
@@ -84,6 +84,7 @@ Streamlit demo.
 | `assets` | Tài sản truyền thông (`kind` image/video/article/doc,`url`,`product_id`) | `core_store` từ products.images + jsonl |
 | `leads` | Lead từ convlog (`dedup_key` unique,`channel`,`user_hash`,`question` đã mask,`intent`,`status`) | `ingest.lead_store` — insert-only, không xóa |
 | `content_drafts` | Hàng duyệt + lịch đăng (`brief`,`channel`,`text`,`guardrail` jsonb snapshot,`status`,`reviewer`,`scheduled_date`, `created_by` người/agent tạo — v3.4, null = draft cũ không duyệt được; v6.1 `content_type` (mặc định post), `sku`, `is_ai`, `prompt_version`, `prompt_sha256` — luật lưu/duyệt chạy theo đúng loại/SKU của dòng; unique index `content_drafts_listing_key_idx` (sku, channel, prompt_version) cho listing chưa bị reject) | `pipelines.store` / Studio — INSERT pending; đổi trạng thái CHỈ qua function `approve_draft`/`reject_draft`/`schedule_draft` |
+| `image_assets` | (v6.2 MKT-03) 1 dòng/(ảnh × SKU × kênh × format) nháp = 1 mục CLI: UNIQUE (`file_sha256`,`sku`,`channel`,`format`) — `file_sha256` = tên file `<sha>.png` ngoài DB, cùng ảnh cho 2 kênh / 2 SKU packshot y hệt / 2 format cùng cỡ = 2 dòng/2 nháp chung file + sidecar, `sku`,`channel`,`format`,`ai_generated`,`label_text`,`provider`,`model`,`prompt_sha256`,`prompt_version`,`packshot_sha256` (sha file packshot gốc của dòng),`draft_id` FK→`content_drafts`,`meta` jsonb (sidecar — mô tả file, không chứa sku/kênh/format/sha file packshot gốc; `meta` mọi dòng cùng ảnh == sidecar),`created_by` — CHECK: `ai_generated` ⇒ nhãn "Nội dung có sử dụng AI" + model + prompt_sha256; insert-only | `python -m pipelines.image_studio` (`save_image`) — agent chỉ SELECT/INSERT |
 | `llm_usage` | 1 dòng/lời gọi LLM-embedding (`ts`,`agent_id`,`model`,`tokens_in/out`,`cost_usd` ước tính,`ok`,`error` đã mask) — không lưu prompt | `pipelines.llm_gateway` — insert-only; trần chi phí tháng theo agent đọc từ đây |
 | `sku_master` | Golden SKU (v3.2) — nguồn sự thật DUY NHẤT listing/pháp lý: `category` tpbvsk/food/alcohol, `pack_spec`, số+ngày giấy tiếp nhận, `xnqc_status`, `self_declaration_ok`, `allowed_channels`, `version` | `ingest.golden_store` từ `data/golden_skus.json` — upsert, giữ row `manual`; Pháp chế xác nhận pháp lý |
 | `sku_map` | Map `products.id` (crawl) ↔ `sku_key` golden — KHÔNG FK products; `approved_by` | `golden_store` (đề xuất agent) — Sản xuất duyệt |
@@ -160,12 +161,12 @@ idempotent theo kỳ (cùng kỳ → cùng tên file ghi đè).
 
 | Role | Được | Không được |
 |---|---|---|
-| `agent_writer` (agent AI) | SELECT `content_drafts` + view `sku_readiness` (v4.2); INSERT draft 11 cột (`brief`,`channel`,`text`,`guardrail`,`source`,`created_by` + v6.1 `content_type`,`sku`,`is_ai`,`prompt_version`,`prompt_sha256` → luôn `pending`); INSERT log 5 cột | UPDATE/DELETE mọi bảng (không tự duyệt được — `permission denied`), `approvals`, bảng khác, function duyệt |
+| `agent_writer` (agent AI) | SELECT `content_drafts` + view `sku_readiness` (v4.2); INSERT draft 11 cột (`brief`,`channel`,`text`,`guardrail`,`source`,`created_by` + v6.1 `content_type`,`sku`,`is_ai`,`prompt_version`,`prompt_sha256` → luôn `pending`); INSERT log 5 cột; v6.2 SELECT + INSERT `image_assets` (15 cột, insert-only) | UPDATE/DELETE mọi bảng (không tự duyệt được — `permission denied`), `approvals`, bảng khác, function duyệt |
 | `app_human` (người: Streamlit/CLI) | Kế thừa `agent_writer` + SELECT `approvals`/`agent_action_log` + EXECUTE `approve_draft`, `reject_draft`, `schedule_draft`, `verify_publish`, `verify_action_log` | UPDATE/DELETE trực tiếp |
 
 Giới hạn pilot: máy local vẫn chạy bằng DSN owner — chặn quyền chỉ có
 hiệu lực khi app/agent dùng DSN theo role. CHƯA chuyển DSN Streamlit/agent
-sang role: `roles.sql` chỉ cấp 3 bảng trên → dưới role, Streamlit mất
+sang role: `roles.sql` chỉ cấp vài bảng trên → dưới role, Streamlit mất
 `chunks`/`leads`/`plot_logs`... (tab Chat/Leads/Báo cáo/Nhật ký vườn gãy)
 và agent mất `llm_usage` (trần chi phí LLM tắt câm vì `_month_spend` lỗi =
 cho qua). DSN role hiện chỉ dùng cho tiến trình duyệt/ghi draft riêng (CLI
@@ -213,6 +214,8 @@ snapshot + lúc duyệt, ô check tay Studio) dùng `check_publish` (+ lớp
 `data/conversations.jsonl` (rotate `.1` >5MB, purge >30d) ·
 `data/zalo_tokens.json` (token hiện hành, gitignored) ·
 `data/zalo_seen.db` (dedup msg_id TTL) · `data/reports/` ·
+`data/image_assets/` (ảnh nháp `<sha>.png` + sidecar `.json`, v6.2) ·
+`data/packshots/` (packshot thật công ty cấp, v6.2 — cả 2 gitignored) ·
 `_histories` in-memory (mất khi restart — chấp nhận).
 
 ## 9. Giới hạn pilot (đọc trước khi hứa thêm)

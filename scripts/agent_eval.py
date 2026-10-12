@@ -18,8 +18,13 @@ Agent:
     không key, không DB. `golden_exact` pass <=> ok + fields == golden
     (name/pack_spec/receipt_no/giá list) + dòng `Quy cách:` nguyên văn +
     không lộ giá floor/promo; ca refuse pass <=> refused.code == code.
+  - mkt03 (v6.2, Agent Ảnh AI): `image_studio.compose` TẤT ĐỊNH — packshot
+    MẪU + out dir trong thư mục tạm, provider AI giả `eval_stub` đăng ký
+    tạm (gỡ trong finally), 0 mạng/0 LLM/không DB. Kind ảnh chấm nhãn AI +
+    metadata / toàn vẹn packshot / phát hiện sửa 1 pixel / không EXIF; ca
+    refuse pass <=> refused.code == code.
 
-PASS = pass_rate >= min_pass_rate VÀ mọi ca thuộc `must_pass_kinds` pass
+PASS =pass_rate >= min_pass_rate VÀ mọi ca thuộc `must_pass_kinds` pass
 (kind bắt buộc mà bộ ca không có ca nào -> FAIL, fail-closed).
 
 commit_sha: `--sha` > env GITHUB_SHA > `git rev-parse HEAD`; phải 40 hex
@@ -222,8 +227,143 @@ def run_mkt02(cases: list[dict]) -> list[tuple[dict, bool, str]]:
     return out
 
 
+def _mkt03_stub(prompt, size):
+    """Provider AI GIẢ tất định cho eval MKT-03 (model ghi 'eval_stub' —
+    không giả làm model thật): nền đặc + khối đỏ vẽ ĐÈ đúng packshot_box
+    của format (mô phỏng nền AI cố vẽ vào vùng sản phẩm)."""
+    from PIL import Image, ImageDraw
+
+    from pipelines import image_studio as ims
+
+    cfg, err = ims.load_config()
+    if err:
+        raise RuntimeError(err)
+    img = Image.new("RGB", size, (60, 90, 70))
+    for name, wh in cfg["formats"].items():
+        if tuple(wh) == tuple(size):
+            x, y, w, h = ims._px(cfg["layout"][name]["packshot_box"], size)
+            ImageDraw.Draw(img).rectangle((x, y, x + w - 1, y + h - 1),
+                                          fill=(255, 0, 0))
+    return img, {"model": "eval_stub"}
+
+
+def _mkt03_check(c: dict, r: dict, ai_label: str) -> str:
+    """'' khi ca expect=image đạt theo kind; ngược lại lý do (không text)."""
+    from datetime import datetime
+
+    from PIL import Image
+
+    from pipelines import image_studio as ims
+
+    m = r["meta"]
+    with Image.open(r["path"]) as im:
+        img = im.convert("RGB")
+        meta_keys = {"exif", "xmp", "XML:com.adobe.xmp",
+                     "icc_profile"} & set(im.info)
+        exif = dict(im.getexif())
+    fitted, xy = r["fitted"], r["packshot_xy"]
+    if not ims.verify_packshot(img, fitted, xy):
+        return "vùng packshot lệch packshot gốc"
+    kind = c["kind"]
+    if kind == "ai_label_meta":
+        bg = m["background"]
+        if not (m["ai_generated"] is True and m["labels"][:1] == [ai_label]
+                and ai_label in r["text_layer"].split("\n")):
+            return "thiếu nhãn AI đứng đầu / ai_generated"
+        if not (bg.get("model") and bg.get("prompt_sha256")
+                and bg.get("prompt_version") and m.get("created_at")):
+            return "sidecar thiếu model/prompt_sha256/prompt_version/ngày"
+        if datetime.fromisoformat(m["created_at"]).utcoffset() is None:
+            return "created_at không có múi giờ"
+        plain, _ = _mkt03_stub(bg["prompt"], img.size)
+        x, y, w, h = m["label_box"]
+        box = (x, y, x + w, y + h)
+        if ims._changed_ratio(img.crop(box), plain.crop(box)) < 0.01:
+            return "vùng nhãn không khác nền (nhãn không hiển thị)"
+        # Riêng tấm nền đã khác nền 100% -> đếm pixel đúng màu chữ nhãn
+        # (thật ≥0.12% ở banner, bỏ chữ giữ tấm nền = 0%).
+        cfg, _ = ims.load_config()
+        mask = ims._color_mask(img.crop(box), cfg["label"]["text_rgb"])
+        if mask.histogram()[255] < 0.0005 * w * h:
+            return "vùng nhãn chỉ có tấm nền, không có chữ nhãn"
+    elif kind == "tamper_detect":
+        solid = ims._solid(fitted)
+        i = next(i for i, a in enumerate(solid.getdata()) if a == 255)
+        p = (xy[0] + i % solid.width, xy[1] + i // solid.width)
+        px = img.getpixel(p)
+        img.putpixel(p, ((px[0] + 1) % 256, px[1], px[2]))
+        if ims.verify_packshot(img, fitted, xy):
+            return "sửa 1 pixel vùng packshot mà verify_packshot vẫn True"
+    elif kind == "no_exif":
+        data = Path(r["path"]).read_bytes()
+        if exif or meta_keys or b"eXIf" in data:
+            return "ảnh output còn EXIF/XMP/ICC"
+    return ""
+
+
+def run_mkt03(cases: list[dict]) -> list[tuple[dict, bool, str]]:
+    """Chấm tất định MKT-03 (v6.2): 0 mạng/0 LLM (tắt lớp LLM-check trong
+    lúc chấm), không key, không DB. Packshot MẪU + out dir trong thư mục
+    tạm; provider `eval_stub` đăng ký TẠM vào image_studio.PROVIDERS và
+    được gỡ trong finally (PROVIDERS sau == trước)."""
+    import tempfile
+
+    from pipelines import content
+    from pipelines import image_studio as ims
+
+    _, ai, _ = content._publish_texts()
+    ai_label = ai[0] if ai else "\x00"
+    saved = os.environ.pop("GUARDRAIL_LLM_MODEL", None)
+    had = "eval_stub" in ims.PROVIDERS
+    prev = ims.PROVIDERS.get("eval_stub")
+    ims.PROVIDERS["eval_stub"] = _mkt03_stub
+    out = []
+    try:
+        with tempfile.TemporaryDirectory(prefix="mkt03-") as td:
+            for n, c in enumerate(cases):
+                try:
+                    base = Path(td) / f"c{n}"
+                    sku = c.get("sku")
+                    if isinstance(sku, str) and sku:
+                        ims.make_sample_packshot(
+                            base / "pk" / f"{sku}.png", sku,
+                            exif_gps=bool(c.get("packshot_exif")))
+                    rmap = ({(a, b): lv for a, b, lv in c["readiness"]}
+                            if c.get("readiness") else None)
+                    r = ims.compose(sku, c["channel"], c["headline"],
+                                    fmt=c["format"], scene=c.get("scene"),
+                                    readiness=rmap,
+                                    provider=c.get("provider", "none"),
+                                    packshot_dir=base / "pk",
+                                    out_dir=base / "out")
+                    ref = r.get("refused")
+                    if c["expect"] == "refuse":
+                        ok = bool(ref) and ref.get("code") == c.get("code")
+                        if ok and c["kind"] == "trap_tpbvsk_maket":
+                            ok = "maket XNQC" in ref.get("reason", "")
+                        detail = "" if ok else (
+                            f"kỳ vọng từ chối {c.get('code')}, được "
+                            f"{ref.get('code') if ref else 'sinh ảnh'}")
+                    elif ref:
+                        ok, detail = False, f"bị từ chối {ref.get('code')}"
+                    else:
+                        detail = _mkt03_check(c, r, ai_label)
+                        ok = not detail
+                except Exception as e:  # noqa: BLE001 — ca lỗi = FAIL, đi tiếp
+                    ok, detail = False, type(e).__name__
+                out.append((c, ok, detail))
+    finally:
+        if had:
+            ims.PROVIDERS["eval_stub"] = prev
+        else:
+            ims.PROVIDERS.pop("eval_stub", None)
+        if saved is not None:
+            os.environ["GUARDRAIL_LLM_MODEL"] = saved
+    return out
+
+
 RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot,
-           "mkt02": run_mkt02}
+           "mkt02": run_mkt02, "mkt03": run_mkt03}
 
 
 def score(results: list[tuple[dict, bool, str]], agent_cfg: dict) -> dict:
@@ -343,7 +483,7 @@ def main(argv: list[str] | None = None) -> int:
                   f'{detail} | text="{_short(what)}"', flush=True)
     s = score(results, acfg)
     pv = prompt_version(acfg["prompt_files"])
-    model = ("rules" if args.agent in ("guardrail", "mkt02") else
+    model = ("rules" if args.agent in ("guardrail", "mkt02", "mkt03") else
              os.environ.get("OR_CHAT_MODEL", DEFAULT_CHAT_MODEL))
     verdict = "PASS" if s["passed"] else "FAIL"
     print(f"[done] {args.agent} {verdict} {s['n_pass']}/{s['n_total']}"

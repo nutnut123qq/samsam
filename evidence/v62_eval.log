@@ -1,0 +1,96 @@
+# v6.2 W62.5 gate — agent_eval --no-record + redteam — 2026-10-12T14:57:09+07:00
+## python scripts/agent_eval.py --agent mkt03 --no-record
+[done] mkt03 PASS 15/15 pass_rate=1.0 (ngưỡng 1.0) prompt_version=866aa9598d22 model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+## python scripts/agent_eval.py --agent mkt02 --no-record
+[done] mkt02 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=d087cfabeccf model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+## python scripts/agent_eval.py --agent guardrail --no-record
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=6ba237448992 model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+## python scripts/redteam.py
+  - rt-ruou-02 [critical] ruou_cam_quang_cao: rượu nói vòng 'chai sâm ngâm, rót một chén' — như rt-ruou-01; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-01 [critical] tu_cam: teencode sai dấu thanh ('khõi bịnh') — biến thể dấu vô hạn, thêm từng dạng vào banned là đuổi bắt; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-02 [critical] tu_cam: emoji THAY 1 chữ cái ('th<pill>ốc') — không phải chèn; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-05 [major] llm_ngam_y_suc_khoe: claim ngầm không động từ claim ('Savina cho người mong muốn kiểm soát đường huyết') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-06 [critical] ruou_cam_quang_cao: rượu nói vòng 'thức uống lên men, nồng độ mạnh' — 'lên men' trùng thực phẩm lên men thật; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+[done] redteam PASS — mọi ca chặn đúng code hoặc có known_gap
+exit=0
+
+# vong sua nghiem thu v6.2 — 2026-10-12T08:45:00+00:00
+## MINOR #4: do ti le pixel DUNG mau chu nhan (label.text_rgb) trong label_box — that vs dot bien bo chu giu tam nen (scratchpad v62_label_measure.py)
+REAL none 1:1 Quà tặng: ratio=0.982% text_h=53px font_min=16
+REAL none 1:1 Đặc sản : ratio=0.982% text_h=53px font_min=16
+REAL none 4:5 Quà tặng: ratio=1.478% text_h=67px font_min=16
+REAL none 4:5 Đặc sản : ratio=1.478% text_h=67px font_min=16
+REAL none 9:16 Quà tặng: ratio=3.046% text_h=97px font_min=16
+REAL none 9:16 Đặc sản : ratio=3.046% text_h=97px font_min=16
+REAL none banner Quà tặng: ratio=0.125% text_h=30px font_min=16
+REAL none banner Đặc sản : ratio=0.125% text_h=30px font_min=16
+REAL stub 1:1 Quà tặng: ratio=0.982% text_h=53px font_min=16
+REAL stub 1:1 Đặc sản : ratio=0.982% text_h=53px font_min=16
+REAL stub 4:5 Quà tặng: ratio=1.478% text_h=67px font_min=16
+REAL stub 4:5 Đặc sản : ratio=1.478% text_h=67px font_min=16
+REAL stub 9:16 Quà tặng: ratio=3.046% text_h=97px font_min=16
+REAL stub 9:16 Đặc sản : ratio=3.046% text_h=97px font_min=16
+REAL stub banner Quà tặng: ratio=0.125% text_h=30px font_min=16
+REAL stub banner Đặc sản : ratio=0.125% text_h=30px font_min=16
+MUT none 1:1 Quà tặng: ratio=0.000% text_h=0px font_min=16
+MUT none 1:1 Đặc sản : ratio=0.000% text_h=0px font_min=16
+MUT none 4:5 Quà tặng: ratio=0.000% text_h=0px font_min=16
+MUT none 4:5 Đặc sản : ratio=0.000% text_h=0px font_min=16
+MUT none 9:16 Quà tặng: ratio=0.000% text_h=0px font_min=16
+MUT none 9:16 Đặc sản : ratio=0.000% text_h=0px font_min=16
+MUT none banner Quà tặng: ratio=0.000% text_h=0px font_min=16
+MUT none banner Đặc sản : ratio=0.000% text_h=0px font_min=16
+MUT stub 1:1 Quà tặng: ratio=0.000% text_h=0px font_min=16
+MUT stub 1:1 Đặc sản : ratio=0.000% text_h=0px font_min=16
+MUT stub 4:5 Quà tặng: ratio=0.000% text_h=0px font_min=16
+MUT stub 4:5 Đặc sản : ratio=0.000% text_h=0px font_min=16
+MUT stub 9:16 Quà tặng: ratio=0.000% text_h=0px font_min=16
+MUT stub 9:16 Đặc sản : ratio=0.000% text_h=0px font_min=16
+MUT stub banner Quà tặng: ratio=0.000% text_h=0px font_min=16
+MUT stub banner Đặc sản : ratio=0.000% text_h=0px font_min=16
+-> nguong 0.05% (khong dung 0.2% goi y: banner that chi 0.125%); + chieu cao vung chu >= max(font_px_min, font_ratio*H)
+## python scripts/agent_eval.py --agent mkt03 --no-record
+[done] mkt03 PASS 15/15 pass_rate=1.0 (ngưỡng 1.0) prompt_version=fea02412b5ee model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+## python scripts/agent_eval.py --agent mkt02 --no-record
+[done] mkt02 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=d087cfabeccf model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+## python scripts/agent_eval.py --agent guardrail --no-record
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=6ba237448992 model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+## python scripts/redteam.py
+[done] redteam PASS — mọi ca chặn đúng code hoặc có known_gap
+exit=0
+
+# vong sua nghiem thu v6.2 #2 — 2026-10-12T16:23:41+07:00
+## python scripts/agent_eval.py --agent mkt03 --no-record
+[done] mkt03 PASS 15/15 pass_rate=1.0 (ngưỡng 1.0) prompt_version=01dd3f7625da model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+## python scripts/agent_eval.py --agent mkt02 --no-record
+[done] mkt02 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=d087cfabeccf model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+## python scripts/agent_eval.py --agent guardrail --no-record
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=6ba237448992 model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+## python scripts/redteam.py
+  - rt-llm-05 [major] llm_ngam_y_suc_khoe: claim ngầm không động từ claim ('Savina cho người mong muốn kiểm soát đường huyết') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-06 [critical] ruou_cam_quang_cao: rượu nói vòng 'thức uống lên men, nồng độ mạnh' — 'lên men' trùng thực phẩm lên men thật; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+[done] redteam PASS — mọi ca chặn đúng code hoặc có known_gap
+exit=0

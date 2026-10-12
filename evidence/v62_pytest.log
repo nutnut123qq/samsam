@@ -1,0 +1,265 @@
+# v6.2-anh-ai gate — 2026-10-12T14:47:59+07:00
+# baseline full pytest TRUOC khi sua: 1112 passed, 3 skipped (evidence/v61_fixround.log — HEAD 335ccfc, worktree chua co code v6.2 luc bat dau; 3 skipped = tests/test_dr_drill.py khong co docker = MOI TRUONG)
+## targeted lan 1: python -m pytest -q -rs tests/test_image_studio.py tests/test_content.py tests/test_listing.py tests/test_store.py tests/test_auth_approval.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_guardrail_v2.py tests/test_guardrail_llm.py
+........................................................................ [ 37%]
+........................................................................ [ 55%]
+........................................................................ [ 74%]
+........................................................................ [ 92%]
+............................                                             [100%]
+388 passed in 67.97s (0:01:07)
+exit=0
+## targeted lan 2: python -m pytest -q -rs <cung danh sach>
+............................                                             [100%]
+388 passed in 69.65s (0:01:09)
+exit=0
+## targeted lan 3: python -m pytest -q -rs <cung danh sach>
+............................                                             [100%]
+388 passed in 70.15s (0:01:10)
+exit=0
+## full: python -m pytest -q -rs
+E           assert '`image_assets`' in '# Chuyển DB lên Postgres managed trong nước (v3.6, WP02 / F17.4)\n\n- **Dành cho ai:** Quản lý hạ tầng AI (hoặc đội t...\nKhôi phục ĐÈ production không có lệnh tự động: tầng 2, người làm tay, báo\nTGĐ — xem `docs/handover/sop.md` mục 6.\n'
+
+tests\test_db_backup.py:332: AssertionError
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+1 failed, 1156 passed, 3 skipped in 261.66s (0:04:21)
+exit=1
+
+# ===== VONG 2 — 2026-10-12T14:58:09+07:00: vong 1 full FAIL 1 (tests/test_db_backup.py::test_cloud_readme_drift_guard — deploy/cloud/README.md chua liet ke bang moi image_assets; day chuyen that cua viec them bang) -> va README (25 bang + dong image_assets) =====
+## targeted vong2 lan 1: python -m pytest -q -rs <cung danh sach>
+............................                                             [100%]
+388 passed in 65.58s (0:01:05)
+exit=0
+## targeted vong2 lan 2: python -m pytest -q -rs <cung danh sach>
+............................                                             [100%]
+388 passed in 62.14s (0:01:02)
+exit=0
+## targeted vong2 lan 3: python -m pytest -q -rs <cung danh sach>
+............................                                             [100%]
+388 passed in 59.09s
+exit=0
+## full vong2: python -m pytest -q -rs
+........                                                                 [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+1157 passed, 3 skipped in 230.62s (0:03:50)
+exit=0
+## ruff check .
+All checks passed!
+exit=0
+## python -m py_compile pipelines/image_studio.py pipelines/content.py app/streamlit_app.py scripts/agent_eval.py
+exit=0
+## so sanh baseline: 1112 passed + 45 test moi (39 tests/test_image_studio.py + 6 tests/test_agent_eval.py mkt03) = 1157 passed; skipped 3 = baseline (3 test_dr_drill khong co docker = MOI TRUONG, khong phai loi version)
+## gate them: git diff --stat <file cam sua> (rong = dat)
+(het)
+## grep -nE 'set_status|approve_draft|schedule|requests|httpx|urllib|import socket|inpaint' pipelines/image_studio.py (rong = dat)
+grep-exit=1
+## git check-ignore data/image_assets/x.png data/packshots/x.png
+data/image_assets/x.png
+data/packshots/x.png
+## grep -n IMAGE_PROVIDER env.example
+102:IMAGE_PROVIDER=none
+## .png trong data/: 0
+## dem assert test cu da sua (khong FLIP, khong xoa assert):
+tests/test_listing.py assert truoc=181 sau=181
+tests/test_handover_docs.py assert truoc=39 sau=39
+tests/test_agent_eval.py assert truoc=112 sau=138
+   test_listing: tap template mong doi them 'image_background' (van so khop CHINH XAC); test_handover_docs: SOP_COMMANDS them 'pipelines.image_studio'; test_agent_eval: chi them test mkt03.
+## git status --short
+ M .gitignore
+ M DONE.md
+ M STATUS.md
+ M app/streamlit_app.py
+ M data/eval/config.json
+ M data/guardrail_rules.json
+ M data/prompts/manifest.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/prompt-library.md
+ M docs/handover/sop.md
+ M docs/roles.sql
+ M docs/schema.sql
+ M env.example
+ M pipelines/content.py
+ M scripts/agent_eval.py
+ M tests/test_agent_eval.py
+ M tests/test_handover_docs.py
+ M tests/test_listing.py
+?? data/eval/mkt03.jsonl
+?? data/image_studio.json
+?? data/prompts/image_background.md
+?? evidence/v62_sample_fake_9x16.json
+?? evidence/v62_sample_fake_9x16.png
+?? evidence/v62_sample_none_1x1.json
+?? evidence/v62_sample_none_1x1.png
+?? pipelines/image_studio.py
+?? tests/test_image_studio.py
+
+# vong sua nghiem thu v6.2 (4 MINOR) — 2026-10-12T08:45:00+00:00
+## probe TRUOC khi sua (scratchpad v62_probe_before.py): check_scene None tren 'lo\x01go va nh\x7fan' / 'y t\x01a va ong ng\x01he'; PNG ghi de cung ten -> compose ok=True, sha(file)!=ten, verify_packshot=False
+## dot bien nguoc (hoan tung fix tai cho -> test moi phai DO; khoi phuc kiem sha)
+R1_check_scene_cc: exit=1 -> 1 failed in 1.84s
+R2_png_by_name: exit=1 -> 1 failed in 2.31s
+R3_select_by_sha_only: exit=1 -> 1 failed in 2.26s
+R4_sidecar_has_channel: exit=1 -> 2 failed in 3.65s
+restored bc7a03ad08c0
+## dem assert (grep -c '\bassert\b') truoc -> sau
+tests/test_image_studio.py 178 -> 211 (def test_ 37 -> 41); tests/test_agent_eval.py 138 -> 140 (36 -> 37)
+FLIP: test_schema_label_check_matches_rules_drift_guard — 1 assert 'file_sha256 text not null unique' -> 2 assert ('unique (file_sha256, channel)', 'file_sha256 text not null,'); khong xoa assert nao
+## targeted lan 1: python -m pytest -q -rs tests/test_image_studio.py tests/test_content.py tests/test_listing.py tests/test_store.py tests/test_auth_approval.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_guardrail_v2.py tests/test_guardrail_llm.py
+393 passed in 59.79s
+exit=0
+## targeted lan 2: python -m pytest -q -rs tests/test_image_studio.py tests/test_content.py tests/test_listing.py tests/test_store.py tests/test_auth_approval.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_guardrail_v2.py tests/test_guardrail_llm.py
+393 passed in 69.06s (0:01:09)
+exit=0
+## targeted lan 3: python -m pytest -q -rs tests/test_image_studio.py tests/test_content.py tests/test_listing.py tests/test_store.py tests/test_auth_approval.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_guardrail_v2.py tests/test_guardrail_llm.py
+393 passed in 65.96s (0:01:05)
+exit=0
+## full: python -m pytest -q -rs (1 lan)
+________________________ test_zz_no_dr_container_left _________________________
+E       AssertionError: assert ['samsam-dr-2..._154016-ea45'] == []
+E         
+E         Left contains one more item: 'samsam-dr-20261012_154016-ea45'
+E         Use -v to get more diff
+tests\test_dr_drill.py:548: AssertionError
+1 failed, 1164 passed in 279.76s (0:04:39)
+exit=1
+-> 1164 passed + 1 failed = 1165 = baseline vong truoc 1160 (1157 passed + 3 skip docker) + 5 test moi. Lan nay Docker BAT nen 3 test dr_drill chay that (0 skip).
+-> FAIL duy nhat test_zz_no_dr_container_left: _docker_names() liet ke container samsam-dr-* TOAN MAY (docker daemon chung cho ~7 worktree chay song song); container 'samsam-dr-20261012_154016-ea45' khong phai cua lan chay nay (test_dr_drill_real_ok/_mismatch cua lan nay da PASS kem assert container cua chinh no da bi xoa) va da bien mat ngay sau do = MOI TRUONG (race cross-worktree), khong lien quan thay doi v6.2 (khong dong vao DR/backup).
+## chay lai rieng tests/test_dr_drill.py (khong phai full)
+Mon Oct 12 15:42:47 SEAST 2026
+...........................                                              [100%]
+27 passed in 39.60s
+exit=0
+Mon Oct 12 15:43:37 SEAST 2026
+## gate tinh
+## ruff check .
+All checks passed!
+exit=0
+## py_compile
+exit=0
+## git diff --stat file cam sua
+(het)
+## grep publish/mang
+(het, exit=1)
+## png trong data/
+0
+## git status --short
+ M .gitignore
+ M DONE.md
+ M STATUS.md
+ M app/streamlit_app.py
+ M data/eval/config.json
+ M data/guardrail_rules.json
+ M data/prompts/manifest.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/prompt-library.md
+ M docs/handover/sop.md
+ M docs/roles.sql
+ M docs/schema.sql
+ M env.example
+ M pipelines/content.py
+ M scripts/agent_eval.py
+ M tests/test_agent_eval.py
+ M tests/test_handover_docs.py
+ M tests/test_listing.py
+?? data/eval/mkt03.jsonl
+?? data/image_studio.json
+?? data/prompts/image_background.md
+?? evidence/v62_sample_fake_9x16.json
+?? evidence/v62_sample_fake_9x16.png
+?? evidence/v62_sample_none_1x1.json
+?? evidence/v62_sample_none_1x1.png
+?? pipelines/image_studio.py
+?? tests/test_image_studio.py
+
+# vong sua nghiem thu v6.2 #2 (1 MINOR: danh tinh asset bo sot sku) — 2026-10-12T16:24:09+07:00
+## sua: unique (file_sha256, sku, channel, format); save_image SELECT 4 cot, sku/format/packshot_sha256 tu compose(); sidecar bo sku/format/packshot.file_sha256 (mo ta FILE — meta moi dong cung anh == sidecar); _fit_packshot chuan hoa RGB duoi alpha 0
+## dot bien nguoc (scratchpad v62r2_mutate.py — hoan tung phan fix tai cho -> test moi phai DO; khoi phuc kiem sha)
+M1 save_image SELECT (sha, kênh) như cũ: exit 1 -> ĐỎ (bắt được)
+    FAILED tests/test_image_studio.py::test_db_same_image_skus_and_same_size_formats
+    1 failed, 3 passed in 3.71s
+M2 sidecar có lại sku/format: exit 1 -> ĐỎ (bắt được)
+    FAILED tests/test_image_studio.py::test_same_picture_three_skus_one_file_one_sidecar
+    FAILED tests/test_image_studio.py::test_db_same_image_skus_and_same_size_formats
+    2 failed, 2 passed in 3.47s
+M3 sidecar có lại packshot.file_sha256: exit 1 -> ĐỎ (bắt được)
+    FAILED tests/test_image_studio.py::test_same_picture_three_skus_one_file_one_sidecar
+    FAILED tests/test_image_studio.py::test_db_same_image_skus_and_same_size_formats
+    2 failed, 2 passed in 3.82s
+M4 bỏ chuẩn hóa RGB dưới alpha 0: exit 1 -> ĐỎ (bắt được)
+    FAILED tests/test_image_studio.py::test_same_picture_three_skus_one_file_one_sidecar
+    FAILED tests/test_image_studio.py::test_db_same_image_skus_and_same_size_formats
+    2 failed, 2 passed in 3.73s
+M5 unique (sha, sku, kênh) thiếu format: exit 1 -> ĐỎ (bắt được)
+    FAILED tests/test_image_studio.py::test_db_same_image_skus_and_same_size_formats
+    FAILED tests/test_image_studio.py::test_schema_label_check_matches_rules_drift_guard
+    FAILED tests/test_image_studio.py::test_db_image_assets_grants_unique_and_checks
+    3 failed, 1 passed in 3.71s
+khôi phục: sha image_studio.py 2c1874c6c065 schema.sql fd9e198c2cbf
+## dem assert (grep -c assert) truoc -> sau
+tests/test_image_studio.py 211 -> 239 (def test_ 41 -> 43)
+FLIP tai cho (khong xoa assert): test_schema_label_check_matches_rules_drift_guard 'unique (file_sha256, channel)' -> 'unique (file_sha256, sku, channel, format)'; test_background_overdraw_packshot_box_neutralized sha file goc doc tu res['packshot_sha256'] thay meta.packshot.file_sha256 (+1 assert file_sha256 khong con trong sidecar)
+## targeted lan 1: python -m pytest -q -rs tests/test_image_studio.py tests/test_content.py tests/test_listing.py tests/test_store.py tests/test_auth_approval.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_guardrail_v2.py tests/test_guardrail_llm.py
+395 passed in 59.32s
+exit=0
+## targeted lan 2: python -m pytest -q -rs tests/test_image_studio.py tests/test_content.py tests/test_listing.py tests/test_store.py tests/test_auth_approval.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_guardrail_v2.py tests/test_guardrail_llm.py
+395 passed in 56.46s
+exit=0
+## targeted lan 3: python -m pytest -q -rs tests/test_image_studio.py tests/test_content.py tests/test_listing.py tests/test_store.py tests/test_auth_approval.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_guardrail_v2.py tests/test_guardrail_llm.py
+395 passed in 55.02s
+exit=0
+## full: python -m pytest -q -rs (1 lan)
+1167 passed in 350.94s (0:05:50)
+exit 0
+## gate tinh
+## ruff check .
+All checks passed!
+exit=0
+## py_compile
+exit=0
+## git diff --stat file cam sua (rong = dat)
+## grep publish/mang (rong = dat)
+grep exit=1 (1 = rong)
+## png trong data/
+0
+## anh mau evidence sinh lai (scratchpad v62r2_samples.py)
+none_1x1 sha 6dfecb27a97a png giữ nguyên bytes: True | khóa ngữ cảnh trong sidecar: [] | packshot keys: ['box', 'fitted_sha256']
+   verify_packshot: True
+fake_9x16 sha d0b9771ed020 png giữ nguyên bytes: True | khóa ngữ cảnh trong sidecar: [] | packshot keys: ['box', 'fitted_sha256']
+   verify_packshot: True
+## git status --short
+ M .gitignore
+ M DONE.md
+ M STATUS.md
+ M app/streamlit_app.py
+ M data/eval/config.json
+ M data/guardrail_rules.json
+ M data/prompts/manifest.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/prompt-library.md
+ M docs/handover/sop.md
+ M docs/roles.sql
+ M docs/schema.sql
+ M env.example
+ M pipelines/content.py
+ M scripts/agent_eval.py
+ M tests/test_agent_eval.py
+ M tests/test_handover_docs.py
+ M tests/test_listing.py
+?? data/eval/mkt03.jsonl
+?? data/image_studio.json
+?? data/prompts/image_background.md
+?? evidence/v62_sample_fake_9x16.json
+?? evidence/v62_sample_fake_9x16.png
+?? evidence/v62_sample_none_1x1.json
+?? evidence/v62_sample_none_1x1.png
+?? pipelines/image_studio.py
+?? tests/test_image_studio.py
+-> full 1167 passed = tong vong truoc 1165 (1164 passed + 1 fail moi truong test_zz_no_dr_container_left) + 2 test moi; 0 skipped: lan nay Docker chay nen 3 test test_dr_drill chay that (khi Docker tat = 3 skipped MOI TRUONG). agent_eval mkt03/mkt02/guardrail + redteam: evidence/v62_eval.log muc 'vong sua nghiem thu v6.2 #2'

@@ -10,6 +10,623 @@ Nhánh `ai-infra`: M30 (v3.0–v3.10) đóng và gộp đủ 2026-10-12 — 24 b
 831 test. Đếm bảng trong test không còn hằng số (sàn `>= 24` / đọc
 schema.sql) để các version M31+ chạy song song không xung đột dòng này.
 
+## Checklist v6.2-anh-ai
+
+Khán giả/mục đích: nhánh M31 (worktree `D:\code\samsam-w41`, tách từ v6.1 đã
+đóng), WP08 phần MKT-03 "Agent Ảnh AI" (pmo.md dòng `| WP08`: "MKT-03 ảnh AI
+(ghép packshot thật, không cho AI sửa chữ nhãn)"; acceptance WP08: "100% asset
+AI có nhãn 'Nội dung có sử dụng AI' và metadata (model, prompt, ngày). QA không
+phát hiện ảnh nào bị AI sửa chữ trên nhãn"; final_plans.json MKT-03 acceptance
+(1) 20 ảnh `ai_generated=true` 100% có nhãn + metadata, (2) vùng nhãn bao bì
+khớp packshot, (3) prompt "bác sĩ áo blouse cầm sản phẩm" bị trả về, (4) biến
+thể AI cho banner Sapentol bị từ chối "creative TPBVSK phải dùng maket XNQC",
+(5) SKU không được bán online không được tạo ảnh cho kênh online). Hiện repo
+KHÔNG có đường sinh ảnh nào: bảng `assets` chỉ là URL ảnh crawl
+(`ingest.core_store`), `content_drafts` chỉ chứa text. Sau version này:
+(a) `pipelines/image_studio.py` GHÉP packshot thật (file công ty cấp, thư mục
+cấu hình ngoài git) lên nền — nền tất định dựng bằng Pillow (provider `none`,
+mặc định) hoặc nền do API sinh ảnh tạo (cổng `generate_background(prompt,
+size)`; provider thật = external-dep, chưa cắm); packshot dán NGUYÊN KHỐI ở
+lớp trên cùng, kiểm toàn vẹn pixel vùng packshot trên file đã ghi — lệch là
+loại; AI không bao giờ nhận ảnh sản phẩm làm input (không inpainting/sửa ảnh);
+(b) nhãn "Nội dung có sử dụng AI" vẽ lên ảnh + metadata (model, prompt,
+version/hash, ngày, sha packshot) ở sidecar JSON + bảng mới `image_assets`;
+ảnh output không mang EXIF/GPS/XMP; (c) rượu, SKU TPBVSK (chỉ được dùng maket
+XNQC), SKU chưa đủ readiness kênh, headline vi phạm `check_publish`, prompt nền
+vi phạm → từ chối TRƯỚC khi gọi provider, 0 file, 0 dòng DB; (d) asset chỉ là
+NHÁP: `content_drafts` `content_type='image'` `pending` — agent không đăng;
+(e) eval MKT-03 tất định; (f) docs prompt-library/sop/kien-truc.
+
+Quy ước:
+- Mọi lệnh shell mở đầu `cd D:/code/samsam-w41 && set -a && .
+  C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/w41.env
+  && set +a && ...` (gate bên dưới viết tắt phần sau `&&`). Không in biến
+  môi trường, không đọc `.env`. Test chạy bằng `python -m pytest`. Lệnh nặng
+  có thể bị đẩy nền — đọc output tới khi process exit trước lệnh nặng kế
+  tiếp; full pytest đúng 1 lần mỗi vòng (máy chạy tới 7 version song song).
+- **TÁI DÙNG, không viết lại**: `content.precheck` (sku lạ/kênh lạ/rượu/
+  xnqc), `content._with_required` (chèn nhãn AI/QC từ
+  `data/guardrail_rules.json`), `content.load_template` + manifest
+  `data/prompts/` (template prompt nền), `guardrail_llm.check_publish_llm`
+  (headline), `guardrail.check` + `llm_gateway.is_health_question` (prompt
+  nền), `store.save_draft` / `store.readiness_from_db` / `store.
+  _conn_or_none` (nháp + readiness + conn có `connect_timeout`). Pillow 12.0
+  đã cài — KHÔNG thêm dependency (không imagehash/opencv/fontTools; không
+  `pip install` global). **KHÔNG sửa** `pipelines/guardrail.py`,
+  `pipelines/guardrail_llm.py`, `pipelines/llm_gateway.py`,
+  `pipelines/store.py`, `pipelines/auth.py`, `connectors/`, `api/`,
+  `scripts/eval_qa.py`, `tests/test_guardrail.py`.
+- **AI không chạm vùng nhãn — bằng cấu trúc, không bằng lời hứa**: provider
+  chỉ nhận `(prompt, size)` — KHÔNG BAO GIỜ nhận ảnh/bytes packshot, không có
+  tham số mask/inpaint. Thứ tự dựng: nền → tấm nhãn + headline (vùng cấu hình
+  KHÔNG giao vùng packshot, giao → `config`) → packshot dán SAU CÙNG
+  (`Image.alpha_composite`/`paste` với alpha của chính packshot). Packshot chỉ
+  được THU NHỎ (không phóng) 1 lần bằng LANCZOS cho vừa ô `packshot_box`, giữ
+  tỉ lệ — bản đã thu nhỏ (`fitted`) là chuẩn so. Toàn vẹn = MỌI pixel có
+  alpha 255 của `fitted` khớp TUYỆT ĐỐI (RGB) với pixel tương ứng của file PNG
+  ĐÃ GHI rồi đọc lại; số pixel đặc = 0 → `packshot_loi`; lệch ≥1 pixel →
+  `packshot_lech`, xóa file tạm, không ghi sidecar/DB. Output chỉ PNG (lossless
+  — JPEG làm lệch pixel). So khớp tuyệt đối chặt hơn tiêu chí pHash ≤8/64 của
+  final_plans (ngưỡng pHash "chốt khi ký" — không cần cài thêm).
+- **Nhãn AI**: ảnh có nền do provider AI (≠ `none`) LUÔN có nhãn
+  `labels.ai[0]` ("Nội dung có sử dụng AI", đọc từ
+  `data/guardrail_rules.json`, không chép tay). Ảnh nền tất định (`none`)
+  CŨNG vẽ nhãn AI — quyết định có chủ đích: `store.set_status` (v6.1
+  fix-round) kiểm lại lúc duyệt với `is_ai=True` CỐ ĐỊNH nên text nháp thiếu
+  nhãn AI sẽ không duyệt được; vẽ dư nhãn là fail-closed, Pháp chế quyết sau
+  (external-dep). `ai_generated` (sidecar + `image_assets`) = true CHỈ khi nền
+  do provider AI — truy vết đúng sự thật. Content type `image` có `ad: true`
+  → `_with_required` thêm `labels.ad[0]` → nhãn QC cũng vẽ lên ảnh. "Lớp chữ"
+  (`text_layer`) = headline + các dòng nhãn đúng thứ tự vẽ; MỌI chữ trên ảnh
+  nằm trong `text_layer` và qua `check_publish_llm`.
+- **Thứ tự từ chối (0 lời gọi provider, 0 file, 0 dòng DB)**: (1)
+  `content.precheck(sku, channel, "image", readiness=)` — mã khác `xnqc` trả
+  nguyên (`config`/`loai_la`/`sku_la`/`kenh_la`/`ruou`); (2) SKU golden
+  `category == "tpbvsk"` (MỌI mức readiness, kể cả map tiêm `QC_DAY_DU`) →
+  `maket_xnqc`, lý do chứa nguyên văn "creative TPBVSK phải dùng maket XNQC"
+  (`xnqc_records` chưa có — external-dep; agent không tạo biến thể); (3) mức
+  readiness (map tiêm / `store.readiness_from_db` / `guardrail.readiness`)
+  ∉ `TP_THUONG|QC_DAY_DU` → `readiness`; `sku=None` → `sku_la` ("ảnh cần SKU có
+  packshot"); kênh ∉ `image_studio.json` `channels` → `kenh_la`; (4) format lạ
+  → `format_la`; (5) headline rỗng/dài hơn `headline.max_chars` hoặc
+  `check_publish_llm(text_layer, channel=, content_type="image", sku=,
+  is_ai=True, readiness=)` không ok → `headline` (kèm violations); (6) `scene`
+  (mô tả nền người nhập) khớp `prompt_banned` (NFC casefold) hoặc
+  `is_health_question(scene)` hoặc `guardrail.check(scene)` không ok →
+  `prompt_cam`; (7) không font nào phủ đủ glyph của `text_layer` → `font`
+  (không vẽ ô vuông); (8) packshot thiếu → `packshot_thieu`, không phải PNG /
+  quá `packshot.max_pixels` (kiểm `size` TRƯỚC `load()` — chống bomb) / không
+  có pixel đặc → `packshot_loi`; (9) provider lạ/lỗi/trả ảnh sai kích thước →
+  `provider`.
+- **Rượu**: golden `category == "alcohol"` → `ruou` mọi kênh/format/provider
+  kể cả map tiêm `QC_DAY_DU` (precheck kiểm category trước readiness — Luật
+  44/2019). Không có đường nào sinh ảnh quảng cáo rượu.
+- **Provider**: env `IMAGE_PROVIDER` đọc LÚC GỌI, mặc định `none`;
+  `PROVIDERS = {"none": _bg_none}` (precedent `ingest.doc_intake.PROVIDERS`
+  của OCR). Provider thật = hàm `fn(prompt, size) -> (PIL.Image, {"model":
+  str})` đăng ký vào `PROVIDERS` SAU khi có key + hợp đồng — chỗ cắm ghi ở
+  docstring module + prompt-library: phải bọc như `llm_gateway` (kill-switch +
+  trần chi phí tháng agent `image` trong `data/llm_gateway.json` + ghi
+  `llm_usage`) — v6.2 KHÔNG cắm, KHÔNG gọi API thật, KHÔNG thêm cap. Module
+  không import `requests`/`httpx`/`urllib`/`socket`.
+- **Chỉ là nháp**: lưu qua `store.save_draft(conn, brief="image <sku> <kênh>
+  <format>", channel, text=text_layer + "\n\nTệp ảnh: <sha256>.png",
+  guardrail, source="cli", created_by=by, content_type="image", sku=,
+  is_ai=True, prompt_version=, prompt_sha256=)` — tên file = sha256 nội dung
+  PNG nằm TRONG text nên `approvals.content_sha256` lúc duyệt ràng cả ảnh.
+  image_studio KHÔNG import/gọi `set_status`/`approve_draft`/`schedule`.
+  `content.draft(..., content_type="image")` → từ chối `loai_la` ("ảnh đi qua
+  pipelines.image_studio") và Studio lọc `image` khỏi selectbox "Loại
+  content" (không sinh nháp ảnh không-có-ảnh).
+- Thêm 1 bảng `image_assets` → kien-truc "25 bảng public" (đếm trong test giữ
+  sàn `>= 24` / đọc schema.sql — KHÔNG thêm assert đếm cứng). File runtime:
+  `data/image_assets/` (output) + `data/packshots/` (mặc định thư mục
+  packshot) gitignore NGAY. Env mới chỉ ghi vào `env.example` (`.env*` bị
+  policy chặn): `IMAGE_PROVIDER`, `PACKSHOT_DIR`, `IMAGE_OUT_DIR`,
+  `IMAGE_FONT`.
+- Config `data/image_studio.json` là BẢN DEV (`_doc`: "chờ GĐ Marketing duyệt
+  layout/màu/template; font thương hiệu chưa có"); KHÔNG đánh dấu người thật
+  đã duyệt. Packshot mẫu cho test/eval/evidence tự sinh bằng Pillow
+  (`make_sample_packshot`) có chữ "MẪU" — không giả làm packshot thật.
+- Test không wall-clock; test DB thật dùng fixture `db` + `_TxConn`
+  (`tests/test_auth_approval.py`), schema tạm, ROLLBACK. Mọi file mới có
+  print tiếng Việt có UTF-8 guard (copy `scripts/zalo_mock.py`). Không FLIP
+  test cũ nào dự kiến — nếu buộc phải, evidence ghi số `assert` trước/sau
+  từng file (gotcha v1.7).
+- Không commit/push/reset/checkout/stash; coordinator commit. Evidence
+  `evidence/v62_*.log` phải `git add -f`.
+
+- [x] **W62.1 Bảng `image_assets` + content type `image` + chặn nháp ảnh
+  không-có-ảnh**
+  - `docs/schema.sql` (khối mới cuối file, comment tiếng Việt):
+    `create table if not exists image_assets (id bigint generated always as
+    identity primary key, created_at timestamptz not null default now(),
+    file_sha256 text not null unique, file_name text not null, sku text not
+    null, channel text not null, format text not null, ai_generated boolean
+    not null, label_text text not null, provider text not null, model text,
+    prompt_sha256 text, prompt_version text, packshot_sha256 text not null,
+    draft_id bigint not null references content_drafts(id), meta jsonb not
+    null, created_by text not null, check (not ai_generated or (label_text
+    like '%Nội dung có sử dụng AI%' and model is not null and prompt_sha256 is
+    not null)))` — ràng buộc DB cho acceptance "asset AI luôn có nhãn +
+    model/prompt". Insert-only (không delete-by-source).
+  - `docs/roles.sql`: `grant select on image_assets to agent_writer` (kiểm
+    skip) + `grant insert (file_sha256, file_name, sku, channel, format,
+    ai_generated, label_text, provider, model, prompt_sha256, prompt_version,
+    packshot_sha256, draft_id, meta, created_by) on image_assets to
+    agent_writer`; comment đầu file cập nhật. KHÔNG UPDATE/DELETE.
+  - `data/guardrail_rules.json` `content_types` thêm `"image": {"public":
+    true, "ad": true, "trang_thai": "chờ Pháp chế — ảnh marketing coi là
+    quảng cáo (nhãn QC + XNQC); TPBVSK chỉ dùng maket XNQC"}`. Không thêm
+    content type khác.
+  - `pipelines/content.py` `draft()`: `content_type == "image"` → trả từ chối
+    `loai_la` (0 LLM) trước precheck. `app/streamlit_app.py`: danh sách "Loại
+    content" bỏ `image` (1 điều kiện lọc).
+  - Boundary: `docs/schema.sql`, `docs/roles.sql`, `data/guardrail_rules.json`
+    (1 content type), `pipelines/content.py` (1 nhánh), `app/streamlit_app.py`
+    (1 lọc), `tests/test_image_studio.py` (mới, phần DB)
+  - Gate:
+    - `python scripts/apply_schema.py --roles` chạy 2 lần liên tiếp exit 0 trên
+      DB w41.env (idempotent), output liệt kê `image_assets`.
+    - pytest DB thật (`db` + `_TxConn`, `set local role agent_writer`):
+      save_draft image + INSERT `image_assets` đủ cột không `permission
+      denied`; INSERT thứ 2 cùng `file_sha256` → `psycopg.errors.
+      UniqueViolation`; `ai_generated=true` + `label_text` thiếu nhãn AI →
+      `psycopg.errors.CheckViolation`; `ai_generated=true` + `model` null →
+      CheckViolation; `update image_assets ...` dưới role →
+      `InsufficientPrivilege`. Test PASS, không nằm trong `-rs` skip.
+    - Drift-guard: chuỗi nhãn trong check constraint schema.sql ==
+      `labels.ai[0]` của `data/guardrail_rules.json` (đổi nhãn 1 chỗ là test
+      đỏ).
+    - pytest: `content.draft("x", "facebook", content_type="image")` →
+      `meta.refused.code == "loai_la"`, fake 0 call; `grep -n '"image"'
+      app/streamlit_app.py` có dòng lọc; `python -m py_compile
+      app/streamlit_app.py`.
+    - `python -m pytest -q tests/test_content.py tests/test_listing.py
+      tests/test_store.py` xanh, không assert nào bị xóa.
+  - Evidence: `evidence/v62_apply_schema.log`, `evidence/v62_pytest.log`
+- [x] **W62.2 Cổng nền `generate_background` + kiểm prompt nền**
+  - `data/prompts/image_background.md` (template nền: chỉ bối cảnh/ánh
+    sáng/chất liệu, "không người, không chữ, không logo, không bao bì sản
+    phẩm, chừa khoảng trống cho sản phẩm", placeholder `{scene}` thay bằng
+    `str.replace`) + `data/prompts/manifest.json` thêm `image_background`
+    (`version` `image_background@1`, sha256, `trang_thai` "chờ GĐ Marketing
+    duyệt"). Đọc qua `content.load_template("image_background")`.
+  - `data/image_studio.json`: `_doc`, `channels` [`facebook`,`zalo`,
+    `tiktok`,`shopee`,`web`], `formats` {`1:1`:[1080,1080], `4:5`:[1080,1350],
+    `9:16`:[1080,1920], `banner`:[1200,628]} + layout tỉ lệ theo format
+    (`packshot_box`, `headline_box`, `label_box` dạng [x,y,w,h] phần trăm),
+    `label` (`font_ratio`, `font_px_min`, `plate_rgba`, `text_rgb`),
+    `headline` (`max_chars`, `font_ratio`), `brand_colors` (2 màu gradient —
+    bản dev), `fonts` (danh sách ứng viên: `C:/Windows/Fonts/arial.ttf`,
+    `segoeui.ttf`, `tahoma.ttf`, DejaVuSans Linux), `packshot` (`max_pixels`),
+    `prompt_banned` (≥: "bác sĩ", "blouse", "áo blouse", "dược sĩ", "y tá",
+    "bệnh viện", "phòng khám", "ống nghe", "nhân viên y tế", "chữ", "nhãn",
+    "logo", "bao bì", "trước sau", "before after").
+  - `pipelines/image_studio.py`:
+    - `generate_background(prompt: str | None, size: tuple[int, int], *,
+      provider: str | None = None) -> tuple[Image.Image, dict]` — provider
+      None → env `IMAGE_PROVIDER` (mặc định `none`); `none` → gradient tất định
+      từ `brand_colors` (bỏ qua prompt), meta `{"provider": "none", "model":
+      "none", "ai_generated": False}`; provider khác trong `PROVIDERS` → gọi
+      `fn(prompt, size)`, convert RGB, kích thước ≠ `size` → `ImageProviderError`
+      (fail-closed, không resize ngầm), meta `ai_generated: True` + `model`;
+      tên không có trong `PROVIDERS` → `ImageProviderError("chưa cắm provider
+      ... — external-dep")`.
+    - `check_scene(scene) -> dict | None` — luật (6) quy ước; trả `{"code":
+      "prompt_cam", "reason"}` nêu từ khớp.
+    - `background_prompt(scene) -> (prompt, version, template_sha256)`.
+  - Boundary: `data/prompts/image_background.md` (mới),
+    `data/prompts/manifest.json` (1 mục), `data/image_studio.json` (mới),
+    `pipelines/image_studio.py` (mới), `tests/test_image_studio.py`
+  - Gate (pytest):
+    - Provider `none`: monkeypatch `socket.socket.connect` +
+      `socket.create_connection` raise và spy `llm_gateway.chat` → gọi
+      `generate_background` + cả `compose` (W62.3) với `IMAGE_PROVIDER` unset /
+      `none` / `GUARDRAIL_LLM_MODEL` unset → thành công, 0 connect, 0 chat; 2
+      lần gọi cùng size → bytes ảnh y hệt (tất định).
+    - `IMAGE_PROVIDER=openai` (chưa đăng ký) → `ImageProviderError`; provider
+      giả trả ảnh sai size → `ImageProviderError`; spy provider giả: args
+      đúng `(prompt: str, size: tuple)` — không có Image/bytes nào (AI không
+      nhận packshot).
+    - `check_scene("bác sĩ áo blouse cầm sản phẩm")` → `prompt_cam` (MKT-03
+      acceptance (3)); `"sâm giúp chữa tiểu đường"` → `prompt_cam`
+      (guardrail/health); "BÁC SĨ" hoa + NFD → vẫn chặn; `"bàn gỗ, ánh nắng
+      sớm, lá xanh"` → None.
+    - Template `image_background` sha khớp manifest; `guardrail.check(template)`
+      ok; prompt cuối chứa nguyên văn `scene`.
+    - `python -m pytest -q tests/test_listing.py tests/test_handover_docs.py`
+      xanh (manifest thêm mục không làm đỏ test template cũ).
+  - Evidence: `evidence/v62_pytest.log`
+- [x] **W62.3 Ghép packshot + kiểm toàn vẹn + nhãn AI + xóa metadata +
+  sidecar (`compose`)**
+  - `pipelines/image_studio.py`:
+    - `precheck_image(sku, channel, fmt, *, readiness=None) -> dict | None`
+      — bước (1)–(4) quy ước (tái dùng `content.precheck`).
+    - `compose(sku, channel, headline, *, fmt="1:1", scene=None,
+      readiness=None, provider=None, packshot_dir=None, out_dir=None) ->
+      dict` — trả `{"ok", "refused", "path", "sidecar", "sha256",
+      "text_layer", "draft_text", "guardrail", "meta"}`; từ chối →
+      `ok=False`, `refused={code, reason}`, `path=None`, 0 file. Luồng: bước
+      (1)–(8) → `generate_background(background_prompt(scene) nếu provider
+      ≠ none)` → vẽ tấm nhãn + `text_layer` nhãn (font ≥ `max(font_px_min,
+      font_ratio × cao)`) và headline vào ô cấu hình → dán `fitted` packshot
+      SAU CÙNG → dựng ảnh mới RGB từ pixel (`Image.new` + paste — không mang
+      `info`/EXIF/ICC/XMP) → `save` PNG KHÔNG `exif=`/`pnginfo=` ra file tạm
+      cùng thư mục → đọc lại → `verify_packshot` → `os.replace` sang
+      `<out_dir>/<sha256>.png` + sidecar `<sha256>.json` (đã tồn tại cùng sha
+      → giữ nguyên, không ghi đè).
+    - `verify_packshot(img, fitted, box) -> bool` (thuần) — luật toàn vẹn
+      quy ước.
+    - `fonts_for(text) -> ImageFont | None` — env `IMAGE_FONT` trước rồi
+      `fonts`; font đạt khi MỌI ký tự không-khoảng-trắng của text (NFC) có
+      mask ≠ mask glyph thiếu (`"\ue000"`) — không dùng fontTools.
+    - `make_sample_packshot(path, sku, size=(600, 800), *, exif_gps=False)` —
+      PNG RGBA nền trong suốt, khối nhãn có chữ "MẪU" + tên SKU (mẫu test/
+      eval/evidence; `exif_gps=True` nhúng EXIF có GPS IFD để test xóa
+      metadata).
+    - Sidecar JSON (UTF-8, `ensure_ascii=False`): `schema` `image_asset@1`,
+      `file`, `asset_sha256`, `sku`, `channel`, `format`, `size`,
+      `ai_generated`, `labels` (list), `label_box`, `headline`,
+      `headline_box`, `packshot` {`file_sha256` (bytes file gốc),
+      `fitted_sha256` (bytes RGBA đã thu nhỏ), `box`}, `background`
+      {`provider`, `model`, `prompt` (None khi `none`), `prompt_sha256`,
+      `prompt_version`, `template_sha256`}, `created_at` (ISO-8601 UTC có
+      offset), `guardrail_ok`. Không ghi đường dẫn tuyệt đối máy, không PII.
+  - Boundary: `pipelines/image_studio.py`, `tests/test_image_studio.py`
+  - Gate (pytest, packshot mẫu `make_sample_packshot` trong `tmp_path`, map
+    readiness tiêm `{("mat-ong-sam-300ml", <kênh>): "TP_THUONG"}`, provider
+    giả `PROVIDERS["fake"]` đăng ký bằng monkeypatch):
+    - **Nền cố tình vẽ đè vùng nhãn bị vô hiệu**: provider giả vẽ khối đỏ
+      đặc phủ đúng `packshot_box` → output `ok=True`, `verify_packshot` True,
+      0 pixel đặc của packshot thành đỏ.
+    - **Phá vùng packshot bị phát hiện/loại**: (a) `verify_packshot` trên ảnh
+      output bị sửa 1 pixel trong vùng packshot (alpha 255) → False; (b)
+      monkeypatch bước dán để vẽ 1 hình chữ nhật đè lên packshot SAU khi dán
+      (mô phỏng lớp AI chạm nhãn) → `refused.code == "packshot_lech"`, thư mục
+      out KHÔNG có `.png`/`.json`/file tạm nào.
+    - **20 ảnh `ai_generated=true`** (provider giả, đủ 4 format × 5 headline/
+      scene khác nhau): 100% `labels[0] == labels.ai[0]` của rules,
+      `text_layer` chứa nhãn, vùng `label_box` khác nền-không-nhãn (≥1% pixel
+      khác — nhãn hiển thị thật), sidecar có `model`/`prompt_sha256`/
+      `prompt_version`/`created_at` parse được ISO (MKT-03 acceptance (1)).
+    - Provider `none` → `ai_generated=False`, `model == "none"`, nhãn AI VẪN
+      có (quy ước), `background.prompt` None.
+    - **EXIF/GPS**: packshot `exif_gps=True` → PNG output `Image.open(...)
+      .getexif()` rỗng, `info` không có `exif`/`XML:com.adobe.xmp`/
+      `icc_profile`; bytes file không chứa `b"eXIf"`/`b"GPS"`.
+    - **Rượu**: 2 SKU rượu × (`facebook`,`shopee`) × (map None | map tiêm
+      `QC_DAY_DU`) × provider (`none`|`fake`) → `ruou`, provider spy 0 call, 0
+      file.
+    - **TPBVSK**: `sapentol-30v` `banner` provider `fake` (map None và map
+      tiêm `QC_DAY_DU`) → `maket_xnqc`, reason chứa "creative TPBVSK phải
+      dùng maket XNQC" (acceptance (4)); mọi 8 SKU TPBVSK đều `maket_xnqc`.
+    - **Readiness**: `mat-ong-sam-120ml-1hu` × `facebook` (golden CAM) →
+      `readiness`; map tiêm thiếu key → `readiness` (acceptance (5)); kênh
+      `chatbot` → `kenh_la`; format `"2:3"` → `format_la`; `sku=None` →
+      `sku_la`.
+    - **Headline**: "Sâm giúp chữa khỏi tiểu đường" → `headline` (violation
+      từ cấm), provider spy 0 call, 0 file; headline dài > `max_chars` →
+      `headline`; headline hợp lệ → `guardrail.ok is True` trên `text_layer`.
+    - Packshot thiếu → `packshot_thieu`; file JPEG/rác → `packshot_loi`;
+      `max_pixels` tmp nhỏ → `packshot_loi` (kiểm trước `load`); packshot
+      trong suốt hoàn toàn → `packshot_loi`; config `fonts` = [đường dẫn không
+      tồn tại] + `IMAGE_FONT` unset → `font`; `fonts_for("\ue000")` None.
+    - Layout config `label_box` giao `packshot_box` (tmp config) → `config`.
+    - 2 lần `compose` cùng tham số (provider `none`) → cùng `sha256`, 1 file
+      PNG, sidecar không bị ghi đè (mtime/bytes giữ).
+    - Test cần font: `pytest.skip` CHỈ khi không có font nào (CI Linux thiếu
+      font) — trên máy này phải PASS, không nằm trong `-rs` skip.
+  - Evidence: `evidence/v62_pytest.log` + ảnh mẫu `evidence/v62_sample_none_1x1.png`
+    và `evidence/v62_sample_fake_9x16.png` (+ sidecar `.json`) sinh bằng
+    script tạm trong scratchpad (KHÔNG thêm vào repo) gọi `compose` với
+    packshot "MẪU" — coordinator mở ảnh xem nhãn hiển thị + packshot nguyên
+    vẹn bằng mắt.
+- [x] **W62.4 Lưu nháp `save_image` + CLI `python -m pipelines.image_studio`**
+  - `save_image(conn, res, *, by, source="cli") -> dict`: `res` phải
+    `ok=True` (khác → ValueError). SELECT `image_assets` theo `file_sha256` →
+    có → `{"status": "skipped", "draft_id"}`. Không → `store.save_draft(...)`
+    (quy ước — `content_type="image"`, status DB mặc định `pending`) →
+    INSERT `image_assets` (`draft_id`, `meta` = sidecar, `label_text` =
+    `"\n".join(labels)`) + `conn.commit()` tường minh (gotcha v2.1).
+    `UniqueViolation` lúc INSERT asset (race 2 process) → rollback,
+    `{"status": "skipped", "orphan_draft_id"}` (nháp mồ côi để người reject —
+    agent không có quyền xóa) — ghi rõ ở docstring. Trả `{"status":
+    "created", "draft_id", "asset_id"}`.
+  - `main(argv)`: `--sku` lặp được (`all` = mọi SKU golden), `--channel`
+    (choices = `image_studio.json` channels), `--format` lặp được (mặc định
+    `1:1`), `--headline` (bắt buộc), `--scene`, `--by` (mặc định
+    `agent:mkt03`). Kiểm `IMAGE_PROVIDER` ∈ `PROVIDERS` và conn DB (qua
+    `store._conn_or_none`) TRƯỚC mọi lời gọi provider — sai → exit 2.
+    `readiness` = `store.readiness_from_db(conn)`. In 1 dòng/(sku × format):
+    `created #<draft_id> <file>` | `skipped <file>` | `refused <code>: <lý
+    do>` | `failed: <lý do>` + dòng tổng. Exit 0 khi không `failed`; 1 khi có
+    `failed`; 2 usage/DB/provider. UTF-8 guard.
+  - Boundary: `pipelines/image_studio.py`, `tests/test_image_studio.py`
+  - Gate:
+    - pytest DB thật (`db` + `_TxConn`, golden nạp `ingest.golden_store.load`
+      trong schema tạm, map readiness tiêm cho `mat-ong-sam-300ml`
+      facebook `TP_THUONG`): lần 1 `save_image` → `created`, dòng
+      `content_drafts` `status='pending'`, `content_type='image'`,
+      `sku='mat-ong-sam-300ml'`, `text` chứa nhãn AI + `<sha>.png`; dòng
+      `image_assets` khớp sidecar; `agent_action_log` có `draft_create`;
+      lần 2 cùng ảnh → `skipped`, `count(*)` cả 2 bảng không đổi.
+    - pytest fake conn (mẫu `tests/test_store.py`): `store.set_status(...,
+      "approved")` trên dòng nháp ảnh (text = `draft_text`) → re-check
+      guardrail ok (không bị `thieu_nhan_ai`/`thieu_nhan_quang_cao`) — nháp
+      ảnh duyệt được bởi người, không phải ngõ cụt.
+    - `main(["--sku","all","--channel","facebook"])` (thiếu `--headline`) →
+      exit 2; `--channel chatbot` → exit 2; `IMAGE_PROVIDER=openai` → exit 2,
+      0 file; `DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m
+      pipelines.image_studio --sku all --channel facebook --headline "Quà
+      tặng núi rừng"` → exit 2, 0 file, 0 provider call (gotcha v2.0: host
+      chết, KHÔNG `env -u`).
+    - Không đường đăng/mạng: `grep -nE "set_status|approve_draft|schedule|
+      requests|httpx|urllib|import socket|inpaint" pipelines/image_studio.py`
+      rỗng.
+    - Chạy thật trên DB w41.env (sau `apply_schema --roles` + `python -m
+      ingest.golden_store`), `IMAGE_OUT_DIR`/`PACKSHOT_DIR` trỏ thư mục tạm
+      scratchpad (packshot mẫu cho MỌI SKU): `python -m pipelines.image_studio
+      --sku all --channel facebook --channel shopee --format 1:1 --headline
+      "Quà tặng từ núi rừng"` → 0 `created` (golden hiện tại: 8 TPBVSK →
+      `maket_xnqc`, 2 rượu → `ruou`, 3 mật ong → `readiness` vì chưa xác minh
+      tự công bố / ngoài allowed_channels), exit 0, 0 file trong out dir, 0
+      dòng `image_assets`. KHÔNG giả lập golden để có `created` thật.
+  - Evidence: `evidence/v62_cli.log` (output CLI + `select count(*) from
+    image_assets` + `select content_type, count(*) from content_drafts group
+    by 1` trước/sau)
+- [x] **W62.5 Bộ eval MKT-03 (`agent_eval --agent mkt03`)**
+  - `data/eval/mkt03.jsonl` (`_doc`: "bản dev — chờ GĐ Marketing/Pháp chế
+    duyệt nhãn"; mọi ca `label_status`): mỗi ca `id`, `kind`, `sku`,
+    `channel`, `format`, `headline`, tùy chọn `scene`, `provider`
+    (`none`|`eval_stub`), `readiness` (list `[sku, kênh, mức]`), `expect`
+    (`image`|`refuse`), `code`. ≥14 ca: `ai_label_meta` ×4 (4 format,
+    `eval_stub`), `packshot_intact` ≥1 (stub vẽ đè `packshot_box`),
+    `tamper_detect` ≥1, `no_exif` ≥1, `trap_alcohol` ≥2 (1 ca map tiêm
+    QC_DAY_DU), `trap_tpbvsk_maket` ≥1 (Sapentol banner), `trap_prompt` ≥1
+    ("bác sĩ áo blouse cầm sản phẩm"), `trap_readiness` ≥1, `trap_headline`
+    ≥1.
+  - `scripts/agent_eval.py`: `RUNNERS["mkt03"] = run_mkt03` — TẤT ĐỊNH, 0
+    mạng, không key, không DB: tạm `GUARDRAIL_LLM_MODEL` pop; packshot mẫu +
+    out dir trong `tempfile.TemporaryDirectory`; provider `eval_stub` đăng ký
+    tạm vào `image_studio.PROVIDERS` (try/finally gỡ — model ghi
+    `"eval_stub"`, không giả làm model thật). Pass: `ai_label_meta` ⇔ `ok` +
+    nhãn AI trong `labels`/`text_layer` + vùng nhãn khác nền + sidecar đủ
+    model/prompt_sha256/prompt_version/created_at; `packshot_intact` ⇔
+    `verify_packshot` True trên file đọc lại; `tamper_detect` ⇔ sửa 1 pixel
+    vùng packshot → `verify_packshot` False; `no_exif` ⇔ `getexif()` rỗng;
+    refuse ⇔ `refused.code == code` (+ `trap_tpbvsk_maket` reason chứa
+    "maket XNQC"). `model` ghi `"rules"`. `data/eval/config.json`
+    `agents.mkt03`: `min_pass_rate` 1.0, `must_pass_kinds` mọi kind trên,
+    `prompt_files` (image_studio.py, image_studio.json,
+    prompts/image_background.md, prompts/manifest.json, guardrail_rules.json,
+    golden_skus.json, mkt03.jsonl). KHÔNG thêm vào `required_agents`.
+  - Boundary: `data/eval/mkt03.jsonl` (mới), `data/eval/config.json`,
+    `scripts/agent_eval.py`, `tests/test_agent_eval.py`
+  - Gate:
+    - `python scripts/agent_eval.py --agent mkt03 --no-record` exit 0, dòng
+      `[done] mkt03 PASS`; `--agent mkt02 --no-record` và `--agent guardrail
+      --no-record` vẫn exit 0.
+    - pytest `tests/test_agent_eval.py`: runner mkt03 0 call gateway (client
+      đếm như mkt02); `PROVIDERS` sau khi chạy == trước (stub đã gỡ); sửa 1
+      ca rượu thành `expect: image` (tmp copy) → FAIL; bỏ hết ca 1 kind bắt
+      buộc → FAIL; test cũ xanh, `required_agents` vẫn `["guardrail",
+      "chatbot"]`.
+  - Evidence: `evidence/v62_eval.log`
+- [x] **W62.6 Docs prompt-library / sop / kien-truc / STATUS + env + gitignore
+  + drift-guard**
+  - `docs/handover/prompt-library.md`: mục "Ảnh AI (MKT-03, v6.2)" — bảng
+    template `image_background` (version, sha256 12 hex, trạng thái), luật
+    prompt nền (`prompt_banned`, health check, guardrail), provider (`none`
+    mặc định; chỗ cắm provider thật + yêu cầu bọc kill/cap/usage như
+    llm_gateway — external-dep), luật nhãn (AI luôn vẽ; QC theo `ad`),
+    luật packshot (dán sau cùng, chỉ thu nhỏ, so pixel tuyệt đối), từ chối
+    rượu/TPBVSK-maket/readiness/headline.
+  - `docs/handover/sop.md`: mục "Sinh ảnh nháp (MKT-03, v6.2)" — chuẩn bị
+    packshot `<PACKSHOT_DIR>/<sku_key>.png` (PNG nền trong suốt, công ty
+    cấp), lệnh `python -m pipelines.image_studio --sku <sku> --channel
+    facebook --format 1:1 --headline "..."`, ý nghĩa `created/skipped/
+    refused/failed` + mã từ chối, exit code, nháp vào tab "Duyệt & Lịch"
+    (người tải ảnh `data/image_assets/<sha>.png` lên kênh tay — agent không
+    đăng; nháp mồ côi do race → reject).
+  - `docs/handover/kien-truc.md`: "24 bảng public" → "25 bảng public" + dòng
+    bảng `image_assets`; dòng `agent_writer` thêm insert/select
+    `image_assets`; module `pipelines/image_studio.py`; env mới.
+  - `env.example`: khối "Ảnh AI (MKT-03, v6.2)" — `IMAGE_PROVIDER=none` (chỉ
+    hỗ trợ `none`; API sinh ảnh có phí = external-dep, đặt tên khác → CLI
+    exit 2), `PACKSHOT_DIR=` (mặc định `data/packshots/`, gitignored),
+    `IMAGE_OUT_DIR=` (mặc định `data/image_assets/`, gitignored),
+    `IMAGE_FONT=` (font thương hiệu — external-dep).
+  - `.gitignore`: `data/image_assets/`, `data/packshots/`.
+  - `STATUS.md`: 1 đoạn v6.2 — có gì, golden hiện tại 0 SKU đủ điều kiện sinh
+    ảnh (TPBVSK cần maket XNQC, mật ong chưa xác minh tự công bố, rượu cấm),
+    external-dep.
+  - `tests/test_handover_docs.py`: `SOP_COMMANDS` thêm `pipelines.image_studio`
+    (test template manifest sẵn có tự phủ `image_background`).
+  - Boundary: `docs/handover/prompt-library.md`, `docs/handover/sop.md`,
+    `docs/handover/kien-truc.md`, `STATUS.md`, `env.example`, `.gitignore`,
+    `tests/test_handover_docs.py`
+  - Gate: `python -m pytest -q tests/test_handover_docs.py` xanh (gồm
+    `test_kien_truc_lists_all_tables` — 25 bảng, `test_prompt_library_lists_
+    every_template_in_manifest`); `git check-ignore data/image_assets/x.png
+    data/packshots/x.png` in cả 2; `grep -n "IMAGE_PROVIDER" env.example` có.
+  - Evidence: `evidence/v62_pytest.log`
+- [ ] **External-dep — chờ công ty / Pháp chế / nhà cung cấp** (GIỮ [ ] —
+  worker không đánh dấu): key + hợp đồng API sinh ảnh (OpenAI/Google/
+  Stability… — chọn sau, có phí; cắm provider + cap `image` trong
+  `data/llm_gateway.json`); ảnh packshot THẬT từng SKU (PNG nền trong suốt);
+  GĐ Marketing duyệt bộ nhận diện/layout/màu/template `image_background` và lô
+  ảnh tầng 1; font thương hiệu; Pháp chế xác nhận quy cách nhãn AI (vị trí/cỡ)
+  + ảnh nền tất định có cần nhãn AI không + content type `image` là quảng cáo;
+  `xnqc_records` (maket XNQC) để làm creative TPBVSK; Sản xuất/Pháp chế xác
+  minh tự công bố mật ong (để có SKU đủ readiness sinh ảnh thật); lưu trữ
+  cloud cho asset. CHƯA có người duyệt thật.
+- Ngoài phạm vi → someday: Studio xem/sinh ảnh + preview ảnh trong tab "Duyệt
+  & Lịch"; video MKT-04; pHash đối chiếu ảnh đã đăng trên kênh với asset đã
+  duyệt; `mkt03` vào `required_agents`; dọn nháp mồ côi do race.
+
+Gate chung (đọc output tới khi process exit trước lệnh nặng kế tiếp, không
+chạy chồng pytest, full pytest đúng 1 lần mỗi vòng):
+- targeted ×3: `python -m pytest -q -rs tests/test_image_studio.py
+  tests/test_content.py tests/test_listing.py tests/test_store.py
+  tests/test_auth_approval.py tests/test_agent_eval.py
+  tests/test_handover_docs.py tests/test_guardrail_v2.py
+  tests/test_guardrail_llm.py` — xanh 3 lần; test DB thật (W62.1/W62.4) và
+  test cần font KHÔNG nằm trong danh sách skip.
+- full: `python -m pytest -q` — baseline đo trước khi sửa (≈1111 passed, 3
+  skipped docker dr_drill); kỳ vọng baseline + số test mới, 0 fail, skipped
+  không tăng.
+- `ruff check .` sạch.
+- `python -m py_compile pipelines/image_studio.py pipelines/content.py
+  app/streamlit_app.py scripts/agent_eval.py`.
+- `python scripts/agent_eval.py --agent mkt03 --no-record` exit 0; `--agent
+  mkt02 --no-record` exit 0; `--agent guardrail --no-record` exit 0;
+  `python scripts/redteam.py` exit 0 (guardrail không đổi).
+- Gate thêm: `git diff --stat -- pipelines/guardrail.py
+  pipelines/guardrail_llm.py pipelines/llm_gateway.py pipelines/store.py
+  pipelines/auth.py connectors api scripts/eval_qa.py tests/test_guardrail.py`
+  rỗng; `grep -nE "set_status|approve_draft|schedule|requests|httpx|urllib|import
+  socket|inpaint" pipelines/image_studio.py` rỗng; `git status` không có file
+  lạ ngoài boundary (`lv2-market-top.png` giữ untracked; không có `.png`
+  trong `data/`); evidence có đếm assert trước/sau nếu có test FLIP.
+
+Kết quả worker (2026-10-12, 2 vòng — evidence `evidence/v62_*.log`, PHẢI
+`git add -f` vì `*.log` bị gitignore; ảnh mẫu `evidence/v62_sample_*.png/.json`):
+- Vòng 1: targeted ×3 xanh (388 passed ×3); full FAIL 1 —
+  `tests/test_db_backup.py::test_cloud_readme_drift_guard`: thêm bảng làm
+  drift-guard đòi `deploy/cloud/README.md` liệt kê `image_assets` (dây chuyền
+  thật, NGOÀI boundary contract) → vá README: "25 bảng" + dòng `image_assets`
+  (đường B, file PNG/sidecar ở `IMAGE_OUT_DIR` chép riêng).
+- Vòng 2: targeted ×3 xanh (388 passed ×3, 0 skip — test DB thật + test
+  font đều chạy); full 1157 passed, 3 skipped (= baseline 1112 + 45 test mới;
+  3 skip `test_dr_drill` không có docker = MÔI TRƯỜNG); ruff sạch; py_compile
+  OK; `agent_eval` mkt03 PASS 15/15, mkt02 PASS 14/14, guardrail PASS 130/132
+  (2 edge known), `redteam` PASS; diff file cấm sửa rỗng; grep publish/mạng
+  rỗng; 0 `.png` trong `data/`.
+- CLI chạy thật DB w41: 26 cặp → 0 created / 26 refused (16 `maket_xnqc`,
+  6 `readiness`, 4 `ruou`), exit 0, 0 file, `image_assets` 0 → 0.
+- Rà OWASP (A08): sidecar cùng sha trên đĩa từng được TIN nếu chỉ khớp
+  `schema`/`asset_sha256` → sidecar sửa tay (bỏ nhãn AI, đổi model) chảy vào
+  `image_assets.meta`. Vá: chỉ giữ sidecar cũ khi mọi field trừ
+  `created_at` trùng bản vừa tính, lệch/hỏng → ghi lại
+  (`test_tampered_sidecar_not_trusted`).
+
+Vòng sửa nghiệm thu (2026-10-12, 4 MINOR — evidence `evidence/v62_*.log`
+mục "vong sua nghiem thu"):
+- MINOR #1 (một ảnh dùng cho nhiều kênh): provider `none` sinh ảnh y hệt cho
+  mọi kênh nên kênh thứ 2 bị `skipped` mà không có nháp, và sidecar đổi kênh
+  qua lại giữa các lần chạy. Đã sửa: danh tính asset là
+  (`file_sha256`, `channel`). `docs/schema.sql` dùng
+  `unique (file_sha256, channel)` thay cho `file_sha256 ... unique`.
+  `save_image` SELECT theo sha và kênh. Sidecar mô tả FILE và KHÔNG chứa
+  `channel` (lệch có chủ đích so với danh sách field sidecar W62.3): kênh lấy
+  từ `compose()["channel"]` (key mới) và nằm ở nháp/`image_assets`, nên
+  `meta` của mọi dòng cùng ảnh == sidecar. Test:
+  `test_db_same_image_two_channels_two_drafts` (2 created, 2 nháp, 2 dòng,
+  sidecar == meta; chạy lại thì skipped, đếm không đổi),
+  `test_same_params_same_file_sidecar_kept` (thêm: kênh shopee giữ nguyên
+  sidecar), `test_db_image_assets_grants_unique_and_checks` (thêm: cùng sha
+  kênh khác thì INSERT được). SOP (`skipped` = đã có nháp CÙNG kênh, kể cả
+  nháp đã reject: đổi headline/scene để sinh lại) và kien-truc đã cập nhật.
+  DB w41 đã áp bản nháp đầu, nên đổi ràng buộc trên bảng 0 dòng bằng script
+  scratchpad. Không đặt migration vào schema.sql vì drift-guard
+  `test_store`/`test_lead_store` cấm `alter table` khác `add column`, và bảng
+  chưa phát hành.
+- MINOR #2 (`check_scene` kiểm một chuỗi, prompt dùng chuỗi khác): đã sửa,
+  giờ kiểm `_clean(scene)`, đúng chuỗi đưa vào prompt. Test:
+  `test_check_scene_checks_the_string_used_in_prompt` (\x01/\x7f/\x1f chèn
+  vào logo/nhãn/y tá/ống nghe/điều trị/thuốc/bao bì/bác sĩ thì ra
+  `prompt_cam`; chuỗi qua kiểm thì `_clean` không có từ cấm).
+- MINOR #3 (PNG cùng tên được tin theo tên): đã sửa, giữ file chỉ khi
+  sha256(bytes) == tên; lệch hoặc đọc lỗi thì `os.replace` ghi lại. Test:
+  `test_tampered_png_same_name_not_trusted` (ảnh đen và file rác cùng tên);
+  `test_same_params_same_file_sidecar_kept` thêm assert bytes + mtime PNG
+  giữ nguyên ở ca hợp lệ.
+- MINOR #4 (kiểm "nhãn hiển thị" bị mù vì tấm nền đã khác 100%): đã sửa bằng
+  helper `image_studio._color_mask` đếm pixel ĐÚNG màu `label.text_rgb`
+  trong `label_box`. Ngưỡng ≥0.05%, KHÔNG dùng 0.2% như gợi ý, vì đo thật
+  banner chỉ 0.125% (1:1 0.98%, 4:5 1.48%, 9:16 3.05%) còn đột biến bỏ chữ
+  giữ tấm nền = 0.000% ở cả 4 format. Test còn đòi chiều cao vùng chữ ≥
+  cỡ chữ sàn `max(font_px_min, font_ratio × H)`. Áp ở
+  `test_twenty_ai_images_label_and_meta` và `agent_eval._mkt03_check`.
+  Đột biến được khóa bằng `test_label_check_catches_plate_without_text` và
+  `test_agent_eval.py::test_mkt03_plate_without_label_text_fails` (ca
+  `ai_label_meta` FAIL 4/4).
+- Đột biến ngược (hoàn từng fix #1–#3 tại chỗ rồi khôi phục, kiểm sha): cả 4
+  bản hoàn đều làm test mới ĐỎ. Ảnh mẫu evidence sinh lại: PNG trùng bytes
+  bản cũ (render không đổi), sidecar không còn `channel`.
+- FLIP test cũ (gotcha v1.7): `test_schema_label_check_matches_rules_drift_guard`
+  đổi 1 assert `file_sha256 text not null unique` thành 2 assert
+  (`unique (file_sha256, channel)` + `file_sha256 text not null,`). Không
+  xóa assert nào. Đếm dòng `assert` (grep -c): `tests/test_image_studio.py`
+  178 → 211 (37 → 41 test), `tests/test_agent_eval.py` 138 → 140 (36 → 37
+  test).
+
+Vòng sửa nghiệm thu #2 (2026-10-12, 1 MINOR — evidence `evidence/v62_*.log`
+mục "vong sua nghiem thu v6.2 #2"):
+- MINOR (fix #1 mới làm một nửa — danh tính asset bỏ sót SKU): 2 SKU có
+  packshot giống nhau ra ảnh byte-y-hệt (nhãn/headline không phụ thuộc SKU),
+  SKU thứ 2 bị `skipped` không có nháp và sidecar lật `sku`. Đã sửa:
+  - Danh tính = (`file_sha256`, `sku`, `channel`, `format`) = đúng 1 mục CLI
+    (SKU × kênh × format). Thêm `format` vì 2 format cùng cỡ + cùng layout
+    cũng ra cùng ảnh (config hiện tại không có, nhưng cùng lớp lỗi).
+    `docs/schema.sql` dùng `unique (file_sha256, sku, channel, format)`.
+    `save_image` SELECT theo cả 4 cột; sku/format/sha file packshot gốc lấy
+    từ key mới `compose()["sku"|"format"|"packshot_sha256"]`, không lấy từ
+    sidecar (thiếu → ValueError).
+  - Sidecar chỉ còn field GIỐNG NHAU cho mọi mục ra cùng ảnh, nên bỏ `sku`,
+    `format` và cả `packshot.file_sha256`. Lý do bỏ `file_sha256`: biến thể
+    "cùng pixel khác bytes" (packshot xuất lại/nén khác) vẫn ra cùng ảnh mà
+    khác sha file, nên sidecar vẫn lật nếu giữ lại. Sha file gốc nằm ở cột
+    `packshot_sha256` của TỪNG dòng; sidecar giữ `packshot.fitted_sha256` +
+    `box`. Lệch có chủ đích so với danh sách field sidecar W62.3, giống
+    `channel` ở vòng trước.
+  - `_fit_packshot` đưa RGB dưới alpha 0 về 0 (vùng này không hiện lên ảnh;
+    `verify_packshot` chỉ so pixel alpha 255; output không đổi). Nếu không,
+    2 file cùng hình nhưng khác "rác" ở vùng trong suốt và không bị thu nhỏ
+    sẽ cho `fitted_sha256` khác nhau trên cùng một ảnh.
+  - Biến thể đã liệt kê nhưng KHÔNG xử lý: provider AI tất định trả cùng nền
+    cho 2 prompt khác nhau (chỉ stub test làm vậy; nền AI thật phụ thuộc
+    prompt). Provider `none` có prompt/model cố định nên không bị.
+  - DB w41 (bảng 0 dòng, chưa phát hành): đổi ràng buộc bằng script
+    scratchpad `v62r2_alter.py` (dừng nếu có dòng), sau đó chạy
+    `apply_schema --roles` (idempotent). Không đặt migration vào schema.sql,
+    cùng lý do vòng trước.
+  - Test: `test_db_same_image_skus_and_same_size_formats` (DB thật: 3 SKU
+    cùng hình — bản sao byte / cùng pixel khác bytes — + format `sq2` trùng
+    cỡ 1:1 → 4 created, 4 nháp đúng SKU/brief, `meta` MỌI dòng == sidecar,
+    `packshot_sha256` từng dòng = sha file của SKU đó; chạy lại → 4 skipped,
+    đếm (4, 4)); `test_same_picture_three_skus_one_file_one_sidecar` (không
+    DB: sidecar giữ nguyên bytes + mtime qua 3 SKU, `meta` bằng nhau);
+    `test_db_image_assets_grants_unique_and_checks` (thêm: cùng sha khác
+    SKU/format INSERT được, trùng cả 4 → UniqueViolation);
+    `test_save_image_rejects_non_ok` (thiếu sku/format/packshot_sha256 →
+    ValueError); `test_same_params_same_file_sidecar_kept` +
+    `test_background_overdraw_packshot_box_neutralized` (sidecar không có
+    sku/format/file_sha256, `res["packshot_sha256"]` = sha file).
+  - Đột biến ngược (scratchpad `v62r2_mutate.py`, khôi phục và kiểm sha):
+    M1 SELECT (sha, kênh), M2 sidecar có lại sku/format, M3 sidecar có lại
+    `packshot.file_sha256`, M4 bỏ chuẩn hóa alpha 0, M5 unique thiếu
+    `format`. Cả 5 làm test mới ĐỎ.
+  - Docs: SOP (dòng `created`/`skipped` và sidecar), kien-truc (dòng
+    `image_assets`), comment schema/roles, docstring module/`compose`/
+    `save_image`, STATUS. Ảnh mẫu evidence sinh lại: PNG trùng bytes bản cũ,
+    sidecar không còn sku/format/file_sha256, `fitted_sha256` 1:1 không đổi.
+  - FLIP test cũ (gotcha v1.7): `test_schema_label_check_matches_rules_drift_
+    guard` đổi tại chỗ assert `unique (file_sha256, channel)` thành
+    `unique (file_sha256, sku, channel, format)`.
+    `test_background_overdraw_packshot_box_neutralized` đổi nguồn assert sha
+    file từ `meta.packshot.file_sha256` sang `res["packshot_sha256"]`.
+    Không xóa assert nào. `tests/test_image_studio.py` 211 → 239 dòng
+    `assert` (41 → 43 test).
+  - Gate: targeted chạy 3 lần, đều 395 passed. Full 1 lần: 1167 passed
+    (= 1165 vòng trước + 2 test mới). 0 skipped vì lần này Docker đang chạy
+    nên 3 test `test_dr_drill` chạy thật; khi Docker tắt thì 3 skip đó là do
+    môi trường. `ruff` sạch, `py_compile` OK. `agent_eval` mkt03 PASS 15/15,
+    mkt02 PASS 14/14, guardrail PASS 130/132 (2 edge đã biết). `redteam`
+    PASS. Diff các file cấm sửa: rỗng. grep publish/mạng: rỗng. Không có
+    `.png` nào trong `data/`.
+
 ## Checklist v6.1-content-listing
 
 Khán giả/mục đích: nhánh M31 (worktree `D:\code\samsam-w41`, tách từ v4.2 đã
