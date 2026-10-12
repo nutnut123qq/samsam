@@ -1,0 +1,71 @@
+{
+  "_doc": "v6.4 MKT-07 (WP08) — luật đề xuất trả lời UGC/review — BẢN NHÁP do dev soạn, CHỜ Pháp chế + Quản lý MXH duyệt mọi câu khách thấy. Template theo lớp khen|che|khieu_nai|hoi_gia|xin_phep; lớp claim_suc_khoe/ruou TÁI DÙNG câu health/alcohol (kênh sở hữu) và health_san/alcohol_san (sàn) trong data/channels.json — không viết câu thứ hai. Template KHÔNG nhắc lại công dụng/bệnh khách nói, không từ cấm, không cụm 'hỗ trợ' (guardrail coi là claim), không link/SĐT/Zalo (chính sách sàn). health_terms = từ khóa sức khỏe khách hay nói — no_claim_echo chặn câu trả lời lặp lại chúng. review_columns = map cột file review xuất tay GIẢ ĐỊNH (người có tài khoản Seller Center xuất 1 file thật để đối chiếu header): cột trong drop (người mua/ảnh/mã đơn) bị bỏ NGAY khi đọc, cột lạ → chặn cả file. Agent KHÔNG tự trả lời/đăng/nhắn khách.",
+  "templates": {
+    "khen": "Dạ, Sâm Sâm cảm ơn Quý khách đã tin dùng và chia sẻ cảm nhận. Mong Quý khách tiếp tục đồng hành cùng Sâm Sâm.",
+    "che": "Dạ, Sâm Sâm rất tiếc vì sản phẩm chưa làm Quý khách hài lòng và cảm ơn Quý khách đã góp ý. Nhân viên Sâm Sâm sẽ phản hồi Quý khách ngay trên kênh này để tìm hiểu thêm.",
+    "khieu_nai": "Dạ, Sâm Sâm thành thật xin lỗi Quý khách về sự cố này. Nhân viên chăm sóc khách hàng sẽ kiểm tra đơn và phản hồi Quý khách ngay trên kênh này.",
+    "hoi_gia": "Dạ, giá sản phẩm được niêm yết tại trang sản phẩm chính thức của Sâm Sâm trên kênh này. Nhân viên Sâm Sâm sẽ phản hồi thêm nếu Quý khách cần.",
+    "xin_phep": "Dạ, Sâm Sâm cảm ơn Quý khách đã chia sẻ. Sâm Sâm xin phép được dùng lại chia sẻ này của Quý khách trong bài giới thiệu trên kênh của Sâm Sâm. Sâm Sâm chỉ sử dụng khi Quý khách đồng ý; Quý khách có thể từ chối hoặc rút lại đồng ý bất cứ lúc nào."
+  },
+  "health_terms": [
+    "đau",
+    "nhức",
+    "khớp",
+    "gout",
+    "gút",
+    "bệnh",
+    "tiểu đường",
+    "đường huyết",
+    "huyết áp",
+    "mỡ máu",
+    "ung thư",
+    "gan",
+    "thận",
+    "mất ngủ",
+    "ho",
+    "viêm",
+    "xương",
+    "khỏi",
+    "chữa",
+    "trị",
+    "thuốc",
+    "mệt mỏi",
+    "suy nhược",
+    "dạ dày",
+    "tiêu hóa",
+    "sinh lý",
+    "miễn dịch"
+  ],
+  "review_columns": {
+    "shopee": {
+      "columns": {
+        "Mã đánh giá": "ma_danh_gia",
+        "Số sao": "so_sao",
+        "Nội dung đánh giá": "noi_dung",
+        "Thời gian đánh giá": "thoi_gian"
+      },
+      "drop": [
+        "Tên người mua",
+        "Tên đăng nhập người mua",
+        "Mã đơn hàng",
+        "Hình ảnh",
+        "Video"
+      ]
+    },
+    "tiktok": {
+      "columns": {
+        "Review ID": "ma_danh_gia",
+        "Rating": "so_sao",
+        "Review Content": "noi_dung",
+        "Review Time": "thoi_gian"
+      },
+      "drop": [
+        "Buyer Name",
+        "Buyer Username",
+        "Order ID",
+        "Images",
+        "Video"
+      ]
+    }
+  }
+}

@@ -1,0 +1,38 @@
+# v6.4 W64.7 docs SOP 5n + kien-truc + cloud README — 2026-10-12T22:16:59+07:00
+## spot-check lenh trong SOP 5n
+$ python -m agents.mkt_ads --help
+exit=0
+$ python -m agents.mkt_koc --help
+exit=0
+$ python -m agents.mkt_ugc --help
+exit=0
+$ python -m agents.mkt_ads --plan tests/fixtures/mkt/ads_plan_mat_ong_MAU.json --by dev --month 2026-10 --dry-run
+[từ chối] ADS_CAM: mat-ong-sam-300ml × shopee: readiness CAM — không ghi gì.
+exit=1
+$ python -m agents.mkt_ads --status 999999
+[err] không có phiếu #999999
+exit=1
+$ python -m agents.mkt_ads --results tests/fixtures/mkt/ads_ket_qua_MAU.csv --plan-id 999999 --by dev
+[từ chối] ADS_PLAN_NOT_APPROVED: không có phiếu #999999 — không ghi gì.
+exit=1
+$ python -m agents.mkt_koc --list
+Danh sách MẪU — không phải KOC thật; agent không liên hệ KOC.
+exit=0
+$ python -m agents.mkt_koc --release 999999 --by dev
+[chặn] KIT_NOT_APPROVED: mục #999999 không phải kit KOC — không ghi gì.
+exit=1
+$ python -m agents.mkt_ugc --mentions --since 2026-10-01 --by dev --dry-run (salt mau)
+[mentions] lớp: (không) · 0 đề xuất (dry-run, không ghi) · skip 0 · không soạn 0 · chặn 0
+Agent không tự trả lời/đăng — người phụ trách đăng tay sau duyệt.
+exit=0
+$ python -m agents.mkt_ugc --reuse-request ugc-ffffffffffffffff --by dev
+[chặn] UGC_UNKNOWN_REF: không có mục ugc_reply 'ugc-ffffffffffffffff' — không ghi gì.
+exit=1
+## pytest handover + cloud README
+............                                                             [100%]
+12 passed in 1.84s
+## grep ad_test_plans
+docs/handover/sop.md:1
+docs/handover/kien-truc.md:3
+deploy/cloud/README.md:1
+80:## 3. Cơ sở dữ liệu — 67 bảng public (`docs/schema.sql`)

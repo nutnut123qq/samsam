@@ -526,11 +526,13 @@ def test_runners_single_source_and_same_signature():
     # gộp M31 đợt 4: + mkt02 (v6.1) + sales_director (v5.0) — đều luật;
     # gộp đợt 5: + cskh (v5.1, gateway giả — tất định); gộp v6.2: + mkt03
     # (provider giả eval_stub — tất định); v6.3: + mkt04 (LLM giả theo ca —
-    # tất định); v6.5: + mkt_seo (seo_san.suggest thuần); v5.3: + kd_a5.
+    # tất định); v6.5: + mkt_seo (seo_san.suggest thuần); v5.3: + kd_a5;
+    # v6.4: + mkt_ads_ugc (hàm thuần).
     assert set(ae.DETERMINISTIC_RUNNERS) == {"guardrail", "co_khi", "mkt02",
                                              "mkt03", "mkt04",
                                              "sales_director", "cskh",
-                                             "mkt_seo", "kd_a5"}
+                                             "mkt_seo", "kd_a5",
+                                             "mkt_ads_ugc"}
     assert not hasattr(ae, "RULE_AGENTS")
     for name, fn in ae.RUNNERS.items():
         if name == "chatbot":
@@ -1185,3 +1187,87 @@ def test_validate_mkt04_case(mutate, needle):
     mutate(c)
     errs = ae._validate_case(c, 0, d)
     assert any(needle in e for e in errs), errs
+
+
+# --- v6.4 W64.6 mkt_ads_ugc (MKT-05/06/07) ----------------------------------
+
+MKT_ADS_UGC_TRAPS = {
+    "trap_ads_input", "trap_offline_only", "trap_listing_only", "trap_cam",
+    "trap_xnqc_dossier", "trap_creative", "trap_no_cap", "trap_over_cap",
+    "trap_kit_contract", "trap_kit_offline", "trap_kit_listing",
+    "trap_kit_creative", "trap_ugc_echo", "trap_ugc_alcohol"}
+
+
+def test_mkt_ads_ugc_suite_shape():
+    from agents import mkt_ads, mkt_ugc
+
+    docs, cases = _rows("mkt_ads_ugc")
+    assert "CHƯA ĐƯỢC CÔNG TY DUYỆT" in docs[0]
+    assert len(cases) >= 20 and len({c["id"] for c in cases}) == len(cases)
+    assert all(c["scorer"] == "mkt_ads_ugc" and c["label"] == "dev_draft"
+               and c["label_status"] == "dev_MAU — chờ GĐ Marketing/Pháp chế"
+               for c in cases)
+    ads = [c for c in cases if c["op"] == "ads"]
+    assert {c["expect"]["code"] for c in ads} == {*mkt_ads.REJECT_CODES,
+                                                  None}
+    kit = [c for c in cases if c["op"] == "kit"]
+    assert len(kit) >= 4 and {"KIT_CONTRACT", "KIT_OFFLINE_ONLY",
+                              "KIT_LISTING_ONLY", None} <= {
+        c["expect"]["code"] for c in kit}
+    ugc = [c for c in cases if c["op"] == "ugc"]
+    assert len(ugc) >= 8
+    assert {c["expect"]["lop"] for c in ugc} == set(mkt_ugc.CLASSES)
+    s = ae.load_suite("mkt_ads_ugc")
+    assert (s["owner_block"], s["runner"], s["agent_model"], s["status"],
+            s["frozen"], s["risk"]) == ("marketing", "mkt_ads_ugc", "rules",
+                                        "active", False, "high")
+    assert MKT_ADS_UGC_TRAPS <= set(s["threshold"]["must_pass_kinds"])
+    assert s["threshold"]["min_pass_rate"] == 1.0
+    assert "mkt_ads_ugc" not in ae.load_config()["required_agents"]
+
+
+def test_mkt_ads_ugc_runner_deterministic_zero_llm(env, monkeypatch, capsys):
+    calls = _mkt02_counting_client(monkeypatch)   # bật GUARDRAIL_LLM_MODEL
+    from pipelines import llm_gateway
+
+    monkeypatch.setattr(llm_gateway, "chat",
+                        lambda *a, **k: pytest.fail("LLM"))
+    _, cases = _rows("mkt_ads_ugc")
+    r1 = [(c["id"], ok) for c, ok, _ in ae.run_mkt_ads_ugc(cases)]
+    r2 = [(c["id"], ok) for c, ok, _ in ae.run_mkt_ads_ugc(cases)]
+    assert r1 == r2 and all(ok for _, ok in r1) and calls == []
+    assert ae.main(["--agent", "mkt_ads_ugc", "--no-record"]) == 0
+    assert "[done] mkt_ads_ugc v1 PASS 28/28" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("cid, field, value", [
+    ("ads-offline-01", "expect", {"code": None}),
+    ("ads-overcap-01", "expect", {"code": None}),
+    ("kit-hop-dong-thieu-01", "expect", {"code": None}),
+    ("ugc-claim-01-no-echo", "expect", {"lop": "khen", "code": None})])
+def test_mkt_ads_ugc_flipped_trap_fails(env, monkeypatch, capsys, cid, field,
+                                        value):
+    _, cases = _rows("mkt_ads_ugc")
+    cases = [dict(c) for c in cases]
+    next(c for c in cases if c["id"] == cid)[field] = value
+    _patched_suite(monkeypatch, "mkt_ads_ugc", cases)
+    assert ae.main(["--agent", "mkt_ads_ugc", "--no-record"]) == 1
+    assert cid in capsys.readouterr().out
+
+
+def test_mkt_ads_ugc_echo_scorer_catches_repeat(monkeypatch):
+    """Câu trả lời lặp lại claim của khách → ca no-echo FAIL (scorer không
+    pass mù)."""
+    from agents import mkt_ugc
+
+    _, cases = _rows("mkt_ads_ugc")
+    c = next(c for c in cases if c["id"] == "ugc-claim-01-no-echo")
+    out = {"lop": "claim_suc_khoe", "code": None,
+           "reply": "Dạ, mừng Quý khách hết đau khớp"}
+    assert ae.score_case(c, out, None)[0] is False
+    real = mkt_ugc.draft_reply
+    monkeypatch.setattr(mkt_ugc, "draft_reply",
+                        lambda *a, **k: "Dạ, chúc mừng hết đau khớp, gout")
+    [(_, ok, _)] = ae.run_mkt_ads_ugc([c])
+    assert ok is False
+    monkeypatch.setattr(mkt_ugc, "draft_reply", real)

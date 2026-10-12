@@ -54,7 +54,9 @@ REQUIRED_MODULES = [
     # v6.5 MKT-10 rà SEO website công ty (GET qua collector)
     "agents/seo_web.py",
     # v10.3 WP16 nền P2: API sàn chỉ đọc + social listening nhà cung cấp
-    "ingest/market_api.py", "ingest/social_vendor.py"]
+    "ingest/market_api.py", "ingest/social_vendor.py",
+    # v6.4 MKT-07 review/UGC → nháp trả lời + consent tái sử dụng
+    "agents/mkt_ugc.py"]
 
 
 def _declared(m):

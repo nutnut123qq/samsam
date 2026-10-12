@@ -838,6 +838,34 @@
         "Chưa có hạn lưu `social_mentions_vendor`",
         "DPIA chưa ký — `excerpt` đang tắt"
       ]
+    },
+    {
+      "id": "DF-34",
+      "name": "Review sàn + bình luận kênh sở hữu → nháp trả lời UGC + xin phép/tái sử dụng UGC (MKT-07, v6.4)",
+      "modules": [
+        "agents/mkt_ugc.py"
+      ],
+      "data": "File review sàn Shopee/TikTok xuất tay (mã đánh giá, số sao, nội dung đánh giá — có thể chứa SĐT/email/tên/yếu tố sức khỏe; cột người mua/ảnh/mã đơn bỏ NGAY khi đọc); nhãn `social_mentions` v7.2 (không text khi DPIA chưa ký); contact_id + trạng thái consent `marketing` khi đề nghị tái sử dụng",
+      "class": "do",
+      "subjects": "Người mua để lại đánh giá trên sàn; khách bình luận/nhắn Fanpage/Zalo OA/TikTok của công ty; liên hệ trong `contacts` đồng ý cho dùng lại UGC",
+      "purpose": "Soạn ĐỀ XUẤT trả lời review/bình luận (template, không LLM) và nháp tin xin phép dùng lại UGC để người phụ trách duyệt rồi đăng/gửi TAY",
+      "storage": "Nội dung review chỉ trong RAM lúc chạy (đã `_mask_pii`) — KHÔNG ghi DB/không in; `approval_queue` mục `ugc_reply`/`ugc_reuse`: lớp, kênh, nguồn (sha12 file + số dòng / `social_mentions#id`), câu đề xuất, contact_id — object_id `ugc-<sha256 có muối INTEL_HASH_SALT>` (không chép nội dung khách)",
+      "retention": "Mục hàng duyệt: theo `approval_queue` (không xóa — append-only trạng thái); nội dung review không lưu",
+      "recipients": "Không gửi ra ngoài — agent không gọi API sàn/MXH, không LLM; người phụ trách đăng/gửi tay trên Seller Center/kênh sở hữu sau duyệt",
+      "cross_border": false,
+      "safeguards": [
+        "Không LLM/mạng (AST test `test_no_ads_api_no_spend`, không thuộc `egress_modules`)",
+        "Cột người mua/ảnh/mã đơn bỏ khi đọc, cột lạ → chặn cả file; `noi_dung` qua `_mask_pii` ngay khi đọc; lỗi chỉ in 'dòng N cột X'",
+        "`no_claim_echo`: câu trả lời không lặp claim/từ khóa sức khỏe khách nói; câu trả lời qua `check_publish`",
+        "Tái sử dụng UGC chỉ khi `crm.can_contact(contact_id, 'marketing')` = granted hiện hành; lớp sức khỏe/rượu luôn chặn (UGC_SENSITIVE)"
+      ],
+      "legal_basis": "Đồng ý `marketing` (v5.2) cho tái sử dụng UGC — phạm vi mục đích chưa được Pháp chế xác nhận: GAP; trả lời review = lợi ích hợp pháp CSKH: CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Pháp chế xác nhận template trả lời UGC (`data/ugc_rules.json` + câu health/alcohol của `data/channels.json`) — CẦN LUẬT SƯ XÁC NHẬN",
+        "Pháp chế xác nhận mục đích consent `marketing` có bao gồm tái sử dụng UGC (ảnh/lời đánh giá) hay cần mục đích riêng",
+        "Tên cột file review là GIẢ ĐỊNH — đối chiếu 1 file xuất thật từ Seller Center (external-dep)",
+        "DPIA chưa ký → `social_mentions` không có text, đề xuất trả lời chỉ theo nhãn"
+      ]
     }
   ]
 }

@@ -2137,6 +2137,372 @@ trong bảng (đã whitelist lúc nhập); thiếu test bài không ngày đăng
 as_of; page_safe thay cả ô title code-built khi sku_key chứa từ trần; dòng lỗi
 DB `str(e)` chưa qua page_safe (có thể làm trang trượt finalize).
 
+## Checklist v6.4-ads-koc-ugc
+
+Khán giả/mục đích: M31 (worktree `D:\code\samsam-w44`) — làm MKT-05/06/07 của
+WP08 "Marketing, content và media AI" (pmo.md dòng `| WP08`; key `marketing`
+trong ctx/final_plans.json agents 5/6/7 + review acceptance_tests 6/7/14).
+Acceptance WP08 phần này: **MKT-05 chặn cứng SKU offline_only và listing_only
+(test); không agent nào có quyền chi tiền hay đăng bài.** Nền ai-infra đã gộp
+(đọc code thật, TÁI DÙNG): `agents/fp_ads.py` v9.1 (`load_cfg`, `propose`,
+`fetch_readiness` — trần ngân sách theo biên, rượu/MO_TA = 0),
+`agents/fp_pnl.py` (`compute`, `parse_month`), `pipelines/guardrail.py`
+(`check`, `check_publish(content_type="ads"|"koc", is_sponsored=True)`,
+`_readiness_of`), view `sku_readiness` (CAM | MO_TA | TP_THUONG |
+QC_DAY_DU), `pipelines/mkt_calendar.py` (`CONTENT_OK`, `REASON_ALCOHOL`),
+`pipelines/store.py` (`content_drafts` status/sku/content_type/is_ai,
+`verify_publish`), `pipelines/director.py` (`submit` → `approval_queue`, risk/
+SLA từ `data/directors/<block>.json`), `pipelines/approval_queue.py`
+(`decide` chặn tự duyệt qua `decide_item` — người duyệt ≠ `created_by`,
+`auto_approve` chỉ risk low + luật đã ký, `verify`), `scripts/contract_check.py`
+v4.4 (`missing_clauses(text, "koc")`, mẫu `docs/legal/mau-hop-dong-koc-NHAP.md`
+đủ 9 điều khoản — đã chạy exit 0), `ingest/intel_import.py` v7.2
+(`social_mentions` chỉ nhãn — excerpt NULL khi `dpia_signed=false`;
+`load_social_rules`, `classify_social`), `ingest/crm.py` v5.2 (`can_contact(conn,
+contact_id, "marketing")` trên `v_consent_current`), `pipelines/pii._mask_pii`,
+`pipelines/kb_filter.is_alcohol`, `pipelines/llm_gateway.is_health_question`
+(nằm trong `GATEWAY_SAFE` — KHÔNG tính egress), `xnqc_dossiers` v4.3,
+`agents/report.write_report`, `scripts/agent_eval.py` (format suite v4.5).
+
+**Ánh xạ channel_policy (kế hoạch MKT) → readiness code đang chạy** (không
+thêm cột chính sách mới — golden + view là nguồn sự thật):
+`offline_only` = `category == "alcohol"` (rượu sâm — luật đặt TRƯỚC readiness như
+`mkt_calendar._cell`, kể cả khi golden ghi `allowed_channels: ["shopee"]`);
+`listing_only` = readiness `MO_TA` (TPBVSK `xnqc_status` ≠ `approved` — none/
+pending); `CAM` = readiness CAM còn lại (kênh ngoài `allowed_channels`, thực
+phẩm `self_declaration_ok` ≠ true — gồm mật ong hiện tại, SKU không có trong
+view → fail-closed); `online_ok` = `TP_THUONG` | `QC_DAY_DU` (= `mkt_calendar.
+CONTENT_OK`). Golden thật hiện KHÔNG có SKU nào online_ok → mọi ca "đạt" dùng
+golden fixture trong schema tạm (sửa `sku_master` như `tests/test_fp_ads.py`).
+
+Quy ước: ponytail — stdlib + `psycopg` (đã có) — KHÔNG dep mới, KHÔNG LLM (cả
+3 agent tất định, template). 3 module mới, mỗi agent 1 file: `agents/mkt_ads.py`
+(MKT-05), `agents/mkt_koc.py` (MKT-06), `agents/mkt_ugc.py` (MKT-07); cả 3 KHÔNG
+import `httpx`/`requests`/`urllib.request`/`http.client`/`socket`/`smtplib`/
+`openai`/SDK quảng cáo (`facebook_business`, `tiktok*`, `google.ads`…) và chỉ
+được lấy `is_health_question`/`_strip_accents` từ `pipelines.llm_gateway`
+(kiểm bằng `scripts/dpia_draft.egress_modules` + AST test). Agent KHÔNG chi tiền,
+KHÔNG gọi API quảng cáo/sàn/MXH, KHÔNG đăng/trả lời/liên hệ KOC hay khách —
+output DUY NHẤT là NHÁP trong `approval_queue` (+ bảng `ad_test_plans` cho phiếu)
+và file kit đã duyệt ở `data/reports/` (đã gitignore). 1 bảng mới
+`ad_test_plans` trong block mới cuối `docs/schema.sql` (`create table if not
+exists`, KHÔNG `alter`/`drop` bảng cũ); KHÔNG thêm assert đếm cứng số bảng (sàn
+≥ 24 / parse schema.sql); `docs/handover/kien-truc.md` thêm tên bảng + sửa câu
+"N bảng public" khớp số parse được (66 → 67 tại thời điểm soạn; gộp song song
+thì đếm lại); `deploy/cloud/README.md` thêm dòng bảng (drift-guard
+`tests/test_db_backup.py::test_cloud_readme_drift_guard`). KHÔNG sửa
+`docs/roles.sql` (bảng mới không grant → mặc định từ chối agent_writer/
+app_human; CLI ghi chạy DSN chủ sở hữu — ghi rõ kien-truc, grant hẹp =
+someday). Loại việc hàng duyệt: phiếu ads = 2 mục cùng `object_id
+adtest-<id>` — `marketing/ad_campaign` (risk high, GĐ Marketing) +
+`finance/budget_change` (risk high, khối finance — người duyệt hiện là vai trò
+`tgd` trong `data/directors/finance.json`; chưa có role GĐ tài chính riêng =
+external-dep); prefix `adtest-` không đụng `fp_ads.pending_for_month` (`ads-
+YYYY-MM-%`). Kết quả ads → `marketing/ad_campaign` `adres-<plan>-<sha12>`. Kit
+KOC → `marketing/koc_brief` (đã có). UGC: thêm vào `data/directors/
+marketing.json` 2 loại `ugc_reply` (sla 24, risk medium) + `ugc_reuse` (sla 72,
+risk high) — không đổi loại cũ. `created_by` mọi mục = `--by` người lập (bắt
+buộc, không blank — precedent v8.3: chặn tự duyệt), title/payload KHÔNG nêu
+tên SKU rượu. Connect qua `ingest.lead_store.connect` (connect_timeout;
+guard `tests/test_connect_timeout_guard.py`); print tiếng Việt → UTF-8 guard;
+CLI nhiều op → `n_ops > 1` usage exit 2 TRƯỚC connect; ghi trên conn chia sẻ →
+`conn.commit()` tường minh; format-spec chỉ trên biến đã coerce (CLI truyền
+str); "hôm nay" theo `pipelines.period.VN_TZ`; file CSV đọc BYTES (`utf-8-sig`),
+lỗi in "dòng N cột X: lý do" — KHÔNG in giá trị ô/nội dung khách; print định
+danh qua `_mask_pii`. Test DB thật: schema tạm + `docs/schema.sql` (+ golden)
+rồi ROLLBACK (tái dùng `tests/test_fp_pnl.py::fpa_conn` + `_TxConn`), skip khi
+không DB nhưng gate đòi 0 skipped mới (ngoài baseline môi trường). Không assert
+wall-clock (ngày/giờ tiêm qua tham số `today`/`now`). KHÔNG ghi `ad_test_plans`/
+`approval_queue` trên DB thật ngoài test rollback (CLI DB thật chỉ `--dry-run`/
+đọc/case âm); `apply_schema` ×2 trên DB riêng `samsam_infra` được phép.
+
+External-dep (KHÔNG giả lập như thật, KHÔNG tự đánh dấu): tài khoản quảng cáo
++ API Meta/TikTok/Shopee Ads (agent không có đường gọi — Quản lý MXH cài tay sau
+duyệt); tên cột file kết quả ads + file review sàn là GIẢ ĐỊNH (người có tài
+khoản xuất 1 file thật để đối chiếu header); KOC thật + hợp đồng ký (danh sách
+`data/koc_sample.json` là MẪU `KOC-MAU-xx`, không handle/tên/SĐT; hợp đồng tham
+chiếu là mẫu NHÁP v4.4 — `contract_check` đạt ≠ đã ký/đã rà luật sư); review
+thật; GĐ Marketing / GĐ tài chính duyệt ngân sách + phiếu (`approvers: []`
+giữ rỗng); trần `data/fpa_config.json` (`confirmed_by: null`); Pháp chế duyệt
+template trả lời UGC + xác nhận mục đích consent `marketing` (v5.2) bao gồm
+tái sử dụng UGC (GAP ghi DF-31); DPIA ký (`dpia_signed=false` → social_mentions
+không có text, đề xuất trả lời chỉ theo nhãn). Someday: XNQC-LOCK theo maket
+nguyên văn (map creative ↔ `xnqc_dossiers.document_sha256` — chưa có cột liên
+kết; version này chỉ đòi SKU TPBVSK có hồ sơ `da_cap` còn hạn), log chi khớp
+phiếu đã duyệt (cần file chi thật), UI Streamlit.
+
+- [x] **W64.1 Schema `ad_test_plans` + loại việc marketing** — block mới cuối
+  `docs/schema.sql` comment "v6.4 MKT-05 phiếu thử nghiệm ads (WP08)": ai ghi
+  (`agents.mkt_ads --plan`, DSN chủ sở hữu), ai đọc (`--results`/`--status`),
+  insert-only (trigger `append_only_guard` sẵn có, khuôn `consents`), không PII,
+  không cột tiền đã chi. Cột: `id` identity pk, `plan_sha256 text not null
+  unique` check `^[0-9a-f]{64}$` (sha JSON chuẩn hóa — chạy lại cùng file =
+  không tạo phiếu thứ 2), `sku_key text not null references sku_master`,
+  `channel text not null` check ∈ golden CHANNELS, `hypothesis` 10..500 ký tự,
+  `creative_draft_ids bigint[] not null` check `cardinality between 1 and 3`,
+  `budget_vnd bigint not null` check `> 0`, `cap_vnd bigint not null`, check
+  `budget_vnd <= cap_vnd`, `cap_ref_month date not null` (ngày 1 của tháng P&L
+  tham chiếu), `start_date`/`end_date date not null` check `end_date >=
+  start_date and end_date - start_date <= 30`, `success_metric jsonb not null`,
+  `stop_rules jsonb not null` check `jsonb_array_length >= 1`, `readiness text
+  not null` check ∈ `TP_THUONG|QC_DAY_DU` (DB tự chặn listing_only/CAM dù code
+  lỗi), `created_by text not null` check not blank, `created_at`.
+  `data/directors/marketing.json` thêm `ugc_reply` {24, medium}, `ugc_reuse`
+  {72, high} (`director.validate` vẫn pass; `_doc` ghi v6.4).
+  - Boundary: `docs/schema.sql` (block mới), `data/directors/marketing.json`,
+    `docs/handover/kien-truc.md` (dòng bảng + "67 bảng public" + mục quyền:
+    bảng chưa grant), `deploy/cloud/README.md` (1 dòng bảng),
+    `tests/test_mkt_ads.py` (phần schema)
+  - Gate: `python scripts/apply_schema.py` ×2 trên `samsam_infra` sạch;
+    test schema tạm: insert `readiness='MO_TA'` → CheckViolation, `budget_vnd >
+    cap_vnd` → CheckViolation, 4 creative → CheckViolation, UPDATE/DELETE →
+    lỗi append-only, trùng `plan_sha256` → UniqueViolation;
+    `director.load_config("marketing")` có đủ 6 loại;
+    `python -m pytest -q tests/test_handover_docs.py::test_kien_truc_lists_all_tables
+    tests/test_db_backup.py::test_cloud_readme_drift_guard` xanh
+  - Evidence: `evidence/v64_schema.log`
+- [x] **W64.2 MKT-05 phiếu thử nghiệm ads — chặn cứng** — `agents/mkt_ads.py`:
+  hàm THUẦN `validate_plan(plan, *, golden, readiness, creatives, cap, today)
+  → (code | None, lý do)` (không DB), mã cố định `REJECT_CODES` theo thứ tự ưu
+  tiên: `ADS_INPUT` (field thiếu/sai kiểu, ngày sai, start < hôm nay VN, > 30
+  ngày, success_metric ∉ `ctr|cpc|cpa|don_hang` × op `>=|<=` × target > 0,
+  stop_rules rỗng/metric lạ) → `ADS_OFFLINE_ONLY` (rượu) → `ADS_LISTING_ONLY`
+  (MO_TA = TPBVSK chưa XNQC) → `ADS_CAM` → `ADS_XNQC_DOSSIER` (TPBVSK QC_DAY_DU
+  nhưng không có `xnqc_dossiers` status `da_cap` còn hạn cho SKU) →
+  `ADS_CREATIVE_UNAPPROVED` (draft không tồn tại / status ≠ approved / sku ≠
+  SKU phiếu / content_type ∉ `ads|image` / `store.verify_publish` False / chạy
+  lại `check_publish(text, channel=<kênh phiếu>, content_type="ads", sku,
+  is_ai, is_sponsored=True)` không ok) → `ADS_NO_CAP` (fp_ads cho cặp SKU ×
+  kênh ≠ `DE_XUAT` hoặc kênh ngoài `fpa_config.ads.channels`) →
+  `ADS_OVER_CAP` (`budget_vnd > cap`). Trần lấy bằng `cap_for(conn, sku,
+  channel, month)` = `fp_ads.propose(fp_pnl.compute(conn, month)["cells"],
+  fp_ads.fetch_readiness(conn, cfg["channels"]), cfg)` — KHÔNG chép công thức.
+  Đạt → insert `ad_test_plans` + `director.submit` 2 mục (`marketing/
+  ad_campaign` + `finance/budget_change`, cùng `object_id adtest-<id>`, payload
+  markdown có NOTE "ĐỀ XUẤT — agent không chi tiền, không gọi API quảng cáo;
+  Quản lý MXH cài tay sau khi GĐ Marketing + GĐ tài chính duyệt"); chạy lại
+  cùng file → tìm theo `plan_sha256`, chỉ bổ sung mục hàng duyệt còn thiếu.
+  `plan_status(conn, id)` → `cho_duyet|da_duyet|tu_choi|het_han|thieu_muc`
+  (`da_duyet` CHỈ khi CẢ 2 mục approved). CLI: `python -m agents.mkt_ads --plan
+  FILE.json --by "Tên" [--month YYYY-MM] [--dry-run]` · `--status ID`. Exit: 0
+  ok/skip · 1 bị từ chối (in mã) / cấu hình / DB lỗi · 2 usage / DB down. Bị
+  từ chối → KHÔNG ghi gì (count `ad_test_plans`/`approval_queue` trước = sau).
+  - Boundary: `agents/mkt_ads.py`, `tests/test_mkt_ads.py`,
+    `tests/fixtures/mkt/` (plan JSON MẪU)
+  - Gate: test từng mã: `ruou-sam-chai-thuy-tinh-500ml` + `ruou-sam-binh-su-do-
+    500ml` → `ADS_OFFLINE_ONLY`; `savigout-30v` (xnqc none) + 1 TPBVSK
+    `xnqc_status='pending'` (schema tạm) → `ADS_LISTING_ONLY`; `mat-ong-sam-
+    300ml` (self_declaration null) + TPBVSK approved trên kênh ngoài
+    allowed → `ADS_CAM`; SKU lạ → `ADS_CAM`; TPBVSK approved không hồ sơ
+    `da_cap` → `ADS_XNQC_DOSSIER`; draft pending / rejected / khác SKU → 
+    `ADS_CREATIVE_UNAPPROVED`; budget = cap đạt, cap+1 → `ADS_OVER_CAP`;
+    fp_ads `CHO_DU_LIEU` → `ADS_NO_CAP`; DB-test: mỗi ca từ chối count 2 bảng
+    không đổi; ca đạt (mật ong `self_declaration_ok=true` + giá vốn duyệt +
+    draft ads approved) → 1 dòng + 2 mục pending risk `high`,
+    `aq.auto_approve` → (False, …), người lập tự duyệt → bị từ chối, chạy lại
+    cùng file → không thêm dòng; `plan_status` chỉ `da_duyet` khi duyệt đủ 2;
+    DB thật: `python -m agents.mkt_ads --plan tests/fixtures/mkt/<rượu>.json
+    --by dev --dry-run` exit 1 `ADS_OFFLINE_ONLY`; `--plan --status 1` exit 2
+  - Evidence: `evidence/v64_ads.log`
+  - Vá nghiệm thu (2026-10-13, 3 MINOR trùng "chẻ trần"): trần là trần THÁNG
+    — cột `allocated_vnd` (tổng phiếu KHÁC cùng SKU × kênh, cùng
+    `cap_ref_month` HOẶC khung chạy chạm cùng tháng lịch, `plan_status` ∉
+    `tu_choi|het_han`) → `budget_vnd + allocated > cap` = `ADS_OVER_CAP`;
+    đếm lại dưới `pg_advisory_xact_lock` trước insert (2 phiếu song song);
+    payload ghi "phiếu khác ... đã giữ X" cho người duyệt. Test:
+    `test_db_cap_cumulative_split_rejected`, `test_db_cap_recheck_under_lock`,
+    `test_pass_and_budget_boundary` (allocated), cuối `test_db_plan_flow` LẬT
+    (phiếu 2 cùng trần → `ADS_OVER_CAP`, 0 ghi). `--month` đổi P&L tham chiếu
+    không mở trần cho tháng lịch đã giữ; chọn tháng P&L cao nhất vẫn là quyền
+    người lập — GĐ tài chính thấy tháng tham chiếu + số đã phân bổ trong payload.
+- [x] **W64.3 MKT-05 nạp kết quả ads (file xuất tay) → đề xuất dừng/tiếp** —
+  `agents/mkt_ads.py`: `read_results(path, plan)` CSV bytes, cột GIẢ ĐỊNH
+  `ngay,bien_the,hien_thi,click,chi_phi_vnd,don_hang` (cột lạ → chặn cả file;
+  `bien_the` ∉ `creative_draft_ids`, ngày ngoài [start, end], số âm, `click >
+  hien_thi` → lỗi dòng/cột, không in giá trị); `evaluate(plan, rows)` THUẦN →
+  tổng + theo biến thể (ctr/cpc/cpa — mẫu 0 → None, không chia 0) + `stop_hits`
+  + `de_xuat` ∈ `dung` (chạm điều kiện dừng HOẶC `chi_phi_vnd >= budget_vnd` —
+  vượt phiếu gắn cờ "CHI VƯỢT PHIẾU") | `dat_muc_tieu` | `tiep` |
+  `chua_du_lieu`; KHÔNG có "tăng ngân sách" (tăng = lập phiếu mới qua trần).
+  Phiếu chưa `da_duyet` → `ADS_PLAN_NOT_APPROVED` exit 1, không ghi. Đạt →
+  `marketing/ad_campaign` `adres-<plan>-<sha12 file>` (nạp lại cùng file →
+  skip). CLI `--results FILE.csv --plan-id N --by "Tên" [--dry-run]`.
+  - Boundary: `agents/mkt_ads.py`, `tests/test_mkt_ads.py`,
+    `tests/fixtures/mkt/ads_ket_qua_MAU.csv`
+  - Gate: test thuần: chạm stop → `dung`, đạt target → `dat_muc_tieu`, giữa kỳ
+    chưa đạt → `tiep`, 0 hiển thị → `chua_du_lieu` (không ZeroDivisionError),
+    chi ≥ ngân sách → `dung` + cờ; cột lạ/biến thể lạ → lỗi có số dòng + tên
+    cột, output không chứa giá trị ô; DB-test: phiếu chưa duyệt đủ 2 → từ
+    chối 0 ghi; duyệt đủ → 1 mục pending, nạp lại → skip
+  - Evidence: `evidence/v64_ads.log`
+- [x] **W64.4 MKT-06 kit KOC/affiliate** — `agents/mkt_koc.py` +
+  `data/koc_sample.json` (`_doc` "MẪU — không phải KOC thật, không PII";
+  `kocs`: [{`code` `^KOC-MAU-\d{2}$`, `platform` tiktok|facebook, `niche`,
+  `contract_file` (đường dẫn tương đối trong repo), `contract_status`
+  "NHAP_MAU"}]; loader fail-closed: key lạ / code sai mẫu / file thiếu / rỗng /
+  `{}` / chỉ `_doc` → lỗi; ≥1 KOC trỏ `tests/fixtures/mkt/hop-dong-koc-thieu-
+  MAU.md` để test). `build_kit(koc, sku, channel, drafts, golden)` THUẦN, chặn
+  theo cùng ánh xạ: `KIT_OFFLINE_ONLY` / `KIT_LISTING_ONLY` / `KIT_CAM` (koc cần
+  `mkt_calendar.CONTENT_OK`) / `KIT_CREATIVE_UNAPPROVED` / `KIT_CONTRACT`
+  (`contract_check.missing_clauses(text, "koc")` khác rỗng — in id điều khoản,
+  hoặc file thiếu/ngoài repo/không đọc được) / `KIT_GUARDRAIL`. Kit tất định:
+  brief = text NGUYÊN VĂN các draft đã duyệt; "được nói" = `matched_claims` trong
+  snapshot guardrail của draft; "không được nói" diễn đạt theo NHÓM (từ cấm
+  `data/banned_words.txt`, công dụng ngoài câu đã duyệt, sản phẩm có cồn) —
+  KHÔNG chép từ cấm/tên SKU rượu (guardrail chặn chính kit); câu khuyến cáo
+  `guardrail_rules.disclaimer.canonical` khi TPBVSK; nhãn `#quangcao` (+ nhãn AI
+  nếu draft `is_ai`); link/mã affiliate placeholder `{{LINK_AFFILIATE}}` /
+  `AFF-<code>-<sku>-PLACEHOLDER` ghi rõ "chưa phải link thật". Kit qua
+  `check_publish(kit, channel, content_type="koc", sku, is_ai, is_sponsored=
+  True)` ok mới `director.submit(marketing, koc_brief, koc-<code>-<sha12>)`,
+  payload kèm `contract_sha256`. `--release QID --by`: mục `koc_brief`
+  approved + `aq.verify(conn, qid, payload)` + sha hợp đồng hiện tại == sha
+  trong payload + `missing_clauses == []` → `write_report` ra
+  `data/reports/koc-kit-<code>-<qid>.md`; sai → `KIT_NOT_APPROVED` /
+  `KIT_CONTRACT_CHANGED` exit 1. Agent KHÔNG gửi/liên hệ KOC. CLI: `python -m
+  agents.mkt_koc --list` · `--kit --koc CODE --sku SKU --channel CH --draft-ids
+  1,2 --by "Tên" [--dry-run]` · `--release QID --by "Tên"`.
+  - Boundary: `agents/mkt_koc.py`, `data/koc_sample.json`,
+    `tests/test_mkt_koc.py`, `tests/fixtures/mkt/hop-dong-koc-thieu-MAU.md`
+  - Gate: kit với hợp đồng mẫu v4.4 + SKU fixture online_ok + draft approved
+    → `check_publish` ok, chứa `#quangcao` + placeholder affiliate (+ khuyến
+    cáo khi TPBVSK); hợp đồng thiếu → `KIT_CONTRACT` có id thiếu, 0 enqueue;
+    rượu/MO_TA/CAM → đúng mã; draft pending → `KIT_CREATIVE_UNAPPROVED`;
+    release: chưa duyệt → `KIT_NOT_APPROVED`, sửa hợp đồng sau khi enqueue →
+    `KIT_CONTRACT_CHANGED`, đủ → file ra đúng bằng payload; `koc_sample.json`
+    `_mask_pii(raw) == raw` + không key `phone|email|name|handle`
+  - Evidence: `evidence/v64_koc.log`
+- [x] **W64.5 MKT-07 UGC/review → đề xuất trả lời + xin phép dùng lại** —
+  `agents/mkt_ugc.py` + `data/ugc_rules.json` (NHÁP chờ Pháp chế/Quản lý MXH:
+  template `khen|che|khieu_nai|hoi_gia|xin_phep`; câu sức khỏe/rượu TÁI DÙNG
+  `data/channels.json` `health`/`alcohol` (kênh sở hữu) và `health_san`/
+  `alcohol_san` (sàn) — không viết câu thứ hai; map cột file review GIẢ ĐỊNH
+  per `shopee|tiktok`: required `ma_danh_gia,so_sao,noi_dung,thoi_gian`, drop
+  cột người mua/ảnh, cột lạ → chặn file). Nguồn: (a) `--reviews FILE --channel
+  shopee|tiktok` (noi_dung `_mask_pii` NGAY khi đọc, chỉ trong RAM); (b)
+  `--mentions --since YYYY-MM-DD` đọc `social_mentions` (CHỈ nhãn v7.2,
+  fanpage→facebook, zalo_oa→zalo). `classify(text, stars, rules)` THUẦN, ưu
+  tiên: `ruou` (`is_alcohol`) → `claim_suc_khoe` (`is_health_question` / nhãn
+  `hoi_suc_khoe` / `guardrail.check(text)` có vi phạm từ cấm/claim) →
+  `khieu_nai` → `che` (nhãn hoặc ≤2 sao) → `khen` (nhãn hoặc ≥4 sao) →
+  `hoi_gia` → `khac` (không soạn). `draft_reply(cls, channel)` template;
+  `no_claim_echo(reply, customer_text)` — mọi span vi phạm của `check(text khách)`
+  + từ khóa sức khỏe khách nói KHÔNG xuất hiện (so bản fold) trong câu trả lời;
+  reply phải `check_publish(reply, channel, content_type="post", is_ai=False)`
+  ok → `director.submit(marketing, ugc_reply, ugc-<hash16>)` (hash = sha256
+  `INTEL_HASH_SALT|channel|ma_danh_gia` — thiếu salt → exit 1 trước connect;
+  đã có object_id ở bất kỳ status → skip). Payload: lớp, kênh, nguồn (sha12
+  file + số dòng / `social_mentions#id`), câu đề xuất, ghi "người đăng tay sau
+  duyệt" — KHÔNG chép nội dung khách. Xin phép dùng lại: `--reuse-request REF
+  --by` → nháp tin nhắn `xin_phep` (mục `ugc_reply`, chưa gửi); `--reuse REF
+  --contact-id N --by` → lớp đọc từ title mục `ugc_reply` của REF (không thấy →
+  `UGC_UNKNOWN_REF`); `claim_suc_khoe`/`ruou` → `UGC_SENSITIVE` luôn chặn;
+  `crm.can_contact(conn, N, "marketing")` False → `UGC_NO_CONSENT` exit 1, 0
+  ghi; đủ → `ugc_reuse` (risk high, payload chỉ contact_id + REF, không PII).
+  Agent KHÔNG tự trả lời/đăng/nhắn khách.
+  - Boundary: `agents/mkt_ugc.py`, `data/ugc_rules.json`,
+    `tests/test_mkt_ugc.py`, `tests/fixtures/mkt/review_shopee_MAU.csv`
+  - Gate: phân loại đúng ≥1 ca mỗi lớp; review "uống Saphraton hết đau khớp,
+    chữa được gout" → `claim_suc_khoe`, reply = template health, không chứa
+    "đau khớp"/"gout"/"chữa" (fold), `check_publish` ok; mọi template trong
+    `ugc_rules.json` qua `check_publish` theo từng kênh; payload/stdout không
+    chứa SĐT/email mẫu trong file và không chứa nội dung khách; DB-test:
+    `--reuse` không consent / consent rút (`granted=false` mới nhất) →
+    `UGC_NO_CONSENT` 0 ghi, consent `marketing` granted → 1 mục `ugc_reuse`
+    risk high; lớp nhạy cảm + consent → `UGC_SENSITIVE`; nạp lại cùng file →
+    skip; mục `ugc_reply` risk medium pending, `auto_approve` False (không
+    luật)
+  - Evidence: `evidence/v64_ugc.log`
+  - Vá nghiệm thu (2026-10-13, MINOR): `test_propose_and_process_enforce_no_echo`
+    — template lặp cụm sức khỏe khách (có dấu + không dấu) → `UGC_ECHO`,
+    `process()` xếp `chan`, 0 lần `_submit`; mutation (tắt khối kiểm trong
+    `propose`) → test đỏ (đã thử).
+- [x] **W64.6 Eval suite + data_flow_map + "0 đường chi tiền"** —
+  `data/eval/suites/mkt_ads_ugc.json` (format v4.5, runner/scorer
+  `mkt_ads_ugc`, `label_status` "dev_MAU — chờ GĐ Marketing/Pháp chế", chấm
+  TẤT ĐỊNH: 0 mạng/LLM/DB, gọi hàm thuần `validate_plan`/`build_kit`/
+  `classify`+`draft_reply`+`no_claim_echo`): ≥ 20 ca — mỗi `REJECT_CODES` của
+  ads ≥1 ca + 1 ca đạt, kit ≥4 (đạt / hợp đồng thiếu / rượu / MO_TA), UGC ≥8
+  (mỗi lớp + no-echo). `scripts/agent_eval.py`: thêm vào `SCORERS`,
+  `RUNNER_SCORERS`, `DETERMINISTIC_RUNNERS` (KHÔNG vào required_agents);
+  `tests/test_qa_harness.py` đổi 17 → 18 suite. `data/data_flow_map.json` thêm
+  `DF-31` (review sàn + social_mentions → nháp trả lời UGC + consent dùng lại;
+  modules `agents/mkt_ugc.py`; class `do`; không lưu nội dung khách; gaps: Pháp
+  chế xác nhận template + mục đích consent `marketing` cho tái sử dụng UGC) →
+  sinh lại `python scripts/dpia_draft.py`. Test AST
+  `test_no_ads_api_no_spend`: 3 module không import mạng/SDK quảng cáo/
+  `openai`, không chuỗi `graph.facebook.com|business-api.tiktok.com|
+  ads.google`, không thuộc `egress_modules()`.
+  - Boundary: `data/eval/suites/mkt_ads_ugc.json`, `scripts/agent_eval.py`,
+    `tests/test_qa_harness.py`, `tests/test_agent_eval.py`,
+    `data/data_flow_map.json`, `docs/legal/DPIA-nhap.md`,
+    `docs/legal/TIA-nhap.md` (sinh lại), `tests/test_data_flow_map.py`
+    (REQUIRED_MODULES), `tests/test_mkt_ads.py` (AST)
+  - Gate: `python scripts/agent_eval.py --validate` → 18/18 hợp lệ;
+    `python scripts/agent_eval.py --agent mkt_ads_ugc --no-record` 100% ×2
+    (tất định, cùng hash); `python scripts/dpia_draft.py --check` exit 0;
+    `python -c "from scripts.dpia_draft import egress_modules as e;
+    print({'agents/mkt_ads.py','agents/mkt_koc.py','agents/mkt_ugc.py'} & e())"`
+    → `set()`; `grep -nE "^\s*(import|from) " agents/mkt_ads.py
+    agents/mkt_koc.py agents/mkt_ugc.py` chỉ stdlib/psycopg/module dự án
+  - Evidence: `evidence/v64_eval.log`
+- [x] **W64.7 Docs SOP + kiến trúc + cloud README** — `docs/handover/sop.md`
+  mục mới `5n. Ads thử nghiệm / kit KOC / UGC (v6.4 — agent KHÔNG chi tiền,
+  KHÔNG đăng, KHÔNG liên hệ)`: lệnh `agents.mkt_ads --plan/--status/--results`,
+  `agents.mkt_koc --list/--kit/--release`, `agents.mkt_ugc --reviews/--mentions/
+  --reuse-request/--reuse` (đúng như chạy thật), ai duyệt (GĐ Marketing + khối
+  finance), bảng mã từ chối, ánh xạ offline_only/listing_only → readiness, cài
+  ads/gửi kit/trả lời = NGƯỜI làm tay sau duyệt; dòng lịch tuần mục đầu SOP nếu
+  có bảng tác vụ. `docs/handover/kien-truc.md`: dòng `ad_test_plans`, "67 bảng
+  public", 3 agent mới + 2 loại việc marketing mới, quyền chưa grant.
+  `deploy/cloud/README.md`: dòng bảng (đường B — dữ liệu nghiệp vụ, dump chuẩn).
+  - Boundary: `docs/handover/sop.md`, `docs/handover/kien-truc.md`,
+    `deploy/cloud/README.md`
+  - Gate: spot-check ≥5 lệnh trong 5n chạy được (`--help`/`--dry-run`/case
+    âm, exit đúng); `python -m pytest -q tests/test_handover_docs.py
+    tests/test_db_backup.py::test_cloud_readme_drift_guard` xanh; grep
+    `ad_test_plans` có trong cả 3 file
+  - Evidence: `evidence/v64_docs.log`
+- [x] **W64.8 Gate chung** [đỏ ngoài boundary đã vá riêng trên `ai-infra`: date-bomb garden 19dc153, QR '-' 8b37b97] — targeted ×3: `python -m pytest -q
+  tests/test_mkt_ads.py tests/test_mkt_koc.py tests/test_mkt_ugc.py
+  tests/test_qa_harness.py tests/test_agent_eval.py tests/test_data_flow_map.py
+  tests/test_dpia_draft.py tests/test_handover_docs.py
+  tests/test_director_framework.py tests/test_connect_timeout_guard.py
+  tests/test_db_backup.py::test_cloud_readme_drift_guard` (3 lần liên tiếp
+  xanh, 0 skipped mới); full `python -m pytest -q` đúng 1 lần/vòng — 0 failed,
+  passed ≥ baseline 3533 + test mới (skip chỉ test môi trường như baseline —
+  Docker `test_dr_drill`); `ruff check .` sạch; `python -m py_compile
+  agents/mkt_ads.py agents/mkt_koc.py agents/mkt_ugc.py scripts/agent_eval.py`;
+  `git status` không file lạ ngoài danh sách boundary (evidence `.log` →
+  `git add -f`). Lệnh nặng có thể bị đẩy nền — đọc output tới khi process
+  exit trước lệnh nặng kế tiếp, không chạy chồng pytest.
+  - Boundary: toàn bộ boundary W64.1–W64.7
+  - Gate: như trên
+  - Evidence: `evidence/v64_pytest.log`, `evidence/v64_ruff.log`
+  - Trạng thái (worker 2026-10-13): targeted ×3 xanh 2 vòng (368 passed ×6, `evidence/v64_targeted.log`); ruff sạch; py_compile ok. Full pytest vòng 2: 3634 passed, 3 failed — `test_ci_workflow` (do v6.4 thêm suite tất định, ĐÃ VÁ test + comment ci.yml, chạy lại xanh) + 2 đỏ KHÔNG thuộc diff: `test_dr_drill::test_zz_no_dr_container_left` (docker — container worktree khác) và `test_garden_director::test_bulletin_numbers_match_reference_sql` (time-bomb wall-clock có sẵn, đỏ từ 2026-10-13). Vòng 1 thêm flake `test_qr_trace` (token bắt đầu '-'). Giữ [ ] chờ coordinator quyết 2 đỏ ngoài phạm vi.
+
+v6.4 đóng 2026-10-13 (workflow resume từ build; worker vá OWASP `_csv.Error`
+ô >131072 ký tự; vòng 0: FIX/FIX/FIX — 5 finding, chính là chia trần FP&A qua
+nhiều phiếu cùng SKU × kênh × tháng → cột `allocated_vnd`, advisory lock + đếm
+lại trước insert, render cho người duyệt thấy tổng; vòng 1 PASS, 0 mở; auditor
+full pytest 3640 pass / 0 fail). Coordinator tự vá NIT quyền: 1 người (không phải
+người tạo) duyệt được CẢ 2 mục marketing + tài chính → kiểm soát kép danh nghĩa;
+`plan_status` giờ trả `cung_nguoi_duyet` khi decided_by trùng (lower+btrim) + test
+(kiểm ngược: bỏ vá → đỏ). Worker sửa test garden — BỎ khi commit (bản vá chung
+`ai-infra` 19dc153). Gate coordinator chạy lại: ruff sạch, test mkt_ads/koc/ugc +
+eval/qa/data_flow/ci xanh, `agent_eval --validate`, `dpia_draft --check`.
+External-dep: tài khoản + API Meta/TikTok/Shopee Ads, tên cột thật file kết quả
+ads + review sàn, KOC thật + hợp đồng ký, review thật, GĐ Marketing + GĐ tài
+chính duyệt phiếu/ngân sách (chưa có role GĐ tài chính riêng — `tgd` thay), trần
+`fpa_config` chưa chốt, Pháp chế duyệt mẫu trả lời UGC + consent `marketing` có
+phủ tái dùng UGC không (gap DF-31), ký DPIA. Someday: `_read_plan` RecursionError
+JSON lồng sâu; review ngụ ý sức khỏe không keyword ('khỏe hẳn, ngủ ngon') vẫn
+`khen` → reuse được; contact_id reuse không gắn tác giả UGC; ref_item không kiểm
+status mục ugc_reply; release KOC `_FILE_LINE` lấy match đầu (brief đứng trước) +
+không kiểm lại readiness/guardrail lúc release; 2 phiếu khác --month chồng tháng;
+test `since`/thứ tự check lỏng; race test cùng conn; khóa XNQC theo artwork,
+khớp chi tiêu thực với phiếu, UI Streamlit, grant hẹp `ad_test_plans`.
+
 Nhánh `ai-infra`: M31 đợt gộp 5 (2026-10-12) — v4.3, v9.1, v8.3, v5.1, v6.2 đã gộp
 (66 bảng; full pytest 3530 pass + 3 đỏ tích hợp đã vá). Tích hợp: mã luồng DF-26
 (v4.3), DF-27 (v9.1), DF-28 (v8.3), DF-29/30 (v5.1) + DPIA/TIA 30 luồng; lô B2B
