@@ -1,5 +1,5 @@
 {
-  "_doc": "v6.1 (MKT-02) — template prompt theo kênh cho pipelines/content.py; v6.2 (MKT-03) image_background = prompt nền ảnh cho pipelines/image_studio.py (chỉ bối cảnh, không người/chữ/logo/bao bì). sha256 tính trên byte UTF-8 của file SAU khi đổi CRLF->LF (checkout Windows autocrlf không làm lệch). Sửa nội dung template => PHẢI bump version (<tên>@N+1) + cập nhật sha256 — content.load_template từ chối (ValueError) template lệch sha. version lưu kèm draft (content_drafts.prompt_version/prompt_sha256). BẢN DEV — chờ GĐ Marketing duyệt, chưa có người duyệt thật.",
+  "_doc": "v6.1 (MKT-02) — template prompt theo kênh cho pipelines/content.py; v6.2 (MKT-03) image_background = prompt nền ảnh cho pipelines/image_studio.py (chỉ bối cảnh, không người/chữ/logo/bao bì). v6.3 (MKT-04) video_script = kịch bản video ngắn cho pipelines/video_studio.py (JSON cảnh; không người/y tế, không số/giá). sha256 tính trên byte UTF-8 của file SAU khi đổi CRLF->LF (checkout Windows autocrlf không làm lệch). Sửa nội dung template => PHẢI bump version (<tên>@N+1) + cập nhật sha256 — content.load_template từ chối (ValueError) template lệch sha. version lưu kèm draft (content_drafts.prompt_version/prompt_sha256). BẢN DEV — chờ GĐ Marketing duyệt, chưa có người duyệt thật.",
   "templates": {
     "content_facebook": {
       "version": "content_facebook@1",
@@ -39,6 +39,11 @@
     "image_background": {
       "version": "image_background@1",
       "sha256": "fe0fd85f396724fe1616f4e3301b395c0041bc45ef3df166a26ed2faed317742",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "video_script": {
+      "version": "video_script@1",
+      "sha256": "bba8df8bd37f8e9bdb638c02a52afc0b8837d77bd6e218b63cc9b0abaa250203",
       "trang_thai": "chờ GĐ Marketing duyệt"
     }
   }

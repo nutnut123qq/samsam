@@ -12,7 +12,9 @@
 --                  INSERT draft (11 cột, v6.1 — status
 --                  luôn default 'pending'), INSERT log (5 cột — trigger ép
 --                  id/ts/db_role/hash), v6.2 SELECT + INSERT image_assets
---                  (15 cột — metadata ảnh nháp MKT-03, insert-only).
+--                  (15 cột — metadata ảnh nháp MKT-03, insert-only),
+--                  v6.3 SELECT + INSERT video_assets (15 cột — video nháp
+--                  MKT-04, insert-only).
 --                  KHÔNG UPDATE/DELETE bảng nào, KHÔNG approvals, KHÔNG
 --                  bảng khác, KHÔNG function duyệt.
 --   app_human    — người (Streamlit/CLI): kế thừa agent_writer + đọc
@@ -66,6 +68,14 @@ grant insert (file_sha256, file_name, sku, channel, format, ai_generated,
               label_text, provider, model, prompt_sha256, prompt_version,
               packshot_sha256, draft_id, meta, created_by)
   on image_assets to agent_writer;
+-- v6.3 (MKT-04 video AI): như image_assets — SELECT (idempotent theo
+-- file_sha256, sku, channel, format) + INSERT 15 cột. KHÔNG UPDATE/DELETE.
+grant select on video_assets to agent_writer;
+grant insert (file_sha256, file_name, sku, channel, format, duration_ms,
+              label_text, script_model, script_prompt_sha256,
+              script_prompt_version, tts_provider, packshot_sha256, draft_id,
+              meta, created_by)
+  on video_assets to agent_writer;
 
 grant agent_writer to app_human;
 grant select on approvals, agent_action_log to app_human;

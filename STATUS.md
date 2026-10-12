@@ -1,5 +1,34 @@
 # STATUS — v2.1-garden-log (2026-10-11)
 
+## v6.3-video-ai — WP08 MKT-04 video ngắn AI (contract trong DONE.md)
+
+**Có gì:** `pipelines/video_studio.py` dựng video dọc 9:16 (và 1:1) NHÁP,
+tất định, 16–44 giây: mỗi cảnh 1 khung 4 giây — khung packshot dựng bằng
+`image_studio.compose` (packshot thật, kiểm lại bytes `verify_packshot` trước
+khi ghép), khung B-roll từ ảnh công ty cấp có license, khung kết = tên SKU
+golden. Kịch bản (phụ đề) do LLM qua gateway (agent `mkt_video`, cap tháng):
+câu có số/giá bị bỏ, câu "bác sĩ khuyên dùng"/từ cấm/vi phạm guardrail → 1
+lượt sửa rồi từ chối trước khi dựng. Nhãn "Nội dung có sử dụng AI" + nhãn QC
+trên MỌI khung + caption; sau mã hóa trích 3 khung kiểm nhãn còn hiện. TTS
+mặc định `none` (video không tiếng, 0 mạng). mp4 ghép bằng ffmpeg
+(`imageio-ffmpeg`), không metadata vị trí/thiết bị/thời điểm. Bảng mới
+`video_assets` (CHECK nhãn AI vô điều kiện + 15–45 giây); output chỉ là nháp
+`content_type=video` `pending` — agent không đăng. Rượu, MỌI SKU TPBVSK
+(Sapentol "hook mới" → `maket_xnqc`), SKU chưa readiness → từ chối 0 LLM.
+CLI `python -m pipelines.video_studio`; eval `agent_eval --agent mkt04`
+(LLM giả, tất định).
+
+**Số liệu hiện tại:** golden có 0 SKU đủ điều kiện dựng video thật (8 TPBVSK
+`maket_xnqc`, 3 mật ong `readiness`, 2 rượu `ruou`) — CLI chạy thật ra toàn
+`refused`, 0 lời gọi LLM. Video mẫu evidence dùng LLM giả + packshot/B-roll
+"MẪU" + map readiness tiêm.
+
+**External-dep (chưa có người thật duyệt):** key + hợp đồng TTS tiếng Việt /
+API video AI (có phí); B-roll/clip quay thật + license; nhạc có bản quyền;
+GĐ Marketing duyệt template `video_script`/layout video; font thương hiệu;
+Pháp chế quy cách nhãn AI trên video + video là quảng cáo; `xnqc_records`
+cho TPBVSK; xác minh tự công bố mật ong; lưu trữ cloud cho mp4.
+
 ## v6.2-anh-ai — WP08 MKT-03 ảnh AI (contract trong DONE.md)
 
 **Có gì:** `pipelines/image_studio.py` ghép packshot THẬT (file công ty cấp,

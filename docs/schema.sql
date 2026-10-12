@@ -2961,3 +2961,44 @@ create table if not exists image_assets (
   check (not ai_generated or (label_text like '%Nội dung có sử dụng AI%'
          and model is not null and prompt_sha256 is not null))
 );
+
+-- v6.3 (MKT-04 video ngắn AI, WP08): metadata video NHÁP do
+-- pipelines/video_studio.py dựng (khung packshot thật qua image_studio +
+-- B-roll có license + phụ đề từ kịch bản LLM). File mp4 `<sha>.mp4` + sidecar
+-- `.json` nằm ở VIDEO_OUT_DIR (ngoài DB). Bảng RIÊNG, không mở rộng
+-- image_assets (cột khác hẳn: thời lượng, model/prompt kịch bản, TTS, nhiều
+-- khung; mở rộng phải `alter` ràng buộc cũ). Insert-only (agent_writer chỉ
+-- SELECT/INSERT — docs/roles.sql).
+--   label_text   — nhãn trên MỌI khung, nối "\n". Kịch bản LUÔN do LLM nên
+--                  video LUÔN là nội dung AI: nhãn "Nội dung có sử dụng AI"
+--                  là ràng buộc DB VÔ ĐIỀU KIỆN (acceptance WP08). Chuỗi
+--                  phải trùng labels.ai[0] của data/guardrail_rules.json
+--                  (drift-guard trong test).
+--   duration_ms  — 15–45 giây (final_plans MKT-04 acceptance).
+--   script_*     — model + sha256 messages gửi LLM + version template.
+--   tts_provider — 'none' = video không tiếng (TTS có phí = external-dep).
+--   packshot_sha256 — sha256 file packshot gốc của TỪNG dòng.
+--   meta         — sidecar JSON (mô tả FILE: không sku/kênh/format/sha
+--                  packshot gốc; meta mọi dòng cùng file == sidecar).
+-- Danh tính asset = (file_sha256, sku, channel, format) = 1 mục CLI.
+create table if not exists video_assets (
+  id bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  file_sha256 text not null,
+  file_name text not null,
+  sku text not null,
+  channel text not null,
+  format text not null,
+  duration_ms integer not null check (duration_ms between 15000 and 45000),
+  label_text text not null,
+  script_model text not null,
+  script_prompt_sha256 text not null,
+  script_prompt_version text not null,
+  tts_provider text not null,
+  packshot_sha256 text not null,
+  draft_id bigint not null references content_drafts(id),
+  meta jsonb not null,
+  created_by text not null,
+  unique (file_sha256, sku, channel, format),
+  check (label_text like '%Nội dung có sử dụng AI%')
+);

@@ -240,7 +240,10 @@ if "Content Studio" in _tabs:
             _pub_types = [k for k in _ctypes if isinstance(
                 _rules_doc["content_types"][k], dict)
                 and _rules_doc["content_types"][k].get("public")
-                and k != "image"] or ["post"]
+                and k != "image"]
+            # v6.3: "video" tương tự — chỉ qua pipelines.video_studio (cần
+            # file mp4 dựng từ packshot thật).
+            _pub_types = [k for k in _pub_types if k != "video"] or ["post"]
         except (OSError, ValueError, KeyError, TypeError):
             _ctypes = _pub_types = ["post"]  # file hỏng: guardrail báo "config"
         try:

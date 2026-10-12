@@ -177,6 +177,67 @@ thiếu/hỏng (`packshot_thieu`/`packshot_loi`). Eval: `python
 scripts/agent_eval.py --agent mkt03 --no-record` (suite
 `data/eval/suites/mkt03.json`, chờ GĐ Marketing/Pháp chế duyệt nhãn).
 
+## 2c. Video ngắn AI (MKT-04, v6.3 — `pipelines/video_studio.py`)
+
+Video dọc NHÁP (9:16 hoặc 1:1, 16–44 giây) dựng TẤT ĐỊNH từ khung PNG: khung
+packshot = `image_studio.compose` (packshot thật nguyên vẹn + phụ đề ở ô
+headline + nhãn), khung B-roll = ảnh tĩnh công ty cấp có license, khung kết =
+tên SKU golden (do code). AI chỉ viết KỊCH BẢN (phụ đề). Cấu hình
+`data/video_studio.json` (bản dev — chờ GĐ Marketing duyệt template video/
+layout; font thương hiệu, B-roll quay thật, nhạc có license chưa có).
+
+| Template | Version | sha256 (12 hex đầu) | Trạng thái |
+|---|---|---|---|
+| `video_script` | `video_script@1` | `bba8df8bd37f` | chờ GĐ Marketing duyệt |
+
+Template `video_script` đòi DUY NHẤT JSON `{"scenes": [{"text", "visual":
+"packshot"|"broll"}]}`, 5–8 cảnh, mỗi câu ≤ 60 ký tự, không người/bác sĩ/
+chuyên gia/cơ sở y tế, không trước-sau, không số/giá. `{channel}`,
+`{sku_name}`, `{brief}` thay bằng `str.replace` (brief thay CUỐI); template
+điền xong làm phần định dạng của system prompt `content._system(...,
+price_rule=False)` (luật TPBVSK + "không viết số"). Gọi
+`llm_gateway.chat("mkt_video", ...)` — cap tháng `mkt_video` 2.0 USD (ước
+tính dev) trong `data/llm_gateway.json`, kill-switch `LLM_KILL=mkt_video`.
+
+**Luật kịch bản:** câu chạm số/giá/quy cách (`content._spec_like` — kể cả
+viết bằng chữ, số fullwidth) bị BỎ (`so_lieu`; v6.3 không đưa giá vào video
+— giá đổi theo kênh/khuyến mãi, video sống lâu hơn giá); câu dài >
+`subtitle.max_chars` bỏ (`dai`); quá `max_scenes` bỏ đuôi (`thua`). Từ cấm
+`script_banned` (bác sĩ, dược sĩ, y tá, chuyên gia, khuyên dùng, bệnh viện,
+phòng khám, lâm sàng, kiểm chứng, trước sau, cam kết hiệu quả... — khớp
+chuẩn hóa như guardrail, cả dạng "chuyên-gia") trên MỌI câu LLM trả, hoặc
+caption không qua `check_publish_llm` (content_type `video`) → 1 lượt sửa có
+feedback → còn vi phạm → từ chối `kich_ban` (vd "Bác sĩ khuyên dùng mỗi
+sáng" bị chặn TRƯỚC khi dựng). JSON sai mẫu / còn < 3 cảnh → `kich_ban`.
+
+**Từ chối trước LLM (0 lời gọi):** rượu (`ruou`), MỌI SKU TPBVSK
+(`maket_xnqc` — "creative TPBVSK phải dùng maket XNQC", vd brief "video
+TikTok Sapentol hook mới"), SKU chưa đủ readiness (`readiness`), kênh/format
+lạ, brief có từ cấm/nhắc sức khỏe/vi phạm guardrail/dài > 500 (`brief_cam`),
+TTS chưa cắm (`tts`), thiếu packshot (`packshot_thieu`).
+
+**TTS:** env `TTS_PROVIDER`, mặc định `none` = video không tiếng (không
+giọng, không nhạc), 0 mạng. Provider thật (TTS tiếng Việt có phí) =
+**external-dep**, CHƯA cắm: hàm `fn(text, voice) -> (wav_bytes, {"model",
+"voice"})` vào `video_studio.TTS_PROVIDERS`, `voice` chỉ là giọng THƯ VIỆN
+của nhà cung cấp (`tts.voices`) — KHÔNG có tham số âm thanh/ảnh mẫu, không
+nhân bản giọng/hình người thật; PHẢI bọc như `llm_gateway` (kill-switch +
+cap agent `mkt_video_tts` + `llm_usage`).
+
+**Nhãn:** kịch bản luôn do LLM → video luôn là nội dung AI: nhãn
+"Nội dung có sử dụng AI" (`labels.ai[0]`) + nhãn QC (`labels.ad[0]`, loại
+`video` có `ad: true`) vẽ trên MỌI khung (suốt video) và có trong caption
+nháp. Sau mã hóa trích 3 khung (đầu/giữa/cuối) kiểm nhãn còn hiện (pixel
+gần màu chữ nhãn ≥ 0.5 × khung nguồn) — thiếu → `nhan_ai`, xóa mp4.
+
+**Packshot:** khung packshot dựng bằng `image_studio.compose` (packshot dán
+sau cùng + kiểm pixel), rồi video_studio đọc lại BYTES khung và chạy
+`verify_packshot` TRƯỚC khi ghép — lệch 1 pixel → `packshot_lech`, 0 mp4.
+mp4 ghép bằng ffmpeg không shell, không metadata (`-map_metadata -1`,
+bitexact), không track âm thanh. Eval: `python scripts/agent_eval.py --agent
+mkt04 --no-record` (suite `data/eval/suites/mkt04.json`, LLM giả, chờ GĐ
+Marketing/Pháp chế duyệt).
+
 ## 3. System prompt — chatbot CSKH (`api/rag.py:23-42`)
 
 Hằng `SYSTEM` dùng trong `answer()`; sentinel `NO_DATA = "Chưa đủ dữ

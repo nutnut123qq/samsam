@@ -38,6 +38,8 @@ Contract:
     `draft()` không gắn SKU và loại `post` giữ nguyên hành vi v4.2.
     v6.2: `draft(content_type="image")` -> từ chối `loai_la` (0 LLM) — ảnh
     chỉ sinh qua `pipelines.image_studio` (ghép packshot thật + nhãn AI).
+    v6.3: `draft(content_type="video")` -> `loai_la` (0 LLM) — video chỉ
+    dựng qua `pipelines.video_studio`.
   - v6.1 listing: tên/quy cách/số ĐKSP/giá list của kênh/hạn dùng do CODE
     dựng từ golden (data/golden_skus.json) — KHÔNG BAO GIỜ đưa giá
     floor/promo. Phần chữ LLM (hook/mô tả/gạch đầu dòng/từ khóa) chỉ khi
@@ -337,6 +339,14 @@ def draft(brief: str, channel: str = "facebook", *,
         ref = {"code": "loai_la", "reason": "ảnh đi qua pipelines."
                "image_studio (ghép packshot thật) — draft() không sinh "
                "nháp ảnh"}
+        return {"text": "", "guardrail": _refused_guardrail(ref),
+                "meta": {**meta, "refused": ref}}
+    if content_type == "video":
+        # v6.3: nháp video PHẢI có file mp4 (khung packshot thật + nhãn AI
+        # mọi khung) — draft() chỉ sinh chữ, không tạo nháp video không-video.
+        ref = {"code": "loai_la", "reason": "video đi qua pipelines."
+               "video_studio (dựng từ packshot thật) — draft() không sinh "
+               "nháp video"}
         return {"text": "", "guardrail": _refused_guardrail(ref),
                 "meta": {**meta, "refused": ref}}
     if sku is not None or content_type != "post":

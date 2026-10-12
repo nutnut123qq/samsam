@@ -6,6 +6,547 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+## Checklist v6.3-video-ai
+
+Khán giả/mục đích: nhánh M31 (worktree `D:\code\samsam-w41`, nền ai-infra sau
+gộp đợt 5 — có v6.1 content/listing + v6.2 image_studio + suite mkt03), WP08
+phần MKT-04 "Agent Video ngắn" (pmo.md dòng `| WP08`: "MKT-04 video ngắn AI
+(B-roll, TTS, phụ đề, nhãn AI)"; acceptance WP08: "100% asset AI có nhãn 'Nội
+dung có sử dụng AI' và metadata (model, prompt, ngày)"; final_plans.json MKT-04
+acceptance (1) video 15–45 giây có nhãn AI ở khung đầu và trong caption,
+transcript qua guardrail, asset ghi nguồn từng cảnh + license, (2) kịch bản
+chứa "bác sĩ khuyên dùng" bị chặn TRƯỚC khi render, (3) brief "video TikTok
+Sapentol hook mới" bị từ chối (XNQC-LOCK — `xnqc_records` chưa có), (4) 0 cảnh
+deepfake). Hiện repo KHÔNG có đường dựng video nào (`content_types`
+`livestream_script`/`video_cart` chỉ là chữ). Sau version này:
+(a) `pipelines/video_studio.py` dựng video dọc `9:16` (và `1:1`) TẤT ĐỊNH từ
+các khung PNG: khung packshot = `image_studio.compose` (packshot thật nguyên
+vẹn + nhãn AI + phụ đề ở ô headline), khung B-roll = ảnh tĩnh công ty cấp
+(thư mục cấu hình ngoài git, phải có license) + cùng lớp chữ, khung kết = tên
+SKU golden (code); ghép bằng ffmpeg (`imageio-ffmpeg` đã có trong
+requirements, KHÔNG cài mới); (b) kịch bản do LLM qua gateway (agent
+`mkt_video`, cap tháng) — câu chạm số/giá bị BỎ (không tự chế số), câu có từ
+cấm kịch bản/guardrail → sửa 1 lượt rồi từ chối; rượu/TPBVSK/SKU chưa
+readiness → từ chối TRƯỚC LLM; (c) TTS chỉ có cổng provider — mặc định `none`
+= video không tiếng (không giọng, không nhạc), 0 mạng; (d) nhãn "Nội dung có
+sử dụng AI" có trên MỌI khung + kiểm lại trên khung TRÍCH từ mp4 (đầu/giữa/
+cuối); sidecar + bảng mới `video_assets`; mp4 không còn metadata vị trí/thiết
+bị/thời điểm; (e) chỉ NHÁP `content_drafts` `content_type='video'` `pending`;
+(f) suite eval `mkt04` tất định (LLM giả); (g) docs prompt-library/sop/
+kien-truc + env.example + gitignore.
+
+Quy ước:
+- Mọi lệnh shell mở đầu `cd D:/code/samsam-w41 && set -a && .
+  C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/v63.env
+  && set +a && ...` (gate bên dưới viết tắt phần sau `&&`; DB riêng
+  `samsam_infra`). Không in biến môi trường, không đọc `.env`. Test chạy bằng
+  `python -m pytest`. Lệnh nặng có thể bị đẩy nền — đọc output tới khi process
+  exit trước lệnh nặng kế tiếp, không chạy chồng pytest, không retry mù; full
+  pytest đúng 1 lần mỗi vòng (máy chạy tới 7 version song song).
+- **TÁI DÙNG, không viết lại**: `image_studio.compose` (khung packshot — đã có
+  precheck rượu/maket XNQC/readiness/kênh, headline qua `check_publish_llm`,
+  packshot dán sau cùng + `verify_packshot`, PNG dựng lại từ pixel),
+  `image_studio.precheck_image`, `image_studio.verify_packshot`,
+  `image_studio._layout_text` + `fonts_for` + `load_config` (lớp nhãn/phụ đề
+  cho khung B-roll — cùng layout/cỡ chữ với ảnh), `image_studio._color_mask`,
+  `image_studio._clean`, `image_studio.make_sample_packshot`;
+  `content._system(fmt, price_rule=False)` (system prompt luật TPBVSK + "không
+  viết số"), `content._spec_like` (câu chạm số/giá/quy cách), `content.
+  load_template` + manifest `data/prompts/`, `content._with_required` (nối
+  nhãn AI/QC thiếu), `content._feedback`, `content._cfg` (golden);
+  `guardrail._find_terms` + `guardrail._filler_hits` (từ cấm kịch bản, chuẩn
+  hóa như guardrail); `guardrail_llm.check_publish_llm`; `llm_gateway.chat` +
+  `is_health_question`; `store.save_draft` / `store.readiness_from_db` /
+  `store._conn_or_none`. Pillow + imageio-ffmpeg 0.6.0 đã cài — KHÔNG thêm
+  dependency (không moviepy/opencv/av/edge-tts/gTTS; không `pip install`
+  global). **KHÔNG sửa** `pipelines/guardrail.py`, `pipelines/
+  guardrail_llm.py`, `pipelines/llm_gateway.py`, `pipelines/store.py`,
+  `pipelines/auth.py`, `pipelines/image_studio.py`, `connectors/`, `api/`,
+  `scripts/eval_qa.py`, `tests/test_guardrail.py`, `tests/
+  test_image_studio.py`. Cần đổi image_studio → dừng, báo coordinator.
+- **ffmpeg**: `find_ffmpeg()` = env `FFMPEG_BIN` (file tồn tại) → `imageio_
+  ffmpeg.get_ffmpeg_exe()` (import lười, lỗi → bỏ qua) → `shutil.which(
+  "ffmpeg")` → None. None → `make_video` trả `refused.code == "ffmpeg_thieu"`
+  (external-dep) SAU khi kịch bản + luật đã chạy (`script` có trong kết quả —
+  phần kịch bản/kiểm luật vẫn dùng được), 0 file, 0 DB; CLI kiểm ffmpeg TRƯỚC
+  LLM → exit 2 (không đốt LLM khi không render được). Gọi ffmpeg bằng
+  `subprocess.run([...], shell=False, timeout=...)`, input CHỈ là file PNG
+  local (image2 `%03d.png`), `-nostdin`; lỗi/timeout → `error` (không phải
+  `refused`). Mã hóa tất định: `libx264` `-threads 1` `-pix_fmt yuv420p`,
+  `-fflags +bitexact -flags:v +bitexact`, `-map_metadata -1 -map_chapters -1`,
+  `-an` (không track âm thanh khi TTS `none`), `-movflags +faststart`.
+- **Thời lượng**: config `scene_s` (mặc định 4), `min_scenes` 3, `max_scenes`
+  10, `duration_s` [15, 45]; mỗi cảnh kịch bản 1 khung × `scene_s` + 1 khung kết
+  → tổng = `scene_s × (n+1)` ∈ [16, 44] s. `load_config` (video) kiểm
+  `scene_s × (min_scenes+1) ≥ 15` và `scene_s × (max_scenes+1) ≤ 45`, sai →
+  `config`. Cảnh > `max_scenes` → cắt đuôi (ghi `dropped`), < `min_scenes` sau
+  lọc → `kich_ban`.
+- **Kịch bản (LLM)**: template `data/prompts/video_script.md` (placeholder
+  `{channel}`, `{sku_name}`, `{brief}` thay bằng `str.replace`; đòi DUY NHẤT
+  JSON `{"scenes": [{"text": str, "visual": "packshot"|"broll"}]}`, 5–8 cảnh,
+  mỗi câu ≤ `subtitle.max_chars`, không người/bác sĩ/chuyên gia, không số/giá);
+  system = `content._system(template, price_rule=False)`; gọi
+  `chat("mkt_video", messages, temperature=0.3, max_tokens=700)` (import tên
+  `chat` ở module để test patch `video_studio.chat`). Lọc từng câu (sau
+  `_clean`): rỗng → bỏ; `content._spec_like` → BỎ (`dropped` lý do `so_lieu`
+  — v6.3 KHÔNG đưa giá vào video: giá theo kênh/khuyến mãi đổi, video sống lâu
+  hơn giá; số duy nhất trên video là tên SKU golden ở khung kết, do code);
+  dài > `subtitle.max_chars` (≤ `image_studio.json` `headline.max_chars` = 60,
+  config kiểm) → bỏ (`dai`). Vi phạm = câu khớp `script_banned` (NFC casefold +
+  filler, như `check_scene`) HOẶC `check_publish_llm(caption, channel=,
+  content_type="video", sku=, is_ai=True, readiness=)` không ok, với caption =
+  `_with_required("\n".join(câu giữ lại), content_type="video", ...)` → 1 lượt
+  sửa có feedback (`content._feedback` + "Trả lại DUY NHẤT JSON đúng mẫu") →
+  còn vi phạm → `kich_ban` (kèm violations/từ khớp), 0 file. JSON sai shape →
+  `kich_ban` không retry. `GatewayError`/`GatewayBlocked` (kill/cap) → `error`
+  `llm`, 0 file.
+- **Thứ tự từ chối (0 LLM, 0 file, 0 DB)**: (1) `load_config` → `config`; (2)
+  `precheck_video(sku, channel, fmt, readiness=)` = `image_studio.
+  precheck_image` (mã trả nguyên: `ruou` — golden category alcohol MỌI kênh kể
+  cả map tiêm `QC_DAY_DU`; `maket_xnqc` — MỌI SKU TPBVSK, lý do chứa "creative
+  TPBVSK phải dùng maket XNQC" = acceptance (3); `readiness`; `sku_la`;
+  `kenh_la`) + kênh ∉ `video_studio.json` `channels` (`tiktok`, `facebook` =
+  Reels) → `kenh_la` + format ∉ `formats` (`9:16`, `1:1`) → `format_la`; (3)
+  `check_brief(brief)`: rỗng/dài > 500/khớp `script_banned`/
+  `is_health_question`/`guardrail.check` không ok → `brief_cam`; (4) TTS
+  provider ∉ `TTS_PROVIDERS` → `tts`; (5) (chỉ `make_video`)
+  `<packshot_dir>/<sku>.png` không tồn tại → `packshot_thieu` (file hỏng thì
+  `compose` trả `packshot_loi` ở bước dựng). Sau LLM: `kich_ban` →
+  `ffmpeg_thieu` → dựng khung (`compose` từ chối → trả nguyên mã của nó, vd
+  `headline`/`font`/`packshot_loi`) → `packshot_lech` → `nhan_ai`.
+- **Khung + toàn vẹn**: cảnh `packshot` (và B-roll khi không có B-roll hợp lệ)
+  + khung kết (headline = tên SKU golden) = `image_studio.compose(sku, channel,
+  headline=câu, fmt=, readiness=, packshot_dir=, out_dir=<thư mục tạm của lần
+  dựng>)`; video_studio đọc BYTES file khung 1 lần → `verify_packshot(ảnh từ
+  bytes, res["fitted"], res["packshot_xy"])` → False → `packshot_lech`, xóa thư
+  mục tạm, 0 mp4/sidecar/DB; đúng bytes đã kiểm được ghi vào `<tmp>/seq/%03d.
+  png` (không đọc lại file gốc lần 2). Cảnh `broll`: ảnh thứ `k mod len` trong
+  danh sách B-roll hợp lệ (sắp theo tên) — file `.png`/`.jpg`/`.jpeg` trong
+  `BROLL_DIR` (mặc định `data/broll/`, gitignored) CÓ mục license chuỗi không
+  rỗng trong `<BROLL_DIR>/licenses.json` (không có license → không dùng, ghi
+  `broll_skipped`); kiểm `max_bytes`/`max_pixels` của `image_studio.json`
+  `packshot` TRƯỚC `load()`; cover-crop LANCZOS về cỡ format, dựng lại RGB từ
+  pixel (mất EXIF/GPS/ICC), dán lớp chữ `_layout_text(font, cfg, fmt, câu,
+  labels)` (labels = `labels.ai[0]` + `labels.ad[0]` như ảnh). MỌI khung (kể
+  cả B-roll/khung kết) phải có pixel ĐÚNG màu `label.text_rgb` trong
+  `label_box` ≥ 0.05% (`_color_mask`, ngưỡng v6.2) → thiếu → `nhan_ai`. Clip
+  video B-roll (mp4/mov) KHÔNG hỗ trợ ở v6.3 — bỏ qua (someday).
+- **Kiểm sau mã hóa**: trích 3 khung từ mp4 đã ghi (t = 0.5 s, giữa, tổng −
+  0.5 s) bằng `ffmpeg -ss <t> -i out.mp4 -frames:v 1 -f image2 -c:v png
+  pipe:1`; `label_visible(frame, ref, lbox, text_rgb)` = số pixel gần màu chữ
+  nhãn (mọi kênh |Δ| ≤ 40) trong `label_box` của khung trích ≥ 0.5 × số đó
+  trên khung PNG nguồn tương ứng (và nguồn > 0) — ngưỡng/độ đo thật ghi
+  evidence; lệch → `nhan_ai`, xóa mp4. Kết quả ghi sidecar `extract_check`.
+- **Nhãn AI**: kịch bản LUÔN do LLM → video LUÔN là nội dung AI: nhãn
+  `labels.ai[0]` (đọc rules, không chép tay) vẽ trên MỌI khung (= "suốt
+  video") + có trong caption (`draft_text`); `video` có `ad: true` → nhãn QC
+  `labels.ad[0]` cũng có. Không có cờ tắt nhãn.
+- **TTS**: env `TTS_PROVIDER` đọc LÚC GỌI, mặc định `none`; `TTS_PROVIDERS =
+  {"none": None}` → không track âm thanh, sidecar `tts: {"provider": "none",
+  "voice": null}`, `music: null` (nhạc có license = external-dep). Chỗ cắm
+  provider thật (ghi docstring + prompt-library): `fn(text: str, voice: str) ->
+  (wav_bytes, {"model", "voice"})`, `voice` ∈ `video_studio.json` `tts.voices`
+  (giọng thư viện của nhà cung cấp — hiện `[]`); KHÔNG có tham số âm thanh/ảnh
+  mẫu (không clone giọng/avatar người thật — acceptance (4)); phải bọc như
+  `llm_gateway` (kill + cap agent `mkt_video_tts` + `llm_usage`) — v6.3 KHÔNG
+  cắm, KHÔNG gọi API. Module không import `requests`/`httpx`/`urllib`/
+  `socket`.
+- **Chỉ là nháp**: `save_video(conn, res, *, by, source="cli")` →
+  `store.save_draft(conn, brief="video <sku> <kênh> <format>", channel, text=
+  res["draft_text"] (= caption + "\n\nTệp video: <sha256>.mp4"), guardrail,
+  source, created_by=by, content_type="video", sku=, is_ai=True,
+  prompt_version=, prompt_sha256=)` → INSERT `video_assets` + `conn.commit()`
+  tường minh (gotcha v2.1). video_studio KHÔNG import/gọi `set_status`/
+  `approve_draft`/`schedule`. `content.draft(..., content_type="video")` →
+  `loai_la` ("video đi qua pipelines.video_studio"), Studio lọc `video` khỏi
+  selectbox "Loại content".
+- **Danh tính asset** (bài học v6.2 vòng #2): (`file_sha256`, `sku`,
+  `channel`, `format`) = 1 mục CLI; sidecar `<sha>.json` mô tả FILE — KHÔNG
+  chứa sku/kênh/format/sha file packshot gốc/prompt_sha256 theo kênh (các thứ
+  đó ở cột từng dòng); `meta` mọi dòng cùng file == sidecar. mp4/sidecar cùng
+  tên chỉ được giữ khi sha256(bytes) == tên và sidecar trùng mọi field trừ
+  `created_at` (bài học A08 v6.2), lệch → ghi lại.
+- Bảng mới `video_assets` (KHÔNG mở rộng `image_assets` — lý do: `image_assets`
+  có `packshot_sha256`/`provider`/`model` nền 1-ảnh + check theo
+  `ai_generated` nền; video cần `duration_ms`, kịch bản model/prompt, TTS,
+  nhiều khung; mở rộng phải `alter` ràng buộc mà drift-guard `test_store`/
+  `test_lead_store` cấm `alter table` khác `add column`) → kien-truc "66 bảng
+  public" → "67 bảng public" + `deploy/cloud/README.md` thêm dòng (drift-guard
+  `test_cloud_readme_drift_guard` — dây chuyền v6.2). KHÔNG thêm assert đếm
+  cứng số bảng. File runtime: `data/video_assets/` + `data/broll/` gitignore
+  NGAY. Env mới chỉ vào `env.example`: `VIDEO_OUT_DIR`, `BROLL_DIR`,
+  `TTS_PROVIDER`, `FFMPEG_BIN`.
+- Config `data/video_studio.json` là BẢN DEV (`_doc`: "chờ GĐ Marketing duyệt
+  template video; font thương hiệu, B-roll/clip thật, nhạc có license chưa
+  có"); KHÔNG đánh dấu người thật đã duyệt. B-roll/packshot mẫu cho test/
+  eval/evidence tự sinh bằng Pillow có chữ "MẪU" (`make_sample_broll(path, *,
+  exif_gps=False)` + license "MẪU — tự sinh, không phải tư liệu thật") — không
+  giả làm tư liệu thật.
+- Test không wall-clock; test DB thật dùng fixture `db` + `_TxConn`
+  (`tests/test_auth_approval.py`), schema tạm, ROLLBACK. Test render dùng
+  fixture `scope="module"` (≤ 5 lần mã hóa mp4 toàn file — máy tải); test cần
+  ffmpeg/font `pytest.skip` CHỈ khi `find_ffmpeg()`/font None — trên máy này
+  phải PASS, không nằm trong `-rs` skip. File mới có print tiếng Việt có UTF-8
+  guard (copy `scripts/zalo_mock.py`). FLIP test cũ dự kiến (gotcha v1.7 —
+  evidence ghi số dòng `assert` trước/sau từng file, không xóa assert):
+  `tests/test_agent_eval.py::test_runners_single_source_and_same_signature`
+  (+`mkt04` vào tập DETERMINISTIC_RUNNERS), `tests/test_qa_harness.py`
+  (`test_validate_cli_all_suites` + chỗ thứ 2 dòng ~479): đếm `[ok]` 17 → 18
+  và `"[done] 17/17 suite hợp lệ"` → `18/18`, thêm assert dòng `[ok] mkt04 v1
+  active owner=marketing ... <n> ca`.
+- Không commit/push/reset/checkout/stash; coordinator commit. Evidence
+  `evidence/v63_*.log` phải `git add -f`.
+
+- [x] **W63.1 Bảng `video_assets` + content type `video` + chặn nháp video
+  không-có-video**
+  - `docs/schema.sql` (khối mới cuối file, comment tiếng Việt): `create table
+    if not exists video_assets (id bigint generated always as identity primary
+    key, created_at timestamptz not null default now(), file_sha256 text not
+    null, file_name text not null, sku text not null, channel text not null,
+    format text not null, duration_ms integer not null check (duration_ms
+    between 15000 and 45000), label_text text not null, script_model text not
+    null, script_prompt_sha256 text not null, script_prompt_version text not
+    null, tts_provider text not null, packshot_sha256 text not null, draft_id
+    bigint not null references content_drafts(id), meta jsonb not null,
+    created_by text not null, unique (file_sha256, sku, channel, format),
+    check (label_text like '%Nội dung có sử dụng AI%'))` — nhãn AI là ràng buộc
+    DB VÔ ĐIỀU KIỆN (kịch bản luôn AI). Insert-only.
+  - `docs/roles.sql`: `grant select on video_assets to agent_writer` + `grant
+    insert (file_sha256, file_name, sku, channel, format, duration_ms,
+    label_text, script_model, script_prompt_sha256, script_prompt_version,
+    tts_provider, packshot_sha256, draft_id, meta, created_by) on video_assets
+    to agent_writer`; comment đầu file cập nhật. KHÔNG UPDATE/DELETE.
+  - `data/guardrail_rules.json` `content_types` thêm `"video": {"public":
+    true, "ad": true, "trang_thai": "chờ Pháp chế — video marketing coi là
+    quảng cáo (nhãn QC + XNQC); TPBVSK chỉ dùng maket/kịch bản XNQC"}`.
+  - `pipelines/content.py` `draft()`: `content_type == "video"` → `loai_la`
+    (0 LLM) cạnh nhánh `image`; `app/streamlit_app.py` lọc thêm `video`.
+  - Boundary: `docs/schema.sql`, `docs/roles.sql`, `data/guardrail_rules.json`
+    (1 content type), `pipelines/content.py` (1 nhánh), `app/streamlit_app.py`
+    (1 lọc), `tests/test_video_studio.py` (mới, phần DB)
+  - Gate:
+    - `python scripts/apply_schema.py --roles` chạy 2 lần liên tiếp exit 0 trên
+      DB v63.env (idempotent), output liệt kê `video_assets`.
+    - pytest DB thật (`db` + `_TxConn`, `set local role agent_writer`):
+      save_draft video + INSERT `video_assets` đủ cột không `permission
+      denied`; trùng (sha, sku, kênh, format) → `UniqueViolation`; cùng sha
+      khác kênh → INSERT được; `label_text` thiếu nhãn AI → `CheckViolation`;
+      `duration_ms` 50000 → `CheckViolation`; `update video_assets ...` →
+      `InsufficientPrivilege`. PASS, không trong `-rs` skip.
+    - Drift-guard: chuỗi nhãn trong check `video_assets` == `labels.ai[0]`.
+    - pytest: `content.draft("x", "tiktok", content_type="video")` →
+      `meta.refused.code == "loai_la"`, fake 0 call; `python -m py_compile
+      app/streamlit_app.py`.
+    - `python -m pytest -q tests/test_content.py tests/test_listing.py
+      tests/test_store.py tests/test_image_studio.py` xanh, không assert nào
+      bị xóa.
+  - Evidence: `evidence/v63_apply_schema.log`, `evidence/v63_pytest.log`
+- [x] **W63.2 Config + template kịch bản + `write_script` (LLM qua gateway,
+  lọc số, từ cấm)**
+  - `data/video_studio.json`: `_doc` (bản dev), `channels` [`tiktok`,
+    `facebook`], `formats` [`9:16`, `1:1`] (cỡ lấy từ `image_studio.json`),
+    `scene_s` 4, `min_scenes` 3, `max_scenes` 10, `duration_s` [15, 45], `fps`
+    30, `subtitle` {`max_chars` 60}, `script_banned` (≥: "bác sĩ", "dược sĩ",
+    "y tá", "chuyên gia", "khuyên dùng", "bệnh viện", "phòng khám", "lâm
+    sàng", "kiểm chứng", "trước sau", "before after", "cam kết hiệu quả"),
+    `tts` {`voices`: []}, `extract_tol` 40, `extract_min_ratio` 0.5.
+  - `data/prompts/video_script.md` + `data/prompts/manifest.json` mục
+    `video_script` (`video_script@1`, sha256, `trang_thai` "chờ GĐ Marketing
+    duyệt"); `data/llm_gateway.json` `monthly_cap_usd.mkt_video` 2.0 (ước tính
+    dev).
+  - `pipelines/video_studio.py`: `load_config()`, `precheck_video(...)`,
+    `check_brief(brief)`, `write_script(sku, channel, brief, *, fmt="9:16",
+    readiness=None) -> {"ok", "refused", "error", "scenes" [{"text",
+    "visual"}], "dropped" [{"text", "ly_do"}], "caption", "guardrail", "model",
+    "prompt_version", "template_sha256", "prompt_sha256" (sha messages gửi
+    LLM), "llm_calls"}` — quy ước "Kịch bản" + "Thứ tự từ chối" (1)–(5) (bước
+    (5) packshot chỉ kiểm ở `make_video`).
+  - Boundary: `data/video_studio.json` (mới), `data/prompts/video_script.md`
+    (mới), `data/prompts/manifest.json` (1 mục), `data/llm_gateway.json` (1
+    cap), `pipelines/video_studio.py` (mới), `tests/test_video_studio.py`
+  - Gate (pytest, `video_studio.chat` patch bằng fake trả lần lượt chuỗi JSON
+    theo ca + đếm call; `GUARDRAIL_LLM_MODEL` unset; map readiness tiêm
+    `{("mat-ong-sam-300ml", "tiktok"): "TP_THUONG"}`):
+    - **Rượu**: 2 SKU rượu × (`tiktok`, `facebook`) × (map None | map tiêm
+      `QC_DAY_DU`) → `ruou`, 0 call. **TPBVSK**: `sapentol-30v` brief "video
+      TikTok Sapentol hook mới" (map None và tiêm `QC_DAY_DU`) → `maket_xnqc`,
+      reason chứa "creative TPBVSK phải dùng maket XNQC", 0 call; mọi 8 SKU
+      TPBVSK → `maket_xnqc`. **Readiness**: `mat-ong-sam-120ml-1hu` × `tiktok`
+      (golden) → `readiness`, 0 call; kênh `zalo` → `kenh_la`; format `4:5` →
+      `format_la`; `sku=None` → `sku_la`.
+    - **Brief**: "bác sĩ khuyên dùng mật ong sâm" / "BÁC SĨ" hoa + NFD / "sâm
+      chữa tiểu đường" → `brief_cam`, 0 call; brief 501 ký tự → `brief_cam`.
+    - **Bác sĩ trong kịch bản (acceptance (2))**: fake trả cảnh "Bác sĩ khuyên
+      dùng mỗi sáng" cả 2 lượt → `kich_ban`, đúng 2 call, lý do nêu từ khớp;
+      lượt 1 vi phạm + lượt 2 sạch → ok, 2 call, lượt 2 messages chứa feedback.
+    - **Guardrail**: cảnh "Sâm giúp chữa khỏi tiểu đường" cả 2 lượt →
+      `kich_ban` (violation từ cấm), 0 file.
+    - **Số/giá**: fake có cảnh "Chỉ 350.000đ một hũ", "Hũ 300ml", "ba trăm
+      nghìn", "１００%" + 3 cảnh sạch → ok, `scenes` KHÔNG câu nào có ký tự số /
+      khớp `_spec_like`, `dropped` đủ 4 mục `so_lieu`; `caption` không chứa
+      "350". Cảnh dài 61 ký tự → `dropped` `dai`. Sau lọc còn 2 cảnh →
+      `kich_ban`. 12 cảnh sạch → giữ 10. JSON hỏng / thiếu `scenes` → `kich_ban`,
+      1 call.
+    - Gateway: `LLM_KILL=mkt_video` (fake `chat` raise `GatewayBlocked`) →
+      `error` chứa `llm`, 0 file. `caption` ok chứa `labels.ai[0]` và
+      `labels.ad[0]`; `check_publish_llm(caption, content_type="video", ...)`
+      ok.
+    - Template `video_script` sha khớp manifest; `guardrail.check(template)`
+      ok; `python -m pytest -q tests/test_listing.py tests/test_handover_docs.py
+      tests/test_llm_gateway.py` xanh.
+  - Evidence: `evidence/v63_pytest.log`
+- [x] **W63.3 Dựng video `make_video` (khung, B-roll, ffmpeg, kiểm trích khung,
+  metadata, sidecar)**
+  - `pipelines/video_studio.py`: `find_ffmpeg()`, `make_sample_broll(...)`,
+    `label_visible(frame, ref, box, rgb, *, tol=40) -> float` (thuần — tỉ lệ),
+    `make_video(sku, channel, brief, *, fmt="9:16", readiness=None,
+    packshot_dir=None, broll_dir=None, out_dir=None) -> {"ok", "refused",
+    "error", "path", "sidecar", "sha256", "sku", "channel", "format",
+    "packshot_sha256", "script", "draft_text", "guardrail", "meta"}`. Luồng:
+    từ chối (1)–(5) → `write_script` → `find_ffmpeg` → dựng khung trong
+    `tempfile.TemporaryDirectory(dir=out_dir)` (quy ước "Khung + toàn vẹn") →
+    ffmpeg → kiểm trích khung → `os.replace` sang `<out>/<sha256>.mp4` +
+    sidecar `<sha256>.json`.
+  - Sidecar (UTF-8, `ensure_ascii=False`): `schema` `video_asset@1`, `file`,
+    `asset_sha256`, `size`, `fps`, `duration_ms`, `labels`, `label_box`,
+    `script` {`model`, `prompt_version`, `template_sha256`, `lines`},
+    `scenes` [{`i`, `source` (`packshot`|`broll`|`end_card`), `subtitle`,
+    `start_ms`, `dur_ms`, `frame_sha256`, `packshot` {`fitted_sha256`, `box`} |
+    null, `broll` {`file_sha256`, `file`, `license`} | null, `background`
+    {`provider`, `model`}}], `tts`, `music` (null), `extract_check` [{`t_ms`,
+    `label_ratio`}], `created_at` (ISO-8601 UTC có offset), `guardrail_ok`.
+    Không đường dẫn tuyệt đối, không PII, không sku/kênh/format/sha packshot gốc.
+  - Boundary: `pipelines/video_studio.py`, `tests/test_video_studio.py`
+  - Gate (pytest, packshot mẫu `image_studio.make_sample_packshot` + B-roll mẫu
+    trong `tmp_path`, fake LLM 5 cảnh sạch có 2 cảnh `broll`):
+    - **Video hợp lệ 9:16**: `ok`, file `.mp4` tồn tại, tên == sha256 bytes;
+      `ffmpeg -i` (stderr) báo `1080x1920`, KHÔNG có dòng `Audio:` (TTS `none`
+      → không tiếng); `duration_ms` == `scene_s × 6 × 1000` (5 cảnh + kết) và ∈
+      [15000, 45000]; sidecar đủ field, `scenes` có đúng 2 `broll` kèm
+      `license`, khung kết `source == "end_card"` subtitle = tên golden;
+      `script.model` + `prompt_version` + `created_at` parse ISO. Video `1:1`
+      → `1080x1080`.
+    - **Nhãn AI trong khung trích (đầu/giữa/cuối)**: `extract_check` có 3 mục
+      `label_ratio ≥ 0.5`; test tự trích lại 3 khung bằng ffmpeg →
+      `label_visible ≥ 0.5`. Đột biến: monkeypatch bước vẽ nhãn khung B-roll/
+      khung trích bỏ chữ nhãn → `nhan_ai`, 0 mp4 (ghi tỉ lệ đo được vào
+      evidence).
+    - **Khung packshot bị sửa → video bị loại**: bọc `image_studio.compose`
+      (monkeypatch) để SAU khi compose ghi file, sửa 1 pixel đặc vùng packshot
+      trong PNG khung → `refused.code == "packshot_lech"`, out dir KHÔNG có
+      `.mp4`/`.json`/thư mục tạm nào, 0 dòng DB.
+    - **Metadata**: B-roll mẫu `exif_gps=True` (JPEG có GPS IFD) → mp4 bytes
+      không chứa `b"GPS"`/`b"ISO6709"`/`b"\xa9xyz"`; `ffmpeg -i out.mp4 -f
+      ffmetadata -` không có dòng `location`/`creation_time`/`make`/`model`/
+      `com.apple` (casefold).
+    - **Tất định**: 2 lần `make_video` cùng tham số (cùng fake) → cùng
+      `sha256`, 1 file mp4, sidecar giữ nguyên bytes (trừ không ghi lại); mp4
+      cùng tên bị sửa bytes → ghi lại; sidecar sửa tay (bỏ nhãn) → ghi lại.
+    - **ffmpeg thiếu**: monkeypatch `find_ffmpeg` → None → `ffmpeg_thieu`,
+      `script.ok` True (kịch bản vẫn có), 0 file.
+    - **TTS / mạng**: monkeypatch `socket.socket.connect` +
+      `socket.create_connection` raise trong cả lần dựng hợp lệ → thành công
+      (0 mạng; LLM là fake). `TTS_PROVIDER=elevenlabs` → `tts`, 0 call LLM.
+    - **B-roll**: file không có license → không dùng (`broll_skipped`, cảnh
+      `broll` rơi về packshot); `.mp4` trong BROLL_DIR bị bỏ qua; ảnh vượt
+      `max_pixels` (config tmp nhỏ) → bỏ qua, không crash.
+    - Packshot thiếu → `packshot_thieu`, 0 call LLM.
+  - Evidence: `evidence/v63_pytest.log` + video mẫu
+    `evidence/v63_sample_9x16.mp4` + sidecar `.json` + 3 khung trích
+    `evidence/v63_sample_frame_{dau,giua,cuoi}.png` sinh bằng script tạm trong
+    scratchpad (KHÔNG thêm vào repo; fake LLM, packshot/B-roll "MẪU") —
+    coordinator mở xem nhãn + phụ đề + packshot bằng mắt. Ghi kích thước file.
+- [x] **W63.4 Lưu nháp `save_video` + CLI `python -m pipelines.video_studio`**
+  - `save_video(conn, res, *, by, source="cli")`: `res.ok` khác True / thiếu
+    `sku`/`format`/`packshot_sha256` → ValueError. SELECT `video_assets` theo
+    (sha, sku, kênh, format) → có → `{"status": "skipped", "draft_id"}`.
+    Không → `save_draft` (quy ước) → INSERT `video_assets` (`meta` = sidecar,
+    `label_text` = `"\n".join(labels)`, `script_prompt_sha256` = sha messages
+    của dòng) + `conn.commit()`. `UniqueViolation` lúc INSERT (race) →
+    rollback, `{"status": "skipped", "orphan_draft_id"}` (docstring).
+  - `main(argv)`: `--sku` lặp được (`all` = mọi SKU golden), `--channel`
+    (choices `video_studio.json` channels), `--format` (mặc định `9:16`),
+    `--brief` (bắt buộc), `--by` (mặc định `agent:mkt04`). Kiểm TRƯỚC mọi LLM:
+    `TTS_PROVIDER` ∈ `TTS_PROVIDERS`, `IMAGE_PROVIDER` ∈ `image_studio.
+    PROVIDERS`, `find_ffmpeg()` có, conn DB (`store._conn_or_none`) — sai →
+    exit 2. `readiness` = `store.readiness_from_db(conn)`. In 1 dòng/(sku ×
+    format): `created #<id> <file>` | `skipped <file>` | `refused <code>: <lý
+    do>` | `failed: <lý do>` + dòng tổng. Exit 0 không `failed`; 1 có
+    `failed`; 2 usage/DB/ffmpeg/provider. UTF-8 guard.
+  - Boundary: `pipelines/video_studio.py`, `tests/test_video_studio.py`
+  - Gate:
+    - pytest DB thật (`db` + `_TxConn`, golden nạp `ingest.golden_store.load`,
+      map readiness tiêm): `save_video` lần 1 → `created`, `content_drafts`
+      `status='pending'`, `content_type='video'`, `sku` đúng, `text` chứa nhãn
+      AI + nhãn QC + `<sha>.mp4`; dòng `video_assets` khớp sidecar;
+      `agent_action_log` có `draft_create`; lần 2 → `skipped`, `count(*)` 2
+      bảng không đổi; cùng file cho kênh `facebook` → `created` thứ 2, `meta`
+      2 dòng == sidecar.
+    - pytest fake conn (mẫu `tests/test_store.py`): `store.set_status(...,
+      "approved")` trên nháp video (text = `draft_text`) → re-check guardrail
+      ok (không `thieu_nhan_ai`/`thieu_nhan_quang_cao`).
+    - `main([... thiếu --brief])` → exit 2; `--channel zalo` → exit 2;
+      `TTS_PROVIDER=x` → exit 2; `find_ffmpeg` None → exit 2, 0 call LLM;
+      `DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m
+      pipelines.video_studio --sku all --channel tiktok --brief "Quà núi rừng"`
+      → exit 2, 0 file, 0 LLM (gotcha v2.0: host chết, KHÔNG `env -u`).
+    - `grep -nE "set_status|approve_draft|schedule|requests|httpx|urllib|import
+      socket|shell=True|clone|speaker_wav|reference_audio"
+      pipelines/video_studio.py` rỗng.
+    - Chạy thật DB v63.env (sau `apply_schema --roles` + `python -m
+      ingest.golden_store`), `VIDEO_OUT_DIR`/`PACKSHOT_DIR`/`BROLL_DIR` trỏ thư
+      mục tạm scratchpad (packshot mẫu MỌI SKU): `python -m
+      pipelines.video_studio --sku all --channel tiktok --channel facebook
+      --brief "Quà tặng từ núi rừng Quảng Nam"` → 0 `created` (golden: 8
+      TPBVSK `maket_xnqc`, 2 rượu `ruou`, 3 mật ong `readiness`), exit 0, 0
+      file, 0 dòng `video_assets`, `select count(*) from llm_usage where
+      agent_id='mkt_video'` không đổi (0 LLM). KHÔNG giả lập golden để có
+      `created` thật.
+  - Evidence: `evidence/v63_cli.log` (output CLI + count `video_assets` /
+    `content_drafts` theo content_type / `llm_usage` mkt_video trước/sau)
+- [x] **W63.5 Suite eval `mkt04` (format suite v4.5, LLM giả, tất định)**
+  - `data/eval/suites/mkt04.json` (`_doc`: bản dev — chờ GĐ Marketing/Pháp chế
+    duyệt; `runner` `mkt04`, `agent_model` `rules`, `status` `active`,
+    `risk` `high`, `cases_sha256` đúng; mọi ca `scorer` `mkt04`, `label`
+    `dev_draft`, `label_status`, `source`): mỗi ca `id`, `kind`, `op`
+    (`video`|`script`), `sku`, `channel`, `format`, `brief`, `fake_llm` (list
+    chuỗi trả lời theo lượt), tùy chọn `readiness`, `broll` (B-roll mẫu GPS +
+    license), `tamper` (bool), `expect` (`video`|`script`|`refuse`), `code`.
+    ≥14 ca: `video_label_meta` ×2 (9:16, 1:1 — nhãn 3 khung trích + sidecar đủ
+    + 15–45 s + không track âm thanh), `no_location_meta` ≥1, `packshot_tamper`
+    ≥1 (expect refuse `packshot_lech`), `spec_line_dropped` ≥1 (`op` script),
+    `trap_alcohol` ≥2 (1 ca map tiêm QC_DAY_DU), `trap_tpbvsk_maket` ≥1
+    (Sapentol "hook mới"), `trap_readiness` ≥1, `trap_doctor` ≥2 (brief +
+    kịch bản "bác sĩ khuyên dùng"), `trap_guardrail` ≥1. ≤ 3 ca thực sự mã hóa
+    mp4.
+  - `scripts/agent_eval.py`: `RUNNERS["mkt04"] = run_mkt04` + `RUNNER_SCORERS`,
+    `SCORERS`, `DETERMINISTIC_RUNNERS`, `NO_TEXT_SCORERS`, `_validate_mkt04_
+    case`, `_score_mkt04` — TẤT ĐỊNH: pop `GUARDRAIL_LLM_MODEL`; patch
+    `video_studio.chat` bằng fake theo `fake_llm` + đếm (mẫu `run_cskh`);
+    packshot/B-roll mẫu + out dir trong `tempfile.TemporaryDirectory`; ca
+    `tamper` bọc tạm `image_studio.compose` (try/finally khôi phục). Pass:
+    refuse ⇔ `refused.code == code` (+ trap rượu/maket/readiness/brief: 0
+    call LLM; `trap_tpbvsk_maket` reason chứa "maket XNQC"); kind video theo
+    quy ước W63.3; `spec_line_dropped` ⇔ không cảnh nào `_spec_like`. Suite
+    KHÔNG vào `required_agents`; `data/eval/config.json` `_doc` thêm 1 câu
+    mkt04.
+  - Boundary: `data/eval/suites/mkt04.json` (mới), `data/eval/config.json`
+    (`_doc`), `scripts/agent_eval.py`, `tests/test_agent_eval.py`,
+    `tests/test_qa_harness.py` (FLIP 17→18)
+  - Gate:
+    - `python scripts/agent_eval.py --agent mkt04 --no-record` exit 0, dòng
+      `[done] mkt04 PASS`; `--agent mkt03 --no-record`, `--agent mkt02
+      --no-record`, `--agent guardrail --no-record` vẫn exit 0;
+      `python scripts/agent_eval.py --validate` exit 0, in `[done] 18/18 suite
+      hợp lệ`.
+    - pytest: runner mkt04 0 call gateway thật; `image_studio.compose` sau khi
+      chạy là hàm gốc; sửa 1 ca rượu thành `expect: video` (tmp copy) → FAIL;
+      bỏ hết ca 1 kind bắt buộc → FAIL; đột biến bỏ chữ nhãn → ca
+      `video_label_meta` FAIL; `required_agents` vẫn `["guardrail",
+      "chatbot"]`; test cũ xanh (FLIP ghi số assert trước/sau).
+  - Evidence: `evidence/v63_eval.log`
+- [x] **W63.6 Docs prompt-library / sop / kien-truc / cloud README / STATUS +
+  env + gitignore + requirements comment**
+  - `docs/handover/prompt-library.md`: mục "Video ngắn AI (MKT-04, v6.3)" —
+    bảng template `video_script` (version, sha256 12 hex, trạng thái), luật kịch
+    bản (`script_banned`, bỏ câu số/giá, 1 lượt sửa, từ chối), TTS (`none`; chỗ
+    cắm + bọc kill/cap/usage; không clone giọng), nhãn (mọi khung + caption),
+    packshot (compose + kiểm lại bytes trước ghép), từ chối trước LLM.
+  - `docs/handover/sop.md`: mục "Dựng video nháp (MKT-04, v6.3)" — chuẩn bị
+    packshot + B-roll + `licenses.json`, lệnh CLI, ý nghĩa `created/skipped/
+    refused/failed` + mã, exit code, nháp vào "Duyệt & Lịch" (người tải
+    `data/video_assets/<sha>.mp4` đăng tay — agent không đăng); ffmpeg lấy từ
+    `imageio-ffmpeg` (hoặc `FFMPEG_BIN`).
+  - `docs/handover/kien-truc.md`: "66 bảng public" → "67 bảng public" + dòng
+    `video_assets`; dòng `agent_writer` thêm SELECT/INSERT `video_assets`;
+    module `pipelines/video_studio.py`; env mới; `data/video_assets/`.
+  - `deploy/cloud/README.md`: dòng `video_assets` (đường B — file mp4/sidecar ở
+    `VIDEO_OUT_DIR` chép riêng).
+  - `env.example`: khối "Video AI (MKT-04, v6.3)" — `TTS_PROVIDER=none` (chỉ
+    `none`; TTS có phí = external-dep), `VIDEO_OUT_DIR=`, `BROLL_DIR=`,
+    `FFMPEG_BIN=`.
+  - `.gitignore`: `data/video_assets/`, `data/broll/`.
+  - `requirements.txt`: CHỈ sửa comment `imageio-ffmpeg` (giờ là runtime của
+    `pipelines.video_studio`, không còn chỉ dev) — không đổi version/dep.
+  - `STATUS.md`: 1 đoạn v6.3 — có gì, golden hiện 0 SKU đủ điều kiện, external-
+    dep. `tests/test_handover_docs.py`: `SOP_COMMANDS` thêm
+    `pipelines.video_studio`.
+  - Boundary: `docs/handover/prompt-library.md`, `docs/handover/sop.md`,
+    `docs/handover/kien-truc.md`, `deploy/cloud/README.md`, `STATUS.md`,
+    `env.example`, `.gitignore`, `requirements.txt` (comment),
+    `tests/test_handover_docs.py`
+  - Gate: `python -m pytest -q tests/test_handover_docs.py tests/test_db_backup.py`
+    xanh (`test_kien_truc_lists_all_tables` 67 bảng, prompt-library phủ
+    manifest, `test_cloud_readme_drift_guard`); `git check-ignore
+    data/video_assets/x.mp4 data/broll/x.jpg` in cả 2; `grep -n
+    "TTS_PROVIDER" env.example` có.
+  - Evidence: `evidence/v63_pytest.log`
+- [ ] **External-dep — chờ công ty / Pháp chế / nhà cung cấp** (GIỮ [ ] —
+  worker không đánh dấu): key + hợp đồng TTS tiếng Việt / API video AI (có
+  phí; cắm provider + cap); B-roll/clip quay thật (shot-list vùng trồng, Đà
+  Nẵng) + license; nhạc có bản quyền; GĐ Marketing duyệt template video/kịch
+  bản `video_script`/layout; font thương hiệu; Pháp chế quy cách nhãn AI trên
+  video (vị trí/thời lượng) + `video` là quảng cáo; `xnqc_records` (maket/kịch
+  bản XNQC) để làm video TPBVSK; xác minh tự công bố mật ong (để có SKU đủ
+  readiness); lưu trữ cloud cho mp4. CHƯA có người duyệt thật.
+- Ngoài phạm vi → someday: clip video làm B-roll (overlay nhãn/phụ đề trên
+  clip); TTS/nhạc thật; giá trên khung kết; preview video trong Studio;
+  `mkt04` vào `required_agents`; dọn nháp mồ côi do race; tier duyệt theo
+  loại video (vườn/hậu trường tầng 1).
+
+Gate chung (đọc output tới khi process exit trước lệnh nặng kế tiếp, không
+chạy chồng pytest, full pytest đúng 1 lần mỗi vòng):
+- targeted ×3: `python -m pytest -q -rs tests/test_video_studio.py
+  tests/test_image_studio.py tests/test_content.py tests/test_listing.py
+  tests/test_store.py tests/test_agent_eval.py tests/test_qa_harness.py
+  tests/test_handover_docs.py tests/test_llm_gateway.py
+  tests/test_guardrail_llm.py` — xanh 3 lần; test DB thật + test cần ffmpeg/
+  font KHÔNG nằm trong danh sách skip.
+- full: `python -m pytest -q` — baseline 3533 passed (đo lại trước khi sửa);
+  kỳ vọng baseline + số test mới, 0 fail, skipped không tăng (skip
+  `test_dr_drill` khi Docker tắt = môi trường).
+- `ruff check .` sạch.
+- `python -m py_compile pipelines/video_studio.py pipelines/content.py
+  app/streamlit_app.py scripts/agent_eval.py`.
+- `python scripts/agent_eval.py --agent mkt04 --no-record` exit 0; `--agent
+  mkt03`/`mkt02`/`guardrail --no-record` exit 0; `python scripts/agent_eval.py
+  --deterministic` exit 0; `python scripts/redteam.py` exit 0.
+- Gate thêm: `git diff --stat -- pipelines/guardrail.py
+  pipelines/guardrail_llm.py pipelines/llm_gateway.py pipelines/store.py
+  pipelines/auth.py pipelines/image_studio.py connectors api
+  scripts/eval_qa.py tests/test_guardrail.py tests/test_image_studio.py` rỗng;
+  grep publish/mạng/clone (W63.4) rỗng; `git status` không có file lạ ngoài
+  boundary (`lv2-market-top.png` nếu có giữ untracked; không `.mp4`/`.png`
+  trong `data/`); evidence có đếm assert trước/sau cho mọi test FLIP.
+- Kết quả gate vòng 3 (worker, 2026-10-13): targeted ×3 = 481 passed ×3, 0 skip
+  (`evidence/v63_targeted_{1,2,3}.log`); full = 3620 passed / 1 failed / 0 skip
+  (`evidence/v63_full.log`) — fail duy nhất `tests/test_garden_director.py::
+  test_bulletin_numbers_match_reference_sql` là time-bomb wall-clock CÓ SẴN ngoài
+  v6.3 (garden_media.created_at = now() 13/10 vs kỳ bản tin tới hết 12/10; file
+  agent/test không đổi — `evidence/v63_pytest.log`), CHƯA vá (ngoài boundary,
+  chờ coordinator). ruff/py_compile/diff-cấm/grep sạch (`evidence/v63_lint.log`);
+  eval mkt04 16/16, mkt03/mkt02/guardrail, `--validate` 18/18, `--deterministic
+  --no-record` exit 0 (không `--no-record` exit 1 chỉ vì working tree bẩn —
+  worker không commit), redteam exit 0 (`evidence/v63_eval.log`).
+
+v6.3 đóng 2026-10-13 (workflow resume từ build; vòng 0: FIX/PASS/FIX — gate đỏ
+date-bomb garden + `script_banned` sót biến thể bác sỹ/dược sỹ/lương y/trước-và-
+sau → thêm từ + test 8 biến thể + test "trước khi dùng" lành tính; vòng 1 PASS,
+0 mở; full pytest 3632 pass). Worker sửa test garden — coordinator BỎ khi commit,
+dùng bản vá chung `ai-infra` 19dc153. Gate coordinator chạy lại: ruff sạch, test
+file đổi/mới xanh, `agent_eval --validate`, `dpia_draft --check`. Golden hiện 0
+SKU đủ điều kiện video → CLI thật tạo 0 nháp (đúng dữ liệu). External-dep: key
+TTS/video trả phí, B-roll/clip có giấy phép, nhạc bản quyền, GĐ Marketing duyệt
+template, font thương hiệu, Pháp chế quy định nhãn video AI, `xnqc_records` (video
+TPBVSK), xác minh tự công bố mật ong, cloud storage mp4. Someday: brief người gõ
+vào SYSTEM prompt (content.draft để ở USER) → chuyển sang user message; `_brolls`
+theo symlink + read_bytes trước check max_bytes; run_mkt04 chưa pop IMAGE_PROVIDER;
+`--by` tự do (agent tự xưng human:); `_one` chỉ bắt OSError; câu KM/"số một"/
+testimonial không số lọt phụ đề; script_banned literal (regex cửa sổ ngắn);
+'lương y' khớp không dấu "chat luong y nghia"; mutation is_health_question không
+test bắt; test_find_ffmpeg_order lỏng; test_ci_workflow:78 dòng dính space;
+`channels._warn` crash cp1258 trong thread (ngoài diff).
+
 Nhánh `ai-infra`: M31 đợt gộp 5 (2026-10-12) — v4.3, v9.1, v8.3, v5.1, v6.2 đã gộp
 (66 bảng; full pytest 3530 pass + 3 đỏ tích hợp đã vá). Tích hợp: mã luồng DF-26
 (v4.3), DF-27 (v9.1), DF-28 (v8.3), DF-29/30 (v5.1) + DPIA/TIA 30 luồng; lô B2B
