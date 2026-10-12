@@ -1,5 +1,38 @@
 # STATUS — v2.1-garden-log (2026-10-11)
 
+## v4.2-guardrail-noi-llm-redteam — WP05 PC-A3 + PC-A9 (contract trong DONE.md)
+
+**Guardrail đăng bài đã nối luồng thật:** `pipelines/content.py` (sinh
+draft — nhãn AI nối tất định, prompt dùng câu khuyến cáo chuẩn đọc từ
+`data/guardrail_rules.json`, bỏ "Ngọc Linh" khỏi brand voice),
+`pipelines/store.py` (`save_draft` lưu snapshot luật đăng bài không bao giờ
+lỏng hơn caller; duyệt chạy LẠI `check_publish_llm` với kênh của draft +
+readiness đọc view `sku_readiness` — grant mới trong `docs/roles.sql`;
+`guardrail_lines()` cho UI) và Content Studio (vi phạm theo code/severity/
+span, ô check tay chọn kênh/loại/nhãn AI). Chatbot giữ `check()`.
+**Lớp LLM-check phụ** `pipelines/guardrail_llm.py` (env
+`GUARDRAIL_LLM_MODEL`, trống = tắt): chỉ CHẶN THÊM (`llm_ngam_y_suc_khoe`),
+lỗi/timeout/vượt trần/phản hồi hỏng -> `llm_check_unavailable` (block).
+Smoke thật `google/gemini-2.5-flash-lite` (evidence/v42_llm.log): bài sạch
+pass, "món quà cho người hay mệt mỏi" bị cờ, bài luật đã chặn 0 call.
+**Red-team PC-A9** `data/eval/redteam.jsonl` 50 ca (9 kiểu tấn công, 44
+critical, 6 ca từ biến thể LLM thật) + `scripts/redteam.py` (CI chạy bộ cố
+định không LLM; `--generate` ≤20 call bằng model khác họ). Lần sinh thật
+18 call `google/gemini-2.5-flash-lite` (~0.0013 USD) -> 90 biến thể, vá
+luật homoglyph/fullwidth, emoji/khoảng trắng Unicode chèn giữa chữ, chữ cái
+cách đơn, teencode không mơ hồ. Tỷ lệ lọt bộ cố định (luật thuần) 20/50 =
+40.0% — toàn bộ có `known_gap` (viết tắt, tiếng Anh, ẩn ý, rượu nói vòng,
+chia câu… — LUẬT KHÔNG bắt; danh sách ở phụ lục D mục 2c). Lớp LLM-check
+MẶC ĐỊNH TẮT (env trống) — khi tắt, 18/20 ca known-gap đi qua trọn
+(2 ca bị luật chặn bằng code khác). Đo 1 lần lớp LLM THẬT trên 20 ca này
+(`google/gemini-2.5-flash-lite`, 18 call, ~0.0012 USD, evidence/v42_llm.log
+mục "đo known-gap"): bắt 15/18, LỌT cả 2 lớp 3 ca — `rt-en-01` ('medicine',
+critical), `rt-ruou-02` (rượu nói vòng, critical), `rt-split-02` (major).
+1 lần chạy, 1 model, chưa phải tỷ lệ bắt ổn định — Pháp chế xem.
+External-dep: Pháp chế duyệt bộ red-team/known-gap/tỷ lệ lọt; công ty chốt
+model LLM-check + mode `llm_check_unavailable`, model/provider red-team và
+trần; bộ ≥100 ca nhãn người thật (A9-1). Chưa có người duyệt thật.
+
 ## v4.1-guardrail-v2 — WP05/PC-A3 (nhánh M31, contract trong DONE.md)
 
 `pipelines/guardrail.py`: `check(text)` giữ signature + key cũ (mọi

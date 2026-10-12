@@ -18,17 +18,20 @@ from pathlib import Path
 import psycopg
 import pytest
 
-from pipelines import store
+from pipelines import guardrail, store
 
 ROOT = Path(__file__).resolve().parent.parent
 TODAY = date(2026, 10, 15)
 COLS = store.COLS
+# v4.2: approve chạy lại check_publish (kênh draft) — text mặc định phải
+# đạt luật đăng bài: có nhãn AI, không "Ngọc Linh", không claim/SKU.
+TEXT_OK = "Quà biếu gia đình dịp Tết.\nNội dung có sử dụng AI"
 
 
 def _row(**kw):
     """Tuple đủ COLS; default = draft pending guardrail-ok."""
     base = {"id": 1, "created_at": None, "brief": "b",
-            "channel": "facebook", "text": "t",
+            "channel": "facebook", "text": TEXT_OK,
             "guardrail": {"ok": True, "violations": [],
                           "matched_claims": []},
             "status": "pending", "reviewer": None, "reviewed_at": None,
@@ -83,7 +86,8 @@ def _route(*subs, params=None, rows=()):
 
 def _save_routes(new_id):
     return [_route("insert into content_drafts", rows=[(new_id,)]),
-            _route("insert into agent_action_log", rows=[])]
+            _route("insert into agent_action_log", rows=[]),
+            _route("from sku_readiness", rows=[])]
 
 
 def test_save_draft_inserts_and_commits():
@@ -100,7 +104,10 @@ def test_save_draft_inserts_and_commits():
     assert params[2] == "text bài" and params[4] == "manual:studio"
     assert params[5] == "Lan"
     # guardrail bọc Jsonb — fake-conn nhận wrapper, .obj là dict gốc.
-    assert getattr(params[3], "obj", params[3]) == g
+    # v4.2: snapshot lưu = luật check_publish chạy lại (kênh draft) — text
+    # thiếu nhãn AI -> ok False dù caller ghi ok:true.
+    assert getattr(params[3], "obj", params[3]) == \
+        guardrail.check_publish("text bài", channel="facebook")
     # v3.4: 1 dòng log draft_create cùng transaction, sha256 text.
     lsql, lparams = conn.calls[1]
     assert "insert into agent_action_log" in lsql
@@ -487,3 +494,345 @@ def test_store_module_exports_contract():
 
     ok, warn = store.set_status(Dead(), 1, "approved", "Lan")
     assert not ok and "không tìm thấy" in warn
+
+
+# ---------- v4.2 W42.4: save/approve chạy lại check_publish ----------
+
+CANON = ("Thực phẩm này không phải là thuốc và không có tác dụng thay thế "
+         "thuốc chữa bệnh")
+SAVINA = f"Savina 12 viên hỗ trợ giảm ho. {CANON}.\nNội dung có sử dụng AI"
+
+
+def _approve_conn(row, readiness_rows=None):
+    routes = [_route("from content_drafts", "where id = %s", rows=[row]),
+              _route("select approve_draft(", rows=[(11,)])]
+    if readiness_rows is not None:
+        routes.append(_route("from sku_readiness", rows=readiness_rows))
+    return _Conn(routes)
+
+
+def _snap(conn):
+    """Snapshot jsonb đã INSERT (sau lần đọc view nếu có)."""
+    return next(c[1][3].obj for c in conn.calls
+                if "insert into content_drafts" in c[0])
+
+
+def _called(conn, sub):
+    return any(sub in c[0] for c in conn.calls)
+
+
+def test_approve_rechecks_publish_missing_ai_label():
+    conn = _approve_conn(_row(text="t"))           # snapshot ok:true giả
+    ok, warn = store.set_status(conn, 1, "approved", "Lan")
+    assert not ok and "kiểm lại" in warn and "thieu_nhan_ai" in warn
+    assert not _called(conn, "approve_draft") and conn.committed == 0
+
+
+def test_approve_unknown_channel_config_blog_alias_ok():
+    conn = _approve_conn(_row(channel="insta"))
+    ok, warn = store.set_status(conn, 1, "approved", "Lan")
+    assert not ok and "config" in warn
+    assert not _called(conn, "approve_draft")
+    conn = _approve_conn(_row(channel="blog"))
+    assert store.set_status(conn, 1, "approved", "Lan") == (True, None)
+    assert _called(conn, "approve_draft(")
+
+
+def test_approve_readiness_from_view_and_fallback():
+    # View nói QC_DAY_DU cho savina×facebook -> duyệt được (gọi function).
+    conn = _approve_conn(_row(text=SAVINA),
+                         [("savina-12v", "facebook", "QC_DAY_DU")])
+    assert store.set_status(conn, 1, "approved", "Lan") == (True, None)
+    assert _called(conn, "from sku_readiness")
+    assert _called(conn, "approve_draft(")
+    # View chỉ có kênh khác -> thiếu key = CAM -> chặn.
+    conn = _approve_conn(_row(text=SAVINA),
+                         [("savina-12v", "shopee", "QC_DAY_DU")])
+    ok, warn = store.set_status(conn, 1, "approved", "Lan")
+    assert not ok and "sku_chua_xnqc" in warn
+    # View lỗi (psycopg.Error) -> fallback golden file -> chặn.
+    conn = _RaiseConn([_route("from content_drafts", "where id = %s",
+                              rows=[_row(text=SAVINA)])],
+                      "from sku_readiness", "permission denied for view")
+    ok, warn = store.set_status(conn, 1, "approved", "Lan")
+    assert not ok and "sku_chua_xnqc" in warn
+    assert not _called(conn, "approve_draft")
+
+
+def test_readiness_from_db_shapes():
+    assert store.readiness_from_db(None) is None
+    conn = _Conn([_route("from sku_readiness",
+                         rows=[("savina-12v", "web", "MO_TA")])])
+    assert store.readiness_from_db(conn) == {("savina-12v", "web"): "MO_TA"}
+    bad = _Conn([_route("from sku_readiness", rows=[("only-one",)])])
+    assert store.readiness_from_db(bad) is None             # hàng sai shape
+
+
+def test_save_draft_snapshot_never_looser():
+    # Caller ghi ok:true nhưng text có từ cấm -> snapshot lưu ok False.
+    conn = _Conn(_save_routes(9))
+    store.save_draft(conn, "b", "facebook",
+                     "Savina chữa ho.\nNội dung có sử dụng AI",
+                     {"ok": True, "violations": []}, created_by="Lan")
+    snap = _snap(conn)
+    assert snap["ok"] is False
+    assert "tu_cam" in [v["code"] for v in snap["violations"]]
+    # Caller có violation LLM + text sạch theo luật -> giữ code, ok False.
+    caller = {"ok": False, "llm_check": "flag", "llm_model": "m/x",
+              "violations": [{"code": "llm_ngam_y_suc_khoe",
+                              "detail": "ẩn ý", "span": "Quà", "start": 0,
+                              "end": 3, "severity": "major",
+                              "type": "llm_ngam_y_suc_khoe"}]}
+    conn = _Conn(_save_routes(10))
+    store.save_draft(conn, "b", "facebook", TEXT_OK, caller,
+                     created_by="Lan")
+    snap = _snap(conn)
+    assert snap["ok"] is False
+    assert [v["code"] for v in snap["violations"]] == ["llm_ngam_y_suc_khoe"]
+    assert snap["llm_check"] == "flag" and snap["llm_model"] == "m/x"
+    # Caller ok:false không lý do (CLI `{}`) + luật sạch -> vẫn False.
+    conn = _Conn(_save_routes(11))
+    store.save_draft(conn, "b", "facebook", TEXT_OK, {}, created_by="Lan")
+    assert _snap(conn)["ok"] is False
+    # Luật sạch + caller ok:true -> ok True; không đọc view khi không SKU.
+    conn = _Conn(_save_routes(12))
+    store.save_draft(conn, "b", "blog", TEXT_OK,
+                     {"ok": True, "violations": []}, created_by="Lan")
+    assert _snap(conn)["ok"] is True
+    assert not _called(conn, "from sku_readiness")
+
+
+def test_save_draft_reads_view_when_sku_mentioned():
+    conn = _Conn(_save_routes(13)[:2] + [_route(
+        "from sku_readiness", rows=[("savina-12v", "facebook", "QC_DAY_DU")])])
+    store.save_draft(conn, "b", "facebook", SAVINA,
+                     {"ok": True, "violations": []}, created_by="Lan")
+    assert _called(conn, "from sku_readiness")
+    snap = _snap(conn)
+    assert snap["ok"] is True, snap["violations"]
+
+
+def test_approve_llm_layer_raise_fail_closed(monkeypatch):
+    from pipelines import llm_gateway
+
+    monkeypatch.setenv("GUARDRAIL_LLM_MODEL", "google/gemini-test")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+
+    class Boom:
+        def __init__(self):
+            import types
+            self.chat = types.SimpleNamespace(
+                completions=types.SimpleNamespace(create=self._c))
+
+        def _c(self, **kw):
+            raise TimeoutError("read timeout")
+
+    monkeypatch.setattr(llm_gateway, "_client", lambda: Boom())
+    conn = _approve_conn(_row())
+    ok, warn = store.set_status(conn, 1, "approved", "Lan")
+    assert not ok and "llm_check_unavailable" in warn
+    assert not _called(conn, "approve_draft")
+
+
+@pytest.mark.parametrize("g,first", [
+    ({"ok": True, "violations": [], "matched_claims": []}, "success"),
+    # snapshot v3 (chỉ type/detail/span)
+    ({"ok": False, "violations": [{"type": "banned_word", "detail": "x",
+                                   "span": "thuốc"}]}, "error"),
+    # snapshot v4.1/v4.2 đầy đủ
+    ({"ok": False, "violations": [{"type": "banned_word", "code": "tu_cam",
+                                   "severity": "critical", "detail": "d",
+                                   "span": "thuốc", "start": 3, "end": 8}],
+      "warnings": [{"code": "sku_chua_mo_kenh", "severity": "minor",
+                    "detail": "w"}],
+      "required_labels": ["Nội dung có sử dụng AI"],
+      "llm_check": "skipped", "llm_model": "m/x"}, "error"),
+    ({}, "error"), (None, "error"), ({"ok": 0}, "error"),
+    ({"ok": True, "violations": "rác"}, "success"),
+    ("chuỗi", "error"),
+])
+def test_guardrail_lines_levels_no_raise(g, first):
+    lines = store.guardrail_lines(g)
+    assert lines and lines[0][0] == first
+    assert all(lv in ("success", "error", "warning", "info")
+               for lv, _ in lines)
+    assert all(isinstance(t, str) for _, t in lines)
+    if first == "error" and not (isinstance(g, dict) and g.get("violations")):
+        assert "KHÔNG RÕ" in lines[0][1]
+
+
+def test_guardrail_lines_full_format():
+    g = {"ok": False, "violations": [{"type": "banned_word", "code": "tu_cam",
+                                      "severity": "critical", "detail": "d",
+                                      "span": "thuốc", "start": 3, "end": 8},
+                                     {"type": "banned_word", "detail": "cũ",
+                                      "span": None}],
+         "warnings": [{"code": "sku_chua_mo_kenh", "severity": "minor",
+                       "detail": "w"}],
+         "required_labels": ["Nội dung có sử dụng AI"],
+         "llm_check": "flag", "llm_model": "m/x",
+         "matched_claims": [{"sku": "savina", "claim": "hỗ trợ giảm ho"}]}
+    lines = store.guardrail_lines(g)
+    assert lines[0] == ("error", '[critical] tu_cam — d → "thuốc" (3–8)')
+    assert lines[1] == ("error", "banned_word — cũ")     # thiếu code -> type
+    assert ("warning", "[minor] sku_chua_mo_kenh — w") in lines
+    assert ("info", "Lớp LLM-check: flag (m/x)") in lines
+    assert ("info", "Nhãn bắt buộc: Nội dung có sử dụng AI") in lines
+    assert ("info", "Claim khớp whitelist: savina: hỗ trợ giảm ho") in lines
+
+
+def test_store_uses_check_publish_not_chat_check():
+    src = (ROOT / "pipelines" / "store.py").read_text(encoding="utf-8")
+    assert "check_publish_llm(" in src and "check_publish(" in src
+    assert "guardrail_check(" not in src
+    assert not re.search(r"(?<![\w.])check\(", src)
+
+
+# ---------- v4.2 fix nghiệm thu: readiness DB trên luồng Studio thật ----------
+
+_QC_VIEW = [("savina-12v", "facebook", "QC_DAY_DU")]
+_QC_MAP = {("savina-12v", "facebook"): "QC_DAY_DU"}
+
+
+def _fake_llm(monkeypatch, text):
+    """Gateway giả cho content.draft — trả `text`, đếm call."""
+    import types
+
+    from pipelines import llm_gateway
+
+    calls = []
+
+    def _create(**kw):
+        calls.append(kw)
+        return types.SimpleNamespace(choices=[types.SimpleNamespace(
+            message=types.SimpleNamespace(content=text))])
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    monkeypatch.setattr(llm_gateway, "_client", lambda: types.SimpleNamespace(
+        chat=types.SimpleNamespace(
+            completions=types.SimpleNamespace(create=_create))))
+    return calls
+
+
+def test_studio_flow_draft_save_approve_with_view(monkeypatch):
+    """Luồng thật: kết quả draft() (không phải {'ok': True} tổng hợp) ->
+    save_draft (view QC_DAY_DU) -> approve gọi function. Trước fix draft()
+    luôn soi golden file -> sku_chua_xnqc -> snapshot ok False, violations
+    [] -> Studio 'KHÔNG RÕ' + không duyệt được."""
+    from pipelines import content
+
+    # Không truyền readiness (DB chết) -> fail-closed file như cũ.
+    calls = _fake_llm(monkeypatch, SAVINA)
+    r0 = content.draft("giới thiệu Savina", "facebook")
+    assert r0["guardrail"]["ok"] is False
+    assert "sku_chua_xnqc" in [v["code"] for v in r0["guardrail"]["violations"]]
+    assert len(calls) == 2                      # file chặn -> có lượt sửa
+    # Có map view -> pass ngay lượt 1, không feedback gỡ claim hợp lệ.
+    calls = _fake_llm(monkeypatch, SAVINA)
+    r = content.draft("giới thiệu Savina", "facebook", readiness=_QC_MAP)
+    assert r["guardrail"]["ok"] is True, r["guardrail"]["violations"]
+    assert len(calls) == 1
+    multi = content.draft_multi("b", ["facebook"], readiness=_QC_MAP)
+    assert multi["facebook"]["guardrail"]["ok"] is True
+    # Lưu: snapshot = luật chạy lại với view + caller thật.
+    conn = _Conn(_save_routes(21)[:2] + [_route("from sku_readiness",
+                                                rows=_QC_VIEW)])
+    store.save_draft(conn, "b", "facebook", r["text"], r["guardrail"],
+                     created_by="agent:studio")
+    snap = _snap(conn)
+    assert snap["ok"] is True, snap["violations"]
+    assert store.guardrail_lines(snap)[0][0] == "success"
+    # Duyệt: người khác duyệt, view QC_DAY_DU -> gọi approve_draft.
+    conn = _approve_conn(_row(text=r["text"], guardrail=snap), _QC_VIEW)
+    assert store.set_status(conn, 1, "approved", "Lan") == (True, None)
+    assert _called(conn, "approve_draft(")
+
+
+def test_merge_snapshot_never_unexplained_not_ok():
+    """ok False mà violations rỗng -> luôn có violation giải thích (UI
+    không 'KHÔNG RÕ'), ok giữ False."""
+    # Caller soi file (sku_chua_xnqc), lưu dùng view QC_DAY_DU -> luật sạch.
+    caller = {"ok": False, "violations": [
+        {"code": "sku_chua_xnqc", "detail": "file", "span": "Savina",
+         "start": 0, "end": 6, "severity": "critical"}]}
+    conn = _Conn(_save_routes(22)[:2] + [_route("from sku_readiness",
+                                                rows=_QC_VIEW)])
+    store.save_draft(conn, "b", "facebook", SAVINA, caller, created_by="Lan")
+    snap = _snap(conn)
+    assert snap["ok"] is False
+    assert [v["code"] for v in snap["violations"]] == ["sku_chua_xnqc"]
+    assert "snapshot lúc sinh" in snap["violations"][0]["detail"]
+    # Caller không chi tiết ({}, {"ok": False}) -> violation config.
+    for c in ({}, {"ok": False}, {"ok": False, "violations": "rác"}, None):
+        conn = _Conn(_save_routes(23))
+        store.save_draft(conn, "b", "facebook", TEXT_OK, c, created_by="Lan")
+        snap = _snap(conn)
+        assert snap["ok"] is False
+        assert [v["code"] for v in snap["violations"]] == ["config"]
+        assert all("KHÔNG RÕ" not in t for _, t in store.guardrail_lines(snap))
+
+
+def test_readiness_now_opens_closes_and_fallback(monkeypatch):
+    closed = []
+
+    class C(_Conn):
+        def close(self):
+            closed.append(1)
+
+    monkeypatch.setattr(store, "connect",
+                        lambda: C([_route("from sku_readiness",
+                                          rows=_QC_VIEW)]))
+    assert store.readiness_now() == _QC_MAP and closed == [1]
+    monkeypatch.setattr(store, "connect", lambda: None)
+    assert store.readiness_now() is None
+
+
+def _md_tokens_safe(out: str) -> bool:
+    """Mọi ký tự markdown đặc biệt trong `out` đều đứng sau đúng 1
+    backslash escape (bỏ cặp `\\x` rồi không còn ký tự đặc biệt trần)."""
+    special = set("\\`*_{}[]()#+-.!<>|~$:")
+    i = 0
+    while i < len(out):
+        if out[i] == "\\":
+            if i + 1 >= len(out) or out[i + 1] not in special:
+                return False
+            i += 2
+            continue
+        if out[i] in special:
+            return False
+        i += 1
+    return True
+
+
+@pytest.mark.parametrize("payload", [
+    "[x](http://t)", "![a](u)", "[x]: http://t", "a\\[x](u)",
+    "**đậm** _nghiêng_ `code` # h", ":red[đỏ] <img src=x>",
+    '[critical] tu_cam — d → "![a](http://t/p.png)" (3–8)',
+])
+def test_md_plain_escapes_link_image(payload):
+    out = store.md_plain(payload)
+    assert _md_tokens_safe(out), out
+    # Bỏ escape -> đúng text gốc (không mất chữ).
+    assert re.sub(r"\\(.)", r"\1", out) == payload
+
+
+def test_streamlit_studio_calls_check_publish_drift_guard():
+    """Studio (W42.5): ô check tay gọi check_publish (+ readiness view),
+    sinh bài truyền readiness, _render_guardrail đi qua guardrail_lines +
+    md_plain; `check()` chế độ chat CHỈ ở tab Chat."""
+    src = (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
+    chat_i = src.index('if "Chat Sâm Sâm" in _tabs')
+    studio_i = src.index('if "Content Studio" in _tabs')
+    end_i = src.index('if "Chưa trả lời" in _tabs')
+    studio = src[studio_i:end_i]
+    imports = [m.start() for m in re.finditer(
+        r"^\s*from pipelines\.guardrail import check\s*$", src,
+        re.MULTILINE)]
+    assert len(imports) == 1 and chat_i < imports[0] < studio_i
+    assert not re.search(r"(?<![\w.])check\(", studio)
+    assert re.search(r"_render_guardrail\(check_publish\(", studio)
+    assert "readiness=readiness_now()" in studio
+    assert studio.count("readiness=_rmap") == 2      # draft + draft_multi
+    rg = src[src.index("def _render_guardrail"):chat_i]
+    assert "guardrail_lines(g)" in rg and "md_plain(line)" in rg
+    assert "def _md_plain" not in src           # 1 bản escape duy nhất (store)

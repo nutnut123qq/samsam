@@ -20,9 +20,17 @@ API (contract — không đổi signature khi chưa cập nhật TASKS.md):
   check(text) -> {"ok","violations","matched_claims","warnings","skus",
                   "required_labels"}
   check_publish(text, *, channel, content_type="post", sku=None,
-                is_ai=True, is_sponsored=False) -> cùng shape.
+                is_ai=True, is_sponsored=False, readiness=None) -> cùng shape.
+  with_violation(result, code, detail, span=None, start=None, end=None)
+      -> dict MỚI có thêm 1 violation (v4.2 — lớp LLM/store chỉ CHẶN THÊM,
+      không bao giờ đổi ok False -> True).
   violations[]: {"type","detail","span","code","severity","start","end"};
   `type` cũ (banned_word/unverified_claim/config) giữ nguyên chuỗi.
+
+v4.2: `readiness` = map (sku_key, kênh-sau-alias) -> CAM|MO_TA|TP_THUONG|
+QC_DAY_DU do CALLER đọc từ view `sku_readiness` (pipelines.store) — module
+này vẫn không chạm DB. None -> soi gương golden file như v4.1; thiếu key ->
+CAM (fail-closed); map không phải dict / giá trị lạ -> "config".
 """
 
 import bisect
@@ -30,6 +38,7 @@ import json
 import re
 import unicodedata
 from functools import lru_cache
+from itertools import compress
 from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
@@ -61,20 +70,54 @@ SAFE_PHRASES = (
 NEGATION_FLIPS = ("không ai", "ai bảo", "ai nói", "chẳng lẽ", "đâu phải")
 
 SEVERITIES = ("critical", "major", "minor")
+READINESS_LEVELS = ("CAM", "MO_TA", "TP_THUONG", "QC_DAY_DU")
 
 # Ký tự chèn giữa 2 CHỮ CÁI để lách từ cấm ("th.uốc", "đi<ZWSP>ều trị").
 # Chỉ bỏ khi 2 bên đều là chữ cái — "No.5", "Tp. HCM" giữ nguyên.
+# v4.2 (red-team PC-A9): thêm khoảng trắng Unicode hẹp (U+2000–U+200A,
+# U+202F, U+205F), variation selector U+FE0F, emoji/biểu tượng (U+2600–
+# U+27BF, U+1F300–U+1FAFF) chèn giữa chữ ("th\U0001f48auốc", "thu<thin>ốc"); và
+# nhánh 2: khoảng trắng (kể cả chuỗi trắng Unicode trộn — biến thể red-team
+# LLM "c <thin> h") giữa 2 chữ cái ĐƠN ("t h u ố c") — chữ nhiều ký tự
+# hai bên ("đi ều") không gộp (dễ nối nhầm 2 từ thật). Chữ "đơn" = không
+# dính chữ/ký tự chèn khác 2 bên (không gộp "t.h.u.o.c t.h.u.o.c" thành 1
+# chuỗi liền mất biên từ). Giới hạn đã biết: nhiều từ viết cách chữ LIỀN
+# nhau ("t h u ố c t r ị") bị gộp thành 1 chuỗi -> lọt (known-gap red-team).
+_FILL = (r".\-_*\u00ad\u200b-\u200d\u2060\ufeff\u2000-\u200a\u202f\u205f"
+         r"\ufe0f\u2600-\u27bf\U0001f300-\U0001faff")
+_SPACES = r" \u00a0\u2000-\u200a\u202f\u205f\u3000"
 _FILLER_RE = re.compile(
-    r"(?<=[^\W\d_])[.\-_*\u00ad\u200b-\u200d\u2060\ufeff]+(?=[^\W\d_])")
+    rf"(?<=[^\W\d_])[{_FILL}]+(?=[^\W\d_])"
+    rf"|(?<=(?<![^\W\d_]|[{_FILL}])[^\W\d_])[{_SPACES}]+"
+    rf"(?=[^\W\d_](?![^\W\d_]|[{_FILL[1:]}]))")
+
+# v4.2 (red-team PC-A9): homoglyph Cyrillic/Greek -> Latin, 1 ký tự -> 1 ký
+# tự (giữ bất biến len(_fold(s)) == len(s)). Áp SAU casefold.
+_HOMOGLYPH = str.maketrans({
+    "\u0430": "a", "\u0435": "e", "\u043e": "o", "\u0440": "p",
+    "\u0441": "c", "\u0443": "y", "\u0445": "x", "\u0442": "t",
+    "\u043d": "h", "\u043a": "k", "\u043c": "m", "\u0432": "b",
+    "\u0456": "i", "\u0458": "j", "\u0455": "s", "\u04bb": "h",
+    "\u0501": "d", "\u04cf": "l", "\u0261": "g",
+    "\u03b1": "a", "\u03bf": "o", "\u03c1": "p", "\u03c4": "t",
+    "\u03c5": "u", "\u03bd": "v", "\u03b9": "i", "\u03ba": "k",
+    "\u03c7": "x", "\u03b5": "e",
+})
+
+_FLIP = bytes.maketrans(b"\x00\x01", b"\x01\x00")
 
 
 @lru_cache(maxsize=65536)
 def _fold_char(ch: str) -> str:
+    # v4.2: NFKC 1 ký tự (fullwidth "\uff54" -> "t") rồi casefold, rồi homoglyph.
+    k = unicodedata.normalize("NFKC", ch)
+    ch = k if len(k) == 1 else ch
     f = ch.casefold()
-    if len(f) == 1:
-        return f
-    f = ch.lower()
-    return f if len(f) == 1 else ch  # "ß"/"ﬁ"/"İ": giữ nguyên, không lệch
+    if len(f) != 1:
+        f = ch.lower()
+        if len(f) != 1:
+            return ch  # "ß"/"ﬁ"/"İ": giữ nguyên, không lệch
+    return f.translate(_HOMOGLYPH)
 
 
 def _fold(s: str) -> str:
@@ -259,17 +302,17 @@ def _find_terms(text: str, terms: list[str], pre: _Txt | None = None
 def _compress(text: str) -> tuple[str | None, list[int]]:
     """Bản nén bỏ ký tự chèn giữa 2 chữ cái + cmap (index nén -> index
     `text`). Không có ký tự chèn -> (None, [])."""
-    runs = list(_FILLER_RE.finditer(text))
+    runs = [m.span() for m in _FILLER_RE.finditer(text)]
     if not runs:
         return None, []
-    parts, cmap, pos = [], [], 0
-    for m in runs:
-        parts.append(text[pos:m.start()])
-        cmap.extend(range(pos, m.start()))
-        pos = m.end()
-    parts.append(text[pos:])
-    cmap.extend(range(pos, len(text)))
-    return "".join(parts), cmap
+    # v4.2: mặt nạ byte + itertools.compress (C) thay vòng append/extend
+    # Python mỗi run — văn bản toàn chữ cái đơn ("a b a b…") có ~n/2 run.
+    drop = bytearray(len(text))
+    for s, e in runs:
+        drop[s:e] = b"\x01" * (e - s)
+    keep = drop.translate(_FLIP)
+    return ("".join(compress(text, keep)),
+            list(compress(range(len(text)), keep)))
 
 
 def _filler_hits(text: str, terms: list[str], packed=None) -> list[dict]:
@@ -349,6 +392,15 @@ def _alcohol_span(kb, pre: _Txt) -> tuple[int, int] | None:
     return m.start(), m.end()
 
 
+def _sev_mode(rules, code) -> tuple[str, str]:
+    """(severity, mode) theo rules[code]; thiếu/hỏng -> critical + block."""
+    r = rules.get(code) if isinstance(rules, dict) else None
+    if (isinstance(r, dict) and r.get("severity") in SEVERITIES
+            and r.get("mode") in ("block", "warn")):
+        return r["severity"], r["mode"]
+    return "critical", "block"  # code thiếu luật -> fail-closed
+
+
 def _vdict(code, severity, detail, span=None, start=None, end=None,
            type_=None) -> dict:
     return {"type": type_ or code, "detail": detail, "span": span,
@@ -376,12 +428,7 @@ def _run(text, ctx: dict | None) -> dict:
     viols, warns = [], []
 
     def flag(code, detail, span=None, start=None, end=None, type_=None):
-        r = rules.get(code)
-        if (isinstance(r, dict) and r.get("severity") in SEVERITIES
-                and r.get("mode") in ("block", "warn")):
-            sev, mode = r["severity"], r["mode"]
-        else:
-            sev, mode = "critical", "block"  # code thiếu luật -> fail-closed
+        sev, mode = _sev_mode(rules, code)
         (warns if mode == "warn" else viols).append(
             _vdict(code, sev, detail, span, start, end, type_))
 
@@ -389,7 +436,7 @@ def _run(text, ctx: dict | None) -> dict:
         text = "" if text is None else str(text)
     text = unicodedata.normalize("NFC", text)
 
-    public, ad, channel, sku = False, False, None, None
+    public, ad, channel, sku, rmap = False, False, None, None, None
     if ctx is not None:
         ch = ctx["channel"]
         ch = cfg["channel_alias"].get(ch, ch) if isinstance(ch, str) else ch
@@ -402,6 +449,12 @@ def _run(text, ctx: dict | None) -> dict:
         sku = ctx["sku"]
         if sku is not None and (not isinstance(sku, str) or sku not in golden):
             return _config_fail(f"SKU lạ: {str(sku)[:60]!r}")
+        rmap = ctx.get("readiness")
+        if rmap is not None and not (
+                isinstance(rmap, dict)
+                and all(r in READINESS_LEVELS for r in rmap.values())):
+            return _config_fail("readiness không hợp lệ (không phải map "
+                                "sku×kênh -> mức sku_readiness)")
         public = bool(ctype.get("public", True))
         ad = bool(ctype.get("ad")) or bool(ctx["is_sponsored"])
         channel = ch
@@ -504,6 +557,10 @@ def _run(text, ctx: dict | None) -> dict:
         from pipelines import kb_filter  # lười: kéo llm_gateway/openai
         try:
             alc = kb_filter.is_alcohol(text)
+            if not alc and pre.low != text.casefold():
+                # v4.2: homoglyph/fullwidth ("ru<Cyrillic o>u") — quét bản
+                # fold (1-1 với text, span dùng chung).
+                alc = kb_filter.is_alcohol(pre.low)
             sp = _alcohol_span(kb_filter, pre) if alc else None
             if not alc:
                 # Cùng lớp ký tự chèn với từ cấm ("r\u200bượu", "r.ượu"):
@@ -530,7 +587,9 @@ def _run(text, ctx: dict | None) -> dict:
         food = [k for k in ctx_skus if golden[k].get("category") == "food"]
         # 2+3. TPBVSK chưa XNQC: có claim, hoặc là nội dung quảng cáo.
         for k in tp:
-            r = _readiness_of(golden[k], channel)
+            # v4.2: map từ view DB (caller đọc) — thiếu key = CAM.
+            r = (rmap.get((k, channel), "CAM") if rmap is not None
+                 else _readiness_of(golden[k], channel))
             if r != "QC_DAY_DU" and (has_claim or ad):
                 flag("sku_chua_xnqc",
                      f"{k}: readiness {r} trên kênh {channel} — TPBVSK chưa"
@@ -611,12 +670,38 @@ def check(text: str) -> dict:
 
 def check_publish(text: str, *, channel: str, content_type: str = "post",
                   sku: str | None = None, is_ai: bool = True,
-                  is_sponsored: bool = False) -> dict:
+                  is_sponsored: bool = False,
+                  readiness: dict | None = None) -> dict:
     """Chế độ đăng bài: luật của `check()` + XNQC/readiness, claim theo
     đúng SKU, câu khuyến cáo, nhãn AI/quảng cáo, "Ngọc Linh", kênh chưa
     mở (warning). `content_type="internal_note"`: chỉ luật `check()` trừ
     rượu. `is_ai` mặc định True (không khai = coi là AI, fail-closed).
-    Kênh/loại/SKU lạ -> ok=False + "config". Không raise."""
+    Kênh/loại/SKU lạ -> ok=False + "config". Không raise.
+    `readiness`: map (sku_key, kênh sau alias) -> mức view `sku_readiness`
+    (caller đọc DB); None -> soi gương golden file. Thiếu key -> CAM."""
     return _guarded(text, {"channel": channel, "content_type": content_type,
                            "sku": sku, "is_ai": is_ai,
-                           "is_sponsored": is_sponsored})
+                           "is_sponsored": is_sponsored,
+                           "readiness": readiness})
+
+
+def with_violation(result, code: str, detail, span=None, start=None,
+                   end=None) -> dict:
+    """Trả dict MỚI = `result` + 1 violation `code` (severity/mode theo
+    data/guardrail_rules.json; code thiếu luật -> critical block). Không
+    mutate input. `ok` mới = `result["ok"] is True` VÀ mode != block —
+    KHÔNG BAO GIỜ nâng ok lên True (lớp LLM/store chỉ được chặn thêm).
+    `result` không phải dict -> coi như ok=False rỗng. Không raise."""
+    base = result if isinstance(result, dict) else {}
+    cfg, err = _load_rules(DATA_DIR)
+    sev, mode = _sev_mode(cfg["rules"] if not err else {}, code)
+    v = _vdict(code, sev, None if detail is None else str(detail)[:500],
+               span, start, end)
+    out = dict(base)
+    viols = base.get("violations")
+    warns = base.get("warnings")
+    out["violations"] = list(viols) if isinstance(viols, list) else []
+    out["warnings"] = list(warns) if isinstance(warns, list) else []
+    (out["warnings"] if mode == "warn" else out["violations"]).append(v)
+    out["ok"] = base.get("ok") is True and mode != "block"
+    return out

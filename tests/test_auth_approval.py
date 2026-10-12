@@ -29,8 +29,10 @@ ROLES_SQL = (ROOT / "docs" / "roles.sql").read_text(encoding="utf-8")
 ZERO = "0" * 64
 VN_TODAY = "(now() at time zone 'Asia/Ho_Chi_Minh')::date"
 OK_G = {"ok": True, "violations": [], "matched_claims": []}
-# Có dấu + CRLF + emoji — viết escape (gotcha ký tự vô hình).
-TEXT_VI = "Sâm Ngọc Linh — quà tặng\r\n\U0001f33f"
+# Có dấu + CRLF + emoji — viết escape (gotcha ký tự vô hình). v4.2: approve
+# chạy lại check_publish (kênh facebook) -> bỏ "Ngọc Linh" + có nhãn AI.
+TEXT_VI = "Sâm Sâm — quà tặng\r\nNội dung có sử dụng AI \U0001f33f"
+DRAFT_TEXT = "Sâm Sâm — bài mẫu. Nội dung có sử dụng AI"
 FUNCS = ("approve_draft", "reject_draft", "schedule_draft", "verify_publish",
          "verify_action_log", "agent_action_log_chain")
 
@@ -94,7 +96,7 @@ def _verify(conn):
         "select id, problem from verify_action_log()").fetchall()]
 
 
-def _draft(conn, created_by="agent:studio", text="Sâm Ngọc Linh — bài mẫu",
+def _draft(conn, created_by="agent:studio", text=DRAFT_TEXT,
            g=OK_G, role="agent_writer"):
     with _as(conn, role):
         if created_by is None:
@@ -528,3 +530,53 @@ def test_chain_id_assigned_after_lock_concurrent():
                 c.close()
         setup.execute(f"drop schema if exists {schema} cascade")
         setup.close()
+
+
+# ---------- v4.2 W42.4: readiness từ view DB dưới role app_human ----------
+
+def test_store_readiness_view_as_app_human_gates_approve(db):
+    """Grant `select on sku_readiness` (roles.sql v4.2) -> store đọc được view
+    dưới app_human; approve claim Savina chỉ qua khi view nói QC_DAY_DU
+    (sửa tay xnqc_status trên bản copy golden — mẫu parity v4.1)."""
+    import copy
+    import json
+
+    from ingest import golden_store as gs
+
+    doc = json.loads((ROOT / "data" / "golden_skus.json").read_text(
+        encoding="utf-8"))
+    doc1 = copy.deepcopy(doc)
+    sav = next(s for s in doc1["skus"] if s["sku_key"] == "savina-12v")
+    sav["allowed_channels"] = sorted(set(sav["allowed_channels"])
+                                     | {"facebook"})
+    gs.load(db, doc1)
+    canon = ("Thực phẩm này không phải là thuốc và không có tác dụng thay "
+             "thế thuốc chữa bệnh")
+    text = f"Savina 12 viên hỗ trợ giảm ho. {canon}.\nNội dung có sử dụng AI"
+    did = _draft(db, text=text)
+
+    db.execute("set local role app_human")
+    tx = _TxConn(db)
+    m = store.readiness_from_db(tx)
+    assert m is not None and len(m) == 13 * 6
+    assert m[("savina-12v", "facebook")] == "MO_TA"
+    ok, warn = store.set_status(tx, did, "approved", "Hoa")
+    assert not ok and "sku_chua_xnqc" in warn and tx.committed == 0
+    db.execute("reset role")
+    # agent_writer cũng đọc được (app_human kế thừa grant này).
+    with _as(db, "agent_writer"):
+        assert db.execute("select count(*) from sku_readiness").fetchone()[0] \
+            == 13 * 6
+
+    doc2 = copy.deepcopy(doc1)
+    next(s for s in doc2["skus"]
+         if s["sku_key"] == "savina-12v")["xnqc_status"] = "approved"
+    gs.load(db, doc2)
+    db.execute("set local role app_human")
+    tx = _TxConn(db)
+    assert store.readiness_from_db(tx)[("savina-12v", "facebook")] == \
+        "QC_DAY_DU"
+    assert store.set_status(tx, did, "approved", "Hoa", "ok") == (True, None)
+    db.execute("reset role")
+    assert db.execute("select status from content_drafts where id = %s",
+                      (did,)).fetchone() == ("approved",)

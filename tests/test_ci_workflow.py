@@ -45,7 +45,8 @@ def test_test_job_postgres_and_commands(doc):
     assert job["env"]["DATABASE_URL"].startswith("postgresql://")
     runs = "\n".join(_runs(job))
     for cmd in ("ruff check", "python -m pytest", "apply_schema.py",
-                "ingest.core_store", "agent_eval.py --agent guardrail"):
+                "ingest.core_store", "agent_eval.py --agent guardrail",
+                "redteam.py"):
         assert cmd in runs, cmd
 
 

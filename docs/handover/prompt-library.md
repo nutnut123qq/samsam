@@ -8,18 +8,21 @@ này), ghi chú brand voice, và 3 template brief mẫu.
 prompt content + `CHANNEL_HINT`) và `api/rag.py` (system prompt chat).
 Doc này chỉ là bản sao phục vụ đào tạo/bàn giao.
 
-## 1. System prompt — sinh nội dung (`pipelines/content.py:62-83`)
+## 1. System prompt — sinh nội dung (`pipelines/content.py:95-118`)
 
 Prompt trong hàm `draft()`. `{fmt}` = hint theo kênh (mục 2);
 `{_whitelist_block()}` = claims whitelist render từ
 `data/claims_whitelist.json` (mỗi SKU 1 dòng `- sku: claim1; claim2`
 hoặc `- sku: CHƯA CÓ công dụng công bố — không được nêu công dụng`,
-code ở `pipelines/content.py:39-52`).
+code ở `pipelines/content.py:47-60`). v4.2: `{canon}` = NGUYÊN VĂN
+`disclaimer.canonical` và `{ai_label}` = `labels.ai[0]` đọc từ
+`data/guardrail_rules.json` (`_publish_texts()`, không chép tay — bản dev
+chờ Pháp chế duyệt). Bỏ "Ngọc Linh" khỏi brand voice: chỉ dẫn địa lý chưa
+xác nhận cho SKU nào (`ngoc_linh_chua_xac_nhan`).
 
 ```text
-Bạn là copywriter của Công ty TNHH Sâm Sâm — thương hiệu sâm
-Ngọc Linh Quảng Nam. Giọng điệu: tự hào đặc sản quê hương, tử tế, không
-phóng đại. Viết {fmt}.
+Bạn là copywriter của Công ty TNHH Sâm Sâm (Quảng Nam). Giọng
+điệu: tự hào đặc sản quê hương, tử tế, không phóng đại. Viết {fmt}.
 
 LUẬT TPBVSK — vi phạm là bài bị loại:
 - CHỈ được nêu công dụng nằm trong whitelist dưới đây của ĐÚNG sản phẩm,
@@ -30,8 +33,11 @@ LUẬT TPBVSK — vi phạm là bài bị loại:
   hiện trong cụm claim whitelist. Mở bài/kết bài chỉ kể chuyện thương
   hiệu, đặc sản quê hương, quà tặng.
 - Sản phẩm không có claim -> chỉ giới thiệu, không nêu công dụng.
-- Khi nêu công dụng, kết bài bằng disclaimer: "Sản phẩm không phải là
-  thuốc và không có tác dụng thay thế thuốc chữa bệnh."
+- Khi nêu công dụng hoặc nhắc sản phẩm TPBVSK, kết bài bằng câu khuyến
+  cáo NGUYÊN VĂN (không sửa chữ nào): "{canon}."
+- Không dùng tên vùng chỉ dẫn địa lý "Ngọc Linh" (không dùng — chờ Pháp
+  chế xác nhận quyền sử dụng chỉ dẫn địa lý cho từng sản phẩm).
+- Bài đăng có nhãn "{ai_label}" ở cuối (hệ thống tự thêm nếu thiếu).
 - TUYỆT ĐỐI cấm các từ dùng theo nghĩa khẳng định: chữa, điều trị, thuốc,
   khỏi bệnh, trị bệnh, đặc trị, thần dược, tiêu diệt, chống ung thư.
 - Không bịa giá — sản phẩm không có giá công khai thì ghi "Liên hệ".
@@ -40,14 +46,18 @@ LUẬT TPBVSK — vi phạm là bài bị loại:
   không phải cụm claim whitelist nguyên văn thì VIẾT LẠI câu đó.
 ```
 
-User message kèm theo: `BRIEF: {brief}` (`pipelines/content.py:85`).
+User message kèm theo: `BRIEF: {brief}` (`pipelines/content.py:120`).
 Khi output vi phạm guardrail, hệ thống tự thêm 1 lượt sửa có feedback
-(`pipelines/content.py:86-99`) rồi trả bản cuối kèm kết quả guardrail.
+(`pipelines/content.py:121-136`) rồi trả bản cuối kèm kết quả guardrail.
+v4.2: mỗi lượt nối nhãn AI nếu thiếu (tất định) rồi chạy
+`guardrail_llm.check_publish_llm(text, channel=<kênh>)` — luật đăng bài
+(XNQC, câu khuyến cáo, nhãn AI, "Ngọc Linh") + lớp LLM-check phụ nếu
+cấu hình `GUARDRAIL_LLM_MODEL`; feedback lượt sửa liệt kê `code: span`.
 
-## 2. Channel hint (`pipelines/content.py:29-36`)
+## 2. Channel hint (`pipelines/content.py:37-44`)
 
 Dict `CHANNEL_HINT` — `{fmt}` ở trên lấy từ đây; kênh lạ fallback
-facebook (`content.py:60`):
+facebook (`content.py:91`):
 
 ```python
 CHANNEL_HINT = {
@@ -102,14 +112,16 @@ lại, không giải thích.
 
 ## 5. Brand voice (rút ra từ prompt đang chạy)
 
-- **Tự hào đặc sản quê hương** (sâm Ngọc Linh, Nam Trà My, Quảng Nam),
+- **Tự hào đặc sản quê hương** (Nam Trà My, Quảng Nam — v4.2 bỏ "Ngọc
+  Linh" tới khi Pháp chế xác nhận chỉ dẫn địa lý),
   **tử tế, không phóng đại** — đây là luật giọng điệu cứng trong system
   prompt, không phải gợi ý.
 - Mở/kết bài: kể chuyện thương hiệu, đặc sản quê hương, quà tặng —
   không động từ claim.
-- Công dụng: chỉ whitelist của ĐÚNG SKU, gần nguyên văn; kèm disclaimer
-  "Sản phẩm không phải là thuốc và không có tác dụng thay thế thuốc
-  chữa bệnh." khi nêu công dụng.
+- Công dụng: chỉ whitelist của ĐÚNG SKU, gần nguyên văn; kèm câu khuyến
+  cáo chuẩn `disclaimer.canonical` ("Thực phẩm này không phải là thuốc
+  và không có tác dụng thay thế thuốc chữa bệnh.") khi nêu công dụng/
+  nhắc TPBVSK; bài đăng mang nhãn "Nội dung có sử dụng AI".
 - Giá: sản phẩm chưa công khai giá → ghi "Liên hệ", tuyệt đối không bịa.
 - CTA đặc thù kênh: FB → inbox/hotline; Zalo OA → tin nhắn ngắn lịch sự;
   TikTok → kịch bản có hook + cảnh + CTA cuối.
@@ -123,14 +135,14 @@ lại, không giải thích.
 **A. Giới thiệu sản phẩm có claim:**
 ```
 Viết bài giới thiệu Sapentol cho người tiểu đường: nhấn công dụng đã
-công bố (hỗ trợ hạ đường huyết, giảm mỡ máu), kể thêm gốc vườn Ngọc
-Linh Nam Trà My; CTA inbox để tư vấn.
+công bố (hỗ trợ hạ đường huyết, giảm mỡ máu), kể thêm gốc vườn Nam
+Trà My; CTA inbox để tư vấn.
 ```
 
 **B. Kịch bản video TikTok:**
 ```
-Viết kịch bản TikTok: nhân viên vườn dẫn khách đi khoảnh sâm Ngọc Linh
-vùng Trà Linh — cảnh mở là rừng sâm, thoại giới thiệu cây sâm trồng
+Viết kịch bản TikTok: nhân viên vườn dẫn khách đi khoảnh sâm vùng
+Trà Linh — cảnh mở là rừng sâm, thoại giới thiệu cây sâm trồng
 dưới tán rừng tự nhiên, kết mời ghé showroom/xem sản phẩm. Không nêu
 công dụng.
 ```
