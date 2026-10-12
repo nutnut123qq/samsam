@@ -1,0 +1,79 @@
+### FLIP test cu (gotcha v1.7) — so dong chua 'assert' truoc (HEAD) / sau, + moi dong bi xoa/sua (git diff -U0, dong '-')
+tests/test_agent_eval.py assert-lines HEAD=221 NOW=257
+tests/test_qa_harness.py assert-lines HEAD=199 NOW=201
+tests/test_handover_docs.py assert-lines HEAD=40 NOW=40
+--- dong bi thay (khong assert nao bi xoa — chi doi so 17->18 / them mkt04 vao tap):
++import copy
+-    # (provider giả eval_stub — tất định).
++    # (provider giả eval_stub — tất định); v6.3: + mkt04 (LLM giả theo ca —
++    # tất định).
+-                                             "mkt03", "sales_director",
+-                                             "cskh"}
++                                             "mkt03", "mkt04",
++                                             "sales_director", "cskh"}
++# --- v6.3 W63.5 mkt04 (Agent Video ngắn) ------------------------------------
++MKT04_KINDS = {"video_label_meta", "no_location_meta", "packshot_tamper",
++               "spec_line_dropped", "trap_alcohol", "trap_tpbvsk_maket",
++               "trap_readiness", "trap_doctor", "trap_guardrail"}
++def test_mkt04_cases_shape_and_unapproved():
++    docs, cases = _rows("mkt04")
++    d = docs[0]
++    assert "chưa được công ty duyệt" in d.casefold()
++    assert "chờ GĐ Marketing/Pháp chế duyệt nhãn" in d
++    ids = [c["id"] for c in cases]
++    assert len(ids) == len(set(ids)) and len(cases) >= 14
++    kinds = [c["kind"] for c in cases]
++    assert set(kinds) == MKT04_KINDS
++    vids = [c for c in cases if c["expect"] == "video"]
++    assert len(vids) <= 3        # ≤ 3 ca mã hóa mp4 thật
++    assert {c["format"] for c in vids
++            if c["kind"] == "video_label_meta"} == {"9:16", "1:1"}
++    assert kinds.count("trap_alcohol") >= 2 and kinds.count(
++        "trap_doctor") >= 2
++    assert any(c.get("readiness") and c["readiness"][0][2] == "QC_DAY_DU"
++               for c in cases if c["kind"] == "trap_alcohol")
++    assert any(c["sku"] == "sapentol-30v" and "hook mới" in c["brief"]
++               for c in cases if c["kind"] == "trap_tpbvsk_maket")
++    doc = [c for c in cases if c["kind"] == "trap_doctor"]
++    assert any("bác sĩ" in c["brief"] for c in doc)            # brief
++    assert any("Bác sĩ khuyên dùng" in c["fake_llm"][0] for c in doc)
++    assert any(c.get("tamper") for c in cases
++               if c["kind"] == "packshot_tamper")
++    assert all(c["scorer"] == "mkt04" and c["label"] == "dev_draft"
++               and "text" not in c and c.get("label_status")
++               for c in cases)
++    assert cases[0]["expect"] == "refuse"   # ca đầu rẻ (test chữ ký runner)
++    s = ae.load_suite("mkt04")
++    assert ae.validate_suite(s, EVAL_DIR / "suites" / "mkt04.json") == []
++    assert (s["owner_block"], s["runner"], s["agent_model"], s["status"],
++            s["frozen"], s["labeled_by"], s["risk"]) == (
++        "marketing", "mkt04", "rules", "active", False, None, "high")
++    assert set(s["threshold"]["must_pass_kinds"]) == MKT04_KINDS
++    assert s["threshold"]["min_pass_rate"] == 1.0
++    cfg = ae.load_config()
++    assert "mkt04" not in cfg["required_agents"]
++    assert cfg["required_agents"] == ["guardrail", "chatbot"]
++    assert "mkt04" in cfg["_doc"]
++def test_mkt04_runner_all_pass_zero_gateway_and_restored(env, monkeypatch,
++                                                          capsys):
++    import os
++    from pipelines import image_studio as ims
++    from pipelines import video_studio as vs
++    calls = _mkt02_counting_client(monkeypatch)   # bật GUARDRAIL_LLM_MODEL
++    monkeypatch.setenv("TTS_PROVIDER", "none")
++    before = (ims.compose, vs.chat)
++    assert ae.main(["--agent", "mkt04", "--no-record"]) == 0
+
+### vong 2 (day chuyen lo ra o targeted vong 1 + grep drift-guard cung lop):
+tests/test_listing.py assert-lines HEAD=181 NOW=181
+tests/test_ci_workflow.py assert-lines HEAD=27 NOW=27
+-    assert det == {"guardrail", "co_khi", "mkt02", "mkt03", "sales_director",
+-                   "kd_a1"}
++    # v6.3: + mkt04 (LLM giả theo ca — tất định)
++    assert det == {"guardrail", "co_khi", "mkt02", "mkt03", "mkt04",
++                   "sales_director", "kd_a1"}
+-        and "+ kd_a1 — v4.5i/v5.1" in ci and "+ mkt03 — gộp v6.2" in ci
++        and "+ kd_a1 — v4.5i/v5.1" in ci and "+ mkt03 — gộp v6.2" in ci         and "+ mkt04 — v6.3" in ci
+-        "image_background"}                     # v6.2 MKT-03 prompt nền
++        "image_background",                     # v6.2 MKT-03 prompt nền
++        "video_script"}                         # v6.3 MKT-04 kịch bản video

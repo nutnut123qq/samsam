@@ -168,6 +168,7 @@
       "name": "Content Studio sinh nháp nội dung qua gateway",
       "modules": [
         "pipelines/content.py",
+        "pipelines/video_studio.py",
         "pipelines/llm_gateway.py",
         "pipelines/store.py"
       ],
@@ -175,7 +176,7 @@
       "class": "vang",
       "subjects": "Nhân viên MKT (tên người duyệt trong approvals)",
       "purpose": "Soạn nháp nội dung marketing chờ người duyệt",
-      "storage": "Bảng `content_drafts`, `approvals`, `agent_action_log`",
+      "storage": "Bảng `content_drafts`, `approvals`, `agent_action_log`; v6.3 video nháp: `video_assets` + file mp4/sidecar ở VIDEO_OUT_DIR (brief chỉ ở prompt gửi LLM, không lưu)",
       "retention": "Không giới hạn — hồ sơ duyệt append-only (bằng chứng tuân thủ quảng cáo)",
       "recipients": "OpenRouter (Mỹ) → whitelist provider (Mỹ)",
       "cross_border": true,

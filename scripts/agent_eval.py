@@ -39,7 +39,14 @@ KHÔNG có `text`), `mkt03` (tất định — v6.2 Agent Ảnh AI:
 provider AI giả `eval_stub` đăng ký TẠM (gỡ trong finally), 0 mạng/0 LLM/
 không DB; kind ảnh chấm nhãn AI + metadata / toàn vẹn packshot / phát hiện
 sửa 1 pixel / không EXIF; ca refuse pass <=> refused.code == code; ca KHÔNG
-có `text`), `mkt_seo` (tất định — v6.5 MKT-11 SEO sàn:
+có `text`), `mkt04` (tất định — v6.3 Agent Video ngắn:
+`video_studio.write_script`/`make_video` THẬT trên LLM GIẢ theo `fake_llm`
+của ca (patch `video_studio.chat`, đếm call), packshot + B-roll MẪU + out dir
+trong thư mục tạm, ca `tamper` bọc tạm `image_studio.compose` (khôi phục
+trong finally); 0 mạng/0 key/không DB; ≤ 3 ca mã hóa mp4 thật; kind video
+chấm nhãn AI trên khung trích + metadata / không metadata vị trí; ca refuse
+pass <=> refused.code == code (+ ca bẫy trước LLM: 0 call); ca KHÔNG có
+`text`), `mkt_seo` (tất định — v6.5 MKT-11 SEO sàn:
 `agents.seo_san.suggest` trên `related` (Trends) của ca, luật
 `data/seo_rules.json` + `data/listing_rules.json` THẬT; 0 mạng/LLM/DB; expect
 ⊂ refused/present/absent/rejected/title_limit; ca KHÔNG có `text`),
@@ -54,8 +61,8 @@ phát hiện, loại việc, payload qua guardrail, cấm chuỗi trong payload 
 patch `api.rag.retrieve`/`api.rag.chat` theo `fake_hits`/`fake_llm` của ca,
 đếm lời gọi LLM), `chatbot`
 (`api.rag.answer` THẬT, cần OPENROUTER_API_KEY). Scorer từng ca: guardrail
-| co_khi | mkt02 | mkt03 | mkt_seo | sales_director | kd_a5 | cskh | eval_qa |
-handoff | exact |
+| co_khi | mkt02 | mkt03 | mkt04 | mkt_seo | sales_director | kd_a5 | cskh |
+eval_qa | handoff | exact |
 regex | judge. Giám khảo LLM CHỈ qua
 `pipelines.llm_gateway.chat("ci_judge")`, model khác HỌ (nhà sản xuất theo
 allowlist `_FAMILIES`; router/alias lạ → từ chối) với model agent; output
@@ -78,6 +85,7 @@ Chạy:
   python scripts/agent_eval.py --agent co_khi --no-record
   python scripts/agent_eval.py --agent mkt02 --no-record
   python scripts/agent_eval.py --agent mkt03 --no-record
+  python scripts/agent_eval.py --agent mkt04 --no-record
   python scripts/agent_eval.py --agent mkt_seo --no-record
   python scripts/agent_eval.py --agent sales_director --no-record
   python scripts/agent_eval.py --agent kd_a5 --no-record
@@ -126,7 +134,8 @@ CONNECT_TIMEOUT_S = 5
 DEFAULT_CHAT_MODEL = "openai/gpt-4o-mini"
 RISKS = ("low", "medium", "high")
 STATUSES = ("active", "skeleton")
-SCORERS = ("guardrail", "co_khi", "mkt02", "mkt03", "sales_director",
+SCORERS = ("guardrail", "co_khi", "mkt02", "mkt03", "mkt04",
+           "sales_director",
            "eval_qa", "handoff", "exact", "regex", "judge", "cskh",
            "mkt_seo", "kd_a5")
 # Nguồn DUY NHẤT của tên runner hợp lệ (RUNNERS.keys() phải trùng).
@@ -136,11 +145,12 @@ RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "co_khi": {"co_khi"},
                   "mkt02": {"mkt02"},
                   "mkt03": {"mkt03"},
+                  "mkt04": {"mkt04"},
                   "mkt_seo": {"mkt_seo"},
                   "sales_director": {"sales_director"},
                   "cskh": {"cskh"},
                   "kd_a5": {"kd_a5"}}
-DETERMINISTIC_RUNNERS = ("guardrail", "co_khi", "mkt02", "mkt03",
+DETERMINISTIC_RUNNERS = ("guardrail", "co_khi", "mkt02", "mkt03", "mkt04",
                          "sales_director", "cskh", "mkt_seo", "kd_a5")
 # Hit giả mặc định của runner cskh (ca không khai `fake_hits`).
 CSKH_DEFAULT_HIT = {"title": "Sản phẩm Sâm Sâm", "lang": "vi",
@@ -153,7 +163,7 @@ GUARDRAIL_CTX_KEYS = {"channel", "content_type", "sku", "is_ai",
 CO_KHI_KINDS = ("fact", "high_risk", "trap_no_data")
 # v6.1 mkt02: ca không có `text` (đầu vào = op × sku × kênh); v6.2 mkt03
 # cũng vậy (đầu vào = sku × kênh × format × headline).
-NO_TEXT_SCORERS = {"mkt02", "mkt03", "mkt_seo", "kd_a5"}
+NO_TEXT_SCORERS = {"mkt02", "mkt03", "mkt04", "mkt_seo", "kd_a5"}
 # v6.5 mkt_seo (MKT-11 SEO sàn): kind + khóa expect hợp lệ.
 MKT_SEO_KINDS = ("keyword_in", "keyword_out", "title_limit", "trap_alcohol",
                  "trap_ngoc_linh", "trap_banned")
@@ -166,6 +176,12 @@ MKT02_OPS = ("listing", "draft")
 MKT03_IMAGE_KINDS = ("ai_label_meta", "packshot_intact", "tamper_detect",
                      "no_exif")
 MKT03_PROVIDERS = ("none", "eval_stub")
+# v6.3 mkt04: op video (make_video) | script (write_script); kind ca expect
+# video chấm theo kind trong _mkt04_check; bẫy chặn TRƯỚC LLM phải 0 call.
+MKT04_OPS = ("video", "script")
+MKT04_VIDEO_KINDS = ("video_label_meta", "no_location_meta")
+MKT04_PRE_LLM = ("ruou", "maket_xnqc", "readiness", "brief_cam", "tts",
+                 "kenh_la", "format_la", "sku_la", "packshot_thieu")
 SALES_KINDS = ("route", "sla", "trap_offhours", "trap_no_auto")
 # v5.3 kd_a5: kind ca (loại luật + bẫy); expect.kinds ⊂ kd_price.SEVERITY.
 KD_A5_KINDS = ("below_floor", "negative_margin", "no_cogs", "list_deviation",
@@ -387,6 +403,44 @@ def _validate_mkt_seo_case(c: dict, cid, exp) -> list[str]:
     return errs + _readiness_errs(c, cid)
 
 
+def _validate_mkt04_case(c: dict, cid, exp) -> list[str]:
+    """v6.3: op video|script + sku/channel/format/brief + fake_llm (list
+    chuỗi theo lượt); expect video|script|refuse; refuse cần `code`; video
+    cần op video + kind ∈ MKT04_VIDEO_KINDS; script cần op script + kind
+    spec_line_dropped; tamper (bool) chỉ op video; broll bool."""
+    errs = []
+    if c.get("op") not in MKT04_OPS:
+        errs.append(f"ca {cid}: mkt04 op phải {MKT04_OPS}")
+    for k in ("sku", "channel", "format", "brief"):
+        if not _nonempty(c.get(k)):
+            errs.append(f"ca {cid}: mkt04 thiếu '{k}'")
+    f = c.get("fake_llm")
+    if not (isinstance(f, list) and f and all(isinstance(x, str) for x in f)):
+        errs.append(f"ca {cid}: fake_llm phải list chuỗi khác rỗng")
+    for k in ("broll", "tamper"):
+        if k in c and not isinstance(c[k], bool):
+            errs.append(f"ca {cid}: {k} phải bool")
+    if c.get("tamper") and c.get("op") != "video":
+        errs.append(f"ca {cid}: tamper chỉ đi với op video")
+    if exp not in ("video", "script", "refuse"):
+        errs.append(f"ca {cid}: mkt04 expect phải video|script|refuse")
+    elif exp == "refuse":
+        if not _nonempty(c.get("code")):
+            errs.append(f"ca {cid}: ca refuse cần code")
+    else:
+        if "code" in c:
+            errs.append(f"ca {cid}: code chỉ đi với expect refuse")
+        if exp == "video" and (c.get("op") != "video" or c.get("kind")
+                               not in MKT04_VIDEO_KINDS):
+            errs.append(f"ca {cid}: ca video cần op video + kind"
+                        f" {MKT04_VIDEO_KINDS}")
+        if exp == "script" and (c.get("op") != "script"
+                                or c.get("kind") != "spec_line_dropped"):
+            errs.append(f"ca {cid}: ca script cần op script + kind"
+                        " spec_line_dropped")
+    return errs + _readiness_errs(c, cid)
+
+
 def _iso_ok(v) -> bool:
     from datetime import datetime
     try:
@@ -556,6 +610,8 @@ def _validate_case(c, i: int, d: dict) -> list[str]:
         errs += _validate_mkt03_case(c, cid, exp)
     elif sc == "mkt_seo":
         errs += _validate_mkt_seo_case(c, cid, exp)
+    elif sc == "mkt04":
+        errs += _validate_mkt04_case(c, cid, exp)
     elif sc == "sales_director":
         errs += _validate_sales_case(c, cid, exp)
     elif sc == "cskh":
@@ -1003,6 +1059,96 @@ def _score_mkt03(case: dict, r: dict, ai_label: str) -> tuple[bool, str]:
     return not detail, detail
 
 
+def _mkt04_check(c: dict, r: dict, ai_label: str) -> str:
+    """'' khi ca expect=video đạt theo kind; ngược lại lý do. Kiểm ĐỘC LẬP
+    trên file mp4 đọc lại (không tin sidecar): tên == sha bytes, cỡ khung
+    đúng format, không track âm thanh, 15–45 s; video_label_meta: 3 khung
+    trích (đầu/giữa/cuối) mỗi khung có pixel gần màu chữ nhãn trong
+    label_box ≥ 0.05% + sidecar đủ model/prompt/ngày + B-roll có license;
+    no_location_meta: bytes/ffmetadata không vị trí/thiết bị/thời điểm."""
+    from datetime import datetime
+
+    from pipelines import image_studio as ims
+    from pipelines import video_studio as vs
+
+    p, m = Path(r["path"]), r["meta"]
+    data = p.read_bytes()
+    if p.stem != hashlib.sha256(data).hexdigest():
+        return "tên file lệch sha256 bytes"
+    ff = vs.find_ffmpeg()
+    info = vs._probe(ff, p)
+    cfg, _ = ims.load_config()
+    w, h = cfg["formats"][c["format"]]
+    dur = vs._duration_ms(info)
+    if f"{w}x{h}" not in info or "Audio:" in info:
+        return "sai cỡ khung / có track âm thanh"
+    if dur is None or not 15000 <= dur <= 45000 or dur != m["duration_ms"]:
+        return f"thời lượng {dur} ms ngoài 15–45 s / lệch sidecar"
+    if c["kind"] == "video_label_meta":
+        if m["labels"][:1] != [ai_label] or ai_label not in r["draft_text"]:
+            return "thiếu nhãn AI đứng đầu / trong caption"
+        sc = m["script"]
+        if not (sc.get("model") and sc.get("prompt_version")
+                and _iso_ok(m.get("created_at"))):
+            return "sidecar thiếu model/prompt_version/ngày"
+        if any(s["source"] == "broll" and not (s.get("broll") or {}).get(
+                "license") for s in m["scenes"]):
+            return "cảnh B-roll thiếu license"
+        x, y, bw, bh = m["label_box"]
+        rgb = cfg["label"]["text_rgb"]
+        for t in [e["t_ms"] for e in m["extract_check"]][:3]:
+            n = vs._near_count(vs._extract_frame(ff, p, t), (x, y, bw, bh),
+                               rgb, 40)
+            if n < 0.0005 * bw * bh:
+                return f"khung trích {t} ms không có chữ nhãn AI"
+        if len(m["extract_check"]) != 3 or datetime.fromisoformat(
+                m["created_at"]).utcoffset() is None:
+            return "extract_check/created_at sai"
+    elif c["kind"] == "no_location_meta":
+        if any(b in data for b in (b"GPS", b"ISO6709", b"\xa9xyz")):
+            return "mp4 còn metadata vị trí"
+        meta = vs._run([ff, "-nostdin", "-loglevel", "error", "-i", str(p),
+                        "-f", "ffmetadata", "-"]).stdout.decode(
+            "utf-8", "replace").casefold()
+        if any(k in meta for k in ("location", "creation_time", "make=",
+                                   "model=", "com.apple")):
+            return "mp4 còn metadata vị trí/thiết bị/thời điểm"
+    return ""
+
+
+def _score_mkt04(case: dict, r: dict, ai_label: str) -> tuple[bool, str]:
+    """v6.3: ca refuse pass <=> refused.code == code (từ chối trước LLM:
+    0 call; trap_tpbvsk_maket: reason chứa 'maket XNQC'; kich_ban: ≤ 2
+    call); ca script (spec_line_dropped) pass <=> ok + không cảnh nào chạm
+    số/giá + có câu bị bỏ `so_lieu`; ca video theo `_mkt04_check`."""
+    from pipelines import content
+
+    ref, calls = r.get("refused"), r.get("llm_calls")
+    if case["expect"] == "refuse":
+        ok = bool(ref) and ref.get("code") == case.get("code")
+        if ok and ref["code"] in MKT04_PRE_LLM:
+            ok = calls == 0
+        if ok and ref["code"] == "kich_ban":
+            ok = calls is not None and 1 <= calls <= 2
+        if ok and case["kind"] == "trap_tpbvsk_maket":
+            ok = "maket XNQC" in ref.get("reason", "")
+        return ok, "" if ok else (
+            f"kỳ vọng từ chối {case.get('code')}, được "
+            f"{ref.get('code') if ref else r.get('error') or 'sinh'}"
+            f" (llm_calls={calls})")
+    if ref or r.get("error"):
+        return False, (f"bị từ chối {ref.get('code')}" if ref
+                       else f"lỗi {r['error'][:80]}")
+    if case["expect"] == "script":
+        sc = r.get("scenes") or []
+        ok = (r.get("ok") is True and sc
+              and not any(content._spec_like(s["text"]) for s in sc)
+              and any(d["ly_do"] == "so_lieu" for d in r["dropped"]))
+        return bool(ok), "" if ok else "kịch bản còn câu số/giá"
+    detail = _mkt04_check(case, r, ai_label)
+    return not detail, detail
+
+
 def _score_sales(case: dict, out: dict) -> tuple[bool, str]:
     """v5.0: so output route/sla_state của agent GĐ KD với expect."""
     from datetime import datetime
@@ -1074,6 +1220,8 @@ def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
         return _score_mkt02(case, out, *_mkt02_gold())
     if sc == "mkt03":
         return _score_mkt03(case, out, _mkt03_ai_label())
+    if sc == "mkt04":
+        return _score_mkt04(case, out, _mkt03_ai_label())
     if sc == "sales_director":
         return _score_sales(case, out)
     if sc == "mkt_seo":
@@ -1218,6 +1366,94 @@ def run_mkt03(cases, judge_model=None):
             ims.PROVIDERS.pop("eval_stub", None)
         if saved is not None:
             os.environ["GUARDRAIL_LLM_MODEL"] = saved
+
+
+def _mkt04_tamper(real):
+    """Bọc compose: SAU khi compose ghi khung, sửa 1 pixel đặc vùng packshot
+    trong file PNG (mô phỏng lớp vẽ đè nhãn sản phẩm)."""
+    from PIL import Image
+
+    from pipelines import image_studio as ims
+
+    def wrap(*a, **k):
+        res = real(*a, **k)
+        if res.get("ok"):
+            with Image.open(res["path"]) as im:
+                img = im.convert("RGB")
+            solid = ims._solid(res["fitted"])
+            i = next(i for i, v in enumerate(solid.getdata()) if v == 255)
+            x, y = res["packshot_xy"]
+            p = (x + i % solid.width, y + i // solid.width)
+            px = img.getpixel(p)
+            img.putpixel(p, ((px[0] + 1) % 256, px[1], px[2]))
+            img.save(res["path"], format="PNG")
+        return res
+    return wrap
+
+
+def _mkt04_out(c: dict, base: Path) -> dict:
+    """1 ca MKT-04: LLM giả theo `fake_llm` (trả lần lượt, lặp câu cuối;
+    model ghi 'eval_fake_llm' — không giả làm model thật) + packshot MẪU
+    (+ B-roll MẪU có GPS + license khi `broll`) trong `base`."""
+    from types import SimpleNamespace
+
+    from pipelines import image_studio as ims
+    from pipelines import video_studio as vs
+
+    calls, answers = [], c["fake_llm"]
+
+    def fake_chat(agent, messages, **kw):
+        calls.append(agent)
+        a = answers[min(len(calls), len(answers)) - 1]
+        return SimpleNamespace(model="eval_fake_llm", choices=[
+            SimpleNamespace(message=SimpleNamespace(content=a))])
+
+    sku = c["sku"]
+    if ims._SKU_FILE_RE.fullmatch(sku):
+        ims.make_sample_packshot(base / "pk" / f"{sku}.png", sku)
+    if c.get("broll"):
+        vs.make_sample_broll(base / "broll" / "a_vuon.jpg", exif_gps=True)
+        vs.make_sample_broll(base / "broll" / "b_nui.png")
+    rmap = ({(a, b): lv for a, b, lv in c["readiness"]}
+            if c.get("readiness") else None)
+    real_chat, real_compose = vs.chat, ims.compose
+    vs.chat = fake_chat
+    if c.get("tamper"):
+        ims.compose = _mkt04_tamper(real_compose)
+    try:
+        if c["op"] == "script":
+            r = vs.write_script(sku, c["channel"], c["brief"],
+                                fmt=c["format"], readiness=rmap)
+        else:
+            r = vs.make_video(sku, c["channel"], c["brief"], fmt=c["format"],
+                              readiness=rmap, packshot_dir=base / "pk",
+                              broll_dir=base / "broll", out_dir=base / "out")
+    finally:
+        vs.chat, ims.compose = real_chat, real_compose
+    return {**r, "llm_calls": len(calls)}
+
+
+def run_mkt04(cases, judge_model=None):
+    """Chấm tất định MKT-04 (v6.3): LLM giả theo ca (0 lời gọi gateway
+    thật), tắt lớp LLM-check (GUARDRAIL_LLM_MODEL) + TTS_PROVIDER trong lúc
+    chấm, không key, không DB. Thư mục tạm chứa packshot/B-roll mẫu + mp4
+    (chấm ngay sau khi dựng — file còn trên đĩa). `video_studio.chat` +
+    `image_studio.compose` khôi phục sau mỗi ca."""
+    import itertools
+    import tempfile
+
+    saved = {k: os.environ.pop(k, None)
+             for k in ("GUARDRAIL_LLM_MODEL", "TTS_PROVIDER")}
+    try:
+        with tempfile.TemporaryDirectory(prefix="mkt04-") as td:
+            n = itertools.count()
+            return _run(cases,
+                        lambda c: _mkt04_out(c, Path(td) / f"c{next(n)}"),
+                        judge_model, show_answer=False)
+    finally:
+        for k, v in saved.items():
+            if v is not None:
+                os.environ[k] = v
 
 
 def _sales_out(c: dict, cfg: dict, sd) -> dict:
@@ -1387,6 +1623,7 @@ def run_mkt_seo(cases, judge_model=None):
 
 RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot,
            "co_khi": run_co_khi, "mkt02": run_mkt02, "mkt03": run_mkt03,
+           "mkt04": run_mkt04,
            "sales_director": run_sales_director, "cskh": run_cskh,
            "mkt_seo": run_mkt_seo, "kd_a5": run_kd_a5}
 
@@ -1680,7 +1917,7 @@ def _score_and_record(suite, model, judge_model, sha, conn) -> int:
     results = RUNNERS[suite["runner"]](suite["cases"], judge_model)
     for c, ok, detail in results:
         if not ok:
-            # mkt02/mkt03: ca không có text -> in "sku × kênh".
+            # mkt02/mkt03/mkt04: ca không có text -> in "sku × kênh".
             what = c.get("text") or f"{c.get('sku')} × {c.get('channel')}"
             print(f"[{agent}:{c['id']}] FAIL ({c.get('kind')}) — "
                   f'{detail} | text="{_short(what)}"', flush=True)

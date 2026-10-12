@@ -1,0 +1,21 @@
+{
+  "_doc": "Cấu hình MKT-04 video ngắn AI (v6.3, pipelines/video_studio.py) — BẢN DEV: chờ GĐ Marketing duyệt template video/kịch bản/layout; font thương hiệu, B-roll/clip quay thật (có license), nhạc có license, TTS tiếng Việt có phí chưa có (external-dep). Chưa có người duyệt thật. Cỡ khung lấy từ data/image_studio.json (formats/layout dùng chung với ảnh — nhãn AI cùng vị trí/cỡ chữ). Mỗi cảnh kịch bản = 1 khung × scene_s giây + 1 khung kết (tên SKU golden) -> tổng scene_s × (số cảnh + 1) phải nằm trong duration_s (kiểm lúc nạp cấu hình). script_banned: từ cấm trong kịch bản/brief (so khớp chuẩn hóa như guardrail — NFC, casefold, có/không dấu, ký tự chèn) — không người/y tế/chuyên gia, không trước-sau, không cam kết. tts.voices: giọng thư viện của nhà cung cấp TTS (chưa cắm — rỗng); KHÔNG có giọng clone người thật. extract_tol/extract_min_ratio: kiểm nhãn AI trên khung TRÍCH từ mp4 (pixel gần màu chữ nhãn, |Δ| ≤ tol mỗi kênh, ≥ ratio × khung PNG nguồn).",
+  "channels": ["tiktok", "facebook"],
+  "formats": ["9:16", "1:1"],
+  "scene_s": 4,
+  "min_scenes": 3,
+  "max_scenes": 10,
+  "duration_s": [15, 45],
+  "fps": 30,
+  "subtitle": {"max_chars": 60},
+  "script_banned": [
+    "bác sĩ", "dược sĩ", "y tá", "chuyên gia", "khuyên dùng", "bệnh viện",
+    "phòng khám", "lâm sàng", "kiểm chứng", "trước sau", "before after",
+    "cam kết hiệu quả", "doctor", "nurse", "hospital",
+    "bác sỹ", "dược sỹ", "y sĩ", "y sỹ", "lương y", "thầy thuốc",
+    "trước và sau", "trước với sau", "so sánh trước"
+  ],
+  "tts": {"voices": []},
+  "extract_tol": 40,
+  "extract_min_ratio": 0.5
+}

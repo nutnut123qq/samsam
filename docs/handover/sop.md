@@ -386,6 +386,46 @@ python -m pipelines.image_studio --sku all --channel facebook --channel shopee -
   XNQC, 3 mật ong chưa xác minh tự công bố, 2 rượu cấm) — lệnh chạy ra toàn
   `refused` là ĐÚNG cho tới khi Pháp chế/Sản xuất cập nhật golden.
 
+### Dựng video nháp (MKT-04, v6.3)
+
+Chuẩn bị: packshot THẬT `<PACKSHOT_DIR>/<sku_key>.png` (như ảnh MKT-03);
+B-roll ảnh tĩnh công ty cấp (.png/.jpg — vùng trồng, núi rừng, làm quà) đặt
+trong `<BROLL_DIR>` (mặc định `data/broll/`, gitignored) kèm
+`licenses.json` dạng `{"ten_file.jpg": "nguồn/giấy phép"}` — ảnh không có
+license bị bỏ qua (cảnh B-roll dùng khung packshot); clip video chưa hỗ
+trợ. ffmpeg lấy từ gói `imageio-ffmpeg` (requirements) hoặc env
+`FFMPEG_BIN`. B-roll/packshot "MẪU" chỉ dùng cho test, không đăng.
+
+```
+python -m pipelines.video_studio --sku mat-ong-sam-300ml --channel tiktok --format 9:16 --brief "Quà tặng từ núi rừng Quảng Nam"
+python -m pipelines.video_studio --sku all --channel tiktok --channel facebook --brief "..."
+```
+
+- Mỗi dòng in 1 video (SKU × kênh × format): `created #id <sha>.mp4` (nháp
+  mới `content_type=video`, `pending`), `skipped <sha>.mp4` (video y hệt đã
+  có nháp cùng SKU + kênh + format; kèm "nháp mồ côi #id" nếu 2 lần chạy
+  song song → người **reject** nháp đó), `refused <code>: <lý do>` (không
+  ghi file/DB), `failed: <lý do>` (lỗi LLM/ffmpeg/ghi file/DB — chạy lại
+  được).
+- Mã từ chối: `ruou`, `maket_xnqc` (MỌI SKU TPBVSK — cần maket/kịch bản
+  XNQC), `readiness`, `kenh_la`/`format_la`/`sku_la`, `brief_cam` (brief
+  có bác sĩ/chuyên gia/sức khỏe/từ cấm/dài), `tts` (TTS_PROVIDER chưa cắm),
+  `packshot_thieu`/`packshot_loi`, `kich_ban` (kịch bản AI vi phạm sau 1
+  lượt sửa / sai mẫu / còn < 3 cảnh), `ffmpeg_thieu`, `headline`/`font`
+  (phụ đề không vẽ được), `packshot_lech` (khung sản phẩm bị sửa — video bị
+  loại), `nhan_ai` (nhãn AI không hiện trên khung), `config`.
+- Exit 0 = không có `failed`; 1 = có `failed`; 2 = sai tham số,
+  `TTS_PROVIDER`/`IMAGE_PROVIDER` chưa cắm, thiếu ffmpeg, hoặc DB không kết
+  nối được (kiểm TRƯỚC mọi lời gọi LLM).
+- Nháp vào tab **Duyệt & Lịch** (text = phụ đề + nhãn + tên file
+  `<sha>.mp4`). Sau khi duyệt, NGƯỜI tải video
+  `data/video_assets/<sha>.mp4` (hoặc `VIDEO_OUT_DIR`) lên kênh tay — agent
+  KHÔNG đăng. Sidecar `<sha>.json` ghi model/prompt version kịch bản, nguồn +
+  license từng cảnh, sha khung, TTS, kết quả kiểm nhãn khung trích.
+- Golden hiện tại: 0 SKU đủ điều kiện (8 TPBVSK `maket_xnqc`, 2 rượu
+  `ruou`, 3 mật ong `readiness`) — chạy ra toàn `refused` là ĐÚNG, không tốn
+  lời gọi LLM.
+
 ## 5. Kênh Zalo OA (khi chạy thật)
 
 ```

@@ -152,7 +152,10 @@ luồng thật nào gọi). `ck_mat` (v9.5, tra cứu tài liệu kỹ thuật M
 khí) KHÔNG BAO GIỜ gọi LLM: gateway luôn từ chối id này (`LOCAL_ONLY_AGENTS`
 — không cần và không thể kill/bật trong config). `projects` (v8.3,
 phòng Dự án — `agents/da_hoso.py --llm` viết lại thư đăng ký chương
-trình; mặc định TẮT, cap tháng riêng; kill như agent khác). Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
+trình; mặc định TẮT, cap tháng riêng; kill như agent khác). `mkt_video`
+(v6.3 MKT-04 — `pipelines/video_studio.py` viết kịch bản video nháp; cap
+tháng riêng 2.0 USD; kill `LLM_KILL=mkt_video` → CLI báo `failed: llm`,
+không dựng video). Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
 `embed("...")` và hằng `AGENT = "..."` trong `api/`, `pipelines/`,
 `ingest/`, `agents/`, `connectors/` (nhờ dev nếu cần).
 

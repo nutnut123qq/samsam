@@ -133,12 +133,12 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-07 |
-| Module (code) | `pipelines/content.py`; `pipelines/llm_gateway.py`; `pipelines/store.py` |
+| Module (code) | `pipelines/content.py`; `pipelines/video_studio.py`; `pipelines/llm_gateway.py`; `pipelines/store.py` |
 | Mục đích | Soạn nháp nội dung marketing chờ người duyệt |
 | Dữ liệu | Brief do nhân viên nhập (quy trình: không đưa dữ liệu khách), claim đã duyệt, nháp nội dung |
 | Lớp | Vàng |
 | Chủ thể | Nhân viên MKT (tên người duyệt trong approvals) |
-| Nơi lưu | Bảng `content_drafts`, `approvals`, `agent_action_log` |
+| Nơi lưu | Bảng `content_drafts`, `approvals`, `agent_action_log`; v6.3 video nháp: `video_assets` + file mp4/sidecar ở VIDEO_OUT_DIR (brief chỉ ở prompt gửi LLM, không lưu) |
 | Thời hạn lưu | Không giới hạn — hồ sơ duyệt append-only (bằng chứng tuân thủ quảng cáo) |
 | Bên nhận | OpenRouter (Mỹ) → whitelist provider (Mỹ) |
 | Chuyển ra nước ngoài | CÓ — xem TIA |

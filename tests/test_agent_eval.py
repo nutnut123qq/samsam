@@ -4,6 +4,7 @@ scripts/agent_eval.py.
 DB qua fake conn, git qua monkeypatch, RAG qua fake answer — không mạng,
 không LLM, không wall-clock."""
 import contextlib
+import copy
 import json
 import shutil
 import subprocess
@@ -524,11 +525,12 @@ def test_runners_single_source_and_same_signature():
     assert ae.RUNNERS.keys() == ae.RUNNER_SCORERS.keys()
     # gộp M31 đợt 4: + mkt02 (v6.1) + sales_director (v5.0) — đều luật;
     # gộp đợt 5: + cskh (v5.1, gateway giả — tất định); gộp v6.2: + mkt03
-    # (provider giả eval_stub — tất định).
-    # v6.5: + mkt_seo (seo_san.suggest thuần — tất định); v5.3: + kd_a5.
+    # (provider giả eval_stub — tất định); v6.3: + mkt04 (LLM giả theo ca —
+    # tất định); v6.5: + mkt_seo (seo_san.suggest thuần); v5.3: + kd_a5.
     assert set(ae.DETERMINISTIC_RUNNERS) == {"guardrail", "co_khi", "mkt02",
-                                             "mkt03", "sales_director",
-                                             "cskh", "mkt_seo", "kd_a5"}
+                                             "mkt03", "mkt04",
+                                             "sales_director", "cskh",
+                                             "mkt_seo", "kd_a5"}
     assert not hasattr(ae, "RULE_AGENTS")
     for name, fn in ae.RUNNERS.items():
         if name == "chatbot":
@@ -1029,3 +1031,157 @@ def test_mkt_seo_case_validation_errors():
         mutate(c)
         errs = ae._validate_case(c, 0, d)
         assert any(needle in e for e in errs), (needle, errs)
+
+
+# --- v6.3 W63.5 mkt04 (Agent Video ngắn) ------------------------------------
+
+MKT04_KINDS = {"video_label_meta", "no_location_meta", "packshot_tamper",
+               "spec_line_dropped", "trap_alcohol", "trap_tpbvsk_maket",
+               "trap_readiness", "trap_doctor", "trap_guardrail"}
+
+
+def test_mkt04_cases_shape_and_unapproved():
+    docs, cases = _rows("mkt04")
+    d = docs[0]
+    assert "chưa được công ty duyệt" in d.casefold()
+    assert "chờ GĐ Marketing/Pháp chế duyệt nhãn" in d
+    ids = [c["id"] for c in cases]
+    assert len(ids) == len(set(ids)) and len(cases) >= 14
+    kinds = [c["kind"] for c in cases]
+    assert set(kinds) == MKT04_KINDS
+    vids = [c for c in cases if c["expect"] == "video"]
+    assert len(vids) <= 3        # ≤ 3 ca mã hóa mp4 thật
+    assert {c["format"] for c in vids
+            if c["kind"] == "video_label_meta"} == {"9:16", "1:1"}
+    assert kinds.count("trap_alcohol") >= 2 and kinds.count(
+        "trap_doctor") >= 2
+    assert any(c.get("readiness") and c["readiness"][0][2] == "QC_DAY_DU"
+               for c in cases if c["kind"] == "trap_alcohol")
+    assert any(c["sku"] == "sapentol-30v" and "hook mới" in c["brief"]
+               for c in cases if c["kind"] == "trap_tpbvsk_maket")
+    doc = [c for c in cases if c["kind"] == "trap_doctor"]
+    assert any("bác sĩ" in c["brief"] for c in doc)            # brief
+    assert any("Bác sĩ khuyên dùng" in c["fake_llm"][0] for c in doc)
+    # biến thể chính tả "sỹ" không kèm "khuyên dùng" (finding v6.3)
+    assert any("Bác sỹ tin chọn" in c["fake_llm"][0] for c in doc)
+    assert any(c.get("tamper") for c in cases
+               if c["kind"] == "packshot_tamper")
+    assert all(c["scorer"] == "mkt04" and c["label"] == "dev_draft"
+               and "text" not in c and c.get("label_status")
+               for c in cases)
+    assert cases[0]["expect"] == "refuse"   # ca đầu rẻ (test chữ ký runner)
+    s = ae.load_suite("mkt04")
+    assert ae.validate_suite(s, EVAL_DIR / "suites" / "mkt04.json") == []
+    assert (s["owner_block"], s["runner"], s["agent_model"], s["status"],
+            s["frozen"], s["labeled_by"], s["risk"]) == (
+        "marketing", "mkt04", "rules", "active", False, None, "high")
+    assert set(s["threshold"]["must_pass_kinds"]) == MKT04_KINDS
+    assert s["threshold"]["min_pass_rate"] == 1.0
+    cfg = ae.load_config()
+    assert "mkt04" not in cfg["required_agents"]
+    assert cfg["required_agents"] == ["guardrail", "chatbot"]
+    assert "mkt04" in cfg["_doc"]
+
+
+def test_mkt04_runner_all_pass_zero_gateway_and_restored(env, monkeypatch,
+                                                          capsys):
+    import os
+
+    from pipelines import image_studio as ims
+    from pipelines import video_studio as vs
+
+    calls = _mkt02_counting_client(monkeypatch)   # bật GUARDRAIL_LLM_MODEL
+    monkeypatch.setenv("TTS_PROVIDER", "none")
+    before = (ims.compose, vs.chat)
+    assert ae.main(["--agent", "mkt04", "--no-record"]) == 0
+    out = capsys.readouterr().out
+    n = len(ae.load_suite("mkt04")["cases"])
+    assert f"[done] mkt04 v1 PASS {n}/{n}" in out and "model=rules" in out
+    assert calls == [] and (ims.compose, vs.chat) == before
+    assert os.environ["GUARDRAIL_LLM_MODEL"] == "google/gemini-test"
+    assert os.environ["TTS_PROVIDER"] == "none"
+
+
+def _mkt04_cheap(cases):
+    """Ca không mã hóa mp4 (bẫy/script/tamper) — test đột biến nhanh."""
+    return [dict(c) for c in cases if c["expect"] != "video"]
+
+
+def test_mkt04_flipped_alcohol_case_fails(env, monkeypatch, capsys):
+    _, cases = _rows("mkt04")
+    cases = _mkt04_cheap(cases)
+    c = next(c for c in cases if c["kind"] == "trap_alcohol")
+    c["expect"] = "video"
+    _patched_suite(monkeypatch, "mkt04", cases)
+    assert ae.main(["--agent", "mkt04", "--no-record"]) == 1
+    out = capsys.readouterr().out
+    assert "FAIL (trap_alcohol)" in out and "ruou" in out
+    assert f'text="{c["sku"]} × {c["channel"]}"' in out
+
+
+@pytest.mark.parametrize("kind", ["trap_doctor", "packshot_tamper"])
+def test_mkt04_missing_required_kind_fails(env, monkeypatch, capsys, kind):
+    _, cases = _rows("mkt04")
+    cases = [c for c in _mkt04_cheap(cases) if c["kind"] != kind]
+    _patched_suite(monkeypatch, "mkt04", cases)
+    assert ae.main(["--agent", "mkt04", "--no-record"]) == 1
+    assert kind in capsys.readouterr().out
+
+
+def test_mkt04_unlabeled_frames_fail(env, monkeypatch):
+    """Đột biến bỏ CHỮ nhãn AI khi vẽ khung -> ca video_label_meta FAIL
+    (video bị từ chối nhan_ai trước khi mã hóa)."""
+    from PIL import ImageDraw
+
+    from pipelines import content
+
+    ai = content._publish_texts()[1][0]
+    real = ImageDraw.ImageDraw.multiline_text
+
+    def no_label(self, xy, text, *a, **kw):
+        if ai in text:
+            return None
+        return real(self, xy, text, *a, **kw)
+
+    monkeypatch.setattr(ImageDraw.ImageDraw, "multiline_text", no_label)
+    _, cases = _rows("mkt04")
+    res = ae.run_mkt04([c for c in cases if c["kind"] == "video_label_meta"])
+    assert len(res) == 2 and not any(ok for _, ok, _ in res)
+    assert all("nhan_ai" in d for _, _, d in res), res
+
+
+def test_mkt04_doctor_script_without_refusal_fails(env, monkeypatch):
+    """Đột biến: write_script bỏ qua từ cấm kịch bản -> ca trap_doctor
+    (kịch bản 'Bác sĩ khuyên dùng') FAIL."""
+    from pipelines import video_studio as vs
+
+    monkeypatch.setattr(vs, "_banned", lambda text, terms: [])
+    _, cases = _rows("mkt04")
+    res = ae.run_mkt04([c for c in cases if c["kind"] == "trap_doctor"
+                        and c.get("code") == "kich_ban"])
+    assert res and not any(ok for _, ok, _ in res)
+
+
+@pytest.mark.parametrize("mutate,needle", [
+    (lambda c: c.pop("brief"), "thiếu 'brief'"),
+    (lambda c: c.update(op="image"), "op phải"),
+    (lambda c: c.update(fake_llm="x"), "fake_llm phải"),
+    (lambda c: c.update(fake_llm=[]), "fake_llm phải"),
+    (lambda c: c.update(broll="yes"), "broll phải bool"),
+    (lambda c: c.update(tamper=True, op="script"), "tamper chỉ"),
+    (lambda c: c.update(expect="image"), "expect phải"),
+    (lambda c: c.update(expect="refuse"), "ca refuse cần code"),
+    (lambda c: c.update(code="ruou"), "code chỉ đi với expect refuse"),
+    (lambda c: c.update(kind="trap_alcohol"), "ca video cần"),
+    (lambda c: c.update(expect="script"), "ca script cần"),
+    (lambda c: c.update(readiness=[["a", "b"]]), "readiness phải"),
+    (lambda c: c.update(text=""), "thiếu 'text'"),
+])
+def test_validate_mkt04_case(mutate, needle):
+    d = ae.load_suite("mkt04")
+    c = copy.deepcopy(next(x for x in d["cases"]
+                           if x["kind"] == "video_label_meta"))
+    assert ae._validate_case(c, 0, d) == []
+    mutate(c)
+    errs = ae._validate_case(c, 0, d)
+    assert any(needle in e for e in errs), errs
