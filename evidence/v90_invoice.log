@@ -1,0 +1,56 @@
+# v9.0 W90.4 evidence — CLI thật trên DB riêng (DATABASE_URL w90, giá trị không in) — 2026-10-12 12:12:40 +0700
+# Dữ liệu MẪU (tên/MST người mua GIẢ). KHÔNG duyệt mục nào; cuối log reject bởi tên dev ghi rõ 'dọn MẪU'.
+
+$ python -m ingest.market_csv --file tests/fixtures/finance/order_invoice_MAU.csv --channel shopee --kind order
+[load] snapshot #10 shopee/order order_invoice_MAU.csv: 17 dòng, map golden 17
+[alerts] export order — không đối chiếu ở P1
+[done]
+[exit 0]
+
+$ python -m agents.acc_invoice --batch --day 2026-10-12 --yeu-cau tests/fixtures/finance/invoice_requests_MAU.csv --channel shopee
+[ok] lô 2026-10-12-5a1ca3581799: 13 dòng (thường 12, cần MST 1, điều chỉnh 0); loại: hủy 2, chưa đạt mốc 1, đã lập 0 → hàng duyệt #1 (finance, chờ người duyệt)
+[file] nháp: lo-2026-10-12-5a1ca3581799.csv (thư mục hoa-don-nhap, gitignored — chứa thông tin người mua, KHÔNG gửi đi)
+[done] BẢN NHÁP — agent không ký số, không phát hành.
+[exit 0]
+
+$ python -m agents.acc_invoice --batch --day 2026-10-12
+[skip] ngày 2026-10-12 đã có lô chờ duyệt #1 — duyệt/từ chối xong mới lập lô mới.
+[exit 0]
+
+$ python -m pipelines.approval_queue --pending --block finance
+[pending] 1 mục chờ duyệt:
+  #1 [finance/invoice_batch] Lô hóa đơn NHÁP 2026-10-12 (13 dòng) — rủi ro high, QA none, guardrail PASS, tạo bởi agent:acc_invoice, hạn 10-13 12:12
+[exit 0]
+
+$ python -m agents.acc_invoice --verify-draft 1 --file data/reports/hoa-don-nhap/lo-2026-10-12-5a1ca3581799.csv
+[fail] mục #1 đang 'pending' — chưa được duyệt
+[exit 1]
+
+$ python -m agents.acc_invoice --batch --verify-draft 1 --file data/reports/hoa-don-nhap/lo-2026-10-12-5a1ca3581799.csv
+usage: python -m agents.acc_invoice [-h] [--batch] [--day DAY]
+                                    [--yeu-cau YEU_CAU]
+                                    [--channel {shopee,tiktok}]
+                                    [--verify-draft QUEUE_ID] [--file FILE]
+python -m agents.acc_invoice: error: chỉ 1 thao tác mỗi lần (--batch | --verify-draft)
+[exit 2]
+
+$ grep -c 'CONG TY GIA LAP HOA DON MAU' <file nháp>   # thông tin người mua CHỈ trong file nháp gitignored
+1
+$ git check-ignore data/reports/hoa-don-nhap/lo-2026-10-12-5a1ca3581799.csv
+data/reports/hoa-don-nhap/lo-2026-10-12-5a1ca3581799.csv
+[exit 0]
+
+$ python - (quét chuỗi người mua GIẢ trong approval_queue / invoice_lines / agent_action_log)
+approval_queue: 0 chuỗi người mua GIẢ
+invoice_lines: 0 chuỗi người mua GIẢ
+agent_action_log: 0 chuỗi người mua GIẢ
+invoice_lines: 13 dòng
+[exit 0]
+
+$ python -m pipelines.approval_queue --reject 1 --by dev-w90-don-MAU --note dọn_dữ_liệu_MẪU_evidence_v9.0
+[done] mục #1 → rejected (người duyệt: dev-w90-don-MAU)
+[exit 0]
+
+$ python -m pipelines.approval_queue --pending --block finance
+[pending] hàng duyệt chung trống
+[exit 0]

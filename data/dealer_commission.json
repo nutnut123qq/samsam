@@ -1,0 +1,7 @@
+{
+  "_doc": "v9.0 ACC-AR — MẪU — chính sách hoa hồng CHƯA ký (external-dep: GĐ tài chính/TGĐ ký chính sách thật); điểm nối bảng `dealers` CRM v5.2 khi gộp (khóa `dealer_code`). term_days = hạn thanh toán mặc định (ngày) khi dòng công nợ không có due_date. rates_pct = tỷ lệ hoa hồng theo nhóm hàng golden (sku_master.category), tính trên doanh số phát sinh + điều chỉnh trong kỳ (sàn 0), Decimal ROUND_HALF_UP. zero_rules = (nhóm, kênh) hoa hồng 0 — rượu bán online KHÔNG được khuyến khích (khớp luật chặn rượu online). tncn_types = loại đại lý cá nhân/hộ kinh doanh → cờ khấu trừ thuế TNCN (kế toán xử lý, agent không tính thuế). Output là BẢN NHÁP — không phải lệnh chi.",
+  "term_days": 30,
+  "rates_pct": {"tpbvsk": 0.08, "food": 0.05, "alcohol": 0.03},
+  "zero_rules": [{"category": "alcohol", "channel": "online"}],
+  "tncn_types": ["ho_kinh_doanh", "ca_nhan"]
+}

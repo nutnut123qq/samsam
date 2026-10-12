@@ -27,6 +27,7 @@ import argparse
 import json
 import re
 import sys
+from collections.abc import Sequence
 from contextlib import suppress
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -160,9 +161,12 @@ def _line(d: dict) -> str:
 
 
 def digest(cfg: dict, items: list[dict], now: datetime,
-           overrides: list[dict] = ()) -> str:
+           overrides: list[dict] = (), extra: Sequence[str] = ()) -> str:
     """Bản tin markdown (thuần). `items` = dòng hàng duyệt của khối,
-    `overrides` = override_qa (queue_id, decided_by, created_at)."""
+    `overrides` = override_qa (queue_id, decided_by, created_at).
+    `extra` (v9.0) = dòng markdown agent nhân viên của khối chèn thêm (vd
+    ACC-AR "## Công nợ đại lý quá hạn") — đặt ngay trước "## Người duyệt";
+    rỗng → output y hệt bản cũ (director không import agent khối nào)."""
     start, end = period_bounds("day", now)
     day = start.date()
     soon = now + timedelta(hours=cfg["due_soon_hours"])
@@ -192,6 +196,8 @@ def digest(cfg: dict, items: list[dict], now: datetime,
     L += ["", "## Override QA hôm nay (ép trình bản QA FAIL)", ""]
     L += ([f"- mục #{o['queue_id']} — bởi {o['decided_by']} lúc "
            f"{_fmt_vn(o['created_at'])}" for o in ovr] or ["- (không có)"])
+    if extra:
+        L += ["", *extra]
     L += ["", "## Người duyệt", "",
           f"- Vai trò duyệt: {', '.join(cfg['approver_roles'])}"]
     if not cfg["approvers"]:
@@ -204,8 +210,10 @@ def digest(cfg: dict, items: list[dict], now: datetime,
 
 
 def run(conn, block: str, now: datetime | None = None,
-        cfg: dict | None = None, out_dir: Path = REPORTS_DIR):
-    """expire → auto_approve (nếu có luật) → digest → file. → (path, text)."""
+        cfg: dict | None = None, out_dir: Path = REPORTS_DIR,
+        extra: Sequence[str] = ()):
+    """expire → auto_approve (nếu có luật) → digest → file. → (path, text).
+    `extra` chuyển nguyên cho `digest` (mục bổ sung của agent khối)."""
     cfg = cfg if cfg is not None else load_config(block)
     now = now or datetime.now(VN_TZ)
     aq.expire_overdue(conn)
@@ -222,7 +230,7 @@ def run(conn, block: str, now: datetime | None = None,
                  for r in conn.execute(_OVERRIDE_SQL,
                                        (block, start, end)).fetchall()]
     conn.commit()   # đóng tx đọc (conn chia sẻ)
-    text = digest(cfg, items, now, overrides)
+    text = digest(cfg, items, now, overrides, extra)
     path = write_report(text, out_dir,
                         f"director-{block}-{start.date():%Y-%m-%d}.md")
     return path, text
@@ -254,6 +262,13 @@ def main(argv=None) -> int:
                   f"người duyệt {appr}")
         print(f"[done] {len(cfgs)} khối hợp lệ (dry-run, không DB)")
         return 0
+    if "finance" in blocks:
+        # v9.0: cùng file director-finance-<ngày>.md với acc_ar --bulletin
+        # (os.replace ghi đè) → chạy sau sẽ làm mất mục nợ quá hạn.
+        print("[warn] khối finance: bản tin này GHI ĐÈ bản của `python -m "
+              "agents.acc_ar --bulletin` (mất mục 'Công nợ đại lý quá hạn')"
+              " — dùng lệnh acc_ar thay, hoặc chạy lại nó sau lệnh này.",
+              file=sys.stderr)
     conn = connect()
     if conn is None:
         print("[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc"

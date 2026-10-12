@@ -104,7 +104,7 @@
 
 ## 3. Luồng không thuộc TIA
 
-Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15.
+Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15, DF-18, DF-19, DF-20.
 
 ## 4. Ký duyệt
 

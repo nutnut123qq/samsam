@@ -326,6 +326,60 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Không xử lý dữ liệu cá nhân thật; chạy sau khi DPIA ký — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | (không) |
 
+### DF-18 — Đối soát quyết toán sàn — ACC-Recon (v9.0)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-18 |
+| Module (code) | `ingest/settlement_csv.py` |
+| Mục đích | Đối soát tiền thực nhận + phí sàn với đơn đã nạp, phát hiện thu sai — chỉ báo cáo, không bút toán |
+| Dữ liệu | Mã đơn (chỉ lưu hash sha256[:16]) + số tiền đơn/phí sàn/hoàn/thực nhận từ file quyết toán Seller Center; cột tên/SĐT/địa chỉ/username người mua bị bỏ ngay khi đọc |
+| Lớp | Đỏ |
+| Chủ thể | Người mua trên sàn (gián tiếp qua mã đơn đã hash) |
+| Nơi lưu | Bảng `settlement_rows` + `recon_results` (không cột người mua); file nguồn do kế toán giữ ngoài repo |
+| Thời hạn lưu | Chưa đặt hạn — theo hạn lưu chứng từ kế toán (cần kế toán trưởng chốt) |
+| Bên nhận | Nội bộ — kế toán / GĐ tài chính đọc `--report`; không gửi ra ngoài, không LLM |
+| Chuyển ra nước ngoài | Không |
+| Biện pháp bảo vệ (có trong code) | Kiểm toàn file trước khi connect; lỗi chỉ nêu số dòng + tên field, không in giá trị ô; Cột người mua thuộc `drop` bị bỏ khi đọc; mã đơn chỉ lưu hash; Báo cáo trỏ dòng bằng `file dòng N`, không in mã đơn/hash |
+| Căn cứ xử lý | Nghĩa vụ kế toán/thuế + thực hiện hợp đồng mua bán — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | Mapping cột + biểu phí là GIẢ ĐỊNH — chờ file settlement thật ≥2 tuần mỗi sàn; Hạn lưu `settlement_rows` chưa chốt |
+
+### DF-19 — Lô hóa đơn điện tử NHÁP — ACC-Invoice (v9.0)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-19 |
+| Module (code) | `agents/acc_invoice.py` |
+| Mục đích | Chuẩn bị danh sách hóa đơn để kế toán nhập tay vào phần mềm HĐĐT sau khi lô được duyệt |
+| Dữ liệu | Tên đơn vị mua, MST, địa chỉ, email nhận hóa đơn — CHỈ của đơn có yêu cầu xuất hóa đơn (file yêu cầu kế toán cung cấp); số tiền + tên hàng từ đơn sàn |
+| Lớp | Đỏ |
+| Chủ thể | Người mua yêu cầu xuất hóa đơn (doanh nghiệp/hộ kinh doanh/cá nhân có MST) |
+| Nơi lưu | Thông tin người mua CHỈ trong file nháp gitignored `data/reports/hoa-don-nhap/lo-<batch_key>.csv`; DB (`invoice_lines`, `approval_queue`) chỉ hash + số tiền + cờ; không vào log/stdout/payload |
+| Thời hạn lưu | File nháp chưa có hạn xóa tự động — GAP (external-dep: kế toán chốt hạn + quyền thư mục) |
+| Bên nhận | Nội bộ — kế toán; agent KHÔNG gửi, KHÔNG gọi API nhà cung cấp HĐĐT, không ký số |
+| Chuyển ra nước ngoài | Không |
+| Biện pháp bảo vệ (có trong code) | Payload hàng duyệt chỉ có hash rút gọn + số tiền + `csv_sha256`; test quét chuỗi người mua GIẢ; `--verify-draft` chỉ pass khi lô đã duyệt và sha256 file khớp; Module không import thư viện mạng/gateway LLM (test_fin_qa); Ô CSV chống formula injection |
+| Căn cứ xử lý | Nghĩa vụ lập hóa đơn theo pháp luật thuế — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | Retention file nháp + quyền thư mục `data/reports/hoa-don-nhap/` = external-dep; Nhà cung cấp HĐĐT + format nhập + chữ ký số = external-dep; Mốc `invoice_trigger` chờ tư vấn thuế chốt (hạn 25/10/2026) |
+
+### DF-20 — Công nợ đại lý + hoa hồng — ACC-AR (v9.0)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-20 |
+| Module (code) | `agents/acc_ar.py` |
+| Mục đích | Tuổi nợ, cảnh báo nợ quá hạn vào bản tin GĐ tài chính, tính hoa hồng NHÁP |
+| Dữ liệu | Mã đại lý (`dealer_code`), loại đại lý, chứng từ công nợ, số tiền, SKU, kênh — KHÔNG tên/SĐT đại lý |
+| Lớp | Đỏ |
+| Chủ thể | Đại lý (doanh nghiệp, hộ kinh doanh, cá nhân) |
+| Nơi lưu | Bảng `dealer_ar` (insert-only theo sha256 file); bản tin `data/reports/director-finance-<ngày>.md` (gitignored) |
+| Thời hạn lưu | Chưa đặt hạn — theo hạn lưu chứng từ kế toán (cần chốt) |
+| Bên nhận | Nội bộ — kế toán / GĐ tài chính; không gửi thư nhắc nợ, không lệnh chi, không LLM |
+| Chuyển ra nước ngoài | Không |
+| Biện pháp bảo vệ (có trong code) | Chỉ mã đại lý, header cố định — cột lạ (vd tên) chặn cả file; Bản tin chỉ in mã đại lý + số tiền, không chi tiết chứng từ; Hoa hồng là BẢN NHÁP theo chính sách MẪU chưa ký |
+| Căn cứ xử lý | Thực hiện hợp đồng đại lý + nghĩa vụ kế toán — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | Sổ công nợ thật (MISA) + chính sách hoa hồng đã ký = external-dep; Nối bảng `dealers` CRM v5.2 khi gộp (khóa `dealer_code`) |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -349,6 +403,9 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-15 | Sao lưu và diễn tập khôi phục DB | Đỏ | cao | không | 2 |
 | DF-16 | Thu tin thị trường tầng A/B (intel — v7.0) | Xanh | thấp | có | 2 |
 | DF-17 | Nghiên cứu giả lập persona (v7.3) | Xanh | thấp | có | 0 |
+| DF-18 | Đối soát quyết toán sàn — ACC-Recon (v9.0) | Đỏ | cao | không | 2 |
+| DF-19 | Lô hóa đơn điện tử NHÁP — ACC-Invoice (v9.0) | Đỏ | cao | không | 3 |
+| DF-20 | Công nợ đại lý + hoa hồng — ACC-AR (v9.0) | Đỏ | cao | không | 2 |
 
 ## 4. Tổng hợp GAP
 
@@ -371,6 +428,13 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-15] Nếu bật offsite cloud nước ngoài phải bổ sung TIA
 - [DF-16] Chưa che họ tên người trong tiêu đề/trích tin (NER)
 - [DF-16] Chưa có hạn lưu/purge `intel_items`
+- [DF-18] Mapping cột + biểu phí là GIẢ ĐỊNH — chờ file settlement thật ≥2 tuần mỗi sàn
+- [DF-18] Hạn lưu `settlement_rows` chưa chốt
+- [DF-19] Retention file nháp + quyền thư mục `data/reports/hoa-don-nhap/` = external-dep
+- [DF-19] Nhà cung cấp HĐĐT + format nhập + chữ ký số = external-dep
+- [DF-19] Mốc `invoice_trigger` chờ tư vấn thuế chốt (hạn 25/10/2026)
+- [DF-20] Sổ công nợ thật (MISA) + chính sách hoa hồng đã ký = external-dep
+- [DF-20] Nối bảng `dealers` CRM v5.2 khi gộp (khóa `dealer_code`)
 
 ## 5. Câu hỏi cho luật sư
 

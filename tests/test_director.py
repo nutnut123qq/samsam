@@ -165,7 +165,18 @@ def test_cli_dry_run_no_db(monkeypatch, capsys):
 def test_cli_db_down_exit_2(monkeypatch, capsys):
     monkeypatch.setattr(dr, "connect", lambda: None)
     assert dr.main(["--block", "sales"]) == 2
-    assert "không kết nối" in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert "không kết nối" in err and "acc_ar --bulletin" not in err
+
+
+@pytest.mark.parametrize("argv", [["--block", "finance"], ["--all"]])
+def test_cli_finance_warns_overwrites_acc_ar_bulletin(monkeypatch, capsys,
+                                                      argv):
+    # v9.0: director-finance-<ngày>.md dùng chung với acc_ar --bulletin
+    monkeypatch.setattr(dr, "connect", lambda: None)
+    assert dr.main(argv) == 2
+    err = capsys.readouterr().err
+    assert "[warn] khối finance" in err and "acc_ar --bulletin" in err
 
 
 @pytest.mark.parametrize("argv", [[], ["--block", "sales", "--all"],
@@ -185,3 +196,22 @@ def test_cli_module_dry_run_subprocess():
                        timeout=60, encoding="utf-8", errors="replace",
                        check=False)
     assert r.returncode == 0 and "11 khối hợp lệ" in r.stdout, r.stderr
+
+
+def test_digest_extra_inserted_before_approvers_default_unchanged():
+    """v9.0: `extra` (vd ACC-AR nợ quá hạn) chèn ngay trước "## Người
+    duyệt"; không truyền → byte-identical bản cũ (bỏ đúng khối chèn khỏi
+    bản có extra phải ra y hệt bản không extra)."""
+    cfg = dr.load_config("finance")
+    now = datetime(2026, 10, 12, 9, 0, tzinfo=VN)
+    items = [_item(1, "pending", now, due=now + timedelta(hours=2))]
+    base = dr.digest(cfg, items, now)
+    assert dr.digest(cfg, items, now, (), ()) == base
+    assert dr.digest(cfg, items, now, extra=[]) == base
+    extra = ["## Công nợ đại lý quá hạn (tính tới 12/10/2026)", "",
+             "- `DL-01` 1.000đ"]
+    md = dr.digest(cfg, items, now, extra=extra)
+    block = "\n" + "\n".join(["", *extra])
+    assert block in md and md.replace(block, "", 1) == base
+    assert md.index("## Công nợ đại lý quá hạn") < md.index("## Người duyệt")
+    assert md.index("## Override QA") < md.index("## Công nợ đại lý")

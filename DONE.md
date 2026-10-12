@@ -13,6 +13,431 @@ rượu trong persona_sim nay bị guardrail v4.1 loại kể cả panel ngườ
 `test_validate_specific_reasons`). Đang chạy song song: v4.2, v4.5, v5.2, v7.2,
 v9.2.
 
+## Checklist v9.0-doi-soat-hoa-don
+
+Khán giả/mục đích: nhánh M31+ (worktree `D:\code\samsam-w70`) — WP12 "Khối
+Tài chính" phần KẾ TOÁN (`ctx/pmo.md` dòng `| WP12`), agent ACC-Recon,
+ACC-Invoice, ACC-AR trong `ctx/final_plans.json` → `finance`. Hiện repo có 0
+dòng code tài chính: đơn sàn đã nạp được qua v3.3 (`ingest/market_csv.py` →
+`market_rows` `export_kind='order'`, `order_id_hash` = sha256("kênh:mã
+đơn")[:16], `price_vnd` đơn giá × `qty`, `status`), golden SKU v3.2
+(`sku_master.category` ∈ tpbvsk/food/alcohol), hàng duyệt chung v4.0
+(`pipelines/director.py::submit` → `pipelines/approval_queue.py::enqueue`,
+`data/directors/finance.json` đã có object_type `invoice_batch` sla 24h risk
+high). Sau version: (1) ACC-Recon nạp file quyết toán (settlement/income) kế
+toán xuất TAY từ Seller Center, kiểm toàn file TRƯỚC connect, idempotent
+sha256, đối chiếu từng dòng với đơn sàn đã nạp + bảng phí cấu hình → MỖI dòng
+đúng 1 nhãn `khop|lech|thieu_chung_tu|hoan` (lệch kèm lý do), chỉ BÁO CÁO —
+không ghi sổ, không bút toán; (2) ACC-Invoice gom lô đơn đạt mốc
+`invoice_trigger` của ngày D → file CSV NHÁP (format HĐĐT GIẢ ĐỊNH) + 1 mục
+`invoice_batch` vào `approval_queue` — agent không chữ ký số, không gửi, không
+gọi API; thông tin người mua CHỈ nằm trong file nháp gitignored, không vào
+DB/log/payload; (3) ACC-AR nạp tay sổ công nợ đại lý → tuổi nợ 0-30/31-60/
+61-90/>90 (`as_of` tham số), hoa hồng theo cấu hình MẪU (rượu kênh online =
+0), cảnh báo nợ quá hạn vào bản tin GĐ tài chính (`director-finance-*.md`);
+(4) FIN-QA nhẹ: chứng minh 0 payload Tài chính đi ra LLM/mạng (mặc định không
+gọi LLM).
+
+Quy ước: ponytail — stdlib + `psycopg` (+ `openpyxl` lười như market_csv) sẵn
+có, KHÔNG dep mới, KHÔNG LLM ở bất kỳ bước nào (phép tính tất định Python/
+SQL). TÁI DÙNG, không viết lại: đọc bảng/ô/số từ `ingest.market_csv`
+(`_table`, `_cell`, `_to_int`, `_nfc`, `_safe`, `_clean`, `_TableError`,
+`MAX_FILE_BYTES`/`MAX_ROWS`/`MAX_COLS`, công thức hash mã đơn), duyệt qua
+`pipelines.director.submit` (SLA/risk từ `data/directors/finance.json`,
+guardrail do `approval_queue.enqueue` tự tính), kỳ/ngày VN qua
+`pipelines.period` (`VN_TZ`, `vn_date`, `period_bounds`), ghi file atomic qua
+`agents.report.write_report`, che PII qua `pipelines.pii._mask_pii`, CLI
+connect qua `ingest.lead_store.connect` hoặc `psycopg.connect(...,
+connect_timeout=10)` (guard `tests/test_connect_timeout_guard.py`). Mọi file
+cấu hình mới ghi **GIẢ ĐỊNH**/**MẪU** trong `_doc`. Schema chỉ THÊM vào
+`docs/schema.sql` (block "v9.0 kế toán", comment tiếng Việt ai ghi/ai đọc/
+vì sao): `create table if not exists`, KHÔNG `alter`/`drop`; không assert đếm
+cứng số bảng. Tiền VND = `bigint` số nguyên đồng; phần trăm phí dùng
+`Decimal(str(x))`, làm tròn ROUND_HALF_UP về đồng. Mọi hàm có thời gian nhận
+`day`/`as_of`/`now` tham số — chỉ CLI đọc đồng hồ (mặc định hôm nay VN); ngày
+từ CLI (str) coerce `date.fromisoformat` → lỗi exit 2 (gotcha v2.2). Print
+tiếng Việt → UTF-8 guard; ghi DB `conn.commit()` tường minh (gotcha v2.1);
+CLI >1 thao tác → `ap.error` exit 2 TRƯỚC connect (gotcha v2.2); lỗi file chỉ
+nêu số dòng + tên field, KHÔNG in giá trị ô; stdout/báo cáo KHÔNG in mã đơn
+gốc, `order_id_hash`, tên/MST/địa chỉ/email/SĐT người mua — trỏ dòng bằng
+`file + row_no`, đại lý bằng `dealer_code`. Test DB: schema tạm + rollback
+như `tests/test_market_csv.py::db` (skip khi không DB nhưng gate đòi **0
+skipped** trên máy có DB), fixture MẪU dưới `tests/fixtures/finance/` (tên/
+MST/SĐT GIẢ, khai báo hằng trong test để quét rò rỉ). Lệnh gate chạy với
+tiền tố `cd D:/code/samsam-w70 && set -a && . <scratchpad>/w90.env && set +a
+&&` (DB riêng, không in biến môi trường). KHÔNG commit/push (coordinator).
+
+External-dep (KHÔNG giả lập, KHÔNG tự đánh dấu): file settlement THẬT ≥2
+tuần mỗi sàn (header/định dạng thật → sửa `data/settlement_map.json`, chạy
+smoke + khớp tổng); biểu phí sàn thật theo ngày hiệu lực (`data/
+settlement_fees.json` là GIẢ ĐỊNH); `invoice_trigger` do tư vấn thuế chốt
+(hạn 25/10/2026 — config ghi `confirmed_by: null`, mặc định
+`giao_thanh_cong` theo kế hoạch); nhà cung cấp HĐĐT + mẫu file nhập thật +
+chữ ký số (người phụ trách kế toán phát hành tay); số hóa đơn gốc cho điều
+chỉnh (`invoices_issued` — chưa có nguồn); `order_status_history`/thời điểm
+đạt mốc thật (độ trễ theo giờ chưa đo được — snapshot không có timestamp
+trạng thái); sổ công nợ MISA + số dư đại lý thật + chính sách hoa hồng đã ký
+(`data/dealer_commission.json` là MẪU; điểm nối bảng `dealers` CRM v5.2 khi
+gộp — `dealer_code` là khóa nối); người duyệt lô (`finance.json`
+`approvers: []`); GĐ tài chính ký biên bản đối soát/nghiệm thu WP12; thư
+nhắc nợ + kênh gửi + lệnh chi hoa hồng (ngoài phạm vi version). Phần
+FP-COGS/AdsBudget/OpsCost/Cash của WP12 KHÔNG thuộc version này.
+
+- [x] **W90.1 Schema kế toán 4 bảng + docs bảng** — `docs/schema.sql` block
+  v9.0 (sau block cuối hiện có):
+  `settlement_rows` (`id bigint identity pk`, `file_sha256 text not null
+  check (~ '^[0-9a-f]{64}$')`, `file_name text not null`, `channel text not
+  null check in ('shopee','tiktok')`, `row_no int not null check (>= 2)`,
+  `order_id_hash text not null check (~ '^[0-9a-f]{16}$')`,
+  `order_amount_vnd bigint not null check (>= 0)`, `fixed_fee_vnd`,
+  `payment_fee_vnd`, `service_fee_vnd`, `shipping_fee_vnd`,
+  `voucher_seller_vnd`, `affiliate_vnd` (bigint not null default 0 — khoản
+  KHẤU TRỪ đã chuẩn hóa dấu, âm = sàn bù), `refund_vnd bigint not null default
+  0 check (>= 0)`, `payout_vnd bigint not null` (thực nhận trên file, có thể
+  âm), `settled_on date`, `imported_at timestamptz not null default now()`,
+  unique `(file_sha256, row_no)`) — KHÔNG cột raw/tên/SĐT/địa chỉ.
+  `recon_results` (`id bigint identity pk`, `settlement_row_id bigint not
+  null unique references settlement_rows(id)`, `label text not null check in
+  ('khop','lech','thieu_chung_tu','hoan')`, `reasons jsonb not null default
+  '[]'`, `expected_payout_vnd bigint not null`, `order_amount_vnd bigint`
+  (tổng từ đơn sàn; null = không thấy đơn), `reconciled_at timestamptz not
+  null default now()`, check `(label <> 'khop' or reasons = '[]'::jsonb) and
+  (label <> 'lech' or reasons <> '[]'::jsonb)`).
+  `invoice_lines` (`id bigint identity pk`, `batch_key text not null check (~
+  '^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9a-f]{12}$')` (= object_id của mục
+  `invoice_batch` trong `approval_queue`, KHÔNG FK — dòng ghi TRƯỚC khi
+  enqueue), `batch_date date not null`, `channel text not null check in
+  ('shopee','tiktok')`, `order_id_hash text not null check (~
+  '^[0-9a-f]{16}$')`, `kind text not null check in ('thuong','can_mst',
+  'dieu_chinh')`, `amount_vnd bigint not null check (>= 0)`, `ref_batch_key
+  text` (điều chỉnh: lô gốc; check `(kind = 'dieu_chinh') = (ref_batch_key is
+  not null)`), `created_at timestamptz not null default now()`, unique
+  `(batch_key, order_id_hash, kind)`) — KHÔNG cột thông tin người mua.
+  `dealer_ar` (`id bigint identity pk`, `file_sha256 text not null check
+  (hex64)`, `file_name text not null`, `row_no int not null`, `dealer_code
+  text not null check (~ '^[A-Z0-9_-]{2,32}$')`, `dealer_type text not null
+  check in ('doanh_nghiep','ho_kinh_doanh','ca_nhan')`, `kind text not null
+  check in ('so_du_dau','phat_sinh','thanh_toan','dieu_chinh')`, `doc_ref
+  text`, `doc_date date not null`, `due_date date check (due_date is null or
+  due_date >= doc_date)`, `amount_vnd bigint not null`, `sku_key text` (không
+  FK — như `market_rows`), `channel text check (channel is null or channel in
+  ('offline','online'))`, `imported_at timestamptz not null default now()`,
+  unique `(file_sha256, row_no)`, check dấu theo kind: `so_du_dau`/
+  `phat_sinh` > 0, `thanh_toan` < 0, `dieu_chinh` <> 0) — KHÔNG tên/SĐT đại
+  lý. `docs/handover/kien-truc.md`: 4 dòng bảng mới (chứa gì / nguồn nạp) +
+  câu "35 bảng public" → "39 bảng public" (trên nền hiện tại; coordinator
+  chỉnh khi gộp) + dòng module mới ở mục 2. `deploy/cloud/README.md`: liệt
+  kê `` `settlement_rows` `` `` `recon_results` `` `` `invoice_lines` ``
+  `` `dealer_ar` `` (drift-guard `tests/test_db_backup.py::
+  test_cloud_readme_drift_guard`).
+  - Boundary: `docs/schema.sql`, `docs/handover/kien-truc.md`,
+    `deploy/cloud/README.md`, `tests/test_settlement_csv.py` (test schema)
+  - Gate: `grep -nE "^\s*(alter|drop)\s+table" docs/schema.sql` không có
+    dòng mới so với `git diff`; `python scripts/apply_schema.py` ×2 exit 0;
+    test DB (schema tạm, rollback): `recon_results` label `'khac'` /
+    `khop` + reasons khác `[]` / `lech` + reasons `[]` → CheckViolation; 2
+    kết quả cùng `settlement_row_id` → UniqueViolation; `dealer_ar`
+    `thanh_toan` amount dương / `phat_sinh` âm / `dealer_code` có dấu cách /
+    `due_date < doc_date` → CheckViolation; `invoice_lines` `dieu_chinh`
+    thiếu `ref_batch_key` → CheckViolation; `python -m pytest -q
+    tests/test_handover_docs.py::test_kien_truc_lists_all_tables
+    tests/test_db_backup.py::test_cloud_readme_drift_guard` xanh
+  - Evidence: `evidence/v90_pytest.log`
+- [x] **W90.2 ACC-Recon nạp file settlement (`ingest/settlement_csv.py`)** —
+  mapping `data/settlement_map.json` (`_doc`: "TÊN CỘT GIẢ ĐỊNH — chưa xác
+  minh với file income/settlement thật; người có tài khoản Seller Center
+  xuất 1 file mỗi sàn để đối chiếu"): `{kênh: {required: {field: header},
+  optional: {...}, drop: [header], fees_negative: bool}}`; field chuẩn
+  `order_id, order_amount, fixed_fee, payment_fee, service_fee,
+  shipping_fee, voucher_seller, affiliate, refund, payout, settled_on`;
+  `drop` gồm mọi cột người mua (tên/SĐT/địa chỉ/username). Hàm thuần
+  `read_settlement(path, channel, mapping) -> (rows, errors, sha)` theo đúng
+  khuôn `market_csv.read_export` (đuôi .csv/.xlsx, UTF-8-sig, rỗng/chỉ
+  header, thiếu cột required, cột lạ, header trùng, trần dòng/cột/byte →
+  lỗi; ≥1 lỗi → rows `[]`). Số tiền: `_to_signed(s)` = dấu `-` đầu tùy chọn
+  + `market_csv._to_int` (trần 10**15); `fees_negative: true` ⇒ cột khấu trừ
+  đổi dấu thành khoản trừ dương (giá trị dương trên file ⇒ khoản bù, âm sau
+  chuẩn hóa — không đoán); `refund` âm sau chuẩn hóa / `order_amount` âm →
+  lỗi dòng; `settled_on` nhận `YYYY-MM-DD` hoặc `DD/MM/YYYY`, sai → lỗi dòng.
+  Mã đơn → `order_id_hash` đúng công thức market_csv (`sha256(f"{kênh}:{mã}")
+  [:16]` — import/tái dùng, không chép công thức lệch); mã đơn TRÙNG trong 1
+  file → lỗi (GIẢ ĐỊNH 1 dòng/đơn). CLI `python -m ingest.settlement_csv
+  --file F --channel shopee|tiktok` | `--reconcile` | `--report`: kiểm file +
+  mapping + bảng phí (W90.3) TRƯỚC connect → lỗi exit 1, 0 connect; sha đã có
+  trong `settlement_rows` → `[skip]` exit 0 không ghi; mới → 1 transaction:
+  insert rows + đối chiếu (W90.3) → `conn.commit()`; UniqueViolation song
+  song → `[skip]`.
+  - Boundary: `ingest/settlement_csv.py` (mới), `data/settlement_map.json`
+    (mới), `tests/test_settlement_csv.py` (mới), `tests/fixtures/finance/`
+    (mới: `settlement_shopee_MAU.csv`, `order_shopee_MAU.csv`)
+  - Gate: fixture 16 dòng parse 0 lỗi, 16 rows, không key nào ngoài field
+    chuẩn + `row_no`/`order_id_hash`; chuỗi PII GIẢ trong cột drop không có
+    trong rows/stdout; bản sao đổi header `Phí cố định` → `Fixed fee` (tạo ở
+    `tmp_path`) → CLI exit 1, stdout có "thiếu cột bắt buộc" + "cột lạ",
+    `connect` (monkeypatch đếm) gọi 0 lần, 0 dòng; ô tiền `12,5` → lỗi nêu
+    số dòng + tên field, không in giá trị ô; mã đơn trùng → exit 1; hash mã
+    đơn của settlement == hash của `market_csv.read_export` cùng mã; DB:
+    nạp 2 lần cùng file → lần 2 `[skip]`, `count(*)` settlement_rows không
+    đổi; `--file --report` cùng lúc → exit 2 trước connect — `python -m
+    pytest -q tests/test_settlement_csv.py` xanh
+  - Evidence: `evidence/v90_pytest.log`, `evidence/v90_recon.log`
+- [x] **W90.3 ACC-Recon đối chiếu + nhãn + phí sàn cấu hình** — bảng phí
+  `data/settlement_fees.json` (`_doc`: "BIỂU PHÍ GIẢ ĐỊNH — chờ biểu phí
+  thật theo ngày hiệu lực + kế toán xác nhận"; mỗi kênh `fixed_fee_pct`,
+  `payment_fee_pct`, `service_fee_pct` (0 ≤ pct ≤ 0.5), `tolerance_vnd` int
+  0..100000; cấu hình sai → exit 1 trước connect). Hàm THUẦN
+  `reconcile_row(row, order_amount, fees) -> (label, reasons, expected)`:
+  `expected = order_amount − fixed − payment − service − shipping −
+  voucher_seller − affiliate − refund` (theo số trên file); lý do (mỗi lý do
+  `{code, expected, actual}`): `thuc_nhan` (|payout − expected| > tolerance),
+  `phi_co_dinh`/`phi_thanh_toan`/`phi_dich_vu` (|phí file −
+  round_half_up(order_amount × pct)| > tolerance — phát hiện thu sai),
+  `gia_tri_don` (order_amount file ≠ tổng `price_vnd × qty` của đơn sàn).
+  Nhãn ĐÚNG 1, ưu tiên: không thấy đơn (`order_amount is None`) →
+  `thieu_chung_tu` > `refund > 0` → `hoan` > có lý do → `lech` > `khop`
+  (reasons vẫn ghi đủ cho hoan/thieu). Đơn sàn = `market_rows` kind
+  `order` cùng kênh + `order_id_hash`, lấy snapshot MỚI NHẤT có chứa hash đó
+  (`distinct on` theo `snapshot_id desc`), tổng `price_vnd*qty` các dòng
+  trong snapshot đó. `--reconcile`: tính lại MỌI `settlement_rows` (upsert
+  `on conflict (settlement_row_id) do update`) — dùng khi file đơn tới sau
+  file quyết toán. `--report`: theo kênh — số dòng mỗi nhãn, tổng thực nhận
+  file, tổng tính lại, tổng chênh, tổng hoa hồng affiliate sàn khấu trừ, số
+  đơn xuất hiện ở ≥2 file quyết toán; danh sách lệch/thiếu/hoàn in `file_name
+  dòng N` + mã lý do + số chênh (không hash, không mã đơn). Không ghi bảng
+  nào ngoài `settlement_rows`/`recon_results`; không bút toán.
+  - Boundary: `ingest/settlement_csv.py`, `data/settlement_fees.json`
+    (mới), `tests/test_settlement_csv.py`, `tests/fixtures/finance/`
+  - Gate: unit thuần — đơn khớp → `khop` reasons `[]`; payout lệch 1.000đ
+    (tolerance 0) → `lech` + `thuc_nhan`; phí cố định file ≠ pct cấu hình →
+    `lech` + `phi_co_dinh`; đổi pct trong cfg test làm dòng đó thành `khop`
+    (ngưỡng đọc từ config); giá trị đơn ≠ đơn sàn → `lech` + `gia_tri_don`;
+    không có đơn → `thieu_chung_tu`; refund > 0 kèm phí lệch → `hoan` (đúng 1
+    nhãn) với `refund_vnd` đúng số; biên tolerance đúng bằng → không lệch,
+    +1 → lệch. DB (schema tạm, rollback): nạp `order_shopee_MAU.csv` qua
+    `market_csv.load` rồi settlement fixture → đúng 16 `recon_results`,
+    `select count(*) from settlement_rows s left join recon_results r on
+    r.settlement_row_id = s.id where r.id is null` = 0, phân bố nhãn đúng
+    kỳ vọng ghi trong test (`khop` 9 / `lech` 3 / `thieu_chung_tu` 2 /
+    `hoan` 2); settlement nạp TRƯỚC đơn → các dòng `thieu_chung_tu`, nạp đơn
+    + `--reconcile` → nhãn cập nhật, vẫn 16 dòng; 2 snapshot đơn chứa cùng
+    hash với giá khác → dùng snapshot mới nhất; `--report` stdout không
+    chứa `order_id_hash` nào/mã đơn gốc/PII GIẢ — `python -m pytest -q
+    tests/test_settlement_csv.py` xanh
+  - Evidence: `evidence/v90_recon.log` (CLI thật trên DB riêng: nạp fixture
+    đơn + settlement, nạp lại → `[skip]`, `--report`)
+- [x] **W90.4 ACC-Invoice lô hóa đơn NHÁP → `approval_queue`
+  (`agents/acc_invoice.py`)** — config `data/invoice_config.json` (`_doc`:
+  "GIẢ ĐỊNH — invoice_trigger chờ tư vấn thuế chốt (hạn 25/10/2026); format
+  CSV chờ nhà cung cấp HĐĐT"; `invoice_trigger` ∈ `giao_thanh_cong` |
+  `ban_giao_van_chuyen` (mặc định `giao_thanh_cong`), `confirmed_by: null`;
+  `trigger_status {kênh: {trigger: [trạng thái đơn sàn]}}`, `return_status
+  {kênh: [...]}`, `request_columns` (file yêu cầu xuất HĐ: `order_id`,
+  `buyer_name`, `tax_code`, `address`, `email` — header GIẢ ĐỊNH),
+  `csv_columns` (thứ tự cột file nháp)). Hàm thuần `build_batch(orders,
+  requests, invoiced, cfg, day) -> dict` (orders = trạng thái + tổng tiền
+  theo `order_id_hash` từ snapshot `order` mới nhất mỗi kênh có
+  `imported_at` ≤ cuối ngày D giờ VN; invoiced = hash đã nằm trong
+  `invoice_lines` của lô có mục `approval_queue` `invoice_batch` status
+  `pending|approved` — lô `rejected|expired` và dòng mồ côi (không có mục
+  hàng) KHÔNG chặn): `thuong` = trạng thái ∈ trigger, chưa invoiced, không
+  có yêu cầu HĐ; `can_mst` = như trên + có yêu cầu kèm MST (`^\d{10}(-\d{3})?
+  $`, sai → lỗi dòng file yêu cầu); `dieu_chinh` = hash đã thuộc lô
+  `approved` (thuong/can_mst) và nay trạng thái ∈ `return_status`, chưa có
+  dòng `dieu_chinh` ở lô pending/approved → kèm `ref_batch_key` lô gốc; đơn
+  hủy (`cancel_status` của `market_csv_map.json`) / trạng thái khác bị loại.
+  CLI `python -m agents.acc_invoice --batch [--day YYYY-MM-DD] [--requests
+  FILE --channel K]` (file yêu cầu kiểm toàn bộ TRƯỚC connect, lỗi → exit 1
+  0 ghi): `pg_try_advisory_lock` không lấy được → exit 1 "đang chạy"; đã có
+  mục `invoice_batch` pending cho ngày D → `[skip]` exit 0; lô rỗng → `[ok]
+  không có đơn` 0 enqueue; còn lại: sinh CSV bytes (người mua bán lẻ =
+  "Người mua không lấy hóa đơn"; mã tham chiếu = `order_id_hash`; tên hàng/số
+  lượng/đơn giá từ `market_rows`) → `batch_key = f"{D}-{sha[:12]}"` →
+  insert `invoice_lines` + `conn.commit()` → `director.submit(conn,
+  "finance", "invoice_batch", batch_key, title, payload, created_by=
+  "agent:acc_invoice")` → ghi file `data/reports/hoa-don-nhap/lo-<batch_key>
+  .csv` qua `write_report` (gitignored theo `data/reports/`). Payload =
+  markdown số đếm + từng dòng (hash rút gọn, kênh, số tiền, cờ `cần MST`/
+  `điều chỉnh — lô gốc X`) + dòng `csv_sha256: <hex>` + "BẢN NHÁP — agent
+  không ký số, không phát hành" — KHÔNG tên/MST/địa chỉ/email người mua.
+  `--verify-draft QUEUE_ID --file F`: exit 0 CHỈ khi mục `approved`,
+  `approval_queue.verify(payload)` đúng VÀ sha256(file) == `csv_sha256`
+  trong payload; ngược lại exit 1 (để kế toán kiểm trước khi nhập tay vào
+  HĐĐT). Module KHÔNG import `smtplib`/`httpx`/`requests`/`urllib`/
+  `pipelines.llm_gateway`/`openai`.
+  - Boundary: `agents/acc_invoice.py` (mới), `data/invoice_config.json`
+    (mới), `tests/test_acc_invoice.py` (mới), `tests/fixtures/finance/`
+    (`order_invoice_MAU.csv`, `invoice_requests_MAU.csv`)
+  - Gate: fixture ngày D: 13 đơn `Hoàn thành` (1 có yêu cầu HĐ kèm MST GIẢ)
+    + 2 `Đã hủy` + 1 `Đang giao` → lô 13 dòng (12 `thuong` + 1 `can_mst`), 2
+    hủy + 1 đang giao bị loại; đổi `invoice_trigger` sang
+    `ban_giao_van_chuyen` (cfg test) → 14 dòng; DB (schema tạm, rollback):
+    `--batch` → đúng 1 mục `approval_queue` (`object_type='invoice_batch'`,
+    `block='finance'`, `status='pending'`, risk/SLA từ finance.json) + 13
+    `invoice_lines`; chạy lại cùng D → `[skip]`, số mục không đổi; `decide`
+    rejected (người khác `created_by`) → chạy lại → lô mới cùng 13 đơn;
+    lô đã `approved` + 1 đơn nay `Trả hàng/Hoàn tiền` → lô D+1 có 1
+    `dieu_chinh` với `ref_batch_key` đúng lô gốc và không chọn lại 12 đơn kia;
+    quét chuỗi tên/MST/địa chỉ/email GIẢ: KHÔNG có trong payload/title
+    `approval_queue`, `invoice_lines`, `agent_action_log.detail`, stdout; CÓ
+    trong file CSV nháp; `--verify-draft` → approved + file nguyên exit 0,
+    sửa 1 byte file exit 1, mục pending exit 1; `--batch --verify-draft` cùng
+    lúc exit 2 trước connect; `grep -nE "smtplib|httpx|requests|urllib|
+    llm_gateway|openai" agents/acc_invoice.py` → 0 dòng; `git check-ignore
+    data/reports/hoa-don-nhap/x.csv` khớp — `python -m pytest -q
+    tests/test_acc_invoice.py` xanh
+  - Evidence: `evidence/v90_invoice.log` (CLI thật trên DB riêng với fixture
+    MẪU: `--batch --day 2026-10-12`, chạy lại → `[skip]`, `python -m
+    pipelines.approval_queue --pending --block finance`; KHÔNG duyệt mục nào
+    trên DB thật — để pending/hoặc reject bởi tên dev ghi rõ "dọn MẪU")
+- [x] **W90.5 ACC-AR công nợ đại lý + tuổi nợ + hoa hồng + bản tin GĐ tài
+  chính (`agents/acc_ar.py`)** — cấu hình `data/dealer_commission.json`
+  (`_doc`: "MẪU — chính sách hoa hồng CHƯA ký; điểm nối bảng `dealers` CRM
+  v5.2 khi gộp (khóa `dealer_code`)"; `term_days` 30 (hạn mặc định khi
+  `due_date` trống), `rates_pct {tpbvsk, food, alcohol}`, `zero_rules
+  [{"category": "alcohol", "channel": "online"}]`, `tncn_types
+  ["ho_kinh_doanh", "ca_nhan"]`). Hàm thuần: `age_bucket(doc_date, as_of)`
+  (`(as_of − doc_date).days` ≤30 → `0-30`, ≤60 → `31-60`, ≤90 → `61-90`,
+  còn lại `>90`; dòng `doc_date > as_of` bị bỏ khỏi kỳ); `aging(entries,
+  as_of, term_days)` — credit (`thanh_toan` + `dieu_chinh` âm) trừ FIFO vào
+  khoản nợ cũ nhất theo `doc_date`, phần còn lại xếp nhóm theo tuổi, `qua_han`
+  khi `as_of > coalesce(due_date, doc_date + term_days)`, dư có ghi riêng;
+  `commission(entries, skus, cfg, start, end)` — cơ sở = `phat_sinh` +
+  `dieu_chinh` trong [start, end) theo (dealer, category qua
+  `sku_master.category`, channel), sàn 0; khớp `zero_rules` → 0 + cờ
+  `ruou_online`; `sku_key` trống/không có trong golden → 0 + cờ `thieu_sku`
+  (fail-closed); `dealer_type` ∈ `tncn_types` → cờ `tncn`; output "BẢN NHÁP —
+  không phải lệnh chi". CLI `python -m agents.acc_ar --load FILE` (CSV mẫu
+  header cố định ghi trong docstring: `dealer_code, dealer_type, kind,
+  doc_ref, doc_date, due_date, amount_vnd, sku_key, channel` — kiểm toàn file
+  TRƯỚC connect, lỗi → exit 1 0 dòng; sha đã nạp → `[skip]`) | `--aging
+  [--as-of D]` | `--commission --from D --to D` | `--bulletin [--as-of D]`.
+  `--bulletin`: tính nợ quá hạn → `pipelines.director.run(conn, "finance",
+  now, extra=<dòng markdown "## Công nợ đại lý quá hạn">)` → file
+  `data/reports/director-finance-<ngày>.md` (bản tin GĐ tài chính, KHÔNG tự
+  gửi). `pipelines/director.py`: thêm tham số `extra: Sequence[str] = ()` vào
+  `digest()` + `run()`, chèn trước mục "## Người duyệt"; mặc định `()` →
+  output byte-identical bản cũ (director không import finance). In ra chỉ
+  `dealer_code`/nhóm/số tiền/cờ — không `doc_ref` chi tiết ngoài số đếm.
+  - Boundary: `agents/acc_ar.py` (mới), `data/dealer_commission.json`
+    (mới), `pipelines/director.py`, `tests/test_acc_ar.py` (mới),
+    `tests/test_director.py`, `tests/fixtures/finance/dealer_ar_MAU.csv`
+  - Gate: biên tuổi nợ với `as_of` cố định: 0/30 → `0-30`, 31/60 →
+    `31-60`, 61/90 → `61-90`, 91 → `>90`; `doc_date` sau `as_of` → bỏ; FIFO:
+    nợ 10tr (90 ngày) + 5tr (10 ngày) − trả 12tr → còn 3tr nhóm `0-30`; quá
+    hạn đúng biên (`as_of == due` không quá hạn, +1 quá hạn; `due_date` trống
+    dùng `term_days`); hoa hồng: alcohol + online = 0 + cờ `ruou_online`,
+    alcohol + offline = rate × cơ sở, tpbvsk online = rate × cơ sở (Decimal
+    ROUND_HALF_UP), `sku_key` lạ → 0 + `thieu_sku`, đại lý `ho_kinh_doanh` có
+    cờ `tncn`; `--as-of 2026-13-01` exit 2; `--aging --bulletin` exit 2 trước
+    connect; file lỗi (`thanh_toan` dương, dealer_code có dấu cách) → exit 1,
+    connect 0 lần; DB (schema tạm, rollback): `--load` ×2 → lần 2 `[skip]`;
+    `--bulletin` sinh file chứa "Công nợ đại lý quá hạn" + mã đại lý quá hạn
+    của fixture; `digest(..)` không `extra` == kết quả trước sửa (test cũ
+    `tests/test_director.py` xanh nguyên) — `python -m pytest -q
+    tests/test_acc_ar.py tests/test_director.py` xanh
+  - Evidence: `evidence/v90_ar.log` (CLI thật trên DB riêng với fixture MẪU:
+    `--load` ×2, `--aging --as-of 2026-10-12`, `--commission`, `--bulletin`)
+- [x] **W90.6 FIN-QA nhẹ + bản đồ dữ liệu + DPIA + docs** — `tests/
+  test_fin_qa.py` (mới): (a) import `ingest.settlement_csv`,
+  `agents.acc_invoice`, `agents.acc_ar` trong subprocess `python -I` →
+  `sys.modules` không có `openai`, `httpx`, `requests`, `smtplib`,
+  `urllib.request`, `http.client`, `pipelines.llm_gateway`; (b)
+  `dpia_draft.egress_modules(ROOT)` không chứa 3 module; (c) chạy luồng
+  fixture W90.3/W90.4/W90.5 với `pipelines.llm_gateway.chat`/`embed`
+  monkeypatch raise → 0 lời gọi (mặc định không gọi LLM — nếu sau này thêm
+  LLM, test này là chỗ cắm quét PII 100% payload). `data/data_flow_map.json`
+  thêm DF-18 (ACC-Recon: `ingest/settlement_csv.py`, class `do`, dữ liệu =
+  mã đơn hash + số tiền/phí, cột người mua bị bỏ khi đọc, lưu
+  `settlement_rows`/`recon_results`, recipients nội bộ, `cross_border`
+  false), DF-19 (ACC-Invoice: `agents/acc_invoice.py`, class `do`, dữ liệu =
+  tên/MST/địa chỉ/email người mua CHỈ của đơn yêu cầu xuất HĐ — chỉ trong
+  file nháp gitignored `data/reports/hoa-don-nhap/`, không DB/log/payload,
+  không gửi; gaps: retention file nháp + quyền thư mục = external-dep),
+  DF-20 (ACC-AR: `agents/acc_ar.py`, class `do`, mã đại lý + công nợ, không
+  tên/SĐT; `dealer_ar`); `version`/`_doc` giữ khuôn. `tests/
+  test_data_flow_map.py`: thêm 3 module vào `REQUIRED_MODULES`. Sinh lại
+  `docs/legal/DPIA-nhap.md` + `docs/legal/TIA-nhap.md` bằng `python
+  scripts/dpia_draft.py` (KHÔNG sửa tay). `docs/handover/sop.md`: mục "Kế
+  toán (v9.0)" — lệnh nạp settlement/đối soát/báo cáo, lô hóa đơn + duyệt
+  qua `pipelines.approval_queue` + `--verify-draft` trước khi nhập HĐĐT, nạp
+  công nợ/tuổi nợ/bản tin, danh sách GIẢ ĐỊNH + external-dep.
+  - Boundary: `tests/test_fin_qa.py` (mới), `data/data_flow_map.json`,
+    `tests/test_data_flow_map.py`, `docs/legal/DPIA-nhap.md`,
+    `docs/legal/TIA-nhap.md`, `docs/handover/sop.md`
+  - Gate: `python scripts/dpia_draft.py --check` exit 0; `python -m pytest
+    -q tests/test_fin_qa.py tests/test_data_flow_map.py
+    tests/test_dpia_draft.py tests/test_handover_docs.py` xanh; mọi lệnh
+    `python -m ...` trong mục mới của sop.md trỏ module tồn tại
+  - Evidence: `evidence/v90_pytest.log`
+- [x] **W90.7 Gate chung** — targeted ×3 TUẦN TỰ: `python -m pytest -q
+  tests/test_settlement_csv.py tests/test_acc_invoice.py tests/test_acc_ar.py
+  tests/test_fin_qa.py tests/test_director.py tests/test_market_csv.py
+  tests/test_approval_queue.py tests/test_data_flow_map.py
+  tests/test_dpia_draft.py tests/test_handover_docs.py
+  tests/test_connect_timeout_guard.py` (lệnh nặng có thể bị đẩy nền — đọc
+  output tới khi process exit rồi mới chạy lần kế, không chạy chồng, không
+  retry mù); full `python -m pytest -q` ĐÚNG 1 lần (baseline 1682 → ≥1682 +
+  test mới, 0 fail, DB test 0 skipped); `ruff check .` clean; `python -m
+  py_compile ingest/settlement_csv.py agents/acc_invoice.py agents/acc_ar.py
+  pipelines/director.py`; `python scripts/dpia_draft.py --check` exit 0;
+  `grep -nE "smtplib|httpx|requests|urllib|llm_gateway|openai"
+  ingest/settlement_csv.py agents/acc_invoice.py agents/acc_ar.py` → 0 dòng;
+  `git status --short` chỉ chứa file trong Boundary các mục trên (không file
+  lạc, không CSV nháp/`data/reports/`; `lv2-market-top.png` không stage).
+  - Boundary: (không file mới ngoài evidence)
+  - Gate: như trên, mọi lệnh exit 0
+  - Evidence: `evidence/v90_pytest.log` (`git add -f` — `*.log` bị ignore),
+    `evidence/v90_recon.log`, `evidence/v90_invoice.log`, `evidence/
+    v90_ar.log`
+- Ghi chú worker (lệch contract, có lý do):
+  - W90.2: hash mã đơn qua `settlement_csv.order_hash` — CÙNG công thức
+    `market_csv` (market_csv không có hàm export, file ngoài boundary) +
+    test parity `test_order_hash_parity_with_market_csv`.
+  - W90.4: cờ `--requests` đổi thành `--yeu-cau` — gate `grep -nE
+    "...|requests|..." agents/acc_invoice.py` → 0 dòng không thể xanh nếu
+    giữ tên cờ. Dòng `invoice_lines` + mục hàng duyệt ghi CÙNG 1
+    transaction (enqueue lồng savepoint rồi commit) thay vì commit giữa
+    chừng → không sinh dòng mồ côi. CSV có cột `lan_lap` (lần lập thứ n
+    trong ngày) để lô lập lại sau từ chối có `batch_key` mới. Yêu cầu
+    xuất HĐ KHÔNG có MST chưa hỗ trợ (GIẢ ĐỊNH — dòng thiếu MST = lỗi file).
+  - W90.1: xóa 4 dòng "35 bảng" trùng lặp sót từ lần gộp trước trong
+    `deploy/cloud/README.md` (đã có dòng bản không-đếm ngay dưới) — thêm 4
+    bảng làm số 35 sai.
+  - W90.7: full pytest 1759 passed, 3 skipped = `test_dr_drill` cần docker
+    (môi trường, có từ trước); test DB của v9.0 0 skipped.
+  - Vòng sửa 1 (cold-check 7 MINOR, evidence `evidence/v90_fix1.log`):
+    (a) dòng `dieu_chinh` không còn ghi retail_buyer — ô người mua "THEO HĐ
+    GỐC lô <ref>" (+ "gốc cần MST" khi dòng gốc `can_mst`, mang
+    `orig_kind`), `--yeu-cau` cấp lại người mua được; payload có cờ "gốc
+    cần MST"/"người mua THEO HĐ GỐC" + quy ước dấu (DƯƠNG = giảm, GIẢ ĐỊNH);
+    (b) `pipelines.director` in `[warn]` khi chạy khối finance (ghi đè bản
+    tin acc_ar) + sop.md 5e/mục hàng duyệt + AGENTS.md ghi `acc_ar
+    --bulletin` THAY director cho finance; (c) test mới: cutoff snapshot
+    theo ngày D, lỗi ghi file nháp/bản tin exit 1 không traceback, dòng
+    tổng `--report` + đơn ở ≥2 file. Mutation probe: 7 test đỏ khi gỡ lại
+    từng chỗ.
+- [ ] **External-dep v9.0 (KHÔNG làm, KHÔNG giả lập — công ty cấp)**: file
+  settlement thật ≥2 tuần mỗi sàn + sửa `data/settlement_map.json`; biểu
+  phí sàn thật theo ngày hiệu lực (`data/settlement_fees.json` GIẢ ĐỊNH);
+  tư vấn thuế chốt `invoice_trigger` (hạn 25/10/2026, `confirmed_by` null);
+  nhà cung cấp HĐĐT + mẫu file nhập + chữ ký số; số hóa đơn gốc cho điều
+  chỉnh; lịch sử trạng thái đơn (độ trễ theo giờ); sổ công nợ MISA + chính
+  sách hoa hồng đã ký (`data/dealer_commission.json` MẪU) + nối `dealers`
+  CRM v5.2; người duyệt lô (`finance.json` `approvers: []`); GĐ tài chính
+  ký biên bản đối soát/nghiệm thu WP12; hạn lưu + quyền thư mục
+  `data/reports/hoa-don-nhap/`; thư nhắc nợ + lệnh chi hoa hồng.
+
+v9.0-doi-soat-hoa-don đóng 2026-10-12 (nghiệm thu đợt 1 FIX 7 → 1 vòng sửa → PASS;
+coordinator chạy lại targeted 188 + ruff + `dpia_draft --check`). 39 bảng trên
+nhánh (+4). Đối soát: mỗi dòng đúng 1 nhãn khop/lech/thieu_chung_tu/hoan (fixture
+16 dòng = 9/3/2/2), phí theo bảng GIẢ ĐỊNH, không ghi sổ. Hóa đơn: lô NHÁP vào
+approval_queue, thông tin người mua chỉ trong CSV nháp gitignored, payload chỉ
+sha; chống công thức Excel trong CSV. Công nợ đại lý: tuổi nợ biên 30/31/60/61/
+90/91, trả FIFO, hoa hồng rượu online 0. 0 import mạng/LLM (test subprocess).
+Luồng DF-18/19/20 sẽ đánh số lại khi gộp. External-dep: file settlement thật ≥2
+tuần + bảng phí thật; trigger HĐ (tư vấn thuế 25/10); nhà cung cấp HĐĐT + chữ ký
+số; sổ MISA; chính sách hoa hồng ký; bảng dealers v5.2; GĐ tài chính ký.
+
 ## Checklist v4.0-director-framework
 
 Khán giả/mục đích: M31 (worktree `D:\code\samsam-w40`) — làm nốt WP03

@@ -1,0 +1,112 @@
+# v9.0 gate — 2026-10-12 12:15:43 +0700 — worktree D:/code/samsam-w70 (DATABASE_URL riêng, không in)
+
+## apply_schema ×2
+$ python scripts/apply_schema.py   (lần 1)
+[done] schema applied — 39 bảng public: agent_action_log
+[exit 0]
+$ python scripts/apply_schema.py   (lần 2)
+[done] schema applied — 39 bảng public: agent_action_log
+[exit 0]
+
+## grep alter/drop table mới trong diff schema
+$ git diff docs/schema.sql | grep -cE '^\+\s*(alter|drop)\s+table'
+0
+
+## director digest byte-identical (sha256 digest 11 khối, trước sửa == sau sửa)
+trước: finance 3a9f029db705b425d90ed28fd33d58c91810fad2010ef7f5fc366c4846735f60 (đo trước khi sửa director.py)
+sau:   finance 3a9f029db705b425d90ed28fd33d58c91810fad2010ef7f5fc366c4846735f60
+
+## targeted lần 1
+$ python -m pytest -q -rs tests/test_settlement_csv.py tests/test_acc_invoice.py tests/test_acc_ar.py tests/test_fin_qa.py tests/test_director.py tests/test_market_csv.py tests/test_approval_queue.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py tests/test_db_backup.py::test_cloud_readme_drift_guard
+........................................................................ [ 29%]
+........................................................................ [ 59%]
+........................................................................ [ 88%]
+...........................                                              [100%]
+243 passed in 34.12s
+[exit 0]
+
+## targeted lần 2
+$ python -m pytest -q -rs tests/test_settlement_csv.py tests/test_acc_invoice.py tests/test_acc_ar.py tests/test_fin_qa.py tests/test_director.py tests/test_market_csv.py tests/test_approval_queue.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py tests/test_db_backup.py::test_cloud_readme_drift_guard
+........................................................................ [ 29%]
+........................................................................ [ 59%]
+........................................................................ [ 88%]
+...........................                                              [100%]
+243 passed in 31.90s
+[exit 0]
+
+## targeted lần 3
+$ python -m pytest -q -rs tests/test_settlement_csv.py tests/test_acc_invoice.py tests/test_acc_ar.py tests/test_fin_qa.py tests/test_director.py tests/test_market_csv.py tests/test_approval_queue.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py tests/test_db_backup.py::test_cloud_readme_drift_guard
+........................................................................ [ 29%]
+........................................................................ [ 59%]
+........................................................................ [ 88%]
+...........................                                              [100%]
+243 passed in 44.13s
+[exit 0]
+
+## full pytest (đúng 1 lần) — 12:18:18
+$ python -m pytest -q -rs
+........................................................................ [ 65%]
+........................................................................ [ 69%]
+........................................................................ [ 73%]
+........................................................................ [ 77%]
+........................................................................ [ 81%]
+........................................................................ [ 85%]
+........................................................................ [ 89%]
+........................................................................ [ 93%]
+........................................................................ [ 98%]
+..................................                                       [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+1759 passed, 3 skipped in 503.40s (0:08:23)
+[exit 0]
+# baseline 1682 → 1759 passed (+77 test mới). 3 skipped = test_dr_drill cần docker (môi trường, có từ trước, không phải test DB của v9.0); test DB v9.0 0 skipped (-rs targeted ở trên không in SKIPPED).
+
+## ruff
+$ ruff check .
+All checks passed!
+[exit 0]
+
+## py_compile
+$ python -m py_compile ingest/settlement_csv.py agents/acc_invoice.py agents/acc_ar.py pipelines/director.py
+[exit 0]
+
+## dpia
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+[exit 0]
+
+## grep mạng/LLM (kỳ vọng 0 dòng → grep exit 1)
+$ grep -nE "smtplib|httpx|requests|urllib|llm_gateway|openai" ingest/settlement_csv.py agents/acc_invoice.py agents/acc_ar.py
+[exit 1]
+
+## git check-ignore file nháp
+$ git check-ignore data/reports/hoa-don-nhap/x.csv
+data/reports/hoa-don-nhap/x.csv
+[exit 0]
+
+## git status --short
+ M DONE.md
+ M data/data_flow_map.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/legal/DPIA-nhap.md
+ M docs/legal/TIA-nhap.md
+ M docs/schema.sql
+ M pipelines/director.py
+ M tests/test_data_flow_map.py
+ M tests/test_director.py
+?? agents/acc_ar.py
+?? agents/acc_invoice.py
+?? data/dealer_commission.json
+?? data/invoice_config.json
+?? data/settlement_fees.json
+?? data/settlement_map.json
+?? ingest/settlement_csv.py
+?? tests/fixtures/finance/
+?? tests/test_acc_ar.py
+?? tests/test_acc_invoice.py
+?? tests/test_fin_qa.py
+?? tests/test_settlement_csv.py
