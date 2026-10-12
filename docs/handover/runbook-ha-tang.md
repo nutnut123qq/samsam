@@ -150,7 +150,9 @@ hiện có: `chatbot` (trả lời khách web/Zalo), `content` (Content Studio),
 tập kill switch (chỉ có trong cấu hình `data/llm_gateway.json`, không có
 luồng thật nào gọi). `ck_mat` (v9.5, tra cứu tài liệu kỹ thuật MẬT cơ
 khí) KHÔNG BAO GIỜ gọi LLM: gateway luôn từ chối id này (`LOCAL_ONLY_AGENTS`
-— không cần và không thể kill/bật trong config). Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
+— không cần và không thể kill/bật trong config). `projects` (v8.3,
+phòng Dự án — `agents/da_hoso.py --llm` viết lại thư đăng ký chương
+trình; mặc định TẮT, cap tháng riêng; kill như agent khác). Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
 `embed("...")` và hằng `AGENT = "..."` trong `api/`, `pipelines/`,
 `ingest/`, `agents/`, `connectors/` (nhờ dev nếu cần).
 

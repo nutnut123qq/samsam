@@ -154,6 +154,19 @@
 | Rủi ro tồn dư | (không) |
 | Căn cứ | Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
+### DF-25 — Hồ sơ tham gia chương trình — viết lại thư đăng ký bằng LLM (v8.3 DA-04, tùy chọn)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `projects`, cap tháng riêng) — CHỈ khi chạy `--llm` (mặc định TẮT) |
+| Dữ liệu gửi đi (sau biện pháp) | Tên/đơn vị tổ chức/hạn chương trình công khai (từ `programs`, gốc tin RSS tầng A/B) + tên SKU được phép (food, TPBVSK đã XNQC) — KHÔNG PII, KHÔNG file nội bộ (checklist/câu hỏi Pháp chế) |
+| Lớp | Xanh |
+| Mục đích | Soạn NHÁP thư đăng ký tham gia hội chợ/OCOP/xúc tiến cho GĐ dự án duyệt (DA-04) |
+| Biện pháp kỹ thuật | Mặc định TẮT — chỉ khi `--llm`; Prompt chỉ dữ kiện công khai (không gửi checklist/câu hỏi Pháp chế); Thư LLM qua CÙNG cổng `check_publish` + lọc rượu + SKU bị loại; trượt → thư template; Agent không tự nộp/gửi — bản nộp phải khớp sha256 bản người duyệt (`--verify-submit`) |
+| Thời hạn lưu (theo map) | Theo `approval_queue` (hồ sơ duyệt); file nháp `data/reports/` theo dọn báo cáo |
+| Rủi ro tồn dư | (không) |
+| Căn cứ | Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
 ## 3. Luồng không thuộc TIA
 
 Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15, DF-18.

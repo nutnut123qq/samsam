@@ -1,0 +1,72 @@
+# v8.3 W83.2–W83.3 radar — (output thật — trích từ lượt chạy gate 2026-10-12, worktree D:/code/samsam-w73)
+
+## git diff --stat crawler/ (phải rỗng)
+(rỗng)
+
+## crawler.intel --report (DB thật, contract cũ exit 0/1)
+$ python -m crawler.intel --report
+chưa có tin trong intel_items
+exit=0
+
+## pytest -v tests/test_da_radar.py (E2E collector Server/Spy/Clock + DB rollback)
+tests/test_da_radar.py::test_real_sources_chuong_trinh PASSED            [  3%]
+tests/test_da_radar.py::test_classify_chuong_trinh[H\u1ed9i ch\u1ee3 x\xfac ti\u1ebfn th\u01b0\u01a1ng m\u1ea1i \u0110\xe0 N\u1eb5ng 2026-True] PASSED [  3%]
+tests/test_da_radar.py::test_classify_chuong_trinh[hoi cho xuc tien thuong mai da nang-True] PASSED [  3%]
+tests/test_da_radar.py::test_classify_chuong_trinh[Ch\u01b0\u01a1ng tr\xecnh OCOP t\u1ec9nh nh\u1eadn h\u1ed3 s\u01a1-True] PASSED [  4%]
+tests/test_da_radar.py::test_classify_chuong_trinh[S\u0103m l\u1ed1p gi\u1ea3m gi\xe1-False] PASSED [  4%]
+tests/test_da_radar.py::test_classify_chuong_trinh[Gi\xe1 v\xe0ng h\xf4m nay-False] PASSED [  4%]
+tests/test_da_radar.py::test_e2e_collector_only_ab_robots_pacing PASSED  [  5%]
+tests/test_da_radar.py::test_cli_tier_c_source_exit2_no_request PASSED   [  5%]
+tests/test_da_radar.py::test_deadline_of[H\u1ea1n \u0111\u0103ng k\xfd: 25/10/2026-pub0-want0] PASSED [  5%]
+tests/test_da_radar.py::test_deadline_of[\u0111\u0103ng k\xfd tr\u01b0\u1edbc ng\xe0y 5/11-pub1-want1] PASSED [  5%]
+tests/test_da_radar.py::test_deadline_of[h\u1ea1n ch\xf3t 10/01-pub2-want2] PASSED [  6%]
+tests/test_da_radar.py::test_deadline_of[gi\xe1 10.050.000 \u0111\u1ed3ng, h\u1ea1n 30/11/2026-pub3-want3] PASSED [  6%]
+tests/test_da_radar.py::test_deadline_of[ph\xed 1.500.000 \u0111-pub4-None] PASSED [  6%]
+tests/test_da_radar.py::test_deadline_of[h\u1ea1n 31/02/2026-pub5-None] PASSED [  7%]
+tests/test_da_radar.py::test_deadline_of[di\u1ec5n ra 20-22/11/2026-pub6-None] PASSED [  7%]
+tests/test_da_radar.py::test_deadline_of[giai \u0111o\u1ea1n 2025-2026-pub7-None] PASSED [  7%]
+tests/test_da_radar.py::test_deadline_of[han dang ky 15/11/2026-pub8-want8] PASSED [  7%]
+tests/test_da_radar.py::test_deadline_of[H\u1ea1n \u0111\u0103ng k\xfd s\u1ebd c\xf4ng b\u1ed1 sau. Khai m\u1ea1c 20/11/2026-pub9-None] PASSED [  8%]
+tests/test_da_radar.py::test_deadline_of[H\u1ea1n \u0111\u0103ng k\xfd 25/10/2026; h\u1ea1n b\u1ed5 sung 30/10/2026-pub10-want10] PASSED [  8%]
+tests/test_da_radar.py::test_deadline_of[H\u1ea0N CH\xd3T 01.11.2026-pub11-want11] PASSED [  8%]
+tests/test_da_radar.py::test_deadline_of[deadline 3-11-2026-pub12-want12] PASSED [  9%]
+tests/test_da_radar.py::test_deadline_of[S\xe2m H\xe0n Qu\u1ed1c 25/10/2026-pub13-None] PASSED [  9%]
+tests/test_da_radar.py::test_deadline_of[h\u1ea1n 20-22/11/2026-pub14-None] PASSED [  9%]
+tests/test_da_radar.py::test_deadline_of[\u0111\u1ebfn h\u1ebft ng\xe0y 5/11 (li\xean h\u1ec7 ***)-pub15-want15] PASSED [ 10%]
+tests/test_da_radar.py::test_deadline_of[h\u1ea1n 5/11-None-None] PASSED [ 10%]
+tests/test_da_radar.py::test_organizer_of[H\u1ed9i ch\u1ee3 do S\u1edf C\xf4ng Th\u01b0\u01a1ng \u0110\xe0 N\u1eb5ng t\u1ed5 ch\u1ee9c t\u1eeb 20/11-S\u1edf C\xf4ng Th\u01b0\u01a1ng \u0110\xe0 N\u1eb5ng] PASSED [ 10%]
+tests/test_da_radar.py::test_organizer_of[Ch\u01b0\u01a1ng tr\xecnh b\u1edfi UBND TP \u0110\xe0 N\u1eb5ng ph\u1ed1i h\u1ee3p v\u1edbi VCCI-UBND TP \u0110\xe0 N\u1eb5ng] PASSED [ 10%]
+tests/test_da_radar.py::test_organizer_of[do C\u1ee5c X\xfac ti\u1ebfn th\u01b0\u01a1ng m\u1ea1i, B\u1ed9 C\xf4ng Th\u01b0\u01a1ng ch\u1ee7 tr\xec-C\u1ee5c X\xfac ti\u1ebfn th\u01b0\u01a1ng m\u1ea1i] PASSED [ 11%]
+tests/test_da_radar.py::test_organizer_of[H\u1ed9i ch\u1ee3 OCOP 2026-ch\u01b0a c\xf4ng b\u1ed1] PASSED [ 11%]
+tests/test_da_radar.py::test_organizer_of[do S\u1edf xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-ch\u01b0a c\xf4ng b\u1ed1] PASSED [ 11%]
+tests/test_da_radar.py::test_organizer_of[None-ch\u01b0a c\xf4ng b\u1ed1] PASSED [ 12%]
+tests/test_da_radar.py::test_reminders_cases PASSED                      [ 12%]
+tests/test_da_radar.py::test_render_list_draft_banner PASSED             [ 12%]
+tests/test_da_radar.py::test_scan_after_e2e PASSED                       [ 12%]
+tests/test_da_radar.py::test_scan_dry_run_no_write_and_since_days PASSED [ 13%]
+tests/test_da_radar.py::test_radar_never_opens_network PASSED            [ 13%]
+tests/test_da_radar.py::test_module_has_no_network_imports PASSED        [ 13%]
+tests/test_da_radar.py::test_cli_usage_exit2_before_connect[argv0] PASSED [ 14%]
+tests/test_da_radar.py::test_cli_usage_exit2_before_connect[argv1] PASSED [ 14%]
+tests/test_da_radar.py::test_cli_usage_exit2_before_connect[argv2] PASSED [ 14%]
+tests/test_da_radar.py::test_cli_usage_exit2_before_connect[argv3] PASSED [ 15%]
+tests/test_da_radar.py::test_cli_usage_exit2_before_connect[argv4] PASSED [ 15%]
+tests/test_da_radar.py::test_cli_usage_exit2_before_connect[argv5] PASSED [ 15%]
+tests/test_da_radar.py::test_cli_db_down_exit2 PASSED                    [ 15%]
+tests/test_da_radar.py::test_cli_scan_wrapped_in_job_run PASSED          [ 16%]
+
+## CLI DB thật
+$ python -m agents.da_radar --scan --dry-run
+[done] seen=0 would_insert=0 dup=0 skipped_ruou=0 blocked=0 (dry-run, không ghi)
+exit=0
+$ python -m agents.da_radar --list --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/56b06086-bb75-4953-a7cf-c3ba86446be6/scratchpad/v83_cligate
+[done] 0 chương trình → C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\56b06086-bb75-4953-a7cf-c3ba86446be6\scratchpad\v83_cligate\da-radar-2026-10-12.md
+exit=0
+
+## tổng lượt -v
+======================= 340 passed in 249.22s (0:04:09) =======================
+
+
+## Vòng sửa nghiệm thu (2026-10-12)
+- MINOR "hạn" trần bắt nhầm: loại hạn chế/giới hạn/thời hạn/hạn hán/hạn mức/hữu hạn/quyền hạn/vô hạn/kỳ hạn/hạn ngạch; bản không dấu ngày phải đứng ngay sau ("Sam Han Quoc 25/10" → None); "từ X đến Y"/"X - Y" → Y ("Thời hạn đăng ký: từ 01/10/2026 đến 05/11/2026" → 05/11/2026). `--list` có cột trích hạn (deadline_text). Test: test_deadline_of (thêm các ca trên), test_deadline_text_shows_range_end, test_radar_never_opens_network (assert "| hạn 25/12/2026 |").
+- MINOR time bomb wall-clock: test_radar_never_opens_network cố định `programs.first_seen = '2026-10-12 10:00+07'` sau scan → không phụ thuộc ngày thật.

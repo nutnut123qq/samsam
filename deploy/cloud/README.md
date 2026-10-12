@@ -136,6 +136,9 @@ bảng nào thì dừng, không bật app.
 | `trends_weekly` | A (nạp lại file Google Trends xuất tay) hoặc B | không cột định danh |
 | `trends_related` | A hoặc B | không cột định danh |
 | `social_mentions` | B | chỉ nhãn + hash có muối (+ trích đã che khi DPIA ký) — không cột định danh; GIỮ đúng `INTEL_HASH_SALT` cũ để dedup tiếp |
+| `programs` | A (chạy lại `python -m agents.da_radar --scan` trên `intel_items`) hoặc B | chương trình xúc tiến (v8.3) — B giữ `first_seen` (ngày phát hiện → nhắc hạn) |
+| `org_prospects` | B | tổ chức mua quà (v8.3) nhập tay — trạng thái lô/chuyển sales không dựng lại được; không cột định danh cá nhân |
+| `project_milestones` | B (hoặc A: `python -m agents.da_pmo --seed` — mất trạng thái/evidence/hạn đã duyệt đổi) | sổ mốc phòng Dự án (v8.3) |
 
 ## 5. Backup + diễn tập trên cloud (mẫu — external-dep)
 

@@ -20,7 +20,10 @@ MAP_PATH = ROOT / "data" / "data_flow_map.json"
 RAW = json.loads(MAP_PATH.read_bytes().decode("utf-8"))
 # Module KHÔNG có đường gửi ra ngoài (v5.2: CRM — agent không tự liên hệ).
 NEW_SCRIPTS = {"scripts/review_load.py", "scripts/dpia_draft.py",
-               "scripts/contract_check.py", "ingest/crm.py"}
+               "scripts/contract_check.py", "ingest/crm.py",
+               # v8.3 phòng Dự án: 4 agent KHÔNG gửi gì ra ngoài
+               "agents/da_radar.py", "agents/da_b2b.py", "agents/da_pmo.py",
+               "agents/da_cr.py"}
 KNOWN_EGRESS = {
     "connectors/zalo.py", "crawler/collect.py", "pipelines/llm_gateway.py",
     "scripts/health_bulletin.py", "scripts/zalo_mock.py",

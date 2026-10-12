@@ -416,6 +416,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | (không) |
 
+### DF-25 — Hồ sơ tham gia chương trình — viết lại thư đăng ký bằng LLM (v8.3 DA-04, tùy chọn)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-25 |
+| Module (code) | `agents/da_hoso.py` |
+| Mục đích | Soạn NHÁP thư đăng ký tham gia hội chợ/OCOP/xúc tiến cho GĐ dự án duyệt (DA-04) |
+| Dữ liệu | Tên/đơn vị tổ chức/hạn chương trình công khai (từ `programs`, gốc tin RSS tầng A/B) + tên SKU được phép (food, TPBVSK đã XNQC) — KHÔNG PII, KHÔNG file nội bộ (checklist/câu hỏi Pháp chế) |
+| Lớp | Xanh |
+| Chủ thể | Không có dữ liệu cá nhân — thông tin chương trình công khai và catalog |
+| Nơi lưu | Bản nộp (payload) trong `approval_queue` khối `projects` (`program_application`, sha256 bất biến); nháp + file nội bộ ở `data/reports/` (gitignored) |
+| Thời hạn lưu | Theo `approval_queue` (hồ sơ duyệt); file nháp `data/reports/` theo dọn báo cáo |
+| Bên nhận | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `projects`, cap tháng riêng) — CHỈ khi chạy `--llm` (mặc định TẮT) |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | Mặc định TẮT — chỉ khi `--llm`; Prompt chỉ dữ kiện công khai (không gửi checklist/câu hỏi Pháp chế); Thư LLM qua CÙNG cổng `check_publish` + lọc rượu + SKU bị loại; trượt → thư template; Agent không tự nộp/gửi — bản nộp phải khớp sha256 bản người duyệt (`--verify-submit`) |
+| Căn cứ xử lý | Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | (không) |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -444,6 +462,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-22 | Nghiệm thu QA — giám khảo LLM của harness (agent_eval, v4.5) | Xanh | thấp | có | 1 |
 | DF-23 | Đối thủ / Google Trends / MXH kênh sở hữu nhập tay + báo cáo tuần (v7.2) | Vàng | trung bình | có | 2 |
 | DF-24 | Guardrail LLM-check phụ + red-team sinh biến thể (v4.2) | Vàng | trung bình | có | 0 |
+| DF-25 | Hồ sơ tham gia chương trình — viết lại thư đăng ký bằng LLM (v8.3 DA-04, tùy chọn) | Xanh | thấp | có | 0 |
 
 ## 4. Tổng hợp GAP
 

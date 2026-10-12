@@ -1,0 +1,74 @@
+# v8.3 W83.6 org_prospects — (output thật — trích từ lượt chạy gate 2026-10-12, worktree D:/code/samsam-w73)
+
+## pytest -v tests/test_da_b2b.py
+tests/test_da_b2b.py::test_dedup_key_normalization PASSED                [ 24%]
+tests/test_da_b2b.py::test_read_csv_fixture_ok PASSED                    [ 24%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[email] PASSED   [ 24%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[fit-qua-dai] PASSED [ 25%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[header-sai] PASSED [ 25%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[org-type-la] PASSED [ 25%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[ruou] PASSED    [ 25%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[sdt] PASSED     [ 26%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[sdt-o-ten] PASSED [ 26%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[source-ftp] PASSED [ 26%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[source-thieu] PASSED [ 27%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[source-zalo] PASSED [ 27%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[ten-1-ky-tu] PASSED [ 27%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[thieu-cot] PASSED [ 27%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[tinh-khong-nhan-ra] PASSED [ 28%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[tinh-mo-ho] PASSED [ 28%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[trung-khac-hoa-dau] PASSED [ 28%]
+tests/test_da_b2b.py::test_read_csv_errors_line_no_value[website-facebook] PASSED [ 29%]
+tests/test_da_b2b.py::test_read_csv_bad_bytes_and_size PASSED            [ 29%]
+tests/test_da_b2b.py::test_read_csv_one_bad_row_rejects_whole_file PASSED [ 29%]
+tests/test_da_b2b.py::test_loi_fixture_cli_exit1_no_connect PASSED       [ 30%]
+tests/test_da_b2b.py::test_render_batch_footer_and_escape PASSED         [ 30%]
+tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv0] PASSED  [ 30%]
+tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv1] PASSED  [ 30%]
+tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv2] PASSED  [ 31%]
+tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv3] PASSED  [ 31%]
+tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv4] PASSED  [ 31%]
+tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv5] PASSED  [ 32%]
+tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv6] PASSED  [ 32%]
+tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv7] PASSED  [ 32%]
+tests/test_da_b2b.py::test_cli_db_down_exit2 PASSED                      [ 32%]
+tests/test_da_b2b.py::test_no_contact_path_grep PASSED                   [ 33%]
+tests/test_da_b2b.py::test_import_twice_idempotent_no_pii PASSED         [ 33%]
+tests/test_da_b2b.py::test_batch_pending_then_handover_after_human PASSED [ 33%]
+tests/test_da_b2b.py::test_tampered_after_approval_blocks_handover PASSED [ 34%]
+tests/test_da_b2b.py::test_rejected_batch_rows_back_to_moi PASSED        [ 34%]
+tests/test_da_b2b.py::test_handover_wrong_item_type_and_missing PASSED   [ 34%]
+
+## CLI DB thật
+$ python -m agents.da_b2b --import tests/fixtures/du_an/to_chuc_loi.csv --by X
+[err] dòng 2 cột org_type: phải thuộc doanh_nghiep|khach_san|su_kien_hoi_nghi|hiep_hoi|co_quan|khac
+[err] dòng 3 cột region: không nhận ra tỉnh/thành (hoặc mơ hồ)
+[err] dòng 4 cột website: nguồn tầng C (MXH/sàn/trang cần đăng nhập) — không dùng
+[err] dòng 5 cột source_url: nguồn tầng C (MXH/sàn/trang cần đăng nhập) — không dùng
+[err] dòng 6 cột fit_reason: chứa SĐT/email — chỉ nhập thông tin tổ chức
+[err] dòng 7 cột fit_reason: chứa SĐT/email — chỉ nhập thông tin tổ chức
+[err] dòng 8 cột fit_reason: không gợi ý rượu
+[error] 7 lỗi — KHÔNG nạp dòng nào
+exit=1
+$ python -m agents.da_b2b --submit-batch --list
+usage: python -m agents.da_b2b [-h] [--import FILE] [--submit-batch]
+                               [--handover QUEUE_ID] [--list] [--by BY]
+                               [--limit LIMIT]
+                               [--status {moi,cho_duyet,chuyen_sales}]
+python -m agents.da_b2b: error: cần đúng 1 thao tác: --import | --submit-batch | --handover | --list
+exit=2
+
+## grep egress
+grep_rc=1 (1 = không khớp)
+grep_hoso_rc=1
+grep_4mod_rc=1
+egress ∩ DA = ['agents/da_hoso.py']
+
+## tổng lượt -v
+======================= 340 passed in 249.22s (0:04:09) =======================
+
+
+## Vòng sửa nghiệm thu (2026-10-12)
+- MINOR A04 fail-open tầng C: `_blocked_hosts()` → None khi intel_sources.json hỏng → read_csv lỗi cả file, main exit 1 trước connect. Test: test_tier_c_config_broken_fails_closed (mutant `return ()` → KILLED).
+- MAJOR + MINOR (trùng) ô có từ guardrail chặn ("Sửa chữa", "Nhà thuốc", "Ung thư", "điều trị", URL /thuoc, "Rượu"): read_csv chạy guardrail.check từng ô → "dòng N cột K: chứa từ/cụm guardrail chặn (tu_cam...) — ghi khác", không in giá trị. Test: test_read_csv_errors_line_no_value[tu-cam-*|ruou-ten], test_guardrail_cell_error_names_column (mutant guardrail={ok:True} → KILLED).
+- MINOR ×2 (trùng) lô expired kẹt cho_duyet: handover nhận `expired` như rejected → dòng về moi, batch_queue_id null; lập lô mới + duyệt + chuyển được. Test: test_expired_batch_rows_back_to_moi_and_rebatchable (mutant bỏ 'expired' → KILLED). Contract W83.6 (DONE.md) + SOP 5h đã cập nhật.

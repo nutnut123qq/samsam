@@ -568,6 +568,81 @@ python -m ingest.crm --handoff 12 --dealer DLM01 --by "<tên>"
   `python scripts/apply_schema.py`) / vi phạm nghiệp vụ · 2 sai cú pháp,
   thiếu `--by`, thiếu/sai khóa.
 
+## 5h. Phòng Dự án (v8.3 — WP11 DA, agent KHÔNG tự nộp/gửi/liên hệ)
+
+**Radar chương trình (DA-03, sáng hằng ngày):**
+1. Thu tin: `python -m crawler.intel --run` (chỉ nguồn đã duyệt; nguồn
+   `chuong_trinh` ship `cho_duyet` — GĐ dự án/BGĐ duyệt trong
+   `data/intel_sources.json`; chạy thử 1 nguồn: `--source <id>`). Radar
+   KHÔNG có collector riêng — robots/nhịp ≥1s/chặn tầng C nằm ở collector.
+2. `python -m agents.da_radar --scan` → bảng `programs` (bỏ tin rượu, bỏ
+   host tầng C; `--dry-run` chỉ đếm).
+3. `python -m agents.da_radar --list` → `data/reports/da-radar-<ngày>.md`:
+   bảng chương trình + "Nhắc hôm nay" (T-7, T-2, PHÁT HIỆN MUỘN khi còn < 7
+   ngày). Hạn chỉ nhận ngày đứng SAU từ khóa hạn ("hạn chế", "giới hạn",
+   "thời hạn", "hạn hán"... KHÔNG tính; "từ X đến Y" lấy Y); cột "Trích hạn"
+   cho thấy đoạn máy dựa vào — đối chiếu link gốc trước khi chốt; "chưa
+   công bố" thì xem link gốc.
+
+**Hồ sơ tham gia (DA-04):**
+1. `python -m agents.da_hoso --checklist <program_id> --template hoi_cho|ocop|xuc_tien_tmdt`
+   → file NỘI BỘ (checklist giấy tờ + câu hỏi Pháp chế — không gửi ra ngoài).
+2. `python -m agents.da_hoso --draft <id> --template T --submit` → nháp
+   bản nộp + đẩy hàng duyệt khối `projects` (`program_application`,
+   PENDING). Nháp có "CẢNH BÁO" (guardrail/rượu/SKU chưa XNQC/0 sản phẩm)
+   → `--submit` bị từ chối exit 1. `--llm` (viết lại thư qua LLM) mặc định
+   TẮT.
+3. Người duyệt (≠ agent): `python -m pipelines.approval_queue --approve <QID> --by "<tên>"`.
+4. `python -m agents.da_hoso --export <QID> --out <file>` (chỉ mục đã duyệt
+   khớp sha256).
+5. Trước khi nộp: `python -m agents.da_hoso --verify-submit <QID> <file>`
+   → exit 0 "KHỚP bản đã duyệt — GĐ dự án tự nộp". Exit 1 **"LỆCH bản
+   duyệt"** = file đã bị sửa (kể cả 1 ký tự, xuống dòng, khoảng trắng,
+   lưu lại bằng Word/BOM) → KHÔNG nộp; soạn lại (`--draft --submit`) và
+   duyệt lại.
+
+**Tổ chức mua quà Tết (DA-05):**
+1. CSV nhập tay đúng header `org_name,org_type,region,website,source_url,fit_reason`
+   — CHỈ thông tin TỔ CHỨC công khai. CẤM nhập SĐT/email/tên người/địa chỉ
+   (file bị từ chối cả file); không dùng link Facebook/Zalo/TikTok/sàn.
+   Ô có từ guardrail chặn (từ cấm như "thuốc", "chữa", "ung thư" — xem
+   `data/banned_words.txt` — hoặc nhóm rượu) cũng bị từ chối: lô chứa ô đó
+   không duyệt được → ghi khác. `data/intel_sources.json` hỏng → từ chối
+   cả file (không kiểm được nguồn tầng C).
+2. `python -m agents.da_b2b --import <file.csv> --by "<tên>"` (lỗi → exit
+   1, 0 dòng nạp; in số dòng + cột, không in giá trị).
+3. `python -m agents.da_b2b --submit-batch` → 1 lô PENDING
+   (`org_prospect_batch`); GĐ dự án/GĐ bán hàng duyệt qua
+   `pipelines.approval_queue`.
+4. `python -m agents.da_b2b --handover <QID> --by "<tên>"` → dòng
+   `chuyen_sales` (chỉ khi đã duyệt + khớp sha256; lô bị từ chối HOẶC hết
+   hạn SLA `expired` → dòng về `moi`, chạy lại `--submit-batch` lập lô mới).
+   Exit 1 "LỆCH bản đã duyệt" = dữ liệu tổ chức bị sửa thẳng DB sau khi
+   duyệt (chỉ chủ sở hữu DSN làm được) → KHÔNG chuyển, dòng giữ
+   `cho_duyet` làm dấu vết; người quản trị DB điều tra, xong thì đặt lại
+   các dòng của lô về `moi` (`batch_queue_id` null) để lập lô mới và duyệt
+   lại. Hệ thống KHÔNG tự liên hệ — GĐ bán hàng/đại lý liên hệ; kiểm tay
+   20 mẫu/lô (tên người trong lý do không bắt được bằng máy).
+
+**PMO thứ Hai (DA-01):** `python -m agents.da_pmo --board --submit`
+(bảng tuần, mốc trễ tô **TRỄ**; `--seed` lần đầu từ
+`data/projects/milestones.json`). Đổi trạng thái: `--set-status <MÃ>
+--status xong --evidence <link> --by "<tên>"` (xong thiếu evidence → exit
+1). Đổi hạn: `--propose-due <MÃ> --due YYYY-MM-DD --by` → duyệt →
+`--apply-due <QID> --by` (hạn đã bị đổi khác → exit 1, đề xuất lại;
+người đề xuất KHÔNG tự duyệt được — cần người khác). `--submit` từ chối
+(exit 1) khi bảng trượt guardrail (title/gate/evidence có từ cấm/nhóm rượu
+— sửa chữ rồi chạy lại).
+
+**CR (DA-02):** `python -m agents.da_cr --cr "<yêu cầu>" --submit` →
+nháp CR (GỢI Ý trong_sow/can_cr/chua_ro + trích nguyên văn SOW, không giá)
+vào hàng duyệt `change_request` cho TGĐ. Yêu cầu có từ cấm (vd "chữa lỗi",
+"thuốc") → `--submit` exit 1, diễn đạt lại (vd "sửa lỗi"). `--list` = sổ
+CR. `--eval` chạy bộ MẪU dev (không phải nghiệm thu).
+
+Exit chung: 0 ok · 1 bị từ chối (chưa duyệt / lệch hash / CSV lỗi /
+cảnh báo) · 2 tham số sai hoặc DB down.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):
