@@ -1,0 +1,59 @@
+# v4.3 W43.5 báo cáo Pháp chế tuần — output thật (2026-10-12T14:27:17+07:00), DB worktree w93 (0 dữ liệu thật → báo cáo rỗng đủ 5 mục)
+
+=== $ python -m agents.ra_kenh --report
+# Báo cáo Pháp chế tuần — 12/10/2026 14:27 (giờ VN, 7 ngày)
+
+> Agent chỉ phát hiện + đề xuất — gỡ/sửa do người; kết quả quét CHƯA được Pháp chế xác nhận.
+
+## 1. Hồ sơ XNQC theo trạng thái
+
+chuan_bi: 0 · da_nop: 0 · bo_sung: 0 · da_cap: 0 · het_han: 0
+
+Nhắc mốc:
+- CHƯA NỘP — savina-12v: hạn đợt 2 30/11/2026 còn 49 ngày
+- CHƯA NỘP — saphraton-20v: hạn đợt 2 30/11/2026 còn 49 ngày
+- CHƯA NỘP — saphraton-combo-2x20v: hạn đợt 2 30/11/2026 còn 49 ngày
+- CHƯA NỘP — saphraton-40v: hạn đợt 2 30/11/2026 còn 49 ngày
+- CHƯA NỘP — saphraton-80v: hạn đợt 2 30/11/2026 còn 49 ngày
+- CHƯA NỘP — savigout-30v: hạn đợt 2 30/11/2026 còn 49 ngày
+- CHƯA NỘP — sapentol-30v: hạn đợt 2 30/11/2026 còn 49 ngày
+- CHƯA NỘP — da-an-sam-30v: hạn đợt 2 30/11/2026 còn 49 ngày
+Đề xuất đồng bộ golden (golden_xnqc_sync) đang chờ duyệt: 0
+
+## 2. Vi phạm đang mở theo URL — S1 0, S2 0
+
+(không có)
+
+### QUÁ 24H — 0
+(không có)
+
+## 3. Đã đóng trong 7 ngày — 0 (đúng hạn 0, trễ 0)
+(không có)
+
+## 4. Lệch / thiếu bản duyệt
+
+- lech_ban_duyet: đang mở 0, phát hiện trong kỳ 0
+- thieu_ban_duyet: đang mở 0, phát hiện trong kỳ 0
+
+## 5. Mục hạ tầng (trang mặc định hosting) — 0
+(không có)
+
+[ok] đã ghi data/reports/phap-che-tuan-2026-10-12.md
+exit=0
+
+=== $ python -m agents.ra_kenh --report --days 0   (usage, trước connect)
+python -m agents.ra_kenh: error: --days phải 1..366
+exit=2
+
+=== $ python -m agents.ra_kenh --report --now 12/10/2026   (usage, trước connect)
+python -m agents.ra_kenh: error: --now sai định dạng ISO
+exit=2
+
+=== test báo cáo trên DB thật sau kịch bản W43.4 (collect_report chỉ SELECT, biên due_at, QUÁ 24H, timezone UTC) — trích
+tests/test_ra_kenh.py::test_cli_help_and_db_down PASSED                  [ 92%]
+tests/test_ra_kenh.py::test_e2e_f1_f5_p6_p8_and_report PASSED            [ 94%]
+============================= 51 passed in 8.21s ==============================
+
+# ===== vòng sửa nghiệm thu — báo cáo §1 thêm sync_notes (CHỈ SELECT + đọc golden file)
+test_e2e_f1_f5_p6_p8_and_report vẫn PASS (fake-conn: mọi SQL bắt đầu select/with, số dòng 3 bảng không đổi); test_sync_golden_supersedes_stale_and_waits_for_edit kiểm §1 chứa 'chờ người sửa golden' + mục LỖI THỜI
+--report --now giữ nguyên; --now với --file/--mark-removed → exit 2 trước connect (thao tác ghi dùng giờ thật — chống lùi closed_at giả 'đúng hạn')

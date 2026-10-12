@@ -149,6 +149,8 @@ bảng nào thì dừng, không bật app.
 | `recon_results` | A (`python -m ingest.settlement_csv --reconcile`) hoặc B | nhãn đối soát dựng lại được từ `settlement_rows` + đơn sàn |
 | `invoice_lines` | B | dòng lô hóa đơn NHÁP gắn mục `approval_queue` — dựng lại sẽ lệch lô đã duyệt |
 | `dealer_ar` | B | sổ công nợ đại lý nạp tay (v9.0) — chỉ mã đại lý |
+| `xnqc_dossiers` | B | (v4.3) sổ hồ sơ XNQC — trạng thái `da_cap` do Pháp chế xác nhận, không có nguồn dựng lại |
+| `channel_posts` | B | (v4.3) snapshot bài kênh sở hữu + đợt vi phạm/hạn 24h — B giữ lịch sử đóng đúng hạn/trễ (A: nạp lại file xuất tay chỉ có hiện trạng) |
 
 ## 5. Backup + diễn tập trên cloud (mẫu — external-dep)
 

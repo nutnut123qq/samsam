@@ -1,0 +1,20 @@
+{
+  "_doc": "BẢN DEV SOẠN — CHỜ PHÁP CHẾ DUYỆT (v4.3, WP05 PC-A1/PC-A4). xnqc: hạn nộp hồ sơ XNQC đợt 2 (pmo.md WP05 — trước 30/11/2026), nhắc trước N ngày, cảnh báo giấy sắp hết hạn trong N ngày. ra_kenh: ngày áp dụng quy trình duyệt bài (bài đăng từ ngày này mà không có draft_id bản đã duyệt -> thieu_ban_duyet; ô ngày trống coi như bài mới), host website SỞ HỮU (chỉ phủ kênh web — page/tài khoản MXH thật là external-dep), dấu hiệu trang mặc định hosting (mục hạ tầng, so không phân biệt hoa thường). Loader: agents/ra_kenh.load_config — thiếu/hỏng/rỗng -> từ chối (fail-closed).",
+  "xnqc": {
+    "dot2_han_nop": "2026-11-30",
+    "nhac_truoc_ngay": 14,
+    "het_han_canh_bao_ngay": 30
+  },
+  "ra_kenh": {
+    "quy_trinh_duyet_tu": "2026-10-12",
+    "owned_web_hosts": ["samsamngoclinh.com", "samsam.net.vn"],
+    "hosting_default_markers": [
+      "default web page for this server",
+      "apache2 default page",
+      "welcome to nginx!",
+      "index of /",
+      "this domain is parked",
+      "website đang được xây dựng"
+    ]
+  }
+}

@@ -2591,3 +2591,76 @@ create or replace trigger sla_escalations_append_only_row
 create or replace trigger sla_escalations_no_truncate
   before truncate on sla_escalations
   for each statement execute function append_only_guard();
+
+-- ============================================================================
+-- v4.3 Pháp chế PC-A1/PC-A4 (WP05): sổ hồ sơ XNQC theo SKU + rà bài đang
+-- đăng trên kênh SỞ HỮU (file xuất tay). Agent CHỈ phát hiện + đề xuất:
+-- không gỡ/sửa bài, không sửa golden, không tự chuyển hồ sơ sang `da_cap`.
+--   * `xnqc_dossiers` — 1 dòng = 1 hồ sơ XNQC (mỗi maket/kịch bản là 1 hồ
+--     sơ). `da_cap` CHỈ do NGƯỜI (Pháp chế) xác nhận: DB chặn thiếu số giấy/
+--     ngày cấp/scan (`documents`) hoặc `updated_by` dạng 'agent:'/'system:'
+--     kể cả khi INSERT/UPDATE thẳng. Lịch sử đổi trạng thái ở
+--     `agent_action_log` (action `xnqc_status`).
+--   * `channel_posts` — 1 dòng = 1 SNAPSHOT bài theo (url, text). Vi phạm
+--     theo "đợt" của URL: `first_detected_at`/`due_at` (24 giờ thật) kế thừa
+--     qua snapshot mới khi chưa sạch; đóng `da_sua` (snapshot sạch),
+--     `thay_ban_moi` (có snapshot mới), `da_go` (NGƯỜI ghi nhận đã gỡ/ẩn).
+--     Trạng thái mục hàng duyệt KHÔNG đóng vi phạm.
+-- ============================================================================
+
+create table if not exists xnqc_dossiers (
+  id bigint generated always as identity primary key,
+  sku_key text not null references sku_master(sku_key),
+  loai_ho_so text not null
+    check (loai_ho_so in ('maket', 'kich_ban_video', 'kich_ban_livestream',
+                          'khac')),
+  ten_ho_so text not null check (btrim(ten_ho_so) <> ''),
+  status text not null default 'chuan_bi'
+    check (status in ('chuan_bi', 'da_nop', 'bo_sung', 'da_cap', 'het_han')),
+  so_giay text,
+  ngay_nop date,
+  ngay_cap date,
+  ngay_het_han date,
+  document_sha256 text references documents(sha256),
+  updated_by text not null check (btrim(updated_by) <> ''),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (status <> 'da_cap' or (btrim(coalesce(so_giay, '')) <> ''
+         and ngay_cap is not null and document_sha256 is not null
+         and updated_by !~* '^\s*(agent|system)\s*:')),
+  check (status not in ('da_nop', 'bo_sung', 'da_cap', 'het_han')
+         or ngay_nop is not null),
+  check (ngay_het_han is null or ngay_cap is null or ngay_het_han > ngay_cap)
+);
+create index if not exists xnqc_dossiers_sku_idx
+  on xnqc_dossiers (sku_key, status);
+
+create table if not exists channel_posts (
+  id bigint generated always as identity primary key,
+  url text not null,
+  channel text not null,
+  content_type text not null,
+  posted_on date,                   -- null = file xuất không ghi ngày
+  is_ai boolean not null,
+  is_sponsored boolean not null default false,
+  sku text,
+  draft_id bigint,                  -- id content_drafts bản đã duyệt — KHÔNG FK
+  text text not null,               -- nội dung CÔNG KHAI của công ty
+  text_sha256 text not null check (text_sha256 ~ '^[0-9a-f]{64}$'),
+  guardrail jsonb not null,         -- snapshot check_publish
+  codes text[] not null default '{}',
+  severity text check (severity in ('S1', 'S2')),  -- null = sạch
+  first_detected_at timestamptz,
+  due_at timestamptz,
+  queue_id bigint references approval_queue(id),
+  alert_id bigint,                 -- id red_alerts — KHÔNG FK: FK làm `truncate red_alerts`
+                                    -- vấp FK trước trigger append-only (test v4.0 ghim trigger)
+  imported_by text not null check (btrim(imported_by) <> ''),
+  scanned_at timestamptz not null,
+  closed_at timestamptz,
+  close_reason text check (close_reason in ('da_sua', 'thay_ban_moi', 'da_go')),
+  closed_by text
+);
+create index if not exists channel_posts_url_idx on channel_posts (url, id);
+create index if not exists channel_posts_open_idx on channel_posts (url)
+  where closed_at is null and severity is not null;

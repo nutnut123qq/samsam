@@ -1,0 +1,124 @@
+# v4.3 W43.3 PC-A4 nạp file xuất tay + rà theo kênh + ticket 24h — output thật
+
+=== 2026-10-12T14:28:00+07:00 $ python -m pytest -v -rs tests/test_ra_kenh.py
+============================= test session starts =============================
+platform win32 -- Python 3.12.7, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\hahuy\AppData\Local\Programs\Python\Python312\python.exe
+rootdir: D:\code\samsam-w93
+plugins: anyio-4.12.1, langsmith-0.7.32, asyncio-1.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 51 items
+
+tests/test_ra_kenh.py::test_read_export_rejects_whole_file[bad_date] PASSED [  1%]
+tests/test_ra_kenh.py::test_read_export_rejects_whole_file[bad_kenh] PASSED [  3%]
+tests/test_ra_kenh.py::test_read_export_rejects_whole_file[draft_abc] PASSED [  5%]
+tests/test_ra_kenh.py::test_read_export_rejects_whole_file[dup_header] PASSED [  7%]
+tests/test_ra_kenh.py::test_read_export_rejects_whole_file[dup_url] PASSED [  9%]
+tests/test_ra_kenh.py::test_read_export_rejects_whole_file[host_web] PASSED [ 11%]
+tests/test_ra_kenh.py::test_read_export_rejects_whole_file[is_ai_yes] PASSED [ 13%]
+tests/test_ra_kenh.py::test_read_export_rejects_whole_file[no_text] PASSED [ 15%]
+tests/test_ra_kenh.py::test_read_export_rejects_whole_file[not_utf8] PASSED [ 17%]
+tests/test_ra_kenh.py::test_read_export_rejects_whole_file[stray_col] PASSED [ 19%]
+tests/test_ra_kenh.py::test_read_export_rejects_whole_file[text_long] PASSED [ 21%]
+tests/test_ra_kenh.py::test_read_export_rejects_whole_file[url_ctrl] PASSED [ 23%]
+tests/test_ra_kenh.py::test_read_export_rejects_whole_file[url_ipv6] PASSED [ 25%]
+tests/test_ra_kenh.py::test_read_export_rejects_whole_file[xlsx] PASSED  [ 27%]
+tests/test_ra_kenh.py::test_read_export_wide_header_capped PASSED        [ 29%]
+tests/test_ra_kenh.py::test_read_export_crlf_scheme_defaults PASSED      [ 31%]
+tests/test_ra_kenh.py::test_scan_row_rules PASSED                        [ 33%]
+tests/test_ra_kenh.py::test_load_config_fail_closed[None] PASSED         [ 35%]
+tests/test_ra_kenh.py::test_load_config_fail_closed[{h\u1ecfng] PASSED   [ 37%]
+tests/test_ra_kenh.py::test_load_config_fail_closed[doc2] PASSED         [ 39%]
+tests/test_ra_kenh.py::test_load_config_fail_closed[doc3] PASSED         [ 41%]
+tests/test_ra_kenh.py::test_load_config_fail_closed[doc4] PASSED         [ 43%]
+tests/test_ra_kenh.py::test_load_config_fail_closed[neg] PASSED          [ 45%]
+tests/test_ra_kenh.py::test_load_config_fail_closed[bool] PASSED         [ 47%]
+tests/test_ra_kenh.py::test_load_config_fail_closed[empty_hosts] PASSED  [ 49%]
+tests/test_ra_kenh.py::test_load_config_fail_closed[bad_marker] PASSED   [ 50%]
+tests/test_ra_kenh.py::test_by_rule[Qu\u1ea3n l\xfd MXH-True] PASSED     [ 52%]
+tests/test_ra_kenh.py::test_by_rule[-False] PASSED                       [ 54%]
+tests/test_ra_kenh.py::test_by_rule[   -False] PASSED                    [ 56%]
+tests/test_ra_kenh.py::test_by_rule[agent:x-False] PASSED                [ 58%]
+tests/test_ra_kenh.py::test_by_rule[  AGENT : x-False] PASSED            [ 60%]
+tests/test_ra_kenh.py::test_by_rule[System:y-False] PASSED               [ 62%]
+tests/test_ra_kenh.py::test_by_rule[Ten\x00-False] PASSED                [ 64%]
+tests/test_ra_kenh.py::test_by_rule[a\u202eb-False] PASSED               [ 66%]
+tests/test_ra_kenh.py::test_by_rule[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-False] PASSED [ 68%]
+tests/test_ra_kenh.py::test_grep_no_egress_no_direct_writes PASSED       [ 70%]
+tests/test_ra_kenh.py::test_dry_run_fixture_no_connect PASSED            [ 72%]
+tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv0] PASSED [ 74%]
+tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv1] PASSED [ 76%]
+tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv2] PASSED [ 78%]
+tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv3] PASSED [ 80%]
+tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv4] PASSED [ 82%]
+tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv5] PASSED [ 84%]
+tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv6] PASSED [ 86%]
+tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv7] PASSED [ 88%]
+tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv8] PASSED [ 90%]
+tests/test_ra_kenh.py::test_cli_help_and_db_down PASSED                  [ 92%]
+tests/test_ra_kenh.py::test_e2e_f1_f5_p6_p8_and_report PASSED            [ 94%]
+tests/test_ra_kenh.py::test_mark_removed_then_still_exported_reopens PASSED [ 96%]
+tests/test_ra_kenh.py::test_ingest_cli_prints_masked PASSED              [ 98%]
+tests/test_ra_kenh.py::test_link_heals_after_crash PASSED                [100%]
+
+============================= 51 passed in 8.21s ==============================
+exit=0
+
+=== probe pathological (OWASP self-review vòng resume, script scratchpad v43_probe.py / v43_probe2.py)
+TRƯỚC vá: wide header 20000 cols -> 4.49s (O(n²) head.count; 5 MB ≈ 650k cột → nhiều giờ), max err len 188965; url 'http://[abc/' -> raw ValueError (CLI in 'cấu hình guardrail', exit 2 sai)
+SAU vá: wide header 600000 cols -> 0.54s max err len 145; url IPv6 hỏng -> ExportError 'dòng 2 cột url: ...' (exit 1)
+scan 5 MB tối đa (200 bài × 19 000 ký tự vi phạm dày): read 0.08s scan 10.22s (tuyến tính, ~51ms/bài, máy đang tải 7 worktree); bài 100 ngoặc lồng: scan 5.83s
+
+# ===== vòng sửa nghiệm thu (worker) — probe CLI thật sau vá (file tạm scratchpad, KHÔNG ghi DB: lỗi ô/--now chặn TRƯỚC connect)
+=== draft_id 20 chữ số (trước: dòng 1 đã nạp rồi 'bigint out of range' exit 2)
+[err] file xuất tay không hợp lệ — 0 dòng nạp (1 lỗi):
+  - dòng 3 cột draft_id: cần số nguyên 1..2^63-1
+exit=1
+=== draft_id 5000 chữ số (trước: '[err] cấu hình guardrail: Exceeds the limit' exit 2)
+[err] file xuất tay không hợp lệ — 0 dòng nạp (1 lỗi):
+  - dòng 2 cột draft_id: cần số nguyên 1..2^63-1
+exit=1
+=== loai_noi_dung internal_note (trước: mất ruou_cam_quang_cao, S2)
+[err] file xuất tay không hợp lệ — 0 dòng nạp (1 lỗi):
+  - dòng 2 cột loai_noi_dung: loại nội bộ — bài đang đăng luôn công khai
+exit=1
+=== marker hosting + từ cấm (trước: chỉ trang_mac_dinh_hosting S2 → hosting_fix, không red_alert)
+[dry-run] 2 bài — KHÔNG connect DB; chưa kiểm lệch bản duyệt — cần DB
+[S1] dòng 2 https://facebook.com/samsam/posts/10 — tu_cam, ngoc_linh_chua_xac_nhan, thieu_ban_duyet → ticket channel_takedown (legal_hr) + red_alert
+    trích: Website đang được xây dựng. Sâm Ngọc Linh chữa khỏi ung thư, thuốc quý
+[S1] dòng 3 https://samsam.net.vn/z — tu_cam, thieu_ban_duyet, trang_mac_dinh_hosting → ticket channel_takedown (legal_hr) + red_alert
+    trích: Welcome to nginx! Sâm chữa khỏi bệnh gout, gọi Hotline *** ngay
+exit=0
+=== --now với thao tác ghi (trước: nhận → lùi closed_at làm giả 'đúng hạn')
+python -m agents.ra_kenh: error: --now chỉ đi với --report/--dry-run — thao tác ghi dùng giờ thật
+exit=2
+python -m agents.ra_kenh: error: --now chỉ đi với --report/--dry-run — thao tác ghi dùng giờ thật
+exit=2
+=== test mới/đổi trong tests/test_ra_kenh.py (đều PASS trong targeted ×3 + full)
+84:    "internal_note": ("x.csv", ("url,kenh,is_ai,loai_noi_dung,text\n"
+88:    "text_nul": ("x.csv", H + f"https://samsam.net.vn/a,web,0,,,{SECRET}"
+90:    "draft_overflow": ("x.csv", H + "https://samsam.net.vn/a,web,0,,"
+92:    "draft_5000_digits": ("x.csv", H + "https://samsam.net.vn/a,web,0,,"
+94:    "url_long": ("x.csv", H + f"https://samsam.net.vn/{SECRET.lower()}"
+116:def test_read_export_draft_id_bigint_boundary(tmp_path):
+166:def test_scan_row_rules():
+211:def test_excerpt_masks_phone_across_window_edge(phone):
+305:    ["--file", "x.csv", "--by", "A", "--now", "2026-10-12T09:00"],
+306:    ["--mark-removed", "u", "--by", "A", "--now", "2026-10-12T09:00"]])
+605:def test_reimport_same_text_rescans_meta_and_rules(db, tmp_path, monkeypatch):
+653:def test_kind_change_opens_new_dot_in_right_block(db, tmp_path):
+701:def test_s2_to_s1_same_dot_raises_alert(db, tmp_path):
+=== chi phí _excerpt che PII toàn văn (đo 2026-10-12, máy đang tải): _mask_pii 19k ký tự ~16ms/lần; scan_row bài 19k dày vi phạm 3.83s (chủ yếu check_publish), _excerpt 0.016s
+
+# ===== vòng sửa nghiệm thu 2 — MAX_URL đếm BYTE UTF-8 (btree channel_posts_url_idx trần 2704 byte)
+trước (probe của reviewer): len(url) đếm KÝ TỰ → URL 1534 ký tự/4534 byte lọt read_export, nổ ProgramLimitExceeded giữa ingest (nạp dở, rc 2)
+sau: too_long = len(url.encode('utf-8')) > MAX_URL (cả trước urlsplit) → lỗi ô exit 1, 0 dòng nạp, không connect
+=== 2026-10-12T15:41:31+07:00 URL 1534 ký tự / 4534 byte (probe reviewer) — DATABASE_URL trỏ host chết để chắc không ghi
+$ python -m agents.ra_kenh --file url_bytes.csv --by "Quản lý MXH"
+[err] file xuất tay không hợp lệ — 0 dòng nạp (1 lỗi):
+  - dòng 3 cột url: dài quá 2048 byte UTF-8
+exit=1
+test mới (PASS targeted ×3 + full):
+- BAD['url_long_bytes'] facebook 'ạ'×1000 (≤2048 ký tự, >2704 byte) → exit 1, connect monkeypatch raise
+- test_read_export_url_limit_counts_bytes: URL CJK không lặp đúng 2048 byte (<1000 ký tự) nhận; 2049 byte → 'dài quá 2048 byte UTF-8'
+- test_url_max_bytes_fits_btree (DB thật schema tạm): URL 2048 byte CJK không nén + S1 → vào channel_posts_url_idx + index đợt mở, red_alert, mark_removed theo url OK
+mutation: đổi lại len(url) → FAIL url_long_bytes + url_limit_counts_bytes (2 failed), khôi phục → xanh
