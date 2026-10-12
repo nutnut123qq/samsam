@@ -41,13 +41,16 @@ không DB; kind ảnh chấm nhãn AI + metadata / toàn vẹn packshot / phát 
 sửa 1 pixel / không EXIF; ca refuse pass <=> refused.code == code; ca KHÔNG
 có `text`), `sales_director` (tất định — v5.0: định tuyến SLA
 handoff A/B + rủi ro qua `agents.sales_director.route/sla_state` trên
-`data/directors/sales.json` THẬT, không LLM/mạng/key/DB), `cskh` (tất định — KD-A1 v5.1: lớp kênh
+`data/directors/sales.json` THẬT, không LLM/mạng/key/DB), `mkt_ads_ugc` (tất
+định — v6.4 MKT-05/06/07: `agents.mkt_ads.validate_plan` / `agents.mkt_koc.
+build_kit` / `agents.mkt_ugc.propose` THUẦN trên golden + KOC MẪU + luật UGC
+thật, 0 mạng/LLM/DB; ca KHÔNG có `text` bắt buộc), `cskh` (tất định — KD-A1 v5.1: lớp kênh
 `connectors.channels.respond` với `api.rag.answer` THẬT nhưng "gateway giả" =
 patch `api.rag.retrieve`/`api.rag.chat` theo `fake_hits`/`fake_llm` của ca,
 đếm lời gọi LLM), `chatbot`
 (`api.rag.answer` THẬT, cần OPENROUTER_API_KEY). Scorer từng ca: guardrail
-| co_khi | mkt02 | mkt03 | sales_director | cskh | eval_qa | handoff | exact |
-regex | judge. Giám khảo LLM CHỈ qua
+| co_khi | mkt02 | mkt03 | sales_director | cskh | mkt_ads_ugc | eval_qa |
+handoff | exact | regex | judge. Giám khảo LLM CHỈ qua
 `pipelines.llm_gateway.chat("ci_judge")`, model khác HỌ (nhà sản xuất theo
 allowlist `_FAMILIES`; router/alias lạ → từ chối) với model agent; output
 judge parse chặt — lỗi = ca FAIL, không bỏ qua.
@@ -70,6 +73,7 @@ Chạy:
   python scripts/agent_eval.py --agent mkt02 --no-record
   python scripts/agent_eval.py --agent mkt03 --no-record
   python scripts/agent_eval.py --agent sales_director --no-record
+  python scripts/agent_eval.py --agent mkt_ads_ugc --no-record
   python scripts/agent_eval.py --agent kd_a1 --no-record
   python scripts/agent_eval.py --validate
   python scripts/agent_eval.py --deterministic [--no-record]
@@ -116,7 +120,8 @@ DEFAULT_CHAT_MODEL = "openai/gpt-4o-mini"
 RISKS = ("low", "medium", "high")
 STATUSES = ("active", "skeleton")
 SCORERS = ("guardrail", "co_khi", "mkt02", "mkt03", "sales_director",
-           "eval_qa", "handoff", "exact", "regex", "judge", "cskh")
+           "eval_qa", "handoff", "exact", "regex", "judge", "cskh",
+           "mkt_ads_ugc")
 # Nguồn DUY NHẤT của tên runner hợp lệ (RUNNERS.keys() phải trùng).
 RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "chatbot": {"eval_qa", "handoff", "exact", "regex",
@@ -125,9 +130,10 @@ RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "mkt02": {"mkt02"},
                   "mkt03": {"mkt03"},
                   "sales_director": {"sales_director"},
-                  "cskh": {"cskh"}}
+                  "cskh": {"cskh"},
+                  "mkt_ads_ugc": {"mkt_ads_ugc"}}
 DETERMINISTIC_RUNNERS = ("guardrail", "co_khi", "mkt02", "mkt03",
-                         "sales_director", "cskh")
+                         "sales_director", "cskh", "mkt_ads_ugc")
 # Hit giả mặc định của runner cskh (ca không khai `fake_hits`).
 CSKH_DEFAULT_HIT = {"title": "Sản phẩm Sâm Sâm", "lang": "vi",
                     "url": "https://samsamngoclinh.com/san-pham",
@@ -139,7 +145,10 @@ GUARDRAIL_CTX_KEYS = {"channel", "content_type", "sku", "is_ai",
 CO_KHI_KINDS = ("fact", "high_risk", "trap_no_data")
 # v6.1 mkt02: ca không có `text` (đầu vào = op × sku × kênh); v6.2 mkt03
 # cũng vậy (đầu vào = sku × kênh × format × headline).
-NO_TEXT_SCORERS = {"mkt02", "mkt03"}
+NO_TEXT_SCORERS = {"mkt02", "mkt03", "mkt_ads_ugc"}
+# v6.4 mkt_ads_ugc: ca = op ads (validate_plan) | kit (build_kit) | ugc
+# (classify + draft_reply + no_claim_echo qua propose) — hàm THUẦN.
+MKT_ADS_UGC_OPS = ("ads", "kit", "ugc")
 MKT02_OPS = ("listing", "draft")
 # v6.2 mkt03: kind ca expect=image (chấm theo kind trong _score_mkt03);
 # provider CHỈ nền tất định / provider giả eval_stub — suite không được kéo
@@ -328,6 +337,41 @@ def _iso_ok(v) -> bool:
         return False
 
 
+def _validate_mkt_ads_ugc_case(c: dict, cid, exp) -> list[str]:
+    """v6.4: op ads → plan object + today ISO + expect.code ∈ REJECT_CODES
+    | null; op kit → koc/sku/channel/drafts + expect.code ∈ CODES | null;
+    op ugc → text hoặc labels + channel + expect.lop ∈ CLASSES."""
+    from agents import mkt_ads, mkt_koc, mkt_ugc  # lazy: thuần, local
+
+    op = c.get("op")
+    if op not in MKT_ADS_UGC_OPS:
+        return [f"ca {cid}: mkt_ads_ugc op phải {MKT_ADS_UGC_OPS}"]
+    if not (isinstance(exp, dict) and exp):
+        return [f"ca {cid}: mkt_ads_ugc expect phải object khác rỗng"]
+    errs = []
+    if op == "ads":
+        if not isinstance(c.get("plan"), dict) or not _nonempty(
+                c.get("today")):
+            errs.append(f"ca {cid}: op ads cần plan (object) + today")
+        if exp.get("code") not in (*mkt_ads.REJECT_CODES, None):
+            errs.append(f"ca {cid}: expect.code phải REJECT_CODES | null")
+    elif op == "kit":
+        if not all(_nonempty(c.get(k)) for k in ("koc", "sku", "channel")) \
+                or not isinstance(c.get("drafts"), list):
+            errs.append(f"ca {cid}: op kit cần koc, sku, channel, drafts")
+        if exp.get("code") not in (*mkt_koc.CODES, None):
+            errs.append(f"ca {cid}: expect.code phải mã kit | null")
+    else:
+        if not (_nonempty(c.get("text")) or isinstance(c.get("labels"),
+                                                         list)):
+            errs.append(f"ca {cid}: op ugc cần text hoặc labels")
+        if not _nonempty(c.get("channel")):
+            errs.append(f"ca {cid}: op ugc cần channel")
+        if exp.get("lop") not in mkt_ugc.CLASSES:
+            errs.append(f"ca {cid}: expect.lop phải {mkt_ugc.CLASSES}")
+    return errs
+
+
 def _validate_sales_case(c: dict, cid, exp) -> list[str]:
     """v5.0: expect object; route/trap_no_auto cần object_type | severity |
     all_types; sla/trap_offhours cần created_at/now/expect.business_due_at
@@ -420,6 +464,8 @@ def _validate_case(c, i: int, d: dict) -> list[str]:
         errs += _validate_sales_case(c, cid, exp)
     elif sc == "cskh":
         errs += _validate_cskh_case(c, cid, exp)
+    elif sc == "mkt_ads_ugc":
+        errs += _validate_mkt_ads_ugc_case(c, cid, exp)
     elif sc == "eval_qa" and (not _is_int(cid) or exp is not None):
         errs.append(f"ca {cid}: eval_qa cần id số (questions.md) + expect"
                     " null")
@@ -881,6 +927,31 @@ def _score_sales(case: dict, out: dict) -> tuple[bool, str]:
                               f"{st['business_due_at']:%d/%m %H:%M}")
 
 
+def _score_mkt_ads_ugc(case: dict, out: dict) -> tuple[bool, str]:
+    """v6.4: ads/kit so mã chặn (kit đạt còn phải có #quangcao + link
+    placeholder); ugc so lớp + mã + câu trả lời không chứa từ `forbid`
+    (bản bỏ dấu) + `reply_none`."""
+    exp = case["expect"]
+    if case["op"] in ("ads", "kit"):
+        if out.get("code") != exp.get("code"):
+            return False, f"kỳ vọng {exp.get('code')}, có {out.get('code')}"
+        kit = out.get("kit") or ""
+        if case["op"] == "kit" and exp.get("code") is None and not (
+                "#quangcao" in kit and "{{LINK_AFFILIATE}}" in kit):
+            return False, "kit đạt thiếu #quangcao / link placeholder"
+        return True, ""
+    if (out.get("lop"), out.get("code")) != (exp["lop"], exp.get("code")):
+        return False, (f"kỳ vọng {exp['lop']}/{exp.get('code')}, có "
+                       f"{out.get('lop')}/{out.get('code')}")
+    reply = out.get("reply")
+    if exp.get("reply_none") and reply is not None:
+        return False, "lớp không soạn mà vẫn có câu trả lời"
+    fold = llm_gateway._strip_accents((reply or "").casefold())
+    bad = [w for w in exp.get("forbid", [])
+           if llm_gateway._strip_accents(w.casefold()) in fold]
+    return not bad, "" if not bad else f"câu trả lời lặp lại {len(bad)} cụm"
+
+
 def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
     sc = case.get("scorer", "guardrail")
     if sc == "guardrail":
@@ -896,6 +967,8 @@ def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
         return _score_sales(case, out)
     if sc == "cskh":
         return channels.score_cskh(case, out)
+    if sc == "mkt_ads_ugc":
+        return _score_mkt_ads_ugc(case, out)
     if sc == "eval_qa":
         import eval_qa  # scripts/ — tái dùng luật chấm Q1-12
         return eval_qa.check_question(int(case["id"]), out)
@@ -1092,9 +1165,57 @@ def run_cskh(cases, judge_model=None):
     return _run(cases, produce, judge_model)
 
 
+def _mkt_ads_ugc_out(c: dict, ctx: dict) -> dict:
+    from datetime import date
+
+    from agents import mkt_ads, mkt_koc, mkt_ugc
+
+    rmap = ({(a, b): lv for a, b, lv in c["readiness"]}
+            if c.get("readiness") is not None else None)
+    if c["op"] == "ads":
+        code, _ = mkt_ads.validate_plan(
+            c["plan"], golden=ctx["golden"], readiness=rmap or {},
+            creatives={d["id"]: d for d in c.get("creatives", [])},
+            cap=c.get("cap"), today=date.fromisoformat(c["today"]),
+            dossier_ok=bool(c.get("dossier_ok")))
+        return {"code": code}
+    if c["op"] == "kit":
+        koc = ctx["kocs"][c["koc"]]
+        text, sha, err = mkt_koc.load_contract(koc["contract_file"])
+        return mkt_koc.build_kit(koc, c["sku"], c["channel"], c["drafts"],
+                                 ctx["golden"], readiness=rmap,
+                                 contract_text=text, contract_sha=sha,
+                                 contract_err=err)
+    return mkt_ugc.propose(c.get("text"), c.get("stars"), c["channel"],
+                           ctx["ugc"], san=bool(c.get("san")),
+                           labels=c.get("labels", ()))
+
+
+def run_mkt_ads_ugc(cases, judge_model=None):
+    """v6.4 MKT-05/06/07 (bộ MẪU chờ GĐ Marketing/Pháp chế): hàm THUẦN
+    `validate_plan` / `build_kit` / `propose` trên golden + KOC MẪU + luật
+    UGC thật — 0 mạng/LLM/DB."""
+    from agents import mkt_koc, mkt_ugc  # lazy
+
+    gold = json.loads((ROOT / "data" / "golden_skus.json").read_bytes()
+                      .decode("utf-8"))
+    ctx = {"golden": {s["sku_key"]: {"category": s.get("category")}
+                      for s in gold["skus"]},
+           "kocs": {k["code"]: k for k in mkt_koc.load_kocs()},
+           "ugc": mkt_ugc.load_rules()}
+    saved = os.environ.pop("GUARDRAIL_LLM_MODEL", None)
+    try:
+        return _run(cases, lambda c: _mkt_ads_ugc_out(c, ctx), judge_model,
+                    show_answer=False)
+    finally:
+        if saved is not None:
+            os.environ["GUARDRAIL_LLM_MODEL"] = saved
+
+
 RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot,
            "co_khi": run_co_khi, "mkt02": run_mkt02, "mkt03": run_mkt03,
-           "sales_director": run_sales_director, "cskh": run_cskh}
+           "sales_director": run_sales_director, "cskh": run_cskh,
+           "mkt_ads_ugc": run_mkt_ads_ugc}
 
 
 def score(results: list[tuple[dict, bool, str]], threshold: dict) -> dict:

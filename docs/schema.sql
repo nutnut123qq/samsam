@@ -2961,3 +2961,52 @@ create table if not exists image_assets (
   check (not ai_generated or (label_text like '%Nội dung có sử dụng AI%'
          and model is not null and prompt_sha256 is not null))
 );
+
+-- ============================================================================
+-- v6.4 MKT-05 phiếu thử nghiệm ads (WP08): 1 dòng / phiếu ĐỀ XUẤT thử nghiệm
+-- quảng cáo (SKU × kênh ads × giả thuyết × biến thể creative đã duyệt ×
+-- ngân sách ≤ trần FP&A v9.1 `agents.fp_ads` × thời gian × chỉ số thành công
+-- × điều kiện dừng). Ai ghi: `python -m agents.mkt_ads --plan` (DSN chủ sở
+-- hữu — bảng CHƯA grant cho agent_writer/app_human). Ai đọc: `--status`/
+-- `--results`. Phiếu chỉ là NHÁP: 2 mục `approval_queue` risk high cùng
+-- object_id `adtest-<id>` (marketing/ad_campaign + finance/budget_change) —
+-- agent KHÔNG chi tiền, KHÔNG gọi API quảng cáo; Quản lý MXH cài tay sau khi
+-- duyệt đủ 2. Insert-only (trigger `append_only_guard`), không PII, không
+-- cột tiền đã chi. `readiness` chỉ nhận mức online được quảng cáo — DB tự
+-- chặn listing_only (MO_TA) / CAM dù code lỗi.
+-- ============================================================================
+create table if not exists ad_test_plans (
+  id bigint generated always as identity primary key,
+  plan_sha256 text not null unique check (plan_sha256 ~ '^[0-9a-f]{64}$'),
+  sku_key text not null references sku_master(sku_key),
+  channel text not null
+    check (channel in ('shopee', 'tiktok', 'web', 'facebook', 'zalo',
+                       'chatbot')),
+  hypothesis text not null check (char_length(btrim(hypothesis)) between 10 and 500),
+  creative_draft_ids bigint[] not null
+    check (cardinality(creative_draft_ids) between 1 and 3),
+  budget_vnd bigint not null check (budget_vnd > 0),
+  cap_vnd bigint not null,
+  -- tổng budget_vnd phiếu KHÁC cùng SKU × kênh × tháng (chưa từ chối/hết
+  -- hạn) lúc lập — chống chẻ trần FP&A thành nhiều phiếu nhỏ (v6.4 fix)
+  allocated_vnd bigint not null default 0 check (allocated_vnd >= 0),
+  cap_ref_month date not null check (extract(day from cap_ref_month) = 1),
+  start_date date not null,
+  end_date date not null,
+  success_metric jsonb not null,
+  stop_rules jsonb not null
+    check (jsonb_typeof(stop_rules) = 'array'
+           and jsonb_array_length(stop_rules) >= 1),
+  readiness text not null check (readiness in ('TP_THUONG', 'QC_DAY_DU')),
+  created_by text not null check (btrim(created_by) <> ''),
+  created_at timestamptz not null default now(),
+  check (budget_vnd <= cap_vnd),
+  check (end_date >= start_date and end_date - start_date <= 30)
+);
+
+create or replace trigger ad_test_plans_append_only_row
+  before update or delete on ad_test_plans
+  for each row execute function append_only_guard();
+create or replace trigger ad_test_plans_no_truncate
+  before truncate on ad_test_plans
+  for each statement execute function append_only_guard();

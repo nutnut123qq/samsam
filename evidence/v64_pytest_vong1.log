@@ -1,0 +1,17 @@
+# v6.4 W64.8 full pytest (1 lan/vong) — 2026-10-13T01:24:28+07:00
+status = 2
+message = 'python -m pipelines.qr_trace revoke: error: argument --code: expected one argument\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2659: SystemExit
+---------------------------- Captured stderr call -----------------------------
+usage: python -m pipelines.qr_trace revoke [-h] --code CODE --by BY
+                                           [--reason REASON]
+python -m pipelines.qr_trace revoke: error: argument --code: expected one argument
+3 failed, 3634 passed in 2369.21s (0:39:29)
+exit=1

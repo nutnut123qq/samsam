@@ -1,0 +1,13 @@
+{
+  "_doc": "Phiếu thử nghiệm ads MẪU (v6.4 test) — mật ong sâm 300ml trên Shopee; chỉ đạt trong schema tạm của test (self_declaration_ok=true + giá vốn MẪU duyệt + draft ads approved). creative_draft_ids do test thay bằng id thật. Không phải phiếu thật.",
+  "sku_key": "mat-ong-sam-300ml",
+  "channel": "shopee",
+  "hypothesis": "Video 15 giây mở hộp quà Tết có CTR cao hơn ảnh tĩnh trên Shopee",
+  "creative_draft_ids": [1, 2],
+  "budget_vnd": 300000,
+  "start_date": "2026-11-02",
+  "end_date": "2026-11-22",
+  "success_metric": {"metric": "ctr", "op": ">=", "target": 0.02},
+  "stop_rules": [{"metric": "cpc", "op": ">=", "value": 5000},
+                 {"metric": "cpa", "op": ">=", "value": 150000}]
+}

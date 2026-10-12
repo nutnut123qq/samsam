@@ -44,7 +44,9 @@ REQUIRED_MODULES = [
     "agents/fp_pnl.py", "agents/fp_ads.py", "agents/fp_opscost.py",
     "agents/fp_cash.py", "agents/fin_director.py",
     # v5.1 CSKH đa kênh
-    "connectors/messenger.py", "connectors/channels.py"]
+    "connectors/messenger.py", "connectors/channels.py",
+    # v6.4 MKT-07 review/UGC → nháp trả lời + consent tái sử dụng
+    "agents/mkt_ugc.py"]
 
 
 def _declared(m):

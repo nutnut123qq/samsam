@@ -158,6 +158,7 @@ bảng nào thì dừng, không bật app.
 | `org_prospects` | B | tổ chức mua quà (v8.3) nhập tay — trạng thái lô/chuyển sales không dựng lại được; không cột định danh cá nhân |
 | `project_milestones` | B (hoặc A: `python -m agents.da_pmo --seed` — mất trạng thái/evidence/hạn đã duyệt đổi) | sổ mốc phòng Dự án (v8.3) |
 | `image_assets` | B | metadata ảnh nháp MKT-03 (v6.2) — file PNG + sidecar ở `IMAGE_OUT_DIR` phải chép theo riêng (không nằm trong dump) |
+| `ad_test_plans` | B | (v6.4 MKT-05) phiếu thử nghiệm ads NHÁP — insert-only, gắn 2 mục `approval_queue` `adtest-<id>`; dựng lại sẽ lệch phiếu đã duyệt |
 
 ## 5. Backup + diễn tập trên cloud (mẫu — external-dep)
 

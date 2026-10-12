@@ -1,0 +1,83 @@
+# v6.4 W64.6 eval suite + data_flow_map + 0 duong chi tien — 2026-10-12T22:15:26+07:00
+## --validate
+[ok] sx_a8 v1 skeleton owner=production qa=production risk=medium 3 ca
+[done] 18/18 suite hợp lệ
+exit=0
+## --agent mkt_ads_ugc --no-record lan 1
+[done] mkt_ads_ugc v1 PASS 28/28 pass_rate=1.0 (ngưỡng 1.0) prompt_version=cfcecc3ed9d6 model=rules judge=None
+## lan 2
+[done] mkt_ads_ugc v1 PASS 28/28 pass_rate=1.0 (ngưỡng 1.0) prompt_version=cfcecc3ed9d6 model=rules judge=None
+## --print-hash (cases_sha256 trong file)
+9c59167dd88bee3ffb41964c8f741a0686b7af086f5e7a0a0e67b1a0855b682d
+"cases_sha256": "9c59167dd88bee3ffb41964c8f741a0686b7af086f5e7a0a0e67b1a0855b682d"
+## dpia_draft --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+exit=0
+## egress_modules giao 3 module
+set()
+## import cua 3 module (chi stdlib/psycopg/du an)
+agents/mkt_ads.py:44:import argparse
+agents/mkt_ads.py:45:import csv
+agents/mkt_ads.py:46:import hashlib
+agents/mkt_ads.py:47:import io
+agents/mkt_ads.py:48:import json
+agents/mkt_ads.py:49:import re
+agents/mkt_ads.py:50:import sys
+agents/mkt_ads.py:51:from contextlib import suppress
+agents/mkt_ads.py:52:from datetime import date, datetime
+agents/mkt_ads.py:53:from decimal import Decimal, InvalidOperation
+agents/mkt_ads.py:54:from pathlib import Path
+agents/mkt_ads.py:56:import psycopg
+agents/mkt_ads.py:58:from agents import fp_ads, fp_pnl
+agents/mkt_ads.py:59:from agents.fp_pnl import parse_month, vnd
+agents/mkt_ads.py:60:from ingest.golden_store import CHANNELS
+agents/mkt_ads.py:61:from ingest.lead_store import connect
+agents/mkt_ads.py:62:from pipelines import director, guardrail, store
+agents/mkt_ads.py:63:from pipelines.mkt_calendar import CONTENT_OK
+agents/mkt_ads.py:64:from pipelines.period import VN_TZ
+agents/mkt_ads.py:65:from pipelines.pii import _mask_pii
+agents/mkt_ads.py:66:from pipelines.store import _db_msg, _oneline
+agents/mkt_koc.py:38:import argparse
+agents/mkt_koc.py:39:import hashlib
+agents/mkt_koc.py:40:import json
+agents/mkt_koc.py:41:import re
+agents/mkt_koc.py:42:import sys
+agents/mkt_koc.py:43:from contextlib import suppress
+agents/mkt_koc.py:44:from pathlib import Path
+agents/mkt_koc.py:46:import psycopg
+agents/mkt_koc.py:48:from agents.report import REPORTS_DIR, write_report
+agents/mkt_koc.py:49:from ingest.lead_store import connect
+agents/mkt_koc.py:50:from pipelines import approval_queue as aq
+agents/mkt_koc.py:51:from pipelines import director, guardrail, store
+agents/mkt_koc.py:52:from pipelines.mkt_calendar import CONTENT_OK
+agents/mkt_koc.py:53:from pipelines.pii import _mask_pii
+agents/mkt_koc.py:54:from pipelines.store import _db_msg
+agents/mkt_koc.py:55:from scripts.contract_check import _read as read_contract_file
+agents/mkt_koc.py:56:from scripts.contract_check import missing_clauses
+agents/mkt_ugc.py:36:import argparse
+agents/mkt_ugc.py:37:import csv
+agents/mkt_ugc.py:38:import hashlib
+agents/mkt_ugc.py:39:import io
+agents/mkt_ugc.py:40:import json
+agents/mkt_ugc.py:41:import os
+agents/mkt_ugc.py:42:import re
+agents/mkt_ugc.py:43:import sys
+agents/mkt_ugc.py:44:import unicodedata
+agents/mkt_ugc.py:45:from contextlib import suppress
+agents/mkt_ugc.py:46:from datetime import date, datetime, time
+agents/mkt_ugc.py:47:from pathlib import Path
+agents/mkt_ugc.py:49:import psycopg
+agents/mkt_ugc.py:51:from ingest import crm
+agents/mkt_ugc.py:52:from ingest.intel_import import SALT_MIN, classify_social, load_social_rules, msg_hash
+agents/mkt_ugc.py:53:from ingest.lead_store import connect
+agents/mkt_ugc.py:54:from pipelines import director, guardrail
+agents/mkt_ugc.py:55:from pipelines.kb_filter import is_alcohol
+agents/mkt_ugc.py:56:from pipelines.llm_gateway import _strip_accents, is_health_question
+agents/mkt_ugc.py:57:from pipelines.period import VN_TZ
+agents/mkt_ugc.py:58:from pipelines.pii import _mask_pii
+agents/mkt_ugc.py:59:from pipelines.store import _db_msg, _oneline
+## grep SDK/endpoint quang cao
+(0 dong)
+## pytest AST + data_flow_map + dpia
+........                                                                 [100%]
+80 passed in 10.10s

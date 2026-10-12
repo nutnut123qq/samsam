@@ -560,6 +560,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Chưa có căn cứ `staff_assist_dpia_v1` cho gợi ý LLM trên tin buyer sàn: GAP |
 | GAP | Chưa có căn cứ xử lý `staff_assist_dpia_v1` (F03b bước 3) — CẦN LUẬT SƯ XÁC NHẬN trước khi dùng thường xuyên; Chưa có trần lượt dán/ngày + thống kê (someday) |
 
+### DF-31 — Review sàn + bình luận kênh sở hữu → nháp trả lời UGC + xin phép/tái sử dụng UGC (MKT-07, v6.4)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-31 |
+| Module (code) | `agents/mkt_ugc.py` |
+| Mục đích | Soạn ĐỀ XUẤT trả lời review/bình luận (template, không LLM) và nháp tin xin phép dùng lại UGC để người phụ trách duyệt rồi đăng/gửi TAY |
+| Dữ liệu | File review sàn Shopee/TikTok xuất tay (mã đánh giá, số sao, nội dung đánh giá — có thể chứa SĐT/email/tên/yếu tố sức khỏe; cột người mua/ảnh/mã đơn bỏ NGAY khi đọc); nhãn `social_mentions` v7.2 (không text khi DPIA chưa ký); contact_id + trạng thái consent `marketing` khi đề nghị tái sử dụng |
+| Lớp | Đỏ |
+| Chủ thể | Người mua để lại đánh giá trên sàn; khách bình luận/nhắn Fanpage/Zalo OA/TikTok của công ty; liên hệ trong `contacts` đồng ý cho dùng lại UGC |
+| Nơi lưu | Nội dung review chỉ trong RAM lúc chạy (đã `_mask_pii`) — KHÔNG ghi DB/không in; `approval_queue` mục `ugc_reply`/`ugc_reuse`: lớp, kênh, nguồn (sha12 file + số dòng / `social_mentions#id`), câu đề xuất, contact_id — object_id `ugc-<sha256 có muối INTEL_HASH_SALT>` (không chép nội dung khách) |
+| Thời hạn lưu | Mục hàng duyệt: theo `approval_queue` (không xóa — append-only trạng thái); nội dung review không lưu |
+| Bên nhận | Không gửi ra ngoài — agent không gọi API sàn/MXH, không LLM; người phụ trách đăng/gửi tay trên Seller Center/kênh sở hữu sau duyệt |
+| Chuyển ra nước ngoài | Không |
+| Biện pháp bảo vệ (có trong code) | Không LLM/mạng (AST test `test_no_ads_api_no_spend`, không thuộc `egress_modules`); Cột người mua/ảnh/mã đơn bỏ khi đọc, cột lạ → chặn cả file; `noi_dung` qua `_mask_pii` ngay khi đọc; lỗi chỉ in 'dòng N cột X'; `no_claim_echo`: câu trả lời không lặp claim/từ khóa sức khỏe khách nói; câu trả lời qua `check_publish`; Tái sử dụng UGC chỉ khi `crm.can_contact(contact_id, 'marketing')` = granted hiện hành; lớp sức khỏe/rượu luôn chặn (UGC_SENSITIVE) |
+| Căn cứ xử lý | Đồng ý `marketing` (v5.2) cho tái sử dụng UGC — phạm vi mục đích chưa được Pháp chế xác nhận: GAP; trả lời review = lợi ích hợp pháp CSKH: CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | Pháp chế xác nhận template trả lời UGC (`data/ugc_rules.json` + câu health/alcohol của `data/channels.json`) — CẦN LUẬT SƯ XÁC NHẬN; Pháp chế xác nhận mục đích consent `marketing` có bao gồm tái sử dụng UGC (ảnh/lời đánh giá) hay cần mục đích riêng; Tên cột file review là GIẢ ĐỊNH — đối chiếu 1 file xuất thật từ Seller Center (external-dep); DPIA chưa ký → `social_mentions` không có text, đề xuất trả lời chỉ theo nhãn |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -596,6 +614,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-28 | Hồ sơ tham gia chương trình — viết lại thư đăng ký bằng LLM (v8.3 DA-04, tùy chọn) | Xanh | thấp | có | 0 |
 | DF-29 | Kênh Messenger (Facebook Page) — nhận tin và trả lời khách (v5.1) | Đỏ | cao | có | 4 |
 | DF-30 | Gợi ý trả lời chat sàn Shopee/TikTok — MXH dán tay (v5.1) | Đỏ | cao | có | 2 |
+| DF-31 | Review sàn + bình luận kênh sở hữu → nháp trả lời UGC + xin phép/tái sử dụng UGC (MKT-07, v6.4) | Đỏ | cao | không | 4 |
 
 ## 4. Tổng hợp GAP
 
@@ -648,6 +667,10 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-29] Câu chào + chính sách NHÁP chờ Pháp chế (chung Zalo)
 - [DF-30] Chưa có căn cứ xử lý `staff_assist_dpia_v1` (F03b bước 3) — CẦN LUẬT SƯ XÁC NHẬN trước khi dùng thường xuyên
 - [DF-30] Chưa có trần lượt dán/ngày + thống kê (someday)
+- [DF-31] Pháp chế xác nhận template trả lời UGC (`data/ugc_rules.json` + câu health/alcohol của `data/channels.json`) — CẦN LUẬT SƯ XÁC NHẬN
+- [DF-31] Pháp chế xác nhận mục đích consent `marketing` có bao gồm tái sử dụng UGC (ảnh/lời đánh giá) hay cần mục đích riêng
+- [DF-31] Tên cột file review là GIẢ ĐỊNH — đối chiếu 1 file xuất thật từ Seller Center (external-dep)
+- [DF-31] DPIA chưa ký → `social_mentions` không có text, đề xuất trả lời chỉ theo nhãn
 
 ## 5. Câu hỏi cho luật sư
 

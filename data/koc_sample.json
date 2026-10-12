@@ -1,0 +1,26 @@
+{
+  "_doc": "v6.4 MKT-06 — danh sách KOC MẪU — không phải KOC thật, không PII (không tên/handle/SĐT/email). code KOC-MAU-xx; platform tiktok|facebook; niche mô tả ngắn; contract_file = đường dẫn tương đối trong repo tới hợp đồng mẫu NHÁP (contract_check v4.4 đạt ≠ đã ký/đã rà luật sư); contract_status luôn NHAP_MAU — KOC thật + hợp đồng ký là external-dep (GĐ Marketing chọn KOC, Pháp chế/luật sư duyệt). KOC-MAU-03 cố ý trỏ hợp đồng THIẾU điều khoản (fixture test) để chứng minh kit bị chặn KIT_CONTRACT. Agent KHÔNG liên hệ KOC.",
+  "kocs": [
+    {
+      "code": "KOC-MAU-01",
+      "platform": "tiktok",
+      "niche": "ẩm thực, quà biếu gia đình",
+      "contract_file": "docs/legal/mau-hop-dong-koc-NHAP.md",
+      "contract_status": "NHAP_MAU"
+    },
+    {
+      "code": "KOC-MAU-02",
+      "platform": "facebook",
+      "niche": "nội trợ, mẹo bếp",
+      "contract_file": "docs/legal/mau-hop-dong-koc-NHAP.md",
+      "contract_status": "NHAP_MAU"
+    },
+    {
+      "code": "KOC-MAU-03",
+      "platform": "tiktok",
+      "niche": "review quà Tết",
+      "contract_file": "tests/fixtures/mkt/hop-dong-koc-thieu-MAU.md",
+      "contract_status": "NHAP_MAU"
+    }
+  ]
+}

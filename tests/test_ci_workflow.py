@@ -59,14 +59,14 @@ def test_deterministic_suites_are_guardrail_and_co_khi():
     """v4.5i: --deterministic (job test, mỗi push) chạy đúng suite active
     có runner tất định (guardrail + co_khi; gộp M31 đợt 4 thêm mkt02 +
     sales_director — đều luật, 0 LLM; gộp v6.2 thêm mkt03 — provider ảnh
-    giả); chatbot (RAG/LLM thật) + 10 khung skeleton KHÔNG chạy."""
+    giả; v6.4 thêm mkt_ads_ugc — hàm thuần); chatbot (RAG/LLM thật) + 10 khung skeleton KHÔNG chạy."""
     import sys
     sys.path.insert(0, str(ROOT / "scripts"))
     import agent_eval as ae
 
     det = {n for n in ae.suite_names() if ae._deterministic(ae.load_suite(n))}
     assert det == {"guardrail", "co_khi", "mkt02", "mkt03", "sales_director",
-                   "kd_a1"}
+                   "kd_a1", "mkt_ads_ugc"}
     assert not ae._deterministic(ae.load_suite("chatbot"))
     skel = [n for n in ae.suite_names()
             if ae.load_suite(n)["status"] == "skeleton"]
@@ -74,7 +74,8 @@ def test_deterministic_suites_are_guardrail_and_co_khi():
         ae._deterministic(ae.load_suite(n)) for n in skel)
     ci = CI.read_text(encoding="utf-8")
     assert "guardrail + co_khi" in ci and "mkt02 + sales_director" in ci \
-        and "+ kd_a1 — v4.5i/v5.1" in ci and "+ mkt03 — gộp v6.2" in ci
+        and "+ kd_a1 — v4.5i/v5.1" in ci and "+ mkt03 — gộp v6.2" in ci \
+        and "+ mkt_ads_ugc — v6.4" in ci
 
 
 def test_test_job_has_no_secrets(doc):

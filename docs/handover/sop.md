@@ -35,6 +35,7 @@ khác.
 | Backup DB + data | xem mục 6 |
 | Đối chiếu danh mục dữ liệu | `python scripts/data_audit.py` → cập nhật `docs/phu-luc-a.md` khi data đổi |
 | Lịch mùa vụ + brief + bản tin Marketing (v6.0) | sáng thứ Hai: `python -m agents.mkt_director --briefs` rồi `--bulletin` → `data/reports/mkt-week-<thứ Hai>.md` — xem mục 5k |
+| Review sàn/UGC + kết quả ads thử nghiệm (v6.4) | thứ Hai: xuất file review Seller Center → `python -m agents.mkt_ugc --reviews FILE.csv --channel shopee --by "<tên>"`; phiếu ads đang chạy → `python -m agents.mkt_ads --results FILE.csv --plan-id N --by "<tên>"` — NHÁP, người duyệt rồi làm tay — xem mục 5n |
 | Bản tin vùng trồng (v9.3) | `python -m agents.garden_director --bulletin` → `data/reports/garden-week-<ngày>.md` — BẢN NHÁP cho GĐ vùng trồng |
 | Kiểm hash chain nhật ký vườn | `python -m agents.garden_director --verify` (exit 0 = nguyên vẹn; 1 = có dòng bị sửa/xóa — xem mục 7) |
 
@@ -1207,6 +1208,92 @@ CR. `--eval` chạy bộ MẪU dev (không phải nghiệm thu).
 
 Exit chung: 0 ok · 1 bị từ chối (chưa duyệt / lệch hash / CSV lỗi /
 cảnh báo) · 2 tham số sai hoặc DB down.
+
+## 5n. Ads thử nghiệm / kit KOC / UGC (v6.4 — agent KHÔNG chi tiền, KHÔNG đăng, KHÔNG liên hệ)
+
+Ba agent MKT-05/06/07 chỉ lập NHÁP vào hàng duyệt chung. Cài chiến dịch
+quảng cáo, gửi kit cho KOC, trả lời review/bình luận, nhắn khách xin phép
+= NGƯỜI làm tay SAU khi duyệt. Không agent nào gọi API quảng cáo (Meta/
+TikTok/Shopee Ads), API sàn hay MXH (tài khoản + API là external-dep).
+
+**Ánh xạ chính sách kênh → readiness** (golden + view `sku_readiness`):
+offline_only = rượu (xét TRƯỚC readiness, kể cả golden ghi nhầm kênh) ·
+listing_only = `MO_TA` (TPBVSK chưa XNQC — chỉ mô tả, không ads) · CAM =
+kênh ngoài `allowed_channels` / thực phẩm chưa tự công bố / SKU lạ ·
+online_ok = `TP_THUONG` | `QC_DAY_DU`. Hiện golden thật CHƯA có SKU nào
+online_ok → mọi phiếu thật đều bị chặn tới khi hồ sơ (tự công bố/XNQC) đủ.
+
+**Phiếu thử nghiệm ads (MKT-05):**
+1. Soạn file JSON (mẫu `tests/fixtures/mkt/ads_plan_mat_ong_MAU.json`):
+   SKU, kênh, giả thuyết, 1–3 id bài `content_drafts` ĐÃ DUYỆT loại
+   ads/image, ngân sách, ngày bắt đầu/kết thúc (≤ 30 ngày, không trước hôm
+   nay), chỉ số thành công (`ctr|cpc|cpa|don_hang`, `>=|<=`), điều kiện dừng.
+2. Thử: `python -m agents.mkt_ads --plan FILE.json --by "<tên>" --month
+   YYYY-MM --dry-run` (tháng P&L tham chiếu trần — mặc định tháng trước).
+3. Lập: bỏ `--dry-run` → 1 dòng `ad_test_plans` + 2 mục risk high cùng
+   `adtest-<id>`: `marketing/ad_campaign` (GĐ Marketing) và
+   `finance/budget_change` (khối finance — vai trò `tgd` tạm thay GĐ tài
+   chính). Chạy lại cùng file → không tạo phiếu thứ 2.
+4. Duyệt (người ≠ người lập): `python -m pipelines.approval_queue --approve
+   <QID> --by "<tên>"` cho CẢ 2 mục. `python -m agents.mkt_ads --status <ID>`
+   → `da_duyet` chỉ khi đủ 2 → Quản lý MXH cài tay đúng ngân sách phiếu.
+5. Hết đợt: xuất file kết quả từ trình quản lý quảng cáo (cột GIẢ ĐỊNH
+   `ngay,bien_the,hien_thi,click,chi_phi_vnd,don_hang` — `bien_the` = id
+   draft) → `python -m agents.mkt_ads --results FILE.csv --plan-id N --by
+   "<tên>"` → 1 mục ĐỀ XUẤT `dung` | `dat_muc_tieu` | `tiep` |
+   `chua_du_lieu` (cờ "CHI VƯỢT PHIẾU" khi chi > ngân sách). Không có nhánh
+   nâng ngân sách — muốn chi thêm phải lập phiếu mới qua trần.
+
+| Mã từ chối | Nghĩa | Làm gì |
+|---|---|---|
+| `ADS_INPUT` | file/field sai, ngày quá khứ, > 30 ngày, metric lạ, giả thuyết vi phạm guardrail | sửa file |
+| `ADS_OFFLINE_ONLY` | SKU rượu | không quảng cáo online — không có ngoại lệ |
+| `ADS_LISTING_ONLY` | TPBVSK chưa XNQC (`MO_TA`) | chờ Pháp chế có XNQC |
+| `ADS_CAM` | kênh chưa mở / thực phẩm chưa tự công bố / SKU lạ | cập nhật golden qua Sản xuất/Pháp chế |
+| `ADS_XNQC_DOSSIER` | TPBVSK QC_DAY_DU nhưng sổ `xnqc_dossiers` không có hồ sơ `da_cap` còn hạn | Pháp chế cập nhật sổ (`agents.xnqc`) |
+| `ADS_CREATIVE_UNAPPROVED` | bài chưa duyệt / khác SKU / sai loại / lệch bản duyệt / thiếu nhãn quảng cáo-AI | duyệt bài qua hàng nội dung (mục 4) |
+| `ADS_NO_CAP` | `agents.fp_ads` không có trần cho SKU × kênh (thiếu giá vốn duyệt, dưới ngưỡng biên, kênh ngoài cấu hình ads) | mục 5l |
+| `ADS_OVER_CAP` | ngân sách + đã phân bổ (phiếu khác cùng SKU × kênh, cùng tháng P&L tham chiếu hoặc chạm cùng tháng lịch, chưa từ chối/hết hạn) > trần FP&A — chẻ nhiều phiếu nhỏ không lách được | giảm ngân sách phiếu, hoặc chờ phiếu cũ bị từ chối/hết hạn |
+| `ADS_PLAN_NOT_APPROVED` | nạp kết quả khi phiếu chưa duyệt đủ 2 mục | duyệt trước |
+
+**Kit KOC/affiliate (MKT-06):**
+1. `python -m agents.mkt_koc --list` — KOC MẪU (`KOC-MAU-xx`, không phải
+   người thật) + kết quả kiểm hợp đồng.
+2. `python -m agents.mkt_koc --kit --koc KOC-MAU-01 --sku <sku> --draft-ids
+   <id,id> --by "<tên>" [--dry-run]` → mục `marketing/koc_brief`. Kit =
+   nguyên văn bài đã duyệt + điểm được/không được nói + câu khuyến cáo
+   (TPBVSK) + nhãn `#quangcao` (+ nhãn AI) + link/mã affiliate
+   PLACEHOLDER (chưa phải link thật) + sha256 hợp đồng. Chặn:
+   `KIT_OFFLINE_ONLY`, `KIT_LISTING_ONLY`, `KIT_CAM`,
+   `KIT_CREATIVE_UNAPPROVED`, `KIT_CONTRACT` (hợp đồng thiếu điều khoản —
+   in mã điều khoản), `KIT_GUARDRAIL`.
+3. GĐ Marketing duyệt → `python -m agents.mkt_koc --release <QID> --by
+   "<tên>"` → `data/reports/koc-kit-<KOC>-<QID>.md` (đúng bản đã duyệt).
+   Hợp đồng bị sửa sau khi lập kit → `KIT_CONTRACT_CHANGED`, lập kit lại.
+   Người phụ trách gửi file cho KOC TAY. Hợp đồng mẫu đạt `contract_check`
+   ≠ đã ký/đã rà luật sư.
+
+**Review/UGC (MKT-07):**
+1. Review sàn: `python -m agents.mkt_ugc --reviews FILE.csv --channel
+   shopee|tiktok --by "<tên>" [--dry-run]` (cần `INTEL_HASH_SALT`; cột
+   người mua/ảnh/mã đơn bị bỏ khi đọc; cột lạ → chặn cả file). Bình luận
+   kênh sở hữu: `python -m agents.mkt_ugc --mentions --since YYYY-MM-DD
+   --by "<tên>"` (chỉ nhãn v7.2 — DPIA chưa ký nên không có nội dung).
+2. Mỗi review được phân lớp khen/chê/khiếu nại/hỏi giá/claim sức khỏe/rượu
+   → mục `ugc_reply` (risk medium) chứa câu ĐỀ XUẤT theo template
+   (`data/ugc_rules.json` + câu sức khỏe/rượu của `data/channels.json`).
+   Câu trả lời KHÔNG lặp lại bệnh/công dụng khách nói (`UGC_ECHO` chặn).
+   Duyệt rồi người phụ trách đăng tay trên Seller Center/kênh.
+3. Xin phép dùng lại: `python -m agents.mkt_ugc --reuse-request <ugc-REF>
+   --by "<tên>"` → nháp tin `xin_phep` (CHƯA GỬI). Khách đồng ý → ghi
+   consent `marketing` (`python -m ingest.crm --consent ...`, mục 5g) →
+   `python -m agents.mkt_ugc --reuse <ugc-REF> --contact-id N --by "<tên>"`
+   → mục `ugc_reuse` (risk high). Không consent/đã rút → `UGC_NO_CONSENT`;
+   review sức khỏe/rượu → `UGC_SENSITIVE` (không bao giờ tái sử dụng);
+   REF lạ → `UGC_UNKNOWN_REF`.
+
+Exit chung: 0 ok/skip · 1 bị chặn (in mã) / cấu hình / DB lỗi · 2 tham số
+sai hoặc DB down.
 
 ## 6. Backup + diễn tập khôi phục (v3.6)
 

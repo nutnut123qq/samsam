@@ -1,0 +1,57 @@
+# v6.4 W64.8 full pytest vong 2 (vong 1: 3 failed flake qr_trace token bat dau '-') — 2026-10-13T02:09:22+07:00
+__________________ test_bulletin_numbers_match_reference_sql __________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v64) at 0x209c078df40>
+
+    def test_bulletin_numbers_match_reference_sql(db):
+        _bulletin_fixture(db)
+        text = gd.build_bulletin(db, "2026-10-12", 7, SCHED)
+        sqls = _sql_blocks(text)
+        assert len(sqls) == 9                     # 2+1+3+1+1+1
+        assert db.execute(sqls[0]).fetchall() == [] and _verify(db) == []
+        n_chain = db.execute(sqls[1]).fetchone()[0]
+        assert f"OK \u2014 {n_chain} nh\u1eadt k\xfd \u0111\xe3 chain" in text
+        n_sp, n_sl = db.execute(sqls[2]).fetchone()
+        assert f"{n_sp} kho\u1ea3nh m\u1eabu, {n_sl} nh\u1eadt k\xfd m\u1eabu" in text
+        plots = [r[0] for r in db.execute(sqls[3])]
+        last_any = dict(db.execute(sqls[4]).fetchall())
+        last_by = {(p, a): t for p, a, t in db.execute(sqls[5])}
+        end = datetime(2026, 10, 13, tzinfo=gd.VN_TZ)
+        rems = gd.reminders(plots, last_any, last_by, SCHED, end)
+        assert rems
+        for r in rems:
+            assert f"- {gd.fmt_reminder(r)}" in text
+        rows4 = db.execute(sqls[6]).fetchall()
+        assert rows4
+        for p, mau, that in rows4:
+            assert f"| {p} | {that} | {mau} |" in text
+        flagged = [r for r in db.execute(sqls[7]) if gd.log_flags(r[4])]
+        assert [f"#{r[0]} " in text for r in flagged] == [True] * len(flagged)
+>       assert db.execute(sqls[8]).fetchall() == [("KV-A01", 1)]
+E       AssertionError: assert [] == [('KV-A01', 1)]
+E         
+E         Right contains one more item: ('KV-A01', 1)
+E         Use -v to get more diff
+
+tests\test_garden_director.py:329: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_ci_workflow.py::test_deterministic_suites_are_guardrail_and_co_khi
+FAILED tests/test_dr_drill.py::test_zz_no_dr_container_left - AssertionError:...
+FAILED tests/test_garden_director.py::test_bulletin_numbers_match_reference_sql
+3 failed, 3634 passed in 3769.82s (1:02:49)
+exit=1
+
+## sau vong 2: va test_ci_workflow (mkt_ads_ugc vao DETERMINISTIC_RUNNERS la chu dich W64.6) — 2026-10-13T03:15:03+07:00
+7 passed in 0.88s
+exit=0
+## 2 do con lai KHONG thuoc diff v6.4:
+- test_dr_drill::test_zz_no_dr_container_left = moi truong docker (container samsam-dr-* cua worktree khac chay song song)
+- test_garden_director::test_bulletin_numbers_match_reference_sql = time-bomb wall-clock co san: garden_media.created_at=now() (2026-10-13) ngoai ky co dinh ket thuc 2026-10-13 00:00 VN; tai hien doc lap:
+1 failed in 6.36s
+- vong 1 (log v64_pytest_vong1.log) co 1 do flake qr_trace: secrets.token_urlsafe bat dau '-' -> argparse '--code -x' exit 2 (ty le 1/64), test_qr_trace.py chay doc lap 86 passed
+== vá nghiệm thu 2026-10-13: full pytest vòng 3
+FAILED tests/test_fp_pnl.py::test_schema_no_alter_drop_table - AssertionError...
+1 failed, 3639 passed in 1566.80s (0:26:06)
+== vá: bỏ 'alter table' (test_schema_no_alter_drop_table cấm alter sau v9.1; bảng v6.4 chưa ship → cột nằm trong create table)
+[done] schema applied — 67 bảng publ
+88 passed in 30.67s
