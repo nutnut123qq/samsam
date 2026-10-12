@@ -6,6 +6,328 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+## Checklist v6.5-do-luong-seo
+
+Khán giả/mục đích: M31 (worktree `D:\code\samsam-w70`) — làm phần MKT-09/
+MKT-10/MKT-11 của WP08 "Marketing, content và media AI" (pmo.md dòng `| WP08`;
+tiêu chí nghiệm thu liên quan: **"Pilot đo được tỷ lệ bị trả lại và thời gian
+duyệt"**, "Không agent nào có quyền chi tiền hay đăng bài"). Nền ai-infra đã
+gộp: `agents/report.py` (báo cáo định kỳ, mục 5 hiện là placeholder "Social
+metrics — chờ bàn giao"), `pipelines/period.py` (`rolling_bounds`/
+`period_bounds` giờ VN), `pipelines/cockpit.py` + `data/metrics.json` +
+`channel_snapshots` (v8.0, `approval_times`, `last_closed_ref`,
+`collect_internal`), `content_drafts` (`created_at`/`status`/`reviewed_at`/
+`created_by`/`content_type`/`channel`/`guardrail` jsonb — duyệt qua function
+`approve_draft`/`reject_draft`), `approval_queue` khối `marketing`
+(`data/directors/marketing.json`, `pipelines/director.submit`), `market_rows`/
+`market_snapshots` (v3.3, kênh `shopee|tiktok`, `export_kind='listing'`),
+`trends_related` (v7.2, `seed`/`section`/`query`/`value`/`flags` có `ruou`),
+listing v6.1 (`pipelines/content.precheck`/`_with_required`/`_existing`,
+`data/listing_rules.json` title_max/keywords_max GIẢ ĐỊNH, unique index
+`content_drafts_listing_key_idx` (sku, channel, prompt_version) khi
+`content_type='listing'` và chưa rejected), collector v7.0
+(`crawler/intel.Fetcher`: robots.txt, ≥1s/host, ngân sách request, chặn
+HARD_BLOCK, CHỈ GET), dữ liệu đã crawl website công ty `data/{products,
+articles,news,about}.jsonl` (crawler/collect.py — chỉ có title/name/body/url/
+images, KHÔNG có HTML thô/meta/H1/alt). Sau version: (1) mục 5 của báo cáo
+định kỳ thành **"5. Marketing"** — tỷ lệ trả lại + thời gian duyệt trung vị/
+p90 + nháp theo agent + vi phạm guardrail theo code + hiệu quả kênh từ
+`channel_snapshots`, mọi số do code tính; (2) `agents/seo_web.py` (MKT-10) rà
+SEO 2 website CỦA CÔNG TY chỉ đọc → báo cáo + nháp đề xuất sửa vào hàng duyệt
+khối marketing; (3) `agents/seo_san.py` (MKT-11) gợi ý từ khóa tiêu đề listing
+sàn từ listing hiện tại + Google Trends xuất tay → nháp listing `pending`
+(v6.1 flow), không sửa sàn; (4) suite eval tất định `mkt_seo`.
+
+Quy ước: ponytail — stdlib + `psycopg` + `bs4` (đã có, crawler dùng) + tái dùng
+module sẵn có; KHÔNG dep mới, KHÔNG bảng mới (`docs/schema.sql`/
+`docs/roles.sql` KHÔNG đổi → `kien-truc.md` "66 bảng public" giữ nguyên),
+KHÔNG http client mới (mọi request mạng đi qua `crawler.intel.Fetcher`),
+KHÔNG LLM ở cả 3 phần (0 import `llm_gateway`/`openai`/`guardrail_llm` trong
+file mới/sửa). **Định nghĩa đo (chốt TRƯỚC khi code):** tỷ lệ trả lại =
+`rejected / (approved + rejected)` trên nháp có quyết định trong kỳ (theo
+`reviewed_at` với `content_drafts`, `decided_at` với `approval_queue` khối
+`marketing`; `pending` KHÔNG vào mẫu số, in riêng; `expired` của hàng chờ đếm
+riêng, không phải "trả lại"); mẫu số 0 → "—" (không in 0%). Thời gian duyệt =
+giờ `created_at → reviewed_at|decided_at`; trung vị = `statistics.median`,
+p90 = nearest-rank (`sorted(h)[ceil(0.9*n)-1]`), làm tròn 1 chữ số; n=0 →
+`None` → "[chưa có dữ liệu]" (thiếu số ≠ 0 giờ); `reviewed_at` null / âm
+(< created_at) → loại khỏi mẫu + đếm `bad_ts`. Kỳ báo cáo = kỳ của
+`agents.report` (`rolling_bounds`, giờ VN, `until` tham số); hiệu quả kênh =
+tuần ISO ĐÃ ĐÓNG gần nhất tính từ `until` (`cockpit.last_closed_ref("week",
+now=until_excl)`), ghi rõ nhãn `YYYY-Www`. Print tiếng Việt → UTF-8 guard;
+connect qua `ingest.lead_store.connect` (connect_timeout); CLI nhiều op →
+`n_ops > 1` usage exit 2 TRƯỚC connect (gotcha v2.2); ghi trên conn chia sẻ →
+`conn.commit()` tường minh (gotcha v2.1 — `director.submit`/`store.save_draft`
+đã làm); `__main__` bọc `pipelines.job_runs.job_run(...)`; file báo cáo mới
+ghi `data/reports/` (đã gitignore) bằng `agents.report.write_report` (atomic,
+BYTES). Test DB thật: fixture schema tạm + `docs/schema.sql` +
+`docs/roles.sql` rồi ROLLBACK (như `tests/test_cockpit.py::db`), mốc thời gian
+quá khứ chèn trực tiếp bằng superuser (`set local session_replication_role =
+replica` khi cần), code gọi `conn.commit()` → bọc `_TxConn` (precedent
+`tests/test_auth_approval.py`); test skip khi không DB nhưng gate đòi **0
+skipped** ở file mới. KHÔNG ghi `approval_queue`/`content_drafts` trên DB thật
+ngoài test rollback (CLI trên DB thật chỉ `--dry-run`/case âm). Test không
+wall-clock (Fetcher tiêm `sleep`/`clock`/`transport`).
+
+External-dep (KHÔNG giả lập như thật, KHÔNG tự đánh dấu): Search Console/GA4
+(số hiển thị/click/xếp hạng thật — báo cáo ghi "chờ bàn giao"); số reach/
+engagement/đơn THẬT từ kênh (version này chỉ fixture MẪU nạp qua
+`python -m pipelines.cockpit --import ... --sample` → `source_ref` `sample:`
+→ mục 5 gắn `(MẪU)`); quyền sửa website (agent KHÔNG có đường ghi — người sửa
+trên CMS sau khi duyệt); file listing thật từ Seller Center (test dùng
+fixture `market_rows` tự chèn); file Google Trends thật (fixture
+`trends_related`); giới hạn ký tự sàn thật (`listing_rules.json` vẫn GIẢ
+ĐỊNH); ngưỡng SEO (`data/seo_rules.json` GIẢ ĐỊNH — MKT/SEO chốt); GĐ
+Marketing ký nghiệm thu WP08; người duyệt thật khối marketing (`approvers: []`
+giữ nguyên).
+
+- [x] **W65.1 `pipelines/mkt_metrics.py` — số đo marketing THUẦN + query** —
+  `review_summary(hours) -> {"n", "median_h", "p90_h", "max_h"}` (thuần, định
+  nghĩa đo ở Quy ước; n=0 → 3 giá trị None); `collect(conn, since, until) ->
+  dict` (since/until aware, naive → ValueError TRƯỚC execute) gồm:
+  `drafts` = theo (`channel`, `content_type`) {decided, approved, rejected,
+  pending_end, rate} từ `content_drafts` (`status in ('approved','rejected')`
+  và `reviewed_at` ∈ [since, until)); `drafts_hours` = `review_summary` trên
+  `reviewed_at - created_at` + `bad_ts`; `queue` = cùng phép đo cho
+  `approval_queue` `block='marketing'` theo `object_type` (`decided_at` ∈ kỳ;
+  `expired` đếm riêng); `by_agent` = số nháp TẠO trong kỳ theo `created_by`
+  (null/rỗng → `(không rõ)`) của `content_drafts` + hàng chờ marketing;
+  `guardrail_codes` = đếm `violations[].code` (thiếu code → `type`, vẫn thiếu
+  → `?`) trên snapshot `guardrail` của nháp TẠO trong kỳ (cả 2 nguồn), snapshot
+  không phải dict/violations không phải list → đếm `snapshot_hong`;
+  `channels` = `channel_snapshots` `period_kind='week'`, `period_start` = tuần
+  đã đóng gần nhất trước `until`, metric `social.reach`, `social.engagement`,
+  `sales.orders_completed` theo kênh + cờ `sample` (`source_ref like
+  'sample:%'`) + tỷ lệ tương tác = engagement/reach (code tính, reach 0/thiếu
+  → None). `psycopg.Error` raise lên caller (report quyết degrade).
+  - Boundary: `pipelines/mkt_metrics.py` (mới), `tests/test_mkt_metrics.py`
+    (mới)
+  - Gate: test thuần `review_summary`: [] → None ×3; [5] → 5/5/5; 10 giá trị
+    1..10 → median 5.5, p90 9, max 10; test DB fixture (0 skipped): 3 nháp
+    facebook (2 approved, 1 rejected) + 1 listing shopee rejected + 1 pending
+    → rate facebook 1/3, listing 1/1, pending không vào mẫu; biên giờ VN:
+    `reviewed_at` 2026-10-04T16:59:59Z (= 23:59:59 04/10 VN) TRONG kỳ
+    `rolling_bounds(7, date(2026,10,4))`, 2026-10-04T17:00:00Z NGOÀI; 1 nháp
+    `reviewed_at < created_at` → `bad_ts=1` không vào median; hàng chờ
+    marketing approved/rejected/expired → expired không vào rate; khối khác
+    (`ceo`) không lọt; `guardrail_codes` đếm đúng code từ snapshot cũ chỉ có
+    `type`; `channels` chỉ lấy tuần đã đóng + `sample` đúng; naive datetime →
+    ValueError với 0 execute (fake conn đếm). `grep -nE
+    "llm_gateway|openai|guardrail_llm|chat\(" pipelines/mkt_metrics.py` rỗng
+  - Evidence: `evidence/v65_mkt_metrics.log`
+- [x] **W65.2 Mục 5 "Marketing" trong `agents/report.py` (MKT-09)** —
+  `generate()` gọi `mkt_metrics.collect(conn, since, until_excl)` SAU
+  `collect_db` (không đổi `collect_db`); `psycopg.Error`/conn None →
+  `rep["marketing"] = {"ok": False, "error": ...}` → mục 5 in `[chưa nạp —
+  <err>]`, mục 1–4/6 không bị ảnh hưởng (số đã có trong bộ nhớ), vẫn ghi file
+  exit 0. `render()` thay "## 5. Social metrics" bằng **"## 5. Marketing"**:
+  bảng tỷ lệ trả lại theo kênh × loại (`rejected/decided` + %, "—" khi mẫu số
+  0) + dòng tổng; thời gian duyệt trung vị/p90/max (giờ) + n (+ `bad_ts` nếu
+  >0) cho nháp nội dung và cho hàng chờ khối marketing tách dòng; nháp theo
+  agent; vi phạm guardrail theo code (chỉ CODE + số lần, KHÔNG trích đoạn
+  text vi phạm); hiệu quả kênh tuần `YYYY-Www` (reach/engagement/đơn/tỷ lệ
+  tương tác, `(MẪU)` khi nguồn sample, thiếu → `[chưa có dữ liệu]` không in
+  0); 1 dòng "Search Console/GA4, số kênh thật — chờ bàn giao (external-dep)".
+  Mục 6 "Nguồn dữ liệu" thêm dòng nguồn mục 5 (`content_drafts`,
+  `approval_queue` khối marketing, `channel_snapshots`). Topline CLI thêm
+  `tra-lai=<rejected>/<decided>`. Docstring module cập nhật (không LLM, nguồn
+  mới).
+  - Boundary: `agents/report.py`, `tests/test_report.py` (sửa
+    `test_render_full_sections_and_flags` — FLIP assert "## 5. Social
+    metrics" → "## 5. Marketing"; fake `_Conn` thêm route query marketing;
+    đối chiếu số assert trước/sau, không mất assert cũ),
+    `tests/test_mkt_metrics.py`
+  - Gate: test render với rep marketing cố định → đúng %/giờ/nhãn tuần/
+    `(MẪU)`/"—"; marketing degraded → chỉ mục 5 `[chưa nạp`, mục 1 vẫn có số;
+    test DB fixture end-to-end `generate(until=date(2026,10,4), conn=_TxConn)`
+    → file chứa đúng tỷ lệ + trung vị/p90 tính tay; MỌI số trong mục 5 xuất
+    hiện trong dict `rep["marketing"]` (test parse số trong mục 5 ⊂ giá trị
+    dict). `grep -nE "llm_gateway|openai|guardrail_llm" agents/report.py`
+    rỗng. `python -m agents.report --days 7` trên DB samsam_infra exit 0 (đọc
+    thật, ghi file gitignored) + `git status` không file lạ
+  - Evidence: `evidence/v65_report_mkt.log`
+- [x] **W65.3 `data/metrics.json` metric mới + cockpit chụp** — thêm internal
+  (`channels ["noi_bo"]`, `source` `db:content_drafts`): `content.drafts_
+  rejected` (bản, better `down`, integer), `content.review_hours_median`,
+  `content.review_hours_p90` (giờ, better `down`, không integer); external
+  `social.engagement` (lượt, better `up`, `manual_export`, kênh ⊂ `facebook,
+  youtube, zalo_oa, tiktok_shop, website`). `pipelines/cockpit.
+  collect_internal` ghi 3 metric internal cho kỳ ĐÃ ĐÓNG bằng CÙNG hàm
+  `mkt_metrics` (không SQL thứ 2); n=0 → không ghi 2 metric giờ (thiếu ≠ 0,
+  như `approvals.ceo_hours_*`); lỗi DB → `errors` từng metric, không chết.
+  Tỷ lệ % KHÔNG lưu metric (unit `%` không có trong `cockpit.UNITS`; báo cáo
+  tính từ đếm) — ghi trong `_doc`.
+  - Boundary: `data/metrics.json`, `pipelines/cockpit.py`,
+    `tests/test_cockpit.py` (thêm id vào `REQUIRED`, test collect mới),
+    `tests/test_ceo_report.py` (chỉ nếu cần route/fixture — không nới assert)
+  - Gate: `python -m pipelines.cockpit --metrics` exit 0 in số internal/
+    external tăng đúng; `load_metrics()` OK + id khớp `METRIC_RE`; test DB
+    collect_internal tuần có 2 approved + 1 rejected → `content.drafts_
+    rejected=1`, median/p90 đúng; tuần 0 quyết định → không có row giờ;
+    `agents.ceo_report` build trên fixture vẫn xanh (metric mới hiện
+    `[chưa có dữ liệu]` khi chưa chụp, không crash)
+  - Evidence: `evidence/v65_metrics.log`
+- [x] **W65.4 MKT-10 SEO website công ty — `agents/seo_web.py` (chỉ đọc)** —
+  `data/seo_rules.json` (mới, `_doc` GIẢ ĐỊNH — MKT/SEO chốt): `web.own_hosts`
+  `["samsam.net.vn", "samsamngoclinh.com"]` (khớp host chính xác hoặc đuôi
+  `.`+host), `title_max` 60, `desc_min` 70, `desc_max` 160, `max_requests`
+  mặc định 40 (1..200). Hai chế độ: **`--from-crawl` (mặc định, 0 request)**
+  đọc `data/{products,articles,news,about}.jsonl` (BYTES + split `\n`, dòng
+  hỏng/`_doc` bỏ + đếm): URL ngoài `own_hosts` → bỏ + đếm; tiêu đề nội dung
+  (title/name — ghi rõ KHÔNG phải thẻ `<title>`) thiếu/trùng (NFC casefold
+  strip, trong cùng host)/dài > `title_max`; sản phẩm không có ảnh; nội dung
+  vi phạm `guardrail.check(body)` → URL + danh sách CODE (không trích span);
+  meta/H1/alt/link gãy = "chưa kiểm — cần `--fetch`". **`--fetch
+  [--max-requests N]`**: URL lấy từ chính các jsonl (own_hosts, sort, dedupe)
+  → `crawler.intel.Fetcher(budget=N)` (robots + ≥1s/host + log `[req]`) —
+  KHÔNG import httpx/requests trong module; parse `bs4` `html.parser`:
+  `<title>` thiếu/trùng/dài, meta description thiếu/ngắn/dài/trùng, số H1 ≠
+  1, `<img>` thiếu/rỗng `alt`, link nội bộ (cùng own host) trỏ URL đã GET
+  trong lượt trả 404/410 = gãy, chưa GET = "chưa kiểm" (đếm); trang non-2xx/
+  robots cấm/hết ngân sách → ghi trạng thái, không crash. Output `data/
+  reports/seo-web-<YYYY-MM-DD giờ VN>.md` (ngày từ `now` tham số) gồm bảng
+  vấn đề + đề xuất sửa tất định theo loại ("thêm meta description 70–160 ký
+  tự", "bổ sung alt mô tả ảnh", ...). `--submit` (chỉ khi có vấn đề): 1 mục
+  `approval_queue` qua `director.submit(conn, "marketing", "seo_web_fix",
+  object_id="seo-web:<ngày>:<sha256 payload[:16]>", ..., created_by=
+  "agent:MKT-10")` — payload chỉ URL + code vấn đề + đề xuất (không trích
+  text vi phạm) → guardrail payload ok; trùng pending → `skipped`. Thêm
+  `seo_web_fix` vào `data/directors/marketing.json` `object_types`
+  (`sla_hours` 168, `risk` "medium"). Agent KHÔNG có đường ghi website.
+  - Boundary: `agents/seo_web.py` (mới), `data/seo_rules.json` (mới),
+    `data/directors/marketing.json`, `tests/test_seo_web.py` (mới)
+  - Gate: from-crawl trên fixture jsonl tmp với `Fetcher`/transport bị
+    monkeypatch raise → 0 request, bắt đúng tiêu đề trùng/dài/thiếu + URL
+    ngoài own_hosts bị bỏ + trang có "chữa" → code `banned_word`; fetch với
+    `httpx.MockTransport` + `sleep`/`clock` tiêm: MỌI request method `GET`,
+    request đầu mỗi origin là `/robots.txt`, robots `Disallow` → trang không
+    GET, khoảng bắt đầu 2 request cùng host ≥ 1s (theo clock giả — tổng sleep
+    tiêm, không wall-clock), `--max-requests 3` → ≤3 request, host ngoài
+    own_hosts (kể cả `evilsamsam.net.vn`) → 0 request; HTML mẫu → đúng thiếu
+    meta/H1=0/2 img thiếu alt/1 link gãy 404; submit trên DB fixture → 1 mục
+    `pending` block marketing `guardrail.ok` true, chạy lại → skipped; CLI 2
+    op → exit 2 trước connect. `grep -nE "\.post\(|\.put\(|\.patch\(|\.delete\(
+    |import httpx|import requests|wp-json" agents/seo_web.py` rỗng
+  - Evidence: `evidence/v65_seo_web.log`
+- [x] **W65.5 MKT-11 SEO sàn — `agents/seo_san.py` (gợi ý → nháp listing)** —
+  `suggest(sku, channel, current_title, related, *, rules, listing_rules,
+  readiness=None) -> dict` THUẦN (0 DB/mạng): `content.precheck(sku, channel,
+  "listing", readiness=...)` từ chối (rượu `ruou`, readiness, SKU/kênh lạ) →
+  `{"refused": {...}}` 0 gợi ý; ứng viên = `related` (dòng `trends_related`)
+  có `seed` ∈ `seo_rules.san.default_seeds` ∪ `sku_seeds[sku]`, loại khi
+  `'ruou' in flags` hoặc `kb_filter.is_alcohol(query)`; mỗi từ khóa còn lại
+  giữ CHỈ KHI `guardrail.check_publish(content._with_required(<dòng từ khóa>,
+  ...), channel=ch, content_type="listing", sku=sku)` ok (vd "sâm ngọc linh" bị
+  `ngoc_linh_chua_xac_nhan` loại) — từ khóa bị loại kèm code; xếp tất định
+  (`top` theo value số giảm dần, rồi `rising` Breakout > +% giảm dần, hòa →
+  query); bỏ từ khóa đã có trong tiêu đề (NFC casefold); tiêu đề đề xuất =
+  tiêu đề hiện tại (hoặc tên golden khi chưa có listing / hiện tại vượt
+  `title_max` — ghi lý do) + nối từ khóa (`san.title_sep`) tới khi chạm
+  `title_max` của `listing_rules.json`; danh sách từ khóa ≤ `keywords_max`
+  (gồm `brand_keywords`); toàn văn cuối qua `check_publish` lần nữa — không ok
+  → `failed` + codes, KHÔNG ghi. `run(conn, skus, channels, *, dry_run, now)`:
+  tiêu đề hiện tại từ snapshot `listing` MỚI NHẤT mỗi kênh (`market_rows.
+  sku_key`, row_no nhỏ nhất), `trends_related` của import mới nhất mỗi seed;
+  không dry-run → `store.save_draft(..., source=store.SOURCE_CLI, created_by=
+  "agent:MKT-11", content_type="listing", sku, is_ai=True, prompt_version=
+  "seo-san-v1", prompt_sha256=sha256(seo_rules.json))` — đã có nháp sống
+  (`content._existing`) hoặc `UniqueViolation` → `skipped`. Báo cáo
+  `data/reports/seo-san-<ngày VN>.md`. CLI `--run [--dry-run] [--sku all|K]
+  [--channel shopee|tiktok ...]`. KHÔNG sửa sàn, KHÔNG gọi API sàn, 0 LLM.
+  - Boundary: `agents/seo_san.py` (mới), `data/seo_rules.json` (khóa `san`),
+    `tests/test_seo_san.py` (mới)
+  - Gate: thuần: SKU rượu (golden `category: alcohol`) → refused `ruou`, 0
+    từ khóa; query flag `ruou`/chứa cụm rượu → loại cho MỌI SKU; "sâm ngọc
+    linh" bị loại kèm code; "chữa" trong query → loại; tiêu đề ≤ `title_max`
+    mọi ca (shopee 120/tiktok 255); thứ tự tất định (chạy 2 lần y hệt);
+    keywords ≤ `keywords_max`; toàn văn `check_publish` ok. DB fixture (0
+    skipped): market_snapshots/rows + intel_imports/trends_related chèn tay →
+    `run` tạo nháp `pending` content_type `listing` created_by `agent:MKT-11`,
+    chạy lại → `skipped` (0 dòng mới), `--dry-run` → 0 INSERT; rượu → 0 nháp.
+    `grep -nE "llm_gateway|openai|\.post\(|\.put\(|import httpx|import
+    requests" agents/seo_san.py` rỗng
+  - Evidence: `evidence/v65_seo_san.log`
+- [x] **W65.6 Suite eval tất định `mkt_seo`** — `data/eval/suites/mkt_seo.json`
+  (format suite v4.5: `_doc` "CHƯA ĐƯỢC CÔNG TY DUYỆT", `agent` `mkt_seo`,
+  `owner_block` marketing, `qa_block` data_platform, `runner` `mkt_seo`,
+  `agent_model` `rules`, `judge` null, `frozen` false, `labeled_by` null,
+  `threshold.min_pass_rate` 1.0 + `must_pass_kinds` gồm `trap_alcohol`,
+  `trap_ngoc_linh`, `title_limit`) ≥10 ca: input (sku, channel,
+  current_title, related) → `seo_san.suggest`; kind `keyword_in` /
+  `keyword_out` / `title_limit` / `trap_alcohol` (SKU rượu + query rượu) /
+  `trap_ngoc_linh` / `trap_banned`. `scripts/agent_eval.py`: thêm scorer +
+  runner `mkt_seo` vào `SCORERS`, `RUNNER_SCORERS`, `DETERMINISTIC_RUNNERS`,
+  `NO_TEXT_SCORERS`, `RUNNERS`, validate ca; 0 mạng/LLM/DB. KHÔNG thêm vào
+  `required_agents` (`data/eval/config.json`). `cases_sha256` qua
+  `--print-hash mkt_seo`.
+  - Boundary: `data/eval/suites/mkt_seo.json` (mới), `scripts/agent_eval.py`,
+    `tests/test_agent_eval.py`, `tests/test_qa_harness.py` (sửa "17/17 suite"
+    → "18/18" — luật hiện hành, không nới)
+  - Gate: `python scripts/agent_eval.py --validate` in `[done] 18/18 suite
+    hợp lệ`; `python scripts/agent_eval.py --agent mkt_seo --no-record` pass
+    100% exit 0 (`--agent`/`--deterministic` cùng nhóm loại trừ — chạy
+    `--deterministic --no-record` riêng 1 lần cũng phải gồm `mkt_seo`); test:
+    suite load +
+    validate == [], sửa 1 ca → hash lệch bị bắt, ca `trap_alcohol` mà
+    `suggest` trả từ khóa → FAIL
+  - Evidence: `evidence/v65_eval.log`
+- [x] **W65.7 Docs + bản đồ luồng dữ liệu** — `docs/handover/sop.md` mục mới
+  `## 5n. Đo lường marketing + SEO (v6.5)` (đọc mục 5 báo cáo; định nghĩa tỷ lệ
+  trả lại/p90; `agents.seo_web` from-crawl vs `--fetch` + `--submit`;
+  `agents.seo_san --run --dry-run`; người sửa web/sàn TAY sau duyệt;
+  external-dep); `docs/handover/kien-truc.md` dòng `agents/` thêm `seo_web.py`,
+  `seo_san.py`, `pipelines/mkt_metrics.py` + dòng bảng `channel_snapshots`
+  nhắc metric mới (số bảng "66" KHÔNG đổi); `docs/handover/playbook-mkt.md`
+  thêm việc tuần (đọc mục 5, chạy SEO). `data/data_flow_map.json` thêm luồng
+  `DF-31` "Rà SEO website công ty (v6.5)" modules `["agents/seo_web.py"]`,
+  class `xanh`, `cross_border` false, recipients "website của chính công ty
+  (GET qua collector, robots + ≥1s)", không lưu dữ liệu cá nhân; sinh lại
+  DPIA/TIA bằng `python scripts/dpia_draft.py` (KHÔNG sửa tay).
+  `tests/test_data_flow_map.py`: thêm `agents/seo_web.py` vào
+  `REQUIRED_MODULES`, `agents/seo_san.py` + `pipelines/mkt_metrics.py` vào
+  `NEW_SCRIPTS` (không egress).
+  - Boundary: `docs/handover/sop.md`, `docs/handover/kien-truc.md`,
+    `docs/handover/playbook-mkt.md`, `data/data_flow_map.json`,
+    `docs/legal/DPIA-nhap.md`, `docs/legal/TIA-nhap.md` (sinh),
+    `tests/test_data_flow_map.py`
+  - Gate: `python scripts/dpia_draft.py --check` exit 0; mọi lệnh trong mục
+    5n chạy được với `--help` exit 0 (spot-check 3 lệnh); `tests/
+    test_handover_docs.py` + `tests/test_data_flow_map.py` + `tests/
+    test_dpia_draft.py` xanh; `grep -n "66 bảng" docs/handover/kien-truc.md`
+    còn đúng
+  - Evidence: `evidence/v65_docs.log`
+- [x] **W65.8 Gate chung** [full pytest 3577 pass + 1 đỏ NGOÀI boundary — date-bomb `test_bulletin_numbers_match_reference_sql` (fixture garden_media.created_at=now()), đã vá riêng trên `ai-infra` 19dc153, hết đỏ khi gộp; targeted ×3 xanh, ruff sạch, grep rỗng — evidence/v65_pytest.log] — targeted ×3 (`python -m pytest -q
+  tests/test_mkt_metrics.py tests/test_report.py tests/test_seo_web.py
+  tests/test_seo_san.py tests/test_cockpit.py tests/test_ceo_report.py
+  tests/test_agent_eval.py tests/test_qa_harness.py tests/test_data_flow_map.py
+  tests/test_dpia_draft.py tests/test_handover_docs.py
+  tests/test_connect_timeout_guard.py -rs` — 0 skipped ở file mới, 3 lần
+  liên tiếp xanh); full `python -m pytest -q` CHỈ 1 lần (đọc output tới khi
+  process exit) — xanh, ≥ baseline 3533 + test mới; `ruff check .` sạch;
+  `python -m py_compile` mọi file .py mới/sửa; grep "số do code":
+  `grep -nE "llm_gateway|openai|guardrail_llm"
+  pipelines/mkt_metrics.py agents/report.py agents/seo_web.py
+  agents/seo_san.py` rỗng; grep "không đường ghi":
+  `grep -nE "\.post\(|\.put\(|\.patch\(|import httpx|import requests|wp-json"
+  agents/seo_web.py agents/seo_san.py` rỗng; `git status` chỉ file trong
+  Boundary (không file runtime lạc trong `data/`).
+  - Boundary: (không file mới)
+  - Gate: như trên; số pass/skip ghi vào evidence
+  - Evidence: `evidence/v65_pytest.log`
+
+v6.5 đóng 2026-10-13 (workflow resume từ build, 1 vòng nghiệm thu: 3/3 PASS,
+0 finding mở). Gate coordinator chạy lại: ruff sạch, targeted test file đổi/mới
+xanh, `agent_eval --validate`, `dpia_draft --check`. Ngoài boundary: date-bomb
+garden test vá riêng trên `ai-infra` (19dc153). External-dep: Search Console/GA4,
+số reach/tương tác/đơn thật theo kênh (fixture `(MẪU)`), file listing Seller
+Center + Google Trends export thật, ngưỡng `data/seo_rules.json` + giới hạn ký tự
+`listing_rules.json` chờ MKT/SEO xác nhận, GĐ Marketing ký WP08 + người duyệt khối
+marketing (`approvers: []`). Someday (NIT): tách "tự rút" khỏi tỷ lệ trả lại;
+`channel_week` lọc source=manual_export; report in `created_by` (email nhân viên)
+→ mask khi gửi TGĐ; object_id seo_web chứa ngày → mỗi ngày 1 pending mới; conn
+aborted làm thông điệp mục 5 lệch; test thiếu nhánh submit refused + CLI DB lỗi;
+`_dict_nums` lỏng; escape `|` ô bảng; `is_own` không kiểm port.
+
 Nhánh `ai-infra`: M31 đợt gộp 5 (2026-10-12) — v4.3, v9.1, v8.3, v5.1, v6.2 đã gộp
 (66 bảng; full pytest 3530 pass + 3 đỏ tích hợp đã vá). Tích hợp: mã luồng DF-26
 (v4.3), DF-27 (v9.1), DF-28 (v8.3), DF-29/30 (v5.1) + DPIA/TIA 30 luồng; lô B2B

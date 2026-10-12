@@ -1,0 +1,45 @@
+## W65.2 python -m agents.report --days 7 (DB samsam_infra-env, đọc thật)
+[report] kỳ 2026-10-05 → 2026-10-12 (7 ngày)
+[done] D:\code\samsam-w70\data\reports\report-2026-10-05_2026-10-12.md — đơn=2 doanh-thu=6.180.000 ₫ leads-mới=0 nhật-ký=4 convlog-kỳ=22 tra-lai=0/0
+exit=0
+
+## grep no-LLM agents/report.py
+grep rc=1 (1 = rỗng)
+
+## mục 5 của file vừa sinh
+## 5. Marketing
+
+**Tỷ lệ nháp bị trả lại** (nháp nội dung có quyết định trong kỳ; nháp còn chờ không vào mẫu số):
+
+| Kênh · Loại | Trả lại / Đã quyết | Tỷ lệ trả lại | Còn chờ cuối kỳ |
+|---|---|---|---|
+| facebook · post | 0/0 | — | 1 |
+| **Tổng** | 0/0 | — | 1 |
+
+**Hàng chờ khối marketing** (theo loại việc):
+
+| Loại việc | Trả lại / Đã quyết | Tỷ lệ trả lại | Còn chờ cuối kỳ |
+|---|---|---|---|
+| **Tổng** | 0/0 | — | 0 |
+- Hết hạn không ai duyệt (không tính trả lại): 0
+
+**Thời gian duyệt** (giờ, tạo → quyết định):
+- Nháp nội dung: [chưa có dữ liệu]
+- Hàng chờ khối marketing: [chưa có dữ liệu]
+
+- Nháp tạo trong kỳ theo agent/người: `agent:mkt-test` 1
+- Vi phạm guardrail theo code (nháp tạo trong kỳ): không có
+
+**Hiệu quả kênh — tuần 2026-W41** (số xuất tay `manual_export`):
+
+- [chưa có dữ liệu] — chưa nạp số kênh tuần này (`python -m pipelines.cockpit --import FILE --by ...`)
+- Search Console/GA4, số kênh thật — chờ bàn giao (external-dep).
+
+## 6. Nguồn dữ liệu
+
+## git status --short (không file lạ trong data/)
+ M data/data_flow_map.json
+ M data/directors/marketing.json
+ M data/metrics.json
+?? data/eval/suites/mkt_seo.json
+?? data/seo_rules.json

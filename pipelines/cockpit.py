@@ -28,6 +28,12 @@ Contract:
   - `approval_times` / `summarize_hours`: thời gian duyệt của TGĐ (hàng
     `approval_queue` khối ceo, created_at → decided_at); không có quyết định
     → median/max None (KHÔNG 0).
+  - v6.5 MKT-09: `content.drafts_rejected` + `content.review_hours_median`/
+    `_p90` (nháp `content_drafts` có quyết định trong kỳ, theo
+    `reviewed_at`) tính bằng CÙNG hàm `pipelines.mkt_metrics.
+    draft_decisions` với mục 5 báo cáo định kỳ (không SQL thứ 2); không có
+    quyết định → không ghi 2 metric giờ (thiếu ≠ 0). Tỷ lệ % không lưu
+    metric (UNITS không có %) — báo cáo tính từ đếm.
 
 Chạy:
   python -m pipelines.cockpit --metrics
@@ -56,6 +62,7 @@ import psycopg
 from agents.report import collect_chat
 from connectors.zalo import RETAIN_DAYS as CONVLOG_RETAIN_DAYS
 from ingest.lead_store import CONV_FILES, connect
+from pipelines import mkt_metrics
 from pipelines.director import DirectorConfigError
 from pipelines.director import load_config as load_director
 from pipelines.job_runs import job_run
@@ -90,6 +97,8 @@ _DATE_RE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 _AGENT_KEY = "ai.cost_usd"
 CEO_METRICS = ("approvals.ceo_decided", "approvals.ceo_hours_median",
                "approvals.ceo_hours_max", "approvals.ceo_expired")
+MKT_METRICS = ("content.drafts_rejected", "content.review_hours_median",
+               "content.review_hours_p90")
 
 
 class MetricsError(Exception):
@@ -306,6 +315,22 @@ def collect_internal(conn, kind: str, ref, *, data_dir: Path = DATA_DIR,
                              str(t["max_h"]), src))
         rows.append(_row("approvals.ceo_expired", kind, start, t["expired"],
                          src))
+
+    try:
+        dd = _savepoint(conn, lambda: mkt_metrics.draft_decisions(
+            conn, start, end))
+    except psycopg.Error as e:
+        errors += [f"{m}: {_db_msg(e)[:200]}" for m in MKT_METRICS]
+    else:
+        src = "db:content_drafts"
+        rows.append(_row("content.drafts_rejected", kind, start,
+                         dd["total"]["rejected"], src))
+        h = dd["hours"]
+        if h["median_h"] is not None:   # thiếu số ≠ 0 giờ
+            rows.append(_row("content.review_hours_median", kind, start,
+                             str(h["median_h"]), src))
+            rows.append(_row("content.review_hours_p90", kind, start,
+                             str(h["p90_h"]), src))
 
     chat_ids = ("chatbot.questions", "chatbot.unanswered")
     if start < now - timedelta(days=CONVLOG_RETAIN_DAYS):

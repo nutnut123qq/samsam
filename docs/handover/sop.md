@@ -1208,6 +1208,62 @@ CR. `--eval` chạy bộ MẪU dev (không phải nghiệm thu).
 Exit chung: 0 ok · 1 bị từ chối (chưa duyệt / lệch hash / CSV lỗi /
 cảnh báo) · 2 tham số sai hoặc DB down.
 
+## 5n. Đo lường marketing + SEO (v6.5)
+
+WP08 MKT-09/10/11 — mọi số do code tính (0 LLM); agent KHÔNG sửa website,
+KHÔNG sửa sàn, KHÔNG đăng bài. Người sửa web/sàn làm TAY sau khi GĐ
+Marketing duyệt.
+
+**Đọc mục 5 "Marketing" của báo cáo định kỳ** (`python -m agents.report
+--days 7` → `data/reports/report-<kỳ>.md`, topline `tra-lai=<bị trả
+lại>/<đã quyết>`):
+- **Tỷ lệ trả lại** = nháp bị trả lại / (duyệt + trả lại) trên nháp CÓ quyết
+  định trong kỳ (`content_drafts` theo `reviewed_at`; hàng chờ khối
+  marketing theo `decided_at`). Nháp còn chờ KHÔNG vào mẫu số (cột "Còn chờ
+  cuối kỳ"); mục hết hạn đếm riêng, không phải "trả lại". Mẫu số 0 → "—".
+- **Thời gian duyệt** (giờ, tạo → quyết định): trung vị + p90 (nearest-rank:
+  9/10 nháp được quyết trong ≤ p90 giờ) + lâu nhất. Không có quyết định →
+  `[chưa có dữ liệu]` (không phải 0 giờ); mốc hỏng (duyệt trước lúc tạo)
+  bị loại + đếm.
+- **Vi phạm guardrail theo code** (chỉ code, không trích câu) + **nháp theo
+  agent/người**.
+- **Hiệu quả kênh** = tuần ISO đã đóng gần nhất từ `channel_snapshots`
+  (số xuất tay nạp bằng `python -m pipelines.cockpit --import FILE --by
+  "<người xuất>"`); `(MẪU)` = file mẫu nạp với `--sample`. Search Console/
+  GA4 và số kênh thật: **chờ bàn giao (external-dep)**.
+- Cockpit chụp thêm `content.drafts_rejected`, `content.review_hours_median`
+  / `_p90` (cùng hàm `pipelines/mkt_metrics.py`) khi chạy `python -m
+  pipelines.cockpit --collect`.
+
+**Rà SEO website công ty (MKT-10, chỉ đọc):**
+1. `python -m agents.seo_web` (mặc định `--from-crawl`, 0 request): đọc dữ
+   liệu đã crawl (`python -m crawler.collect`) → `data/reports/seo-web-<ngày
+   VN>.md`: tiêu đề nội dung thiếu/trùng/dài, sản phẩm không ảnh, trang/slug
+   vi phạm guardrail (chỉ code). Meta/H1/alt/link gãy = "chưa kiểm".
+2. `python -m agents.seo_web --fetch --max-requests 40` khi cần kiểm HTML:
+   GET qua collector (robots.txt, ≥1s/host, ngân sách 1..200) CHỈ 2 host
+   công ty (`data/seo_rules.json` `web.own_hosts`); redirect ra ngoài bị chặn.
+3. Thêm `--submit` → 1 mục `seo_web_fix` vào hàng chờ khối marketing (SLA
+   168h; payload chỉ URL + code + đề xuất). GĐ Marketing duyệt rồi người
+   quản trị web sửa TAY trên CMS. Chạy lại cùng nội dung → `skipped`.
+
+**Gợi ý từ khóa tiêu đề sàn (MKT-11):**
+1. Nạp file Seller Center (`python -m ingest.market_csv`) + Google Trends
+   xuất tay (`python -m ingest.intel_import`).
+2. `python -m agents.seo_san --run --dry-run` → `data/reports/seo-san-<ngày
+   VN>.md` xem trước (0 ghi DB). Bỏ `--dry-run` → nháp listing `pending`
+   (`prompt_version` `seo-san-v1`, `created_by` `agent:MKT-11`) vào hàng
+   duyệt nội dung; chạy lại → `skipped`. Lọc `--sku K` / `--channel shopee`.
+3. Từ khóa rượu, "Ngọc Linh" (chờ Pháp chế), từ cấm bị loại kèm code; tiêu
+   đề ≤ `title_max` `data/listing_rules.json` (GIẢ ĐỊNH). Người duyệt rồi
+   sửa TAY trên Seller Center — agent không gọi API sàn.
+4. Bộ ca kiểm: `python scripts/agent_eval.py --agent mkt_seo --no-record`.
+
+**External-dep:** Search Console/GA4; số reach/tương tác/đơn thật; quyền sửa
+website; file listing thật; ngưỡng SEO (`data/seo_rules.json` GIẢ ĐỊNH); giới
+hạn ký tự sàn thật; GĐ Marketing ký nghiệm thu WP08; người duyệt khối
+marketing (`approvers: []`).
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):

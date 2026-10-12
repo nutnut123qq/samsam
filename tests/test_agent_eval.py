@@ -4,6 +4,7 @@ scripts/agent_eval.py.
 DB qua fake conn, git qua monkeypatch, RAG qua fake answer — không mạng,
 không LLM, không wall-clock."""
 import contextlib
+import json
 import shutil
 import subprocess
 import sys
@@ -17,7 +18,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import agent_eval as ae
 import eval_qa
 
-from pipelines import guardrail
+from pipelines import guardrail, llm_gateway
 
 SHA = "a" * 40
 EVAL_DIR = ROOT / "data" / "eval"
@@ -524,9 +525,10 @@ def test_runners_single_source_and_same_signature():
     # gộp M31 đợt 4: + mkt02 (v6.1) + sales_director (v5.0) — đều luật;
     # gộp đợt 5: + cskh (v5.1, gateway giả — tất định); gộp v6.2: + mkt03
     # (provider giả eval_stub — tất định).
+    # v6.5: + mkt_seo (seo_san.suggest thuần — tất định).
     assert set(ae.DETERMINISTIC_RUNNERS) == {"guardrail", "co_khi", "mkt02",
                                              "mkt03", "sales_director",
-                                             "cskh"}
+                                             "cskh", "mkt_seo"}
     assert not hasattr(ae, "RULE_AGENTS")
     for name, fn in ae.RUNNERS.items():
         if name == "chatbot":
@@ -960,3 +962,70 @@ def test_validate_sales_director_case(mutate, needle):
     mutate(c)
     errs = ae._validate_case(c, 0, d)
     assert any(needle in e for e in errs), errs
+
+
+# --- v6.5 W65.6 mkt_seo (MKT-11 SEO sàn) ------------------------------------
+
+def test_mkt_seo_suite_loads_validates_not_required():
+    s = ae.load_suite("mkt_seo")
+    assert ae.validate_suite(s, EVAL_DIR / "suites" / "mkt_seo.json") == []
+    assert "CHƯA ĐƯỢC CÔNG TY DUYỆT" in s["_doc"]
+    assert (s["owner_block"], s["qa_block"], s["runner"], s["agent_model"],
+            s["judge"], s["frozen"], s["labeled_by"]) == (
+        "marketing", "data_platform", "mkt_seo", "rules", None, False, None)
+    assert s["threshold"] == {"min_pass_rate": 1.0, "must_pass_kinds": [
+        "trap_alcohol", "trap_ngoc_linh", "trap_banned", "title_limit"]}
+    cases = s["cases"]
+    assert len(cases) >= 10
+    assert {c["kind"] for c in cases} == set(ae.MKT_SEO_KINDS)
+    assert all(c["scorer"] == "mkt_seo" and "text" not in c for c in cases)
+    assert "mkt_seo" not in ae.load_config()["required_agents"]
+
+
+def test_mkt_seo_edited_case_hash_mismatch_refused():
+    d = ae.read_suite("mkt_seo")
+    d["cases"][0]["expect"] = {"present": ["khác"]}
+    assert any("cases_sha256" in e for e in ae.validate_suite(d))
+
+
+def test_mkt_seo_runner_all_pass_zero_llm(env, monkeypatch, capsys):
+    monkeypatch.setattr(llm_gateway, "chat",
+                        lambda *a, **k: pytest.fail("LLM"))
+    _, cases = _rows("mkt_seo")
+    res = ae.run_mkt_seo(cases)
+    assert [(c["id"], d) for c, ok, d in res if not ok] == []
+    assert ae.main(["--agent", "mkt_seo", "--no-record"]) == 0
+    out = capsys.readouterr().out
+    assert f"[done] mkt_seo v1 PASS {len(cases)}/{len(cases)}" in out
+
+
+def test_mkt_seo_trap_alcohol_with_keywords_fails(env, monkeypatch, capsys):
+    """Ca trap_alcohol mà suggest trả từ khóa (agent hỏng) → FAIL."""
+    from agents import seo_san
+
+    real = seo_san.suggest
+
+    def broken(sku, ch, title, related, **kw):
+        out = real("saphraton-20v", ch, title, related, **kw)
+        return {**out, "sku": sku, "keywords": [r["query"] for r in related]}
+
+    monkeypatch.setattr(seo_san, "suggest", broken)
+    assert ae.main(["--agent", "mkt_seo", "--no-record"]) == 1
+    out = capsys.readouterr().out
+    assert "FAIL (trap_alcohol)" in out
+
+
+def test_mkt_seo_case_validation_errors():
+    d = ae.load_suite("mkt_seo")
+    base = d["cases"][0]
+    for mutate, needle in (
+            (lambda c: c.update(kind="x"), "mkt_seo kind"),
+            (lambda c: c.pop("sku"), "thiếu 'sku'"),
+            (lambda c: c.update(related=[{"seed": "a"}]), "related"),
+            (lambda c: c.update(expect={"lạ": 1}), "expect key lạ"),
+            (lambda c: c.update(expect={}), "expect phải object"),
+            (lambda c: c.update(expect={"title_limit": 1}), "title_limit")):
+        c = json.loads(json.dumps(base))
+        mutate(c)
+        errs = ae._validate_case(c, 0, d)
+        assert any(needle in e for e in errs), (needle, errs)

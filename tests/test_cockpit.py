@@ -40,7 +40,10 @@ REQUIRED = {
     "approvals.ceo_hours_median", "approvals.ceo_hours_max",
     "approvals.ceo_expired", "sales.gmv_vnd", "sales.orders_completed",
     "sales.orders_cancelled", "sales.settlement_vnd", "social.followers",
-    "social.reach"}
+    "social.reach",
+    # v6.5 MKT-09 (test collect: tests/test_mkt_metrics.py)
+    "content.drafts_rejected", "content.review_hours_median",
+    "content.review_hours_p90", "social.engagement"}
 EXT_CHANNELS = {"shopee", "tiktok_shop", "facebook", "youtube", "zalo_oa",
                 "website"}
 
@@ -61,6 +64,12 @@ def test_metrics_file_loads():
     assert [k for k, s in m.items() if s.get("per_agent")] == ["ai.cost_usd"]
     assert "không phải doanh thu thực nhận" in m["sales.gmv_vnd"]["name"]
     assert m["sales.orders_cancelled"]["better"] == "down"
+    # v6.5: số đo marketing — giờ không nguyên, tên không chứa chữ số
+    assert m["content.review_hours_p90"]["unit"] == "giờ"
+    assert m["content.review_hours_p90"]["integer"] is False
+    assert m["content.drafts_rejected"]["better"] == "down"
+    assert m["social.engagement"]["kind"] == "external"
+    assert not any(ch.isdigit() for s in m.values() for ch in s["name"])
 
 
 def _metrics_cfg():
