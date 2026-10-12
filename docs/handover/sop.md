@@ -1319,6 +1319,64 @@ tính listing, GĐ bán hàng ký nghiệm thu + gán nhãn suite `kd_a5`.
 
 Exit: 0 ok · 1 cấu hình/CSV lỗi (trước connect) · 2 tham số sai / DB down.
 
+## 5p. Kéo listing/đơn qua API sàn — CHỈ ĐỌC (v10.3, `ingest.market_api`)
+
+**Làm gì:** thay bước xuất file tay ở mục 5b bằng API chính thức của sàn
+(Shopee Open Platform / TikTok Shop API) — dữ liệu đổ vào CÙNG staging
+`market_snapshots`/`market_rows` nên cảnh báo S1/S2 và `--report` của 5b
+chạy y hệt. Module CHỈ có các endpoint ĐỌC (allowlist cứng trong code) —
+không đổi giá/listing/tồn/đơn; quảng cáo vẫn nạp bằng FILE (`ingest.market_csv
+--kind ads`).
+
+```
+python -m ingest.market_api --channel shopee --kind listing
+python -m ingest.market_api --channel tiktok --kind order --days 7   # 1..15 ngày
+python -m ingest.market_csv --report                                  # đọc cảnh báo như 5b
+```
+
+- **Chưa chạy được thật (external-dep):** cần app trên Shopee Partner
+  Center / TikTok Shop Partner Center **chỉ xin quyền đọc** + access token
+  + sandbox để xác minh chữ ký/field. Thiếu bất kỳ biến
+  `SHOPEE_PARTNER_ID/SHOPEE_PARTNER_KEY/SHOPEE_SHOP_ID/SHOPEE_ACCESS_TOKEN`
+  (TikTok: `TIKTOK_APP_KEY/TIKTOK_APP_SECRET/TIKTOK_SHOP_CIPHER/
+  TIKTOK_ACCESS_TOKEN`) → in `[external-dep] thiếu <TÊN BIẾN>`, **exit 2**,
+  0 request, không chạm DB — đây là trạng thái hiện tại, không phải lỗi.
+- Key/token CHỈ để trong `.env` (Quản lý hạ tầng AI giữ); không dán vào
+  chat/ticket. Token hết hạn → lỗi `HTTP 401`/mã lỗi auth → người xoay
+  token (chưa có refresh tự động — xem runbook hạ tầng).
+- Dữ liệu không đổi so với lần trước → `[skip] dữ liệu không đổi`. Lỗi
+  API/dữ liệu → `[err]` (chỉ mã lỗi, không in nội dung response), exit 1,
+  KHÔNG ghi gì.
+- Tên/SĐT/địa chỉ người mua trong response đơn bị bỏ ngay trong bộ nhớ;
+  DB chỉ giữ field như file xuất tay, mã đơn dạng hash.
+
+## 5q. Social listening nhà cung cấp (v10.3, `ingest.social_vendor` — cổng TGĐ)
+
+**Làm gì:** nạp file export của nhà cung cấp social listening (bài/bình
+luận CÔNG KHAI trên MXH/diễn đàn/báo) vào bảng RIÊNG
+`social_mentions_vendor` (không trộn với kênh sở hữu ở 5f). **Hiện đang
+KHÓA:** `data/social_vendor.json` có `"vendor_approved_by_tgd": false` →
+
+```
+python -m ingest.social_vendor --file vendor_export.csv
+# → [blocked] nhà cung cấp chưa được TGĐ duyệt — không nạp (exit 2)
+```
+
+- **Mở khóa (CHỈ người thật):** sau khi có hợp đồng + DPA với nhà cung cấp,
+  Pháp chế xác nhận nguồn thu thập hợp pháp và **TGĐ duyệt**, người phụ
+  trách sửa `data/social_vendor.json`: `vendor_approved_by_tgd` = `true`
+  (boolean, không phải chuỗi), `approval_ref` = mã biên bản duyệt,
+  `vendor_name`. Agent/AI không được sửa file này.
+- Template cột (GIẢ ĐỊNH — chưa có file thật): bắt buộc `thoi_gian,
+  nen_tang (facebook|tiktok|youtube|instagram|forum|news|khac), noi_dung`;
+  tùy chọn `ma_tin, id_tac_gia, loai (post|comment|review)`; cột `ten_tac_gia,
+  link_tac_gia, avatar, so_nguoi_theo_doi, email, sdt, url_bai,
+  cam_xuc_vendor` bị BỎ ngay khi đọc; cột khác → lỗi cả file.
+- Cùng luật dữ liệu cá nhân như 5f: che SĐT/email ngay khi đọc, chỉ lưu
+  nhãn + hash có muối (`INTEL_HASH_SALT`), trích nội dung CHỈ khi
+  `dpia_signed` true. Nạp lại cùng file → `[skip]`; tin trùng giữa 2 file
+  (cùng `ma_tin`) chỉ đếm 1 lần (`new=… dup=…`).
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):
@@ -1446,6 +1504,25 @@ docker compose --env-file .env -f deploy/docker-compose.monitoring.yml down     
 
 Uptime Kuma theo dõi URL production (`/zalo-webhook` HTTPS, Streamlit) là
 external-dep — cần server production.
+
+## 6c. Backend vector của chatbot — float8 | pgvector (v10.3)
+
+Chatbot tìm đoạn KB bằng `RAG_VECTOR_BACKEND` trong `.env`:
+`float8` (mặc định — cosine numpy trên cột `embedding float8[]`) hoặc
+`pgvector` (index HNSW trên cột `embedding_v`). Giá trị khác → lỗi ngay
+(không đoán). Hiện Postgres local/cloud CHƯA có extension pgvector
+(external-dep) → giữ `float8`.
+
+```
+python scripts/apply_schema.py --pgvector     # thiếu extension → [external-dep], exit 3, không đụng gì
+python scripts/vector_eval.py --synthetic 200 --questions   # PHẢI [PASS] trước khi chuyển
+# đặt RAG_VECTOR_BACKEND=pgvector trong .env rồi khởi động lại streamlit/zalo
+```
+
+- Chọn `pgvector` mà DB thiếu cột/extension → chatbot KHÔNG sập: in
+  `[warn]` 1 lần rồi tự dùng float8.
+- Quay lại: đặt `RAG_VECTOR_BACKEND=float8` (cột float8 vẫn còn nguyên,
+  không cần migrate ngược). Chi tiết: `runbook-ha-tang.md`.
 
 ## 7. Xử lý sự cố thường gặp
 

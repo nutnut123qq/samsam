@@ -1,0 +1,123 @@
+# v10.3 W103.8 — gate chung — 2026-10-12T22:16:10+07:00
+# VÒNG 1
+# targeted = tests/test_market_api.py tests/test_rag_backend.py tests/test_vector_eval.py tests/test_social_vendor.py tests/test_apply_schema_pgvector.py tests/test_market_csv.py tests/test_rag.py tests/test_intel_import.py tests/test_store.py tests/test_lead_store.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_handover_docs.py
+$ python -m pytest <targeted 13 file> -q   (lần 1/3)
+........................................................................ [ 83%]
+......................................................................   [100%]
+430 passed in 117.62s (0:01:57)
+exit=0
+$ python -m pytest <targeted 13 file> -q   (lần 2/3)
+........................................................................ [ 83%]
+......................................................................   [100%]
+430 passed in 96.80s (0:01:36)
+exit=0
+$ python -m pytest <targeted 13 file> -q   (lần 3/3)
+........................................................................ [ 83%]
+......................................................................   [100%]
+430 passed in 146.58s (0:02:26)
+exit=0
+
+# VÒNG 2 (sau vá deploy/cloud/README.md) — 2026-10-12T23:01:04+07:00
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile ingest/market_api.py ingest/social_vendor.py scripts/vector_eval.py scripts/apply_schema.py api/rag.py scripts/dr_drill.py
+exit=0
+$ python -m pytest tests/test_connect_timeout_guard.py -q
+2 passed in 3.18s
+exit=0
+$ python scripts/agent_eval.py --deterministic
+[ok] sx_a8 v1 skeleton owner=production qa=production risk=medium 3 ca
+[done] 17/17 suite hợp lệ
+[error] working tree bẩn (hoặc không đọc được git status) — kết quả không gắn được với commit; commit trước hoặc dùng --allow-dirty (ghi '<sha>-dirty', không mở được deploy)
+[error] working tree bẩn (hoặc không đọc được git status) — kết quả không gắn được với commit; commit trước hoặc dùng --allow-dirty (ghi '<sha>-dirty', không mở được deploy)
+[error] working tree bẩn (hoặc không đọc được git status) — kết quả không gắn được với commit; commit trước hoặc dùng --allow-dirty (ghi '<sha>-dirty', không mở được deploy)
+[error] working tree bẩn (hoặc không đọc được git status) — kết quả không gắn được với commit; commit trước hoặc dùng --allow-dirty (ghi '<sha>-dirty', không mở được deploy)
+[error] working tree bẩn (hoặc không đọc được git status) — kết quả không gắn được với commit; commit trước hoặc dùng --allow-dirty (ghi '<sha>-dirty', không mở được deploy)
+[error] working tree bẩn (hoặc không đọc được git status) — kết quả không gắn được với commit; commit trước hoặc dùng --allow-dirty (ghi '<sha>-dirty', không mở được deploy)
+exit=1
+(tree bẩn vì chưa commit → chạy lại với --no-record: chỉ chấm, không ghi eval_runs)
+$ python scripts/agent_eval.py --deterministic --no-record
+[done] 17/17 suite hợp lệ
+[co_khi:ck-f01] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Nhiệt độ buồng co của máy co màng SS-EQ-03 đặt bao nhiêu?"
+[co_khi:ck-f02] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Tốc độ băng tải máy co màng SS-EQ-03 là bao nhiêu mét mỗi phút?"
+[done] co_khi v1 PASS 21/23 pass_rate=0.913 (ngưỡng 0.9) prompt_version=2a0de120b8ba model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối mechanical: chưa cấu hình (external-dep)
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail v2 PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=757372efdabb model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối legal_hr: chưa cấu hình (external-dep)
+[done] kd_a1 v2 PASS 43/43 pass_rate=1.0 (ngưỡng 0.86) prompt_version=b6e1a642dfb1 model=fake_gateway judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] mkt02 v1 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=43569adb57d0 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt03 v1 PASS 15/15 pass_rate=1.0 (ngưỡng 1.0) prompt_version=08d094392738 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] sales_director v1 PASS 26/26 pass_rate=1.0 (ngưỡng 1.0) prompt_version=011acc377380 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+exit=0
+# targeted vòng 2 = 13 file vòng 1 + tests/test_db_backup.py::test_cloud_readme_drift_guard
+$ python -m pytest <targeted vòng 2> -q   (lần 1/3)
+431 passed in 124.06s (0:02:04)
+exit=0
+$ python -m pytest <targeted vòng 2> -q   (lần 2/3)
+................................s..exit=1
+$ python -m pytest <targeted vòng 2> -q   (lần 3/3)
+
+# (lần chạy vòng 2 lần 2/3 ở trên bị NGẮT giữa chừng do hết hạn mức phiên — không phải lỗi test; chạy lại trọn vòng 3)
+# VÒNG 3 — 2026-10-13T01:09:17+07:00
+# targeted = tests/test_market_api.py tests/test_rag_backend.py tests/test_vector_eval.py tests/test_social_vendor.py tests/test_apply_schema_pgvector.py tests/test_market_csv.py tests/test_rag.py tests/test_intel_import.py tests/test_store.py tests/test_lead_store.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_kb_acl.py tests/test_kb_acl_db.py tests/test_db_backup.py::test_cloud_readme_drift_guard tests/test_dr_drill.py
+$ python -m pytest <targeted> -q -rs   (lần 1/3)
+........................................................................ [ 14%]
+........................................................................ [ 28%]
+........................................................................ [ 43%]
+........................................................................ [ 57%]
+........................................................................ [ 72%]
+........................................................................ [ 86%]
+...................................................................      [100%]
+499 passed in 276.37s (0:04:36)
+exit=0
+$ python -m pytest <targeted> -q -rs   (lần 2/3)
+...................................................................      [100%]
+499 passed in 238.21s (0:03:58)
+exit=0
+$ python -m pytest <targeted> -q -rs   (lần 3/3)
+...................................................................      [100%]
+499 passed in 190.05s (0:03:10)
+exit=0
+# VÒNG 3 lệnh nhẹ — 2026-10-13T01:23:09+07:00
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile ingest/market_api.py ingest/social_vendor.py scripts/vector_eval.py scripts/apply_schema.py api/rag.py scripts/dr_drill.py
+exit=0
+$ python -m pytest tests/test_connect_timeout_guard.py -q
+2 passed in 2.64s
+exit=0
+$ python scripts/apply_schema.py (lần 1)
+[done] schema applied — 67 bảng public: agent_action_log
+exit=0
+$ python scripts/apply_schema.py (lần 2)
+[done] schema applied — 67 bảng public: agent_action_log
+exit=0
+$ python scripts/apply_schema.py --pgvector
+[done] schema applied — 67 bảng public: agent_action_log, allocation_proposals, approval_queue, approvals, assets, auto_policies, bom_co
+[external-dep] Postgres chưa cài pgvector — giữ backend float8 (schema.sql đã apply; cài extension cần quyền superuser/nhà cun
+exit=3
+$ python scripts/agent_eval.py --deterministic --no-record  (tree bẩn chưa commit → --no-record)
+[done] 17/17 suite hợp lệ
+[done] co_khi v1 PASS 21/23 pass_rate=0.913 (ngưỡng 0.9) prompt_version=2a0de120b8ba model=rules judge=None
+[done] guardrail v2 PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=757372efdabb model=rules judge=None
+[done] kd_a1 v2 PASS 43/43 pass_rate=1.0 (ngưỡng 0.86) prompt_version=b6e1a642dfb1 model=fake_gateway judge=None
+[done] mkt02 v1 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=43569adb57d0 model=rules judge=None
+[done] mkt03 v1 PASS 15/15 pass_rate=1.0 (ngưỡng 1.0) prompt_version=08d094392738 model=rules judge=None
+[done] sales_director v1 PASS 26/26 pass_rate=1.0 (ngưỡng 1.0) prompt_version=011acc377380 model=rules judge=None
+exit=0
+# VÒNG 3 full pytest: 3670 passed, 1 failed (test_garden_director bom ngày, ngoài boundary — xem evidence/v103_pytest.log)
+# VÒNG 4: fix bom ngày test_garden_director (until từ now() DB) → full pytest 3671 passed exit=0; ruff sạch — xem evidence/v103_pytest.log

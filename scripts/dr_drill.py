@@ -113,14 +113,16 @@ def probe_docker(image: str) -> str | None:
     return None
 
 
-def leftovers() -> list[str]:
+def leftovers(prefix: str = PREFIX) -> list[str]:
+    """Container sót theo tiền tố (mặc định DR; v10.3 vector_eval dùng
+    `samsam-vec-`)."""
     try:
-        r = _docker(["ps", "-a", "--filter", f"name={PREFIX}",
+        r = _docker(["ps", "-a", "--filter", f"name={prefix}",
                      "--format", "{{.Names}}"], timeout=PROBE_TIMEOUT_S)
     except (OSError, subprocess.TimeoutExpired):
         return []
     return [n for n in r.stdout.decode("utf-8", "replace").split()
-            if n.startswith(PREFIX)]
+            if n.startswith(prefix)]
 
 
 def image_volumes(image: str) -> list[str]:

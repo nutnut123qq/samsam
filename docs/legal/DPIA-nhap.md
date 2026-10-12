@@ -151,9 +151,9 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-08 |
-| Module (code) | `ingest/embed_store.py` |
+| Module (code) | `ingest/embed_store.py`; `scripts/vector_eval.py` |
 | Mục đích | Tạo vector tìm kiếm cho chatbot |
-| Dữ liệu | Đoạn văn bản public (sản phẩm, bài viết) đã crawl |
+| Dữ liệu | Đoạn văn bản public (sản phẩm, bài viết) đã crawl; v10.3 `scripts/vector_eval.py --questions` embed 10 câu hỏi kiểm thử CỐ ĐỊNH Q1–Q10 (tests/questions.md — không dữ liệu khách) để so backend float8/pgvector |
 | Lớp | Xanh |
 | Chủ thể | Không có dữ liệu cá nhân |
 | Nơi lưu | Bảng `chunks` |
@@ -578,6 +578,42 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Không xử lý dữ liệu cá nhân |
 | GAP | (không) |
 
+### DF-32 — Connector API sàn chỉ đọc (ingest/market_api.py)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-32 |
+| Module (code) | `ingest/market_api.py` |
+| Mục đích | Đối soát listing/giá với golden + cảnh báo rượu/giá lệch (v3.3) mà không cần MXH xuất file tay |
+| Dữ liệu | Gửi đi: thông tin xác thực app (partner_id/app_key, access token, chữ ký HMAC) + tham số truy vấn (offset/cursor, khoảng thời gian, danh sách mã sản phẩm/mã đơn) — không dữ liệu cá nhân. Nhận về: listing (mã/tên sản phẩm, SKU, giá, tồn, trạng thái) và đơn (mã đơn, trạng thái, dòng hàng) — response đơn CÓ THỂ chứa PII người mua (tên/SĐT/địa chỉ người nhận) chỉ nằm trong RAM của lời gọi và bị bỏ NGAY: chỉ trích field allowlist như market_csv, mã đơn → order_id_hash |
+| Lớp | Đỏ |
+| Chủ thể | Người mua trên Shopee/TikTok Shop (dữ liệu đơn) |
+| Nơi lưu | Bảng `market_snapshots` (file_name `api:<kênh>:<loại>:<giờ>`), `market_rows` (chỉ field allowlist, `order_id_hash`), `market_alerts` — cùng staging v3.3 |
+| Thời hạn lưu | Không giới hạn — GAP (cùng luồng nạp file sàn v3.3) |
+| Bên nhận | Shopee Open Platform (partner.shopeemobile.com) / TikTok Shop API (open-api.tiktokglobalshop.com) — chỉ endpoint ĐỌC; hệ thống chỉ GỬI thông tin xác thực + tham số truy vấn, KHÔNG gửi dữ liệu cá nhân ra ngoài (dữ liệu đơn đi CHIỀU VỀ từ sàn, sàn vốn đang giữ) |
+| Chuyển ra nước ngoài | Không |
+| Biện pháp bảo vệ (có trong code) | Allowlist cứng (kênh, method, path) endpoint đọc — ngoài allowlist từ chối TRƯỚC khi request (test server giả đếm 0); Không theo redirect (3xx = lỗi), base URL chỉ https hoặc localhost (server giả), trần response 10MB + MAX_PAGES; Key/token chỉ ở env — thiếu → exit 2, 0 request; lỗi không in body/URL/token; PII người mua bỏ ngay trong RAM — row chỉ field allowlist, mã đơn hash; đơn shopee chỉ xin item_list |
+| Căn cứ xử lý | Hợp đồng mua bán (thực hiện đơn) — CẦN LUẬT SƯ XÁC NHẬN (cùng luồng nạp file sàn v3.3) |
+| GAP | Chữ ký/endpoint/field theo tài liệu công khai — CHƯA xác minh với sandbox sàn (external-dep: app key + sandbox); Chưa có cơ chế refresh token sàn (token hết hạn → exit lỗi, người xoay token); Chưa có hạn lưu cho dữ liệu đơn sàn (cùng luồng nạp file sàn v3.3) |
+
+### DF-33 — Social listening nhà cung cấp (ingest/social_vendor.py)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-33 |
+| Module (code) | `ingest/social_vendor.py` |
+| Mục đích | Theo dõi thảo luận thị trường về sâm/thương hiệu (nhãn khen/chê/hỏi giá/hỏi sức khỏe/rượu) — chỉ đếm, không liên hệ người đăng |
+| Dữ liệu | File export của nhà cung cấp social listening: thời gian, nền tảng, nội dung bài/bình luận CÔNG KHAI (che SĐT/email ngay khi đọc); cột định danh tác giả (tên, link profile, avatar, email, SĐT, URL bài, số follower) bị BỎ ngay khi đọc; mã tin/ID tác giả chỉ vào hash dedup có muối |
+| Lớp | Vàng |
+| Chủ thể | Người đăng công khai trên MXH/diễn đàn/báo (bên thứ ba, không phải khách đã đồng ý) |
+| Nơi lưu | Bảng `social_mentions_vendor` (không cột định danh tác giả; `excerpt` CHỈ khi DPIA đã ký và tin không nhạy cảm) + meta file ở `intel_imports` (channel `vendor`) |
+| Thời hạn lưu | Chưa có hạn lưu — GAP |
+| Bên nhận | Không gửi ra ngoài (file do nhà cung cấp bàn giao, nạp tay; module không request mạng) |
+| Chuyển ra nước ngoài | Không |
+| Biện pháp bảo vệ (có trong code) | Cổng TGĐ fail-closed: `vendor_approved_by_tgd` phải đúng true + `approval_ref` — chưa duyệt → exit 2, không đọc file, không connect; Bỏ cột định danh tác giả ngay khi đọc; cột lạ → chặn cả file; `msg_hash` sha256 có muối `INTEL_HASH_SALT`; nhãn theo luật (không LLM); Bảng riêng — không trộn vào `social_mentions` kênh sở hữu |
+| Căn cứ xử lý | Lợi ích hợp pháp (nghiên cứu thị trường trên dữ liệu công khai) — CẦN LUẬT SƯ XÁC NHẬN; chưa có DPA với nhà cung cấp: GAP |
+| GAP | Chưa có hợp đồng + DPA với nhà cung cấp và quyết định TGĐ duyệt (external-dep); Chưa xác minh nguồn thu thập hợp pháp của vendor (điều khoản nền tảng, thông báo chủ thể); Chưa có hạn lưu `social_mentions_vendor`; DPIA chưa ký — `excerpt` đang tắt |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -615,6 +651,8 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-29 | Kênh Messenger (Facebook Page) — nhận tin và trả lời khách (v5.1) | Đỏ | cao | có | 4 |
 | DF-30 | Gợi ý trả lời chat sàn Shopee/TikTok — MXH dán tay (v5.1) | Đỏ | cao | có | 2 |
 | DF-31 | Rà SEO website công ty (v6.5) | Xanh | thấp | không | 0 |
+| DF-32 | Connector API sàn chỉ đọc (ingest/market_api.py) | Đỏ | cao | không | 3 |
+| DF-33 | Social listening nhà cung cấp (ingest/social_vendor.py) | Vàng | trung bình | không | 4 |
 
 ## 4. Tổng hợp GAP
 
@@ -667,6 +705,13 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-29] Câu chào + chính sách NHÁP chờ Pháp chế (chung Zalo)
 - [DF-30] Chưa có căn cứ xử lý `staff_assist_dpia_v1` (F03b bước 3) — CẦN LUẬT SƯ XÁC NHẬN trước khi dùng thường xuyên
 - [DF-30] Chưa có trần lượt dán/ngày + thống kê (someday)
+- [DF-32] Chữ ký/endpoint/field theo tài liệu công khai — CHƯA xác minh với sandbox sàn (external-dep: app key + sandbox)
+- [DF-32] Chưa có cơ chế refresh token sàn (token hết hạn → exit lỗi, người xoay token)
+- [DF-32] Chưa có hạn lưu cho dữ liệu đơn sàn (cùng luồng nạp file sàn v3.3)
+- [DF-33] Chưa có hợp đồng + DPA với nhà cung cấp và quyết định TGĐ duyệt (external-dep)
+- [DF-33] Chưa xác minh nguồn thu thập hợp pháp của vendor (điều khoản nền tảng, thông báo chủ thể)
+- [DF-33] Chưa có hạn lưu `social_mentions_vendor`
+- [DF-33] DPIA chưa ký — `excerpt` đang tắt
 
 ## 5. Câu hỏi cho luật sư
 

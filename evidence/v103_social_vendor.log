@@ -1,0 +1,16 @@
+# v10.3 W103.6 — cổng social listening nhà cung cấp trên samsam_v103 — 2026-10-12T22:06:13+07:00
+$ grep -n '"vendor_approved_by_tgd": false' data/social_vendor.json
+3:  "vendor_approved_by_tgd": false,
+$ python -m ingest.social_vendor --file tests/fixtures/social_vendor/vendor_export.csv   (config repo = false)
+[blocked] nhà cung cấp chưa được TGĐ duyệt — không nạp (vendor_approved_by_tgd chưa là true). Cần hợp đồng + DPA + TGĐ duyệt; người thật cập nhật data/social_vendor.json.
+exit=2
+$ grep -n 'insert into social_mentions\b' ingest/social_vendor.py
+grep_rc=1 (1 = rỗng)
+$ python scripts/apply_schema.py (lần 1)
+[done] schema applied — 67 bảng public: ...
+exit=0
+$ python scripts/apply_schema.py (lần 2)
+[done] schema applied — 67 bảng public: ...
+exit=0
+$ select count(*) bảng social_mentions_vendor trên samsam_v103
+(True, 67)

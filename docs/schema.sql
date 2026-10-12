@@ -2961,3 +2961,34 @@ create table if not exists image_assets (
   check (not ai_generated or (label_text like '%Nội dung có sử dụng AI%'
          and model is not null and prompt_sha256 is not null))
 );
+
+-- ============================================================================
+-- v10.3 social listening nhà cung cấp (WP16 nền P2) — `ingest/social_vendor.py`.
+--   * CỔNG TGĐ: module từ chối nạp (exit 2, không đọc file, không connect)
+--     tới khi `data/social_vendor.json` có `vendor_approved_by_tgd: true` +
+--     `approval_ref` — CHỈ người thật đổi sau khi TGĐ duyệt hợp đồng + DPA.
+--   * Bảng RIÊNG (không chèn vào `social_mentions`): `social_mentions` là kênh
+--     SỞ HỮU với check channel/kind cố định; drift-guard cấm `alter ...
+--     constraint` → tách bảng, đồng thời báo cáo kênh sở hữu (`intel_weekly`)
+--     không bị trộn dữ liệu bên thứ ba.
+--   * KHÔNG cột tên/ID/URL/SĐT/email tác giả: `id_tac_gia`/`ma_tin` chỉ vào
+--     vật liệu hash dedup (`msg_hash` sha256 CÓ MUỐI `INTEL_HASH_SALT`, cùng
+--     hàm v7.2); `excerpt` (đã che, ≤200) CHỈ khi DPIA đã ký và tin không
+--     nhạy cảm (cùng luật v7.2). Meta file ở `intel_imports` (kind
+--     `social`, channel `vendor`).
+-- ============================================================================
+
+create table if not exists social_mentions_vendor (
+  id bigint generated always as identity primary key,
+  import_id bigint not null references intel_imports(id),
+  platform text not null check (platform in
+    ('facebook', 'tiktok', 'youtube', 'instagram', 'forum', 'news', 'khac')),
+  kind text not null check (kind in ('post', 'comment', 'review')),
+  posted_at timestamptz not null,
+  msg_hash text not null unique,    -- sha256 có MUỐI (INTEL_HASH_SALT)
+  labels text[] not null check (cardinality(labels) > 0),
+  sensitive boolean not null,       -- true = hỏi sức khỏe
+  excerpt text check (char_length(excerpt) <= 200)
+);
+
+create index if not exists social_mentions_vendor_posted_idx on social_mentions_vendor (posted_at);

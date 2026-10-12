@@ -146,6 +146,7 @@ bảng nào thì dừng, không bật app.
 | `trends_weekly` | A (nạp lại file Google Trends xuất tay) hoặc B | không cột định danh |
 | `trends_related` | A hoặc B | không cột định danh |
 | `social_mentions` | B | chỉ nhãn + hash có muối (+ trích đã che khi DPIA ký) — không cột định danh; GIỮ đúng `INTEL_HASH_SALT` cũ để dedup tiếp |
+| `social_mentions_vendor` | B | (v10.3) social listening nhà cung cấp — chỉ nhãn + hash có muối, không cột định danh tác giả; thường 0 dòng tới khi TGĐ duyệt vendor; cùng `INTEL_HASH_SALT` |
 | `settlement_rows` | A (nạp lại file quyết toán) hoặc B | quyết toán sàn (v9.0) — không cột người mua, mã đơn chỉ hash |
 | `recon_results` | A (`python -m ingest.settlement_csv --reconcile`) hoặc B | nhãn đối soát dựng lại được từ `settlement_rows` + đơn sàn |
 | `invoice_lines` | B | dòng lô hóa đơn NHÁP gắn mục `approval_queue` — dựng lại sẽ lệch lô đã duyệt |

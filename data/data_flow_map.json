@@ -193,9 +193,10 @@
       "id": "DF-08",
       "name": "Embedding KB public",
       "modules": [
-        "ingest/embed_store.py"
+        "ingest/embed_store.py",
+        "scripts/vector_eval.py"
       ],
-      "data": "Đoạn văn bản public (sản phẩm, bài viết) đã crawl",
+      "data": "Đoạn văn bản public (sản phẩm, bài viết) đã crawl; v10.3 `scripts/vector_eval.py --questions` embed 10 câu hỏi kiểm thử CỐ ĐỊNH Q1–Q10 (tests/questions.md — không dữ liệu khách) để so backend float8/pgvector",
       "class": "xanh",
       "subjects": "Không có dữ liệu cá nhân",
       "purpose": "Tạo vector tìm kiếm cho chatbot",
@@ -781,6 +782,61 @@
       ],
       "legal_basis": "Không xử lý dữ liệu cá nhân",
       "gaps": []
+    },
+    {
+      "id": "DF-32",
+      "name": "Connector API sàn chỉ đọc (ingest/market_api.py)",
+      "modules": [
+        "ingest/market_api.py"
+      ],
+      "data": "Gửi đi: thông tin xác thực app (partner_id/app_key, access token, chữ ký HMAC) + tham số truy vấn (offset/cursor, khoảng thời gian, danh sách mã sản phẩm/mã đơn) — không dữ liệu cá nhân. Nhận về: listing (mã/tên sản phẩm, SKU, giá, tồn, trạng thái) và đơn (mã đơn, trạng thái, dòng hàng) — response đơn CÓ THỂ chứa PII người mua (tên/SĐT/địa chỉ người nhận) chỉ nằm trong RAM của lời gọi và bị bỏ NGAY: chỉ trích field allowlist như market_csv, mã đơn → order_id_hash",
+      "class": "do",
+      "subjects": "Người mua trên Shopee/TikTok Shop (dữ liệu đơn)",
+      "purpose": "Đối soát listing/giá với golden + cảnh báo rượu/giá lệch (v3.3) mà không cần MXH xuất file tay",
+      "storage": "Bảng `market_snapshots` (file_name `api:<kênh>:<loại>:<giờ>`), `market_rows` (chỉ field allowlist, `order_id_hash`), `market_alerts` — cùng staging v3.3",
+      "retention": "Không giới hạn — GAP (cùng luồng nạp file sàn v3.3)",
+      "recipients": "Shopee Open Platform (partner.shopeemobile.com) / TikTok Shop API (open-api.tiktokglobalshop.com) — chỉ endpoint ĐỌC; hệ thống chỉ GỬI thông tin xác thực + tham số truy vấn, KHÔNG gửi dữ liệu cá nhân ra ngoài (dữ liệu đơn đi CHIỀU VỀ từ sàn, sàn vốn đang giữ)",
+      "cross_border": false,
+      "safeguards": [
+        "Allowlist cứng (kênh, method, path) endpoint đọc — ngoài allowlist từ chối TRƯỚC khi request (test server giả đếm 0)",
+        "Không theo redirect (3xx = lỗi), base URL chỉ https hoặc localhost (server giả), trần response 10MB + MAX_PAGES",
+        "Key/token chỉ ở env — thiếu → exit 2, 0 request; lỗi không in body/URL/token",
+        "PII người mua bỏ ngay trong RAM — row chỉ field allowlist, mã đơn hash; đơn shopee chỉ xin item_list"
+      ],
+      "legal_basis": "Hợp đồng mua bán (thực hiện đơn) — CẦN LUẬT SƯ XÁC NHẬN (cùng luồng nạp file sàn v3.3)",
+      "gaps": [
+        "Chữ ký/endpoint/field theo tài liệu công khai — CHƯA xác minh với sandbox sàn (external-dep: app key + sandbox)",
+        "Chưa có cơ chế refresh token sàn (token hết hạn → exit lỗi, người xoay token)",
+        "Chưa có hạn lưu cho dữ liệu đơn sàn (cùng luồng nạp file sàn v3.3)"
+      ]
+    },
+    {
+      "id": "DF-33",
+      "name": "Social listening nhà cung cấp (ingest/social_vendor.py)",
+      "modules": [
+        "ingest/social_vendor.py"
+      ],
+      "data": "File export của nhà cung cấp social listening: thời gian, nền tảng, nội dung bài/bình luận CÔNG KHAI (che SĐT/email ngay khi đọc); cột định danh tác giả (tên, link profile, avatar, email, SĐT, URL bài, số follower) bị BỎ ngay khi đọc; mã tin/ID tác giả chỉ vào hash dedup có muối",
+      "class": "vang",
+      "subjects": "Người đăng công khai trên MXH/diễn đàn/báo (bên thứ ba, không phải khách đã đồng ý)",
+      "purpose": "Theo dõi thảo luận thị trường về sâm/thương hiệu (nhãn khen/chê/hỏi giá/hỏi sức khỏe/rượu) — chỉ đếm, không liên hệ người đăng",
+      "storage": "Bảng `social_mentions_vendor` (không cột định danh tác giả; `excerpt` CHỈ khi DPIA đã ký và tin không nhạy cảm) + meta file ở `intel_imports` (channel `vendor`)",
+      "retention": "Chưa có hạn lưu — GAP",
+      "recipients": "Không gửi ra ngoài (file do nhà cung cấp bàn giao, nạp tay; module không request mạng)",
+      "cross_border": false,
+      "safeguards": [
+        "Cổng TGĐ fail-closed: `vendor_approved_by_tgd` phải đúng true + `approval_ref` — chưa duyệt → exit 2, không đọc file, không connect",
+        "Bỏ cột định danh tác giả ngay khi đọc; cột lạ → chặn cả file",
+        "`msg_hash` sha256 có muối `INTEL_HASH_SALT`; nhãn theo luật (không LLM)",
+        "Bảng riêng — không trộn vào `social_mentions` kênh sở hữu"
+      ],
+      "legal_basis": "Lợi ích hợp pháp (nghiên cứu thị trường trên dữ liệu công khai) — CẦN LUẬT SƯ XÁC NHẬN; chưa có DPA với nhà cung cấp: GAP",
+      "gaps": [
+        "Chưa có hợp đồng + DPA với nhà cung cấp và quyết định TGĐ duyệt (external-dep)",
+        "Chưa xác minh nguồn thu thập hợp pháp của vendor (điều khoản nền tảng, thông báo chủ thể)",
+        "Chưa có hạn lưu `social_mentions_vendor`",
+        "DPIA chưa ký — `excerpt` đang tắt"
+      ]
     }
   ]
 }

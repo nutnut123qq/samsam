@@ -1,0 +1,48 @@
+{
+  "_doc": "v10.3 connector API sàn CHỈ ĐỌC (ingest/market_api.py) — ánh xạ trạng thái API → từ vựng trạng thái của file xuất tay v3.3 (data/market_csv_map.json) để cảnh báo/báo cáo v3.3 dùng lại nguyên vẹn. Mã trạng thái API là GIẢ ĐỊNH theo tài liệu công khai Shopee Open Platform v2 / TikTok Shop API 202309 — CHƯA xác minh với sandbox thật (external-dep: app key + sandbox). Status không có trong map giữ NGUYÊN mã API (listing lạ = coi là đang bán, fail-closed như v3.3). File này KHÔNG chứa endpoint — allowlist endpoint đọc hard-code trong code (ALLOWED).",
+  "status_map": {
+    "shopee": {
+      "listing": {
+        "NORMAL": "Đang hoạt động",
+        "UNLIST": "Đã ẩn",
+        "BANNED": "Bị khóa",
+        "SELLER_DELETE": "Đã xóa",
+        "SHOPEE_DELETE": "Vi phạm",
+        "REVIEWING": "Đang duyệt"
+      },
+      "order": {
+        "UNPAID": "Chờ thanh toán",
+        "READY_TO_SHIP": "Chờ lấy hàng",
+        "PROCESSED": "Đã xử lý",
+        "SHIPPED": "Đang giao",
+        "TO_CONFIRM_RECEIVE": "Đã giao",
+        "COMPLETED": "Hoàn thành",
+        "IN_CANCEL": "Đang hủy",
+        "CANCELLED": "Đã hủy",
+        "TO_RETURN": "Trả hàng/Hoàn tiền"
+      }
+    },
+    "tiktok": {
+      "listing": {
+        "ACTIVATE": "Live",
+        "SELLER_DEACTIVATED": "Deactivated",
+        "PLATFORM_DEACTIVATED": "Suspended",
+        "DRAFT": "Draft",
+        "DELETED": "Deleted",
+        "FREEZE": "Frozen",
+        "PENDING": "Pending",
+        "FAILED": "Failed"
+      },
+      "order": {
+        "UNPAID": "Unpaid",
+        "ON_HOLD": "On hold",
+        "AWAITING_SHIPMENT": "Awaiting shipment",
+        "AWAITING_COLLECTION": "Awaiting collection",
+        "IN_TRANSIT": "In transit",
+        "DELIVERED": "Delivered",
+        "COMPLETED": "Completed",
+        "CANCELLED": "Cancelled"
+      }
+    }
+  }
+}

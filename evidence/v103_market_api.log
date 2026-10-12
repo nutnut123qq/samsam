@@ -1,0 +1,19 @@
+# v103 market_api CLI that tren DB worktree (khong key san) — 2026-10-13T01:07:11+07:00
+$ python -m ingest.market_api --channel shopee --kind listing
+[external-dep] thiếu SHOPEE_PARTNER_ID, SHOPEE_PARTNER_KEY, SHOPEE_SHOP_ID, SHOPEE_ACCESS_TOKEN — chưa có app key/token sàn (Partner Center, quyền chỉ đọc); 0 request, không connect DB.
+exit=2
+$ python -m ingest.market_api --channel tiktok --kind order --days 3
+[external-dep] thiếu TIKTOK_APP_KEY, TIKTOK_APP_SECRET, TIKTOK_SHOP_CIPHER, TIKTOK_ACCESS_TOKEN — chưa có app key/token sàn (Partner Center, quyền chỉ đọc); 0 request, không connect DB.
+exit=2
+$ python -m ingest.market_api --channel shopee --kind ads
+usage: python -m ingest.market_api [-h] --channel {shopee,tiktok} --kind
+                                   {listing,order,ads} [--days DAYS]
+python -m ingest.market_api: error: ads chỉ qua file — `ingest.market_csv` (API quảng cáo = external-dep)
+exit=2
+$ python -m ingest.market_api --channel shopee --kind listing --days 3
+usage: python -m ingest.market_api [-h] --channel {shopee,tiktok} --kind
+                                   {listing,order,ads} [--days DAYS]
+python -m ingest.market_api: error: --days chỉ dùng với --kind order
+exit=2
+$ grep -nE "^(import|from) +(httpx|requests)" ingest/market_api.py
+grep exit=1 (1 = rong)

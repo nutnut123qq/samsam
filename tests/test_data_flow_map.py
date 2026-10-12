@@ -28,7 +28,9 @@ NEW_SCRIPTS = {"scripts/review_load.py", "scripts/dpia_draft.py",
                # v6.5 WP08: số đo + gợi ý SEO sàn — KHÔNG gửi gì ra ngoài
                "agents/seo_san.py", "pipelines/mkt_metrics.py",
                # v5.3 KD-A4/A5: agent luật, KHÔNG gửi gì ra ngoài
-               "agents/kd_listing.py", "agents/kd_price.py"}
+               "agents/kd_listing.py", "agents/kd_price.py",
+               # v10.3: cổng vendor nạp FILE — không request mạng
+               "ingest/social_vendor.py"}
 KNOWN_EGRESS = {
     "connectors/zalo.py", "crawler/collect.py", "pipelines/llm_gateway.py",
     "scripts/health_bulletin.py", "scripts/zalo_mock.py",
@@ -50,7 +52,9 @@ REQUIRED_MODULES = [
     # v5.1 CSKH đa kênh
     "connectors/messenger.py", "connectors/channels.py",
     # v6.5 MKT-10 rà SEO website công ty (GET qua collector)
-    "agents/seo_web.py"]
+    "agents/seo_web.py",
+    # v10.3 WP16 nền P2: API sàn chỉ đọc + social listening nhà cung cấp
+    "ingest/market_api.py", "ingest/social_vendor.py"]
 
 
 def _declared(m):
