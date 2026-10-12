@@ -135,7 +135,9 @@ def test_overdue_section_only_codes():
 # ---------- file + CLI không DB ----------
 
 def test_read_ar_errors_name_row_and_field(tmp_path):
-    hdr = AR_FILE.read_bytes().decode("utf-8").split("\n")[0]
+    # rstrip CR: checkout Windows autocrlf → fixture CRLF; ghép thêm cột sau
+    # header phải không dính '\r' (cột 'channel\r,ten_dai_ly').
+    hdr = AR_FILE.read_bytes().decode("utf-8").split("\n")[0].rstrip("\r")
     for body, needle in (
             ("DL-01,doanh_nghiep,thanh_toan,,2026-10-01,,5.000,,",
              "dòng 2: field 'amount_vnd' phải < 0"),
@@ -178,7 +180,7 @@ def test_cli_usage_exit2_before_connect(monkeypatch, argv):
 
 def test_cli_bad_file_exit1_zero_connect(tmp_path, monkeypatch, capsys):
     calls = _no_connect(monkeypatch)
-    hdr = AR_FILE.read_bytes().decode("utf-8").split("\n")[0]
+    hdr = AR_FILE.read_bytes().decode("utf-8").split("\n")[0].rstrip("\r")
     p = tmp_path / "a.csv"
     p.write_bytes((hdr + "\nDL-01,ca_nhan,thanh_toan,,2026-10-01,,5,,\n"
                    "DL 02,ca_nhan,phat_sinh,,2026-10-01,,5,,\n")

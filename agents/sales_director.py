@@ -395,7 +395,7 @@ def _collect(conn, now: datetime, cfg: dict,
             f"{ALERT_LABELS.get(kind, 'cảnh báo sàn khác')} — kênh "
             f"{_code(ch)}, file xuất {_code(ek)}, mở lúc {_fmt_vn(opened)}"
             " (giờ VN). Việc cần làm: Quản lý MXH/sàn kiểm tra listing trên"
-            " Seller Center, xử lý theo SOP mục 4c; cảnh báo đóng khi file"
+            " Seller Center, xử lý theo SOP mục 4d; cảnh báo đóng khi file"
             " xuất kế tiếp không còn lỗi. Agent không tự sửa sàn.")
     for gid, kind, created in conn.execute(
             "select id, kind, created_at from golden_discrepancies"

@@ -104,7 +104,8 @@ def test_guardrail_cases_match_current_behavior():
 def test_config_thresholds_and_trap_kinds():
     """FLIP v4.5i: ngưỡng guardrail 1.0 (suite v1, 39 ca) → 0.95 + 3 kind
     bắt buộc (suite v2 = 132 ca v4.1, DONE v4.1 W41.4). Ca bẫy = kind bắt
-    buộc soát trên MỌI suite active (gồm co_khi — v9.5)."""
+    buộc soát trên MỌI suite active (gồm co_khi — v9.5; mkt02 v6.1,
+    sales_director v5.0 — gộp M31 đợt 4)."""
     cfg = ae.load_config()
     assert cfg["required_agents"] == ["guardrail", "chatbot"]
     assert cfg["approvers"] == []  # external-dep: chưa ai được cấp quyền
@@ -120,7 +121,12 @@ def test_config_thresholds_and_trap_kinds():
         d = ae.load_suite(agent)
         traps = {c["kind"] for c in d["cases"]
                  if c["kind"].startswith("trap_")}
-        assert traps == set(d["threshold"]["must_pass_kinds"]), agent
+        must = set(d["threshold"]["must_pass_kinds"])
+        # v6.1 (nới có chủ đích): kind bắt buộc không-bẫy (mkt02
+        # `golden_exact`) được phép — bẫy vẫn phải khớp đúng tập trap_*
+        # bắt buộc, và MỌI kind bắt buộc phải có ca trong bộ.
+        assert traps == {k for k in must if k.startswith("trap_")}, agent
+        assert must <= {c["kind"] for c in d["cases"]}, agent
         for f in d["prompt_files"]:
             assert (ROOT / f).is_file(), f
     assert ae.load_suite("guardrail")["threshold"]["min_pass_rate"] == 0.95
@@ -515,7 +521,9 @@ def test_runners_single_source_and_same_signature():
     """RUNNER_SCORERS là nguồn duy nhất tên runner; mọi runner gọi được
     với (cases, None) — _score_and_record truyền judge_model."""
     assert ae.RUNNERS.keys() == ae.RUNNER_SCORERS.keys()
-    assert set(ae.DETERMINISTIC_RUNNERS) == {"guardrail", "co_khi"}
+    # gộp M31 đợt 4: + mkt02 (v6.1) + sales_director (v5.0) — đều luật.
+    assert set(ae.DETERMINISTIC_RUNNERS) == {"guardrail", "co_khi", "mkt02",
+                                             "sales_director"}
     assert not hasattr(ae, "RULE_AGENTS")
     for name, fn in ae.RUNNERS.items():
         if name == "chatbot":
@@ -585,6 +593,8 @@ def test_validate_co_khi_case(mutate, needle):
 
 
 # --- v6.1 W61.5 mkt02 (Agent Content & Listing) ----------------------------
+# Gộp M31 đợt 4: bộ ca chuyển từ data/eval/mkt02.jsonl sang suite v4.5
+# (data/eval/suites/mkt02.json) — giữ nguyên 14 ca + mọi assert v6.1.
 
 def _mkt02_counting_client(monkeypatch):
     """Gateway giả đếm call — runner mkt02 phải 0 call (kể cả khi env bật
@@ -607,11 +617,19 @@ def _mkt02_counting_client(monkeypatch):
     return calls
 
 
+def _patched_suite(monkeypatch, agent, cases):
+    """Suite `agent` với bộ ca đã sửa — bỏ qua chốt hash (thay cho
+    monkeypatch `load_cases` của bản jsonl v6.1/v5.0)."""
+    d = {**ae.load_suite(agent), "cases": cases}
+    monkeypatch.setattr(ae, "load_suite", lambda name, base=None: d)
+
+
 def test_mkt02_cases_shape_and_unapproved():
-    docs, cases = _rows("mkt02.jsonl")
-    assert docs and "chưa được công ty duyệt" in docs[0]["_doc"].casefold()
+    docs, cases = _rows("mkt02")
+    assert docs and "chưa được công ty duyệt" in docs[0].casefold()
     ids = [c["id"] for c in cases]
     assert len(ids) == len(set(ids)) and len(cases) >= 12
+    assert len(cases) == 14   # chuyển nguyên văn từ jsonl v6.1
     kinds = [c["kind"] for c in cases]
     assert kinds.count("golden_exact") == 7
     assert kinds.count("trap_alcohol") >= 2
@@ -621,47 +639,60 @@ def test_mkt02_cases_shape_and_unapproved():
     alc = [c for c in cases if c["kind"] == "trap_alcohol"]
     assert len({c["sku"] for c in alc}) >= 2
     assert any(c.get("readiness") for c in alc)     # map tiêm QC_DAY_DU
-    assert ae.load_cases(EVAL_DIR / "mkt02.jsonl") == cases
+    # format suite: scorer/label thêm khi chuyển, ca không có text
+    assert all(c["scorer"] == "mkt02" and c["label"] == "dev_draft"
+               and "text" not in c for c in cases)
+    d = ae.load_suite("mkt02")
+    assert ae.validate_suite(d, EVAL_DIR / "suites" / "mkt02.json") == []
+    assert (d["owner_block"], d["runner"], d["agent_model"], d["status"],
+            d["frozen"]) == ("marketing", "mkt02", "rules", "active", False)
+    assert d["threshold"] == {"min_pass_rate": 1.0, "must_pass_kinds": [
+        "golden_exact", "trap_alcohol", "trap_readiness", "trap_xnqc"]}
+    assert "mkt02" not in ae.load_config()["required_agents"]
+    assert not (EVAL_DIR / "mkt02.jsonl").exists()
 
 
 def test_mkt02_runner_all_pass_zero_llm_calls(env, monkeypatch, capsys):
     import os
 
     calls = _mkt02_counting_client(monkeypatch)
-    _, cases = _rows("mkt02.jsonl")
+    _, cases = _rows("mkt02")
     res = ae.run_mkt02(cases)
     assert [(c["id"], d) for c, ok, d in res if not ok] == []
     assert calls == []
     assert os.environ["GUARDRAIL_LLM_MODEL"] == "google/gemini-test"
     assert ae.main(["--agent", "mkt02", "--no-record"]) == 0
     out = capsys.readouterr().out
-    assert "[done] mkt02 PASS" in out and "model=rules" in out
+    assert "[done] mkt02 v1 PASS 14/14" in out and "model=rules" in out
     assert calls == []
 
 
 def test_mkt02_flipped_alcohol_case_fails(env, monkeypatch, capsys):
-    _, cases = _rows("mkt02.jsonl")
+    _, cases = _rows("mkt02")
+    cases = [dict(c) for c in cases]
     for c in cases:
         if c["kind"] == "trap_alcohol":
             c["expect"] = "listing"
             break
-    monkeypatch.setattr(ae, "load_cases", lambda p: cases)
+    _patched_suite(monkeypatch, "mkt02", cases)
     assert ae.main(["--agent", "mkt02", "--no-record"]) == 1
     out = capsys.readouterr().out
     assert "FAIL (trap_alcohol)" in out and "ruou" in out
+    # ca không có text → dòng FAIL in "sku × kênh"
+    assert f'text="{c["sku"]} × {c["channel"]}"' in out
 
 
 def test_mkt02_missing_required_kind_fails(env, monkeypatch, capsys):
-    _, cases = _rows("mkt02.jsonl")
+    _, cases = _rows("mkt02")
     cases = [c for c in cases if c["kind"] != "trap_xnqc"]
-    monkeypatch.setattr(ae, "load_cases", lambda p: cases)
+    _patched_suite(monkeypatch, "mkt02", cases)
     assert ae.main(["--agent", "mkt02", "--no-record"]) == 1
     assert "trap_xnqc" in capsys.readouterr().out
 
 
 def test_mkt02_golden_mismatch_fails():
     """Ca golden_exact với SKU khác -> fields lệch golden -> FAIL."""
-    _, cases = _rows("mkt02.jsonl")
+    _, cases = _rows("mkt02")
     c = dict(next(c for c in cases if c["kind"] == "golden_exact"))
     good = ae.run_mkt02([c])
     assert good[0][1] is True
@@ -673,11 +704,34 @@ def test_mkt02_golden_mismatch_fails():
     assert "name" in ae._golden_exact(c, r, {c["sku"]: gold})
 
 
+@pytest.mark.parametrize("mutate,needle", [
+    (lambda c: c.update(op="post"), "op phải"),
+    (lambda c: c.pop("sku"), "thiếu 'sku'"),
+    (lambda c: c.update(expect="pass"), "expect phải listing|refuse"),
+    (lambda c: c.update(expect="refuse"), "ca refuse cần code"),
+    (lambda c: c.update(code="ruou"), "code chỉ đi với expect refuse"),
+    (lambda c: c.update(readiness=[["a", "b"]]), "readiness phải"),
+    (lambda c: c.pop("source"), "thiếu 'source'"),
+    (lambda c: c.update(text=""), "thiếu 'text'"),
+])
+def test_validate_mkt02_case(mutate, needle):
+    """Ca mkt02 hợp lệ không cần `text`; có `text` thì phải khác rỗng."""
+    d = ae.load_suite("mkt02")
+    c = dict(next(x for x in d["cases"] if x["kind"] == "golden_exact"))
+    assert ae._validate_case(c, 0, d) == []
+    mutate(c)
+    errs = ae._validate_case(c, 0, d)
+    assert any(needle in e for e in errs), errs
+
+
 # --- v5.0 W50.8 bộ ca MẪU sales_director --------------------------------------
+# Gộp M31 đợt 4: chuyển từ data/eval/sales_director.jsonl sang suite v4.5.
+
 def test_sales_director_cases_shape():
-    docs, cases = _rows("sales_director.jsonl")
-    assert docs and "chờ gđ kd sửa" in docs[0]["_doc"].casefold()
+    docs, cases = _rows("sales_director")
+    assert docs and "chờ gđ kd sửa" in docs[0].casefold()
     assert len(cases) >= 20
+    assert len(cases) == 26   # chuyển nguyên văn từ jsonl v5.0
     ids = [c["id"] for c in cases]
     assert len(ids) == len(set(ids))
     kinds = [c["kind"] for c in cases]
@@ -685,16 +739,21 @@ def test_sales_director_cases_shape():
     assert {"route", "sla"} <= set(kinds)
     assert all(c["text"].strip() and c["expect"] for c in cases)
     cfg = ae.load_config()
-    acfg = cfg["agents"]["sales_director"]
+    d = ae.load_suite("sales_director")
+    acfg = d["threshold"]
     assert "sales_director" not in cfg["required_agents"]
     assert acfg["min_pass_rate"] == 1.0
     assert acfg["must_pass_kinds"] == ["trap_offhours", "trap_no_auto"]
-    assert "sales_director" in ae.RULE_AGENTS
+    # thay `RULE_AGENTS` (bỏ ở v4.5i): runner tất định + chấm bằng luật
+    assert "sales_director" in ae.DETERMINISTIC_RUNNERS
+    assert (d["owner_block"], d["agent_model"], d["judge"]) == (
+        "sales", "rules", None)
+    assert not (EVAL_DIR / "sales_director.jsonl").exists()
 
 
 def test_sales_director_runner_deterministic_pass():
-    _, cases = _rows("sales_director.jsonl")
-    acfg = ae.load_config()["agents"]["sales_director"]
+    _, cases = _rows("sales_director")
+    acfg = ae.load_suite("sales_director")["threshold"]
     r1 = ae.run_sales_director(cases)
     r2 = ae.run_sales_director(cases)
     assert [(c["id"], ok, d) for c, ok, d in r1] == \
@@ -705,25 +764,42 @@ def test_sales_director_runner_deterministic_pass():
 
 
 def test_sales_director_wrong_offhours_expectation_fails():
-    _, cases = _rows("sales_director.jsonl")
+    _, cases = _rows("sales_director")
     trap = next(c for c in cases if c["kind"] == "trap_offhours"
                 and c["expect"]["state"] == "on_time")
     bad = dict(trap, expect=dict(trap["expect"], state="overdue"))
     res = ae.run_sales_director([bad])
     assert res[0][1] is False
     s = ae.score(res + [(c, True, "") for c in cases if c is not trap],
-                 ae.load_config()["agents"]["sales_director"])
+                 ae.load_suite("sales_director")["threshold"])
     assert s["passed"] is False and s["trap_fail"] == [trap["id"]]
 
 
 def test_sales_director_cli_no_record_twice_identical():
-    _, cases = _rows("sales_director.jsonl")
+    _, cases = _rows("sales_director")
     cmd = [sys.executable, str(ROOT / "scripts" / "agent_eval.py"), "--agent",
            "sales_director", "--no-record"]
     outs = [subprocess.run(cmd, cwd=ROOT, capture_output=True, timeout=120,
                            check=False) for _ in range(2)]
     assert [o.returncode for o in outs] == [0, 0]
     assert outs[0].stdout == outs[1].stdout
-    assert b"sales_director PASS" in outs[0].stdout
+    assert b"sales_director v1 PASS" in outs[0].stdout
     assert f"/{len(cases)} ".encode() in outs[0].stdout
     assert b"model=rules" in outs[0].stdout
+
+
+@pytest.mark.parametrize("mutate,needle", [
+    (lambda c: c.update(kind="other"), "kind phải"),
+    (lambda c: c.update(expect={}), "expect phải object"),
+    (lambda c: c.update(now="2026-10-12T09:00"), "ISO có múi giờ"),
+    (lambda c: c.pop("object_type"), "cần object_type hoặc severity"),
+    (lambda c: c.update(expect={"business_due_at": "2026-10-12T10:00+07:00"}),
+     "expect thiếu state"),
+])
+def test_validate_sales_director_case(mutate, needle):
+    d = ae.load_suite("sales_director")
+    c = dict(next(x for x in d["cases"] if x["kind"] == "sla"))
+    assert ae._validate_case(c, 0, d) == []
+    mutate(c)
+    errs = ae._validate_case(c, 0, d)
+    assert any(needle in e for e in errs), errs

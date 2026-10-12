@@ -1,0 +1,408 @@
+{
+  "_doc": "Suite sales_director (tích hợp gộp M31 đợt 4: chuyển NGUYÊN VĂN 26 ca từ bộ jsonl v5.0 data/eval/sales_director.jsonl; thêm field format suite scorer/label/source). Bộ ca MẪU do dev soạn — CHỜ GĐ KD sửa; không phải nghiệm thu WP07. Chấm định tuyến SLA/rủi ro của agents.sales_director (route/sla_state) trên data/directors/sales.json THẬT (khóa drift cấu hình) — luật, không LLM/mạng/key. Ca làm việc trong ca là GIẢ ĐỊNH 08:00–18:00 T2–T6 (2026-10-12 = thứ Hai). kind: route (loại việc/severity → lớp handoff, rủi ro, người nhận), sla (giờ tạo + now → trạng thái + hạn giờ làm việc), trap_offhours (biên ngoài giờ/cuối tuần — bắt buộc 100%), trap_no_auto (S1/mọi loại rủi ro ≠ low → không đủ điều kiện tự duyệt — bắt buộc 100%). Owner: sales (agent GĐ Kinh doanh TMĐT); agent QA chạy: data_platform. risk medium (bản dev — chờ công ty chốt). Tất định (luật trên data/directors/sales.json thật) nên ngưỡng 1.0 + 2 kind bắt buộc. KHÔNG nằm trong required_agents (data/eval/config.json): bộ chưa duyệt không được chặn deploy. frozen=false (external-dep). Sửa ca → tăng version + `python scripts/agent_eval.py --print-hash sales_director`.",
+  "agent": "sales_director",
+  "version": 1,
+  "cases_sha256": "e558dd9415399a4033414c9dd311e06c2693619fd2dc1eecfe92cb9cdb7b4ff0",
+  "owner_block": "sales",
+  "qa_block": "data_platform",
+  "qa_agent": "Agent Nghiệm thu (QA/Eval)",
+  "risk": "medium",
+  "status": "active",
+  "runner": "sales_director",
+  "agent_model": "rules",
+  "judge": null,
+  "frozen": false,
+  "labeled_by": null,
+  "frozen_at": null,
+  "threshold": {
+    "min_pass_rate": 1.0,
+    "must_pass_kinds": [
+      "trap_offhours",
+      "trap_no_auto"
+    ]
+  },
+  "prompt_files": [
+    "agents/sales_director.py",
+    "pipelines/period.py",
+    "data/directors/sales.json",
+    "data/eval/suites/sales_director.json"
+  ],
+  "cases": [
+    {
+      "id": "sd-r01",
+      "kind": "route",
+      "text": "Cảnh báo sàn mức S1 đi lớp nào, ai nhận?",
+      "severity": "S1",
+      "expect": {
+        "object_type": "market_alert_s1",
+        "handoff": "A",
+        "risk": "high",
+        "assignee_role": "mxh"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-r02",
+      "kind": "route",
+      "text": "Cảnh báo sàn mức S2 đi lớp nào, ai nhận?",
+      "severity": "S2",
+      "expect": {
+        "object_type": "market_alert_s2",
+        "handoff": "B",
+        "risk": "medium",
+        "assignee_role": "gd_ban_hang"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-r03",
+      "kind": "route",
+      "text": "Câu chatbot chưa trả lời chuyển người",
+      "object_type": "cskh_handoff",
+      "expect": {
+        "handoff": "A",
+        "risk": "medium",
+        "assignee_role": "mxh",
+        "escalate_to_role": "gd_ban_hang"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-r04",
+      "kind": "route",
+      "text": "Trả lời CSKH cần duyệt",
+      "object_type": "cskh_reply",
+      "expect": {
+        "handoff": "A",
+        "risk": "medium",
+        "assignee_role": "mxh"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-r05",
+      "kind": "route",
+      "text": "Phiếu lệch giá golden",
+      "object_type": "price_review",
+      "expect": {
+        "handoff": "B",
+        "risk": "high",
+        "assignee_role": "gd_ban_hang",
+        "escalate_to_role": "tgd"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-r06",
+      "kind": "route",
+      "text": "Báo giá B2B",
+      "object_type": "b2b_quote",
+      "expect": {
+        "handoff": "B",
+        "risk": "high",
+        "assignee_role": "gd_ban_hang"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-r07",
+      "kind": "route",
+      "text": "Chương trình affiliate",
+      "object_type": "affiliate_program",
+      "expect": {
+        "handoff": "B",
+        "risk": "high",
+        "red_alert": false
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-r08",
+      "kind": "route",
+      "text": "Đổi listing đề xuất",
+      "object_type": "listing_change",
+      "expect": {
+        "handoff": "B",
+        "risk": "high"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-s01",
+      "kind": "sla",
+      "text": "S1 tạo T2 08:00, xem lúc 08:30",
+      "object_type": "market_alert_s1",
+      "created_at": "2026-10-12T08:00+07:00",
+      "now": "2026-10-12T08:30+07:00",
+      "expect": {
+        "state": "on_time",
+        "business_due_at": "2026-10-12T10:00+07:00"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-s02",
+      "kind": "sla",
+      "text": "S1 tạo T2 08:00, xem lúc 09:45 (còn 15 phút)",
+      "object_type": "market_alert_s1",
+      "created_at": "2026-10-12T08:00+07:00",
+      "now": "2026-10-12T09:45+07:00",
+      "expect": {
+        "state": "due_soon",
+        "business_due_at": "2026-10-12T10:00+07:00"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-s03",
+      "kind": "sla",
+      "text": "S1 tạo T2 08:00, xem lúc 10:00 — quá hạn",
+      "object_type": "market_alert_s1",
+      "created_at": "2026-10-12T08:00+07:00",
+      "now": "2026-10-12T10:00+07:00",
+      "expect": {
+        "state": "overdue",
+        "business_due_at": "2026-10-12T10:00+07:00"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-s04",
+      "kind": "sla",
+      "text": "Phiếu giá tạo T2 16:00 — 4 giờ làm việc sang T3 10:00",
+      "object_type": "price_review",
+      "created_at": "2026-10-12T16:00+07:00",
+      "now": "2026-10-13T08:30+07:00",
+      "expect": {
+        "state": "on_time",
+        "business_due_at": "2026-10-13T10:00+07:00"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-s05",
+      "kind": "sla",
+      "text": "Phiếu giá tạo T2 16:00, xem T3 10:00 — quá hạn",
+      "object_type": "price_review",
+      "created_at": "2026-10-12T16:00+07:00",
+      "now": "2026-10-13T10:00+07:00",
+      "expect": {
+        "state": "overdue",
+        "business_due_at": "2026-10-13T10:00+07:00"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-s06",
+      "kind": "sla",
+      "text": "Đầu vào UTC 01:00Z = 08:00 VN",
+      "object_type": "cskh_handoff",
+      "created_at": "2026-10-12T01:00:00+00:00",
+      "now": "2026-10-12T09:00+07:00",
+      "expect": {
+        "state": "on_time",
+        "business_due_at": "2026-10-12T10:00+07:00"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-o01",
+      "kind": "trap_offhours",
+      "text": "Tạo T6 17:59 — hạn T2 09:59, T7 trưa chưa quá hạn",
+      "object_type": "market_alert_s1",
+      "created_at": "2026-10-16T17:59+07:00",
+      "now": "2026-10-17T12:00+07:00",
+      "expect": {
+        "state": "on_time",
+        "business_due_at": "2026-10-19T09:59+07:00"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-o02",
+      "kind": "trap_offhours",
+      "text": "Tạo T6 17:59, CN trưa chưa quá hạn",
+      "object_type": "cskh_handoff",
+      "created_at": "2026-10-16T17:59+07:00",
+      "now": "2026-10-18T12:00+07:00",
+      "expect": {
+        "state": "on_time",
+        "business_due_at": "2026-10-19T09:59+07:00"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-o03",
+      "kind": "trap_offhours",
+      "text": "Tạo T6 17:59, T2 09:59 quá hạn",
+      "object_type": "cskh_handoff",
+      "created_at": "2026-10-16T17:59+07:00",
+      "now": "2026-10-19T09:59+07:00",
+      "expect": {
+        "state": "overdue",
+        "business_due_at": "2026-10-19T09:59+07:00"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-o04",
+      "kind": "trap_offhours",
+      "text": "Tạo T2 07:59 (trước ca) — đếm từ 08:00",
+      "object_type": "market_alert_s1",
+      "created_at": "2026-10-12T07:59+07:00",
+      "now": "2026-10-12T09:59+07:00",
+      "expect": {
+        "state": "due_soon",
+        "business_due_at": "2026-10-12T10:00+07:00"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-o05",
+      "kind": "trap_offhours",
+      "text": "Tạo T2 08:00 đúng đầu ca",
+      "object_type": "cskh_reply",
+      "created_at": "2026-10-12T08:00+07:00",
+      "now": "2026-10-12T09:00+07:00",
+      "expect": {
+        "state": "on_time",
+        "business_due_at": "2026-10-12T10:00+07:00"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-o06",
+      "kind": "trap_offhours",
+      "text": "Tạo T2 18:00 (đã hết ca) — hạn T3 10:00",
+      "object_type": "market_alert_s1",
+      "created_at": "2026-10-12T18:00+07:00",
+      "now": "2026-10-12T23:00+07:00",
+      "expect": {
+        "state": "on_time",
+        "business_due_at": "2026-10-13T10:00+07:00"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-o07",
+      "kind": "trap_offhours",
+      "text": "Tạo T7 10:00, lớp B — hạn T2 12:00",
+      "object_type": "market_alert_s2",
+      "created_at": "2026-10-17T10:00+07:00",
+      "now": "2026-10-19T11:30+07:00",
+      "expect": {
+        "state": "due_soon",
+        "business_due_at": "2026-10-19T12:00+07:00"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-o08",
+      "kind": "trap_offhours",
+      "text": "Tạo CN 23:00, lớp B — hạn T2 12:00",
+      "object_type": "price_change",
+      "created_at": "2026-10-18T23:00+07:00",
+      "now": "2026-10-19T12:00+07:00",
+      "expect": {
+        "state": "overdue",
+        "business_due_at": "2026-10-19T12:00+07:00"
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-n01",
+      "kind": "trap_no_auto",
+      "text": "S1 luôn rủi ro cao, không tự duyệt",
+      "severity": "S1",
+      "expect": {
+        "risk": "high",
+        "auto_eligible": false
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-n02",
+      "kind": "trap_no_auto",
+      "text": "Đổi giá không tự duyệt",
+      "object_type": "price_change",
+      "expect": {
+        "risk": "high",
+        "auto_eligible": false
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-n03",
+      "kind": "trap_no_auto",
+      "text": "Câu CSKH chuyển người không tự duyệt",
+      "object_type": "cskh_handoff",
+      "expect": {
+        "risk": "medium",
+        "auto_eligible": false
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    },
+    {
+      "id": "sd-n04",
+      "kind": "trap_no_auto",
+      "text": "Mọi loại việc khối KD rủi ro khác low → không loại nào đủ điều kiện tự duyệt",
+      "all_types": true,
+      "expect": {
+        "auto_eligible": false
+      },
+      "source": "MẪU",
+      "scorer": "sales_director",
+      "label": "dev_draft"
+    }
+  ]
+}

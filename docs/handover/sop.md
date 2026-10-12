@@ -34,7 +34,7 @@ khác.
 | Xem lịch đăng sắp tới | `python -m pipelines.store --calendar` (mặc định 14 ngày; `--days N`) |
 | Backup DB + data | xem mục 6 |
 | Đối chiếu danh mục dữ liệu | `python scripts/data_audit.py` → cập nhật `docs/phu-luc-a.md` khi data đổi |
-| Lịch mùa vụ + brief + bản tin Marketing (v6.0) | sáng thứ Hai: `python -m agents.mkt_director --briefs` rồi `--bulletin` → `data/reports/mkt-week-<thứ Hai>.md` — xem mục 5e |
+| Lịch mùa vụ + brief + bản tin Marketing (v6.0) | sáng thứ Hai: `python -m agents.mkt_director --briefs` rồi `--bulletin` → `data/reports/mkt-week-<thứ Hai>.md` — xem mục 5k |
 | Bản tin vùng trồng (v9.3) | `python -m agents.garden_director --bulletin` → `data/reports/garden-week-<ngày>.md` — BẢN NHÁP cho GĐ vùng trồng |
 | Kiểm hash chain nhật ký vườn | `python -m agents.garden_director --verify` (exit 0 = nguyên vẹn; 1 = có dòng bị sửa/xóa — xem mục 7) |
 
@@ -180,7 +180,7 @@ python -m pipelines.approval_queue --approve <ID> --by "<tên>" [--note "..."]
 python -m pipelines.approval_queue --reject <ID> --by "<tên>" [--note "..."]
 python -m pipelines.approval_queue --override-qa <ID> --by "<tên>" --reason "<lý do ≥10 ký tự>"
 python -m pipelines.approval_queue --expire
-python -m pipelines.director --block <khối>        # bản tin GĐ khối → data/reports/director-<khối>-<ngày>.md (khối finance: dùng `python -m agents.acc_ar --bulletin` — mục 5e; director ghi đè mất mục nợ quá hạn)
+python -m pipelines.director --block <khối>        # bản tin GĐ khối → data/reports/director-<khối>-<ngày>.md (khối finance: dùng `python -m agents.acc_ar --bulletin` — mục 5j; director ghi đè mất mục nợ quá hạn)
 python -m pipelines.director --all --dry-run       # chỉ kiểm 11 file cấu hình, không DB
 python -m pipelines.red_alert --check-routing      # exit 1 = chưa có người nhận cảnh báo đỏ độc lập
 ```

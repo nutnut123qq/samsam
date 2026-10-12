@@ -230,8 +230,9 @@ def test_validate_suite_rejects(mutate, needle):
 def test_validate_cli_all_suites(capsys):
     assert ae.main(["--validate"]) == 0
     out = capsys.readouterr().out
-    assert len(re.findall(r"^\[ok\] ", out, re.MULTILINE)) == 13
-    assert "[done] 13/13 suite hợp lệ" in out
+    # gộp M31 đợt 4: + mkt02 (v6.1) + sales_director (v5.0) → 15 suite
+    assert len(re.findall(r"^\[ok\] ", out, re.MULTILINE)) == 15
+    assert "[done] 15/15 suite hợp lệ" in out
     assert re.search(r"^\[ok\] guardrail v2 .* 132 ca$", out, re.MULTILINE)
     assert re.search(r"^\[ok\] co_khi v1 .* 23 ca$", out, re.MULTILINE)
 
@@ -240,7 +241,8 @@ def test_validate_cli_all_suites(capsys):
 
 def test_skeleton_suites_cover_all_blocks():
     names = ae.suite_names()
-    assert set(names) == set(SKELETONS) | {"guardrail", "chatbot", "co_khi"}
+    assert set(names) == set(SKELETONS) | {"guardrail", "chatbot", "co_khi",
+                                           "mkt02", "sales_director"}
     suites = {n: ae.load_suite(n) for n in names}
     assert {s["qa_block"] for s in suites.values()} == set(director.BLOCKS)
     owners = [suites[n]["owner_block"] for n in SKELETONS]
@@ -468,12 +470,15 @@ def test_deterministic_skips_llm_runners(env, monkeypatch, capsys):
                         lambda *a, **k: pytest.fail("LLM"))
     assert ae.main(["--deterministic", "--no-record"]) == 0
     out = capsys.readouterr().out
-    assert "[done] 13/13 suite hợp lệ" in out
+    assert "[done] 15/15 suite hợp lệ" in out
     assert "guardrail v2 PASS 130/132" in out and "[done] chatbot" not in out
     assert "co_khi v1 PASS 21/23" in out and "[done] ck_a6" not in out
+    assert "mkt02 v1 PASS 14/14" in out
+    assert "sales_director v1 PASS 26/26" in out
     assert ae.main(["--deterministic"]) == 0
     rows = _inserted(env)
-    assert [r["agent"] for r in rows] == ["co_khi", "guardrail"]
+    assert [r["agent"] for r in rows] == ["co_khi", "guardrail", "mkt02",
+                                          "sales_director"]
     assert all(r["commit_sha"] == SHA for r in rows)
 
 

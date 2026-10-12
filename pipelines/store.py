@@ -82,7 +82,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from ingest.lead_store import connect
-from pipelines import guardrail, guardrail_llm
+from pipelines import guardrail
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in
 # tiếng Việt có dấu. Ép UTF-8 (no-op nếu đã UTF-8).
@@ -170,6 +170,12 @@ def _publish_check(conn, text: str, channel, *, llm: bool,
         res = (rules if rmap is None
                else guardrail.check_publish(text, readiness=rmap, **ctx))
     else:
+        # Import LƯỜI (gộp M31 đợt 4): guardrail_llm kéo llm_gateway/openai
+        # lúc import — import ở đầu module làm MỌI module chỉ cần helper
+        # của store (`_db_msg`, `_oneline` — vd pipelines.director, khối kế
+        # toán v9.0) kéo theo gateway/mạng (test_fin_qa). Chỉ nhánh llm=True
+        # mới cần lớp LLM-check.
+        from pipelines import guardrail_llm
         res = guardrail_llm.check_publish_llm(text, readiness=rmap, **ctx)
     # v6.1 (rà OWASP A01): loại `public: false` (internal_note) bỏ qua luật
     # đăng bài (rượu/XNQC/nhãn) — dòng mang loại đó không được vào hàng

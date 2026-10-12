@@ -6,6 +6,21 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+Nhánh `ai-infra`: M31 đợt gộp 4 (2026-10-12) — v9.4 (kèm v9.2), v9.0, v6.1,
+v6.0, v5.0 đã gộp (57 bảng). Tích hợp khi gộp: bộ chấm MKT-02 (v6.1, 14 ca) +
+sales_director (v5.0, 26 ca) chuyển NGUYÊN VĂN từ jsonl sang suite v4.5
+(`data/eval/suites/mkt02.json`, `sales_director.json`; runner/scorer/validate
+trong `agent_eval.py`, chạy trong `--deterministic`, KHÔNG vào
+required_agents); luồng ACC-Recon v9.0 DF-18 → DF-25 (trùng CRM v5.2) + sinh
+lại DPIA/TIA (25 luồng); `pipelines/store.py` import `guardrail_llm` lười
+(import ở đầu kéo llm_gateway/openai vào khối kế toán v9.0 qua director —
+FIN-QA đỏ); `director.digest` nhận cả `qa_runs` (v4.5) lẫn `extra` (v9.0);
+test kế toán bỏ `\r` header fixture (checkout autocrlf); SOP đánh số lại mục
+trùng (4d GĐ KD, 5h–5k SX/QR/kế toán/lịch MKT) + sửa tham chiếu chéo.
+Gate: apply_schema 2 lần sạch (57 bảng), ruff sạch, full pytest 2880 passed /
+3 skipped (test_dr_drill — Docker Desktop hỏng engine, môi trường) —
+`evidence/m31_dot4_*.log`.
+
 Nhánh `ai-infra`: M31 đợt gộp 3 (2026-10-12) — v4.2, v4.5i (v4.5 + tích hợp),
 v5.2, v7.1, v7.2, v8.0 đã gộp (44 bảng). Tích hợp khi gộp: bản đồ dữ liệu gộp 3
 chiều theo id luồng (CRM DF-18, cockpit DF-21, judge QA DF-22) + khai thêm DF-23

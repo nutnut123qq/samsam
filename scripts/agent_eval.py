@@ -28,9 +28,18 @@ Runner: `guardrail` (tất định, không LLM — CI mỗi push; ca có `ctx` �
 `guardrail.check_publish(text, **ctx)`, không có → `guardrail.check(text)`;
 ca `expect: block` có `code` chỉ pass khi bị chặn ĐÚNG code đó — v4.1),
 `co_khi` (tất định — luật trên `agents.ck_mat.ask`, local, không LLM/mạng;
-agent tra cứu CK-A1 v9.5), `chatbot` (`api.rag.answer` THẬT, cần
-OPENROUTER_API_KEY). Scorer từng ca: guardrail | co_khi | eval_qa |
-handoff | exact | regex | judge. Giám khảo LLM CHỈ qua
+agent tra cứu CK-A1 v9.5), `mkt02` (tất định — v6.1 Agent Content &
+Listing: `content.listing(llm=False)` (op listing) / `content.precheck`
+(op draft — cổng từ chối của draft()); 0 lời gọi LLM (lớp LLM-check tắt
+trong lúc chấm), không key, không DB; `golden_exact` pass <=> ok + fields ==
+golden (name/pack_spec/receipt_no/giá list) + dòng `Quy cách:` nguyên văn
++ không lộ giá floor/promo; ca refuse pass <=> refused.code == code; ca
+KHÔNG có `text`), `sales_director` (tất định — v5.0: định tuyến SLA
+handoff A/B + rủi ro qua `agents.sales_director.route/sla_state` trên
+`data/directors/sales.json` THẬT, không LLM/mạng/key/DB), `chatbot`
+(`api.rag.answer` THẬT, cần OPENROUTER_API_KEY). Scorer từng ca: guardrail
+| co_khi | mkt02 | sales_director | eval_qa | handoff | exact | regex |
+judge. Giám khảo LLM CHỈ qua
 `pipelines.llm_gateway.chat("ci_judge")`, model khác HỌ (nhà sản xuất theo
 allowlist `_FAMILIES`; router/alias lạ → từ chối) với model agent; output
 judge parse chặt — lỗi = ca FAIL, không bỏ qua.
@@ -50,6 +59,8 @@ thiếu key / DB lỗi / tree bẩn; 2 tham số sai.
 Chạy:
   python scripts/agent_eval.py --agent guardrail [--no-record]
   python scripts/agent_eval.py --agent co_khi --no-record
+  python scripts/agent_eval.py --agent mkt02 --no-record
+  python scripts/agent_eval.py --agent sales_director --no-record
   python scripts/agent_eval.py --validate
   python scripts/agent_eval.py --deterministic [--no-record]
   python scripts/agent_eval.py --print-hash guardrail
@@ -93,18 +104,24 @@ CONNECT_TIMEOUT_S = 5
 DEFAULT_CHAT_MODEL = "openai/gpt-4o-mini"
 RISKS = ("low", "medium", "high")
 STATUSES = ("active", "skeleton")
-SCORERS = ("guardrail", "co_khi", "eval_qa", "handoff", "exact", "regex",
-           "judge")
+SCORERS = ("guardrail", "co_khi", "mkt02", "sales_director", "eval_qa",
+           "handoff", "exact", "regex", "judge")
 # Nguồn DUY NHẤT của tên runner hợp lệ (RUNNERS.keys() phải trùng).
 RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "chatbot": {"eval_qa", "handoff", "exact", "regex",
                               "judge"},
-                  "co_khi": {"co_khi"}}
-DETERMINISTIC_RUNNERS = ("guardrail", "co_khi")
+                  "co_khi": {"co_khi"},
+                  "mkt02": {"mkt02"},
+                  "sales_director": {"sales_director"}}
+DETERMINISTIC_RUNNERS = ("guardrail", "co_khi", "mkt02", "sales_director")
 # key ctx hợp lệ = tham số keyword của guardrail.check_publish (v4.1).
 GUARDRAIL_CTX_KEYS = {"channel", "content_type", "sku", "is_ai",
                       "is_sponsored"}
 CO_KHI_KINDS = ("fact", "high_risk", "trap_no_data")
+# v6.1 mkt02: ca không có `text` (đầu vào = op × sku × kênh).
+NO_TEXT_SCORERS = {"mkt02"}
+MKT02_OPS = ("listing", "draft")
+SALES_KINDS = ("route", "sla", "trap_offhours", "trap_no_auto")
 LABELS = ("dev_draft", "company")
 # agent_model "env:X" chỉ đọc biến trong allowlist — suite không được đọc
 # env tùy ý (DATABASE_URL...) rồi ghi vào eval_runs.model / in ra log.
@@ -219,6 +236,69 @@ def _validate_co_khi_case(c: dict, cid, exp) -> list[str]:
     return errs
 
 
+def _nonempty(v) -> bool:
+    return isinstance(v, str) and bool(v.strip())
+
+
+def _validate_mkt02_case(c: dict, cid, exp) -> list[str]:
+    """v6.1: op listing|draft + sku/channel/content_type; expect
+    listing|refuse; refuse cần `code`; readiness tùy chọn [[sku,kênh,mức]]."""
+    errs = []
+    if c.get("op") not in MKT02_OPS:
+        errs.append(f"ca {cid}: mkt02 op phải {MKT02_OPS}")
+    for k in ("sku", "channel", "content_type"):
+        if not _nonempty(c.get(k)):
+            errs.append(f"ca {cid}: mkt02 thiếu '{k}'")
+    if exp not in ("listing", "refuse"):
+        errs.append(f"ca {cid}: mkt02 expect phải listing|refuse")
+    elif exp == "refuse" and not _nonempty(c.get("code")):
+        errs.append(f"ca {cid}: ca refuse cần code")
+    elif exp == "listing" and "code" in c:
+        errs.append(f"ca {cid}: code chỉ đi với expect refuse")
+    if "readiness" in c:
+        r = c["readiness"]
+        if not (isinstance(r, list) and r and all(
+                isinstance(x, list) and len(x) == 3
+                and all(_nonempty(y) for y in x) for x in r)):
+            errs.append(f"ca {cid}: readiness phải list [sku, kênh, mức]")
+    return errs
+
+
+def _iso_ok(v) -> bool:
+    from datetime import datetime
+    try:
+        return datetime.fromisoformat(v).tzinfo is not None
+    except (TypeError, ValueError):
+        return False
+
+
+def _validate_sales_case(c: dict, cid, exp) -> list[str]:
+    """v5.0: expect object; route/trap_no_auto cần object_type | severity |
+    all_types; sla/trap_offhours cần created_at/now/expect.business_due_at
+    ISO có múi giờ + expect.state."""
+    kind = c.get("kind")
+    if kind not in SALES_KINDS:
+        return [f"ca {cid}: sales_director kind phải {SALES_KINDS}"]
+    if not (isinstance(exp, dict) and exp):
+        return [f"ca {cid}: sales_director expect phải object khác rỗng"]
+    errs = []
+    if c.get("all_types"):
+        if kind != "trap_no_auto" or set(exp) != {"auto_eligible"}:
+            errs.append(f"ca {cid}: all_types chỉ cho trap_no_auto +"
+                        " expect {auto_eligible}")
+    elif not (_nonempty(c.get("object_type")) or _nonempty(
+            c.get("severity"))):
+        errs.append(f"ca {cid}: cần object_type hoặc severity")
+    if kind in ("sla", "trap_offhours"):
+        if not (_iso_ok(c.get("created_at")) and _iso_ok(c.get("now"))
+                and _iso_ok(exp.get("business_due_at"))):
+            errs.append(f"ca {cid}: created_at/now/expect.business_due_at"
+                        " phải ISO có múi giờ")
+        if not _nonempty(exp.get("state")):
+            errs.append(f"ca {cid}: expect thiếu state")
+    return errs
+
+
 def _validate_case(c, i: int, d: dict) -> list[str]:
     if not isinstance(c, dict):
         return [f"cases[{i}] không phải object"]
@@ -226,12 +306,14 @@ def _validate_case(c, i: int, d: dict) -> list[str]:
     cid = c.get("id")
     if not (_is_int(cid) or (isinstance(cid, str) and cid.strip())):
         errs.append(f"cases[{i}] thiếu id")
+    sc = c.get("scorer")
     for k in ("kind", "text", "source"):
+        if k == "text" and sc in NO_TEXT_SCORERS and "text" not in c:
+            continue
         if not isinstance(c.get(k), str) or not c[k].strip():
             errs.append(f"ca {cid}: thiếu '{k}'")
     if c.get("label") not in LABELS:
         errs.append(f"ca {cid}: label phải {LABELS}")
-    sc = c.get("scorer")
     if sc not in SCORERS:
         errs.append(f"ca {cid}: scorer '{sc}' lạ — phải {SCORERS}")
         return errs
@@ -244,6 +326,10 @@ def _validate_case(c, i: int, d: dict) -> list[str]:
         errs += _validate_guardrail_case(c, cid, exp)
     elif sc == "co_khi":
         errs += _validate_co_khi_case(c, cid, exp)
+    elif sc == "mkt02":
+        errs += _validate_mkt02_case(c, cid, exp)
+    elif sc == "sales_director":
+        errs += _validate_sales_case(c, cid, exp)
     elif sc == "eval_qa" and (not _is_int(cid) or exp is not None):
         errs.append(f"ca {cid}: eval_qa cần id số (questions.md) + expect"
                     " null")
@@ -532,6 +618,78 @@ def _score_co_khi(case: dict, res: dict, no_data: str) -> tuple[bool, str]:
                               f" high_risk={res.get('high_risk')}")
 
 
+def _vnd(v) -> str:
+    return f"{v:,}".replace(",", ".")
+
+
+def _golden_exact(c: dict, r: dict, gold: dict) -> str:
+    """'' khi listing khớp golden; ngược lại lý do (không kèm text)."""
+    if r.get("ok") is not True:
+        return "listing không ok: " + ", ".join(
+            str(v.get("code")) for v in r["guardrail"].get("violations", []))
+    g, f = gold[c["sku"]], r["fields"]
+    prices = (g.get("prices") or {}).get(c["channel"]) or {}
+    want = {"name": g["name"], "pack_spec": g.get("pack_spec"),
+            "receipt_no": g.get("receipt_no") if g["category"] == "tpbvsk"
+            else None,
+            "price": (_vnd(prices["list"]) + " đ") if "list" in prices
+            else f["price"]}
+    bad = [k for k, v in want.items() if f.get(k) != v]
+    if bad:
+        return f"fields lệch golden: {bad}"
+    if f"Quy cách: {g.get('pack_spec')}" not in r["text"].split("\n"):
+        return "thiếu dòng 'Quy cách:' nguyên văn golden"
+    for kind in ("floor", "promo"):
+        v = prices.get(kind)
+        if v is not None and v != prices.get("list") and (
+                _vnd(v) in r["text"] or str(v) in r["text"]):
+            return f"lộ giá {kind}"
+    return ""
+
+
+def _mkt02_gold() -> tuple[dict, str | None]:
+    """Golden SKU (data/golden_skus.json) → ({sku_key: sku}, lỗi đọc)."""
+    from ingest.golden_store import read_golden
+    doc, err = read_golden(ROOT / "data" / "golden_skus.json")
+    return {s["sku_key"]: s for s in (doc or {}).get("skus", [])}, err
+
+
+def _score_mkt02(case: dict, r: dict, gold: dict,
+                 err: str | None) -> tuple[bool, str]:
+    """v6.1: ca refuse pass <=> refused.code == code; ca listing pass <=>
+    không bị từ chối + khớp golden (`_golden_exact`)."""
+    ref = r.get("refused")
+    if case["expect"] == "refuse":
+        ok = bool(ref) and ref.get("code") == case.get("code")
+        return ok, "" if ok else (
+            f"kỳ vọng từ chối {case.get('code')}, được "
+            f"{ref.get('code') if ref else 'sinh listing'}")
+    if ref:
+        return False, f"bị từ chối {ref.get('code')}"
+    detail = err or _golden_exact(case, r, gold)
+    return not detail, detail
+
+
+def _score_sales(case: dict, out: dict) -> tuple[bool, str]:
+    """v5.0: so output route/sla_state của agent GĐ KD với expect."""
+    from datetime import datetime
+
+    exp = case["expect"]
+    if "all_types" in out:
+        bad = [t for t, (auto, risk) in out["all_types"].items()
+               if auto is not exp["auto_eligible"] or risk == "low"]
+        return not bad, "" if not bad else f"loại đủ điều kiện tự duyệt: {bad}"
+    if "route" in out:
+        got = {k: out["route"][k] for k in exp}
+        return got == exp, "" if got == exp else f"kỳ vọng {exp}, có {got}"
+    st = out["sla"]
+    due = datetime.fromisoformat(exp["business_due_at"])
+    ok = st["state"] == exp["state"] and st["business_due_at"] == due
+    return ok, "" if ok else (f"kỳ vọng {exp['state']} hạn {due:%d/%m %H:%M}"
+                              f", có {st['state']} hạn "
+                              f"{st['business_due_at']:%d/%m %H:%M}")
+
+
 def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
     sc = case.get("scorer", "guardrail")
     if sc == "guardrail":
@@ -539,6 +697,10 @@ def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
     if sc == "co_khi":
         from agents import ck_mat
         return _score_co_khi(case, out, ck_mat.NO_DATA)
+    if sc == "mkt02":
+        return _score_mkt02(case, out, *_mkt02_gold())
+    if sc == "sales_director":
+        return _score_sales(case, out)
     if sc == "eval_qa":
         import eval_qa  # scripts/ — tái dùng luật chấm Q1-12
         return eval_qa.check_question(int(case["id"]), out)
@@ -604,8 +766,63 @@ def run_co_khi(cases, judge_model=None):
                 judge_model, show_answer=False)
 
 
+def _mkt02_out(c: dict) -> dict:
+    """op listing → content.listing(llm=False); op draft → chỉ precheck
+    (cổng từ chối của draft()) — 0 LLM, không DB."""
+    from pipelines import content
+
+    rmap = ({(a, b): m for a, b, m in c["readiness"]}
+            if c.get("readiness") else None)
+    if c["op"] == "draft":
+        return {"refused": content.precheck(c["sku"], c["channel"],
+                                            c["content_type"],
+                                            readiness=rmap)}
+    return content.listing(c["sku"], c["channel"], readiness=rmap,
+                           llm=False)
+
+
+def run_mkt02(cases, judge_model=None):
+    """Chấm tất định MKT-02 — tắt lớp LLM-check (GUARDRAIL_LLM_MODEL) trong
+    lúc chấm, khôi phục env sau đó."""
+    saved = os.environ.pop("GUARDRAIL_LLM_MODEL", None)
+    try:
+        return _run(cases, _mkt02_out, judge_model, show_answer=False)
+    finally:
+        if saved is not None:
+            os.environ["GUARDRAIL_LLM_MODEL"] = saved
+
+
+def _sales_out(c: dict, cfg: dict, sd) -> dict:
+    """Output agent GĐ KD cho 1 ca: route() (mọi loại khi all_types) hoặc
+    sla_state() trên cấu hình thật."""
+    from datetime import datetime
+
+    if c.get("all_types"):
+        return {"all_types": {
+            t: (sd.route(cfg, t)["auto_eligible"],
+                cfg["object_types"][t]["risk"])
+            for t in cfg["object_types"]}}
+    ot = c.get("object_type") or sd.alert_type(c["severity"])
+    if c["kind"] in ("route", "trap_no_auto"):
+        return {"route": sd.route(cfg, ot)}
+    return {"sla": sd.sla_state(
+        {"object_type": ot,
+         "created_at": datetime.fromisoformat(c["created_at"])},
+        cfg, datetime.fromisoformat(c["now"]))}
+
+
+def run_sales_director(cases, judge_model=None):
+    """v5.0 (bộ MẪU chờ GĐ KD sửa): luật, không LLM/mạng/key/DB."""
+    from agents import sales_director as sd  # lazy
+
+    cfg = sd.load_sales_config()
+    return _run(cases, lambda c: _sales_out(c, cfg, sd), judge_model,
+                show_answer=False)
+
+
 RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot,
-           "co_khi": run_co_khi}
+           "co_khi": run_co_khi, "mkt02": run_mkt02,
+           "sales_director": run_sales_director}
 
 
 def score(results: list[tuple[dict, bool, str]], threshold: dict) -> dict:
@@ -897,8 +1114,10 @@ def _score_and_record(suite, model, judge_model, sha, conn) -> int:
     results = RUNNERS[suite["runner"]](suite["cases"], judge_model)
     for c, ok, detail in results:
         if not ok:
+            # mkt02: ca không có text -> in "sku × kênh".
+            what = c.get("text") or f"{c.get('sku')} × {c.get('channel')}"
             print(f"[{agent}:{c['id']}] FAIL ({c.get('kind')}) — "
-                  f'{detail} | text="{_short(c["text"])}"', flush=True)
+                  f'{detail} | text="{_short(what)}"', flush=True)
     s = score(results, suite["threshold"])
     pv = prompt_version(suite["prompt_files"])
     verdict = "PASS" if s["passed"] else "FAIL"

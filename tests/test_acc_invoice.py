@@ -82,7 +82,7 @@ def test_read_yeu_cau_ok_and_errors(tmp_path):
     key = ("shopee", order_hash("shopee", "FAKEINV0005"))
     assert set(got) == {key}
     assert got[key]["tax_code"] == "0109999999"
-    hdr = REQS.read_bytes().decode("utf-8").split("\n")[0]
+    hdr = REQS.read_bytes().decode("utf-8").split("\n")[0].rstrip("\r")
     for body, needle in (
             ("FAKEINV0001,CONG TY GIA,010999999,DC,e@x.vn", "'tax_code'"),
             ("FAKEINV0001,,0109999999,DC,e@x.vn", "thiếu field 'buyer_name'"),
@@ -259,7 +259,7 @@ def test_cli_usage_exit2_before_connect(monkeypatch, argv):
 def test_cli_bad_request_file_exit1_zero_connect(tmp_path, monkeypatch,
                                                  capsys):
     calls = _no_connect(monkeypatch)
-    hdr = REQS.read_bytes().decode("utf-8").split("\n")[0]
+    hdr = REQS.read_bytes().decode("utf-8").split("\n")[0].rstrip("\r")
     p = tmp_path / "r.csv"
     p.write_bytes((hdr + "\nFAKEINV0001,CONG TY GIA,12345,DC,e@x.vn\n")
                   .encode("utf-8"))

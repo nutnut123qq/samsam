@@ -617,7 +617,9 @@ def test_approve_rechecks_with_row_context(monkeypatch):
         seen.append(kw)
         return real(text, **kw)
 
-    monkeypatch.setattr(store.guardrail_llm, "check_publish_llm", spy)
+    # gộp M31 đợt 4: store import guardrail_llm LƯỜI (trong _publish_check)
+    # — patch thẳng module guardrail_llm (cùng object store gọi lúc chạy).
+    monkeypatch.setattr(guardrail_llm, "check_publish_llm", spy)
     frame = content.listing("savina-12v", "shopee")["text"]
     conn = _Conn([(("from content_drafts", "where id = %s"),
                    [_row(channel="shopee", text=frame,
