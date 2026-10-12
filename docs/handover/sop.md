@@ -567,6 +567,123 @@ python -m ingest.crm --handoff 12 --dealer DLM01 --by "<tên>"
 - Exit: 0 ok · 1 DB không truy cập được / thiếu bảng (chạy
   `python scripts/apply_schema.py`) / vi phạm nghiệp vụ · 2 sai cú pháp,
   thiếu `--by`, thiếu/sai khóa.
+## 5h. Sản xuất P1 — tồn, phân bổ, BOM, lô (v9.2)
+
+Agent SX-A0/A3/A4/A5 **chỉ đề xuất**: không tự chuyển kho, không đặt
+mua, không lệnh sản xuất, không gọi LLM. Dữ liệu trong repo
+(`data/sample_inventory.csv`, `data/sample_bom.json`,
+`data/sample_lots.json`) là **MẪU** — output in `[MẪU]`. Mốc chốt + SLA ở
+`data/production_config.json` (`status` "GIẢ ĐỊNH — chờ GĐ sản xuất
+chốt"; GĐ SX chốt rồi NGƯỜI đổi `status`).
+
+1. **Thứ Sáu — nạp tồn** (nhân sự kho xuất file cột `sku_key,kho,qty,
+   captured_at`; `kho` là slug như `kho-da-nang`):
+   ```
+   python -m ingest.inventory_csv --file <file.csv|.xlsx>
+   ```
+   File lỗi (cột lạ/thiếu, SKU ngoài golden, qty âm/lẻ, ngày tương lai,
+   trùng dòng) → `[err]` exit 1, **không nạp gì**; nạp lại cùng file →
+   `[skip]`. Tồn hiện có = snapshot mới nhất mỗi (SKU, kho).
+   **File phải liệt kê ĐỦ mọi SKU × kho từng có tồn — SKU hết hàng ghi
+   `qty` 0** (đừng bỏ dòng); kho ngừng dùng → ghi 0 cho mọi SKU của kho
+   đó. SKU bị bỏ khỏi file mới vẫn giữ số cũ (agent không đoán = 0) và
+   `allocate`/`bulletin` in "số tồn cũ hơn file kho mới nhất — kiểm lại"
+   — thấy dòng này thì bổ sung file với `qty` 0 rồi nạp lại. File đính
+   chính gửi lại CÙNG ngày cũng phải đủ mọi SKU của kho: agent so theo
+   FILE mới nhất của kho, SKU vắng trong file đó bị cảnh báo y như trên.
+2. **Đề xuất phân bổ theo 4 mốc** (`chot_11_11` 25/10, `ke_hoach_tet`
+   01/11, `chot_12_12` 15/11, `chot_tet` 10/12):
+   ```
+   python -m pipelines.production allocate --cutoff chot_11_11 [--start YYYY-MM-DD]
+   ```
+   Nhu cầu thấp/cơ sở/cao lấy từ `pipelines.scenario` (mục 5c) — KHÔNG
+   phải doanh số cam kết. Ghi NHÁP `pending` vào `allocation_proposals`
+   (cùng input → cùng `run_id`, chạy lại `[skip]`). SKU chưa có số tồn →
+   đề xuất 0 + "chưa có số tồn — không kết luận thiếu".
+3. **GĐ sản xuất duyệt** cả run (bắt buộc `--by`; ghi `approvals` + hash
+   chain CHỈ qua function DB `decide_allocation_run` — `intake` tương tự
+   qua `record_lot_intake`; khi tạo role cloud cho SX: grant EXECUTE 2
+   function này, **TUYỆT ĐỐI không grant INSERT `approvals`** cho role nào —
+   `verify_publish` tin bảng đó, chèn được là duyệt giả được nội dung;
+   duyệt KHÔNG chuyển kho — chuyển tay theo quyết định):
+   ```
+   python -m pipelines.production approve --run <run_id> --by "<tên GĐ SX>"
+   python -m pipelines.production reject --run <run_id> --by "<tên>" --note "<lý do>"
+   ```
+4. **BOM combo/hộp quà**:
+   ```
+   python -m pipelines.production bom --load <bom.json> [--source manual|sample]
+   python -m pipelines.production bom --check
+   ```
+   Kiểm luật kênh theo golden: kênh online của combo phải có trong
+   `allowed_channels` của MỌI SKU thành phần; tên combo qua guardrail.
+   `--check` chạy lại luật trên golden hiện tại (golden đổi → BOM cũ có
+   thể lỗi, exit 1) + số combo làm được (tính trên tồn CHƯA trừ phân bổ).
+5. **Hồ sơ lô + kiểm nhập** (người kiểm nhập ghi kết quả, bắt buộc
+   `--by`; lô đã kiểm không ghi lại):
+   ```
+   python -m pipelines.production lots --load <lots.json> [--source manual|sample]
+   python -m pipelines.production intake --lot <mã lô> --result passed|failed --by "<người kiểm nhập>"
+   ```
+   Hạn dùng ≤ ngày sản xuất bị chặn (Python + DB). Lô `passed` là đầu vào
+   QR truy xuất (v9.4).
+6. **Bản tin tuần cho GĐ sản xuất** (in stdout, không gửi — người gửi):
+   ```
+   python -m pipelines.production bulletin [--date YYYY-MM-DD]
+   ```
+   4 mục: thiếu hàng theo mốc, lô chờ kiểm nhập, BOM lỗi, mục chờ duyệt &
+   SLA (≥ 24h "NHẮC", ≥ 48h "QUÁ SLA 48h — đề xuất chuyển TGĐ" — chỉ là
+   chữ, không tự chuyển/duyệt thay).
+
+**Luật rượu:** phân bổ rượu = 0 mọi kênh online (bất kể golden còn ghi
+`shopee`); combo có rượu chỉ được kênh `offline`. Câu hỏi mở: rượu có được
+đóng hộp quà OFFLINE không (luồng B2B ghi "không đóng trong hộp quà") —
+chờ Pháp chế/GĐ SX chốt; tới lúc đó không đưa rượu vào hộp quà mẫu.
+
+## 5i. Lô + QR truy xuất (v9.4 — thí điểm mật ong)
+
+Chỉ SKU trong `pilot_skus` của `data/qr_config.json` (nhãn **GIẢ ĐỊNH** —
+chờ GĐ vùng trồng + Pháp chế chốt `region_text`, mốc phương án B). Lô
+trong repo là **MẪU** (`[MẪU]` — không dùng in tem). Danh tính `--by` hiện
+tự khai + allowlist `data/qr_signers.json` (ship RỖNG — SSO thật là
+external-dep: chưa điền thì `sign` từ chối).
+
+Thứ tự (mọi bước ghi cần `--by`, ghi `approvals`/`agent_action_log`):
+
+```bash
+# 1. GĐ Sản xuất ánh xạ lô ↔ nhật ký "thu hoạch" ĐÃ CHAIN (+ ≤3 ảnh kho tư liệu cùng khoảnh)
+python -m pipelines.qr_trace link --lot <mã lô> --log <id nhật ký> [--media <sha256> ...] --by "<tên>"
+python -m pipelines.qr_trace unlink --lot <mã lô> --log <id> --by "<tên>"   # gỡ khi ánh xạ nhầm
+# 2. Xem lời văn trang + sha + guardrail kênh qr + vai đã ký/còn thiếu (chỉ đọc, exit 0)
+python -m pipelines.qr_trace preview --lot <mã lô>
+# 3. Ba NGƯỜI KHÁC NHAU ký cùng bản (GĐ SX, GĐ vùng trồng, Pháp chế/QA)
+python -m pipelines.qr_trace sign --lot <mã lô> --role gd_san_xuat --by "<tên>"
+python -m pipelines.qr_trace sign --lot <mã lô> --role gd_vung_trong --by "<tên>"
+python -m pipelines.qr_trace sign --lot <mã lô> --role phap_che_qa --by "<tên>"
+# 4. Phát hành mã (DB kiểm đủ 3 chữ ký trên bản HIỆN TẠI, lô passed còn hạn)
+python -m pipelines.qr_trace issue --lot <mã lô> --by "<tên>"
+# 5. Sinh trang tĩnh data/qr_site/<code>/index.html (gitignored) — cần env GARDEN_MEDIA_DIR nếu có ảnh
+python -m pipelines.qr_trace site [--out <thư mục>]
+# 6. Thu hồi mã (trang chuyển "đã thu hồi" sau khi chạy lại site)
+python -m pipelines.qr_trace revoke --code <mã> --by "<tên>" [--reason "..."]
+# Bản tin phương án B (in stdout, không ghi DB) — chạy mỗi ngày từ 20/11
+python -m pipelines.qr_trace planb [--date YYYY-MM-DD]
+```
+
+- **Đổi ánh xạ / ảnh / ngày lô / lời văn (`region_text`) sau khi ký = ký
+  lại**: chữ ký gắn với `snapshot_sha256` + `text_sha256`; `preview` sẽ báo
+  thiếu cả 3 vai. Lô đang có mã còn hiệu lực → `link`/`unlink` bị chặn
+  (thu hồi trước). `site` thấy nội dung lệch bản đã ký → KHÔNG ghi trang
+  đó, exit 1 ("cần thu hồi + ký lại").
+- Trang KHÔNG có tọa độ, mã/vị trí khoảnh, tên/SĐT/email người (nhật ký, ảnh,
+  người ký); text fail guardrail kênh `qr` → không ký/phát hành/ghi trang.
+- **Không sinh ảnh QR** (lib QR không có trong interpreter): `issue` in URL
+  (`public_base_url` rỗng = chưa có domain — external-dep); nhà in tạo QR từ
+  URL. Đưa `data/qr_site/` lên hosting tĩnh = việc Hạ tầng (external-dep);
+  KHÔNG có trang liệt kê mã (chống dò mã).
+- `planb`: trước mốc → "còn N ngày"; từ mốc → "ĐỀ XUẤT phương án B" + lời
+  văn tem KHÔNG QR cho lô đã passed. GĐ vùng trồng quyết, báo Sales + Hạ
+  tầng — agent KHÔNG tự đổi tem.
 
 ## 6. Backup + diễn tập khôi phục (v3.6)
 

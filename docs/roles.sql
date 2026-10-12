@@ -58,7 +58,9 @@ grant execute on function
   reject_draft(bigint, text, text),
   schedule_draft(bigint, date, text),
   verify_publish(text, text, text),
-  verify_action_log()
+  verify_action_log(),
+  decide_allocation_run(text, text, text, text),
+  record_lot_intake(text, text, text, text)
   to app_human;
 
 -- v4.0 hàng duyệt dùng chung (WP03): agent đẩy việc + tự duyệt theo luật đã
@@ -111,3 +113,20 @@ grant insert (alert_id, acked_by, note) on red_alert_acks to app_human;
 -- qa_status từ run mới nhất. eval_runs chỉ có metadata (id ca, model, hash,
 -- commit) — không text ca/PII. CHỈ SELECT: agent không tự ghi kết quả QA.
 grant select on eval_runs to agent_writer;
+
+-- v9.2: duyệt phân bổ / kiểm nhập lô CHỈ qua 2 function trên. TUYỆT ĐỐI
+-- không grant INSERT approvals cho role nào (verify_publish tin approvals →
+-- chèn được là duyệt giả được content_draft).
+
+-- v9.4 lô + QR truy xuất: app_human (GĐ SX / GĐ vùng trồng / Pháp chế-QA qua
+-- CLI) CHỈ EXECUTE 5 function ghi + hàm bản chụp. KHÔNG grant INSERT/UPDATE
+-- approvals / lot_origins / qr_signatures / qr_codes cho role nào; agent_writer
+-- KHÔNG ký/phát hành/thu hồi.
+grant execute on function
+  qr_lot_snapshot_sha(text),
+  link_lot_origin(text, bigint, text[], text),
+  unlink_lot_origin(text, bigint, text),
+  sign_qr_lot(text, text, text, text, text),
+  issue_qr(text, text, text, text),
+  revoke_qr(text, text, text)
+  to app_human;

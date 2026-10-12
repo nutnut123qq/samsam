@@ -1828,3 +1828,614 @@ alter table eval_runs add column if not exists suite_sha256 text;
 alter table eval_runs add column if not exists threshold_sha256 text;
 alter table eval_runs add column if not exists owner_block text;
 alter table eval_runs add column if not exists failed_cases jsonb;
+
+-- ============================================================================
+-- v9.2 Sản xuất P1 (WP13 SX-A3/A4/A5): tồn thành phẩm, đề xuất phân bổ theo
+-- mốc chốt, BOM combo/hộp quà, hồ sơ lô + kiểm nhập. Dữ liệu trong repo là
+-- MẪU (source='sample') tới khi kho/GĐ sản xuất cấp số thật. Agent CHỈ ĐỀ
+-- XUẤT (allocation_proposals 'pending'): không chuyển kho, không sửa tồn,
+-- không đặt mua, không lệnh sản xuất. Quyết định của người -> approvals +
+-- agent_action_log (hash chain v3.4). Không cột cá nhân/khách hàng.
+-- sku_key không FK: golden đọc từ file (như market_rows).
+-- ============================================================================
+create table if not exists inventory_snapshots (
+  id bigint generated always as identity primary key,
+  sku_key text not null,
+  kho text not null,
+  qty int not null check (qty >= 0),
+  captured_at date not null,
+  source text not null check (source in ('manual_export', 'sample')),
+  file_name text not null,
+  file_sha256 text not null,
+  row_no int not null,
+  imported_at timestamptz not null default now(),
+  unique (file_sha256, row_no)
+);
+create index if not exists inventory_snapshots_sku_idx
+  on inventory_snapshots (sku_key, kho, captured_at);
+
+create table if not exists allocation_proposals (
+  id bigint generated always as identity primary key,
+  run_id text not null,
+  cutoff_id text not null,
+  cutoff_date date not null,
+  start_week date not null,
+  sku_key text not null,
+  channel text not null,
+  stock_total int,                  -- null = SKU chưa có số tồn (không coi = 0)
+  demand_low int not null,
+  demand_base int not null,
+  demand_high int not null,
+  proposed_qty int not null check (proposed_qty >= 0),
+  note text,
+  status text not null default 'pending'
+    check (status in ('pending', 'approved', 'rejected')),
+  decided_by text,
+  decided_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (run_id, sku_key, channel),
+  check ((status = 'pending') = (decided_by is null)),
+  check (decided_by is null or btrim(decided_by) <> '')
+);
+create index if not exists allocation_proposals_cutoff_idx
+  on allocation_proposals (cutoff_id, created_at);
+
+create table if not exists bom_combos (
+  combo_key text primary key,
+  name text not null,
+  channels text[] not null check (cardinality(channels) > 0),
+  source text not null check (source in ('manual', 'sample')),
+  note text,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists bom_items (
+  combo_key text not null references bom_combos (combo_key) on delete cascade,
+  sku_key text not null,
+  qty int not null check (qty > 0),
+  primary key (combo_key, sku_key)
+);
+
+create table if not exists production_lots (
+  lot_code text primary key,
+  sku_key text not null,
+  mfg_date date not null,
+  exp_date date not null,
+  qty int not null check (qty > 0),
+  intake_status text not null default 'pending'
+    check (intake_status in ('pending', 'passed', 'failed')),
+  checked_by text,
+  checked_at timestamptz,
+  source text not null check (source in ('manual', 'sample')),
+  note text,
+  created_at timestamptz not null default now(),
+  check (exp_date > mfg_date),      -- hạn dùng <= ngày SX bị DB chặn
+  check ((intake_status = 'pending') = (checked_by is null)),
+  check (checked_by is null or btrim(checked_by) <> '')
+);
+
+-- Quyết định của NGƯỜI (duyệt phân bổ, kiểm nhập lô) CHỈ qua 2 function
+-- SECURITY DEFINER dưới — client KHÔNG insert thẳng `approvals` (precedent
+-- v3.4 approve_draft). TUYỆT ĐỐI không grant INSERT approvals cho role nào:
+-- `verify_publish` tin dòng approvals mới nhất → ai chèn được approvals là
+-- chèn được duyệt giả cho content_draft. object_type cố định trong function.
+-- content_sha256 = sha256(UTF-8 của jsonb::text) tính TRONG DB.
+
+-- Duyệt/từ chối CẢ 1 run phân bổ (mọi dòng pending). Không đụng
+-- inventory_snapshots (duyệt ≠ chuyển kho). Trả (id approvals, số dòng).
+create or replace function decide_allocation_run(p_run text, p_decision text,
+  p_by text, p_note text default null)
+returns table (out_approval_id bigint, out_rows integer)
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := btrim(coalesce(p_by, ''));
+  v_n integer;
+  v_sha text;
+  v_aid bigint;
+begin
+  if v_by = '' then
+    raise exception 'thiếu tên người quyết định';
+  end if;
+  if p_decision is null or p_decision not in ('approved', 'rejected') then
+    raise exception 'decision phải là approved|rejected';
+  end if;
+  perform 1 from allocation_proposals a
+    where a.run_id = p_run and a.status = 'pending' for update;
+  select count(*), encode(sha256(convert_to(coalesce(jsonb_agg(
+           jsonb_build_array(a.sku_key, a.channel, a.proposed_qty)
+           order by a.sku_key collate "C", a.channel collate "C"),
+           '[]'::jsonb)::text, 'UTF8')), 'hex')
+    into v_n, v_sha
+    from allocation_proposals a
+   where a.run_id = p_run and a.status = 'pending';
+  if v_n = 0 then
+    if exists (select 1 from allocation_proposals a where a.run_id = p_run)
+    then
+      raise exception 'run % không còn dòng pending', p_run;
+    end if;
+    raise exception 'không có run %', p_run;
+  end if;
+  update allocation_proposals a set status = p_decision, decided_by = v_by,
+         decided_at = now()
+   where a.run_id = p_run and a.status = 'pending';
+  insert into approvals (object_type, object_id, content_sha256, decision,
+                         approved_by, note)
+  values ('allocation_run', p_run, v_sha, p_decision, v_by, p_note)
+  returning approvals.id into v_aid;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, case p_decision when 'approved' then 'alloc_approve'
+                else 'alloc_reject' end, 'allocation_run', p_run,
+          jsonb_build_object('approval_id', v_aid, 'content_sha256', v_sha,
+                             'rows', v_n));
+  out_approval_id := v_aid;
+  out_rows := v_n;
+  return next;
+end $$;
+revoke execute on function decide_allocation_run(text, text, text, text)
+  from public;
+
+-- Kiểm nhập 1 lô: chỉ từ pending (lô đã kiểm không ghi lại). passed →
+-- approvals 'approved', failed → 'rejected'. Trả id approvals.
+create or replace function record_lot_intake(p_lot text, p_result text,
+  p_by text, p_note text default null)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  l production_lots%rowtype;
+  v_by text := btrim(coalesce(p_by, ''));
+  v_sha text;
+  v_aid bigint;
+begin
+  if v_by = '' then
+    raise exception 'thiếu tên người kiểm nhập';
+  end if;
+  if p_result is null or p_result not in ('passed', 'failed') then
+    raise exception 'result phải là passed|failed';
+  end if;
+  select * into l from production_lots p where p.lot_code = p_lot for update;
+  if not found then
+    raise exception 'không có lô %', p_lot;
+  end if;
+  if l.intake_status <> 'pending' then
+    raise exception 'lô % đã kiểm (%) — không ghi lại', p_lot,
+      l.intake_status;
+  end if;
+  v_sha := encode(sha256(convert_to(jsonb_build_object(
+    'lot_code', l.lot_code, 'sku_key', l.sku_key,
+    'mfg_date', to_char(l.mfg_date, 'YYYY-MM-DD'),
+    'exp_date', to_char(l.exp_date, 'YYYY-MM-DD'),
+    'qty', l.qty, 'source', l.source)::text, 'UTF8')), 'hex');
+  update production_lots p set intake_status = p_result, checked_by = v_by,
+         checked_at = now()
+   where p.lot_code = p_lot;
+  insert into approvals (object_type, object_id, content_sha256, decision,
+                         approved_by, note)
+  values ('lot_intake', p_lot, v_sha,
+          case p_result when 'passed' then 'approved' else 'rejected' end,
+          v_by, p_note)
+  returning approvals.id into v_aid;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'lot_intake', 'lot_intake', p_lot,
+          jsonb_build_object('approval_id', v_aid, 'content_sha256', v_sha,
+                             'result', p_result));
+  return v_aid;
+end $$;
+revoke execute on function record_lot_intake(text, text, text, text)
+  from public;
+
+-- ============================================================================
+-- v9.4 lô + QR truy xuất (WP13 VT — thí điểm mật ong, 3 chữ ký, phương án B).
+--   * `lot_origins` — GĐ Sản xuất ánh xạ lô (`production_lots`) ↔ nhật ký
+--     `thu hoạch` ĐÃ CHAIN (`plot_logs.row_hash`, v9.3) + tối đa 3 ảnh tư liệu
+--     (`garden_media`, đã gỡ EXIF) của CÙNG khoảnh. KHÔNG cột khoảnh/vị trí/
+--     tọa độ: khoảnh + ngày thu hoạch suy từ nhật ký đã chain (bất biến).
+--   * `qr_signatures` — 3 vai (GĐ Sản xuất, GĐ vùng trồng, Pháp chế/QA) ký
+--     trên CÙNG bản chụp dữ liệu (`qr_lot_snapshot_sha`) + CÙNG lời văn trang
+--     (`text_sha256`). 1 người không ký 2 vai trên cùng lô. Append-only.
+--     `signer` = danh tính tự khai (`--by`; SSO = external-dep) — chỉ bảng
+--     này + approvals giữ tên; trang công khai KHÔNG in tên người ký.
+--   * `qr_codes` — mã công khai ngẫu nhiên (Python `secrets.token_urlsafe`,
+--     KHÔNG dẫn xuất từ lot_code), 1 mã còn hiệu lực/lô; không xóa; chỉ
+--     được đánh dấu thu hồi 1 lần (`revoked_*`).
+--   * Ai ghi: CHỈ 5 function SECURITY DEFINER dưới (link/unlink/sign/issue/
+--     revoke) — client KHÔNG insert thẳng `approvals`/`qr_*` (không role nào
+--     được grant INSERT; `docs/roles.sql` chỉ grant EXECUTE cho app_human).
+--     Ai đọc: CLI `python -m pipelines.qr_trace` (owner DB). Không cột PII
+--     (KHÔNG SĐT/email/địa chỉ/tọa độ — cột `location` của plots không đọc).
+-- ============================================================================
+
+create table if not exists lot_origins (
+  id bigint generated always as identity primary key,
+  lot_code text not null references production_lots (lot_code),
+  plot_log_id bigint not null references plot_logs (id),
+  media_sha256 text[] not null default '{}'
+    check (cardinality(media_sha256) <= 3),
+  linked_by text not null check (btrim(linked_by) <> ''),
+  linked_at timestamptz not null default now(),
+  unique (lot_code, plot_log_id)
+);
+
+create table if not exists qr_signatures (
+  id bigint generated always as identity primary key,
+  lot_code text not null references production_lots (lot_code),
+  role text not null
+    check (role in ('gd_san_xuat', 'gd_vung_trong', 'phap_che_qa')),
+  signer text not null check (btrim(signer) <> ''),
+  signer_norm text not null,
+  snapshot_sha256 text not null check (snapshot_sha256 ~ '^[0-9a-f]{64}$'),
+  text_sha256 text not null check (text_sha256 ~ '^[0-9a-f]{64}$'),
+  approval_id bigint not null references approvals (id),
+  signed_at timestamptz not null default now(),
+  unique (lot_code, snapshot_sha256, text_sha256, role),
+  unique (lot_code, snapshot_sha256, text_sha256, signer_norm)
+);
+
+create or replace trigger qr_signatures_append_only_row
+  before update or delete on qr_signatures
+  for each row execute function append_only_guard();
+create or replace trigger qr_signatures_no_truncate
+  before truncate on qr_signatures
+  for each statement execute function append_only_guard();
+
+create table if not exists qr_codes (
+  code text primary key check (code ~ '^[A-Za-z0-9_-]{22,64}$'),
+  lot_code text not null references production_lots (lot_code),
+  snapshot_sha256 text not null check (snapshot_sha256 ~ '^[0-9a-f]{64}$'),
+  text_sha256 text not null check (text_sha256 ~ '^[0-9a-f]{64}$'),
+  issued_by text not null check (btrim(issued_by) <> ''),
+  issued_at timestamptz not null default now(),
+  revoked_at timestamptz,
+  revoked_by text,
+  revoke_reason text,
+  check ((revoked_at is null) = (revoked_by is null)),
+  check (revoked_by is null or btrim(revoked_by) <> '')
+);
+create unique index if not exists qr_codes_one_active_idx
+  on qr_codes (lot_code) where revoked_at is null;
+
+-- qr_codes: không DELETE/TRUNCATE; UPDATE chỉ để thu hồi mã CÒN hiệu lực và
+-- chỉ đổi 3 cột revoked_* (mã đã thu hồi không "hồi sinh"/sửa được).
+create or replace function qr_codes_guard() returns trigger
+language plpgsql as $$
+begin
+  if tg_op <> 'UPDATE' then
+    raise exception 'qr_codes: % bị chặn (chỉ thu hồi qua revoke_qr)', tg_op;
+  end if;
+  if old.revoked_at is not null then
+    raise exception 'qr_codes: mã đã thu hồi — không sửa';
+  end if;
+  if (new.code, new.lot_code, new.snapshot_sha256, new.text_sha256,
+      new.issued_by, new.issued_at)
+     is distinct from (old.code, old.lot_code, old.snapshot_sha256,
+      old.text_sha256, old.issued_by, old.issued_at) then
+    raise exception 'qr_codes: chỉ được đổi cột revoked_*';
+  end if;
+  return new;
+end $$;
+revoke execute on function qr_codes_guard() from public;
+
+create or replace trigger qr_codes_guard_row
+  before update or delete on qr_codes
+  for each row execute function qr_codes_guard();
+create or replace trigger qr_codes_guard_truncate
+  before truncate on qr_codes
+  for each statement execute function qr_codes_guard();
+
+-- Chuẩn hóa danh tính người ký (NFC + gộp khoảng trắng + chữ thường) —
+-- issue_qr tự tính lại từ `signer`, KHÔNG tin cột `signer_norm`.
+create or replace function qr_signer_norm(p text) returns text
+language sql immutable as $$
+  select lower(btrim(regexp_replace(normalize(coalesce(p, ''), NFC),
+                                    '\s+', ' ', 'g')))
+$$;
+revoke execute on function qr_signer_norm(text) from public;
+
+-- Bản chụp dữ liệu lô mà 3 vai ký: lô + mọi nguồn (nhật ký đã chain:
+-- id, khoảnh, row_hash, ngày thu hoạch giờ VN, ảnh). Đổi ánh xạ/ảnh/ngày lô
+-- → sha khác → chữ ký cũ không còn tính. null = không có lô.
+create or replace function qr_lot_snapshot_sha(p_lot text) returns text
+language sql stable security definer set search_path from current as $$
+  select encode(sha256(convert_to(jsonb_build_object(
+    'lot_code', l.lot_code, 'sku_key', l.sku_key,
+    'mfg_date', to_char(l.mfg_date, 'YYYY-MM-DD'),
+    'exp_date', to_char(l.exp_date, 'YYYY-MM-DD'),
+    'source', l.source,
+    'origins', coalesce((
+      select jsonb_agg(jsonb_build_array(o.plot_log_id, g.plot_id, g.row_hash,
+               to_char((g.ts at time zone 'Asia/Ho_Chi_Minh')::date,
+                       'YYYY-MM-DD'),
+               (select coalesce(jsonb_agg(m order by m collate "C"),
+                                '[]'::jsonb)
+                  from unnest(o.media_sha256) m))
+             order by o.plot_log_id)
+        from lot_origins o join plot_logs g on g.id = o.plot_log_id
+       where o.lot_code = l.lot_code), '[]'::jsonb))::text, 'UTF8')), 'hex')
+  from production_lots l where l.lot_code = p_lot
+$$;
+revoke execute on function qr_lot_snapshot_sha(text) from public;
+
+-- GĐ Sản xuất ánh xạ 1 nhật ký thu hoạch ĐÃ CHAIN vào lô. Từ chối: nhật ký
+-- mẫu/chưa chain/không phải thu hoạch/khoảnh mẫu/thu hoạch sau ngày SX; chuỗi
+-- nhật ký có vấn đề (verify_plot_logs không rỗng → không dùng dòng nào);
+-- ảnh không thuộc kho của CÙNG khoảnh; lô failed/đang có mã còn hiệu lực.
+create or replace function link_lot_origin(p_lot text, p_plot_log_id bigint,
+  p_media text[], p_by text)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  l production_lots%rowtype;
+  g plot_logs%rowtype;
+  v_by text := btrim(coalesce(p_by, ''));
+  v_media text[] := coalesce(p_media, '{}'::text[]);
+  v_src text;
+  v_id bigint;
+  m text;
+begin
+  if v_by = '' then
+    raise exception 'thiếu tên người ánh xạ (--by)';
+  end if;
+  select * into l from production_lots p where p.lot_code = p_lot for update;
+  if not found then
+    raise exception 'không có lô %', p_lot;
+  end if;
+  if l.intake_status = 'failed' then
+    raise exception 'lô % kiểm nhập failed — không ánh xạ nguồn', p_lot;
+  end if;
+  if exists (select 1 from qr_codes c
+             where c.lot_code = p_lot and c.revoked_at is null) then
+    raise exception 'lô % đang có mã QR còn hiệu lực — thu hồi trước khi '
+      'đổi ánh xạ', p_lot;
+  end if;
+  select * into g from plot_logs pl where pl.id = p_plot_log_id;
+  if not found then
+    raise exception 'không có nhật ký #%', p_plot_log_id;
+  end if;
+  if g.source like 'sample:%' or g.row_hash is null then
+    raise exception 'nhật ký #% là dữ liệu mẫu / chưa chain — không dùng '
+      'làm nguồn', p_plot_log_id;
+  end if;
+  if g.activity <> 'thu hoạch' then
+    raise exception 'nhật ký #% không phải "thu hoạch"', p_plot_log_id;
+  end if;
+  select p.source into v_src from plots p where p.id = g.plot_id;
+  if v_src is null or v_src like 'sample:%' then
+    raise exception 'khoảnh của nhật ký #% là dữ liệu mẫu', p_plot_log_id;
+  end if;
+  if (g.ts at time zone 'Asia/Ho_Chi_Minh')::date > l.mfg_date then
+    raise exception 'nhật ký #%: ngày thu hoạch sau ngày sản xuất lô',
+      p_plot_log_id;
+  end if;
+  if exists (select 1 from verify_plot_logs()) then
+    raise exception 'chuỗi nhật ký vườn có vấn đề (verify_plot_logs) — '
+      'không dùng dòng nào làm nguồn';
+  end if;
+  if cardinality(v_media) > 3 then
+    raise exception 'tối đa 3 ảnh tư liệu / nguồn';
+  end if;
+  if (select count(distinct x) from unnest(v_media) x)
+     <> cardinality(v_media) then
+    raise exception 'ảnh tư liệu bị trùng';
+  end if;
+  foreach m in array v_media loop
+    if m is null or m !~ '^[0-9a-f]{64}$' then
+      raise exception 'sha256 ảnh sai định dạng';
+    end if;
+    if not exists (select 1 from garden_media gm
+                   where gm.sha256 = m and gm.plot_id = g.plot_id) then
+      raise exception 'ảnh % không có trong kho tư liệu của khoảnh nguồn',
+        left(m, 12);
+    end if;
+  end loop;
+  if exists (select 1 from lot_origins o
+             where o.lot_code = p_lot and o.plot_log_id = p_plot_log_id) then
+    raise exception 'nhật ký #% đã ánh xạ vào lô %', p_plot_log_id, p_lot;
+  end if;
+  insert into lot_origins (lot_code, plot_log_id, media_sha256, linked_by)
+  values (p_lot, p_plot_log_id, v_media, v_by)
+  returning lot_origins.id into v_id;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'qr_lot_link', 'production_lot', p_lot,
+          jsonb_build_object('plot_log_id', p_plot_log_id,
+                             'media', cardinality(v_media)));
+  return v_id;
+end $$;
+revoke execute on function link_lot_origin(text, bigint, text[], text)
+  from public;
+
+-- Gỡ 1 ánh xạ — chỉ khi lô không có mã còn hiệu lực. Trả id dòng đã gỡ.
+create or replace function unlink_lot_origin(p_lot text, p_plot_log_id bigint,
+  p_by text)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := btrim(coalesce(p_by, ''));
+  v_id bigint;
+begin
+  if v_by = '' then
+    raise exception 'thiếu tên người gỡ ánh xạ (--by)';
+  end if;
+  perform 1 from production_lots p where p.lot_code = p_lot for update;
+  if exists (select 1 from qr_codes c
+             where c.lot_code = p_lot and c.revoked_at is null) then
+    raise exception 'lô % đang có mã QR còn hiệu lực — thu hồi trước khi '
+      'đổi ánh xạ', p_lot;
+  end if;
+  delete from lot_origins o
+   where o.lot_code = p_lot and o.plot_log_id = p_plot_log_id
+  returning o.id into v_id;
+  if v_id is null then
+    raise exception 'lô % không có ánh xạ nhật ký #%', p_lot, p_plot_log_id;
+  end if;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'qr_lot_unlink', 'production_lot', p_lot,
+          jsonb_build_object('plot_log_id', p_plot_log_id));
+  return v_id;
+end $$;
+revoke execute on function unlink_lot_origin(text, bigint, text) from public;
+
+-- 1 vai ký lô trên bản chụp HIỆN TẠI + lời văn p_text_sha. Từ chối: vai lạ,
+-- lô chưa passed, 0 nguồn, vai đã ký bản này, CÙNG người đã ký vai KHÁC trên
+-- lô này (bất kể bản chụp nào). Ghi approvals + qr_signatures + log.
+create or replace function sign_qr_lot(p_lot text, p_role text, p_by text,
+  p_text_sha text, p_note text default null)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  l production_lots%rowtype;
+  v_by text := btrim(coalesce(p_by, ''));
+  v_norm text := qr_signer_norm(p_by);
+  v_snap text;
+  v_aid bigint;
+begin
+  if v_by = '' or v_norm = '' then
+    raise exception 'thiếu tên người ký (--by)';
+  end if;
+  if p_role is null
+     or p_role not in ('gd_san_xuat', 'gd_vung_trong', 'phap_che_qa') then
+    raise exception 'vai trò ký không hợp lệ';
+  end if;
+  if p_text_sha is null or p_text_sha !~ '^[0-9a-f]{64}$' then
+    raise exception 'text_sha256 sai định dạng';
+  end if;
+  select * into l from production_lots p where p.lot_code = p_lot for update;
+  if not found then
+    raise exception 'không có lô %', p_lot;
+  end if;
+  if l.intake_status <> 'passed' then
+    raise exception 'lô % chưa kiểm nhập passed (%) — không ký', p_lot,
+      l.intake_status;
+  end if;
+  if not exists (select 1 from lot_origins o where o.lot_code = p_lot) then
+    raise exception 'lô % chưa có nguồn vùng trồng đã chain — không ký',
+      p_lot;
+  end if;
+  v_snap := qr_lot_snapshot_sha(p_lot);
+  if exists (select 1 from qr_signatures s
+             where s.lot_code = p_lot and s.snapshot_sha256 = v_snap
+               and s.text_sha256 = p_text_sha and s.role = p_role) then
+    raise exception 'vai % đã ký bản này của lô %', p_role, p_lot;
+  end if;
+  if exists (select 1 from qr_signatures s
+             where s.lot_code = p_lot and s.role <> p_role
+               and qr_signer_norm(s.signer) = v_norm) then
+    raise exception 'một người không được ký hai vai trên cùng lô %', p_lot;
+  end if;
+  insert into approvals (object_type, object_id, content_sha256, decision,
+                         approved_by, note)
+  values ('qr_lot_sign', p_lot,
+          encode(sha256(convert_to(v_snap || ':' || p_text_sha, 'UTF8')),
+                 'hex'),
+          'approved', v_by,
+          p_role || coalesce(' | ' || nullif(btrim(p_note), ''), ''))
+  returning approvals.id into v_aid;
+  insert into qr_signatures (lot_code, role, signer, signer_norm,
+                             snapshot_sha256, text_sha256, approval_id)
+  values (p_lot, p_role, v_by, v_norm, v_snap, p_text_sha, v_aid);
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'qr_lot_sign', 'production_lot', p_lot,
+          jsonb_build_object('approval_id', v_aid, 'role', p_role,
+                             'snapshot_sha256', v_snap,
+                             'text_sha256', p_text_sha));
+  return v_aid;
+end $$;
+revoke execute on function sign_qr_lot(text, text, text, text, text)
+  from public;
+
+-- Phát hành mã: lô passed, còn hạn (giờ VN), có nguồn, chuỗi nhật ký nguyên
+-- vẹn, đủ 3 vai do 3 NGƯỜI khác nhau ký đúng bản chụp hiện tại + lời văn
+-- p_text_sha (tính lại chuẩn hóa từ `signer`), chưa có mã còn hiệu lực. Mã
+-- do client sinh ngẫu nhiên; DB chặn mã chứa lot_code.
+create or replace function issue_qr(p_lot text, p_code text,
+  p_text_sha text, p_by text)
+returns text
+language plpgsql security definer set search_path from current as $$
+declare
+  l production_lots%rowtype;
+  v_by text := btrim(coalesce(p_by, ''));
+  v_snap text;
+  v_roles integer;
+  v_people integer;
+begin
+  if v_by = '' then
+    raise exception 'thiếu tên người phát hành (--by)';
+  end if;
+  if p_code is null or p_code !~ '^[A-Za-z0-9_-]{22,64}$' then
+    raise exception 'mã QR sai định dạng';
+  end if;
+  if p_text_sha is null or p_text_sha !~ '^[0-9a-f]{64}$' then
+    raise exception 'text_sha256 sai định dạng';
+  end if;
+  select * into l from production_lots p where p.lot_code = p_lot for update;
+  if not found then
+    raise exception 'không có lô %', p_lot;
+  end if;
+  if position(lower(l.lot_code) in lower(p_code)) > 0 then
+    raise exception 'mã QR không được chứa mã lô';
+  end if;
+  if l.intake_status <> 'passed' then
+    raise exception 'lô % chưa kiểm nhập passed (%) — không phát hành',
+      p_lot, l.intake_status;
+  end if;
+  if l.exp_date <= (now() at time zone 'Asia/Ho_Chi_Minh')::date then
+    raise exception 'lô % đã hết hạn sử dụng — không phát hành', p_lot;
+  end if;
+  if not exists (select 1 from lot_origins o where o.lot_code = p_lot) then
+    raise exception 'lô % chưa có nguồn vùng trồng đã chain', p_lot;
+  end if;
+  if exists (select 1 from verify_plot_logs()) then
+    raise exception 'chuỗi nhật ký vườn có vấn đề (verify_plot_logs) — '
+      'không phát hành';
+  end if;
+  v_snap := qr_lot_snapshot_sha(p_lot);
+  select count(distinct s.role), count(distinct qr_signer_norm(s.signer))
+    into v_roles, v_people
+    from qr_signatures s
+   where s.lot_code = p_lot and s.snapshot_sha256 = v_snap
+     and s.text_sha256 = p_text_sha;
+  if v_roles < 3 or v_people < 3 then
+    raise exception 'lô % chưa đủ 3 chữ ký của 3 người khác nhau trên bản '
+      'hiện tại (% vai, % người)', p_lot, v_roles, v_people;
+  end if;
+  if exists (select 1 from qr_codes c
+             where c.lot_code = p_lot and c.revoked_at is null) then
+    raise exception 'lô % đã có mã QR còn hiệu lực', p_lot;
+  end if;
+  insert into qr_codes (code, lot_code, snapshot_sha256, text_sha256,
+                        issued_by)
+  values (p_code, p_lot, v_snap, p_text_sha, v_by);
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'qr_issue', 'qr_code', p_code,
+          jsonb_build_object('lot_code', p_lot, 'snapshot_sha256', v_snap,
+                             'text_sha256', p_text_sha));
+  return p_code;
+end $$;
+revoke execute on function issue_qr(text, text, text, text) from public;
+
+-- Thu hồi mã còn hiệu lực (trang công khai chuyển "đã thu hồi").
+create or replace function revoke_qr(p_code text, p_by text,
+  p_reason text default null)
+returns timestamptz
+language plpgsql security definer set search_path from current as $$
+declare
+  c qr_codes%rowtype;
+  v_by text := btrim(coalesce(p_by, ''));
+begin
+  if v_by = '' then
+    raise exception 'thiếu tên người thu hồi (--by)';
+  end if;
+  select * into c from qr_codes q where q.code = p_code for update;
+  if not found then
+    raise exception 'không có mã QR này';
+  end if;
+  if c.revoked_at is not null then
+    raise exception 'mã QR đã thu hồi trước đó';
+  end if;
+  update qr_codes q set revoked_at = now(), revoked_by = v_by,
+         revoke_reason = nullif(btrim(p_reason), '')
+   where q.code = p_code;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'qr_revoke', 'qr_code', p_code,
+          jsonb_build_object('lot_code', c.lot_code));
+  return now();
+end $$;
+revoke execute on function revoke_qr(text, text, text) from public;

@@ -1,0 +1,84 @@
+== v9.4 W94.8 gate — targeted ×3 (tuần tự)
+$ python -m pytest -q -rs tests/test_qr_trace.py tests/test_production.py tests/test_garden_chain.py tests/test_guardrail_v2.py tests/test_handover_docs.py tests/test_db_backup.py::test_cloud_readme_drift_guard tests/test_connect_timeout_guard.py tests/test_auth_approval.py
+-- lần 1 — 2026-10-12T11:46:11+07:00
+........................................................................ [ 87%]
+..........................................                               [100%]
+330 passed in 66.18s (0:01:06)
+exit=0
+-- lần 2 — 2026-10-12T11:47:23+07:00
+........................................................................ [ 87%]
+..........................................                               [100%]
+330 passed in 73.50s (0:01:13)
+exit=0
+-- lần 3 — 2026-10-12T11:48:42+07:00
+........................................................................ [ 87%]
+..........................................                               [100%]
+330 passed in 64.89s (0:01:04)
+exit=0
+-- skipped trong test_qr_trace.py (phải 0)
+.............                                                            [100%]
+85 passed in 22.14s
+== full python -m pytest -q -rs (ĐÚNG 1 lần)
+start 2026-10-12T11:50:27+07:00
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+1877 passed, 3 skipped in 447.12s (0:07:27)
+exit=0 end 2026-10-12T11:58:01+07:00
+(3 skipped = DR drill cần docker image postgres — môi trường, không thuộc v9.4; 0 skipped trong test_qr_trace.py)
+== ruff check .
+All checks passed!
+exit=0
+== python -m py_compile pipelines/qr_trace.py
+exit=0
+== git diff --check
+warning: in the working copy of 'data/guardrail_rules.json', LF will be replaced by CRLF the next time Git touches it
+exit=0
+== git status --short
+ M .gitignore
+ M AGENTS.md
+ M DONE.md
+ M data/guardrail_rules.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/playbook-vuon.md
+ M docs/handover/sop.md
+ M docs/roles.sql
+ M docs/schema.sql
+ M tests/test_auth_approval.py
+ M tests/test_garden_chain.py
+?? data/qr_config.json
+?? data/qr_signers.json
+?? pipelines/qr_trace.py
+?? tests/test_qr_trace.py
+== grep test_qr_trace.py không đọc đồng hồ
+(rỗng = OK)
+
+== v9.4 vòng sửa nghiệm thu (2026-10-12T12:31:56+07:00) — 2 MINOR
+F1 truncate approvals: test assert message '<bảng> append-only' (cascade) + FeatureNotSupported (FK) cho approvals; agent_action_log exc=RaiseException + message
+$ mutation probe schema tạm+rollback (drop trigger approvals_no_truncate / agent_action_log_no_truncate):
+drop=None                                          truncate approvals               -> FeatureNotSupported | cannot truncate a table referenced in a foreign key constrai
+drop=None                                          truncate approvals cascade       -> RaiseException | approvals append-only: TRUNCATE b? ch?n
+drop=None                                          truncate agent_action_log        -> RaiseException | agent_action_log append-only: TRUNCATE b? ch?n
+drop=None                                          truncate agent_action_log cascade -> RaiseException | agent_action_log append-only: TRUNCATE b? ch?n
+drop=approvals_no_truncate on approvals            truncate approvals               -> FeatureNotSupported | cannot truncate a table referenced in a foreign key constrai
+drop=approvals_no_truncate on approvals            truncate approvals cascade       -> RaiseException | qr_signatures append-only: TRUNCATE b? ch?n
+drop=approvals_no_truncate on approvals            truncate agent_action_log        -> RaiseException | agent_action_log append-only: TRUNCATE b? ch?n
+drop=approvals_no_truncate on approvals            truncate agent_action_log cascade -> RaiseException | agent_action_log append-only: TRUNCATE b? ch?n
+drop=agent_action_log_no_truncate on agent_action_log truncate approvals               -> FeatureNotSupported | cannot truncate a table referenced in a foreign key constrai
+drop=agent_action_log_no_truncate on agent_action_log truncate approvals cascade       -> RaiseException | approvals append-only: TRUNCATE b? ch?n
+drop=agent_action_log_no_truncate on agent_action_log truncate agent_action_log        -> NO ERROR
+drop=agent_action_log_no_truncate on agent_action_log truncate agent_action_log cascade -> NO ERROR
+F2 _has_metadata: thêm marker Exif\0\0 / ns.adobe.com/xap toàn file + đuôi thừa sau EOI/IEND
+$ mutation probe (bỏ từng lớp → test_has_metadata_catches_exif_hidden_after_sos_or_eoi):
+no_byte_markers killed
+no_eoi_tail killed
+no_iend_tail killed
+original passes
+== targeted ×3: tests/test_qr_trace.py tests/test_auth_approval.py tests/test_garden_chain.py tests/test_garden_media.py
+146 passed (101.71s) / 146 passed (87.27s) / 146 passed (81.85s)
+== full pytest
+$ python -m pytest -q
+1878 passed, 3 skipped in 460.80s (0:07:40)
+== ruff check .
+All checks passed!

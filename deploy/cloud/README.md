@@ -126,6 +126,14 @@ bảng nào thì dừng, không bật app.
 | `channel_snapshots` | B | (v4.0) số liệu kênh nhập tay/API theo kỳ |
 | `red_alerts` | B | (v4.0) append-only (trigger) — cảnh báo đỏ không được mất |
 | `red_alert_acks` | B | (v7.1) append-only — ai xác nhận cảnh báo đỏ intel lúc nào; mất bảng = cảnh báo đã xác nhận lại hiện là "chưa xác nhận" |
+| `inventory_snapshots` | A (nạp lại file kho) hoặc B | tồn thành phẩm (v9.2) — repo chỉ có file MẪU, số thật theo đường B |
+| `allocation_proposals` | B | đề xuất phân bổ + quyết định GĐ SX — dựng lại sẽ mất lịch sử duyệt |
+| `bom_combos` | A (nạp lại file BOM) hoặc B | combo/hộp quà (v9.2) |
+| `bom_items` | A hoặc B | thành phần combo |
+| `production_lots` | B | hồ sơ lô + trạng thái kiểm nhập — không dựng lại được |
+| `lot_origins` | B | ánh xạ lô ↔ nhật ký thu hoạch đã chain (v9.4) — quyết định của GĐ SX, không dựng lại được |
+| `qr_signatures` | B | 3 chữ ký tem QR (append-only) — lịch sử ký, không dựng lại được |
+| `qr_codes` | B | mã QR đã phát hành/thu hồi — mất bảng = tem đã in trỏ vào mã không còn trang |
 | `sim_runs` | B | nghiên cứu giả lập persona (v7.3) — lịch sử chạy model/prompt/seed để kiểm toán, không PII |
 | `intel_items` | A (chạy lại `python -m crawler.intel --run`) hoặc B | tin thị trường công khai (v7.0) — chỉ tiêu đề + trích ≤300 ký tự + link; B giữ tin cũ đã trôi khỏi RSS |
 | `machines` | B | sổ máy cơ khí (v9.5) — nhập tay, không có nguồn dựng lại |

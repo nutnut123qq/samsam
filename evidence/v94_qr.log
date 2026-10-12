@@ -1,0 +1,95 @@
+== v9.4 evidence — 2026-10-12T11:38:47+07:00
+-- apply_schema x2
+lần 1 exit=0
+43 bảng public
+lần 2 exit=0
+43 bảng public
+-- grep -c '^create table if not exists' docs/schema.sql
+43
+-- grep PII-ish words trong block v9.4 (đọc tay: chỉ comment giải thích KHÔNG)
+5:--     tọa độ: khoảnh + ngày thu hoạch suy từ nhật ký đã chain (bất biến).
+18:--     (KHÔNG SĐT/email/địa chỉ/tọa độ — cột `location` của plots không đọc).
+121:               (select coalesce(jsonb_agg(m order by m collate "C"),
+-- git check-ignore data/qr_site/x/index.html
+data/qr_site/x/index.html
+exit=0
+-- nạp lô MẪU (pending, source sample — không phải quyết định người)
+$ python -m pipelines.production lots --load data/sample_lots.json --source sample
+[load] [MẪU] 3 lô mới (pending — chờ người kiểm nhập)
+exit=0
+-- link nhật ký mẫu (id 7, sample, không chain) → exit 1
+$ python -m pipelines.qr_trace link --lot MAU-MO120-260915 --log 7 --by test
+[err] nhật ký #7 là dữ liệu mẫu / chưa chain — không dùng làm nguồn — không ghi.
+exit=1
+$ python -m pipelines.qr_trace preview --lot MAU-MO120-260915
+Lô MAU-MO120-260915 [MẪU] — kiểm nhập: pending — nguồn đã chain: 0 nhật ký thu hoạch
+--- lời văn trang (3 vai ký trên đúng bản này) ---
+Truy xuất nguồn gốc sản phẩm
+Mật ong sâm 120ml (1 hũ)
+Lô: MAU-MO120-260915
+Ngày sản xuất: 15/09/2026
+Hạn sử dụng: 15/03/2028
+Vùng nguyên liệu: Quảng Nam – Đà Nẵng (mức tỉnh)
+[MẪU] dữ liệu mẫu — không dùng in tem
+---
+text_sha256: a691cdce50f2468c7b8051f1c70ad8ad39aa3760f676518822613d2eecd8f852
+snapshot_sha256: db7b16860a2f06db7434c54b6a00cecafb8bf38dac52d7a1c573f6f0afaa08c8
+guardrail kênh qr: OK
+Đã ký (bản hiện tại): chưa vai nào
+Còn thiếu: GĐ Sản xuất, GĐ vùng trồng, Pháp chế/QA
+Mã còn hiệu lực: chưa
+exit=0
+-- sign: allowlist repo rỗng → exit 1 external-dep, không connect
+$ python -m pipelines.qr_trace sign --lot MAU-MO120-260915 --role gd_san_xuat --by test
+[err] chưa cấu hình người ký vai GĐ Sản xuất (external-dep SSO) — không connect.
+exit=1
+-- issue lô pending → exit 1
+$ python -m pipelines.qr_trace issue --lot MAU-MO120-260915 --by test
+[err] lô MAU-MO120-260915 chưa kiểm nhập passed — không ghi.
+exit=1
+-- lô rượu (ngoài pilot_skus) → exit 1
+$ python -m pipelines.qr_trace preview --lot MAU-RUOU500-260820
+[err] lô MAU-RUOU500-260820: SKU ruou-sam-chai-thuy-tinh-500ml ngoài pilot_skus — không làm QR — không ghi.
+exit=1
+-- site → exit 0, 0 trang
+$ python -m pipelines.qr_trace site --out C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/qr_site
+[done] 0 trang → C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\qr_site (0 lỗi)
+exit=0
+0
+$ python -m pipelines.qr_trace planb --date 2026-11-26
+Bản tin phương án B — tem QR thí điểm (ngày 26/11/2026)
+Cấu hình: GIẢ ĐỊNH — chờ GĐ vùng trồng + Pháp chế chốt
+Mốc phương án B 27/11/2026: còn 1 ngày — chưa đề xuất
+Đã phát hành mã QR:
+- không có
+Chưa phát hành:
+- lô MAU-MO120-260915 [MẪU] — Mật ong sâm 120ml (1 hũ): còn thiếu kiểm nhập passed; nguồn vùng trồng đã chain; chữ ký vai GĐ Sản xuất, GĐ vùng trồng, Pháp chế/QA
+exit=0
+$ python -m pipelines.qr_trace planb --date 2026-11-27
+Bản tin phương án B — tem QR thí điểm (ngày 27/11/2026)
+Cấu hình: GIẢ ĐỊNH — chờ GĐ vùng trồng + Pháp chế chốt
+ĐỀ XUẤT phương án B (mốc 27/11/2026) — GĐ vùng trồng quyết, báo Sales + Hạ tầng; agent KHÔNG tự đổi tem
+Đã phát hành mã QR:
+- không có
+Chưa phát hành:
+- lô MAU-MO120-260915 [MẪU] — Mật ong sâm 120ml (1 hũ): còn thiếu kiểm nhập passed; nguồn vùng trồng đã chain; chữ ký vai GĐ Sản xuất, GĐ vùng trồng, Pháp chế/QA
+    chưa đủ điều kiện in tem
+exit=0
+-- usage: thiếu --by → exit 2
+$ python -m pipelines.qr_trace revoke --code AAAAAAAAAAAAAAAAAAAAAA
+usage: python -m pipelines.qr_trace revoke [-h] --code CODE --by BY
+                                           [--reason REASON]
+python -m pipelines.qr_trace revoke: error: the following arguments are required: --by
+exit=2
+-- --help
+usage: python -m pipelines.qr_trace [-h]
+                                    {link,unlink,preview,sign,issue,revoke,site,planb}
+                                    ...
+
+Lô + QR truy xuất (thí điểm mật ong): ánh xạ nguồn, 3 chữ ký, phát hành/thu
+hồi mã, trang tĩnh, phương án B — không sinh ảnh QR, không gửi, không in.
+-- đếm cuối (phải 0 — không giả người ký)
+lot_origins 0
+qr_signatures 0
+qr_codes 0
+approvals qr_lot_sign 0

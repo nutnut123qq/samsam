@@ -185,7 +185,10 @@ def test_guard_blocks_update_delete_truncate_on_chained(db):
             (ids[1],))
     _raises(db, "delete from plot_logs where id = %s", (ids[1],))
     _raises(db, "delete from plots where id = 'KV-T01'")   # FK cascade
-    _raises(db, "truncate plot_logs")
+    # v9.4: lot_origins FK → TRUNCATE thường bị FK chặn trước trigger;
+    # CASCADE (xóa luôn ánh xạ lô) vẫn tới trigger guard.
+    _raises(db, "truncate plot_logs", exc=psycopg.Error)
+    _raises(db, "truncate plot_logs cascade")
     _raises(db, "truncate plots cascade")
     assert db.execute("select count(*) from plot_logs").fetchone()[0] == 3
     assert _verify(db) == []
