@@ -1,0 +1,52 @@
+# v4.3 W43.1 schema + cấu hình — output thật (2026-10-12T14:26:38+07:00), DB = DATABASE_URL của worktree w93 (w43.env, không in DSN)
+
+=== apply_schema lần 1
+$ python scripts/apply_schema.py
+[done] schema applied — 37 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_posts, channel_snapshots, chunks, chunks_internal, claims_approved, content_drafts, decisions, document_fields, documents, eval_runs, garden_media, golden_discrepancies, incidents, intel_items, job_runs, leads, llm_usage, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, red_alerts, sim_runs, sku_map, sku_master, xnqc_dossiers
+exit=0
+
+=== apply_schema lần 2
+$ python scripts/apply_schema.py
+[done] schema applied — 37 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_posts, channel_snapshots, chunks, chunks_internal, claims_approved, content_drafts, decisions, document_fields, documents, eval_runs, garden_media, golden_discrepancies, incidents, intel_items, job_runs, leads, llm_usage, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, red_alerts, sim_runs, sku_map, sku_master, xnqc_dossiers
+exit=0
+
+=== $ python -m pipelines.director --all --dry-run
+[ok] ceo — Tổng giám đốc + Hội đồng thành viên + Ban kiểm soát nội bộ · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] sales — Giám đốc bán hàng + Sales (Phòng kinh doanh TMĐT) · 3 loại việc · vai trò duyệt gd_ban_hang · người duyệt chưa cấu hình (external-dep)
+[ok] marketing — Giám đốc marketing + Chuyên viên marketing + Chuyên viên SEO · 3 loại việc · vai trò duyệt gd_marketing · người duyệt chưa cấu hình (external-dep)
+[ok] intel — Trung tâm tình báo thị trường (trực thuộc TGĐ, phục vụ Marketing/Sales) · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] finance — Giám đốc tài chính + Phòng kế toán + Phòng tài chính–kế hoạch · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] production — Giám đốc sản xuất + Nghiên cứu và sản xuất + Công nghệ sinh học · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] farming — Giám đốc vùng trồng + Nhân viên vùng trồng · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] projects — Giám đốc dự án + Chuyên viên dự án–xúc tiến đầu tư · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] legal_hr — Pháp chế nhân sự + Chuyên viên pháp chế–hành chính–nhân sự · 5 loại việc · vai trò duyệt phap_che · người duyệt chưa cấu hình (external-dep)
+[ok] mechanical — Trung tâm điện–cơ khí chế tạo máy + Kỹ sư điện–cơ khí · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] data_platform — Hạ tầng dữ liệu & AI (do Quản lý hạ tầng AI vận hành) · 3 loại việc · vai trò duyệt ha_tang,tgd · người duyệt chưa cấu hình (external-dep)
+[done] 11 khối hợp lệ (dry-run, không DB)
+exit=0
+
+=== test DB (schema tạm + set local search_path + docs/schema.sql ×2; 0 skipped) — trích từ `python -m pytest -v -rs tests/test_xnqc.py` + tests/test_ra_kenh.py (load_config)
+xnqc_v.txt:=== 2026-10-12T14:27:38+07:00 $ python -m pytest -v -rs tests/test_xnqc.py
+xnqc_v.txt:============================= test session starts =============================
+xnqc_v.txt:tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw0] PASSED   [ 62%]
+xnqc_v.txt:tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw1] PASSED   [ 66%]
+xnqc_v.txt:tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw2] PASSED   [ 70%]
+xnqc_v.txt:tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw3] PASSED   [ 74%]
+xnqc_v.txt:tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw4] PASSED   [ 77%]
+xnqc_v.txt:tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw5] PASSED   [ 81%]
+xnqc_v.txt:tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw6] PASSED   [ 85%]
+xnqc_v.txt:tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw7] PASSED   [ 88%]
+xnqc_v.txt:tests/test_xnqc.py::test_schema_fk_and_valid_row PASSED                  [ 92%]
+xnqc_v.txt:============================= 27 passed in 12.56s =============================
+ra_kenh_v.txt:=== 2026-10-12T14:28:00+07:00 $ python -m pytest -v -rs tests/test_ra_kenh.py
+ra_kenh_v.txt:============================= test session starts =============================
+ra_kenh_v.txt:tests/test_ra_kenh.py::test_load_config_fail_closed[None] PASSED         [ 35%]
+ra_kenh_v.txt:tests/test_ra_kenh.py::test_load_config_fail_closed[{h\u1ecfng] PASSED   [ 37%]
+ra_kenh_v.txt:tests/test_ra_kenh.py::test_load_config_fail_closed[doc2] PASSED         [ 39%]
+ra_kenh_v.txt:tests/test_ra_kenh.py::test_load_config_fail_closed[doc3] PASSED         [ 41%]
+ra_kenh_v.txt:tests/test_ra_kenh.py::test_load_config_fail_closed[doc4] PASSED         [ 43%]
+ra_kenh_v.txt:tests/test_ra_kenh.py::test_load_config_fail_closed[neg] PASSED          [ 45%]
+ra_kenh_v.txt:tests/test_ra_kenh.py::test_load_config_fail_closed[bool] PASSED         [ 47%]
+ra_kenh_v.txt:tests/test_ra_kenh.py::test_load_config_fail_closed[empty_hosts] PASSED  [ 49%]
+ra_kenh_v.txt:tests/test_ra_kenh.py::test_load_config_fail_closed[bad_marker] PASSED   [ 50%]
+ra_kenh_v.txt:============================= 51 passed in 8.21s ==============================

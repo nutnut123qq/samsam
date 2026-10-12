@@ -408,6 +408,31 @@
       ],
       "legal_basis": "Không xử lý dữ liệu cá nhân thật; chạy sau khi DPIA ký — CẦN LUẬT SƯ XÁC NHẬN",
       "gaps": []
+    },
+    {
+      "id": "DF-18",
+      "name": "Rà bài đăng kênh sở hữu từ file xuất tay (v4.3 PC-A4)",
+      "modules": [
+        "agents/ra_kenh.py"
+      ],
+      "data": "Text bài CÔNG KHAI của công ty trên website/fanpage/sàn (url, kênh, ngày đăng, draft_id) do Quản lý MXH xuất tay; kết quả guardrail, mã vi phạm, hạn 24 giờ",
+      "class": "xanh",
+      "subjects": "không — chỉ bài của công ty, không bình luận/người tương tác (cột lạ trong file → từ chối cả file)",
+      "purpose": "Phát hiện bài đang đăng vi phạm luật quảng cáo/lệch bản đã duyệt để Pháp chế ra lệnh gỡ/sửa trong 24 giờ",
+      "storage": "Bảng `channel_posts` + `approval_queue` (lệnh gỡ/sửa, không chép đoạn vi phạm) + `red_alerts` (S1)",
+      "retention": "không giới hạn — GAP (Pháp chế chốt)",
+      "recipients": "nội bộ, không gửi ra ngoài (không LLM, không gọi API kênh)",
+      "cross_border": false,
+      "safeguards": [
+        "File xuất tay kiểm toàn bộ trước khi ghi DB; cột lạ (bình luận, tên người) → từ chối, lỗi không in giá trị ô",
+        "Đoạn trích in ra/báo cáo qua `_mask_pii` (hotline, email trong bài)",
+        "Agent không gỡ/sửa bài, không sửa golden — chỉ đề xuất vào hàng duyệt cho người quyết"
+      ],
+      "legal_basis": "Nội dung công khai của chính công ty, không phải dữ liệu cá nhân — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Thời hạn lưu `channel_posts` chưa chốt",
+        "Quyền đọc kênh qua API thật chưa có — chỉ file xuất tay (external-dep)"
+      ]
     }
   ]
 }

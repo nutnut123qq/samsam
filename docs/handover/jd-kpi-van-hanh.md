@@ -47,8 +47,8 @@ Người phụ trách: {{ho_ten_quan_ly_ha_tang}} · {{ho_ten_quan_ly_mxh}} · N
 | Hàng duyệt không quá tải do tồn đăng | Không cảnh báo "QUÁ TẢI" kéo dài >2 ngày | `python scripts/review_load.py` |
 | Lịch đăng đầy đủ | Không ngày trống trong lịch tuần | `python -m pipelines.store --calendar` |
 | Cảnh báo sàn S1 đóng trong ngày | 100% cảnh báo S1 đóng trong ngày phát sinh | `python -m ingest.market_csv --report` · `market_alerts` |
-| 0 bài đăng lệch bản approve | 0 bài lệch mã băm | `approvals` (hàm SQL verify_publish) |
-| Ticket gỡ/ẩn trong 24 giờ | 100% ticket | CHƯA ĐO ĐƯỢC — chưa có công cụ ticket gỡ 24h (WP05 A0-3/A4 sẽ build) |
+| 0 bài đăng lệch bản approve | 0 bài lệch mã băm | `approvals` (hàm SQL verify_publish) · `channel_posts` (mã lech_ban_duyet, rà từ file xuất tay v4.3) |
+| Ticket gỡ/ẩn trong 24 giờ | 100% ticket | `python -m agents.ra_kenh --report` (ticket gỡ 24h: khối QUÁ 24H + số đóng đúng hạn/trễ) · `channel_posts` — kết quả quét chưa được Pháp chế xác nhận; leo thang S2 sau 2 giờ (A0-3) chưa build |
 | Tỷ lệ hậu kiểm việc gỡ theo ủy quyền | 100% được Pháp chế hậu kiểm | CHƯA ĐO ĐƯỢC — chưa có sổ hậu kiểm ủy quyền (WP05 sẽ build) |
 | Bài kiểm tra tuân thủ quảng cáo | Đạt ≥ 80% trên bộ ≥20 câu | CHƯA ĐO ĐƯỢC — chưa có bộ câu hỏi (WP05 đào tạo sẽ build) |
 

@@ -3,8 +3,8 @@
 - **Dành cho ai:** Quản lý hạ tầng AI (hoặc đội triển khai khi chưa tuyển
   xong), người được TGĐ giao mở tài khoản cloud.
 - **Làm gì:** chọn nhà cung cấp Postgres managed trong nước, nối app vào
-  bằng TLS, đưa đủ 35 bảng lên, bật backup + diễn tập khôi phục.
-  bằng TLS, đưa đủ bảng của `docs/schema.sql` lên, bật backup + diễn tập khôi phục.
+  bằng TLS, đưa đủ 37 bảng của `docs/schema.sql` lên, bật backup + diễn
+  tập khôi phục.
 - **Cần gì (external-dep — công ty cấp, repo này KHÔNG giả lập):** tài
   khoản + thẻ thanh toán nhà cung cấp; bật PITR/WAL; object storage
   S3-compatible + key; khóa mã hóa backup trong secret manager; VM ứng
@@ -63,16 +63,14 @@ Người làm 1 lần trên console: bật PITR/WAL, đặt retention WAL, đọ
 cấu hình để kiểm, lưu biên bản. Diễn tập PITR ra instance tạm của nhà
 cung cấp (mốc 30/11 và 18/12), đo RTO, xóa instance sau khi đo.
 
-## 4. Đưa 35 bảng lên cloud
-## 4. Đưa toàn bộ bảng lên cloud
+## 4. Đưa 37 bảng lên cloud
 
 Chọn 1 trong 2 đường cho từng bảng.
 
 ### Đường A — dựng mới từ nguồn trong repo
 
 ```
-python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ 35 bảng
-python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ số bảng
+python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ 37 bảng
 python -m ingest.core_store         # products, claims_approved, plots, plot_logs, orders, assets
 python -m ingest.golden_store       # sku_master, sku_map, price_list, golden_discrepancies
 python -m ingest.embed_store        # chunks (gọi API embed — tốn phí)
@@ -85,8 +83,7 @@ Bảng sinh lúc chạy bắt đầu RỖNG theo đường A: `leads`, `content_
 ### Đường B — mang dữ liệu đang có
 
 ```
-python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts 35 bảng)
-python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts mọi bảng)
+python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts 37 bảng)
 pg_restore --no-owner --no-privileges --exit-on-error -d samsam <file .dump>   # vào DB cloud rỗng (PG* env, sslmode=require)
 ```
 
@@ -131,6 +128,8 @@ bảng nào thì dừng, không bật app.
 | `machines` | B | sổ máy cơ khí (v9.5) — nhập tay, không có nguồn dựng lại |
 | `maintenance_plans` | B | lịch bảo trì + người duyệt việc lớn |
 | `incidents` | B | sự cố/downtime (view `downtime_log` tự có khi apply schema) |
+| `xnqc_dossiers` | B | (v4.3) sổ hồ sơ XNQC — trạng thái `da_cap` do Pháp chế xác nhận, không có nguồn dựng lại |
+| `channel_posts` | B | (v4.3) snapshot bài kênh sở hữu + đợt vi phạm/hạn 24h — B giữ lịch sử đóng đúng hạn/trễ (A: nạp lại file xuất tay chỉ có hiện trạng) |
 
 ## 5. Backup + diễn tập trên cloud (mẫu — external-dep)
 

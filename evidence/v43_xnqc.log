@@ -1,0 +1,102 @@
+# v4.3 W43.2 PC-A1 sổ hồ sơ XNQC — output thật (2026-10-12T14:26:53+07:00), DB worktree w93 (0 hồ sơ thật — hồ sơ thật = external-dep)
+
+=== $ python -m agents.xnqc --list
+[xnqc] 0 hồ sơ
+exit=0
+
+=== $ python -m agents.xnqc --remind --today 2026-11-16
+[xnqc] nhắc mốc ngày 16/11/2026 — 8 mục
+- SẮP HẠN — savina-12v: hạn đợt 2 30/11/2026 còn 14 ngày, chưa nộp hồ sơ
+- SẮP HẠN — saphraton-20v: hạn đợt 2 30/11/2026 còn 14 ngày, chưa nộp hồ sơ
+- SẮP HẠN — saphraton-combo-2x20v: hạn đợt 2 30/11/2026 còn 14 ngày, chưa nộp hồ sơ
+- SẮP HẠN — saphraton-40v: hạn đợt 2 30/11/2026 còn 14 ngày, chưa nộp hồ sơ
+- SẮP HẠN — saphraton-80v: hạn đợt 2 30/11/2026 còn 14 ngày, chưa nộp hồ sơ
+- SẮP HẠN — savigout-30v: hạn đợt 2 30/11/2026 còn 14 ngày, chưa nộp hồ sơ
+- SẮP HẠN — sapentol-30v: hạn đợt 2 30/11/2026 còn 14 ngày, chưa nộp hồ sơ
+- SẮP HẠN — da-an-sam-30v: hạn đợt 2 30/11/2026 còn 14 ngày, chưa nộp hồ sơ
+exit=0
+
+=== $ python -m agents.xnqc --set 1 --status da_cap --by "agent:x"   (usage, trước connect)
+usage: python -m agents.xnqc [-h] [--add] [--set ID] [--list] [--remind]
+                             [--sync-golden] [--sku SKU]
+                             [--loai {maket,kich_ban_video,kich_ban_livestream,khac}]
+                             [--ten TEN]
+                             [--status {chuan_bi,da_nop,bo_sung,da_cap,het_han}]
+                             [--by BY] [--so-giay SO_GIAY]
+                             [--ngay-nop NGAY_NOP] [--ngay-cap NGAY_CAP]
+                             [--het-han HET_HAN] [--doc-sha DOC_SHA]
+                             [--today TODAY]
+python -m agents.xnqc: error: --by phải là tên NGƯỜI — không nhận 'agent:'/'system:'
+exit=2
+
+=== test (THUẦN + DB thật, 0 skipped) — output đầy đủ
+=== 2026-10-12T14:27:38+07:00 $ python -m pytest -v -rs tests/test_xnqc.py
+============================= test session starts =============================
+platform win32 -- Python 3.12.7, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\hahuy\AppData\Local\Programs\Python\Python312\python.exe
+rootdir: D:\code\samsam-w93
+plugins: anyio-4.12.1, langsmith-0.7.32, asyncio-1.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 27 items
+
+tests/test_xnqc.py::test_reminders_dot2_boundaries[today0-CH\u01afA N\u1ed8P-15] PASSED [  3%]
+tests/test_xnqc.py::test_reminders_dot2_boundaries[today1-S\u1eaeP H\u1ea0N-14] PASSED [  7%]
+tests/test_xnqc.py::test_reminders_dot2_boundaries[today2-S\u1eaeP H\u1ea0N-0] PASSED [ 11%]
+tests/test_xnqc.py::test_reminders_dot2_boundaries[today3-QU\xc1 H\u1ea0N-1] PASSED [ 14%]
+tests/test_xnqc.py::test_reminders_expiry_and_back_to_unfiled PASSED     [ 18%]
+tests/test_xnqc.py::test_golden_target_branches PASSED                   [ 22%]
+tests/test_xnqc.py::test_cli_usage_exit2_before_connect[argv0] PASSED    [ 25%]
+tests/test_xnqc.py::test_cli_usage_exit2_before_connect[argv1] PASSED    [ 29%]
+tests/test_xnqc.py::test_cli_usage_exit2_before_connect[argv2] PASSED    [ 33%]
+tests/test_xnqc.py::test_cli_usage_exit2_before_connect[argv3] PASSED    [ 37%]
+tests/test_xnqc.py::test_cli_usage_exit2_before_connect[argv4] PASSED    [ 40%]
+tests/test_xnqc.py::test_cli_usage_exit2_before_connect[argv5] PASSED    [ 44%]
+tests/test_xnqc.py::test_cli_usage_exit2_before_connect[argv6] PASSED    [ 48%]
+tests/test_xnqc.py::test_cli_usage_exit2_before_connect[argv7] PASSED    [ 51%]
+tests/test_xnqc.py::test_cli_db_down_exit2_no_hang PASSED                [ 55%]
+tests/test_xnqc.py::test_cli_help_exit0 PASSED                           [ 59%]
+tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw0] PASSED   [ 62%]
+tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw1] PASSED   [ 66%]
+tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw2] PASSED   [ 70%]
+tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw3] PASSED   [ 74%]
+tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw4] PASSED   [ 77%]
+tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw5] PASSED   [ 81%]
+tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw6] PASSED   [ 85%]
+tests/test_xnqc.py::test_schema_checks_block_direct_insert[kw7] PASSED   [ 88%]
+tests/test_xnqc.py::test_schema_fk_and_valid_row PASSED                  [ 92%]
+tests/test_xnqc.py::test_db_full_flow_and_golden_untouched PASSED        [ 96%]
+tests/test_xnqc.py::test_cli_db_list_remind_sync PASSED                  [100%]
+
+============================= 27 passed in 12.56s =============================
+exit=0
+
+# ===== vòng sửa nghiệm thu — sync_golden thay thế đề xuất cũ / chờ người sửa golden
+test: tests/test_xnqc.py::test_sync_golden_supersedes_stale_and_waits_for_edit (DB thật schema tạm, PASS targeted ×3 + full):
+- da_nop→da_cap: mục ':approved' ghi 'THAY THẾ mục #<:pending> — chỉ duyệt mục mới nhất', guardrail.check ok; sync_notes liệt mục ':pending' LỖI THỜI
+- da_cap→het_han trong 72h: mục ':none' GIỮ NGUYÊN thay cả 2 mục cũ (trước: không có gì, mục '→approved' vẫn chờ duyệt); gọi lại sync → []
+- hồ sơ 2 da_nop khi ':pending' cũ còn pending (unique index) → mục ':pending@<id>' mới nhất; gọi lại → []
+- mục đã duyệt, golden chưa sửa → sync_golden [] (không đề xuất lại), --sync-golden + báo cáo §1 in 'đã duyệt — chờ người sửa golden'
+- sha256 data/golden_skus.json không đổi
+
+# ===== vòng sửa nghiệm thu 2 — --today CHỈ cho --remind/--sync-golden (cùng lớp --now ra_kenh)
+trước (probe của reviewer): --set ... --ngay-cap 2029-12-31 --today 2030-01-01 → rc 0, da_cap ngày cấp tương lai + mục savigout-30v:approved
+sau: main ap.error TRƯỚC connect khi --today đi với --add/--set/--list; --set/--add dùng datetime.now(VN_TZ).date()
+     _valid_cap thêm ngay_cap <= today (giấy chưa tới ngày cấp — kể cả ghi thẳng DB — không tính approved)
+=== --today với thao tác ghi xnqc
+$ python -m agents.xnqc --set 1 --status da_cap --so-giay 1 --ngay-cap 2029-12-31 --doc-sha <64 hex> --by A --today 2030-01-01
+python -m agents.xnqc: error: --today chỉ đi với --remind/--sync-golden — --set/--add dùng ngày thật
+exit=2
+$ python -m agents.xnqc --set 1 --status da_nop --by A --ngay-nop 2026-10-01 --today 2030-01-01
+python -m agents.xnqc: error: --today chỉ đi với --remind/--sync-golden — --set/--add dùng ngày thật
+exit=2
+$ python -m agents.xnqc --add --sku savigout-30v --loai maket --ten m --by A --today 2030-01-01
+python -m agents.xnqc: error: --today chỉ đi với --remind/--sync-golden — --set/--add dùng ngày thật
+exit=2
+$ python -m agents.xnqc --remind --today 2026-11-16   (vẫn nhận --today; DB chết → exit 2 ở bước connect, KHÔNG phải usage)
+[err] DB không truy cập được
+exit=2
+
+test mới/đổi (PASS targeted ×3 + full):
+- test_cli_usage_exit2_before_connect +4 argv: --set da_nop/--set da_cap/--add/--list kèm --today → exit 2, connect raise
+- test_golden_target_branches +3 assert: ngay_cap == today → approved; ngay_cap > today → none; tương lai + da_nop → pending
+- _d() fixture thêm ngay_cap (mặc định 2026-09-01)
+mutation: bỏ guard --today + bỏ ngay_cap<=today → 5 failed (4 argv + golden_target), khôi phục → xanh

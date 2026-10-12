@@ -6,6 +6,564 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+## Checklist v4.3-phap-che-xnqc-ra-kenh
+
+Khán giả/mục đích: nhánh M31 (worktree `D:\code\samsam-w93`) — phần PC-A1
+(hồ sơ XNQC) + PC-A4 (rà kênh sở hữu, ticket gỡ/sửa 24h) của WP05 (pmo.md
+dòng `| WP05`; plan_legal_hr.md §1, §3, §4, §5, §6, A1, A4;
+research_legal.md mục 1–3, 10). Chuyên viên Pháp chế là người DUY NHẤT
+duyệt. Hiện chưa có gì giúp họ: (1) không có sổ theo dõi hồ sơ XNQC theo
+SKU (mỗi maket/kịch bản là 1 hồ sơ — research_legal mục 2), không ai nhắc
+mốc đợt 2 trước 30/11/2026 hay giấy sắp hết hạn, và `sku_master.
+xnqc_status`/`data/golden_skus.json` (nguồn của `sku_readiness` +
+`guardrail.readiness()`) không có đường nối từ hồ sơ đã cấp; (2) bài ĐANG
+ĐĂNG trên kênh sở hữu chưa được rà — `guardrail.check_publish` (v4.1) chỉ
+chạy cho nháp mới; không ai biết bài nào lệch bản đã duyệt (`approvals`
+sha256 / `verify_publish`), không có ticket gỡ/sửa có đồng hồ 24h (Luật QC
+75/2025 + NĐ 342/2025 — gỡ trong 24 giờ). Sau version: `python -m
+agents.xnqc` (sổ hồ sơ + nhắc mốc + đề xuất đồng bộ golden vào
+`approval_queue`), `python -m agents.ra_kenh --file <csv xuất tay>` (nạp
+idempotent → `check_publish` theo kênh → đối chiếu bản duyệt → ticket
+`approval_queue` SLA 24h, critical → `red_alerts`), `python -m
+agents.ra_kenh --report` (báo cáo Pháp chế tuần). Agent CHỈ phát hiện +
+đề xuất: KHÔNG gỡ/sửa/ẩn bài trên kênh, KHÔNG gọi API kênh, KHÔNG sửa
+golden (file lẫn bảng), KHÔNG tự chuyển hồ sơ sang `da_cap`, KHÔNG tự
+quyết mục hàng duyệt.
+
+Quy ước: ponytail — stdlib (`csv`, `json`, `hashlib`, `argparse`,
+`datetime`) + `psycopg` sẵn có; KHÔNG dep mới, KHÔNG LLM/gateway/mạng
+trong cả 2 module mới (tự chứng minh: không nằm trong
+`scripts.dpia_draft.egress_modules(ROOT)`). TÁI DÙNG, không viết lại:
+`pipelines.guardrail.check_publish` (luật đăng bài theo kênh — kênh hợp
+lệ = `channels` + `channel_alias` của `data/guardrail_rules.json`:
+shopee/tiktok/web/facebook/zalo/chatbot, `blog`→`web`; `content_type` ∈
+`content_types`), `pipelines.store.verify_publish` (so bản đăng với bản
+đã duyệt), `pipelines.director.submit` (SLA/risk lấy từ
+`data/directors/<khối>.json`, guardrail payload do `approval_queue.enqueue`
+TỰ tính), `pipelines.red_alert.raise_alert`, `pipelines.pii._mask_pii`,
+`ingest.golden_store.read_golden` + `GOLDEN_FILE` (CHỈ ĐỌC),
+`ingest.lead_store.connect` (đã `connect_timeout`), `agents.report.
+write_report` (atomic, `data/reports/` đã gitignore),
+`pipelines.period.VN_TZ`. Thêm 2 bảng `xnqc_dossiers`, `channel_posts`
+(KHÔNG thêm assert đếm cứng số bảng; thêm tên vào `docs/handover/kien-
+truc.md` + sửa câu "N bảng public" = số parse được từ schema sau khi thêm
+— hiện 35 → 37; các version song song thêm bảng thì coordinator cộng khi
+gộp). Mọi module/CLI mới: UTF-8 reconfigure guard sau imports; tham số
+ngày từ CLI là str → coerce `date`/`datetime` TRƯỚC mọi format-spec
+(gotcha v2.2); nhiều op cùng lúc → `ap.error` exit 2 TRƯỚC connect
+(gotcha v2.2 `n_ops`); ghi trên conn chia sẻ: `conn.transaction()` +
+`conn.commit()` tường minh (gotcha v2.1); `--by` là tên NGƯỜI — rỗng/chỉ
+khoảng trắng, chứa ký tự điều khiển, hoặc bắt đầu `agent:`/`system:`
+(không phân biệt hoa thường, bỏ khoảng trắng đầu) → từ chối; tên người
+in qua thay ký tự điều khiển (precedent W44.1). "Bây giờ" là THAM SỐ
+(`now`/`today`) ở mọi hàm logic — test không wall-clock (AGENTS.md
+gotcha timing); CLI `--now` ISO, thiếu múi giờ → hiểu là giờ VN (+07:00),
+ghi rõ trong `--help`. Text bài là nội dung CÔNG KHAI của công ty (lớp
+Xanh) nhưng mọi đoạn trích in ra/ghi báo cáo/red_alert vẫn qua
+`_mask_pii` (hotline, email trong bài). File xuất tay chỉ gồm bài của
+công ty — KHÔNG nạp bình luận/tên người tương tác (cột lạ → lỗi).
+
+External-dep (KHÔNG giả lập, để `[ ]`): quyền đọc kênh thật (API Fanpage/
+TikTok/Shopee) — version này CHỈ nhận file xuất tay; danh sách page/tài
+khoản sở hữu thật ngoài 2 website (cấu hình `owned_web_hosts` chỉ phủ
+`web`); Chuyên viên Pháp chế xác nhận kết quả quét lần đầu F1–F5 (A4-1
+"số vi phạm bằng số mục fixture người thật xác nhận") + đóng băng fixture;
+hồ sơ XNQC thật (số giấy, ngày cấp, scan giấy) — DB chỉ có dữ liệu test;
+người nhận cảnh báo đỏ thật (`data/red_alert_routing.json` vẫn `[]` →
+`route_error`); văn bản ủy quyền GỠ/ẨN + lịch trực (plan §5, §11.1);
+SSO/role DB cho `--by` (pilot free-text). Ngoài phạm vi (someday, ghi
+không làm): leo thang S2 sau 2 giờ trong khung 06–22h + nhắc người duyệt
+vắng (A0-3); hạn nộp sửa 90 ngày làm việc + chỉ-sửa-1-lần (NQ 21/2026);
+soạn hồ sơ XNQC bằng LLM (A1 đợt 2); quét trực tiếp website qua
+`crawler/collect.py`; ticket ẩn listing khi A2 hạ mức (A2-1).
+
+- [x] **W43.1 Schema 2 bảng + cấu hình** — `docs/schema.sql` thêm khối
+  "v4.3 Pháp chế PC-A1/PC-A4" (chỉ `create table if not exists` + index,
+  chạy lại idempotent):
+  `xnqc_dossiers` (`id` bigint identity pk; `sku_key` text not null
+  references `sku_master(sku_key)`; `loai_ho_so` text not null check in
+  (`maket`, `kich_ban_video`, `kich_ban_livestream`, `khac`); `ten_ho_so`
+  text not null (mô tả ngắn, vd "maket fanpage"); `status` text not null
+  default `chuan_bi` check in (`chuan_bi`, `da_nop`, `bo_sung`, `da_cap`,
+  `het_han`); `so_giay` text; `ngay_nop`/`ngay_cap`/`ngay_het_han` date;
+  `document_sha256` text references `documents(sha256)`; `updated_by` text
+  not null check btrim <> ''; `created_at`/`updated_at` timestamptz default
+  now()) + CHECK bảng: `status <> 'da_cap' or (btrim(coalesce(so_giay,''))
+  <> '' and ngay_cap is not null and document_sha256 is not null and
+  updated_by !~* '^\s*(agent|system)\s*:')`; `status not in ('da_nop',
+  'bo_sung','da_cap','het_han') or ngay_nop is not null`; `ngay_het_han is
+  null or ngay_cap is null or ngay_het_han > ngay_cap` — DB tự chặn
+  `da_cap` thiếu người/số giấy/scan kể cả khi ai đó INSERT/UPDATE thẳng.
+  `channel_posts` (1 dòng = 1 SNAPSHOT bài theo (url, text): `id` bigint
+  identity pk; `url` text not null; `channel` text not null; `content_type`
+  text not null; `posted_on` date (null = file không ghi ngày); `is_ai`
+  boolean not null; `is_sponsored` boolean not null default false; `sku`
+  text; `draft_id` bigint (id `content_drafts` bản đã duyệt — KHÔNG FK,
+  draft xoá/thiếu → kiểm ra lệch); `text` text not null; `text_sha256` text
+  not null check `~ '^[0-9a-f]{64}$'`; `guardrail` jsonb not null (snapshot
+  `check_publish`); `codes` text[] not null default '{}' (code vi phạm
+  block + `lech_ban_duyet`/`thieu_ban_duyet`/`trang_mac_dinh_hosting`);
+  `severity` text check in (`S1`, `S2`) (null = sạch); `first_detected_at`
+  timestamptz; `due_at` timestamptz; `queue_id` bigint references
+  `approval_queue(id)`; `alert_id` bigint references `red_alerts(id)`;
+  `imported_by` text not null check btrim <> ''; `scanned_at` timestamptz
+  not null; `closed_at` timestamptz; `close_reason` text check in
+  (`da_sua`, `thay_ban_moi`, `da_go`); `closed_by` text; index (`url`,
+  `id`) + index partial `where closed_at is null and severity is not
+  null`). KHÔNG sửa bảng/view/function cũ, KHÔNG đụng `sku_readiness`.
+  Cấu hình `data/phap_che.json`: `{"_doc": "BẢN DEV SOẠN — CHỜ PHÁP CHẾ
+  DUYỆT ...", "xnqc": {"dot2_han_nop": "2026-11-30", "nhac_truoc_ngay": 14,
+  "het_han_canh_bao_ngay": 30}, "ra_kenh": {"quy_trinh_duyet_tu":
+  "2026-10-12", "owned_web_hosts": ["samsamngoclinh.com",
+  "samsam.net.vn"], "hosting_default_markers": [...]}}` — loader thuần
+  `load_config(path) -> dict` (đặt ở `agents/ra_kenh.py`, `agents/xnqc.py`
+  import lại): file thiếu/JSON hỏng/`{}`/chỉ `_doc`/ngày sai ISO/số không
+  phải int ≥ 0/list rỗng → `ValueError` (fail-closed, AGENTS.md gotcha
+  missing vs 0-record). `data/directors/legal_hr.json` thêm `object_types`
+  `channel_takedown` {sla_hours 24, risk high} + `golden_xnqc_sync`
+  {sla_hours 72, risk high} (giữ `xnqc_dossier`, `contract_review`,
+  `hr_notice`); `data/directors/data_platform.json` thêm `hosting_fix`
+  {sla_hours 24, risk medium}.
+  - Boundary: `docs/schema.sql`, `data/phap_che.json`,
+    `data/directors/legal_hr.json`, `data/directors/data_platform.json`
+  - Gate: `python scripts/apply_schema.py` chạy 2 lần exit 0 trên DB
+    samsam_infra (in tên 2 bảng mới); `python -m pipelines.director --all
+    --dry-run` exit 0 (cấu hình 11 khối hợp lệ); test DB (schema tạm +
+    `set local search_path` + docs/schema.sql, mẫu fixture `db` của
+    `tests/test_auth_approval.py`/`tests/test_director_framework.py`; 0
+    skipped): INSERT thẳng `xnqc_dossiers` status `da_cap` thiếu
+    `so_giay` / thiếu `ngay_cap` / thiếu `document_sha256` / `updated_by
+    'agent:x'` / `'  System: y'` → mỗi case `psycopg.errors.CheckViolation`;
+    `sku_key` không có trong `sku_master` → FK lỗi; `ngay_het_han <=
+    ngay_cap` → CheckViolation; `load_config` ≥6 case lỗi raise.
+  - Evidence: `evidence/v43_schema.log`
+  - Kết quả: apply_schema ×2 exit 0 in "37 bảng public" có
+    `channel_posts`, `xnqc_dossiers`; director `--all --dry-run` 11 khối
+    exit 0 (legal_hr 5 loại việc, data_platform 3); test schema 8 case
+    CheckViolation + 2 FK + 1 dòng hợp lệ, `load_config` 9 case raise — 0
+    skipped. **LỆCH contract (cố ý, coordinator xem):** `channel_posts.
+    alert_id` KHÔNG FK tới `red_alerts(id)` — FK làm `truncate red_alerts`
+    trong `tests/test_director_framework.py` vấp FK (FeatureNotSupported)
+    trước trigger append-only mà test v4.0 ghim (vòng 1 full pytest bắt 2
+    fail); id vẫn chỉ ghi từ `raise_alert`, `kien-truc.md` ghi "không FK".
+- [x] **W43.2 PC-A1 sổ hồ sơ XNQC + nhắc mốc + đề xuất đồng bộ golden** —
+  `agents/xnqc.py`: hàm `add(conn, sku_key, loai, ten, by) -> int`
+  (status `chuan_bi`); `set_status(conn, dossier_id, status, by, *,
+  so_giay=None, ngay_nop=None, ngay_cap=None, ngay_het_han=None,
+  doc_sha=None, today: date) -> tuple[bool, str]` — chuyển hợp lệ CHỈ theo
+  `TRANSITIONS = {chuan_bi: {da_nop}, da_nop: {bo_sung, da_cap}, bo_sung:
+  {da_nop}, da_cap: {het_han}, het_han: {}}`; chuyển khác → (False, lý do)
+  không ghi; `da_nop` bắt buộc `ngay_nop`; `da_cap` bắt buộc `--by` NGƯỜI
+  (luật `--by` ở Quy ước) + `so_giay` + `ngay_cap` (≤ today) + `doc_sha`
+  trỏ `documents` có `status = 'verified'` (Pháp chế đã đối chiếu bản gốc
+  qua `python -m ingest.doc_intake --verify <sha> --by`) — `pending_review`
+  /`cho_ocr`/`rejected`/không tồn tại → từ chối nêu lý do. Mỗi thay đổi:
+  UPDATE + 1 dòng `agent_action_log` (`actor` = by, `action`
+  `xnqc_status`, `object_type` `xnqc_dossier`, `detail` {id, from, to} —
+  KHÔNG số giấy/tên file) cùng transaction + `conn.commit()`. Ánh xạ
+  golden THUẦN `golden_target(rows, today) -> 'approved'|'pending'|'none'`
+  theo SKU: có hồ sơ `da_cap` còn hiệu lực (`ngay_het_han` null hoặc ≥
+  today) → `approved`; else có `da_nop`/`bo_sung` → `pending`; else
+  `none`. `sync_golden(conn, today, created_by='agent:phap_che_a1') ->
+  list[int]`: so `golden_target` với `xnqc_status` trong
+  `read_golden(GOLDEN_FILE)` (nguồn mà `guardrail.readiness` đọc) — lệch
+  → `director.submit(block='legal_hr', object_type='golden_xnqc_sync',
+  object_id=f"{sku}:{target}", title=..., payload=...)`; payload = đề xuất
+  bằng chữ ("Đề xuất sửa data/golden_skus.json: <sku> xnqc_status
+  <cũ>→<mới> theo hồ sơ #<id> (<trạng thái>, xác nhận bởi <by>); sau khi
+  duyệt, người phụ trách golden sửa file rồi chạy `python -m
+  ingest.golden_store`") — idempotent: đã có mục `pending` cùng
+  (object_type, object_id) → bỏ qua, không exception. `set_status` sang
+  `da_cap`/`het_han`/`da_nop` tự gọi `sync_golden` sau commit. Agent
+  KHÔNG ghi file golden, KHÔNG INSERT/UPDATE `sku_master`/`price_list`.
+  Nhắc mốc THUẦN `reminders(rows, tpbvsk_skus, cfg, today) -> list[str]`
+  (`tpbvsk_skus` = SKU `category == 'tpbvsk'` trong golden file): SKU chưa
+  có hồ sơ `da_nop`/`bo_sung`/`da_cap` còn hiệu lực → `CHƯA NỘP — hạn đợt
+  2 <dd/mm/yyyy> còn N ngày` khi N > `nhac_truoc_ngay`, `SẮP HẠN` khi 0 ≤ N
+  ≤ `nhac_truoc_ngay`, `QUÁ HẠN đợt 2` khi today > hạn; hồ sơ `da_cap` có
+  `ngay_het_han` trong ≤ `het_han_canh_bao_ngay` ngày → `SẮP HẾT HẠN`;
+  `ngay_het_han` < today mà vẫn `da_cap` → `ĐÃ QUÁ HẠN — Pháp chế chuyển
+  het_han` (agent KHÔNG tự chuyển). CLI `python -m agents.xnqc`:
+  `--add --sku K --loai L --ten T --by B` · `--set ID --status S --by B
+  [--so-giay X] [--ngay-nop D] [--ngay-cap D] [--het-han D] [--doc-sha
+  SHA]` · `--list` · `--remind [--today D]` · `--sync-golden [--today D]`.
+  Exit 0 ok · 1 chuyển trạng thái bị từ chối · 2 usage (ngày sai ISO, op
+  >1, `--by` không hợp lệ — kiểm TRƯỚC connect) / DB down ("[err] DB không
+  truy cập được").
+  - Boundary: `agents/xnqc.py`, `tests/test_xnqc.py`
+  - Gate: `tests/test_xnqc.py` — THUẦN: `reminders` biên với cfg mặc định
+    today `2026-11-15` → CHƯA NỘP còn 15 ngày, `2026-11-16` → SẮP HẠN còn
+    14, `2026-11-30` → SẮP HẠN còn 0, `2026-12-01` → QUÁ HẠN; SKU có
+    `da_cap` hết hạn 2026-12-10 với today 2026-11-12 → SẮP HẾT HẠN (28
+    ngày), today 2026-12-11 → ĐÃ QUÁ HẠN và SKU đó quay lại danh sách
+    CHƯA NỘP/QUÁ HẠN; `golden_target` đủ 5 nhánh (da_cap còn hạn, da_cap
+    hết hạn + da_nop → pending, chỉ bo_sung, chỉ chuan_bi/het_han → none,
+    không hồ sơ → none); CLI `--set 1 --status da_cap --by "agent:x"` /
+    `--by "   "` / `--ngay-cap 2026-13-01` / `--add --list` → exit 2 với
+    `connect` monkeypatch raise (chứng minh chưa connect). DB THẬT (0
+    skipped; nạp golden vào schema tạm bằng `ingest.golden_store.load`):
+    luồng `chuan_bi → da_nop → bo_sung → da_nop → da_cap → het_han` qua
+    `set_status`, mỗi bước 1 dòng `agent_action_log` `xnqc_status` và
+    `verify_action_log()` rỗng; chuyển sai (`chuan_bi → da_cap`, `da_cap →
+    da_nop`, `het_han → *`) → (False, ...) row không đổi; `da_cap` thiếu
+    by/so_giay/doc, doc `pending_review`, doc `rejected`, doc không tồn
+    tại → từ chối từng case; `da_cap` hợp lệ (doc `verified`) → đúng 1 mục
+    `approval_queue` `golden_xnqc_sync` object_id `"<sku>:approved"`
+    block `legal_hr`, `due_at - created_at` = 72 giờ, `pipelines.
+    guardrail.check(payload)["ok"] is True` (Pháp chế duyệt được — dùng
+    `approval_queue.decide(..., "approved")` → (True, None)); gọi
+    `sync_golden` lần 2 → không thêm mục; sau toàn bộ test: sha256
+    `data/golden_skus.json` y hệt trước khi chạy + `select * from
+    sku_master` không đổi (so trước/sau). DB-down: `DATABASE_URL=
+    postgresql://u@10.255.255.1:5432/x` (gotcha v2.0) → `--list` exit 2,
+    không treo (≤ connect_timeout + vài giây).
+  - Evidence: `evidence/v43_xnqc.log` (output test + `python -m
+    agents.xnqc --remind --today 2026-11-16` trên DB samsam_infra: 0 hồ sơ
+    thật → liệt kê 8 SKU TPBVSK SẮP HẠN — dữ liệu hồ sơ thật = external-dep)
+  - Kết quả: `tests/test_xnqc.py` 27 passed 0 skipped (DB thật); `--remind
+    --today 2026-11-16` trên DB worktree → 8 mục "SẮP HẠN … còn 14 ngày";
+    `--list` 0 hồ sơ. Hồ sơ XNQC thật (số giấy/ngày cấp/scan) =
+    external-dep `[ ]` bên dưới.
+- [x] **W43.3 PC-A4 nạp file xuất tay + rà theo kênh + ticket 24h** —
+  `agents/ra_kenh.py`. (a) `read_export(path, cfg) -> list[dict]` THUẦN,
+  kiểm TOÀN file TRƯỚC connect (precedent `ingest/market_csv.py`): chỉ
+  `.csv` decode `utf-8-sig`; ≤ 5 MB; header trùng/rỗng; cột bắt buộc `url`,
+  `kenh`, `is_ai`, `text`; tùy chọn `loai_noi_dung` (mặc định `post`),
+  `ngay_dang` (ISO), `draft_id` (int > 0), `sku`, `is_sponsored`; cột lạ →
+  lỗi (chặn nạp bình luận/tên người); `url` http(s) có host — kênh `web`
+  thì host (bỏ `www.`) ∈ `owned_web_hosts`; `kenh` ∉ kênh guardrail (sau
+  alias) → lỗi; `is_ai`/`is_sponsored` ∈ {0,1}, ô `is_ai` trống → 1
+  (fail-closed như `check_publish`); text rỗng hoặc > 20 000 ký tự; > 2 000
+  dòng; CÙNG `url` xuất hiện 2 lần trong 1 file → lỗi (mơ hồ). URL so
+  KHÔNG chuẩn hóa scheme (`http://samsam.net.vn/` ≠ `https://samsam.net.vn/`
+  — F2 ≠ F5), chỉ strip khoảng trắng. Text chuẩn hóa DUY NHẤT `\r\n`→`\n`
+  trước hash (artefact công cụ xuất). Lỗi → in số dòng + tên cột (KHÔNG
+  in giá trị ô), exit 1, KHÔNG connect, 0 dòng nạp. (b) `scan_row(row,
+  cfg) -> dict` THUẦN: `check_publish(text, channel=kenh,
+  content_type=loai, sku=sku, is_ai=is_ai, is_sponsored=is_sponsored)` →
+  `codes` = code các violation (mode block); text khớp
+  `hosting_default_markers` (so trên bản fold) → CHỈ code
+  `trang_mac_dinh_hosting` (mục hạ tầng, không ticket nội dung, không
+  red_alert); `draft_id` trống VÀ (`ngay_dang` trống HOẶC ≥
+  `quy_trinh_duyet_tu`) → thêm `thieu_ban_duyet` (fail-closed: không rõ
+  ngày = coi như bài mới). `severity`: có violation `severity critical` →
+  `S1`; còn code nào khác → `S2`; không code → null (warnings như
+  `sku_chua_mo_kenh` KHÔNG mở ticket). (c) `ingest(conn, rows, cfg, *, by,
+  now: datetime) -> dict` (1 transaction + commit): mỗi row — snapshot
+  MỚI NHẤT của `url` có cùng `text_sha256` → skip (idempotent); text cũ
+  quay lại sau khi đã sửa (revert) → snapshot mới, mở lại vi phạm. Row có
+  `draft_id` → `pipelines.store.verify_publish(conn, draft_id, text)`
+  False → thêm `lech_ban_duyet` (S2 nếu chưa S1). "Đợt vi phạm" theo URL:
+  snapshot vi phạm khi URL KHÔNG có dòng mở → `first_detected_at = now`,
+  `due_at = now + 24h` (giờ đồng hồ thật, gồm T7/CN/Tết — plan §9),
+  enqueue 1 mục qua `director.submit` — nội dung: block `legal_hr`
+  object_type `channel_takedown`; hosting: block `data_platform`
+  object_type `hosting_fix`; object_id `channel_post:<id>`; `title` chứa
+  url (đã `_mask_pii`); `payload` = lệnh bằng chữ: kênh, mã bài #id, sha
+  12 ký tự, danh sách code, S1/S2, hạn (giờ VN), câu "thao tác GỠ/ẨN/SỬA
+  do người được ủy quyền thực hiện trên kênh — agent không gỡ/sửa" —
+  KHÔNG chép đoạn vi phạm (payload phải qua `guardrail.check` để Pháp chế
+  approve được); S1 → `red_alert.raise_alert(conn, "agent:phap_che_a4",
+  "S1 <kênh>: <url>", {post_id, codes, due_at})` (không đoạn trích) → lưu
+  `alert_id`. Snapshot vi phạm khi URL ĐANG có đợt mở → dòng mới kế thừa
+  `first_detected_at`/`due_at`/`queue_id`/`alert_id` (đồng hồ KHÔNG reset
+  khi sửa dở), dòng cũ đóng `thay_ban_moi`; không enqueue mục mới; chỉ
+  raise_alert khi đợt chưa có `alert_id` mà snapshot mới là S1. Snapshot
+  SẠCH khi URL có đợt mở → đóng mọi dòng mở `da_sua` (`closed_at = now`,
+  `closed_by = by`). URL VẮNG trong file mới → giữ nguyên (vắng ≠ đã gỡ).
+  `mark_removed(conn, url, by, now)` — NGƯỜI ghi nhận đã gỡ/ẩn → đóng
+  `da_go` (by theo luật `--by`; agent:/system: → từ chối). Mục hàng duyệt
+  chỉ người quyết (`python -m pipelines.approval_queue --approve/--reject`
+  — approve = Pháp chế xác nhận lệnh gỡ/sửa, KHÔNG đóng vi phạm; mục
+  `expired` do `expire_overdue` cũng KHÔNG đóng vi phạm). CLI `python -m
+  agents.ra_kenh`: `--file F --by B [--now ISO] [--dry-run]` (dry-run:
+  parse + `scan_row`, KHÔNG connect, in kế hoạch ticket; ghi rõ "chưa kiểm
+  lệch bản duyệt — cần DB") · `--mark-removed URL --by B [--now ISO]` ·
+  `--report [--now ISO] [--days 7]` (W43.5). Exit 0 ok (có vi phạm vẫn 0 —
+  rà là báo, không chặn) · 1 file không hợp lệ / mark-removed không có đợt
+  mở · 2 usage/cấu hình hỏng/DB down. In: tổng dòng, mới/skip, số S1/S2,
+  ticket mới, red_alert mới — đoạn trích ≤ 160 ký tự qua `_mask_pii`.
+  - Boundary: `agents/ra_kenh.py`, `tests/test_ra_kenh.py`
+  - Gate: `tests/test_ra_kenh.py` THUẦN: `read_export` ≥12 case lỗi (đuôi
+    .xlsx, không UTF-8, header trùng, thiếu `text`, cột lạ `ten_nguoi_
+    binh_luan`, kenh `shopeee`, host web ngoài allowlist, is_ai `yes`,
+    draft_id `abc`, ngày `2026-13-01`, url trùng trong file, text >20 000)
+    → mỗi case exit 1 qua `main()` với `connect` monkeypatch raise và
+    stdout KHÔNG chứa giá trị ô đặc trưng; CRLF vs LF cùng text → cùng
+    sha; `http://samsam.net.vn/` và `https://samsam.net.vn/` là 2 URL;
+    `scan_row` marker hosting → chỉ `trang_mac_dinh_hosting`; ngày trống/
+    2026-10-12 không draft → `thieu_ban_duyet`, 2021-01-11 → không;
+    `sku_chua_mo_kenh` (warn) một mình → severity null. GREP: `agents/
+    ra_kenh.py`, `agents/xnqc.py` KHÔNG nằm trong `scripts.dpia_draft.
+    egress_modules(ROOT)`; source không chứa `wp-json`, `urlopen`,
+    `requests`, `httpx`, `graph.facebook`; regex `(insert\s+into|update|
+    delete\s+from)\s+(sku_master|price_list|content_drafts|approvals|
+    approval_queue|red_alerts)` không trúng (chỉ đi qua function/module
+    có sẵn); không có `write_text`/`write_bytes`/`open(..., "w")` trỏ
+    `golden` (đường ghi duy nhất là `write_report` vào `data/reports/`).
+  - Evidence: `evidence/v43_ra_kenh.log`
+  - Kết quả: `tests/test_ra_kenh.py` 51 passed 0 skipped — `read_export`
+    14 case lỗi (12 contract + `url_ctrl` + `url_ipv6`) exit 1, không
+    connect, stdout không chứa giá trị ô; grep egress/SQL-ghi-thẳng/ghi
+    golden sạch. Vòng resume vá 2 lỗi thật tự rà (OWASP): header đếm trùng
+    `head.count` O(n²) (20k cột 4.49s → 650k cột/5 MB treo hàng giờ;
+    Counter: 600k cột 0.54s) + lỗi liệt kê tên cột cắt 10 tên; `urlsplit`
+    raise ValueError với URL IPv6 hỏng (`http://[abc/`) lọt ra CLI thành
+    "cấu hình guardrail" exit 2 → nay lỗi ô `dòng N cột url` exit 1 (cùng
+    idiom `crawler/intel.py`). Lỗi DB in ra qua `safe(_mask_pii(...))`.
+- [x] **W43.4 Fixture F1–F5 + lệch bản duyệt — E2E** — `tests/fixtures/
+  ra_kenh/f1_f5.csv` (đầu file KHÔNG có comment — CSV; nguồn ghi trong
+  `tests/fixtures/ra_kenh/README.md`): F1 `https://samsamngoclinh.com/`
+  kenh web — text dựng từ tên + mô tả các sản phẩm
+  `https://samsamngoclinh.com/product/*` trong `data/products.jsonl`
+  (crawl công khai; ghi rõ "dựng từ crawl, CHƯA phải bản xuất trang chủ
+  thật"), ngày trống; F2 `http://samsam.net.vn/` web — body `data/
+  about.jsonl` trang `ve-chung-toi`; F3 `https://samsamngoclinh.com/
+  product/savigout/` web — `description` trong `data/products.jsonl`; F4
+  `http://samsam.net.vn/vi/news/cam-nang-suc-khoe/savigout-xua-tan-noi-lo-
+  benh-gout-10.html` web `ngay_dang` 2021-01-11 — `body` trong
+  `data/news.jsonl`; F5 `https://samsam.net.vn/` web — text trang mặc
+  định hosting MẪU (ghi rõ "giả lập, chờ bản chụp thật"); cả 5 `is_ai=0`.
+  `f4_quet_lai.csv`: F4 text đã bỏ hết từ cấm (bản sửa của người — vẫn
+  nhắc Savigout nên còn `sku_chua_xnqc`). Kỳ vọng (đo trên guardrail v4.1
+  hiện tại — `check_publish` kênh web, post): F1 S1 (gồm
+  `ruou_cam_quang_cao`, `tu_cam`, `sku_chua_xnqc`, `thieu_khuyen_cao`); F2
+  S2 (chỉ major `ngoc_linh_chua_xac_nhan` + `thieu_ban_duyet`); F3 S1
+  (`sku_chua_xnqc`, `thieu_khuyen_cao`, `claim_ngoai_cong_bo`); F4 S1
+  (`tu_cam` …, KHÔNG `thieu_ban_duyet` vì 2021); F5 chỉ
+  `trang_mac_dinh_hosting`. Test cũng tự sinh 3 bài P6–P8 trong DB tạm:
+  draft `content_drafts` approved (qua `pipelines.store.save_draft` +
+  `set_status` người ≠ người tạo) với text trung tính `check_publish(...,
+  channel='facebook')` ok; P6 đăng ĐÚNG text + `draft_id` → sạch; P7 cùng
+  `draft_id` khác 1 ký tự → `lech_ban_duyet` S2; P8 `ngay_dang`
+  2026-10-13 không `draft_id` → `thieu_ban_duyet` S2.
+  - Boundary: `tests/fixtures/ra_kenh/` (f1_f5.csv, f4_quet_lai.csv,
+    README.md), `tests/test_ra_kenh.py`
+  - Gate: DB THẬT (schema tạm, 0 skipped), `now = 2026-10-12T09:00+07:00`
+    tham số: nạp f1_f5 → đúng 4 mục `approval_queue` `channel_takedown`
+    block `legal_hr` (F1–F4) + 1 mục `hosting_fix` block `data_platform`
+    (F5), mỗi `channel_posts.due_at - first_detected_at` = đúng 24 giờ,
+    `due_at` = `2026-10-13T09:00+07:00`; đúng 3 dòng `red_alerts` mới (F1,
+    F3, F4 — S1), F2/F5 không alert, `route_error` có (routing `[]`); mọi
+    payload `guardrail.check()["ok"] is True` và `approval_queue.decide(qid,
+    "Pháp chế A", "approved")` → (True, None) + dòng `channel_posts` VẪN mở
+    sau approve; payload không chứa chuỗi vi phạm (vd "chữa", "thuốc").
+    Nạp lại f1_f5 y hệt → 0 snapshot mới, 0 mục queue mới, 0 red_alert mới
+    (đếm trước/sau). Nạp `f4_quet_lai.csv` với now +3h → snapshot mới F4
+    có 0 code `tu_cam`, `first_detected_at`/`due_at`/`queue_id`/`alert_id`
+    kế thừa (đồng hồ không reset), dòng F4 cũ `thay_ban_moi`, 0 mục queue
+    mới, 0 red_alert mới. Nạp lại text F4 GỐC (revert) → snapshot mới mở
+    lại (codes có `tu_cam`). P6 sạch (0 ticket); P7 `lech_ban_duyet`
+    (`verify_publish` False) 1 ticket S2 không alert; nạp P7 với text
+    đúng bản duyệt → đóng `da_sua`; P8 `thieu_ban_duyet`. `--mark-removed
+    F2 --by "Quản lý MXH"` → đóng `da_go`; `--by "agent:x"` → exit 2
+    không đổi; URL không có đợt mở → exit 1. Mục queue của F3 bị Pháp
+    chế `decide(..., "rejected")` → dòng `channel_posts` F3 VẪN mở (đóng
+    vi phạm chỉ qua snapshot sạch / `--mark-removed`, không theo trạng
+    thái hàng duyệt — `approved`/`rejected`/`expired` đều không đóng). CLI `python -m agents.ra_kenh --file tests/fixtures/ra_kenh/f1_f5.csv
+    --by "test" --dry-run` exit 0 không connect (`connect` monkeypatch
+    raise) và in đủ F1–F5 với mức đúng như kỳ vọng.
+  - Evidence: `evidence/v43_fixture.log` (output test + dry-run thật trên
+    f1_f5.csv). Pháp chế xác nhận kết quả quét lần đầu + đóng băng
+    fixture: external-dep `[ ]`.
+  - Kết quả (phần code/test): `test_e2e_f1_f5_p6_p8_and_report` +
+    `test_mark_removed_then_still_exported_reopens` + `test_link_heals_
+    after_crash` pass DB thật 0 skipped — 4 `channel_takedown` legal_hr +
+    1 `hosting_fix` data_platform, due = 13/10/2026 09:00 +07, 3 red_alert
+    (F1/F3/F4, `route_error`), nạp lại 0 mới, F4 quét lại kế thừa đồng hồ,
+    revert mở lại `tu_cam`, P6 sạch / P7 `lech_ban_duyet` → đóng `da_sua` /
+    P8 `thieu_ban_duyet`, approve/reject/expired không đóng vi phạm. Ghi
+    chú: `expired` trong test đặt bằng UPDATE trực tiếp (`decided_by
+    system:sla`) — `expire_overdue()` dùng `now()` DB mà `due_at` bất biến
+    (trigger) và cả test chạy trong 1 tx nên không thể cho quá hạn thật.
+    Dry-run thật: F1/F3/F4 S1 + red_alert, F2 S2
+    (`ngoc_linh_chua_xac_nhan, thieu_ban_duyet`), F5 chỉ
+    `trang_mac_dinh_hosting` → `hosting_fix`.
+- [x] **W43.5 Báo cáo Pháp chế tuần** — `agents/ra_kenh.py` `collect_report
+  (conn, now: datetime, days: int) -> dict` (CHỈ SELECT) + `render_report
+  (stats, now) -> str` THUẦN + `--report` ghi `data/reports/phap-che-tuan-
+  <YYYY-MM-DD giờ VN>.md` qua `agents.report.write_report` và in stdout:
+  (1) Hồ sơ XNQC theo trạng thái (đếm 5 trạng thái + từng hồ sơ: sku,
+  loại, số giấy, ngày nộp/cấp/hết hạn — KHÔNG tên file scan) + khối nhắc
+  mốc `agents.xnqc.reminders(..., today = ngày VN của now)` + số đề xuất
+  `golden_xnqc_sync` đang pending; (2) Vi phạm MỞ theo URL (chỉ dòng mở mới
+  nhất mỗi URL — không đếm đôi snapshot): S1 trước S2, mỗi dòng url, kênh,
+  code, `first_detected_at`/`due_at` giờ VN, còn/quá bao nhiêu giờ, mục
+  queue #id + trạng thái (pending/approved/expired); khối `QUÁ 24H` (now >
+  `due_at`); (3) Đã đóng trong `days` ngày: số đóng ĐÚNG hạn (`closed_at`
+  ≤ `due_at`) / TRỄ, theo `close_reason` (đợt có `thay_ban_moi` tính theo
+  dòng đóng cuối cùng của đợt); (4) Lệch bản duyệt (`lech_ban_duyet`) +
+  thiếu bản duyệt (`thieu_ban_duyet`) — đang mở / phát hiện trong kỳ; (5)
+  Mục hạ tầng (`trang_mac_dinh_hosting`). Đầu báo cáo: "Agent chỉ phát
+  hiện + đề xuất — gỡ/sửa do người; kết quả quét CHƯA được Pháp chế xác
+  nhận" + dòng `CẢNH BÁO` khi có QUÁ 24H hoặc S1 mở. `--days` ngoài
+  1..366, `--now` sai ISO → exit 2 TRƯỚC connect; DB down → exit 2.
+  - Boundary: `agents/ra_kenh.py`, `tests/test_ra_kenh.py`
+  - Gate: DB THẬT sau kịch bản W43.4: `collect_report(now=2026-10-12T12:00
+    +07:00)` → S1 mở = 3 (F1, F3, F4 — F4 đếm 1 lần dù 3 snapshot), S2 mở
+    đúng số, QUÁ 24H = 0; `now=2026-10-13T09:00:01+07:00` → QUÁ 24H gồm
+    F1/F3/F4 (F2 đã `da_go` không còn); biên `now` = đúng `due_at` → CHƯA
+    quá; P7 đóng `da_sua` trong hạn → "đúng hạn" 1; `render_report` chứa
+    "QUÁ 24H", url F1, KHÔNG chứa đoạn vi phạm thô chưa mask; sau
+    `collect_report` số dòng `channel_posts`/`approval_queue`/`red_alerts`
+    không đổi + fake-conn ghi lại mọi SQL → đều bắt đầu `select`/`with`;
+    timezone session ép `set local timezone = 'UTC'` trong fixture (DB dev
+    Asia/Bangkok che lỗi múi giờ — bài học W44.1 fix1). `python -m
+    agents.ra_kenh --report` trên DB samsam_infra exit 0 (0 dữ liệu thật →
+    báo cáo rỗng có tiêu đề đủ 5 mục).
+  - Evidence: `evidence/v43_report.log`
+  - Kết quả: test báo cáo trong E2E pass (S1 mở 3, QUÁ 24H 0 lúc 12:00;
+    biên = due chưa quá; 09:00:01 hôm sau QUÁ 24H gồm F1/F3/F4 + F5 hạ
+    tầng, F2 đã `da_go`; đúng hạn 1; SQL chỉ select; số dòng không đổi);
+    `python -m agents.ra_kenh --report` trên DB worktree exit 0, báo cáo
+    rỗng đủ 5 mục + 8 nhắc mốc CHƯA NỘP (ghi `data/reports/` — gitignored).
+- [x] **W43.6 Docs + bản đồ luồng dữ liệu** — `docs/handover/kien-truc.md`:
+  thêm `xnqc_dossiers`, `channel_posts` vào bảng mục 3 (chứa/nguồn nạp),
+  sửa "35 bảng public" → số parse thật (37 trên nhánh này), thêm
+  `xnqc.py`, `ra_kenh.py` vào dòng `agents/`; `deploy/cloud/README.md`:
+  mọi "35 bảng" → số mới (dòng mục 4/apply_schema/backup); `data/
+  data_flow_map.json` thêm `DF-18` "Rà bài đăng kênh sở hữu từ file xuất
+  tay" (`modules` [`agents/ra_kenh.py`], `class` xanh — text bài công khai
+  của công ty, `subjects` "không — chỉ bài của công ty, không bình luận/
+  người tương tác", `storage` `channel_posts` + `approval_queue` +
+  `red_alerts`, `retention` "không giới hạn — GAP (Pháp chế chốt)",
+  `recipients` "nội bộ, không gửi ra ngoài", `cross_border` false) →
+  `python scripts/dpia_draft.py` sinh lại `docs/legal/DPIA-nhap.md` +
+  `TIA-nhap.md`; `docs/legal/xnqc-ra-kenh-NHAP.md` (khối "BẢN NHÁP — chờ
+  Chuyên viên Pháp chế duyệt" 15 dòng đầu; dành cho ai/làm gì/cần gì;
+  định dạng file xuất tay (cột + ví dụ không PII); quy trình: MXH xuất →
+  `--dry-run` → Pháp chế xem → nạp → duyệt mục `channel_takedown` → người
+  được ủy quyền gỡ/sửa → xuất lại hoặc `--mark-removed`; S1/S2 theo plan
+  §5; đồng bộ golden = duyệt `golden_xnqc_sync` rồi người sửa file +
+  `python -m ingest.golden_store`; danh sách external-dep). `docs/handover/
+  jd-kpi-van-hanh.md`: dòng KPI "ticket gỡ 24h" (đang "CHƯA ĐO ĐƯỢC") trỏ
+  nguồn đo `python -m agents.ra_kenh --report` / bảng `channel_posts`;
+  dòng "0 bài đăng lệch bản approve" thêm nguồn `channel_posts`
+  (`lech_ban_duyet`).
+  - Boundary: `docs/handover/kien-truc.md`, `deploy/cloud/README.md`,
+    `data/data_flow_map.json`, `docs/legal/DPIA-nhap.md`,
+    `docs/legal/TIA-nhap.md`, `docs/legal/xnqc-ra-kenh-NHAP.md`,
+    `docs/handover/jd-kpi-van-hanh.md`
+  - Gate: `python -m pytest -q tests/test_handover_docs.py
+    tests/test_data_flow_map.py tests/test_dpia_draft.py
+    tests/test_legal_docs.py` xanh (kien-truc đủ tên bảng + "N bảng" khớp
+    `_table_names()`; DF-18 load_map pass; mọi module egress đã khai báo;
+    docs/legal có NHÁP 15 dòng đầu, không "đã tuân thủ"; jd-kpi mọi
+    lệnh/bảng nguồn đo tồn tại); `python scripts/dpia_draft.py --check`
+    exit 0; `grep -n "35 bảng" deploy/cloud/README.md docs/handover/kien-
+    truc.md` rỗng; `grep -rn "đã tuân thủ" docs/legal` rỗng; mọi lệnh
+    `python -m agents.xnqc`/`agents.ra_kenh` nhắc trong doc chạy `--help`
+    exit 0.
+  - Evidence: `evidence/v43_docs.log`
+  - Kết quả: 4 file test docs xanh trong targeted ×3; `dpia_draft.py
+    --check` exit 0 (DF-18 xanh, TIA liệt DF-18 "không thuộc TIA"); grep
+    "35 bảng" + "đã tuân thủ" rỗng; schema parse 37 bảng = kien-truc +
+    deploy/cloud/README (4 chỗ, + 2 dòng bảng đường B); `--help` 2 CLI
+    exit 0.
+- [x] **W43.7 Gate chung** — không đụng file ngoài boundary W43.1–W43.6
+  (KHÔNG sửa `pipelines/guardrail.py`, `pipelines/store.py`,
+  `pipelines/approval_queue.py`, `pipelines/red_alert.py`,
+  `ingest/golden_store.py`, `data/golden_skus.json`,
+  `data/guardrail_rules.json`, `data/red_alert_routing.json`,
+  `docs/roles.sql`, AGENTS.md).
+  - Boundary: (tổng hợp W43.1–W43.6)
+  - Gate: targeted xanh ×3 TUẦN TỰ (`python -m pytest -q tests/test_xnqc.py
+    tests/test_ra_kenh.py tests/test_director.py tests/test_handover_docs.py
+    tests/test_data_flow_map.py tests/test_dpia_draft.py
+    tests/test_legal_docs.py`, đọc output tới exit mới chạy lần kế — lệnh
+    nặng có thể bị đẩy nền, không chạy chồng; 0 skipped — DB thật có
+    `DATABASE_URL`); full `python -m pytest -q` ĐÚNG 1 lần: xanh, ≥ 1682 +
+    số test mới, 0 failed; `ruff check .` sạch; `python -m py_compile
+    agents/xnqc.py agents/ra_kenh.py`; `python scripts/dpia_draft.py
+    --check` exit 0; `python -m pipelines.director --all --dry-run` exit 0;
+    `git diff --stat -- data/golden_skus.json pipelines/guardrail.py`
+    rỗng; `git status --short` chỉ file trong boundary (không file lạ, không
+    file mutation); evidence `.log` `git add -f` (gitignore `*.log`). Ghi
+    "coordinator self-review" nếu không spawn được auditor lạ.
+  - Evidence: `evidence/v43_pytest.log`
+  - Kết quả vòng 3 (resume, worker): targeted ×3 tuần tự 189/189/189
+    passed 0 skipped; full `python -m pytest -q` 1 lần: 1758 passed, 3
+    skipped (`tests/test_dr_drill.py` "không có docker" = MÔI TRƯỜNG,
+    Docker Desktop tắt — không phải lỗi version), 0 failed, exit 0 —
+    collect-only: test cũ 1683 (≥ baseline 1682) + 78 test mới = 1761;
+    `ruff check .` sạch; py_compile 4 file exit 0; dpia `--check` + director
+    dry-run exit 0; `git diff --stat` 10 file cấm sửa rỗng; `git status`
+    chỉ file trong boundary. Worker tự rà OWASP trên diff (không phải
+    auditor lạ — coordinator quyết cold-check). `git add -f evidence/
+    v43_*.log` = việc coordinator khi commit.
+  - Kết quả vòng sửa nghiệm thu (worker, 13 phát hiện — 2 MAJOR + 11
+    MINOR, gộp trùng còn 9 lỗi): (1) MAJOR skip-cùng-sha → `ingest` chỉ bỏ
+    qua khi sha + cột bài (kênh, loại, is_ai, is_sponsored, sku, draft_id,
+    ngày) + kết quả rà (codes, mức sau `verify_publish`) trùng snapshot mới
+    nhất (`test_reimport_same_text_rescans_meta_and_rules`: cùng file 0
+    mới; thêm draft_id duyệt → `da_sua`; luật chặt hơn → đợt mới + ticket +
+    red_alert); (2) MAJOR marker hosting fail-open → `scan_row` LUÔN
+    `check_publish`, marker chỉ kênh `web` và chỉ thành hạ tầng khi 0
+    violation, có vi phạm → nhánh nội dung + nối `trang_mac_dinh_hosting`
+    (FLIP `test_scan_row_rules` + case facebook); (3) đổi loại đợt hạ tầng↔
+    nội dung → đóng đợt cũ (`da_sua` khi vấn đề loại cũ hết, `thay_ban_moi`
+    khi marker vẫn còn) + đợt mới đúng khối, hạn mới
+    (`test_kind_change_opens_new_dot_in_right_block`); (4) `sync_golden`:
+    mục mới ghi "THAY THẾ mục #X — chỉ duyệt mục mới nhất", đích = golden mà
+    còn mục cũ trái đích → mục "GIỮ NGUYÊN", mục cùng đích đã duyệt chờ
+    người sửa golden → không đề xuất lại; `sync_notes` (CHỈ đọc) in ở
+    `--sync-golden` + báo cáo §1 (`test_sync_golden_supersedes_stale_and_
+    waits_for_edit`); (5) `_excerpt` che PII toàn văn rồi mới cắt
+    (`test_excerpt_masks_phone_across_window_edge` 3 dạng SĐT × 100 offset
+    × đầu/cuối); (6) `read_export`: ô chứa NUL, draft_id ngoài 1..2^63-1
+    (kiểm `len` trước `int()`), url > 2048, `loai_noi_dung` không public
+    (`internal_note`) → lỗi ô exit 1 không connect (BAD +5 case +
+    `test_read_export_draft_id_bigint_boundary`); (7) `--now` CHỈ với
+    `--report`/`--dry-run` (ghi dùng giờ thật, test monkeypatch
+    `ra_kenh._now`), đóng `da_sua` ghi `agent_action_log`
+    `channel_post_fixed` cùng transaction; (8) test leo thang S2→S1 cùng đợt
+    bắn red_alert (`test_s2_to_s1_same_dot_raises_alert`). Gate: targeted ×3
+    204/204/204 passed 0 skipped; full pytest + ruff + dpia/director xem
+    `evidence/v43_pytest.log`. **Coordinator cần sửa câu contract** (code đã
+    theo phát hiện, contract còn chữ cũ): W43.3(b) "khớp marker → CHỈ code
+    `trang_mac_dinh_hosting`" → "kênh web + marker + 0 violation → chỉ code
+    hosting; có violation → nhánh nội dung + nối code hosting"; W43.3(c)
+    "cùng `text_sha256` → skip" → "sha + cột bài + kết quả rà trùng → skip"
+    + luật đổi loại đợt + `channel_post_fixed`; CLI bỏ `[--now ISO]` khỏi
+    `--file` (trừ `--dry-run`) và `--mark-removed`; W43.2 idempotent
+    `sync_golden` theo "mục mới nhất của SKU" (object_id có thể
+    `<sku>:<đích>@<id mục bị thay>` khi mục cùng đích cũ hơn còn pending —
+    unique index pending).
+  - Kết quả vòng sửa nghiệm thu 2 (worker, 2 MINOR): (1) `MAX_URL` đếm
+    BYTE UTF-8 thay vì ký tự (btree `channel_posts_url_idx` trần 2704
+    byte; chữ có dấu/CJK 3 byte — URL 1534 ký tự/4534 byte trước lọt
+    `read_export` rồi nổ giữa ingest, nạp dở): `read_export` tính
+    `too_long` theo byte TRƯỚC `urlsplit` → "dài quá 2048 byte UTF-8", exit 1
+    không connect (BAD `url_long_bytes` + `test_read_export_url_limit_
+    counts_bytes` biên 2048/2049 byte + DB thật `test_url_max_bytes_fits_
+    btree`: URL 2048 byte CJK không nén + S1 vào được cả 2 index); (2)
+    `xnqc --today` CHỈ với `--remind`/`--sync-golden` (cùng lớp `--now` của
+    ra_kenh): kèm `--add`/`--set`/`--list` → usage exit 2 TRƯỚC connect
+    (`test_cli_usage_exit2_before_connect` +4 argv); `_valid_cap` thêm
+    `ngay_cap <= today` — giấy chưa tới ngày cấp (kể cả ghi thẳng DB)
+    không tính `approved` (`test_golden_target_branches` +3 assert). Mutation
+    (đảo từng vá) → test mới FAIL, khôi phục → xanh. Gate: targeted
+    (`tests/test_xnqc.py tests/test_ra_kenh.py`) ×3 tuần tự 100/100/100
+    passed; full `python -m pytest -q` 1 lần: 1783 passed, 0 skipped (lần
+    này Docker chạy được — `test_dr_drill` không skip), 0 failed; `ruff
+    check .` sạch; probe CLI thật trong `evidence/v43_ra_kenh.log`,
+    `evidence/v43_xnqc.log`, gate trong `evidence/v43_pytest.log`.
+    **Contract W43.3(a)** nên ghi rõ "url ≤ 2048 BYTE UTF-8".
+- External-dep còn treo (KHÔNG giả lập, không tự đánh dấu người thật đã
+  làm):
+  - [ ] Quyền đọc kênh thật (API Fanpage/TikTok/Shopee) — chỉ có file xuất
+    tay; danh sách page/tài khoản MXH sở hữu ngoài 2 website.
+  - [ ] Chuyên viên Pháp chế xác nhận kết quả quét lần đầu F1–F5 (A4-1) +
+    đóng băng fixture.
+  - [ ] Hồ sơ XNQC thật (số giấy, ngày cấp, scan `verified`) — DB chỉ có
+    dữ liệu test.
+  - [ ] Người nhận cảnh báo đỏ thật (`data/red_alert_routing.json` vẫn
+    `[]` → `route_error`).
+  - [ ] Văn bản ủy quyền GỠ/ẨN + lịch trực (TGĐ ký); SSO/role DB cho
+    `--by` (pilot free-text).
+  - [ ] Pháp chế duyệt `data/phap_che.json` (`_doc` "BẢN DEV SOẠN") +
+    `docs/legal/xnqc-ra-kenh-NHAP.md`.
+
 Nhánh `ai-infra`: M31 đợt gộp 2026-10-12 — v4.0, v4.1, v4.4, v7.0, v7.3, v9.3,
 v9.5 đã đóng + gộp (35 bảng). Tích hợp khi gộp: bổ sung DF-16 (intel) + DF-17
 (persona_sim) vào `data/data_flow_map.json` + sinh lại DPIA/TIA nháp; phương án

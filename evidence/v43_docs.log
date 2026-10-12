@@ -1,0 +1,29 @@
+# v4.3 W43.6 docs + bản đồ luồng dữ liệu — output thật (2026-10-12T14:27:30+07:00)
+
+=== $ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+exit=0
+
+=== $ grep -n "35 bảng" deploy/cloud/README.md docs/handover/kien-truc.md   (kỳ vọng rỗng)
+grep_exit=1 (1 = không trúng)
+
+=== $ grep -rn "đã tuân thủ" docs/legal   (kỳ vọng rỗng)
+grep_exit=1 (1 = không trúng)
+
+=== $ grep -n -E "3[0-9] bảng" deploy/cloud/README.md docs/handover/kien-truc.md
+deploy/cloud/README.md:6:  bằng TLS, đưa đủ 37 bảng của `docs/schema.sql` lên, bật backup + diễn
+deploy/cloud/README.md:66:## 4. Đưa 37 bảng lên cloud
+deploy/cloud/README.md:73:python scripts/apply_schema.py      # chạy 2 lần — lần 2 vẫn in đủ 37 bảng
+deploy/cloud/README.md:86:python scripts/db_backup.py         # local, ra file .dump + manifest (row_counts 37 bảng)
+docs/handover/kien-truc.md:71:## 3. Cơ sở dữ liệu — 37 bảng public (`docs/schema.sql`)
+
+=== số bảng parse từ docs/schema.sql
+37 bảng; mới: ['channel_posts', 'xnqc_dossiers']
+
+=== $ python -m agents.xnqc --help
+exit=0
+=== $ python -m agents.ra_kenh --help
+exit=0
+
+=== DF-18 trong data/data_flow_map.json
+DF-18 xanh ['agents/ra_kenh.py'] cross_border= False
