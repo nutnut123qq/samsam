@@ -212,6 +212,39 @@ group by agent_id order by usd desc;
   duyệt, luật đóng băng (`pipelines.freeze.check`, đã nối v4.0) trước mỗi
   deploy.
 
+## 7b. Chuyển backend vector sang pgvector + xoay token sàn (v10.3)
+
+**Chuyển float8 → pgvector** (chỉ khi Postgres đã có extension `vector`;
+cloud = **external-dep**: cài extension cần quyền superuser/nhà cung cấp):
+
+1. Cài pgvector trên Postgres (cloud: bật extension trong console nhà cung
+   cấp; local: gói pgvector khớp major Postgres).
+2. `python scripts/apply_schema.py --pgvector` → `[done] pgvector applied`
+   (thiếu extension → `[external-dep]`, exit 3, KHÔNG đụng gì). Migration
+   chỉ THÊM cột `embedding_v` + trigger đồng bộ + index HNSW; cột
+   `embedding float8[]` giữ nguyên; chạy lại an toàn.
+3. `python scripts/vector_eval.py --synthetic 200 --questions` → phải
+   `[PASS]` (recall@8 ≥ 0.99, Q1–Q10 pgvector không thấp hơn float8,
+   checksum float8 không đổi, container `samsam-vec-*` đã dọn). Chạy trên
+   máy có Docker + image `pgvector/pgvector:0.8.6-pg17-trixie` sẵn (không
+   tự pull).
+4. Đặt `RAG_VECTOR_BACKEND=pgvector` trong `.env`, khởi động lại
+   streamlit/zalo (module không tự nạp lại env).
+5. Kiểm log: KHÔNG được có `[warn] RAG_VECTOR_BACKEND=pgvector nhưng DB
+   thiếu cột` — có = DB chưa migration, chatbot đang tự rơi về float8.
+
+**Rollback:** đặt lại `RAG_VECTOR_BACKEND=float8` + khởi động lại — cột
+float8 còn nguyên, không cần migrate ngược, không mất dữ liệu.
+
+**Xoay token sàn (connector API chỉ đọc `python -m ingest.market_api`):**
+app key/token Shopee/TikTok là **external-dep** (Partner Center, app chỉ
+xin quyền ĐỌC). Token hết hạn → lệnh in `[err] ... HTTP 401`/mã lỗi auth,
+exit 1, không ghi gì. Người giữ tài khoản Partner Center cấp token mới →
+cập nhật `SHOPEE_ACCESS_TOKEN` / `TIKTOK_ACCESS_TOKEN` trong `.env` (KHÔNG
+dán vào chat/ticket/log) → chạy lại lệnh. Chưa có refresh tự động (gap).
+Nghi lộ key → thu hồi app secret trên Partner Center trước, rồi thay
+`SHOPEE_PARTNER_KEY` / `TIKTOK_APP_SECRET`.
+
 ## 8. Checklist bàn giao
 
 Người nhận tick từng mục khi làm xong CÓ người kèm:

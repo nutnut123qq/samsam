@@ -6,6 +6,437 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+## Checklist v10.3-nen-p2
+
+Khán giả/mục đích: nhánh `ai-infra` (worktree `D:\code\samsam-w95`) — WP16
+phần NỀN (pmo.md dòng `| WP16`: "Connector sàn API chỉ đọc. Chuyển sang
+pgvector. Ingest dữ liệu social listening từ nhà cung cấp, nếu TGĐ duyệt";
+nghiệm thu: "test chứng minh connector chỉ dùng scope read", "eval retrieve
+sau khi chuyển pgvector không thấp hơn bản float8[]"). Nền có sẵn: v3.3
+`ingest/market_csv.py` (staging `market_snapshots`/`market_rows`/
+`market_alerts`, `load()`/`reconcile()`/`report()`), `api/rag.py`
+`retrieve()` (float8[] + numpy cosine, lọc rượu, ghim `catalog-products`),
+v7.2 `ingest/intel_import.py` (`social_mentions`, `classify_social`,
+`msg_hash` có muối `INTEL_HASH_SALT`, `dpia_signed` trong
+`data/social_rules.json`), `scripts/eval_qa.py` (`EXPECTED` Q1–Q10),
+`scripts/dr_drill.py` (container Postgres tạm `--pull never`). Sau version:
+(a) Quản lý MXH có thể kéo listing/đơn qua API sàn CHỈ ĐỌC vào CÙNG
+staging v3.3 → cảnh báo S1/S2 v3.3 chạy lại nguyên vẹn; (b) `retrieve()`
+chọn backend `float8` | `pgvector` qua cấu hình, có bằng chứng đo pgvector
+không thấp hơn float8 trên corpus THẬT (868 chunk); (c) có cổng nạp file
+social listening của nhà cung cấp, đóng chặt tới khi TGĐ duyệt.
+
+Hiện trạng đo khi soạn contract (2026-10-12): Postgres local 17.6 KHÔNG có
+extension `vector` (`select ... from pg_available_extensions where
+name='vector'` rỗng); Docker có SẴN image `pgvector/pgvector:0.8.6-pg17-trixie`
+→ eval pgvector chạy trong container tạm từ image đó (không pull, không cài
+gì vào Postgres local). `chunks` 868 dòng, `embedding` 1536 chiều;
+`chunks_internal` 0 dòng. `social_mentions` có check constraint
+`social_mentions_channel_check` (fanpage|zalo_oa|tiktok) +
+`social_mentions_kind_check`; drift-guard `tests/test_store.py`
+`_forbidden_ddl` CẤM mọi `alter table` trừ `add column if not exists` →
+KHÔNG nới được constraint để chèn row vendor vào `social_mentions` mà
+không phá invariant schema. Quyết định contract: vendor vào bảng RIÊNG
+`social_mentions_vendor` — CÙNG cột + CÙNG luật PII/hash/excerpt (tái dùng
+hàm v7.2), thêm `platform`; meta file vẫn ở `intel_imports` (`kind`
+`social`, `channel` = `vendor`, cột channel không có check) → **1 bảng
+mới**, kien-truc đổi "66" → "67 bảng public". Lợi phụ: báo cáo kênh SỞ
+HỮU của `intel_weekly` không bị trộn dữ liệu bên thứ ba.
+
+Quy ước: ponytail — stdlib (`urllib.request`, `hmac`, `hashlib`,
+`http.server` cho server giả) + `psycopg`/`numpy` sẵn có; KHÔNG thêm
+dependency (không `pgvector` python package — truyền vector dạng text
+`'[...]'::vector`). Schema chỉ THÊM (`add column if not exists`, `create
+... if not exists`); KHÔNG `drop`/`alter ... constraint` (drift-guard
+`tests/test_store.py`); KHÔNG xóa/đổi cột `embedding float8[]`. Mọi print
+tiếng Việt → UTF-8 guard; mọi connect `connect_timeout`; ghi = 1
+transaction + `conn.commit()` tường minh; `n_ops` > 1 → `ap.error` exit 2
+trước connect/request; lỗi chỉ in số dòng/tên field/mã lỗi — KHÔNG in giá
+trị ô, body response, token/key/sign/DSN. Test DB thật: schema tạm +
+ROLLBACK (fixture `db` của `tests/test_market_csv.py`), 0 skipped; test
+mạng: server giả `http.server` bind `127.0.0.1:0` trong thread, đếm
+request — không wall-clock assert, không gọi sàn thật. Fixture dữ liệu
+TỔNG HỢP, chuỗi PII giả rõ ràng ("NGUOI MUA GIA", "0900000000", "DIA CHI
+GIA 1"). Tên endpoint/field/chữ ký sàn và format file vendor là GIẢ ĐỊNH
+theo tài liệu công khai — docstring ghi rõ "chưa xác minh với sandbox
+thật". Mã luồng DF-31/DF-32 có thể đánh lại khi gộp nếu version song song
+đã dùng.
+
+External-dep (KHÔNG giả lập, KHÔNG tự đánh dấu đã có): app key + access
+token Shopee Open Platform / TikTok Shop Partner Center (app chỉ xin quyền
+đọc), sandbox để xác minh chữ ký/field/phân trang, cơ chế refresh token;
+API quảng cáo + quyết toán qua API (P2 vẫn nạp ads/quyết toán bằng file
+v3.3/v9.0); pgvector trên Postgres local + cloud (cài extension cần quyền
+superuser/nhà cung cấp) → tới lúc đó backend mặc định `float8`; eval_qa
+end-to-end (LLM) chạy lại trên DB cloud đã có pgvector; hợp đồng + DPA với
+nhà cung cấp social listening, file export thật của vendor, quyết định
+TGĐ duyệt vendor, chữ ký DPIA (Pháp chế) — `vendor_approved_by_tgd` và
+`dpia_signed` CHỈ người thật đổi.
+
+- [x] **W103.1 Connector API sàn — lõi chỉ đọc (không DB)** —
+  `ingest/market_api.py` (mới), docstring tiếng Việt: CHỈ ĐỌC, allowlist
+  cứng, chữ ký "theo tài liệu công khai, chưa xác minh sandbox", không
+  PII người mua. Hằng `ALLOWED: frozenset[(channel, method, path)]`
+  HARD-CODE trong code (không đọc từ config/env): shopee `GET
+  /api/v2/product/get_item_list`, `GET /api/v2/product/get_item_base_info`,
+  `GET /api/v2/product/get_model_list`, `GET /api/v2/order/get_order_list`,
+  `GET /api/v2/order/get_order_detail`; tiktok `POST
+  /product/202309/products/search`, `POST /order/202309/orders/search`
+  (search của TikTok là POST nhưng chỉ đọc — allowlist theo cặp
+  method+path, không theo "GET"). MỌI request đi qua 1 hàm duy nhất
+  `_request(channel, method, path, params, body=None)`: kiểm `(channel,
+  method, path)` ∈ `ALLOWED` ĐẦU TIÊN → không thuộc → `ScopeError`, chưa
+  dựng URL/chưa mở socket. Ký: shopee `sign = HMAC-SHA256(partner_key,
+  f"{partner_id}{path}{timestamp}{access_token}{shop_id}")` hex, đặt
+  trong query cùng `partner_id`/`timestamp`/`access_token`/`shop_id`;
+  tiktok `sign = HMAC-SHA256(app_secret, app_secret + path + concat(k+v
+  của query đã sort, bỏ sign/access_token) + body + app_secret)`, token
+  ở header `x-tts-access-token`, query có `app_key`/`timestamp`/
+  `shop_cipher`/`sign`. Hàm ký là hàm thuần (`sign_shopee`, `sign_tiktok`)
+  — `timestamp` truyền vào được (test tất định). Base URL: env
+  `SHOPEE_API_BASE` (mặc định `https://partner.shopeemobile.com`),
+  `TIKTOK_API_BASE` (mặc định `https://open-api.tiktokglobalshop.com`);
+  chỉ chấp nhận `https://` hoặc `http://127.0.0.1|localhost` (server giả)
+  — khác → lỗi cấu hình. HTTP: `urllib.request` timeout 15s, KHÔNG theo
+  redirect (opener với redirect handler trả lỗi — 3xx = lỗi, chống lộ
+  token sang host khác), đọc tối đa `MAX_RESP_BYTES` (10 MB), JSON hỏng /
+  HTTP ≠ 200 / field `error` (shopee) hoặc `code ≠ 0` (tiktok) khác rỗng
+  → `ApiError` chỉ mang HTTP status + mã lỗi đã `_safe` (không body).
+  Phân trang có trần `MAX_PAGES` (vượt → lỗi, không nạp nửa vời).
+  Chuẩn hóa → row dict CÙNG field của `market_csv._parse` (`row_no` 1..n
+  theo thứ tự trả về, `item_id`, `seller_sku`, `title`, `price`, `stock`,
+  `status`, `qty`, `order_id_hash`): trích TƯỜNG MINH từng field allowlist
+  (không copy dict response); giá/số lượng → int ≥ 0 qua `_to_int`/
+  `NUM_MAX` của market_csv (giá float không nguyên → lỗi); listing có biến
+  thể → 1 row/model (`seller_sku` = model_sku); order → 1 row/item,
+  `order_id_hash` = sha256(`channel:order_sn`)[:16] — CÙNG công thức
+  market_csv; đơn shopee chỉ xin `response_optional_fields=item_list`
+  (không xin field người nhận). Trạng thái API → từ vựng mapping CSV qua
+  `data/market_api.json` (`{"_doc": "... GIẢ ĐỊNH ...", "status_map":
+  {kênh: {loại: {api_status: csv_status}}}}`, vd shopee `UNLIST`→`Đã
+  ẩn`, `CANCELLED`→`Đã hủy`; tiktok `SELLER_DEACTIVATED`→`Deactivated`,
+  `CANCELLED`→`Cancelled`); status lạ giữ nguyên (listing lạ = đang bán,
+  fail-closed như v3.3). Config KHÔNG chứa endpoint.
+  - Boundary: `ingest/market_api.py`, `data/market_api.json` (mới),
+    `tests/test_market_api.py` (mới)
+  - Gate: `python -m pytest tests/test_market_api.py -q`: (1) server giả
+    đếm request — `_request("shopee", "POST",
+    "/api/v2/product/update_price", ...)`, `_request("shopee", "GET",
+    "/api/v2/product/update_item", ...)`, `_request("tiktok", "POST",
+    "/product/202309/products/123/prices/update", ...)`, method sai trên
+    path đúng (`DELETE /api/v2/product/get_item_list`) → `ScopeError`,
+    server đếm **0** request; (2) quét AST `ingest/market_api.py`: mọi
+    hằng chuỗi bắt đầu `/api/v2/`, `/product/`, `/order/` ∈ path của
+    `ALLOWED`, và không path nào trong `ALLOWED` khớp
+    `(?i)update|add|delete|create|cancel|ship|set_|edit|reply|unlist|boost|split|handle|upload`;
+    (3) `sign_shopee`/`sign_tiktok` khớp vector tính độc lập bằng
+    `hmac` trong test với input cố định; server giả nhận `sign` đúng và
+    KHÔNG thấy `partner_key`/`app_secret` ở URL/header/body; (4) 302 từ
+    server giả → `ApiError`, server thứ 2 (đích redirect) đếm 0;
+    response > `MAX_RESP_BYTES` / JSON hỏng / `error` khác rỗng →
+    `ApiError`, thông điệp không chứa body; base URL `http://evil.example`
+    → lỗi cấu hình, 0 request; (5) response giả có `buyer_username`,
+    `recipient_address` ("DIA CHI GIA 1"), phone "0900000000", "NGUOI MUA
+    GIA" → `json.dumps(rows)` không chứa chuỗi nào trong đó, không chứa
+    `order_sn` gốc, `order_id_hash` 16 hex bằng đúng hash market_csv cho
+    cùng mã; (6) giá `236000.0` → 236000, `236000.5` → lỗi; listing có 2
+    model → 2 row; vượt `MAX_PAGES` → lỗi; (7) `grep -nE "^(import|from)
+    +(httpx|requests)" ingest/market_api.py` rỗng
+  - Evidence: `evidence/v103_pytest.log`
+- [x] **W103.2 CLI nạp API → CÙNG staging v3.3 + cảnh báo chạy lại** —
+  `python -m ingest.market_api --channel shopee|tiktok --kind
+  listing|order [--days N]` (`--kind ads` → argparse lỗi "ads chỉ qua
+  file — `ingest.market_csv`", exit 2; `--days` chỉ với order, 1..15,
+  mặc định 7). Thứ tự: argparse → đọc key env (shopee:
+  `SHOPEE_PARTNER_ID`, `SHOPEE_PARTNER_KEY`, `SHOPEE_SHOP_ID`,
+  `SHOPEE_ACCESS_TOKEN`; tiktok: `TIKTOK_APP_KEY`, `TIKTOK_APP_SECRET`,
+  `TIKTOK_SHOP_CIPHER`, `TIKTOK_ACCESS_TOKEN`) — thiếu/rỗng bất kỳ →
+  `[external-dep] thiếu <TÊN BIẾN>` (chỉ tên, không giá trị), **exit 2, 0
+  request, không connect DB** → base URL hợp lệ (sai → exit 2) → tải +
+  chuẩn hóa TOÀN BỘ (lỗi API/dữ liệu → `[err]`, exit 1, KHÔNG connect, 0
+  dòng) → connect → `file_sha256` = sha256 JSON chuẩn (sort_keys) của
+  (channel, kind, rows) — đã có → `[skip] dữ liệu không đổi`, exit 0 →
+  1 transaction TÁI DÙNG `market_csv.load(conn, rows, channel, kind,
+  file_name, sha)` (`file_name` = `api:<channel>:<kind>:<YYYYmmddTHHMM giờ
+  VN>`) + `market_csv.reconcile(conn, sid, inactive_status)` với
+  `inactive_status` lấy từ `data/market_csv_map.json` (cùng nguồn v3.3)
+  → `conn.commit()`; in giống market_csv (`[load]`, `[alerts]`, `[warn]`
+  vắng mặt giữ mở). Lỗi DB/thiếu bảng → rollback, exit 1 (mẫu market_csv).
+  Chạy trong `job_run("ingest.market_api")` (pipelines/job_runs, bản tin
+  sức khỏe). KHÔNG sửa logic `market_csv` (chỉ import); KHÔNG bảng mới.
+  - Boundary: `ingest/market_api.py`, `tests/test_market_api.py`
+  - Gate: test (monkeypatch connect → raise + server giả đếm): thiếu
+    từng biến key (8 biến, parametrize) → exit 2, server 0 request,
+    connect KHÔNG gọi, capsys không chứa giá trị các biến còn lại; `--kind
+    ads` / `--days 0` / `--days 16` / `--days` với listing → exit 2 trước
+    request; test DB thật (rollback, golden từ `data/golden_skus.json`
+    như test_market_csv): server giả trả listing có 1 item map SKU rượu
+    status `NORMAL`, 1 item lệch giá golden, 1 item không map → sau CLI:
+    1 `market_snapshots` `file_name` bắt đầu `api:shopee:listing:`, đủ
+    row trong `market_rows`, `market_alerts` open đúng 3 kind
+    `alcohol_listed`/`price_mismatch`/`item_unmapped` (CÙNG kết quả
+    `market_csv.find_alerts` trên rows đó); lần 2 cùng dữ liệu → `[skip]`,
+    số đếm không đổi; lần 3 item rượu trả `UNLIST` → `alcohol_listed`
+    closed; order giả có PII → `select count(*) from market_rows where
+    raw::text ~* 'NGUOI MUA GIA|0900000000|DIA CHI GIA|<order_sn gốc>'`
+    = 0 và cùng regex trên `market_snapshots::text` = 0; `python -m
+    ingest.market_csv --report` chạy sau đó tách đơn `Đã hủy` (status
+    map từ `CANCELLED`); CLI thật trên samsam_infra không có key: `python
+    -m ingest.market_api --channel shopee --kind listing; echo $?` → 2
+  - Evidence: `evidence/v103_pytest.log`, `evidence/v103_market_api.log`
+- [x] **W103.3 Migration pgvector tùy chọn (giữ float8)** —
+  `docs/schema_pgvector.sql` (mới — TÁCH khỏi `schema.sql` vì Postgres
+  không có extension sẽ lỗi ở `create extension`): `create extension if
+  not exists vector`; `alter table chunks add column if not exists
+  embedding_v vector(1536)`; tương tự `chunks_internal`; backfill
+  `update ... set embedding_v = embedding::vector where embedding is not
+  null and embedding_v is null`; trigger `before insert or update of
+  embedding` (hàm `create or replace`) gán `new.embedding_v :=
+  new.embedding::vector` (writer `embed_store`/`kb_internal` KHÔNG đổi —
+  hook ghi đồng bộ ở DB; lệch chiều → lỗi to, nhất quán với float8 hiện
+  tại vốn cũng vỡ khi trộn chiều); index `create index if not exists ...
+  using hnsw (embedding_v vector_cosine_ops)` cho cả 2 bảng. Cột
+  `embedding float8[]` giữ nguyên. `scripts/apply_schema.py --pgvector`:
+  chạy schema.sql như cũ rồi kiểm `pg_available_extensions` có `vector`
+  → apply `schema_pgvector.sql`; không có → `[external-dep] Postgres
+  chưa cài pgvector — giữ backend float8`, exit 3 (schema.sql vẫn đã
+  apply). Không flag → hành vi cũ y hệt.
+  - Boundary: `docs/schema_pgvector.sql` (mới), `scripts/apply_schema.py`,
+    `tests/test_apply_schema_pgvector.py` (mới)
+  - Gate: `python scripts/apply_schema.py --pgvector; echo $?` trên
+    samsam_infra → in `[external-dep]`, exit 3, `select count(*) from
+    information_schema.columns where column_name='embedding_v'` = 0 (không
+    đụng DB local khi thiếu extension); `python scripts/apply_schema.py`
+    (không flag) exit 0 như cũ; trong container pgvector (W103.5) apply 2
+    lần sạch, `embedding_v` not null = `embedding` not null, checksum
+    `md5(string_agg(embedding::text, ',' order by id))` trước = sau
+    migration (float8 giữ nguyên); `grep -niE "drop (column|table)"
+    docs/schema_pgvector.sql` rỗng
+  - Evidence: `evidence/v103_pgvector.log`
+- [x] **W103.4 retrieve() tách backend float8 | pgvector** — `api/rag.py`:
+  `retrieve(question, k, *, collection)` = validate collection (TRƯỚC
+  embed, như cũ) → embed → `retrieve_by_vector(qv, k=TOP_K, *,
+  collection="public", backend=None)`. Backend từ env
+  `RAG_VECTOR_BACKEND` (`float8` mặc định | `pgvector`); giá trị khác →
+  `ValueError` (deny-by-default như collection). `_rank_float8(conn, sql,
+  params, qv)` = code numpy hiện tại; `_rank_pgvector(conn, collection,
+  qv, limit)` = `set local hnsw.ef_search = <≥ limit>` + `select <cùng
+  cột>, 1 - (embedding_v <=> %s::vector) ... where embedding_v is not
+  null order by embedding_v <=> %s::vector limit %s` với `limit =
+  PGVECTOR_CANDIDATES` (64) + truy vấn riêng điểm của chunk
+  `catalog-products` (public). Lọc rượu + ghim catalog (ngưỡng 0.15) +
+  shape hit `{title,url,lang,content,score,doc_id}` dùng CHUNG 1 hàm cho 2
+  backend. pgvector: sau lọc rượu còn < k mà đã lấy đủ `limit` ứng viên
+  → chạy lại đường float8 cho câu đó (không trả thiếu). pgvector mà DB
+  thiếu cột/extension (`UndefinedColumn`/`UndefinedObject`/
+  `UndefinedFunction`) → rollback, `[warn]` stderr 1 lần/process, rơi về
+  float8 (kênh khách không sập). `answer()` không đổi chữ ký; chatbot
+  suite tất định (`agent_eval`) patch `retrieve` vẫn xanh.
+  - Boundary: `api/rag.py`, `tests/test_rag_backend.py` (mới)
+  - Gate: test fake conn (không DB): cùng corpus nhỏ (vector tay, có 1
+    chunk nhắc rượu, 1 `catalog-products`) → `float8` và `pgvector` (fake
+    conn trả rows đã sort theo cosine tính trong test) ra danh sách hit
+    GIỐNG HỆT (doc_id + thứ tự + score sai số 1e-9); SQL pgvector chứa
+    `<=>`, `hnsw.ef_search`, không chứa `float8`; `RAG_VECTOR_BACKEND=abc`
+    → `ValueError` và embed KHÔNG được gọi; fake conn pgvector raise
+    `psycopg.errors.UndefinedColumn` → kết quả = float8, `[warn]` in đúng
+    1 lần qua 2 lần gọi; corpus 70 chunk rượu đứng đầu → pgvector vẫn trả
+    đủ k (fallback); `collection="internal:x"` đọc `chunks_internal` ở cả
+    2 backend, collection lạ → `ValueError` trước embed; `python -m pytest
+    tests/test_rag.py tests/test_kb_acl.py tests/test_kb_acl_db.py -q` xanh không
+    sửa; `python scripts/agent_eval.py --deterministic` exit 0
+  - Evidence: `evidence/v103_pytest.log`
+- [x] **W103.5 Eval retrieve pgvector vs float8 trên corpus thật** —
+  `scripts/vector_eval.py` (mới, UTF-8 guard): dựng container tạm từ image
+  ĐÃ CÓ `pgvector/pgvector:0.8.6-pg17-trixie` (`--pull never`, bind
+  127.0.0.1, mật khẩu ngẫu nhiên qua env tiến trình, `--tmpfs` data dir,
+  tên `samsam-vec-*`, LUÔN dọn trong `finally`) TÁI DÙNG helper
+  `scripts/dr_drill.py` (`probe_docker`/`cleanup`/`host_port`/
+  `wait_ready` — tham số hóa prefix tối thiểu nếu cần, hành vi dr_drill
+  không đổi); apply `schema.sql` + `schema_pgvector.sql`; chép `chunks`
+  (+ `chunks_internal`) từ `DATABASE_URL` nguồn bằng SELECT (nguồn CHỈ
+  ĐỌC); so 2 backend qua `rag.retrieve_by_vector` với `DATABASE_URL`
+  trỏ container: (a) `--synthetic N` (mặc định 200, `random.Random(42)`)
+  query = chuẩn hóa(e_i + e_j) của 2 chunk ngẫu nhiên — tất định, 0 API;
+  (b) `--questions`: 10 câu Q1–Q10 `tests/questions.md` embed qua
+  `llm_gateway.embed("chatbot", ...)` (thiếu key → `[external-dep]` bỏ
+  phần (b), không fail). Chỉ số: recall@8 = |top_pg ∩ top_f8| / |top_f8|
+  (định danh chunk = (doc_id, chunk_index) — thêm cột nếu cần trong
+  query eval, không đổi shape hit), top-1 trùng; (b) thêm "nhóm kỳ vọng
+  trúng" = số nhóm `eval_qa.EXPECTED[n]` có alternative (casefold) xuất
+  hiện trong content top-k. PASS khi recall@8 trung bình ≥ 0.99 VÀ mỗi
+  câu (b) pgvector trúng ≥ float8. Exit 0 pass / 1 fail hoặc container
+  không dọn được / 2 usage / 3 thiếu docker-daemon-image (`[external-dep]`).
+  In bảng tóm tắt, không in DSN/mật khẩu.
+  - Boundary: `scripts/vector_eval.py` (mới), `scripts/dr_drill.py`
+    (chỉ nếu cần tham số prefix), `tests/test_vector_eval.py` (mới)
+  - Gate: test thuần: `recall_at_k` biên (rỗng, trùng hết, lệch 1),
+    synthetic queries tất định (2 lần gọi seed 42 bằng nhau), probe docker
+    thiếu image (monkeypatch) → exit 3 không chạy container; `python -m
+    pytest tests/test_dr_drill.py -q` xanh như trước; chạy THẬT `python
+    scripts/vector_eval.py --synthetic 200 --questions` → exit 0,
+    recall@8 ≥ 0.99, mỗi Q1–Q10 pgvector ≥ float8, checksum float8 trước
+    = sau, `docker ps -a --filter name=samsam-vec-` rỗng sau chạy, số
+    dòng + md5 `chunks` NGUỒN trên samsam_infra không đổi
+  - Evidence: `evidence/v103_pgvector.log`
+- [x] **W103.6 Cổng social listening nhà cung cấp (fail-closed TGĐ)** —
+  `ingest/social_vendor.py` (mới): `python -m ingest.social_vendor --file
+  F` (CSV/XLSX export vendor, format GIẢ ĐỊNH). Config
+  `data/social_vendor.json` (`_doc` ghi "CHỈ người thật đổi sau khi TGĐ
+  duyệt hợp đồng + DPA"; `vendor_approved_by_tgd: false`,
+  `approval_ref: null`, `vendor_name: null`). Thứ tự: argparse → config:
+  thiếu file / JSON hỏng / `vendor_approved_by_tgd` không phải `true`
+  (kể cả `"true"` chuỗi, `1`) / `approval_ref` rỗng → `[blocked] nhà cung
+  cấp chưa được TGĐ duyệt — không nạp`, **exit 2, KHÔNG đọc file, KHÔNG
+  connect** → bộ lọc rượu + `social_rules.json` (fail-closed như v7.2) →
+  đọc + kiểm TOÀN file qua `intel_import._parse_table` (required
+  `thoi_gian`, `nen_tang` ∈ facebook|tiktok|youtube|instagram|forum|news|
+  khac, `noi_dung`; optional `ma_tin`, `id_tac_gia` (CHỈ vào vật liệu hash
+  dedup, không lưu); drop NGAY `ten_tac_gia`, `link_tac_gia`, `avatar`,
+  `so_nguoi_theo_doi`, `email`, `sdt`, `url_bai` (URL bài có thể định
+  danh), `cam_xuc_vendor`; cột lạ → lỗi cả file) → muối `INTEL_HASH_SALT`
+  (≥16, thiếu → exit 1) → connect → `[skip]` theo `file_sha256` → 1
+  transaction: `intel_imports` (`kind='social'`, `channel='vendor'`,
+  không đổi constraint) + `social_mentions_vendor`, nhãn TÁI DÙNG
+  `classify_social` (che SĐT/email trước), `msg_hash` TÁI DÙNG
+  `msg_hash(salt, "vendor:<nen_tang>", key)` (`on conflict (msg_hash) do
+  nothing` — dedup), `excerpt` CHỈ khi `dpia_signed` true và không nhạy
+  cảm (cùng luật v7.2) → `conn.commit()`. Schema (`docs/schema.sql`,
+  block mới cuối file "v10.3 social listening nhà cung cấp", comment
+  tiếng Việt: cổng TGĐ, không cột định danh tác giả, vì sao bảng riêng):
+  `create table if not exists social_mentions_vendor` (`id` identity pk,
+  `import_id` FK `intel_imports` not null, `platform text not null check
+  in (facebook, tiktok, youtube, instagram, forum, news, khac)`, `kind`
+  check in (`post`, `comment`, `review`), `posted_at timestamptz not
+  null`, `msg_hash text not null unique`, `labels text[] not null check
+  (cardinality(labels) > 0)`, `sensitive boolean not null`, `excerpt text
+  check (char_length(excerpt) <= 200)`) + index `posted_at`. KHÔNG cột
+  tên/ID/URL/SĐT/email tác giả; KHÔNG `alter table` nào. KHÔNG sửa
+  `intel_import.py` ngoài việc import hàm (nếu cần tách 1 hàm public thì
+  giữ tên cũ làm alias, test v7.2 không sửa). `intel_weekly` không đổi
+  (bảng riêng → báo cáo kênh sở hữu không bị trộn; báo cáo vendor =
+  someday khi có hợp đồng).
+  - Boundary: `ingest/social_vendor.py` (mới), `data/social_vendor.json`
+    (mới), `docs/schema.sql` (block mới cuối file),
+    `tests/test_social_vendor.py` (mới), `tests/fixtures/social_vendor/`
+    (mới)
+  - Gate: config mặc định repo (`false`) → CLI exit 2, `[blocked]`,
+    monkeypatch đọc file + connect → KHÔNG gọi (parametrize: thiếu file
+    config / JSON hỏng / `"true"` chuỗi / `1` / `true` mà `approval_ref`
+    rỗng → đều exit 2, 0 connect); config `true` trong `tmp_path`
+    (monkeypatch đường dẫn, KHÔNG sửa file repo) + DB thật schema tạm
+    rollback: fixture có "NGUOI DANG GIA", "0900000000", link profile giả
+    `https://facebook.com/profile.gia` → `select count(*) from
+    social_mentions_vendor s where row_to_json(s)::text ~* 'NGUOI DANG
+    GIA|0900000000|profile\.gia'` = 0 và cùng regex trên
+    `intel_imports` = 0; `excerpt` null hết khi `dpia_signed` false; tin
+    hỏi sức khỏe → `sensitive=true` + nhãn `hoi_suc_khoe`; tin nhắc rượu
+    → nhãn `hoi_ruou`; nạp lại cùng file → `[skip]`; file thứ 2 chồng tin
+    cùng `ma_tin` → dedup (đếm new/dup); cột lạ (vd `email_tac_gia`) /
+    `nen_tang` ngoài tập → exit 1, 0 dòng, connect không gọi; thiếu
+    `INTEL_HASH_SALT` → exit 1; `social_mentions` (owned) không nhận row
+    nào từ module (`grep -n "insert into social_mentions\b"
+    ingest/social_vendor.py` rỗng); `python scripts/apply_schema.py` ×2 exit
+    0, in 67 bảng; `python -m pytest tests/test_intel_import.py
+    tests/test_store.py tests/test_lead_store.py -q` xanh (drift-guard
+    DDL); `grep -n '"vendor_approved_by_tgd": false'
+    data/social_vendor.json` trúng
+  - Evidence: `evidence/v103_pytest.log`, `evidence/v103_social_vendor.log`
+- [x] **W103.7 Docs + bản đồ luồng + DPIA/TIA + env** —
+  `data/data_flow_map.json`: DF-31 "Connector API sàn chỉ đọc
+  (ingest/market_api.py)" — dữ liệu gửi đi = thông tin xác thực + tham số
+  truy vấn (không dữ liệu cá nhân), dữ liệu nhận về có PII người mua chỉ
+  trong RAM và bị bỏ ngay (chỉ field allowlist như market_csv, mã đơn
+  hash), lớp `do` (đơn sàn), safeguards: allowlist endpoint đọc, không
+  theo redirect, key ở env; gaps: chưa xác minh sandbox, token refresh
+  chưa có; DF-32 "Social listening nhà cung cấp (ingest/social_vendor.py)"
+  — chủ thể = người đăng công khai (bên thứ ba), cổng TGĐ + DPIA, gaps:
+  DPA với vendor, nguồn thu thập hợp pháp của vendor, hạn lưu. Chạy
+  `python scripts/dpia_draft.py` sinh lại `docs/legal/DPIA-nhap.md` +
+  `TIA-nhap.md`. `env.example`: thêm TÊN biến (không giá trị) 8 key sàn
+  + `SHOPEE_API_BASE`/`TIKTOK_API_BASE` + `RAG_VECTOR_BACKEND=float8`.
+  `docs/handover/sop.md`: mục kéo API sàn (lệnh + exit 2 khi thiếu key =
+  external-dep), mục nạp vendor (cổng TGĐ), mục chuyển backend vector.
+  `docs/handover/kien-truc.md`: module `market_api`, `social_vendor`,
+  `vector_eval`; dòng `chunks` ghi cột `embedding_v` (tùy chọn,
+  pgvector); thêm dòng bảng `social_mentions_vendor` (v10.3, cổng TGĐ,
+  không cột định danh tác giả); `intel_imports` ghi channel `vendor`;
+  câu "66 bảng public" → "67 bảng public" khớp `apply_schema`; sửa câu "khi data lớn → pgvector" thành
+  hiện trạng. `docs/handover/runbook-ha-tang.md`: cài pgvector (cloud =
+  external-dep) → `apply_schema.py --pgvector` → `vector_eval.py` PASS →
+  đặt `RAG_VECTOR_BACKEND=pgvector`; rollback = đặt lại `float8` (cột
+  float8 còn nguyên, không cần migrate ngược); xoay token sàn.
+  - Boundary: `data/data_flow_map.json`, `docs/legal/DPIA-nhap.md`,
+    `docs/legal/TIA-nhap.md` (sinh lại), `env.example`,
+    `docs/handover/{sop,kien-truc,runbook-ha-tang}.md`,
+    `tests/test_data_flow_map.py` (thêm `ingest/market_api.py`,
+    `ingest/social_vendor.py` vào `REQUIRED_MODULES`)
+  - Gate: `python scripts/dpia_draft.py --check` exit 0; `python -m
+    pytest tests/test_data_flow_map.py tests/test_dpia_draft.py
+    tests/test_handover_docs.py -q` xanh; `grep -c "market_api\|social_vendor\|RAG_VECTOR_BACKEND" docs/handover/sop.md` ≥ 3;
+    `grep -n "67 bảng public" docs/handover/kien-truc.md` trúng và
+    `python scripts/apply_schema.py` in 67 bảng; `grep -nE
+    "^(SHOPEE|TIKTOK)_[A-Z_]+=.+" env.example` rỗng (không giá trị);
+    `git status --short` không có file lạ ngoài boundary
+  - Evidence: `evidence/v103_docs.log`
+- [x] **W103.8 Gate chung** — targeted ×3 tuần tự (`python -m pytest
+  tests/test_market_api.py tests/test_rag_backend.py
+  tests/test_vector_eval.py tests/test_social_vendor.py
+  tests/test_market_csv.py tests/test_rag.py tests/test_intel_import.py
+  tests/test_store.py tests/test_lead_store.py tests/test_data_flow_map.py
+  tests/test_dpia_draft.py tests/test_handover_docs.py -q`, cả 3 lần
+  xanh, 0 skipped ngoài skip sẵn có); full `python -m pytest -q` ĐÚNG 1
+  lần (đọc output tới khi process exit — lệnh nặng có thể bị đẩy nền,
+  không chạy chồng) xanh, số pass ≥ baseline 3533 + test mới; `ruff
+  check .` sạch; `python -m py_compile ingest/market_api.py
+  ingest/social_vendor.py scripts/vector_eval.py scripts/apply_schema.py
+  api/rag.py` exit 0; `python -m pytest
+  tests/test_connect_timeout_guard.py -q` xanh (connect mới có timeout); `python scripts/apply_schema.py`
+  ×2 exit 0; `python scripts/agent_eval.py --deterministic` exit 0;
+  `python scripts/vector_eval.py --synthetic 200 --questions` exit 0
+  (W103.5); `git status --short` chỉ file trong boundary (giữ
+  untracked `lv2-market-top.png` nếu có, không stage).
+  - Boundary: không file mới — chỉ chạy gate
+  - Gate: như trên, mọi lệnh exit 0 (riêng `market_api` thiếu key = 2 và
+    `apply_schema --pgvector` local = 3 là kỳ vọng external-dep)
+  - Evidence: `evidence/v103_pytest.log` (full), `evidence/v103_gate.log`
+    (targeted ×3 + ruff + py_compile; `git add -f` vì `*.log` gitignore)
+  - Kết quả worker (2026-10-13): targeted ×3 (17 file, 499 pass ×3, 0 skip),
+    ruff sạch, py_compile 0, connect_timeout_guard xanh, apply_schema ×2
+    exit 0 (67 bảng), `--pgvector` local exit 3 (external-dep đúng kỳ vọng),
+    agent_eval `--deterministic --no-record` exit 0 (tree chưa commit),
+    vector_eval PASS (recall@8 0.9947, Q1–Q10 pg ≥ f8, container dọn).
+    **Full pytest: 3670 pass, 1 FAIL ngoài boundary** —
+    `test_garden_director.py::test_bulletin_numbers_match_reference_sql`
+    là bom ngày (fixture kỳ tới 2026-10-12, `created_at = now()` do
+    trigger → fail mọi lần chạy sau 00:00 13/10 giờ VN; vòng 1 hôm 12/10
+    pass). Không thuộc diff v10.3 → (vòng 3).
+  - Vòng 4 (fix, 2026-10-13): vá chỉ TEST — `until` lấy từ
+    `(now() at time zone 'Asia/Saigon')::date` của transaction DB, `end` =
+    until+1 ngày, assert header kỳ; `agents/garden_director.py` không đổi.
+    File test ×3: 65 pass ×3; full `python -m pytest -q` 1 lần: **3671 passed,
+    exit 0**; `ruff check .` sạch → tick.
+
+
+v10.3 đóng 2026-10-13 (workflow resume từ build; vòng 0: FIX/PASS/FIX — 2
+finding cùng gốc là date-bomb garden làm đỏ gate; vòng 1 PASS, 0 mở). Worker
+vá test garden kiểu `until` từ now() DB — coordinator BỎ bản đó khi commit để
+dùng bản vá chung trên `ai-infra` (19dc153, tránh xung đột gộp). Gate
+coordinator chạy lại: ruff sạch, test file mới (pgvector/market_api/rag_backend/
+social_vendor/vector_eval/data_flow_map) xanh, `dpia_draft --check`. Worker:
+full pytest 3671 pass; vector_eval synthetic 200 recall@8 0.9947.
+External-dep: app key + sandbox Shopee/TikTok (chữ ký/endpoint chưa đối chiếu),
+refresh token, ads/settlement qua API, pgvector trên Postgres local + cloud
+(backend mặc định giữ float8; cần pgvector ≥0.8 cho iterative_scan), eval_qa
+E2E trên DB cloud, hợp đồng + DPA vendor social listening + TGĐ duyệt, file
+export thật của vendor, ký DPIA. Someday: SP_ITEM_STATUSES thiếu SELLER_DELETE/
+SHOPEE_DELETE (item rượu xóa → alert S1 mở mãi); pgvector <0.8 lỗi
+`hnsw.iterative_scan` không rơi vào fallback; vector_eval bị SIGTERM bỏ sót
+container; `len(cands) < limit` coi là cạn corpus khi HNSW lọc collection;
+http.client.HTTPException không bọc ApiError; test MAX_RESP_BYTES không chứng
+minh check size; vài nhánh biên chưa test; `channels._warn` print tiếng Việt
+crash cp1258 trong thread (ngoài diff, test_messenger warning).
+
 Nhánh `ai-infra`: M31 đợt gộp 5 (2026-10-12) — v4.3, v9.1, v8.3, v5.1, v6.2 đã gộp
 (66 bảng; full pytest 3530 pass + 3 đỏ tích hợp đã vá). Tích hợp: mã luồng DF-26
 (v4.3), DF-27 (v9.1), DF-28 (v8.3), DF-29/30 (v5.1) + DPIA/TIA 30 luồng; lô B2B

@@ -1,0 +1,6 @@
+{
+  "_doc": "v10.3 cổng nạp social listening NHÀ CUNG CẤP (ingest/social_vendor.py, WP16 nền P2). CHỈ người thật đổi sau khi TGĐ duyệt hợp đồng + DPA với nhà cung cấp (và Pháp chế xác nhận nguồn thu thập hợp pháp của vendor): đặt vendor_approved_by_tgd = true (JSON boolean, không phải chuỗi), approval_ref = số/mã biên bản duyệt, vendor_name = tên nhà cung cấp. Chưa đủ → module từ chối nạp (exit 2, không đọc file, không connect DB). Agent/AI KHÔNG được sửa file này. Format file export của vendor là GIẢ ĐỊNH (chưa có file thật).",
+  "vendor_approved_by_tgd": false,
+  "approval_ref": null,
+  "vendor_name": null
+}

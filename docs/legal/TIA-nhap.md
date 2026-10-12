@@ -42,7 +42,7 @@
 | Mục | Nội dung |
 |---|---|
 | Bên nhận / nước | OpenRouter (Mỹ) — embeddings |
-| Dữ liệu gửi đi (sau biện pháp) | Đoạn văn bản public (sản phẩm, bài viết) đã crawl |
+| Dữ liệu gửi đi (sau biện pháp) | Đoạn văn bản public (sản phẩm, bài viết) đã crawl; v10.3 `scripts/vector_eval.py --questions` embed 10 câu hỏi kiểm thử CỐ ĐỊNH Q1–Q10 (tests/questions.md — không dữ liệu khách) để so backend float8/pgvector |
 | Lớp | Xanh |
 | Mục đích | Tạo vector tìm kiếm cho chatbot |
 | Biện pháp kỹ thuật | Qua gateway (mask + routing); `kb_filter` loại nội dung rượu/phóng đại |
@@ -195,7 +195,7 @@
 
 ## 3. Luồng không thuộc TIA
 
-Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15, DF-18, DF-19, DF-20, DF-25, DF-26, DF-27.
+Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15, DF-18, DF-19, DF-20, DF-25, DF-26, DF-27, DF-31, DF-32.
 
 ## 4. Ký duyệt
 

@@ -1,0 +1,76 @@
+# v10.3 W103.3/W103.5 — pgvector: Postgres local (samsam_v103) + eval trong container tạm — 2026-10-12T22:06:42+07:00
+$ select count(*) from pg_available_extensions where name='vector'
+0 | server 17.6
+$ python scripts/apply_schema.py --pgvector
+[done] schema applied — 67 bảng public: ...
+[external-dep] Postgres chưa cài pgvector — giữ backend float8 (schema.sql đã apply; cài extension cần quyền superuser/nhà cung cấp cloud).
+exit=3
+$ select count(*) from information_schema.columns where column_name='embedding_v'
+0
+$ python scripts/apply_schema.py (không flag)
+[done] schema applied — 67 bảng public: ...
+exit=0
+$ grep -niE 'drop (column|table)' docs/schema_pgvector.sql
+grep_rc=1 (1 = rỗng)
+
+$ python scripts/vector_eval.py --synthetic 200 --questions  (2026-10-12T21:54:33+07:00)
+[eval] container samsam-vec-20261012_215524-9dae (pgvector/pgvector:0.8.6-pg17-trixie) sẵn sàng
+[eval] schema_pgvector.sql lần 1: sạch
+[eval] schema_pgvector.sql lần 2: sạch
+[eval] chunks: 868 dòng, checksum float8 nguồn=060f502a6b59 trước=060f502a6b59 sau=060f502a6b59, embedding_v/embedding not null = 868/868
+[eval] chunks_internal: 0 dòng, checksum float8 nguồn=d41d8cd98f00 trước=d41d8cd98f00 sau=d41d8cd98f00, embedding_v/embedding not null = 0/0
+[eval] trigger đồng bộ embedding → embedding_v: OK
+[eval] (a) synthetic n=200 seed=42: recall@8 trung bình 0.9950, top-1 trùng 0.9500, min recall 0.889
+[eval] (b) Q1–Q10 | recall@8 | top-1 | nhóm kỳ vọng trúng f8 → pg
+  Q1  | 1.000 | trùng | 2/2 → 2/2 OK
+  Q2  | 1.000 | trùng | 1/1 → 1/1 OK
+  Q3  | 1.000 | trùng | 2/2 → 2/2 OK
+  Q4  | 1.000 | trùng | 2/2 → 2/2 OK
+  Q5  | 1.000 | trùng | 0/1 → 0/1 OK
+  Q6  | 1.000 | trùng | 1/1 → 1/1 OK
+  Q7  | 0.889 | trùng | 2/2 → 2/2 OK
+  Q8  | 1.000 | trùng | 1/1 → 1/1 OK
+  Q9  | 1.000 | trùng | 1/1 → 1/1 OK
+  Q10 | 1.000 | trùng | 1/1 → 1/1 OK
+[eval] recall@8 trung bình toàn bộ (210 query): 0.9947 (ngưỡng ≥ 0.99)
+[eval] container samsam-vec-20261012_215524-9dae đã dọn
+[eval] corpus NGUỒN không đổi (số dòng + md5): OK — chunks 868 dòng
+[PASS]
+exit=0
+$ docker ps -a --filter name=samsam-vec- (sau chạy):
+(rỗng = đã dọn)
+
+# VÒNG 3 chạy lại — 2026-10-13T01:23:53+07:00
+$ python scripts/vector_eval.py --synthetic 200 --questions
+exit=124
+$ docker ps -a --filter name=samsam-vec- (sau chạy):
+samsam-vec-20261013_012435-fc39
+(rỗng = đã dọn)
+# (lần trên bị chính lệnh 'timeout 580' của worker giết giữa chừng — máy tải nặng, eval >580s; output stdout bị buffer nên mất; SIGTERM ngoài bỏ qua finally → container sót samsam-vec-20261013_012435-fc39, đã dọn tay bằng docker rm -f -v lúc 2026-10-13T01:33:52+07:00. Chạy lại nền, python -u, không timeout.)
+# VÒNG 3 chạy lại (nền) — 2026-10-13T01:33:58+07:00
+$ python -u scripts/vector_eval.py --synthetic 200 --questions
+[eval] container samsam-vec-20261013_013441-f1bc (pgvector/pgvector:0.8.6-pg17-trixie) sẵn sàng
+[eval] schema_pgvector.sql lần 1: sạch
+[eval] schema_pgvector.sql lần 2: sạch
+[eval] chunks: 868 dòng, checksum float8 nguồn=060f502a6b59 trước=060f502a6b59 sau=060f502a6b59, embedding_v/embedding not null = 868/868
+[eval] chunks_internal: 0 dòng, checksum float8 nguồn=d41d8cd98f00 trước=d41d8cd98f00 sau=d41d8cd98f00, embedding_v/embedding not null = 0/0
+[eval] trigger đồng bộ embedding → embedding_v: OK
+[eval] (a) synthetic n=200 seed=42: recall@8 trung bình 0.9950, top-1 trùng 0.9500, min recall 0.889
+[eval] (b) Q1–Q10 | recall@8 | top-1 | nhóm kỳ vọng trúng f8 → pg
+  Q1  | 1.000 | trùng | 2/2 → 2/2 OK
+  Q2  | 1.000 | trùng | 1/1 → 1/1 OK
+  Q3  | 1.000 | trùng | 2/2 → 2/2 OK
+  Q4  | 1.000 | trùng | 2/2 → 2/2 OK
+  Q5  | 1.000 | trùng | 0/1 → 0/1 OK
+  Q6  | 1.000 | trùng | 1/1 → 1/1 OK
+  Q7  | 0.889 | trùng | 2/2 → 2/2 OK
+  Q8  | 1.000 | trùng | 1/1 → 1/1 OK
+  Q9  | 1.000 | trùng | 1/1 → 1/1 OK
+  Q10 | 1.000 | trùng | 1/1 → 1/1 OK
+[eval] recall@8 trung bình toàn bộ (210 query): 0.9947 (ngưỡng ≥ 0.99)
+[eval] container samsam-vec-20261013_013441-f1bc đã dọn
+[eval] corpus NGUỒN không đổi (số dòng + md5): OK — chunks 868 dòng
+[PASS]
+exit=0
+$ docker ps -a --filter name=samsam-vec- (sau chạy):
+(rỗng = đã dọn)
