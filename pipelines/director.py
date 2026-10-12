@@ -16,6 +16,10 @@ Contract:
     hàng của khối → `digest` (hàm THUẦN) → ghi `data/reports/director-
     <block>-<YYYY-MM-DD>.md` (atomic, gitignored). KHÔNG tự gửi.
   - Ngày "hôm nay" theo giờ VN (`pipelines.period.period_bounds('day')`).
+  - v4.5 (WP06): `submit(qa_suite=...)` lấy `qa_status` từ `eval_runs`
+    (`qa_status_latest` — run mới nhất không `-dirty`), BỎ QUA giá trị
+    caller khai (agent không tự khai pass). `run` đọc `eval_runs` có
+    `owner_block = block` trong ngày VN → mục "Nghiệm thu QA hôm nay".
 
 Chạy:
   python -m pipelines.director --block sales
@@ -63,6 +67,12 @@ _ITEM_SQL = (
 _ITEM_COLS = ("id", "object_type", "object_id", "title", "risk", "qa_status",
               "status", "created_by", "created_at", "due_at", "decided_by",
               "decided_at", "lane")
+_QA_SQL = (
+    "select agent, suite_version, passed, n_pass, n_total, failed_cases,"
+    " commit_sha, ts from eval_runs where owner_block = %s"
+    " and ts >= %s and ts < %s order by ts, id")
+_QA_COLS = ("agent", "suite_version", "passed", "n_pass", "n_total",
+            "failed_cases", "commit_sha", "ts")
 _OVERRIDE_SQL = (
     "select d.queue_id, d.decided_by, d.created_at from decisions d"
     " join approval_queue a on a.id = d.queue_id"
@@ -131,15 +141,30 @@ def load_all(base_dir: Path | None = None) -> dict[str, dict]:
     return {b: load_config(b, base_dir) for b in BLOCKS}
 
 
+def qa_status_latest(conn, agent: str) -> str:
+    """'pass' | 'fail' | 'none' theo row eval_runs mới nhất (ts, id) của
+    agent — bỏ run `<sha>-dirty` (tree bẩn không phải bằng chứng)."""
+    row = conn.execute(
+        "select passed from eval_runs where agent = %s and commit_sha not"
+        " like '%%-dirty' order by ts desc, id desc limit 1",
+        (agent,)).fetchone()
+    if row is None:
+        return "none"
+    return "pass" if row[0] else "fail"
+
+
 def submit(conn, block: str, object_type: str, object_id: str, title: str,
            payload: str, created_by: str, qa_status: str = "none",
-           cfg: dict | None = None) -> int:
-    """Agent nhân viên đẩy việc → id hàng duyệt. SLA/risk từ cấu hình."""
+           cfg: dict | None = None, qa_suite: str | None = None) -> int:
+    """Agent nhân viên đẩy việc → id hàng duyệt. SLA/risk từ cấu hình.
+    `qa_suite` có → qa_status lấy từ eval_runs (bỏ qua giá trị caller)."""
     cfg = cfg if cfg is not None else load_config(block)
     spec = cfg["object_types"].get(object_type)
     if spec is None:
         raise ValueError(f"khối {block} không nhận loại việc '{object_type}'"
                          f" — có: {sorted(cfg['object_types'])}")
+    if qa_suite:
+        qa_status = qa_status_latest(conn, qa_suite)
     return aq.enqueue(conn, object_type=object_type, object_id=object_id,
                       block=block, title=title, payload=payload,
                       risk=spec["risk"], created_by=created_by,
@@ -159,10 +184,22 @@ def _line(d: dict) -> str:
             f"{_oneline(_mask_pii(d.get('title') or ''), 70)}")
 
 
+def _qa_line(r: dict) -> str:
+    fails = [str(x) for x in (r.get("failed_cases") or [])]
+    more = f" (+{len(fails) - 10})" if len(fails) > 10 else ""
+    tail = f" — ca FAIL: {', '.join(fails[:10])}{more}" if fails else ""
+    return (f"- `{r['agent']}` v{r.get('suite_version')} "
+            f"{'PASS' if r.get('passed') else 'FAIL'} "
+            f"{r.get('n_pass')}/{r.get('n_total')} · commit "
+            f"{(r.get('commit_sha') or '')[:7]}{tail}")
+
+
 def digest(cfg: dict, items: list[dict], now: datetime,
-           overrides: list[dict] = ()) -> str:
+           overrides: list[dict] = (), qa_runs=()) -> str:
     """Bản tin markdown (thuần). `items` = dòng hàng duyệt của khối,
-    `overrides` = override_qa (queue_id, decided_by, created_at)."""
+    `overrides` = override_qa (queue_id, decided_by, created_at),
+    `qa_runs` = eval_runs của khối (owner) trong ngày; None = không đọc
+    được."""
     start, end = period_bounds("day", now)
     day = start.date()
     soon = now + timedelta(hours=cfg["due_soon_hours"])
@@ -192,6 +229,12 @@ def digest(cfg: dict, items: list[dict], now: datetime,
     L += ["", "## Override QA hôm nay (ép trình bản QA FAIL)", ""]
     L += ([f"- mục #{o['queue_id']} — bởi {o['decided_by']} lúc "
            f"{_fmt_vn(o['created_at'])}" for o in ovr] or ["- (không có)"])
+    L += ["", "## Nghiệm thu QA hôm nay", ""]
+    if qa_runs is None:
+        L.append("- (không đọc được eval_runs — lỗi/quyền DB)")
+    else:
+        qa = [r for r in qa_runs if _in(r.get("ts"), start, end)]
+        L += [_qa_line(r) for r in qa] or ["- (không có)"]
     L += ["", "## Người duyệt", "",
           f"- Vai trò duyệt: {', '.join(cfg['approver_roles'])}"]
     if not cfg["approvers"]:
@@ -221,8 +264,15 @@ def run(conn, block: str, now: datetime | None = None,
     overrides = [dict(zip(("queue_id", "decided_by", "created_at"), r))
                  for r in conn.execute(_OVERRIDE_SQL,
                                        (block, start, end)).fetchall()]
+    try:
+        # Savepoint: DB cũ/role thiếu quyền eval_runs không làm hỏng tx.
+        with conn.transaction():
+            qa_runs = [dict(zip(_QA_COLS, r)) for r in conn.execute(
+                _QA_SQL, (block, start, end)).fetchall()]
+    except psycopg.Error:
+        qa_runs = None
     conn.commit()   # đóng tx đọc (conn chia sẻ)
-    text = digest(cfg, items, now, overrides)
+    text = digest(cfg, items, now, overrides, qa_runs)
     path = write_report(text, out_dir,
                         f"director-{block}-{start.date():%Y-%m-%d}.md")
     return path, text

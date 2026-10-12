@@ -115,6 +115,19 @@
 | Rủi ro tồn dư | (không) |
 | Căn cứ | Không xử lý dữ liệu cá nhân — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
+### DF-22 — Nghiệm thu QA — giám khảo LLM của harness (agent_eval, v4.5)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `ci_judge`, trần 1 USD/tháng) |
+| Dữ liệu gửi đi (sau biện pháp) | Ca kiểm thử (đề + rubric do dev/công ty soạn) và output của agent bị chấm (vd câu trả lời chatbot trên KB public) — chỉ ca có scorer judge |
+| Lớp | Xanh |
+| Mục đích | Chấm ca lớp mềm khi nghiệm thu agent theo commit (cổng deploy F17.1) |
+| Biện pháp kỹ thuật | Chỉ qua `pipelines.llm_gateway` agent `ci_judge` — không gọi client LLM trực tiếp (test khóa); Model judge phải KHÁC HỌ nhà sản xuất với model agent (allowlist họ; router/alias lạ → từ chối trước mọi lời gọi); CI mỗi push (`--deterministic`) chỉ chạy suite luật (guardrail + co_khi) — 0 lời gọi LLM; hiện chưa suite active nào có ca judge |
+| Thời hạn lưu (theo map) | Không giới hạn — lịch sử nghiệm thu theo commit (kiểm toán deploy) |
+| Rủi ro tồn dư | Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep) |
+| Căn cứ | Không xử lý dữ liệu cá nhân thật (ca kiểm thử tổng hợp) — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
 ## 3. Luồng không thuộc TIA
 
 Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15, DF-18.

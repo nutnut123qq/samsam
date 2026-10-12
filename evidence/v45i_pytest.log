@@ -1,0 +1,117 @@
+# v4.5i-tich-hop-qa — gate pytest (2026-10-12 11:24:29 +0700, HEAD c2be1ae + working tree)
+
+## targeted lần 1: python -m pytest -q -rs tests/test_agent_eval.py tests/test_qa_harness.py tests/test_guardrail_v2.py tests/test_handover_docs.py tests/test_ci_workflow.py tests/test_deploy_gate.py tests/test_legal_docs.py
+........................................................................ [ 24%]
+........................................................................ [ 49%]
+........................................................................ [ 74%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+289 passed in 54.56s
+[exit 0]
+
+## targeted lần 2: python -m pytest -q -rs tests/test_agent_eval.py tests/test_qa_harness.py tests/test_guardrail_v2.py tests/test_handover_docs.py tests/test_ci_workflow.py tests/test_deploy_gate.py tests/test_legal_docs.py
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.LockNotAvailable: canceling statement due to lock timeout
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: LockNotAvailable
+288 passed, 1 error in 73.05s (0:01:13)
+[exit 1]
+
+## targeted lần 3: python -m pytest -q -rs tests/test_agent_eval.py tests/test_qa_harness.py tests/test_guardrail_v2.py tests/test_handover_docs.py tests/test_ci_workflow.py tests/test_deploy_gate.py tests/test_legal_docs.py
+........................................................................ [ 24%]
+........................................................................ [ 49%]
+........................................................................ [ 74%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+289 passed in 47.57s
+[exit 0]
+
+# Vòng 2 (lần 2 vòng 1 ERROR LockNotAvailable (tên test bị cắt do tail -15; nghi tranh khóa DB khi nhiều version song song cùng cluster Postgres — CHƯA xác minh nguyên nhân); chạy lại 3 lần liên tiếp với -rsfE để ghi tên test)
+
+## vòng 2 targeted lần 1 (cùng lệnh, thêm -rsfE)
+289 passed in 52.58s
+[exit 0]
+
+## vòng 2 targeted lần 2 (cùng lệnh, thêm -rsfE)
+289 passed in 42.51s
+[exit 0]
+
+## vòng 2 targeted lần 3 (cùng lệnh, thêm -rsfE)
+289 passed in 41.10s
+[exit 0]
+
+## full lần 1 (sau vòng 2): python -m pytest -q -rsfE
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+FAILED tests/test_data_flow_map.py::test_every_egress_module_declared - Asser...
+FAILED tests/test_db_backup.py::test_backup_manifest_matches_live - Assertion...
+FAILED tests/test_db_backup.py::test_drill_ok_and_dropped - AssertionError: a...
+3 failed, 1761 passed, 3 skipped in 400.06s (0:06:40)
+36:E       AssertionError: module gửi dữ liệu ra ngoài CHƯA khai báo trong data/data_flow_map.json: ['scripts/agent_eval.py']
+37:E       assert not ['scripts/agent_eval.py']
+58:E       AssertionError: assert 29 == 35
+59:E        +  where 29 = len({'agent_action_log': 0, 'approval_queue': 0, 'approvals': 0, 'assets': 219, ...})
+78:E       AssertionError: assert ('35/35 bảng khớp' in '  agent_action_log       manifest=      0 thực tế=      0  khớp\n  approval_queue         manifest=      0 thực tế=  ...13  khớp\n[drill] samsam_w40_20261012_113529_vn.dump → samsam_drill_20261012_113629_6e86: 29/29 bảng khớp, RTO 3.86s\n')
+[exit 1]
+
+Nguyên nhân + xử lý:
+- test_data_flow_map::test_every_egress_module_declared: scripts/agent_eval.py (v4.5 import llm_gateway cho judge ci_judge) chưa khai báo — lỗi sẵn có từ merge (dòng import có ở HEAD c2be1ae), dây chuyền 'toàn bộ test xanh' → thêm DF-18 vào data/data_flow_map.json + sinh lại docs/legal/DPIA-nhap.md, TIA-nhap.md bằng python scripts/dpia_draft.py.
+- test_db_backup (2 test, 29 vs 35 bảng): DB worktree samsam_w40 chưa có 6 bảng M31 (garden_media, incidents, intel_items, machines, maintenance_plans, sim_runs) — môi trường, không phải code; chạy python scripts/apply_schema.py (idempotent, không --roles) trên DB riêng worktree → 35 bảng.
+- 3 SKIPPED test_dr_drill: không có docker/image postgres (môi trường máy, không phải DB test của version).
+
+# Vòng 3 (sau DF-18 + apply_schema): targeted ×3 rồi full ×1
+
+## vòng 3 targeted lần 1: python -m pytest -q -rsfE tests/test_agent_eval.py tests/test_qa_harness.py tests/test_guardrail_v2.py tests/test_handover_docs.py tests/test_ci_workflow.py tests/test_deploy_gate.py tests/test_legal_docs.py
+289 passed in 36.18s
+[exit 0]
+
+## vòng 3 targeted lần 2: python -m pytest -q -rsfE tests/test_agent_eval.py tests/test_qa_harness.py tests/test_guardrail_v2.py tests/test_handover_docs.py tests/test_ci_workflow.py tests/test_deploy_gate.py tests/test_legal_docs.py
+289 passed in 32.30s
+[exit 0]
+
+## vòng 3 targeted lần 3: python -m pytest -q -rsfE tests/test_agent_eval.py tests/test_qa_harness.py tests/test_guardrail_v2.py tests/test_handover_docs.py tests/test_ci_workflow.py tests/test_deploy_gate.py tests/test_legal_docs.py
+289 passed in 39.77s
+[exit 0]
+
+## vòng 3 full lần 1 (duy nhất vòng này): python -m pytest -q -rsfE
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+1764 passed, 3 skipped in 427.21s (0:07:07)
+[exit 0]
+
+## vòng 4 (MINOR: khóa show_answer=False co_khi — answer MẬT không lọt detail/stdout; mutation show_answer=True -> 2 failed: test_co_khi_trap_fail_scored_failed + test_co_khi_cli_no_record_twice_identical, đã khôi phục)
+
+## vòng 4 targeted lần 1: python -m pytest -q -rsfE tests/test_agent_eval.py tests/test_qa_harness.py tests/test_guardrail_v2.py tests/test_handover_docs.py tests/test_ci_workflow.py tests/test_deploy_gate.py tests/test_legal_docs.py
+289 passed in 51.12s
+[exit 0]
+
+## vòng 4 targeted lần 2: python -m pytest -q -rsfE tests/test_agent_eval.py tests/test_qa_harness.py tests/test_guardrail_v2.py tests/test_handover_docs.py tests/test_ci_workflow.py tests/test_deploy_gate.py tests/test_legal_docs.py
+289 passed in 56.88s
+[exit 0]
+
+## vòng 4 targeted lần 3: python -m pytest -q -rsfE tests/test_agent_eval.py tests/test_qa_harness.py tests/test_guardrail_v2.py tests/test_handover_docs.py tests/test_ci_workflow.py tests/test_deploy_gate.py tests/test_legal_docs.py
+289 passed in 34.94s
+[exit 0]
+
+
+## vòng 4 full lần 1 (duy nhất vòng này): python -m pytest -q -rsfE
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+1764 passed, 3 skipped in 544.26s (0:09:04)
+[exit 0]
+$ ruff check .
+All checks passed!
+[exit 0]

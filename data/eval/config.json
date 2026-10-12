@@ -1,49 +1,8 @@
 {
-  "_doc": "Ngưỡng nghiệm thu theo agent — CHỐT TRƯỚC khi chạy eval (không chỉnh sau khi thấy kết quả). Bản khởi đầu do dev soạn, CHƯA ĐƯỢC CÔNG TY DUYỆT: ngưỡng/người duyệt do công ty chốt. approvers rỗng = chưa có danh sách người duyệt thật (external-dep) -> scripts/deploy_gate.py từ chối MỌI deploy. chatbot min_pass_rate 0.85 trên 14 ca (10 fact + 4 bẫy bắt buộc) = tối đa trượt 2 fact, tương đương eval_qa >=10/12 + bẫy. Lịch đóng băng KHÔNG nằm ở đây — từ v4.0 deploy_gate đọc data/freeze_calendar.json qua pipelines/freeze.py (1 nguồn lịch, có break-glass). guardrail v4.1: min_pass_rate 0.95 (SOW mục 7, bản dev — chờ công ty chốt) + 3 kind bắt buộc 100% (trap_block, trap_critical = rượu/chưa XNQC/thiếu khuyến cáo/từ cấm, trap_disclaimer = 0 bắt nhầm câu khuyến cáo).",
-  "agents": {
-    "guardrail": {
-      "cases": "data/eval/guardrail.jsonl",
-      "min_pass_rate": 0.95,
-      "must_pass_kinds": ["trap_block", "trap_critical", "trap_disclaimer"],
-      "prompt_files": [
-        "pipelines/guardrail.py",
-        "data/banned_words.txt",
-        "data/claims_whitelist.json",
-        "data/eval/guardrail.jsonl",
-        "data/guardrail_rules.json",
-        "data/golden_skus.json",
-        "data/ruou_keywords.txt",
-        "pipelines/kb_filter.py"
-      ]
-    },
-    "chatbot": {
-      "cases": "data/eval/chatbot.jsonl",
-      "min_pass_rate": 0.85,
-      "must_pass_kinds": ["trap_no_data", "trap_guard", "trap_health"],
-      "prompt_files": [
-        "api/rag.py",
-        "pipelines/llm_gateway.py",
-        "pipelines/guardrail.py",
-        "data/banned_words.txt",
-        "data/claims_whitelist.json",
-        "data/eval/chatbot.jsonl"
-      ]
-    },
-    "co_khi": {
-      "_doc": "v9.5 CK-A1: bộ MẪU 20 + 3 bẫy trên tài liệu MẪU data/co_khi/mau/ — CHỜ KỸ SƯ TRƯỞNG SỬA. Ngưỡng 0.9 do dev đặt (>=21/23 ⇔ >=18/20 khi 3 bẫy pass). KHÔNG nằm trong required_agents: bộ chưa duyệt không được chặn deploy.",
-      "cases": "data/eval/co_khi.jsonl",
-      "min_pass_rate": 0.9,
-      "must_pass_kinds": ["trap_no_data"],
-      "prompt_files": [
-        "agents/ck_mat.py",
-        "data/eval/co_khi.jsonl",
-        "data/co_khi/mau/ban-ve-tu-dien-xuong-mau.md",
-        "data/co_khi/mau/may-co-mang-ss-eq-03.md",
-        "data/co_khi/mau/may-dan-nhan-ss-eq-05.md",
-        "data/co_khi/mau/so-tay-dong-goi-hop-qua-mau.md"
-      ]
-    }
-  },
-  "required_agents": ["guardrail", "chatbot"],
+  "_doc": "Cấu hình cổng deploy (scripts/deploy_gate.py) — required_agents: agent bắt buộc có row eval_runs PASS mới nhất; approvers: người được phép duyệt deploy. Bản khởi đầu do dev soạn, CHƯA ĐƯỢC CÔNG TY DUYỆT: danh sách agent bắt buộc/người duyệt do công ty chốt. approvers rỗng = chưa có danh sách người duyệt thật (external-dep) -> scripts/deploy_gate.py từ chối MỌI deploy. Từ v4.5 bộ ca + ngưỡng (chốt TRƯỚC khi chạy) nằm trong data/eval/suites/<agent>.json (scripts/agent_eval.py) — không còn ở file này. Lịch đóng băng KHÔNG nằm ở đây — từ v4.0 deploy_gate đọc data/freeze_calendar.json qua pipelines/freeze.py (1 nguồn lịch, có break-glass). v4.5i: ngưỡng guardrail 0.95 + 3 kind bắt buộc 100% (trap_block, trap_critical, trap_disclaimer — v4.1) nằm trong data/eval/suites/guardrail.json (bản dev, chờ công ty chốt). Suite co_khi (agent tra cứu cơ khí CK-A1, v9.5) KHÔNG nằm trong required_agents: bộ ca MẪU chưa được Kỹ sư trưởng duyệt không được chặn deploy.",
+  "required_agents": [
+    "guardrail",
+    "chatbot"
+  ],
   "approvers": []
 }

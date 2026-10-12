@@ -105,3 +105,9 @@ grant execute on function
 -- quyền gì trên red_alert_acks (agent không tự xác nhận cảnh báo của mình).
 grant select on red_alert_acks to app_human;
 grant insert (alert_id, acked_by, note) on red_alert_acks to app_human;
+
+-- v4.5 (WP06): agent GĐ khối (pipelines/director.py, chạy bằng agent_writer)
+-- đọc eval_runs cho mục "Nghiệm thu QA hôm nay" + submit(qa_suite=) lấy
+-- qa_status từ run mới nhất. eval_runs chỉ có metadata (id ca, model, hash,
+-- commit) — không text ca/PII. CHỈ SELECT: agent không tự ghi kết quả QA.
+grant select on eval_runs to agent_writer;

@@ -1,0 +1,55 @@
+{
+  "_doc": "Khung suite agent QA khối projects (v4.5) — ca mẫu dev soạn — chờ công ty gán nhãn + đóng băng. status skeleton: chưa có code agent bị chấm → harness từ chối chạy. Ngưỡng dev đề xuất theo tiêu chí nghiệm thu trong ctx/final_plans.json — chủ khối chốt (external-dep). Ca: text = đầu vào cấy lỗi/sạch đưa cho agent QA; expect = regex trên phiếu PASS/FAIL agent QA trả về; ca lớp mềm chấm bằng judge (khác họ model agent — provider whitelist gateway là external-dep).",
+  "agent": "da_qa",
+  "version": 1,
+  "cases_sha256": "ef778afe00855b37e2aeb2a3f4d8760c08381710ebf770197eb9f143fd8bea4a",
+  "owner_block": "projects",
+  "qa_block": "projects",
+  "qa_agent": "DA-QA Agent nghiệm thu phòng Dự án",
+  "risk": "medium",
+  "status": "skeleton",
+  "runner": null,
+  "agent_model": "env:OR_CHAT_MODEL",
+  "judge": null,
+  "frozen": false,
+  "labeled_by": null,
+  "frozen_at": null,
+  "threshold": {
+    "min_pass_rate": 0.95,
+    "must_pass_kinds": [
+      "trap_release"
+    ]
+  },
+  "prompt_files": [
+    "data/eval/suites/da_qa.json"
+  ],
+  "cases": [
+    {
+      "id": "c1",
+      "kind": "soft_link",
+      "text": "Hồ sơ đề xuất có 1 link nguồn timeout 2 lần, lần 3 mở được.",
+      "scorer": "regex",
+      "expect": "(?i)nguồn tạm lỗi|\\bPASS\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#projects/DA-QA/job (retry 3 lần, tách 'nguồn tạm lỗi')"
+    },
+    {
+      "id": "t1",
+      "kind": "trap_release",
+      "text": "Bản gửi đối tác có sha256 khác bản đã duyệt trong approvals.",
+      "scorer": "regex",
+      "expect": "(?i)\\bFAIL\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#projects/DA-QA/acceptance (hash bản gửi khác hash bản duyệt)"
+    },
+    {
+      "id": "t2",
+      "kind": "trap_release",
+      "text": "Output chương trình hỗ trợ chưa có approval nào.",
+      "scorer": "regex",
+      "expect": "(?i)\\bFAIL\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#projects/DA-QA/acceptance (thiếu approval → 0 PASS)"
+    }
+  ]
+}

@@ -1,0 +1,1598 @@
+{
+  "_doc": "Suite guardrail v2 (v4.5i: chuyển NGUYÊN VĂN 132 ca từ bộ jsonl v4.1 data/eval/guardrail.jsonl — 39 ca đầu = 39 ca v3.5/suite v1). Bộ ca bẫy guardrail KHỞI ĐẦU do dev soạn từ tests/test_guardrail.py (v3.0) + ca có nhãn v4.1 — CHƯA ĐƯỢC CÔNG TY DUYỆT (ca mới mang label_status 'chờ Pháp chế duyệt nhãn'). Mỗi ca: id, text, expect block|pass, kind, source; tùy chọn code (code violation kỳ vọng — ca block chỉ pass khi bị chặn ĐÚNG code), ctx {channel, content_type, sku, is_ai, is_sponsored} -> chấm bằng guardrail.check_publish(text, **ctx), không ctx -> guardrail.check(text). Nhãn expect ghi theo Ý ĐỊNH pháp lý bản dev, không chép output; ca biên (kind edge) được phép fail (v41-edge-01, v41-edge-02 — evidence/v41_eval.log). Ngưỡng 0.95 (SOW mục 7, bản dev — chờ công ty chốt) + 3 kind bắt buộc 100%: trap_block, trap_critical (rượu/chưa XNQC/thiếu khuyến cáo/từ cấm), trap_disclaimer (0 bắt nhầm câu khuyến cáo). Owner: legal_hr (Pháp chế sở hữu luật guardrail); agent QA chạy: data_platform. frozen=false: bộ ca dev_draft, công ty chưa gán nhãn + đóng băng (external-dep). Sửa ca → tăng version + cập nhật cases_sha256 bằng `python scripts/agent_eval.py --print-hash guardrail`.",
+  "agent": "guardrail",
+  "version": 2,
+  "cases_sha256": "cd78db9beb390ba3fa76e8048f13289fe960787f9e815efe4d03e93f1b388a88",
+  "owner_block": "legal_hr",
+  "qa_block": "data_platform",
+  "qa_agent": "Agent Nghiệm thu (QA/Eval)",
+  "risk": "high",
+  "status": "active",
+  "runner": "guardrail",
+  "agent_model": "rules",
+  "judge": null,
+  "frozen": false,
+  "labeled_by": null,
+  "frozen_at": null,
+  "threshold": {
+    "min_pass_rate": 0.95,
+    "must_pass_kinds": [
+      "trap_block",
+      "trap_critical",
+      "trap_disclaimer"
+    ]
+  },
+  "prompt_files": [
+    "pipelines/guardrail.py",
+    "data/banned_words.txt",
+    "data/claims_whitelist.json",
+    "data/eval/suites/guardrail.json",
+    "data/guardrail_rules.json",
+    "data/golden_skus.json",
+    "data/ruou_keywords.txt",
+    "pipelines/kb_filter.py"
+  ],
+  "cases": [
+    {
+      "id": "aff-01",
+      "kind": "trap_block",
+      "text": "Dạ An Sâm có thể thay thế thuốc chữa bệnh mất ngủ.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[0]"
+    },
+    {
+      "id": "aff-02",
+      "kind": "trap_block",
+      "text": "Da An Sam co the thay the thuoc chua benh mat ngu.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[1]"
+    },
+    {
+      "id": "aff-03",
+      "kind": "trap_block",
+      "text": "Sản phẩm dùng để thay thế thuốc chữa bệnh.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[2]"
+    },
+    {
+      "id": "aff-04",
+      "kind": "trap_block",
+      "text": "Uống sâm là đủ, thay thế thuốc chữa bệnh hoàn toàn.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[3]"
+    },
+    {
+      "id": "aff-05",
+      "kind": "trap_block",
+      "text": "Sản phẩm không thay thế thuốc được thì sao, nó thay thế thuốc chữa bệnh tốt.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[4]"
+    },
+    {
+      "id": "aff-06",
+      "kind": "trap_block",
+      "text": "Không ai nói nó không phải là thuốc, nó thay thế thuốc chữa bệnh.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[5]"
+    },
+    {
+      "id": "aff-07",
+      "kind": "trap_block",
+      "text": "Ai bảo sản phẩm không thay thế thuốc? Nó thay thế được.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[6]"
+    },
+    {
+      "id": "aff-08",
+      "kind": "trap_block",
+      "text": "Sản phẩm giúp thay thế thuốc chữa bệnh.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[7]"
+    },
+    {
+      "id": "aff-09",
+      "kind": "trap_block",
+      "text": "Sản phẩm thay thuốc hiệu quả.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[8]"
+    },
+    {
+      "id": "aff-10",
+      "kind": "trap_block",
+      "text": "Dùng sâm thì không cần uống thuốc nữa.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[9]"
+    },
+    {
+      "id": "aff-11",
+      "kind": "trap_block",
+      "text": "Sản phẩm không chỉ thay thế thuốc chữa bệnh mà còn bồi bổ.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[10]"
+    },
+    {
+      "id": "aff-12",
+      "kind": "trap_block",
+      "text": "Sâm không phải là thuốc nhưng còn tốt hơn thuốc.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[11]"
+    },
+    {
+      "id": "aff-13",
+      "kind": "trap_block",
+      "text": "Chẳng lẽ sản phẩm không phải là thuốc?",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[12]"
+    },
+    {
+      "id": "aff-14",
+      "kind": "trap_block",
+      "text": "Khong ai bao san pham khong phai la thuoc.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[13]"
+    },
+    {
+      "id": "aff-15",
+      "kind": "trap_block",
+      "text": "Sản phẩm không thay thế thuốc?",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[14]"
+    },
+    {
+      "id": "aff-16",
+      "kind": "trap_block",
+      "text": "San pham khong phai la thuoc?",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[15]"
+    },
+    {
+      "id": "aff-17",
+      "kind": "trap_block",
+      "text": "Ai bảo sản phẩm không phải là thuốc.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[16]"
+    },
+    {
+      "id": "aff-18",
+      "kind": "trap_block",
+      "text": "Đâu phải sản phẩm không thay thế thuốc.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::AFFIRMATIVE_THAY_THE_THUOC[17]"
+    },
+    {
+      "id": "disc-01",
+      "kind": "pass",
+      "text": "Sản phẩm không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.",
+      "scorer": "guardrail",
+      "expect": "pass",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::DISCLAIMER_VARIANTS[0]"
+    },
+    {
+      "id": "disc-02",
+      "kind": "pass",
+      "text": "Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.",
+      "scorer": "guardrail",
+      "expect": "pass",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::DISCLAIMER_VARIANTS[1]"
+    },
+    {
+      "id": "disc-03",
+      "kind": "pass",
+      "text": "Thuc pham nay khong phai la thuoc va khong co tac dung thay the thuoc chua benh.",
+      "scorer": "guardrail",
+      "expect": "pass",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::DISCLAIMER_VARIANTS[2]"
+    },
+    {
+      "id": "disc-04",
+      "kind": "pass",
+      "text": "Sản phẩm không thay thế thuốc chữa bệnh.",
+      "scorer": "guardrail",
+      "expect": "pass",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::DISCLAIMER_VARIANTS[3]"
+    },
+    {
+      "id": "disc-05",
+      "kind": "pass",
+      "text": "Lưu ý: sản phẩm không phải là thuốc.",
+      "scorer": "guardrail",
+      "expect": "pass",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::DISCLAIMER_VARIANTS[4]"
+    },
+    {
+      "id": "disc-06",
+      "kind": "pass",
+      "text": "Sâm Sâm mang đặc sản núi Ngọc Linh tới mọi nhà. Sapentol hỗ trợ hạ đường huyết. Sản phẩm không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Món quà ý nghĩa cho gia đình dịp Tết.",
+      "scorer": "guardrail",
+      "expect": "pass",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::DISCLAIMER_VARIANTS[5]"
+    },
+    {
+      "id": "disc-07",
+      "kind": "pass",
+      "text": "Không ai muốn mệt mỏi, sản phẩm không phải là thuốc.",
+      "scorer": "guardrail",
+      "expect": "pass",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::DISCLAIMER_VARIANTS[6]"
+    },
+    {
+      "id": "disc-08",
+      "kind": "pass",
+      "text": "Sản phẩm không phải là thuốc và không ai phủ nhận điều đó.",
+      "scorer": "guardrail",
+      "expect": "pass",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::DISCLAIMER_VARIANTS[7]"
+    },
+    {
+      "id": "banned-case-bat-buoc",
+      "kind": "trap_block",
+      "text": "Saphraton chữa khỏi tiểu đường cho người bệnh",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::test_banned_word_case_bat_buoc"
+    },
+    {
+      "id": "banned-khong-dau",
+      "kind": "trap_block",
+      "text": "san pham nay chua khoi benh, dieu tri rat tot",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::test_banned_word_khong_dau"
+    },
+    {
+      "id": "thuoc-claim",
+      "kind": "trap_block",
+      "text": "Sapentol là thuốc đặc trị tiểu đường hiệu quả nhất",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::test_thuoc_claim_van_chan"
+    },
+    {
+      "id": "unverified-claim",
+      "kind": "trap_block",
+      "text": "Savina giúp tăng cường trí nhớ và làm đẹp da.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::test_unverified_claim_flagged"
+    },
+    {
+      "id": "wrong-sku-claim",
+      "kind": "trap_block",
+      "text": "Sapentol giúp giảm acid uric trong máu.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::test_wrong_sku_claim_flagged"
+    },
+    {
+      "id": "compound-escape-1",
+      "kind": "trap_block",
+      "text": "Savina giúp giảm ho và làm đẹp da cho phụ nữ.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::test_compound_clause_escape_1"
+    },
+    {
+      "id": "compound-escape-2",
+      "kind": "trap_block",
+      "text": "Sapentol hỗ trợ hạ đường huyết và giúp tăng cường trí nhớ.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::test_compound_clause_escape_2"
+    },
+    {
+      "id": "approved-claim",
+      "kind": "pass",
+      "text": "Sapentol hỗ trợ hạ đường huyết, giảm mỡ máu cho người lớn.",
+      "scorer": "guardrail",
+      "expect": "pass",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::test_approved_claim_pass_sach"
+    },
+    {
+      "id": "disclaimer-phat-ly",
+      "kind": "pass",
+      "text": "Sapentol hỗ trợ hạ đường huyết. Lưu ý: sản phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.",
+      "scorer": "guardrail",
+      "expect": "pass",
+      "label": "dev_draft",
+      "source": "tests/test_guardrail.py::test_disclaimer_phat_ly_pass"
+    },
+    {
+      "id": "core-chua",
+      "kind": "trap_block",
+      "text": "Sản phẩm này chữa đau lưng.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "dev v3.5 — từ cấm lõi 'chữa' (AGENTS.md)"
+    },
+    {
+      "id": "core-dieu-tri",
+      "kind": "trap_block",
+      "text": "Savigout điều trị gout.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "dev v3.5 — từ cấm lõi 'điều trị' (AGENTS.md)"
+    },
+    {
+      "id": "core-thuoc",
+      "kind": "trap_block",
+      "text": "Saphraton là thuốc quý.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "dev v3.5 — từ cấm lõi 'thuốc' (AGENTS.md)"
+    },
+    {
+      "id": "core-khoi-benh",
+      "kind": "trap_block",
+      "text": "Uống đều đặn là khỏi bệnh.",
+      "scorer": "guardrail",
+      "expect": "block",
+      "label": "dev_draft",
+      "source": "dev v3.5 — từ cấm lõi 'khỏi bệnh' (AGENTS.md)"
+    },
+    {
+      "id": "v41-ruou-01",
+      "text": "Rượu sâm ngâm 5 năm, quà Tết sang trọng.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — từ khóa rượu (chat)",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-ruou-02",
+      "text": "Mua 2 chai ruou sam tang 1.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — rượu không dấu",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-ruou-03",
+      "text": "Rượu sâm bình sứ đỏ – món quà Tết trang nhã",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "ctx": {
+        "channel": "facebook",
+        "content_type": "post_sale"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — A3-2 fanpage post_sale",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-ruou-04",
+      "text": "Bình sứ đỏ 500ml quà Tết. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post",
+        "sku": "ruou-sam-binh-su-do-500ml"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — A3-2 sku meta, text không có từ khóa",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-ruou-05",
+      "text": "Samsam No.5 đậm đà, chốt đơn ngay trong live! #quangcao Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "ctx": {
+        "channel": "tiktok",
+        "content_type": "livestream_script"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — tên SKU rượu cũ, livestream",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-ruou-06",
+      "text": "Sâm ngâm rượu 40% vol, uống ấm bụng.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "ctx": {
+        "channel": "zalo",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — ngâm rượu + % vol, zalo",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-ruou-07",
+      "text": "Rượu sâm chai thủy tinh 500ml giảm giá 30%.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — tên SKU golden alcohol",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-ruou-08",
+      "text": "Chai thủy tinh 500ml sang trọng.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "ctx": {
+        "channel": "web",
+        "content_type": "post",
+        "sku": "ruou-sam-chai-thuy-tinh-500ml",
+        "is_ai": false
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — sku meta rượu, web",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-ruou-09",
+      "text": "Ginseng spirits — premium gift for Tet.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — tiếng Anh",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-ruou-10",
+      "text": "RƯỢU SÂM thượng hạng #quangcao. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "ctx": {
+        "channel": "facebook",
+        "content_type": "ads"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — HOA, ads",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-ruou-11",
+      "text": "Rượu sâm biếu sếp dịp Tết.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — NFD",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-ruou-12",
+      "text": "Đồ uống có cồn từ sâm, link ở bio. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "ctx": {
+        "channel": "web",
+        "content_type": "koc"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — đồ uống có cồn, koc",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-xnqc-01",
+      "text": "Savigout chính hãng, link mua ở bio",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "sku_chua_xnqc",
+      "ctx": {
+        "channel": "tiktok",
+        "content_type": "koc"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — A3-1",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-xnqc-02",
+      "text": "Savina 12 viên giá tốt #quangcao. Nội dung có sử dụng AI. Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "sku_chua_xnqc",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "ads"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — ads không claim, đủ nhãn + khuyến cáo",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-xnqc-03",
+      "text": "Sapentol hỗ trợ hạ đường huyết. Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "sku_chua_xnqc",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — claim đúng công bố nhưng chưa XNQC",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-xnqc-04",
+      "text": "Combo Saphraton 2 hộp quà Tết, Hợp tác quảng cáo. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "sku_chua_xnqc",
+      "ctx": {
+        "channel": "facebook",
+        "content_type": "post_sale"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — post_sale",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-xnqc-05",
+      "text": "Dạ An Sâm 30 viên, bấm giỏ hàng nhé. #quangcao Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "sku_chua_xnqc",
+      "ctx": {
+        "channel": "tiktok",
+        "content_type": "video_cart"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — video_cart",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-xnqc-06",
+      "text": "Hỗ trợ giảm acid uric trong máu. Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "sku_chua_xnqc",
+      "ctx": {
+        "channel": "web",
+        "content_type": "post",
+        "sku": "savigout-30v"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — sku meta + claim đúng",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-xnqc-07",
+      "text": "Saphraton 80 viên giảm mệt mỏi, chốt đơn! #quangcao Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "sku_chua_xnqc",
+      "ctx": {
+        "channel": "zalo",
+        "content_type": "livestream_script"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — livestream claim",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-xnqc-08",
+      "text": "Savina 12 viên — review thật. Được tài trợ. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "sku_chua_xnqc",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post",
+        "is_sponsored": true
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — is_sponsored",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-xnqc-09",
+      "text": "Saphraton hỗ trợ bồi bổ sức khỏe cho người lớn tuổi. Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "sku_chua_xnqc",
+      "ctx": {
+        "channel": "facebook",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — claim facebook",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-xnqc-10",
+      "text": "Mình dùng hộp này mỗi sáng, link ở bio #quangcao Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "sku_chua_xnqc",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "koc",
+        "sku": "sapentol-30v"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — koc sku meta",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-kc-01",
+      "text": "Savina hỗ trợ giảm ho. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "thieu_khuyen_cao",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — claim không có câu khuyến cáo",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-kc-02",
+      "text": "Savina 12 viên, tuýp tiện mang theo. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "thieu_khuyen_cao",
+      "ctx": {
+        "channel": "web",
+        "content_type": "post",
+        "sku": "savina-12v"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — TPBVSK không claim vẫn cần",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-kc-03",
+      "text": "Sapentol hỗ trợ hạ đường huyết. Sản phẩm không phải là thuốc. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "thieu_khuyen_cao",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — chỉ có biến thể ngắn",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-kc-04",
+      "text": "Saphraton 20 viên. Ai bảo thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "thieu_khuyen_cao",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — câu chuẩn bị đảo nghĩa",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-kc-05",
+      "text": "Dạ An Sâm 30 viên. Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh? Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "thieu_khuyen_cao",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — câu chuẩn dạng câu hỏi",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-kc-06",
+      "text": "Savigout 30 viên. Thuc pham nay khong phai la thuoc va khong co tac dung thay the thuoc chua benh. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "thieu_khuyen_cao",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — câu chuẩn không dấu không tính đạt",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-kc-07",
+      "text": "Sản phẩm giúp giảm mệt mỏi. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "thieu_khuyen_cao",
+      "ctx": {
+        "channel": "facebook",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — claim không rõ SKU",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-kc-08",
+      "text": "Sapentol 30 viên — Thực phẩm này không phải là thuốc. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "thieu_khuyen_cao",
+      "ctx": {
+        "channel": "web",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — câu cụt nửa sau",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-kc-09",
+      "text": "Hộp 80 viên tiết kiệm. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "thieu_khuyen_cao",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post",
+        "sku": "saphraton-80v"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — sku meta TPBVSK",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-kc-10",
+      "text": "Mật ong sâm hỗ trợ bồi bổ sức khỏe. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "thieu_khuyen_cao",
+      "ctx": {
+        "channel": "zalo",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — food có claim",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-tc-01",
+      "text": "Sâm chữa mất ngủ.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "tu_cam",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — NFD",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-tc-02",
+      "text": "SAPENTOL ĐIỀU TRỊ TIỂU ĐƯỜNG",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "tu_cam",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — HOA",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-tc-03",
+      "text": "Saphraton là th.uốc bổ",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "tu_cam",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — chèn dấu chấm",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-tc-04",
+      "text": "Savigout c-h-ữ-a gout",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "tu_cam",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — chèn gạch",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-tc-05",
+      "text": "Dạ An Sâm đi​ều trị mất ngủ",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "tu_cam",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — zero-width space",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-tc-06",
+      "text": "san pham dac tri dau da day",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "tu_cam",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — không dấu",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-tc-07",
+      "text": "Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Nhưng Savina chữa ho dứt điểm. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "tu_cam",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — từ cấm NGOÀI span câu khuyến cáo",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-tc-08",
+      "text": "Thần dược cho người già",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "tu_cam",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — thần dược",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-tc-09",
+      "text": "Sâm giúp khỏi bệnh nhanh",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "tu_cam",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — khỏi bệnh",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-tc-10",
+      "text": "Thu­ốc bổ từ sâm",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "tu_cam",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — soft hyphen",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-tc-11",
+      "text": "Chống ung thư hiệu quả #quangcao Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "tu_cam",
+      "ctx": {
+        "channel": "facebook",
+        "content_type": "ads"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — ads",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-tc-12",
+      "text": "ThUốC quý từ núi rừng",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "tu_cam",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — hoa thường trộn",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-disc-01",
+      "text": "Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.",
+      "expect": "pass",
+      "kind": "trap_disclaimer",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — đứng riêng (check)",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-disc-02",
+      "text": "Quà biếu gia đình. Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Liên hệ shop.",
+      "expect": "pass",
+      "kind": "trap_disclaimer",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — giữa đoạn (check)",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-disc-03",
+      "text": "Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.",
+      "expect": "pass",
+      "kind": "trap_disclaimer",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — NFD (check)",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-disc-04",
+      "text": "THỰC PHẨM NÀY KHÔNG PHẢI LÀ THUỐC VÀ KHÔNG CÓ TÁC DỤNG THAY THẾ THUỐC CHỮA BỆNH.",
+      "expect": "pass",
+      "kind": "trap_disclaimer",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — HOA (check)",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-disc-05",
+      "text": "Thực phẩm này không phải là thuốc và\nkhông có tác dụng thay thế thuốc chữa bệnh.",
+      "expect": "pass",
+      "kind": "trap_disclaimer",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — xuống dòng giữa câu (check)",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-disc-06",
+      "text": "Quà biếu gia đình. Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Nội dung có sử dụng AI.",
+      "expect": "pass",
+      "kind": "trap_disclaimer",
+      "ctx": {
+        "channel": "web",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — post đủ nhãn",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-disc-07",
+      "text": "Nhắc team: Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.",
+      "expect": "pass",
+      "kind": "trap_disclaimer",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "internal_note",
+        "sku": "savina-12v"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — ghi chú nội bộ",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-disc-08",
+      "text": "THỰC PHẨM NÀY KHÔNG PHẢI LÀ THUỐC VÀ KHÔNG CÓ TÁC DỤNG THAY THẾ THUỐC CHỮA BỆNH. Nội dung có sử dụng AI.",
+      "expect": "pass",
+      "kind": "trap_disclaimer",
+      "ctx": {
+        "channel": "facebook",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — HOA, post",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-disc-09",
+      "text": "Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Nội dung có sử dụng AI.",
+      "expect": "pass",
+      "kind": "trap_disclaimer",
+      "ctx": {
+        "channel": "zalo",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — NFD, post",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-disc-10",
+      "text": "Lưu ý:\nThực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Nội dung có sử dụng AI.",
+      "expect": "pass",
+      "kind": "trap_disclaimer",
+      "ctx": {
+        "channel": "web",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — sau 'Lưu ý:' xuống dòng",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-disc-11",
+      "text": "Ưu đãi cuối tuần #quangcao. Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Nội dung có sử dụng AI.",
+      "expect": "pass",
+      "kind": "trap_disclaimer",
+      "ctx": {
+        "channel": "facebook",
+        "content_type": "ads"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — ads không SKU/claim",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-01",
+      "text": "Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe.",
+      "expect": "pass",
+      "kind": "edge",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — phủ định 'không chữa' — ý định pass; guardrail chặn bảo thủ (cho phép fail)",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-02",
+      "text": "Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm.",
+      "expect": "pass",
+      "kind": "edge",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — tên nhóm TPBVSK + 'thuộc' — ý định pass",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-03",
+      "text": "Sâm Sâm mang sâm Ngọc Linh tới mọi nhà.",
+      "expect": "pass",
+      "kind": "edge",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — 'Ngọc Linh' trong chat (check) không áp luật chỉ dẫn",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-04",
+      "text": "Xem thêm tại samsamngoclinh.com. Nội dung có sử dụng AI.",
+      "expect": "pass",
+      "kind": "edge",
+      "ctx": {
+        "channel": "web",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — domain chứa ngoclinh",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-05",
+      "text": "Ghi chú kho: rượu sâm bình sứ đỏ còn 12 bình.",
+      "expect": "pass",
+      "kind": "edge",
+      "ctx": {
+        "channel": "facebook",
+        "content_type": "internal_note"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — internal_note nhắc rượu (A3-2)",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-06",
+      "text": "Mật ong sâm 120ml, hũ thủy tinh xinh xắn. Nội dung có sử dụng AI.",
+      "expect": "pass",
+      "kind": "edge",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — mật ong không claim",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-07",
+      "text": "Giá Saphraton 80 viên: liên hệ shop để được báo giá.",
+      "expect": "pass",
+      "kind": "pass",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — 'Liên hệ' giá",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-08",
+      "text": "Tp.HCM giao hàng trong ngày.",
+      "expect": "pass",
+      "kind": "edge",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — dấu chấm giữa chữ không tạo từ cấm",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-09",
+      "text": "Website: samsam.net.vn",
+      "expect": "pass",
+      "kind": "pass",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — domain",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-10",
+      "text": "Thuộc tính sản phẩm: hộp 30 viên.",
+      "expect": "pass",
+      "kind": "edge",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — 'thuộc' khác 'thuốc'",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-11",
+      "text": "Sapentol hỗ trợ hạ đường huyết, giảm mỡ máu.",
+      "expect": "pass",
+      "kind": "pass",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — claim đúng công bố (check)",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-12",
+      "text": "Savina hỗ trợ giảm ho, giảm đờm.",
+      "expect": "pass",
+      "kind": "pass",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — claim đúng công bố (check)",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-13",
+      "text": "Savigout hỗ trợ giảm acid uric trong máu.",
+      "expect": "pass",
+      "kind": "pass",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — claim đúng công bố (check)",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-14",
+      "text": "Thư cảm ơn khách hàng thân thiết.",
+      "expect": "pass",
+      "kind": "pass",
+      "ctx": {
+        "channel": "web",
+        "content_type": "post",
+        "is_ai": false
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — không AI không cần nhãn",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-15",
+      "text": "Đơn hàng số No.5 đã giao.",
+      "expect": "pass",
+      "kind": "edge",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — 'No.5' không có 'samsam'",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-16",
+      "text": "Shop mở cửa 8h-17h mỗi ngày.",
+      "expect": "pass",
+      "kind": "pass",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — gạch giữa chữ-số",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-17",
+      "text": "Cảm ơn quý khách đã tin dùng Sâm Sâm!",
+      "expect": "pass",
+      "kind": "pass",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — câu thường",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-18",
+      "text": "Savina 12 viên. Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Nội dung có sử dụng AI.",
+      "expect": "pass",
+      "kind": "edge",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — mô tả TPBVSK MO_TA không claim, không quảng cáo",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-19",
+      "text": "Sâm vùng Ngọc Linh chính gốc. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "edge",
+      "code": "ngoc_linh_chua_xac_nhan",
+      "ctx": {
+        "channel": "web",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — 'Ngọc Linh' khi chưa SKU nào được xác nhận",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-20",
+      "text": "Mật ong sâm 300ml. Nội dung có sử dụng AI.",
+      "expect": "pass",
+      "kind": "edge",
+      "ctx": {
+        "channel": "tiktok",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — kênh chưa mở chỉ cảnh báo",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-21",
+      "text": "Ưu đãi tháng 10 cho khách quen. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "edge",
+      "code": "thieu_nhan_quang_cao",
+      "ctx": {
+        "channel": "facebook",
+        "content_type": "ads"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — ads thiếu nhãn quảng cáo",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-22",
+      "text": "Ưu đãi tháng 10.",
+      "expect": "block",
+      "kind": "edge",
+      "code": "thieu_nhan_ai",
+      "ctx": {
+        "channel": "web",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — thiếu nhãn AI",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-23",
+      "text": "Ưu đãi tháng 10.",
+      "expect": "pass",
+      "kind": "edge",
+      "ctx": {
+        "channel": "web",
+        "content_type": "post",
+        "is_ai": false
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — người viết, không cần nhãn AI",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-24",
+      "text": "Mật ong sâm hỗ trợ bồi bổ sức khỏe. Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "edge",
+      "code": "claim_suc_khoe_tp_thuong",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — food nêu công dụng",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-25",
+      "text": "Sapentol giúp giảm acid uric. Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "edge",
+      "code": "claim_ngoai_cong_bo",
+      "ctx": {
+        "channel": "web",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — claim của SKU khác",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-26",
+      "text": "Hãy hỏi ý kiến chuyên gia dinh dưỡng trước khi dùng.",
+      "expect": "pass",
+      "kind": "pass",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — khuyên hỏi chuyên gia",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-27",
+      "text": "Ngâm chân nước ấm trước khi ngủ.",
+      "expect": "pass",
+      "kind": "edge",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — 'ngâm' không phải 'ngâm rượu'",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-28",
+      "text": "Hộp quà Tết gồm mật ong sâm và trà.",
+      "expect": "pass",
+      "kind": "pass",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — quà Tết không rượu",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-29",
+      "text": "Kiểm kho chai 500ml.",
+      "expect": "pass",
+      "kind": "edge",
+      "ctx": {
+        "channel": "facebook",
+        "content_type": "internal_note",
+        "sku": "ruou-sam-chai-thuy-tinh-500ml"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — internal_note sku rượu",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-30",
+      "text": "Sản phẩm có nguồn gốc rõ ràng, tem truy xuất QR.",
+      "expect": "pass",
+      "kind": "pass",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — truy xuất",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-31",
+      "text": "Hướng dẫn bảo quản: nơi khô ráo, tránh ánh nắng.",
+      "expect": "pass",
+      "kind": "pass",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — 'bảo quản' khác 'bảo vệ'",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-32",
+      "text": "Hũ 300ml. Nội dung có sử dụng AI.",
+      "expect": "pass",
+      "kind": "edge",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post",
+        "sku": "mat-ong-sam-300ml"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — sku meta food không claim",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-33",
+      "text": "Sản phẩm giúp giảm mệt mỏi. Nội dung có sử dụng AI. Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.",
+      "expect": "block",
+      "kind": "edge",
+      "code": "claim_khong_ro_sku",
+      "ctx": {
+        "channel": "web",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 — claim không rõ SKU",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-ruou-13",
+      "text": "Quà Tết: r​ượu sâm thượng hạng.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 fix — rượu chèn zero-width",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-ruou-14",
+      "text": "Quà Tết: r.ượu sâm thượng hạng.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 fix — rượu chèn dấu chấm",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-ruou-15",
+      "text": "Combo rư-ợu sâm biếu Tết. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "trap_critical",
+      "code": "ruou_cam_quang_cao",
+      "ctx": {
+        "channel": "facebook",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 fix — rượu chèn gạch nối, đăng bài",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-34",
+      "text": "Sapentol hỗ trợ giảm acid uric trong máu. Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "edge",
+      "code": "claim_ngoai_cong_bo",
+      "ctx": {
+        "channel": "shopee",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 fix — nguyên văn claim Savigout gắn Sapentol (pool đúng SKU)",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    },
+    {
+      "id": "v41-edge-35",
+      "text": "Bài viết: hỗ trợ giảm ho. Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Nội dung có sử dụng AI.",
+      "expect": "block",
+      "kind": "edge",
+      "code": "claim_ngoai_cong_bo",
+      "ctx": {
+        "channel": "web",
+        "content_type": "post"
+      },
+      "label_status": "chờ Pháp chế duyệt nhãn",
+      "source": "dev v4.1 fix — claim Savina khi không có SKU (pool rỗng)",
+      "scorer": "guardrail",
+      "label": "dev_draft"
+    }
+  ]
+}

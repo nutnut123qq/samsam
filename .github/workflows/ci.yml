@@ -1,7 +1,10 @@
 # v3.5 (WP06, F17.1) — CI nghiệm thu. Job test KHÔNG dùng secret (test
-# không gọi LLM thật); eval guardrail tất định ghi eval_runs vào DB service
-# (chỉ là tín hiệu CI — bản thật n8n ghi qua webhook HMAC, external-dep).
-# Job eval (chatbot, gọi LLM thật) chỉ chạy khi bấm tay + có secret.
+# không gọi LLM thật); v4.5: `agent_eval.py --deterministic` validate MỌI
+# suite data/eval/suites/ + chạy suite active tất định (guardrail + co_khi
+# — v4.5i, DETERMINISTIC_RUNNERS) và ghi
+# eval_runs vào DB service (chỉ là tín hiệu CI — bản thật n8n ghi qua
+# webhook HMAC, external-dep). Job eval (chatbot + suite có judge LLM, tốn
+# phí) chỉ chạy khi bấm tay hoặc nightly 02:00 VN + có secret.
 name: ci
 
 on:
@@ -9,6 +12,8 @@ on:
     branches: [main, ai-infra]
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: "0 19 * * *"   # 02:00 giờ VN — eval LLM nightly
 
 permissions:
   contents: read
@@ -44,7 +49,7 @@ jobs:
       - run: python scripts/apply_schema.py
       - run: python -m ingest.core_store
       - run: python -m pytest -q
-      - run: python scripts/agent_eval.py --agent guardrail
+      - run: python scripts/agent_eval.py --deterministic
       # v4.2 PC-A9: bộ red-team cố định (luật thuần, không LLM/secret)
       - run: python scripts/redteam.py
 
@@ -52,7 +57,7 @@ jobs:
     needs: test
     # context `secrets` không dùng được trong if job-level -> map secret vào
     # env rồi kiểm ở từng bước.
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     services:

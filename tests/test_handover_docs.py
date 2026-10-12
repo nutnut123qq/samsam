@@ -193,7 +193,8 @@ def test_guardrail_case_counts_in_phu_luc_d():
 def test_guardrail_v2_tests_and_case_counts_in_phu_luc_d():
     """v4.1: mục Guardrail v2 liệt kê đủ tên test của
     tests/test_guardrail_v2.py + số ca theo kind của
-    data/eval/guardrail.jsonl (word-boundary — gotcha v2.3)."""
+    suite data/eval/suites/guardrail.json (v4.5i — thay jsonl v4.1;
+    word-boundary — gotcha v2.3)."""
     import json
     from collections import Counter
 
@@ -206,10 +207,11 @@ def test_guardrail_v2_tests_and_case_counts_in_phu_luc_d():
     for n in names:
         assert re.search(rf"(?<!\w){n}(?!\w)", body), \
             f"phu-luc-d.md thiếu test v2 '{n}'"
-    rows = [json.loads(line) for line in (ROOT / "data" / "eval"
-            / "guardrail.jsonl").read_text(encoding="utf-8").split("\n")
-            if line.strip()]
-    kinds = Counter(r["kind"] for r in rows if "_doc" not in r)
+    rows = json.loads((ROOT / "data" / "eval" / "suites"
+                       / "guardrail.json").read_text(encoding="utf-8")
+                      )["cases"]
+    kinds = Counter(r["kind"] for r in rows)
+    assert "data/eval/suites/guardrail.json" in body
     for kind, n in kinds.items():
         assert re.search(rf"\|\s*`{kind}`\s*\|\s*{n}\s*\|", body), \
             f"phu-luc-d.md phải ghi '| `{kind}` | {n} |'"

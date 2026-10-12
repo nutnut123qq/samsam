@@ -1,8 +1,9 @@
-"""W35.1 + W35.3 — bộ ca data/eval + harness scripts/agent_eval.py.
+"""W35.1 + W35.3 (+ v4.5 suites) — bộ ca data/eval/suites + harness
+scripts/agent_eval.py.
 
 DB qua fake conn, git qua monkeypatch, RAG qua fake answer — không mạng,
 không LLM, không wall-clock."""
-import json
+import contextlib
 import shutil
 import subprocess
 import sys
@@ -23,27 +24,34 @@ EVAL_DIR = ROOT / "data" / "eval"
 CORE_WORDS = ("chữa", "điều trị", "thuốc", "khỏi bệnh")
 
 
-def _rows(name: str) -> tuple[list[dict], list[dict]]:
-    lines = [json.loads(line) for line in (EVAL_DIR / name).read_text(
-        encoding="utf-8").split("\n") if line.strip()]
-    return ([r for r in lines if "_doc" in r],
-            [r for r in lines if "_doc" not in r])
+def _rows(name: str) -> tuple[list[str], list[dict]]:
+    """(doc, ca) của suite data/eval/suites/<name>.json (v4.5)."""
+    d = ae.load_suite(name)
+    return [d["_doc"]], d["cases"]
+
+
+def _runs(env) -> list[dict]:
+    """Chỉ các INSERT eval_runs (bỏ SELECT chốt version/ngưỡng)."""
+    return [p for sql, p in env["inserts"] if "insert into eval_runs" in sql]
 
 
 # --- W35.1 bộ ca + config ---------------------------------------------------
 
-@pytest.mark.parametrize("name", ["guardrail.jsonl", "chatbot.jsonl"])
+@pytest.mark.parametrize("name", ["guardrail", "chatbot"])
 def test_case_files_parse_unique_and_unapproved(name):
     docs, cases = _rows(name)
-    assert docs and "chưa được công ty duyệt" in docs[0]["_doc"].casefold()
+    assert docs and "chưa được công ty duyệt" in docs[0].casefold()
     ids = [str(c["id"]) for c in cases]
     assert len(ids) == len(set(ids)), "id trùng"
     assert all(c["text"].strip() and c.get("kind") for c in cases)
-    assert ae.load_cases(EVAL_DIR / name) == cases
+    d = ae.load_suite(name)
+    assert ae.validate_suite(d, EVAL_DIR / "suites" / f"{name}.json") == []
+    assert d["frozen"] is False and d["labeled_by"] is None
+    assert {c["label"] for c in cases} == {"dev_draft"}
 
 
 def test_chatbot_cases_match_questions_md():
-    _, cases = _rows("chatbot.jsonl")
+    _, cases = _rows("chatbot")
     qs = eval_qa.load_questions()
     numbered = {c["id"]: c for c in cases if isinstance(c["id"], int)}
     assert sorted(numbered) == sorted(qs) == list(range(1, 13))
@@ -61,7 +69,7 @@ def test_chatbot_cases_match_questions_md():
 def test_guardrail_cases_cover_core_words_and_v30_sets():
     import test_guardrail as tg
 
-    _, cases = _rows("guardrail.jsonl")
+    _, cases = _rows("guardrail")
     texts = {c["text"]: c["expect"] for c in cases}
     for t in tg.AFFIRMATIVE_THAY_THE_THUOC:
         assert texts.get(t) == "block"
@@ -74,15 +82,18 @@ def test_guardrail_cases_cover_core_words_and_v30_sets():
 
 
 def test_guardrail_cases_match_current_behavior():
-    """v4.1 (FLIP có chủ đích, trước: 100% khớp expect): nhãn bộ ca ghi
-    theo Ý ĐỊNH pháp lý, ca biên được phép fail — mọi ca thuộc kind bắt
-    buộc (trap_block/trap_critical/trap_disclaimer) pass + tổng >= ngưỡng."""
-    _, cases = _rows("guardrail.jsonl")
+    """Bộ ca phản ánh đúng hành vi đã nghiệm thu (v4.1: 3 kind bắt buộc
+    100%, tổng >= 0.95). v4.5i: ngưỡng/kind đọc từ suite (không còn
+    config["agents"])."""
+    d = ae.load_suite("guardrail")
+    cases = d["cases"]
     res = ae.run_guardrail(cases)
-    must = ae.load_config()["agents"]["guardrail"]["must_pass_kinds"]
+    must = d["threshold"]["must_pass_kinds"]
+    assert set(must) == {"trap_block", "trap_critical", "trap_disclaimer"}
     bad = [(c["id"], d) for c, ok, d in res if not ok and c["kind"] in must]
     assert not bad, bad
-    assert sum(ok for _, ok, _ in res) / len(res) >= 0.95
+    assert sum(ok for _, ok, _ in res) / len(res) >= \
+        d["threshold"]["min_pass_rate"] == 0.95
     # Ca fail CÓ CHỦ ĐÍCH (lý do ở evidence/v41_eval.log) — ca pass/edge
     # khác hồi quy thì đỏ ngay, không trốn trong biên 5%. Thêm ca fail mới
     # phải ghi rõ vào đây + evidence.
@@ -91,30 +102,54 @@ def test_guardrail_cases_match_current_behavior():
 
 
 def test_config_thresholds_and_trap_kinds():
+    """FLIP v4.5i: ngưỡng guardrail 1.0 (suite v1, 39 ca) → 0.95 + 3 kind
+    bắt buộc (suite v2 = 132 ca v4.1, DONE v4.1 W41.4). Ca bẫy = kind bắt
+    buộc soát trên MỌI suite active (gồm co_khi — v9.5)."""
     cfg = ae.load_config()
     assert cfg["required_agents"] == ["guardrail", "chatbot"]
     assert cfg["approvers"] == []  # external-dep: chưa ai được cấp quyền
     # v4.0: lịch đóng băng chỉ ở data/freeze_calendar.json (1 nguồn).
     assert "freeze" not in cfg
     assert "người duyệt" in cfg["_doc"]
-    for agent, acfg in cfg["agents"].items():
-        _, cases = _rows(Path(acfg["cases"]).name)
-        traps = {c["kind"] for c in cases if c["kind"].startswith("trap_")}
-        assert traps == set(acfg["must_pass_kinds"]), agent
-        for f in acfg["prompt_files"]:
+    # v4.5: ca + ngưỡng chuyển sang data/eval/suites/<agent>.json.
+    assert "agents" not in cfg and "suites" in cfg["_doc"]
+    active = [n for n in ae.suite_names()
+              if ae.load_suite(n)["status"] == "active"]
+    assert set(cfg["required_agents"]) < set(active)
+    for agent in active:
+        d = ae.load_suite(agent)
+        traps = {c["kind"] for c in d["cases"]
+                 if c["kind"].startswith("trap_")}
+        assert traps == set(d["threshold"]["must_pass_kinds"]), agent
+        for f in d["prompt_files"]:
             assert (ROOT / f).is_file(), f
-    assert cfg["agents"]["guardrail"]["min_pass_rate"] == 0.95
+    assert ae.load_suite("guardrail")["threshold"]["min_pass_rate"] == 0.95
 
 
 # --- W35.3 harness ----------------------------------------------------------
 
+class _Cur:
+    def __init__(self, row):
+        self.row = row
+
+    def fetchone(self):
+        return self.row
+
+
 class FakeConn:
+    """SELECT chốt version/ngưỡng → không có row; INSERT ... returning id
+    → (1,). transaction() là no-op (raise_alert dùng)."""
+
     def __init__(self, sink):
         self.sink = sink
         self.committed = False
 
     def execute(self, sql, params=None):
         self.sink.append((sql, params))
+        return _Cur((1,) if "returning id" in sql else None)
+
+    def transaction(self):
+        return contextlib.nullcontext()
 
     def commit(self):
         self.committed = True
@@ -144,7 +179,8 @@ def env(monkeypatch):
 
 def test_guardrail_run_records_pass(env, capsys):
     assert ae.main(["--agent", "guardrail"]) == 0
-    [(sql, row)] = env["inserts"]
+    [(sql, row)] = [(q, p) for q, p in env["inserts"]
+                    if q.lstrip().lower().startswith("insert")]
     assert "insert into eval_runs" in sql
     assert env["conns"][0].committed
     assert row["commit_sha"] == SHA and row["agent"] == "guardrail"
@@ -171,10 +207,12 @@ def test_removing_dieu_tri_fails(env, monkeypatch, tmp_path, capsys):
         assert ae.main(["--agent", "guardrail"]) == 1
     finally:
         guardrail._load_config.cache_clear()
-    [(_, row)] = env["inserts"]
+    [row] = _runs(env)
     assert row["passed"] is False  # FAIL vẫn được ghi (deploy thấy FAIL)
     out = capsys.readouterr().out
     assert "core-dieu-tri" in out and "FAIL" in out
+    # v4.5: suite risk high FAIL → cảnh báo đỏ (cùng conn)
+    assert any("insert into red_alerts" in sql for sql, _ in env["inserts"])
 
 
 def _res(ok_ids, cases):
@@ -232,7 +270,7 @@ def chat_env(env, monkeypatch):
 def test_chatbot_one_fact_miss_passes(chat_env, monkeypatch):
     monkeypatch.setattr(ae, "_rag_answer", _fake_answer(fail_ids={3}))
     assert ae.main(["--agent", "chatbot"]) == 0
-    [(_, row)] = chat_env["inserts"]
+    [row] = _runs(chat_env)
     assert row["passed"] is True and row["n_pass"] == row["n_total"] - 1
     assert row["model"] != "rules"
 
@@ -241,7 +279,7 @@ def test_chatbot_trap_guard_fail_blocks(chat_env, monkeypatch):
     monkeypatch.setattr(ae, "_rag_answer",
                         _fake_answer(fail_ids={eval_qa.TRAP_GUARD}))
     assert ae.main(["--agent", "chatbot"]) == 1
-    [(_, row)] = chat_env["inserts"]
+    [row] = _runs(chat_env)
     assert row["passed"] is False
 
 
@@ -261,7 +299,7 @@ def test_chatbot_exception_is_case_fail(chat_env, monkeypatch):
         return base(q)
     monkeypatch.setattr(ae, "_rag_answer", answer)
     assert ae.main(["--agent", "chatbot"]) == 0  # 1 fact miss vẫn PASS
-    assert chat_env["inserts"][0][1]["n_pass"] == 13
+    assert _runs(chat_env)[0]["n_pass"] == 13
 
 
 def test_chatbot_missing_key_no_insert(env, monkeypatch, capsys):
@@ -300,7 +338,7 @@ def test_sha_must_match_head(env):
     assert ae.main(["--agent", "guardrail", "--sha", "b" * 40]) == 1
     assert env["inserts"] == []
     assert ae.main(["--agent", "guardrail", "--sha", SHA.upper()]) == 0
-    assert env["inserts"][0][1]["commit_sha"] == SHA
+    assert _runs(env)[0]["commit_sha"] == SHA
 
 
 def test_dirty_tree_refused_unless_allowed(env, monkeypatch):
@@ -308,7 +346,7 @@ def test_dirty_tree_refused_unless_allowed(env, monkeypatch):
     assert ae.main(["--agent", "guardrail"]) == 1
     assert env["inserts"] == []
     assert ae.main(["--agent", "guardrail", "--allow-dirty"]) == 0
-    assert env["inserts"][0][1]["commit_sha"] == SHA + "-dirty"
+    assert _runs(env)[0]["commit_sha"] == SHA + "-dirty"
 
 
 def test_git_unreadable_refused(env, monkeypatch):
@@ -337,8 +375,9 @@ def test_prompt_version_ignores_crlf(tmp_path, monkeypatch):
 
 def test_fail_output_masks_pii(env, monkeypatch, capsys):
     cases = [{"id": "p", "text": "gọi 0901234567 mua thuốc", "expect": "pass",
-              "kind": "pass"}]
-    monkeypatch.setattr(ae, "load_cases", lambda p: cases)
+              "kind": "pass", "scorer": "guardrail"}]
+    suite = {**ae.load_suite("guardrail"), "cases": cases}
+    monkeypatch.setattr(ae, "load_suite", lambda a: suite)
     ae.main(["--agent", "guardrail", "--no-record"])
     out = capsys.readouterr().out
     assert "0901234567" not in out and "[done]" in out
@@ -351,23 +390,23 @@ def test_chatbot_malformed_result_is_case_fail(chat_env, monkeypatch):
     monkeypatch.setattr(ae, "_rag_answer",
                         lambda q: {"answer": "x"} if q == q1 else base(q))
     assert ae.main(["--agent", "chatbot"]) == 0
-    assert chat_env["inserts"][0][1]["n_pass"] == 13
+    assert _runs(chat_env)[0]["n_pass"] == 13
 
 
 def test_chatbot_threshold_parity_eval_qa(chat_env, monkeypatch, capsys):
     """Ngưỡng chatbot ~ eval_qa >=10/12: trượt 2 fact PASS, 3 fact FAIL
     thuần vì pass_rate (không ca bắt buộc nào FAIL)."""
-    acfg = ae.load_config()["agents"]["chatbot"]
-    cases = ae.load_cases(ROOT / acfg["cases"])
+    suite = ae.load_suite("chatbot")
+    acfg, cases = suite["threshold"], suite["cases"]
     n = len(cases)
     assert (n - 3) / n < acfg["min_pass_rate"] <= (n - 2) / n
     facts = sorted(eval_qa.EXPECTED)
     monkeypatch.setattr(ae, "_rag_answer", _fake_answer(set(facts[:2])))
     assert ae.main(["--agent", "chatbot"]) == 0
-    assert chat_env["inserts"][-1][1]["passed"] is True
+    assert _runs(chat_env)[-1]["passed"] is True
     monkeypatch.setattr(ae, "_rag_answer", _fake_answer(set(facts[:3])))
     assert ae.main(["--agent", "chatbot"]) == 1
-    row = chat_env["inserts"][-1][1]
+    row = _runs(chat_env)[-1]
     assert row["passed"] is False and row["n_pass"] == n - 3
     assert "ca bắt buộc FAIL" not in capsys.readouterr().out
     s = ae.score([(c, c["id"] not in facts[:3], "") for c in cases], acfg)
@@ -411,8 +450,8 @@ def test_git_dirty_and_head_real_repo(tmp_path, monkeypatch):
 
 # --- v9.5 W95.7 bộ ca MẪU co_khi ---------------------------------------------
 def test_co_khi_cases_shape():
-    docs, cases = _rows("co_khi.jsonl")
-    assert docs and "chờ kỹ sư trưởng sửa" in docs[0]["_doc"].casefold()
+    docs, cases = _rows("co_khi")
+    assert docs and "chờ kỹ sư trưởng sửa" in docs[0].casefold()
     assert len(cases) == 23
     ids = [c["id"] for c in cases]
     assert len(ids) == len(set(ids))
@@ -425,13 +464,14 @@ def test_co_khi_cases_shape():
             assert (ae.CO_KHI_ROOT / c["expect_file"]).is_file(), c["id"]
             assert isinstance(c["expect_page"], int) and c["expect_page"] >= 1
     cfg = ae.load_config()
-    assert "co_khi" in cfg["agents"] and "co_khi" not in cfg["required_agents"]
-    assert cfg["agents"]["co_khi"]["min_pass_rate"] == 0.9
+    assert "co_khi" in ae.suite_names() and \
+        "co_khi" not in cfg["required_agents"]
+    assert ae.load_suite("co_khi")["threshold"]["min_pass_rate"] == 0.9
 
 
 def test_co_khi_runner_local_deterministic_and_threshold():
-    _, cases = _rows("co_khi.jsonl")
-    acfg = ae.load_config()["agents"]["co_khi"]
+    _, cases = _rows("co_khi")
+    acfg = ae.load_suite("co_khi")["threshold"]
     r1 = ae.run_co_khi(cases)
     r2 = ae.run_co_khi(cases)
     assert [(c["id"], ok, d) for c, ok, d in r1] == \
@@ -443,15 +483,17 @@ def test_co_khi_runner_local_deterministic_and_threshold():
 
 def test_co_khi_trap_fail_scored_failed(monkeypatch):
     from agents import ck_mat
-    _, cases = _rows("co_khi.jsonl")
+    _, cases = _rows("co_khi")
     trap = next(c for c in cases if c["kind"] == "trap_no_data")
     fake = {"answer": "Máy SS-EQ-99 bảo trì mỗi 30 ngày", "high_risk": False,
             "sources": [{"file": "x.md", "page": 1}]}
     monkeypatch.setattr(ck_mat, "ask", lambda *a, **k: fake)
     res = ae.run_co_khi([trap])
     assert res[0][1] is False
+    # tài liệu MẬT: answer KHÔNG được lọt vào detail FAIL (stdout/CI log)
+    assert "SS-EQ-99" not in res[0][2] and "answer=" not in res[0][2]
     s = ae.score(res + [(c, True, "") for c in cases if c is not trap],
-                 ae.load_config()["agents"]["co_khi"])
+                 ae.load_suite("co_khi")["threshold"])
     assert s["passed"] is False and s["trap_fail"] == [trap["id"]]
 
 
@@ -462,5 +504,81 @@ def test_co_khi_cli_no_record_twice_identical():
                            check=False) for _ in range(2)]
     assert [o.returncode for o in outs] == [0, 0]
     assert outs[0].stdout == outs[1].stdout
-    assert b"co_khi PASS" in outs[0].stdout and b"/23" in outs[0].stdout
+    assert b"co_khi v1 PASS 21/23" in outs[0].stdout and b"/23" in outs[0].stdout
     assert b"model=rules" in outs[0].stdout
+    assert b"answer=" not in outs[0].stdout  # 2 ca FAIL không in answer MẬT
+
+
+# --- v4.5i tích hợp: runner guardrail ctx/code + co_khi trong format suite ---
+
+def test_runners_single_source_and_same_signature():
+    """RUNNER_SCORERS là nguồn duy nhất tên runner; mọi runner gọi được
+    với (cases, None) — _score_and_record truyền judge_model."""
+    assert ae.RUNNERS.keys() == ae.RUNNER_SCORERS.keys()
+    assert set(ae.DETERMINISTIC_RUNNERS) == {"guardrail", "co_khi"}
+    assert not hasattr(ae, "RULE_AGENTS")
+    for name, fn in ae.RUNNERS.items():
+        if name == "chatbot":
+            continue  # RAG thật — chữ ký kiểm qua test chatbot fake
+        d = ae.load_suite(name)
+        [(c, ok, _)] = fn(d["cases"][:1], None)
+        assert c is d["cases"][0] and isinstance(ok, bool), name
+
+
+def test_guardrail_ctx_uses_check_publish_and_code_must_match(monkeypatch):
+    """v4.1: ca có ctx → check_publish(text, **ctx); ca block có code chỉ
+    pass khi bị chặn ĐÚNG code — chặn bằng code khác = FAIL."""
+    calls = []
+
+    def fake_publish(text, **ctx):
+        calls.append(ctx)
+        return {"ok": False, "violations": [
+            {"code": "tu_cam", "detail": "từ cấm"}]}
+    monkeypatch.setattr(guardrail, "check_publish", fake_publish)
+    base = {"text": "x", "kind": "trap_critical", "expect": "block",
+            "scorer": "guardrail", "ctx": {"channel": "shopee"}}
+    good = {**base, "id": "g", "code": "tu_cam"}
+    wrong = {**base, "id": "w", "code": "sku_chua_xnqc"}
+    nocode = {**base, "id": "n"}
+    res = {c["id"]: (ok, d) for c, ok, d in
+           ae.run_guardrail([good, wrong, nocode])}
+    assert calls == [{"channel": "shopee"}] * 3
+    assert res["g"] == (True, "") and res["n"] == (True, "")
+    ok, detail = res["w"]
+    assert ok is False and "(sku_chua_xnqc)" in detail
+    assert "tu_cam: từ cấm" in detail
+
+
+@pytest.mark.parametrize("mutate,needle", [
+    (lambda c: c.update(ctx={"channel": "shopee", "x": 1}), "ctx key lạ"),
+    (lambda c: c.update(ctx={"content_type": "ads"}), "thiếu channel"),
+    (lambda c: c.update(ctx="shopee"), "ctx phải object"),
+    (lambda c: c.update(expect="pass", code="tu_cam"),
+     "code chỉ đi với expect block"),
+    (lambda c: c.update(code=""), "code phải chuỗi"),
+])
+def test_validate_guardrail_ctx_and_code(mutate, needle):
+    d = ae.load_suite("guardrail")
+    c = next(dict(x) for x in d["cases"] if x["expect"] == "block")
+    mutate(c)
+    errs = ae._validate_case(c, 0, d)
+    assert any(needle in e for e in errs), errs
+
+
+@pytest.mark.parametrize("mutate,needle", [
+    (lambda c: c.update(expect_file="khong-co.md"), "expect_file"),
+    (lambda c: c.update(expect_file="../mau/may-co-mang-ss-eq-03.md"),
+     "expect_file"),
+    (lambda c: c.update(expect_page=0), "expect_page"),
+    (lambda c: c.update(expect_page=True), "expect_page"),
+    (lambda c: c.update(expect="pass"), "expect phải null"),
+    (lambda c: c.update(kind="other"), "kind phải"),
+    (lambda c: c.update(kind="trap_no_data"), "trap_no_data không có"),
+])
+def test_validate_co_khi_case(mutate, needle):
+    d = ae.load_suite("co_khi")
+    c = dict(next(x for x in d["cases"] if x["kind"] == "fact"))
+    assert ae._validate_case(c, 0, d) == []
+    mutate(c)
+    errs = ae._validate_case(c, 0, d)
+    assert any(needle in e for e in errs), errs

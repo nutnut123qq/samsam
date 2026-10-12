@@ -362,6 +362,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Đồng ý theo mục đích (bảng `consents`) — nội dung đồng ý CHỜ Pháp chế duyệt |
 | GAP | Chưa có TTL/xóa theo mục đích và theo yêu cầu chủ thể (quyền xóa/truy cập); Khóa mã hóa do công ty giữ + quy trình backup khóa tách khỏi backup DB chưa có (mất khóa = mất PII); Đồng ý chưa gắn kênh chat (Zalo/web) — chỉ ghi tay qua CLI; Đại lý ký cam kết xử lý dữ liệu chưa được kiểm trong code (chỉ kiểm consent đích danh); Phân quyền DB cho bảng CRM (role sales) chưa cấp — external-dep |
 
+### DF-22 — Nghiệm thu QA — giám khảo LLM của harness (agent_eval, v4.5)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-22 |
+| Module (code) | `scripts/agent_eval.py` |
+| Mục đích | Chấm ca lớp mềm khi nghiệm thu agent theo commit (cổng deploy F17.1) |
+| Dữ liệu | Ca kiểm thử (đề + rubric do dev/công ty soạn) và output của agent bị chấm (vd câu trả lời chatbot trên KB public) — chỉ ca có scorer judge |
+| Lớp | Xanh |
+| Chủ thể | Không có — ca kiểm thử tổng hợp, không dữ liệu khách thật; log FAIL qua `_mask_pii` |
+| Nơi lưu | Bảng `eval_runs` (số liệu + id ca FAIL; không lưu văn bản output/judge) |
+| Thời hạn lưu | Không giới hạn — lịch sử nghiệm thu theo commit (kiểm toán deploy) |
+| Bên nhận | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `ci_judge`, trần 1 USD/tháng) |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | Chỉ qua `pipelines.llm_gateway` agent `ci_judge` — không gọi client LLM trực tiếp (test khóa); Model judge phải KHÁC HỌ nhà sản xuất với model agent (allowlist họ; router/alias lạ → từ chối trước mọi lời gọi); CI mỗi push (`--deterministic`) chỉ chạy suite luật (guardrail + co_khi) — 0 lời gọi LLM; hiện chưa suite active nào có ca judge |
+| Căn cứ xử lý | Không xử lý dữ liệu cá nhân thật (ca kiểm thử tổng hợp) — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep) |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -387,6 +405,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-17 | Nghiên cứu giả lập persona (v7.3) | Xanh | thấp | có | 0 |
 | DF-21 | Nhận xét báo cáo TGĐ qua LLM (cockpit — v8.0, chỉ khi --llm) | Xanh | thấp | có | 0 |
 | DF-18 | CRM contact_vault / đồng ý / đại lý (KD-A2) | Đỏ | cao | không | 5 |
+| DF-22 | Nghiệm thu QA — giám khảo LLM của harness (agent_eval, v4.5) | Xanh | thấp | có | 1 |
 
 ## 4. Tổng hợp GAP
 
@@ -414,6 +433,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-18] Đồng ý chưa gắn kênh chat (Zalo/web) — chỉ ghi tay qua CLI
 - [DF-18] Đại lý ký cam kết xử lý dữ liệu chưa được kiểm trong code (chỉ kiểm consent đích danh)
 - [DF-18] Phân quyền DB cho bảng CRM (role sales) chưa cấp — external-dep
+- [DF-22] Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep)
 
 ## 5. Câu hỏi cho luật sư
 

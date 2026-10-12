@@ -123,9 +123,11 @@ sinh/lưu/duyệt/Studio + `readiness` (map view DB do caller truyền) — mụ
 | `llm_ngam_y_suc_khoe` (v4.2, lớp LLM) | major | block |
 | `llm_check_unavailable` (v4.2, lớp LLM lỗi) | major | block |
 
-Bộ ca có nhãn `data/eval/guardrail.jsonl` (132 ca; ca mới mang
+Bộ ca có nhãn = suite `data/eval/suites/guardrail.json` v2 (format suite
+v4.5 — version + `cases_sha256`; 132 ca; ca mới mang
 `label_status: "chờ Pháp chế duyệt nhãn"`, nhãn `expect` theo Ý ĐỊNH pháp
-lý bản dev — ca biên được phép fail):
+lý bản dev — ca biên được phép fail; ngưỡng 0.95 + 3 kind bắt buộc nằm
+trong `threshold` của suite):
 
 | Kind | Số ca |
 |---|---|
@@ -142,6 +144,14 @@ từ cấm 12. Chấm: `python scripts/agent_eval.py --agent guardrail
 khuyến cáo). Ca biên đang fail (ý định pass, guardrail chặn bảo thủ):
 `v41-edge-01` "không chữa bệnh", `v41-edge-02` "thực phẩm bảo vệ sức
 khỏe" (động từ claim "bảo vệ" trong tên nhóm).
+
+Suite cơ khí `data/eval/suites/co_khi.json` (v9.5, agent tra cứu CK-A1
+`agents/ck_mat.py` — luật, không LLM): 23 ca MẪU (17 fact, 3 high_risk,
+3 trap_no_data) — CHỜ KỸ SƯ TRƯỞNG SỬA; ngưỡng 0.9 + `trap_no_data` 100%;
+KHÔNG nằm trong `required_agents` (không chặn deploy). Chấm: `python
+scripts/agent_eval.py --agent co_khi --no-record` → `co_khi v1 PASS 21/23`
+(ck-f01/ck-f02 fail thật — xếp hạng BM25). Khác `ck_a6` (khung suite
+agent QA A6 khối Cơ khí, skeleton).
 
 Test `tests/test_guardrail_v2.py`: `test_check_signature_unchanged`,
 `test_nfd_banned_word_blocked_and_nfd_disclaimer_pass`,
