@@ -128,6 +128,32 @@
 | Rủi ro tồn dư | Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep) |
 | Căn cứ | Không xử lý dữ liệu cá nhân thật (ca kiểm thử tổng hợp) — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
+### DF-23 — Đối thủ / Google Trends / MXH kênh sở hữu nhập tay + báo cáo tuần (v7.2)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | Không gửi ra ngoài mặc định; tóm tắt LLM (`--llm`, mặc định TẮT, không gửi text social) qua gateway → OpenRouter (Mỹ) |
+| Dữ liệu gửi đi (sau biện pháp) | Giá/khuyến mãi đối thủ ghi tay, file Google Trends xuất tay, export comment/inbox kênh sở hữu (đã bỏ cột tên/ID, che SĐT/email khi đọc) |
+| Lớp | Vàng |
+| Mục đích | Nghiên cứu đối thủ, xu hướng, lắng nghe MXH cho báo cáo tuần |
+| Biện pháp kỹ thuật | Bỏ cột tên/ID người dùng ngay khi đọc; Dedup bằng hash có muối `INTEL_HASH_SALT`; Không lưu trích comment khi `dpia_signed` false; Tóm tắt qua guardrail |
+| Thời hạn lưu (theo map) | Chưa có hạn lưu/purge — GAP |
+| Rủi ro tồn dư | Chưa có hạn lưu `social_mentions`; Mapping cột export thật chưa xác minh |
+| Căn cứ | Lợi ích hợp pháp (kênh sở hữu) — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
+### DF-24 — Guardrail LLM-check phụ + red-team sinh biến thể (v4.2)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `guardrail_llm`, `redteam`) |
+| Dữ liệu gửi đi (sau biện pháp) | Nội dung nháp marketing do agent/nhân viên soạn (đã qua `_mask_pii`), câu tấn công tổng hợp |
+| Lớp | Vàng |
+| Mục đích | Bắt claim sức khỏe ẩn ý mà luật không bắt; kiểm thử red-team guardrail |
+| Biện pháp kỹ thuật | Chỉ chặn THÊM, lỗi → `llm_check_unavailable` chặn; Mặc định TẮT (env trống); Red-team chỉ chạy tay, ≤20 lời gọi, model khác họ |
+| Thời hạn lưu (theo map) | Theo `content_drafts` (hồ sơ duyệt) |
+| Rủi ro tồn dư | (không) |
+| Căn cứ | Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
 ## 3. Luồng không thuộc TIA
 
 Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15, DF-18.

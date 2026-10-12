@@ -60,7 +60,9 @@ def _social_pii():
 
 
 def _v72_block():
-    return SCHEMA_SQL.split("v7.2 đối thủ / trend / social", 1)[1]
+    # Gộp M31: các block version khác nối sau v7.2 — cắt tới header block kế tiếp.
+    rest = SCHEMA_SQL.split("v7.2 đối thủ / trend / social", 1)[1]
+    return re.split(r"\n-- =+\r?\n-- v\d", rest, maxsplit=1)[0]
 
 
 def test_schema_v72_tables_and_no_identity_columns():

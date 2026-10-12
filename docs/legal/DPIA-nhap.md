@@ -380,6 +380,42 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Không xử lý dữ liệu cá nhân thật (ca kiểm thử tổng hợp) — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep) |
 
+### DF-23 — Đối thủ / Google Trends / MXH kênh sở hữu nhập tay + báo cáo tuần (v7.2)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-23 |
+| Module (code) | `ingest/intel_import.py`; `scripts/intel_weekly.py` |
+| Mục đích | Nghiên cứu đối thủ, xu hướng, lắng nghe MXH cho báo cáo tuần |
+| Dữ liệu | Giá/khuyến mãi đối thủ ghi tay, file Google Trends xuất tay, export comment/inbox kênh sở hữu (đã bỏ cột tên/ID, che SĐT/email khi đọc) |
+| Lớp | Vàng |
+| Chủ thể | Người bình luận/nhắn tin trên kênh sở hữu của công ty |
+| Nơi lưu | Bảng `intel_imports`, `competitor_observations`, `trends_weekly`, `trends_related`, `social_mentions` (không trích comment tới khi DPIA ký) |
+| Thời hạn lưu | Chưa có hạn lưu/purge — GAP |
+| Bên nhận | Không gửi ra ngoài mặc định; tóm tắt LLM (`--llm`, mặc định TẮT, không gửi text social) qua gateway → OpenRouter (Mỹ) |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | Bỏ cột tên/ID người dùng ngay khi đọc; Dedup bằng hash có muối `INTEL_HASH_SALT`; Không lưu trích comment khi `dpia_signed` false; Tóm tắt qua guardrail |
+| Căn cứ xử lý | Lợi ích hợp pháp (kênh sở hữu) — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | Chưa có hạn lưu `social_mentions`; Mapping cột export thật chưa xác minh |
+
+### DF-24 — Guardrail LLM-check phụ + red-team sinh biến thể (v4.2)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-24 |
+| Module (code) | `pipelines/guardrail_llm.py`; `scripts/redteam.py` |
+| Mục đích | Bắt claim sức khỏe ẩn ý mà luật không bắt; kiểm thử red-team guardrail |
+| Dữ liệu | Nội dung nháp marketing do agent/nhân viên soạn (đã qua `_mask_pii`), câu tấn công tổng hợp |
+| Lớp | Vàng |
+| Chủ thể | Không có dữ liệu khách — nháp nội dung marketing |
+| Nơi lưu | Không lưu text LLM; kết quả vào guardrail snapshot của `content_drafts` |
+| Thời hạn lưu | Theo `content_drafts` (hồ sơ duyệt) |
+| Bên nhận | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `guardrail_llm`, `redteam`) |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | Chỉ chặn THÊM, lỗi → `llm_check_unavailable` chặn; Mặc định TẮT (env trống); Red-team chỉ chạy tay, ≤20 lời gọi, model khác họ |
+| Căn cứ xử lý | Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | (không) |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -406,6 +442,8 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-21 | Nhận xét báo cáo TGĐ qua LLM (cockpit — v8.0, chỉ khi --llm) | Xanh | thấp | có | 0 |
 | DF-18 | CRM contact_vault / đồng ý / đại lý (KD-A2) | Đỏ | cao | không | 5 |
 | DF-22 | Nghiệm thu QA — giám khảo LLM của harness (agent_eval, v4.5) | Xanh | thấp | có | 1 |
+| DF-23 | Đối thủ / Google Trends / MXH kênh sở hữu nhập tay + báo cáo tuần (v7.2) | Vàng | trung bình | có | 2 |
+| DF-24 | Guardrail LLM-check phụ + red-team sinh biến thể (v4.2) | Vàng | trung bình | có | 0 |
 
 ## 4. Tổng hợp GAP
 
@@ -434,6 +472,8 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-18] Đại lý ký cam kết xử lý dữ liệu chưa được kiểm trong code (chỉ kiểm consent đích danh)
 - [DF-18] Phân quyền DB cho bảng CRM (role sales) chưa cấp — external-dep
 - [DF-22] Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep)
+- [DF-23] Chưa có hạn lưu `social_mentions`
+- [DF-23] Mapping cột export thật chưa xác minh
 
 ## 5. Câu hỏi cho luật sư
 

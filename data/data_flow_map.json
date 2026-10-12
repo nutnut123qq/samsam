@@ -489,6 +489,56 @@
       "gaps": [
         "Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep)"
       ]
+    },
+    {
+      "id": "DF-23",
+      "name": "Đối thủ / Google Trends / MXH kênh sở hữu nhập tay + báo cáo tuần (v7.2)",
+      "modules": [
+        "ingest/intel_import.py",
+        "scripts/intel_weekly.py"
+      ],
+      "data": "Giá/khuyến mãi đối thủ ghi tay, file Google Trends xuất tay, export comment/inbox kênh sở hữu (đã bỏ cột tên/ID, che SĐT/email khi đọc)",
+      "class": "vang",
+      "subjects": "Người bình luận/nhắn tin trên kênh sở hữu của công ty",
+      "purpose": "Nghiên cứu đối thủ, xu hướng, lắng nghe MXH cho báo cáo tuần",
+      "storage": "Bảng `intel_imports`, `competitor_observations`, `trends_weekly`, `trends_related`, `social_mentions` (không trích comment tới khi DPIA ký)",
+      "retention": "Chưa có hạn lưu/purge — GAP",
+      "recipients": "Không gửi ra ngoài mặc định; tóm tắt LLM (`--llm`, mặc định TẮT, không gửi text social) qua gateway → OpenRouter (Mỹ)",
+      "cross_border": true,
+      "safeguards": [
+        "Bỏ cột tên/ID người dùng ngay khi đọc",
+        "Dedup bằng hash có muối `INTEL_HASH_SALT`",
+        "Không lưu trích comment khi `dpia_signed` false",
+        "Tóm tắt qua guardrail"
+      ],
+      "legal_basis": "Lợi ích hợp pháp (kênh sở hữu) — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Chưa có hạn lưu `social_mentions`",
+        "Mapping cột export thật chưa xác minh"
+      ]
+    },
+    {
+      "id": "DF-24",
+      "name": "Guardrail LLM-check phụ + red-team sinh biến thể (v4.2)",
+      "modules": [
+        "pipelines/guardrail_llm.py",
+        "scripts/redteam.py"
+      ],
+      "data": "Nội dung nháp marketing do agent/nhân viên soạn (đã qua `_mask_pii`), câu tấn công tổng hợp",
+      "class": "vang",
+      "subjects": "Không có dữ liệu khách — nháp nội dung marketing",
+      "purpose": "Bắt claim sức khỏe ẩn ý mà luật không bắt; kiểm thử red-team guardrail",
+      "storage": "Không lưu text LLM; kết quả vào guardrail snapshot của `content_drafts`",
+      "retention": "Theo `content_drafts` (hồ sơ duyệt)",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider qua gateway (agent `guardrail_llm`, `redteam`)",
+      "cross_border": true,
+      "safeguards": [
+        "Chỉ chặn THÊM, lỗi → `llm_check_unavailable` chặn",
+        "Mặc định TẮT (env trống)",
+        "Red-team chỉ chạy tay, ≤20 lời gọi, model khác họ"
+      ],
+      "legal_basis": "Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": []
     }
   ]
 }

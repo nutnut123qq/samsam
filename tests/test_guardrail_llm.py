@@ -111,10 +111,10 @@ def test_prompt_fences_text_and_says_do_not_follow(fake):
 
 
 def _eval_cases():
-    rows = [json.loads(line) for line in (ROOT / "data" / "eval"
-            / "guardrail.jsonl").read_text(encoding="utf-8").split("\n")
-            if line.strip()]
-    return [r for r in rows if "_doc" not in r]
+    # Gộp M31: v4.5i chuyển bộ ca guardrail sang suite (data/eval/suites/).
+    suite = json.loads((ROOT / "data" / "eval" / "suites" / "guardrail.json")
+                       .read_text(encoding="utf-8"))
+    return suite["cases"]
 
 
 ADVERSARIAL = [

@@ -71,7 +71,10 @@ def test_migrated_cases_identical_to_v35():
         ("fact", "eval_qa"), ("trap_no_data", "eval_qa"),
         ("trap_guard", "eval_qa"), ("trap_health", "handoff")}
     # bộ ca jsonl v3.5 đã chuyển hết sang suites/ (không còn 2 nguồn)
-    assert list((ROOT / "data" / "eval").glob("*.jsonl")) == []
+    # redteam.jsonl (v4.2 PC-A9) là bộ tấn công cho scripts/redteam.py, không
+    # phải bộ ca chấm agent — miễn trừ khi gộp M31.
+    assert [p.name for p in (ROOT / "data" / "eval").glob("*.jsonl")] == \
+        ["redteam.jsonl"]
 
 
 def test_active_suites_metadata():

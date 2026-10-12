@@ -6,6 +6,14 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+Nhánh `ai-infra`: M31 đợt gộp 3 (2026-10-12) — v4.2, v4.5i (v4.5 + tích hợp),
+v5.2, v7.1, v7.2, v8.0 đã gộp (44 bảng). Tích hợp khi gộp: bản đồ dữ liệu gộp 3
+chiều theo id luồng (CRM DF-18, cockpit DF-21, judge QA DF-22) + khai thêm DF-23
+(v7.2 nhập tay) và DF-24 (v4.2 LLM-check/red-team), sinh lại DPIA/TIA (22 luồng);
+`test_guardrail_llm` đọc suite thay jsonl; `redteam.jsonl` miễn trừ luật 'không
+còn jsonl'; test schema v7.2 cắt đúng block; README cloud bỏ dòng trùng do gộp
+(dùng câu không đếm số bảng).
+
 ## Checklist v8.0-cockpit-bao-cao
 
 Khán giả/mục đích: M31 (worktree `D:\code\samsam-w44`) — làm WP10 "Cockpit
