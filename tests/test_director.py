@@ -273,3 +273,14 @@ def test_sales_finance_object_types_v82():
                                                      "risk": "high"}
     assert "b2b_margin_review" in f["_doc"]
     assert f["approvers"] == [] and dr.load_config("sales")["approvers"] == []
+
+
+def test_p3_object_types_v110():
+    """v11.0 WP17: concept R&D SX-A6 risk high, CK-A5 medium — không low
+    (luật tự duyệt chỉ áp low)."""
+    p = dr.load_config("production")["object_types"]
+    assert p["rd_concept_brief"] == {"sla_hours": 72, "risk": "high"}
+    m = dr.load_config("mechanical")["object_types"]
+    assert m["maintenance_risk"] == {"sla_hours": 72, "risk": "medium"}
+    assert dr.load_config("farming")["object_types"]["harvest_forecast"][
+        "risk"] == "medium"

@@ -1,0 +1,29 @@
+=== v11.0 W110.1 SX-A6 2026-10-15T03:22:09+07:00
+$ python -m agents.sx_rnd --list
+- stick-tra-sam-khong-duong: Stick trà sâm không đường · 120.000–180.000 đ · SKU nền mat-ong-sam-120ml-1hu
+- mat-ong-sam-goi-nho: Mật ong sâm gói nhỏ · 150.000–220.000 đ · SKU nền mat-ong-sam-120ml-1hu, mat-ong-sam-300ml
+- mini-gift-set-duoi-300k: Mini gift set dưới 300.000đ · 250.000–299.000 đ · SKU nền mat-ong-sam-120ml-1hu
+exit=0
+$ python -m agents.sx_rnd --list --brief x (usage)
+python -m agents.sx_rnd: error: cần đúng 1 trong --list / --brief
+exit=2
+$ grep -nE 'import httpx|import requests|\.post\(|smtp|content_drafts|save_draft' agents/sx_rnd.py
+grep_rc=1 (1 = rỗng)
+$ grep sx_rnd data/llm_gateway.json; rd_concept_brief production.json
+"sx_rnd": 1.0
+    "rd_concept_brief": {
+      "sla_hours": 72,
+      "risk": "high"
+    }
+Test: tests/test_sx_rnd.py nằm trong targeted ×3 (evidence/v110_targeted.log) — 0 skipped, gồm DB fixture.
+=== vá nghiệm thu MINOR-1: probe claim_free vs health_terms (đường LLM)
+'Tăng sức đề kháng.' claim_free= [] health_terms= ['đề kháng']
+'An thần, dễ ngủ.' claim_free= [] health_terms= ['an thần', 'ngủ']
+'Uống buổi tối để ngủ sâu hơn.' claim_free= [] health_terms= ['ngủ']
+'đẩy lùi lão hóa' claim_free= [] health_terms= ['lão hóa', 'đẩy lùi']
+'Hồi phục sinh lực nhanh.' claim_free= [] health_terms= ['sinh lực', 'hồi phục']
+'Làm đẹp da.' claim_free= [] health_terms= ['đẹp da', 'làm đẹp']
+=== vá re-audit MINOR NFD: probe health_terms trước(old fold không NFC)/sau vá
+'An thần, dễ ngủ.' NFD old= [] new= ['an thần', 'ngủ'] claim_free= []
+'Tăng sức đề kháng.' NFD old= [] new= ['đề kháng'] claim_free= []
+Test: test_health_phrases_caught_by_health_terms + test_llm_health_effect_output_falls_back param NFD_PHRASES; test_llm_nfd_output_stored_nfc; test_health_terms_allowed_when_already_in_concept (NFD allowed).
