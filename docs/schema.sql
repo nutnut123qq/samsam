@@ -1732,7 +1732,8 @@ create index if not exists competitor_observations_on_idx on competitor_observat
 --   * `dealers` = đại lý (mã, vùng, trạng thái, hoa hồng mặc định). Dữ
 --     liệu hiện là MẪU (`data/dealer_regions.json`); đại lý thật =
 --     external-dep. Người liên hệ của đại lý (nếu có) nằm trong vault.
---   * `consents` = đồng ý theo mục đích cskh | marketing | dai_ly,
+--   * `consents` = đồng ý theo mục đích cskh | marketing | dai_ly | b2b
+--     (v8.2: b2b = gửi báo giá cho người liên hệ của TỔ CHỨC — form B2B),
 --     APPEND-ONLY (rút đồng ý = thêm dòng granted=false, không UPDATE).
 --     `dai_ly` phải ĐÍCH DANH đại lý nhận; grant phải có mã biên bản
 --     (`evidence_ref`) + phiên bản chính sách. Trạng thái hiện hành =
@@ -1795,6 +1796,15 @@ create or replace trigger consents_append_only_row
 create or replace trigger consents_no_truncate
   before truncate on consents
   for each statement execute function append_only_guard();
+
+-- v8.2 KD-A3 (WP11): mở rộng HẸP CHECK mục đích thêm 'b2b' (form B2B — đồng ý
+-- nhận báo giá cho người liên hệ tổ chức). DB cũ giữ CHECK 3 mục đích của
+-- create ở trên → drop + add lại (idempotent, validate lại dòng cũ — cả 3 mục
+-- đích cũ vẫn hợp lệ). Drift-guard tests/test_lead_store.py cho phép ĐÚNG 2
+-- lệnh này (không nới alter khác).
+alter table consents drop constraint if exists consents_purpose_check;
+alter table consents add constraint consents_purpose_check
+  check (purpose in ('cskh', 'marketing', 'dai_ly', 'b2b'));
 
 -- Đồng ý hiện hành theo (contact, mục đích, đại lý): dòng mới nhất theo id
 -- (KHÔNG theo ts — ts ghi lùi không lật được trạng thái).
@@ -3165,4 +3175,42 @@ create or replace trigger ad_test_plans_append_only_row
   for each row execute function append_only_guard();
 create or replace trigger ad_test_plans_no_truncate
   before truncate on ad_test_plans
+  for each statement execute function append_only_guard();
+
+-- ============================================================================
+-- v8.2 KD-A3 báo giá B2B (WP11) — yêu cầu báo giá quà Tết từ form B2B.
+--   * `b2b_requests` insert-only (trigger append_only_guard chặn UPDATE/
+--     DELETE/TRUNCATE). Ai ghi: `connectors/b2b_form.intake` (1 transaction:
+--     contact vault → consent mục đích 'b2b' → dòng này). Ai đọc:
+--     `agents.kd_quote` (--requests / --quote). KHÔNG cột PII: tên/SĐT/email
+--     người liên hệ CHỈ ở `contacts` (mã hóa Fernet) — bảng giữ `contact_id`
+--     + `consent_id`. `org_name` là tên TỔ CHỨC (hộ kinh doanh có thể trùng
+--     tên người — gap ghi DPIA DF-31). `request_key` = b2r:sha256(tên tổ chức
+--     chuẩn hóa + tỉnh + items canonical + ngày VN) chống gửi trùng.
+--     `items` = [{key, qty}] (1..10 dòng; key = SKU/combo của catalog).
+-- Quyền: roles.sql KHÔNG grant bảng này cho agent_writer/app_human (mặc định
+-- từ chối) — form/CLI chạy DSN chủ sở hữu; grant hẹp = someday.
+-- ============================================================================
+
+create table if not exists b2b_requests (
+  id bigint generated always as identity primary key,
+  request_key text not null unique check (request_key ~ '^b2r:[0-9a-f]{64}$'),
+  org_name text not null check (char_length(btrim(org_name)) between 2 and 200),
+  org_type text not null check (org_type in ('doanh_nghiep', 'khach_san',
+    'su_kien_hoi_nghi', 'hiep_hoi', 'co_quan', 'khac')),
+  region text not null,             -- 1 trong 34 tỉnh (ingest.crm.province_of)
+  items jsonb not null check (jsonb_typeof(items) = 'array'
+    and jsonb_array_length(items) between 1 and 10),
+  need_by date,
+  contact_id bigint not null references contacts(id),
+  consent_id bigint not null references consents(id),
+  source text not null check (source ~ '^[a-z0-9_.:-]{1,50}$'),
+  created_at timestamptz not null default now()
+);
+
+create or replace trigger b2b_requests_append_only_row
+  before update or delete on b2b_requests
+  for each row execute function append_only_guard();
+create or replace trigger b2b_requests_no_truncate
+  before truncate on b2b_requests
   for each statement execute function append_only_guard();

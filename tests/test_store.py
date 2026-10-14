@@ -412,9 +412,18 @@ _ALTER_ADD_OK = re.compile(
     r"[^;,]*;")
 
 
+# v8.2 KD-A3: thêm ĐÚNG cặp drop+add CHECK mục đích `consents` (thêm 'b2b')
+# — tên bảng/constraint/dạng check cố định (cùng luật tests/test_lead_store).
+_CONSENT_B2B_OK = re.compile(
+    r"\balter\s+table\s+consents\s+(?:drop\s+constraint\s+if\s+exists\s+"
+    r"consents_purpose_check|add\s+constraint\s+consents_purpose_check\s+"
+    r"check\s*\(\s*purpose\s+in\s*\(\s*'cskh',\s*'marketing',\s*"
+    r"'dai_ly',\s*'b2b'\s*\)\s*\))\s*;")
+
+
 def _forbidden_ddl(lower: str) -> list[str]:
     return re.findall(r"\b(?:alter|drop)\s+table\b",
-                      _ALTER_ADD_OK.sub("", lower))
+                      _CONSENT_B2B_OK.sub("", _ALTER_ADD_OK.sub("", lower)))
 
 
 def test_drift_guard_narrow_alter_only():
@@ -425,7 +434,12 @@ def test_drift_guard_narrow_alter_only():
                  "drop column z;"),
                 "alter table x add column y text;",
                 ("alter table x add column if not exists y text; "
-                 "drop table z;")):
+                 "drop table z;"),
+                ("alter table consents drop constraint if exists "
+                 "consents_purpose_check; alter table consents drop "
+                 "column purpose;"),
+                ("alter table consents add constraint "
+                 "consents_purpose_check check (purpose in ('x'));")):
         assert _forbidden_ddl(bad), bad
     assert _forbidden_ddl(
         "alter table x add column if not exists y text;") == []

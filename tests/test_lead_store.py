@@ -318,6 +318,20 @@ def test_schema_sql_has_leads_table():
     # <c> ...;` (1 action) được phép; mọi alter/drop table khác bị bắt.
     rest = re.sub(r"\balter\s+table\s+\w+\s+add\s+column\s+if\s+not"
                   r"\s+exists\s+\w+[^;,]*;", "", lower)
+    # v8.2 KD-A3: nới HẸP thêm ĐÚNG cặp drop+add CHECK mục đích consents
+    # (thêm 'b2b') — tên bảng, tên constraint và dạng check đều cố định.
+    narrow = ((r"\balter\s+table\s+consents\s+drop\s+constraint\s+if\s+"
+               r"exists\s+consents_purpose_check\s*;"),
+              (r"\balter\s+table\s+consents\s+add\s+constraint\s+"
+               r"consents_purpose_check\s+check\s*\(\s*purpose\s+in\s*"
+               r"\(\s*'cskh',\s*'marketing',\s*'dai_ly',\s*'b2b'\s*\)\s*\)"
+               r"\s*;"))
+    for pat in narrow:
+        assert len(re.findall(pat, rest)) == 1, pat
+        rest = re.sub(pat, "", rest)
     assert not re.search(r"\b(alter|drop)\s+table\b", rest)
+    assert re.search(r"\b(alter|drop)\s+table\b", re.sub(
+        narrow[0], "", "alter table consents drop constraint if exists"
+        " consents_purpose_check; alter table consents drop column x;"))
     assert re.search(r"\b(alter|drop)\s+table\b",
                      "alter table x drop column y;")  # guard còn sống

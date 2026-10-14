@@ -255,3 +255,21 @@ def test_cli_ceo_warns_overwrites_ceo_report_bulletin(monkeypatch, capsys,
     assert dr.main(argv) == 2
     err = capsys.readouterr().err
     assert "[warn] khối ceo" in err and "ceo_report --bulletin" in err
+
+
+def test_sales_finance_object_types_v82():
+    """v8.2 KD-A3 — báo giá B2B: b2b_quote_matrix là loại DUY NHẤT khối
+    sales risk low (lane auto_policy chỉ khi chủ khối ký); b2b_quote/
+    b2b_catalog high; tài chính rà biên b2b_margin_review high; không
+    người thật."""
+    s = dr.load_config("sales")["object_types"]
+    assert s["b2b_quote_matrix"]["risk"] == "low"
+    assert s["b2b_quote_matrix"]["sla_hours"] == 96
+    assert s["b2b_quote"]["risk"] == "high" and s["b2b_catalog"]["risk"] == "high"
+    assert {t for t, v in s.items() if v["risk"] == "low"} == {
+        "b2b_quote_matrix"}
+    f = dr.load_config("finance")
+    assert f["object_types"]["b2b_margin_review"] == {"sla_hours": 72,
+                                                     "risk": "high"}
+    assert "b2b_margin_review" in f["_doc"]
+    assert f["approvers"] == [] and dr.load_config("sales")["approvers"] == []

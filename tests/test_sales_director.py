@@ -70,7 +70,10 @@ def test_ship_config_valid_and_no_real_people():
     assert types["market_alert_s1"]["risk"] == "high"
     assert {t for t, s in types.items() if s["handoff"] == "A"} == {
         "cskh_handoff", "cskh_reply", "market_alert_s1"}
-    assert all(s["risk"] != "low" for s in types.values())
+    # v8.2: b2b_quote_matrix (báo giá KD-A3 trong ma trận) là loại DUY NHẤT
+    # risk low — lane auto_policy chỉ khi chủ khối ký; mọi loại khác ≠ low.
+    assert {t for t, s in types.items() if s["risk"] == "low"} == {
+        "b2b_quote_matrix"}
 
 
 def test_worst_clock_hours():

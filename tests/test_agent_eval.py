@@ -527,12 +527,12 @@ def test_runners_single_source_and_same_signature():
     # gộp đợt 5: + cskh (v5.1, gateway giả — tất định); gộp v6.2: + mkt03
     # (provider giả eval_stub — tất định); v6.3: + mkt04 (LLM giả theo ca —
     # tất định); v6.5: + mkt_seo (seo_san.suggest thuần); v5.3: + kd_a5;
-    # v6.4: + mkt_ads_ugc (hàm thuần).
+    # v6.4: + mkt_ads_ugc (hàm thuần); v8.2: + kd_a3 (luật báo giá B2B).
     assert set(ae.DETERMINISTIC_RUNNERS) == {"guardrail", "co_khi", "mkt02",
                                              "mkt03", "mkt04",
                                              "sales_director", "cskh",
                                              "mkt_seo", "kd_a5",
-                                             "mkt_ads_ugc"}
+                                             "mkt_ads_ugc", "kd_a3"}
     assert not hasattr(ae, "RULE_AGENTS")
     for name, fn in ae.RUNNERS.items():
         if name == "chatbot":

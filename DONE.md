@@ -2503,6 +2503,548 @@ không kiểm lại readiness/guardrail lúc release; 2 phiếu khác --month ch
 test `since`/thứ tự check lỏng; race test cùng conn; khóa XNQC theo artwork,
 khớp chi tiêu thực với phiếu, UI Streamlit, grant hẹp `ad_test_plans`.
 
+## Checklist v8.2-b2b-bao-gia
+
+Khán giả/mục đích: M31 (worktree `D:\code\samsam-w93`) — làm phần KD-A3 của
+WP11 "B2B quà Tết và phòng Dự án" (pmo.md dòng `| WP11`: "KD-A3 báo giá B2B,
+form B2B mở trước 16/11, catalog PDF"; nghiệm thu: category `alcohol` KHÔNG BAO
+GIỜ render vào catalog/tài liệu chào hàng; báo giá nằm trong ma trận chỉ tự đạt
+khi tài chính đã xác nhận biên; không agent nào tự liên hệ tổ chức bên ngoài).
+Kế hoạch gốc (ctx/final_plans.json khối `sales`, A3): trong ma trận → lane
+auto_policy (kiểm 10%); ngoài ma trận / vượt ngưỡng hộp / mọi dòng TPBVSK chưa
+XNQC → per_item GĐ bán hàng; TPBVSK chưa XNQC trong báo giá chỉ ghi tên, quy
+cách, giá + câu khuyến cáo; rượu không có mặt ở bề mặt chủ động nào (GĐ tự xử
+lý ngoài hệ thống khi đủ 3 điều kiện Pháp chế). Nền ai-infra đã có (đọc code
+thật, TÁI DÙNG): `ingest/golden_store.read_golden` (`category`
+tpbvsk/food/alcohol, `xnqc_status`, `prices[kênh]{floor,list,promo}`,
+`pack_spec`); `agents/fp_pnl.cogs_at` + `fetch_versions` (v9.1 — chỉ dòng
+`cogs_versions` có `approved_by`); `pipelines/production.db_combos` +
+`read_json(path, "combos")` (BOM v9.2 `bom_combos`/`bom_items`,
+`data/sample_bom.json` có `hop-qua-tet-sam-sam-mau`); `pipelines/director.submit`
+(risk/SLA theo `data/directors/<khối>.json`, `qa_suite` → `qa_status` từ
+`eval_runs`) + `director.run` (auto_approve chỉ mục risk low + QA pass + luật
+`auto_policies` đã ký — ship rỗng → fail-closed); `pipelines/approval_queue`
+(`enqueue` tự chạy guardrail, `verify` → `verify_publish` sha256 bản duyệt);
+`pipelines/guardrail.check_publish`; `pipelines/kb_filter.is_alcohol`;
+`ingest/crm` (contact_vault Fernet `add_contact`, `record_consent`,
+`load_vault_key`, `normalize_phone`, `province_of`); `agents/da_b2b.ORG_TYPES`
+(v8.3); `pipelines/pii._PII_RE`/`_mask_pii`; `agents/report.write_report`;
+`agents/da_hoso._verify_submit` (mẫu cổng khớp hash). Hiện trạng: khối `sales`
+đã có object_type `b2b_quote` (high, 96h, handoff B) nhưng 0 agent ghi; mọi SKU
+golden `xnqc_status: none` → tài liệu chào hàng thật hiện chỉ giới thiệu được
+mật ong sâm (food). Sau version: (1) ma trận báo giá GIẢ ĐỊNH + định giá/phân
+loại tất định; (2) báo giá markdown + HTML in được, qua `check_publish`, vào
+hàng duyệt đúng lane, bản gửi phải khớp hash bản duyệt; (3) catalog quà Tết
+(golden + BOM, loại rượu/TPBVSK chưa XNQC); (4) form B2B (endpoint stdlib mặc
+định TẮT) → PII người liên hệ vào contact_vault + consent mục đích `b2b`; (5)
+suite eval tất định `kd_a3`.
+
+Quy ước: ponytail — stdlib + `psycopg` + `cryptography` (đã có, qua
+`ingest.crm`) — KHÔNG dep mới, KHÔNG sửa `requirements.txt`. PDF: đã kiểm
+`reportlab`/`fpdf`/`weasyprint`/`xhtml2pdf` đều KHÔNG cài (`fitz`/PyMuPDF có
+trong Python global nhưng ngoài requirements và v3.8 ghi "reportlab/fitz/PIL
+KHÔNG dùng") → đầu ra = HTML in được (A4, `@media print`, không tài nguyên
+ngoài, không `<script>`) — "In → Lưu PDF" bằng trình duyệt; PDF dựng sẵn +
+font/logo thương hiệu = external-dep. 3 module mới: `agents/kd_quote.py`
+(KD-A3 báo giá), `agents/kd_catalog.py` (catalog), `connectors/b2b_form.py`
+(form) + `data/b2b_pricing.json`, `data/b2b_form.html`. CẢ 3 module KHÔNG
+import `smtplib`/`email.mime`/`httpx`/`requests`/`urllib.request`/
+`http.client`/`socket`/`webbrowser`/`pipelines.llm_gateway` (0 LLM, 0 egress —
+`scripts/dpia_draft.egress_modules` không chứa 3 file; `b2b_form` chỉ dùng
+`http.server` = nhận vào). Không có đường gửi email/Zalo/SMS: GĐ bán hàng tự gửi
+file đã `--verify-send` KHỚP. Text tài liệu đối ngoại do TEMPLATE + số do code
+tính (không LLM) → `check_publish(..., is_ai=False)` (lý do ghi docstring: grep
+gateway rỗng là bằng chứng). Mọi tài liệu đối ngoại (báo giá, catalog) là
+PAYLOAD trong `approval_queue` — đúng chuỗi được hash; người duyệt qua `python
+-m pipelines.approval_queue --approve/--reject` (KHÔNG đường agent tự duyệt
+ngoài lane auto_policy đã ký). 1 bảng mới `b2b_requests` trong block mới cuối
+`docs/schema.sql` + mở rộng CHECK `consents.purpose` thêm `b2b` (ALTER hẹp
+idempotent — dây chuyền: spec đòi consent mục đích b2b, bảng v5.2 chặn bằng
+CHECK) — KHÔNG thêm assert đếm cứng số bảng (sàn ≥ 24 / parse schema.sql);
+`docs/handover/kien-truc.md` thêm tên bảng + sửa câu "N bảng public" khớp số
+parse được (66 → 67 tại thời điểm soạn; gộp song song thì đếm lại);
+`deploy/cloud/README.md` thêm dòng bảng (drift-guard
+`tests/test_db_backup.py::test_cloud_readme_drift_guard`). KHÔNG sửa
+`docs/roles.sql` (bảng mới không grant → mặc định từ chối
+agent_writer/app_human; CLI/form chạy DSN chủ sở hữu — ghi rõ kien-truc, grant
+hẹp = someday). Connect qua `ingest.lead_store.connect` (connect_timeout; guard
+`tests/test_connect_timeout_guard.py`); print tiếng Việt → UTF-8 guard; CLI
+nhiều op → `n_ops > 1` usage exit 2 TRƯỚC connect; ghi trên conn chia sẻ →
+`conn.commit()` tường minh; ≥ 2 mục hàng duyệt cùng báo giá ghi trong 1
+transaction (precedent `agents/da_b2b._HoldCommit`); format-spec chỉ trên biến
+đã coerce (CLI truyền str); ngày "hôm nay" theo giờ VN (`pipelines.period.VN_TZ`);
+tiền = `int`/`Decimal`, KHÔNG float. Print/log: không SĐT/tên/email người liên
+hệ (định danh qua `_mask_pii`/hash). File nháp → `data/reports/` (đã gitignore)
+qua `agents.report.write_report`. Test DB thật: fixture schema tạm +
+`docs/schema.sql` + `docs/roles.sql` rồi ROLLBACK (như
+`tests/test_da_b2b.py::db`), code gọi `conn.commit()` → bọc `_TxConn`/`TxConn`;
+skip khi không DB nhưng gate đòi **0 skipped**. Không assert wall-clock (đồng
+hồ tiêm cho rate-limit; server test event-based; request bị từ chối sớm → raw
+socket như `test_chunked_post_rejected_411`). KHÔNG ghi `b2b_requests`/
+`contacts`/`consents`/`approval_queue`/`approvals`/`cogs_versions` trên DB thật
+ngoài test rollback (CLI DB thật chỉ `--dry-run`/đọc/case âm); `apply_schema` ×2
+trên DB riêng `samsam_infra` được phép.
+
+External-dep (KHÔNG giả lập như thật, KHÔNG tự đánh dấu): ma trận chiết khấu +
+ngưỡng biên thật (`data/b2b_pricing.json` ship `status` GIẢ ĐỊNH,
+`finance_confirmed: null`, `sales_confirmed: null` — chỉ người thật điền; khi
+null MỌI báo giá đi per_item); giá vốn duyệt thật (`cogs_versions` do GĐ SX lập,
+tài chính duyệt qua `agents.fp_pnl --cogs-approve`); chi phí bao bì hộp/thiệp
+(BOM chưa có — `packaging_cost_vnd: null`); chữ ký GĐ bán hàng + tài chính
+(`approvers: []` giữ rỗng; `auto_policies` cho `b2b_quote_matrix` KHÔNG tự
+thêm); domain/hosting/TLS cho form + grant role hẹp; `policy_version` + câu
+đồng ý b2b do Pháp chế chốt (ship `b2b-v0-nhap`); DPIA luồng form ký; logo/font
+thương hiệu + PDF dựng sẵn; ảnh packshot thật (`data/packshots/` gitignore,
+công ty cấp); Pháp chế quyết TPBVSK chưa XNQC trong báo giá có bị coi là quảng
+cáo không (mặc định per_item) và điều kiện bán rượu B2B.
+
+- [x] **W82.1 Schema `b2b_requests` + consent mục đích `b2b`** — block mới cuối
+  `docs/schema.sql` có comment "v8.2 KD-A3 báo giá B2B (WP11)": ai ghi
+  (`connectors/b2b_form.intake`, insert-only), ai đọc (`agents.kd_quote`), không
+  cột PII (PII người liên hệ CHỈ ở `contacts` mã hóa — bảng giữ `contact_id`).
+  `b2b_requests` (`id` identity pk, `request_key text not null unique` check
+  `^b2r:[0-9a-f]{64}$` (sha256 tên tổ chức chuẩn hóa + tỉnh + items canonical +
+  ngày VN — chống gửi trùng), `org_name` check `char_length(btrim(..))` 2..200,
+  `org_type` check ∈ `doanh_nghiep|khach_san|su_kien_hoi_nghi|hiep_hoi|co_quan|
+  khac` (= `agents.da_b2b.ORG_TYPES`), `region text not null`, `items jsonb not
+  null` check `jsonb_typeof = 'array'` và `jsonb_array_length` 1..10, `need_by
+  date` null, `contact_id bigint not null references contacts(id)`,
+  `consent_id bigint not null references consents(id)`, `source text not null`
+  check `^[a-z0-9_.:-]{1,50}$`, `created_at timestamptz not null default
+  now()`) + trigger append-only (`append_only_guard` — chặn UPDATE/DELETE/
+  TRUNCATE như `consents`). Mở rộng: `alter table consents drop constraint if
+  exists consents_purpose_check; alter table consents add constraint
+  consents_purpose_check check (purpose in ('cskh','marketing','dai_ly','b2b'))`
+  + sửa comment mục `consents` v5.2; `ingest/crm.py` `PURPOSES` thêm `"b2b"`
+  (docstring: b2b = gửi báo giá cho người liên hệ tổ chức).
+  - Boundary: `docs/schema.sql`, `ingest/crm.py` (CHỈ hằng `PURPOSES` +
+    docstring), `docs/handover/kien-truc.md` (dòng bảng + "N bảng public" +
+    mục quyền: chưa grant), `deploy/cloud/README.md` (dòng `b2b_requests` —
+    đường B: yêu cầu khách, không dựng lại được), `tests/test_b2b_form.py`
+    (phần schema)
+  - Gate: `python scripts/apply_schema.py` ×2 trên `samsam_infra` sạch (lần 2
+    không lỗi); test rollback: insert hợp lệ OK; `request_key` sai định dạng /
+    `org_type` lạ / `items` = `{}` hoặc mảng 11 phần tử / `contact_id` không
+    tồn tại → lỗi; UPDATE/DELETE `b2b_requests` → lỗi; `consents` purpose `b2b`
+    OK, `xyz` lỗi; `select pg_get_constraintdef(oid) from pg_constraint where
+    conname='consents_purpose_check'` chứa `'b2b'` sau apply ×2;
+    `information_schema.columns` của `b2b_requests` KHÔNG có cột tên chứa
+    `phone|email|name_|contact_name|address`; `python -m pytest
+    tests/test_crm.py tests/test_db_backup.py tests/test_handover_docs.py -q`
+    xanh (test_consent_flow lặp `PURPOSES` vẫn đúng)
+  - Evidence: `evidence/v82_pytest.log`
+- [x] **W82.2 Ma trận báo giá + định giá/phân loại tất định** —
+  `data/b2b_pricing.json` (mới, GIẢ ĐỊNH chờ GĐ bán hàng + tài chính): `{"_doc",
+  "status": "GIẢ ĐỊNH ...", "version": 1, "finance_confirmed": null,
+  "sales_confirmed": null, "base": {"channel": "shopee", "kind": "list"},
+  "min_margin_pct": 30, "rounding_vnd": 1000, "quote_valid_days": 14,
+  "tiers": [{"min_qty", "max_qty", "discount_pct"} ×3 liền nhau tăng dần, vd
+  10–49/5, 50–199/8, 200–1000/12], "items": {"<sku_key|combo_key>":
+  {"max_discount_pct", "packaging_cost_vnd"? (chỉ combo, null = chưa biết)}}}`
+  — items chỉ gồm SKU/combo KHÔNG rượu (3 mật ong + 1–2 TPBVSK + combo
+  `hop-qua-tet-sam-sam-mau`). `agents/kd_quote.py`: `validate_matrix(doc) ->
+  list[str]` THUẦN (tiers liền nhau không chồng, số nguyên, discount 0..50,
+  `min_margin_pct` 0..90, key slug, key là rượu (golden `alcohol` hoặc
+  `is_alcohol(tên)`) → lỗi "rượu không được vào ma trận", `finance_confirmed`/
+  `sales_confirmed` null hoặc `{by` không rỗng, `at` ISO date`}`).
+  `price_lines(items, matrix, golden, combos, *, discount=None)` +
+  `classify(items, matrix, golden, combos, cogs_versions, day, *,
+  discount=None) -> {"lines", "total", "cogs_total", "margin_pct",
+  "within_matrix", "reasons", "problems"}` THUẦN: giá gốc SKU = golden
+  `prices[base.channel][base.kind]`, combo = Σ giá gốc thành phần × qty; bậc
+  theo qty từng dòng; CK mặc định = CK bậc, `discount` ép tay (CLI) cho mọi
+  dòng; đơn giá = làm tròn XUỐNG bội `rounding_vnd` của `base × (100 − ck) /
+  100` (int); giá vốn dòng = `fp_pnl.cogs_at(versions, sku, day)` (combo = Σ
+  thành phần × qty + `packaging_cost_vnd`); biên = (tổng − giá vốn) × 100 /
+  tổng, `Decimal` 1 chữ số. `reasons` (→ per_item, mã cố định):
+  `ma_tran_chua_xac_nhan` (`finance_confirmed` null), `ngoai_ma_tran` (key
+  không trong `items`), `ngoai_bac_so_luong`, `chiet_khau_vuot` (> CK bậc hoặc
+  > `max_discount_pct`), `duoi_gia_san` (đơn giá < floor golden / Σ floor thành
+  phần), `thieu_gia_niem_yet`, `thieu_gia_von_duyet` (bất kỳ SKU/thành phần
+  không có dòng ĐÃ duyệt hiệu lực tại `day`), `thieu_chi_phi_bao_bi`,
+  `bien_duoi_nguong` (biên < `min_margin_pct`), `tpbvsk_chua_xnqc` (dòng/thành
+  phần TPBVSK `xnqc_status != 'approved'`). `problems` (CHẶN — không sinh/không
+  vào hàng duyệt): `ruou_khong_bao_gia` (SKU `alcohol` / `is_alcohol(tên)` /
+  combo có thành phần rượu), `ma_khong_ton_tai`, `so_luong_khong_hop_le`
+  (không phải int 1..100000), `ma_tran_loi`. `within_matrix` = `reasons` và
+  `problems` đều rỗng. CLI `python -m agents.kd_quote --check-matrix [FILE]`
+  (không DB; exit 0 hợp lệ / 1 lỗi, in mã lỗi).
+  - Boundary: `data/b2b_pricing.json` (mới), `agents/kd_quote.py` (mới),
+    `tests/test_kd_quote.py` (mới), `tests/fixtures/b2b/` (mới: golden MẪU có
+    1 TPBVSK `approved` + 2 SKU rượu, ma trận MẪU `finance_confirmed: {"by":
+    "Tai Chinh Gia Lap (test)", ...}`, combo MẪU có thành phần rượu)
+  - Gate: ≥ 15 ca `classify`: mật ong 1 hũ qty 20 (list 745000, CK 5%) → đơn
+    giá 707000, thành tiền 14140000, giá vốn duyệt 300000 → biên 57.6 →
+    `within_matrix` True, `reasons` []; giá vốn 600000 → `bien_duoi_nguong`;
+    dòng giá vốn chưa duyệt (`approved_by` null) hoặc `valid_from` > ngày →
+    `thieu_gia_von_duyet`; qty 5 / 2000 → `ngoai_bac_so_luong`; `discount=20` →
+    `chiet_khau_vuot`; ép CK làm đơn giá < floor → `duoi_gia_san`; key không
+    trong ma trận → `ngoai_ma_tran`; ma trận THẬT `data/b2b_pricing.json` (null
+    xác nhận) → luôn có `ma_tran_chua_xac_nhan` và `within_matrix` False;
+    `saphraton-20v` (none) → `tpbvsk_chua_xnqc`; combo `packaging_cost_vnd`
+    null → `thieu_chi_phi_bao_bi`; SKU rượu / combo có thành phần rượu / tên
+    chứa "rượu" → `problems` ∋ `ruou_khong_bao_gia`; qty `"10"`/0/-1/True →
+    `so_luong_khong_hop_le`; thuần: không DB/mạng (`httpx.Client.__init__` +
+    `lead_store.connect` monkeypatch raise vẫn chạy). `validate_matrix`: file
+    thật → [] ; tiers chồng / CK 60 / key rượu / `finance_confirmed: {"by":
+    "  "}` → lỗi. `python -m agents.kd_quote --check-matrix` exit 0
+  - Evidence: `evidence/v82_quote.log`
+- [x] **W82.3 Sinh báo giá + cổng `check_publish` + hàng duyệt đúng lane** —
+  `agents/kd_quote.py`: `build_quote(request, result, golden, day) -> {
+  "quote_no", "payload", "internal", "problems"}`: `quote_no` =
+  `BG-<YYYYMMDD>-<request_id>-<sha256(canonical json lines+giá+version ma
+  trận+ngày)[:8]>` (cùng đầu vào → cùng số → không nhân đôi); `payload` (= BẢN
+  GỬI, chuỗi được hash, markdown) gồm số báo giá, ngày, hiệu lực đến (ngày +
+  `quote_valid_days`), tên + loại tổ chức + tỉnh (KHÔNG tên/SĐT/email người
+  liên hệ), bảng Sản phẩm | Quy cách (golden `pack_spec` / thành phần combo) |
+  SL | Giá niêm yết | CK % | Đơn giá | Thành tiền, tổng cộng, ghi chú điều khoản
+  cố định (giá GIẢ ĐỊNH đã gồm VAT, chưa gồm vận chuyển — tài chính chốt), câu
+  khuyến cáo TPBVSK `data/guardrail_rules.json` `disclaimer.canonical` khi có
+  dòng TPBVSK, dòng "Báo giá chỉ có hiệu lực khi GĐ bán hàng ký — hệ thống
+  không tự gửi"; KHÔNG claim sức khỏe/công dụng, KHÔNG "Ngọc Linh"; `internal`
+  (KHÔNG gửi khách) = biên, giá vốn, `reasons`, sha ma trận. `gate_quote(payload,
+  excluded_names) -> list[str]`: `guardrail.check_publish(payload,
+  channel="web", content_type="post", is_ai=False)` phải `ok is True` (vi phạm →
+  `guardrail:<code>`), `kb_filter.is_alcohol(payload)` → `ruou`, tên/sku_key
+  SKU rượu xuất hiện → `ruou`, `_PII_RE` khớp → `pii`. `submit(conn, request,
+  built, result)` CHỈ khi `problems` rỗng: `within_matrix` →
+  `director.submit(conn, "sales", "b2b_quote_matrix", quote_no, ...,
+  created_by="agent:kd_quote", qa_suite="kd_a3")` (risk low — lane auto_policy
+  chỉ chạy khi `auto_policies` đã ký + eval `kd_a3` pass mới nhất; ship →
+  pending GĐ duyệt); ngược lại `director.submit(conn, "sales", "b2b_quote",
+  ...)` (risk high); thêm `director.submit(conn, "finance",
+  "b2b_margin_review", quote_no, payload=internal, ...)` khi `reasons` ∋
+  `bien_duoi_nguong` hoặc `thieu_gia_von_duyet` — các mục trong 1 transaction
+  (`_HoldCommit` rồi commit 1 lần); trùng mục pending (unique
+  `approval_queue_pending_uq`) → `[skip]`, không ghi thêm. `data/directors/
+  sales.json` thêm `b2b_quote_matrix` (sla 96, risk low, handoff B, label "Báo
+  giá B2B trong ma trận (chờ auto_policy được ký)") + `b2b_catalog` (sla 96,
+  risk high, handoff B); `data/directors/finance.json` thêm `b2b_margin_review`
+  (sla 72, risk high) + câu `_doc`. CLI `python -m agents.kd_quote
+  --requests` (liệt kê `b2b_requests`: id, tổ chức, tỉnh, số dòng, ngày — không
+  PII) | `--quote REQ_ID [--discount PCT] [--date YYYY-MM-DD] [--out-dir DIR]
+  [--submit] [--dry-run]` (in phân loại + `reasons`; ghi nháp `bao-gia-
+  <quote_no>.md` + `.html` + `-noi-bo.md` qua `write_report`; `problems` →
+  exit 1 không enqueue); DB down → exit 2; 2 op → exit 2 trước connect.
+  - Boundary: `agents/kd_quote.py`, `data/directors/sales.json`,
+    `data/directors/finance.json`, `tests/test_kd_quote.py`,
+    `tests/test_director.py` (test object_types v8.2)
+  - Gate: payload fixture: chứa câu khuyến cáo khi có TPBVSK, không khi chỉ
+    mật ong; `gate_quote` [] với golden thật + mật ong; tổ chức "Nhà thuốc X" →
+    `guardrail:tu_cam` (từ cấm tuyệt đối — ghi giới hạn: GĐ soạn tay); payload
+    không chứa SĐT/email/tên người liên hệ của request (đối chiếu fixture
+    contact); `quote_no` ổn định ×2. DB (rollback): within_matrix (ma trận MẪU
+    đã xác nhận + giá vốn duyệt) → 1 mục `sales/b2b_quote_matrix` risk low,
+    `qa_status` theo `eval_runs` `kd_a3`; `director.run(conn, "sales")` KHÔNG
+    auto-duyệt khi `auto_policies` rỗng (status vẫn pending); chèn
+    `auto_policies` bật + ký (test) + `eval_runs` pass → auto_approve OK lane
+    `auto_policy`; `b2b_quote` high không bao giờ auto dù có luật; biên dưới
+    ngưỡng → 2 mục (`sales/b2b_quote` + `finance/b2b_margin_review`), lỗi giả ở
+    mục 2 → 0 mục; ngoài ma trận → `b2b_quote` high; chạy lại → `[skip]`, số
+    mục không đổi; request có dòng rượu (chèn tay) → exit 1, 0 mục
+    `approval_queue`; `python -m pytest tests/test_director.py
+    tests/test_sales_director.py tests/test_fin_director.py -q` xanh
+  - Evidence: `evidence/v82_quote.log`
+- [x] **W82.4 Bản gửi phải khớp hash bản duyệt — không đường email** —
+  `agents/kd_quote.py`: `render_html(payload, title) -> str` TẤT ĐỊNH (bộ
+  chuyển markdown tối thiểu cho đúng tập cú pháp payload tự sinh: tiêu đề,
+  danh sách, bảng, đoạn; MỌI giá trị qua `html.escape`; `<meta charset>`,
+  `@page { size: A4 }`, không `<script>`/tài nguyên ngoài) — dùng chung cho
+  catalog. `export(conn, qid, out)` (`.md` = payload nguyên văn bytes UTF-8
+  `\n`; `.html` = `render_html(payload)`) CHỈ từ mục ĐÃ `approved`.
+  `verify_send(conn, qid, path, object_types) -> bool` (khuôn
+  `da_hoso._verify_submit`): file ≤ 2 MB, UTF-8 strict; mục phải đúng khối
+  `sales` + `object_type` ∈ tập cho phép + `status = 'approved'`; `.md` →
+  `aq.verify(conn, qid, text)`; `.html` → bytes == `render_html(payload DB)` VÀ
+  `aq.verify(conn, qid, payload DB)`; lệch/không thấy/chưa duyệt → False. CLI
+  `--export QID --out FILE` | `--verify-send QID FILE` (exit 0 "KHỚP bản đã
+  duyệt — GĐ bán hàng tự gửi" / 1 "LỆCH — KHÔNG gửi"). Không hàm/CLI nào gửi
+  email/tin nhắn.
+  - Boundary: `agents/kd_quote.py`, `tests/test_kd_quote.py`
+  - Gate: DB (rollback): mục pending → `--export` exit 1, `--verify-send` exit
+    1; sau `aq.decide(..., "approved")` bởi người ≠ `agent:kd_quote` → export
+    `.md` + `.html` → `--verify-send` cả 2 exit 0; sửa 1 byte (`.md` hoặc
+    `.html`) → exit 1; file > 2 MB / byte lỗi UTF-8 → exit 1; qid của mục
+    `projects/program_application` đã duyệt → exit 1 (sai loại); mục bị
+    `rejected` → exit 1. `render_html` ×2 byte y hệt; tổ chức
+    `<script>alert(1)</script>` → không có `<script` trong HTML. `grep -rnE
+    "smtplib|email\.mime|sendmail|webbrowser" agents/kd_quote.py
+    agents/kd_catalog.py connectors/b2b_form.py` rỗng
+  - Evidence: `evidence/v82_quote.log`
+- [x] **W82.5 Catalog quà Tết (golden + BOM hộp quà, loại rượu)** —
+  `agents/kd_catalog.py`: `eligible(golden, combos) -> (items, excluded)`
+  THUẦN: SKU `alcohol` hoặc `is_alcohol(tên)` → loại khỏi MỌI phần (excluded
+  chỉ ghi `sku_key` + mã `ruou`, KHÔNG tên); TPBVSK `xnqc_status != 'approved'`
+  → loại (`tpbvsk_chua_xnqc` — catalog = tài liệu chào hàng = quảng cáo);
+  combo (BOM v9.2) có thành phần bị loại hoặc tên `is_alcohol` → loại; food →
+  vào. `build(golden, combos, matrix, *, day, packshot_dir=None) -> {"payload",
+  "excluded", "problems"}`: payload markdown "Catalog quà Tết" — mỗi mục tên,
+  quy cách, giá niêm yết (ma trận `base`), bảng bậc CK (tiers ∧
+  `max_discount_pct`, chỉ mục có trong ma trận; ngoài ma trận → "liên hệ báo
+  giá"), ảnh: `<packshot_dir>/<key>.png` tồn tại (magic PNG) → dòng
+  `packshots/<key>.png` + sha256[:16] (HTML tham chiếu đường tương đối, không
+  nhúng), thiếu → "(ảnh: chờ packshot công ty cấp)"; nhãn "Quảng cáo"; câu
+  khuyến cáo khi có TPBVSK; "Giá tham khảo — báo giá chính thức theo yêu cầu,
+  hệ thống không tự gửi". Cổng: `check_publish(payload, channel="web",
+  content_type="ads", is_ai=False)` `ok is True` + `is_alcohol(payload)` False
+  + không tên/sku_key bị loại. CLI `python -m agents.kd_catalog --build
+  [--bom FILE] [--date] [--out-dir DIR] [--packshot-dir DIR]` (combo từ DB
+  `production.db_combos`; `--bom FILE` → `production.read_json(FILE,
+  "combos")` không DB) → `catalog-tet-<date>.md` + `.html` (`render_html`) |
+  `--submit [--bom FILE]` → `director.submit(conn, "sales", "b2b_catalog", ...)`
+  | `--export QID --out FILE` | `--verify-send QID FILE` (tái dùng
+  `kd_quote.export`/`verify_send` với `object_types={"b2b_catalog"}`).
+  - Boundary: `agents/kd_catalog.py` (mới), `tests/test_kd_catalog.py` (mới),
+    `tests/fixtures/b2b/`
+  - Gate: golden fixture (2 SKU rượu + combo tên trung tính chứa thành phần
+    rượu + combo tên chứa "rượu") → md VÀ html: không tên/sku_key rượu nào,
+    `kb_filter.is_alcohol` False cả 2, combo dính rượu không xuất hiện; TPBVSK
+    `approved` vào + có câu khuyến cáo; TPBVSK `none` không vào; packshot tmp
+    PNG → dòng sha16, file không phải PNG → coi như thiếu; golden thật +
+    `data/sample_bom.json` → chỉ 3 mật ong, `hop-qua-tet-sam-sam-mau` bị loại
+    (`tpbvsk_chua_xnqc` qua `saphraton-80v`), cổng [] ; CLI `python -m
+    agents.kd_catalog --build --bom data/sample_bom.json --out-dir <scratchpad>`
+    exit 0 và file sinh ra `grep -ciE "rượu|ruou"` = 0. DB (rollback):
+    `--submit` → 1 mục `b2b_catalog` high pending; duyệt → `--verify-send` html
+    KHỚP exit 0, sửa 1 byte → exit 1
+  - Evidence: `evidence/v82_catalog.log`
+- [x] **W82.6 Form B2B nhận yêu cầu báo giá (endpoint mặc định TẮT)** —
+  `data/b2b_form.html` (HTML tĩnh, placeholder `<!--OPTIONS-->`, không
+  `<script>`/tài nguyên ngoài; trường: tên tổ chức, loại, tỉnh, tên + SĐT +
+  email (tùy chọn) người liên hệ, tối đa 10 dòng sản phẩm × số lượng, ngày cần
+  hàng, ô đồng ý mục đích b2b kèm `policy_version`, honeypot `website` ẩn).
+  `connectors/b2b_form.py`: `options(golden, combos)` = `kd_catalog.eligible`
+  (cùng tập catalog — form công khai không liệt kê rượu/TPBVSK chưa XNQC);
+  `parse_form(body: bytes, allowed, today) -> (dict | None, code)` THUẦN
+  (`urllib.parse.parse_qs` `max_num_fields`; mỗi field 1 giá trị; tên tổ chức
+  2..200 không `_PII_RE`; `org_type` ∈ `ORG_TYPES`; tỉnh qua
+  `crm.province_of`; SĐT qua `crm.normalize_phone`; email ≤ 254; dòng key ∈
+  `allowed` (key rượu → cùng mã lỗi chung `ma_khong_hop_le`), qty int
+  1..100000, 1..10 dòng; `need_by` ISO trong [hôm nay VN, +365]; thiếu đồng ý
+  → `thieu_dong_y`; honeypot có giá trị → `spam`). `RateLimiter(per_ip=5,
+  global_limit=60, window_s=3600, clock=time.monotonic)` — in-memory, khóa =
+  sha256(ip)[:16], không ghi đĩa. `intake(conn, form, keys, *, now=None) ->
+  (request_id, new)`: `request_key` đã có → trả id cũ, không ghi; ngược lại 1
+  transaction: `crm.add_contact(... source="b2b_form", by="web:b2b_form")` →
+  `crm.record_consent(cid, "b2b", True, "web", ..., evidence_ref="B2BF-<16
+  hex request_key>", policy_version=POLICY_VERSION)` → insert `b2b_requests` →
+  `conn.commit()`. Server `ThreadingHTTPServer` (handler `timeout = 10`):
+  `GET /b2b` → form với options escape; `POST /b2b`: `Transfer-Encoding` /
+  thiếu `Content-Length` → 411; > `MAX_FORM_BYTES` 8192 → 413 KHÔNG đọc body;
+  Content-Type ≠ `application/x-www-form-urlencoded` → 415; rate-limit → 429
+  (kiểm TRƯỚC đọc body/DB); lỗi → 400 trang chung (không echo input); spam →
+  200 trang chung, 0 ghi; vault/DB lỗi → 503; OK → 200 "Đã nhận yêu cầu —
+  GĐ bán hàng sẽ liên hệ" (vòng 3: trang KHÔNG hiện mã YC — mã chỉ ở log/CLI
+  GĐ, xem F4) ; path khác → 404. Log stdout chỉ
+  `[b2b_form] <status> ip=<hash8> yc=<id>` (không PII). `python -m
+  connectors.b2b_form`: `B2B_FORM_ENABLED` ∉ 1/true/yes → exit 2 "[fatal] form
+  B2B mặc định TẮT" TRƯỚC bind; `crm.load_vault_key` lỗi → exit 2 trước bind;
+  bind `B2B_FORM_HOST` (mặc định 127.0.0.1) : `B2B_FORM_PORT` (mặc định 8791 —
+  8788 zalo, 8789 messenger).
+  - Boundary: `connectors/b2b_form.py` (mới), `data/b2b_form.html` (mới),
+    `tests/test_b2b_form.py` (mới)
+  - Gate: `parse_form` ≥ 15 ca (thiếu đồng ý, honeypot, key rượu, key lạ, qty
+    0/"1e3"/100001, 11 dòng, field lặp 2 lần, tỉnh lạ, SĐT sai, tên tổ chức chứa
+    SĐT, `need_by` quá khứ, body không UTF-8, hợp lệ); `RateLimiter` đồng hồ
+    giả: lượt 6 cùng IP False, IP khác True, sau cửa sổ True, trần global;
+    server thread port 0: GET trang không `is_alcohol`, không "rượu"; POST 9000
+    byte (raw socket) → 413 và `intake` không được gọi; chunked → 411 (raw
+    socket); `text/plain` → 415; lượt 6 → 429; honeypot → 200 + 0 dòng; hợp lệ
+    (rollback DB, khóa Fernet sinh trong test) → 1 `contacts` (`phone_enc`
+    `gAAAAA...`), 1 `consents` purpose `b2b` granted source `web`, 1
+    `b2b_requests`; quét text MỌI cột `contacts`/`consents`/`b2b_requests`/
+    `agent_action_log` mới không chứa SĐT/tên/email thô; gửi lại y hệt → 0 dòng
+    mới; stdout/stderr (capsys) không chứa SĐT/tên/email; `main([])` không env →
+    exit 2, không socket bind (monkeypatch `ThreadingHTTPServer` raise); không
+    assert wall-clock
+  - Evidence: `evidence/v82_form.log`
+- [x] **W82.7 Eval suite tất định `kd_a3`** — `data/eval/suites/kd_a3.json`
+  (format v4.5: `agent` kd_a3, `version` 1, `owner_block`/`qa_block` sales,
+  `risk` high, `status` active, `runner` kd_a3, `frozen` false, `labeled_by`
+  null, `threshold` `{min_pass_rate: 1.0, must_pass_kinds: ["trap_hard"]}`,
+  `cases_sha256` đúng validator, `_doc` "bộ MẪU dev — chờ GĐ bán hàng/tài chính
+  gán nhãn"); ≥ 12 ca `scorer: kd_a3` không `text` (đầu vào = items, cogs,
+  `day`, `discount`?, `matrix_patch`?; `expect` ∈ within_matrix|per_item|
+  refuse + `expect_reasons`?): trong ma trận đạt (patch `finance_confirmed`
+  MẪU eval), dưới biên, thiếu giá vốn duyệt, ngoài bậc, CK vượt, dưới floor,
+  TPBVSK chưa XNQC, combo thiếu bao bì, ma trận thật chưa xác nhận, trap_hard:
+  SKU rượu, combo dính rượu, tên tổ chức có từ cấm → refuse.
+  `scripts/agent_eval.py`: `SCORERS` + `RUNNER_SCORERS["kd_a3"]` +
+  `DETERMINISTIC_RUNNERS` + `NO_TEXT_SCORERS` + `_validate_kd_a3_case` +
+  `run_kd_a3` (import lười `agents.kd_quote`; golden + ma trận file thật +
+  patch ca; 0 DB/mạng/LLM) + `RUNNERS`. Test cập nhật: `tests/test_agent_eval.py`
+  (tập `DETERMINISTIC_RUNNERS`), `tests/test_ci_workflow.py` (tập det +
+  chuỗi ci.yml), `tests/test_qa_harness.py` (17 → 18 suite, tập tên),
+  `.github/workflows/ci.yml` (dòng comment "+ kd_a3 — v8.2").
+  - Boundary: `data/eval/suites/kd_a3.json`, `scripts/agent_eval.py`,
+    `tests/test_agent_eval.py`, `tests/test_ci_workflow.py`,
+    `tests/test_qa_harness.py`, `.github/workflows/ci.yml` (CHỈ comment)
+  - Gate: `python scripts/agent_eval.py --validate` → "[done] 18/18 suite hợp
+    lệ"; `python scripts/agent_eval.py --agent kd_a3 --no-record` exit 0, pass
+    rate 1.0; ca cấy lỗi (đổi expect 1 ca trong tmp) → exit ≠ 0; `python -m
+    pytest tests/test_agent_eval.py tests/test_ci_workflow.py
+    tests/test_qa_harness.py -q` xanh
+  - Evidence: `evidence/v82_pytest.log`
+- [x] **W82.8 Bản đồ dữ liệu + DPIA** — `data/data_flow_map.json` thêm luồng
+  DF-31 (gộp song song trùng mã thì đánh lại) "Form B2B yêu cầu báo giá + báo
+  giá KD-A3 (v8.2)": `modules` [`connectors/b2b_form.py`,
+  `agents/kd_quote.py`, `ingest/crm.py`], data (tên tổ chức, tên/SĐT/email
+  người liên hệ — vault Fernet, sản phẩm/số lượng, IP chỉ băm in-memory),
+  `cross_border` false, recipients "không — GĐ bán hàng tự gửi báo giá đã duyệt",
+  retention GIẢ ĐỊNH (Pháp chế chốt; chưa job xóa = GAP), safeguards (endpoint
+  mặc định tắt, rate-limit, 8 KB, consent `b2b`, không echo input, 0 egress),
+  gaps (`policy_version` nháp, tên hộ kinh doanh có thể là tên người, chưa grant
+  role hẹp, DPIA chưa ký). Sinh lại `python scripts/dpia_draft.py` →
+  `docs/legal/DPIA-nhap.md` + `TIA-nhap.md`.
+  - Boundary: `data/data_flow_map.json`, `docs/legal/DPIA-nhap.md`,
+    `docs/legal/TIA-nhap.md`
+  - Gate: `python scripts/dpia_draft.py --check` exit 0; `python -c "import
+    sys; sys.path.insert(0,'scripts'); import dpia_draft as d; m=d.egress_
+    modules(); print(sorted(x for x in m if 'kd_' in x or 'b2b_form' in x))"`
+    → `[]`; `python -m pytest tests/test_data_flow_map.py tests/test_dpia_
+    draft.py -q` xanh
+  - Evidence: `evidence/v82_pytest.log`
+- [x] **W82.9 Docs** — `docs/handover/sop.md` mục mới "Báo giá B2B quà Tết
+  (v8.2, KD-A3)": luồng form (bật `B2B_FORM_ENABLED` chỉ sau DPIA ký) →
+  `kd_quote --requests` → `--quote ID --submit` → GĐ bán hàng (+ tài chính khi
+  biên dưới ngưỡng/thiếu giá vốn) duyệt → `--export` → `--verify-send` KHỚP →
+  NGƯỜI tự gửi; catalog `--build`/`--submit`/`--verify-send`; HTML → In → Lưu
+  PDF; bảng object_type thêm `b2b_quote_matrix`/`b2b_catalog`/
+  `b2b_margin_review`; rượu: hệ thống không báo giá — GĐ xử lý ngoài hệ thống
+  khi Pháp chế xác nhận. `docs/handover/kien-truc.md`: bảng `b2b_requests` +
+  "67 bảng public" (đếm lại khi gộp) + consents `b2b` + 3 module. `AGENTS.md`
+  Commands: 1 dòng "B2B báo giá (v8.2, WP11)" liệt kê 3 lệnh.
+  `tests/test_handover_docs.py` `SOP_COMMANDS` thêm `agents.kd_quote`,
+  `agents.kd_catalog`, `connectors.b2b_form`.
+  - Boundary: `docs/handover/sop.md`, `docs/handover/kien-truc.md`,
+    `AGENTS.md` (Commands), `tests/test_handover_docs.py`
+  - Gate: `python -m pytest tests/test_handover_docs.py -q` xanh; `grep -c
+    "agents.kd_quote" AGENTS.md docs/handover/sop.md` ≥ 1 mỗi file
+  - Evidence: `evidence/v82_pytest.log`
+- [x] **Gate chung** — (targeted xanh run 2,3,4 liên tiếp 1008 passed 0 skipped — run 1 đỏ do MÔI TRƯỜNG: subprocess 0xC0000142 / `pg_dump --version` lỗi dưới tải máy; full 3672 passed; ruff sạch; DB thật trước/sau không đổi — `evidence/v82_pytest.log`, `v82_full.log`, `v82_db_counts.log`)
+  - targeted ×3: `python -m pytest tests/test_kd_quote.py tests/test_kd_catalog.py tests/test_b2b_form.py tests/test_crm.py tests/test_approval_queue.py tests/test_director.py tests/test_director_framework.py tests/test_sales_director.py tests/test_fin_director.py tests/test_fp_pnl.py tests/test_production.py tests/test_agent_eval.py tests/test_qa_harness.py tests/test_ci_workflow.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_db_backup.py tests/test_lead_store.py tests/test_store.py tests/test_kb_filter.py tests/test_guardrail.py tests/test_connect_timeout_guard.py -q -rs`
+    3 lần liên tiếp xanh, test DB **0 skipped** (lệnh nặng có thể bị đẩy nền —
+    đọc output tới khi process exit, không chạy chồng, không retry mù)
+  - full: `python -m pytest -q` xanh, ≥ 3533 (baseline) + test mới — ĐÚNG 1
+    lần/vòng (skip `tests/test_dr_drill.py` do Docker = môi trường, ghi rõ)
+  - `ruff check .` sạch
+  - `python -m py_compile agents/kd_quote.py agents/kd_catalog.py connectors/b2b_form.py scripts/agent_eval.py`
+  - Không đường liên hệ/egress: `grep -rnE "import (httpx|requests|socket|smtplib)|from (httpx|requests|smtplib|urllib\.request|http\.client|email)|urllib\.request|email\.mime|sendmail|webbrowser|llm_gateway" agents/kd_quote.py agents/kd_catalog.py connectors/b2b_form.py`
+    rỗng; `egress_modules` không chứa 3 file (W82.8)
+  - Rượu: test W82.2 (`ruou_khong_bao_gia`), W82.3 (request có rượu → 0 mục),
+    W82.5 (md + html catalog không rượu), W82.6 (trang form không rượu, key rượu
+    bị từ chối), W82.7 (trap_hard) xanh; `data/b2b_pricing.json` không key rượu
+  - CLI: `python -m agents.kd_quote --check-matrix` exit 0; `python -m
+    agents.kd_quote --requests` exit 0 (DB thật, đọc); `python -m
+    agents.kd_quote --quote 999999999 --dry-run` exit 1 (không thấy); `python
+    -m agents.kd_quote --verify-send 999999999 <file>` exit 1; `python -m
+    agents.kd_catalog --build --bom data/sample_bom.json --out-dir
+    <scratchpad>` exit 0; `python -m connectors.b2b_form` (không
+    `B2B_FORM_ENABLED`) exit 2; `python -m pipelines.director --all
+    --dry-run` exit 0; `python scripts/agent_eval.py --validate` exit 0;
+    `python scripts/dpia_draft.py --check` exit 0; mọi CLI 2 op cùng lúc → exit 2
+  - DB thật trước/sau toàn bộ gate: `b2b_requests`, `contacts`, `consents`,
+    `approval_queue`, `approvals`, `cogs_versions`, `auto_policies`,
+    `llm_usage` số dòng KHÔNG đổi (không row test sót, không tự duyệt, 0 LLM)
+  - `git diff --stat`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); không đụng `docs/roles.sql`, `requirements.txt`,
+    `pipelines/guardrail.py`, `pipelines/approval_queue.py`; `ingest/crm.py`
+    chỉ đổi `PURPOSES` + docstring; `lv2-market-top.png` giữ untracked;
+    fixture không chứa tên/SĐT/email người thật (SĐT test dạng `09xxxxxxxx`
+    giả, tên "Nguoi Lien He Mau")
+- [ ] **external-dep** GĐ bán hàng + tài chính chốt ma trận chiết khấu, ngưỡng
+  biên, cách tính VAT, chi phí bao bì hộp/thiệp, rồi điền `finance_confirmed`/
+  `sales_confirmed` (hệ thống không tự điền); ký `auto_policies` cho
+  `b2b_quote_matrix` nếu muốn lane tự đạt (kiểm 10% = quy trình người).
+- [ ] **external-dep** Giá vốn thật (GĐ SX lập, tài chính duyệt qua
+  `agents.fp_pnl --cogs-approve`); Pháp chế: câu đồng ý + `policy_version` b2b,
+  TPBVSK chưa XNQC trong báo giá, điều kiện rượu B2B; DPIA luồng form ký.
+- [ ] **external-dep** Domain/hosting/TLS cho form + role DB hẹp; logo/font
+  thương hiệu + PDF dựng sẵn; packshot thật; người gửi báo giá/catalog (GĐ bán
+  hàng) — hệ thống không gửi.
+
+Vòng sửa nghiệm thu (cold-check, 3 MINOR — evidence `evidence/v82_fix_vong2.log`,
+`evidence/v82_pytest_vong2.log`, `evidence/v82_pytest_vong2b.log`):
+- [x] **F1 A09 IP thô qua handle_error mặc định** — `FormServer.handle_error`
+  override: stderr chỉ `[b2b_form] lỗi kết nối ip=<hash8> <TênLớpLỗi>`, không
+  IP/traceback. Test: `test_client_rst_mid_body_no_raw_ip` (raw socket
+  SO_LINGER 0 → RST giữa body, chờ event không sleep),
+  `test_unexpected_intake_error_no_raw_ip` (RuntimeError từ intake). Mutation:
+  bỏ override → 2 test đỏ.
+- [x] **F2 A04/A01 form lật lại consent b2b đã rút** — `intake`: `add_contact`
+  trả new=False và dòng b2b hiện hành `granted=false` → rollback, 0 ghi, trang
+  chung, log `yc=-` (vòng 2 còn khác body với OK → oracle, vá ở F4). Contact cũ chưa rút
+  vẫn nhận (`test_intake_existing_contact_granted_still_ok`). Rủi ro "consent web
+  không xác minh SĐT" (OTP/double opt-in = external-dep; GĐ bán hàng gọi xác minh
+  danh tính) ghi vào gaps DF-31 `data/data_flow_map.json` → sinh lại
+  DPIA/TIA (`dpia_draft --check` exit 0). Test:
+  `test_intake_withdrawn_b2b_not_regranted` (can_contact vẫn False, đếm 3 bảng
+  không đổi, không PII/IP ở log). Mutation: bỏ chặn → đỏ.
+- [x] **F4 (vòng 3, MINOR A01/A04) oracle dò vault qua mã YC** — vòng 2
+  POST hợp lệ trả "mã YC-<id>" còn SĐT đã rút b2b trả trang không mã → người
+  lạ phân biệt được "SĐT X đã rút đồng ý b2b". Chọn phương án (a):
+  `connectors/b2b_form.py` trang công khai `PAGE_OK` cố định, KHÔNG hiện mã YC
+  ở mọi nhánh 200 (nhận mới / gửi lại / đã rút / honeypot) — cũng hết lộ id
+  tuần tự (lưu lượng YC). Mã YC chỉ ở log stdout `yc=<id>` + CLI GĐ
+  `kd_quote --requests`. Sửa docstring module + comment do_POST (bỏ câu sai
+  "không lộ trạng thái vault"). Test: `test_intake_withdrawn_b2b_not_regranted`
+  thêm POST hợp lệ SĐT khác → `body_ok == body == bf.PAGE_OK` (và đúng là đã
+  ghi +1 b2b_requests); `test_post_wrong_type_415_and_429`,
+  `test_intake_db_vault_consent_no_pii` assert body == PAGE_OK, gửi-lại-cùng-mã
+  chuyển sang so `yc=` trong log. Mutation: hiện lại YC khi rid≠None → 3 test
+  đỏ. Gate vòng 3: targeted ×3 = 216 passed ×3; ruff sạch; full pytest 3678
+  passed, 1 failed = `test_garden_director::test_bulletin_numbers_match_reference_sql`
+  (cùng fail lệ thuộc NGÀY THẬT đã ghi ở Gate vòng sửa — ngoài boundary, file
+  garden không đổi). Evidence `evidence/v82_fix_vong3.log`.
+- [x] **F3 biên làm tròn trước khi so ngưỡng** — `classify` so số nguyên
+  `(total - cogs_total) * 100 < min_margin_pct * total` (quantize chỉ hiển thị).
+  Test `test_margin_threshold_compares_unrounded` (494900 → đúng 30% within;
+  495182/495200 → `bien_duoi_nguong`; bắt cả đột biến `<`→`<=`). Suite `kd_a3`
+  v2: +kd-w03 (đúng ngưỡng) +kd-p11 (29.96%), `cases_sha256` mới,
+  `test_qa_harness` 20 ca / PASS 20/20.
+- [x] **Gate vòng sửa** — targeted (`test_b2b_form` + `test_kd_quote` +
+  `test_qa_harness` + `test_dpia_draft`) ×3 = 216 passed ×3; ruff sạch;
+  `agent_eval --agent kd_a3 --no-record` PASS 20/20; `dpia_draft --check`
+  exit 0. Full pytest lần 1: 3677 passed, 2 failed (log cắt tail — tên 1 fail
+  mất, không tái hiện); lần 2: 3678 passed, 1 failed =
+  `test_garden_director::test_bulletin_numbers_match_reference_sql` — NGOÀI
+  boundary, lệ thuộc NGÀY THẬT: fixture ghi `garden_media.created_at = now()`
+  (đồng hồ máy đã sang 2026-10-13) nhưng bản tin hỏi cửa sổ kết thúc
+  2026-10-12 → mục 6 rỗng; file garden không đổi trong diff v8.2 (ghi someday,
+  không vá ở đây). 0 skipped (docker chạy được ở lần này).
+
+Ngoài phạm vi (ghi để không cuốn vào): kiểm tồn khả dụng/"vượt tồn → per_item"
+(flows F16 — đọc `inventory_snapshots`); nối `b2b_requests` ↔ `org_prospects`
+(v8.3) / `leads`; nhập yêu cầu báo giá qua CSV/điện thoại (GĐ dùng form local);
+kiểm mẫu 10% lane auto_policy; job xóa theo retention; grant `roles.sql` hẹp
+cho `b2b_requests`; CAPTCHA/anti-bot ngoài rate-limit + honeypot; combo quà
+0,5–2 triệu; PDF dựng sẵn bằng thư viện.
+
+v8.2 đóng 2026-10-13 (workflow resume từ build; full pytest worker 3672 pass;
+vòng 0: PASS/FIX/FIX — 3 finding; vòng 1 FIX còn 1; vòng 2 PASS, 0 mở. Finding
+chính: form công khai lộ trạng thái vault — SĐT đã rút đồng ý b2b trả trang khác
++ mã YC tuần tự lộ lượng yêu cầu → mọi nhánh 200 trả cùng `PAGE_OK` không mã YC,
+mã chỉ ở log nội bộ + CLI `kd_quote --requests`; mutation check 3 test đỏ).
+Gate coordinator chạy lại: ruff sạch, test b2b_form/kd_quote/kd_catalog + test
+dây chuyền (crm/director/lead_store/store/sales_director/eval/qa) xanh,
+`agent_eval --validate`, `dpia_draft --check`. External-dep: GĐ bán hàng + tài
+chính chốt ma trận chiết khấu/ngưỡng biên/VAT/bao bì (`finance_confirmed`/
+`sales_confirmed`; ma trận hiện GIẢ ĐỊNH → mọi báo giá per_item), ký
+`auto_policies` b2b_quote_matrix nếu muốn lane tự đạt, giá vốn thật đã duyệt,
+Pháp chế chốt câu đồng ý + `policy_version` b2b (`b2b-v0-nhap`), TPBVSK chưa XNQC
+trong báo giá, điều kiện bán rượu B2B, ký DPIA luồng form; domain/hosting/TLS/
+reverse proxy (rate-limit/giới hạn kết nối ở tầng proxy, không tin
+X-Forwarded-For), grant role DB hẹp `b2b_requests`, logo/font/PDF, packshot
+thật, người gửi báo giá thật (hệ thống không có đường gửi). Someday: trần toàn cục
+60/giờ bị trừ cả POST rác (khóa form bằng ~12 IP); slowloris ThreadingHTTPServer;
+form không xác minh SĐT + trùng SĐT giữ PII cũ (ghi vào DF-31 gaps/sop);
+docs/docstring ghi sha256(ip) trong khi code dùng HMAC muối; catalog bậc giá
+không kiểm giá sàn golden; FK consent_id không ràng buộc đúng contact + purpose
+b2b; mục sales bị từ chối khi finance còn pending → --quote --submit lại tạo
+lệch cặp; margin_pct làm tròn hiện '30.0% (ngưỡng 30%)' cạnh bien_duoi_nguong;
+nhánh _Withdrawn khác đường xử lý (timing); race `_Dup` chưa test;
+test_director:258 dòng dính space.
+
 Nhánh `ai-infra`: M31 đợt gộp 5 (2026-10-12) — v4.3, v9.1, v8.3, v5.1, v6.2 đã gộp
 (66 bảng; full pytest 3530 pass + 3 đỏ tích hợp đã vá). Tích hợp: mã luồng DF-26
 (v4.3), DF-27 (v9.1), DF-28 (v8.3), DF-29/30 (v5.1) + DPIA/TIA 30 luồng; lô B2B

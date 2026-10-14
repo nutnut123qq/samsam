@@ -1557,6 +1557,72 @@ online_ok → mọi phiếu thật đều bị chặn tới khi hồ sơ (tự c
 Exit chung: 0 ok/skip · 1 bị chặn (in mã) / cấu hình / DB lỗi · 2 tham số
 sai hoặc DB down.
 
+## 5s. Báo giá B2B quà Tết (v8.2, KD-A3 — WP11; agent KHÔNG tự gửi/liên hệ)
+
+**Ma trận báo giá:** `data/b2b_pricing.json` là bản GIẢ ĐỊNH (bậc số lượng ×
+chiết khấu × SKU/combo, ngưỡng biên `min_margin_pct`). Kiểm: `python -m
+agents.kd_quote --check-matrix` (exit 0 hợp lệ / 1 lỗi). Khi GĐ bán hàng +
+tài chính chốt: sửa số, điền `finance_confirmed`/`sales_confirmed` =
+`{"by": "<tên>", "at": "YYYY-MM-DD"}` (NGƯỜI điền — hệ thống không tự điền).
+Còn `null` → MỌI báo giá đi per_item (mã `ma_tran_chua_xac_nhan`). Rượu
+KHÔNG BAO GIỜ được thêm vào ma trận (`--check-matrix` báo lỗi).
+
+**Form B2B (nhận yêu cầu):** chỉ bật SAU khi DPIA luồng DF-35 được ký:
+`B2B_FORM_ENABLED=1 python -m connectors.b2b_form` (đặt biến trong env tiến
+trình — .env KHÔNG bật được; thiếu → exit 2; khóa `CONTACT_VAULT_KEY` lỗi →
+exit 2) → `http://127.0.0.1:8791/b2b` (`B2B_FORM_HOST`/`B2B_FORM_PORT`;
+domain + TLS + reverse proxy = external-dep). Form chỉ liệt kê đúng tập sản
+phẩm của catalog. Chặn: > 8 KB (413), không phải form urlencoded (415),
+chunked (411), > 5 lượt/IP/giờ hoặc 60 lượt/giờ toàn form (429), honeypot
+(trả trang chung, không ghi). Tên/SĐT/email người liên hệ vào `contacts`
+(mã hóa) + đồng ý mục đích `b2b` (`policy_version` `b2b-v0-nhap` — NHÁP chờ
+Pháp chế); bảng `b2b_requests` chỉ giữ `contact_id`. Log chỉ
+`[b2b_form] <mã> ip=<hash> yc=<id>`.
+
+**Báo giá (GĐ bán hàng):**
+1. `python -m agents.kd_quote --requests` → danh sách `YC-<id>` (không PII).
+2. `python -m agents.kd_quote --quote <ID> [--discount <PCT>] [--date
+   YYYY-MM-DD]` → in phân loại + lý do; ghi nháp `data/reports/bao-gia-
+   <số>.md` + `.html` + `-noi-bo.md` (bản nội bộ: biên, giá vốn — KHÔNG gửi
+   khách). `--dry-run` = chỉ in. Dòng rượu / mã lạ / số lượng sai → exit 1,
+   không sinh báo giá (rượu: hệ thống không báo giá — GĐ xử lý NGOÀI hệ
+   thống khi Pháp chế xác nhận đủ điều kiện). Cổng chặn (vd tên tổ chức chứa
+   từ cấm như "Nhà thuốc ...") → exit 1: GĐ soạn tay.
+3. `--quote <ID> --submit` → hàng duyệt: trong ma trận + biên đạt + giá vốn
+   ĐÃ duyệt → `b2b_quote_matrix` (risk low — CHỈ tự đạt khi chủ khối đã ký
+   `auto_policies` cho loại này + suite `kd_a3` pass; ship → chờ người duyệt);
+   ngoài ma trận / TPBVSK chưa XNQC / vượt CK / dưới giá sàn → `b2b_quote`
+   (risk high); biên dưới ngưỡng hoặc thiếu giá vốn đã duyệt → thêm mục
+   `finance/b2b_margin_review` cho tài chính (cùng 1 transaction). Chạy lại
+   cùng số báo giá → `[skip]`.
+4. Người duyệt (≠ agent): `python -m pipelines.approval_queue --approve <QID>
+   --by "<tên>"` (tài chính duyệt mục `b2b_margin_review` trước khi GĐ bán
+   hàng ký báo giá).
+5. `python -m agents.kd_quote --export <QID> --out <file>.md|.html` (chỉ mục
+   ĐÃ duyệt, khớp sha256). HTML → mở trình duyệt → In → Lưu PDF (A4).
+6. Trước khi gửi: `python -m agents.kd_quote --verify-send <QID> <file>` →
+   exit 0 "KHỚP bản đã duyệt — GĐ bán hàng tự gửi". Exit 1 "LỆCH" = file bị
+   sửa (kể cả 1 ký tự) / chưa duyệt / sai loại → KHÔNG gửi. NGƯỜI tự gửi
+   (email/Zalo của GĐ) — hệ thống không có đường gửi.
+
+**Catalog quà Tết:** `python -m agents.kd_catalog --build [--bom
+data/sample_bom.json] [--packshot-dir <thư mục ảnh>]` → `data/reports/
+catalog-tet-<ngày>.md` + `.html` (loại rượu, TPBVSK chưa XNQC, combo dính
+các SKU đó; nhãn "Quảng cáo"; ảnh `<key>.png` đặt cạnh HTML trong thư mục
+`packshots/`). `--submit` → mục `b2b_catalog` (risk high) → duyệt →
+`--export <QID> --out <file>` → `--verify-send <QID> <file>` KHỚP → người tự
+gửi. Dữ liệu thật hiện chỉ còn 3 mã mật ong (mọi TPBVSK chưa XNQC).
+
+| object_type | Khối | Rủi ro | Ai duyệt |
+|---|---|---|---|
+| `b2b_quote_matrix` | sales | low | GĐ bán hàng (auto_policy chỉ khi chủ khối ký) |
+| `b2b_quote` | sales | high | GĐ bán hàng |
+| `b2b_catalog` | sales | high | GĐ bán hàng |
+| `b2b_margin_review` | finance | high | Tài chính (TGĐ tạm) |
+
+Exit chung: 0 ok · 1 bị chặn (problems / cổng / chưa duyệt / lệch hash /
+ma trận lỗi) · 2 tham số sai hoặc DB down.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):

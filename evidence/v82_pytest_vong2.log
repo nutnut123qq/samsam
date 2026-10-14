@@ -1,0 +1,19 @@
+== full: python -m pytest -q -rs (vong 2 fix cold-check)
+            assert f"- {gd.fmt_reminder(r)}" in text
+        rows4 = db.execute(sqls[6]).fetchall()
+        assert rows4
+        for p, mau, that in rows4:
+            assert f"| {p} | {that} | {mau} |" in text
+        flagged = [r for r in db.execute(sqls[7]) if gd.log_flags(r[4])]
+        assert [f"#{r[0]} " in text for r in flagged] == [True] * len(flagged)
+>       assert db.execute(sqls[8]).fetchall() == [("KV-A01", 1)]
+E       AssertionError: assert [] == [('KV-A01', 1)]
+E         
+E         Right contains one more item: ('KV-A01', 1)
+E         Use -v to get more diff
+
+tests\test_garden_director.py:329: AssertionError
+2 failed, 3677 passed in 2591.77s (0:43:11)
+== ruff check .
+All checks passed!
+== EXIT

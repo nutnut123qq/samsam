@@ -437,11 +437,15 @@ def test_schema_tables_view_constraints(db):
     db.execute("insert into consents (contact_id, purpose, granted, source, "
                "recorded_by) values (%s, 'marketing', false, 'web', 'x')",
                (cid,))
+    # v8.2: `b2b_requests` FK → consents nên TRUNCATE trần bị chặn bởi FK
+    # TRƯỚC trigger; CASCADE thì trigger append-only (cả 2 bảng) chặn.
     for sql in ("update consents set granted = true",
-                "delete from consents", "truncate consents"):
+                "delete from consents", "truncate consents",
+                "truncate consents cascade"):
         with pytest.raises(psycopg.Error) as e, db.transaction():
             db.execute(sql)
-        assert "append-only" in str(e.value)
+        assert "append-only" in str(e.value) or (
+            sql == "truncate consents" and "foreign key" in str(e.value))
     lid = _lead(db, "giá bao nhiêu")
     _raises(db, CheckViolation,
             "update leads set status = 'bogus' where id = %s", (lid,))

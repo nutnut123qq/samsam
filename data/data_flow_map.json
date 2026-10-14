@@ -866,6 +866,40 @@
         "Tên cột file review là GIẢ ĐỊNH — đối chiếu 1 file xuất thật từ Seller Center (external-dep)",
         "DPIA chưa ký → `social_mentions` không có text, đề xuất trả lời chỉ theo nhãn"
       ]
+    },
+    {
+      "id": "DF-35",
+      "name": "Form B2B yêu cầu báo giá + báo giá KD-A3 (v8.2)",
+      "modules": [
+        "connectors/b2b_form.py",
+        "agents/kd_quote.py",
+        "ingest/crm.py"
+      ],
+      "data": "Tên + loại + tỉnh của TỔ CHỨC, tên/SĐT/email NGƯỜI LIÊN HỆ của tổ chức (vault Fernet), sản phẩm/số lượng/ngày cần hàng, IP người gửi (chỉ băm sha256 in-memory cho rate-limit, không ghi đĩa)",
+      "class": "do",
+      "subjects": "Người liên hệ của doanh nghiệp/khách sạn/đơn vị sự kiện/hiệp hội/cơ quan đặt quà Tết",
+      "purpose": "Nhận yêu cầu báo giá quà Tết B2B; lập báo giá NHÁP cho GĐ bán hàng duyệt rồi NGƯỜI tự gửi (đồng ý mục đích `b2b`)",
+      "storage": "Postgres: `contacts` (tên/SĐT/email MÃ HÓA Fernet, tra trùng HMAC), `consents` (mục đích `b2b`, nguồn `web`, `policy_version` b2b-v0-nhap), `b2b_requests` (insert-only — chỉ `contact_id`/`consent_id`, không PII người); báo giá trong `approval_queue` (KHÔNG tên/SĐT/email người liên hệ) + nháp `data/reports/bao-gia-*` (gitignored)",
+      "retention": "GIẢ ĐỊNH — Pháp chế chốt thời hạn giữ yêu cầu báo giá/người liên hệ; chưa có job xóa theo hạn: GAP",
+      "recipients": "Không — hệ thống không gửi; GĐ bán hàng tự gửi báo giá đã duyệt (`--verify-send` KHỚP sha256)",
+      "cross_border": false,
+      "safeguards": [
+        "Endpoint mặc định TẮT (`B2B_FORM_ENABLED` env tiến trình, .env không bật được), bind 127.0.0.1 mặc định",
+        "Rate-limit 5 lượt/IP/giờ + 60 lượt/giờ toàn form, body ≤ 8 KB, chặn chunked/Content-Type lạ, honeypot — kiểm TRƯỚC khi đọc body/DB",
+        "Không echo input ở trang lỗi; log stdout chỉ mã + hash IP + mã YC; lỗi kết nối/ngoại lệ bất ngờ → stderr chỉ hash IP + tên lớp lỗi (không IP thô/traceback)",
+        "Đồng ý mục đích `b2b` bắt buộc (append-only), PII chỉ trong vault mã hóa",
+        "Báo giá do template + code tính (0 LLM, 0 egress), qua `check_publish` + quét PII/rượu trước khi vào hàng duyệt",
+        "Rượu không bao giờ vào form/báo giá/catalog"
+      ],
+      "legal_basis": "Đồng ý của người liên hệ (mục đích `b2b`, câu đồng ý NHÁP b2b-v0-nhap chờ Pháp chế): GAP tới khi Pháp chế chốt câu đồng ý + `policy_version`",
+      "gaps": [
+        "`policy_version` b2b-v0-nhap + câu đồng ý là NHÁP — Pháp chế chốt",
+        "Tên hộ kinh doanh có thể là tên người (cột `org_name` không mã hóa) — kiểm mẫu tay",
+        "Chưa grant role DB hẹp cho form public (chạy DSN chủ sở hữu) — external-dep",
+        "DPIA luồng form chưa ký — KHÔNG bật endpoint trước khi ký",
+        "Chưa có job xóa theo thời hạn lưu (retention)",
+        "Consent web KHÔNG xác minh SĐT (OTP/double opt-in = external-dep): người lạ gõ SĐT người khác tạo được yêu cầu + đồng ý b2b; SĐT trùng contact đã RÚT b2b → bỏ qua 0 ghi (code chặn), contact cũ giữ tên/email trong vault — GĐ bán hàng gọi xác minh danh tính trước khi gửi báo giá"
+      ]
     }
   ]
 }

@@ -66,10 +66,10 @@ def test_deterministic_suites_are_guardrail_and_co_khi():
 
     det = {n for n in ae.suite_names() if ae._deterministic(ae.load_suite(n))}
     # v6.5: + mkt_seo (seo_san.suggest thuần — 0 mạng/LLM/DB); v6.3: + mkt04
-    # v6.4: + mkt_ads_ugc
+    # v6.4: + mkt_ads_ugc; v8.2: + kd_a3
     assert det == {"guardrail", "co_khi", "mkt02", "mkt03", "mkt04",
                    "sales_director", "kd_a1", "mkt_seo", "kd_a5",
-                   "mkt_ads_ugc"}
+                   "mkt_ads_ugc", "kd_a3"}
     assert not ae._deterministic(ae.load_suite("chatbot"))
     skel = [n for n in ae.suite_names()
             if ae.load_suite(n)["status"] == "skeleton"]
@@ -79,7 +79,8 @@ def test_deterministic_suites_are_guardrail_and_co_khi():
     assert "guardrail + co_khi" in ci and "mkt02 + sales_director" in ci \
         and "+ kd_a1 — v4.5i/v5.1" in ci and "+ mkt03 — gộp v6.2" in ci \
         and "+ mkt_seo — v6.5" in ci and "+ kd_a5 — v5.3" in ci \
-        and "+ mkt04 — v6.3" in ci and "+ mkt_ads_ugc" in ci
+        and "+ mkt04 — v6.3" in ci and "+ mkt_ads_ugc" in ci \
+        and "+ kd_a3 — v8.2" in ci
 
 
 def test_test_job_has_no_secrets(doc):
