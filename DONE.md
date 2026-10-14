@@ -6,6 +6,389 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+## Checklist v10.0-hdtv-bks
+
+Khán giả/mục đích: M31 (worktree `D:\code\samsam-w41`) — làm 3 hạng mục đầu
+của WP16 "Agent P2 và nâng cấp nền" (pmo.md dòng `| WP16`): **Gói báo cáo
+HĐTV**, **Đối soát độc lập**, **Audit inside-out của BKS** (thiết kế khối
+Điều hành — key `ceo` trong ctx/final_plans.json: mục tiêu 3 "Gói HĐTV hằng
+tháng: tiến độ P0–P3, rủi ro pháp lý, chi so với ngân sách vận hành", "ép
+trình bản fail → override_qa tự vào gói HĐTV", "Kiểm soát hằng ngày: … Inside-
+out đọc `agent_action_log`. Đối soát: Tài chính giữ nghiệp vụ hằng ngày; BKS
+hậu kiểm — ≤200 đơn/tuần kiểm 100%, vượt ngưỡng lấy mẫu n kèm seed ghi log",
+Mục 5 giới hạn "xóa dòng CUỐI chuỗi"). Nền đã có (đọc code thật, TÁI DÙNG):
+cockpit v8.0 (`channel_snapshots`, `agents.ceo_report.build`/`period_label`/
+`fmt_value`/`fmt_delta`, `data/metrics.json`), section v8.1
+(`agents.ceo_decisions.section`, `agents.ceo_risk.section`,
+`agents.ceo_audit.section` — outside-in P1), v9.0 `settlement_rows` +
+`recon_results` (`ingest.settlement_csv.reconcile_row`/`load_fees`/
+`order_hash`), v9.1 `agents.fp_pnl.compute`, `agents.fp_opscost.summary`,
+hash chain `verify_action_log()` (+ `pipelines.store.verify_log`) và
+`verify_plot_logs()`, `approvals` + `verify_publish`, `approval_queue` +
+`decisions` (`override_qa`), `docs/roles.sql` (`agent_writer`/`app_human`).
+Hiện trạng: chưa có gói HĐTV (chỉ trang tuần/tháng TGĐ); `recon_results` do
+CHÍNH module nạp ghi — không ai tính lại độc lập, không ai đối chiếu thực nhận
+quyết toán ↔ đơn sàn ↔ P&L ↔ số cockpit báo TGĐ; hash chain chỉ kiểm từng
+CLI riêng, không ai đối chiếu `approvals` ↔ `agent_action_log` ↔ nội dung
+đang phát hành, không ai rà quyền role; xóa dòng cuối chuỗi không phát hiện.
+Sau version: (1) bảng `audit_runs` (sổ lần chạy kiểm soát, append-only) +
+role DB `bks_reader` chỉ đọc; (2) `agents/bks_audit.py` audit inside-out
+(chuỗi hash + neo đuôi, duyệt ↔ nội dung ↔ log, override/quyết định bất
+thường, quyền role); (3) `agents/bks_recon.py` đối soát độc lập 4 nguồn có
+nguồn từng khác biệt + lấy mẫu có seed; (4) `agents/hdtv_report.py` gói HĐTV
+tháng/quý markdown, mọi số do code điền + có nguồn (test grounding).
+
+Quy ước: ponytail — stdlib + `psycopg` sẵn có, KHÔNG dep mới, KHÔNG LLM,
+KHÔNG mạng (3 module mới vào `NEW_SCRIPTS` của `tests/test_data_flow_map.py`
+— "không gửi gì ra ngoài"). PDF = ngoài phạm vi (markdown là bản chuẩn; PDF
+cần dep nặng → someday). Đúng 1 bảng mới `audit_runs`; KHÔNG `alter`/`drop`
+bảng cũ (drift-guard `test_schema_no_alter_drop_table`); test KHÔNG đếm cứng
+số bảng (sàn ≥ 24 / parse schema.sql). Ba module CHỈ ĐỌC mọi bảng nghiệp vụ;
+đường ghi DUY NHẤT: `insert into audit_runs` (bks_audit/bks_recon/
+hdtv_report `--record`) và `director.submit` khối `ceo` (`hdtv_report
+--submit`, loại việc `hdtv_pack`). Kỳ CHỈ qua `pipelines.period.period_bounds`
+(tháng, giờ VN); quý = 3 tháng liên tiếp `YYYY-Qn` (KHÔNG thêm `quarter` vào
+`period.KINDS` — `channel_snapshots.period_kind` CHECK chỉ `day|week|month`,
+cấm alter). Kỳ chưa đóng (`end_excl > now` giờ VN) → exit 2. Báo cáo/stdout
+KHÔNG chép mã đơn, `order_id_hash`, tên/SĐT người mua, text bài/tiêu đề
+listing — trỏ dòng bằng `file_name dòng N` / `market_snapshots#id dòng N` /
+`channel_snapshots#id` / `#id` nội bộ; tên người nội bộ + lý do override qua
+`_mask_pii` + `_oneline`. File ra `data/reports/` (gitignored). Connect qua
+`ingest.lead_store.connect` (connect_timeout; guard
+`tests/test_connect_timeout_guard.py`); print tiếng Việt → UTF-8 guard; CLI
+`n_ops > 1` → usage exit 2 TRƯỚC connect; ghi trên conn chia sẻ →
+`conn.commit()` tường minh; format-spec chỉ trên biến đã coerce; `__main__`
+bọc `pipelines.job_runs.job_run(...)`. Test DB thật: schema tạm +
+`docs/schema.sql` + `docs/roles.sql` rồi ROLLBACK (fixture như
+`tests/test_ceo_audit.py::ceo_db` + `TxConn` ghi log SQL), giả mạo bằng
+superuser `set local session_replication_role = replica` trong tx rollback
+(precedent `tests/test_auth_approval.py`); skip khi không DB nhưng gate đòi
+**0 skipped**. KHÔNG ghi `audit_runs`/`approval_queue` trên DB thật ngoài test
+rollback (CLI trên DB thật: `--dry-run`, case âm, hoặc `--out-dir` scratchpad
+không `--record`).
+
+External-dep (KHÔNG giả lập như thật, KHÔNG tự đánh dấu): chữ ký HĐTV/BKS
+trên gói và trên biên bản audit; danh sách thành viên HĐTV/BKS thật (role
+`bks_reader` chỉ là role DB nologin — login thật do hạ tầng tạo `in role
+bks_reader` khi có người); số liệu thật (Seller Center/kế toán — version này
+chỉ fixture MẪU, báo cáo gắn `(MẪU)` khi nguồn `sample:`/file `*_MAU`); neo
+head hash vào bucket object-lock + bộ kiểm chứng độc lập trong tài khoản cloud
+do HĐTV đứng tên (version này chỉ neo nội bộ qua `audit_runs` — KHÔNG chống
+được superuser xóa cả `audit_runs`, ghi rõ giới hạn trong báo cáo); TGĐ duyệt
+mục `hdtv_pack` (`approvers: []`); bản PDF có chữ ký.
+
+- [x] **W100.1 Bảng `audit_runs` + role `bks_reader` chỉ đọc** —
+  `docs/schema.sql` thêm khối "v10.0 HĐTV/BKS (WP16)": `audit_runs (id
+  identity pk, kind text check in ('inside_out','recon','hdtv_pack'),
+  period_label text not null check (period_label ~ '^[0-9]{4}-(0[1-9]|1[0-2]
+  |Q[1-4])$'), params jsonb not null default '{}' (seed, cỡ mẫu, head chuỗi
+  — KHÔNG PII), findings int not null check (>= 0), report_sha256 text not
+  null check (~ '^[0-9a-f]{64}$'), run_by text not null check (btrim(run_by)
+  <> '') (agent ghi `agent:bks_audit`/`agent:bks_recon`/`agent:hdtv_report`
+  — sổ lần chạy máy, không phải chữ ký người), created_at timestamptz default
+  now(), db_role text default session_user)` + trigger `audit_runs_append_
+  only_row` (before update or delete → `append_only_guard()`) +
+  `audit_runs_no_truncate` (for each statement). `docs/roles.sql`: tạo
+  `bks_reader nologin` trong khối `do $$` + thêm vào câu `revoke all ...
+  from agent_writer, app_human` (chạy lại không cộng dồn); grant: `usage`
+  schema; `select` trên ĐÚNG các bảng 3 module đọc (`agent_action_log`,
+  `approvals`, `approval_queue`, `decisions`, `decision_log`,
+  `content_drafts`, `channel_posts`, `plot_logs`, `settlement_rows`,
+  `recon_results`, `market_snapshots`, `market_rows`, `channel_snapshots`,
+  `cogs_versions`, `sku_master`, `llm_usage`, `opex_entries`, `audit_runs`
+  + bảng mà `ceo_decisions`/`ceo_risk`/`ceo_audit`/`fp_opscost` section đọc —
+  liệt kê từ code thật, không `all tables`); `insert (kind, period_label,
+  params, findings, report_sha256, run_by) on audit_runs`; `execute`
+  `verify_action_log()`, `verify_plot_logs()`, `verify_publish(text,text,
+  text)`. KHÔNG grant UPDATE/DELETE/TRUNCATE bất kỳ bảng nào, KHÔNG execute
+  function ghi (`approve_draft`, `decide_item`, `override_qa`...). `agent_
+  writer`/`app_human` KHÔNG có quyền gì trên `audit_runs` (owner ghi khi chạy
+  DSN chủ; chạy role thì dùng `bks_reader`).
+  - Boundary: `docs/schema.sql`, `docs/roles.sql`, `tests/test_bks_audit.py`
+    (mới)
+  - Gate: `python scripts/apply_schema.py --roles` ×2 sạch (idempotent);
+    test DB: `update`/`delete`/`truncate audit_runs` (owner) → raise
+    "append-only"; dưới `set local role bks_reader`: SELECT mọi bảng liệt kê
+    OK, `insert into audit_runs` 6 cột OK, `insert into approvals`/`update
+    content_drafts`/`delete from agent_action_log`/`select decide_item(...)`
+    → `InsufficientPrivilege`; `rolcanlogin` của `bks_reader` = false; CHECK
+    `period_label` từ chối `2026-13`, `2026-Q5`, `2026-W41`;
+    `test_schema_no_alter_drop_table` (tests/test_fp_pnl.py) vẫn xanh
+  - Evidence: `evidence/v100_schema.log`
+  - Kết quả (worker): `audit_runs` + 2 trigger append-only; `bks_reader` SELECT 23 bảng (liệt kê từ code: + `market_alerts`, `project_milestones`, `red_alerts`, `red_alert_acks`, `xnqc_dossiers` của section v8.1) + INSERT 6 cột + EXECUTE 3 verify. `apply_schema --roles` ×2 exit 0 (72 bảng) — `evidence/v100_schema.log`. Dây chuyền ngoài boundary: `tests/test_handover_docs.py::test_sop_warns_role_dsn_while_grants_partial` chỉ tính grant cho `agent_writer|app_human` (bks_reader đọc `llm_usage` làm test cũ đỏ).
+- [x] **W100.2 Audit inside-out — chuỗi hash + neo đuôi**
+  (`agents/bks_audit.py`) — `check_chains(conn, prev_heads: dict | None) ->
+  (heads, findings)`: gọi `verify_action_log()` + `verify_plot_logs()` (mỗi
+  cái trong savepoint; lỗi DB → finding `khong_kiem_duoc` cho chuỗi đó,
+  KHÔNG coi là nguyên vẹn); problem `row_hash`/`prev_hash`/`unchained` →
+  finding `chuoi_bi_sua` {bảng, id, problem}. `heads` = {bảng: {max_id,
+  row_hash, n}} (plot_logs: chỉ dòng `row_hash is not null`). Neo đuôi: lấy
+  `params.heads` của dòng `audit_runs` kind `inside_out` MỚI NHẤT; với mỗi
+  bảng: dòng `id = prev.max_id` không còn / `row_hash` khác → `mat_duoi_
+  chuoi` (bù giới hạn "xóa dòng cuối" của chuỗi thuần trong khoảng giữa 2
+  lần audit); `n` hiện tại < `prev.n` → `mat_duoi_chuoi`. Lần đầu (chưa có
+  run) → ghi chú "chưa có neo trước — lần audit đầu", KHÔNG finding. Giới
+  hạn ghi trong docstring + báo cáo: superuser xóa cả `audit_runs` thì neo
+  nội bộ mất — neo object-lock ngoài = external-dep.
+  - Boundary: `agents/bks_audit.py` (mới), `tests/test_bks_audit.py`
+  - Gate: test DB (superuser replica trong tx rollback): (a) chuỗi sạch →
+    0 finding; (b) `update agent_action_log set detail = '{"x":1}' where id =
+    <giữa>` → đúng 1 `chuoi_bi_sua` id đó problem `row_hash`; (c) `delete`
+    1 dòng giữa → `prev_hash` ở dòng kế; (d) `update plot_logs set detail`
+    → `chuoi_bi_sua` bảng plot_logs; (e) chèn plot_logs không-mẫu khi
+    trigger tắt → `unchained`; (f) ghi `audit_runs` neo → xóa dòng CUỐI
+    agent_action_log → run sau báo `mat_duoi_chuoi` (đối chứng: KHÔNG có neo
+    → `verify_action_log()` rỗng, audit không báo — chứng minh neo là thứ
+    bắt được); (g) `verify_plot_logs` bị revoke/thiếu → `khong_kiem_duoc`,
+    không "nguyên vẹn"
+  - Evidence: `evidence/v100_audit.log`
+  - Kết quả: 7 case (a)–(g) xanh (`test_chain_clean_then_tampered`, `test_tail_anchor_catches_last_row_delete` có đối chứng không neo, `test_chain_unverifiable_is_not_clean`) — `evidence/v100_audit.log`.
+- [x] **W100.3 Audit inside-out — duyệt ↔ nội dung đang phát hành ↔ log** —
+  `check_approvals(conn) -> findings` (tính lại, KHÔNG tin cột status):
+  (a) `content_drafts` status `approved` (+ đã xếp lịch): `verify_publish(
+  'content_draft', id, text)` false → `noi_dung_lech_ban_duyet` (text sửa
+  sau duyệt); (b) `approval_queue` status `approved`: sha256(payload) ≠
+  `content_sha256` hoặc `approvals` mới nhất của (object_type, object_id)
+  không phải approved cùng sha → `noi_dung_lech_ban_duyet`; (c) mỗi dòng
+  `approvals` phải có đúng dòng `agent_action_log` action ∈ {`draft_
+  approve`,`draft_reject`,`queue_approve`,`queue_reject`, + action của
+  function duyệt khác có trong schema — liệt kê từ `grep "insert into
+  approvals" docs/schema.sql`} với `detail->>'approval_id' = id` →
+  thiếu → `duyet_ngoai_function`; (d) approved mà `approved_by`/
+  `decided_by` = người tạo (so `lower(btrim)`) → `tu_duyet`; (e) queue
+  approved `qa_status='fail'` không có `decisions` `override_qa` →
+  `qa_fail_khong_override`. Không chép text/payload ra báo cáo — chỉ
+  `#id`, object_type, khối.
+  - Boundary: `agents/bks_audit.py`, `tests/test_bks_audit.py`
+  - Gate: test DB: dựng draft + mục hàng duyệt duyệt ĐÚNG qua `store.set_
+    status`/`decide_item` → 0 finding; rồi superuser replica trong tx: sửa
+    `content_drafts.text` của draft đã duyệt → (a); sửa `approval_queue.
+    payload` → (b); `insert into approvals` trực tiếp → (c); `update
+    approval_queue set decided_by = created_by` → (d); queue `qa_status
+    fail` approved không override → (e); mỗi case đúng 1 code, đúng `#id`
+  - Evidence: `evidence/v100_audit.log`
+  - Kết quả: APPROVAL_ACTIONS 10 action từ 8 function `insert into approvals` (draft_approve/reject, queue_approve/reject, queue_auto_approve, alloc_approve/reject, lot_intake, qr_lot_sign, cogs_approve); `tu_duyet` xét draft + mục hàng duyệt + giá vốn. 5 tamper mỗi case đúng 1 code.
+- [x] **W100.4 Audit inside-out — override_qa/quyết định bất thường + quyền
+  role + CLI** — `check_overrides(conn, start, end, max_per_person=3)`:
+  `decisions` kind `override_qa` trong kỳ → liệt kê TẤT CẢ (mục "Ép trình
+  QA" — đầu vào gói HĐTV) + bất thường: người override = người tạo mục →
+  `override_tu_trinh`; người override = người duyệt mục đó → `tu_ep_tu_duyet`;
+  1 người > `max_per_person` lần/kỳ → `override_don_dap`; `decision_log`
+  dòng `quyet_dinh` căn cứ `approval_queue:ID` mà mục đó không approved|
+  rejected → `can_cu_sai`. `check_privileges(conn)`: qua
+  `has_table_privilege`/`has_function_privilege` (catalog, không cần quyền
+  đặc biệt) cho `agent_writer`, `app_human`, `bks_reader`: UPDATE/DELETE/
+  TRUNCATE trên bảng append-only (`approvals`, `agent_action_log`,
+  `decisions`, `decision_log`, `audit_runs`, `plot_logs`) hoặc INSERT
+  `approvals` → `quyen_vuot`; `bks_reader` có bất kỳ INSERT/UPDATE/DELETE
+  nào ngoài INSERT `audit_runs` hoặc EXECUTE `approve_draft`/`decide_item`/
+  `override_qa` → `quyen_vuot`. CLI `python -m agents.bks_audit --report
+  [--month YYYY-MM] [--now ISO] [--out-dir DIR] [--record] [--dry-run]` →
+  `data/reports/bks-audit-<YYYY-MM>.md`: bảng tổng theo code + chi tiết
+  `#id`; `--record` → 1 dòng `audit_runs` (kind `inside_out`, params.heads,
+  findings, sha256 file, run_by `agent:bks_audit`) + `conn.commit()`;
+  `--dry-run` in ra stdout, 0 ghi. Exit 0 kể cả có finding (audit là báo,
+  không chặn) · 2 tham số sai / kỳ chưa đóng / DB down.
+  - Boundary: `agents/bks_audit.py`, `tests/test_bks_audit.py`
+  - Gate: test DB: 2 override hợp lệ → liệt kê, 0 bất thường; 3 case bất
+    thường mỗi case đúng 1 code; superuser trong tx `grant update on
+    approvals to agent_writer` → `quyen_vuot` đúng role/bảng (đối chứng
+    roles.sql sạch → 0); `TxConn` log: mọi SQL của `--report` không
+    `--record` là SELECT/`select verify_*`/savepoint (0 insert/update/
+    delete); `--record` đúng 1 `insert into audit_runs`; chạy toàn bộ
+    `--report --record` dưới `set local role bks_reader` thành công
+    (role đủ quyền, không cần owner); CLI usage combo `--report --dry-run
+    --record` → exit 2 trước connect; DB down (`DATABASE_URL` host chết) →
+    exit 2
+  - Evidence: `evidence/v100_audit.log`
+  - Kết quả: override 4 code + `quyen_vuot` (quyền kế thừa app_human←agent_writer chỉ báo ở role gốc); TxConn log chỉ SELECT; `--record` đúng 1 insert; `--report --record` dưới `bks_reader` OK; usage/kỳ mở/DB down/host chết → 2. `can_cu_sai` quét TOÀN sổ (không giới hạn kỳ — kiểm toàn vẹn).
+- [x] **W100.5 Đối soát độc lập doanh thu ↔ đơn sàn ↔ P&L ↔ cockpit**
+  (`agents/bks_recon.py`) — `collect(conn, month) -> dict` 4 nguồn theo
+  kênh (`shopee`, `tiktok`; cockpit `tiktok_shop` ↔ `tiktok` qua 1 dict
+  map): **Q** = `settlement_rows` `settled_on` trong tháng (Σ
+  `order_amount_vnd`, Σ `payout_vnd`, số dòng); **Đ** = Σ `price_vnd × qty`
+  của snapshot `order` MỚI NHẤT chứa mã (CÙNG quy tắc `ingest.settlement_csv.
+  _ORDER_SQL` — import, không chép SQL); **P** = `agents.fp_pnl.compute(conn,
+  month)` tổng `doanh_thu`/`thuc_nhan` theo kênh; **C** = `channel_snapshots`
+  `sales.settlement_vnd` kỳ `month` (ưu tiên `manual_export` như
+  `ceo_report._pick`). `diffs(src) -> list` THUẦN: Q.payout ↔ P.thuc_nhan
+  (`pnl_lech_quyet_toan`), Q.payout ↔ C (`cockpit_lech_quyet_toan`), Q.
+  order_amount ↔ Đ (`don_lech_quyet_toan`); thiếu 1 phía → `thieu_nguon`
+  (KHÔNG coi = 0); |Δ| ≤ `tolerance_vnd` của kênh (`data/settlement_fees.json`,
+  đọc qua `settlement_csv.load_fees`) → khớp. Mỗi khác biệt {code, kênh, tháng, a: {nguồn,
+  giá trị}, b: {nguồn, giá trị}, Δ, refs: [`file_name dòng N` |
+  `market_snapshots#id dòng N` | `channel_snapshots#id` | `pnl:<tháng>/<kênh>`]}.
+  Dòng: `recheck_rows(rows, orders, fees)` tính lại TỪNG dòng quyết toán bằng
+  `settlement_csv.reconcile_row` (thuần) rồi so `recon_results` đã lưu: nhãn/
+  expected khác → `nhan_lech` (đối soát Tài chính cũ/bị sửa), không có dòng
+  recon → `chua_doi_soat`; đơn trong snapshot order mới nhất không có dòng
+  quyết toán nào → `don_chua_quyet_toan` (refs dòng snapshot). Lấy mẫu:
+  `pick_sample(ids, seed, limit=200)` THUẦN — ≤ 200 dòng/kỳ → 100%, không
+  sample; > 200 → `random.Random(seed).sample` sắp xếp lại; seed = `--seed`
+  hoặc `secrets.randbits(32)`, ghi vào report + `audit_runs.params`
+  {seed, n_total, n_checked}. CLI `python -m agents.bks_recon --month
+  YYYY-MM [--seed N] [--now ISO] [--out-dir DIR] [--record] [--dry-run]` →
+  `data/reports/bks-recon-<YYYY-MM>.md`; `--record` → `audit_runs` kind
+  `recon`. CHỈ ĐỌC ngoài `audit_runs`. Exit 0 (kể cả có lệch) · 1 cấu hình
+  phí hỏng · 2 tham số/kỳ chưa đóng/DB down.
+  - Boundary: `agents/bks_recon.py` (mới), `tests/test_bks_recon.py` (mới),
+    `tests/fixtures/bks/` (mới — README + CSV MẪU lệch: bản sao
+    `tests/fixtures/finance/settlement_shopee_MAU.csv`/`order_shopee_MAU.csv`
+    với 1 dòng payout sai, 1 đơn không có quyết toán, 1 dòng quyết toán không
+    có đơn; dữ liệu GIẢ `FAKE*`, không PII thật)
+  - Gate: test thuần `diffs`: khớp → []; 3 code lệch + `thieu_nguon` (C
+    thiếu → KHÔNG ra `cockpit_lech` với 0); tolerance biên ±1; `pick_sample`
+    ≤200 → đủ, 250 → 200 phần tử, cùng seed → cùng tập, khác seed → khác;
+    test DB nạp fixture qua `ingest.market_csv.load` + `ingest.settlement_csv.
+    load`/`reconcile` (+ `channel_snapshots` 1 dòng lệch) → báo ĐÚNG các
+    lệch đã cài (code + kênh + refs `file dòng N`), fixture sạch → 0 lệch;
+    superuser replica `update recon_results set label='khop'` dòng đang lệch
+    → `nhan_lech`; report không chứa mã `FAKESET`, `order_id_hash`, SĐT
+    `0900…`, tên người nhận (assert regex); `TxConn` log chỉ SELECT (+ 1
+    insert `audit_runs` khi `--record`); chạy dưới `set local role
+    bks_reader` OK
+  - Evidence: `evidence/v100_recon.log`
+  - Kết quả: fixture `tests/fixtures/bks/` (sach/lech, tháng 09/2026). Thêm 2 code dòng ngoài hợp đồng để báo được lệch cài: `quyet_toan_lech` (tính lại = lech, kèm mã lý do) và `quyet_toan_khong_don` (tính lại = thieu_chung_tu). Bẩn → đúng 3 lệch cài + `don_lech` (300.000, refs dòng 13) + `cockpit_lech` (−50.000); sạch → 0 — `evidence/v100_recon.log`.
+- [x] **W100.6 Gói báo cáo HĐTV tháng/quý** (`agents/hdtv_report.py`) —
+  `build(conn, period: str, now) -> dict` với period `YYYY-MM` hoặc
+  `YYYY-Qn` (parse thuần `parse_period`; tháng/quý chưa đóng → `ValueError`
+  → exit 2). Mục cố định (thứ tự): (1) **Chỉ số cockpit** — tháng: tái dùng
+  `agents.ceo_report.build(conn, 'month', ref)`; quý: 3 cột tháng + cột quý
+  theo `data/hdtv_report.json` `quarter_agg` {metric_id: `sum`|`last`}
+  (metric không khai → cột quý "—"; thiếu ≥1 tháng → `[chưa đủ dữ liệu]`,
+  KHÔNG cộng thiếu); (2) **Tiến độ & Sổ quyết định** (`ceo_decisions.
+  section`); (3) **Rủi ro pháp lý mở** (`ceo_risk.section`); (4) **Chi so
+  ngân sách vận hành** (`fp_opscost.summary` từng tháng); (5) **P&L tóm tắt**
+  (`fp_pnl.compute` tổng theo kênh — BẢN NHÁP tới khi GĐ tài chính ký);
+  (6) **Ép trình QA (override_qa)** — mọi `decisions` kind `override_qa`
+  trong kỳ (`#id`, `#queue`, khối, ngày VN, người quyết + lý do qua
+  `_mask_pii`/`_oneline`) — từ `bks_audit.check_overrides`; (7) **Kiểm soát
+  BKS** — dòng `audit_runs` mới nhất mỗi kind trong/sau kỳ (ngày, findings,
+  `report_sha256[:12]`; chưa có → "chưa chạy — không kiểm chứng được", KHÔNG
+  "không vi phạm"). Mỗi mục đọc trong savepoint; lỗi → 1 dòng "*(không đọc
+  được: …)*", mục khác vẫn ra. MỌI số do code điền; `build` trả `facts:
+  [{text, source}]` (source = `channel_snapshots#id`/`db:<bảng>`/`fn:<module.
+  hàm>`) — số nào render mà không có fact → `render` raise (fail-closed).
+  Toàn trang qua `guardrail.check()` trước ghi; không ok → dòng CẢNH BÁO đầu
+  trang + chặn `--submit` (precedent v8.0). Nguồn `sample:`/fixture MẪU →
+  `(MẪU)`. CLI `python -m agents.hdtv_report --month YYYY-MM | --quarter
+  YYYY-Qn [--now ISO] [--out-dir DIR] [--submit] [--record]` →
+  `data/reports/hdtv-<period>.md`; `--submit` → `director.submit(conn,
+  'ceo', 'hdtv_pack', ...)` (thêm `hdtv_pack` vào `data/directors/ceo.json`
+  `object_types`, risk `high`, sla 72h) — TGĐ duyệt trước khi gửi HĐTV, hệ
+  thống KHÔNG tự duyệt/gửi; `--record` → `audit_runs` kind `hdtv_pack`.
+  Exit 0 · 1 cấu hình hỏng/guardrail chặn submit · 2 tham số/kỳ chưa đóng/
+  DB down.
+  - Boundary: `agents/hdtv_report.py` (mới), `data/hdtv_report.json` (mới,
+    `_doc` ghi "BẢN DEV SOẠN"), `data/directors/ceo.json` (+`hdtv_pack`),
+    `tests/test_hdtv_report.py` (mới)
+  - Gate: **grounding** (như v8.0): `test_every_number_has_source` — render
+    gói tháng + quý trên fixture DB, mọi token số `\d[\d.,]*` trong thân
+    (trừ nhãn kỳ/ngày/`#id` khai báo) ∈ `facts[].text` có `source` khác rỗng;
+    3 số then chốt (Σ thực nhận, số override, metric cockpit) test tính lại
+    bằng SQL độc lập và khớp; mutation: chèn literal số vào template mục →
+    `render` raise (test đỏ nếu bỏ guard — đã thử, ghi evidence); quý thiếu
+    tháng 2 → `[chưa đủ dữ liệu]` không phải tổng 2 tháng; `last` lấy tháng
+    3; mục lỗi DB (revoke bảng trong tx) → dòng "không đọc được", mục khác
+    vẫn có; override_qa trong kỳ xuất hiện đủ (đếm = SQL), ngoài kỳ không;
+    chưa có `audit_runs` → "không kiểm chứng được"; `parse_period` từ chối
+    `2026-13`, `2026-Q0`, `2026-Q5`, quý/tháng chưa đóng → exit 2; guardrail
+    vi phạm → `director.submit` 0 lần, rc 1; `test_director.py` vẫn xanh
+    (object_types hợp lệ)
+  - Evidence: `evidence/v100_hdtv.log`
+  - Kết quả: grounding tháng + quý xanh; 3 số then chốt khớp SQL độc lập; mutation literal 987654 → raise; tắt guard → test ĐỎ (đã thử, `evidence/v100_mutation.log` + `v100_hdtv.log`). `last` chỉ cần tháng cuối quý, `sum` cần đủ 3 tháng (giả định — ghi trong `_doc`). Markdown, không PDF.
+- [x] **W100.7 Chỉ-đọc guard + docs** — test tĩnh
+  `test_bks_modules_write_only_audit_runs`: quét source 3 module (regex
+  không phân biệt hoa thường `\b(insert\s+into|update\s+\w+\s+set|delete\s+
+  from|truncate|alter|drop|grant|create)\b`) → chỉ được khớp `insert into
+  audit_runs`; không import `pipelines.store.set_status`/`approval_queue.
+  decide`/`ingest.*.load` (ngoài test). Docs: `docs/handover/kien-truc.md`
+  thêm `audit_runs` + role `bks_reader` + 3 module, sửa "N bảng public"
+  (+1 so với số hiện tại trong file); `docs/handover/sop.md` mục mới (thứ tự
+  chạy tháng: nạp quyết toán/đơn → `fp_pnl --pnl` → `bks_recon --record` →
+  `bks_audit --record` → `hdtv_report --submit`; DSN role `bks_reader`; giới
+  hạn neo nội bộ); `AGENTS.md` bảng Commands +3 dòng; `tests/
+  test_data_flow_map.py` `NEW_SCRIPTS` +3 module.
+  - Boundary: `tests/test_bks_audit.py`, `docs/handover/kien-truc.md`,
+    `docs/handover/sop.md`, `AGENTS.md`, `tests/test_data_flow_map.py`
+  - Gate: test tĩnh xanh + mutation (thêm `update approvals set` giả vào 1
+    module → đỏ, đã thử); `python -m pytest tests/test_handover_docs.py
+    tests/test_data_flow_map.py -q` xanh (`test_kien_truc_lists_all_tables`
+    thấy `audit_runs`); `grep -n "bks_audit\|bks_recon\|hdtv_report"
+    AGENTS.md docs/handover/sop.md` có ở cả 2
+  - Evidence: `evidence/v100_pytest.log`
+  - Kết quả: guard quét hằng chuỗi KHÔNG phải docstring (AST) bằng regex dạng câu lệnh (`truncate <bảng>`, `create|alter|drop <đối tượng>`...) — regex trần `truncate` của hợp đồng khớp tên quyền `'TRUNCATE'` trong SQL catalog của `check_privileges`; mutation 7 kiểu đỏ + thử thật `update approvals set` vào bks_recon → đỏ. Docs: kien-truc 72 bảng, sop mục 5t, AGENTS +3 dòng, NEW_SCRIPTS +3. Dây chuyền: `deploy/cloud/README.md` +`audit_runs` (test_db_backup đòi đủ bảng).
+- [x] **Gate chung** —
+  - targeted ×3: `python -m pytest tests/test_bks_audit.py
+    tests/test_bks_recon.py tests/test_hdtv_report.py tests/test_ceo_report.py
+    tests/test_ceo_audit.py tests/test_ceo_decisions.py tests/test_ceo_risk.py
+    tests/test_fp_pnl.py tests/test_settlement_csv.py tests/test_auth_approval.py
+    tests/test_garden_chain.py tests/test_director.py tests/test_data_flow_map.py
+    tests/test_handover_docs.py tests/test_connect_timeout_guard.py -q -rs`
+    3 lần liên tiếp xanh, test DB **0 skipped** (lệnh nặng có thể bị đẩy nền
+    — đọc output tới khi process exit, không chạy chồng, không retry mù)
+  - full: `python -m pytest -q` ĐÚNG 1 lần/vòng — 0 failed, passed ≥ baseline
+    đo đầu version + test mới (skip chỉ `test_dr_drill` khi Docker tắt —
+    ghi rõ)
+  - `ruff check .` sạch
+  - `python -m py_compile agents/bks_audit.py agents/bks_recon.py
+    agents/hdtv_report.py`
+  - `python scripts/apply_schema.py --roles` ×2 sạch
+  - CLI (DB thật, KHÔNG `--record`/`--submit`): `python -m agents.bks_audit
+    --report --month 2026-09 --out-dir <scratchpad>` exit 0; `python -m
+    agents.bks_recon --month 2026-09 --seed 1 --out-dir <scratchpad>` exit 0;
+    `python -m agents.hdtv_report --month 2026-09 --out-dir <scratchpad>` exit
+    0; `--quarter 2026-Q3` exit 0; `--month 2026-10` exit 2 (chưa đóng);
+    `--quarter 2026-Q5` exit 2; `python -m pipelines.store --verify-log` exit 0
+  - DB thật trước/sau toàn bộ gate: `audit_runs`, `approval_queue`,
+    `approvals`, `agent_action_log`, `recon_results`, `decisions`,
+    `channel_snapshots` số dòng KHÔNG đổi
+  - `git diff --stat`: chỉ file trong Boundary + evidence (`evidence/*.log`
+    phải `git add -f`); `lv2-market-top.png` giữ untracked; `data/directors/
+    ceo.json` + `data/hdtv_report.json` không tên/email người thật
+  - Kết quả (worker, vòng 2): targeted ×3 = 433 passed ×3, 0 skipped (vòng 1 lần 2 `LockNotAvailable` ở fixture `test_auth_approval` lock 10s do worktree song song → nâng 60s ở `test_auth_approval`/`test_fp_pnl` như precedent `test_ceo_audit`; `v100_pytest_vong1.log`). Full vòng 2: 1 failed `test_db_backup` (deploy/cloud/README.md thiếu `audit_runs`) → vá doc → full vòng 3 **4334 passed, 3 skipped** (`test_dr_drill` ×3 — Docker tắt) = baseline 4257 + 77 test mới (`v100_full.log`, `v100_full_vong2.log`). ruff sạch, py_compile 0 (`v100_lint.log`); apply_schema ×2 exit 0 (`v100_schema.log`); CLI DB thật exit 0/0/0/0, `--month 2026-10`→2, `--quarter 2026-Q5`→2, `--verify-log`→0 (`v100_cli.log`); 7 bảng số dòng không đổi (`v100_counts.log`; `audit_runs` chưa tồn tại trước apply → 0). `git diff`: ngoài Boundary có 5 file dây chuyền ghi rõ ở W100.1/W100.7/gate (test_handover_docs, test_auth_approval, test_fp_pnl, deploy/cloud/README.md); evidence `*.log` phải `git add -f`.
+  - Vá nghiệm thu vòng 3 (worker, 6 MINOR): (1) `_SQL_B` không so với quyết định MỚI NHẤT của object nữa mà đòi dòng `approvals` của CHÍNH mục (cùng object, approved, cùng sha, `approved_at <= decided_at`) — nộp lại cùng object rồi từ chối/duyệt bản khác không báo oan mục cũ (`test_queue_resubmit_same_object_not_flagged`); (2)+(4) guard W100.7: phần nội suy f-string → token `_X_` (không bỏ), tên bảng có schema `(?:\w+\.)?\w+`, `insert\s+into\b` bất kỳ là vi phạm trừ đúng `insert into audit_runs`, cấm `import ingest…`/`from ingest import` (+7 ca mutation); (3) `_SQL_C` buộc log cùng object_id, actor = approved_by, `db_role` = approvals.db_role, `ts = approved_at` — log giả do agent_writer ghi mang db_role 'agent_writer' (`test_forged_log_by_agent_writer_still_outside_function`, dùng `set local session authorization`); (5) `WRITE_FUNCS` cứng → catalog: mọi SECURITY DEFINER trong schema mà bks_reader EXECUTE được, trừ `READ_FUNCS` (verify_*) → `quyen_vuot` (grant `sign_qr_lot` → bị flag; drift-guard `test_read_funcs_match_schema`); (6) test nhánh biên: `test_tail_anchor_row_hash_changed`, `test_valid_heads_non_dict_or_junk_entries`, `test_recorded_junk_heads_dropped_no_crash`, `test_approvals_overrides_unverifiable_not_clean`. Mutation (khôi phục SQL cũ B/C, bỏ `_valid_heads`, bỏ nhánh `row_hash_khac`) → test mới ĐỎ; guard cũ LỌT 4 ca probe, guard mới BẮT (`v100_mutation_vong3.log`). Targeted ×3 `test_bks_audit.py` 49 passed ×3 (`v100_targeted_vong3.log`); ruff sạch (`v100_lint_vong3.log`); full **4353 passed, 3 skipped** (test_dr_drill — Docker tắt; lần chạy đầu bị `timeout 1500` tự đặt cắt ở 67% do máy tải, chạy lại không cap: 43m37s) (`v100_full_vong3.log`).
+- [ ] **external-dep** Chữ ký HĐTV/BKS trên gói tháng/quý và biên bản audit;
+  danh sách thành viên HĐTV/BKS + login thật `in role bks_reader`; TGĐ duyệt
+  mục `hdtv_pack` (`approvers: []`).
+- [ ] **external-dep** Số liệu thật (quyết toán/đơn Seller Center, kế toán)
+  — chỉ fixture MẪU.
+- [ ] **external-dep** Neo head hash vào bucket object-lock + bộ kiểm chứng
+  độc lập trong tài khoản cloud HĐTV (neo nội bộ `audit_runs` không chống
+  superuser xóa cả sổ — ghi giới hạn trong báo cáo); bản PDF ký số.
+
+Ngoài phạm vi (WP16 còn lại, ghi để không cuốn vào): KD-A6/A7/A9, MKT-12,
+SX-A7, VT cảnh báo thời tiết, DA-06, PC-A8, connector sàn API, pgvector,
+social listening vendor; PDF; tab Streamlit/vai trò app `bks` trong
+`pipelines.auth.ROLES` (đụng ma trận 6 vai trò + test_auth — chờ TGĐ chốt);
+hash chain cho `audit_runs`; khung giá–voucher trong audit.
+
+v10.0 đóng 2026-10-15 (vòng 0: FIX/FIX/FIX — 6 finding; vòng 1 FIX còn 1
+(guard chỉ-ghi-audit_runs sót `.format`/`%`/nối chuỗi/tên bảng có ngoặc kép →
+thêm BARE_TAIL_RE + 6 ca đột biến); vòng 2 PASS, 0 mở; full pytest 4359
+passed / 3 skipped docker). Worker vá A03: tên người/lý do override trong báo
+cáo HĐTV/BKS → che PII + bỏ ký tự markdown/HTML; nâng lock_timeout 60s cho
+fixture roles.sql (test_auth_approval, test_fp_pnl) chống LockNotAvailable khi
+chạy song song. Gate coordinator chạy lại: ruff sạch, test bks_audit/bks_recon/
+hdtv_report/db_backup/data_flow_map 220 pass, `dpia_draft --check`. Quyết định
+của contract cần TGĐ xem: chỉ markdown (không PDF — tránh dep nặng); chưa thêm
+vai trò app `bks` vào `pipelines.auth.ROLES` (đụng ma trận 6 vai trò) — có role
+DB `bks_reader` chỉ đọc; neo đuôi chuỗi hash nằm trong `audit_runs` nên không
+chống được superuser xóa cả bảng này (báo cáo ghi rõ). Bảng 72 khi tách nhánh —
+đánh lại khi gộp. External-dep: chữ ký + danh sách thành viên HĐTV/BKS +
+login, số bán/quyết toán thật, neo head-hash vào bucket object-lock + người
+kiểm độc lập, TGĐ duyệt mục `hdtv_pack`, PDF có chữ ký. Someday: WRITE_FUNCS
+viết tay sót hàm ghi mới (sign_qr_lot, issue_qr, revoke_qr, link/unlink_lot_origin…)
+→ check_privileges có thể bỏ sót role được EXECUTE hàm ghi (nên dò SECURITY
+DEFINER từ DB); neo đuôi fail-open khi lần --record trước thiếu head một bảng;
+check (b) chấp nhận bản duyệt CŨ cùng sha; `don_chua_quyet_toan` không giới
+hạn theo tháng (đơn chưa quyết toán bình thường bị báo); grounding theo tập
+token (số '0','1' lọt); sec_bks không lọc period_label; `_cockpit` ưu tiên
+manual_export trước khi lọc NaN; SOP nói chạy được bằng bks_reader nhưng
+`--submit` cần enqueue_item; `source_ref`/`file_name` chưa lọc markdown đầy đủ;
+lỗi `--submit` in str(e) không qua `_mask_pii`; test `_is_read` coi
+`select <hàm ghi>(...)` là đọc; test hdtv phụ thuộc now() DB ≥ 01/09/2026.
+
 Nhánh `ai-infra`: M31 đợt gộp 6 (2026-10-14) — v6.5, v5.3, v10.3, v6.3, v8.1, v6.4,
 v8.2 đã gộp (71 bảng; 22 suite eval; DF-01..DF-35 + DPIA/TIA 35 luồng). Trước gộp
 vá riêng 2 lỗi đỏ chung mọi worktree: test garden date-bomb (ảnh fixture

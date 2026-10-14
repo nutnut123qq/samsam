@@ -1,0 +1,28 @@
+BEFORE_CLI audit_runs=0 approval_queue=0 approvals=0 agent_action_log=1 recon_results=0 decisions=0 channel_snapshots=0
+## python -m agents.bks_audit --report --month 2026-09 --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/d88fba75-117d-4fd0-8a9d-e701448ee362/scratchpad/cli_out
+[done] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d88fba75-117d-4fd0-8a9d-e701448ee362\scratchpad\cli_out\bks-audit-2026-09.md — kỳ 2026-09, 0 phát hiện · không ghi sổ
+exit=0
+## python -m agents.bks_recon --month 2026-09 --seed 1 --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/d88fba75-117d-4fd0-8a9d-e701448ee362/scratchpad/cli_out
+[done] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d88fba75-117d-4fd0-8a9d-e701448ee362\scratchpad\cli_out\bks-recon-2026-09.md — tháng 2026-09, 0 khác biệt/phát hiện, seed 1, kiểm 0/0 dòng · không ghi sổ
+exit=0
+## python -m agents.hdtv_report --month 2026-09 --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/d88fba75-117d-4fd0-8a9d-e701448ee362/scratchpad/cli_out
+[done] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d88fba75-117d-4fd0-8a9d-e701448ee362\scratchpad\cli_out\hdtv-2026-09.md — kỳ 2026-09, 33 fact có nguồn, 0 mục không đọc được
+exit=0
+## python -m agents.hdtv_report --quarter 2026-Q3 --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/d88fba75-117d-4fd0-8a9d-e701448ee362/scratchpad/cli_out
+[done] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d88fba75-117d-4fd0-8a9d-e701448ee362\scratchpad\cli_out\hdtv-2026-Q3.md — kỳ 2026-Q3, 75 fact có nguồn, 0 mục không đọc được
+exit=0
+## python -m agents.hdtv_report --month 2026-10 --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/d88fba75-117d-4fd0-8a9d-e701448ee362/scratchpad/cli_out
+[error] kỳ 2026-10 chưa đóng (hết 2026-10-31 giờ VN)
+exit=2
+## python -m agents.hdtv_report --quarter 2026-Q5 --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/d88fba75-117d-4fd0-8a9d-e701448ee362/scratchpad/cli_out
+[error] kỳ phải dạng YYYY-MM hoặc YYYY-Qn (n = 1..4)
+exit=2
+## python -m agents.bks_audit --report --dry-run --record
+usage: python -m agents.bks_audit [-h] [--report] [--month MONTH] [--now NOW]
+                                  [--out-dir OUT_DIR] [--record] [--dry-run]
+python -m agents.bks_audit: error: --record và --dry-run loại trừ nhau
+exit=2
+## python -m pipelines.store --verify-log
+[ok] chuỗi nguyên vẹn (1 dòng)
+exit=0
+AFTER_CLI audit_runs=0 approval_queue=0 approvals=0 agent_action_log=1 recon_results=0 decisions=0 channel_snapshots=0

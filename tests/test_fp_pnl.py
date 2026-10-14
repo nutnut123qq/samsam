@@ -236,7 +236,9 @@ def fpa_conn():
     except psycopg.OperationalError as e:
         pytest.skip(f"không connect được DB: {type(e).__name__}")
     try:
-        conn.execute("set local lock_timeout = '10s'")
+        # 60s (không 10s): roles.sql đụng role toàn cluster — nhiều worktree
+        # chạy song song (flake LockNotAvailable v10.0, precedent test_ceo_audit).
+        conn.execute("set local lock_timeout = '60s'")
         schema = f"t_w91p_{uuid.uuid4().hex[:12]}"
         conn.execute(f"create schema {schema}")
         conn.execute(f"set local search_path to {schema}, pg_temp")
