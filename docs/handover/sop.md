@@ -1812,6 +1812,48 @@ với kịch bản cao" (cân nhắc KM/chuyển kênh — người quyết) · 
 đối chiếu được tồn`, exit 1. `--write` → `data/reports/kd-forecast-<thứ
 Hai>.md`.
 
+## 5w. Gói HĐTV + kiểm soát độc lập BKS (v10.0 — WP16; chỉ đọc, KHÔNG tự gửi)
+
+**Thứ tự chạy hằng tháng** (sau khi tháng đã đóng, giờ VN):
+1. Kế toán nạp file đơn + quyết toán: `python -m ingest.market_csv --file
+   <đơn>.csv --channel shopee --kind order` → `python -m ingest.settlement_csv
+   --file <quyết toán>.csv --channel shopee` (file đơn tới sau → `--reconcile`).
+2. `python -m agents.fp_pnl --pnl --month YYYY-MM` (P&L BẢN NHÁP).
+3. `python -m agents.bks_recon --month YYYY-MM [--seed N] --record` — đối
+   soát độc lập 4 nguồn (quyết toán ↔ đơn sàn ↔ P&L ↔ số cockpit báo TGĐ),
+   tính lại từng dòng (≤ 200 dòng/tháng kiểm 100%, vượt → mẫu 200 theo seed —
+   seed in trong báo cáo + `audit_runs.params`) → `data/reports/bks-recon-
+   <YYYY-MM>.md`. Mọi khác biệt kèm nguồn (`file dòng N` / `market_snapshots#id
+   dòng N` / `channel_snapshots#id` / `pnl:<tháng>/<kênh>`); thiếu 1 nguồn →
+   `thieu_nguon` (không coi = 0).
+4. `python -m agents.bks_audit --report --month YYYY-MM --record` — audit
+   inside-out: hash chain `agent_action_log`/`plot_logs` + NEO ĐUÔI (head
+   chuỗi lưu trong `audit_runs` — lần sau phát hiện xóa dòng cuối), duyệt ↔
+   nội dung đang phát hành ↔ log, override_qa bất thường, quyền role vượt →
+   `data/reports/bks-audit-<YYYY-MM>.md`. `--dry-run` = chỉ in stdout, không
+   ghi gì. Có phát hiện vẫn exit 0 (audit là báo, không chặn).
+5. `python -m agents.hdtv_report --month YYYY-MM --submit` (quý:
+   `--quarter YYYY-Qn`) → `data/reports/hdtv-<kỳ>.md` 7 mục (cockpit, Tiến
+   độ & Sổ quyết định, Rủi ro pháp lý mở, Chi so ngân sách, P&L tóm tắt, Ép
+   trình QA, Kiểm soát BKS) — mọi số do code điền + có nguồn; số không nguồn
+   → exit 1 không ghi trang. `--submit` → mục `hdtv_pack` khối ceo (risk
+   high, SLA 72h) — TGĐ duyệt rồi MỚI trình HĐTV; guardrail vi phạm → không
+   nộp (exit 1). Cách gộp cột quý: `data/hdtv_report.json` (BẢN DEV SOẠN).
+
+**DSN:** chạy bằng DSN chủ sở hữu, hoặc login của thành viên BKS tạo `in role
+bks_reader` (hạ tầng tạo NGOÀI git — external-dep): role chỉ SELECT các bảng
+cần đọc + INSERT `audit_runs` + EXECUTE 3 function kiểm; không sửa/xóa/duyệt
+được gì. `--record` ghi đúng 1 dòng `audit_runs` (append-only).
+
+**Giới hạn neo nội bộ:** neo đuôi chuỗi nằm trong `audit_runs` cùng DB —
+superuser xóa cả sổ `audit_runs` thì neo mất. Neo head hash vào bucket
+object-lock + bộ kiểm chứng độc lập trong tài khoản cloud do HĐTV đứng tên =
+external-dep. Chữ ký HĐTV/BKS trên gói/biên bản và số liệu thật (Seller
+Center/kế toán) = external-dep; báo cáo gắn `(MẪU)` khi nguồn là file MẪU.
+
+Exit chung: 0 ok · 1 cấu hình hỏng (biểu phí / `hdtv_report.json`) / guardrail
+chặn submit · 2 tham số sai / kỳ chưa đóng / DB down.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):

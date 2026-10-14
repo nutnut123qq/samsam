@@ -3306,3 +3306,40 @@ create table if not exists affiliate_attributions (
   check (category is distinct from 'alcohol' or commission_vnd = 0),
   check (status <> 'huy' or commission_vnd = 0)
 );
+
+-- ============================================================================
+-- v10.0 HĐTV/BKS (WP16): sổ lần chạy kiểm soát độc lập.
+--   * `audit_runs` — 1 dòng / lần chạy `agents.bks_audit --record` (audit
+--     inside-out, kind `inside_out`), `agents.bks_recon --record` (đối soát
+--     độc lập, `recon`), `agents.hdtv_report --record` (gói HĐTV,
+--     `hdtv_pack`). `params` = seed / cỡ mẫu / head chuỗi hash (neo đuôi cho
+--     lần audit sau) — KHÔNG PII, KHÔNG mã đơn. `report_sha256` = sha256 file
+--     báo cáo đã ghi. `run_by` = agent (`agent:bks_audit`...) — sổ lần chạy
+--     MÁY, KHÔNG phải chữ ký người (chữ ký HĐTV/BKS = external-dep).
+--     APPEND-ONLY (`append_only_guard()` chặn UPDATE/DELETE/TRUNCATE, kể cả
+--     owner khi trigger còn bật). GIỚI HẠN: superuser xóa cả bảng này thì
+--     neo nội bộ mất — neo object-lock ngoài = external-dep.
+-- Quyền (`docs/roles.sql`): role `bks_reader` (nologin) SELECT các bảng 3
+-- module đọc + INSERT 6 cột bảng này; agent_writer/app_human KHÔNG có quyền.
+-- ============================================================================
+
+create table if not exists audit_runs (
+  id bigint generated always as identity primary key,
+  kind text not null check (kind in ('inside_out', 'recon', 'hdtv_pack')),
+  period_label text not null
+    check (period_label ~ '^[0-9]{4}-(0[1-9]|1[0-2]|Q[1-4])$'),
+  params jsonb not null default '{}',
+  findings int not null check (findings >= 0),
+  report_sha256 text not null check (report_sha256 ~ '^[0-9a-f]{64}$'),
+  run_by text not null check (btrim(run_by) <> ''),
+  created_at timestamptz not null default now(),
+  db_role text not null default session_user
+);
+create index if not exists audit_runs_kind_idx on audit_runs (kind, id);
+
+create or replace trigger audit_runs_append_only_row
+  before update or delete on audit_runs
+  for each row execute function append_only_guard();
+create or replace trigger audit_runs_no_truncate
+  before truncate on audit_runs
+  for each statement execute function append_only_guard();

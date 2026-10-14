@@ -1,0 +1,6 @@
+== vong4 mutation W100.7: guard cu (TBL \w+) vs moi (TBL ident|"quoted"|{}|%s + BARE_TAIL_RE)
+'X = "update {} set a=1".format(t)' old: [] new: ['update {} set']
+'X = "update %s set a=1" % t' old: [] new: ['update %s set']
+'X = "update " + t + " set a=1"' old: [] new: ['update ']
+'X = \'update "approvals" set a=1\'' old: [] new: ['update "approvals" set']
+'X = "truncate table " + t' old: ['truncate table'] new: ['truncate table', 'truncate table ']

@@ -162,6 +162,7 @@ bảng nào thì dừng, không bật app.
 | `b2b_requests` | B | yêu cầu báo giá B2B từ form (v8.2) — insert-only, yêu cầu khách không dựng lại được; PII người liên hệ ở `contacts` (vault) |
 | `affiliate_codes` | B | mã affiliate đại lý (v5.4) — mã ngẫu nhiên không dựng lại được (voucher thật trên sàn đã tạo theo mã) |
 | `affiliate_attributions` | A (`python -m agents.kd_affiliate --attribute`) hoặc B | ghi nhận đơn qua mã (v5.4) dựng lại được từ `market_rows` + `affiliate_codes`; chỉ hash đơn, mã đại lý |
+| `audit_runs` | B | sổ lần chạy kiểm soát độc lập BKS/HĐTV (v10.0) — append-only, chứa neo đuôi hash chain (`params.heads`) cho lần audit sau; mất bảng = mất neo nội bộ, không dựng lại được |
 | `project_milestones` | B (hoặc A: `python -m agents.da_pmo --seed` — mất trạng thái/evidence/hạn đã duyệt đổi) | sổ mốc phòng Dự án (v8.3) |
 | `image_assets` | B | metadata ảnh nháp MKT-03 (v6.2) — file PNG + sidecar ở `IMAGE_OUT_DIR` phải chép theo riêng (không nằm trong dump) |
 | `video_assets` | B | metadata video nháp MKT-04 (v6.3) — file mp4 + sidecar ở `VIDEO_OUT_DIR` phải chép theo riêng (không nằm trong dump) |

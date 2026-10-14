@@ -1,0 +1,10 @@
+== mutation vong3 (bks_audit.py: khoi phuc SQL cu / bo _valid_heads / bo nhanh row_hash_khac -> test moi phai DO)
+old_SQL_B: rc=1 RED | 1 failed, 48 deselected in 6.32s
+old_SQL_C: rc=1 RED | 1 failed, 48 deselected in 5.53s
+no_valid_heads: rc=1 RED | 1 failed, 48 deselected in 6.18s
+no_row_hash_branch: rc=1 RED | 1 failed, 48 deselected in 5.85s
+== guard W100.7 cu vs moi
+'X = f"insert into {t} (a) values (1)"': guard_cu=LOT guard_moi=BAT
+'X = f"update {t} set a = 1"': guard_cu=LOT guard_moi=BAT
+'X = "update public.approvals set a=1"': guard_cu=LOT guard_moi=BAT
+'import ingest.market_csv as m\nm.load(1)': guard_cu=LOT guard_moi=BAT

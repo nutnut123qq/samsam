@@ -1,0 +1,41 @@
+## python -m pytest tests/test_hdtv_report.py -v -rs — 2026-10-14T21:57:41+07:00
+tests/test_hdtv_report.py::test_every_number_has_source[2026-09] PASSED  [  3%]
+tests/test_hdtv_report.py::test_every_number_has_source[2026-Q3] PASSED  [  7%]
+tests/test_hdtv_report.py::test_key_numbers_match_independent_sql PASSED [ 10%]
+tests/test_hdtv_report.py::test_override_list_in_period_only PASSED      [ 14%]
+tests/test_hdtv_report.py::test_mutation_literal_number_in_template_raises PASSED [ 17%]
+tests/test_hdtv_report.py::test_quarter_missing_month_not_partial_sum PASSED [ 21%]
+tests/test_hdtv_report.py::test_quarter_value_pure PASSED                [ 25%]
+tests/test_hdtv_report.py::test_section_db_error_others_still_render PASSED [ 28%]
+tests/test_hdtv_report.py::test_bks_section_not_run_vs_run PASSED        [ 32%]
+tests/test_hdtv_report.py::test_parse_period_rejects[2026-13] PASSED     [ 35%]
+tests/test_hdtv_report.py::test_parse_period_rejects[2026-Q0] PASSED     [ 39%]
+tests/test_hdtv_report.py::test_parse_period_rejects[2026-Q5] PASSED     [ 42%]
+tests/test_hdtv_report.py::test_parse_period_rejects[2026-9] PASSED      [ 46%]
+tests/test_hdtv_report.py::test_parse_period_rejects[26-09] PASSED       [ 50%]
+tests/test_hdtv_report.py::test_parse_period_rejects[2026-W41] PASSED    [ 53%]
+tests/test_hdtv_report.py::test_parse_period_rejects[None] PASSED        [ 57%]
+tests/test_hdtv_report.py::test_parse_period_ok_and_open PASSED          [ 60%]
+tests/test_hdtv_report.py::test_cli_open_or_bad_period_exit2[argv0] PASSED [ 64%]
+tests/test_hdtv_report.py::test_cli_open_or_bad_period_exit2[argv1] PASSED [ 67%]
+tests/test_hdtv_report.py::test_cli_open_or_bad_period_exit2[argv2] PASSED [ 71%]
+tests/test_hdtv_report.py::test_cli_open_or_bad_period_exit2[argv3] PASSED [ 75%]
+tests/test_hdtv_report.py::test_cli_usage_exit2[argv0] PASSED            [ 78%]
+tests/test_hdtv_report.py::test_cli_usage_exit2[argv1] PASSED            [ 82%]
+tests/test_hdtv_report.py::test_cli_usage_exit2[argv2] PASSED            [ 85%]
+tests/test_hdtv_report.py::test_cli_bad_config_exit1_db_down_exit2 PASSED [ 89%]
+tests/test_hdtv_report.py::test_guardrail_violation_blocks_submit PASSED [ 92%]
+tests/test_hdtv_report.py::test_submit_and_record_real_path PASSED       [ 96%]
+tests/test_hdtv_report.py::test_month_cli_read_only_sql PASSED           [100%]
+============================= 28 passed in 22.48s =============================
+exit=0
+## MUTATION: tắt guard trong render (if bad and False) — kỳ vọng test ĐỎ
+E       Failed: DID NOT RAISE <class 'agents.hdtv_report.UngroundedNumber'>
+tests\test_hdtv_report.py:141: Failed
+FAILED tests/test_hdtv_report.py::test_mutation_literal_number_in_template_raises
+1 failed, 2 passed, 25 deselected in 34.61s
+## MUTATION: thêm 'update approvals set' giả vào agents/bks_recon.py — kỳ vọng guard ĐỎ
+E           AssertionError: agents/bks_recon.py
+E           assert ['update approvals set'] == []
+tests\test_bks_audit.py:534: AssertionError
+1 failed, 29 deselected in 10.66s

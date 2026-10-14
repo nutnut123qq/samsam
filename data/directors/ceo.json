@@ -1,5 +1,5 @@
 {
-  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES — khối chưa có vai trò riêng, TẠM map 'tgd' (external-dep: TGĐ chốt). approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store). v8.0 (cockpit WP10): thêm monthly_report (báo cáo tháng TGĐ), change_request (yêu cầu thay đổi), price_voucher_frame (khung giá–voucher theo chiến dịch) theo kế hoạch Agent Điều hành (ctx final_plans 'ceo', mục người duyệt human_owner) — BẢN DEV SOẠN, chờ TGĐ chốt.",
+  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES — khối chưa có vai trò riêng, TẠM map 'tgd' (external-dep: TGĐ chốt). approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store). v8.0 (cockpit WP10): thêm monthly_report (báo cáo tháng TGĐ), change_request (yêu cầu thay đổi), price_voucher_frame (khung giá–voucher theo chiến dịch) theo kế hoạch Agent Điều hành (ctx final_plans 'ceo', mục người duyệt human_owner) — BẢN DEV SOẠN, chờ TGĐ chốt. v10.0 (WP16): thêm hdtv_pack (gói báo cáo HĐTV tháng/quý — agents.hdtv_report --submit; TGĐ duyệt trước khi trình HĐTV, hệ thống không tự duyệt/gửi) — BẢN DEV SOẠN.",
   "block": "ceo",
   "name": "Tổng giám đốc + Hội đồng thành viên + Ban kiểm soát nội bộ",
   "director_agent": "Agent Điều hành (Chief of Staff AI)",
@@ -30,6 +30,10 @@
     },
     "price_voucher_frame": {
       "sla_hours": 48,
+      "risk": "high"
+    },
+    "hdtv_pack": {
+      "sla_hours": 72,
       "risk": "high"
     }
   },

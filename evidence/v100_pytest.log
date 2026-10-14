@@ -1,0 +1,48 @@
+# vòng 2 (sau vá lock_timeout 60s test_auth_approval/test_fp_pnl — vòng 1 lần 2 LockNotAvailable, xem v100_pytest_vong1.log)
+## targeted lần 1 — 2026-10-14T20:20:00+07:00
+........................................................................ [ 16%]
+........................................................................ [ 33%]
+........................................................................ [ 49%]
+........................................................................ [ 66%]
+........................................................................ [ 83%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+433 passed in 707.64s (0:11:47)
+exit=0
+## targeted lần 2 — 2026-10-14T20:32:29+07:00
+........................................................................ [ 16%]
+........................................................................ [ 33%]
+........................................................................ [ 49%]
+........................................................................ [ 66%]
+........................................................................ [ 83%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+433 passed in 882.80s (0:14:42)
+exit=0
+## targeted lần 3 — 2026-10-14T20:47:36+07:00
+........................................................................ [ 16%]
+........................................................................ [ 33%]
+........................................................................ [ 49%]
+........................................................................ [ 66%]
+........................................................................ [ 83%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+433 passed in 788.44s (0:13:08)
+exit=0
+## full python -m pytest -q — 2026-10-14T21:01:21+07:00
+        schema = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
+        tables = re.findall(r"^create table if not exists (\w+)", schema, re.MULTILINE)
+        assert len(tables) == N_TABLES
+        for t in tables:
+>           assert f"`{t}`" in readme, f"README thi\u1ebfu b\u1ea3ng {t}"
+E           AssertionError: README thi\u1ebfu b\u1ea3ng audit_runs
+E           assert '`audit_runs`' in '# Chuy\u1ec3n DB l\xean Postgres managed trong n\u01b0\u1edbc (v3.6, WP02 / F17.4)\\n\\n- **D\xe0nh cho ai:** Qu\u1ea3n l\xfd h\u1ea1 t\u1ea7ng AI (ho\u1eb7c \u0111\u1ed9i t...\\nKh\xf4i ph\u1ee5c \u0110\xc8 production kh\xf4ng c\xf3 l\u1ec7nh t\u1ef1 \u0111\u1ed9ng: t\u1ea7ng 2, ng\u01b0\u1eddi l\xe0m tay, b\xe1o\\nTG\u0110 \u2014 xem `docs/handover/sop.md` m\u1ee5c 6.\\n'
+
+tests\test_db_backup.py:332: AssertionError
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+1 failed, 4333 passed, 3 skipped in 3059.79s (0:50:59)
+exit=1
+DONE

@@ -240,7 +240,10 @@ def test_sop_warns_role_dsn_while_grants_partial():
     `_month_spend` lỗi = cho qua). Grant đủ rồi thì sửa docs + test này."""
     roles = (ROOT / "docs" / "roles.sql").read_text(encoding="utf-8")
     granted = set()
-    for m in re.finditer(r"grant\s+[^;]*?\bon\s+(?!function)([\w\s,]+?)\s+to",
+    # v10.0: chỉ tính grant cho role DSN app/agent — `bks_reader` (chỉ đọc,
+    # kiểm soát chi phí cho HĐTV) đọc `llm_usage` không làm DSN app/agent đủ.
+    for m in re.finditer(r"grant\s+[^;]*?\bon\s+(?!function)([\w\s,]+?)"
+                         r"\s+to\s+(?:agent_writer|app_human)\b",
                          roles, re.IGNORECASE):
         granted |= {t.strip() for t in m.group(1).split(",")}
     missing = set(_table_names()) - granted

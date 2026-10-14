@@ -36,7 +36,10 @@ NEW_SCRIPTS = {"scripts/review_load.py", "scripts/dpia_draft.py",
                # v10.1 KD-A6/A7: luật + template, KHÔNG LLM/gửi
                "agents/kd_orders.py", "agents/kd_care.py",
                # v5.4 KD-A8/A10: affiliate + dự báo — KHÔNG gửi gì ra ngoài
-               "agents/kd_affiliate.py", "agents/kd_forecast.py"}
+               "agents/kd_affiliate.py", "agents/kd_forecast.py",
+               # v10.0 WP16: HĐTV/BKS chỉ đọc DB, ghi file — KHÔNG gửi ra ngoài
+               "agents/bks_audit.py", "agents/bks_recon.py",
+               "agents/hdtv_report.py"}
 KNOWN_EGRESS = {
     "connectors/zalo.py", "crawler/collect.py", "pipelines/llm_gateway.py",
     "scripts/health_bulletin.py", "scripts/zalo_mock.py",

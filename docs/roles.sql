@@ -32,6 +32,10 @@ begin
   if not exists (select from pg_roles where rolname = 'app_human') then
     create role app_human nologin;
   end if;
+  -- v10.0 (WP16): Ban kiểm soát / HĐTV đọc độc lập — xem khối cuối file.
+  if not exists (select from pg_roles where rolname = 'bks_reader') then
+    create role bks_reader nologin;
+  end if;
 end $$;
 
 -- Revoke sạch trên schema hiện tại rồi grant lại (chạy lại không cộng dồn).
@@ -39,10 +43,10 @@ do $$
 declare
   s text := quote_ident(current_schema());
 begin
-  execute format('revoke all on all tables in schema %s from agent_writer, app_human', s);
-  execute format('revoke all on all sequences in schema %s from agent_writer, app_human', s);
-  execute format('revoke all on all functions in schema %s from agent_writer, app_human', s);
-  execute format('revoke all on schema %s from agent_writer, app_human', s);
+  execute format('revoke all on all tables in schema %s from agent_writer, app_human, bks_reader', s);
+  execute format('revoke all on all sequences in schema %s from agent_writer, app_human, bks_reader', s);
+  execute format('revoke all on all functions in schema %s from agent_writer, app_human, bks_reader', s);
+  execute format('revoke all on schema %s from agent_writer, app_human, bks_reader', s);
   execute format('grant usage on schema %s to agent_writer', s);
 end $$;
 
@@ -183,3 +187,35 @@ grant select on sla_escalations to app_human;
 grant select, insert (sku_key, cost_vnd, valid_from, created_by, note)
   on cogs_versions to app_human;
 grant execute on function approve_cogs(bigint, text, text) to app_human;
+
+-- v10.0 HĐTV/BKS (WP16): `bks_reader` — role CHỈ ĐỌC cho audit inside-out
+-- (`agents.bks_audit`), đối soát độc lập (`agents.bks_recon`) và gói HĐTV
+-- (`agents.hdtv_report`). NOLOGIN — login thật của thành viên BKS/HĐTV do hạ
+-- tầng tạo `in role bks_reader` (external-dep). Quyền:
+--   * SELECT ĐÚNG các bảng 3 module đọc (liệt kê từ code thật — kể cả bảng
+--     section v8.1 `ceo_decisions`/`ceo_risk`/`ceo_audit` và
+--     `fp_opscost`/`fp_pnl`/`ceo_report` đọc), KHÔNG `all tables`;
+--   * INSERT 6 cột `audit_runs` (id/created_at/db_role do DB đặt) — đường
+--     ghi DUY NHẤT của role;
+--   * EXECUTE 3 function KIỂM (SECURITY DEFINER, chỉ đọc).
+-- KHÔNG UPDATE/DELETE/TRUNCATE bảng nào, KHÔNG execute function ghi
+-- (approve_draft, decide_item, override_qa...). agent_writer/app_human KHÔNG
+-- có quyền gì trên `audit_runs` (revoke all ở đầu file).
+do $$
+begin
+  execute format('grant usage on schema %s to bks_reader',
+                 quote_ident(current_schema()));
+end $$;
+grant select on agent_action_log, approvals, approval_queue, decisions,
+  decision_log, content_drafts, channel_posts, plot_logs, settlement_rows,
+  recon_results, market_snapshots, market_rows, market_alerts,
+  channel_snapshots, cogs_versions, sku_master, llm_usage, opex_entries,
+  project_milestones, red_alerts, red_alert_acks, xnqc_dossiers, audit_runs
+  to bks_reader;
+grant insert (kind, period_label, params, findings, report_sha256, run_by)
+  on audit_runs to bks_reader;
+grant execute on function
+  verify_action_log(),
+  verify_plot_logs(),
+  verify_publish(text, text, text)
+  to bks_reader;
