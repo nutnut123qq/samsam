@@ -1,0 +1,8 @@
+=== W102.3 SX-A7 static 2026-10-14T21:29:43+07:00 ===
+$ grep -nE "director|save_draft|content_drafts|approval_queue|insert into|update .* set|import httpx|import requests" agents/sx_tracuu.py
+rc=1 (1 = rỗng)
+$ grep -rn sx_tracuu connectors/ app/ api/
+rc=1 (1 = rỗng)
+$ python -m agents.sx_tracuu --help
+rc=0
+pytest: tests/test_sx_tracuu.py tests/test_kb_acl.py tests/test_kb_acl_db.py tests/test_kb_internal.py — xem evidence/v102_gate_targeted.log

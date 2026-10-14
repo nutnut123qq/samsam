@@ -1,0 +1,10 @@
+=== W102.6 docs 2026-10-14T21:30:48+07:00 ===
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-14
+rc=0
+$ grep -n "71 bảng" docs/handover/kien-truc.md
+80:## 3. Cơ sở dữ liệu — 71 bảng public (`docs/schema.sql`)
+$ grep -n sx_tracuu docs/handover/runbook-ha-tang.md
+158:không dựng video). `sx_tracuu` (v10.2 SX-A7, khối SX — `agents/sx_tracuu.py`
+161:`LLM_KILL=sx_tracuu` → embed bị chặn, tra cứu trả "chưa có dữ liệu" kèm
+pytest: tests/test_handover_docs.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_runbook.py — xem evidence/v102_gate_targeted.log

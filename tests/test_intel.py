@@ -151,7 +151,7 @@ def test_real_sources_file_gate():
     assert cfg["llm"]["enabled"] is False
     assert "chờ" in cfg["_doc"] and "chờ" in cfg["llm"]["_doc"]
     assert set(cfg["topics"]) == {"sam", "tpbvsk", "gioi_tre", "quang_cao",
-                                  "doi_thu", "chuong_trinh"}
+                                  "doi_thu", "chuong_trinh", "phap_ly"}
     # Host tầng C được thêm vào danh sách chặn.
     c_hosts = intel.tier_c_hosts(cfg)
     assert "linkedin.com" in c_hosts

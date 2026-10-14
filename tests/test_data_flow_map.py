@@ -30,7 +30,9 @@ NEW_SCRIPTS = {"scripts/review_load.py", "scripts/dpia_draft.py",
                # v5.3 KD-A4/A5: agent luật, KHÔNG gửi gì ra ngoài
                "agents/kd_listing.py", "agents/kd_price.py",
                # v10.3: cổng vendor nạp FILE — không request mạng
-               "ingest/social_vendor.py"}
+               "ingest/social_vendor.py",
+               # v10.2 DA-06 hồ sơ đối tác: 0 LLM, không gửi/chia sẻ
+               "agents/da_doitac.py"}
 KNOWN_EGRESS = {
     "connectors/zalo.py", "crawler/collect.py", "pipelines/llm_gateway.py",
     "scripts/health_bulletin.py", "scripts/zalo_mock.py",
@@ -56,7 +58,9 @@ REQUIRED_MODULES = [
     # v10.3 WP16 nền P2: API sàn chỉ đọc + social listening nhà cung cấp
     "ingest/market_api.py", "ingest/social_vendor.py",
     # v6.4 MKT-07 review/UGC → nháp trả lời + consent tái sử dụng
-    "agents/mkt_ugc.py"]
+    "agents/mkt_ugc.py",
+    # v10.2 WP16 P2: SX-A7 tra cứu nội bộ (gateway) + VT dự báo (collector)
+    "agents/sx_tracuu.py", "agents/vt_thoitiet.py"]
 
 
 def _declared(m):

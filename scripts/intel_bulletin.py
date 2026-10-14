@@ -5,7 +5,13 @@ nguồn; tùy chọn gợi ý chủ đề nội dung vào hàng duyệt chung.
 Contract:
   - Kỳ = `pipelines.period.period_bounds(period, ref)` giờ VN; tin thuộc kỳ
     theo `fetched_at`. Nhóm theo `TOPICS` (sâm, TPBVSK, giới trẻ, quảng cáo,
-    đối thủ), trần `PER_TOPIC` tin/chủ đề + "(+N tin nữa)".
+    đối thủ, văn bản pháp luật), trần `PER_TOPIC` tin/chủ đề + "(+N tin
+    nữa)".
+  - v10.2 PC-A8 chủ đề `phap_ly` (Văn bản pháp luật): mỗi dòng tiêu đề +
+    nguồn + ngày VN `YYYY-MM-DD` (`published_at`, thiếu → `fetched_at` kèm
+    "(ngày thu)") + link; KHÔNG diễn giải pháp lý (không tóm tắt LLM,
+    không gợi ý nội dung — `NO_CONTENT_TOPICS`), dòng chân "Pháp chế
+    quyết".
   - Khối "NỘI BỘ – trích nguồn": tiêu đề + nguồn + ngày VN + link, giữ
     nguyên từ ngữ nguồn — CHỈ để đọc, KHÔNG có đường sang hàng duyệt nội
     dung (module không ghi bảng nào ngoài `director.submit` cho gợi ý).
@@ -57,7 +63,11 @@ from pipelines.job_runs import clean_detail, job_run
 from pipelines.period import VN_TZ, period_bounds
 from pipelines.pii import _mask_pii
 
-TOPICS = ("sam", "tpbvsk", "gioi_tre", "quang_cao", "doi_thu")
+TOPICS = ("sam", "tpbvsk", "gioi_tre", "quang_cao", "doi_thu", "phap_ly")
+# Văn bản pháp luật KHÔNG phải chủ đề truyền thông và không được diễn giải:
+# 0 tóm tắt LLM, 0 gợi ý nội dung (v10.2 PC-A8).
+NO_CONTENT_TOPICS = frozenset({"phap_ly"})
+LEGAL_FOOTER = "Diễn giải/đổi rule: Pháp chế quyết — agent không kết luận."
 TOPIC_LABELS = {
     "sam": "Sâm & thị trường sâm",
     # Không viết đủ "bảo vệ sức khỏe": guardrail coi là claim công dụng.
@@ -65,6 +75,7 @@ TOPIC_LABELS = {
     "gioi_tre": "Giới trẻ & xu hướng tiêu dùng",
     "quang_cao": "Quảng cáo & người có ảnh hưởng",
     "doi_thu": "Đối thủ",
+    "phap_ly": "Văn bản pháp luật",
 }
 # Góc nội dung TẤT ĐỊNH cho gợi ý chủ đề — chung về thương hiệu/vùng trồng,
 # không trích tin, không tên/giá SKU, không công dụng.
@@ -169,6 +180,20 @@ def _quote(d: dict) -> str:
             f"{_vn_day(when)} · {_link(d['url'])}")
 
 
+def _legal_quote(d: dict) -> str:
+    """Dòng tin văn bản pháp luật: ngày ISO bắt buộc (thiếu published_at →
+    fetched_at + "(ngày thu)"), link http(s) — không diễn giải."""
+    pub, got = d.get("published_at"), d.get("fetched_at")
+    if pub:
+        day = pub.astimezone(VN_TZ).strftime("%Y-%m-%d")
+    elif got:
+        day = got.astimezone(VN_TZ).strftime("%Y-%m-%d") + " (ngày thu)"
+    else:
+        day = "? (chưa rõ ngày)"
+    return (f"> - {_md(d['title'])} — {_md(d['source'], 40)} · {day} · "
+            f"{_link(d['url'])}")
+
+
 def render(data: dict, start: datetime, end: datetime,
            summaries: dict | None = None, period: str = "day") -> str:
     """THUẦN — bản tin markdown. `summaries` {chủ đề: text | None (bị
@@ -207,9 +232,12 @@ def render(data: dict, start: datetime, end: datetime,
             L += ["- (không có tin mới)", ""]
             continue
         L.append(f"> **{QUOTE_HEAD}**")
-        L += [_quote(d) for d in items[:PER_TOPIC]]
+        q = _legal_quote if t == "phap_ly" else _quote
+        L += [q(d) for d in items[:PER_TOPIC]]
         if len(items) > PER_TOPIC:
             L.append(f"> - (+{len(items) - PER_TOPIC} tin nữa)")
+        if t == "phap_ly":
+            L.append(f"> {LEGAL_FOOTER}")
         L.append("")
     if data.get("suggested"):
         L += ["## Gợi ý chủ đề nội dung (chờ Quản lý MXH duyệt)", ""]
@@ -238,7 +266,7 @@ def summarize(groups: dict) -> tuple[dict, int]:
     out, n_fail = {}, 0
     for t in TOPICS:
         items = groups.get(t) or []
-        if not items:
+        if not items or t in NO_CONTENT_TOPICS:
             continue
         body = "\n".join(f"- {_segment(d)}" for d in items[:LLM_ITEMS])
         msgs = [{"role": "system", "content": SUM_PROMPT},
@@ -287,7 +315,7 @@ def suggest(conn, period: str, start: datetime, end: datetime,
     out = []
     for t in TOPICS:
         n = len(groups.get(t) or [])
-        if n < MIN_SUGGEST:
+        if n < MIN_SUGGEST or t in NO_CONTENT_TOPICS:
             continue
         title, payload = suggestion(t, n, start, end, period)
         if guardrail.check(payload).get("ok") is not True:

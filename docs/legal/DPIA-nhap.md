@@ -1,7 +1,7 @@
 # DPIA — Đánh giá tác động xử lý dữ liệu cá nhân (NHÁP)
 
 > **BẢN NHÁP — chưa có giá trị pháp lý; chờ Chuyên viên Pháp chế ký, luật sư rà — agent không kết luận tuân thủ.**
-> Sinh tự động bởi `python scripts/dpia_draft.py` từ `data/data_flow_map.json` (bản đồ rà từ code ngày 2026-10-12). KHÔNG sửa tay — sửa map rồi chạy lại (`--check` bắt lệch).
+> Sinh tự động bởi `python scripts/dpia_draft.py` từ `data/data_flow_map.json` (bản đồ rà từ code ngày 2026-10-14). KHÔNG sửa tay — sửa map rồi chạy lại (`--check` bắt lệch).
 > Căn cứ: Luật BVDLCN 91/2025/QH15 + NĐ 356/2025 (hiệu lực 01/01/2026, NĐ 356/2025 thay NĐ 13/2023). Khung mục dựng theo cấu trúc hồ sơ đánh giá tác động xử lý của NĐ 13/2023 Điều 24 — mẫu biểu chính thức theo NĐ 356/2025: CẦN LUẬT SƯ XÁC NHẬN.
 
 ## 1. Bên kiểm soát / bên xử lý dữ liệu
@@ -650,6 +650,42 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Đồng ý của người liên hệ (mục đích `b2b`, câu đồng ý NHÁP b2b-v0-nhap chờ Pháp chế): GAP tới khi Pháp chế chốt câu đồng ý + `policy_version` |
 | GAP | `policy_version` b2b-v0-nhap + câu đồng ý là NHÁP — Pháp chế chốt; Tên hộ kinh doanh có thể là tên người (cột `org_name` không mã hóa) — kiểm mẫu tay; Chưa grant role DB hẹp cho form public (chạy DSN chủ sở hữu) — external-dep; DPIA luồng form chưa ký — KHÔNG bật endpoint trước khi ký; Chưa có job xóa theo thời hạn lưu (retention); Consent web KHÔNG xác minh SĐT (OTP/double opt-in = external-dep): người lạ gõ SĐT người khác tạo được yêu cầu + đồng ý b2b; SĐT trùng contact đã RÚT b2b → bỏ qua 0 ghi (code chặn), contact cũ giữ tên/email trong vault — GĐ bán hàng gọi xác minh danh tính trước khi gửi báo giá |
 
+### DF-36 — Tra cứu khoa học nội bộ SX-A7 (v10.2)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-36 |
+| Module (code) | `agents/sx_tracuu.py` |
+| Mục đích | Tra cứu nội bộ tài liệu khoa học có trích nguồn DOI/URL cho bộ phận sản xuất — KHÔNG dùng cho truyền thông, không claim công dụng ra ngoài |
+| Dữ liệu | Câu hỏi tra cứu của nhân viên sản xuất (≤2000 ký tự) + đoạn tài liệu khoa học NỘI BỘ đã được GĐ SX duyệt nạp (`chunks_internal` collection `internal:sx`); không dữ liệu cá nhân (đoạn trích qua `_mask_pii`) |
+| Lớp | Vàng |
+| Chủ thể | Không có chủ thể dữ liệu cá nhân (tài liệu khoa học/kỹ thuật); người hỏi là nhân viên nội bộ — không ghi tên |
+| Nơi lưu | Tài liệu: Postgres `chunks_internal` (nạp qua `ingest.kb_internal --collection internal:sx --approved-by`); câu trả lời chỉ in stdout / file `data/reports/sx-tracuu-*.md` (gitignored) khi `--out`; module KHÔNG ghi bảng nào |
+| Thời hạn lưu | Theo vòng đời tài liệu nội bộ trong `chunks_internal` (nạp lại theo doc_sha256); file báo cáo cục bộ — GIẢ ĐỊNH, chủ khối SX chốt |
+| Bên nhận | Nhà cung cấp embedding/LLM qua `pipelines.llm_gateway` (agent `sx_tracuu`, cap tháng riêng; LLM chỉ khi `--llm`, mặc định tắt) — không gửi tới khách/kênh ngoài |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | Collection `internal:sx` là HẰNG trong module; chatbot khách (`api.rag.answer`) không có tham số collection — test DB `test_public_retrieve_and_answer_never_return_sx`; Mọi đầu ra mở đầu nhãn "NỘI BỘ – không dùng cho truyền thông"; mặc định trích nguyên văn, LLM chỉ khi `--llm` + `guardrail.check` ok; Không có đường sang bản nháp nội dung/hàng duyệt/chatbot (grep test); câu về rượu → không tra, 0 embed; Gateway: PII mask + provider routing + kill/cap theo agent |
+| Căn cứ xử lý | Lợi ích hợp pháp (nghiên cứu nội bộ, không dữ liệu cá nhân); bản quyền tài liệu khoa học bên ngoài: CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | Tài liệu khoa học thật + GĐ SX duyệt nạp (`--approved-by` người thật) — external-dep; Bản quyền bài báo (PubMed/Semantic Scholar/tạp chí): chỉ nạp tài liệu được phép lưu nội bộ — Pháp chế xác nhận; Gửi đoạn tài liệu nội bộ qua nhà cung cấp embedding nước ngoài — TIA chưa ký |
+
+### DF-37 — Dự báo thời tiết VT (v10.2)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-37 |
+| Module (code) | `agents/vt_thoitiet.py` |
+| Mục đích | Cảnh báo mưa lớn/rét và dấu hiệu sâu bệnh theo khoảnh → gợi ý "cần đi kiểm tra" cho GĐ vùng trồng |
+| Dữ liệu | Tọa độ VÙNG trồng đã làm tròn 0,1° (~11 km, không phải tọa độ khoảnh) + số ngày dự báo gửi nhà cung cấp dự báo; dự báo mưa/nhiệt trả về; nhật ký `plot_logs` (chỉ mã khoảnh, ngày, cờ từ `detail`) đọc nội bộ |
+| Lớp | Xanh |
+| Chủ thể | Không có chủ thể dữ liệu cá nhân (tọa độ vùng làm tròn; digest không chứa người ghi nhật ký) |
+| Nơi lưu | Digest `data/reports/vt-canh-bao-*.md` (gitignored) + mục `approval_queue` `weather_digest` khối farming khi `--submit`; dự báo không lưu DB |
+| Thời hạn lưu | Mục hàng duyệt theo `approval_queue` (append-only trạng thái); file digest cục bộ — GIẢ ĐỊNH, GĐ vùng trồng chốt |
+| Bên nhận | Nhà cung cấp dự báo (Open-Meteo hoặc API có phí) — CHỈ khi `fetch.enabled = true` (mặc định false), GET qua `crawler.intel.Fetcher` (robots, ≥1s/host, chặn sàn/MXH/tầng C); mặc định nhập tay CSV, không gửi gì |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | Tọa độ cấu hình bắt buộc đã làm tròn 0,1° (sai → exit 1); `[req]` chỉ chứa tọa độ vùng làm tròn (test parse query); Digest không chứa lat/lon/`location`/`area_m2`/người ghi; không chẩn đoán/liều lượng/hoạt chất; qua `guardrail.check` trước khi ghi; Cờ sâu bệnh CHỈ quét `detail` (`garden_director.log_flags`); 0 LLM; không gửi/đăng gì; GĐ duyệt mục = đã xem |
+| Căn cứ xử lý | Lợi ích hợp pháp (vận hành vùng trồng, không dữ liệu cá nhân); điều khoản thương mại nhà cung cấp dự báo: CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | Điều khoản thương mại Open-Meteo / API thời tiết có phí chưa xác minh — giữ `fetch.enabled=false`; Ngưỡng mưa/nhiệt + gán khoảnh→vùng GIẢ ĐỊNH — GĐ vùng trồng chốt; Người duyệt thật khối farming (`approvers: []`) — external-dep |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -691,6 +727,8 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-33 | Social listening nhà cung cấp (ingest/social_vendor.py) | Vàng | trung bình | không | 4 |
 | DF-34 | Review sàn + bình luận kênh sở hữu → nháp trả lời UGC + xin phép/tái sử dụng UGC (MKT-07, v6.4) | Đỏ | cao | không | 4 |
 | DF-35 | Form B2B yêu cầu báo giá + báo giá KD-A3 (v8.2) | Đỏ | cao | không | 6 |
+| DF-36 | Tra cứu khoa học nội bộ SX-A7 (v10.2) | Vàng | trung bình | có | 3 |
+| DF-37 | Dự báo thời tiết VT (v10.2) | Xanh | thấp | có | 3 |
 
 ## 4. Tổng hợp GAP
 
@@ -760,6 +798,12 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-35] DPIA luồng form chưa ký — KHÔNG bật endpoint trước khi ký
 - [DF-35] Chưa có job xóa theo thời hạn lưu (retention)
 - [DF-35] Consent web KHÔNG xác minh SĐT (OTP/double opt-in = external-dep): người lạ gõ SĐT người khác tạo được yêu cầu + đồng ý b2b; SĐT trùng contact đã RÚT b2b → bỏ qua 0 ghi (code chặn), contact cũ giữ tên/email trong vault — GĐ bán hàng gọi xác minh danh tính trước khi gửi báo giá
+- [DF-36] Tài liệu khoa học thật + GĐ SX duyệt nạp (`--approved-by` người thật) — external-dep
+- [DF-36] Bản quyền bài báo (PubMed/Semantic Scholar/tạp chí): chỉ nạp tài liệu được phép lưu nội bộ — Pháp chế xác nhận
+- [DF-36] Gửi đoạn tài liệu nội bộ qua nhà cung cấp embedding nước ngoài — TIA chưa ký
+- [DF-37] Điều khoản thương mại Open-Meteo / API thời tiết có phí chưa xác minh — giữ `fetch.enabled=false`
+- [DF-37] Ngưỡng mưa/nhiệt + gán khoảnh→vùng GIẢ ĐỊNH — GĐ vùng trồng chốt
+- [DF-37] Người duyệt thật khối farming (`approvers: []`) — external-dep
 
 ## 5. Câu hỏi cho luật sư
 

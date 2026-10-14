@@ -1,0 +1,26 @@
+{
+  "_doc": "Mục lục data room hồ sơ đối tác DA-06 (v10.2, agents/da_doitac.py) — BẢN DEV SOẠN, chờ GĐ dự án + GĐ tài chính chốt. evidence = đường dẫn/URL tài liệu chứng minh (null = 'thieu'); verified_by = NGƯỜI THẬT đã đối chiếu (null = 'chua_xac_minh') — agent KHÔNG BAO GIỜ ghi verified_by. Data room chỉ chia sẻ theo NDA sau khi TGĐ/HĐTV duyệt (external-dep); agent không gửi/chia sẻ gì.",
+  "sections": [
+    {"id": "phap_ly", "title": "Pháp lý doanh nghiệp", "items": [
+      {"id": "PL-01", "title": "Giấy chứng nhận đăng ký doanh nghiệp", "owner_role": "phap_che", "evidence": null, "verified_by": null},
+      {"id": "PL-02", "title": "Bản tự công bố / giấy tiếp nhận từng sản phẩm", "owner_role": "phap_che", "evidence": null, "verified_by": null}
+    ]},
+    {"id": "vung_trong", "title": "Vùng trồng", "items": [
+      {"id": "VT-01", "title": "Hồ sơ quyền sử dụng/thuê đất vùng trồng", "owner_role": "vung_trong", "evidence": null, "verified_by": null},
+      {"id": "VT-02", "title": "Nhật ký canh tác có hash chain (plot_logs)", "owner_role": "vung_trong", "evidence": "docs/schema.sql#plot_logs", "verified_by": null}
+    ]},
+    {"id": "san_pham", "title": "Sản phẩm", "items": [
+      {"id": "SP-01", "title": "Danh mục SKU + giá niêm yết (golden SKU)", "owner_role": "san_xuat", "evidence": "data/golden_skus.json", "verified_by": null},
+      {"id": "SP-02", "title": "Phiếu kiểm nghiệm chất lượng còn hiệu lực", "owner_role": "san_xuat", "evidence": null, "verified_by": null}
+    ]},
+    {"id": "kenh", "title": "Kênh phân phối", "items": [
+      {"id": "KN-01", "title": "Báo cáo doanh số sàn TMĐT (file Seller Center)", "owner_role": "kinh_doanh", "evidence": null, "verified_by": null}
+    ]},
+    {"id": "nhan_su", "title": "Nhân sự & tổ chức", "items": [
+      {"id": "NS-01", "title": "Sơ đồ tổ chức (vai trò, không thông tin cá nhân)", "owner_role": "hcns", "evidence": null, "verified_by": null}
+    ]},
+    {"id": "so_lieu", "title": "Số liệu tài chính", "items": [
+      {"id": "SL-01", "title": "Báo cáo tài chính năm gần nhất (đã kiểm toán)", "owner_role": "tai_chinh", "evidence": null, "verified_by": null}
+    ]}
+  ]
+}

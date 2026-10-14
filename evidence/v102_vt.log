@@ -1,0 +1,6 @@
+=== W102.4 VT static 2026-10-14T21:30:02+07:00 ===
+$ grep -nE "import httpx|import requests|llm_gateway|\.post\(" agents/vt_thoitiet.py
+rc=1 (1 = rỗng)
+$ python -m agents.vt_thoitiet --help
+rc=0
+pytest: tests/test_vt_thoitiet.py — xem evidence/v102_gate_targeted.log

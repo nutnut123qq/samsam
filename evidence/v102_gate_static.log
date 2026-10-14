@@ -1,0 +1,14 @@
+=== W102.7 greps 2026-10-14T19:18:49+07:00 ===
+$ grep -nE "import httpx|import requests" agents/sx_tracuu.py agents/vt_thoitiet.py agents/da_doitac.py
+rc=1 (1 = rỗng)
+$ grep -nE "llm_gateway|openai" agents/vt_thoitiet.py agents/da_doitac.py pipelines/intel_alert.py
+rc=1 (1 = rỗng)
+$ git diff --stat docs/schema.sql docs/roles.sql
+(rỗng ở trên = không đổi)
+$ grep -n "71 bảng" docs/handover/kien-truc.md
+80:## 3. Cơ sở dữ liệu — 71 bảng public (`docs/schema.sql`)
+$ ruff check .
+All checks passed!
+ruff rc=0
+$ python -m py_compile <file mới/sửa>
+py_compile rc=0

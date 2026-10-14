@@ -6,6 +6,375 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+## Checklist v10.2-tri-thuc-p2
+
+Khán giả/mục đích: M31 (worktree `D:\code\samsam-w70`) — làm 4 agent P2 của
+WP16 "Agent P2 và nâng cấp nền (T4–T6)" (pmo.md dòng `| WP16`; tiêu chí
+nghiệm thu liên quan: **"10 agent P2 đạt tối thiểu Pilot có người duyệt"**,
+"Chủ khối từng agent ký"): **SX-A7** tra cứu khoa học nội bộ (final_plans
+`production` "A7 – Agent Tra cứu Khoa học nội bộ": chỉ nội bộ, có DOI/URL,
+nhãn "nội bộ – không dùng cho truyền thông", chatbot khách không đọc được),
+**VT** cảnh báo thời tiết & sâu bệnh (final_plans `farming` "Agent Cảnh báo
+thời tiết & sâu bệnh": tọa độ làm tròn, ngưỡng GĐ chốt, chỉ gợi ý "cần đi
+kiểm tra", không chẩn đoán/liều lượng/hoạt chất, digest GĐ bấm "đã xem"),
+**DA-06** hồ sơ đối tác (final_plans `projects` "DA-06": go-live
+**16/02/2027**, mục lục data room có trạng thái, số liệu chỉ có nguồn +
+ngày, 0 dự phóng, gate XNQC + rượu, chưa duyệt → "không được chia sẻ"),
+**PC-A8** theo dõi văn bản pháp luật (final_plans `legal_hr` "A8 – Agent
+Theo dõi văn bản pháp luật": qua collector chung, mỗi ý có URL + ngày,
+0 request vào đường robots chặn/sàn). Nền đã có (TÁI DÙNG, không viết lại):
+`ingest/kb_internal.py` (v3.9 — nạp tài liệu ĐÃ DUYỆT vào `chunks_internal`,
+`--collection internal:<phong> --approved-by`, chặn `confidential`),
+`api/rag.py` (`retrieve_by_vector(qv, k, collection="internal:sx")` đọc
+`chunks_internal`, hit `url` = `source_ref`; `answer()` KHÔNG có tham số
+collection), `pipelines/llm_gateway.py` (`chat`/`embed`, cap theo agent_id
+trong `data/llm_gateway.json`), `crawler/intel.py` (v7.0 `Fetcher`: robots,
+≥1s/host, ngân sách, `HARD_BLOCK` + tầng C, log `[req]` có `url`;
+`load_sources`, `classify`, nguồn `data/intel_sources.json` status
+`cho_duyet|duyet`), `pipelines/intel_alert.py` (v7.1 — `RULES` cứng,
+`load_rules` fail-closed, `match`, `scan` → `pipelines.red_alert.
+raise_alert` 1 cảnh báo/tin, leo thang 2h, `--ack`), `scripts/
+intel_bulletin.py` (`TOPICS`), `agents/garden_director.py` (`log_flags`
+CHỈ quét detail, không in `location`/tọa độ), `plot_logs` hash chain v9.3,
+`org_prospects` (v8.3 DA-05, chỉ thông tin TỔ CHỨC, không cột liên hệ cá
+nhân), `agents/da_hoso.py` (`eligible_skus` — loại rượu + TPBVSK chưa XNQC;
+mẫu `_export` khớp sha256 bản duyệt), `pipelines/director.submit`,
+`pipelines/pii._mask_pii`, `pipelines/guardrail.check`/`check_publish`,
+`pipelines/kb_filter.is_alcohol`, `pipelines/job_runs.job_run`,
+`agents/report.write_report`.
+
+Quy ước: ponytail — stdlib + `psycopg` + module sẵn có; KHÔNG dep mới,
+KHÔNG bảng mới (`docs/schema.sql`/`docs/roles.sql` KHÔNG đổi →
+`kien-truc.md` "71 bảng public" giữ nguyên), KHÔNG http client mới (mọi
+request mạng qua `crawler.intel.Fetcher`; 0 `import httpx|requests` trong
+file mới). LLM CHỈ ở SX-A7 và CHỈ khi `--llm` (mặc định TẮT → trả lời
+trích đoạn tất định); VT/DA-06/PC-A8 0 LLM. Không agent nào có đường ghi
+ra ngoài công ty (không gửi/đăng/liên hệ) và không tự duyệt — đầu ra =
+file `data/reports/` (gitignored, `write_report` atomic) + mục hàng duyệt
+`pending` qua `director.submit` + cảnh báo `red_alerts`. Print tiếng Việt →
+UTF-8 guard; connect qua `ingest.lead_store.connect` (connect_timeout); CLI
+nhiều op → `n_ops > 1` usage exit 2 TRƯỚC connect; ghi trên conn chia sẻ →
+`conn.commit()` tường minh; `__main__` bọc `job_run(...)`; mọi hàm thời gian
+nhận `now`/`until` tham số (chỉ CLI đọc đồng hồ, ngày theo giờ VN); test
+không wall-clock (Fetcher tiêm `transport`/`sleep`/`clock`); test DB =
+fixture schema tạm + `docs/schema.sql` + `docs/roles.sql` rồi ROLLBACK (bọc
+`_TxConn` khi code gọi commit — precedent `tests/test_cockpit.py`,
+`tests/test_auth_approval.py`), gate đòi **0 skipped** ở file test mới.
+KHÔNG ghi `chunks_internal`/`approval_queue`/`red_alerts` trên DB thật
+samsam_infra ngoài test rollback (CLI trên DB thật chỉ `--dry-run`/đọc/case
+âm). Mã luồng DF-36/DF-37 và mục SOP `5t` là tạm — coordinator đánh lại số
+khi gộp nhánh.
+
+External-dep (KHÔNG giả lập như thật, KHÔNG tự đánh dấu): tài liệu khoa
+học THẬT + GĐ SX duyệt nạp (`--approved-by` là tên người thật — test dùng
+tên giả trong DB rollback); PubMed/Semantic Scholar/bài có bản quyền (không
+tự gọi API — tài liệu do người tải về rồi nạp); API thời tiết có phí /
+điều khoản thương mại Open-Meteo chưa xác minh (`fetch.enabled` mặc định
+`false` → dùng nhập tay CSV); ngưỡng mưa/nhiệt + gán khoảnh→vùng
+(`data/weather_config.json` GIẢ ĐỊNH — GĐ vùng trồng chốt); Pháp chế duyệt
+nguồn văn bản (mọi nguồn mới `cho_duyet`, URL RSS chưa xác minh bằng lượt
+chạy thật) + bộ từ khóa `phap_ly`; người nhận cảnh báo thật
+(`data/red_alert_routing.json` giữ nguyên); số liệu data room thật + GĐ tài
+chính đối chiếu + TGĐ/HĐTV duyệt + NDA (`data/projects/partner_facts.json`
+chỉ có MẪU gắn `sample: true`); người duyệt thật các khối (`approvers: []`
+giữ nguyên); chủ khối ký nghiệm thu WP16.
+
+- [ ] **W102.1 PC-A8 nguồn văn bản pháp luật + luật `legal_doc` → red_alert** —
+  `data/intel_sources.json`: thêm ≥3 nguồn tầng **A** cổng văn bản/cơ quan
+  nhà nước (vd Cổng TTĐT Chính phủ văn bản mới, Cục ATTP, Bộ Y tế) `kind`
+  `rss`, `status` `cho_duyet`, `note` "URL RSS chưa xác minh — Pháp chế
+  duyệt nguồn"; thêm chủ đề `phap_ly` vào `topics` (cụm CỤ THỂ: "nghị
+  định", "thông tư", "dự thảo", "văn bản hợp nhất", "quyết định số", "luật
+  an toàn thực phẩm", "luật quảng cáo", "tác hại của rượu, bia" — không cụm
+  trần "luật"); `_doc` nhắc PC-A8. `data/intel_alert_rules.json`: thêm
+  `"legal_sources": [id...]` (id nguồn văn bản ở trên). `pipelines/
+  intel_alert.py`: `RULES` thêm `"legal_doc"`; `load_rules` đọc
+  `legal_sources` BẮT BUỘC — thiếu/không phải list/rỗng/phần tử không khớp
+  `[a-z0-9_-]+` → `IntelAlertConfigError` (fail-closed, CLI exit 1 trước
+  connect); `match(item, rules)`: `legal_doc` khi `item["source"] ∈
+  legal_sources` ∧ (`topics ∩ {tpbvsk, quang_cao}` ≠ ∅ ∨ `'ruou' ∈ flags`)
+  — tin khớp nhiều luật vẫn ĐÚNG 1 cảnh báo (`scan` không đổi, unique index
+  `red_alerts_intel_item_uq`), `detail.rules` chứa `legal_doc`; leo thang
+  2h/`--ack` dùng lại nguyên. `crawler/intel.py` KHÔNG đổi (fetch/robots/
+  tầng C sẵn có).
+  - Boundary: `data/intel_sources.json`, `data/intel_alert_rules.json`,
+    `pipelines/intel_alert.py`, `tests/test_intel_alert.py` (helper
+    `_rules_doc` thêm `legal_sources`; `test_match_rules_cover_all_three` →
+    cover đủ 4 luật — FLIP, đối chiếu số assert trước/sau), `tests/
+    test_intel.py` (assert tập topic dòng ~153 thêm `phap_ly` — luật hiện
+    hành, không nới), `tests/test_pc_a8.py` (mới)
+  - Gate: `python -m crawler.intel --report` không cần mạng vẫn exit như cũ;
+    `load_sources` trên file thật → 0 lỗi, mọi nguồn `legal_sources` tồn
+    tại trong `intel_sources.json` với tier `A` (drift test 2 chiều); test
+    `load_rules` fail-closed với `legal_sources` thiếu/`[]`/`[""]`/`"x"`/
+    `["Bad Id"]`; `match` thuần: tin nguồn văn bản + chủ đề tpbvsk →
+    `legal_doc`; nguồn văn bản + cờ `ruou` (không tpbvsk) → `legal_doc`;
+    nguồn văn bản chỉ chủ đề `sam` → không `legal_doc`; nguồn báo
+    (`vnexpress-*`) + tpbvsk → không `legal_doc`. **Collector có robots + 0
+    tầng C** (test, `httpx.MockTransport` + `sleep`/`clock` tiêm, `main(
+    ["--run","--source",<id văn bản>], transport=...)` trên DB fixture):
+    request đầu mỗi origin là `/robots.txt`, robots `Disallow` feed → 0 GET
+    feed + `[robots-deny]`; mọi request method GET; 2 request cùng host cách
+    ≥1s theo clock giả; feed redirect sang `shopee.vn`/host tầng C →
+    `[blocked]` + 0 request tới host đó; tin văn bản lưu `intel_items` tier A
+    topics có `phap_ly`. **Cảnh báo vào red_alert** (DB fixture, 0 skipped):
+    chèn tin nguồn văn bản + tpbvsk → `scan(conn, now)` tạo đúng 1 dòng
+    `red_alerts` `source_agent='intel_red_alert'` `detail.rules ∋
+    'legal_doc'`; chạy lại → 0 dòng mới; quá 2h chưa ack → 1 leo thang.
+    `grep -nE "import httpx|import requests|llm_gateway" pipelines/
+    intel_alert.py` rỗng
+  - Evidence: `evidence/v102_pc_a8.log`
+- [ ] **W102.2 PC-A8 bản tin pháp lý trong bản tin intel** — `scripts/
+  intel_bulletin.py`: `TOPICS` thêm `phap_ly` (nhãn "Văn bản pháp luật"),
+  khối "NỘI BỘ – trích nguồn" của chủ đề này in mỗi tin: tiêu đề + nguồn +
+  ngày VN (`published_at`, thiếu → `fetched_at` kèm "(ngày thu)") + link —
+  KHÔNG diễn giải pháp lý, dòng chân "Diễn giải/đổi rule: Pháp chế quyết —
+  agent không kết luận". `--suggest` KHÔNG sinh gợi ý nội dung cho chủ đề
+  `phap_ly` (văn bản pháp luật không phải chủ đề truyền thông). LLM tóm tắt
+  giữ nguyên cổng cũ (`--llm` ∧ `llm.enabled`).
+  - Boundary: `scripts/intel_bulletin.py`, `tests/test_intel_bulletin.py`
+  - Gate: test render với tin `phap_ly` (có/không `published_at`) → mỗi
+    dòng có URL `http(s)://` + ngày `YYYY-MM-DD`; 0 dòng tin thiếu URL hoặc
+    ngày; `--suggest` trên fixture có ≥2 tin `phap_ly` → 0 `director.submit`
+    cho chủ đề đó (fake/DB fixture đếm); bulletin cũ (5 chủ đề) không đổi
+    output (test hiện có xanh, không nới)
+  - Evidence: `evidence/v102_pc_a8.log`
+- [ ] **W102.3 SX-A7 tra cứu khoa học nội bộ — `agents/sx_tracuu.py`** —
+  Nạp tài liệu: KHÔNG code nạp mới — dùng `python -m ingest.kb_internal
+  --file F --collection internal:sx --approved-by "<GĐ SX>"` (SOP ghi rõ;
+  khuyến nghị dòng `DOI: 10.xxxx/...` hoặc `URL: https://...` trong 20 dòng
+  đầu file). `ask(question, *, k=5, llm=False, now=None) -> {"answer",
+  "sources": [{"doc_id","title","source_ref","cite"}], "label", "mode"}`:
+  câu rỗng/chỉ dấu câu → NO_DATA (chuỗi `api.rag.NO_DATA`), 0 embed;
+  `kb_filter.is_alcohol(question)` → NO_DATA (không tra rượu); embed qua
+  `llm_gateway.embed("sx_tracuu", q)` rồi `api.rag.retrieve_by_vector(qv, k,
+  collection="internal:sx")` — collection là HẰNG trong module, không tham
+  số CLI/hàm; top score < `api.rag.MIN_SCORE` → NO_DATA. `cite` = DOI/URL
+  parse bằng regex `^(doi|url)\s*:\s*(\S+)` (casefold, 20 dòng đầu) từ
+  chunk_index 0 của doc (1 SELECT `chunks_internal where collection =
+  'internal:sx' and doc_id = any(%s) and chunk_index = 0`); không có →
+  `cite = "(chưa có DOI/URL — tên file <source_ref>)"`. Mặc định (`mode`
+  `extract`): trả lời = trích đoạn NGUYÊN VĂN top hit (≤600 ký tự/đoạn, ≤3
+  đoạn, qua `_mask_pii`) + `[n]` trỏ nguồn — không tổng hợp. `--llm`: 1 lời
+  gọi `llm_gateway.chat("sx_tracuu", ...)` system prompt "chỉ dựa ngữ cảnh,
+  trích [n], không kết luận công dụng cho người tiêu dùng"; output `None`/
+  rỗng/`GatewayError`/`guardrail.check(...)["ok"] is not True` → về
+  `extract` + ghi lý do (code vi phạm, không trích span). MỌI đầu ra (stdout
+  + file `data/reports/sx-tracuu-<YYYY-MM-DD VN>-<sha8 câu hỏi>.md` khi
+  `--out`) mở đầu nhãn **"NỘI BỘ – không dùng cho truyền thông"**. Module
+  KHÔNG ghi bảng nào (0 INSERT/UPDATE), KHÔNG import `pipelines.director`/
+  `pipelines.store`/`pipelines.content`/`connectors` — không có đường sang
+  `content_drafts`/hàng duyệt/chatbot. `data/llm_gateway.json`
+  `monthly_cap_usd` thêm `"sx_tracuu": 1.0` (ƯỚC TÍNH). CLI `python -m
+  agents.sx_tracuu --ask "<câu>" [--k N] [--llm] [--out]`; DB down → exit 2
+  `[warn]`; câu >2000 ký tự → exit 2 trước connect/embed.
+  - Boundary: `agents/sx_tracuu.py` (mới), `data/llm_gateway.json`,
+    `tests/test_sx_tracuu.py` (mới)
+  - Gate: **tra cứu nội bộ không lộ ra chatbot khách** (test v3.9 giữ
+    xanh: `tests/test_kb_acl.py` `test_answer_has_no_collection_param`,
+    `test_public_reads_only_chunks`; `tests/test_kb_acl_db.py`
+    `test_retrieve_default_hides_internal_and_alcohol`) + test mới DB
+    fixture (0 skipped): chèn 3 chunk `internal:sx` (doc_id `sx-saponin-*`,
+    embedding cố định) + 1 chunk public → `api.rag.retrieve_by_vector(qv)`
+    mặc định KHÔNG trả doc_id `sx-*`; `api.rag.answer(<đúng tiêu đề tài
+    liệu sx>)` với embed/chat monkeypatch → `sources` không chứa
+    `source_ref` nội bộ; `ask()` (embed monkeypatch) → sources đúng doc_id
+    `sx-*`, `cite` = DOI parse được, doc không DOI → chuỗi "chưa có
+    DOI/URL"; chunk `internal:mkt` cùng vector KHÔNG lọt vào `ask()`; nhãn
+    "NỘI BỘ – không dùng cho truyền thông" có ở 100% đầu ra (extract, llm,
+    NO_DATA); `--llm` với chat trả "sản phẩm chữa ung thư" → mode
+    `extract` + lý do `banned_word`; câu rượu → NO_DATA 0 embed (đếm);
+    `grep -nE "director|save_draft|content_drafts|approval_queue|
+    insert into|update .* set|import httpx|import requests" agents/
+    sx_tracuu.py` rỗng; `grep -rn "sx_tracuu" connectors/ app/ api/` rỗng
+  - Evidence: `evidence/v102_sx_a7.log`
+- [ ] **W102.4 VT cảnh báo thời tiết & sâu bệnh — `agents/vt_thoitiet.py`** —
+  `data/weather_config.json` (mới, `_doc` GIẢ ĐỊNH — GĐ vùng trồng chốt):
+  `areas: [{"code","name","lat","lon","plots":[plot_id...]}]` (lat/lon ĐÃ
+  làm tròn 0,1° — `round(v*10) == v*10` và |lat|≤90, |lon|≤180, sai →
+  config lỗi exit 1), `thresholds: {"rain_mm_day": 50, "tmin_c": 5}`,
+  `fetch: {"enabled": false, "url_template": <Open-Meteo forecast daily
+  precipitation_sum,temperature_2m_min,temperature_2m_max>, "days": 7}`,
+  `flag_days: 7`. Thuần: `load_config(path)` fail-closed; `read_csv(path)`
+  nhập tay header đúng `area_code,day,rain_mm,tmin_c,tmax_c` (≤1MB, UTF-8/
+  BOM, area ∈ config, `day` ISO, số hữu hạn rain 0..1000, nhiệt -20..50,
+  trùng (area, day) → lỗi; lỗi in dòng+cột, không in giá trị; có lỗi → 0
+  xử lý, không connect); `parse_open_meteo(body) -> rows` (JSON hỏng/thiếu
+  mảng/độ dài lệch → lỗi nguồn, không crash); `evaluate(rows, thresholds)
+  -> [{"area","day","kinds":["mua_lon"|"ret"],"value"}]` (`rain_mm >
+  rain_mm_day` → `mua_lon`; `tmin_c < tmin_c` → `ret`; bằng ngưỡng KHÔNG
+  cảnh báo). `--fetch` chỉ khi `fetch.enabled is True` (False → exit 2
+  "chưa bật — điều khoản chưa xác minh", 0 request): mỗi vùng 1 URL qua
+  `crawler.intel.Fetcher` (robots + ≥1s/host + `--max-requests`, log
+  `[req]`); non-2xx/robots cấm/hết ngân sách → vùng đó "chưa có dự báo",
+  không crash. Sâu bệnh: `plot_logs` `ts` trong `flag_days` ngày tới
+  `now` → `garden_director.log_flags(detail)` (CHỈ detail) → "khoảnh X:
+  ghi nhận '<cờ>' ngày D — cần đi kiểm tra". Digest `build_digest(alerts,
+  flags, plots_by_area, now) -> str` từ TEMPLATE tất định theo khoảnh (vùng
+  → danh sách khoảnh trong `plots`, khoảnh active không thuộc vùng nào →
+  dòng "chưa gán vùng"): chỉ "cần đi kiểm tra" (thoát nước/che chắn/sâu
+  bệnh) — KHÔNG chẩn đoán, KHÔNG liều lượng/hoạt chất/tên thuốc; digest
+  KHÔNG chứa lat/lon/`location`/`area_m2`/người ghi; qua `guardrail.check`
+  ok trước ghi file `data/reports/vt-canh-bao-<YYYY-MM-DD VN>.md`.
+  `--submit` (chỉ khi có cảnh báo/cờ): `director.submit(conn, "farming",
+  "weather_digest", object_id="vt-digest:<ngày VN>", ...,
+  created_by="agent:VT")` — GĐ approve = "đã xem"; trùng pending →
+  `skipped`. `data/directors/farming.json` thêm `weather_digest`
+  (`sla_hours` 24, `risk` "medium" — KHÔNG `low` để luật tự duyệt không
+  bao giờ áp). CLI `--digest (--from-csv FILE | --fetch [--max-requests
+  N]) [--submit] [--date YYYY-MM-DD]`; 2 nguồn cùng lúc → exit 2 trước
+  connect; DB down → digest chỉ phần thời tiết + `[warn] chưa nạp nhật ký`
+  exit 0 (không `--submit`).
+  - Boundary: `agents/vt_thoitiet.py` (mới), `data/weather_config.json`
+    (mới), `data/directors/farming.json`, `tests/test_vt_thoitiet.py` (mới)
+  - Gate: **replay 90 ngày**: fixture 90 ngày × 2 vùng (sinh tất định có ngày
+    mưa 50.0/50.1/120, tmin 5.0/4.9) → số (vùng, ngày) có cảnh báo ==
+    số đếm bằng vòng lặp độc lập trong test (không gọi `evaluate`); biên
+    50.0/5.0 không cảnh báo; CSV lỗi từng loại → 0 xử lý; **fetch qua
+    collector** (`httpx.MockTransport` + `sleep`/`clock` tiêm, config tmp
+    `enabled: true`): request đầu origin `/robots.txt`, robots Disallow →
+    0 GET dự báo; mọi `[req]` `url` có `latitude`/`longitude` ≤1 chữ số
+    thập phân (parse query); host trong `HARD_BLOCK`/tầng C ở
+    `url_template` → `[blocked]` 0 request; `enabled: false` → 0 request
+    exit 2; digest: chứa mã khoảnh, KHÔNG chứa chuỗi lat/lon của config,
+    không "latitude"/"location"; quét regex liều lượng `\d+\s*(ml|lít|l|g|
+    gam|kg|cc|ppm)\b|/ha\b` + từ cấm → 0 hit; nhật ký activity 'kiểm tra
+    sâu bệnh' detail "bình thường" → 0 cờ, detail "phát hiện sâu bệnh" → 1
+    dòng "cần đi kiểm tra"; DB fixture (0 skipped) `--submit` → 1 mục
+    `pending` block farming `weather_digest`, chạy lại → skipped; không có
+    cảnh báo → 0 submit. `grep -nE "import httpx|import requests|
+    llm_gateway|\.post\(" agents/vt_thoitiet.py` rỗng
+  - Evidence: `evidence/v102_vt.log`
+- [ ] **W102.5 DA-06 hồ sơ đối tác — `agents/da_doitac.py`** —
+  `data/projects/data_room.json` (mới, BẢN DEV SOẠN): 6 mục lớn (pháp lý,
+  vùng trồng, sản phẩm, kênh, nhân sự, số liệu), mỗi mục con `{id, title,
+  owner_role, evidence: null|<đường dẫn/URL>, verified_by: null}` →
+  trạng thái tính: `thieu` (không evidence) / `chua_xac_minh` (có evidence,
+  `verified_by` null) / `da_xac_minh` — agent KHÔNG ghi `verified_by`.
+  `data/projects/partner_facts.json` (mới, chỉ MẪU `sample: true`): số liệu
+  `{key, label, value, unit, source, as_of}`; thiếu `source`/`as_of` → in
+  "chưa xác minh" (không in số). Thuần: `build(prospect, facts, golden,
+  data_room, *, now) -> {payload, internal, problems}`: phần đối tác CHỈ từ
+  cột `org_prospects` (`org_name`, `org_type`, `region`, `website`,
+  `source_url`, `fit_reason`) — ô nào `_mask_pii` đổi giá trị → problem
+  (không in ô); phần sản phẩm = `da_hoso.eligible_skus(golden)` (rượu +
+  TPBVSK chưa XNQC bị loại, cả tên SKU); số liệu: mỗi số kèm "(nguồn …, ngày
+  …)", fact `sample` → nhãn `(MẪU)`, doanh số sàn kèm chú thích "doanh số,
+  không phải doanh thu thực nhận"; CẤM dự phóng/cam kết: dòng payload khớp
+  regex `dự phóng|dự báo doanh thu|lợi nhuận dự kiến|biên lợi nhuận|ROI|cam
+  kết lợi nhuận|tăng trưởng \d+\s*%` → problem (không có giá vốn + biên →
+  không có số dự phóng nào được sinh). Cổng payload: `guardrail.
+  check_publish(payload, channel="web")` ok ∧ không `kb_filter.is_alcohol`
+  ∧ 0 tên SKU bị loại. `internal` = mục lục data room + trạng thái + danh
+  sách "chưa xác minh" (KHÔNG vào hàng duyệt). Go-live: `GO_LIVE =
+  date(2027, 2, 16)` — `now` (giờ VN) < GO_LIVE → chế độ `shadow`: chỉ ghi
+  file, `--submit` bị từ chối exit 1 "shadow trước go-live 16/02/2027".
+  `--submit` (sau go-live, problems rỗng) → `director.submit(conn,
+  "projects", "partner_profile", object_id="partner:<prospect id>:<sha256
+  payload[:16]>", ..., created_by="agent:DA-06")` pending; `--status
+  QUEUE_ID`: chỉ `approved` VÀ sha256 payload dựng lại khớp bản duyệt →
+  "được chia sẻ (theo NDA)", mọi trường hợp khác → **"không được chia
+  sẻ"** + lý do. `data/directors/projects.json` thêm `partner_profile`
+  (`sla_hours` 72, `risk` "high"). Agent KHÔNG gửi/chia sẻ data room, 0
+  LLM. CLI `--draft PROSPECT_ID [--submit] [--date YYYY-MM-DD]`,
+  `--data-room`, `--status QUEUE_ID`.
+  - Boundary: `agents/da_doitac.py` (mới), `data/projects/data_room.json`
+    (mới), `data/projects/partner_facts.json` (mới), `data/directors/
+    projects.json`, `tests/test_da_doitac.py` (mới)
+  - Gate: thuần — fact "doanh số Shopee 2026 21.585.320đ" có source + as_of
+    → payload có đúng số + nguồn + ngày + chú thích "không phải doanh thu
+    thực nhận"; fact thiếu source → "chưa xác minh", số không xuất hiện; 0
+    dòng khớp regex dự phóng/cam kết; fact label "lợi nhuận dự kiến" →
+    problem; golden có SKU rượu + TPBVSK `xnqc` null → 0 tên 2 SKU đó trong
+    payload; prospect có `fit_reason` chứa SĐT/email → problem, giá trị
+    không in; regex PII (`_mask_pii` không đổi) trên toàn payload → 0 hit;
+    data room: evidence null → `thieu`, có evidence chưa verified →
+    `chua_xac_minh`. DB fixture (0 skipped): `now` 2027-02-15 VN →
+    `--submit` exit 1 shadow, 0 mục hàng chờ; `now` 2027-02-16 → 1 mục
+    `pending` block projects `partner_profile`; `--status` pending →
+    "không được chia sẻ"; approved (superuser trong fixture) + payload khớp
+    → "được chia sẻ"; sửa facts sau duyệt → lệch hash → "không được chia
+    sẻ". CLI 2 op → exit 2 trước connect. `grep -nE "llm_gateway|openai|
+    import httpx|import requests|\.post\(|smtp" agents/da_doitac.py` rỗng
+  - Evidence: `evidence/v102_da06.log`
+- [ ] **W102.6 Docs + bản đồ luồng dữ liệu** — `docs/handover/sop.md` mục mới
+  `## 5t. Tri thức P2: tra cứu khoa học nội bộ, cảnh báo thời tiết, hồ sơ
+  đối tác, theo dõi văn bản (v10.2)` (nạp tài liệu SX qua `ingest.
+  kb_internal --collection internal:sx --approved-by`; `agents.sx_tracuu
+  --ask`; `agents.vt_thoitiet --digest --from-csv` + GĐ duyệt = "đã xem";
+  `agents.da_doitac --data-room/--draft/--status` + shadow tới 16/02/2027;
+  PC-A8: Pháp chế duyệt nguồn văn bản (`cho_duyet`→`duyet` là việc người),
+  `crawler.intel --run`, `pipelines.intel_alert --run/--open/--ack`, bản tin
+  chủ đề `phap_ly`; external-dep); `docs/handover/kien-truc.md` dòng
+  `agents/` thêm `sx_tracuu.py`, `vt_thoitiet.py`, `da_doitac.py` (số bảng
+  "71" KHÔNG đổi); `data/data_flow_map.json`: `DF-36` "Tra cứu khoa học
+  nội bộ SX-A7 (v10.2)" modules `["agents/sx_tracuu.py"]` (câu hỏi + đoạn
+  tài liệu nội bộ → embed/LLM qua gateway, `cross_border` true, không dữ
+  liệu cá nhân); `DF-37` "Dự báo thời tiết VT (v10.2)" modules
+  `["agents/vt_thoitiet.py"]` (tọa độ VÙNG làm tròn 0,1° → nhà cung cấp dự
+  báo, GET qua collector, không dữ liệu cá nhân); sinh lại DPIA/TIA bằng
+  `python scripts/dpia_draft.py` (KHÔNG sửa tay). `tests/
+  test_data_flow_map.py`: thêm `agents/sx_tracuu.py`, `agents/
+  vt_thoitiet.py` vào `REQUIRED_MODULES`, `agents/da_doitac.py` vào
+  `NEW_SCRIPTS` (không egress).
+  - Boundary: `docs/handover/sop.md`, `docs/handover/kien-truc.md`,
+    `data/data_flow_map.json`, `docs/legal/DPIA-nhap.md`,
+    `docs/legal/TIA-nhap.md` (sinh), `tests/test_data_flow_map.py`,
+    `docs/handover/runbook-ha-tang.md` (agent_id `sx_tracuu` mục 5 — vá
+    nghiệm thu: `tests/test_runbook.py` đỏ)
+  - Gate: `python scripts/dpia_draft.py --check` exit 0; mọi lệnh trong mục
+    5t chạy `--help` exit 0 (`agents.sx_tracuu`, `agents.vt_thoitiet`,
+    `agents.da_doitac`, `pipelines.intel_alert`); `tests/
+    test_handover_docs.py` + `tests/test_data_flow_map.py` + `tests/
+    test_dpia_draft.py` xanh; `grep -n "71 bảng" docs/handover/
+    kien-truc.md` còn đúng
+  - Evidence: `evidence/v102_docs.log`
+- [x] **W102.7 Gate chung** [full pytest 4400 passed / 3 skipped docker] — targeted ×3 (`python -m pytest -q
+  tests/test_pc_a8.py tests/test_intel_alert.py tests/test_intel.py
+  tests/test_intel_bulletin.py tests/test_sx_tracuu.py tests/test_kb_acl.py
+  tests/test_kb_acl_db.py tests/test_kb_internal.py tests/test_vt_thoitiet.py
+  tests/test_da_doitac.py tests/test_data_flow_map.py tests/test_dpia_draft.py
+  tests/test_handover_docs.py tests/test_connect_timeout_guard.py
+  tests/test_runbook.py -rs` — 0
+  skipped ở file mới, 3 lần liên tiếp xanh); full `python -m pytest -q` CHỈ
+  1 lần (đọc output tới khi process exit) — xanh, ≥ baseline 4257 pass +
+  test mới (skip chỉ test_dr_drill khi Docker tắt — môi trường, ghi rõ);
+  `ruff check .` sạch; `python -m py_compile` mọi file .py mới/sửa;
+  `python -m crawler.intel --run --source <id văn bản>` KHÔNG chạy trên mạng
+  thật trong gate (nguồn `cho_duyet`, URL chưa xác minh — chỉ test
+  MockTransport); grep "0 http client mới": `grep -nE "import httpx|import
+  requests" agents/sx_tracuu.py agents/vt_thoitiet.py agents/da_doitac.py`
+  rỗng; grep "0 LLM ngoài SX-A7": `grep -nE "llm_gateway|openai"
+  agents/vt_thoitiet.py agents/da_doitac.py pipelines/intel_alert.py` rỗng;
+  `git diff --stat docs/schema.sql docs/roles.sql` rỗng; `git status` chỉ
+  file trong Boundary (không file runtime lạc trong `data/`, `data/reports/`
+  gitignored).
+  - Boundary: (không file mới)
+  - Gate: như trên; số pass/skip ghi vào evidence
+  - Evidence: `evidence/v102_pytest.log`
+
+v10.2 đóng 2026-10-14 (vòng 0: FIX/FIX/FIX — 6 finding: MAJOR runbook thiếu
+agent `sx_tracuu` (test_runbook đỏ); `--date` tương lai mở được go-live DA-06
+→ submit chỉ theo đồng hồ thật; PII chỉ kiểm cột org_prospects → `_mask_pii`
+trên cả payload; evidence thiếu/run 1 rỗng; vòng 1 PASS, 0 mở; full pytest
+worker 4400 passed / 3 skipped docker). Coordinator thêm test khóa
+`collection = %s` trong `_CITE_SQL` (cùng doc_id ở internal:mkt không được làm
+nguồn trích SX; kiểm ngược: bỏ lọc → đỏ). Gate coordinator chạy lại: ruff sạch,
+test_sx_tracuu 17 pass. Số tạm cần đánh lại khi gộp: DF-36/DF-37, SOP 5t.
+External-dep: tài liệu khoa học thật + GĐ SX duyệt, PubMed/Semantic Scholar,
+API thời tiết trả phí + điều khoản Open-Meteo (fetch tắt mặc định), ngưỡng
+thời tiết + map khoảnh–vùng, Pháp chế duyệt nguồn văn bản + từ khóa, người nhận
+cảnh báo thật, số liệu data room thật + GĐ tài chính/TGĐ/HĐTV duyệt + NDA,
+người duyệt thật từng khối, chủ khối ký WP16. Someday: `legal_doc` không đòi
+topic `phap_ly` → tin ATTP thường cũng báo đỏ (cần Pháp chế quyết); bản tin cũ
+thêm mục 'Văn bản pháp luật — (không có tin mới)'; FORECAST_RE sót "năm 2027:
+30%" + `as_of` tương lai; sx_tracuu render câu LLM/cite/title vào markdown
+không escape (ảnh tự tải nếu tài liệu nội bộ bị chèn); `_internal_host` VT không
+chặn IP che giấu/DNS rebinding (fetch tắt mặc định); flake LockNotAvailable
+roles.sql ×2 trong da_db dưới tải; nhánh lỗi VT guardrail/ask >2000 ký tự/
+_legal_quote fallback chưa test; `--date` trước go-live sau go-live gắn nhãn
+shadow rồi bị từ chối submit.
+
 Nhánh `ai-infra`: M31 đợt gộp 6 (2026-10-14) — v6.5, v5.3, v10.3, v6.3, v8.1, v6.4,
 v8.2 đã gộp (71 bảng; 22 suite eval; DF-01..DF-35 + DPIA/TIA 35 luồng). Trước gộp
 vá riêng 2 lỗi đỏ chung mọi worktree: test garden date-bomb (ảnh fixture

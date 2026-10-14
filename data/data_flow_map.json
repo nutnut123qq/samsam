@@ -1,6 +1,6 @@
 {
   "_doc": "Bản đồ luồng dữ liệu (PC-A5, v4.4 W44.2) — rà từ code thật ngày 2026-10-12. Nguồn sinh docs/legal/DPIA-nhap.md + TIA-nhap.md qua `python scripts/dpia_draft.py`. Sửa code thêm luồng gửi dữ liệu ra ngoài (import openai/httpx/requests/smtplib/urllib.request..., hoặc chat/embed từ pipelines.llm_gateway) PHẢI thêm module vào `modules` của 1 flow ở đây — tests/test_data_flow_map.py đỏ nếu thiếu. Sửa file này xong chạy lại dpia_draft (test --check đỏ nếu docs lệch). Lớp theo plan_data_platform §2: do = Đỏ, vang = Vàng, xanh = Xanh. Đây là NHÁP kỹ thuật để Pháp chế rà — không kết luận tuân thủ.",
-  "version": "2026-10-12",
+  "version": "2026-10-14",
   "classes": {
     "do": "Đỏ — orders/đơn sàn, leads, liên hệ đại lý, log hội thoại, mọi tin nhắn có yếu tố sức khỏe, user_id thô. Không được đi ra LLM nước ngoài.",
     "vang": "Vàng — câu hỏi thường SAU `_mask_pii` (che SĐT/email), tài liệu nội bộ. Được gửi LLM qua gateway (mask + provider routing).",
@@ -899,6 +899,60 @@
         "DPIA luồng form chưa ký — KHÔNG bật endpoint trước khi ký",
         "Chưa có job xóa theo thời hạn lưu (retention)",
         "Consent web KHÔNG xác minh SĐT (OTP/double opt-in = external-dep): người lạ gõ SĐT người khác tạo được yêu cầu + đồng ý b2b; SĐT trùng contact đã RÚT b2b → bỏ qua 0 ghi (code chặn), contact cũ giữ tên/email trong vault — GĐ bán hàng gọi xác minh danh tính trước khi gửi báo giá"
+      ]
+    },
+    {
+      "id": "DF-36",
+      "name": "Tra cứu khoa học nội bộ SX-A7 (v10.2)",
+      "modules": [
+        "agents/sx_tracuu.py"
+      ],
+      "data": "Câu hỏi tra cứu của nhân viên sản xuất (≤2000 ký tự) + đoạn tài liệu khoa học NỘI BỘ đã được GĐ SX duyệt nạp (`chunks_internal` collection `internal:sx`); không dữ liệu cá nhân (đoạn trích qua `_mask_pii`)",
+      "class": "vang",
+      "subjects": "Không có chủ thể dữ liệu cá nhân (tài liệu khoa học/kỹ thuật); người hỏi là nhân viên nội bộ — không ghi tên",
+      "purpose": "Tra cứu nội bộ tài liệu khoa học có trích nguồn DOI/URL cho bộ phận sản xuất — KHÔNG dùng cho truyền thông, không claim công dụng ra ngoài",
+      "storage": "Tài liệu: Postgres `chunks_internal` (nạp qua `ingest.kb_internal --collection internal:sx --approved-by`); câu trả lời chỉ in stdout / file `data/reports/sx-tracuu-*.md` (gitignored) khi `--out`; module KHÔNG ghi bảng nào",
+      "retention": "Theo vòng đời tài liệu nội bộ trong `chunks_internal` (nạp lại theo doc_sha256); file báo cáo cục bộ — GIẢ ĐỊNH, chủ khối SX chốt",
+      "recipients": "Nhà cung cấp embedding/LLM qua `pipelines.llm_gateway` (agent `sx_tracuu`, cap tháng riêng; LLM chỉ khi `--llm`, mặc định tắt) — không gửi tới khách/kênh ngoài",
+      "cross_border": true,
+      "safeguards": [
+        "Collection `internal:sx` là HẰNG trong module; chatbot khách (`api.rag.answer`) không có tham số collection — test DB `test_public_retrieve_and_answer_never_return_sx`",
+        "Mọi đầu ra mở đầu nhãn \"NỘI BỘ – không dùng cho truyền thông\"; mặc định trích nguyên văn, LLM chỉ khi `--llm` + `guardrail.check` ok",
+        "Không có đường sang bản nháp nội dung/hàng duyệt/chatbot (grep test); câu về rượu → không tra, 0 embed",
+        "Gateway: PII mask + provider routing + kill/cap theo agent"
+      ],
+      "legal_basis": "Lợi ích hợp pháp (nghiên cứu nội bộ, không dữ liệu cá nhân); bản quyền tài liệu khoa học bên ngoài: CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Tài liệu khoa học thật + GĐ SX duyệt nạp (`--approved-by` người thật) — external-dep",
+        "Bản quyền bài báo (PubMed/Semantic Scholar/tạp chí): chỉ nạp tài liệu được phép lưu nội bộ — Pháp chế xác nhận",
+        "Gửi đoạn tài liệu nội bộ qua nhà cung cấp embedding nước ngoài — TIA chưa ký"
+      ]
+    },
+    {
+      "id": "DF-37",
+      "name": "Dự báo thời tiết VT (v10.2)",
+      "modules": [
+        "agents/vt_thoitiet.py"
+      ],
+      "data": "Tọa độ VÙNG trồng đã làm tròn 0,1° (~11 km, không phải tọa độ khoảnh) + số ngày dự báo gửi nhà cung cấp dự báo; dự báo mưa/nhiệt trả về; nhật ký `plot_logs` (chỉ mã khoảnh, ngày, cờ từ `detail`) đọc nội bộ",
+      "class": "xanh",
+      "subjects": "Không có chủ thể dữ liệu cá nhân (tọa độ vùng làm tròn; digest không chứa người ghi nhật ký)",
+      "purpose": "Cảnh báo mưa lớn/rét và dấu hiệu sâu bệnh theo khoảnh → gợi ý \"cần đi kiểm tra\" cho GĐ vùng trồng",
+      "storage": "Digest `data/reports/vt-canh-bao-*.md` (gitignored) + mục `approval_queue` `weather_digest` khối farming khi `--submit`; dự báo không lưu DB",
+      "retention": "Mục hàng duyệt theo `approval_queue` (append-only trạng thái); file digest cục bộ — GIẢ ĐỊNH, GĐ vùng trồng chốt",
+      "recipients": "Nhà cung cấp dự báo (Open-Meteo hoặc API có phí) — CHỈ khi `fetch.enabled = true` (mặc định false), GET qua `crawler.intel.Fetcher` (robots, ≥1s/host, chặn sàn/MXH/tầng C); mặc định nhập tay CSV, không gửi gì",
+      "cross_border": true,
+      "safeguards": [
+        "Tọa độ cấu hình bắt buộc đã làm tròn 0,1° (sai → exit 1); `[req]` chỉ chứa tọa độ vùng làm tròn (test parse query)",
+        "Digest không chứa lat/lon/`location`/`area_m2`/người ghi; không chẩn đoán/liều lượng/hoạt chất; qua `guardrail.check` trước khi ghi",
+        "Cờ sâu bệnh CHỈ quét `detail` (`garden_director.log_flags`)",
+        "0 LLM; không gửi/đăng gì; GĐ duyệt mục = đã xem"
+      ],
+      "legal_basis": "Lợi ích hợp pháp (vận hành vùng trồng, không dữ liệu cá nhân); điều khoản thương mại nhà cung cấp dự báo: CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Điều khoản thương mại Open-Meteo / API thời tiết có phí chưa xác minh — giữ `fetch.enabled=false`",
+        "Ngưỡng mưa/nhiệt + gán khoảnh→vùng GIẢ ĐỊNH — GĐ vùng trồng chốt",
+        "Người duyệt thật khối farming (`approvers: []`) — external-dep"
       ]
     }
   ]
