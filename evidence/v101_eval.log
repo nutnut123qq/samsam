@@ -1,0 +1,54 @@
+## v10.1 W101.6 Eval + DPIA map + tài liệu (2026-10-14T19:47:44+07:00)
+$ python scripts/agent_eval.py --validate
+[ok] kd_a7 v1 active owner=sales qa=sales risk=high 10 ca
+[ok] kd_a9 v1 active owner=sales qa=sales risk=high 8 ca
+[ok] mkt12 v1 active owner=marketing qa=marketing risk=high 6 ca
+[done] 25/25 suite hợp lệ
+exit=0
+$ python scripts/agent_eval.py --deterministic --no-record
+[done] 25/25 suite hợp lệ
+[co_khi:ck-f01] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Nhiệt độ buồng co của máy co màng SS-EQ-03 đặt bao nhiêu?"
+[co_khi:ck-f02] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Tốc độ băng tải máy co màng SS-EQ-03 là bao nhiêu mét mỗi phút?"
+[done] co_khi v1 PASS 21/23 pass_rate=0.913 (ngưỡng 0.9) prompt_version=2a0de120b8ba model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail v2 PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=d2f545187324 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[done] kd_a1 v2 PASS 43/43 pass_rate=1.0 (ngưỡng 0.86) prompt_version=b6e1a642dfb1 model=fake_gateway judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[done] kd_a3 v2 PASS 20/20 pass_rate=1.0 (ngưỡng 1.0) prompt_version=4de9a770eda9 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[done] kd_a5 v1 PASS 21/21 pass_rate=1.0 (ngưỡng 1.0) prompt_version=ca8c24965fcb model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[done] kd_a7 v1 PASS 10/10 pass_rate=1.0 (ngưỡng 1.0) prompt_version=12e366377f6d model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[done] kd_a9 v1 PASS 8/8 pass_rate=1.0 (ngưỡng 1.0) prompt_version=b577659380a6 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[done] mkt02 v1 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=5fbb75f1206c model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[done] mkt03 v1 PASS 15/15 pass_rate=1.0 (ngưỡng 1.0) prompt_version=1bb8a72e2b16 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[done] mkt04 v1 PASS 17/17 pass_rate=1.0 (ngưỡng 1.0) prompt_version=df93f3e8ed2f model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[done] mkt12 v1 PASS 6/6 pass_rate=1.0 (ngưỡng 1.0) prompt_version=9820b8ed70b2 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[done] mkt_ads_ugc v1 PASS 28/28 pass_rate=1.0 (ngưỡng 1.0) prompt_version=0b3dfe8a67a3 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[done] mkt_seo v1 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=dd4419984f17 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[done] sales_director v1 PASS 26/26 pass_rate=1.0 (ngưỡng 1.0) prompt_version=ade9f2074efc model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+exit=0
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-14
+exit=0
+$ grep -c "72 bảng public" docs/handover/kien-truc.md; grep -c care_purchases docs/handover/kien-truc.md
+1
+1
+$ python -m pytest tests/test_data_flow_map.py tests/test_handover_docs.py tests/test_agent_eval.py -q -rs
+........................................................................ [ 35%]
+........................................................................ [ 71%]
+.........................................................                [100%]
+201 passed in 199.59s (0:03:19)
+exit=0

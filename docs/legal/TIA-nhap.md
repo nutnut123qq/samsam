@@ -1,7 +1,7 @@
 # TIA — Đánh giá tác động chuyển dữ liệu cá nhân ra nước ngoài (NHÁP)
 
 > **BẢN NHÁP — chưa có giá trị pháp lý; chờ Chuyên viên Pháp chế ký, luật sư rà — agent không kết luận tuân thủ.**
-> Sinh tự động bởi `python scripts/dpia_draft.py` từ `data/data_flow_map.json` (bản đồ rà từ code ngày 2026-10-12). KHÔNG sửa tay — sửa map rồi chạy lại (`--check` bắt lệch).
+> Sinh tự động bởi `python scripts/dpia_draft.py` từ `data/data_flow_map.json` (bản đồ rà từ code ngày 2026-10-14). KHÔNG sửa tay — sửa map rồi chạy lại (`--check` bắt lệch).
 > Căn cứ: Luật BVDLCN 91/2025/QH15 (chuyển dữ liệu xuyên biên giới phải có hồ sơ đánh giá tác động) + NĐ 356/2025; khung mục theo cấu trúc NĐ 13/2023 Điều 25 — CẦN LUẬT SƯ XÁC NHẬN.
 
 ## 1. Bên chuyển dữ liệu
@@ -193,9 +193,22 @@
 | Rủi ro tồn dư | Chưa có căn cứ xử lý `staff_assist_dpia_v1` (F03b bước 3) — CẦN LUẬT SƯ XÁC NHẬN trước khi dùng thường xuyên; Chưa có trần lượt dán/ngày + thống kê (someday) |
 | Căn cứ | Chưa có căn cứ `staff_assist_dpia_v1` cho gợi ý LLM trên tin buyer sàn: GAP — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
+### DF-37 — Kịch bản livestream (KD-A9) + gói video YouTube dài (MKT-12) qua LLM gateway (v10.1)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | OpenRouter (Mỹ) → whitelist provider (Mỹ) — chỉ brief + tên SKU, qua `_mask_pii` của gateway |
+| Dữ liệu gửi đi (sau biện pháp) | Brief do nhân viên nhập (quy trình: không đưa dữ liệu khách), tên SKU golden + mã SKU trong giỏ (KHÔNG giá — giá do code điền sau), lời dẫn/kịch bản nháp; KHÔNG dữ liệu khách |
+| Lớp | Vàng |
+| Mục đích | Soạn NHÁP lời dẫn livestream + hỏi-đáp bình luận, gói video YouTube dài (tiêu đề/mô tả/chương/phụ đề) chờ người duyệt |
+| Biện pháp kỹ thuật | `_mask_pii` + kill-switch + trần chi phí tháng (`kd_livestream`, `mkt_youtube`) ở gateway; Từ chối TRƯỚC LLM: rượu, SKU không promotable, quá trần phiên/tuần, brief có từ cấm; Câu LLM chạm số/giá/rượu bị bỏ; giá do code từ `v_promotable`; câu hỏi sức khỏe → câu trả lời mẫu; `check_publish` toàn văn + 1 lượt sửa → vi phạm thì không lưu; YouTube `privacyStatus` cố định private, không có đường đăng |
+| Thời hạn lưu (theo map) | Không giới hạn — hồ sơ duyệt append-only (bằng chứng tuân thủ quảng cáo); file Shorts xem trước xóa tay |
+| Rủi ro tồn dư | Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email); Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday) |
+| Căn cứ | Lợi ích hợp pháp/hợp đồng lao động với nhân viên — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
 ## 3. Luồng không thuộc TIA
 
-Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15, DF-18, DF-19, DF-20, DF-25, DF-26, DF-27, DF-31, DF-32, DF-33, DF-34, DF-35.
+Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15, DF-18, DF-19, DF-20, DF-25, DF-26, DF-27, DF-31, DF-32, DF-33, DF-34, DF-35, DF-36.
 
 ## 4. Ký duyệt
 

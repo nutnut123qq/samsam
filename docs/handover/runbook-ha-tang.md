@@ -155,7 +155,11 @@ phòng Dự án — `agents/da_hoso.py --llm` viết lại thư đăng ký chư�
 trình; mặc định TẮT, cap tháng riêng; kill như agent khác). `mkt_video`
 (v6.3 MKT-04 — `pipelines/video_studio.py` viết kịch bản video nháp; cap
 tháng riêng 2.0 USD; kill `LLM_KILL=mkt_video` → CLI báo `failed: llm`,
-không dựng video). Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
+không dựng video). `kd_livestream` (v10.1 KD-A9 — `agents/kd_live.py`
+lời dẫn kịch bản livestream nháp) và `mkt_youtube` (v10.1 MKT-12 —
+`agents/mkt_youtube.py` gói video YouTube dài nháp): cap tháng riêng
+2.0 USD mỗi id; kill `LLM_KILL=kd_livestream` / `LLM_KILL=mkt_youtube`
+→ CLI báo `[error] llm`, không lưu nháp. Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
 `embed("...")` và hằng `AGENT = "..."` trong `api/`, `pipelines/`,
 `ingest/`, `agents/`, `connectors/` (nhờ dev nếu cần).
 

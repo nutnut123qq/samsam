@@ -1623,6 +1623,73 @@ gửi. Dữ liệu thật hiện chỉ còn 3 mã mật ong (mọi TPBVSK chưa 
 Exit chung: 0 ok · 1 bị chặn (problems / cổng / chưa duyệt / lệch hash /
 ma trận lỗi) · 2 tham số sai hoặc DB down.
 
+## 5t. Đơn sàn + đối soát, chăm sóc lại, livestream, YouTube (v10.1 WP16 — KD-A6/A7/A9, MKT-12; hệ thống KHÔNG gửi/đăng)
+
+**Đơn sàn → `orders` (KD-A6):** sau khi nạp file đơn (`python -m
+ingest.market_csv --file F --channel K --kind order`), chạy `python -m
+agents.kd_orders --sync --dry-run` (chỉ đếm) rồi `python -m agents.kd_orders
+--sync [--snapshot ID]`. Idempotent: chạy lại = 0 thêm/0 cập nhật; snapshot
+sau đổi trạng thái (vd hủy) → cập nhật `status`, KHÔNG đổi `ts` (GIẢ ĐỊNH:
+`ts` = lúc nạp snapshot đầu tiên thấy đơn — file chưa có cột ngày đặt). Row
+`orders` không phải `market:%` (nhập tay/mẫu) không bao giờ bị đè.
+
+**File đối soát (kế toán):** `python -m agents.kd_orders --recon --since
+2026-10-01 --until 2026-10-31 [--out-dir DIR]` → `data/reports/doi-soat-
+<since>-<until>.csv` (UTF-8 BOM, mở được bằng Excel): mỗi đơn sàn trong kỳ 1
+dòng (mã 8 ký tự, phí sàn = cố định + thanh toán + dịch vụ, ship, voucher,
+affiliate, hoàn, thực nhận, nhãn `khop|lech|thieu_chung_tu|hoan|
+chua_quyet_toan`), quyết toán trong kỳ không có đơn → `thieu_don`, hàng
+`TONG` mỗi kênh. Chỉ BÁO CÁO — không bút toán; kế toán duyệt file. File
+quyết toán/đơn thật từ Seller Center là external-dep (cột GIẢ ĐỊNH).
+
+**Chăm sóc lại / xin đánh giá (KD-A7):**
+1. NGƯỜI ghi lần mua kênh sở hữu: `python -m agents.kd_care --record --by
+   "<tên người>" < lan_mua.json` (`{"contact_id": N, "channel":
+   "web|zalo|b2b|showroom", "sku_key": "...", "purchased_on": "YYYY-MM-DD",
+   "delivered_on": "YYYY-MM-DD", "order_ref": "MÃ-NỘI-BỘ"}` — không SĐT/
+   tên; khách sàn bị chặn).
+2. `python -m agents.kd_care --plan` (chỉ đọc) → `--run --dry-run` → `--run`
+   → mục `care_rebuy` (nhắc mua lại — cần đồng ý `marketing`, SKU trong
+   `v_promotable` kênh zalo, tối đa 2 tin/khách/tháng) / `care_review` (xin
+   đánh giá — cần đồng ý `cskh`) vào hàng duyệt khối sales.
+3. GĐ bán hàng duyệt: `python -m pipelines.approval_queue --approve <QID>
+   --by "<tên>"`.
+4. TRƯỚC KHI GỬI: lưu payload đã duyệt ra file rồi chạy
+   `python -m agents.kd_care --verify-send <QID> <file>` → `[ok]` mới gửi (kiểm sha bản duyệt + đồng ý
+   CÒN hiệu lực + trong khung 08:00–20:00). `consent` = khách đã rút đồng ý
+   → KHÔNG gửi. Người gửi tay phần tin phía trên dòng `---` qua Zalo OA/ZNS
+   (external-dep). Mẫu tin/khung giờ/trần trong `data/care_rules.json` là GIẢ
+   ĐỊNH chờ GĐ KD/Pháp chế; consent thật của khách là external-dep.
+
+**Kịch bản livestream (KD-A9):** `python -m agents.kd_live --channel
+tiktok --cart mat-ong-sam-300ml,mat-ong-sam-120ml-1hu --day 2026-10-20
+--brief "Phiên quà quê cuối tuần" [--dry-run]` → nháp `livestream_script`
+pending trong `content_drafts` (duyệt qua `python -m pipelines.store
+--approve <ID> --by "<tên>"` như nội dung khác). Bị từ chối trước LLM: kênh
+ngoài `data/livestream_rules.json`, giỏ có rượu, SKU chưa promotable
+(TPBVSK chưa XNQC / giá chưa duyệt), quá 2 phiên/tuần. Giá trong kịch bản do
+hệ thống điền từ bảng giá đã duyệt. Tài khoản livestream là external-dep —
+người dẫn đọc kịch bản đã duyệt.
+
+**YouTube dài + Shorts (MKT-12):** `python -m agents.mkt_youtube --brief
+"Câu chuyện vùng trồng sâm" [--render] [--dry-run]` → nháp `video` kênh
+`youtube` pending (tiêu đề, mô tả có chương + nhãn AI/QC, kịch bản theo
+chương, phụ đề SRT, danh sách Shorts; chế độ hiển thị luôn `private`).
+`--render` dựng Shorts xem trước 9:16 từ B-roll có license trong
+`data/broll/` (`licenses.json`) → `data/video_assets/<sha256>.mp4` (thiếu
+B-roll → `broll_thieu`, thiếu ffmpeg → `ffmpeg_thieu`). Tư liệu quay thật,
+TTS tiếng Việt, kênh YouTube + API là external-dep — người phụ trách kênh
+đưa video lên và đổi chế độ hiển thị sau khi duyệt.
+
+| object_type / content_type | Khối | Rủi ro | Ai duyệt |
+|---|---|---|---|
+| `care_rebuy` | sales | high (lớp B) | GĐ bán hàng |
+| `care_review` | sales | medium (lớp A) | MXH/CSKH → GĐ bán hàng |
+| `livestream_script` (content_drafts) | marketing | — | GĐ Marketing/Pháp chế |
+| `video` kênh `youtube` (content_drafts) | marketing | — | GĐ Marketing/Pháp chế |
+
+Exit chung: 0 ok · 1 bị từ chối/lỗi/verify fail · 2 tham số sai hoặc DB down.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):

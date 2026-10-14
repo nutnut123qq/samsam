@@ -94,7 +94,8 @@ def test_manifest_sha_matches_every_template():
         "content_facebook", "content_zalo", "content_tiktok", "content_blog",
         "listing_shopee", "listing_tiktok", "listing_web",
         "image_background",                     # v6.2 MKT-03 prompt nền
-        "video_script"}                         # v6.3 MKT-04 kịch bản video
+        "video_script",                         # v6.3 MKT-04 kịch bản video
+        "livestream_script", "youtube_long"}    # v10.1 KD-A9 + MKT-12
     for name, ent in MANIFEST["templates"].items():
         raw = (ROOT / "data" / "prompts" / f"{name}.md").read_bytes()
         sha = hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()

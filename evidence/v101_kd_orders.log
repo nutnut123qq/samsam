@@ -1,0 +1,27 @@
+## v10.1 W101.1–W101.2 KD-A6 kd_orders (2026-10-14T19:36:07+07:00)
+$ python -m pytest tests/test_kd_orders.py -q -rs
+.......                                                                  [100%]
+7 passed in 17.07s
+exit=0
+$ python -m agents.kd_orders --sync --report   # usage → exit 2 trước connect
+usage: python -m agents.kd_orders [-h] [--sync] [--snapshot SNAPSHOT]
+                                  [--dry-run] [--recon] [--since SINCE]
+                                  [--until UNTIL] [--out-dir OUT_DIR]
+                                  [--report]
+python -m agents.kd_orders: error: chỉ được 1 thao tác mỗi lần (--sync | --recon)
+exit=2
+$ python -m agents.kd_orders --recon --since 2026-10-31 --until 2026-10-01
+usage: python -m agents.kd_orders [-h] [--sync] [--snapshot SNAPSHOT]
+                                  [--dry-run] [--recon] [--since SINCE]
+                                  [--until UNTIL] [--out-dir OUT_DIR]
+                                  [--report]
+python -m agents.kd_orders: error: --since phải ≤ --until
+exit=2
+$ python -m agents.kd_orders --sync --dry-run   # DB thật: chỉ đếm, KHÔNG ghi
+[dry-run] 0 snapshot đơn: thêm 0, cập nhật 0, không đổi 0, giữ nguyên row không phải sàn 0, bỏ dòng thiếu mã đơn 0 — KHÔNG ghi DB
+exit=0
+$ python -m agents.kd_orders --recon --since 2026-10-01 --until 2026-10-31 --out-dir <scratchpad>  # chỉ SELECT
+[recon] 0 dòng (khop 0, lech 0, thieu_chung_tu 0, hoan 0, chua_quyet_toan 0, thieu_don 0) → doi-soat-2026-10-01-2026-10-31.csv (BÁO CÁO cho kế toán — không bút toán)
+exit=0
+$ grep llm/mạng trong agents/kd_orders.py (kỳ vọng rỗng)
+grep_exit=1 (1 = không khớp)

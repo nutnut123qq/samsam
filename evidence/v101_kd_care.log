@@ -1,0 +1,17 @@
+## v10.1 W101.3 KD-A7 kd_care (2026-10-14T19:37:19+07:00)
+$ python -m pytest tests/test_kd_care.py tests/test_director.py tests/test_sales_director.py -q -rs
+........................................................................ [ 63%]
+.........................................                                [100%]
+113 passed in 192.87s (0:03:12)
+exit=0
+$ grep cấm trong agents/kd_care.py (kỳ vọng rỗng)
+grep_exit=1 (1 = không khớp)
+$ python -m agents.kd_care --plan --run   # usage → exit 2 trước connect
+python -m agents.kd_care: error: chỉ 1 thao tác mỗi lần (--record | --plan | --run | --verify-send)
+exit=2
+$ python -m agents.kd_care --plan   # DB thật: chỉ đọc (care_purchases ship rỗng)
+[plan] 0 nháp · bỏ qua 0
+exit=0
+$ python -m agents.kd_care --run --dry-run   # DB thật: KHÔNG ghi
+[dry-run] 0 nháp · bỏ qua 0
+exit=0

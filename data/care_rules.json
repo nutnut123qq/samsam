@@ -1,0 +1,14 @@
+{
+  "_doc": "v10.1 KD-A7 (agents/kd_care.py) — luật chăm sóc lại / xin đánh giá. GIẢ ĐỊNH — chờ GĐ KD/Pháp chế chốt: khung giờ gửi, số ngày sau mua/giao, trần tin marketing/tháng, câu chữ mẫu tin. window [bắt đầu, kết thúc) giờ VN — ngoài khung thì dời tới mốc mở khung kế tiếp. rebuy (nhắc mua lại) cần đồng ý mục đích `marketing`, chỉ SKU có trong view v_promotable của kênh `channel` (rượu/TPBVSK chưa XNQC/giá chưa duyệt → BỎ khách, không đổi sang SKU khác), tối đa max_marketing_per_month tin/khách/tháng VN theo THÁNG GỬI (gui_luc; đếm mục hàng duyệt pending+approved). Chỉ nhắc lần mua MỚI NHẤT của mỗi (khách, SKU) — đã mua lại thì lần cũ không nhắc — và chỉ khi ngày mua trong [hôm nay − (rebuy_after_days + rebuy_window_days), hôm nay − rebuy_after_days]; review chỉ khi ngày giao trong [hôm nay − (review_after_days + review_window_days), hôm nay − review_after_days] — lần mua cũ hơn KHÔNG nhắc (chống dồn tồn đọng vào hàng duyệt). review (xin đánh giá) cần đồng ý `cskh`, 1 lần/lần mua. templates: câu chữ CỐ ĐỊNH, chỗ {ten_sp} = tên golden — agent KHÔNG tự soạn (0 LLM); mẫu rebuy là tin quảng cáo nên mang nhãn 'Quảng cáo'. Hệ thống KHÔNG gửi: NGƯỜI gửi tay qua Zalo OA/ZNS sau khi GĐ bán hàng duyệt (external-dep).",
+  "channel": "zalo",
+  "window": ["08:00", "20:00"],
+  "rebuy_after_days": 30,
+  "rebuy_window_days": 60,
+  "review_after_days": 7,
+  "review_window_days": 60,
+  "max_marketing_per_month": 2,
+  "templates": {
+    "rebuy": "Sâm Sâm kính chào Quý khách. Sản phẩm {ten_sp} Quý khách đã chọn lần trước hiện vẫn có tại cửa hàng Sâm Sâm trên Zalo. Quý khách muốn đặt thêm vui lòng nhắn lại cho Sâm Sâm. Quý khách không muốn nhận tin này nữa vui lòng nhắn \"Dừng\". Quảng cáo",
+    "review": "Sâm Sâm cảm ơn Quý khách đã chọn {ten_sp}. Quý khách vui lòng dành chút thời gian chia sẻ đánh giá về sản phẩm và dịch vụ giao hàng để Sâm Sâm phục vụ tốt hơn."
+  }
+}

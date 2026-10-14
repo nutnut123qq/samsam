@@ -1,6 +1,6 @@
 {
   "_doc": "Bản đồ luồng dữ liệu (PC-A5, v4.4 W44.2) — rà từ code thật ngày 2026-10-12. Nguồn sinh docs/legal/DPIA-nhap.md + TIA-nhap.md qua `python scripts/dpia_draft.py`. Sửa code thêm luồng gửi dữ liệu ra ngoài (import openai/httpx/requests/smtplib/urllib.request..., hoặc chat/embed từ pipelines.llm_gateway) PHẢI thêm module vào `modules` của 1 flow ở đây — tests/test_data_flow_map.py đỏ nếu thiếu. Sửa file này xong chạy lại dpia_draft (test --check đỏ nếu docs lệch). Lớp theo plan_data_platform §2: do = Đỏ, vang = Vàng, xanh = Xanh. Đây là NHÁP kỹ thuật để Pháp chế rà — không kết luận tuân thủ.",
-  "version": "2026-10-12",
+  "version": "2026-10-14",
   "classes": {
     "do": "Đỏ — orders/đơn sàn, leads, liên hệ đại lý, log hội thoại, mọi tin nhắn có yếu tố sức khỏe, user_id thô. Không được đi ra LLM nước ngoài.",
     "vang": "Vàng — câu hỏi thường SAU `_mask_pii` (che SĐT/email), tài liệu nội bộ. Được gửi LLM qua gateway (mask + provider routing).",
@@ -604,13 +604,14 @@
       "id": "DF-25",
       "name": "Đối soát quyết toán sàn — ACC-Recon (v9.0)",
       "modules": [
-        "ingest/settlement_csv.py"
+        "ingest/settlement_csv.py",
+        "agents/kd_orders.py"
       ],
       "data": "Mã đơn (chỉ lưu hash sha256[:16]) + số tiền đơn/phí sàn/hoàn/thực nhận từ file quyết toán Seller Center; cột tên/SĐT/địa chỉ/username người mua bị bỏ ngay khi đọc",
       "class": "do",
       "subjects": "Người mua trên sàn (gián tiếp qua mã đơn đã hash)",
       "purpose": "Đối soát tiền thực nhận + phí sàn với đơn đã nạp, phát hiện thu sai — chỉ báo cáo, không bút toán",
-      "storage": "Bảng `settlement_rows` + `recon_results` (không cột người mua); file nguồn do kế toán giữ ngoài repo",
+      "storage": "Bảng `settlement_rows` + `recon_results` (không cột người mua); file nguồn do kế toán giữ ngoài repo. v10.1 KD-A6 (`agents/kd_orders.py`): đơn sàn → bảng lõi `orders` (id `<kênh>:<order_id_hash>`, không PII người mua) + file đối soát `data/reports/doi-soat-*.csv` (gitignored, chỉ 8 ký tự đầu hash).",
       "retention": "Chưa đặt hạn — theo hạn lưu chứng từ kế toán (cần kế toán trưởng chốt)",
       "recipients": "Nội bộ — kế toán / GĐ tài chính đọc `--report`; không gửi ra ngoài, không LLM",
       "cross_border": false,
@@ -899,6 +900,64 @@
         "DPIA luồng form chưa ký — KHÔNG bật endpoint trước khi ký",
         "Chưa có job xóa theo thời hạn lưu (retention)",
         "Consent web KHÔNG xác minh SĐT (OTP/double opt-in = external-dep): người lạ gõ SĐT người khác tạo được yêu cầu + đồng ý b2b; SĐT trùng contact đã RÚT b2b → bỏ qua 0 ghi (code chặn), contact cũ giữ tên/email trong vault — GĐ bán hàng gọi xác minh danh tính trước khi gửi báo giá"
+      ]
+    },
+    {
+      "id": "DF-36",
+      "name": "Chăm sóc lại + xin đánh giá khách kênh sở hữu → nháp tin vào hàng duyệt (KD-A7, v10.1)",
+      "modules": [
+        "agents/kd_care.py",
+        "ingest/crm.py"
+      ],
+      "data": "contact_id + trạng thái đồng ý theo mục đích (`marketing` nhắc mua lại, `cskh` xin đánh giá) + lần mua kênh sở hữu do NGƯỜI ghi (`care_purchases`: kênh web/zalo/b2b/showroom, SKU, ngày mua/giao, mã nội bộ) — KHÔNG SĐT/tên/email/địa chỉ (PII chỉ trong vault `contacts` mã hóa, agent không giải mã)",
+      "class": "do",
+      "subjects": "Khách mua qua kênh sở hữu (web/Zalo/B2B/showroom) có trong `contacts`",
+      "purpose": "Lập NHÁP tin nhắc mua lại / xin đánh giá CHỈ cho khách có đồng ý đúng mục đích để GĐ bán hàng duyệt rồi NGƯỜI gửi tay",
+      "storage": "Postgres: `care_purchases` (không cột PII), `approval_queue` mục `care_rebuy`/`care_review` (payload = tin template + `contact_id`/`muc_dich`/`gui_luc` — không PII/ciphertext/HMAC), `agent_action_log` (`care_purchase_record`)",
+      "retention": "GIẢ ĐỊNH — Pháp chế chốt thời hạn giữ lần mua/thời hạn liên hệ; chưa có job xóa theo hạn: GAP",
+      "recipients": "Không — hệ thống không gửi (không LLM, không mạng); người gửi tay qua Zalo OA/ZNS sau khi duyệt + `--verify-send` (sha bản duyệt + đồng ý còn hiệu lực + khung giờ)",
+      "cross_border": false,
+      "safeguards": [
+        "Khách sàn bị CHẶN ở DB (CHECK channel) — chỉ chăm sóc bằng công cụ của sàn",
+        "`crm.can_contact` mặc định False; rút đồng ý → lần chạy kế 0 mục, `--verify-send` trả `consent`",
+        "Trần 2 tin marketing/khách/tháng + khung giờ 08:00–20:00 (GIẢ ĐỊNH `data/care_rules.json`)",
+        "Tin = template cố định (0 LLM), qua `check_publish` (nhãn QC, rượu, XNQC, khuyến cáo); chỉ SKU trong `v_promotable`",
+        "Module không đọc vault (không `load_vault_key`/`unseal`), không thuộc `egress_modules`"
+      ],
+      "legal_basis": "Đồng ý của khách theo mục đích (`marketing`/`cskh`, v5.2) — câu đồng ý + thời hạn liên hệ chưa được Pháp chế chốt: GAP",
+      "gaps": [
+        "Consent thật của khách + thời hạn liên hệ do Pháp chế chốt (test dùng consent fixture)",
+        "Mẫu tin, khung giờ, trần tin/tháng là GIẢ ĐỊNH — GĐ KD/Pháp chế chốt",
+        "Chưa grant role DB hẹp cho `care_purchases` (CLI chạy DSN chủ sở hữu) — someday",
+        "Chưa có job xóa lần mua/liên hệ theo thời hạn (retention)"
+      ]
+    },
+    {
+      "id": "DF-37",
+      "name": "Kịch bản livestream (KD-A9) + gói video YouTube dài (MKT-12) qua LLM gateway (v10.1)",
+      "modules": [
+        "agents/kd_live.py",
+        "agents/mkt_youtube.py",
+        "pipelines/llm_gateway.py"
+      ],
+      "data": "Brief do nhân viên nhập (quy trình: không đưa dữ liệu khách), tên SKU golden + mã SKU trong giỏ (KHÔNG giá — giá do code điền sau), lời dẫn/kịch bản nháp; KHÔNG dữ liệu khách",
+      "class": "vang",
+      "subjects": "Nhân viên KD/MKT lập brief; người duyệt (tên trong approvals)",
+      "purpose": "Soạn NHÁP lời dẫn livestream + hỏi-đáp bình luận, gói video YouTube dài (tiêu đề/mô tả/chương/phụ đề) chờ người duyệt",
+      "storage": "`content_drafts` (pending, `livestream_script`/`video`, kênh `youtube`), `agent_action_log` (`draft_create`, `youtube_short_render`); Shorts xem trước mp4 + sidecar ở VIDEO_OUT_DIR (`data/video_assets/`, gitignored, không metadata/không âm thanh)",
+      "retention": "Không giới hạn — hồ sơ duyệt append-only (bằng chứng tuân thủ quảng cáo); file Shorts xem trước xóa tay",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider (Mỹ) — chỉ brief + tên SKU, qua `_mask_pii` của gateway",
+      "cross_border": true,
+      "safeguards": [
+        "`_mask_pii` + kill-switch + trần chi phí tháng (`kd_livestream`, `mkt_youtube`) ở gateway",
+        "Từ chối TRƯỚC LLM: rượu, SKU không promotable, quá trần phiên/tuần, brief có từ cấm",
+        "Câu LLM chạm số/giá/rượu bị bỏ; giá do code từ `v_promotable`; câu hỏi sức khỏe → câu trả lời mẫu",
+        "`check_publish` toàn văn + 1 lượt sửa → vi phạm thì không lưu; YouTube `privacyStatus` cố định private, không có đường đăng"
+      ],
+      "legal_basis": "Lợi ích hợp pháp/hợp đồng lao động với nhân viên — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email)",
+        "Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday)"
       ]
     }
   ]

@@ -6,6 +6,413 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+## Checklist v10.1-kd-p2
+
+Khán giả/mục đích: M31 (worktree `D:\code\samsam-w44`) — làm phần KD-A6 (đơn
+hàng + đối soát), KD-A7 (chăm sóc lại + đánh giá), KD-A9 (kịch bản livestream)
+và MKT-12 (YouTube dài) của WP16 "Agent P2 và nâng cấp nền" (pmo.md dòng
+`| WP16`; tiêu chí liên quan: **"10 agent P2 đạt tối thiểu Pilot có người
+duyệt"**, "Chủ khối từng agent ký"). Nền đã có, TÁI DÙNG không viết lại:
+`ingest/market_csv.py` (staging `market_snapshots`/`market_rows`
+export `order`: `order_id_hash` = sha256("kênh:mã")[:16], cột PII người mua bị
+`drop` khi đọc, `cancel_status` trong `data/market_csv_map.json`),
+`agents/acc_invoice.fetch_orders` (gom đơn = Σ `price_vnd × qty` theo
+`order_id_hash` trên snapshot order mới nhất), `ingest/settlement_csv.py`
+(`settlement_rows` phí từng đơn + `recon_results` nhãn `khop|lech|
+thieu_chung_tu|hoan`), bảng lõi `orders` (v1.8, `id text pk`, KHÔNG cột PII,
+`ingest/core_store.apply_rows` xóa theo `source` của jsonl nó nạp),
+`ingest/crm.py` (`contacts` mã hóa Fernet, `consents` append-only mục đích
+`cskh|marketing|dai_ly|b2b`, `can_contact()` mặc định False),
+`pipelines/director.submit` + `pipelines/approval_queue` (`verify` =
+`verify_publish` sha bản duyệt; khối `sales` trong `data/directors/sales.json`),
+view `v_promotable` (SKU × kênh có readiness + giá `list` ĐÃ duyệt),
+`pipelines/guardrail.check_publish` (content_type `livestream_script`/`video`
+đã có; câu khuyến cáo `disclaimer.canonical`; nhãn `labels.ai`/`labels.ad`),
+`pipelines/kb_filter.is_alcohol`, `pipelines/llm_gateway.chat` +
+`is_health_question`, `pipelines/content` (`load_template` + manifest sha,
+`_spec_like`), `pipelines/store.save_draft` (nháp `content_drafts` pending,
+chạy lại `check_publish` lúc lưu), `pipelines/video_studio` v6.3
+(`find_ffmpeg`, `_brolls` B-roll có license, `_broll_frame`, `_encode`,
+`_extract_frame` + `label_visible`, `script_banned` trong
+`data/video_studio.json`), `agents/report.REPORTS_DIR` (`data/reports/`
+đã gitignore), `pipelines/job_runs.job_run`, `scripts/agent_eval.py`.
+Sau version: (1) `python -m agents.kd_orders` đưa đơn sàn vào `orders` lõi
+idempotent + xuất file đối soát có phí sàn từng đơn cho kế toán; (2)
+`python -m agents.kd_care` lập NHÁP tin chăm sóc lại / xin đánh giá CHỈ cho
+khách có consent đúng mục đích → `approval_queue` khối `sales`, KHÔNG gửi;
+(3) `python -m agents.kd_live` soạn NHÁP kịch bản livestream (LLM qua gateway,
+giỏ + giá do CODE từ `v_promotable`) → `content_drafts` pending; (4)
+`python -m agents.mkt_youtube` soạn NHÁP gói video YouTube dài (kịch bản,
+tiêu đề, mô tả, chương, phụ đề SRT, danh sách Shorts) + dựng bản xem trước
+Shorts bằng video_studio từ B-roll có license.
+
+Quy ước: ponytail — stdlib + `psycopg` + module sẵn có; KHÔNG dep mới, KHÔNG
+http client mới, KHÔNG đường gửi/đăng ra ngoài (0 import `requests`/`httpx`/
+`urllib.request`/`smtplib`/`googleapiclient`/ZNS trong 4 file agent mới — grep
+gate). LLM CHỈ qua `pipelines.llm_gateway.chat` (agent id mới `kd_livestream`,
+`mkt_youtube` thêm vào `monthly_cap_usd` trong `data/llm_gateway.json`, trần
+GIẢ ĐỊNH như `mkt_video`); `kd_orders`/`kd_care` KHÔNG LLM (0 import
+`llm_gateway`/`openai`/`guardrail_llm`). Bảng mới DUY NHẤT `care_purchases`
+(W101.3) → `docs/handover/kien-truc.md` "71 bảng public" → "72 bảng public"
++ thêm tên bảng; không assert đếm cứng số bảng trong test (sàn ≥ 24 / đọc
+schema.sql). Print tiếng Việt → UTF-8 guard sau imports; connect qua
+`ingest.lead_store.connect` (connect_timeout); CLI nhiều op → `n_ops > 1`
+usage exit 2 TRƯỚC connect; ghi trên conn chia sẻ → `conn.commit()` tường
+minh (gotcha v2.1); `__main__` bọc `pipelines.job_runs.job_run(...)`; print/
+log chỉ `contact_id`/`order_id_hash[:8]`, mọi text tự do qua `_mask_pii`;
+file xuất mới ghi `data/reports/` atomic (tmp + `os.replace`, BYTES, `\n`
+tường minh). Test DB thật: fixture schema tạm + `docs/schema.sql` +
+`docs/roles.sql` rồi ROLLBACK (như `tests/test_cockpit.py::db`), code gọi
+`conn.commit()` → bọc `_TxConn` (precedent `tests/test_auth_approval.py`);
+test skip khi không DB nhưng gate đòi **0 skipped** ở file test mới. LLM
+trong test = fake tất định monkeypatch `chat` (precedent
+`tests/test_video_studio.py`), 0 lời gọi mạng. Thời gian (`now`/`today`)
+tiêm được — KHÔNG wall-clock. KHÔNG ghi `orders`/`approval_queue`/
+`content_drafts` trên DB thật ngoài test rollback (CLI trên DB thật chỉ
+`--dry-run` / case âm).
+
+External-dep (KHÔNG giả lập như thật, KHÔNG tự đánh dấu): tài khoản
+livestream sàn/TikTok/Facebook và kênh YouTube + YouTube Data API (upload
+private, chuyển public bởi role mxh — version này KHÔNG có đường upload);
+ZNS/Zalo OA gửi tin chăm sóc (agent chỉ lập nháp + `--verify-send` cho NGƯỜI
+gửi); consent THẬT của khách + mục đích/thời hạn liên hệ do Pháp chế chốt
+(test dùng consent fixture); file đơn/quyết toán thật từ Seller Center (cột
+`data/market_csv_map.json`/`settlement_map.json` vẫn GIẢ ĐỊNH; test dùng
+fixture `market_rows`/`settlement_rows` tự chèn); đơn web/Zalo thật
+(`care_purchases` do NGƯỜI ghi — ship rỗng); mẫu tin chăm sóc, khung giờ gửi,
+trần tin/tháng, trần phiên live/tuần (`data/care_rules.json`,
+`data/livestream_rules.json` GIẢ ĐỊNH — GĐ KD/Pháp chế chốt); tư liệu quay
+thật cho video dài 5–15 phút + TTS tiếng Việt có phí (bản dựng video dài =
+external-dep; version này chỉ dựng xem trước Shorts từ B-roll có license);
+ffmpeg trên máy chạy (thiếu → `ffmpeg_thieu`, phần kịch bản vẫn chạy); speech-
+to-text transcript live cho A11 hậu kiểm; người duyệt thật khối `sales`/
+`marketing` (`approvers: []` giữ nguyên); chủ khối ký nghiệm thu WP16.
+
+- [x] **W101.1 KD-A6 `agents/kd_orders.py` — đơn sàn → `orders` lõi
+  (idempotent, 0 PII)** — `build_orders(rows, cancel_status) -> list[dict]`
+  THUẦN: gom `market_rows` export `order` theo `order_id_hash` của 1
+  snapshot → 1 đơn `{id: "<kênh>:<order_id_hash>", channel, qty: Σqty,
+  total_vnd: Σ(price_vnd × qty) (cùng công thức `acc_invoice.fetch_orders`),
+  status: "cancelled" nếu status ∈ `cancel_status` (so `_nfc`) ngược lại
+  status file đã `_clean` ≤ 40 ký tự, product_id: None (sàn không map
+  `products`), note: danh sách `sku_key` đã map (sort, nối ",", ≤ 200 ký tự)
+  hoặc None, source: "market:<kênh>"}`; dòng thiếu `order_id_hash` bỏ + đếm.
+  `sync(conn, snapshot_ids=None) -> {"inserted", "updated", "unchanged",
+  "skipped"}`: mặc định MỌI snapshot `export_kind='order'` theo `imported_at,
+  id` tăng dần (snapshot sau thắng); `ts` = `imported_at` của snapshot ĐẦU
+  TIÊN thấy đơn (GIẢ ĐỊNH — file export chưa có cột ngày đặt; KHÔNG cập nhật
+  ts khi upsert); upsert `insert ... on conflict (id) do update set status,
+  qty, total_vnd, note where orders.source like 'market:%' and (cột) is
+  distinct from excluded` (row `manual`/sample KHÔNG bị đè); 1 transaction +
+  `conn.commit()`. CLI `--sync [--snapshot ID] [--dry-run]`.
+  - Boundary: `agents/kd_orders.py` (mới), `tests/test_kd_orders.py` (mới).
+    Chỉ ĐỌC `market_snapshots`/`market_rows`, chỉ GHI `orders`. Không sửa
+    `ingest/market_csv.py`, `ingest/core_store.py`, `docs/schema.sql`.
+  - Gate: (a) export Shopee mẫu có đơn 2 SKU (2 dòng cùng mã) + TikTok →
+    số đơn và Σ`total_vnd` khớp 100% với `acc_invoice.fetch_orders` trên
+    cùng snapshot (test parity); (b) `sync` chạy 2 lần → lần 2 `inserted=0,
+    updated=0` và `select count(*), sum(total_vnd) from orders` không đổi;
+    snapshot sau đổi trạng thái sang hủy → `updated=1`, status `cancelled`,
+    `ts` giữ nguyên; (c) row `orders` cùng id nhưng `source='manual'` không
+    bị đè; `core_store.apply_rows` với domain orders mẫu không xóa row
+    `market:%`; (d) `information_schema.columns` của `orders` không có cột
+    khớp `name|phone|sdt|address|dia_chi|buyer|email` và giá trị cột text
+    của mọi row đã sync qua `_PII_RE` 0 match; (e) print/log không chứa
+    `order_id_hash` đầy đủ (chỉ ≤ 8 ký tự); `--sync --report` → exit 2 trước
+    connect. `python -m pytest tests/test_kd_orders.py -q` xanh, 0 skipped.
+  - Evidence: `evidence/v101_kd_orders.log`
+  - Kết quả (worker): 7 test xanh 0 skipped (gate a–e). Lệch nhỏ có chủ
+    đích: `sync` trả thêm khóa `protected` (đếm row cùng id nhưng source
+    không phải `market:%` — không đè); cờ `--report` chỉ tồn tại để báo
+    usage exit 2 (không có báo cáo riêng — dùng `--recon`). Khai báo
+    `agents/kd_orders.py` vào luồng DPIA DF-25 (đơn sàn/quyết toán).
+- [x] **W101.2 KD-A6 file đối soát doanh thu thực nhận** — `recon_rows(conn,
+  since, until) -> list[dict]` (since/until date VN; đơn `orders` source
+  `market:%` có `ts` ∈ kỳ): mỗi đơn 1 dòng {channel, order_ref:
+  `order_id_hash[:8]`, status, total_vnd (orders), order_amount_vnd,
+  platform_fee_vnd = fixed+payment+service, shipping_fee_vnd,
+  voucher_seller_vnd, affiliate_vnd, refund_vnd, payout_vnd (settlement_rows
+  mới nhất của đơn theo `imported_at, id`), label = `recon_results.label`
+  hoặc `chua_quyet_toan` (chưa có settlement)}; settlement của kênh trong kỳ
+  `settled_on` mà không có đơn trong `orders` → dòng label `thieu_don`. Hàng
+  tổng theo kênh do CODE cộng. `write_csv(rows, out_dir) -> Path` ghi
+  `doi-soat-<since>-<until>.csv` atomic, `utf-8-sig`, `\n`. CLI `--recon
+  --since D --until D [--out-dir DIR]`. Chỉ BÁO CÁO: không ghi DB, không bút
+  toán; kế toán duyệt file (external).
+  - Boundary: `agents/kd_orders.py`, `tests/test_kd_orders.py`. Chỉ ĐỌC
+    `orders`/`settlement_rows`/`recon_results`.
+  - Gate: fixture 3 đơn (1 khớp, 1 lệch, 1 chưa quyết toán) + 1 settlement
+    không có đơn → CSV đủ 4 dòng + hàng tổng; mỗi dòng có cột
+    `platform_fee_vnd` = tổng 3 phí của settlement đó; label đúng 4 loại;
+    file không chứa `order_id_hash` đủ 16 ký tự, không cột tên/SĐT/địa chỉ;
+    since > until hoặc định dạng sai → exit 2 trước connect; ghi 2 lần cùng
+    kỳ → file byte-giống nhau (tất định).
+  - Evidence: `evidence/v101_kd_orders.log`
+  - Kết quả (worker): `recon_rows` + `write_csv(rows, out_dir, since,
+    until)` (thêm 2 tham số kỳ để đặt tên file); settlement có trong bảng
+    nhưng chưa có `recon_results` → `chua_quyet_toan` (không đoán nhãn);
+    ô chuỗi chặn công thức bảng tính (`'=`). Kế toán duyệt file = external.
+- [x] **W101.3 KD-A7 `agents/kd_care.py` — nháp chăm sóc lại / xin đánh giá
+  CHỈ khi có consent** — Bảng mới `care_purchases` (`docs/schema.sql`, khối
+  comment v10.1): `id identity pk, contact_id bigint not null references
+  contacts(id), channel text not null check (channel in ('web','zalo',
+  'b2b','showroom'))` (sàn bị chặn ở DB — khách sàn chỉ chăm sóc bằng công cụ
+  sàn), `order_ref text` (mã nội bộ, không PII), `sku_key text not null
+  references sku_master(sku_key)`, `purchased_on date not null`,
+  `delivered_on date`, `recorded_by text not null check (btrim <> '' and not
+  like 'agent:%')`, `created_at`; KHÔNG cột PII. `data/care_rules.json` (GIẢ
+  ĐỊNH, `_doc` ghi "chờ GĐ KD/Pháp chế"): `window` [08:00, 20:00) giờ VN,
+  `rebuy_after_days`, `review_after_days`, `max_marketing_per_month` = 2,
+  `templates` {`rebuy`, `review`} chuỗi có chỗ `{ten_sp}` (tên golden) — agent
+  KHÔNG tự soạn (0 LLM). `plan(conn, now) -> {"items", "skipped"}`: rebuy =
+  mua ≥ `rebuy_after_days` trước, `can_contact(contact, 'marketing')` True,
+  `sku_key` ∈ `v_promotable` kênh `zalo` (không promotable/rượu/TPBVSK chưa
+  XNQC → BỎ khách, không đổi sang SKU khác), chưa đủ trần tháng VN (đếm mục
+  `approval_queue` `object_type='care_rebuy'`, `status in ('pending',
+  'approved')`, `object_id` = `<contact_id>:<YYYY-MM>:<n>`); review = giao ≥
+  `review_after_days`, `can_contact(contact, 'cskh')`, 1 lần/`care_purchases.
+  id` (`object_id` = `review:<id>`). `gui_luc` = `now` nếu trong khung, ngoài
+  khung → dời mốc mở khung kế tiếp (22:30 → 08:00 hôm sau). `run(conn, now,
+  dry_run)` → `director.submit(block='sales', object_type='care_rebuy'|
+  'care_review', payload=...)`; payload = text tin đã điền + dòng `contact_id:
+  N`, `gui_luc`, `muc_dich` — KHÔNG SĐT/tên/email/địa chỉ, không ciphertext/
+  HMAC (module không import `load_vault_key`/`unseal`). Text tin qua
+  `guardrail.check_publish(channel='zalo', content_type='post_sale',
+  sku=sku_key, is_ai=False)` (`post_sale` là `ad: true` → template rebuy
+  phải mang `labels.ad[0]`; template review không nêu công dụng) → vi phạm
+  → không đẩy, đếm `skipped`. Thêm
+  `care_rebuy` (risk high, handoff B) + `care_review` (risk medium, handoff
+  A) vào `object_types` `data/directors/sales.json`. `verify_send(conn,
+  item_id, text, now) -> (ok, ly_do)`: chỉ ok khi mục `approved` VÀ
+  `aq.verify` khớp sha VÀ `can_contact` còn True TẠI LÚC GỬI VÀ `now` trong
+  khung — NGƯỜI gửi (ZNS external). CLI `--record` (stdin JSON, `--by`
+  người) | `--plan` | `--run [--dry-run]` | `--verify-send ID FILE`.
+  - Boundary: `agents/kd_care.py` (mới), `data/care_rules.json` (mới),
+    `docs/schema.sql` (thêm `care_purchases`), `data/directors/sales.json`
+    (+2 object_types), `tests/test_kd_care.py` (mới). Không sửa
+    `ingest/crm.py`, `pipelines/approval_queue.py`, `pipelines/director.py`.
+  - Gate (fixture 50 mua mẫu: 20 shopee + 10 tiktok cố chèn → DB CHECK từ
+    chối; 20 web trong đó 12 có consent `marketing` granted): (a) rebuy đúng
+    12 khách, 0 khách sàn; khách chỉ có consent `cskh` → chỉ review, không
+    rebuy; khách có consent `b2b` không tính là `marketing`; (b) tin thứ 3
+    trong cùng tháng VN → bị chặn (`skipped` lý do `tran_thang`), mục
+    `rejected` không tính trần; (c) `now` 22:30 VN → `gui_luc` 08:00 hôm
+    sau; 07:59 → 08:00 cùng ngày; (d) SKU `ruou` và SKU TPBVSK
+    `xnqc_status='none'` → 0 tin nhắc; (e) khách rút consent (dòng mới
+    `granted=false`) → lần `--run` kế 0 mục mới cho khách đó, và
+    `verify_send` mục ĐÃ approved của khách đó → `(False, 'consent')`; (f)
+    payload mọi mục qua `_PII_RE` 0 match và không chứa giá trị cột
+    `contacts.*_enc`/`phone_hmac` của fixture; (g) chạy `--run` 2 lần cùng
+    `now` → lần 2 0 mục mới (unique pending + object_id tất định); (h) grep
+    `agents/kd_care.py` không có `llm_gateway|openai|requests|httpx|urllib|
+    smtplib|unseal|load_vault_key`. `python scripts/apply_schema.py --roles`
+    ×2 sạch; `python -m pytest tests/test_kd_care.py tests/test_director.py
+    tests/test_sales_director.py -q` xanh, 0 skipped ở file mới.
+  - Evidence: `evidence/v101_kd_care.log` (apply_schema --roles ×2 nằm trong
+    `evidence/v101_pytest.log`)
+  - Kết quả (worker): gate a–h xanh (13 test, 0 skipped). Lệch có chủ đích
+    cần coordinator xem: (1) object_id rebuy =
+    `<contact_id>:<YYYY-MM>:p<purchase_id>` thay `:<n>` — vẫn đếm trần theo
+    tháng (LIKE `%:YYYY-MM:%`, pending+approved) nhưng tất định theo lần
+    mua (chạy lại = 0 mục, 1 lần nhắc/lần mua mọi status); (2) tin review
+    kiểm `check_publish(content_type='post')` (xin đánh giá không phải
+    quảng cáo — `post_sale` ad:true sẽ đòi nhãn QC + chặn TPBVSK MO_TA);
+    rebuy vẫn `post_sale`; (3) SKU TPBVSK → CODE nối câu khuyến cáo chuẩn;
+    guardrail nhận diện theo HỌ sản phẩm nên cả họ (vd mọi Saphraton) phải
+    QC_DAY_DU trên zalo thì tin mới qua. Lỗi `--record` không echo tên
+    trường/giá trị (rà OWASP). External-dep giữ nguyên: consent thật,
+    ZNS/Zalo OA gửi, `care_purchases` ship rỗng, `care_rules.json` GIẢ ĐỊNH.
+- [x] **W101.4 KD-A9 `agents/kd_live.py` — nháp kịch bản livestream** —
+  `data/livestream_rules.json` (GIẢ ĐỊNH): `channels` ["shopee","tiktok",
+  "facebook"], `max_sessions_per_week` 2, `max_cart` 8, `duration_min`.
+  `data/prompts/livestream_script.md` + entry manifest (`version`/`sha256`,
+  `trang_thai` chờ GĐ Marketing) — LLM CHỈ viết lời dẫn từng SKU + câu hỏi/
+  đáp bình luận dạng JSON, KHÔNG số. `write_script(conn, channel, cart,
+  session_day, brief) -> {"ok", "refused", "text", "cart", "dropped",
+  "guardrail", "draft_id"}`. Từ chối TRƯỚC LLM (0 lời gọi, 0 DB ghi), thứ
+  tự: kênh lạ | giỏ rỗng/quá `max_cart` | SKU rượu (`sku_master.category=
+  'alcohol'` hoặc `kb_filter.is_alcohol(tên)`) → `ruou` | SKU không có trong
+  `v_promotable` kênh đó (vd TPBVSK `xnqc_status` none) → `khong_promotable`
+  | đã có ≥ `max_sessions_per_week` nháp `livestream_script` chưa rejected
+  cùng tuần ISO (VN) của `session_day` → `vuot_tran_phien` (ngày phiên ghi
+  dòng đầu `brief` dạng `phien: YYYY-MM-DD kenh: K`, regex parse — không
+  cột mới). Sau LLM (gateway agent `kd_livestream`): câu `_spec_like`/có chữ
+  số → BỎ (`dropped`), câu `is_alcohol` → BỎ; hỏi-đáp mà câu hỏi
+  `is_health_question` → câu trả lời thay bằng `data/channels.json`
+  `templates.health` (không để LLM trả lời sức khỏe). Phần giỏ do CODE dựng:
+  tên golden + giá `v_promotable.price_vnd` (định dạng VND) theo thứ tự
+  người nhập; có SKU TPBVSK → CODE nối `disclaimer.canonical`; nhãn
+  `labels.ai[0]`. Toàn văn qua `check_publish(channel, content_type=
+  'livestream_script', is_ai=True, readiness=store.readiness_from_db)` → vi
+  phạm → 1 lượt sửa có feedback → còn → `kich_ban` (0 draft). Đạt →
+  `store.save_draft(..., content_type='livestream_script', created_by=
+  'agent:kd_a9', prompt_version, prompt_sha256)` pending. CLI `--channel K
+  --cart sku1,sku2 --day D --brief "..." [--dry-run]`.
+  - Boundary: `agents/kd_live.py` (mới), `data/livestream_rules.json` (mới),
+    `data/prompts/livestream_script.md` + `data/prompts/manifest.json`,
+    `data/llm_gateway.json` (+`kd_livestream`, +`mkt_youtube` cap),
+    `tests/test_kd_live.py` (mới).
+  - Gate (fake LLM tất định): (a) giỏ có SKU rượu → `ruou`, giỏ có SKU
+    TPBVSK xnqc none → `khong_promotable`, cả 2 với 0 lời gọi `chat`
+    (acceptance "chặn 2/2"); (b) phiên thứ 3 cùng tuần ISO → `vuot_tran_phien`
+    0 lời gọi; phiên tuần kế → ok; nháp `rejected` không tính trần; (c) fake
+    LLM trả câu "giá chỉ 199k", câu "rượu sâm" → bị bỏ; giá trong text cuối
+    = đúng `v_promotable.price_vnd` của fixture (không số nào khác do LLM);
+    (d) fake LLM gán công dụng giấc ngủ cho mật ong / chứa từ cấm → lượt
+    sửa → vẫn vi phạm → `kich_ban`, 0 `content_drafts`; (e) câu hỏi bình
+    luận sức khỏe → đáp = template health nguyên văn; (f) giỏ có TPBVSK →
+    text chứa `disclaimer.canonical` nguyên văn và `labels.ai[0]`; 0 từ cấm
+    (`check()` ok); (g) draft lưu `status='pending'`, module không có đường
+    duyệt/đăng (grep `set_status|approve|requests|httpx` rỗng). `python -m
+    pytest tests/test_kd_live.py -q` xanh, 0 skipped.
+  - Evidence: `evidence/v101_kd_live.log`
+  - Kết quả (worker): gate a–g xanh (8 test, 0 skipped). `livestream_script`
+    là `ad: true` → CODE nối cả `labels.ad[0]` lẫn `labels.ai[0]`. Tách
+    `generate(...)` (không DB, dùng cho runner eval) khỏi `write_script(conn,
+    ...)`. Câu LLM bỏ ký tự Cc/Cf + bỏ trường không phải chuỗi (rà OWASP).
+    Tài khoản livestream = external-dep.
+- [x] **W101.5 MKT-12 `agents/mkt_youtube.py` — gói video YouTube dài +
+  Shorts xem trước** — `data/guardrail_rules.json` `channel_alias` thêm
+  `"youtube": "web"` (kênh sở hữu như web; KHÔNG thêm vào `channels` —
+  `test_guardrail_v2` khóa `channels == golden CHANNELS`). `data/prompts/
+  youtube_long.md` + manifest. `write_package(brief, *, readiness=None) ->
+  {"ok", "refused", "title", "description", "chapters", "segments", "srt",
+  "shorts", "dropped", "guardrail", "meta"}`: từ chối TRƯỚC LLM: brief rỗng/
+  > 500 ký tự | `video_studio.check_brief` (từ `script_banned`) | `is_alcohol`
+  → `ruou`. LLM (gateway agent `mkt_youtube`) trả JSON `{title, description,
+  segments[{title, text, visual, duration_s}], shorts[{segments: [idx],
+  title}]}`; câu `_spec_like`/`script_banned`/`is_alcohol` → BỎ; Σ
+  `duration_s` ∉ [300, 900] → `thoi_luong`. CODE dựng tất định: `chapters`
+  (mốc cộng dồn, dòng đầu `00:00`, ≥ 3 chương, mỗi chương ≥ 10 s), `srt`
+  (mỗi segment 1 cue theo mốc cộng dồn), `description` = mô tả LLM + chương
+  + `labels.ai[0]` + `labels.ad[0]`, `meta.privacyStatus = "private"` (hằng
+  — không có tham số đổi). Toàn bộ text qua `check_publish(channel=
+  'youtube', content_type='video', is_ai=True)` → 1 lượt sửa → còn vi phạm →
+  `kich_ban`. Lưu: `store.save_draft(channel='youtube', content_type=
+  'video', created_by='agent:mkt12')` pending. `render_shorts(pkg, *,
+  broll_dir, out_dir) -> list[dict]` TÁI DÙNG `video_studio.find_ffmpeg`/
+  `_brolls`/`_broll_frame`/`_encode`/`_extract_frame`/`label_visible` (khung
+  9:16, mỗi Short 15–45 s, nhãn AI trên mọi khung, kiểm lại 3 khung trích
+  từ mp4) → file `<out_dir>/<sha256>.mp4` + sidecar `.json` (mặc định
+  `data/video_assets/`, đã gitignore) + 1 dòng `agent_action_log`
+  `youtube_short_render` (sha, draft_id) — KHÔNG ghi `video_assets` (bảng
+  đó bắt `sku`/`packshot_sha256` not null). Không B-roll license →
+  `broll_thieu`; không ffmpeg → `ffmpeg_thieu` (gói kịch bản vẫn lưu). CLI
+  `--brief "..." [--render] [--dry-run]`.
+  - Boundary: `agents/mkt_youtube.py` (mới), `data/prompts/youtube_long.md`
+    + manifest, `data/guardrail_rules.json` (chỉ `channel_alias`),
+    `tests/test_mkt_youtube.py` (mới). KHÔNG sửa `pipelines/video_studio.py`
+    (nếu thật cần đổi helper → ghi lý do, test video_studio phải xanh).
+  - Gate (fake LLM tất định; Shorts dùng `video_studio.make_sample_broll` +
+    ffmpeg của `imageio-ffmpeg`): (a) `meta.privacyStatus == "private"` 100%
+    và module không có `googleapiclient|upload|privacyStatus.*public` (grep);
+    (b) mô tả có câu claim/từ cấm → sửa → còn → `kich_ban`, 0 draft; (c)
+    Σ duration 120 s → `thoi_luong`; (d) chapters dòng đầu `00:00`, mốc tăng
+    dần, SRT parse lại đúng số cue/mốc; (e) description chứa `labels.ai[0]`;
+    mỗi mp4 Short có nhãn AI trên 3 khung trích (`label_visible` ≥ ngưỡng
+    config), không track audio, không metadata; (f) brief nhắc rượu → `ruou`
+    0 lời gọi; (g) `check_publish(channel='youtube', ...)` không trả lỗi
+    config "kênh lạ"; `tests/test_guardrail_v2.py` vẫn xanh. `python -m
+    pytest tests/test_mkt_youtube.py tests/test_guardrail_v2.py
+    tests/test_video_studio.py -q` xanh, 0 skipped ở file mới.
+  - Evidence: `evidence/v101_mkt_youtube.log`
+  - Kết quả (worker): gate a–g xanh (7 test + guardrail_v2 + video_studio
+    xanh, 0 skipped). KHÔNG sửa `pipelines/video_studio.py` (dùng thêm
+    helper `_probe`/`_duration_ms`/`_label_drawn`). Short = 1–3 khung tiêu
+    đề phần, mỗi khung max(scene_s, ⌈15/n⌉) giây. Kênh YouTube + API, tư
+    liệu quay thật, TTS = external-dep.
+- [x] **W101.6 Eval + DPIA map + tài liệu bàn giao** — suite tất định
+  `data/eval/suites/kd_a7.json` (runner `kd_a7`: kind `consent_in`,
+  `trap_no_consent`, `trap_san`, `trap_cap`, `trap_window`, `trap_sku_cam` —
+  mọi `trap_*` bắt buộc 100%), `kd_a9.json` (runner `kd_a9`, LLM giả: `trap_
+  alcohol`, `trap_not_promotable`, `trap_number`, `trap_health_qa`,
+  `trap_banned`, `trap_disclaimer`), `mkt12.json` (runner `mkt12`: `trap_
+  private`, `trap_banned`, `trap_alcohol`, `chapters_ok`); đăng ký runner
+  trong `scripts/agent_eval.py` (`RUNNERS`, `RUNNER_SCORERS`,
+  `DETERMINISTIC_RUNNERS`); `frozen=false`, `labeled_by=null`, `_doc` ghi
+  "bộ ca MẪU dev soạn, chờ chủ khối gán nhãn"; KHÔNG vào `required_agents`.
+  `data/data_flow_map.json` thêm luồng DF-36 (A7: contact_id + consent →
+  approval_queue, không gửi, `cross_border:false`) và DF-37 (A9/MKT-12:
+  brief/lời dẫn → LLM qua gateway, không PII) — module mới có egress phải
+  khai báo (`tests/test_data_flow_map.py`). `docs/handover/kien-truc.md`:
+  72 bảng + `care_purchases` + 4 agent mới; `docs/handover/sop.md`: mục SOP
+  mới cho 4 CLI (lệnh đúng như chạy thật, ghi external-dep).
+  - Boundary: `data/eval/suites/{kd_a7,kd_a9,mkt12}.json`,
+    `scripts/agent_eval.py`, `data/data_flow_map.json`,
+    `docs/handover/{kien-truc,sop}.md`, test drift liên quan.
+  - Gate: `python scripts/agent_eval.py --validate` 100% suite hợp lệ (cả 3
+    mới); `python scripts/agent_eval.py --deterministic --no-record` mọi
+    suite PASS; `python scripts/dpia_draft.py --check` exit 0; `python -m
+    pytest tests/test_data_flow_map.py tests/test_handover_docs.py
+    tests/test_agent_eval.py -q` xanh; `grep -c "72 bảng public"
+    docs/handover/kien-truc.md` ≥ 1 và `care_purchases` có trong file.
+  - Evidence: `evidence/v101_eval.log`
+  - Kết quả (worker): 3 suite PASS 10/10, 8/8, 6/6 (thêm kind
+    `trap_session` cho kd_a9 và `duration` cho mkt12 ngoài danh sách
+    contract); `--validate` 25/25; `dpia_draft --check` exit 0 (đã sinh lại
+    `docs/legal/DPIA-nhap.md` + `TIA-nhap.md` theo map mới — 37 luồng).
+    Drift sửa kèm: `docs/handover/prompt-library.md` (2 template mới),
+    `tests/test_agent_eval.py` (DETERMINISTIC_RUNNERS), `tests/
+    test_sales_director.py` (tập handoff A + `care_review`), `tests/
+    test_data_flow_map.py` (NEW_SCRIPTS/REQUIRED_MODULES), `tests/
+    test_handover_docs.py` (SOP_COMMANDS); full pytest vòng 1 bắt thêm 7
+    drift → sửa `tests/test_ci_workflow.py`, `tests/test_listing.py`,
+    `tests/test_qa_harness.py` (22→25 suite, tập/thứ tự agent),
+    `deploy/cloud/README.md` (+`care_purchases`),
+    `docs/handover/runbook-ha-tang.md` (+agent id `kd_livestream`/
+    `mkt_youtube`). Chủ khối gán nhãn suite = external-dep.
+- [x] **W101.7 Gate chung** — targeted ×3 không flake; full suite 1 lần;
+  lint; compile.
+  - Boundary: không file mới.
+  - Gate: `python -m pytest tests/test_kd_orders.py tests/test_kd_care.py
+    tests/test_kd_live.py tests/test_mkt_youtube.py -q` xanh ×3 liên tiếp,
+    0 skipped; `python -m pytest -q` full xanh (skip chỉ được là test cần
+    Docker — ghi rõ lý do môi trường); `ruff check .` sạch; `python -m
+    py_compile agents/kd_orders.py agents/kd_care.py agents/kd_live.py
+    agents/mkt_youtube.py` exit 0; `python scripts/apply_schema.py --roles`
+    ×2 sạch; `python -m pipelines.store --verify-log` nguyên vẹn; `git
+    status` không có file runtime lạc (`data/reports/`, `data/video_assets/`
+    gitignored; `lv2-market-top.png` không stage). Lệnh nặng có thể bị đẩy
+    nền — đọc output tới khi process exit trước lệnh nặng kế tiếp.
+  - Evidence: `evidence/v101_pytest.log` (`git add -f` vì `*.log`
+    gitignore)
+  - Kết quả (worker): targeted ×3 = 35 passed ×3, 0 skipped; full vòng 1 =
+    7 failed (drift, đã sửa) → vòng 2 = 4296 passed, 3 skipped (đều
+    `test_dr_drill` cần docker/postgres image — môi trường); ruff sạch;
+    py_compile exit 0; apply_schema --roles ×2 exit 0 (72 bảng);
+    `--verify-log` nguyên vẹn; git status không có runtime lạc. Evidence
+    file `.log` chưa stage (coordinator `git add -f`).
+
+Someday (không treo version): bảng `order_items` + đồng bộ WooCommerce REST
+chỉ đọc + cảnh báo đơn sắp trễ/hủy bất thường (cần ngày đặt/giao trong file
+thật); job xóa liên hệ theo TTL từng mục đích (acceptance A7 (4) — chờ Pháp
+chế chốt thời hạn); A9 hậu kiểm transcript live (speech-to-text) → A11 gắn
+cờ; MKT-12 dựng video dài 16:9 từ tư liệu quay thật + TTS; grant hẹp
+`agent_writer` cho `care_purchases`/`orders` (version này CLI chạy DSN chủ sở
+hữu, `docs/roles.sql` không grant).
+
+v10.1 đóng 2026-10-15 (vòng 0: FIX/PASS/FIX — 4 finding; vòng 1 PASS, 0 mở;
+agent sửa kết thúc trước khi đọc full pytest → coordinator tự chạy full
+pytest: 4304 passed / 3 skipped docker — `evidence/v101_full_coord.log`).
+Worker tự vá OWASP: `kd_care --record` in tên field JSON (có thể là SĐT) → chỉ
+in số lượng; `kd_live` lọc ký tự điều khiển/vô hình trong câu LLM. Coordinator
+vá chuỗi DF-25 `storage` dính liền (DPIA/TIA đọc sai câu) + sinh lại DPIA/TIA.
+Lệch contract có lý do (đã ghi ở checklist): object_id care_rebuy theo
+purchase; tin xin đánh giá kiểm như `post` (không phải quảng cáo); livestream
+gắn cả nhãn quảng cáo + nhãn AI. Số tạm cần đánh lại khi gộp: DF-36/DF-37
+(trùng v10.2), bảng 72. External-dep: tài khoản livestream/YouTube (không có
+đường upload), gửi ZNS, consent thật + TTL liên hệ do Pháp chế chốt, file
+đơn/quyết toán thật, đơn web/Zalo thật, config GIẢ ĐỊNH `care_rules.json`/
+`livestream_rules.json`, tư liệu quay thật + TTS, người duyệt thật, chủ khối
+ký. Someday (CHÚ Ý trước khi nối kênh gửi thật): `verify_send` không ghi "đã
+gửi" và không giới hạn tuổi bản duyệt → 1 mục care_rebuy đã duyệt có thể qua
+verify nhiều lần (gửi lặp); trần 2 tin/tháng đếm không khóa — 2 `--run` song
+song cùng đếm 0; trần tính theo tháng lập kế hoạch thay tháng gửi. Khác: dòng
+TONG đối soát cộng cả đơn hủy; SRT không lọc '-->'; CHECK `recorded_by not like
+'agent:%'` phân biệt hoa thường; nhánh UniqueViolation/guardrail-skip chưa
+test; test recon phụ thuộc now() DB; order_items + WooCommerce, cảnh báo đơn
+trễ, job xóa liên hệ TTL, hậu kiểm transcript live, video dài 16:9, grant hẹp.
+
 Nhánh `ai-infra`: M31 đợt gộp 6 (2026-10-14) — v6.5, v5.3, v10.3, v6.3, v8.1, v6.4,
 v8.2 đã gộp (71 bảng; 22 suite eval; DF-01..DF-35 + DPIA/TIA 35 luồng). Trước gộp
 vá riêng 2 lỗi đỏ chung mọi worktree: test garden date-bomb (ảnh fixture
