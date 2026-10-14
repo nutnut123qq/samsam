@@ -3214,3 +3214,68 @@ create or replace trigger b2b_requests_append_only_row
 create or replace trigger b2b_requests_no_truncate
   before truncate on b2b_requests
   for each statement execute function append_only_guard();
+
+-- ============================================================================
+-- v5.4 KD-A8 affiliate đại lý (WP07) — `agents.kd_affiliate`.
+--   * `affiliate_codes` — mã affiliate NGẪU NHIÊN (`secrets`, "SS" + 10 ký
+--     tự bảng 32, không 0/O/1/I; không chứa mã đại lý/ngày/số thứ tự) cho
+--     đại lý `dealers` active × kênh shopee|tiktok|web. Vòng đời: pending
+--     (mục `affiliate_program` khối sales đang chờ) → active (mục approved +
+--     verify khớp payload, `--release`) | void (mục rejected/expired);
+--     active → revoked (`--revoke`). Mỗi (đại lý, kênh) tối đa 1 mã
+--     pending|active (unique partial index). Voucher/coupon THẬT trên sàn/
+--     WooCommerce do Quản lý MXH tạo TAY — bảng này không gọi sàn.
+--   * `affiliate_attributions` — 1 dòng/(kênh, order_id_hash, line_key) đơn
+--     sàn có mã voucher khớp `affiliate_codes` (từ `market_rows.raw`
+--     `voucher_code`, snapshot mới nhất). Hoa hồng TẠM TÍNH (BẢN NHÁP, không
+--     phải lệnh chi) = `ingest.crm.commission_rate(..., online=True)`; rượu
+--     = 0 chốt ở CẢ code lẫn CHECK dưới; đơn hủy = 0. KHÔNG mã đơn gốc/PII
+--     người mua (chỉ hash), KHÔNG tên đại lý (chỉ `dealer_code`).
+-- Quyền: roles.sql KHÔNG grant 2 bảng này (mặc định từ chối như `dealers`/
+-- `settlement_rows`) — CLI chạy DSN chủ sở hữu.
+-- ============================================================================
+
+create table if not exists affiliate_codes (
+  id bigint generated always as identity primary key,
+  code text not null unique check (code ~ '^SS[A-HJ-NP-Z2-9]{10}$'),
+  dealer_code text not null references dealers(code),
+  channel text not null check (channel in ('shopee', 'tiktok', 'web')),
+  status text not null default 'pending'
+    check (status in ('pending', 'active', 'void', 'revoked')),
+  queue_id bigint unique references approval_queue(id),
+  created_by text not null check (btrim(created_by) <> ''),
+  created_at timestamptz not null default now(),
+  activated_at timestamptz,
+  activated_by text,
+  revoked_at timestamptz,
+  revoked_by text,
+  check (status not in ('active', 'revoked') or activated_at is not null),
+  check (status <> 'revoked' or revoked_at is not null)
+);
+create unique index if not exists affiliate_codes_open_uq
+  on affiliate_codes (dealer_code, channel)
+  where status in ('pending', 'active');
+
+create table if not exists affiliate_attributions (
+  id bigint generated always as identity primary key,
+  code_id bigint not null references affiliate_codes(id),
+  dealer_code text not null,
+  channel text not null check (channel in ('shopee', 'tiktok')),
+  order_id_hash text not null check (order_id_hash ~ '^[0-9a-f]{16}$'),
+  line_key text not null check (btrim(line_key) <> ''),
+  market_row_id bigint not null references market_rows(id),
+  sku_key text,
+  category text,
+  qty int not null check (qty >= 0),
+  amount_vnd bigint not null check (amount_vnd >= 0),
+  rate_pct numeric(5,2) not null check (rate_pct between 0 and 100),
+  commission_vnd bigint not null check (commission_vnd >= 0),
+  status text not null check (status in ('tinh', 'huy')),
+  flags text[] not null default '{}',
+  settled boolean not null default false,
+  updated_at timestamptz not null default now(),
+  unique (channel, order_id_hash, line_key),
+  -- Chốt chặn rượu ở DB: rượu bán online KHÔNG có hoa hồng (WP07).
+  check (category is distinct from 'alcohol' or commission_vnd = 0),
+  check (status <> 'huy' or commission_vnd = 0)
+);

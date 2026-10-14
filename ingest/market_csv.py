@@ -27,7 +27,9 @@ drop: [header], inactive_status: [...], cancel_status: [...]}}}`. Field
 chuẩn: item_id, seller_sku, title, price, stock, status, ads_spend, qty,
 order_id, sale_price (v5.3: giá sau khuyến mãi của listing, TÙY CHỌN — chỉ
 nằm trong `market_rows.raw`, không có cột riêng; cảnh báo v3.3 vẫn so theo
-`price`; agents.kd_price đọc làm giá bán thực). PII: chỉ field allowlist
+`price`; agents.kd_price đọc làm giá bán thực), voucher_code (v5.4: mã
+voucher/affiliate trên dòng đơn, TÙY CHỌN, ≤ VOUCHER_MAX ký tự — chỉ trong
+`raw`; agents.kd_affiliate ghi nhận đơn qua mã). PII: chỉ field allowlist
 được giữ; cột `drop` (tên/SĐT/địa chỉ người mua, ghi chú...) bị bỏ ngay khi đọc; `order_id` → `order_id_hash` =
 sha256("kênh:mã đơn")[:16], giá trị gốc không giữ.
 
@@ -82,7 +84,10 @@ MAP_FILE = ROOT / "data" / "market_csv_map.json"
 CHANNELS = ("shopee", "tiktok")
 KINDS = ("listing", "order", "ads")
 FIELDS = ("item_id", "seller_sku", "title", "price", "stock", "status",
-          "ads_spend", "qty", "order_id", "sale_price")
+          "ads_spend", "qty", "order_id", "sale_price", "voucher_code")
+# v5.4: mã voucher/affiliate trên dòng đơn (TÙY CHỌN, chỉ vào `raw`) — trần
+# độ dài; vượt → lỗi dòng (không in giá trị ô).
+VOUCHER_MAX = 64
 # field số → trần giá trị (cột bigint tiền VND / int số lượng).
 NUM_MAX = {"price": 10**15, "ads_spend": 10**15, "stock": 2 * 10**9,
            "qty": 2 * 10**9, "sale_price": 10**15}
@@ -331,6 +336,11 @@ def _parse(table, channel: str, kind: str, spec: dict
                     continue
                 out["order_id_hash"] = hashlib.sha256(
                     f"{channel}:{v}".encode()).hexdigest()[:16]
+            elif (f == "voucher_code" and v is not None
+                  and len(v) > VOUCHER_MAX):
+                errs.append(f"dòng {row_no}: field '{f}' dài quá "
+                            f"{VOUCHER_MAX} ký tự")
+                bad = True
             else:
                 out[f] = v
         if out.get("item_id") is None and out.get("seller_sku") is None:

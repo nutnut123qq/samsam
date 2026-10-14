@@ -1,0 +1,8 @@
+# v5.4 W54.2 phần thuần kd_affiliate — 2026-10-14T19:04:48+07:00
+$ python -m pytest -q tests/test_kd_affiliate.py -k "not db" -rs
+.......................................                                  [100%]
+39 passed, 6 deselected in 1.56s
+$ grep -nE "^import random|from random|random\." agents/kd_affiliate.py  (phải rỗng)
+grep exit=1 (1 = rỗng)
+$ grep -n "import secrets" agents/kd_affiliate.py
+44:import secrets

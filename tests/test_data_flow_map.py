@@ -30,7 +30,9 @@ NEW_SCRIPTS = {"scripts/review_load.py", "scripts/dpia_draft.py",
                # v5.3 KD-A4/A5: agent luật, KHÔNG gửi gì ra ngoài
                "agents/kd_listing.py", "agents/kd_price.py",
                # v10.3: cổng vendor nạp FILE — không request mạng
-               "ingest/social_vendor.py"}
+               "ingest/social_vendor.py",
+               # v5.4 KD-A8/A10: affiliate + dự báo — KHÔNG gửi gì ra ngoài
+               "agents/kd_affiliate.py", "agents/kd_forecast.py"}
 KNOWN_EGRESS = {
     "connectors/zalo.py", "crawler/collect.py", "pipelines/llm_gateway.py",
     "scripts/health_bulletin.py", "scripts/zalo_mock.py",

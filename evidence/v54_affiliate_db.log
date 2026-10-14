@@ -1,0 +1,6 @@
+# v5.4 W54.3 A8 DB issue/release/revoke — 2026-10-14T19:05:04+07:00
+$ python -m pytest -q tests/test_kd_affiliate.py -k "issue_release or rejected or cli_" -rs
+............                                                             [100%]
+12 passed, 33 deselected in 11.69s
+$ grep -nE "decide\(|auto_approve" agents/kd_affiliate.py  (phải rỗng)
+grep exit=1 (1 = rỗng)
