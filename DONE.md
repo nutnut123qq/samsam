@@ -6,6 +6,24 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+Nhánh `ai-infra`: M31 đợt gộp 6 (2026-10-14) — v6.5, v5.3, v10.3, v6.3, v8.1, v6.4,
+v8.2 đã gộp (71 bảng; 22 suite eval; DF-01..DF-35 + DPIA/TIA 35 luồng). Trước gộp
+vá riêng 2 lỗi đỏ chung mọi worktree: test garden date-bomb (ảnh fixture
+`created_at` cố định thay now(), 19dc153) và `qr_trace.new_code` không sinh mã
+bắt đầu '-' (argparse đọc thành option — bug CLI thật + flake ~1/64, 8b37b97);
+bản vá garden riêng của v10.3/v6.3/v6.4 bỏ khi commit nhánh. Tích hợp khi gộp:
+SOP đánh số 5n (v6.5 đo lường/SEO), 5o (v5.3), 5p/5q (v10.3), 5r (v6.4), 5s
+(v8.2); luồng v10.3 DF-31/32 → DF-32/33, v6.4 UGC → DF-34 (`mkt_ugc` GAP DF-34),
+v8.2 form B2B → DF-35 (SOP); `union_sql` làm rơi dòng `for each statement` của
+trigger `*_no_truncate` (decision_log, ad_test_plans) → thêm lại + kiểm bảo toàn
+dòng 2 phía; kien-truc gộp dòng bảng trùng (`api/`, `pipelines/`, `ingest/`,
+`agents/`, `connectors/`, `content_drafts`); test v6.4 `marketing` object_types +
+`seo_web_fix` (v6.5); `run_mkt_ads_ugc` mất `finally` khi gộp → khôi phục.
+Gate: apply_schema --roles ×2 sạch (71 bảng), ruff sạch, `agent_eval --validate`
+22/22 + `--deterministic --no-record` mọi suite PASS, `dpia_draft --check`,
+`pipelines.store --verify-log` nguyên vẹn, full pytest 4257 passed / 3 skipped
+(test_dr_drill — Docker Desktop tắt, môi trường) — `evidence/m31_dot6_pytest.log`.
+
 ## Checklist v6.5-do-luong-seo
 
 Khán giả/mục đích: M31 (worktree `D:\code\samsam-w70`) — làm phần MKT-09/
