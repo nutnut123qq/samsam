@@ -732,3 +732,53 @@ def test_db_sale_price_in_raw(db, monkeypatch):
     # Cột riêng không đổi — chỉ nằm trong raw.
     assert db.execute("select count(*) from information_schema.columns"
                       " where column_name = 'sale_price'").fetchone()[0] == 0
+
+
+# ---------- v5.4 voucher_code (mã affiliate trên dòng đơn) ----------
+
+VOUCHER_HDR = ("Mã đơn hàng,Trạng thái đơn hàng,Tên sản phẩm,"
+               "SKU phân loại hàng,Số lượng,Giá ưu đãi,Mã giảm giá của Shop")
+
+
+def test_voucher_code_optional_in_order_mapping():
+    m = _map()
+    assert m["shopee"]["order"]["optional"]["voucher_code"] == \
+        "Mã giảm giá của Shop"
+    assert m["tiktok"]["order"]["optional"]["voucher_code"] == \
+        "Seller Voucher Code"
+    assert "voucher_code" in m["_doc"] and "GIẢ ĐỊNH" in m["_doc"]
+    rows, errs, _ = _read(ORDER, "order")          # file cũ không có cột
+    assert errs == [] and len(rows) == 4
+    assert all(r["voucher_code"] is None for r in rows)
+
+
+def test_voucher_code_parsed_and_stripped(tmp_path):
+    p = _write(tmp_path, "o.csv", VOUCHER_HDR
+               + "\nO1,Hoàn thành,A,savina-12v,1,100, SSABCDEFGH23 \n"
+               + "O2,Hoàn thành,B,savina-12v,1,100,\n")
+    rows, errs, _ = _read(p, "order")
+    assert errs == []
+    assert [r["voucher_code"] for r in rows] == ["SSABCDEFGH23", None]
+
+
+def test_voucher_code_too_long_reports_row_not_value(tmp_path):
+    long = "V" * 64 + "Q"
+    p = _write(tmp_path, "o.csv", VOUCHER_HDR
+               + f"\nO1,Hoàn thành,A,savina-12v,1,100,{long}\n")
+    rows, errs, _ = _read(p, "order")
+    assert rows == [] and errs == [
+        "dòng 2: field 'voucher_code' dài quá 64 ký tự"]
+    assert long not in " ".join(errs) and "VVVV" not in " ".join(errs)
+    ok = _write(tmp_path, "ok.csv", VOUCHER_HDR
+                + f"\nO1,Hoàn thành,A,savina-12v,1,100,{'V' * 64}\n")
+    assert _read(ok, "order")[1] == []
+
+
+def test_db_voucher_code_in_raw(db, monkeypatch, tmp_path):
+    p = _write(tmp_path, "o.csv", VOUCHER_HDR
+               + "\nO1,Hoàn thành,A,savina-12v,1,100,SSABCDEFGH23\n")
+    assert _run(db, monkeypatch, p, "order") == (0, 1)
+    assert db.execute("select raw->>'voucher_code' from market_rows"
+                      ).fetchone()[0] == "SSABCDEFGH23"
+    assert db.execute("select count(*) from information_schema.columns"
+                      " where column_name = 'voucher_code'").fetchone()[0] == 0

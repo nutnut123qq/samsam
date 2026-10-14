@@ -782,6 +782,341 @@ TONG đối soát cộng cả đơn hủy; SRT không lọc '-->'; CHECK `record
 test; test recon phụ thuộc now() DB; order_items + WooCommerce, cảnh báo đơn
 trễ, job xóa liên hệ TTL, hậu kiểm transcript live, video dài 16:9, grant hẹp.
 
+## Checklist v5.4-affiliate-du-bao
+
+Khán giả/mục đích: M31 (worktree `D:\code\samsam-w40`) — làm KD-A8 "Affiliate
+đại lý" và KD-A10 "Dự báo mùa" của WP07 (pmo.md dòng `| WP07`; tiêu chí
+nghiệm thu liên quan: **"A8 sinh mã/link và kit (lấy từ hàng duyệt của
+Marketing) cho danh sách đại lý GĐ duyệt. Rượu có hoa hồng 0"**; đợt 2:
+"A8 onboard affiliate trước 11.11", "A10 bán thủ công từ 25/10"; A10 "dùng
+engine kịch bản chung"). Nền đã có: `dealers` (v5.2, `code`/`status`/
+`commission_default`/`source`) + `ingest.crm.commission_rate(dealer,
+category, online)` (rượu online → 0, đại lý không active → 0, category lạ →
+0); `content_drafts` approved + `store.verify_publish` + `agents.mkt_koc.
+load_drafts`/`KIT_TYPES` (v6.4); `store.readiness_from_db` +
+`pipelines.mkt_calendar.CONTENT_OK`; `pipelines.guardrail.check`;
+`pipelines.director.submit` + `approval_queue` khối `sales` loại
+`affiliate_program` (ĐÃ có trong `data/directors/sales.json`: 96h, high,
+handoff B — KHÔNG thêm loại mới) + `pipelines.approval_queue.verify`;
+`market_rows` export `order` (v3.3, `order_id_hash`, `price_vnd`, `qty`,
+`sku_key`, `status`, `raw`) + `cancel_status` trong `data/market_csv_map.json`;
+`settlement_rows` (v9.0, `channel` + `order_id_hash`); `pipelines.scenario.
+project()` (v7.3) + `pipelines.production.shortage()` +
+`ingest.inventory_csv.current_stock()`/`STALE_NOTE` (v9.2);
+`agents.report.write_report` (atomic, `data/reports/` đã gitignore);
+`pipelines.job_runs.job_run`. Sau version: (1) `agents/kd_affiliate.py` (A8)
+sinh mã affiliate NGẪU NHIÊN (secrets) cho đại lý `active`, ghép kit từ nháp
+Marketing ĐÃ DUYỆT → NHÁP vào hàng duyệt khối `sales`; chỉ khi duyệt mới
+kích hoạt mã + ghi file kit để người phụ trách gửi TAY; ghi nhận đơn qua mã
+từ file đơn sàn → `affiliate_attributions` idempotent, hoa hồng tạm tính
+(BẢN NHÁP, không phải lệnh chi), rượu = 0 ở cả code lẫn ràng buộc DB;
+(2) `agents/kd_forecast.py` (A10) dự báo SKU × kênh LUÔN là khoảng thấp/cơ
+sở/cao qua `scenario.project()` (không engine thứ 2), đối chiếu tồn →
+cảnh báo THIẾU/RỦI RO/THỪA, chưa có số tồn ≠ 0.
+
+Quy ước: ponytail — stdlib (`secrets`, `decimal`, `hashlib`) + `psycopg` +
+module sẵn có; KHÔNG dep mới; KHÔNG LLM (0 import `llm_gateway`/`openai`/
+`guardrail_llm` ở file mới); KHÔNG đường gửi (0 `smtplib`/`httpx`/
+`requests`/`urllib.request`/`.post(` ở file mới) — agent KHÔNG gửi kit, KHÔNG
+liên hệ đại lý, KHÔNG tạo voucher/coupon trên sàn/WooCommerce (Quản lý MXH
+tạo TAY trong Seller Center/WP admin sau khi GĐ bán hàng duyệt). **2 bảng
+mới** `affiliate_codes`, `affiliate_attributions` (`docs/schema.sql`,
+`create table if not exists` + ràng buộc; KHÔNG grant trong `docs/roles.sql`
+— mặc định từ chối như `dealers`/`settlement_rows`); KHÔNG thêm assert đếm
+cứng số bảng. **Định nghĩa (chốt TRƯỚC khi code):** mã = `"SS"` + 10 ký tự
+`secrets.choice` trên bảng 32 ký tự `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`
+(không 0/O/1/I, ≥ 50 bit; không chứa mã đại lý/ngày/số thứ tự; không bao giờ
+bắt đầu '-' — gotcha `qr_trace`); trùng unique → sinh lại ≤ 5 lần rồi lỗi.
+Mỗi (đại lý, kênh ∈ `shopee|tiktok|web`) tối đa 1 mã `pending|active`
+(unique partial index) → `--issue` lặp lại = `[skip]` in mã đang có, không
+sinh mã mới. Vòng đời: `pending` (đang chờ duyệt) → `active` (mục hàng duyệt
+`approved` + `aq.verify` khớp payload) | `void` (mục `rejected|expired`);
+`active` → `revoked` (`--revoke`, cần `--by`). Link: chỉ kênh `web` =
+`https://samsamngoclinh.com/?coupon=<mã>` (GIẢ ĐỊNH tham số — coupon thật do
+MXH tạo); sàn chỉ có MÃ. Ghi nhận đơn: dòng `market_rows` `export_kind=
+'order'` có `raw->>'voucher_code'` (chuẩn hóa strip + upper) = mã trong
+`affiliate_codes`; khóa idempotent `(channel, order_id_hash, line_key)` với
+`line_key = coalesce(seller_sku, item_id)`; cùng đơn ở nhiều file → lấy dòng
+của snapshot MỚI NHẤT (`imported_at desc, id desc` — cùng quy ước
+settlement v9.0); status thuộc `cancel_status` → `huy`, hoa hồng 0. Hoa hồng
+dòng = `round_half_up(price_vnd × qty × rate / 100)` VND, `rate =
+crm.commission_rate(dealer_row, sku_master.category, online=True)` (MỌI kênh
+của A8 là online) — `data/dealer_commission.json` (acc_ar, công nợ đại lý
+offline) KHÔNG dùng ở đây (1 nguồn tỷ lệ; test parity cả 2 đều cho rượu
+online = 0). Cờ dòng: `ruou_online` (category alcohol), `thieu_sku`
+(sku_key null/không có category), `dai_ly_ngung` (dealer không active),
+`ma_chua_kich_hoat` (mã `pending|void` → hoa hồng 0), `ma_da_thu_hoi` (mã
+`revoked` — vẫn tính, người quyết), `huy`. `settled` = tồn tại
+`settlement_rows` cùng `(channel, order_id_hash)` (báo cáo tách "tạm tính"
+vs "đã quyết toán"; `settlement_rows.affiliate_vnd` là phí AMS sàn thu —
+KHÔNG phải hoa hồng đại lý, không cộng lẫn). A10: chân trời mặc định 13 tuần
+từ `scenario.week_start(hôm nay VN)`; mỗi SKU golden × `scenario.
+ALL_CHANNELS` gọi `scenario.project(...)` rồi cộng theo mức; cảnh báo theo
+SKU (tồn không theo kênh) = `production.shortage(stock, sums)` + THỪA khi
+`stock > sums["high"]` ("dư N so với kịch bản cao"); SKU không có dòng tồn →
+"chưa có số tồn" (KHÔNG = 0, không cảnh báo thiếu); kho `stale` → kèm
+`STALE_NOTE`; tồn `sample` → nhãn `(MẪU)`. Print tiếng Việt → UTF-8 guard;
+connect qua `ingest.lead_store.connect` (connect_timeout); CLI nhiều op →
+`n_ops > 1` usage exit 2 TRƯỚC connect; ghi trên conn chia sẻ → `conn.commit()`
+tường minh; `__main__` bọc `job_run(...)`; output không in `order_id_hash`/
+tên đại lý (chỉ `dealer.code`) — kit chỉ chứa mã đại lý, không PII. Test DB
+thật: fixture schema tạm + `docs/schema.sql` + `docs/roles.sql` rồi ROLLBACK
+(như `tests/test_mkt_koc.py::db`, `_TxConn` từ `tests/test_fp_pnl`), 0
+skipped ở file mới; KHÔNG ghi `approval_queue`/`affiliate_*` trên DB thật
+ngoài test rollback (CLI DB thật chỉ `--dry-run`/case âm). Test không
+wall-clock.
+
+External-dep (KHÔNG giả lập như thật, KHÔNG tự đánh dấu): danh sách đại lý
+thật do GĐ bán hàng duyệt (version này chỉ `dealers` MẪU từ
+`data/dealer_regions.json` → kit gắn nhãn `(ĐẠI LÝ MẪU)` khi `dealers.source
+= 'dealer_regions.json'`); hợp đồng đại lý/affiliate đã ký; chính sách hoa
+hồng ký (`commission_default` MẪU — hoa hồng in là BẢN NHÁP); tên cột mã
+voucher trong file đơn Seller Center thật (`voucher_code` header GIẢ ĐỊNH);
+giới hạn độ dài/định dạng mã voucher của từng sàn (12 ký tự GIẢ ĐỊNH); tạo
+voucher/coupon thật trên Shopee AMS/TikTok/WooCommerce (người làm tay); đơn
+web (WooCommerce) — chưa có nguồn, attribution web = 0 dòng; số bán thật/
+baseline thật cho dự báo (`data/scenario_assumptions.json` vẫn GIẢ ĐỊNH);
+file tồn kho thật; GĐ bán hàng ký nghiệm thu WP07 + người duyệt khối `sales`
+(`approvers: []` giữ nguyên).
+
+- [ ] **External-dep (giữ mở)** — đại lý thật + GĐ bán hàng duyệt danh sách;
+  hợp đồng/chính sách hoa hồng ký; header cột mã voucher + giới hạn mã của
+  sàn thật; tạo voucher/coupon thật (MXH làm tay); nguồn đơn web; số bán
+  thật cho dự báo; file tồn kho thật; GĐ bán hàng ký nghiệm thu WP07.
+
+- [x] **W54.1 Schema 2 bảng + field `voucher_code` file đơn sàn** —
+  `docs/schema.sql` thêm `affiliate_codes` (`id` identity, `code text unique
+  check (code ~ '^SS[A-HJ-NP-Z2-9]{10}$')`, `dealer_code text not null
+  references dealers(code)`, `channel check in ('shopee','tiktok','web')`,
+  `status check in ('pending','active','void','revoked')` default pending,
+  `queue_id bigint unique references approval_queue(id)`, `created_by`
+  nonblank, `created_at`, `activated_at/by`, `revoked_at/by`, check
+  `status not in ('active','revoked') or activated_at is not null`, unique
+  partial index `(dealer_code, channel) where status in ('pending','active')`)
+  và `affiliate_attributions` (`code_id` FK, `dealer_code`, `channel check in
+  ('shopee','tiktok')`, `order_id_hash check ~ '^[0-9a-f]{16}$'`, `line_key`
+  nonblank, `market_row_id` FK `market_rows`, `sku_key`, `category`, `qty int
+  >= 0`, `amount_vnd bigint >= 0`, `rate_pct numeric(5,2)`, `commission_vnd
+  bigint >= 0`, `status check in ('tinh','huy')`, `flags text[]`, `settled
+  bool`, `updated_at`; `unique (channel, order_id_hash, line_key)`; **check
+  `category is distinct from 'alcohol' or commission_vnd = 0`** — chốt chặn
+  rượu ở DB; check `status <> 'huy' or commission_vnd = 0`).
+  `ingest/market_csv.py`: thêm field text TÙY CHỌN `voucher_code` vào
+  `FIELDS` (chỉ vào `raw`, strip; > 64 ký tự → lỗi dòng chỉ nêu số dòng +
+  tên field, KHÔNG in giá trị); `data/market_csv_map.json` thêm `optional`
+  `voucher_code` cho `shopee/order` + `tiktok/order` (header GIẢ ĐỊNH, ghi
+  trong `_doc`). File không có cột này vẫn nạp như cũ.
+  - Boundary: `docs/schema.sql`, `ingest/market_csv.py`,
+    `data/market_csv_map.json`, `tests/test_market_csv.py` (thêm test)
+  - Gate: `python scripts/apply_schema.py --roles` ×2 trên DB riêng sạch
+    (idempotent); `python -m pytest -q tests/test_market_csv.py` xanh (test
+    cũ không đổi + test mới: file đơn có cột voucher → `raw.voucher_code`;
+    không có cột → không key/None; 65 ký tự → lỗi dòng, output không chứa
+    giá trị ô); test DB: insert attribution category `alcohol` với
+    `commission_vnd = 1` → `psycopg.errors.CheckViolation`; mã sai mẫu
+    (`SS0OOOOOOOOO`, `-SABCDEFGHJ`) → CheckViolation; 2 mã `pending` cùng
+    (dealer, channel) → UniqueViolation
+  - Evidence: `evidence/v54_schema.log`
+- [x] **W54.2 `agents/kd_affiliate.py` — phần THUẦN (mã, kit, hoa hồng)** —
+  `new_code(rand=secrets) -> str` (định nghĩa ở Quy ước; KHÔNG import
+  `random`); `link_for(code, channel) -> str | None` (chỉ `web`);
+  `build_kit(dealer, channel, code, drafts, golden, readiness) -> {code |
+  None, reason, kit, sha12}` — mã chặn: `AFF_DEALER` (dealer không tồn tại/
+  status ≠ active), `AFF_RUOU_ONLINE` (draft gắn SKU category alcohol — mọi
+  kênh A8 online), `AFF_CREATIVE_UNAPPROVED` (0 hoặc > `mkt_koc.MAX_DRAFTS`
+  draft, draft không approved / `verified` ≠ True / `content_type` ∉
+  `mkt_koc.KIT_TYPES`), `AFF_READINESS` (readiness (sku, kênh) ∉
+  `CONTENT_OK`; kênh `web` tra readiness `web`), `AFF_GUARDRAIL` (kit không
+  qua `guardrail.check`); kit = text NGUYÊN VĂN draft đã duyệt + mã + link
+  (web) + câu "BẢN NHÁP — hệ thống không gửi; Quản lý MXH tạo voucher/coupon
+  và gửi TAY sau khi GĐ bán hàng duyệt" + nhãn `(ĐẠI LÝ MẪU)` khi dealer
+  source `dealer_regions.json`; KHÔNG tên/SĐT đại lý (chỉ `code`);
+  `commission_line(dealer, category, amount_vnd, code_status, cancelled) ->
+  {rate_pct, commission_vnd, flags, status}` gọi `crm.commission_rate(...,
+  online=True)` (không công thức thứ 2), Decimal ROUND_HALF_UP.
+  - Boundary: `agents/kd_affiliate.py` (mới), `tests/test_kd_affiliate.py`
+    (mới)
+  - Gate: test thuần: 2000 lần `new_code()` → khớp `^SS[A-HJ-NP-Z2-9]{10}$`,
+    không trùng, không chứa mã đại lý; `len(ALPHABET) ** CODE_LEN >= 2**50`;
+    `new_code(rand=<fake trả cố định>)` tất định (tiêm được để test);
+    `grep -nE "^import random|from random|random\." agents/kd_affiliate.py`
+    rỗng; `commission_line` alcohol + dealer commission_default 10 → rate 0,
+    commission 0, cờ `ruou_online`; tpbvsk 10% × 1.234.567 → 123.457 (half
+    up); dealer `paused` → 0 + `dai_ly_ngung`; category None → 0 +
+    `thieu_sku`; mã `pending` → 0 + `ma_chua_kich_hoat`; huỷ → `huy` 0; parity:
+    `acc_ar` zero_rules (`data/dealer_commission.json`) cũng cho alcohol/online
+    = 0; `build_kit` mỗi mã chặn 1 case + 1 case đạt (kit chứa mã, không chứa
+    `dealer.name`); kit có draft rượu → `AFF_RUOU_ONLINE` dù draft approved
+  - Evidence: `evidence/v54_affiliate_pure.log`
+- [x] **W54.3 A8 DB: `--issue` / `--release` / `--revoke` (nháp vào hàng
+  duyệt, không gửi)** — `issue(conn, dealer_code, channel, draft_ids, *, by,
+  dry_run)`: đọc dealer + `mkt_koc.load_drafts` + golden `sku_master` +
+  `store.readiness_from_db` → `build_kit`; đạt → MỘT transaction: insert
+  `affiliate_codes` (`pending`) + `director.submit(conn, "sales",
+  "affiliate_program", f"aff-{code_id}", title, kit, created_by=by)` + update
+  `queue_id` → `conn.commit()`; (dealer, kênh) đã có mã pending/active →
+  `[skip]` không sinh mã, không mục mới; `--dry-run` → in kit, 0 ghi.
+  `release(conn, qid, by)`: mục `approved` + `aq.verify(conn, qid, payload)`
+  True → code `active` (`activated_at/by`) + file
+  `data/reports/affiliate-kit-<dealer>-<qid>.md` qua `write_report`; mục
+  `rejected|expired` → code `void`, exit 1 `AFF_NOT_APPROVED`; `pending` →
+  exit 1, 0 ghi; payload lệch → `AFF_PAYLOAD_CHANGED` exit 1. `revoke(conn,
+  code, by)` chỉ từ `active`. CLI: `python -m agents.kd_affiliate --issue
+  --dealer D --channel C --draft-ids 1,2 --by X [--dry-run] | --release QID
+  --by X | --revoke CODE --by X | --attribute | --report --from YYYY-MM-DD
+  --to YYYY-MM-DD`; `n_ops != 1` → usage exit 2 trước connect; `--by` rỗng →
+  exit 2; DB down → exit 2 (`connect_timeout`). Agent KHÔNG gọi
+  `aq.decide`/tự duyệt.
+  - Boundary: `agents/kd_affiliate.py`, `tests/test_kd_affiliate.py`
+  - Gate: test DB (0 skipped): dealer MẪU active + 2 draft approved verified
+    → issue → 1 `affiliate_codes` pending + 1 `approval_queue` (`block=
+    'sales'`, `object_type='affiliate_program'`, status pending, payload chứa
+    mã); issue lần 2 cùng (dealer, kênh) → skip, đếm bảng không đổi; dealer
+    `ended` → `AFF_DEALER`, 0 dòng; release khi pending → exit 1, code vẫn
+    pending; duyệt mục bằng `aq.decide` (vai trò người, trong test) →
+    release → `active` + file kit trong `tmp_path`; mục rejected → `void`;
+    revoke `pending` → lỗi; CLI `--issue --release` cùng lúc → exit 2 với 0
+    connect (fake connect đếm); `grep -nE "decide\(|auto_approve"
+    agents/kd_affiliate.py` rỗng
+  - Evidence: `evidence/v54_affiliate_db.log`
+- [x] **W54.4 A8 ghi nhận đơn qua mã + báo cáo hoa hồng NHÁP** —
+  `attribute(conn) -> {"new", "updated", "same", "unknown_code",
+  "web_skipped"}`: quét `market_rows` `export_kind='order'` có
+  `raw ? 'voucher_code'`, lấy dòng snapshot mới nhất mỗi `(channel,
+  order_id_hash, line_key)`, khớp mã (chuẩn hóa) → `commission_line` →
+  upsert `affiliate_attributions` `on conflict (channel, order_id_hash,
+  line_key) do update ... where (...) is distinct from (...)`; mã không có
+  trong bảng → chỉ đếm `unknown_code` (không ghi, không in mã); `settled`
+  từ `settlement_rows`; 1 transaction + `conn.commit()`. `report(conn,
+  start, end_excl)` (THUẦN đọc; kỳ theo `market_snapshots.imported_at` giờ
+  VN): theo `dealer_code` × kênh: số dòng, doanh số, hoa hồng tạm tính, phần
+  đã quyết toán, đếm cờ; đầu báo cáo "BẢN NHÁP — không phải lệnh chi; chính
+  sách hoa hồng chưa ký"; không in `order_id_hash`.
+  - Boundary: `agents/kd_affiliate.py`, `tests/test_kd_affiliate.py`
+  - Gate: test DB: fixture snapshot đơn shopee 3 dòng (tpbvsk có mã active,
+    alcohol có mã active, dòng mã lạ) → `attribute` new=2, unknown_code=1,
+    dòng alcohol commission 0 + `ruou_online`; **chạy lại `attribute` →
+    new=0, updated=0** (idempotent, đếm bảng không đổi); nạp snapshot MỚI
+    cùng đơn status `Đã hủy` → updated=1, `status='huy'`, commission 0, vẫn
+    1 dòng/khóa; có `settlement_rows` cùng order → `settled` true; mã
+    `pending` trong file → `ma_chua_kich_hoat` commission 0; report output
+    không chứa chuỗi `order_id_hash` nào của fixture và có câu "BẢN NHÁP";
+    `grep -nE "smtplib|import httpx|import requests|urllib\.request|\.post\("
+    agents/kd_affiliate.py` rỗng
+  - Evidence: `evidence/v54_affiliate_attr.log`
+- [x] **W54.5 `agents/kd_forecast.py` (A10) — dự báo mùa SKU × kênh, luôn
+  khoảng, đối chiếu tồn** — `forecast(skus, stock, start, weeks,
+  assumptions) -> list[dict]` THUẦN: mỗi SKU × `scenario.ALL_CHANNELS` gọi
+  `scenario.project(sku, ch, start, weeks, assumptions)` → `{low, base, high,
+  note}` cộng dồn; mỗi SKU: `sums` + `production.shortage(qty, sums)` + cờ
+  THỪA (`qty > sums["high"]`) + `stale`/`sample` từ `current_stock`;
+  `render(rows, start, weeks) -> str` (bảng "thấp–cơ sở–cao" MỌI ô, không
+  cột 1 số; dòng cảnh báo THIẾU/RỦI RO/THỪA/chưa có số tồn). CLI `python -m
+  agents.kd_forecast [--start YYYY-MM-DD] [--weeks 1..104] [--sku X]
+  [--write]` (`--write` → `data/reports/kd-forecast-<start>.md` qua
+  `write_report`); golden qua `golden_store.read_golden`+`validate`, giả
+  định qua `scenario.load_assumptions()` (lỗi → exit 1); DB down → vẫn in dự
+  báo + `[warn] không đối chiếu được tồn`, exit 1; `job_run` bọc main.
+  - Boundary: `agents/kd_forecast.py` (mới), `tests/test_kd_forecast.py`
+    (mới)
+  - Gate: `grep -n "from pipelines import scenario" agents/kd_forecast.py`
+    có; `grep -n "scenario.project(" agents/kd_forecast.py` có; `grep -nE
+    "baseline|trend|coef|\* *1\.[0-9]" agents/kd_forecast.py` rỗng (không
+    công thức riêng); test: monkeypatch `scenario.project` đếm lời gọi =
+    số SKU × len(ALL_CHANNELS) (chứng minh đi qua engine chung); mọi dòng
+    output có `low <= base <= high`; render: mọi ô dự báo dạng `a–b–c` (regex),
+    không ô số đơn; rượu × shopee → 0–0–0 + note rượu (từ engine); tồn 5 <
+    low → "THIẾU CẢ KỊCH BẢN THẤP"; tồn > high → "THỪA"; SKU không có tồn →
+    "chưa có số tồn", KHÔNG có chữ THIẾU; kho stale → có `STALE_NOTE`;
+    `--weeks 0`/`105` → exit 2; DB host chết (`DATABASE_URL` trỏ
+    `10.255.255.1`) → in dự báo + warn, exit 1, không treo (connect_timeout)
+  - Evidence: `evidence/v54_forecast.log`
+- [x] **W54.6 Tài liệu bàn giao + bản đồ luồng** — `docs/handover/
+  kien-truc.md`: thêm `affiliate_codes`, `affiliate_attributions` vào danh
+  sách bảng + sửa câu "N bảng public" khớp số `create table` thực tế trong
+  `docs/schema.sql`; thêm 2 module vào bảng `agents/`. `docs/handover/
+  sop.md`: mục mới (đánh số kế tiếp) "A8 affiliate đại lý" (issue → GĐ bán
+  hàng duyệt → release → MXH tạo voucher TAY → nạp file đơn có cột mã →
+  `--attribute` → `--report`; rượu hoa hồng 0; hoa hồng là NHÁP) + "A10 dự
+  báo mùa" (lệnh, cách đọc khoảng, THIẾU/RỦI RO/THỪA, external-dep).
+  `tests/test_data_flow_map.py`: `agents/kd_affiliate.py`,
+  `agents/kd_forecast.py` vào `NEW_SCRIPTS` (không egress). Không luồng dữ
+  liệu cá nhân mới (kit/báo cáo chỉ mã đại lý, `order_id_hash` không in) →
+  KHÔNG thêm DF; nếu `dpia_draft --check` đòi → sinh lại bằng
+  `python scripts/dpia_draft.py` (KHÔNG sửa tay).
+  - Boundary: `docs/handover/kien-truc.md`, `docs/handover/sop.md`,
+    `tests/test_data_flow_map.py` (+ `docs/legal/DPIA-nhap.md`/`TIA-nhap.md`
+    chỉ khi sinh lại)
+  - Gate: `python -m pytest -q tests/test_handover_docs.py
+    tests/test_data_flow_map.py tests/test_dpia_draft.py` xanh
+    (`test_kien_truc_lists_all_tables` pass với 2 bảng mới); `python
+    scripts/dpia_draft.py --check` exit 0; `python -m agents.kd_affiliate
+    --help` + `python -m agents.kd_forecast --help` exit 0; số trong câu
+    "bảng public" = `grep -c "create table if not exists" docs/schema.sql`
+    (trừ dòng comment — so bằng regex của test)
+  - Evidence: `evidence/v54_docs.log`
+- [x] **W54.7 Gate chung** — targeted ×3 (`python -m pytest -q
+  tests/test_kd_affiliate.py tests/test_kd_forecast.py tests/test_market_csv.py
+  tests/test_settlement_csv.py tests/test_crm.py tests/test_mkt_koc.py
+  tests/test_production.py tests/test_scenario.py tests/test_sales_director.py
+  tests/test_acc_ar.py tests/test_data_flow_map.py tests/test_handover_docs.py
+  tests/test_connect_timeout_guard.py -rs` — 0 skipped ở file mới, 3 lần liên
+  tiếp xanh); full `python -m pytest -q` CHỈ 1 lần (đọc output tới khi
+  process exit) — xanh (skip chỉ được là test docker/môi trường, ghi rõ);
+  `ruff check .` sạch; `python -m py_compile agents/kd_affiliate.py
+  agents/kd_forecast.py ingest/market_csv.py`; `python scripts/apply_schema.py
+  --roles` ×2 sạch; grep "không đường gửi/không LLM": `grep -nE
+  "smtplib|import httpx|import requests|urllib\.request|\.post\(|llm_gateway|openai|guardrail_llm"
+  agents/kd_affiliate.py agents/kd_forecast.py` rỗng; grep "mã không đoán
+  được": `grep -n "import secrets" agents/kd_affiliate.py` có và `grep -nE
+  "^import random|from random" agents/kd_affiliate.py` rỗng; grep "dự báo
+  qua engine chung": `grep -n "scenario.project(" agents/kd_forecast.py` có;
+  `git status` chỉ file trong Boundary (không file runtime lạc trong `data/`,
+  `lv2-market-top.png` không stage).
+  - Boundary: (không file mới)
+  - Gate: như trên; số pass/skip ghi vào evidence
+  - Evidence: `evidence/v54_pytest.log` — targeted ×3: 651 passed ×3;
+    full vòng 1: 1 failed (`test_db_backup::test_cloud_readme_drift_guard` —
+    `deploy/cloud/README.md` thiếu 2 bảng mới, NGOÀI Boundary nhưng bắt buộc
+    để full xanh → đã thêm) + 1 error `LockNotAvailable` (lock_timeout fixture
+    trên DB dùng chung khi nhiều version chạy song song; không tái hiện);
+    full vòng 2: 4322 passed, 3 skipped (docker `test_dr_drill`).
+  - Vòng nghiệm thu (3 MINOR test-coverage, chỉ thêm test, 0 dòng code
+    agent đổi): `test_db_attribute_code_channel_mismatch_and_web` (mã tiktok/
+    web trên đơn Shopee → unknown_code/web_skipped, 0 dòng ghi nhận),
+    `test_db_attribute_voucher_from_latest_line_with_code` (snapshot sau ô mã
+    trống / thiếu cột mã → giữ code_id, qty/status theo file mới, updated=1),
+    `test_db_issue_submit_error_rolls_back_code` (submit raise → rollback, 0
+    mã/0 mục hàng duyệt, issue sau không skip). Mutation A–D (bỏ nhánh kênh
+    lệch / nhánh web / dùng l.vcode / bỏ except-rollback) đều làm test đỏ.
+    Evidence `evidence/v54_fix_tests.log`: targeted 48 passed ×3; full 4324
+    passed, 3 skipped (docker), 1 error LockNotAvailable (DB dùng chung khi
+    nhiều version song song — cùng lớp vòng 1); ruff sạch.
+
+v5.4 đóng 2026-10-15 (vòng 0: PASS/PASS/FIX — 3 MINOR thiếu test: mã sai
+kênh/web, voucher lấy từ dòng mới nhất CÓ mã, rollback khi director.submit lỗi
+→ 3 test + 4 đột biến bắt đỏ; vòng 1 PASS, 0 mở). Worker vá bug thật: mã đã
+insert còn trong tx khi submit lỗi → issue() rollback + raise. Full pytest:
+worker 4324 pass + 1 LockNotAvailable (DB dùng chung dưới tải, không tái lập);
+reviewer chạy độc lập 4325 passed / 3 skipped docker. Gate coordinator chạy
+lại: ruff sạch, test_kd_affiliate/kd_forecast/market_csv/db_backup/
+data_flow_map 229 pass, `dpia_draft --check`. Ngoài boundary chấp nhận:
+`deploy/cloud/README.md` thêm 2 bảng (drift-guard). Tỷ lệ hoa hồng lấy từ
+`ingest.crm.commission_rate(online=True)` (không dùng dealer_commission.json —
+chính sách công nợ offline), test khóa cả 2 nguồn rượu online = 0. Bảng 73
+khi tách nhánh — đánh lại khi gộp. External-dep: danh sách đại lý thật (kit
+gắn `(ĐẠI LÝ MẪU)`), hợp đồng + chính sách hoa hồng ký, tên cột voucher + giới
+hạn độ dài mã trên sàn thật, tạo voucher/coupon thật, đơn web, số bán/
+baseline thật, file tồn kho thật, GĐ bán hàng ký + người duyệt thật.
+Someday (CHÚ Ý tiền — trước khi dùng báo cáo hoa hồng để chi): `attribute()`
+tính lại MỌI dòng theo trạng thái + tỷ lệ HIỆN TẠI của đại lý → đổi tỷ lệ/tạm
+dừng đại lý ghi đè hoa hồng đơn cũ (cần chốt tỷ lệ lúc ghi nhận); kỳ báo cáo
+theo imported_at → đơn hủy ở file tháng sau dời sang kỳ sau. Khác: mã pending
+của mục bị từ chối/hết hạn chỉ void khi có người chạy --release (khóa cặp đại
+lý×kênh); release ghi kit dù UPDATE no-op (TOCTOU); _ATTR_SQL không giới hạn
+cửa sổ; `--sku X --write` đè file dự báo đầy đủ; nhánh _fresh_code hết lượt/
+UniqueViolation/release expired chưa test; patch aq.verify không qua monkeypatch.
+
 Nhánh `ai-infra`: M31 đợt gộp 6 (2026-10-14) — v6.5, v5.3, v10.3, v6.3, v8.1, v6.4,
 v8.2 đã gộp (71 bảng; 22 suite eval; DF-01..DF-35 + DPIA/TIA 35 luồng). Trước gộp
 vá riêng 2 lỗi đỏ chung mọi worktree: test garden date-bomb (ảnh fixture

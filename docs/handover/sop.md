@@ -1763,6 +1763,55 @@ TTS tiếng Việt, kênh YouTube + API là external-dep — người phụ trá
 
 Exit chung: 0 ok · 1 bị từ chối/lỗi/verify fail · 2 tham số sai hoặc DB down.
 
+## 5v. Affiliate đại lý (KD-A8) + Dự báo mùa (KD-A10) — v5.4, WP07
+
+**A8 affiliate đại lý** (agent KHÔNG gửi kit, KHÔNG liên hệ đại lý, KHÔNG tạo
+voucher/coupon trên sàn/WooCommerce):
+1. Marketing có nháp ĐÃ DUYỆT (`content_drafts` approved, loại post/ads/koc/
+   image, gắn SKU readiness đạt cho kênh). Đại lý trong `dealers` phải
+   `active` (hiện là danh sách MẪU `dealer_regions.json` → kit gắn nhãn
+   "(ĐẠI LÝ MẪU)"; danh sách thật do GĐ bán hàng duyệt = external-dep).
+2. `python -m agents.kd_affiliate --issue --dealer DLM01 --channel
+   shopee|tiktok|web --draft-ids 1,2 --by "<người lập>" [--dry-run]` → mã
+   NGẪU NHIÊN `SS` + 10 ký tự (pending) + mục `sales/affiliate_program` (risk
+   high, SLA 96h) chờ GĐ bán hàng. Chặn (exit 1, in mã): `AFF_DEALER`,
+   `AFF_RUOU_ONLINE` (SKU rượu — không bao giờ có affiliate online),
+   `AFF_CREATIVE_UNAPPROVED`, `AFF_READINESS`, `AFF_GUARDRAIL`. Đại lý × kênh
+   đã có mã pending/active → `[skip]`.
+3. GĐ bán hàng duyệt: `python -m pipelines.approval_queue --approve <QID>
+   --by "<tên>"` (từ chối → mã thành `void` khi chạy bước 4).
+4. `python -m agents.kd_affiliate --release <QID> --by "<tên>"` → mã `active`
+   + file `data/reports/affiliate-kit-<đại lý>-<QID>.md` (chỉ khi mục approved
+   và khớp bản duyệt; lệch → `AFF_PAYLOAD_CHANGED`).
+5. Quản lý MXH tạo TAY voucher đúng mã trong Seller Center (shopee/tiktok)
+   hoặc coupon WooCommerce (kênh web; link `?coupon=<mã>` là GIẢ ĐỊNH tham
+   số) rồi gửi kit TAY cho đại lý.
+6. Nạp file đơn sàn có cột mã voucher (`Mã giảm giá của Shop` / `Seller
+   Voucher Code` — header GIẢ ĐỊNH): `python -m ingest.market_csv --file F
+   --channel shopee --kind order`.
+7. `python -m agents.kd_affiliate --attribute` (chạy lại bao nhiêu lần cũng
+   được — idempotent; đơn hủy ở file mới → dòng `huy`, hoa hồng 0).
+8. `python -m agents.kd_affiliate --report --from YYYY-MM-DD --to YYYY-MM-DD`
+   → bảng theo mã đại lý × kênh: doanh số, hoa hồng TẠM TÍNH, phần đơn đã có
+   trong file quyết toán sàn, cờ (`ruou_online`, `thieu_sku`, `dai_ly_ngung`,
+   `ma_chua_kich_hoat`, `ma_da_thu_hoi`, `huy`). Là BẢN NHÁP — không phải lệnh
+   chi; tỷ lệ = `commission_default` MẪU (chính sách hoa hồng ký =
+   external-dep). Rượu hoa hồng 0 ở cả code lẫn ràng buộc DB.
+9. Ngừng hợp tác: `--revoke <MÃ> --by "<tên>"` rồi TẮT voucher TAY trên sàn.
+
+**A10 dự báo mùa:** `python -m agents.kd_forecast [--start YYYY-MM-DD]
+[--weeks 13] [--sku X] [--write]` → mỗi SKU × kênh là khoảng
+`thấp–cơ sở–cao` (đơn vị, cộng cả kỳ) từ engine kịch bản chung
+(`pipelines.scenario`, giả định `data/scenario_assumptions.json` — GIẢ
+ĐỊNH, số bán thật = external-dep). Đọc: lập kế hoạch theo cơ sở, chuẩn bị
+cho cao, không hứa theo cao. Đối chiếu tồn (file kho v9.2): "THIẾU CẢ KỊCH
+BẢN THẤP" (gấp) · "THIẾU (cơ sở)" · "RỦI RO (kịch bản cao)" · "THỪA: dư N so
+với kịch bản cao" (cân nhắc KM/chuyển kênh — người quyết) · "chưa có số tồn"
+(KHÔNG phải tồn 0 — nạp file kho trước khi kết luận). Rượu online luôn
+0–0–0 (chỉ offline). DB không kết nối được → vẫn in dự báo + `[warn] không
+đối chiếu được tồn`, exit 1. `--write` → `data/reports/kd-forecast-<thứ
+Hai>.md`.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):

@@ -160,6 +160,8 @@ bảng nào thì dừng, không bật app.
 | `decision_log` | B | sổ quyết định TGĐ (v8.1) — append-only, NGƯỜI ghi; quyết định + chuỗi theo dõi không dựng lại được từ nguồn nào |
 | `care_purchases` | B | lần mua kênh sở hữu do người ghi (v10.1 KD-A7) — chỉ `contact_id`, không PII; nguồn chăm sóc lại theo consent |
 | `b2b_requests` | B | yêu cầu báo giá B2B từ form (v8.2) — insert-only, yêu cầu khách không dựng lại được; PII người liên hệ ở `contacts` (vault) |
+| `affiliate_codes` | B | mã affiliate đại lý (v5.4) — mã ngẫu nhiên không dựng lại được (voucher thật trên sàn đã tạo theo mã) |
+| `affiliate_attributions` | A (`python -m agents.kd_affiliate --attribute`) hoặc B | ghi nhận đơn qua mã (v5.4) dựng lại được từ `market_rows` + `affiliate_codes`; chỉ hash đơn, mã đại lý |
 | `project_milestones` | B (hoặc A: `python -m agents.da_pmo --seed` — mất trạng thái/evidence/hạn đã duyệt đổi) | sổ mốc phòng Dự án (v8.3) |
 | `image_assets` | B | metadata ảnh nháp MKT-03 (v6.2) — file PNG + sidecar ở `IMAGE_OUT_DIR` phải chép theo riêng (không nằm trong dump) |
 | `video_assets` | B | metadata video nháp MKT-04 (v6.3) — file mp4 + sidecar ở `VIDEO_OUT_DIR` phải chép theo riêng (không nằm trong dump) |
