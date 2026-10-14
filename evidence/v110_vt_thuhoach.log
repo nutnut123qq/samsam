@@ -1,0 +1,33 @@
+=== v11.0 W110.2 VT 2026-10-15T03:22:15+07:00
+$ python -m agents.vt_thuhoach --date 2026-10-14 (DB thật, chỉ đọc, KHÔNG --submit)
+# Dự báo thu hoạch & sẵn hàng theo lô — 2026-10-14
+
+## Metadata
+
+- model: vt_thuhoach-rule-v1 + pipelines.scenario.project
+- seed: 0 (tất định — không lấy mẫu ngẫu nhiên)
+- harvest_assumptions_sha256: d7086ea36b046089073c0c544629060eb92f9818a3236e408bff748080f0ad7e
+- scenario_assumptions_sha256: 32f987305faf59f23f70070cb6386f944823fb760ce0e501c0263cdfaa8fada2
+- as_of: 2026-10-14
+- generated: 2026-10-14
+- dữ liệu dùng: 3 khoảnh · 0 nhật ký thu hoạch · 0 lô
+- giả định: GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt
+
+## Dự báo thu hoạch theo khoảnh (kg củ tươi, thấp–cơ sở–cao)
+
+- KV-A01 (MẪU): 2026-Q4 — 99–189–332 kg
+- KV-A02 (MẪU): 2028-Q1 — 59–113–199 kg
+- KV-B01 (MẪU): chưa đủ 5 năm tuổi trong 8 quý tới — không ước lượng
+
+## Sẵn hàng theo lô (13 tuần từ 2026-10-12)
+
+- (không có lô)
+
+---
+Khoảng thấp–cơ sở–cao — KHÔNG phải cam kết với khách/đại lý; GĐ vùng trồng xác nhận trước khi chia sẻ.
+
+[write] D:\code\samsam-w95\data\reports\vt-thu-hoach-2026-10-14.md
+exit=0
+$ grep -nE 'llm_gateway|openai|import httpx|import requests|random' agents/vt_thuhoach.py
+grep_rc=1 (1 = rỗng)
+Test: tests/test_vt_thuhoach.py nằm trong targeted ×3 (evidence/v110_targeted.log) — 0 skipped, gồm DB fixture.

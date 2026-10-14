@@ -39,7 +39,9 @@ NEW_SCRIPTS = {"scripts/review_load.py", "scripts/dpia_draft.py",
                "agents/kd_affiliate.py", "agents/kd_forecast.py",
                # v10.0 WP16: HĐTV/BKS chỉ đọc DB, ghi file — KHÔNG gửi ra ngoài
                "agents/bks_audit.py", "agents/bks_recon.py",
-               "agents/hdtv_report.py"}
+               "agents/hdtv_report.py",
+               # v11.0 WP17 P3: VT dự báo + CK-A5 quy tắc — 0 LLM, không gửi
+               "agents/vt_thuhoach.py", "agents/ck_predict.py"}
 KNOWN_EGRESS = {
     "connectors/zalo.py", "crawler/collect.py", "pipelines/llm_gateway.py",
     "scripts/health_bulletin.py", "scripts/zalo_mock.py",
@@ -71,7 +73,9 @@ REQUIRED_MODULES = [
     # v10.1 WP16: đơn sàn/đối soát, chăm sóc lại (consent), livestream +
     # YouTube qua gateway (DF-25/DF-38/DF-39)
     "agents/kd_orders.py", "agents/kd_care.py", "agents/kd_live.py",
-    "agents/mkt_youtube.py"]
+    "agents/mkt_youtube.py",
+    # v11.0 WP17 P3: SX-A6 concept brief R&D (LLM tùy chọn qua gateway)
+    "agents/sx_rnd.py"]
 
 
 def _declared(m):

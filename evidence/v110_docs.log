@@ -1,0 +1,32 @@
+=== v11.0 W110.4 docs 2026-10-15T03:21:43+07:00
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-14
+exit=0
+$ python -m agents.sx_rnd --help
+exit=0
+$ python -m agents.vt_thuhoach --help
+exit=0
+$ python -m agents.ck_predict --help
+exit=0
+$ grep -n '75 bảng' docs/handover/kien-truc.md
+81:## 3. Cơ sở dữ liệu — 75 bảng public (`docs/schema.sql`)
+252:v10.0: role `bks_reader` (NOLOGIN — login thật của thành viên BKS/HĐTV do hạ tầng tạo `in role bks_re
+$ grep -c 'sx_rnd.py\|vt_thuhoach.py\|ck_predict.py' docs/handover/kien-truc.md
+      1 ck_predict.py
+      1 sx_rnd.py
+      1 vt_thuhoach.py
+$ grep -n '## 5x' docs/handover/sop.md
+1857:## 5x. Agent P3: concept R&D, dự báo thu hoạch & sẵn hàng, bảo trì dự đoán (v11.0)
+$ grep -n 'sx_rnd' docs/handover/runbook-ha-tang.md
+166:→ CLI báo `[error] llm`, không lưu nháp. `sx_rnd` (v11.0 SX-A6 —
+167:`agents/sx_rnd.py --llm` viết lại hương vị/nghi thức trong concept brief
+169:`LLM_KILL=sx_rnd` → brief về template kèm lý do `gateway:GatewayBlocked`). Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
+$ grep DF-40 data/data_flow_map.json docs/legal/*.md
+data/data_flow_map.json:1018:      "id": "DF-40",
+docs/legal/DPIA-nhap.md:725:### DF-40 — Concept brief R&D SX-A6 (v11.0)
+docs/legal/DPIA-nhap.md:729:| Mã luồng | DF-40 |
+docs/legal/DPIA-nhap.md:788:| DF-40 | Concept brief R&D SX-A6 (v11.0) | Xanh | thấp | có | 1 |
+docs/legal/DPIA-nhap.md:870:- [DF-40] R&D thật, mock-up ảnh, xếp hạng persona = external-dep (chưa làm)
+docs/legal/TIA-nhap.md:235:### DF-40 — Concept brief R&D SX-A6 (v11.0)
+$ git diff --stat docs/schema.sql docs/roles.sql (rỗng = không đổi)
+(hết)

@@ -163,7 +163,10 @@ lý do, không gọi chat). `kd_livestream` (v10.1 KD-A9 — `agents/kd_live.py`
 lời dẫn kịch bản livestream nháp) và `mkt_youtube` (v10.1 MKT-12 —
 `agents/mkt_youtube.py` gói video YouTube dài nháp): cap tháng riêng
 2.0 USD mỗi id; kill `LLM_KILL=kd_livestream` / `LLM_KILL=mkt_youtube`
-→ CLI báo `[error] llm`, không lưu nháp. Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
+→ CLI báo `[error] llm`, không lưu nháp. `sx_rnd` (v11.0 SX-A6 —
+`agents/sx_rnd.py --llm` viết lại hương vị/nghi thức trong concept brief
+R&D nội bộ; mặc định TẮT; cap tháng 1.0 USD ƯỚC TÍNH; kill
+`LLM_KILL=sx_rnd` → brief về template kèm lý do `gateway:GatewayBlocked`). Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
 `embed("...")` và hằng `AGENT = "..."` trong `api/`, `pipelines/`,
 `ingest/`, `agents/`, `connectors/` (nhờ dev nếu cần).
 

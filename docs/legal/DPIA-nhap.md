@@ -722,6 +722,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Lợi ích hợp pháp/hợp đồng lao động với nhân viên — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email); Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday) |
 
+### DF-40 — Concept brief R&D SX-A6 (v11.0)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-40 |
+| Module (code) | `agents/sx_rnd.py` |
+| Mục đích | Soạn concept brief NỘI BỘ sản phẩm phái sinh (không nêu công dụng) để GĐ sản xuất chọn concept thử mẫu |
+| Dữ liệu | Mô tả concept từ `data/rd_concepts.json` (hương vị/nghi thức dùng — GIẢ ĐỊNH, không dữ liệu cá nhân) gửi LLM khi `--llm`; tín hiệu = URL + ngày tin public trong `intel_items` (không gửi LLM, không chép tiêu đề/đoạn trích vào brief); KHÔNG dữ liệu khách/nhân viên |
+| Lớp | Xanh |
+| Chủ thể | Không có chủ thể dữ liệu cá nhân (danh mục sản phẩm + tin báo chí public) |
+| Nơi lưu | File `data/reports/rd-brief-<id>-<ngày>.md` (gitignored) + `approval_queue` mục `rd_concept_brief` khối production (pending, risk high); `llm_usage` khi `--llm` |
+| Thời hạn lưu | Không giới hạn — hồ sơ duyệt append-only; file báo cáo xóa tay |
+| Bên nhận | OpenRouter (Mỹ) → whitelist provider (Mỹ) — CHỈ khi `--llm` (mặc định TẮT), chỉ đoạn hương vị/nghi thức của concept, qua `_mask_pii` của gateway |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | `--llm` mặc định TẮT; kill-switch + trần chi phí tháng `sx_rnd` (1.0 USD ƯỚC TÍNH) ở gateway; Cổng `claim_free`: `check_publish(internal_note)` + 0 động từ claim + không rượu — lỗi thì về template hoặc không ghi/không nộp; Concept/tín hiệu nhắc rượu bị loại; brief gắn nhãn NỘI BỘ, không có đường công bố ra ngoài |
+| Căn cứ xử lý | Không xử lý dữ liệu cá nhân — không cần căn cứ NĐ 13/2023; chuyển dữ liệu sản phẩm ra nước ngoài theo hợp đồng nhà cung cấp LLM |
+| GAP | R&D thật, mock-up ảnh, xếp hạng persona = external-dep (chưa làm) |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -767,6 +785,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-37 | Dự báo thời tiết VT (v10.2) | Xanh | thấp | có | 3 |
 | DF-38 | Chăm sóc lại + xin đánh giá khách kênh sở hữu → nháp tin vào hàng duyệt (KD-A7, v10.1) | Đỏ | cao | không | 4 |
 | DF-39 | Kịch bản livestream (KD-A9) + gói video YouTube dài (MKT-12) qua LLM gateway (v10.1) | Vàng | trung bình | có | 2 |
+| DF-40 | Concept brief R&D SX-A6 (v11.0) | Xanh | thấp | có | 1 |
 
 ## 4. Tổng hợp GAP
 
@@ -848,6 +867,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-38] Chưa có job xóa lần mua/liên hệ theo thời hạn (retention)
 - [DF-39] Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email)
 - [DF-39] Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday)
+- [DF-40] R&D thật, mock-up ảnh, xếp hạng persona = external-dep (chưa làm)
 
 ## 5. Câu hỏi cho luật sư
 

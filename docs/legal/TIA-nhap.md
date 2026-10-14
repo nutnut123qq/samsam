@@ -232,6 +232,19 @@
 | Rủi ro tồn dư | Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email); Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday) |
 | Căn cứ | Lợi ích hợp pháp/hợp đồng lao động với nhân viên — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
+### DF-40 — Concept brief R&D SX-A6 (v11.0)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | OpenRouter (Mỹ) → whitelist provider (Mỹ) — CHỈ khi `--llm` (mặc định TẮT), chỉ đoạn hương vị/nghi thức của concept, qua `_mask_pii` của gateway |
+| Dữ liệu gửi đi (sau biện pháp) | Mô tả concept từ `data/rd_concepts.json` (hương vị/nghi thức dùng — GIẢ ĐỊNH, không dữ liệu cá nhân) gửi LLM khi `--llm`; tín hiệu = URL + ngày tin public trong `intel_items` (không gửi LLM, không chép tiêu đề/đoạn trích vào brief); KHÔNG dữ liệu khách/nhân viên |
+| Lớp | Xanh |
+| Mục đích | Soạn concept brief NỘI BỘ sản phẩm phái sinh (không nêu công dụng) để GĐ sản xuất chọn concept thử mẫu |
+| Biện pháp kỹ thuật | `--llm` mặc định TẮT; kill-switch + trần chi phí tháng `sx_rnd` (1.0 USD ƯỚC TÍNH) ở gateway; Cổng `claim_free`: `check_publish(internal_note)` + 0 động từ claim + không rượu — lỗi thì về template hoặc không ghi/không nộp; Concept/tín hiệu nhắc rượu bị loại; brief gắn nhãn NỘI BỘ, không có đường công bố ra ngoài |
+| Thời hạn lưu (theo map) | Không giới hạn — hồ sơ duyệt append-only; file báo cáo xóa tay |
+| Rủi ro tồn dư | R&D thật, mock-up ảnh, xếp hạng persona = external-dep (chưa làm) |
+| Căn cứ | Không xử lý dữ liệu cá nhân — không cần căn cứ NĐ 13/2023; chuyển dữ liệu sản phẩm ra nước ngoài theo hợp đồng nhà cung cấp LLM — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
 ## 3. Luồng không thuộc TIA
 
 Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15, DF-18, DF-19, DF-20, DF-25, DF-26, DF-27, DF-31, DF-32, DF-33, DF-34, DF-35, DF-38.

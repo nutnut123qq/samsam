@@ -1,0 +1,38 @@
+{
+  "_doc": "v11.0 SX-A6 (agents/sx_rnd.py) — danh mục concept sản phẩm phái sinh + khoảng giá dự kiến. GIẢ ĐỊNH do dev soạn — GĐ sản xuất chốt (external-dep). Chỉ mô tả hương vị/nguồn gốc/nghi thức dùng/quy cách/giá; KHÔNG nêu công dụng; KHÔNG concept cho SKU rượu. base_skus = sku_key trong data/golden_skus.json (SKU nguyên liệu/dòng gần nhất). signal_topics ⊂ topics của intel_items.",
+  "concepts": [
+    {
+      "id": "stick-tra-sam-khong-duong",
+      "name": "Stick trà sâm không đường",
+      "flavor": "Vị đắng nhẹ của sâm, hậu ngọt tự nhiên, không thêm đường; hương thảo mộc thoang thoảng",
+      "origin": "Sâm Ngọc Linh trồng dưới tán rừng vùng Trà My, Quảng Nam; nguyên liệu cùng vùng với dòng mật ong sâm",
+      "ritual": "Pha 1 stick với 150–200ml nước ấm khoảng 80 độ, khuấy đều, dùng buổi sáng hoặc giờ nghỉ giữa ca",
+      "pack_spec": "Hộp 10 stick x 3g, giấy kraft in một màu, mã lô và hạn dùng in trên từng stick",
+      "price_vnd": {"low": 120000, "high": 180000},
+      "base_skus": ["mat-ong-sam-120ml-1hu"],
+      "signal_topics": ["gioi_tre", "sam"]
+    },
+    {
+      "id": "mat-ong-sam-goi-nho",
+      "name": "Mật ong sâm gói nhỏ",
+      "flavor": "Mật ong rừng sánh, vị ngọt dịu xen chút đắng nhẹ đặc trưng của lát sâm",
+      "origin": "Mật ong và sâm Ngọc Linh từ vùng Trà My, Quảng Nam; công thức dựa trên dòng mật ong sâm hũ 120ml",
+      "ritual": "Xé gói dùng trực tiếp hoặc pha với nước ấm, tiện mang theo khi đi làm, đi du lịch",
+      "pack_spec": "Hộp 14 gói x 15g, gói nhôm dạng stick, hộp giấy có cửa sổ",
+      "price_vnd": {"low": 150000, "high": 220000},
+      "base_skus": ["mat-ong-sam-120ml-1hu", "mat-ong-sam-300ml"],
+      "signal_topics": ["gioi_tre", "sam"]
+    },
+    {
+      "id": "mini-gift-set-duoi-300k",
+      "name": "Mini gift set dưới 300.000đ",
+      "flavor": "Bộ thưởng thức gồm mật ong sâm gói nhỏ và trà sâm stick, vị ngọt dịu và hậu đắng nhẹ",
+      "origin": "Sản phẩm của Sâm Sâm từ vùng sâm Ngọc Linh, Quảng Nam; kèm thẻ giới thiệu vùng trồng",
+      "ritual": "Làm quà tặng dịp lễ, Tết, quà cảm ơn đối tác; người nhận pha dùng tại nhà hoặc văn phòng",
+      "pack_spec": "Hộp quà cứng 20x15x6cm, gồm 7 gói mật ong sâm + 5 stick trà sâm + thiệp",
+      "price_vnd": {"low": 250000, "high": 299000},
+      "base_skus": ["mat-ong-sam-120ml-1hu"],
+      "signal_topics": ["gioi_tre", "sam"]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+=== v11.0 W110.3 CK-A5 — bằng chứng thiếu dữ liệu trên DB thật samsam_infra (chỉ đọc, KHÔNG --submit) 2026-10-15T03:21:09+07:00
+$ python -m agents.ck_predict
+# CK-A5 bảo trì dự đoán (bước 1, quy tắc) — 2026-10-15
+
+**CK-A5: ĐÃ XÂY, CHƯA BẬT — downtime_log có 0 ngày / cần ≥ 90 ngày (0 sự cố, chưa có sự cố đã đóng)**
+
+- Chưa đủ dữ liệu: không lập danh sách máy rủi ro, không backtest.
+- Bằng chứng thiếu dữ liệu: số ngày phủ và số sự cố ở trên đọc trực tiếp từ view `downtime_log` (sự cố đã đóng).
+
+## Quy tắc (GIẢ ĐỊNH — Kỹ sư trưởng chốt)
+
+- bật khi downtime_log ≥ 90 ngày; cửa sổ 90 ngày; lặp ≥ 2; tổng downtime ≥ 240 phút; lần kế dự kiến trong 14 ngày
+- Chỉ gợi ý lịch bảo trì; agent không ra lệnh vận hành máy. Cảm biến/giờ chạy máy = bước 2 (external-dep).
+
+[write] D:\code\samsam-w95\data\reports\ck-a5-2026-10-15.md
+exit=0
+
+$ psql-equivalent: đếm downtime_log / incidents / machines (chỉ SELECT)
+select count(*), min(started_at)::date, max(started_at)::date from downtime_log -> (0, None, None)
+select count(*) from incidents -> (0,)
+select count(*) from machines where active -> (0,)
+
+$ grep -rnE 'pymodbus|snap7|opcua|modbus|192\.168\.' agents/ck_predict.py
+grep_rc=1 (1 = rỗng)
+$ grep -nE 'llm_gateway|import httpx|import requests|\.post\(' agents/ck_predict.py
+grep_rc=1 (1 = rỗng)
+=== vá nghiệm thu MINOR-3: nhãn bộ phận qua guardrail
+'cần sửa chữa bạc đạn' -> 'cần sửa bạc đạn' guardrail_ok= True
+'bơm thuốc sát trùng' -> 'mã 3dd86c72' guardrail_ok= True
+'bạc đạn' -> 'bạc đạn' guardrail_ok= True

@@ -1854,6 +1854,60 @@ Center/kế toán) = external-dep; báo cáo gắn `(MẪU)` khi nguồn là fil
 Exit chung: 0 ok · 1 cấu hình hỏng (biểu phí / `hdtv_report.json`) / guardrail
 chặn submit · 2 tham số sai / kỳ chưa đóng / DB down.
 
+## 5x. Agent P3: concept R&D, dự báo thu hoạch & sẵn hàng, bảo trì dự đoán (v11.0)
+
+WP17 — 3 agent chỉ ĐỀ XUẤT; đầu ra = file `data/reports/` + mục `pending`
+qua `pipelines.director.submit` (không tự duyệt, không công bố, không tự
+vận hành máy). Giả định là BẢN DEV SOẠN — người có thẩm quyền chốt.
+
+**SX-A6 concept brief R&D** (khối production, GĐ sản xuất duyệt):
+1. `python -m agents.sx_rnd --list` — danh mục concept `data/rd_concepts.json`
+   (GIẢ ĐỊNH — GĐ SX chốt; SKU nền phải có trong golden, không SKU rượu).
+2. `python -m agents.sx_rnd --brief <concept_id> [--llm] [--submit]
+   [--date YYYY-MM-DD]` → `data/reports/rd-brief-<id>-<ngày>.md`: 5 mục
+   (Hương vị / Nguồn gốc / Nghi thức dùng / Quy cách / Giá dự kiến dạng
+   khoảng) + tín hiệu `intel_items` 90 ngày (URL + ngày; tin cờ rượu bị loại)
+   + nhãn "NỘI BỘ – concept chưa duyệt, không công bố ra ngoài" + dòng
+   "Sinh bởi" (model/seed/ngày). KHÔNG nêu công dụng: brief phải qua cổng
+   `claim_free` (guardrail + 0 động từ claim + không rượu), lỗi → exit 1,
+   không ghi file/không vào hàng. `--llm` (mặc định TẮT, agent `sx_rnd`, cap
+   1.0 USD/tháng ƯỚC TÍNH) chỉ viết lại hương vị/nghi thức; lỗi/không qua cổng
+   → về template kèm lý do. `--submit` → mục `rd_concept_brief` (risk high,
+   SLA 72h); chạy lại cùng nội dung → `skipped`. GĐ SX chọn concept thử mẫu —
+   brief KHÔNG công bố ra ngoài.
+
+**VT dự báo thu hoạch & sẵn hàng theo lô** (khối farming, GĐ vùng trồng xác
+nhận trước khi chia sẻ — không dùng làm cam kết):
+3. `python -m agents.vt_thuhoach [--date YYYY-MM-DD] [--weeks 13] [--submit]`
+   → `data/reports/vt-thu-hoach-<ngày>.md`: kg củ tươi theo khoảnh (quý thu
+   hoạch, khoảng thấp–cơ sở–cao từ `data/harvest_assumptions.json` GIẢ ĐỊNH);
+   khoảnh đã có nhật ký "thu hoạch" không dự báo lại; thiếu số cây/năm trồng →
+   "thiếu dữ liệu" (không coi = 0). Sẵn hàng: chỉ lô `passed` còn hạn; nhu cầu
+   = `pipelines.scenario.project()` cộng mọi kênh; tuần hết hàng dạng khoảng;
+   "rủi ro cận hạn" theo FEFO. Khối metadata ghi model, seed 0, sha256 2 file
+   giả định, as_of/generated. `--submit` → mục `harvest_forecast` (risk
+   medium); trùng → `skipped`.
+
+**CK-A5 bảo trì dự đoán bước 1** (khối mechanical, Kỹ sư trưởng quyết):
+4. `python -m agents.ck_predict [--date YYYY-MM-DD] [--submit]` →
+   `data/reports/ck-a5-<ngày>.md`. Điều kiện bật: view `downtime_log` (sự cố
+   đã đóng) phủ ≥ 90 ngày. Chưa đủ → "CK-A5: ĐÃ XÂY, CHƯA BẬT" + số ngày/số sự
+   cố thật, 0 danh sách máy, `--submit` exit 1 ("từ chối bật"). Đủ → máy rủi
+   ro theo quy tắc (lặp ≥ 2 sự cố/bộ phận trong 90 ngày, downtime ≥ 240 phút,
+   lần kế dự kiến ≤ 14 ngày — ngưỡng GIẢ ĐỊNH, Kỹ sư trưởng chốt) + backtest
+   precision/recall; `--submit` → mục `maintenance_risk` (risk medium). Chỉ
+   gợi ý đưa bảo trì lên sớm — agent không ra lệnh vận hành máy; không
+   PLC/cảm biến.
+
+**External-dep:** R&D thật (≈5 man-day ngoài gói), mock-up ảnh + persona,
+danh mục concept/khoảng giá và giả định năng suất do người có thẩm quyền
+chốt, khoảnh/lô/nhật ký thật (hiện MẪU), số bán thật, dữ liệu downtime thật
+≥ 3 tháng, giờ chạy máy + cảm biến (bước 2), người duyệt thật các khối,
+chủ khối ký nghiệm thu WP17.
+
+Exit chung: 0 ok · 1 cấu hình/giả định hỏng, brief không qua cổng, CK-A5
+chưa bật mà `--submit` · 2 tham số sai / DB down.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):

@@ -6,6 +6,329 @@ sửa nếu sai)*
 
 Version đang mở: **v2.4-polish** (loop /cycle 10, cycle 7/10)
 
+## Checklist v11.0-p3
+
+Khán giả/mục đích: M31 (worktree `D:\code\samsam-w95`) — làm 3 agent P3 của
+WP17 "Agent P3 (T7–T12)" (pmo.md dòng `| WP17`; tiêu chí nghiệm thu: **"Mỗi
+agent đạt Pilot có người duyệt. Riêng CK-A5, nếu thiếu dữ liệu thì nghiệm thu
+ở mức 'đã xây, chưa bật' kèm bằng chứng thiếu dữ liệu. Kết quả persona hoặc
+dự báo đều ghi dạng khoảng và lưu đủ model/prompt/seed/ngày"**; go-live chậm
+nhất 11/07/2027): **SX-A6** R&D sản phẩm phái sinh (final_plans `production`
+"A6 – Agent R&D Sản phẩm phái sinh": chỉ concept brief — hương vị, nguồn gốc,
+nghi thức dùng, quy cách, giá dạng khoảng; KHÔNG nêu công dụng; không concept
+cho SKU rượu; tín hiệu có URL + ngày; GĐ SX chọn, không công bố ra ngoài),
+**VT** dự báo thu hoạch & sẵn hàng theo lô (final_plans `farming` "Agent Dự
+báo thu hoạch & sẵn hàng theo lô": kịch bản thấp–vừa–cao kèm giả định + phần
+dữ liệu thiếu; GĐ xác nhận trước khi chia sẻ; không dùng làm cam kết), **CK-A5**
+bảo trì dự đoán bước 1 (final_plans `mechanical` "A5 – Agent Bảo trì dự đoán":
+chỉ bật khi `downtime_log` ≥ 3 tháng; quy tắc theo lịch sử sự cố; chỉ gợi ý
+đưa bảo trì lên sớm, không tự dừng máy; log 6 tuần → "chưa đủ dữ liệu", 0 danh
+sách máy rủi ro; ≥ 3 tháng → backtest precision/recall kèm dữ liệu dùng; 0
+pymodbus/snap7/opcua/địa chỉ PLC). Nền đã có (TÁI DÙNG, không viết lại):
+`pipelines/scenario.py` (`project(sku, channel, start, weeks, assumptions)` →
+`low/base/high` theo tuần, `load_assumptions`, `ALL_CHANNELS`, `ScenarioError`;
+rượu = 0 online), `agents/kd_forecast.py` (mẫu cộng `project()` qua mọi kênh),
+`pipelines/production.py` (`TZ_VN`, bảng `production_lots`
+`intake_status pending|passed|failed`, `source manual|sample`), `plots` +
+`plot_logs` (v9.3 hash chain: dòng thật `row_hash is not null`, mẫu
+`source like 'sample:%'` không chain; activity chuẩn "thu hoạch" từ
+`agents.garden.ACTIVITY_VOCAB`), `agents/cmms.py` (v9.5: `machines`,
+`incidents`, view `downtime_log` = sự cố ĐÃ ĐÓNG `machine_code, started_at,
+ended_at, downtime_phut, part, root_cause`), `intel_items` (`url`, `title`,
+`snippet`, `published_at`, `fetched_at`, `topics` ⊂ {sam, tpbvsk, gioi_tre,
+quang_cao, doi_thu, chuong_trinh, phap_ly}, `flags`), `ingest/golden_store.py`
+(`category` tpbvsk|food|alcohol, `GOLDEN_FILE`), `pipelines/guardrail.py`
+(`check`, `check_publish(text, channel=, content_type="internal_note", is_ai=)`,
+`CLAIM_VERBS`, `_pat`), `pipelines/kb_filter.is_alcohol`, `pipelines/
+llm_gateway.chat` (cap theo agent_id `data/llm_gateway.json`), `pipelines/
+director.submit` (→ `approval_queue`, risk/SLA từ `data/directors/<khối>.json`;
+farming ĐÃ có `harvest_forecast` sla 72 medium), `pipelines/job_runs.job_run`,
+`agents/report.write_report` (atomic, `data/reports/` gitignored),
+`ingest.lead_store.connect` (connect_timeout), `pipelines.pii._mask_pii`.
+
+Quy ước: ponytail — stdlib + `psycopg` + module sẵn có; KHÔNG dep mới (không
+pandas/numpy mới cho agent — thống kê bằng `statistics`), KHÔNG bảng mới
+(`docs/schema.sql`/`docs/roles.sql` KHÔNG đổi → `kien-truc.md` "75 bảng
+public" giữ nguyên; model/seed/ngày lưu trong `payload` mục hàng duyệt
+(`approval_queue`, sha256 do DB tính) + file báo cáo), KHÔNG http client
+(0 `import httpx|requests` trong file mới). LLM CHỈ ở SX-A6 và CHỈ khi `--llm`
+(mặc định TẮT → brief từ template tất định); VT/CK-A5 0 LLM. Không agent nào
+có đường ghi ra ngoài công ty, không tự duyệt, không tự dừng máy — đầu ra =
+file `data/reports/` + mục `pending` qua `director.submit`. Print tiếng Việt →
+UTF-8 guard; CLI nhiều op → `n_ops > 1` usage exit 2 TRƯỚC connect; ghi trên
+conn chia sẻ → `conn.commit()` tường minh; `__main__` bọc `job_run(...)`; mọi
+hàm thời gian nhận `now` tham số (chỉ CLI đọc đồng hồ, ngày theo giờ VN
+`TZ_VN`); test không wall-clock; test DB = fixture schema tạm + `docs/
+schema.sql` + `docs/roles.sql` rồi ROLLBACK (precedent `tests/
+test_cockpit.py`, `tests/test_da_doitac.py`), gate đòi **0 skipped** ở file
+test mới. KHÔNG ghi `approval_queue`/`incidents`/`plot_logs`/`production_lots`
+trên DB thật samsam_infra ngoài test rollback (CLI trên DB thật chỉ đọc /
+không `--submit`). Mã luồng DF-40, mục SOP `5x` là TẠM — coordinator đánh lại
+số khi gộp nhánh.
+
+External-dep (KHÔNG giả lập như thật, KHÔNG tự đánh dấu): R&D thật (≈5
+man-day ngoài gói — công ty ký thêm; GĐ SX chọn concept thử mẫu + duyệt chi;
+Pháp chế xem hướng công bố); mock-up ảnh + persona xếp hạng sơ bộ (model ảnh /
+DPIA persona — KHÔNG làm ở version này); danh mục concept + khoảng giá
+(`data/rd_concepts.json` GIẢ ĐỊNH); giả định năng suất/tuổi thu hoạch
+(`data/harvest_assumptions.json` GIẢ ĐỊNH — GĐ vùng trồng chốt); khoảnh/nhật
+ký thu hoạch/lô thật (hiện là MẪU); số bán thật cho `scenario_assumptions`;
+**dữ liệu downtime thật ≥ 3 tháng** (CK-A5 nghiệm thu ở mức "đã xây, chưa
+bật"); giờ chạy máy (không có cột trong `machines`) + cảm biến rung/nhiệt
+(bước 2, GĐ tài chính duyệt); ngưỡng quy tắc CK-A5 (Kỹ sư trưởng chốt); người
+duyệt thật các khối (`approvers: []` giữ nguyên); chủ khối ký nghiệm thu WP17.
+
+- [x] **W110.1 SX-A6 concept brief R&D — `agents/sx_rnd.py`** —
+  `data/rd_concepts.json` (mới, `_doc` GIẢ ĐỊNH — GĐ SX chốt; ≥3 concept: stick
+  trà sâm không đường, mật ong sâm gói nhỏ, mini gift set dưới 300.000đ):
+  mỗi concept `{id ([a-z0-9-]+), name, flavor, origin, ritual, pack_spec,
+  price_vnd: {low, high} (int, 0 < low ≤ high), base_skus: [sku_key golden],
+  signal_topics: [⊂ topics intel]}`; `load_concepts(path, golden)`
+  fail-closed (`RndConfigError`): khóa thiếu/thừa, id trùng, giá sai, sku không
+  có trong golden, sku `category == "alcohol"`, bất kỳ trường chữ nào
+  `kb_filter.is_alcohol` → lỗi, CLI exit 1 trước connect. Tín hiệu:
+  `load_signals(conn, topics, now, days=90)` SELECT `intel_items` theo
+  `topics && %s` và ngày (`coalesce(published_at, fetched_at)`) trong `days`
+  ngày tới `now`; loại tin `'ruou' = any(flags)` hoặc `is_alcohol(title +
+  snippet)`; mỗi tín hiệu giữ `url` + ngày VN. Thuần: `build_brief(concept,
+  signals, *, now) -> {"text", "problems"}` — template tất định đúng 5 mục
+  (Hương vị / Nguồn gốc / Nghi thức dùng / Quy cách / Giá dự kiến dạng
+  khoảng "low–high đ") + "Tín hiệu (nguồn)" mỗi dòng URL + ngày
+  `YYYY-MM-DD`, + nhãn "NỘI BỘ – concept chưa duyệt, không công bố ra
+  ngoài"; 0 tín hiệu → problem "thiếu tín hiệu có nguồn" (không sinh brief).
+  `--llm` (mặc định TẮT): 1 lời gọi `llm_gateway.chat("sx_rnd", ...)` chỉ
+  viết lại đoạn mô tả hương vị/nghi thức; system prompt cấm nêu công dụng;
+  ghi vào brief khối "Sinh bởi: model=<model> · prompt_sha256=<12 hex> ·
+  seed=<int> · ngày=<YYYY-MM-DD VN>" + nhãn "Nội dung có sử dụng AI"; output
+  `None`/rỗng/`GatewayError`/không qua cổng → về template + ghi lý do (code,
+  không trích span). **Cổng 0 công dụng** `claim_free(text) -> list[str]`:
+  `guardrail.check_publish(text, channel="web", content_type="internal_note",
+  is_ai=<llm>)["ok"] is True` ∧ `matched_claims == []` ∧ 0 hit
+  `guardrail._pat(v)` với mọi `v ∈ guardrail.CLAIM_VERBS` (trên text đã fold
+  như guardrail) ∧ không `is_alcohol` — có lỗi → không ghi file, không
+  submit. `--submit`: `director.submit(conn, "production", "rd_concept_brief",
+  object_id="rd:<concept id>:<sha256 text[:16]>", ..., created_by="agent:SX-A6")`
+  → `pending`; trùng pending → `skipped`. `data/directors/production.json`
+  thêm `rd_concept_brief` (`sla_hours` 72, `risk` "high" — không bao giờ tự
+  duyệt). `data/llm_gateway.json` `monthly_cap_usd` thêm `"sx_rnd": 1.0`
+  (ƯỚC TÍNH). CLI `python -m agents.sx_rnd (--list | --brief CONCEPT_ID)
+  [--llm] [--submit] [--date YYYY-MM-DD]`; DB down → `[warn]` exit 2.
+  - Boundary: `agents/sx_rnd.py` (mới), `data/rd_concepts.json` (mới),
+    `data/directors/production.json`, `data/llm_gateway.json`,
+    `tests/test_sx_rnd.py` (mới), `tests/test_director.py` (thêm assert
+    `rd_concept_brief` high — không nới test cũ)
+  - Gate: thuần — tín hiệu "trà sâm không đường giới trẻ" kèm 1 URL → brief
+    có đủ 5 mục + URL + ngày, `claim_free` rỗng; 100% brief từ
+    `rd_concepts.json` thật qua `claim_free` (parametrize mọi concept); text
+    chèn "giúp ngủ ngon" / "tăng cường sức khỏe" / "hỗ trợ tiêu hóa" / "chữa"
+    → `claim_free` khác rỗng (mỗi `CLAIM_VERBS` 1 case) → 0 file, 0 submit;
+    `--llm` với chat monkeypatch trả "trà sâm giúp tỉnh táo" → về template +
+    lý do, brief cuối 0 claim; `--llm` OK → khối "Sinh bởi" có model +
+    prompt_sha256 + seed + ngày, nhãn AI; concept `base_skus` chứa SKU rượu →
+    `RndConfigError`; tín hiệu có cờ `ruou` → bị loại khỏi brief; 0 tín hiệu →
+    problem, 0 brief. DB fixture (0 skipped): chèn 2 `intel_items` (1
+    `gioi_tre`, 1 cờ `ruou`) → `--brief ... --submit` → 1 mục `pending` block
+    production `rd_concept_brief`, payload chỉ chứa URL tin không rượu; chạy
+    lại → skipped. CLI `--list --brief` → exit 2 trước connect. `grep -nE
+    "import httpx|import requests|\.post\(|smtp|content_drafts|save_draft"
+    agents/sx_rnd.py` rỗng
+  - Evidence: `evidence/v110_sx_a6.log`
+- [x] **W110.2 VT dự báo thu hoạch & sẵn hàng theo lô — `agents/vt_thuhoach.py`** —
+  `data/harvest_assumptions.json` (mới, `_doc` GIẢ ĐỊNH — GĐ vùng trồng
+  chốt): `{"version", "min_age_years" (int 1..30), "yield_g_per_tree":
+  {low, base, high}, "survival_rate": {low, base, high} (0<x≤1), "quarters"
+  (1..8)}`, low ≤ base ≤ high; `load_assumptions(path)` fail-closed. Thuần:
+  `forecast_harvest(plots, logs, assumptions, *, now) -> [{plot_id, quarter,
+  low, base, high, notes}]` — chỉ khoảnh `status='active'`; tuổi =
+  năm(quý) − `planted_year`, đủ `min_age_years` mới vào quý; khoảnh đã có
+  nhật ký "thu hoạch" (activity chuẩn) → không dự báo lại + note "đã thu hoạch
+  <ngày>"; `tree_count`/`planted_year` null → note "thiếu dữ liệu" (KHÔNG
+  coi = 0, không số); dòng plot/log `source like 'sample:%'` → nhãn (MẪU);
+  kg = tree_count × yield × survival /1000 làm tròn bất đối xứng như
+  `scenario` (thấp floor, cơ sở nửa-lên, cao ceil) → luôn `low ≤ base ≤ high`.
+  `availability(lots, skus, scen_assumptions, *, now, weeks=13)` — chỉ lô
+  `intake_status='passed'` ∧ `exp_date > now` (giờ VN); lô `pending` liệt kê
+  "chưa kiểm nhập — không tính sẵn"; nhu cầu tuần = Σ `scenario.project(sku,
+  ch, start, weeks, a)` qua `scenario.ALL_CHANNELS` theo mức (KHÔNG công thức
+  thứ 2); tuần hết hàng dạng KHOẢNG (nhu cầu cao → sớm nhất, thấp → muộn
+  nhất, "đủ qua <n> tuần" nếu không hết); lô hết hạn trước tuần hết hàng theo
+  nhu cầu thấp (FEFO) → "rủi ro cận hạn"; `ScenarioError` (thiếu baseline) →
+  SKU "thiếu giả định", không crash; rượu chỉ offline (luật `scenario`).
+  `render(...) -> str` mở đầu khối **metadata**: `model: vt_thuhoach-rule-v1 +
+  pipelines.scenario.project`, `seed: 0 (tất định — không lấy mẫu ngẫu
+  nhiên)`, `harvest_assumptions_sha256`, `scenario_assumptions_sha256`,
+  `as_of` (ngày VN), `generated` (ngày VN), số khoảnh/nhật ký/lô dùng; chân
+  "Khoảng thấp–cơ sở–cao — KHÔNG phải cam kết với khách/đại lý; GĐ vùng trồng
+  xác nhận trước khi chia sẻ"; qua `guardrail.check` ok trước ghi file
+  `data/reports/vt-thu-hoach-<YYYY-MM-DD VN>.md`. `--submit`:
+  `director.submit(conn, "farming", "harvest_forecast", object_id=
+  "vt-harvest:<as_of>:<sha256 payload[:16]>", ..., created_by="agent:VT")`
+  (loại việc ĐÃ có, không sửa farming.json). CLI `python -m
+  agents.vt_thuhoach [--date YYYY-MM-DD] [--weeks 1..104] [--submit]`; DB
+  down → `[warn]` exit 2.
+  - Boundary: `agents/vt_thuhoach.py` (mới), `data/harvest_assumptions.json`
+    (mới), `tests/test_vt_thuhoach.py` (mới)
+  - Gate: **luôn khoảng**: mọi số trong `forecast_harvest`/`availability` có
+    đủ low/base/high và `low ≤ base ≤ high`, ≥1 case `low < high`; regex
+    trên payload: mỗi dòng số lượng có dạng `\d+–\d+–\d+` (không số đơn lẻ
+    cho dự báo); **lưu model/seed/ngày**: payload chứa `model:`, `seed:`,
+    `as_of:`, `generated:`, 2 sha256 giả định (64 hex) — test đổi 1 số giả
+    định → sha đổi; chạy 2 lần cùng input + `now` → payload byte-identical;
+    nhu cầu khớp phép cộng độc lập `scenario.project` trong test (không gọi
+    `availability`); `tree_count` null → "thiếu dữ liệu", không số; khoảnh đã
+    "thu hoạch" → không dự báo; lô `pending`/hết hạn → không tính sẵn; SKU
+    thiếu baseline → "thiếu giả định" exit 0; 0 từ cấm/claim (`guardrail.check`
+    ok). DB fixture (0 skipped): plots + plot_logs thật (chain) + mẫu +
+    production_lots passed/pending → `--submit` → 1 mục `pending` block
+    farming `harvest_forecast`, chạy lại → skipped. `grep -nE "llm_gateway|
+    openai|import httpx|import requests|random" agents/vt_thuhoach.py` rỗng
+  - Evidence: `evidence/v110_vt_thuhoach.log`
+- [x] **W110.3 CK-A5 bảo trì dự đoán bước 1 (quy tắc) — `agents/ck_predict.py`** —
+  Hằng (GIẢ ĐỊNH — Kỹ sư trưởng chốt, ghi trong docstring): `MIN_DAYS = 90`
+  (≈3 tháng), `WINDOW_DAYS = 90`, `REPEAT_MIN = 2`, `DOWNTIME_MIN_PHUT = 240`,
+  `SOON_DAYS = 14`, `BACKTEST_DAYS = 30`. Đọc `load_downtime(conn)` = SELECT
+  view `downtime_log` (KHÔNG đọc `incidents.description`/`reported_by`) +
+  `machines` active. Thuần: `data_status(rows, *, now) -> {"enabled", "n",
+  "first", "last", "coverage_days", "need_days"}` — bỏ dòng `started_at >
+  now`; `coverage_days = (ngày VN của now − ngày VN dòng sớm nhất).days`;
+  `enabled` ⇔ `n > 0` ∧ `coverage_days ≥ MIN_DAYS`. `score(rows, machines,
+  *, now)` (chỉ khi enabled) → `[{machine_code, level, reasons[], suggest}]`:
+  trong `WINDOW_DAYS`: ≥ `REPEAT_MIN` sự cố; cùng `part` lặp ≥ `REPEAT_MIN`;
+  tổng `downtime_phut` ≥ `DOWNTIME_MIN_PHUT`; dự kiến lần kế = sự cố cuối +
+  trung vị khoảng cách (`statistics.median`, cần ≥2 sự cố) rơi trong
+  `SOON_DAYS` → `suggest` "đề xuất đưa bảo trì lên sớm — Kỹ sư trưởng quyết"
+  (KHÔNG lệnh dừng máy). `backtest(rows, machines, *, now)` cắt tại `now −
+  BACKTEST_DAYS`: chấm `score` trên dữ liệu trước mốc, đối chiếu máy có sự
+  cố sau mốc → `{tp, fp, fn, precision, recall, train_range, test_range,
+  n_train, n_test}` (mẫu số 0 → "không xác định", không chia 0). `render`:
+  **chưa bật** → "CK-A5: ĐÃ XÂY, CHƯA BẬT — downtime_log có <coverage>
+  ngày / cần ≥ 90 ngày (<n> sự cố, từ <first> đến <last>)" + 0 danh sách máy
+  rủi ro + 0 backtest; **đã bật** → danh sách máy + lý do + backtest kèm dữ
+  liệu dùng. File `data/reports/ck-a5-<YYYY-MM-DD VN>.md`. `--submit` khi
+  chưa bật → exit 1 "chưa đủ 3 tháng dữ liệu — từ chối bật", 0 mục hàng
+  chờ; đã bật + có máy rủi ro → `director.submit(conn, "mechanical",
+  "maintenance_risk", object_id="ck-a5:<ngày VN>", ...,
+  created_by="agent:CK-A5")`. `data/directors/mechanical.json` thêm
+  `maintenance_risk` (`sla_hours` 72, `risk` "medium" — không `low`). CLI
+  `python -m agents.ck_predict [--date YYYY-MM-DD] [--submit]`; DB down →
+  `[warn]` exit 2.
+  - Boundary: `agents/ck_predict.py` (mới), `data/directors/mechanical.json`,
+    `tests/test_ck_predict.py` (mới), `tests/test_director.py` (thêm assert
+    `maintenance_risk` medium)
+  - Gate: **`now` tham số**: cùng bộ dòng, `now` = sự cố đầu + 42 ngày (6
+    tuần) → `enabled False`, render có "ĐÃ XÂY, CHƯA BẬT" + số ngày + số sự
+    cố, KHÔNG có mã máy trong mục rủi ro, `score` không được gọi (đếm qua
+    monkeypatch); biên `coverage_days` 89 → chưa bật, 90 → bật; 0 dòng → chưa
+    bật "0 sự cố"; dòng `started_at` tương lai không làm tăng coverage; `now`
+    ≥ 3 tháng → danh sách máy có lý do + backtest có precision/recall + dải
+    ngày train/test; fixture tất định (máy A 4 sự cố cùng `part` → rủi ro, máy
+    B 1 sự cố → không) → precision/recall khớp số đếm tay trong test; mẫu
+    số 0 → "không xác định"; render 0 chuỗi "dừng máy" dạng lệnh. DB fixture
+    (0 skipped): chèn machines + incidents đóng 6 tuần → `--submit` exit 1, 0
+    dòng `approval_queue`; incidents 4 tháng → `--submit` → 1 mục `pending`
+    block mechanical `maintenance_risk`. **Bằng chứng thiếu dữ liệu trên DB
+    thật** (chỉ đọc, không `--submit`): `python -m agents.ck_predict` trên
+    samsam_infra → output "ĐÃ XÂY, CHƯA BẬT" + số liệu thật ghi vào evidence.
+    `grep -rnE "pymodbus|snap7|opcua|modbus|192\.168\." agents/ck_predict.py`
+    rỗng; `grep -nE "llm_gateway|import httpx|import requests|\.post\("
+    agents/ck_predict.py` rỗng
+  - Evidence: `evidence/v110_ck_a5.log`
+- [x] **W110.4 Docs + bản đồ luồng dữ liệu** — `docs/handover/sop.md` mục mới
+  `## 5x. Agent P3: concept R&D, dự báo thu hoạch & sẵn hàng, bảo trì dự đoán
+  (v11.0)` (`agents.sx_rnd --list/--brief [--llm] [--submit]` + GĐ SX duyệt,
+  không công bố; `agents.vt_thuhoach [--submit]` + GĐ vùng trồng xác nhận,
+  không cam kết; `agents.ck_predict` + điều kiện bật ≥ 90 ngày downtime_log,
+  Kỹ sư trưởng quyết; external-dep); `docs/handover/kien-truc.md` dòng
+  `agents/` thêm `sx_rnd.py`, `vt_thuhoach.py`, `ck_predict.py` ("75 bảng"
+  KHÔNG đổi); `data/data_flow_map.json` `DF-40` "Concept brief R&D SX-A6
+  (v11.0)" modules `["agents/sx_rnd.py"]` (mô tả concept + tiêu đề tin
+  public → LLM qua gateway khi `--llm`, `cross_border` true, không dữ liệu cá
+  nhân); sinh lại DPIA/TIA bằng `python scripts/dpia_draft.py` (KHÔNG sửa
+  tay). `tests/test_data_flow_map.py`: `agents/sx_rnd.py` vào
+  `REQUIRED_MODULES`; `agents/vt_thuhoach.py`, `agents/ck_predict.py` vào
+  `NEW_SCRIPTS` (không egress). `docs/handover/runbook-ha-tang.md` mục 5
+  thêm agent_id `sx_rnd` (precedent v10.2: `tests/test_runbook.py`).
+  - Boundary: `docs/handover/sop.md`, `docs/handover/kien-truc.md`,
+    `data/data_flow_map.json`, `docs/legal/DPIA-nhap.md`,
+    `docs/legal/TIA-nhap.md` (sinh), `tests/test_data_flow_map.py`,
+    `docs/handover/runbook-ha-tang.md`
+  - Gate: `python scripts/dpia_draft.py --check` exit 0; mọi lệnh trong mục
+    5x chạy `--help` exit 0 (`agents.sx_rnd`, `agents.vt_thuhoach`,
+    `agents.ck_predict`); `tests/test_handover_docs.py` +
+    `tests/test_data_flow_map.py` + `tests/test_dpia_draft.py` +
+    `tests/test_runbook.py` xanh; `grep -n "75 bảng" docs/handover/
+    kien-truc.md` còn đúng
+  - Evidence: `evidence/v110_docs.log`
+- [x] **W110.5 Gate chung** — targeted ×3 (`python -m pytest -q
+  tests/test_sx_rnd.py tests/test_vt_thuhoach.py tests/test_ck_predict.py
+  tests/test_director.py tests/test_director_framework.py
+  tests/test_scenario.py tests/test_kd_forecast.py tests/test_data_flow_map.py
+  tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_runbook.py
+  tests/test_connect_timeout_guard.py -rs` — 0 skipped ở file mới, 3 lần
+  liên tiếp xanh; file test nào không tồn tại thì bỏ khỏi lệnh và ghi rõ);
+  full `python -m pytest -q` CHỈ 1 lần (đọc output tới khi process exit) —
+  xanh, ≥ baseline 4618 pass + test mới (skip chỉ test docker/dr_drill khi
+  Docker tắt — môi trường, ghi rõ); `ruff check .` sạch; `python -m
+  py_compile` mọi file .py mới/sửa; grep "0 http client mới": `grep -nE
+  "import httpx|import requests" agents/sx_rnd.py agents/vt_thuhoach.py
+  agents/ck_predict.py` rỗng; grep "0 LLM ngoài SX-A6": `grep -nE
+  "llm_gateway|openai" agents/vt_thuhoach.py agents/ck_predict.py` rỗng;
+  `git diff --stat docs/schema.sql docs/roles.sql` rỗng; `git status` chỉ
+  file trong Boundary (không file runtime lạc trong `data/`, `data/reports/`
+  gitignored; `lv2-market-top.png` nếu có là file lạ — không stage).
+  - Boundary: (không file mới)
+  - Gate: như trên; số pass/skip ghi vào evidence
+  - Evidence: `evidence/v110_pytest.log`
+
+Kết quả worker (v11.0-p3, chưa commit — coordinator commit):
+- W110.1: 54 test `test_sx_rnd.py` (gồm DB fixture, 0 skipped); brief chỉ
+  chép URL + ngày tín hiệu (KHÔNG tiêu đề/đoạn trích — tránh mang claim báo
+  vào brief); tín hiệu có URL lỗi/không qua `claim_free` bị loại kèm dòng
+  "đã loại N". Lý do LLM ghi mã nhóm (`khong_qua_cong:claim_verb,...`) — tên
+  động từ claim không được chèn vào brief.
+- W110.2: SKU rượu KHÔNG đưa vào bản sẵn hàng (chỉ đếm "N SKU nhóm hạn chế
+  quảng bá") — vì payload phải qua `guardrail.check` (enqueue + duyệt kiểm
+  lại), mã SKU rượu làm hỏng cổng; rượu vẫn ở dự báo offline KD-A10. Mã
+  khoảnh/lô/SKU từ DB ép 1 dòng (`_id`) — chặn chèn dòng metadata giả
+  (OWASP A03, test `test_identifier_newline_cannot_forge_metadata_line`).
+- W110.3: DB thật samsam_infra (chỉ đọc): downtime_log 0 sự cố / 0 ngày,
+  incidents 0, machines active 0 → "ĐÃ XÂY, CHƯA BẬT" (`evidence/v110_ck_a5.log`).
+- W110.5: targeted ×3 vòng 1 = 340 pass ×3; vòng 2 (sau vá `_id`) = 341 pass
+  ×3, 0 skipped; full `python -m pytest -q` 1 lần = **4717 passed, 3 skipped**
+  (test_dr_drill — không Docker) trong 20 phút (lần chạy trước bị `timeout
+  590` cắt ở 51% vì máy tải — không phải fail); ruff sạch; py_compile 8 file.
+  Evidence: `evidence/v110_{sx_a6,vt_thuhoach,ck_a5,docs,targeted,pytest}.log`
+  (`*.log` gitignored → cần `git add -f`).
+
+Vá nghiệm thu (3 MINOR, worker):
+- SX-A6 `--llm`: bản viết lại phải 0 cụm `HEALTH_TERMS` mới so với concept
+  (`health_terms()` — đề kháng/ngủ/lão hóa/sinh lực/đẹp da...), không thì về
+  template lý do `khong_qua_cong:health` (test
+  `test_llm_health_effect_output_falls_back` 12 case).
+- `generated`/"ngày lập"/"Sinh bởi ngày=" = ngày THẬT (đồng hồ, `main(...,
+  generated=)` cho test), tách khỏi `--date` (as_of / "tín hiệu tới") — test
+  `test_db_backdate_generated_is_wall_clock_not_as_of`,
+  `test_backdate_generated_separate_from_signal_date`,
+  `test_cli_backdate_generated_injected`.
+- CK-A5: nhãn bộ phận 'sửa chữa'→'sửa', còn trượt guardrail → `mã <sha8>`;
+  `guardrail.check(text)` trước submit (parity VT, exit 1). Test DB
+  `test_db_banned_word_part_queued_guardrail_ok_and_approvable` (guardrail
+  ok + `approval_queue.decide` approved), `..._failing_guardrail_refused_no_queue`;
+  DB submit SX-A6/CK-A5 assert `guardrail->>'ok'` = true (+ SX duyệt được).
+- Someday (KHÔNG vá version này — list dùng chung): `guardrail.check`/
+  `check_publish` cho qua cụm hiệu quả sức khỏe không chứa từ cấm/động từ
+  claim ("Tăng sức đề kháng", "An thần, dễ ngủ", "đẩy lùi lão hóa") — chỉ
+  đường LLM SX-A6 được chặn bằng `health_terms`.
+
+External-dep (giữ [ ] — KHÔNG giả lập, KHÔNG tự đánh dấu):
+- [ ] R&D thật (≈5 man-day ngoài gói) + GĐ SX chọn concept thử mẫu; Pháp chế xem hướng công bố
+- [ ] Mock-up ảnh + persona xếp hạng sơ bộ (chưa làm ở version này)
+- [ ] `data/rd_concepts.json` + `data/harvest_assumptions.json` — GĐ SX / GĐ vùng trồng chốt (hiện GIẢ ĐỊNH)
+- [ ] Khoảnh/nhật ký thu hoạch/lô thật (hiện MẪU) + số bán thật `scenario_assumptions`
+- [ ] Dữ liệu downtime thật ≥ 3 tháng (CK-A5 nghiệm thu mức "đã xây, chưa bật"); giờ chạy máy + cảm biến (bước 2)
+- [ ] Ngưỡng quy tắc CK-A5 — Kỹ sư trưởng chốt
+- [ ] Người duyệt thật các khối (`approvers: []`) + chủ khối ký nghiệm thu WP17
+
 ## Checklist v10.2-tri-thuc-p2
 
 Khán giả/mục đích: M31 (worktree `D:\code\samsam-w70`) — làm 4 agent P2 của
@@ -1499,6 +1822,29 @@ manual_export trước khi lọc NaN; SOP nói chạy được bằng bks_reader
 `--submit` cần enqueue_item; `source_ref`/`file_name` chưa lọc markdown đầy đủ;
 lỗi `--submit` in str(e) không qua `_mask_pii`; test `_is_read` coi
 `select <hàm ghi>(...)` là đọc; test hdtv phụ thuộc now() DB ≥ 01/09/2026.
+
+v11.0 đóng 2026-10-15 (vòng 0: FIX/PASS/FIX — 3 finding; vòng 1 FIX còn 1;
+vòng 2 PASS, 0 mở; agent sửa kết thúc trước khi đọc full pytest → coordinator
+tự chạy: ruff sạch, `dpia_draft --check`, `agent_eval --validate` 25/25, full
+pytest 4764 passed / 3 skipped docker — `evidence/v110_full_coord.log`).
+Worker vá A03: mã khoảnh/lô/SKU từ DB ép 1 dòng ≤64 ký tự trong payload VT
+(chống giả dòng `- seed:`/`- model:`). Lựa chọn ngoài contract (có lý do): VT
+bỏ SKU rượu khỏi báo cáo sẵn hàng (payload phải qua guardrail); brief SX-A6 chỉ
+ghi URL/ngày/chủ đề tín hiệu (không chép tiêu đề báo → tránh claim); fallback
+LLM ghi mã loại lý do. CK-A5 trên DB samsam_infra thật: 0 sự cố, 0 ngày phủ →
+"ĐÃ XÂY, CHƯA BẬT". Số tạm cần đánh lại khi gộp: DF-40, SOP 5x. External-dep:
+R&D thật (ký riêng), mock-up + xếp hạng persona, file giả định
+`rd_concepts.json`/`harvest_assumptions.json`, khoảnh/lô thật, dữ liệu downtime
+thật ≥3 tháng, giờ chạy máy + cảm biến, ngưỡng CK-A5, người duyệt thật, chủ khối
+ký WP17. Someday: CK-A5 bật chỉ theo độ dài lịch (1 sự cố 91 ngày trước là đủ
+bật — cần thêm sàn số sự cố); CK-A5 không chạy guardrail trước submit (mục vẫn
+không duyệt được — fail-closed); VT `--date` quá khứ vẫn đọc trạng thái hiện
+tại (lô sản xuất sau as_of tính vào tồn); log thu hoạch cũ đánh dấu khoảnh
+"đã thu hoạch" mãi kể cả trồng lại; URL_RE SX-A6 còn cho `* _ # ~`; HEALTH_TERMS
+sót 'tăng sức bền', 'trường thọ', 'tráng dương'; `generated` trong text băm
+object_id → chạy lại ngày khác tạo mục pending mới; help `--date` SX-A6 cũ;
+machine_code CK-A5 chưa ép 1 dòng; key LLM so khớp không NFC; vài nhánh biên
+`--date` hợp lệ/tín hiệu tương lai/thu hoạch tương lai chưa test.
 
 Nhánh `ai-infra`: M31 đợt gộp 7 (2026-10-15) — v10.2, v10.1, v5.4, v10.0 đã gộp
 (75 bảng; 25 suite eval; DF-01..DF-39 + DPIA/TIA 39 luồng). Tích hợp khi gộp:

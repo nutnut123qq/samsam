@@ -1013,6 +1013,30 @@
         "Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email)",
         "Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday)"
       ]
+    },
+    {
+      "id": "DF-40",
+      "name": "Concept brief R&D SX-A6 (v11.0)",
+      "modules": [
+        "agents/sx_rnd.py"
+      ],
+      "data": "Mô tả concept từ `data/rd_concepts.json` (hương vị/nghi thức dùng — GIẢ ĐỊNH, không dữ liệu cá nhân) gửi LLM khi `--llm`; tín hiệu = URL + ngày tin public trong `intel_items` (không gửi LLM, không chép tiêu đề/đoạn trích vào brief); KHÔNG dữ liệu khách/nhân viên",
+      "class": "xanh",
+      "subjects": "Không có chủ thể dữ liệu cá nhân (danh mục sản phẩm + tin báo chí public)",
+      "purpose": "Soạn concept brief NỘI BỘ sản phẩm phái sinh (không nêu công dụng) để GĐ sản xuất chọn concept thử mẫu",
+      "storage": "File `data/reports/rd-brief-<id>-<ngày>.md` (gitignored) + `approval_queue` mục `rd_concept_brief` khối production (pending, risk high); `llm_usage` khi `--llm`",
+      "retention": "Không giới hạn — hồ sơ duyệt append-only; file báo cáo xóa tay",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider (Mỹ) — CHỈ khi `--llm` (mặc định TẮT), chỉ đoạn hương vị/nghi thức của concept, qua `_mask_pii` của gateway",
+      "cross_border": true,
+      "safeguards": [
+        "`--llm` mặc định TẮT; kill-switch + trần chi phí tháng `sx_rnd` (1.0 USD ƯỚC TÍNH) ở gateway",
+        "Cổng `claim_free`: `check_publish(internal_note)` + 0 động từ claim + không rượu — lỗi thì về template hoặc không ghi/không nộp",
+        "Concept/tín hiệu nhắc rượu bị loại; brief gắn nhãn NỘI BỘ, không có đường công bố ra ngoài"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân — không cần căn cứ NĐ 13/2023; chuyển dữ liệu sản phẩm ra nước ngoài theo hợp đồng nhà cung cấp LLM",
+      "gaps": [
+        "R&D thật, mock-up ảnh, xếp hạng persona = external-dep (chưa làm)"
+      ]
     }
   ]
 }
