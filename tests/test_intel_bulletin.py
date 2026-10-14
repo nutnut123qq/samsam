@@ -398,3 +398,66 @@ class _null_job:
 
     def __exit__(self, *a):
         return False
+
+
+# ---------------------------------------------------------------- v10.2 PC-A8
+
+_LEGAL_LINE = re.compile(r"^> - .+ · \d{4}-\d{2}-\d{2}(?: \(ngày thu\))? · "
+                         r"<https?://\S+>$")
+
+
+def _legal_rows():
+    pub = datetime(2026, 10, 11, 20, 0, tzinfo=timezone.utc)   # 12/10 VN
+    got = datetime(2026, 10, 12, 1, 0, tzinfo=timezone.utc)
+    return [{"title": "Nghị định sửa đổi quy định thực phẩm chức năng",
+             "source": "chinhphu-van-ban", "published_at": pub,
+             "fetched_at": got, "url": "https://vanban.example.gov.vn/nd-1"},
+            {"title": "Dự thảo thông tư về quảng cáo",
+             "source": "boyte-van-ban", "published_at": None,
+             "fetched_at": got, "url": "https://moh.example.gov.vn/tt-2"}]
+
+
+def test_render_phap_ly_every_line_has_url_and_date():
+    assert "phap_ly" in ib.TOPICS and ib.TOPIC_LABELS["phap_ly"] == \
+        "Văn bản pháp luật"
+    start = datetime(2026, 10, 12, tzinfo=VN_TZ)
+    data = {"n_items": 2, "groups": {"phap_ly": _legal_rows()}, "alerts": [],
+            "jobs": {"runs": 0, "failed": 0, "last_detail": None,
+                     "fail_ids": []},
+            "sources": {"ab": 3, "not_approved": 3, "errors": 0},
+            "suggested": []}
+    md = ib.render(data, start, start + timedelta(days=1))
+    sec = md.split("Văn bản pháp luật — 2 tin")[1].split("## ")[0]
+    lines = [ln for ln in sec.splitlines() if ln.startswith("> - ")]
+    assert len(lines) == 2
+    assert all(_LEGAL_LINE.match(ln) for ln in lines), lines
+    assert "· 2026-10-12 ·" in lines[0]            # published_at giờ VN
+    assert "2026-10-12 (ngày thu)" in lines[1]     # thiếu published_at
+    assert ib.LEGAL_FOOTER in sec and "Pháp chế quyết" in sec
+    # Chủ đề cũ vẫn giữ định dạng ngày dd/mm/YYYY (không đổi output cũ).
+    data["groups"] = {"sam": [dict(_legal_rows()[0], title="Giá sâm")]}
+    md2 = ib.render(data, start, start + timedelta(days=1))
+    assert "· 12/10/2026 ·" in md2 and ib.LEGAL_FOOTER not in md2
+
+
+def test_suggest_and_llm_skip_phap_ly(env, capsys):
+    _llm_on(env)
+    for t in ("Nghị định mới về thực phẩm chức năng",
+              "Dự thảo thông tư quảng cáo thực phẩm",
+              "Văn bản hợp nhất luật an toàn thực phẩm"):
+        _item(env.db, t, ["phap_ly"], source="chinhphu-van-ban")
+    sent = []
+    env.mp.setattr(llm_gateway, "chat",
+                   lambda *a, **kw: sent.append(a) or _resp("tóm tắt"))
+    subs = []
+    real = director.submit
+    env.mp.setattr(director, "submit",
+                   lambda *a, **kw: subs.append(a) or real(*a, **kw))
+    assert _run(["--period", "day", "--date", DAY, "--llm", "--suggest"]) == 0
+    assert subs == [] and _topic_rows(env.db) == []      # 0 gợi ý phap_ly
+    assert sent == []                                   # 0 tóm tắt LLM
+    md = _report(env)
+    sec = md.split("Văn bản pháp luật — 3 tin")[1].split("## ")[0]
+    lines = [ln for ln in sec.splitlines() if ln.startswith("> - ")]
+    assert len(lines) == 3 and all(_LEGAL_LINE.match(ln) for ln in lines)
+    assert "Tóm tắt (AI" not in sec

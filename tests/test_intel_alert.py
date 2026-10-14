@@ -147,6 +147,14 @@ BAD_RULES = [
     json.dumps(_rules_doc(lookback_hours=721)).encode(),
     json.dumps(_rules_doc(lookback_hours=True)).encode(),
     json.dumps(_rules_doc(lookback_hours="48")).encode(),
+    # v10.2 PC-A8: legal_sources BẮT BUỘC (fail-closed)
+    json.dumps({k: v for k, v in _rules_doc().items()
+                if k != "legal_sources"}).encode(),
+    json.dumps(_rules_doc(legal_sources=[])).encode(),
+    json.dumps(_rules_doc(legal_sources=[""])).encode(),
+    json.dumps(_rules_doc(legal_sources="x")).encode(),
+    json.dumps(_rules_doc(legal_sources=["Bad Id"])).encode(),
+    json.dumps(_rules_doc(legal_sources=[1])).encode(),
 ]
 
 
@@ -182,6 +190,9 @@ POSITIVE = [
     ("Hàng nhái thương hiệu Sâm Sâm", (), ("sam",), (), "brand_negative"),
     ("Đường dây làm giả sâm Ngọc Linh bị triệt phá", (), ("sam",), (),
      "brand_negative"),
+    # v10.2 PC-A8: nguồn văn bản pháp luật (legal_sources) + chủ đề tpbvsk
+    ("Thông tư hướng dẫn ghi nhãn thực phẩm chức năng", (),
+     ("phap_ly", "tpbvsk"), (), "legal_doc", "cuc-attp-van-ban"),
 ]
 NEUTRAL = [
     ("Sâm Sâm ra mắt hộp quà Tết", ("sam",), ()),
@@ -200,10 +211,12 @@ NEUTRAL = [
 ]
 
 
-@pytest.mark.parametrize("title,snip,topics,flags,rule", POSITIVE)
-def test_match_positive(title, snip, topics, flags, rule):
+@pytest.mark.parametrize("case", POSITIVE)
+def test_match_positive(case):
+    title, snip, topics, flags, rule, *src = case
     got = ia.match({"title": title, "snippet": " ".join(snip),
-                    "topics": list(topics), "flags": list(flags)},
+                    "topics": list(topics), "flags": list(flags),
+                    "source": src[0] if src else "fx71-a"},
                    ia.load_rules())
     assert rule in got, got
 
@@ -214,8 +227,9 @@ def test_match_neutral(title, topics, flags):
                      "flags": list(flags)}, ia.load_rules()) == []
 
 
-def test_match_rules_cover_all_three():
-    assert {p[-1] for p in POSITIVE} == set(ia.RULES)
+def test_match_rules_cover_all_four():
+    assert {p[4] for p in POSITIVE} == set(ia.RULES)
+    assert len(ia.RULES) == 4
     assert len(POSITIVE) >= 6 and len(NEUTRAL) >= 6
 
 

@@ -1623,6 +1623,79 @@ gửi. Dữ liệu thật hiện chỉ còn 3 mã mật ong (mọi TPBVSK chưa 
 Exit chung: 0 ok · 1 bị chặn (problems / cổng / chưa duyệt / lệch hash /
 ma trận lỗi) · 2 tham số sai hoặc DB down.
 
+## 5t. Tri thức P2: tra cứu khoa học nội bộ, cảnh báo thời tiết, hồ sơ đối tác, theo dõi văn bản (v10.2)
+
+4 agent P2 của WP16 — KHÔNG agent nào gửi/đăng/liên hệ ra ngoài và không tự
+duyệt. Đầu ra = file `data/reports/` (gitignored) + mục hàng duyệt `pending`
++ cảnh báo `red_alerts`.
+
+**SX-A7 tra cứu khoa học nội bộ (khối Sản xuất):**
+1. Nạp tài liệu (CHỈ sau khi GĐ SX duyệt; tên là NGƯỜI THẬT): `python -m
+   ingest.kb_internal --file <tai-lieu>.md --collection internal:sx
+   --approved-by "<GĐ SX>"`. Khuyến nghị 20 dòng đầu có `DOI: 10.xxxx/...`
+   hoặc `URL: https://...` để câu trả lời trích được nguồn. Chỉ nạp tài liệu
+   được phép lưu nội bộ (bản quyền — Pháp chế xác nhận); không tự gọi
+   PubMed/Semantic Scholar.
+2. Tra cứu: `python -m agents.sx_tracuu --ask "<câu hỏi>" [--k 5] [--out]`
+   → trích đoạn NGUYÊN VĂN + `[n]` + DOI/URL. `--llm` (mặc định TẮT) tổng
+   hợp qua gateway agent `sx_tracuu`; vi phạm guardrail → tự về trích đoạn.
+   Mọi đầu ra mở đầu "NỘI BỘ – không dùng cho truyền thông" — KHÔNG chép
+   sang bài đăng/chatbot khách. Câu về rượu → không tra. DB down → exit 2.
+
+**VT cảnh báo thời tiết & sâu bệnh (khối Vùng trồng):**
+1. `data/weather_config.json` là GIẢ ĐỊNH (vùng, tọa độ VÙNG làm tròn 0,1°,
+   khoảnh thuộc vùng, ngưỡng mưa > 50 mm/ngày, nhiệt thấp nhất < 5 °C) — GĐ
+   vùng trồng chốt rồi sửa file.
+2. `python -m agents.vt_thoitiet --digest --from-csv <du-bao>.csv [--submit]
+   [--date YYYY-MM-DD]` — CSV nhập tay header `area_code,day,rain_mm,tmin_c,
+   tmax_c`; lỗi → in dòng+cột, không xử lý (exit 1). Digest
+   `data/reports/vt-canh-bao-<ngày>.md`: theo khoảnh, chỉ "cần đi kiểm tra"
+   (thoát nước/che chắn/sâu bệnh từ nhật ký 7 ngày), không chẩn đoán/liều
+   lượng/tọa độ.
+3. `--submit` (chỉ khi có cảnh báo/cờ) → mục `weather_digest` khối farming
+   (risk medium, SLA 24h). GĐ vùng trồng duyệt = "đã xem": `python -m
+   pipelines.approval_queue --approve <QID> --by "<tên>"`.
+4. `--fetch` (dự báo tự động qua collector, robots + ≥1s/host) CHỈ khi
+   `fetch.enabled = true` — mặc định false vì điều khoản Open-Meteo/API có
+   phí chưa xác minh (external-dep); chưa bật → exit 2, 0 request.
+
+**DA-06 hồ sơ đối tác (phòng Dự án) — shadow tới go-live 16/02/2027:**
+1. `python -m agents.da_doitac --data-room` → mục lục data room NỘI BỘ +
+   trạng thái `thieu`/`chua_xac_minh`/`da_xac_minh` (`data/projects/
+   data_room.json`; `verified_by` do NGƯỜI điền sau khi đối chiếu).
+2. `python -m agents.da_doitac --draft <PROSPECT_ID> [--date YYYY-MM-DD]` →
+   nháp hồ sơ từ `org_prospects` (chỉ thông tin tổ chức) + SKU đủ điều kiện
+   + số liệu có nguồn + ngày (`data/projects/partner_facts.json` hiện là
+   MẪU). Không dự phóng/cam kết lợi nhuận (bị chặn).
+3. Từ 16/02/2027: `--draft <ID> --submit` → mục `partner_profile` khối
+   projects (risk high). Trước go-live `--submit` bị từ chối (exit 1).
+4. `python -m agents.da_doitac --status <QID>` → chỉ "được chia sẻ (theo
+   NDA)" khi mục ĐÃ duyệt VÀ dữ liệu dựng lại khớp sha256 bản duyệt; còn lại
+   "không được chia sẻ". Hệ thống không gửi data room — người chia sẻ theo
+   NDA sau khi TGĐ/HĐTV duyệt.
+
+**PC-A8 theo dõi văn bản pháp luật (Pháp chế):**
+1. Nguồn văn bản (`chinhphu-van-ban`, `cuc-attp-van-ban`, `boyte-van-ban`
+   trong `data/intel_sources.json`, tầng A) đang `cho_duyet` — Pháp chế xác
+   minh URL RSS + điều khoản rồi NGƯỜI đổi sang `duyet` (agent không tự đổi).
+   Bộ từ khóa chủ đề `phap_ly` + `legal_sources` trong
+   `data/intel_alert_rules.json` là GIẢ ĐỊNH chờ Pháp chế duyệt.
+2. Thu tin: `python -m crawler.intel --run` (chỉ nguồn `duyet`; chạy thử 1
+   nguồn: `--source <id>`) — robots, ≥1s/host, chặn sàn/MXH/tầng C.
+3. Cảnh báo: `python -m pipelines.intel_alert --run` (lịch như mục 5 —
+   SUỐT 24/7) — tin từ nguồn văn bản thuộc chủ đề TPBVSK/quảng cáo hoặc
+   nhắc rượu → luật `legal_doc` → 1 dòng `red_alerts`, leo thang sau 2 giờ
+   chưa xác nhận; `--open` xem, `--ack <ID> --by "<tên>"` xác nhận.
+4. Bản tin: `python scripts/intel_bulletin.py --period week` có mục "Văn bản
+   pháp luật" (tiêu đề + nguồn + ngày + link, KHÔNG diễn giải; không tóm tắt
+   LLM, không gợi ý nội dung). Diễn giải/đổi rule: Pháp chế quyết.
+
+External-dep: tài liệu khoa học thật + GĐ SX duyệt nạp; API thời tiết/điều
+khoản Open-Meteo; ngưỡng + gán khoảnh→vùng; Pháp chế duyệt nguồn văn bản +
+từ khóa; người nhận cảnh báo thật; số liệu data room thật + GĐ tài chính đối
+chiếu + TGĐ/HĐTV duyệt + NDA; người duyệt thật các khối; chủ khối ký nghiệm
+thu WP16.
+
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
 **Backup** (hằng ngày, hoặc trước khi đụng schema/data):

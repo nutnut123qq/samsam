@@ -1,7 +1,7 @@
 # TIA — Đánh giá tác động chuyển dữ liệu cá nhân ra nước ngoài (NHÁP)
 
 > **BẢN NHÁP — chưa có giá trị pháp lý; chờ Chuyên viên Pháp chế ký, luật sư rà — agent không kết luận tuân thủ.**
-> Sinh tự động bởi `python scripts/dpia_draft.py` từ `data/data_flow_map.json` (bản đồ rà từ code ngày 2026-10-12). KHÔNG sửa tay — sửa map rồi chạy lại (`--check` bắt lệch).
+> Sinh tự động bởi `python scripts/dpia_draft.py` từ `data/data_flow_map.json` (bản đồ rà từ code ngày 2026-10-14). KHÔNG sửa tay — sửa map rồi chạy lại (`--check` bắt lệch).
 > Căn cứ: Luật BVDLCN 91/2025/QH15 (chuyển dữ liệu xuyên biên giới phải có hồ sơ đánh giá tác động) + NĐ 356/2025; khung mục theo cấu trúc NĐ 13/2023 Điều 25 — CẦN LUẬT SƯ XÁC NHẬN.
 
 ## 1. Bên chuyển dữ liệu
@@ -192,6 +192,32 @@
 | Thời hạn lưu (theo map) | Không lưu nội dung |
 | Rủi ro tồn dư | Chưa có căn cứ xử lý `staff_assist_dpia_v1` (F03b bước 3) — CẦN LUẬT SƯ XÁC NHẬN trước khi dùng thường xuyên; Chưa có trần lượt dán/ngày + thống kê (someday) |
 | Căn cứ | Chưa có căn cứ `staff_assist_dpia_v1` cho gợi ý LLM trên tin buyer sàn: GAP — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
+### DF-36 — Tra cứu khoa học nội bộ SX-A7 (v10.2)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | Nhà cung cấp embedding/LLM qua `pipelines.llm_gateway` (agent `sx_tracuu`, cap tháng riêng; LLM chỉ khi `--llm`, mặc định tắt) — không gửi tới khách/kênh ngoài |
+| Dữ liệu gửi đi (sau biện pháp) | Câu hỏi tra cứu của nhân viên sản xuất (≤2000 ký tự) + đoạn tài liệu khoa học NỘI BỘ đã được GĐ SX duyệt nạp (`chunks_internal` collection `internal:sx`); không dữ liệu cá nhân (đoạn trích qua `_mask_pii`) |
+| Lớp | Vàng |
+| Mục đích | Tra cứu nội bộ tài liệu khoa học có trích nguồn DOI/URL cho bộ phận sản xuất — KHÔNG dùng cho truyền thông, không claim công dụng ra ngoài |
+| Biện pháp kỹ thuật | Collection `internal:sx` là HẰNG trong module; chatbot khách (`api.rag.answer`) không có tham số collection — test DB `test_public_retrieve_and_answer_never_return_sx`; Mọi đầu ra mở đầu nhãn "NỘI BỘ – không dùng cho truyền thông"; mặc định trích nguyên văn, LLM chỉ khi `--llm` + `guardrail.check` ok; Không có đường sang bản nháp nội dung/hàng duyệt/chatbot (grep test); câu về rượu → không tra, 0 embed; Gateway: PII mask + provider routing + kill/cap theo agent |
+| Thời hạn lưu (theo map) | Theo vòng đời tài liệu nội bộ trong `chunks_internal` (nạp lại theo doc_sha256); file báo cáo cục bộ — GIẢ ĐỊNH, chủ khối SX chốt |
+| Rủi ro tồn dư | Tài liệu khoa học thật + GĐ SX duyệt nạp (`--approved-by` người thật) — external-dep; Bản quyền bài báo (PubMed/Semantic Scholar/tạp chí): chỉ nạp tài liệu được phép lưu nội bộ — Pháp chế xác nhận; Gửi đoạn tài liệu nội bộ qua nhà cung cấp embedding nước ngoài — TIA chưa ký |
+| Căn cứ | Lợi ích hợp pháp (nghiên cứu nội bộ, không dữ liệu cá nhân); bản quyền tài liệu khoa học bên ngoài: CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
+### DF-37 — Dự báo thời tiết VT (v10.2)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | Nhà cung cấp dự báo (Open-Meteo hoặc API có phí) — CHỈ khi `fetch.enabled = true` (mặc định false), GET qua `crawler.intel.Fetcher` (robots, ≥1s/host, chặn sàn/MXH/tầng C); mặc định nhập tay CSV, không gửi gì |
+| Dữ liệu gửi đi (sau biện pháp) | Tọa độ VÙNG trồng đã làm tròn 0,1° (~11 km, không phải tọa độ khoảnh) + số ngày dự báo gửi nhà cung cấp dự báo; dự báo mưa/nhiệt trả về; nhật ký `plot_logs` (chỉ mã khoảnh, ngày, cờ từ `detail`) đọc nội bộ |
+| Lớp | Xanh |
+| Mục đích | Cảnh báo mưa lớn/rét và dấu hiệu sâu bệnh theo khoảnh → gợi ý "cần đi kiểm tra" cho GĐ vùng trồng |
+| Biện pháp kỹ thuật | Tọa độ cấu hình bắt buộc đã làm tròn 0,1° (sai → exit 1); `[req]` chỉ chứa tọa độ vùng làm tròn (test parse query); Digest không chứa lat/lon/`location`/`area_m2`/người ghi; không chẩn đoán/liều lượng/hoạt chất; qua `guardrail.check` trước khi ghi; Cờ sâu bệnh CHỈ quét `detail` (`garden_director.log_flags`); 0 LLM; không gửi/đăng gì; GĐ duyệt mục = đã xem |
+| Thời hạn lưu (theo map) | Mục hàng duyệt theo `approval_queue` (append-only trạng thái); file digest cục bộ — GIẢ ĐỊNH, GĐ vùng trồng chốt |
+| Rủi ro tồn dư | Điều khoản thương mại Open-Meteo / API thời tiết có phí chưa xác minh — giữ `fetch.enabled=false`; Ngưỡng mưa/nhiệt + gán khoảnh→vùng GIẢ ĐỊNH — GĐ vùng trồng chốt; Người duyệt thật khối farming (`approvers: []`) — external-dep |
+| Căn cứ | Lợi ích hợp pháp (vận hành vùng trồng, không dữ liệu cá nhân); điều khoản thương mại nhà cung cấp dự báo: CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
 ## 3. Luồng không thuộc TIA
 

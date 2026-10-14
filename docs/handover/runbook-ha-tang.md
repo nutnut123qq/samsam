@@ -155,7 +155,11 @@ phòng Dự án — `agents/da_hoso.py --llm` viết lại thư đăng ký chư�
 trình; mặc định TẮT, cap tháng riêng; kill như agent khác). `mkt_video`
 (v6.3 MKT-04 — `pipelines/video_studio.py` viết kịch bản video nháp; cap
 tháng riêng 2.0 USD; kill `LLM_KILL=mkt_video` → CLI báo `failed: llm`,
-không dựng video). Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
+không dựng video). `sx_tracuu` (v10.2 SX-A7, khối SX — `agents/sx_tracuu.py`
+tra cứu tài liệu khoa học NỘI BỘ: embed câu hỏi luôn qua gateway, `chat`
+chỉ khi `--llm` — mặc định TẮT; cap tháng 1.0 USD ƯỚC TÍNH; kill
+`LLM_KILL=sx_tracuu` → embed bị chặn, tra cứu trả "chưa có dữ liệu" kèm
+lý do, không gọi chat). Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
 `embed("...")` và hằng `AGENT = "..."` trong `api/`, `pipelines/`,
 `ingest/`, `agents/`, `connectors/` (nhờ dev nếu cần).
 

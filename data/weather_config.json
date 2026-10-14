@@ -1,0 +1,14 @@
+{
+  "_doc": "GIẢ ĐỊNH — cấu hình VT Agent Cảnh báo thời tiết & sâu bệnh (v10.2, agents/vt_thoitiet.py). Vùng/tọa độ/gán khoảnh→vùng và ngưỡng mưa/nhiệt là GIẢ ĐỊNH của dev — GĐ vùng trồng chốt (external-dep). Tọa độ là tọa độ VÙNG đã làm tròn 0,1° (~11 km), KHÔNG phải tọa độ khoảnh; chỉ gửi ra nhà cung cấp dự báo khi fetch.enabled = true. fetch.enabled mặc định false: điều khoản thương mại Open-Meteo / API có phí chưa xác minh → dùng --from-csv nhập tay. Ngưỡng: mưa > rain_mm_day mm/ngày → 'mua_lon'; nhiệt độ thấp nhất < tmin_c °C → 'ret' (bằng ngưỡng không cảnh báo).",
+  "areas": [
+    {"code": "vung-a", "name": "Vùng A (GIẢ ĐỊNH)", "lat": 15.1, "lon": 107.9, "plots": ["KV-A01", "KV-A02"]},
+    {"code": "vung-b", "name": "Vùng B (GIẢ ĐỊNH)", "lat": 15.0, "lon": 108.0, "plots": ["KV-B01"]}
+  ],
+  "thresholds": {"rain_mm_day": 50, "tmin_c": 5},
+  "fetch": {
+    "enabled": false,
+    "url_template": "https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&daily=precipitation_sum,temperature_2m_min,temperature_2m_max&timezone=Asia%2FHo_Chi_Minh&forecast_days={days}",
+    "days": 7
+  },
+  "flag_days": 7
+}

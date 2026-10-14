@@ -2,15 +2,20 @@
 → cảnh báo đỏ + leo thang 2 giờ chưa xác nhận.
 
 Contract:
-  - Luật: 3 luật CỨNG trong code (`RULES`), từ khóa trong
+  - Luật: 4 luật CỨNG trong code (`RULES`), từ khóa trong
     `data/intel_alert_rules.json` (GIẢ ĐỊNH — chờ Pháp chế/Quản lý MXH):
       brand_negative     = nhóm brand ∧ nhóm negative
       regulation         = nhóm regulation ∧ (chủ đề tpbvsk|quang_cao hoặc
                            cờ ruou)
       competitor_penalty = chủ đề doi_thu ∧ nhóm penalty
+      legal_doc          = (v10.2 PC-A8 Theo dõi văn bản pháp luật) nguồn
+                           tin ∈ `legal_sources` (id nguồn văn bản tầng A
+                           trong data/intel_sources.json) ∧ (chủ đề
+                           tpbvsk|quang_cao hoặc cờ ruou)
     Khớp cụm qua `crawler.intel.classify` (có dấu/không dấu, "săm lốp" ≠
     "sâm"). `load_rules` fail-closed: file thiếu/rỗng/hỏng/thiếu nhóm/nhóm
-    rỗng/lookback lạ → `IntelAlertConfigError` (KHÔNG quét "0 luật" im lặng).
+    rỗng/lookback lạ/`legal_sources` thiếu-rỗng-sai dạng →
+    `IntelAlertConfigError` (KHÔNG quét "0 luật" im lặng).
   - `scan`: tin `fetched_at >= now - lookback_hours` chưa có cảnh báo → mỗi
     tin khớp ĐÚNG 1 `pipelines.red_alert.raise_alert` (người nhận độc lập
     v4.0; thiếu → dòng vẫn ghi + `route_error`, fail-closed). Unique index
@@ -34,6 +39,7 @@ Exit: 0 ok · 1 luật hỏng / DB lỗi / có cảnh báo nhưng thiếu ngư�
 
 import argparse
 import json
+import re
 import sys
 from contextlib import suppress
 from datetime import datetime, timedelta
@@ -58,8 +64,9 @@ for _s in (sys.stdout, sys.stderr):
 ROOT = Path(__file__).resolve().parent.parent
 RULES_FILE = ROOT / "data" / "intel_alert_rules.json"
 GROUPS = ("brand", "negative", "regulation", "penalty")
-RULES = ("brand_negative", "regulation", "competitor_penalty")
+RULES = ("brand_negative", "regulation", "competitor_penalty", "legal_doc")
 REG_TOPICS = ("tpbvsk", "quang_cao")
+_SRC_ID_RE = re.compile(r"[a-z0-9_-]+")
 SOURCE_AGENT = "intel_red_alert"
 # Hằng code — KHÔNG đọc từ file (cấu hình không nới được thời hạn leo thang).
 ESCALATE_AFTER = timedelta(hours=2)
@@ -136,13 +143,20 @@ def load_rules(path=None) -> dict:
     lb = cfg.get("lookback_hours")
     if isinstance(lb, bool) or not isinstance(lb, int) or not 1 <= lb <= 720:
         raise IntelAlertConfigError(f"{p.name}: lookback_hours phải 1..720")
+    legal = cfg.get("legal_sources")
+    if (not isinstance(legal, list) or not legal
+            or not all(isinstance(x, str) and _SRC_ID_RE.fullmatch(x)
+                       for x in legal)):
+        raise IntelAlertConfigError(f"{p.name}: legal_sources phải là list "
+                                    "id nguồn [a-z0-9_-] không rỗng")
     return {"groups": out, "lookback_hours": lb,
+            "legal_sources": frozenset(legal),
             "status": str(cfg.get("status") or "")}
 
 
 def match(item: dict, rules: dict) -> list[str]:
     """THUẦN — tên luật khớp (thứ tự `RULES`). item: title/snippet/topics/
-    flags như dòng `intel_items` (không mở URL)."""
+    flags/source như dòng `intel_items` (không mở URL)."""
     hit, flags = classify(item.get("title") or "", item.get("snippet") or "",
                           rules["groups"])
     hit = set(hit)
@@ -155,6 +169,9 @@ def match(item: dict, rules: dict) -> list[str]:
         out.append("regulation")
     if "doi_thu" in topics and "penalty" in hit:
         out.append("competitor_penalty")
+    if (item.get("source") in rules.get("legal_sources", ())
+            and (topics & set(REG_TOPICS) or "ruou" in flags)):
+        out.append("legal_doc")
     return out
 
 
@@ -174,7 +191,7 @@ def scan(conn, now: datetime, rules: dict | None = None,
           "ids": []}
     for iid, title, snip, topics, flags, url, src, pub, fetched in rows:
         hits = match({"title": title, "snippet": snip, "topics": topics,
-                      "flags": flags}, rules)
+                      "flags": flags, "source": src}, rules)
         if not hits:
             continue
         try:
