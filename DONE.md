@@ -1846,6 +1846,15 @@ object_id → chạy lại ngày khác tạo mục pending mới; help `--date` 
 machine_code CK-A5 chưa ép 1 dòng; key LLM so khớp không NFC; vài nhánh biên
 `--date` hợp lệ/tín hiệu tương lai/thu hoạch tương lai chưa test.
 
+Nhánh `ai-infra`: M31 đợt gộp 8 (2026-10-15) — v11.0 đã gộp (merge sạch; cây
+sau gộp trùng `infra-v110`, diff 0 dòng; 75 bảng, 25 suite, DF-01..DF-40, SOP
+5x — số tạm của v11.0 trùng đúng số kế tiếp, không đánh lại). Gate:
+apply_schema --roles ×2 sạch, `dpia_draft --check`, `--deterministic
+--no-record` 14 suite tất định PASS, `pipelines.store --verify-log` +
+`agents.garden_director --verify` nguyên vẹn, full pytest 4764 passed / 3
+skipped docker (chạy trên cây trùng — `evidence/v110_full_coord.log`). Hết 35
+version kế hoạch M30 + M31.
+
 Nhánh `ai-infra`: M31 đợt gộp 7 (2026-10-15) — v10.2, v10.1, v5.4, v10.0 đã gộp
 (75 bảng; 25 suite eval; DF-01..DF-39 + DPIA/TIA 39 luồng). Tích hợp khi gộp:
 SOP đánh số 5t (v10.2), 5u (v10.1), 5v (v5.4), 5w (v10.0); luồng v10.1 DF-36/37
