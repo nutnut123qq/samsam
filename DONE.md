@@ -1500,6 +1500,18 @@ manual_export trước khi lọc NaN; SOP nói chạy được bằng bks_reader
 lỗi `--submit` in str(e) không qua `_mask_pii`; test `_is_read` coi
 `select <hàm ghi>(...)` là đọc; test hdtv phụ thuộc now() DB ≥ 01/09/2026.
 
+Nhánh `ai-infra`: M31 đợt gộp 7 (2026-10-15) — v10.2, v10.1, v5.4, v10.0 đã gộp
+(75 bảng; 25 suite eval; DF-01..DF-39 + DPIA/TIA 39 luồng). Tích hợp khi gộp:
+SOP đánh số 5t (v10.2), 5u (v10.1), 5v (v5.4), 5w (v10.0); luồng v10.1 DF-36/37
+→ DF-38/39 (comment `test_data_flow_map`); `llm_gateway.json` gộp cap tháng
+`sx_tracuu` (v10.2) + `kd_livestream`/`mkt_youtube` (v10.1); runbook mục 5 nối
+cả 3 agent id; schema gộp bằng `union_sql` + kiểm bảo toàn dòng 2 phía + kiểm
+trigger `*_no_truncate` đủ thân (sạch). Gate: apply_schema --roles ×2 sạch
+(75 bảng), ruff sạch, `agent_eval --validate` 25/25 + `--deterministic
+--no-record` mọi suite PASS, `dpia_draft --check`, `pipelines.store
+--verify-log` nguyên vẹn, full pytest 4618 passed / 3 skipped (test_dr_drill —
+Docker tắt) — `evidence/m31_dot7_pytest.log`.
+
 Nhánh `ai-infra`: M31 đợt gộp 6 (2026-10-14) — v6.5, v5.3, v10.3, v6.3, v8.1, v6.4,
 v8.2 đã gộp (71 bảng; 22 suite eval; DF-01..DF-35 + DPIA/TIA 35 luồng). Trước gộp
 vá riêng 2 lỗi đỏ chung mọi worktree: test garden date-bomb (ảnh fixture
