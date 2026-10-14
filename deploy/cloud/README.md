@@ -158,6 +158,7 @@ bảng nào thì dừng, không bật app.
 | `programs` | A (chạy lại `python -m agents.da_radar --scan` trên `intel_items`) hoặc B | chương trình xúc tiến (v8.3) — B giữ `first_seen` (ngày phát hiện → nhắc hạn) |
 | `org_prospects` | B | tổ chức mua quà (v8.3) nhập tay — trạng thái lô/chuyển sales không dựng lại được; không cột định danh cá nhân |
 | `decision_log` | B | sổ quyết định TGĐ (v8.1) — append-only, NGƯỜI ghi; quyết định + chuỗi theo dõi không dựng lại được từ nguồn nào |
+| `care_purchases` | B | lần mua kênh sở hữu do người ghi (v10.1 KD-A7) — chỉ `contact_id`, không PII; nguồn chăm sóc lại theo consent |
 | `b2b_requests` | B | yêu cầu báo giá B2B từ form (v8.2) — insert-only, yêu cầu khách không dựng lại được; PII người liên hệ ở `contacts` (vault) |
 | `project_milestones` | B (hoặc A: `python -m agents.da_pmo --seed` — mất trạng thái/evidence/hạn đã duyệt đổi) | sổ mốc phòng Dự án (v8.3) |
 | `image_assets` | B | metadata ảnh nháp MKT-03 (v6.2) — file PNG + sidecar ở `IMAGE_OUT_DIR` phải chép theo riêng (không nằm trong dump) |

@@ -101,6 +101,9 @@ def _sample(sources: dict) -> bool:
         str(s).startswith("sample:") for s in sources)
 
 
+_NOT_CANCELLED = " and status is distinct from 'cancelled'"
+
+
 def collect_db(conn, since: datetime, until: datetime) -> dict:
     """Query toàn bộ số liệu DB cho báo cáo (1 lượt). `psycopg.Error`
     (kết nối chết giữa chừng, thiếu bảng) → {"db_ok": False} — caller
@@ -108,16 +111,19 @@ def collect_db(conn, since: datetime, until: datetime) -> dict:
     p = (since, until)
     prev = (since - (until - since), since)  # kỳ trước cùng độ dài
     try:
+        # v10.1: đơn `cancelled` (kd_orders ghi từ file sàn, total_vnd vẫn
+        # = Σ giá×SL) KHÔNG tính vào Đơn hàng/Doanh thu/kênh/top — chỉ hiện
+        # ở dòng Trạng thái.
         cur_cnt, cur_rev = conn.execute(
             "select count(*), coalesce(sum(total_vnd),0) from orders "
-            "where ts >= %s and ts < %s", p).fetchone()
+            "where ts >= %s and ts < %s" + _NOT_CANCELLED, p).fetchone()
         prev_cnt, prev_rev = conn.execute(
             "select count(*), coalesce(sum(total_vnd),0) from orders "
-            "where ts >= %s and ts < %s", prev).fetchone()
+            "where ts >= %s and ts < %s" + _NOT_CANCELLED, prev).fetchone()
         order_channel = conn.execute(
             "select channel, count(*), coalesce(sum(total_vnd),0) "
-            "from orders where ts >= %s and ts < %s "
-            "group by channel order by 2 desc", p).fetchall()
+            "from orders where ts >= %s and ts < %s" + _NOT_CANCELLED
+            + " group by channel order by 2 desc", p).fetchall()
         order_status = dict(conn.execute(
             "select status, count(*) from orders "
             "where ts >= %s and ts < %s group by status",
@@ -127,7 +133,8 @@ def collect_db(conn, since: datetime, until: datetime) -> dict:
             "coalesce(sum(o.qty),0), coalesce(sum(o.total_vnd),0) "
             "from orders o left join products p "
             "on p.id = o.product_id "
-            "where o.ts >= %s and o.ts < %s "
+            "where o.ts >= %s and o.ts < %s"
+            " and o.status is distinct from 'cancelled' "
             "group by 1 order by 3 desc limit 5", p).fetchall()
         order_sources = dict(conn.execute(
             "select source, count(*) from orders "
@@ -420,6 +427,11 @@ def render(rep: dict) -> str:
             L.append("- Top doanh thu: " + "; ".join(
                 f"{name} ({qty} sp / {_fmt_vnd(rev)})"
                 for name, qty, rev in sales["top"]))
+        if sales["by_status"].get("cancelled"):
+            L.append("- Đơn `cancelled` không tính vào Đơn hàng/Doanh thu.")
+        if any(str(s).startswith("market:") for s in sales["sources"]):
+            L.append("- Đơn sàn (nạp từ file Seller Center): ngày đơn = "
+                     "ngày nạp file (giả định — file sàn chưa map ngày đặt).")
         if sales["count"] == 0:
             L.append("- Không có đơn nào trong kỳ.")
         L.append("")

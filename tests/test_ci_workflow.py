@@ -66,10 +66,10 @@ def test_deterministic_suites_are_guardrail_and_co_khi():
 
     det = {n for n in ae.suite_names() if ae._deterministic(ae.load_suite(n))}
     # v6.5: + mkt_seo (seo_san.suggest thuần — 0 mạng/LLM/DB); v6.3: + mkt04
-    # v6.4: + mkt_ads_ugc; v8.2: + kd_a3
+    # v6.4: + mkt_ads_ugc; v8.2: + kd_a3; v10.1: + kd_a7, kd_a9, mkt12
     assert det == {"guardrail", "co_khi", "mkt02", "mkt03", "mkt04",
                    "sales_director", "kd_a1", "mkt_seo", "kd_a5",
-                   "mkt_ads_ugc", "kd_a3"}
+                   "mkt_ads_ugc", "kd_a3", "kd_a7", "kd_a9", "mkt12"}
     assert not ae._deterministic(ae.load_suite("chatbot"))
     skel = [n for n in ae.suite_names()
             if ae.load_suite(n)["status"] == "skeleton"]

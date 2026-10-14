@@ -189,6 +189,16 @@ layout; font thương hiệu, B-roll quay thật, nhạc có license chưa có).
 | Template | Version | sha256 (12 hex đầu) | Trạng thái |
 |---|---|---|---|
 | `video_script` | `video_script@1` | `bba8df8bd37f` | chờ GĐ Marketing duyệt |
+| `livestream_script` | `livestream_script@1` | `38ac96051fb5` | chờ GĐ Marketing duyệt |
+| `youtube_long` | `youtube_long@1` | `204e78558f09` | chờ GĐ Marketing duyệt |
+
+v10.1: `livestream_script` (KD-A9 `agents/kd_live.py`, gateway agent
+`kd_livestream`) — LLM CHỈ viết lời dẫn từng SKU + hỏi-đáp bình luận JSON
+`{"mo_dau", "san_pham": [{"sku", "loi_dan"}], "hoi_dap": [{"hoi", "dap"}],
+"ket"}`; giỏ/giá/khuyến cáo/nhãn do code. `youtube_long` (MKT-12
+`agents/mkt_youtube.py`, gateway agent `mkt_youtube`) — JSON `{"title",
+"description", "segments": [{"title", "text", "visual", "duration_s"}],
+"shorts"}`; chương/SRT/nhãn do code. Cả hai cap tháng 2.0 USD (ước tính dev).
 
 Template `video_script` đòi DUY NHẤT JSON `{"scenes": [{"text", "visual":
 "packshot"|"broll"}]}`, 5–8 cảnh, mỗi câu ≤ 60 ký tự, không người/bác sĩ/

@@ -219,9 +219,22 @@
 | Rủi ro tồn dư | Điều khoản thương mại Open-Meteo / API thời tiết có phí chưa xác minh — giữ `fetch.enabled=false`; Ngưỡng mưa/nhiệt + gán khoảnh→vùng GIẢ ĐỊNH — GĐ vùng trồng chốt; Người duyệt thật khối farming (`approvers: []`) — external-dep |
 | Căn cứ | Lợi ích hợp pháp (vận hành vùng trồng, không dữ liệu cá nhân); điều khoản thương mại nhà cung cấp dự báo: CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
+### DF-39 — Kịch bản livestream (KD-A9) + gói video YouTube dài (MKT-12) qua LLM gateway (v10.1)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | OpenRouter (Mỹ) → whitelist provider (Mỹ) — chỉ brief + tên SKU, qua `_mask_pii` của gateway |
+| Dữ liệu gửi đi (sau biện pháp) | Brief do nhân viên nhập (quy trình: không đưa dữ liệu khách), tên SKU golden + mã SKU trong giỏ (KHÔNG giá — giá do code điền sau), lời dẫn/kịch bản nháp; KHÔNG dữ liệu khách |
+| Lớp | Vàng |
+| Mục đích | Soạn NHÁP lời dẫn livestream + hỏi-đáp bình luận, gói video YouTube dài (tiêu đề/mô tả/chương/phụ đề) chờ người duyệt |
+| Biện pháp kỹ thuật | `_mask_pii` + kill-switch + trần chi phí tháng (`kd_livestream`, `mkt_youtube`) ở gateway; Từ chối TRƯỚC LLM: rượu, SKU không promotable, quá trần phiên/tuần, brief có từ cấm; Câu LLM chạm số/giá/rượu bị bỏ; giá do code từ `v_promotable`; câu hỏi sức khỏe → câu trả lời mẫu; `check_publish` toàn văn + 1 lượt sửa → vi phạm thì không lưu; YouTube `privacyStatus` cố định private, không có đường đăng |
+| Thời hạn lưu (theo map) | Không giới hạn — hồ sơ duyệt append-only (bằng chứng tuân thủ quảng cáo); file Shorts xem trước xóa tay |
+| Rủi ro tồn dư | Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email); Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday) |
+| Căn cứ | Lợi ích hợp pháp/hợp đồng lao động với nhân viên — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
 ## 3. Luồng không thuộc TIA
 
-Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15, DF-18, DF-19, DF-20, DF-25, DF-26, DF-27, DF-31, DF-32, DF-33, DF-34, DF-35.
+Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15, DF-18, DF-19, DF-20, DF-25, DF-26, DF-27, DF-31, DF-32, DF-33, DF-34, DF-35, DF-38.
 
 ## 4. Ký duyệt
 

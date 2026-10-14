@@ -141,7 +141,8 @@ STATUSES = ("active", "skeleton")
 SCORERS = ("guardrail", "co_khi", "mkt02", "mkt03", "mkt04",
            "sales_director",
            "eval_qa", "handoff", "exact", "regex", "judge", "cskh",
-           "mkt_seo", "kd_a5", "mkt_ads_ugc", "kd_a3")
+           "mkt_seo", "kd_a5", "mkt_ads_ugc", "kd_a3", "kd_a7", "kd_a9",
+           "mkt12")
 # Nguồn DUY NHẤT của tên runner hợp lệ (RUNNERS.keys() phải trùng).
 RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "chatbot": {"eval_qa", "handoff", "exact", "regex",
@@ -155,10 +156,13 @@ RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "cskh": {"cskh"},
                   "kd_a5": {"kd_a5"},
                   "mkt_ads_ugc": {"mkt_ads_ugc"},
-                  "kd_a3": {"kd_a3"}}
+                  "kd_a3": {"kd_a3"},
+                  "kd_a7": {"kd_a7"},
+                  "kd_a9": {"kd_a9"},
+                  "mkt12": {"mkt12"}}
 DETERMINISTIC_RUNNERS = ("guardrail", "co_khi", "mkt02", "mkt03", "mkt04",
                          "sales_director", "cskh", "mkt_seo", "kd_a5",
-                         "mkt_ads_ugc", "kd_a3")
+                         "mkt_ads_ugc", "kd_a3", "kd_a7", "kd_a9", "mkt12")
 # Hit giả mặc định của runner cskh (ca không khai `fake_hits`).
 CSKH_DEFAULT_HIT = {"title": "Sản phẩm Sâm Sâm", "lang": "vi",
                     "url": "https://samsamngoclinh.com/san-pham",
@@ -171,7 +175,17 @@ CO_KHI_KINDS = ("fact", "high_risk", "trap_no_data")
 # v6.1 mkt02: ca không có `text` (đầu vào = op × sku × kênh); v6.2 mkt03
 # cũng vậy (đầu vào = sku × kênh × format × headline).
 NO_TEXT_SCORERS = {"mkt02", "mkt03", "mkt04", "mkt_seo", "kd_a5",
-                   "mkt_ads_ugc", "kd_a3"}
+                   "mkt_ads_ugc", "kd_a3", "kd_a7", "kd_a9", "mkt12"}
+# v10.1 KD-A7/KD-A9/MKT-12: khóa ca bắt buộc + khóa expect hợp lệ (đầu vào
+# = hàm thuần/LLM GIẢ theo ca — 0 DB/mạng).
+V101_CASE_KEYS = {"kd_a7": ("now", "purchases", "consents", "promotable"),
+                  "kd_a9": ("channel", "cart", "day", "brief", "promotable",
+                            "fake_llm"),
+                  "mkt12": ("brief", "fake_llm")}
+V101_EXPECT_KEYS = {"kd_a7": {"rebuy", "review", "skipped", "gui_luc"},
+                    "kd_a9": {"refused", "llm_calls", "contains", "absent"},
+                    "mkt12": {"refused", "llm_calls", "contains", "absent",
+                              "privacy", "chapters_min"}}
 # v6.5 mkt_seo (MKT-11 SEO sàn): kind + khóa expect hợp lệ.
 MKT_SEO_KINDS = ("keyword_in", "keyword_out", "title_limit", "trap_alcohol",
                  "trap_ngoc_linh", "trap_banned")
@@ -695,6 +709,21 @@ def _validate_kd_a3_case(c: dict, cid, exp) -> list[str]:
     return errs
 
 
+def _validate_v101_case(c: dict, cid, exp, sc: str) -> list[str]:
+    """v10.1 kd_a7/kd_a9/mkt12: đủ khóa đầu vào; expect object khóa ⊂
+    V101_EXPECT_KEYS; fake_llm list 1..2 phần tử (bản nháp + lượt sửa)."""
+    errs = [f"ca {cid}: thiếu '{k}'" for k in V101_CASE_KEYS[sc]
+            if k not in c]
+    if not (isinstance(exp, dict) and exp
+            and set(exp) <= V101_EXPECT_KEYS[sc]):
+        errs.append(f"ca {cid}: expect phải object khóa ⊂"
+                    f" {sorted(V101_EXPECT_KEYS[sc])}")
+    fl = c.get("fake_llm")
+    if "fake_llm" in c and not (isinstance(fl, list) and 1 <= len(fl) <= 2):
+        errs.append(f"ca {cid}: fake_llm phải list 1..2 phản hồi")
+    return errs
+
+
 def _validate_case(c, i: int, d: dict) -> list[str]:
     if not isinstance(c, dict):
         return [f"cases[{i}] không phải object"]
@@ -740,6 +769,8 @@ def _validate_case(c, i: int, d: dict) -> list[str]:
         errs += _validate_mkt_ads_ugc_case(c, cid, exp)
     elif sc == "kd_a3":
         errs += _validate_kd_a3_case(c, cid, exp)
+    elif sc in V101_CASE_KEYS:
+        errs += _validate_v101_case(c, cid, exp, sc)
     elif sc == "eval_qa" and (not _is_int(cid) or exp is not None):
         errs.append(f"ca {cid}: eval_qa cần id số (questions.md) + expect"
                     " null")
@@ -1376,6 +1407,49 @@ def _score_kd_a3(case: dict, out: dict) -> tuple[bool, str]:
                               f"{out['codes']}")
 
 
+def _score_v101(case: dict, out: dict) -> tuple[bool, str]:
+    """v10.1: so từng khóa expect — refused (mã hoặc null), llm_calls,
+    contains/absent (trên toàn văn), rebuy/review (tập lần mua), skipped
+    {"<id>:<kind>": lý do}, gui_luc (mọi payload), privacy, chapters_min
+    (≥ n chương, dòng đầu 00:00)."""
+    exp = case["expect"]
+    got = (out.get("refused") or {}).get("code")
+    if "refused" in exp and got != exp["refused"]:
+        return False, f"refused kỳ vọng {exp['refused']}, có {got}"
+    if "llm_calls" in exp and out.get("llm_calls") != exp["llm_calls"]:
+        return False, (f"llm_calls kỳ vọng {exp['llm_calls']}, có"
+                       f" {out.get('llm_calls')}")
+    text = out.get("text") or ""
+    miss = [s for s in exp.get("contains", []) if s not in text]
+    bad = [s for s in exp.get("absent", []) if s in text]
+    if miss or bad:
+        return False, f"thiếu {len(miss)} cụm / thừa {len(bad)} cụm"
+    for kind in ("rebuy", "review"):
+        if kind in exp:
+            ids = sorted(i["purchase_id"] for i in out.get("items", [])
+                         if i["kind"] == kind)
+            if ids != sorted(exp[kind]):
+                return False, f"{kind} kỳ vọng {sorted(exp[kind])}, có {ids}"
+    if "skipped" in exp:
+        sk = {f"{s['purchase_id']}:{s['kind']}": s["ly_do"]
+              for s in out.get("skipped", [])}
+        diff = {k: v for k, v in exp["skipped"].items() if sk.get(k) != v}
+        if diff:
+            return False, f"skipped lệch {sorted(diff)}"
+    if "gui_luc" in exp and not all(
+            f"gui_luc: {exp['gui_luc']}" in i["payload"]
+            for i in out.get("items", [])):
+        return False, "gui_luc lệch"
+    if "privacy" in exp and (out.get("meta") or {}).get(
+            "privacyStatus") != exp["privacy"]:
+        return False, "privacyStatus lệch"
+    if "chapters_min" in exp:
+        ch = out.get("chapters") or []
+        if len(ch) < exp["chapters_min"] or not ch[0].startswith("00:00 "):
+            return False, f"chương không đạt ({len(ch)})"
+    return True, ""
+
+
 def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
     sc = case.get("scorer", "guardrail")
     if sc == "guardrail":
@@ -1401,6 +1475,8 @@ def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
         return _score_mkt_ads_ugc(case, out)
     if sc == "kd_a3":
         return _score_kd_a3(case, out)
+    if sc in V101_CASE_KEYS:
+        return _score_v101(case, out)
     if sc == "eval_qa":
         import eval_qa  # scripts/ — tái dùng luật chấm Q1-12
         return eval_qa.check_question(int(case["id"]), out)
@@ -1891,12 +1967,107 @@ def run_kd_a3(cases, judge_model=None):
             os.environ["GUARDRAIL_LLM_MODEL"] = saved
 
 
+def _golden_skus() -> dict:
+    gold = json.loads((ROOT / "data" / "golden_skus.json").read_bytes()
+                      .decode("utf-8"))
+    return {s["sku_key"]: {"name": s["name"], "category": s.get("category")}
+            for s in gold["skus"]}
+
+
+def _rmap(c: dict):
+    return ({(a, b): lv for a, b, lv in c["readiness"]}
+            if c.get("readiness") is not None else None)
+
+
+def _fake_chat_seq(responses: list, calls: list):
+    def fake(agent, messages, **kw):
+        calls.append(agent)
+        r = responses[min(len(calls), len(responses)) - 1]
+        return _fake_completion(r if isinstance(r, str) else json.dumps(
+            r, ensure_ascii=False))
+    return fake
+
+
+def run_kd_a7(cases, judge_model=None):
+    """v10.1 KD-A7 (bộ MẪU chờ GĐ bán hàng gán nhãn): `kd_care.select_items`
+    THUẦN trên luật THẬT data/care_rules.json + golden — 0 DB/mạng/LLM."""
+    from datetime import date, datetime
+
+    from agents import kd_care as kc  # lazy
+
+    rules, skus = kc.load_rules(), _golden_skus()
+
+    def produce(c):
+        data = {
+            "purchases": [{
+                "id": p["id"], "contact_id": p["contact_id"],
+                "channel": p["channel"], "sku_key": p["sku_key"],
+                "name": skus[p["sku_key"]]["name"],
+                "category": skus[p["sku_key"]]["category"],
+                "purchased_on": date.fromisoformat(p["purchased_on"]),
+                "delivered_on": (date.fromisoformat(p["delivered_on"])
+                                 if p.get("delivered_on") else None)}
+                for p in c["purchases"]],
+            "consent": {(a, b): True for a, b in c["consents"]},
+            "promotable": set(c["promotable"]),
+            "month_counts": {int(k): v for k, v in
+                             (c.get("month_counts") or {}).items()},
+            "seen_rebuy": set(), "seen_review": set()}
+        return kc.select_items(data, datetime.fromisoformat(c["now"]), rules,
+                               _rmap(c))
+
+    return _run(cases, produce, judge_model, show_answer=False)
+
+
+def run_kd_a9(cases, judge_model=None):
+    """v10.1 KD-A9 (bộ MẪU): `kd_live.generate` THẬT (luật trước LLM, lọc
+    câu số/rượu, template sức khỏe, khuyến cáo/nhãn, guardrail) trên LLM GIẢ
+    theo ca — 0 DB/mạng."""
+    from datetime import date
+    from unittest import mock
+
+    from agents import kd_live as kl  # lazy
+
+    rules, skus = kl.load_rules(), _golden_skus()
+
+    def produce(c):
+        calls: list = []
+        ctx = {"skus": skus, "promotable": dict(c["promotable"]),
+               "n_sessions": c.get("n_sessions", 0), "readiness": _rmap(c)}
+        with mock.patch.object(kl, "chat",
+                               _fake_chat_seq(c["fake_llm"], calls)):
+            res = kl.generate(c["channel"], c["cart"],
+                              date.fromisoformat(c["day"]), c["brief"], ctx,
+                              rules)
+        return {**res, "llm_calls": len(calls)}
+
+    return _run(cases, produce, judge_model, show_answer=False)
+
+
+def run_mkt12(cases, judge_model=None):
+    """v10.1 MKT-12 (bộ MẪU): `mkt_youtube.write_package` THẬT trên LLM GIẢ
+    theo ca — 0 DB/mạng, không dựng video."""
+    from unittest import mock
+
+    from agents import mkt_youtube as my  # lazy
+
+    def produce(c):
+        calls: list = []
+        with mock.patch.object(my, "chat",
+                               _fake_chat_seq(c["fake_llm"], calls)):
+            res = my.write_package(c["brief"], readiness=_rmap(c))
+        return {**res, "llm_calls": len(calls)}
+
+    return _run(cases, produce, judge_model, show_answer=False)
+
+
 RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot,
            "co_khi": run_co_khi, "mkt02": run_mkt02, "mkt03": run_mkt03,
            "mkt04": run_mkt04,
            "sales_director": run_sales_director, "cskh": run_cskh,
            "mkt_seo": run_mkt_seo, "kd_a5": run_kd_a5,
-           "mkt_ads_ugc": run_mkt_ads_ugc, "kd_a3": run_kd_a3}
+           "mkt_ads_ugc": run_mkt_ads_ugc, "kd_a3": run_kd_a3,
+           "kd_a7": run_kd_a7, "kd_a9": run_kd_a9, "mkt12": run_mkt12}
 
 
 def score(results: list[tuple[dict, bool, str]], threshold: dict) -> dict:

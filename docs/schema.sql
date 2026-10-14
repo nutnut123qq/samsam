@@ -3214,3 +3214,30 @@ create or replace trigger b2b_requests_append_only_row
 create or replace trigger b2b_requests_no_truncate
   before truncate on b2b_requests
   for each statement execute function append_only_guard();
+
+-- ============================================================================
+-- v10.1 KD-A7 (WP16) — lần mua của khách KÊNH SỞ HỮU (web/Zalo/B2B/showroom)
+-- để agent `agents.kd_care` lập NHÁP tin chăm sóc lại / xin đánh giá. Khách
+-- sàn (Shopee/TikTok) bị CHẶN Ở DB — khách sàn chỉ chăm sóc bằng công cụ của
+-- sàn (điều khoản sàn cấm kéo khách ra ngoài). KHÔNG cột PII: khách chỉ là
+-- `contact_id` (PII nằm trong vault `contacts` mã hóa); `order_ref` là MÃ
+-- nội bộ. Người ghi (`recorded_by`) là NGƯỜI — agent không tự ghi lần mua.
+-- Không FK sang `orders` (core_store xóa `orders` theo source khi nạp lại).
+-- Quyền: roles.sql KHÔNG grant cho agent_writer/app_human (mặc định từ chối)
+-- — CLI chạy DSN chủ sở hữu; grant hẹp = someday.
+-- ============================================================================
+
+create table if not exists care_purchases (
+  id bigint generated always as identity primary key,
+  contact_id bigint not null references contacts(id),
+  channel text not null check (channel in ('web', 'zalo', 'b2b', 'showroom')),
+  order_ref text check (order_ref ~ '^[A-Za-z0-9_.:-]{1,40}$'),
+  sku_key text not null references sku_master(sku_key),
+  purchased_on date not null,
+  delivered_on date check (delivered_on >= purchased_on),
+  recorded_by text not null check (btrim(recorded_by) <> ''
+                                   and recorded_by not like 'agent:%'),
+  created_at timestamptz not null default now()
+);
+create index if not exists care_purchases_contact_idx
+  on care_purchases (contact_id, purchased_on);

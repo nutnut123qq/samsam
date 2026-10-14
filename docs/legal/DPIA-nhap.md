@@ -457,12 +457,12 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-25 |
-| Module (code) | `ingest/settlement_csv.py` |
+| Module (code) | `ingest/settlement_csv.py`; `agents/kd_orders.py` |
 | Mục đích | Đối soát tiền thực nhận + phí sàn với đơn đã nạp, phát hiện thu sai — chỉ báo cáo, không bút toán |
 | Dữ liệu | Mã đơn (chỉ lưu hash sha256[:16]) + số tiền đơn/phí sàn/hoàn/thực nhận từ file quyết toán Seller Center; cột tên/SĐT/địa chỉ/username người mua bị bỏ ngay khi đọc |
 | Lớp | Đỏ |
 | Chủ thể | Người mua trên sàn (gián tiếp qua mã đơn đã hash) |
-| Nơi lưu | Bảng `settlement_rows` + `recon_results` (không cột người mua); file nguồn do kế toán giữ ngoài repo |
+| Nơi lưu | Bảng `settlement_rows` + `recon_results` (không cột người mua); file nguồn do kế toán giữ ngoài repo. v10.1 KD-A6 (`agents/kd_orders.py`): đơn sàn → bảng lõi `orders` (id `<kênh>:<order_id_hash>`, không PII người mua) + file đối soát `data/reports/doi-soat-*.csv` (gitignored, chỉ 8 ký tự đầu hash). |
 | Thời hạn lưu | Chưa đặt hạn — theo hạn lưu chứng từ kế toán (cần kế toán trưởng chốt) |
 | Bên nhận | Nội bộ — kế toán / GĐ tài chính đọc `--report`; không gửi ra ngoài, không LLM |
 | Chuyển ra nước ngoài | Không |
@@ -686,6 +686,42 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Lợi ích hợp pháp (vận hành vùng trồng, không dữ liệu cá nhân); điều khoản thương mại nhà cung cấp dự báo: CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Điều khoản thương mại Open-Meteo / API thời tiết có phí chưa xác minh — giữ `fetch.enabled=false`; Ngưỡng mưa/nhiệt + gán khoảnh→vùng GIẢ ĐỊNH — GĐ vùng trồng chốt; Người duyệt thật khối farming (`approvers: []`) — external-dep |
 
+### DF-38 — Chăm sóc lại + xin đánh giá khách kênh sở hữu → nháp tin vào hàng duyệt (KD-A7, v10.1)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-38 |
+| Module (code) | `agents/kd_care.py`; `ingest/crm.py` |
+| Mục đích | Lập NHÁP tin nhắc mua lại / xin đánh giá CHỈ cho khách có đồng ý đúng mục đích để GĐ bán hàng duyệt rồi NGƯỜI gửi tay |
+| Dữ liệu | contact_id + trạng thái đồng ý theo mục đích (`marketing` nhắc mua lại, `cskh` xin đánh giá) + lần mua kênh sở hữu do NGƯỜI ghi (`care_purchases`: kênh web/zalo/b2b/showroom, SKU, ngày mua/giao, mã nội bộ) — KHÔNG SĐT/tên/email/địa chỉ (PII chỉ trong vault `contacts` mã hóa, agent không giải mã) |
+| Lớp | Đỏ |
+| Chủ thể | Khách mua qua kênh sở hữu (web/Zalo/B2B/showroom) có trong `contacts` |
+| Nơi lưu | Postgres: `care_purchases` (không cột PII), `approval_queue` mục `care_rebuy`/`care_review` (payload = tin template + `contact_id`/`muc_dich`/`gui_luc` — không PII/ciphertext/HMAC), `agent_action_log` (`care_purchase_record`) |
+| Thời hạn lưu | GIẢ ĐỊNH — Pháp chế chốt thời hạn giữ lần mua/thời hạn liên hệ; chưa có job xóa theo hạn: GAP |
+| Bên nhận | Không — hệ thống không gửi (không LLM, không mạng); người gửi tay qua Zalo OA/ZNS sau khi duyệt + `--verify-send` (sha bản duyệt + đồng ý còn hiệu lực + khung giờ) |
+| Chuyển ra nước ngoài | Không |
+| Biện pháp bảo vệ (có trong code) | Khách sàn bị CHẶN ở DB (CHECK channel) — chỉ chăm sóc bằng công cụ của sàn; `crm.can_contact` mặc định False; rút đồng ý → lần chạy kế 0 mục, `--verify-send` trả `consent`; Trần 2 tin marketing/khách/tháng + khung giờ 08:00–20:00 (GIẢ ĐỊNH `data/care_rules.json`); Tin = template cố định (0 LLM), qua `check_publish` (nhãn QC, rượu, XNQC, khuyến cáo); chỉ SKU trong `v_promotable`; Module không đọc vault (không `load_vault_key`/`unseal`), không thuộc `egress_modules` |
+| Căn cứ xử lý | Đồng ý của khách theo mục đích (`marketing`/`cskh`, v5.2) — câu đồng ý + thời hạn liên hệ chưa được Pháp chế chốt: GAP |
+| GAP | Consent thật của khách + thời hạn liên hệ do Pháp chế chốt (test dùng consent fixture); Mẫu tin, khung giờ, trần tin/tháng là GIẢ ĐỊNH — GĐ KD/Pháp chế chốt; Chưa grant role DB hẹp cho `care_purchases` (CLI chạy DSN chủ sở hữu) — someday; Chưa có job xóa lần mua/liên hệ theo thời hạn (retention) |
+
+### DF-39 — Kịch bản livestream (KD-A9) + gói video YouTube dài (MKT-12) qua LLM gateway (v10.1)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-39 |
+| Module (code) | `agents/kd_live.py`; `agents/mkt_youtube.py`; `pipelines/llm_gateway.py` |
+| Mục đích | Soạn NHÁP lời dẫn livestream + hỏi-đáp bình luận, gói video YouTube dài (tiêu đề/mô tả/chương/phụ đề) chờ người duyệt |
+| Dữ liệu | Brief do nhân viên nhập (quy trình: không đưa dữ liệu khách), tên SKU golden + mã SKU trong giỏ (KHÔNG giá — giá do code điền sau), lời dẫn/kịch bản nháp; KHÔNG dữ liệu khách |
+| Lớp | Vàng |
+| Chủ thể | Nhân viên KD/MKT lập brief; người duyệt (tên trong approvals) |
+| Nơi lưu | `content_drafts` (pending, `livestream_script`/`video`, kênh `youtube`), `agent_action_log` (`draft_create`, `youtube_short_render`); Shorts xem trước mp4 + sidecar ở VIDEO_OUT_DIR (`data/video_assets/`, gitignored, không metadata/không âm thanh) |
+| Thời hạn lưu | Không giới hạn — hồ sơ duyệt append-only (bằng chứng tuân thủ quảng cáo); file Shorts xem trước xóa tay |
+| Bên nhận | OpenRouter (Mỹ) → whitelist provider (Mỹ) — chỉ brief + tên SKU, qua `_mask_pii` của gateway |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | `_mask_pii` + kill-switch + trần chi phí tháng (`kd_livestream`, `mkt_youtube`) ở gateway; Từ chối TRƯỚC LLM: rượu, SKU không promotable, quá trần phiên/tuần, brief có từ cấm; Câu LLM chạm số/giá/rượu bị bỏ; giá do code từ `v_promotable`; câu hỏi sức khỏe → câu trả lời mẫu; `check_publish` toàn văn + 1 lượt sửa → vi phạm thì không lưu; YouTube `privacyStatus` cố định private, không có đường đăng |
+| Căn cứ xử lý | Lợi ích hợp pháp/hợp đồng lao động với nhân viên — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email); Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday) |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -729,6 +765,8 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-35 | Form B2B yêu cầu báo giá + báo giá KD-A3 (v8.2) | Đỏ | cao | không | 6 |
 | DF-36 | Tra cứu khoa học nội bộ SX-A7 (v10.2) | Vàng | trung bình | có | 3 |
 | DF-37 | Dự báo thời tiết VT (v10.2) | Xanh | thấp | có | 3 |
+| DF-38 | Chăm sóc lại + xin đánh giá khách kênh sở hữu → nháp tin vào hàng duyệt (KD-A7, v10.1) | Đỏ | cao | không | 4 |
+| DF-39 | Kịch bản livestream (KD-A9) + gói video YouTube dài (MKT-12) qua LLM gateway (v10.1) | Vàng | trung bình | có | 2 |
 
 ## 4. Tổng hợp GAP
 
@@ -804,6 +842,12 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-37] Điều khoản thương mại Open-Meteo / API thời tiết có phí chưa xác minh — giữ `fetch.enabled=false`
 - [DF-37] Ngưỡng mưa/nhiệt + gán khoảnh→vùng GIẢ ĐỊNH — GĐ vùng trồng chốt
 - [DF-37] Người duyệt thật khối farming (`approvers: []`) — external-dep
+- [DF-38] Consent thật của khách + thời hạn liên hệ do Pháp chế chốt (test dùng consent fixture)
+- [DF-38] Mẫu tin, khung giờ, trần tin/tháng là GIẢ ĐỊNH — GĐ KD/Pháp chế chốt
+- [DF-38] Chưa grant role DB hẹp cho `care_purchases` (CLI chạy DSN chủ sở hữu) — someday
+- [DF-38] Chưa có job xóa lần mua/liên hệ theo thời hạn (retention)
+- [DF-39] Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email)
+- [DF-39] Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday)
 
 ## 5. Câu hỏi cho luật sư
 

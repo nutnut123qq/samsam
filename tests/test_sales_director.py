@@ -68,8 +68,9 @@ def test_ship_config_valid_and_no_real_people():
               "message_template", "listing_sync", "promo_change"):
         assert types[t]["handoff"] in ("A", "B") and types[t]["label"]
     assert types["market_alert_s1"]["risk"] == "high"
+    # v10.1: + care_review (KD-A7 xin đánh giá sau giao — MXH/CSKH nhận).
     assert {t for t, s in types.items() if s["handoff"] == "A"} == {
-        "cskh_handoff", "cskh_reply", "market_alert_s1"}
+        "cskh_handoff", "cskh_reply", "market_alert_s1", "care_review"}
     # v8.2: b2b_quote_matrix (báo giá KD-A3 trong ma trận) là loại DUY NHẤT
     # risk low — lane auto_policy chỉ khi chủ khối ký; mọi loại khác ≠ low.
     assert {t for t, s in types.items() if s["risk"] == "low"} == {
