@@ -137,9 +137,10 @@ def store(clean: bytes, ext: str, store_dir) -> tuple[str, Path]:
 
 
 def record(conn, sha: str, ext: str, nbytes: int, info: dict, plot_id: str,
-           taken_on: date, author: str) -> bool:
+           taken_on: date, author: str, source: str = SOURCE) -> bool:
     """INSERT garden_media (`on conflict (sha256) do nothing`) + commit
-    tường minh → True nếu dòng mới."""
+    tường minh → True nếu dòng mới. `source` (v12.4): `zalo:garden` khi ảnh
+    tới từ Zalo nhân viên vườn."""
     with conn.transaction():
         row = conn.execute(
             "insert into garden_media (sha256, ext, bytes, width, height,"
@@ -148,7 +149,7 @@ def record(conn, sha: str, ext: str, nbytes: int, info: dict, plot_id: str,
             " on conflict (sha256) do nothing returning id",
             (sha, ext, nbytes, info["width"], info["height"], plot_id,
              taken_on, author, info["exif_removed"], info["had_gps"],
-             SOURCE)).fetchone()
+             source)).fetchone()
     conn.commit()
     return row is not None
 

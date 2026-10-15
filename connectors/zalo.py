@@ -31,6 +31,12 @@ ZALO_WEBHOOK_PORT). Env (V1.2 — 2 secret khác nhau): ZALO_OA_SECRET
 store). DEPLOY=1/true/yes khi public -> fail-closed nếu thiếu OA secret
 hoặc không có đường send nào (D5.1); mặc định dev bypass signature —
 runbook: docs/deploy.md.
+
+v12.4: user trong allowlist nhân viên vườn (`connectors.zalo_garden`) KHÔNG
+đi chatbot khách — tin chữ/ảnh/ghi âm vào intake nhật ký vườn. Convlog thêm
+`reply_ms` (lượt chữ của khách: từ lúc nhận tới khi gửi xong, gồm chờ lock
+user + gọi send API — đo PL02 "phản hồi ≤30 giây"); `latency_ms` giữ nghĩa
+cũ (chỉ phần answer()).
 """
 
 import hashlib
@@ -49,6 +55,7 @@ from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 
+from connectors import zalo_garden
 from pipelines.pii import _PII_RE, _mask_pii, _paren_group_end  # noqa: F401
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in tiếng
@@ -631,13 +638,17 @@ def handle_text(user_id: str, question: str, msg_id: str = "", *,
     concurrent cùng user_id xử lý tuần tự (lượt sau thấy history lượt
     trước, reply ra đúng thứ tự); user khác nhau vẫn song song.
     v5.1: `channel`/`send` cho Messenger dùng chung pipeline (mặc định
-    Zalo — gọi cũ không đổi)."""
+    Zalo — gọi cũ không đổi). v12.4: mốc nhận đo TRƯỚC lock → `reply_ms`
+    tính cả thời gian chờ lượt trước của cùng user."""
+    t_recv = time.monotonic()
     with _ulock(user_id):
-        return _reply(user_id, question, msg_id, channel=channel, send=send)
+        return _reply(user_id, question, msg_id, channel=channel, send=send,
+                      t_recv=t_recv)
 
 
 def _reply(user_id: str, question: str, msg_id: str = "", *,
-           channel: str = "zalo", send=None) -> dict:
+           channel: str = "zalo", send=None, t_recv: float | None = None
+           ) -> dict:
     """answer() -> guardrail -> send -> ghi conversation log. Lazy import
     vì api.rag nặng (numpy/psycopg/openai) — phần webhook thuần test
     không cần nó. History per user truyền vào answer() để câu follow-up
@@ -652,6 +663,7 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
 
     send = send or send_text  # tra lúc gọi — test monkeypatch send_text
     t0 = time.monotonic()  # latency_ms đo elapsed — monotonic (V7.2)
+    t_recv = t0 if t_recv is None else t_recv  # v12.4 reply_ms
     route = gate = None
     try:
         inb = channels.normalize(channel, user_id, question)
@@ -686,6 +698,7 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
             # trước check()); False sẽ đếm nhầm crash vào "violation".
             "guardrail_ok": None,
             "latency_ms": int((time.monotonic() - t0) * 1000),
+            "reply_ms": int((time.monotonic() - t_recv) * 1000),
             "answered": False,
             "sent": sent,
             "error": repr(e)[:300],
@@ -694,12 +707,13 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
         return {"sent": sent, "text": fallback, "sources": []}
     if route is not None:
         return _reply_fixed(user_id, question, msg_id, inb, route.kind,
-                            route.text, send, t0, handoff=route.handoff)
+                            route.text, send, t0, handoff=route.handoff,
+                            t_recv=t_recv)
     if gate.block:
         # require_consent_for_llm bật + chưa đồng ý: chỉ câu chào, 0 LLM.
         return _reply_fixed(user_id, question, msg_id, inb,
                             "consent_required", gate.prefix, send, t0,
-                            prompted=gate.prompted)
+                            prompted=gate.prompted, t_recv=t_recv)
     latency_ms = int((time.monotonic() - t0) * 1000)
     raw = res["answer"]
     # Check TRƯỚC khi append nguồn — URL là citation, slug tiếng Việt có
@@ -737,6 +751,7 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
         "sources": res["sources"],
         "guardrail_ok": guardrail_ok,
         "latency_ms": latency_ms,
+        "reply_ms": int((time.monotonic() - t_recv) * 1000),
         # `in` thay `==`: rag.py cũng coi NO_DATA-là-substring là không có
         # data (line `if NO_DATA in text: sources = []`).
         "answered": NO_DATA not in raw,
@@ -758,7 +773,7 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
 
 def _reply_fixed(user_id: str, question: str, msg_id: str, inb, kind: str,
                  text: str, send, t0: float, *, handoff: str | None = None,
-                 prompted: bool = False) -> dict:
+                 prompted: bool = False, t_recv: float | None = None) -> dict:
     """v5.1: gửi text cố định của lớp kênh (template rượu/sức khỏe, ack
     đồng ý, câu chào khi chặn LLM) — 0 lời gọi answer(), không vào
     history, guardrail_ok null (text viết tay, chờ Pháp chế duyệt)."""
@@ -785,6 +800,8 @@ def _reply_fixed(user_id: str, question: str, msg_id: str, inb, kind: str,
         "sources": [],
         "guardrail_ok": None,
         "latency_ms": int((time.monotonic() - t0) * 1000),
+        "reply_ms": int((time.monotonic() - (t0 if t_recv is None
+                                             else t_recv)) * 1000),
         # rượu/sức khỏe = cần người (queue); đồng ý/câu chào = không áp dụng
         "answered": False if handoff else None,
         "sent": sent,
@@ -832,6 +849,14 @@ def handle_non_text(user_id: str, event: str, msg_id: str = "") -> dict:
     user serialize, reply không đảo thứ tự (như handle_text)."""
     with _ulock(user_id):
         return _reply_non_text(user_id, event, msg_id)
+
+
+def handle_garden(user_id: str, event: str, msg, msg_id: str = "") -> dict:
+    """v12.4: tin của nhân viên vườn → `zalo_garden.handle` (cùng _ulock
+    với text/non-text — chữ rồi ảnh của 1 người xử lý đúng thứ tự)."""
+    with _ulock(user_id):
+        return zalo_garden.handle(user_id, event, msg, msg_id,
+                                  send=send_text)
 
 
 def handle_follow(user_id: str) -> dict:
@@ -955,7 +980,11 @@ class Handler(BaseHTTPRequestHandler):
             return  # unfollow/... — không phải tin nhắn -> ignore
         msg, sender = ev.get("message") or {}, ev.get("sender") or {}
         uid, mid = sender.get("id", ""), msg.get("msg_id") or ""
-        if event == "user_send_text":
+        if uid and zalo_garden.staff_code(uid):
+            # v12.4: nhân viên vườn → intake nhật ký vườn, KHÔNG chatbot
+            # khách/convlog. Sau ACK nên đọc allowlist không chặn ACK.
+            target, args = handle_garden, (uid, event, msg, mid)
+        elif event == "user_send_text":
             text = (msg.get("text") or "").strip()
             if not text or not uid:
                 return
