@@ -1,0 +1,11 @@
+# v13.7 — lịch job 'dr_drill' (nguồn: deploy/onprem/jobs.json).
+[Unit]
+Description=Sam Sam timer dr_drill
+
+[Timer]
+OnCalendar=*-*-01 04:00:00
+Persistent=true
+Unit=samsam-job@dr_drill.service
+
+[Install]
+WantedBy=timers.target

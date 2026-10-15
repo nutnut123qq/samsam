@@ -1,0 +1,73 @@
+{
+  "_doc": "v13.7 (F06) — lịch job vận hành trên server Sâm Sâm (PL01 mục 2, 8; PL02 mục 2–3). Mỗi job chạy qua `python -m pipelines.job_runs --run <tên>`: khóa file chống chạy chồng + 1 dòng `job_runs` `job:<tên>`. Lịch = `on_calendar` (cú pháp systemd OnCalendar, giờ máy chủ = Asia/Ho_Chi_Minh), unit ở `deploy/onprem/systemd/` (test khớp). `steps` = argv sau `python` (module `-m` hoặc script trong `scripts/`); chạy HẾT các bước, job lỗi khi có bước exit ≠ 0. `max_gap_hours` = bản tin sức khỏe báo KHÔNG CHẠY/TRỄ khi quá hạn. Repo KHÔNG tự cài lịch — người vận hành bật timer trên server (deploy/onprem/README.md mục 7).",
+  "jobs": {
+    "intel": {
+      "on_calendar": "*-*-* 06:45:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "crawler.intel", "--run"],
+                ["scripts/intel_bulletin.py", "--period", "day"]],
+      "muc_dich": "Bản tin thị trường 7h sáng (PL01 Tình báo thị trường)"
+    },
+    "red_alert_sweep": {
+      "on_calendar": "*-*-* *:05:00",
+      "max_gap_hours": 2,
+      "steps": [["-m", "pipelines.intel_alert", "--run"],
+                ["-m", "pipelines.red_alert", "--deliver"]],
+      "muc_dich": "Quét cảnh báo đỏ 60 phút + leo thang 2 giờ + gửi lại cảnh báo chưa gửi được"
+    },
+    "ceo_weekly": {
+      "on_calendar": "Mon *-*-* 08:00:00",
+      "max_gap_hours": 192,
+      "steps": [["-m", "agents.ceo_report", "--period", "week", "--submit"]],
+      "muc_dich": "Báo cáo TGĐ thứ Hai (vào hàng duyệt khối ceo, không tự gửi)"
+    },
+    "invoice_batch": {
+      "on_calendar": "*-*-* 21:00:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "agents.acc_invoice", "--batch"]],
+      "muc_dich": "Lô hóa đơn nháp mỗi tối (kế toán duyệt, không phát hành)"
+    },
+    "content_daily": {
+      "on_calendar": "*-*-* 06:00:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "pipelines.content", "--daily"]],
+      "muc_dich": "3 nháp bài/ngày theo lịch mùa vụ (người duyệt/đăng tay)"
+    },
+    "backup": {
+      "on_calendar": "*-*-* 01:30:00",
+      "max_gap_hours": 26,
+      "steps": [["scripts/db_backup.py"]],
+      "muc_dich": "Backup hằng ngày + bản sao ngoài (BACKUP_OFFSITE)"
+    },
+    "restore_drill": {
+      "on_calendar": "Sun *-*-* 03:00:00",
+      "max_gap_hours": 192,
+      "steps": [["scripts/db_restore_drill.py"]],
+      "muc_dich": "Diễn tập khôi phục hằng tuần vào DB tạm"
+    },
+    "dr_drill": {
+      "on_calendar": "*-*-01 04:00:00",
+      "max_gap_hours": 768,
+      "steps": [["scripts/dr_drill.py"]],
+      "muc_dich": "Diễn tập DR hằng tháng (thêm tay trước mốc 30/11, 18/12)"
+    },
+    "kpi_snapshot": {
+      "on_calendar": "*-*-* 23:50:00",
+      "max_gap_hours": 26,
+      "steps": [["scripts/ops_monthly.py", "--snapshot"]],
+      "muc_dich": "Chụp dữ kiện KPI chat không PII trước khi convlog xoay vòng"
+    },
+    "health_bulletin": {
+      "on_calendar": "*-*-* 07:30:00",
+      "max_gap_hours": 26,
+      "steps": [["scripts/health_bulletin.py"]],
+      "muc_dich": "Bản tin sức khỏe hằng ngày"
+    },
+    "ops_monthly": {
+      "on_calendar": "*-*-01 08:00:00",
+      "max_gap_hours": 768,
+      "steps": [["scripts/ops_monthly.py", "--month", "prev"]],
+      "muc_dich": "Báo cáo vận hành tháng trước (người gửi Bên B trước ngày 05 rồi --mark-sent)"
+    }
+  }
+}

@@ -37,6 +37,15 @@ v12.4: user trong allowlist nhân viên vườn (`connectors.zalo_garden`) KHÔN
 `reply_ms` (lượt chữ của khách: từ lúc nhận tới khi gửi xong, gồm chờ lock
 user + gọi send API — đo PL02 "phản hồi ≤30 giây"); `latency_ms` giữ nghĩa
 cũ (chỉ phần answer()).
+
+v13.7 (F06): hạn chót TỔNG 30 giây tính từ lúc nhận tin (gồm chờ lock user,
+luật kênh, rewrite/embed/chat, gửi): `answer()` chạy trong luồng riêng với
+hạn = nhận + 30 − 5 giây (`api.rag.CHAT_BUDGET_S`/`SEND_RESERVE_S`, truyền
+xuống từng lời gọi qua contextvar `api.rag.DEADLINE` → `timeout` client);
+quá hạn (kể cả lời gọi treo không chịu timeout) → gửi HANDOFF_TEXT, ghi
+convlog `error` "deadline:<bước>" + mục `cskh_handoff` lý do `deadline`;
+kết quả về muộn bị bỏ (không gửi, không vào history). Send API timeout 5
+giây (`SEND_TIMEOUT_S`).
 """
 
 import hashlib
@@ -82,6 +91,8 @@ PORT = int(os.environ.get("ZALO_WEBHOOK_PORT", "8788"))
 SEND_URL = "https://openapi.zalo.me/v3.0/oa/message/cs"
 OAUTH_URL = "https://oauth.zaloapp.com/v4/oa/access_token"
 MAX_TEXT = 2000  # giới hạn text của Zalo CS message
+# v13.7: phần ngân sách 30 giây dành cho gửi (= api.rag.SEND_RESERVE_S).
+SEND_TIMEOUT_S = 5
 MAX_BODY = 1024 * 1024  # 1MB — event Zalo là JSON nhỏ; body lớn = DoS
 FALLBACK = ("Sâm Sâm xin lỗi, câu trả lời tự động chưa đạt kiểm duyệt nội "
             "bộ. Quý khách vui lòng gọi hotline 1800577732 để được hỗ trợ.")
@@ -571,7 +582,7 @@ def _send_once(user_id: str, text: str, token: str) -> bool | None:
         r = httpx.post(SEND_URL, params={"access_token": token},
                        json={"recipient": {"user_id": user_id},
                              "message": {"text": text[:MAX_TEXT]}},
-                       timeout=15)
+                       timeout=SEND_TIMEOUT_S)
         # json() throw (body không phải JSON) -> except ValueError -> None;
         # JSON hợp lệ nhưng không phải dict -> coi như API error rõ.
         body = r.json()
@@ -652,6 +663,39 @@ def handle_text(user_id: str, question: str, msg_id: str = "", *,
                       t_recv=t_recv)
 
 
+def _answer_within(answer, question: str, history: list, deadline: float):
+    """v13.7: chạy `answer()` trong luồng riêng, chờ tối đa tới `deadline`
+    (monotonic). Hết hạn → `DeadlineExceeded` — luồng trả lời tự dừng nhờ
+    timeout đã truyền xuống; kết quả về muộn bị bỏ. Luồng chỉ TÍNH câu trả
+    lời (không gửi, không ghi history) nên bỏ kết quả là an toàn."""
+    from api.rag import DEADLINE, DeadlineExceeded
+
+    left = deadline - time.monotonic()
+    if left <= 0:
+        raise DeadlineExceeded("cho_lock")
+    box: dict = {}
+    done = threading.Event()
+
+    def work():
+        DEADLINE.set(deadline)
+        try:
+            # Chỉ truyền kwarg history khi đã có lượt trước — 1-turn gọi
+            # y hệt signature cũ (mock `lambda q:` trong test cũ vẫn dùng).
+            box["res"] = (answer(question, history=history) if history
+                          else answer(question))
+        except BaseException as e:  # noqa: BLE001 — chuyển về luồng gọi
+            box["err"] = e
+        finally:
+            done.set()
+
+    threading.Thread(target=work, name="zalo-answer", daemon=True).start()
+    if not done.wait(left):
+        raise DeadlineExceeded("tra_loi")
+    if "err" in box:
+        raise box["err"]
+    return box["res"]
+
+
 def _reply(user_id: str, question: str, msg_id: str = "", *,
            channel: str = "zalo", send=None, t_recv: float | None = None
            ) -> dict:
@@ -664,13 +708,16 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
     answer, không vào history); `channels.consent_gate` thêm câu chào +
     chính sách ở tin đầu; text gửi qua `channels.format_reply`; handoff/
     đồng ý ghi DB SAU khi gửi (DB down chỉ warn)."""
-    from api.rag import NO_DATA, answer
+    from api import rag
+    from api.rag import NO_DATA, DeadlineExceeded, answer
     from connectors import channels
 
     send = send or send_text  # tra lúc gọi — test monkeypatch send_text
     t0 = time.monotonic()  # latency_ms đo elapsed — monotonic (V7.2)
     t_recv = t0 if t_recv is None else t_recv  # v12.4 reply_ms
-    route = gate = None
+    # v13.7: hạn chót trả lời = nhận tin + 30 giây − phần dành cho gửi.
+    deadline = t_recv + rag.CHAT_BUDGET_S - rag.SEND_RESERVE_S
+    route = gate = inb = None
     md = "van_hanh"
     try:
         inb = channels.normalize(channel, user_id, question)
@@ -684,19 +731,19 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
         if route is None and not gate.block and md != "tat":
             with _hist_lock:
                 history = list(_history(user_id))
-            # Chỉ truyền kwarg history khi đã có lượt trước — 1-turn gọi
-            # y hệt signature cũ (mock `lambda q:` trong test cũ vẫn
-            # dùng được).
-            res = (answer(question, history=history) if history
-                   else answer(question))
+            res = _answer_within(answer, question, history, deadline)
     except Exception as e:  # noqa: BLE001 — catch-all có chủ đích ở
         # thread boundary (D4.4): MỌI crash của answer() phải log +
         # fallback, thread không được chết câm mất vết câu hỏi.
         # Gateway chặn có chủ đích (kill-switch/vượt trần) không phải sự
         # cố -> khách vẫn được chuyển người, không nhận "hệ thống lỗi".
         from pipelines.llm_gateway import GatewayBlocked
-        fallback = (HANDOFF_TEXT if isinstance(e, GatewayBlocked)
+        late = isinstance(e, DeadlineExceeded)
+        fallback = (HANDOFF_TEXT if late or isinstance(e, GatewayBlocked)
                     else ERROR_FALLBACK)
+        if late:
+            print(f"[deadline] {channel}: quá 30 giây ({e.stage}) -> chuyển "
+                  f"người (uh={_uhash(user_id)})", flush=True)
         sent = send(user_id, fallback)
         _log_conversation({
             "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -712,10 +759,14 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
             "reply_ms": int((time.monotonic() - t_recv) * 1000),
             "answered": False,
             "sent": sent,
-            "error": repr(e)[:300],
+            "error": (f"deadline:{e.stage}" if late else repr(e)[:300]),
             "channel": channel,
         })
-        return {"sent": sent, "text": fallback, "sources": []}
+        if late and inb is not None:
+            # Có người nhận việc: mục cskh_handoff (DB down chỉ warn).
+            channels.record_handoff(inb, "deadline", msg_id)
+        return {"sent": sent, "text": fallback, "sources": [],
+                **({"deadline": e.stage} if late else {})}
     if route is not None:
         return _reply_fixed(user_id, question, msg_id, inb, route.kind,
                             route.text, send, t0, handoff=route.handoff,

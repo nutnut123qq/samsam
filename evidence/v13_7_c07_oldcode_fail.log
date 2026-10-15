@@ -1,0 +1,1762 @@
+FFFFFFFFFFFFFFFF.FFFF.FFFFFFFFFFFFFFFFFFFFF                              [100%]
+================================== FAILURES ===================================
+__________________ test_routed_but_not_sent_is_not_notified ___________________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x000001DB9FDA1940>
+
+    def test_routed_but_not_sent_is_not_notified(capsys):
+        """F06: người nhận hợp lệ nhưng kênh chưa cấu hình → KHÔNG "đã thông
+        báo" (code cũ trả True + "→ 1 người nhận")."""
+        conn = _Fake()
+>       ok, msg = ra.raise_alert(conn, "agent:x", "Lô lỗi",
+                                 routing={"recipients": [RCP]}, sender=None)
+E       TypeError: raise_alert() got an unexpected keyword argument 'sender'
+
+tests\test_v13_c07_ops.py:88: TypeError
+_______ test_delivery_rows_never_store_address_and_send_failure_counted _______
+
+    def test_delivery_rows_never_store_address_and_send_failure_counted():
+        conn = _Fake()
+    
+        def boom(to, subj, body):
+            raise OSError("smtp down pc@vi-du.test")
+>       ok, _ = ra.raise_alert(conn, "agent:x", "Gọi 0912 345 678 lô lỗi",
+                               routing={"recipients": [RCP]}, sender=boom)
+E       TypeError: raise_alert() got an unexpected keyword argument 'sender'
+
+tests\test_v13_c07_ops.py:102: TypeError
+___________________ test_smtp_sender_env_gate_and_starttls ____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DB9FD24380>
+
+    def test_smtp_sender_env_gate_and_starttls(monkeypatch):
+>       assert ra.smtp_sender({}) is None
+               ^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.red_alert' has no attribute 'smtp_sender'
+
+tests\test_v13_c07_ops.py:111: AttributeError
+________ test_resolve_address[email:pc@vi-du.test-env0-pc@vi-du.test] _________
+
+channel = 'email:pc@vi-du.test', env = {}, want = 'pc@vi-du.test'
+
+    @pytest.mark.parametrize("channel,env,want", [
+        ("email:pc@vi-du.test", {}, "pc@vi-du.test"),
+        ("email:$RA_PC", {"RA_PC": "pc@vi-du.test"}, "pc@vi-du.test"),
+        ("email:$RA_PC", {}, None),
+        ("email", {}, None),
+        ("zalo:123", {}, None),
+        ("email:a@b@c", {}, None),
+        ("email:a b@c", {}, None),
+        ("email:a@b.vn,x@y.vn", {}, None),          # chèn thêm người nhận
+        ("email:a@b.vn\r\nBcc: x@y", {}, None),     # chèn header
+    ])
+    def test_resolve_address(channel, env, want):
+>       assert ra.resolve_address(channel, env) == want
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.red_alert' has no attribute 'resolve_address'
+
+tests\test_v13_c07_ops.py:155: AttributeError
+____________ test_resolve_address[email:$RA_PC-env1-pc@vi-du.test] ____________
+
+channel = 'email:$RA_PC', env = {'RA_PC': 'pc@vi-du.test'}
+want = 'pc@vi-du.test'
+
+    @pytest.mark.parametrize("channel,env,want", [
+        ("email:pc@vi-du.test", {}, "pc@vi-du.test"),
+        ("email:$RA_PC", {"RA_PC": "pc@vi-du.test"}, "pc@vi-du.test"),
+        ("email:$RA_PC", {}, None),
+        ("email", {}, None),
+        ("zalo:123", {}, None),
+        ("email:a@b@c", {}, None),
+        ("email:a b@c", {}, None),
+        ("email:a@b.vn,x@y.vn", {}, None),          # chèn thêm người nhận
+        ("email:a@b.vn\r\nBcc: x@y", {}, None),     # chèn header
+    ])
+    def test_resolve_address(channel, env, want):
+>       assert ra.resolve_address(channel, env) == want
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.red_alert' has no attribute 'resolve_address'
+
+tests\test_v13_c07_ops.py:155: AttributeError
+________________ test_resolve_address[email:$RA_PC-env2-None] _________________
+
+channel = 'email:$RA_PC', env = {}, want = None
+
+    @pytest.mark.parametrize("channel,env,want", [
+        ("email:pc@vi-du.test", {}, "pc@vi-du.test"),
+        ("email:$RA_PC", {"RA_PC": "pc@vi-du.test"}, "pc@vi-du.test"),
+        ("email:$RA_PC", {}, None),
+        ("email", {}, None),
+        ("zalo:123", {}, None),
+        ("email:a@b@c", {}, None),
+        ("email:a b@c", {}, None),
+        ("email:a@b.vn,x@y.vn", {}, None),          # chèn thêm người nhận
+        ("email:a@b.vn\r\nBcc: x@y", {}, None),     # chèn header
+    ])
+    def test_resolve_address(channel, env, want):
+>       assert ra.resolve_address(channel, env) == want
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.red_alert' has no attribute 'resolve_address'
+
+tests\test_v13_c07_ops.py:155: AttributeError
+____________________ test_resolve_address[email-env3-None] ____________________
+
+channel = 'email', env = {}, want = None
+
+    @pytest.mark.parametrize("channel,env,want", [
+        ("email:pc@vi-du.test", {}, "pc@vi-du.test"),
+        ("email:$RA_PC", {"RA_PC": "pc@vi-du.test"}, "pc@vi-du.test"),
+        ("email:$RA_PC", {}, None),
+        ("email", {}, None),
+        ("zalo:123", {}, None),
+        ("email:a@b@c", {}, None),
+        ("email:a b@c", {}, None),
+        ("email:a@b.vn,x@y.vn", {}, None),          # chèn thêm người nhận
+        ("email:a@b.vn\r\nBcc: x@y", {}, None),     # chèn header
+    ])
+    def test_resolve_address(channel, env, want):
+>       assert ra.resolve_address(channel, env) == want
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.red_alert' has no attribute 'resolve_address'
+
+tests\test_v13_c07_ops.py:155: AttributeError
+__________________ test_resolve_address[zalo:123-env4-None] ___________________
+
+channel = 'zalo:123', env = {}, want = None
+
+    @pytest.mark.parametrize("channel,env,want", [
+        ("email:pc@vi-du.test", {}, "pc@vi-du.test"),
+        ("email:$RA_PC", {"RA_PC": "pc@vi-du.test"}, "pc@vi-du.test"),
+        ("email:$RA_PC", {}, None),
+        ("email", {}, None),
+        ("zalo:123", {}, None),
+        ("email:a@b@c", {}, None),
+        ("email:a b@c", {}, None),
+        ("email:a@b.vn,x@y.vn", {}, None),          # chèn thêm người nhận
+        ("email:a@b.vn\r\nBcc: x@y", {}, None),     # chèn header
+    ])
+    def test_resolve_address(channel, env, want):
+>       assert ra.resolve_address(channel, env) == want
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.red_alert' has no attribute 'resolve_address'
+
+tests\test_v13_c07_ops.py:155: AttributeError
+_________________ test_resolve_address[email:a@b@c-env5-None] _________________
+
+channel = 'email:a@b@c', env = {}, want = None
+
+    @pytest.mark.parametrize("channel,env,want", [
+        ("email:pc@vi-du.test", {}, "pc@vi-du.test"),
+        ("email:$RA_PC", {"RA_PC": "pc@vi-du.test"}, "pc@vi-du.test"),
+        ("email:$RA_PC", {}, None),
+        ("email", {}, None),
+        ("zalo:123", {}, None),
+        ("email:a@b@c", {}, None),
+        ("email:a b@c", {}, None),
+        ("email:a@b.vn,x@y.vn", {}, None),          # chèn thêm người nhận
+        ("email:a@b.vn\r\nBcc: x@y", {}, None),     # chèn header
+    ])
+    def test_resolve_address(channel, env, want):
+>       assert ra.resolve_address(channel, env) == want
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.red_alert' has no attribute 'resolve_address'
+
+tests\test_v13_c07_ops.py:155: AttributeError
+_________________ test_resolve_address[email:a b@c-env6-None] _________________
+
+channel = 'email:a b@c', env = {}, want = None
+
+    @pytest.mark.parametrize("channel,env,want", [
+        ("email:pc@vi-du.test", {}, "pc@vi-du.test"),
+        ("email:$RA_PC", {"RA_PC": "pc@vi-du.test"}, "pc@vi-du.test"),
+        ("email:$RA_PC", {}, None),
+        ("email", {}, None),
+        ("zalo:123", {}, None),
+        ("email:a@b@c", {}, None),
+        ("email:a b@c", {}, None),
+        ("email:a@b.vn,x@y.vn", {}, None),          # chèn thêm người nhận
+        ("email:a@b.vn\r\nBcc: x@y", {}, None),     # chèn header
+    ])
+    def test_resolve_address(channel, env, want):
+>       assert ra.resolve_address(channel, env) == want
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.red_alert' has no attribute 'resolve_address'
+
+tests\test_v13_c07_ops.py:155: AttributeError
+_____________ test_resolve_address[email:a@b.vn,x@y.vn-env7-None] _____________
+
+channel = 'email:a@b.vn,x@y.vn', env = {}, want = None
+
+    @pytest.mark.parametrize("channel,env,want", [
+        ("email:pc@vi-du.test", {}, "pc@vi-du.test"),
+        ("email:$RA_PC", {"RA_PC": "pc@vi-du.test"}, "pc@vi-du.test"),
+        ("email:$RA_PC", {}, None),
+        ("email", {}, None),
+        ("zalo:123", {}, None),
+        ("email:a@b@c", {}, None),
+        ("email:a b@c", {}, None),
+        ("email:a@b.vn,x@y.vn", {}, None),          # chèn thêm người nhận
+        ("email:a@b.vn\r\nBcc: x@y", {}, None),     # chèn header
+    ])
+    def test_resolve_address(channel, env, want):
+>       assert ra.resolve_address(channel, env) == want
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.red_alert' has no attribute 'resolve_address'
+
+tests\test_v13_c07_ops.py:155: AttributeError
+__________ test_resolve_address[email:a@b.vn\r\nBcc: x@y-env8-None] ___________
+
+channel = 'email:a@b.vn\r\nBcc: x@y', env = {}, want = None
+
+    @pytest.mark.parametrize("channel,env,want", [
+        ("email:pc@vi-du.test", {}, "pc@vi-du.test"),
+        ("email:$RA_PC", {"RA_PC": "pc@vi-du.test"}, "pc@vi-du.test"),
+        ("email:$RA_PC", {}, None),
+        ("email", {}, None),
+        ("zalo:123", {}, None),
+        ("email:a@b@c", {}, None),
+        ("email:a b@c", {}, None),
+        ("email:a@b.vn,x@y.vn", {}, None),          # chèn thêm người nhận
+        ("email:a@b.vn\r\nBcc: x@y", {}, None),     # chèn header
+    ])
+    def test_resolve_address(channel, env, want):
+>       assert ra.resolve_address(channel, env) == want
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.red_alert' has no attribute 'resolve_address'
+
+tests\test_v13_c07_ops.py:155: AttributeError
+___________________ test_ack_generic_for_every_alert_source ___________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c07) at 0x1db9fd265d0>
+
+    def test_ack_generic_for_every_alert_source(db):
+        """F06: `--ack` chung mọi cảnh báo đỏ (code cũ chỉ intel)."""
+        tx = TxConn(db)
+        ok, _ = ra.raise_alert(tx, "agents.sales_director", "SLA trễ",
+                               routing={"recipients": []})
+        aid = db.execute("select max(id) from red_alerts").fetchone()[0]
+        esc = db.execute(
+            "insert into red_alerts (source_agent, title, detail) values ('x',"
+            " 't', %s::jsonb) returning id",
+            (json.dumps({"escalation_of": aid}),)).fetchone()[0]
+        for by in ("agent:bot", "system:cron", "  "):
+>           assert ra.ack(tx, aid, by)[0] is False
+                   ^^^^^^
+E           AttributeError: module 'pipelines.red_alert' has no attribute 'ack'
+
+tests\test_v13_c07_ops.py:169: AttributeError
+---------------------------- Captured stderr call -----------------------------
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+_____________ test_ack_enforced_mode_only_independent_recipients ______________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c07) at 0x1db9fd26210>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DB9FD24F20>
+
+    def test_ack_enforced_mode_only_independent_recipients(db, monkeypatch):
+        monkeypatch.setattr(auth, "_APPROVAL_FORCE", True)
+        tx = TxConn(db)
+        ra.raise_alert(tx, "agent:x", "Lô lỗi", routing={"recipients": []})
+        aid = db.execute("select max(id) from red_alerts").fetchone()[0]
+        routing = {"recipients": [RCP, {**RCP, "name": "TGD", "role": "tgd"}]}
+>       ok, msg = ra.ack(tx, aid, "TGD", routing=routing)
+                  ^^^^^^
+E       AttributeError: module 'pipelines.red_alert' has no attribute 'ack'
+
+tests\test_v13_c07_ops.py:189: AttributeError
+---------------------------- Captured stderr call -----------------------------
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+____________ test_deliver_pending_catches_up_caps_and_skips_acked _____________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c07) at 0x1db9fcee9f0>
+
+    def test_deliver_pending_catches_up_caps_and_skips_acked(db):
+        tx = TxConn(db)
+        now = datetime.now(timezone.utc)
+        ids = []
+        for t in ("A", "B", "C"):
+            ra.raise_alert(tx, "agent:x", f"Lô {t}", routing={"recipients": []})
+            ids.append(db.execute("select max(id) from red_alerts").fetchone()[0])
+>       ra.ack(tx, ids[2], "Người A")
+        ^^^^^^
+E       AttributeError: module 'pipelines.red_alert' has no attribute 'ack'
+
+tests\test_v13_c07_ops.py:201: AttributeError
+---------------------------- Captured stderr call -----------------------------
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+[RED-ALERT][warn] cảnh báo đỏ #2 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+[RED-ALERT][warn] cảnh báo đỏ #3 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+_________________ test_cli_deliver_exit_1_without_recipients __________________
+
+self = ArgumentParser(prog='python -m pipelines.red_alert', usage=None, description='Cảnh báo đỏ — kiểm cấu hình người nhận độc lập', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+args = ['--deliver'], namespace = Namespace(check_routing=False)
+
+    def parse_known_args(self, args=None, namespace=None):
+        if args is None:
+            # args default to the system args
+            args = _sys.argv[1:]
+        else:
+            # make sure that args are mutable
+            args = list(args)
+    
+        # default Namespace built from parser defaults
+        if namespace is None:
+            namespace = Namespace()
+    
+        # add any action defaults that aren't present
+        for action in self._actions:
+            if action.dest is not SUPPRESS:
+                if not hasattr(namespace, action.dest):
+                    if action.default is not SUPPRESS:
+                        setattr(namespace, action.dest, action.default)
+    
+        # add any parser defaults that aren't present
+        for dest in self._defaults:
+            if not hasattr(namespace, dest):
+                setattr(namespace, dest, self._defaults[dest])
+    
+        # parse the arguments and exit if there are any errors
+        if self.exit_on_error:
+            try:
+>               namespace, args = self._parse_known_args(args, namespace)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:1931: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='python -m pipelines.red_alert', usage=None, description='Cảnh báo đỏ — kiểm cấu hình người nhận độc lập', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+arg_strings = ['--deliver'], namespace = Namespace(check_routing=False)
+
+    def _parse_known_args(self, arg_strings, namespace):
+        # replace arg strings that are file references
+        if self.fromfile_prefix_chars is not None:
+            arg_strings = self._read_args_from_files(arg_strings)
+    
+        # map all mutually exclusive arguments to the other arguments
+        # they can't occur with
+        action_conflicts = {}
+        for mutex_group in self._mutually_exclusive_groups:
+            group_actions = mutex_group._group_actions
+            for i, mutex_action in enumerate(mutex_group._group_actions):
+                conflicts = action_conflicts.setdefault(mutex_action, [])
+                conflicts.extend(group_actions[:i])
+                conflicts.extend(group_actions[i + 1:])
+    
+        # find all option indices, and determine the arg_string_pattern
+        # which has an 'O' if there is an option at an index,
+        # an 'A' if there is an argument, or a '-' if there is a '--'
+        option_string_indices = {}
+        arg_string_pattern_parts = []
+        arg_strings_iter = iter(arg_strings)
+        for i, arg_string in enumerate(arg_strings_iter):
+    
+            # all args after -- are non-options
+            if arg_string == '--':
+                arg_string_pattern_parts.append('-')
+                for arg_string in arg_strings_iter:
+                    arg_string_pattern_parts.append('A')
+    
+            # otherwise, add the arg to the arg strings
+            # and note the index if it was an option
+            else:
+                option_tuples = self._parse_optional(arg_string)
+                if option_tuples is None:
+                    pattern = 'A'
+                else:
+                    option_string_indices[i] = option_tuples
+                    pattern = 'O'
+                arg_string_pattern_parts.append(pattern)
+    
+        # join the pieces together to form the pattern
+        arg_strings_pattern = ''.join(arg_string_pattern_parts)
+    
+        # converts arg strings to the appropriate and then takes the action
+        seen_actions = set()
+        seen_non_default_actions = set()
+    
+        def take_action(action, argument_strings, option_string=None):
+            seen_actions.add(action)
+            argument_values = self._get_values(action, argument_strings)
+    
+            # error if this argument is not allowed with other previously
+            # seen arguments
+            if action.option_strings or argument_strings:
+                seen_non_default_actions.add(action)
+                for conflict_action in action_conflicts.get(action, []):
+                    if conflict_action in seen_non_default_actions:
+                        msg = _('not allowed with argument %s')
+                        action_name = _get_action_name(conflict_action)
+                        raise ArgumentError(action, msg % action_name)
+    
+            # take the action if we didn't receive a SUPPRESS value
+            # (e.g. from a default)
+            if argument_values is not SUPPRESS:
+                action(self, namespace, argument_values, option_string)
+    
+        # function to convert arg_strings into an optional action
+        def consume_optional(start_index):
+    
+            # get the optional identified at this index
+            option_tuples = option_string_indices[start_index]
+            # if multiple actions match, the option string was ambiguous
+            if len(option_tuples) > 1:
+                options = ', '.join([option_string
+                    for action, option_string, sep, explicit_arg in option_tuples])
+                args = {'option': arg_string, 'matches': options}
+                msg = _('ambiguous option: %(option)s could match %(matches)s')
+                raise ArgumentError(None, msg % args)
+    
+            action, option_string, sep, explicit_arg = option_tuples[0]
+    
+            # identify additional optionals in the same arg string
+            # (e.g. -xyz is the same as -x -y -z if no args are required)
+            match_argument = self._match_argument
+            action_tuples = []
+            while True:
+    
+                # if we found no optional action, skip it
+                if action is None:
+                    extras.append(arg_strings[start_index])
+                    return start_index + 1
+    
+                # if there is an explicit argument, try to match the
+                # optional's string arguments to only this
+                if explicit_arg is not None:
+                    arg_count = match_argument(action, 'A')
+    
+                    # if the action is a single-dash option and takes no
+                    # arguments, try to parse more single-dash options out
+                    # of the tail of the option string
+                    chars = self.prefix_chars
+                    if (
+                        arg_count == 0
+                        and option_string[1] not in chars
+                        and explicit_arg != ''
+                    ):
+                        if sep or explicit_arg[0] in chars:
+                            msg = _('ignored explicit argument %r')
+                            raise ArgumentError(action, msg % explicit_arg)
+                        action_tuples.append((action, [], option_string))
+                        char = option_string[0]
+                        option_string = char + explicit_arg[0]
+                        optionals_map = self._option_string_actions
+                        if option_string in optionals_map:
+                            action = optionals_map[option_string]
+                            explicit_arg = explicit_arg[1:]
+                            if not explicit_arg:
+                                sep = explicit_arg = None
+                            elif explicit_arg[0] == '=':
+                                sep = '='
+                                explicit_arg = explicit_arg[1:]
+                            else:
+                                sep = ''
+                        else:
+                            extras.append(char + explicit_arg)
+                            stop = start_index + 1
+                            break
+                    # if the action expect exactly one argument, we've
+                    # successfully matched the option; exit the loop
+                    elif arg_count == 1:
+                        stop = start_index + 1
+                        args = [explicit_arg]
+                        action_tuples.append((action, args, option_string))
+                        break
+    
+                    # error if a double-dash option did not use the
+                    # explicit argument
+                    else:
+                        msg = _('ignored explicit argument %r')
+                        raise ArgumentError(action, msg % explicit_arg)
+    
+                # if there is no explicit argument, try to match the
+                # optional's string arguments with the following strings
+                # if successful, exit the loop
+                else:
+                    start = start_index + 1
+                    selected_patterns = arg_strings_pattern[start:]
+                    arg_count = match_argument(action, selected_patterns)
+                    stop = start + arg_count
+                    args = arg_strings[start:stop]
+                    action_tuples.append((action, args, option_string))
+                    break
+    
+            # add the Optional to the list and return the index at which
+            # the Optional's string args stopped
+            assert action_tuples
+            for action, args, option_string in action_tuples:
+                take_action(action, args, option_string)
+            return stop
+    
+        # the list of Positionals left to be parsed; this is modified
+        # by consume_positionals()
+        positionals = self._get_positional_actions()
+    
+        # function to convert arg_strings into positional actions
+        def consume_positionals(start_index):
+            # match as many Positionals as possible
+            match_partial = self._match_arguments_partial
+            selected_pattern = arg_strings_pattern[start_index:]
+            arg_counts = match_partial(positionals, selected_pattern)
+    
+            # slice off the appropriate arg strings for each Positional
+            # and add the Positional and its args to the list
+            for action, arg_count in zip(positionals, arg_counts):
+                args = arg_strings[start_index: start_index + arg_count]
+                # Strip out the first '--' if it is not in REMAINDER arg.
+                if action.nargs == PARSER:
+                    if arg_strings_pattern[start_index] == '-':
+                        assert args[0] == '--'
+                        args.remove('--')
+                elif action.nargs != REMAINDER:
+                    if (arg_strings_pattern.find('-', start_index,
+                                                 start_index + arg_count) >= 0):
+                        args.remove('--')
+                start_index += arg_count
+                take_action(action, args)
+    
+            # slice off the Positionals that we just parsed and return the
+            # index at which the Positionals' string args stopped
+            positionals[:] = positionals[len(arg_counts):]
+            return start_index
+    
+        # consume Positionals and Optionals alternately, until we have
+        # passed the last option string
+        extras = []
+        start_index = 0
+        if option_string_indices:
+            max_option_string_index = max(option_string_indices)
+        else:
+            max_option_string_index = -1
+        while start_index <= max_option_string_index:
+    
+            # consume any Positionals preceding the next option
+            next_option_string_index = min([
+                index
+                for index in option_string_indices
+                if index >= start_index])
+            if start_index != next_option_string_index:
+                positionals_end_index = consume_positionals(start_index)
+    
+                # only try to parse the next optional if we didn't consume
+                # the option string during the positionals parsing
+                if positionals_end_index > start_index:
+                    start_index = positionals_end_index
+                    continue
+                else:
+                    start_index = positionals_end_index
+    
+            # if we consumed all the positionals we could and we're not
+            # at the index of an option string, there were extra arguments
+            if start_index not in option_string_indices:
+                strings = arg_strings[start_index:next_option_string_index]
+                extras.extend(strings)
+                start_index = next_option_string_index
+    
+            # consume the next optional and any arguments for it
+            start_index = consume_optional(start_index)
+    
+        # consume any positionals following the last Optional
+        stop_index = consume_positionals(start_index)
+    
+        # if we didn't consume all the argument strings, there were extras
+        extras.extend(arg_strings[stop_index:])
+    
+        # make sure all required actions were present and also convert
+        # action defaults which were not given as arguments
+        required_actions = []
+        for action in self._actions:
+            if action not in seen_actions:
+                if action.required:
+                    required_actions.append(_get_action_name(action))
+                else:
+                    # Convert action default now instead of doing it before
+                    # parsing arguments to avoid calling convert functions
+                    # twice (which may fail) if the argument was given, but
+                    # only if it was defined already in the namespace
+                    if (action.default is not None and
+                        isinstance(action.default, str) and
+                        hasattr(namespace, action.dest) and
+                        action.default is getattr(namespace, action.dest)):
+                        setattr(namespace, action.dest,
+                                self._get_value(action, action.default))
+    
+        if required_actions:
+>           raise ArgumentError(None, _('the following arguments are required: %s') %
+                       ', '.join(required_actions))
+E           argparse.ArgumentError: the following arguments are required: --check-routing
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2196: ArgumentError
+
+During handling of the above exception, another exception occurred:
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c07) at 0x1db9fceebd0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DB9FCEFA40>
+capsys = <_pytest.capture.CaptureFixture object at 0x000001DB9FCEEB10>
+
+    def test_cli_deliver_exit_1_without_recipients(db, monkeypatch, capsys):
+        import ingest.lead_store as ls
+        monkeypatch.setattr(ls, "connect", lambda: TxConn(db))
+        monkeypatch.setattr(ra, "ROUTING", ROOT / "data" / "red_alert_routing.json")
+        ra.raise_alert(TxConn(db), "agent:x", "Lô lỗi",
+                       routing={"recipients": []})
+>       assert ra.main(["--deliver"]) == 1
+               ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v13_c07_ops.py:229: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+pipelines\red_alert.py:166: in main
+    ap.parse_args(argv)
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:1895: in parse_args
+    args, argv = self.parse_known_args(args, namespace)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:1933: in parse_known_args
+    self.error(str(err))
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2672: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='python -m pipelines.red_alert', usage=None, description='Cảnh báo đỏ — kiểm cấu hình người nhận độc lập', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = 'python -m pipelines.red_alert: error: the following arguments are required: --check-routing\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2659: SystemExit
+---------------------------- Captured stderr call -----------------------------
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+usage: python -m pipelines.red_alert [-h] --check-routing
+python -m pipelines.red_alert: error: the following arguments are required: --check-routing
+_______________ test_rag_budget_passed_to_every_call_then_stops _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DB9FCEF620>
+
+    def test_rag_budget_passed_to_every_call_then_stops(monkeypatch):
+        """Ngân sách TRUYỀN XUỐNG từng lời gọi (timeout client) và bước sau
+        không bắt đầu khi đã hết hạn (đồng hồ giả — không wall-clock)."""
+        clock = _Clock()
+>       monkeypatch.setattr(rag, "_clock", clock)
+E       AttributeError: <module 'api.rag' from 'D:\\code\\samsam\\.claude\\worktrees\\wf_5e5afa70-b41-11\\api\\rag.py'> has no attribute '_clock'
+
+tests\test_v13_c07_ops.py:264: AttributeError
+____________ test_rag_deadline_from_contextvar_and_client_timeout _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DB9FCEE060>
+
+    def test_rag_deadline_from_contextvar_and_client_timeout(monkeypatch):
+        clock = _Clock()
+>       monkeypatch.setattr(rag, "_clock", clock)
+E       AttributeError: <module 'api.rag' from 'D:\\code\\samsam\\.claude\\worktrees\\wf_5e5afa70-b41-11\\api\\rag.py'> has no attribute '_clock'
+
+tests\test_v13_c07_ops.py:291: AttributeError
+_________________ test_zalo_slow_answer_handoff_within_budget _________________
+
+zfiles = (WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2677/test_zalo_slow_answer_handoff_0'), [])
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DB9FCEE930>
+
+    def test_zalo_slow_answer_handoff_within_budget(zfiles, monkeypatch):
+        """Câu trả lời treo (không chịu timeout) → khách nhận HANDOFF trong
+        ngân sách, có mục người xử lý; kết quả về muộn bị bỏ (không gửi lần 2,
+        không vào history). Chờ theo sự kiện — code cũ treo tới khi nhả."""
+        tmp_path, handoffs = zfiles
+        release, finished = threading.Event(), threading.Event()
+        seen_deadline = []
+    
+        def slow(q, history=None):
+            seen_deadline.append(rag.DEADLINE.get())
+            release.wait(30)
+            finished.set()
+            return {"answer": "Giá 1.000.000 đ", "sources": ["https://x"]}
+        monkeypatch.setattr("api.rag.answer", slow)
+>       monkeypatch.setattr(rag, "CHAT_BUDGET_S", 0.4)
+E       AttributeError: <module 'api.rag' from 'D:\\code\\samsam\\.claude\\worktrees\\wf_5e5afa70-b41-11\\api\\rag.py'> has no attribute 'CHAT_BUDGET_S'
+
+tests\test_v13_c07_ops.py:348: AttributeError
+__________________ test_zalo_lock_wait_counts_toward_budget ___________________
+
+zfiles = (WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2677/test_zalo_lock_wait_counts_tow0'), [])
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DB9FD28D10>
+
+    def test_zalo_lock_wait_counts_toward_budget(zfiles, monkeypatch):
+        tmp_path, handoffs = zfiles
+        monkeypatch.setattr("api.rag.answer",
+                            lambda q: pytest.fail("không được gọi answer()"))
+        sent = []
+>       r = zalo._reply("u2", "Saphraton giá bao nhiêu?", "m2",
+                        send=lambda u, t: sent.append(t) or True,
+                        t_recv=time.monotonic() - 31)     # đã chờ lock 31 giây
+
+tests\test_v13_c07_ops.py:376: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+connectors\zalo.py:691: in _reply
+    else answer(question))
+         ^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+q = 'Saphraton giá bao nhiêu?'
+
+>   lambda q: pytest.fail("không được gọi answer()"))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: không được gọi answer()
+
+tests\test_v13_c07_ops.py:374: Failed
+---------------------------- Captured stdout call -----------------------------
+[warn] channels: không xác định được đồng ý (zalo) — thiếu CHANNEL_HASH_SALT hoặc DB down; trả lời không tiền tố
+________________________ test_send_timeouts_fit_budget ________________________
+
+    def test_send_timeouts_fit_budget():
+        src = (ROOT / "connectors" / "zalo.py").read_text(encoding="utf-8")
+        msrc = (ROOT / "connectors" / "messenger.py").read_text(encoding="utf-8")
+>       assert zalo.SEND_TIMEOUT_S <= rag.SEND_RESERVE_S
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'connectors.zalo' has no attribute 'SEND_TIMEOUT_S'
+
+tests\test_v13_c07_ops.py:399: AttributeError
+________________________ test_incident_sla_rules_pure _________________________
+
+    def test_incident_sla_rules_pure():
+>       oi = _oi()
+             ^^^^^
+
+tests\test_v13_c07_ops.py:408: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _oi():
+>       from pipelines import ops_incidents  # module mới v13.7
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ImportError: cannot import name 'ops_incidents' from 'pipelines' (D:\code\samsam\.claude\worktrees\wf_5e5afa70-b41-11\pipelines\__init__.py)
+
+tests\test_v13_c07_ops.py:45: ImportError
+_______________ test_incident_log_db_append_only_and_validation _______________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c07) at 0x1db9f9f0aa0>
+
+    def test_incident_log_db_append_only_and_validation(db):
+>       oi = _oi()
+             ^^^^^
+
+tests\test_v13_c07_ops.py:442: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _oi():
+>       from pipelines import ops_incidents  # module mới v13.7
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ImportError: cannot import name 'ops_incidents' from 'pipelines' (D:\code\samsam\.claude\worktrees\wf_5e5afa70-b41-11\pipelines\__init__.py)
+
+tests\test_v13_c07_ops.py:45: ImportError
+_______________ test_incident_rows_empty_book_not_claimed_clean _______________
+
+    def test_incident_rows_empty_book_not_claimed_clean():
+>       rows, _ = om.incident_rows({"incidents": [], "events": []}, SHIFT,
+                  ^^^^^^^^^^^^^^^^
+                                   _vn(2026, 11, 2))
+E       AttributeError: module 'scripts.ops_monthly' has no attribute 'incident_rows'
+
+tests\test_v13_c07_ops.py:484: AttributeError
+_________________ test_kpi_snapshot_survives_convlog_rotation _________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c07) at 0x1db9fa36b40>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2677/test_kpi_snapshot_survives_con0')
+
+    def test_kpi_snapshot_survives_convlog_rotation(db, tmp_path):
+        base = {"user_hash": "h" * 16, "question": "Anh Nguyễn Văn Mẫu 0912345678"}
+        early = [dict(base, ts="2026-10-01T01:00:00Z", msg_id="m1", answered=True,
+                      reply_ms=1200, channel="zalo"),
+                 dict(base, ts="2026-10-01T02:00:00Z", msg_id="m2",
+                      answered=False, reply_ms=31000, channel="zalo")]
+        late = [dict(base, ts="2026-10-31T03:00:00Z", msg_id="m3", answered=True,
+                     reply_ms=900, channel="messenger")]
+        _jsonl(tmp_path / "conversations.jsonl", early + late)
+        tx = TxConn(db)
+>       assert om.snapshot(tx, tmp_path) == (3, 3)
+               ^^^^^^^^^^^
+E       AttributeError: module 'scripts.ops_monthly' has no attribute 'snapshot'
+
+tests\test_v13_c07_ops.py:507: AttributeError
+______________________ test_cli_snapshot_db_down_exit_1 _______________________
+
+self = ArgumentParser(prog='__main__.py', usage=None, description='v12.6 B6 — Báo cáo vận hành tháng gửi Bên B (HĐ hợp tác TEDO–Sâm Sâm,', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+args = ['--snapshot']
+namespace = Namespace(month=None, out_dir=WindowsPath('D:/code/samsam/.claude/worktrees/wf_5e5afa70-b41-11/data/reports'))
+
+    def parse_known_args(self, args=None, namespace=None):
+        if args is None:
+            # args default to the system args
+            args = _sys.argv[1:]
+        else:
+            # make sure that args are mutable
+            args = list(args)
+    
+        # default Namespace built from parser defaults
+        if namespace is None:
+            namespace = Namespace()
+    
+        # add any action defaults that aren't present
+        for action in self._actions:
+            if action.dest is not SUPPRESS:
+                if not hasattr(namespace, action.dest):
+                    if action.default is not SUPPRESS:
+                        setattr(namespace, action.dest, action.default)
+    
+        # add any parser defaults that aren't present
+        for dest in self._defaults:
+            if not hasattr(namespace, dest):
+                setattr(namespace, dest, self._defaults[dest])
+    
+        # parse the arguments and exit if there are any errors
+        if self.exit_on_error:
+            try:
+>               namespace, args = self._parse_known_args(args, namespace)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:1931: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='__main__.py', usage=None, description='v12.6 B6 — Báo cáo vận hành tháng gửi Bên B (HĐ hợp tác TEDO–Sâm Sâm,', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+arg_strings = ['--snapshot']
+namespace = Namespace(month=None, out_dir=WindowsPath('D:/code/samsam/.claude/worktrees/wf_5e5afa70-b41-11/data/reports'))
+
+    def _parse_known_args(self, arg_strings, namespace):
+        # replace arg strings that are file references
+        if self.fromfile_prefix_chars is not None:
+            arg_strings = self._read_args_from_files(arg_strings)
+    
+        # map all mutually exclusive arguments to the other arguments
+        # they can't occur with
+        action_conflicts = {}
+        for mutex_group in self._mutually_exclusive_groups:
+            group_actions = mutex_group._group_actions
+            for i, mutex_action in enumerate(mutex_group._group_actions):
+                conflicts = action_conflicts.setdefault(mutex_action, [])
+                conflicts.extend(group_actions[:i])
+                conflicts.extend(group_actions[i + 1:])
+    
+        # find all option indices, and determine the arg_string_pattern
+        # which has an 'O' if there is an option at an index,
+        # an 'A' if there is an argument, or a '-' if there is a '--'
+        option_string_indices = {}
+        arg_string_pattern_parts = []
+        arg_strings_iter = iter(arg_strings)
+        for i, arg_string in enumerate(arg_strings_iter):
+    
+            # all args after -- are non-options
+            if arg_string == '--':
+                arg_string_pattern_parts.append('-')
+                for arg_string in arg_strings_iter:
+                    arg_string_pattern_parts.append('A')
+    
+            # otherwise, add the arg to the arg strings
+            # and note the index if it was an option
+            else:
+                option_tuples = self._parse_optional(arg_string)
+                if option_tuples is None:
+                    pattern = 'A'
+                else:
+                    option_string_indices[i] = option_tuples
+                    pattern = 'O'
+                arg_string_pattern_parts.append(pattern)
+    
+        # join the pieces together to form the pattern
+        arg_strings_pattern = ''.join(arg_string_pattern_parts)
+    
+        # converts arg strings to the appropriate and then takes the action
+        seen_actions = set()
+        seen_non_default_actions = set()
+    
+        def take_action(action, argument_strings, option_string=None):
+            seen_actions.add(action)
+            argument_values = self._get_values(action, argument_strings)
+    
+            # error if this argument is not allowed with other previously
+            # seen arguments
+            if action.option_strings or argument_strings:
+                seen_non_default_actions.add(action)
+                for conflict_action in action_conflicts.get(action, []):
+                    if conflict_action in seen_non_default_actions:
+                        msg = _('not allowed with argument %s')
+                        action_name = _get_action_name(conflict_action)
+                        raise ArgumentError(action, msg % action_name)
+    
+            # take the action if we didn't receive a SUPPRESS value
+            # (e.g. from a default)
+            if argument_values is not SUPPRESS:
+                action(self, namespace, argument_values, option_string)
+    
+        # function to convert arg_strings into an optional action
+        def consume_optional(start_index):
+    
+            # get the optional identified at this index
+            option_tuples = option_string_indices[start_index]
+            # if multiple actions match, the option string was ambiguous
+            if len(option_tuples) > 1:
+                options = ', '.join([option_string
+                    for action, option_string, sep, explicit_arg in option_tuples])
+                args = {'option': arg_string, 'matches': options}
+                msg = _('ambiguous option: %(option)s could match %(matches)s')
+                raise ArgumentError(None, msg % args)
+    
+            action, option_string, sep, explicit_arg = option_tuples[0]
+    
+            # identify additional optionals in the same arg string
+            # (e.g. -xyz is the same as -x -y -z if no args are required)
+            match_argument = self._match_argument
+            action_tuples = []
+            while True:
+    
+                # if we found no optional action, skip it
+                if action is None:
+                    extras.append(arg_strings[start_index])
+                    return start_index + 1
+    
+                # if there is an explicit argument, try to match the
+                # optional's string arguments to only this
+                if explicit_arg is not None:
+                    arg_count = match_argument(action, 'A')
+    
+                    # if the action is a single-dash option and takes no
+                    # arguments, try to parse more single-dash options out
+                    # of the tail of the option string
+                    chars = self.prefix_chars
+                    if (
+                        arg_count == 0
+                        and option_string[1] not in chars
+                        and explicit_arg != ''
+                    ):
+                        if sep or explicit_arg[0] in chars:
+                            msg = _('ignored explicit argument %r')
+                            raise ArgumentError(action, msg % explicit_arg)
+                        action_tuples.append((action, [], option_string))
+                        char = option_string[0]
+                        option_string = char + explicit_arg[0]
+                        optionals_map = self._option_string_actions
+                        if option_string in optionals_map:
+                            action = optionals_map[option_string]
+                            explicit_arg = explicit_arg[1:]
+                            if not explicit_arg:
+                                sep = explicit_arg = None
+                            elif explicit_arg[0] == '=':
+                                sep = '='
+                                explicit_arg = explicit_arg[1:]
+                            else:
+                                sep = ''
+                        else:
+                            extras.append(char + explicit_arg)
+                            stop = start_index + 1
+                            break
+                    # if the action expect exactly one argument, we've
+                    # successfully matched the option; exit the loop
+                    elif arg_count == 1:
+                        stop = start_index + 1
+                        args = [explicit_arg]
+                        action_tuples.append((action, args, option_string))
+                        break
+    
+                    # error if a double-dash option did not use the
+                    # explicit argument
+                    else:
+                        msg = _('ignored explicit argument %r')
+                        raise ArgumentError(action, msg % explicit_arg)
+    
+                # if there is no explicit argument, try to match the
+                # optional's string arguments with the following strings
+                # if successful, exit the loop
+                else:
+                    start = start_index + 1
+                    selected_patterns = arg_strings_pattern[start:]
+                    arg_count = match_argument(action, selected_patterns)
+                    stop = start + arg_count
+                    args = arg_strings[start:stop]
+                    action_tuples.append((action, args, option_string))
+                    break
+    
+            # add the Optional to the list and return the index at which
+            # the Optional's string args stopped
+            assert action_tuples
+            for action, args, option_string in action_tuples:
+                take_action(action, args, option_string)
+            return stop
+    
+        # the list of Positionals left to be parsed; this is modified
+        # by consume_positionals()
+        positionals = self._get_positional_actions()
+    
+        # function to convert arg_strings into positional actions
+        def consume_positionals(start_index):
+            # match as many Positionals as possible
+            match_partial = self._match_arguments_partial
+            selected_pattern = arg_strings_pattern[start_index:]
+            arg_counts = match_partial(positionals, selected_pattern)
+    
+            # slice off the appropriate arg strings for each Positional
+            # and add the Positional and its args to the list
+            for action, arg_count in zip(positionals, arg_counts):
+                args = arg_strings[start_index: start_index + arg_count]
+                # Strip out the first '--' if it is not in REMAINDER arg.
+                if action.nargs == PARSER:
+                    if arg_strings_pattern[start_index] == '-':
+                        assert args[0] == '--'
+                        args.remove('--')
+                elif action.nargs != REMAINDER:
+                    if (arg_strings_pattern.find('-', start_index,
+                                                 start_index + arg_count) >= 0):
+                        args.remove('--')
+                start_index += arg_count
+                take_action(action, args)
+    
+            # slice off the Positionals that we just parsed and return the
+            # index at which the Positionals' string args stopped
+            positionals[:] = positionals[len(arg_counts):]
+            return start_index
+    
+        # consume Positionals and Optionals alternately, until we have
+        # passed the last option string
+        extras = []
+        start_index = 0
+        if option_string_indices:
+            max_option_string_index = max(option_string_indices)
+        else:
+            max_option_string_index = -1
+        while start_index <= max_option_string_index:
+    
+            # consume any Positionals preceding the next option
+            next_option_string_index = min([
+                index
+                for index in option_string_indices
+                if index >= start_index])
+            if start_index != next_option_string_index:
+                positionals_end_index = consume_positionals(start_index)
+    
+                # only try to parse the next optional if we didn't consume
+                # the option string during the positionals parsing
+                if positionals_end_index > start_index:
+                    start_index = positionals_end_index
+                    continue
+                else:
+                    start_index = positionals_end_index
+    
+            # if we consumed all the positionals we could and we're not
+            # at the index of an option string, there were extra arguments
+            if start_index not in option_string_indices:
+                strings = arg_strings[start_index:next_option_string_index]
+                extras.extend(strings)
+                start_index = next_option_string_index
+    
+            # consume the next optional and any arguments for it
+            start_index = consume_optional(start_index)
+    
+        # consume any positionals following the last Optional
+        stop_index = consume_positionals(start_index)
+    
+        # if we didn't consume all the argument strings, there were extras
+        extras.extend(arg_strings[stop_index:])
+    
+        # make sure all required actions were present and also convert
+        # action defaults which were not given as arguments
+        required_actions = []
+        for action in self._actions:
+            if action not in seen_actions:
+                if action.required:
+                    required_actions.append(_get_action_name(action))
+                else:
+                    # Convert action default now instead of doing it before
+                    # parsing arguments to avoid calling convert functions
+                    # twice (which may fail) if the argument was given, but
+                    # only if it was defined already in the namespace
+                    if (action.default is not None and
+                        isinstance(action.default, str) and
+                        hasattr(namespace, action.dest) and
+                        action.default is getattr(namespace, action.dest)):
+                        setattr(namespace, action.dest,
+                                self._get_value(action, action.default))
+    
+        if required_actions:
+>           raise ArgumentError(None, _('the following arguments are required: %s') %
+                       ', '.join(required_actions))
+E           argparse.ArgumentError: the following arguments are required: --month
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2196: ArgumentError
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DB9FCEFCE0>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2677/test_cli_snapshot_db_down_exit0')
+
+    def test_cli_snapshot_db_down_exit_1(monkeypatch, tmp_path):
+        monkeypatch.setattr(om, "connect", lambda: None)
+>       assert om.main(["--snapshot"], data_dir=tmp_path) == 1
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v13_c07_ops.py:526: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+scripts\ops_monthly.py:648: in main
+    args = ap.parse_args(argv)
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:1895: in parse_args
+    args, argv = self.parse_known_args(args, namespace)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:1933: in parse_known_args
+    self.error(str(err))
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2672: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='__main__.py', usage=None, description='v12.6 B6 — Báo cáo vận hành tháng gửi Bên B (HĐ hợp tác TEDO–Sâm Sâm,', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = '__main__.py: error: the following arguments are required: --month\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2659: SystemExit
+---------------------------- Captured stderr call -----------------------------
+usage: __main__.py [-h] --month MONTH [--out-dir OUT_DIR]
+__main__.py: error: the following arguments are required: --month
+___________________ test_mark_sent_only_by_sender_with_file ___________________
+
+self = ArgumentParser(prog='__main__.py', usage=None, description='v12.6 B6 — Báo cáo vận hành tháng gửi Bên B (HĐ hợp tác TEDO–Sâm Sâm,', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+args = ['--mark-sent', '2026-10', '--file', 'C:\\Users\\hahuy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-2677\\test_mark_sent_only_by_sender_0\\van-hanh-2026-10.md', '--by', 'agent:ops']
+namespace = Namespace(month=None, out_dir=WindowsPath('D:/code/samsam/.claude/worktrees/wf_5e5afa70-b41-11/data/reports'))
+
+    def parse_known_args(self, args=None, namespace=None):
+        if args is None:
+            # args default to the system args
+            args = _sys.argv[1:]
+        else:
+            # make sure that args are mutable
+            args = list(args)
+    
+        # default Namespace built from parser defaults
+        if namespace is None:
+            namespace = Namespace()
+    
+        # add any action defaults that aren't present
+        for action in self._actions:
+            if action.dest is not SUPPRESS:
+                if not hasattr(namespace, action.dest):
+                    if action.default is not SUPPRESS:
+                        setattr(namespace, action.dest, action.default)
+    
+        # add any parser defaults that aren't present
+        for dest in self._defaults:
+            if not hasattr(namespace, dest):
+                setattr(namespace, dest, self._defaults[dest])
+    
+        # parse the arguments and exit if there are any errors
+        if self.exit_on_error:
+            try:
+>               namespace, args = self._parse_known_args(args, namespace)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:1931: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='__main__.py', usage=None, description='v12.6 B6 — Báo cáo vận hành tháng gửi Bên B (HĐ hợp tác TEDO–Sâm Sâm,', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+arg_strings = ['--mark-sent', '2026-10', '--file', 'C:\\Users\\hahuy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-2677\\test_mark_sent_only_by_sender_0\\van-hanh-2026-10.md', '--by', 'agent:ops']
+namespace = Namespace(month=None, out_dir=WindowsPath('D:/code/samsam/.claude/worktrees/wf_5e5afa70-b41-11/data/reports'))
+
+    def _parse_known_args(self, arg_strings, namespace):
+        # replace arg strings that are file references
+        if self.fromfile_prefix_chars is not None:
+            arg_strings = self._read_args_from_files(arg_strings)
+    
+        # map all mutually exclusive arguments to the other arguments
+        # they can't occur with
+        action_conflicts = {}
+        for mutex_group in self._mutually_exclusive_groups:
+            group_actions = mutex_group._group_actions
+            for i, mutex_action in enumerate(mutex_group._group_actions):
+                conflicts = action_conflicts.setdefault(mutex_action, [])
+                conflicts.extend(group_actions[:i])
+                conflicts.extend(group_actions[i + 1:])
+    
+        # find all option indices, and determine the arg_string_pattern
+        # which has an 'O' if there is an option at an index,
+        # an 'A' if there is an argument, or a '-' if there is a '--'
+        option_string_indices = {}
+        arg_string_pattern_parts = []
+        arg_strings_iter = iter(arg_strings)
+        for i, arg_string in enumerate(arg_strings_iter):
+    
+            # all args after -- are non-options
+            if arg_string == '--':
+                arg_string_pattern_parts.append('-')
+                for arg_string in arg_strings_iter:
+                    arg_string_pattern_parts.append('A')
+    
+            # otherwise, add the arg to the arg strings
+            # and note the index if it was an option
+            else:
+                option_tuples = self._parse_optional(arg_string)
+                if option_tuples is None:
+                    pattern = 'A'
+                else:
+                    option_string_indices[i] = option_tuples
+                    pattern = 'O'
+                arg_string_pattern_parts.append(pattern)
+    
+        # join the pieces together to form the pattern
+        arg_strings_pattern = ''.join(arg_string_pattern_parts)
+    
+        # converts arg strings to the appropriate and then takes the action
+        seen_actions = set()
+        seen_non_default_actions = set()
+    
+        def take_action(action, argument_strings, option_string=None):
+            seen_actions.add(action)
+            argument_values = self._get_values(action, argument_strings)
+    
+            # error if this argument is not allowed with other previously
+            # seen arguments
+            if action.option_strings or argument_strings:
+                seen_non_default_actions.add(action)
+                for conflict_action in action_conflicts.get(action, []):
+                    if conflict_action in seen_non_default_actions:
+                        msg = _('not allowed with argument %s')
+                        action_name = _get_action_name(conflict_action)
+                        raise ArgumentError(action, msg % action_name)
+    
+            # take the action if we didn't receive a SUPPRESS value
+            # (e.g. from a default)
+            if argument_values is not SUPPRESS:
+                action(self, namespace, argument_values, option_string)
+    
+        # function to convert arg_strings into an optional action
+        def consume_optional(start_index):
+    
+            # get the optional identified at this index
+            option_tuples = option_string_indices[start_index]
+            # if multiple actions match, the option string was ambiguous
+            if len(option_tuples) > 1:
+                options = ', '.join([option_string
+                    for action, option_string, sep, explicit_arg in option_tuples])
+                args = {'option': arg_string, 'matches': options}
+                msg = _('ambiguous option: %(option)s could match %(matches)s')
+                raise ArgumentError(None, msg % args)
+    
+            action, option_string, sep, explicit_arg = option_tuples[0]
+    
+            # identify additional optionals in the same arg string
+            # (e.g. -xyz is the same as -x -y -z if no args are required)
+            match_argument = self._match_argument
+            action_tuples = []
+            while True:
+    
+                # if we found no optional action, skip it
+                if action is None:
+                    extras.append(arg_strings[start_index])
+                    return start_index + 1
+    
+                # if there is an explicit argument, try to match the
+                # optional's string arguments to only this
+                if explicit_arg is not None:
+                    arg_count = match_argument(action, 'A')
+    
+                    # if the action is a single-dash option and takes no
+                    # arguments, try to parse more single-dash options out
+                    # of the tail of the option string
+                    chars = self.prefix_chars
+                    if (
+                        arg_count == 0
+                        and option_string[1] not in chars
+                        and explicit_arg != ''
+                    ):
+                        if sep or explicit_arg[0] in chars:
+                            msg = _('ignored explicit argument %r')
+                            raise ArgumentError(action, msg % explicit_arg)
+                        action_tuples.append((action, [], option_string))
+                        char = option_string[0]
+                        option_string = char + explicit_arg[0]
+                        optionals_map = self._option_string_actions
+                        if option_string in optionals_map:
+                            action = optionals_map[option_string]
+                            explicit_arg = explicit_arg[1:]
+                            if not explicit_arg:
+                                sep = explicit_arg = None
+                            elif explicit_arg[0] == '=':
+                                sep = '='
+                                explicit_arg = explicit_arg[1:]
+                            else:
+                                sep = ''
+                        else:
+                            extras.append(char + explicit_arg)
+                            stop = start_index + 1
+                            break
+                    # if the action expect exactly one argument, we've
+                    # successfully matched the option; exit the loop
+                    elif arg_count == 1:
+                        stop = start_index + 1
+                        args = [explicit_arg]
+                        action_tuples.append((action, args, option_string))
+                        break
+    
+                    # error if a double-dash option did not use the
+                    # explicit argument
+                    else:
+                        msg = _('ignored explicit argument %r')
+                        raise ArgumentError(action, msg % explicit_arg)
+    
+                # if there is no explicit argument, try to match the
+                # optional's string arguments with the following strings
+                # if successful, exit the loop
+                else:
+                    start = start_index + 1
+                    selected_patterns = arg_strings_pattern[start:]
+                    arg_count = match_argument(action, selected_patterns)
+                    stop = start + arg_count
+                    args = arg_strings[start:stop]
+                    action_tuples.append((action, args, option_string))
+                    break
+    
+            # add the Optional to the list and return the index at which
+            # the Optional's string args stopped
+            assert action_tuples
+            for action, args, option_string in action_tuples:
+                take_action(action, args, option_string)
+            return stop
+    
+        # the list of Positionals left to be parsed; this is modified
+        # by consume_positionals()
+        positionals = self._get_positional_actions()
+    
+        # function to convert arg_strings into positional actions
+        def consume_positionals(start_index):
+            # match as many Positionals as possible
+            match_partial = self._match_arguments_partial
+            selected_pattern = arg_strings_pattern[start_index:]
+            arg_counts = match_partial(positionals, selected_pattern)
+    
+            # slice off the appropriate arg strings for each Positional
+            # and add the Positional and its args to the list
+            for action, arg_count in zip(positionals, arg_counts):
+                args = arg_strings[start_index: start_index + arg_count]
+                # Strip out the first '--' if it is not in REMAINDER arg.
+                if action.nargs == PARSER:
+                    if arg_strings_pattern[start_index] == '-':
+                        assert args[0] == '--'
+                        args.remove('--')
+                elif action.nargs != REMAINDER:
+                    if (arg_strings_pattern.find('-', start_index,
+                                                 start_index + arg_count) >= 0):
+                        args.remove('--')
+                start_index += arg_count
+                take_action(action, args)
+    
+            # slice off the Positionals that we just parsed and return the
+            # index at which the Positionals' string args stopped
+            positionals[:] = positionals[len(arg_counts):]
+            return start_index
+    
+        # consume Positionals and Optionals alternately, until we have
+        # passed the last option string
+        extras = []
+        start_index = 0
+        if option_string_indices:
+            max_option_string_index = max(option_string_indices)
+        else:
+            max_option_string_index = -1
+        while start_index <= max_option_string_index:
+    
+            # consume any Positionals preceding the next option
+            next_option_string_index = min([
+                index
+                for index in option_string_indices
+                if index >= start_index])
+            if start_index != next_option_string_index:
+                positionals_end_index = consume_positionals(start_index)
+    
+                # only try to parse the next optional if we didn't consume
+                # the option string during the positionals parsing
+                if positionals_end_index > start_index:
+                    start_index = positionals_end_index
+                    continue
+                else:
+                    start_index = positionals_end_index
+    
+            # if we consumed all the positionals we could and we're not
+            # at the index of an option string, there were extra arguments
+            if start_index not in option_string_indices:
+                strings = arg_strings[start_index:next_option_string_index]
+                extras.extend(strings)
+                start_index = next_option_string_index
+    
+            # consume the next optional and any arguments for it
+            start_index = consume_optional(start_index)
+    
+        # consume any positionals following the last Optional
+        stop_index = consume_positionals(start_index)
+    
+        # if we didn't consume all the argument strings, there were extras
+        extras.extend(arg_strings[stop_index:])
+    
+        # make sure all required actions were present and also convert
+        # action defaults which were not given as arguments
+        required_actions = []
+        for action in self._actions:
+            if action not in seen_actions:
+                if action.required:
+                    required_actions.append(_get_action_name(action))
+                else:
+                    # Convert action default now instead of doing it before
+                    # parsing arguments to avoid calling convert functions
+                    # twice (which may fail) if the argument was given, but
+                    # only if it was defined already in the namespace
+                    if (action.default is not None and
+                        isinstance(action.default, str) and
+                        hasattr(namespace, action.dest) and
+                        action.default is getattr(namespace, action.dest)):
+                        setattr(namespace, action.dest,
+                                self._get_value(action, action.default))
+    
+        if required_actions:
+>           raise ArgumentError(None, _('the following arguments are required: %s') %
+                       ', '.join(required_actions))
+E           argparse.ArgumentError: the following arguments are required: --month
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2196: ArgumentError
+
+During handling of the above exception, another exception occurred:
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c07) at 0x1db9fd27140>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2677/test_mark_sent_only_by_sender_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x000001DB9FD268A0>
+
+    def test_mark_sent_only_by_sender_with_file(db, tmp_path, capsys):
+        now = _vn(2026, 11, 3, 9)
+        f = tmp_path / "van-hanh-2026-10.md"
+        f.write_text("báo cáo", encoding="utf-8")
+        tx = TxConn(db)
+        for argv in (["--mark-sent", "2026-10", "--file", str(f), "--by",
+                      "agent:ops"],
+                     ["--mark-sent", "2026-10", "--file", str(tmp_path / "x.md"),
+                      "--by", "Người Gửi"],
+                     ["--mark-sent", "2026-11", "--file", str(f), "--by",
+                      "Người Gửi"]):                           # tháng chưa đóng
+>           assert om.main(argv, now=now, conn=tx) == 2
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v13_c07_ops.py:541: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+scripts\ops_monthly.py:648: in main
+    args = ap.parse_args(argv)
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:1895: in parse_args
+    args, argv = self.parse_known_args(args, namespace)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:1933: in parse_known_args
+    self.error(str(err))
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2672: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='__main__.py', usage=None, description='v12.6 B6 — Báo cáo vận hành tháng gửi Bên B (HĐ hợp tác TEDO–Sâm Sâm,', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = '__main__.py: error: the following arguments are required: --month\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2659: SystemExit
+---------------------------- Captured stderr call -----------------------------
+usage: __main__.py [-h] --month MONTH [--out-dir OUT_DIR]
+__main__.py: error: the following arguments are required: --month
+________________________ test_month_prev_for_day1_job _________________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2677/test_month_prev_for_day1_job0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DB9FCEEEA0>
+
+    def test_month_prev_for_day1_job(tmp_path, monkeypatch):
+        monkeypatch.setattr(om, "connect", lambda: None)
+        rc = om.main(["--month", "prev", "--out-dir", str(tmp_path)],
+                     now=_vn(2026, 11, 1, 8), data_dir=tmp_path)
+>       assert rc == 1 and (tmp_path / "van-hanh-2026-10.md").exists()
+E       assert (2 == 1)
+
+tests\test_v13_c07_ops.py:563: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[usage] --month cần dạng YYYY-MM
+___________________ test_render_ads_koc_scope_always_stated ___________________
+
+    def test_render_ads_koc_scope_always_stated():
+        md = om.render({"start": _vn(2026, 10, 1), "end": _vn(2026, 11, 1),
+                        "now": _vn(2026, 11, 2), "assets": om.load_assets(),
+                        "repo": {"head": None, "modules": 1, "tests": 1,
+                                 "handover": []},
+                        "conv": {"exists": False, "earliest": None,
+                                 "questions": [], "latencies": []},
+                        "shift": SHIFT, "backups": None, "drills": None,
+                        "db_ok": False})
+>       assert "KOC/livestream" in md and "KHÔNG được coi là đạt" in md
+E       AssertionError: assert ('KOC/livestream' in '# Báo cáo vận hành tháng 10/2026\n\n_Sinh lúc 02/11/2026 00:00 giờ VN. Hạn gửi Bên B: trước ngày 05/11/2026 (PL02 mục...hiện tại: `không đọc được`\n- Số module Python: 1; số file test: 1\n- Tài liệu bàn giao `docs/handover/`: (không có)\n')
+
+tests\test_v13_c07_ops.py:575: AssertionError
+_________________ test_schedule_file_and_systemd_units_match __________________
+
+    def test_schedule_file_and_systemd_units_match():
+>       jobs = job_runs.load_jobs()
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.job_runs' has no attribute 'load_jobs'
+
+tests\test_v13_c07_ops.py:580: AttributeError
+________________________ test_load_jobs_rejects[bad0] _________________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2677/test_load_jobs_rejects_bad0_0')
+bad = {'jobs': {'x': {'max_gap_hours': 1, 'on_calendar': 'daily', 'steps': [['-m', 'khong.co.module']]}}}
+
+    @pytest.mark.parametrize("bad", [
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 1,
+                        "steps": [["-m", "khong.co.module"]]}}},
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 1,
+                        "steps": [["../evil.py"]]}}},
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 0,
+                        "steps": [["scripts/db_backup.py"]]}}},
+        {"jobs": {"X Y": {"on_calendar": "daily", "max_gap_hours": 1,
+                          "steps": [["scripts/db_backup.py"]]}}},
+        {"jobs": {}}, {},
+    ])
+    def test_load_jobs_rejects(tmp_path, bad):
+        p = tmp_path / "jobs.json"
+        p.write_text(json.dumps(bad), encoding="utf-8")
+>       with pytest.raises(job_runs.JobConfigError):
+                           ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.job_runs' has no attribute 'JobConfigError'
+
+tests\test_v13_c07_ops.py:618: AttributeError
+________________________ test_load_jobs_rejects[bad1] _________________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2677/test_load_jobs_rejects_bad1_0')
+bad = {'jobs': {'x': {'max_gap_hours': 1, 'on_calendar': 'daily', 'steps': [['../evil.py']]}}}
+
+    @pytest.mark.parametrize("bad", [
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 1,
+                        "steps": [["-m", "khong.co.module"]]}}},
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 1,
+                        "steps": [["../evil.py"]]}}},
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 0,
+                        "steps": [["scripts/db_backup.py"]]}}},
+        {"jobs": {"X Y": {"on_calendar": "daily", "max_gap_hours": 1,
+                          "steps": [["scripts/db_backup.py"]]}}},
+        {"jobs": {}}, {},
+    ])
+    def test_load_jobs_rejects(tmp_path, bad):
+        p = tmp_path / "jobs.json"
+        p.write_text(json.dumps(bad), encoding="utf-8")
+>       with pytest.raises(job_runs.JobConfigError):
+                           ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.job_runs' has no attribute 'JobConfigError'
+
+tests\test_v13_c07_ops.py:618: AttributeError
+________________________ test_load_jobs_rejects[bad2] _________________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2677/test_load_jobs_rejects_bad2_0')
+bad = {'jobs': {'x': {'max_gap_hours': 0, 'on_calendar': 'daily', 'steps': [['scripts/db_backup.py']]}}}
+
+    @pytest.mark.parametrize("bad", [
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 1,
+                        "steps": [["-m", "khong.co.module"]]}}},
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 1,
+                        "steps": [["../evil.py"]]}}},
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 0,
+                        "steps": [["scripts/db_backup.py"]]}}},
+        {"jobs": {"X Y": {"on_calendar": "daily", "max_gap_hours": 1,
+                          "steps": [["scripts/db_backup.py"]]}}},
+        {"jobs": {}}, {},
+    ])
+    def test_load_jobs_rejects(tmp_path, bad):
+        p = tmp_path / "jobs.json"
+        p.write_text(json.dumps(bad), encoding="utf-8")
+>       with pytest.raises(job_runs.JobConfigError):
+                           ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.job_runs' has no attribute 'JobConfigError'
+
+tests\test_v13_c07_ops.py:618: AttributeError
+________________________ test_load_jobs_rejects[bad3] _________________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2677/test_load_jobs_rejects_bad3_0')
+bad = {'jobs': {'X Y': {'max_gap_hours': 1, 'on_calendar': 'daily', 'steps': [['scripts/db_backup.py']]}}}
+
+    @pytest.mark.parametrize("bad", [
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 1,
+                        "steps": [["-m", "khong.co.module"]]}}},
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 1,
+                        "steps": [["../evil.py"]]}}},
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 0,
+                        "steps": [["scripts/db_backup.py"]]}}},
+        {"jobs": {"X Y": {"on_calendar": "daily", "max_gap_hours": 1,
+                          "steps": [["scripts/db_backup.py"]]}}},
+        {"jobs": {}}, {},
+    ])
+    def test_load_jobs_rejects(tmp_path, bad):
+        p = tmp_path / "jobs.json"
+        p.write_text(json.dumps(bad), encoding="utf-8")
+>       with pytest.raises(job_runs.JobConfigError):
+                           ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.job_runs' has no attribute 'JobConfigError'
+
+tests\test_v13_c07_ops.py:618: AttributeError
+________________________ test_load_jobs_rejects[bad4] _________________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2677/test_load_jobs_rejects_bad4_0')
+bad = {'jobs': {}}
+
+    @pytest.mark.parametrize("bad", [
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 1,
+                        "steps": [["-m", "khong.co.module"]]}}},
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 1,
+                        "steps": [["../evil.py"]]}}},
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 0,
+                        "steps": [["scripts/db_backup.py"]]}}},
+        {"jobs": {"X Y": {"on_calendar": "daily", "max_gap_hours": 1,
+                          "steps": [["scripts/db_backup.py"]]}}},
+        {"jobs": {}}, {},
+    ])
+    def test_load_jobs_rejects(tmp_path, bad):
+        p = tmp_path / "jobs.json"
+        p.write_text(json.dumps(bad), encoding="utf-8")
+>       with pytest.raises(job_runs.JobConfigError):
+                           ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.job_runs' has no attribute 'JobConfigError'
+
+tests\test_v13_c07_ops.py:618: AttributeError
+________________________ test_load_jobs_rejects[bad5] _________________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2677/test_load_jobs_rejects_bad5_0')
+bad = {}
+
+    @pytest.mark.parametrize("bad", [
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 1,
+                        "steps": [["-m", "khong.co.module"]]}}},
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 1,
+                        "steps": [["../evil.py"]]}}},
+        {"jobs": {"x": {"on_calendar": "daily", "max_gap_hours": 0,
+                        "steps": [["scripts/db_backup.py"]]}}},
+        {"jobs": {"X Y": {"on_calendar": "daily", "max_gap_hours": 1,
+                          "steps": [["scripts/db_backup.py"]]}}},
+        {"jobs": {}}, {},
+    ])
+    def test_load_jobs_rejects(tmp_path, bad):
+        p = tmp_path / "jobs.json"
+        p.write_text(json.dumps(bad), encoding="utf-8")
+>       with pytest.raises(job_runs.JobConfigError):
+                           ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.job_runs' has no attribute 'JobConfigError'
+
+tests\test_v13_c07_ops.py:618: AttributeError
+______________________ test_wrapper_lock_blocks_overlap _______________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2677/test_wrapper_lock_blocks_overl0')
+_no_job_runs_db = []
+
+    def test_wrapper_lock_blocks_overlap(tmp_path, _no_job_runs_db):
+        jobs = {"x": {"on_calendar": "daily", "max_gap_hours": 1,
+                      "steps": [["-m", "pipelines.period"]]}}
+        calls = []
+>       with job_runs._file_lock(tmp_path / "x.lock") as got:
+             ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.job_runs' has no attribute '_file_lock'
+
+tests\test_v13_c07_ops.py:626: AttributeError
+____________ test_wrapper_runs_all_steps_and_reports_first_failure ____________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2677/test_wrapper_runs_all_steps_an0')
+_no_job_runs_db = []
+
+    def test_wrapper_runs_all_steps_and_reports_first_failure(tmp_path,
+                                                              _no_job_runs_db):
+        jobs = {"x": {"on_calendar": "daily", "max_gap_hours": 1,
+                      "steps": [["-m", "a"], ["-m", "b"], ["-m", "c"]]}}
+        rcs, seen = iter([0, 3, 4]), []
+    
+        def runner(argv, cwd, timeout):
+            seen.append(argv[1:])
+            return type("R", (), {"returncode": next(rcs)})
+>       assert job_runs.run_scheduled("x", jobs=jobs, lock_dir=tmp_path,
+               ^^^^^^^^^^^^^^^^^^^^^^
+                                      runner=runner) == 3
+E       AttributeError: module 'pipelines.job_runs' has no attribute 'run_scheduled'
+
+tests\test_v13_c07_ops.py:650: AttributeError
+_________________ test_health_bulletin_watches_scheduled_jobs _________________
+
+    def test_health_bulletin_watches_scheduled_jobs():
+>       exp = hb.expected_jobs()
+              ^^^^^^^^^^^^^^^^
+E       AttributeError: module 'scripts.health_bulletin' has no attribute 'expected_jobs'
+
+tests\test_v13_c07_ops.py:658: AttributeError
+__________________________ test_gitignore_job_locks ___________________________
+
+    def test_gitignore_job_locks():
+>       assert "data/job_locks/" in (ROOT / ".gitignore").read_text(
+            encoding="utf-8")
+E       AssertionError: assert 'data/job_locks/' in '__pycache__/\n*.pyc\n.venv/\nvenv/\n.env\n.streamlit/secrets.toml\ndata/raw/\ndata/conversations.jsonl*\ndata/zalo_se...aff.sample.json\ndata/garden_staff.json\n# worktree tạm của workflow subagent (Claude Code) — không commit\n.claude/\n'
+E        +  where '__pycache__/\n*.pyc\n.venv/\nvenv/\n.env\n.streamlit/secrets.toml\ndata/raw/\ndata/conversations.jsonl*\ndata/zalo_se...aff.sample.json\ndata/garden_staff.json\n# worktree tạm của workflow subagent (Claude Code) — không commit\n.claude/\n' = read_text(encoding='utf-8')
+E        +    where read_text = (WindowsPath('D:/code/samsam/.claude/worktrees/wf_5e5afa70-b41-11') / '.gitignore').read_text
+
+tests\test_v13_c07_ops.py:665: AssertionError
+__________________________ test_cli_module_help_runs __________________________
+
+    def test_cli_module_help_runs():
+        """`python -m pipelines.job_runs --list` đọc lịch thật, không DB."""
+        import subprocess
+        import sys
+        r = subprocess.run([sys.executable, "-m", "pipelines.job_runs", "--list"],
+                           cwd=ROOT, capture_output=True, timeout=60,
+                           env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+                           encoding="utf-8", errors="replace", check=False)
+>       assert r.returncode == 0 and "red_alert_sweep" in r.stdout
+E       AssertionError: assert (0 == 0 and 'red_alert_sweep' in '')
+E        +  where 0 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'pipelines.job_runs', '--list'], returncode=0, stdout='', stderr='').returncode
+E        +  and   '' = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'pipelines.job_runs', '--list'], returncode=0, stdout='', stderr='').stdout
+
+tests\test_v13_c07_ops.py:677: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_v13_c07_ops.py::test_routed_but_not_sent_is_not_notified - ...
+FAILED tests/test_v13_c07_ops.py::test_delivery_rows_never_store_address_and_send_failure_counted
+FAILED tests/test_v13_c07_ops.py::test_smtp_sender_env_gate_and_starttls - At...
+FAILED tests/test_v13_c07_ops.py::test_resolve_address[email:pc@vi-du.test-env0-pc@vi-du.test]
+FAILED tests/test_v13_c07_ops.py::test_resolve_address[email:$RA_PC-env1-pc@vi-du.test]
+FAILED tests/test_v13_c07_ops.py::test_resolve_address[email:$RA_PC-env2-None]
+FAILED tests/test_v13_c07_ops.py::test_resolve_address[email-env3-None] - Att...
+FAILED tests/test_v13_c07_ops.py::test_resolve_address[zalo:123-env4-None] - ...
+FAILED tests/test_v13_c07_ops.py::test_resolve_address[email:a@b@c-env5-None]
+FAILED tests/test_v13_c07_ops.py::test_resolve_address[email:a b@c-env6-None]
+FAILED tests/test_v13_c07_ops.py::test_resolve_address[email:a@b.vn,x@y.vn-env7-None]
+FAILED tests/test_v13_c07_ops.py::test_resolve_address[email:a@b.vn\r\nBcc: x@y-env8-None]
+FAILED tests/test_v13_c07_ops.py::test_ack_generic_for_every_alert_source - A...
+FAILED tests/test_v13_c07_ops.py::test_ack_enforced_mode_only_independent_recipients
+FAILED tests/test_v13_c07_ops.py::test_deliver_pending_catches_up_caps_and_skips_acked
+FAILED tests/test_v13_c07_ops.py::test_cli_deliver_exit_1_without_recipients
+FAILED tests/test_v13_c07_ops.py::test_rag_budget_passed_to_every_call_then_stops
+FAILED tests/test_v13_c07_ops.py::test_rag_deadline_from_contextvar_and_client_timeout
+FAILED tests/test_v13_c07_ops.py::test_zalo_slow_answer_handoff_within_budget
+FAILED tests/test_v13_c07_ops.py::test_zalo_lock_wait_counts_toward_budget - ...
+FAILED tests/test_v13_c07_ops.py::test_send_timeouts_fit_budget - AttributeEr...
+FAILED tests/test_v13_c07_ops.py::test_incident_sla_rules_pure - ImportError:...
+FAILED tests/test_v13_c07_ops.py::test_incident_log_db_append_only_and_validation
+FAILED tests/test_v13_c07_ops.py::test_incident_rows_empty_book_not_claimed_clean
+FAILED tests/test_v13_c07_ops.py::test_kpi_snapshot_survives_convlog_rotation
+FAILED tests/test_v13_c07_ops.py::test_cli_snapshot_db_down_exit_1 - SystemEx...
+FAILED tests/test_v13_c07_ops.py::test_mark_sent_only_by_sender_with_file - S...
+FAILED tests/test_v13_c07_ops.py::test_month_prev_for_day1_job - assert (2 == 1)
+FAILED tests/test_v13_c07_ops.py::test_render_ads_koc_scope_always_stated - A...
+FAILED tests/test_v13_c07_ops.py::test_schedule_file_and_systemd_units_match
+FAILED tests/test_v13_c07_ops.py::test_load_jobs_rejects[bad0] - AttributeErr...
+FAILED tests/test_v13_c07_ops.py::test_load_jobs_rejects[bad1] - AttributeErr...
+FAILED tests/test_v13_c07_ops.py::test_load_jobs_rejects[bad2] - AttributeErr...
+FAILED tests/test_v13_c07_ops.py::test_load_jobs_rejects[bad3] - AttributeErr...
+FAILED tests/test_v13_c07_ops.py::test_load_jobs_rejects[bad4] - AttributeErr...
+FAILED tests/test_v13_c07_ops.py::test_load_jobs_rejects[bad5] - AttributeErr...
+FAILED tests/test_v13_c07_ops.py::test_wrapper_lock_blocks_overlap - Attribut...
+FAILED tests/test_v13_c07_ops.py::test_wrapper_runs_all_steps_and_reports_first_failure
+FAILED tests/test_v13_c07_ops.py::test_health_bulletin_watches_scheduled_jobs
+FAILED tests/test_v13_c07_ops.py::test_gitignore_job_locks - AssertionError: ...
+FAILED tests/test_v13_c07_ops.py::test_cli_module_help_runs - AssertionError:...
+41 failed, 2 passed in 13.56s

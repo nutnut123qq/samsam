@@ -1,0 +1,11 @@
+# v13.7 — lịch job 'content_daily' (nguồn: deploy/onprem/jobs.json).
+[Unit]
+Description=Sam Sam timer content_daily
+
+[Timer]
+OnCalendar=*-*-* 06:00:00
+Persistent=true
+Unit=samsam-job@content_daily.service
+
+[Install]
+WantedBy=timers.target

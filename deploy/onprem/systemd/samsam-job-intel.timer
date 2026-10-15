@@ -1,0 +1,11 @@
+# v13.7 — lịch job 'intel' (nguồn: deploy/onprem/jobs.json).
+[Unit]
+Description=Sam Sam timer intel
+
+[Timer]
+OnCalendar=*-*-* 06:45:00
+Persistent=true
+Unit=samsam-job@intel.service
+
+[Install]
+WantedBy=timers.target

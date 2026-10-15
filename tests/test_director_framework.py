@@ -548,10 +548,16 @@ def test_raise_alert_as_agent_writer(db):
                                         {"sdt": "0912345678", "n": 3})
     assert routed is False and "thiếu người nhận" in msg
     ok_routing = {"recipients": [{"name": "Nguoi Nhan Gia Lap (test)",
-                                  "role": "phap_che", "channel": "email"}]}
-    routed2, _ = red_alert.raise_alert(tx, "agent:intel-red", "Lô B",
-                                       routing=ok_routing)
-    assert routed2 is True and tx.committed == 2
+                                  "role": "phap_che",
+                                  "channel": "email:pc@vi-du.test"}]}
+    # v13.7 (flip có chủ đích): True = ĐÃ GỬI (sender giả, không mạng); dưới
+    # agent_writer ghi được `red_alert_deliveries` (grant v13.7).
+    sent = []
+    routed2, _ = red_alert.raise_alert(
+        tx, "agent:intel-red", "Lô B", routing=ok_routing,
+        sender=lambda to, subj, body: sent.append(to))
+    assert routed2 is True and sent == ["pc@vi-du.test"]
+    assert tx.committed == 3                    # alert + log, rồi nhật ký gửi
     db.execute("reset role")
     rows = db.execute("select title, detail, recipients, route_error from"
                       " red_alerts order by id").fetchall()
@@ -559,6 +565,9 @@ def test_raise_alert_as_agent_writer(db):
     assert rows[0][1]["n"] == 3
     assert rows[0][2] == [] and "thiếu người nhận" in rows[0][3]
     assert rows[1][2] == ["Nguoi Nhan Gia Lap (test)"] and rows[1][3] is None
+    assert db.execute("select recipient, role, channel, ok, error from"
+                      " red_alert_deliveries").fetchall() == [
+        ("Nguoi Nhan Gia Lap (test)", "phap_che", "email", True, None)]
     assert _one(db, "select count(*) from agent_action_log where action ="
                     " 'red_alert_raise'") == 2
     assert _verify(db) == []

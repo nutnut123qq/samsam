@@ -18,16 +18,21 @@ Contract:
     `IntelAlertConfigError` (KHÔNG quét "0 luật" im lặng).
   - `scan`: tin `fetched_at >= now - lookback_hours` chưa có cảnh báo → mỗi
     tin khớp ĐÚNG 1 `pipelines.red_alert.raise_alert` (người nhận độc lập
-    v4.0; thiếu → dòng vẫn ghi + `route_error`, fail-closed). Unique index
+    v4.0; thiếu → dòng vẫn ghi + `route_error`, fail-closed). v13.7:
+    `unrouted` = cảnh báo CHƯA THÔNG BÁO được (thiếu người nhận HOẶC chưa
+    gửi được qua SMTP) → `--run` exit 1. Unique index
     partial chặn báo trùng khi chạy song song → đếm `dup`.
   - `escalate`: cảnh báo gốc quá `ESCALATE_AFTER` (2 giờ, hằng code) chưa
     có dòng `red_alert_acks` và chưa leo thang → 1 cảnh báo leo thang (1 cấp,
     không lặp), cùng routing độc lập v4.0.
   - `ack`: NGƯỜI xác nhận cảnh báo gốc (`red_alert_acks`, append-only,
-    `acked_at` do DB đặt). Lỗi đầu vào → (False, msg), không raise.
+    `acked_at` do DB đặt). Lỗi đầu vào → (False, msg), không raise. v13.7:
+    kiểm riêng intel rồi giao `red_alert.ack` (đường xác nhận CHUNG cho mọi
+    cảnh báo đỏ — chặn agent:/system:, chế độ thực chỉ người nhận độc lập).
   - Thời gian: mọi hàm nhận `now` (aware) — không đọc đồng hồ bên trong.
-  - Không gửi gì, không liên hệ ai ngoài hệ thống: module chỉ ghi DB (qua
-    `raise_alert` + bảng xác nhận), không mở mạng, không gọi LLM.
+  - Module không tự mở mạng/không gọi LLM: chỉ ghi DB qua
+    `red_alert.raise_alert` — v13.7 chính `raise_alert` gửi email (SMTP) tới
+    người nhận ĐỘC LẬP đã cấu hình (Pháp chế/BKS), không ai khác.
 
 Chạy:
   python -m pipelines.intel_alert --run
@@ -180,7 +185,7 @@ def _iso(ts):
 
 
 def scan(conn, now: datetime, rules: dict | None = None,
-         routing: dict | None = None) -> dict:
+         routing: dict | None = None, sender=red_alert._ENV) -> dict:
     """Quét tin mới → cảnh báo đỏ. → {"scanned","alerts","dup","unrouted",
     "ids"}."""
     rules = rules if rules is not None else load_rules()
@@ -201,7 +206,7 @@ def scan(conn, now: datetime, rules: dict | None = None,
                 detail={"intel_item_id": iid, "rules": hits, "url": url,
                         "source": src, "published_at": _iso(pub),
                         "fetched_at": _iso(fetched)},
-                routing=routing)
+                routing=routing, sender=sender)
         except UniqueViolation:   # tiến trình khác vừa báo cùng tin
             st["dup"] += 1
             continue
@@ -216,7 +221,8 @@ def scan(conn, now: datetime, rules: dict | None = None,
     return st
 
 
-def escalate(conn, now: datetime, routing: dict | None = None) -> dict:
+def escalate(conn, now: datetime, routing: dict | None = None,
+             sender=red_alert._ENV) -> dict:
     """Cảnh báo gốc quá 2 giờ chưa xác nhận → 1 bản leo thang (1 cấp)."""
     rows = conn.execute(_DUE_SQL, (SOURCE_AGENT, now - ESCALATE_AFTER,
                                    SOURCE_AGENT)).fetchall()
@@ -230,7 +236,7 @@ def escalate(conn, now: datetime, routing: dict | None = None) -> dict:
                 ESC_PREFIX + f"#{aid} " + _oneline(base, TITLE_MAX),
                 detail={"escalation_of": aid, "url": url,
                         "label": ESC_LABEL},
-                routing=routing)
+                routing=routing, sender=sender)
         except UniqueViolation:
             st["dup"] += 1
             continue
@@ -274,18 +280,7 @@ def ack(conn, alert_id, by: str, note: str | None = None
     if "intel_item_id" not in detail:
         conn.commit()
         return False, f"cảnh báo #{aid} không phải cảnh báo gốc intel"
-    try:
-        with conn.transaction():
-            conn.execute("insert into red_alert_acks (alert_id, acked_by,"
-                         " note) values (%s, %s, %s)", (aid, by, note))
-        conn.commit()
-    except UniqueViolation:
-        conn.rollback()
-        return False, f"cảnh báo #{aid} đã được xác nhận trước đó"
-    except psycopg.Error as e:
-        conn.rollback()
-        return False, f"cảnh báo #{aid}: {_db_msg(e)}"
-    return True, f"đã xác nhận cảnh báo #{aid} (người: {by})"
+    return red_alert.ack(conn, aid, by, note)
 
 
 def open_alerts(conn, now: datetime) -> list[dict]:
@@ -327,7 +322,8 @@ def _run(conn, rules: dict, now: datetime) -> tuple[int, str]:
               " MXH duyệt", flush=True)
     if s["unrouted"] + e["unrouted"]:
         print(f"[RED-ALERT][warn] {s['unrouted'] + e['unrouted']} cảnh báo "
-              f"đã ghi nhưng {red_alert.MISSING} — fail-closed, exit 1",
+              f"đã ghi nhưng CHƯA thông báo được ({red_alert.MISSING} hoặc "
+              f"{red_alert.NOT_SENT}) — fail-closed, exit 1",
               flush=True)
         return 1, summary
     return 0, summary

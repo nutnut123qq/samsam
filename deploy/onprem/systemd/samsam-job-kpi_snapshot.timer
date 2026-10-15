@@ -1,0 +1,11 @@
+# v13.7 — lịch job 'kpi_snapshot' (nguồn: deploy/onprem/jobs.json).
+[Unit]
+Description=Sam Sam timer kpi_snapshot
+
+[Timer]
+OnCalendar=*-*-* 23:50:00
+Persistent=true
+Unit=samsam-job@kpi_snapshot.service
+
+[Install]
+WantedBy=timers.target

@@ -95,11 +95,54 @@ dùng chung tài khoản cá nhân cho máy.
   mất điện — đặt thêm 1 monitor ngoài (máy thứ hai trong LAN hoặc dịch vụ
   heartbeat trả phí của Sâm Sâm) = external-dep.
 - Kênh báo (Telegram/SMTP/Zalo) + người nhận ngoài giờ = external-dep.
-- Bản tin sức khỏe hằng ngày: `python scripts/health_bulletin.py`.
+- Bản tin sức khỏe hằng ngày: `python scripts/health_bulletin.py` — mục Job
+  báo KHÔNG CHẠY/TRỄ cho mọi job trong `deploy/onprem/jobs.json` quá
+  `max_gap_hours` (v13.7). Bản tin chạy CÙNG máy nên không thay monitor
+  ngoài máy.
+- Cảnh báo đỏ (v13.7): gửi email qua SMTP của Sâm Sâm — env
+  `RED_ALERT_NOTIFY=email`, `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USER`,
+  `SMTP_PASSWORD`, `SMTP_FROM`; người nhận độc lập (Pháp chế/BKS, kể cả người
+  trực ngoài giờ) điền `data/red_alert_routing.json` với kênh
+  `email:$TEN_BIEN` (địa chỉ để trong `.env` server — repo public). Kiểm:
+  `python -m pipelines.red_alert --check-routing` phải exit 0 trước khi tính
+  là "có tuyến cảnh báo". Người nhận xác nhận trong 02 giờ (kể cả T7/CN/Tết):
+  `python -m pipelines.red_alert --ack <id> --by "<tên>"`.
+- Sổ sự cố (v13.7, PL02 mục 2): người trực ghi `python -m
+  pipelines.ops_incidents --open ...` ngay khi phát hiện (kèm `--occurred-at`
+  lấy từ monitor/log nếu biết), rồi `--event <id> --kind responded` (ack kỹ
+  thuật), `fixed` (sửa xong), `customer_resolved` (khách/đối tác đã xử lý —
+  đếm riêng). Báo cáo tháng tính 15 phút / 3 giờ / 3 ngày làm việc / 7 ngày.
 
 ## 7. Lịch tự chạy (systemd timer)
 
-Mẫu unit (sửa `<>`; `User` là tài khoản vận hành, KHÔNG root):
+**v13.7 — dùng bộ unit có sẵn** `deploy/onprem/systemd/` (sinh từ
+`deploy/onprem/jobs.json`, test `tests/test_v13_c07_ops.py` giữ khớp): 1
+unit mẫu `samsam-job@.service` (sửa `<...>`) + 1 timer/job. Mọi job chạy qua
+`python -m pipelines.job_runs --run <tên>`: khóa file `data/job_locks/<tên>.lock`
+(hoặc `JOB_LOCK_DIR`) chống chạy chồng — lần trước chưa xong thì lần sau ghi
+`job_runs` "chạy chồng — bỏ lượt" (exit 75), không chạy bước nào; mỗi lần chạy
+ghi 1 dòng `job_runs` `job:<tên>`. Cài: chép unit vào `/etc/systemd/system/`,
+`systemctl daemon-reload`, `systemctl enable --now samsam-job-<tên>.timer`;
+xem `python -m pipelines.job_runs --list`, `systemctl list-timers`.
+
+| Job | Lịch (giờ VN) | Việc |
+|---|---|---|
+| `intel` | 06:45 hằng ngày | thu tin + bản tin thị trường trước 7h |
+| `red_alert_sweep` | phút 05 mỗi giờ | quét cảnh báo đỏ intel + leo thang 2 giờ + gửi lại cảnh báo chưa gửi được |
+| `ceo_weekly` | 08:00 thứ Hai | báo cáo TGĐ tuần → hàng duyệt khối ceo |
+| `invoice_batch` | 21:00 hằng ngày | lô hóa đơn nháp → hàng duyệt khối finance |
+| `content_daily` | 06:00 hằng ngày | 3 nháp bài/ngày |
+| `backup` | 01:30 hằng ngày | backup + bản sao ngoài |
+| `restore_drill` | 03:00 Chủ nhật | diễn tập khôi phục vào DB tạm |
+| `dr_drill` | 04:00 ngày 1 | diễn tập DR (thêm tay trước 30/11, 18/12) |
+| `kpi_snapshot` | 23:50 hằng ngày | chụp KPI chat không PII (`chat_kpi_facts`) |
+| `health_bulletin` | 07:30 hằng ngày | bản tin sức khỏe |
+| `ops_monthly` | 08:00 ngày 1 | báo cáo vận hành tháng trước (`--month prev`); người gửi Bên B trước ngày 05 rồi `--mark-sent` |
+
+Chưa xác minh trên server thật (external-dep): timer chạy, giờ hệ thống
+Asia/Ho_Chi_Minh, monitor ngoài máy báo khi cả server/timer chết.
+
+Mẫu unit cũ (sửa `<>`; `User` là tài khoản vận hành, KHÔNG root):
 
 ```
 # /etc/systemd/system/samsam-backup.service

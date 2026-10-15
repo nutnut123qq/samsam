@@ -1,0 +1,11 @@
+# v13.7 — lịch job 'red_alert_sweep' (nguồn: deploy/onprem/jobs.json).
+[Unit]
+Description=Sam Sam timer red_alert_sweep
+
+[Timer]
+OnCalendar=*-*-* *:05:00
+Persistent=true
+Unit=samsam-job@red_alert_sweep.service
+
+[Install]
+WantedBy=timers.target

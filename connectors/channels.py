@@ -72,7 +72,9 @@ HANDOFF_TYPE = "cskh_handoff"
 # guardrail.check soi luật rượu trên payload → mục không đóng được.
 HANDOFF_REASONS = {"alcohol": "san_pham_han_che", "health": "suc_khoe",
                    "no_data": "thieu_du_lieu", "guardrail": "kiem_duyet",
-                   "rollout": "chua_van_hanh"}
+                   "rollout": "chua_van_hanh",
+                   # v13.7: quá hạn 30 giây (PL02 mục 2) → người trả lời.
+                   "deadline": "qua_han_tra_loi"}
 # v13.3 (HĐ 6.7): chatbot = tính năng sales-01 trong danh mục; chưa vận
 # hành → câu bot thành gợi ý `cskh_reply` chờ người duyệt rồi người gửi.
 CHATBOT_FEATURE = "sales-01"
