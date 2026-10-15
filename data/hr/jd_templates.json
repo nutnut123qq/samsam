@@ -1,0 +1,63 @@
+{
+  "_doc": "v12.2 PC-HR — mẫu mô tả công việc + tiêu chí sàng lọc hồ sơ (agents/pc_hr.py). BẢN DEV SOẠN, chờ Chuyên viên pháp chế–nhân sự + TGĐ chốt (vị trí, nhiệm vụ, tiêu chí, quyền lợi đều là GIẢ ĐỊNH). Mỗi vị trí: ten, phong_ban, muc_dich, nhiem_vu[], bat_buoc[] (≥1 tiêu chí {id, mo_ta, tu_khoa[]}), uu_tien[] ({id, mo_ta, tu_khoa[], diem 1..5}), quyen_loi[]. Từ khóa so khớp KHÔNG dấu, không phân biệt hoa thường, theo từ trọn vẹn. CẤM tiêu chí phân biệt đối xử (giới tính, tuổi, hôn nhân, tôn giáo, dân tộc, quê quán, mang thai) — module từ chối cấu hình có từ khóa loại này. Không ghi từ cấm của guardrail (vd 'thuốc') vào nội dung JD.",
+  "positions": {
+    "gd_kd_truc_tuyen": {
+      "ten": "Giám đốc kinh doanh trực tuyến",
+      "phong_ban": "sales",
+      "muc_dich": "Chịu trách nhiệm doanh thu kênh trực tuyến (sàn TMĐT, Zalo OA, website) của sản phẩm sâm Ngọc Linh.",
+      "nhiem_vu": [
+        "Lập và theo dõi kế hoạch doanh thu, ngân sách quảng cáo kênh trực tuyến theo tháng/quý",
+        "Duyệt giá, khuyến mãi, nội dung bán hàng do hệ thống đề xuất trong hàng duyệt",
+        "Quản lý đội vận hành sàn và chăm sóc khách hàng trực tuyến",
+        "Báo cáo kết quả kinh doanh cho TGĐ hằng tuần"
+      ],
+      "bat_buoc": [
+        {"id": "kinh_nghiem_tmdt", "mo_ta": "Kinh nghiệm quản lý kinh doanh thương mại điện tử", "tu_khoa": ["thương mại điện tử", "tmđt", "e-commerce", "ecommerce"]},
+        {"id": "quan_ly_doi", "mo_ta": "Đã quản lý đội nhóm", "tu_khoa": ["quản lý đội", "trưởng nhóm", "team leader", "trưởng phòng", "quản lý nhóm"]}
+      ],
+      "uu_tien": [
+        {"id": "san", "mo_ta": "Kinh nghiệm vận hành Shopee/TikTok Shop/Lazada", "tu_khoa": ["shopee", "tiktok shop", "lazada"], "diem": 2},
+        {"id": "nganh_tpbvsk", "mo_ta": "Hiểu quy định quảng cáo TPBVSK, xác nhận nội dung quảng cáo", "tu_khoa": ["tpbvsk", "thực phẩm bảo vệ sức khỏe", "thực phẩm chức năng"], "diem": 2},
+        {"id": "quang_cao", "mo_ta": "Đã quản lý ngân sách quảng cáo trực tuyến", "tu_khoa": ["facebook ads", "google ads", "tiktok ads", "shopee ads"], "diem": 1}
+      ],
+      "quyen_loi": ["Thu nhập thỏa thuận theo năng lực", "Chế độ bảo hiểm theo luật lao động"]
+    },
+    "nv_van_hanh_san": {
+      "ten": "Nhân viên vận hành sàn thương mại điện tử",
+      "phong_ban": "sales",
+      "muc_dich": "Vận hành gian hàng sâm Ngọc Linh trên sàn thương mại điện tử theo bản giá và nội dung đã duyệt.",
+      "nhiem_vu": [
+        "Cập nhật sản phẩm, giá, tồn kho trên sàn theo bản đã duyệt",
+        "Xử lý đơn hàng, đối soát và báo cáo số liệu sàn hằng tuần",
+        "Xuất file báo cáo từ Seller Center cho hệ thống"
+      ],
+      "bat_buoc": [
+        {"id": "kinh_nghiem_san", "mo_ta": "Kinh nghiệm vận hành gian hàng trên sàn", "tu_khoa": ["shopee", "tiktok shop", "lazada", "gian hàng", "seller center"]},
+        {"id": "bang_tinh", "mo_ta": "Sử dụng được Excel/Google Sheets", "tu_khoa": ["excel", "google sheets", "google sheet"]}
+      ],
+      "uu_tien": [
+        {"id": "quang_cao_san", "mo_ta": "Đã chạy quảng cáo trên sàn", "tu_khoa": ["shopee ads", "tiktok ads", "quảng cáo sàn"], "diem": 2},
+        {"id": "livestream", "mo_ta": "Kinh nghiệm livestream bán hàng", "tu_khoa": ["livestream", "live stream"], "diem": 1}
+      ],
+      "quyen_loi": ["Lương cứng + thưởng theo kết quả", "Được đào tạo công cụ hệ thống AI nội bộ"]
+    },
+    "nv_cskh": {
+      "ten": "Nhân viên chăm sóc khách hàng trực tuyến",
+      "phong_ban": "sales",
+      "muc_dich": "Trả lời, tư vấn khách hàng qua Zalo OA, Messenger và chat sàn; tiếp nhận câu hỏi chuyển từ chatbot.",
+      "nhiem_vu": [
+        "Trả lời khách trong 2 giờ làm việc theo kịch bản đã duyệt",
+        "Tiếp nhận câu hỏi chatbot chuyển người, ghi nhận phản hồi khách",
+        "Không tư vấn công dụng ngoài nội dung đã được phê duyệt"
+      ],
+      "bat_buoc": [
+        {"id": "kinh_nghiem_cskh", "mo_ta": "Kinh nghiệm chăm sóc khách hàng / tư vấn bán hàng", "tu_khoa": ["chăm sóc khách hàng", "cskh", "tư vấn bán hàng", "customer service"]}
+      ],
+      "uu_tien": [
+        {"id": "zalo", "mo_ta": "Đã dùng Zalo OA / chat sàn", "tu_khoa": ["zalo oa", "zalo", "chat sàn", "messenger"], "diem": 2},
+        {"id": "san_pham_sam", "mo_ta": "Hiểu biết về sản phẩm sâm", "tu_khoa": ["sâm", "nhân sâm", "sâm ngọc linh"], "diem": 1}
+      ],
+      "quyen_loi": ["Lương cứng + thưởng theo đánh giá khách", "Làm việc theo ca giờ hành chính"]
+    }
+  }
+}

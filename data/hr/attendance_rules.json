@@ -1,0 +1,11 @@
+{
+  "_doc": "v12.2 PC-HR — luật ca chấm công (agents/pc_hr.py --attendance). GIẢ ĐỊNH / BẢN DEV SOẠN, chờ Chuyên viên pháp chế–nhân sự + TGĐ chốt theo nội quy lao động: giờ ca, ngày làm (0 = thứ Hai), số phút du di đi trễ/về sớm. Lịch nghỉ lễ `holidays` để trống = chưa có (external-dep) — ngày lễ sẽ bị tính là ngày làm khi đếm vắng. Agent chỉ tổng hợp số theo mã NV — KHÔNG tính lương, KHÔNG đề xuất kỷ luật.",
+  "shift": {
+    "start": "08:00",
+    "end": "17:00",
+    "workdays": [0, 1, 2, 3, 4],
+    "holidays": []
+  },
+  "grace_late_min": 5,
+  "grace_early_min": 5
+}
