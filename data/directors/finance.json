@@ -1,5 +1,5 @@
 {
-  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES — khối chưa có vai trò riêng, TẠM map 'tgd' (external-dep: TGĐ chốt). approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store). v8.2: b2b_margin_review = tài chính rà biên báo giá B2B KD-A3 khi biên dưới ngưỡng hoặc thiếu giá vốn đã duyệt (payload nội bộ, không gửi khách). v12.0 — người duyệt theo PL01 Hợp đồng hợp tác TEDO–Sâm Sâm: GĐ tài chính (9 phòng ban theo HĐ; approver_roles chỉ đổi khi vai trò tương ứng có trong pipelines.auth.ROLES — chưa có thì giữ map tạm).",
+  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES — khối chưa có vai trò riêng, TẠM map 'tgd' (external-dep: TGĐ chốt). approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store). v8.2: b2b_margin_review = tài chính rà biên báo giá B2B KD-A3 khi biên dưới ngưỡng hoặc thiếu giá vốn đã duyệt (payload nội bộ, không gửi khách). v12.0 — người duyệt theo PL01 Hợp đồng hợp tác TEDO–Sâm Sâm: GĐ tài chính (9 phòng ban theo HĐ; approver_roles chỉ đổi khi vai trò tương ứng có trong pipelines.auth.ROLES — chưa có thì giữ map tạm). v13.6: ar_reminder = NHÁP thư nhắc nợ đại lý quá hạn (agents/acc_ar --reminders, placeholder thay tên/người nhận, không PII) — GĐ tài chính duyệt, kế toán gửi tay; SLA 48h/risk medium GIẢ ĐỊNH chờ GĐ tài chính chốt.",
   "block": "finance",
   "name": "Giám đốc tài chính + Phòng kế toán + Phòng tài chính–kế hoạch",
   "director_agent": "FIN-Director (CFO agent điều phối)",
@@ -27,6 +27,10 @@
     "b2b_margin_review": {
       "sla_hours": 72,
       "risk": "high"
+    },
+    "ar_reminder": {
+      "sla_hours": 48,
+      "risk": "medium"
     }
   },
   "digest_recipients": [],

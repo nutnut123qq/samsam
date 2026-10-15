@@ -1,10 +1,12 @@
 """v9.0 ACC-AR (WP12) — công nợ đại lý: nạp tay sổ công nợ → tuổi nợ
 0-30/31-60/61-90/>90 + quá hạn, hoa hồng theo cấu hình MẪU, cảnh báo nợ quá
 hạn vào bản tin GĐ tài chính. Tất định Python, KHÔNG LLM/mạng, KHÔNG gửi,
-KHÔNG lệnh chi, KHÔNG thư nhắc nợ (ngoài phạm vi version).
+KHÔNG lệnh chi. v13.6: NHÁP thư nhắc nợ (`--reminders`) vào hàng duyệt —
+agent không gửi.
 
-Ownership: ghi DUY NHẤT `dealer_ar` (insert-only, idempotent theo sha256
-file); chỉ ĐỌC `sku_master.category`. Bản tin qua `pipelines.director.run(
+Ownership: ghi `dealer_ar` (insert-only, idempotent theo sha256 file) và
+mục `ar_reminder` hàng duyệt (v13.6, qua `director.submit`); chỉ ĐỌC
+`sku_master.category`, `dealers.code/status`. Bản tin qua `pipelines.director.run(
 ..., extra=...)` → `data/reports/director-finance-<ngày>.md` (gitignored).
 
 File nạp (`--load F`, .csv/.xlsx, header CỐ ĐỊNH đúng thứ tự tùy ý):
@@ -34,10 +36,20 @@ Chạy:
   python -m agents.acc_ar --aging [--as-of YYYY-MM-DD]
   python -m agents.acc_ar --commission --from YYYY-MM-DD --to YYYY-MM-DD   (--to tính cả ngày)
   python -m agents.acc_ar --bulletin [--as-of YYYY-MM-DD]
+  python -m agents.acc_ar --reminders [--as-of YYYY-MM-DD] [--dry-run]
+    v13.6 (PL01 Tài chính "nháp thư nhắc nợ"): mỗi đại lý có khoản QUÁ HẠN
+    VÀ có trong sổ `dealers` (quan hệ đại lý CRM v5.2; mã ngoài sổ → bỏ
+    qua, không soạn) → 1 mục `ar_reminder` khối finance (`director.submit`,
+    created_by agent:acc_ar): bảng chứng từ còn nợ FIFO + hạn + số ngày quá
+    hạn + nguồn file/sha256; tên/người nhận/người ký/hạn mới là placeholder
+    `{{…}}` (không PII, không LLM). Idempotent theo object_id
+    `ar:<mã>:<sha12 khoản quá hạn>` (pending/approved/rejected → bỏ qua;
+    đổi trạng thái nợ → đợt mới). Tính năng tắt (rollout) → exit 2.
 Exit: 0 ok/skip · 1 file/cấu hình/DB lỗi · 2 tham số sai / DB down.
 """
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -58,9 +70,10 @@ from ingest.settlement_csv import (
     read_table,
     round_half_up,
 )
-from pipelines import director
+from pipelines import director, rollout
 from pipelines.period import VN_TZ, vn_date
-from pipelines.store import _db_msg
+from pipelines.pii import _mask_pii
+from pipelines.store import _db_msg, _oneline
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in tiếng
 # Việt có dấu. Ép UTF-8 (no-op nếu đã UTF-8).
@@ -82,6 +95,9 @@ BUCKETS = ("0-30", "31-60", "61-90", ">90")
 _CODE_RE = re.compile(r"[A-Z0-9_-]{2,32}")
 _SKU_RE = re.compile(r"[a-z0-9][a-z0-9_-]{0,63}")
 MAX_REF = 64
+AGENT = "agent:acc_ar"
+FIN_BLOCK = "finance"
+REMINDER_TYPE = "ar_reminder"
 
 
 # ---------- cấu hình ----------
@@ -226,10 +242,12 @@ def age_bucket(doc_date: date, as_of: date) -> str | None:
     return ">90"
 
 
-def aging(entries: list[dict], as_of: date, term_days: int) -> list[dict]:
-    """→ [{dealer_code, dealer_type, buckets, qua_han, du_co, con_no}]
-    sắp theo dealer_code. Khoản nợ = so_du_dau/phat_sinh/dieu_chinh dương;
-    ghi có = thanh_toan + dieu_chinh âm, trừ FIFO theo doc_date."""
+def open_items(entries: list[dict], as_of: date,
+               term_days: int) -> dict[str, dict]:
+    """FIFO dùng chung cho `aging` và thư nhắc nợ → {dealer_code: {"type",
+    "items": [{entry, con_lai, han, qua_han}], "du_co"}}. Khoản nợ =
+    so_du_dau/phat_sinh/dieu_chinh dương; ghi có = thanh_toan + dieu_chinh
+    âm, trừ FIFO theo (doc_date, row_no); doc_date > as_of bỏ khỏi kỳ."""
     by: dict = {}
     for e in entries:
         if e["doc_date"] > as_of:
@@ -240,12 +258,11 @@ def aging(entries: list[dict], as_of: date, term_days: int) -> list[dict]:
             d["debits"].append(e)
         else:
             d["credit"] += -e["amount_vnd"]
-    out = []
+    out = {}
     for code in sorted(by):
         d = by[code]
         credit = d["credit"]
-        buckets = dict.fromkeys(BUCKETS, 0)
-        overdue = 0
+        items = []
         for e in sorted(d["debits"], key=lambda x: (x["doc_date"],
                                                     x.get("row_no", 0))):
             left = e["amount_vnd"]
@@ -254,13 +271,28 @@ def aging(entries: list[dict], as_of: date, term_days: int) -> list[dict]:
             credit -= used
             if not left:
                 continue
-            buckets[age_bucket(e["doc_date"], as_of)] += left
             due = e["due_date"] or e["doc_date"] + timedelta(days=term_days)
-            if as_of > due:
-                overdue += left
+            items.append({"entry": e, "con_lai": left, "han": due,
+                          "qua_han": as_of > due})
+        out[code] = {"type": d["type"], "items": items, "du_co": credit}
+    return out
+
+
+def aging(entries: list[dict], as_of: date, term_days: int) -> list[dict]:
+    """→ [{dealer_code, dealer_type, buckets, qua_han, du_co, con_no}]
+    sắp theo dealer_code (FIFO ở `open_items`)."""
+    out = []
+    for code, d in open_items(entries, as_of, term_days).items():
+        buckets = dict.fromkeys(BUCKETS, 0)
+        overdue = 0
+        for it in d["items"]:
+            buckets[age_bucket(it["entry"]["doc_date"], as_of)] += \
+                it["con_lai"]
+            if it["qua_han"]:
+                overdue += it["con_lai"]
         out.append({"dealer_code": code, "dealer_type": d["type"],
-                    "buckets": buckets, "qua_han": overdue, "du_co": credit,
-                    "con_no": sum(buckets.values())})
+                    "buckets": buckets, "qua_han": overdue,
+                    "du_co": d["du_co"], "con_no": sum(buckets.values())})
     return out
 
 
@@ -325,6 +357,87 @@ def overdue_section(rows: list[dict], as_of: date) -> list[str]:
     return L
 
 
+# ---------- v13.6 nháp thư nhắc nợ (thuần) ----------
+
+_R_HEAD = ("NHÁP THƯ NHẮC NỢ — chờ GĐ tài chính duyệt; kế toán điền "
+           "placeholder và gửi tay. Agent KHÔNG gửi.")
+_R_INTRO = ("Theo sổ công nợ của Công ty TNHH Sâm Sâm tính tới ngày {as_of}, "
+            "quý đại lý còn các khoản đã quá hạn thanh toán sau:")
+_R_TABLE = ("| Chứng từ | Ngày chứng từ | Hạn thanh toán | Số còn nợ |"
+            " Quá hạn |")
+_R_ASK = ("Kính đề nghị quý đại lý thanh toán hoặc phản hồi đối chiếu trước "
+          "ngày {{HAN_THANH_TOAN}}. Nếu đã thanh toán, xin bỏ qua thư này và "
+          "gửi chứng từ để đối chiếu.")
+_R_SIGN = "{{NGUOI_KY}} — Phòng kế toán Công ty TNHH Sâm Sâm"
+_R_BASIS = ("Căn cứ (nội bộ, không gửi kèm): sổ công nợ `dealer_ar` nạp tay —"
+            " file {files}; ghi có trừ FIFO theo ngày chứng từ; hạn = "
+            "due_date hoặc ngày chứng từ + {term} ngày "
+            "(data/dealer_commission.json); trạng thái đại lý trong sổ: "
+            "{status}. Nháp này thay nháp nhắc nợ cũ của cùng đại lý nếu còn"
+            " chờ duyệt.")
+
+def _txt(s, n: int = 64) -> str:
+    """Chuỗi từ file nạp tay (doc_ref/file_name) → 1 dòng, che PII, ≤ n."""
+    return _oneline(_mask_pii(_clean(str(s), n)), n) if s else "(không số)"
+
+
+def reminder_drafts(entries: list[dict], as_of: date, term_days: int,
+                    dealers: dict[str, str],
+                    sources: dict[str, list[tuple]]) -> dict:
+    """Nháp thư nhắc nợ cho đại lý có khoản QUÁ HẠN tại `as_of` →
+    {"drafts": [{dealer_code, object_id, title, body, qua_han}],
+    "skipped": [{dealer_code, reason}]}.
+
+    - Chỉ đại lý có trong sổ `dealers` (quan hệ đại lý — luật CRM v5.2);
+      mã không có trong sổ → skipped, KHÔNG soạn (không có căn cứ liên hệ).
+    - Không PII: tên/người nhận/người ký/hạn mới là placeholder `{{…}}` kế
+      toán điền khi gửi tay; chỉ mã đại lý + số tiền + chứng từ.
+    - Căn cứ: từng chứng từ còn nợ (FIFO), hạn = due_date hoặc doc_date +
+      term_days, file nguồn (tên + sha256 8 ký tự).
+    - object_id = `ar:<mã>:<sha12 các khoản quá hạn>` — cùng trạng thái nợ
+      → cùng id (idempotent); thêm khoản/trả bớt → đợt mới."""
+    drafts, skipped = [], []
+    for code, d in open_items(entries, as_of, term_days).items():
+        od = [it for it in d["items"] if it["qua_han"]]
+        if not od:
+            continue
+        if code not in dealers:
+            skipped.append({"dealer_code": code, "reason": (
+                "không có trong sổ đại lý `dealers` — không có căn cứ quan "
+                "hệ để liên hệ, không soạn thư")})
+            continue
+        total = sum(it["con_lai"] for it in od)
+        con_no = sum(it["con_lai"] for it in d["items"])
+        key = json.dumps([[it["entry"].get("doc_ref"),
+                           it["entry"]["doc_date"].isoformat(),
+                           it["han"].isoformat(), it["con_lai"]]
+                          for it in od], ensure_ascii=False)
+        oid = f"ar:{code}:{hashlib.sha256(key.encode()).hexdigest()[:12]}"
+        files = ", ".join(f"{_txt(n, 80)} (sha256 {s[:8]})"
+                          for n, s in sorted(set(sources.get(code, ()))))
+        L = [_R_HEAD, "",
+             f"Kính gửi: {{{{TEN_DAI_LY}}}} (mã đại lý {code})",
+             "Người nhận: {{NGUOI_LIEN_HE}}", "",
+             _R_INTRO.format(as_of=f"{as_of:%d/%m/%Y}"), "",
+             _R_TABLE, "|---|---|---|---|---|"]
+        for it in od:
+            e = it["entry"]
+            L.append(f"| {_txt(e.get('doc_ref'))} | {e['doc_date']:%d/%m/%Y}"
+                     f" | {it['han']:%d/%m/%Y} | {_vnd(it['con_lai'])} | "
+                     f"{(as_of - it['han']).days} ngày |")
+        L += ["", (f"Tổng quá hạn: {_vnd(total)} (tổng còn nợ: "
+                   f"{_vnd(con_no)})."), "", _R_ASK, "", "Trân trọng,",
+              _R_SIGN, "", "---",
+              _R_BASIS.format(files=files or "(không rõ)", term=term_days,
+                              status=dealers[code])]
+        drafts.append({"dealer_code": code, "object_id": oid,
+                       "qua_han": total, "body": "\n".join(L),
+                       "title": (f"Nháp thư nhắc nợ {code} — quá hạn "
+                                 f"{_vnd(total)} (tính tới "
+                                 f"{as_of:%d/%m/%Y})")})
+    return {"drafts": drafts, "skipped": skipped}
+
+
 # ---------- DB ----------
 
 _COLS = ("row_no", "dealer_code", "dealer_type", "kind", "doc_ref",
@@ -348,6 +461,62 @@ def fetch_entries(conn) -> list[dict]:
 
 def fetch_skus(conn) -> dict:
     return dict(conn.execute("select sku_key, category from sku_master"))
+
+
+def fetch_dealers(conn) -> dict[str, str]:
+    """Sổ đại lý CRM v5.2 → {code: status} (chỉ mã + trạng thái, không
+    đọc tên/contact)."""
+    return dict(conn.execute("select code, status from dealers"))
+
+
+def fetch_sources(conn) -> dict[str, list[tuple]]:
+    out: dict[str, list[tuple]] = {}
+    for code, name, sha in conn.execute(
+            "select distinct dealer_code, file_name, file_sha256 from"
+            " dealer_ar"):
+        out.setdefault(code, []).append((name, sha))
+    return out
+
+
+_REMINDER_EXISTING_SQL = (
+    "select 1 from approval_queue where object_type = %s and object_id = %s"
+    " and status in ('pending', 'approved', 'rejected') limit 1")
+
+
+def enqueue_reminders(conn, as_of: date, term_days: int,
+                      dcfg: dict | None = None, dry_run: bool = False) -> dict:
+    """Nháp thư nhắc nợ → hàng duyệt khối finance (`ar_reminder`, pending —
+    GĐ tài chính duyệt, kế toán gửi tay). Đã có cùng object_id ở pending/
+    approved/rejected → skipped (expired thì soạn lại). Tính năng `tat` →
+    RolloutBlocked trước khi ghi. → {"enqueued", "skipped", "drafts"}."""
+    res = reminder_drafts(fetch_entries(conn), as_of, term_days,
+                          fetch_dealers(conn), fetch_sources(conn))
+    conn.commit()
+    out = {"enqueued": [], "skipped": list(res["skipped"]),
+           "drafts": res["drafts"]}
+    if dry_run:
+        return out
+    cfg = dcfg if dcfg is not None else director.load_config(FIN_BLOCK)
+    for d in res["drafts"]:
+        if conn.execute(_REMINDER_EXISTING_SQL,
+                        (REMINDER_TYPE, d["object_id"])).fetchone():
+            conn.commit()
+            out["skipped"].append({"dealer_code": d["dealer_code"],
+                                   "reason": "đã có nháp cùng trạng thái nợ"
+                                             " trong hàng duyệt"})
+            continue
+        try:
+            qid = director.submit(conn, FIN_BLOCK, REMINDER_TYPE,
+                                  d["object_id"], d["title"], d["body"],
+                                  created_by=AGENT, cfg=cfg)
+        except psycopg.errors.UniqueViolation:
+            conn.rollback()
+            out["skipped"].append({"dealer_code": d["dealer_code"],
+                                   "reason": "đã có (đua)"})
+            continue
+        out["enqueued"].append({"dealer_code": d["dealer_code"],
+                                "queue_id": qid, "qua_han": d["qua_han"]})
+    return out
 
 
 def bulletin(conn, as_of: date, now: datetime, out_dir: Path = REPORTS_DIR,
@@ -379,6 +548,24 @@ def _date_arg(ap, s: str | None, flag: str) -> date | None:
         ap.error(f"{flag} phải dạng YYYY-MM-DD")
 
 
+def _print_reminders(res: dict, as_of: date, dry_run: bool) -> int:
+    if dry_run:
+        for d in res["drafts"]:
+            print(f"--- [dry-run] {REMINDER_TYPE} {d['object_id']} ---")
+            print(d["body"])
+    for x in res["enqueued"]:
+        print(f"[reminder] {x['dealer_code']} quá hạn {_vnd(x['qua_han'])} →"
+              f" hàng duyệt #{x['queue_id']} (pending — GĐ tài chính duyệt;"
+              " kế toán gửi tay)")
+    for x in res["skipped"]:
+        print(f"[skip] {x['dealer_code']}: {x['reason']}")
+    n = len(res["drafts"]) if dry_run else len(res["enqueued"])
+    print(f"[reminders] tính tới {as_of}: {n} nháp"
+          + (" (dry-run, không ghi)" if dry_run else " mới")
+          + f", {len(res['skipped'])} bỏ qua — agent KHÔNG gửi thư")
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         prog="python -m agents.acc_ar",
@@ -388,6 +575,11 @@ def main(argv=None) -> int:
     ap.add_argument("--aging", action="store_true")
     ap.add_argument("--commission", action="store_true")
     ap.add_argument("--bulletin", action="store_true")
+    ap.add_argument("--reminders", action="store_true",
+                    help="v13.6: nháp thư nhắc nợ quá hạn → hàng duyệt "
+                         "finance (không gửi)")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="--reminders: chỉ in nháp, không ghi hàng duyệt")
     ap.add_argument("--as-of", help="ngày chốt YYYY-MM-DD (mặc định hôm nay "
                                     "VN)")
     ap.add_argument("--from", dest="date_from")
@@ -395,17 +587,20 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     n_ops = sum([args.load is not None, args.aging, args.commission,
-                 args.bulletin])
+                 args.bulletin, args.reminders])
     if n_ops > 1:
         ap.error("chỉ 1 thao tác mỗi lần (--load | --aging | --commission | "
-                 "--bulletin)")
+                 "--bulletin | --reminders)")
     if n_ops == 0:
-        ap.error("cần --load | --aging | --commission | --bulletin")
+        ap.error("cần --load | --aging | --commission | --bulletin | "
+                 "--reminders")
+    if args.dry_run and not args.reminders:
+        ap.error("--dry-run chỉ dùng với --reminders")
     as_of = _date_arg(ap, args.as_of, "--as-of")
     d_from = _date_arg(ap, args.date_from, "--from")
     d_to = _date_arg(ap, args.date_to, "--to")
-    if args.as_of and not (args.aging or args.bulletin):
-        ap.error("--as-of chỉ dùng với --aging/--bulletin")
+    if args.as_of and not (args.aging or args.bulletin or args.reminders):
+        ap.error("--as-of chỉ dùng với --aging/--bulletin/--reminders")
     if args.commission:
         if d_from is None or d_to is None:
             ap.error("--commission cần --from và --to")
@@ -451,6 +646,10 @@ def main(argv=None) -> int:
             print(f"[bulletin] {n_od} đại lý quá hạn → {path.name} (BẢN "
                   "NHÁP, không tự gửi)")
             return 0
+        if args.reminders:
+            return _print_reminders(enqueue_reminders(
+                conn, as_of, cfg["term_days"], dry_run=args.dry_run),
+                as_of, args.dry_run)
         if args.aging:
             rows = aging(fetch_entries(conn), as_of, cfg["term_days"])
             print(f"[aging] tuổi nợ tính tới {as_of} — {len(rows)} đại lý:")
@@ -474,6 +673,11 @@ def main(argv=None) -> int:
         print(f"  tổng hoa hồng nháp: "
               f"{_vnd(sum(x['hoa_hong'] for x in lines))}")
         return 0
+    except rollout.RolloutBlocked as e:
+        with suppress(Exception):
+            conn.rollback()
+        print(f"[blocked] {e}", file=sys.stderr)
+        return 2
     except (psycopg.Error, director.DirectorConfigError, OSError) as e:
         with suppress(Exception):
             conn.rollback()

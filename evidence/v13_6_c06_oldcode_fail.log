@@ -1,0 +1,577 @@
+FFFFFFFFFFFFFFFF.FFFFFFF..FFFFFFFF                                       [100%]
+================================== FAILURES ===================================
+________________ test_calendar_file_has_daily_posts_per_day_3 _________________
+
+    def test_calendar_file_has_daily_posts_per_day_3():
+        cal = mc.load_calendar()
+>       assert cal["daily_posts"]["per_day"] == 3       # số HĐ PL01
+               ^^^^^^^^^^^^^^^^^^
+E       KeyError: 'daily_posts'
+
+tests\test_v13_c06_daily_ar.py:79: KeyError
+______________ test_candidates_campaign_on_draft_milestone_first ______________
+
+    def test_candidates_campaign_on_draft_milestone_first():
+        cal, golden, sla = _inputs(ready=False)
+>       dc = mc.daily_candidates(cal, golden, WED, sla)
+             ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.mkt_calendar' has no attribute 'daily_candidates'
+
+tests\test_v13_c06_daily_ar.py:84: AttributeError
+_____ test_candidates_sku_pillar_without_valid_sku_is_refused_not_swapped _____
+
+    def test_candidates_sku_pillar_without_valid_sku_is_refused_not_swapped():
+        """Golden hiện tại: 0 SKU đủ readiness bài đăng → trụ gắn SKU mang lý
+        do từ chối, KHÔNG lấy SKU khác (rượu/TPBVSK chưa XNQC) cho đủ số."""
+        cal, golden, sla = _inputs(ready=False)
+>       ev = [c for c in mc.daily_candidates(cal, golden, THU, sla)["candidates"]
+                         ^^^^^^^^^^^^^^^^^^^
+              if c["kind"] == "evergreen"]
+E       AttributeError: module 'pipelines.mkt_calendar' has no attribute 'daily_candidates'
+
+tests\test_v13_c06_daily_ar.py:99: AttributeError
+___________ test_candidates_never_alcohol_and_rotate_deterministic ____________
+
+    def test_candidates_never_alcohol_and_rotate_deterministic():
+        cal, golden, sla = _inputs(ready=True)
+        for k in range(10):
+>           dc = mc.daily_candidates(cal, golden, THU + timedelta(days=k), sla)
+                 ^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'pipelines.mkt_calendar' has no attribute 'daily_candidates'
+
+tests\test_v13_c06_daily_ar.py:113: AttributeError
+__________________ test_daily_posts_config_fail_closed[bad0] __________________
+
+bad = []
+
+    @pytest.mark.parametrize("bad", [
+        [], {"per_day": 0, "evergreen": [{"id": "a", "channel": "facebook",
+                                          "skus": [], "pillar": "x"}]},
+        {"per_day": 10, "evergreen": [{"id": "a", "channel": "facebook",
+                                       "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": []},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "shopee",
+                                      "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo",
+                                      "skus": "all", "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo", "skus": [],
+                                      "pillar": " "}]},
+        {"per_day": 3, "evergreen": [
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "x"},
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "y"}]},
+    ])
+    def test_daily_posts_config_fail_closed(bad):
+        cal = mc.load_calendar()
+        cal["daily_posts"] = bad
+>       with pytest.raises(mc.CalendarError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'pipelines.mkt_calendar.CalendarError'>
+
+tests\test_v13_c06_daily_ar.py:143: Failed
+__________________ test_daily_posts_config_fail_closed[bad1] __________________
+
+bad = {'evergreen': [{'channel': 'facebook', 'id': 'a', 'pillar': 'x', 'skus': []}], 'per_day': 0}
+
+    @pytest.mark.parametrize("bad", [
+        [], {"per_day": 0, "evergreen": [{"id": "a", "channel": "facebook",
+                                          "skus": [], "pillar": "x"}]},
+        {"per_day": 10, "evergreen": [{"id": "a", "channel": "facebook",
+                                       "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": []},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "shopee",
+                                      "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo",
+                                      "skus": "all", "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo", "skus": [],
+                                      "pillar": " "}]},
+        {"per_day": 3, "evergreen": [
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "x"},
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "y"}]},
+    ])
+    def test_daily_posts_config_fail_closed(bad):
+        cal = mc.load_calendar()
+        cal["daily_posts"] = bad
+>       with pytest.raises(mc.CalendarError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'pipelines.mkt_calendar.CalendarError'>
+
+tests\test_v13_c06_daily_ar.py:143: Failed
+__________________ test_daily_posts_config_fail_closed[bad2] __________________
+
+bad = {'evergreen': [{'channel': 'facebook', 'id': 'a', 'pillar': 'x', 'skus': []}], 'per_day': 10}
+
+    @pytest.mark.parametrize("bad", [
+        [], {"per_day": 0, "evergreen": [{"id": "a", "channel": "facebook",
+                                          "skus": [], "pillar": "x"}]},
+        {"per_day": 10, "evergreen": [{"id": "a", "channel": "facebook",
+                                       "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": []},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "shopee",
+                                      "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo",
+                                      "skus": "all", "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo", "skus": [],
+                                      "pillar": " "}]},
+        {"per_day": 3, "evergreen": [
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "x"},
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "y"}]},
+    ])
+    def test_daily_posts_config_fail_closed(bad):
+        cal = mc.load_calendar()
+        cal["daily_posts"] = bad
+>       with pytest.raises(mc.CalendarError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'pipelines.mkt_calendar.CalendarError'>
+
+tests\test_v13_c06_daily_ar.py:143: Failed
+__________________ test_daily_posts_config_fail_closed[bad3] __________________
+
+bad = {'evergreen': [], 'per_day': 3}
+
+    @pytest.mark.parametrize("bad", [
+        [], {"per_day": 0, "evergreen": [{"id": "a", "channel": "facebook",
+                                          "skus": [], "pillar": "x"}]},
+        {"per_day": 10, "evergreen": [{"id": "a", "channel": "facebook",
+                                       "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": []},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "shopee",
+                                      "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo",
+                                      "skus": "all", "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo", "skus": [],
+                                      "pillar": " "}]},
+        {"per_day": 3, "evergreen": [
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "x"},
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "y"}]},
+    ])
+    def test_daily_posts_config_fail_closed(bad):
+        cal = mc.load_calendar()
+        cal["daily_posts"] = bad
+>       with pytest.raises(mc.CalendarError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'pipelines.mkt_calendar.CalendarError'>
+
+tests\test_v13_c06_daily_ar.py:143: Failed
+__________________ test_daily_posts_config_fail_closed[bad4] __________________
+
+bad = {'evergreen': [{'channel': 'shopee', 'id': 'a', 'pillar': 'x', 'skus': []}], 'per_day': 3}
+
+    @pytest.mark.parametrize("bad", [
+        [], {"per_day": 0, "evergreen": [{"id": "a", "channel": "facebook",
+                                          "skus": [], "pillar": "x"}]},
+        {"per_day": 10, "evergreen": [{"id": "a", "channel": "facebook",
+                                       "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": []},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "shopee",
+                                      "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo",
+                                      "skus": "all", "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo", "skus": [],
+                                      "pillar": " "}]},
+        {"per_day": 3, "evergreen": [
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "x"},
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "y"}]},
+    ])
+    def test_daily_posts_config_fail_closed(bad):
+        cal = mc.load_calendar()
+        cal["daily_posts"] = bad
+>       with pytest.raises(mc.CalendarError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'pipelines.mkt_calendar.CalendarError'>
+
+tests\test_v13_c06_daily_ar.py:143: Failed
+__________________ test_daily_posts_config_fail_closed[bad5] __________________
+
+bad = {'evergreen': [{'channel': 'zalo', 'id': 'a', 'pillar': 'x', 'skus': 'all'}], 'per_day': 3}
+
+    @pytest.mark.parametrize("bad", [
+        [], {"per_day": 0, "evergreen": [{"id": "a", "channel": "facebook",
+                                          "skus": [], "pillar": "x"}]},
+        {"per_day": 10, "evergreen": [{"id": "a", "channel": "facebook",
+                                       "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": []},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "shopee",
+                                      "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo",
+                                      "skus": "all", "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo", "skus": [],
+                                      "pillar": " "}]},
+        {"per_day": 3, "evergreen": [
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "x"},
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "y"}]},
+    ])
+    def test_daily_posts_config_fail_closed(bad):
+        cal = mc.load_calendar()
+        cal["daily_posts"] = bad
+>       with pytest.raises(mc.CalendarError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'pipelines.mkt_calendar.CalendarError'>
+
+tests\test_v13_c06_daily_ar.py:143: Failed
+__________________ test_daily_posts_config_fail_closed[bad6] __________________
+
+bad = {'evergreen': [{'channel': 'zalo', 'id': 'a', 'pillar': ' ', 'skus': []}], 'per_day': 3}
+
+    @pytest.mark.parametrize("bad", [
+        [], {"per_day": 0, "evergreen": [{"id": "a", "channel": "facebook",
+                                          "skus": [], "pillar": "x"}]},
+        {"per_day": 10, "evergreen": [{"id": "a", "channel": "facebook",
+                                       "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": []},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "shopee",
+                                      "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo",
+                                      "skus": "all", "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo", "skus": [],
+                                      "pillar": " "}]},
+        {"per_day": 3, "evergreen": [
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "x"},
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "y"}]},
+    ])
+    def test_daily_posts_config_fail_closed(bad):
+        cal = mc.load_calendar()
+        cal["daily_posts"] = bad
+>       with pytest.raises(mc.CalendarError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'pipelines.mkt_calendar.CalendarError'>
+
+tests\test_v13_c06_daily_ar.py:143: Failed
+__________________ test_daily_posts_config_fail_closed[bad7] __________________
+
+bad = {'evergreen': [{'channel': 'zalo', 'id': 'a', 'pillar': 'x', 'skus': []}, {'channel': 'zalo', 'id': 'a', 'pillar': 'y', 'skus': []}], 'per_day': 3}
+
+    @pytest.mark.parametrize("bad", [
+        [], {"per_day": 0, "evergreen": [{"id": "a", "channel": "facebook",
+                                          "skus": [], "pillar": "x"}]},
+        {"per_day": 10, "evergreen": [{"id": "a", "channel": "facebook",
+                                       "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": []},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "shopee",
+                                      "skus": [], "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo",
+                                      "skus": "all", "pillar": "x"}]},
+        {"per_day": 3, "evergreen": [{"id": "a", "channel": "zalo", "skus": [],
+                                      "pillar": " "}]},
+        {"per_day": 3, "evergreen": [
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "x"},
+            {"id": "a", "channel": "zalo", "skus": [], "pillar": "y"}]},
+    ])
+    def test_daily_posts_config_fail_closed(bad):
+        cal = mc.load_calendar()
+        cal["daily_posts"] = bad
+>       with pytest.raises(mc.CalendarError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'pipelines.mkt_calendar.CalendarError'>
+
+tests\test_v13_c06_daily_ar.py:143: Failed
+_________________ test_missing_daily_posts_raises_not_silent __________________
+
+    def test_missing_daily_posts_raises_not_silent():
+        cal, golden, sla = _inputs()
+        cal = dict(cal)
+>       del cal["daily_posts"]
+            ^^^^^^^^^^^^^^^^^^
+E       KeyError: 'daily_posts'
+
+tests\test_v13_c06_daily_ar.py:150: KeyError
+___________________ test_unknown_sku_in_daily_posts_raises ____________________
+
+    def test_unknown_sku_in_daily_posts_raises():
+        cal, golden, sla = _inputs()
+        cal = copy.deepcopy(cal)
+>       cal["daily_posts"]["evergreen"][0]["skus"] = ["khong-co"]
+        ^^^^^^^^^^^^^^^^^^
+E       KeyError: 'daily_posts'
+
+tests\test_v13_c06_daily_ar.py:159: KeyError
+_________________________ test_daily_key_fixed_width __________________________
+
+    def test_daily_key_fixed_width():
+>       assert content.daily_key(THU, 1) == "[daily 2026-10-15 #1]"
+               ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.content' has no attribute 'daily_key'
+
+tests\test_v13_c06_daily_ar.py:165: AttributeError
+_____________ test_feature_mapping_marketing_01_and_finance_03_3 ______________
+
+    def test_feature_mapping_marketing_01_and_finance_03_3():
+        assert rollout.feature_for(table="content_drafts",
+                                   created_by=content.DEFAULT_BY,
+                                   content_type="post") == "marketing-01"
+        assert rollout.feature_for(table="approval_queue", block="finance",
+                                   object_type="ar_reminder",
+>                                  created_by=ar.AGENT) == "finance-03.3"
+                                              ^^^^^^^^
+E       AttributeError: module 'agents.acc_ar' has no attribute 'AGENT'
+
+tests\test_v13_c06_daily_ar.py:177: AttributeError
+__________________ test_cli_daily_db_down_exit_2_before_llm ___________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000020DC4DC00B0>
+capsys = <_pytest.capture.CaptureFixture object at 0x0000020DC4DC31A0>
+
+    def test_cli_daily_db_down_exit_2_before_llm(monkeypatch, capsys):
+        calls = _fake_llm(monkeypatch, SAFE)
+    
+        @contextmanager
+        def dead():
+            yield None, "không kết nối được Postgres"
+    
+        monkeypatch.setattr(store, "_conn_or_none", dead)
+>       assert content.main(["--daily", "--date", "2026-10-15"]) == 2
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v13_c06_daily_ar.py:202: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+pipelines\content.py:684: in main
+    args = ap.parse_args(argv)
+           ^^^^^^^^^^^^^^^^^^^
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:1899: in parse_args
+    self.error(msg)
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:2672: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='python -m pipelines.content', usage=None, description='Sinh NHÁP listing theo SKU × kênh vào hàng...KHÔNG sửa listing trên sàn', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = 'python -m pipelines.content: error: unrecognized arguments: --daily --date 2026-10-15\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:2659: SystemExit
+---------------------------- Captured stderr call -----------------------------
+usage: python -m pipelines.content [-h] [--listing] [--sku SKU]
+                                   [--channel {shopee,tiktok,web}] [--by BY]
+                                   [--no-llm]
+python -m pipelines.content: error: unrecognized arguments: --daily --date 2026-10-15
+___________________ test_cli_daily_missing_exit_1_and_lines ___________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000020DC4DC5D90>
+capsys = <_pytest.capture.CaptureFixture object at 0x0000020DC4DC5B80>
+
+    def test_cli_daily_missing_exit_1_and_lines(monkeypatch, capsys):
+        @contextmanager
+        def fake_conn():
+            yield object(), None
+    
+        monkeypatch.setattr(store, "_conn_or_none", fake_conn)
+        res = {"day": THU, "per_day": 3, "live": 2, "missing": 1,
+               "items": [{"slot": 1, "status": "created", "id": 7,
+                          "kind": "evergreen", "ref": "thuong-hieu",
+                          "channel": "facebook", "sku": None},
+                         {"slot": 2, "status": "skipped", "id": 5}],
+               "refused": [{"kind": "evergreen", "ref": "san-pham",
+                            "channel": "facebook", "sku": None,
+                            "code": "readiness", "reason": "thiếu SKU"}],
+               "overflow": [], "reasons": ["chỉ 2/3 chủ đề hợp lệ"]}
+>       monkeypatch.setattr(content, "daily_batch", lambda *a, **k: res)
+E       AttributeError: <module 'pipelines.content' from '<code-cu>/pipelines\\content.py'> has no attribute 'daily_batch'
+
+tests\test_v13_c06_daily_ar.py:221: AttributeError
+_________________ test_cli_daily_rollout_off_exit_2_zero_llm __________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000020DC4DC0500>
+capsys = <_pytest.capture.CaptureFixture object at 0x0000020DC4DC0AD0>
+
+    def test_cli_daily_rollout_off_exit_2_zero_llm(monkeypatch, capsys):
+        calls = _fake_llm(monkeypatch, SAFE)
+    
+        @contextmanager
+        def fake_conn():
+            yield object(), None
+    
+        monkeypatch.setattr(store, "_conn_or_none", fake_conn)
+        monkeypatch.setattr(rollout, "_FORCE_MODE", "tat")
+>       assert content.main(["--daily", "--date", "2026-10-15"]) == 2
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v13_c06_daily_ar.py:241: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+pipelines\content.py:684: in main
+    args = ap.parse_args(argv)
+           ^^^^^^^^^^^^^^^^^^^
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:1899: in parse_args
+    self.error(msg)
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:2672: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='python -m pipelines.content', usage=None, description='Sinh NHÁP listing theo SKU × kênh vào hàng...KHÔNG sửa listing trên sàn', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = 'python -m pipelines.content: error: unrecognized arguments: --daily --date 2026-10-15\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:2659: SystemExit
+---------------------------- Captured stderr call -----------------------------
+usage: python -m pipelines.content [-h] [--listing] [--sku SKU]
+                                   [--channel {shopee,tiktok,web}] [--by BY]
+                                   [--no-llm]
+python -m pipelines.content: error: unrecognized arguments: --daily --date 2026-10-15
+____________ test_reminder_draft_has_basis_and_placeholders_no_pii ____________
+
+    def test_reminder_draft_has_basis_and_placeholders_no_pii():
+        ents = [_e(amount=1_000_000, days_ago=60, ref="HD-001", row_no=2),
+                _e(amount=2_000_000, days_ago=40, ref="HD-002", row_no=3),
+                _e(amount=500_000, days_ago=5, ref="HD-003", row_no=4),
+                _e(kind="thanh_toan", amount=-1_200_000, days_ago=3,
+                   ref="PT-9", row_no=5)]
+>       res = ar.reminder_drafts(ents, AS_OF, 30, {"DL-01": "active"}, SRC)
+              ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.acc_ar' has no attribute 'reminder_drafts'
+
+tests\test_v13_c06_daily_ar.py:265: AttributeError
+___________________ test_reminder_only_dealers_in_registry ____________________
+
+    def test_reminder_only_dealers_in_registry():
+        ents = [_e(code="DL-01"), _e(code="DL-02", row_no=3)]
+>       res = ar.reminder_drafts(ents, AS_OF, 30, {"DL-01": "ended"}, SRC)
+              ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.acc_ar' has no attribute 'reminder_drafts'
+
+tests\test_v13_c06_daily_ar.py:286: AttributeError
+___________________ test_reminder_object_id_per_debt_state ____________________
+
+    def test_reminder_object_id_per_debt_state():
+        ents = [_e(days_ago=40)]
+>       d1 = ar.reminder_drafts(ents, AS_OF, 30, {"DL-01": "active"},
+             ^^^^^^^^^^^^^^^^^^
+                                SRC)["drafts"][0]
+E       AttributeError: module 'agents.acc_ar' has no attribute 'reminder_drafts'
+
+tests\test_v13_c06_daily_ar.py:298: AttributeError
+___________________ test_reminder_masks_pii_in_file_fields ____________________
+
+    def test_reminder_masks_pii_in_file_fields():
+        ents = [_e(ref="0905123456")]
+        src = {"DL-01": [("Nguyen 0905123456.csv", "b" * 64)]}
+>       body = ar.reminder_drafts(ents, AS_OF, 30, {"DL-01": "active"},
+               ^^^^^^^^^^^^^^^^^^
+                                  src)["drafts"][0]["body"]
+E       AttributeError: module 'agents.acc_ar' has no attribute 'reminder_drafts'
+
+tests\test_v13_c06_daily_ar.py:313: AttributeError
+____________ test_db_daily_three_drafts_then_retry_restart_no_dup _____________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c06) at 0x20dc4dc6240>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000020DC4DC54C0>
+
+    def test_db_daily_three_drafts_then_retry_restart_no_dup(db, monkeypatch):
+        gs.load(db, _golden(ready=True))
+        tx = _TxConn(db)
+        calls = _fake_llm(monkeypatch, SAFE)
+>       r1 = content.daily_batch(tx, THU, inputs=_inputs(ready=True))
+             ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.content' has no attribute 'daily_batch'
+
+tests\test_v13_c06_daily_ar.py:399: AttributeError
+______________ test_db_daily_missing_inputs_reported_not_filled _______________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c06) at 0x20dc4dc6b40>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000020DC4DC6180>
+
+    def test_db_daily_missing_inputs_reported_not_filled(db, monkeypatch):
+        """Golden thật (0 SKU đủ readiness bài đăng): chỉ 2 trụ không gắn SKU
+        hợp lệ → 2 nháp + THIẾU 1, không sinh bài SKU vi phạm cho đủ số."""
+        gs.load(db, _golden(ready=False))
+        tx = _TxConn(db)
+        calls = _fake_llm(monkeypatch, SAFE)
+>       r = content.daily_batch(tx, THU, inputs=_inputs(ready=False))
+            ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.content' has no attribute 'daily_batch'
+
+tests\test_v13_c06_daily_ar.py:429: AttributeError
+____________ test_db_daily_guardrail_fail_not_saved_then_redrafted ____________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c06) at 0x20dc4dc3fb0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000020DC4DC1190>
+
+    def test_db_daily_guardrail_fail_not_saved_then_redrafted(db, monkeypatch):
+        gs.load(db, _golden(ready=True))
+        tx = _TxConn(db)
+        _fake_llm(monkeypatch, BAD)
+>       r = content.daily_batch(tx, THU, inputs=_inputs(ready=True))
+            ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.content' has no attribute 'daily_batch'
+
+tests\test_v13_c06_daily_ar.py:441: AttributeError
+________ test_db_daily_unique_index_blocks_parallel_dup_rejected_redo _________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c06) at 0x20dc4dc4290>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000020DC4DC5EE0>
+
+    def test_db_daily_unique_index_blocks_parallel_dup_rejected_redo(db,
+                                                                    monkeypatch):
+        """Hai tiến trình song song: chốt cuối là index unique; slot bị người
+        từ chối thì soạn lại được (không tính là nháp sống)."""
+        gs.load(db, _golden(ready=True))
+        tx = _TxConn(db)
+>       key = content.daily_key(THU, 1)
+              ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.content' has no attribute 'daily_key'
+
+tests\test_v13_c06_daily_ar.py:455: AttributeError
+_________________ test_db_daily_rollout_off_blocks_before_llm _________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c06) at 0x20dc4dc0560>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000020DC4DC1310>
+
+    def test_db_daily_rollout_off_blocks_before_llm(db, monkeypatch):
+        gs.load(db, _golden(ready=True))
+        calls = _fake_llm(monkeypatch, SAFE)
+        monkeypatch.setattr(rollout, "_FORCE_MODE", "tat")
+        with pytest.raises(rollout.RolloutBlocked):
+>           content.daily_batch(_TxConn(db), THU, inputs=_inputs(ready=True))
+            ^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'pipelines.content' has no attribute 'daily_batch'
+
+tests\test_v13_c06_daily_ar.py:486: AttributeError
+____________________ test_db_daily_payload_has_no_slot_key ____________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c06) at 0x20dc4dc0b60>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000020DC4DC2360>
+
+    def test_db_daily_payload_has_no_slot_key(db, monkeypatch):
+        gs.load(db, _golden(ready=True))
+        calls = _fake_llm(monkeypatch, SAFE)
+>       content.daily_batch(_TxConn(db), THU, inputs=_inputs(ready=True))
+        ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.content' has no attribute 'daily_batch'
+
+tests\test_v13_c06_daily_ar.py:493: AttributeError
+________________ test_db_reminders_enqueue_finance_idempotent _________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c06) at 0x20dc4dc2d50>
+
+    def test_db_reminders_enqueue_finance_idempotent(db):
+        _seed_ar(db)
+        tx = _TxConn(db)
+        # Dry-run: in nháp, không ghi hàng duyệt.
+>       res0 = ar.enqueue_reminders(tx, AS_OF, 30, dry_run=True)
+               ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.acc_ar' has no attribute 'enqueue_reminders'
+
+tests\test_v13_c06_daily_ar.py:523: AttributeError
+____________________ test_db_reminders_rollout_off_blocked ____________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c06) at 0x20dc4ba7380>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000020DC4BA5A30>
+
+    def test_db_reminders_rollout_off_blocked(db, monkeypatch):
+        _seed_ar(db)
+        monkeypatch.setattr(rollout, "_FORCE_MODE", "tat")
+        with pytest.raises(rollout.RolloutBlocked):
+>           ar.enqueue_reminders(_TxConn(db), AS_OF, 30)
+            ^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'agents.acc_ar' has no attribute 'enqueue_reminders'
+
+tests\test_v13_c06_daily_ar.py:543: AttributeError
+31 failed, 3 passed in 13.85s

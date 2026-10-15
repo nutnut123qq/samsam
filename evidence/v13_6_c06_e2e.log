@@ -1,0 +1,132 @@
+
+$ acc_ar --load fixture công nợ MẪU
+[load] 9 dòng công nợ từ dealer_ar_MAU.csv
+[exit 0]
+
+[setup] sổ dealers: thêm DL-HN01 (tên giả); DL-DN02/DL-QN03 KHÔNG có trong sổ
+
+$ acc_ar --reminders --as-of 2026-10-12 --dry-run
+--- [dry-run] ar_reminder ar:DL-HN01:b951515a49b9 ---
+NHÁP THƯ NHẮC NỢ — chờ GĐ tài chính duyệt; kế toán điền placeholder và gửi tay. Agent KHÔNG gửi.
+
+Kính gửi: {{TEN_DAI_LY}} (mã đại lý DL-HN01)
+Người nhận: {{NGUOI_LIEN_HE}}
+
+Theo sổ công nợ của Công ty TNHH Sâm Sâm tính tới ngày 12/10/2026, quý đại lý còn các khoản đã quá hạn thanh toán sau:
+
+| Chứng từ | Ngày chứng từ | Hạn thanh toán | Số còn nợ | Quá hạn |
+|---|---|---|---|---|
+| PX-GIA-001 | 01/09/2026 | 01/10/2026 | 10.000.000đ | 11 ngày |
+
+Tổng quá hạn: 10.000.000đ (tổng còn nợ: 10.000.000đ).
+
+Kính đề nghị quý đại lý thanh toán hoặc phản hồi đối chiếu trước ngày {{HAN_THANH_TOAN}}. Nếu đã thanh toán, xin bỏ qua thư này và gửi chứng từ để đối chiếu.
+
+Trân trọng,
+{{NGUOI_KY}} — Phòng kế toán Công ty TNHH Sâm Sâm
+
+---
+Căn cứ (nội bộ, không gửi kèm): sổ công nợ `dealer_ar` nạp tay — file dealer_ar_MAU.csv (sha256 3635b15b); ghi có trừ FIFO theo ngày chứng từ; hạn = due_date hoặc ngày chứng từ + 30 ngày (data/dealer_commission.json); trạng thái đại lý trong sổ: active. Nháp này thay nháp nhắc nợ cũ của cùng đại lý nếu còn chờ duyệt.
+[skip] DL-DN02: không có trong sổ đại lý `dealers` — không có căn cứ quan hệ để liên hệ, không soạn thư
+[reminders] tính tới 2026-10-12: 1 nháp (dry-run, không ghi), 1 bỏ qua — agent KHÔNG gửi thư
+[exit 0]
+
+$ acc_ar --reminders --as-of 2026-10-12
+[reminder] DL-HN01 quá hạn 10.000.000đ → hàng duyệt #1 (pending — GĐ tài chính duyệt; kế toán gửi tay)
+[skip] DL-DN02: không có trong sổ đại lý `dealers` — không có căn cứ quan hệ để liên hệ, không soạn thư
+[reminders] tính tới 2026-10-12: 1 nháp mới, 1 bỏ qua — agent KHÔNG gửi thư
+[exit 0]
+
+$ acc_ar --reminders --as-of 2026-10-13 (chạy lại — không nhân bản)
+[skip] DL-DN02: không có trong sổ đại lý `dealers` — không có căn cứ quan hệ để liên hệ, không soạn thư
+[skip] DL-HN01: đã có nháp cùng trạng thái nợ trong hàng duyệt
+[reminders] tính tới 2026-10-13: 0 nháp mới, 2 bỏ qua — agent KHÔNG gửi thư
+[exit 0]
+
+$ approval_queue --pending --block finance
+[pending] 1 mục chờ duyệt:
+  #1 [finance/ar_reminder] Nháp thư nhắc nợ DL-HN01 — quá hạn 10.000.000đ (tính tới 12… — rủi ro medium, QA none, guardrail PASS, tạo bởi agent:acc_ar, hạn 10-17 20:23
+[exit 0]
+
+$ acc_ar --reminders --dry-run --aging (usage)
+
+[stderr] usage: python -m agents.acc_ar [-h] [--load FILE] [--aging] [--commission]
+                               [--bulletin] [--reminders] [--dry-run]
+                               [--as-of AS_OF] [--from DATE_FROM]
+                               [--to DATE_TO]
+python -m agents.acc_ar: error: chỉ 1 thao tác mỗi lần (--load | --aging | --commission | --bulletin | --reminders)
+[exit 2]
+
+$ content --daily --date 2026-10-15 (golden thật, LLM key rỗng)
+# Nháp bài ngày 15/10/2026 — cần 3/ngày (PL01 Marketing)
+#1 evergreen:thuong-hieu × facebook: failed: llm:GatewayError
+#2 evergreen:vung-trong × zalo: failed: llm:GatewayError
+[bị từ chối] evergreen:san-pham × facebook: readiness — thiếu SKU đủ điều kiện kênh facebook cho bài đăng (cần readiness TP_THUONG/QC_DAY_DU; rượu không kênh online)
+[bị từ chối] evergreen:qua-tang × zalo: readiness — thiếu SKU đủ điều kiện kênh zalo cho bài đăng (cần readiness TP_THUONG/QC_DAY_DU; rượu không kênh online)
+[THIẾU] 3/3 nháp: chỉ 2/3 chủ đề hợp lệ theo lịch mùa vụ — xem danh sách bị từ chối; 2 slot soạn không đạt (guardrail/LLM) — chạy lại để soạn lại
+[done] 0/3 nháp sống cho ngày 2026-10-15 (pending — GĐ Marketing duyệt ở tab 'Duyệt & Lịch', người đăng tay; agent không đăng)
+[exit 1]
+
+[check] nháp [daily ...] trong DB sau lần chạy lỗi LLM: 0
+
+$ content --daily --sku x (usage)
+
+[stderr] usage: python -m pipelines.content [-h] [--listing | --daily] [--date DATE]
+                                   [--sku SKU] [--channel {shopee,tiktok,web}]
+                                   [--by BY] [--no-llm]
+python -m pipelines.content: error: --daily không nhận --sku/--channel/--by/--no-llm (người tạo cố định agent:mkt02)
+[exit 2]
+
+$ content --daily host DB chết
+
+[stderr] [error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết) — không ghi được nháp
+[exit 2]
+
+$ acc_ar --reminders host DB chết
+
+[stderr] [error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+[exit 2]
+
+$ mkt_calendar (lịch vẫn hợp lệ với daily_posts)
+> GIẢ ĐỊNH — chờ GĐ Marketing chốt · Lịch ĐỀ XUẤT — GĐ Marketing duyệt trước khi chạy
+
+# Lịch mùa vụ marketing 12/10/2026 → 18/10/2026 (giờ VN)
+
+## Tuần 2026-10-12
+
+| ngày | chiến dịch | kênh | định dạng | SKU | mốc |
+|---|---|---|---|---|---|
+| 17/10 | c-2010-2026 (Quà tặng 20/10 — sâm Ngọc Linh cho phái đẹp) | facebook | post | câu chuyện thương hiệu — không nêu tên SKU | brief 12/10 09:00 · nháp 14/10 09:00 · duyệt 16/10 09:00 · đăng 17/10 09:00 |
+| 17/10 | c-2010-2026 (Quà tặng 20/10 — sâm Ngọc Linh cho phái đẹp) | zalo | post | câu chuyện thương hiệu — không nêu tên SKU | brief 12/10 09:00 · nháp 14/10 09:00 · duyệt 16/10 09:00 · đăng 17/10 09:00 |
+
+## SKU bị chặn kênh
+
+| SKU | kênh | readiness | lý do | định dạng |
+|---|---|---|---|---|
+| da-an-sam-30v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| da-an-sam-30v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-1hu | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-1hu | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-2hu | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-2hu | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-300ml | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-300ml | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| ruou-sam-binh-su-do-500ml | facebook | CAM | rượu: không kênh online | post |
+| ruou-sam-binh-su-do-500ml | zalo | CAM | rượu: không kênh online | post |
+| ruou-sam-chai-thuy-tinh-500ml | facebook | CAM | rượu: không kênh online | post |
+| ruou-sam-chai-thuy-tinh-500ml | zalo | CAM | rượu: không kênh online | post |
+| sapentol-30v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| sapentol-30v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-20v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-20v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-40v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-40v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-80v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-80v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-combo-2x20v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-combo-2x20v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| savigout-30v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| savigout-30v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| savina-12v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| savina-12v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+[exit 0]
