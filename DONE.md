@@ -23,6 +23,110 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Checklist v13.8-c09-p2-neo-vbpl-moc
+
+Gộp vào `v13-hop-dong` bởi merge agent đợt 4 (nhánh lane `v13-c09`, `d0748e3`).
+
+- [x] v13.8 c09 (F10, P2): `pipelines/anchor.py` + 2 bảng append-only
+  `anchor_batches`/`anchor_receipts`. Gốc Merkle trên đầu chuỗi `plot_logs` +
+  chữ ký/phát hành/thu hồi QR của lô không mẫu (không tên người ký, không tọa
+  độ). Provider mặc định `none` = chưa neo (`--submit` exit 2); adapter
+  OpenTimestamps chỉ gửi digest 32 byte, lỗi ghi dòng `loi`, chạy lại = thử lại;
+  `--verify` đối chiếu nội bộ, `--export` bản kê + .ots cho bên thứ ba
+  `ots verify`.
+- [x] `pipelines/legal_updates.py`: luật `legal_doc` của PC-A8 → mục
+  `legal_doc_review` khối legal_hr (payload template, idempotent, rollout cưỡng
+  chế). API sàn (`ingest/market_api.py`) và domain QR ghi BLOCKED — CHƯA
+  VERIFIED.
+- [x] C10 (F09, F11): `data/projects/milestones.json` đủ mốc PL01 mục 7, tách kết
+  thúc xây dựng P1 (11/01) khỏi nghiệm thu P1 (11–20/02); 5 mốc phụ thuộc ngày
+  ký ở `moc_chua_co_ngay`, hiện trên bảng tuần. `data/tai_san_hop_tac.json` thêm
+  vị trí/phiên bản/chủ quản/quyền (`cho_xac_nhan`); sổ nghĩa vụ ngoài code
+  N01–N20 `docs/handover/so-nghia-vu-hop-dong.md` trạng thái `de_xuat`.
+- Evidence lane: `evidence/v13_8_c09_pytest.log` (44 ca mới; 46 file liên quan
+  2467 passed, 1 FAIL môi trường worktree có sẵn), `v13_8_c09_oldcode_fail.log`
+  (code cũ lỗi collection; giữ module mới với data/schema cũ → 19 FAIL),
+  `v13_8_c09_e2e.log`.
+- BLOCKED: hai bên chọn chuỗi/provider/phí/tài khoản neo + tháng neo (PL01 mục 7
+  để trống; `data/anchor_config.json` provider `none` = CHƯA NEO, adapter
+  OpenTimestamps mới kiểm bằng calendar giả); Bên B cấp app key + sandbox chỉ
+  đọc Shopee Open Platform/TikTok Shop (API sàn CHƯA VERIFIED); Bên B cấp tên
+  miền công khai trang QR (`public_base_url` rỗng); Pháp chế duyệt URL nguồn
+  VBPL trong `intel_sources.json` + bộ từ khóa `legal_doc` (GIẢ ĐỊNH, chưa bắt
+  luật lao động), Bên B ủy quyền người duyệt khối legal_hr (C04); hai bên chốt
+  PL05, ngày ký, ngày bắt đầu vận hành, phí/thưởng, lịch hoàn trả, tiêu chuẩn
+  và giá quy đổi củ, kho mã nguồn chung, người giữ quyền cao nhất Bên B, biên
+  bản kiểm kê tài sản thực; scheduler on-prem cho `pipelines.anchor --build` và
+  `pipelines.legal_updates --submit` chưa gắn (sau gộp vẫn chưa có trong
+  `deploy/onprem/jobs.json`).
+- Còn mở: chưa có biên nhận neo thật — farming-06 `mot_phan`;
+  `scripts/ops_monthly.py` chưa in 4 cột tài sản mới (dữ liệu chỉ trong JSON —
+  kiểm lại sau gộp c07 vẫn chưa); DB seed trước v13.8 giữ title/gate cũ MOC-C/
+  MOC-D (`da_pmo --seed` chỉ báo [lệch], TGĐ sửa tay); mốc gom = giờ DB − 5
+  phút, transaction ghi mở >5 phút có thể làm `--verify` báo "chèn lùi giờ" giả;
+  chưa có test DB cho "dòng ghi sau mốc gom không làm verify báo sai".
+
+## Checklist v13.7-c07-van-hanh-canh-bao-30s
+
+Gộp vào `v13-hop-dong` bởi merge agent đợt 4 (nhánh lane `v13-c07`, `77adfd2`).
+
+- [x] v13.7 c07 (F06): `raise_alert` gửi email SMTP stdlib (STARTTLS kiểm chứng
+  chỉ) tới người nhận độc lập, mỗi lần gửi ghi `red_alert_deliveries` (không lưu
+  địa chỉ); trả True chỉ khi gửi được ≥1 người. `--deliver` gửi lại, `--ack ID
+  --by` dùng chung mọi cảnh báo, `--open`; `--check-routing` exit 1 khi thiếu
+  người nhận hoặc chưa có kênh gửi.
+- [x] Chatbot hạn chót tổng 30 giây từ lúc nhận tin (tính cả chờ lock): thời
+  gian còn lại truyền thành timeout xuống rewrite/embed/DB/chat, `answer()` chạy
+  luồng riêng có chặn cứng; quá hạn → HANDOFF + `cskh_handoff` lý do `deadline`,
+  kết quả muộn bị bỏ; timeout gửi 5 giây (Zalo + Messenger dùng chung).
+- [x] Sổ sự cố `pipelines.ops_incidents` (append-only); `ops_monthly` có mục SLA
+  15 phút / 3 giờ / 3 ngày làm việc / 7 ngày, đếm riêng xử lý khách xong,
+  `--snapshot` (`chat_kpi_facts` không PII), `--mark-sent` do người gửi xác
+  nhận, `--month prev`, ghi rõ phạm vi rà ads/KOC. Lịch on-prem
+  `deploy/onprem/jobs.json` + systemd timer qua `python -m pipelines.job_runs
+  --run` có khóa chống chạy chồng (exit 75), ghi `job_runs`; bản tin sức khỏe
+  theo dõi các job.
+- Evidence lane: `evidence/v13_7_c07_pytest.log` (43 ca mới, 41 FAIL trên code
+  cũ; 34 file liên quan 1563 passed, 1 FAIL môi trường có sẵn),
+  `v13_7_c07_oldcode_fail.log`, `v13_7_c07_e2e.log`.
+- BLOCKED: Pháp chế/BKS cấp người nhận cảnh báo đỏ độc lập + người trực ngoài giờ
+  (`data/red_alert_routing.json` rỗng → `--check-routing`/`--deliver` exit 1);
+  hạ tầng Sâm Sâm cấp SMTP tên miền công ty + `RED_ALERT_NOTIFY=email`, `SMTP_*`,
+  biến địa chỉ người nhận trong `.env` server (chưa gửi thư thật lần nào, mới
+  sender giả); server on-prem bật timer systemd, monitor NGOÀI máy, NAS/ổ
+  offsite máy khác, người ký biên bản diễn tập; Hành chính cấp lịch nghỉ lễ/Tết
+  `data/rollout_config.json` (SLA 3 ngày làm việc tạm tính T2–T6); Bên A/B nguồn
+  dữ liệu ads trả phí/KOC/livestream (báo cáo ghi chưa có dữ liệu, không tính
+  đạt); staging fault injection + kịch bản mất server chưa chạy (DoD C07).
+- Còn mở: leo thang 2 giờ chỉ có cho cảnh báo intel (ack + KPI 2 giờ đã áp mọi
+  nguồn); dư lượng ngân sách 30s chưa trừ: refresh token Zalo hiếm (15s) trong
+  đường gửi, `record_suggestion`/DB nhánh `_reply_held` trước khi gửi; ack ngoài
+  giờ chưa tách khỏi routing (người trực thêm thẳng vào recipients);
+  `BACKUP_KEEP=7` không giữ bản theo quý (chính sách lưu Bên B); đổi nghĩa
+  `raise_alert` True = đã gửi — merge đợt 4 rà caller: `sales_director`,
+  `ra_kenh`, `agent_eval` không dùng giá trị trả về, chỉ `intel_alert` dùng (đã
+  sửa trong lane); `ra_kenh` đặt URL bài vào tiêu đề cảnh báo S1 nên thư gửi đi
+  có URL, lệch safeguard DF-45 "thư không chứa detail/URL".
+
+## Gộp v13 đợt 4 (c07 + c09)
+
+- `git merge --no-ff` v13-c07 (`77adfd2`, không xung đột) rồi v13-c09
+  (`d0748e3`) vào `v13-hop-dong`. Xung đột c09 đều là khối nối đuôi, giữ cả hai
+  (c07 trước): `AGENTS.md` Commands v13.7 ↔ v13.8, `docs/schema.sql` khối v13.7
+  ↔ v13.8 (giữ dòng chung `for each statement` cuối trigger
+  `chat_kpi_facts_no_truncate`), `data/data_flow_map.json` DF-45 ↔ DF-47,
+  `docs/handover/kien-truc.md` đếm lại 81 bảng (75 + 4 c07 + 2 c09). Counter
+  dòng so HEAD/MERGE_HEAD: 0 dòng mất ngoài 2 dòng đếm bảng cũ và các dòng board
+  /TIA mà từng lane đã thay. JSON parse được, .py ast.parse được. DPIA/TIA sinh
+  lại bằng `scripts/dpia_draft.py` (42 luồng, 17 ra nước ngoài).
+- DB `samsam_v13_m4`: `apply_schema --roles` ×2 sạch (81 bảng), core_store,
+  golden_store; `ruff check .` sạch.
+- Gate sau gộp (DB `samsam_v13_m4`): 44 file pytest (test 2 lane + red_alert/
+  intel_alert/ops_monthly/job_runs/health_bulletin/rag/zalo/messenger/channels/
+  da_pmo/market_api/rollout*/pc_a8/legal_docs, các caller raise_alert
+  sales_director/ra_kenh/agent_eval/ceo_*/bks_audit, drift handover/
+  data_flow_map/dpia/db_backup) → 2025 passed, 0 failed. Không cần vá.
+
 ## Checklist v13.6-c06-3-nhap-bai-nhac-no
 
 Gộp vào `v13-hop-dong` bởi merge agent đợt 3 (nhánh lane `v13-c06`, `1be59f8`).
