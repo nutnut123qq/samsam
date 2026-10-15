@@ -1,0 +1,12 @@
+{
+  "_doc": "v13.8 C09 — neo mã xác thực chuỗi truy xuất lên blockchain (PL01 mục 4b; pipelines/anchor.py). provider: 'none' (MẶC ĐỊNH = chưa neo, không gửi gì ra ngoài) | 'opentimestamps' (chỉ gửi digest 32 byte = sha256 bản kê tới 1 calendar OpenTimestamps miễn phí, lưu biên nhận .ots; xác nhận Bitcoin do bên thứ ba `ots upgrade` + `ots verify`). CHỌN CHUỖI/PROVIDER/PHÍ/TÀI KHOẢN LÀ QUYẾT ĐỊNH HAI BÊN — agent KHÔNG tự đổi khỏi 'none'. calendars: chỉ https, không query; thử lần lượt, calendar đầu nhận là đủ (thử lại = chạy lại --submit). timeout_s 1..60.",
+  "status": "CHƯA CHỐT — chờ hai bên chọn chuỗi/provider/phí",
+  "provider": "none",
+  "opentimestamps": {
+    "calendars": [
+      "https://a.pool.opentimestamps.org",
+      "https://b.pool.opentimestamps.org"
+    ],
+    "timeout_s": 15
+  }
+}

@@ -140,6 +140,8 @@ bảng nào thì dừng, không bật app.
 | `lot_origins` | B | ánh xạ lô ↔ nhật ký thu hoạch đã chain (v9.4) — quyết định của GĐ SX, không dựng lại được |
 | `qr_signatures` | B | 3 chữ ký tem QR (append-only) — lịch sử ký, không dựng lại được |
 | `qr_codes` | B | mã QR đã phát hành/thu hồi — mất bảng = tem đã in trỏ vào mã không còn trang |
+| `anchor_batches` | B | (v13.8) append-only — lần gom neo blockchain (lá + gốc Merkle + sha bản kê); dựng lại = mất bằng chứng đã neo |
+| `anchor_receipts` | B | (v13.8) append-only — biên nhận .ots/lỗi gửi calendar; mất bảng = mất biên nhận neo (bản .ots đã `--export` giữ riêng) |
 | `sla_escalations` | B | (v5.0) append-only — leo thang SLA khối KD (đã leo thang mục nào, lúc nào) không dựng lại được |
 | `sim_runs` | B | nghiên cứu giả lập persona (v7.3) — lịch sử chạy model/prompt/seed để kiểm toán, không PII |
 | `intel_items` | A (chạy lại `python -m crawler.intel --run`) hoặc B | tin thị trường công khai (v7.0) — chỉ tiêu đề + trích ≤300 ký tự + link; B giữ tin cũ đã trôi khỏi RSS |

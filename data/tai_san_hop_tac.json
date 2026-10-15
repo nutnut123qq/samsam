@@ -1,36 +1,63 @@
 {
-  "_doc": "v12.6 — Danh mục tài sản hợp tác theo Phụ lục 04 mục 3 của Hợp đồng hợp tác đầu tư TEDO–Sâm Sâm. BẢN DEV SOẠN, chờ TGĐ Bên B và đại diện dự án Bên A chốt. Bên A cập nhật file này mỗi khi có thay đổi; scripts/ops_monthly.py chép nguyên vào báo cáo vận hành tháng gửi Bên B. Không ghi tên người, MST, số tài khoản, mật khẩu. Loader: scripts/ops_monthly.load_assets — thiếu/hỏng/rỗng -> từ chối (fail-closed).",
+  "_doc": "v12.6 — Danh mục tài sản hợp tác theo Phụ lục 04 mục 3 của Hợp đồng hợp tác đầu tư TEDO–Sâm Sâm. BẢN DEV SOẠN, chờ TGĐ Bên B và đại diện dự án Bên A chốt. Bên A cập nhật file này mỗi khi có thay đổi; scripts/ops_monthly.py chép nguyên vào báo cáo vận hành tháng gửi Bên B. Không ghi tên người, MST, số tài khoản, mật khẩu, địa chỉ. Loader: scripts/ops_monthly.load_assets — thiếu/hỏng/rỗng -> từ chối (fail-closed). v13.8 C10 (PL01 mục 8b–c, PL04 mục 3): mỗi hạng mục thêm `vi_tri` (nơi đặt thực tế), `phien_ban`, `chu_quan` (vai trò giữ, không tên người), `quyen_truy_cap` (Bên A / Bên B / người giữ quyền cao nhất), `trang_thai` — giá trị chưa kiểm kê thực ghi 'chưa xác nhận' kèm bên cần cung cấp; KHÔNG suy đoán. Toàn bộ file ở trạng thái 'cho_xac_nhan' tới khi hai bên ký biên bản kiểm kê (agent không tự đổi).",
   "cap_nhat": "2026-10-15",
+  "trang_thai": "cho_xac_nhan",
+  "nguoi_giu_quyen_cao_nhat": "Bên B — người do TGĐ Bên B chỉ định (chưa xác nhận); Bên A chỉ được cấp quyền vận hành (PL01 mục 8b)",
   "hang_muc": [
     {
       "hang_muc": "Mã nguồn Dự án",
       "mo_ta": "Mã nguồn các tính năng AI, nền tảng thương mại điện tử, truy xuất blockchain",
       "noi_luu": "Kho mã nguồn chung",
-      "ben_quan_ly": "Bên A"
+      "ben_quan_ly": "Bên A",
+      "vi_tri": "Kho git hiện hành của Bên A (nhánh main); kho chung mà HAI BÊN đều có quyền (PL01 mục 8c) chưa xác định — chưa xác nhận; mã website bán hàng ở repo riêng chưa xác định",
+      "phien_ban": "Commit HEAD tại ngày báo cáo (scripts/ops_monthly.py ghi tự động); bản bàn giao chính thức chưa gắn tag",
+      "chu_quan": "Đại diện dự án Bên A",
+      "quyen_truy_cap": "Bên A: ghi; Bên B: quyền đọc/ghi trên kho chung chưa cấp — chưa xác nhận",
+      "trang_thai": "cho_xac_nhan"
     },
     {
       "hang_muc": "Cấu hình, quy trình AI",
       "mo_ta": "Cấu hình hệ thống, prompt, luồng tự động, bộ kiểm thử",
       "noi_luu": "Kho mã nguồn chung",
-      "ben_quan_ly": "Bên A"
+      "ben_quan_ly": "Bên A",
+      "vi_tri": "Cùng kho mã nguồn (thư mục data/, docs/, tests/, deploy/); bí mật/khóa KHÔNG nằm trong kho — nằm ở .env trên server Bên B",
+      "phien_ban": "Theo commit của kho mã nguồn",
+      "chu_quan": "Đại diện dự án Bên A",
+      "quyen_truy_cap": "Như mã nguồn; bí mật trên server do người giữ quyền cao nhất Bên B kiểm soát — chưa xác nhận",
+      "trang_thai": "cho_xac_nhan"
     },
     {
       "hang_muc": "Tài liệu kỹ thuật",
       "mo_ta": "Sơ đồ hệ thống, hướng dẫn vận hành, tài liệu bàn giao",
       "noi_luu": "Kho tài liệu chung",
-      "ben_quan_ly": "Bên A"
+      "ben_quan_ly": "Bên A",
+      "vi_tri": "docs/handover/ trong kho mã nguồn; kho tài liệu chung hai bên chưa xác định — chưa xác nhận",
+      "phien_ban": "Theo commit của kho mã nguồn",
+      "chu_quan": "Đại diện dự án Bên A",
+      "quyen_truy_cap": "Như mã nguồn — chưa xác nhận",
+      "trang_thai": "cho_xac_nhan"
     },
     {
       "hang_muc": "Cơ sở dữ liệu Dự án",
       "mo_ta": "Dữ liệu sản phẩm, đơn hàng, nhật ký hệ thống",
       "noi_luu": "Server của Bên B",
-      "ben_quan_ly": "Bên B quản lý, Bên A vận hành"
+      "ben_quan_ly": "Bên B quản lý, Bên A vận hành",
+      "vi_tri": "Postgres trên server vật lý Bên B (PL01 mục 8a) — server chưa bàn giao, hiện chạy môi trường dev của Bên A; bản sao ngoài hệ thống chưa xác nhận",
+      "phien_ban": "Lược đồ docs/schema.sql theo commit; bản sao lưu theo scripts/db_backup.py",
+      "chu_quan": "Quản trị hạ tầng Bên B (chưa chỉ định)",
+      "quyen_truy_cap": "Owner DB: Bên B; Bên A: login vận hành (agent_writer/app_human); Bên A xem số: ben_a_reader — tạo login thật chưa làm (runbook-ha-tang mục 9)",
+      "trang_thai": "cho_xac_nhan"
     },
     {
       "hang_muc": "Tài khoản quản trị cao nhất",
       "mo_ta": "Tài khoản server, tên miền, kênh bán hàng",
       "noi_luu": "Bên B giữ",
-      "ben_quan_ly": "Bên B"
+      "ben_quan_ly": "Bên B",
+      "vi_tri": "Chưa xác nhận — Bên B lập danh sách tài khoản (server, tên miền, Shopee/TikTok Shop, Zalo OA, Facebook) ngoài kho mã nguồn",
+      "phien_ban": "Không áp dụng",
+      "chu_quan": "Người giữ quyền cao nhất Bên B",
+      "quyen_truy_cap": "Bên B giữ quyền cao nhất; Bên A được cấp quyền vận hành theo từng tài khoản — chưa xác nhận",
+      "trang_thai": "cho_xac_nhan"
     }
   ],
   "khong_thuoc_tai_san_hop_tac": [

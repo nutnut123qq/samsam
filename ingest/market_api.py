@@ -38,6 +38,13 @@ dict response; mã đơn → `order_id_hash` = sha256("kênh:mã đơn")[:16] (C
 công thức market_csv); đơn shopee chỉ xin `response_optional_fields=
 item_list` (không xin field người nhận).
 
+TRẠNG THÁI XÁC MINH (v13.8 C09, PL01 mục 3b/7 "Kết nối API sàn 02–03/2027"):
+**BLOCKED — CHƯA VERIFIED.** Chưa có app key/access token/sandbox chính thức
+của Shopee Open Platform/TikTok Shop (Bên B cấp app chỉ đọc) → chữ ký,
+endpoint, field, phân trang, rate limit mới chỉ kiểm bằng server giả theo tài
+liệu công khai. Không ghi "đã kết nối API sàn" vào hồ sơ nghiệm thu khi chưa
+chạy được với sandbox thật.
+
 CLI: `python -m ingest.market_api --channel shopee|tiktok --kind
 listing|order [--days N]` — thiếu key env → `[external-dep]` exit 2 (0
 request, không connect DB); lỗi API/dữ liệu → exit 1 (không connect, 0

@@ -3549,3 +3549,57 @@ create unique index if not exists content_drafts_daily_key_idx
   on content_drafts ((left(brief, 21)))
   where content_type = 'post' and created_by = 'agent:mkt02'
     and status <> 'rejected' and brief like '[daily %';
+
+-- ===== v13.8 c09 neo blockchain =====
+-- PL01 mục 4b: "Mã xác thực của chuỗi dữ liệu được neo lên blockchain theo
+-- định kỳ để bên thứ ba kiểm chứng được". `python -m pipelines.anchor`:
+--   * `anchor_batches` — 1 dòng / lần gom: lá (đầu chuỗi `plot_logs` + chữ
+--     ký/phát hành/thu hồi QR của lô KHÔNG mẫu — chỉ mã lô, vai, sha, thời
+--     điểm; KHÔNG tên người ký, KHÔNG tọa độ/khoảnh), gốc Merkle, sha256 bản
+--     kê (manifest) = digest DUY NHẤT được gửi ra ngoài. APPEND-ONLY.
+--   * `anchor_receipts` — mỗi lần gửi digest tới provider: `da_gui` (biên
+--     nhận .ots của calendar — CHƯA phải xác nhận Bitcoin, bên thứ ba chạy
+--     `ots upgrade` + `ots verify`) hoặc `loi` (lớp lỗi, không URL/token).
+--     Provider `none` (mặc định) = không gửi gì, không ghi dòng → "chưa neo".
+--     APPEND-ONLY (thử lại = dòng mới).
+-- Không grant cho role nào (CLI chạy DSN chủ sở hữu). Hash lưu cùng DB KHÔNG
+-- thay được neo ngoài — chỉ phục vụ đối chiếu nội bộ (`--verify`).
+create table if not exists anchor_batches (
+  id bigint generated always as identity primary key,
+  as_of timestamptz not null,
+  leaves jsonb not null
+    check (jsonb_typeof(leaves) = 'array' and jsonb_array_length(leaves) > 0),
+  merkle_root text not null check (merkle_root ~ '^[0-9a-f]{64}$'),
+  manifest_sha256 text not null unique
+    check (manifest_sha256 ~ '^[0-9a-f]{64}$'),
+  created_by text not null check (btrim(created_by) <> ''),
+  created_at timestamptz not null default now()
+);
+create or replace trigger anchor_batches_append_only_row
+  before update or delete on anchor_batches
+  for each row execute function append_only_guard();
+create or replace trigger anchor_batches_no_truncate
+  before truncate on anchor_batches
+  for each statement execute function append_only_guard();
+
+create table if not exists anchor_receipts (
+  id bigint generated always as identity primary key,
+  batch_id bigint not null references anchor_batches (id),
+  provider text not null check (provider in ('opentimestamps')),
+  status text not null check (status in ('da_gui', 'loi')),
+  calendar text check (calendar ~ '^https://'),
+  receipt bytea check (octet_length(receipt) <= 16384),
+  error text check (char_length(error) <= 300),
+  created_by text not null check (btrim(created_by) <> ''),
+  created_at timestamptz not null default now(),
+  check ((status = 'da_gui') = (receipt is not null and calendar is not null)),
+  check ((status = 'loi') = (error is not null))
+);
+create index if not exists anchor_receipts_batch_idx
+  on anchor_receipts (batch_id, id);
+create or replace trigger anchor_receipts_append_only_row
+  before update or delete on anchor_receipts
+  for each row execute function append_only_guard();
+create or replace trigger anchor_receipts_no_truncate
+  before truncate on anchor_receipts
+  for each statement execute function append_only_guard();

@@ -1,0 +1,196 @@
+# v13.8 c09 — E2E CLI trên DB lane samsam_v13_c09 (KHÔNG DB .env): anchor build/verify/submit(none)/export/status/usage/dead-DB, legal_updates, da_pmo seed+board, rollout --catalog
+# Setup: 1 khoảnh manual + 1 nhật ký chain qua agents.garden.add_log; chờ 320s thật > LAG 5 phút (không sửa created_at)
+# Provider none: KHÔNG có lời gọi mạng nào; neo thật = BLOCKED quyết định hai bên
+
+[setup] plot_log id=8 warn=[]
+
+$ python -m pipelines.anchor --status
+
+  exit=0
+
+  provider: none
+
+    (chưa có lần gom nào)
+
+$ python -m pipelines.anchor --build --dry-run
+
+  exit=1
+
+  [err] chưa có nhật ký đã chain / hồ sơ lô nào để neo
+
+[setup] đã chờ 320s > LAG 5 phút
+
+$ python -m pipelines.anchor --build
+
+  exit=0
+
+  [ok] lần gom #1 (mới): 1 lá, gốc beb76edff8bd0628f11e48cacaca8359c92aa78fdcd641e71f3e840f1333ef68
+
+  [external-dep] provider 'none' — lần gom CHƯA NEO ra blockchain (chỉ đối chiếu nội bộ).
+
+$ python -m pipelines.anchor --build
+
+  exit=0
+
+  [ok] lần gom #1 (không đổi): 1 lá, gốc beb76edff8bd0628f11e48cacaca8359c92aa78fdcd641e71f3e840f1333ef68
+
+  [external-dep] provider 'none' — lần gom CHƯA NEO ra blockchain (chỉ đối chiếu nội bộ).
+
+$ python -m pipelines.anchor --verify latest
+
+  exit=0
+
+  [ok] lần gom #1: khớp DB — chưa neo
+
+$ python -m pipelines.anchor --submit latest
+
+  exit=2
+
+  [external-dep] provider 'none' — CHƯA NEO: chọn chuỗi/provider/phí là quyết định hai bên (data/anchor_config.json).
+
+$ python -m pipelines.anchor --export latest --out <out>
+
+  exit=0
+
+  [ok] <out>\anchor-1.json
+
+  Bên thứ ba: `ots upgrade <file>.json.ots` rồi `ots verify <file>.json.ots` (cần tệp .json cạnh .ots).
+
+$ python -m pipelines.anchor --status
+
+  exit=0
+
+  provider: none
+
+    #1 2026-10-15 21:30Z 1 lá beb76edff8bd0628… — chưa neo
+
+$ python -m pipelines.anchor --verify 99999
+
+  exit=1
+
+  [err] không có lần gom '99999'
+
+$ python -m pipelines.anchor --build --status
+
+  exit=2
+
+  usage: python -m pipelines.anchor [-h] [--build] [--dry-run]
+
+                                    [--submit ID|latest] [--verify ID|latest]
+
+                                    [--export ID|latest] [--out OUT] [--status]
+
+                                    [--by BY]
+
+  python -m pipelines.anchor: error: chọn đúng 1 trong --build/--submit/--verify/--export/--status
+
+$ python -m pipelines.anchor --status [DATABASE_URL=host chết]
+
+  exit=2
+
+  [err] DB không kết nối được
+
+$ python -m pipelines.legal_updates --submit --dry-run
+
+  exit=0
+
+  [ok] (dry-run) văn bản khớp chưa vào hàng: 0 · đã đẩy: 0 [] · còn lại lần sau: 0
+
+$ python -m pipelines.legal_updates --submit
+
+  exit=0
+
+  [ok] văn bản khớp chưa vào hàng: 0 · đã đẩy: 0 [] · còn lại lần sau: 0
+
+$ python -m pipelines.legal_updates --submit [DATABASE_URL=host chết]
+
+  exit=2
+
+  [err] DB không kết nối được
+
+$ python -m agents.da_pmo --seed
+
+  exit=0
+
+  [done] inserted=15 existing=0
+
+$ python -m agents.da_pmo --board --date 2026-10-15 --out-dir <out>
+
+  exit=0
+
+  [done] 15 mốc → <out>\da-pmo-board-2026-10-15.md
+
+[board] mục mốc chưa có ngày: True
+
+  (chờ ngày ký / hai bên chốt)
+
+  
+
+  | Mã | Việc | Owner | Hạn theo HĐ | Blocker |
+
+  |---|---|---|---|---|
+
+  | BAN-GIAO-DAU-VAO | Bàn giao hồ sơ, dữ liệu đầu vào (khoản 4 Điều 2 HĐ) | ben_b | Trong 05 ngày kể từ ngày ký | Ngày ký HĐ chưa chốt trong repo — không tính đư
+
+  | HA-TANG | Bảo đảm hạ tầng (server, thiết bị, đường truyền) + Bên A cài đặt | hai_ben | Khi bắt đầu triển khai | Ngày bắt đầu triển khai chưa chốt; server Bên 
+
+  | BLOCKCHAIN | Truy xuất blockchain — neo mã xác thực nhật ký vườn, hồ sơ lô; tem QR | ben_a | ……/2027 (HĐ để trống) | HĐ chưa ghi tháng; hai bên chọn chuỗi/pro
+
+  | NGHIEM-THU-P2 | Nghiệm thu P2 — hai bên ký biên bản | hai_ben | Trước khi hết năm hợp tác thứ nhất | Năm hợp tác tính từ ngày ký (data/rev_share.json ngay_ky_
+
+$ python -m pipelines.rollout --catalog
+
+  exit=0
+
+  Danh mục yêu cầu HĐ — BẢN ĐỀ XUẤT, chờ hai bên chốt
+
+  ceo            HĐ  9 · đề xuất  7 · chưa xác định — chờ hai bên chốt (đề xuất 7/9)
+
+  sales          HĐ 12 · đề xuất 12 · khớp số lượng — nội dung chờ hai bên chốt
+
+  marketing      HĐ 14 · đề xuất 11 · chưa xác định — chờ hai bên chốt (đề xuất 11/14)
+
+  intel          HĐ 11 · đề xuất  8 · chưa xác định — chờ hai bên chốt (đề xuất 8/11)
+
+  finance        HĐ  9 · đề xuất  9 · khớp số lượng — nội dung chờ hai bên chốt
+
+  production     HĐ  6 · đề xuất  6 · khớp số lượng — nội dung chờ hai bên chốt
+
+  farming        HĐ  9 · đề xuất  7 · chưa xác định — chờ hai bên chốt (đề xuất 7/9)
+
+  legal_hr       HĐ 10 · đề xuất 11 · chưa xác định — chờ hai bên chốt (đề xuất 11/10)
+
+  data_platform  HĐ  9 · đề xuất  8 · chưa xác định — chờ hai bên chốt (đề xuất 8/9)
+
+  P1             HĐ 80 · đề xuất 72 · chưa xác định — chờ hai bên chốt (đề xuất 72/80)
+
+  P2             HĐ  9 · đề xuất  7 · chưa xác định — chờ hai bên chốt (đề xuất 7/9)
+
+  tong           HĐ 89 · đề xuất 79 · chưa xác định — chờ hai bên chốt (đề xuất 79/89)
+
+  ngoài 89: nen_tang_tmdt 2, truy_xuat_blockchain 1, nghia_vu_hd 4
+
+  code_status: co_code 65, mot_phan 16, thieu 1, lam_rieng 2, ngoai_code 2
+
+  tách ceo-02 → ceo-02.1, ceo-02.2
+
+  tách ceo-04 → ceo-04.1, ceo-04.2
+
+  tách sales-04 → sales-04.1, sales-04.2
+
+  tách sales-06 → sales-06.1, sales-06.2
+
+  tách sales-07 → sales-07.1, sales-07.2, sales-07.3
+
+  tách marketing-02 → marketing-02.1, marketing-02.2
+
+  tách marketing-04 → marketing-04.1, marketing-04.2
+
+  tách marketing-06 → marketing-06.1, marketing-06.2
+
+  tách marketing-07 → marketing-07.1, marketing-07.2
+
+  tách intel-01 → intel-01.1, intel-01.2
+
+RC {'status0': 0, 'build_lag': 1, 'build': 0, 'build2': 0, 'verify': 0, 'submit_none': 2, 'export': 0, 'status': 0, 'verify_404': 1, 'usage': 2, 'dead_db': 2, 'legal_dry': 0, 'legal': 0, 'legal_dead': 2, 'pmo_seed': 0, 'pmo_board': 0, 'catalog': 0}
+

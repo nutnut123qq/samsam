@@ -219,6 +219,19 @@
 | Rủi ro tồn dư | Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email); Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday) |
 | Căn cứ | Lợi ích hợp pháp/hợp đồng lao động với nhân viên — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
+### DF-47 — Neo mã xác thực chuỗi truy xuất lên blockchain — chỉ digest 32 byte (v13.8 C09)
+
+| Mục | Nội dung |
+|---|---|
+| Bên nhận / nước | MẶC ĐỊNH KHÔNG GỬI (provider `none`). Khi hai bên chọn `opentimestamps`: 1 calendar OpenTimestamps công khai (https, URL trong `data/anchor_config.json`) nhận digest; digest đi vào giao dịch Bitcoin công khai |
+| Dữ liệu gửi đi (sau biện pháp) | sha256 của bản kê lần gom (gốc Merkle trên đầu chuỗi plot_logs + chữ ký/phát hành/thu hồi QR: mã lô, vai, sha, thời điểm) — 32 byte; KHÔNG tên người ký, KHÔNG nội dung nhật ký, KHÔNG tọa độ/khoảnh/GPS |
+| Lớp | Xanh |
+| Mục đích | PL01 mục 4b — neo mã xác thực chuỗi dữ liệu truy xuất định kỳ để bên thứ ba kiểm chứng |
+| Biện pháp kỹ thuật | Chỉ gửi sha256 bản kê (32 byte); bản kê và lá không rời hệ thống trừ khi người chủ động `--export`; Lá chỉ gồm bản ghi bất biến không PII; lô mẫu bị loại; tên người ký QR không vào lá; Provider mặc định `none` = không mở mạng; đổi provider là quyết định hai bên; biên DÙNG qua rollout `farming-06` (chạy thử/tắt chặn gửi); HTTP: chỉ https, không theo redirect, trần 8 KB phản hồi, timeout cấu hình; lỗi chỉ ghi lớp lỗi |
+| Thời hạn lưu (theo map) | Lâu dài (bằng chứng truy xuất, append-only) — chờ Pháp chế chốt cùng hồ sơ lô |
+| Rủi ro tồn dư | Chưa chọn chuỗi/provider/phí — chưa neo thật (BLOCKED quyết định hai bên); Calendar OpenTimestamps đặt ở nước ngoài — dù chỉ là digest, Pháp chế xác nhận trước khi bật |
+| Căn cứ | Không xử lý dữ liệu cá nhân (digest băm của bản ghi không PII) — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
+
 ## 3. Luồng không thuộc TIA
 
 Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15, DF-18, DF-19, DF-20, DF-25, DF-26, DF-27, DF-31, DF-32, DF-33, DF-34, DF-35, DF-38, DF-42, DF-44.
