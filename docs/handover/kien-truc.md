@@ -180,7 +180,7 @@ created_by` + v6.1 5 cột ngữ cảnh draft). `--roles` chạy thêm `docs/rol
 | 4 | Leads | Dashboard convlog (file-based, hiện cả khi DB chết) + bảng `leads` — read-only |
 | 5 | Báo cáo | Sinh/xem báo cáo `data/reports/` — BẢN NHÁP người gửi |
 | 6 | Nhật ký vườn | Form ghi `plot_logs` + panel "Cần chú ý" + nhật ký gần nhất |
-| 7 | Duyệt & Lịch | Hàng duyệt `content_drafts` — người duyệt = người đăng nhập (không gõ tên); Duyệt disabled khi vi phạm / vai trò không được duyệt / chính mình tạo draft; xếp lịch theo vai trò + calendar 14 ngày |
+| 7 | Duyệt & Lịch | Hàng duyệt `content_drafts` — người duyệt = người đăng nhập (không gõ tên); Duyệt disabled khi vi phạm / vai trò không được duyệt / chính mình tạo draft; xếp lịch theo vai trò + calendar 14 ngày. v13.5: + hàng duyệt chung (`approval_queue`) của các khối mà vai trò là người duyệt; chế độ thực (AUTH_MODE local\|proxy) chỉ người có tên trong `approvers` của đúng khối (`pipelines.auth.authorize`) |
 
 Tab hiện theo vai trò đăng nhập (mục 6b) — tab không được phép KHÔNG
 được tạo (code tab đó không chạy, không query DB).
@@ -286,10 +286,10 @@ nhập, cấm khi `DEPLOY=1`.
 |---|---|---|---|
 | `tgd` | cả 7 tab | có | có |
 | `phap_che` | Chat Sâm Sâm, Content Studio, Chưa trả lời, Báo cáo, Duyệt & Lịch | có | — |
-| `gd_ban_hang` | Chat Sâm Sâm, Chưa trả lời, Leads, Báo cáo | — | — |
+| `gd_ban_hang` | Chat Sâm Sâm, Chưa trả lời, Leads, Báo cáo, Duyệt & Lịch | khối sales (hàng duyệt chung) | — |
 | `gd_marketing` | Chat Sâm Sâm, Content Studio, Leads, Báo cáo, Duyệt & Lịch | có | có |
 | `mxh` | Chat Sâm Sâm, Content Studio, Chưa trả lời, Leads, Duyệt & Lịch | — | có |
-| `ha_tang` | Chat Sâm Sâm, Chưa trả lời, Báo cáo, Nhật ký vườn | — | — |
+| `ha_tang` | Chat Sâm Sâm, Chưa trả lời, Báo cáo, Nhật ký vườn, Duyệt & Lịch | khối data_platform (hàng duyệt chung) | — |
 
 ## 7. Guardrail — 2 lớp (áp cho MỌI text AI sinh)
 

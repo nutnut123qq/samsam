@@ -1,0 +1,27 @@
+## dev: agent không được duyệt
+$ python -m pipelines.approval_queue --approve 4 --by agent:fp_pnl  [env mặc định]
+exit=1
+  [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+  [warn] mục #4: 'agent:fp_pnl' không phải người — agent/hệ thống KHÔNG được approve
+## thực: approvers rỗng (cấu hình thật) → chặn
+$ python -m pipelines.approval_queue --approve 4 --by Bất Kỳ Ai  [APPROVAL_ENFORCE=1]
+exit=1
+  [warn] mục #4: khối finance CHƯA có người được Bên B ủy quyền (approvers rỗng trong data/directors/finance.json) — cần văn bản ủy quyền của Bên B, không tự điền
+## thực: override cũng chặn
+$ python -m pipelines.approval_queue --override-qa 4 --by Bất Kỳ Ai --reason lý do đủ dài để thử  [AUTH_MODE=local]
+exit=1
+  [warn] mục #4: khối finance CHƯA có người được Bên B ủy quyền (approvers rỗng trong data/directors/finance.json) — cần văn bản ủy quyền của Bên B, không tự điền
+## thực: store --approve draft không tồn tại
+$ python -m pipelines.store --approve 999999 --by X  [APPROVAL_ENFORCE=1]
+exit=2
+  [warn] không tìm thấy draft #999999
+## DB chết → exit 2
+$ python -m pipelines.approval_queue --approve 4 --by X  [env mặc định]
+exit=2
+  [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+  [error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+## --verify-log sạch (gồm dòng authz_denied)
+$ python -m pipelines.store --verify-log  [env mặc định]
+exit=0
+  [ok] chuỗi nguyên vẹn (8 dòng)
+[RESULT] PASS

@@ -2187,14 +2187,19 @@ create role <ten_nguoi> login password '<mat-khau>' in role app_human;
 | Tiến trình dưới role | Bảng thiếu quyền | Hậu quả |
 |---|---|---|
 | Streamlit dưới `app_human` | `chunks`, `leads`, `plot_logs`/`plots`, `products`/`claims_approved`, `llm_usage`... | Tab Chat, Leads, Báo cáo, Nhật ký vườn lỗi DB |
-| Agent dưới `agent_writer` (qua `pipelines/llm_gateway.py`) | `llm_usage` (SELECT + INSERT) | **MỌI lời gọi LLM bị chặn** — v13.1 `_month_spend` lỗi đọc = fail-closed (`GatewayBlocked`, chatbot chuyển nhân viên; trước v13.1 là "cho qua" làm trần chi phí tắt câm) |
+| Agent dưới `agent_writer` (qua `pipelines/llm_gateway.py`) | v13.5 ĐÃ grant `llm_usage` (SELECT 3 cột + INSERT 7 cột, CHECK không âm) — trần chi phí chạy được dưới login agent (test `tests/test_v13_c04_authz.py` login thật). Trước v13.5 thiếu grant = **MỌI lời gọi LLM bị chặn** (v13.1 `_month_spend` lỗi đọc = fail-closed `GatewayBlocked`) | Phần còn thiếu là bảng nghiệp vụ của từng agent (dòng dưới) |
 | Agent/ingest khác | `chunks`, `leads`, `plot_logs`, `sku_*`, `price_list`, `orders`... | Ghi/đọc lỗi |
 
 Hiện tại DSN role CHỈ dùng cho tiến trình duyệt/ghi draft riêng, ví dụ
 CLI `python -m pipelines.store` (login `in role app_human` duyệt/xếp
 lịch; login `in role agent_writer` lưu draft). Máy pilot vẫn chạy app/
 agent bằng DSN owner → chặn tự-duyệt ở tầng DB CHƯA có hiệu lực cho
-chúng (UI vẫn đi qua `approve_draft`). Chuyển hẳn sang role = grant đủ
+chúng (UI vẫn đi qua `approve_draft`). v13.5: các function duyệt tự chặn
+người quyết dạng `agent:`/`system:` kể cả dưới DSN owner; chế độ thực
+(`AUTH_MODE=local|proxy` hoặc `APPROVAL_ENFORCE=1`) CLI duyệt chỉ nhận
+`--by` khớp `db_login` (login Postgres riêng của người, khai trong
+`data/users.json`) và người phải có tên trong `approvers` của đúng khối —
+mỗi người duyệt cần 1 login `in role app_human` do hạ tầng tạo. Chuyển hẳn sang role = grant đủ
 bảng theo plan §5 (external-dep/someday trong `DONE.md`), kiểm lại trần
 chi phí LLM dưới role agent trước khi đổi DSN.
 

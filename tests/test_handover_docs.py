@@ -254,7 +254,9 @@ def test_sop_warns_role_dsn_while_grants_partial():
                          roles, re.IGNORECASE):
         granted |= {t.strip() for t in m.group(1).split(",")}
     missing = set(_table_names()) - granted
-    assert "llm_usage" in missing and "chunks" in missing, granted
+    # v13.5 c04: llm_usage ĐÃ grant cho agent_writer (FinOps dưới login
+    # agent) — bảng nghiệp vụ (chunks...) vẫn thiếu nên cảnh báo DSN giữ.
+    assert "llm_usage" not in missing and "chunks" in missing, granted
     sop, kt = _doc("sop.md"), _doc("kien-truc.md")
     assert "CHƯA đổi `DATABASE_URL`" in sop
     assert "Rồi đổi `DATABASE_URL` của agent/app" not in sop

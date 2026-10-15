@@ -37,6 +37,9 @@ không có nguồn → hiển thị "không đủ dữ liệu" thay vì để mo
 `AUTH_MODE` trống/lạ = không vào được (fail-closed). Chỉ tab trong
 `ROLE_TABS[role]` được tạo; khối code tab khác KHÔNG chạy (không query
 DB). Người duyệt/xếp lịch = identity đăng nhập (không còn ô gõ tên).
+v13.5 (F08): tab "Duyệt & Lịch" có thêm hàng duyệt chung 9 khối; chế độ
+thực (AUTH_MODE local|proxy) mọi quyết định qua `auth.authorize` — người
+phải nằm trong `approvers` của đúng khối (Bên B ủy quyền).
 """
 
 import time
@@ -625,8 +628,13 @@ if "Duyệt & Lịch" in _tabs:
         import psycopg as _pg
 
         from ingest.lead_store import connect as _ldr
+        from pipelines import approval_queue as _aq
         from pipelines import store as _store
 
+        # v13.5 (F08): chế độ thực = đối chiếu người được Bên B ủy quyền.
+        _enforced = _auth.approval_enforced()
+        if not _enforced:
+            st.warning(_auth.DEV_WARNING)
         _rconn = _ldr()
         if _rconn is None:
             st.info("Chưa nạp — không kết nối được Postgres (kiểm tra "
@@ -675,6 +683,20 @@ if "Duyệt & Lịch" in _tabs:
                         _why = ("Draft trước v3.4 không có người tạo — "
                                 "từ chối rồi tạo lại")
                     _can_rej = _auth.can_approve(_role) or _mine
+                    _rej_why = None
+                    if _enforced:
+                        # v13.5 (F08): chế độ thực — người được Bên B ủy
+                        # quyền đúng khối của draft (approvers + vai trò).
+                        _blk = _store._draft_block(_d)
+                        if _why is None:
+                            _okz, _wz = _auth.authorize(
+                                _ident, _blk, "approve", role=_role,
+                                created_by=_d.get("created_by"), via="ui")
+                            _why = None if _okz else _wz
+                        _okz, _rej_why = _auth.authorize(
+                            _ident, _blk, "reject", role=_role,
+                            created_by=_d.get("created_by"), via="ui")
+                        _can_rej = _okz
                     # st.text (không markdown): created_by do agent ghi — chặn link giả.
                     st.text(f"Tạo bởi: {_d.get('created_by') or '—'}")
                     with st.form(f"review-{_d['id']}"):
@@ -686,13 +708,14 @@ if "Duyệt & Lịch" in _tabs:
                             "Duyệt", disabled=_why is not None, help=_why)
                         _rej = _c2.form_submit_button(
                             "Từ chối", disabled=not _can_rej,
-                            help=(None if _can_rej else
+                            help=(None if _can_rej else _rej_why or
                                   f"Vai trò `{_role}` không có quyền "
                                   f"duyệt/từ chối"))
                     if (_appr and _why is None) or (_rej and _can_rej):
                         _target = "approved" if _appr else "rejected"
                         _ok, _warn = _store.set_status(
-                            _rconn, _d["id"], _target, _ident, _note)
+                            _rconn, _d["id"], _target, _ident, _note,
+                            via="ui", role=_role)
                         if _ok:
                             st.success(f"Draft #{_d['id']} → {_target}")
                             # st.rerun() raise RerunException — đóng conn
@@ -720,7 +743,8 @@ if "Duyệt & Lịch" in _tabs:
                         st.error("Chọn ngày đăng.")
                     else:
                         _ok, _warn = _store.schedule(
-                            _rconn, _pick["id"], _day, _ident)
+                            _rconn, _pick["id"], _day, _ident,
+                            via="ui", role=_role)
                         if _ok:
                             st.success(f"Draft #{_pick['id']} xếp lịch "
                                        f"{_day:%Y-%m-%d} — người đăng tay.")
@@ -742,4 +766,64 @@ if "Duyệt & Lịch" in _tabs:
                     hide_index=True)
             else:
                 st.info("Chưa có bài nào trong lịch 14 ngày tới.")
+
+            # ---- v13.5 (F08): hàng duyệt chung 9 khối — đường thao tác
+            # của người duyệt thật (không chỉ CLI). Chỉ khối mà vai trò là
+            # người duyệt (chế độ thực: có tên trong approvers của khối).
+            st.divider()
+            st.subheader("Hàng duyệt khối (việc của agent)")
+            _qblocks = _auth.decidable_blocks(_ident, _role)
+            _qitems = []
+            if not _qblocks:
+                st.info(f"`{_ident}` (vai trò `{_role}`) chưa được ủy "
+                        f"quyền duyệt khối nào — Bên B ủy quyền bằng văn "
+                        f"bản rồi quản trị điền `approvers` trong "
+                        f"data/directors/<khối>.json (không tự điền).")
+            else:
+                try:
+                    _qitems = [_q for _b in _qblocks
+                               for _q in _aq.pending(_rconn, _b, full=True)]
+                except _pg.Error:
+                    st.info("Lỗi đọc hàng duyệt chung — thử tải lại trang.")
+                if not _qitems:
+                    st.info("Không có mục chờ ở khối: "
+                            + ", ".join(_qblocks))
+            for _q in _qitems:
+                with st.expander(
+                        f"#{_q['id']} [{_q['block']}/{_q['object_type']}] "
+                        f"{_store._oneline(_q['title'] or '', 70)}"):
+                    # Bản THÔ đầy đủ = đúng chuỗi được ký sha256 (WYSIWYS).
+                    st.text(_q["preview"] or "")
+                    st.text(f"Tạo bởi: {_q['created_by']} · rủi ro "
+                            f"{_q['risk']} · QA {_q['qa_status']} · "
+                            f"guardrail "
+                            f"{'PASS' if _q['guardrail_ok'] else 'VI PHẠM'}")
+                    _oka, _wa = _auth.authorize(
+                        _ident, _q["block"], "approve", role=_role,
+                        created_by=_q["created_by"], via="ui")
+                    if _oka and not _q["guardrail_ok"]:
+                        _oka, _wa = False, "Guardrail vi phạm — chỉ từ chối"
+                    _okr, _wr = _auth.authorize(
+                        _ident, _q["block"], "reject", role=_role,
+                        created_by=_q["created_by"], via="ui")
+                    with st.form(f"queue-{_q['id']}"):
+                        st.text_input("Người quyết (đăng nhập)",
+                                      value=_ident, disabled=True)
+                        _qnote = st.text_input("Ghi chú (tuỳ chọn)")
+                        _q1, _q2 = st.columns(2)
+                        _qa = _q1.form_submit_button(
+                            "Duyệt", disabled=not _oka, help=_wa)
+                        _qr = _q2.form_submit_button(
+                            "Từ chối", disabled=not _okr, help=_wr)
+                    if (_qa and _oka) or (_qr and _okr):
+                        _qt = "approved" if _qa else "rejected"
+                        _ok, _warn = _aq.decide(
+                            _rconn, _q["id"], _ident, _qt, _qnote or None,
+                            via="ui", role=_role)
+                        if _ok:
+                            st.success(f"Mục #{_q['id']} → {_qt}")
+                            _rconn.close()
+                            st.rerun()
+                        else:
+                            st.warning(_warn)
             _rconn.close()

@@ -21,12 +21,15 @@ EXPECTED = {
     "tgd": set(auth.TABS),
     "phap_che": {"Chat Sâm Sâm", "Content Studio", "Chưa trả lời",
                  "Báo cáo", "Duyệt & Lịch"},
-    "gd_ban_hang": {"Chat Sâm Sâm", "Chưa trả lời", "Leads", "Báo cáo"},
+    # v13.5: người duyệt khối sales/data_platform cần tab duyệt.
+    "gd_ban_hang": {"Chat Sâm Sâm", "Chưa trả lời", "Leads", "Báo cáo",
+                    "Duyệt & Lịch"},
     "gd_marketing": {"Chat Sâm Sâm", "Content Studio", "Leads", "Báo cáo",
                      "Duyệt & Lịch"},
     "mxh": {"Chat Sâm Sâm", "Content Studio", "Chưa trả lời", "Leads",
             "Duyệt & Lịch"},
-    "ha_tang": {"Chat Sâm Sâm", "Chưa trả lời", "Báo cáo", "Nhật ký vườn"},
+    "ha_tang": {"Chat Sâm Sâm", "Chưa trả lời", "Báo cáo", "Nhật ký vườn",
+                "Duyệt & Lịch"},
 }
 
 
