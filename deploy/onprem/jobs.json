@@ -15,6 +15,24 @@
                 ["-m", "pipelines.red_alert", "--deliver"]],
       "muc_dich": "Quét cảnh báo đỏ 60 phút + leo thang 2 giờ + gửi lại cảnh báo chưa gửi được"
     },
+    "red_alert_escalate": {
+      "on_calendar": "*-*-* *:00/15:00",
+      "max_gap_hours": 1,
+      "steps": [["-m", "pipelines.red_alert", "--escalate"]],
+      "muc_dich": "Leo thang MỌI cảnh báo đỏ gốc quá 2 giờ đồng hồ chưa xác nhận — 15 phút/lần, mọi ngày kể cả T7/CN/Tết (PL02 mục 3)"
+    },
+    "anchor_build": {
+      "on_calendar": "*-*-* 02:30:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "pipelines.anchor", "--build"]],
+      "muc_dich": "Gom gốc Merkle nhật ký vườn + hồ sơ lô hằng ngày (P2 blockchain). CHƯA neo ra chuỗi: --submit cần provider hai bên chọn"
+    },
+    "legal_updates": {
+      "on_calendar": "*-*-* 07:15:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "pipelines.legal_updates", "--submit"]],
+      "muc_dich": "Văn bản pháp luật mới (sau job intel) vào hàng duyệt Pháp chế hằng ngày (legal_hr-07)"
+    },
     "ceo_weekly": {
       "on_calendar": "Mon *-*-* 08:00:00",
       "max_gap_hours": 192,

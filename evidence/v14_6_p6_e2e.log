@@ -1,0 +1,27 @@
+[RED-ALERT][warn] cảnh báo đỏ #3 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+[RED-ALERT][warn] cảnh báo đỏ #4 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+== job_runs --list có 3 job mới: rc=0 (mong 0) PASS
+   backup: *-*-* 01:30:00 (hạn 26h) scripts/db_backup.py
+   restore_drill: Sun *-*-* 03:00:00 (hạn 192h) scripts/db_restore_drill.py
+   dr_drill: *-*-01 04:00:00 (hạn 768h) scripts/dr_drill.py
+   kpi_snapshot: *-*-* 23:50:00 (hạn 26h) scripts/ops_monthly.py --snapshot
+   health_bulletin: *-*-* 07:30:00 (hạn 26h) scripts/health_bulletin.py
+   ops_monthly: *-*-01 08:00:00 (hạn 768h) scripts/ops_monthly.py --month prev
+== red_alert --escalate (chưa tới hạn): rc=0 (mong 0) PASS
+   [done] escalated=0 dup=0 unrouted=0 escalated_of=[]
+== anchor --build (dữ liệu nạp lane): rc=1 (mong None) PASS
+   [err] chưa có nhật ký đã chain / hồ sơ lô nào để neo
+== legal_updates --submit --dry-run: rc=0 (mong 0) PASS
+   [ok] (dry-run) văn bản khớp chưa vào hàng: 0 · đã đẩy: 0 [] · còn lại lần sau: 0
+== leo thang 1h59 → không có bản của cảnh báo mới: PASS {'escalated': 0, 'dup': 0, 'unrouted': 0, 'ids': []}
+== leo thang 2h01 → có bản leo thang (nguồn sales_director): PASS {'escalated': 1, 'dup': 0, 'unrouted': 1, 'ids': [3]}
+== chạy lại → không leo thang lần 2: PASS {'escalated': 0, 'dup': 0, 'unrouted': 0, 'ids': []}
+== đúng 1 bản leo thang: PASS n=1
+== qr_trace link --media <sha video> → từ chối: rc=1 (mong 1) PASS
+   [err] tư liệu d7cb583b6633 là video — trang QR chỉ nhận ảnh jpg/png — không ghi.
+== qr_trace link không media → nhận: rc=0 (mong 0) PASS
+   [done] lô LOT-E2E-50FC78: ánh xạ nhật ký #10 (0 ảnh) — người thực hiện: GĐ SX E2E. Chữ ký cũ (nếu có) không còn tính — ký lại trên bản mới.
+== DB trigger chặn sha video: PASS CheckViolation
+TỔNG: PASS
+42:| Hạng mục | Mô tả | Nơi lưu giữ | Bên quản lý | Vị trí | Phiên bản | Chủ quản | Quyền truy cập |
+== ops_monthly --month 2026-09: rc=0 PASS (bảng tài sản 8 cột, 5 hạng mục)

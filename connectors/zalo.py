@@ -46,6 +46,13 @@ quá hạn (kể cả lời gọi treo không chịu timeout) → gửi HANDOFF_
 convlog `error` "deadline:<bước>" + mục `cskh_handoff` lý do `deadline`;
 kết quả về muộn bị bỏ (không gửi, không vào history). Send API timeout 5
 giây (`SEND_TIMEOUT_S`).
+
+v14.6: hạn chót TỔNG (nhận + 30 giây, contextvar `_SEND_DEADLINE` do `_reply`
+đặt) phủ cả phần GỬI: refresh token oauth (trước: timeout cố định 15 giây
+cộng thêm sau 25 giây trả lời), chờ refresh đang chạy ở luồng khác và lần
+gửi lại chỉ dùng phần còn lại; không đủ → bỏ bước đó, tin không tới khách →
+convlog `error` "deadline:<bước>" + mục `cskh_handoff` lý do `deadline`.
+Nhánh giữ câu trả lời (`_reply_held`) GỬI trước rồi mới ghi gợi ý vào DB.
 """
 
 import hashlib
@@ -58,6 +65,7 @@ import threading
 import time
 import uuid
 from collections import OrderedDict, deque
+from contextvars import ContextVar
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -93,6 +101,17 @@ OAUTH_URL = "https://oauth.zaloapp.com/v4/oa/access_token"
 MAX_TEXT = 2000  # giới hạn text của Zalo CS message
 # v13.7: phần ngân sách 30 giây dành cho gửi (= api.rag.SEND_RESERVE_S).
 SEND_TIMEOUT_S = 5
+# v14.6: refresh token oauth (timeout cũ 15 giây) + chờ refresh đang chạy ở
+# luồng khác + lần gửi lại đều nằm TRONG hạn chót 30 giây của lượt trả lời:
+# refresh chỉ bắt đầu khi còn ≥ MIN_CALL_S + SEND_TIMEOUT_S, timeout = phần
+# còn lại trừ phần dành cho gửi. Không có hạn chót (CLI/preflight) → như cũ.
+REFRESH_TIMEOUT_S = 15
+MIN_CALL_S = 1.0
+_SEND_DEADLINE: ContextVar[float | None] = ContextVar("zalo_send_deadline",
+                                                      default=None)
+# Bước bị bỏ/cắt vì hết ngân sách trong lượt gửi gần nhất (None = không).
+_SEND_LATE: ContextVar[str | None] = ContextVar("zalo_send_late",
+                                                default=None)
 MAX_BODY = 1024 * 1024  # 1MB — event Zalo là JSON nhỏ; body lớn = DoS
 FALLBACK = ("Sâm Sâm xin lỗi, câu trả lời tự động chưa đạt kiểm duyệt nội "
             "bộ. Quý khách vui lòng gọi hotline 1800577732 để được hỗ trợ.")
@@ -501,7 +520,7 @@ def _can_refresh() -> bool:
     return bool(_current_refresh_token() and APP_ID and APP_SECRET)
 
 
-def refresh_access_token() -> bool:
+def refresh_access_token(timeout: float = REFRESH_TIMEOUT_S) -> bool:
     """Refresh access_token qua oauth Zalo (grant_type=refresh_token;
     header `secret_key` = ZALO_APP_SECRET). Thành công -> persist
     access_token + refresh_token MỚI + expires_at vào store ngay —
@@ -531,7 +550,7 @@ def refresh_access_token() -> bool:
                 data={"app_id": APP_ID,
                       "grant_type": "refresh_token",
                       "refresh_token": refresh_tok},
-                timeout=15)
+                timeout=timeout)
             body = r.json()
         except (httpx.HTTPError, ValueError) as e:
             print(f"[warn] zalo: refresh token lỗi {e!r}", flush=True)
@@ -581,7 +600,48 @@ def refresh_access_token() -> bool:
         return True
 
 
-def _send_once(user_id: str, text: str, token: str) -> bool | None:
+def _left() -> float | None:
+    """v14.6: giây còn lại tới hạn chót TỔNG của lượt (None = không hạn)."""
+    dl = _SEND_DEADLINE.get()
+    return None if dl is None else dl - time.monotonic()
+
+
+def _late(stage: str) -> None:
+    _SEND_LATE.set(stage)
+    print(f"[deadline] zalo: bỏ bước {stage} — không đủ ngân sách 30 giây",
+          flush=True)
+
+
+def _refresh_in_budget() -> bool:
+    """Refresh token TRONG hạn chót: còn ≥ MIN_CALL_S + SEND_TIMEOUT_S →
+    timeout = phần còn lại trừ phần dành cho gửi; không đủ → bỏ refresh
+    (không đụng mốc throttle) + đánh dấu trễ."""
+    left = _left()
+    if left is None:
+        return refresh_access_token()
+    budget = min(REFRESH_TIMEOUT_S, left - SEND_TIMEOUT_S)
+    if budget < MIN_CALL_S:
+        _late("lam_moi_token")
+        return False
+    return refresh_access_token(timeout=budget)
+
+
+def _wait_refresh_in_flight() -> None:
+    """Chờ refresh đang chạy ở luồng khác xong — tối đa phần ngân sách còn
+    lại trừ phần dành cho gửi (không chờ 15 giây của luồng kia)."""
+    left = _left()
+    if left is None:
+        with _token_lock:
+            pass
+        return
+    if _token_lock.acquire(timeout=max(0.0, left - SEND_TIMEOUT_S)):
+        _token_lock.release()
+    else:
+        _late("cho_token")
+
+
+def _send_once(user_id: str, text: str, token: str,
+               timeout: float | None = None) -> bool | None:
     """Gọi Zalo CS message API đúng 1 lần. True = đã gửi; False = API
     trả lỗi rõ (status != 200 hoặc error != 0 — vd token hết hạn) ->
     đáng thử refresh + retry; None = lỗi transport/decode, không rõ
@@ -590,7 +650,8 @@ def _send_once(user_id: str, text: str, token: str) -> bool | None:
         r = httpx.post(SEND_URL, params={"access_token": token},
                        json={"recipient": {"user_id": user_id},
                              "message": {"text": text[:MAX_TEXT]}},
-                       timeout=SEND_TIMEOUT_S)
+                       timeout=SEND_TIMEOUT_S if timeout is None
+                       else timeout)
         # json() throw (body không phải JSON) -> except ValueError -> None;
         # JSON hợp lệ nhưng không phải dict -> coi như API error rõ.
         body = r.json()
@@ -615,7 +676,11 @@ def send_text(user_id: str, text: str) -> bool:
     CÔNG gần đây -> retry cùng token mới; attempt-fail gần đây -> bỏ
     (không còn gì tốt hơn để thử, retry token hỏng là waste); còn lại
     -> refresh rồi retry nếu được. Lỗi transport không retry (không rõ
-    lượt trước có tới Zalo không)."""
+    lượt trước có tới Zalo không).
+    v14.6: trong lượt trả lời có hạn chót (`_SEND_DEADLINE`), refresh/chờ
+    refresh/gửi lại chỉ dùng phần ngân sách còn lại (`_refresh_in_budget`,
+    `_wait_refresh_in_flight`); bước bị bỏ vì hết giờ ghi `_SEND_LATE` để
+    `_reply` chuyển người lý do `deadline` nếu tin không tới khách."""
     token = _current_access_token()
     if _can_refresh() and (not token or _token_expiring_soon()):
         # Gộp bootstrap (chưa có token — nhánh _startup_error cho phép
@@ -624,12 +689,11 @@ def send_text(user_id: str, text: str) -> bool:
         # (_last_refresh): oauth sập mà không throttle = mỗi send một
         # call 15s-timeout (reviewer v1.1 F1).
         if time.monotonic() - _last_refresh > REFRESH_MIN_INTERVAL_S:
-            refresh_access_token()
+            _refresh_in_budget()
         else:
             # Thread khác đang refresh (hoặc vừa fail) — chờ lock xong
             # rồi đọc lại token mới nhất thay vì send bản cũ/mất lượt.
-            with _token_lock:
-                pass
+            _wait_refresh_in_flight()
         token = _current_access_token()
     if not token:
         print(f"[warn] zalo: chưa có access token "
@@ -640,21 +704,31 @@ def send_text(user_id: str, text: str) -> bool:
     if res is False and _can_refresh():
         if (time.monotonic() - _last_refresh > REFRESH_MIN_INTERVAL_S
                 # Lâu rồi không ai refresh -> thử rotate rồi retry.
-                and refresh_access_token()):
-            res = _send_once(user_id, text, _current_access_token())
+                and _refresh_in_budget()):
+            res = _resend(user_id, text)
         else:
             # Attempt gần đây: thread khác ĐANG refresh, hoặc vừa fail
             # — chờ _token_lock để phân biệt (in-flight thì chờ xong,
             # reviewer v1.1 F2); fail xong rồi thì lock rảnh ngay.
-            with _token_lock:
-                pass
+            _wait_refresh_in_flight()
             if (time.monotonic() - _last_refresh_ok
                     <= REFRESH_MIN_INTERVAL_S):
                 # Refresh vừa THÀNH CÔNG -> retry 1 lần với token mới
                 # (throttle M3 giữ). Attempt-fail (_last_refresh_ok cũ)
                 # -> không retry bằng token hỏng (waste, V2.2).
-                res = _send_once(user_id, text, _current_access_token())
+                res = _resend(user_id, text)
     return res is True
+
+
+def _resend(user_id: str, text: str) -> bool | None:
+    """Lần gửi LẠI sau refresh: timeout = min(SEND_TIMEOUT_S, còn lại);
+    không đủ MIN_CALL_S → bỏ (đánh dấu trễ)."""
+    left = _left()
+    if left is not None and left < MIN_CALL_S:
+        _late("gui_lai")
+        return None
+    return _send_once(user_id, text, _current_access_token(),
+                      None if left is None else min(SEND_TIMEOUT_S, left))
 
 
 def handle_text(user_id: str, question: str, msg_id: str = "", *,
@@ -707,6 +781,31 @@ def _answer_within(answer, question: str, history: list, deadline: float):
 def _reply(user_id: str, question: str, msg_id: str = "", *,
            channel: str = "zalo", send=None, t_recv: float | None = None
            ) -> dict:
+    """v14.6: đặt hạn chót TỔNG (nhận + `CHAT_BUDGET_S`) cho mọi lời gửi của
+    lượt — `send_text` trừ cả refresh token/chờ refresh/gửi lại vào ngân
+    sách này — rồi chạy `_reply_turn`. Reset contextvar khi xong (gọi trực
+    tiếp từ test/luồng chính không để lại hạn chót cũ)."""
+    from api import rag
+
+    t_recv = time.monotonic() if t_recv is None else t_recv
+    tok_dl = _SEND_DEADLINE.set(t_recv + rag.CHAT_BUDGET_S)
+    tok_late = _SEND_LATE.set(None)
+    try:
+        return _reply_turn(user_id, question, msg_id, channel=channel,
+                           send=send, t_recv=t_recv)
+    finally:
+        _SEND_LATE.reset(tok_late)
+        _SEND_DEADLINE.reset(tok_dl)
+
+
+def _send_late(sent: bool) -> str | None:
+    """Bước bị bỏ vì hết ngân sách khi tin KHÔNG tới khách (None = không)."""
+    return None if sent else _SEND_LATE.get()
+
+
+def _reply_turn(user_id: str, question: str, msg_id: str = "", *,
+                channel: str = "zalo", send=None,
+                t_recv: float | None = None) -> dict:
     """answer() -> guardrail -> send -> ghi conversation log. Lazy import
     vì api.rag nặng (numpy/psycopg/openai) — phần webhook thuần test
     không cần nó. History per user truyền vào answer() để câu follow-up
@@ -753,6 +852,7 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
             print(f"[deadline] {channel}: quá 30 giây ({e.stage}) -> chuyển "
                   f"người (uh={_uhash(user_id)})", flush=True)
         sent = send(user_id, fallback)
+        slate = _send_late(sent)
         _log_conversation({
             "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "msg_id": msg_id,
@@ -767,10 +867,11 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
             "reply_ms": int((time.monotonic() - t_recv) * 1000),
             "answered": False,
             "sent": sent,
-            "error": (f"deadline:{e.stage}" if late else repr(e)[:300]),
+            "error": (f"deadline:{e.stage}" if late
+                      else f"deadline:{slate}" if slate else repr(e)[:300]),
             "channel": channel,
         })
-        if late and inb is not None:
+        if (late or slate) and inb is not None:
             # Có người nhận việc: mục cskh_handoff (DB down chỉ warn).
             channels.record_handoff(inb, "deadline", msg_id)
         return {"sent": sent, "text": fallback, "sources": [],
@@ -816,6 +917,7 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
     if gate.prefix:
         text = gate.prefix + "\n\n" + text
     sent = send(user_id, text)
+    slate = _send_late(sent)
     entry = {
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "msg_id": msg_id,
@@ -828,16 +930,21 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
         "reply_ms": int((time.monotonic() - t_recv) * 1000),
         # `in` thay `==`: rag.py cũng coi NO_DATA-là-substring là không có
         # data (line `if NO_DATA in text: sources = []`).
-        "answered": NO_DATA not in raw,
+        "answered": NO_DATA not in raw and not slate,
         "sent": sent,  # send-fail khác "đã xử lý" — giữ riêng để đối soát
         "channel": channel,
     }
     if not guardrail_ok:
         entry["flagged_text"] = raw[:500]  # raw bị flag, debug guardrail
+    if slate:
+        # v14.6: tin không tới khách vì hết 30 giây (refresh token/gửi lại)
+        # → người nhận việc, lý do `deadline`.
+        entry["error"] = f"deadline:{slate}"
     _log_conversation(entry)
     # Ghi DB SAU khi đã gửi — DB down chỉ warn, khách không câm.
-    if meta["handoff"]:
-        channels.record_handoff(inb, meta["handoff"], msg_id)
+    reason = meta["handoff"] or ("deadline" if slate else None)
+    if reason:
+        channels.record_handoff(inb, reason, msg_id)
     # `prompted` chỉ khi câu chào ĐÃ tới khách — gửi lỗi mà ghi thì bảng
     # append-only giữ bằng chứng "đã báo" sai, tin sau mất câu chào.
     if gate.prompted and sent:
@@ -851,22 +958,26 @@ def _reply_held(user_id: str, question: str, msg_id: str, inb, md: str,
     → câu bot KHÔNG tới khách. Có câu bot đạt guardrail (không phải tắt) →
     gợi ý `cskh_reply` (ghi nội bộ, người duyệt rồi người gửi). Khách nhận
     HOLD_TEXT viết tay (rượu/sức khỏe lớp 2 → template cố định như cũ) +
-    mục handoff; không vào history (bot chưa trả lời khách)."""
+    mục handoff; không vào history (bot chưa trả lời khách).
+    v14.6: GỬI TRƯỚC, ghi gợi ý vào DB SAU — trước đây `record_suggestion`
+    (connect + insert, tới vài giây khi DB chậm) chạy trước khi gửi nên ăn
+    vào ngân sách 30 giây của khách."""
     from connectors import channels
 
-    meta, sid, text = None, None, HOLD_TEXT
+    meta, bot, text = None, None, HOLD_TEXT
     if res is not None:
         bot, meta = channels.format_reply(inb.channel, res)
         if meta["handoff"] in ("alcohol", "health"):
             text = bot                     # template cố định, không phải AI
-        elif meta["guardrail_ok"] and not meta["handoff"]:
-            sid = channels.record_suggestion(inb, bot, msg_id,
-                                             raw=res["answer"])
     if gate.prefix:
         text = gate.prefix + "\n\n" + text
     print(f"[rollout] {inb.channel}: chatbot {md} — không gửi câu bot "
           f"(uh={_uhash(user_id)})", flush=True)
     sent = send(user_id, text)
+    slate = _send_late(sent)
+    sid = None
+    if meta and meta["guardrail_ok"] and not meta["handoff"]:
+        sid = channels.record_suggestion(inb, bot, msg_id, raw=res["answer"])
     _log_conversation({
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "msg_id": msg_id,
@@ -882,9 +993,10 @@ def _reply_held(user_id: str, question: str, msg_id: str, inb, md: str,
         "rollout": md,
         "suggestion_id": sid,
         "channel": inb.channel,
+        **({"error": f"deadline:{slate}"} if slate else {}),
     })
-    channels.record_handoff(inb, (meta or {}).get("handoff") or "rollout",
-                            msg_id)
+    channels.record_handoff(inb, (meta or {}).get("handoff")
+                            or ("deadline" if slate else "rollout"), msg_id)
     if gate.prompted and sent:
         channels.record_consent(inb, "prompted", msg_id)
     return {"sent": sent, "text": text, "sources": [], "rollout": md}
@@ -910,6 +1022,7 @@ def _reply_fixed(user_id: str, question: str, msg_id: str, inb, kind: str,
             kind, text = ("consent_withdrawn_fail",
                           channels.template("consent_withdrawn_fail"))
     sent = send(user_id, text)
+    slate = _send_late(sent)
     _log_conversation({
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "msg_id": msg_id,
@@ -922,13 +1035,15 @@ def _reply_fixed(user_id: str, question: str, msg_id: str, inb, kind: str,
         "reply_ms": int((time.monotonic() - (t0 if t_recv is None
                                              else t_recv)) * 1000),
         # rượu/sức khỏe = cần người (queue); đồng ý/câu chào = không áp dụng
-        "answered": False if handoff else None,
+        "answered": False if handoff or slate else None,
         "sent": sent,
         "route": kind,
         "channel": inb.channel,
+        **({"error": f"deadline:{slate}"} if slate else {}),
     })
-    if handoff:
-        channels.record_handoff(inb, handoff, msg_id)
+    reason = handoff or ("deadline" if slate else None)
+    if reason:
+        channels.record_handoff(inb, reason, msg_id)
     if kind == "consent_granted":
         channels.record_consent(inb, "granted", msg_id)
     elif prompted and sent:

@@ -129,6 +129,9 @@ xem `python -m pipelines.job_runs --list`, `systemctl list-timers`.
 |---|---|---|
 | `intel` | 06:45 hằng ngày | thu tin + bản tin thị trường trước 7h |
 | `red_alert_sweep` | phút 05 mỗi giờ | quét cảnh báo đỏ intel + leo thang 2 giờ + gửi lại cảnh báo chưa gửi được |
+| `red_alert_escalate` | 15 phút/lần, mọi ngày (kể cả T7/CN/Tết) | v14.6: leo thang MỌI cảnh báo đỏ gốc quá 2 giờ đồng hồ chưa `--ack` (1 lần/cảnh báo) |
+| `anchor_build` | 02:30 hằng ngày | v14.6: gom gốc Merkle nhật ký vườn + hồ sơ lô (`anchor --build`); CHƯA neo ra chuỗi — `--submit` chờ hai bên chọn provider |
+| `legal_updates` | 07:15 hằng ngày | v14.6: văn bản pháp luật mới → hàng duyệt Pháp chế (`legal_updates --submit`) |
 | `ceo_weekly` | 08:00 thứ Hai | báo cáo TGĐ tuần → hàng duyệt khối ceo |
 | `invoice_batch` | 21:00 hằng ngày | lô hóa đơn nháp → hàng duyệt khối finance |
 | `content_daily` | 06:00 hằng ngày | 3 nháp bài/ngày |

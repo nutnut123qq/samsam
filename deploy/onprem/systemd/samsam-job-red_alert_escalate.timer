@@ -1,0 +1,11 @@
+# v14.6 — lịch job 'red_alert_escalate' (nguồn: deploy/onprem/jobs.json).
+[Unit]
+Description=Sam Sam timer red_alert_escalate
+
+[Timer]
+OnCalendar=*-*-* *:00/15:00
+Persistent=true
+Unit=samsam-job@red_alert_escalate.service
+
+[Install]
+WantedBy=timers.target

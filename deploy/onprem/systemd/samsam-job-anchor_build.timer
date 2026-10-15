@@ -1,0 +1,11 @@
+# v14.6 — lịch job 'anchor_build' (nguồn: deploy/onprem/jobs.json).
+[Unit]
+Description=Sam Sam timer anchor_build
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+Unit=samsam-job@anchor_build.service
+
+[Install]
+WantedBy=timers.target

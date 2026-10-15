@@ -36,6 +36,9 @@ Contract:
     tháng (`llm_usage`).
   - (3) Danh mục tài sản hợp tác PL04 mục 3 từ `data/tai_san_hop_tac.json`
     + dữ kiện tự động (git HEAD, số module, số file test, `docs/handover/`).
+    v14.6: in thêm 4 cột kiểm kê (vị trí/phiên bản/chủ quản/quyền truy
+    cập — thiếu → "chưa xác nhận"), trạng thái kiểm kê và người giữ quyền
+    cao nhất.
   - Tháng tương lai / sai định dạng / danh mục tài sản hỏng → exit 2 (kiểm
     TRƯỚC khi connect, không ghi file). DB không truy cập được → vẫn ghi báo
     cáo với các mục DB "chưa có dữ liệu", exit 1 (cron thấy lỗi). Tháng
@@ -102,6 +105,8 @@ from pipelines.job_runs import clean_detail
 from pipelines.period import VN_TZ
 
 ASSETS = ROOT / "data" / "tai_san_hop_tac.json"
+INVENTORY_KEYS = ("vi_tri", "phien_ban", "chu_quan", "quyen_truy_cap")
+UNCONFIRMED = "chưa xác nhận"
 MISSING = "missing"
 NO_DATA = "chưa có dữ liệu"
 CSKH_HOURS = 2                      # PL02 mục 3: 02 giờ làm việc
@@ -163,9 +168,21 @@ def load_assets(path: Path = ASSETS) -> dict:
     if not isinstance(excl, list) or not all(
             isinstance(x, str) and x.strip() for x in excl):
         raise UsageError("khong_thuoc_tai_san_hop_tac: cần list chuỗi")
-    return {"cap_nhat": upd, "items": [{k: i[k].strip() for k in keys}
-                                       for i in items],
-            "excluded": [x.strip() for x in excl]}
+    # v14.6 (PL01 mục 8b–c, PL04 mục 3): 4 cột kiểm kê v13.8 — thiếu/rỗng/
+    # sai kiểu → "chưa xác nhận" (không suy đoán, file cũ vẫn đọc được).
+    out = [{k: (i[k].strip() if k in keys else
+                (i.get(k).strip() if isinstance(i.get(k), str)
+                 and i.get(k).strip() else UNCONFIRMED))
+            for k in (*keys, *INVENTORY_KEYS)} for i in items]
+    hold = doc.get("nguoi_giu_quyen_cao_nhat")
+    return {"cap_nhat": upd, "items": out,
+            "excluded": [x.strip() for x in excl],
+            "trang_thai": (doc.get("trang_thai").strip()
+                           if isinstance(doc.get("trang_thai"), str)
+                           and doc.get("trang_thai").strip()
+                           else UNCONFIRMED),
+            "quyen_cao_nhat": (hold.strip() if isinstance(hold, str)
+                               and hold.strip() else UNCONFIRMED)}
 
 
 # ------------------------------------------------------------------ DB
@@ -789,10 +806,15 @@ def render(f: dict) -> str:
     a, rf = f["assets"], f["repo"]
     L += ["", "## 3. Danh mục tài sản hợp tác (PL04 mục 3)", "",
           (f"_Nguồn: `data/tai_san_hop_tac.json` (cập nhật "
-           f"{a['cap_nhat']:%d/%m/%Y})._"), "",
-          "| Hạng mục | Mô tả | Nơi lưu giữ | Bên quản lý |", "|---|---|---|---|"]
-    L += ["| " + " | ".join(_cell(i[k]) for k in ("hang_muc", "mo_ta",
-                                                 "noi_luu", "ben_quan_ly"))
+           f"{a['cap_nhat']:%d/%m/%Y}; trạng thái kiểm kê: "
+           f"{_cell(a.get('trang_thai', UNCONFIRMED))})._"), "",
+          "Người giữ quyền cao nhất: "
+          + _cell(a.get("quyen_cao_nhat", UNCONFIRMED)) + ".", "",
+          ("| Hạng mục | Mô tả | Nơi lưu giữ | Bên quản lý | Vị trí | Phiên "
+           "bản | Chủ quản | Quyền truy cập |"),
+          "|---|---|---|---|---|---|---|---|"]
+    L += ["| " + " | ".join(_cell(i.get(k, UNCONFIRMED)) for k in (
+        "hang_muc", "mo_ta", "noi_luu", "ben_quan_ly", *INVENTORY_KEYS))
           + " |" for i in a["items"]]
     if a["excluded"]:
         L += ["", "Không thuộc tài sản hợp tác (tài sản riêng Bên B): "

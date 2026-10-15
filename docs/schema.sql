@@ -4000,3 +4000,33 @@ create or replace trigger partner_post_scans_append_only_row
 create or replace trigger partner_post_scans_no_truncate
   before truncate on partner_post_scans
   for each statement execute function append_only_guard();
+-- ===== v14.6 p6 vận hành còn sót =====
+-- (1) Leo thang 2 giờ CHUNG mọi cảnh báo đỏ (`pipelines.red_alert.escalate`,
+--     job `red_alert_escalate`): 1 bản leo thang / cảnh báo gốc, MỌI nguồn
+--     (index v7.1 chỉ phủ nguồn intel). Chạy song song → UniqueViolation →
+--     đếm dup. Trước v14.6 chỉ intel ghi `escalation_of` (đã unique) nên tạo
+--     index không vấp dòng cũ.
+create unique index if not exists red_alerts_escalation_all_uq
+  on red_alerts ((detail->>'escalation_of'))
+  where detail ? 'escalation_of';
+-- (2) QR truy xuất chỉ phát hành ẢNH (`qr_trace.MEDIA_EXT`): ánh xạ nguồn lô
+--     (`link_lot_origin`, SECURITY DEFINER) không nhận sha của video vườn
+--     (v13.4 garden_media nhận mp4/mov) — trước đây chỉ `site` từ chối lúc
+--     phát hành, lô đã ký/phát hành trên ánh xạ có video. Trigger INSERT
+--     (dòng cũ không bị kiểm lại — không mất dữ liệu khi nâng cấp).
+create or replace function lot_origins_image_only() returns trigger
+language plpgsql as $$
+begin
+  if exists (select 1 from garden_media gm
+             where gm.sha256 = any(new.media_sha256)
+               and gm.ext not in ('jpg', 'png')) then
+    raise exception using errcode = 'check_violation',
+      message = 'tư liệu QR chỉ nhận ảnh jpg/png — sha là video, không '
+                'ánh xạ';
+  end if;
+  return new;
+end $$;
+revoke execute on function lot_origins_image_only() from public;
+create or replace trigger lot_origins_image_only_ins
+  before insert on lot_origins
+  for each row execute function lot_origins_image_only();

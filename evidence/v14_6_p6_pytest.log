@@ -1,0 +1,119 @@
+........................................................................ [  2%]
+........................................................................ [  4%]
+........................................................................ [  6%]
+........................................................................ [  9%]
+........................................................................ [ 11%]
+........................................................................ [ 13%]
+........................................................................ [ 16%]
+........................................................................ [ 18%]
+........................................................................ [ 20%]
+........................................................................ [ 23%]
+........................................................................ [ 25%]
+........................................................................ [ 27%]
+...........F............................................................ [ 30%]
+........................................................................ [ 32%]
+........................................................................ [ 34%]
+........................................................................ [ 37%]
+........................................................................ [ 39%]
+........................................................................ [ 41%]
+........................................................................ [ 44%]
+.......F................................................................ [ 46%]
+........................................................................ [ 48%]
+........................................................................ [ 51%]
+........................................................................ [ 53%]
+........................................................................ [ 55%]
+........................................................................ [ 58%]
+........................................................................ [ 60%]
+........................................................................ [ 62%]
+........................................................................ [ 65%]
+........................................................................ [ 67%]
+........................................................................ [ 69%]
+........................................................................ [ 72%]
+........................................................................ [ 74%]
+........................................................................ [ 76%]
+........................................................................ [ 79%]
+........................................................................ [ 81%]
+........................................................................ [ 83%]
+........................................................................ [ 86%]
+........................................................................ [ 88%]
+.........F.............................................................. [ 90%]
+........................................................................ [ 93%]
+........................................................................ [ 95%]
+........................................................................ [ 97%]
+.....................................................................    [100%]
+================================== FAILURES ===================================
+______________ test_purge_sample_only_called_from_cli_and_tests _______________
+
+    def test_purge_sample_only_called_from_cli_and_tests():
+        """Agent/cron KHÔNG gọi purge_sample/adopt_plot — chỉ định nghĩa + CLI
+        main."""
+        root = gd.ROOT
+        hits = []
+        for p in root.rglob("*.py"):
+            if any(part in {".venv", "venv", "node_modules", ".git", ".claude"}
+                   for part in p.parts):
+                continue
+            src = p.read_text(encoding="utf-8", errors="replace")
+            if "purge_sample(" in src or "adopt_plot(" in src:
+                hits.append(p.relative_to(root).as_posix())
+>       assert sorted(h for h in hits if not h.startswith("tests/")) == [
+            "agents/garden_director.py"]
+E       AssertionError: assert [] == ['agents/garden_director.py']
+E         
+E         Right contains one more item: 'agents/garden_director.py'
+E         Use -v to get more diff
+
+tests\test_garden_director.py:264: AssertionError
+_______________________ test_harvest_real_convlog_smoke _______________________
+
+    def test_harvest_real_convlog_smoke():
+        """Convlog thật: harvest không raise, mọi row đủ cột + ts aware."""
+        rows, _ = ls.harvest(DATA)
+>       assert rows, "convlog thật phải suy ra được lead"
+E       AssertionError: convlog thật phải suy ra được lead
+E       assert []
+
+tests\test_lead_store.py:217: AssertionError
+___________________ test_job_login_report_steps_match_owner ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p6) at 0x240e59914c0>, 'dsn': {...svc_backup': 't_p2_svc_backup_452c130e9a', 'svc_job': 't_p2_svc_job_452c130e9a', ...}, 'schema': 't_v14p2l_452c130e9a'}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2776/test_job_login_report_steps_ma0')
+
+    def test_job_login_report_steps_match_owner(live, tmp_path):
+        """Bước lịch đọc nhiều bảng (báo cáo TGĐ, báo cáo vận hành tháng) chạy
+        dưới login svc_job cho ĐÚNG kết quả như owner — không có mục âm thầm
+        'lỗi đọc … InsufficientPrivilege'."""
+        a = live["admin"]
+        with a.transaction():
+            a.execute(f"set local search_path to {live['schema']}")
+            a.execute("insert into channel_snapshots (channel, metric_id,"
+                      " period_kind, period_start, value, source, source_ref,"
+                      " captured_by) values ('shopee', 'gmv', 'week',"
+                      " date_trunc('week', now() - interval '7 days')::date,"
+                      " 1000000, 'manual_export', 'f.csv', 'Lan')")
+        for argv in (["-m", "agents.ceo_report", "--period", "week"],
+                     ["scripts/ops_monthly.py", "--month", "prev"]):
+            outs = {}
+            for who in ("admin", "svc_job"):
+                d = tmp_path / f"{argv[1]}-{who}"
+                rc, text = _run([*argv, "--out-dir", str(d)], live["dsn"][who],
+                                tmp_path)
+                assert rc == 0, (argv, who, text)
+                assert "InsufficientPrivilege" not in text, text
+                outs[who] = {p.name: p.read_text(encoding="utf-8")
+                             for p in d.iterdir()}
+>           assert outs["svc_job"] == outs["admin"], argv
+E           AssertionError: ['-m', 'agents.ceo_report', '--period', 'week']
+E           assert {'ceo-2026-W4..._report`.*\n'} == {'ceo-2026-W4..._report`.*\n'}
+E             
+E             Differing items:
+E             {'ceo-2026-W41.md': '# Báo cáo tuần 2026-W41 — TGĐ\n\n**ĐỎ — chưa có người nhận cảnh báo độc lập** (data/red_alert_rou...data/metrics.json.*\n\n---\n*BẢN NHÁP — chờ TGĐ ký; hệ thống KHÔNG tự gửi. Sinh bởi `python -m agents.ceo_report`.*\n'} != {'ceo-2026-W41.md': '# Báo cáo tuần 2026-W41 — TGĐ\n\n**ĐỎ — chưa có người nhận cảnh báo độc lập** (data/red_alert_rou...data/metrics.json.*\n\n---\n*BẢN NHÁP — chờ TGĐ ký; hệ thống KHÔNG tự gửi. Sinh bởi `python -m agents.ceo_report`.*\n'}
+E             Use -v to get more diff
+
+tests\test_v14_p2_service_auth.py:710: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_garden_director.py::test_purge_sample_only_called_from_cli_and_tests
+FAILED tests/test_lead_store.py::test_harvest_real_convlog_smoke - AssertionE...
+FAILED tests/test_v14_p2_service_auth.py::test_job_login_report_steps_match_owner
+3 failed, 3090 passed in 1003.96s (0:16:43)
+# chạy lại riêng: test_v14_p2_service_auth.py::test_job_login_report_steps_match_owner + test_handover_docs.py → 12 passed (chập chờn vắt phút đã ghi ở v14.3)
