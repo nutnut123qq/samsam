@@ -18,7 +18,7 @@ opening)`:
     low ≤ base ≤ high; `opening` None → số dư = dòng tiền ròng lũy kế từ 0 +
     ghi "chưa có số dư đầu kỳ thật"; cảnh báo mọi tuần `close.low <
     min_balance_vnd` ("tuần âm ở kịch bản thấp").
-Tỷ lệ thực nhận đo từ DB: Σ payout / Σ giá trị đơn của `settlement_rows` 8
+Tỷ lệ thực nhận đo từ DB: Σ payout / Σ giá trị đơn của `v_settlement_khoan` 8
 tuần trước tuần bắt đầu theo kênh; không đo được (Σ đơn = 0, DB down, ngoài
 0..1) → mặc định cấu hình + "chưa xác minh".
 
@@ -287,7 +287,8 @@ def measure(conn, start: date) -> dict:
     since = w0 - timedelta(weeks=MEASURE_WEEKS)
     return {ch: (int(p), int(o), n) for ch, p, o, n in conn.execute(
         "select channel, coalesce(sum(payout_vnd), 0),"
-        " coalesce(sum(order_amount_vnd), 0), count(*) from settlement_rows"
+        " coalesce(sum(order_amount_vnd), 0), count(*) from"
+        " v_settlement_khoan"
         " where settled_on >= %s and settled_on < %s group by channel",
         (since, w0))}
 

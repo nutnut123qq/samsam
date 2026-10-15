@@ -19,6 +19,16 @@ Contract nạp (`python -m ingest.settlement_csv --file F --channel K`):
     sàn bù (âm sau chuẩn hóa, không đoán). `refund` âm sau chuẩn hóa /
     `order_amount` âm → lỗi dòng. Mã đơn → `order_id_hash` = sha256(
     "kênh:mã")[:16] — CÙNG công thức `market_csv` (test khóa parity).
+  - `txn_type` (loại giao dịch — tùy chọn, v13.2): có cột → 1 dòng / (đơn,
+    loại) trong 1 file (đơn + điều chỉnh/hoàn cùng mã là hợp lệ); không có
+    cột → GIẢ ĐỊNH 1 dòng/đơn như cũ.
+
+Chồng kỳ (v13.2, F01): cùng khoản xuất lại ở file khác (khác sha256) KHÔNG
+bị chặn lúc nạp (giữ dữ liệu thô + nguồn) nhưng: số doanh thu mọi caller đọc
+view `v_settlement_khoan` (1 dòng / khoản trùng nguyên văn); `overlaps()`
+báo nhóm (kênh, đơn, loại) ở ≥2 file — `trung` (nguyên văn, đã tính 1 lần)
+/ `lech` (số khác: KHÔNG tự chọn file nào, giữ cả hai) → `agents.rev_share`
+gắn BẤT THƯỜNG, không tính phí, tới khi người đối soát giải quyết.
 
 Đối chiếu (`reconcile_row`, thuần): expected = giá trị đơn − mọi khoản trừ
 − hoàn. Lý do `{code, expected, actual}`: `thuc_nhan` (|payout − expected|
@@ -71,7 +81,8 @@ FEES_FILE = ROOT / "data" / "settlement_fees.json"
 CHANNELS = ("shopee", "tiktok")
 FIELDS = ("order_id", "order_amount", "fixed_fee", "payment_fee",
           "service_fee", "shipping_fee", "voucher_seller", "affiliate",
-          "refund", "payout", "settled_on")
+          "refund", "payout", "settled_on", "txn_type")
+TXN_TYPE_MAX = 64
 MUST = ("order_id", "order_amount", "payout")
 # Khoản KHẤU TRỪ (đổi dấu khi fees_negative) — thứ tự = cột DB.
 DEDUCT = ("fixed_fee", "payment_fee", "service_fee", "shipping_fee",
@@ -238,7 +249,8 @@ def load_fees(path: Path = FEES_FILE) -> tuple[dict | None, str | None]:
 def read_settlement(path: Path, channel: str, mapping: dict
                     ) -> tuple[list[dict], list[str], str | None]:
     """Hàm thuần: → (rows, errors, sha256 file). errors ≠ [] → rows = [].
-    Mỗi row CHỈ có field chuẩn (trừ order_id) + `row_no` + `order_id_hash`."""
+    Mỗi row CHỈ có field chuẩn (trừ order_id) + `row_no` + `order_id_hash`
+    (+ `txn_type` str | None)."""
     spec = mapping.get(channel) if isinstance(mapping, dict) else None
     if not isinstance(spec, dict) or not isinstance(spec.get("required"),
                                                     dict):
@@ -276,17 +288,27 @@ def _parse(table, channel: str, spec: dict) -> tuple[list[dict], list[str]]:
                for f, j in col_of.items()}
         out = {"row_no": row_no}
         bad = False
+        tt = rec.get("txn_type")
+        tt = _nfc(tt).strip() if tt is not None else ""
+        tt = tt or None
+        if tt is not None and len(tt) > TXN_TYPE_MAX:
+            errs.append(f"dòng {row_no}: field 'txn_type' dài quá "
+                        f"{TXN_TYPE_MAX} ký tự")
+            bad = True
+        out["txn_type"] = tt
         oid = rec.get("order_id")
         if oid is None:
             errs.append(f"dòng {row_no}: thiếu mã đơn")
             bad = True
         else:
             h = order_hash(channel, oid)
-            if h in seen:
-                errs.append(f"dòng {row_no}: mã đơn trùng dòng {seen[h]} "
-                            "(GIẢ ĐỊNH 1 dòng/đơn)")
+            if (h, tt) in seen:
+                errs.append(f"dòng {row_no}: mã đơn trùng dòng "
+                            f"{seen[(h, tt)]} (GIẢ ĐỊNH 1 dòng/"
+                            + ("đơn/loại giao dịch)" if "txn_type" in col_of
+                               else "đơn)"))
                 bad = True
-            seen.setdefault(h, row_no)
+            seen.setdefault((h, tt), row_no)
             out["order_id_hash"] = h
         for f in MONEY:
             v = rec.get(f)
@@ -377,11 +399,42 @@ def load(conn, rows: list[dict], channel: str, file_name: str,
             " row_no, order_id_hash, order_amount_vnd, fixed_fee_vnd,"
             " payment_fee_vnd, service_fee_vnd, shipping_fee_vnd,"
             " voucher_seller_vnd, affiliate_vnd, refund_vnd, payout_vnd,"
-            " settled_on) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,"
-            " %s, %s, %s, %s, %s)",
+            " settled_on, txn_type) values (%s, %s, %s, %s, %s, %s, %s, %s,"
+            " %s, %s, %s, %s, %s, %s, %s, %s)",
             [(sha, file_name, channel, r["row_no"], r["order_id_hash"],
-              *(r[c] for c in _COLS), r["settled_on"]) for r in rows])
+              *(r[c] for c in _COLS), r["settled_on"], r.get("txn_type"))
+             for r in rows])
     return len(rows)
+
+
+# Nhóm (kênh, đơn, loại giao dịch) có dòng ở ≥2 file quyết toán. Số bộ giá
+# trị khác nhau = 1 → trùng nguyên văn. Khung kỳ: nhóm có ÍT NHẤT 1 dòng
+# `settled_on` trong [start, end) — start NULL = mọi kỳ.
+_OVERLAP_SQL = (
+    "select channel, count(distinct (settled_on, "
+    + ", ".join(f"{c}_vnd" for c in _COLS)
+    + ")), array_agg(distinct file_name) from settlement_rows where channel"
+    " = any(%(ch)s) group by channel, order_id_hash, txn_type having"
+    " count(distinct file_sha256) >= 2 and (%(s)s::date is null or"
+    " bool_or(settled_on >= %(s)s::date and settled_on < %(e)s::date))"
+    " order by 1")
+
+
+def overlaps(conn, channels, start: date | None = None,
+             end: date | None = None) -> dict:
+    """Khoản quyết toán xuất lại ở ≥2 file → {kênh: {"trung": số nhóm
+    trùng nguyên văn (view `v_settlement_khoan` đã tính 1 lần), "lech": số
+    nhóm có số khác nhau (giữ cả hai — người đối soát quyết), "files": [tên
+    file]}}; kênh không có → vắng. CHỈ SELECT, không mã đơn/hash."""
+    out: dict = {}
+    for ch, n_var, files in conn.execute(
+            _OVERLAP_SQL, {"ch": list(channels), "s": start, "e": end}):
+        o = out.setdefault(ch, {"trung": 0, "lech": 0, "files": set()})
+        o["trung" if n_var <= 1 else "lech"] += 1
+        o["files"].update(files)
+    for o in out.values():
+        o["files"] = sorted(o["files"])
+    return out
 
 
 # Tổng đơn sàn theo (kênh, hash): snapshot `order` MỚI NHẤT có chứa hash.
@@ -442,13 +495,15 @@ def report(conn) -> None:
             "select r.label, count(*) from settlement_rows s join"
             " recon_results r on r.settlement_row_id = s.id where s.channel"
             " = %s group by 1", (ch,)).fetchall())
+        # Tổng tiền đọc view 1 dòng/khoản (bản xuất lại tính 1 lần) — cùng
+        # số với rev_share/P&L/BKS; số dòng theo nhãn vẫn là dòng thô.
         n_rows, payout, expected, aff, n_unrec = conn.execute(
             "select count(*), coalesce(sum(s.payout_vnd), 0),"
             " coalesce(sum(r.expected_payout_vnd), 0),"
             " coalesce(sum(s.affiliate_vnd), 0), count(*) filter (where"
-            " r.id is null) from settlement_rows s left join recon_results r"
-            " on r.settlement_row_id = s.id where s.channel = %s",
-            (ch,)).fetchone()
+            " r.id is null) from v_settlement_khoan s left join"
+            " recon_results r on r.settlement_row_id = s.id where s.channel"
+            " = %s", (ch,)).fetchone()
         if not n_rows:
             print(f"  {ch}: chưa có file quyết toán")
             continue
@@ -456,13 +511,22 @@ def report(conn) -> None:
             "select count(*) from (select order_id_hash from settlement_rows"
             " where channel = %s group by 1 having count(distinct"
             " file_sha256) >= 2) x", (ch,)).fetchone()[0]
-        print(f"  {ch}: {n_rows} dòng — " + ", ".join(
+        n_raw = conn.execute("select count(*) from settlement_rows where"
+                             " channel = %s", (ch,)).fetchone()[0]
+        print(f"  {ch}: {n_raw} dòng — " + ", ".join(
             f"{lb}={by.get(lb, 0)}" for lb in LABELS)
             + (f", CHƯA đối chiếu={n_unrec}" if n_unrec else ""))
         print(f"    thực nhận theo file {_vnd(payout)}; tính lại "
               f"{_vnd(expected)}; chênh {_vnd(payout - expected)}; "
               f"affiliate sàn khấu trừ {_vnd(aff)}; đơn ở ≥2 file "
               f"quyết toán: {multi}")
+        ov = overlaps(conn, [ch]).get(ch, {"trung": 0, "lech": 0,
+                                           "files": []})
+        print(f"    khoản xuất lại ở ≥2 file: trùng {ov['trung']}, lệch "
+              f"{ov['lech']} — tổng tiền tính {n_rows} khoản (trùng nguyên"
+              " văn tính 1 lần; lệch giữ cả hai, chờ người đối soát)"
+              + (": " + ", ".join(_safe(f, 80) for f in ov["files"][:20])
+                 if ov["files"] else ""))
         bad = conn.execute(
             "select s.file_name, s.row_no, r.label, r.reasons from"
             " settlement_rows s join recon_results r on r.settlement_row_id"
@@ -551,6 +615,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         n = load(conn, rows, args.channel, args.file.name, sha)
         counts = reconcile(conn, fees, sha)
+        ov = overlaps(conn, [args.channel]).get(args.channel)
         conn.commit()
     except psycopg.errors.UniqueViolation as e:
         conn.rollback()
@@ -573,6 +638,13 @@ def main(argv: list[str] | None = None) -> int:
     print(f"[load] quyết toán {args.channel} {_clean(args.file.name, 80)}: "
           f"{n} dòng; đối chiếu: " + ", ".join(
               f"{k}={v}" for k, v in counts.items()))
+    if ov:
+        print(f"[warn] khoản xuất lại ở ≥2 file (chồng kỳ): trùng "
+              f"{ov['trung']}, lệch {ov['lech']} — "
+              + ", ".join(_safe(f, 80) for f in ov["files"][:20])
+              + ". Trùng nguyên văn tính 1 lần; lệch giữ cả hai → đối soát"
+              " quý BẤT THƯỜNG, không tính phí tới khi người đối soát xử"
+              " lý.")
     if counts["thieu_chung_tu"]:
         print(f"[warn] {counts['thieu_chung_tu']} dòng chưa thấy đơn sàn — "
               "nạp file đơn (`python -m ingest.market_csv --kind order`) rồi"

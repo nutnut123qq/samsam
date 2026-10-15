@@ -3,8 +3,10 @@
 
 Doanh thu thuần trực tuyến = Gộp − Phí sàn − Hủy − Hoàn, theo ngày quyết
 toán `settled_on` trong kỳ (giờ VN):
-  - Gộp = Σ `order_amount_vnd` của `settlement_rows` (file quyết toán sàn
-    kế toán xuất tay, v9.0) thuộc kênh trong `kenh_truc_tuyen`.
+  - Gộp = Σ `order_amount_vnd` của khoản quyết toán (view
+    `v_settlement_khoan` trên `settlement_rows` — file quyết toán sàn kế
+    toán xuất tay, v9.0; khoản xuất lại nguyên văn ở file khác tính 1 lần,
+    v13.2) thuộc kênh trong `kenh_truc_tuyen`.
   - Phí sàn = Σ các cột `phi_san_cot` (GIẢ ĐỊNH ở `data/rev_share.json`).
   - Hủy = Σ giá trị đơn của dòng quyết toán mà đơn sàn (`orders`, source
     `market:%`, `agents.kd_orders --sync`) có trạng thái `cancelled`; hoàn
@@ -14,13 +16,18 @@ toán `settled_on` trong kỳ (giờ VN):
 THIẾU NGUỒN → "chưa có dữ liệu", KHÔNG suy, KHÔNG coi = 0: kênh không có
 dòng quyết toán nào trong kỳ → kênh + tổng chưa có dữ liệu; có dòng chưa
 thấy trạng thái đơn → Hủy/Thuần kênh đó + tổng chưa có dữ liệu. Hoàn > Gộp
-hoặc Thuần âm → ghi "bất thường", KHÔNG tính phí. Website/kênh khác: chưa
-có nguồn (website bán hàng làm riêng sau).
+hoặc Thuần âm → ghi "bất thường", KHÔNG tính phí. Khoản quyết toán xuất
+lại ở ≥2 file trong kỳ (`settlement_csv.overlaps`, v13.2 F01) → "bất
+thường" kèm tên file — trùng nguyên văn đã tính 1 lần, số khác nhau giữ cả
+hai (KHÔNG tự chọn file mới nhất) — KHÔNG tính phí tới khi người đối soát
+xử lý. Website/kênh khác: chưa có nguồn (website bán hàng làm riêng sau).
 
 Phí vận hành = round_half_up(Thuần × `ty_le_phi_van_hanh`) — chỉ khi đã
 chốt tỷ lệ VÀ `ngay_bat_dau_van_hanh` (Điều 8.1, 9.3); quý chứa ngày bắt
-đầu chỉ tính từ ngày đó. `--year N` = năm hợp tác thứ N tính từ ngày bắt
-đầu, so các mức thưởng PL02 mục 4 (ngưỡng/tỷ lệ null = "chưa chốt").
+đầu chỉ tính từ ngày đó. `--year N` = năm hợp tác thứ N tính từ
+`ngay_ky_hop_dong` (thời hạn hợp tác tính từ ngày ký — Điều 3.1; v13.2 F09:
+KHÔNG dùng ngày vận hành, KHÔNG lấy ngày dự kiến), so các mức thưởng PL02
+mục 4 (ngưỡng/tỷ lệ null = "chưa chốt"). Hai ngày null = chưa chốt.
 
 XUNG ĐỘT LỢI ÍCH (HĐ Điều 7.6): Bên A vận hành hệ thống này VÀ hưởng phí
 tính trên chính số này → mọi số ở đây chỉ là ĐỀ XUẤT; căn cứ duy nhất là
@@ -37,8 +44,8 @@ Chạy:
       [--now ISO] [--out-dir DIR]   → data/reports/doi-soat-<YYYY-Qn>.md
   python -m agents.rev_share --year N [--dry-run] [--now ISO] [--out-dir DIR]
                                     → data/reports/doi-soat-nam-<N>.md
-Exit: 0 ok (kể cả thiếu dữ liệu) · 1 cấu hình hỏng/chưa chốt ngày bắt đầu
-(--year) · 2 tham số sai / kỳ chưa đóng / trước ngày vận hành / DB down /
+Exit: 0 ok (kể cả thiếu dữ liệu) · 1 cấu hình hỏng/chưa chốt ngày ký hợp
+đồng (--year) · 2 tham số sai / kỳ chưa đóng / trước ngày vận hành / DB down /
 lỗi DB.
 """
 
@@ -61,7 +68,7 @@ from agents.fp_pnl import frac, is_int, vnd
 from agents.ra_kenh import parse_now
 from agents.report import REPORTS_DIR, write_report
 from ingest.lead_store import connect
-from ingest.settlement_csv import CHANNELS, round_half_up
+from ingest.settlement_csv import CHANNELS, overlaps, round_half_up
 from pipelines.job_runs import job_run
 from pipelines.period import VN_TZ
 
@@ -84,14 +91,15 @@ _DATE_RE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 _ROW_SQL = (
     "select s.channel, s.file_name, s.order_amount_vnd, "
     + ", ".join(f"s.{c}_vnd" for c in FEE_COLS)
-    + ", s.refund_vnd, s.payout_vnd, o.status from settlement_rows s"
+    + ", s.refund_vnd, s.payout_vnd, o.status from v_settlement_khoan s"
     " left join orders o on o.id = s.channel || ':' || s.order_id_hash"
     " and o.source like 'market:%%' where s.settled_on >= %s and"
     " s.settled_on < %s and s.channel = any(%s) order by s.id")
 _ROW_COLS = ("channel", "file_name", "order_amount", *FEE_COLS, "refund",
              "payout", "status")
 _UNDATED_SQL = (
-    "select channel, count(*) from settlement_rows where settled_on is null"
+    "select channel, count(*) from v_settlement_khoan where settled_on is"
+    " null"
     " and channel = any(%s) group by channel order by channel")
 
 
@@ -100,6 +108,19 @@ class ConfigError(ValueError):
 
 
 # ------------------------------------------------------------------ cấu hình
+
+def _date_or_none(raw: dict, key: str) -> date | None:
+    """Ngày `YYYY-MM-DD` | null (= chưa chốt). Sai → ConfigError."""
+    v = raw.get(key)
+    if v is None:
+        return None
+    try:
+        if not (isinstance(v, str) and _DATE_RE.fullmatch(v)):
+            raise ValueError
+        return date.fromisoformat(v)
+    except ValueError:
+        raise ConfigError(f"{key}: null hoặc YYYY-MM-DD") from None
+
 
 def load_config(path: Path | None = None) -> dict:
     p = path or CONFIG_FILE
@@ -110,15 +131,10 @@ def load_config(path: Path | None = None) -> dict:
                           ) from None
     if not isinstance(raw, dict):
         raise ConfigError(f"{p.name}: phải là object")
-    start = raw.get("ngay_bat_dau_van_hanh")
-    if start is not None:
-        try:
-            if not (isinstance(start, str) and _DATE_RE.fullmatch(start)):
-                raise ValueError
-            start = date.fromisoformat(start)
-        except ValueError:
-            raise ConfigError("ngay_bat_dau_van_hanh: null hoặc YYYY-MM-DD"
-                              ) from None
+    start = _date_or_none(raw, "ngay_bat_dau_van_hanh")
+    sign = _date_or_none(raw, "ngay_ky_hop_dong")
+    if sign is not None and start is not None and start < sign:
+        raise ConfigError("ngay_bat_dau_van_hanh trước ngay_ky_hop_dong")
     rate = raw.get("ty_le_phi_van_hanh")
     if rate is not None:
         rate, why = frac(rate, "ty_le_phi_van_hanh")
@@ -152,7 +168,8 @@ def load_config(path: Path | None = None) -> dict:
         out_t.append({"muc": t["muc"], "tu_vnd": tu, "ty_le": tl})
     if len({t["muc"] for t in out_t}) != len(out_t):
         raise ConfigError("muc_thuong: trùng muc")
-    return {"start": start, "rate": rate, "channels": list(chans),
+    return {"start": start, "sign": sign, "rate": rate,
+            "channels": list(chans),
             "fee_cols": [c for c in FEE_COLS if c in cols],
             "tiers": sorted(out_t, key=lambda t: t["muc"])}
 
@@ -193,8 +210,9 @@ def _add_years(d: date, n: int) -> date:
 
 
 def year_range(start: date, n, now: datetime) -> tuple[date, date]:
-    """Năm hợp tác thứ n (1-based) từ ngày bắt đầu vận hành → (đầu, sau
-    cuối). n sai / năm chưa đóng → ValueError."""
+    """Năm hợp tác thứ n (1-based) từ `start` = NGÀY KÝ hợp đồng (Điều 3.1)
+    → (đầu, sau cuối). n sai / năm chưa đóng (00:00 giờ VN ngày sau cuối)
+    → ValueError. Ký 29/02 → năm thường dùng 01/03 (các năm liền nhau)."""
     if not is_int(n, 1, MAX_YEAR):
         raise ValueError(f"--year phải là số 1..{MAX_YEAR}")
     ys, ye = _add_years(start, n - 1), _add_years(start, n)
@@ -223,9 +241,13 @@ def channel_figures(rows: list[dict], fee_cols) -> dict:
                                     for r in rows).items())}
 
 
-def summarize(rows: list[dict], channels, fee_cols) -> dict:
-    """→ {channels: {kênh: số | None}, total: {khóa: int | None}, notes}."""
+def summarize(rows: list[dict], channels, fee_cols,
+              overlap: dict | None = None) -> dict:
+    """→ {channels: {kênh: số | None}, total: {khóa: int | None}, notes,
+    anomaly}. `overlap` = `settlement_csv.overlaps()` của kỳ: kênh có khoản
+    xuất lại ở ≥2 file → BẤT THƯỜNG (không tính phí) kèm tên file."""
     out, notes = {}, []
+    overlap = overlap or {}
     for ch in channels:
         mine = [r for r in rows if r["channel"] == ch]
         if not mine:
@@ -246,6 +268,16 @@ def summarize(rows: list[dict], channels, fee_cols) -> dict:
                          " hoặc lỗi file — cần giải trình (Điều 7.5)")
         if f["net"] is not None and f["net"] < 0:
             notes.append(f"{ch}: BẤT THƯỜNG — Thuần âm ({vnd(f['net'])})")
+    for ch in channels:
+        o = overlap.get(ch)
+        if o and (o["trung"] or o["lech"]):
+            notes.append(
+                f"{ch}: BẤT THƯỜNG — khoản quyết toán xuất lại ở ≥2 file"
+                f" (chồng kỳ): trùng nguyên văn {o['trung']} (đã tính 1"
+                f" lần), lệch số {o['lech']} (giữ cả hai, KHÔNG tự chọn"
+                " file) — nguồn: " + ", ".join(_fname(f) for f in
+                                               o["files"])
+                + " — người đối soát xác nhận/loại bản thừa (Điều 7.5)")
     total = {}
     for k in MONEY_KEYS:
         vals = [None if f is None else f[k] for f in out.values()]
@@ -311,7 +343,9 @@ def record(conn, label: str, start: date, end: date, s: dict, rate,
     detail = {"channels": s["channels"], "notes": s["notes"],
               "phi_san_cot": cfg["fee_cols"],
               "ngay_bat_dau_van_hanh": (None if cfg["start"] is None
-                                        else cfg["start"].isoformat())}
+                                        else cfg["start"].isoformat()),
+              "ngay_ky_hop_dong": (None if cfg["sign"] is None
+                                   else cfg["sign"].isoformat())}
     rid = conn.execute(
         "insert into revenue_quarters (quarter, period_start, period_end,"
         " gross_vnd, platform_fee_vnd, cancel_vnd, refund_vnd, net_vnd,"
@@ -346,8 +380,9 @@ def _figures_table(s: dict, start: date, end: date) -> list[str]:
                        f" {NO_DATA} | **{NO_DATA}** | {NO_DATA} | — |")
             continue
         files = ", ".join(f"{n} ({k} dòng)" for n, k in f["files"])
-        src = (f"`settlement_rows` settled_on {start} → {last}, {f['n']}"
-               f" dòng: {files}; Hủy: `orders` (source market:{ch})"
+        src = (f"`v_settlement_khoan` (`settlement_rows`, bản xuất lại"
+               f" nguyên văn tính 1 lần) settled_on {start} → {last},"
+               f" {f['n']} khoản: {files}; Hủy: `orders` (source market:{ch})"
                f" {f['n_cancelled']} đơn hủy")
         if f["n_unknown"]:
             src += f", {f['n_unknown']} dòng chưa thấy đơn"
@@ -376,12 +411,14 @@ _FORMULA = ("Công thức: Thuần = Gộp − Phí sàn − Hủy − Hoàn. H�
 def _head(cfg: dict, period: str, now: datetime) -> list[str]:
     cols = ", ".join(f"`{c}_vnd`" for c in cfg["fee_cols"])
     start = NOT_SET if cfg["start"] is None else str(cfg["start"])
+    sign = NOT_SET if cfg["sign"] is None else str(cfg["sign"])
     return [_WARN, "", "| Ô | Nội dung |", "|---|---|",
             f"| Kỳ | {period} |",
             f"| Ngày lập | {now.astimezone(VN_TZ):%Y-%m-%d %H:%M} (giờ VN) |",
             (f"| Kênh trực tuyến | {', '.join(cfg['channels'])} · website:"
              " chưa có nguồn (website bán hàng làm riêng sau) |"),
             f"| Phí sàn gồm | {cols} (GIẢ ĐỊNH — 2 bên chốt) |",
+            f"| Ngày ký hợp đồng (mốc năm hợp tác) | {sign} |",
             f"| Ngày bắt đầu vận hành thương mại | {start} |", "",
             "## Số liệu", ""]
 
@@ -463,10 +500,10 @@ def main(argv=None, now=None) -> int:
     except ConfigError as e:
         print(f"[error] {e} — không connect.", file=sys.stderr)
         return 1
-    if a.year is not None and cfg["start"] is None:
-        print(f"[error] {NOT_SET} ngay_bat_dau_van_hanh trong"
-              f" {CONFIG_FILE.name} — không xác định được năm hợp tác.",
-              file=sys.stderr)
+    if a.year is not None and cfg["sign"] is None:
+        print(f"[error] {NOT_SET} ngay_ky_hop_dong trong"
+              f" {CONFIG_FILE.name} — năm hợp tác tính từ ngày ký hợp đồng"
+              " (không dùng ngày vận hành/ngày dự kiến).", file=sys.stderr)
         return 1
     try:
         if a.quarter is not None:
@@ -474,7 +511,7 @@ def main(argv=None, now=None) -> int:
             start, end = quarter_range(a.quarter, now, cfg["start"])
         else:
             label = f"nam-{a.year}"
-            start, end = year_range(cfg["start"], a.year, now)
+            start, end = year_range(cfg["sign"], a.year, now)
     except ValueError as e:
         print(f"[error] {e}", file=sys.stderr)
         return 2
@@ -488,7 +525,8 @@ def main(argv=None, now=None) -> int:
         if not a.record:
             conn.read_only = True
         rows, undated = fetch(conn, start, end, cfg["channels"])
-        s = summarize(rows, cfg["channels"], cfg["fee_cols"])
+        s = summarize(rows, cfg["channels"], cfg["fee_cols"],
+                      overlaps(conn, cfg["channels"], start, end))
         if a.quarter is not None:
             fee, why = ops_fee(s["total"]["net"], cfg["rate"], cfg["start"],
                                s["anomaly"])

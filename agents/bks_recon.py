@@ -5,8 +5,9 @@ Tài chính giữ nghiệp vụ hằng ngày (`ingest.settlement_csv` tự ghi
 `recon_results`); BKS HẬU KIỂM — module này KHÔNG tin `recon_results`:
   - `collect(conn, month)` 4 nguồn theo kênh (`shopee`, `tiktok`; cockpit
     `tiktok_shop` ↔ `tiktok` qua `COCKPIT_CHANNEL`):
-      Q = `settlement_rows` `settled_on` trong tháng (Σ giá trị đơn, Σ thực
-          nhận, số dòng);
+      Q = khoản quyết toán (`v_settlement_khoan` trên `settlement_rows`,
+          bản xuất lại nguyên văn tính 1 lần — v13.2) `settled_on` trong
+          tháng (Σ giá trị đơn, Σ thực nhận, số khoản);
       Đ = Σ `price_vnd × qty` của snapshot `order` MỚI NHẤT chứa mã — CÙNG
           `ingest.settlement_csv._ORDER_SQL` (import, không chép);
       P = `agents.fp_pnl.compute` Σ thực nhận/doanh thu các ô P&L;
@@ -23,7 +24,9 @@ Tài chính giữ nghiệp vụ hằng ngày (`ingest.settlement_csv` tự ghi
     `lech` → `quyet_toan_lech` (kèm mã lý do), `thieu_chung_tu` →
     `quyet_toan_khong_don` (bản thân dòng lệch — BKS báo độc lập, không chỉ
     khi nhãn đã lưu sai). Đơn trong snapshot order mới nhất không có dòng
-    quyết toán nào → `don_chua_quyet_toan`.
+    quyết toán nào → `don_chua_quyet_toan`. Khoản xuất lại ở ≥2 file trong
+    tháng (`settlement_csv.overlaps`) → `quyet_toan_chong_ky` (1 dòng/kênh,
+    refs = tên file; trùng nguyên văn / lệch số).
   - `pick_sample(ids, seed, limit=200)` THUẦN: ≤ 200 dòng/kỳ → kiểm 100%;
     > 200 → `random.Random(seed).sample` sắp lại. Seed (`--seed` hoặc
     `secrets.randbits(32)`) ghi vào báo cáo + `audit_runs.params`.
@@ -60,6 +63,7 @@ from ingest.settlement_csv import (
     _ORDER_SQL,
     CHANNELS,
     load_fees,
+    overlaps,
     reconcile_row,
 )
 from pipelines.job_runs import job_run
@@ -85,13 +89,14 @@ SRC_NAME = {"Q": "quyết toán (settlement_rows)",
             "P": "P&L (agents.fp_pnl.compute)",
             "C": "cockpit TGĐ (channel_snapshots sales.settlement_vnd)"}
 ROW_CODES = ("nhan_lech", "chua_doi_soat", "quyet_toan_lech",
-             "quyet_toan_khong_don", "don_chua_quyet_toan")
+             "quyet_toan_khong_don", "don_chua_quyet_toan",
+             "quyet_toan_chong_ky")
 CODES = tuple(c for c, _a, _b in PAIRS) + ("thieu_nguon",) + ROW_CODES
 MAX_LINES = 200
 _ROW_SQL = (
     "select id, file_name, row_no, channel, order_id_hash, "
     + ", ".join(f"{c}_vnd" for c in _COLS)
-    + " from settlement_rows where settled_on >= %s and settled_on < %s"
+    + " from v_settlement_khoan where settled_on >= %s and settled_on < %s"
     " order by id")
 _CS_SQL = (
     "select id, channel, value, source, source_ref from channel_snapshots"
@@ -256,6 +261,11 @@ def collect(conn, month: date, seed: int, fees: dict) -> dict:
     row_f += [{"code": "don_chua_quyet_toan", "channel": ch,
                "refs": [f"market_snapshots#{sid} dòng {rn}"]}
               for sid, ch, rn in conn.execute(_UNSETTLED_SQL)]
+    row_f += [{"code": "quyet_toan_chong_ky", "channel": ch,
+               "refs": [_fname(f) for f in o["files"]],
+               "trung": o["trung"], "lech": o["lech"]}
+              for ch, o in sorted(overlaps(conn, CHANNELS, start,
+                                           end).items())]
     return {"src": {"month": label, "channels": channels},
             "row_findings": row_f, "n_total": len(rows),
             "n_checked": len(picked), "seed": seed,
@@ -287,6 +297,10 @@ def _row_line(f: dict) -> str:
         extra = f" — nhãn đã lưu {f['stored']} ≠ tính lại {f['recomputed']}"
     elif f["code"] == "chua_doi_soat":
         extra = f" — tính lại: {f['recomputed']}"
+    elif f["code"] == "quyet_toan_chong_ky":
+        extra = (f" — khoản xuất lại ở ≥2 file: trùng nguyên văn {f['trung']}"
+                 f" (Q tính 1 lần), lệch số {f['lech']} (giữ cả hai, chờ"
+                 " người đối soát)")
     elif f.get("reasons"):
         extra = " — lý do: " + ", ".join(f["reasons"])
     return f"- [{f['code']}] kênh {f['channel']}: {'; '.join(f['refs'])}" \
