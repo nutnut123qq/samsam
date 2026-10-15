@@ -122,11 +122,13 @@ Cột cuối là phần nghiệm thu còn chờ công ty (chi tiết ở mục 3
 - GĐ vùng trồng quyết phương án B ngày 27/11.
 
 ### Hạ tầng-IT
-- SSO Cloudflare Access + Google Workspace (thay `--by` tự khai).
-- Postgres managed trong nước, PITR/WAL, object storage S3, khóa mã hóa backup trong secret manager.
-- Object-lock cho `agent_action_log`, `plot_logs`, `audit_runs` và kho bản gốc OCR.
-- Login DB thật, chạy `roles.sql` trên cloud, các role hẹp (`loader`, `market_sync`, `webhook`, `backup`, `ci`…).
-- Server production, VM diễn tập, systemd timer backup/drill, Uptime Kuma.
+(v12.6: theo HĐ, hệ thống lõi chạy trên server vật lý của Sâm Sâm — `deploy/onprem/README.md`; phương án cloud chỉ còn tham khảo.)
+- Server vật lý + nơi đặt máy, UPS/nguồn dự phòng, đường truyền, IP tĩnh; tài khoản quản trị cao nhất (OS, Postgres superuser, tên miền, router) do Sâm Sâm giữ, cấp tài khoản vận hành cho Bên A.
+- SSO nội bộ đứng tên Sâm Sâm nếu dùng `AUTH_MODE=proxy` (mặc định `AUTH_MODE=local` trong LAN; thay `--by` tự khai).
+- Postgres tự quản trên server đó, PITR/WAL ra ổ/NAS ngoài server, ổ/NAS thứ hai cho `BACKUP_OFFSITE=dir:` + bản xoay vòng cất ngoài phòng máy, khóa mã hóa backup do Sâm Sâm giữ.
+- Object-lock/neo ngoài cho `agent_action_log`, `plot_logs`, `audit_runs` và kho bản gốc OCR.
+- Login DB thật, chạy `roles.sql` trên server, các role hẹp (`loader`, `market_sync`, `webhook`, `backup`, `ci`…).
+- Docker + image `postgres:17-alpine` cho diễn tập DR, systemd timer backup/drill/báo cáo vận hành, Uptime Kuma + 1 monitor ngoài server (phát hiện sự cố ≤15 phút).
 - Kênh gửi cảnh báo thật (SMTP/Telegram/Zalo) kèm người nhận.
 - CI GitHub với secret, self-hosted runner trong nước; n8n ghi `eval_runs` qua HMAC; cron cho agent.
 - pgvector ≥0.8 local + cloud.

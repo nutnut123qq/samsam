@@ -1,5 +1,10 @@
 # Chuyển DB lên Postgres managed trong nước (v3.6, WP02 / F17.4)
 
+> **v12.6 — KHÔNG phải phương án chính theo Hợp đồng hợp tác TEDO–Sâm Sâm.**
+> HĐ Điều 2 + PL01 mục 8: hệ thống lõi chạy trên server vật lý của Sâm Sâm —
+> xem [`deploy/onprem/README.md`](../onprem/README.md). Tài liệu dưới đây chỉ
+> giữ làm tham khảo/dự phòng khi Hai Bên lập phụ lục điều chỉnh hạ tầng.
+
 - **Dành cho ai:** Quản lý hạ tầng AI (hoặc đội triển khai khi chưa tuyển
   xong), người được TGĐ giao mở tài khoản cloud.
 - **Làm gì:** chọn nhà cung cấp Postgres managed trong nước, nối app vào

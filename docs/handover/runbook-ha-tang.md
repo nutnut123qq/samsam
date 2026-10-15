@@ -14,6 +14,12 @@ tập DR); thư mục backup NGOÀI repo (`BACKUP_DIR`); đường dẫn file lo
 break-glass NGOÀI repo (`BREAK_GLASS_LOG`, đặt trong `.env`).
 Mọi lệnh chạy từ root repo.
 
+**Hạ tầng theo HĐ (v12.6):** hệ thống lõi chạy trên server vật lý của Sâm
+Sâm (Postgres tự quản trên server đó, tài khoản quản trị cao nhất do Sâm
+Sâm giữ) — cài đặt, phân quyền, bản sao ngoài, giám sát, lịch systemd ở
+`deploy/onprem/README.md`. Phương án cloud (`deploy/cloud/README.md`) chỉ
+còn là tham khảo.
+
 > Những gì runbook này KHÔNG tự động: khôi phục ĐÈ production, bật lại
 > agent trong đóng băng, đổi trần chi phí — đều là thao tác NGƯỜI, có
 > phiếu, có người duyệt.
@@ -47,6 +53,11 @@ Mọi lệnh chạy từ root repo.
 - Rà danh sách người giữ quyền break-glass + người giữ khóa mã hóa backup
   còn đúng người (đổi nhân sự → báo Quản lý hạ tầng AI).
 - Trước 18/12: chốt mọi thay đổi tính năng — từ 21/12 chỉ còn hotfix.
+- Ngày 1–2 hằng tháng: `python scripts/ops_monthly.py --month <YYYY-MM tháng
+  trước>` → `data/reports/van-hanh-<tháng>.md` (KPI vận hành, tiêu chí kỹ
+  thuật, danh mục tài sản hợp tác). Đọc lại, người của Bên A gửi Sâm Sâm
+  TRƯỚC ngày 05 (PL02 mục 3) — script không tự gửi. Mục ghi "chưa có dữ
+  liệu" = thiếu nguồn, không phải số 0.
 
 ## 2. Mức sự cố S1 / S2 / S3
 
@@ -86,10 +97,11 @@ mới cần người duyệt).
   `dr_drill` in `RTO ...s` và ghi `rto_seconds`.
 - **RPO** (dữ liệu tối đa có thể mất = tuổi bản backup) với pg_dump hằng
   ngày chỉ đạt ≤ 24 giờ. RPO ≤ 15 phút cho leads/đơn hàng/đồng ý cần PITR
-  của Postgres cloud — **external-dep** (công ty chọn nhà cung cấp; diễn
-  tập PITR ra instance tạm 30/11 và 18/12).
-- VM diễn tập riêng (tách khỏi máy chạy CI) và lịch tự chạy (systemd
-  timer: backup 01:30, drill Chủ nhật 03:00, DR hằng tháng) — **external-dep**.
+  (lưu WAL liên tục ra ổ/NAS ngoài server của Sâm Sâm) — **external-dep**
+  (cấu hình trên server thật; diễn tập 30/11 và 18/12).
+- Lịch tự chạy trên server của Sâm Sâm (systemd timer: backup 01:30,
+  drill Chủ nhật 03:00, DR hằng tháng, báo cáo vận hành ngày 1–2 — mẫu unit
+  ở `deploy/onprem/README.md` mục 7) — **external-dep** (cài khi có server).
 
 **Khôi phục ĐÈ production:** KHÔNG có lệnh tự động. Tầng 2 — người làm
 tay theo `sop.md` mục 6: báo TGĐ trước, đối chiếu danh sách phiếu xóa dữ

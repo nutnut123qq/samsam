@@ -67,6 +67,7 @@ chat lẫn embeddings) + Streamlit.
 | Catalog/listing KD-A4 (v5.3) | `python -m agents.kd_listing --run --dry-run` (chỉ đọc) · `--run` (lệch listing sàn ↔ bản duyệt/golden → hàng duyệt `listing_sync`/`market_alert_s1`, agent KHÔNG sửa sàn) · `--report` |
 | Giá & KM KD-A5 (v5.3) | `python -m agents.kd_price --report --plan <CSV> --as-of <ngày>` · `--run [--dry-run] [--plan CSV]` (floor/biên/lệch niêm yết/trần KM/KM chồng → NHÁP `price_change`/`promo_change`/S1; KHÔNG đổi giá, ngưỡng `data/price_watch.json` GIẢ ĐỊNH) |
 | GĐ Kinh doanh TMĐT (v5.0) | `python -m agents.sales_director --run [--dry-run] --bulletin` (dry-run CHỈ ĐỌC, in kế hoạch + bản tin) · `--run` (nguồn thật → hàng duyệt khối sales + quét SLA A 2h/B 4h giờ làm việc → `sla_escalations`/cảnh báo đỏ) · `--bulletin [--period week]` (→ `data/reports/sales-director-*.md`, không PII, không tự gửi) |
+| Báo cáo vận hành tháng (v12.6) | `python scripts/ops_monthly.py --month YYYY-MM [--out-dir DIR]` (→ `data/reports/van-hanh-<tháng>.md` gửi Bên B trước ngày 05: KPI vận hành PL02 mục 3, tiêu chí kỹ thuật PL02 mục 2, tài sản hợp tác `data/tai_san_hop_tac.json`; chỉ đọc, không tự gửi; thiếu nguồn = "chưa có dữ liệu"; DB down exit 1) · hạ tầng on-prem `deploy/onprem/README.md` |
 | Test/lint | `python -m pytest` · `ruff check .` |
 
 ## Structure
