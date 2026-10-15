@@ -135,6 +135,10 @@ def _authz(conn, qid: int, by, action: str, via: str,
         by, block, action, created_by=created, role=role, via=via,
         db_login=(auth.session_login(conn)
                   if enforced and via != "ui" else None))
+    if ok and enforced and via != "ui":
+        # v14.2: CLI chế độ thực không chạy bằng login superuser/owner.
+        why = auth.privileged_login(conn)
+        ok = why is None
     if ok:
         return None
     auth.deny_log(conn, by, block, action, "approval_queue", qid, why)

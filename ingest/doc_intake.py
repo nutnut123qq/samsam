@@ -440,6 +440,16 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if sha is not None:
             status = "verified" if args.verify is not None else "rejected"
+            # v14.2: Pháp chế được Bên B ủy quyền (auth.cli_gate, legal_hr)
+            # — bản đối chiếu này là căn cứ `da_cap` của XNQC.
+            from pipelines import auth  # lười: auth → director → ...
+            why = auth.cli_gate(conn, by, "legal_hr",
+                                "verify" if args.verify is not None
+                                else "reject", "document", sha[:12])
+            if why:
+                conn.rollback()
+                print(f"[err] {why} — không đổi gì")
+                return 1
             if not set_review(conn, sha, status, by):
                 print(f"[err] {sha[:12]} không tồn tại hoặc không ở"
                       " pending_review — không đổi gì")

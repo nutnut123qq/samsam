@@ -307,6 +307,12 @@ def convlog_stats(data_dir: Path = DATA_DIR) -> dict:
 
 def main() -> int:
     load_dotenv(ROOT / ".env")
+    # v14.2: login dịch vụ nạp file (LOADER_DATABASE_URL, role svc_loader)
+    # — chế độ thực từ chối login superuser/owner/thiếu biến.
+    from pipelines import auth  # lười: auth → director → ...
+    if why := auth.bind_service("loader"):
+        print(f"[err] {why}", flush=True)
+        return 2
     rows, stats = harvest()
     print(f"[scan] convlog: {stats['records']} record — "
           f"lead={len(rows)}, intent-miss={stats['intent']}, "

@@ -59,6 +59,7 @@ import secrets
 import sys
 import threading
 import time
+import unicodedata
 from pathlib import Path
 
 from dotenv import dotenv_values
@@ -363,7 +364,13 @@ def check_login(username, password, users: dict, now: float | None = None):
 # mỗi phòng ban 1 người duyệt. `authorize()` là cổng DUY NHẤT cho mọi quyết
 # định người (approval_queue.decide/override, store.set_status/schedule, UI).
 
-ACTIONS = ("approve", "reject", "override_qa", "schedule")
+ACTIONS = ("approve", "reject", "override_qa", "schedule",
+           # v14.2 (p2): quyết định người ở CLI ngoài hàng duyệt chung —
+           # mỗi CLI gọi `cli_gate` với khối + hành động của đúng việc đó.
+           "intake", "approve_price", "sign", "issue", "revoke",
+           "set_status", "promote", "severe", "disable", "ack", "verify",
+           "consent", "assign", "handoff", "load_dealers", "purge_sample",
+           "adopt_plot")
 NON_HUMAN = ("agent:", "system:", "auto_policy:")
 DIRECTORS_DIR = ROOT / "data" / "directors"
 _APPROVAL_FORCE: bool | None = None   # test ép chế độ (tests/conftest.py)
@@ -402,9 +409,15 @@ def block_config(block: str) -> dict:
     return director.load_config(block, DIRECTORS_DIR)
 
 
+def _norm_name(s) -> str:
+    """NFC + gộp khoảng trắng + casefold (khớp `qr_trace.norm_name`)."""
+    return " ".join(unicodedata.normalize("NFC", s).split()).casefold() \
+        if isinstance(s, str) else ""
+
+
 def authorize(by, block, action, *, created_by=None, role=None,
-              db_login=None, via="cli", users=None,
-              env=None) -> tuple[bool, str | None]:
+              db_login=None, via="cli", users=None, env=None, allow=None,
+              allow_src=None) -> tuple[bool, str | None]:
     """→ (True, None) được phép | (False, lý do).
 
     Mọi chế độ: người rỗng / `agent:*`|`system:*`|`auto_policy:*` → chặn;
@@ -415,7 +428,12 @@ def authorize(by, block, action, *, created_by=None, role=None,
     chặn — Bên B chưa ủy quyền), người phải nằm trong `approvers` của ĐÚNG
     khối (chéo khối bị chặn), có tài khoản trong users file với vai trò
     thuộc `approver_roles`; đường CLI (`via='cli'`) phải có `db_login` khớp
-    login Postgres đang dùng (`--by` free-text không còn là danh tính)."""
+    login Postgres đang dùng (`--by` free-text không còn là danh tính).
+
+    v14.2 `allow` (danh sách người riêng của việc đó, vd người ký QR theo vai
+    `data/qr_signers.json`, người nhận cảnh báo đỏ độc lập): chế độ thực đối
+    chiếu `allow` THAY `approvers`/`approver_roles` của khối (rỗng = chặn),
+    vẫn bắt buộc tài khoản users file + `db_login` khớp (CLI)."""
     if action not in ACTIONS:
         return False, f"hành động '{action}' không hợp lệ — {ACTIONS}"
     who = by.strip() if isinstance(by, str) else ""
@@ -428,6 +446,20 @@ def authorize(by, block, action, *, created_by=None, role=None,
         return False, "người quyết trùng người tạo — cần người khác duyệt"
     if not approval_enforced(env):
         return True, None     # dev: caller in DEV_WARNING
+    if allow is not None:
+        src = allow_src or "danh sách riêng"
+        names = {_norm_name(a) for a in allow if _norm_name(a)}
+        if not names:
+            return False, (f"chưa có người được {action} ({src} rỗng) — "
+                           f"Bên B cấp danh sách, không tự điền")
+        if _norm_name(who) not in names:
+            return False, f"'{who}' không thuộc người được {action} ({src})"
+        users = load_users() if users is None else users
+        entry = users.get(who.casefold())
+        if entry is None:
+            return False, (f"'{who}' chưa có tài khoản đăng nhập/vai trò "
+                           f"(users file)")
+        return _login_match(entry, db_login, via)
     if action == "schedule":
         roles = CAN_SCHEDULE
     else:
@@ -457,6 +489,11 @@ def authorize(by, block, action, *, created_by=None, role=None,
     if entry["role"] not in roles:
         return False, (f"vai trò tài khoản '{entry['role']}' không được "
                        f"{action} ở khối {block}")
+    return _login_match(entry, db_login, via)
+
+
+def _login_match(entry: dict, db_login, via) -> tuple[bool, str | None]:
+    """CLI chế độ thực: `--by` phải khớp login Postgres đang dùng."""
     if via != "ui":
         want = entry.get("db_login")
         got = (db_login or "").strip().lower()
@@ -487,24 +524,70 @@ def decidable_blocks(ident, role) -> list[str]:
     return out
 
 
+_DENY_SQL = ("insert into agent_action_log (actor, action, object_type,"
+             " object_id, detail) values (%s, 'authz_denied', %s, %s, %s)")
+
+
+def _idle(conn) -> bool:
+    """Kết nối psycopg KHÔNG có giao dịch mở (không có việc dở của caller)."""
+    try:
+        from psycopg import pq
+        return conn.info.transaction_status == pq.TransactionStatus.IDLE
+    except Exception:  # noqa: BLE001 — conn giả/không phải psycopg
+        return False
+
+
+def _side_conn(conn):
+    """Kết nối PHỤ cùng tham số + login với `conn` (autocommit)."""
+    import psycopg
+    params = dict(conn.info.get_parameters())
+    if conn.info.password:
+        params["password"] = conn.info.password
+    params.setdefault("connect_timeout", "5")
+    return psycopg.connect(**params, autocommit=True)
+
+
 def deny_log(conn, by, block, action, object_type, object_id,
-             reason) -> None:
+             reason, *, env=None) -> None:
     """Ghi lần BỊ TỪ CHỐI vào `agent_action_log` (hash chain, lưu toàn kỳ)
-    — best-effort trong savepoint, lỗi thì bỏ (không che lý do từ chối).
-    Chỉ chế độ thực (máy dev không rác log)."""
-    if not approval_enforced():
+    — best-effort, lỗi thì bỏ (không che lý do từ chối). Chỉ chế độ thực
+    (máy dev không rác log).
+
+    v14.2: KHÔNG commit giao dịch của caller (trước đây `conn.commit()` chốt
+    luôn việc dở của caller). Kết nối rảnh → transaction riêng (chỉ dòng
+    log); đang có giao dịch mở → kết nối PHỤ cùng login (autocommit, bền kể
+    cả caller rollback); kết nối phụ lỗi → savepoint trong giao dịch caller
+    (đi theo số phận giao dịch đó)."""
+    if not approval_enforced(env):
         return
     try:
         from psycopg.types.json import Jsonb
-        actor = (by or "").strip()[:100] or "(trống)"
+        args = ((by or "").strip()[:100] or "(trống)", object_type,
+                str(object_id),
+                Jsonb({"block": block, "action": action,
+                       "reason": (reason or "")[:300]}))
+    except Exception:  # noqa: BLE001 — best-effort
+        return
+    if _idle(conn):
+        try:
+            with conn.transaction():
+                conn.execute(_DENY_SQL, args)
+        except Exception:  # noqa: BLE001, S110 — best-effort
+            pass
+        return
+    try:
+        with _side_conn(conn) as side:
+            # Caller đã ghi log trong tx đang mở → giữ khóa chuỗi (advisory
+            # xact lock) → kết nối phụ chờ caller, caller chờ hàm này = treo.
+            # Hết hạn chờ → rơi về savepoint trong tx caller.
+            side.execute("set lock_timeout = '3s'")
+            side.execute(_DENY_SQL, args)
+        return
+    except Exception:  # noqa: BLE001, S110 — rơi về savepoint
+        pass
+    try:
         with conn.transaction():
-            conn.execute(
-                "insert into agent_action_log (actor, action, object_type,"
-                " object_id, detail) values (%s, 'authz_denied', %s, %s, %s)",
-                (actor, object_type, str(object_id),
-                 Jsonb({"block": block, "action": action,
-                        "reason": (reason or "")[:300]})))
-        conn.commit()
+            conn.execute(_DENY_SQL, args)
     except Exception:  # noqa: BLE001, S110 — best-effort
         pass
 
@@ -516,6 +599,135 @@ def session_login(conn) -> str | None:
     except Exception:  # noqa: BLE001
         return None
     return str(r[0]) if r else None
+
+
+# ---------- v14.2 cổng CLI + login dịch vụ (F08) ----------
+# Superuser / thành viên role SỞ HỮU bảng (mọi schema không phải hệ thống
+# của DB — không chỉ search_path: login thiếu USAGE schema thì
+# current_schema() rỗng) = vượt mọi trigger chặn/grant (sửa log, duyệt
+# thẳng) → chế độ thực từ chối.
+_PRIV_LOGIN_SQL = (
+    "select r.rolsuper, exists (select 1 from pg_class c join pg_namespace n"
+    " on n.oid = c.relnamespace where n.nspname <> 'information_schema' and"
+    " n.nspname not like 'pg\\_%' and c.relkind in ('r', 'p', 'v', 'm')"
+    " and pg_has_role(session_user, c.relowner, 'MEMBER'))"
+    " from pg_roles r where r.rolname = session_user")
+
+
+def privileged_login(conn) -> str | None:
+    """Login của `conn` là superuser / owner bảng → lý do; không kiểm được
+    → lý do (fail-closed); login thường → None."""
+    try:
+        with conn.transaction():
+            row = conn.execute(_PRIV_LOGIN_SQL).fetchone()
+    except Exception as e:  # noqa: BLE001
+        return f"không kiểm được quyền login Postgres ({type(e).__name__})"
+    if row is None:
+        return "không kiểm được quyền login Postgres"
+    if row[0]:
+        return ("login Postgres là SUPERUSER — chế độ thực phải dùng login "
+                "riêng không phải superuser/owner (docs/roles.sql)")
+    if row[1]:
+        return ("login Postgres là CHỦ SỞ HỮU (owner) bảng — chế độ thực "
+                "phải dùng login riêng không sở hữu bảng (docs/roles.sql)")
+    return None
+
+
+def cli_gate(conn, by, block, action, object_type, object_id, *,
+             created_by=None, allow=None, allow_src=None,
+             env=None) -> str | None:
+    """Cổng cho MỌI quyết định người ở CLI (ngoài hàng duyệt chung) → lý do
+    chặn | None. Chế độ thực: `authorize` (khối/hành động hoặc `allow`,
+    `--by` khớp `db_login` của login đang dùng); bị chặn → `authz_denied`
+    vào log. Dev: chỉ chặn agent/system/tự duyệt + in DEV_WARNING ra stderr.
+    KHÔNG từ chối login owner ở đây: các CLI này còn ghi bảng trực tiếp
+    (giá, hồ sơ XNQC, sổ triển khai, CRM...) mà `app_human` chưa có quyền —
+    cấp quyền ghi theo khối cho login người là quyết định hạ tầng (runbook
+    mục 9). Hàng duyệt chung/draft (chỉ qua function SECURITY DEFINER) thì
+    có từ chối owner (`approval_queue`/`store`)."""
+    enforced = approval_enforced(env)
+    ok, why = authorize(by, block, action, created_by=created_by,
+                        db_login=session_login(conn) if enforced else None,
+                        env=env, allow=allow, allow_src=allow_src)
+    if ok:
+        if not enforced:
+            print(f"[warn] {DEV_WARNING}", file=sys.stderr, flush=True)
+        return None
+    deny_log(conn, by, block, action, object_type, object_id, why, env=env)
+    return why
+
+
+# Dịch vụ chạy KHÔNG phải người: mỗi dịch vụ 1 login riêng `in role <role>`
+# (hạ tầng Bên B tạo NGOÀI git — docs/roles.sql khối v14.2). Chế độ thực:
+# biến `<DỊCH VỤ>_DATABASE_URL` bắt buộc (không rơi về DATABASE_URL), login
+# không superuser/owner và thuộc đúng role dịch vụ. Dev: thiếu biến → rơi về
+# DATABASE_URL. Bên A (`ben_a_reader`) đăng nhập trực tiếp bằng công cụ của
+# họ — không có tiến trình trong repo.
+SERVICES = {
+    "webhook": ("WEBHOOK_DATABASE_URL", "svc_webhook"),   # Zalo/Messenger
+    "job": ("JOB_DATABASE_URL", "svc_job"),               # agent chạy lịch
+    "loader": ("LOADER_DATABASE_URL", "svc_loader"),      # nạp file
+    "backup": ("BACKUP_DATABASE_URL", "svc_backup"),      # pg_dump chỉ đọc
+}
+
+
+def service_dsn(service: str, env=None) -> tuple[str | None, str | None]:
+    """→ (dsn, None) | (None, lý do)."""
+    var, _ = SERVICES[service]
+    env = _env() if env is None else env
+    dsn = (env.get(var) or "").strip()
+    if dsn:
+        return dsn, None
+    if approval_enforced(env):
+        return None, (f"chế độ thực: thiếu {var} — dịch vụ '{service}' phải "
+                      f"chạy bằng login riêng, không rơi về DATABASE_URL")
+    dsn = (env.get("DATABASE_URL") or "").strip()
+    return (dsn, None) if dsn else (None, f"thiếu {var} / DATABASE_URL")
+
+
+def service_login_problem(conn, service: str, env=None) -> str | None:
+    """Chế độ thực: login superuser/owner hoặc không thuộc role dịch vụ →
+    lý do. Dev → None."""
+    if not approval_enforced(env):
+        return None
+    why = privileged_login(conn)
+    if why:
+        return why
+    _, role = SERVICES[service]
+    try:
+        with conn.transaction():
+            ok = conn.execute(
+                "select exists (select 1 from pg_roles where rolname = %s)"
+                " and pg_has_role(session_user, %s, 'MEMBER')",
+                (role, role)).fetchone()[0]
+    except Exception as e:  # noqa: BLE001
+        return f"không kiểm được role dịch vụ ({type(e).__name__})"
+    return None if ok else (f"login không thuộc role '{role}' của dịch vụ "
+                            f"'{service}' (docs/roles.sql)")
+
+
+def bind_service(service: str, env=None) -> str | None:
+    """Đầu tiến trình dịch vụ (webhook, job lịch, loader, backup): có
+    `<DỊCH VỤ>_DATABASE_URL` → đặt `DATABASE_URL` của tiến trình (mọi module
+    + tiến trình con đọc biến này) + kiểm login ở chế độ thực → lý do từ chối
+    | None. Dev thiếu biến dịch vụ → không đổi gì (giữ DATABASE_URL đang có —
+    KHÔNG tự nạp DSN từ `.env` vào môi trường)."""
+    var, _ = SERVICES[service]
+    env = _env() if env is None else env
+    dsn = (env.get(var) or "").strip()
+    if not dsn:
+        if approval_enforced(env):
+            return service_dsn(service, env)[1]
+        return None
+    os.environ["DATABASE_URL"] = dsn
+    if not approval_enforced(env):
+        return None
+    import psycopg
+    try:
+        with psycopg.connect(dsn, connect_timeout=5) as c:
+            return service_login_problem(c, service, env)
+    except psycopg.Error as e:
+        return f"không kết nối được DB dịch vụ '{service}' ({type(e).__name__})"
 
 
 # ---------- CLI ----------

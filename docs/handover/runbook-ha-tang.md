@@ -337,6 +337,14 @@ kết quả). Function duyệt trong DB tự chặn người quyết dạng `age
 - Lưu ≥180 ngày: không job nào xóa `settlement_rows`/`orders` nguồn thật/
   `revenue_quarters` (`data/retention.json` không có mục này); backup hằng
   ngày giữ theo mục 3. Bảo trì làm gián đoạn > 24 giờ phải báo trước Bên A.
+- v14.2: DB tự chặn — `settlement_rows` APPEND-ONLY (UPDATE/DELETE/TRUNCATE
+  bị trigger chặn kể cả owner); `orders` không mẫu không xóa/không đổi mã/
+  không chuyển thành mẫu/không TRUNCATE, mọi lần đổi giá trị (trạng thái
+  theo snapshot sau) ghi 1 dòng `order_history` (giá trị cũ + mới,
+  append-only). File quyết toán sai: nạp file đúng (khoản xuất lại xử lý ở
+  `v_settlement_khoan`), KHÔNG xóa dòng cũ.
+- `agents.bks_audit` theo dõi quyền `ben_a_reader`: SELECT ngoài 3 bảng/view
+  trên hoặc bất kỳ quyền ghi nào → phát hiện `quyen_vuot`.
 
 ### 9.4 Khi chấm dứt hợp đồng (HĐ 12.3, 13.3d)
 
@@ -348,3 +356,73 @@ kết quả). Function duyệt trong DB tự chặn người quyết dạng `age
 | Xóa MỌI bản sao dữ liệu Bên B do Bên A giữ (máy dev, backup offsite của Bên A, `BACKUP_DIR`/`GARDEN_MEDIA_DIR`/`HR_INBOX_DIR` bản sao, DB test) | 30 ngày | Bên A | biên bản xác nhận xóa có chữ ký hai bên (**external-dep**, mẫu PL05 chưa có) |
 
 Không xóa dữ liệu trên server của Bên B — đó là tài sản Bên B giữ.
+
+### 9.5 Quyết định người ở CLI ngoài hàng duyệt chung (v14.2)
+
+Mọi CLI `--by` là QUYẾT ĐỊNH (không phải nhập liệu) đi qua
+`pipelines.auth.cli_gate` → `authorize` — chế độ thực: người thuộc
+`approvers` của ĐÚNG khối (hoặc danh sách riêng của việc đó), có tài khoản
+users file, `--by` khớp `db_login` của login Postgres đang dùng; bị chặn →
+`authz_denied`. Dev: chỉ chặn `agent:`/`system:` + in "CHẾ ĐỘ DEV".
+
+| CLI | Khối / danh sách | Hành động |
+|---|---|---|
+| `pipelines.production approve\|reject --run` · `intake --lot` | production | approve/reject · intake |
+| `ingest.golden_store --approve-price` | sales | approve_price |
+| `pipelines.qr_trace sign` | `data/qr_signers.json` vai đó | sign |
+| `pipelines.qr_trace issue` · `revoke` | `data/qr_signers.json` (3 vai) | issue · revoke |
+| `agents.xnqc --set` | legal_hr | set_status |
+| `pipelines.rollout --promote\|--severe\|--disable` | phòng ban của tính năng | promote/severe/disable |
+| `pipelines.red_alert --ack` (+ `intel_alert --ack`) | người nhận độc lập `data/red_alert_routing.json` | ack |
+| `ingest.crm --consent\|--assign\|--handoff\|--load-dealers` | sales | consent/assign/handoff/load_dealers |
+| `ingest.doc_intake --verify\|--reject` | legal_hr | verify/reject |
+| `agents.fp_pnl --cogs-approve` | finance | approve |
+| `agents.garden_director --purge-sample\|--adopt-plot` | farming | purge_sample/adopt_plot |
+
+KHÔNG qua cổng (nhập liệu/ghi sổ, người chịu trách nhiệm ghi `--by`):
+`crm --add-contact\|--status`, `xnqc --add`, `rollout --seed`,
+`ops_incidents`, `ops_monthly --mark-sent`, `cockpit --import`,
+`garden_media`, `zalo_garden --done`, `channels --suggest`, `ceo_decisions`,
+`agent_eval --propose-*` (đề xuất → hàng duyệt), `break_glass` (không có kết
+nối DB — danh sách `break_glass_holders`).
+
+Còn hở (quyết định hạ tầng Bên B): các CLI trên ghi bảng TRỰC TIẾP (giá,
+hồ sơ XNQC, sổ triển khai, CRM, tài liệu, khoảnh) — login `in role
+app_human` chưa có quyền ghi các bảng đó (production/qr/giá vốn/ack đi qua
+function hoặc bảng đã cấp nên chạy được). Bên B chọn: function SECURITY
+DEFINER theo việc, hoặc role người theo khối — chưa cấp thì CLI đó báo lỗi
+quyền (fail-closed), không chạy bằng DSN owner chung.
+
+### 9.6 Login dịch vụ (v14.2)
+
+Mỗi dịch vụ không phải người chạy 1 login RIÊNG (hạ tầng Bên B tạo NGOÀI
+git) trong role nhóm của `docs/roles.sql` khối v14.2, trỏ biến DSN riêng:
+
+| Dịch vụ | Role nhóm | Biến DSN | Tiến trình |
+|---|---|---|---|
+| Webhook Zalo OA / Messenger | `svc_webhook` | `WEBHOOK_DATABASE_URL` | `connectors.zalo`, `connectors.messenger` |
+| Job lịch (agent) | `svc_job` | `JOB_DATABASE_URL` | `pipelines.job_runs --run <job>` (mọi job trừ dưới) |
+| Nạp file | `svc_loader` | `LOADER_DATABASE_URL` | `ingest.core_store\|golden_store (nạp)\|market_csv\|settlement_csv\|inventory_csv\|intel_import\|embed_store\|kb_internal\|lead_store`, `agents.kd_orders` |
+| Backup | `svc_backup` (CHỈ ĐỌC) | `BACKUP_DATABASE_URL` | job `backup` (`scripts/db_backup.py`) |
+| Bên A | `ben_a_reader` | (công cụ của Bên A) | không có tiến trình trong repo |
+
+```sql
+create role zalo_oa_svc login password '<...>' in role svc_webhook;
+create role job_svc     login password '<...>' in role svc_job;
+create role loader_svc  login password '<...>' in role svc_loader;
+create role backup_svc  login password '<...>' in role svc_backup;
+```
+
+- Chế độ thực (`APPROVAL_ENFORCE=1` / `DEPLOY` / `AUTH_MODE=local|proxy`):
+  thiếu biến dịch vụ → tiến trình KHÔNG chạy (không rơi về
+  `DATABASE_URL`); login là superuser, thành viên role sở hữu bảng, hoặc
+  không thuộc đúng role nhóm → từ chối có lý do (webhook exit 1, job exit
+  78 không chạy bước nào, loader exit 2). Dev: thiếu biến → dùng
+  `DATABASE_URL` như cũ.
+- `restore_drill` / `dr_drill` tạo DB tạm (CREATEDB) → chạy bằng login quản
+  trị hạ tầng, ngoài login dịch vụ.
+- Kiểm: `python -m agents.bks_audit --report` — quyền vượt của 8 role
+  (`agent_writer`, `app_human`, `bks_reader`, `ben_a_reader`, 4 `svc_*`).
+  Test login thật: `tests/test_v14_p2_service_auth.py`.
+- Chạy lại `python scripts/apply_schema.py --roles` mỗi bản phát hành (grant
+  theo bảng mới; `svc_backup` đọc MỌI bảng hiện có).

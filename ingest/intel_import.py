@@ -801,6 +801,12 @@ def main(argv: list[str] | None = None) -> int:
         _print_errs(errs)
         return 1
     load_dotenv(ROOT / ".env")   # muối + DSN nằm trong .env (không connect)
+    # v14.2: login dịch vụ nạp file (LOADER_DATABASE_URL, role svc_loader)
+    # — chế độ thực từ chối login superuser/owner/thiếu biến.
+    from pipelines import auth  # lười: auth → director → ...
+    if why := auth.bind_service("loader"):
+        print(f"[err] {why}", flush=True)
+        return 2
     if kind == "social":
         salt = os.environ.get("INTEL_HASH_SALT", "")
         if len(salt) < SALT_MIN:

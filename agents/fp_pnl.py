@@ -447,6 +447,15 @@ def main(argv=None) -> int:
                   "lập).")
             return 0
         if args.cogs_approve is not None:
+            # v14.2: GĐ tài chính được Bên B ủy quyền (auth.cli_gate) — DB
+            # function `approve_cogs` vẫn chặn người lập tự duyệt.
+            from pipelines import auth  # lười: auth → director → ...
+            why = auth.cli_gate(conn, by, "finance", "approve",
+                                "cogs_versions", args.cogs_approve)
+            if why:
+                conn.rollback()
+                print(f"[err] giá vốn #{args.cogs_approve}: {why}")
+                return 1
             ok, msg = approve(conn, args.cogs_approve, by, note)
             if not ok:
                 print(f"[err] giá vốn #{args.cogs_approve}: {msg}")

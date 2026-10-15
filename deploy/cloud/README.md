@@ -61,6 +61,10 @@ DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/samsam?sslmode=require
 | `backup` | CHỈ ĐỌC mọi bảng | `scripts/db_backup.py` |
 | `loader` | ghi bảng golden (`sku_master`, `sku_map`, `price_list`, `golden_discrepancies`) | `ingest.golden_store` |
 
+v14.2: bản on-prem dùng role nhóm `svc_webhook` / `svc_job` / `svc_loader` /
+`svc_backup` (quyền theo bảng code dùng, `docs/roles.sql` khối v14.2) +
+biến `<DỊCH VỤ>_DATABASE_URL` — xem `docs/handover/runbook-ha-tang.md` mục 9.
+
 ## 3. PITR phía nhà cung cấp (external-dep)
 
 Người làm 1 lần trên console: bật PITR/WAL, đặt retention WAL, đọc lại
@@ -104,6 +108,7 @@ bảng nào thì dừng, không bật app.
 | `plot_logs` | B | nhật ký vườn thật không có trong repo; hash chain v9.3 — chỉ B giữ nguyên `prev_hash`/`row_hash` (restore xong chạy `python -m agents.garden_director --verify`) |
 | `garden_media` | B | metadata ảnh vườn (v9.3); file ảnh nằm ở `GARDEN_MEDIA_DIR` ngoài repo — sao lưu thư mục đó riêng |
 | `orders` | A | |
+| `order_history` | B | (v14.2) append-only — lịch sử đổi trạng thái đơn thật (HĐ 7.3 iii); không dựng lại được từ nguồn |
 | `assets` | A | |
 | `leads` | B | dữ liệu khách — PII, chỉ qua backup mã hóa |
 | `contacts` | B | (v5.2) PII đã mã hóa Fernet — vô dụng nếu thiếu `CONTACT_VAULT_KEY`; mang khóa theo đường RIÊNG, không cùng file backup |

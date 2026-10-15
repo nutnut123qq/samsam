@@ -77,7 +77,10 @@ def clean_detail(detail) -> str | None:
 
 def _record(job, started, finished, ok, detail) -> None:
     try:
-        dsn = os.environ.get("DATABASE_URL")
+        # v14.2: sổ job ghi bằng login job lịch (JOB_DATABASE_URL) khi có —
+        # job `backup` chạy login CHỈ ĐỌC (svc_backup) vẫn có dòng job_runs.
+        dsn = (os.environ.get("JOB_DATABASE_URL")
+               or os.environ.get("DATABASE_URL"))
         if not dsn:
             _warn("không có DATABASE_URL — bỏ ghi job_runs")
             return
@@ -125,6 +128,11 @@ JOBS_FILE = ROOT / "deploy" / "onprem" / "jobs.json"
 LOCK_DIR_DEFAULT = ROOT / "data" / "job_locks"
 STEP_TIMEOUT_S = 3 * 3600
 EXIT_LOCKED = 75
+EXIT_SERVICE = 78          # EX_CONFIG: login dịch vụ thiếu/sai quyền
+# v14.2: job → login dịch vụ (`pipelines.auth.SERVICES`); mặc định 'job'.
+# Diễn tập khôi phục/DR tạo DB tạm (CREATEDB) → login quản trị hạ tầng
+# (giữ DATABASE_URL, None) — ngoài login dịch vụ (runbook mục 9).
+JOB_SERVICE = {"backup": "backup", "restore_drill": None, "dr_drill": None}
 _NAME_RE = re.compile(r"[a-z0-9_]{1,40}")
 
 
@@ -221,6 +229,16 @@ def run_scheduled(name: str, *, jobs: dict | None = None,
     if name not in jobs:
         raise JobConfigError(f"không có job '{name}' trong lịch")
     runner = runner or subprocess.run
+    svc = JOB_SERVICE.get(name, "job")
+    if svc is not None:
+        # v14.2: job chạy bằng login dịch vụ riêng (JOB_/BACKUP_DATABASE_URL)
+        # — tiến trình con kế thừa DATABASE_URL; chế độ thực từ chối login
+        # superuser/owner/sai role (không chạy bước nào, exit 78).
+        from pipelines import auth  # lười: auth → director → ...
+        why = auth.bind_service(svc)
+        if why:
+            _warn(f"job '{name}' KHÔNG chạy — {why}")
+            return EXIT_SERVICE
     lock = (lock_dir or _lock_dir()) / f"{name}.lock"
     with _file_lock(lock) as got:
         if not got:

@@ -40,7 +40,11 @@ không? (outside-in P1 — bài/listing đang chạy — là `agents.ceo_audit`.
     `audit_runs` hoặc EXECUTE function ghi → `quyen_vuot`. Quyền kế thừa từ
     role khác cùng danh sách chỉ báo ở role gốc. Function ghi lấy từ
     CATALOG (mọi SECURITY DEFINER trong schema trừ `READ_FUNCS`) — không
-    danh sách cứng (thêm function mới không lọt).
+    danh sách cứng (thêm function mới không lọt). v14.2: theo dõi thêm
+    `ben_a_reader` (+ SELECT ngoài số tổng hợp `BEN_A_READS` = vượt) và 4
+    login dịch vụ `svc_*` (svc_backup chỉ đọc); mọi role (trừ backup) đọc
+    `contacts`/`consents` = vượt; `settlement_rows`/`order_history` vào
+    danh sách append-only.
 CHỈ ĐỌC mọi bảng nghiệp vụ; đường ghi DUY NHẤT `insert into audit_runs`
 (`--record`). Báo cáo chỉ `#id`/bảng/khối — không text/payload; tên người +
 lý do override qua `_mask_pii` + `_oneline`. Không LLM, không mạng.
@@ -92,8 +96,18 @@ APPROVAL_ACTIONS = ("draft_approve", "draft_reject", "queue_approve",
                     "alloc_reject", "lot_intake", "qr_lot_sign",
                     "cogs_approve")
 APPEND_ONLY = ("approvals", "agent_action_log", "decisions", "decision_log",
-               "audit_runs", "plot_logs")
-WATCH_ROLES = ("agent_writer", "app_human", "bks_reader")
+               "audit_runs", "plot_logs", "settlement_rows", "order_history")
+# v14.2: + Bên A (chỉ đọc số tổng hợp) + 4 login dịch vụ (docs/roles.sql).
+WATCH_ROLES = ("agent_writer", "app_human", "bks_reader", "ben_a_reader",
+               "svc_webhook", "svc_job", "svc_loader", "svc_backup")
+# Role CHỈ ĐỌC: bất kỳ quyền ghi nào = vượt.
+READ_ONLY_ROLES = ("ben_a_reader", "svc_backup")
+# Bên A chỉ đọc đúng các bảng/view số tổng hợp (khối v12.5 B5) — SELECT bảng
+# khác (đơn, quyết toán gốc, khách hàng...) = vượt.
+BEN_A_READS = ("revenue_quarters", "v_ben_a_settlement_daily",
+               "v_ben_a_orders_daily")
+# Bảng PII (ciphertext + đồng ý) — chỉ owner/CLI người + backup đọc.
+PII_TABLES = ("contacts", "consents")
 # Function SECURITY DEFINER bks_reader ĐƯỢC chạy (chỉ đọc); mọi SECDEF
 # khác trong schema chạy được → quyen_vuot (function INVOKER chạy bằng
 # quyền của chính role — đã kiểm qua quyền bảng).
@@ -337,11 +351,32 @@ _MEMBER_SQL = (
     " pg_has_role(a.oid, b.oid, 'USAGE')")
 
 
+_SEL_SQL = (
+    "select c.relname from pg_class c where c.relnamespace ="
+    " current_schema()::regnamespace and c.relkind in ('r', 'p', 'v', 'm')"
+    " and (has_table_privilege(%s, c.oid, 'SELECT') or"
+    " has_any_column_privilege(%s, c.oid, 'SELECT')) order by 1")
+
+
 def _excess(role: str, table: str, priv: str) -> bool:
     if role == "bks_reader":
         return not (table == "audit_runs" and priv == "INSERT")
+    if role in READ_ONLY_ROLES:
+        return True
+    if (role, table, priv) == ("svc_loader", "plot_logs", "DELETE"):
+        # Nạp lại nhật ký MẪU chưa chain (core_store); trigger
+        # `plot_logs_guard` chặn xóa dòng đã chain kể cả owner.
+        return False
     return ((table in APPEND_ONLY and priv != "INSERT")
             or (table == "approvals" and priv == "INSERT"))
+
+
+def _excess_read(role: str, table: str) -> bool:
+    """v14.2: SELECT vượt — Bên A ngoài số tổng hợp; mọi role (trừ backup)
+    đọc bảng PII."""
+    if role == "ben_a_reader":
+        return table not in BEN_A_READS
+    return role != "svc_backup" and table in PII_TABLES
 
 
 def check_privileges(conn) -> list[dict]:
@@ -356,7 +391,10 @@ def check_privileges(conn) -> list[dict]:
             raw |= {(role, t, p) for t, p in _rows(conn, _PRIV_SQL,
                                                    (role, role))
                     if _excess(role, t, p)}
-            if role == "bks_reader":
+            raw |= {(role, t, "SELECT") for (t,) in _rows(conn, _SEL_SQL,
+                                                           (role, role))
+                    if _excess_read(role, t)}
+            if role == "bks_reader" or role in READ_ONLY_ROLES:
                 raw |= {(role, f"function {f}", "EXECUTE") for (f,) in _rows(
                     conn, _FUNC_SQL, (list(READ_FUNCS), role))}
     except psycopg.Error as e:

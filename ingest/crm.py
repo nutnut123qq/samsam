@@ -620,6 +620,11 @@ def _connect():
     return lead_store.connect()
 
 
+# v14.2: thao tác CLI → hành động `auth.cli_gate` (khối sales).
+GATED_OPS = {"consent": "consent", "assign": "assign", "handoff": "handoff",
+             "load-dealers": "load_dealers"}
+
+
 def _db_msg(e: psycopg.Error) -> str:
     """Thông điệp lỗi DB không kèm DETAIL (DETAIL có thể chứa giá trị)."""
     prim = getattr(getattr(e, "diag", None), "message_primary", None)
@@ -747,6 +752,19 @@ def main(argv=None) -> int:
         print("[err] DB không truy cập được — kiểm DATABASE_URL / chạy "
               "`python scripts/apply_schema.py`", flush=True)
         return 1
+    # v14.2: quyết định cho phép dùng/chuyển PII (đồng ý, gán/chuyển đại lý,
+    # sổ đại lý) = người được Bên B ủy quyền khối sales (auth.cli_gate).
+    # Nhập liên hệ / đổi trạng thái lead = việc nhập liệu, không qua cổng.
+    gated = GATED_OPS.get(op)
+    if gated:
+        from pipelines import auth  # lười: auth → director → ...
+        oid = {"consent": args.consent, "assign": args.assign,
+               "handoff": args.handoff}.get(op, "dealers")
+        why = auth.cli_gate(conn, by, "sales", gated, "crm", oid)
+        if why:
+            conn.close()
+            print(f"[err] {why} — không ghi.", flush=True)
+            return 1
     try:
         if op == "add-contact":
             cid, new = add_contact(conn, rec, keys, by, args.lead)

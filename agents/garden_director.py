@@ -536,6 +536,18 @@ def main(argv=None) -> int:
         print(f"[warn] chưa nạp — {msg}")
         return 0
     try:
+        if args.purge_sample or args.adopt_plot:
+            # v14.2: gỡ mẫu / nhận khoảnh = quyết định của GĐ vùng trồng
+            # được Bên B ủy quyền (auth.cli_gate, khối farming).
+            from pipelines import auth  # lười: auth → director → ...
+            why = auth.cli_gate(
+                conn, args.by, "farming",
+                "purge_sample" if args.purge_sample else "adopt_plot",
+                "plots", args.adopt_plot or "sample")
+            if why:
+                conn.rollback()
+                print(f"[err] {why} — không đổi gì", file=sys.stderr)
+                return 1
         if args.verify:
             probs = verify(conn)
             for i, p in probs:

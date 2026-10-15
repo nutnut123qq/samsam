@@ -295,3 +295,118 @@ grant insert (alert_id, recipient, role, channel, ok, error)
 grant select, insert on red_alert_deliveries to app_human;
 grant select, insert on ops_incidents, ops_incident_events to app_human;
 grant select on chat_kpi_facts to app_human;
+
+-- ===== v14.2 p2 login dịch vụ (quyền tối thiểu theo bảng code dùng) =====
+-- Mỗi dịch vụ KHÔNG phải người chạy bằng 1 login riêng `in role <svc_*>` (hạ
+-- tầng Bên B tạo NGOÀI git, vd `create role zalo_oa login password '...'
+-- in role svc_webhook;`) và trỏ biến `<DỊCH VỤ>_DATABASE_URL`
+-- (`pipelines.auth.SERVICES`). Chế độ thực (`APPROVAL_ENFORCE`/`DEPLOY`/
+-- AUTH_MODE local|proxy) từ chối login superuser/owner hoặc không thuộc
+-- đúng role dịch vụ. Danh sách bảng lấy từ SQL thật của module (rà tĩnh
+-- `tests/test_v14_p2_service_auth.py` + chạy flow dưới login thật):
+--   svc_webhook — webhook Zalo OA / Messenger (`connectors.zalo|messenger`
+--     → channels/api.rag/llm_gateway/rollout/director.submit): kế thừa
+--     agent_writer (hàng duyệt cskh_handoff/cskh_reply qua enqueue_item,
+--     llm_usage, feature_rollout, action log) + SELECT `chunks` (KB công
+--     khai — KHÔNG `chunks_internal`) + SELECT/INSERT `chat_consents`
+--     (append-only). KHÔNG leads/contacts/orders/payload hàng duyệt.
+--   svc_job — job lịch (`pipelines.job_runs --run`, deploy/onprem/jobs.json)
+--     trừ backup/diễn tập: kế thừa agent_writer + đọc/ghi đúng bảng các bước
+--     dùng (dưới). KHÔNG contacts/consents (PII), KHÔNG UPDATE/DELETE bảng
+--     log/bằng chứng, KHÔNG function duyệt.
+--   svc_loader — nạp file (`ingest.*` loader, `agents.kd_orders --sync`):
+--     ghi staging/golden/KB/đơn theo đúng loader; KHÔNG contacts/consents,
+--     KHÔNG hàng duyệt/approvals, KHÔNG xóa settlement_rows/đơn thật (trigger
+--     v14.2 chặn cả khi có quyền).
+--   svc_backup — `scripts/db_backup.py` (pg_dump): CHỈ SELECT mọi bảng +
+--     sequence của schema (bản sao đầy đủ; `contacts` vốn là ciphertext).
+--     KHÔNG ghi gì.
+-- `restore_drill`/`dr_drill` tạo DB tạm → cần login quản trị hạ tầng
+-- (CREATEDB) — ngoài phạm vi login dịch vụ, ghi rõ ở runbook mục 9.
+-- Bên A: `ben_a_reader` (khối v12.5 B5) — login của Bên A `in role
+-- ben_a_reader`, không có tiến trình trong repo.
+do $$
+declare
+  r text;
+begin
+  foreach r in array array['svc_webhook', 'svc_job', 'svc_loader',
+                           'svc_backup'] loop
+    if not exists (select from pg_roles where rolname = r) then
+      execute format('create role %I nologin', r);
+    end if;
+  end loop;
+end $$;
+do $$
+declare
+  s text := quote_ident(current_schema());
+begin
+  execute format('revoke all on all tables in schema %s from svc_webhook, svc_job, svc_loader, svc_backup', s);
+  execute format('revoke all on all sequences in schema %s from svc_webhook, svc_job, svc_loader, svc_backup', s);
+  execute format('revoke all on all functions in schema %s from svc_webhook, svc_job, svc_loader, svc_backup', s);
+  execute format('revoke all on schema %s from svc_webhook, svc_job, svc_loader, svc_backup', s);
+  execute format('grant usage on schema %s to svc_loader, svc_backup', s);
+end $$;
+
+grant agent_writer to svc_webhook;
+grant select on chunks to svc_webhook;
+grant select, insert on chat_consents to svc_webhook;
+
+-- svc_job theo bước lịch: intel (crawler.intel + intel_bulletin), quét cảnh
+-- báo đỏ (intel_alert --run, red_alert --deliver), báo cáo TGĐ (ceo_report:
+-- cockpit + ceo_audit/decisions/risk), lô hóa đơn (acc_invoice --batch),
+-- nháp bài (content --daily), KPI/bản tin sức khỏe/báo cáo tháng
+-- (ops_monthly, health_bulletin), neo + văn bản pháp luật (anchor --build,
+-- legal_updates --submit), wrapper job_runs.
+grant agent_writer to svc_job;
+grant select, insert on job_runs to svc_job;
+grant usage on sequence job_runs_id_seq to svc_job;
+grant select, insert on intel_items to svc_job;
+grant select on approval_queue, approvals, decisions, decision_log,
+  red_alerts, red_alert_acks, red_alert_deliveries, channel_snapshots,
+  channel_posts, content_drafts, market_alerts, market_rows,
+  market_snapshots, project_milestones, xnqc_dossiers, leads, llm_usage,
+  sla_escalations, golden_discrepancies, ops_incidents, ops_incident_events,
+  plot_logs, qr_codes, qr_signatures, production_lots, anchor_batches,
+  anchor_receipts, sku_master, orders, settlement_rows, agent_action_log
+  to svc_job;
+grant select, insert on invoice_lines, chat_kpi_facts, anchor_batches
+  to svc_job;
+grant execute on function qr_lot_snapshot_sha(text), verify_plot_logs()
+  to svc_job;
+
+-- svc_loader theo loader: market_csv, settlement_csv (+ đối soát
+-- recon_results), inventory_csv, intel_import, core_store (delete-by-source
+-- dữ liệu nạp — trigger v14.2 vẫn chặn xóa đơn thật), golden_store (nạp),
+-- embed_store/kb_internal (KB + chi phí embedding), kd_orders --sync.
+grant select, insert, update on market_snapshots, market_rows, market_alerts,
+  inventory_snapshots, intel_imports, competitor_observations, sku_master,
+  sku_map, price_list, orders to svc_loader;
+grant select, insert on settlement_rows, social_mentions, trends_related,
+  trends_weekly to svc_loader;
+grant select, insert, update on recon_results to svc_loader;
+-- `ingest.lead_store` gom lead từ convlog (đã che/hash) — insert-only.
+grant select, insert on leads to svc_loader;
+grant select, insert, update, delete on products, claims_approved, plots,
+  assets, golden_discrepancies, chunks, chunks_internal
+  to svc_loader;
+-- plot_logs: nạp lại nhật ký MẪU chưa chain (delete-by-source) — trigger
+-- `plot_logs_guard` chặn sửa/xóa dòng đã chain kể cả owner; KHÔNG UPDATE.
+grant select, insert, delete on plot_logs to svc_loader;
+grant delete on orders to svc_loader;
+grant select on v_settlement_khoan, garden_media, agent_action_log
+  to svc_loader;
+grant select (agent_id, ts, cost_usd) on llm_usage to svc_loader;
+grant insert (agent_id, model, tokens_in, tokens_out, cost_usd, ok, error)
+  on llm_usage to svc_loader;
+grant usage on sequence llm_usage_id_seq to svc_loader;
+grant insert on job_runs to svc_loader;
+grant usage on sequence job_runs_id_seq to svc_loader;
+
+-- svc_backup: đọc toàn bộ (pg_dump + đếm dòng cùng snapshot).
+do $$
+begin
+  execute format('grant select on all tables in schema %s to svc_backup',
+                 quote_ident(current_schema()));
+  execute format('grant select on all sequences in schema %s to svc_backup',
+                 quote_ident(current_schema()));
+end $$;

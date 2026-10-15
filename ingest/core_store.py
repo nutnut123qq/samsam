@@ -326,6 +326,12 @@ def kept_plots(conn, domains: list) -> list[tuple[str, int, int]]:
 
 def main() -> int:
     load_dotenv(ROOT / ".env")
+    # v14.2: login dịch vụ nạp file (LOADER_DATABASE_URL, role svc_loader)
+    # — chế độ thực từ chối login superuser/owner/thiếu biến.
+    from pipelines import auth  # lười: auth → director → ...
+    if why := auth.bind_service("loader"):
+        print(f"[err] {why}", flush=True)
+        return 2
     dsn = os.environ.get("DATABASE_URL")
     if not dsn:
         print("[err] thiếu DATABASE_URL trong .env")
