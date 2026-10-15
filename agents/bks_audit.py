@@ -96,7 +96,9 @@ APPROVAL_ACTIONS = ("draft_approve", "draft_reject", "queue_approve",
                     "alloc_reject", "lot_intake", "qr_lot_sign",
                     "cogs_approve")
 APPEND_ONLY = ("approvals", "agent_action_log", "decisions", "decision_log",
-               "audit_runs", "plot_logs", "settlement_rows", "order_history")
+               "audit_runs", "plot_logs", "settlement_rows", "order_history",
+               # v14.3: sổ đầu ra báo cáo + gợi ý chat sàn / lần dùng.
+               "report_outputs", "san_suggestions", "san_suggestion_uses")
 # v14.2: + Bên A (chỉ đọc số tổng hợp) + 4 login dịch vụ (docs/roles.sql).
 WATCH_ROLES = ("agent_writer", "app_human", "bks_reader", "ben_a_reader",
                "svc_webhook", "svc_job", "svc_loader", "svc_backup")
@@ -511,15 +513,26 @@ def render(data: dict, label: str, now: datetime) -> str:
     return "\n".join(L)
 
 
+# v14.3: loại lần chạy → tính năng danh mục (cổng giai đoạn HĐ 6.7).
+KIND_FEATURE = {"inside_out": "ceo-04.2", "recon": "ceo-04.1",
+                "hdtv_pack": "ceo-05"}
+
+
 def record_run(conn, kind: str, label: str, params: dict, findings: int,
-               text: str, run_by: str) -> int:
+               text: str, run_by: str, sample: bool = False) -> int:
     """Ghi 1 dòng `audit_runs` (sha256 = bản báo cáo đã ghi) + commit
-    tường minh (conn có thể đã mở tx bằng SELECT — gotcha v2.1)."""
+    tường minh (conn có thể đã mở tx bằng SELECT — gotcha v2.1). v14.3:
+    tính năng của `kind` TẮT → RolloutBlocked, không ghi; `sample` = báo
+    cáo dựng trên số MẪU → cờ provenance `is_sample` (không đếm đầu ra)."""
+    from pipelines import rollout  # lười: rollout → director → ...
+    rollout.check_generate(conn, KIND_FEATURE.get(kind),
+                           f"sổ lần chạy kiểm soát ({kind})")
     sha = hashlib.sha256(text.encode("utf-8")).hexdigest()
     rid = conn.execute(
         "insert into audit_runs (kind, period_label, params, findings,"
-        " report_sha256, run_by) values (%s, %s, %s, %s, %s, %s) returning"
-        " id", (kind, label, Jsonb(params), findings, sha, run_by)
+        " report_sha256, run_by, is_sample) values (%s, %s, %s, %s, %s, %s,"
+        " %s) returning id",
+        (kind, label, Jsonb(params), findings, sha, run_by, bool(sample))
     ).fetchone()[0]
     conn.commit()
     return rid
@@ -539,6 +552,7 @@ def month_bounds(month_arg: str | None, now: datetime):
 
 
 def main(argv=None, now=None) -> int:
+    from pipelines.rollout import RolloutBlocked  # lười: tránh vòng import
     ap = argparse.ArgumentParser(
         prog="python -m agents.bks_audit",
         description="Audit inside-out BKS (CHỈ ĐỌC; ghi duy nhất audit_runs "
@@ -588,6 +602,9 @@ def main(argv=None, now=None) -> int:
                              n, text, RUN_BY)
     except psycopg.Error as e:
         print(f"[error] lỗi DB: {_why(e)}", file=sys.stderr)
+        return 2
+    except RolloutBlocked as e:      # HĐ 6.7
+        print(f"[blocked] {e}", file=sys.stderr)
         return 2
     finally:
         with suppress(Exception):

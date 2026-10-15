@@ -410,3 +410,31 @@ begin
   execute format('grant select on all sequences in schema %s to svc_backup',
                  quote_ident(current_schema()));
 end $$;
+
+-- ===== v14.3 p3 rollout phủ đủ biên =====
+-- * `enqueue_item` bản 11 tham số (cờ mẫu) — cùng người được gọi bản 10.
+-- * `report_outputs`: mọi tiến trình ghi báo cáo qua `write_report` (agent
+--   / job / người — đều kế thừa agent_writer) INSERT được, không UPDATE/
+--   DELETE (append-only). bks_reader KHÔNG (đường ghi duy nhất của role là
+--   audit_runs) → báo cáo BKS chạy bằng login bks_reader không vào sổ đếm
+--   (cảnh báo, không chặn báo cáo); `audit_runs` vẫn đếm.
+-- * `san_suggestions`: CLI `channels --suggest` (người MXH, kế thừa
+--   agent_writer) ghi gợi ý; `san_suggestion_uses` chỉ NGƯỜI (app_human).
+-- * svc_loader đọc `feature_rollout` để cổng tính năng của loader có đầu ra
+--   (đối soát `recon_results`, gom lead) thấy được giai đoạn `tat` — không
+--   đọc được thì `rollout.mode` rơi về chạy thử, tắt không chặn được.
+-- * `audit_runs.is_sample`: bks_reader ghi thêm cột cờ mẫu.
+grant execute on function
+  enqueue_item(text, text, text, text, text, text, jsonb, text, text, int,
+               boolean)
+  to agent_writer;
+grant insert (feature_id, name, sha256, is_sample) on report_outputs
+  to agent_writer;
+grant select on report_outputs, san_suggestions, san_suggestion_uses
+  to app_human;
+grant select, insert (channel, msg_ref, answer, handoff, guardrail_ok, stage,
+  created_by) on san_suggestions to agent_writer;
+grant insert (suggestion_id, used_by, stage) on san_suggestion_uses
+  to app_human;
+grant select on feature_rollout to svc_loader;
+grant insert (is_sample) on audit_runs to bks_reader;

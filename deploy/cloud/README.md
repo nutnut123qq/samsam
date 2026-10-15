@@ -109,6 +109,9 @@ bảng nào thì dừng, không bật app.
 | `garden_media` | B | metadata ảnh vườn (v9.3); file ảnh nằm ở `GARDEN_MEDIA_DIR` ngoài repo — sao lưu thư mục đó riêng |
 | `orders` | A | |
 | `order_history` | B | (v14.2) append-only — lịch sử đổi trạng thái đơn thật (HĐ 7.3 iii); không dựng lại được từ nguồn |
+| `report_outputs` | B | (v14.3) append-only — sổ báo cáo file của tính năng (đếm đầu ra nghiệm thu PL02); không dựng lại được từ nguồn |
+| `san_suggestions` | B | (v14.3) append-only — gợi ý chat sàn đã soạn (không tin buyer, chỉ sha256 tin đã che PII); bằng chứng đầu ra sales-02 |
+| `san_suggestion_uses` | B | (v14.3) append-only — người MXH xác nhận đã dán gửi gợi ý |
 | `assets` | A | |
 | `leads` | B | dữ liệu khách — PII, chỉ qua backup mã hóa |
 | `contacts` | B | (v5.2) PII đã mã hóa Fernet — vô dụng nếu thiếu `CONTACT_VAULT_KEY`; mang khóa theo đường RIÊNG, không cùng file backup |

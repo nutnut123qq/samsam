@@ -9,6 +9,10 @@ Contract:
     > 100 ký tự → exit 2 TRƯỚC khi connect; DB CHECK chặn thêm lớp nữa).
     Agent CHỈ ĐỀ XUẤT (`--propose`, chỉ đọc): mục hàng duyệt khối `ceo` đã
     approved/rejected chưa có trong sổ.
+  - v14.3 (HĐ 6.7): `--record`/`--follow` KHÔNG qua cổng giai đoạn
+    `rollout` — dòng sổ là quyết định NGƯỜI ghi (CHECK chặn agent/system),
+    không phải đầu ra AI; tắt ceo-02.2 không được chặn TGĐ ghi quyết định.
+    `--propose` chỉ đọc, không ghi gì.
   - Căn cứ phải TỒN TẠI: `approval_queue:ID` (phải approved|rejected — người
     quyết mặc định = `decided_by` của mục, `--decided-by` khác → từ chối),
     `approvals:ID`, `decisions:ID`, hoặc `van_ban` (văn bản ngoài hệ thống —

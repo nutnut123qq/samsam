@@ -401,8 +401,15 @@ def _cancel_map() -> dict:
             for ch in ("shopee", "tiktok")}
 
 
+FEATURE_ATTR = "finance-03.2"
+
+
 def attribute(conn, cancel: dict | None = None) -> dict:
-    """Ghi nhận đơn sàn qua mã → affiliate_attributions (idempotent)."""
+    """Ghi nhận đơn sàn qua mã → affiliate_attributions (idempotent).
+    v14.3: tính năng finance-03.2 TẮT → RolloutBlocked (HĐ 6.7), không
+    ghi (main in [error] exit 1)."""
+    from pipelines import rollout  # lười: rollout → director → ...
+    rollout.check_generate(conn, FEATURE_ATTR, "ghi nhận đơn affiliate")
     cancel = cancel if cancel is not None else _cancel_map()
     res = {"new": 0, "updated": 0, "same": 0, "unknown_code": 0,
            "web_skipped": 0}

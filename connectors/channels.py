@@ -24,10 +24,22 @@ TƯỜNG MINH — không suy diễn). `user_hash` = HMAC-SHA256(muối env
 
 Văn bản khách thấy nằm ở `data/channels.json` (NHÁP chờ Pháp chế).
 
+Gợi ý chat sàn (sales-02, v14.3 — HĐ 6.7/PL02 mục 1): mỗi lần `--suggest`
+ghi 1 dòng `san_suggestions` (KHÔNG lưu tin buyer: chỉ `msg_ref` = sha256
+tin đã che PII; câu gợi ý đã che PII; guardrail; giai đoạn lúc soạn;
+người MXH) để bộ đếm đầu ra đếm DISTINCT theo (kênh, msg_ref). `tat` →
+exit 2, không gọi AI, không ghi. Chưa vận hành (chạy thử / DB down) → in
+nhãn "CHẠY THỬ — chưa được dùng", KHÔNG có lệnh đánh dấu. `--mark-sent ID
+--by` = NGƯỜI MXH xác nhận đã dán gửi (`san_suggestion_uses`, qua
+`auth.cli_gate` khối sales) — chỉ khi giai đoạn hiện tại cho dùng
+(`rollout.use_reason`) VÀ gợi ý được soạn ngoài chạy thử, guardrail đạt.
+
 Chạy:
   echo "<tin buyer>" | python -m connectors.channels --suggest shopee --by "<tên MXH>"
+  python -m connectors.channels --mark-sent ID --by "<tên MXH>"
   python -m connectors.channels --eval-real --limit 8   # gọi LLM thật, vài cent
-Exit: 0 ok · 1 eval thật FAIL/thiếu key · 2 tham số sai/stdin rỗng.
+Exit: 0 ok · 1 eval thật FAIL/thiếu key, --mark-sent bị từ chối · 2 tham số
+sai/stdin rỗng/tính năng tắt/DB down (--mark-sent).
 """
 
 import argparse
@@ -601,38 +613,138 @@ def score_cskh(case: dict, out: dict, *, content: bool = True
 SUGGEST_FEATURE = "sales-02"
 
 
-def _suggest(channel: str, text: str) -> int:
+def _suggest(channel: str, text: str, by: str | None = None) -> int:
     """v13 vá review (F03): đọc giai đoạn `sales-02` (HĐ 6.7). `tat` → không
     gọi AI, exit 2. Chưa vận hành (chạy thử / DB down = fail-closed) → vẫn
-    soạn để đánh giá nội bộ nhưng in nhãn KHÔNG dán gửi khách."""
+    soạn để đánh giá nội bộ nhưng in nhãn KHÔNG dán gửi khách.
+    v14.3: có `by` (CLI luôn có) → ghi đầu ra `san_suggestions` để đếm."""
     from pipelines import rollout
-    md = rollout.quick_mode()
-    if md is None:
-        conn = _connect()
-        try:
-            md = rollout.mode(conn, SUGGEST_FEATURE)
-        finally:
-            if conn is not None:
-                conn.close()
-    if md == "tat":
-        print(f"[blocked] tính năng {SUGGEST_FEATURE} (gợi ý chat sàn) đang"
-              " TẮT — không soạn gợi ý (HĐ 6.7)", file=sys.stderr)
-        return 2
+    conn = _connect()
     try:
-        out = respond(channel, "cli:mxh", text)
-    except Exception as e:  # noqa: BLE001 — gateway chặn/DB lỗi: vẫn có câu dán
-        _warn(f"answer() lỗi {type(e).__name__} — dùng câu chuyển nhân viên")
-        out = {"answer": template("san_handoff"), "handoff": "no_data",
-               "blocked": []}
-    if md not in rollout.USABLE:
-        print("[CHẠY THỬ — CHỈ ĐÁNH GIÁ NỘI BỘ, KHÔNG dán gửi khách"
-              f" ({SUGGEST_FEATURE} chưa vận hành, HĐ 6.7)]")
+        md = rollout.quick_mode() or rollout.mode(conn, SUGGEST_FEATURE)
+        if md == "tat":
+            print(f"[blocked] tính năng {SUGGEST_FEATURE} (gợi ý chat sàn) "
+                  "đang TẮT — không soạn gợi ý (HĐ 6.7)", file=sys.stderr)
+            return 2
+        try:
+            out = respond(channel, "cli:mxh", text)
+        except Exception as e:  # noqa: BLE001 — gateway chặn/DB lỗi: vẫn có câu dán
+            _warn(f"answer() lỗi {type(e).__name__} — dùng câu chuyển nhân "
+                  "viên")
+            out = {"answer": template("san_handoff"), "handoff": "no_data",
+                   "blocked": []}
+        sid = (record_san_suggestion(conn, channel, text, out, md, by)
+               if by else None)
+    finally:
+        if conn is not None:
+            conn.close()
+    usable = md in rollout.USABLE
+    if not usable:
+        print("[CHẠY THỬ — CHỈ ĐÁNH GIÁ NỘI BỘ, chưa được dùng: KHÔNG dán "
+              f"gửi khách ({SUGGEST_FEATURE} chưa vận hành, HĐ 6.7)]")
     print("[GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]")
     print(out["answer"])
     if out.get("handoff"):
         print(f"handoff={out['handoff']}")
     if out.get("blocked"):
         print(f"blocked={','.join(out['blocked'])}")
+    if sid is not None and usable:
+        print(f"[đầu ra #{sid}] dán xong → python -m connectors.channels "
+              f"--mark-sent {sid} --by '<tên MXH>'")
+    elif sid is not None:
+        print(f"[đầu ra #{sid}] ghi nội bộ (chạy thử) — không đánh dấu đã "
+              "gửi được")
+    return 0
+
+
+SUGGEST_STAGES = ("chay_thu", "co_nguoi_duyet", "van_hanh")
+_HANDOFF_RE = re.compile(r"[a-z_]{1,40}")
+
+
+def suggestion_ref(text: str) -> str:
+    """Khóa tin buyer KHÔNG chứa tin: sha256(tin đã che PII, gộp khoảng
+    trắng, casefold)[:32] — cùng câu hỏi gợi ý lại = 1 đầu ra."""
+    norm = " ".join(_mask_pii(str(text)).split()).casefold()
+    return hashlib.sha256(norm.encode("utf-8")).hexdigest()[:32]
+
+
+def record_san_suggestion(conn, channel: str, text: str, out: dict,
+                          stage: str, by: str) -> int | None:
+    """1 dòng `san_suggestions` → id | None (DB down / lỗi → [warn], không
+    chặn việc in gợi ý). Không lưu tin buyer, câu gợi ý qua `_mask_pii`."""
+    import psycopg
+
+    from pipelines import guardrail
+    if conn is None:
+        _warn("DB down — gợi ý không được ghi (không đếm đầu ra)")
+        return None
+    answer = _mask_pii(str(out.get("answer") or "")).strip()[:MAX_INBOUND]
+    if channel not in SAN_CHANNELS or stage not in SUGGEST_STAGES \
+            or not answer:
+        return None
+    ok = guardrail.check(answer)["ok"] and not san_violations(answer)
+    ho = out.get("handoff")
+    ho = ho if isinstance(ho, str) and _HANDOFF_RE.fullmatch(ho) else None
+    try:
+        with conn.transaction():
+            sid = conn.execute(
+                "insert into san_suggestions (channel, msg_ref, answer,"
+                " handoff, guardrail_ok, stage, created_by) values (%s, %s,"
+                " %s, %s, %s, %s, %s) returning id",
+                (channel, suggestion_ref(text), answer, ho, ok, stage,
+                 by.strip()[:MAX_BY_LEN])).fetchone()[0]
+        conn.commit()
+        return sid
+    except psycopg.Error as e:
+        _warn(f"không ghi được gợi ý ({type(e).__name__}) — không đếm đầu ra")
+        return None
+
+
+def _mark_sent(sid: int, by: str) -> int:
+    """NGƯỜI MXH xác nhận đã dán gửi gợi ý #sid → `san_suggestion_uses`."""
+    import psycopg
+
+    from pipelines import auth, rollout
+    conn = _connect()
+    if conn is None:
+        print("[FAIL] DB không kết nối được (DATABASE_URL)", file=sys.stderr)
+        return 2
+    try:
+        row = conn.execute("select guardrail_ok, stage from san_suggestions"
+                           " where id = %s", (sid,)).fetchone()
+        if row is None:
+            print(f"[TỪ CHỐI] không có gợi ý #{sid}", file=sys.stderr)
+            return 1
+        why = auth.cli_gate(conn, by, "sales", "verify", "san_suggestion",
+                            str(sid))
+        if why is None and not row[0]:
+            why = "gợi ý không qua guardrail/luật kênh sàn — không dùng"
+        if why is None and row[1] not in rollout.USABLE:
+            why = ("gợi ý soạn lúc CHẠY THỬ — chỉ đánh giá nội bộ, không "
+                   "đánh dấu đã gửi (HĐ 6.7)")
+        if why is None:
+            why = rollout.use_reason(conn, SUGGEST_FEATURE, f"gợi ý #{sid}",
+                                     rollout.is_human(by))
+        if why:
+            conn.rollback()
+            print(f"[TỪ CHỐI] {why}", file=sys.stderr)
+            return 1
+        md = rollout.mode(conn, SUGGEST_FEATURE)
+        with conn.transaction():
+            conn.execute("insert into san_suggestion_uses (suggestion_id,"
+                         " used_by, stage) values (%s, %s, %s)",
+                         (sid, by.strip(), md))
+        conn.commit()
+    except psycopg.errors.UniqueViolation:
+        print(f"[skip] gợi ý #{sid} đã được đánh dấu trước đó",
+              file=sys.stderr)
+        return 0
+    except psycopg.Error as e:
+        print(f"[FAIL] lỗi DB {type(e).__name__}", file=sys.stderr)
+        return 2
+    finally:
+        conn.close()
+    print(f"[OK] gợi ý #{sid}: đã dán gửi — người: {by.strip()}")
     return 0
 
 
@@ -696,29 +808,37 @@ def main(argv=None) -> int:
                     "không gọi API sàn) / chạy eval A1 thật nhỏ")
     ap.add_argument("--suggest", choices=SAN_CHANNELS,
                     help="đọc tin buyer từ STDIN, in câu gợi ý")
+    ap.add_argument("--mark-sent", type=int, metavar="ID",
+                    help="NGƯỜI MXH xác nhận đã dán gửi gợi ý #ID")
     ap.add_argument("--by", help="tên người MXH dùng gợi ý (bắt buộc với"
-                                 " --suggest)")
+                                 " --suggest/--mark-sent)")
     ap.add_argument("--eval-real", action="store_true",
                     help="chạy ca kd_a1 với answer() THẬT (tốn vài cent)")
     ap.add_argument("--limit", type=int, default=8)
     args = ap.parse_args(argv)
-    n_ops = (args.suggest is not None) + args.eval_real
+    n_ops = ((args.suggest is not None) + args.eval_real
+             + (args.mark_sent is not None))
     if n_ops != 1:
-        ap.error("cần đúng 1 thao tác: --suggest KÊNH | --eval-real")
+        ap.error("cần đúng 1 thao tác: --suggest KÊNH | --mark-sent ID |"
+                 " --eval-real")
     if args.eval_real:
         if not 1 <= args.limit <= 50:
             ap.error("--limit phải 1..50")
         return _eval_real(args.limit)
     by = (args.by or "").strip()
     if not by or len(by) > MAX_BY_LEN or not by.isprintable():
-        ap.error(f"--suggest cần --by <tên MXH> (1..{MAX_BY_LEN} ký tự in"
-                 " được)")
+        ap.error(f"--suggest/--mark-sent cần --by <tên MXH> (1..{MAX_BY_LEN}"
+                 " ký tự in được)")
+    if args.mark_sent is not None:
+        if args.mark_sent < 1:
+            ap.error("--mark-sent cần ID dương")
+        return _mark_sent(args.mark_sent, by)
     if hasattr(sys.stdin, "reconfigure"):
         sys.stdin.reconfigure(encoding="utf-8", errors="replace")
     text = sys.stdin.read(MAX_STDIN)
     if not text.strip():
         ap.error("STDIN rỗng — dán tin buyer qua STDIN (không qua argv)")
-    return _suggest(args.suggest, text)
+    return _suggest(args.suggest, text, by)
 
 
 if __name__ == "__main__":

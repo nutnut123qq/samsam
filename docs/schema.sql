@@ -3765,3 +3765,136 @@ create or replace trigger orders_guard_row
 create or replace trigger orders_no_truncate
   before truncate on orders
   for each statement execute function append_only_guard();
+
+-- ===== v14.3 p3 rollout phủ đủ biên =====
+-- HĐ 6.7; PL02 mục 1a–c (F03/F04 còn hở sau v13). Idempotent.
+--   * Cột cờ mẫu THỐNG NHẤT `is_sample` (provenance ghi lúc tạo, thay quy
+--     ước tên 'sample'/'mau'/'MẪU' của bộ đếm đầu ra `pipelines.rollout`)
+--     cho bảng chưa có cột nguồn: `approval_queue` (qua `enqueue_item` bản
+--     11 tham số — bản 10 tham số cũ gọi lại với false), `allocation_
+--     proposals` (tồn kho nguồn là mẫu), `audit_runs` (báo cáo dựng trên
+--     số mẫu). Dòng cũ = false (không đoán lại); bộ đếm vẫn loại thêm theo
+--     quy ước tên cũ (chỉ loại thêm — fail-closed, không bao giờ biến mẫu
+--     thành thật).
+--   * `report_outputs` — sổ báo cáo file đã sinh của TÍNH NĂNG (tiền tố
+--     `output_sources.report`): `agents.report.write_report` ghi 1 dòng sau
+--     khi ghi file (tên, sha256 nội dung, `is_sample`). Bộ đếm đầu ra loại
+--     `report` đếm DISTINCT tên trong cửa sổ giai đoạn. APPEND-ONLY.
+--   * `san_suggestions` — gợi ý chat sàn (`connectors.channels --suggest`,
+--     sales-02): KHÔNG lưu tin buyer (chỉ `msg_ref` = sha256 tin ĐÃ CHE PII),
+--     câu gợi ý đã che PII, giai đoạn lúc soạn. `san_suggestion_uses` —
+--     NGƯỜI đánh dấu đã dán gửi (`--mark-sent`, chỉ khi giai đoạn cho dùng).
+--     Cả hai APPEND-ONLY.
+alter table approval_queue
+  add column if not exists is_sample boolean not null default false;
+alter table allocation_proposals
+  add column if not exists is_sample boolean not null default false;
+alter table audit_runs
+  add column if not exists is_sample boolean not null default false;
+
+create or replace function enqueue_item(p_object_type text, p_object_id text,
+  p_block text, p_title text, p_payload text, p_risk text, p_guardrail jsonb,
+  p_qa_status text, p_created_by text, p_sla_hours int, p_is_sample boolean)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := btrim(coalesce(p_created_by, ''));
+  v_id bigint;
+  v_sha text;
+begin
+  if v_by = '' then
+    raise exception 'thiếu người/agent tạo mục';
+  end if;
+  if p_sla_hours is null or p_sla_hours < 1 or p_sla_hours > 720 then
+    raise exception 'SLA % giờ ngoài khoảng 1..720', p_sla_hours;
+  end if;
+  insert into approval_queue (object_type, object_id, block, title, payload,
+    content_sha256, risk, guardrail, qa_status, created_by, due_at,
+    is_sample)
+  values (p_object_type, p_object_id, p_block, coalesce(p_title, ''),
+    p_payload, repeat('0', 64), p_risk, coalesce(p_guardrail, '{}'::jsonb),
+    coalesce(p_qa_status, 'none'), v_by,
+    now() + make_interval(hours => p_sla_hours), coalesce(p_is_sample, false))
+  returning approval_queue.id, approval_queue.content_sha256
+    into v_id, v_sha;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'queue_enqueue', p_object_type, p_object_id,
+          jsonb_build_object('queue_id', v_id, 'content_sha256', v_sha,
+                             'block', p_block));
+  return v_id;
+end $$;
+revoke execute on function enqueue_item(text, text, text, text, text, text,
+  jsonb, text, text, int, boolean) from public;
+
+-- Bản 10 tham số (mọi caller cũ) = không phải mẫu.
+create or replace function enqueue_item(p_object_type text, p_object_id text,
+  p_block text, p_title text, p_payload text, p_risk text, p_guardrail jsonb,
+  p_qa_status text, p_created_by text, p_sla_hours int)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+begin
+  return enqueue_item(p_object_type, p_object_id, p_block, p_title,
+    p_payload, p_risk, p_guardrail, p_qa_status, p_created_by, p_sla_hours,
+    false);
+end $$;
+revoke execute on function enqueue_item(text, text, text, text, text, text,
+  jsonb, text, text, int) from public;
+
+create table if not exists report_outputs (
+  id bigint generated always as identity primary key,
+  feature_id text not null
+    check (feature_id ~ '^[a-z_]+-[0-9]{2}([.][0-9]{1,2})?$'),
+  name text not null check (char_length(name) between 1 and 200
+    and name !~ '[/\\]'),
+  sha256 text not null check (sha256 ~ '^[0-9a-f]{64}$'),
+  is_sample boolean not null default false,
+  created_at timestamptz not null default now(),
+  db_role text not null default session_user
+);
+create index if not exists report_outputs_feature_idx
+  on report_outputs (feature_id, created_at);
+create or replace trigger report_outputs_append_only_row
+  before update or delete on report_outputs
+  for each row execute function append_only_guard();
+create or replace trigger report_outputs_no_truncate
+  before truncate on report_outputs
+  for each statement execute function append_only_guard();
+
+create table if not exists san_suggestions (
+  id bigint generated always as identity primary key,
+  channel text not null check (channel in ('shopee', 'tiktok')),
+  msg_ref text not null check (msg_ref ~ '^[0-9a-f]{32}$'),
+  answer text not null check (char_length(answer) between 1 and 4000),
+  handoff text check (handoff is null or handoff ~ '^[a-z_]{1,40}$'),
+  guardrail_ok boolean not null,
+  stage text not null
+    check (stage in ('chay_thu', 'co_nguoi_duyet', 'van_hanh')),
+  created_by text not null check (btrim(created_by) <> ''),
+  created_at timestamptz not null default now(),
+  db_role text not null default session_user
+);
+create index if not exists san_suggestions_created_idx
+  on san_suggestions (created_at);
+create or replace trigger san_suggestions_append_only_row
+  before update or delete on san_suggestions
+  for each row execute function append_only_guard();
+create or replace trigger san_suggestions_no_truncate
+  before truncate on san_suggestions
+  for each statement execute function append_only_guard();
+
+create table if not exists san_suggestion_uses (
+  id bigint generated always as identity primary key,
+  suggestion_id bigint not null unique references san_suggestions (id),
+  used_by text not null check (btrim(used_by) <> ''
+    and lower(btrim(used_by)) not like 'agent:%'
+    and lower(btrim(used_by)) not like 'system:%'),
+  stage text not null check (stage in ('co_nguoi_duyet', 'van_hanh')),
+  used_at timestamptz not null default now(),
+  db_role text not null default session_user
+);
+create or replace trigger san_suggestion_uses_append_only_row
+  before update or delete on san_suggestion_uses
+  for each row execute function append_only_guard();
+create or replace trigger san_suggestion_uses_no_truncate
+  before truncate on san_suggestion_uses
+  for each statement execute function append_only_guard();

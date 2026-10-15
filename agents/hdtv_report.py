@@ -70,6 +70,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CONFIG_FILE = ROOT / "data" / "hdtv_report.json"
 RUN_BY = "agent:hdtv_report"
 OBJECT_TYPE = "hdtv_pack"
+FEATURE = "ceo-05"                 # v14.3 cổng giai đoạn (HĐ 6.7)
 NO_DATA = "[chưa có dữ liệu]"
 NOT_ENOUGH = "[chưa đủ dữ liệu]"
 NOT_RUN = "chưa chạy — không kiểm chứng được"
@@ -520,13 +521,21 @@ def main(argv=None, now=None) -> int:
     try:
         if not (a.submit or a.record):
             conn.read_only = True
+        # v14.3 (HĐ 6.7): ceo-05 TẮT → không dựng gói (không file/sổ/hàng).
+        from pipelines import rollout  # lười: rollout → director → ...
+        try:
+            rollout.check_generate(conn, FEATURE, "gói báo cáo HĐTV")
+        except rollout.RolloutBlocked as e:
+            print(f"[blocked] {e}", file=sys.stderr)
+            return 2
         try:
             pack = build(conn, period, now, cfg=cfg)
             text, ok = finalize(pack)
         except UngroundedNumber as e:
             print(f"[error] {e}", file=sys.stderr)
             return 1
-        path = write_report(text, a.out_dir, f"hdtv-{period}.md")
+        path = write_report(text, a.out_dir, f"hdtv-{period}.md",
+                            sample=pack["sample"])
         print(f"[done] {path} — kỳ {period}, {len(pack['facts'])} fact có "
               f"nguồn, {pack['unreadable']} mục không đọc được")
         if not ok:
@@ -537,7 +546,8 @@ def main(argv=None, now=None) -> int:
                 conn, "hdtv_pack", period,
                 {"facts": len(pack["facts"]),
                  "unreadable": pack["unreadable"],
-                 "guardrail_ok": ok}, pack["unreadable"], text, RUN_BY)
+                 "guardrail_ok": ok}, pack["unreadable"], text, RUN_BY,
+                sample=pack["sample"])
             print(f"[record] audit_runs #{rid}")
         if not a.submit:
             return 0
@@ -550,7 +560,7 @@ def main(argv=None, now=None) -> int:
             qid = director.submit(
                 conn, "ceo", OBJECT_TYPE, object_id=period,
                 title=f"Gói báo cáo HĐTV {kind_vi} {period}", payload=text,
-                created_by=RUN_BY)
+                created_by=RUN_BY, sample=pack["sample"])
         except (psycopg.Error, ValueError, director.DirectorConfigError) as e:
             msg = _db_msg(e) if isinstance(e, psycopg.Error) else str(e)
             print(f"[error] không nộp được hàng chờ: {_cell(msg)[:300]}",

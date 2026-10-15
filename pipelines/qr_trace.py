@@ -10,7 +10,11 @@ insert thẳng `approvals`/`lot_origins`/`qr_signatures`/`qr_codes`):
   issue   phát hành mã ngẫu nhiên `secrets.token_urlsafe(16)` (không suy ra
           được mã lô) — DB kiểm đủ 3 chữ ký
   revoke  thu hồi mã → trang "đã thu hồi"
-  site    sinh trang tĩnh `data/qr_site/<code>/index.html` (gitignored)
+  site    sinh trang tĩnh `data/qr_site/<code>/index.html` (gitignored).
+          v14.3: farming-03.2 chưa cho dùng (chạy thử/tắt — HĐ 6.7) → mã
+          còn hiệu lực KHÔNG xuất trang; trang đã xuất từ trước bị THAY bằng
+          trang "tạm ngưng" (không lời văn lô) + gỡ ảnh không còn trang dùng
+          — tắt thật sự dừng đầu ra đang công khai. Thu hồi vẫn xuất.
   planb   bản tin phương án B theo mốc cấu hình (tem không QR — GĐ quyết)
 
 Danh tính `--by` hiện là TỰ KHAI + allowlist `data/qr_signers.json` (ship
@@ -77,6 +81,7 @@ COORD_RE = re.compile(r"\d{1,3}[.,]\d{4,}")
 TITLE = "Truy xuất nguồn gốc sản phẩm"
 SAMPLE_LINE = "[MẪU] dữ liệu mẫu — không dùng in tem"
 REVOKED = "Mã truy xuất này đã thu hồi"
+PAUSED = "Trang truy xuất của mã này đang tạm ngưng"
 MEDIA_EXT = ("jpg", "png")
 
 
@@ -309,6 +314,11 @@ def revoked_html(day: dt.date) -> str:
     return _html_doc([f"<h1>{html.escape(TITLE)}</h1>",
                       f"<p>{REVOKED}.</p>",
                       f"<p>Ngày thu hồi: {_d(day)}</p>"])
+
+
+def paused_html() -> str:
+    """Trang thay thế khi tính năng chưa được dùng — không lời văn lô."""
+    return _html_doc([f"<h1>{html.escape(TITLE)}</h1>", f"<p>{PAUSED}.</p>"])
 
 
 def _has_metadata(data: bytes, ext: str) -> bool:
@@ -746,6 +756,8 @@ def cmd_site(args) -> int:
                 continue
             if hold:
                 n_hold += 1
+                if (out / code / "index.html").exists():   # đã công khai
+                    pages.append((code, paused_html(), []))
                 continue
             try:
                 st = lot_state(conn, lot_code, cfg, golden)
@@ -773,8 +785,8 @@ def cmd_site(args) -> int:
             print(f"[blocked] {n_hold} mã còn hiệu lực KHÔNG xuất trang — "
                   f"{hold}")
         mdir = out / "media"
-        if n_err == 0 and n_hold == 0 and mdir.is_dir():
-            # gỡ ảnh không còn trang dùng
+        if n_err == 0 and mdir.is_dir():
+            # gỡ ảnh không còn trang dùng (kể cả ảnh của trang bị tạm ngưng)
             for f in mdir.iterdir():
                 stem, _, ext = f.name.partition(".")
                 if (f.is_file() and HEX64_RE.match(stem)
