@@ -36,10 +36,18 @@ Contract:
     approval_enforced`) chỉ nhận người có trong routing độc lập. Bản leo
     thang → xác nhận id gốc. KPI 2 giờ đồng hồ (kể cả T7/CN/Tết) tính ở
     `scripts/ops_monthly.py`.
+  - v14.6 `--escalate` (job 15 phút MỌI ngày, kể cả T7/CN/Tết): cảnh báo
+    đỏ GỐC của MỌI nguồn (không chỉ intel) quá `ESCALATE_AFTER` = 2 giờ ĐỒNG
+    HỒ (không tính giờ làm việc) chưa có `red_alert_acks` → đúng 1 bản leo
+    thang (`detail.escalation_of`, cùng `source_agent` với bản gốc, unique
+    index chung mọi nguồn) gửi tới người nhận độc lập. Mỗi cảnh báo gốc = 1
+    đợt: leo thang 1 lần, không lặp mỗi lần quét; trần `ESC_MAX_PER_RUN`/lần
+    (cũ trước, dư → lần sau). Bản leo thang chưa thông báo được → exit 1.
+    `intel_alert.escalate` dùng chung hàm này (lọc nguồn intel).
 
 Chạy: `python -m pipelines.red_alert --check-routing` (exit 0 khi có ≥1
 người nhận GỬI ĐƯỢC; 1 khi thiếu người nhận HOẶC chưa có kênh gửi) ·
-`--deliver` · `--ack ID --by "Tên" [--note ..]` · `--open`.
+`--deliver` · `--escalate` · `--ack ID --by "Tên" [--note ..]` · `--open`.
 """
 
 import argparse
@@ -82,6 +90,11 @@ BY_MAX = 100
 NOTE_MAX = 500
 BIGINT_MAX = 2 ** 63 - 1
 _ENV = object()           # sender mặc định = đọc cấu hình SMTP từ env
+# v14.6 — PL02 mục 3: 02 giờ ĐỒNG HỒ, hằng code (cấu hình không nới được).
+ESCALATE_AFTER = timedelta(hours=2)
+ESC_LABEL = "CHƯA XÁC NHẬN"
+ESC_PREFIX = f"[LEO THANG — {ESC_LABEL}] "
+ESC_MAX_PER_RUN = 50
 
 
 def _norm(v) -> str:
@@ -325,6 +338,43 @@ def deliver_pending(conn, now: datetime, routing: dict | None = None,
     return st
 
 
+_DUE_SQL = (
+    "select r.id, r.source_agent, r.title, r.detail->>'url' from red_alerts r"
+    " where not (r.detail ? 'escalation_of') and r.ts <= %s"
+    " and (%s::text is null or r.source_agent = %s)"
+    " and not exists (select 1 from red_alert_acks a where a.alert_id = r.id)"
+    " and not exists (select 1 from red_alerts e where e.detail ?"
+    " 'escalation_of' and e.detail->>'escalation_of' = r.id::text)"
+    " order by r.id limit %s")
+
+
+def escalate(conn, now: datetime, routing: dict | None = None,
+             sender=_ENV, *, source: str | None = None) -> dict:
+    """Cảnh báo GỐC quá 2 giờ đồng hồ chưa xác nhận → 1 bản leo thang/cảnh
+    báo (mọi nguồn; `source` = chỉ 1 nguồn) → {"escalated", "dup",
+    "unrouted", "ids"}. Chạy song song: unique index → đếm `dup`."""
+    rows = conn.execute(_DUE_SQL, (now - ESCALATE_AFTER, source, source,
+                                   ESC_MAX_PER_RUN)).fetchall()
+    conn.commit()
+    st = {"escalated": 0, "dup": 0, "unrouted": 0, "ids": []}
+    for aid, src, title, url in rows:
+        detail = {"escalation_of": aid, "label": ESC_LABEL}
+        if url:
+            detail["url"] = url
+        t = " ".join(str(title or "").split())[:200]
+        try:
+            routed, _ = raise_alert(conn, src, f"{ESC_PREFIX}#{aid} {t}",
+                                    detail=detail, routing=routing,
+                                    sender=sender)
+        except UniqueViolation:        # khối transaction() đã tự rollback
+            st["dup"] += 1
+            continue
+        st["escalated"] += 1
+        st["unrouted"] += not routed
+        st["ids"].append(aid)
+    return st
+
+
 def ack(conn, alert_id, by: str, note: str | None = None, *,
         routing: dict | None = None, env=None) -> tuple[bool, str]:
     """NGƯỜI xác nhận MỌI cảnh báo đỏ gốc → (True, msg) | (False, lý do).
@@ -436,6 +486,8 @@ def main(argv=None) -> int:
                    help="exit 0 khi có ≥1 người nhận gửi được, 1 khi thiếu")
     g.add_argument("--deliver", action="store_true",
                    help="gửi lại cảnh báo 48 giờ chưa gửi được/chưa xác nhận")
+    g.add_argument("--escalate", action="store_true",
+                   help="leo thang cảnh báo gốc quá 2 giờ chưa xác nhận")
     g.add_argument("--ack", type=int, metavar="ID",
                    help="xác nhận cảnh báo đỏ gốc (cần --by)")
     g.add_argument("--open", action="store_true",
@@ -470,6 +522,20 @@ def main(argv=None) -> int:
                       f"{_mask_pii(d['title'] or '')[:120]}")
             return 0
         from pipelines.job_runs import job_run
+        if args.escalate:
+            with job_run("pipelines.red_alert.escalate") as jr:
+                st = escalate(conn, now)
+                jr["detail"] = (f"escalated={st['escalated']} dup={st['dup']}"
+                                f" unrouted={st['unrouted']}")
+                jr["ok"] = not st["unrouted"]
+            print(f"[done] {jr['detail']} escalated_of={st['ids']}",
+                  flush=True)
+            if st["unrouted"]:
+                print(f"[RED-ALERT][FAIL] {st['unrouted']} bản leo thang "
+                      f"CHƯA thông báo được ({MISSING} hoặc {NOT_SENT})",
+                      flush=True)
+                return 1
+            return 0
         with job_run("pipelines.red_alert.deliver") as jr:
             st = deliver_pending(conn, now)
             undone = st["failed"] + st["capped"]

@@ -579,6 +579,16 @@ def cmd_link(args, unlink: bool = False) -> int:
         lot_state(conn, args.lot, cfg, golden)       # lô có + thuộc pilot
         if not unlink:
             _gen_gate(conn, FEATURE_LINK, f"ánh xạ lô {args.lot}")
+            # v14.6: trang QR chỉ phát hành ẢNH — sha của video vườn bị từ
+            # chối NGAY khi ánh xạ (trước đây chỉ `site` từ chối lúc phát
+            # hành, sau khi 3 người đã ký); DB cũng chặn (trigger v14.6).
+            vids = conn.execute(
+                "select sha256 from garden_media where sha256 = any(%s)"
+                " and not (ext = any(%s)) order by sha256",
+                (list(args.media or []), list(MEDIA_EXT))).fetchall()
+            if vids:
+                raise QrError(f"tư liệu {vids[0][0][:12]} là video — trang "
+                              "QR chỉ nhận ảnh jpg/png")
         if unlink:
             row, why = _call(conn, "select unlink_lot_origin(%s, %s, %s)",
                              (args.lot, args.log, args.by))

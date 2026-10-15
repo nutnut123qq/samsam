@@ -446,18 +446,19 @@ def build_bulletin(conn, until, days: int = 7, schedule=None) -> str:
                  "(lower), không quét tên hoạt động._")]
     out += _sql_block(q5)
 
-    # (6) ảnh mới
+    # (6) ảnh/video mới — v13.4 `garden_media` nhận cả video (mp4/mov) nên
+    # nhãn "Ảnh" đếm cả video là sai nghĩa (v14.6).
     q6 = [("select plot_id, count(*) from garden_media"
            f" where created_at >= {s} and created_at < {e}"
            " group by plot_id order by plot_id")]
     rows6 = conn.execute(q6[0]).fetchall()
-    out.append("## 6. Ảnh vườn mới (đã gỡ EXIF/GPS)")
+    out.append("## 6. Ảnh/video vườn mới (đã gỡ EXIF/GPS)")
     out.append("")
     if rows6:
-        out += ["| Khoảnh | Ảnh |", "|---|---:|"]
+        out += ["| Khoảnh | Ảnh/video |", "|---|---:|"]
         out += [f"| {p} | {n} |" for p, n in rows6]
     else:
-        out.append("Không có ảnh mới.")
+        out.append("Không có ảnh/video mới.")
     out += _sql_block(q6)
     return "\n".join(out).rstrip("\n") + "\n"
 

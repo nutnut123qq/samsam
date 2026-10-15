@@ -1,0 +1,11 @@
+# v14.6 — lịch job 'legal_updates' (nguồn: deploy/onprem/jobs.json).
+[Unit]
+Description=Sam Sam timer legal_updates
+
+[Timer]
+OnCalendar=*-*-* 07:15:00
+Persistent=true
+Unit=samsam-job@legal_updates.service
+
+[Install]
+WantedBy=timers.target

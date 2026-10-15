@@ -24,7 +24,8 @@ Contract:
     partial chặn báo trùng khi chạy song song → đếm `dup`.
   - `escalate`: cảnh báo gốc quá `ESCALATE_AFTER` (2 giờ, hằng code) chưa
     có dòng `red_alert_acks` và chưa leo thang → 1 cảnh báo leo thang (1 cấp,
-    không lặp), cùng routing độc lập v4.0.
+    không lặp), cùng routing độc lập v4.0. v14.6: gọi `red_alert.escalate`
+    (luật chung mọi cảnh báo đỏ — job `red_alert_escalate` 15 phút).
   - `ack`: NGƯỜI xác nhận cảnh báo gốc (`red_alert_acks`, append-only,
     `acked_at` do DB đặt). Lỗi đầu vào → (False, msg), không raise. v13.7:
     kiểm riêng intel rồi giao `red_alert.ack` (đường xác nhận CHUNG cho mọi
@@ -74,10 +75,11 @@ REG_TOPICS = ("tpbvsk", "quang_cao")
 _SRC_ID_RE = re.compile(r"[a-z0-9_-]+")
 SOURCE_AGENT = "intel_red_alert"
 # Hằng code — KHÔNG đọc từ file (cấu hình không nới được thời hạn leo thang).
-ESCALATE_AFTER = timedelta(hours=2)
+# v14.6: một nguồn duy nhất ở `red_alert` (leo thang chung mọi cảnh báo đỏ).
+ESCALATE_AFTER = red_alert.ESCALATE_AFTER
 ALERT_PREFIX = "[BÁO ĐỎ intel] "
-ESC_LABEL = "CHƯA XÁC NHẬN"
-ESC_PREFIX = f"[LEO THANG — {ESC_LABEL}] "
+ESC_LABEL = red_alert.ESC_LABEL
+ESC_PREFIX = red_alert.ESC_PREFIX
 TITLE_MAX = 200
 BY_MAX = 100
 NOTE_MAX = 500
@@ -89,14 +91,6 @@ _NEW_SQL = (
     " where i.fetched_at >= %s and not exists (select 1 from red_alerts r"
     " where r.source_agent = %s and r.detail ? 'intel_item_id'"
     " and r.detail->>'intel_item_id' = i.id::text) order by i.id")
-_DUE_SQL = (
-    "select r.id, r.title, r.detail->>'url' from red_alerts r"
-    " where r.source_agent = %s and r.detail ? 'intel_item_id'"
-    " and r.ts <= %s"
-    " and not exists (select 1 from red_alert_acks a where a.alert_id = r.id)"
-    " and not exists (select 1 from red_alerts e where e.source_agent = %s"
-    " and e.detail ? 'escalation_of'"
-    " and e.detail->>'escalation_of' = r.id::text) order by r.id")
 _OPEN_SQL = (
     "select r.id, r.ts, r.title, r.detail->>'url', r.recipients,"
     " r.route_error, exists (select 1 from red_alerts e"
@@ -223,27 +217,10 @@ def scan(conn, now: datetime, rules: dict | None = None,
 
 def escalate(conn, now: datetime, routing: dict | None = None,
              sender=red_alert._ENV) -> dict:
-    """Cảnh báo gốc quá 2 giờ chưa xác nhận → 1 bản leo thang (1 cấp)."""
-    rows = conn.execute(_DUE_SQL, (SOURCE_AGENT, now - ESCALATE_AFTER,
-                                   SOURCE_AGENT)).fetchall()
-    conn.commit()
-    st = {"escalated": 0, "dup": 0, "unrouted": 0, "ids": []}
-    for aid, title, url in rows:
-        base = (title or "").removeprefix(ALERT_PREFIX)
-        try:
-            routed, _ = red_alert.raise_alert(
-                conn, SOURCE_AGENT,
-                ESC_PREFIX + f"#{aid} " + _oneline(base, TITLE_MAX),
-                detail={"escalation_of": aid, "url": url,
-                        "label": ESC_LABEL},
-                routing=routing, sender=sender)
-        except UniqueViolation:
-            st["dup"] += 1
-            continue
-        st["escalated"] += 1
-        st["unrouted"] += not routed
-        st["ids"].append(aid)
-    return st
+    """Cảnh báo gốc intel quá 2 giờ chưa xác nhận → 1 bản leo thang (1 cấp).
+    v14.6: dùng CHUNG `red_alert.escalate` (lọc nguồn intel) — cùng 1 luật,
+    cùng unique index với job leo thang mọi nguồn → không leo thang 2 lần."""
+    return red_alert.escalate(conn, now, routing, sender, source=SOURCE_AGENT)
 
 
 def ack(conn, alert_id, by: str, note: str | None = None
