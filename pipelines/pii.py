@@ -412,6 +412,23 @@ _LOW_RECIPIENT_RE = re.compile(
     r"(?<!\w)(?:giao|gui|ship|chuyen)(?:[ \t]+hang)?[ \t]+cho[ \t]+")
 
 
+# v14 vá review: kiểu bỏ dấu CŨ/MỚI ("Hoà"/"Hòa", "Thuý"/"Thúy", "Thuỷ"/
+# "Thủy") cùng một tên — đưa về kiểu mới (dấu ở nguyên âm đầu) cả 2 phía
+# trước khi so dạng có dấu. Chỉ cụm oa/oe/uy CUỐI từ, không sau "q"
+# ("quý" giữ nguyên). Độ dài không đổi (offset an toàn).
+# Dấu thanh NFD (sắc huyền hỏi ngã nặng) — mã số, không ký tự trần.
+_TONE_MARKS = "".join(map(chr, (0x301, 0x300, 0x309, 0x303, 0x323)))
+_OLD_TONE_RE = re.compile(
+    r"(?<!q)(o(?=[ae])|u(?=y))([aey])([" + _TONE_MARKS + r"])(?!\w)")
+
+
+def _tone(w: str) -> str:
+    """Chữ thường NFC -> kiểu dấu mới cho oa/oe/uy cuối từ."""
+    d = unicodedata.normalize("NFD", w)
+    d2 = _OLD_TONE_RE.sub(r"\1\3\2", d)
+    return w if d2 == d else unicodedata.normalize("NFC", d2)
+
+
 def _fold_words(words) -> tuple:
     return tuple(_WORD_RE.findall(_fold_keep(unicodedata.normalize(
         "NFC", " ".join(words) if not isinstance(words, str) else words))))
@@ -422,7 +439,7 @@ class _Dict:
 
     def __init__(self, doc: dict, provinces: dict):
         def pair(key):
-            acc = frozenset(unicodedata.normalize("NFC", w).lower()
+            acc = frozenset(_tone(unicodedata.normalize("NFC", w).lower())
                             for w in doc[key])
             return acc, frozenset(_fold_keep(w) for w in acc)
         self.ho = pair("ho")
@@ -464,9 +481,9 @@ def _names() -> "_Dict | None":
 
 def _in(t: str, f: str, s: int, e: int, sets) -> bool:
     """Từ t[s:e] thuộc `sets` (có dấu, bỏ dấu): gõ không dấu -> so bản bỏ
-    dấu; có dấu -> so đúng dạng có dấu."""
+    dấu; có dấu -> so đúng dạng có dấu (kiểu dấu cũ/mới coi như nhau)."""
     w, fw = t[s:e].lower(), f[s:e]
-    return (fw in sets[1]) if w == fw else (w in sets[0])
+    return (fw in sets[1]) if w == fw else (_tone(w) in sets[0])
 
 
 def _is_place(d: _Dict, f: str, s: int, e: int) -> bool:
@@ -542,6 +559,14 @@ def _dict_spans(d: _Dict, t: str, f: str) -> list[tuple[int, int]]:
         e = _cap_name_span(d, t, f, m.end(), (d.ho,))
         if e > m.end():
             spans.append((m.end(), e))
+    for m in _NAME_WEAK_RE.finditer(f):                         # (k)
+        # v14 vá review: "tôi là tuấn", "em là ngọc" — tên gõ thường trong
+        # từ điển sau tự giới thiệu (Viết Hoa: luật xưng danh yếu).
+        if t[m.end():m.end() + 1].isupper():
+            continue
+        e = _low_name_end(d, t, f, m.end())
+        if e > m.end():
+            spans.append((m.end(), e))
     for m in _LOW_RECIPIENT_RE.finditer(f):                     # (i)
         if t[m.end():m.end() + 1].isupper():
             continue                       # Viết Hoa: luật (c)/(f)
@@ -568,16 +593,17 @@ def _name_spans(t: str, f: str) -> list[tuple[int, int]]:
             # ("Nguyễn Chí Thanh", "Lê Thị Anh") — không áp _STOP.
             e = _words_after(t, f, m.end(), cap_only=True, first_free=True,
                              limit=3, stop=False)
-            if e == m.end():
+            if e > m.end():
+                words = tuple(_WORD_RE.findall(f, s, e))
+                if any(words[:len(x)] == x for x in _NAME_EXCEPT):
+                    continue
+                # v14.1: địa danh trong từ điển ("Hà Đông", "Phan Thiết")
+                if d is not None and _is_place(d, f, s, e):
+                    continue
+                spans.append((s, e))
                 continue
-            words = tuple(_WORD_RE.findall(f, s, e))
-            if any(words[:len(x)] == x for x in _NAME_EXCEPT):
-                continue
-            # v14.1: địa danh trong từ điển ("Hà Đông", "Phan Thiết")
-            if d is not None and _is_place(d, f, s, e):
-                continue
-            spans.append((s, e))
-            continue
+            # v14 vá review: họ Viết Hoa + đệm gõ thường ("Trần thị Bé")
+            # -> rơi xuống luật họ + văn/thị như khi gõ thường.
         nxt = _WORD_RE.match(f, m.end() + 1)
         if (nxt and f[m.end()] == " "
                 and t[nxt.start():nxt.end()].lower() in _MIDDLE):

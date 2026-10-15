@@ -18,7 +18,9 @@ Contract nạp (`python -m ingest.golden_store [--file PATH]`):
       sku_master  on conflict (sku_key): chỉ update khi row không phải
                   `source='manual'` VÀ dữ liệu đổi thật → version+1.
       sku_map     on conflict (product_id): giữ row manual; đổi sku_key
-                  thì xóa approved_by (duyệt cũ không còn giá trị).
+                  thì trigger DB `sku_map_remap_clears_approval` xóa
+                  approved_by (duyệt cũ hết giá trị) — loader không ghi
+                  cột duyệt (login svc_loader chỉ UPDATE sku_key/note).
       price_list  APPEND-ONLY: chưa có dòng mở → insert chờ duyệt; dòng mở
                   cùng giá → bỏ qua; khác giá → đóng valid_to=hôm nay VN
                   + insert dòng mới chờ duyệt (không UPDATE giá).
@@ -328,9 +330,7 @@ def load(conn, doc: dict, source: str = "golden_skus.json") -> dict:
     map_sql = (
         "insert into sku_map (product_id, sku_key, note, source) "
         "values (%s, %s, %s, %s) on conflict (product_id) do update set "
-        "sku_key = excluded.sku_key, note = excluded.note, "
-        "approved_by = case when sku_map.sku_key = excluded.sku_key "
-        "then sku_map.approved_by end "
+        "sku_key = excluded.sku_key, note = excluded.note "
         "where sku_map.source <> 'manual' and (sku_map.sku_key, "
         "sku_map.note) is distinct from (excluded.sku_key, excluded.note)")
     map_note = "đề xuất của agent — chờ Sản xuất duyệt"

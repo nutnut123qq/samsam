@@ -133,6 +133,8 @@ GATES = [
     ("ingest/doc_intake.py", r'cli_gate\(conn, by, "legal_hr"'),
     ("agents/fp_pnl.py", r'cli_gate\(conn, by, "finance", "approve"'),
     ("agents/garden_director.py", r'conn, args\.by, "farming",'),
+    ("ingest/kb_internal.py", (r'cli_gate\(hconn, a\.approved_by, '
+                               r'"data_platform", "approve"')),
 ]
 
 
@@ -521,6 +523,69 @@ def test_cli_authorized_person_passes_gate(live, human, capsys):
     assert _denied(live, "production_lot", "LOT-OK") == before + 1
 
 
+# ---------- v14 vá review (MINOR): KB nội bộ — người duyệt qua cổng
+
+def _kb_file(tmp_path):
+    f = tmp_path / "quy_trinh_MAU.md"
+    f.write_text("# Quy trình MẪU\n\nBước 1: kiểm hàng. Bước 2: ghi sổ.\n",
+                 encoding="utf-8")
+    return f
+
+
+def test_kb_internal_agent_approver_rejected_before_connect(monkeypatch,
+                                                            tmp_path):
+    """`--approved-by agent:*` / `system:*` = không phải người → exit 2
+    TRƯỚC khi connect/embed (code cũ: chỉ kiểm không rỗng → nạp)."""
+    from ingest import kb_internal
+
+    def boom(*a, **k):
+        raise AssertionError("không được connect/embed")
+    monkeypatch.setattr(kb_internal, "connect", boom)
+    monkeypatch.setattr(kb_internal, "embed_all", boom)
+    for who in ("agent:kb", "system:cron"):
+        with pytest.raises(SystemExit) as e:
+            kb_internal.main(["--file", str(_kb_file(tmp_path)),
+                              "--collection", "internal:kd",
+                              "--approved-by", who])
+        assert e.value.code == 2, who
+
+
+def test_kb_internal_enforced_gate_human_login_then_loader(live, human,
+                                                           capsys, tmp_path,
+                                                           monkeypatch):
+    """Chế độ thực: `--approved-by` tự khai không thuộc approvers khối
+    data_platform → chặn, `authz_denied`, 0 embed. Đúng người + login của
+    chính họ → qua cổng, ghi bằng login svc_loader (người không cần quyền
+    ghi `chunks_internal`)."""
+    from ingest import kb_internal
+    calls = []
+
+    def fake_embed(_client, _model, chunks):
+        calls.append(len(chunks))
+        return [[1.0, 0.0] for _ in chunks]
+    monkeypatch.setattr(kb_internal, "embed_all", fake_embed)
+    monkeypatch.setattr(kb_internal, "load_dotenv", lambda *a, **k: None)
+    monkeypatch.setenv("LOADER_DATABASE_URL", live["dsn"]["svc_loader"])
+    oid = "internal:kd/quy-trinh-mau"
+    argv = ["--file", str(_kb_file(tmp_path)), "--collection", "internal:kd"]
+    before = _denied(live, "chunks_internal", oid)
+    assert kb_internal.main([*argv, "--approved-by", ANY]) == 1
+    assert "Bên B ủy quyền" in capsys.readouterr().out
+    assert _denied(live, "chunks_internal", oid) == before + 1
+    assert calls == []
+    human["approve"]("data_platform", PERSON)
+    human["users"]({PERSON: {"role": "tgd",
+                             "db_login": live["name"]["app_human"]}})
+    assert kb_internal.main([*argv, "--approved-by", PERSON]) == 0, \
+        capsys.readouterr()
+    assert calls and _denied(live, "chunks_internal", oid) == before + 1
+    assert _admin_q(live, "select distinct approved_by from chunks_internal"
+                    " where doc_id = 'quy-trinh-mau'") == [(PERSON,)]
+    # login người (app_human) tự ghi chunks_internal: không có quyền
+    with _login(live, "app_human") as c:
+        _deny(c, "delete from chunks_internal")
+
+
 def test_red_alert_ack_needs_own_login(live, cfg, enforce):
     """Người nhận độc lập phải ack bằng login của chính họ."""
     with _login(live, "svc_job") as j:
@@ -768,6 +833,68 @@ def test_loader_login_loads_files_and_cannot_erase(live, tmp_path):
                     " 'market:%'")[0][0] == n_orders
     assert _admin_q(live, "select count(*) from settlement_rows")[0][0] \
         == n_settle
+
+
+def test_loader_login_golden_cannot_self_approve(live, tmp_path):
+    """v14 vá review (MAJOR): login svc_loader nạp golden được nhưng KHÔNG
+    tự duyệt giá/map, KHÔNG quyết/xóa phiếu lệch đã quyết. Code cũ: UPDATE
+    toàn bảng price_list/sku_map + mọi quyền golden_discrepancies → 4 câu
+    probe đều chạy được."""
+    dsn = live["dsn"]["svc_loader"]
+    rc, text = _run(["-m", "ingest.golden_store"], dsn, tmp_path)
+    assert rc == 0, text
+    open_id = _admin_q(live, "select min(id) from price_list where"
+                       " approved_by is null and valid_to is null")[0][0]
+    assert open_id is not None
+    pid, sku = _admin_q(live, "select product_id, sku_key from sku_map"
+                        " order by product_id limit 1")[0]
+    other = _admin_q(live, "select sku_key from sku_master where sku_key"
+                     " <> %s order by 1 limit 1", (sku,))[0][0]
+    n_disc = _admin_q(live, "select count(*) from golden_discrepancies")[0][0]
+    assert n_disc > 0
+    with _login(live, "svc_loader") as c:
+        _deny(c, "update price_list set approved_by = 'svc', approved_at ="
+                 " now() where id = %s", (open_id,))
+        _deny(c, "update sku_map set approved_by = 'svc'")
+        _deny(c, "update golden_discrepancies set status = 'resolved',"
+                 " resolved_by = 'svc'")
+        # INSERT sẵn-duyệt cũng phải bị chặn (sku_map: quyền theo cột;
+        # price_list: trigger append-only).
+        _deny(c, "insert into sku_map (product_id, sku_key, approved_by,"
+                 " source) values ('x-new', %s, 'svc', 'svc')", (sku,))
+    with _login(live, "svc_loader") as c,             pytest.raises(psycopg.errors.RaiseException), c.transaction():
+        c.execute("insert into price_list (sku_key, channel, kind,"
+                  " price_vnd, valid_from, approved_by) values (%s,"
+                  " 'web', 'list', 1, current_date, 'svc')", (sku,))
+    # Phiếu người đã quyết: không role nào xóa được (loader dọn pending).
+    _admin_q(live, "update golden_discrepancies set status = 'resolved',"
+             " resolved_by = 'Lan' where id = (select min(id) from"
+             " golden_discrepancies) returning id")
+    _admin_q(live, "update sku_map set approved_by = 'Sản xuất' where"
+             " product_id = %s returning 1", (pid,))
+    with _login(live, "svc_loader") as c:
+        with pytest.raises(psycopg.errors.CheckViolation), c.transaction():
+            c.execute("delete from golden_discrepancies")
+        # đổi map (việc loader) → duyệt cũ tự xóa, không cần quyền cột duyệt
+        c.execute("update sku_map set sku_key = %s, note = 'x' where"
+                  " product_id = %s", (other, pid))
+        assert c.execute("select approved_by from sku_map where product_id"
+                         " = %s", (pid,)).fetchone()[0] is None
+        c.rollback()
+    assert _admin_q(live, "select count(*) from golden_discrepancies where"
+                    " status = 'resolved'")[0][0] == 1
+    # Phiếu pending hết điều kiện vẫn được loader dọn khi nạp lại.
+    _admin_q(live, "insert into golden_discrepancies (kind, sku_key, detail,"
+             " source) values ('price_mismatch', 'khong-con', '{}',"
+             " 'golden_store') returning id")
+    rc, text = _run(["-m", "ingest.golden_store"], dsn, tmp_path)
+    assert rc == 0, text
+    assert _admin_q(live, "select count(*) from golden_discrepancies where"
+                    " sku_key = 'khong-con'")[0][0] == 0
+    assert _admin_q(live, "select count(*) from golden_discrepancies where"
+                    " status = 'resolved'")[0][0] == 1
+    assert _admin_q(live, "select approved_by from sku_map where"
+                    " product_id = %s", (pid,))[0][0] == "Sản xuất"
 
 
 def test_backup_login_reads_everything_writes_nothing(live):

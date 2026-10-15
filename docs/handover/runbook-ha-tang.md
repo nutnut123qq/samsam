@@ -378,6 +378,7 @@ users file, `--by` khớp `db_login` của login Postgres đang dùng; bị ch�
 | `ingest.doc_intake --verify\|--reject` | legal_hr | verify/reject |
 | `agents.fp_pnl --cogs-approve` | finance | approve |
 | `agents.garden_director --purge-sample\|--adopt-plot` | farming | purge_sample/adopt_plot |
+| `ingest.kb_internal --approved-by` (v14 vá review) | data_platform — cổng chạy trên login CỦA NGƯỜI (`DATABASE_URL`) TRƯỚC khi đổi sang `LOADER_DATABASE_URL` để ghi | approve |
 
 KHÔNG qua cổng (nhập liệu/ghi sổ, người chịu trách nhiệm ghi `--by`):
 `crm --add-contact\|--status`, `xnqc --add`, `rollout --seed`,
@@ -402,7 +403,7 @@ git) trong role nhóm của `docs/roles.sql` khối v14.2, trỏ biến DSN riê
 |---|---|---|---|
 | Webhook Zalo OA / Messenger | `svc_webhook` | `WEBHOOK_DATABASE_URL` | `connectors.zalo`, `connectors.messenger` |
 | Job lịch (agent) | `svc_job` | `JOB_DATABASE_URL` | `pipelines.job_runs --run <job>` (mọi job trừ dưới) |
-| Nạp file | `svc_loader` | `LOADER_DATABASE_URL` | `ingest.core_store\|golden_store (nạp)\|market_csv\|settlement_csv\|inventory_csv\|intel_import\|embed_store\|kb_internal\|lead_store`, `agents.kd_orders` |
+| Nạp file | `svc_loader` | `LOADER_DATABASE_URL` | `ingest.core_store\|golden_store (nạp)\|market_csv\|settlement_csv\|inventory_csv\|intel_import\|embed_store\|kb_internal\|lead_store`, `agents.kd_orders` — golden: KHÔNG duyệt giá/map, KHÔNG quyết/xóa phiếu lệch đã quyết (UPDATE chỉ cột `valid_to`/`sku_key,note`/`detail,updated_at`; v14 vá review) |
 | Backup | `svc_backup` (CHỈ ĐỌC) | `BACKUP_DATABASE_URL` | job `backup` (`scripts/db_backup.py`) |
 | Bên A | `ben_a_reader` | (công cụ của Bên A) | không có tiến trình trong repo |
 

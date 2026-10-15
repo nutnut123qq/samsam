@@ -4030,3 +4030,40 @@ revoke execute on function lot_origins_image_only() from public;
 create or replace trigger lot_origins_image_only_ins
   before insert on lot_origins
   for each row execute function lot_origins_image_only();
+
+-- ===== v14 vá review: golden master không cho login nạp tự duyệt =====
+-- (1) sku_map: đổi map sang SKU khác → duyệt cũ hết giá trị (trước đây
+--     loader tự set `approved_by = case ...` → cần UPDATE cột approved_by =
+--     svc_loader ghi được TÊN duyệt). Trigger lo phần xóa duyệt nên loader
+--     chỉ cần UPDATE (sku_key, note) (roles.sql khối v14.2).
+create or replace function sku_map_remap_clears_approval() returns trigger
+language plpgsql as $$
+begin
+  if new.sku_key is distinct from old.sku_key
+     and new.approved_by is not distinct from old.approved_by then
+    new.approved_by := null;
+  end if;
+  return new;
+end $$;
+revoke execute on function sku_map_remap_clears_approval() from public;
+create or replace trigger sku_map_remap_clears_approval_upd
+  before update on sku_map
+  for each row execute function sku_map_remap_clears_approval();
+-- (2) golden_discrepancies: phiếu NGƯỜI đã quyết (resolved/dismissed) là bằng
+--     chứng — không xóa (mọi role); loader chỉ dọn phiếu `pending` hết điều
+--     kiện. Đổi status/resolved_by: roles.sql chỉ cấp UPDATE (detail,
+--     updated_at) cho svc_loader.
+create or replace function golden_disc_keep_decided() returns trigger
+language plpgsql as $$
+begin
+  if old.status <> 'pending' then
+    raise exception using errcode = 'check_violation',
+      message = format('golden_discrepancies: phiếu id %s đã quyết (%s) —'
+                       ' không xóa', old.id, old.status);
+  end if;
+  return old;
+end $$;
+revoke execute on function golden_disc_keep_decided() from public;
+create or replace trigger golden_disc_keep_decided_del
+  before delete on golden_discrepancies
+  for each row execute function golden_disc_keep_decided();

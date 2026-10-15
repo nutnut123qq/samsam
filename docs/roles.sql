@@ -380,14 +380,29 @@ grant execute on function qr_lot_snapshot_sha(text), verify_plot_logs()
 -- embed_store/kb_internal (KB + chi phí embedding), kd_orders --sync.
 grant select, insert, update on market_snapshots, market_rows, market_alerts,
   inventory_snapshots, intel_imports, competitor_observations, sku_master,
-  sku_map, price_list, orders to svc_loader;
+  orders to svc_loader;
+-- Golden (v14 vá review): loader KHÔNG duyệt giá/map, KHÔNG quyết phiếu lệch
+-- — chỉ cột loader thật ghi. Duyệt = `golden_store --approve-price` (người,
+-- auth.cli_gate) bằng login của người. Đổi map → trigger
+-- `sku_map_remap_clears_approval` xóa duyệt cũ (schema.sql khối vá review).
+grant select, insert on price_list, golden_discrepancies to svc_loader;
+-- sku_map: INSERT theo CỘT, không có approved_by → loader không chèn được map
+-- "đã duyệt" sẵn (price_list có trigger chặn INSERT sẵn-duyệt; sku_map không).
+grant select on sku_map to svc_loader;
+grant insert (product_id, sku_key, note, source) on sku_map to svc_loader;
+grant update (sku_key, note) on sku_map to svc_loader;
+grant update (valid_to) on price_list to svc_loader;
+grant update (detail, updated_at) on golden_discrepancies to svc_loader;
+-- xóa phiếu `pending` hết điều kiện; phiếu đã quyết bị trigger
+-- `golden_disc_keep_decided` chặn với mọi role.
+grant delete on golden_discrepancies to svc_loader;
 grant select, insert on settlement_rows, social_mentions, trends_related,
   trends_weekly to svc_loader;
 grant select, insert, update on recon_results to svc_loader;
 -- `ingest.lead_store` gom lead từ convlog (đã che/hash) — insert-only.
 grant select, insert on leads to svc_loader;
 grant select, insert, update, delete on products, claims_approved, plots,
-  assets, golden_discrepancies, chunks, chunks_internal
+  assets, chunks, chunks_internal
   to svc_loader;
 -- plot_logs: nạp lại nhật ký MẪU chưa chain (delete-by-source) — trigger
 -- `plot_logs_guard` chặn sửa/xóa dòng đã chain kể cả owner; KHÔNG UPDATE.

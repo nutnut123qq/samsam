@@ -177,6 +177,71 @@ def test_names_dict_shape():
     assert set(doc["ho_ro"]) <= set(doc["ho"])
 
 
+# ---- v14 vá review (MINOR): từ điển so sai cách, không phải thiếu tên ----
+# Probe review: 5 câu dưới lọt nguyên tên tới payload embed/chat với
+# handoff=None trên code v14.1 (kiểu dấu cũ, tên gõ thường sau tự giới
+# thiệu, họ Viết Hoa + đệm gõ thường, họ "Bế").
+REVIEW_NAME_CASES = [
+    ("giao Thuỳ 2 hộp Saphraton", ("Thuỳ",)),
+    ("gửi Hoà 1 hộp", ("Hoà",)),
+    ("gửi Thuý ở Hải Châu", ("Thuý",)),
+    ("tôi là tuấn, giao 2 hộp Saphraton", ("là tuấn",)),
+    ("em là ngọc", ("là ngọc",)),
+    ("tôi là tuan", ("tuan",)),
+    ("đặt cho mẹ tôi Trần thị Bé 1 hộp", ("Trần", "Bé")),
+    ("Bế Văn Đàn đặt 1 hộp", ("Bế", "Đàn")),
+]
+REVIEW_NEGATIVE = [
+    "tôi là khách quen", "em là sinh viên", "mình là chủ shop",
+    "tôi là người Quảng Nam", "quý khách cần gì", "hoà vốn không shop",
+    "Thuỷ tinh hay hộp gỗ", "khoẻ không shop", "em là khách mới",
+    "Bé nhà mình dùng được không",
+]
+
+
+@pytest.mark.parametrize("q,leaks", REVIEW_NAME_CASES)
+def test_review_names_masked(q, leaks):
+    out, _risky = pii.scrub_user(q)
+    assert "***" in out, (q, out)
+    for leak in leaks:
+        assert leak not in out, (q, leak, out)
+
+
+@pytest.mark.parametrize("q,leaks", REVIEW_NAME_CASES)
+def test_review_names_never_reach_provider(fake, q, leaks):
+    rag.answer(q)
+    sent = fake.user_payload()
+    assert sent, q
+    for leak in leaks:
+        assert leak not in sent, (q, leak, sent)
+
+
+@pytest.mark.parametrize("q", REVIEW_NEGATIVE)
+def test_review_negatives_untouched(q):
+    assert pii.scrub_user(q) == (q, False)
+
+
+def test_tone_placement_fold_both_sides(monkeypatch, tmp_path):
+    """Từ điển ghi kiểu dấu CŨ ("hoà") vẫn bắt khách gõ kiểu mới ("Hòa") và
+    ngược lại; "quý" (q + uy) không bị đổi."""
+    assert pii._tone("hoà") == pii._tone("hòa") == "hòa"
+    assert pii._tone("thuỷ") == "thủy" and pii._tone("quý") == "quý"
+    assert pii._tone("hoàng") == "hoàng"
+    doc = json.loads((ROOT / "data" / "vn_names.json")
+                     .read_text(encoding="utf-8"))
+    doc["ten"] = [w for w in doc["ten"] if w not in ("hòa",)] + ["hoà"]
+    p = tmp_path / "names.json"
+    p.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+    monkeypatch.setattr(pii, "NAMES_FILE", p)
+    pii._names.cache_clear()
+    try:
+        assert pii.scrub_user("giao Hòa 1 hộp")[0] == "giao *** 1 hộp"
+        assert pii.scrub_user("giao Hoà 1 hộp")[0] == "giao *** 1 hộp"
+    finally:
+        monkeypatch.undo()
+        pii._names.cache_clear()
+
+
 # ---------------- convlog Zalo/Messenger/Streamlit ----------------
 
 @pytest.fixture
@@ -425,6 +490,10 @@ LONG_V14 = {
     "ctx_pair": ("bi gan ", 60000), "hoi_nga": ("khõi ", 100000),
     "ut": ("UT ", 100000), "split": ("tốt. cho ", 60000),
     "space_after_cue": ("giao" + " " * 200000 + "Bích", 1),
+    # v14 vá review: tự giới thiệu + tên gõ thường, kiểu dấu cũ, họ Viết
+    # Hoa + đệm gõ thường
+    "weak_low": ("tôi là tuấn ", 60000), "old_tone": ("giao Hoà ", 60000),
+    "cap_ho_low_dem": ("Trần thị ", 60000),
 }
 
 

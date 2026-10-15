@@ -6,6 +6,14 @@
 Contract:
   - CHỈ chạy sau khi trưởng phòng duyệt tài liệu — `--approved-by` là tên
     NGƯỜI THẬT đã duyệt; agent/test không tự điền tên người thật.
+    v14 vá review: `--approved-by` là QUYẾT ĐỊNH NGƯỜI (data_platform-03 —
+    sổ triển khai đếm `chunks_internal.approved_by` là bằng chứng người
+    duyệt) → `agent:`/`system:` bị từ chối khi validate; rồi
+    `auth.cli_gate(khối data_platform, approve)` trên kết nối bằng login
+    CỦA NGƯỜI (`DATABASE_URL` trước khi đổi sang login dịch vụ): chế độ thực
+    chỉ người trong `approvers` khối data_platform + login Postgres khớp
+    `db_login`; bị chặn → `authz_denied`, exit 1, 0 embed. Ghi bảng vẫn bằng
+    login loader (`LOADER_DATABASE_URL`).
   - Validate HẾT trước khi connect DB và trước khi embed (lỗi -> exit 2):
     approved-by trống; collection sai `^internal:[a-z0-9_]{1,32}$`; file
     không tồn tại / 0 byte / chỉ trắng / đuôi khác .md|.txt / không phải
@@ -85,6 +93,10 @@ def parse_args(argv=None) -> tuple[argparse.Namespace, str]:
     a.approved_by = a.approved_by.strip()
     if not a.approved_by or len(a.approved_by) > 200:
         ap.error("--approved-by phải là tên người duyệt (1-200 ký tự)")
+    from pipelines import auth  # lười: auth → director → ...
+    if not auth.is_human(a.approved_by):
+        ap.error("--approved-by phải là NGƯỜI thật — agent/hệ thống không"
+                 " duyệt tài liệu nội bộ")
     if not COLLECTION_RE.fullmatch(a.collection):
         ap.error("--collection phải dạng internal:<phong> ([a-z0-9_]{1,32})")
     path = Path(a.file)
@@ -155,9 +167,20 @@ def connect():
 
 def main(argv=None) -> int:
     a, text = parse_args(argv)
+    from pipelines import auth  # lười: auth → director → ...
+    # v14 vá review: người duyệt qua cổng TRƯỚC khi đổi DSN sang loader —
+    # kết nối này là login của người (khớp `db_login` ở chế độ thực).
+    hconn = connect()
+    try:
+        why = auth.cli_gate(hconn, a.approved_by, "data_platform", "approve",
+                            "chunks_internal", f"{a.collection}/{a.doc_id}")
+    finally:
+        hconn.close()
+    if why:
+        print(f"[err] {why} — không nạp.", flush=True)
+        return 1
     # v14.2: login dịch vụ nạp file (LOADER_DATABASE_URL, role svc_loader)
     # — chế độ thực từ chối login superuser/owner/thiếu biến.
-    from pipelines import auth  # lười: auth → director → ...
     if why := auth.bind_service("loader"):
         print(f"[err] {why}", flush=True)
         return 2
