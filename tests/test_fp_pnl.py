@@ -304,9 +304,19 @@ def _add(db, sku="savina-12v", cost=50000, day="2026-10-01", by="nguyen a"):
 
 
 def test_schema_no_alter_drop_table():
+    # Từ v9.1 trở đi schema chỉ được THÊM: cấm DDL làm mất/đổi dữ liệu
+    # (drop table/column, đổi kiểu, rename, truncate). v13 (c00 nới CHECK
+    # feature_rollout, c02 `add column if not exists txn_type`) là ALTER
+    # cộng thêm, idempotent — không xóa dòng/cột nào.
     added = SCHEMA_SQL.split("v9.1 FP&A (WP12")[1]
-    assert not re.search(r"^\s*(alter|drop)\s+table", added,
-                         re.IGNORECASE | re.MULTILINE)
+    flags = re.IGNORECASE | re.MULTILINE
+    assert not re.search(r"^\s*drop\s+table", added, flags)
+    for stmt in re.findall(r"^\s*alter\s+table\b[^;]*;", added, flags):
+        assert re.search(r"\b(add\s+column\s+if\s+not\s+exists|"
+                         r"(add|drop)\s+constraint)\b", stmt, re.IGNORECASE), stmt
+        assert not re.search(r"\b(drop\s+column|alter\s+column|rename|"
+                             r"set\s+data\s+type)\b", stmt, re.IGNORECASE), stmt
+    assert not re.search(r"^\s*truncate\b", added, flags)
 
 
 def test_cogs_versions_append_only(db):

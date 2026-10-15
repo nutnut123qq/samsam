@@ -388,7 +388,8 @@ def test_main_dry_run_no_write(db, monkeypatch, tmp_path, capsys):
 
 
 def test_main_year(db, monkeypatch, tmp_path):
-    _cfg(tmp_path, monkeypatch, ngay_bat_dau_van_hanh="2025-09-01",
+    # v13.2 F09: năm hợp tác tính từ NGÀY KÝ (trước: ngay_bat_dau_van_hanh)
+    _cfg(tmp_path, monkeypatch, ngay_ky_hop_dong="2025-09-01",
          kenh_truc_tuyen=["shopee", "tiktok"],
          muc_thuong=[{"muc": 1, "tu_vnd": 1_000_000, "ty_le": 0.1},
                      {"muc": 2, "tu_vnd": 2_000_000, "ty_le": None},
@@ -406,7 +407,7 @@ def test_main_year(db, monkeypatch, tmp_path):
                       ).fetchone()[0] == 0
 
 
-def test_main_year_needs_start(monkeypatch):
+def test_main_year_needs_sign(monkeypatch):
     monkeypatch.setattr(rs, "connect", lambda: pytest.fail("connect"))
     assert rs.main(["--year", "1"], now=NOW) == 1
 
@@ -417,7 +418,7 @@ def test_main_errors_before_connect(monkeypatch, tmp_path):
     assert rs.main(["--quarter", "2026-9"], now=NOW) == 2
     _cfg(tmp_path, monkeypatch, ngay_bat_dau_van_hanh="2026-11-01")
     assert rs.main(["--quarter", "2026-Q3"], now=NOW) == 2       # trước vận hành
-    _cfg(tmp_path, monkeypatch, ngay_bat_dau_van_hanh="2025-12-01")
+    _cfg(tmp_path, monkeypatch, ngay_ky_hop_dong="2025-12-01")
     assert rs.main(["--year", "1"], now=NOW) == 2                 # chưa đóng
     _cfg(tmp_path, monkeypatch, ty_le_phi_van_hanh=7)
     assert rs.main(["--quarter", "2026-Q3"], now=NOW) == 1       # cấu hình
@@ -504,7 +505,8 @@ def test_views_no_order_hash_column():
 
 def test_roles_sql_block_narrow():
     roles = (ROOT / "docs" / "roles.sql").read_text(encoding="utf-8")
-    block = roles[roles.index("===== v12.5 B5"):]
+    # khối v12.5 tới marker khối kế tiếp (lane sau thêm khối cuối file)
+    block = roles[roles.index("===== v12.5 B5"):].split("\n-- =====", 1)[0]
     grants = re.findall(r"(?is)^grant\b.*?;", block, re.MULTILINE)
     assert len(grants) == 1
     assert re.fullmatch(

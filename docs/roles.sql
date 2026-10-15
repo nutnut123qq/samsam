@@ -253,3 +253,9 @@ begin
 end $$;
 grant select on revenue_quarters, v_ben_a_settlement_daily,
   v_ben_a_orders_daily to ben_a_reader;
+
+-- ===== v13.2 c02 đối soát chồng kỳ =====
+-- `bks_recon`/`hdtv_report` (role bks_reader) đọc số quyết toán qua view
+-- `v_settlement_khoan` (1 dòng / khoản, khử bản xuất lại). ben_a_reader vẫn
+-- CHỈ 2 view tổng hợp (view này có order_id_hash → không cấp).
+grant select on v_settlement_khoan to bks_reader;

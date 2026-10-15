@@ -1,0 +1,80 @@
+## apply_schema --roles (lần 1)
+$ python scripts/apply_schema.py --roles ...
+[done] schema applied — 75 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, approval_queue, approvals, assets, audit_runs, auto_policies, b2b_requests, bom_combos, bom_items, care_purchases, channel_posts, channel_snapshots, chat_consents, chunks, chunks_internal, claims_approved, cogs_versions, competitor_observations, consents, contacts, content_drafts, dealer_ar, dealers, decision_log, decisions, document_fields, documents, eval_runs, feature_rollout, feature_rollout_events, garden_media, garden_voice_drafts, golden_discrepancies, image_assets, intel_imports, intel_items, inventory_snapshots, invoice_lines, job_runs, leads, llm_usage, lot_origins, market_alerts, market_rows, market_snapshots, opex_entries, orders, org_prospects, plot_logs, plots, price_list, production_lots, products, project_milestones, qr_codes, qr_signatures, recon_results, red_alert_acks, red_alerts, revenue_quarters, settlement_rows, sim_runs, sku_map, sku_master, sla_escalations, social_mentions, social_mentions_vendor, trends_related, trends_weekly, video_assets, xnqc_dossiers
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+exit=0
+
+## apply_schema --roles (lần 2 — idempotent)
+$ python scripts/apply_schema.py --roles ...
+[done] schema applied — 75 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, approval_queue, approvals, assets, audit_runs, auto_policies, b2b_requests, bom_combos, bom_items, care_purchases, channel_posts, channel_snapshots, chat_consents, chunks, chunks_internal, claims_approved, cogs_versions, competitor_observations, consents, contacts, content_drafts, dealer_ar, dealers, decision_log, decisions, document_fields, documents, eval_runs, feature_rollout, feature_rollout_events, garden_media, garden_voice_drafts, golden_discrepancies, image_assets, intel_imports, intel_items, inventory_snapshots, invoice_lines, job_runs, leads, llm_usage, lot_origins, market_alerts, market_rows, market_snapshots, opex_entries, orders, org_prospects, plot_logs, plots, price_list, production_lots, products, project_milestones, qr_codes, qr_signatures, recon_results, red_alert_acks, red_alerts, revenue_quarters, settlement_rows, sim_runs, sku_map, sku_master, sla_escalations, social_mentions, social_mentions_vendor, trends_related, trends_weekly, video_assets, xnqc_dossiers
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+exit=0
+
+## core_store
+$ python -m ingest.core_store ...
+[load] orders: 5 rows
+
+[load] assets: 219 rows
+
+[done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+
+exit=0
+
+## golden_store
+$ python -m ingest.golden_store ...
+[load] sku_changed=13, map_changed=15, price_inserted=34, price_closed=0, price_same=0
+[disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+exit=0
+
+## nạp file 1
+$ python -m ingest.settlement_csv --file ...
+[load] quyết toán shopee quyet_toan_T8_lan1.csv: 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0
+[warn] 1 dòng chưa thấy đơn sàn — nạp file đơn (`python -m ingest.market_csv --kind order`) rồi chạy `--reconcile`.
+[done]
+exit=0
+
+## nạp file 2 (khác sha, cùng khoản 1.000.000 phí 50.000)
+$ python -m ingest.settlement_csv --file ...
+[load] quyết toán shopee quyet_toan_T8_lan2.csv: 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0
+[warn] khoản xuất lại ở ≥2 file (chồng kỳ): trùng 1, lệch 0 — quyet_toan_T8_lan1.csv, quyet_toan_T8_lan2.csv. Trùng nguyên văn tính 1 lần; lệch giữ cả hai → đối soát quý BẤT THƯỜNG, không tính phí tới khi người đối soát xử lý.
+[warn] 1 dòng chưa thấy đơn sàn — nạp file đơn (`python -m ingest.market_csv --kind order`) rồi chạy `--reconcile`.
+[done]
+exit=0
+
+## nạp lại file 1 (idempotent)
+$ python -m ingest.settlement_csv --file ...
+[skip] file quyết toán đã nạp — không ghi gì.
+exit=0
+
+## --report
+$ python -m ingest.settlement_csv --report ...
+[report] đối soát quyết toán sàn — CHỈ BÁO CÁO, không bút toán:
+  shopee: 2 dòng — khop=0, lech=0, thieu_chung_tu=2, hoan=0
+    thực nhận theo file 950.000đ; tính lại 950.000đ; chênh 0đ; affiliate sàn khấu trừ 0đ; đơn ở ≥2 file quyết toán: 1
+    khoản xuất lại ở ≥2 file: trùng 1, lệch 0 — tổng tiền tính 1 khoản (trùng nguyên văn tính 1 lần; lệch giữ cả hai, chờ người đối soát): quyet_toan_T8_lan1.csv, quyet_toan_T8_lan2.csv
+  tiktok: chưa có file quyết toán
+exit=0
+
+## rev_share --quarter 2026-Q3 --dry-run
+$ python -m agents.rev_share --quarter ...
+| Ngày ký hợp đồng (mốc năm hợp tác) | chưa chốt |
+| Ngày bắt đầu vận hành thương mại | chưa chốt |
+| shopee | 1.000.000đ | 50.000đ | chưa có dữ liệu | 0đ | **chưa có dữ liệu** | 950.000đ | `v_settlement_khoan` (`settlement_rows`, bản xuất lại nguyên văn tính 1 lần) settled_on 2026-07-01 → 2026-09-30, 1 khoản: quyet_toan_T8_lan1.csv (1 dòng); Hủy: `orders` (source market:shopee) 0 đơn hủy, 1 dòng chưa thấy đơn |
+| **Tổng** | chưa có dữ liệu | chưa có dữ liệu | chưa có dữ liệu | chưa có dữ liệu | **chưa có dữ liệu** | chưa có dữ liệu | Σ các kênh (thiếu 1 kênh → chưa có dữ liệu) |
+## Phí vận hành (Điều 9.3, PL02 mục 5)
+| Phí vận hành (quy đổi sản phẩm) | — (chưa chốt tỷ lệ phí vận hành) |
+- shopee: BẤT THƯỜNG — khoản quyết toán xuất lại ở ≥2 file (chồng kỳ): trùng nguyên văn 1 (đã tính 1 lần), lệch số 0 (giữ cả hai, KHÔNG tự chọn file) — nguồn: quyet_toan_T8_lan1.csv, quyet_toan_T8_lan2.csv — người đối soát xác nhận/loại bản thừa (Điều 7.5)
+exit=0
+
+## rev_share --year 1 (ngày ký null → exit 1)
+$ python -m agents.rev_share --year ...
+[error] chưa chốt ngay_ky_hop_dong trong rev_share.json — năm hợp tác tính từ ngày ký hợp đồng (không dùng ngày vận hành/ngày dự kiến).
+exit=1
+
+## bks_recon --month 2026-08 --seed 1 --dry-run
+$ python -m agents.bks_recon --month ...
+| shopee | 1.000.000đ | 950.000đ | 1 | — | 950.000đ | — |
+| quyet_toan_chong_ky | 1 |
+- [quyet_toan_chong_ky] kênh shopee: quyet_toan_T8_lan1.csv; quyet_toan_T8_lan2.csv — khoản xuất lại ở ≥2 file: trùng nguyên văn 1 (Q tính 1 lần), lệch số 0 (giữ cả hai, chờ người đối soát)
+exit=0

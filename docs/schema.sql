@@ -3401,6 +3401,7 @@ create or replace trigger revenue_quarters_no_truncate
   before truncate on revenue_quarters
   for each statement execute function append_only_guard();
 
+-- v13.2: định nghĩa lại ở khối `v13.2 c02` (đọc `v_settlement_khoan`).
 create or replace view v_ben_a_settlement_daily as
 select settled_on, channel, count(*) as n_rows,
        sum(order_amount_vnd) as order_amount_vnd,
@@ -3432,3 +3433,52 @@ alter table feature_rollout
 alter table feature_rollout
   add constraint feature_rollout_feature_id_check
   check (feature_id ~ '^[a-z_]+-[0-9]{2}([.][0-9]{1,2})?$');
+
+-- ===== v13.2 c02 đối soát chồng kỳ =====
+-- F01: cùng 1 khoản quyết toán có thể bị kế toán xuất lại ở file khác/chồng
+-- kỳ (khác sha256 → `unique (file_sha256, row_no)` không chặn). Dữ liệu thô
+-- GIỮ NGUYÊN (không xóa/không tự chọn file mới nhất); mọi caller số doanh
+-- thu (rev_share, fp_pnl → hdtv_report, bks_recon, fp_cash, ACC-Recon
+-- report, view Bên A) đọc `v_settlement_khoan` = 1 dòng / khoản, khoản =
+-- trùng NGUYÊN VĂN mọi trường giao dịch có trong file (kênh, mã đơn hash,
+-- `txn_type`, ngày quyết toán, mọi cột tiền) → tính 1 lần, `n_ban` = số bản.
+-- Cùng (kênh, đơn, txn_type) ở ≥2 file mà số KHÁC → không đoán: giữ cả hai +
+-- `ingest.settlement_csv.overlaps()` báo "lệch" → rev_share BẤT THƯỜNG,
+-- không tính phí. `txn_type` (loại giao dịch: đơn/điều chỉnh/hoàn...) = cột
+-- tùy chọn của mapping — chưa xác minh header file thật thì NULL (1 dòng/đơn).
+alter table settlement_rows add column if not exists txn_type text;
+alter table settlement_rows
+  drop constraint if exists settlement_rows_txn_type_check;
+alter table settlement_rows
+  add constraint settlement_rows_txn_type_check
+  check (txn_type is null or (btrim(txn_type) <> '' and length(txn_type) <= 64));
+
+create or replace view v_settlement_khoan as
+select id, file_sha256, file_name, channel, row_no, order_id_hash, txn_type,
+       order_amount_vnd, fixed_fee_vnd, payment_fee_vnd, service_fee_vnd,
+       shipping_fee_vnd, voucher_seller_vnd, affiliate_vnd, refund_vnd,
+       payout_vnd, settled_on, imported_at, n_ban
+from (select s.*, row_number() over (w order by s.id) as rn,
+             count(*) over w as n_ban
+      from settlement_rows s
+      window w as (partition by s.channel, s.order_id_hash, s.txn_type,
+                   s.settled_on, s.order_amount_vnd, s.fixed_fee_vnd,
+                   s.payment_fee_vnd, s.service_fee_vnd, s.shipping_fee_vnd,
+                   s.voucher_seller_vnd, s.affiliate_vnd, s.refund_vnd,
+                   s.payout_vnd)) k
+where rn = 1;
+
+-- View Bên A (v12.5) đọc khoản đã khử bản trùng — cùng số với rev_share.
+create or replace view v_ben_a_settlement_daily as
+select settled_on, channel, count(*) as n_rows,
+       sum(order_amount_vnd) as order_amount_vnd,
+       sum(fixed_fee_vnd) as fixed_fee_vnd,
+       sum(payment_fee_vnd) as payment_fee_vnd,
+       sum(service_fee_vnd) as service_fee_vnd,
+       sum(shipping_fee_vnd) as shipping_fee_vnd,
+       sum(voucher_seller_vnd) as voucher_seller_vnd,
+       sum(affiliate_vnd) as affiliate_vnd,
+       sum(refund_vnd) as refund_vnd,
+       sum(payout_vnd) as payout_vnd
+from v_settlement_khoan
+group by settled_on, channel;

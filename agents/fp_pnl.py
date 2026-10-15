@@ -46,8 +46,8 @@ import psycopg
 
 from agents.report import REPORTS_DIR, write_report
 from ingest.lead_store import connect
-from ingest.market_csv import _to_int
-from ingest.settlement_csv import CHANNELS, round_half_up
+from ingest.market_csv import _safe, _to_int
+from ingest.settlement_csv import CHANNELS, overlaps, round_half_up
 from pipelines.period import VN_TZ, period_bounds, vn_date
 from pipelines.store import _db_msg
 
@@ -273,7 +273,14 @@ def render(result: dict) -> str:
           ("- GIẢ ĐỊNH thận trọng: dòng hoàn vẫn tính giá vốn theo số lượng "
            "đơn (hàng hoàn nhập kho lại chưa có nguồn)."),
           ("- Chưa có doanh thu đại lý/B2B (MISA — external-dep): P&L chỉ "
-           "kênh sàn."), ""]
+           "kênh sàn.")]
+    for ch, o in sorted((result.get("chong_ky") or {}).items()):
+        L.append(f"- **BẤT THƯỜNG** {ch}: khoản quyết toán xuất lại ở ≥2 file"
+                 f" (chồng kỳ) — trùng nguyên văn {o['trung']} (tính 1 lần),"
+                 f" lệch số {o['lech']} (giữ cả hai, chờ người đối soát): "
+                 + ", ".join(_safe(f, 80).replace("|", "/")
+                             for f in o["files"]))
+    L.append("")
     return "\n".join(L)
 
 
@@ -302,11 +309,13 @@ def fetch_versions(conn) -> list[dict]:
 
 
 def fetch_rows(conn, month: date) -> list[dict]:
-    """Dòng quyết toán trong tháng (giờ VN) + dòng thiếu ngày."""
+    """Khoản quyết toán trong tháng (giờ VN) + dòng thiếu ngày — đọc view
+    `v_settlement_khoan` (bản xuất lại nguyên văn ở file khác tính 1 lần,
+    v13.2 — cùng số với `agents.rev_share`/BKS/view Bên A)."""
     start, end = (d.date() for d in period_bounds("month", month))
     cols = ", ".join(f"s.{c}" for c in _R_COLS[:-1])
     return [dict(zip(_R_COLS, r)) for r in conn.execute(
-        f"select {cols}, r.label from settlement_rows s left join"
+        f"select {cols}, r.label from v_settlement_khoan s left join"
         " recon_results r on r.settlement_row_id = s.id where"
         " (s.settled_on >= %s and s.settled_on < %s) or s.settled_on is null"
         " order by s.id", (start, end))]
@@ -323,7 +332,11 @@ def fetch_lines(conn, hashes: list[str]) -> list[dict]:
 def compute(conn, month: date, channel: str | None = None) -> dict:
     rows = fetch_rows(conn, month)
     lines = fetch_lines(conn, [r["order_id_hash"] for r in rows])
-    return pnl(rows, lines, fetch_versions(conn), month, channel)
+    res = pnl(rows, lines, fetch_versions(conn), month, channel)
+    start, end = (d.date() for d in period_bounds("month", month))
+    res["chong_ky"] = overlaps(conn, [channel] if channel else CHANNELS,
+                               start, end)
+    return res
 
 
 def add_cogs(conn, sku: str, cost: int, valid_from: date, by: str,

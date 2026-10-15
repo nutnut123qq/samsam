@@ -501,8 +501,10 @@ def test_db_load_reconcile_idempotent_report(db, monkeypatch, capsys):
 
 def test_db_report_order_in_two_settlement_files(db, monkeypatch, tmp_path,
                                                  capsys):
-    """File quyết toán thứ 2 giữ đúng 1 đơn chung (FAKESET0001), 15 đơn kia
-    đổi mã → report đếm 1 đơn ở ≥2 file; tổng cộng dồn cả 2 file."""
+    """File quyết toán thứ 2 giữ đúng 1 đơn chung (FAKESET0001, dòng y hệt),
+    15 đơn kia đổi mã → report đếm 1 đơn ở ≥2 file. v13.2 F01 (FLIP — bản cũ
+    cộng dồn cả 2 file = đếm trùng khoản FAKESET0001 279.840đ): tổng tiền
+    tính 1 lần khoản trùng nguyên văn + báo chồng kỳ."""
     _load_orders(db, monkeypatch)
     p = _copy(tmp_path, "settlement_lan2.csv", lambda t: "\n".join(
         ln if ln.startswith(("FAKESET0001", "Mã đơn")) or not ln
@@ -515,10 +517,15 @@ def test_db_report_order_in_two_settlement_files(db, monkeypatch, tmp_path,
     assert _run(db, monkeypatch, "--report") == (0, 0)
     out = capsys.readouterr().out
     assert "shopee: 32 dòng" in out
-    # file 2: 15 dòng thiếu chứng từ (expected vẫn tính từ file) → tổng ×2
-    assert ("thực nhận theo file 13.821.840đ; tính lại 13.831.840đ; chênh "
+    # file 2: 15 dòng thiếu chứng từ (expected vẫn tính từ file); khoản
+    # FAKESET0001 (thực nhận = tính lại = 279.840, affiliate 0) tính 1 lần:
+    # 13.821.840 − 279.840; 13.831.840 − 279.840
+    assert ("thực nhận theo file 13.542.000đ; tính lại 13.552.000đ; chênh "
             "-10.000đ; affiliate sàn khấu trừ 136.800đ; đơn ở ≥2 file quyết "
             "toán: 1") in out
+    assert ("khoản xuất lại ở ≥2 file: trùng 1, lệch 0 — tổng tiền tính 31"
+            " khoản") in out
+    assert "settlement_lan2.csv" in out and "settlement_shopee_MAU.csv" in out
     assert not re.search(PII_RE, out)
 
 
