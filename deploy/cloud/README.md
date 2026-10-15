@@ -116,6 +116,7 @@ bảng nào thì dừng, không bật app.
 | `leads` | B | dữ liệu khách — PII, chỉ qua backup mã hóa |
 | `b2b_quote_events` | B | (v14.4) append-only — mốc gửi/kết quả báo giá B2B do người ghi; không dựng lại được từ nguồn |
 | `dealer_price_obs` | B | (v14.4) append-only — giá đại lý quan sát tay (file nhập tay có thể không còn); không PII |
+| `partner_post_scans` | B | (v14.5) append-only — sổ rà bài KOC/đại lý đã đăng (chỉ mã đối tác + sha256 URL/text, không text/handle); bằng chứng marketing-04.2 |
 | `contacts` | B | (v5.2) PII đã mã hóa Fernet — vô dụng nếu thiếu `CONTACT_VAULT_KEY`; mang khóa theo đường RIÊNG, không cùng file backup |
 | `consents` | B | (v5.2) append-only — bằng chứng đồng ý, dựng lại = mất |
 | `chat_consents` | B | (v5.1) append-only — bằng chứng đồng ý tư vấn chat Zalo/Messenger (user_hash có muối — mang `CHANNEL_HASH_SALT` theo đường riêng, đổi muối = mất liên kết), dựng lại = mất |

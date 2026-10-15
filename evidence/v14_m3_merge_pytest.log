@@ -1,0 +1,58 @@
+# v14 gộp đợt 3 (p5 + p6) — pytest file liên quan sau gộp
+# commit: e2b199c (merge v14-p6) trên v14-hop-dong; DB dựng mới samsam_v14_m3 (apply_schema --roles x2 sạch, 88 bảng; core_store; golden_store) — KHÔNG phải DB .env
+# lệnh: python -m pytest <39 file> -q -ra -p no:cacheprovider
+# file: test_v14_p5_mkt_ceo_intel test_v14_p6_ops test_mkt_ads test_ra_kenh test_intel_weekly test_intel_import test_ceo_audit test_ceo_decisions test_ceo_report test_ceo_risk test_red_alert test_intel_alert test_zalo test_zalo_garden test_qr_trace test_ops_monthly test_garden_director test_job_runs test_handover_docs test_data_flow_map test_dpia_draft test_db_backup test_rollout test_rollout_enforce test_approval_queue test_director test_director_framework test_mkt_director test_auth test_auth_approval test_v13_c04_authz test_v13_c05_media test_v13_c07_ops test_v13_c09_anchor_legal test_v14_p2_service_auth test_v14_p3_rollout_edges test_v14_p4_sales test_v14_p1_pii_guardrail test_sales_director
+# DSN che bằng withdb.py
+
+........................................................................ [  3%]
+........................................................................ [  7%]
+........................................................................ [ 11%]
+........................................................................ [ 14%]
+........................................................................ [ 18%]
+........................................................................ [ 22%]
+........................................................................ [ 26%]
+........................................................................ [ 29%]
+........................................................................ [ 33%]
+........................................................................ [ 37%]
+........................................................................ [ 41%]
+........................................................................ [ 44%]
+........................................................................ [ 48%]
+........................................................................ [ 52%]
+............................................F........................... [ 56%]
+........................................................................ [ 59%]
+........................................................................ [ 63%]
+........................................................................ [ 67%]
+........................................................................ [ 71%]
+........................................................................ [ 74%]
+........................................................................ [ 78%]
+........................................................................ [ 82%]
+........................................................................ [ 86%]
+........................................................................ [ 89%]
+........................................................................ [ 93%]
+........................................................................ [ 97%]
+...................................................                      [100%]
+================================== FAILURES ===================================
+________________________ test_cloud_readme_drift_guard ________________________
+
+    def test_cloud_readme_drift_guard():
+        readme = (ROOT / "deploy" / "cloud" / "README.md").read_text(
+            encoding="utf-8")
+        env = (ROOT / "deploy" / "cloud" / "env.cloud.example").read_text(
+            encoding="utf-8")
+        schema = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
+        tables = re.findall(r"^create table if not exists (\w+)", schema, re.MULTILINE)
+        assert len(tables) == N_TABLES
+        for t in tables:
+>           assert f"`{t}`" in readme, f"README thiếu bảng {t}"
+E           AssertionError: README thiếu bảng partner_post_scans
+E           assert '`partner_post_scans`' in '# Chuyển DB lên Postgres managed trong nước (v3.6, WP02 / F17.4)\n\n> **v12.6 — KHÔNG phải phương án chính theo Hợp đ...\nKhôi phục ĐÈ production không có lệnh tự động: tầng 2, người làm tay, báo\nTGĐ — xem `docs/handover/sop.md` mục 6.\n'
+
+tests\test_db_backup.py:332: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_db_backup.py::test_cloud_readme_drift_guard - AssertionErro...
+1 failed, 1922 passed in 606.26s (0:10:06)
+
+# vá sau gộp: deploy/cloud/README.md thiếu dòng bảng partner_post_scans (p5 thêm bảng nhưng không thêm README cloud) → thêm 1 dòng
+# chạy lại: python -m pytest tests/test_db_backup.py tests/test_handover_docs.py -q → 61 passed in 90.29s
+# ruff check . → All checks passed!; python scripts/dpia_draft.py --check → [ok] khớp map (2 lane không đổi data_flow_map.json)
+# smoke CLI DB m3: red_alert --escalate exit 0 (escalated=0); ceo_promo --dry-run exit 0; intel_weekly --suggest-keywords exit 0 (không có file trends)

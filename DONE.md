@@ -28,7 +28,8 @@ ghi detail khi nhập).
 - `main` = `f96773a` (v13 gộp fast-forward từ `v13-hop-dong`, ĐÃ push
   GitHub 16/10/2026 theo duyệt của user; quét secret trước push sạch).
   Worktree/nhánh lane v13 và DB `samsam_v13_*` đã dọn. Nhánh đang làm:
-  `v14-hop-dong` (đã gộp lane p1–p4; p5, p6 chưa gộp; chưa merge main/push).
+  `v14-hop-dong` (đã gộp lane p1–p6; chưa chạy gate cuối v14; chưa merge
+  main/push).
 - Full pytest SAU SHA cuối `f96773a` (DB dựng mới, không phải DB `.env`):
   **5229 passed, 3 skipped, 0 failed** (18:41) — 3 skipped = `test_dr_drill`
   cần docker image postgres. Log: `evidence/v13_final_f96773a_pytest.log`.
@@ -37,6 +38,158 @@ ghi detail khi nhập).
   mục `chua_nghiem_thu`; còn việc THIẾU CODE (giao lane v14) và việc chờ
   dữ liệu/quyết định bên ngoài — bảng tách ở `docs/handover/v13-board.md`
   mục "Còn mở (16/10/2026)".
+
+## Gộp v14 đợt 3 (p5 + p6)
+
+- `git merge --no-ff` v14-p5 (`3c74014`, không xung đột → `28483f5`) rồi
+  v14-p6 (`b921c83` → `e2b199c`) vào `v14-hop-dong`. Xung đột 3 file, đều dạng
+  nối đuôi — giữ cả hai phía: `docs/schema.sql` (khối v14.5 `partner_post_scans`
+  rồi khối v14.6 index leo thang chung + trigger `lot_origins_image_only`),
+  `AGENTS.md` (2 dòng Commands v14.5, v14.6), `v13-board.md` (dòng p5 từ nhánh
+  p5, dòng p6 từ nhánh p6; sau gộp sửa "chưa gộp" → "đã gộp `v14-hop-dong` —
+  chưa vào main"). Counter dòng so 2 phía: AGENTS.md/schema.sql không thiếu
+  dòng nào (trigger `*_no_truncate` cuối khối p4 còn đủ); board chỉ thiếu 2
+  dòng "giao" cũ đã chủ ý thay. `data/contract_features.json` tự gộp (p5 đổi
+  ceo-04.1/marketing-04.2/intel-04.2, p6 đổi sales-01/intel-02/legal_hr-07/
+  farming-06/data_platform-08 — không trùng khóa). JSON parse được, .py
+  `ast.parse` được, ruff sạch, `dpia_draft.py --check` khớp (2 lane không đổi
+  `data_flow_map.json`). `kien-truc.md` 88 bảng (p5 +1, p6 không thêm bảng).
+- DB `samsam_v14_m3`: `apply_schema --roles` ×2 sạch (88 bảng), core_store,
+  golden_store. pytest 39 file (2 lane đụng + drift + v14 p1–p4):
+  **1922 passed, 1 failed** (10:06) — FAIL do gộp/lane:
+  `test_db_backup::test_cloud_readme_drift_guard` (p5 thêm bảng
+  `partner_post_scans` nhưng không thêm dòng `deploy/cloud/README.md`). Vá 1
+  dòng README; chạy lại test_db_backup + test_handover_docs **61 passed**.
+  Log: `evidence/v14_m3_merge_pytest.log`. Chưa chạy FULL suite (gate cuối
+  v14 chạy).
+- Smoke CLI trên DB m3: `red_alert --escalate` exit 0 (0 cảnh báo), `ceo_promo
+  --dry-run` exit 0, `intel_weekly --suggest-keywords` exit 0 (không có file
+  Trends) — chỉ là smoke, E2E của lane ở `evidence/v14_5_p5_e2e.log`,
+  `evidence/v14_6_p6_e2e.log`.
+- Review diff so DoD (đọc code thật): p5 — 3 biên sinh gọi
+  `rollout.check_generate` (ra_kenh `--partner-file`, ceo_promo, intel_weekly
+  `--suggest-keywords`), `created_by` trong `output_sources` khớp hằng số code
+  (`agent:mkt_doi_tac`, `agent:ceo_audit`, `agent:intel_keywords`); p6 —
+  `red_alert.escalate` dùng chung cho intel, unique index chung mọi nguồn,
+  Zalo đặt hạn chót qua contextvar trong cùng luồng `_reply`, jobs.json +
+  3 timer. Ghi thêm ngoài phần lane tự báo: (1) lần chạy `--escalate` đầu
+  tiên trên DB đã có cảnh báo cũ chưa xác nhận sẽ leo thang hàng loạt (trần 50
+  mỗi lần, cũ trước) — cần quyết cách xử lý tồn khi bật job; (2) `muc_dich`
+  job `red_alert` cũ vẫn ghi "leo thang 2 giờ" trong khi việc leo thang chung
+  nay nằm ở job `red_alert_escalate` (chỉ mô tả, không đổi hành vi); (3) chưa
+  có job lịch cho `ceo_promo` (hằng ngày), `intel_weekly --suggest-keywords`
+  (hằng tuần) và 4 bước v14.4 (`sales_director --run`, `kd_quote
+  --followups`, `kd_orders --watch`, `kd_price --dealer-watch`) — không lane
+  nào nhận.
+- **C00–C11 CHƯA hoàn thành toàn bộ.** Đã gộp p1–p6 vào `v14-hop-dong`; chưa
+  chạy gate cuối v14; chưa vào main, chưa push.
+
+## Checklist v14.6-p6-van-hanh-con-sot
+
+Gộp vào `v14-hop-dong` bởi merge agent v14 đợt 3 (nhánh lane `v14-p6`, `b921c83`).
+CODE VERIFIED, CHƯA nghiệm thu.
+
+- [x] Zalo: hạn 30 giây tính cả phần gửi — refresh token chỉ chạy khi còn đủ
+  thời gian, timeout = phần còn lại trừ 5 giây dành cho gửi (trước cố định 15
+  giây); chờ refresh của luồng khác và lần gửi lại cũng có hạn; bỏ bước vì hết
+  giờ mà tin không tới khách → convlog `deadline:<bước>` + `cskh_handoff` lý
+  do `deadline`. `_reply_held` gửi khách trước rồi mới ghi gợi ý vào DB.
+- [x] `red_alert --escalate`: leo thang 2 giờ ĐỒNG HỒ cho MỌI cảnh báo đỏ gốc,
+  mỗi cảnh báo đúng 1 lần (unique index chung); `intel_alert` dùng chung hàm.
+- [x] `jobs.json` + timer: `red_alert_escalate` (15 phút, mọi ngày),
+  `anchor_build` (02:30), `legal_updates` (07:15).
+- [x] `ops_monthly` in bảng tài sản 8 cột; nhãn bản tin vùng trồng "Ảnh/video";
+  `qr_trace link` + trigger DB từ chối sha video; `_doc` routing ghi đúng việc
+  gửi SMTP.
+- [x] Lane báo: `tests/test_v14_p6_ops.py` 15 test (code cũ 15 FAIL); 55 file
+  liên quan 3090 passed / 3 failed (2 môi trường có sẵn + 1 chập chờn vắt
+  phút, chạy lại riêng qua); E2E CLI DB lane PASS; evidence
+  `evidence/v14_6_p6_*.log`.
+
+BLOCKED (bên ngoài):
+- Pháp chế/Bên B: cử người nhận cảnh báo đỏ độc lập + địa chỉ email + cấu hình
+  `SMTP_*` thật. `data/red_alert_routing.json` vẫn rỗng nên bản leo thang chỉ
+  nằm trong DB và `--escalate` exit 1 khi có bản cần gửi.
+- Hạ tầng Bên B: bật timer systemd trên server thật cho `red_alert_escalate`,
+  `anchor_build`, `legal_updates` (repo không tự cài lịch).
+- Hai bên: chọn chuỗi/provider/phí neo blockchain — `anchor_build` chỉ gom gốc
+  Merkle, chưa neo ra chuỗi.
+- Dữ liệu vườn thật: `anchor --build` exit 1 khi chưa có nhật ký thật đã chain
+  → job `anchor_build` báo lỗi tới khi có dữ liệu thật.
+
+Còn mở (lane báo):
+- Các bước v14.4 chưa có job lịch (`sales_director --run`, `kd_quote
+  --followups`, `kd_orders --watch`, `kd_price --dealer-watch`) — kế hoạch p6
+  không liệt kê.
+- Messenger `send_text` chưa trừ ngân sách 30 giây động (không có refresh,
+  timeout 5 giây cố định nằm trong phần dành cho gửi — chỉ trễ khi tổng đã quá
+  hạn từ trước).
+- Tiêu đề bản leo thang intel giờ giữ tiền tố gốc `[BÁO ĐỎ intel]` sau `#id`
+  (trước bị cắt); không test nào phụ thuộc chuỗi này.
+- Leo thang chỉ 1 cấp, gửi CÙNG người nhận độc lập; chưa có cấp người nhận thứ
+  hai/người trực ngoài giờ riêng — chờ Pháp chế/Bên B quyết.
+- 3 FAIL lane báo (không do p6): `test_garden_director::
+  test_purge_sample_only_called_from_cli_and_tests` (đường dẫn worktree chứa
+  `.claude`), `test_lead_store::test_harvest_real_convlog_smoke` (convlog
+  gitignored), `test_v14_p2_service_auth::test_job_login_report_steps_match_owner`
+  (chập chờn vắt phút). Ở lần chạy sau gộp đợt 3, `test_garden_director` và
+  `test_v14_p2_service_auth` đều qua.
+
+## Checklist v14.5-p5-marketing-ceo-intel
+
+Gộp vào `v14-hop-dong` bởi merge agent v14 đợt 3 (nhánh lane `v14-p5`, `3c74014`).
+CODE VERIFIED, CHƯA nghiệm thu (3 mục vẫn `chua_nghiem_thu`).
+
+- [x] marketing-04.2: `python -m agents.ra_kenh --partner-file CSV --by` rà bài
+  KOC/đại lý ĐÃ đăng — chỉ nhận MÃ đối tác có trong sổ KOC/đại lý, guardrail
+  cho bài koc có tài trợ, đối chiếu bộ tài liệu đã duyệt (`koc_brief`/
+  `affiliate_program`); vi phạm → `marketing/partner_post_review` theo đợt; sổ
+  `partner_post_scans` append-only, không lưu text/URL đầy đủ/handle.
+- [x] ceo-04.1: module mới `python -m agents.ceo_promo [--plan] [--running]
+  [--as-of] [--dry-run]` so KM đang chạy (listing `sale_price`, file xuất
+  KM/voucher) với kế hoạch KM + giá KM golden đã duyệt → `ceo/promo_deviation`,
+  khóa đợt theo snapshot/sha file; `ceo_audit` vẫn chỉ đọc.
+- [x] intel-04.2: `python scripts/intel_weekly.py --suggest-keywords` loại từ
+  khóa có từ cấm, claim chưa duyệt, ngữ cảnh sức khỏe, rượu, PII hoặc chỉ dẫn
+  địa lý 'Ngọc Linh' chưa xác nhận; 1 mục `intel/keyword_suggest` mỗi file
+  Trends.
+- [x] Cả 3 exit 2 khi tính năng tắt. Lane báo: 68 test mới (code cũ lỗi
+  collection; giữ riêng module mới → 52 FAIL); 59 file liên quan 2663 passed /
+  0 failed; E2E CLI 25/25; evidence `evidence/v14_5_p5_*.log`.
+
+BLOCKED (bên ngoài):
+- Bên B / GĐ marketing: file xuất bài KOC/đại lý đã đăng (không có nguồn tự
+  động — API/crawl MXH đối tác ngoài phạm vi); KOC thật + hợp đồng KOC/đại lý
+  đã ký (`data/koc_sample.json` vẫn MẪU); bộ `koc_brief`/`affiliate_program`
+  được GĐ marketing/GĐ bán hàng duyệt.
+- GĐ bán hàng: kế hoạch KM đã chốt (CSV định dạng `kd_price --plan`) hoặc giá
+  KM đã duyệt trong golden `price_list` kind=promo; Quản lý MXH: file xuất
+  KM/voucher thật + listing Seller Center (mapping cột `sale_price` chưa xác
+  minh với file thật); chưa so được MÔ TẢ listing vì file xuất sàn không có
+  cột này (Bên B cấp file có mô tả hoặc quyền API sàn).
+- Pháp chế: duyệt luật lọc từ khóa (chưa có lớp LLM-check cho nói vòng); điền
+  identity/`confirmed_skus` cho 'Ngọc Linh' trong `data/guardrail_rules.json`
+  — tới khi đó mọi từ khóa chứa Ngọc Linh bị loại lý do `chi_dan_dia_ly`.
+- Bên B: văn bản ủy quyền để điền `approvers` khối marketing/ceo/intel (đang
+  rỗng → chế độ thực chặn mọi quyết định).
+- Quản lý MXH: file Google Trends related xuất tay.
+
+Còn mở (lane báo):
+- Lệnh mới chưa có trong lịch `deploy/onprem/jobs.json` (`ceo_promo` hằng ngày,
+  `intel_weekly --suggest-keywords` hằng tuần) — boundary p6, p6 không nhận.
+- `ra_kenh --partner-file` ghi `partner_post_scans` bằng DSN người chạy (như
+  `channel_posts`); chưa grant cho `app_human`/`agent_writer` — cùng vấn đề mở
+  của p2 về CLI người ghi bảng trực tiếp.
+- `intel_weekly` nhận mục mẫu theo quy ước tên file MAU vì `intel_imports` chưa
+  có cột provenance.
+- Bộ lọc từ khóa không loại từ khóa thương hiệu đối thủ/xuất xứ khác (vd 'nhân
+  sâm hàn quốc' coi là an toàn) — Marketing/Pháp chế quyết.
+- Bài đối tác kiểm với `is_ai=False` (file xuất không có cột is_ai) → chưa kiểm
+  nhãn AI cho bài đối tác.
+- Mã đối tác chưa đăng ký làm hỏng cả file (fail-closed) thay vì ghi thành vi
+  phạm.
+- (Merge đợt 3 bắt thêm) p5 không thêm `partner_post_scans` vào
+  `deploy/cloud/README.md` → drift-guard FAIL sau gộp; merge agent đã vá.
 
 ## Checklist v14.4-p4-kinh-doanh
 
