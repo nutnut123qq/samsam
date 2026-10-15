@@ -533,7 +533,8 @@ def assign_owner(conn, lead_id, staff_code, by, now=None, watch=None,
     from pipelines import director, period
 
     by = _check_by(by)
-    if not isinstance(staff_code, str) or             not sales_watch.STAFF_RE.fullmatch(staff_code):
+    if (not isinstance(staff_code, str)
+            or not sales_watch.STAFF_RE.fullmatch(staff_code)):
         raise ValueError("--staff phải là MÃ nhân viên [A-Z0-9_-]{2,20} "
                          "(không ghi tên)")
     watch = watch or sales_watch.section("lead_owner")
@@ -542,7 +543,8 @@ def assign_owner(conn, lead_id, staff_code, by, now=None, watch=None,
         raise ValueError(f"mã nhân viên {staff_code} không có trong danh "
                          "sách lead_owner.staff_codes")
     shift = shift or director.load_config("sales")["business_hours"]
-    if lead_id is None or isinstance(lead_id, bool)             or not isinstance(lead_id, int):
+    if (lead_id is None or isinstance(lead_id, bool)
+            or not isinstance(lead_id, int)):
         raise ValueError("lead_id phải là số nguyên")
     with conn.transaction():
         row = conn.execute("select status, owner_code from leads where id ="

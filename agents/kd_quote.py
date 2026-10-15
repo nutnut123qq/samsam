@@ -834,7 +834,8 @@ def record_event(conn, qid: int, kind: str, by=None) -> int:
                     " recorded_by) values (%s, %s, %s, %s) returning id",
                     (qid, qno, kind, who)).fetchone()[0]
         except psycopg.errors.UniqueViolation:
-            raise ValueError(f"mục #{qid} đã ghi kết quả — không ghi đè")                 from None
+            raise ValueError(
+                f"mục #{qid} đã ghi kết quả — không ghi đè") from None
     return eid
 
 

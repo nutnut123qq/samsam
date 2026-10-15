@@ -28,7 +28,7 @@ ghi detail khi nhập).
 - `main` = `f96773a` (v13 gộp fast-forward từ `v13-hop-dong`, ĐÃ push
   GitHub 16/10/2026 theo duyệt của user; quét secret trước push sạch).
   Worktree/nhánh lane v13 và DB `samsam_v13_*` đã dọn. Nhánh đang làm:
-  `v14-hop-dong` (chưa merge/push).
+  `v14-hop-dong` (đã gộp lane p1–p4; p5, p6 chưa gộp; chưa merge main/push).
 - Full pytest SAU SHA cuối `f96773a` (DB dựng mới, không phải DB `.env`):
   **5229 passed, 3 skipped, 0 failed** (18:41) — 3 skipped = `test_dr_drill`
   cần docker image postgres. Log: `evidence/v13_final_f96773a_pytest.log`.
@@ -37,6 +37,152 @@ ghi detail khi nhập).
   mục `chua_nghiem_thu`; còn việc THIẾU CODE (giao lane v14) và việc chờ
   dữ liệu/quyết định bên ngoài — bảng tách ở `docs/handover/v13-board.md`
   mục "Còn mở (16/10/2026)".
+
+## Checklist v14.4-p4-kinh-doanh
+
+Gộp vào `v14-hop-dong` bởi merge agent v14 đợt 2 (nhánh lane `v14-p4`, `7a014aa`).
+CODE VERIFIED, CHƯA nghiệm thu (4 mục vẫn `chua_nghiem_thu`).
+
+- [x] sales-04.1: `ingest.crm --owner LEAD --staff <MÃ NV> --by` gán người phụ
+  trách bằng MÃ nhân viên (không lưu tên), hạn xử lý theo giờ làm việc, đi qua
+  `auth.cli_gate` sales/assign; `sales_director` đẩy `lead_followup` theo ĐỢT
+  khi lead chưa gán/quá hạn rồi leo thang SLA lớp B.
+- [x] sales-05: `kd_quote --followups` lập nháp nhắc chốt `b2b_followup` tính
+  từ lần gửi (`--verify-send`) hoặc lúc duyệt; `--outcome` để NGƯỜI ghi kết quả
+  vào `b2b_quote_events` (append-only, 1 kết quả/báo giá).
+- [x] sales-06.1: `ingest.dealer_price --file --by` nạp giá đại lý quan sát tay
+  vào `dealer_price_obs` (kiểm toàn file, append-only); `kd_price
+  --dealer-watch` so giá sàn golden hiệu lực đúng ngày quan sát →
+  `dealer_price_alert`; kd_price vẫn không có SQL ghi.
+- [x] sales-06.2: `kd_orders --watch` so tỷ lệ hủy/hoàn tuần đã đóng với ngưỡng
+  và nền các tuần trước → `order_anomaly`, gom đợt theo số đơn xấu; đơn trễ ghi
+  'chưa đo'.
+- [x] Mọi biên sinh qua rollout (tắt → exit 2); ngưỡng `data/sales_watch.json`
+  GIẢ ĐỊNH. Lane báo: 58 ca mới, 81 file liên quan 3520 passed / 1 FAIL môi
+  trường có sẵn; E2E 26/26; evidence `evidence/v14_4_p4_*.log`.
+
+BLOCKED (bên ngoài):
+- Bên B: danh sách MÃ nhân viên kinh doanh (`data/sales_watch.json`
+  `lead_owner.staff_codes` rỗng — CLI hiện chỉ kiểm mẫu mã).
+- Bên B: văn bản ủy quyền người gán/duyệt khối sales (`data/directors/
+  sales.json` `approvers` rỗng → chế độ thực chặn `--owner`) + login Postgres
+  người (`app_human`, `db_login`).
+- GĐ bán hàng: chốt ngưỡng `data/sales_watch.json` (giờ gán/hạn xử lý, nhắc
+  chốt, lookback, ngưỡng hủy/hoàn, hệ số nền) + ca làm việc/lịch nghỉ trong
+  `sales.json` — hiện GIẢ ĐỊNH.
+- Bên B: nguồn giá đại lý TỰ ĐỘNG (API/crawl gian hàng đại lý) + sổ đại lý thật
+  (`dealer_regions.json` đang MẪU).
+- Bên B: file xuất Seller Center thật có cột ngày đặt/hạn giao (để đo đơn TRỄ)
+  + tên trạng thái hoàn/trả thật (`return_status` GIẢ ĐỊNH).
+- Bên B: quyết bật form B2B (`B2B_FORM_ENABLED`) khi có tên miền/hạ tầng.
+
+Còn mở (lane báo):
+- Chưa có job lịch cho `kd_quote --followups`, `kd_price --dealer-watch`,
+  `kd_orders --watch` trong `deploy/onprem/jobs.json` + timer (boundary p6),
+  kèm `JOB_SERVICE='job'`.
+- Chưa có ca `crm --owner` chế độ thực bằng login Postgres thật trong
+  `CLI_CASES` của `tests/test_v14_p2_service_auth.py`; đường cli_gate +
+  deny_log của p4 mới kiểm qua monkeypatch.
+- `lead_followup` bỏ qua phần vượt trần `max_per_run` nhưng bản tin không có bộ
+  đếm 'chờ lần sau' riêng.
+- `test_v14_p2_service_auth::test_job_login_report_steps_match_owner` chập
+  chờn ở ranh giới phút (lỗi test có sẵn của p2);
+  `test_lead_store::test_harvest_real_convlog_smoke` phụ thuộc convlog
+  gitignored.
+
+## Checklist v14.3-p3-rollout-phu-du-bien
+
+Gộp vào `v14-hop-dong` bởi merge agent v14 đợt 2 (nhánh lane `v14-p3`, `96a10ad`).
+CODE VERIFIED, CHƯA nghiệm thu (mọi mục vẫn `chua_nghiem_thu`).
+
+- [x] Bộ đếm đầu ra của sổ triển khai đếm được MỌI nguồn bảng/report trong danh
+  mục: 29 bảng riêng + sổ mới `report_outputs` do `write_report` ghi. Đếm
+  DISTINCT theo khóa tự nhiên trong cửa sổ, loại mẫu bằng cột provenance
+  (`is_sample` mới trên `approval_queue`/`allocation_proposals`/`audit_runs`);
+  khóa lọc danh mục phải có bộ lọc thật; dòng seed không tính là đầu ra.
+- [x] Khai `created_by` cho loại việc dùng chung khối — `market_alert_s1` của
+  kd_listing không còn bị đếm sang sales-06.1.
+- [x] `channels --suggest` ghi `san_suggestions` (không lưu tin buyer) + có
+  `--mark-sent`, chỉ đánh dấu khi giai đoạn cho dùng; `qr_trace site` khi tính
+  năng chưa cho dùng thay trang đã công khai bằng trang "tạm ngưng" và gỡ ảnh.
+- [x] Tính năng tắt → agent tự ghi bảng riêng không sinh đầu ra (allocate/
+  approve, đối soát, `audit_runs`, gói HĐTV, persona_sim, affiliate, đối soát
+  quý, `cockpit --collect`); nhật ký vườn nhập tay và sổ quyết định TGĐ là người
+  ghi nên không chặn (lý do ghi trong docstring).
+- [x] Lane báo: `tests/test_v14_p3_rollout_edges.py` 20 test (FAIL trên code
+  cũ), 48 file liên quan 2034 passed / 2 FAIL môi trường có sẵn, E2E CLI 23/23;
+  evidence `evidence/v14_3_p3_*.log`.
+
+BLOCKED (bên ngoài):
+- Bên B: văn bản ủy quyền người MXH vào `approvers` khối sales
+  (`data/directors/sales.json`) + login riêng có `db_login` — chưa có thì ở chế
+  độ thực `channels --mark-sent` bị chặn.
+- Hành chính Sâm Sâm: chốt lịch nghỉ lễ/Tết trong `data/rollout_config.json`
+  (ngày làm việc của cổng nâng giai đoạn đang tính cả ngày lễ).
+- Hai bên: quyết định cơ chế người duyệt từng mục cho tính năng chỉ có đầu ra
+  báo cáo/bảng không có bước duyệt (vd người duyệt ký từng báo cáo qua
+  `approvals`) — chưa có thì các tính năng đó dừng ở `co_nguoi_duyet`.
+
+Còn mở (lane báo):
+- Nguồn `file` (`conversations.jsonl` của sales-01, `backup_runs.jsonl` của
+  data_platform-07.2) chưa có bộ đếm; data_platform-07.2 chỉ có nguồn file nên
+  vẫn 'không đếm được'.
+- Tính năng chỉ có đầu ra report/bảng không có bước người duyệt từng mục
+  (ceo-03, sales-07.3, intel-01.1, finance-03.1/04.1, production-05,
+  farming-02, data_platform-07.1, finance-01, intel-05...): đếm được đầu ra
+  nhưng human=0, không qua được `co_nguoi_duyet` → `van_hanh`.
+- `budget_change` do `agents/mkt_ads.py` tạo với `created_by=<tên người>`
+  không thuộc tính năng nào → bị chặn ở biên dùng (fail-closed); cần agent id
+  riêng rồi khai trong marketing-03.
+- Các loader nạp file (market_csv, golden_store, embed_store, kb_internal,
+  doc_intake, agent_eval, lead_store harvest — và `ingest.dealer_price` của p4)
+  không qua cổng tắt — dữ liệu nguồn dùng chung, cần xác nhận chủ trương.
+- Cảnh báo đỏ intel (intel-02/legal_hr-07, `pipelines/intel_alert.py`, p6)
+  chưa gắn cổng tắt khi sinh.
+- Báo cáo BKS chạy bằng login `bks_reader` không ghi được `report_outputs` (chỉ
+  cảnh báo; `audit_runs` vẫn đếm). Các caller `write_report` khác chưa truyền
+  `sample=` (dựa nhãn (MẪU)/[MẪU] trong bản).
+- Báo cáo file ở giai đoạn chạy thử chưa có nhãn 'chạy thử — không gửi' trong
+  nội dung (vd doi-soat, van-hanh gửi Bên B do người gửi tay).
+
+## Gộp v14 đợt 2 (p3 + p4)
+
+- `git merge --no-ff` v14-p3 (`96a10ad`, không xung đột → `7d7f8ba`) rồi
+  v14-p4 (`7a014aa` → `ef93f97`) vào `v14-hop-dong`. Xung đột 6 file, đều
+  dạng nối đuôi — giữ cả hai phía: `docs/schema.sql` (khối v14.3 rồi v14.4;
+  dòng chung cuối khối `for each statement execute function
+  append_only_guard();` được nhân đôi cho trigger `*_no_truncate` của p3),
+  `docs/roles.sql`, `AGENTS.md` (2 dòng Commands), `v13-board.md` (dòng trạng
+  thái p3 từ nhánh p3, p4 từ nhánh p4, ghi "đã gộp `v14-hop-dong` — chưa vào
+  main"), `kien-truc.md` **87 bảng** (82 + 3 p3 + 2 p4, khớp `apply_schema`).
+  `data/contract_features.json` gộp 3 chiều theo từng khóa: chỉ sales-06.1
+  `output_sources` cả hai cùng đổi → giữ `created_by` của p3 + thêm
+  `dealer_price_alert` của p4 (tránh `market_alert_s1` giao phạm vi sales-03).
+  Counter dòng so 2 phía: chỉ thiếu các dòng đã chủ ý thay (số bảng, dòng
+  `leads` p4 sửa, 6 dòng JSON gộp khóa). JSON parse được; ruff sạch; DPIA/TIA
+  `--check` khớp (2 lane không đổi `data_flow_map.json`).
+- DB `samsam_v14_m2`: `apply_schema --roles` ×2 sạch (87 bảng), core_store,
+  golden_store. pytest 46 file 2 lane đụng + drift (handover_docs,
+  data_flow_map, dpia_draft, db_backup, rollout, rollout_enforce, p1/p2 v14):
+  **2206 passed, 0 failed** (10:04). Log: `evidence/v14_m2_merge_pytest.log`.
+  Chưa chạy FULL suite ở đợt này (gate cuối v14 chạy).
+- Vá nhỏ sau gộp: 3 dòng nối bị dồn thành 1 dòng có khoảng trắng dài
+  (`agents/kd_quote.py` `raise ... from None`, `ingest/crm.py` 2 điều kiện —
+  dấu vết gotcha heredoc, hợp lệ cú pháp nhưng khó đọc) → viết lại bằng ngoặc;
+  chạy lại test_v14_p4_sales/test_crm/test_kd_quote 287 passed.
+- Review diff so DoD (đọc code thật): p3 — `qr_trace issue` qua
+  `_gen_gate`+`use_reason`, `site` tạm ngưng trang đã công khai, `channels
+  --suggest` tắt → exit 2 / chạy thử in nhãn và không cho `--mark-sent`,
+  `zalo_garden`/`garden_media` đã có cổng từ v13; p4 — 3 job sinh gọi
+  `rollout.check_generate`, `lead_followup` qua cổng chung của `aq.enqueue`,
+  `crm --owner` qua `cli_gate`. Ghi thêm ngoài phần lane tự báo: (1) `kd_quote
+  --outcome --by` (ghi kết quả chốt, không ghi đè được) và `--verify-send
+  --by` KHÔNG qua `cli_gate` — theo tiền lệ `crm --status` là nhập liệu, nhưng
+  chưa được xếp vào bảng runbook 9.5; cần quyết là quyết định hay nhập liệu;
+  (2) `ingest.dealer_price` là loader không qua cổng tắt (cùng chủ trương
+  loader p3 nêu).
+- **C00–C11 CHƯA hoàn thành toàn bộ.** Đã gộp p1–p4; p5, p6 chưa gộp (board:
+  "giao"); chưa vào main, chưa push.
 
 ## Checklist v14.2-p2-quyen-dich-vu
 
