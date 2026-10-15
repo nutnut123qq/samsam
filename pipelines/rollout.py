@@ -870,7 +870,9 @@ _TABLES = {
         "human": _h("t.recorded_by"),
         "nosample": "số quyết toán thật (rev_share không nhận file mẫu)"},
     "feature_rollout_events": {
-        "ts": "t.ts", "key": "'fe:' || t.id", "human": _h("t.by_person"),
+        # `seed` = vào sổ hàng loạt (1 lệnh → N dòng), không phải đầu ra.
+        "ts": "t.ts", "key": "'fe:' || t.id", "where": "t.kind <> 'seed'",
+        "human": _h("t.by_person"),
         "nosample": "NGƯỜI ghi sổ triển khai"},
     "san_suggestions": {
         "ts": "t.created_at",

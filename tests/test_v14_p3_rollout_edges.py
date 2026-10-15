@@ -80,6 +80,7 @@ CAT = [
     _ff("finance-03.2", [{"table": "affiliate_attributions"}]),
     _ff("finance-06", [{"table": "revenue_quarters"}]),
     _ff("marketing-06.2", [{"table": "channel_snapshots"}]),
+    _ff("data_platform-08", [{"table": "feature_rollout_events"}]),
 ]
 
 
@@ -207,6 +208,15 @@ def test_table_sources_counted_distinct_with_provenance(cdb):
     cdb.execute(ra, ("khac", json.dumps(
         {"intel_item_id": 3, "rules": ["brand_negative"]})))
     assert _facts(cdb, "intel-02")["outputs"] == 1
+
+
+def test_rollout_seed_events_not_outputs(cdb):
+    """1 lệnh `--seed` ghi N dòng sổ — không phải N đầu ra (50 log hành
+    động không đạt cổng); quyết định người (tắt/lỗi nặng) mới tính."""
+    ro.seed(cdb, CAT, BY, now=NOW - timedelta(days=1))
+    assert _facts(cdb, "data_platform-08")["outputs"] == 0
+    ro.disable(cdb, "ceo-03", BY)
+    assert _facts(cdb, "data_platform-08")["outputs"] == 1
 
 
 def test_catalog_filter_key_must_be_supported(tmp_path):
@@ -378,7 +388,8 @@ def test_qr_site_paused_replaces_published_page(db, proxy, run, stage,  # noqa: 
         stage["md"] = md
         assert run("site", "--out", str(out)) == 1
         body = page.read_text(encoding="utf-8")
-        assert q.PAUSED in body and LOT not in body and "media" not in body
+        assert LOT not in body and "media" not in body     # code cũ: còn
+        assert q.PAUSED in body
         assert not (out / "media" / f"{sha}.jpg").exists()
     stage["md"] = "van_hanh"
     assert run("site", "--out", str(out)) == 0
