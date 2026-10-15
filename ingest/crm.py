@@ -61,7 +61,7 @@ from psycopg.types.json import Jsonb
 from ingest import lead_store
 from pipelines.llm_gateway import _strip_accents
 from pipelines.period import VN_TZ
-from pipelines.pii import _PII_RE, _mask_pii
+from pipelines.pii import _PII_RE, _mask_pii, scrub_user
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in
 # tiếng Việt có dấu. Ép UTF-8 (no-op nếu đã UTF-8).
@@ -626,7 +626,9 @@ def handoff_payload(conn, lead_id, dealer_code, keys) -> dict:
         raise ValueError(f"đại lý {dealer_code} không active")
     payload = {"lead_id": lead_id, "dealer": dealer_code,
                "province": lead[1], "intent": lead[2],
-               "question": _mask_pii(lead[3] or "")}
+               # gate v14 (F02): scrub_user che cả tên/địa chỉ — lead cũ
+               # (convlog trước v14.1) chỉ đã qua _mask_pii SĐT/email.
+               "question": scrub_user(lead[3] or "")[0]}
     if lead[4] is not None and can_contact(conn, lead[4], "dai_ly",
                                            dealer_code):
         c = conn.execute(

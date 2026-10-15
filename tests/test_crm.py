@@ -726,3 +726,20 @@ def test_cli_chain_on_db(dealers, monkeypatch, capsys):
     det = db.execute("select detail from agent_action_log where action = "
                      "'crm_handoff'").fetchall()
     assert [d[0]["pii_included"] for d in det] == [True]
+
+
+def test_handoff_question_names_scrubbed_v14_gate(dealers, keys):
+    """Gate v14 (F02 còn sót ở biên p4): câu hỏi lead trong payload chuyển
+    đại lý trước đây chỉ qua `_mask_pii` (SĐT/email) — tên/địa chỉ khách
+    lọt sang đại lý dù CHƯA có consent dai_ly. Nay qua `scrub_user`; lead
+    cũ (convlog trước v14.1) cũng được che lúc chuyển."""
+    db = dealers
+    lid = _lead(db, "Tôi là Nguyễn Văn Mẫu, giao cho chị Bích số 12 đường Ví Dụ"
+                    " Đà Nẵng, sđt 0905 123 456", "order")
+    crm.assign_lead(db, lid, "DLM01", "Lan")
+    p = crm.handoff_payload(db, lid, "DLM01", keys)
+    blob = json.dumps(p, ensure_ascii=False)
+    for needle in ("Nguyễn Văn Mẫu", "Bích", "Ví Dụ", "0905 123 456"):
+        assert needle not in blob
+    assert not {"phone", "name", "email", "address"} & set(p)
+    assert p["intent"] == "order" and "***" in p["question"]

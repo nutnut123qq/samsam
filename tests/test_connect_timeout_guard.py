@@ -7,7 +7,9 @@ import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SKIP_DIRS = {"tests", ".venv", "venv", "__pycache__", ".git"}
+# `.claude/` (gitignored): worktree lane tạm của công cụ — bản sao code cũ,
+# không thuộc repo (gate v14: bản lane p2 chưa vá làm guard FAIL oan).
+SKIP_DIRS = {"tests", ".venv", "venv", "__pycache__", ".git", ".claude"}
 
 
 def scan_source(src: str, name: str = "<src>") -> tuple[int, list[str]]:
