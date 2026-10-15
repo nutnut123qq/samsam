@@ -704,6 +704,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Lợi ích hợp pháp/hợp đồng lao động với nhân viên — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email); Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday) |
 
+### DF-44 — Nhật ký vườn qua Zalo OA — nhân viên vườn gửi chữ/ảnh/ghi âm (v12.4)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-44 |
+| Module (code) | `connectors/zalo_garden.py`; `connectors/zalo.py`; `scripts/garden_media.py` |
+| Mục đích | Ghi nhật ký vùng trồng (chuỗi băm không sửa/xóa) + kho tư liệu ảnh vườn; ghi âm chờ người chép lời |
+| Dữ liệu | Tin của NHÂN VIÊN vườn (trong allowlist `user_hash`): chữ nhật ký (mã khoảnh, hoạt động, chi tiết — đã `_mask_pii`), ảnh vườn (có thể có mặt người; EXIF/GPS bị gỡ), ghi âm giọng nói nhân viên; user_id Zalo thô chỉ trong RAM lúc xử lý |
+| Lớp | Vàng |
+| Chủ thể | Nhân viên vườn của công ty nhắn Zalo OA |
+| Nơi lưu | `plot_logs` (author `zalo:<ma_nv>`, source `zalo:garden`, hash chain); `garden_media` + file ảnh đã gỡ EXIF/GPS ở `GARDEN_MEDIA_DIR` (ngoài repo); file ghi âm `<GARDEN_MEDIA_DIR>/audio/` + bảng `garden_voice_drafts` (mã NV, khoảnh, sha256 — không user_id/tên); allowlist `data/garden_staff.json` (gitignored, chỉ user_hash + mã NV) |
+| Thời hạn lưu | Nhật ký `plot_logs`: lâu dài (chuỗi băm, không xóa được); ảnh/ghi âm: chưa có hạn lưu trong code — GAP (GĐ vùng trồng/Pháp chế chốt); tin nhân viên KHÔNG vào convlog/history chatbot |
+| Bên nhận | Zalo/VNG — tải ảnh/ghi âm từ CDN Zalo (host `MEDIA_HOSTS` GIẢ ĐỊNH, chỉ https, không redirect) và gửi câu xác nhận qua openapi.zalo.me — Việt Nam; KHÔNG gửi audio tới dịch vụ chép lời (STT chưa tích hợp) |
+| Chuyển ra nước ngoài | Không |
+| Biện pháp bảo vệ (có trong code) | Chỉ user_hash trong allowlist mới vào intake vườn; file allowlist thiếu/hỏng → không ai là nhân viên (fail-closed); Ảnh dựng lại từ pixel, bỏ toàn bộ EXIF/GPS/XMP trước khi lưu; kho bắt buộc ngoài repo; Chi tiết nhật ký qua `_mask_pii`, cắt 1000 ký tự; trả lời là câu viết tay, 0 LLM; stdout chỉ in `uh=` (hash) — không in user_id, URL tệp, nội dung tin |
+| Căn cứ xử lý | Hợp đồng lao động / nội quy ghi nhật ký vườn — CẦN LUẬT SƯ XÁC NHẬN cho ghi âm giọng nói nhân viên |
+| GAP | Hạn lưu ảnh/ghi âm chưa có — GĐ vùng trồng + Pháp chế chốt; Thông báo cho nhân viên về việc lưu ghi âm/ảnh (nội quy) chưa có; Host CDN Zalo của payload ảnh/ghi âm là GIẢ ĐỊNH — đối chiếu event thật |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -748,6 +766,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-37 | Dự báo thời tiết VT (v10.2) | Xanh | thấp | có | 3 |
 | DF-38 | Chăm sóc lại + xin đánh giá khách kênh sở hữu → nháp tin vào hàng duyệt (KD-A7, v10.1) | Đỏ | cao | không | 4 |
 | DF-39 | Kịch bản livestream (KD-A9) + gói video YouTube dài (MKT-12) qua LLM gateway (v10.1) | Vàng | trung bình | có | 2 |
+| DF-44 | Nhật ký vườn qua Zalo OA — nhân viên vườn gửi chữ/ảnh/ghi âm (v12.4) | Vàng | trung bình | không | 3 |
 
 ## 4. Tổng hợp GAP
 
@@ -829,6 +848,9 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-38] Chưa có job xóa lần mua/liên hệ theo thời hạn (retention)
 - [DF-39] Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email)
 - [DF-39] Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday)
+- [DF-44] Hạn lưu ảnh/ghi âm chưa có — GĐ vùng trồng + Pháp chế chốt
+- [DF-44] Thông báo cho nhân viên về việc lưu ghi âm/ảnh (nội quy) chưa có
+- [DF-44] Host CDN Zalo của payload ảnh/ghi âm là GIẢ ĐỊNH — đối chiếu event thật
 
 ## 5. Câu hỏi cho luật sư
 

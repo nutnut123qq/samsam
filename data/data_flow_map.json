@@ -990,6 +990,35 @@
         "Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email)",
         "Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday)"
       ]
+    },
+    {
+      "id": "DF-44",
+      "name": "Nhật ký vườn qua Zalo OA — nhân viên vườn gửi chữ/ảnh/ghi âm (v12.4)",
+      "modules": [
+        "connectors/zalo_garden.py",
+        "connectors/zalo.py",
+        "scripts/garden_media.py"
+      ],
+      "data": "Tin của NHÂN VIÊN vườn (trong allowlist `user_hash`): chữ nhật ký (mã khoảnh, hoạt động, chi tiết — đã `_mask_pii`), ảnh vườn (có thể có mặt người; EXIF/GPS bị gỡ), ghi âm giọng nói nhân viên; user_id Zalo thô chỉ trong RAM lúc xử lý",
+      "class": "vang",
+      "subjects": "Nhân viên vườn của công ty nhắn Zalo OA",
+      "purpose": "Ghi nhật ký vùng trồng (chuỗi băm không sửa/xóa) + kho tư liệu ảnh vườn; ghi âm chờ người chép lời",
+      "storage": "`plot_logs` (author `zalo:<ma_nv>`, source `zalo:garden`, hash chain); `garden_media` + file ảnh đã gỡ EXIF/GPS ở `GARDEN_MEDIA_DIR` (ngoài repo); file ghi âm `<GARDEN_MEDIA_DIR>/audio/` + bảng `garden_voice_drafts` (mã NV, khoảnh, sha256 — không user_id/tên); allowlist `data/garden_staff.json` (gitignored, chỉ user_hash + mã NV)",
+      "retention": "Nhật ký `plot_logs`: lâu dài (chuỗi băm, không xóa được); ảnh/ghi âm: chưa có hạn lưu trong code — GAP (GĐ vùng trồng/Pháp chế chốt); tin nhân viên KHÔNG vào convlog/history chatbot",
+      "recipients": "Zalo/VNG — tải ảnh/ghi âm từ CDN Zalo (host `MEDIA_HOSTS` GIẢ ĐỊNH, chỉ https, không redirect) và gửi câu xác nhận qua openapi.zalo.me — Việt Nam; KHÔNG gửi audio tới dịch vụ chép lời (STT chưa tích hợp)",
+      "cross_border": false,
+      "safeguards": [
+        "Chỉ user_hash trong allowlist mới vào intake vườn; file allowlist thiếu/hỏng → không ai là nhân viên (fail-closed)",
+        "Ảnh dựng lại từ pixel, bỏ toàn bộ EXIF/GPS/XMP trước khi lưu; kho bắt buộc ngoài repo",
+        "Chi tiết nhật ký qua `_mask_pii`, cắt 1000 ký tự; trả lời là câu viết tay, 0 LLM",
+        "stdout chỉ in `uh=` (hash) — không in user_id, URL tệp, nội dung tin"
+      ],
+      "legal_basis": "Hợp đồng lao động / nội quy ghi nhật ký vườn — CẦN LUẬT SƯ XÁC NHẬN cho ghi âm giọng nói nhân viên",
+      "gaps": [
+        "Hạn lưu ảnh/ghi âm chưa có — GĐ vùng trồng + Pháp chế chốt",
+        "Thông báo cho nhân viên về việc lưu ghi âm/ảnh (nội quy) chưa có",
+        "Host CDN Zalo của payload ảnh/ghi âm là GIẢ ĐỊNH — đối chiếu event thật"
+      ]
     }
   ]
 }

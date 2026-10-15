@@ -67,6 +67,7 @@ chat lẫn embeddings) + Streamlit.
 | Catalog/listing KD-A4 (v5.3) | `python -m agents.kd_listing --run --dry-run` (chỉ đọc) · `--run` (lệch listing sàn ↔ bản duyệt/golden → hàng duyệt `listing_sync`/`market_alert_s1`, agent KHÔNG sửa sàn) · `--report` |
 | Giá & KM KD-A5 (v5.3) | `python -m agents.kd_price --report --plan <CSV> --as-of <ngày>` · `--run [--dry-run] [--plan CSV]` (floor/biên/lệch niêm yết/trần KM/KM chồng → NHÁP `price_change`/`promo_change`/S1; KHÔNG đổi giá, ngưỡng `data/price_watch.json` GIẢ ĐỊNH) |
 | GĐ Kinh doanh TMĐT (v5.0) | `python -m agents.sales_director --run [--dry-run] --bulletin` (dry-run CHỈ ĐỌC, in kế hoạch + bản tin) · `--run` (nguồn thật → hàng duyệt khối sales + quét SLA A 2h/B 4h giờ làm việc → `sla_escalations`/cảnh báo đỏ) · `--bulletin [--period week]` (→ `data/reports/sales-director-*.md`, không PII, không tự gửi) |
+| Nhật ký vườn qua Zalo (v12.4) | nhân viên trong `data/garden_staff.json` (gitignored, mẫu `.sample.json`; `user_hash` lấy bằng `python -m connectors.zalo_garden --hash` đọc user_id từ STDIN) nhắn OA: chữ `<mã khoảnh> <hoạt động> <chi tiết>` → `plot_logs` (hash chain), ảnh → `garden_media` (gỡ EXIF/GPS, `GARDEN_MEDIA_DIR`), ghi âm → `garden_voice_drafts` chờ chép lời (STT external-dep, không gửi audio) · `--pending` · `--done ID --log LOG_ID --by "<tên>"` |
 | Test/lint | `python -m pytest` · `ruff check .` |
 
 ## Structure

@@ -3270,3 +3270,33 @@ create or replace trigger audit_runs_append_only_row
 create or replace trigger audit_runs_no_truncate
   before truncate on audit_runs
   for each statement execute function append_only_guard();
+
+-- ===== v12.4 B4 =====
+-- Nhật ký vườn qua Zalo (`connectors/zalo_garden.py`, HĐ PL01 mục 7): tin
+-- chữ của nhân viên vườn ghi thẳng `plot_logs` (source `zalo:garden`, vào hash
+-- chain v9.3); ảnh vào `garden_media` (đã gỡ EXIF/GPS). Ghi âm KHÔNG thành
+-- nhật ký ngay: file lưu NGOÀI repo (`<GARDEN_MEDIA_DIR>/audio/`, theo
+-- sha256) + 1 dòng nháp ở bảng dưới, trạng thái `cho_chep_loi`; người nghe
+-- ghi nhật ký (`agents.garden`) rồi đóng nháp (`--done`, trỏ `plot_log_id`).
+-- KHÔNG lưu user_id Zalo / tên người — chỉ `staff_code` (mã NV allowlist).
+-- Chưa có STT (external-dep) → không cột transcript.
+create table if not exists garden_voice_drafts (
+  id bigint generated always as identity primary key,
+  sha256 text not null unique check (sha256 ~ '^[0-9a-f]{64}$'),
+  ext text not null
+    check (ext in ('aac', 'm4a', 'mp3', 'amr', 'wav', 'ogg', 'bin')),
+  bytes bigint not null check (bytes > 0),
+  staff_code text not null check (btrim(staff_code) <> ''),
+  plot_id text references plots(id),
+  status text not null default 'cho_chep_loi'
+    check (status in ('cho_chep_loi', 'da_chep_loi')),
+  plot_log_id bigint references plot_logs(id),
+  closed_by text check (closed_by is null or btrim(closed_by) <> ''),
+  closed_at timestamptz,
+  source text not null default 'zalo:garden',
+  received_at timestamptz not null default now(),
+  check ((status = 'da_chep_loi') = (plot_log_id is not null
+    and closed_by is not null and closed_at is not null))
+);
+create index if not exists garden_voice_drafts_status_idx
+  on garden_voice_drafts (status, id);

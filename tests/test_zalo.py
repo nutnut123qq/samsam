@@ -70,6 +70,13 @@ def _isolated_files(monkeypatch, tmp_path):
     # v5.1: không muối -> lớp kênh KHÔNG chạm DB (consent/handoff bỏ qua)
     # — DATABASE_URL thật trong env không được dính vào test webhook.
     monkeypatch.delenv("CHANNEL_HASH_SALT", raising=False)
+    # v12.4: allowlist nhân viên vườn + cache + khoảnh gần nhất là
+    # module-global của zalo_garden — file thật data/garden_staff.json (máy
+    # deploy) không được biến user test thành nhân viên.
+    monkeypatch.setattr(zalo.zalo_garden, "STAFF_FILE",
+                        tmp_path / "garden_staff.json")
+    monkeypatch.setattr(zalo.zalo_garden, "_staff", (None, {}))
+    monkeypatch.setattr(zalo.zalo_garden, "_last_plot", {})
     zalo._histories.clear()
     _reset_seen_conn()
     yield
@@ -1918,3 +1925,125 @@ def test_reply_unknown_channel_falls_back_not_crash(monkeypatch):
                         lambda u, t: sent.append(t) or True)
     r = zalo.handle_text("u3", "x", channel="sms")
     assert sent == [zalo.ERROR_FALLBACK] and r["text"] == zalo.ERROR_FALLBACK
+
+
+# ---------------------------------------------------------------- v12.4
+def _garden_staff(tmp_path, uid="u1"):
+    (tmp_path / "garden_staff.json").write_text(json.dumps(
+        {"staff": [{"user_hash": zalo._uhash(uid), "ma_nv": "VT01"}]}),
+        encoding="utf-8")
+
+
+@pytest.mark.parametrize("event", ["user_send_text", "user_send_image",
+                                   "user_send_audio", "user_send_sticker"])
+def test_garden_staff_routed_not_chatbot(server, monkeypatch, tmp_path,
+                                         event):
+    # v12.4: user trong allowlist vườn → handle_garden (mọi loại tin),
+    # KHÔNG handle_text/handle_non_text, KHÔNG convlog; dedup giữ nguyên.
+    _garden_staff(tmp_path)
+    got, done = [], threading.Event()
+    monkeypatch.setattr(zalo, "handle_garden",
+                        lambda u, e, m, mid="": got.append((u, e, mid))
+                        or done.set())
+    monkeypatch.setattr(zalo, "handle_text",
+                        lambda *a, **k: got.append("WRONG-text"))
+    monkeypatch.setattr(zalo, "handle_non_text",
+                        lambda *a, **k: got.append("WRONG-non-text"))
+    raw = json.dumps(_event(text="KV-A01 tưới", event=event,
+                            msg_id="g1")).encode()
+    for _ in range(2):  # Zalo retry cùng msg_id → dedup
+        assert httpx.post(server, content=raw,
+                          headers={"X-ZEvent-Signature": _sign(raw)}
+                          ).status_code == 200
+    assert done.wait(5)
+    time.sleep(0.3)  # dup dispatch (nếu bug) cần cơ hội chạy trước assert
+    assert got == [("u1", event, "g1")]
+    assert not (tmp_path / "conversations.jsonl").exists()
+
+
+def test_garden_bad_allowlist_falls_back_to_chatbot(server, monkeypatch,
+                                                    tmp_path):
+    # Allowlist hỏng → fail-closed: không ai là nhân viên, tin đi chatbot.
+    (tmp_path / "garden_staff.json").write_bytes(b"{hong")
+    got, done = [], threading.Event()
+    monkeypatch.setattr(zalo, "handle_garden",
+                        lambda *a, **k: got.append("WRONG-garden"))
+    monkeypatch.setattr(zalo, "handle_text",
+                        lambda u, t, m=None: got.append(u) or done.set())
+    raw = json.dumps(_event(msg_id="g2")).encode()
+    assert httpx.post(server, content=raw,
+                      headers={"X-ZEvent-Signature": _sign(raw)}
+                      ).status_code == 200
+    assert done.wait(5)
+    assert got == ["u1"]
+
+
+def test_handle_garden_sends_via_send_text_no_convlog(monkeypatch,
+                                                      tmp_path):
+    _garden_staff(tmp_path)
+    sent = []
+    monkeypatch.setattr(zalo, "send_text",
+                        lambda u, t: sent.append((u, t)) or True)
+    monkeypatch.setattr(zalo.zalo_garden, "_connect", lambda: None)
+    r = zalo.handle_garden("u1", "user_send_text", {"text": "KV-A01 tưới"},
+                           "m1")
+    assert sent == [("u1", zalo.zalo_garden.DB_DOWN)] and r["sent"]
+    assert not (tmp_path / "conversations.jsonl").exists()
+    assert not zalo._histories
+
+
+def test_reply_ms_includes_lock_wait_and_send(monkeypatch, tmp_path):
+    # v12.4 (PL02 ≤30 giây): reply_ms đo từ lúc nhận (trước lock user) tới
+    # khi gửi xong; latency_ms giữ nghĩa cũ (chỉ answer()). Lock user bị
+    # giữ ≥0.3s SAU khi thread đã vào handle_text (event, không đoán thời
+    # điểm thread chạy) + send chậm 0.1s → reply_ms ≥ 300 > latency_ms.
+    monkeypatch.setattr("api.rag.answer",
+                        lambda q: {"answer": "Giá 1.000.000 đ",
+                                   "sources": ["http://x"]})
+    monkeypatch.setattr("pipelines.guardrail.check", lambda t: {"ok": True})
+
+    def slow_send(u, t):
+        time.sleep(0.1)
+        return True
+    monkeypatch.setattr(zalo, "send_text", slow_send)
+    lock, entered = zalo._ulock("u1"), threading.Event()
+
+    def run():
+        entered.set()
+        zalo.handle_text("u1", "giá?", "r1")
+    lock.acquire()
+    th = threading.Thread(target=run)
+    th.start()
+    try:
+        assert entered.wait(10)
+        time.sleep(0.3)
+    finally:
+        lock.release()
+    th.join(10)
+    rec = _wait_log_lines(tmp_path / "conversations.jsonl", 1)[0]
+    assert isinstance(rec["reply_ms"], int)
+    assert rec["reply_ms"] >= 300
+    assert rec["reply_ms"] >= rec["latency_ms"] + 250
+
+
+@pytest.mark.parametrize("question", ["rượu sâm giá bao nhiêu",
+                                      "uống sâm có chữa tiểu đường không"])
+def test_reply_ms_on_fixed_routes(monkeypatch, tmp_path, question):
+    # Lượt template (rượu/sức khỏe) cũng là lượt trả lời khách → có reply_ms.
+    monkeypatch.setattr("api.rag.answer",
+                        lambda q: pytest.fail("không được gọi answer"))
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
+    zalo.handle_text("u1", question, "f1")
+    rec = _wait_log_lines(tmp_path / "conversations.jsonl", 1)[0]
+    assert rec.get("route") and isinstance(rec["reply_ms"], int)
+    assert rec["reply_ms"] >= rec["latency_ms"] >= 0
+
+
+def test_reply_ms_on_crash(monkeypatch, tmp_path):
+    def boom(q):
+        raise RuntimeError("x")
+    monkeypatch.setattr("api.rag.answer", boom)
+    monkeypatch.setattr(zalo, "send_text", lambda u, t: True)
+    zalo.handle_text("u1", "giá?", "c1")
+    rec = _wait_log_lines(tmp_path / "conversations.jsonl", 1)[0]
+    assert rec["answered"] is False and isinstance(rec["reply_ms"], int)
