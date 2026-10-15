@@ -24,6 +24,13 @@ Contract:
     1 dòng `agent_action_log` (detail KHÔNG chứa PII/HMAC/ciphertext).
   - PII vào qua JSON stdin (`-`) hoặc file NGOÀI repo — không nhận qua
     argv (lộ shell history / process list); thông báo lỗi không echo PII.
+  - v14.4 (sales-04.1, PL01 "Mỗi khách có người phụ trách trong ngày"):
+    `--owner LEAD --staff MÃ --by` gán người phụ trách = MÃ nhân viên (không
+    tên) + hạn xử lý `owner_due_at` = N giờ LÀM VIỆC từ lúc gán
+    (`data/sales_watch.json` GIẢ ĐỊNH, ca `data/directors/sales.json`). Gán
+    là quyết định của người → `auth.cli_gate` khối sales hành động
+    `assign`. Lead quá hạn (chưa gán / gán mà vẫn `new`) do
+    `agents.sales_director` đẩy mục `lead_followup` + leo thang SLA.
   - Tỉnh/thành: 34 đơn vị sau sáp nhập 2025 — GIẢ ĐỊNH chưa đối chiếu văn
     bản chính thức (`data/vn_provinces_2025.json`); vùng + đại lý MẪU ở
     `data/dealer_regions.json`.
@@ -53,6 +60,7 @@ from psycopg.types.json import Jsonb
 
 from ingest import lead_store
 from pipelines.llm_gateway import _strip_accents
+from pipelines.period import VN_TZ
 from pipelines.pii import _PII_RE, _mask_pii
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in
@@ -515,6 +523,47 @@ def set_lead_status(conn, lead_id, status, by) -> str:
     return old
 
 
+def assign_owner(conn, lead_id, staff_code, by, now=None, watch=None,
+                 shift=None):
+    """Gán người phụ trách (MÃ nhân viên) cho lead + hạn xử lý theo giờ làm
+    việc → hạn (aware). Lead không có / đã kết thúc / mã sai mẫu / mã ngoài
+    danh sách (khi danh sách có) → ValueError, không ghi. Gán lại (đổi
+    người) được — đợt mới, log cũ → mới."""
+    from agents import sales_watch
+    from pipelines import director, period
+
+    by = _check_by(by)
+    if not isinstance(staff_code, str) or             not sales_watch.STAFF_RE.fullmatch(staff_code):
+        raise ValueError("--staff phải là MÃ nhân viên [A-Z0-9_-]{2,20} "
+                         "(không ghi tên)")
+    watch = watch or sales_watch.section("lead_owner")
+    codes = watch["staff_codes"]
+    if codes and staff_code not in codes:
+        raise ValueError(f"mã nhân viên {staff_code} không có trong danh "
+                         "sách lead_owner.staff_codes")
+    shift = shift or director.load_config("sales")["business_hours"]
+    if lead_id is None or isinstance(lead_id, bool)             or not isinstance(lead_id, int):
+        raise ValueError("lead_id phải là số nguyên")
+    with conn.transaction():
+        row = conn.execute("select status, owner_code from leads where id ="
+                           " %s for update", (lead_id,)).fetchone()
+        if row is None:
+            raise ValueError(f"không có lead #{lead_id}")
+        if row[0] in TERMINAL:
+            raise ValueError(f"lead #{lead_id} đã kết thúc ({row[0]})")
+        if now is None:
+            now = conn.execute("select now()").fetchone()[0]
+        due = period.business_deadline(
+            now, watch["handle_within_business_hours"], shift)
+        conn.execute(
+            "update leads set owner_code = %s, owner_due_at = %s, "
+            "owner_assigned_by = %s, owner_assigned_at = %s where id = %s",
+            (staff_code, due, by, now, lead_id))
+        _log(conn, by, "crm_owner", "lead", lead_id,
+             {"from": row[1], "to": staff_code, "due_at": due.isoformat()})
+    return due
+
+
 def report(conn, regions=None) -> str:
     """Báo cáo CRM CHỈ SELECT, KHÔNG giải mã (không cần khóa): tổng
     liên hệ, đồng ý hiện hành, lead theo tỉnh/đại lý/trạng thái, lead chưa
@@ -622,7 +671,7 @@ def _connect():
 
 # v14.2: thao tác CLI → hành động `auth.cli_gate` (khối sales).
 GATED_OPS = {"consent": "consent", "assign": "assign", "handoff": "handoff",
-             "load-dealers": "load_dealers"}
+             "load-dealers": "load_dealers", "owner": "assign"}
 
 
 def _db_msg(e: psycopg.Error) -> str:
@@ -660,6 +709,11 @@ def main(argv=None) -> int:
                     help="gán lead cho --dealer theo vùng")
     ap.add_argument("--province", metavar="TÊN",
                     help="(với --assign) tỉnh của lead, nhận cả tên cũ")
+    ap.add_argument("--owner", type=int, metavar="LEAD",
+                    help="gán người phụ trách (MÃ nhân viên --staff) + hạn "
+                         "xử lý theo giờ làm việc (v14.4)")
+    ap.add_argument("--staff", metavar="MA_NV",
+                    help="(với --owner) mã nhân viên, KHÔNG ghi tên")
     ap.add_argument("--status", nargs=2, metavar=("LEAD", "STATE"),
                     help=f"đổi trạng thái lead ({'|'.join(LEAD_STATES)})")
     ap.add_argument("--report", action="store_true",
@@ -678,7 +732,8 @@ def main(argv=None) -> int:
            "assign": args.assign is not None,
            "status": args.status is not None, "report": args.report,
            "handoff": args.handoff is not None,
-           "load-dealers": args.load_dealers is not None}
+           "load-dealers": args.load_dealers is not None,
+           "owner": args.owner is not None}
     chosen = [k for k, v in ops.items() if v]
     if len(chosen) != 1:
         ap.error("cần đúng 1 thao tác: --" + " | --".join(ops))
@@ -690,6 +745,9 @@ def main(argv=None) -> int:
                             or args.policy_version):
         ap.error("--purpose/--grant/--withdraw/--source/--evidence/"
                  "--policy-version chỉ dùng với --consent")
+    if (args.staff is not None) != (op == "owner"):
+        ap.error("--owner LEAD cần --staff MA_NV (và --staff chỉ đi với "
+                 "--owner)")
     if args.province is not None and op != "assign":
         ap.error("--province chỉ dùng với --assign")
     if args.dealer is not None and op not in ("consent", "assign",
@@ -740,6 +798,22 @@ def main(argv=None) -> int:
         if op in ("assign", "report", "load-dealers"):
             regions = load_regions(Path(args.load_dealers)
                                    if op == "load-dealers" else REGIONS_FILE)
+        owner_cfg = None
+        if op == "owner":
+            from agents import sales_watch
+            from pipelines.director import DirectorConfigError, load_config
+            try:
+                owner_cfg = (sales_watch.section("lead_owner"),
+                             load_config("sales")["business_hours"])
+            except DirectorConfigError as e:
+                raise ValueError(f"cấu hình khối sales lỗi: {e}") from None
+            if not sales_watch.STAFF_RE.fullmatch(args.staff):
+                raise ValueError("--staff phải là MÃ nhân viên "
+                                 "[A-Z0-9_-]{2,20} (không ghi tên)")
+            if not owner_cfg[0]["staff_codes"]:
+                print("[warn] chưa có danh sách mã nhân viên kinh doanh "
+                      "(lead_owner.staff_codes rỗng — Bên B cấp) — chỉ kiểm"
+                      " mẫu mã", flush=True)
     except VaultKeyError as e:
         print(f"[err] {e}", flush=True)
         return 2
@@ -759,7 +833,8 @@ def main(argv=None) -> int:
     if gated:
         from pipelines import auth  # lười: auth → director → ...
         oid = {"consent": args.consent, "assign": args.assign,
-               "handoff": args.handoff}.get(op, "dealers")
+               "handoff": args.handoff, "owner": args.owner}.get(op,
+                                                                 "dealers")
         why = auth.cli_gate(conn, by, "sales", gated, "crm", oid)
         if why:
             conn.close()
@@ -791,6 +866,12 @@ def main(argv=None) -> int:
                                args.province, regions)
             conn.commit()
             print(f"[ok] lead #{args.assign} → {args.dealer} ({prov})")
+        elif op == "owner":
+            due = assign_owner(conn, args.owner, args.staff, by,
+                               watch=owner_cfg[0], shift=owner_cfg[1])
+            conn.commit()
+            print(f"[ok] lead #{args.owner} → người phụ trách {args.staff},"
+                  f" hạn xử lý {due.astimezone(VN_TZ):%d/%m/%Y %H:%M} (giờ VN)")
         elif op == "status":
             old = set_lead_status(conn, status_lead, args.status[1], by)
             conn.commit()

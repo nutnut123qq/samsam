@@ -1,0 +1,68 @@
+# v14.4 p4 — tests/test_v14_p4_sales.py trên CODE CŨ (git archive v14-hop-dong f9aed60)
+
+## (1) code cũ nguyên trạng: thiếu agents.sales_watch → lỗi collection (cả file không chạy = FAIL)
+ImportError while importing test module 'C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\bf073c29-8533-4e6c-814d-e5fc46fbe378\scratchpad\p4_oldcode\tests\test_v14_p4_sales.py'.
+E   ImportError: cannot import name 'sales_watch' from 'agents' (C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\bf073c29-8533-4e6c-814d-e5fc46fbe378\scratchpad\p4_oldcode\agents\__init__.py)
+1 error in 1.31s
+
+## (2) code cũ + CHỈ chép 3 file mới đứng riêng (agents/sales_watch.py, data/sales_watch.json, ingest/dealer_price.py); crm/kd_quote/kd_price/kd_orders/sales_director/schema/roles/sales.json/danh mục giữ bản cũ.
+## 34 PASS = test thuần của chính 3 file mới (cấu hình, đọc file đại lý) + test tham số CLI (argparse cũ cũng exit 2 vì cờ chưa có); 24 FAIL = mọi hành vi mới ở module cũ.
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_shipped_config_valid_and_unconfirmed
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-kh\xf3a l\u1ea1]
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-max_per_run]
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-staff_codes0]
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-staff_codes1]
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-after_business_hours]
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-quote_followup]
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-channels]
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-return_status]
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-confirmed_by]
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_valid
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[lazada,DL-01,sam-a,1000,2026-10-13,https://a.vn/x-kenh]
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,dl 01,sam-a,1000,2026-10-13,https://a.vn/x-ma_dai_ly]
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,S\xe2m A,1000,2026-10-13,https://a.vn/x-sku_key]
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,0,2026-10-13,https://a.vn/x-gia_vnd]
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,abc,2026-10-13,https://a.vn/x-gia_vnd]
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,1000,2026-10-15,https://a.vn/x-ngay]
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,1000,13/10/2026,https://a.vn/x-ngay]
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,1000,2026-10-13,http://a.vn/x-url_nguon]
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,1000,2026-10-13,https://a.vn/goi-0912345678-url_nguon]
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,1000,2026-10-13,https://a.vn/x y-url_nguon]
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,1000,2026-10-13,-url_nguon]
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_structure_errors
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv0]
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv1]
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv2]
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv3]
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv4]
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv5]
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv6]
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv7]
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv8]
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv9]
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv10]
+FAILED tests/test_v14_p4_sales.py::test_sales_json_has_new_types_lane_b_and_catalog_maps_each
+FAILED tests/test_v14_p4_sales.py::test_anomalies_threshold_and_spike_closed_weeks_only
+FAILED tests/test_v14_p4_sales.py::test_anomalies_no_baseline_or_zero_bad_no_spike
+FAILED tests/test_v14_p4_sales.py::test_crm_owner_rejects_name_as_staff_code_before_db
+FAILED tests/test_v14_p4_sales.py::test_bad_watch_config_exit1_before_connect
+FAILED tests/test_v14_p4_sales.py::test_assign_owner_sets_code_due_and_log
+FAILED tests/test_v14_p4_sales.py::test_assign_owner_rejects
+FAILED tests/test_v14_p4_sales.py::test_cli_owner_through_gate
+FAILED tests/test_v14_p4_sales.py::test_cli_owner_enforced_mode_blocked_empty_approvers
+FAILED tests/test_v14_p4_sales.py::test_lead_followup_unassigned_and_assigned_overdue
+FAILED tests/test_v14_p4_sales.py::test_lead_followup_enqueue_idempotent_reassign_new_wave
+FAILED tests/test_v14_p4_sales.py::test_lead_followup_cap_per_run
+FAILED tests/test_v14_p4_sales.py::test_lead_followup_overdue_escalates_like_other_sales_items
+FAILED tests/test_v14_p4_sales.py::test_followup_after_business_hours_then_rounds
+FAILED tests/test_v14_p4_sales.py::test_followup_sent_resets_base_outcome_stops
+FAILED tests/test_v14_p4_sales.py::test_record_event_rules
+FAILED tests/test_v14_p4_sales.py::test_cli_verify_send_records_sent_and_outcome
+FAILED tests/test_v14_p4_sales.py::test_run_followups_enqueue_and_rollout_off
+FAILED tests/test_v14_p4_sales.py::test_dealer_load_whole_file_check_idempotent_append_only
+FAILED tests/test_v14_p4_sales.py::test_dealer_findings_floor_rules
+FAILED tests/test_v14_p4_sales.py::test_dealer_watch_enqueue_idempotent_and_rollout_off
+FAILED tests/test_v14_p4_sales.py::test_cli_dealer_file_and_watch
+FAILED tests/test_v14_p4_sales.py::test_watch_counts_and_enqueue_waves
+FAILED tests/test_v14_p4_sales.py::test_watch_return_status_and_cli_dry_run
+24 failed, 34 passed in 28.88s

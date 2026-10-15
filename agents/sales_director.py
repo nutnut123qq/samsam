@@ -25,6 +25,12 @@ Contract:
     `(object_type, object_id)` đã có trong `approval_queue` Ở BẤT KỲ status
     (cùng đợt đã duyệt/từ chối/expired không bị đẩy lại).
     Lead `new` quá N giờ làm việc → CHỈ nhắc trong bản tin (`stale_leads`).
+    v14.4 (sales-04.1): lead `new` tạo/gán trong `lead_owner.lookback_days`
+    mà CHƯA có người phụ trách quá `assign_within_business_hours`, hoặc đã
+    gán nhưng quá `owner_due_at` → `lead_followup` theo ĐỢT
+    (`lead:<id>:chua_gan` / `lead:<id>:<owner_assigned_at UTC>` — gán lại =
+    đợt mới); trần `max_per_run` mục mới/lần (phần vượt chờ lần sau). Payload
+    chỉ mã lead/kênh/ý định/mã nhân viên/hạn — không câu hỏi khách.
     `payload`/`title` dựng từ TEMPLATE (mã/loại/kênh/giờ VN) — KHÔNG câu hỏi
     khách, tiêu đề listing, sku_key, detail (guardrail ok, người duyệt được).
   - `sweep`: `expire_overdue` (quá hạn TUYỆT ĐỐI → expired, không bao giờ
@@ -65,6 +71,7 @@ from pathlib import Path
 
 import psycopg
 
+from agents import sales_watch
 from agents.report import REPORTS_DIR, write_report
 from ingest.lead_store import (
     CONV_FILES,
@@ -95,7 +102,7 @@ JOB = "agents.sales_director"
 SWEEP_BY = "system:sla:sales"
 CLASS_HOURS = {"A": 2, "B": 4}          # WP07: handoff A 2h, B 4h làm việc
 SOURCE_TYPES = ("cskh_handoff", "market_alert_s1", "market_alert_s2",
-                "price_review")
+                "price_review", "lead_followup")
 PERIODS = ("day", "week")
 # Nhãn mã cảnh báo sàn trong payload — KHÔNG đưa mã thô (vd chứa từ khóa
 # rượu → guardrail chặn approve vĩnh viễn).
@@ -223,7 +230,12 @@ def validate_sales(cfg: dict) -> dict:
 
 
 def load_sales_config(base_dir: Path | None = None) -> dict:
-    return validate_sales(director.load_config(BLOCK, base_dir))
+    cfg = validate_sales(director.load_config(BLOCK, base_dir))
+    try:
+        cfg["lead_owner"] = sales_watch.section("lead_owner")
+    except ValueError as e:
+        raise DirectorConfigError(f"{BLOCK}: {e}") from None
+    return cfg
 
 
 def route(cfg: dict, object_type: str) -> dict:
@@ -413,6 +425,8 @@ def _collect(conn, now: datetime, cfg: dict,
             f"{_fmt_vn(created)} (giờ VN). Việc cần làm: GĐ bán hàng đối"
             " chiếu giá theo từng nguồn trong phiếu và quyết giá đúng;"
             " agent không chọn giá.")
+    for it in lead_items(conn, now, cfg):
+        add(it["object_type"], it["object_id"], it["title"], it["payload"])
     cap, n_cskh, deferred = cfg["sources"]["max_cskh_per_run"], 0, 0
     cskh = _cskh_state(conn)
     for u in _unanswered(now, cfg, data_dir):
@@ -442,6 +456,64 @@ def _collect(conn, now: datetime, cfg: dict,
             " CSKH mở tab 'Chưa trả lời' đọc câu hỏi gốc (đã che SĐT/email)"
             " và liên hệ lại khách qua kênh gốc.")
     return items, deferred
+
+
+_INTENT_LABELS = {"partner": "hợp tác/đại lý", "order": "đặt hàng",
+                  "price": "hỏi giá", "contact": "liên hệ"}
+
+
+def lead_items(conn, now: datetime, cfg: dict) -> list[dict]:
+    """v14.4 sales-04.1 (CHỈ ĐỌC) → mục `lead_followup` chưa có trong hàng
+    duyệt (mọi status), tối đa `max_per_run`. Thiếu cấu hình `lead_owner`
+    (cfg dựng tay ở test cũ) → []."""
+    _check_now(now)
+    lo = cfg.get("lead_owner")
+    if not lo:
+        return []
+    since = now - timedelta(days=lo["lookback_days"])
+    seen = {o for (o,) in conn.execute(
+        "select object_id from approval_queue where object_type ="
+        " 'lead_followup'").fetchall()}
+    out = []
+    for lid, ts, ch, intent, owner, due, assigned in conn.execute(
+            "select id, ts, channel, intent, owner_code, owner_due_at,"
+            " owner_assigned_at from leads where status = 'new' and"
+            " (ts >= %s or owner_assigned_at >= %s) order by ts, id",
+            (since, since)).fetchall():
+        if owner is None or assigned is None or due is None:
+            due = period.business_deadline(
+                ts, lo["assign_within_business_hours"],
+                cfg["business_hours"])
+            oid, what = f"lead:{lid}:chua_gan", "CHƯA có người phụ trách"
+            todo = ("GĐ bán hàng gán người phụ trách (`python -m ingest.crm"
+                    f" --owner {lid} --staff <mã NV> --by <tên>`)")
+        else:
+            oid = (f"lead:{lid}:"
+                   f"{assigned.astimezone(timezone.utc):%Y%m%dT%H%M%S%fZ}")
+            what = (f"người phụ trách mã {_staff(owner)} chưa xử lý (lead"
+                    " vẫn ở trạng thái mới)")
+            todo = ("GĐ bán hàng nhắc người phụ trách hoặc gán người khác;"
+                    " người phụ trách cập nhật trạng thái lead sau khi liên"
+                    " hệ")
+        if now < due or oid in seen:
+            continue
+        if len(out) >= lo["max_per_run"]:
+            break
+        seen.add(oid)
+        out.append({
+            "object_type": "lead_followup", "object_id": oid,
+            "title": f"lead #{lid}",
+            "payload": (
+                f"Lead #{lid} (kênh {_code(ch)}, ý định "
+                f"{_INTENT_LABELS.get(intent, 'khác')}) — {what}; hạn "
+                f"{_fmt_vn(due)} (giờ VN, giờ làm việc GIẢ ĐỊNH). Việc cần"
+                f" làm: {todo}. Hệ thống không tự liên hệ khách.")})
+    return out
+
+
+def _staff(code) -> str:
+    s = code if isinstance(code, str) else ""
+    return s if sales_watch.STAFF_RE.fullmatch(s) else "(mã lạ)"
 
 
 def enqueue_new(conn, items: list[dict], cfg: dict) -> int:

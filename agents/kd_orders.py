@@ -20,7 +20,20 @@ thái đơn = trạng thái DÒNG ĐẦU của đơn trong snapshot (cùng
 (total_vnd vẫn = Σ giá×SL để đối soát; `agents.report` LOẠI `cancelled`
 khỏi Đơn hàng/Doanh thu và ghi chú ngày đơn sàn = ngày nạp file).
 
+v14.4 (sales-06.2, PL01 "cảnh báo đơn trễ, hủy, hoàn bất thường"):
+`--watch` (job, CHỈ đọc `orders` sàn — source `market:%`, không mẫu) gom đơn
+theo (kênh, tuần ISO giờ VN theo `orders.ts`) → TUẦN ĐÃ ĐÓNG gần nhất
+(`check_weeks`) có ≥ `min_orders` đơn mà tỷ lệ hủy (`cancelled`) / hoàn
+(trạng thái `return_status` của kênh — GIẢ ĐỊNH) > ngưỡng tuyệt đối, HOẶC ≥
+`spike_ratio` × tỷ lệ nền `baseline_weeks` tuần trước (nền đủ đơn) → mục
+`order_anomaly` khối sales. Theo ĐỢT: khóa `ow:<kênh>:<loại>:<tuần>:<số đơn
+xấu>` — đang có mục pending cùng (kênh, loại, tuần) → không thêm; đã quyết
+→ chỉ mục mới khi số đơn xấu TĂNG (trạng thái đổi muộn). Đơn TRỄ: file xuất
+chưa có cột ngày đặt/hạn giao → "chưa đo", KHÔNG suy. Ngưỡng
+`data/sales_watch.json` GIẢ ĐỊNH. Agent không xử lý đơn, không liên hệ khách.
+
 Chạy:
+  python -m agents.kd_orders --watch [--dry-run] [--as-of YYYY-MM-DD]
   python -m agents.kd_orders --sync [--snapshot ID] [--dry-run]
   python -m agents.kd_orders --recon --since 2026-10-01 --until 2026-10-31
       [--out-dir DIR]
@@ -35,7 +48,8 @@ import os
 import sys
 import unicodedata
 from contextlib import suppress
-from datetime import date
+from datetime import date, datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 import psycopg
@@ -44,7 +58,7 @@ from agents.report import REPORTS_DIR
 from ingest.lead_store import connect
 from ingest.market_csv import _clean, load_mapping
 from pipelines.job_runs import job_run
-from pipelines.period import period_bounds
+from pipelines.period import VN_TZ, period_bounds, vn_date
 from pipelines.store import _db_msg
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in
@@ -189,6 +203,195 @@ def sync(conn, snapshot_ids=None, dry_run: bool = False) -> dict:
             cur.executemany(_UPSERT_SQL, todo)
     conn.commit()
     return counts
+
+
+# ------------------------------------------------------- v14.4 đơn bất thường
+
+FEATURE_WATCH = "sales-06.2"
+OT_ANOMALY = "order_anomaly"
+WATCH_KINDS = {"cancel": "hủy", "return": "hoàn/trả"}
+LATE_NOTE = ("Đơn trễ: CHƯA ĐO — file xuất Seller Center chưa có cột ngày"
+             " đặt/hạn giao (không suy từ ngày nạp file).")
+
+
+def _pct(bad: int, n: int) -> str:
+    if not n:
+        return "—"
+    q = (Decimal(bad) * 100 / Decimal(n)).quantize(Decimal("0.1"),
+                                                   ROUND_HALF_UP)
+    return f"{q}%"
+
+
+def week_counts(conn, since: datetime, return_status: dict) -> dict:
+    """CHỈ SELECT → {(kênh, ngày đầu tuần VN): {n, cancel, return}} cho đơn
+    sàn thật (`market:%`) từ `since`."""
+    rs = {ch: {_nfc(x) for x in v} for ch, v in return_status.items()}
+    out: dict = {}
+    for ch, ts, status in conn.execute(
+            "select channel, ts, status from orders where source like"
+            " 'market:%%' and ts >= %s", (since,)).fetchall():
+        wk = period_bounds("week", ts)[0].date()
+        c = out.setdefault((ch, wk), {"n": 0, "cancel": 0, "return": 0})
+        c["n"] += 1
+        st = _nfc(status or "")
+        if st == "cancelled":
+            c["cancel"] += 1
+        elif st in rs.get(ch, ()):
+            c["return"] += 1
+    return out
+
+
+def anomalies(counts: dict, today: date, ow: dict) -> list[dict]:
+    """THUẦN, tất định → phát hiện trên các tuần ĐÃ ĐÓNG gần nhất."""
+    w0 = period_bounds("week", today)[0].date()
+    chans = sorted({ch for ch, _ in counts})
+    out = []
+    for i in range(1, ow["check_weeks"] + 1):
+        wk = w0 - timedelta(days=7 * i)
+        for ch in chans:
+            c = counts.get((ch, wk))
+            if not c or c["n"] < ow["min_orders"]:
+                continue
+            base = [counts.get((ch, wk - timedelta(days=7 * j)))
+                    for j in range(1, ow["baseline_weeks"] + 1)]
+            nb = sum(b["n"] for b in base if b)
+            for kind, cap in (("cancel", ow["cancel_rate_max_pct"]),
+                              ("return", ow["return_rate_max_pct"])):
+                bad, n = c[kind], c["n"]
+                bb = sum(b[kind] for b in base if b)
+                if bad == 0:
+                    continue
+                over = bad * 100 > n * cap
+                spike = (nb >= ow["min_orders"] and bb > 0
+                         and bad * nb >= ow["spike_ratio"] * bb * n)
+                if not (over or spike):
+                    continue
+                out.append({"channel": ch, "kind": kind, "week": wk,
+                            "n": n, "bad": bad, "cap": cap, "n_base": nb,
+                            "bad_base": bb, "over": over, "spike": spike,
+                            "object_id": f"ow:{ch}:{kind}:{wk.isoformat()}"
+                                         f":{bad}"})
+    return sorted(out, key=lambda f: (f["week"], f["channel"], f["kind"]))
+
+
+def _new_only(conn, fs: list[dict]) -> list[dict]:
+    """Bỏ phát hiện đã có mục pending cùng (kênh, loại, tuần) hoặc đã quyết
+    với số đơn xấu ≥ hiện tại."""
+    pend, decided = set(), {}
+    for oid, st in conn.execute(
+            "select object_id, status from approval_queue where object_type"
+            " = %s and object_id like 'ow:%%'", (OT_ANOMALY,)).fetchall():
+        head, _, n = oid.rpartition(":")
+        if st == "pending":
+            pend.add(head)
+        elif n.isdigit():
+            decided[head] = max(decided.get(head, 0), int(n))
+    out = []
+    for f in fs:
+        head = f["object_id"].rpartition(":")[0]
+        if head in pend or decided.get(head, -1) >= f["bad"]:
+            continue
+        out.append(f)
+    return out
+
+
+def anomaly_item(f: dict, ow: dict, label: str) -> dict:
+    end = f["week"] + timedelta(days=6)
+    kind = WATCH_KINDS[f["kind"]]
+    why = []
+    if f["over"]:
+        why.append(f"vượt ngưỡng {f['cap']}%")
+    if f["spike"]:
+        why.append(f"≥ {ow['spike_ratio']} lần tỷ lệ nền")
+    where = (f"kênh {f['channel']}, tuần {f['week']:%d/%m}–{end:%d/%m/%Y}")
+    return {"object_type": OT_ANOMALY, "object_id": f["object_id"],
+            "title": f"{label} — đơn {kind}, {where}",
+            "payload": (
+                f"Cảnh báo đơn {kind} bất thường (A6, NHÁP): {where}."
+                f" Số liệu: {f['n']} đơn, {kind} {f['bad']}"
+                f" ({_pct(f['bad'], f['n'])}); nền {ow['baseline_weeks']}"
+                f" tuần trước {f['n_base']} đơn, {kind} {f['bad_base']}"
+                f" ({_pct(f['bad_base'], f['n_base'])}). Lý do: "
+                + "; ".join(why) + " (ngưỡng GIẢ ĐỊNH). Ghi chú: ngày đơn ="
+                " ngày nạp file đầu tiên (GIẢ ĐỊNH). " + LATE_NOTE
+                + " Việc cần làm: GĐ bán hàng rà lý do trên Seller Center và"
+                " quyết xử lý. Agent không xử lý đơn, không liên hệ khách.")}
+
+
+def watch(conn, today: date, ow: dict, cfg: dict,
+          dry_run: bool = False) -> dict:
+    from pipelines import director, rollout
+
+    rollout.check_generate(conn, FEATURE_WATCH, "cảnh báo đơn bất thường")
+    w0 = period_bounds("week", today)[0]
+    since = w0 - timedelta(days=7 * (ow["check_weeks"]
+                                     + ow["baseline_weeks"]))
+    counts = week_counts(conn, since, ow["return_status"])
+    fs = anomalies(counts, today, ow)
+    new = _new_only(conn, fs)
+    label = cfg["object_types"][OT_ANOMALY]["label"]
+    n = 0
+    if not dry_run:
+        for f in new:
+            it = anomaly_item(f, ow, label)
+            try:
+                director.submit(conn, "sales", OT_ANOMALY, it["object_id"],
+                                it["title"], it["payload"],
+                                "agent:kd_orders", cfg=cfg)
+            except psycopg.errors.UniqueViolation:
+                with suppress(Exception):
+                    conn.rollback()
+                continue
+            n += 1
+    conn.commit()
+    return {"findings": fs, "new": len(new), "enqueued": n,
+            "weeks": sorted({wk for _, wk in counts})}
+
+
+def _watch_main(args) -> int:
+    from agents import sales_watch
+    from pipelines import director
+    from pipelines.rollout import RolloutBlocked
+
+    try:
+        ow = sales_watch.section("order_watch")
+        cfg = director.load_config("sales")
+        if OT_ANOMALY not in cfg["object_types"]:
+            raise director.DirectorConfigError(
+                f"sales.json thiếu loại việc {OT_ANOMALY}")
+    except (ValueError, director.DirectorConfigError) as e:
+        print(f"[error] cấu hình lỗi: {e} — không connect", file=sys.stderr)
+        return 1
+    today = args.as_of or vn_date(datetime.now(VN_TZ))
+    conn = connect()
+    if conn is None:
+        print("[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc"
+              " host chết)", file=sys.stderr)
+        return 2
+    try:
+        try:
+            r = watch(conn, today, ow, cfg, args.dry_run)
+        except RolloutBlocked as e:
+            print(f"[rollout] {e}", file=sys.stderr)
+            return 2
+        tag = "dry-run" if args.dry_run else "watch"
+        for f in r["findings"]:
+            print(f"  [{f['channel']}] tuần {f['week']:%Y-%m-%d}: đơn"
+                  f" {WATCH_KINDS[f['kind']]} {f['bad']}/{f['n']}"
+                  f" ({_pct(f['bad'], f['n'])})")
+        print(f"[{tag}] ngày {today:%Y-%m-%d}: bất thường"
+              f" {len(r['findings'])} (mới {r['new']}) · đẩy {r['enqueued']}"
+              " mục" + (" — KHÔNG ghi DB" if args.dry_run else ""))
+        print(f"[info] {LATE_NOTE}")
+        return 0
+    except psycopg.Error as e:
+        with suppress(Exception):
+            conn.rollback()
+        print(f"[error] lỗi DB: {_clean(_db_msg(e), 300)}", file=sys.stderr)
+        return 2
+    finally:
+        with suppress(Exception):
+            conn.close()
 
 
 # ------------------------------------------------------------ đối soát
@@ -363,20 +566,39 @@ def main(argv=None) -> int:
     ap.add_argument("--out-dir", type=Path, default=REPORTS_DIR)
     ap.add_argument("--report", action="store_true",
                     help="(không hỗ trợ — dùng --recon)")
+    ap.add_argument("--watch", action="store_true",
+                    help="cảnh báo tỷ lệ hủy/hoàn bất thường tuần đã đóng →"
+                         " hàng duyệt khối sales (v14.4)")
+    ap.add_argument("--as-of", help="(với --watch --dry-run) ngày giả")
     args = ap.parse_args(argv)
-    n_ops = sum([args.sync, args.recon, args.report])
+    n_ops = sum([args.sync, args.recon, args.report, args.watch])
     # v14.2: login dịch vụ nạp file (LOADER_DATABASE_URL, role svc_loader)
-    # — chế độ thực từ chối login superuser/owner/thiếu biến.
+    # — chế độ thực từ chối login superuser/owner/thiếu biến. v14.4:
+    # `--watch` là job đẩy hàng duyệt (svc_job, kế thừa agent_writer).
     from pipelines import auth  # lười: auth → director → ...
-    if why := auth.bind_service("loader"):
+    why = (auth.bind_service("job") if args.watch
+           else auth.bind_service("loader"))
+    if why:
         print(f"[err] {why}", flush=True)
         return 2
     if n_ops > 1:
-        ap.error("chỉ được 1 thao tác mỗi lần (--sync | --recon)")
+        ap.error("chỉ được 1 thao tác mỗi lần (--sync | --recon | --watch)")
     if n_ops == 0 or args.report:
-        ap.error("cần --sync hoặc --recon --since D --until D")
-    if (args.snapshot is not None or args.dry_run) and not args.sync:
-        ap.error("--snapshot/--dry-run chỉ đi với --sync")
+        ap.error("cần --sync, --watch hoặc --recon --since D --until D")
+    if args.snapshot is not None and not args.sync:
+        ap.error("--snapshot chỉ đi với --sync")
+    if args.dry_run and not (args.sync or args.watch):
+        ap.error("--dry-run chỉ đi với --sync / --watch")
+    if args.as_of is not None:
+        if not (args.watch and args.dry_run):
+            ap.error("--as-of chỉ dùng với --watch --dry-run (không ghi"
+                     " hàng duyệt theo ngày giả)")
+        try:
+            args.as_of = date.fromisoformat(args.as_of)
+        except ValueError:
+            ap.error("--as-of phải dạng YYYY-MM-DD")
+    if args.watch:
+        return _watch_main(args)
     if args.snapshot is not None and args.snapshot <= 0:
         ap.error("--snapshot phải là số dương")
     since = until = None
