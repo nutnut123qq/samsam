@@ -1,0 +1,125 @@
+
+$ python -m pipelines.rollout --seed --by Quản lý AI E2E
+[PASS] exit 0 (mong 0) — vào sổ
+   [OK] vào sổ 0 · có sẵn 66 · bỏ qua (chưa co_code) 20
+
+$ python -m connectors.channels --suggest shopee --by Lan MXH  <<< 'giá hộp 6 năm? gọi 0912345678'
+[PASS] exit 0 (mong 0) — chạy thử → nhãn chưa được dùng
+   [warn] channels: answer() lỗi GatewayError — dùng câu chuyển nhân viên
+   [CHẠY THỬ — CHỈ ĐÁNH GIÁ NỘI BỘ, chưa được dùng: KHÔNG dán gửi khách (sales-02 chưa vận hành, HĐ 6.7)]
+   [GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]
+   Dạ, câu hỏi này cần nhân viên Sâm Sâm kiểm tra thêm. Nhân viên sẽ phản hồi Quý khách ngay trong khung chat này.
+   handoff=no_data
+   [đầu ra #32] ghi nội bộ (chạy thử) — không đánh dấu đã gửi được
+   dòng san_suggestions không chứa SĐT/tin buyer: True
+
+$ python -m connectors.channels --mark-sent 32 --by Lan MXH
+[PASS] exit 1 (mong 1) — chạy thử → từ chối đánh dấu
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+   [TỪ CHỐI] gợi ý soạn lúc CHẠY THỬ — chỉ đánh giá nội bộ, không đánh dấu đã gửi (HĐ 6.7)
+
+$ python -m connectors.channels --suggest tiktok --by Lan MXH  <<< 'còn hàng không'
+[PASS] exit 0 (mong 0) — vận hành → có lệnh đánh dấu
+   [warn] channels: answer() lỗi GatewayError — dùng câu chuyển nhân viên
+   [GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]
+   Dạ, câu hỏi này cần nhân viên Sâm Sâm kiểm tra thêm. Nhân viên sẽ phản hồi Quý khách ngay trong khung chat này.
+   handoff=no_data
+   [đầu ra #33] dán xong → python -m connectors.channels --mark-sent 33 --by '<tên MXH>'
+
+$ python -m connectors.channels --mark-sent 33 --by agent:kd_a1
+[PASS] exit 1 (mong 1) — agent không đánh dấu
+   [TỪ CHỐI] 'agent:kd_a1' không phải người — agent/hệ thống KHÔNG được verify
+
+$ python -m connectors.channels --mark-sent 33 --by Lan MXH
+[PASS] exit 0 (mong 0) — người MXH đánh dấu đã dán
+   [OK] gợi ý #33: đã dán gửi — người: Lan MXH
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+$ python -m connectors.channels --mark-sent 32 --by Lan MXH
+[PASS] exit 1 (mong 1) — gợi ý soạn lúc chạy thử vẫn không dùng được
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+   [TỪ CHỐI] gợi ý soạn lúc CHẠY THỬ — chỉ đánh giá nội bộ, không đánh dấu đã gửi (HĐ 6.7)
+
+$ python -m pipelines.rollout --disable sales-02 --by Quản lý AI E2E
+[PASS] exit 0 (mong 0)
+   [OK] sales-02: vận hành → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+$ python -m connectors.channels --suggest shopee --by Lan MXH  <<< 'x'
+[PASS] exit 2 (mong 2) — tắt → exit 2, không gọi AI
+   [blocked] tính năng sales-02 (gợi ý chat sàn) đang TẮT — không soạn gợi ý (HĐ 6.7)
+
+$ python -m agents.ceo_risk --report --out-dir C:\Users\hahuy\AppData\Local\Temp\p3e2e_oz7sp6kn
+[PASS] exit 0 (mong 0) — báo cáo ceo-risk → report_outputs
+   [done] C:\Users\hahuy\AppData\Local\Temp\p3e2e_oz7sp6kn\ceo-risk-2026-10-16.md — đỏ 2, vàng 8, xanh 0
+   report_outputs: [('ceo-03', 'ceo-risk-2026-10-16.md', False)]
+
+$ python -m pipelines.rollout --disable production-01 --by Quản lý AI E2E
+[PASS] exit 0 (mong 0)
+   [OK] production-01: chạy thử → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+$ python -m pipelines.rollout --disable finance-01 --by Quản lý AI E2E
+[PASS] exit 0 (mong 0)
+   [OK] finance-01: chạy thử → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+$ python -m pipelines.rollout --disable ceo-04.2 --by Quản lý AI E2E
+[PASS] exit 0 (mong 0)
+   [OK] ceo-04.2: chạy thử → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+$ python -m pipelines.rollout --disable marketing-06.2 --by Quản lý AI E2E
+[PASS] exit 0 (mong 0)
+   [OK] marketing-06.2: chạy thử → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+$ python -m pipelines.rollout --disable finance-06 --by Quản lý AI E2E
+[PASS] exit 0 (mong 0)
+   [OK] finance-06: chạy thử → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+$ python -m pipelines.production allocate --cutoff x
+[PASS] exit 1 (mong 1) — mốc sai vẫn exit 1 (kiểm tham số)
+   [err] không có mốc 'x' trong config (chot_11_11, ke_hoach_tet, chot_12_12, chot_tet)
+
+$ python -m pipelines.production allocate --cutoff chot_11_11
+[PASS] exit 1 (mong 1) — production-01 tắt → không ghi đề xuất
+   [err] đề xuất phân bổ tồn: tính năng production-01 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra — không ghi.
+   allocation_proposals không đổi: True
+
+$ python -m ingest.settlement_csv --reconcile
+[PASS] exit 2 (mong 2) — finance-01 tắt → không đối soát
+   [blocked] đối soát quyết toán: tính năng finance-01 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra — không đối soát.
+
+$ python -m pipelines.cockpit --collect --period week
+[PASS] exit 2 (mong 2) — marketing-06.2 tắt → không chụp số
+     approvals.ceo_decided                           0  db:approval_queue
+     approvals.ceo_expired                           0  db:approval_queue
+     content.drafts_rejected                         0  db:content_drafts
+   [warn] thiếu nguồn — chatbot.questions: không có file conversations.jsonl
+   [warn] thiếu nguồn — chatbot.unanswered: không có file conversations.jsonl
+   [blocked] chụp số cockpit: tính năng marketing-06.2 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra — không ghi channel_snapshots
+
+$ python -m agents.bks_audit --report --out-dir C:\Users\hahuy\AppData\Local\Temp\p3e2e_oz7sp6kn --record
+[PASS] exit 2 (mong 2) — ceo-04.2 tắt → không báo cáo/sổ
+   [blocked] báo cáo bks-audit-2026-09.md: tính năng ceo-04.2 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+
+$ python -m agents.rev_share --quarter 2026-Q3 --out-dir C:\Users\hahuy\AppData\Local\Temp\p3e2e_oz7sp6kn --record
+[PASS] exit 2 (mong 2) — finance-06 tắt → không đối soát quý
+   [blocked] báo cáo doi-soat-2026-Q3.md: tính năng finance-06 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+
+$ python -m pipelines.rollout --status
+[PASS] exit 0 (mong 0) — sổ + đếm đầu ra
+   farming-06         Neo mã xác thực lên blockchain           — mot_phan, chưa vào sổ
+   finance-06         Doanh thu thuần trực tuyến + biên bản đ… tắt từ 16/10/2026 · 0 ngày LV · 0 (0 ngày, 0 người duyệt) đầu ra · ĐỦ cổng → chạy thử
+   data_platform-08   Sổ triển khai 3 bước + hồ sơ nghiệm thu… chạy thử từ 16/10/2026 · 0 ngày LV · 72 (1 ngày, 72 người duyệt) đầu ra · mới 0/5 ngày làm việc chạy thử; đầu ra mới rải trên 1/5 ngày làm việc
+   ceo-90             Nghĩa vụ hợp đồng ngoài phần mềm         — ngoai_code, chưa vào sổ
+   data_platform-90   Hạ tầng độc lập trên server Bên B        — ngoai_code, chưa vào sổ
+   CẢNH BÁO: lịch nghỉ lễ/Tết chưa chốt (`data/rollout_config.json` holidays rỗng) — ngày làm việc đang tính T2–T6 kể cả ngày lễ; chờ Hành chính Sâm Sâm chốt, KHÔNG tự điền.
+
+$ python -m connectors.channels --mark-sent 1 --by Lan MXH
+[PASS] exit 2 (mong 2) — DB chết → exit 2
+   [FAIL] DB không kết nối được (DATABASE_URL)
+
+[tổng] 0 kiểm tra FAIL

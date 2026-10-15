@@ -1,0 +1,131 @@
+# v14.3 p3 — test mới chạy trên code CŨ (v14-hop-dong f9aed60: code + danh mục + schema/roles cũ; test mới giữ). Mong đợi: FAIL.
+FFFFFFFFF.FFFFFFFFFF                                                     [100%]
+================================== FAILURES ===================================
+E   TypeError: write_report() got an unexpected keyword argument 'sample'
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:133: TypeError: write_report() got an unexpected keyword argument 'sample'
+E   AssertionError: assert 'không ghi sổ đầu ra' in ''
+     +  where '' = CaptureResult(out='', err='').err
+     +    where CaptureResult(out='', err='') = readouterr()
+     +      where readouterr = <_pytest.capture.CaptureFixture object at 0x000001E49AE27A10>.readouterr
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:153: AssertionError: assert 'không ghi sổ đầu ra' in ''
+E   psycopg.errors.UndefinedColumn: column "is_sample" of relation "audit_runs" does not exist
+    LINE 1: ...d, period_label, findings, report_sha256, run_by, is_sample)...
+                                                                 ^
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: psycopg.errors.UndefinedColumn: column "is_sample" of relation "audit_runs" does not exist
+E   Failed: DID NOT RAISE <class 'ValueError'>
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:217: Failed: DID NOT RAISE <class 'ValueError'>
+E   AssertionError: ('ceo-02.2', 'table=decision_log')
+    assert False
+     +  where False = <built-in method startswith of str object at 0x000001E49AFA0270>('file=')
+     +    where <built-in method startswith of str object at 0x000001E49AFA0270> = 'table=decision_log'.startswith
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:231: AssertionError: ('ceo-02.2', 'table=decision_log')
+E   TypeError: enqueue() got an unexpected keyword argument 'sample'
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:241: TypeError: enqueue() got an unexpected keyword argument 'sample'
+E   AssertionError: assert 'sales-06.1' == 'sales-03'
+      
+      - sales-03
+      ?        ^
+      + sales-06.1
+      ?        ^^^
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:256: AssertionError: assert 'sales-06.1' == 'sales-03'
+E   TypeError: _suggest() takes 2 positional arguments but 3 were given
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:286: TypeError: _suggest() takes 2 positional arguments but 3 were given
+E   TypeError: _suggest() takes 2 positional arguments but 3 were given
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:329: TypeError: _suggest() takes 2 positional arguments but 3 were given
+E   AttributeError: module 'pipelines.qr_trace' has no attribute 'PAUSED'
+---------------------------- Captured stdout call -----------------------------
+[done] lô LOT-MO-001: ánh xạ nhật ký #2 (1 ảnh) — người thực hiện: A. Chữ ký cũ (nếu có) không còn tính — ký lại trên bản mới.
+[done] lô LOT-MO-001: vai GĐ Sản xuất đã ký (approvals #2) — người ký: Trần Sản Xuất
+[done] lô LOT-MO-001: vai GĐ vùng trồng đã ký (approvals #3) — người ký: Lê Vùng Trồng
+[done] lô LOT-MO-001: vai Pháp chế/QA đã ký (approvals #4) — người ký: Phạm Pháp Chế
+[done] lô LOT-MO-001: đã phát hành mã — người phát hành: A
+chưa có domain công khai (external-dep) — đường dẫn XtRHCbBxbYb-Aek2agwuAw/
+ảnh QR: nhà in tạo từ URL (lib QR không có — external-dep). Chạy `site` để sinh trang.
+[done] 1 trang → C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2757\test_qr_site_paused_replaces_p0\site (0 lỗi)
+[blocked] 1 mã còn hiệu lực KHÔNG xuất trang — trang QR công khai: tính năng farming-03.2 đang tắt — HĐ 6.7/PL02 mục 1 — đầu ra chỉ ghi nội bộ, không dùng
+[done] 0 trang → C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2757\test_qr_site_paused_replaces_p0\site (0 lỗi)
+---------------------------- Captured stderr call -----------------------------
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:381: AttributeError: module 'pipelines.qr_trace' has no attribute 'PAUSED'
+E   Failed: DID NOT RAISE <class 'pipelines.rollout.RolloutBlocked'>
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:399: Failed: DID NOT RAISE <class 'pipelines.rollout.RolloutBlocked'>
+E   AssertionError: assert 0 == 1
+     +  where 0 = <function main at 0x000001E49B250720>(['approve', '--run', 'abcdef123456', '--by', 'GĐ SX'])
+     +    where <function main at 0x000001E49B250720> = production.main
+---------------------------- Captured stdout call -----------------------------
+[done] run abcdef123456: 1 dòng → approved (approvals #1) — người quyết định: GĐ SX. Không chuyển kho (thực hiện tay theo quyết định).
+---------------------------- Captured stderr call -----------------------------
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:416: AssertionError: assert 0 == 1
+E   Failed: DID NOT RAISE <class 'pipelines.rollout.RolloutBlocked'>
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:425: Failed: DID NOT RAISE <class 'pipelines.rollout.RolloutBlocked'>
+E   Failed: DID NOT RAISE <class 'pipelines.rollout.RolloutBlocked'>
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:432: Failed: DID NOT RAISE <class 'pipelines.rollout.RolloutBlocked'>
+E   assert (0 == 2)
+---------------------------- Captured stdout call -----------------------------
+[done] C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2757\test_hdtv_off_no_pack0\out\hdtv-2026-09.md — kỳ 2026-09, 34 fact có nguồn, 0 mục không đọc được
+[record] audit_runs #1
+[submit] mục #1 vào hàng chờ khối ceo (pending — TGĐ duyệt; hệ thống KHÔNG tự duyệt, KHÔNG tự gửi HĐTV)
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:450: assert (0 == 2)
+E   AttributeError: 'TxConn' object has no attribute 'cursor'
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\scripts\persona_sim.py:511: AttributeError: 'TxConn' object has no attribute 'cursor'
+E   assert (0 == 2)
+---------------------------- Captured stdout call -----------------------------
+[cockpit] kỳ week bắt đầu 2026-10-05 (giờ VN) — 11 số, 2 lỗi nguồn
+  leads.new                                       0  db:leads
+  content.drafts_created                          0  db:content_drafts
+  content.drafts_approved                         0  db:approvals
+  content.drafts_pending_end                      0  db:content_drafts
+  market.alerts_open_end                          0  db:market_alerts
+  jobs.failed                                     0  db:job_runs
+  approvals.overdue                               0  db:approval_queue
+  ai.cost_usd                                     0  db:llm_usage
+  approvals.ceo_decided                           0  db:approval_queue
+  approvals.ceo_expired                           0  db:approval_queue
+  content.drafts_rejected                         0  db:content_drafts
+[warn] thiếu nguồn — chatbot.questions: không có file conversations.jsonl
+[warn] thiếu nguồn — chatbot.unanswered: không có file conversations.jsonl
+[done] inserted=11 unchanged=0 conflict=0
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:477: assert (0 == 2)
+E   assert None == 0
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_v14_p3_rollout_edges.py:489: assert None == 0
+E   pipelines.rollout.RolloutError: ceo-02 (chạy thử) chưa đủ cổng: không đếm được đầu ra — output_sources không có nguồn đếm được (approval_queue/content_drafts)
+
+During handling of the above exception, another exception occurred:
+E   AssertionError: Regex pattern did not match.
+      Expected regex: '0/50'
+      Actual message: 'ceo-02 (chạy thử) chưa đủ cổng: không đếm được đầu ra — output_sources không có nguồn đếm được (approval_queue/content_drafts)'
+D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-4\tests\test_rollout.py:817: AssertionError: Regex pattern did not match.
+=========================== short test summary info ===========================
+FAILED tests/test_v14_p3_rollout_edges.py::test_report_outputs_counted_distinct_without_sample
+FAILED tests/test_v14_p3_rollout_edges.py::test_report_record_db_down_report_still_written
+FAILED tests/test_v14_p3_rollout_edges.py::test_table_sources_counted_distinct_with_provenance
+FAILED tests/test_v14_p3_rollout_edges.py::test_catalog_filter_key_must_be_supported
+FAILED tests/test_v14_p3_rollout_edges.py::test_real_catalog_every_table_report_source_counts
+FAILED tests/test_v14_p3_rollout_edges.py::test_approval_queue_sample_flag_not_counted
+FAILED tests/test_v14_p3_rollout_edges.py::test_shared_object_type_mapped_by_created_by
+FAILED tests/test_v14_p3_rollout_edges.py::test_san_suggest_records_output_and_mark_sent_by_stage
+FAILED tests/test_v14_p3_rollout_edges.py::test_san_mark_sent_refused_when_off_or_guardrail_fail
+FAILED tests/test_v14_p3_rollout_edges.py::test_qr_site_paused_replaces_published_page
+FAILED tests/test_v14_p3_rollout_edges.py::test_allocation_off_not_written_sample_flagged
+FAILED tests/test_v14_p3_rollout_edges.py::test_allocation_approve_blocked_when_off
+FAILED tests/test_v14_p3_rollout_edges.py::test_recon_off_not_written - Faile...
+FAILED tests/test_v14_p3_rollout_edges.py::test_audit_run_off_not_written_and_sample_flag
+FAILED tests/test_v14_p3_rollout_edges.py::test_hdtv_off_no_pack - assert (0 ...
+FAILED tests/test_v14_p3_rollout_edges.py::test_sim_affiliate_revenue_off_not_written
+FAILED tests/test_v14_p3_rollout_edges.py::test_cockpit_collect_off_not_written
+FAILED tests/test_v14_p3_rollout_edges.py::test_manual_garden_log_not_gated
+FAILED tests/test_rollout.py::test_promote_no_countable_source_fail_closed - ...
+19 failed, 1 passed in 25.44s
+E   AssertionError: assert ('LOT-MO-001' not in '<!doctype h...dy></html>\n'
+1 failed, 18 deselected in 3.10s
+
+# Chạy riêng test QR với pipelines/qr_trace.py cũ (sau khi đặt assert lời văn lô trước) — dòng trên.
+# test_rollout_seed_events_not_outputs (thêm sau) với pipelines/rollout.py cũ:
+E   ValueError: ceo-04.2.output_sources[0]: phải là object có đúng 1 trong ('table', 'report', 'file'), key ⊂ ['block', 'content_type', 'created_by', 'file', 'object_type', 'report', 'rules_any', 'sou
+ERROR tests/test_v14_p3_rollout_edges.py - ValueError: ceo-04.2.output_source...
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 1.62s
