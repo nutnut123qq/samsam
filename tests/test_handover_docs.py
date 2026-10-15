@@ -242,8 +242,9 @@ def test_guardrail_v2_tests_and_case_counts_in_phu_luc_d():
 
 def test_sop_warns_role_dsn_while_grants_partial():
     """roles.sql chưa grant đủ bảng → SOP/kiến trúc KHÔNG được hướng dẫn
-    đổi DSN app/agent sang role (gãy tab + trần chi phí LLM tắt câm do
-    `_month_spend` lỗi = cho qua). Grant đủ rồi thì sửa docs + test này."""
+    đổi DSN app/agent sang role (gãy tab + v13.1 mọi lời gọi LLM bị chặn
+    do `_month_spend` lỗi = fail-closed; trước v13.1 là "cho qua"). Grant đủ
+    rồi thì sửa docs + test này."""
     roles = (ROOT / "docs" / "roles.sql").read_text(encoding="utf-8")
     granted = set()
     # v10.0: chỉ tính grant cho role DSN app/agent — `bks_reader` (chỉ đọc,
@@ -258,7 +259,7 @@ def test_sop_warns_role_dsn_while_grants_partial():
     assert "CHƯA đổi `DATABASE_URL`" in sop
     assert "Rồi đổi `DATABASE_URL` của agent/app" not in sop
     for body in (sop, kt):
-        assert "llm_usage" in body and "cho qua" in body
+        assert "llm_usage" in body and "fail-closed" in body
     assert "CHƯA chuyển DSN Streamlit/agent" in kt
 
 

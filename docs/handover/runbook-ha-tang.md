@@ -199,6 +199,10 @@ python -c "from pipelines import llm_gateway as g; g._gate('smoke'); print('OK: 
   (vd `chatbot`) để kiểm agent vừa tắt.
 - Lỗi khác (`provider whitelist rỗng`, `config ... hỏng`) = cấu hình
   gateway sai → S2, báo dev.
+- v13.1: `GatewayBlocked: ... không đọc được chi tiêu tháng` = gateway
+  không đọc được `llm_usage` (DB down / thiếu `DATABASE_URL` / role thiếu
+  quyền) → MỌI lời gọi LLM bị chặn (fail-closed), chatbot trả câu chuyển
+  nhân viên. Xử lý như sự cố DB, không phải lỗi kill switch.
 
 Bật lại: xóa agent_id khỏi `"kill"` (và khỏi `LLM_KILL` + restart). Trong
 đóng băng, bật lại = loại `restore`: chỉ về đúng trạng thái trước khi tắt,

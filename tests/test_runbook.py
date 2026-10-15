@@ -129,7 +129,9 @@ def test_kill_switch_check_command_runs(monkeypatch, capsys):
              if ln.startswith('python -c "') and "_gate('smoke')" in ln]
     assert len(lines) == 1, "runbook thiếu lệnh kiểm kill switch smoke"
     code = lines[0][len('python -c "'):-1]
-    monkeypatch.setattr(g, "_month_spend", lambda a: None)
+    # v13.1: không đọc được chi tiêu = chặn (fail-closed) — lệnh runbook
+    # giả định DB đọc được (chi tiêu 0); trước đây None = "cho qua".
+    monkeypatch.setattr(g, "_month_spend", lambda a: 0.0)
     monkeypatch.setenv("LLM_PROVIDER_ONLY", "openai")
     monkeypatch.setenv("LLM_KILL", "")
     exec(code, {})  # noqa: S102 — chính dòng lệnh trong runbook

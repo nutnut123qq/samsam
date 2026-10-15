@@ -330,6 +330,81 @@ def _filler_hits(text: str, terms: list[str], packed=None) -> list[dict]:
     return out
 
 
+# v13.1 (F07 red-team): 3 lớp lách từ cấm còn lọt sau v4.2, khép bằng
+# LUẬT (không đổi nhãn/known_gap). Áp trên bản fold (`_Txt.low`, cùng độ
+# dài text gốc), hit trùng span pass chính thì bỏ.
+#  (A) cụm cấm NHIỀU âm tiết bị chèn khoảng trắng TRONG âm tiết ("đi ều
+#      trị") hoặc dính liền ("khỏibệnh"): giữa 2 ký tự cùng âm tiết cho
+#      <=2 khoảng trắng, giữa 2 âm tiết <=3 (kể cả 0). Chỉ cụm >=2 âm tiết
+#      — từ đơn ("thu ốc") dễ trùng 2 từ thật.
+#  (B) cụm cấm nhiều âm tiết bị dấu câu/emoji chia ("Khỏi. Bệnh."): giữa 2
+#      âm tiết 1–4 ký tự không phải chữ (không xuống dòng), VÀ âm tiết đầu
+#      không đứng ngay sau một từ khác ("giá trị. Bệnh nhân" KHÔNG khớp
+#      "trị bệnh") — mẫu lách là mảnh 1 từ tách câu.
+#  (C) chuỗi chữ cái ĐƠN cách nhau ("t h u ố c t r ị"): nối lại rồi tìm từ
+#      cấm như CHUỖI CON (chuỗi chữ đơn nối là hiện vật lách, không có biên
+#      từ thật — v4.2 mất biên từ "thuốctrị").
+# Cộng biểu tượng viên thuốc (U+1F48A) = "thuốc" (đứng riêng hay chèn thay chữ).
+_PILL = "\U0001f48a"
+_HSP = r"[^\S\n]"
+_LETTER = r"[^\W\d_]"
+_SPACED_RUN_RE = re.compile(
+    rf"(?<!{_LETTER}){_LETTER}(?!{_LETTER})"
+    rf"(?:{_HSP}+{_LETTER}(?!{_LETTER})){{2,}}")
+
+
+@lru_cache(maxsize=1024)
+def _split_pats(term: str) -> tuple[re.Pattern, re.Pattern] | None:
+    words = _fold(term).split()
+    if len(words) < 2:
+        return None
+    intra = [f"{_HSP}{{0,2}}".join(map(re.escape, w)) for w in words]
+    a = re.compile(r"(?<!\w)" + f"{_HSP}{{0,3}}".join(intra) + r"(?!\w)")
+    b = re.compile(rf"(?<!\w{_HSP})(?<!\w{_HSP}{{2}})(?<!\w)"
+                   + r"[^\w\n]{1,4}".join(map(re.escape, words))
+                   + r"(?!\w)")
+    return a, b
+
+
+def _evasion_hits(text: str, terms: list[str], pre: _Txt,
+                  taken: list[tuple[int, int]]) -> list[tuple[dict, str]]:
+    """Hit (A)(B)(C) + biểu tượng viên thuốc, bỏ hit chồng span đã có (`taken`)."""
+    low = pre.low
+    used = bytearray(len(text) + 1)  # 1 = vị trí đã thuộc hit (O(span)/lần)
+    for s, e in taken:
+        used[s:e] = b"\x01" * (e - s)
+    out = []
+
+    def add(term, s, e, how):
+        if not any(used[s:e]):
+            out.append(({"term": term, "start": s, "end": e}, how))
+            used[s:e] = b"\x01" * (e - s)
+
+    for term in terms:
+        pats = _split_pats(term)
+        if pats is None:
+            continue
+        for p, how in zip(pats, (" (tách âm tiết)", " (chia bằng dấu câu)")):
+            for m in p.finditer(low):
+                add(term, m.start(), m.end(), how)
+    for m in _SPACED_RUN_RE.finditer(low):
+        pos = [i for i in range(m.start(), m.end()) if not low[i].isspace()]
+        joined = "".join(low[i] for i in pos)
+        bare = _strip_len(joined) == joined
+        for term in terms:
+            t = "".join(_fold(term).split())
+            for cand in {t, _strip_len(t)} if bare else {t}:
+                k = joined.find(cand) if cand else -1
+                if k >= 0:
+                    add(term, pos[k], pos[k + len(cand) - 1] + 1,
+                        " (chữ cách rời)")
+    i = text.find(_PILL)
+    while i >= 0:
+        add("thuốc", i, i + len(_PILL), " (biểu tượng viên thuốc)")
+        i = text.find(_PILL, i + 1)
+    return out
+
+
 def _cover(spans):
     """inside(s, e): [s,e) nằm trọn trong 1 span nào đó — bisect trên
     prefix-max end, O(log n)/lần (vòng `any(...)` lồng cũ là O(n²))."""
@@ -510,9 +585,12 @@ def _run(text, ctx: dict | None) -> dict:
     # --- Lớp 1: banned words (trừ span nằm trong approved claim /
     # disclaimer pháp lý bắt buộc) — pass thường + pass ký tự chèn.
     packed = _compress(text)  # bản nén dùng chung cho từ cấm + rượu
-    for h, how in ([(h, "") for h in _find_terms(text, banned, pre)]
-                   + [(h, " (chèn ký tự)")
-                      for h in _filler_hits(text, banned, packed)]):
+    base = ([(h, "") for h in _find_terms(text, banned, pre)]
+            + [(h, " (chèn ký tự)")
+               for h in _filler_hits(text, banned, packed)])
+    base += _evasion_hits(text, banned, pre,
+                          [(h["start"], h["end"]) for h, _ in base])
+    for h, how in base:
         if exempt(h["start"], h["end"]):
             continue
         flag("tu_cam", f"từ/cụm cấm{how}: \"{h['term']}\"",

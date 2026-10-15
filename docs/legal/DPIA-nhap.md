@@ -117,16 +117,16 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mã luồng | DF-06 |
 | Module (code) | `api/rag.py`; `pipelines/llm_gateway.py`; `app/streamlit_app.py`; `connectors/zalo.py` |
 | Mục đích | CSKH — sinh câu trả lời có nguồn |
-| Dữ liệu | Câu hỏi thường SAU `_mask_pii` + history 4 lượt gần nhất (cũng mask) + đoạn KB public làm ngữ cảnh |
+| Dữ liệu | Câu hỏi thường SAU `pii.scrub_user` (v13.1: SĐT/email + tên theo mẫu xưng danh/danh xưng + địa chỉ có số nhà) + history 4 lượt gần nhất (cũng scrub; lượt còn dấu hiệu PII bị bỏ) + đoạn KB public làm ngữ cảnh (địa chỉ/SĐT đại lý bị che, giữ liên hệ công khai công ty `pii_allow`) |
 | Lớp | Vàng |
 | Chủ thể | Khách hàng chat Zalo/web |
 | Nơi lưu | Không lưu ở hệ thống ngoài nhật ký hội thoại convlog; phía nhà cung cấp: yêu cầu zdr + data_collection=deny (cam kết của nhà cung cấp chưa được rà) |
 | Thời hạn lưu | Phía hệ thống: theo nhật ký hội thoại (30 ngày); phía nhà cung cấp: không lưu theo cấu hình zdr — chưa kiểm chứng bằng hợp đồng |
 | Bên nhận | OpenRouter (Mỹ) → nhà cung cấp trong whitelist `provider_only` của data/llm_gateway.json (openai, azure — Mỹ) |
 | Chuyển ra nước ngoài | CÓ — xem TIA |
-| Biện pháp bảo vệ (có trong code) | `_mask_pii` ở gateway cho MỌI message (system/history/user) và input embedding; `is_health_question` chặn câu hỏi sức khỏe TRƯỚC LLM (chuyển người); Provider routing data_collection=deny, zdr=true, allow_fallbacks=false, only=whitelist (fail-closed); Kill-switch + trần chi phí theo agent |
+| Biện pháp bảo vệ (có trong code) | `_mask_pii` + `pii.mask_identity` (tên xưng danh, địa chỉ có số nhà) ở gateway cho MỌI message (system/history/user) và input embedding; v13.1: `api.rag.answer` chạy `pii.scrub_user` trên câu hỏi + lượt user TRƯỚC rewrite/embed/chat; còn dấu hiệu PII không che chắc -> chuyển người, 0 lời gọi AI; `is_health_question` chặn câu hỏi sức khỏe TRƯỚC LLM (chuyển người) — v13.1 lọc theo âm tiết trên toàn câu (trộn dấu/không dấu, NFKC, ký tự vô hình); câu rewrite cũng lọc; Provider routing data_collection=deny, zdr=true, allow_fallbacks=false, only=whitelist (fail-closed); Kill-switch + trần chi phí theo agent |
 | Căn cứ xử lý | Đồng ý cho chuyển dữ liệu ra nước ngoài — CHƯA có cơ chế ghi nhận trong code: GAP; hồ sơ TIA (bản nháp này) |
-| GAP | Tên người/địa chỉ đứng tự do lọt mask — rủi ro tồn dư khi chuyển ra nước ngoài; Bảng `consents` có (v5.2) nhưng CHƯA gắn kênh chat — chưa có bản ghi đồng ý trước lượt gọi LLM; Điều khoản xử lý dữ liệu (DPA) với OpenRouter/nhà cung cấp chưa được Pháp chế rà |
+| GAP | Tên người/địa chỉ đứng tự do lọt mask khi KHÔNG theo mẫu (v13.1 đã che theo MẪU: xưng danh, danh xưng + chữ Viết Hoa, số nhà + đường/ngõ/hẻm) — tên đứng trơ không mẫu (vd 'Lan đặt 2 hộp') hoặc mã đơn vẫn có thể lọt; chưa có NER — rủi ro tồn dư khi chuyển ra nước ngoài; Bảng `consents` có (v5.2) nhưng CHƯA gắn kênh chat — chưa có bản ghi đồng ý trước lượt gọi LLM; Điều khoản xử lý dữ liệu (DPA) với OpenRouter/nhà cung cấp chưa được Pháp chế rà |
 
 ### DF-07 — Content Studio sinh nháp nội dung qua gateway
 
@@ -799,7 +799,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-04] `_uhash` không muối — user_id Zalo dạng số có thể dò ngược ra hash (bút danh, không phải ẩn danh)
 - [DF-05] Bảng `leads` không có hạn lưu / job xóa — GAP
 - [DF-05] Lead từ chat chỉ có user_hash — chỉ liên hệ khi người gán contact có consent (`can_contact`); đồng ý chưa thu ở kênh chat
-- [DF-06] Tên người/địa chỉ đứng tự do lọt mask — rủi ro tồn dư khi chuyển ra nước ngoài
+- [DF-06] Tên người/địa chỉ đứng tự do lọt mask khi KHÔNG theo mẫu (v13.1 đã che theo MẪU: xưng danh, danh xưng + chữ Viết Hoa, số nhà + đường/ngõ/hẻm) — tên đứng trơ không mẫu (vd 'Lan đặt 2 hộp') hoặc mã đơn vẫn có thể lọt; chưa có NER — rủi ro tồn dư khi chuyển ra nước ngoài
 - [DF-06] Bảng `consents` có (v5.2) nhưng CHƯA gắn kênh chat — chưa có bản ghi đồng ý trước lượt gọi LLM
 - [DF-06] Điều khoản xử lý dữ liệu (DPA) với OpenRouter/nhà cung cấp chưa được Pháp chế rà
 - [DF-07] Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email)

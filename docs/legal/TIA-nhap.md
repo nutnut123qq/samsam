@@ -16,12 +16,12 @@
 | Mục | Nội dung |
 |---|---|
 | Bên nhận / nước | OpenRouter (Mỹ) → nhà cung cấp trong whitelist `provider_only` của data/llm_gateway.json (openai, azure — Mỹ) |
-| Dữ liệu gửi đi (sau biện pháp) | Câu hỏi thường SAU `_mask_pii` + history 4 lượt gần nhất (cũng mask) + đoạn KB public làm ngữ cảnh |
+| Dữ liệu gửi đi (sau biện pháp) | Câu hỏi thường SAU `pii.scrub_user` (v13.1: SĐT/email + tên theo mẫu xưng danh/danh xưng + địa chỉ có số nhà) + history 4 lượt gần nhất (cũng scrub; lượt còn dấu hiệu PII bị bỏ) + đoạn KB public làm ngữ cảnh (địa chỉ/SĐT đại lý bị che, giữ liên hệ công khai công ty `pii_allow`) |
 | Lớp | Vàng |
 | Mục đích | CSKH — sinh câu trả lời có nguồn |
-| Biện pháp kỹ thuật | `_mask_pii` ở gateway cho MỌI message (system/history/user) và input embedding; `is_health_question` chặn câu hỏi sức khỏe TRƯỚC LLM (chuyển người); Provider routing data_collection=deny, zdr=true, allow_fallbacks=false, only=whitelist (fail-closed); Kill-switch + trần chi phí theo agent |
+| Biện pháp kỹ thuật | `_mask_pii` + `pii.mask_identity` (tên xưng danh, địa chỉ có số nhà) ở gateway cho MỌI message (system/history/user) và input embedding; v13.1: `api.rag.answer` chạy `pii.scrub_user` trên câu hỏi + lượt user TRƯỚC rewrite/embed/chat; còn dấu hiệu PII không che chắc -> chuyển người, 0 lời gọi AI; `is_health_question` chặn câu hỏi sức khỏe TRƯỚC LLM (chuyển người) — v13.1 lọc theo âm tiết trên toàn câu (trộn dấu/không dấu, NFKC, ký tự vô hình); câu rewrite cũng lọc; Provider routing data_collection=deny, zdr=true, allow_fallbacks=false, only=whitelist (fail-closed); Kill-switch + trần chi phí theo agent |
 | Thời hạn lưu (theo map) | Phía hệ thống: theo nhật ký hội thoại (30 ngày); phía nhà cung cấp: không lưu theo cấu hình zdr — chưa kiểm chứng bằng hợp đồng |
-| Rủi ro tồn dư | Tên người/địa chỉ đứng tự do lọt mask — rủi ro tồn dư khi chuyển ra nước ngoài; Bảng `consents` có (v5.2) nhưng CHƯA gắn kênh chat — chưa có bản ghi đồng ý trước lượt gọi LLM; Điều khoản xử lý dữ liệu (DPA) với OpenRouter/nhà cung cấp chưa được Pháp chế rà |
+| Rủi ro tồn dư | Tên người/địa chỉ đứng tự do lọt mask khi KHÔNG theo mẫu (v13.1 đã che theo MẪU: xưng danh, danh xưng + chữ Viết Hoa, số nhà + đường/ngõ/hẻm) — tên đứng trơ không mẫu (vd 'Lan đặt 2 hộp') hoặc mã đơn vẫn có thể lọt; chưa có NER — rủi ro tồn dư khi chuyển ra nước ngoài; Bảng `consents` có (v5.2) nhưng CHƯA gắn kênh chat — chưa có bản ghi đồng ý trước lượt gọi LLM; Điều khoản xử lý dữ liệu (DPA) với OpenRouter/nhà cung cấp chưa được Pháp chế rà |
 | Căn cứ | Đồng ý cho chuyển dữ liệu ra nước ngoài — CHƯA có cơ chế ghi nhận trong code: GAP; hồ sơ TIA (bản nháp này) — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
 ### DF-07 — Content Studio sinh nháp nội dung qua gateway
