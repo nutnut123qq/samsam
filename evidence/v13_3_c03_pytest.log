@@ -1,0 +1,16 @@
+........................................................................ [ 22%]
+........................................................................ [ 44%]
+........................................................................ [ 66%]
+........................................................................ [ 88%]
+......................................                                   [100%]
+326 passed in 67.50s (0:01:07)
+
+# Vòng liên quan (67 file test chạm approval_queue/store/write_report/connectors/director), trước vá fake-conn:
+FAILED tests/test_approval_queue.py::test_decide_rechecks_payload_not_snapshot
+FAILED tests/test_approval_queue.py::test_decide_happy_and_reject_skips_recheck
+FAILED tests/test_approval_queue.py::test_decide_function_error_returns_message
+FAILED tests/test_approval_queue.py::test_override_auto_expire_verify - Index...
+FAILED tests/test_garden_director.py::test_purge_sample_only_called_from_cli_and_tests
+5 failed, 2953 passed in 809.96s (0:13:29)
+# 4 FAIL test_approval_queue (fake conn định tuyến theo SQL cũ) -> vá: giữ nguyên SQL cũ, metadata cưỡng chế đọc bằng truy vấn riêng chỉ khi cần DB. Chạy lại test_approval_queue+test_rollout_enforce+test_rollout+test_director_framework: 194 passed; 17 file biên (zalo/messenger/channels/store/kd_quote/kd_catalog/da_b2b/da_pmo/kd_care/acc_invoice/kd_affiliate/bks_audit/da_schema/handover_docs/auth_approval/data_flow_map/dpia_draft): 749 passed.
+# test_garden_director::test_purge_sample_only_called_from_cli_and_tests: FAIL có sẵn do worktree dưới .claude/ (FAIL cả code cũ — xem v13_3_c03_oldcode_fail.log).

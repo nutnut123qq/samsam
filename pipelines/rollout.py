@@ -21,13 +21,29 @@ Contract:
   - Giai đoạn `chay_thu` → `co_nguoi_duyet` → `van_hanh`; `tat` (tắt tay)
     → `--promote` đưa lại `chay_thu` (bắt đầu đếm lại). Mọi ghi cần
     `--by` NGƯỜI thật (chặn 'agent:'/'system:' ở code + CHECK DB).
-  - Cổng nâng (tính trong tx, khóa dòng `for update`):
-      chay_thu → co_nguoi_duyet: ≥5 ngày làm việc VÀ ≥50 dòng
-        `agent_action_log` có `actor` ∈ `agent_ids` của tính năng, `ts` ≥
-        lúc vào giai đoạn. Tính năng không khai `agent_ids` → KHÔNG đếm
-        được → từ chối (fail-closed, không đoán).
-      co_nguoi_duyet → van_hanh: ≥10 ngày làm việc VÀ 0 sự kiện `severe`
-        từ lúc vào giai đoạn.
+  - Cổng nâng (tính trong tx, khóa dòng `for update`). v13.3 (F04): ĐẦU RA
+    = mục DISTINCT ở `output_sources` của ĐÚNG tính năng (không đếm dòng
+    `agent_action_log` theo actor — 50 log bất kỳ không phải 50 đầu ra):
+    `approval_queue` (khối + loại [+ created_by]; 1 object_id = 1 đầu ra dù
+    xếp hàng lại) và `content_drafts` (created_by + loại; trùng nội dung =
+    1). Chỉ đầu ra guardrail ok, KHÔNG mẫu (object_id 'sample'/'mau', tiêu
+    đề/brief có 'MẪU', source 'sample…'), tạo trong [lúc vào giai đoạn,
+    bây giờ]. Nguồn khác (report/file/bảng riêng) chưa có bộ đếm → ghi
+    "không đếm được" (fail-closed).
+      chay_thu → co_nguoi_duyet: ≥5 ngày làm việc VÀ ≥50 đầu ra VÀ đầu ra
+        rải trên ≥5 ngày làm việc khác nhau.
+      co_nguoi_duyet → van_hanh: ≥10 ngày làm việc VÀ ≥1 đầu ra được NGƯỜI
+        duyệt từng mục (không 'agent:'/'system:'/auto_policy) VÀ không đầu
+        ra nào được duyệt/dùng thiếu người duyệt VÀ 0 sự kiện `severe`.
+  - Cưỡng chế runtime v13.3 (F03, HĐ 6.7): `mode(conn, feature_id)` là
+    nguồn DUY NHẤT; chưa vào sổ / bảng thiếu / DB down / không thuộc tính
+    năng nào → `chay_thu` (fail-closed). `rollout_config.json` `enforce:
+    false` (tường minh) mới tắt cưỡng chế. Biên: sinh (`approval_queue.
+    enqueue`, `store.save_draft`, `agents.report.write_report`) chặn khi
+    `tat`; quyết duyệt chặn khi `tat`; DÙNG (`approval_queue.verify` —
+    mọi --verify-send/--export/áp dụng, `store.schedule`, chatbot gửi
+    khách) chặn khi `chay_thu`/`tat`, `co_nguoi_duyet` chỉ mục người
+    duyệt từng mục.
     Ngày làm việc = số ngày làm việc SAU ngày vào giai đoạn tới hết hôm nay
     (giờ VN; ngày vào không tính) theo `data/rollout_config.json` (GIẢ
     ĐỊNH T2–T6, chưa lịch lễ), kiểm qua `pipelines.period.parse_shift`.
@@ -271,6 +287,20 @@ def _check_item(i: int, f) -> str:
     return fid
 
 
+def _overlap(a: dict, b: dict) -> bool:
+    """2 nguồn bảng cùng bảng mà mọi key chung bằng nhau (key thiếu = mọi
+    giá trị; rules_any giao nhau) → 1 dòng thuộc được cả 2 = đếm chéo."""
+    if a.get("table") != b.get("table"):
+        return False
+    for k in set(a) & set(b):
+        if k == "rules_any":
+            if not set(a[k]) & set(b[k]):
+                return False
+        elif a[k] != b[k]:
+            return False
+    return True
+
+
 def load_features(path: Path = FEATURES_FILE) -> list[dict]:
     """Đọc + kiểm danh mục → list dòng. Sai → ValueError (fail-closed)."""
     try:
@@ -293,7 +323,7 @@ def load_features(path: Path = FEATURES_FILE) -> list[dict]:
                          f"{HD_TOTAL}")
     if not isinstance(items, list) or not items:
         raise ValueError("features: rỗng")
-    out, seen, aid_of, src_of = [], set(), {}, {}
+    out, seen, aid_of, src_of, tables = [], set(), {}, {}, []
     for i, f in enumerate(items):
         fid = _check_item(i, f)
         if fid in seen:
@@ -307,6 +337,13 @@ def load_features(path: Path = FEATURES_FILE) -> list[dict]:
             if src_of.setdefault(k, fid) != fid:
                 raise ValueError(f"{fid}.output_sources: {k} đã thuộc "
                                  f"{src_of[k]} — không đếm chéo")
+            for ofid, o in tables:          # v13.3: phạm vi lọc giao nhau
+                if ofid != fid and _overlap(d, o):
+                    raise ValueError(f"{fid}.output_sources: {k} giao phạm "
+                                     f"vi với nguồn của {ofid} — không đếm "
+                                     "chéo")
+            if "table" in d:
+                tables.append((fid, d))
         seen.add(fid)
         out.append(f)
     if tong != summary(out, counts, phases):
@@ -368,24 +405,44 @@ def _feature(feats: list[dict], fid: str) -> dict:
     raise RolloutError(f"{fid}: không có trong danh mục contract_features")
 
 
-def evaluate(stage: str, days: int, outputs: int | None,
-             severe: int) -> tuple[str | None, list[str]]:
-    """Cổng PL02 mục 1 → (giai đoạn đích, [lý do chưa đạt]). Rỗng = đạt."""
+_NO_COUNT = ("không đếm được đầu ra — output_sources không có nguồn đếm "
+             "được (approval_queue/content_drafts)")
+
+
+def evaluate(stage: str, days: int, outputs: int | None, severe: int,
+             out_days: int = 0, human: int = 0, unapproved: int = 0
+             ) -> tuple[str | None, list[str]]:
+    """Cổng PL02 mục 1 → (giai đoạn đích, [lý do chưa đạt]). Rỗng = đạt.
+    `out_days` = số ngày làm việc khác nhau có đầu ra; `human` = số đầu ra
+    NGƯỜI duyệt từng mục; `unapproved` = đầu ra duyệt/dùng thiếu người.
+    Mặc định 0 → fail-closed (không truyền bằng chứng = chưa đạt)."""
+    why = []
     if stage == "chay_thu":
-        why = []
         if days < TRIAL_DAYS:
             why.append(f"mới {days}/{TRIAL_DAYS} ngày làm việc chạy thử")
         if outputs is None:
-            why.append("chưa khai agent_ids — không đếm được đầu ra trong "
-                       "agent_action_log")
-        elif outputs < TRIAL_OUTPUTS:
-            why.append(f"mới {outputs}/{TRIAL_OUTPUTS} đầu ra")
+            why.append(_NO_COUNT)
+        else:
+            if outputs < TRIAL_OUTPUTS:
+                why.append(f"mới {outputs}/{TRIAL_OUTPUTS} đầu ra")
+            if out_days < TRIAL_DAYS:
+                why.append(f"đầu ra mới rải trên {out_days}/{TRIAL_DAYS} "
+                           "ngày làm việc")
         return "co_nguoi_duyet", why
     if stage == "co_nguoi_duyet":
-        why = []
         if days < REVIEW_DAYS:
             why.append(f"mới {days}/{REVIEW_DAYS} ngày làm việc có người "
                        "duyệt")
+        if outputs is None:
+            why.append(_NO_COUNT)
+        elif not outputs:
+            why.append("chưa có đầu ra nào trong giai đoạn có người duyệt")
+        elif human < 1:
+            why.append("chưa có đầu ra nào được NGƯỜI duyệt từng mục "
+                       "(không tính agent:/system:/auto_policy)")
+        if unapproved:
+            why.append(f"{unapproved} đầu ra được duyệt/dùng không có người "
+                       "duyệt từng mục")
         if severe:
             why.append(f"{severe} lỗi nghiêm trọng trong giai đoạn")
         return "van_hanh", why
@@ -394,15 +451,240 @@ def evaluate(stage: str, days: int, outputs: int | None,
     return None, ["đã vận hành — không còn bước nâng"]
 
 
+# ------------------------------------------------------------ cưỡng chế
+
+
+# CHỈ test: tests/conftest.py đặt 'van_hanh' (test cũ giữ hành vi); test
+# cưỡng chế đặt lại None. Production luôn None — không env/cờ nào đổi được.
+_FORCE_MODE: str | None = None
+FAIL_CLOSED = "chay_thu"
+USABLE = ("co_nguoi_duyet", "van_hanh")
+
+
+class RolloutBlocked(ValueError):
+    """Biên sinh/quyết/dùng đầu ra bị chặn theo giai đoạn (HĐ 6.7)."""
+
+
+def enforce_enabled(path: Path | None = None) -> bool:
+    """Chỉ `"enforce": false` TƯỜNG MINH mới tắt; file lỗi/thiếu → bật."""
+    try:
+        cfg = json.loads(Path(path or CONFIG_FILE).read_bytes()
+                         .decode("utf-8"))
+    except (OSError, UnicodeDecodeError, ValueError):
+        return True
+    return not (isinstance(cfg, dict) and cfg.get("enforce") is False)
+
+
+def quick_mode() -> str | None:
+    """Giai đoạn biết được KHÔNG cần DB (ép test / cưỡng chế tắt) | None."""
+    if _FORCE_MODE is not None:
+        return _FORCE_MODE
+    return None if enforce_enabled() else "van_hanh"
+
+
+def mode(conn, feature_id: str | None) -> str:
+    """Giai đoạn hiện hành của tính năng — nguồn DUY NHẤT cho mọi biên.
+    Chưa vào sổ / không thuộc tính năng nào / bảng thiếu / DB down →
+    `chay_thu` (fail-closed). Đọc trong savepoint: lỗi không làm hỏng tx
+    của conn chia sẻ."""
+    q = quick_mode()
+    if q is not None:
+        return q
+    if conn is None or not feature_id:
+        return FAIL_CLOSED
+    try:
+        with conn.transaction():
+            row = conn.execute("select stage from feature_rollout where"
+                               " feature_id = %s", (feature_id,)).fetchone()
+    except psycopg.Error:
+        return FAIL_CLOSED
+    return row[0] if row and row[0] in STAGES else FAIL_CLOSED
+
+
+_cat_cache: tuple | None = None        # (path, mtime_ns, features)
+
+
+def _catalog() -> list[dict] | None:
+    global _cat_cache
+    p = Path(FEATURES_FILE)
+    try:
+        mt = p.stat().st_mtime_ns
+    except OSError:
+        return None
+    if _cat_cache and _cat_cache[:2] == (p, mt):
+        return _cat_cache[2]
+    try:
+        feats = load_features(p)
+    except ValueError:
+        return None
+    _cat_cache = (p, mt, feats)
+    return feats
+
+
+def _src_hit(src: dict, attrs: dict, skip=()) -> bool:
+    return all(k == "rules_any" or k in skip or attrs.get(k) == v
+               for k, v in src.items())
+
+
+def feature_for(**attrs) -> str | None:
+    """Tính năng sở hữu 1 đầu ra theo `output_sources` (key của nguồn là
+    ràng buộc, key thiếu = mọi giá trị). 0 hoặc >1 mục khớp → None. Khối
+    cũ ngoài BLOCKS (vd 'projects' trước v12.0) → khớp bỏ qua khối nếu duy
+    nhất."""
+    feats = _catalog() or []
+    hits = {f["id"] for f in feats for s in f["output_sources"]
+            if _src_hit(s, attrs)}
+    if not hits and "block" in attrs and attrs["block"] not in BLOCKS:
+        hits = {f["id"] for f in feats for s in f["output_sources"]
+                if _src_hit(s, attrs, skip=("block",))}
+    return next(iter(hits)) if len(hits) == 1 else None
+
+
+def feature_for_report(name: str) -> str | None:
+    """Báo cáo `data/reports/<tiền tố>…` → tính năng (tiền tố dài nhất)."""
+    best = None
+    for f in _catalog() or []:
+        for s in f["output_sources"]:
+            p = s.get("report")
+            if p and str(name).startswith(p) and (
+                    best is None or len(p) > len(best[0])):
+                best = (p, f["id"])
+    return best[1] if best else None
+
+
+def _why(fid, md: str, what: str) -> str:
+    return (f"{what}: tính năng {fid or '(không thuộc danh mục)'} đang "
+            f"{STAGE_LABEL[md]} — HĐ 6.7/PL02 mục 1")
+
+
+def check_generate(conn, fid: str | None, what: str) -> None:
+    """Biên SINH: tính năng `tat` → RolloutBlocked. Chạy thử vẫn sinh
+    (ghi nội bộ). Không thuộc danh mục → không chặn sinh (chặn ở biên dùng)."""
+    if fid is not None and mode(conn, fid) == "tat":
+        raise RolloutBlocked(_why(fid, "tat", what) + " — không sinh đầu ra")
+
+
+def decide_reason(conn, fid: str | None, what: str) -> str | None:
+    """Biên DUYỆT: mục của tính năng `tat` không được duyệt (kể cả mục đang
+    chờ từ trước khi tắt). Từ chối vẫn được (dọn hàng)."""
+    if fid is not None and mode(conn, fid) == "tat":
+        return _why(fid, "tat", what) + " — không duyệt mục của tính năng tắt"
+    return None
+
+
+def use_reason(conn, fid: str | None, what: str,
+               human_reviewed: bool) -> str | None:
+    """Biên DÙNG (gửi khách / xuất / áp dụng / xếp lịch đăng) → lý do chặn
+    | None. `chay_thu`/`tat` chặn; `co_nguoi_duyet` chỉ mục NGƯỜI duyệt từng
+    mục; `van_hanh` theo duyệt sẵn có của biên (vẫn cổng người HĐ 6.7)."""
+    md = mode(conn, fid)
+    if md not in USABLE:
+        return _why(fid, md, what) + " — đầu ra chỉ ghi nội bộ, không dùng"
+    if md == "co_nguoi_duyet" and not human_reviewed:
+        return (_why(fid, md, what) + " — mục chưa được NGƯỜI duyệt từng "
+                "mục")
+    return None
+
+
+def gate_report(name: str) -> None:
+    """Biên sinh báo cáo file: tiền tố thuộc tính năng `tat` →
+    RolloutBlocked. Không thuộc danh mục / biết giai đoạn không cần DB →
+    không mở DB."""
+    q = quick_mode()
+    if q is not None and q != "tat":
+        return
+    fid = feature_for_report(name)
+    if fid is None:
+        return
+    conn = connect() if q is None else None
+    try:
+        check_generate(conn, fid, f"báo cáo {name}")
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def is_human(name) -> bool:
+    s = name.strip().casefold() if isinstance(name, str) else ""
+    return bool(s) and not s.startswith(("agent:", "system:"))
+
+
+def holiday_warning(path: Path | None = None) -> str | None:
+    """Lịch nghỉ chưa chốt → cảnh báo (không bịa ngày nghỉ)."""
+    try:
+        hol = json.loads(Path(path or CONFIG_FILE).read_bytes()
+                         .decode("utf-8")).get("holidays")
+    except (OSError, UnicodeDecodeError, ValueError, AttributeError):
+        hol = None
+    if hol:
+        return None
+    return ("CẢNH BÁO: lịch nghỉ lễ/Tết chưa chốt (`data/rollout_config.json`"
+            " holidays rỗng) — ngày làm việc đang tính T2–T6 kể cả ngày lễ;"
+            " chờ Hành chính Sâm Sâm chốt, KHÔNG tự điền.")
+
+
 # ------------------------------------------------------------ DB
 
 
-def _count_outputs(conn, agent_ids: list[str], since) -> int | None:
-    if not agent_ids:
-        return None
-    return conn.execute(
-        "select count(*) from agent_action_log where actor = any(%s)"
-        " and ts >= %s", (list(agent_ids), since)).fetchone()[0]
+# Người duyệt thật: không rỗng, không 'agent:'/'system:' (cùng luật check_by).
+_HUMAN = ("(btrim(coalesce({c}, '')) <> '' and lower(btrim({c})) not like"
+          " 'agent:%%' and lower(btrim({c})) not like 'system:%%')")
+# Mục mẫu (đầu ra không tính): object_id chứa từ 'sample'/'mau' đứng riêng.
+SAMPLE_ID_RE = r"(^|[^a-z0-9])(sample|mau)([^a-z0-9]|$)"
+# Mỗi dòng: (thời điểm tạo, người duyệt từng mục?, duyệt/dùng thiếu người?)
+_COUNTERS = {
+    "approval_queue": (
+        "select min(created_at),"
+        " bool_or(status = 'approved' and lane = 'per_item' and "
+        + _HUMAN.format(c="decided_by") + "),"
+        " bool_or(status = 'approved' and not (lane is not distinct from"
+        " 'per_item' and " + _HUMAN.format(c="decided_by") + "))"
+        " from approval_queue where block = %s and object_type = %s"
+        " and (%s::text is null or created_by = %s)"
+        " and created_at >= %s and created_at <= %s"
+        " and coalesce(guardrail->>'ok', '') = 'true'"
+        " and object_id !~* %s and title not like '%%MẪU%%'"
+        " group by object_type, object_id",
+        lambda s, a, b: (s["block"], s["object_type"], s.get("created_by"),
+                         s.get("created_by"), a, b, SAMPLE_ID_RE)),
+    "content_drafts": (
+        "select min(created_at),"
+        " bool_or(status = 'approved' and " + _HUMAN.format(c="reviewer")
+        + "), bool_or(status = 'approved' and not "
+        + _HUMAN.format(c="reviewer") + ")"
+        " from content_drafts where created_by = %s and content_type = %s"
+        " and created_at >= %s and created_at <= %s"
+        " and coalesce(guardrail->>'ok', '') = 'true'"
+        " and coalesce(source, '') not ilike 'sample%%'"
+        " and brief not like '%%MẪU%%' group by md5(text)",
+        lambda s, a, b: (s["created_by"], s["content_type"], a, b)),
+}
+
+
+def _src_label(s: dict) -> str:
+    return ", ".join(f"{k}={v}" for k, v in s.items() if k != "rules_any")
+
+
+def output_facts(conn, f: dict, since, now, shift) -> dict:
+    """Đầu ra THẬT của đúng tính năng trong [since, now] (F04) →
+    {outputs (None = không đếm được), out_days, human, unapproved,
+    uncounted: [nguồn chưa có bộ đếm]}."""
+    rows, counted, uncounted = [], False, []
+    for s in f.get("output_sources") or []:
+        c = _COUNTERS.get(s.get("table"))
+        if c is None:
+            uncounted.append(_src_label(s))
+            continue
+        counted = True
+        rows += conn.execute(c[0], c[1](s, since, now)).fetchall()
+    sh = period.parse_shift(shift)
+    days = {d for d in (period.vn_date(r[0]) for r in rows)
+            if d.weekday() in sh["workdays"] and d not in sh["holidays"]}
+    return {"outputs": len(rows) if counted else None,
+            "out_days": len(days),
+            "human": sum(1 for r in rows if r[1]),
+            "unapproved": sum(1 for r in rows if r[2]),
+            "uncounted": uncounted}
 
 
 def _count_severe(conn, fid: str, since) -> int:
@@ -413,11 +695,12 @@ def _count_severe(conn, fid: str, since) -> int:
 
 def _facts(conn, f: dict, stage: str, since, now, shift) -> dict:
     days = business_days(since, now, shift)
-    outputs = _count_outputs(conn, f.get("agent_ids", []), since)
+    o = output_facts(conn, f, since, now, shift)
     severe = _count_severe(conn, f["id"], since)
-    target, why = evaluate(stage, days, outputs, severe)
-    return {"days": days, "outputs": outputs, "severe": severe,
-            "target": target, "why": why}
+    target, why = evaluate(stage, days, o["outputs"], severe, o["out_days"],
+                           o["human"], o["unapproved"])
+    return {"days": days, **o, "severe": severe, "target": target,
+            "why": why}
 
 
 def _event(conn, fid, kind, frm, to, by, now, *, code=None, note=None,
@@ -497,8 +780,9 @@ def promote(conn, feats, fid: str, by: str, shift, now=None) -> dict:
                                + "; ".join(facts["why"]))
         _set_stage(conn, fid, facts["target"], by, now)
         _event(conn, fid, "promote", stage, facts["target"], by, now,
-               evidence={k: facts[k] for k in ("days", "outputs", "severe")}
-               | {"since": since.isoformat()})
+               evidence={k: facts[k] for k in (
+                   "days", "outputs", "out_days", "human", "unapproved",
+                   "severe")} | {"since": since.isoformat()})
     conn.commit()
     return {"from": stage, "to": facts["target"], "facts": facts}
 
@@ -615,7 +899,7 @@ def _legacy_line(r) -> str:
 
 def render_dossier(phase: str, rows: list[dict], severe: list[dict],
                    n_reviewed: int, now: datetime,
-                   root: Path = ROOT, legacy=()) -> str:
+                   root: Path = ROOT, legacy=(), warnings=()) -> str:
     """Markdown hồ sơ đề nghị nghiệm thu — THUẦN (đầu vào đã đọc DB)."""
     L = [f"# Hồ sơ đề nghị nghiệm thu {phase} — BẢN NHÁP do hệ thống dựng",
          "",
@@ -636,14 +920,17 @@ def render_dossier(phase: str, rows: list[dict], severe: list[dict],
             tail = "chưa vào sổ | — | — | — | —"
         else:
             out = "không đếm được" if fx["outputs"] is None \
-                else str(fx["outputs"])
+                else f"{fx['outputs']} ({fx['out_days']} ngày)"
             tail = (f"{STAGE_LABEL[r['stage']]} | {_d(r['since'])} | "
                     f"{fx['days']} | {out} | {fx['severe']}")
         L.append(f"| {f['id']} | {f['phong_ban']} | {_cell(f['ten'])} | "
                  f"{f['code_status']} | {tail} |")
     L += ["", ("Nguồn: `data/contract_features.json`, bảng `feature_rollout`,"
-          " `feature_rollout_events`; đầu ra = dòng `agent_action_log` theo"
-          " `agent_ids` từ lúc vào giai đoạn."), ""]
+          " `feature_rollout_events`; đầu ra = mục DISTINCT ở `output_sources`"
+          " của đúng tính năng (hàng duyệt / nháp nội dung, guardrail đạt,"
+          " không mẫu) từ lúc vào giai đoạn — (N ngày) = số ngày làm việc"
+          " khác nhau có đầu ra."), ""]
+    L += [f"> {w}" for w in warnings] + ([""] if warnings else [])
     if legacy:
         L += [("ID nhóm cũ (v12) còn trong sổ — lịch sử giữ nguyên, mục tách"
                " đếm lại từ mốc riêng:"), ""]
@@ -711,7 +998,8 @@ def dossier(conn, feats, phase: str, shift, now=None) -> str:
             if r["feature"]["id"] in ids]
     return render_dossier(phase, rows, severe_events(conn, ids),
                           reviewed_count(conn, ids), now,
-                          legacy=legacy_rows(conn, feats))
+                          legacy=legacy_rows(conn, feats),
+                          warnings=[w for w in (holiday_warning(),) if w])
 
 
 # ------------------------------------------------------------ CLI
@@ -724,7 +1012,9 @@ def _print_status(rows) -> None:
         if r["stage"] is None:
             print(f"{head} — {f['code_status']}, chưa vào sổ")
             continue
-        out = "?" if fx["outputs"] is None else fx["outputs"]
+        out = ("?" if fx["outputs"] is None else
+               f"{fx['outputs']} ({fx['out_days']} ngày, {fx['human']} người"
+               " duyệt)")
         gate = ("vận hành" if fx["target"] is None else
                 "ĐỦ cổng → " + STAGE_LABEL[fx["target"]] if not fx["why"]
                 else "; ".join(fx["why"]))
@@ -800,6 +1090,8 @@ def main(argv=None) -> int:
                   f" bỏ qua (chưa co_code) {st['skipped']}")
         elif a.status:
             _print_status(status_rows(conn, feats, shift))
+            if w := holiday_warning():
+                print(w)
             for r in legacy_rows(conn, feats):
                 print(f"[id nhóm cũ] {_legacy_line(r)} — lịch sử giữ "
                       "nguyên, mục tách đếm lại từ mốc riêng")

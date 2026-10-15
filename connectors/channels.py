@@ -71,7 +71,12 @@ HANDOFF_TYPE = "cskh_handoff"
 # Mã lý do → nhãn ghi trong payload/title. KHÔNG ghi chữ 'alcohol'/'rượu':
 # guardrail.check soi luật rượu trên payload → mục không đóng được.
 HANDOFF_REASONS = {"alcohol": "san_pham_han_che", "health": "suc_khoe",
-                   "no_data": "thieu_du_lieu", "guardrail": "kiem_duyet"}
+                   "no_data": "thieu_du_lieu", "guardrail": "kiem_duyet",
+                   "rollout": "chua_van_hanh"}
+# v13.3 (HĐ 6.7): chatbot = tính năng sales-01 trong danh mục; chưa vận
+# hành → câu bot thành gợi ý `cskh_reply` chờ người duyệt rồi người gửi.
+CHATBOT_FEATURE = "sales-01"
+SUGGEST_TYPE = "cskh_reply"
 CONSENT_ACTIONS = ("prompted", "granted", "withdrawn")
 TEMPLATE_KEYS = ("alcohol", "alcohol_san", "health", "health_san",
                  "consent_prompt", "consent_ack", "consent_withdrawn_ack",
@@ -482,6 +487,59 @@ def record_handoff(inb: Inbound, reason: str, msg_id: str = "",
         return None
     except psycopg.Error as e:
         _warn(f"tạo mục handoff lỗi {type(e).__name__}")
+        return None
+    finally:
+        if own:
+            conn.close()
+
+
+def chatbot_mode() -> str:
+    """Giai đoạn triển khai của chatbot (`rollout.mode`, HĐ 6.7). DB down /
+    chưa vào sổ → 'chay_thu' (fail-closed: không gửi câu bot cho khách)."""
+    from pipelines import rollout
+    q = rollout.quick_mode()
+    if q is not None:
+        return q
+    conn = _connect()
+    try:
+        return rollout.mode(conn, CHATBOT_FEATURE)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def record_suggestion(inb: Inbound, text: str, msg_id: str = "",
+                      conn=None, raw: str | None = None) -> int | None:
+    """Câu bot CHƯA gửi → mục `cskh_reply` khối sales (payload = đúng câu
+    sẽ gửi, đã che PII; không câu hỏi/user_id) → id | None. Người duyệt
+    rồi NGƯỜI gửi. Dòng "Nguồn: <url>" làm guardrail bắt oan slug (vd
+    'chua-') → lưu câu gốc `raw` (người gửi tự kèm nguồn). Sàn / thiếu
+    muối / DB down / tắt → None + warn."""
+    import psycopg
+
+    from pipelines import director, guardrail
+    if inb.channel not in CHAT_CHANNELS or inb.user_hash is None:
+        return None
+    payload = _mask_pii(text)
+    if raw is not None and not guardrail.check(payload)["ok"]:
+        payload = _mask_pii(raw)
+    own = conn is None
+    conn = _connect() if own else conn
+    if conn is None:
+        _warn("DB down — không lưu gợi ý trả lời")
+        return None
+    ref = _ref(msg_id or f"{inb.ts}:{inb.text}")
+    try:
+        return director.submit(
+            conn, "sales", SUGGEST_TYPE,
+            object_id=f"{inb.channel}:{inb.user_hash}:{ref}",
+            title=f"Gợi ý trả lời {inb.channel} — msg_ref {ref}",
+            payload=payload, created_by=AGENT_ID)
+    except psycopg.Error as e:
+        _warn(f"lưu gợi ý trả lời lỗi {type(e).__name__}")
+        return None
+    except (ValueError, director.DirectorConfigError) as e:
+        _warn(f"không lưu gợi ý trả lời: {type(e).__name__}")
         return None
     finally:
         if own:

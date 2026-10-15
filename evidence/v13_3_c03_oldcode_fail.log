@@ -1,0 +1,41 @@
+# c03: test MỚI chạy trên CODE CŨ (nguồn HEAD b17df31) — phải FAIL
+FAILED tests/test_rollout_enforce.py::test_probe_review_stage_no_outputs_not_van_hanh
+FAILED tests/test_rollout_enforce.py::test_mode_fail_closed_without_db - Attr...
+FAILED tests/test_rollout_enforce.py::test_enforce_false_restores_old_behaviour
+FAILED tests/test_rollout_enforce.py::test_feature_for_mapping - AttributeErr...
+FAILED tests/test_rollout_enforce.py::test_catalog_rejects_overlapping_sources
+FAILED tests/test_rollout_enforce.py::test_holiday_warning - AttributeError: ...
+FAILED tests/test_rollout_enforce.py::test_probe_arbitrary_actor_logs_not_outputs
+FAILED tests/test_rollout_enforce.py::test_outputs_distinct_no_retry_sample_cross_or_guardrail_fail
+FAILED tests/test_rollout_enforce.py::test_outputs_unapproved_by_human_flagged
+FAILED tests/test_rollout_enforce.py::test_outputs_content_drafts_distinct_text
+FAILED tests/test_rollout_enforce.py::test_mode_reads_ledger_and_fails_closed
+FAILED tests/test_rollout_enforce.py::test_agent_role_reads_stage_so_off_blocks_generation
+FAILED tests/test_rollout_enforce.py::test_enqueue_blocked_only_when_off - At...
+FAILED tests/test_rollout_enforce.py::test_pending_item_of_disabled_feature_cannot_be_approved
+FAILED tests/test_rollout_enforce.py::test_verify_use_gate_by_stage - Asserti...
+FAILED tests/test_rollout_enforce.py::test_verify_review_stage_needs_human_per_item
+FAILED tests/test_rollout_enforce.py::test_unmapped_item_use_fail_closed - As...
+FAILED tests/test_rollout_enforce.py::test_kd_quote_verify_send_boundary - As...
+FAILED tests/test_rollout_enforce.py::test_content_draft_generate_decide_schedule
+FAILED tests/test_rollout_enforce.py::test_report_generation_blocked_when_off
+FAILED tests/test_rollout_enforce.py::test_chatbot_mode_db_down_fail_closed
+FAILED tests/test_rollout_enforce.py::test_suggestion_saved_internally_not_usable
+FAILED tests/test_rollout.py::test_evaluate[chay_thu-5-50-0-extra0-co_nguoi_duyet-0-None]
+FAILED tests/test_rollout.py::test_evaluate[chay_thu-4-50-0-extra1-co_nguoi_duyet-1-4/5]
+FAILED tests/test_rollout.py::test_evaluate[chay_thu-5-49-0-extra2-co_nguoi_duyet-1-49/50]
+FAILED tests/test_rollout.py::test_evaluate[chay_thu-5-50-0-extra3-co_nguoi_duyet-1-r\u1ea3i tr\xean 4/5]
+FAILED tests/test_rollout.py::test_evaluate[chay_thu-5-50-0-extra4-co_nguoi_duyet-1-r\u1ea3i tr\xean 0/5]
+FAILED tests/test_rollout.py::test_evaluate[chay_thu-0-0-0-extra6-co_nguoi_duyet-3-None]
+FAILED tests/test_rollout.py::test_evaluate[co_nguoi_duyet-10-3-0-extra7-van_hanh-0-None]
+FAILED tests/test_rollout.py::test_evaluate[co_nguoi_duyet-10-None-0-extra8-van_hanh-1-kh\xf4ng \u0111\u1ebfm \u0111\u01b0\u1ee3c]
+FAILED tests/test_rollout.py::test_evaluate[co_nguoi_duyet-10-0-0-extra9-van_hanh-1-ch\u01b0a c\xf3 \u0111\u1ea7u ra]
+FAILED tests/test_rollout.py::test_evaluate[co_nguoi_duyet-10-5-0-extra10-van_hanh-1-NG\u01af\u1edcI duy\u1ec7t]
+FAILED tests/test_rollout.py::test_evaluate[co_nguoi_duyet-10-5-0-extra11-van_hanh-1-1 \u0111\u1ea7u ra \u0111\u01b0\u1ee3c duy\u1ec7t/d\xf9ng kh\xf4ng c\xf3 ng\u01b0\u1eddi]
+FAILED tests/test_rollout.py::test_evaluate[co_nguoi_duyet-9-1-0-extra12-van_hanh-1-9/10]
+FAILED tests/test_rollout.py::test_evaluate[co_nguoi_duyet-30-1-1-extra13-van_hanh-1-l\u1ed7i nghi\xeam tr\u1ecdng]
+FAILED tests/test_rollout.py::test_full_path_to_van_hanh_then_no_more - pipel...
+FAILED tests/test_rollout.py::test_roles_select_only - AssertionError: assert...
+FAILED tests/test_garden_director.py::test_purge_sample_only_called_from_cli_and_tests
+38 failed, 4 passed, 5 errors in 30.66s
+# test_garden_director::test_purge_sample_only_called_from_cli_and_tests FAIL cả trên code cũ: worktree nằm dưới .claude/ nên bộ quét bỏ qua mọi file (môi trường lane, không do c03)

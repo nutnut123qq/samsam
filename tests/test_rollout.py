@@ -461,21 +461,36 @@ def test_business_days_rejects_bad_types():
         ro.business_days("2026-10-12", _vn(2026, 10, 13), SHIFT)
 
 
-@pytest.mark.parametrize("stage,days,outputs,severe,target,n_why,needle", [
-    ("chay_thu", 5, 50, 0, "co_nguoi_duyet", 0, None),
-    ("chay_thu", 4, 50, 0, "co_nguoi_duyet", 1, "4/5"),
-    ("chay_thu", 5, 49, 0, "co_nguoi_duyet", 1, "49/50"),
-    ("chay_thu", 9, None, 0, "co_nguoi_duyet", 1, "agent_ids"),
-    ("chay_thu", 0, 0, 0, "co_nguoi_duyet", 2, None),
-    ("co_nguoi_duyet", 10, None, 0, "van_hanh", 0, None),
-    ("co_nguoi_duyet", 9, 0, 0, "van_hanh", 1, "9/10"),
-    ("co_nguoi_duyet", 30, 0, 1, "van_hanh", 1, "lỗi nghiêm trọng"),
-    ("tat", 0, None, 3, "chay_thu", 0, None),
-    ("van_hanh", 99, 99, 0, None, 1, "đã vận hành"),
-])
-def test_evaluate(stage, days, outputs, severe, target, n_why, needle):
-    t, why = ro.evaluate(stage, days, outputs, severe)
-    assert t == target and len(why) == n_why
+# v13.3 (F03/F04): (out_days, human, unapproved) — đầu ra rải ≥5 ngày làm
+# việc; có người duyệt cần ≥1 đầu ra NGƯỜI duyệt + 0 đầu ra thiếu người.
+# Đã FLIP ca cũ ("co_nguoi_duyet", 10, None, 0) → van_hanh không lý do:
+# đó chính là lỗi F03 (10 ngày + 0 đầu ra/duyệt mà vẫn vận hành).
+@pytest.mark.parametrize(
+    "stage,days,outputs,severe,extra,target,n_why,needle", [
+        ("chay_thu", 5, 50, 0, (5, 0, 0), "co_nguoi_duyet", 0, None),
+        ("chay_thu", 4, 50, 0, (5, 0, 0), "co_nguoi_duyet", 1, "4/5"),
+        ("chay_thu", 5, 49, 0, (5, 0, 0), "co_nguoi_duyet", 1, "49/50"),
+        ("chay_thu", 5, 50, 0, (4, 0, 0), "co_nguoi_duyet", 1, "rải trên 4/5"),
+        ("chay_thu", 5, 50, 0, (), "co_nguoi_duyet", 1, "rải trên 0/5"),
+        ("chay_thu", 9, None, 0, (), "co_nguoi_duyet", 1, "không đếm được"),
+        ("chay_thu", 0, 0, 0, (), "co_nguoi_duyet", 3, None),
+        ("co_nguoi_duyet", 10, 3, 0, (3, 1, 0), "van_hanh", 0, None),
+        ("co_nguoi_duyet", 10, None, 0, (), "van_hanh", 1, "không đếm được"),
+        ("co_nguoi_duyet", 10, 0, 0, (), "van_hanh", 1, "chưa có đầu ra"),
+        ("co_nguoi_duyet", 10, 5, 0, (5, 0, 0), "van_hanh", 1,
+         "NGƯỜI duyệt"),
+        ("co_nguoi_duyet", 10, 5, 0, (5, 2, 1), "van_hanh", 1,
+         "1 đầu ra được duyệt/dùng không có người"),
+        ("co_nguoi_duyet", 9, 1, 0, (1, 1, 0), "van_hanh", 1, "9/10"),
+        ("co_nguoi_duyet", 30, 1, 1, (1, 1, 0), "van_hanh", 1,
+         "lỗi nghiêm trọng"),
+        ("tat", 0, None, 3, (), "chay_thu", 0, None),
+        ("van_hanh", 99, 99, 0, (), None, 1, "đã vận hành"),
+    ])
+def test_evaluate(stage, days, outputs, severe, extra, target, n_why,
+                  needle):
+    t, why = ro.evaluate(stage, days, outputs, severe, *extra)
+    assert t == target and len(why) == n_why, why
     if needle:
         assert needle in "; ".join(why)
 
@@ -519,14 +534,16 @@ def test_criteria_cover_pl02_muc2():
             assert (ROOT / rel).is_file() or rel in allowed, rel
 
 
-def _row(fid, stage=None, days=0, outputs=None, severe=0, ten="T"):
+def _row(fid, stage=None, days=0, outputs=None, severe=0, ten="T",
+         out_days=5):
     f = _f(fid, ten=ten)
     if stage is None:
         return {"feature": f, "stage": None, "since": None, "facts": None}
-    t, why = ro.evaluate(stage, days, outputs, severe)
+    t, why = ro.evaluate(stage, days, outputs, severe, out_days)
     return {"feature": f, "stage": stage, "since": _vn(2026, 10, 12),
             "facts": {"days": days, "outputs": outputs, "severe": severe,
-                      "target": t, "why": why}}
+                      "out_days": out_days, "human": 0, "unapproved": 0,
+                      "uncounted": [], "target": t, "why": why}}
 
 
 def test_render_dossier_sections():
@@ -605,7 +622,9 @@ def test_cli_db_down_and_bad_config(monkeypatch, tmp_path, capsys):
 # ------------------------------------------------------------ DB
 
 
-FEATS = [_f("ceo-01"),
+SRC = {"table": "approval_queue", "block": "ceo",
+       "object_type": "weekly_report"}
+FEATS = [_f("ceo-01", output_sources=[SRC]),
          _f("ceo-02", agent_ids=[], output_sources=[{"report": "b-"}]),
          _f("sales-08", modules=[], agent_ids=[], output_sources=[],
             code_status="lam_rieng", blocker="repo website chưa xác định"),
@@ -619,6 +638,43 @@ def _log(conn, actor, n):
         conn.execute("insert into agent_action_log (actor, action,"
                      " object_type, object_id) values (%s, 'test_b1',"
                      " 't', %s)", (actor, str(i)))
+
+
+def _workdays_after(t, k):
+    d, out = ro.period.vn_date(t), []
+    while len(out) < k:
+        d += timedelta(days=1)
+        if d.weekday() < 5:
+            out.append(d)
+    return out
+
+
+def _out(conn, n, start, *, days=5, block="ceo", otype="weekly_report",
+         by="agent:t_b1", status="pending", lane=None, decided_by=None,
+         ok=True, oid="w", title="Báo cáo tuần"):
+    """n đầu ra `approval_queue` (object_id riêng) rải đều trên `days` ngày
+    làm việc đầu tiên SAU ngày VN của `start`, 10:00 VN. Tắt tạm trigger
+    guard (ép created_at=now()) chỉ để dựng mốc thời gian quá khứ."""
+    ds = _workdays_after(start, days)
+    conn.execute("alter table approval_queue disable trigger"
+                 " approval_queue_guard_row")
+    try:
+        for i in range(n):
+            ts = datetime.combine(ds[i % days], datetime.min.time(),
+                                  VN_TZ).replace(hour=10)
+            conn.execute(
+                "insert into approval_queue (object_type, object_id, block,"
+                " title, payload, content_sha256, risk, guardrail,"
+                " created_by, created_at, due_at, status, lane, decided_by,"
+                " decided_at) values (%s, %s, %s, %s, 'p', %s, 'low',"
+                " %s::jsonb, %s, %s, %s, %s, %s, %s, %s)",
+                (otype, f"{oid}-{i}-{ts:%Y%m%d}", block, title, "0" * 64,
+                 json.dumps({"ok": ok}), by, ts, ts + timedelta(days=3),
+                 status, lane, decided_by,
+                 ts if status != "pending" else None))
+    finally:
+        conn.execute("alter table approval_queue enable trigger"
+                     " approval_queue_guard_row")
 
 
 def _state(conn, fid):
@@ -703,8 +759,14 @@ def test_roles_select_only(db):
                            ("update", False), ("delete", False)):
             assert db.execute("select has_table_privilege('app_human', %s,"
                               " %s)", (t, priv)).fetchone()[0] is want
+        # v13.3: agent đọc được giai đoạn hiện hành (mode() ở biên sinh) —
+        # chỉ bảng trạng thái, không nhật ký sự kiện, không ghi.
         assert db.execute("select has_table_privilege('agent_writer', %s,"
-                          " 'select')", (t,)).fetchone()[0] is False
+                          " 'select')", (t,)).fetchone()[0] is (
+                              t == "feature_rollout")
+        for priv in ("insert", "update", "delete"):
+            assert db.execute("select has_table_privilege('agent_writer',"
+                              " %s, %s)", (t, priv)).fetchone()[0] is False
 
 
 def test_seed_idempotent_only_co_code(db):
@@ -741,20 +803,23 @@ def test_promote_refusals_write_nothing(db):
         ro.promote(db, FEATS, "ceo-01", "system:x", SHIFT)
 
 
-def test_promote_no_agent_ids_fail_closed(db):
+def test_promote_no_countable_source_fail_closed(db):
+    """v13.3: nguồn đầu ra chỉ là report/file (chưa có bộ đếm) → không đếm
+    được → từ chối, kể cả khi agent_action_log đầy log (F04)."""
     ro.seed(db, FEATS, BY, now=NOW - timedelta(days=60))
     _log(db, "agent:t_b1", 80)
-    with pytest.raises(ro.RolloutError, match="agent_ids"):
+    with pytest.raises(ro.RolloutError, match="không đếm được"):
         ro.promote(db, FEATS, "ceo-02", BY, SHIFT)
 
 
 def test_promote_counts_outputs_only_since_stage_start(db):
-    ro.seed(db, FEATS, BY, now=NOW - timedelta(days=30))
-    _log(db, "agent:t_b1", 49)
-    _log(db, "agent:khac", 10)
+    t0 = NOW - timedelta(days=30)
+    ro.seed(db, FEATS, BY, now=t0)
+    _out(db, 49, t0)
+    _out(db, 10, t0, otype="weekly_board", oid="khac")   # tính năng khác
     with pytest.raises(ro.RolloutError, match="49/50"):
         ro.promote(db, FEATS, "ceo-01", BY, SHIFT)
-    _log(db, "agent:t_b1", 1)
+    _out(db, 1, t0, oid="them")
     n = db.committed
     r = ro.promote(db, FEATS, "ceo-01", BY, SHIFT)
     assert (r["from"], r["to"]) == ("chay_thu", "co_nguoi_duyet")
@@ -764,20 +829,23 @@ def test_promote_counts_outputs_only_since_stage_start(db):
                     ).fetchone()
     assert ev[:2] == ("chay_thu", "co_nguoi_duyet") and ev[3] == BY
     assert ev[2]["outputs"] == 50 and ev[2]["days"] >= 5
-    # Log ghi TRƯỚC mốc vào giai đoạn không được tính.
-    ro.seed(db, [_f("ceo-03")], BY, now=NOW + timedelta(hours=1))
-    _log(db, "agent:t_b1", 50)
+    assert ev[2]["out_days"] == 5
+    # Đầu ra tạo TRƯỚC mốc vào giai đoạn không được tính.
+    f3 = [_f("ceo-03", output_sources=[SRC])]
+    ro.seed(db, f3, BY, now=NOW + timedelta(hours=1))
     with pytest.raises(ro.RolloutError, match="0/50"):
-        ro.promote(db, [_f("ceo-03")], "ceo-03", BY, SHIFT,
+        ro.promote(db, f3, "ceo-03", BY, SHIFT,
                    now=NOW + timedelta(days=30))
 
 
 def test_review_stage_needs_10_days_and_no_severe(db):
     t0 = NOW - timedelta(days=40)
     ro.seed(db, FEATS, BY, now=t0)
-    _log(db, "agent:t_b1", 50)
+    _out(db, 50, t0)
     ro.promote(db, FEATS, "ceo-01", BY, SHIFT, now=t0 + timedelta(days=14))
     t1 = t0 + timedelta(days=14)
+    _out(db, 2, t1, days=2, oid="duyet", status="approved", lane="per_item",
+         decided_by="GĐ bán hàng")
     with pytest.raises(ro.RolloutError, match="/10 ngày"):
         ro.promote(db, FEATS, "ceo-01", BY, SHIFT, now=t1 + timedelta(days=7))
     # Lỗi chèn tay không kèm đổi giai đoạn vẫn chặn (phòng thủ 2 lớp).
@@ -793,11 +861,20 @@ def test_review_stage_needs_10_days_and_no_severe(db):
 def test_full_path_to_van_hanh_then_no_more(db):
     t0 = NOW - timedelta(days=40)
     ro.seed(db, FEATS, BY, now=t0)
-    _log(db, "agent:t_b1", 50)
+    _out(db, 50, t0)
     ro.promote(db, FEATS, "ceo-01", BY, SHIFT, now=t0 + timedelta(days=8))
+    t1 = t0 + timedelta(days=8)
+    # Có người duyệt: 10 ngày mà KHÔNG có đầu ra người duyệt → chưa vận
+    # hành (F03 — trước v13.3 chỉ đếm ngày là nâng).
+    with pytest.raises(ro.RolloutError, match="chưa có đầu ra nào"):
+        ro.promote(db, FEATS, "ceo-01", BY, SHIFT,
+                   now=t0 + timedelta(days=24))
+    _out(db, 1, t1, days=1, oid="duyet", status="approved", lane="per_item",
+         decided_by="GĐ bán hàng")
     r = ro.promote(db, FEATS, "ceo-01", "GĐ bán hàng", SHIFT,
                    now=t0 + timedelta(days=24))
     assert r["to"] == "van_hanh" and r["facts"]["days"] >= 10
+    assert r["facts"]["human"] == 1 and r["facts"]["unapproved"] == 0
     with pytest.raises(ro.RolloutError, match="đã vận hành"):
         ro.promote(db, FEATS, "ceo-01", BY, SHIFT)
     assert _events(db, "ceo-01") == ["seed", "promote", "promote"]
@@ -806,7 +883,7 @@ def test_full_path_to_van_hanh_then_no_more(db):
 def test_severe_rolls_back_to_trial_and_resets_clock(db):
     t0 = NOW - timedelta(days=10)
     ro.seed(db, FEATS, BY, now=t0)
-    _log(db, "agent:t_b1", 50)
+    _out(db, 50, t0)
     ro.promote(db, FEATS, "ceo-01", BY, SHIFT, now=t0 + timedelta(days=8))
     t_err = NOW + timedelta(hours=1)        # sau mọi dòng log đã ghi
     r = ro.record_severe(db, "ceo-01", "thieu_nhan_ai", BY,

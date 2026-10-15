@@ -1,0 +1,21 @@
+[rollout] TỪ CHỐI DÙNG mục #1: mục ceo/weekly_report: tính năng ceo-01 đang chạy thử — HĐ 6.7/PL02 mục 1 — đầu ra chỉ ghi nội bộ, không dùng
+enforce = True | quick_mode = None
+$ python -m pipelines.rollout --seed --by Quản lý AI MẪU (E2E c03) -> exit 0
+    [OK] vào sổ 62 · có sẵn 0 · bỏ qua (chưa co_code) 24
+$ python -m pipelines.rollout --status -> exit 0
+    ceo-01             Báo cáo tuần tự động                     chạy thử từ 15/10/2026 · 0 ngày LV · 0 (0 ngày, 0 người duyệt) đầu ra · mới 0/5 ngày làm việc chạy thử; mới 0/50 đầu ra; đầu ra mới rải trên 0/5 ngày làm việc
+    CẢNH BÁO: lịch nghỉ lễ/Tết chưa chốt (`data/rollout_config.json` holidays rỗng) — ngày làm việc đang tính T2–T6 kể cả ngày lễ; chờ Hành chính Sâm Sâm chốt, KHÔNG tự điền.
+mode(ceo-01) = chay_thu
+mode(sales-01) chatbot = chay_thu
+enqueue chạy thử -> id 1
+decide approve -> (True, None)
+verify (biên DÙNG, chạy thử) -> False
+$ python -m pipelines.rollout --promote ceo-01 --by Quản lý AI MẪU (E2E c03) -> exit 1
+    [TỪ CHỐI] ceo-01 (chạy thử) chưa đủ cổng: mới 0/5 ngày làm việc chạy thử; mới 1/50 đầu ra; đầu ra mới rải trên 1/5 ngày làm việc
+$ python -m pipelines.rollout --disable ceo-01 --by Quản lý AI MẪU (E2E c03) --note E2E tắt -> exit 0
+    [OK] ceo-01: chạy thử → tắt
+mode(ceo-01) sau tắt = tat
+enqueue khi TẮT -> RolloutBlocked: hàng duyệt ceo/weekly_report: tính năng ceo-01 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+$ python -m pipelines.rollout --dossier --phase P1 --out C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/bf073c29-8533-4e6c-814d-e5fc46fbe378/scratchpad\c03_dossier.md -> exit 0
+    [OK] hồ sơ → C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\bf073c29-8533-4e6c-814d-e5fc46fbe378\scratchpad\c03_dossier.md
+DB chết -> chatbot_mode = chay_thu | exit 0

@@ -20,6 +20,13 @@ Contract:
     `override` (lý do ≥10 ký tự, người ≠ người tạo) rồi người khác `decide`.
   - Ghi trên conn chia sẻ: `conn.transaction()` + `conn.commit()` tường
     minh (gotcha savepoint v2.1).
+  - v13.3 cưỡng chế giai đoạn (`pipelines.rollout.mode`, HĐ 6.7) — mục
+    gắn tính năng qua `output_sources` (khối + loại [+ created_by]):
+    `enqueue` của tính năng `tat` → RolloutBlocked (ValueError); `decide`
+    approve mục của tính năng `tat` → (False, lý do); `verify` (cổng DÙNG
+    của mọi --verify-send/--export/áp dụng) → False + lý do ở stderr khi
+    `chay_thu`/`tat`/không thuộc danh mục, `co_nguoi_duyet` chỉ mục NGƯỜI
+    duyệt từng mục.
   - Giới hạn pilot: `--by` free-text (SSO thật = external-dep).
 
 Chạy:
@@ -65,6 +72,10 @@ def enqueue(conn, *, object_type: str, object_id: str, block: str,
         raise ValueError("enqueue: thiếu created_by (người/agent tạo)")
     if not (payload or "").strip():
         raise ValueError("enqueue: payload rỗng")
+    # v13.3 (HĐ 6.7): tính năng TẮT không sinh đầu ra (RolloutBlocked là
+    # ValueError — caller đã xử lý như tham số sai). Chạy thử vẫn ghi.
+    _rollout().check_generate(conn, _feature_of((block, object_type, by)),
+                              f"hàng duyệt {block}/{object_type}")
     g = guardrail_check(payload)
     with conn.transaction():
         row = conn.execute(
@@ -111,10 +122,17 @@ def decide(conn, item_id, decider: str, decision: str,
             with conn.transaction():
                 row = conn.execute("select payload from approval_queue"
                                    " where id = %s", (qid,)).fetchone()
+                meta = _meta(conn, qid)
         except psycopg.Error as e:
             return False, f"mục #{qid}: {_db_msg(e)}"
         if row is None:
             return False, f"không tìm thấy mục #{qid} trong hàng duyệt"
+        # v13.3 (HĐ 6.7): tính năng TẮT → mục chờ của nó không duyệt được.
+        if meta is not None:
+            why = _rollout().decide_reason(conn, _feature_of(meta[:3]),
+                                           f"mục #{qid}")
+            if why:
+                return False, why
         # Snapshot guardrail lúc enqueue có thể cũ/giả — kiểm lại payload.
         recheck = guardrail_check(row[0] or "")
         if not recheck.get("ok"):
@@ -185,11 +203,57 @@ def verify(conn, item_id, text: str) -> bool:
                            " where id = %s", (qid,)).fetchone()
         if row is None:
             return False
+        # v13.3 (HĐ 6.7): verify là cổng DÙNG chung (--verify-send/--export/
+        # áp dụng) — chạy thử/tắt không lọt, có người duyệt chỉ mục người
+        # duyệt từng mục (không auto_policy/agent).
+        meta = _meta(conn, qid)
+        why = None if meta is None else use_reason(conn, meta)
+        if why:
+            print(f"[rollout] TỪ CHỐI DÙNG mục #{qid}: {why}",
+                  file=sys.stderr)
+            return False
         res = conn.execute("select verify_publish(%s, %s, %s)",
                            (row[0], row[1], text)).fetchone()
     except psycopg.Error:
         return False
     return bool(res and res[0] is True)
+
+
+def _rollout():
+    from pipelines import rollout  # lười: rollout → director → module này
+    return rollout
+
+
+def _feature_of(meta) -> str | None:
+    """(block, object_type, created_by) → id tính năng theo danh mục."""
+    block, otype, by = meta
+    return _rollout().feature_for(table="approval_queue", block=block,
+                                  object_type=otype, created_by=by)
+
+
+_META_SQL = ("select block, object_type, created_by, status, lane,"
+             " decided_by from approval_queue where id = %s")
+
+
+def _meta(conn, qid):
+    """Metadata cho cổng giai đoạn — CHỈ đọc khi cưỡng chế cần DB
+    (`quick_mode()` không phải 'van_hanh'); cưỡng chế tắt / test ép vận
+    hành → None (không thêm truy vấn). Mục không có → ('', '', '', None,
+    None, None) để vẫn fail-closed."""
+    if _rollout().quick_mode() == "van_hanh":
+        return None
+    r = conn.execute(_META_SQL, (qid,)).fetchone()
+    return tuple(r) if r else ("", "", "", None, None, None)
+
+
+def use_reason(conn, meta) -> str | None:
+    """meta = (block, object_type, created_by, status, lane, decided_by) →
+    lý do chặn dùng | None."""
+    ro = _rollout()
+    human = (meta[3] == "approved" and meta[4] == "per_item"
+             and ro.is_human(meta[5]))
+    return ro.use_reason(conn, _feature_of(meta[:3]),
+                         f"mục {meta[0]}/{meta[1]}", human)
 
 
 def _print_item(d: dict) -> None:
