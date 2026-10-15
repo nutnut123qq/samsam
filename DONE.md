@@ -1846,6 +1846,21 @@ object_id → chạy lại ngày khác tạo mục pending mới; help `--date` 
 machine_code CK-A5 chưa ép 1 dòng; key LLM so khớp không NFC; vài nhánh biên
 `--date` hợp lệ/tín hiệu tương lai/thu hoạch tương lai chưa test.
 
+Nhánh `ai-infra`: NGHIỆM THU TỔNG M30+M31 (2026-10-15, Docker bật) — DB mới
+`samsam_final` dựng từ đầu: apply_schema --roles ×2 (75 bảng), `ingest.core_store`,
+`ingest.golden_store`, `ingest.embed_store` (868 chunk, 14 lời gọi embed). Gate:
+full pytest **4767 passed / 0 failed / 0 skipped** (gồm test_dr_drill Docker);
+ruff sạch; `agent_eval --validate` 25/25, `--deterministic --no-record` 14 suite
+PASS; `scripts/redteam.py` PASS (ca lọt đều là known_gap đã ghi — chỉ lớp
+LLM-check bắt); `dpia_draft --check`; `pipelines.store --verify-log` +
+`agents.garden_director --verify` nguyên vẹn; `pipelines.director --all
+--dry-run` 11 khối hợp lệ; `scripts/eval_qa.py` 11/12 (Q5 mã số doanh nghiệp →
+"chưa đủ dữ liệu", không bịa — như v3.9). Streamlit (venv tạm, không cài
+global): không cấu hình đăng nhập → chặn truy cập (fail-closed đúng); AUTH_MODE=dev
+→ 7 tab mở không exception; chat hỏi danh sách mật ong → "chưa đủ dữ liệu" +
+chuyển nhân viên (kho public chưa có danh mục mật ong). Evidence:
+`evidence/final_*.log`.
+
 Nhánh `ai-infra`: M31 đợt gộp 8 (2026-10-15) — v11.0 đã gộp (merge sạch; cây
 sau gộp trùng `infra-v110`, diff 0 dòng; 75 bảng, 25 suite, DF-01..DF-40, SOP
 5x — số tạm của v11.0 trùng đúng số kế tiếp, không đánh lại). Gate:
