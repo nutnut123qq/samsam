@@ -513,7 +513,7 @@ def test_store_module_exports_contract():
 
     ok, warn = store.set_status(Dead(), 1, "approved", "Lan")
     assert not ok and "lỗi DB" in warn
-    ok, warn = store.schedule(Dead(), 1, "2026-10-20", today=TODAY)
+    ok, warn = store.schedule(Dead(), 1, "2026-10-20", "Lan", today=TODAY)
     assert not ok and "lỗi DB" in warn
     with pytest.raises(psycopg.Error):
         store._get(Dead(), 1)

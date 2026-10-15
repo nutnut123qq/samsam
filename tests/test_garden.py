@@ -146,8 +146,10 @@ def test_add_log_future_ts_warns():
     """audit-bù NIT: ts tương lai → warn (không reject — nhật ký
     người ghi tay, warn là đủ ở pilot)."""
     conn = _Conn([_route("insert into plot_logs", rows=[(9,)])])
+    # mốc tương đối giờ thật (add_log so với now() thật) — NOW cố định
+    # 10/10 + 3 ngày thành quá khứ từ 14/10 (date-bomb, gộp main 15/10)
     lid, warns = g.add_log(conn, "KV-A01",
-                           NOW + timedelta(days=3), "tưới")
+                           datetime.now(UTC) + timedelta(days=3), "tưới")
     assert lid == 9
     assert any("tương lai" in w for w in warns)
 
