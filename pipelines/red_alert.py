@@ -337,19 +337,26 @@ def ack(conn, alert_id, by: str, note: str | None = None, *,
         return False, f"tên người xác nhận dài quá {BY_MAX} ký tự"
     if not auth.is_human(by):
         return False, "người xác nhận phải là người thật (không agent:/system:)"
+    allow = None
     if auth.approval_enforced(env):
         routing = routing if routing is not None else load_routing()
         valid, _ = _valid_recipients(routing.get("recipients"),
                                      routing.get("excluded_roles") or ())
-        if by.casefold() not in {r["name"].casefold() for r in valid}:
-            return False, ("chế độ thực: chỉ người nhận độc lập trong "
-                           "data/red_alert_routing.json được xác nhận")
+        allow = [r["name"] for r in valid]
     try:
         aid = int(alert_id)
     except (TypeError, ValueError):
         aid = 0
     if not 1 <= aid <= BIGINT_MAX:
         return False, f"id '{' '.join(str(alert_id).split())[:40]}' không hợp lệ"
+    # v14.2: chế độ thực — chỉ người nhận độc lập, có tài khoản + `--by` khớp
+    # login Postgres đang dùng (không còn tên tự khai); lần bị chặn vào log
+    # hash chain.
+    why = auth.cli_gate(conn, by, None, "ack", "red_alert", aid, allow=allow,
+                        allow_src="người nhận độc lập trong "
+                                  "data/red_alert_routing.json", env=env)
+    if why:
+        return False, f"chế độ thực: {why}"
     # Cắt TRƯỚC regex mask (chống DoS), cắt lại sau mask.
     note = (_mask_pii(str(note).strip()[:NOTE_MAX * 2])[:NOTE_MAX] or None
             if note else None)

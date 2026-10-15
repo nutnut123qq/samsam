@@ -259,6 +259,12 @@ def main(argv: list[str] | None = None) -> int:
               flush=True)
         return 1
 
+    # v14.2: login dịch vụ nạp file (LOADER_DATABASE_URL, role svc_loader)
+    # — chế độ thực từ chối login superuser/owner/thiếu biến.
+    from pipelines import auth  # lười: auth → director → ...
+    if why := auth.bind_service("loader"):
+        print(f"[err] {why}", flush=True)
+        return 2
     load_dotenv(ROOT / ".env")
     dsn = os.environ.get("DATABASE_URL")
     if not dsn:

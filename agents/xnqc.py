@@ -51,7 +51,7 @@ from psycopg.types.json import Jsonb
 from agents.ra_kenh import CONFIG, _iso_date, by_error, load_config, safe
 from ingest.golden_store import GOLDEN_FILE, read_golden
 from ingest.lead_store import connect
-from pipelines import director
+from pipelines import auth, director
 from pipelines.period import VN_TZ
 from pipelines.pii import _mask_pii
 from pipelines.store import _db_msg
@@ -436,6 +436,14 @@ def main(argv=None) -> int:
             print(f"[ok] hồ sơ #{did} ({a.sku}, {a.loai}) — chuan_bi")
             return 0
         if a.set is not None:
+            # v14.2: đổi trạng thái hồ sơ (kể cả da_cap) = quyết định của
+            # Pháp chế được Bên B ủy quyền (auth.cli_gate, khối legal_hr).
+            why = auth.cli_gate(conn, a.by, "legal_hr", "set_status",
+                                "xnqc_dossier", a.set)
+            if why:
+                conn.rollback()
+                print(f"[từ chối] {why}")
+                return 1
             ok, msg = set_status(conn, a.set, a.status, a.by,
                                  so_giay=a.so_giay, ngay_nop=a.ngay_nop,
                                  ngay_cap=a.ngay_cap, ngay_het_han=a.het_han,

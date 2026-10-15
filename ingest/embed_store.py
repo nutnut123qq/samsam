@@ -277,6 +277,12 @@ def sync(conn, data_dir: Path = DATA_DIR, model: str = DEFAULT_MODEL) -> dict:
 
 
 def main() -> int:
+    # v14.2: login dịch vụ nạp file (LOADER_DATABASE_URL, role svc_loader)
+    # — chế độ thực từ chối login superuser/owner/thiếu biến.
+    from pipelines import auth  # lười: auth → director → ...
+    if why := auth.bind_service("loader"):
+        print(f"[err] {why}", flush=True)
+        return 2
     env = load_env()
     try:
         with psycopg.connect(env["dsn"], connect_timeout=CONNECT_TIMEOUT_S) as conn:

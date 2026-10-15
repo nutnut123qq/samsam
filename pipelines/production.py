@@ -954,6 +954,15 @@ def _print_plan(rid, cutoff, start_week, rows, a_status, cfg, old, n):
 
 def cmd_decide(args, decision: str) -> int:
     def run(conn):
+        # v14.2: GĐ sản xuất được Bên B ủy quyền (auth.cli_gate) — `--by`
+        # tự khai không còn là danh tính ở chế độ thực.
+        from pipelines import auth  # lười: auth → director → ...
+        why = auth.cli_gate(conn, args.by, "production",
+                            "approve" if decision == "approved" else "reject",
+                            "allocation_run", args.run)
+        if why:
+            conn.rollback()
+            return _err(f"{why} — không ghi.")
         ok, msg = decide_run(conn, args.run, decision, args.by, args.note)
         if not ok:
             conn.rollback()
@@ -1043,6 +1052,12 @@ def cmd_lots(args) -> int:
 
 def cmd_intake(args) -> int:
     def run(conn):
+        from pipelines import auth  # lười: auth → director → ...
+        why = auth.cli_gate(conn, args.by, "production", "intake",
+                            "production_lot", args.lot)
+        if why:
+            conn.rollback()
+            return _err(f"{why} — không ghi.")
         ok, msg = intake(conn, args.lot, args.result, args.by, args.note)
         if not ok:
             conn.rollback()

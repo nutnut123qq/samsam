@@ -248,6 +248,11 @@ def main(argv=None) -> int:
     if err := _startup_error():
         print(err, flush=True)
         return 1
+    # v14.2: login DB dịch vụ riêng (WEBHOOK_DATABASE_URL, role svc_webhook).
+    from pipelines import auth  # lười: auth → director → ...
+    if err := auth.bind_service("webhook"):
+        print(f"[fatal] messenger: {err}", flush=True)
+        return 1
     port = int(_env("MESSENGER_WEBHOOK_PORT") or "8789")
     srv = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     st = {k: "set" if _env(k) else "MISSING" for k in REQUIRED_ENV}

@@ -1,0 +1,96 @@
+........................................................................ [  3%]
+..........................................................F............. [  7%]
+........................................................................ [ 11%]
+........................................................................ [ 15%]
+........................................................................ [ 18%]
+........................................................................ [ 22%]
+........................................................................ [ 26%]
+........................................................................ [ 30%]
+........................................................................ [ 33%]
+........................................................................ [ 37%]
+........................................................................ [ 41%]
+.......................................................F................ [ 45%]
+...........................................................F............ [ 49%]
+........................................................................ [ 52%]
+........................................................................ [ 56%]
+........................................................................ [ 60%]
+........................................................................ [ 64%]
+..............................................................F......... [ 67%]
+........................................................................ [ 71%]
+..............................[warn] channels: thiếu CHANNEL_HASH_SALT — không tạo mục handoff (health)
+.......................................... [ 75%]
+........................................................................ [ 79%]
+........................................................................ [ 83%]
+........................................................................ [ 86%]
+........................................................................ [ 90%]
+........................................................................ [ 94%]
+........................................................................ [ 98%]
+....................................                                     [100%]
+================================== FAILURES ===================================
+______________________ test_alloc_no_second_engine_grep _______________________
+
+    def test_alloc_no_second_engine_grep():
+        src = (ROOT / "pipelines" / "production.py").read_text(encoding="utf-8")
+>       assert re.search(r"from pipelines import scenario|from pipelines\.scenario "
+                         r"import|import pipelines\.scenario", src)
+E       assert None
+E        +  where None = <function search at 0x000001717DAE91C0>('from pipelines import scenario|from pipelines\\.scenario import|import pipelines\\.scenario', '"""v9.2 Sản xuất P1 (WP13) — SX-A3 phân bổ tồn, SX-A4 BOM combo/hộp quà,\nSX-A5 hồ sơ lô + kiểm nhập, SX-A0 bản tin t...return cmd_intake(args)\n    return cmd_bulletin(args)\n\n\nif __name__ == "__main__":\n    raise SystemExit(main())\n')
+E        +    where <function search at 0x000001717DAE91C0> = re.search
+
+tests\test_production.py:125: AssertionError
+______________ test_purge_sample_only_called_from_cli_and_tests _______________
+
+    def test_purge_sample_only_called_from_cli_and_tests():
+        """Agent/cron KHÔNG gọi purge_sample/adopt_plot — chỉ định nghĩa + CLI
+        main."""
+        root = gd.ROOT
+        hits = []
+        for p in root.rglob("*.py"):
+            if any(part in {".venv", "venv", "node_modules", ".git", ".claude"}
+                   for part in p.parts):
+                continue
+            src = p.read_text(encoding="utf-8", errors="replace")
+            if "purge_sample(" in src or "adopt_plot(" in src:
+                hits.append(p.relative_to(root).as_posix())
+>       assert sorted(h for h in hits if not h.startswith("tests/")) == [
+            "agents/garden_director.py"]
+E       AssertionError: assert [] == ['agents/garden_director.py']
+E         
+E         Right contains one more item: 'agents/garden_director.py'
+E         Use -v to get more diff
+
+tests\test_garden_director.py:264: AssertionError
+_________________ test_roles_sql_lists_tables_not_all_tables __________________
+
+    def test_roles_sql_lists_tables_not_all_tables():
+        roles = (ROOT / "docs" / "roles.sql").read_text(encoding="utf-8")
+        block = roles[roles.index("v10.0 HĐTV/BKS"):]
+        assert "all tables" not in block.split("do $$")[1].split("end $$")[1]
+        for t in BKS_SELECT:
+            assert re.search(rf"(?<!\w){t}(?!\w)", block), t
+>       assert not re.search(r"grant\s+(update|delete|truncate)", block,
+                             re.IGNORECASE)
+E       assert not <re.Match object; span=(11183, 11195), match='grant delete'>
+E        +  where <re.Match object; span=(11183, 11195), match='grant delete'> = <function search at 0x000001717DAE91C0>('grant\\s+(update|delete|truncate)', "v10.0 HĐTV/BKS (WP16): `bks_reader` — role CHỈ ĐỌC cho audit inside-out\n-- (`agents.bks_audit`), đối soát độc lập (`...rant select on all sequences in schema %s to svc_backup',\n                 quote_ident(current_schema()));\nend $$;\n", re.IGNORECASE)
+E        +    where <function search at 0x000001717DAE91C0> = re.search
+E        +    and   re.IGNORECASE = re.IGNORECASE
+
+tests\test_bks_audit.py:194: AssertionError
+_______________________ test_harvest_real_convlog_smoke _______________________
+
+    def test_harvest_real_convlog_smoke():
+        """Convlog thật: harvest không raise, mọi row đủ cột + ts aware."""
+        rows, _ = ls.harvest(DATA)
+>       assert rows, "convlog thật phải suy ra được lead"
+E       AssertionError: convlog thật phải suy ra được lead
+E       assert []
+
+tests\test_lead_store.py:217: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_production.py::test_alloc_no_second_engine_grep - assert None
+FAILED tests/test_garden_director.py::test_purge_sample_only_called_from_cli_and_tests
+FAILED tests/test_bks_audit.py::test_roles_sql_lists_tables_not_all_tables - ...
+FAILED tests/test_lead_store.py::test_harvest_real_convlog_smoke - AssertionE...
+4 failed, 1904 passed in 1083.08s (0:18:03)
+
+# Sau lần chạy trên (41 file liên quan): 2 FAIL do lane đã vá ngay (test_production::test_alloc_no_second_engine_grep — import auth lười; test_bks_audit::test_roles_sql_lists_tables_not_all_tables — giới hạn phạm vi khối BKS tới khối v12.1), chạy lại 7 file: xem evidence/v14_2_p2_pytest.log (317 passed). 2 FAIL môi trường có sẵn ở code cũ: test_garden_director::test_purge_sample_only_called_from_cli_and_tests (đường dẫn worktree chứa .claude), test_lead_store::test_harvest_real_convlog_smoke (convlog gitignored không có trong worktree).

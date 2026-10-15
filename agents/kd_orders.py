@@ -365,6 +365,12 @@ def main(argv=None) -> int:
                     help="(không hỗ trợ — dùng --recon)")
     args = ap.parse_args(argv)
     n_ops = sum([args.sync, args.recon, args.report])
+    # v14.2: login dịch vụ nạp file (LOADER_DATABASE_URL, role svc_loader)
+    # — chế độ thực từ chối login superuser/owner/thiếu biến.
+    from pipelines import auth  # lười: auth → director → ...
+    if why := auth.bind_service("loader"):
+        print(f"[err] {why}", flush=True)
+        return 2
     if n_ops > 1:
         ap.error("chỉ được 1 thao tác mỗi lần (--sync | --recon)")
     if n_ops == 0 or args.report:

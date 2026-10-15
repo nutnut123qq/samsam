@@ -1,0 +1,125 @@
+# E2E v14.2 p2 — quyền dịch vụ + quyết định người ở CLI (DB lane samsam_v14_p2)
+logins tạm: app_human, svc_webhook, svc_job, svc_loader, svc_backup (không superuser/owner)
+
+### job lịch kpi_snapshot — JOB_DATABASE_URL = login svc_job (chế độ thực)
+$ JOB_DATABASE_URL=<dsn> DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m pipelines.job_runs --run kpi_snapshot
+[exit 0]
+[ok] chat_kpi_facts: đọc 0 dữ kiện, mới 0
+→ mong đợi exit 0: OK
+
+### job lịch kpi_snapshot — JOB_DATABASE_URL = login owner/superuser (DSN .env) (chế độ thực)
+$ JOB_DATABASE_URL=<dsn> DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m pipelines.job_runs --run kpi_snapshot
+[exit 78]
+[job-runs] job 'kpi_snapshot' KHÔNG chạy — login Postgres là SUPERUSER — chế độ thực phải dùng login riêng không phải superuser/owner (docs/roles.sql)
+→ mong đợi exit 78: OK
+
+### job lịch kpi_snapshot — JOB_DATABASE_URL = login svc_webhook (chế độ thực)
+$ JOB_DATABASE_URL=<dsn> DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m pipelines.job_runs --run kpi_snapshot
+[exit 78]
+[job-runs] job 'kpi_snapshot' KHÔNG chạy — login không thuộc role 'svc_job' của dịch vụ 'job' (docs/roles.sql)
+→ mong đợi exit 78: OK
+
+### job lịch thiếu JOB_DATABASE_URL (chế độ thực) — không rơi về DSN owner
+$ DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m pipelines.job_runs --run kpi_snapshot
+[exit 78]
+[job-runs] job 'kpi_snapshot' KHÔNG chạy — chế độ thực: thiếu JOB_DATABASE_URL — dịch vụ 'job' phải chạy bằng login riêng, không rơi về DATABASE_URL
+→ mong đợi exit 78: OK
+job_runs job:kpi_snapshot mới: 1 dòng (chỉ lần svc_job chạy được)
+
+### loader inventory_csv — LOADER_DATABASE_URL = login svc_loader (chế độ thực)
+$ LOADER_DATABASE_URL=<dsn> DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m ingest.inventory_csv --file data/sample_inventory.csv --source sample
+[exit 0]
+[skip] file đã nạp (16 dòng) — không ghi gì.
+→ mong đợi exit 0: OK
+
+### loader inventory_csv — LOADER_DATABASE_URL = login owner/superuser (DSN .env) (chế độ thực)
+$ LOADER_DATABASE_URL=<dsn> DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m ingest.inventory_csv --file data/sample_inventory.csv --source sample
+[exit 2]
+[err] login Postgres là SUPERUSER — chế độ thực phải dùng login riêng không phải superuser/owner (docs/roles.sql)
+→ mong đợi exit 2: OK
+
+### loader inventory_csv — LOADER_DATABASE_URL = login svc_job (chế độ thực)
+$ LOADER_DATABASE_URL=<dsn> DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m ingest.inventory_csv --file data/sample_inventory.csv --source sample
+[exit 2]
+[err] login không thuộc role 'svc_loader' của dịch vụ 'loader' (docs/roles.sql)
+→ mong đợi exit 2: OK
+
+### backup — BACKUP_DATABASE_URL = login svc_backup (job backup)
+$ BACKUP_DATABASE_URL=<dsn> JOB_DATABASE_URL=<dsn> DATABASE_URL=<dsn> BACKUP_DIR=C:\Users\hahuy\AppData\Local\Temp\tmp3wec0cz9 APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m pipelines.job_runs --run backup
+[exit 0]
+[done] samsam_v14_p2_20261016_011854_vn.dump — 428578 bytes, sha256 c869c357a0b10239…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe, 82 bảng
+[warn] backup CHƯA mã hóa (external-dep: khóa công ty)
+[warn] chưa cấu hình offsite (BACKUP_OFFSITE)
+→ mong đợi exit 0: OK
+
+### CLI quyết định — login app_human, --by tự khai, approvers thật rỗng
+$ DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m pipelines.production intake --lot LOT-E2E --result passed --by Bất Kỳ Ai
+[exit 1]
+[err] khối production CHƯA có người được Bên B ủy quyền (approvers rỗng trong data/directors/production.json) — cần văn bản ủy quyền của Bên B, không tự điền — không ghi.
+→ mong đợi exit ≠ 0: OK
+
+### CLI quyết định — login app_human, --by tự khai, approvers thật rỗng
+$ DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m ingest.golden_store --approve-price 1 --by Bất Kỳ Ai
+[exit 1]
+[err] khối sales CHƯA có người được Bên B ủy quyền (approvers rỗng trong data/directors/sales.json) — cần văn bản ủy quyền của Bên B, không tự điền — không ghi.
+→ mong đợi exit ≠ 0: OK
+
+### CLI quyết định — login app_human, --by tự khai, approvers thật rỗng
+$ DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m pipelines.qr_trace revoke --code EEEEEEEEEEEEEEEEEEEEEE --by Bất Kỳ Ai
+[exit 1]
+[err] chưa có người được revoke (data/qr_signers.json rỗng) — Bên B cấp danh sách, không tự điền — không ghi.
+→ mong đợi exit ≠ 0: OK
+
+### CLI quyết định — login app_human, --by tự khai, approvers thật rỗng
+$ DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m agents.xnqc --set 1 --status da_nop --ngay-nop 2026-10-01 --by Bất Kỳ Ai
+[exit 1]
+[từ chối] khối legal_hr CHƯA có người được Bên B ủy quyền (approvers rỗng trong data/directors/legal_hr.json) — cần văn bản ủy quyền của Bên B, không tự điền
+→ mong đợi exit ≠ 0: OK
+
+### CLI quyết định — login app_human, --by tự khai, approvers thật rỗng
+$ DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m pipelines.rollout --disable sales-01 --by Bất Kỳ Ai
+[exit 1]
+[TỪ CHỐI] khối sales CHƯA có người được Bên B ủy quyền (approvers rỗng trong data/directors/sales.json) — cần văn bản ủy quyền của Bên B, không tự điền
+→ mong đợi exit ≠ 0: OK
+
+### CLI quyết định — login app_human, --by tự khai, approvers thật rỗng
+$ DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m ingest.doc_intake --verify eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee --by Bất Kỳ Ai
+[exit 1]
+[err] khối legal_hr CHƯA có người được Bên B ủy quyền (approvers rỗng trong data/directors/legal_hr.json) — cần văn bản ủy quyền của Bên B, không tự điền — không đổi gì
+→ mong đợi exit ≠ 0: OK
+
+### CLI quyết định — login app_human, --by tự khai, approvers thật rỗng
+$ DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m agents.fp_pnl --cogs-approve 1 --by Bất Kỳ Ai
+[exit 1]
+[err] giá vốn #1: khối finance CHƯA có người được Bên B ủy quyền (approvers rỗng trong data/directors/finance.json) — cần văn bản ủy quyền của Bên B, không tự điền
+→ mong đợi exit ≠ 0: OK
+
+### CLI quyết định — login app_human, --by tự khai, approvers thật rỗng
+$ DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m ingest.crm --load-dealers --by Bất Kỳ Ai
+[exit 1]
+[err] khối sales CHƯA có người được Bên B ủy quyền (approvers rỗng trong data/directors/sales.json) — cần văn bản ủy quyền của Bên B, không tự điền — không ghi.
+→ mong đợi exit ≠ 0: OK
+
+### CLI quyết định — login app_human, --by tự khai, approvers thật rỗng
+$ DATABASE_URL=<dsn> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=C:\Users\hahuy\AppData\Local\Temp\tmpngrp7_il\users.json python -m agents.garden_director --purge-sample --by Bất Kỳ Ai
+[exit 1]
+[err] khối farming CHƯA có người được Bên B ủy quyền (approvers rỗng trong data/directors/farming.json) — cần văn bản ủy quyền của Bên B, không tự điền — không đổi gì
+→ mong đợi exit ≠ 0: OK
+
+authz_denied mới: 9 (mong đợi 9)
+verify_action_log() vấn đề: 0
+
+### dev mode — --by agent:x vẫn bị chặn
+$ DATABASE_URL=<dsn> python -m pipelines.production intake --lot LOT-E2E --result passed --by agent:x
+[exit 1]
+[err] 'agent:x' không phải người — agent/hệ thống KHÔNG được intake — không ghi.
+→ mong đợi exit 1: OK
+
+[OK] owner bị chặn: delete from settlement_rows → RaiseException: settlement_rows append-only: DELETE bị chặn
+
+[OK] owner bị chặn: update settlement_rows set payout_vnd = 0 → RaiseException: settlement_rows append-only: UPDATE bị chặn
+
+[OK] owner bị chặn: delete from orders where source like 'market:%' → RaiseException: orders: đơn thật (source market:shopee) không xóa được — HĐ 7.3
+settlement_rows: 16 dòng; orders market: 3
+
+[dọn] đã xóa login tạm

@@ -187,7 +187,10 @@ def test_bks_reader_read_only_role(db):
 
 def test_roles_sql_lists_tables_not_all_tables():
     roles = (ROOT / "docs" / "roles.sql").read_text(encoding="utf-8")
-    block = roles[roles.index("v10.0 HĐTV/BKS"):]
+    # v14.2: khối BKS kết thúc ở khối kế tiếp — khối login dịch vụ v14.2
+    # (svc_loader UPDATE/DELETE bảng nạp) không thuộc phạm vi kiểm này.
+    block = roles[roles.index("v10.0 HĐTV/BKS"):
+                  roles.index("-- ===== v12.1 B1 =====")]
     assert "all tables" not in block.split("do $$")[1].split("end $$")[1]
     for t in BKS_SELECT:
         assert re.search(rf"(?<!\w){t}(?!\w)", block), t

@@ -1084,6 +1084,19 @@ def main(argv=None) -> int:
         print("[FAIL] DB không kết nối được (DATABASE_URL)", file=sys.stderr)
         return 2
     try:
+        fid = a.promote or a.severe or a.disable
+        if fid:
+            # v14.2: nâng/lùi/tắt giai đoạn = quyết định của người được Bên
+            # B ủy quyền cho phòng ban của tính năng (auth.cli_gate).
+            from pipelines import auth  # lười: auth → director → ...
+            act = ("promote" if a.promote else
+                   "severe" if a.severe else "disable")
+            blk = next((f.get("phong_ban") for f in feats if f["id"] == fid
+                        and f.get("phong_ban") in BLOCKS), "data_platform")
+            why = auth.cli_gate(conn, a.by, blk, act, "feature_rollout", fid)
+            if why:
+                print(f"[TỪ CHỐI] {why}", file=sys.stderr)
+                return 1
         if a.seed:
             st = seed(conn, feats, a.by)
             print(f"[OK] vào sổ {st['inserted']} · có sẵn {st['existing']} ·"

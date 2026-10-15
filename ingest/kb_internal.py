@@ -155,6 +155,12 @@ def connect():
 
 def main(argv=None) -> int:
     a, text = parse_args(argv)
+    # v14.2: login dịch vụ nạp file (LOADER_DATABASE_URL, role svc_loader)
+    # — chế độ thực từ chối login superuser/owner/thiếu biến.
+    from pipelines import auth  # lười: auth → director → ...
+    if why := auth.bind_service("loader"):
+        print(f"[err] {why}", flush=True)
+        return 2
     conn = connect()
     try:
         r = ingest_doc(conn, collection=a.collection, doc_id=a.doc_id,

@@ -529,6 +529,29 @@ def _call(conn, sql: str, params: tuple):
     return production._decide(conn, sql, params)
 
 
+# v14.2: vai ký → khối (chỉ để ghi log từ chối); người được ký/phát hành/thu
+# hồi = allowlist `data/qr_signers.json` (Bên B cấp).
+_ROLE_BLOCK = {"gd_san_xuat": "production", "gd_vung_trong": "farming",
+               "phap_che_qa": "legal_hr"}
+
+
+def _gate(conn, by: str, action: str, object_type: str, oid: str,
+          role: str | None = None) -> None:
+    """Quyết định người qua `auth.cli_gate`: `sign` đối chiếu người ký ĐÚNG
+    vai, `issue`/`revoke` đối chiếu người ký của 3 vai. Bị chặn → QrError."""
+    from pipelines import auth  # lười: auth → director → ...
+    try:
+        signers = load_signers()
+    except QrError:
+        signers = {r: set() for r in ROLES}   # hỏng = rỗng → chế độ thực chặn
+    allow = signers[role] if role else set().union(*signers.values())
+    why = auth.cli_gate(conn, by, _ROLE_BLOCK.get(role, "farming"), action,
+                        object_type, oid, allow=allow,
+                        allow_src="data/qr_signers.json")
+    if why:
+        raise QrError(why)
+
+
 def _prep_or_err():
     try:
         return _prep(), None
@@ -616,6 +639,7 @@ def cmd_sign(args) -> int:
     cfg, golden = prep
 
     def run(conn):
+        _gate(conn, args.by, "sign", "qr_lot", args.lot, args.role)
         st = lot_state(conn, args.lot, cfg, golden)
         if production.qr_payload(st["lot"]) is None:
             raise QrError(f"lô {args.lot} chưa kiểm nhập passed")
@@ -643,6 +667,7 @@ def cmd_issue(args) -> int:
     cfg, golden = prep
 
     def run(conn):
+        _gate(conn, args.by, "issue", "qr_lot", args.lot)
         st = lot_state(conn, args.lot, cfg, golden)
         if production.qr_payload(st["lot"]) is None:
             raise QrError(f"lô {args.lot} chưa kiểm nhập passed")
@@ -680,6 +705,7 @@ def cmd_issue(args) -> int:
 
 def cmd_revoke(args) -> int:
     def run(conn):
+        _gate(conn, args.by, "revoke", "qr_code", args.code[:12])
         row, why = _call(conn, "select revoke_qr(%s, %s, %s)",
                          (args.code, args.by, args.reason))
         if row is None:

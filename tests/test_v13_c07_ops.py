@@ -180,14 +180,32 @@ def test_ack_generic_for_every_alert_source(db):
             ] == []
 
 
-def test_ack_enforced_mode_only_independent_recipients(db, monkeypatch):
+def test_ack_enforced_mode_only_independent_recipients(db, monkeypatch,
+                                                      tmp_path):
+    """v14.2 (p2) FLIP có lý do: chế độ thực trước đây chỉ so TÊN tự khai với
+    danh sách người nhận — `--by "phap che gia lap"` từ bất kỳ login nào
+    cũng xác nhận được. Nay thêm: người nhận phải có tài khoản users file
+    và `--by` khớp login Postgres đang dùng (`auth.cli_gate`)."""
     monkeypatch.setattr(auth, "_APPROVAL_FORCE", True)
+    monkeypatch.setattr(auth, "ENV_FILE", tmp_path / "no.env")
+    uf = tmp_path / "users.json"
+    uf.write_text("{}", encoding="utf-8")
+    monkeypatch.setenv("AUTH_USERS_FILE", str(uf))
     tx = TxConn(db)
     ra.raise_alert(tx, "agent:x", "Lô lỗi", routing={"recipients": []})
     aid = db.execute("select max(id) from red_alerts").fetchone()[0]
     routing = {"recipients": [RCP, {**RCP, "name": "TGD", "role": "tgd"}]}
     ok, msg = ra.ack(tx, aid, "TGD", routing=routing)
     assert ok is False and "chế độ thực" in msg
+    ok, msg = ra.ack(tx, aid, "phap che gia lap", routing=routing)
+    assert ok is False and "tài khoản" in msg          # tên tự khai không đủ
+    me = db.execute("select session_user").fetchone()[0]
+    uf.write_text(json.dumps({"phap che gia lap": {
+        "role": "phap_che", "db_login": "login_khac"}}), encoding="utf-8")
+    ok, msg = ra.ack(tx, aid, "phap che gia lap", routing=routing)
+    assert ok is False and "login Postgres" in msg
+    uf.write_text(json.dumps({"phap che gia lap": {
+        "role": "phap_che", "db_login": me}}), encoding="utf-8")
     assert ra.ack(tx, aid, "phap che gia lap", routing=routing)[0] is True
 
 

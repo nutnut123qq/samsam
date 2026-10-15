@@ -498,6 +498,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[err] {len(errs)} lỗi — không nạp gì.", flush=True)
             return 1
         source = path.name
+        # v14.2: nạp file = login dịch vụ (LOADER_DATABASE_URL, svc_loader);
+        # --approve-price/--report là người → DSN của người.
+        from pipelines import auth  # lười: auth → director → ...
+        if why := auth.bind_service("loader"):
+            print(f"[err] {why}", flush=True)
+            return 2
 
     load_dotenv(ROOT / ".env")
     dsn = os.environ.get("DATABASE_URL")
@@ -514,6 +520,14 @@ def main(argv: list[str] | None = None) -> int:
             report(conn)
             return 0
         if args.approve_price is not None:
+            # v14.2: GĐ bán hàng được Bên B ủy quyền (auth.cli_gate).
+            from pipelines import auth  # lười: auth → director → ...
+            why = auth.cli_gate(conn, by, "sales", "approve_price",
+                                "price_list", args.approve_price)
+            if why:
+                conn.rollback()
+                print(f"[err] {why} — không ghi.")
+                return 1
             ok, msg = approve_price(conn, args.approve_price, by)
             if not ok:
                 conn.rollback()

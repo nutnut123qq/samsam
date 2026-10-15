@@ -3694,3 +3694,74 @@ create or replace trigger anchor_receipts_append_only_row
 create or replace trigger anchor_receipts_no_truncate
   before truncate on anchor_receipts
   for each statement execute function append_only_guard();
+
+-- ===== v14.2 p2 số liệu doanh thu/đơn append-only (HĐ 7.3 iii) =====
+-- Số liệu doanh thu/đơn trực tuyến là căn cứ chia doanh thu + quyền xem số
+-- liên tục của Bên A → không xóa/sửa mất giá trị cũ.
+--   * `settlement_rows` — APPEND-ONLY hoàn toàn (`append_only_guard`, kể cả
+--     owner): mọi dòng là file quyết toán THẬT (không có đường nạp mẫu); nạp
+--     lại idempotent theo sha256 file + `unique (file_sha256, row_no)` nên
+--     không cần xóa. File sai = nạp file đúng (khoản xuất lại xử lý ở
+--     `v_settlement_khoan`/`overlaps`), KHÔNG xóa dòng cũ.
+--   * `orders` — dòng KHÔNG mẫu (`source` khác 'sample' / 'sample:%') không
+--     xóa được, không đổi mã đơn, không chuyển thành mẫu; TRUNCATE bị chặn.
+--     UPDATE hợp lệ (`agents.kd_orders` đổi trạng thái theo snapshot sau, FK
+--     products `on delete set null`) → 1 dòng `order_history` (toàn bộ dòng
+--     cũ + mới, APPEND-ONLY). Dòng mẫu: `ingest.core_store` vẫn xóa/nạp lại.
+--     Trigger SECURITY DEFINER: người ghi `orders` không cần quyền
+--     `order_history`.
+create or replace trigger settlement_rows_append_only_row
+  before update or delete on settlement_rows
+  for each row execute function append_only_guard();
+create or replace trigger settlement_rows_no_truncate
+  before truncate on settlement_rows
+  for each statement execute function append_only_guard();
+
+create table if not exists order_history (
+  id bigint generated always as identity primary key,
+  order_id text not null,
+  old_row jsonb not null,
+  new_row jsonb not null,
+  db_role text not null default session_user,
+  changed_at timestamptz not null default now()
+);
+create index if not exists order_history_order_idx
+  on order_history (order_id, id);
+create or replace trigger order_history_append_only_row
+  before update or delete on order_history
+  for each row execute function append_only_guard();
+create or replace trigger order_history_no_truncate
+  before truncate on order_history
+  for each statement execute function append_only_guard();
+
+create or replace function orders_guard() returns trigger
+language plpgsql security definer set search_path from current as $$
+declare
+  old_sample boolean := old.source = 'sample' or old.source like 'sample:%';
+begin
+  if old_sample then
+    return case when tg_op = 'DELETE' then old else new end;
+  end if;
+  if tg_op = 'DELETE' then
+    raise exception 'orders: đơn thật (source %) không xóa được — HĐ 7.3',
+      old.source;
+  end if;
+  if new.id is distinct from old.id then
+    raise exception 'orders: không đổi mã đơn thật';
+  end if;
+  if new.source = 'sample' or new.source like 'sample:%' then
+    raise exception 'orders: không chuyển đơn thật thành mẫu';
+  end if;
+  if to_jsonb(new) is distinct from to_jsonb(old) then
+    insert into order_history (order_id, old_row, new_row)
+    values (old.id, to_jsonb(old), to_jsonb(new));
+  end if;
+  return new;
+end $$;
+revoke execute on function orders_guard() from public;
+create or replace trigger orders_guard_row
+  before update or delete on orders
+  for each row execute function orders_guard();
+create or replace trigger orders_no_truncate
+  before truncate on orders
+  for each statement execute function append_only_guard();
