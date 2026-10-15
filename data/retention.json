@@ -1,0 +1,38 @@
+{
+  "_doc": "v13.4 C05 — Hạn lưu dữ liệu cá nhân của CV / chấm công / ảnh-video vườn / ghi âm vườn. ttl_days = null nghĩa là CHƯA CHỐT: job `python scripts/retention_purge.py` KHÔNG xóa gì và `scripts/health_bulletin.py` cảnh báo mỗi ngày. CHỈ người có thẩm quyền (owner của mục + Pháp chế) điền số ngày nguyên ≥ 1 — agent/dev KHÔNG tự điền, không có giá trị mặc định. Có TTL thì job chỉ xóa FILE quá hạn (ghi agent_action_log TRƯỚC khi xóa); dòng metadata DB (không PII: sha256, mã khoảnh, mã NV) giữ nguyên; ảnh/video đã gắn vào hồ sơ lô QR (lot_origins) không xóa; ghi âm chưa chép lời không xóa mà cảnh báo. kho.loai: thu_muc (thư mục ngoài repo theo env, chỉ file cấp 1 đúng đuôi, bỏ symlink) | garden_media | garden_voice | khong_luu_ban_sao (hệ thống không giữ bản sao file — không có gì để xóa).",
+  "muc": [
+    {
+      "id": "hr_cv",
+      "ten": "CV / hồ sơ ứng viên (.txt/.md trong HR_INBOX_DIR)",
+      "ttl_days": null,
+      "owner": "Chuyên viên pháp chế – nhân sự",
+      "kho": {"loai": "thu_muc", "env": "HR_INBOX_DIR", "duoi": [".txt", ".md"]},
+      "luong": "DF-42"
+    },
+    {
+      "id": "hr_attendance",
+      "ten": "File chấm công (ma_nv, ngày, giờ vào/ra)",
+      "ttl_days": null,
+      "owner": "Chuyên viên pháp chế – nhân sự",
+      "kho": {"loai": "khong_luu_ban_sao"},
+      "ghi_chu": "agents.pc_hr đọc file người chạy chỉ định, không sao chép; hàng duyệt chỉ có số tổng hợp theo mã NV (approval_queue append-only). Hạn giữ file gốc do bộ phận nhân sự quản lý ngoài hệ thống.",
+      "luong": "DF-42"
+    },
+    {
+      "id": "garden_media",
+      "ten": "Ảnh / video vườn đã gỡ EXIF/GPS (GARDEN_MEDIA_DIR)",
+      "ttl_days": null,
+      "owner": "Giám đốc vùng trồng + Pháp chế",
+      "kho": {"loai": "garden_media", "env": "GARDEN_MEDIA_DIR"},
+      "luong": "DF-44"
+    },
+    {
+      "id": "garden_voice",
+      "ten": "Ghi âm nhân viên vườn (GARDEN_MEDIA_DIR/audio)",
+      "ttl_days": null,
+      "owner": "Giám đốc vùng trồng + Pháp chế",
+      "kho": {"loai": "garden_voice", "env": "GARDEN_MEDIA_DIR"},
+      "luong": "DF-44"
+    }
+  ]
+}

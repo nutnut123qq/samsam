@@ -1003,7 +1003,7 @@
       "subjects": "Ứng viên nộp hồ sơ; nhân viên Sâm Sâm chấm công",
       "purpose": "Lập NHÁP xếp hạng hồ sơ (không tự loại) và tổng hợp ngày công/đi trễ/về sớm/thiếu chấm để Chuyên viên pháp chế–nhân sự duyệt",
       "storage": "CV ở `HR_INBOX_DIR` (ngoài repo, module từ chối thư mục trong repo); Postgres `approval_queue` mục `hr_screening`/`hr_attendance`/`hr_jd` (append-only) + `agent_action_log` (`queue_enqueue`); bảng mã ↔ tên file chỉ in ra console người chạy (tên file qua `_mask_pii`)",
-      "retention": "GIẢ ĐỊNH — Pháp chế chốt thời hạn giữ CV/hồ sơ tuyển dụng và dữ liệu chấm công; hàng duyệt append-only giữ vĩnh viễn mã băm + số tổng hợp; chưa có job xóa CV trong `HR_INBOX_DIR`: GAP",
+      "retention": "v13.4: `data/retention.json` mục `hr_cv`/`hr_attendance` — `ttl_days` null = CHƯA CHỐT (Pháp chế chốt): job `scripts/retention_purge.py` không xóa gì, bản tin sức khỏe cảnh báo hằng ngày; khi có TTL job xóa CV quá hạn trong `HR_INBOX_DIR` (ghi `agent_action_log` trước khi xóa). Hệ thống không giữ bản sao file chấm công; hàng duyệt append-only giữ vĩnh viễn mã băm + số tổng hợp",
       "recipients": "Không — không LLM, không mạng; người duyệt đọc trong hàng duyệt nội bộ",
       "cross_border": false,
       "safeguards": [
@@ -1021,29 +1021,30 @@
     },
     {
       "id": "DF-44",
-      "name": "Nhật ký vườn qua Zalo OA — nhân viên vườn gửi chữ/ảnh/ghi âm (v12.4)",
+      "name": "Nhật ký vườn qua Zalo OA — nhân viên vườn gửi chữ/ảnh/video/ghi âm (v12.4, video v13.4)",
       "modules": [
         "connectors/zalo_garden.py",
         "connectors/zalo.py",
         "scripts/garden_media.py"
       ],
-      "data": "Tin của NHÂN VIÊN vườn (trong allowlist `user_hash`): chữ nhật ký (mã khoảnh, hoạt động, chi tiết — đã `_mask_pii`), ảnh vườn (có thể có mặt người; EXIF/GPS bị gỡ), ghi âm giọng nói nhân viên; user_id Zalo thô chỉ trong RAM lúc xử lý",
+      "data": "Tin của NHÂN VIÊN vườn (trong allowlist `user_hash`): chữ nhật ký (mã khoảnh, hoạt động, chi tiết — đã `_mask_pii`), ảnh vườn (có thể có mặt người; EXIF/GPS bị gỡ), video vườn (có thể có mặt/giọng người; metadata/GPS gỡ bằng remux ffmpeg cục bộ), ghi âm giọng nói nhân viên; user_id Zalo thô chỉ trong RAM lúc xử lý",
       "class": "vang",
       "subjects": "Nhân viên vườn của công ty nhắn Zalo OA",
       "purpose": "Ghi nhật ký vùng trồng (chuỗi băm không sửa/xóa) + kho tư liệu ảnh vườn; ghi âm chờ người chép lời",
-      "storage": "`plot_logs` (author `zalo:<ma_nv>`, source `zalo:garden`, hash chain); `garden_media` + file ảnh đã gỡ EXIF/GPS ở `GARDEN_MEDIA_DIR` (ngoài repo); file ghi âm `<GARDEN_MEDIA_DIR>/audio/` + bảng `garden_voice_drafts` (mã NV, khoảnh, sha256 — không user_id/tên); allowlist `data/garden_staff.json` (gitignored, chỉ user_hash + mã NV)",
-      "retention": "Nhật ký `plot_logs`: lâu dài (chuỗi băm, không xóa được); ảnh/ghi âm: chưa có hạn lưu trong code — GAP (GĐ vùng trồng/Pháp chế chốt); tin nhân viên KHÔNG vào convlog/history chatbot",
-      "recipients": "Zalo/VNG — tải ảnh/ghi âm từ CDN Zalo (host `MEDIA_HOSTS` GIẢ ĐỊNH, chỉ https, không redirect) và gửi câu xác nhận qua openapi.zalo.me — Việt Nam; KHÔNG gửi audio tới dịch vụ chép lời (STT chưa tích hợp)",
+      "storage": "`plot_logs` (author `zalo:<ma_nv>`, source `zalo:garden`, hash chain); `garden_media` + file ảnh/video đã gỡ EXIF/GPS/metadata ở `GARDEN_MEDIA_DIR` (ngoài repo; bản gốc video chỉ ở thư mục tạm `<kho>/.tmp/`, xóa ngay sau remux); file ghi âm `<GARDEN_MEDIA_DIR>/audio/` + bảng `garden_voice_drafts` (mã NV, khoảnh, sha256 — không user_id/tên); allowlist `data/garden_staff.json` (gitignored, chỉ user_hash + mã NV)",
+      "retention": "Nhật ký `plot_logs`: lâu dài (chuỗi băm, không xóa được); ảnh/video/ghi âm: `data/retention.json` mục `garden_media`/`garden_voice` — `ttl_days` null = CHƯA CHỐT (GĐ vùng trồng + Pháp chế chốt), job `scripts/retention_purge.py` không xóa gì và bản tin sức khỏe cảnh báo; khi có TTL chỉ xóa file (trừ ảnh gắn hồ sơ lô QR, ghi âm chưa chép lời); tin nhân viên KHÔNG vào convlog/history chatbot",
+      "recipients": "Zalo/VNG — tải ảnh/ghi âm từ CDN Zalo (host `MEDIA_HOSTS` GIẢ ĐỊNH, chỉ https, không redirect) và gửi câu xác nhận qua openapi.zalo.me — Việt Nam; KHÔNG gửi audio tới dịch vụ chép lời (registry STT chỉ có `none` — vendor chưa chọn; webhook không bao giờ gọi STT, `--transcribe` exit 2)",
       "cross_border": false,
       "safeguards": [
         "Chỉ user_hash trong allowlist mới vào intake vườn; file allowlist thiếu/hỏng → không ai là nhân viên (fail-closed)",
         "Ảnh dựng lại từ pixel, bỏ toàn bộ EXIF/GPS/XMP trước khi lưu; kho bắt buộc ngoài repo",
+        "Video: kiểm magic bytes MP4/MOV + cỡ + đuôi, remux ffmpeg chỉ giữ hình+tiếng (bỏ metadata/track vị trí), quét lại dấu vị trí sau remux; thiếu ffmpeg → từ chối, không lưu; ghi âm kiểm magic bytes",
         "Chi tiết nhật ký qua `_mask_pii`, cắt 1000 ký tự; trả lời là câu viết tay, 0 LLM",
         "stdout chỉ in `uh=` (hash) — không in user_id, URL tệp, nội dung tin"
       ],
       "legal_basis": "Hợp đồng lao động / nội quy ghi nhật ký vườn — CẦN LUẬT SƯ XÁC NHẬN cho ghi âm giọng nói nhân viên",
       "gaps": [
-        "Hạn lưu ảnh/ghi âm chưa có — GĐ vùng trồng + Pháp chế chốt",
+        "Hạn lưu ảnh/video/ghi âm chưa chốt (`data/retention.json` ttl null) — GĐ vùng trồng + Pháp chế chốt",
         "Thông báo cho nhân viên về việc lưu ghi âm/ảnh (nội quy) chưa có",
         "Host CDN Zalo của payload ảnh/ghi âm là GIẢ ĐỊNH — đối chiếu event thật"
       ]

@@ -1,0 +1,24 @@
+{
+  "_doc": "v13.4 C05 — Đối chiếu 'Hồ sơ gốc 14 sản phẩm' (PL01 mục 2, Sản xuất R&D / Hồ sơ sản phẩm) với golden master `data/golden_skus.json` (13 SKU, gồm combo/gói nhiều đơn vị). BẢN ĐỐI CHIẾU CHƯA XÁC NHẬN: mỗi SKU golden đúng 1 dòng, `ho_so_goc` = null (mã hồ sơ trong danh mục 14 của Bên B — chưa có), `trang_thai` = chua_xac_nhan. KHÔNG nhân bản/tách SKU cho đủ 14 và KHÔNG gộp SKU cùng số công bố thành 1 hồ sơ — 13 SKU ứng với bao nhiêu hồ sơ gốc là việc Bên B xác nhận. `ghi_chu_doi_chieu` chỉ ghi sự kiện đọc được từ golden (cùng số ĐKSP, thành phần combo theo tên). `so_cong_bo` sao từ golden `receipt_no` (test khóa trùng khớp). Chỉ người có thẩm quyền Bên B điền `danh_muc_ho_so_goc` + `ho_so_goc` + đổi trạng thái.",
+  "nguon": "PL01 mục 2 — Sản xuất, R&D / Hồ sơ sản phẩm: 'Hồ sơ gốc 14 sản phẩm (thành phần, quy cách, số công bố)'",
+  "so_ho_so_hop_dong": 14,
+  "so_sku_golden": 13,
+  "trang_thai_doi_chieu": "chua_xac_nhan",
+  "blocker": "Bên B cung cấp danh mục 14 hồ sơ gốc (tên, thành phần, quy cách, số công bố) — chưa có thì không xác định được SKU nào ứng với hồ sơ nào và hồ sơ nào chưa có SKU",
+  "danh_muc_ho_so_goc": [],
+  "sku": [
+    {"sku_key": "savina-12v", "so_cong_bo": "8014/2021/ĐKSP", "ho_so_goc": null, "trang_thai": "chua_xac_nhan", "ghi_chu_doi_chieu": null},
+    {"sku_key": "saphraton-20v", "so_cong_bo": "2778/2018/ĐKSP", "ho_so_goc": null, "trang_thai": "chua_xac_nhan", "ghi_chu_doi_chieu": "Cùng số ĐKSP với 3 SKU Saphraton khác (combo 2x20, 40 viên, 80 viên) — chờ Bên B xác nhận 1 hay nhiều hồ sơ gốc"},
+    {"sku_key": "saphraton-combo-2x20v", "so_cong_bo": "2778/2018/ĐKSP", "ho_so_goc": null, "trang_thai": "chua_xac_nhan", "ghi_chu_doi_chieu": "Combo 2 hộp x 20 viên (theo tên golden) — golden ghi chờ KD xác nhận có trùng Saphraton 40 viên không"},
+    {"sku_key": "saphraton-40v", "so_cong_bo": "2778/2018/ĐKSP", "ho_so_goc": null, "trang_thai": "chua_xac_nhan", "ghi_chu_doi_chieu": "Cùng số ĐKSP Saphraton"},
+    {"sku_key": "saphraton-80v", "so_cong_bo": "2778/2018/ĐKSP", "ho_so_goc": null, "trang_thai": "chua_xac_nhan", "ghi_chu_doi_chieu": "Cùng số ĐKSP Saphraton"},
+    {"sku_key": "savigout-30v", "so_cong_bo": "8560/2019/ĐKSP", "ho_so_goc": null, "trang_thai": "chua_xac_nhan", "ghi_chu_doi_chieu": null},
+    {"sku_key": "sapentol-30v", "so_cong_bo": "5191/2020/ĐKSP", "ho_so_goc": null, "trang_thai": "chua_xac_nhan", "ghi_chu_doi_chieu": null},
+    {"sku_key": "da-an-sam-30v", "so_cong_bo": "11129/2021/ĐKSP", "ho_so_goc": null, "trang_thai": "chua_xac_nhan", "ghi_chu_doi_chieu": null},
+    {"sku_key": "mat-ong-sam-120ml-1hu", "so_cong_bo": null, "ho_so_goc": null, "trang_thai": "chua_xac_nhan", "ghi_chu_doi_chieu": "Golden chưa có số công bố/tự công bố"},
+    {"sku_key": "mat-ong-sam-120ml-2hu", "so_cong_bo": null, "ho_so_goc": null, "trang_thai": "chua_xac_nhan", "ghi_chu_doi_chieu": "Gói 2 hũ 120ml (theo tên golden) — golden chưa có số công bố/tự công bố"},
+    {"sku_key": "mat-ong-sam-300ml", "so_cong_bo": null, "ho_so_goc": null, "trang_thai": "chua_xac_nhan", "ghi_chu_doi_chieu": "Golden chưa có số công bố/tự công bố"},
+    {"sku_key": "ruou-sam-chai-thuy-tinh-500ml", "so_cong_bo": null, "ho_so_goc": null, "trang_thai": "chua_xac_nhan", "ghi_chu_doi_chieu": "Golden chưa có số công bố/tự công bố"},
+    {"sku_key": "ruou-sam-binh-su-do-500ml", "so_cong_bo": null, "ho_so_goc": null, "trang_thai": "chua_xac_nhan", "ghi_chu_doi_chieu": "Golden chưa có số công bố/tự công bố"}
+  ]
+}

@@ -962,6 +962,16 @@ def main(argv=None) -> int:
               f"là external-dep; hỗ trợ: {', '.join(sorted(PROVIDERS))}",
               file=sys.stderr)
         return 2
+    if name == "none" and (args.scene or "").strip():
+        # v13.4: yêu cầu nền AI (--scene) mà chưa có provider → KHÔNG âm thầm
+        # bỏ scene rồi ra nền gradient như thể đã đáp ứng.
+        print("[blocked] --scene cần nền AI nhưng IMAGE_PROVIDER chưa cấu "
+              "hình (none = nền gradient tất định) — BLOCKED: API sinh ảnh "
+              "(vendor + hợp đồng/DPA + key + trần chi phí agent `image` "
+              "trong data/llm_gateway.json), cắm vào "
+              "pipelines.image_studio.PROVIDERS; bỏ --scene để ra nháp "
+              "nền gradient", file=sys.stderr)
+        return 2
     skus = list(args.sku)
     if "all" in skus:
         gcfg, gerr = content._cfg()

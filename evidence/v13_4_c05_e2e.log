@@ -1,0 +1,98 @@
+# v13.4 c05 E2E CLI — DB lane samsam_v13_c05 (DSN che), kho/intake ở scratchpad ngoài repo, không mạng.
+# Lần chạy ĐẦU (bước 1 ghi mới):
+### 1. garden_media video MOV có GPS → gỡ + lưu
+$ python scripts/garden_media.py --file <scratch>\e2e\IMG_0042.MOV --plot KV-A01 --date 2026-10-15 --by E2E c05
+[done] c86c3cc45c24 — video mov đã gỡ metadata, có GPS: có
+[exit 0]
+file kho: c86c3cc45c24 | còn dấu vị trí: False
+.tmp rỗng: True
+garden_media mới: ('mov', None, None, True, 'cli:garden_media') | + 1
+
+# Lần chạy LẠI toàn bộ (bước 1 idempotent — cùng sha, +0 dòng):
+nguồn có dấu vị trí: True
+
+### 1. garden_media video MOV có GPS → gỡ + lưu
+$ python scripts/garden_media.py --file <scratch>\e2e\IMG_0042.MOV --plot KV-A01 --date 2026-10-15 --by E2E c05
+[done] c86c3cc45c24 — video mov đã gỡ metadata, có GPS: có (tệp đã có trong kho)
+[exit 0]
+file kho: c86c3cc45c24 | còn dấu vị trí: False
+.tmp rỗng: True
+garden_media mới: ('mov', None, None, True, 'cli:garden_media') | + 0
+
+### 2. garden_media: đuôi .mp4 nhưng nội dung MOV → từ chối
+$ python scripts/garden_media.py --file <scratch>\e2e\doi_duoi.mp4 --plot KV-A01 --date 2026-10-15 --by E2E c05
+[err] từ chối video: đuôi file không khớp nội dung video
+[exit 1]
+
+### 3. garden_media: thiếu ffmpeg (FFMPEG_BIN sai + PATH rỗng không đủ — giả lập qua python -c chặn)
+$ python -c import sys; sys.argv=['x','--file',r'<scratch>\e2e\IMG_0042.MOV','--plot','KV-A01','--date','2026-10-15','--by','E2E']; from scripts import garden_media as g; g._find_ffmpeg=lambda: None; raise SystemExit(g.main(sys.argv[1:]))
+[err] từ chối video: thiếu ffmpeg — TỪ CHỐI video vì không gỡ được metadata/GPS (external-dep: pip install -r requirements.txt [imageio-ffmpeg] hoặc env FFMPEG_BIN)
+[exit 1]
+
+### 4. zalo_garden --transcribe (STT chưa cấu hình)
+$ python -m connectors.zalo_garden --transcribe 1
+[blocked] chưa cấu hình STT: BLOCKED — cần vendor STT trong nước + hợp đồng/DPA + key (Bên B/Pháp chế chọn), cắm vào connectors.zalo_garden.STT_PROVIDERS rồi đặt GARDEN_STT_PROVIDER; tạm thời người nghe ghi âm rồi ghi nhật ký tay (python -m agents.garden) và đóng nháp --done
+[exit 2]
+
+### 5. zalo_garden --transcribe (env đặt vendor chưa tích hợp)
+$ python -m connectors.zalo_garden --transcribe 1
+[blocked] GARDEN_STT_PROVIDER='fpt' chưa tích hợp — chưa cấu hình STT: BLOCKED — cần vendor STT trong nước + hợp đồng/DPA + key (Bên B/Pháp chế chọn), cắm vào connectors.zalo_garden.STT_PROVIDERS rồi đặt GARDEN_STT_PROVIDER; tạm thời người nghe ghi âm rồi ghi nhật ký tay (python -m agents.garden) và đóng nháp --done
+[exit 2]
+
+### 6. doc_intake: ảnh nhãn, OCR_PROVIDER chưa cấu hình
+$ python -m ingest.doc_intake
+[dup] 21516186c72d trùng — bỏ qua
+[done] new=0 dup=1 cho_ocr=0 skipped=0 error=0
+[exit 0]
+
+### 7. sx_label --image (OCR chưa cấu hình)
+$ python -m agents.sx_label --sku mat-ong-sam-300ml --image <scratch>\e2e\intake\nhan\nhan.jpg
+[error] chưa cấu hình OCR: đặt OCR_PROVIDER=<provider trong nước đã cắm vào ingest.doc_intake.PROVIDERS> (external-dep, cần hợp đồng + DPA), hoặc chép chữ trên nhãn ra file .txt rồi dùng --text
+[exit 2]
+
+### 8. image_studio --scene khi IMAGE_PROVIDER=none
+$ python -m pipelines.image_studio --sku mat-ong-sam-300ml --channel facebook --headline Quà Tết --scene bàn gỗ, lá sâm
+[blocked] --scene cần nền AI nhưng IMAGE_PROVIDER chưa cấu hình (none = nền gradient tất định) — BLOCKED: API sinh ảnh (vendor + hợp đồng/DPA + key + trần chi phí agent `image` trong data/llm_gateway.json), cắm vào pipelines.image_studio.PROVIDERS; bỏ --scene để ra nháp nền gradient
+[exit 2]
+
+### 9. retention_purge --dry-run (TTL chưa chốt)
+$ python scripts/retention_purge.py --dry-run
+- CẢNH BÁO `hr_cv` (CV / hồ sơ ứng viên (.txt/.md trong HR_INBOX_DIR)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Chuyên viên pháp chế – nhân sự (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `hr_attendance` (File chấm công (ma_nv, ngày, giờ vào/ra)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Chuyên viên pháp chế – nhân sự (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `garden_media` (Ảnh / video vườn đã gỡ EXIF/GPS (GARDEN_MEDIA_DIR)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `garden_voice` (Ghi âm nhân viên vườn (GARDEN_MEDIA_DIR/audio)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)
+[blocked] chưa mục nào được chốt hạn lưu — không xóa gì
+[exit 0]
+
+### 10. health_bulletin mục 6
+$ python scripts/health_bulletin.py --out-dir <scratch>\e2e\rep --date 2026-10-15
+ | 0.0000 | 2.00 | 0% | OK |
+| persona_sim | 0.0000 | 2.00 | 0% | OK |
+| redteam | 0.0000 | 0.50 | 0% | OK |
+| smoke | 0.0000 | 0.50 | 0% | OK |
+| sx_tracuu | 0.0000 | 1.00 | 0% | OK |
+
+## 4. Lời gọi LLM lỗi 24h
+
+_Nguồn: bảng `llm_usage` `ok = false` (24h qua)._
+
+- Tổng: 0
+
+## 5. Hàng chờ duyệt
+
+_Nguồn: bảng `content_drafts` `status = 'pending'`._
+
+- Draft chờ duyệt: 0
+
+## 6. Hạn lưu dữ liệu cá nhân
+
+_Nguồn: `data/retention.json` (CV / chấm công / ảnh-video / ghi âm vườn); job `scripts/retention_purge.py`._
+
+- CẢNH BÁO `hr_cv` (CV / hồ sơ ứng viên (.txt/.md trong HR_INBOX_DIR)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Chuyên viên pháp chế – nhân sự (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `hr_attendance` (File chấm công (ma_nv, ngày, giờ vào/ra)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Chuyên viên pháp chế – nhân sự (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `garden_media` (Ảnh / video vườn đã gỡ EXIF/GPS (GARDEN_MEDIA_DIR)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `garden_voice` (Ghi âm nhân viên vườn (GARDEN_MEDIA_DIR/audio)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)
+
+[done] <scratch>\e2e\rep\health-2026-10-15.md
+[notify] bỏ qua (chưa cấu hình — cần --notify)
+[exit 0]

@@ -715,30 +715,30 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Lớp | Đỏ |
 | Chủ thể | Ứng viên nộp hồ sơ; nhân viên Sâm Sâm chấm công |
 | Nơi lưu | CV ở `HR_INBOX_DIR` (ngoài repo, module từ chối thư mục trong repo); Postgres `approval_queue` mục `hr_screening`/`hr_attendance`/`hr_jd` (append-only) + `agent_action_log` (`queue_enqueue`); bảng mã ↔ tên file chỉ in ra console người chạy (tên file qua `_mask_pii`) |
-| Thời hạn lưu | GIẢ ĐỊNH — Pháp chế chốt thời hạn giữ CV/hồ sơ tuyển dụng và dữ liệu chấm công; hàng duyệt append-only giữ vĩnh viễn mã băm + số tổng hợp; chưa có job xóa CV trong `HR_INBOX_DIR`: GAP |
+| Thời hạn lưu | v13.4: `data/retention.json` mục `hr_cv`/`hr_attendance` — `ttl_days` null = CHƯA CHỐT (Pháp chế chốt): job `scripts/retention_purge.py` không xóa gì, bản tin sức khỏe cảnh báo hằng ngày; khi có TTL job xóa CV quá hạn trong `HR_INBOX_DIR` (ghi `agent_action_log` trước khi xóa). Hệ thống không giữ bản sao file chấm công; hàng duyệt append-only giữ vĩnh viễn mã băm + số tổng hợp |
 | Bên nhận | Không — không LLM, không mạng; người duyệt đọc trong hàng duyệt nội bộ |
 | Chuyển ra nước ngoài | Không |
 | Biện pháp bảo vệ (có trong code) | Chấm tất định theo từ khóa JD, không gửi CV cho LLM; không tự loại ứng viên — mọi hồ sơ có trong danh sách + lý do; Cấu hình JD có tiêu chí phân biệt đối xử (giới tính/tuổi/hôn nhân/tôn giáo/dân tộc/quê quán/ngoại hình) → từ chối; File chấm công kiểm toàn file trước connect; mã NV giống SĐT/email hoặc có dấu cách (tên) → lỗi, 0 dòng; thông báo lỗi không in giá trị ô; Risk medium cho cả 3 loại mục — không auto_policy; agent không tính lương/kỷ luật |
 | Căn cứ xử lý | Ứng viên: đồng ý khi nộp hồ sơ / thực hiện thủ tục trước giao kết hợp đồng lao động; nhân viên: hợp đồng lao động + nội quy — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Câu thông báo xử lý dữ liệu cho ứng viên + thời hạn giữ CV chưa được Pháp chế chốt; Tiêu chí JD và luật ca (`data/hr/*.json`) là BẢN DEV SOẠN/GIẢ ĐỊNH; chưa có lịch nghỉ lễ; Mã băm CV vẫn liên kết lại được với người khi giữ file gốc (dữ liệu bút danh hóa, không ẩn danh) |
 
-### DF-44 — Nhật ký vườn qua Zalo OA — nhân viên vườn gửi chữ/ảnh/ghi âm (v12.4)
+### DF-44 — Nhật ký vườn qua Zalo OA — nhân viên vườn gửi chữ/ảnh/video/ghi âm (v12.4, video v13.4)
 
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-44 |
 | Module (code) | `connectors/zalo_garden.py`; `connectors/zalo.py`; `scripts/garden_media.py` |
 | Mục đích | Ghi nhật ký vùng trồng (chuỗi băm không sửa/xóa) + kho tư liệu ảnh vườn; ghi âm chờ người chép lời |
-| Dữ liệu | Tin của NHÂN VIÊN vườn (trong allowlist `user_hash`): chữ nhật ký (mã khoảnh, hoạt động, chi tiết — đã `_mask_pii`), ảnh vườn (có thể có mặt người; EXIF/GPS bị gỡ), ghi âm giọng nói nhân viên; user_id Zalo thô chỉ trong RAM lúc xử lý |
+| Dữ liệu | Tin của NHÂN VIÊN vườn (trong allowlist `user_hash`): chữ nhật ký (mã khoảnh, hoạt động, chi tiết — đã `_mask_pii`), ảnh vườn (có thể có mặt người; EXIF/GPS bị gỡ), video vườn (có thể có mặt/giọng người; metadata/GPS gỡ bằng remux ffmpeg cục bộ), ghi âm giọng nói nhân viên; user_id Zalo thô chỉ trong RAM lúc xử lý |
 | Lớp | Vàng |
 | Chủ thể | Nhân viên vườn của công ty nhắn Zalo OA |
-| Nơi lưu | `plot_logs` (author `zalo:<ma_nv>`, source `zalo:garden`, hash chain); `garden_media` + file ảnh đã gỡ EXIF/GPS ở `GARDEN_MEDIA_DIR` (ngoài repo); file ghi âm `<GARDEN_MEDIA_DIR>/audio/` + bảng `garden_voice_drafts` (mã NV, khoảnh, sha256 — không user_id/tên); allowlist `data/garden_staff.json` (gitignored, chỉ user_hash + mã NV) |
-| Thời hạn lưu | Nhật ký `plot_logs`: lâu dài (chuỗi băm, không xóa được); ảnh/ghi âm: chưa có hạn lưu trong code — GAP (GĐ vùng trồng/Pháp chế chốt); tin nhân viên KHÔNG vào convlog/history chatbot |
-| Bên nhận | Zalo/VNG — tải ảnh/ghi âm từ CDN Zalo (host `MEDIA_HOSTS` GIẢ ĐỊNH, chỉ https, không redirect) và gửi câu xác nhận qua openapi.zalo.me — Việt Nam; KHÔNG gửi audio tới dịch vụ chép lời (STT chưa tích hợp) |
+| Nơi lưu | `plot_logs` (author `zalo:<ma_nv>`, source `zalo:garden`, hash chain); `garden_media` + file ảnh/video đã gỡ EXIF/GPS/metadata ở `GARDEN_MEDIA_DIR` (ngoài repo; bản gốc video chỉ ở thư mục tạm `<kho>/.tmp/`, xóa ngay sau remux); file ghi âm `<GARDEN_MEDIA_DIR>/audio/` + bảng `garden_voice_drafts` (mã NV, khoảnh, sha256 — không user_id/tên); allowlist `data/garden_staff.json` (gitignored, chỉ user_hash + mã NV) |
+| Thời hạn lưu | Nhật ký `plot_logs`: lâu dài (chuỗi băm, không xóa được); ảnh/video/ghi âm: `data/retention.json` mục `garden_media`/`garden_voice` — `ttl_days` null = CHƯA CHỐT (GĐ vùng trồng + Pháp chế chốt), job `scripts/retention_purge.py` không xóa gì và bản tin sức khỏe cảnh báo; khi có TTL chỉ xóa file (trừ ảnh gắn hồ sơ lô QR, ghi âm chưa chép lời); tin nhân viên KHÔNG vào convlog/history chatbot |
+| Bên nhận | Zalo/VNG — tải ảnh/ghi âm từ CDN Zalo (host `MEDIA_HOSTS` GIẢ ĐỊNH, chỉ https, không redirect) và gửi câu xác nhận qua openapi.zalo.me — Việt Nam; KHÔNG gửi audio tới dịch vụ chép lời (registry STT chỉ có `none` — vendor chưa chọn; webhook không bao giờ gọi STT, `--transcribe` exit 2) |
 | Chuyển ra nước ngoài | Không |
-| Biện pháp bảo vệ (có trong code) | Chỉ user_hash trong allowlist mới vào intake vườn; file allowlist thiếu/hỏng → không ai là nhân viên (fail-closed); Ảnh dựng lại từ pixel, bỏ toàn bộ EXIF/GPS/XMP trước khi lưu; kho bắt buộc ngoài repo; Chi tiết nhật ký qua `_mask_pii`, cắt 1000 ký tự; trả lời là câu viết tay, 0 LLM; stdout chỉ in `uh=` (hash) — không in user_id, URL tệp, nội dung tin |
+| Biện pháp bảo vệ (có trong code) | Chỉ user_hash trong allowlist mới vào intake vườn; file allowlist thiếu/hỏng → không ai là nhân viên (fail-closed); Ảnh dựng lại từ pixel, bỏ toàn bộ EXIF/GPS/XMP trước khi lưu; kho bắt buộc ngoài repo; Video: kiểm magic bytes MP4/MOV + cỡ + đuôi, remux ffmpeg chỉ giữ hình+tiếng (bỏ metadata/track vị trí), quét lại dấu vị trí sau remux; thiếu ffmpeg → từ chối, không lưu; ghi âm kiểm magic bytes; Chi tiết nhật ký qua `_mask_pii`, cắt 1000 ký tự; trả lời là câu viết tay, 0 LLM; stdout chỉ in `uh=` (hash) — không in user_id, URL tệp, nội dung tin |
 | Căn cứ xử lý | Hợp đồng lao động / nội quy ghi nhật ký vườn — CẦN LUẬT SƯ XÁC NHẬN cho ghi âm giọng nói nhân viên |
-| GAP | Hạn lưu ảnh/ghi âm chưa có — GĐ vùng trồng + Pháp chế chốt; Thông báo cho nhân viên về việc lưu ghi âm/ảnh (nội quy) chưa có; Host CDN Zalo của payload ảnh/ghi âm là GIẢ ĐỊNH — đối chiếu event thật |
+| GAP | Hạn lưu ảnh/video/ghi âm chưa chốt (`data/retention.json` ttl null) — GĐ vùng trồng + Pháp chế chốt; Thông báo cho nhân viên về việc lưu ghi âm/ảnh (nội quy) chưa có; Host CDN Zalo của payload ảnh/ghi âm là GIẢ ĐỊNH — đối chiếu event thật |
 
 ## 3. Đánh giá rủi ro
 
@@ -785,7 +785,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-38 | Chăm sóc lại + xin đánh giá khách kênh sở hữu → nháp tin vào hàng duyệt (KD-A7, v10.1) | Đỏ | cao | không | 4 |
 | DF-39 | Kịch bản livestream (KD-A9) + gói video YouTube dài (MKT-12) qua LLM gateway (v10.1) | Vàng | trung bình | có | 2 |
 | DF-42 | Nhân sự: xếp hạng hồ sơ ứng viên + tổng hợp chấm công theo mã NV (PC-HR, v12.2) | Đỏ | cao | không | 3 |
-| DF-44 | Nhật ký vườn qua Zalo OA — nhân viên vườn gửi chữ/ảnh/ghi âm (v12.4) | Vàng | trung bình | không | 3 |
+| DF-44 | Nhật ký vườn qua Zalo OA — nhân viên vườn gửi chữ/ảnh/video/ghi âm (v12.4, video v13.4) | Vàng | trung bình | không | 3 |
 
 ## 4. Tổng hợp GAP
 
@@ -870,7 +870,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-42] Câu thông báo xử lý dữ liệu cho ứng viên + thời hạn giữ CV chưa được Pháp chế chốt
 - [DF-42] Tiêu chí JD và luật ca (`data/hr/*.json`) là BẢN DEV SOẠN/GIẢ ĐỊNH; chưa có lịch nghỉ lễ
 - [DF-42] Mã băm CV vẫn liên kết lại được với người khi giữ file gốc (dữ liệu bút danh hóa, không ẩn danh)
-- [DF-44] Hạn lưu ảnh/ghi âm chưa có — GĐ vùng trồng + Pháp chế chốt
+- [DF-44] Hạn lưu ảnh/video/ghi âm chưa chốt (`data/retention.json` ttl null) — GĐ vùng trồng + Pháp chế chốt
 - [DF-44] Thông báo cho nhân viên về việc lưu ghi âm/ảnh (nội quy) chưa có
 - [DF-44] Host CDN Zalo của payload ảnh/ghi âm là GIẢ ĐỊNH — đối chiếu event thật
 

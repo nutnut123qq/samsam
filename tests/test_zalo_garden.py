@@ -215,11 +215,26 @@ def test_fetch_network_error_wrapped():
         zg._fetch(CDN, client=_client(boom))
 
 
-def test_audio_ext():
-    assert zg._audio_ext(AUDIO) == "aac"
-    assert zg._audio_ext("https://zdn.vn/v/a.M4A?x=1") == "m4a"
-    assert zg._audio_ext("https://zdn.vn/v/a.exe") == "bin"
-    assert zg._audio_ext("https://zdn.vn/v/noext") == "bin"
+# v13.4: đuôi ghi âm lấy theo MAGIC BYTES, không theo URL (trước đây
+# `_audio_ext(url)` nhận mọi nội dung, đuôi lạ → 'bin' vẫn lưu vào kho).
+ADTS = b"\xff\xf1\x50\x80\x02\x1f\xfc" + b"\x00" * 16
+
+
+@pytest.mark.parametrize("data, want", [
+    (ADTS, "aac"), (b"\x00\x00\x00\x20ftypM4A \x00\x00", "m4a"),
+    (b"ID3\x04\x00" + b"\x00" * 8, "mp3"), (b"\xff\xfb\x90\x00", "mp3"),
+    (b"#!AMR\n\x3c", "amr"), (b"RIFF\x24\x00\x00\x00WAVEfmt ", "wav"),
+    (b"OggS\x00\x02", "ogg")])
+def test_audio_kind_magic(data, want):
+    assert zg.audio_kind(data) == want
+
+
+@pytest.mark.parametrize("data", [b"AUDIO-BYTES", b"MZ\x90\x00exe", b"",
+                                  b"\xff", b"\xff\xd8\xff\xe0JFIF",
+                                  b"<html>"])
+def test_audio_kind_rejects_non_audio(data):
+    with pytest.raises(ValueError):
+        zg.audio_kind(data)
 
 
 def test_store_dir(monkeypatch, tmp_path):
@@ -313,9 +328,11 @@ def test_crash_still_replies(monkeypatch, tmp_path, capsys):
 def test_removed_staff_and_unsupported(monkeypatch, tmp_path):
     assert _run("user_send_text", {"text": "KV-T01 tưới"}) == zg.ERROR
     _staff(tmp_path)
-    for ev in ("user_send_sticker", "user_send_file", "user_send_video",
-               "user_send_location"):
+    # v13.4: user_send_video đã được nhận (test video riêng) — bỏ khỏi đây.
+    for ev in ("user_send_sticker", "user_send_file", "user_send_location",
+               "user_send_gif"):
         assert _run(ev, {}) == zg.UNSUPPORTED
+    assert _run("user_send_video", {}) == zg.NO_FILE
     assert _run("user_send_text", "khong-phai-dict") == zg.HELP
 
 
@@ -425,7 +442,8 @@ def test_voice_draft_no_stt(conn, monkeypatch, tmp_path, capsys):
     store = tmp_path / "kho"
     monkeypatch.setenv("GARDEN_MEDIA_DIR", str(store))
     monkeypatch.setenv("GARDEN_STT_PROVIDER", "some-stt")
-    monkeypatch.setattr(zg, "_fetch", lambda *a, **k: b"AUDIO-BYTES")
+    # v13.4: bytes phải là ghi âm thật (magic ADTS) — trước: b"AUDIO-BYTES"
+    monkeypatch.setattr(zg, "_fetch", lambda *a, **k: ADTS)
 
     def no_net(*a, **k):
         raise AssertionError("không được gửi audio ra ngoài")
@@ -436,10 +454,9 @@ def test_voice_draft_no_stt(conn, monkeypatch, tmp_path, capsys):
     sha, ext, n, code, plot, st = conn.execute(
         "select sha256, ext, bytes, staff_code, plot_id, status "
         "from garden_voice_drafts").fetchone()
-    assert (ext, n, code, plot, st) == ("aac", 11, "VT01", None,
+    assert (ext, n, code, plot, st) == ("aac", len(ADTS), "VT01", None,
                                         "cho_chep_loi")
-    assert (store / "audio" / sha[:2] / f"{sha}.aac").read_bytes() == \
-        b"AUDIO-BYTES"
+    assert (store / "audio" / sha[:2] / f"{sha}.aac").read_bytes() == ADTS
     assert "chưa tích hợp" in capsys.readouterr().out
     # gửi lại cùng file → không thêm dòng
     _run("user_send_voice", _voice(typ="voice"))
@@ -450,7 +467,7 @@ def test_voice_draft_no_stt(conn, monkeypatch, tmp_path, capsys):
 def test_voice_with_plot_and_no_store(conn, monkeypatch, tmp_path):
     assert _run("user_send_audio", _voice("KV-T01")) == zg.NO_STORE
     monkeypatch.setenv("GARDEN_MEDIA_DIR", str(tmp_path / "kho"))
-    monkeypatch.setattr(zg, "_fetch", lambda *a, **k: b"A2")
+    monkeypatch.setattr(zg, "_fetch", lambda *a, **k: ADTS + b"2")
     out = _run("user_send_audio", _voice("KV-T01"))
     assert "(khoảnh KV-T01)" in out
     assert conn.execute("select plot_id, ext from garden_voice_drafts"

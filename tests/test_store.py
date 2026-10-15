@@ -429,7 +429,11 @@ _V13_CHECK_OK = re.compile(
     r"feature_rollout_feature_id_check\s+check\s*\([^;]*\))|settlement_rows"
     r"\s+(?:drop\s+constraint\s+if\s+exists\s+settlement_rows_txn_type_check"
     r"|add\s+constraint\s+settlement_rows_txn_type_check\s+check\s*"
-    r"\([^;]*\)))\s*;")
+    r"\([^;]*\))|garden_media\s+(?:drop\s+constraint\s+if\s+exists\s+"
+    r"garden_media_ext_check|add\s+constraint\s+garden_media_ext_check\s+"
+    r"check\s*\(\s*ext\s+in\s*\([^;()]*\)\s*\)))\s*;")
+# v13.4 c05: cặp CHECK `garden_media_ext_check` (thêm video mp4/mov) — cùng
+# allowlist hẹp; chỉ dạng `check (ext in (...))`.
 
 
 def _forbidden_ddl(lower: str) -> list[str]:
@@ -456,7 +460,14 @@ def test_drift_guard_narrow_alter_only():
                 ("alter table settlement_rows add constraint "
                  "settlement_rows_txn_type_check check (x), drop column y;"),
                 ("alter table orders add constraint "
-                 "settlement_rows_txn_type_check check (x);")):
+                 "settlement_rows_txn_type_check check (x);"),
+                ("alter table garden_media add constraint "
+                 "garden_media_ext_check check (ext in ('mp4')), drop "
+                 "column plot_id;"),
+                ("alter table garden_media drop constraint if exists "
+                 "garden_media_plot_id_fkey;"),
+                ("alter table plots add constraint garden_media_ext_check "
+                 "check (ext in ('x'));")):
         assert _forbidden_ddl(bad), bad
     assert _forbidden_ddl(
         "alter table x add column if not exists y text;") == []
