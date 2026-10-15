@@ -166,6 +166,9 @@ bảng nào thì dừng, không bật app.
 | `audit_runs` | B | sổ lần chạy kiểm soát độc lập BKS/HĐTV (v10.0) — append-only, chứa neo đuôi hash chain (`params.heads`) cho lần audit sau; mất bảng = mất neo nội bộ, không dựng lại được |
 | `revenue_quarters` | B | (v12.5) biên bản đối soát doanh thu thuần quý ĐỀ XUẤT (`agents.rev_share --record`) — append-only, lịch sử đề xuất đã ghi (HĐ hợp tác Điều 7.3: lưu ≥180 ngày, không sửa/xóa); A dựng lại được số từ `settlement_rows`, KHÔNG dựng lại được lịch sử ghi |
 | `project_milestones` | B (hoặc A: `python -m agents.da_pmo --seed` — mất trạng thái/evidence/hạn đã duyệt đổi) | sổ mốc tiến độ (v8.3 DA-01, v12.0 khối ceo) |
+| `feature_rollout` | B | (v12.1) trạng thái hiện tại sổ triển khai 3 bước theo nhóm tính năng HĐ (`pipelines.rollout`) — mất bảng = mất mốc `stage_since` đếm ngày làm việc/đầu ra cho nghiệm thu |
+| `feature_rollout_events` | B | (v12.1) append-only — nhật ký seed/nâng/lỗi nghiêm trọng/tắt của sổ triển khai; là nhật ký lỗi của hồ sơ đề nghị nghiệm thu |
+| `garden_voice_drafts` | B | (v12.4) nháp ghi âm nhân viên vườn chờ chép lời; file âm thanh ở `GARDEN_MEDIA_DIR/audio/` ngoài repo — sao lưu thư mục đó riêng |
 | `image_assets` | B | metadata ảnh nháp MKT-03 (v6.2) — file PNG + sidecar ở `IMAGE_OUT_DIR` phải chép theo riêng (không nằm trong dump) |
 | `video_assets` | B | metadata video nháp MKT-04 (v6.3) — file mp4 + sidecar ở `VIDEO_OUT_DIR` phải chép theo riêng (không nằm trong dump) |
 | `ad_test_plans` | B | (v6.4 MKT-05) phiếu thử nghiệm ads NHÁP — insert-only, gắn 2 mục `approval_queue` `adtest-<id>`; dựng lại sẽ lệch phiếu đã duyệt |

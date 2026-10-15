@@ -23,6 +23,110 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Checklist v12.1–v12.6-bu-thieu-hop-dong
+
+Khán giả/mục đích: bù phần THIẾU so với Hợp đồng hợp tác đầu tư TEDO–Sâm Sâm
+(PL01 phạm vi, PL02 nghiệm thu/KPI, PL04 tài sản) sau khi v12.0 gỡ phần thừa.
+6 lane build song song (worktree riêng, nhánh `v12-b1`..`v12-b6` tạo từ
+`c0015db`), integrator gộp `--no-ff` theo thứ tự b1→b6 trên `main`.
+
+- [x] v12.1 B1 — danh mục tính năng HĐ + sổ triển khai 3 bước (PL02 mục 1).
+  `data/contract_features.json` = nhóm tính năng theo PL01 mục 2 × 9 phòng ban
+  (`_doc` ghi 9/12/14/11/9/6/9/10/9 = 89; danh mục 89 mục chi tiết chờ hai bên
+  chốt); mỗi dòng có `modules` + `agent_ids` (actor có thật trong code);
+  website + chatbot website = `lam_rieng`, neo blockchain + theo dõi cập nhật
+  pháp lý (P2) = `thieu`. `pipelines/rollout.py` + bảng `feature_rollout` và
+  `feature_rollout_events` (append-only): cổng chạy thử ≥5 ngày làm việc VÀ
+  ≥50 dòng `agent_action_log` của `agent_ids`; có người duyệt ≥10 ngày làm việc
+  VÀ 0 lỗi nghiêm trọng; tính năng không có `agent_ids` → từ chối (fail-closed);
+  ghi lỗi nghiêm trọng (7 mã PL02 mục 2) → tự lùi về chạy thử. Mọi ghi cần
+  `--by` người thật (code + CHECK DB). `--dossier --phase P1|P2` → hồ sơ đề
+  nghị nghiệm thu. `app_human` chỉ SELECT.
+- [x] v12.2 B2 — PC-HR nhân sự (`agents/pc_hr.py`, khối `legal_hr`, 3 loại
+  mục `hr_jd`/`hr_screening`/`hr_attendance` risk medium): `--jd` nháp mô tả
+  công việc (`data/hr/jd_templates.json` BẢN DEV SOẠN, qua guardrail);
+  `--screen` xếp hạng CV .txt/.md ở `HR_INBOX_DIR` (từ chối thư mục trong repo)
+  tất định theo từ khóa JD, mã ứng viên = sha256 nội dung, không tên/SĐT/email
+  vào DB, không tự loại ai, cấu hình có tiêu chí phân biệt đối xử → từ chối;
+  `--attendance` kiểm toàn file trước connect (lỗi → exit 1, 0 dòng), tổng
+  hợp ngày công/đi trễ/về sớm/thiếu chấm/vắng theo mã NV với luật ca
+  `data/hr/attendance_rules.json` GIẢ ĐỊNH. 0 LLM, 0 mạng, không bảng mới.
+  Luồng DF-42.
+- [x] v12.3 B3 — SX đối soát nhãn + cận hạn: `agents/sx_label.py` đọc chữ nhãn
+  (.txt, hoặc ảnh/PDF qua OCR provider của `doc_intake` — chưa cấu hình → exit
+  2), trích tất định tên/số ĐKSP-tự công bố/quy cách/NSX-HSD/mã lô/cụm bắt buộc,
+  so golden `sku_master` + `production_lots` + listing mới nhất mỗi kênh;
+  `--submit` → mục `label_check` khối production, idempotent theo đợt. Không
+  lưu nguyên văn nhãn; SKU nhóm hạn chế chỉ ghi mã `H-<sha8>`. Luật
+  `data/label_rules.json` GIẢ ĐỊNH. `pipelines.production bulletin` thêm mục
+  "Hàng cận hạn (FEFO)" theo `near_expiry_days` (GIẢ ĐỊNH 90).
+- [x] v12.4 B4 — nhật ký vườn qua Zalo (`connectors/zalo_garden.py`): user_hash
+  trong `data/garden_staff.json` (gitignored, có `.sample`; thiếu/hỏng = không
+  ai là nhân viên) không vào chatbot khách/convlog. Chữ "<mã khoảnh> <hoạt
+  động> <chi tiết>" → `agents.garden` → `plot_logs` (source `zalo:garden`, hash
+  chain); sai mã khoảnh → hướng dẫn, không ghi. Ảnh chỉ tải từ CDN Zalo https,
+  không redirect, trần 25 MB, gỡ EXIF/GPS → `garden_media`. Ghi âm → bảng mới
+  `garden_voice_drafts` trạng thái `cho_chep_loi` (không STT, không gửi audio
+  ra ngoài), người chép đóng bằng `--done ID --log --by`. Convlog thêm
+  `reply_ms` (nhận → gửi xong, PL02 ≤30 giây); `latency_ms` giữ nghĩa cũ.
+  Luồng DF-44.
+- [x] v12.5 B5 — doanh thu thuần trực tuyến + biên bản đối soát quý
+  (`agents/rev_share.py`): thuần = gộp − phí sàn − hủy − hoàn (`settlement_rows`
+  + trạng thái `orders` market:%; hoàn của dòng hủy tính trong Hủy, không trừ
+  2 lần); thiếu nguồn → "chưa có dữ liệu", không coi là 0; hoàn > gộp / thuần
+  âm → bất thường, không tính phí. `--year N` so mức thưởng. `data/rev_share.json`
+  mọi tỷ lệ/mức/ngày bắt đầu = null "chưa chốt". `--record` → `revenue_quarters`
+  append-only. Role `ben_a_reader` NOLOGIN chỉ SELECT bảng đó + 2 view tổng hợp
+  ngày × kênh (không mã đơn/hash). Docstring ghi xung đột lợi ích Điều 7.6.
+- [x] v12.6 B6 — `scripts/ops_monthly.py --month` → `data/reports/van-hanh-<tháng>.md`
+  (hạn trước ngày 05 tháng sau): KPI vận hành PL02 mục 3, tiêu chí kỹ thuật PL02
+  mục 2 (backup, diễn tập, p95 chatbot, chi phí AI), tài sản hợp tác PL04 mục 3
+  (`data/tai_san_hop_tac.json` BẢN DEV SOẠN) + dữ kiện tự động. Chỉ đọc, 0 LLM,
+  mọi số có nguồn, DB down vẫn ghi báo cáo + exit 1. `deploy/onprem/README.md`
+  (server vật lý Sâm Sâm); `deploy/cloud/README.md` đánh dấu không phải phương
+  án chính; cập nhật `runbook-ha-tang.md` + mục Hạ tầng-IT `ban-giao-M31.md`.
+
+### v12 đóng
+
+- Gộp: `v12-b1`..`v12-b6` merge `--no-ff` theo thứ tự trên `main`. Xung đột chỉ ở
+  khối nối đuôi (`AGENTS.md` dòng Commands, cuối `docs/schema.sql` /
+  `docs/roles.sql`, `data/data_flow_map.json` DF-42 + DF-44, tiêu đề số bảng
+  `kien-truc.md`) — giữ CẢ HAI phía, so Counter dòng HEAD/MERGE_HEAD với file
+  gộp (0 dòng thiếu ngoài dòng số bảng đổi chủ ý), JSON parse + .py ast.parse
+  sạch. DPIA/TIA sinh lại bằng `scripts/dpia_draft.py` (40 luồng, 16 ra nước
+  ngoài). `kien-truc.md` = 75 bảng public (71 + feature_rollout,
+  feature_rollout_events, garden_voice_drafts, revenue_quarters).
+- Vá sau gộp (không do lane): bộ quét toàn repo `scripts/dpia_draft.py`
+  (`SKIP_DIRS`) và `test_purge_sample_only_called_from_cli_and_tests` bỏ qua
+  `.claude/` — worktree của các lane nằm trong `.claude/worktrees/` chứa bản
+  sao code làm 2 test fail giả.
+- Gate: DB mới `samsam_v12_i`: `apply_schema --roles` ×2 sạch (75 bảng),
+  `core_store` + `golden_store` exit 0; `ruff check .` sạch; FULL pytest
+  (`evidence/v12_pytest.log`): 4802 passed / 1 failed (23 phút 26 giây). Ca fail do gộp: `test_db_backup::test_cloud_readme_drift_guard` — `deploy/cloud/README.md` (lane B5 thêm `revenue_quarters`) thiếu 3 bảng của B1/B4 → thêm `feature_rollout`, `feature_rollout_events`, `garden_voice_drafts`; chạy lại `tests/test_db_backup.py` 50 passed (`evidence/v12_pytest_rerun.log`). Test `contract_features` (B1, `test_lane_modules_exist_after_merge`) pass với module thật sau gộp.
+- External-dep / chờ người thật chốt: lịch nghỉ lễ + Tết (`rollout_config.json`,
+  luật ca HR); danh mục 89 tính năng chi tiết; mẫu JD + tiêu chí sàng lọc + luật
+  ca (Pháp chế–nhân sự + TGĐ); luật nhãn + `near_expiry_days` (Pháp chế, GĐ sản
+  xuất); OCR trong nước + DPA; danh sách nhân viên vườn + quy trình lấy Zalo
+  user_id, host CDN Zalo/payload ảnh-ghi âm đối chiếu event thật, STT; tỷ lệ phí
+  vận hành, mức thưởng, ngày bắt đầu vận hành, cột "phí sàn" (hai bên); login
+  thật `in role ben_a_reader`; server vật lý, UPS, IP tĩnh, NAS/offsite backup,
+  monitor ngoài server, kênh cảnh báo, systemd timer, người ký diễn tập;
+  `BACKUP_DIR` thật có `backup_runs.jsonl`.
+- GAP ghi lại (chưa làm, để chọn sau): `ops_monthly` tính p95 chatbot trên
+  `latency_ms` (chỉ thời gian `answer()`) thay vì `reply_ms` của v12.4 (nhận →
+  gửi xong) → số p95 thấp hơn thực; 35/55 tính năng `co_code` không có
+  `agent_ids` nên cổng rollout từ chối nâng (cần log `agent_action_log` hoặc
+  cho bằng chứng tay); chatbot `kd_a1` chỉ log handoff vào `agent_action_log`;
+  `bks_audit.WATCH_ROLES` chưa có `ben_a_reader`; red alert ngoài intel chưa có
+  đường ack (KPI 2 giờ đếm "chưa xác nhận"); KPI rượu/TPBVSK chỉ đọc
+  `channel_posts`; hạn lưu CV/chấm công/ảnh/ghi âm vườn + thông báo cho ứng
+  viên/nhân viên chưa có (Pháp chế); PL02 thời gian phản hồi/sửa lỗi chưa có
+  sổ sự cố; `ops_monthly` chưa vào `SOP_COMMANDS`/`sop.md`.
+- KHÔNG làm ở v12: website bán hàng + chatbot website (làm riêng sau); neo
+  blockchain (P2 — cần chọn chuỗi; hiện có hash chain + neo object-lock); kết
+  nối API sàn thật (P2 — `ingest/market_api.py` khung chỉ đọc, chờ key).
+  Commit trên `main`, KHÔNG push.
+
 ## Checklist v12.0-go-ngoai-pham-vi
 
 Khán giả/mục đích: căn cứ phạm vi chuyển từ SOW draft sang **Hợp đồng hợp tác
