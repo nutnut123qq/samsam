@@ -32,7 +32,7 @@ Contract:
     (`$BACKUP_DIR/backup_runs.jsonl`, status ok; đếm riêng có bản sao ngoài),
     diễn tập khôi phục (`drill_runs.jsonl` + `dr_runs.jsonl`, mốc
     30/11/2026, 18/12/2026, sau đó mỗi quý), phản hồi chatbot p95 + % > 30
-    giây (field `latency_ms` của convlog; không có → "chưa đo"), chi phí AI
+    giây (field `reply_ms` của convlog; không có → "chưa đo"), chi phí AI
     tháng (`llm_usage`).
   - (3) Danh mục tài sản hợp tác PL04 mục 3 từ `data/tai_san_hop_tac.json`
     + dữ kiện tự động (git HEAD, số module, số file test, `docs/handover/`).
@@ -232,7 +232,9 @@ def read_convlog(data_dir: Path, start: datetime, end: datetime) -> dict:
             if key in seen:
                 continue
             seen.add(key)
-            lat = rec.get("latency_ms")
+            # PL02 ≤30 giây đo `reply_ms` (nhận tin → gửi xong, v12.4);
+            # `latency_ms` chỉ đo answer() → báo thấp hơn thật, không dùng.
+            lat = rec.get("reply_ms")
             if isinstance(lat, int) and not isinstance(lat, bool) \
                     and lat >= 0:
                 lats.append(lat)
@@ -561,12 +563,12 @@ def render(f: dict) -> str:
     lats = conv["latencies"]
     if not lats:
         L.append("| Phản hồi tự động của chatbot | ≤ 30 giây | chưa đo "
-                 "(không có `latency_ms` trong convlog tháng) | convlog |")
+                 "(không có `reply_ms` trong convlog tháng — bản ghi trước v12.4 không đo) | convlog |")
     else:
         slow = sum(1 for x in lats if x > CHAT_LIMIT_MS)
         L.append(f"| Phản hồi tự động của chatbot | ≤ 30 giây | p95 "
                  f"{p95(lats) / 1000:.1f} giây; > 30 giây {slow}/{len(lats)} "
-                 f"({_pct(slow, len(lats))}) | convlog `latency_ms` |")
+                 f"({_pct(slow, len(lats))}) | convlog `reply_ms` |")
     co = db.get("cost") if f.get("db_ok") else None
     if (msg := _state(co, "llm_usage")):
         L.append(f"| Chi phí AI tháng | trong trần `data/llm_gateway.json` | "

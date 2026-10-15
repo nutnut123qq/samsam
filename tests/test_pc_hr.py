@@ -438,3 +438,12 @@ def test_db_submit_three_ops_and_dedupe(db, tmp_path, monkeypatch, capsys):
     n = db.execute("select count(*) from agent_action_log where actor ="
                    " 'agent:pc_hr' and action = 'queue_enqueue'").fetchone()[0]
     assert n == 3
+
+
+def test_bias_age_not_confused_with_watering():
+    # review v12: norm() bỏ dấu làm 'tưới'/'tươi' == 'tuoi' → chặn oan.
+    for ok in ("tưới tiêu", "sâm tươi", "kinh nghiệm tưới nước", "tuoi cay"):
+        assert h._bias(ok) is False, ok
+    for bad in ("tuổi 25-35", "độ tuổi", "TUỔI dưới 30", "tuoi 25",
+                "tuoi tu 22", "tuoi duoi 30", "giới tính nam"):
+        assert h._bias(bad) is True, bad

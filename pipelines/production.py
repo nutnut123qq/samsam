@@ -726,9 +726,12 @@ def intake(conn, lot_code: str, result: str, by: str,
 
 
 def collect(conn, golden_skus: dict | None, golden_why: str | None = None,
-            near_until: dt.date | None = None) -> dict:
+            near_until: dt.date | None = None,
+            near_from: dt.date | None = None) -> dict:
     """Chỉ SQL (0 LLM) → data cho `render_bulletin`. Không ghi gì.
-    `near_until` (v12.3): lô passed có HSD ≤ ngày này (None → bỏ qua)."""
+    `near_until` (v12.3): lô passed có HSD ≤ ngày này (None → bỏ qua);
+    `near_from`: HSD ≥ ngày này — lô hết hạn đã lâu không nằm mãi trong
+    bản tin (review v12; None → không chặn dưới)."""
     missing = [t for t in ALLOC_TABLES if conn.execute(
         "select to_regclass(%s) is null", (t,)).fetchone()[0]]
     data = {"missing_tables": missing, "shortages": [], "no_stock": [],
@@ -784,8 +787,9 @@ def collect(conn, golden_skus: dict | None, golden_why: str | None = None,
             for code, sku, exp, qty in conn.execute(
                     "select lot_code, sku_key, exp_date, qty from"
                     " production_lots where intake_status = 'passed'"
-                    " and exp_date <= %s order by exp_date, lot_code",
-                    (near_until,)):
+                    " and exp_date <= %s and (%s::date is null"
+                    " or exp_date >= %s) order by exp_date, lot_code",
+                    (near_until, near_from, near_from)):
                 total = stock[sku]["qty"] if sku in stock else None
                 if total == 0:
                     continue          # SKU hết tồn — không còn hàng cận hạn
@@ -1058,8 +1062,8 @@ def cmd_bulletin(args) -> int:
     day = args.date or _today_vn()
 
     def run(conn):
-        data = collect(conn, golden, why, day + dt.timedelta(
-            days=cfg["near_expiry_days"]))
+        near = dt.timedelta(days=cfg["near_expiry_days"])
+        data = collect(conn, golden, why, day + near, day - near)
         data["date"] = day
         print(render_bulletin(data, dt.datetime.now(TZ_VN), cfg), end="")
         return 0

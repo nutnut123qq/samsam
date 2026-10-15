@@ -91,10 +91,13 @@ _TIME_RE = re.compile(r"([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?")
 # Tiêu chí phân biệt đối xử (Bộ luật Lao động) — dạng không dấu. Cụm nhiều
 # từ / từ hiếm khớp ở bất kỳ đâu trong từ khóa; 'nam'/'nu' chỉ khớp NGUYÊN
 # từ khóa ('quảng nam' hợp lệ).
-_BIAS_ANY = ("tuoi", "gioi tinh", "nam gioi", "nu gioi", "hon nhan",
+_BIAS_ANY = ("gioi tinh", "nam gioi", "nu gioi", "hon nhan",
              "ket hon", "doc than", "ton giao", "dan toc", "mang thai",
              "que quan", "ngoai hinh", "chieu cao", "can nang")
 _BIAS_EXACT = ("nam", "nu")
+# 'tuoi' không dấu trùng 'tưới'/'tươi' → chỉ bắt 'tuổi' có dấu, hoặc
+# 'tuoi' không dấu đứng trước số/khoảng (review v12: 'tưới tiêu' bị chặn oan).
+_AGE_RE = re.compile(r"\btuoi\s*(?:\d|tu\b|duoi\b|tren\b|khong\s+qua\b)")
 NOTE_SCREEN = ("Agent KHÔNG loại ai — danh sách chỉ xếp hạng theo từ khóa; "
                "CV diễn đạt khác từ khóa có thể bị chấm thấp. Người duyệt "
                "đọc hồ sơ gốc và quyết.")
@@ -142,7 +145,17 @@ def _strs(v, name: str, min_n: int = 0) -> list[str]:
 
 def _bias(s: str) -> bool:
     n = norm(s)
+    if "tuổi" in unicodedata.normalize("NFC", s).casefold():
+        return True
+    if "tuổi" not in s and _AGE_RE.search(n) and not _has_accent(s):
+        return True
     return n in _BIAS_EXACT or any(has_kw(n, b) for b in _BIAS_ANY)
+
+
+def _has_accent(s: str) -> bool:
+    """Có dấu tiếng Việt (tưới/tươi có dấu → không phải 'tuoi' gõ thiếu dấu)."""
+    return any(unicodedata.combining(c) or c in "đĐ"
+               for c in unicodedata.normalize("NFD", s))
 
 
 def _crit(c, where: str, with_score: bool) -> dict:

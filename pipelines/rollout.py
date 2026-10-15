@@ -123,8 +123,8 @@ CRITERIA = (
     ("Phản hồi lỗi thường", "Trong vòng 03 ngày làm việc", None, ()),
     ("Sửa lỗi phát sinh", "Trong vòng 07 ngày", None, ()),
     ("Phản hồi tự động của chatbot", "Trong vòng 30 giây",
-     "convlog `latency_ms` · python scripts/ops_monthly.py --month YYYY-MM",
-     (("connectors/zalo.py", "latency_ms"), ("scripts/ops_monthly.py", None))),
+     "convlog `reply_ms` · python scripts/ops_monthly.py --month YYYY-MM",
+     (("connectors/zalo.py", "reply_ms"), ("scripts/ops_monthly.py", None))),
     ("Hạ tầng", "Theo PL01 mục 8", "deploy/onprem/README.md",
      (("deploy/onprem/README.md", None),)),
 )

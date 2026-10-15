@@ -250,11 +250,13 @@ def summarize(rows: list[dict], channels, fee_cols) -> dict:
     for k in MONEY_KEYS:
         vals = [None if f is None else f[k] for f in out.values()]
         total[k] = None if any(v is None for v in vals) else sum(vals)
-    return {"channels": out, "total": total, "notes": notes}
+    return {"channels": out, "total": total, "notes": notes,
+            "anomaly": any("BẤT THƯỜNG" in n for n in notes)}
 
 
-def ops_fee(net, rate, start) -> tuple[int | None, str | None]:
-    """Phí vận hành quý → (số, None) | (None, lý do)."""
+def ops_fee(net, rate, start, anomaly=False) -> tuple[int | None, str | None]:
+    """Phí vận hành quý → (số, None) | (None, lý do). `anomaly` = có kênh
+    BẤT THƯỜNG (Hoàn > Gộp / Thuần âm) → không tính phí dù tổng dương."""
     if rate is None:
         return None, f"{NOT_SET} tỷ lệ phí vận hành"
     if start is None:
@@ -263,6 +265,8 @@ def ops_fee(net, rate, start) -> tuple[int | None, str | None]:
         return None, f"doanh thu thuần {NO_DATA}"
     if net < 0:
         return None, "doanh thu thuần âm — 2 bên giải trình (Điều 7.5)"
+    if anomaly:
+        return None, "có kênh bất thường — 2 bên giải trình (Điều 7.5)"
     return round_half_up(Decimal(net) * rate), None
 
 
@@ -486,7 +490,8 @@ def main(argv=None, now=None) -> int:
         rows, undated = fetch(conn, start, end, cfg["channels"])
         s = summarize(rows, cfg["channels"], cfg["fee_cols"])
         if a.quarter is not None:
-            fee, why = ops_fee(s["total"]["net"], cfg["rate"], cfg["start"])
+            fee, why = ops_fee(s["total"]["net"], cfg["rate"], cfg["start"],
+                               s["anomaly"])
             text = render_quarter(label, start, end, s, undated, cfg, fee,
                                   why, now)
         else:

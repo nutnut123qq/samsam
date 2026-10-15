@@ -1106,7 +1106,9 @@ def test_bulletin_near_expiry_db(db, run, capsys, tmp_path):
             ("NE-PEND-1", has[0], soon, "pending"),
             ("NE-FAIL-1", has[0], soon, "failed"),
             ("NE-FAR-1", has[0], TODAY + dt.timedelta(days=400), "passed"),
-            ("NE-OLD-1", has[0], TODAY - dt.timedelta(days=1), "passed")]
+            ("NE-OLD-1", has[0], TODAY - dt.timedelta(days=1), "passed"),
+            ("NE-ANCIENT-1", has[0], TODAY - dt.timedelta(days=400),
+             "passed")]
     for code, sku, exp, st in lots:
         db.execute("insert into production_lots (lot_code, sku_key, mfg_date,"
                    " exp_date, qty, intake_status, checked_by, checked_at,"
@@ -1116,7 +1118,8 @@ def test_bulletin_near_expiry_db(db, run, capsys, tmp_path):
                     None if st == "pending" else "QA test",
                     None if st == "pending" else CREATED))
     data = prod.collect(db, _golden(), None,
-                        TODAY + dt.timedelta(days=90))
+                        TODAY + dt.timedelta(days=90),
+                        TODAY - dt.timedelta(days=90))
     got = {r["lot_code"]: r["stock"] for r in data["near_expiry"]}
     assert set(got) == {"NE-OK-1", "NE-NOSTK-1", "NE-OLD-1"}
     assert got["NE-NOSTK-1"] is None and got["NE-OK-1"] == stock[has[0]]["qty"]

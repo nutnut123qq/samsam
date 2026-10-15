@@ -227,15 +227,17 @@ def test_read_convlog(tmp_path):
     _write_jsonl(tmp_path / "conversations.jsonl", [
         {"_doc": "x"}, b"{corrupt",
         dict(base, ts="2026-10-02T02:00:00Z", msg_id="m1", answered=True,
-             latency_ms=1200),
+             reply_ms=1200, latency_ms=800),
         dict(base, ts="2026-10-02T02:00:00Z", msg_id="m1", answered=True,
-             latency_ms=1200),                          # trùng msg_id
+             reply_ms=1200),                            # trùng msg_id
         dict(base, ts="2026-10-03T02:00:00Z", msg_id="m2", answered=False,
-             latency_ms=True),                          # bool không tính
+             reply_ms=True),                            # bool không tính
         dict(base, ts="2026-10-03T03:00:00Z", msg_id="m3", answered=None,
-             latency_ms=-5),                            # chào hỏi
+             reply_ms=-5),                              # chào hỏi
         dict(base, ts="2026-10-03T04:00:00Z", msg_id="m4", answered=False,
-             route="consent_granted", latency_ms=31000),
+             route="consent_granted", reply_ms=31000),
+        dict(base, ts="2026-10-03T04:30:00Z", msg_id="m4b", answered=None,
+             latency_ms=45000),                         # chỉ answer() → không tính
         dict(base, ts="2026-10-03T05:00:00Z", msg_id="m5", answered=1),
         dict(base, ts="2026-10-04T05:00:00Z", msg_id="m8", answered=True,
              sent=False),                               # gửi lỗi = chưa xử lý

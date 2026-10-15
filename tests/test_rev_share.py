@@ -201,6 +201,19 @@ def test_summarize_unknown_status_total_none():
     assert "kd_orders --sync" in s["notes"][0]
 
 
+def test_fee_blocked_when_any_channel_anomalous():
+    # Tổng dương nhưng 1 kênh Hoàn > Gộp → không tính phí (review v12).
+    s = rs.summarize([_row(amount=100, refund=300),
+                      _row(ch="tiktok", amount=10_000)],
+                     ["shopee", "tiktok"], FEES)
+    assert s["total"]["net"] == 9_800 and s["anomaly"] is True
+    assert rs.ops_fee(s["total"]["net"], Decimal("0.05"), date(2026, 1, 1),
+                      s["anomaly"]) == (
+        None, "có kênh bất thường — 2 bên giải trình (Điều 7.5)")
+    ok = rs.summarize([_row(amount=1000)], ["shopee"], FEES)
+    assert ok["anomaly"] is False
+
+
 def test_summarize_refund_over_gross_flagged():
     s = rs.summarize([_row(amount=100, refund=300)], ["shopee"], FEES)
     assert s["total"]["net"] == -200
