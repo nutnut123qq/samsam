@@ -65,7 +65,7 @@ import httpx
 from dotenv import load_dotenv
 
 from connectors import zalo_garden
-from pipelines.pii import _PII_RE, _mask_pii, _paren_group_end  # noqa: F401
+from pipelines.pii import _PII_RE, _mask_pii, _paren_group_end, scrub_user  # noqa: F401
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in tiếng
 # Việt có dấu (fatal/warn prints). Ép UTF-8 — no-op nếu đã là UTF-8.
@@ -321,6 +321,14 @@ PURGE_RETRY_S = 3600.0
 # V7.2: monotonic + "-inf" = chưa từng (xem _last_refresh).
 _last_purge = float("-inf")
 _last_purge_attempt = float("-inf")
+
+
+def _log_question(question):
+    """v14.1 (p1): câu KHÁCH gõ ghi convlog qua CÙNG bộ che `scrub_user`
+    (SĐT/email + tên/địa chỉ, như payload gửi AI) — trước v14.1 chỉ
+    `_mask_pii` (SĐT/email) nên tên/địa chỉ nằm plaintext trên đĩa. Chỉ đổi
+    giá trị chuỗi `question`, không đổi format record (reader cũ vẫn đọc)."""
+    return scrub_user(question)[0] if isinstance(question, str) else question
 
 
 def _log_conversation(entry: dict) -> None:
@@ -749,7 +757,7 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
             "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "msg_id": msg_id,
             "user_hash": _uhash(user_id),
-            "question": _mask_pii(question),
+            "question": _log_question(question),
             "answer": "",
             "sources": [],
             # null chứ không phải False — guardrail chưa chạy (crash
@@ -812,7 +820,7 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "msg_id": msg_id,
         "user_hash": _uhash(user_id),
-        "question": _mask_pii(question),
+        "question": _log_question(question),
         "answer": text[:500],
         "sources": res["sources"],
         "guardrail_ok": guardrail_ok,
@@ -863,7 +871,7 @@ def _reply_held(user_id: str, question: str, msg_id: str, inb, md: str,
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "msg_id": msg_id,
         "user_hash": _uhash(user_id),
-        "question": _mask_pii(question),
+        "question": _log_question(question),
         "answer": text[:500],               # text ĐÃ GỬI (parity HANDOFF)
         "sources": [],
         "guardrail_ok": meta["guardrail_ok"] if meta else None,
@@ -906,7 +914,7 @@ def _reply_fixed(user_id: str, question: str, msg_id: str, inb, kind: str,
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "msg_id": msg_id,
         "user_hash": _uhash(user_id),
-        "question": _mask_pii(question),
+        "question": _log_question(question),
         "answer": text[:500],
         "sources": [],
         "guardrail_ok": None,

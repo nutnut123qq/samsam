@@ -433,6 +433,81 @@ def _syl_ok(orig: str, acc: str | None, bare: bool,
     return _marks(orig) == _marks(acc) or (partial and _marks_sub(orig, acc))
 
 
+# v14.1 (p1): bệnh/triệu chứng ĐƠN ÂM TIẾT chỉ bắt theo NGỮ CẢNH "bị|mắc|
+# chữa" đứng ngay trước ("bị sốt", "đang bị gan", "hay bị tim", "mắc
+# phổi", "chua gan") — âm tiết trần trùng từ thường ("gan" = gần, "tim" =
+# tìm, "than" = than phiền) nên KHÔNG thêm vào danh sách đứng riêng. Luật:
+#   - từ ngữ cảnh: gõ không dấu, hoặc đúng bộ dấu ("bị" ≠ "bí", "mắc" ≠
+#     "mặc", "chữa" ≠ "chưa");
+#   - âm tiết bệnh: có dấu thì bộ dấu là tập con dạng chuẩn ("sôt" ⊂ "sốt";
+#     "gần"/"tìm"/"họ" khác hẳn); gõ trần thì: dạng chuẩn vốn không dấu
+#     (gan/tim/ho/u) và từ ngữ cảnh gõ CÓ dấu, hoặc cặp (ngữ cảnh, bệnh)
+#     nằm trong `_CTX_BARE` (đã rà nhập nhằng: "mac dau" = mặc dầu, "chua
+#     tim" = chưa tìm, "bi soi" = bị soi, "bi phoi" = bị phơi, "bi cam" =
+#     bị cấm -> không có);
+#   - âm tiết kế tiếp nằm trong `_CTX_NEXT_STOP` của bệnh đó -> bỏ ("bị
+#     than phiền", "bi ho tro", "bị tìm thấy").
+_CTX_TRIG = {"bi": "bị", "mac": "mắc", "chua": "chữa"}
+_CTX_DIS = {p: v for v in (
+    "sốt", "đau", "ho", "thận", "gan", "tim", "phổi", "khớp", "cảm",
+    "cúm", "gút", "gout", "sỏi", "trĩ", "hen", "suyễn", "ngứa", "u", "lao",
+    "nám", "mụn", "zona", "lậu", "giang mai")
+    for p in [_strip_accents(v)]}
+_CTX_BARE = {
+    "bi": {"sot", "dau", "ho", "than", "gan", "tim", "khop", "cum", "gut",
+           "gout", "ngua", "suyen", "zona"},
+    "mac": {"sot", "ho", "gan", "cum", "gut", "gout", "suyen", "lao",
+            "zona"},
+    "chua": {"sot", "gan", "cum", "gut", "gout", "suyen"},
+}
+_CTX_NEXT_STOP = {
+    "than": {"phien", "van", "tho", "thoai"},
+    "ho": {"tro", "so", "hang", "ten", "lam", "khau", "chieu", "gia",
+           "kinh", "lua", "goi"},
+    "tim": {"thay", "kiem", "hieu", "ra", "duoc", "cach", "toi"},
+    "gan": {"day", "nhu", "ket", "gui", "het"},
+    "cam": {"on", "dong", "xuc", "nhan", "thay", "giac", "hung", "tinh"},
+    "lao": {"dong", "xuong", "vao", "toi", "ra"},
+    "u": {"am", "me"},
+}
+
+
+def _health_ctx(syls: list[str], plain: list[str]) -> bool:
+    n = len(plain)
+    for i in range(n - 1):
+        trig = _CTX_TRIG.get(plain[i])
+        if trig is None:
+            continue
+        o = syls[i]
+        trig_bare = _strip_accents(o) == o
+        if not trig_bare and _marks(o) != _marks(trig):
+            continue
+        d = plain[i + 1]
+        two = f"{d} {plain[i + 2]}" if i + 2 < n else ""
+        dis = _CTX_DIS.get(two)
+        width = 2 if dis else 1
+        dis = dis or _CTX_DIS.get(d)
+        if dis is None:
+            continue
+        if i + 1 + width < n and plain[i + 1 + width] in _CTX_NEXT_STOP.get(
+                d, ()):
+            continue
+        parts = syls[i + 1:i + 1 + width]
+        ok = True
+        for o2, acc in zip(parts, dis.split()):
+            if _strip_accents(o2) != o2:
+                ok = _marks_sub(o2, acc)
+            elif _strip_accents(acc) == acc:
+                ok = not trig_bare or d in _CTX_BARE[plain[i]]
+            else:
+                ok = d in _CTX_BARE[plain[i]]
+            if not ok:
+                break
+        if ok:
+            return True
+    return False
+
+
 def is_health_question(text: str) -> bool:
     if not isinstance(text, str):
         return False
@@ -442,6 +517,8 @@ def is_health_question(text: str) -> bool:
         return True
     syls = _SYL_RE.findall(t)
     plain = [_strip_accents(s) for s in syls]
+    if _health_ctx(syls, plain):
+        return True
     for i, p in enumerate(plain):
         joined = _HEALTH_JOINED.get(p)
         if joined and _syl_ok(syls[i], joined[0], joined[1], partial=True):

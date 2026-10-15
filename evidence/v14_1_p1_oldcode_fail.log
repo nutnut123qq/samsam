@@ -1,0 +1,21 @@
+# v14.1 p1 — tests/test_v14_p1_pii_guardrail.py trên CODE CŨ
+# (source v14-hop-dong a71bab5: pii/llm_gateway/guardrail/zalo/streamlit_app/banned_words/redteam.jsonl/phu-luc-d; data/vn_names.json gỡ tạm) — file test mới giữ nguyên
+68 failed, 134 passed in 37.96s
+# PASS trên code cũ = ca âm tính (bán hàng/sức khỏe/guardrail), probe tuyến tính, và ca v13 đã bắt (giữ làm hồi quy).
+# Theo hàm (chạy lại -rA trên code cũ):
+#  FAILED  2 test_convlog_question_scrubbed_answer_path (zalo, messenger)
+#  FAILED  1 test_convlog_question_scrubbed_fixed_route
+#  FAILED  1 test_convlog_question_scrubbed_gateway_blocked
+#  FAILED  1 test_convlog_reader_reads_scrubbed_record
+#  FAILED 24 test_health_ctx_handoff_before_any_ai      (PASS 10: v13 đã bắt)
+#  FAILED  1 test_names_dict_missing_fail_closed
+#  FAILED  1 test_names_dict_shape
+#  FAILED 12 test_rag_dict_names_never_reach_provider   (PASS 3: v13 đã bắt)
+#  FAILED 12 test_scrub_user_masks_dict_names           (PASS 3: v13 đã bắt)
+#  FAILED  2 test_scrub_user_sales_negatives_untouched  ('Tặng Mẹ', 'Tặng Sếp' bị che nhầm ở v13)
+#  FAILED  7 test_redteam_v14_closed_cases_blocked
+#  FAILED  1 test_redteam_v14_counts_and_labels_unchanged
+#  FAILED  1 test_redteam_v14_spans_map_to_text
+#  FAILED  1 test_streamlit_chat_convlog_scrubbed
+#  FAILED  1 test_streamlit_chat_gateway_blocked_handoff_no_crash
+#  PASS   41 test_health_ctx_no_false_positive, 51 sales negatives, 13 guardrail FP, 13 linear

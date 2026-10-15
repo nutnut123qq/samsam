@@ -160,7 +160,9 @@ def test_generate_same_family_or_missing_model_exit2(gen, monkeypatch,
 
 
 def test_generate_junk_and_leak_reported_exit0(gen, tmp_path, capsys):
-    leak = "Sâm Sâm natural medicine. Nội dung có sử dụng AI."
+    # v14.1 (p1): 'natural medicine' nay bị chặn (từ cấm tiếng Anh) — biến
+    # thể "lọt" mẫu đổi sang câu rượu nói vòng vẫn là known-gap (rt-ruou-01).
+    leak = "Sâm ngâm bình sứ 40 độ, nhâm nhi ngày Tết. Nội dung có sử dụng AI."
     blocked = "Sâm Sâm chữa mất ngủ. Nội dung có sử dụng AI."
     log = gen("không phải json", json.dumps([leak, blocked],
                                             ensure_ascii=False),

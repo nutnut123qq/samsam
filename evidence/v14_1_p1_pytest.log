@@ -1,0 +1,7 @@
+# v14.1 p1 — pytest (DB lane samsam_v14_p1, nhánh v14-p1)
+## 81 file liên quan (pii/guardrail/llm_gateway/zalo/messenger/channels/rag/redteam/streamlit_app/banned_words/phu-luc-d) + test_lead_store — chạy TRƯỚC khi đổi mẫu test_redteam
+FAILED tests/test_redteam.py::test_generate_junk_and_leak_reported_exit0 - As...
+FAILED tests/test_lead_store.py::test_harvest_real_convlog_smoke - AssertionE...
+2 failed, 3622 passed in 1437.22s (0:23:57)
+## sau đổi mẫu 'lọt' của test_redteam + ruff: 18 file trọng điểm
+1149 passed in 241.96s (0:04:01)

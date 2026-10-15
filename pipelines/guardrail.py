@@ -64,6 +64,16 @@ SAFE_PHRASES = (
     "không thay thế thuốc chữa bệnh",
     "không thay thế thuốc",
 )
+# v14.1 (p1): banned có từ tiếng Anh ("medicine"...) -> câu khuyến cáo bản
+# tiếng Anh trong KB ("This food is not a medicine and cannot replace
+# medicine") cũng là phủ định, miễn như SAFE_PHRASES. Mọi mục mở đầu bằng
+# từ phủ định "not"/"cannot" (cùng luật v3.0: không có mục khẳng định trần).
+SAFE_PHRASES_EN = (
+    "not a medicine",
+    "not a substitute for medicine",
+    "not replace medicine",
+    "cannot replace medicine",
+)
 
 # Cụm đảo nghĩa đứng TRƯỚC disclaimer trong cùng clause -> phủ định kép/
 # câu tu từ ("Ai bảo sản phẩm không phải là thuốc") -> KHÔNG miễn.
@@ -402,7 +412,63 @@ def _evasion_hits(text: str, terms: list[str], pre: _Txt,
     while i >= 0:
         add("thuốc", i, i + len(_PILL), " (biểu tượng viên thuốc)")
         i = text.find(_PILL, i + 1)
+    # v14.1 (D): nhầm dấu hỏi/ngã — cụm cấm >=2 âm tiết so trên bản đổi
+    # ngã -> hỏi ("khõi bịnh" = "khỏi bịnh"). Chỉ hỏi/ngã (lỗi chính tả phổ
+    # biến nhất), KHÔNG nới mọi dấu thanh: "thuộc bộ" ≠ "thuốc bổ", "chưa
+    # khỏi" ≠ "chữa khỏi" vẫn khác. Từ đơn ("chửa" = có chửa) không áp.
+    hn = "".join(map(_hoi_nga, low))
+    if hn != low:
+        for term in terms:
+            t = "".join(map(_hoi_nga, _fold(term)))
+            if len(t.split()) < 2:
+                continue
+            for m in _pat(t).finditer(hn):
+                add(term, m.start(), m.end(), " (nhầm dấu hỏi/ngã)")
+    # v14.1 (E): viết tắt "UT" (= ung thư) CHỈ khi viết HOA và có ngữ cảnh
+    # bệnh ngay quanh ("khỏi hẳn UT", "UT giai đoạn đầu", "bị UT") — "UT"
+    # trần ngoài ngữ cảnh (tên riêng/viết tắt khác) không bắt.
+    if "ung thư" in terms:
+        st = pre.stripped
+        for m in _UT_RE.finditer(text):
+            s, e = m.span()
+            if (_UT_BEFORE_RE.search(st, max(0, s - 25), s)
+                    or _UT_AFTER_RE.match(st, e)):
+                add("ung thư", s, e, " (viết tắt UT)")
     return out
+
+
+@lru_cache(maxsize=65536)
+def _hoi_nga(ch: str) -> str:
+    """1 ký tự: dấu ngã -> dấu hỏi (giữ độ dài; ký tự lạ giữ nguyên)."""
+    d = unicodedata.normalize("NFD", ch)
+    if "\u0303" not in d:
+        return ch
+    r = unicodedata.normalize("NFC", d.replace("\u0303", "\u0309"))
+    return r if len(r) == 1 else ch
+
+
+_UT_RE = re.compile(r"(?<!\w)UT(?!\w)")
+_UT_BEFORE_RE = re.compile(
+    r"(?<!\w)(?:khoi|chua|tri|bi|mac|benh|chong|phong|ngua|tieu diet|"
+    r"di can|dieu tri)(?:[ \t]+(?:han|het|duoc|luon|ca))?[ \t]+$")
+_UT_AFTER_RE = re.compile(r"[ \t]+(?:giai[ \t]+doan|di[ \t]+can|vu|gan|"
+                          r"phoi|da[ \t]+day|mau)(?!\w)")
+
+# v14.1 (F, red-team chia_cau): claim tách câu "rất tốt. Cho tim mạch của
+# bạn" — clause sau không còn động từ claim. Bắt "tốt" kết câu + câu sau mở
+# bằng "cho" + đích sức khỏe (cơ quan/chỉ số) không nằm trong claim đã công
+# bố -> claim_ngoai_cong_bo. Không đích sức khỏe ("rất tốt. Cho mình xin
+# địa chỉ") thì không bắt.
+_SPLIT_CLAIM_RE = re.compile(
+    r"(?<!\w)tốt(?:[ \t]+(?:nhất|lắm|quá|hơn|lắm[ \t]+luôn))?[ \t]*"
+    r"[.;:!…]+[ \t]*cho[ \t]+([^.,;:!?\n]{1,120})")
+_HEALTH_TARGETS = (
+    "tim mạch", "tim", "gan", "thận", "phổi", "dạ dày", "xương khớp",
+    "khớp", "huyết áp", "đường huyết", "mỡ máu", "trí não", "não",
+    "giấc ngủ", "sinh lý", "tiêu hóa", "miễn dịch", "đề kháng", "mắt",
+    "người bệnh", "bệnh nhân", "nội tiết", "thần kinh", "máu")
+_HEALTH_TARGET_RE = re.compile(
+    r"(?<!\w)(?:" + "|".join(map(re.escape, _HEALTH_TARGETS)) + r")(?!\w)")
 
 
 def _cover(spans):
@@ -578,7 +644,8 @@ def _run(text, ctx: dict | None) -> dict:
                                    "start": h["start"], "end": h["end"]})
                 matched.append({"sku": k, "claim": c})
 
-    safe_hits = _negated_hits(text, _find_terms(text, list(SAFE_PHRASES),
+    safe_hits = _negated_hits(text, _find_terms(text, list(SAFE_PHRASES)
+                                                + list(SAFE_PHRASES_EN),
                                                 pre), pre)
     exempt = _cover((h["start"], h["end"]) for h in claim_hits + safe_hits)
 
@@ -628,7 +695,21 @@ def _run(text, ctx: dict | None) -> dict:
             flag("claim_ngoai_cong_bo",
                  "claim công dụng không nằm trong whitelist đã công bố",
                  text[s2:e2], s2, e2, type_="unverified_claim")
-    has_claim = bool(claim_hits) or bool(claim_clauses)
+    split_claim = False
+    for m in _SPLIT_CLAIM_RE.finditer(low):
+        s1, e1 = m.span(1)
+        tg = _HEALTH_TARGET_RE.search(low, s1, e1)
+        if tg is None or exempt(tg.start(), tg.end()) or any(
+                s < e1 and e > s1 for s, e in spans):
+            continue
+        split_claim = True
+        flag("claim_ngoai_cong_bo",
+             "claim công dụng tách câu ('tốt. Cho <cơ quan/chỉ số>') không "
+             "nằm trong whitelist đã công bố",
+             text[m.start():e1].rstrip(), m.start(),
+             m.start() + len(text[m.start():e1].rstrip()),
+             type_="unverified_claim")
+    has_claim = bool(claim_hits) or bool(claim_clauses) or split_claim
 
     # --- Rượu: mọi chế độ trừ ghi chú nội bộ (A3-2).
     if ctx is None or public:
