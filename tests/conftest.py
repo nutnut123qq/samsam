@@ -8,7 +8,7 @@ v4.2: xóa env lớp LLM-check/red-team — test không bao giờ gọi LLM th�
 máy dev có đặt GUARDRAIL_LLM_MODEL/REDTEAM_MODEL."""
 import pytest
 
-from pipelines import llm_gateway, rollout
+from pipelines import auth, llm_gateway, rollout
 
 
 class _ZeroSpendConn:
@@ -50,3 +50,12 @@ def _rollout_van_hanh(monkeypatch):
     nên ép `van_hanh` (không chạm DB). Test cưỡng chế đặt lại
     `rollout._FORCE_MODE = None` (tests/test_rollout_enforce.py)."""
     monkeypatch.setattr(rollout, "_FORCE_MODE", "van_hanh", raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _approval_dev_mode(monkeypatch):
+    """v13.5: ủy quyền người duyệt (`auth.approval_enforced`) đọc
+    AUTH_MODE/APPROVAL_ENFORCE/DEPLOY từ env + `.env` máy dev — test cũ giả
+    định CLI/hàm duyệt chạy ở chế độ dev (chỉ chặn agent). Test ủy quyền
+    đặt lại `auth._APPROVAL_FORCE` (tests/test_v13_c04_authz.py)."""
+    monkeypatch.setattr(auth, "_APPROVAL_FORCE", False)

@@ -281,3 +281,70 @@ Người nhận tick từng mục khi làm xong CÓ người kèm:
 - [ ] Thử kill switch trên `smoke` (thêm vào `"kill"` → chạy lệnh kiểm mục 5 thấy `GatewayBlocked` → xóa ra → chạy lại thấy `OK: smoke NOT blocked`)
 - [ ] Nhận danh sách người giữ quyền break-glass + người giữ khóa mã hóa backup (**external-dep** — công ty cấp)
 - [ ] Ký biên bản nhận bàn giao với Quản lý hạ tầng AI (**external-dep**)
+
+## 9. Danh tính người duyệt, nhật ký, Bên A, chấm dứt hợp đồng (v13.5)
+
+Căn cứ: HĐ 6.7 + 7.1–7.3, 12.3, 13.3d; PL01 mục 8 (mỗi phòng ban 1 người
+duyệt là nhân sự Bên B). Code: `pipelines/auth.py` (`authorize`),
+`pipelines/approval_queue.py`, `pipelines/store.py`, tab **Duyệt & Lịch**.
+
+### 9.1 Bật chế độ thực (đối chiếu người được ủy quyền)
+
+1. Bên B ký văn bản ủy quyền người duyệt từng khối (**external-dep** — dev
+   KHÔNG tự điền). Quản trị chép đúng tên đăng nhập (username/email trong
+   `data/users.json`) vào `approvers` của `data/directors/<khối>.json`.
+   `approvers` rỗng ở chế độ thực = **không ai duyệt được khối đó**
+   (fail-closed, thông báo "CHƯA có người được Bên B ủy quyền").
+2. Mỗi người duyệt có 1 tài khoản `data/users.json` (vai trò thuộc
+   `approver_roles` của khối) và — nếu dùng CLI — 1 login Postgres RIÊNG:
+   `create role <login> login password '<...>' in role app_human;` rồi ghi
+   `"db_login": "<login>"` vào entry của họ. CLI chế độ thực chỉ nhận `--by`
+   khớp login đang kết nối; UI lấy danh tính từ phiên đăng nhập (không ô gõ
+   tên). Agent chạy bằng login `in role agent_writer` (không execute hàm
+   duyệt, không sửa/xóa log).
+3. `.env`: `AUTH_MODE=local|proxy` (hoặc `APPROVAL_ENFORCE=1` cho máy chỉ
+   chạy CLI). Thiếu = chế độ dev: chỉ chặn agent/tự duyệt + in cảnh báo
+   "CHẾ ĐỘ DEV".
+4. Kiểm: `python -m pipelines.approval_queue --approve <id> --by "<tên lạ>"`
+   phải exit 1; người đúng khối + đúng login → exit 0.
+
+Mọi lần bị từ chối ghi `agent_action_log` action `authz_denied` (người,
+khối, hành động, lý do). Mọi quyết định duyệt ghi `approvals` (sha256 nội
+dung, `db_role` = login thật) + `agent_action_log` (hash chain, người, sha,
+kết quả). Function duyệt trong DB tự chặn người quyết dạng `agent:`/
+`system:`/`auto_policy:` kể cả khi gọi thẳng SQL.
+
+### 9.2 Nhật ký toàn kỳ (HĐ 7.2)
+
+- Bằng chứng dài hạn = bảng `agent_action_log` + `approvals` + `decisions`
+  (append-only, trigger chặn UPDATE/DELETE/TRUNCATE kể cả owner). KHÔNG dùng
+  `data/conversations.jsonl` (convlog xoay 30 ngày, có nội dung khách) làm
+  bằng chứng duyệt.
+- Kiểm hằng tuần: `python -m pipelines.store --verify-log` (exit 1 = chuỗi
+  hỏng → sự cố S1). Xóa dòng CUỐI chuỗi chỉ lộ khi có neo ngoài
+  (`agents.bks_audit` ghi neo đuôi theo tháng).
+- Hai Bên truy cập/sao chép: Bên B qua login `in role app_human` /
+  `bks_reader`; Bên A (vận hành kỹ thuật) qua login vận hành. Sao chép:
+  `pg_dump -t agent_action_log -t approvals -t decisions --data-only`.
+
+### 9.3 Bên A xem số liệu (HĐ 7.3)
+
+- Login thật do hạ tầng Bên B tạo: `create role <login_ben_a> login password
+  '<...>' in role ben_a_reader;` — chỉ đọc `v_ben_a_settlement_daily`,
+  `v_ben_a_orders_daily`, `revenue_quarters` (không mã đơn, không PII, không
+  bảng gốc, không ghi). Test: `tests/test_v13_c04_authz.py::
+  test_ben_a_login_reads_numbers_only` (login thật, không superuser).
+- Lưu ≥180 ngày: không job nào xóa `settlement_rows`/`orders` nguồn thật/
+  `revenue_quarters` (`data/retention.json` không có mục này); backup hằng
+  ngày giữ theo mục 3. Bảo trì làm gián đoạn > 24 giờ phải báo trước Bên A.
+
+### 9.4 Khi chấm dứt hợp đồng (HĐ 12.3, 13.3d)
+
+| Bước | Hạn | Owner | Bằng chứng |
+|---|---|---|---|
+| Bàn giao hệ thống, mã nguồn, tài liệu cho Bên B | 15 ngày | Bên A (Quản lý hạ tầng AI) | biên bản bàn giao + commit/tag cuối |
+| Xuất bản sao nhật ký cho Bên B (`pg_dump` 3 bảng 9.2) + `--verify-log` sạch | trước khi xóa | Bên A | file dump + sha256 ghi trong biên bản |
+| Thu hồi login Bên A (`alter role <login> nologin` / `drop role`), xoay mật khẩu `app_human`/`agent_writer`, đổi `AUTH_MODE` users | ngay khi bàn giao | Bên B (người giữ tài khoản cao nhất) | danh sách login sau thu hồi |
+| Xóa MỌI bản sao dữ liệu Bên B do Bên A giữ (máy dev, backup offsite của Bên A, `BACKUP_DIR`/`GARDEN_MEDIA_DIR`/`HR_INBOX_DIR` bản sao, DB test) | 30 ngày | Bên A | biên bản xác nhận xóa có chữ ký hai bên (**external-dep**, mẫu PL05 chưa có) |
+
+Không xóa dữ liệu trên server của Bên B — đó là tài sản Bên B giữ.

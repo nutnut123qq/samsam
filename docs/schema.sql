@@ -730,6 +730,12 @@ begin
   if v_by = '' then
     raise exception 'thiếu tên người duyệt';
   end if;
+  -- v13.5 c04 (F08): agent/hệ thống KHÔNG BAO GIỜ duyệt (kể cả gọi thẳng
+  -- bằng login app_human, bỏ qua pipelines.auth).
+  if v_by ~* '^(agent|system|auto_policy)\s*:' then
+    raise exception 'người duyệt % không phải người — agent/hệ thống không được duyệt',
+      v_by;
+  end if;
   select * into d from content_drafts c where c.id = p_id for update;
   if not found then
     raise exception 'không tìm thấy draft #%', p_id;
@@ -1095,6 +1101,12 @@ begin
     raise exception 'mục #% quá hạn SLA — chờ expire, không duyệt', p_id;
   end if;
   if p_decision = 'approved' then
+    -- v13.5 c04 (F08): agent/hệ thống không bao giờ duyệt (từ chối = rút
+    -- mục của chính mình vẫn được).
+    if v_by ~* '^(agent|system|auto_policy)\s*:' then
+      raise exception 'người duyệt % không phải người — agent/hệ thống không được duyệt',
+        v_by;
+    end if;
     if coalesce(q.guardrail->>'ok', '') <> 'true' then
       raise exception 'mục #% vi phạm guardrail (ok != true), không duyệt được',
         p_id;
@@ -1228,6 +1240,10 @@ begin
   end if;
   if lower(btrim(q.created_by)) = lower(v_by) then
     raise exception 'người override trùng người tạo mục #%', p_id;
+  end if;
+  if v_by ~* '^(agent|system|auto_policy)\s*:' then   -- v13.5 c04 (F08)
+    raise exception 'người override % không phải người — agent/hệ thống không được override',
+      v_by;
   end if;
   insert into decisions (kind, queue_id, decided_by, reason)
   values ('override_qa', q.id, v_by,
@@ -2710,6 +2726,10 @@ begin
   if v_by = '' then
     raise exception 'thiếu tên người duyệt';
   end if;
+  if v_by ~* '^(agent|system|auto_policy)\s*:' then   -- v13.5 c04 (F08)
+    raise exception 'người duyệt % không phải người — agent/hệ thống không được duyệt',
+      v_by;
+  end if;
   select * into c from cogs_versions g where g.id = p_id for update;
   if not found then
     raise exception 'không tìm thấy giá vốn #%', p_id;
@@ -3494,3 +3514,26 @@ group by settled_on, channel;
 alter table garden_media drop constraint if exists garden_media_ext_check;
 alter table garden_media add constraint garden_media_ext_check
   check (ext in ('jpg', 'png', 'mp4', 'mov'));
+
+-- ===== v13.5 c04 danh tính / quyền duyệt =====
+-- `docs/roles.sql` v13.5 cấp INSERT llm_usage cho agent_writer (FinOps chạy
+-- dưới login agent). Agent ghi được chi phí ÂM thì tự hạ chi tiêu tháng để
+-- lách trần → trigger chặn số âm (trigger thay vì thêm CHECK — drift-guard DDL;
+-- dòng cũ không bị kiểm lại, không mất dữ liệu khi nâng cấp). ts do DB đặt (agent không có
+-- quyền cột ts → không lùi giờ được).
+create or replace function llm_usage_nonneg() returns trigger
+language plpgsql as $$
+begin
+  if new.cost_usd < 0 or new.tokens_in < 0 or new.tokens_out < 0 then
+    raise exception using errcode = 'check_violation',
+      message = 'llm_usage: chi phí/token không được âm';
+  end if;
+  return new;
+end $$;
+revoke execute on function llm_usage_nonneg() from public;
+create or replace trigger llm_usage_nonneg_ins
+  before insert or update on llm_usage
+  for each row execute function llm_usage_nonneg();
+-- Các function duyệt (approve_draft, decide_item approve, override_qa,
+-- approve_cogs) chặn người quyết dạng 'agent:'/'system:'/'auto_policy:' ngay
+-- trong định nghĩa ở trên (create or replace — nâng cấp DB cũ tự áp).

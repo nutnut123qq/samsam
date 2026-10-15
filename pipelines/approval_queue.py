@@ -27,7 +27,13 @@ Contract:
     của mọi --verify-send/--export/áp dụng) → False + lý do ở stderr khi
     `chay_thu`/`tat`/không thuộc danh mục, `co_nguoi_duyet` chỉ mục NGƯỜI
     duyệt từng mục.
-  - Giới hạn pilot: `--by` free-text (SSO thật = external-dep).
+  - v13.5 ủy quyền (F08, HĐ 5.4/7.2, PL01): `decide`/`override` đi qua
+    `pipelines.auth.authorize` — `agent:*`/`system:*` không bao giờ duyệt
+    (DB `decide_item`/`override_qa` cũng chặn); chế độ thực (AUTH_MODE
+    local|proxy hoặc APPROVAL_ENFORCE=1/DEPLOY) → người phải thuộc
+    `approvers` của ĐÚNG khối (rỗng = chặn), vai trò thuộc `approver_roles`,
+    CLI chạy bằng login Postgres riêng khớp `db_login` của người trong users
+    file. Lần bị chặn ghi `authz_denied` vào `agent_action_log`.
 
 Chạy:
   python -m pipelines.approval_queue --pending [--block K]
@@ -46,6 +52,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from ingest.lead_store import connect
+from pipelines import auth
 from pipelines.guardrail import check as guardrail_check
 from pipelines.pii import _mask_pii
 from pipelines.store import _db_msg, _oneline
@@ -105,9 +112,41 @@ def _id(item_id):
         return None
 
 
+def _authz(conn, qid: int, by, action: str, via: str,
+           role) -> str | None:
+    """v13.5 (F08): cổng ủy quyền `auth.authorize` cho mục hàng duyệt →
+    lý do chặn | None. Chế độ thực đọc khối + người tạo TỪ DB (không tin
+    caller) + login Postgres của kết nối; chế độ dev không truy vấn thêm
+    (chỉ chặn agent/system). Lần bị chặn ghi `authz_denied` vào log."""
+    block = created = None
+    enforced = auth.approval_enforced()
+    if enforced:
+        try:
+            with conn.transaction():
+                r = conn.execute("select block, created_by from"
+                                 " approval_queue where id = %s",
+                                 (qid,)).fetchone()
+        except psycopg.Error as e:
+            return f"mục #{qid}: {_db_msg(e)}"
+        if r is None:
+            return f"không tìm thấy mục #{qid} trong hàng duyệt"
+        block, created = r
+    ok, why = auth.authorize(
+        by, block, action, created_by=created, role=role, via=via,
+        db_login=(auth.session_login(conn)
+                  if enforced and via != "ui" else None))
+    if ok:
+        return None
+    auth.deny_log(conn, by, block, action, "approval_queue", qid, why)
+    return f"mục #{qid}: {why}"
+
+
 def decide(conn, item_id, decider: str, decision: str,
-           note: str | None = None) -> tuple[bool, str | None]:
-    """Người quyết từng mục (per_item) → (True, None) | (False, msg)."""
+           note: str | None = None, *, via: str = "cli",
+           role: str | None = None) -> tuple[bool, str | None]:
+    """Người quyết từng mục (per_item) → (True, None) | (False, msg).
+    `via='ui'` + `role` = danh tính từ phiên đăng nhập Streamlit; CLI
+    (`via='cli'`) ở chế độ thực phải chạy bằng login DB của người duyệt."""
     if decision not in DECISIONS:
         return False, f"quyết định '{decision}' không hợp lệ — approved|rejected"
     if not (decider or "").strip():
@@ -115,6 +154,10 @@ def decide(conn, item_id, decider: str, decision: str,
     qid = _id(item_id)
     if qid is None:
         return False, f"id '{item_id}' không hợp lệ"
+    why = _authz(conn, qid, decider,
+                 "approve" if decision == "approved" else "reject", via, role)
+    if why:
+        return False, why
     if decision == "approved":
         try:
             # Savepoint: role không đọc được payload (agent_writer — chỉ
@@ -145,11 +188,15 @@ def decide(conn, item_id, decider: str, decision: str,
     return (True, None) if ok else (False, res)
 
 
-def override(conn, item_id, by: str, reason: str) -> tuple[bool, str | None]:
+def override(conn, item_id, by: str, reason: str, *, via: str = "cli",
+             role: str | None = None) -> tuple[bool, str | None]:
     """Ép trình bản QA FAIL (ghi decisions override_qa) — KHÔNG duyệt."""
     qid = _id(item_id)
     if qid is None:
         return False, f"id '{item_id}' không hợp lệ"
+    why = _authz(conn, qid, by, "override_qa", via, role)
+    if why:
+        return False, why
     # Đếm ký tự không phải khoảng trắng — lý do toàn \n/\t không phải lý do.
     if len("".join((reason or "").split())) < 10:
         return False, (f"mục #{qid}: lý do override_qa phải ≥ 10 ký tự "
@@ -177,14 +224,16 @@ def expire_overdue(conn, by: str = "system:sla") -> int:
     return n
 
 
-def pending(conn, block: str | None = None) -> list[dict]:
-    """Mục đang chờ (cũ nhất trước) — payload chỉ cắt PREVIEW ký tự."""
+def pending(conn, block: str | None = None, *,
+            full: bool = False) -> list[dict]:
+    """Mục đang chờ (cũ nhất trước) — payload cắt PREVIEW ký tự; `full`
+    (UI người duyệt: phải thấy đúng bản được ký sha256) → payload đủ."""
     sql = ("select id, object_type, object_id, block, title,"
-           " left(payload, %s), risk, qa_status,"
+           f" {'payload' if full else 'left(payload, %s)'}, risk, qa_status,"
            " coalesce(guardrail->>'ok', '') = 'true', created_by,"
            " created_at, due_at, status from approval_queue"
            " where status = 'pending'")
-    params: list = [PREVIEW]
+    params: list = [] if full else [PREVIEW]
     if block:
         sql += " and block = %s"
         params.append(block)
@@ -280,8 +329,9 @@ def main(argv=None) -> int:
                          "người khác --approve)")
     ap.add_argument("--expire", action="store_true",
                     help="đánh expired mọi mục quá SLA")
-    ap.add_argument("--by", help="tên người quyết (free-text — SSO là "
-                                 "external-dep)")
+    ap.add_argument("--by", help="người quyết — chế độ thực phải thuộc "
+                                 "approvers của khối + chạy bằng login DB "
+                                 "riêng (db_login trong users file)")
     ap.add_argument("--note", default=None)
     ap.add_argument("--reason", default=None,
                     help="lý do override QA (≥ 10 ký tự)")
@@ -302,6 +352,8 @@ def main(argv=None) -> int:
     if args.override_qa is not None and not (args.reason or "").strip():
         ap.error("--override-qa cần --reason <lý do>")
 
+    if by and not args.expire and not auth.approval_enforced():
+        print(f"[warn] {auth.DEV_WARNING}", file=sys.stderr)
     conn = connect()
     if conn is None:
         print("[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc"

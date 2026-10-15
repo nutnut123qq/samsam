@@ -33,6 +33,14 @@ Contract:
     pilot — someday lockout bền + theo IP).
   - Tạo hash: `python -m pipelines.auth --hash` (đọc mật khẩu bằng
     getpass, KHÔNG qua argv/history) → dán vào users file.
+  - v13.5 (F08) `authorize(by, block, action)` — cổng ủy quyền DUY NHẤT
+    cho quyết định người (hàng duyệt chung, draft nội dung, xếp lịch; UI +
+    CLI). Agent/system không bao giờ duyệt; người tạo không tự duyệt. Chế độ
+    thực (`approval_enforced`: AUTH_MODE local|proxy, APPROVAL_ENFORCE hoặc
+    DEPLOY) → người phải thuộc `approvers` của ĐÚNG khối (rỗng = chặn: Bên
+    B chưa ủy quyền), tài khoản users file có vai trò thuộc `approver_roles`,
+    CLI chạy bằng login Postgres khớp `db_login`. Dev → in DEV_WARNING.
+    `approvers`/`db_login` là người thật do Bên B cấp — dev KHÔNG tự điền.
 
 Users file (JSON object):
   {"_doc": "...", "<username|email>": {"role": "<ROLES>",
@@ -75,12 +83,16 @@ ROLE_TABS = {
     "tgd": TABS,
     "phap_che": ("Chat Sâm Sâm", "Content Studio", "Chưa trả lời",
                  "Báo cáo", "Duyệt & Lịch"),
-    "gd_ban_hang": ("Chat Sâm Sâm", "Chưa trả lời", "Leads", "Báo cáo"),
+    # v13.5: GĐ bán hàng / Quản lý AI là người duyệt khối sales /
+    # data_platform (PL01) → cần tab duyệt cho hàng duyệt chung.
+    "gd_ban_hang": ("Chat Sâm Sâm", "Chưa trả lời", "Leads", "Báo cáo",
+                    "Duyệt & Lịch"),
     "gd_marketing": ("Chat Sâm Sâm", "Content Studio", "Leads", "Báo cáo",
                      "Duyệt & Lịch"),
     "mxh": ("Chat Sâm Sâm", "Content Studio", "Chưa trả lời", "Leads",
             "Duyệt & Lịch"),
-    "ha_tang": ("Chat Sâm Sâm", "Chưa trả lời", "Báo cáo", "Nhật ký vườn"),
+    "ha_tang": ("Chat Sâm Sâm", "Chưa trả lời", "Báo cáo", "Nhật ký vườn",
+                "Duyệt & Lịch"),
 }
 CAN_APPROVE = frozenset({"tgd", "phap_che", "gd_marketing"})
 CAN_SCHEDULE = frozenset({"tgd", "gd_marketing", "mxh"})
@@ -166,6 +178,11 @@ def load_users(path=None) -> dict:
         ph = entry.get("password_hash")
         users[key] = {"role": role,
                       "password_hash": ph if isinstance(ph, str) else ""}
+        # v13.5: login Postgres RIÊNG của người (CLI duyệt ở chế độ thực —
+        # `--by` phải khớp login DB đang dùng). Chỉ thêm key khi có.
+        dbl = entry.get("db_login")
+        if isinstance(dbl, str) and dbl.strip():
+            users[key]["db_login"] = dbl.strip().lower()
     return users
 
 
@@ -339,6 +356,166 @@ def check_login(username, password, users: dict, now: float | None = None):
               f"{LOCK_SECONDS}s sau {MAX_FAILS} lần sai", file=sys.stderr,
               flush=True)
     return None, None, LOGIN_FAIL_MSG
+
+
+# ---------- v13.5 ủy quyền người duyệt (F08) ----------
+# HĐ 5.4/7.2 + PL01: "người được Bên B ủy quyền duyệt trước khi thực hiện",
+# mỗi phòng ban 1 người duyệt. `authorize()` là cổng DUY NHẤT cho mọi quyết
+# định người (approval_queue.decide/override, store.set_status/schedule, UI).
+
+ACTIONS = ("approve", "reject", "override_qa", "schedule")
+NON_HUMAN = ("agent:", "system:", "auto_policy:")
+DIRECTORS_DIR = ROOT / "data" / "directors"
+_APPROVAL_FORCE: bool | None = None   # test ép chế độ (tests/conftest.py)
+DEV_WARNING = ("CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy "
+               "quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 "
+               "khi dùng thật)")
+
+
+def is_human(name) -> bool:
+    """Tên người thật: không rỗng, không tiền tố agent:/system:/auto_policy:."""
+    s = name.strip().casefold() if isinstance(name, str) else ""
+    return bool(s) and not s.startswith(NON_HUMAN)
+
+
+def _same(a, b) -> bool:
+    return (a or "").strip().casefold() == (b or "").strip().casefold()
+
+
+def approval_enforced(env=None) -> bool:
+    """Chế độ thực: AUTH_MODE local|proxy, hoặc APPROVAL_ENFORCE / DEPLOY
+    truthy. Còn lại (dev, CLI máy dev) = cảnh báo, không đối chiếu."""
+    if _APPROVAL_FORCE is not None:
+        return _APPROVAL_FORCE
+    env = _env() if env is None else env
+    return (auth_mode(env) in ("local", "proxy")
+            or _truthy(env.get("APPROVAL_ENFORCE"))
+            or _truthy(env.get("DEPLOY")))
+
+
+def block_config(block: str) -> dict:
+    """Cấu hình khối `data/directors/<block>.json` (đã validate) — raise
+    `director.DirectorConfigError` khi thiếu/hỏng/khối lạ."""
+    from pipelines import director  # lười: director import auth
+    if block not in director.BLOCKS:
+        raise director.DirectorConfigError(f"khối '{block}' không tồn tại")
+    return director.load_config(block, DIRECTORS_DIR)
+
+
+def authorize(by, block, action, *, created_by=None, role=None,
+              db_login=None, via="cli", users=None,
+              env=None) -> tuple[bool, str | None]:
+    """→ (True, None) được phép | (False, lý do).
+
+    Mọi chế độ: người rỗng / `agent:*`|`system:*`|`auto_policy:*` → chặn;
+    duyệt/override mục chính mình tạo → chặn. Chế độ dev chỉ tới đó (UI giữ
+    cổng `can_approve` cũ; caller in DEV_WARNING).
+    Chế độ thực (`approval_enforced`) thêm: `role` (UI, từ phiên đăng nhập)
+    thuộc `approver_roles` của khối (xếp lịch: CAN_SCHEDULE); khối phải có `approvers` (rỗng =
+    chặn — Bên B chưa ủy quyền), người phải nằm trong `approvers` của ĐÚNG
+    khối (chéo khối bị chặn), có tài khoản trong users file với vai trò
+    thuộc `approver_roles`; đường CLI (`via='cli'`) phải có `db_login` khớp
+    login Postgres đang dùng (`--by` free-text không còn là danh tính)."""
+    if action not in ACTIONS:
+        return False, f"hành động '{action}' không hợp lệ — {ACTIONS}"
+    who = by.strip() if isinstance(by, str) else ""
+    if not who:
+        return False, "thiếu người quyết định (--by / đăng nhập)"
+    if not is_human(who):
+        return False, (f"'{who}' không phải người — agent/hệ thống KHÔNG "
+                       f"được {action}")
+    if action in ("approve", "override_qa") and _same(who, created_by):
+        return False, "người quyết trùng người tạo — cần người khác duyệt"
+    if not approval_enforced(env):
+        return True, None     # dev: caller in DEV_WARNING
+    if action == "schedule":
+        roles = CAN_SCHEDULE
+    else:
+        try:
+            cfg = block_config(block)
+        except Exception as e:  # noqa: BLE001 — cấu hình hỏng = chặn
+            return False, f"không đọc được cấu hình khối '{block}': {e}"
+        roles = frozenset(cfg["approver_roles"])
+        approvers = {a.strip().casefold() for a in cfg["approvers"]
+                     if a.strip()}
+        if not approvers:
+            return False, (f"khối {block} CHƯA có người được Bên B ủy quyền "
+                           f"(approvers rỗng trong data/directors/{block}"
+                           f".json) — cần văn bản ủy quyền của Bên B, "
+                           f"không tự điền")
+    if role is not None and role not in roles:
+        return False, (f"vai trò '{role}' không được {action} ở khối "
+                       f"{block} ({', '.join(sorted(roles))})")
+    if action != "schedule" and who.casefold() not in approvers:
+        return False, (f"'{who}' không thuộc người được ủy quyền duyệt "
+                       f"khối {block}")
+    users = load_users() if users is None else users
+    entry = users.get(who.casefold())
+    if entry is None:
+        return False, (f"'{who}' chưa có tài khoản đăng nhập/vai trò "
+                       f"(users file)")
+    if entry["role"] not in roles:
+        return False, (f"vai trò tài khoản '{entry['role']}' không được "
+                       f"{action} ở khối {block}")
+    if via != "ui":
+        want = entry.get("db_login")
+        got = (db_login or "").strip().lower()
+        if not want or want != got:
+            return False, ("--by không khớp login Postgres đang dùng — CLI "
+                           "chế độ thực phải chạy bằng login DB riêng của "
+                           "người duyệt (users file 'db_login')")
+    return True, None
+
+
+def decidable_blocks(ident, role) -> list[str]:
+    """Khối mà người đăng nhập (UI) được quyết hàng duyệt chung: vai trò
+    thuộc `approver_roles`; chế độ thực thêm có tên trong `approvers`.
+    Khối cấu hình hỏng → bỏ qua (fail-closed)."""
+    from pipelines import director
+    out = []
+    for b in director.BLOCKS:
+        try:
+            cfg = block_config(b)
+        except Exception:  # noqa: BLE001, S112 — hỏng = bỏ khối
+            continue
+        if role not in cfg["approver_roles"]:
+            continue
+        if approval_enforced() and (ident or "").strip().casefold() not in {
+                a.strip().casefold() for a in cfg["approvers"]}:
+            continue
+        out.append(b)
+    return out
+
+
+def deny_log(conn, by, block, action, object_type, object_id,
+             reason) -> None:
+    """Ghi lần BỊ TỪ CHỐI vào `agent_action_log` (hash chain, lưu toàn kỳ)
+    — best-effort trong savepoint, lỗi thì bỏ (không che lý do từ chối).
+    Chỉ chế độ thực (máy dev không rác log)."""
+    if not approval_enforced():
+        return
+    try:
+        from psycopg.types.json import Jsonb
+        actor = (by or "").strip()[:100] or "(trống)"
+        with conn.transaction():
+            conn.execute(
+                "insert into agent_action_log (actor, action, object_type,"
+                " object_id, detail) values (%s, 'authz_denied', %s, %s, %s)",
+                (actor, object_type, str(object_id),
+                 Jsonb({"block": block, "action": action,
+                        "reason": (reason or "")[:300]})))
+        conn.commit()
+    except Exception:  # noqa: BLE001, S110 — best-effort
+        pass
+
+
+def session_login(conn) -> str | None:
+    """Login Postgres của kết nối (`session_user`) — None khi lỗi."""
+    try:
+        r = conn.execute("select session_user").fetchone()
+    except Exception:  # noqa: BLE001
+        return None
+    return str(r[0]) if r else None
 
 
 # ---------- CLI ----------

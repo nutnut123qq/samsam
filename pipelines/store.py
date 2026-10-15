@@ -47,10 +47,15 @@ Contract:
     (`draft_create`) cùng transaction. `--verify-log` kiểm hash chain.
   - `schedule` chỉ trên draft approved + ngày ≥ hôm nay giờ VN + text
     còn khớp sha bản đã duyệt; bắt buộc người xếp lịch (`--by`).
-  - Giới hạn (pilot): `--by`/`reviewer` vẫn là free-text — DB tin
-    người giữ DSN `app_human`; gắn login DB riêng từng người là
-    someday. Gọi thẳng `approve_draft` bằng DSN `app_human` (bỏ qua
-    module này) thì chỉ còn kiểm snapshot guardrail, không re-check.
+  - v13.5 ủy quyền (F08): approve/reject/schedule qua
+    `pipelines.auth.authorize` (khối = phòng ban của tính năng trong danh
+    mục, không thuộc → marketing). Chế độ thực (AUTH_MODE local|proxy /
+    APPROVAL_ENFORCE / DEPLOY): người thuộc `approvers` khối, vai trò đúng,
+    CLI chạy bằng login Postgres riêng khớp `db_login` — `--by` free-text
+    không còn đủ. Dev: cảnh báo. Gọi thẳng `approve_draft` bằng login
+    `app_human` (bỏ qua module này) thì DB vẫn chặn agent/người tạo nhưng
+    không đối chiếu approvers — vì vậy mỗi người duyệt 1 login riêng,
+    `approvals.db_role`/log ghi login thật.
   - Mọi ghi-tác-vụ: `conn.transaction()` + `conn.commit()` TƯỜNG
     MINH — trên conn chia sẻ đã-trong-tx (UI SELECT trước) block
     transaction() chỉ là savepoint, thiếu commit() → INSERT/UPDATE
@@ -237,6 +242,34 @@ def _rollout():
     return rollout
 
 
+def _draft_block(cur: dict) -> str:
+    """v13.5: khối sở hữu draft = phòng ban của tính năng (output_sources
+    content_drafts); không thuộc danh mục → 'marketing' (nội dung)."""
+    fid = _draft_feature(cur.get("created_by"),
+                         cur.get("content_type") or "post")
+    for f in _rollout()._catalog() or []:
+        if f["id"] == fid and f.get("phong_ban"):
+            return f["phong_ban"]
+    return "marketing"
+
+
+def _authz(conn, cur: dict, by, action: str, via: str, role) -> str | None:
+    """v13.5 (F08): cổng `auth.authorize` cho draft → lý do chặn | None.
+    Chế độ thực: khối theo danh mục, người tạo từ DÒNG DB, login Postgres
+    của kết nối (CLI). Lần bị chặn ghi `authz_denied` vào log."""
+    from pipelines import auth  # lười: auth → director → module này
+    block = _draft_block(cur)
+    enforced = auth.approval_enforced()
+    ok, why = auth.authorize(
+        by, block, action, created_by=cur.get("created_by"), role=role,
+        via=via, db_login=(auth.session_login(conn)
+                           if enforced and via != "ui" else None))
+    if ok:
+        return None
+    auth.deny_log(conn, by, block, action, OBJECT_TYPE, cur["id"], why)
+    return f"draft #{cur['id']}: {why}"
+
+
 def _draft_feature(created_by, content_type) -> str | None:
     """v13.3: draft → tính năng theo `output_sources` content_drafts."""
     return _rollout().feature_for(table="content_drafts",
@@ -327,7 +360,8 @@ def _same_person(a, b) -> bool:
 
 
 def set_status(conn, draft_id, status: str, reviewer: str,
-               note: str | None = None) -> tuple[bool, str | None]:
+               note: str | None = None, *, via: str = "cli",
+               role: str | None = None) -> tuple[bool, str | None]:
     """pending -> approved|rejected → (True, None) | (False, warn).
 
     Warn không raise: id không tồn tại / id không phải số / draft
@@ -375,6 +409,10 @@ def set_status(conn, draft_id, status: str, reviewer: str,
         if _same_person(cur.get("created_by"), reviewer):
             return False, (f"bạn là người tạo draft #{did} — cần người "
                            f"khác duyệt")
+        # v13.5: ủy quyền người duyệt khối TRƯỚC lời gọi LLM-check.
+        why = _authz(conn, cur, reviewer, "approve", via, role)
+        if why:
+            return False, why
         # Snapshot jsonb do agent ghi — có thể giả ok:true. Chạy LẠI
         # guardrail ĐĂNG BÀI (kênh draft + readiness DB + LLM-check nếu
         # cấu hình) trên text thật trong DB trước khi gọi function.
@@ -397,6 +435,9 @@ def set_status(conn, draft_id, status: str, reviewer: str,
                            f"lúc lưu không khớp; phải reject hoặc viết lại")
         sql = "select approve_draft(%s, %s, %s)"
     else:
+        why = _authz(conn, cur, reviewer, "reject", via, role)
+        if why:
+            return False, why
         sql = "select reject_draft(%s, %s, %s)"
     try:
         with conn.transaction():
@@ -424,7 +465,8 @@ def _vn_today() -> date:
 
 
 def schedule(conn, draft_id, day, by: str | None = None,
-             today: date | None = None) -> tuple[bool, str | None]:
+             today: date | None = None, *, via: str = "cli",
+             role: str | None = None) -> tuple[bool, str | None]:
     """Xếp lịch đăng → (True, None) | (False, warn). Chỉ draft
     approved; `day` (date/ISO-str) không được quá khứ (giờ VN — function
     DB kiểm lại); `by` = người xếp lịch, bắt buộc. Đi qua
@@ -453,6 +495,9 @@ def schedule(conn, draft_id, day, by: str | None = None,
     if cur["status"] != "approved":
         return False, (f"draft #{did} đang '{cur['status']}' — chỉ "
                        f"xếp lịch bài đã approved")
+    why = _authz(conn, cur, by, "schedule", via, role)
+    if why:
+        return False, why
     ro = _rollout()
     why = ro.use_reason(conn, _draft_feature(cur.get("created_by"),
                                              cur.get("content_type")
@@ -620,9 +665,9 @@ def main(argv=None) -> int:
     ap.add_argument("--reject", type=int, metavar="ID",
                     help="từ chối draft")
     ap.add_argument("--by", dest="reviewer",
-                    help="tên người duyệt/xếp lịch — bắt buộc với "
-                         "--approve/--reject/--schedule (free-text: DB "
-                         "tin người giữ DSN app_human)")
+                    help="người duyệt/xếp lịch — bắt buộc với "
+                         "--approve/--reject/--schedule; chế độ thực phải "
+                         "thuộc approvers khối + chạy bằng login DB riêng")
     ap.add_argument("--note", default=None, help="ghi chú duyệt")
     ap.add_argument("--schedule", nargs=2,
                     metavar=("ID", "YYYY-MM-DD"),
@@ -650,6 +695,10 @@ def main(argv=None) -> int:
     if args.schedule is not None and not (args.reviewer or "").strip():
         ap.error("--schedule cần --by <tên người xếp lịch>")
 
+    if (args.reviewer or "").strip():
+        from pipelines import auth
+        if not auth.approval_enforced():
+            print(f"[warn] {auth.DEV_WARNING}", file=sys.stderr)
     with _conn_or_none() as (conn, err):
         # ---- ĐỌC: DB down → "chưa nạp" exit 0 (precedent report) ----
         if args.pending:

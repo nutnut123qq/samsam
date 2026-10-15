@@ -1,0 +1,19 @@
+# v13.5 C04 UI E2E — Streamlit AppTest (streamlit 1.64, venv repo), DB lane samsam_v13_c04, AUTH_MODE=local, approvers GIA trong ban sao tmp data/directors (khong sua cau hinh that). Streamlit chay DSN owner; least privilege kiem rieng bang login that o tests/test_v13_c04_authz.py. Lan chay 2 (lan 1 cung PASS, seed #1/#2).
+[seed] sales #3, finance #4
+[PASS] gd_ban_hang có tab Duyệt & Lịch
+[PASS] nguoi.la@test.vn (không ủy quyền) KHÔNG thấy mục sales #3
+[PASS] hiện lời nhắc chưa được ủy quyền
+[PASS] gd.tc@test.vn không thấy mục sales (chéo khối)
+[PASS] gd.tc@test.vn thấy mục finance #4
+[PASS] gd.bh@test.vn thấy mục sales #3
+[PASS] gd.bh@test.vn không thấy mục finance
+[PASS] ô người quyết = danh tính đăng nhập, bị khóa (không gõ tự do)
+[PASS] người duyệt thấy payload đầy đủ (bản được ký sha)
+[PASS] đúng 1 nút Duyệt bật (thấy 1)
+[PASS] bấm Duyệt không lỗi
+[PASS] mục #3 → ('approved', 'gd.bh@test.vn')
+[PASS] approvals: ('gd.bh@test.vn', 'postgres')
+[PASS] log: [('agent:kd_price', 'queue_enqueue'), ('gd.bh@test.vn', 'queue_approve')]
+[PASS] hash chain nguyên vẹn
+[PASS] mục finance vẫn pending
+[RESULT] PASS

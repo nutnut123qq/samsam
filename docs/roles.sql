@@ -267,3 +267,20 @@ grant select on v_settlement_khoan to bks_reader;
 -- sinh → tính năng đã TẮT vẫn sinh được. Chỉ SELECT bảng trạng thái (không
 -- PII, không `feature_rollout_events`); ghi vẫn chỉ CLI owner.
 grant select on feature_rollout to agent_writer;
+
+-- ===== v13.5 c04 danh tính / quyền duyệt / least privilege =====
+-- FinOps dưới login agent: `pipelines.llm_gateway` đọc chi tiêu tháng
+-- (agent_id, ts, cost_usd) + ghi 1 dòng/lời gọi. Thiếu grant thì dưới login
+-- `agent_writer` MỌI lời gọi LLM bị chặn (v13.1 fail-closed khi không đọc được
+-- chi tiêu) — tức không chuyển được agent sang login riêng. KHÔNG UPDATE/DELETE
+-- (agent không tự xóa/sửa chi tiêu để lách trần). app_human kế thừa.
+grant select (agent_id, ts, cost_usd) on llm_usage to agent_writer;
+grant insert (agent_id, model, tokens_in, tokens_out, cost_usd, ok, error)
+  on llm_usage to agent_writer;
+grant usage on sequence llm_usage_id_seq to agent_writer;
+-- Danh tính người duyệt: mỗi người duyệt 1 login Postgres riêng `in role
+-- app_human` (hạ tầng tạo NGOÀI git), khai `db_login` trong users file — CLI
+-- chế độ thực (`pipelines.auth.authorize`) chỉ nhận `--by` khớp login đang dùng;
+-- `approvals.db_role` + `agent_action_log.db_role` ghi login thật. Agent chạy
+-- login `in role agent_writer` (không execute decide_item/approve_draft/
+-- override_qa; không UPDATE/DELETE log — trigger append-only chặn cả owner).
