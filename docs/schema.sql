@@ -3350,3 +3350,74 @@ create table if not exists garden_voice_drafts (
 );
 create index if not exists garden_voice_drafts_status_idx
   on garden_voice_drafts (status, id);
+
+-- ===== v12.5 B5 doanh thu thuần trực tuyến + đối soát quý =====
+-- HĐ hợp tác Điều 7.3 (Bên A xem số liệu doanh thu/đơn trực tuyến; lưu
+-- ≥180 ngày, không sửa/xóa khi Bên A không đồng ý), 7.5 + 8.3 (đối soát
+-- doanh thu thuần trực tuyến mỗi quý — biên bản 2 bên ký là căn cứ DUY
+-- NHẤT tính phí vận hành/thưởng).
+--   * `revenue_quarters` — 1 dòng / lần `python -m agents.rev_share
+--     --quarter YYYY-Qn --record`: số ĐỀ XUẤT do hệ thống (Bên A vận hành)
+--     dựng từ `settlement_rows` + trạng thái đơn `orders` (source
+--     `market:%`). Ô tiền NULL = "chưa có dữ liệu" (KHÔNG coi = 0).
+--     `fee_rate`/`ops_fee_vnd` NULL = tỷ lệ chưa chốt. `detail` = số theo
+--     kênh + nguồn + ghi chú thiếu nguồn (không mã đơn/hash/PII).
+--     `report_sha256` = sha256 file biên bản đã ghi. Ghi lại cùng quý →
+--     dòng MỚI (lịch sử giữ nguyên; dòng id lớn nhất = đề xuất hiện hành).
+--     APPEND-ONLY (`append_only_guard()` chặn UPDATE/DELETE/TRUNCATE).
+--   * `v_ben_a_settlement_daily` / `v_ben_a_orders_daily` — số tổng hợp
+--     theo ngày × kênh (KHÔNG mã đơn/hash) cho role `ben_a_reader`
+--     (`docs/roles.sql`). `orders.ts` của đơn sàn = ngày NẠP file (file
+--     xuất sàn chưa có cột ngày đặt — GIẢ ĐỊNH v10.1 `agents.kd_orders`).
+-- ============================================================================
+
+create table if not exists revenue_quarters (
+  id bigint generated always as identity primary key,
+  quarter text not null check (quarter ~ '^[0-9]{4}-Q[1-4]$'),
+  period_start date not null,
+  period_end date not null,             -- exclusive
+  gross_vnd bigint,
+  platform_fee_vnd bigint,
+  cancel_vnd bigint,
+  refund_vnd bigint,
+  net_vnd bigint,
+  payout_vnd bigint,
+  fee_rate numeric check (fee_rate is null or fee_rate between 0 and 1),
+  ops_fee_vnd bigint check (ops_fee_vnd is null or ops_fee_vnd >= 0),
+  detail jsonb not null default '{}',
+  report_sha256 text not null check (report_sha256 ~ '^[0-9a-f]{64}$'),
+  recorded_by text not null check (btrim(recorded_by) <> ''),
+  recorded_at timestamptz not null default now(),
+  check (period_start < period_end),
+  check (ops_fee_vnd is null or (fee_rate is not null and net_vnd is not null))
+);
+create index if not exists revenue_quarters_quarter_idx
+  on revenue_quarters (quarter, id);
+
+create or replace trigger revenue_quarters_append_only_row
+  before update or delete on revenue_quarters
+  for each row execute function append_only_guard();
+create or replace trigger revenue_quarters_no_truncate
+  before truncate on revenue_quarters
+  for each statement execute function append_only_guard();
+
+create or replace view v_ben_a_settlement_daily as
+select settled_on, channel, count(*) as n_rows,
+       sum(order_amount_vnd) as order_amount_vnd,
+       sum(fixed_fee_vnd) as fixed_fee_vnd,
+       sum(payment_fee_vnd) as payment_fee_vnd,
+       sum(service_fee_vnd) as service_fee_vnd,
+       sum(shipping_fee_vnd) as shipping_fee_vnd,
+       sum(voucher_seller_vnd) as voucher_seller_vnd,
+       sum(affiliate_vnd) as affiliate_vnd,
+       sum(refund_vnd) as refund_vnd,
+       sum(payout_vnd) as payout_vnd
+from settlement_rows
+group by settled_on, channel;
+
+create or replace view v_ben_a_orders_daily as
+select (ts at time zone 'Asia/Ho_Chi_Minh')::date as day, channel, status,
+       count(*) as n_orders, sum(total_vnd) as total_vnd
+from orders
+where source like 'market:%'
+group by 1, 2, 3;

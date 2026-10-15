@@ -226,3 +226,30 @@ grant execute on function
 -- ngày làm việc + đầu ra nằm ở code; cấp quyền sửa cho app_human sẽ cho phép
 -- nâng giai đoạn bỏ qua cổng. agent_writer KHÔNG có quyền gì (revoke đầu file).
 grant select on feature_rollout, feature_rollout_events to app_human;
+
+-- ===== v12.5 B5 doanh thu thuần trực tuyến + đối soát quý =====
+-- `ben_a_reader` — tài khoản XEM số liệu doanh thu/đơn trực tuyến của Bên A
+-- (HĐ hợp tác Điều 7.3). NOLOGIN — login thật do hạ tầng Sâm Sâm tạo
+-- `in role ben_a_reader` (external-dep). Quyền: SELECT ĐÚNG 2 view tổng hợp
+-- theo ngày × kênh (không mã đơn/hash) + `revenue_quarters`. KHÔNG bảng gốc
+-- (`settlement_rows`/`orders`/`market_rows`), KHÔNG `contacts`/PII, KHÔNG
+-- INSERT/UPDATE/DELETE gì. Revoke sạch rồi grant lại (chạy lại không cộng
+-- dồn).
+do $$
+begin
+  if not exists (select from pg_roles where rolname = 'ben_a_reader') then
+    create role ben_a_reader nologin;
+  end if;
+end $$;
+do $$
+declare
+  s text := quote_ident(current_schema());
+begin
+  execute format('revoke all on all tables in schema %s from ben_a_reader', s);
+  execute format('revoke all on all sequences in schema %s from ben_a_reader', s);
+  execute format('revoke all on all functions in schema %s from ben_a_reader', s);
+  execute format('revoke all on schema %s from ben_a_reader', s);
+  execute format('grant usage on schema %s to ben_a_reader', s);
+end $$;
+grant select on revenue_quarters, v_ben_a_settlement_daily,
+  v_ben_a_orders_daily to ben_a_reader;
