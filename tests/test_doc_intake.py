@@ -378,8 +378,12 @@ def test_foreign_provider_never_called(dirs, monkeypatch, no_network):
     calls = []
     monkeypatch.setitem(di.PROVIDERS, "fake_us",
                         (lambda p: calls.append(p) or "text", False))
-    c = di.intake(intake, orig, FakeConn(), "fake_us")
-    assert calls == [] and c["cho_ocr"] == 2
+    # v13.4 (flip): trước đây intake chạy tiếp, âm thầm để 2 tài liệu ở
+    # cho_ocr như thể đã cấu hình OCR — nay từ chối NGAY, 0 tài liệu ghi.
+    conn = FakeConn()
+    with pytest.raises(ValueError, match="nước ngoài"):
+        di.intake(intake, orig, conn, "fake_us")
+    assert calls == [] and conn.docs == {} and not orig.exists()
 
 
 @pytest.mark.parametrize("pages", [

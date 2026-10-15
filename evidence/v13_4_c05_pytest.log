@@ -1,0 +1,50 @@
+........................................................................ [  8%]
+........................................................................ [ 16%]
+........................................................................ [ 24%]
+........................................................................ [ 33%]
+........................................................................ [ 41%]
+......................................................................F. [ 49%]
+........................................................................ [ 58%]
+.........................................................F.............. [ 66%]
+........................................................................ [ 74%]
+........................................................................ [ 83%]
+........................................................................ [ 91%]
+........................................................................ [ 99%]
+..                                                                       [100%]
+================================== FAILURES ===================================
+_______________________ test_harvest_real_convlog_smoke _______________________
+
+    def test_harvest_real_convlog_smoke():
+        """Convlog thật: harvest không raise, mọi row đủ cột + ts aware."""
+        rows, _ = ls.harvest(DATA)
+>       assert rows, "convlog thật phải suy ra được lead"
+E       AssertionError: convlog thật phải suy ra được lead
+E       assert []
+
+tests\test_lead_store.py:217: AssertionError
+______________ test_purge_sample_only_called_from_cli_and_tests _______________
+
+    def test_purge_sample_only_called_from_cli_and_tests():
+        """Agent/cron KHÔNG gọi purge_sample/adopt_plot — chỉ định nghĩa + CLI
+        main."""
+        root = gd.ROOT
+        hits = []
+        for p in root.rglob("*.py"):
+            if any(part in {".venv", "venv", "node_modules", ".git", ".claude"}
+                   for part in p.parts):
+                continue
+            src = p.read_text(encoding="utf-8", errors="replace")
+            if "purge_sample(" in src or "adopt_plot(" in src:
+                hits.append(p.relative_to(root).as_posix())
+>       assert sorted(h for h in hits if not h.startswith("tests/")) == [
+            "agents/garden_director.py"]
+E       AssertionError: assert [] == ['agents/garden_director.py']
+E         
+E         Right contains one more item: 'agents/garden_director.py'
+E         Use -v to get more diff
+
+tests\test_garden_director.py:264: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_lead_store.py::test_harvest_real_convlog_smoke - AssertionE...
+FAILED tests/test_garden_director.py::test_purge_sample_only_called_from_cli_and_tests
+2 failed, 864 passed in 275.15s (0:04:35)

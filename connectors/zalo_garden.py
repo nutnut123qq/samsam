@@ -20,11 +20,24 @@ Contract:
     `GARDEN_MEDIA_DIR` NGOÀI repo + bảng `garden_media`. Khoảnh = mã ở chú
     thích ảnh, hoặc khoảnh nhân viên vừa ghi trong 2 giờ; không có → hướng
     dẫn, KHÔNG tải. Kho thiếu/nằm trong repo → báo, KHÔNG tải.
-  - Giọng nói: lưu file vào `<GARDEN_MEDIA_DIR>/audio/` + dòng
-    `garden_voice_drafts` trạng thái `cho_chep_loi`; NGƯỜI nghe rồi ghi
-    nhật ký (`python -m agents.garden`) và đóng nháp `--done`. STT là
-    external-dep: `GARDEN_STT_PROVIDER` trống → không gọi; có giá trị → chưa
-    tích hợp provider nào nên vẫn KHÔNG gửi audio ra ngoài (chỉ cảnh báo).
+  - Video (v13.4, event `user_send_video`, attachment `video` — GIẢ ĐỊNH
+    theo tài liệu OA, đối chiếu event thật): như ảnh (cần khoảnh) nhưng đi
+    nhánh VIDEO của `scripts/garden_media` (magic bytes MP4/MOV, ≤200 MB,
+    remux ffmpeg gỡ metadata/GPS; thiếu ffmpeg → KHÔNG lưu). Video không
+    bao giờ vào nhánh xử lý ảnh.
+  - Giọng nói: kiểm magic bytes (AAC/M4A/MP3/AMR/WAV/OGG — đuôi lưu theo
+    NỘI DUNG, không theo URL; lạ → không lưu), lưu file vào
+    `<GARDEN_MEDIA_DIR>/audio/` + dòng `garden_voice_drafts` trạng thái
+    `cho_chep_loi`; NGƯỜI nghe rồi ghi nhật ký (`python -m agents.garden`)
+    và đóng nháp `--done`.
+  - STT (v13.4): registry `STT_PROVIDERS` name → (callable(path)->text,
+    domestic). Chỉ có `none` — CHƯA chọn vendor (BLOCKED: vendor STT trong
+    nước + hợp đồng/DPA + key do Bên B/Pháp chế quyết; không viết adapter
+    trước). `--transcribe ID` = đường cắm: provider `none`/lạ/nước ngoài →
+    exit 2 kèm hướng dẫn (không gửi audio, không trả chữ rỗng như thành
+    công); có provider → in bản chép (qua `_mask_pii`) làm NHÁP cho người
+    nghe đối chiếu rồi tự ghi nhật ký + `--done` — agent không tự ghi.
+    Webhook không bao giờ gọi STT.
   - Trả lời xác nhận ngắn — text viết tay, không LLM. stdout chỉ `uh=`.
   - KHÔNG import `connectors.zalo`: `python -m connectors.zalo` sẽ nạp 2 bản
     module (2 bộ token/lock/dedup) — zalo truyền `send` vào `handle`.
@@ -33,6 +46,7 @@ Chạy:
   python -m connectors.zalo_garden --hash < file_user_id   (STDIN → user_hash)
   python -m connectors.zalo_garden --pending
   python -m connectors.zalo_garden --done ID --log LOG_ID --by "<tên>"
+  python -m connectors.zalo_garden --transcribe ID   (exit 2 tới khi có STT)
 """
 
 import argparse
@@ -68,8 +82,13 @@ LAST_PLOT_TTL_S = 2 * 3600
 # GIẢ ĐỊNH — host CDN Zalo trong payload ảnh/ghi âm; đối chiếu event thật
 # của OA (external-dep). Host lạ → không tải (chặn SSRF khi bypass chữ ký dev).
 MEDIA_HOSTS = ("zdn.vn", "zadn.vn", "zalo.me", "zaloapp.com")
-MEDIA_TYPES = {"image": ("image",), "audio": ("audio", "voice")}
-AUDIO_EXTS = ("aac", "m4a", "mp3", "amr", "wav", "ogg")
+MEDIA_TYPES = {"image": ("image",), "video": ("video",),
+               "audio": ("audio", "voice")}
+STT_HELP = ("chưa cấu hình STT: BLOCKED — cần vendor STT trong nước + hợp "
+            "đồng/DPA + key (Bên B/Pháp chế chọn), cắm vào "
+            "connectors.zalo_garden.STT_PROVIDERS rồi đặt GARDEN_STT_PROVIDER; "
+            "tạm thời người nghe ghi âm rồi ghi nhật ký tay "
+            "(python -m agents.garden) và đóng nháp --done")
 _HASH_RE = re.compile(r"[0-9a-f]{16}")
 _PLOT_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,31}")
 # 'co' không dấu: có / cỏ / cơ — không đoán là 'làm cỏ'.
@@ -90,12 +109,12 @@ DB_DOWN = ("Hệ thống chưa ghi được (lỗi kết nối) — vui lòng g�
 ERROR = "Hệ thống gặp lỗi, chưa ghi được — vui lòng gửi lại sau ít phút."
 NO_STORE = ("Kho ảnh vườn chưa được cấu hình — tệp CHƯA lưu, vui lòng báo "
             "quản trị.")
-NEED_PLOT = ("Ảnh CHƯA lưu: chưa biết khoảnh. Ghi mã khoảnh ở chú thích ảnh "
-             "hoặc gửi tin chữ có mã khoảnh trước (vd: KV-A01 kiểm tra sâu "
-             "bệnh) rồi gửi ảnh trong 2 giờ.")
+NEED_PLOT = ("Ảnh/video CHƯA lưu: chưa biết khoảnh. Ghi mã khoảnh ở chú "
+             "thích hoặc gửi tin chữ có mã khoảnh trước (vd: KV-A01 kiểm tra "
+             "sâu bệnh) rồi gửi ảnh/video trong 2 giờ.")
 NO_FILE = "Không đọc được tệp đính kèm — vui lòng gửi lại."
-UNSUPPORTED = ("Nhật ký vườn qua Zalo nhận chữ, ảnh và ghi âm (chưa nhận "
-               "video/tệp/sticker). ") + HELP
+UNSUPPORTED = ("Nhật ký vườn qua Zalo nhận chữ, ảnh, video và ghi âm "
+               "(chưa nhận tệp/sticker/vị trí). ") + HELP
 
 # Cache allowlist (key = mtime_ns+size) — rebind nguyên tử, đọc không lock.
 _staff: tuple = (None, {})
@@ -241,13 +260,51 @@ def _gm():
     return garden_media
 
 
-def _audio_ext(url: str) -> str:
-    ext = Path(urlsplit(url).path).suffix.lower().lstrip(".")
-    return ext if ext in AUDIO_EXTS else "bin"
+def audio_kind(data: bytes) -> str:
+    """Đuôi ghi âm theo MAGIC BYTES (không tin đuôi URL) → aac | m4a | mp3 |
+    amr | wav | ogg. Khác → ValueError (không lưu tệp lạ vào kho)."""
+    if data.startswith(b"#!AMR"):
+        return "amr"
+    if data[:4] == b"RIFF" and data[8:12] == b"WAVE":
+        return "wav"
+    if data.startswith(b"OggS"):
+        return "ogg"
+    if data.startswith(b"ID3"):
+        return "mp3"
+    if len(data) >= 12 and data[4:8] == b"ftyp":
+        return "m4a"
+    if len(data) >= 2 and data[0] == 0xFF:
+        if data[1] & 0xF6 == 0xF0:          # ADTS: sync 12 bit + layer 00
+            return "aac"
+        if data[1] & 0xE0 == 0xE0 and data[1] & 0x06:  # MPEG audio layer I-III
+            return "mp3"
+    raise ValueError("tệp ghi âm không đúng định dạng (magic bytes)")
+
+
+# name -> (callable(path) -> text, domestic). `none` = chưa có STT. Vendor
+# thật là external-dep (xem STT_HELP) — KHÔNG viết adapter trước khi chọn.
+STT_PROVIDERS = {"none": (None, True)}
+
+
+def stt_provider() -> tuple[str, str | None]:
+    """(tên provider, lỗi|None). Lỗi khi `none`/không có trong registry/
+    nước ngoài — người gọi KHÔNG gửi audio."""
+    name = os.environ.get("GARDEN_STT_PROVIDER", "").strip() or "none"
+    fn, domestic = STT_PROVIDERS.get(name, (None, True))
+    if name not in STT_PROVIDERS:
+        return name, (f"GARDEN_STT_PROVIDER={name[:40]!r} chưa tích hợp — "
+                      + STT_HELP)
+    if fn is None:
+        return name, STT_HELP
+    if not domestic:
+        return name, ("provider STT nước ngoài bị từ chối (giọng nói nhân "
+                      "viên là dữ liệu cá nhân) — " + STT_HELP)
+    return name, None
 
 
 def _stt_note(uh: str) -> None:
-    if os.environ.get("GARDEN_STT_PROVIDER", "").strip():
+    name, err = stt_provider()
+    if err and name != "none":
         print(f"[warn] garden: GARDEN_STT_PROVIDER đặt nhưng chưa tích hợp "
               f"provider — KHÔNG gửi audio, giữ chờ chép lời (uh={uh})",
               flush=True)
@@ -300,21 +357,28 @@ def _on_media(uh: str, code: str, msg: dict, kind: str) -> str:
         words = str(msg.get("text") or "").split()
         plot = _find_plot(conn, words[0]) if words else None
         plot = plot or _recent_plot(uh)
-        if kind == "image" and plot is None:
+        if kind in ("image", "video") and plot is None:
             return NEED_PLOT
         gm = _gm()
         for url in urls:
             try:
-                raw = _fetch(url)
-                if kind == "image":
-                    clean, ext, info = gm.strip_image(raw)
+                if kind in ("image", "video"):
+                    # video: nhánh riêng (magic MP4/MOV + remux ffmpeg),
+                    # KHÔNG bao giờ qua Pillow.
+                    if kind == "video":
+                        clean, ext, info = gm.strip_video(
+                            _fetch(url, gm.MAX_VIDEO_BYTES),
+                            tmp_dir=store_dir / ".tmp")
+                    else:
+                        clean, ext, info = gm.strip_image(_fetch(url))
                     sha, _ = gm.store(clean, ext, store_dir)
                     from pipelines.period import vn_date
                     gm.record(conn, sha, ext, len(clean), info, plot,
                               vn_date(datetime.now(timezone.utc)),
                               f"zalo:{code}", source=SOURCE)
                 else:
-                    ext = _audio_ext(url)
+                    raw = _fetch(url)
+                    ext = audio_kind(raw)
                     sha, _ = gm.store(raw, ext, store_dir / "audio")
                     _stt_note(uh)
                     with conn.transaction():
@@ -334,9 +398,10 @@ def _on_media(uh: str, code: str, msg: dict, kind: str) -> str:
     if not ok:
         return ("CHƯA lưu được tệp (tải lỗi hoặc tệp không hợp lệ) — vui "
                 "lòng gửi lại.")
-    if kind == "image":
-        return (f"Đã lưu {ok}/{len(urls)} ảnh cho khoảnh {plot} (đã xóa vị "
-                f"trí GPS).")
+    if kind in ("image", "video"):
+        what = "ảnh" if kind == "image" else "video"
+        return (f"Đã lưu {ok}/{len(urls)} {what} cho khoảnh {plot} (đã xóa "
+                f"vị trí GPS).")
     return (f"Đã nhận {ok} ghi âm{f' (khoảnh {plot})' if plot else ''} — "
             f"chờ người chép lời rồi mới thành nhật ký chính thức.")
 
@@ -355,6 +420,8 @@ def handle(user_id: str, event: str, msg, msg_id: str = "", *,
             reply = _on_text(uh, code, str(msg.get("text") or ""))
         elif event == "user_send_image":
             reply = _on_media(uh, code, msg, "image")
+        elif event == "user_send_video":
+            reply = _on_media(uh, code, msg, "video")
         elif event in ("user_send_audio", "user_send_voice"):
             reply = _on_media(uh, code, msg, "audio")
         else:
@@ -366,6 +433,47 @@ def handle(user_id: str, event: str, msg, msg_id: str = "", *,
     print(f"[garden] zalo: {event[:40]} -> "
           f"{'sent' if sent else 'send-fail'} (uh={uh})", flush=True)
     return {"sent": sent, "text": reply}
+
+
+def _transcribe(conn, draft_id: int, name: str) -> int:
+    """Chép lời 1 nháp ghi âm đang chờ qua provider STT ĐÃ cắm → in NHÁP
+    (đã `_mask_pii`). Không ghi nhật ký/không đóng nháp — người làm."""
+    row = conn.execute(
+        "select sha256, ext from garden_voice_drafts where id = %s and "
+        "status = 'cho_chep_loi'", (draft_id,)).fetchone()
+    if row is None:
+        print(f"[err] không có nháp #{draft_id} đang chờ chép lời",
+              file=sys.stderr)
+        return 1
+    store_dir = _store_dir()
+    if store_dir is None:
+        print("[err] thiếu GARDEN_MEDIA_DIR (kho ngoài repo)",
+              file=sys.stderr)
+        return 2
+    sha, ext = row
+    path = store_dir / "audio" / sha[:2] / f"{sha}.{ext}"
+    try:
+        data = path.read_bytes()
+    except OSError as e:
+        print(f"[err] thiếu file ghi âm {sha[:12]} ({type(e).__name__})",
+              file=sys.stderr)
+        return 1
+    if hashlib.sha256(data).hexdigest() != sha:
+        print(f"[err] file ghi âm {sha[:12]} lệch sha256", file=sys.stderr)
+        return 1
+    fn, _domestic = STT_PROVIDERS[name]
+    try:
+        text = unicodedata.normalize("NFC", str(fn(path) or "")).strip()
+    except Exception as e:  # noqa: BLE001 — lỗi provider bất kỳ
+        print(f"[err] STT {name} lỗi ({type(e).__name__})", file=sys.stderr)
+        return 1
+    if not text:
+        print(f"[err] STT {name} không ra chữ — người nghe ghi tay",
+              file=sys.stderr)
+        return 1
+    print(f"[nhap] #{draft_id} ({name}) — NHÁP, người nghe đối chiếu rồi "
+          f"ghi nhật ký + --done:\n{_mask_pii(text)[:MAX_DETAIL]}")
+    return 0
 
 
 def main(argv=None) -> int:
@@ -381,11 +489,16 @@ def main(argv=None) -> int:
     ap.add_argument("--log", type=int, metavar="LOG_ID",
                     help="id plot_logs đã ghi từ ghi âm (đi với --done)")
     ap.add_argument("--by", default=None, help="người chép lời")
+    ap.add_argument("--transcribe", type=int, metavar="ID",
+                    help="chép lời nháp ghi âm qua STT (exit 2 khi chưa có "
+                         "provider) — in NHÁP cho người đối chiếu")
     args = ap.parse_args(argv)
     n_ops = sum(bool(x) for x in (args.hash, args.pending,
-                                  args.done is not None))
+                                  args.done is not None,
+                                  args.transcribe is not None))
     if n_ops != 1:
-        ap.error("chọn đúng 1 trong --hash / --pending / --done")
+        ap.error("chọn đúng 1 trong --hash / --pending / --done / "
+                 "--transcribe")
     if args.hash:
         uid = sys.stdin.readline().strip()
         if not uid:
@@ -395,6 +508,11 @@ def main(argv=None) -> int:
     if args.done is not None and (args.log is None
                                   or not (args.by or "").strip()):
         ap.error("--done cần --log và --by")
+    if args.transcribe is not None:
+        name, err = stt_provider()
+        if err:  # kiểm TRƯỚC khi connect/đọc audio — không gửi gì
+            print(f"[blocked] {err}", file=sys.stderr)
+            return 2
     conn = _connect()
     if conn is None:
         print("[err] không kết nối được Postgres", file=sys.stderr)
@@ -409,7 +527,13 @@ def main(argv=None) -> int:
                 print(f"#{i} {at:%Y-%m-%d %H:%M} UTC {code} "
                       f"{plot or '-'} {sha[:12]}.{ext}")
             print(f"[pending] {len(rows)} ghi âm chờ chép lời")
+            if rows and stt_provider()[1]:
+                print("[blocked] STT chưa cấu hình — người nghe ghi âm rồi "
+                      "ghi nhật ký tay; vendor STT: BLOCKED (xem "
+                      "--transcribe)")
             return 0
+        if args.transcribe is not None:
+            return _transcribe(conn, args.transcribe, name)
         import psycopg
         try:
             with conn.transaction():

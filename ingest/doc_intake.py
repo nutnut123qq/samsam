@@ -34,6 +34,12 @@ Contract:
     (`domestic=False`) bị TỪ CHỐI cho mọi tài liệu (trước OCR chưa biết
     PII → coi như có PII; bật = phiếu tầng 2 + TIA). FPT.AI Reader /
     Google Vision = external-dep, chưa cắm.
+    v13.4: CLI intake KHÔNG báo thành công câm khi thiếu OCR — có tài
+    liệu scan/ảnh vào `cho_ocr` mà `OCR_PROVIDER` chưa cấu hình (`none`)
+    → in `[blocked]` kèm hướng dẫn + exit 2 (tài liệu có lớp chữ vẫn
+    nạp; lỗi file vẫn exit 1). Provider nước ngoài trong registry → từ
+    chối ngay (exit 2 / ValueError), không âm thầm trả "".
+    BLOCKED: vendor OCR trong nước + hợp đồng/DPA + key (Bên B/Pháp chế).
   - Không lưu full text vào DB, không in filename/nội dung ra stdout —
     chỉ `sha256[:12]`, `doc_type`, `status`, số đếm.
   - Someday: tài liệu `cho_ocr` khi đã có provider thật cần lệnh OCR
@@ -95,6 +101,10 @@ def _ocr_none(path: Path) -> str:
 # name -> (callable(path) -> text, domestic). Thêm provider thật
 # (FPT.AI Reader) là external-dep: hợp đồng + DPA trước khi cắm.
 PROVIDERS = {"none": (_ocr_none, True)}
+OCR_BLOCKED = ("OCR_PROVIDER chưa cấu hình — BLOCKED: vendor OCR trong nước "
+               "+ hợp đồng/DPA + key (Bên B/Pháp chế chọn), cắm vào "
+               "ingest.doc_intake.PROVIDERS; tạm thời người đọc bản gốc rồi "
+               "nhập tay")
 
 
 class DocError(Exception):
@@ -305,6 +315,8 @@ def intake(intake_dir: Path, originals_dir: Path, conn,
     error}. Thư mục không tồn tại/rỗng → toàn 0. Lỗi 1 file không dừng lô."""
     if ocr_provider not in PROVIDERS:
         raise ValueError(f"OCR provider không hỗ trợ: {ocr_provider}")
+    if not PROVIDERS[ocr_provider][1]:
+        raise ValueError(f"OCR provider nước ngoài bị từ chối: {ocr_provider}")
     intake_dir, originals_dir = Path(intake_dir), Path(originals_dir)
     counts = dict.fromkeys(("new", "dup", "cho_ocr", "skipped", "error"), 0)
     if not intake_dir.is_dir():
@@ -410,6 +422,9 @@ def main(argv: list[str] | None = None) -> int:
     if n_ops == 0 and provider not in PROVIDERS:
         ap.error(f"OCR_PROVIDER={provider} chưa hỗ trợ (có: "
                  + ", ".join(PROVIDERS) + ") — provider có phí là external-dep")
+    if n_ops == 0 and not PROVIDERS[provider][1]:
+        ap.error(f"OCR_PROVIDER={provider} là dịch vụ nước ngoài — bị từ chối "
+                 "(tài liệu chưa OCR coi như có PII)")
 
     conn = lead_store.connect()
     if conn is None:
@@ -436,7 +451,14 @@ def main(argv: list[str] | None = None) -> int:
                                  ROOT / "data" / "originals"),
                         conn, provider)
         print("[done] " + " ".join(f"{k}={v}" for k, v in counts.items()))
-        return 1 if counts["error"] else 0
+        if counts["error"]:
+            return 1
+        if counts["cho_ocr"] and provider == "none":
+            # Không báo thành công câm: tài liệu scan/ảnh CHƯA có chữ.
+            print(f"[blocked] {counts['cho_ocr']} tài liệu scan/ảnh ở "
+                  f"cho_ocr — {OCR_BLOCKED}")
+            return 2
+        return 0
     finally:
         conn.close()
 

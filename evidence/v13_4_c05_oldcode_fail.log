@@ -1,0 +1,874 @@
+FFFFFFFFFFFFFFFFFFFFFFFFFFFF...........F................................ [ 41%]
+...............FFFFFFFFFFFFF.........F................................F. [ 82%]
+.............................FF                                          [100%]
+================================== FAILURES ===================================
+____________________ test_strip_video_mov_removes_location ____________________
+
+mov = b'\x00\x00\x00\x14ftypqt  \x00\x00\x02\x00qt  \x00\x00\x00\x08wide\x00\x00)@mdat\x00\x00\x02\xac\x06\x05\xff\xff\xa8\x...\x00Lavf61.7.100\x00\x00\x00#loci\x00\x00\x00\x00\x00\x00\x00\x00\x00l3\xc3\x00\x10\r\xed\x00\x00\x00\x00earth\x00\x00'
+tmp_path = WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_strip_video_mov_removes_l0')
+
+    @need_ff
+    def test_strip_video_mov_removes_location(mov, tmp_path):
+>       clean, ext, info = gm.strip_video(mov, tmp_dir=tmp_path / ".tmp")
+                           ^^^^^^^^^^^^^^
+E       AttributeError: module 'scripts.garden_media' has no attribute 'strip_video'
+
+tests\test_v13_c05_media.py:97: AttributeError
+________________________ test_strip_video_mp4_and_m4v _________________________
+
+mp4 = b'\x00\x00\x00 ftypisom\x00\x00\x02\x00isomiso2avc1mp41\x00\x00\x00\x08free\x00\x00)@mdat\x00\x00\x02\xac\x06\x05\xff\...\x00Lavf61.7.100\x00\x00\x00#loci\x00\x00\x00\x00\x00\x00\x00\x00\x00l3\xc3\x00\x10\r\xed\x00\x00\x00\x00earth\x00\x00'
+tmp_path = WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_strip_video_mp4_and_m4v0')
+
+    @need_ff
+    def test_strip_video_mp4_and_m4v(mp4, tmp_path):
+        for hint in (".mp4", ".M4V"):
+>           clean, ext, _ = gm.strip_media(mp4, hint, tmp_dir=tmp_path)
+                            ^^^^^^^^^^^^^^
+E           AttributeError: module 'scripts.garden_media' has no attribute 'strip_media'
+
+tests\test_v13_c05_media.py:109: AttributeError
+________________________ test_no_ffmpeg_refuses_video _________________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A095B410>
+
+    def test_no_ffmpeg_refuses_video(monkeypatch):
+>       monkeypatch.setattr(gm, "_find_ffmpeg", lambda: None)
+E       AttributeError: <module 'scripts.garden_media' from 'D:\\code\\samsam\\.claude\\worktrees\\wf_5e5afa70-b41-6\\scripts\\garden_media.py'> has no attribute '_find_ffmpeg'
+
+tests\test_v13_c05_media.py:115: AttributeError
+__________________ test_video_magic_and_structure_rejected[] __________________
+
+data = b''
+
+    @pytest.mark.parametrize("data", [
+        b"", b"\xff\xd8\xff\xe0JFIF" + b"\x00" * 20,          # JPEG đổi đuôi
+        b"\x00\x00\x00\x14ftypheic\x00\x00\x00\x00heic",       # brand lạ
+        b"\x00\x00\x00\x14ftypisom\x00\x00\x02\x00isom\x00\x00\x00\xffmoov",
+        b"\x00\x00\x00\x01ftypisom",                           # hộp cụt
+    ])
+    def test_video_magic_and_structure_rejected(data):
+        with pytest.raises(ValueError):
+>           gm.strip_video(data)
+            ^^^^^^^^^^^^^^
+E           AttributeError: module 'scripts.garden_media' has no attribute 'strip_video'
+
+tests\test_v13_c05_media.py:130: AttributeError
+_ test_video_magic_and_structure_rejected[\xff\xd8\xff\xe0JFIF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00] _
+
+data = b'\xff\xd8\xff\xe0JFIF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+
+    @pytest.mark.parametrize("data", [
+        b"", b"\xff\xd8\xff\xe0JFIF" + b"\x00" * 20,          # JPEG đổi đuôi
+        b"\x00\x00\x00\x14ftypheic\x00\x00\x00\x00heic",       # brand lạ
+        b"\x00\x00\x00\x14ftypisom\x00\x00\x02\x00isom\x00\x00\x00\xffmoov",
+        b"\x00\x00\x00\x01ftypisom",                           # hộp cụt
+    ])
+    def test_video_magic_and_structure_rejected(data):
+        with pytest.raises(ValueError):
+>           gm.strip_video(data)
+            ^^^^^^^^^^^^^^
+E           AttributeError: module 'scripts.garden_media' has no attribute 'strip_video'
+
+tests\test_v13_c05_media.py:130: AttributeError
+_ test_video_magic_and_structure_rejected[\x00\x00\x00\x14ftypheic\x00\x00\x00\x00heic] _
+
+data = b'\x00\x00\x00\x14ftypheic\x00\x00\x00\x00heic'
+
+    @pytest.mark.parametrize("data", [
+        b"", b"\xff\xd8\xff\xe0JFIF" + b"\x00" * 20,          # JPEG đổi đuôi
+        b"\x00\x00\x00\x14ftypheic\x00\x00\x00\x00heic",       # brand lạ
+        b"\x00\x00\x00\x14ftypisom\x00\x00\x02\x00isom\x00\x00\x00\xffmoov",
+        b"\x00\x00\x00\x01ftypisom",                           # hộp cụt
+    ])
+    def test_video_magic_and_structure_rejected(data):
+        with pytest.raises(ValueError):
+>           gm.strip_video(data)
+            ^^^^^^^^^^^^^^
+E           AttributeError: module 'scripts.garden_media' has no attribute 'strip_video'
+
+tests\test_v13_c05_media.py:130: AttributeError
+_ test_video_magic_and_structure_rejected[\x00\x00\x00\x14ftypisom\x00\x00\x02\x00isom\x00\x00\x00\xffmoov] _
+
+data = b'\x00\x00\x00\x14ftypisom\x00\x00\x02\x00isom\x00\x00\x00\xffmoov'
+
+    @pytest.mark.parametrize("data", [
+        b"", b"\xff\xd8\xff\xe0JFIF" + b"\x00" * 20,          # JPEG đổi đuôi
+        b"\x00\x00\x00\x14ftypheic\x00\x00\x00\x00heic",       # brand lạ
+        b"\x00\x00\x00\x14ftypisom\x00\x00\x02\x00isom\x00\x00\x00\xffmoov",
+        b"\x00\x00\x00\x01ftypisom",                           # hộp cụt
+    ])
+    def test_video_magic_and_structure_rejected(data):
+        with pytest.raises(ValueError):
+>           gm.strip_video(data)
+            ^^^^^^^^^^^^^^
+E           AttributeError: module 'scripts.garden_media' has no attribute 'strip_video'
+
+tests\test_v13_c05_media.py:130: AttributeError
+______ test_video_magic_and_structure_rejected[\x00\x00\x00\x01ftypisom] ______
+
+data = b'\x00\x00\x00\x01ftypisom'
+
+    @pytest.mark.parametrize("data", [
+        b"", b"\xff\xd8\xff\xe0JFIF" + b"\x00" * 20,          # JPEG đổi đuôi
+        b"\x00\x00\x00\x14ftypheic\x00\x00\x00\x00heic",       # brand lạ
+        b"\x00\x00\x00\x14ftypisom\x00\x00\x02\x00isom\x00\x00\x00\xffmoov",
+        b"\x00\x00\x00\x01ftypisom",                           # hộp cụt
+    ])
+    def test_video_magic_and_structure_rejected(data):
+        with pytest.raises(ValueError):
+>           gm.strip_video(data)
+            ^^^^^^^^^^^^^^
+E           AttributeError: module 'scripts.garden_media' has no attribute 'strip_video'
+
+tests\test_v13_c05_media.py:130: AttributeError
+________________________ test_video_oversize_rejected _________________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A0958E60>
+
+    def test_video_oversize_rejected(monkeypatch):
+>       monkeypatch.setattr(gm, "MAX_VIDEO_BYTES", 10)
+E       AttributeError: <module 'scripts.garden_media' from 'D:\\code\\samsam\\.claude\\worktrees\\wf_5e5afa70-b41-6\\scripts\\garden_media.py'> has no attribute 'MAX_VIDEO_BYTES'
+
+tests\test_v13_c05_media.py:134: AttributeError
+_____________________ test_extension_must_match_container _____________________
+
+mov = b'\x00\x00\x00\x14ftypqt  \x00\x00\x02\x00qt  \x00\x00\x00\x08wide\x00\x00)@mdat\x00\x00\x02\xac\x06\x05\xff\xff\xa8\x...\x00Lavf61.7.100\x00\x00\x00#loci\x00\x00\x00\x00\x00\x00\x00\x00\x00l3\xc3\x00\x10\r\xed\x00\x00\x00\x00earth\x00\x00'
+mp4 = b'\x00\x00\x00 ftypisom\x00\x00\x02\x00isomiso2avc1mp41\x00\x00\x00\x08free\x00\x00)@mdat\x00\x00\x02\xac\x06\x05\xff\...\x00Lavf61.7.100\x00\x00\x00#loci\x00\x00\x00\x00\x00\x00\x00\x00\x00l3\xc3\x00\x10\r\xed\x00\x00\x00\x00earth\x00\x00'
+tmp_path = WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_extension_must_match_cont0')
+
+    @need_ff
+    def test_extension_must_match_container(mov, mp4, tmp_path):
+        with pytest.raises(ValueError, match="không khớp"):
+>           gm.strip_media(mov, ".mp4", tmp_dir=tmp_path)
+            ^^^^^^^^^^^^^^
+E           AttributeError: module 'scripts.garden_media' has no attribute 'strip_media'
+
+tests\test_v13_c05_media.py:142: AttributeError
+_________________ test_video_without_picture_stream_rejected __________________
+
+tmp_path = WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_video_without_picture_str0')
+
+    @need_ff
+    def test_video_without_picture_stream_rejected(tmp_path):
+        audio = _make_video(tmp_path / "a.mp4", "mp4", audio_only=True)
+        with pytest.raises(ValueError, match="luồng hình"):
+>           gm.strip_video(audio, tmp_dir=tmp_path / ".tmp")
+            ^^^^^^^^^^^^^^
+E           AttributeError: module 'scripts.garden_media' has no attribute 'strip_video'
+
+tests\test_v13_c05_media.py:153: AttributeError
+__________________ test_location_surviving_remux_is_rejected __________________
+
+mov = b'\x00\x00\x00\x14ftypqt  \x00\x00\x02\x00qt  \x00\x00\x00\x08wide\x00\x00)@mdat\x00\x00\x02\xac\x06\x05\xff\xff\xa8\x...\x00Lavf61.7.100\x00\x00\x00#loci\x00\x00\x00\x00\x00\x00\x00\x00\x00l3\xc3\x00\x10\r\xed\x00\x00\x00\x00earth\x00\x00'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A0932540>
+tmp_path = WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_location_surviving_remux_0')
+
+    @need_ff
+    def test_location_surviving_remux_is_rejected(mov, monkeypatch, tmp_path):
+        """Phòng thủ chiều sâu: ffmpeg (bản lạ/cờ đổi) giữ lại metadata → quét
+        sau remux phải chặn, không lưu."""
+        real = subprocess.run
+    
+        def keep_meta(cmd, **kw):
+            if cmd[0] == FF and "-map_metadata" in cmd:
+                Path(cmd[-1]).write_bytes(Path(cmd[cmd.index("-i") + 1])
+                                          .read_bytes())
+                return subprocess.CompletedProcess(cmd, 0, b"", b"")
+            return real(cmd, **kw)
+>       monkeypatch.setattr(gm.subprocess, "run", keep_meta)
+                            ^^^^^^^^^^^^^
+E       AttributeError: module 'scripts.garden_media' has no attribute 'subprocess'. Did you mean: 'suppress'?
+
+tests\test_v13_c05_media.py:168: AttributeError
+__________________________ test_cli_video_end_to_end __________________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c05) at 0x173a04783b0>
+mov = b'\x00\x00\x00\x14ftypqt  \x00\x00\x02\x00qt  \x00\x00\x00\x08wide\x00\x00)@mdat\x00\x00\x02\xac\x06\x05\xff\xff\xa8\x...\x00Lavf61.7.100\x00\x00\x00#loci\x00\x00\x00\x00\x00\x00\x00\x00\x00l3\xc3\x00\x10\r\xed\x00\x00\x00\x00earth\x00\x00'
+tmp_path = WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_cli_video_end_to_end0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A09331A0>
+capsys = <_pytest.capture.CaptureFixture object at 0x00000173A0932030>
+
+    @need_ff
+    def test_cli_video_end_to_end(db, mov, tmp_path, monkeypatch, capsys):
+        _plot(db)
+        monkeypatch.setattr(gm, "connect", lambda *a, **kw: _TxConn(db))
+        src = tmp_path / "IMG_0001_GPS.MOV"
+        src.write_bytes(mov)
+        store = tmp_path / "store"
+        argv = ["--file", str(src), "--plot", "KV-T01", "--date", "2026-10-12",
+                "--by", "Bé Na", "--store", str(store)]
+>       assert gm.main(argv) == 0
+E       AssertionError: assert 1 == 0
+E        +  where 1 = <function main at 0x00000173A04AD800>(['--file', '<home>\\AppData\\Local\\Temp\\pytest-of-<user>', '--plot', 'KV-T01', '--date', '2026-10-12', ...])
+E        +    where <function main at 0x00000173A04AD800> = gm.main
+
+tests\test_v13_c05_media.py:199: AssertionError
+---------------------------- Captured stderr call -----------------------------
+[err] từ chối ảnh: không mở được ảnh (UnidentifiedImageError)
+___________________ test_cli_video_no_ffmpeg_no_file_no_row ___________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c05) at 0x173a064b3e0>
+tmp_path = WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_cli_video_no_ffmpeg_no_fi0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A064BD10>
+capsys = <_pytest.capture.CaptureFixture object at 0x00000173A0B39730>
+
+    def test_cli_video_no_ffmpeg_no_file_no_row(db, tmp_path, monkeypatch,
+                                                capsys):
+        _plot(db)
+        monkeypatch.setattr(gm, "connect", lambda *a, **kw: _TxConn(db))
+>       monkeypatch.setattr(gm, "_find_ffmpeg", lambda: None)
+E       AttributeError: <module 'scripts.garden_media' from 'D:\\code\\samsam\\.claude\\worktrees\\wf_5e5afa70-b41-6\\scripts\\garden_media.py'> has no attribute '_find_ffmpeg'
+
+tests\test_v13_c05_media.py:220: AttributeError
+________________________ test_cli_file_must_be_regular ________________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c05) at 0x173a066c230>
+tmp_path = WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_cli_file_must_be_regular0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A066C170>
+capsys = <_pytest.capture.CaptureFixture object at 0x00000173A066C200>
+
+    def test_cli_file_must_be_regular(db, tmp_path, monkeypatch, capsys):
+        _plot(db)
+        monkeypatch.setattr(gm, "connect", lambda *a, **kw: _TxConn(db))
+        d = tmp_path / "thu_muc.mp4"
+        d.mkdir()
+        assert gm.main(["--file", str(d), "--plot", "KV-T01", "--date",
+                        "2026-10-12", "--by", "A", "--store",
+                        str(tmp_path / "s")]) == 1
+>       assert "file thường" in capsys.readouterr().err
+E       AssertionError: assert 'file thường' in '[err] không đọc được file ảnh (PermissionError)\n'
+E        +  where '[err] không đọc được file ảnh (PermissionError)\n' = CaptureResult(out='', err='[err] không đọc được file ảnh (PermissionError)\n').err
+E        +    where CaptureResult(out='', err='[err] không đọc được file ảnh (PermissionError)\n') = readouterr()
+E        +      where readouterr = <_pytest.capture.CaptureFixture object at 0x00000173A066C200>.readouterr
+
+tests\test_v13_c05_media.py:240: AssertionError
+_______________ test_schema_garden_media_ext_allows_video_only ________________
+
+db = <psycopg.Connection [INERROR] (host=localhost user=postgres database=samsam_v13_c05) at 0x173a066edb0>
+
+    def test_schema_garden_media_ext_allows_video_only(db):
+        _plot(db)
+        for i, ext in enumerate(("mp4", "mov", "jpg", "png")):
+>           db.execute("insert into garden_media (sha256, ext, bytes, plot_id,"
+                       " taken_on, author) values (%s, %s, 1, 'KV-T01',"
+                       " '2026-10-12', 'a')", (f"{i:064x}", ext))
+
+tests\test_v13_c05_media.py:246: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [INERROR] (host=localhost user=postgres database=samsam_v13_c05) at 0x173a066edb0>
+query = "insert into garden_media (sha256, ext, bytes, plot_id, taken_on, author) values (%s, %s, 1, 'KV-T01', '2026-10-12', 'a')"
+params = ('0000000000000000000000000000000000000000000000000000000000000000', 'mp4')
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.CheckViolation: new row for relation "garden_media" violates check constraint "garden_media_ext_check"
+E           DETAIL:  Failing row contains (1, 0000000000000000000000000000000000000000000000000000000000000000, mp4, 1, null, null, KV-T01, 2026-10-12, a, 0, f, cli:garden_media, 2026-10-15 19:31:01.261469+07).
+
+<home>\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: CheckViolation
+________________________ test_zalo_video_stored_clean _________________________
+
+zconn = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c05) at 0x173a066f110>
+mov = b'\x00\x00\x00\x14ftypqt  \x00\x00\x02\x00qt  \x00\x00\x00\x08wide\x00\x00)@mdat\x00\x00\x02\xac\x06\x05\xff\xff\xa8\x...\x00Lavf61.7.100\x00\x00\x00#loci\x00\x00\x00\x00\x00\x00\x00\x00\x00l3\xc3\x00\x10\r\xed\x00\x00\x00\x00earth\x00\x00'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A066EBA0>
+tmp_path = WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_zalo_video_stored_clean0')
+
+    @need_ff
+    def test_zalo_video_stored_clean(zconn, mov, monkeypatch, tmp_path):
+        calls = []
+        monkeypatch.setattr(zg, "_fetch", lambda u, mx=None, *a, **k:
+                            calls.append((u, mx)) or mov)
+        monkeypatch.setattr(gm, "strip_image",
+                            lambda *a, **k: pytest.fail("video vào nhánh ảnh"))
+        out = _run("user_send_video", _video("KV-T01 vườn sau mưa"))
+>       assert out.startswith("Đã lưu 1/1 video cho khoảnh KV-T01")
+E       AssertionError: assert False
+E        +  where False = <built-in method startswith of str object at 0x000001739E59C270>('Đã lưu 1/1 video cho khoảnh KV-T01')
+E        +    where <built-in method startswith of str object at 0x000001739E59C270> = 'Nhật ký vườn qua Zalo nhận chữ, ảnh và ghi âm (chưa nhận video/tệp/sticker). Cú pháp nhật ký vườn: <mã khoảnh> <hoạt ...n thuốc sinh học, thu hoạch, ghi nhận. Ảnh: ghi mã khoảnh ở chú thích, hoặc gửi trong 2 giờ sau tin chữ của khoảnh đó.'.startswith
+
+tests\test_v13_c05_media.py:297: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[garden] zalo: user_send_video -> sent (uh=22085aa929bcd7af)
+_________________________ test_zalo_video_needs_plot __________________________
+
+zconn = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c05) at 0x173a066d4f0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A066FD40>
+
+    def test_zalo_video_needs_plot(zconn, monkeypatch):
+        monkeypatch.setattr(zg, "_fetch", lambda *a, **k: pytest.fail("tải"))
+>       assert _run("user_send_video", _video()) == zg.NEED_PLOT
+E       AssertionError: assert 'Nhật ký vườn...ủa khoảnh đó.' == 'Ảnh CHƯA lưu... trong 2 giờ.'
+E         
+E         - Ảnh CHƯA lưu: chưa biết khoảnh. Ghi mã khoảnh ở chú thích ảnh hoặc gửi tin chữ có mã khoảnh trước (vd: KV-A01 kiểm tra sâu bệnh) rồi gửi ảnh trong 2 giờ.
+E         + Nhật ký vườn qua Zalo nhận chữ, ảnh và ghi âm (chưa nhận video/tệp/sticker). Cú pháp nhật ký vườn: <mã khoảnh> <hoạt động> <chi tiết>, vd: KV-A01 tưới 30 phút. Hoạt động: trồng, tưới, bón, làm cỏ, kiểm tra sâu bệnh, phun thuốc sinh học, thu hoạch, ghi nhận. Ảnh: ghi mã khoảnh ở chú thích, hoặc gửi trong 2 giờ sau tin chữ của khoảnh đó.
+
+tests\test_v13_c05_media.py:309: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[garden] zalo: user_send_video -> sent (uh=22085aa929bcd7af)
+__________________ test_zalo_video_rejected_not_saved[jpeg] ___________________
+
+zconn = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c05) at 0x173a066e300>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A066E060>
+payload = 'jpeg'
+
+    @pytest.mark.parametrize("payload", ["jpeg", "no_ffmpeg"])
+    def test_zalo_video_rejected_not_saved(zconn, monkeypatch, payload):
+        if payload == "no_ffmpeg":
+            monkeypatch.setattr(gm, "_find_ffmpeg", lambda: None)
+            data = (b"\x00\x00\x00\x14ftypisom\x00\x00\x02\x00isom"
+                    b"\x00\x00\x00\x08free")
+        else:
+            data = b"\xff\xd8\xff\xe0JFIF" + b"\x00" * 30
+        monkeypatch.setattr(zg, "_fetch", lambda *a, **k: data)
+        out = _run("user_send_video", _video("KV-T01"))
+>       assert out.startswith("CHƯA lưu được tệp")
+E       AssertionError: assert False
+E        +  where False = <built-in method startswith of str object at 0x000001739E59C270>('CHƯA lưu được tệp')
+E        +    where <built-in method startswith of str object at 0x000001739E59C270> = 'Nhật ký vườn qua Zalo nhận chữ, ảnh và ghi âm (chưa nhận video/tệp/sticker). Cú pháp nhật ký vườn: <mã khoảnh> <hoạt ...n thuốc sinh học, thu hoạch, ghi nhận. Ảnh: ghi mã khoảnh ở chú thích, hoặc gửi trong 2 giờ sau tin chữ của khoảnh đó.'.startswith
+
+tests\test_v13_c05_media.py:322: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[garden] zalo: user_send_video -> sent (uh=22085aa929bcd7af)
+________________ test_zalo_video_rejected_not_saved[no_ffmpeg] ________________
+
+zconn = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c05) at 0x173a066fbc0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A066F860>
+payload = 'no_ffmpeg'
+
+    @pytest.mark.parametrize("payload", ["jpeg", "no_ffmpeg"])
+    def test_zalo_video_rejected_not_saved(zconn, monkeypatch, payload):
+        if payload == "no_ffmpeg":
+>           monkeypatch.setattr(gm, "_find_ffmpeg", lambda: None)
+E           AttributeError: <module 'scripts.garden_media' from 'D:\\code\\samsam\\.claude\\worktrees\\wf_5e5afa70-b41-6\\scripts\\garden_media.py'> has no attribute '_find_ffmpeg'
+
+tests\test_v13_c05_media.py:315: AttributeError
+___________________ test_zalo_audio_without_magic_not_saved ___________________
+
+zconn = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c05) at 0x173a06424b0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A06420F0>
+tmp_path = WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_zalo_audio_without_magic_0')
+
+    def test_zalo_audio_without_magic_not_saved(zconn, monkeypatch, tmp_path):
+        """Trước v13.4 mọi bytes đều lưu (đuôi theo URL, lạ → 'bin')."""
+        monkeypatch.setattr(zg, "_fetch", lambda *a, **k: b"MZ\x90\x00PE-exe")
+        msg = {"attachments": [{"type": "audio", "payload": {
+            "url": "https://voice-2.zadn.vn/v/x.aac"}}]}
+>       assert _run("user_send_audio", msg).startswith("CHƯA lưu được tệp")
+E       AssertionError: assert False
+E        +  where False = <built-in method startswith of str object at 0x00000173A06F53B0>('CHƯA lưu được tệp')
+E        +    where <built-in method startswith of str object at 0x00000173A06F53B0> = 'Đã nhận 1 ghi âm — chờ người chép lời rồi mới thành nhật ký chính thức.'.startswith
+E        +      where 'Đã nhận 1 ghi âm — chờ người chép lời rồi mới thành nhật ký chính thức.' = _run('user_send_audio', {'attachments': [{'payload': {'url': 'https://voice-2.zadn.vn/v/x.aac'}, 'type': 'audio'}]})
+
+tests\test_v13_c05_media.py:332: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[garden] zalo: user_send_audio -> sent (uh=22085aa929bcd7af)
+__________________ test_zalo_audio_ext_from_content_not_url ___________________
+
+zconn = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c05) at 0x173a0642f30>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A06428D0>
+
+    def test_zalo_audio_ext_from_content_not_url(zconn, monkeypatch):
+        monkeypatch.setattr(zg, "_fetch", lambda *a, **k: ADTS)
+        msg = {"attachments": [{"type": "voice", "payload": {
+            "url": "https://voice-2.zadn.vn/v/x.mp3"}}]}
+        _run("user_send_voice", msg)
+>       assert zconn.execute("select ext from garden_voice_drafts"
+                             ).fetchone()[0] == "aac"
+E       AssertionError: assert 'mp3' == 'aac'
+E         
+E         - aac
+E         + mp3
+
+tests\test_v13_c05_media.py:343: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[garden] zalo: user_send_voice -> sent (uh=22085aa929bcd7af)
+______________ test_transcribe_without_provider_exit2_no_connect ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A066DDC0>
+capsys = <_pytest.capture.CaptureFixture object at 0x00000173A066E300>
+
+    def test_transcribe_without_provider_exit2_no_connect(monkeypatch, capsys):
+        monkeypatch.setattr(zg, "_connect", lambda: pytest.fail("connect"))
+        for env in ("", "fpt-stt"):
+            monkeypatch.setenv("GARDEN_STT_PROVIDER", env)
+>           assert zg.main(["--transcribe", "1"]) == 2
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v13_c05_media.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+connectors\zalo_garden.py:384: in main
+    args = ap.parse_args(argv)
+           ^^^^^^^^^^^^^^^^^^^
+<home>\AppData\Local\Programs\Python\Python312\Lib\argparse.py:1899: in parse_args
+    self.error(msg)
+<home>\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2672: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='python -m connectors.zalo_garden', usage=None, description='Nhật ký vườn qua Zalo — tiện ích allowlist + nháp ghi âm', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = 'python -m connectors.zalo_garden: error: unrecognized arguments: --transcribe 1\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+<home>\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2659: SystemExit
+---------------------------- Captured stderr call -----------------------------
+usage: python -m connectors.zalo_garden [-h] [--hash] [--pending] [--done ID]
+                                        [--log LOG_ID] [--by BY]
+python -m connectors.zalo_garden: error: unrecognized arguments: --transcribe 1
+__________________ test_transcribe_foreign_provider_refused ___________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A066F5C0>
+capsys = <_pytest.capture.CaptureFixture object at 0x00000173A066E6C0>
+
+    def test_transcribe_foreign_provider_refused(monkeypatch, capsys):
+        monkeypatch.setattr(zg, "_connect", lambda: pytest.fail("connect"))
+>       monkeypatch.setitem(zg.STT_PROVIDERS, "foreign",
+                            ^^^^^^^^^^^^^^^^
+                            (lambda p: pytest.fail("gửi audio"), False))
+E       AttributeError: module 'connectors.zalo_garden' has no attribute 'STT_PROVIDERS'
+
+tests\test_v13_c05_media.py:360: AttributeError
+______________ test_transcribe_mock_provider_prints_masked_draft ______________
+
+zconn = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v13_c05) at 0x173a066d130>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A066CFE0>
+tmp_path = WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_transcribe_mock_provider_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x00000173A066E030>
+
+    def test_transcribe_mock_provider_prints_masked_draft(zconn, monkeypatch,
+                                                          tmp_path, capsys):
+        """CHỈ MOCK — chứng minh đường cắm (đọc đúng file theo sha, che PII, không
+        đóng nháp); chưa verify với vendor STT thật."""
+        monkeypatch.setattr(zg, "_fetch", lambda *a, **k: ADTS)
+        _run("user_send_voice", {"text": "KV-T01", "attachments": [
+            {"type": "voice", "payload": {"url": "https://zdn.vn/a.aac"}}]})
+        did, sha = zconn.execute("select id, sha256 from garden_voice_drafts"
+                                 ).fetchone()
+        seen = []
+>       monkeypatch.setitem(zg.STT_PROVIDERS, "mock_vn", (
+                            ^^^^^^^^^^^^^^^^
+            lambda p: seen.append(Path(p).read_bytes())
+            or "KV-T01 tưới 30 phút, gọi 0905123456", True))
+E       AttributeError: module 'connectors.zalo_garden' has no attribute 'STT_PROVIDERS'
+
+tests\test_v13_c05_media.py:377: AttributeError
+---------------------------- Captured stdout call -----------------------------
+[garden] zalo: user_send_voice -> sent (uh=22085aa929bcd7af)
+_________________ test_intake_scan_without_ocr_exit2_blocked __________________
+
+intake_cli = <test_v13_c05_media.intake_cli.<locals>.Conn object at 0x00000173A0933FB0>
+tmp_path = WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_intake_scan_without_ocr_e0')
+capsys = <_pytest.capture.CaptureFixture object at 0x00000173A0932F30>
+
+    def test_intake_scan_without_ocr_exit2_blocked(intake_cli, tmp_path, capsys):
+        """Trước v13.4: ảnh vào cho_ocr nhưng CLI exit 0 như đã xong."""
+        d = tmp_path / "in" / "nhan"
+        d.mkdir(parents=True)
+        (d / "nhan.jpg").write_bytes(b"\xff\xd8\xff\xe0 anh nhan")
+>       assert di.main([]) == 2
+E       assert 0 == 2
+E        +  where 0 = <function main at 0x00000173A04AD1C0>([])
+E        +    where <function main at 0x00000173A04AD1C0> = di.main
+
+tests\test_v13_c05_media.py:432: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[new] 18b8d10a6e14 nhan cho_ocr fields=0
+[done] new=1 dup=0 cho_ocr=1 skipped=0 error=0
+______________________ test_foreign_ocr_provider_refused ______________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A064BB00>
+tmp_path = WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_foreign_ocr_provider_refu0')
+
+    def test_foreign_ocr_provider_refused(monkeypatch, tmp_path):
+        monkeypatch.setitem(di.PROVIDERS, "gvision",
+                            (lambda p: pytest.fail("gửi ảnh"), False))
+>       with pytest.raises(ValueError, match="nước ngoài"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests\test_v13_c05_media.py:441: Failed
+_______________ test_scene_without_ai_provider_exit2_before_db ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A0640E60>
+capsys = <_pytest.capture.CaptureFixture object at 0x00000173A06402C0>
+
+    def test_scene_without_ai_provider_exit2_before_db(monkeypatch, capsys):
+        from pipelines import image_studio as ims
+        monkeypatch.delenv("IMAGE_PROVIDER", raising=False)
+        monkeypatch.setattr(ims.store, "_conn_or_none",
+                            lambda *a, **k: pytest.fail("connect"))
+>       rc = ims.main(["--sku", "mat-ong-sam-300ml", "--channel",
+                       ims.load_config()[0]["channels"][0], "--headline", "Quà",
+                       "--scene", "bàn gỗ, lá sâm"])
+
+tests\test_v13_c05_media.py:459: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+pipelines\image_studio.py:974: in main
+    with store._conn_or_none() as (conn, cerr):
+         ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+a = (), k = {}
+
+>   lambda *a, **k: pytest.fail("connect"))
+                    ^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: connect
+
+tests\test_v13_c05_media.py:458: Failed
+____________________ test_health_bulletin_warns_unset_ttl _____________________
+
+    def test_health_bulletin_warns_unset_ttl():
+        from scripts import health_bulletin as hb
+        md = hb.render({"db_ok": False, "db_error": "x"}, date(2026, 10, 15))
+>       sec = md[md.index(hb.H_RETENTION):]
+                          ^^^^^^^^^^^^^^
+E       AttributeError: module 'scripts.health_bulletin' has no attribute 'H_RETENTION'
+
+tests\test_v13_c05_media.py:538: AttributeError
+_ test_audio_kind_magic[\xff\xf1P\x80\x02\x1f\xfc\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00-aac] _
+
+data = b'\xff\xf1P\x80\x02\x1f\xfc\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+want = 'aac'
+
+    @pytest.mark.parametrize("data, want", [
+        (ADTS, "aac"), (b"\x00\x00\x00\x20ftypM4A \x00\x00", "m4a"),
+        (b"ID3\x04\x00" + b"\x00" * 8, "mp3"), (b"\xff\xfb\x90\x00", "mp3"),
+        (b"#!AMR\n\x3c", "amr"), (b"RIFF\x24\x00\x00\x00WAVEfmt ", "wav"),
+        (b"OggS\x00\x02", "ogg")])
+    def test_audio_kind_magic(data, want):
+>       assert zg.audio_kind(data) == want
+               ^^^^^^^^^^^^^
+E       AttributeError: module 'connectors.zalo_garden' has no attribute 'audio_kind'
+
+tests\test_zalo_garden.py:229: AttributeError
+__________ test_audio_kind_magic[\x00\x00\x00 ftypM4A \x00\x00-m4a] ___________
+
+data = b'\x00\x00\x00 ftypM4A \x00\x00', want = 'm4a'
+
+    @pytest.mark.parametrize("data, want", [
+        (ADTS, "aac"), (b"\x00\x00\x00\x20ftypM4A \x00\x00", "m4a"),
+        (b"ID3\x04\x00" + b"\x00" * 8, "mp3"), (b"\xff\xfb\x90\x00", "mp3"),
+        (b"#!AMR\n\x3c", "amr"), (b"RIFF\x24\x00\x00\x00WAVEfmt ", "wav"),
+        (b"OggS\x00\x02", "ogg")])
+    def test_audio_kind_magic(data, want):
+>       assert zg.audio_kind(data) == want
+               ^^^^^^^^^^^^^
+E       AttributeError: module 'connectors.zalo_garden' has no attribute 'audio_kind'
+
+tests\test_zalo_garden.py:229: AttributeError
+___ test_audio_kind_magic[ID3\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00-mp3] ____
+
+data = b'ID3\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00', want = 'mp3'
+
+    @pytest.mark.parametrize("data, want", [
+        (ADTS, "aac"), (b"\x00\x00\x00\x20ftypM4A \x00\x00", "m4a"),
+        (b"ID3\x04\x00" + b"\x00" * 8, "mp3"), (b"\xff\xfb\x90\x00", "mp3"),
+        (b"#!AMR\n\x3c", "amr"), (b"RIFF\x24\x00\x00\x00WAVEfmt ", "wav"),
+        (b"OggS\x00\x02", "ogg")])
+    def test_audio_kind_magic(data, want):
+>       assert zg.audio_kind(data) == want
+               ^^^^^^^^^^^^^
+E       AttributeError: module 'connectors.zalo_garden' has no attribute 'audio_kind'
+
+tests\test_zalo_garden.py:229: AttributeError
+_________________ test_audio_kind_magic[\xff\xfb\x90\x00-mp3] _________________
+
+data = b'\xff\xfb\x90\x00', want = 'mp3'
+
+    @pytest.mark.parametrize("data, want", [
+        (ADTS, "aac"), (b"\x00\x00\x00\x20ftypM4A \x00\x00", "m4a"),
+        (b"ID3\x04\x00" + b"\x00" * 8, "mp3"), (b"\xff\xfb\x90\x00", "mp3"),
+        (b"#!AMR\n\x3c", "amr"), (b"RIFF\x24\x00\x00\x00WAVEfmt ", "wav"),
+        (b"OggS\x00\x02", "ogg")])
+    def test_audio_kind_magic(data, want):
+>       assert zg.audio_kind(data) == want
+               ^^^^^^^^^^^^^
+E       AttributeError: module 'connectors.zalo_garden' has no attribute 'audio_kind'
+
+tests\test_zalo_garden.py:229: AttributeError
+_____________________ test_audio_kind_magic[#!AMR\n<-amr] _____________________
+
+data = b'#!AMR\n<', want = 'amr'
+
+    @pytest.mark.parametrize("data, want", [
+        (ADTS, "aac"), (b"\x00\x00\x00\x20ftypM4A \x00\x00", "m4a"),
+        (b"ID3\x04\x00" + b"\x00" * 8, "mp3"), (b"\xff\xfb\x90\x00", "mp3"),
+        (b"#!AMR\n\x3c", "amr"), (b"RIFF\x24\x00\x00\x00WAVEfmt ", "wav"),
+        (b"OggS\x00\x02", "ogg")])
+    def test_audio_kind_magic(data, want):
+>       assert zg.audio_kind(data) == want
+               ^^^^^^^^^^^^^
+E       AttributeError: module 'connectors.zalo_garden' has no attribute 'audio_kind'
+
+tests\test_zalo_garden.py:229: AttributeError
+____________ test_audio_kind_magic[RIFF$\x00\x00\x00WAVEfmt -wav] _____________
+
+data = b'RIFF$\x00\x00\x00WAVEfmt ', want = 'wav'
+
+    @pytest.mark.parametrize("data, want", [
+        (ADTS, "aac"), (b"\x00\x00\x00\x20ftypM4A \x00\x00", "m4a"),
+        (b"ID3\x04\x00" + b"\x00" * 8, "mp3"), (b"\xff\xfb\x90\x00", "mp3"),
+        (b"#!AMR\n\x3c", "amr"), (b"RIFF\x24\x00\x00\x00WAVEfmt ", "wav"),
+        (b"OggS\x00\x02", "ogg")])
+    def test_audio_kind_magic(data, want):
+>       assert zg.audio_kind(data) == want
+               ^^^^^^^^^^^^^
+E       AttributeError: module 'connectors.zalo_garden' has no attribute 'audio_kind'
+
+tests\test_zalo_garden.py:229: AttributeError
+___________________ test_audio_kind_magic[OggS\x00\x02-ogg] ___________________
+
+data = b'OggS\x00\x02', want = 'ogg'
+
+    @pytest.mark.parametrize("data, want", [
+        (ADTS, "aac"), (b"\x00\x00\x00\x20ftypM4A \x00\x00", "m4a"),
+        (b"ID3\x04\x00" + b"\x00" * 8, "mp3"), (b"\xff\xfb\x90\x00", "mp3"),
+        (b"#!AMR\n\x3c", "amr"), (b"RIFF\x24\x00\x00\x00WAVEfmt ", "wav"),
+        (b"OggS\x00\x02", "ogg")])
+    def test_audio_kind_magic(data, want):
+>       assert zg.audio_kind(data) == want
+               ^^^^^^^^^^^^^
+E       AttributeError: module 'connectors.zalo_garden' has no attribute 'audio_kind'
+
+tests\test_zalo_garden.py:229: AttributeError
+_______________ test_audio_kind_rejects_non_audio[AUDIO-BYTES] ________________
+
+data = b'AUDIO-BYTES'
+
+    @pytest.mark.parametrize("data", [b"AUDIO-BYTES", b"MZ\x90\x00exe", b"",
+                                      b"\xff", b"\xff\xd8\xff\xe0JFIF",
+                                      b"<html>"])
+    def test_audio_kind_rejects_non_audio(data):
+        with pytest.raises(ValueError):
+>           zg.audio_kind(data)
+            ^^^^^^^^^^^^^
+E           AttributeError: module 'connectors.zalo_garden' has no attribute 'audio_kind'
+
+tests\test_zalo_garden.py:237: AttributeError
+______________ test_audio_kind_rejects_non_audio[MZ\x90\x00exe] _______________
+
+data = b'MZ\x90\x00exe'
+
+    @pytest.mark.parametrize("data", [b"AUDIO-BYTES", b"MZ\x90\x00exe", b"",
+                                      b"\xff", b"\xff\xd8\xff\xe0JFIF",
+                                      b"<html>"])
+    def test_audio_kind_rejects_non_audio(data):
+        with pytest.raises(ValueError):
+>           zg.audio_kind(data)
+            ^^^^^^^^^^^^^
+E           AttributeError: module 'connectors.zalo_garden' has no attribute 'audio_kind'
+
+tests\test_zalo_garden.py:237: AttributeError
+_____________________ test_audio_kind_rejects_non_audio[] _____________________
+
+data = b''
+
+    @pytest.mark.parametrize("data", [b"AUDIO-BYTES", b"MZ\x90\x00exe", b"",
+                                      b"\xff", b"\xff\xd8\xff\xe0JFIF",
+                                      b"<html>"])
+    def test_audio_kind_rejects_non_audio(data):
+        with pytest.raises(ValueError):
+>           zg.audio_kind(data)
+            ^^^^^^^^^^^^^
+E           AttributeError: module 'connectors.zalo_garden' has no attribute 'audio_kind'
+
+tests\test_zalo_garden.py:237: AttributeError
+___________________ test_audio_kind_rejects_non_audio[\xff] ___________________
+
+data = b'\xff'
+
+    @pytest.mark.parametrize("data", [b"AUDIO-BYTES", b"MZ\x90\x00exe", b"",
+                                      b"\xff", b"\xff\xd8\xff\xe0JFIF",
+                                      b"<html>"])
+    def test_audio_kind_rejects_non_audio(data):
+        with pytest.raises(ValueError):
+>           zg.audio_kind(data)
+            ^^^^^^^^^^^^^
+E           AttributeError: module 'connectors.zalo_garden' has no attribute 'audio_kind'
+
+tests\test_zalo_garden.py:237: AttributeError
+___________ test_audio_kind_rejects_non_audio[\xff\xd8\xff\xe0JFIF] ___________
+
+data = b'\xff\xd8\xff\xe0JFIF'
+
+    @pytest.mark.parametrize("data", [b"AUDIO-BYTES", b"MZ\x90\x00exe", b"",
+                                      b"\xff", b"\xff\xd8\xff\xe0JFIF",
+                                      b"<html>"])
+    def test_audio_kind_rejects_non_audio(data):
+        with pytest.raises(ValueError):
+>           zg.audio_kind(data)
+            ^^^^^^^^^^^^^
+E           AttributeError: module 'connectors.zalo_garden' has no attribute 'audio_kind'
+
+tests\test_zalo_garden.py:237: AttributeError
+__________________ test_audio_kind_rejects_non_audio[<html>] __________________
+
+data = b'<html>'
+
+    @pytest.mark.parametrize("data", [b"AUDIO-BYTES", b"MZ\x90\x00exe", b"",
+                                      b"\xff", b"\xff\xd8\xff\xe0JFIF",
+                                      b"<html>"])
+    def test_audio_kind_rejects_non_audio(data):
+        with pytest.raises(ValueError):
+>           zg.audio_kind(data)
+            ^^^^^^^^^^^^^
+E           AttributeError: module 'connectors.zalo_garden' has no attribute 'audio_kind'
+
+tests\test_zalo_garden.py:237: AttributeError
+_____________________ test_removed_staff_and_unsupported ______________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A065D970>
+tmp_path = WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_removed_staff_and_unsuppo0')
+
+    def test_removed_staff_and_unsupported(monkeypatch, tmp_path):
+        assert _run("user_send_text", {"text": "KV-T01 tưới"}) == zg.ERROR
+        _staff(tmp_path)
+        # v13.4: user_send_video đã được nhận (test video riêng) — bỏ khỏi đây.
+        for ev in ("user_send_sticker", "user_send_file", "user_send_location",
+                   "user_send_gif"):
+            assert _run(ev, {}) == zg.UNSUPPORTED
+>       assert _run("user_send_video", {}) == zg.NO_FILE
+E       AssertionError: assert 'Nhật ký vườn...ủa khoảnh đó.' == 'Không đọc đư...lòng gửi lại.'
+E         
+E         - Không đọc được tệp đính kèm — vui lòng gửi lại.
+E         + Nhật ký vườn qua Zalo nhận chữ, ảnh và ghi âm (chưa nhận video/tệp/sticker). Cú pháp nhật ký vườn: <mã khoảnh> <hoạt động> <chi tiết>, vd: KV-A01 tưới 30 phút. Hoạt động: trồng, tưới, bón, làm cỏ, kiểm tra sâu bệnh, phun thuốc sinh học, thu hoạch, ghi nhận. Ảnh: ghi mã khoảnh ở chú thích, hoặc gửi trong 2 giờ sau tin chữ của khoảnh đó.
+
+tests\test_zalo_garden.py:335: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[garden] zalo: user_send_text -> sent (uh=22085aa929bcd7af)
+[garden] zalo: user_send_sticker -> sent (uh=22085aa929bcd7af)
+[garden] zalo: user_send_file -> sent (uh=22085aa929bcd7af)
+[garden] zalo: user_send_location -> sent (uh=22085aa929bcd7af)
+[garden] zalo: user_send_gif -> sent (uh=22085aa929bcd7af)
+[garden] zalo: user_send_video -> sent (uh=22085aa929bcd7af)
+_____________________ test_foreign_provider_never_called ______________________
+
+dirs = (WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_foreign_provider_never_ca0/intake'), WindowsPath('<home>/AppData/Local/Temp/pytest-of-<user>/pytest-2643/test_foreign_provider_never_ca0/originals'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173A05E1FD0>
+no_network = []
+
+    def test_foreign_provider_never_called(dirs, monkeypatch, no_network):
+        intake, orig = dirs
+        _put(intake, "giay_tiep_nhan/scan.pdf", make_pdf(None))
+        _put(intake, "nhan/a.jpg", b"\xff\xd8\xff jpeg")
+        calls = []
+        monkeypatch.setitem(di.PROVIDERS, "fake_us",
+                            (lambda p: calls.append(p) or "text", False))
+        # v13.4 (flip): trước đây intake chạy tiếp, âm thầm để 2 tài liệu ở
+        # cho_ocr như thể đã cấu hình OCR — nay từ chối NGAY, 0 tài liệu ghi.
+        conn = FakeConn()
+>       with pytest.raises(ValueError, match="nước ngoài"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests\test_doc_intake.py:384: Failed
+---------------------------- Captured stdout call -----------------------------
+[new] f5c28aee1a4f giay_tiep_nhan cho_ocr fields=0
+[new] e699d2eaedd7 nhan cho_ocr fields=0
+______________ test_purge_sample_only_called_from_cli_and_tests _______________
+
+    def test_purge_sample_only_called_from_cli_and_tests():
+        """Agent/cron KHÔNG gọi purge_sample/adopt_plot — chỉ định nghĩa + CLI
+        main."""
+        root = gd.ROOT
+        hits = []
+        for p in root.rglob("*.py"):
+            if any(part in {".venv", "venv", "node_modules", ".git", ".claude"}
+                   for part in p.parts):
+                continue
+            src = p.read_text(encoding="utf-8", errors="replace")
+            if "purge_sample(" in src or "adopt_plot(" in src:
+                hits.append(p.relative_to(root).as_posix())
+>       assert sorted(h for h in hits if not h.startswith("tests/")) == [
+            "agents/garden_director.py"]
+E       AssertionError: assert [] == ['agents/garden_director.py']
+E         
+E         Right contains one more item: 'agents/garden_director.py'
+E         Use -v to get more diff
+
+tests\test_garden_director.py:264: AssertionError
+_______________________ test_harvest_real_convlog_smoke _______________________
+
+    def test_harvest_real_convlog_smoke():
+        """Convlog thật: harvest không raise, mọi row đủ cột + ts aware."""
+        rows, _ = ls.harvest(DATA)
+>       assert rows, "convlog thật phải suy ra được lead"
+E       AssertionError: convlog thật phải suy ra được lead
+E       assert []
+
+tests\test_lead_store.py:217: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_v13_c05_media.py::test_strip_video_mov_removes_location - A...
+FAILED tests/test_v13_c05_media.py::test_strip_video_mp4_and_m4v - AttributeE...
+FAILED tests/test_v13_c05_media.py::test_no_ffmpeg_refuses_video - AttributeE...
+FAILED tests/test_v13_c05_media.py::test_video_magic_and_structure_rejected[]
+FAILED tests/test_v13_c05_media.py::test_video_magic_and_structure_rejected[\xff\xd8\xff\xe0JFIF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00]
+FAILED tests/test_v13_c05_media.py::test_video_magic_and_structure_rejected[\x00\x00\x00\x14ftypheic\x00\x00\x00\x00heic]
+FAILED tests/test_v13_c05_media.py::test_video_magic_and_structure_rejected[\x00\x00\x00\x14ftypisom\x00\x00\x02\x00isom\x00\x00\x00\xffmoov]
+FAILED tests/test_v13_c05_media.py::test_video_magic_and_structure_rejected[\x00\x00\x00\x01ftypisom]
+FAILED tests/test_v13_c05_media.py::test_video_oversize_rejected - AttributeE...
+FAILED tests/test_v13_c05_media.py::test_extension_must_match_container - Att...
+FAILED tests/test_v13_c05_media.py::test_video_without_picture_stream_rejected
+FAILED tests/test_v13_c05_media.py::test_location_surviving_remux_is_rejected
+FAILED tests/test_v13_c05_media.py::test_cli_video_end_to_end - AssertionErro...
+FAILED tests/test_v13_c05_media.py::test_cli_video_no_ffmpeg_no_file_no_row
+FAILED tests/test_v13_c05_media.py::test_cli_file_must_be_regular - Assertion...
+FAILED tests/test_v13_c05_media.py::test_schema_garden_media_ext_allows_video_only
+FAILED tests/test_v13_c05_media.py::test_zalo_video_stored_clean - AssertionE...
+FAILED tests/test_v13_c05_media.py::test_zalo_video_needs_plot - AssertionErr...
+FAILED tests/test_v13_c05_media.py::test_zalo_video_rejected_not_saved[jpeg]
+FAILED tests/test_v13_c05_media.py::test_zalo_video_rejected_not_saved[no_ffmpeg]
+FAILED tests/test_v13_c05_media.py::test_zalo_audio_without_magic_not_saved
+FAILED tests/test_v13_c05_media.py::test_zalo_audio_ext_from_content_not_url
+FAILED tests/test_v13_c05_media.py::test_transcribe_without_provider_exit2_no_connect
+FAILED tests/test_v13_c05_media.py::test_transcribe_foreign_provider_refused
+FAILED tests/test_v13_c05_media.py::test_transcribe_mock_provider_prints_masked_draft
+FAILED tests/test_v13_c05_media.py::test_intake_scan_without_ocr_exit2_blocked
+FAILED tests/test_v13_c05_media.py::test_foreign_ocr_provider_refused - Faile...
+FAILED tests/test_v13_c05_media.py::test_scene_without_ai_provider_exit2_before_db
+FAILED tests/test_v13_c05_media.py::test_health_bulletin_warns_unset_ttl - At...
+FAILED tests/test_zalo_garden.py::test_audio_kind_magic[\xff\xf1P\x80\x02\x1f\xfc\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00-aac]
+FAILED tests/test_zalo_garden.py::test_audio_kind_magic[\x00\x00\x00 ftypM4A \x00\x00-m4a]
+FAILED tests/test_zalo_garden.py::test_audio_kind_magic[ID3\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00-mp3]
+FAILED tests/test_zalo_garden.py::test_audio_kind_magic[\xff\xfb\x90\x00-mp3]
+FAILED tests/test_zalo_garden.py::test_audio_kind_magic[#!AMR\n<-amr] - Attri...
+FAILED tests/test_zalo_garden.py::test_audio_kind_magic[RIFF$\x00\x00\x00WAVEfmt -wav]
+FAILED tests/test_zalo_garden.py::test_audio_kind_magic[OggS\x00\x02-ogg] - A...
+FAILED tests/test_zalo_garden.py::test_audio_kind_rejects_non_audio[AUDIO-BYTES]
+FAILED tests/test_zalo_garden.py::test_audio_kind_rejects_non_audio[MZ\x90\x00exe]
+FAILED tests/test_zalo_garden.py::test_audio_kind_rejects_non_audio[] - Attri...
+FAILED tests/test_zalo_garden.py::test_audio_kind_rejects_non_audio[\xff] - A...
+FAILED tests/test_zalo_garden.py::test_audio_kind_rejects_non_audio[\xff\xd8\xff\xe0JFIF]
+FAILED tests/test_zalo_garden.py::test_audio_kind_rejects_non_audio[<html>]
+FAILED tests/test_zalo_garden.py::test_removed_staff_and_unsupported - Assert...
+FAILED tests/test_doc_intake.py::test_foreign_provider_never_called - Failed:...
+FAILED tests/test_garden_director.py::test_purge_sample_only_called_from_cli_and_tests
+FAILED tests/test_lead_store.py::test_harvest_real_convlog_smoke - AssertionE...
+46 failed, 129 passed in 53.87s

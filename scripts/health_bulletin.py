@@ -2,8 +2,9 @@
 
 Contract:
   - Mọi số lấy từ SQL — 0 lời gọi LLM/gateway. Mỗi mục ghi kèm bảng nguồn.
-  - 5 mục (heading cố định): DB · Job 24h · Chi phí AI tháng này theo agent
-    · Lời gọi LLM lỗi 24h · Hàng chờ duyệt.
+  - 6 mục (heading cố định): DB · Job 24h · Chi phí AI tháng này theo agent
+    · Lời gọi LLM lỗi 24h · Hàng chờ duyệt · Hạn lưu dữ liệu cá nhân (v13.4,
+    đọc `data/retention.json` không cần DB: TTL null = CẢNH BÁO chưa chốt).
   - Chi phí so với trần `pipelines.llm_gateway._config()["monthly_cap_usd"]`
     (giữ env override + key `default`): ≥80% "CẢNH BÁO", ≥100% "ĐÃ CHẶN
     (gateway)" — bản tin CHỈ báo, việc chặn do gateway làm. Cap 0 = gateway chặn hẳn agent đó ("ĐÃ CHẶN (cap 0)").
@@ -67,6 +68,17 @@ H_JOBS = "## 2. Job 24h"
 H_COST = "## 3. Chi phí AI tháng này theo agent"
 H_ERR = "## 4. Lời gọi LLM lỗi 24h"
 H_QUEUE = "## 5. Hàng chờ duyệt"
+H_RETENTION = "## 6. Hạn lưu dữ liệu cá nhân"
+
+
+def retention_lines() -> list[str]:
+    """v13.4 — tình trạng `data/retention.json` (không DB): TTL null = CẢNH
+    BÁO chưa chốt; cấu hình hỏng = báo lỗi (job không xóa gì)."""
+    from scripts.retention_purge import RetentionError, load_config, status_lines
+    try:
+        return status_lines(load_config())
+    except RetentionError as e:
+        return [f"- LỖI cấu hình hạn lưu ({e}) — job xóa không chạy"]
 
 
 def _jobs(conn) -> dict:
@@ -182,7 +194,8 @@ def _section_state(val, table: str) -> str | None:
 
 
 def render(data: dict, day: date, caps: dict | None = None,
-           cap_error: str | None = None) -> str:
+           cap_error: str | None = None,
+           retention: list[str] | None = None) -> str:
     L = [f"# Bản tin sức khỏe hệ thống — {day:%Y-%m-%d}", "",
          (f"_Sinh lúc {datetime.now(VN):%Y-%m-%d %H:%M} giờ VN — số liệu "
           "từ SQL, không dùng LLM. Bản tin chỉ BÁO, không tự xử lý._"), "",
@@ -255,6 +268,11 @@ def render(data: dict, day: date, caps: dict | None = None,
         L.append(f"- {msg}")
     else:
         L.append(f"- Draft chờ duyệt: {pend}")
+
+    L += ["", H_RETENTION, "",
+          ("_Nguồn: `data/retention.json` (CV / chấm công / ảnh-video / ghi "
+           "âm vườn); job `scripts/retention_purge.py`._"), ""]
+    L += retention if retention is not None else retention_lines()
     return "\n".join(L) + "\n"
 
 

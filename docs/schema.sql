@@ -3482,3 +3482,15 @@ select settled_on, channel, count(*) as n_rows,
        sum(payout_vnd) as payout_vnd
 from v_settlement_khoan
 group by settled_on, channel;
+
+-- ===== v13.4 c05 media vườn (video) =====
+-- PL01 vùng trồng: "Ảnh, video thật từ vườn đã xóa vị trí GPS". Video vào
+-- CÙNG kho `garden_media` (khoảnh có video được giữ như khoảnh có ảnh —
+-- `ingest.core_store`, gỡ mẫu `garden_director`); `scripts/garden_media.py`
+-- gỡ metadata bằng remux ffmpeg trước khi ghi, width/height NULL. Chỉ nới
+-- CHECK đuôi (cặp drop+add tên cố định, idempotent) — không đổi cột nào.
+-- QR truy xuất (`pipelines.qr_trace`, MEDIA_EXT jpg/png) KHÔNG phát hành
+-- video: site từ chối sha có ext ngoài ảnh.
+alter table garden_media drop constraint if exists garden_media_ext_check;
+alter table garden_media add constraint garden_media_ext_check
+  check (ext in ('jpg', 'png', 'mp4', 'mov'));
