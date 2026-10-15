@@ -23,6 +23,111 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Checklist v13.6-c06-3-nhap-bai-nhac-no
+
+Gộp vào `v13-hop-dong` bởi merge agent đợt 3 (nhánh lane `v13-c06`, `1be59f8`).
+
+- [x] v13.6 c06 (F05, phần nội dung + công nợ): `python -m pipelines.content
+  --daily [--date]` soạn tối đa 3 nháp bài/ngày (`per_day` = số HĐ). Chủ đề lấy
+  từ `mkt_calendar`: ô `post` của chiến dịch có mốc NHÁP đúng ngày trước, rồi trụ
+  thường ngày `daily_posts` xoay vòng (GIẢ ĐỊNH). Mỗi chủ đề kiểm readiness DB;
+  trụ gắn SKU mà không có SKU hợp lệ → báo THIẾU (exit 1), không soạn nháp vi
+  phạm cho đủ số. Khóa `[daily ngày #slot]` đầu brief + unique index (khối
+  schema v13.6 c06) → retry/restart/chạy song song không nhân bản; slot bị từ
+  chối soạn lại được. Tính năng `tat` → chặn trước mọi lời gọi LLM (exit 2).
+- [x] `python -m agents.acc_ar --reminders [--as-of] [--dry-run]`: nháp thư nhắc
+  nợ chỉ cho khoản quá hạn của đại lý có trong sổ `dealers`; placeholder thay
+  tên, liệt kê chứng từ FIFO kèm hạn/số ngày quá hạn + file nguồn/sha256; vào
+  hàng duyệt khối finance loại `ar_reminder`, idempotent theo trạng thái nợ;
+  agent không gửi.
+- Evidence lane: `evidence/v13_6_c06_pytest.log` (34 ca mới, 31 FAIL trên code
+  cũ; 27 file liên quan 1062 passed trên DB lane `samsam_v13_c06`),
+  `v13_6_c06_oldcode_fail.log` (đã thay đường scratch bằng `<code-cu>/`),
+  `v13_6_c06_e2e.log` (CLI trên DB lane, không LLM thật).
+- BLOCKED: GĐ Marketing chốt trụ nội dung thường ngày (`daily_posts.evergreen`)
+  + lịch chiến dịch `data/marketing_calendar.json` (GIẢ ĐỊNH); Pháp chế/Bên B
+  cấp XNQC cho TPBVSK, tự công bố cho thực phẩm, `allowed_channels`
+  facebook/zalo trong golden — hiện 0 SKU đủ readiness bài đăng nên ngày không
+  có chiến dịch chỉ soạn được 2/3 nháp (không gắn SKU), báo THIẾU exit 1; Bên B
+  cấp sổ công nợ thật (`dealer_ar` nạp tay) + sổ `dealers` (đại lý ngoài sổ
+  không có nháp nhắc nợ); Bên B ủy quyền người duyệt khối marketing/finance
+  (approvers rỗng, thuộc C04); lịch chạy hằng ngày `content --daily` thuộc C07;
+  GĐ tài chính chốt SLA 48h / risk medium của `ar_reminder` (GIẢ ĐỊNH); soạn bằng
+  LLM thật chưa verify E2E (không gọi API có phí — test dùng gateway giả).
+- Còn mở: `agents/mkt_director.py` chưa đổi — bản tin tuần chưa hiện số nháp
+  3/ngày theo ngày; ngày có số ô `post` chiến dịch > per_day thì phần dư chỉ báo
+  "vượt 3/ngày — GĐ Marketing quyết", không tự dời ngày; khóa daily nằm ở tiền
+  tố brief + index `left(brief,21)` (không đổi store.py thuộc C04) — muốn cột
+  riêng thì cần migration; đại lý trạng thái 'ended' vẫn nhận nháp nhắc nợ (ghi
+  trạng thái ở phần căn cứ) — Pháp chế xác nhận được phép nhắc nợ đối tác đã
+  chấm dứt.
+
+## Checklist v13.5-c04-uy-quyen-nguoi-duyet
+
+Gộp vào `v13-hop-dong` bởi merge agent đợt 3 (nhánh lane `v13-c04`, `6bb22d9`).
+
+- [x] v13.5 c04 (F08): `pipelines.auth.authorize` là cổng duy nhất cho mọi
+  quyết định người — approve/reject/override hàng duyệt chung, approve/reject
+  draft, xếp lịch đăng; cả CLI lẫn UI. Chế độ thực (AUTH_MODE local|proxy,
+  APPROVAL_ENFORCE hoặc DEPLOY): người phải thuộc `approvers` của đúng khối
+  (rỗng = chặn tới khi Bên B ủy quyền), vai trò tài khoản thuộc
+  `approver_roles`, CLI `--by` phải khớp login Postgres (`db_login`). Chế độ dev
+  chỉ chặn agent + tự duyệt và in cảnh báo.
+- [x] Function DB `approve_draft`, `decide_item` (approve), `override_qa`,
+  `approve_cogs` từ chối 'agent:'/'system:'/'auto_policy:' kể cả gọi thẳng SQL.
+  Lần bị chặn ghi `authz_denied` vào hash chain `agent_action_log`. Tab "Duyệt &
+  Lịch" hiện hàng duyệt chung theo khối người đăng nhập được quyết; thêm tab cho
+  `gd_ban_hang`, `ha_tang`. `agent_writer` được cấp cột `llm_usage` + trigger
+  chặn chi phí âm → FinOps chạy dưới login agent.
+- Evidence lane: `evidence/v13_5_c04_pytest.log` (27 ca với login Postgres tạm
+  thật, 24 FAIL trên code cũ; 2296 test liên quan pass), `v13_5_c04_ui_e2e.log`
+  (AppTest), `v13_5_c04_cli_e2e.log`, `v13_5_c04_migrate_e2e.log` (nâng cấp từ
+  main), `v13_5_c04_oldcode_fail.log`. Runbook mục 9: bật chế độ thực, giữ log
+  toàn kỳ HĐ, quyền đọc Bên A, xóa bản sao trong 30 ngày khi chấm dứt.
+- BLOCKED: Bên B ký văn bản ủy quyền người duyệt cho 9 khối (tới lúc đó
+  `approvers` trong `data/directors/*.json` rỗng và chế độ thực chặn mọi duyệt —
+  dev không tự điền); hạ tầng Bên B tạo login Postgres riêng mỗi người duyệt (in
+  role `app_human`), login agent (in role `agent_writer`), login Bên A (in role
+  `ben_a_reader`), khai `db_login` trong `data/users.json`, chỉ định người giữ
+  tài khoản quyền cao nhất; chuyển Streamlit/agent khỏi DSN owner còn cần grant
+  bảng nghiệp vụ (chunks, leads, plot_logs, products, orders... — SOP §5), hiện
+  chỉ luồng duyệt, enqueue và FinOps chạy dưới role tách; biên bản xóa bản sao
+  khi chấm dứt (HĐ 12.3/13.3d) cần mẫu PL05 (chưa có) + chữ ký hai bên.
+- Còn mở: các CLI khác có `--by` chưa qua `auth.authorize` (production
+  approve/intake, golden_store --approve-price, qr_trace sign/issue/revoke,
+  xnqc, rollout --promote, red_alert/intel_alert --ack, crm, doc_intake
+  --verify) — DB `approve_cogs` đã chặn agent nhưng các đường này chưa đối chiếu
+  approvers; `via='ui'` là tham số caller truyền — code giữ DSN owner gọi
+  `decide(via='ui')` sẽ bỏ qua ràng buộc db_login (phòng thủ thật = login riêng
+  + đưa app/agent khỏi DSN owner); gọi thẳng `approve_draft`/`decide_item` bằng
+  login `app_human` không đối chiếu approvers (chỉ chặn agent + người tạo) —
+  đưa approvers vào DB cần quyết định schema; HĐ 7.3(iii) số liệu Bên A không
+  sửa/xóa — `settlement_rows` (và orders thật) chưa có trigger append-only dù
+  không code nào UPDATE/DELETE; quyền Bên A đọc toàn bộ log (HĐ 7.2) qua login
+  vận hành kỹ thuật của Bên A — `ben_a_reader` cố ý không đọc
+  `agent_action_log` (có tên nhân sự), hai bên xác nhận; UI E2E chạy trên DSN
+  owner (db_role=postgres), chưa chạy UI dưới login `app_human` thật (tab khác
+  thiếu grant); fixture `tests/conftest.py` ép `auth._APPROVAL_FORCE=False` cho
+  test cũ — đã gộp cùng c06 không xung đột conftest.
+
+## Gộp v13 đợt 3 (c04 + c06)
+
+- `git merge --no-ff` v13-c04 (`6bb22d9`, không xung đột) rồi v13-c06
+  (`1be59f8`) vào `v13-hop-dong`. Xung đột c06: `AGENTS.md` (dòng Commands
+  v13.5 ↔ v13.6) và `docs/schema.sql` (khối cuối v13.5 c04 ↔ v13.6 c06) — khối
+  nối đuôi, giữ cả hai (c04 trước). Counter dòng so HEAD/MERGE_HEAD: 0 dòng mất ở
+  AGENTS.md, schema.sql; `v13-board.md` git tự gộp (mỗi lane thay dòng của mình,
+  hai dòng mới đều có). JSON đổi parse được, .py đổi ast.parse được.
+  `scripts/dpia_draft.py --check` khớp map (hai lane không đổi
+  data_flow_map) → không sinh lại.
+- DB `samsam_v13_m3`: `apply_schema --roles` ×2 sạch (75 bảng), core_store,
+  golden_store; `ruff check .` sạch.
+- Gate sau gộp (DB `samsam_v13_m3`): 27 file pytest (test 2 lane + auth/
+  approval_queue/store/content/acc_ar/mkt_*/director*/sales_director/rollout*/
+  listing/image/video studio/contract_check/v13 c01, c05 + drift handover/
+  data_flow_map/dpia/db_backup cloud README/connect_timeout) → 1029 passed, 0
+  failed. Không cần vá.
+
 ## Checklist v13.4-c05-media-vuon-provider
 
 Gộp vào `v13-hop-dong` bởi merge agent đợt 2 (nhánh lane `v13-c05`, `1cdf9ea`).
