@@ -1,0 +1,1305 @@
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.FFFFFFFFF.                    [100%]
+================================== FAILURES ===================================
+__________________________ test_authorize_allow_list __________________________
+
+cfg = {'approve': <function cfg.<locals>.approve at 0x000002D07F6B7920>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te...hahuy/pytest-2712/test_authorize_allow_list0/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F6B7740>}
+enforce = None
+
+    def test_authorize_allow_list(cfg, enforce):
+        """`allow` (người ký QR / người nhận cảnh báo đỏ) thay approvers khối,
+        vẫn bắt tài khoản + login khớp."""
+        a = auth.authorize
+>       ok, why = a("Nguyễn Ký", "production", "sign", allow=[],
+                    allow_src="data/qr_signers.json", db_login="l1")
+E       TypeError: authorize() got an unexpected keyword argument 'allow'
+
+tests\test_v14_p2_service_auth.py:89: TypeError
+_____________________ test_authorize_new_actions_dev_mode _____________________
+
+cfg = {'approve': <function cfg.<locals>.approve at 0x000002D07F6607C0>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te.../pytest-2712/test_authorize_new_actions_dev0/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F6609A0>}
+
+    def test_authorize_new_actions_dev_mode(cfg):
+        """Dev: hành động mới hợp lệ, vẫn chặn agent/system; hành động lạ chặn."""
+        for act in ("intake", "approve_price", "sign", "issue", "revoke",
+                    "set_status", "promote", "severe", "disable", "ack",
+                    "verify", "consent", "assign", "handoff", "load_dealers",
+                    "purge_sample", "adopt_plot"):
+>           assert auth.authorize("Lan", "sales", act) == (True, None), act
+E           AssertionError: intake
+E           assert (False, "hành... 'schedule')") == (True, None)
+E             
+E             At index 0 diff: False != True
+E             Use -v to get more diff
+
+tests\test_v14_p2_service_auth.py:114: AssertionError
+_ test_decision_clis_route_through_cli_gate[pipelines/production.py-cli_gate\\(conn, args\\.by, "production",\\s+"approve" if] _
+
+path = 'pipelines/production.py'
+pat = 'cli_gate\\(conn, args\\.by, "production",\\s+"approve" if'
+
+    @pytest.mark.parametrize("path, pat", GATES)
+    def test_decision_clis_route_through_cli_gate(path, pat):
+        src = (ROOT / path).read_text(encoding="utf-8")
+>       assert re.search(pat, src), (path, pat)
+E       AssertionError: ('pipelines/production.py', 'cli_gate\\(conn, args\\.by, "production",\\s+"approve" if')
+E       assert None
+E        +  where None = <function search at 0x000002D06CBF91C0>('cli_gate\\(conn, args\\.by, "production",\\s+"approve" if', '"""v9.2 Sản xuất P1 (WP13) — SX-A3 phân bổ tồn, SX-A4 BOM combo/hộp quà,\nSX-A5 hồ sơ lô + kiểm nhập, SX-A0 bản tin t...return cmd_intake(args)\n    return cmd_bulletin(args)\n\n\nif __name__ == "__main__":\n    raise SystemExit(main())\n')
+E        +    where <function search at 0x000002D06CBF91C0> = re.search
+
+tests\test_v14_p2_service_auth.py:142: AssertionError
+_ test_decision_clis_route_through_cli_gate[pipelines/production.py-cli_gate\\(conn, args\\.by, "production", "intake"] _
+
+path = 'pipelines/production.py'
+pat = 'cli_gate\\(conn, args\\.by, "production", "intake"'
+
+    @pytest.mark.parametrize("path, pat", GATES)
+    def test_decision_clis_route_through_cli_gate(path, pat):
+        src = (ROOT / path).read_text(encoding="utf-8")
+>       assert re.search(pat, src), (path, pat)
+E       AssertionError: ('pipelines/production.py', 'cli_gate\\(conn, args\\.by, "production", "intake"')
+E       assert None
+E        +  where None = <function search at 0x000002D06CBF91C0>('cli_gate\\(conn, args\\.by, "production", "intake"', '"""v9.2 Sản xuất P1 (WP13) — SX-A3 phân bổ tồn, SX-A4 BOM combo/hộp quà,\nSX-A5 hồ sơ lô + kiểm nhập, SX-A0 bản tin t...return cmd_intake(args)\n    return cmd_bulletin(args)\n\n\nif __name__ == "__main__":\n    raise SystemExit(main())\n')
+E        +    where <function search at 0x000002D06CBF91C0> = re.search
+
+tests\test_v14_p2_service_auth.py:142: AssertionError
+_ test_decision_clis_route_through_cli_gate[ingest/golden_store.py-cli_gate\\(conn, by, "sales", "approve_price"] _
+
+path = 'ingest/golden_store.py'
+pat = 'cli_gate\\(conn, by, "sales", "approve_price"'
+
+    @pytest.mark.parametrize("path, pat", GATES)
+    def test_decision_clis_route_through_cli_gate(path, pat):
+        src = (ROOT / path).read_text(encoding="utf-8")
+>       assert re.search(pat, src), (path, pat)
+E       AssertionError: ('ingest/golden_store.py', 'cli_gate\\(conn, by, "sales", "approve_price"')
+E       assert None
+E        +  where None = <function search at 0x000002D06CBF91C0>('cli_gate\\(conn, by, "sales", "approve_price"', '"""v3.2 golden master — nạp `data/golden_skus.json` vào bảng golden\n(`sku_master`, `sku_map`, `price_list`) + dựng p...            for k, v in totals.items()))\n    return 0\n\n\nif __name__ == "__main__":\n    raise SystemExit(main())\n')
+E        +    where <function search at 0x000002D06CBF91C0> = re.search
+
+tests\test_v14_p2_service_auth.py:142: AssertionError
+_ test_decision_clis_route_through_cli_gate[pipelines/qr_trace.py-_gate\\(conn, args\\.by, "sign"] _
+
+path = 'pipelines/qr_trace.py', pat = '_gate\\(conn, args\\.by, "sign"'
+
+    @pytest.mark.parametrize("path, pat", GATES)
+    def test_decision_clis_route_through_cli_gate(path, pat):
+        src = (ROOT / path).read_text(encoding="utf-8")
+>       assert re.search(pat, src), (path, pat)
+E       AssertionError: ('pipelines/qr_trace.py', '_gate\\(conn, args\\.by, "sign"')
+E       assert None
+E        +  where None = <function search at 0x000002D06CBF91C0>('_gate\\(conn, args\\.by, "sign"', '"""v9.4 Lô + QR truy xuất (WP13 VT — thí điểm mật ong, 3 chữ ký, phương án B).\n\nLuồng NGƯỜI (mọi bước ghi cần `--by...site,\n            "planb": cmd_planb}[args.cmd](args)\n\n\nif __name__ == "__main__":\n    raise SystemExit(main())\n')
+E        +    where <function search at 0x000002D06CBF91C0> = re.search
+
+tests\test_v14_p2_service_auth.py:142: AssertionError
+_ test_decision_clis_route_through_cli_gate[pipelines/qr_trace.py-_gate\\(conn, args\\.by, "issue"] _
+
+path = 'pipelines/qr_trace.py', pat = '_gate\\(conn, args\\.by, "issue"'
+
+    @pytest.mark.parametrize("path, pat", GATES)
+    def test_decision_clis_route_through_cli_gate(path, pat):
+        src = (ROOT / path).read_text(encoding="utf-8")
+>       assert re.search(pat, src), (path, pat)
+E       AssertionError: ('pipelines/qr_trace.py', '_gate\\(conn, args\\.by, "issue"')
+E       assert None
+E        +  where None = <function search at 0x000002D06CBF91C0>('_gate\\(conn, args\\.by, "issue"', '"""v9.4 Lô + QR truy xuất (WP13 VT — thí điểm mật ong, 3 chữ ký, phương án B).\n\nLuồng NGƯỜI (mọi bước ghi cần `--by...site,\n            "planb": cmd_planb}[args.cmd](args)\n\n\nif __name__ == "__main__":\n    raise SystemExit(main())\n')
+E        +    where <function search at 0x000002D06CBF91C0> = re.search
+
+tests\test_v14_p2_service_auth.py:142: AssertionError
+_ test_decision_clis_route_through_cli_gate[pipelines/qr_trace.py-_gate\\(conn, args\\.by, "revoke"] _
+
+path = 'pipelines/qr_trace.py', pat = '_gate\\(conn, args\\.by, "revoke"'
+
+    @pytest.mark.parametrize("path, pat", GATES)
+    def test_decision_clis_route_through_cli_gate(path, pat):
+        src = (ROOT / path).read_text(encoding="utf-8")
+>       assert re.search(pat, src), (path, pat)
+E       AssertionError: ('pipelines/qr_trace.py', '_gate\\(conn, args\\.by, "revoke"')
+E       assert None
+E        +  where None = <function search at 0x000002D06CBF91C0>('_gate\\(conn, args\\.by, "revoke"', '"""v9.4 Lô + QR truy xuất (WP13 VT — thí điểm mật ong, 3 chữ ký, phương án B).\n\nLuồng NGƯỜI (mọi bước ghi cần `--by...site,\n            "planb": cmd_planb}[args.cmd](args)\n\n\nif __name__ == "__main__":\n    raise SystemExit(main())\n')
+E        +    where <function search at 0x000002D06CBF91C0> = re.search
+
+tests\test_v14_p2_service_auth.py:142: AssertionError
+_ test_decision_clis_route_through_cli_gate[agents/xnqc.py-cli_gate\\(conn, a\\.by, "legal_hr", "set_status"] _
+
+path = 'agents/xnqc.py'
+pat = 'cli_gate\\(conn, a\\.by, "legal_hr", "set_status"'
+
+    @pytest.mark.parametrize("path, pat", GATES)
+    def test_decision_clis_route_through_cli_gate(path, pat):
+        src = (ROOT / path).read_text(encoding="utf-8")
+>       assert re.search(pat, src), (path, pat)
+E       AssertionError: ('agents/xnqc.py', 'cli_gate\\(conn, a\\.by, "legal_hr", "set_status"')
+E       assert None
+E        +  where None = <function search at 0x000002D06CBF91C0>('cli_gate\\(conn, a\\.by, "legal_hr", "set_status"', '"""v4.3 PC-A1 (WP05) — sổ hồ sơ XNQC theo SKU + nhắc mốc + đề xuất đồng bộ\ngolden.\n\nMỗi maket/kịch bản là 1 hồ sơ ...\n        return 2\n    finally:\n        conn.close()\n\n\nif __name__ == "__main__":\n    raise SystemExit(main())\n')
+E        +    where <function search at 0x000002D06CBF91C0> = re.search
+
+tests\test_v14_p2_service_auth.py:142: AssertionError
+_ test_decision_clis_route_through_cli_gate[pipelines/rollout.py-cli_gate\\(conn, a\\.by, blk, act] _
+
+path = 'pipelines/rollout.py', pat = 'cli_gate\\(conn, a\\.by, blk, act'
+
+    @pytest.mark.parametrize("path, pat", GATES)
+    def test_decision_clis_route_through_cli_gate(path, pat):
+        src = (ROOT / path).read_text(encoding="utf-8")
+>       assert re.search(pat, src), (path, pat)
+E       AssertionError: ('pipelines/rollout.py', 'cli_gate\\(conn, a\\.by, blk, act')
+E       assert None
+E        +  where None = <function search at 0x000002D06CBF91C0>('cli_gate\\(conn, a\\.by, blk, act', '"""v12.1 B1 — sổ triển khai 3 bước + hồ sơ đề nghị nghiệm thu (HĐ hợp tác\nTEDO–Sâm Sâm, PL02 mục 1).\n\nQuy trình HĐ...    return 2\n    finally:\n        conn.close()\n    return 0\n\n\nif __name__ == "__main__":\n    sys.exit(main())\n')
+E        +    where <function search at 0x000002D06CBF91C0> = re.search
+
+tests\test_v14_p2_service_auth.py:142: AssertionError
+_ test_decision_clis_route_through_cli_gate[pipelines/red_alert.py-cli_gate\\(conn, by, None, "ack"] _
+
+path = 'pipelines/red_alert.py', pat = 'cli_gate\\(conn, by, None, "ack"'
+
+    @pytest.mark.parametrize("path, pat", GATES)
+    def test_decision_clis_route_through_cli_gate(path, pat):
+        src = (ROOT / path).read_text(encoding="utf-8")
+>       assert re.search(pat, src), (path, pat)
+E       AssertionError: ('pipelines/red_alert.py', 'cli_gate\\(conn, by, None, "ack"')
+E       assert None
+E        +  where None = <function search at 0x000002D06CBF91C0>('cli_gate\\(conn, by, None, "ack"', '"""v4.0 W40.4 — cảnh báo đỏ tới người nhận ĐỘC LẬP (WP03).\n\nContract:\n  - Bảng `red_alerts` append-only: role ngườ...\n        return 1\n    finally:\n        conn.close()\n\n\nif __name__ == "__main__":\n    raise SystemExit(main())\n')
+E        +    where <function search at 0x000002D06CBF91C0> = re.search
+
+tests\test_v14_p2_service_auth.py:142: AssertionError
+_ test_decision_clis_route_through_cli_gate[ingest/crm.py-cli_gate\\(conn, by, "sales", gated] _
+
+path = 'ingest/crm.py', pat = 'cli_gate\\(conn, by, "sales", gated'
+
+    @pytest.mark.parametrize("path, pat", GATES)
+    def test_decision_clis_route_through_cli_gate(path, pat):
+        src = (ROOT / path).read_text(encoding="utf-8")
+>       assert re.search(pat, src), (path, pat)
+E       AssertionError: ('ingest/crm.py', 'cli_gate\\(conn, by, "sales", gated')
+E       assert None
+E        +  where None = <function search at 0x000002D06CBF91C0>('cli_gate\\(conn, by, "sales", gated', '"""KD-A2 (WP07, v5.2) — CRM lead & đại lý theo vùng: kho liên hệ\n(contact_vault) + đồng ý theo mục đích + gán đại lý...\n        return 1\n    finally:\n        conn.close()\n\n\nif __name__ == "__main__":\n    raise SystemExit(main())\n')
+E        +    where <function search at 0x000002D06CBF91C0> = re.search
+
+tests\test_v14_p2_service_auth.py:142: AssertionError
+_ test_decision_clis_route_through_cli_gate[ingest/doc_intake.py-cli_gate\\(conn, by, "legal_hr"] _
+
+path = 'ingest/doc_intake.py', pat = 'cli_gate\\(conn, by, "legal_hr"'
+
+    @pytest.mark.parametrize("path, pat", GATES)
+    def test_decision_clis_route_through_cli_gate(path, pat):
+        src = (ROOT / path).read_text(encoding="utf-8")
+>       assert re.search(pat, src), (path, pat)
+E       AssertionError: ('ingest/doc_intake.py', 'cli_gate\\(conn, by, "legal_hr"')
+E       assert None
+E        +  where None = <function search at 0x000002D06CBF91C0>('cli_gate\\(conn, by, "legal_hr"', '"""v3.8 WP04b / F15.1 — số hóa tài liệu công ty vào hệ thống CÓ KIỂM SOÁT.\n\nLuồng (flows_infra.md F15.1): thư mục i...\n        return 0\n    finally:\n        conn.close()\n\n\nif __name__ == "__main__":\n    raise SystemExit(main())\n')
+E        +    where <function search at 0x000002D06CBF91C0> = re.search
+
+tests\test_v14_p2_service_auth.py:142: AssertionError
+_ test_decision_clis_route_through_cli_gate[agents/fp_pnl.py-cli_gate\\(conn, by, "finance", "approve"] _
+
+path = 'agents/fp_pnl.py', pat = 'cli_gate\\(conn, by, "finance", "approve"'
+
+    @pytest.mark.parametrize("path, pat", GATES)
+    def test_decision_clis_route_through_cli_gate(path, pat):
+        src = (ROOT / path).read_text(encoding="utf-8")
+>       assert re.search(pat, src), (path, pat)
+E       AssertionError: ('agents/fp_pnl.py', 'cli_gate\\(conn, by, "finance", "approve"')
+E       assert None
+E        +  where None = <function search at 0x000002D06CBF91C0>('cli_gate\\(conn, by, "finance", "approve"', '"""v9.1 FP-COGS-PnL (WP12) — giá vốn theo SKU có ngày hiệu lực (người lập ≠\nngười duyệt, chặn ở DB) + P&L SKU × kênh...   with suppress(Exception):\n            conn.close()\n\n\nif __name__ == "__main__":\n    raise SystemExit(main())\n')
+E        +    where <function search at 0x000002D06CBF91C0> = re.search
+
+tests\test_v14_p2_service_auth.py:142: AssertionError
+_ test_decision_clis_route_through_cli_gate[agents/garden_director.py-conn, args\\.by, "farming",] _
+
+path = 'agents/garden_director.py', pat = 'conn, args\\.by, "farming",'
+
+    @pytest.mark.parametrize("path, pat", GATES)
+    def test_decision_clis_route_through_cli_gate(path, pat):
+        src = (ROOT / path).read_text(encoding="utf-8")
+>       assert re.search(pat, src), (path, pat)
+E       AssertionError: ('agents/garden_director.py', 'conn, args\\.by, "farming",')
+E       assert None
+E        +  where None = <function search at 0x000002D06CBF91C0>('conn, args\\.by, "farming",', '"""WP13 (VT) — Agent GĐ vùng trồng: bản tin tuần, nhắc lịch/gap, kiểm\nhash chain nhật ký, hồ sơ khoảnh (precheck + g...  f"nhận khoảnh (--adopt-plot {b[\'plot_id\']} --by)")\n\n\nif __name__ == "__main__":\n    raise SystemExit(main())\n')
+E        +    where <function search at 0x000002D06CBF91C0> = re.search
+
+tests\test_v14_p2_service_auth.py:142: AssertionError
+_________________________ test_service_dsn_selection __________________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002D07F604740>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2712/test_service_dsn_selection0')
+
+    def test_service_dsn_selection(monkeypatch, tmp_path):
+        monkeypatch.setattr(auth, "ENV_FILE", tmp_path / "no.env")
+        dev = {"DATABASE_URL": "postgresql://dev/x"}
+>       assert auth.service_dsn("job", {**dev, "AUTH_MODE": "dev"}) == (
+               ^^^^^^^^^^^^^^^^
+            "postgresql://dev/x", None)
+E       AttributeError: module 'pipelines.auth' has no attribute 'service_dsn'
+
+tests\test_v14_p2_service_auth.py:148: AttributeError
+____________________ test_service_entry_points_bind_login _____________________
+
+    def test_service_entry_points_bind_login():
+        """Webhook + job lịch + loader + backup chọn DSN dịch vụ ở đầu tiến trình."""
+        for path, svc in (("connectors/zalo.py", "webhook"),
+                          ("connectors/messenger.py", "webhook"),
+                          ("pipelines/job_runs.py", None),
+                          ("ingest/core_store.py", "loader"),
+                          ("ingest/golden_store.py", "loader"),
+                          ("ingest/market_csv.py", "loader"),
+                          ("ingest/settlement_csv.py", "loader"),
+                          ("ingest/inventory_csv.py", "loader"),
+                          ("ingest/intel_import.py", "loader"),
+                          ("ingest/embed_store.py", "loader"),
+                          ("ingest/kb_internal.py", "loader"),
+                          ("ingest/lead_store.py", "loader"),
+                          ("agents/kd_orders.py", "loader")):
+            src = (ROOT / path).read_text(encoding="utf-8")
+            want = "bind_service(svc)" if svc is None else \
+                f'bind_service("{svc}")'
+>           assert want in src, path
+E           AssertionError: connectors/zalo.py
+E           assert 'bind_service("webhook")' in '"""Zalo OA webhook connector — nhận event -> ACK 200 nhanh -> reply async.\n\nSpec webhook (docs.zaloplatforms.com):\..._can_refresh() else \'MISSING\'})", flush=True)\n    srv.serve_forever()\n\n\nif __name__ == "__main__":\n    main()\n'
+
+tests\test_v14_p2_service_auth.py:185: AssertionError
+______________________ test_settlement_rows_append_only _______________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f58b980>
+
+    def test_settlement_rows_append_only(db):
+        """HĐ 7.3 iii: dòng quyết toán thật không sửa/xóa — kể cả owner."""
+        db.execute("insert into settlement_rows (file_sha256, file_name, channel,"
+                   " row_no, order_id_hash, order_amount_vnd, payout_vnd)"
+                   " values (%s, 'qt.csv', 'shopee', 2, %s, 100000, 90000)",
+                   ("a" * 64, "b" * 16))
+        for sql in ("update settlement_rows set payout_vnd = 1",
+                    "delete from settlement_rows",
+                    "truncate settlement_rows cascade"):
+>           assert "append-only" in _raises(db, sql)
+                                    ^^^^^^^^^^^^^^^^
+
+tests\test_v14_p2_service_auth.py:260: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+conn = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f58b980>
+sql = 'update settlement_rows set payout_vnd = 1', args = ()
+exc = <class 'psycopg.errors.RaiseException'>
+
+    def _raises(conn, sql, args=(), exc=RaiseException):
+>       with pytest.raises(exc) as e, conn.transaction():
+             ^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.errors.RaiseException'>
+
+tests\test_v14_p2_service_auth.py:240: Failed
+___________________ test_orders_real_rows_kept_with_history ___________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d0728217c0>
+
+    def test_orders_real_rows_kept_with_history(db):
+        _order(db, "shopee:aaaa", "market:shopee", "new")
+        _order(db, "mau-1", "sample:sample_orders.jsonl")
+        # đơn thật: không xóa / không đổi mã / không chuyển thành mẫu / không TRUNCATE
+>       assert "không xóa" in _raises(
+            db, "delete from orders where id = 'shopee:aaaa'")
+
+tests\test_v14_p2_service_auth.py:269: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+conn = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d0728217c0>
+sql = "delete from orders where id = 'shopee:aaaa'", args = ()
+exc = <class 'psycopg.errors.RaiseException'>
+
+    def _raises(conn, sql, args=(), exc=RaiseException):
+>       with pytest.raises(exc) as e, conn.transaction():
+             ^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.errors.RaiseException'>
+
+tests\test_v14_p2_service_auth.py:240: Failed
+________________ test_kd_orders_resync_idempotent_and_history _________________
+
+db = <psycopg.Connection [INERROR] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f635bb0>
+
+    def test_kd_orders_resync_idempotent_and_history(db):
+        """Nạp lại cùng snapshot → 0 lịch sử; snapshot sau đổi trạng thái → 1."""
+        sid = db.execute(
+            "insert into market_snapshots (channel, export_kind, file_name,"
+            " file_sha256, row_count) values ('shopee', 'order', 'o.csv',"
+            " %s, 1) returning id", ("c" * 64,)).fetchone()[0]
+        db.execute("insert into market_rows (snapshot_id, row_no, channel,"
+                   " export_kind, order_id_hash, status, qty, price_vnd, raw)"
+                   " values (%s, 2, 'shopee', 'order', %s, 'Hoàn thành', 1,"
+                   " 100000, '{}')", (sid, "d" * 16))
+        tx = _Tx(db)
+        assert kd_orders.sync(tx)["inserted"] == 1
+        assert kd_orders.sync(tx)["unchanged"] == 1
+>       assert db.execute("select count(*) from order_history").fetchone() == (0,)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v14_p2_service_auth.py:309: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [INERROR] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f635bb0>
+query = 'select count(*) from order_history', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "order_history" does not exist
+E           LINE 1: select count(*) from order_history
+E                                        ^
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+_________ test_cli_enforced_arbitrary_by_rejected[production approve] _________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F6637E0>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te.../pytest-2712/test_cli_enforced_arbitrary_by0/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F6639C0>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F635F10>
+label = 'production approve', fn = <function main at 0x000002D07F7232E0>
+argv = ['approve', '--run', 'abcdef123456', '--by', 'Bất Kỳ Ai']
+otype = 'allocation_run', oid = 'abcdef123456', frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('production approve', '[err] không có run abcdef123456 — không ghi.
+E         ')
+E       assert 'Bên B ủy quyền' in '[err] không có run abcdef123456 — không ghi.\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+_________ test_cli_enforced_arbitrary_by_rejected[production reject] __________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F661080>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te.../pytest-2712/test_cli_enforced_arbitrary_by1/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F6631A0>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F635E20>
+label = 'production reject', fn = <function main at 0x000002D07F7232E0>
+argv = ['reject', '--run', 'abcdef123456', '--by', 'Bất Kỳ Ai']
+otype = 'allocation_run', oid = 'abcdef123456', frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('production reject', '[err] không có run abcdef123456 — không ghi.
+E         ')
+E       assert 'Bên B ủy quyền' in '[err] không có run abcdef123456 — không ghi.\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+_________ test_cli_enforced_arbitrary_by_rejected[production intake] __________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F663A60>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te.../pytest-2712/test_cli_enforced_arbitrary_by2/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F662840>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F635E80>
+label = 'production intake', fn = <function main at 0x000002D07F7232E0>
+argv = ['intake', '--lot', 'LOT-P2', '--result', 'passed', '--by', ...]
+otype = 'production_lot', oid = 'LOT-P2', frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('production intake', '[err] không có lô LOT-P2 — không ghi.
+E         ')
+E       assert 'Bên B ủy quyền' in '[err] không có lô LOT-P2 — không ghi.\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+________ test_cli_enforced_arbitrary_by_rejected[golden approve-price] ________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F6639C0>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te.../pytest-2712/test_cli_enforced_arbitrary_by3/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F6634C0>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F6036B0>
+label = 'golden approve-price', fn = <function main at 0x000002D072BCA660>
+argv = ['--approve-price', '7', '--by', 'Bất Kỳ Ai'], otype = 'price_list'
+oid = '7', frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('golden approve-price', '[err] lỗi DB, đã rollback: permission denied for table price_list
+E         ')
+E       assert 'Bên B ủy quyền' in '[err] lỗi DB, đã rollback: permission denied for table price_list\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+______________ test_cli_enforced_arbitrary_by_rejected[qr issue] ______________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F663240>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te.../pytest-2712/test_cli_enforced_arbitrary_by4/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F662E80>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F634770>
+label = 'qr issue', fn = <function main at 0x000002D07F6B56C0>
+argv = ['issue', '--lot', 'LOT-P2', '--by', 'Bất Kỳ Ai'], otype = 'qr_lot'
+oid = 'LOT-P2', frag = 'qr_signers'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('qr issue', '[err] lỗi DB, đã rollback: InsufficientPrivilege
+E         ')
+E       assert 'qr_signers' in '[err] lỗi DB, đã rollback: InsufficientPrivilege\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+_____________ test_cli_enforced_arbitrary_by_rejected[qr revoke] ______________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F8F8A40>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te.../pytest-2712/test_cli_enforced_arbitrary_by5/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F8F8400>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F634DA0>
+label = 'qr revoke', fn = <function main at 0x000002D07F6B56C0>
+argv = ['revoke', '--code', 'AAAAAAAAAAAAAAAAAAAAAA', '--by', 'Bất Kỳ Ai']
+otype = 'qr_code', oid = 'AAAAAAAAAAAA', frag = 'qr_signers'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('qr revoke', '[err] không có mã QR này — không ghi.
+E         ')
+E       assert 'qr_signers' in '[err] không có mã QR này — không ghi.\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+______________ test_cli_enforced_arbitrary_by_rejected[xnqc set] ______________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F8F9260>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te.../pytest-2712/test_cli_enforced_arbitrary_by6/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F8F9440>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F63E1B0>
+label = 'xnqc set', fn = <function main at 0x000002D07F587B00>
+argv = ['--set', '5', '--status', 'da_nop', '--ngay-nop', '2026-10-01', ...]
+otype = 'xnqc_dossier', oid = '5', frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('xnqc set', '[err] InsufficientPrivilege: permission denied for table xnqc_dossiers
+E         ')
+E       assert 'Bên B ủy quyền' in '[err] InsufficientPrivilege: permission denied for table xnqc_dossiers\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+__________ test_cli_enforced_arbitrary_by_rejected[rollout promote] ___________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F8F84A0>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te.../pytest-2712/test_cli_enforced_arbitrary_by7/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F8F9800>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F63D100>
+label = 'rollout promote', fn = <function main at 0x000002D072851EE0>
+argv = ['--promote', 'sales-01', '--by', 'Bất Kỳ Ai'], otype = 'feature_rollout'
+oid = 'sales-01', frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('rollout promote', '[FAIL] lỗi DB: permission denied for table feature_rollout
+E         ')
+E       assert 'Bên B ủy quyền' in '[FAIL] lỗi DB: permission denied for table feature_rollout\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+___________ test_cli_enforced_arbitrary_by_rejected[rollout severe] ___________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F8F8AE0>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te.../pytest-2712/test_cli_enforced_arbitrary_by8/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F8F8860>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F642870>
+label = 'rollout severe', fn = <function main at 0x000002D072851EE0>
+argv = ['--severe', 'sales-01', '--reason', 'lo_pii', '--by', 'Bất Kỳ Ai']
+otype = 'feature_rollout', oid = 'sales-01', frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('rollout severe', '[FAIL] lỗi DB: permission denied for table feature_rollout
+E         ')
+E       assert 'Bên B ủy quyền' in '[FAIL] lỗi DB: permission denied for table feature_rollout\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+__________ test_cli_enforced_arbitrary_by_rejected[rollout disable] ___________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F8F9F80>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te.../pytest-2712/test_cli_enforced_arbitrary_by9/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F8FA0C0>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F642B10>
+label = 'rollout disable', fn = <function main at 0x000002D072851EE0>
+argv = ['--disable', 'sales-01', '--by', 'Bất Kỳ Ai'], otype = 'feature_rollout'
+oid = 'sales-01', frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('rollout disable', '[FAIL] lỗi DB: permission denied for table feature_rollout
+E         ')
+E       assert 'Bên B ủy quyền' in '[FAIL] lỗi DB: permission denied for table feature_rollout\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+____________ test_cli_enforced_arbitrary_by_rejected[crm consent] _____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F663BA0>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te...pytest-2712/test_cli_enforced_arbitrary_by10/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F661580>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F63DEB0>
+label = 'crm consent', fn = <function main at 0x000002D07F4A4B80>
+argv = ['--consent', '3', '--purpose', 'cskh', '--grant', '--source', ...]
+otype = 'crm', oid = '3', frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('crm consent', '[err] lỗi DB — InsufficientPrivilege: permission denied for table contacts
+E         ')
+E       assert 'Bên B ủy quyền' in '[err] lỗi DB — InsufficientPrivilege: permission denied for table contacts\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+_____________ test_cli_enforced_arbitrary_by_rejected[crm assign] _____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F662F20>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te...pytest-2712/test_cli_enforced_arbitrary_by11/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F6637E0>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F63DAC0>
+label = 'crm assign', fn = <function main at 0x000002D07F4A4B80>
+argv = ['--assign', '4', '--dealer', 'DL-01', '--by', 'Bất Kỳ Ai']
+otype = 'crm', oid = '4', frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('crm assign', '[err] lỗi DB — InsufficientPrivilege: permission denied for table leads
+E         ')
+E       assert 'Bên B ủy quyền' in '[err] lỗi DB — InsufficientPrivilege: permission denied for table leads\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+__________ test_cli_enforced_arbitrary_by_rejected[crm load-dealers] __________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F663E20>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te...pytest-2712/test_cli_enforced_arbitrary_by12/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F661440>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F607C20>
+label = 'crm load-dealers', fn = <function main at 0x000002D07F4A4B80>
+argv = ['--load-dealers', '--by', 'Bất Kỳ Ai'], otype = 'crm', oid = 'dealers'
+frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('crm load-dealers', '[err] lỗi DB — InsufficientPrivilege: permission denied for table dealers
+E         ')
+E       assert 'Bên B ủy quyền' in '[err] lỗi DB — InsufficientPrivilege: permission denied for table dealers\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+_____________ test_cli_enforced_arbitrary_by_rejected[doc verify] _____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F663560>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te...pytest-2712/test_cli_enforced_arbitrary_by13/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F663EC0>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F6053A0>
+label = 'doc verify', fn = <function main at 0x000002D07F5FB380>
+argv = ['--verify', 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', '--by', 'Bất Kỳ Ai']
+otype = 'document', oid = 'ffffffffffff', frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+>       rc = fn(argv)
+             ^^^^^^^^
+
+tests\test_v14_p2_service_auth.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ingest\doc_intake.py:443: in main
+    if not set_review(conn, sha, status, by):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ingest\doc_intake.py:377: in set_review
+    cur = conn.execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [BAD] at 0x2d07f636c00>
+query = "update documents set status = %s, verified_by = %s, verified_at = now() where sha256 = %s and status = 'pending_review'"
+params = ('verified', 'Bất Kỳ Ai', 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table documents
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: InsufficientPrivilege
+_____________ test_cli_enforced_arbitrary_by_rejected[doc reject] _____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F8F8AE0>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te...pytest-2712/test_cli_enforced_arbitrary_by14/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F8F9940>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F642BD0>
+label = 'doc reject', fn = <function main at 0x000002D07F5FB380>
+argv = ['--reject', 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', '--by', 'Bất Kỳ Ai']
+otype = 'document', oid = 'ffffffffffff', frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+>       rc = fn(argv)
+             ^^^^^^^^
+
+tests\test_v14_p2_service_auth.py:470: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ingest\doc_intake.py:443: in main
+    if not set_review(conn, sha, status, by):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ingest\doc_intake.py:377: in set_review
+    cur = conn.execute(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [BAD] at 0x2d07f641fa0>
+query = "update documents set status = %s, verified_by = %s, verified_at = now() where sha256 = %s and status = 'pending_review'"
+params = ('rejected', 'Bất Kỳ Ai', 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: permission denied for table documents
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: InsufficientPrivilege
+____________ test_cli_enforced_arbitrary_by_rejected[cogs approve] ____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F8F9E40>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te...pytest-2712/test_cli_enforced_arbitrary_by15/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F8F9EE0>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F643950>
+label = 'cogs approve', fn = <function main at 0x000002D07F1EBC40>
+argv = ['--cogs-approve', '9', '--by', 'Bất Kỳ Ai'], otype = 'cogs_versions'
+oid = '9', frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('cogs approve', '[err] giá vốn #9: không tìm thấy giá vốn #9
+E         ')
+E       assert 'Bên B ủy quyền' in '[err] giá vốn #9: không tìm thấy giá vốn #9\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+____________ test_cli_enforced_arbitrary_by_rejected[garden purge] ____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F8F8360>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te...pytest-2712/test_cli_enforced_arbitrary_by16/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F8F9800>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F6423C0>
+label = 'garden purge', fn = <function main at 0x000002D07F5860C0>
+argv = ['--purge-sample', '--by', 'Bất Kỳ Ai'], otype = 'plots', oid = 'sample'
+frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('garden purge', '[err] lỗi DB InsufficientPrivilege: permission denied for table plots — đã chạy `python scripts/apply_schema.py`?
+E         ')
+E       assert 'Bên B ủy quyền' in '[err] lỗi DB InsufficientPrivilege: permission denied for table plots — đã chạy `python scripts/apply_schema.py`?\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+____________ test_cli_enforced_arbitrary_by_rejected[garden adopt] ____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F663EC0>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te...pytest-2712/test_cli_enforced_arbitrary_by17/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F663B00>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D07F640500>
+label = 'garden adopt', fn = <function main at 0x000002D07F5860C0>
+argv = ['--adopt-plot', 'K-01', '--by', 'Bất Kỳ Ai'], otype = 'plots'
+oid = 'K-01', frag = 'Bên B ủy quyền'
+
+    @pytest.mark.parametrize("label, fn, argv, otype, oid, frag",
+                             CLI_CASES, ids=[c[0] for c in CLI_CASES])
+    def test_cli_enforced_arbitrary_by_rejected(live, human, capsys, label, fn,
+                                                argv, otype, oid, frag):
+        """Probe F08 ở biên CLI: chế độ thực, approvers/qr_signers THẬT rỗng,
+        login app_human → `--by <tên tùy ý>` bị chặn TRƯỚC khi ghi, lần bị chặn
+        vào log hash chain (code cũ: không cổng, không `authz_denied`)."""
+        before = _denied(live, otype, oid)
+        rc = fn(argv)
+        out = capsys.readouterr()
+        text = out.out + out.err
+        assert rc != 0, (label, text)
+>       assert frag in text, (label, text)
+E       AssertionError: ('garden adopt', '[err] lỗi DB InsufficientPrivilege: permission denied for table plots — đã chạy `python scripts/apply_schema.py`?
+E         ')
+E       assert 'Bên B ủy quyền' in '[err] lỗi DB InsufficientPrivilege: permission denied for table plots — đã chạy `python scripts/apply_schema.py`?\n'
+
+tests\test_v14_p2_service_auth.py:474: AssertionError
+___________________ test_qr_sign_requires_account_and_login ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F17FCE0>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te.../pytest-2712/test_qr_sign_requires_account_0/directors'), 'users': <function cfg.<locals>.users at 0x000002D072C036A0>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D072B50200>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2712/test_qr_sign_requires_account_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002D072B50EF0>
+
+    def test_qr_sign_requires_account_and_login(live, human, capsys, tmp_path,
+                                                monkeypatch):
+        """Người ký có tên trong qr_signers nhưng không có tài khoản/login của
+        mình → chặn (code cũ: tên tự khai trong allowlist là đủ)."""
+        sf = tmp_path / "qr_signers.json"
+        sf.write_text(json.dumps({"status": "test", "roles": {
+            "gd_san_xuat": ["Nguyễn Ký"], "gd_vung_trong": [],
+            "phap_che_qa": []}}, ensure_ascii=False), encoding="utf-8")
+        monkeypatch.setattr(qr_trace, "SIGNERS_FILE", sf)
+        argv = ["sign", "--lot", "LOT-P2", "--role", "gd_san_xuat", "--by",
+                "Nguyễn Ký"]
+        before = _denied(live, "qr_lot", "LOT-P2")
+        assert qr_trace.main(argv) == 1
+>       assert "chưa có tài khoản" in capsys.readouterr().out
+E       AssertionError: assert 'chưa có tài khoản' in '[err] lỗi DB, đã rollback: InsufficientPrivilege\n'
+E        +  where '[err] lỗi DB, đã rollback: InsufficientPrivilege\n' = CaptureResult(out='[err] lỗi DB, đã rollback: InsufficientPrivilege\n', err='').out
+E        +    where CaptureResult(out='[err] lỗi DB, đã rollback: InsufficientPrivilege\n', err='') = readouterr()
+E        +      where readouterr = <_pytest.capture.CaptureFixture object at 0x000002D072B50200>.readouterr
+
+tests\test_v14_p2_service_auth.py:491: AssertionError
+___________________ test_cli_authorized_person_passes_gate ____________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+human = {'approve': <function cfg.<locals>.approve at 0x000002D07F663D80>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te.../pytest-2712/test_cli_authorized_person_pas0/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F662AC0>}
+capsys = <_pytest.capture.CaptureFixture object at 0x000002D072BAF650>
+
+    def test_cli_authorized_person_passes_gate(live, human, capsys):
+        """Đúng người được ủy quyền khối + login của chính họ → qua cổng (lỗi
+        sau đó là nghiệp vụ: run/lô không tồn tại), không ghi `authz_denied`."""
+        human["approve"]("production", PERSON)
+        human["users"]({PERSON: {"role": "tgd",
+                                 "db_login": live["name"]["app_human"]}})
+        before = _denied(live, "production_lot", "LOT-OK")
+        rc = production.main(["intake", "--lot", "LOT-OK", "--result", "passed",
+                              "--by", PERSON])
+        out = capsys.readouterr().out
+        assert rc == 1 and "ủy quyền" not in out and "login" not in out, out
+        assert _denied(live, "production_lot", "LOT-OK") == before
+        # sai login (người khác chạy bằng login này) → chặn
+        human["users"]({PERSON: {"role": "tgd", "db_login": "login_khac"}})
+        assert production.main(["intake", "--lot", "LOT-OK", "--result",
+                                "passed", "--by", PERSON]) == 1
+>       assert "login Postgres" in capsys.readouterr().out
+E       AssertionError: assert 'login Postgres' in '[err] không có lô LOT-OK — không ghi.\n'
+E        +  where '[err] không có lô LOT-OK — không ghi.\n' = CaptureResult(out='[err] không có lô LOT-OK — không ghi.\n', err='').out
+E        +    where CaptureResult(out='[err] không có lô LOT-OK — không ghi.\n', err='') = readouterr()
+E        +      where readouterr = <_pytest.capture.CaptureFixture object at 0x000002D072BAF650>.readouterr
+
+tests\test_v14_p2_service_auth.py:520: AssertionError
+_____________________ test_red_alert_ack_needs_own_login ______________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+cfg = {'approve': <function cfg.<locals>.approve at 0x000002D07F662980>, 'dir': WindowsPath('C:/Users/hahuy/AppData/Local/Te.../pytest-2712/test_red_alert_ack_needs_own_l0/directors'), 'users': <function cfg.<locals>.users at 0x000002D07F6634C0>}
+enforce = None
+
+    def test_red_alert_ack_needs_own_login(live, cfg, enforce):
+        """Người nhận độc lập phải ack bằng login của chính họ."""
+        with _login(live, "svc_job") as j:
+            ok, _ = ra.raise_alert(j, "agent:p2", "Lô lỗi p2",
+                                   routing={"recipients": []})
+        aid = _admin_q(live, "select max(id) from red_alerts")[0][0]
+        routing = {"recipients": [{"name": "PC Giả Lập", "role": "phap_che",
+                                   "channel": "email:pc@vi-du.test"}]}
+        with _login(live, "app_human") as h:
+            ok, msg = ra.ack(h, aid, "PC Giả Lập", routing=routing)
+>           assert not ok and "tài khoản" in msg
+E           assert (not True)
+
+tests\test_v14_p2_service_auth.py:534: AssertionError
+---------------------------- Captured stderr call -----------------------------
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+__________________ test_deny_log_does_not_commit_caller_work __________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+enforce = None
+
+    def test_deny_log_does_not_commit_caller_work(live, enforce):
+        with _login(live, "app_human") as c:
+            c.execute("insert into content_drafts (brief, channel, text,"
+                      " guardrail, source, created_by) values ('p2-dang-do',"
+                      " 'facebook', 'x', '{}'::jsonb, 'cli', 'Lan')")
+            auth.deny_log(c, ANY, "sales", "approve", "p2_probe", "dang-do",
+                          "lý do thử")
+            c.rollback()
+            # kết nối rảnh → ghi trong transaction riêng, không để tx mở
+            auth.deny_log(c, ANY, "sales", "approve", "p2_probe", "ranh",
+                          "lý do thử")
+            assert c.info.transaction_status == psycopg.pq.TransactionStatus.IDLE
+>       assert _admin_q(live, "select count(*) from content_drafts where brief"
+                        " = 'p2-dang-do'") == [(0,)]
+E       assert [(1,)] == [(0,)]
+E         
+E         At index 0 diff: (1,) != (0,)
+E         Use -v to get more diff
+
+tests\test_v14_p2_service_auth.py:558: AssertionError
+_______________ test_service_logins_not_owner_and_role_checked ________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+enforce = None
+
+    def test_service_logins_not_owner_and_role_checked(live, enforce):
+        for grp in SERVICE_GROUPS:
+            with _login(live, grp) as c:
+>               assert auth.privileged_login(c) is None, grp
+                       ^^^^^^^^^^^^^^^^^^^^^
+E               AttributeError: module 'pipelines.auth' has no attribute 'privileged_login'
+
+tests\test_v14_p2_service_auth.py:587: AttributeError
+_________________________ test_bind_service_enforced __________________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+enforce = None
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002D072D0F290>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2712/test_bind_service_enforced0')
+
+    def test_bind_service_enforced(live, enforce, monkeypatch, tmp_path):
+        monkeypatch.setattr(auth, "ENV_FILE", tmp_path / "no.env")
+        monkeypatch.setenv("DATABASE_URL", "postgresql://khong-dung/x")
+        monkeypatch.setenv("WEBHOOK_DATABASE_URL", live["dsn"]["admin"])
+>       assert auth.bind_service("webhook")            # owner/superuser → chặn
+               ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.auth' has no attribute 'bind_service'
+
+tests\test_v14_p2_service_auth.py:607: AttributeError
+_________________ test_job_wrapper_runs_steps_under_job_login _________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+enforce = None
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002D072B69700>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2712/test_job_wrapper_runs_steps_un0')
+
+    def test_job_wrapper_runs_steps_under_job_login(live, enforce, monkeypatch,
+                                                    tmp_path):
+        monkeypatch.setattr(auth, "ENV_FILE", tmp_path / "no.env")
+        monkeypatch.setenv("DATABASE_URL", live["dsn"]["admin"])
+        rec = []
+        monkeypatch.setattr(job_runs, "_record", lambda *a: rec.append(a))
+        jobs = {"x": {"on_calendar": "*-*-* 01:00:00", "max_gap_hours": 1,
+                      "steps": [["-m", "a"]]}}
+        seen = []
+    
+        def runner(argv, cwd, timeout):
+            seen.append(os.environ["DATABASE_URL"])
+            return type("R", (), {"returncode": 0})
+    
+        def run():
+            return job_runs.run_scheduled("x", jobs=jobs, lock_dir=tmp_path,
+                                          runner=runner)
+        monkeypatch.delenv("JOB_DATABASE_URL", raising=False)
+>       assert run() == job_runs.EXIT_SERVICE and seen == []   # thiếu biến
+                        ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'pipelines.job_runs' has no attribute 'EXIT_SERVICE'
+
+tests\test_v14_p2_service_auth.py:633: AttributeError
+____________________ test_webhook_login_does_its_job_only _____________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+
+    def test_webhook_login_does_its_job_only(live):
+        """Webhook: đồng ý chat + mục handoff/gợi ý + đọc KB công khai được;
+        KB nội bộ, PII, đơn, payload hàng duyệt, duyệt — không."""
+        uh = "ab" * 16
+        inb = channels.Inbound("zalo", uh, "hỏi giá hộp quà", "2026-10-16T08:00")
+        with _login(live, "svc_webhook") as c:
+>           assert channels.record_consent(inb, "prompted", "m1", conn=c)
+E           AssertionError: assert None
+E            +  where None = <function record_consent at 0x000002D072CE0FE0>(Inbound(channel='zalo', user_hash='abababababababababababababababab', text='hỏi giá hộp quà', ts='2026-10-16T08:00'), 'prompted', 'm1', conn=<psycopg.Connection [IDLE] (host=localhost user=t_p2_svc_webhook_5fd359b627 database=samsam_v14_p2) at 0x2d072b68f80>)
+E            +    where <function record_consent at 0x000002D072CE0FE0> = channels.record_consent
+
+tests\test_v14_p2_service_auth.py:649: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[warn] channels: ghi chat_consents lỗi InsufficientPrivilege
+___________________ test_job_login_report_steps_match_owner ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2712/test_job_login_report_steps_ma0')
+
+    def test_job_login_report_steps_match_owner(live, tmp_path):
+        """Bước lịch đọc nhiều bảng (báo cáo TGĐ, báo cáo vận hành tháng) chạy
+        dưới login svc_job cho ĐÚNG kết quả như owner — không có mục âm thầm
+        'lỗi đọc … InsufficientPrivilege'."""
+        a = live["admin"]
+        with a.transaction():
+            a.execute(f"set local search_path to {live['schema']}")
+            a.execute("insert into channel_snapshots (channel, metric_id,"
+                      " period_kind, period_start, value, source, source_ref,"
+                      " captured_by) values ('shopee', 'gmv', 'week',"
+                      " date_trunc('week', now() - interval '7 days')::date,"
+                      " 1000000, 'manual_export', 'f.csv', 'Lan')")
+        for argv in (["-m", "agents.ceo_report", "--period", "week"],
+                     ["scripts/ops_monthly.py", "--month", "prev"]):
+            outs = {}
+            for who in ("admin", "svc_job"):
+                d = tmp_path / f"{argv[1]}-{who}"
+                rc, text = _run([*argv, "--out-dir", str(d)], live["dsn"][who],
+                                tmp_path)
+>               assert rc == 0, (argv, who, text)
+E               AssertionError: (['-m', 'agents.ceo_report', '--period', 'week'], 'svc_job', '[job-runs] ghi job_runs lỗi (InsufficientPrivilege) — job vẫn chạy bình thường
+E                 [error] lỗi DB: permission denied for table channel_snapshots
+E                 ')
+E               assert 2 == 0
+
+tests\test_v14_p2_service_auth.py:706: AssertionError
+_______________ test_loader_login_loads_files_and_cannot_erase ________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2712/test_loader_login_loads_files_0')
+
+    def test_loader_login_loads_files_and_cannot_erase(live, tmp_path):
+        fx = ROOT / "tests" / "fixtures"
+        dsn = live["dsn"]["svc_loader"]
+        for argv in (["-m", "ingest.market_csv", "--file",
+                      str(fx / "market" / "fixture_shopee_order.csv"),
+                      "--channel", "shopee", "--kind", "order"],
+                     ["-m", "agents.kd_orders", "--sync"],
+                     ["-m", "ingest.settlement_csv", "--file",
+                      str(fx / "finance" / "settlement_shopee_MAU.csv"),
+                      "--channel", "shopee"],
+                     ["-m", "ingest.inventory_csv", "--file",
+                      str(ROOT / "data" / "sample_inventory.csv"),
+                      "--source", "sample"]):
+            rc, text = _run(argv, dsn, tmp_path)
+>           assert rc == 0, (argv, text)
+E           AssertionError: (['-m', 'ingest.market_csv', '--file', 'D:\\code\\samsam\\.claude\\worktrees\\wf_67edb33c-c7a-2\\tests\\fixtures\\mark...v', '--channel', 'shopee', ...], '[err] thiếu bảng market_* / golden — chạy `python scripts/apply_schema.py` trước.
+E             ')
+E           assert 1 == 0
+
+tests\test_v14_p2_service_auth.py:746: AssertionError
+______________ test_backup_login_reads_everything_writes_nothing ______________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+
+    def test_backup_login_reads_everything_writes_nothing(live):
+        tables = [r[0] for r in _admin_q(
+            live, "select tablename from pg_tables where schemaname ="
+                  " current_schema() and tablename <> 't_owned' order by 1")]
+        assert len(tables) > 50
+        with _login(live, "svc_backup") as c:
+            for t in tables:
+>               c.execute(f"select count(*) from {t}").fetchone()
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v14_p2_service_auth.py:780: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [BAD] at 0x2d07286b2f0>
+query = 'select count(*) from ad_test_plans', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "ad_test_plans" does not exist
+E           LINE 1: select count(*) from ad_test_plans
+E                                        ^
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+_______________ test_bks_audit_watches_ben_a_and_service_roles ________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d07f637bc0>, 'dsn': {...svc_backup': 't_p2_svc_backup_5fd359b627', 'svc_job': 't_p2_svc_job_5fd359b627', ...}, 'schema': 't_v14p2l_5fd359b627'}
+
+    def test_bks_audit_watches_ben_a_and_service_roles(live):
+>       assert {"ben_a_reader", *SERVICE_GROUPS} <= set(bks_audit.WATCH_ROLES)
+E       AssertionError: assert {'ben_a_reade...'svc_webhook'} <= {'agent_write... 'bks_reader'}
+E         
+E         Extra items in the left set:
+E         'svc_job'
+E         'svc_loader'
+E         'svc_backup'
+E         'svc_webhook'
+E         'ben_a_reader'
+
+tests\test_v14_p2_service_auth.py:793: AssertionError
+_____________ test_ack_enforced_mode_only_independent_recipients ______________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v14_p2) at 0x2d072cb5490>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002D072B85A30>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2712/test_ack_enforced_mode_only_in0')
+
+    def test_ack_enforced_mode_only_independent_recipients(db, monkeypatch,
+                                                          tmp_path):
+        """v14.2 (p2) FLIP có lý do: chế độ thực trước đây chỉ so TÊN tự khai với
+        danh sách người nhận — `--by "phap che gia lap"` từ bất kỳ login nào
+        cũng xác nhận được. Nay thêm: người nhận phải có tài khoản users file
+        và `--by` khớp login Postgres đang dùng (`auth.cli_gate`)."""
+        monkeypatch.setattr(auth, "_APPROVAL_FORCE", True)
+        monkeypatch.setattr(auth, "ENV_FILE", tmp_path / "no.env")
+        uf = tmp_path / "users.json"
+        uf.write_text("{}", encoding="utf-8")
+        monkeypatch.setenv("AUTH_USERS_FILE", str(uf))
+        tx = TxConn(db)
+        ra.raise_alert(tx, "agent:x", "Lô lỗi", routing={"recipients": []})
+        aid = db.execute("select max(id) from red_alerts").fetchone()[0]
+        routing = {"recipients": [RCP, {**RCP, "name": "TGD", "role": "tgd"}]}
+        ok, msg = ra.ack(tx, aid, "TGD", routing=routing)
+        assert ok is False and "chế độ thực" in msg
+        ok, msg = ra.ack(tx, aid, "phap che gia lap", routing=routing)
+>       assert ok is False and "tài khoản" in msg          # tên tự khai không đủ
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert (True is False)
+
+tests\test_v13_c07_ops.py:201: AssertionError
+---------------------------- Captured stderr call -----------------------------
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+=========================== short test summary info ===========================
+FAILED tests/test_v14_p2_service_auth.py::test_authorize_allow_list - TypeErr...
+FAILED tests/test_v14_p2_service_auth.py::test_authorize_new_actions_dev_mode
+FAILED tests/test_v14_p2_service_auth.py::test_decision_clis_route_through_cli_gate[pipelines/production.py-cli_gate\\(conn, args\\.by, "production",\\s+"approve" if]
+FAILED tests/test_v14_p2_service_auth.py::test_decision_clis_route_through_cli_gate[pipelines/production.py-cli_gate\\(conn, args\\.by, "production", "intake"]
+FAILED tests/test_v14_p2_service_auth.py::test_decision_clis_route_through_cli_gate[ingest/golden_store.py-cli_gate\\(conn, by, "sales", "approve_price"]
+FAILED tests/test_v14_p2_service_auth.py::test_decision_clis_route_through_cli_gate[pipelines/qr_trace.py-_gate\\(conn, args\\.by, "sign"]
+FAILED tests/test_v14_p2_service_auth.py::test_decision_clis_route_through_cli_gate[pipelines/qr_trace.py-_gate\\(conn, args\\.by, "issue"]
+FAILED tests/test_v14_p2_service_auth.py::test_decision_clis_route_through_cli_gate[pipelines/qr_trace.py-_gate\\(conn, args\\.by, "revoke"]
+FAILED tests/test_v14_p2_service_auth.py::test_decision_clis_route_through_cli_gate[agents/xnqc.py-cli_gate\\(conn, a\\.by, "legal_hr", "set_status"]
+FAILED tests/test_v14_p2_service_auth.py::test_decision_clis_route_through_cli_gate[pipelines/rollout.py-cli_gate\\(conn, a\\.by, blk, act]
+FAILED tests/test_v14_p2_service_auth.py::test_decision_clis_route_through_cli_gate[pipelines/red_alert.py-cli_gate\\(conn, by, None, "ack"]
+FAILED tests/test_v14_p2_service_auth.py::test_decision_clis_route_through_cli_gate[ingest/crm.py-cli_gate\\(conn, by, "sales", gated]
+FAILED tests/test_v14_p2_service_auth.py::test_decision_clis_route_through_cli_gate[ingest/doc_intake.py-cli_gate\\(conn, by, "legal_hr"]
+FAILED tests/test_v14_p2_service_auth.py::test_decision_clis_route_through_cli_gate[agents/fp_pnl.py-cli_gate\\(conn, by, "finance", "approve"]
+FAILED tests/test_v14_p2_service_auth.py::test_decision_clis_route_through_cli_gate[agents/garden_director.py-conn, args\\.by, "farming",]
+FAILED tests/test_v14_p2_service_auth.py::test_service_dsn_selection - Attrib...
+FAILED tests/test_v14_p2_service_auth.py::test_service_entry_points_bind_login
+FAILED tests/test_v14_p2_service_auth.py::test_settlement_rows_append_only - ...
+FAILED tests/test_v14_p2_service_auth.py::test_orders_real_rows_kept_with_history
+FAILED tests/test_v14_p2_service_auth.py::test_kd_orders_resync_idempotent_and_history
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[production approve]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[production reject]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[production intake]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[golden approve-price]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[qr issue]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[qr revoke]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[xnqc set]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[rollout promote]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[rollout severe]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[rollout disable]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[crm consent]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[crm assign]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[crm load-dealers]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[doc verify]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[doc reject]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[cogs approve]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[garden purge]
+FAILED tests/test_v14_p2_service_auth.py::test_cli_enforced_arbitrary_by_rejected[garden adopt]
+FAILED tests/test_v14_p2_service_auth.py::test_qr_sign_requires_account_and_login
+FAILED tests/test_v14_p2_service_auth.py::test_cli_authorized_person_passes_gate
+FAILED tests/test_v14_p2_service_auth.py::test_red_alert_ack_needs_own_login
+FAILED tests/test_v14_p2_service_auth.py::test_deny_log_does_not_commit_caller_work
+FAILED tests/test_v14_p2_service_auth.py::test_service_logins_not_owner_and_role_checked
+FAILED tests/test_v14_p2_service_auth.py::test_bind_service_enforced - Attrib...
+FAILED tests/test_v14_p2_service_auth.py::test_job_wrapper_runs_steps_under_job_login
+FAILED tests/test_v14_p2_service_auth.py::test_webhook_login_does_its_job_only
+FAILED tests/test_v14_p2_service_auth.py::test_job_login_report_steps_match_owner
+FAILED tests/test_v14_p2_service_auth.py::test_loader_login_loads_files_and_cannot_erase
+FAILED tests/test_v14_p2_service_auth.py::test_backup_login_reads_everything_writes_nothing
+FAILED tests/test_v14_p2_service_auth.py::test_bks_audit_watches_ben_a_and_service_roles
+FAILED tests/test_v13_c07_ops.py::test_ack_enforced_mode_only_independent_recipients
+51 failed, 2 passed in 20.60s
