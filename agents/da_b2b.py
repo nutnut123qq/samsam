@@ -71,6 +71,7 @@ STATUSES = ("moi", "cho_duyet", "chuyen_sales")
 MAX_BYTES = 1_000_000
 MAX_URL = 500
 BLOCK = "sales"
+LEGACY_BLOCK = "projects"   # khối cũ trước v12.0 (đã gỡ)
 OBJECT_TYPE = "org_prospect_batch"
 FOOTER = ("Hệ thống KHÔNG tự liên hệ — GĐ bán hàng/đại lý liên hệ sau khi "
           "duyệt.")
@@ -297,7 +298,9 @@ def handover(conn, qid: int) -> tuple[bool, str, int]:
     """→ (ok, thông điệp, số dòng đổi). Chỉ đổi khi người đã quyết."""
     row = conn.execute("select block, object_type, status from"
                        " approval_queue where id = %s", (qid,)).fetchone()
-    if row is None or row[0] != BLOCK or row[1] != OBJECT_TYPE:
+    # v12.0: lô nộp trước v12.0 nằm ở khối `projects` (đã gỡ) — vẫn nhận để
+    # dòng 'cho_duyet' của lô cũ không kẹt vĩnh viễn (trả 'moi'/chuyển sales).
+    if row is None or row[0] not in (BLOCK, LEGACY_BLOCK)             or row[1] != OBJECT_TYPE:
         return False, f"mục #{qid} không phải lô `{OBJECT_TYPE}`", 0
     if row[2] in ("rejected", "expired"):
         # Lô kết thúc không duyệt → trả dòng về 'moi' để lập lô mới (không

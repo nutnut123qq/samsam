@@ -87,6 +87,8 @@ bảng cũ trên DB đang chạy (`machines`, `maintenance_plans`, `incidents`,
 `programs`) KHÔNG drop — người quản trị quyết sau khi backup; sổ mốc theo lịch
 P1 của HĐ chờ hai bên chốt. Commit trên `main`, KHÔNG push.
 
+- [x] A9 Vá review v12.0: (1) `AGENTS.md` khôi phục dòng Commands của `da_b2b`/`da_pmo` (module GIỮ, bị xóa nhầm theo dòng phòng Dự án); (2) mục hàng duyệt nộp TRƯỚC v12.0 ở khối `projects` (đã gỡ): `da_b2b.handover` + `da_pmo.apply_due` nhận thêm khối cũ `projects` (`LEGACY_BLOCK`) — lô `org_prospect_batch` cũ không kẹt `cho_duyet`, `milestone_change` cũ áp dụng được sau duyệt; test hồi quy 2 file. Mục cũ khối `projects`/`mechanical` KHÔNG còn vào bản tin `pipelines.director` (khối đã gỡ) — xem bằng `python -m pipelines.approval_queue --pending --block projects` (và `mechanical`); DB `.env` chưa truy vấn nên chưa biết có mục cũ hay không.
+
 ## Checklist v11.0-p3
 
 Khán giả/mục đích: M31 (worktree `D:\code\samsam-w95`) — làm 3 agent P3 của

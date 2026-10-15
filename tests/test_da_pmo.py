@@ -348,3 +348,20 @@ def test_apply_due_older_approval_blocked(db, monkeypatch):
     assert _due(db, "DA-05") == date(2026, 11, 21)
     assert _cli(db, monkeypatch, "--apply-due", str(q2), "--by", "X") == 0
     assert _due(db, "DA-05") == date(2026, 12, 2)
+
+
+def test_apply_due_legacy_projects_block(db, monkeypatch):
+    """v12.0 review: đề xuất đổi hạn nộp trước v12.0 (khối `projects` đã gỡ)
+    vẫn áp dụng được sau khi người duyệt — không kẹt vĩnh viễn."""
+    assert _cli(db, monkeypatch, "--seed") == 0
+    assert _cli(db, monkeypatch, "--propose-due", "DA-05", "--due",
+                "2026-11-28", "--by", "X") == 0
+    qid = db.execute("select max(id) from approval_queue").fetchone()[0]
+    db.execute("set local session_replication_role = replica")
+    db.execute("update approval_queue set block = 'projects' where id = %s",
+               (qid,))
+    db.execute("set local session_replication_role = origin")
+    ok, msg = aq.decide(TxConn(db), qid, APPROVER, "approved")
+    assert ok, msg
+    assert _cli(db, monkeypatch, "--apply-due", str(qid), "--by", "X") == 0
+    assert _due(db, "DA-05") == date(2026, 11, 28)

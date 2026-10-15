@@ -61,6 +61,7 @@ SOURCE = "data/projects/milestones.json"
 STATUSES = ("chua_bat_dau", "dang_lam", "xong", "tam_dung")
 CODE_RE = re.compile(r"[A-Z][A-Z0-9_.-]{1,31}")
 BLOCK = "ceo"
+LEGACY_BLOCK = "projects"   # khối cũ trước v12.0 (đã gỡ)
 CREATED_BY = "agent:da_pmo"
 COLS = ("code", "title", "wp", "owner_role", "due_date", "gate", "evidence",
         "status")
@@ -175,7 +176,9 @@ def apply_due(conn, qid: int, by: str) -> tuple[bool, str]:
     row = conn.execute("select block, object_type, status, payload,"
                        " object_id from approval_queue where id = %s",
                        (qid,)).fetchone()
-    if row is None or row[0] != BLOCK or row[1] != "milestone_change":
+    # v12.0: đề xuất đổi hạn nộp trước v12.0 nằm ở khối `projects` (đã gỡ)
+    # — vẫn áp dụng được sau khi người duyệt, không kẹt vĩnh viễn.
+    if row is None or row[0] not in (BLOCK, LEGACY_BLOCK)             or row[1] != "milestone_change":
         return False, f"mục #{qid} không phải `milestone_change` khối ceo"
     if row[2] != "approved":
         return False, f"mục #{qid} đang '{row[2]}' — chỉ áp dụng khi đã duyệt"

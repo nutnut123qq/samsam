@@ -387,3 +387,29 @@ def test_handover_wrong_item_type_and_missing(db, monkeypatch):
                          created_by="agent:kd_quote")
     assert _cli(db, monkeypatch, "--handover", str(cq), "--by", "X") == 1
     assert _cli(db, monkeypatch, "--handover", "999999", "--by", "X") == 1
+
+
+def _to_legacy_block(db, qid):
+    """Giả lập lô nộp trước v12.0 (khối `projects` đã gỡ)."""
+    db.execute("set local session_replication_role = replica")
+    db.execute("update approval_queue set block = 'projects' where id = %s",
+               (qid,))
+    db.execute("set local session_replication_role = origin")
+
+
+def test_legacy_projects_block_batch_not_stuck(db, monkeypatch):
+    """v12.0 review: lô cũ khối `projects` vẫn chuyển sales khi đã duyệt và
+    vẫn trả dòng về 'moi' khi bị từ chối — không kẹt 'cho_duyet'."""
+    qid = _batch(db, monkeypatch)
+    _to_legacy_block(db, qid)
+    ok, msg = aq.decide(TxConn(db), qid, APPROVER, "approved")
+    assert ok, msg
+    assert _cli(db, monkeypatch, "--handover", str(qid), "--by", "X") == 0
+    assert _n(db, "status = 'chuyen_sales'") == 15
+    assert _cli(db, monkeypatch, "--submit-batch") == 0
+    q2 = db.execute("select max(id) from approval_queue").fetchone()[0]
+    _to_legacy_block(db, q2)
+    ok, msg = aq.decide(TxConn(db), q2, APPROVER, "rejected")
+    assert ok, msg
+    assert _cli(db, monkeypatch, "--handover", str(q2), "--by", "X") == 0
+    assert _n(db, "status = 'moi' and batch_queue_id is null") == 1
