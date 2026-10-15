@@ -157,9 +157,11 @@ def qa_status_latest(conn, agent: str) -> str:
 
 def submit(conn, block: str, object_type: str, object_id: str, title: str,
            payload: str, created_by: str, qa_status: str = "none",
-           cfg: dict | None = None, qa_suite: str | None = None) -> int:
+           cfg: dict | None = None, qa_suite: str | None = None,
+           sample: bool = False) -> int:
     """Agent nhân viên đẩy việc → id hàng duyệt. SLA/risk từ cấu hình.
-    `qa_suite` có → qa_status lấy từ eval_runs (bỏ qua giá trị caller)."""
+    `qa_suite` có → qa_status lấy từ eval_runs (bỏ qua giá trị caller).
+    `sample` → cờ provenance `is_sample` (v14.3, `aq.enqueue`)."""
     cfg = cfg if cfg is not None else load_config(block)
     spec = cfg["object_types"].get(object_type)
     if spec is None:
@@ -170,7 +172,8 @@ def submit(conn, block: str, object_type: str, object_id: str, title: str,
     return aq.enqueue(conn, object_type=object_type, object_id=object_id,
                       block=block, title=title, payload=payload,
                       risk=spec["risk"], created_by=created_by,
-                      sla_hours=spec["sla_hours"], qa_status=qa_status)
+                      sla_hours=spec["sla_hours"], qa_status=qa_status,
+                      sample=sample)
 
 
 def _in(ts, start, end) -> bool:

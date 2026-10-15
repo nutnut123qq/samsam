@@ -547,11 +547,15 @@ def report_name(since: datetime, until: datetime) -> str:
     return f"report-{_vn_day_s(since)}_{end}.md"
 
 
-def write_report(text: str, out_dir: Path, name: str) -> Path:
+def write_report(text: str, out_dir: Path, name: str,
+                 sample: bool | None = None) -> Path:
     """Atomic tmp + `os.replace` (precedent `_purge_convlog`); ghi
     BYTES utf-8 — `write_text` trên Windows đổi `\\n`→`\\r\\n`.
     v13.3: tên file thuộc tiền tố báo cáo của tính năng đang TẮT
-    (`pipelines.rollout.gate_report`, HĐ 6.7) → RolloutBlocked, không ghi."""
+    (`pipelines.rollout.gate_report`, HĐ 6.7) → RolloutBlocked, không ghi.
+    v14.3: ghi xong → `rollout.record_report` (sổ `report_outputs` để đếm
+    đầu ra của tính năng; `sample=True` = dựng trên dữ liệu MẪU, không
+    đếm)."""
     from pipelines import rollout  # lười: rollout import module này
     rollout.gate_report(name)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -559,6 +563,7 @@ def write_report(text: str, out_dir: Path, name: str) -> Path:
     tmp = out_dir / (name + ".tmp")
     tmp.write_bytes(text.encode("utf-8"))
     os.replace(tmp, final)
+    rollout.record_report(name, text, sample)
     return final
 
 

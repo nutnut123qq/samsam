@@ -28,8 +28,16 @@ Contract:
     xếp hàng lại) và `content_drafts` (created_by + loại; trùng nội dung =
     1). Chỉ đầu ra guardrail ok, KHÔNG mẫu (object_id 'sample'/'mau', tiêu
     đề/brief có 'MẪU', source 'sample…'), tạo trong [lúc vào giai đoạn,
-    bây giờ]. Nguồn khác (report/file/bảng riêng) chưa có bộ đếm → ghi
-    "không đếm được" (fail-closed).
+    bây giờ]. v14.3: nguồn `report` đếm DISTINCT tên trong sổ
+    `report_outputs` (ghi bởi `write_report` → `record_report`); nguồn bảng
+    riêng đếm DISTINCT khóa tự nhiên theo `_TABLES` (thời điểm tạo, mẫu
+    theo cột provenance `is_sample`/`source`/`dry_run`/lô mẫu, người quyết
+    từng mục nếu bảng có bước đó — không có thì đầu ra không đủ bằng chứng
+    người duyệt cho co_nguoi_duyet → van_hanh); khóa trùng giữa 2 nguồn của
+    cùng tính năng gộp 1. Khóa lọc danh mục phải có bộ lọc thật của bảng
+    (loader từ chối). Chỉ nguồn `file` còn chưa đếm → "không đếm được"
+    (fail-closed). Nguồn đọc lỗi (bảng thiếu / login thiếu quyền) → vào
+    `uncounted`, không làm hỏng tx.
       chay_thu → co_nguoi_duyet: ≥5 ngày làm việc VÀ ≥50 đầu ra VÀ đầu ra
         rải trên ≥5 ngày làm việc khác nhau.
       co_nguoi_duyet → van_hanh: ≥10 ngày làm việc VÀ ≥1 đầu ra được NGƯỜI
@@ -68,6 +76,7 @@ sai / cấu hình lỗi / DB down.
 """
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -106,7 +115,8 @@ PHASES = ("P1", "P2")
 HD_TOTAL = 89                     # HĐ: 89 tính năng / 9 phòng ban
 SRC_KINDS = ("table", "report", "file")
 SRC_KEYS = frozenset(SRC_KINDS) | {"block", "object_type", "created_by",
-                                   "content_type", "source_agent", "rules_any"}
+                                   "content_type", "source_agent", "rules_any",
+                                   "kind", "source"}
 TRIAL_DAYS, TRIAL_OUTPUTS, REVIEW_DAYS = 5, 50, 10    # PL02 mục 1a, 1b
 MAX_BY = 100
 MAX_NOTE = 300
@@ -200,6 +210,13 @@ def _check_sources(fid: str, srcs) -> list[dict]:
                     d.get("table"), ())
         if any(k not in d for k in need):
             raise ValueError(f"{w}: bảng {d['table']} cần {need}")
+        spec = _TABLES.get(d.get("table"))
+        if spec is not None:        # v14.3: khóa lọc phải có bộ lọc thật
+            bad = set(d) - {"table"} - set(spec.get("filters", {}))
+            if bad:                 # (bỏ qua câm = đếm chéo tính năng khác)
+                raise ValueError(f"{w}: bảng {d['table']} không lọc được "
+                                 f"theo {sorted(bad)} — có "
+                                 f"{sorted(spec.get('filters', {}))}")
     return srcs
 
 
@@ -406,7 +423,8 @@ def _feature(feats: list[dict], fid: str) -> dict:
 
 
 _NO_COUNT = ("không đếm được đầu ra — output_sources không có nguồn đếm "
-             "được (approval_queue/content_drafts)")
+             "được (chỉ có file nhật ký / bảng chưa có bộ đếm / không đọc "
+             "được)")
 
 
 def evaluate(stage: str, days: int, outputs: int | None, severe: int,
@@ -604,6 +622,46 @@ def gate_report(name: str) -> None:
             conn.close()
 
 
+# Nhãn MẪU chuẩn của báo cáo dựng trên dữ liệu mẫu ("(MẪU)" / "[MẪU]") —
+# chỉ LOẠI THÊM khi caller chưa truyền cờ `sample` (fail-closed).
+_REPORT_SAMPLE_RE = re.compile(r"[(\[]MẪU[)\]]")
+
+
+def record_report(name: str, text: str, sample: bool | None = None) -> bool:
+    """v14.3 (F04): báo cáo file của TÍNH NĂNG (tiền tố `output_sources.
+    report`) → 1 dòng `report_outputs` (tên, sha256 nội dung, `is_sample` =
+    cờ caller HOẶC nhãn MẪU trong bản) để bộ đếm đầu ra loại `report` đếm
+    DISTINCT tên trong cửa sổ giai đoạn. → True khi đã ghi. Không thuộc
+    danh mục / test ép giai đoạn (`_FORCE_MODE`) → False, không mở DB. DB
+    down / login không có quyền → cảnh báo stderr, False (báo cáo vẫn ghi —
+    chỉ là không được ĐẾM, fail-closed)."""
+    if _FORCE_MODE is not None:
+        return False
+    fid = feature_for_report(name)
+    if fid is None:
+        return False
+    is_sample = bool(sample) or bool(_REPORT_SAMPLE_RE.search(text or ""))
+    sha = hashlib.sha256((text or "").encode("utf-8")).hexdigest()
+    conn = connect()
+    if conn is None:
+        print(f"[warn] báo cáo {name}: DB không kết nối được — không ghi sổ "
+              "đầu ra (không được đếm)", file=sys.stderr)
+        return False
+    try:
+        with conn.transaction():
+            conn.execute("insert into report_outputs (feature_id, name,"
+                         " sha256, is_sample) values (%s, %s, %s, %s)",
+                         (fid, name, sha, is_sample))
+        conn.commit()
+        return True
+    except psycopg.Error as e:
+        print(f"[warn] báo cáo {name}: không ghi được sổ đầu ra "
+              f"({type(e).__name__}) — không được đếm", file=sys.stderr)
+        return False
+    finally:
+        conn.close()
+
+
 def is_human(name) -> bool:
     s = name.strip().casefold() if isinstance(name, str) else ""
     return bool(s) and not s.startswith(("agent:", "system:"))
@@ -629,29 +687,40 @@ def holiday_warning(path: Path | None = None) -> str | None:
 # Người duyệt thật: không rỗng, không 'agent:'/'system:' (cùng luật check_by).
 _HUMAN = ("(btrim(coalesce({c}, '')) <> '' and lower(btrim({c})) not like"
           " 'agent:%%' and lower(btrim({c})) not like 'system:%%')")
-# Mục mẫu (đầu ra không tính): object_id chứa từ 'sample'/'mau' đứng riêng.
+# Quy ước tên CŨ (trước cột cờ `is_sample` v14.3): object_id chứa từ
+# 'sample'/'mau' đứng riêng, tiêu đề/brief có 'MẪU'. Chỉ LOẠI THÊM (dòng cũ
+# chưa có cờ) — không bao giờ biến mẫu thành thật.
 SAMPLE_ID_RE = r"(^|[^a-z0-9])(sample|mau)([^a-z0-9]|$)"
-# Mỗi dòng: (thời điểm tạo, người duyệt từng mục?, duyệt/dùng thiếu người?)
+
+
+def _h(col: str) -> str:
+    return _HUMAN.format(c=col)
+
+
+# Mỗi bộ đếm → SQL trả từng dòng (khóa DISTINCT có tiền tố nguồn, thời điểm
+# tạo đầu tiên trong cửa sổ, có NGƯỜI duyệt từng mục?, duyệt/dùng thiếu
+# người?). Khóa trùng giữa 2 nguồn của CÙNG tính năng (vd ảnh nháp ↔
+# `image_assets` của chính nháp đó) gộp 1 đầu ra.
 _COUNTERS = {
     "approval_queue": (
-        "select min(created_at),"
+        "select 'aq:' || block || '/' || object_type || '/' || object_id,"
+        " min(created_at),"
         " bool_or(status = 'approved' and lane = 'per_item' and "
-        + _HUMAN.format(c="decided_by") + "),"
+        + _h("decided_by") + "),"
         " bool_or(status = 'approved' and not (lane is not distinct from"
-        " 'per_item' and " + _HUMAN.format(c="decided_by") + "))"
+        " 'per_item' and " + _h("decided_by") + "))"
         " from approval_queue where block = %s and object_type = %s"
         " and (%s::text is null or created_by = %s)"
         " and created_at >= %s and created_at <= %s"
-        " and coalesce(guardrail->>'ok', '') = 'true'"
+        " and coalesce(guardrail->>'ok', '') = 'true' and not is_sample"
         " and object_id !~* %s and title not like '%%MẪU%%'"
-        " group by object_type, object_id",
+        " group by block, object_type, object_id",
         lambda s, a, b: (s["block"], s["object_type"], s.get("created_by"),
                          s.get("created_by"), a, b, SAMPLE_ID_RE)),
     "content_drafts": (
-        "select min(created_at),"
-        " bool_or(status = 'approved' and " + _HUMAN.format(c="reviewer")
-        + "), bool_or(status = 'approved' and not "
-        + _HUMAN.format(c="reviewer") + ")"
+        "select 'cd:' || md5(text), min(created_at),"
+        " bool_or(status = 'approved' and " + _h("reviewer")
+        + "), bool_or(status = 'approved' and not " + _h("reviewer") + ")"
         " from content_drafts where created_by = %s and content_type = %s"
         " and created_at >= %s and created_at <= %s"
         " and coalesce(guardrail->>'ok', '') = 'true'"
@@ -659,6 +728,198 @@ _COUNTERS = {
         " and brief not like '%%MẪU%%' group by md5(text)",
         lambda s, a, b: (s["created_by"], s["content_type"], a, b)),
 }
+
+# v14.3 — bộ đếm bảng riêng: bảng → spec. `ts` thời điểm tạo, `key` khóa tự
+# nhiên DISTINCT (ghi lại/nạp lại = 1), `sample` điều kiện MẪU theo cột
+# provenance (None = bảng không có đường ghi mẫu — lý do ở `nosample`),
+# `human`/`unapp` = có NGƯỜI quyết từng mục / quyết thiếu người (None =
+# bảng không có bước người duyệt từng mục → đầu ra đếm được nhưng KHÔNG đủ
+# bằng chứng người duyệt cho cổng co_nguoi_duyet → van_hanh), `where` lọc
+# cố định, `filters` khóa danh mục → điều kiện (giá trị = tham số).
+_SRC_SAMPLE = "coalesce(t.source, '') ilike 'sample%%'"
+_LOT_SAMPLE = ("exists (select 1 from production_lots l where l.lot_code ="
+               " t.lot_code and l.source = 'sample')")
+_DRAFT_JOIN = "join content_drafts d on d.id = t.draft_id"
+_DRAFT_OK = "coalesce(d.guardrail->>'ok', '') = 'true'"
+_TABLES = {
+    "decision_log": {
+        "ts": "t.recorded_at", "key": "'dl:' || t.id",
+        "where": "t.entry_kind = 'quyet_dinh'", "human": _h("t.recorded_by"),
+        "nosample": "NGƯỜI ghi (--by, CHECK chặn agent/system)"},
+    "audit_runs": {
+        "ts": "t.created_at",
+        "key": "'ar:' || t.kind || '/' || t.period_label || '/' "
+               "|| t.report_sha256",
+        "sample": "t.is_sample", "filters": {"kind": "t.kind = %s"}},
+    "leads": {
+        "ts": "t.created_at", "key": "'ld:' || t.dedup_key",
+        "human": _h("t.assigned_by"),
+        "nosample": "gom từ convlog thật / nhập tay (source conversations."
+                    "jsonl|manual)"},
+    "consents": {
+        "ts": "t.ts", "key": "'cn:' || t.id", "human": _h("t.recorded_by"),
+        "nosample": "NGƯỜI ghi bằng chứng đồng ý (evidence_ref)"},
+    "image_assets": {
+        "ts": "t.created_at", "key": "'cd:' || md5(d.text)",
+        "join": _DRAFT_JOIN, "where": _DRAFT_OK,
+        "sample": "coalesce(d.source, '') ilike 'sample%%'",
+        "human": "d.status = 'approved' and " + _h("d.reviewer"),
+        "unapp": "d.status = 'approved' and not " + _h("d.reviewer")},
+    "video_assets": {
+        "ts": "t.created_at", "key": "'cd:' || md5(d.text)",
+        "join": _DRAFT_JOIN, "where": _DRAFT_OK,
+        "sample": "coalesce(d.source, '') ilike 'sample%%'",
+        "human": "d.status = 'approved' and " + _h("d.reviewer"),
+        "unapp": "d.status = 'approved' and not " + _h("d.reviewer")},
+    "channel_snapshots": {
+        "ts": "t.captured_at",
+        "key": "'cs:' || t.channel || '/' || t.metric_id || '/' || "
+               "t.period_kind || '/' || t.period_start || '/' || t.source",
+        "sample": "coalesce(t.source_ref, '') ilike 'sample:%%'",
+        "human": _h("t.captured_by")},
+    "red_alerts": {
+        "ts": "t.ts",
+        "key": "'ra:' || coalesce(t.detail->>'intel_item_id', t.id::text)",
+        "where": "not (t.detail ? 'escalation_of')",
+        "human": ("exists (select 1 from red_alert_acks k where k.alert_id"
+                  " = t.id and " + _h("k.acked_by") + ")"),
+        "nosample": "cảnh báo sinh từ tin thật đã thu",
+        "filters": {"source_agent": "t.source_agent = %s",
+                    "rules_any": "t.detail->'rules' ?| %s::text[]"}},
+    "sim_runs": {
+        "ts": "t.created_at", "key": "'sr:' || t.run_id",
+        "sample": "t.dry_run"},
+    "recon_results": {
+        "ts": "t.reconciled_at", "key": "'rr:' || t.settlement_row_id",
+        "nosample": "file quyết toán thật do kế toán xuất (settlement_rows "
+                    "không có cột mẫu)"},
+    "affiliate_attributions": {
+        "ts": "t.updated_at",
+        "key": "'aa:' || t.channel || '/' || t.order_id_hash || '/' || "
+               "t.line_key",
+        "nosample": "đơn sàn nạp từ file xuất Seller Center"},
+    "allocation_proposals": {
+        "ts": "t.created_at",
+        "key": "'ap:' || t.cutoff_id || '/' || t.sku_key || '/' || t.channel",
+        "sample": "t.is_sample",
+        "human": "t.status = 'approved' and " + _h("t.decided_by"),
+        "unapp": "t.status = 'approved' and not " + _h("t.decided_by")},
+    "golden_discrepancies": {
+        "ts": "t.created_at", "key": "'gd:' || t.id",
+        "human": "t.status = 'resolved' and " + _h("t.resolved_by"),
+        "unapp": "t.status = 'resolved' and not " + _h("t.resolved_by"),
+        "nosample": "so golden master với dữ liệu sản phẩm đã nạp"},
+    "production_lots": {
+        "ts": "t.created_at", "key": "'pl:' || t.lot_code",
+        "sample": "t.source = 'sample'",
+        "human": "t.intake_status = 'passed' and " + _h("t.checked_by"),
+        "unapp": "t.intake_status = 'passed' and not " + _h("t.checked_by")},
+    "plot_logs": {
+        "ts": "t.created_at", "key": "'lg:' || t.id", "sample": _SRC_SAMPLE,
+        "human": _h("t.author"), "filters": {"source": "t.source = %s"}},
+    "garden_voice_drafts": {
+        "ts": "t.received_at", "key": "'gv:' || t.sha256",
+        "human": "t.status = 'da_chep_loi' and " + _h("t.closed_by"),
+        "nosample": "ghi âm nhân viên gửi qua Zalo"},
+    "lot_origins": {
+        "ts": "t.linked_at", "key": "'lo:' || t.lot_code || '/' || "
+                                    "t.plot_log_id",
+        "sample": _LOT_SAMPLE, "human": _h("t.linked_by"),
+        "unapp": "not " + _h("t.linked_by")},
+    "qr_codes": {
+        "ts": "t.issued_at", "key": "'qr:' || t.code", "sample": _LOT_SAMPLE,
+        "human": _h("t.issued_by"), "unapp": "not " + _h("t.issued_by")},
+    "garden_media": {
+        "ts": "t.created_at", "key": "'gm:' || t.sha256",
+        "human": _h("t.author"),
+        "nosample": "ảnh/video nhân viên nạp (gỡ EXIF), không có lô mẫu"},
+    "documents": {
+        "ts": "t.created_at", "key": "'dc:' || t.sha256",
+        "human": "t.status = 'verified' and " + _h("t.verified_by"),
+        "unapp": "t.status = 'verified' and not " + _h("t.verified_by"),
+        "nosample": "bản scan/PDF gốc do người đưa vào thư mục intake"},
+    "document_fields": {
+        "ts": "d.created_at", "key": "'df:' || t.sha256 || '/' || t.field",
+        "join": "join documents d on d.sha256 = t.sha256",
+        "human": ("t.verified and d.status = 'verified' and "
+                  + _h("d.verified_by")),
+        "nosample": "trích từ tài liệu gốc (documents)"},
+    "chunks": {
+        "ts": "t.ingested_at", "key": "'ck:' || t.doc_id",
+        "nosample": "KB công khai crawl từ site công ty"},
+    "chunks_internal": {
+        "ts": "t.ingested_at",
+        "key": "'ci:' || t.collection || '/' || t.doc_id",
+        "human": _h("t.approved_by"),
+        "nosample": "tài liệu nội bộ trưởng phòng duyệt (approved_by)"},
+    "market_snapshots": {
+        "ts": "t.imported_at", "key": "'ms:' || t.file_sha256",
+        "nosample": "file xuất Seller Center (bảng không có cột mẫu)"},
+    "eval_runs": {
+        "ts": "t.ts",
+        "key": "'ev:' || t.agent || '/' || t.commit_sha || '/' || "
+               "coalesce(t.suite_sha256, '')",
+        "nosample": "lần chạy bộ ca kiểm thử (không phải dữ liệu khách)"},
+    "anchor_batches": {
+        "ts": "t.created_at", "key": "'ab:' || t.manifest_sha256",
+        "human": _h("t.created_by"),
+        "nosample": "`anchor --build` loại sẵn lô/khoảnh mẫu khỏi lá"},
+    "revenue_quarters": {
+        "ts": "t.recorded_at",
+        "key": "'rq:' || t.quarter || '/' || t.report_sha256",
+        "human": _h("t.recorded_by"),
+        "nosample": "số quyết toán thật (rev_share không nhận file mẫu)"},
+    "feature_rollout_events": {
+        # `seed` = vào sổ hàng loạt (1 lệnh → N dòng), không phải đầu ra.
+        "ts": "t.ts", "key": "'fe:' || t.id", "where": "t.kind <> 'seed'",
+        "human": _h("t.by_person"),
+        "nosample": "NGƯỜI ghi sổ triển khai"},
+    "san_suggestions": {
+        "ts": "t.created_at",
+        "key": "'ss:' || t.channel || '/' || t.msg_ref",
+        "where": "t.guardrail_ok",
+        "human": ("exists (select 1 from san_suggestion_uses u where"
+                  " u.suggestion_id = t.id and " + _h("u.used_by") + ")"),
+        "nosample": "tin buyer thật MXH dán qua STDIN"},
+}
+_REPORT_SQL = (
+    "select 'rp:' || name, min(created_at), false, false from report_outputs"
+    " where feature_id = %s and left(name, length(%s)) = %s"
+    " and created_at >= %s and created_at <= %s and not is_sample"
+    " group by name")
+
+
+def _table_sql(src: dict, a, b) -> tuple[str, tuple] | None:
+    """SQL đếm 1 nguồn bảng riêng | None (bảng chưa có bộ đếm)."""
+    spec = _TABLES.get(src.get("table"))
+    if spec is None:
+        return None
+    conds, params = [f"{spec['ts']} >= %s", f"{spec['ts']} <= %s"], [a, b]
+    if spec.get("where"):
+        conds.append(f"({spec['where']})")
+    if spec.get("sample"):
+        conds.append(f"not coalesce(({spec['sample']}), false)")
+    for k, cond in spec.get("filters", {}).items():
+        if k in src:
+            conds.append(cond)
+            params.append(src[k])
+    sql = (f"select {spec['key']}, min({spec['ts']}),"
+           f" bool_or(coalesce(({spec.get('human') or 'false'}), false)),"
+           f" bool_or(coalesce(({spec.get('unapp') or 'false'}), false))"
+           f" from {src['table']} t {spec.get('join', '')}"
+           f" where {' and '.join(conds)} group by 1")
+    return sql, tuple(params)
+
+
+def _source_sql(f: dict, s: dict, a, b) -> tuple[str, tuple] | None:
+    c = _COUNTERS.get(s.get("table"))
+    if c is not None:
+        return c[0], c[1](s, a, b)
+    if "report" in s:
+        return _REPORT_SQL, (f["id"], s["report"], s["report"], a, b)
+    if "table" in s:
+        return _table_sql(s, a, b)
+    return None                      # `file`: chưa có bộ đếm (fail-closed)
 
 
 def _src_label(s: dict) -> str:
@@ -668,15 +929,29 @@ def _src_label(s: dict) -> str:
 def output_facts(conn, f: dict, since, now, shift) -> dict:
     """Đầu ra THẬT của đúng tính năng trong [since, now] (F04) →
     {outputs (None = không đếm được), out_days, human, unapproved,
-    uncounted: [nguồn chưa có bộ đếm]}."""
-    rows, counted, uncounted = [], False, []
+    uncounted: [nguồn chưa có bộ đếm / không đọc được]}. Mỗi nguồn đọc
+    trong savepoint: lỗi (bảng thiếu, login không có quyền đọc) → nguồn đó
+    vào `uncounted`, không làm hỏng tx của conn chia sẻ (fail-closed: thiếu
+    nguồn = ít đầu ra hơn, không bao giờ nhiều hơn)."""
+    merged, counted, uncounted = {}, False, []
     for s in f.get("output_sources") or []:
-        c = _COUNTERS.get(s.get("table"))
-        if c is None:
+        q = _source_sql(f, s, since, now)
+        if q is None:
             uncounted.append(_src_label(s))
             continue
+        try:
+            with conn.transaction():
+                got = conn.execute(*q).fetchall()
+        except psycopg.Error as e:
+            uncounted.append(f"{_src_label(s)} (không đọc được: "
+                             f"{type(e).__name__})")
+            continue
         counted = True
-        rows += conn.execute(c[0], c[1](s, since, now)).fetchall()
+        for key, ts, hum, una in got:
+            o = merged.get(key)
+            merged[key] = (ts, bool(hum), bool(una)) if o is None else (
+                min(o[0], ts), o[1] or bool(hum), o[2] or bool(una))
+    rows = list(merged.values())
     sh = period.parse_shift(shift)
     days = {d for d in (period.vn_date(r[0]) for r in rows)
             if d.weekday() in sh["workdays"] and d not in sh["holidays"]}

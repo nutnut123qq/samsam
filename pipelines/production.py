@@ -610,21 +610,28 @@ def _open():
         return None
 
 
+FEATURE_ALLOC = "production-01"
+
+
 def save_proposals(conn, run_id: str, cutoff: dict, start_week: dt.date,
                    rows: list[dict]) -> int:
-    """Ghi NHÁP pending. Không commit — caller commit."""
+    """Ghi NHÁP pending. Không commit — caller commit. v14.3: tính năng
+    production-01 TẮT → RolloutBlocked (HĐ 6.7), không ghi; dòng dựng trên
+    tồn kho MẪU → cờ provenance `is_sample` (bộ đếm đầu ra loại)."""
+    from pipelines import rollout  # lười: rollout → director → ...
+    rollout.check_generate(conn, FEATURE_ALLOC, "đề xuất phân bổ tồn")
     n = 0
     for r in rows:
         n += conn.execute(
             "insert into allocation_proposals (run_id, cutoff_id,"
             " cutoff_date, start_week, sku_key, channel, stock_total,"
-            " demand_low, demand_base, demand_high, proposed_qty, note)"
-            " values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-            " on conflict (run_id, sku_key, channel) do nothing",
+            " demand_low, demand_base, demand_high, proposed_qty, note,"
+            " is_sample) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,"
+            " %s, %s, %s) on conflict (run_id, sku_key, channel) do nothing",
             (run_id, cutoff["id"], cutoff["date"], start_week, r["sku_key"],
              r["channel"], r["stock_total"], r["demand_low"],
              r["demand_base"], r["demand_high"], r["proposed_qty"],
-             r["note"])).rowcount
+             r["note"], bool(r.get("sample")))).rowcount
     return n
 
 
@@ -908,7 +915,12 @@ def cmd_allocate(args) -> int:
                            " where run_id = %s", (rid,)).fetchone()[0]
         n = 0
         if not old:
-            n = save_proposals(conn, rid, cutoff, start_week, rows)
+            from pipelines import rollout  # lười
+            try:
+                n = save_proposals(conn, rid, cutoff, start_week, rows)
+            except rollout.RolloutBlocked as e:
+                conn.rollback()
+                return _err(f"{e} — không ghi.")
             conn.commit()
         _print_plan(rid, cutoff, start_week, rows, a["status"], cfg, old, n)
         return 0
@@ -963,6 +975,15 @@ def cmd_decide(args, decision: str) -> int:
         if why:
             conn.rollback()
             return _err(f"{why} — không ghi.")
+        if decision == "approved":
+            # v14.3 (HĐ 6.7): đề xuất của tính năng TẮT không được duyệt
+            # (kể cả run sinh trước khi tắt); từ chối vẫn được (dọn hàng).
+            from pipelines import rollout  # lười
+            why = rollout.decide_reason(conn, FEATURE_ALLOC,
+                                        f"run phân bổ {args.run}")
+            if why:
+                conn.rollback()
+                return _err(f"{why} — không ghi.")
         ok, msg = decide_run(conn, args.run, decision, args.by, args.note)
         if not ok:
             conn.rollback()

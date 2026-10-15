@@ -15,6 +15,11 @@ Contract:
   - Nhật ký là thao tác NGƯỜI ghi tay — hệ thống KHÔNG tự sinh/tự
     sửa (human-gate đối xứng C2.4). Không LLM → output không cần
     `guardrail.check()` (message anomaly là template viết tay).
+  - v14.3 (HĐ 6.7): form/CLI này KHÔNG đi qua cổng giai đoạn `rollout` —
+    nhật ký NGƯỜI nhập tay là dữ liệu gốc, không phải đầu ra AI của tính
+    năng; tắt farming-01 (nhật ký qua Zalo — `connectors.zalo_garden`, có
+    cổng) không được làm mất đường ghi tay. Bộ đếm đầu ra farming-01 chỉ
+    đếm `source='zalo:garden'`, không đếm `manual:garden`.
   - DB down: `connect()` (lead_store, connect_timeout=3) → None;
     `add` exit 2 báo lỗi, `--check` in "chưa nạp" exit 0 (precedent
     `data_audit.py`), UI `st.info`.

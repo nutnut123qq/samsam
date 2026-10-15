@@ -72,8 +72,12 @@ COLS = ("id", "object_type", "object_id", "block", "title", "preview",
 
 def enqueue(conn, *, object_type: str, object_id: str, block: str,
             title: str, payload: str, risk: str, created_by: str,
-            sla_hours: int, qa_status: str = "none") -> int:
-    """Đẩy 1 mục vào hàng → id. Guardrail do module tự tính."""
+            sla_hours: int, qa_status: str = "none",
+            sample: bool = False) -> int:
+    """Đẩy 1 mục vào hàng → id. Guardrail do module tự tính.
+    v14.3: `sample=True` = mục dựng trên dữ liệu MẪU → cột provenance
+    `is_sample` (bộ đếm đầu ra `pipelines.rollout` loại; không đoán theo
+    tên/tiêu đề). Mặc định gọi bản 10 tham số (= không mẫu)."""
     by = (created_by or "").strip()
     if not by:
         raise ValueError("enqueue: thiếu created_by (người/agent tạo)")
@@ -84,11 +88,13 @@ def enqueue(conn, *, object_type: str, object_id: str, block: str,
     _rollout().check_generate(conn, _feature_of((block, object_type, by)),
                               f"hàng duyệt {block}/{object_type}")
     g = guardrail_check(payload)
+    args = (object_type, str(object_id), block, title or "", payload, risk,
+            Jsonb(g), qa_status, by, sla_hours)
+    sql = "select enqueue_item(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    if sample:
+        sql, args = sql[:-1] + ", %s)", (*args, True)
     with conn.transaction():
-        row = conn.execute(
-            "select enqueue_item(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-            (object_type, str(object_id), block, title or "", payload, risk,
-             Jsonb(g), qa_status, by, sla_hours)).fetchone()
+        row = conn.execute(sql, args).fetchone()
     conn.commit()
     return row[0]
 

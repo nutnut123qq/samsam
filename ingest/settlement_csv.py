@@ -449,9 +449,16 @@ _ORDER_SQL = (
     " 'order' group by 1, 2")
 
 
+FEATURE_RECON = "finance-01"
+
+
 def reconcile(conn, fees: dict, sha: str | None = None) -> dict:
     """Đối chiếu (upsert `recon_results`, không commit) các dòng của file
-    `sha` — None = MỌI dòng. → {nhãn: số dòng}."""
+    `sha` — None = MỌI dòng. → {nhãn: số dòng}. v14.3: tính năng finance-01
+    TẮT → RolloutBlocked (HĐ 6.7) TRƯỚC mọi ghi — nạp dòng quyết toán
+    (dữ liệu kế toán xuất) vẫn được, chỉ không sinh kết quả đối soát."""
+    from pipelines import rollout  # lười: rollout → director → ...
+    rollout.check_generate(conn, FEATURE_RECON, "đối soát quyết toán")
     sql = ("select id, channel, order_id_hash, " + ", ".join(
         f"{c}_vnd" for c in _COLS) + " from settlement_rows")
     rows = conn.execute(sql + (" where file_sha256 = %s" if sha else "")
@@ -553,6 +560,7 @@ def _print_errs(errs: list[str]) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from pipelines import rollout  # lười: rollout → director → ...
     ap = argparse.ArgumentParser(
         prog="python -m ingest.settlement_csv",
         description="ACC-Recon: nạp file quyết toán sàn + đối soát (chỉ báo "
@@ -610,7 +618,12 @@ def main(argv: list[str] | None = None) -> int:
             report(conn)
             return 0
         if args.reconcile:
-            counts = reconcile(conn, fees)
+            try:
+                counts = reconcile(conn, fees)
+            except rollout.RolloutBlocked as e:
+                conn.rollback()
+                print(f"[blocked] {e} — không đối soát.", flush=True)
+                return 2
             conn.commit()
             print("[reconcile] " + ", ".join(f"{k}={v}" for k, v in
                                              counts.items()))
@@ -620,7 +633,12 @@ def main(argv: list[str] | None = None) -> int:
             print("[skip] file quyết toán đã nạp — không ghi gì.")
             return 0
         n = load(conn, rows, args.channel, args.file.name, sha)
-        counts = reconcile(conn, fees, sha)
+        try:
+            counts = reconcile(conn, fees, sha)
+        except rollout.RolloutBlocked as e:   # chỉ nạp, không đối soát
+            print(f"[blocked] {e} — đã nạp dòng quyết toán, KHÔNG đối "
+                  "soát.", flush=True)
+            counts = {}
         ov = overlaps(conn, [args.channel]).get(args.channel)
         conn.commit()
     except psycopg.errors.UniqueViolation as e:

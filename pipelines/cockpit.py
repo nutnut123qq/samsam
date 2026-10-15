@@ -80,6 +80,7 @@ DATA_DIR = ROOT / "data"
 METRICS_PATH = DATA_DIR / "metrics.json"
 INTERNAL_CHANNEL = "noi_bo"
 CAPTURED_BY = "agent:cockpit"
+FEATURE_COLLECT = "marketing-06.2"
 METRIC_RE = re.compile(r"[a-z][a-z0-9_.]{1,63}")
 CHANNEL_RE = re.compile(r"[a-z][a-z0-9_]{1,31}")
 UNITS = ("lead", "câu", "bản", "cảnh báo", "USD", "job", "mục", "giờ",
@@ -607,6 +608,17 @@ def _cli_collect(args, now) -> int:
             conn.rollback()
             print("[dry-run] không ghi channel_snapshots")
             return 0
+        # v14.3 (HĐ 6.7): số do máy chụp là đầu ra của marketing-06.2 —
+        # tính năng TẮT → không ghi. `--import` (số NGƯỜI xuất tay) không
+        # phải đầu ra AI → không chặn.
+        from pipelines import rollout  # lười: rollout → director → ...
+        try:
+            rollout.check_generate(conn, FEATURE_COLLECT, "chụp số cockpit")
+        except rollout.RolloutBlocked as e:
+            conn.rollback()
+            print(f"[blocked] {e} — không ghi channel_snapshots",
+                  file=sys.stderr)
+            return 2
         st = store(conn, rows, CAPTURED_BY, metrics=metrics)
     except psycopg.Error as e:
         print(f"[error] lỗi DB: {_db_msg(e)[:300]}", file=sys.stderr)

@@ -504,8 +504,14 @@ def _connect():
     return psycopg.connect(dsn, connect_timeout=CONNECT_TIMEOUT_S)
 
 
+FEATURE = "intel-05"
+
+
 def write_rows(conn, rows: list, commit: bool = True) -> int:
-    """1 executemany trong 1 transaction; commit tường minh (gotcha v2.1)."""
+    """1 executemany trong 1 transaction; commit tường minh (gotcha v2.1).
+    v14.3: tính năng intel-05 TẮT → RolloutBlocked (HĐ 6.7), không ghi."""
+    from pipelines import rollout  # lười: rollout → director → ...
+    rollout.check_generate(conn, FEATURE, "lượt giả lập persona")
     sql = (f"insert into sim_runs ({', '.join(SIM_COLS)}) values "
            f"({', '.join(['%s'] * len(SIM_COLS))})")
     with conn.cursor() as cur:
@@ -528,6 +534,26 @@ def _read_json(path: Path):
         return json.loads(text, parse_constant=_reject_const), None
     except ValueError:
         return None, f"{path.name} JSON hỏng"
+
+
+def _feature_off() -> str | None:
+    """intel-05 TẮT → lý do (không gọi gateway, không ghi). DB down /
+    thiếu DSN → None (mode fail-closed = chạy thử: vẫn chạy, ghi sẽ báo
+    lỗi DB như cũ)."""
+    from pipelines import rollout  # lười
+    if rollout.quick_mode() is not None:
+        return ("tính năng tắt" if rollout.quick_mode() == "tat" else None)
+    try:
+        conn = _connect()
+    except (psycopg.Error, RuntimeError):
+        return None
+    try:
+        rollout.check_generate(conn, FEATURE, "lượt giả lập persona")
+    except rollout.RolloutBlocked as e:
+        return str(e)
+    finally:
+        conn.close()
+    return None
 
 
 def _err(msg: str) -> int:
@@ -569,6 +595,10 @@ def main(argv: list[str] | None = None) -> int:
               file=sys.stderr)
         return 2
 
+    off = _feature_off()
+    if off:
+        print(f"[blocked] {off}", file=sys.stderr)
+        return 2
     run_date = dt.datetime.now(dt.timezone(dt.timedelta(hours=7))).date()
     run_id = (f"{'dry' if args.dry_run else 'run'}-{run_date:%Y%m%d}-"
               f"{uuid.uuid4().hex[:8]}")
@@ -593,7 +623,7 @@ def main(argv: list[str] | None = None) -> int:
             write_rows(conn, rows)
         finally:
             conn.close()
-    except (psycopg.Error, RuntimeError) as e:
+    except (psycopg.Error, RuntimeError, ValueError) as e:
         return _err(f"ghi sim_runs lỗi ({type(e).__name__}) — không in báo "
                     "cáo (kết quả phải truy vết được)")
     print(text)

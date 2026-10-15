@@ -356,6 +356,7 @@ def render(data: dict, now: datetime) -> str:
 # ------------------------------------------------------------------ CLI
 
 def main(argv=None, now=None) -> int:
+    from pipelines.rollout import RolloutBlocked  # lười: tránh vòng import
     ap = argparse.ArgumentParser(
         prog="python -m agents.bks_recon",
         description="Đối soát độc lập BKS (CHỈ ĐỌC; ghi duy nhất audit_runs"
@@ -400,14 +401,19 @@ def main(argv=None, now=None) -> int:
         if a.dry_run:
             print(text)
             return 0
-        path = write_report(text, a.out_dir, f"bks-recon-{label}.md")
+        path = write_report(text, a.out_dir, f"bks-recon-{label}.md",
+                            sample=data["sample_flag"])
         rid = None
         if a.record:
             rid = record_run(conn, KIND, label, {
                 "seed": seed, "n_total": data["n_total"],
-                "n_checked": data["n_checked"]}, n, text, RUN_BY)
+                "n_checked": data["n_checked"]}, n, text, RUN_BY,
+                sample=data["sample_flag"])
     except psycopg.Error as e:
         print(f"[error] lỗi DB: {_why(e)}", file=sys.stderr)
+        return 2
+    except RolloutBlocked as e:      # HĐ 6.7
+        print(f"[blocked] {e}", file=sys.stderr)
         return 2
     finally:
         with suppress(Exception):

@@ -804,12 +804,18 @@ def test_promote_refusals_write_nothing(db):
 
 
 def test_promote_no_countable_source_fail_closed(db):
-    """v13.3: nguồn đầu ra chỉ là report/file (chưa có bộ đếm) → không đếm
-    được → từ chối, kể cả khi agent_action_log đầy log (F04)."""
-    ro.seed(db, FEATS, BY, now=NOW - timedelta(days=60))
+    """v13.3: nguồn đầu ra chỉ là file nhật ký (chưa có bộ đếm) → không đếm
+    được → từ chối, kể cả khi agent_action_log đầy log (F04).
+    v14.3 FLIP có lý do: nguồn `report` nay có bộ đếm (`report_outputs`) —
+    80 log action vẫn = 0 đầu ra (không còn "không đếm được")."""
+    feats = FEATS + [_f("intel-02", agent_ids=[],
+                        output_sources=[{"file": "x.jsonl"}])]
+    ro.seed(db, feats, BY, now=NOW - timedelta(days=60))
     _log(db, "agent:t_b1", 80)
     with pytest.raises(ro.RolloutError, match="không đếm được"):
-        ro.promote(db, FEATS, "ceo-02", BY, SHIFT)
+        ro.promote(db, feats, "intel-02", BY, SHIFT)
+    with pytest.raises(ro.RolloutError, match="0/50"):
+        ro.promote(db, feats, "ceo-02", BY, SHIFT)
 
 
 def test_promote_counts_outputs_only_since_stage_start(db):

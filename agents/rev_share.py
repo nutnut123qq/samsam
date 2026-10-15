@@ -80,6 +80,7 @@ for _s in (sys.stdout, sys.stderr):
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_FILE = ROOT / "data" / "rev_share.json"
 RUN_BY = "agent:rev_share"
+FEATURE = "finance-06"             # v14.3 cổng giai đoạn (HĐ 6.7)
 NO_DATA = "chưa có dữ liệu"
 NOT_SET = "chưa chốt"
 FEE_COLS = ("fixed_fee", "payment_fee", "service_fee", "shipping_fee",
@@ -344,7 +345,10 @@ def fetch(conn, start: date, end: date, channels) -> tuple[list, dict]:
 def record(conn, label: str, start: date, end: date, s: dict, rate,
            fee: int | None, text: str, cfg: dict) -> int:
     """Ghi 1 dòng `revenue_quarters` (append-only) + commit tường minh
-    (conn đã mở tx bằng SELECT — gotcha v2.1)."""
+    (conn đã mở tx bằng SELECT — gotcha v2.1). v14.3: finance-06 TẮT →
+    RolloutBlocked (HĐ 6.7), không ghi."""
+    from pipelines import rollout  # lười: rollout → director → ...
+    rollout.check_generate(conn, FEATURE, "sổ đối soát quý")
     t = s["total"]
     detail = {"channels": s["channels"], "notes": s["notes"],
               "phi_san_cot": cfg["fee_cols"],
@@ -480,6 +484,7 @@ def render_year(n: int, start: date, end: date, s: dict, undated: dict,
 # ------------------------------------------------------------------ CLI
 
 def main(argv=None, now=None) -> int:
+    from pipelines.rollout import RolloutBlocked  # lười: tránh vòng import
     ap = argparse.ArgumentParser(
         prog="python -m agents.rev_share",
         description="Doanh thu thuần trực tuyến + biên bản đối soát quý"
@@ -549,6 +554,9 @@ def main(argv=None, now=None) -> int:
                          cfg)
     except psycopg.Error as e:
         print(f"[error] lỗi DB: {type(e).__name__}", file=sys.stderr)
+        return 2
+    except RolloutBlocked as e:      # HĐ 6.7
+        print(f"[blocked] {e}", file=sys.stderr)
         return 2
     finally:
         with suppress(Exception):

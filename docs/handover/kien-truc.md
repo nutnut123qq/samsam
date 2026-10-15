@@ -78,7 +78,7 @@ Streamlit demo.
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored); `projects/milestones.json` (v8.3 DA-01 — sổ mốc BẢN DEV SOẠN chờ TGĐ chốt; v12.0 gỡ file của phòng Dự án) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 82 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 85 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
@@ -90,6 +90,9 @@ Streamlit demo.
 | `plot_logs` | Nhật ký vùng trồng (`plot_id` FK→plots,`ts`,`activity`,`detail`,`author`) + **hash chain** (v9.3) `prev_hash`→`row_hash` cho mọi dòng KHÔNG mẫu — trigger INSERT tính hash, dòng đã chain không UPDATE/DELETE/TRUNCATE được (kể cả cascade khi xóa khoảnh); dòng `sample:%` ngoài chuỗi. Kiểm: function `verify_plot_logs()` (`python -m agents.garden_director --verify`) | `agents.garden` `source='manual:garden'` + sample (loader giữ khoảnh mẫu còn nhật ký đã chain/ảnh; sau khi gỡ mẫu không nạp lại) |
 | `orders` | Đơn hàng tối thiểu (`channel`,`product_id`,`qty`,`total_vnd`,`status`) — không PII. v10.1: đơn sàn id `<kênh>:<order_id_hash>`, source `market:<kênh>`, `note` = các `sku_key`. v14.2 (HĐ 7.3 iii): đơn KHÔNG mẫu không xóa/không đổi mã/không chuyển thành mẫu/không TRUNCATE (trigger `orders_guard`); mọi UPDATE đổi giá trị → 1 dòng `order_history` | `sample_orders.jsonl` (MẪU) + nhập tay + `python -m agents.kd_orders --sync` |
 | `order_history` | (v14.2) Lịch sử thay đổi đơn THẬT: `order_id`, `old_row`/`new_row` (jsonb toàn dòng — không PII vì `orders` không có cột PII), `db_role`, `changed_at`. APPEND-ONLY (`append_only_guard`); ghi bởi trigger SECURITY DEFINER — người ghi `orders` không cần quyền bảng này | trigger `orders_guard` (UPDATE `orders` từ `kd_orders --sync`, FK products set null...) |
+| `report_outputs` | (v14.3) Sổ báo cáo file của TÍNH NĂNG (tiền tố `output_sources.report` trong `data/contract_features.json`): `feature_id`, `name` (tên file, không đường dẫn), `sha256` nội dung, `is_sample` (cờ caller `write_report(sample=)` hoặc nhãn `(MẪU)`/`[MẪU]` trong bản), `created_at`/`db_role` — APPEND-ONLY. Bộ đếm đầu ra `pipelines.rollout` loại `report` đếm DISTINCT `name` trong cửa sổ giai đoạn, bỏ mẫu | `agents.report.write_report` → `rollout.record_report` (agent_writer INSERT 4 cột; bks_reader không có quyền → báo cáo BKS chạy bằng login đó không được đếm, có cảnh báo) |
+| `san_suggestions` | (v14.3) Gợi ý chat sàn đã soạn (sales-02): `channel` shopee/tiktok, `msg_ref` = sha256(tin buyer ĐÃ che PII)[:32] — KHÔNG lưu tin, `answer` câu gợi ý đã che PII, `handoff`, `guardrail_ok` (guardrail + luật kênh sàn), `stage` giai đoạn lúc soạn, `created_by` người MXH — APPEND-ONLY; đếm DISTINCT (kênh, `msg_ref`), chỉ dòng guardrail đạt | `python -m connectors.channels --suggest KÊNH --by` (tắt → exit 2, không ghi) |
+| `san_suggestion_uses` | (v14.3) NGƯỜI MXH xác nhận đã dán gửi gợi ý: `suggestion_id` UNIQUE, `used_by` (CHECK chặn agent/system), `stage` (chỉ co_nguoi_duyet/van_hanh) — APPEND-ONLY; bằng chứng "người duyệt từng mục" của sales-02 | `python -m connectors.channels --mark-sent ID --by` (qua `auth.cli_gate` khối sales; gợi ý soạn lúc chạy thử / tính năng chưa cho dùng / guardrail trượt → từ chối) |
 | `care_purchases` | (v10.1 KD-A7) Lần mua của khách KÊNH SỞ HỮU (`contact_id` FK→contacts, `channel` CHECK web/zalo/b2b/showroom — khách sàn bị chặn ở DB, `order_ref` mã nội bộ, `sku_key`, `purchased_on`, `delivered_on`, `recorded_by` NGƯỜI — CHECK chặn 'agent:') — KHÔNG cột PII; không FK sang `orders`. Chưa grant agent_writer/app_human | `python -m agents.kd_care --record --by "<tên>"` (stdin JSON) — ship RỖNG (đơn web/Zalo thật = external-dep) |
 | `assets` | Tài sản truyền thông (`kind` image/video/article/doc,`url`,`product_id`) | `core_store` từ products.images + jsonl |
 | `leads` | Lead từ convlog (`dedup_key` unique,`channel`,`user_hash`,`question` đã mask,`intent`,`status` new/contacted/qualified/won/lost; v5.2 thêm `contact_id`,`province`,`dealer_code`,`assigned_by/at`) | `ingest.lead_store` — insert-only, không xóa; gán/trạng thái qua `python -m ingest.crm --assign/--status ... --by <tên>` |
@@ -175,6 +178,15 @@ tạo / fact suy ra một lần). Apply: `python scripts/apply_schema.py`
 (idempotent, toàn `create ... if not exists` + `create or replace function`;
 ngoại lệ duy nhất `alter table content_drafts add column if not exists
 created_by` + v6.1 5 cột ngữ cảnh draft). `--roles` chạy thêm `docs/roles.sql` (mục 6b).
+
+Cờ mẫu thống nhất (v14.3): bảng đầu ra chưa có cột nguồn có thêm
+`is_sample boolean default false` — `approval_queue` (`enqueue_item` bản 11
+tham số / `aq.enqueue(sample=)` / `director.submit(sample=)`),
+`allocation_proposals` (tồn kho nguồn là mẫu), `audit_runs` (báo cáo dựng
+trên số mẫu). Bảng có sẵn cột nguồn dùng cột đó (`source='sample'`/`sample:*`,
+`source_ref 'sample:'`, `sim_runs.dry_run`, lô mẫu qua `production_lots`).
+Bộ đếm đầu ra `pipelines.rollout` loại mẫu theo các cột này; quy ước tên cũ
+('sample'/'mau'/'MẪU') chỉ còn LOẠI THÊM cho dòng trước v14.3.
 
 ## 4. Giao diện — Streamlit `app/streamlit_app.py` (7 tab)
 
