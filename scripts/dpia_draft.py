@@ -53,7 +53,7 @@ DEFAULT_MAP = ROOT / "data" / "data_flow_map.json"
 DEFAULT_OUT = ROOT / "docs" / "legal"
 DPIA_NAME = "DPIA-nhap.md"
 TIA_NAME = "TIA-nhap.md"
-SKIP_DIRS = {"tests", ".venv", "venv", "__pycache__", ".git"}
+SKIP_DIRS = {"tests", ".venv", "venv", "__pycache__", ".git", ".claude"}
 NET_ROOTS = {"openai", "httpx", "requests", "smtplib", "aiohttp", "urllib3",
              "ftplib"}
 NET_DOTTED = ("urllib.request", "http.client")

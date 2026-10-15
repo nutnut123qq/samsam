@@ -255,7 +255,7 @@ def test_purge_sample_only_called_from_cli_and_tests():
     root = gd.ROOT
     hits = []
     for p in root.rglob("*.py"):
-        if any(part in {".venv", "venv", "node_modules", ".git"}
+        if any(part in {".venv", "venv", "node_modules", ".git", ".claude"}
                for part in p.parts):
             continue
         src = p.read_text(encoding="utf-8", errors="replace")
