@@ -23,6 +23,108 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Checklist v13.4-c05-media-vuon-provider
+
+Gộp vào `v13-hop-dong` bởi merge agent đợt 2 (nhánh lane `v13-c05`, `1cdf9ea`).
+
+- [x] v13.4 c05 (F05, phần media): kho media vườn và kênh Zalo vườn nhận video
+  MP4/MOV (`.m4v` lưu là mp4). Mỗi video được kiểm magic bytes, kích thước
+  (200 MB, GIẢ ĐỊNH), đuôi khớp nội dung, phải là file thường; rồi remux bằng
+  ffmpeg (từ imageio-ffmpeg) chỉ giữ hình + tiếng, quét lại dấu vị trí. Không có
+  ffmpeg → từ chối video, không lưu gì. CHECK `garden_media.ext` nới thêm
+  mp4/mov. Ghi âm Zalo kiểm magic bytes, đuôi lấy theo nội dung.
+- [x] Registry OCR/STT/ảnh AI fail-closed: `doc_intake` exit 2 khi còn scan ở
+  `cho_ocr`, provider OCR nước ngoài bị từ chối, `zalo_garden --transcribe` và
+  `image_studio --scene` exit 2; tích hợp thật vẫn BLOCKED chờ vendor + DPA + key.
+- [x] `data/product_dossiers.json` đối chiếu 1:1 với 13 SKU golden, tất cả
+  `chua_xac_nhan`, không nhân bản SKU cho đủ 14.
+- [x] `data/retention.json` giữ mọi TTL null (không bịa);
+  `scripts/retention_purge.py` ghi `agent_action_log` trước khi xóa, bỏ qua ảnh
+  đã gắn lô QR và ghi âm chưa chép lời; `health_bulletin` mục 6 cảnh báo.
+- Evidence lane: `evidence/v13_4_c05_pytest.log` (test_v13_c05_media 45 ca, 29
+  FAIL trên code cũ; 18 file liên quan 864 passed, 2 fail do môi trường
+  worktree), `v13_4_c05_oldcode_fail.log`, `v13_4_c05_e2e.log`.
+- BLOCKED: OCR thật (Bên B/Pháp chế chọn vendor OCR trong nước + hợp
+  đồng/DPA/TIA + key; hiện chỉ provider `none`, doc_intake/sx_label exit 2
+  `[blocked]`); STT thật (vendor STT trong nước + hợp đồng/DPA + key;
+  `--transcribe` exit 2, nhánh provider chỉ verify bằng mock); API ảnh nền AI
+  (vendor + hợp đồng/DPA + key + trần chi phí agent `image` trong
+  `data/llm_gateway.json`); Bên B cấp danh mục 14 hồ sơ gốc (tên, thành phần,
+  quy cách, số công bố); owner từng mục + Pháp chế chốt TTL `hr_cv`,
+  `hr_attendance`, `garden_media`, `garden_voice`; event video Zalo OA
+  (`user_send_video`, attachment 'video') và host CDN là GIẢ ĐỊNH, cần đối chiếu
+  event thật.
+- Còn mở: `qr_trace` hàm SQL gắn lô ↔ nhật ký nhận mọi sha `garden_media` kể cả
+  video, rồi `site/preview` từ chối với thông báo gây hiểu nhầm "không có trong
+  garden_media" (fail-closed nhưng sai lời) — nên kiểm `ext in ('jpg','png')` ở
+  hàm gắn (c09); `agents.garden_director` bản tin mục 6 "Ảnh vườn mới" giờ đếm cả
+  video, nên đổi nhãn "Ảnh/video"; `data/contract_features.json` (production-02,
+  mục media vùng trồng) chưa cập nhật code_status/blocker theo video,
+  product_dossiers, blocker OCR/STT/ảnh AI (c00/coordinator); gỡ GPS video mới
+  verify trên mẫu do ffmpeg sinh (QuickTime ISO6709/location, MP4 title), chưa
+  trên clip iPhone/Android thật — quét sau remux fail-closed nếu còn dấu.
+  Hai fail môi trường lane báo (`test_garden_director::test_purge_sample_only…`,
+  `test_lead_store::test_harvest_real_convlog_smoke`) PASS trên checkout chính
+  sau gộp.
+
+## Checklist v13.3-c03-rollout-cuong-che
+
+Gộp vào `v13-hop-dong` bởi merge agent đợt 2 (nhánh lane `v13-c03`, `24c1e53`).
+
+- [x] v13.3 c03 (F03): sổ triển khai chặn thật ở runtime. Mọi biên đọc giai
+  đoạn qua `rollout.mode(conn, feature_id)`; chưa vào sổ, bảng thiếu, DB down
+  hoặc không thuộc danh mục → chạy thử (fail-closed). Chỉ `rollout_config.json`
+  `enforce: false` tường minh mới tắt cưỡng chế. Tính năng tắt: không sinh đầu
+  ra (`approval_queue.enqueue`, `store.save_draft`, `write_report`), không duyệt
+  được mục đang chờ. Chạy thử hoặc tắt: mọi đường dùng bị chặn kèm lý do, gồm
+  `approval_queue.verify` (cổng chung của --verify-send/--export/áp dụng),
+  `store --schedule` và chatbot gửi khách (Zalo + Messenger qua chung
+  `zalo._reply`: câu bot thành gợi ý `cskh_reply` chờ người duyệt, khách nhận
+  câu viết tay). Có người duyệt: chỉ dùng mục được người duyệt từng mục.
+- [x] F04: đầu ra = mục DISTINCT ở `output_sources` của đúng tính năng
+  (guardrail đạt, không mẫu, trong cửa sổ giai đoạn), rải trên ≥5 ngày làm việc.
+  Lên vận hành cần thêm ≥1 đầu ra do người duyệt và 0 đầu ra duyệt thiếu người;
+  10 ngày mà 0 đầu ra hoặc 50 log bất kỳ đều không đạt. `agent_writer` được
+  SELECT `feature_rollout` để agent thấy trạng thái tắt.
+- Evidence lane: `evidence/v13_3_c03_pytest.log` (test_rollout_enforce 27 ca,
+  trên code cũ đều FAIL/ERROR; test_rollout 128 ca), `v13_3_c03_e2e.log`,
+  `v13_3_c03_oldcode_fail.log`. Acceptance vẫn `chua_nghiem_thu`.
+- BLOCKED: Hành chính Sâm Sâm chốt lịch nghỉ lễ/Tết trong
+  `data/rollout_config.json` (holidays rỗng; --status và dossier in cảnh báo,
+  không tự điền); Bên B ủy quyền người duyệt theo khối (approvers rỗng, thuộc
+  C04 — cổng hiện chỉ chặn 'agent:'/'system:'/auto_policy); hai bên chốt danh
+  mục 89 mục + `output_sources` — tính năng chỉ có nguồn report/file/bảng riêng
+  (vd ceo-03, intel-01.1, finance-04.1, sales-02, production-04.2) chưa có bộ
+  đếm nên không nâng giai đoạn được tới khi có bản ghi đầu ra.
+- Còn mở: nguồn đầu ra report/file/bảng riêng (plot_logs, recon_results,
+  red_alerts...) chưa có bộ đếm → luôn "không đếm được"; biên sinh khi tắt mới
+  phủ approval_queue/content_drafts/write_report — agent ghi thẳng bảng riêng
+  (decision_log, recon_results, plot_logs, allocation_proposals...) chưa bị chặn
+  khi tắt; sales-02 (`connectors.channels --suggest`) chưa gắn cổng; chatbot
+  co_nguoi_duyet: gợi ý `cskh_reply` duyệt xong người vẫn gửi tay trên OA, CLI
+  chưa có `--verify-use ID FILE` (C04); chưa vận hành hoặc DB down → chatbot chỉ
+  gửi HOLD_TEXT + handoff (hành vi production mới — GĐ bán hàng cần biết trước
+  khi bật enforce trên server); mục approval_queue có object_type chưa nằm trong
+  `output_sources` bị chặn ở biên dùng — rà mapping trước vận hành; mục mẫu nhận
+  diện theo quy ước tên ('sample'/'mau'/'MẪU'/source 'sample…'), chưa có cột cờ
+  mẫu thống nhất.
+
+## Gộp v13 đợt 2 (c03 + c05)
+
+- `git merge --no-ff` v13-c03 (`24c1e53`) rồi v13-c05 (`1cdf9ea`) vào
+  `v13-hop-dong`. Không xung đột (git tự gộp AGENTS.md, data_flow_map.json,
+  v13-board.md, DPIA-nhap.md). Counter dòng so HEAD/MERGE_HEAD/merge-base: 0 dòng
+  mất ở AGENTS.md, data_flow_map.json, v13-board.md, DPIA-nhap.md, schema.sql,
+  test_store.py; JSON đổi parse được; .py đổi ast.parse được.
+  `scripts/dpia_draft.py` chạy lại sau gộp: chỉ khác đuôi dòng (40 luồng, 16 ra
+  nước ngoài) → không stage.
+- DB `samsam_v13_m2`: `apply_schema --roles` ×3 sạch (75 bảng), core_store,
+  golden_store; `ruff check .` sạch.
+- Gate sau gộp (DB `samsam_v13_m2`): 3 đợt pytest = 73 file (file 2 lane đụng,
+  mọi test chạm approval_queue/store/write_report/rollout, drift
+  handover/data_flow_map/dpia/db_backup, guard schema) → 1530 + 1548 + 34 =
+  3112 passed, 0 failed. Không cần vá.
+
 ## Checklist v13.2-c02-doi-soat-chong-ky
 
 Gộp vào `v13-hop-dong` bởi merge agent đợt 1 (nhánh lane `v13-c02`, `9c5f458`).
