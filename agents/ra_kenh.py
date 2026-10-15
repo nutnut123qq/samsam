@@ -36,6 +36,8 @@ Chạy:
   python -m agents.ra_kenh --file <csv> --by "<tên người>" [--dry-run [--now ISO]]
   python -m agents.ra_kenh --mark-removed <url> --by "<tên người>"
   python -m agents.ra_kenh --report [--now ISO] [--days 7]
+  python -m agents.ra_kenh --partner-file <csv> --by "<tên người>" [--dry-run]
+    (v14.5 marketing-04.2 — bài KOC/đại lý; xem khối "v14.5 đối tác")
 `--now` CHỈ cho `--report`/`--dry-run` (thao tác ghi dùng giờ thật — chống
 lùi `closed_at` làm giả "đúng hạn"); thiếu múi giờ → hiểu là giờ VN
 (+07:00). Exit 0 ok (có vi phạm vẫn 0 — rà là báo, không chặn) · 1 file
@@ -709,6 +711,408 @@ def render_report(stats: dict, now: datetime) -> str:
     return "\n".join(L) + "\n"
 
 
+# ------------------------------------------------------------------ v14.5 đối tác
+# marketing-04.2 (PL01 Marketing — KOC và đại lý affiliate: "kiểm tra bài
+# đăng của đối tác"). Nguồn = file xuất tay bài KOC/đại lý ĐÃ đăng (người
+# MXH/marketing gom). Tách hẳn khỏi luồng kênh SỞ HỮU ở trên (bảng riêng
+# `partner_post_scans`, loại việc riêng `marketing/partner_post_review`):
+#   - Kiểm TOÀN file trước khi connect; chỉ nhận MÃ đối tác (không tên/
+#     handle/SĐT — cột lạ bị từ chối); mã phải có trong sổ KOC
+#     (`data/koc_sample.json`) hoặc sổ đại lý (`dealers`) — lạ → cả file lỗi.
+#   - Rà theo kênh: `guardrail.check_publish(content_type="koc",
+#     is_sponsored=True, is_ai=False)` (bài do đối tác viết, là quảng cáo).
+#   - Đối chiếu bộ tài liệu chuẩn ĐÃ duyệt của đúng đối tác: kit KOC
+#     (`marketing/koc_brief` approved, payload khớp hash duyệt —
+#     `verify_publish` của DB, không qua cổng DÙNG rollout vì đây là SO, không
+#     phát hành) hoặc kit affiliate đại lý (mã `active` + mục
+#     `sales/affiliate_program` approved). Không có → `thieu_bo_tai_lieu`;
+#     SKU ngoài kit → `sku_ngoai_bo_tai_lieu`; câu công dụng khớp claim
+#     nhưng không nằm trong "Điểm được nói" của kit → `ngoai_bo_tai_lieu`
+#     (kit đại lý không liệt kê claim → chỉ xét SKU).
+#   - Đợt theo (mã đối tác, URL): rà khác lần trước (text/mã vi phạm) → 1
+#     dòng sổ; vi phạm → 1 mục hàng duyệt (đợt mới, kể cả bài quay lại bản
+#     cũ sau một lần sạch); trùng lần trước → bỏ qua (idempotent).
+#   - Không lưu text/URL đầy đủ (URL có thể chứa handle cá nhân) — sha256 +
+#     tên miền NỀN TẢNG (bỏ subdomain, `_site`); payload không chép đoạn vi
+#     phạm. Agent KHÔNG liên hệ đối tác,
+#     không gỡ/sửa bài; GĐ marketing yêu cầu đối tác theo hợp đồng.
+PARTNER_AGENT = "agent:mkt_doi_tac"
+PARTNER_FEATURE = "marketing-04.2"
+OT_PARTNER = "partner_post_review"
+PARTNER_REQUIRED = ("ma_doi_tac", "url", "kenh", "text", "ngay_dang")
+PARTNER_OPTIONAL = ("sku",)
+THIEU_KIT = "thieu_bo_tai_lieu"
+NGOAI_KIT = "ngoai_bo_tai_lieu"
+SKU_NGOAI_KIT = "sku_ngoai_bo_tai_lieu"
+_PARTNER_RE = re.compile(r"[A-Z0-9][A-Z0-9_-]{1,39}")
+_KOC_SAMPLE_RE = re.compile(r"KOC-MAU-\d{2}")
+_KIT_HEAD_RE = re.compile(r"# Kit KOC (KOC-MAU-\d{2}) — `([^`\n]+)` × ")
+_AFF_SKU_RE = re.compile(r"^### Bài #\d+ — `([^`\n]+)`$", re.MULTILINE)
+
+
+_SLD = frozenset(("com", "net", "org", "edu", "gov", "co", "ac"))
+
+
+def _sha(s: str) -> str:
+    return store.content_sha256(s)
+
+
+def _site(host: str) -> str:
+    """Tên miền NỀN TẢNG (bỏ subdomain): `chilan.blogspot.com` →
+    `blogspot.com`, `www.tiktok.com` → `tiktok.com`, `abc.com.vn` →
+    `abc.com.vn` — subdomain/đường dẫn có thể là handle cá nhân KOC."""
+    parts = host.lower().rstrip(".").split(".")
+    n = 3 if (len(parts) >= 3 and len(parts[-1]) == 2
+              and parts[-2] in _SLD) else 2
+    return ".".join(parts[-n:])
+
+
+def read_partner_export(path) -> list[dict]:
+    """Đọc + kiểm TOÀN file bài đối tác TRƯỚC khi connect. Lỗi → ExportError
+    (chỉ 'dòng N cột X: lý do' — KHÔNG kèm giá trị ô)."""
+    p = Path(path)
+    if p.suffix.lower() != ".csv":
+        raise ExportError(["chỉ nhận file .csv"])
+    if not p.is_file():
+        raise ExportError(["không có file"])
+    if p.stat().st_size > MAX_BYTES:
+        raise ExportError([f"file lớn hơn {MAX_BYTES // 1024 // 1024} MB"])
+    try:
+        raw = p.read_bytes().decode("utf-8-sig")
+    except UnicodeDecodeError:
+        raise ExportError(["file không phải UTF-8"]) from None
+    rules = _rules()
+    try:
+        recs = list(csv.reader(io.StringIO(raw, newline="")))
+    except csv.Error as e:
+        raise ExportError([f"CSV hỏng ({type(e).__name__})"]) from None
+    if not recs:
+        raise ExportError(["file rỗng"])
+    head = [h.strip().lower() for h in recs[0]]
+    errs = []
+    if any(not h for h in head):
+        errs.append("dòng 1: có cột header rỗng")
+    if sorted(h for h, k in Counter(head).items() if h and k > 1):
+        errs.append("dòng 1: header trùng")
+    stray = [h for h in head if h and h not in PARTNER_REQUIRED
+             + PARTNER_OPTIONAL]
+    if stray:
+        errs.append(f"dòng 1: {len(stray)} cột lạ — chỉ nhận"
+                    f" {list(PARTNER_REQUIRED + PARTNER_OPTIONAL)} (MÃ đối"
+                    " tác, không tên/handle/liên hệ cá nhân)")
+    miss = [c for c in PARTNER_REQUIRED if c not in head]
+    if miss:
+        errs.append(f"dòng 1: thiếu cột bắt buộc {miss}")
+    if errs:
+        raise ExportError(errs)
+    body = [(i, r) for i, r in enumerate(recs[1:], start=2)
+            if any(c.strip() for c in r)]
+    if not body:
+        raise ExportError(["file không có dòng bài nào"])
+    if len(body) > MAX_ROWS:
+        raise ExportError([f"quá {MAX_ROWS} dòng"])
+    out, seen = [], {}
+    for n, r in body:
+        if len(r) != len(head):
+            errs.append(f"dòng {n}: số ô {len(r)} ≠ số cột {len(head)}")
+            continue
+        c = dict(zip(head, r))
+
+        def bad(col, why, n=n):
+            errs.append(f"dòng {n} cột {col}: {why}")
+
+        for col, v in c.items():
+            if "\x00" in v:
+                bad(col, "chứa ký tự NUL")
+        code = c["ma_doi_tac"].strip()
+        if not _PARTNER_RE.fullmatch(code):
+            bad("ma_doi_tac", "cần MÃ đối tác (A-Z 0-9 _ -, 2..40 ký tự) —"
+                " không tên/handle")
+        url = c["url"].strip()
+        too_long = len(url.encode("utf-8")) > MAX_URL
+        try:
+            parts = urlsplit(url) if url and not too_long else None
+            host = (parts.hostname or "") if parts else ""
+        except ValueError:
+            parts, host = None, ""
+        if too_long:
+            bad("url", f"dài quá {MAX_URL} byte UTF-8")
+        elif (not parts or parts.scheme not in ("http", "https") or not host
+                or len(host) > 253
+                or any(ch.isspace() or unicodedata.category(ch)[0] == "C"
+                       for ch in url)):
+            bad("url", "cần URL http(s) có host, không khoảng trắng/ký tự"
+                " điều khiển")
+        elif url in seen:
+            bad("url", f"trùng URL với dòng {seen[url]} (mơ hồ)")
+        seen.setdefault(url, n)
+        ch = c["kenh"].strip().lower()
+        ch = rules["channel_alias"].get(ch, ch)
+        if ch not in rules["channels"]:
+            bad("kenh", f"kênh không hợp lệ — nhận {rules['channels']}")
+        posted = None
+        try:
+            posted = _iso_date(c["ngay_dang"], "ngay_dang")
+        except ValueError:
+            bad("ngay_dang", "cần ngày YYYY-MM-DD hợp lệ")
+        sku = (c.get("sku") or "").strip() or None
+        if sku is not None and sku not in rules["golden"]:
+            bad("sku", "SKU không có trong golden")
+        text = c["text"].replace("\r\n", "\n")
+        if not text.strip():
+            bad("text", "rỗng")
+        elif len(text) > MAX_TEXT:
+            bad("text", f"dài quá {MAX_TEXT} ký tự")
+        out.append({"line": n, "partner": code, "url": url,
+                    "url_sha": _sha(url), "host": _site(host),
+                    "channel": ch, "posted_on": posted, "sku": sku,
+                    "text": text, "sha": _sha(text)})
+    if errs:
+        raise ExportError(errs)
+    return out
+
+
+def _kit_claims(payload: str) -> set:
+    """Các dòng '- …' của mục "## Điểm được nói" trong kit KOC đã duyệt."""
+    out, inside = set(), False
+    for line in (payload or "").splitlines():
+        if line.startswith("## "):
+            inside = line.strip() == "## Điểm được nói"
+        elif inside and line.startswith("- "):
+            out.add(line[2:].strip())
+    return out
+
+
+def _verified(conn, otype: str, oid: str, payload: str) -> bool:
+    """Payload = đúng bản đã duyệt (hash `approvals`) — SO, không phát hành
+    nên không đi qua cổng DÙNG của rollout (`approval_queue.verify`)."""
+    r = conn.execute("select verify_publish(%s, %s, %s)",
+                     (otype, oid, payload)).fetchone()
+    return bool(r and r[0] is True)
+
+
+def partner_kits(conn) -> dict:
+    """CHỈ SELECT → {mã đối tác: {skus, claims (None = kit không liệt kê
+    claim), refs}} từ bộ tài liệu chuẩn ĐÃ duyệt."""
+    kits: dict = {}
+    for qid, oid, payload in conn.execute(
+            "select id, object_id, payload from approval_queue where block ="
+            " 'marketing' and object_type = 'koc_brief' and status ="
+            " 'approved' order by id").fetchall():
+        m = _KIT_HEAD_RE.match(payload or "")
+        if m is None or not _verified(conn, "koc_brief", oid, payload):
+            continue
+        k = kits.setdefault(m.group(1), {"skus": set(), "claims": set(),
+                                         "refs": []})
+        k["skus"].add(m.group(2))
+        if k["claims"] is not None:
+            k["claims"] |= _kit_claims(payload)
+        k["refs"].append(f"koc_brief#{qid}")
+    for dealer, qid, oid, payload in conn.execute(
+            "select c.dealer_code, q.id, q.object_id, q.payload from"
+            " affiliate_codes c join approval_queue q on q.id = c.queue_id"
+            " where c.status = 'active' and q.object_type ="
+            " 'affiliate_program' and q.status = 'approved' order by c.id"
+            ).fetchall():
+        if not _verified(conn, "affiliate_program", oid, payload):
+            continue
+        k = kits.setdefault(dealer, {"skus": set(), "claims": None,
+                                     "refs": []})
+        k["claims"] = None          # kit đại lý không liệt kê claim
+        k["skus"] |= set(_AFF_SKU_RE.findall(payload))
+        k["refs"].append(f"affiliate_program#{qid}")
+    return kits
+
+
+def partner_verdict(g: dict, kit: dict | None, sku: str | None) -> dict:
+    """THUẦN: kết quả guardrail + kit đã duyệt (None = chưa có) → {codes,
+    severity}. S1 = có vi phạm critical; còn mã khác → S2."""
+    viols = [v for v in g.get("violations", []) if isinstance(v, dict)]
+    codes = list(dict.fromkeys(v.get("code") for v in viols))
+    if kit is None:
+        codes.append(THIEU_KIT)
+    else:
+        if sku is not None and kit["skus"] and sku not in kit["skus"]:
+            codes.append(SKU_NGOAI_KIT)
+        if kit["claims"] is not None:
+            said = {m.get("claim") for m in g.get("matched_claims") or []
+                    if isinstance(m, dict) and m.get("claim")}
+            if said - kit["claims"]:
+                codes.append(NGOAI_KIT)
+    crit = any(v.get("severity") == "critical" for v in viols)
+    return {"codes": codes, "severity": "S1" if crit else
+            ("S2" if codes else None)}
+
+
+def partner_scan(row: dict, kit: dict | None) -> dict:
+    g = guardrail.check_publish(
+        row["text"], channel=row["channel"], content_type="koc",
+        sku=row["sku"], is_ai=False, is_sponsored=True)
+    return partner_verdict(g, kit, row["sku"])
+
+
+def partner_registry(conn) -> dict:
+    """{mã: is_sample} — KOC (sổ MẪU) + đại lý (`dealers`, nguồn
+    dealer_regions.json = MẪU). Sổ KOC hỏng → ValueError (fail-closed)."""
+    from agents.mkt_koc import KocConfigError, load_kocs
+    try:
+        reg = {k["code"]: True for k in load_kocs()}
+    except KocConfigError as e:
+        raise ValueError(f"sổ KOC: {e}") from None
+    for code, src in conn.execute("select code, source from dealers"):
+        reg.setdefault(code, src == "dealer_regions.json")
+    return reg
+
+
+def _partner_payload(r: dict, v: dict, kit: dict | None) -> str:
+    kit_s = (", ".join(kit["refs"]) if kit else
+             "CHƯA có bộ tài liệu chuẩn đã duyệt cho đối tác này")
+    return "\n".join([
+        (f"Rà bài đối tác (marketing-04.2) — đối tác {r['partner']}, kênh"
+         f" {r['channel']}, tên miền {r['host']}, ngày đăng"
+         f" {r['posted_on']:%d/%m/%Y}"),
+        (f"Mã URL (sha256 12 ký tự đầu): {r['url_sha'][:12]} · mã nội dung:"
+         f" {r['sha'][:12]} (sổ partner_post_scans)"),
+        f"Mức: {v['severity']} — mã: {', '.join(v['codes'])}",
+        f"Bộ tài liệu chuẩn đối chiếu: {kit_s}",
+        ("Việc cần làm: GĐ marketing yêu cầu đối tác sửa/gỡ bài theo hợp"
+         " đồng KOC/đại lý (URL đầy đủ tra trong file xuất tay theo mã URL)."
+         " Agent KHÔNG liên hệ đối tác, KHÔNG gỡ/sửa bài; payload không chép"
+         " đoạn vi phạm.")])
+
+
+def ingest_partner(conn, rows: list[dict], *, by: str, now: datetime,
+                   dcfg: dict | None = None) -> dict:
+    """Nạp lần rà bài đối tác → thống kê. Mã đối tác lạ → ValueError (0
+    dòng). Tính năng tắt → RolloutBlocked (0 dòng)."""
+    from pipelines import rollout
+    err = by_error(by)
+    if err:
+        raise ValueError(err)
+    now = _aware(now)
+    rollout.check_generate(conn, PARTNER_FEATURE, "rà bài đối tác")
+    dcfg = dcfg or director.load_config("marketing")
+    reg = partner_registry(conn)
+    unknown = sorted({r["partner"] for r in rows} - set(reg))
+    if unknown:
+        conn.rollback()
+        raise ValueError(f"{len(unknown)} mã đối tác không có trong sổ KOC/"
+                         "đại lý — không nạp")
+    kits = partner_kits(conn)
+    verdicts = [partner_scan(r, kits.get(r["partner"])) for r in rows]
+    if any("config" in v["codes"] for v in verdicts):
+        raise ValueError("guardrail cấu hình hỏng — không nạp (fail-closed)")
+    conn.commit()     # đóng tx đọc
+    st = {"rows": len(rows), "new": 0, "skip": 0, "S1": 0, "S2": 0,
+          "clean": 0, "tickets": 0, "items": []}
+    for r, v in zip(rows, verdicts):
+        last = conn.execute(
+            "select id, text_sha256, codes from partner_post_scans where"
+            " partner_code = %s and url_sha256 = %s order by id desc limit 1",
+            (r["partner"], r["url_sha"])).fetchone()
+        if last and last[1] == r["sha"] and list(last[2]) == v["codes"]:
+            st["skip"] += 1
+            continue
+        kit = kits.get(r["partner"])
+        sample = reg[r["partner"]]
+        qid = None
+        if v["severity"]:
+            # oid xác định theo trạng thái TRƯỚC khi ghi → chạy lại sau sự
+            # cố giữa submit và insert tìm lại đúng mục, không nhân bản.
+            oid = (f"partner_post:{r['partner']}:{r['url_sha'][:16]}:"
+                   f"{last[0] if last else 0}")
+            row = conn.execute("select id from approval_queue where"
+                               " object_type = %s and object_id = %s",
+                               (OT_PARTNER, oid)).fetchone()
+            conn.commit()
+            if row:
+                qid = row[0]
+            else:
+                qid = director.submit(
+                    conn, "marketing", OT_PARTNER, oid,
+                    (f"Bài đối tác {r['partner']} {v['severity']} trên"
+                     f" {r['channel']} ({r['host']})")[:300],
+                    _partner_payload(r, v, kit), PARTNER_AGENT,
+                    cfg=dcfg, sample=sample)
+                st["tickets"] += 1
+        with conn.transaction():
+            sid = conn.execute(
+                "insert into partner_post_scans (partner_code, url_sha256,"
+                " host, channel, posted_on, sku, text_sha256, codes, severity,"
+                " kit_ref, queue_id, is_sample, scanned_by, scanned_at)"
+                " values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,"
+                " %s) returning id",
+                (r["partner"], r["url_sha"], r["host"], r["channel"],
+                 r["posted_on"], r["sku"], r["sha"], v["codes"],
+                 v["severity"], ", ".join(kit["refs"])[:200] if kit else None,
+                 qid, sample, by.strip(), now)).fetchone()[0]
+        conn.commit()
+        st["new"] += 1
+        if v["severity"]:
+            st[v["severity"]] += 1
+        else:
+            st["clean"] += 1
+        st["items"].append({"id": sid, "line": r["line"],
+                            "partner": r["partner"], "host": r["host"],
+                            "url_sha": r["url_sha"], "channel": r["channel"],
+                            "severity": v["severity"], "codes": v["codes"],
+                            "queue_id": qid})
+    return st
+
+
+def _partner_main(a) -> int:
+    from pipelines.rollout import RolloutBlocked
+    try:
+        rows = read_partner_export(a.partner_file)
+    except ExportError as e:
+        print(f"[err] file bài đối tác không hợp lệ — 0 dòng nạp ({e}):")
+        for m in e.errors[:20]:
+            print(f"  - {m}")
+        return 1
+    except ValueError as e:
+        print(f"[err] cấu hình guardrail: {e}")
+        return 2
+    if a.dry_run:
+        print(f"[dry-run] {len(rows)} bài đối tác — KHÔNG connect DB; chưa"
+              " đối chiếu sổ đối tác/bộ tài liệu đã duyệt — cần DB")
+        for r in rows:
+            v = partner_scan(r, None)
+            codes = [c for c in v["codes"] if c != THIEU_KIT]
+            print(f"[{'vi phạm' if codes else 'guardrail sạch'}] dòng"
+                  f" {r['line']} {r['partner']} {r['channel']} {r['host']}"
+                  f" — {', '.join(codes) or '—'}")
+        return 0
+    conn = connect()
+    if conn is None:
+        print("[err] DB không truy cập được")
+        return 2
+    try:
+        st = ingest_partner(conn, rows, by=a.by, now=_now())
+    except RolloutBlocked as e:
+        conn.rollback()
+        print(f"[rollout] {e}")
+        return 2
+    except ValueError as e:
+        conn.rollback()
+        print(f"[err] {safe(_mask_pii(str(e)))[:200]}")
+        return 1
+    except psycopg.Error as e:
+        conn.rollback()
+        print(f"[err] {type(e).__name__}: {safe(_mask_pii(str(e)))[:200]}")
+        return 2
+    finally:
+        conn.close()
+    print(f"[ok] {st['rows']} bài đối tác — mới {st['new']}, bỏ qua"
+          f" {st['skip']} (trùng lần rà trước) — S1 {st['S1']}, S2 {st['S2']},"
+          f" sạch {st['clean']} — mục hàng duyệt mới {st['tickets']}")
+    for it in st["items"]:
+        if it["severity"]:
+            print(f"[{it['severity']}] dòng {it['line']} {it['partner']}"
+                  f" {it['channel']} {it['host']} url#{it['url_sha'][:12]} —"
+                  f" {', '.join(it['codes'])} — mục #{it['queue_id']}")
+    return 0
+
+
 # ------------------------------------------------------------------ CLI
 def _print_plan(rows, scans) -> None:
     for r, s in zip(rows, scans):
@@ -730,6 +1134,10 @@ def main(argv=None) -> int:
                     " → ticket gỡ/sửa 24h. Agent KHÔNG gỡ/sửa bài.")
     ap.add_argument("--file", help="CSV xuất tay (url,kenh,is_ai,text[,"
                     "loai_noi_dung,ngay_dang,draft_id,sku,is_sponsored])")
+    ap.add_argument("--partner-file", metavar="CSV",
+                    help="v14.5 bài KOC/đại lý ĐÃ đăng (ma_doi_tac,url,kenh,"
+                    "text,ngay_dang[,sku]) → guardrail + bộ tài liệu chuẩn đã"
+                    " duyệt → hàng duyệt GĐ marketing")
     ap.add_argument("--mark-removed", metavar="URL",
                     help="NGƯỜI ghi nhận đã gỡ/ẩn bài → đóng đợt (da_go)")
     ap.add_argument("--report", action="store_true",
@@ -742,11 +1150,15 @@ def main(argv=None) -> int:
     ap.add_argument("--dry-run", action="store_true",
                     help="chỉ đọc file + rà, KHÔNG connect DB")
     a = ap.parse_args(argv)
-    n_ops = sum([a.file is not None, a.mark_removed is not None, a.report])
+    n_ops = sum([a.file is not None, a.mark_removed is not None, a.report,
+                 a.partner_file is not None])
     if n_ops != 1:
-        ap.error("chọn đúng 1 thao tác: --file | --mark-removed | --report")
-    if a.dry_run and a.file is None:
-        ap.error("--dry-run chỉ đi với --file")
+        ap.error("chọn đúng 1 thao tác: --file | --partner-file |"
+                 " --mark-removed | --report")
+    if a.dry_run and a.file is None and a.partner_file is None:
+        ap.error("--dry-run chỉ đi với --file/--partner-file")
+    if a.partner_file is not None and a.now is not None:
+        ap.error("--now không đi với --partner-file (ghi dùng giờ thật)")
     if a.now is not None and not (a.report or a.dry_run):
         # lùi giờ ghi → closed_at trước hạn = "đúng hạn" giả trong báo cáo
         ap.error("--now chỉ đi với --report/--dry-run — thao tác ghi dùng"
@@ -761,6 +1173,8 @@ def main(argv=None) -> int:
         err = by_error(a.by)
         if err:
             ap.error(err)
+    if a.partner_file is not None:
+        return _partner_main(a)
     try:
         cfg = load_config()
     except ValueError as e:

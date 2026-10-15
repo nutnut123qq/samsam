@@ -466,3 +466,11 @@ grant select, insert on dealer_price_obs to svc_loader;
 grant usage on sequence dealer_price_obs_id_seq to svc_loader;
 grant select on dealers to svc_loader;
 grant select on dealer_price_obs, dealers, price_list to svc_job;
+
+-- ===== v14.5 p5 marketing/ceo/intel =====
+-- * `partner_post_scans` (ra_kenh --partner-file): CLI người MXH/marketing
+--   ghi bằng login chạy ra_kenh (như `channel_posts` — hiện DSN owner);
+--   agent_writer/app_human KHÔNG ghi.
+-- * svc_job đọc nguồn của `intel_weekly --suggest-keywords` (intel-04.2)
+--   và `agents.ceo_promo` (ceo-04.1: listing sàn, giá golden đã có).
+grant select on trends_related, intel_imports to svc_job;

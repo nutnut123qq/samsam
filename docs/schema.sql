@@ -3966,3 +3966,37 @@ create or replace trigger dealer_price_obs_append_only_row
 create or replace trigger dealer_price_obs_no_truncate
   before truncate on dealer_price_obs
   for each statement execute function append_only_guard();
+
+-- ===== v14.5 p5 marketing/ceo/intel =====
+-- marketing-04.2 (PL01 Marketing "kiểm tra bài đăng của đối tác"): sổ rà
+-- bài KOC/đại lý ĐÃ đăng từ file xuất tay (`agents.ra_kenh --partner-file`).
+-- KHÔNG lưu text bài, URL đầy đủ hay tên/handle đối tác — chỉ MÃ đối tác
+-- (có trong sổ KOC/đại lý), sha256 URL/text, tên miền. Mỗi lần rà khác bản
+-- trước (text/mã vi phạm) = 1 dòng; đợt vi phạm mới → 1 mục hàng duyệt
+-- `marketing/partner_post_review`. Append-only (bằng chứng rà).
+create table if not exists partner_post_scans (
+  id bigint generated always as identity primary key,
+  partner_code text not null check (partner_code ~ '^[A-Z0-9][A-Z0-9_-]{1,39}$'),
+  url_sha256 text not null check (url_sha256 ~ '^[0-9a-f]{64}$'),
+  host text not null check (char_length(host) between 1 and 253),
+  channel text not null check (channel ~ '^[a-z0-9_]{2,20}$'),
+  posted_on date not null,
+  sku text,
+  text_sha256 text not null check (text_sha256 ~ '^[0-9a-f]{64}$'),
+  codes text[] not null default '{}',
+  severity text check (severity in ('S1', 'S2')),
+  kit_ref text check (char_length(kit_ref) <= 200),
+  queue_id bigint references approval_queue(id),
+  is_sample boolean not null default false,
+  scanned_by text not null check (btrim(scanned_by) <> ''),
+  scanned_at timestamptz not null default now(),
+  check ((severity is null) = (cardinality(codes) = 0))
+);
+create index if not exists partner_post_scans_key_idx
+  on partner_post_scans (partner_code, url_sha256, id);
+create or replace trigger partner_post_scans_append_only_row
+  before update or delete on partner_post_scans
+  for each row execute function append_only_guard();
+create or replace trigger partner_post_scans_no_truncate
+  before truncate on partner_post_scans
+  for each statement execute function append_only_guard();
