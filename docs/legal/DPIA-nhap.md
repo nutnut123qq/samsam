@@ -704,6 +704,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Lợi ích hợp pháp/hợp đồng lao động với nhân viên — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email); Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday) |
 
+### DF-42 — Nhân sự: xếp hạng hồ sơ ứng viên + tổng hợp chấm công theo mã NV (PC-HR, v12.2)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-42 |
+| Module (code) | `agents/pc_hr.py` |
+| Mục đích | Lập NHÁP xếp hạng hồ sơ (không tự loại) và tổng hợp ngày công/đi trễ/về sớm/thiếu chấm để Chuyên viên pháp chế–nhân sự duyệt |
+| Dữ liệu | CV ứng viên .txt/.md (có tên/SĐT/email/kinh nghiệm) đọc TẠI MÁY từ `HR_INBOX_DIR` ngoài repo; file chấm công `ma_nv,ngay,gio_vao,gio_ra` (mã NV, không tên). Hàng duyệt chỉ nhận mã ứng viên = 12 ký tự đầu sha256 nội dung CV + số tiêu chí đạt/điểm/lý do theo tiêu chí JD, và số tổng hợp theo mã NV — KHÔNG tên/SĐT/email/tên file/nội dung CV |
+| Lớp | Đỏ |
+| Chủ thể | Ứng viên nộp hồ sơ; nhân viên Sâm Sâm chấm công |
+| Nơi lưu | CV ở `HR_INBOX_DIR` (ngoài repo, module từ chối thư mục trong repo); Postgres `approval_queue` mục `hr_screening`/`hr_attendance`/`hr_jd` (append-only) + `agent_action_log` (`queue_enqueue`); bảng mã ↔ tên file chỉ in ra console người chạy (tên file qua `_mask_pii`) |
+| Thời hạn lưu | GIẢ ĐỊNH — Pháp chế chốt thời hạn giữ CV/hồ sơ tuyển dụng và dữ liệu chấm công; hàng duyệt append-only giữ vĩnh viễn mã băm + số tổng hợp; chưa có job xóa CV trong `HR_INBOX_DIR`: GAP |
+| Bên nhận | Không — không LLM, không mạng; người duyệt đọc trong hàng duyệt nội bộ |
+| Chuyển ra nước ngoài | Không |
+| Biện pháp bảo vệ (có trong code) | Chấm tất định theo từ khóa JD, không gửi CV cho LLM; không tự loại ứng viên — mọi hồ sơ có trong danh sách + lý do; Cấu hình JD có tiêu chí phân biệt đối xử (giới tính/tuổi/hôn nhân/tôn giáo/dân tộc/quê quán/ngoại hình) → từ chối; File chấm công kiểm toàn file trước connect; mã NV giống SĐT/email hoặc có dấu cách (tên) → lỗi, 0 dòng; thông báo lỗi không in giá trị ô; Risk medium cho cả 3 loại mục — không auto_policy; agent không tính lương/kỷ luật |
+| Căn cứ xử lý | Ứng viên: đồng ý khi nộp hồ sơ / thực hiện thủ tục trước giao kết hợp đồng lao động; nhân viên: hợp đồng lao động + nội quy — CẦN LUẬT SƯ XÁC NHẬN |
+| GAP | Câu thông báo xử lý dữ liệu cho ứng viên + thời hạn giữ CV chưa được Pháp chế chốt; Tiêu chí JD và luật ca (`data/hr/*.json`) là BẢN DEV SOẠN/GIẢ ĐỊNH; chưa có lịch nghỉ lễ; Mã băm CV vẫn liên kết lại được với người khi giữ file gốc (dữ liệu bút danh hóa, không ẩn danh) |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -748,6 +766,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-37 | Dự báo thời tiết VT (v10.2) | Xanh | thấp | có | 3 |
 | DF-38 | Chăm sóc lại + xin đánh giá khách kênh sở hữu → nháp tin vào hàng duyệt (KD-A7, v10.1) | Đỏ | cao | không | 4 |
 | DF-39 | Kịch bản livestream (KD-A9) + gói video YouTube dài (MKT-12) qua LLM gateway (v10.1) | Vàng | trung bình | có | 2 |
+| DF-42 | Nhân sự: xếp hạng hồ sơ ứng viên + tổng hợp chấm công theo mã NV (PC-HR, v12.2) | Đỏ | cao | không | 3 |
 
 ## 4. Tổng hợp GAP
 
@@ -829,6 +848,9 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-38] Chưa có job xóa lần mua/liên hệ theo thời hạn (retention)
 - [DF-39] Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email)
 - [DF-39] Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday)
+- [DF-42] Câu thông báo xử lý dữ liệu cho ứng viên + thời hạn giữ CV chưa được Pháp chế chốt
+- [DF-42] Tiêu chí JD và luật ca (`data/hr/*.json`) là BẢN DEV SOẠN/GIẢ ĐỊNH; chưa có lịch nghỉ lễ
+- [DF-42] Mã băm CV vẫn liên kết lại được với người khi giữ file gốc (dữ liệu bút danh hóa, không ẩn danh)
 
 ## 5. Câu hỏi cho luật sư
 
