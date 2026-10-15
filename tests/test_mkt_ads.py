@@ -383,7 +383,10 @@ def test_director_marketing_types():
     t = cfg["object_types"]
     assert set(t) == {"ad_campaign", "listing_copy", "koc_brief",
                       "campaign_brief", "ugc_reply", "ugc_reuse",
-                      "seo_web_fix"}  # + v6.5 MKT-10
+                      "seo_web_fix",  # + v6.5 MKT-10
+                      # v14.5 (marketing-04.2): bài đối tác — loại mới, chỉ
+                      # thêm; các loại cũ + SLA/risk giữ nguyên.
+                      "partner_post_review"}
     assert t["ugc_reply"] == {"sla_hours": 24, "risk": "medium"}
     assert t["ugc_reuse"] == {"sla_hours": 72, "risk": "high"}
     assert t["ad_campaign"]["risk"] == "high" and cfg["approvers"] == []

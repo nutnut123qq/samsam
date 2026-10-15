@@ -78,7 +78,7 @@ Streamlit demo.
 | `data/` | jsonl nguồn, `claims_whitelist.json`, `banned_words.txt`, convlog + token/seen (runtime, gitignored); `projects/milestones.json` (v8.3 DA-01 — sổ mốc BẢN DEV SOẠN chờ TGĐ chốt; v12.0 gỡ file của phòng Dự án) |
 | `tests/` | pytest (`python -m pytest`) |
 
-## 3. Cơ sở dữ liệu — 87 bảng public (`docs/schema.sql`)
+## 3. Cơ sở dữ liệu — 88 bảng public (`docs/schema.sql`)
 
 | Bảng | Chứa | Nguồn nạp |
 |---|---|---|
@@ -97,6 +97,7 @@ Streamlit demo.
 | `assets` | Tài sản truyền thông (`kind` image/video/article/doc,`url`,`product_id`) | `core_store` từ products.images + jsonl |
 | `leads` | Lead từ convlog (`dedup_key` unique,`channel`,`user_hash`,`question` đã mask,`intent`,`status` new/contacted/qualified/won/lost; v5.2 thêm `contact_id`,`province`,`dealer_code`,`assigned_by/at`; v14.4 người phụ trách = MÃ nhân viên `owner_code` (không tên) + hạn xử lý `owner_due_at` theo giờ làm việc + `owner_assigned_by/at`) | `ingest.lead_store` — insert-only, không xóa; gán/trạng thái qua `python -m ingest.crm --assign/--status ... --by <tên>`; người phụ trách `--owner LEAD --staff MÃ --by` (qua `auth.cli_gate`); quá hạn → `agents.sales_director` mục `lead_followup` |
 | `b2b_quote_events` | (v14.4 sales-05) Sự kiện báo giá B2B ĐÃ duyệt: `queue_id` FK→`approval_queue`, `quote_no`, `kind` da_gui (bản gửi khớp sha256 bản duyệt)/chot/khong_chot/huy, `recorded_by`, `db_role` — APPEND-ONLY (`append_only_guard`), 1 kết quả/báo giá (index unique partial); không người liên hệ | `python -m agents.kd_quote --verify-send QID F [--by]` / `--outcome QID chot|khong_chot|huy --by`; đọc: `--followups` (nháp nhắc chốt đơn `b2b_followup`) |
+| `partner_post_scans` | (v14.5 marketing-04.2) Sổ rà bài KOC/đại lý ĐÃ đăng: `partner_code` (MÃ có trong sổ KOC/`dealers`), `url_sha256`, `host` (tên miền nền tảng, bỏ subdomain), `channel`, `posted_on`, `sku`, `text_sha256`, `codes`/`severity` (guardrail + lệch bộ tài liệu chuẩn đã duyệt), `kit_ref`, `queue_id` FK→`approval_queue`, `is_sample`, `scanned_by` — APPEND-ONLY, KHÔNG text/URL đầy đủ/tên-handle đối tác | `python -m agents.ra_kenh --partner-file CSV --by <tên>` (kiểm toàn file trước connect; đợt vi phạm → `marketing/partner_post_review`) |
 | `dealer_price_obs` | (v14.4 sales-06.1) Giá ĐẠI LÝ quan sát tay: `file_sha256`+`row_no` UNIQUE (idempotent), `channel`, `dealer_code` FK→`dealers`, `sku_key` FK→`sku_master`, `price_vnd`, `observed_on`, `source_url` (https, công khai), `source` manual_export/sample, `created_by` — APPEND-ONLY, không PII | `python -m ingest.dealer_price --file CSV --by <tên>` (kiểm toàn file trước connect); đọc: `python -m agents.kd_price --dealer-watch` (giá < giá sàn golden → `dealer_price_alert`) |
 | `contacts` | (v5.2) Kho liên hệ (contact_vault): `phone_enc`/`name_enc`/`email_enc`/`address_enc` = ciphertext Fernet (DB check chặn plaintext), `phone_hmac` HMAC có khóa để tra trùng, `province` — bảng khác chỉ giữ `contact_id` | `python -m ingest.crm --add-contact - --by <tên>` (JSON qua stdin, cần `CONTACT_VAULT_KEY`) |
 | `dealers` | (v5.2) Đại lý: `code`,`name`,`region`,`status` active/paused/ended,`commission_default` (rượu online luôn 0 ở code) — hiện là dữ liệu MẪU | `python -m ingest.crm --load-dealers --by <tên>` từ `data/dealer_regions.json` (dòng `source='manual'` không bị đè) |

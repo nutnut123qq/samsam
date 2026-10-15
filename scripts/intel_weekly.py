@@ -13,8 +13,12 @@ Contract:
     CHỈ ĐẾM theo kênh × nhãn (nhạy cảm riêng), không in nội dung bình luận;
     (4) Tin `intel_items` trong tuần theo chủ đề (≤5 tiêu đề/chủ đề + link).
     Mục rỗng → "chưa có dữ liệu tuần này".
-  - CHỈ ĐỌC: connect `connect_timeout=10`, `read_only = True`; không ghi
-    bảng nào, không gửi ai, không đường sang hàng duyệt nội dung.
+  - Báo cáo CHỈ ĐỌC: connect `connect_timeout=10`, `read_only = True`;
+    không ghi bảng nào, không gửi ai, không đường sang hàng duyệt nội dung.
+  - v14.5 `--suggest-keywords [--import ID] [--dry-run]` (intel-04.2): đường
+    ghi DUY NHẤT — 1 mục `intel/keyword_suggest` mỗi file Trends related
+    (xem khối "v14.5 từ khóa"). File nạp có tên chứa MAU → mục cờ mẫu
+    (`intel_imports` chưa có cột provenance — quy ước tên chỉ để loại thêm).
   - `--llm` (mặc định tắt): chỉ khi `llm.enabled is True` trong
     `data/intel_sources.json` (cùng cổng Pháp chế v7.0); input = mục 1+2+4
     đã render (KHÔNG mục social); 1 lời gọi `chat("intel", ...)`; output qua
@@ -231,6 +235,209 @@ def summarize(payload: str) -> str | None:
     return s
 
 
+# ---------------------------------------------------------- v14.5 từ khóa
+# intel-04.2 (PL01 Tình báo thị trường — "gợi ý từ khóa an toàn về pháp
+# lý"): truy vấn liên quan Google Trends (top + rising) của 1 file
+# `trend_related` đã nạp (mặc định file mới nhất) → lọc LUẬT, không LLM:
+#   tu_cam     `guardrail.check` trúng từ cấm
+#   cong_dung  câu công dụng ngoài công bố (claim_*)
+#   ruou       rượu (`kb_filter.is_alcohol` hoặc luật rượu guardrail)
+#   suc_khoe   ngữ cảnh bệnh/sức khỏe (`llm_gateway.is_health_question`)
+#   pii        có SĐT/email/tên theo mẫu (`pii._mask_pii` đổi chuỗi)
+#   chi_dan_dia_ly  "Ngọc Linh" khi Pháp chế chưa xác nhận quyền dùng chỉ
+#              dẫn địa lý (luật `ngoc_linh_chua_xac_nhan` của check_publish
+#              — `data/guardrail_rules.json`; Pháp chế điền identity/
+#              confirmed_skus thì tự hết loại)
+# → 1 mục `intel/keyword_suggest` mỗi file (`kw:<import_id>` — nạp file
+# mới = đợt mới): danh sách AN TOÀN (nguyên văn) + lý do loại theo dòng
+# `trends_related #id` (KHÔNG chép từ khóa bị loại — payload phải qua được
+# guardrail để người duyệt). Gợi ý ≠ được dùng: Quản lý Marketing duyệt;
+# agent không chạy quảng cáo/SEO. Đây là đường ghi DUY NHẤT của script.
+KW_FEATURE = "intel-04.2"
+KW_AGENT = "agent:intel_keywords"
+OT_KW = "keyword_suggest"
+KW_REASONS = {"tu_cam": "từ cấm", "cong_dung": "công dụng ngoài công bố",
+              "ruou": "nhóm sản phẩm cấm quảng cáo",
+              "suc_khoe": "ngữ cảnh bệnh/sức khỏe",
+              "pii": "thông tin cá nhân",
+              "chi_dan_dia_ly": "chỉ dẫn địa lý chưa được xác nhận"}
+
+
+class KeywordConfigError(ValueError):
+    """Guardrail hỏng khi lọc từ khóa — fail-closed, không đề xuất gì."""
+
+
+def keyword_reasons(q: str) -> list[str]:
+    """THUẦN: từ khóa → lý do loại (rỗng = an toàn). Guardrail cấu hình
+    hỏng → KeywordConfigError."""
+    from pipelines.kb_filter import is_alcohol
+    from pipelines.pii import _mask_pii
+    out = []
+    if _mask_pii(q) != q:
+        out.append("pii")
+    g = guardrail.check(q)
+    for v in g.get("violations", []):
+        c = str(v.get("code") or "")
+        if c == "config":
+            raise KeywordConfigError("guardrail cấu hình hỏng")
+        out.append("cong_dung" if c.startswith("claim") else
+                   "ruou" if c.startswith("ruou") else c)
+    if is_alcohol(q):
+        out.append("ruou")
+    if llm_gateway.is_health_question(q):
+        out.append("suc_khoe")
+    # Từ khóa dùng cho SEO/quảng cáo = ngữ cảnh ĐĂNG: luật chỉ dẫn địa lý
+    # "Ngọc Linh" của `check_publish` (không gắn SKU) — chỉ lấy đúng mã đó.
+    pub = guardrail.check_publish(q, channel="web", content_type="post",
+                                  is_ai=False)
+    if any(v.get("code") == "config" for v in pub.get("violations", [])):
+        raise KeywordConfigError("guardrail cấu hình hỏng")
+    if any(v.get("code") == "ngoc_linh_chua_xac_nhan"
+           for v in pub.get("violations", [])):
+        out.append("chi_dan_dia_ly")
+    return list(dict.fromkeys(out))
+
+
+def _fold_kw(q: str) -> str:
+    import unicodedata
+    return " ".join(unicodedata.normalize("NFC", q).casefold().split())
+
+
+def keyword_suggestions(conn, import_id: int | None = None) -> dict | None:
+    """CHỈ SELECT → {import_id, file_name, safe [(id, seed|None, section,
+    query, value)], excluded [(id, [lý do])]} | None (chưa có file)."""
+    if import_id is None:
+        r = conn.execute("select max(id) from intel_imports where kind ="
+                         " 'trend_related'").fetchone()
+        import_id = r[0] if r else None
+    if import_id is None:
+        return None
+    imp = conn.execute("select id, file_name from intel_imports where id ="
+                       " %s and kind = 'trend_related'",
+                       (import_id,)).fetchone()
+    if imp is None:
+        return None
+    safe, excluded, seen = [], [], set()
+    for rid, seed, section, q, value in conn.execute(
+            "select id, seed, section, query, value from trends_related"
+            " where import_id = %s order by id", (import_id,)).fetchall():
+        key = _fold_kw(q)
+        if key in seen:
+            continue
+        seen.add(key)
+        why = keyword_reasons(q)
+        if why:
+            excluded.append((rid, why))
+        else:
+            safe.append((rid, None if keyword_reasons(seed) else seed,
+                         section, q, value))
+    return {"import_id": imp[0], "file_name": imp[1], "safe": safe,
+            "excluded": excluded}
+
+
+def render_keywords(res: dict) -> str:
+    """THUẦN → payload mục hàng duyệt (không chép từ khóa bị loại)."""
+    from collections import Counter
+    L = [(f"Gợi ý từ khóa an toàn pháp lý (intel-04.2, NHÁP) — file Google"
+          f" Trends đã nạp #{res['import_id']}"
+          f" ({_md(res['file_name'], 80)}): an toàn {len(res['safe'])},"
+          f" loại {len(res['excluded'])}."), "",
+         ("Từ khóa đề xuất (đã qua luật: không từ cấm, không công dụng"
+          " ngoài công bố, không ngữ cảnh bệnh, không nhóm sản phẩm cấm"
+          " quảng cáo, không thông tin cá nhân, không chỉ dẫn địa lý chưa"
+          " xác nhận):")]
+    L += [f"- {_md(q, 120)} — {section} {_md(v, 20)}"
+          + (f" (gốc: {_md(s, 60)})" if s else "")
+          for _rid, s, section, q, v in res["safe"]] or ["- (không có)"]
+    cnt = Counter(r for _rid, why in res["excluded"] for r in why)
+    L += ["", "Lý do loại (theo số dòng): " + (" · ".join(
+        f"{KW_REASONS.get(k, k)} {n}" for k, n in sorted(cnt.items()))
+        or "không có")]
+    L += [f"- trends_related #{rid}: "
+          + ", ".join(KW_REASONS.get(w, w) for w in why)
+          for rid, why in res["excluded"]]
+    L += ["", ("Việc cần làm: Quản lý Marketing duyệt trước khi dùng cho SEO/"
+               "quảng cáo; luật lọc là từ khóa tất định (chưa có lớp LLM-check"
+               " — Pháp chế duyệt bộ luật). Agent không chạy quảng cáo/SEO.")]
+    return "\n".join(L)
+
+
+def suggest_keywords(conn, import_id: int | None, cfg: dict,
+                     dry_run: bool = False) -> dict:
+    """→ {res, payload, object_id, qid, skipped}. Tắt → RolloutBlocked."""
+    from pipelines import director, rollout
+    rollout.check_generate(conn, KW_FEATURE, "gợi ý từ khóa")
+    res = keyword_suggestions(conn, import_id)
+    if res is None:
+        conn.commit()
+        return {"res": None, "qid": None, "skipped": False}
+    payload = render_keywords(res)
+    oid = f"kw:{res['import_id']}"
+    exists = conn.execute("select id from approval_queue where object_type"
+                          " = %s and object_id = %s", (OT_KW, oid)).fetchone()
+    sample = conn.execute(
+        "select exists(select 1 from intel_imports where id = %s and"
+        " file_name like '%%MAU%%')", (res["import_id"],)).fetchone()[0]
+    conn.commit()
+    if exists or dry_run:
+        return {"res": res, "payload": payload, "object_id": oid,
+                "qid": exists[0] if exists else None,
+                "skipped": bool(exists)}
+    qid = director.submit(conn, "intel", OT_KW, oid,
+                          f"Gợi ý từ khóa an toàn — file Trends"
+                          f" #{res['import_id']}", payload, KW_AGENT,
+                          cfg=cfg, sample=sample)
+    return {"res": res, "payload": payload, "object_id": oid, "qid": qid,
+            "skipped": False}
+
+
+def _keywords_main(args) -> int:
+    from ingest.lead_store import connect
+    from pipelines import auth, director
+    from pipelines.rollout import RolloutBlocked
+    try:
+        cfg = director.load_config("intel")
+        if OT_KW not in cfg["object_types"]:
+            raise ValueError(f"intel.json thiếu loại việc {OT_KW}")
+    except ValueError as e:
+        print(f"[err] cấu hình lỗi: {e} — không connect", flush=True)
+        return 1
+    if why := auth.bind_service("job"):
+        print(f"[err] {why}", flush=True)
+        return 2
+    conn = connect()
+    if conn is None:
+        print("[err] không kết nối được Postgres", flush=True)
+        return 2
+    try:
+        r = suggest_keywords(conn, args.import_id, cfg, args.dry_run)
+    except RolloutBlocked as e:
+        print(f"[rollout] {e}", flush=True)
+        return 2
+    except KeywordConfigError as e:
+        print(f"[err] {e} — không đề xuất (fail-closed)", flush=True)
+        return 1
+    except psycopg.Error as e:
+        print(f"[err] lỗi DB: {type(e).__name__}", flush=True)
+        return 2
+    finally:
+        conn.close()
+    if r["res"] is None:
+        print("[info] không có file Google Trends related (trend_related)"
+              " phù hợp (--import) — không có gì để gợi ý", flush=True)
+        return 0
+    print(r["payload"], flush=True)
+    if args.dry_run:
+        print(f"[dry-run] {r['object_id']} — KHÔNG ghi DB"
+              + (" (đã có trong hàng duyệt)" if r["skipped"] else ""))
+    elif r["skipped"]:
+        print(f"[skip] {r['object_id']} đã có mục #{r['qid']}")
+    else:
+        print(f"[ok] mục hàng duyệt #{r['qid']} ({OT_KW}, chờ Quản lý"
+              " Marketing)")
+    return 0
+
+
 def _connect(dsn: str):
     conn = psycopg.connect(dsn, connect_timeout=10)
     conn.read_only = True
@@ -243,7 +450,21 @@ def main(argv=None) -> int:
                                    "(YYYY-MM-DD)")
     ap.add_argument("--llm", action="store_true",
                     help="tóm tắt LLM (chỉ khi llm.enabled = true)")
+    ap.add_argument("--suggest-keywords", action="store_true",
+                    help="v14.5 gợi ý từ khóa an toàn pháp lý từ file Trends"
+                    " related → hàng duyệt intel (keyword_suggest)")
+    ap.add_argument("--import", dest="import_id", type=int,
+                    help="id intel_imports (trend_related) — mặc định mới"
+                    " nhất; chỉ với --suggest-keywords")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="--suggest-keywords: in gợi ý, không ghi DB")
     args = ap.parse_args(argv)
+    if args.suggest_keywords:
+        if args.week is not None or args.llm:
+            ap.error("--suggest-keywords không đi với --week/--llm")
+        return _keywords_main(args)
+    if args.import_id is not None or args.dry_run:
+        ap.error("--import/--dry-run chỉ đi với --suggest-keywords")
     if args.week is not None:
         day = ii._iso_date(args.week)
         if day is None:

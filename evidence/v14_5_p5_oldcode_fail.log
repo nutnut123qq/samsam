@@ -1,0 +1,1212 @@
+# v14.5 p5 — test regression trên CODE CŨ (v14-hop-dong eed089d), giữ test mới
+# Lần 1: toàn bộ nguồn cũ (không có agents/ceo_promo.py) → lỗi collection
+
+=================================== ERRORS ====================================
+_____________ ERROR collecting tests/test_v14_p5_mkt_ceo_intel.py _____________
+ImportError while importing test module 'D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-7\tests\test_v14_p5_mkt_ceo_intel.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v14_p5_mkt_ceo_intel.py:33: in <module>
+    from agents import ceo_audit, ceo_promo, ra_kenh
+E   ImportError: cannot import name 'ceo_promo' from 'agents' (D:\code\samsam\.claude\worktrees\wf_67edb33c-c7a-7\agents\__init__.py)
+=========================== short test summary info ===========================
+ERROR tests/test_v14_p5_mkt_ceo_intel.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.90s
+
+
+# Lần 2: nguồn/dữ liệu/schema cũ + CHỈ module mới agents/ceo_promo.py đứng riêng → 52 FAIL / 16 pass
+# 16 pass = test thuần của module mới (compare_promos, CLI usage, lọc dòng file đang chạy, tắt)
+#   + intel_weekly usage (code cũ cũng exit 2 vì cờ lạ) — không phải bảo đảm của code cũ
+FFFFFFFFFFFFFFFFFFFFFFFFFFF............FFFFFFFFFFFFFFFFFF.FFFFF...FF     [100%]
+================================== FAILURES ===================================
+_ test_block_type_and_catalog_map_each_feature[marketing-partner_post_review-marketing-04.2-agent:mkt_doi_tac] _
+
+block = 'marketing', ot = 'partner_post_review', fid = 'marketing-04.2'
+by = 'agent:mkt_doi_tac'
+
+    @pytest.mark.parametrize("block, ot, fid, by", [
+        ("marketing", "partner_post_review", "marketing-04.2",
+         "agent:mkt_doi_tac"),
+        ("ceo", "promo_deviation", "ceo-04.1", "agent:ceo_audit"),
+        ("intel", "keyword_suggest", "intel-04.2", "agent:intel_keywords"),
+    ])
+    def test_block_type_and_catalog_map_each_feature(block, ot, fid, by):
+        """Loại việc mới thuộc đúng khối + ĐÚNG 1 tính năng danh mục (rollout
+        cưỡng chế ở biên enqueue/duyệt/dùng); danh mục hết 'thiếu code'."""
+        cfg = director.load_config(block)
+>       assert cfg["object_types"][ot]["risk"] in ("medium", "high")
+               ^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'partner_post_review'
+
+tests\test_v14_p5_mkt_ceo_intel.py:62: KeyError
+_ test_block_type_and_catalog_map_each_feature[ceo-promo_deviation-ceo-04.1-agent:ceo_audit] _
+
+block = 'ceo', ot = 'promo_deviation', fid = 'ceo-04.1', by = 'agent:ceo_audit'
+
+    @pytest.mark.parametrize("block, ot, fid, by", [
+        ("marketing", "partner_post_review", "marketing-04.2",
+         "agent:mkt_doi_tac"),
+        ("ceo", "promo_deviation", "ceo-04.1", "agent:ceo_audit"),
+        ("intel", "keyword_suggest", "intel-04.2", "agent:intel_keywords"),
+    ])
+    def test_block_type_and_catalog_map_each_feature(block, ot, fid, by):
+        """Loại việc mới thuộc đúng khối + ĐÚNG 1 tính năng danh mục (rollout
+        cưỡng chế ở biên enqueue/duyệt/dùng); danh mục hết 'thiếu code'."""
+        cfg = director.load_config(block)
+>       assert cfg["object_types"][ot]["risk"] in ("medium", "high")
+               ^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'promo_deviation'
+
+tests\test_v14_p5_mkt_ceo_intel.py:62: KeyError
+_ test_block_type_and_catalog_map_each_feature[intel-keyword_suggest-intel-04.2-agent:intel_keywords] _
+
+block = 'intel', ot = 'keyword_suggest', fid = 'intel-04.2'
+by = 'agent:intel_keywords'
+
+    @pytest.mark.parametrize("block, ot, fid, by", [
+        ("marketing", "partner_post_review", "marketing-04.2",
+         "agent:mkt_doi_tac"),
+        ("ceo", "promo_deviation", "ceo-04.1", "agent:ceo_audit"),
+        ("intel", "keyword_suggest", "intel-04.2", "agent:intel_keywords"),
+    ])
+    def test_block_type_and_catalog_map_each_feature(block, ot, fid, by):
+        """Loại việc mới thuộc đúng khối + ĐÚNG 1 tính năng danh mục (rollout
+        cưỡng chế ở biên enqueue/duyệt/dùng); danh mục hết 'thiếu code'."""
+        cfg = director.load_config(block)
+>       assert cfg["object_types"][ot]["risk"] in ("medium", "high")
+               ^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'keyword_suggest'
+
+tests\test_v14_p5_mkt_ceo_intel.py:62: KeyError
+_____________________ test_partner_export_reads_code_only _____________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_export_reads_code0')
+
+    def test_partner_export_reads_code_only(tmp_path):
+>       rows = ra_kenh.read_partner_export(_pcsv(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            tmp_path, f"KOC-MAU-01,{URL1},tiktok,\"{BAD_TEXT}\",2026-10-13,\n"))
+E       AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:88: AttributeError
+_ test_partner_export_rejects_whole_file[ma_doi_tac,ten_koc,url,kenh,text,ngay_dang\n-KOC-MAU-01,Ch\u1ecb Lan,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,abc,2026-10-13\n-c\u1ed9t l\u1ea1] _
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_export_rejects_wh0')
+head = 'ma_doi_tac,ten_koc,url,kenh,text,ngay_dang\n'
+body = 'KOC-MAU-01,Chị Lan,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,abc,2026-10-13\n'
+frag = 'cột lạ'
+
+    @pytest.mark.parametrize("head, body, frag", [
+        # cột tên/handle/SĐT đối tác → cả file lỗi (không PII ngoài mã)
+        ("ma_doi_tac,ten_koc,url,kenh,text,ngay_dang\n",
+         f"KOC-MAU-01,Chị Lan,{URL1},tiktok,abc,2026-10-13\n", "cột lạ"),
+        (PHDR, f"Chi Lan,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"koc-mau-01,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,13/10/2026,\n", "ngay_dang"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,,\n", "ngay_dang"),
+        (PHDR, "KOC-MAU-01,ftp://x/y,tiktok,abc,2026-10-13,\n", "url"),
+        (PHDR, f"KOC-MAU-01,{URL1},myspace,abc,2026-10-13,\n", "kenh"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,2026-10-13,khong-co\n", "sku"),
+        (PHDR, (f"KOC-MAU-01,{URL1},tiktok,a,2026-10-13,\n"
+                f"KOC-MAU-02,{URL1},tiktok,b,2026-10-13,\n"), "trùng URL"),
+        ("ma_doi_tac,url,kenh,text\n", f"KOC-MAU-01,{URL1},tiktok,a\n",
+         "thiếu cột"),
+    ])
+    def test_partner_export_rejects_whole_file(tmp_path, head, body, frag):
+        with pytest.raises(ra_kenh.ExportError) as e:
+>           ra_kenh.read_partner_export(_pcsv(tmp_path, body, head))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:115: AttributeError
+_ test_partner_export_rejects_whole_file[ma_doi_tac,url,kenh,text,ngay_dang,sku\n-Chi Lan,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,abc,2026-10-13,\n-ma_doi_tac] _
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_export_rejects_wh1')
+head = 'ma_doi_tac,url,kenh,text,ngay_dang,sku\n'
+body = 'Chi Lan,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,abc,2026-10-13,\n'
+frag = 'ma_doi_tac'
+
+    @pytest.mark.parametrize("head, body, frag", [
+        # cột tên/handle/SĐT đối tác → cả file lỗi (không PII ngoài mã)
+        ("ma_doi_tac,ten_koc,url,kenh,text,ngay_dang\n",
+         f"KOC-MAU-01,Chị Lan,{URL1},tiktok,abc,2026-10-13\n", "cột lạ"),
+        (PHDR, f"Chi Lan,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"koc-mau-01,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,13/10/2026,\n", "ngay_dang"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,,\n", "ngay_dang"),
+        (PHDR, "KOC-MAU-01,ftp://x/y,tiktok,abc,2026-10-13,\n", "url"),
+        (PHDR, f"KOC-MAU-01,{URL1},myspace,abc,2026-10-13,\n", "kenh"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,2026-10-13,khong-co\n", "sku"),
+        (PHDR, (f"KOC-MAU-01,{URL1},tiktok,a,2026-10-13,\n"
+                f"KOC-MAU-02,{URL1},tiktok,b,2026-10-13,\n"), "trùng URL"),
+        ("ma_doi_tac,url,kenh,text\n", f"KOC-MAU-01,{URL1},tiktok,a\n",
+         "thiếu cột"),
+    ])
+    def test_partner_export_rejects_whole_file(tmp_path, head, body, frag):
+        with pytest.raises(ra_kenh.ExportError) as e:
+>           ra_kenh.read_partner_export(_pcsv(tmp_path, body, head))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:115: AttributeError
+_ test_partner_export_rejects_whole_file[ma_doi_tac,url,kenh,text,ngay_dang,sku\n-koc-mau-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,abc,2026-10-13,\n-ma_doi_tac] _
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_export_rejects_wh2')
+head = 'ma_doi_tac,url,kenh,text,ngay_dang,sku\n'
+body = 'koc-mau-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,abc,2026-10-13,\n'
+frag = 'ma_doi_tac'
+
+    @pytest.mark.parametrize("head, body, frag", [
+        # cột tên/handle/SĐT đối tác → cả file lỗi (không PII ngoài mã)
+        ("ma_doi_tac,ten_koc,url,kenh,text,ngay_dang\n",
+         f"KOC-MAU-01,Chị Lan,{URL1},tiktok,abc,2026-10-13\n", "cột lạ"),
+        (PHDR, f"Chi Lan,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"koc-mau-01,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,13/10/2026,\n", "ngay_dang"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,,\n", "ngay_dang"),
+        (PHDR, "KOC-MAU-01,ftp://x/y,tiktok,abc,2026-10-13,\n", "url"),
+        (PHDR, f"KOC-MAU-01,{URL1},myspace,abc,2026-10-13,\n", "kenh"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,2026-10-13,khong-co\n", "sku"),
+        (PHDR, (f"KOC-MAU-01,{URL1},tiktok,a,2026-10-13,\n"
+                f"KOC-MAU-02,{URL1},tiktok,b,2026-10-13,\n"), "trùng URL"),
+        ("ma_doi_tac,url,kenh,text\n", f"KOC-MAU-01,{URL1},tiktok,a\n",
+         "thiếu cột"),
+    ])
+    def test_partner_export_rejects_whole_file(tmp_path, head, body, frag):
+        with pytest.raises(ra_kenh.ExportError) as e:
+>           ra_kenh.read_partner_export(_pcsv(tmp_path, body, head))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:115: AttributeError
+_ test_partner_export_rejects_whole_file[ma_doi_tac,url,kenh,text,ngay_dang,sku\n-KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,abc,13/10/2026,\n-ngay_dang] _
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_export_rejects_wh3')
+head = 'ma_doi_tac,url,kenh,text,ngay_dang,sku\n'
+body = 'KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,abc,13/10/2026,\n'
+frag = 'ngay_dang'
+
+    @pytest.mark.parametrize("head, body, frag", [
+        # cột tên/handle/SĐT đối tác → cả file lỗi (không PII ngoài mã)
+        ("ma_doi_tac,ten_koc,url,kenh,text,ngay_dang\n",
+         f"KOC-MAU-01,Chị Lan,{URL1},tiktok,abc,2026-10-13\n", "cột lạ"),
+        (PHDR, f"Chi Lan,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"koc-mau-01,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,13/10/2026,\n", "ngay_dang"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,,\n", "ngay_dang"),
+        (PHDR, "KOC-MAU-01,ftp://x/y,tiktok,abc,2026-10-13,\n", "url"),
+        (PHDR, f"KOC-MAU-01,{URL1},myspace,abc,2026-10-13,\n", "kenh"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,2026-10-13,khong-co\n", "sku"),
+        (PHDR, (f"KOC-MAU-01,{URL1},tiktok,a,2026-10-13,\n"
+                f"KOC-MAU-02,{URL1},tiktok,b,2026-10-13,\n"), "trùng URL"),
+        ("ma_doi_tac,url,kenh,text\n", f"KOC-MAU-01,{URL1},tiktok,a\n",
+         "thiếu cột"),
+    ])
+    def test_partner_export_rejects_whole_file(tmp_path, head, body, frag):
+        with pytest.raises(ra_kenh.ExportError) as e:
+>           ra_kenh.read_partner_export(_pcsv(tmp_path, body, head))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:115: AttributeError
+_ test_partner_export_rejects_whole_file[ma_doi_tac,url,kenh,text,ngay_dang,sku\n-KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,abc,,\n-ngay_dang] _
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_export_rejects_wh4')
+head = 'ma_doi_tac,url,kenh,text,ngay_dang,sku\n'
+body = 'KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,abc,,\n'
+frag = 'ngay_dang'
+
+    @pytest.mark.parametrize("head, body, frag", [
+        # cột tên/handle/SĐT đối tác → cả file lỗi (không PII ngoài mã)
+        ("ma_doi_tac,ten_koc,url,kenh,text,ngay_dang\n",
+         f"KOC-MAU-01,Chị Lan,{URL1},tiktok,abc,2026-10-13\n", "cột lạ"),
+        (PHDR, f"Chi Lan,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"koc-mau-01,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,13/10/2026,\n", "ngay_dang"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,,\n", "ngay_dang"),
+        (PHDR, "KOC-MAU-01,ftp://x/y,tiktok,abc,2026-10-13,\n", "url"),
+        (PHDR, f"KOC-MAU-01,{URL1},myspace,abc,2026-10-13,\n", "kenh"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,2026-10-13,khong-co\n", "sku"),
+        (PHDR, (f"KOC-MAU-01,{URL1},tiktok,a,2026-10-13,\n"
+                f"KOC-MAU-02,{URL1},tiktok,b,2026-10-13,\n"), "trùng URL"),
+        ("ma_doi_tac,url,kenh,text\n", f"KOC-MAU-01,{URL1},tiktok,a\n",
+         "thiếu cột"),
+    ])
+    def test_partner_export_rejects_whole_file(tmp_path, head, body, frag):
+        with pytest.raises(ra_kenh.ExportError) as e:
+>           ra_kenh.read_partner_export(_pcsv(tmp_path, body, head))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:115: AttributeError
+_ test_partner_export_rejects_whole_file[ma_doi_tac,url,kenh,text,ngay_dang,sku\n-KOC-MAU-01,ftp://x/y,tiktok,abc,2026-10-13,\n-url] _
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_export_rejects_wh5')
+head = 'ma_doi_tac,url,kenh,text,ngay_dang,sku\n'
+body = 'KOC-MAU-01,ftp://x/y,tiktok,abc,2026-10-13,\n', frag = 'url'
+
+    @pytest.mark.parametrize("head, body, frag", [
+        # cột tên/handle/SĐT đối tác → cả file lỗi (không PII ngoài mã)
+        ("ma_doi_tac,ten_koc,url,kenh,text,ngay_dang\n",
+         f"KOC-MAU-01,Chị Lan,{URL1},tiktok,abc,2026-10-13\n", "cột lạ"),
+        (PHDR, f"Chi Lan,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"koc-mau-01,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,13/10/2026,\n", "ngay_dang"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,,\n", "ngay_dang"),
+        (PHDR, "KOC-MAU-01,ftp://x/y,tiktok,abc,2026-10-13,\n", "url"),
+        (PHDR, f"KOC-MAU-01,{URL1},myspace,abc,2026-10-13,\n", "kenh"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,2026-10-13,khong-co\n", "sku"),
+        (PHDR, (f"KOC-MAU-01,{URL1},tiktok,a,2026-10-13,\n"
+                f"KOC-MAU-02,{URL1},tiktok,b,2026-10-13,\n"), "trùng URL"),
+        ("ma_doi_tac,url,kenh,text\n", f"KOC-MAU-01,{URL1},tiktok,a\n",
+         "thiếu cột"),
+    ])
+    def test_partner_export_rejects_whole_file(tmp_path, head, body, frag):
+        with pytest.raises(ra_kenh.ExportError) as e:
+>           ra_kenh.read_partner_export(_pcsv(tmp_path, body, head))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:115: AttributeError
+_ test_partner_export_rejects_whole_file[ma_doi_tac,url,kenh,text,ngay_dang,sku\n-KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,myspace,abc,2026-10-13,\n-kenh] _
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_export_rejects_wh6')
+head = 'ma_doi_tac,url,kenh,text,ngay_dang,sku\n'
+body = 'KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,myspace,abc,2026-10-13,\n'
+frag = 'kenh'
+
+    @pytest.mark.parametrize("head, body, frag", [
+        # cột tên/handle/SĐT đối tác → cả file lỗi (không PII ngoài mã)
+        ("ma_doi_tac,ten_koc,url,kenh,text,ngay_dang\n",
+         f"KOC-MAU-01,Chị Lan,{URL1},tiktok,abc,2026-10-13\n", "cột lạ"),
+        (PHDR, f"Chi Lan,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"koc-mau-01,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,13/10/2026,\n", "ngay_dang"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,,\n", "ngay_dang"),
+        (PHDR, "KOC-MAU-01,ftp://x/y,tiktok,abc,2026-10-13,\n", "url"),
+        (PHDR, f"KOC-MAU-01,{URL1},myspace,abc,2026-10-13,\n", "kenh"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,2026-10-13,khong-co\n", "sku"),
+        (PHDR, (f"KOC-MAU-01,{URL1},tiktok,a,2026-10-13,\n"
+                f"KOC-MAU-02,{URL1},tiktok,b,2026-10-13,\n"), "trùng URL"),
+        ("ma_doi_tac,url,kenh,text\n", f"KOC-MAU-01,{URL1},tiktok,a\n",
+         "thiếu cột"),
+    ])
+    def test_partner_export_rejects_whole_file(tmp_path, head, body, frag):
+        with pytest.raises(ra_kenh.ExportError) as e:
+>           ra_kenh.read_partner_export(_pcsv(tmp_path, body, head))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:115: AttributeError
+_ test_partner_export_rejects_whole_file[ma_doi_tac,url,kenh,text,ngay_dang,sku\n-KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,abc,2026-10-13,khong-co\n-sku] _
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_export_rejects_wh7')
+head = 'ma_doi_tac,url,kenh,text,ngay_dang,sku\n'
+body = 'KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,abc,2026-10-13,khong-co\n'
+frag = 'sku'
+
+    @pytest.mark.parametrize("head, body, frag", [
+        # cột tên/handle/SĐT đối tác → cả file lỗi (không PII ngoài mã)
+        ("ma_doi_tac,ten_koc,url,kenh,text,ngay_dang\n",
+         f"KOC-MAU-01,Chị Lan,{URL1},tiktok,abc,2026-10-13\n", "cột lạ"),
+        (PHDR, f"Chi Lan,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"koc-mau-01,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,13/10/2026,\n", "ngay_dang"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,,\n", "ngay_dang"),
+        (PHDR, "KOC-MAU-01,ftp://x/y,tiktok,abc,2026-10-13,\n", "url"),
+        (PHDR, f"KOC-MAU-01,{URL1},myspace,abc,2026-10-13,\n", "kenh"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,2026-10-13,khong-co\n", "sku"),
+        (PHDR, (f"KOC-MAU-01,{URL1},tiktok,a,2026-10-13,\n"
+                f"KOC-MAU-02,{URL1},tiktok,b,2026-10-13,\n"), "trùng URL"),
+        ("ma_doi_tac,url,kenh,text\n", f"KOC-MAU-01,{URL1},tiktok,a\n",
+         "thiếu cột"),
+    ])
+    def test_partner_export_rejects_whole_file(tmp_path, head, body, frag):
+        with pytest.raises(ra_kenh.ExportError) as e:
+>           ra_kenh.read_partner_export(_pcsv(tmp_path, body, head))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:115: AttributeError
+_ test_partner_export_rejects_whole_file[ma_doi_tac,url,kenh,text,ngay_dang,sku\n-KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,a,2026-10-13,\nKOC-MAU-02,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,b,2026-10-13,\n-tr\xf9ng URL] _
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_export_rejects_wh8')
+head = 'ma_doi_tac,url,kenh,text,ngay_dang,sku\n'
+body = 'KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,a,2026-10-13,\nKOC-MAU-02,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,b,2026-10-13,\n'
+frag = 'trùng URL'
+
+    @pytest.mark.parametrize("head, body, frag", [
+        # cột tên/handle/SĐT đối tác → cả file lỗi (không PII ngoài mã)
+        ("ma_doi_tac,ten_koc,url,kenh,text,ngay_dang\n",
+         f"KOC-MAU-01,Chị Lan,{URL1},tiktok,abc,2026-10-13\n", "cột lạ"),
+        (PHDR, f"Chi Lan,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"koc-mau-01,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,13/10/2026,\n", "ngay_dang"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,,\n", "ngay_dang"),
+        (PHDR, "KOC-MAU-01,ftp://x/y,tiktok,abc,2026-10-13,\n", "url"),
+        (PHDR, f"KOC-MAU-01,{URL1},myspace,abc,2026-10-13,\n", "kenh"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,2026-10-13,khong-co\n", "sku"),
+        (PHDR, (f"KOC-MAU-01,{URL1},tiktok,a,2026-10-13,\n"
+                f"KOC-MAU-02,{URL1},tiktok,b,2026-10-13,\n"), "trùng URL"),
+        ("ma_doi_tac,url,kenh,text\n", f"KOC-MAU-01,{URL1},tiktok,a\n",
+         "thiếu cột"),
+    ])
+    def test_partner_export_rejects_whole_file(tmp_path, head, body, frag):
+        with pytest.raises(ra_kenh.ExportError) as e:
+>           ra_kenh.read_partner_export(_pcsv(tmp_path, body, head))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:115: AttributeError
+_ test_partner_export_rejects_whole_file[ma_doi_tac,url,kenh,text\n-KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,a\n-thi\u1ebfu c\u1ed9t] _
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_export_rejects_wh9')
+head = 'ma_doi_tac,url,kenh,text\n'
+body = 'KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,a\n'
+frag = 'thiếu cột'
+
+    @pytest.mark.parametrize("head, body, frag", [
+        # cột tên/handle/SĐT đối tác → cả file lỗi (không PII ngoài mã)
+        ("ma_doi_tac,ten_koc,url,kenh,text,ngay_dang\n",
+         f"KOC-MAU-01,Chị Lan,{URL1},tiktok,abc,2026-10-13\n", "cột lạ"),
+        (PHDR, f"Chi Lan,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"koc-mau-01,{URL1},tiktok,abc,2026-10-13,\n", "ma_doi_tac"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,13/10/2026,\n", "ngay_dang"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,,\n", "ngay_dang"),
+        (PHDR, "KOC-MAU-01,ftp://x/y,tiktok,abc,2026-10-13,\n", "url"),
+        (PHDR, f"KOC-MAU-01,{URL1},myspace,abc,2026-10-13,\n", "kenh"),
+        (PHDR, f"KOC-MAU-01,{URL1},tiktok,abc,2026-10-13,khong-co\n", "sku"),
+        (PHDR, (f"KOC-MAU-01,{URL1},tiktok,a,2026-10-13,\n"
+                f"KOC-MAU-02,{URL1},tiktok,b,2026-10-13,\n"), "trùng URL"),
+        ("ma_doi_tac,url,kenh,text\n", f"KOC-MAU-01,{URL1},tiktok,a\n",
+         "thiếu cột"),
+    ])
+    def test_partner_export_rejects_whole_file(tmp_path, head, body, frag):
+        with pytest.raises(ra_kenh.ExportError) as e:
+>           ra_kenh.read_partner_export(_pcsv(tmp_path, body, head))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:115: AttributeError
+___ test_partner_site_strips_personal_subdomain[www.tiktok.com-tiktok.com] ____
+
+host = 'www.tiktok.com', site = 'tiktok.com'
+
+    @pytest.mark.parametrize("host, site", [
+        ("www.tiktok.com", "tiktok.com"),
+        ("chilan.blogspot.com", "blogspot.com"),          # subdomain = handle
+        ("m.facebook.com", "facebook.com"),
+        ("shop.abc.com.vn", "abc.com.vn"),
+        ("abc.vn", "abc.vn"),
+    ])
+    def test_partner_site_strips_personal_subdomain(host, site):
+>       assert ra_kenh._site(host) == site
+               ^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute '_site'
+
+tests\test_v14_p5_mkt_ceo_intel.py:129: AttributeError
+_ test_partner_site_strips_personal_subdomain[chilan.blogspot.com-blogspot.com] _
+
+host = 'chilan.blogspot.com', site = 'blogspot.com'
+
+    @pytest.mark.parametrize("host, site", [
+        ("www.tiktok.com", "tiktok.com"),
+        ("chilan.blogspot.com", "blogspot.com"),          # subdomain = handle
+        ("m.facebook.com", "facebook.com"),
+        ("shop.abc.com.vn", "abc.com.vn"),
+        ("abc.vn", "abc.vn"),
+    ])
+    def test_partner_site_strips_personal_subdomain(host, site):
+>       assert ra_kenh._site(host) == site
+               ^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute '_site'
+
+tests\test_v14_p5_mkt_ceo_intel.py:129: AttributeError
+__ test_partner_site_strips_personal_subdomain[m.facebook.com-facebook.com] ___
+
+host = 'm.facebook.com', site = 'facebook.com'
+
+    @pytest.mark.parametrize("host, site", [
+        ("www.tiktok.com", "tiktok.com"),
+        ("chilan.blogspot.com", "blogspot.com"),          # subdomain = handle
+        ("m.facebook.com", "facebook.com"),
+        ("shop.abc.com.vn", "abc.com.vn"),
+        ("abc.vn", "abc.vn"),
+    ])
+    def test_partner_site_strips_personal_subdomain(host, site):
+>       assert ra_kenh._site(host) == site
+               ^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute '_site'
+
+tests\test_v14_p5_mkt_ceo_intel.py:129: AttributeError
+___ test_partner_site_strips_personal_subdomain[shop.abc.com.vn-abc.com.vn] ___
+
+host = 'shop.abc.com.vn', site = 'abc.com.vn'
+
+    @pytest.mark.parametrize("host, site", [
+        ("www.tiktok.com", "tiktok.com"),
+        ("chilan.blogspot.com", "blogspot.com"),          # subdomain = handle
+        ("m.facebook.com", "facebook.com"),
+        ("shop.abc.com.vn", "abc.com.vn"),
+        ("abc.vn", "abc.vn"),
+    ])
+    def test_partner_site_strips_personal_subdomain(host, site):
+>       assert ra_kenh._site(host) == site
+               ^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute '_site'
+
+tests\test_v14_p5_mkt_ceo_intel.py:129: AttributeError
+_________ test_partner_site_strips_personal_subdomain[abc.vn-abc.vn] __________
+
+host = 'abc.vn', site = 'abc.vn'
+
+    @pytest.mark.parametrize("host, site", [
+        ("www.tiktok.com", "tiktok.com"),
+        ("chilan.blogspot.com", "blogspot.com"),          # subdomain = handle
+        ("m.facebook.com", "facebook.com"),
+        ("shop.abc.com.vn", "abc.com.vn"),
+        ("abc.vn", "abc.vn"),
+    ])
+    def test_partner_site_strips_personal_subdomain(host, site):
+>       assert ra_kenh._site(host) == site
+               ^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute '_site'
+
+tests\test_v14_p5_mkt_ceo_intel.py:129: AttributeError
+_______ test_partner_verdict_kit_and_guardrail[g0-None-None-codes0-S2] ________
+
+g = {'matched_claims': [], 'ok': True, 'violations': []}, kit = None, sku = None
+codes = ['thieu_bo_tai_lieu'], sev = 'S2'
+
+    @pytest.mark.parametrize("g, kit, sku, codes, sev", [
+        (_g(), None, None, ["thieu_bo_tai_lieu"], "S2"),
+        (_g([("tu_cam", "critical")]), KIT, None, ["tu_cam"], "S1"),
+        (_g(claims=["hỗ trợ bồi bổ sức khỏe"]), KIT, "mat-ong-sam-300ml", [],
+         None),
+        (_g(claims=["hỗ trợ giảm mệt mỏi"]), KIT, "mat-ong-sam-300ml",
+         ["ngoai_bo_tai_lieu"], "S2"),
+        (_g(), KIT, "savina-12v", ["sku_ngoai_bo_tai_lieu"], "S2"),
+        # kit đại lý không liệt kê claim → chỉ xét SKU
+        (_g(claims=["x"]), {"skus": set(), "claims": None, "refs": []}, None,
+         [], None),
+    ])
+    def test_partner_verdict_kit_and_guardrail(g, kit, sku, codes, sev):
+>       v = ra_kenh.partner_verdict(g, kit, sku)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute 'partner_verdict'
+
+tests\test_v14_p5_mkt_ceo_intel.py:155: AttributeError
+_______ test_partner_verdict_kit_and_guardrail[g1-kit1-None-codes1-S1] ________
+
+g = {'matched_claims': [], 'ok': False, 'violations': [{'code': 'tu_cam', 'severity': 'critical'}]}
+kit = {'claims': {'hỗ trợ bồi bổ sức khỏe'}, 'refs': ['koc_brief#1'], 'skus': {'mat-ong-sam-300ml'}}
+sku = None, codes = ['tu_cam'], sev = 'S1'
+
+    @pytest.mark.parametrize("g, kit, sku, codes, sev", [
+        (_g(), None, None, ["thieu_bo_tai_lieu"], "S2"),
+        (_g([("tu_cam", "critical")]), KIT, None, ["tu_cam"], "S1"),
+        (_g(claims=["hỗ trợ bồi bổ sức khỏe"]), KIT, "mat-ong-sam-300ml", [],
+         None),
+        (_g(claims=["hỗ trợ giảm mệt mỏi"]), KIT, "mat-ong-sam-300ml",
+         ["ngoai_bo_tai_lieu"], "S2"),
+        (_g(), KIT, "savina-12v", ["sku_ngoai_bo_tai_lieu"], "S2"),
+        # kit đại lý không liệt kê claim → chỉ xét SKU
+        (_g(claims=["x"]), {"skus": set(), "claims": None, "refs": []}, None,
+         [], None),
+    ])
+    def test_partner_verdict_kit_and_guardrail(g, kit, sku, codes, sev):
+>       v = ra_kenh.partner_verdict(g, kit, sku)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute 'partner_verdict'
+
+tests\test_v14_p5_mkt_ceo_intel.py:155: AttributeError
+_ test_partner_verdict_kit_and_guardrail[g2-kit2-mat-ong-sam-300ml-codes2-None] _
+
+g = {'matched_claims': [{'claim': 'hỗ trợ bồi bổ sức khỏe'}], 'ok': True, 'violations': []}
+kit = {'claims': {'hỗ trợ bồi bổ sức khỏe'}, 'refs': ['koc_brief#1'], 'skus': {'mat-ong-sam-300ml'}}
+sku = 'mat-ong-sam-300ml', codes = [], sev = None
+
+    @pytest.mark.parametrize("g, kit, sku, codes, sev", [
+        (_g(), None, None, ["thieu_bo_tai_lieu"], "S2"),
+        (_g([("tu_cam", "critical")]), KIT, None, ["tu_cam"], "S1"),
+        (_g(claims=["hỗ trợ bồi bổ sức khỏe"]), KIT, "mat-ong-sam-300ml", [],
+         None),
+        (_g(claims=["hỗ trợ giảm mệt mỏi"]), KIT, "mat-ong-sam-300ml",
+         ["ngoai_bo_tai_lieu"], "S2"),
+        (_g(), KIT, "savina-12v", ["sku_ngoai_bo_tai_lieu"], "S2"),
+        # kit đại lý không liệt kê claim → chỉ xét SKU
+        (_g(claims=["x"]), {"skus": set(), "claims": None, "refs": []}, None,
+         [], None),
+    ])
+    def test_partner_verdict_kit_and_guardrail(g, kit, sku, codes, sev):
+>       v = ra_kenh.partner_verdict(g, kit, sku)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute 'partner_verdict'
+
+tests\test_v14_p5_mkt_ceo_intel.py:155: AttributeError
+_ test_partner_verdict_kit_and_guardrail[g3-kit3-mat-ong-sam-300ml-codes3-S2] _
+
+g = {'matched_claims': [{'claim': 'hỗ trợ giảm mệt mỏi'}], 'ok': True, 'violations': []}
+kit = {'claims': {'hỗ trợ bồi bổ sức khỏe'}, 'refs': ['koc_brief#1'], 'skus': {'mat-ong-sam-300ml'}}
+sku = 'mat-ong-sam-300ml', codes = ['ngoai_bo_tai_lieu'], sev = 'S2'
+
+    @pytest.mark.parametrize("g, kit, sku, codes, sev", [
+        (_g(), None, None, ["thieu_bo_tai_lieu"], "S2"),
+        (_g([("tu_cam", "critical")]), KIT, None, ["tu_cam"], "S1"),
+        (_g(claims=["hỗ trợ bồi bổ sức khỏe"]), KIT, "mat-ong-sam-300ml", [],
+         None),
+        (_g(claims=["hỗ trợ giảm mệt mỏi"]), KIT, "mat-ong-sam-300ml",
+         ["ngoai_bo_tai_lieu"], "S2"),
+        (_g(), KIT, "savina-12v", ["sku_ngoai_bo_tai_lieu"], "S2"),
+        # kit đại lý không liệt kê claim → chỉ xét SKU
+        (_g(claims=["x"]), {"skus": set(), "claims": None, "refs": []}, None,
+         [], None),
+    ])
+    def test_partner_verdict_kit_and_guardrail(g, kit, sku, codes, sev):
+>       v = ra_kenh.partner_verdict(g, kit, sku)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute 'partner_verdict'
+
+tests\test_v14_p5_mkt_ceo_intel.py:155: AttributeError
+____ test_partner_verdict_kit_and_guardrail[g4-kit4-savina-12v-codes4-S2] _____
+
+g = {'matched_claims': [], 'ok': True, 'violations': []}
+kit = {'claims': {'hỗ trợ bồi bổ sức khỏe'}, 'refs': ['koc_brief#1'], 'skus': {'mat-ong-sam-300ml'}}
+sku = 'savina-12v', codes = ['sku_ngoai_bo_tai_lieu'], sev = 'S2'
+
+    @pytest.mark.parametrize("g, kit, sku, codes, sev", [
+        (_g(), None, None, ["thieu_bo_tai_lieu"], "S2"),
+        (_g([("tu_cam", "critical")]), KIT, None, ["tu_cam"], "S1"),
+        (_g(claims=["hỗ trợ bồi bổ sức khỏe"]), KIT, "mat-ong-sam-300ml", [],
+         None),
+        (_g(claims=["hỗ trợ giảm mệt mỏi"]), KIT, "mat-ong-sam-300ml",
+         ["ngoai_bo_tai_lieu"], "S2"),
+        (_g(), KIT, "savina-12v", ["sku_ngoai_bo_tai_lieu"], "S2"),
+        # kit đại lý không liệt kê claim → chỉ xét SKU
+        (_g(claims=["x"]), {"skus": set(), "claims": None, "refs": []}, None,
+         [], None),
+    ])
+    def test_partner_verdict_kit_and_guardrail(g, kit, sku, codes, sev):
+>       v = ra_kenh.partner_verdict(g, kit, sku)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute 'partner_verdict'
+
+tests\test_v14_p5_mkt_ceo_intel.py:155: AttributeError
+______ test_partner_verdict_kit_and_guardrail[g5-kit5-None-codes5-None] _______
+
+g = {'matched_claims': [{'claim': 'x'}], 'ok': True, 'violations': []}
+kit = {'claims': None, 'refs': [], 'skus': set()}, sku = None, codes = []
+sev = None
+
+    @pytest.mark.parametrize("g, kit, sku, codes, sev", [
+        (_g(), None, None, ["thieu_bo_tai_lieu"], "S2"),
+        (_g([("tu_cam", "critical")]), KIT, None, ["tu_cam"], "S1"),
+        (_g(claims=["hỗ trợ bồi bổ sức khỏe"]), KIT, "mat-ong-sam-300ml", [],
+         None),
+        (_g(claims=["hỗ trợ giảm mệt mỏi"]), KIT, "mat-ong-sam-300ml",
+         ["ngoai_bo_tai_lieu"], "S2"),
+        (_g(), KIT, "savina-12v", ["sku_ngoai_bo_tai_lieu"], "S2"),
+        # kit đại lý không liệt kê claim → chỉ xét SKU
+        (_g(claims=["x"]), {"skus": set(), "claims": None, "refs": []}, None,
+         [], None),
+    ])
+    def test_partner_verdict_kit_and_guardrail(g, kit, sku, codes, sev):
+>       v = ra_kenh.partner_verdict(g, kit, sku)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute 'partner_verdict'
+
+tests\test_v14_p5_mkt_ceo_intel.py:155: AttributeError
+___________________ test_partner_scan_uses_channel_ad_rules ___________________
+
+    def test_partner_scan_uses_channel_ad_rules():
+        """Bài đối tác = quảng cáo: thiếu nhãn #quangcao bị bắt, từ cấm S1."""
+        row = {"text": "Sâm này chữa ung thư", "channel": "tiktok", "sku": None}
+>       v = ra_kenh.partner_scan(row, None)
+            ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute 'partner_scan'
+
+tests\test_v14_p5_mkt_ceo_intel.py:162: AttributeError
+_________________ test_ra_kenh_partner_cli_usage_and_dry_run __________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_ra_kenh_partner_cli_usage0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025881D0DEB0>
+capsys = <_pytest.capture.CaptureFixture object at 0x0000025881D0D100>
+
+    def test_ra_kenh_partner_cli_usage_and_dry_run(tmp_path, monkeypatch,
+                                                   capsys):
+        f = _pcsv(tmp_path, f"KOC-MAU-01,{URL1},tiktok,\"{BAD_TEXT}\","
+                            "2026-10-13,\n")
+        with pytest.raises(SystemExit) as e:
+            ra_kenh.main(["--partner-file", str(f), "--by", "Lan", "--now",
+                          "2026-10-14T09:00"])
+        assert e.value.code == 2
+        with pytest.raises(SystemExit):
+            ra_kenh.main(["--partner-file", str(f), "--report"])
+        with pytest.raises(SystemExit):
+            ra_kenh.main(["--partner-file", str(f), "--by", "agent:x"])
+        monkeypatch.setattr(ra_kenh, "connect", lambda: pytest.fail("connect"))
+>       assert ra_kenh.main(["--partner-file", str(f), "--by", "Lan",
+                             "--dry-run"]) == 0
+
+tests\test_v14_p5_mkt_ceo_intel.py:181: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+agents\ra_kenh.py:744: in main
+    a = ap.parse_args(argv)
+        ^^^^^^^^^^^^^^^^^^^
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:1899: in parse_args
+    self.error(msg)
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2672: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='python -m agents.ra_kenh', usage=None, description='PC-A4 rà bài đang đăng trên kênh sở hữu (file...h. Agent KHÔNG gỡ/sửa bài.', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = 'python -m agents.ra_kenh: error: unrecognized arguments: --partner-file C:\\Users\\hahuy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-2780\\test_ra_kenh_partner_cli_usage0\\doi_tac.csv\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\argparse.py:2659: SystemExit
+---------------------------- Captured stderr call -----------------------------
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--mark-removed URL]
+                                [--report] [--by BY] [--now NOW] [--days DAYS]
+                                [--dry-run]
+python -m agents.ra_kenh: error: unrecognized arguments: --partner-file C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2780\test_ra_kenh_partner_cli_usage0\doi_tac.csv
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--mark-removed URL]
+                                [--report] [--by BY] [--now NOW] [--days DAYS]
+                                [--dry-run]
+python -m agents.ra_kenh: error: unrecognized arguments: --partner-file C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2780\test_ra_kenh_partner_cli_usage0\doi_tac.csv
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--mark-removed URL]
+                                [--report] [--by BY] [--now NOW] [--days DAYS]
+                                [--dry-run]
+python -m agents.ra_kenh: error: unrecognized arguments: --partner-file C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2780\test_ra_kenh_partner_cli_usage0\doi_tac.csv
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--mark-removed URL]
+                                [--report] [--by BY] [--now NOW] [--days DAYS]
+                                [--dry-run]
+python -m agents.ra_kenh: error: unrecognized arguments: --partner-file C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2780\test_ra_kenh_partner_cli_usage0\doi_tac.csv
+________________ test_ceo_promo_bad_plan_exit1_before_connect _________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_ceo_promo_bad_plan_exit1_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025881D618E0>
+
+    def test_ceo_promo_bad_plan_exit1_before_connect(tmp_path,
+                                                           monkeypatch):
+        p = tmp_path / "plan.csv"
+        p.write_bytes(b"program_id,kenh\nX,shopee\n")
+        monkeypatch.setattr(ceo_promo, "connect", lambda: pytest.fail("connect"))
+>       assert ceo_promo.main(["--plan", str(p)]) == 1
+E       AssertionError: assert 2 == 1
+E        +  where 2 = <function main at 0x0000025881F08540>(['--plan', 'C:\\Users\\hahuy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-2780\\test_ceo_promo_bad_plan_exit1_0\\plan.csv'])
+E        +    where <function main at 0x0000025881F08540> = ceo_promo.main
+
+tests\test_v14_p5_mkt_ceo_intel.py:258: AssertionError
+---------------------------- Captured stderr call -----------------------------
+[error] cấu hình lỗi: ceo.json thiếu loại việc promo_deviation — không connect
+_ test_keyword_reasons_excluded[s\xe2m ng\u1ecdc linh ch\u1eefa ung th\u01b0-want0] _
+
+q = 'sâm ngọc linh chữa ung thư', want = {'tu_cam'}
+
+    @pytest.mark.parametrize("q, want", [
+        ("sâm ngọc linh chữa ung thư", {"tu_cam"}),
+        ("sam ngoc linh tri tieu duong", {"suc_khoe"}),
+        ("sâm ngọc linh cho người tiểu đường", {"suc_khoe"}),
+        ("rượu sâm ngọc linh", {"ruou"}),
+        ("sam ngoc linh ngam ruou", {"ruou"}),
+        ("sâm ngọc linh tốt cho gan", {"cong_dung"}),
+        ("sâm ngọc linh giải độc gan", {"tu_cam"}),
+        ("sâm ngọc linh 0912345678", {"pii"}),
+        # chỉ dẫn địa lý chưa được Pháp chế xác nhận (luật đăng bài)
+        ("sâm ngọc linh", {"chi_dan_dia_ly"}),
+        ("sam ngoc linh quang nam", {"chi_dan_dia_ly"}),
+    ])
+    def test_keyword_reasons_excluded(q, want):
+>       assert want <= set(iw.keyword_reasons(q))
+                           ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:277: AttributeError
+______ test_keyword_reasons_excluded[sam ngoc linh tri tieu duong-want1] ______
+
+q = 'sam ngoc linh tri tieu duong', want = {'suc_khoe'}
+
+    @pytest.mark.parametrize("q, want", [
+        ("sâm ngọc linh chữa ung thư", {"tu_cam"}),
+        ("sam ngoc linh tri tieu duong", {"suc_khoe"}),
+        ("sâm ngọc linh cho người tiểu đường", {"suc_khoe"}),
+        ("rượu sâm ngọc linh", {"ruou"}),
+        ("sam ngoc linh ngam ruou", {"ruou"}),
+        ("sâm ngọc linh tốt cho gan", {"cong_dung"}),
+        ("sâm ngọc linh giải độc gan", {"tu_cam"}),
+        ("sâm ngọc linh 0912345678", {"pii"}),
+        # chỉ dẫn địa lý chưa được Pháp chế xác nhận (luật đăng bài)
+        ("sâm ngọc linh", {"chi_dan_dia_ly"}),
+        ("sam ngoc linh quang nam", {"chi_dan_dia_ly"}),
+    ])
+    def test_keyword_reasons_excluded(q, want):
+>       assert want <= set(iw.keyword_reasons(q))
+                           ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:277: AttributeError
+_ test_keyword_reasons_excluded[s\xe2m ng\u1ecdc linh cho ng\u01b0\u1eddi ti\u1ec3u \u0111\u01b0\u1eddng-want2] _
+
+q = 'sâm ngọc linh cho người tiểu đường', want = {'suc_khoe'}
+
+    @pytest.mark.parametrize("q, want", [
+        ("sâm ngọc linh chữa ung thư", {"tu_cam"}),
+        ("sam ngoc linh tri tieu duong", {"suc_khoe"}),
+        ("sâm ngọc linh cho người tiểu đường", {"suc_khoe"}),
+        ("rượu sâm ngọc linh", {"ruou"}),
+        ("sam ngoc linh ngam ruou", {"ruou"}),
+        ("sâm ngọc linh tốt cho gan", {"cong_dung"}),
+        ("sâm ngọc linh giải độc gan", {"tu_cam"}),
+        ("sâm ngọc linh 0912345678", {"pii"}),
+        # chỉ dẫn địa lý chưa được Pháp chế xác nhận (luật đăng bài)
+        ("sâm ngọc linh", {"chi_dan_dia_ly"}),
+        ("sam ngoc linh quang nam", {"chi_dan_dia_ly"}),
+    ])
+    def test_keyword_reasons_excluded(q, want):
+>       assert want <= set(iw.keyword_reasons(q))
+                           ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:277: AttributeError
+__ test_keyword_reasons_excluded[r\u01b0\u1ee3u s\xe2m ng\u1ecdc linh-want3] __
+
+q = 'rượu sâm ngọc linh', want = {'ruou'}
+
+    @pytest.mark.parametrize("q, want", [
+        ("sâm ngọc linh chữa ung thư", {"tu_cam"}),
+        ("sam ngoc linh tri tieu duong", {"suc_khoe"}),
+        ("sâm ngọc linh cho người tiểu đường", {"suc_khoe"}),
+        ("rượu sâm ngọc linh", {"ruou"}),
+        ("sam ngoc linh ngam ruou", {"ruou"}),
+        ("sâm ngọc linh tốt cho gan", {"cong_dung"}),
+        ("sâm ngọc linh giải độc gan", {"tu_cam"}),
+        ("sâm ngọc linh 0912345678", {"pii"}),
+        # chỉ dẫn địa lý chưa được Pháp chế xác nhận (luật đăng bài)
+        ("sâm ngọc linh", {"chi_dan_dia_ly"}),
+        ("sam ngoc linh quang nam", {"chi_dan_dia_ly"}),
+    ])
+    def test_keyword_reasons_excluded(q, want):
+>       assert want <= set(iw.keyword_reasons(q))
+                           ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:277: AttributeError
+________ test_keyword_reasons_excluded[sam ngoc linh ngam ruou-want4] _________
+
+q = 'sam ngoc linh ngam ruou', want = {'ruou'}
+
+    @pytest.mark.parametrize("q, want", [
+        ("sâm ngọc linh chữa ung thư", {"tu_cam"}),
+        ("sam ngoc linh tri tieu duong", {"suc_khoe"}),
+        ("sâm ngọc linh cho người tiểu đường", {"suc_khoe"}),
+        ("rượu sâm ngọc linh", {"ruou"}),
+        ("sam ngoc linh ngam ruou", {"ruou"}),
+        ("sâm ngọc linh tốt cho gan", {"cong_dung"}),
+        ("sâm ngọc linh giải độc gan", {"tu_cam"}),
+        ("sâm ngọc linh 0912345678", {"pii"}),
+        # chỉ dẫn địa lý chưa được Pháp chế xác nhận (luật đăng bài)
+        ("sâm ngọc linh", {"chi_dan_dia_ly"}),
+        ("sam ngoc linh quang nam", {"chi_dan_dia_ly"}),
+    ])
+    def test_keyword_reasons_excluded(q, want):
+>       assert want <= set(iw.keyword_reasons(q))
+                           ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:277: AttributeError
+_ test_keyword_reasons_excluded[s\xe2m ng\u1ecdc linh t\u1ed1t cho gan-want5] _
+
+q = 'sâm ngọc linh tốt cho gan', want = {'cong_dung'}
+
+    @pytest.mark.parametrize("q, want", [
+        ("sâm ngọc linh chữa ung thư", {"tu_cam"}),
+        ("sam ngoc linh tri tieu duong", {"suc_khoe"}),
+        ("sâm ngọc linh cho người tiểu đường", {"suc_khoe"}),
+        ("rượu sâm ngọc linh", {"ruou"}),
+        ("sam ngoc linh ngam ruou", {"ruou"}),
+        ("sâm ngọc linh tốt cho gan", {"cong_dung"}),
+        ("sâm ngọc linh giải độc gan", {"tu_cam"}),
+        ("sâm ngọc linh 0912345678", {"pii"}),
+        # chỉ dẫn địa lý chưa được Pháp chế xác nhận (luật đăng bài)
+        ("sâm ngọc linh", {"chi_dan_dia_ly"}),
+        ("sam ngoc linh quang nam", {"chi_dan_dia_ly"}),
+    ])
+    def test_keyword_reasons_excluded(q, want):
+>       assert want <= set(iw.keyword_reasons(q))
+                           ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:277: AttributeError
+_ test_keyword_reasons_excluded[s\xe2m ng\u1ecdc linh gi\u1ea3i \u0111\u1ed9c gan-want6] _
+
+q = 'sâm ngọc linh giải độc gan', want = {'tu_cam'}
+
+    @pytest.mark.parametrize("q, want", [
+        ("sâm ngọc linh chữa ung thư", {"tu_cam"}),
+        ("sam ngoc linh tri tieu duong", {"suc_khoe"}),
+        ("sâm ngọc linh cho người tiểu đường", {"suc_khoe"}),
+        ("rượu sâm ngọc linh", {"ruou"}),
+        ("sam ngoc linh ngam ruou", {"ruou"}),
+        ("sâm ngọc linh tốt cho gan", {"cong_dung"}),
+        ("sâm ngọc linh giải độc gan", {"tu_cam"}),
+        ("sâm ngọc linh 0912345678", {"pii"}),
+        # chỉ dẫn địa lý chưa được Pháp chế xác nhận (luật đăng bài)
+        ("sâm ngọc linh", {"chi_dan_dia_ly"}),
+        ("sam ngoc linh quang nam", {"chi_dan_dia_ly"}),
+    ])
+    def test_keyword_reasons_excluded(q, want):
+>       assert want <= set(iw.keyword_reasons(q))
+                           ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:277: AttributeError
+____ test_keyword_reasons_excluded[s\xe2m ng\u1ecdc linh 0912345678-want7] ____
+
+q = 'sâm ngọc linh 0912345678', want = {'pii'}
+
+    @pytest.mark.parametrize("q, want", [
+        ("sâm ngọc linh chữa ung thư", {"tu_cam"}),
+        ("sam ngoc linh tri tieu duong", {"suc_khoe"}),
+        ("sâm ngọc linh cho người tiểu đường", {"suc_khoe"}),
+        ("rượu sâm ngọc linh", {"ruou"}),
+        ("sam ngoc linh ngam ruou", {"ruou"}),
+        ("sâm ngọc linh tốt cho gan", {"cong_dung"}),
+        ("sâm ngọc linh giải độc gan", {"tu_cam"}),
+        ("sâm ngọc linh 0912345678", {"pii"}),
+        # chỉ dẫn địa lý chưa được Pháp chế xác nhận (luật đăng bài)
+        ("sâm ngọc linh", {"chi_dan_dia_ly"}),
+        ("sam ngoc linh quang nam", {"chi_dan_dia_ly"}),
+    ])
+    def test_keyword_reasons_excluded(q, want):
+>       assert want <= set(iw.keyword_reasons(q))
+                           ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:277: AttributeError
+_________ test_keyword_reasons_excluded[s\xe2m ng\u1ecdc linh-want8] __________
+
+q = 'sâm ngọc linh', want = {'chi_dan_dia_ly'}
+
+    @pytest.mark.parametrize("q, want", [
+        ("sâm ngọc linh chữa ung thư", {"tu_cam"}),
+        ("sam ngoc linh tri tieu duong", {"suc_khoe"}),
+        ("sâm ngọc linh cho người tiểu đường", {"suc_khoe"}),
+        ("rượu sâm ngọc linh", {"ruou"}),
+        ("sam ngoc linh ngam ruou", {"ruou"}),
+        ("sâm ngọc linh tốt cho gan", {"cong_dung"}),
+        ("sâm ngọc linh giải độc gan", {"tu_cam"}),
+        ("sâm ngọc linh 0912345678", {"pii"}),
+        # chỉ dẫn địa lý chưa được Pháp chế xác nhận (luật đăng bài)
+        ("sâm ngọc linh", {"chi_dan_dia_ly"}),
+        ("sam ngoc linh quang nam", {"chi_dan_dia_ly"}),
+    ])
+    def test_keyword_reasons_excluded(q, want):
+>       assert want <= set(iw.keyword_reasons(q))
+                           ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:277: AttributeError
+________ test_keyword_reasons_excluded[sam ngoc linh quang nam-want9] _________
+
+q = 'sam ngoc linh quang nam', want = {'chi_dan_dia_ly'}
+
+    @pytest.mark.parametrize("q, want", [
+        ("sâm ngọc linh chữa ung thư", {"tu_cam"}),
+        ("sam ngoc linh tri tieu duong", {"suc_khoe"}),
+        ("sâm ngọc linh cho người tiểu đường", {"suc_khoe"}),
+        ("rượu sâm ngọc linh", {"ruou"}),
+        ("sam ngoc linh ngam ruou", {"ruou"}),
+        ("sâm ngọc linh tốt cho gan", {"cong_dung"}),
+        ("sâm ngọc linh giải độc gan", {"tu_cam"}),
+        ("sâm ngọc linh 0912345678", {"pii"}),
+        # chỉ dẫn địa lý chưa được Pháp chế xác nhận (luật đăng bài)
+        ("sâm ngọc linh", {"chi_dan_dia_ly"}),
+        ("sam ngoc linh quang nam", {"chi_dan_dia_ly"}),
+    ])
+    def test_keyword_reasons_excluded(q, want):
+>       assert want <= set(iw.keyword_reasons(q))
+                           ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:277: AttributeError
+____________ test_keyword_reasons_safe[s\xe2m gi\xe1 bao nhi\xeau] ____________
+
+q = 'sâm giá bao nhiêu'
+
+    @pytest.mark.parametrize("q", [
+        "sâm giá bao nhiêu", "quà tết sâm", "hộp quà sâm biếu tết",
+        "mật ong sâm", "sâm mua ở đâu", "hồng sâm",
+    ])
+    def test_keyword_reasons_safe(q):
+>       assert iw.keyword_reasons(q) == []
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:285: AttributeError
+______________ test_keyword_reasons_safe[qu\xe0 t\u1ebft s\xe2m] ______________
+
+q = 'quà tết sâm'
+
+    @pytest.mark.parametrize("q", [
+        "sâm giá bao nhiêu", "quà tết sâm", "hộp quà sâm biếu tết",
+        "mật ong sâm", "sâm mua ở đâu", "hồng sâm",
+    ])
+    def test_keyword_reasons_safe(q):
+>       assert iw.keyword_reasons(q) == []
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:285: AttributeError
+____ test_keyword_reasons_safe[h\u1ed9p qu\xe0 s\xe2m bi\u1ebfu t\u1ebft] _____
+
+q = 'hộp quà sâm biếu tết'
+
+    @pytest.mark.parametrize("q", [
+        "sâm giá bao nhiêu", "quà tết sâm", "hộp quà sâm biếu tết",
+        "mật ong sâm", "sâm mua ở đâu", "hồng sâm",
+    ])
+    def test_keyword_reasons_safe(q):
+>       assert iw.keyword_reasons(q) == []
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:285: AttributeError
+_______________ test_keyword_reasons_safe[m\u1eadt ong s\xe2m] ________________
+
+q = 'mật ong sâm'
+
+    @pytest.mark.parametrize("q", [
+        "sâm giá bao nhiêu", "quà tết sâm", "hộp quà sâm biếu tết",
+        "mật ong sâm", "sâm mua ở đâu", "hồng sâm",
+    ])
+    def test_keyword_reasons_safe(q):
+>       assert iw.keyword_reasons(q) == []
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:285: AttributeError
+__________ test_keyword_reasons_safe[s\xe2m mua \u1edf \u0111\xe2u] ___________
+
+q = 'sâm mua ở đâu'
+
+    @pytest.mark.parametrize("q", [
+        "sâm giá bao nhiêu", "quà tết sâm", "hộp quà sâm biếu tết",
+        "mật ong sâm", "sâm mua ở đâu", "hồng sâm",
+    ])
+    def test_keyword_reasons_safe(q):
+>       assert iw.keyword_reasons(q) == []
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:285: AttributeError
+_________________ test_keyword_reasons_safe[h\u1ed3ng s\xe2m] _________________
+
+q = 'hồng sâm'
+
+    @pytest.mark.parametrize("q", [
+        "sâm giá bao nhiêu", "quà tết sâm", "hộp quà sâm biếu tết",
+        "mật ong sâm", "sâm mua ở đâu", "hồng sâm",
+    ])
+    def test_keyword_reasons_safe(q):
+>       assert iw.keyword_reasons(q) == []
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'keyword_reasons'
+
+tests\test_v14_p5_mkt_ceo_intel.py:285: AttributeError
+__________ test_keyword_payload_passes_guardrail_and_hides_excluded ___________
+
+    def test_keyword_payload_passes_guardrail_and_hides_excluded():
+        res = {"import_id": 7, "file_name": "related_MAU.csv",
+               "safe": [(1, "sâm ngọc linh", "rising", "hộp quà sâm", "+250%"),
+                        (2, None, "top", "sâm ngọc linh giá", "100")],
+               "excluded": [(3, ["tu_cam", "suc_khoe"]), (4, ["ruou"]),
+                            (5, ["cong_dung"]), (6, ["pii"])]}
+>       text = iw.render_keywords(res)
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'render_keywords'
+
+tests\test_v14_p5_mkt_ceo_intel.py:294: AttributeError
+__________________ test_partner_ingest_items_by_wave_no_pii ___________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v14_p5) at 0x25881d0d3a0>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_ingest_items_by_w0')
+
+    def test_partner_ingest_items_by_wave_no_pii(db, tmp_path):
+        tx = _TxConn(db)
+        kit = _approved_kit(tx)
+>       rows = _prow(tmp_path, (f"KOC-MAU-01,{URL1},tiktok,\"{BAD_TEXT}\","
+                                "2026-10-13,mat-ong-sam-300ml\n"
+                                f"KOC-MAU-01,{URL2},tiktok,\"{OK_TEXT}\","
+                                "2026-10-13,mat-ong-sam-300ml\n"), "a.csv")
+
+tests\test_v14_p5_mkt_ceo_intel.py:395: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_ingest_items_by_w0')
+body = 'KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,"Sâm này chữa ung thư, uống là khỏ....review/video/7300000000000000002,tiktok,"Hộp quà Tết biếu gia đình rất sang #quangcao",2026-10-13,mat-ong-sam-300ml\n'
+name = 'a.csv'
+
+    def _prow(tmp_path, body, name):
+>       return ra_kenh.read_partner_export(_pcsv(tmp_path, body, name=name))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:389: AttributeError
+_______________ test_partner_revert_after_clean_opens_new_wave ________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v14_p5) at 0x25881d14d70>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_revert_after_clea0')
+
+    def test_partner_revert_after_clean_opens_new_wave(db, tmp_path):
+        """Gotcha khóa theo ĐỢT: vi phạm A → sửa sạch B → quay lại A = đợt mới
+        (khóa 'đã thấy text này' sẽ nuốt câm lần tái phát)."""
+        tx = _TxConn(db)
+        _approved_kit(tx)
+>       bad = _prow(tmp_path, f"KOC-MAU-01,{URL1},tiktok,\"{BAD_TEXT}\","
+                              "2026-10-13,\n", "bad.csv")
+
+tests\test_v14_p5_mkt_ceo_intel.py:429: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_revert_after_clea0')
+body = 'KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,"Sâm này chữa ung thư, uống là khỏi bệnh #quangcao",2026-10-13,\n'
+name = 'bad.csv'
+
+    def _prow(tmp_path, body, name):
+>       return ra_kenh.read_partner_export(_pcsv(tmp_path, body, name=name))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:389: AttributeError
+________________ test_partner_without_kit_and_unknown_partner _________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v14_p5) at 0x258819ebe30>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_without_kit_and_u0')
+
+    def test_partner_without_kit_and_unknown_partner(db, tmp_path):
+        tx = _TxConn(db)
+>       rows = _prow(tmp_path, f"KOC-MAU-02,{URL1},tiktok,\"{OK_TEXT}\","
+                               "2026-10-13,\n", "nokit.csv")
+
+tests\test_v14_p5_mkt_ceo_intel.py:442: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_without_kit_and_u0')
+body = 'KOC-MAU-02,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,"Hộp quà Tết biếu gia đình rất sang #quangcao",2026-10-13,\n'
+name = 'nokit.csv'
+
+    def _prow(tmp_path, body, name):
+>       return ra_kenh.read_partner_export(_pcsv(tmp_path, body, name=name))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:389: AttributeError
+___________________ test_partner_feature_off_writes_nothing ___________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v14_p5) at 0x25881972ea0>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_feature_off_write0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025881972A80>
+
+    def test_partner_feature_off_writes_nothing(db, tmp_path, monkeypatch):
+>       rows = _prow(tmp_path, f"KOC-MAU-01,{URL1},tiktok,\"{BAD_TEXT}\","
+                               "2026-10-13,\n", "off.csv")
+
+tests\test_v14_p5_mkt_ceo_intel.py:456: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_partner_feature_off_write0')
+body = 'KOC-MAU-01,https://www.tiktok.com/@chi.lan.review/video/7300000000000000001,tiktok,"Sâm này chữa ung thư, uống là khỏi bệnh #quangcao",2026-10-13,\n'
+name = 'off.csv'
+
+    def _prow(tmp_path, body, name):
+>       return ra_kenh.read_partner_export(_pcsv(tmp_path, body, name=name))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.ra_kenh' has no attribute 'read_partner_export'
+
+tests\test_v14_p5_mkt_ceo_intel.py:389: AttributeError
+______________________ test_promo_check_deviation_waves _______________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v14_p5) at 0x2588196dbe0>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2780/test_promo_check_deviation_wav0')
+
+    def test_promo_check_deviation_waves(db, tmp_path):
+        _seed_promo(db)
+        _snapshot(db, 1, [(SKU, 1_000_000, 700_000), (RUOU, 1_000_000, 900_000),
+                          (None, 500_000, 400_000), (SKU, 1_000_000, None)])
+        tx = _TxConn(db)
+        plan = _plan(tmp_path, f"P1,shopee,{SKU},giam_gia,2026-10-01,"
+                               "2026-10-31,20\n")
+        r = _promo(tx, plan, dry_run=True)
+        assert sorted(f["code"] for f in r["findings"]) == [
+            "khong_xac_dinh_sku", "km_ngoai_ke_hoach", "km_sau_hon_duyet"]
+        assert _queue(db, "promo_deviation") == []          # dry-run 0 ghi
+>       r = _promo(tx, plan)
+            ^^^^^^^^^^^^^^^^
+
+tests\test_v14_p5_mkt_ceo_intel.py:535: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v14_p5_mkt_ceo_intel.py:519: in _promo
+    return ceo_promo.promo_check(tx, TODAY, mapping={}, plan=plan,
+agents\ceo_promo.py:255: in promo_check
+    director.submit(conn, "ceo", OT_PROMO, it["object_id"],
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+conn = <test_v14_p5_mkt_ceo_intel._TxConn object at 0x000002588196D1C0>
+block = 'ceo', object_type = 'promo_deviation'
+object_id = 'km:32f80e1cac4b105c:s1'
+title = 'Kiểm soát KM — listing có KM nhưng không xác định được SKU — kênh shopee, SKU (chưa map SKU)'
+payload = 'Kiểm soát nội bộ ceo-04.1 (NHÁP): kênh shopee, SKU (chưa map SKU) — mã khong_xac_dinh_sku (listing có KM nhưng không ...abab. Việc cần làm: TGĐ/BKS yêu cầu GĐ bán hàng giải trình hoặc điều chỉnh trên Seller Center. Agent KHÔNG đổi KM/giá.'
+created_by = 'agent:ceo_audit', qa_status = 'none'
+cfg = {'_doc': 'Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_... năng «Theo dõi tiến độ, sổ quyết định»; TGĐ duyệt).', 'approver_roles': ['tgd'], 'approvers': [], 'block': 'ceo', ...}
+qa_suite = None, sample = False
+
+    def submit(conn, block: str, object_type: str, object_id: str, title: str,
+               payload: str, created_by: str, qa_status: str = "none",
+               cfg: dict | None = None, qa_suite: str | None = None,
+               sample: bool = False) -> int:
+        """Agent nhân viên đẩy việc → id hàng duyệt. SLA/risk từ cấu hình.
+        `qa_suite` có → qa_status lấy từ eval_runs (bỏ qua giá trị caller).
+        `sample` → cờ provenance `is_sample` (v14.3, `aq.enqueue`)."""
+        cfg = cfg if cfg is not None else load_config(block)
+        spec = cfg["object_types"].get(object_type)
+        if spec is None:
+>           raise ValueError(f"khối {block} không nhận loại việc '{object_type}'"
+                             f" — có: {sorted(cfg['object_types'])}")
+E           ValueError: khối ceo không nhận loại việc 'promo_deviation' — có: ['board_pack', 'change_request', 'decision_record', 'hdtv_pack', 'milestone_change', 'monthly_report', 'price_voucher_frame', 'weekly_board', 'weekly_report']
+
+pipelines\director.py:168: ValueError
+___________________ test_suggest_keywords_one_item_per_file ___________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v14_p5) at 0x25881d16ea0>
+
+    def test_suggest_keywords_one_item_per_file(db):
+        iid = _trends(db)
+        tx = _TxConn(db)
+>       r = iw.suggest_keywords(tx, None, INTEL, dry_run=True)
+            ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'suggest_keywords'
+
+tests\test_v14_p5_mkt_ceo_intel.py:625: AttributeError
+_____________________ test_suggest_keywords_off_and_empty _____________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v14_p5) at 0x25881d15820>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000025881D17800>
+
+    def test_suggest_keywords_off_and_empty(db, monkeypatch):
+        tx = _TxConn(db)
+>       assert iw.suggest_keywords(tx, None, INTEL)["res"] is None
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'intel_weekly_p5' has no attribute 'suggest_keywords'
+
+tests\test_v14_p5_mkt_ceo_intel.py:647: AttributeError
+52 failed, 16 passed in 12.91s

@@ -1,0 +1,186 @@
+# v14.5 p5 — E2E CLI trên DB mới samsam_v14_p5_2 (schema+roles x2, core_store, golden_store; DSN che bởi withdb)
+##### marketing-04.2 — ra_kenh --partner-file
+=== dry-run không connect
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m agents.ra_kenh --partner-file <scratch>/p5e2e/doi_tac.csv --by Lan MXH --dry-run
+[dry-run] 2 bài đối tác — KHÔNG connect DB; chưa đối chiếu sổ đối tác/bộ tài liệu đã duyệt — cần DB
+[vi phạm] dòng 2 KOC-MAU-01 tiktok tiktok.com — tu_cam
+[guardrail sạch] dòng 3 KOC-MAU-02 facebook blogspot.com — —
+[PASS] exit 0
+=== cột tên đối tác → 0 dòng
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m agents.ra_kenh --partner-file <scratch>/p5e2e/doi_tac_cot_ten.csv --by Lan MXH
+[err] file bài đối tác không hợp lệ — 0 dòng nạp (1 lỗi):
+  - dòng 1: 1 cột lạ — chỉ nhận ['ma_doi_tac', 'url', 'kenh', 'text', 'ngay_dang', 'sku'] (MÃ đối tác, không tên/handle/liên hệ cá nhân)
+[PASS] exit 1
+=== mã đối tác lạ → 0 dòng
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m agents.ra_kenh --partner-file <scratch>/p5e2e/doi_tac_la.csv --by Lan MXH
+[err] 1 mã đối tác không có trong sổ KOC/đại lý — không nạp
+[PASS] exit 1
+=== --by agent: bị từ chối
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m agents.ra_kenh --partner-file <scratch>/p5e2e/doi_tac.csv --by agent:x
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+                                [--mark-removed URL] [--report] [--by BY]
+                                [--now NOW] [--days DAYS] [--dry-run]
+python -m agents.ra_kenh: error: --by phải là tên NGƯỜI — không nhận 'agent:'/'system:'
+[PASS] exit 2
+=== nạp thật
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m agents.ra_kenh --partner-file <scratch>/p5e2e/doi_tac.csv --by Lan MXH
+[ok] 2 bài đối tác — mới 2, bỏ qua 0 (trùng lần rà trước) — S1 1, S2 1, sạch 0 — mục hàng duyệt mới 2
+[S1] dòng 2 KOC-MAU-01 tiktok tiktok.com url#c745a379e8b1 — tu_cam, thieu_bo_tai_lieu — mục #1
+[S2] dòng 3 KOC-MAU-02 facebook blogspot.com url#287321a65d30 — thieu_bo_tai_lieu — mục #2
+[PASS] exit 0
+=== nạp lại = bỏ qua
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m agents.ra_kenh --partner-file <scratch>/p5e2e/doi_tac.csv --by Lan MXH
+[ok] 2 bài đối tác — mới 0, bỏ qua 2 (trùng lần rà trước) — S1 0, S2 0, sạch 0 — mục hàng duyệt mới 0
+[PASS] exit 0
+--- sổ + hàng duyệt (không text/URL/handle)
+[('KOC-MAU-01', 'tiktok.com', 'tiktok', ['tu_cam', 'thieu_bo_tai_lieu'], 'S1', True, True), ('KOC-MAU-02', 'blogspot.com', 'facebook', ['thieu_bo_tai_lieu'], 'S2', True, True)]
+
+[('marketing', 'partner_post_review', 'agent:mkt_doi_tac', 'pending', True, True), ('marketing', 'partner_post_review', 'agent:mkt_doi_tac', 'pending', True, True)]
+
+##### ceo-04.1 — ceo_promo
+=== kế hoạch hỏng → exit 1 trước connect
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m agents.ceo_promo --plan <scratch>/p5e2e/ke_hoach_hong.csv
+[error] --plan không hợp lệ — 0 dòng:
+  - thiếu cột bắt buộc: sku_key, loai_km, ngay_bat_dau, ngay_ket_thuc
+  - cần cột giam_pct hoặc gia_km_vnd
+[PASS] exit 1
+=== usage --report (cờ lạ)
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m agents.ceo_audit --report --promo
+usage: python -m agents.ceo_audit [-h] [--report] [--now NOW]
+                                  [--out-dir OUT_DIR]
+python -m agents.ceo_audit: error: unrecognized arguments: --promo
+[PASS] exit 2
+=== dry-run
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m agents.ceo_promo --plan <scratch>/p5e2e/ke_hoach_km.csv --running <scratch>/p5e2e/km_dang_chay.csv --as-of 2026-10-20 --dry-run
+[dry-run] ngày 2026-10-20: 4 KM đang chạy, khớp 1, lệch 4 (mới 4), bản duyệt chưa thấy chạy 0 · đẩy 0 mục — KHÔNG ghi DB
+  - Kiểm soát KM — KM đang chạy không có bản duyệt hiệu lực — kênh shopee, SKU da-an-sam-30v
+  - Kiểm soát KM — KM chạy quá ngày kết thúc của bản duyệt — kênh shopee, SKU mat-ong-sam-300ml
+  - Kiểm soát KM — giá sau KM thấp hơn mức bản duyệt cho phép — kênh shopee, SKU mat-ong-sam-300ml
+  - Kiểm soát KM — KM đang chạy khác loại với bản duyệt — kênh shopee, SKU savina-12v
+[PASS] exit 0
+=== đẩy thật
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m agents.ceo_promo --plan <scratch>/p5e2e/ke_hoach_km.csv --running <scratch>/p5e2e/km_dang_chay.csv --as-of 2026-10-20
+[promo] ngày 2026-10-20: 4 KM đang chạy, khớp 1, lệch 4 (mới 4), bản duyệt chưa thấy chạy 0 · đẩy 4 mục
+  - Kiểm soát KM — KM đang chạy không có bản duyệt hiệu lực — kênh shopee, SKU da-an-sam-30v
+  - Kiểm soát KM — KM chạy quá ngày kết thúc của bản duyệt — kênh shopee, SKU mat-ong-sam-300ml
+  - Kiểm soát KM — giá sau KM thấp hơn mức bản duyệt cho phép — kênh shopee, SKU mat-ong-sam-300ml
+  - Kiểm soát KM — KM đang chạy khác loại với bản duyệt — kênh shopee, SKU savina-12v
+[PASS] exit 0
+=== chạy lại = 0 mới
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m agents.ceo_promo --plan <scratch>/p5e2e/ke_hoach_km.csv --running <scratch>/p5e2e/km_dang_chay.csv --as-of 2026-10-20
+[promo] ngày 2026-10-20: 4 KM đang chạy, khớp 1, lệch 4 (mới 0), bản duyệt chưa thấy chạy 0 · đẩy 0 mục
+  - Kiểm soát KM — KM đang chạy không có bản duyệt hiệu lực — kênh shopee, SKU da-an-sam-30v
+  - Kiểm soát KM — KM chạy quá ngày kết thúc của bản duyệt — kênh shopee, SKU mat-ong-sam-300ml
+  - Kiểm soát KM — giá sau KM thấp hơn mức bản duyệt cho phép — kênh shopee, SKU mat-ong-sam-300ml
+  - Kiểm soát KM — KM đang chạy khác loại với bản duyệt — kênh shopee, SKU savina-12v
+[PASS] exit 0
+[('ceo', 'agent:ceo_audit', 'pending', 'true', 'Kiểm soát KM — KM đang chạy không có bản duyệt hiệu lực — kênh shopee, SKU da-an-sam-30v'), ('ceo', 'agent:ceo_audit', 'pending', 'true', 'Kiểm soát KM — KM chạy quá ngày kết thúc của bản duyệt — kênh shopee, SKU mat-ong-sam-300m'), ('ceo', 'agent:ceo_audit', 'pending', 'true', 'Kiểm soát KM — giá sau KM thấp hơn mức bản duyệt cho phép — kênh shopee, SKU mat-ong-sam-3'), ('ceo', 'agent:ceo_audit', 'pending', 'true', 'Kiểm soát KM — KM đang chạy khác loại với bản duyệt — kênh shopee, SKU savina-12v')]
+
+=== DB chết → exit 2
+$ env DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m agents.ceo_promo --dry-run --as-of 2026-10-20
+[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+[job-runs] ghi job_runs lỗi (ConnectionTimeout) — job vẫn chạy bình thường
+[PASS] exit 2
+##### intel-04.2 — intel_weekly --suggest-keywords
+=== chưa có file trend → info exit 0
+$ python <scratch>/withdb.py samsam_v14_p5_2 python scripts/intel_weekly.py --suggest-keywords --dry-run
+[info] không có file Google Trends related (trend_related) phù hợp (--import) — không có gì để gợi ý
+[PASS] exit 0
+=== nạp file related MẪU
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m ingest.intel_import --trend tests/fixtures/intel_import/relatedQueries_MAU.csv --seed sâm ngọc linh
+[load] trend_related #1 relatedQueries_MAU.csv: 6 dòng
+[done]
+[PASS] exit 0
+=== dry-run
+$ python <scratch>/withdb.py samsam_v14_p5_2 python scripts/intel_weekly.py --suggest-keywords --dry-run
+Gợi ý từ khóa an toàn pháp lý (intel-04.2, NHÁP) — file Google Trends đã nạp #1 (relatedQueries_MAU.csv): an toàn 3, loại 3.
+
+Từ khóa đề xuất (đã qua luật: không từ cấm, không công dụng ngoài công bố, không ngữ cảnh bệnh, không nhóm sản phẩm cấm quảng cáo, không thông tin cá nhân, không chỉ dẫn địa lý chưa xác nhận):
+- nhân sâm hàn quốc — top 100
+- hồng sâm — top 41
+- nhân sâm tươi — rising Breakout
+
+Lý do loại (theo số dòng): chỉ dẫn địa lý chưa được xác nhận 3 · nhóm sản phẩm cấm quảng cáo 1
+- trends_related #2: chỉ dẫn địa lý chưa được xác nhận
+- trends_related #4: chỉ dẫn địa lý chưa được xác nhận
+- trends_related #5: nhóm sản phẩm cấm quảng cáo, chỉ dẫn địa lý chưa được xác nhận
+
+Việc cần làm: Quản lý Marketing duyệt trước khi dùng cho SEO/quảng cáo; luật lọc là từ khóa tất định (chưa có lớp LLM-check — Pháp chế duyệt bộ luật). Agent không chạy quảng cáo/SEO.
+[dry-run] kw:1 — KHÔNG ghi DB
+[PASS] exit 0
+=== đẩy thật
+$ python <scratch>/withdb.py samsam_v14_p5_2 python scripts/intel_weekly.py --suggest-keywords
+Gợi ý từ khóa an toàn pháp lý (intel-04.2, NHÁP) — file Google Trends đã nạp #1 (relatedQueries_MAU.csv): an toàn 3, loại 3.
+
+Từ khóa đề xuất (đã qua luật: không từ cấm, không công dụng ngoài công bố, không ngữ cảnh bệnh, không nhóm sản phẩm cấm quảng cáo, không thông tin cá nhân, không chỉ dẫn địa lý chưa xác nhận):
+- nhân sâm hàn quốc — top 100
+- hồng sâm — top 41
+- nhân sâm tươi — rising Breakout
+
+Lý do loại (theo số dòng): chỉ dẫn địa lý chưa được xác nhận 3 · nhóm sản phẩm cấm quảng cáo 1
+- trends_related #2: chỉ dẫn địa lý chưa được xác nhận
+- trends_related #4: chỉ dẫn địa lý chưa được xác nhận
+- trends_related #5: nhóm sản phẩm cấm quảng cáo, chỉ dẫn địa lý chưa được xác nhận
+
+Việc cần làm: Quản lý Marketing duyệt trước khi dùng cho SEO/quảng cáo; luật lọc là từ khóa tất định (chưa có lớp LLM-check — Pháp chế duyệt bộ luật). Agent không chạy quảng cáo/SEO.
+[ok] mục hàng duyệt #7 (keyword_suggest, chờ Quản lý Marketing)
+[PASS] exit 0
+=== chạy lại = skip
+$ python <scratch>/withdb.py samsam_v14_p5_2 python scripts/intel_weekly.py --suggest-keywords
+Gợi ý từ khóa an toàn pháp lý (intel-04.2, NHÁP) — file Google Trends đã nạp #1 (relatedQueries_MAU.csv): an toàn 3, loại 3.
+
+Từ khóa đề xuất (đã qua luật: không từ cấm, không công dụng ngoài công bố, không ngữ cảnh bệnh, không nhóm sản phẩm cấm quảng cáo, không thông tin cá nhân, không chỉ dẫn địa lý chưa xác nhận):
+- nhân sâm hàn quốc — top 100
+- hồng sâm — top 41
+- nhân sâm tươi — rising Breakout
+
+Lý do loại (theo số dòng): chỉ dẫn địa lý chưa được xác nhận 3 · nhóm sản phẩm cấm quảng cáo 1
+- trends_related #2: chỉ dẫn địa lý chưa được xác nhận
+- trends_related #4: chỉ dẫn địa lý chưa được xác nhận
+- trends_related #5: nhóm sản phẩm cấm quảng cáo, chỉ dẫn địa lý chưa được xác nhận
+
+Việc cần làm: Quản lý Marketing duyệt trước khi dùng cho SEO/quảng cáo; luật lọc là từ khóa tất định (chưa có lớp LLM-check — Pháp chế duyệt bộ luật). Agent không chạy quảng cáo/SEO.
+[skip] kw:1 đã có mục #7
+[PASS] exit 0
+[('intel', 'kw:1', 'agent:intel_keywords', 'pending', True, 'true', True)]
+
+=== usage --import không --suggest-keywords
+$ python <scratch>/withdb.py samsam_v14_p5_2 python scripts/intel_weekly.py --import 1
+usage: python scripts/intel_weekly.py [-h] [--week WEEK] [--llm]
+                                      [--suggest-keywords]
+                                      [--import IMPORT_ID] [--dry-run]
+python scripts/intel_weekly.py: error: --import/--dry-run chỉ đi với --suggest-keywords
+[PASS] exit 2
+##### rollout TẮT ở 3 biên mới
+=== seed sổ triển khai
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m pipelines.rollout --seed --by E2E Lan
+[OK] vào sổ 73 · có sẵn 0 · bỏ qua (chưa co_code) 13
+[PASS] exit 0
+=== tắt marketing-04.2
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m pipelines.rollout --disable marketing-04.2 --by E2E Lan
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[OK] marketing-04.2: chạy thử → tắt
+[PASS] exit 0
+=== tắt ceo-04.1
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m pipelines.rollout --disable ceo-04.1 --by E2E Lan
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[OK] ceo-04.1: chạy thử → tắt
+[PASS] exit 0
+=== tắt intel-04.2
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m pipelines.rollout --disable intel-04.2 --by E2E Lan
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[OK] intel-04.2: chạy thử → tắt
+[PASS] exit 0
+=== partner tắt → exit 2
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m agents.ra_kenh --partner-file <scratch>/p5e2e/doi_tac.csv --by Lan MXH
+[rollout] rà bài đối tác: tính năng marketing-04.2 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+[PASS] exit 2
+=== promo tắt → exit 2
+$ python <scratch>/withdb.py samsam_v14_p5_2 python -m agents.ceo_promo --running <scratch>/p5e2e/km_dang_chay.csv --as-of 2026-10-20
+[rollout] so KM đang chạy: tính năng ceo-04.1 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+[PASS] exit 2
+=== keywords tắt → exit 2
+$ python <scratch>/withdb.py samsam_v14_p5_2 python scripts/intel_weekly.py --suggest-keywords
+[rollout] gợi ý từ khóa: tính năng intel-04.2 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+[PASS] exit 2
+TỔNG: PASS 25 / FAIL 0

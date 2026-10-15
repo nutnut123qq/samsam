@@ -1,5 +1,5 @@
 {
-  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES — khối chưa có vai trò riêng, TẠM map 'tgd' (external-dep: TGĐ chốt). approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store). v8.0 (cockpit WP10): thêm monthly_report (báo cáo tháng TGĐ), change_request (yêu cầu thay đổi), price_voucher_frame (khung giá–voucher theo chiến dịch) theo kế hoạch Agent Điều hành (ctx final_plans 'ceo', mục người duyệt human_owner) — BẢN DEV SOẠN, chờ TGĐ chốt. v10.0 (WP16): thêm hdtv_pack (gói báo cáo HĐTV tháng/quý — agents.hdtv_report --submit; TGĐ duyệt trước khi trình HĐTV, hệ thống không tự duyệt/gửi) — BẢN DEV SOẠN. v12.0 — người duyệt theo PL01 Hợp đồng hợp tác TEDO–Sâm Sâm: TGĐ (9 phòng ban theo HĐ; approver_roles chỉ đổi khi vai trò tương ứng có trong pipelines.auth.ROLES — chưa có thì giữ map tạm). Thêm weekly_board + milestone_change (v12.0, chuyển từ khối projects đã gỡ: agents/da_pmo.py — sổ mốc + bảng tuần, thuộc tính năng «Theo dõi tiến độ, sổ quyết định»; TGĐ duyệt).",
+  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES — khối chưa có vai trò riêng, TẠM map 'tgd' (external-dep: TGĐ chốt). approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store). v8.0 (cockpit WP10): thêm monthly_report (báo cáo tháng TGĐ), change_request (yêu cầu thay đổi), price_voucher_frame (khung giá–voucher theo chiến dịch) theo kế hoạch Agent Điều hành (ctx final_plans 'ceo', mục người duyệt human_owner) — BẢN DEV SOẠN, chờ TGĐ chốt. v10.0 (WP16): thêm hdtv_pack (gói báo cáo HĐTV tháng/quý — agents.hdtv_report --submit; TGĐ duyệt trước khi trình HĐTV, hệ thống không tự duyệt/gửi) — BẢN DEV SOẠN. v12.0 — người duyệt theo PL01 Hợp đồng hợp tác TEDO–Sâm Sâm: TGĐ (9 phòng ban theo HĐ; approver_roles chỉ đổi khi vai trò tương ứng có trong pipelines.auth.ROLES — chưa có thì giữ map tạm). Thêm weekly_board + milestone_change (v12.0, chuyển từ khối projects đã gỡ: agents/da_pmo.py — sổ mốc + bảng tuần, thuộc tính năng «Theo dõi tiến độ, sổ quyết định»; TGĐ duyệt). v14.5 (ceo-04.1, Kiểm soát nội bộ): promo_deviation = KM/voucher ĐANG CHẠY (listing sàn mới nhất / file xuất KM-voucher) lệch kế hoạch KM đã duyệt hoặc giá KM golden đã duyệt — agents.ceo_promo (ceo_audit giữ CHỈ ĐỌC); TGĐ/BKS xem xét, agent KHÔNG đổi KM/giá.",
   "block": "ceo",
   "name": "Tổng giám đốc + Hội đồng thành viên + Ban kiểm soát nội bộ",
   "director_agent": "Agent Điều hành (Chief of Staff AI)",
@@ -43,6 +43,10 @@
     "milestone_change": {
       "sla_hours": 72,
       "risk": "medium"
+    },
+    "promo_deviation": {
+      "sla_hours": 48,
+      "risk": "high"
     }
   },
   "digest_recipients": [],
