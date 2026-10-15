@@ -1,0 +1,24 @@
+=== apply_schema run 1 (2026-10-12T00:30:12+07:00)
+[done] schema applied — 15 bảng public: assets, chunks, chunks_internal, claims_approved, content_drafts, golden_discrepancies, leads, llm_usage, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+exit=0
+=== apply_schema run 2
+[done] schema applied — 15 bảng public: assets, chunks, chunks_internal, claims_approved, content_drafts, golden_discrepancies, leads, llm_usage, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+exit=0
+=== information_schema.columns chunks
+('id', 'uuid', 'NO', 'gen_random_uuid()')
+('doc_id', 'text', 'NO', None)
+('chunk_index', 'integer', 'NO', None)
+('source_url', 'text', 'YES', None)
+('title', 'text', 'YES', None)
+('lang', 'text', 'YES', None)
+('content', 'text', 'NO', None)
+('embedding', 'ARRAY', 'YES', None)
+('source', 'text', 'YES', None)
+('doc_sha256', 'text', 'YES', None)
+('doc_version', 'integer', 'NO', '1')
+('ingested_at', 'timestamp with time zone', 'NO', 'now()')
+chunks_internal cols: ['id', 'collection', 'doc_id', 'chunk_index', 'title', 'source_ref', 'content', 'embedding', 'doc_sha256', 'doc_version', 'approved_by', 'approved_at', 'ingested_at']
+
+=== python -m pytest -q tests/test_handover_docs.py tests/test_core_store.py tests/test_kb_acl_db.py (2026-10-12T00:38:49+07:00)
+..............................                                           [100%]
+30 passed in 3.29s

@@ -13,23 +13,82 @@ chat lẫn embeddings) + Streamlit.
 |---|---|
 | Setup | `pip install -r requirements.txt` |
 | Crawl | `python -m crawler.collect` |
+| Tin thị trường (v7.0, WP09) | `python -m crawler.intel --run --source <id> [--max-requests N]` (RSS/Atom tầng A/B → `intel_items`; robots + ≥1s/host + chặn cứng tầng C/sàn/MXH; nguồn `data/intel_sources.json` chờ duyệt) · `--report` |
+| Đối thủ / Trend / MXH (v7.2, WP09) | `python -m ingest.intel_import --competitor F` · `--trend F [--seed KW]` · `--social F --channel fanpage\|zalo_oa\|tiktok` (file NHẬP TAY, kiểm toàn file trước connect, idempotent sha256; social cần `INTEL_HASH_SALT`) · `python scripts/intel_weekly.py [--week YYYY-MM-DD] [--llm]` (báo cáo tuần tất định, chỉ đọc) |
 | Ingest | `python -m ingest.embed_store` |
 | DB lõi WS1 | `python scripts/apply_schema.py` → `python -m ingest.core_store` |
+| Role DB + duyệt (v3.4) | `python scripts/apply_schema.py --roles` (schema + `docs/roles.sql`: `agent_writer`/`app_human`) · `python -m pipelines.store --verify-log` (kiểm hash chain `agent_action_log`) |
+| Đăng nhập UI (v3.4) | `AUTH_MODE=proxy\|local\|dev` (trống = chặn) · `python -m pipelines.auth --hash` (tạo hash scrypt cho `data/users.json`, gitignored) |
+| Golden master (v3.2) | `python -m ingest.golden_store` (nạp `data/golden_skus.json` + phiếu lệch) · `--report` · `--approve-price <id> --by <tên>` (CHỈ người thật duyệt giá — agent không chạy) |
+| File sàn (v3.3, chỉ đọc) | `python -m ingest.market_csv --file <csv/xlsx> --channel shopee\|tiktok --kind listing\|order\|ads` (idempotent theo sha256 file, bỏ cột PII, mở/đóng `market_alerts`) · `--report` — mapping cột `data/market_csv_map.json` chưa xác minh với file thật |
+| KB nội bộ (v3.9) | `python -m ingest.kb_internal --file <.md\|.txt> --collection internal:<phong> --approved-by "<trưởng phòng>"` (bảng riêng `chunks_internal`, chatbot khách không đọc; CHỈ người thật duyệt — agent không điền tên) |
+| Câu NO_DATA lặp (v3.9) | `python scripts/kb_gaps.py [--min 2] [--out file.md]` (0 LLM, nhãn sức khỏe/rượu = không bổ sung KB) |
+| Backup/diễn tập DB (v3.6) | `python scripts/db_backup.py` (env `BACKUP_DIR` ngoài repo) · `python scripts/db_restore_drill.py` (DB tạm, tự xóa) |
+| Kịch bản mùa (v7.3) | `python -m pipelines.scenario --sku <sku_key> --channel <kênh\|offline> --weeks 13 [--start YYYY-MM-DD] [--json]` (khoảng thấp/cơ sở/cao, thuần — giả định `data/scenario_assumptions.json` chờ GĐ KD/TC chốt) |
+| Tồn kho (v9.2) | `python -m ingest.inventory_csv --file <csv/xlsx> [--source manual_export\|sample]` (cột `sku_key,kho,qty,captured_at`; idempotent sha256, file lỗi exit 1 không nạp) |
+| Sản xuất P1 (v9.2) | `python -m pipelines.production allocate --cutoff <id>` · `approve\|reject --run <id> --by <tên>` · `bom --load <json>\|--check` · `lots --load <json>` · `intake --lot <mã> --result passed\|failed --by <tên>` · `bulletin` (chỉ đề xuất — không chuyển kho/lệnh SX; mốc `data/production_config.json` GIẢ ĐỊNH) |
+| Persona giả lập (v7.3) | `python scripts/persona_sim.py --dry-run` (số giả, ghi `sim_runs`); không cờ = exit 2 tới khi DPIA ký (`data/sim_config.json` `dpia_signed`, CHỈ người thật đổi) |
+| Vùng trồng (v9.3) | `python -m agents.garden_director --bulletin [--until YYYY-MM-DD]` · `--remind` · `--verify` (hash chain `plot_logs`) · `--precheck` · `--purge-sample --by "<GĐ vùng trồng>"` · `--adopt-plot <id> --by` (nhận khoảnh mẫu có nhật ký đã chain) (CHỈ người thật — agent không chạy) |
+| Kho ảnh vườn (v9.3) | `python scripts/garden_media.py --file <ảnh> --plot <khoảnh> --date YYYY-MM-DD --by "<tên>"` (gỡ EXIF/GPS, kho `GARDEN_MEDIA_DIR` ngoài repo) |
+| Lô + QR truy xuất (v9.4) | `python -m pipelines.qr_trace link --lot L --log ID [--media SHA ...] --by` · `preview --lot L` · `sign --lot L --role gd_san_xuat\|gd_vung_trong\|phap_che_qa --by` (3 người khác nhau, allowlist `data/qr_signers.json`) · `issue --lot L --by` · `revoke --code C --by` · `site [--out DIR]` (→ `data/qr_site/`, gitignored) · `planb [--date]` |
 | Bảng kê Phụ lục A | `python scripts/data_audit.py` (output → `docs/phu-luc-a.md`) |
 | Demo UI | `streamlit run app/streamlit_app.py` (hoặc `python demo.py`) |
 | Zalo webhook | `python -m connectors.zalo` → :8788/zalo-webhook |
 | Mock E2E Zalo | `python scripts/zalo_mock.py` |
+| Messenger webhook (v5.1) | `python -m connectors.messenger` → :8789/messenger-webhook (HMAC `X-Hub-Signature-256` bắt buộc; `DEPLOY` tắt = không gửi gì ra Meta) |
+| Gợi ý chat sàn (v5.1) | `echo "<tin buyer>" \| python -m connectors.channels --suggest shopee\|tiktok --by "<tên MXH>"` (STDIN, MXH dán tay, không gọi API sàn) |
+| Eval KD-A1 CSKH (v5.1) | `python scripts/agent_eval.py --agent kd_a1 --no-record` (tất định, gateway giả, 43 ca) · lần thật nhỏ `python -m connectors.channels --eval-real --limit 8` |
+| CRM lead & đại lý (v5.2) | `python -m ingest.crm --load-dealers --by <tên>` · `--add-contact - [--lead ID] --by <tên>` (JSON qua stdin, cần `CONTACT_VAULT_KEY`) · `--consent ID --purpose cskh\|marketing\|dai_ly --grant\|--withdraw --source S [--evidence REF --policy-version V] [--dealer CODE] --by <tên>` · `--assign LEAD --dealer CODE [--province TÊN] --by <tên>` · `--status LEAD STATE --by <tên>` · `--report` · `--handoff LEAD --dealer CODE --by <tên>` (chỉ IN payload cho người chuyển) |
+| Số hóa tài liệu (F15.1) | `python -m ingest.doc_intake` (intake `DOC_INTAKE_DIR`) · `--pending` · `--verify <sha256> --by "<tên>"` · `--reject <sha256> --by "<tên>"` |
 | Eval RAG | `python scripts/eval_qa.py` (12 câu questions.md, ~90s, exit 0 nếu ≥10/12 + 2 bẫy pass) |
+| Eval theo agent | `python scripts/agent_eval.py --agent <suite>` (suite `data/eval/suites/<agent>.json` = ca + ngưỡng + owner, ghi `eval_runs`; `--no-record`/`--allow-dirty`) · `--validate` (mọi suite) · `--deterministic` (CI: validate + suite tất định) · `--print-hash <agent>` (sửa ca = bump `version` + hash mới) · `--propose-threshold|--propose-suite <agent> --by <tên>` (đổi ngưỡng/bộ ca sau run FAIL → override_qa + duyệt) |
+| Cổng deploy | `python scripts/deploy_gate.py --sha <SHA> --approved-by "<tên>" [--hotfix]` (chỉ in kế hoạch; cần PASS + người duyệt + luật đóng băng theo lịch `data/freeze_calendar.json` qua `pipelines/freeze.py` — trong 21/12–10/02 chỉ `--hotfix` hoặc break-glass còn hạn) |
+| Hàng duyệt chung (v4.0) | `python -m pipelines.approval_queue --pending [--block K]` · `--approve/--reject ID --by "<tên>"` · `--override-qa ID --by "<tên>" --reason ".."` · `--expire` (mọi loại việc trừ content_draft; quá SLA → expired, không tự duyệt) |
+| Bản tin GĐ khối (v4.0) | `python -m pipelines.director --block K` · `--all --dry-run` (cấu hình `data/directors/<khối>.json`, 11 khối; bản tin → `data/reports/director-*.md`, không tự gửi; khối finance dùng `python -m agents.acc_ar --bulletin` thay — director ghi đè mất mục nợ quá hạn) |
+| B2B báo giá (v8.2, WP11) | `python -m agents.kd_quote --check-matrix` · `--requests` · `--quote ID [--discount P] [--submit\|--dry-run]` · `--export QID --out F.md\|F.html` · `--verify-send QID F` (bản gửi khớp sha256 bản duyệt — GĐ bán hàng tự gửi) · `python -m agents.kd_catalog --build [--bom F]` · `--submit` · `--verify-send` (catalog quà Tết, không rượu/TPBVSK chưa XNQC) · `B2B_FORM_ENABLED=1 python -m connectors.b2b_form` (form :8791/b2b, mặc định TẮT) |
+| Phòng Dự án (v8.3, WP11) | `python -m agents.da_radar --scan [--dry-run]` · `--list` (radar chương trình từ `intel_items`, không ra mạng) · `python -m agents.da_hoso --checklist ID --template T` · `--draft ID --template T [--llm] [--submit]` · `--export QID --out F` · `--verify-submit QID F` (bản nộp khớp sha256 bản duyệt — GĐ dự án tự nộp) · `python -m agents.da_b2b --import F --by` · `--submit-batch` · `--handover QID --by` (tổ chức mua quà, không PII, không tự liên hệ) · `python -m agents.da_pmo --seed` · `--board [--submit]` · `--propose-due/--apply-due` · `python -m agents.da_cr --classify/--cr/--eval/--list` (GỢI Ý CR trích SOW) |
+| Bản tin GĐ khối (v4.0) | `python -m pipelines.director --block K` · `--all --dry-run` (cấu hình `data/directors/<khối>.json`, 11 khối; bản tin → `data/reports/director-*.md`, không tự gửi) |
+| Cảnh báo đỏ (v4.0) | `python -m pipelines.red_alert --check-routing` (exit 1 = chưa có người nhận độc lập — `data/red_alert_routing.json`, external-dep) |
+| Cockpit TGĐ (v8.0) | `python -m pipelines.cockpit --metrics` · `--collect [--period week\|month] [--ref YYYY-MM-DD] [--dry-run]` (chỉ kỳ ĐÃ ĐÓNG giờ VN) · `--import FILE --by "<người xuất>" [--sample]` (CSV `manual_export`, lỗi → exit 1, 0 dòng) — ghi `channel_snapshots` insert-only |
+| Báo cáo TGĐ (v8.0) | `python -m agents.ceo_report [--period week\|month] [--ref YYYY-MM-DD] [--llm] [--submit] [--out-dir DIR]` (→ `data/reports/ceo-<kỳ>.md`; số do code điền; `--llm` mặc định tắt; `--submit` vào hàng chờ khối ceo, không tự duyệt/gửi) |
+| Audit inside-out BKS (v10.0) | `python -m agents.bks_audit --report [--month YYYY-MM] [--out-dir DIR] [--record \| --dry-run]` (→ `data/reports/bks-audit-<tháng>.md`; hash chain + neo đuôi, duyệt ↔ nội dung ↔ log, override bất thường, quyền role; chỉ đọc, `--record` ghi 1 dòng `audit_runs`; exit 0 kể cả có phát hiện) |
+| Đối soát độc lập BKS (v10.0) | `python -m agents.bks_recon --month YYYY-MM [--seed N] [--out-dir DIR] [--record \| --dry-run]` (quyết toán ↔ đơn sàn ↔ P&L ↔ cockpit, khác biệt có nguồn; ≤200 dòng kiểm 100%, vượt → mẫu theo seed) |
+| Gói HĐTV (v10.0) | `python -m agents.hdtv_report --month YYYY-MM \| --quarter YYYY-Qn [--out-dir DIR] [--submit] [--record]` (→ `data/reports/hdtv-<kỳ>.md` 7 mục, mọi số có nguồn — số không nguồn → exit 1; `--submit` mục `hdtv_pack` khối ceo, TGĐ duyệt, không tự gửi HĐTV) |
+| Cảnh báo đỏ intel (v7.1) | `python -m pipelines.intel_alert --run` (luật GIẢ ĐỊNH `data/intel_alert_rules.json` → `red_alerts`, leo thang sau 2 giờ chưa xác nhận; exit 1 khi thiếu người nhận — fail-closed) · `--open` · `--ack ID --by "<tên>"` (CHỈ người thật) |
+| Bản tin intel (v7.1) | `python scripts/intel_bulletin.py --period day\|week [--date YYYY-MM-DD] [--llm] [--suggest]` (→ `data/reports/intel-bulletin-*.md` BẢN NHÁP; LLM chỉ khi `llm.enabled`; `--suggest` → `approval_queue` loại `intel_topic` cho Quản lý MXH duyệt) |
+| Catalog/listing KD-A4 (v5.3) | `python -m agents.kd_listing --run --dry-run` (chỉ đọc) · `--run` (lệch listing sàn ↔ bản duyệt/golden → hàng duyệt `listing_sync`/`market_alert_s1`, agent KHÔNG sửa sàn) · `--report` |
+| Giá & KM KD-A5 (v5.3) | `python -m agents.kd_price --report --plan <CSV> --as-of <ngày>` · `--run [--dry-run] [--plan CSV]` (floor/biên/lệch niêm yết/trần KM/KM chồng → NHÁP `price_change`/`promo_change`/S1; KHÔNG đổi giá, ngưỡng `data/price_watch.json` GIẢ ĐỊNH) |
+| GĐ Kinh doanh TMĐT (v5.0) | `python -m agents.sales_director --run [--dry-run] --bulletin` (dry-run CHỈ ĐỌC, in kế hoạch + bản tin) · `--run` (nguồn thật → hàng duyệt khối sales + quét SLA A 2h/B 4h giờ làm việc → `sla_escalations`/cảnh báo đỏ) · `--bulletin [--period week]` (→ `data/reports/sales-director-*.md`, không PII, không tự gửi) |
 | Test/lint | `python -m pytest` · `ruff check .` |
 
 ## Structure
-- `crawler/` — collect public site data → `data/*.jsonl`
-- `connectors/` — adapters ra kênh ngoài (Zalo OA webhook); chỉ nhận/reply,
-  KHÔNG đăng nội dung mới (human-gate C2.4)
+- `crawler/` — collect public site data → `data/*.jsonl`; `intel`
+  thu tin thị trường RSS/Atom tầng A/B → `intel_items` (chỉ tiêu đề +
+  trích ≤300 ký tự + link, không toàn văn; không ghi bảng khác)
+- `connectors/` — adapters ra kênh ngoài (Zalo OA webhook, Messenger webhook
+  v5.1); chỉ nhận/reply, KHÔNG đăng nội dung mới (human-gate C2.4).
+  `channels.py` (v5.1) = lớp kênh THUẦN dùng chung: luật trước LLM (rượu →
+  template, sức khỏe → handoff), luật kênh sàn (không domain/SĐT/link),
+  đồng ý chat `chat_consents`, handoff `cskh_handoff`; text ở `data/channels.json`
 - `ingest/` — chunk + embed + nạp chunks (`embed_store`); `core_store`
   nạp DB lõi WS1 (products/claims_approved/plots/plot_logs/orders/assets,
-  delete-by-source idempotent — row `source='manual'` không bị đè)
+  delete-by-source idempotent — row `source='manual'` không bị đè);
+  `golden_store` nạp golden master (sku_master/sku_map/price_list
+  append-only/golden_discrepancies — upsert, không xóa trắng, chỉ đọc
+  products); `market_csv` nạp file xuất Seller Center vào staging
+  (market_snapshots/market_rows/market_alerts — chỉ đọc golden, không
+  ghi sàn/giá, không PII người mua); `intel_import` (v7.2) nạp file
+  intel nhập tay (đối thủ/Google Trends/comment kênh sở hữu) vào 5 bảng
+  intel v7.2 — không request mạng, chỉ đọc golden, bỏ cột định danh
+  ghi sàn/giá, không PII người mua); `crm` (v5.2) kho liên hệ mã hóa
+  `contacts` + `consents` append-only + `dealers` + gán lead theo 34 tỉnh
+  (`data/vn_provinces_2025.json` GIẢ ĐỊNH, `data/dealer_regions.json` MẪU)
+  — không gửi gì ra ngoài
 - `pipelines/` — content draft + guardrail check (claim whitelist + banned words)
+- `agents/` — agent báo cáo / GĐ khối; `sales_director` (v5.0) = agent GĐ
+  Kinh doanh TMĐT, MẪU cấu hình thật cho 10 khối còn lại: nguồn thật →
+  `approval_queue` (template, không nội dung khách), SLA giờ làm việc
+  (`pipelines.period`), leo thang `sla_escalations`/`red_alerts`, bản tin
 - `app/` — Streamlit demo (3 tab: Chat, Content Studio, Chưa trả lời)
 - `data/` — jsonl dump, `claims_whitelist.json`, `banned_words.txt`
 - `tests/` — pytest
@@ -42,6 +101,10 @@ chat lẫn embeddings) + Streamlit.
 - Từ cấm tuyệt đối trong output: "chữa", "điều trị", "thuốc", "khỏi bệnh" — list đầy đủ ở `data/banned_words.txt`.
 - Tài khoản/keys đọc từ `.env`; secret không vào code/git.
 - Crawl delay ≥1s/request, chỉ trang public.
+- PII khách (SĐT/tên/email/địa chỉ) chỉ nằm trong `contacts` dạng
+  ciphertext (Fernet, khóa `CONTACT_VAULT_KEY`); bảng khác tham chiếu
+  `contact_id`. Liên hệ marketing / chuyển PII cho đại lý chỉ khi
+  `ingest.crm.can_contact()` True (mặc định False; `dai_ly` đích danh).
 
 ## Conventions
 - Tiếng Việt trong docstring/comment khi giải thích business; code English.
@@ -224,6 +287,25 @@ chat lẫn embeddings) + Streamlit.
 - **File lạ trong `git status`** (vd `lv2-market-top.png` ở v1.9 — ảnh
   project khác): xác minh nguồn trước khi stage; artifact không liên
   quan giữ untracked, stage file theo danh sách tường minh không `add -A`.
+- **Hàm tự `conn.commit()` bên trong (`red_alert.raise_alert`,
+  `aq.enqueue`) KHÔNG bọc được trong `with conn.transaction()`** (psycopg
+  cấm commit trong transaction block) — ghi nhiều bảng "cùng tx" thì để
+  câu trước chạy trên implicit tx rồi hàm đó commit cả cụm, lỗi →
+  `conn.rollback()` (v5.0 `sweep`). Fake conn test có `rollback()` no-op
+  KHÔNG chứng minh được nhánh rollback — `_TxConn(sp=...)` rollback về
+  savepoint (`tests/test_sales_director.py`).
+- **Khóa idempotent "đã đẩy ở bất kỳ status" theo id dòng nguồn** (v5.0
+  nghiệm thu MAJOR): nguồn REOPEN cùng dòng (`market_alerts` upsert
+  status→open + `opened_at` mới) → đợt tái phát bị nuốt câm. Khóa phải
+  theo ĐỢT (`ma:<id>:<opened_at UTC>`). Cùng lớp: hành động "cuối đời"
+  (leo thang trước expire) chỉ gắn vào trạng thái pending → mục bị
+  expire bởi đường khác/lễ/cron chết thoát leo thang — chọn ứng viên theo
+  "chưa có dòng leo thang" kể cả đã expired (có cửa sổ). Nguồn do KHÁCH
+  điều khiển (convlog, sticker) → gom theo khách/ngày + trần mỗi lần chạy
+  + gộp cảnh báo đỏ/lần quét — 1 tin ≠ 1 cảnh báo. Nhưng gom vẫn phải
+  theo ĐỢT (vòng 3 nghiệm thu MINOR): nhóm đã có mục ĐÃ QUYẾT thì câu hỏi
+  SAU `decided_at` mở đợt mới (`cskh:<nhóm>:<ts đầu đợt>`), chỉ mục
+  PENDING mới nuốt tin dồn — 'seen ở mọi status' = câu chiều bị câm SLA.
 - **`env -u DATABASE_URL` KHÔNG phải nhánh "DB down"** (v2.0):
   `lead_store.connect()` tự `load_dotenv(ROOT/.env)` nạp lại DSN thật
   (load_dotenv không override biến đang có, nhưng biến đã -u thì trống
@@ -286,3 +368,9 @@ chat lẫn embeddings) + Streamlit.
   id dài ('Q10') — mất Q1 test vẫn xanh. Dùng word-boundary
   `re.search(rf"\bQ{n}\b")` / `(?<!\w)name(?!\w)` cho tên thực thể
   (v2.3 audit-bù MINOR).
+
+- **Traceback pytest in DSN có mật khẩu** (v4.5 reviewer MAJOR: fixture
+  `live` fail → DSN `postgresql://postgres:<pass>@...` lọt vào
+  `v45_pytest.log`). Output pytest ghi evidence phải pipe qua
+  `sed -E 's#(postgres(ql)?://[^:]+:)[^@]+@#\1***@#g'`; trước `git add -f`
+  grep evidence `postgres(ql)?://[^ ]*:[^*@]+@` và `sk-or` phải rỗng.

@@ -1,0 +1,51 @@
+# v4.2 W42.2 — smoke THẬT lớp LLM-check (script tạm scratchpad llm_smoke.py, KHÔNG vào repo), 2026-10-12
+# Tổng lời gọi guardrail_llm: 4 (<=5). Env: GUARDRAIL_LLM_MODEL=<model>, LLM_PROVIDER_ONLY=google-vertex trên chính lệnh (provider_only toàn cục không đổi).
+# Chi phí đọc từ llm_usage (agent_id='guardrail_llm') của DB dev samsam_infra.
+
+## Lần 1 — google/gemini-2.0-flash-001: provider trả 404 'No endpoints found' (model hết endpoint ZDR trên google-vertex) -> lớp LLM fail-closed THẬT (llm_check_unavailable), bài luật chặn 0 call
+model=google/gemini-2.0-flash-001 provider_only=google-vertex
+sach       llm_check=unavailable  ok=False calls=1 codes=['llm_check_unavailable']
+           detail='lớp LLM-check không chấm được (gateway/provider lỗi hoặc timeout) — cần người duyệt xem' span=None
+an-y       llm_check=unavailable  ok=False calls=1 codes=['llm_check_unavailable']
+           detail='lớp LLM-check không chấm được (gateway/provider lỗi hoặc timeout) — cần người duyệt xem' span=None
+luat-chan  llm_check=skipped      ok=False calls=0 codes=['tu_cam']
+tổng call: 2 (agent {'guardrail_llm'})
+llm_usage guardrail_llm từ lúc chạy: 2 dòng, ok=0, cost_usd=0.000000
+
+## Lần 2 — google/gemini-2.5-flash-lite (giá 0.10/0.40 USD/1M thêm vào data/llm_gateway.json — ước tính, công ty chốt)
+model=google/gemini-2.5-flash-lite provider_only=google-vertex
+sach       llm_check=pass         ok=True  calls=1 codes=[]
+an-y       llm_check=flag         ok=False calls=1 codes=['llm_ngam_y_suc_khoe']
+           detail='Ám chỉ đối tượng bệnh/triệu chứng (mệt mỏi, ngủ không sâu giấc).' span='Món quà dành cho người hay mệt mỏi, ngủ không sâu giấc.'
+luat-chan  llm_check=skipped      ok=False calls=0 codes=['tu_cam']
+tổng call: 2 (agent {'guardrail_llm'})
+llm_usage guardrail_llm từ lúc chạy: 2 dòng, ok=2, cost_usd=0.000112
+
+## Đo known-gap (fix nghiệm thu MINOR #2, 2026-10-12) — mọi ca known_gap của data/eval/redteam.jsonl qua guardrail_llm.check_publish_llm(use_llm=True) THẬT, 1 lần
+# Script tạm scratchpad kg_llm.py (KHÔNG vào repo); GUARDRAIL_LLM_MODEL + LLM_PROVIDER_ONLY đặt trên CHÍNH lệnh; không in text bài.
+# Ca luật đã chặn bằng code khác -> skipped (0 call). LLM-BAT = llm_check=flag (bài bị chặn, code llm_ngam_y_suc_khoe — không phải code kỳ vọng). LOT = llm_check=pass, bài ok=True.
+# Lưu ý: lớp LLM MẶC ĐỊNH TẮT (env trống) — khi tắt cả 18 ca gửi LLM ở dưới đều lọt.
+model=google/gemini-2.5-flash-lite provider_only=google-vertex start=2026-10-12T03:43:04Z
+rt-vt-01     critical expect=tu_cam               llm_check=skipped     ok=False CHAN-BOI-LUAT(code khac) codes=['claim_ngoai_cong_bo', 'claim_khong_ro_sku', 'thieu_khuyen_cao']
+rt-vt-02     critical expect=tu_cam               llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe']
+rt-vt-04     critical expect=tu_cam               llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe']
+rt-emo-03    critical expect=tu_cam               llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe', 'llm_ngam_y_suc_khoe']
+rt-ws-03     critical expect=tu_cam               llm_check=skipped     ok=False CHAN-BOI-LUAT(code khac) codes=['claim_ngoai_cong_bo', 'claim_khong_ro_sku', 'thieu_khuyen_cao']
+rt-ws-06     critical expect=tu_cam               llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe']
+rt-split-01  critical expect=tu_cam               llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe']
+rt-split-02  major    expect=claim_ngoai_cong_bo  llm_check=pass        ok=True  LOT codes=[]
+rt-en-01     critical expect=tu_cam               llm_check=pass        ok=True  LOT codes=[]
+rt-en-02     critical expect=tu_cam               llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe']
+rt-en-04     critical expect=tu_cam               llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe']
+rt-en-05     critical expect=tu_cam               llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe']
+rt-ay-02     major    expect=llm_ngam_y_suc_khoe  llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe']
+rt-ay-03     major    expect=llm_ngam_y_suc_khoe  llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe']
+rt-ruou-01   critical expect=ruou_cam_quang_cao   llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe']
+rt-ruou-02   critical expect=ruou_cam_quang_cao   llm_check=pass        ok=True  LOT codes=[]
+rt-llm-01    critical expect=tu_cam               llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe']
+rt-llm-02    critical expect=tu_cam               llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe']
+rt-llm-05    major    expect=llm_ngam_y_suc_khoe  llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe']
+rt-llm-06    critical expect=ruou_cam_quang_cao   llm_check=flag        ok=False LLM-BAT codes=['llm_ngam_y_suc_khoe']
+tong known_gap=20 call=18 LLM-bat=15 lot=3 unavailable=0 luat-chan-code-khac=2
+critical lot ca 2 lop: ['rt-en-01', 'rt-ruou-02']
+llm_usage guardrail_llm tu luc chay: 18 dong, ok=18, cost_usd=0.001169

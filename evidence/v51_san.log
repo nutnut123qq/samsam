@@ -1,0 +1,54 @@
+# v5.1-cskh-da-kenh — evidence (output thật của lệnh; worktree D:/code/samsam-w40, DB samsam_infra, 2026-10-12)
+## Smoke CLI gợi ý sàn (gateway OpenRouter thật, DB samsam_infra)
+$ echo "<tin buyer — xem dòng dưới, SĐT che>" | python -m connectors.channels --suggest shopee --by "probe"
+  (tin buyer đã mask: shop có Zalo không)
+[GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]
+Dạ, câu hỏi này cần nhân viên Sâm Sâm kiểm tra thêm. Nhân viên sẽ phản hồi Quý khách ngay trong khung chat này.
+handoff=no_data
+exit=0
+
+$ echo "<tin buyer — xem dòng dưới, SĐT che>" | python -m connectors.channels --suggest shopee --by "probe"
+  (tin buyer đã mask: Savina giá bao nhiêu, gọi tôi ***)
+[GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]
+Savina tuýp 12 viên: 128.000 đ.  
+Liên hệ.
+exit=0
+
+$ echo "<tin buyer — xem dòng dưới, SĐT che>" | python -m connectors.channels --suggest shopee --by "probe"
+  (tin buyer đã mask: Shop có bán rượu sâm không?)
+[GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]
+Dạ, Sâm Sâm không tư vấn sản phẩm này qua tin nhắn tự động. Nhân viên Sâm Sâm sẽ phản hồi Quý khách ngay trong khung chat này.
+handoff=alcohol
+exit=0
+
+$ echo "giá?" | python -m connectors.channels --suggest tiktok   (thiếu --by)
+python -m connectors.channels: error: --suggest cần --by <tên MXH> (1..100 ký tự in được)
+exit=2
+$ printf "  \n" | python -m connectors.channels --suggest tiktok --by probe   (stdin rỗng)
+python -m connectors.channels: error: STDIN rỗng — dán tin buyer qua STDIN (không qua argv)
+exit=2
+$ python -m connectors.channels --help
+usage: python -m connectors.channels [-h] [--suggest {shopee,tiktok}]
+                                     [--by BY] [--eval-real] [--limit LIMIT]
+
+exit=0
+
+
+## -k suggest ×3 (vòng 3)
+$ python -m pytest -q tests/test_channels.py -k suggest  (vòng 3, lần 1): 18 passed, 77 deselected in 1.00s
+$ python -m pytest -q tests/test_channels.py -k suggest  (vòng 3, lần 2): 18 passed, 77 deselected in 0.58s
+$ python -m pytest -q tests/test_channels.py -k suggest  (vòng 3, lần 3): 18 passed, 77 deselected in 0.65s
+
+## VÒNG FIX NGHIỆM THU — san_violations tái dùng _mask_pii (bóc ngoặc) + mã email — 2026-10-12T17:25:21+07:00
+san_violations('Gọi (0235) 3699 899 nhé') = ['phone']
+san_violations('Gọi (0235)3699899') = ['phone']
+san_violations('(+84) 905 115 709') = ['phone']
+san_violations('Liên hệ (0905) 123 456 nhé.') = ['phone']
+san_violations('Email: lienhe@samsamngoclinh.asia') = ['email']
+san_violations('a@b.xyz') = ['email']
+san_violations('a@b.co') = ['email']
+san_violations('Savina tuýp 12 viên: 159.000 đ.') = []
+san_violations('Mua 2 hộp (2) giá (1.500.000) đ') = []
+san_violations('giá 50.000.000 - 100.000.000') = []
+san_violations('(1.500.000)(2.000.000)') = []
+format_reply('shopee', '(0235) 3699 899') -> ('Dạ, Sâm Sâm xin phép kiểm tra lại thông tin và phản hồi Quý khách ngay trong khung chat này.', {'guardrail_ok': True, 'handoff': None, 'blocked': ['phone']})

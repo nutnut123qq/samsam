@@ -1,0 +1,18 @@
+## v10.1 fix nghiệm thu (4 MINOR: kd_care rebuy/review backlog + trần theo tháng gửi; report loại đơn cancelled; mkt_youtube khuyến cáo TPBVSK) (2026-10-14T22:56:15+07:00)
+$ python -m pytest tests/test_kd_care.py tests/test_kd_orders.py tests/test_report.py tests/test_mkt_youtube.py -q -rs  # lượt 1
+.........................................................                [100%]
+57 passed in 41.72s
+$ python -m pytest tests/test_kd_care.py tests/test_kd_orders.py tests/test_report.py tests/test_mkt_youtube.py -q -rs  # lượt 2
+.........................................................                [100%]
+57 passed in 54.71s
+$ python -m pytest tests/test_kd_care.py tests/test_kd_orders.py tests/test_report.py tests/test_mkt_youtube.py -q -rs  # lượt 3
+.........................................................                [100%]
+57 passed in 46.03s
+$ python scripts/agent_eval.py --agent kd_a7 --no-record
+[done] kd_a7 v1 PASS 10/10 pass_rate=1.0 (ngưỡng 1.0) prompt_version=22533679652a model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+$ python scripts/agent_eval.py --agent mkt12 --no-record
+[done] mkt12 v1 PASS 6/6 pass_rate=1.0 (ngưỡng 1.0) prompt_version=9820b8ed70b2 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+$ ruff check .
+All checks passed!

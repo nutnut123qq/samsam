@@ -1,0 +1,13 @@
+# v53 W53.2 market_csv sale_price — 2026-10-12T22:08:38+07:00
+$ python -m pytest tests/test_market_csv.py -q -rs
+...........................................                              [100%]
+43 passed in 43.88s
+[exit 0]
+
+$ git diff --numstat tests/test_market_csv.py ingest/market_csv.py data/market_csv_map.json  (cột 2 = số dòng xóa)
+3	3	data/market_csv_map.json
+6	4	ingest/market_csv.py
+53	0	tests/test_market_csv.py
+
+$ git diff -U0 tests/test_market_csv.py | grep '^-[^-]' (dòng test cũ bị xóa — phải rỗng)
+[grep exit 1 — 1 = rỗng]

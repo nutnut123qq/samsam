@@ -4,18 +4,22 @@ nhãn *(mẫu)*, degraded "[chưa nạp]", footer human-gate) + write/
 generate end-to-end vào tmp_path. Không cần DB thật."""
 
 import json
+import re
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import psycopg
+import pytest
 
 from agents import report as rep
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 UTC = timezone.utc
-S = datetime(2026, 10, 4, tzinfo=UTC)      # since
-U = datetime(2026, 10, 11, tzinfo=UTC)     # until_excl (kỳ tới 10/10)
+VN = timezone(timedelta(hours=7))
+# v4.0: kỳ cắt 00:00 giờ VN (trước đó 00:00 UTC).
+S = datetime(2026, 10, 4, tzinfo=VN)       # since
+U = datetime(2026, 10, 11, tzinfo=VN)      # until_excl (kỳ tới 10/10)
 PS = S - (U - S)                           # prev since = 2026-09-27
 
 
@@ -31,9 +35,10 @@ def _conv_rec(**kw):
 
 def test_period_bounds_date_until_is_end_inclusive():
     since, until = rep.period_bounds(7, date(2026, 10, 10))
-    assert since == datetime(2026, 10, 4, tzinfo=UTC)
-    # Ngày cuối kỳ inclusive → exclusive = hôm sau 00:00 UTC.
-    assert until == datetime(2026, 10, 11, tzinfo=UTC)
+    assert since == datetime(2026, 10, 4, tzinfo=VN)
+    # Ngày cuối kỳ inclusive → exclusive = hôm sau 00:00 giờ VN (v4.0 —
+    # trước là 00:00 UTC = 07:00 VN, lệch 7 giờ).
+    assert until == datetime(2026, 10, 11, tzinfo=VN)
     assert until.tzinfo is not None and since.tzinfo is not None
 
 
@@ -42,9 +47,11 @@ def test_period_bounds_default_and_datetime():
     assert until.tzinfo is not None
     assert until - since == timedelta(days=7)
     assert abs((datetime.now(UTC) - until).total_seconds()) < 60
-    # naive → coi UTC (DTZ001: cố ý tạo naive để test coerce).
+    # v4.0: naive → ValueError (luật "mix date local + giờ UTC" v2.4 —
+    # trước đây coi naive là UTC). DTZ001: cố ý tạo naive.
     naive = datetime(2026, 10, 11, 5, 30)  # noqa: DTZ001
-    assert rep.period_bounds(7, naive)[1] == naive.replace(tzinfo=UTC)
+    with pytest.raises(ValueError):
+        rep.period_bounds(7, naive)
     aware = datetime(2026, 10, 11, 5, 30, tzinfo=UTC)
     assert rep.period_bounds(7, aware)[1] == aware
 
@@ -58,6 +65,9 @@ def test_fmt_vnd():
 def test_report_name_deterministic():
     name = rep.report_name(S, U)
     assert name == "report-2026-10-04_2026-10-10.md"
+    assert rep.report_name(*rep.period_bounds(7, date(2026, 10, 10)))         == name
+    # Mốc UTC tương đương cùng tên (ngày lấy theo giờ VN).
+    assert rep.report_name(S.astimezone(UTC), U.astimezone(UTC)) == name
     assert rep.report_name(S, U) == name
     # Kỳ khác → tên khác (không đè lẫn nhau).
     assert rep.report_name(S - timedelta(days=7), S) != name
@@ -67,10 +77,11 @@ def test_report_name_deterministic():
 
 def test_collect_chat_period_filter_and_edges(tmp_path):
     inside = _conv_rec(msg_id="in", ts="2026-10-08T00:00:00Z")
-    edge_lo = _conv_rec(msg_id="lo", ts="2026-10-04T00:00:00Z",
+    # Biên theo giờ VN: 2026-10-03T17:00Z = 00:00 04/10 VN.
+    edge_lo = _conv_rec(msg_id="lo", ts="2026-10-03T17:00:00Z",
                         answered=False)          # biên dưới inclusive
-    edge_hi = _conv_rec(msg_id="hi", ts="2026-10-11T00:00:00Z")  # ngoài
-    before = _conv_rec(msg_id="bf", ts="2026-10-03T23:59:59Z")
+    edge_hi = _conv_rec(msg_id="hi", ts="2026-10-10T17:00:00Z")  # ngoài
+    before = _conv_rec(msg_id="bf", ts="2026-10-03T16:59:59Z")
     bad_ts = _conv_rec(msg_id="bt", ts="10/10/2026")
     str_false = _conv_rec(msg_id="sf", answered="false")  # truthy str
     lines = [json.dumps(r) for r in
@@ -85,7 +96,8 @@ def test_collect_chat_period_filter_and_edges(tmp_path):
     # in+lo+sf trong kỳ (zalo); hi/before ngoài; bt ts hỏng.
     assert st["in_period"] == 3
     assert st["answered_period"] == 1            # chỉ `inside`
-    assert st["by_channel_period"] == {"zalo": 3, "streamlit": 0}
+    assert st["by_channel_period"] == {"zalo": 3, "messenger": 0,
+                                       "streamlit": 0}
     assert st["total"] == 6
     # "false" (str) KHÔNG đếm answered — strict `is True`:
     # in+hi+bf+bt(True, ts hỏng vẫn đếm all-time) = 4.
@@ -100,6 +112,32 @@ def test_collect_chat_missing_and_empty(tmp_path):
     (tmp_path / "conversations.jsonl").write_bytes(b"")
     st = rep.collect_chat(tmp_path, S, U)
     assert st["total"] == 0
+
+
+def test_collect_chat_skips_consent_replies(tmp_path):
+    # v5.1 fix: "Đồng ý"/"Không đồng ý" (route consent_granted/withdrawn/
+    # withdrawn_fail, answered:null) KHÔNG phải câu hỏi — trước fix
+    # 1 câu đã trả lời + 1 consent_granted → in_period=2, unanswered=1.
+    # consent_required GIỮ (câu hỏi thật bị chặn khi cờ bật).
+    recs = [_conv_rec(msg_id="q1", answered=True, channel="zalo"),
+            _conv_rec(msg_id="c1", answered=None, route="consent_granted",
+                      channel="zalo")]
+    p = tmp_path / "conversations.jsonl"
+    p.write_bytes(b"".join(json.dumps(r).encode() + b"\n" for r in recs))
+    st = rep.collect_chat(tmp_path, S, U)
+    assert st["in_period"] == 1 and st["answered_period"] == 1
+    assert st["in_period"] - st["answered_period"] == 0
+    assert st["total"] == 1 and st["by_channel"]["zalo"] == 1
+    more = [_conv_rec(msg_id="c2", answered=None, route="consent_withdrawn"),
+            _conv_rec(msg_id="c3", answered=None,
+                      route="consent_withdrawn_fail"),
+            _conv_rec(msg_id="r1", answered=False, route="consent_required"),
+            _conv_rec(msg_id="x1", answered=False, route=["corrupt"])]
+    with p.open("ab") as f:
+        f.write(b"".join(json.dumps(r).encode() + b"\n" for r in more))
+    st = rep.collect_chat(tmp_path, S, U)
+    # consent_required + route corrupt (list, không hash) vẫn là câu hỏi.
+    assert st["in_period"] == 3 and st["answered_period"] == 1
 
 
 # ---------- collect_db qua fake-conn ----------
@@ -140,6 +178,10 @@ def _route(*subs, params=None, rows=()):
 
 def _db_conn():
     return _Conn([
+        # v6.5 mục 5 Marketing (mkt_metrics.collect) — bảng rỗng.
+        _route("from content_drafts", rows=[]),
+        _route("from approval_queue", rows=[]),
+        _route("from channel_snapshots", rows=[]),
         _route("select count(*)", "from orders", params=(S, U),
                rows=[(3, 6720000)]),
         _route("select count(*)", "from orders", params=(PS, S),
@@ -227,14 +269,46 @@ def test_collect_db_error_returns_degraded():
 
 # ---------- render ----------
 
-def _full_rep(tmp_path=None, db=None):
+# v6.5 mục 5 — dict marketing CỐ ĐỊNH (dạng output mkt_metrics.collect).
+MKT = {
+    "ok": True,
+    "drafts": {
+        ("facebook", "post"): {"decided": 3, "approved": 2, "rejected": 1,
+                               "pending_end": 2, "rate": 33.3},
+        ("shopee", "listing"): {"decided": 1, "approved": 0, "rejected": 1,
+                                "pending_end": 0, "rate": 100.0},
+        ("zalo", "post"): {"decided": 0, "approved": 0, "rejected": 0,
+                           "pending_end": 4, "rate": None}},
+    "drafts_total": {"decided": 4, "approved": 2, "rejected": 2,
+                     "pending_end": 6, "rate": 50.0},
+    "drafts_hours": {"n": 4, "median_h": 7.0, "p90_h": 40.0, "max_h": 41.5,
+                     "bad_ts": 1},
+    "queue": {"koc_brief": {"decided": 2, "approved": 1, "rejected": 1,
+                            "pending_end": 1, "rate": 50.0}},
+    "queue_total": {"decided": 2, "approved": 1, "rejected": 1,
+                    "pending_end": 1, "rate": 50.0},
+    "queue_hours": {"n": 0, "median_h": None, "p90_h": None, "max_h": None,
+                    "bad_ts": 0},
+    "queue_expired": 3,
+    "by_agent": {"agent:MKT-11": 5, "(không rõ)": 1},
+    "guardrail_codes": {"tu_cam": 2, "snapshot_hong": 1},
+    "channels": {"week": "2026-W40", "rows": [
+        {"channel": "facebook", "reach": 1200, "engagement": 66,
+         "orders": None, "eng_rate": 5.5, "sample": True},
+        {"channel": "tiktok_shop", "reach": None, "engagement": None,
+         "orders": 7, "eng_rate": None, "sample": False}]},
+}
+
+
+def _full_rep(tmp_path=None, db=None, mkt=MKT):
     """rep hoàn chỉnh để render — db=None → nhánh degraded."""
     data_dir = tmp_path or DATA
     return {"period": {"days": 7, "since": S, "until": U},
             "generated_at": datetime(2026, 10, 10, 16, 0, tzinfo=UTC),
             "db": (db if db is not None
                    else rep.collect_db(_db_conn(), S, U)),
-            "chat": rep.collect_chat(data_dir, S, U)}
+            "chat": rep.collect_chat(data_dir, S, U),
+            "marketing": mkt}
 
 
 def test_render_full_sections_and_flags(tmp_path):
@@ -249,7 +323,10 @@ def test_render_full_sections_and_flags(tmp_path):
     assert "Chờ xử lý (new): 30" in text
     assert "## 4. Vùng trồng *(mẫu)*" in text
     assert "Cần chú ý" in text                   # flag sâu bệnh
-    assert "## 5. Social metrics" in text and "Chờ bàn giao" in text
+    # v6.5 FLIP: placeholder "Social metrics" → mục 5 "Marketing" số thật;
+    # dòng chờ bàn giao giữ cho phần external (Search Console/GA4).
+    assert "## 5. Marketing" in text and "chờ bàn giao" in text
+    assert "## 5. Social metrics" not in text
     assert "sample:sample_orders.jsonl=5 *(mẫu)*" in text
     assert "Kiểm chứng số liệu" in text
 
@@ -339,3 +416,106 @@ def test_generate_closes_only_own_conn(tmp_path, monkeypatch):
     rep.generate(until=date(2026, 10, 10), out_dir=tmp_path,
                  data_dir=tmp_path)
     assert conn2.closed is True
+
+
+# ---------- v6.5 mục 5 Marketing ----------
+
+def _sec5(text: str) -> str:
+    return text.split("## 5. Marketing\n")[1].split("## 6.")[0]
+
+
+_NUM = re.compile(r"(?<![\w.])\d+(?:\.\d+)?")
+
+
+def _dict_nums(obj) -> set:
+    out = set()
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            out |= _dict_nums(k) | _dict_nums(v)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            out |= _dict_nums(v)
+    elif obj is not None and not isinstance(obj, bool):
+        out |= set(_NUM.findall(str(obj)))
+    return out
+
+
+def test_render_marketing_section(tmp_path):
+    sec = _sec5(rep.render(_full_rep(tmp_path)))
+    assert "| facebook · post | 1/3 | 33.3% | 2 |" in sec
+    assert "| shopee · listing | 1/1 | 100.0% | 0 |" in sec
+    assert "| zalo · post | 0/0 | — | 4 |" in sec       # mẫu số 0 → —
+    assert "| **Tổng** | 2/4 | 50.0% | 6 |" in sec
+    assert ("Nháp nội dung: trung vị 7.0 giờ · p90 40.0 giờ · lâu nhất "
+            "41.5 giờ (n=4) — loại 1 mục mốc thời gian hỏng") in sec
+    assert "Hàng chờ khối marketing: [chưa có dữ liệu]" in sec
+    assert "Hết hạn không ai duyệt (không tính trả lại): 3" in sec
+    assert "`agent:MKT-11` 5 · `(không rõ)` 1" in sec
+    assert "`tu_cam` 2 · `snapshot_hong` 1" in sec
+    assert "tuần 2026-W40" in sec
+    assert "| facebook (MẪU) | 1200 | 66 | [chưa có dữ liệu] | 5.5% |" in sec
+    assert ("| tiktok_shop | [chưa có dữ liệu] | [chưa có dữ liệu] | 7 | "
+            "[chưa có dữ liệu] |") in sec
+    assert "Search Console/GA4" in sec and "external-dep" in sec
+
+
+def test_marketing_numbers_all_from_dict(tmp_path):
+    """MỌI số trong mục 5 phải có trong dict rep["marketing"] (code tính)."""
+    sec = _sec5(rep.render(_full_rep(tmp_path)))
+    nums = set(_NUM.findall(sec))
+    assert nums                                     # có số để kiểm
+    assert nums <= _dict_nums(MKT), nums - _dict_nums(MKT)
+    # đổi 1 số trong dict → số in ra đổi theo (không hard-code)
+    m2 = {**MKT, "drafts": {("facebook", "post"): dict(
+        MKT["drafts"][("facebook", "post")], rejected=2, rate=66.7)}}
+    sec2 = _sec5(rep.render(_full_rep(tmp_path, mkt=m2)))
+    assert "| facebook · post | 2/3 | 66.7% | 2 |" in sec2
+
+
+def test_marketing_degraded_only_section5(tmp_path):
+    bad = {"ok": False, "error": "relation \"channel_snapshots\" does not"
+           " exist"}
+    text = rep.render(_full_rep(tmp_path, mkt=bad))
+    assert "[chưa nạp — relation" in _sec5(text)
+    assert text.count("[chưa nạp") == 1
+    assert "| Đơn hàng | 3 | 2 |" in text            # mục 1 vẫn có số
+    # thiếu hẳn key marketing (rep cũ) → vẫn render, mục 5 chưa nạp
+    r = _full_rep(tmp_path)
+    r.pop("marketing")
+    assert "chưa thu số marketing" in rep.render(r)
+
+
+def test_generate_marketing_db_error_degrades_section5(tmp_path):
+    class Half(_Conn):
+        def execute(self, sql, params=None):
+            if "from content_drafts" in sql:
+                raise psycopg.errors.UndefinedTable(
+                    'relation "content_drafts" does not exist')
+            return super().execute(sql, params)
+
+    conn = Half(_db_conn().routes)
+    path, r = rep.generate(until=date(2026, 10, 10), out_dir=tmp_path,
+                           data_dir=tmp_path, conn=conn)
+    assert r["db"]["db_ok"] is True
+    assert r["marketing"]["ok"] is False
+    body = path.read_text(encoding="utf-8")
+    assert "[chưa nạp — relation" in _sec5(body)
+    assert "6.720.000 ₫" in body                      # mục 1 không ảnh hưởng
+    # conn None → marketing degraded, không gọi DB
+    assert rep.collect_marketing(None, S, U)["ok"] is False
+
+
+def test_generate_marketing_empty_db_and_topline(tmp_path, monkeypatch,
+                                                 capsys):
+    path, r = rep.generate(until=date(2026, 10, 10), out_dir=tmp_path,
+                           data_dir=tmp_path, conn=_db_conn())
+    m = r["marketing"]
+    assert m["ok"] is True and m["drafts_total"]["rate"] is None
+    sec = _sec5(path.read_text(encoding="utf-8"))
+    assert "| **Tổng** | 0/0 | — | 0 |" in sec
+    assert "Nháp nội dung: [chưa có dữ liệu]" in sec
+    assert "tuần 2026-W40" in sec and "chưa nạp số kênh" in sec
+    monkeypatch.setattr(rep, "connect", lambda: _db_conn())
+    assert rep.main(["--until", "2026-10-10", "--out-dir",
+                     str(tmp_path)]) == 0
+    assert "tra-lai=0/0" in capsys.readouterr().out

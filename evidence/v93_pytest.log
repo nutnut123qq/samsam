@@ -1,0 +1,160 @@
+# v9.3 W93.8 gate chung — 2026-10-12T03:08:21+07:00
+## targeted lần 1
+$ python -m pytest -q -rs tests/test_garden_chain.py tests/test_garden_director.py tests/test_garden_media.py tests/test_core_store.py tests/test_garden.py
+........................................................................ [ 62%]
+............................................                             [100%]
+116 passed in 41.23s
+## targeted lần 2
+$ python -m pytest -q -rs tests/test_garden_chain.py tests/test_garden_director.py tests/test_garden_media.py tests/test_core_store.py tests/test_garden.py
+........................................................................ [ 62%]
+............................................                             [100%]
+116 passed in 40.43s
+## targeted lần 3
+$ python -m pytest -q -rs tests/test_garden_chain.py tests/test_garden_director.py tests/test_garden_media.py tests/test_core_store.py tests/test_garden.py
+........................................................................ [ 62%]
+............................................                             [100%]
+116 passed in 39.75s
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile agents/garden_director.py scripts/garden_media.py ingest/core_store.py agents/garden.py app/streamlit_app.py
+exit=0
+$ git diff --check
+exit=0
+$ git diff --stat -- agents/garden.py app/streamlit_app.py agents/report.py pipelines/auth.py docs/roles.sql (phải rỗng)
+(hết)
+$ git status --short
+ M AGENTS.md
+ M DONE.md
+ M docs/handover/kien-truc.md
+ M docs/handover/playbook-vuon.md
+ M docs/handover/sop.md
+ M docs/schema.sql
+ M env.example
+ M ingest/core_store.py
+ M requirements.txt
+?? agents/garden_director.py
+?? data/garden_schedule.json
+?? scripts/garden_media.py
+?? tests/test_garden_chain.py
+?? tests/test_garden_director.py
+?? tests/test_garden_media.py
+
+# VÒNG 1 — full pytest FAIL (output thật):
+## full pytest (1 lần) — 2026-10-12T03:11:07+07:00
+$ python -m pytest -q
+>           assert f"`{t}`" in readme, f"README thi\u1ebfu b\u1ea3ng {t}"
+E           AssertionError: README thi\u1ebfu b\u1ea3ng garden_media
+E           assert '`garden_media`' in '# Chuy\u1ec3n DB l\xean Postgres managed trong n\u01b0\u1edbc (v3.6, WP02 / F17.4)\\n\\n- **D\xe0nh cho ai:** Qu\u1ea3n l\xfd h\u1ea1 t\u1ea7ng AI (ho\u1eb7c \u0111\u1ed9i t...\\nKh\xf4i ph\u1ee5c \u0110\xc8 production kh\xf4ng c\xf3 l\u1ec7nh t\u1ef1 \u0111\u1ed9ng: t\u1ea7ng 2, ng\u01b0\u1eddi l\xe0m tay, b\xe1o\\nTG\u0110 \u2014 xem `docs/handover/sop.md` m\u1ee5c 6.\\n'
+
+tests\test_db_backup.py:332: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_db_backup.py::test_cloud_readme_drift_guard - AssertionErro...
+1 failed, 921 passed in 325.94s (0:05:25)
+exit=1
+
+# Sửa vòng 1: deploy/cloud/README.md thiếu bảng garden_media (drift-guard test_cloud_readme_drift_guard) → thêm dòng garden_media + note hash chain plot_logs, 24→25 bảng
+
+# VÒNG 2 — 2026-10-12T03:17:24+07:00
+$ python -m pytest -q tests/test_db_backup.py
+..................................................                       [100%]
+50 passed in 118.52s (0:01:58)
+## vòng 2 targeted lần 1
+$ python -m pytest -q -rs tests/test_garden_chain.py tests/test_garden_director.py tests/test_garden_media.py tests/test_core_store.py tests/test_garden.py
+............................................                             [100%]
+116 passed in 40.41s
+## vòng 2 targeted lần 2
+$ python -m pytest -q -rs tests/test_garden_chain.py tests/test_garden_director.py tests/test_garden_media.py tests/test_core_store.py tests/test_garden.py
+............................................                             [100%]
+116 passed in 39.35s
+## vòng 2 targeted lần 3
+$ python -m pytest -q -rs tests/test_garden_chain.py tests/test_garden_director.py tests/test_garden_media.py tests/test_core_store.py tests/test_garden.py
+............................................                             [100%]
+116 passed in 36.76s
+$ ruff check .
+All checks passed!
+exit=0
+$ git diff --check
+exit=0
+## vòng 2 full pytest (1 lần) — 2026-10-12T03:22:35+07:00
+$ python -m pytest -q
+........................................................................ [ 85%]
+........................................................................ [ 93%]
+..........................................................               [100%]
+922 passed in 271.38s (0:04:31)
+exit=0
+(baseline 831 + 91 test mới = 922; 0 fail, 0 skip trong targeted)
+$ python -m py_compile agents/garden_director.py scripts/garden_media.py ingest/core_store.py agents/garden.py app/streamlit_app.py
+exit=0
+$ git diff --stat -- agents/garden.py app/streamlit_app.py agents/report.py pipelines/auth.py docs/roles.sql (phải rỗng)
+(hết)
+$ git status --short
+ M AGENTS.md
+ M DONE.md
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/playbook-vuon.md
+ M docs/handover/sop.md
+ M docs/schema.sql
+ M env.example
+ M ingest/core_store.py
+ M requirements.txt
+?? agents/garden_director.py
+?? data/garden_schedule.json
+?? scripts/garden_media.py
+?? tests/test_garden_chain.py
+?? tests/test_garden_director.py
+?? tests/test_garden_media.py
+$ git status --short --ignored data/ (file runtime)
+?? data/garden_schedule.json
+!! data/conversations.jsonl
+!! data/reports/
+
+=================== VÒNG SỬA nghiệm thu (5 MINOR) — 2026-10-12 ===================
+$ targeted ×3: python -m pytest -q -rs tests/test_garden_chain.py tests/test_garden_director.py tests/test_garden_media.py tests/test_core_store.py tests/test_garden.py tests/test_handover_docs.py
+== targeted run 1
+........................................................................ [ 52%]
+................................................................         [100%]
+136 passed in 37.93s
+== targeted run 2
+........................................................................ [ 52%]
+................................................................         [100%]
+136 passed in 36.21s
+== targeted run 3
+........................................................................ [ 52%]
+................................................................         [100%]
+136 passed in 36.93s
+$ python -m pytest -q   (full, 1 lần)
+........................................................................ [ 69%]
+........................................................................ [ 77%]
+........................................................................ [ 84%]
+........................................................................ [ 92%]
+......................................................................   [100%]
+934 passed in 256.80s (0:04:16)
+exit=0
+$ đột biến (từng fix bị gỡ tạm → test mới phải FAIL; đã khôi phục file):
+  - core_store.main bỏ nhánh sample_garden_purged → FAILED test_loader_main_skips_samples_after_purge
+  - build_bulletin lọc lại chỉ theo ts → FAILED test_bulletin_includes_backfilled_log_by_created_at
+  - FORMATS bỏ "MPO" → FAILED test_mpo_multi_frame_phone_jpeg_stripped (ValueError định dạng MPO)
+$ ruff check .
+All checks passed!
+$ python -m py_compile agents/garden_director.py scripts/garden_media.py ingest/core_store.py
+exit 0
+$ git diff --check
+sạch
+$ git diff --stat -- agents/garden.py app/streamlit_app.py agents/report.py pipelines/auth.py docs/roles.sql
+(rỗng = không đổi)
+
+## VÒNG SỬA #2 — 1 MINOR --until mặc định (2026-10-12T04:14:00+07:00)
+$ python -m pytest -q tests/test_garden_director.py -k 'until or lands_next'  → 6 passed
+đột biến: _default_until trả HÔM NAY → 5 failed, 1 passed (test_default_until_is_yesterday_vn ×3, test_cli_bulletin_without_until_uses_yesterday, test_log_written_after_default_bulletin_lands_next_week); đã khôi phục
+$ python -m pytest -q tests/test_garden_director.py tests/test_garden_chain.py tests/test_garden.py tests/test_garden_media.py   (×3)
+121 passed in 35.14s
+121 passed in 32.79s
+121 passed in 32.86s
+$ python -m pytest -q -rs   (full, 1 lần)
+1 failed, 939 passed in 241.57s — FAILED tests/test_dr_drill.py::test_zz_no_dr_container_left: container 'samsam-dr-20261012_041029-d715' của worktree KHÁC đang DR drill song song (docker namespace chung; 04:12 đã biến mất, docker ps -a samsam-dr-* rỗng). Không liên quan diff (chỉ garden_director + test + docs).
+$ python -m pytest -q tests/test_dr_drill.py   (chạy lại riêng)
+27 passed in 23.21s; docker ps -a --filter name=samsam-dr- → rỗng
+$ ruff check .
+All checks passed!

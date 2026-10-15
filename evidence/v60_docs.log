@@ -1,0 +1,71 @@
+# v6.0 W60.7 docs evidence — 2026-10-12T12:48:36+07:00
+$ python -m pytest -q tests/test_handover_docs.py
+.........                                                                [100%]
+9 passed in 0.14s
+... [exit=0]
+
+$ grep -n "mkt_calendar\|mkt_director" docs/handover/sop.md docs/handover/kien-truc.md
+docs/handover/sop.md:37:| Lịch mùa vụ + brief + bản tin Marketing (v6.0) | sáng thứ Hai: `python -m agents.mkt_director --briefs` rồi `--bulletin` �
+docs/handover/sop.md:352:python -m pipelines.mkt_calendar --start 2026-10-12 --weeks 4
+docs/handover/sop.md:353:python -m pipelines.mkt_calendar --start 2026-10-12 --weeks 26 --by month
+docs/handover/sop.md:354:python -m pipelines.mkt_calendar --start 2026-10-12 --weeks 18 --ics data/reports/mkt-calendar-2026-10-12.ics
+docs/handover/sop.md:378:python -m agents.mkt_director --briefs --dry-run
+docs/handover/sop.md:379:python -m agents.mkt_director --briefs [--today YYYY-MM-DD] [--horizon-days 14]
+docs/handover/sop.md:380:python -m agents.mkt_director --load --today 2026-11-02 --days 28
+docs/handover/sop.md:381:python -m agents.mkt_director --bulletin
+docs/handover/kien-truc.md:63:| `pipelines/` | `guardrail.py` (banned words + claim whitelist + chặn rượu, chuẩn hóa NFC/casefold/ký tự chèn — `ch
+docs/handover/kien-truc.md:65:| `agents/` | `report.py` (báo cáo định kỳ → file md), `garden.py` (nhật ký vùng trồng + cảnh báo), `garden_dire
+docs/handover/kien-truc.md:151:| GĐ Marketing MKT-00 (v6.0) | `python -m agents.mkt_director --briefs [--dry-run]` / `--load [--days 28]` / `--bulletin`; lịc
+
+$ grep -n "35 bảng" docs/handover/kien-truc.md
+71:## 3. Cơ sở dữ liệu — 35 bảng public (`docs/schema.sql`)
+
+## spot-check lenh trong sop.md muc 5e
+$ python -m pipelines.mkt_calendar --start 2026-10-12 --weeks 4
+> GIẢ ĐỊNH — chờ GĐ Marketing chốt · Lịch ĐỀ XUẤT — GĐ Marketing duyệt trước khi chạy
+
+# Lịch mùa vụ marketing 12/10/2026 → 08/11/2026 (giờ VN)
+
+## Tuần 2026-10-12
+
+| ngày | chiến dịch | kênh | định dạng | SKU | mốc |
+|---|---|---|---|---|---|
+... [exit=0]
+
+$ python -m pipelines.mkt_calendar --start 2026-10-12 --weeks 26 --by month
+> GIẢ ĐỊNH — chờ GĐ Marketing chốt · Lịch ĐỀ XUẤT — GĐ Marketing duyệt trước khi chạy
+
+# Lịch mùa vụ marketing 12/10/2026 → 11/04/2027 (giờ VN)
+
+## Tháng 2026-10
+
+| ngày | chiến dịch | kênh | định dạng | SKU | mốc |
+|---|---|---|---|---|---|
+... [exit=0]
+
+$ python -m agents.mkt_director --briefs --dry-run
+--- [dry-run] sẽ đẩy campaign_brief c-2010-2026 ---
+Brief chiến dịch c-2010-2026 — sự kiện 20.10
+Trụ nội dung: Quà tặng 20/10 — sâm Ngọc Linh cho phái đẹp
+Ngày đăng: 17/10/2026
+
+Mốc (giờ VN):
+- brief: 12/10/2026 09:00
+- nháp: 14/10/2026 09:00
+... [exit=0]
+
+$ python -m agents.mkt_director --load --today 2026-11-02 --days 28
+# Tải duyệt dự báo 02/11/2026 + 28 ngày (lịch: GIẢ ĐỊNH — chờ GĐ Marketing chốt; quota: de_xuat)
+
+| ngày | Pháp chế | trần | GĐ Marketing | trần |
+|---|---|---|---|---|
+| T2 02/11 | 0 | 35 | 0 | 3 |
+| T3 03/11 | 0 | 35 | 0 | 3 |
+| T4 04/11 | 0 | 35 | 0 | 3 |
+| T5 05/11 | 0 | 35 | 0 | 3 |
+... [exit=0]
+
+$ python -m pipelines.approval_queue --pending --block marketing
+[pending] hàng duyệt chung trống
+... [exit=0]
+

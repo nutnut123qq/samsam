@@ -1,0 +1,15 @@
+{
+  "_doc": "v9.0 ACC-Recon — mapping cột file quyết toán (income/settlement) kế toán xuất TAY từ Seller Center → field chuẩn của ingest.settlement_csv. TÊN CỘT GIẢ ĐỊNH — chưa xác minh với file income/settlement thật; người có tài khoản Seller Center xuất 1 file mỗi sàn để đối chiếu (header, dòng header, dấu số tiền, định dạng ngày). Mỗi kênh: required {field: header} (thiếu = lỗi cả file), optional {field: header} (vắng cột = 0 / trống), drop [header] (bỏ NGAY khi đọc — mọi cột người mua/người nhận), fees_negative (true = file ghi khoản khấu trừ là số ÂM → đổi dấu thành khoản trừ dương; giá trị dương trên file = sàn bù, giữ âm sau chuẩn hóa, không đoán). Cột không thuộc required/optional/drop = cột lạ → chặn cả file. Field chuẩn: order_id, order_amount, fixed_fee, payment_fee, service_fee, shipping_fee, voucher_seller, affiliate, refund, payout, settled_on. GIẢ ĐỊNH 1 dòng/đơn (mã đơn trùng trong 1 file = lỗi).",
+  "shopee": {
+    "required": {"order_id": "Mã đơn hàng", "order_amount": "Giá sản phẩm", "fixed_fee": "Phí cố định", "payment_fee": "Phí thanh toán", "service_fee": "Phí dịch vụ", "payout": "Tổng tiền đã thanh toán"},
+    "optional": {"shipping_fee": "Phí vận chuyển người bán trả", "voucher_seller": "Mã giảm giá của Shop", "affiliate": "Phí hoa hồng Tiếp thị liên kết", "refund": "Số tiền hoàn lại", "settled_on": "Ngày hoàn thành thanh toán"},
+    "drop": ["Tên đăng nhập người mua", "Tên người nhận", "Số điện thoại", "Địa chỉ nhận hàng", "Mã vận đơn", "Ghi chú"],
+    "fees_negative": true
+  },
+  "tiktok": {
+    "required": {"order_id": "Order/adjustment ID", "order_amount": "Total revenue", "fixed_fee": "Platform commission", "payment_fee": "Transaction fee", "service_fee": "Service fee", "payout": "Total settlement amount"},
+    "optional": {"shipping_fee": "Actual shipping fee", "voucher_seller": "Seller discounts", "affiliate": "Affiliate commission", "refund": "Refund amount", "settled_on": "Order settled time"},
+    "drop": ["Buyer Username", "Recipient", "Phone #", "Detail Address", "Tracking ID"],
+    "fees_negative": true
+  }
+}

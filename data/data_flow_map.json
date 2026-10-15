@@ -1,0 +1,1042 @@
+{
+  "_doc": "Bản đồ luồng dữ liệu (PC-A5, v4.4 W44.2) — rà từ code thật ngày 2026-10-12. Nguồn sinh docs/legal/DPIA-nhap.md + TIA-nhap.md qua `python scripts/dpia_draft.py`. Sửa code thêm luồng gửi dữ liệu ra ngoài (import openai/httpx/requests/smtplib/urllib.request..., hoặc chat/embed từ pipelines.llm_gateway) PHẢI thêm module vào `modules` của 1 flow ở đây — tests/test_data_flow_map.py đỏ nếu thiếu. Sửa file này xong chạy lại dpia_draft (test --check đỏ nếu docs lệch). Lớp theo plan_data_platform §2: do = Đỏ, vang = Vàng, xanh = Xanh. Đây là NHÁP kỹ thuật để Pháp chế rà — không kết luận tuân thủ.",
+  "version": "2026-10-14",
+  "classes": {
+    "do": "Đỏ — orders/đơn sàn, leads, liên hệ đại lý, log hội thoại, mọi tin nhắn có yếu tố sức khỏe, user_id thô. Không được đi ra LLM nước ngoài.",
+    "vang": "Vàng — câu hỏi thường SAU `_mask_pii` (che SĐT/email), tài liệu nội bộ. Được gửi LLM qua gateway (mask + provider routing).",
+    "xanh": "Xanh — catalog, claims, chunk public, số liệu vận hành tổng hợp không có dữ liệu cá nhân."
+  },
+  "flows": [
+    {
+      "id": "DF-01",
+      "name": "Kênh Zalo OA — nhận tin và trả lời khách",
+      "modules": [
+        "connectors/zalo.py",
+        "connectors/channels.py"
+      ],
+      "data": "user_id Zalo thô, nội dung tin nhắn khách (có thể chứa SĐT, tên, địa chỉ, yếu tố sức khỏe), câu trả lời gửi lại",
+      "class": "do",
+      "subjects": "Khách hàng nhắn Zalo OA của công ty",
+      "purpose": "Chăm sóc khách hàng (CSKH) — trả lời câu hỏi sản phẩm qua chatbot",
+      "storage": "RAM `_histories` (deque 8 message = 4 lượt Q&A/user); `data/zalo_seen.db` (khóa dedup msg_id và `follow:<user_id>` thô); `data/zalo_tokens.json` (token OA — secret, không phải DLCN); bảng `chat_consents` (v5.1, append-only: `user_hash` HMAC có muối `CHANNEL_HASH_SALT` 32 hex, kênh, prompted/granted/withdrawn, `policy_version`, `evidence_ref` = sha256(msg_id)[:16] — không nội dung tin); mục `approval_queue` loại `cskh_handoff` (payload cố định: kênh, mã lý do, user_hash có muối, msg_ref, ts — không câu hỏi/câu trả lời/user_id)",
+      "retention": "`_histories`: RAM, LRU 1000 user (HIST_MAX_USERS), mất khi restart; `zalo_seen.db`: TTL 1 giờ (SEEN_TTL_S) cho msg, 7 ngày (FOLLOW_TTL_S) cho khóa follow; `chat_consents`: lưu lâu dài làm bằng chứng đồng ý (append-only, chưa có hạn — GAP); mục `cskh_handoff`: theo hồ sơ duyệt `approval_queue`",
+      "recipients": "Zalo/VNG — openapi.zalo.me (gửi tin), oauth.zaloapp.com (làm mới token) — Việt Nam",
+      "cross_border": false,
+      "safeguards": [
+        "Xác thực chữ ký webhook (verify_signature) trước khi xử lý",
+        "v5.1 `channels.pre_route` TRƯỚC LLM: câu sức khỏe → template + chuyển người (mục `cskh_handoff`), câu về rượu → template cố định — cả hai KHÔNG gọi `answer()`/LLM",
+        "Log/stdout chỉ in `_uhash(user_id)` + `_mask_pii` — không in user_id thô",
+        "Đồng ý tư vấn chat chỉ ghi khi khách gõ \"Đồng ý\" tường minh (không suy diễn); rút đồng ý (câu ngắn phủ định/rút/hủy + \"đồng ý\") = dòng withdrawn + xóa history RAM + DỪNG LLM cho khách đó (bất kể cờ) tới khi nhắn lại \"Đồng ý\" — CHỈ KHI ghi được dòng withdrawn (có CHANNEL_HASH_SALT + DB lên); ghi lỗi → khách nhận câu \"chưa ghi nhận được, gọi hotline\" (không hứa dừng) và tin sau vẫn tới LLM khi cờ tắt",
+        "Thiếu muối `CHANNEL_HASH_SALT` → không ghi đồng ý/handoff (fail-closed), không dùng hash không muối"
+      ],
+      "legal_basis": "Đồng ý của khách — v5.1 có `chat_consents` ghi đồng ý TƯỜNG MINH qua chat (câu chào + link chính sách ở tin đầu, NHÁP chờ Pháp chế); cờ `require_consent_for_llm` mặc định TẮT = vẫn xử lý tin trước khi khách đồng ý: GAP",
+      "gaps": [
+        "`require_consent_for_llm` mặc định tắt — tin nhắn vẫn qua LLM trước khi khách đồng ý; Pháp chế quyết bật",
+        "Câu chào + `policy_url` + `policy_version` trong `data/channels.json` là NHÁP — `policy_url` chưa xác minh trang tồn tại; chờ Pháp chế duyệt",
+        "`chat_consents` chưa nối `consents` v5.2 khi khách để lại liên hệ; chưa có hạn lưu",
+        "`zalo_seen.db` lưu user_id thô trong khóa `follow:<user_id>` tới 7 ngày",
+        "CẦN LUẬT SƯ XÁC NHẬN: Zalo/VNG là bên xử lý (cần hợp đồng xử lý) hay bên nhận độc lập"
+      ]
+    },
+    {
+      "id": "DF-02",
+      "name": "Preflight token Zalo trước khi mở public",
+      "modules": [
+        "scripts/zalo_preflight.py"
+      ],
+      "data": "Access/refresh token OA, thông tin OA (getoa) — không có dữ liệu khách",
+      "class": "xanh",
+      "subjects": "Không có chủ thể dữ liệu cá nhân (tài khoản OA của công ty)",
+      "purpose": "Kiểm tra cấu hình kênh trước khi deploy",
+      "storage": "`data/zalo_tokens.json` (secret, gitignore)",
+      "retention": "Token ghi đè mỗi lần làm mới; không lưu lịch sử",
+      "recipients": "Zalo/VNG — openapi.zalo.me, oauth.zaloapp.com — Việt Nam",
+      "cross_border": false,
+      "safeguards": [
+        "Chỉ chạy tay trên máy deploy; không gọi OpenRouter (chỉ kiểm key non-empty)"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân",
+      "gaps": []
+    },
+    {
+      "id": "DF-03",
+      "name": "Mock E2E Zalo (chỉ test)",
+      "modules": [
+        "scripts/zalo_mock.py"
+      ],
+      "data": "Sự kiện giả (user_id, tin nhắn tự sinh) — không dữ liệu khách thật",
+      "class": "xanh",
+      "subjects": "Không có (dữ liệu giả)",
+      "purpose": "Kiểm thử webhook local — CHỈ dùng cho test",
+      "storage": "Không lưu ngoài convlog local của tiến trình test",
+      "retention": "Theo convlog local nếu chạy cùng máy",
+      "recipients": "localhost (127.0.0.1) — không ra Internet",
+      "cross_border": false,
+      "safeguards": [
+        "Chỉ gọi localhost"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân thật",
+      "gaps": []
+    },
+    {
+      "id": "DF-04",
+      "name": "Nhật ký hội thoại (convlog)",
+      "modules": [
+        "connectors/zalo.py",
+        "connectors/messenger.py",
+        "app/streamlit_app.py",
+        "ingest/lead_store.py",
+        "scripts/kb_gaps.py"
+      ],
+      "data": "user_hash (sha256 KHÔNG muối của user_id, 16 hex — bút danh, vẫn là dữ liệu cá nhân), câu hỏi ĐÃ `_mask_pii`, câu trả lời, ts, cờ answered/flagged; v5.1: thêm `channel` (zalo/messenger) và `route` (alcohol/health/consent_*) — Messenger ghi CHUNG file qua `zalo._reply`",
+      "class": "do",
+      "subjects": "Khách hàng chat Zalo/Messenger/web, nhân viên thử trên Streamlit",
+      "purpose": "Đo chất lượng trả lời, tìm câu chưa trả lời (bổ sung KB), trích lead",
+      "storage": "`data/conversations.jsonl` (+ `.1` khi rotate), máy chủ chạy webhook",
+      "retention": "30 ngày (RETAIN_DAYS = 30, purge hằng ngày khi ghi)",
+      "recipients": "Nội bộ (Quản lý hạ tầng AI, MKT xem tab Chưa trả lời) — không gửi ra ngoài",
+      "cross_border": false,
+      "safeguards": [
+        "`_mask_pii` che SĐT/email trước khi ghi",
+        "`_uhash` thay user_id thô",
+        "Purge 30 ngày ghi atomic (tmp + os.replace)"
+      ],
+      "legal_basis": "Đồng ý (CSKH) — CHƯA có cơ chế ghi nhận trong code: GAP",
+      "gaps": [
+        "Tên người, địa chỉ, mã đơn đứng tự do trong câu hỏi KHÔNG bị `_mask_pii` che (chỉ SĐT/email) — rủi ro tồn dư",
+        "Chưa có luồng xóa theo yêu cầu chủ thể (theo user_hash)",
+        "`_uhash` không muối — user_id Zalo dạng số có thể dò ngược ra hash (bút danh, không phải ẩn danh)"
+      ]
+    },
+    {
+      "id": "DF-05",
+      "name": "Lead store (khách có nhu cầu mua/đại lý)",
+      "modules": [
+        "ingest/lead_store.py"
+      ],
+      "data": "user_hash, câu hỏi đã mask, intent (partner/order/price/contact), trạng thái chăm sóc; v5.2: `contact_id` (tham chiếu kho liên hệ — không PII trong `leads`), tỉnh, mã đại lý gán",
+      "class": "do",
+      "subjects": "Khách hàng, người hỏi làm đại lý",
+      "purpose": "Bán hàng — chăm sóc lại khách có nhu cầu",
+      "storage": "Bảng `leads` (Postgres)",
+      "retention": "Không có hạn lưu trong code — GAP",
+      "recipients": "Nội bộ (Sales/Admin) — không gửi ra ngoài",
+      "cross_border": false,
+      "safeguards": [
+        "Câu hỏi đã mask từ convlog",
+        "Chỉ lưu user_hash",
+        "v5.2: PII liên hệ KHÔNG nằm trong `leads` — chỉ `contact_id` trỏ `contacts` (mã hóa, DF-18)"
+      ],
+      "legal_basis": "Đồng ý theo mục đích — bảng `consents` (v5.2) cho contact đã gắn; lead từ chat chưa có đồng ý: GAP",
+      "gaps": [
+        "Bảng `leads` không có hạn lưu / job xóa — GAP",
+        "Lead từ chat chỉ có user_hash — chỉ liên hệ khi người gán contact có consent (`can_contact`); đồng ý chưa thu ở kênh chat"
+      ]
+    },
+    {
+      "id": "DF-06",
+      "name": "Chatbot RAG gửi câu hỏi tới LLM qua gateway (OpenRouter)",
+      "modules": [
+        "api/rag.py",
+        "pipelines/llm_gateway.py",
+        "app/streamlit_app.py",
+        "connectors/zalo.py"
+      ],
+      "data": "Câu hỏi thường SAU `_mask_pii` + history 4 lượt gần nhất (cũng mask) + đoạn KB public làm ngữ cảnh",
+      "class": "vang",
+      "subjects": "Khách hàng chat Zalo/web",
+      "purpose": "CSKH — sinh câu trả lời có nguồn",
+      "storage": "Không lưu ở hệ thống ngoài nhật ký hội thoại convlog; phía nhà cung cấp: yêu cầu zdr + data_collection=deny (cam kết của nhà cung cấp chưa được rà)",
+      "retention": "Phía hệ thống: theo nhật ký hội thoại (30 ngày); phía nhà cung cấp: không lưu theo cấu hình zdr — chưa kiểm chứng bằng hợp đồng",
+      "recipients": "OpenRouter (Mỹ) → nhà cung cấp trong whitelist `provider_only` của data/llm_gateway.json (openai, azure — Mỹ)",
+      "cross_border": true,
+      "safeguards": [
+        "`_mask_pii` ở gateway cho MỌI message (system/history/user) và input embedding",
+        "`is_health_question` chặn câu hỏi sức khỏe TRƯỚC LLM (chuyển người)",
+        "Provider routing data_collection=deny, zdr=true, allow_fallbacks=false, only=whitelist (fail-closed)",
+        "Kill-switch + trần chi phí theo agent"
+      ],
+      "legal_basis": "Đồng ý cho chuyển dữ liệu ra nước ngoài — CHƯA có cơ chế ghi nhận trong code: GAP; hồ sơ TIA (bản nháp này)",
+      "gaps": [
+        "Tên người/địa chỉ đứng tự do lọt mask — rủi ro tồn dư khi chuyển ra nước ngoài",
+        "Bảng `consents` có (v5.2) nhưng CHƯA gắn kênh chat — chưa có bản ghi đồng ý trước lượt gọi LLM",
+        "Điều khoản xử lý dữ liệu (DPA) với OpenRouter/nhà cung cấp chưa được Pháp chế rà"
+      ]
+    },
+    {
+      "id": "DF-07",
+      "name": "Content Studio sinh nháp nội dung qua gateway",
+      "modules": [
+        "pipelines/content.py",
+        "pipelines/video_studio.py",
+        "pipelines/llm_gateway.py",
+        "pipelines/store.py"
+      ],
+      "data": "Brief do nhân viên nhập (quy trình: không đưa dữ liệu khách), claim đã duyệt, nháp nội dung",
+      "class": "vang",
+      "subjects": "Nhân viên MKT (tên người duyệt trong approvals)",
+      "purpose": "Soạn nháp nội dung marketing chờ người duyệt",
+      "storage": "Bảng `content_drafts`, `approvals`, `agent_action_log`; v6.3 video nháp: `video_assets` + file mp4/sidecar ở VIDEO_OUT_DIR (brief chỉ ở prompt gửi LLM, không lưu)",
+      "retention": "Không giới hạn — hồ sơ duyệt append-only (bằng chứng tuân thủ quảng cáo)",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider (Mỹ)",
+      "cross_border": true,
+      "safeguards": [
+        "`_mask_pii` ở gateway",
+        "`guardrail.check()` trước khi hiển thị/lưu",
+        "Duyệt người thật (approve_draft) trước khi đăng"
+      ],
+      "legal_basis": "Lợi ích hợp pháp/hợp đồng lao động với nhân viên — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email)"
+      ]
+    },
+    {
+      "id": "DF-08",
+      "name": "Embedding KB public",
+      "modules": [
+        "ingest/embed_store.py",
+        "scripts/vector_eval.py"
+      ],
+      "data": "Đoạn văn bản public (sản phẩm, bài viết) đã crawl; v10.3 `scripts/vector_eval.py --questions` embed 10 câu hỏi kiểm thử CỐ ĐỊNH Q1–Q10 (tests/questions.md — không dữ liệu khách) để so backend float8/pgvector",
+      "class": "xanh",
+      "subjects": "Không có dữ liệu cá nhân",
+      "purpose": "Tạo vector tìm kiếm cho chatbot",
+      "storage": "Bảng `chunks`",
+      "retention": "Thay khi nạp lại",
+      "recipients": "OpenRouter (Mỹ) — embeddings",
+      "cross_border": true,
+      "safeguards": [
+        "Qua gateway (mask + routing)",
+        "`kb_filter` loại nội dung rượu/phóng đại"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân",
+      "gaps": []
+    },
+    {
+      "id": "DF-09",
+      "name": "KB nội bộ (tài liệu nội bộ đã duyệt)",
+      "modules": [
+        "ingest/kb_internal.py",
+        "ingest/embed_store.py"
+      ],
+      "data": "Tài liệu nội bộ đã duyệt (quy trình, chính sách) — có thể nhắc tên nhân viên",
+      "class": "vang",
+      "subjects": "Nhân viên (nếu tài liệu nhắc tên)",
+      "purpose": "Trợ lý nội bộ tra cứu tài liệu",
+      "storage": "Bảng `chunks_internal` (chatbot khách không đọc tới)",
+      "retention": "Thay khi nạp bản mới (theo doc_sha256)",
+      "recipients": "OpenRouter (Mỹ) — embeddings qua gateway",
+      "cross_border": true,
+      "safeguards": [
+        "Qua gateway (`_mask_pii` input embedding)",
+        "Bảng riêng, phân quyền theo collection"
+      ],
+      "legal_basis": "Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Tên nhân viên trong tài liệu không bị mask khi embedding"
+      ]
+    },
+    {
+      "id": "DF-10",
+      "name": "Số hóa tài liệu (doc intake)",
+      "modules": [
+        "ingest/doc_intake.py"
+      ],
+      "data": "Bản gốc PDF/ảnh tài liệu công ty (có thể chứa SĐT/email/tên đối tác), text trích, cờ pii_flag",
+      "class": "vang",
+      "subjects": "Đối tác, nhân viên có tên trong tài liệu",
+      "purpose": "Lưu trữ + tra cứu tài liệu nội bộ",
+      "storage": "Thư mục originals (DOC_ORIGINALS_DIR) + bảng `documents`, `document_fields`",
+      "retention": "Không giới hạn (bản gốc bất biến theo sha256)",
+      "recipients": "Không — OCR provider mặc định `none`; provider OCR nước ngoài bị TỪ CHỐI",
+      "cross_border": false,
+      "safeguards": [
+        "OCR nước ngoài bị từ chối",
+        "pii_flag true/NULL không được gửi LLM"
+      ],
+      "legal_basis": "Lợi ích hợp pháp/hợp đồng — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Chưa có hạn lưu cho bản gốc"
+      ]
+    },
+    {
+      "id": "DF-11",
+      "name": "Nạp file đơn/sản phẩm từ sàn TMĐT",
+      "modules": [
+        "ingest/market_csv.py"
+      ],
+      "data": "Dòng đơn hàng sàn sau khi DROP cột PII (tên/SĐT/địa chỉ người mua, ghi chú); order_id → order_id_hash",
+      "class": "do",
+      "subjects": "Người mua trên sàn",
+      "purpose": "Đối soát doanh thu, cảnh báo giá/tồn",
+      "storage": "Bảng `market_snapshots`, `market_rows`, `market_alerts`",
+      "retention": "Không giới hạn — GAP",
+      "recipients": "Không gửi ra ngoài (file do người tải từ Seller Center)",
+      "cross_border": false,
+      "safeguards": [
+        "Allowlist cột — cột PII bị bỏ ngay khi đọc",
+        "`order_id_hash`",
+        "Lỗi chỉ nêu số dòng/tên cột, không giá trị ô"
+      ],
+      "legal_basis": "Hợp đồng mua bán (thực hiện đơn) — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Chưa có hạn lưu cho dữ liệu đơn sàn"
+      ]
+    },
+    {
+      "id": "DF-12",
+      "name": "Bản tin sức khỏe hệ thống",
+      "modules": [
+        "scripts/health_bulletin.py"
+      ],
+      "data": "Chỉ số tổng hợp vận hành (job, eval, chi phí, số mục) — không có dữ liệu cá nhân",
+      "class": "xanh",
+      "subjects": "Không có",
+      "purpose": "Giám sát vận hành",
+      "storage": "`data/reports/`",
+      "retention": "Không giới hạn (file báo cáo)",
+      "recipients": "Khi `--notify`: máy chủ SMTP cấu hình (email) hoặc Telegram (api.telegram.org — nước ngoài)",
+      "cross_border": true,
+      "safeguards": [
+        "Mặc định KHÔNG gửi — cần `--notify` + env kênh",
+        "Chỉ số tổng hợp, không nội dung chat"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân",
+      "gaps": []
+    },
+    {
+      "id": "DF-13",
+      "name": "Crawl website công khai của công ty",
+      "modules": [
+        "crawler/collect.py",
+        "crawler/sources.py"
+      ],
+      "data": "Trang public (sản phẩm, bài viết) — không thu dữ liệu cá nhân",
+      "class": "xanh",
+      "subjects": "Không có",
+      "purpose": "Xây KB public cho chatbot",
+      "storage": "`data/*.jsonl`",
+      "retention": "Ghi đè khi crawl lại",
+      "recipients": "Chỉ GET tới samsamngoclinh.com, samsam.net.vn — không gửi dữ liệu cá nhân",
+      "cross_border": false,
+      "safeguards": [
+        "Delay ≥1s/request, chỉ trang public"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân",
+      "gaps": []
+    },
+    {
+      "id": "DF-14",
+      "name": "Nhật ký chi phí LLM (llm_usage)",
+      "modules": [
+        "pipelines/llm_gateway.py"
+      ],
+      "data": "agent_id, model, số token, chi phí ước tính, lỗi đã mask (≤300 ký tự) — không lưu prompt/response",
+      "class": "xanh",
+      "subjects": "Không có",
+      "purpose": "Kiểm soát chi phí, trần tháng",
+      "storage": "Bảng `llm_usage`",
+      "retention": "Không giới hạn (metadata)",
+      "recipients": "Nội bộ",
+      "cross_border": false,
+      "safeguards": [
+        "Không lưu nội dung; lỗi qua `_mask_pii`"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân",
+      "gaps": []
+    },
+    {
+      "id": "DF-15",
+      "name": "Sao lưu và diễn tập khôi phục DB",
+      "modules": [
+        "scripts/db_backup.py",
+        "scripts/db_restore_drill.py"
+      ],
+      "data": "Toàn bộ DB (gồm bảng lớp Đỏ: leads, orders...)",
+      "class": "do",
+      "subjects": "Mọi chủ thể có trong DB",
+      "purpose": "An toàn dữ liệu, khôi phục sự cố",
+      "storage": "BACKUP_DIR ngoài repo; offsite `dir:` (ổ local/mạng nội bộ)",
+      "retention": "Giữ BACKUP_KEEP (mặc định 7) bản mới nhất",
+      "recipients": "Nội bộ; offsite `s3://` chưa bật (external-dep — script exit 3, không gọi mạng)",
+      "cross_border": false,
+      "safeguards": [
+        "Mã hóa khi có BACKUP_PASSPHRASE_FILE",
+        "sha256 manifest",
+        "Diễn tập khôi phục vào DB tạm"
+      ],
+      "legal_basis": "Nghĩa vụ bảo đảm an toàn dữ liệu — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Mã hóa backup là tùy chọn — chưa bắt buộc",
+        "Nếu bật offsite cloud nước ngoài phải bổ sung TIA"
+      ]
+    },
+    {
+      "id": "DF-16",
+      "name": "Thu tin thị trường tầng A/B (intel — v7.0)",
+      "modules": [
+        "crawler/intel.py",
+        "scripts/intel_bulletin.py"
+      ],
+      "data": "Tiêu đề + trích ≤300 ký tự + link tin RSS/Atom công khai (đã che SĐT/email); có thể nhắc tên người trong tin báo chí",
+      "class": "xanh",
+      "subjects": "Người được nhắc tên trong tin báo chí công khai (nếu có)",
+      "purpose": "Tình báo thị trường: tin về sâm, TPBVSK, đồ ăn giới trẻ, quảng cáo, đối thủ",
+      "storage": "Bảng `intel_items` (không lưu toàn văn)",
+      "retention": "Chưa có hạn lưu/purge — GAP",
+      "recipients": "Chỉ GET tới nguồn RSS tầng A/B trong `data/intel_sources.json`; tóm tắt LLM (mặc định TẮT) qua gateway → OpenRouter (Mỹ)",
+      "cross_border": true,
+      "safeguards": [
+        "robots.txt + delay ≥1s/host, chặn cứng sàn/MXH kể cả khi redirect",
+        "Chỉ tiêu đề + trích ≤300 ký tự, `_mask_pii` trước khi lưu",
+        "LLM tóm tắt chỉ chạy khi `llm.enabled` + `--llm`, qua gateway + guardrail",
+        "Bản tin v7.1 (`scripts/intel_bulletin.py --llm`): tóm tắt theo chủ đề CHỈ từ tiêu đề + trích đã lưu (≤300 ký tự/tin, bỏ link, ≤10 tin), cùng cờ `llm.enabled` (mặc định TẮT) + guardrail; bản tin là file nội bộ, không gửi"
+      ],
+      "legal_basis": "Thông tin công khai; nếu bật LLM thì cần Pháp chế xác nhận — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Chưa che họ tên người trong tiêu đề/trích tin (NER)",
+        "Chưa có hạn lưu/purge `intel_items`"
+      ]
+    },
+    {
+      "id": "DF-17",
+      "name": "Nghiên cứu giả lập persona (v7.3)",
+      "modules": [
+        "scripts/persona_sim.py"
+      ],
+      "data": "Persona TỔNG HỢP (không dữ liệu khách thật), phương án sản phẩm/thông điệp, điểm số model",
+      "class": "xanh",
+      "subjects": "Không có — persona tổng hợp, validator chặn key PII/SĐT/email",
+      "purpose": "Loại bớt phương án truyền thông yếu trước khi thử thật",
+      "storage": "Bảng `sim_runs` (không lưu văn bản LLM thô, không PII)",
+      "retention": "Không giới hạn — lịch sử kiểm toán model/prompt/seed",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider qua gateway (agent `persona_sim`)",
+      "cross_border": true,
+      "safeguards": [
+        "Cổng DPIA: `dpia_signed` false → từ chối chạy thật (exit 2, 0 lời gọi LLM)",
+        "Validator đầu vào chặn persona <18 tuổi, key ngoài allowlist, PII",
+        "Mọi phương án qua guardrail trước khi gửi model"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân thật; chạy sau khi DPIA ký — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": []
+    },
+    {
+      "id": "DF-21",
+      "name": "Nhận xét báo cáo TGĐ qua LLM (cockpit — v8.0, chỉ khi --llm)",
+      "modules": [
+        "agents/ceo_report.py"
+      ],
+      "data": "metric_id + tên chỉ số + chiều tốt + xu hướng (tăng/giảm/không đổi) + nhãn kỳ — KHÔNG số tuyệt đối, KHÔNG PII",
+      "class": "xanh",
+      "subjects": "Không có — số liệu vận hành tổng hợp, không dữ liệu cá nhân",
+      "purpose": "Viết phần nhận xét báo cáo tuần/tháng cho TGĐ bằng placeholder; code điền số",
+      "storage": "Không lưu prompt/response (llm_usage chỉ đếm token/chi phí); văn bản đã điền nằm trong file data/reports/ceo-<kỳ>.md (gitignored)",
+      "retention": "Theo file báo cáo local — chưa có hạn lưu riêng",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider qua gateway (agent `cockpit`, trần 0,5 USD/tháng)",
+      "cross_border": true,
+      "safeguards": [
+        "Mặc định TẮT — chỉ chạy khi `python -m agents.ceo_report --llm`",
+        "Prompt chỉ có metric_id/tên/chiều tốt/xu hướng, không số tuyệt đối",
+        "`ground()`: văn bản LLM còn chữ số/%/trăm-nghìn-triệu-tỷ ngoài placeholder → bị loại, dùng nhận xét theo luật; qua guardrail"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": []
+    },
+    {
+      "id": "DF-18",
+      "name": "CRM contact_vault / đồng ý / đại lý (KD-A2)",
+      "modules": [
+        "ingest/crm.py"
+      ],
+      "data": "Tên, SĐT, email, địa chỉ khách (nhập tay qua stdin) + người liên hệ của đại lý + bản ghi đồng ý theo mục đích (cskh/marketing/dai_ly, mã biên bản, phiên bản chính sách) + gán lead theo tỉnh/đại lý",
+      "class": "do",
+      "subjects": "Khách hàng để lại liên hệ, người liên hệ của đại lý",
+      "purpose": "Bán hàng — chăm sóc lead, chuyển lead cho đại lý phụ trách vùng khi khách đồng ý đích danh",
+      "storage": "Bảng `contacts` (PII mã hóa Fernet), `consents` (append-only), `dealers`, `leads` (contact_id/province/dealer_code) — Postgres",
+      "retention": "Không có hạn lưu trong code — GAP (TTL theo mục đích chưa build)",
+      "recipients": "Nội bộ (Sales/Admin); đại lý ĐÍCH DANH khi có consent dai_ly hiện hành — NGƯỜI chuyển tay payload `--handoff`, hệ thống không gửi",
+      "cross_border": false,
+      "safeguards": [
+        "Mã hóa tầng ứng dụng (Fernet) — khóa `CONTACT_VAULT_KEY` chỉ ở env, DB không thấy khóa/plaintext; thiếu khóa → không ghi PII",
+        "Tra trùng SĐT bằng HMAC-SHA256 có khóa (HKDF), không sha256 trần",
+        "DB check chặn plaintext lọt vào cột `*_enc`",
+        "`consents` append-only (trigger) — rút đồng ý = thêm dòng mới",
+        "`can_contact` mặc định False; dai_ly phải đích danh đại lý",
+        "Report không giải mã, không in PII; `agent_action_log` không chứa PII",
+        "Module không có đường gửi ra ngoài (drift-guard egress)"
+      ],
+      "legal_basis": "Đồng ý theo mục đích (bảng `consents`) — nội dung đồng ý CHỜ Pháp chế duyệt",
+      "gaps": [
+        "Chưa có TTL/xóa theo mục đích và theo yêu cầu chủ thể (quyền xóa/truy cập)",
+        "Khóa mã hóa do công ty giữ + quy trình backup khóa tách khỏi backup DB chưa có (mất khóa = mất PII)",
+        "Đồng ý chưa gắn kênh chat (Zalo/web) — chỉ ghi tay qua CLI",
+        "Đại lý ký cam kết xử lý dữ liệu chưa được kiểm trong code (chỉ kiểm consent đích danh)",
+        "Phân quyền DB cho bảng CRM (role sales) chưa cấp — external-dep"
+      ]
+    },
+    {
+      "id": "DF-22",
+      "name": "Nghiệm thu QA — giám khảo LLM của harness (agent_eval, v4.5)",
+      "modules": [
+        "scripts/agent_eval.py"
+      ],
+      "data": "Ca kiểm thử (đề + rubric do dev/công ty soạn) và output của agent bị chấm (vd câu trả lời chatbot trên KB public) — chỉ ca có scorer judge",
+      "class": "xanh",
+      "subjects": "Không có — ca kiểm thử tổng hợp, không dữ liệu khách thật; log FAIL qua `_mask_pii`",
+      "purpose": "Chấm ca lớp mềm khi nghiệm thu agent theo commit (cổng deploy F17.1)",
+      "storage": "Bảng `eval_runs` (số liệu + id ca FAIL; không lưu văn bản output/judge)",
+      "retention": "Không giới hạn — lịch sử nghiệm thu theo commit (kiểm toán deploy)",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider qua gateway (agent `ci_judge`, trần 1 USD/tháng)",
+      "cross_border": true,
+      "safeguards": [
+        "Chỉ qua `pipelines.llm_gateway` agent `ci_judge` — không gọi client LLM trực tiếp (test khóa)",
+        "Model judge phải KHÁC HỌ nhà sản xuất với model agent (allowlist họ; router/alias lạ → từ chối trước mọi lời gọi)",
+        "CI mỗi push (`--deterministic`) chỉ chạy suite luật (guardrail + co_khi + kd_a1 — kd_a1 gateway giả) — 0 lời gọi LLM; hiện chưa suite active nào có ca judge"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân thật (ca kiểm thử tổng hợp) — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep)"
+      ]
+    },
+    {
+      "id": "DF-23",
+      "name": "Đối thủ / Google Trends / MXH kênh sở hữu nhập tay + báo cáo tuần (v7.2)",
+      "modules": [
+        "ingest/intel_import.py",
+        "scripts/intel_weekly.py"
+      ],
+      "data": "Giá/khuyến mãi đối thủ ghi tay, file Google Trends xuất tay, export comment/inbox kênh sở hữu (đã bỏ cột tên/ID, che SĐT/email khi đọc)",
+      "class": "vang",
+      "subjects": "Người bình luận/nhắn tin trên kênh sở hữu của công ty",
+      "purpose": "Nghiên cứu đối thủ, xu hướng, lắng nghe MXH cho báo cáo tuần",
+      "storage": "Bảng `intel_imports`, `competitor_observations`, `trends_weekly`, `trends_related`, `social_mentions` (không trích comment tới khi DPIA ký)",
+      "retention": "Chưa có hạn lưu/purge — GAP",
+      "recipients": "Không gửi ra ngoài mặc định; tóm tắt LLM (`--llm`, mặc định TẮT, không gửi text social) qua gateway → OpenRouter (Mỹ)",
+      "cross_border": true,
+      "safeguards": [
+        "Bỏ cột tên/ID người dùng ngay khi đọc",
+        "Dedup bằng hash có muối `INTEL_HASH_SALT`",
+        "Không lưu trích comment khi `dpia_signed` false",
+        "Tóm tắt qua guardrail"
+      ],
+      "legal_basis": "Lợi ích hợp pháp (kênh sở hữu) — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Chưa có hạn lưu `social_mentions`",
+        "Mapping cột export thật chưa xác minh"
+      ]
+    },
+    {
+      "id": "DF-24",
+      "name": "Guardrail LLM-check phụ + red-team sinh biến thể (v4.2)",
+      "modules": [
+        "pipelines/guardrail_llm.py",
+        "scripts/redteam.py"
+      ],
+      "data": "Nội dung nháp marketing do agent/nhân viên soạn (đã qua `_mask_pii`), câu tấn công tổng hợp",
+      "class": "vang",
+      "subjects": "Không có dữ liệu khách — nháp nội dung marketing",
+      "purpose": "Bắt claim sức khỏe ẩn ý mà luật không bắt; kiểm thử red-team guardrail",
+      "storage": "Không lưu text LLM; kết quả vào guardrail snapshot của `content_drafts`",
+      "retention": "Theo `content_drafts` (hồ sơ duyệt)",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider qua gateway (agent `guardrail_llm`, `redteam`)",
+      "cross_border": true,
+      "safeguards": [
+        "Chỉ chặn THÊM, lỗi → `llm_check_unavailable` chặn",
+        "Mặc định TẮT (env trống)",
+        "Red-team chỉ chạy tay, ≤20 lời gọi, model khác họ"
+      ],
+      "legal_basis": "Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": []
+    },
+    {
+      "id": "DF-19",
+      "name": "Lô hóa đơn điện tử NHÁP — ACC-Invoice (v9.0)",
+      "modules": [
+        "agents/acc_invoice.py"
+      ],
+      "data": "Tên đơn vị mua, MST, địa chỉ, email nhận hóa đơn — CHỈ của đơn có yêu cầu xuất hóa đơn (file yêu cầu kế toán cung cấp); số tiền + tên hàng từ đơn sàn",
+      "class": "do",
+      "subjects": "Người mua yêu cầu xuất hóa đơn (doanh nghiệp/hộ kinh doanh/cá nhân có MST)",
+      "purpose": "Chuẩn bị danh sách hóa đơn để kế toán nhập tay vào phần mềm HĐĐT sau khi lô được duyệt",
+      "storage": "Thông tin người mua CHỈ trong file nháp gitignored `data/reports/hoa-don-nhap/lo-<batch_key>.csv`; DB (`invoice_lines`, `approval_queue`) chỉ hash + số tiền + cờ; không vào log/stdout/payload",
+      "retention": "File nháp chưa có hạn xóa tự động — GAP (external-dep: kế toán chốt hạn + quyền thư mục)",
+      "recipients": "Nội bộ — kế toán; agent KHÔNG gửi, KHÔNG gọi API nhà cung cấp HĐĐT, không ký số",
+      "cross_border": false,
+      "safeguards": [
+        "Payload hàng duyệt chỉ có hash rút gọn + số tiền + `csv_sha256`; test quét chuỗi người mua GIẢ",
+        "`--verify-draft` chỉ pass khi lô đã duyệt và sha256 file khớp",
+        "Module không import thư viện mạng/gateway LLM (test_fin_qa)",
+        "Ô CSV chống formula injection"
+      ],
+      "legal_basis": "Nghĩa vụ lập hóa đơn theo pháp luật thuế — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Retention file nháp + quyền thư mục `data/reports/hoa-don-nhap/` = external-dep",
+        "Nhà cung cấp HĐĐT + format nhập + chữ ký số = external-dep",
+        "Mốc `invoice_trigger` chờ tư vấn thuế chốt (hạn 25/10/2026)"
+      ]
+    },
+    {
+      "id": "DF-20",
+      "name": "Công nợ đại lý + hoa hồng — ACC-AR (v9.0)",
+      "modules": [
+        "agents/acc_ar.py"
+      ],
+      "data": "Mã đại lý (`dealer_code`), loại đại lý, chứng từ công nợ, số tiền, SKU, kênh — KHÔNG tên/SĐT đại lý",
+      "class": "do",
+      "subjects": "Đại lý (doanh nghiệp, hộ kinh doanh, cá nhân)",
+      "purpose": "Tuổi nợ, cảnh báo nợ quá hạn vào bản tin GĐ tài chính, tính hoa hồng NHÁP",
+      "storage": "Bảng `dealer_ar` (insert-only theo sha256 file); bản tin `data/reports/director-finance-<ngày>.md` (gitignored)",
+      "retention": "Chưa đặt hạn — theo hạn lưu chứng từ kế toán (cần chốt)",
+      "recipients": "Nội bộ — kế toán / GĐ tài chính; không gửi thư nhắc nợ, không lệnh chi, không LLM",
+      "cross_border": false,
+      "safeguards": [
+        "Chỉ mã đại lý, header cố định — cột lạ (vd tên) chặn cả file",
+        "Bản tin chỉ in mã đại lý + số tiền, không chi tiết chứng từ",
+        "Hoa hồng là BẢN NHÁP theo chính sách MẪU chưa ký"
+      ],
+      "legal_basis": "Thực hiện hợp đồng đại lý + nghĩa vụ kế toán — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Sổ công nợ thật (MISA) + chính sách hoa hồng đã ký = external-dep",
+        "Nối bảng `dealers` CRM v5.2 khi gộp (khóa `dealer_code`)"
+      ]
+    },
+    {
+      "id": "DF-25",
+      "name": "Đối soát quyết toán sàn — ACC-Recon (v9.0)",
+      "modules": [
+        "ingest/settlement_csv.py",
+        "agents/kd_orders.py"
+      ],
+      "data": "Mã đơn (chỉ lưu hash sha256[:16]) + số tiền đơn/phí sàn/hoàn/thực nhận từ file quyết toán Seller Center; cột tên/SĐT/địa chỉ/username người mua bị bỏ ngay khi đọc",
+      "class": "do",
+      "subjects": "Người mua trên sàn (gián tiếp qua mã đơn đã hash)",
+      "purpose": "Đối soát tiền thực nhận + phí sàn với đơn đã nạp, phát hiện thu sai — chỉ báo cáo, không bút toán",
+      "storage": "Bảng `settlement_rows` + `recon_results` (không cột người mua); file nguồn do kế toán giữ ngoài repo. v10.1 KD-A6 (`agents/kd_orders.py`): đơn sàn → bảng lõi `orders` (id `<kênh>:<order_id_hash>`, không PII người mua) + file đối soát `data/reports/doi-soat-*.csv` (gitignored, chỉ 8 ký tự đầu hash).",
+      "retention": "Chưa đặt hạn — theo hạn lưu chứng từ kế toán (cần kế toán trưởng chốt)",
+      "recipients": "Nội bộ — kế toán / GĐ tài chính đọc `--report`; không gửi ra ngoài, không LLM",
+      "cross_border": false,
+      "safeguards": [
+        "Kiểm toàn file trước khi connect; lỗi chỉ nêu số dòng + tên field, không in giá trị ô",
+        "Cột người mua thuộc `drop` bị bỏ khi đọc; mã đơn chỉ lưu hash",
+        "Báo cáo trỏ dòng bằng `file dòng N`, không in mã đơn/hash"
+      ],
+      "legal_basis": "Nghĩa vụ kế toán/thuế + thực hiện hợp đồng mua bán — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Mapping cột + biểu phí là GIẢ ĐỊNH — chờ file settlement thật ≥2 tuần mỗi sàn",
+        "Hạn lưu `settlement_rows` chưa chốt"
+      ]
+    },
+    {
+      "id": "DF-26",
+      "name": "Rà bài đăng kênh sở hữu từ file xuất tay (v4.3 PC-A4)",
+      "modules": [
+        "agents/ra_kenh.py"
+      ],
+      "data": "Text bài CÔNG KHAI của công ty trên website/fanpage/sàn (url, kênh, ngày đăng, draft_id) do Quản lý MXH xuất tay; kết quả guardrail, mã vi phạm, hạn 24 giờ",
+      "class": "xanh",
+      "subjects": "không — chỉ bài của công ty, không bình luận/người tương tác (cột lạ trong file → từ chối cả file)",
+      "purpose": "Phát hiện bài đang đăng vi phạm luật quảng cáo/lệch bản đã duyệt để Pháp chế ra lệnh gỡ/sửa trong 24 giờ",
+      "storage": "Bảng `channel_posts` + `approval_queue` (lệnh gỡ/sửa, không chép đoạn vi phạm) + `red_alerts` (S1)",
+      "retention": "không giới hạn — GAP (Pháp chế chốt)",
+      "recipients": "nội bộ, không gửi ra ngoài (không LLM, không gọi API kênh)",
+      "cross_border": false,
+      "safeguards": [
+        "File xuất tay kiểm toàn bộ trước khi ghi DB; cột lạ (bình luận, tên người) → từ chối, lỗi không in giá trị ô",
+        "Đoạn trích in ra/báo cáo qua `_mask_pii` (hotline, email trong bài)",
+        "Agent không gỡ/sửa bài, không sửa golden — chỉ đề xuất vào hàng duyệt cho người quyết"
+      ],
+      "legal_basis": "Nội dung công khai của chính công ty, không phải dữ liệu cá nhân — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Thời hạn lưu `channel_posts` chưa chốt",
+        "Quyền đọc kênh qua API thật chưa có — chỉ file xuất tay (external-dep)"
+      ]
+    },
+    {
+      "id": "DF-27",
+      "name": "FP&A tài chính–kế hoạch — giá vốn, P&L, ngân sách ads, chi phí vận hành, dòng tiền (v9.1)",
+      "modules": [
+        "agents/fp_pnl.py",
+        "agents/fp_ads.py",
+        "agents/fp_opscost.py",
+        "agents/fp_cash.py",
+        "agents/fin_director.py"
+      ],
+      "data": "Số liệu tổng hợp theo SKU × kênh × tháng (thực nhận quyết toán, giá vốn, lãi gộp), chi phí AI theo agent (`llm_usage`), chi phí dịch vụ cloud/SaaS nhập tay (mã dịch vụ + số tiền), dự báo dòng tiền theo tuần; tên người lập/duyệt giá vốn (nhân viên) — KHÔNG dữ liệu người mua, KHÔNG tên/SĐT đại lý cá nhân",
+      "class": "vang",
+      "subjects": "Nhân viên lập/duyệt giá vốn (GĐ sản xuất, GĐ tài chính); không có chủ thể là khách hàng",
+      "purpose": "P&L theo SKU/kênh, đề xuất ngân sách quảng cáo theo biên gộp, cảnh báo chi phí vận hành so trần, dòng tiền 13 tuần, bản tin tuần GĐ tài chính",
+      "storage": "Bảng `cogs_versions` (append-only, duyệt qua function), `opex_entries` (insert-only theo sha256 file); báo cáo `data/reports/pnl-<tháng>.md` + `data/reports/director-finance-<ngày>.md` (gitignored); đề xuất/khoản vượt X trong `approval_queue`",
+      "retention": "Chưa đặt hạn — theo hạn lưu chứng từ kế toán (cần chốt)",
+      "recipients": "Nội bộ — GĐ tài chính / TGĐ; không gửi tự động, không LLM, không gọi API quảng cáo/nhà cung cấp",
+      "cross_border": false,
+      "safeguards": [
+        "0 import mạng/LLM (test FIN-QA subprocess `python -I`); mọi text FP&A qua `_mask_pii` không đổi",
+        "Giá vốn: người duyệt ≠ người lập chặn ở DB (function SECURITY DEFINER), bảng append-only",
+        "Đề xuất ads + khoản vượt ngưỡng X là mục chờ NGƯỜI duyệt (risk high, auto_policy không áp); khoản > X chỉ 'được chi' khi vai trò tgd duyệt",
+        "Báo cáo chỉ sku_key/kênh/số tiền — không mã đơn/hash, không tên người lập/duyệt"
+      ],
+      "legal_basis": "Nghĩa vụ kế toán + lợi ích hợp pháp quản trị nội bộ — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Giá vốn thật + người lập/duyệt thật = external-dep (bảng `cogs_versions` trên DB thật để trống)",
+        "Hóa đơn cloud/SaaS thật (thay `opex_MAU.csv`) = external-dep",
+        "Ngưỡng biên, hệ số ngân sách, trần chi phí, ngưỡng X, tỷ giá, chi cố định, độ trễ tiền sàn, số dư đầu kỳ (`data/fpa_config.json`) — GĐ tài chính chốt",
+        "TGĐ ký khoản vượt X + danh sách người/vai trò thật (`data/users.json`)",
+        "Doanh thu đại lý/B2B từ MISA cho P&L kênh offline"
+      ]
+    },
+    {
+      "id": "DF-28",
+      "name": "Hồ sơ tham gia chương trình — viết lại thư đăng ký bằng LLM (v8.3 DA-04, tùy chọn)",
+      "modules": [
+        "agents/da_hoso.py"
+      ],
+      "data": "Tên/đơn vị tổ chức/hạn chương trình công khai (từ `programs`, gốc tin RSS tầng A/B) + tên SKU được phép (food, TPBVSK đã XNQC) — KHÔNG PII, KHÔNG file nội bộ (checklist/câu hỏi Pháp chế)",
+      "class": "xanh",
+      "subjects": "Không có dữ liệu cá nhân — thông tin chương trình công khai và catalog",
+      "purpose": "Soạn NHÁP thư đăng ký tham gia hội chợ/OCOP/xúc tiến cho GĐ dự án duyệt (DA-04)",
+      "storage": "Bản nộp (payload) trong `approval_queue` khối `projects` (`program_application`, sha256 bất biến); nháp + file nội bộ ở `data/reports/` (gitignored)",
+      "retention": "Theo `approval_queue` (hồ sơ duyệt); file nháp `data/reports/` theo dọn báo cáo",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider qua gateway (agent `projects`, cap tháng riêng) — CHỈ khi chạy `--llm` (mặc định TẮT)",
+      "cross_border": true,
+      "safeguards": [
+        "Mặc định TẮT — chỉ khi `--llm`",
+        "Prompt chỉ dữ kiện công khai (không gửi checklist/câu hỏi Pháp chế)",
+        "Thư LLM qua CÙNG cổng `check_publish` + lọc rượu + SKU bị loại; trượt → thư template",
+        "Agent không tự nộp/gửi — bản nộp phải khớp sha256 bản người duyệt (`--verify-submit`)"
+      ],
+      "legal_basis": "Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": []
+    },
+    {
+      "id": "DF-29",
+      "name": "Kênh Messenger (Facebook Page) — nhận tin và trả lời khách (v5.1)",
+      "modules": [
+        "connectors/messenger.py",
+        "connectors/zalo.py",
+        "connectors/channels.py"
+      ],
+      "data": "PSID Messenger thô (trong RAM/khóa lock), nội dung tin nhắn khách (có thể chứa SĐT, tên, địa chỉ, yếu tố sức khỏe), câu trả lời gửi lại",
+      "class": "do",
+      "subjects": "Khách hàng nhắn Fanpage Messenger của công ty",
+      "purpose": "Chăm sóc khách hàng (CSKH) — trả lời câu hỏi sản phẩm qua chatbot, dùng chung pipeline Zalo",
+      "storage": "RAM `_histories` chung Zalo (khóa `messenger:<psid>`); `data/zalo_seen.db` (khóa dedup `msgr:<mid>`); convlog `data/conversations.jsonl` (`_uhash` + `_mask_pii`); `chat_consents` + mục `cskh_handoff` (user_hash có muối, chung Zalo)",
+      "retention": "`_histories`: RAM, LRU, mất khi restart; `zalo_seen.db`: TTL 1 giờ (SEEN_TTL_S) cho mid; convlog 30 ngày (RETAIN_DAYS)",
+      "recipients": "Meta Platforms — graph.facebook.com (Send API, header Bearer page token) — Meta nhận tin khách trực tiếp từ Messenger và câu trả lời từ hệ thống (máy chủ ngoài Việt Nam)",
+      "cross_border": true,
+      "safeguards": [
+        "Chữ ký HMAC `X-Hub-Signature-256` (app secret) bắt buộc — sai/thiếu → 403, không parse; KHÔNG có bypass dev",
+        "DEPLOY tắt → `send_text` không gọi Graph API (chỉ [dry-run]); DEPLOY bật thiếu secret/token/muối → không serve",
+        "`channels.pre_route` trước LLM: rượu → template cố định, sức khỏe → template + chuyển người (không gọi LLM)",
+        "Convlog/stdout chỉ `_uhash` + `_mask_pii` — không in PSID thô; page token ở header, không vào URL/log"
+      ],
+      "legal_basis": "Đồng ý của khách — `chat_consents` (kênh messenger) ghi đồng ý tường minh; cờ `require_consent_for_llm` mặc định TẮT: GAP",
+      "gaps": [
+        "Chưa có Meta app review + page token thật + webhook HTTPS public (external-dep) — kênh CHƯA mở cho khách thật",
+        "DPIA/TIA CHƯA KÝ — phải ký trước khi bật Messenger cho khách thật",
+        "CẦN LUẬT SƯ XÁC NHẬN: vai trò Meta (bên xử lý hay bên nhận độc lập) và căn cứ chuyển dữ liệu ra nước ngoài",
+        "Câu chào + chính sách NHÁP chờ Pháp chế (chung Zalo)"
+      ]
+    },
+    {
+      "id": "DF-30",
+      "name": "Gợi ý trả lời chat sàn Shopee/TikTok — MXH dán tay (v5.1)",
+      "modules": [
+        "connectors/channels.py"
+      ],
+      "data": "Tin nhắn buyer sàn do Quản lý MXH dán vào CLI qua STDIN (có thể chứa SĐT/tên/địa chỉ), câu gợi ý trả lời",
+      "class": "do",
+      "subjects": "Người mua trên Shopee/TikTok Shop nhắn shop",
+      "purpose": "Gợi ý câu trả lời CSKH để nhân viên đọc/sửa rồi DÁN TAY trên Seller Center (không gọi API sàn)",
+      "storage": "Không lưu — CLI in ra màn hình, không ghi DB/convlog; câu hỏi đi gateway ghi `llm_usage` (số liệu, không nội dung)",
+      "retention": "Không lưu nội dung",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider qua gateway (agent `chatbot`, `_mask_pii` + ZDR) — chỉ khi câu không bị chặn trước LLM; sàn KHÔNG nhận gì từ hệ thống (người dán)",
+      "cross_border": true,
+      "safeguards": [
+        "`pre_route`: rượu/sức khỏe → template kênh sàn, không gọi LLM",
+        "Lọc chính sách sàn `san_violations` (url/domain/SĐT/zalo/facebook/địa chỉ cửa hàng) — vi phạm → thay CẢ câu bằng câu cố định",
+        "Tin buyer nhận qua STDIN (không argv/shell history), không in lại tin thô",
+        "Không gọi API sàn, không ghi DB — nhân viên đọc/sửa trước khi dán"
+      ],
+      "legal_basis": "Chưa có căn cứ `staff_assist_dpia_v1` cho gợi ý LLM trên tin buyer sàn: GAP",
+      "gaps": [
+        "Chưa có căn cứ xử lý `staff_assist_dpia_v1` (F03b bước 3) — CẦN LUẬT SƯ XÁC NHẬN trước khi dùng thường xuyên",
+        "Chưa có trần lượt dán/ngày + thống kê (someday)"
+      ]
+    },
+    {
+      "id": "DF-31",
+      "name": "Rà SEO website công ty (v6.5)",
+      "modules": [
+        "agents/seo_web.py"
+      ],
+      "data": "HTML công khai các trang của chính website công ty (title, meta description, H1, thẻ img/alt, link nội bộ, mã HTTP) + dữ liệu đã crawl data/*.jsonl; không có dữ liệu cá nhân",
+      "class": "xanh",
+      "subjects": "Không có chủ thể dữ liệu cá nhân (nội dung website của công ty)",
+      "purpose": "Phát hiện lỗi SEO/nội dung vi phạm trên website công ty để người quản trị web sửa TAY sau khi GĐ Marketing duyệt",
+      "storage": "`data/reports/seo-web-<ngày>.md` (gitignore) + 1 mục `approval_queue` khối marketing (`seo_web_fix`, payload chỉ URL + code + đề xuất)",
+      "retention": "Báo cáo ghi đè theo ngày; mục hàng duyệt theo vòng đời approval_queue",
+      "recipients": "website của chính công ty (GET qua collector, robots + ≥1s)",
+      "cross_border": false,
+      "safeguards": [
+        "Mặc định `--from-crawl` 0 request; `--fetch` chỉ GET qua `crawler.intel.Fetcher` (robots.txt, ≥1s/host, ngân sách ≤200, chặn host ngoài `web.own_hosts` kể cả hop redirect)",
+        "Không có đường ghi website (không POST/PUT, không WP REST ghi); không gọi LLM",
+        "Payload hàng duyệt không trích text vi phạm; URL có slug bị guardrail chặn → mã băm"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân",
+      "gaps": []
+    },
+    {
+      "id": "DF-32",
+      "name": "Connector API sàn chỉ đọc (ingest/market_api.py)",
+      "modules": [
+        "ingest/market_api.py"
+      ],
+      "data": "Gửi đi: thông tin xác thực app (partner_id/app_key, access token, chữ ký HMAC) + tham số truy vấn (offset/cursor, khoảng thời gian, danh sách mã sản phẩm/mã đơn) — không dữ liệu cá nhân. Nhận về: listing (mã/tên sản phẩm, SKU, giá, tồn, trạng thái) và đơn (mã đơn, trạng thái, dòng hàng) — response đơn CÓ THỂ chứa PII người mua (tên/SĐT/địa chỉ người nhận) chỉ nằm trong RAM của lời gọi và bị bỏ NGAY: chỉ trích field allowlist như market_csv, mã đơn → order_id_hash",
+      "class": "do",
+      "subjects": "Người mua trên Shopee/TikTok Shop (dữ liệu đơn)",
+      "purpose": "Đối soát listing/giá với golden + cảnh báo rượu/giá lệch (v3.3) mà không cần MXH xuất file tay",
+      "storage": "Bảng `market_snapshots` (file_name `api:<kênh>:<loại>:<giờ>`), `market_rows` (chỉ field allowlist, `order_id_hash`), `market_alerts` — cùng staging v3.3",
+      "retention": "Không giới hạn — GAP (cùng luồng nạp file sàn v3.3)",
+      "recipients": "Shopee Open Platform (partner.shopeemobile.com) / TikTok Shop API (open-api.tiktokglobalshop.com) — chỉ endpoint ĐỌC; hệ thống chỉ GỬI thông tin xác thực + tham số truy vấn, KHÔNG gửi dữ liệu cá nhân ra ngoài (dữ liệu đơn đi CHIỀU VỀ từ sàn, sàn vốn đang giữ)",
+      "cross_border": false,
+      "safeguards": [
+        "Allowlist cứng (kênh, method, path) endpoint đọc — ngoài allowlist từ chối TRƯỚC khi request (test server giả đếm 0)",
+        "Không theo redirect (3xx = lỗi), base URL chỉ https hoặc localhost (server giả), trần response 10MB + MAX_PAGES",
+        "Key/token chỉ ở env — thiếu → exit 2, 0 request; lỗi không in body/URL/token",
+        "PII người mua bỏ ngay trong RAM — row chỉ field allowlist, mã đơn hash; đơn shopee chỉ xin item_list"
+      ],
+      "legal_basis": "Hợp đồng mua bán (thực hiện đơn) — CẦN LUẬT SƯ XÁC NHẬN (cùng luồng nạp file sàn v3.3)",
+      "gaps": [
+        "Chữ ký/endpoint/field theo tài liệu công khai — CHƯA xác minh với sandbox sàn (external-dep: app key + sandbox)",
+        "Chưa có cơ chế refresh token sàn (token hết hạn → exit lỗi, người xoay token)",
+        "Chưa có hạn lưu cho dữ liệu đơn sàn (cùng luồng nạp file sàn v3.3)"
+      ]
+    },
+    {
+      "id": "DF-33",
+      "name": "Social listening nhà cung cấp (ingest/social_vendor.py)",
+      "modules": [
+        "ingest/social_vendor.py"
+      ],
+      "data": "File export của nhà cung cấp social listening: thời gian, nền tảng, nội dung bài/bình luận CÔNG KHAI (che SĐT/email ngay khi đọc); cột định danh tác giả (tên, link profile, avatar, email, SĐT, URL bài, số follower) bị BỎ ngay khi đọc; mã tin/ID tác giả chỉ vào hash dedup có muối",
+      "class": "vang",
+      "subjects": "Người đăng công khai trên MXH/diễn đàn/báo (bên thứ ba, không phải khách đã đồng ý)",
+      "purpose": "Theo dõi thảo luận thị trường về sâm/thương hiệu (nhãn khen/chê/hỏi giá/hỏi sức khỏe/rượu) — chỉ đếm, không liên hệ người đăng",
+      "storage": "Bảng `social_mentions_vendor` (không cột định danh tác giả; `excerpt` CHỈ khi DPIA đã ký và tin không nhạy cảm) + meta file ở `intel_imports` (channel `vendor`)",
+      "retention": "Chưa có hạn lưu — GAP",
+      "recipients": "Không gửi ra ngoài (file do nhà cung cấp bàn giao, nạp tay; module không request mạng)",
+      "cross_border": false,
+      "safeguards": [
+        "Cổng TGĐ fail-closed: `vendor_approved_by_tgd` phải đúng true + `approval_ref` — chưa duyệt → exit 2, không đọc file, không connect",
+        "Bỏ cột định danh tác giả ngay khi đọc; cột lạ → chặn cả file",
+        "`msg_hash` sha256 có muối `INTEL_HASH_SALT`; nhãn theo luật (không LLM)",
+        "Bảng riêng — không trộn vào `social_mentions` kênh sở hữu"
+      ],
+      "legal_basis": "Lợi ích hợp pháp (nghiên cứu thị trường trên dữ liệu công khai) — CẦN LUẬT SƯ XÁC NHẬN; chưa có DPA với nhà cung cấp: GAP",
+      "gaps": [
+        "Chưa có hợp đồng + DPA với nhà cung cấp và quyết định TGĐ duyệt (external-dep)",
+        "Chưa xác minh nguồn thu thập hợp pháp của vendor (điều khoản nền tảng, thông báo chủ thể)",
+        "Chưa có hạn lưu `social_mentions_vendor`",
+        "DPIA chưa ký — `excerpt` đang tắt"
+      ]
+    },
+    {
+      "id": "DF-34",
+      "name": "Review sàn + bình luận kênh sở hữu → nháp trả lời UGC + xin phép/tái sử dụng UGC (MKT-07, v6.4)",
+      "modules": [
+        "agents/mkt_ugc.py"
+      ],
+      "data": "File review sàn Shopee/TikTok xuất tay (mã đánh giá, số sao, nội dung đánh giá — có thể chứa SĐT/email/tên/yếu tố sức khỏe; cột người mua/ảnh/mã đơn bỏ NGAY khi đọc); nhãn `social_mentions` v7.2 (không text khi DPIA chưa ký); contact_id + trạng thái consent `marketing` khi đề nghị tái sử dụng",
+      "class": "do",
+      "subjects": "Người mua để lại đánh giá trên sàn; khách bình luận/nhắn Fanpage/Zalo OA/TikTok của công ty; liên hệ trong `contacts` đồng ý cho dùng lại UGC",
+      "purpose": "Soạn ĐỀ XUẤT trả lời review/bình luận (template, không LLM) và nháp tin xin phép dùng lại UGC để người phụ trách duyệt rồi đăng/gửi TAY",
+      "storage": "Nội dung review chỉ trong RAM lúc chạy (đã `_mask_pii`) — KHÔNG ghi DB/không in; `approval_queue` mục `ugc_reply`/`ugc_reuse`: lớp, kênh, nguồn (sha12 file + số dòng / `social_mentions#id`), câu đề xuất, contact_id — object_id `ugc-<sha256 có muối INTEL_HASH_SALT>` (không chép nội dung khách)",
+      "retention": "Mục hàng duyệt: theo `approval_queue` (không xóa — append-only trạng thái); nội dung review không lưu",
+      "recipients": "Không gửi ra ngoài — agent không gọi API sàn/MXH, không LLM; người phụ trách đăng/gửi tay trên Seller Center/kênh sở hữu sau duyệt",
+      "cross_border": false,
+      "safeguards": [
+        "Không LLM/mạng (AST test `test_no_ads_api_no_spend`, không thuộc `egress_modules`)",
+        "Cột người mua/ảnh/mã đơn bỏ khi đọc, cột lạ → chặn cả file; `noi_dung` qua `_mask_pii` ngay khi đọc; lỗi chỉ in 'dòng N cột X'",
+        "`no_claim_echo`: câu trả lời không lặp claim/từ khóa sức khỏe khách nói; câu trả lời qua `check_publish`",
+        "Tái sử dụng UGC chỉ khi `crm.can_contact(contact_id, 'marketing')` = granted hiện hành; lớp sức khỏe/rượu luôn chặn (UGC_SENSITIVE)"
+      ],
+      "legal_basis": "Đồng ý `marketing` (v5.2) cho tái sử dụng UGC — phạm vi mục đích chưa được Pháp chế xác nhận: GAP; trả lời review = lợi ích hợp pháp CSKH: CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Pháp chế xác nhận template trả lời UGC (`data/ugc_rules.json` + câu health/alcohol của `data/channels.json`) — CẦN LUẬT SƯ XÁC NHẬN",
+        "Pháp chế xác nhận mục đích consent `marketing` có bao gồm tái sử dụng UGC (ảnh/lời đánh giá) hay cần mục đích riêng",
+        "Tên cột file review là GIẢ ĐỊNH — đối chiếu 1 file xuất thật từ Seller Center (external-dep)",
+        "DPIA chưa ký → `social_mentions` không có text, đề xuất trả lời chỉ theo nhãn"
+      ]
+    },
+    {
+      "id": "DF-35",
+      "name": "Form B2B yêu cầu báo giá + báo giá KD-A3 (v8.2)",
+      "modules": [
+        "connectors/b2b_form.py",
+        "agents/kd_quote.py",
+        "ingest/crm.py"
+      ],
+      "data": "Tên + loại + tỉnh của TỔ CHỨC, tên/SĐT/email NGƯỜI LIÊN HỆ của tổ chức (vault Fernet), sản phẩm/số lượng/ngày cần hàng, IP người gửi (chỉ băm sha256 in-memory cho rate-limit, không ghi đĩa)",
+      "class": "do",
+      "subjects": "Người liên hệ của doanh nghiệp/khách sạn/đơn vị sự kiện/hiệp hội/cơ quan đặt quà Tết",
+      "purpose": "Nhận yêu cầu báo giá quà Tết B2B; lập báo giá NHÁP cho GĐ bán hàng duyệt rồi NGƯỜI tự gửi (đồng ý mục đích `b2b`)",
+      "storage": "Postgres: `contacts` (tên/SĐT/email MÃ HÓA Fernet, tra trùng HMAC), `consents` (mục đích `b2b`, nguồn `web`, `policy_version` b2b-v0-nhap), `b2b_requests` (insert-only — chỉ `contact_id`/`consent_id`, không PII người); báo giá trong `approval_queue` (KHÔNG tên/SĐT/email người liên hệ) + nháp `data/reports/bao-gia-*` (gitignored)",
+      "retention": "GIẢ ĐỊNH — Pháp chế chốt thời hạn giữ yêu cầu báo giá/người liên hệ; chưa có job xóa theo hạn: GAP",
+      "recipients": "Không — hệ thống không gửi; GĐ bán hàng tự gửi báo giá đã duyệt (`--verify-send` KHỚP sha256)",
+      "cross_border": false,
+      "safeguards": [
+        "Endpoint mặc định TẮT (`B2B_FORM_ENABLED` env tiến trình, .env không bật được), bind 127.0.0.1 mặc định",
+        "Rate-limit 5 lượt/IP/giờ + 60 lượt/giờ toàn form, body ≤ 8 KB, chặn chunked/Content-Type lạ, honeypot — kiểm TRƯỚC khi đọc body/DB",
+        "Không echo input ở trang lỗi; log stdout chỉ mã + hash IP + mã YC; lỗi kết nối/ngoại lệ bất ngờ → stderr chỉ hash IP + tên lớp lỗi (không IP thô/traceback)",
+        "Đồng ý mục đích `b2b` bắt buộc (append-only), PII chỉ trong vault mã hóa",
+        "Báo giá do template + code tính (0 LLM, 0 egress), qua `check_publish` + quét PII/rượu trước khi vào hàng duyệt",
+        "Rượu không bao giờ vào form/báo giá/catalog"
+      ],
+      "legal_basis": "Đồng ý của người liên hệ (mục đích `b2b`, câu đồng ý NHÁP b2b-v0-nhap chờ Pháp chế): GAP tới khi Pháp chế chốt câu đồng ý + `policy_version`",
+      "gaps": [
+        "`policy_version` b2b-v0-nhap + câu đồng ý là NHÁP — Pháp chế chốt",
+        "Tên hộ kinh doanh có thể là tên người (cột `org_name` không mã hóa) — kiểm mẫu tay",
+        "Chưa grant role DB hẹp cho form public (chạy DSN chủ sở hữu) — external-dep",
+        "DPIA luồng form chưa ký — KHÔNG bật endpoint trước khi ký",
+        "Chưa có job xóa theo thời hạn lưu (retention)",
+        "Consent web KHÔNG xác minh SĐT (OTP/double opt-in = external-dep): người lạ gõ SĐT người khác tạo được yêu cầu + đồng ý b2b; SĐT trùng contact đã RÚT b2b → bỏ qua 0 ghi (code chặn), contact cũ giữ tên/email trong vault — GĐ bán hàng gọi xác minh danh tính trước khi gửi báo giá"
+      ]
+    },
+    {
+      "id": "DF-36",
+      "name": "Tra cứu khoa học nội bộ SX-A7 (v10.2)",
+      "modules": [
+        "agents/sx_tracuu.py"
+      ],
+      "data": "Câu hỏi tra cứu của nhân viên sản xuất (≤2000 ký tự) + đoạn tài liệu khoa học NỘI BỘ đã được GĐ SX duyệt nạp (`chunks_internal` collection `internal:sx`); không dữ liệu cá nhân (đoạn trích qua `_mask_pii`)",
+      "class": "vang",
+      "subjects": "Không có chủ thể dữ liệu cá nhân (tài liệu khoa học/kỹ thuật); người hỏi là nhân viên nội bộ — không ghi tên",
+      "purpose": "Tra cứu nội bộ tài liệu khoa học có trích nguồn DOI/URL cho bộ phận sản xuất — KHÔNG dùng cho truyền thông, không claim công dụng ra ngoài",
+      "storage": "Tài liệu: Postgres `chunks_internal` (nạp qua `ingest.kb_internal --collection internal:sx --approved-by`); câu trả lời chỉ in stdout / file `data/reports/sx-tracuu-*.md` (gitignored) khi `--out`; module KHÔNG ghi bảng nào",
+      "retention": "Theo vòng đời tài liệu nội bộ trong `chunks_internal` (nạp lại theo doc_sha256); file báo cáo cục bộ — GIẢ ĐỊNH, chủ khối SX chốt",
+      "recipients": "Nhà cung cấp embedding/LLM qua `pipelines.llm_gateway` (agent `sx_tracuu`, cap tháng riêng; LLM chỉ khi `--llm`, mặc định tắt) — không gửi tới khách/kênh ngoài",
+      "cross_border": true,
+      "safeguards": [
+        "Collection `internal:sx` là HẰNG trong module; chatbot khách (`api.rag.answer`) không có tham số collection — test DB `test_public_retrieve_and_answer_never_return_sx`",
+        "Mọi đầu ra mở đầu nhãn \"NỘI BỘ – không dùng cho truyền thông\"; mặc định trích nguyên văn, LLM chỉ khi `--llm` + `guardrail.check` ok",
+        "Không có đường sang bản nháp nội dung/hàng duyệt/chatbot (grep test); câu về rượu → không tra, 0 embed",
+        "Gateway: PII mask + provider routing + kill/cap theo agent"
+      ],
+      "legal_basis": "Lợi ích hợp pháp (nghiên cứu nội bộ, không dữ liệu cá nhân); bản quyền tài liệu khoa học bên ngoài: CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Tài liệu khoa học thật + GĐ SX duyệt nạp (`--approved-by` người thật) — external-dep",
+        "Bản quyền bài báo (PubMed/Semantic Scholar/tạp chí): chỉ nạp tài liệu được phép lưu nội bộ — Pháp chế xác nhận",
+        "Gửi đoạn tài liệu nội bộ qua nhà cung cấp embedding nước ngoài — TIA chưa ký"
+      ]
+    },
+    {
+      "id": "DF-37",
+      "name": "Dự báo thời tiết VT (v10.2)",
+      "modules": [
+        "agents/vt_thoitiet.py"
+      ],
+      "data": "Tọa độ VÙNG trồng đã làm tròn 0,1° (~11 km, không phải tọa độ khoảnh) + số ngày dự báo gửi nhà cung cấp dự báo; dự báo mưa/nhiệt trả về; nhật ký `plot_logs` (chỉ mã khoảnh, ngày, cờ từ `detail`) đọc nội bộ",
+      "class": "xanh",
+      "subjects": "Không có chủ thể dữ liệu cá nhân (tọa độ vùng làm tròn; digest không chứa người ghi nhật ký)",
+      "purpose": "Cảnh báo mưa lớn/rét và dấu hiệu sâu bệnh theo khoảnh → gợi ý \"cần đi kiểm tra\" cho GĐ vùng trồng",
+      "storage": "Digest `data/reports/vt-canh-bao-*.md` (gitignored) + mục `approval_queue` `weather_digest` khối farming khi `--submit`; dự báo không lưu DB",
+      "retention": "Mục hàng duyệt theo `approval_queue` (append-only trạng thái); file digest cục bộ — GIẢ ĐỊNH, GĐ vùng trồng chốt",
+      "recipients": "Nhà cung cấp dự báo (Open-Meteo hoặc API có phí) — CHỈ khi `fetch.enabled = true` (mặc định false), GET qua `crawler.intel.Fetcher` (robots, ≥1s/host, chặn sàn/MXH/tầng C); mặc định nhập tay CSV, không gửi gì",
+      "cross_border": true,
+      "safeguards": [
+        "Tọa độ cấu hình bắt buộc đã làm tròn 0,1° (sai → exit 1); `[req]` chỉ chứa tọa độ vùng làm tròn (test parse query)",
+        "Digest không chứa lat/lon/`location`/`area_m2`/người ghi; không chẩn đoán/liều lượng/hoạt chất; qua `guardrail.check` trước khi ghi",
+        "Cờ sâu bệnh CHỈ quét `detail` (`garden_director.log_flags`)",
+        "0 LLM; không gửi/đăng gì; GĐ duyệt mục = đã xem"
+      ],
+      "legal_basis": "Lợi ích hợp pháp (vận hành vùng trồng, không dữ liệu cá nhân); điều khoản thương mại nhà cung cấp dự báo: CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Điều khoản thương mại Open-Meteo / API thời tiết có phí chưa xác minh — giữ `fetch.enabled=false`",
+        "Ngưỡng mưa/nhiệt + gán khoảnh→vùng GIẢ ĐỊNH — GĐ vùng trồng chốt",
+        "Người duyệt thật khối farming (`approvers: []`) — external-dep"
+      ]
+    },
+    {
+      "id": "DF-38",
+      "name": "Chăm sóc lại + xin đánh giá khách kênh sở hữu → nháp tin vào hàng duyệt (KD-A7, v10.1)",
+      "modules": [
+        "agents/kd_care.py",
+        "ingest/crm.py"
+      ],
+      "data": "contact_id + trạng thái đồng ý theo mục đích (`marketing` nhắc mua lại, `cskh` xin đánh giá) + lần mua kênh sở hữu do NGƯỜI ghi (`care_purchases`: kênh web/zalo/b2b/showroom, SKU, ngày mua/giao, mã nội bộ) — KHÔNG SĐT/tên/email/địa chỉ (PII chỉ trong vault `contacts` mã hóa, agent không giải mã)",
+      "class": "do",
+      "subjects": "Khách mua qua kênh sở hữu (web/Zalo/B2B/showroom) có trong `contacts`",
+      "purpose": "Lập NHÁP tin nhắc mua lại / xin đánh giá CHỈ cho khách có đồng ý đúng mục đích để GĐ bán hàng duyệt rồi NGƯỜI gửi tay",
+      "storage": "Postgres: `care_purchases` (không cột PII), `approval_queue` mục `care_rebuy`/`care_review` (payload = tin template + `contact_id`/`muc_dich`/`gui_luc` — không PII/ciphertext/HMAC), `agent_action_log` (`care_purchase_record`)",
+      "retention": "GIẢ ĐỊNH — Pháp chế chốt thời hạn giữ lần mua/thời hạn liên hệ; chưa có job xóa theo hạn: GAP",
+      "recipients": "Không — hệ thống không gửi (không LLM, không mạng); người gửi tay qua Zalo OA/ZNS sau khi duyệt + `--verify-send` (sha bản duyệt + đồng ý còn hiệu lực + khung giờ)",
+      "cross_border": false,
+      "safeguards": [
+        "Khách sàn bị CHẶN ở DB (CHECK channel) — chỉ chăm sóc bằng công cụ của sàn",
+        "`crm.can_contact` mặc định False; rút đồng ý → lần chạy kế 0 mục, `--verify-send` trả `consent`",
+        "Trần 2 tin marketing/khách/tháng + khung giờ 08:00–20:00 (GIẢ ĐỊNH `data/care_rules.json`)",
+        "Tin = template cố định (0 LLM), qua `check_publish` (nhãn QC, rượu, XNQC, khuyến cáo); chỉ SKU trong `v_promotable`",
+        "Module không đọc vault (không `load_vault_key`/`unseal`), không thuộc `egress_modules`"
+      ],
+      "legal_basis": "Đồng ý của khách theo mục đích (`marketing`/`cskh`, v5.2) — câu đồng ý + thời hạn liên hệ chưa được Pháp chế chốt: GAP",
+      "gaps": [
+        "Consent thật của khách + thời hạn liên hệ do Pháp chế chốt (test dùng consent fixture)",
+        "Mẫu tin, khung giờ, trần tin/tháng là GIẢ ĐỊNH — GĐ KD/Pháp chế chốt",
+        "Chưa grant role DB hẹp cho `care_purchases` (CLI chạy DSN chủ sở hữu) — someday",
+        "Chưa có job xóa lần mua/liên hệ theo thời hạn (retention)"
+      ]
+    },
+    {
+      "id": "DF-39",
+      "name": "Kịch bản livestream (KD-A9) + gói video YouTube dài (MKT-12) qua LLM gateway (v10.1)",
+      "modules": [
+        "agents/kd_live.py",
+        "agents/mkt_youtube.py",
+        "pipelines/llm_gateway.py"
+      ],
+      "data": "Brief do nhân viên nhập (quy trình: không đưa dữ liệu khách), tên SKU golden + mã SKU trong giỏ (KHÔNG giá — giá do code điền sau), lời dẫn/kịch bản nháp; KHÔNG dữ liệu khách",
+      "class": "vang",
+      "subjects": "Nhân viên KD/MKT lập brief; người duyệt (tên trong approvals)",
+      "purpose": "Soạn NHÁP lời dẫn livestream + hỏi-đáp bình luận, gói video YouTube dài (tiêu đề/mô tả/chương/phụ đề) chờ người duyệt",
+      "storage": "`content_drafts` (pending, `livestream_script`/`video`, kênh `youtube`), `agent_action_log` (`draft_create`, `youtube_short_render`); Shorts xem trước mp4 + sidecar ở VIDEO_OUT_DIR (`data/video_assets/`, gitignored, không metadata/không âm thanh)",
+      "retention": "Không giới hạn — hồ sơ duyệt append-only (bằng chứng tuân thủ quảng cáo); file Shorts xem trước xóa tay",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider (Mỹ) — chỉ brief + tên SKU, qua `_mask_pii` của gateway",
+      "cross_border": true,
+      "safeguards": [
+        "`_mask_pii` + kill-switch + trần chi phí tháng (`kd_livestream`, `mkt_youtube`) ở gateway",
+        "Từ chối TRƯỚC LLM: rượu, SKU không promotable, quá trần phiên/tuần, brief có từ cấm",
+        "Câu LLM chạm số/giá/rượu bị bỏ; giá do code từ `v_promotable`; câu hỏi sức khỏe → câu trả lời mẫu",
+        "`check_publish` toàn văn + 1 lượt sửa → vi phạm thì không lưu; YouTube `privacyStatus` cố định private, không có đường đăng"
+      ],
+      "legal_basis": "Lợi ích hợp pháp/hợp đồng lao động với nhân viên — CẦN LUẬT SƯ XÁC NHẬN",
+      "gaps": [
+        "Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email)",
+        "Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday)"
+      ]
+    },
+    {
+      "id": "DF-40",
+      "name": "Concept brief R&D SX-A6 (v11.0)",
+      "modules": [
+        "agents/sx_rnd.py"
+      ],
+      "data": "Mô tả concept từ `data/rd_concepts.json` (hương vị/nghi thức dùng — GIẢ ĐỊNH, không dữ liệu cá nhân) gửi LLM khi `--llm`; tín hiệu = URL + ngày tin public trong `intel_items` (không gửi LLM, không chép tiêu đề/đoạn trích vào brief); KHÔNG dữ liệu khách/nhân viên",
+      "class": "xanh",
+      "subjects": "Không có chủ thể dữ liệu cá nhân (danh mục sản phẩm + tin báo chí public)",
+      "purpose": "Soạn concept brief NỘI BỘ sản phẩm phái sinh (không nêu công dụng) để GĐ sản xuất chọn concept thử mẫu",
+      "storage": "File `data/reports/rd-brief-<id>-<ngày>.md` (gitignored) + `approval_queue` mục `rd_concept_brief` khối production (pending, risk high); `llm_usage` khi `--llm`",
+      "retention": "Không giới hạn — hồ sơ duyệt append-only; file báo cáo xóa tay",
+      "recipients": "OpenRouter (Mỹ) → whitelist provider (Mỹ) — CHỈ khi `--llm` (mặc định TẮT), chỉ đoạn hương vị/nghi thức của concept, qua `_mask_pii` của gateway",
+      "cross_border": true,
+      "safeguards": [
+        "`--llm` mặc định TẮT; kill-switch + trần chi phí tháng `sx_rnd` (1.0 USD ƯỚC TÍNH) ở gateway",
+        "Cổng `claim_free`: `check_publish(internal_note)` + 0 động từ claim + không rượu — lỗi thì về template hoặc không ghi/không nộp",
+        "Concept/tín hiệu nhắc rượu bị loại; brief gắn nhãn NỘI BỘ, không có đường công bố ra ngoài"
+      ],
+      "legal_basis": "Không xử lý dữ liệu cá nhân — không cần căn cứ NĐ 13/2023; chuyển dữ liệu sản phẩm ra nước ngoài theo hợp đồng nhà cung cấp LLM",
+      "gaps": [
+        "R&D thật, mock-up ảnh, xếp hạng persona = external-dep (chưa làm)"
+      ]
+    }
+  ]
+}

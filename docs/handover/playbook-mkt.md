@@ -74,6 +74,37 @@ python -m agents.report                        # sinh báo cáo 7 ngày
 
 (Flag đầy đủ: `--days N` cho calendar/report; 1 lệnh chỉ làm 1 thao tác.)
 
+## Lịch tuần + bản tin + duyệt brief (v6.0)
+
+- **Lịch tuần:** `python -m pipelines.mkt_calendar --weeks 4` in lịch
+  chiến dịch ĐỀ XUẤT (GIẢ ĐỊNH tới khi GĐ Marketing chốt): mỗi ô kênh ×
+  định dạng, SKU được phép, hạn brief/nháp/duyệt/đăng (giờ VN). Viết bài
+  đúng hạn "nháp" để Pháp chế kịp duyệt trước hạn "duyệt". Ô ghi "câu
+  chuyện thương hiệu — không nêu tên SKU" = không được nêu tên sản phẩm.
+  Muốn lịch trên điện thoại: thêm `--ics` rồi import file `.ics`.
+- **Bản tin thứ Hai:** người vận hành chạy `python -m agents.mkt_director
+  --bulletin` → `data/reports/mkt-week-<thứ Hai>.md`: chiến dịch 28 ngày
+  tới, việc trễ hạn, tải duyệt so với quota, SKU bị chặn kênh.
+- **Duyệt brief:** brief chiến dịch do agent đẩy vào hàng duyệt chung ở
+  trạng thái chờ — chỉ **GĐ Marketing** duyệt (`python -m
+  pipelines.approval_queue --approve ID --by "<tên>"`). Agent không duyệt,
+  không đăng, không chi tiền; cảnh báo "VƯỢT QUOTA" chỉ là đề xuất dời.
+
+## Đo lường + SEO hằng tuần (v6.5)
+
+- **Thứ Hai — đọc mục 5 "Marketing"** của báo cáo định kỳ (`python -m
+  agents.report --days 7`): tỷ lệ nháp bị trả lại theo kênh × loại, thời gian
+  duyệt trung vị/p90, vi phạm guardrail theo code (code nào lặp nhiều = viết
+  lại brief/template), hiệu quả kênh tuần trước. Số `(MẪU)` là dữ liệu mẫu;
+  Search Console/GA4 chờ bàn giao.
+- **Rà SEO website** (`python -m agents.seo_web`, thêm `--submit` để gửi đề
+  xuất vào hàng duyệt): tiêu đề trùng/dài, sản phẩm thiếu ảnh, trang có câu
+  vi phạm luật. GĐ Marketing duyệt → người quản trị web sửa TAY trên CMS.
+- **Gợi ý tiêu đề sàn** (`python -m agents.seo_san --run --dry-run` xem
+  trước, bỏ `--dry-run` để tạo nháp listing chờ duyệt): từ khóa lấy từ
+  Google Trends xuất tay; từ khóa rượu, "Ngọc Linh", từ cấm tự bị loại. Sau
+  duyệt, sửa TAY trên Seller Center.
+
 ## Khi nào gọi người khác
 
 | Tình huống | Gọi ai |

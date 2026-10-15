@@ -1,0 +1,186 @@
+=== v4.0-director-framework gate — 2026-10-12T03:08:10+07:00 — worktree D:/code/samsam-w40 (DB samsam_w40) ===
+--- baseline DB thật TRƯỚC gate ---
+approvals 0
+approval_queue 0
+auto_policies 0
+decisions 0
+channel_snapshots 0
+red_alerts 0
+agent_action_log 0
+--- grep alter/drop table (chỉ dòng add column if not exists CŨ) ---
+498:alter table chunks add column if not exists source text;  -- products.jsonl|articles.jsonl|about.jsonl|news.jsonl|catalog
+499:alter table chunks add column if not exists doc_sha256 text;  -- hash (model, source, title, url, lang, chunks sau lọc)
+500:alter table chunks add column if not exists doc_version int not null default 1;
+501:alter table chunks add column if not exists ingested_at timestamptz not null default now();
+557:alter table content_drafts add column if not exists created_by text;
+--- apply_schema --roles lần 1 ---
+[done] schema applied — 29 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_snapshots, chunks, chunks_internal, claims_approved, content_drafts, decisions, document_fields, documents, eval_runs, golden_discrepancies, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, red_alerts, sku_map, sku_master
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+exit=0
+--- apply_schema --roles lần 2 ---
+[done] schema applied — 29 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_snapshots, chunks, chunks_internal, claims_approved, content_drafts, decisions, document_fields, documents, eval_runs, golden_discrepancies, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, red_alerts, sku_map, sku_master
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+exit=0
+--- targeted lần 1 ---
+........................................................................ [ 51%]
+........................................................................ [ 77%]
+.............................................................            [100%]
+277 passed in 46.84s
+exit=0
+--- targeted lần 2 ---
+........................................................................ [ 51%]
+........................................................................ [ 77%]
+.............................................................            [100%]
+277 passed in 45.72s
+exit=0
+--- targeted lần 3 ---
+........................................................................ [ 51%]
+........................................................................ [ 77%]
+.............................................................            [100%]
+277 passed in 45.15s
+exit=0
+
+=== gate CLI/lint — 2026-10-12T03:23:19+07:00 ===
+--- ruff check . ---
+All checks passed!
+exit=0
+--- py_compile ---
+exit=0
+--- python -m pipelines.director --all --dry-run ---
+[ok] ceo — Tổng giám đốc + Hội đồng thành viên + Ban kiểm soát nội bộ · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] sales — Giám đốc bán hàng + Sales (Phòng kinh doanh TMĐT) · 3 loại việc · vai trò duyệt gd_ban_hang · người duyệt chưa cấu hình (external-dep)
+[ok] marketing — Giám đốc marketing + Chuyên viên marketing + Chuyên viên SEO · 3 loại việc · vai trò duyệt gd_marketing · người duyệt chưa cấu hình (external-dep)
+[ok] intel — Trung tâm tình báo thị trường (trực thuộc TGĐ, phục vụ Marketing/Sales) · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] finance — Giám đốc tài chính + Phòng kế toán + Phòng tài chính–kế hoạch · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] production — Giám đốc sản xuất + Nghiên cứu và sản xuất + Công nghệ sinh học · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] farming — Giám đốc vùng trồng + Nhân viên vùng trồng · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] projects — Giám đốc dự án + Chuyên viên dự án–xúc tiến đầu tư · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] legal_hr — Pháp chế nhân sự + Chuyên viên pháp chế–hành chính–nhân sự · 3 loại việc · vai trò duyệt phap_che · người duyệt chưa cấu hình (external-dep)
+[ok] mechanical — Trung tâm điện–cơ khí chế tạo máy + Kỹ sư điện–cơ khí · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] data_platform — Hạ tầng dữ liệu & AI (do Quản lý hạ tầng AI vận hành) · 2 loại việc · vai trò duyệt ha_tang,tgd · người duyệt chưa cấu hình (external-dep)
+[done] 11 khối hợp lệ (dry-run, không DB)
+exit=0
+--- python -m pipelines.red_alert --check-routing (kỳ vọng exit 1) ---
+[FAIL] thiếu người nhận độc lập (external-dep) — cảnh báo đỏ vẫn được ghi bảng red_alerts nhưng chưa có ai nhận; Pháp chế xác nhận người nhận rồi điền data/red_alert_routing.json
+exit=1
+--- python -m pipelines.store --verify-log ---
+[ok] chuỗi nguyên vẹn (0 dòng)
+exit=0
+--- python -m pipelines.approval_queue --pending ---
+[pending] hàng duyệt chung trống
+exit=0
+--- python -m pipelines.approval_queue --approve 999999999 --by X (kỳ vọng exit 1) ---
+[warn] không tìm thấy mục #999999999 trong hàng duyệt
+exit=1
+--- python -m pipelines.approval_queue --approve 1 --by X --expire (kỳ vọng exit 2) ---
+python -m pipelines.approval_queue: error: chỉ 1 thao tác mỗi lần — tách lệnh
+exit=2
+--- grep '"freeze"' data/eval/config.json (kỳ vọng rỗng) ---
+grep_exit=1
+--- grep 'cfg["freeze"]' scripts/deploy_gate.py (kỳ vọng rỗng) ---
+grep_exit=1
+--- grep 3 lệnh mới trong AGENTS.md + sop.md ---
+pipelines.approval_queue AGENTS=1 sop=5
+pipelines.director AGENTS=1 sop=2
+pipelines.red_alert AGENTS=1 sop=1
+--- test_report.py số dòng assert: trước (HEAD) / sau ---
+71 / 72
+--- DB thật SAU gate ---
+approvals 0
+approval_queue 0
+auto_policies 0
+decisions 0
+channel_snapshots 0
+red_alerts 0
+--- người thật trong config? (recipients/approvers/digest_recipients) ---
+routing recipients []
+ceo.json [] [] ['tgd']
+data_platform.json [] [] ['ha_tang', 'tgd']
+farming.json [] [] ['tgd']
+finance.json [] [] ['tgd']
+intel.json [] [] ['tgd']
+legal_hr.json [] [] ['phap_che']
+marketing.json [] [] ['gd_marketing']
+mechanical.json [] [] ['tgd']
+production.json [] [] ['tgd']
+projects.json [] [] ['tgd']
+sales.json [] [] ['gd_ban_hang']
+--- git status --short ---
+ M AGENTS.md
+ M DONE.md
+ M agents/report.py
+ M data/eval/config.json
+ M data/freeze_calendar.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/roles.sql
+ M docs/schema.sql
+ M pipelines/freeze.py
+ M scripts/deploy_gate.py
+ M tests/test_agent_eval.py
+ M tests/test_deploy_gate.py
+ M tests/test_freeze.py
+ M tests/test_handover_docs.py
+ M tests/test_report.py
+?? data/directors/
+?? data/red_alert_routing.json
+?? pipelines/approval_queue.py
+?? pipelines/director.py
+?? pipelines/period.py
+?? pipelines/red_alert.py
+?? tests/test_approval_queue.py
+?? tests/test_director.py
+?? tests/test_director_framework.py
+?? tests/test_period.py
+?? tests/test_red_alert.py
+
+=== Phần B — tự rà OWASP Top 10 trên diff (worker self-review, không phải auditor lạ) ===
+A01 Broken Access Control:
+  - agent_writer KHÔNG execute decide_item/override_qa, không UPDATE/DELETE (test DB InsufficientPrivilege) — OK.
+  - app_human (TGĐ/ha_tang) không DELETE/UPDATE/TRUNCATE red_alerts; superuser bị trigger chặn — OK.
+  - [MỞ, tiềm ẩn] auto_approve_item tin risk/qa_status/guardrail do caller ghi lúc enqueue_item: agent giữ DSN
+    agent_writer gọi SQL thẳng có thể khai risk low + qa pass + guardrail ok giả. Hôm nay vô hại (auto_policies RỖNG,
+    fail-closed); phải có nguồn tin cậy trước khi chủ khối bật policy. Ghi chú trong docs/schema.sql cạnh function.
+A03 Injection: mọi SQL bind tham số; không f-string SQL trong code mới — OK.
+A04 Insecure Design: expired không bao giờ approved (không ghi approvals); override_qa không đổi status; content_draft
+  bị CHECK cấm khỏi hàng chung (không bypass approve_draft) — OK.
+A05 Misconfiguration: routing luôn loại tgd/ha_tang kể cả khi file xóa excluded_roles; config hỏng → [] (fail-closed).
+  ĐÃ VÁ: deploy_gate crash traceback khi lịch thiếu kind feature/hotfix (freeze.check ValueError) → nay fail-closed
+  có lý do (test_calendar_missing_kind_fail_closed).
+A08 Integrity: content_sha256 do trigger ép = sha(payload), payload bất biến → re-check guardrail Python rồi decide không
+  có TOCTOU; verify_publish khớp byte-exact — OK.
+A09 Logging: agent_action_log detail chỉ id/sha/kind (test: không key payload); title/detail red_alerts qua _mask_pii;
+  title in CLI/bản tin qua _mask_pii. [THẤP] expire_overdue(p_by) agent gọi được với p_by tùy ý → decided_by có thể
+  ghi tên người khác; cột decisions.db_role (session_user) vẫn lộ login thật — ghi nhận, không vá.
+A02/A06/A07/A10: không áp dụng (không crypto/dep mới/auth mới/HTTP ra ngoài).
+
+===== VÒNG SỬA NGHIỆM THU (8 MINOR) — 2026-10-12 =====
+--- apply_schema --roles #1
+[done] schema applied — 29 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_snapshots, chunks, chunks_internal, claims_approved, content_drafts, decisions, document_fields, documents, eval_runs, golden_discrepancies, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, red_alerts, sku_map, sku_master
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+exit=0
+--- apply_schema --roles #2
+[done] schema applied — 29 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_snapshots, chunks, chunks_internal, claims_approved, content_drafts, decisions, document_fields, documents, eval_runs, golden_discrepancies, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, red_alerts, sku_map, sku_master
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+exit=0
+real DB column privs: agent_writer payload=False title=True; app_human payload=True
+--- targeted 14 file #1
+........................................................................ [ 96%]
+...........                                                              [100%]
+299 passed in 39.20s
+exit=0
+--- targeted 14 file #2
+........................................................................ [ 96%]
+...........                                                              [100%]
+299 passed in 34.02s
+exit=0
+--- targeted 14 file #3
+........................................................................ [ 96%]
+...........                                                              [100%]
+299 passed in 36.94s
+exit=0
+--- mutation probe (sửa tạm file rồi khôi phục, git diff xác nhận): (M1) bỏ 'and a.due_at <= now()' khỏi expire_overdue → FAIL test_expire_never_approves + test_director_submit_and_run_expires; (M2) override_qa về btrim → FAIL test_override_qa_flow; (M3) grant select approval_queue đủ cột cho agent_writer → FAIL test_agent_writer_cannot_decide_or_touch
+py_compile ok
+red_alert --check-routing exit=1 (1 = đúng thiết kế)
+DB that sau gate (count): {'approval_queue': 0, 'decisions': 0, 'red_alerts': 0, 'channel_snapshots': 0, 'auto_policies': 0}

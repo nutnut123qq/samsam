@@ -1,0 +1,430 @@
+{
+ "_doc": "Suite kd_a7 (v10.1 KD-A7 chăm sóc lại + xin đánh giá, WP16). Ca KHÔNG có `text`: đầu vào = lần mua MẪU × đồng ý theo mục đích × SKU promotable × số mục tháng × now. Chấm TẤT ĐỊNH: agents.kd_care.select_items trên luật THẬT data/care_rules.json + golden — 0 DB/mạng/LLM. kind: consent_in, trap_no_consent, trap_san, trap_cap, trap_window, trap_sku_cam (mọi trap_* bắt buộc 100%). frozen=false, labeled_by=null — bộ ca MẪU dev soạn, chờ chủ khối gán nhãn (external-dep); KHÔNG nằm trong required_agents (data/eval/config.json). Sửa ca → tăng version + `python scripts/agent_eval.py --print-hash <agent>`.",
+ "agent": "kd_a7",
+ "version": 1,
+ "cases_sha256": "0d16b033d74448df95d9054aa74f373b970daac65684f97fa357c89af68b3464",
+ "owner_block": "sales",
+ "qa_block": "sales",
+ "qa_agent": "Agent Nghiệm thu (QA/Eval)",
+ "risk": "high",
+ "status": "active",
+ "runner": "kd_a7",
+ "agent_model": "rules",
+ "judge": null,
+ "frozen": false,
+ "labeled_by": null,
+ "frozen_at": null,
+ "threshold": {
+  "min_pass_rate": 1.0,
+  "must_pass_kinds": [
+   "trap_no_consent",
+   "trap_san",
+   "trap_cap",
+   "trap_window",
+   "trap_sku_cam"
+  ]
+ },
+ "prompt_files": [
+  "agents/kd_care.py",
+  "data/care_rules.json",
+  "data/golden_skus.json",
+  "data/guardrail_rules.json",
+  "data/eval/suites/kd_a7.json"
+ ],
+ "cases": [
+  {
+   "id": "a7-01",
+   "kind": "consent_in",
+   "now": "2026-10-14T10:00:00+07:00",
+   "purchases": [
+    {
+     "id": 1,
+     "contact_id": 1,
+     "channel": "web",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "purchased_on": "2026-09-01",
+     "delivered_on": "2026-09-03"
+    }
+   ],
+   "consents": [
+    [
+     1,
+     "marketing"
+    ]
+   ],
+   "promotable": [
+    "mat-ong-sam-120ml-1hu"
+   ],
+   "expect": {
+    "rebuy": [
+     1
+    ],
+    "review": [],
+    "gui_luc": "2026-10-14 10:00"
+   },
+   "source": "MẪU dev v10.1",
+   "scorer": "kd_a7",
+   "label": "dev_draft"
+  },
+  {
+   "id": "a7-02",
+   "kind": "consent_in",
+   "now": "2026-10-14T10:00:00+07:00",
+   "purchases": [
+    {
+     "id": 1,
+     "contact_id": 2,
+     "channel": "web",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "purchased_on": "2026-09-01",
+     "delivered_on": "2026-09-03"
+    }
+   ],
+   "consents": [
+    [
+     2,
+     "cskh"
+    ]
+   ],
+   "promotable": [
+    "mat-ong-sam-120ml-1hu"
+   ],
+   "expect": {
+    "rebuy": [],
+    "review": [
+     1
+    ],
+    "skipped": {
+     "1:rebuy": "consent"
+    }
+   },
+   "source": "MẪU dev v10.1",
+   "scorer": "kd_a7",
+   "label": "dev_draft"
+  },
+  {
+   "id": "a7-03",
+   "kind": "trap_no_consent",
+   "now": "2026-10-14T10:00:00+07:00",
+   "purchases": [
+    {
+     "id": 1,
+     "contact_id": 1,
+     "channel": "web",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "purchased_on": "2026-09-01",
+     "delivered_on": "2026-09-03"
+    }
+   ],
+   "consents": [],
+   "promotable": [
+    "mat-ong-sam-120ml-1hu"
+   ],
+   "expect": {
+    "rebuy": [],
+    "review": [],
+    "skipped": {
+     "1:rebuy": "consent",
+     "1:review": "consent"
+    }
+   },
+   "source": "MẪU dev v10.1",
+   "scorer": "kd_a7",
+   "label": "dev_draft"
+  },
+  {
+   "id": "a7-04",
+   "kind": "trap_no_consent",
+   "now": "2026-10-14T10:00:00+07:00",
+   "purchases": [
+    {
+     "id": 1,
+     "contact_id": 1,
+     "channel": "web",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "purchased_on": "2026-09-01",
+     "delivered_on": "2026-09-03"
+    }
+   ],
+   "consents": [
+    [
+     1,
+     "b2b"
+    ],
+    [
+     1,
+     "dai_ly"
+    ]
+   ],
+   "promotable": [
+    "mat-ong-sam-120ml-1hu"
+   ],
+   "expect": {
+    "rebuy": [],
+    "skipped": {
+     "1:rebuy": "consent"
+    }
+   },
+   "source": "MẪU dev v10.1",
+   "scorer": "kd_a7",
+   "label": "dev_draft"
+  },
+  {
+   "id": "a7-05",
+   "kind": "trap_san",
+   "now": "2026-10-14T10:00:00+07:00",
+   "purchases": [
+    {
+     "id": 1,
+     "contact_id": 1,
+     "channel": "shopee",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "purchased_on": "2026-09-01",
+     "delivered_on": "2026-09-03"
+    },
+    {
+     "id": 2,
+     "contact_id": 1,
+     "channel": "tiktok",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "purchased_on": "2026-09-01",
+     "delivered_on": "2026-09-03"
+    }
+   ],
+   "consents": [
+    [
+     1,
+     "marketing"
+    ],
+    [
+     1,
+     "cskh"
+    ]
+   ],
+   "promotable": [
+    "mat-ong-sam-120ml-1hu"
+   ],
+   "expect": {
+    "rebuy": [],
+    "review": [],
+    "skipped": {
+     "1:rebuy": "kenh_san",
+     "2:rebuy": "kenh_san"
+    }
+   },
+   "source": "MẪU dev v10.1",
+   "scorer": "kd_a7",
+   "label": "dev_draft"
+  },
+  {
+   "id": "a7-06",
+   "kind": "trap_cap",
+   "now": "2026-10-14T10:00:00+07:00",
+   "purchases": [
+    {
+     "id": 1,
+     "contact_id": 1,
+     "channel": "web",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "purchased_on": "2026-09-01",
+     "delivered_on": "2026-09-03"
+    },
+    {
+     "id": 2,
+     "contact_id": 1,
+     "channel": "web",
+     "sku_key": "mat-ong-sam-120ml-2hu",
+     "purchased_on": "2026-09-02",
+     "delivered_on": "2026-09-03"
+    },
+    {
+     "id": 3,
+     "contact_id": 1,
+     "channel": "web",
+     "sku_key": "mat-ong-sam-300ml",
+     "purchased_on": "2026-09-03",
+     "delivered_on": "2026-09-03"
+    }
+   ],
+   "consents": [
+    [
+     1,
+     "marketing"
+    ]
+   ],
+   "promotable": [
+    "mat-ong-sam-120ml-1hu",
+    "mat-ong-sam-120ml-2hu",
+    "mat-ong-sam-300ml"
+   ],
+   "expect": {
+    "rebuy": [
+     1,
+     2
+    ],
+    "skipped": {
+     "3:rebuy": "tran_thang"
+    }
+   },
+   "source": "MẪU dev v10.1",
+   "scorer": "kd_a7",
+   "label": "dev_draft"
+  },
+  {
+   "id": "a7-07",
+   "kind": "trap_cap",
+   "now": "2026-10-14T10:00:00+07:00",
+   "purchases": [
+    {
+     "id": 1,
+     "contact_id": 1,
+     "channel": "web",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "purchased_on": "2026-09-01",
+     "delivered_on": "2026-09-03"
+    }
+   ],
+   "consents": [
+    [
+     1,
+     "marketing"
+    ]
+   ],
+   "promotable": [
+    "mat-ong-sam-120ml-1hu"
+   ],
+   "month_counts": {
+    "1": 2
+   },
+   "expect": {
+    "rebuy": [],
+    "skipped": {
+     "1:rebuy": "tran_thang"
+    }
+   },
+   "source": "MẪU dev v10.1",
+   "scorer": "kd_a7",
+   "label": "dev_draft"
+  },
+  {
+   "id": "a7-08",
+   "kind": "trap_window",
+   "now": "2026-10-14T22:30:00+07:00",
+   "purchases": [
+    {
+     "id": 1,
+     "contact_id": 1,
+     "channel": "web",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "purchased_on": "2026-09-01",
+     "delivered_on": "2026-09-03"
+    }
+   ],
+   "consents": [
+    [
+     1,
+     "marketing"
+    ],
+    [
+     1,
+     "cskh"
+    ]
+   ],
+   "promotable": [
+    "mat-ong-sam-120ml-1hu"
+   ],
+   "expect": {
+    "rebuy": [
+     1
+    ],
+    "review": [
+     1
+    ],
+    "gui_luc": "2026-10-15 08:00"
+   },
+   "source": "MẪU dev v10.1",
+   "scorer": "kd_a7",
+   "label": "dev_draft"
+  },
+  {
+   "id": "a7-09",
+   "kind": "trap_window",
+   "now": "2026-10-14T07:59:00+07:00",
+   "purchases": [
+    {
+     "id": 1,
+     "contact_id": 1,
+     "channel": "web",
+     "sku_key": "mat-ong-sam-120ml-1hu",
+     "purchased_on": "2026-09-01",
+     "delivered_on": "2026-09-03"
+    }
+   ],
+   "consents": [
+    [
+     1,
+     "marketing"
+    ]
+   ],
+   "promotable": [
+    "mat-ong-sam-120ml-1hu"
+   ],
+   "expect": {
+    "rebuy": [
+     1
+    ],
+    "gui_luc": "2026-10-14 08:00"
+   },
+   "source": "MẪU dev v10.1",
+   "scorer": "kd_a7",
+   "label": "dev_draft"
+  },
+  {
+   "id": "a7-10",
+   "kind": "trap_sku_cam",
+   "now": "2026-10-14T10:00:00+07:00",
+   "purchases": [
+    {
+     "id": 1,
+     "contact_id": 1,
+     "channel": "web",
+     "sku_key": "ruou-sam-chai-thuy-tinh-500ml",
+     "purchased_on": "2026-09-01",
+     "delivered_on": "2026-09-03"
+    },
+    {
+     "id": 2,
+     "contact_id": 2,
+     "channel": "web",
+     "sku_key": "sapentol-30v",
+     "purchased_on": "2026-09-01",
+     "delivered_on": "2026-09-03"
+    }
+   ],
+   "consents": [
+    [
+     1,
+     "marketing"
+    ],
+    [
+     2,
+     "marketing"
+    ]
+   ],
+   "promotable": [
+    "mat-ong-sam-120ml-1hu",
+    "ruou-sam-chai-thuy-tinh-500ml"
+   ],
+   "expect": {
+    "rebuy": [],
+    "skipped": {
+     "1:rebuy": "ruou",
+     "2:rebuy": "khong_promotable"
+    }
+   },
+   "source": "MẪU dev v10.1",
+   "scorer": "kd_a7",
+   "label": "dev_draft"
+  }
+ ]
+}

@@ -7,11 +7,50 @@ Contract:
   - Status one-way `pending -> approved|rejected`: mọi chuyển khác
     (sai id, đã duyệt/từ chối trước đó) → `set_status` trả
     (False, warn) KHÔNG raise — UI/CLI hiện warn thân thiện.
-  - approve CHỈ khi `guardrail->>'ok' = true` (double-gate SOW):
-    bài vi phạm phải reject/regen — không có duyệt-kèm-ghi-nhận.
-    Check ở Python (warn rõ) VÀ trong WHERE của UPDATE (atomic,
-    chống race 2 người duyệt cùng lúc).
-  - `schedule` chỉ trên draft approved + date không quá khứ.
+  - v3.4: function DB là NGUỒN SỰ THẬT cho mọi chuyển trạng thái —
+    `approve_draft` / `reject_draft` / `schedule_draft` (SECURITY
+    DEFINER, docs/schema.sql). Module này KHÔNG chạy UPDATE lên bảng draft
+    trực tiếp; role `agent_writer` (agent) không có quyền UPDATE nên
+    không tự duyệt được, role `app_human` (người) chỉ đi qua function.
+  - approve CHỈ khi guardrail ok (double-gate SOW): bài vi phạm phải
+    reject/regen — không có duyệt-kèm-ghi-nhận. Python chạy LẠI guardrail
+    CHẾ ĐỘ ĐĂNG BÀI (v4.2) trên text từ DB với kênh của draft —
+    `guardrail_llm.check_publish_llm(text, channel=<draft.channel>,
+    readiness=<view sku_readiness>)` (luật + lớp LLM-check nếu cấu hình;
+    snapshot jsonb do agent ghi có thể giả `ok:true`) trước khi gọi
+    function; function kiểm lại snapshot + `created_by` có + người duyệt
+    ≠ người tạo (atomic, `for update` — race 2 người duyệt thì người sau
+    thua).
+  - v6.1 ngữ cảnh draft THEO CỘT: `content_type` (mặc định `post`),
+    `sku` (None = không gắn SKU), `is_ai` (mặc định True — fail-closed),
+    `prompt_version`/`prompt_sha256` (template data/prompts/). Lưu và
+    duyệt chạy `check_publish` với đúng loại/SKU của draft — lúc duyệt
+    đọc TỪ DÒNG DB (`.get` — dòng thiếu cột coi như mặc định), không tin
+    caller. Riêng `is_ai`: lúc DUYỆT luôn True (fail-closed như v4.2) —
+    cột chỉ để truy vết, vì agent_writer ghi được cột (is_ai=false sẽ tự
+    bỏ yêu cầu nhãn AI). Bỏ cố định khi có đường ghi is_ai=false chỉ
+    dành cho người (app_human). Không tài trợ (`is_sponsored` chưa có
+    cột). Kênh `blog` -> `web` (alias); kênh lạ -> "config" -> không duyệt được.
+  - Readiness (v4.2/v6.1): đọc view `sku_readiness` (`readiness_from_db`,
+    trong savepoint) khi text nhắc SKU HOẶC draft có cột `sku`; lỗi DB /
+    conn None -> soi gương golden file (fail-closed: file chưa SKU nào
+    XNQC).
+  - v6.1 listing: partial unique index (sku, channel, prompt_version)
+    với `content_type='listing'` và status ≠ rejected — INSERT trùng raise
+    `psycopg.errors.UniqueViolation` cho caller (batch content coi là
+    `skipped`).
+  - `save_draft` (v4.2) chạy lại LUẬT đăng bài (không gọi LLM) và lưu
+    snapshot không bao giờ lỏng hơn luật hay snapshot caller.
+  - Mỗi quyết định ghi `approvals` kèm sha256 text lúc duyệt;
+    `verify_publish(conn, id, text)` so bản phát hành với bản đã duyệt.
+  - `save_draft` bắt buộc `created_by` + ghi 1 dòng `agent_action_log`
+    (`draft_create`) cùng transaction. `--verify-log` kiểm hash chain.
+  - `schedule` chỉ trên draft approved + ngày ≥ hôm nay giờ VN + text
+    còn khớp sha bản đã duyệt; bắt buộc người xếp lịch (`--by`).
+  - Giới hạn (pilot): `--by`/`reviewer` vẫn là free-text — DB tin
+    người giữ DSN `app_human`; gắn login DB riêng từng người là
+    someday. Gọi thẳng `approve_draft` bằng DSN `app_human` (bỏ qua
+    module này) thì chỉ còn kiểm snapshot guardrail, không re-check.
   - Mọi ghi-tác-vụ: `conn.transaction()` + `conn.commit()` TƯỜNG
     MINH — trên conn chia sẻ đã-trong-tx (UI SELECT trước) block
     transaction() chỉ là savepoint, thiếu commit() → INSERT/UPDATE
@@ -27,11 +66,14 @@ Chạy:
   python -m pipelines.store --pending
   python -m pipelines.store --approve ID --by "Tên" [--note "..."]
   python -m pipelines.store --reject  ID --by "Tên" [--note "..."]
-  python -m pipelines.store --schedule ID YYYY-MM-DD
+  python -m pipelines.store --schedule ID YYYY-MM-DD --by "Tên"
   python -m pipelines.store --calendar [--days 14]
+  python -m pipelines.store --verify-log
 """
 
 import argparse
+import hashlib
+import re
 import sys
 from contextlib import contextmanager, suppress
 from datetime import date, datetime, timedelta, timezone
@@ -40,6 +82,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from ingest.lead_store import connect
+from pipelines import guardrail
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in
 # tiếng Việt có dấu. Ép UTF-8 (no-op nếu đã UTF-8).
@@ -53,32 +96,179 @@ SOURCE_STUDIO = "manual:studio"
 SOURCE_CLI = "cli"
 DEFAULT_LIMIT = 50
 DEFAULT_DAYS = 14
+OBJECT_TYPE = "content_draft"
+# Việt Nam không có DST — offset cố định, không cần tzdata.
+VN_TZ = timezone(timedelta(hours=7))
 
 COLS = ("id", "created_at", "brief", "channel", "text", "guardrail",
         "status", "reviewer", "reviewed_at", "review_note",
-        "scheduled_date", "source")
+        "scheduled_date", "source", "created_by",
+        "content_type", "sku", "is_ai", "prompt_version", "prompt_sha256")
 
 _INSERT_SQL = (
-    "insert into content_drafts (brief, channel, text, guardrail, source) "
-    "values (%s, %s, %s, %s, %s) returning id")
+    "insert into content_drafts (brief, channel, text, guardrail, source, "
+    "created_by, content_type, sku, is_ai, prompt_version, prompt_sha256) "
+    "values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) returning id")
+
+_LOG_SQL = (
+    "insert into agent_action_log (actor, action, object_type, object_id, "
+    "detail) values (%s, %s, %s, %s, %s)")
+
+
+def content_sha256(text: str) -> str:
+    """sha256 hex byte-exact UTF-8, không normalize — khớp PG
+    `encode(sha256(convert_to(t, 'UTF8')), 'hex')`."""
+    return hashlib.sha256((text or "").encode("utf-8")).hexdigest()
+
+
+def _db_msg(e: Exception) -> str:
+    """Thông điệp lỗi function DB (raise tiếng Việt) — không kèm
+    context/SQL."""
+    diag = getattr(e, "diag", None)
+    return (getattr(diag, "message_primary", None) or str(e)).strip()
 
 _SELECT_SQL = f"select {', '.join(COLS)} from content_drafts"
 
+_READINESS_SQL = "select sku_key, channel, readiness from sku_readiness"
+
+
+def readiness_from_db(conn) -> dict | None:
+    """Map (sku_key, channel) -> readiness từ view `sku_readiness`.
+
+    Đọc trong `conn.transaction()` (savepoint nếu conn đã trong tx — lỗi
+    không làm hỏng tx ngoài, gotcha v2.1). conn None / lỗi DB / hàng sai
+    shape -> None (= guardrail soi gương golden file, fail-closed)."""
+    if conn is None:
+        return None
+    try:
+        with conn.transaction():
+            rows = conn.execute(_READINESS_SQL).fetchall()
+        return {(str(k), str(c)): str(r) for k, c, r in rows}
+    except (psycopg.Error, TypeError, ValueError):
+        return None
+
+
+def readiness_now() -> dict | None:
+    """Mở conn ngắn (`connect` có connect_timeout) đọc view `sku_readiness`
+    cho caller không giữ conn (Studio: sinh bài + ô check tay). DB chết /
+    lỗi -> None (= soi gương golden file, fail-closed)."""
+    with _conn_or_none() as (conn, _err):
+        return readiness_from_db(conn)
+
+
+def _publish_check(conn, text: str, channel, *, llm: bool,
+                   content_type="post", sku=None, is_ai=True) -> dict:
+    """Guardrail đăng bài cho draft theo ngữ cảnh draft (loại/SKU/is_ai —
+    docstring module). Readiness DB đọc khi text nhắc SKU HOẶC draft gắn
+    `sku`. `llm=False` -> chỉ luật (bước lưu)."""
+    ctx = {"channel": channel, "content_type": content_type, "sku": sku,
+           "is_ai": is_ai}
+    rules = guardrail.check_publish(text, **ctx)
+    rmap = (readiness_from_db(conn)
+            if rules.get("skus") or sku is not None else None)
+    if not llm:
+        res = (rules if rmap is None
+               else guardrail.check_publish(text, readiness=rmap, **ctx))
+    else:
+        # Import LƯỜI (gộp M31 đợt 4): guardrail_llm kéo llm_gateway/openai
+        # lúc import — import ở đầu module làm MỌI module chỉ cần helper
+        # của store (`_db_msg`, `_oneline` — vd pipelines.director, khối kế
+        # toán v9.0) kéo theo gateway/mạng (test_fin_qa). Chỉ nhánh llm=True
+        # mới cần lớp LLM-check.
+        from pipelines import guardrail_llm
+        res = guardrail_llm.check_publish_llm(text, readiness=rmap, **ctx)
+    # v6.1 (rà OWASP A01): loại `public: false` (internal_note) bỏ qua luật
+    # đăng bài (rượu/XNQC/nhãn) — dòng mang loại đó không được vào hàng
+    # duyệt ĐĂNG (agent_writer ghi được cột content_type) -> chặn "config".
+    cfg, _err = guardrail._load_rules(guardrail.DATA_DIR)
+    ctype = (cfg["content_types"].get(content_type)
+             if cfg and isinstance(content_type, str) else None)
+    if isinstance(ctype, dict) and not ctype.get("public", True):
+        res = guardrail.with_violation(
+            res, "config", f"loại nội dung {content_type!r} không công khai "
+            "— không vào hàng duyệt đăng bài")
+    return res
+
+
+def _merge_snapshot(rules: dict, caller) -> dict:
+    """Snapshot lưu = kết quả luật + violation `llm_*` của caller (thêm qua
+    `with_violation`, chỉ chặn thêm) + `llm_check`/`llm_model` caller. ok =
+    luật.ok VÀ caller.ok is True — không bao giờ lỏng hơn bên nào.
+    ok False mà không còn violation nào (caller chặn bằng luật mà lần chạy
+    lại không lặp lại, vd caller soi file còn lưu dùng view DB) -> chép
+    violation của caller kèm "(snapshot lúc sinh)"; caller không có chi
+    tiết -> violation `config` — UI không bao giờ hiện "KHÔNG RÕ"."""
+    out = dict(rules)
+    c = caller if isinstance(caller, dict) else {}
+    viols = c.get("violations")
+    for v in viols if isinstance(viols, list) else []:
+        code = v.get("code") if isinstance(v, dict) else None
+        if isinstance(code, str) and code.startswith("llm_"):
+            out = guardrail.with_violation(
+                out, code, v.get("detail"), v.get("span"), v.get("start"),
+                v.get("end"))
+    for k in ("llm_check", "llm_model"):
+        if isinstance(c.get(k), str):
+            out[k] = c[k][:100]
+    out["ok"] = out.get("ok") is True and c.get("ok") is True
+    if out["ok"] is False and not out.get("violations"):
+        for v in viols if isinstance(viols, list) else []:
+            if isinstance(v, dict) and isinstance(v.get("code"), str):
+                out = guardrail.with_violation(
+                    out, v["code"][:64],
+                    f"(snapshot lúc sinh) {v.get('detail') or ''}",
+                    v.get("span"), v.get("start"), v.get("end"))
+        if not out.get("violations"):
+            out = guardrail.with_violation(
+                out, "config", "snapshot lúc sinh ok != true, không có chi "
+                "tiết vi phạm — sinh/kiểm lại bài trước khi lưu")
+    return out
+
 
 def save_draft(conn, brief: str, channel: str, text: str,
-               guardrail: dict, source: str = SOURCE_STUDIO):
-    """INSERT 1 draft → id. `guardrail` = snapshot kết quả
-    `pipelines.guardrail.check()` lúc sinh (jsonb). Channel lạ vẫn
+               guardrail: dict, source: str = SOURCE_STUDIO, *,
+               created_by: str | None = None, content_type: str = "post",
+               sku: str | None = None, is_ai: bool = True,
+               prompt_version: str | None = None,
+               prompt_sha256: str | None = None):
+    """INSERT 1 draft → id. `guardrail` = snapshot kết quả guardrail lúc
+    sinh (caller); v4.2 LƯU snapshot = luật `check_publish` chạy lại trên
+    text với kênh draft (readiness DB nếu có) gộp chặt-nhất với snapshot
+    caller (`_merge_snapshot`) — không gọi LLM ở bước lưu. Channel lạ vẫn
     ghi nguyên văn (draft của người — DB không chặn vocab, queue
-    hiển thị đúng thứ đã lưu). commit() tường minh — xem docstring
-    module."""
+    hiển thị đúng thứ đã lưu). `created_by` BẮT BUỘC (rỗng →
+    ValueError trước khi chạm DB) — không có người tạo thì không kiểm
+    được "người duyệt ≠ người tạo". Ghi kèm 1 dòng log `draft_create`
+    cùng transaction. commit() tường minh — xem docstring module.
+    v6.1: `content_type`/`sku`/`is_ai`/`prompt_*` ghi vào cột và là ngữ
+    cảnh luật lúc lưu (mặc định = hành vi cũ: post, None, True)."""
+    by = (created_by or "").strip()
+    if not by:
+        raise ValueError("save_draft: thiếu created_by (người/agent tạo)")
+    text = text or ""
+    ch = (channel or "").strip()
+    is_ai = is_ai is not False
+    snap = _merge_snapshot(
+        _publish_check(conn, text, ch, llm=False, content_type=content_type,
+                       sku=sku, is_ai=is_ai), guardrail)
     with conn.transaction():
         row = conn.execute(
             _INSERT_SQL,
-            ((brief or "").strip(), (channel or "").strip(), text or "",
-             Jsonb(guardrail or {}), source)).fetchone()
+            ((brief or "").strip(), ch, text,
+             Jsonb(snap), source, by, content_type, sku, is_ai,
+             prompt_version, prompt_sha256)).fetchone()
+        did = row[0] if row else None
+        if did is not None:
+            conn.execute(_LOG_SQL, (
+                by, "draft_create", OBJECT_TYPE, str(did),
+                Jsonb({"channel": ch,
+                       "source": source,
+                       "content_type": content_type,
+                       "sku": sku,
+                       "prompt_version": prompt_version,
+                       "content_sha256": content_sha256(text)})))
     conn.commit()
-    return row[0] if row else None
+    return did
 
 
 def _rows(cur) -> list[dict]:
@@ -110,15 +300,23 @@ def _get(conn, draft_id) -> dict | None:
     return dict(zip(COLS, row)) if row else None
 
 
+def _same_person(a, b) -> bool:
+    """So khớp người như function DB: lower(btrim(.))."""
+    return (a or "").strip().lower() == (b or "").strip().lower()
+
+
 def set_status(conn, draft_id, status: str, reviewer: str,
                note: str | None = None) -> tuple[bool, str | None]:
     """pending -> approved|rejected → (True, None) | (False, warn).
 
     Warn không raise: id không tồn tại / id không phải số / draft
-    không còn pending / approve khi guardrail chưa ok / thiếu tên
-    người duyệt (bắt buộc cho audit) / status đích lạ. UPDATE có
-    `where status='pending'` (+ `guardrail->>'ok'='true'` khi
-    approve) — race 2 người duyệt cùng lúc thì người sau thua."""
+    không còn pending / approve khi guardrail chưa ok (snapshot HOẶC
+    chạy lại `check_publish_llm` với kênh draft trên text từ DB — chạy
+    SAU các pre-check rẻ để không tốn lời gọi LLM) / thiếu người tạo /
+    người duyệt = người tạo / thiếu tên người duyệt / status đích lạ /
+    function DB từ chối (thông điệp của function). Chuyển trạng thái CHỈ qua
+    `approve_draft` / `reject_draft` (DB là nguồn sự thật; pre-check
+    Python chỉ để warn thân thiện)."""
     status = (status or "").strip()
     if status not in ("approved", "rejected"):
         return False, (f"status đích '{status}' không hợp lệ — chỉ "
@@ -138,31 +336,47 @@ def set_status(conn, draft_id, status: str, reviewer: str,
     if cur["status"] != "pending":
         return False, (f"draft #{did} đã ở trạng thái "
                        f"'{cur['status']}' — chỉ duyệt từ pending")
-    g = cur["guardrail"]
-    g_ok = isinstance(g, dict) and g.get("ok") is True
-    if status == "approved" and not g_ok:
-        return False, (f"draft #{did} vi phạm guardrail (ok != true) "
-                       f"— phải reject hoặc viết lại; không có "
-                       f"duyệt-kèm-ghi-nhận")
-    # Guardrail-check LẶP LẠI trong WHERE (atomic): lỡ guardrail jsonb
-    # bị sửa giữa lúc đọc và ghi thì approve vẫn không lọt.
-    sql = ("update content_drafts set status = %s, reviewer = %s, "
-           "review_note = %s, reviewed_at = now() "
-           "where id = %s and status = 'pending'")
     if status == "approved":
-        sql += " and guardrail->>'ok' = 'true'"
-    sql += " returning id"
+        g = cur["guardrail"]
+        if not (isinstance(g, dict) and g.get("ok") is True):
+            return False, (f"draft #{did} vi phạm guardrail (ok != true) "
+                           f"— phải reject hoặc viết lại; không có "
+                           f"duyệt-kèm-ghi-nhận")
+        if not (cur.get("created_by") or "").strip():
+            return False, (f"draft #{did} không có người tạo (draft trước "
+                           f"v3.4) — không duyệt được, reject rồi tạo lại")
+        if _same_person(cur.get("created_by"), reviewer):
+            return False, (f"bạn là người tạo draft #{did} — cần người "
+                           f"khác duyệt")
+        # Snapshot jsonb do agent ghi — có thể giả ok:true. Chạy LẠI
+        # guardrail ĐĂNG BÀI (kênh draft + readiness DB + LLM-check nếu
+        # cấu hình) trên text thật trong DB trước khi gọi function.
+        # v6.1: ngữ cảnh luật đọc TỪ DÒNG DB (`.get` — dòng thiếu cột coi
+        # như mặc định post/None), không tin caller. `is_ai` CỐ ĐỊNH True
+        # (fail-closed như v4.2): cột is_ai chỉ để truy vết — agent_writer
+        # ghi được cột này, tin nó = agent tự bỏ yêu cầu nhãn AI.
+        recheck = _publish_check(conn, cur["text"] or "", cur["channel"],
+                                 llm=True,
+                                 content_type=cur.get("content_type")
+                                 or "post",
+                                 sku=cur.get("sku"), is_ai=True)
+        if recheck.get("ok") is not True:
+            vs = [v for v in recheck.get("violations") or []
+                  if isinstance(v, dict)]
+            codes = ", ".join(dict.fromkeys(
+                str(v.get("code") or v.get("type")) for v in vs)) or "?"
+            return False, (f"draft #{did} vi phạm guardrail khi kiểm lại "
+                           f"text ({len(vs)} vi phạm: {codes}) — snapshot "
+                           f"lúc lưu không khớp; phải reject hoặc viết lại")
+        sql = "select approve_draft(%s, %s, %s)"
+    else:
+        sql = "select reject_draft(%s, %s, %s)"
     try:
         with conn.transaction():
-            row = conn.execute(
-                sql, (status, reviewer.strip(), (note or None), did)
-            ).fetchone()
+            conn.execute(sql, (did, reviewer.strip(), (note or None)))
         conn.commit()
     except psycopg.Error as e:
-        return False, f"lỗi DB khi cập nhật draft #{did}: {e}"
-    if not row:
-        return False, (f"draft #{did} vừa đổi trạng thái — tải lại "
-                       f"danh sách rồi thử lại")
+        return False, f"draft #{did}: {_db_msg(e)}"
     return True, None
 
 
@@ -178,16 +392,24 @@ def _coerce_date(v) -> date | None:
     return None
 
 
-def schedule(conn, draft_id, day, today: date | None = None
-             ) -> tuple[bool, str | None]:
+def _vn_today() -> date:
+    return datetime.now(VN_TZ).date()
+
+
+def schedule(conn, draft_id, day, by: str | None = None,
+             today: date | None = None) -> tuple[bool, str | None]:
     """Xếp lịch đăng → (True, None) | (False, warn). Chỉ draft
-    approved; `day` (date/ISO-str) không được quá khứ. `today`
-    inject được cho test."""
+    approved; `day` (date/ISO-str) không được quá khứ (giờ VN — function
+    DB kiểm lại); `by` = người xếp lịch, bắt buộc. Đi qua
+    `schedule_draft` (kiểm thêm text còn khớp sha bản đã duyệt).
+    `today` inject được cho test."""
+    if not (by or "").strip():
+        return False, "thiếu tên người xếp lịch (--by) — bắt buộc cho audit"
     d = _coerce_date(day)
     if d is None:
         return False, (f"ngày '{day}' không hợp lệ — định dạng "
                        f"YYYY-MM-DD")
-    today = today or datetime.now(timezone.utc).date()
+    today = today or _vn_today()
     if d < today:
         return False, (f"ngày {d:%Y-%m-%d} đã qua — chỉ xếp lịch "
                        f"từ hôm nay trở đi")
@@ -206,16 +428,34 @@ def schedule(conn, draft_id, day, today: date | None = None
                        f"xếp lịch bài đã approved")
     try:
         with conn.transaction():
-            row = conn.execute(
-                "update content_drafts set scheduled_date = %s "
-                "where id = %s and status = 'approved' returning id",
-                (d, did)).fetchone()
+            conn.execute("select schedule_draft(%s, %s, %s)",
+                         (did, d, by.strip()))
         conn.commit()
     except psycopg.Error as e:
-        return False, f"lỗi DB khi xếp lịch draft #{did}: {e}"
-    if not row:
-        return False, f"draft #{did} vừa đổi trạng thái — thử lại"
+        return False, f"draft #{did}: {_db_msg(e)}"
     return True, None
+
+
+def verify_publish(conn, draft_id, text: str) -> bool:
+    """Bản sắp đăng có đúng bản đã duyệt? → True chỉ khi quyết định mới
+    nhất của draft là approved VÀ sha256(text) khớp. Lỗi DB/id xấu →
+    False (fail-closed)."""
+    try:
+        did = int(draft_id)
+        row = conn.execute("select verify_publish(%s, %s, %s)",
+                           (OBJECT_TYPE, str(did), text)).fetchone()
+    except (TypeError, ValueError, psycopg.Error):
+        return False
+    return bool(row and row[0] is True)
+
+
+def verify_log(conn) -> tuple[int, list[tuple]]:
+    """Kiểm hash chain `agent_action_log` → (số dòng, [(id, problem)]).
+    List rỗng = nguyên vẹn (trừ xóa dòng CUỐI — cần neo ngoài)."""
+    n = conn.execute("select count(*) from agent_action_log").fetchone()[0]
+    probs = [tuple(r) for r in conn.execute(
+        "select id, problem from verify_action_log()").fetchall()]
+    return n, probs
 
 
 def calendar(conn, days: int = DEFAULT_DAYS,
@@ -236,6 +476,63 @@ def calendar(conn, days: int = DEFAULT_DAYS,
         "order by created_at desc, id desc"))
     return {"today": today, "days": days,
             "scheduled": scheduled, "unscheduled": unscheduled}
+
+
+def _vline(v: dict) -> str:
+    sev = v.get("severity")
+    code = v.get("code") or v.get("type") or "?"
+    line = (f"[{sev}] " if sev else "") + f"{code} — {v.get('detail') or ''}"
+    if v.get("span"):
+        line += f' → "{v["span"]}"'
+        if isinstance(v.get("start"), int) and isinstance(v.get("end"), int):
+            line += f" ({v['start']}–{v['end']})"
+    return line
+
+
+_MD_SPECIAL_RE = re.compile(r"([\\`*_{}\[\]()#+\-.!<>|~$:])")
+
+
+def md_plain(s) -> str:
+    """Escape markdown cho dòng guardrail render trong widget Streamlit:
+    span/detail lấy từ text draft hoặc lý do LLM — không để link/ảnh
+    tracker (`[x](u)`, `![a](u)`), màu `:red[..]` render (WYSIWYS)."""
+    return _MD_SPECIAL_RE.sub(r"\\\1", str(s))
+
+
+def guardrail_lines(g) -> list[tuple[str, str]]:
+    """Formatter thuần cho UI: [(level, text)], level ∈ success|error|
+    warning|info. Mỗi violation `[severity] code — detail → "span"
+    (start–end)` (snapshot cũ thiếu `code` dùng `type`); warnings ->
+    warning; llm_check/required_labels/claim khớp -> info. Non-dict /
+    thiếu ok / ok falsy mà không có violation -> error "KHÔNG RÕ" (parity
+    `_fmt_guardrail`). Không raise."""
+    if not isinstance(g, dict):
+        return [("error", "Guardrail: KHÔNG RÕ — snapshot không đọc được")]
+    viols = g.get("violations")
+    viols = ([v for v in viols if isinstance(v, dict)]
+             if isinstance(viols, list) else [])
+    out = []
+    if g.get("ok") is True and not viols:
+        out.append(("success", "Guardrail: PASS — không vi phạm"))
+    elif not viols:
+        out.append(("error", ("Guardrail: KHÔNG RÕ — ok != true, không "
+                              "có chi tiết vi phạm")))
+    out += [("error", _vline(v)) for v in viols]
+    warns = g.get("warnings")
+    out += [("warning", _vline(w)) for w in
+            (warns if isinstance(warns, list) else []) if isinstance(w, dict)]
+    if g.get("llm_check"):
+        out.append(("info", f"Lớp LLM-check: {g['llm_check']}"
+                    + (f" ({g['llm_model']})" if g.get("llm_model") else "")))
+    labels = g.get("required_labels")
+    if isinstance(labels, list) and labels:
+        out.append(("info", "Nhãn bắt buộc: " + "; ".join(map(str, labels))))
+    mc = g.get("matched_claims")
+    if isinstance(mc, list) and mc:
+        out.append(("info", "Claim khớp whitelist: " + "; ".join(
+            f"{m.get('sku')}: {m.get('claim')}" for m in mc
+            if isinstance(m, dict))))
+    return out
 
 
 def _fmt_guardrail(d: dict) -> str:
@@ -288,8 +585,9 @@ def main(argv=None) -> int:
     ap.add_argument("--reject", type=int, metavar="ID",
                     help="từ chối draft")
     ap.add_argument("--by", dest="reviewer",
-                    help="tên người duyệt — bắt buộc với "
-                         "--approve/--reject")
+                    help="tên người duyệt/xếp lịch — bắt buộc với "
+                         "--approve/--reject/--schedule (free-text: DB "
+                         "tin người giữ DSN app_human)")
     ap.add_argument("--note", default=None, help="ghi chú duyệt")
     ap.add_argument("--schedule", nargs=2,
                     metavar=("ID", "YYYY-MM-DD"),
@@ -298,19 +596,24 @@ def main(argv=None) -> int:
                     help="xem lịch đăng sắp tới")
     ap.add_argument("--days", type=int, default=DEFAULT_DAYS,
                     help=f"số ngày lịch (mặc định {DEFAULT_DAYS})")
+    ap.add_argument("--verify-log", action="store_true",
+                    help="kiểm hash chain agent_action_log (exit 1 nếu "
+                         "phát hiện sửa/xóa)")
     args = ap.parse_args(argv)
 
     n_ops = (sum(w is not None
                  for w in (args.approve, args.reject, args.schedule))
-             + args.pending + args.calendar)
+             + args.pending + args.calendar + args.verify_log)
     if n_ops == 0:
         ap.error("cần 1 thao tác: --pending | --calendar | "
-                 "--approve | --reject | --schedule")
+                 "--approve | --reject | --schedule | --verify-log")
     if n_ops > 1:
         ap.error("chỉ 1 thao tác mỗi lần — tách lệnh")
     if (args.approve is not None or args.reject is not None) \
             and not (args.reviewer or "").strip():
         ap.error("--approve/--reject cần --by <tên người duyệt>")
+    if args.schedule is not None and not (args.reviewer or "").strip():
+        ap.error("--schedule cần --by <tên người xếp lịch>")
 
     with _conn_or_none() as (conn, err):
         # ---- ĐỌC: DB down → "chưa nạp" exit 0 (precedent report) ----
@@ -347,6 +650,26 @@ def main(argv=None) -> int:
                     _print_draft_line(d)
             return 0
 
+        if args.verify_log:
+            # Kiểm toàn vẹn: DB down → exit 2 (không kết luận được).
+            if conn is None:
+                print(f"[error] {err} — không kiểm được", file=sys.stderr)
+                return 2
+            try:
+                n, probs = verify_log(conn)
+            except psycopg.Error as e:
+                print(f"[error] lỗi DB khi kiểm log: {_db_msg(e)}",
+                      file=sys.stderr)
+                return 2
+            if not probs:
+                print(f"[ok] chuỗi nguyên vẹn ({n} dòng)")
+                return 0
+            print(f"[FAIL] hash chain agent_action_log hỏng — "
+                  f"{len(probs)} vấn đề / {n} dòng:")
+            for lid, prob in probs:
+                print(f"  id={lid} problem={prob}")
+            return 1
+
         # ---- GHI: DB down → exit 2 (precedent garden) ----
         if conn is None:
             print(f"[error] {err} — không ghi được", file=sys.stderr)
@@ -366,12 +689,13 @@ def main(argv=None) -> int:
             return 0
         # --schedule ID YYYY-MM-DD
         did, day_s = args.schedule
-        ok, warn = schedule(conn, did, day_s)
+        ok, warn = schedule(conn, did, day_s, args.reviewer)
         if not ok:
             print(f"[warn] {warn}", file=sys.stderr)
             return 2
-        print(f"[done] draft #{did} xếp lịch {day_s} — người đăng "
-              f"tay (hệ thống không tự đăng)")
+        print(f"[done] draft #{did} xếp lịch {day_s} (người xếp: "
+              f"{args.reviewer.strip()}) — người đăng tay (hệ thống "
+              f"không tự đăng)")
         return 0
 
 

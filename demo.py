@@ -41,7 +41,8 @@ def ensure_deps() -> None:
 def ensure_db() -> None:
     import psycopg
     try:
-        with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+        with psycopg.connect(os.environ["DATABASE_URL"],
+                             connect_timeout=5) as conn:
             n = conn.execute(
                 "select count(*) from chunks").fetchone()[0]
     except psycopg.OperationalError as e:
@@ -50,7 +51,7 @@ def ensure_db() -> None:
     except psycopg.errors.UndefinedTable:
         print("[demo] tao schema tu docs/schema.sql...")
         with psycopg.connect(os.environ["DATABASE_URL"],
-                             autocommit=True) as conn:
+                             autocommit=True, connect_timeout=5) as conn:
             conn.execute((ROOT / "docs" / "schema.sql")
                          .read_text(encoding="utf-8"))
         n = 0

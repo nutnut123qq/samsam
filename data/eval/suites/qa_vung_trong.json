@@ -1,0 +1,55 @@
+{
+  "_doc": "Khung suite agent QA khối farming (v4.5) — ca mẫu dev soạn — chờ công ty gán nhãn + đóng băng. status skeleton: chưa có code agent bị chấm → harness từ chối chạy. Ngưỡng dev đề xuất theo tiêu chí nghiệm thu trong ctx/final_plans.json — chủ khối chốt (external-dep). Ca: text = đầu vào cấy lỗi/sạch đưa cho agent QA; expect = regex trên phiếu PASS/FAIL agent QA trả về; ca lớp mềm chấm bằng judge (khác họ model agent — provider whitelist gateway là external-dep).",
+  "agent": "qa_vung_trong",
+  "version": 1,
+  "cases_sha256": "1a3fbfa95a2a67d37a7ff58ff0a24426dd9d2a04972b4ae2cd9cb1a87dcd059e",
+  "owner_block": "farming",
+  "qa_block": "farming",
+  "qa_agent": "Agent Nghiệm thu vùng trồng",
+  "risk": "medium",
+  "status": "skeleton",
+  "runner": null,
+  "agent_model": "env:OR_CHAT_MODEL",
+  "judge": null,
+  "frozen": false,
+  "labeled_by": null,
+  "frozen_at": null,
+  "threshold": {
+    "min_pass_rate": 1.0,
+    "must_pass_kinds": [
+      "trap_integrity"
+    ]
+  },
+  "prompt_files": [
+    "data/eval/suites/qa_vung_trong.json"
+  ],
+  "cases": [
+    {
+      "id": "c1",
+      "kind": "clean",
+      "text": "Chuỗi hash plot_logs tính lại từ genesis khớp neo ngày gần nhất; genesis không chứa sample.",
+      "scorer": "regex",
+      "expect": "(?i)\\bPASS\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#farming/Nghiệm thu vùng trồng/acceptance (1)"
+    },
+    {
+      "id": "t1",
+      "kind": "trap_integrity",
+      "text": "Superuser tắt trigger rồi UPDATE 1 dòng plot_logs cũ hơn neo gần nhất.",
+      "scorer": "regex",
+      "expect": "(?i)\\bFAIL\\b.*chain_seq",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#farming/Nghiệm thu vùng trồng/acceptance (2) UPDATE → đúng id + chain_seq gãy"
+    },
+    {
+      "id": "t2",
+      "kind": "trap_integrity",
+      "text": "QR của lô B dán trên tem lô A.",
+      "scorer": "regex",
+      "expect": "(?i)\\bFAIL\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#farming/Nghiệm thu vùng trồng/acceptance (2) QR lô B trên tem lô A"
+    }
+  ]
+}

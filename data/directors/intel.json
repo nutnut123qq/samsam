@@ -1,0 +1,26 @@
+{
+  "_doc": "Cấu hình agent GĐ khối Intel (v4.0 khung, v7.1 cấu hình thật — pipelines/director.py). BẢN DEV SOẠN, CHƯA được TGĐ/Quản lý MXH duyệt. approver_roles = ['mxh'] (Quản lý MXH — chủ khối Tình báo thị trường theo kế hoạch final_plans; mxh ∈ pipelines.auth.ROLES). approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: intel_bulletin, competitor_report (low) + intel_topic (v7.1 — gợi ý chủ đề nội dung từ bản tin intel, scripts/intel_bulletin.py --suggest; risk medium ⇒ auto_policy chỉ áp low không bao giờ tự duyệt được — người duyệt từng mục). sla_hours 1..720 (quá hạn → expired, không tự duyệt). Không dùng 'content_draft' (giữ đường pipelines.store) — gợi ý chủ đề KHÔNG phải bản nháp nội dung.",
+  "block": "intel",
+  "name": "Trung tâm tình báo thị trường (trực thuộc TGĐ, phục vụ Marketing/Sales)",
+  "director_agent": "Intel Director (GĐ Tình báo agent)",
+  "approver_roles": [
+    "mxh"
+  ],
+  "approvers": [],
+  "object_types": {
+    "intel_bulletin": {
+      "sla_hours": 24,
+      "risk": "low"
+    },
+    "competitor_report": {
+      "sla_hours": 72,
+      "risk": "low"
+    },
+    "intel_topic": {
+      "sla_hours": 48,
+      "risk": "medium"
+    }
+  },
+  "digest_recipients": [],
+  "due_soon_hours": 8
+}

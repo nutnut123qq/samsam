@@ -1,0 +1,67 @@
+== v8.0 W80.5–W80.8 CLI báo cáo/preflight/director/DPIA 2026-10-12T11:52:23+07:00 — DB thật: chỉ đọc (KHÔNG --submit)
+-- DB trước: channel_snapshots=0 approval_queue=0 approvals=0 red_alerts=0 llm_usage=41
+
+$ python -m agents.ceo_report --period week --ref 2026-10-05 --out-dir <scratchpad>/v80_report_out
+[done] <scratchpad>\v80_report_out\ceo-2026-W41.md — kỳ 2026-W41, 0/20 chỉ số có số kỳ này · ĐỎ: chưa có người nhận cảnh báo độc lập
+rc=0
+-- file: ceo-2026-W41.md — dòng ĐỎ:
+1
+-- số ô '[chưa có dữ liệu]':
+41
+-- ô số 0 bịa (| 0 <đơn vị> |) trong bảng:
+0
+-- 12 dòng đầu trang:
+# Báo cáo tuần 2026-W41 — TGĐ
+
+**ĐỎ — chưa có người nhận cảnh báo độc lập** (data/red_alert_routing.json, external-dep: Pháp chế xác nhận)
+
+**Kỳ:** 05/10/2026 → 11/10/2026 (giờ VN) · **Kỳ trước:** 2026-W40 · **Sinh lúc:** 12/10/2026 11:52 giờ VN
+
+Mọi con số do code điền từ bảng `channel_snapshots` (chụp bởi `pipelines.cockpit`); thiếu số hiện `[chưa có dữ liệu]`, không hiện 0. Dòng *(MẪU)* là số liệu mẫu, không phải số vận hành thật.
+
+## Số liệu điều hành
+
+| Chỉ số | Kênh | Kỳ này | Kỳ trước | Δ | Đánh giá | Nguồn |
+|---|---|---|---|---|---|---|
+
+$ python -m agents.ceo_report --period month --ref 2026-09-01 --out-dir <scratchpad>/v80_report_out
+[done] <scratchpad>\v80_report_out\ceo-2026-09.md — kỳ 2026-09, 0/20 chỉ số có số kỳ này · ĐỎ: chưa có người nhận cảnh báo độc lập
+rc=0
+
+$ python -m agents.ceo_report --period week --ref 2026-10-12 --out-dir <scratchpad>/v80_report_out   (kỳ chưa đóng)
+[error] kỳ chưa đóng (2026-10-12 → hết 2026-10-18 giờ VN)
+rc=2
+-- file trong out-dir: ceo-2026-09.md ceo-2026-W41.md 
+
+$ python -m pipelines.red_alert --check-routing
+[FAIL] thiếu người nhận độc lập (external-dep) — cảnh báo đỏ vẫn được ghi bảng red_alerts nhưng chưa có ai nhận; Pháp chế xác nhận người nhận rồi điền data/red_alert_routing.json
+rc=1
+
+$ python -m pipelines.director --all --dry-run
+[ok] ceo — Tổng giám đốc + Hội đồng thành viên + Ban kiểm soát nội bộ · 6 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] sales — Giám đốc bán hàng + Sales (Phòng kinh doanh TMĐT) · 3 loại việc · vai trò duyệt gd_ban_hang · người duyệt chưa cấu hình (external-dep)
+[ok] marketing — Giám đốc marketing + Chuyên viên marketing + Chuyên viên SEO · 3 loại việc · vai trò duyệt gd_marketing · người duyệt chưa cấu hình (external-dep)
+[ok] intel — Trung tâm tình báo thị trường (trực thuộc TGĐ, phục vụ Marketing/Sales) · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] finance — Giám đốc tài chính + Phòng kế toán + Phòng tài chính–kế hoạch · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] production — Giám đốc sản xuất + Nghiên cứu và sản xuất + Công nghệ sinh học · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] farming — Giám đốc vùng trồng + Nhân viên vùng trồng · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] projects — Giám đốc dự án + Chuyên viên dự án–xúc tiến đầu tư · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] legal_hr — Pháp chế nhân sự + Chuyên viên pháp chế–hành chính–nhân sự · 3 loại việc · vai trò duyệt phap_che · người duyệt chưa cấu hình (external-dep)
+[ok] mechanical — Trung tâm điện–cơ khí chế tạo máy + Kỹ sư điện–cơ khí · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] data_platform — Hạ tầng dữ liệu & AI (do Quản lý hạ tầng AI vận hành) · 2 loại việc · vai trò duyệt ha_tang,tgd · người duyệt chưa cấu hình (external-dep)
+[done] 11 khối hợp lệ (dry-run, không DB)
+rc=0
+
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+rc=0
+
+$ python -m py_compile pipelines/cockpit.py agents/ceo_report.py
+rc=0
+
+$ python -m pytest tests/test_ceo_report.py tests/test_director.py -q -rs
+......................................................................   [100%]
+70 passed in 3.11s
+rc=0
+
+-- DB sau: channel_snapshots=0 approval_queue=0 approvals=0 red_alerts=0 llm_usage=41

@@ -1,0 +1,7 @@
+=== W102.5 DA-06 static 2026-10-14T21:30:26+07:00 ===
+$ grep -nE "llm_gateway|openai|import httpx|import requests|\.post\(|smtp" agents/da_doitac.py
+rc=1 (1 = rỗng)
+$ python -m agents.da_doitac --help
+rc=0
+Vá nghiệm thu: go-live theo đồng hồ thật (--date không mở --submit: test_future_date_flag_cannot_open_go_live); PII toàn payload (test_fact_pii_in_payload_is_problem, test_submit_refused_when_fact_has_pii)
+pytest: tests/test_da_doitac.py — xem evidence/v102_gate_targeted.log

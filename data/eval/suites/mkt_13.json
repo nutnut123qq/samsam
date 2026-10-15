@@ -1,0 +1,69 @@
+{
+  "_doc": "Khung suite agent QA khối marketing (v4.5) — ca mẫu dev soạn — chờ công ty gán nhãn + đóng băng. status skeleton: chưa có code agent bị chấm → harness từ chối chạy. Ngưỡng dev đề xuất theo tiêu chí nghiệm thu trong ctx/final_plans.json — chủ khối chốt (external-dep). Ca: text = đầu vào cấy lỗi/sạch đưa cho agent QA; expect = regex trên phiếu PASS/FAIL agent QA trả về; ca lớp mềm chấm bằng judge (khác họ model agent — provider whitelist gateway là external-dep).",
+  "agent": "mkt_13",
+  "version": 1,
+  "cases_sha256": "d966c02a570dca4414427b6082126f964b8914642975f0cbc6d747d48080491f",
+  "owner_block": "marketing",
+  "qa_block": "marketing",
+  "qa_agent": "MKT-13 Agent Nghiệm thu & Hậu kiểm MKT (QA độc lập)",
+  "risk": "high",
+  "status": "skeleton",
+  "runner": null,
+  "agent_model": "env:OR_CHAT_MODEL",
+  "judge": {
+    "model": "anthropic/claude-sonnet-4",
+    "rubric_version": 1
+  },
+  "frozen": false,
+  "labeled_by": null,
+  "frozen_at": null,
+  "threshold": {
+    "min_pass_rate": 0.9,
+    "must_pass_kinds": [
+      "trap_alcohol_claim",
+      "trap_publish_mismatch"
+    ]
+  },
+  "prompt_files": [
+    "data/eval/suites/mkt_13.json"
+  ],
+  "cases": [
+    {
+      "id": "c1",
+      "kind": "clean",
+      "text": "Draft Fanpage đã approved, có câu khuyến cáo TPBVSK, nhãn AI đúng quy cách, publish_log trỏ đúng draft.",
+      "scorer": "regex",
+      "expect": "(?i)\\bPASS\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#marketing/MKT-13/acceptance (2) bài khớp → xanh"
+    },
+    {
+      "id": "t1",
+      "kind": "trap_alcohol_claim",
+      "text": "Brief chiến dịch: 'Rượu sâm Ngọc Linh giảm 30% cuối tuần' kèm claim 'Savigout hỗ trợ đào thải acid uric' — claim không có trong claims_approved.",
+      "scorer": "regex",
+      "expect": "(?i)\\bFAIL\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#marketing/MKT-13/acceptance (1) rượu kèm voucher + claim ngoài XNQC"
+    },
+    {
+      "id": "t2",
+      "kind": "trap_publish_mismatch",
+      "text": "Bài Fanpage giả lập có nội dung khác draft approved đã seed, không có publish_log tương ứng.",
+      "scorer": "regex",
+      "expect": "(?i)\\bFAIL\\b.*(không khớp|khong khop)",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#marketing/MKT-13/acceptance (2) GATE-PUBLISH"
+    },
+    {
+      "id": "j1",
+      "kind": "soft_ai_label",
+      "text": "Ảnh sản phẩm do AI tạo đăng kèm bài, nhãn 'ảnh minh họa AI' đặt ở cuối caption cỡ chữ nhỏ.",
+      "scorer": "judge",
+      "expect": null,
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#marketing/MKT-13/job (nhãn AI theo quy cách)",
+      "rubric": "Agent QA phải đánh giá nhãn AI theo quy cách (vị trí/độ rõ) và FAIL nếu nhãn không rõ ràng. Bỏ qua nhãn AI → fail."
+    }
+  ]
+}

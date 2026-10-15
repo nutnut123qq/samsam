@@ -1,0 +1,26 @@
+# v53 W53.1 config — 2026-10-12T22:07:51+07:00
+$ python -m pytest tests/test_kd_price.py -k config tests/test_sales_director.py -q -rs
+.........................................                                [100%]
+41 passed, 84 deselected in 7.97s
+[exit 0]
+
+$ python -m pipelines.director --all --dry-run
+[ok] ceo — Tổng giám đốc + Hội đồng thành viên + Ban kiểm soát nội bộ · 6 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] sales — Giám đốc bán hàng + Sales (Phòng kinh doanh TMĐT) · 12 loại việc · vai trò duyệt gd_ban_hang · người duyệt chưa cấu hình (external-dep)
+[ok] marketing — Giám đốc marketing + Chuyên viên marketing + Chuyên viên SEO · 4 loại việc · vai trò duyệt gd_marketing · người duyệt chưa cấu hình (external-dep)
+[ok] intel — Trung tâm tình báo thị trường (trực thuộc TGĐ, phục vụ Marketing/Sales) · 3 loại việc · vai trò duyệt mxh · người duyệt chưa cấu hình (external-dep)
+[ok] finance — Giám đốc tài chính + Phòng kế toán + Phòng tài chính–kế hoạch · 4 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] production — Giám đốc sản xuất + Nghiên cứu và sản xuất + Công nghệ sinh học · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] farming — Giám đốc vùng trồng + Nhân viên vùng trồng · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] projects — Giám đốc dự án + Chuyên viên dự án–xúc tiến đầu tư · 5 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] legal_hr — Pháp chế nhân sự + Chuyên viên pháp chế–hành chính–nhân sự · 5 loại việc · vai trò duyệt phap_che · người duyệt chưa cấu hình (external-dep)
+[ok] mechanical — Trung tâm điện–cơ khí chế tạo máy + Kỹ sư điện–cơ khí · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] data_platform — Hạ tầng dữ liệu & AI (do Quản lý hạ tầng AI vận hành) · 3 loại việc · vai trò duyệt ha_tang,tgd · người duyệt chưa cấu hình (external-dep)
+[done] 11 khối hợp lệ (dry-run, không DB)
+[exit 0]
+
+$ python -c from agents import sales_director as sd; c = sd.load_sales_config(); print({t: (c['object_types'][t]['handoff'], c['object_types'][t]['risk'], c['object_types'][t]['sla_hours']) for t in ('listing_sync', 'promo_change', 'price_change', 'market_alert_s1')}); print('worst B', sd.worst_clock_hours(c['business_hours'], 4))
+{'listing_sync': ('B', 'high', 96), 'promo_change': ('B', 'high', 96), 'price_change': ('B', 'high', 96), 'market_alert_s1': ('A', 'high', 72)}
+worst B 66.0
+[exit 0]
+

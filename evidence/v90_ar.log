@@ -1,0 +1,57 @@
+# v9.0 W90.5 evidence — CLI thật trên DB riêng (DATABASE_URL w90, giá trị không in) — 2026-10-12 12:13:25 +0700
+# Sổ công nợ MẪU (mã đại lý giả, không tên/SĐT); hoa hồng theo chính sách MẪU chưa ký.
+
+$ python -m agents.acc_ar --load tests/fixtures/finance/dealer_ar_MAU.csv
+[load] 9 dòng công nợ từ dealer_ar_MAU.csv
+[exit 0]
+
+$ python -m agents.acc_ar --load tests/fixtures/finance/dealer_ar_MAU.csv
+[skip] file công nợ đã nạp — không ghi gì.
+[exit 0]
+
+$ python -m agents.acc_ar --aging --as-of 2026-10-12
+[aging] tuổi nợ tính tới 2026-10-12 — 3 đại lý:
+  DL-DN02: còn nợ 18.000.000đ (0-30 14.000.000đ, 31-60 0đ, 61-90 0đ, >90 4.000.000đ); quá hạn 4.000.000đ
+  DL-HN01: còn nợ 10.000.000đ (0-30 0đ, 31-60 10.000.000đ, 61-90 0đ, >90 0đ); quá hạn 10.000.000đ
+  DL-QN03: còn nợ 3.500.000đ (0-30 3.500.000đ, 31-60 0đ, 61-90 0đ, >90 0đ); quá hạn 0đ
+[exit 0]
+
+$ python -m agents.acc_ar --commission --from 2026-09-01 --to 2026-10-31
+[commission] BẢN NHÁP — không phải lệnh chi; kỳ 2026-09-01 → 2026-10-31 (tính cả ngày cuối), chính sách MẪU chưa ký:
+  DL-DN02 alcohol/offline: cơ sở 6.000.000đ × 0.03 = 180.000đ [tncn]
+  DL-DN02 alcohol/online: cơ sở 8.000.000đ × 0 = 0đ [ruou_online, tncn]
+  DL-HN01 tpbvsk/offline: cơ sở 15.000.000đ × 0.08 = 1.200.000đ
+  DL-QN03 ?/offline: cơ sở 1.000.000đ × 0 = 0đ [thieu_sku, tncn]
+  DL-QN03 tpbvsk/online: cơ sở 2.500.000đ × 0.08 = 200.000đ [tncn]
+  tổng hoa hồng nháp: 1.580.000đ
+[exit 0]
+
+$ python -m agents.acc_ar --bulletin --as-of 2026-10-12
+[bulletin] 2 đại lý quá hạn → director-finance-2026-10-12.md (BẢN NHÁP, không tự gửi)
+[exit 0]
+
+$ python -m agents.acc_ar --aging --as-of 2026-13-01
+usage: python -m agents.acc_ar [-h] [--load FILE] [--aging] [--commission]
+                               [--bulletin] [--as-of AS_OF] [--from DATE_FROM]
+                               [--to DATE_TO]
+python -m agents.acc_ar: error: --as-of phải dạng YYYY-MM-DD
+[exit 2]
+
+$ python -m agents.acc_ar --aging --bulletin
+usage: python -m agents.acc_ar [-h] [--load FILE] [--aging] [--commission]
+                               [--bulletin] [--as-of AS_OF] [--from DATE_FROM]
+                               [--to DATE_TO]
+python -m agents.acc_ar: error: chỉ 1 thao tác mỗi lần (--load | --aging | --commission | --bulletin)
+[exit 2]
+
+$ sed -n '/## Công nợ đại lý quá hạn/,/## Người duyệt/p' data/reports/director-finance-2026-10-12.md
+## Công nợ đại lý quá hạn (tính tới 12/10/2026)
+
+| Đại lý | Quá hạn | 31-60 | 61-90 | >90 |
+|---|---|---|---|---|
+| `DL-HN01` | 10.000.000đ | 10.000.000đ | 0đ | 0đ |
+| `DL-DN02` | 4.000.000đ | 0đ | 0đ | 4.000.000đ |
+
+Tổng quá hạn: 14.000.000đ — nguồn: sổ công nợ nạp tay (`dealer_ar`); thư nhắc nợ do kế toán gửi tay, agent không gửi.
+
+## Người duyệt

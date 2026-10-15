@@ -1,0 +1,89 @@
+v3.7 W37.5 compose gate — 2026-10-11T23:57:14+07:00
+docker server 28.4.0
+Docker Compose version v2.39.4-desktop.1
+
+===== config voi N8N_ENCRYPTION_KEY=dummy =====
+name: samsam-monitoring
+services:
+  n8n:
+    environment:
+      GENERIC_TIMEZONE: Asia/Ho_Chi_Minh
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_ENCRYPTION_KEY: dummy
+      N8N_HOST: 127.0.0.1
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_PORT: "5678"
+      N8N_SECURE_COOKIE: "false"
+      TZ: Asia/Ho_Chi_Minh
+    image: n8nio/n8n:2.4.0
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        host_ip: 127.0.0.1
+        target: 5678
+        published: "5678"
+        protocol: tcp
+    restart: "no"
+    volumes:
+      - type: volume
+        source: n8n_data
+        target: /home/node/.n8n
+        volume: {}
+  uptime-kuma:
+    environment:
+      TZ: Asia/Ho_Chi_Minh
+    image: louislam/uptime-kuma:1.23.17
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        host_ip: 127.0.0.1
+        target: 3001
+        published: "3001"
+        protocol: tcp
+    restart: "no"
+    volumes:
+      - type: volume
+        source: kuma_data
+        target: /app/data
+        volume: {}
+networks:
+  default:
+    name: samsam-monitoring_default
+volumes:
+  kuma_data:
+    name: samsam-monitoring_kuma_data
+  n8n_data:
+    name: samsam-monitoring_n8n_data
+exit=0
+
+===== config THIEU bien (phai loi) =====
+error while interpolating services.n8n.environment.N8N_ENCRYPTION_KEY: required variable N8N_ENCRYPTION_KEY is missing a value: set N8N_ENCRYPTION_KEY (long random string) in env
+exit=1
+
+===== grep ports chi 127.0.0.1 =====
+21:      - "127.0.0.1:5678:5678"
+38:      - "127.0.0.1:3001:3001"
+OK moi port bind 127.0.0.1
+
+===== khong :latest =====
+OK khong co :latest
+
+===== image local co san? =====
+khong co image local
+
+===== container cua stack (phai rong) =====
+(het danh sach)
+
+===== up -d / down -v: KHONG CHAY =====
+Ly do: may chua co image n8nio/n8n:2.4.0 + louislam/uptime-kuma:1.23.17 (xem
+"image local co san?" o tren) — `up` se pull image tu Docker Hub = tai file,
+can user cho phep tuong minh; worker khong co quyen do trong lan chay nay.
+Tag da xac minh TON TAI tren registry bang `docker manifest inspect` (chi
+metadata, exit 0 ca hai). Gate chi gom `config` + kiem 127.0.0.1/no-latest/
+thieu-bien-loi. Khong co container nao cua stack (project samsam-monitoring)
+truoc/sau gate.
+
+===== config qua --env-file (lenh trong SOP), env-file tam co N8N_ENCRYPTION_KEY =====
+exit=0

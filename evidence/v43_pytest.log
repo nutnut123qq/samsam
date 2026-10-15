@@ -1,0 +1,229 @@
+# v4.3 W43.7 gate chung — output thật (worker, vòng 2 sau khi bỏ FK alert_id + thêm 2 bảng vào deploy/cloud/README)
+# vòng 1: targeted x3 xanh (187 passed) nhưng full pytest 3 failed: test_director_framework x2 (truncate red_alerts vấp FK channel_posts.alert_id -> FeatureNotSupported thay RaiseException), test_db_backup::test_cloud_readme_drift_guard (README thiếu bảng xnqc_dossiers)
+
+=== targeted run 1 2026-10-12T13:13:34+07:00
+$ python -m pytest -q -rs tests/test_xnqc.py tests/test_ra_kenh.py tests/test_director.py tests/test_handover_docs.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_legal_docs.py
+........................................................................ [ 38%]
+........................................................................ [ 77%]
+...........................................                              [100%]
+187 passed in 18.93s
+exit=0
+
+=== targeted run 2 2026-10-12T13:13:57+07:00
+$ python -m pytest -q -rs tests/test_xnqc.py tests/test_ra_kenh.py tests/test_director.py tests/test_handover_docs.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_legal_docs.py
+........................................................................ [ 38%]
+........................................................................ [ 77%]
+...........................................                              [100%]
+187 passed in 17.89s
+exit=0
+
+=== targeted run 3 2026-10-12T13:14:18+07:00
+$ python -m pytest -q -rs tests/test_xnqc.py tests/test_ra_kenh.py tests/test_director.py tests/test_handover_docs.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_legal_docs.py
+........................................................................ [ 38%]
+........................................................................ [ 77%]
+...........................................                              [100%]
+187 passed in 19.78s
+exit=0
+
+=== full pytest (1 lần vòng 2) 2026-10-12T13:14:46+07:00
+$ python -m pytest -q -rs
+...............................                                          [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+1756 passed, 3 skipped in 256.19s (0:04:16)
+exit=0
+
+# ---- vòng 3 (resume sau ngắt phiên): vá read_export (Counter header + cap tên cột, urlsplit IPv6 → lỗi ô exit 1), safe() trên lỗi DB in ra, test +url_ipv6 +wide_header +sku_chua_mo_kenh
+
+=== targeted run 1 2026-10-12T14:28:32+07:00
+$ python -m pytest -q -rs tests/test_xnqc.py tests/test_ra_kenh.py tests/test_director.py tests/test_handover_docs.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_legal_docs.py
+........................................................................ [ 38%]
+........................................................................ [ 76%]
+.............................................                            [100%]
+189 passed in 24.39s
+exit=0
+
+=== targeted run 2 2026-10-12T14:29:05+07:00
+$ python -m pytest -q -rs tests/test_xnqc.py tests/test_ra_kenh.py tests/test_director.py tests/test_handover_docs.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_legal_docs.py
+........................................................................ [ 38%]
+........................................................................ [ 76%]
+.............................................                            [100%]
+189 passed in 21.13s
+exit=0
+
+=== targeted run 3 2026-10-12T14:29:34+07:00
+$ python -m pytest -q -rs tests/test_xnqc.py tests/test_ra_kenh.py tests/test_director.py tests/test_handover_docs.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_legal_docs.py
+........................................................................ [ 38%]
+........................................................................ [ 76%]
+.............................................                            [100%]
+189 passed in 21.95s
+exit=0
+
+=== 2026-10-12T14:30:09+07:00 $ ruff check .
+All checks passed!
+exit=0
+
+=== $ python -m py_compile agents/xnqc.py agents/ra_kenh.py tests/test_xnqc.py tests/test_ra_kenh.py
+exit=0
+
+=== $ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+exit=0
+
+=== $ python -m pipelines.director --all --dry-run | tail -1
+[done] 11 khối hợp lệ (dry-run, không DB)
+exit=0
+
+=== $ git diff --stat -- data/golden_skus.json pipelines/guardrail.py pipelines/store.py pipelines/approval_queue.py pipelines/red_alert.py ingest/golden_store.py data/guardrail_rules.json data/red_alert_routing.json docs/roles.sql AGENTS.md   (kỳ vọng rỗng)
+(hết diff)
+
+=== $ git status --short
+ M DONE.md
+ M data/data_flow_map.json
+ M data/directors/data_platform.json
+ M data/directors/legal_hr.json
+ M deploy/cloud/README.md
+ M docs/handover/jd-kpi-van-hanh.md
+ M docs/handover/kien-truc.md
+ M docs/legal/DPIA-nhap.md
+ M docs/legal/TIA-nhap.md
+ M docs/schema.sql
+?? agents/ra_kenh.py
+?? agents/xnqc.py
+?? data/phap_che.json
+?? docs/legal/xnqc-ra-kenh-NHAP.md
+?? tests/fixtures/ra_kenh/
+?? tests/test_ra_kenh.py
+?? tests/test_xnqc.py
+
+=== full pytest (1 lần vòng 3) 2026-10-12T14:30:15+07:00
+$ python -m pytest -q -rs
+(... dòng tiến độ lược ...)
+........................................................................ [ 98%]
+.................................                                        [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+1758 passed, 3 skipped in 307.87s (0:05:07)
+exit=0
+end 2026-10-12T14:35:27+07:00
+
+=== đối chiếu baseline: collect-only (không chạy) 2026-10-12T14:36:07+07:00
+test cũ (bỏ 2 file mới): 1683 tests collected (= 1680 passed + 3 skipped docker) — baseline contract 1682
+test mới tests/test_xnqc.py + tests/test_ra_kenh.py: 78 tests collected
+tổng 1761 = 1758 passed + 3 skipped (docker = MÔI TRƯỜNG: Docker Desktop tắt, không phải lỗi version) — 0 failed
+
+# ===== vòng sửa nghiệm thu (worker) — 13 phát hiện (2 MAJOR + 11 MINOR) =====
+=== targeted run 1 2026-10-12T15:04:37+07:00
+$ python -m pytest -q -rs tests/test_xnqc.py tests/test_ra_kenh.py tests/test_director.py tests/test_handover_docs.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_legal_docs.py
+........................................................................ [ 35%]
+........................................................................ [ 70%]
+............................................................             [100%]
+204 passed in 31.38s
+exit=0
+=== targeted run 2 2026-10-12T15:05:16+07:00
+$ python -m pytest -q -rs tests/test_xnqc.py tests/test_ra_kenh.py tests/test_director.py tests/test_handover_docs.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_legal_docs.py
+........................................................................ [ 35%]
+........................................................................ [ 70%]
+............................................................             [100%]
+204 passed in 33.26s
+exit=0
+=== targeted run 3 2026-10-12T15:05:56+07:00
+$ python -m pytest -q -rs tests/test_xnqc.py tests/test_ra_kenh.py tests/test_director.py tests/test_handover_docs.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_legal_docs.py
+........................................................................ [ 35%]
+........................................................................ [ 70%]
+............................................................             [100%]
+204 passed in 37.75s
+exit=0
+=== full pytest 1 lần (sau targeted ×3)
+$ python -m pytest -q -rs
+=== full pytest start 2026-10-12T15:06:51+07:00
+................................................                         [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+1773 passed, 3 skipped in 585.13s (0:09:45)
+exit=0 end 2026-10-12T15:16:44+07:00
+→ 1773 passed + 3 skipped = 1776 = 1761 (vòng trước) + 15 test mới; 3 skipped tests/test_dr_drill.py 'không có docker' = MÔI TRƯỜNG (Docker Desktop tắt), không phải lỗi version; 0 failed
+=== 2026-10-12T15:07:38+07:00 $ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile agents/xnqc.py agents/ra_kenh.py tests/test_xnqc.py tests/test_ra_kenh.py
+exit=0
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+exit=0
+$ python -m pipelines.director --all --dry-run | tail -2
+exit=0
+[ok] data_platform — Hạ tầng dữ liệu & AI (do Quản lý hạ tầng AI vận hành) · 3 loại việc · vai trò duyệt ha_tang,tgd · người duyệt chưa cấu hình (external-dep)
+[done] 11 khối hợp lệ (dry-run, không DB)
+$ git diff --stat -- data/golden_skus.json pipelines/guardrail.py pipelines/store.py pipelines/approval_queue.py pipelines/red_alert.py ingest/golden_store.py data/guardrail_rules.json data/red_alert_routing.json docs/roles.sql AGENTS.md
+(rỗng = không sửa)
+$ grep SQL ghi thẳng bảng duyệt/golden + egress
+grep exit=1 (1 = không trúng)
+$ git status --short
+ M DONE.md
+ M data/data_flow_map.json
+ M data/directors/data_platform.json
+ M data/directors/legal_hr.json
+ M deploy/cloud/README.md
+ M docs/handover/jd-kpi-van-hanh.md
+ M docs/handover/kien-truc.md
+ M docs/legal/DPIA-nhap.md
+ M docs/legal/TIA-nhap.md
+ M docs/schema.sql
+?? agents/ra_kenh.py
+?? agents/xnqc.py
+?? data/phap_che.json
+?? docs/legal/xnqc-ra-kenh-NHAP.md
+?? tests/fixtures/ra_kenh/
+?? tests/test_ra_kenh.py
+?? tests/test_xnqc.py
+
+# ===== vòng sửa nghiệm thu 2 (worker) — MAX_URL đếm byte + --today chỉ cho --remind/--sync-golden
+=== 2026-10-12T15:38:52+07:00 targeted lần 1: python -m pytest tests/test_xnqc.py tests/test_ra_kenh.py -q
+............................                                             [100%]
+100 passed in 39.04s
+exit=0
+=== 2026-10-12T15:39:41+07:00 targeted lần 2: python -m pytest tests/test_xnqc.py tests/test_ra_kenh.py -q
+............................                                             [100%]
+100 passed in 42.11s
+exit=0
+=== 2026-10-12T15:40:31+07:00 targeted lần 3: python -m pytest tests/test_xnqc.py tests/test_ra_kenh.py -q
+............................                                             [100%]
+100 passed in 35.75s
+exit=0
+(sau targeted ×3: đổi 1 assert test_read_export_url_limit_counts_bytes sang biến msg cho ruff ISC004 — cùng ngữ nghĩa; lại PASS trong -k url và full)
+=== 2026-10-12T15:42:07+07:00 $ python -m pytest -q -rs
+1783 passed in 388.18s (0:06:28)
+exit=0 end 2026-10-12T15:48:44+07:00
+→ 1783 passed = 1776 (vòng trước: 1773 passed + 3 skipped) + 7 test mới (ra_kenh 3: BAD url_long_bytes, url_limit_counts_bytes, url_max_bytes_fits_btree; xnqc 4 argv usage); 0 skipped (lần này Docker có — test_dr_drill chạy), 0 failed
+=== 2026-10-12T15:49:07+07:00 $ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile agents/xnqc.py agents/ra_kenh.py tests/test_xnqc.py tests/test_ra_kenh.py
+exit=0
+$ git diff --stat -- data/golden_skus.json pipelines/guardrail.py pipelines/store.py pipelines/approval_queue.py pipelines/red_alert.py ingest/golden_store.py data/guardrail_rules.json data/red_alert_routing.json docs/roles.sql AGENTS.md
+(rỗng = không sửa)
+$ git status --short
+ M DONE.md
+ M data/data_flow_map.json
+ M data/directors/data_platform.json
+ M data/directors/legal_hr.json
+ M deploy/cloud/README.md
+ M docs/handover/jd-kpi-van-hanh.md
+ M docs/handover/kien-truc.md
+ M docs/legal/DPIA-nhap.md
+ M docs/legal/TIA-nhap.md
+ M docs/schema.sql
+?? agents/ra_kenh.py
+?? agents/xnqc.py
+?? data/phap_che.json
+?? docs/legal/xnqc-ra-kenh-NHAP.md
+?? tests/fixtures/ra_kenh/
+?? tests/test_ra_kenh.py
+?? tests/test_xnqc.py

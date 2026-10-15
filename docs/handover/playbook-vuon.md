@@ -76,12 +76,80 @@ Ghi xong CLI in `[done] nhật ký #id`; `--check` in từng dòng
 `[no-logs|gap|keyword] <khoảnh>: ...`. Khi DB chết: ghi → báo lỗi
 (không mất lệnh — ghi lại sau), `--check` → in "chưa nạp".
 
+## Nhật ký đã ghi là bằng chứng (v9.3 — hash chain)
+
+- Mỗi nhật ký thật (không phải dữ liệu mẫu) được DB nối vào **chuỗi băm**
+  ngay lúc ghi: dòng sau giữ dấu vân tay của dòng trước. Nhật ký đã ghi
+  **không sửa, không xóa được** — kể cả xóa khoảnh cũng bị chặn khi khoảnh
+  đó còn nhật ký.
+- **Ghi sai → ghi dòng MỚI kèm lý do**, không nhờ ai "sửa trong DB".
+- Ai đó sửa lén bằng quyền quản trị DB sẽ bị phát hiện khi kiểm chuỗi:
+  `python -m agents.garden_director --verify` (exit 0 = nguyên vẹn,
+  exit 1 = có dòng bị đụng → báo GĐ vùng trồng + người phụ trách hạ tầng).
+
+## Bản tin tuần + nhắc lịch (Agent GĐ vùng trồng)
+
+```
+python -m agents.garden_director --bulletin                    # tuần kết thúc HÔM QUA (giờ VN) — chạy sau 0h
+python -m agents.garden_director --bulletin --until 2026-10-11 # kỳ cụ thể (ngày đã qua)
+python -m agents.garden_director --remind                      # chỉ in danh sách nhắc
+```
+
+- Bản tin ghi file `data/reports/garden-week-<ngày>.md` (BẢN NHÁP, người
+  đọc rồi gửi tay — hệ thống không tự gửi Zalo/email). 6 mục: toàn vẹn
+  chuỗi nhật ký, dữ liệu mẫu còn lại, nhắc lịch/gap, nhật ký mới theo
+  khoảnh, cảnh báo từ khóa (CHỈ quét ô Chi tiết — tên hoạt động "kiểm tra
+  sâu bệnh" không tự kích cảnh báo), ảnh mới. Mỗi mục có "SQL đối chứng"
+  để người kiểm tự chạy lại ra đúng con số. Không có vị trí/diện tích/tọa
+  độ/tên người ghi.
+- Nhật ký "mới trong kỳ" = ngày hoạt động trong kỳ HOẶC được GHI trong kỳ
+  — nhập bù từ sổ giấy (ngày hoạt động tuần trước) vẫn lên bản tin tuần
+  này, cảnh báo đánh dấu "(ghi bù)". Điều này chỉ đúng khi kỳ gồm các ngày
+  ĐÃ HẾT: mặc định `--until` = hôm qua. Đừng truyền `--until` = hôm nay —
+  nhật ký ghi sau giờ chạy trong ngày đó không vào bản tin nào (kỳ sau bắt
+  đầu từ 0h hôm sau).
+- Nhắc lịch theo `data/garden_schedule.json` — **GIẢ ĐỊNH** (tưới 7 ngày,
+  kiểm tra sâu bệnh 7, làm cỏ 30, bón 60, gap 14) chờ GĐ vùng trồng chốt
+  lịch canh tác thật. Loại nhắc: `[no-logs]` khoảnh chưa có nhật ký nào,
+  `[gap]` quá N ngày không có nhật ký, `[overdue]` hoạt động định kỳ trễ.
+
+## Gửi ảnh vườn vào kho tư liệu (gỡ EXIF/GPS)
+
+```
+python scripts/garden_media.py --file anh.jpg --plot KV-A01 --date 2026-10-12 --by "Tên"
+```
+
+- Ảnh điện thoại chứa **tọa độ GPS = vị trí khoảnh**. Lệnh trên dựng lại
+  ảnh từ điểm ảnh → bản lưu **không còn EXIF/GPS/XMP** nào; in ra `có
+  GPS: có` nghĩa là ảnh GỐC có GPS và đã được gỡ.
+- Kho ảnh nằm NGOÀI repo (`GARDEN_MEDIA_DIR` hoặc `--store`), tên file =
+  sha256 → gửi trùng ảnh không nhân đôi. Nhận JPEG (kể cả ảnh iPhone/Samsung
+  nhiều khung MPO — chỉ giữ ảnh chính)/PNG/WEBP ≤ 25 MB;
+  video/HEIC chưa nhận (đổi sang JPEG trước).
+- Đừng gửi ảnh gốc qua kênh khác (Zalo nhóm, email) — gửi bản trong kho.
+
+## Tem QR truy xuất (v9.4 — thí điểm mật ong)
+
+- Bạn ký vai **`gd_vung_trong`** (GĐ vùng trồng) — cùng GĐ Sản xuất và Pháp
+  chế/QA, mỗi lô cần 3 NGƯỜI khác nhau; 1 người không ký 2 vai:
+  `python -m pipelines.qr_trace preview --lot <mã lô>` (đọc lời văn) rồi
+  `python -m pipelines.qr_trace sign --lot <mã lô> --role gd_vung_trong --by "<tên>"`.
+- Nguồn lô chỉ lấy từ nhật ký **thu hoạch** đã ghi (hash chain) — nhật ký
+  ghi thiếu/sai thì ghi dòng MỚI trước khi GĐ SX ánh xạ.
+- Ảnh công khai trên trang QR (`--media` khi ánh xạ, tối đa 3 ảnh, cùng
+  khoảnh): chọn ảnh vườn/cây — **không ảnh có người/khuôn mặt** (chưa có
+  giấy đồng ý). Trang chỉ ghi vùng mức tỉnh (`region_text`), không tọa độ.
+- **Phương án B (mốc 27/11 — GIẢ ĐỊNH)**: `python -m pipelines.qr_trace planb`
+  in bản tin; từ mốc mà chưa đủ 3 chữ ký → agent ĐỀ XUẤT tem không QR, **bạn
+  quyết** và báo Sales + Hạ tầng.
+
 ## Khi nào gọi người khác
 
 | Tình huống | Gọi ai |
 |---|---|
 | Khoảnh mới chưa có trong ô chọn Khoảnh | Người vận hành — thêm row vào bảng `plots` (status='active') |
+| Bản tin/`--verify` báo vấn đề hash chain | **GĐ vùng trồng** + người phụ trách hạ tầng (`sop.md` mục "`--verify` vùng trồng báo lỗi") |
 | Tab hiện "Chưa nạp — không kết nối được Postgres" | Người vận hành/IT — `sop.md` mục "DB không kết nối được" |
 | Cảnh báo keyword sâu bệnh/rệp/nấm/dịch | **Quản lý vườn** — kiểm tra thực địa ngay |
-| Nhập sai nhật ký muốn sửa/xóa | Người vận hành — sửa trực tiếp trong DB (pilot chưa có nút sửa) |
+| Nhập sai nhật ký muốn sửa/xóa | **Không sửa/xóa được** (v9.3 hash chain) — ghi dòng MỚI kèm lý do (vd hoạt động `ghi nhận`, chi tiết "đính chính nhật ký ngày .. : ..."). Đính chính có duyệt = đề xuất someday |
 | Muốn nhắc nhật ký bằng tin Zalo thay form | Đội dự án — chat-intake chưa làm (đề xuất someday) |

@@ -1,0 +1,16 @@
+# v3.4 fix-round UI E2E (MAJOR _auth shadow + MINOR WYSIWYS) — 2026-10-12T00:58:22+07:00
+# streamlit 1.65.0 trong venv tạm NGOÀI repo (scratchpad/v34venv, --system-site-packages), không cài global, không sửa requirements
+# AUTH_MODE=dev (identity dev, role tgd); DB thật, schema tạm committed t_e2e_* (search_path qua options DSN), drop cascade cuối chạy; không bấm Duyệt/Từ chối/Xếp lịch
+# lượt 2: bản đột biến (_g_author → _auth) chạy từ scratchpad → E2E phải thấy AttributeError
+setup schema tạm: drafts 1(pending) 2(approved) → [('approved', 1), ('pending', 1)]
+PASS tgd/dev: đủ 7 tab
+PASS garden form đã render (dòng Người ghi chạy)
+PASS không có exception trên trang
+PASS draft text hiện THÔ (link markdown nguyên chuỗi)
+PASS không render link/ảnh từ draft
+PASS nút Duyệt có trên form (can_approve chạy)
+PASS selectbox xếp lịch hiện (can_schedule chạy)
+PASS đột biến `_auth` gán đè → exception AttributeError
+cleanup: drop schema tạm → còn 0
+[ui-review-e2e] 8/8 PASS
+exit=0

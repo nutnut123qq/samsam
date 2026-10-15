@@ -22,7 +22,10 @@ leads cần DB (`DATABASE_URL` trong `.env`, xem `sop.md`).
 - Câu trả lời bot luôn kèm **nguồn (URL)** — khi follow-up khách, trích
   đúng nguồn đó, đừng thêm công dụng ngoài dữ liệu.
 - Tab Leads ở pilot là **read-only** — đổi trạng thái lead (new →
-  contacted/won/lost) cập nhật trực tiếp trong DB (xem `sop.md`).
+  contacted → qualified → won, hoặc lost) bằng CLI `python -m ingest.crm
+  --status <id> <trạng thái> --by "<tên>"` (xem `sop.md` mục 5c).
+- Chỉ liên hệ marketing / chuyển SĐT-tên khách cho đại lý khi khách đã
+  đồng ý đúng mục đích (bảng `consents`) — chưa có đồng ý = KHÔNG.
 - Hệ thống KHÔNG tự gọi/nhắn khách — mọi follow-up do bạn thực hiện.
 
 ## Quy trình ngày mẫu
@@ -43,9 +46,18 @@ leads cần DB (`DATABASE_URL` trong `.env`, xem `sop.md`).
      `contact` (địa chỉ/liên hệ). Ưu tiên gọi `partner`/`order` trước.
    - `user_hash` là mã băm — không phải SĐT; kết hợp kênh Zalo OA để
      biết khách nào và nhắn lại trong OA.
-3. **Cập nhật trạng thái lead** sau khi xử lý: `new` → `contacted` /
-   `won` / `lost` — cập nhật trong DB (chưa có nút trên UI ở pilot;
-   hướng dẫn SQL ở `sop.md` mục "Cập nhật status lead").
+3. **CRM — gán đại lý + trạng thái (v5.2):** chạy `python -m ingest.crm
+   --report` xem lead CHƯA gán (kèm tỉnh suy ra + đại lý gợi ý theo
+   vùng) → gán `--assign <id> --dealer <mã> --by "<tên>"` (tỉnh không suy
+   được thì thêm `--province`). Khách để lại SĐT/tên → nhập qua stdin
+   `--add-contact - --lead <id> --by "<tên>"` (KHÔNG gõ SĐT trên dòng
+   lệnh). Khách đồng ý (phiếu/biên bản có mã) → `--consent <contact>
+   --purpose dai_ly --grant --source ... --evidence <mã> --policy-version
+   <v> --dealer <mã> --by "<tên>"`; khách rút → `--withdraw`. Chuyển lead
+   cho đại lý: `--handoff <id> --dealer <mã> --by "<tên>"` in nội dung để
+   BẠN tự gửi (có SĐT chỉ khi khách đồng ý đích danh đại lý đó). Sau khi
+   xử lý: `--status <id> contacted|qualified|won|lost --by "<tên>"` (không
+   lùi trạng thái).
 4. **Trước khi trả lời câu khó:** hỏi thử tab **Chat Sâm Sâm** để xem
    bot trích nguồn nào — dùng nguồn đó làm căn cứ trả lời khách, tránh
    nói sai công dụng TPBVSK.
@@ -59,6 +71,8 @@ leads cần DB (`DATABASE_URL` trong `.env`, xem `sop.md`).
 python -m ingest.lead_store     # gom lead mới từ convlog vào bảng leads
                                 # (idempotent — chạy lại không nhân đôi)
 python scripts/eval_qa.py       # đo chất lượng chatbot 12 câu (xem phu-luc-d.md)
+python -m ingest.crm --report   # CRM: lead theo tỉnh/đại lý/trạng thái, không PII
+python -m ingest.crm --help     # đủ lệnh gán/đồng ý/trạng thái/handoff (sop.md mục 5c)
 ```
 
 ## Khi nào gọi người khác
@@ -69,4 +83,5 @@ python scripts/eval_qa.py       # đo chất lượng chatbot 12 câu (xem phu-l
 | Bảng leads trống/hiện "Chưa có dữ liệu leads" | Người vận hành — chạy `python -m ingest.lead_store`; vẫn trống nghĩa là convlog chưa có câu ý định mua |
 | Câu hỏi có ý mua nhưng không lên leads | Báo đội dự án — intent hiện là heuristic keyword, có thể sót cụm |
 | Khách khiếu nại bot trả lời sai | Quản lý + đội dự án — lưu lại câu hỏi + câu trả lời + nguồn bot trích |
-| Muốn sửa trạng thái lead mà không rành SQL | Người vận hành |
+| Lệnh CRM báo thiếu `CONTACT_VAULT_KEY` | Người phụ trách hạ tầng — khóa do công ty giữ (`sop.md` mục 5c) |
+| Hai đại lý cùng muốn nhận 1 lead | GĐ bán hàng quyết — CLI từ chối gán đè |

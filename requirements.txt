@@ -6,8 +6,21 @@ beautifulsoup4>=4.12
 psycopg[binary]>=3.1
 numpy>=1.26
 
+# Doc file .xlsx xuat tay tu Seller Center (ingest.market_csv) - dep nhe,
+# import luoi; thieu thi xuat CSV
+openpyxl>=3.1
+
 # LLM + embeddings qua OpenRouter (openai client troi base_url)
 openai>=1.40
+
+# v3.8 doc intake - doc lop text PDF (thuan Python, khong dep native;
+# reportlab/fitz/PIL KHONG dung)
+pypdf>=4
+
+# v5.2 CRM contact_vault (ingest.crm) - Fernet ma hoa PII + HKDF khoa HMAC
+# tra trung SDT. Da co san (keo theo boi google-auth/paramiko) - khong
+# tu che crypto, khong pgcrypto (khoa lo trong SQL log)
+cryptography>=42
 
 # App demo
 streamlit>=1.38
@@ -19,4 +32,10 @@ ruff>=0.6
 
 # Dev — chi can khi quay lai video demo (scripts/record_demo.py)
 playwright>=1.63
+# v6.3: imageio-ffmpeg gio la RUNTIME cua pipelines.video_studio (ffmpeg dung
+# video nhap MKT-04; thieu -> ffmpeg_thieu/exit 2) — van dung cho record_demo
 imageio-ffmpeg>=0.5
+
+# v9.3 kho tu lieu vuon (scripts/garden_media.py) - go EXIF/GPS bang cach
+# dung lai anh tu pixel; import luoi, thieu thi script bao external-dep
+Pillow>=10

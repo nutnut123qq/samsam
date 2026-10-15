@@ -659,5 +659,74 @@ thêm/sửa bảng; không global mutable mới.
 
 ---
 
+## M30 — Hạ tầng AI P1 (v3.0–v3.10, nhánh `ai-infra`, worktree riêng)
+
+Nguồn: kế hoạch "Phòng Kinh doanh vận hành bằng AI" (WP01–WP06, WP04b,
+WP15 phần hạ tầng; luồng F15.x, F17.x). Coordinator kiêm **Quản lý hạ
+tầng AI** cho tới khi công ty tuyển người. Làm trên nhánh `ai-infra`
+(worktree `D:\code\samsam-infra`, DB riêng `samsam_infra`) để không đụng
+loop `/cycle` đang chạy trên `main` (v2.4-polish) — đánh số từ v3.0 để
+không trùng version của loop đó. Commit local từng version, **không
+push** (push do user giữ).
+
+Quy trình mỗi version (chặt theo skill):
+1. Contract: agent soạn checklist `DONE.md` (boundary/gate/evidence) →
+   coordinator duyệt → commit `contract vX`.
+2. Worker: làm theo `/ship` — targeted test ×3, full `python -m pytest
+   -q`, `ruff check .`, `py_compile`, tự rà OWASP trên diff; evidence
+   vào `evidence/vXX_*.log` (`git add -f`).
+3. Nghiệm thu song song 3 agent (chỉ đọc): đúng contract + gotchas
+   AGENTS.md / bảo mật OWASP trên diff / chất lượng test + chạy ×3 bắt
+   flaky. Có MAJOR → sửa → nghiệm thu lại (tối đa 2 vòng).
+4. Coordinator: đọc `git diff` thật, chạy lại gate, `/code-review` trên
+   diff (+ `/security-review` cho v3.1, v3.4, v3.6) → commit `dong vX`.
+
+**Skip-khi-công-ty-chưa-cấp:** phần cần tài khoản/ký/khóa của công ty
+được làm tới mức chạy được local + có cổng cấu hình, rồi ghi
+"external-dep" — không giả lập như thật, không treo version.
+
+- [x] **v3.0-guardrail-hotfix** — vá lỗ hổng SAFE_PHRASES miễn trừ luôn
+  câu khẳng định ("…có thể thay thế thuốc chữa bệnh…" → ok=True); bộ câu
+  bẫy hồi quy. Boundary: `pipelines/guardrail.py`, `tests/test_guardrail.py`.
+  Gate: câu bẫy ok=False, câu khuyến cáo phủ định vẫn ok=True, full xanh.
+- [x] **v3.1-llm-gateway** — một client LLM duy nhất: che PII trước mọi
+  lời gọi, lọc câu sức khỏe → handoff, privacy routing (provider
+  whitelist, `data_collection=deny`, zdr), fail-closed, `llm_usage`, trần
+  theo agent, cờ kill; chuyển `api/rag.py`, `pipelines/content.py`,
+  `ingest/embed_store.py` sang gateway. Skip: DPIA/TIA ký (chỉ template).
+- [x] **v3.2-golden-master** — dữ liệu chuẩn 100% SKU: `price_list`
+  append-only (list/promo, valid_from/to), `sku_readiness`,
+  `v_promotable`, phiếu lệch, loader golden riêng (không đè row manual).
+  Skip: xác nhận của GĐ bán hàng/Pháp chế → để `pending`, không tự duyệt.
+- [x] **v3.3-connector-csv** — nạp CSV Seller Center Shopee/TikTok vào
+  staging, đối chiếu golden, cảnh báo rượu/giá lệch/TPBVSK có ads. Skip:
+  file CSV thật (mapping cấu hình + fixture tổng hợp, "định dạng chưa
+  xác minh").
+- [x] **v3.4-auth-approval** — vai trò + tách quyền DB (agent không tự
+  duyệt), `approval_queue` 2 lớp, `approvals` có sha256, `agent_action_log`
+  hash chain, đăng nhập Streamlit. Skip: SSO Cloudflare Access (cần DNS) →
+  cổng header proxy để sẵn + đăng nhập local.
+- [x] **v3.5-ci-eval-deploy** — harness nghiệm thu chung, GitHub Actions
+  (pytest + ruff + Postgres service), cổng deploy theo commit SHA khi eval
+  PASS + phiếu duyệt. Skip: chạy thật trên GitHub (không push), runner
+  tự host.
+- [x] **v3.6-cloud-db-backup** — backup/restore (pg_dump + bản sao ngoài),
+  kiểm `connect_timeout` mọi connect, script triển khai cloud trong nước
+  ở dạng cấu hình. Skip: tài khoản cloud Bizfly + thẻ.
+- [x] **v3.7-ops-monitoring** — `job_runs`, bản tin sức khỏe 07:30, cảnh
+  báo chi phí AI 80%/chặn 100% từ `llm_usage`, docker-compose n8n +
+  Uptime Kuma chạy local. Skip: production, kênh email/Resend.
+- [x] **v3.8-ocr-intake** — intake tài liệu: checksum, file gốc bất biến,
+  trích text PDF số, quét PII, hàng Pháp chế xác nhận trường pháp lý.
+  Skip: API OCR có phí (FPT/Google) → provider cắm sau.
+- [x] **v3.9-kb-acl** — kho tri thức có quyền đọc theo đoạn, tách
+  `chunks_internal` khỏi chatbot khách (deny-by-default), nạp tăng dần,
+  lọc nội dung rượu, version. Gate thêm: `scripts/eval_qa.py` ≥10/12.
+- [x] **v3.10-dr-freeze** — diễn tập khôi phục trên Postgres docker
+  local, công cụ đóng băng 21/12–10/02 (chặn deploy ngoài hotfix),
+  break-glass, runbook bàn giao cho người vận hành hạ tầng.
+
+---
+
 ## Lề (không đụng trong pilot)
 Messenger integration, agent vườn, dashboard, training, deploy public, auth.

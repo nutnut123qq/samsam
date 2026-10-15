@@ -1,0 +1,18 @@
+=== DB đếm read-only TRƯỚC ingest (dry-run khớp lại)
+[dry-run read-only] db=samsam_v39 chunks=916 hit_is_alcohol(content|title)=46 docs=31
+content-only hits: 40
+sample docs: ['catalog-products', 'nv-RUOU-SAMSAM-No-5', 'nv-RUOU-SAMSAM-No-7', 'nv-khai-truong-showroom-sam-ngoc-linh-sam-sam-43', 'nv-le-hoi-sam-va-huong-lieu-duoc-lieu-quoc-te-tp-ho-chi-minh-32', 'nv-ra-mat-khong-gian-trung-bay-va-trai-nghiem-sam-ngoc-linh-tai-da-nang-39', 'nv-ruou-sam-ngoc-linh', 'nv-sam-ngoc-linh-quoc-bao-viet-nam-2', 'nv-sam-sam-tai-hoi-cho-duoc-lieu-y-duoc-co-truyen-va-cac-san-pham-tu-duoc-lieu-toan-quoc-lan-thu-hai-nam-2024-36', 'nv-tour-du-lich-sinh-thai-nam-tra-my-gan-voi-sam-ngoc-linh-37', 'wc-158', 'wc-159', 'wc-2293', 'wc-2296', 'wc-990', 'wc-991', 'wp-134', 'wp-160', 'wp-170', 'wp-176', 'wp-191', 'wp-2332', 'wp-2339', 'wp-2342', 'wp-2346', 'wp-2352', 'wp-2413', 'wp-2416', 'wp-2527', 'wp-2529', 'wp-285']
+substring rượu|wine on content: 41
+substring-only: wp-1842 ['intertwined']
+=== python -m pytest -q tests/test_kb_filter.py (2026-10-12T00:38:41+07:00)
+.............................                                            [100%]
+29 passed in 0.20s
+
+######## VÒNG SỬA nghiệm thu (2026-10-12T01:07:46+07:00)
+=== python -m pytest -q tests/test_kb_filter.py
+45 passed in 0.19s
+=== mutation: _norm bỏ normalize('NFC') -> test_kb_filter+test_embed_store+test_kb_internal (kỳ vọng ĐỎ)
+FAILED tests/test_kb_filter.py::test_hits[no\u0302\u0300ng \u0111o\u0323\u0302 co\u0302\u0300n 40]
+FAILED tests/test_kb_filter.py::test_hits[Sa\u0302m Sa\u0302m co\u0301 ba\u0301n \u0111o\u0302\u0300 uo\u0302\u0301ng co\u0301 co\u0302\u0300n kho\u0302ng?]
+2 failed, 75 passed in 3.64s
+(đã khôi phục kb_filter.py từ bản sao; diff rỗng)

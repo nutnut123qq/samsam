@@ -1,0 +1,57 @@
+# evidence/v91_cash.log — v9.1 FP-Cash (dòng tiền 13 tuần trên pipelines.scenario.project)
+# Chạy: 2026-10-12 14:47:35 +0700; giả định GIẢ ĐỊNH (fpa_config.json + scenario_assumptions.json); settlement MẪU trên DB dev.
+
+$ python -m agents.fp_cash --forecast --start 2026-10-12
+# Dòng tiền 13 tuần từ 12/10/2026 — khoảng thấp/cơ sở/cao
+
+**Khoảng ước lượng trên giả định — KHÔNG phải cam kết; agent không đề xuất vay, chuyển khoản hay dời hạn thanh toán.**
+
+| Tuần | Thu thấp | Thu cơ sở | Thu cao | Chi | Số dư thấp | Số dư cơ sở | Số dư cao |
+|---|---|---|---|---|---|---|---|
+| 12/10 | 64.798.926đ | 83.805.998đ | 102.813.072đ | 18.000.000đ | 46.798.926đ | 65.805.998đ | 84.813.072đ |
+| 19/10 | 64.798.926đ | 83.805.998đ | 102.813.072đ | 0đ | 111.597.852đ | 149.611.996đ | 187.626.144đ |
+| 26/10 | 64.798.926đ | 83.805.998đ | 102.813.072đ | 60.000.000đ | 116.396.778đ | 173.417.994đ | 230.439.216đ |
+| 02/11 | 64.798.926đ | 83.805.998đ | 102.813.072đ | 0đ | 181.195.704đ | 257.223.992đ | 333.252.288đ |
+| 09/11 | 64.798.926đ | 83.805.998đ | 102.813.072đ | 18.000.000đ | 227.994.630đ | 323.029.990đ | 418.065.360đ |
+| 16/11 | 64.798.926đ | 89.748.398đ | 117.336.649đ | 0đ | 292.793.556đ | 412.778.388đ | 535.402.009đ |
+| 23/11 | 77.062.693đ | 122.864.524đ | 189.018.641đ | 60.000.000đ | 309.856.249đ | 475.642.912đ | 664.420.650đ |
+| 30/11 | 64.798.926đ | 83.805.998đ | 102.813.072đ | 0đ | 374.655.175đ | 559.448.910đ | 767.233.722đ |
+| 07/12 | 64.798.926đ | 83.805.998đ | 102.813.072đ | 18.000.000đ | 421.454.101đ | 625.254.908đ | 852.046.794đ |
+| 14/12 | 64.798.926đ | 83.805.998đ | 102.813.072đ | 300.000.000đ | 186.253.027đ | 409.060.906đ | 654.859.866đ |
+| 21/12 | 76.202.598đ | 110.347.014đ | 160.382.588đ | 60.000.000đ | 202.455.625đ | 459.407.920đ | 755.242.454đ |
+| 28/12 | 64.798.926đ | 83.805.998đ | 102.813.072đ | 0đ | 267.254.551đ | 543.213.918đ | 858.055.526đ |
+| 04/01 | 67.867.751đ | 95.209.672đ | 125.057.730đ | 18.000.000đ | 317.122.302đ | 620.423.590đ | 965.113.256đ |
+
+Cảnh báo — tuần âm ở kịch bản thấp (số dư < 0đ): (không có)
+Thiếu giá — loại khỏi dự báo: `ruou-sam-binh-su-do-500ml` × offline, `saphraton-40v` × offline
+
+Giả định:
+- offline: tỷ lệ thực nhận 1.0000 — mặc định cấu hình — chưa xác minh
+- shopee: tỷ lệ thực nhận 0.8238 — đo từ settlement 17 dòng (8 tuần trước)
+- tiktok: tỷ lệ thực nhận 0.8500 — mặc định cấu hình — chưa xác minh
+- độ trễ tiền về offline: 4 tuần — GIẢ ĐỊNH, chưa xác minh
+- độ trễ tiền về shopee: 2 tuần — GIẢ ĐỊNH, chưa xác minh
+- độ trễ tiền về tiktok: 2 tuần — GIẢ ĐỊNH, chưa xác minh
+- kịch bản bán (đơn vị/tuần): GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt — `data/scenario_assumptions.json`
+- đơn giá: giá `list` golden cho kênh online; offline = list shopee × 0.7 (GIẢ ĐỊNH)
+- chi cố định + một lần, tỷ lệ/độ trễ mặc định: `data/fpa_config.json` mục cash — GIẢ ĐỊNH, chờ GĐ tài chính chốt
+- chưa có số dư đầu kỳ thật — số dư = dòng tiền ròng lũy kế từ 0
+
+[exit=0]
+
+$ python -m agents.fp_cash --forecast --start 2026-02-30
+usage: python -m agents.fp_cash [-h] [--forecast] [--start START]
+                                [--opening OPENING] [--json]
+python -m agents.fp_cash: error: --start phải dạng YYYY-MM-DD
+[exit=2]
+
+$ DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m agents.fp_cash --forecast --start 2026-10-12  (host chết)
+[warn] không kết nối được Postgres — tỷ lệ thực nhận dùng mặc định cấu hình (chưa xác minh)
+# Dòng tiền 13 tuần từ 12/10/2026 — khoảng thấp/cơ sở/cao
+
+**Khoảng ước lượng trên giả định — KHÔNG phải cam kết; agent không đề xuất vay, chuyển khoản hay dời hạn thanh toán.**
+
+| Tuần | Thu thấp | Thu cơ sở | Thu cao | Chi | Số dư thấp | Số dư cơ sở | Số dư cao |
+|---|---|---|---|---|---|---|---|
+| 12/10 | 66.038.900đ | 85.408.000đ | 104.777.100đ | 18.000.000đ | 48.038.900đ | 67.408.000đ | 86.777.100đ |
+[exit=0]

@@ -1,0 +1,53 @@
+### ruff check . (2026-10-13T02:08:26+07:00)
+All checks passed!
+exit=0
+### python -m py_compile pipelines/video_studio.py pipelines/content.py app/streamlit_app.py scripts/agent_eval.py tests/test_video_studio.py (2026-10-13T02:08:26+07:00)
+exit=0
+### git diff --stat file CAM sua (phai rong)
+(het diff cam)
+### grep publish/mang/clone (phai rong; exit 1 = rong)
+grep exit=1
+### git check-ignore
+data/video_assets/x.mp4
+data/broll/x.jpg
+### grep TTS_PROVIDER env.example
+163:TTS_PROVIDER=none
+### git status --short
+ M .github/workflows/ci.yml
+ M .gitignore
+ M DONE.md
+ M STATUS.md
+ M app/streamlit_app.py
+ M data/data_flow_map.json
+ M data/eval/config.json
+ M data/guardrail_rules.json
+ M data/llm_gateway.json
+ M data/prompts/manifest.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/prompt-library.md
+ M docs/handover/runbook-ha-tang.md
+ M docs/handover/sop.md
+ M docs/legal/DPIA-nhap.md
+ M docs/legal/TIA-nhap.md
+ M docs/roles.sql
+ M docs/schema.sql
+ M env.example
+ M pipelines/content.py
+ M requirements.txt
+ M scripts/agent_eval.py
+ M tests/test_agent_eval.py
+ M tests/test_ci_workflow.py
+ M tests/test_handover_docs.py
+ M tests/test_listing.py
+ M tests/test_qa_harness.py
+?? data/eval/suites/mkt04.json
+?? data/prompts/video_script.md
+?? data/video_studio.json
+?? evidence/v63_sample_9x16.json
+?? evidence/v63_sample_9x16.mp4
+?? evidence/v63_sample_frame_cuoi.png
+?? evidence/v63_sample_frame_dau.png
+?? evidence/v63_sample_frame_giua.png
+?? pipelines/video_studio.py
+?? tests/test_video_studio.py

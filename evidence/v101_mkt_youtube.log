@@ -1,0 +1,13 @@
+## v10.1 W101.5 MKT-12 mkt_youtube (2026-10-14T19:43:52+07:00)
+$ python -m pytest tests/test_mkt_youtube.py tests/test_guardrail_v2.py tests/test_video_studio.py -q -rs
+........................................................................ [ 31%]
+........................................................................ [ 63%]
+........................................................................ [ 94%]
+............                                                             [100%]
+228 passed in 175.77s (0:02:55)
+exit=0
+$ grep "googleapiclient|upload|privacyStatus.*public" agents/mkt_youtube.py (kỳ vọng rỗng)
+grep_exit=1 (1 = không khớp)
+$ python -m agents.mkt_youtube --brief "Rượu sâm ngày Tết" --dry-run   # case âm: chặn TRƯỚC LLM, không DB
+[refuse] ruou: brief nhắc rượu — cấm quảng cáo/khuyến mại rượu (Luật 44/2019) (LLM 0 lời gọi)
+exit=1

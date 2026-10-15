@@ -1,0 +1,32 @@
+# v10.3 W103.7 — docs + bản đồ luồng + DPIA/TIA + env — 2026-10-12T22:07:50+07:00
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+exit=0
+$ grep -c 'market_api\|social_vendor\|RAG_VECTOR_BACKEND' docs/handover/sop.md
+10
+$ grep -n '67 bảng public' docs/handover/kien-truc.md
+81:## 3. Cơ sở dữ liệu — 67 bảng public (`docs/schema.sql`)
+$ grep -nE '^(SHOPEE|TIKTOK)_[A-Z_]+=.+' env.example
+grep_rc=1 (1 = rỗng — không giá trị)
+$ grep -nE '^(SHOPEE|TIKTOK|RAG)_[A-Z_]+=' env.example
+162:SHOPEE_PARTNER_ID=
+163:SHOPEE_PARTNER_KEY=
+164:SHOPEE_SHOP_ID=
+165:SHOPEE_ACCESS_TOKEN=
+168:SHOPEE_API_BASE=
+169:TIKTOK_APP_KEY=
+170:TIKTOK_APP_SECRET=
+171:TIKTOK_SHOP_CIPHER=
+172:TIKTOK_ACCESS_TOKEN=
+174:TIKTOK_API_BASE=
+179:RAG_VECTOR_BACKEND=float8
+$ data_flow_map: DF-31/DF-32
+DF-08 xanh cross_border=True ['ingest/embed_store.py', 'scripts/vector_eval.py'] | Embedding KB public
+DF-31 do cross_border=False ['ingest/market_api.py'] | Connector API sàn chỉ đọc (ingest/market_api.py)
+DF-32 vang cross_border=False ['ingest/social_vendor.py'] | Social listening nhà cung cấp (ingest/social_vendor.py)
+tổng luồng 32
+
+# VÒNG 3 chạy lại — 2026-10-13T01:23:53+07:00
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+exit=0

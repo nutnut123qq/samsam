@@ -1,0 +1,96 @@
+=== v7.3 W73.3–W73.6 persona_sim + sim_runs evidence — 2026-10-12 02:58:42 +07 — git b35f3eb+dirty (DB riêng samsam_infra)
+
+$ python scripts/apply_schema.py   (lần 1)
+[done] schema applied — 25 bảng public: agent_action_log, approvals, assets, chunks, chunks_internal, claims_approved, content_drafts, document_fields, documents, eval_runs, golden_discrepancies, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, sim_runs, sku_map, sku_master
+exit=0
+
+$ python scripts/apply_schema.py   (lần 2 — idempotent)
+exit=0
+
+$ grep -c '^create table if not exists' docs/schema.sql
+25
+
+$ grep -niE 'phone|email|order_id|user_hash|buyer|answer_text' <block v7.3 của schema.sql>
+(rc=1 — 1 = không trúng)
+
+$ python -m pytest -q tests/test_persona_sim.py -k validate
+............................                                             [100%]
+28 passed, 17 deselected in 0.60s
+
+$ python -m pytest -q -rs tests/test_persona_sim.py
+.............................................                            [100%]
+45 passed in 4.91s
+
+$ python -m pytest -q tests/test_handover_docs.py tests/test_connect_timeout_guard.py
+..........                                                               [100%]
+10 passed in 0.46s
+
+$ grep -n 'connect(' scripts/persona_sim.py
+490:def _connect():
+495:    return psycopg.connect(dsn, connect_timeout=CONNECT_TIMEOUT_S)
+579:        conn = _connect()
+
+$ python scripts/persona_sim.py   (không cờ, dpia_signed=false, PYTHONIOENCODING không đặt)
+[refuse] DPIA chưa ký (sim_config.json dpia_signed khác true) — persona_sim chỉ chạy --dry-run (số giả). Chỉ NGƯỜI thật đổi dpia_signed sau khi Pháp chế + TGĐ ký DPIA/TIA.
+exit=2
+
+$ python scripts/persona_sim.py --dry-run
+[DRY-RUN — số giả, gateway giả, không gọi LLM]
+Nghiên cứu giả lập persona — run dry-20261012-d9fd3213 · persona_set v1 (e42a92a06373) · 45 lời gọi, 45 hợp lệ
+KHÔNG phải dự báo doanh số — chỉ dùng để loại bớt phương án yếu trước khi thử với khách thật.
+Giới hạn: persona tổng hợp + mô hình ngôn ngữ (dữ liệu huấn luyện thiên lệch WEIRD) không đại diện người tiêu dùng Việt Nam thật.
+
+phương án | khoảng p10–p90 | p50 | độ phân tán | n hợp lệ
+brand-qua-tet-vung-trong | 4.5 – 8.6 | 7.1 | 4.0 | 45
+brand-truy-xuat-nguon-goc | 4.8 – 8.2 | 5.9 | 3.4 | 45
+mat-ong-sam-qua-tet | 4.6 – 8.8 | 6.4 | 4.2 | 45
+doi-chung-yeu (đối chứng yếu) | 0.8 – 2.9 | 1.6 | 2.1 | 45
+Đối chứng yếu thấp nhất ở 45/45 lời gọi hợp lệ (100%, ngưỡng 80%).
+Cần Quản lý MXH duyệt báo cáo trước khi dùng.
+[ok] 180 dòng sim_runs (45 lời gọi) run_id=dry-20261012-d9fd3213
+exit=0
+
+=== Chạy lại sau Phần B (OWASP: cổng DPIA đọc file chuẩn, parse JSON O(n), marker validate không giả được) — 2026-10-12 03:10:02 +07 ===
+
+$ python -m pytest -q -rs tests/test_persona_sim.py
+46 passed in 12.10s
+
+$ python scripts/persona_sim.py
+[refuse] DPIA chưa ký (sim_config.json dpia_signed khác true) — persona_sim chỉ chạy --dry-run (số giả). Chỉ NGƯỜI thật đổi dpia_signed sau khi Pháp chế + TGĐ ký DPIA/TIA.
+exit=2
+
+$ python scripts/persona_sim.py --dry-run
+doi-chung-yeu (đối chứng yếu) | 0.8 – 2.9 | 1.6 | 2.1 | 45
+Đối chứng yếu thấp nhất ở 45/45 lời gọi hợp lệ (100%, ngưỡng 80%).
+Cần Quản lý MXH duyệt báo cáo trước khi dùng.
+[ok] 180 dòng sim_runs (45 lời gọi) run_id=dry-20261012-8a37fbcc
+exit=0
+
+$ python -c 'select dry_run, count(*), count(distinct (model,prompt_id,sample_idx)) ... sim_runs where run_id = <run vừa ghi>'
+dry-20261012-8a37fbcc [(True, 180, 45, 45, 0)]
+
+=== W73.6 docs ===
+$ grep -n 'pipelines.scenario' docs/handover/sop.md AGENTS.md
+docs/handover/sop.md:186:python -m pipelines.scenario --sku saphraton-20v --channel shopee --weeks 13 [--start 2026-10-1
+AGENTS.md:25:| Kịch bản mùa (v7.3) | `python -m pipelines.scenario --sku <sku_key> --channel <kênh\|offline> --wee
+$ grep -n 'persona_sim' docs/handover/sop.md AGENTS.md docs/handover/kien-truc.md
+docs/handover/sop.md:207:python scripts/persona_sim.py --dry-run
+docs/handover/sop.md:216:  `llm_gateway` (agent `persona_sim`, trần tháng `monthly_cap_usd`).
+AGENTS.md:26:| Persona giả lập (v7.3) | `python scripts/persona_sim.py --dry-run` (số giả, ghi `sim_runs`); khô
+docs/handover/kien-truc.md:67:| `scripts/` | `apply_schema.py`, `data_audit.py`, `eval_qa.py`, `zalo_mock.py`, `zalo_pre
+docs/handover/kien-truc.md:99:| `sim_runs` | (v7.3) Nghiên cứu giả lập persona TỔNG HỢP: 1 dòng = 1 lời g�
+docs/handover/kien-truc.md:155:| Nghiên cứu giả lập persona (v7.3) | `scripts/persona_sim.py` từ chối chạy 
+(spot-check 2 lệnh sop.md: scenario exit 0 ở evidence/v73_scenario.log; persona_sim không cờ exit 2 + --dry-run exit 0 ở trên)
+
+=== Vòng sửa nghiệm thu (persona_sim: _is_num int khổng lồ, test cổng DPIA không rỗng) — 2026-10-12 03:40:09 +07 ===
+# probe parse_scores với int 400 chữ số (trước: OverflowError thoát run_matrix)
+None
+{'a': 3.0, 'b': 9.5}
+True False False
+
+$ python -m pytest -q tests/test_persona_sim.py -k 'dpia or parse_scores' -v
+====================== 8 passed, 39 deselected in 3.64s =======================
+
+# mutant M1 (is True -> bool(...) cả 2 phía cfg/canon) + M2 (_is_num cũ) — phải ĐỎ:
+M1 dpia bool(): rc=1 -> RED (killed) | 1 failed, 2 passed, 40 deselected in 2.66s
+M2 _is_num isfinite(int): rc=1 -> RED (killed) | 1 failed, 46 deselected in 1.90s

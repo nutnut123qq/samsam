@@ -1,0 +1,39 @@
+== targeted run 1
+........................................................................ [ 33%]
+........................................................................ [ 66%]
+........................................................................ [100%]
+216 passed in 53.68s
+== targeted run 2
+........................................................................ [ 33%]
+........................................................................ [ 66%]
+........................................................................ [100%]
+216 passed in 56.75s
+== targeted run 3
+........................................................................ [ 33%]
+........................................................................ [ 66%]
+........................................................................ [100%]
+216 passed in 68.87s (0:01:08)
+== ruff
+All checks passed!
+== mutation (trang hien YC khi rid != None) -> ky vong DO:
+=========================== short test summary info ===========================
+FAILED tests/test_b2b_form.py::test_post_wrong_type_415_and_429 - AssertionEr...
+FAILED tests/test_b2b_form.py::test_intake_db_vault_consent_no_pii - Assertio...
+FAILED tests/test_b2b_form.py::test_intake_withdrawn_b2b_not_regranted - Asse...
+3 failed, 52 passed in 18.31s
+== mutation da hoan nguyen; full pytest
+        assert rows4
+        for p, mau, that in rows4:
+            assert f"| {p} | {that} | {mau} |" in text
+        flagged = [r for r in db.execute(sqls[7]) if gd.log_flags(r[4])]
+        assert [f"#{r[0]} " in text for r in flagged] == [True] * len(flagged)
+>       assert db.execute(sqls[8]).fetchall() == [("KV-A01", 1)]
+E       AssertionError: assert [] == [('KV-A01', 1)]
+E         
+E         Right contains one more item: ('KV-A01', 1)
+E         Use -v to get more diff
+
+tests\test_garden_director.py:329: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_garden_director.py::test_bulletin_numbers_match_reference_sql
+1 failed, 3678 passed in 861.76s (0:14:21)

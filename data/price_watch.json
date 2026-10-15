@@ -1,0 +1,11 @@
+{
+  "_doc": "v5.3 (WP07 KD-A5) — cấu hình giám sát giá + khuyến mãi cho agents.kd_price. GIẢ ĐỊNH — chờ GĐ bán hàng chốt (external-dep): mọi ngưỡng là số dev ước lượng, KHÔNG phải số thật; confirmed_by = null tới khi GĐ bán hàng ký. channels: kênh sàn được giám sát (⊂ ingest.market_csv.CHANNELS). list_deviation_pct: số nguyên 1..50 — |giá niêm yết trên sàn − giá list golden| vượt ngưỡng % giá list → cảnh báo S2. max_discount_pct {kênh: 1..49}: trần giảm % so với giá list golden cho 1 khuyến mãi VÀ cho tổng các khuyến mãi chồng (≤ 49 khớp luật R2 của golden). max_stacked_promos: số khuyến mãi tối đa cùng SKU × kênh × ngày (1..10). promo_kinds: loại khuyến mãi hợp lệ trong file kế hoạch (voucher | flash_sale | giam_gia). lookahead_days: số ngày nhìn trước để kiểm khuyến mãi dự kiến (1..120). Giá sàn (floor) + giá list lấy từ bảng golden price_list — file này không chứa giá. Agent KHÔNG đổi giá/khuyến mãi — mọi đề xuất là NHÁP vào hàng duyệt, GĐ bán hàng duyệt.",
+  "status": "GIẢ ĐỊNH — chờ GĐ bán hàng chốt",
+  "confirmed_by": null,
+  "channels": ["shopee", "tiktok"],
+  "list_deviation_pct": 5,
+  "max_discount_pct": {"shopee": 40, "tiktok": 40},
+  "max_stacked_promos": 1,
+  "promo_kinds": ["voucher", "flash_sale", "giam_gia"],
+  "lookahead_days": 45
+}

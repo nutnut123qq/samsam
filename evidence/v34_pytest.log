@@ -1,0 +1,64 @@
+# v3.4-auth-approval — Phần A vòng 1: test lặp (output thật) — 2026-10-12T00:38:05+07:00
+
+## targeted lần 1: python -m pytest tests/test_auth.py tests/test_auth_approval.py tests/test_store.py tests/test_handover_docs.py tests/test_lead_store.py -q -rs
+........................................................................ [ 94%]
+....                                                                     [100%]
+76 passed in 8.51s
+exit=0
+
+## targeted lần 2: python -m pytest tests/test_auth.py tests/test_auth_approval.py tests/test_store.py tests/test_handover_docs.py tests/test_lead_store.py -q -rs
+........................................................................ [ 94%]
+....                                                                     [100%]
+76 passed in 9.62s
+exit=0
+
+## targeted lần 3: python -m pytest tests/test_auth.py tests/test_auth_approval.py tests/test_store.py tests/test_handover_docs.py tests/test_lead_store.py -q -rs
+........................................................................ [ 94%]
+....                                                                     [100%]
+76 passed in 12.81s
+exit=0
+
+## full: python -m pytest -q
+........................................................................ [ 20%]
+........................................................................ [ 41%]
+........................................................................ [ 62%]
+........................................................................ [ 83%]
+........................................................                 [100%]
+344 passed in 52.32s
+exit=0
+
+## ruff check .
+All checks passed!
+exit=0
+
+## python -m py_compile pipelines/auth.py pipelines/store.py app/streamlit_app.py scripts/apply_schema.py
+exit=0
+
+## Số test / assert trước-sau (gotcha v1.7)
+trước (HEAD):
+tests/test_store.py asserts=65 tests=20
+tests/test_lead_store.py asserts=67 tests=13
+tests/test_handover_docs.py asserts=18 tests=7
+sau:
+tests/test_store.py asserts=93 tests=26
+tests/test_lead_store.py asserts=68 tests=13
+tests/test_handover_docs.py asserts=19 tests=7
+test mới: tests/test_auth.py tests=17, tests/test_auth_approval.py tests=13
+
+# ===== fix-round nghiệm thu (7 finding: 1 MAJOR + 6 MINOR) — 2026-10-12T01:00:19+07:00 =====
+## targeted ×3: tests/test_auth.py tests/test_auth_approval.py tests/test_handover_docs.py
+48 passed in 12.30s
+48 passed in 11.44s
+48 passed in 13.15s
+## full: python -m pytest -q (chạy trước, tuần tự)
+355 passed in 49.97s
+## ruff check .
+All checks passed!
+exit=0
+## mutation (khôi phục bằng bản backup, cmp xác nhận)
+- auth.py bỏ giữ-chỗ in-flight + bỏ re-check khóa sau verify + auth_mode đọc os.environ → 4 FAILED: test_auth_mode_reads_dotenv, test_lockout_concurrent_burst_capped, test_lockout_burst_with_correct_password, test_lockout_set_during_verify_blocks_correct
+- schema.sql bỏ check transaction_isolation → 2 FAILED test_chain_rejects_non_read_committed[repeatable read|serializable]
+- schema.sql bỏ 'new.id := nextval(...)' (id lấy từ default trước khóa) → FAILED test_chain_id_assigned_after_lock_concurrent: ['A1','B','A2'] != ['A1','A2','B']
+- streamlit_app _g_author→_auth + st.text→st.markdown(_d['text']) → 2 FAILED test_app_no_import_alias_shadowing, test_app_review_shows_raw_draft_text
+## số test: 344 → 355 (+4 lockout đồng thời/re-check/exception, +1 dotenv, +2 app AST, +3 chain DB, +1 docs role-DSN)
+## UI E2E tgd + DB thật: evidence/v34_ui_review_e2e.log (8/8) + v34_ui_review_tgd.png

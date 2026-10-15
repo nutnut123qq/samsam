@@ -80,6 +80,23 @@ def test_channel_of_msgid_empty_vs_present():
     assert ls.channel_of(old) == "streamlit"
 
 
+def test_channel_of_messenger_key_and_stats(tmp_path):
+    """v5.1: Messenger ghi chung convlog kèm key `channel` — lead/KPI phải
+    ra 'messenger', không suy 'zalo' từ msg_id (nghiệm thu MINOR)."""
+    m = _rec(msg_id="mid.1", channel="messenger")
+    assert ls.channel_of(m) == "messenger"
+    row, _skip = ls.lead_row({**m, "question": "Saphraton giá bao nhiêu?"})
+    assert row["channel"] == "messenger"
+    assert ls.channel_of(_rec(msg_id="m1", channel="zalo")) == "zalo"
+    # key lạ/không phải chuỗi → luật cũ theo msg_id
+    assert ls.channel_of(_rec(msg_id="m1", channel="shopee")) == "zalo"
+    assert ls.channel_of(_rec(msg_id="", channel=["x"])) == "streamlit"
+    (tmp_path / "conversations.jsonl").write_bytes(
+        json.dumps(m).encode() + b"\n")
+    assert ls.convlog_stats(tmp_path)["by_channel"] == {
+        "zalo": 0, "messenger": 1, "streamlit": 0}
+
+
 def test_dedup_key_msgid_vs_hash():
     assert ls.dedup_key(_rec(msg_id="m1")) == "convlog:m1"
     r = _rec(msg_id="")
@@ -201,7 +218,7 @@ def test_harvest_real_convlog_smoke():
     for r in rows:
         assert set(ls.LEAD_COLS) <= r.keys()
         assert r["ts"].tzinfo is not None
-        assert r["channel"] in ("zalo", "streamlit")
+        assert r["channel"] in ("zalo", "messenger", "streamlit")
         assert r["intent"] in ("partner", "order", "price", "contact")
 
 
@@ -260,7 +277,7 @@ def test_convlog_stats_counts_and_missing(tmp_path):
         + b"{bad\n")
     s = ls.convlog_stats(tmp_path)
     assert s["total"] == 2 and s["answered"] == 1
-    assert s["by_channel"] == {"zalo": 1, "streamlit": 1}
+    assert s["by_channel"] == {"zalo": 1, "messenger": 0, "streamlit": 1}
     assert s["skipped"] == 1
 
 
@@ -276,6 +293,25 @@ def test_convlog_stats_answered_strict_true(tmp_path):
         + json.dumps(_rec(msg_id="m4", answered=1)).encode() + b"\n")
     s = ls.convlog_stats(tmp_path)
     assert s["total"] == 4 and s["answered"] == 1
+
+
+def test_convlog_stats_skips_consent_replies(tmp_path):
+    # v5.1 fix: trả lời đồng ý/rút đồng ý không phải câu hỏi; giữ
+    # consent_required (câu hỏi thật bị chặn).
+    recs = [_rec(msg_id="q1", answered=True, channel="zalo"),
+            _rec(msg_id="c1", answered=None, route="consent_granted",
+                 channel="zalo"),
+            _rec(msg_id="c2", answered=None, route="consent_withdrawn",
+                 channel="messenger"),
+            _rec(msg_id="c3", answered=None, route="consent_withdrawn_fail",
+                 channel="messenger"),
+            _rec(msg_id="r1", answered=False, route="consent_required",
+                 channel="messenger")]
+    (tmp_path / "conversations.jsonl").write_bytes(
+        b"".join(json.dumps(r).encode() + b"\n" for r in recs))
+    s = ls.convlog_stats(tmp_path)
+    assert s["total"] == 2 and s["answered"] == 1
+    assert s["by_channel"] == {"zalo": 1, "messenger": 1, "streamlit": 0}
 
 
 def test_database_helpers_return_none_when_unavailable(monkeypatch,
@@ -321,5 +357,25 @@ def test_schema_sql_has_leads_table():
     assert "dedup_key text not null unique" in columns
     assert "status text not null default 'new'" in columns
     assert len(re.findall(
-        r"^create table if not exists", lower, re.MULTILINE)) == 9
-    assert not re.search(r"\b(alter|drop)\s+table\b", lower)
+        r"^create table if not exists", lower, re.MULTILINE)) >= 24
+    # v3.4: nới HẸP — chỉ `alter table <t> add column if not exists
+    # <c> ...;` (1 action) được phép; mọi alter/drop table khác bị bắt.
+    rest = re.sub(r"\balter\s+table\s+\w+\s+add\s+column\s+if\s+not"
+                  r"\s+exists\s+\w+[^;,]*;", "", lower)
+    # v8.2 KD-A3: nới HẸP thêm ĐÚNG cặp drop+add CHECK mục đích consents
+    # (thêm 'b2b') — tên bảng, tên constraint và dạng check đều cố định.
+    narrow = ((r"\balter\s+table\s+consents\s+drop\s+constraint\s+if\s+"
+               r"exists\s+consents_purpose_check\s*;"),
+              (r"\balter\s+table\s+consents\s+add\s+constraint\s+"
+               r"consents_purpose_check\s+check\s*\(\s*purpose\s+in\s*"
+               r"\(\s*'cskh',\s*'marketing',\s*'dai_ly',\s*'b2b'\s*\)\s*\)"
+               r"\s*;"))
+    for pat in narrow:
+        assert len(re.findall(pat, rest)) == 1, pat
+        rest = re.sub(pat, "", rest)
+    assert not re.search(r"\b(alter|drop)\s+table\b", rest)
+    assert re.search(r"\b(alter|drop)\s+table\b", re.sub(
+        narrow[0], "", "alter table consents drop constraint if exists"
+        " consents_purpose_check; alter table consents drop column x;"))
+    assert re.search(r"\b(alter|drop)\s+table\b",
+                     "alter table x drop column y;")  # guard còn sống

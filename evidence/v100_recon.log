@@ -1,0 +1,22 @@
+## python -m pytest tests/test_bks_recon.py -v -rs — 2026-10-14T21:57:23+07:00
+tests/test_bks_recon.py::test_diffs_match_and_codes PASSED               [  5%]
+tests/test_bks_recon.py::test_diffs_missing_source_not_zero PASSED       [ 10%]
+tests/test_bks_recon.py::test_diffs_tolerance_boundary[100-0] PASSED     [ 15%]
+tests/test_bks_recon.py::test_diffs_tolerance_boundary[-100-0] PASSED    [ 21%]
+tests/test_bks_recon.py::test_diffs_tolerance_boundary[101-1] PASSED     [ 26%]
+tests/test_bks_recon.py::test_diffs_tolerance_boundary[-101-1] PASSED    [ 31%]
+tests/test_bks_recon.py::test_pick_sample PASSED                         [ 36%]
+tests/test_bks_recon.py::test_recheck_rows_pure PASSED                   [ 42%]
+tests/test_bks_recon.py::test_clean_fixture_zero_findings PASSED         [ 47%]
+tests/test_bks_recon.py::test_planted_mismatches_exact PASSED            [ 52%]
+tests/test_bks_recon.py::test_cockpit_missing_is_thieu_nguon PASSED      [ 57%]
+tests/test_bks_recon.py::test_stored_label_tampered_is_nhan_lech PASSED  [ 63%]
+tests/test_bks_recon.py::test_cli_report_no_pii_read_only PASSED         [ 68%]
+tests/test_bks_recon.py::test_cli_record_and_as_bks_reader PASSED        [ 73%]
+tests/test_bks_recon.py::test_cli_usage_exit2_before_connect[argv0] PASSED [ 78%]
+tests/test_bks_recon.py::test_cli_usage_exit2_before_connect[argv1] PASSED [ 84%]
+tests/test_bks_recon.py::test_cli_usage_exit2_before_connect[argv2] PASSED [ 89%]
+tests/test_bks_recon.py::test_cli_usage_exit2_before_connect[argv3] PASSED [ 94%]
+tests/test_bks_recon.py::test_cli_open_month_db_down_bad_fees PASSED     [100%]
+============================= 19 passed in 10.81s =============================
+exit=0

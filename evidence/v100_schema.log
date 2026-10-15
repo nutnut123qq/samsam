@@ -1,0 +1,37 @@
+## python scripts/apply_schema.py --roles (lần 1)
+[done] schema applied — 72 bảng public: ad_test_plans, agent_action_log, allocation_proposals, approval_queue, approvals, assets, audit_runs, auto_policies, b2b_requests, bom_combos, bom_items, channel_posts, channel_snapshots, chat_consents, chunks, chunks_internal, claims_approved, cogs_versions, competitor_observations, consents, contacts, content_drafts, dealer_ar, dealers, decision_log, decisions, document_fields, documents, eval_runs, garden_media, golden_discrepancies, image_assets, incidents, intel_imports, intel_items, inventory_snapshots, invoice_lines, job_runs, leads, llm_usage, lot_origins, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, opex_entries, orders, org_prospects, plot_logs, plots, price_list, production_lots, products, programs, project_milestones, qr_codes, qr_signatures, recon_results, red_alert_acks, red_alerts, settlement_rows, sim_runs, sku_map, sku_master, sla_escalations, social_mentions, social_mentions_vendor, trends_related, trends_weekly, video_assets, xnqc_dossiers
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+exit=0
+## python scripts/apply_schema.py --roles (lần 2)
+[done] schema applied — 72 bảng public: ad_test_plans, agent_action_log, allocation_proposals, approval_queue, approvals, assets, audit_runs, auto_policies, b2b_requests, bom_combos, bom_items, channel_posts, channel_snapshots, chat_consents, chunks, chunks_internal, claims_approved, cogs_versions, competitor_observations, consents, contacts, content_drafts, dealer_ar, dealers, decision_log, decisions, document_fields, documents, eval_runs, garden_media, golden_discrepancies, image_assets, incidents, intel_imports, intel_items, inventory_snapshots, invoice_lines, job_runs, leads, llm_usage, lot_origins, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, opex_entries, orders, org_prospects, plot_logs, plots, price_list, production_lots, products, programs, project_milestones, qr_codes, qr_signatures, recon_results, red_alert_acks, red_alerts, settlement_rows, sim_runs, sku_map, sku_master, sla_escalations, social_mentions, social_mentions_vendor, trends_related, trends_weekly, video_assets, xnqc_dossiers
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+exit=0
+## kiểm role bks_reader trên DB thật (public) — apply_schema chỉ in 2 role cũ
+bks_reader rolcanlogin = (False,)
+bảng có quyền: 23
+  agent_action_log: SELECT
+  approval_queue: SELECT
+  approvals: SELECT
+  audit_runs: SELECT
+  channel_posts: SELECT
+  channel_snapshots: SELECT
+  cogs_versions: SELECT
+  content_drafts: SELECT
+  decision_log: SELECT
+  decisions: SELECT
+  llm_usage: SELECT
+  market_alerts: SELECT
+  market_rows: SELECT
+  market_snapshots: SELECT
+  opex_entries: SELECT
+  plot_logs: SELECT
+  project_milestones: SELECT
+  recon_results: SELECT
+  red_alert_acks: SELECT
+  red_alerts: SELECT
+  settlement_rows: SELECT
+  sku_master: SELECT
+  xnqc_dossiers: SELECT
+cột INSERT audit_runs: ['findings', 'kind', 'params', 'period_label', 'report_sha256', 'run_by']
+agent_writer quyền trên audit_runs (select, insert): (False, False)
+app_human quyền trên audit_runs (select, insert): (False, False)

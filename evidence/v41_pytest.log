@@ -1,0 +1,100 @@
+# v4.1-guardrail-v2 — evidence pytest/ruff/py_compile + rà caller (output thật)
+# 2026-10-12, worktree D:/code/samsam-w41
+
+## Baseline full pytest TRƯỚC khi sửa (cùng worktree, cùng DB samsam_infra)
+831 passed in 144.27s (0:02:24)
+EXIT=0
+
+## Targeted x3 (-rs: không có dòng SKIPPED -> test_readiness_parity_with_db_view chạy thật)
+=== targeted lần 1: python -m pytest -q -rs tests/test_guardrail.py tests/test_guardrail_v2.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_kb_filter.py
+........................................................................ [ 70%]
+.............................................................            [100%]
+205 passed in 8.40s
+exit=0
+=== targeted lần 2: python -m pytest -q -rs tests/test_guardrail.py tests/test_guardrail_v2.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_kb_filter.py
+........................................................................ [ 70%]
+.............................................................            [100%]
+205 passed in 8.82s
+exit=0
+=== targeted lần 3: python -m pytest -q -rs tests/test_guardrail.py tests/test_guardrail_v2.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_kb_filter.py
+........................................................................ [ 70%]
+.............................................................            [100%]
+205 passed in 10.23s
+exit=0
+
+## Full: python -m pytest -q -rs (đúng 1 lần) — 831 baseline + 85 test_guardrail_v2 + 1 test_handover_docs = 917; skipped 0 (baseline 0)
+917 passed in 234.23s (0:03:54)
+EXIT=0
+
+## ruff check .
+All checks passed!
+exit=0
+
+## python -m py_compile pipelines/guardrail.py scripts/agent_eval.py tests/test_guardrail_v2.py
+exit=0
+
+## Rà caller: grep -rn 'check(' --include=*.py pipelines api app connectors scripts agents ingest (lọc caller guardrail)
+pipelines/content.py:86:        result = check(text)
+pipelines/store.py:17:    `pipelines.guardrail.check(text từ DB)` trước khi gọi function
+pipelines/store.py:207:        recheck = guardrail_check(cur["text"] or "")
+app/streamlit_app.py:158:                g = check(r["answer"])
+app/streamlit_app.py:292:            _render_guardrail(check(raw))
+connectors/zalo.py:681:    guardrail_ok = check(raw)["ok"]
+scripts/agent_eval.py:7:  - guardrail: `guardrail.check(text)["ok"]` (ca có `ctx` ->
+scripts/agent_eval.py:102:                 else guardrail.check(c["text"]))
+scripts/eval_qa.py:93:        gr = guardrail.check(a)
+
+Caller -> tham số / key đọc (không đổi nghĩa):
+- pipelines/content.py:86 check(text) 1 tham số; đọc result['ok'], violations[].type/span/detail; lưu cả dict vào content_drafts.guardrail (jsonb — field mới đều JSON-serializable; SQL approve_draft chỉ đọc guardrail->>'ok').
+- pipelines/store.py:207 guardrail_check(cur['text'] or '') 1 tham số; đọc .get('ok'), len(.get('violations')).
+- app/streamlit_app.py:158 check(r['answer']) -> g['ok']; :292 _render_guardrail(check(raw)) -> ok, violations[].type/detail/span, matched_claims[].sku/claim.
+- connectors/zalo.py:681 check(raw)['ok'] 1 tham số.
+- scripts/eval_qa.py:93 guardrail.check(a) -> ok, violations[].type/span/detail.
+- scripts/agent_eval.py:102 check(c['text']) / check_publish(c['text'], **ctx) -> ok, violations[].code (mới, có chủ đích W41.4).
+- api/rag.py: không gọi guardrail trực tiếp (caller streamlit/zalo gọi trên answer).
+
+## Test caller cũ xanh nguyên + file không đổi
+........................                                                 [100%]
+168 passed in 51.99s
+git diff --stat -- tests/test_guardrail.py tests/test_content.py tests/test_store.py tests/test_auth_approval.py tests/test_zalo.py tests/test_rag.py pipelines/content.py pipelines/store.py app connectors api:
+[rỗng ở trên] exit=0
+
+## tests/test_handover_docs.py
+9 passed in 0.20s
+
+## VÁ NGHIỆM THU (2026-10-12) — 5 MINOR: 0-record config, rượu chèn ký tự, pool claim đúng SKU, span rượu, pin ca fail chủ đích
+## targeted ×3: python -m pytest -q -rs tests/test_guardrail.py tests/test_guardrail_v2.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_kb_filter.py
+218 passed in 6.08s
+218 passed in 6.46s
+218 passed in 6.34s
+## full: python -m pytest -q (917 -> 930 = +13 test mới; 0 skipped)
+930 passed in 222.64s (0:03:42)
+## ruff check . -> All checks passed!  | py_compile guardrail.py agent_eval.py exit 0
+## mutation (targeted 3 file guardrail/guardrail_v2/agent_eval, -x):
+M1 pool=full: exit=1 KILLED | ['FAILED tests/test_guardrail_v2.py::test_claims_bound_to_context_sku - Asserti...'] | 1 failed, 87 passed in 4.12s
+M2 sp=None: exit=1 KILLED | ['FAILED tests/test_guardrail_v2.py::test_alcohol_keywords_and_golden_names_blocked[r\\u01b0\\u1ee3u]'] | 1 failed, 18 passed in 2.40s
+M3 no alcohol filler: exit=1 KILLED | ['FAILED tests/test_guardrail_v2.py::test_alcohol_filler_evasion_blocked[r\\u200b\\u01b0\\u1ee3u]'] | 1 failed, 48 passed in 2.95s
+M4 no golden-empty check: exit=0 SURVIVED | [] | 164 passed in 5.61s
+M5 no family->golden check: exit=1 KILLED | ['FAILED tests/test_guardrail_v2.py::test_zero_record_config_fail_closed[_golden_truncated]'] | 1 failed, 73 passed in 3.97s
+M6 no banned-empty check: exit=1 KILLED | ['FAILED tests/test_guardrail_v2.py::test_zero_record_config_fail_closed[_banned_comments_only]'] | 1 failed, 74 passed in 3.01s
+# M4 SURVIVED có chủ đích: golden {skus:[]} đã bị chốt family->golden (M5) bắt trước; 'if not golden' giữ làm lưới cho trường hợp families cũng rỗng.
+
+## Vòng sửa nghiệm thu MINOR — _load_rules chiều ngược golden ⊆ families (output thật)
+# Fix: pipelines/guardrail.py::_load_rules — raise -> config khi (a) golden SKU tpbvsk/food không thuộc family nào
+#      (families={}, xoá family, golden_skus=[]), (b) family có golden_skus mà aliases rỗng/chỉ khoảng trắng,
+#      (c) 1 SKU thuộc 2 family. Test: test_zero_record_config_fail_closed +6 breaker (check() & check_publish()).
+## mutation: tắt cả 3 chốt mới -> python -m pytest -q tests/test_guardrail_v2.py -k zero_record
+FAILED tests/test_guardrail_v2.py::test_zero_record_config_fail_closed[_families_empty]
+FAILED tests/test_guardrail_v2.py::test_zero_record_config_fail_closed[_family_savigout_removed]
+FAILED tests/test_guardrail_v2.py::test_zero_record_config_fail_closed[_family_savigout_no_skus]
+FAILED tests/test_guardrail_v2.py::test_zero_record_config_fail_closed[_family_savigout_no_aliases]
+FAILED tests/test_guardrail_v2.py::test_zero_record_config_fail_closed[_family_savigout_blank_aliases]
+FAILED tests/test_guardrail_v2.py::test_zero_record_config_fail_closed[_sku_in_two_families]
+6 failed, 3 passed, 95 deselected in 2.26s   (KILLED — khôi phục code fix sau đó)
+## targeted ×3: python -m pytest -q -rs tests/test_guardrail.py tests/test_guardrail_v2.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_kb_filter.py
+224 passed in 4.83s
+224 passed in 4.54s
+224 passed in 6.33s
+## full: python -m pytest -q (930 -> 936 = +6 breaker; 0 skipped)
+936 passed in 201.58s (0:03:21)
+## ruff check . -> All checks passed!

@@ -1,0 +1,12 @@
+{
+  "_doc": "GIẢ ĐỊNH — chờ Pháp chế/Quản lý MXH duyệt bộ từ khóa (external-dep; đổi 'status' khỏi 'gia_dinh' là việc người thật). Luật cảnh báo đỏ intel (v7.1, pipelines/intel_alert.py). 3 luật CỨNG trong code, file chỉ cấp từ khóa: brand_negative = brand ∧ negative; regulation = regulation ∧ (chủ đề tpbvsk|quang_cao hoặc cờ ruou); competitor_penalty = chủ đề doi_thu ∧ penalty; legal_doc (v10.2 PC-A8) = nguồn ∈ legal_sources ∧ (chủ đề tpbvsk|quang_cao hoặc cờ ruou) — legal_sources BẮT BUỘC, là id nguồn văn bản tầng A trong data/intel_sources.json (chờ Pháp chế duyệt). Cụm CÓ dấu khớp text có dấu; bản không dấu tự sinh chỉ áp khi tin gõ hoàn toàn không dấu (crawler.intel.classify — 'săm lốp' không thành 'sâm'). lookback_hours: chỉ quét tin thu trong N giờ gần nhất (1..720). Hệ thống chỉ GHI cảnh báo vào bảng red_alerts — không tự liên hệ ai.",
+  "status": "gia_dinh",
+  "lookback_hours": 48,
+  "legal_sources": ["chinhphu-van-ban", "cuc-attp-van-ban", "boyte-van-ban"],
+  "groups": {
+    "brand": ["sâm sâm", "samsam", "sâm ngọc linh"],
+    "negative": ["giả mạo", "hàng giả", "sâm giả", "ngọc linh giả", "sâm sâm giả", "làm giả", "hàng nhái", "thu hồi", "ngộ độc", "xử phạt", "bị phạt", "lừa đảo"],
+    "regulation": ["nghị định", "thông tư", "dự thảo", "quy định mới"],
+    "penalty": ["xử phạt", "bị phạt", "thu hồi", "đình chỉ"]
+  }
+}

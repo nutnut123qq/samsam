@@ -1,0 +1,178 @@
+# v8.3 gate chung — (output thật — trích từ lượt chạy gate 2026-10-12, worktree D:/code/samsam-w73)
+
+## Vòng 1 — targeted ×3 (19 file theo contract)
+lượt đỏ đầu tiên (output bị lượt sau ghi đè, số liệu chép từ màn hình): 1 failed, 642 passed — FK programs.intel_item_id → intel_items làm test_intel::test_cli_missing_table_exit1 (`drop table intel_items` trong schema tạm) DependentObjectsStillExist → vá test: `drop table intel_items cascade`; đếm lại từ 1
+lượt 1: 643 passed in 248.51s (0:04:08) | exit=0
+lượt 2: 643 passed in 264.13s (0:04:24) | exit=0
+lượt 3: 643 passed in 381.28s (0:06:21) | exit=0
+
+## Vòng 1 — full python -m pytest -q (1 lần)
+1 failed, 2518 passed, 3 skipped in 618.89s (0:10:18)
+exit=1
+lỗi:
+______________________ test_runbook_lists_real_agent_ids ______________________
+                f"runbook thi\u1ebfu agent_id '{a}'")
+E           AssertionError: runbook thi\u1ebfu agent_id 'projects'
+E           assert None
+E            +  where None = <function search at 0x000001D93B5D9620>('(?<![\\\\w-])projects(?![\\\\w-])', '# Runbook v\u1eadn h\xe0nh h\u1ea1 t\u1ea7ng AI (v3.10)\\n\\n**D\xe0nh cho ai:** ng\u01b0\u1eddi v\u1eadn h\xe0nh h\u1ea1 t\u1ea7ng AI c\u1ee7a S\xe2m S\xe2m (kh\xf4ng ph\u1ea3i dev) \u2014\\nn...a backup (**external-dep** \u2014 c\xf4ng ty c\u1ea5p)\\n- [ ] K\xfd bi\xean b\u1ea3n nh\u1eadn b\xe0n giao v\u1edbi Qu\u1ea3n l\xfd h\u1ea1 t\u1ea7ng AI (**external-dep**)\\n')
+E            +    where <function search at 0x000001D93B5D9620> = re.search
+→ vá: docs/handover/runbook-ha-tang.md liệt kê agent_id `projects` (dây chuyền: agent id mới trong da_hoso)
+
+## Vòng 2 — targeted ×3 (sau vá runbook + hardening OWASP)
+lượt 1: 643 passed in 367.58s (0:06:07) | exit=0
+lượt 2: 643 passed in 334.80s (0:05:34) | exit=0
+lượt 3: 643 passed in 235.72s (0:03:55) | exit=0
+skipped trong 3 lượt targeted: 0
+
+## Vòng 2 — full python -m pytest -q (1 lần)
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+2519 passed, 3 skipped in 524.66s (0:08:44)
+exit=0
+3 skipped = tests/test_dr_drill.py không có docker (MÔI TRƯỜNG — Docker Desktop tắt, không phải lỗi version)
+baseline 2338 → 2519 passed
+
+## ruff check .
+All checks passed!
+exit=0
+
+## py_compile 5 module
+exit=0 
+
+## Gate CLI + DB thật trước/sau (toàn bộ output)
+## DB thật — đếm dòng TRƯỚC gate CLI
+programs=0 org_prospects=0 project_milestones=0 approval_queue=0 approvals=0 intel_items=0 llm_usage=41
+## git diff --stat crawler/ docs/roles.sql (phải rỗng)
+(hết)
+## grep egress 5 module DA (phải rỗng)
+grep_rc=1 (1 = không khớp)
+grep_hoso_rc=1
+grep_4mod_rc=1
+## egress_modules ∩ 5 module DA
+egress ∩ DA = ['agents/da_hoso.py']
+## crawler.intel --report (contract cũ: exit 0/1)
+$ python -m crawler.intel --report
+chưa có tin trong intel_items
+exit=0
+## CLI
+$ python -m agents.da_radar --scan --dry-run
+[done] seen=0 would_insert=0 dup=0 skipped_ruou=0 blocked=0 (dry-run, không ghi)
+exit=0
+$ python -m agents.da_radar --list --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/56b06086-bb75-4953-a7cf-c3ba86446be6/scratchpad/v83_cligate
+[done] 0 chương trình → C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\56b06086-bb75-4953-a7cf-c3ba86446be6\scratchpad\v83_cligate\da-radar-2026-10-12.md
+exit=0
+$ python -m agents.da_b2b --import tests/fixtures/du_an/to_chuc_loi.csv --by X
+[err] dòng 2 cột org_type: phải thuộc doanh_nghiep|khach_san|su_kien_hoi_nghi|hiep_hoi|co_quan|khac
+[err] dòng 3 cột region: không nhận ra tỉnh/thành (hoặc mơ hồ)
+[err] dòng 4 cột website: nguồn tầng C (MXH/sàn/trang cần đăng nhập) — không dùng
+[err] dòng 5 cột source_url: nguồn tầng C (MXH/sàn/trang cần đăng nhập) — không dùng
+[err] dòng 6 cột fit_reason: chứa SĐT/email — chỉ nhập thông tin tổ chức
+[err] dòng 7 cột fit_reason: chứa SĐT/email — chỉ nhập thông tin tổ chức
+[err] dòng 8 cột fit_reason: không gợi ý rượu
+[error] 7 lỗi — KHÔNG nạp dòng nào
+exit=1
+$ python -m agents.da_cr --eval
+[eval] độ khớp 1.00 trên 19 ca (ngưỡng 0.9) — MẪU dev — không phải nghiệm thu; bộ thật do TGĐ/Pháp chế gán nhãn
+exit=0
+$ python -m agents.da_pmo --seed --dry-run
+[done] would_insert=11 existing=0 (dry-run, không ghi)
+exit=0
+$ python -m agents.da_pmo --board --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/56b06086-bb75-4953-a7cf-c3ba86446be6/scratchpad/v83_cligate
+[done] 0 mốc → C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\56b06086-bb75-4953-a7cf-c3ba86446be6\scratchpad\v83_cligate\da-pmo-board-2026-10-12.md
+exit=0
+$ python -m pipelines.director --all --dry-run
+[ok] ceo — Tổng giám đốc + Hội đồng thành viên + Ban kiểm soát nội bộ · 6 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] sales — Giám đốc bán hàng + Sales (Phòng kinh doanh TMĐT) · 3 loại việc · vai trò duyệt gd_ban_hang · người duyệt chưa cấu hình (external-dep)
+[ok] marketing — Giám đốc marketing + Chuyên viên marketing + Chuyên viên SEO · 3 loại việc · vai trò duyệt gd_marketing · người duyệt chưa cấu hình (external-dep)
+[ok] intel — Trung tâm tình báo thị trường (trực thuộc TGĐ, phục vụ Marketing/Sales) · 3 loại việc · vai trò duyệt mxh · người duyệt chưa cấu hình (external-dep)
+[ok] finance — Giám đốc tài chính + Phòng kế toán + Phòng tài chính–kế hoạch · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] production — Giám đốc sản xuất + Nghiên cứu và sản xuất + Công nghệ sinh học · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] farming — Giám đốc vùng trồng + Nhân viên vùng trồng · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] projects — Giám đốc dự án + Chuyên viên dự án–xúc tiến đầu tư · 5 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] legal_hr — Pháp chế nhân sự + Chuyên viên pháp chế–hành chính–nhân sự · 3 loại việc · vai trò duyệt phap_che · người duyệt chưa cấu hình (external-dep)
+[ok] mechanical — Trung tâm điện–cơ khí chế tạo máy + Kỹ sư điện–cơ khí · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] data_platform — Hạ tầng dữ liệu & AI (do Quản lý hạ tầng AI vận hành) · 2 loại việc · vai trò duyệt ha_tang,tgd · người duyệt chưa cấu hình (external-dep)
+[done] 11 khối hợp lệ (dry-run, không DB)
+exit=0
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+exit=0
+## 2 thao tác cùng lúc → exit 2
+$ python -m agents.da_radar --scan --list
+usage: python -m agents.da_radar [-h] [--scan] [--list] [--days DAYS]
+                                 [--dry-run] [--date DATE] [--out-dir OUT_DIR]
+python -m agents.da_radar: error: cần đúng 1 thao tác: --scan | --list
+exit=2
+$ python -m agents.da_hoso --checklist 1 --draft 1 --template ocop
+usage: python -m agents.da_hoso [-h] [--checklist PROGRAM_ID]
+                                [--draft PROGRAM_ID] [--export QUEUE_ID]
+                                [--verify-submit QUEUE_ID FILE]
+                                [--template TEMPLATE] [--llm] [--submit]
+                                [--out OUT] [--out-dir OUT_DIR]
+python -m agents.da_hoso: error: cần đúng 1 thao tác: --checklist | --draft | --export | --verify-submit
+exit=2
+$ python -m agents.da_b2b --submit-batch --list
+usage: python -m agents.da_b2b [-h] [--import FILE] [--submit-batch]
+                               [--handover QUEUE_ID] [--list] [--by BY]
+                               [--limit LIMIT]
+                               [--status {moi,cho_duyet,chuyen_sales}]
+python -m agents.da_b2b: error: cần đúng 1 thao tác: --import | --submit-batch | --handover | --list
+exit=2
+$ python -m agents.da_pmo --seed --board
+usage: python -m agents.da_pmo [-h] [--seed] [--dry-run] [--set-status CODE]
+                               [--status {chua_bat_dau,dang_lam,xong,tam_dung}]
+                               [--evidence EVIDENCE] [--board] [--date DATE]
+                               [--out-dir OUT_DIR] [--submit]
+                               [--propose-due CODE] [--due DUE]
+                               [--apply-due QUEUE_ID] [--by BY]
+python -m agents.da_pmo: error: cần đúng 1 thao tác: --seed | --set-status | --board | --propose-due | --apply-due
+exit=2
+$ python -m agents.da_cr --eval --list
+usage: python -m agents.da_cr [-h] [--classify TEXT] [--cr TEXT] [--submit]
+                              [--eval] [--cases CASES] [--list]
+                              [--out-dir OUT_DIR]
+python -m agents.da_cr: error: cần đúng 1 thao tác: --classify | --cr | --eval | --list
+exit=2
+## ca âm DB thật (không ghi)
+$ python -m agents.da_hoso --verify-submit 999999 tests/fixtures/du_an/to_chuc_MAU.csv
+[warn] mục #999999: LỆCH bản duyệt — KHÔNG nộp (soạn lại + duyệt lại)
+exit=1
+$ python -m agents.da_hoso --export 999999 --out C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/56b06086-bb75-4953-a7cf-c3ba86446be6/scratchpad/v83_cligate/khong-duoc-tao.md
+[warn] mục #999999 không phải hồ sơ `program_application` đã duyệt — KHÔNG xuất
+exit=1
+khong-duoc-tao.md: không tồn tại (đúng)
+## grep agents.da_ trong docs
+AGENTS.md:1
+docs/handover/sop.md:11
+## DB thật — đếm dòng SAU gate CLI
+programs=0 org_prospects=0 project_milestones=0 approval_queue=0 approvals=0 intel_items=0 llm_usage=41
+script_exit=0
+
+
+## Vòng sửa nghiệm thu (2026-10-12, 12 finding MAJOR/MINOR — v83_open.json)
+### targeted ×3 (19 file theo contract, tuần tự)
+lượt 1: 677 passed in 337.40s (0:05:37)
+exit=0
+lượt 2: 677 passed in 247.49s (0:04:07)
+exit=0
+lượt 3: 677 passed in 295.64s (0:04:55)
+exit=0
+skipped trong 3 lượt targeted: 0
+
+### mutation (mỗi mutant phải làm test tương ứng ĐỎ; file khôi phục byte-for-byte, kiểm sha256)
+[KILLED] agents/da_pmo.py :: test_apply_due_older_approval_blocked -> 1 failed in 5.05s
+[KILLED] agents/da_pmo.py :: test_propose_due_proposer_cannot_self_approve -> 1 failed in 4.42s
+[KILLED] agents/da_b2b.py :: test_tier_c_config_broken_fails_closed -> 1 failed in 2.15s
+[KILLED] agents/da_b2b.py :: test_expired_batch_rows_back_to_moi_and_rebatchable -> 1 failed in 4.33s
+[KILLED] agents/da_b2b.py :: test_guardrail_cell_error_names_column -> 1 failed in 2.46s
+[KILLED] agents/da_cr.py :: test_cr_banned_word_submit_refused_before_connect -> 3 failed in 1.56s
+[KILLED] agents/da_pmo.py :: test_board_submit_refused_when_guardrail_fails -> 1 failed in 2.72s
+restored byte-for-byte; rc_all= 0
+
+### full python -m pytest -q (1 lần)
+2556 passed in 613.33s (0:10:13)
+exit=0
+0 skipped: lượt này Docker đang chạy (không do worker bật) nên 3 test tests/test_dr_drill.py chạy thật và xanh; khi Docker tắt chúng skip = MÔI TRƯỜNG.
+
+### ruff check . → All checks passed! · py_compile 5 agents/da_*.py → OK

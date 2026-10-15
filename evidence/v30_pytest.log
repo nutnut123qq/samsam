@@ -1,0 +1,203 @@
+# v3.0-guardrail-hotfix gate VÒNG 4 (vá MINOR drift phu-luc-d: 14->18 câu bẫy, 35->39 case; +test_guardrail_case_counts_in_phu_luc_d) — 2026-10-11 22:58 +0700 HEAD 03c14a1 + working tree
+
+## collect-only test_guardrail (doc ghi 15 test / 39 case)
+39 tests collected in 0.03s
+## run 1: test_guardrail + test_handover_docs
+46 passed in 0.28s
+## run 2: test_guardrail + test_handover_docs
+46 passed in 0.25s
+## run 3: test_guardrail + test_handover_docs
+46 passed in 0.20s
+
+=== full: python -m pytest -q (218 + 1 drift-guard count mới = 219)
+219 passed in 24.37s
+exit=0
+
+=== ruff check .
+All checks passed!
+exit=0
+
+=== gate thêm (2 câu)
+ok=False ['banned_word:chữa', 'banned_word:thuốc'] | Dạ An Sâm có thể thay thế thuốc chữa bệnh mất ngủ.
+ok=True [] | Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.
+exit=0
+
+################ VÒNG 3 (giữ nguyên) ################
+# v3.0-guardrail-hotfix gate VÒNG 3 (vá 2 MINOR nghiệm thu: +4 case chốt nhánh '?' riêng + flip có dấu) — 2026-10-11 22:51 +0700 HEAD 03c14a1 + working tree
+
+=== targeted run 1: python -m pytest -q tests/test_guardrail.py tests/test_handover_docs.py
+.............................................                            [100%]
+45 passed in 0.23s
+exit=0
+
+=== targeted run 2: python -m pytest -q tests/test_guardrail.py tests/test_handover_docs.py
+.............................................                            [100%]
+45 passed in 0.24s
+exit=0
+
+=== targeted run 3: python -m pytest -q tests/test_guardrail.py tests/test_handover_docs.py
+.............................................                            [100%]
+45 passed in 0.24s
+exit=0
+
+=== full: python -m pytest -q (baseline 191 + 27 case mới = 218)
+........................................................................ [ 66%]
+........................................................................ [ 99%]
+..                                                                       [100%]
+218 passed in 24.23s
+exit=0
+
+=== ruff check .
+All checks passed!
+exit=0
+
+=== gate thêm (2 câu)
+ok=False ['banned_word:từ/cụm cấm: "chữa"', 'banned_word:từ/cụm cấm: "thuốc"'] | Dạ An Sâm có thể thay thế thuốc chữa bệnh mất ngủ.
+ok=True [] | Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.
+exit=0
+
+################ VÒNG 2 (giữ nguyên) ################
+# v3.0-guardrail-hotfix gate VÒNG 2 (sau vá ruff ISC004 vòng 1) — 2026-10-11 22:44 +0700 HEAD 03c14a1 + working tree
+
+=== targeted run 1: python -m pytest -q tests/test_guardrail.py tests/test_handover_docs.py
+.........................................                                [100%]
+41 passed in 0.19s
+exit=0
+
+=== targeted run 2: python -m pytest -q tests/test_guardrail.py tests/test_handover_docs.py
+.........................................                                [100%]
+41 passed in 0.19s
+exit=0
+
+=== targeted run 3: python -m pytest -q tests/test_guardrail.py tests/test_handover_docs.py
+.........................................                                [100%]
+41 passed in 0.19s
+exit=0
+
+=== full: python -m pytest -q (baseline 191 + 23 case mới = 214)
+........................................................................ [ 33%]
+........................................................................ [ 67%]
+......................................................................   [100%]
+214 passed in 25.15s
+exit=0
+
+=== ruff check .
+All checks passed!
+exit=0
+
+=== python -m py_compile pipelines/guardrail.py tests/test_guardrail.py
+exit=0
+
+=== gate thêm (2 câu)
+ok=False ['banned_word:chữa', 'banned_word:thuốc'] | Dạ An Sâm có thể thay thế thuốc chữa bệnh mất ngủ.
+ok=True [] | Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.
+exit=0
+
+################ VÒNG 1 (giữ nguyên output thật — ruff FAIL ISC004 trong tests mới, đã vá ở vòng 2) ################
+# v3.0-guardrail-hotfix gate — 2026-10-11 22:43 +0700 HEAD 03c14a1 + working tree
+
+=== targeted run 1: python -m pytest -q tests/test_guardrail.py tests/test_handover_docs.py
+.........................................                                [100%]
+41 passed in 0.45s
+exit=0
+
+=== targeted run 2: python -m pytest -q tests/test_guardrail.py tests/test_handover_docs.py
+.........................................                                [100%]
+41 passed in 0.28s
+exit=0
+
+=== targeted run 3: python -m pytest -q tests/test_guardrail.py tests/test_handover_docs.py
+.........................................                                [100%]
+41 passed in 0.27s
+exit=0
+
+=== full: python -m pytest -q
+........................................................................ [ 33%]
+........................................................................ [ 67%]
+......................................................................   [100%]
+214 passed in 26.36s
+exit=0
+
+=== ruff check .
+ISC004 Unparenthesized implicit string concatenation in collection
+   --> tests\test_guardrail.py:106:5
+    |
+104 |       "Sản phẩm dùng để thay thế thuốc chữa bệnh.",
+105 |       "Uống sâm là đủ, thay thế thuốc chữa bệnh hoàn toàn.",
+106 | /     "Sản phẩm không thay thế thuốc được thì sao, nó thay thế thuốc chữa "
+107 | |     "bệnh tốt.",
+    | |_______________^
+108 |       "Không ai nói nó không phải là thuốc, nó thay thế thuốc chữa bệnh.",
+109 |       "Ai bảo sản phẩm không thay thế thuốc? Nó thay thế được.",
+    |
+help: Did you forget a comma?
+help: Wrap implicitly concatenated strings in parentheses
+
+ISC004 Unparenthesized implicit string concatenation in collection
+   --> tests\test_guardrail.py:121:5
+    |
+119 |   DISCLAIMER_VARIANTS = [
+120 |       # nguyên văn pipelines/content.py (prompt disclaimer bắt buộc)
+121 | /     "Sản phẩm không phải là thuốc và không có tác dụng thay thế thuốc "
+122 | |     "chữa bệnh.",
+    | |________________^
+123 |       "Thực phẩm này không phải là thuốc và không có tác dụng thay thế "
+124 |       "thuốc chữa bệnh.",
+    |
+help: Did you forget a comma?
+help: Wrap implicitly concatenated strings in parentheses
+
+ISC004 Unparenthesized implicit string concatenation in collection
+   --> tests\test_guardrail.py:123:5
+    |
+121 |       "Sản phẩm không phải là thuốc và không có tác dụng thay thế thuốc "
+122 |       "chữa bệnh.",
+123 | /     "Thực phẩm này không phải là thuốc và không có tác dụng thay thế "
+124 | |     "thuốc chữa bệnh.",
+    | |______________________^
+125 |       "Thuc pham nay khong phai la thuoc va khong co tac dung thay the "
+126 |       "thuoc chua benh.",
+    |
+help: Did you forget a comma?
+help: Wrap implicitly concatenated strings in parentheses
+
+ISC004 Unparenthesized implicit string concatenation in collection
+   --> tests\test_guardrail.py:125:5
+    |
+123 |       "Thực phẩm này không phải là thuốc và không có tác dụng thay thế "
+124 |       "thuốc chữa bệnh.",
+125 | /     "Thuc pham nay khong phai la thuoc va khong co tac dung thay the "
+126 | |     "thuoc chua benh.",
+    | |______________________^
+127 |       "Sản phẩm không thay thế thuốc chữa bệnh.",
+128 |       "Lưu ý: sản phẩm không phải là thuốc.",
+    |
+help: Did you forget a comma?
+help: Wrap implicitly concatenated strings in parentheses
+
+ISC004 Unparenthesized implicit string concatenation in collection
+   --> tests\test_guardrail.py:130:5
+    |
+128 |       "Lưu ý: sản phẩm không phải là thuốc.",
+129 |       # disclaimer đứng GIỮA đoạn dài, kèm claim whitelist Sapentol
+130 | /     "Sâm Sâm mang đặc sản núi Ngọc Linh tới mọi nhà. Sapentol hỗ trợ hạ "
+131 | |     "đường huyết. Sản phẩm không phải là thuốc và không có tác dụng thay "
+132 | |     "thế thuốc chữa bệnh. Món quà ý nghĩa cho gia đình dịp Tết.",
+    | |________________________________________________________________^
+133 |       # cụm đảo nghĩa ở clause KHÁC / đứng SAU disclaimer không làm mất miễn
+134 |       "Không ai muốn mệt mỏi, sản phẩm không phải là thuốc.",
+    |
+help: Did you forget a comma?
+help: Wrap implicitly concatenated strings in parentheses
+
+Found 5 errors.
+No fixes available (5 hidden fixes can be enabled with the `--unsafe-fixes` option).
+exit=1
+
+=== python -m py_compile pipelines/guardrail.py tests/test_guardrail.py
+exit=0
+
+=== gate thêm (2 câu)
+ok=False ['banned_word:chữa', 'banned_word:thuốc'] | Dạ An Sâm có thể thay thế thuốc chữa bệnh mất ngủ.
+ok=True [] | Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.
+exit=0

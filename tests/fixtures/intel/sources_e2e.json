@@ -1,0 +1,14 @@
+{
+  "_doc": "Nguồn FIXTURE cho E2E crawler.intel (id tiền tố fx-, dọn bằng delete from intel_items where source like 'fx-%'). Phục vụ: python -m http.server 18770 --bind 127.0.0.1 --directory tests/fixtures/intel/site. fx-private bị robots.txt cấm; fx-c tầng C (localhost) không bao giờ được request.",
+  "llm": {"enabled": false},
+  "topics": {
+    "sam": ["sâm ngọc linh", "nhân sâm"],
+    "tpbvsk": ["thực phẩm chức năng", "TPBVSK", "ATTP"],
+    "quang_cao": ["quảng cáo", "XNQC"]
+  },
+  "sources": [
+    {"id": "fx-a", "name": "fixture A", "tier": "A", "url": "http://127.0.0.1:18770/feed.xml", "kind": "rss", "status": "cho_duyet", "note": "fixture"},
+    {"id": "fx-private", "name": "fixture robots cấm", "tier": "B", "url": "http://127.0.0.1:18770/private/feed.xml", "kind": "rss", "status": "cho_duyet", "note": "fixture"},
+    {"id": "fx-c", "name": "fixture tầng C", "tier": "C", "url": "http://localhost:18771/feed.xml", "kind": "rss", "status": "cho_duyet", "note": "fixture — chặn"}
+  ]
+}

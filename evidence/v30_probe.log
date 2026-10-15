@@ -1,0 +1,144 @@
+# v3.0-guardrail-hotfix probe — TRƯỚC bản vá (HEAD 03c14a1, guardrail.py chưa sửa: clean)
+$ PYTHONPATH=. python probe_v30.py
+## 7 câu lỗ hổng (kỳ vọng ok=False)
+FAIL ok=True [] | Dạ An Sâm có thể thay thế thuốc chữa bệnh mất ngủ.
+FAIL ok=True [] | Da An Sam co the thay the thuoc chua benh mat ngu.
+FAIL ok=True [] | Sản phẩm dùng để thay thế thuốc chữa bệnh.
+FAIL ok=True [] | Uống sâm là đủ, thay thế thuốc chữa bệnh hoàn toàn.
+FAIL ok=True [] | Sản phẩm không thay thế thuốc được thì sao, nó thay thế thuốc chữa bệnh tốt.
+FAIL ok=True [] | Không ai nói nó không phải là thuốc, nó thay thế thuốc chữa bệnh.
+FAIL ok=True [] | Ai bảo sản phẩm không thay thế thuốc? Nó thay thế được.
+-> 0/7 đúng kỳ vọng
+
+## Câu khẳng định bổ sung (kỳ vọng ok=False)
+OK   ok=False ['unverified_claim:Sản phẩm giúp thay thế thuốc chữa bệnh'] | Sản phẩm giúp thay thế thuốc chữa bệnh.
+OK   ok=False ['banned_word:thuốc'] | Sản phẩm thay thuốc hiệu quả.
+OK   ok=False ['banned_word:thuốc'] | Dùng sâm thì không cần uống thuốc nữa.
+OK   ok=False ['unverified_claim:Sản phẩm không chỉ thay thế thuốc chữa bệnh mà còn bồi bổ'] | Sản phẩm không chỉ thay thế thuốc chữa bệnh mà còn bồi bổ.
+OK   ok=False ['banned_word:thuốc'] | Sâm không phải là thuốc nhưng còn tốt hơn thuốc.
+FAIL ok=True [] | Chẳng lẽ sản phẩm không phải là thuốc?
+FAIL ok=True [] | Khong ai bao san pham khong phai la thuoc.
+-> 5/7 đúng kỳ vọng
+
+## Câu khuyến cáo đúng (kỳ vọng ok=True)
+OK   ok=True [] | Sản phẩm không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.
+OK   ok=True [] | Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.
+OK   ok=True [] | Thuc pham nay khong phai la thuoc va khong co tac dung thay the thuoc chua benh.
+OK   ok=True [] | Sản phẩm không thay thế thuốc chữa bệnh.
+OK   ok=True [] | Lưu ý: sản phẩm không phải là thuốc.
+OK   ok=True [] | Sapentol hỗ trợ hạ đường huyết. Lưu ý: sản phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Liên hệ hotline.
+-> 6/6 đúng kỳ vọng
+
+SAFE_PHRASES = ('không phải là thuốc', 'không có tác dụng thay thế thuốc', 'thay thế thuốc chữa bệnh', 'không thay thế thuốc')
+TỔNG sai kỳ vọng: 9
+
+################################################################
+# SAU bản vá (working tree trên HEAD 03c14a1, 2026-10-11 22:45 +0700)
+$ PYTHONPATH=. python probe_v30.py
+## 7 câu lỗ hổng (kỳ vọng ok=False)
+OK   ok=False ['banned_word:chữa', 'banned_word:thuốc'] | Dạ An Sâm có thể thay thế thuốc chữa bệnh mất ngủ.
+OK   ok=False ['banned_word:chua', 'banned_word:thuoc'] | Da An Sam co the thay the thuoc chua benh mat ngu.
+OK   ok=False ['banned_word:chữa', 'banned_word:thuốc'] | Sản phẩm dùng để thay thế thuốc chữa bệnh.
+OK   ok=False ['banned_word:chữa', 'banned_word:thuốc'] | Uống sâm là đủ, thay thế thuốc chữa bệnh hoàn toàn.
+OK   ok=False ['banned_word:chữa', 'banned_word:thuốc'] | Sản phẩm không thay thế thuốc được thì sao, nó thay thế thuốc chữa bệnh tốt.
+OK   ok=False ['banned_word:chữa', 'banned_word:thuốc', 'banned_word:thuốc'] | Không ai nói nó không phải là thuốc, nó thay thế thuốc chữa bệnh.
+OK   ok=False ['banned_word:thuốc'] | Ai bảo sản phẩm không thay thế thuốc? Nó thay thế được.
+-> 7/7 đúng kỳ vọng
+
+## Câu khẳng định bổ sung (kỳ vọng ok=False)
+OK   ok=False ['banned_word:chữa', 'banned_word:thuốc', 'unverified_claim:Sản phẩm giúp thay thế thuốc chữa bệnh'] | Sản phẩm giúp thay thế thuốc chữa bệnh.
+OK   ok=False ['banned_word:thuốc'] | Sản phẩm thay thuốc hiệu quả.
+OK   ok=False ['banned_word:thuốc'] | Dùng sâm thì không cần uống thuốc nữa.
+OK   ok=False ['banned_word:chữa', 'banned_word:thuốc', 'unverified_claim:Sản phẩm không chỉ thay thế thuốc chữa bệnh mà còn bồi bổ'] | Sản phẩm không chỉ thay thế thuốc chữa bệnh mà còn bồi bổ.
+OK   ok=False ['banned_word:thuốc'] | Sâm không phải là thuốc nhưng còn tốt hơn thuốc.
+OK   ok=False ['banned_word:thuốc'] | Chẳng lẽ sản phẩm không phải là thuốc?
+OK   ok=False ['banned_word:thuoc'] | Khong ai bao san pham khong phai la thuoc.
+-> 7/7 đúng kỳ vọng
+
+## Câu khuyến cáo đúng (kỳ vọng ok=True)
+OK   ok=True [] | Sản phẩm không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.
+OK   ok=True [] | Thực phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh.
+OK   ok=True [] | Thuc pham nay khong phai la thuoc va khong co tac dung thay the thuoc chua benh.
+OK   ok=True [] | Sản phẩm không thay thế thuốc chữa bệnh.
+OK   ok=True [] | Lưu ý: sản phẩm không phải là thuốc.
+OK   ok=True [] | Sapentol hỗ trợ hạ đường huyết. Lưu ý: sản phẩm này không phải là thuốc và không có tác dụng thay thế thuốc chữa bệnh. Liên hệ hotline.
+-> 6/6 đúng kỳ vọng
+
+SAFE_PHRASES = ('không phải là thuốc', 'không có tác dụng thay thế thuốc chữa bệnh', 'không có tác dụng thay thế thuốc', 'không thay thế thuốc chữa bệnh', 'không thay thế thuốc')
+TỔNG sai kỳ vọng: 0
+
+## Biên clause (W30.2) + hiệu năng (text bệnh lý, so HEAD)
+ok=True [] | 'Không ai muốn mệt mỏi, sản phẩm không phải là thuốc.'
+ok=True [] | 'Sản phẩm không phải là thuốc và không ai phủ nhận điều đó.'
+ok=False ['thuốc'] | 'Sản phẩm không phải là thuốc đúng không?'
+ok=True [] | 'Ai bảo, sản phẩm không phải là thuốc.'
+20000 chars: sau vá 0.45s | HEAD 0.43s
+100000 chars: sau vá 3.94s | HEAD 3.87s
+
+## grep cùng lớp lỗi (W30.4)
+$ grep -rn "SAFE_PHRASES\|_inside\|_negated_hits\|NEGATION_FLIPS\|thay thế thuốc\|không phải là thuốc" pipelines/ api/ agents/ connectors/ ingest/ app/ scripts/
+pipelines/content.py:76:  thuốc và không có tác dụng thay thế thuốc chữa bệnh."
+pipelines/guardrail.py:33:# mở đầu bằng "không " — mục trần "thay thế thuốc chữa bệnh" (v2.x) từng
+pipelines/guardrail.py:34:# miễn luôn câu KHẲNG ĐỊNH "có thể thay thế thuốc chữa bệnh" (v3.0 vá).
+pipelines/guardrail.py:35:# Mục dài "...thay thế thuốc chữa bệnh" là mục duy nhất bao được "chữa"
+pipelines/guardrail.py:37:SAFE_PHRASES = (
+pipelines/guardrail.py:38:    "không phải là thuốc",
+pipelines/guardrail.py:39:    "không có tác dụng thay thế thuốc chữa bệnh",
+pipelines/guardrail.py:40:    "không có tác dụng thay thế thuốc",
+pipelines/guardrail.py:41:    "không thay thế thuốc chữa bệnh",
+pipelines/guardrail.py:42:    "không thay thế thuốc",
+pipelines/guardrail.py:46:# câu tu từ ("Ai bảo sản phẩm không phải là thuốc") -> KHÔNG miễn.
+pipelines/guardrail.py:47:NEGATION_FLIPS = ("không ai", "ai bảo", "ai nói", "chẳng lẽ", "đâu phải")
+pipelines/guardrail.py:108:def _inside(outer: dict, inner: dict) -> bool:
+pipelines/guardrail.py:112:def _negated_hits(text: str, hits: list[dict]) -> list[dict]:
+pipelines/guardrail.py:115:    và không có cụm đảo nghĩa (`NEGATION_FLIPS`, có dấu lẫn không dấu)
+pipelines/guardrail.py:120:    for f in _find_terms(text, list(NEGATION_FLIPS)):
+pipelines/guardrail.py:130:            continue  # phủ định kép: "ai bảo ... không phải là thuốc"
+pipelines/guardrail.py:182:    safe_hits = _negated_hits(text, _find_terms(text, list(SAFE_PHRASES)))
+pipelines/guardrail.py:187:        if any(_inside(c, h) for c in claim_hits + safe_hits):
+Binary file pipelines/__pycache__/guardrail.cpython-312.pyc matches
+
+$ grep -rniE "whitelist|exempt|miễn" --include=*.py pipelines/ api/ agents/ connectors/ ingest/ app/ scripts/
+pipelines/content.py:8:    với system prompt chứa brand voice + claims_whitelist (chỉ được viết
+pipelines/content.py:9:    công dụng trong whitelist).
+pipelines/content.py:39:def _whitelist_block() -> str:
+pipelines/content.py:40:    """Render claims whitelist thành đoạn nhét vào system prompt."""
+pipelines/content.py:42:        (ROOT / "data" / "claims_whitelist.json").read_text(encoding="utf-8"))
+pipelines/content.py:67:- CHỈ được nêu công dụng nằm trong whitelist dưới đây của ĐÚNG sản phẩm,
+pipelines/content.py:69:{_whitelist_block()}
+pipelines/content.py:72:  hiện trong cụm claim whitelist. Mở bài/kết bài chỉ kể chuyện thương
+pipelines/content.py:82:  không phải cụm claim whitelist nguyên văn thì VIẾT LẠI câu đó.
+pipelines/content.py:98:                         "dùng claim whitelist nguyên văn, câu trang trí "
+pipelines/guardrail.py:7:  2. Claim whitelist: load data/claims_whitelist.json — phát hiện câu
+pipelines/guardrail.py:32:# nằm trong các cụm này thì miễn (giống approved claim). MỌI mục phải
+pipelines/guardrail.py:34:# miễn luôn câu KHẲNG ĐỊNH "có thể thay thế thuốc chữa bệnh" (v3.0 vá).
+pipelines/guardrail.py:46:# câu tu từ ("Ai bảo sản phẩm không phải là thuốc") -> KHÔNG miễn.
+pipelines/guardrail.py:72:    claims_path = DATA_DIR / "claims_whitelist.json"
+pipelines/guardrail.py:163:    # thì KHÔNG flag. Text nhắc tên SKU -> đối whitelist chỉ SKU đó.
+pipelines/guardrail.py:195:    # --- Lớp 2: clause có động từ claim — trừ các span đã khớp whitelist;
+pipelines/guardrail.py:215:                "detail": "claim công dụng không nằm trong whitelist đã công bố",
+connectors/zalo.py:186:# lần fail đều rotate = burn oauth vô ích. Whitelist mã lỗi Zalo chưa
+connectors/zalo.py:187:# chắc, sai whitelist = auto-refresh chết câm -> throttle an toàn hơn.
+connectors/zalo.py:189:# time.monotonic() (miễn clock-skew: NTP/sửa giờ lùi đông băng throttle);
+ingest/core_store.py:88:    'saphraton-48'. Dùng link claims_whitelist.source → products.url."""
+ingest/core_store.py:115:    """1 SKU trong claims_whitelist → n rows (mỗi approved_claim 1 row).
+ingest/core_store.py:125:            "source_ref": src, "source": "claims_whitelist.json"}
+ingest/core_store.py:168:            # Chỉ map URL kiểu net.vn '<slug>.html' — whitelist.source trỏ
+ingest/core_store.py:181:    wl_path = data_dir / "claims_whitelist.json"
+ingest/core_store.py:190:            domains.append(("claims_approved", "claims_whitelist.json",
+app/streamlit_app.py:72:                # monotonic cho latency_ms — elapsed-time, miễn clock
+app/streamlit_app.py:151:               "trước khi hiển thị (banned words + claim whitelist TPBVSK).")
+app/streamlit_app.py:167:            st.caption("Claim khớp whitelist: " + "; ".join(
+scripts/data_audit.py:3:Đếm records trong `data/*.jsonl` + `claims_whitelist.json` + các bảng
+scripts/data_audit.py:44:def whitelist_counts(path: Path) -> tuple[int, int] | None:
+scripts/data_audit.py:67:                    ("claims_whitelist.json", "claims_approved",
+scripts/data_audit.py:68:                     "claims_whitelist.json"),
+scripts/data_audit.py:130:    wl = whitelist_counts(DATA_DIR / "claims_whitelist.json")
+scripts/data_audit.py:131:    in_db = db.get("claims_whitelist.json") if db is not None else None
+scripts/data_audit.py:132:    print(f"| Claims đã công bố (P0) | `data/claims_whitelist.json` | "
+
+## Lối miễn còn lại: claim_hits (ngoài phạm vi v3.0 — chỉ ghi nhận)
+approved_claims: 18 | claim chứa từ cấm: 1
+   ('sapentol', 'hỗ trợ hạ đường huyết', ['hạ đường huyết'])
+claim chứa thuốc/chữa: []
+Kết luận: content.py:75-76 chỉ là prompt (không phải exemption); cơ chế miễn trừ cụm từ cấm duy nhất là guardrail.py (claim_hits + safe_hits). claim_hits ngoài phạm vi v3.0 — không vá.

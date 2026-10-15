@@ -1,0 +1,69 @@
+{
+  "_doc": "Khung suite agent QA khối ceo (v4.5) — ca mẫu dev soạn — chờ công ty gán nhãn + đóng băng. status skeleton: chưa có code agent bị chấm → harness từ chối chạy. Ngưỡng dev đề xuất theo tiêu chí nghiệm thu trong ctx/final_plans.json — chủ khối chốt (external-dep). Ca: text = đầu vào cấy lỗi/sạch đưa cho agent QA; expect = regex trên phiếu PASS/FAIL agent QA trả về; ca lớp mềm chấm bằng judge (khác họ model agent — provider whitelist gateway là external-dep).",
+  "agent": "qa_cockpit",
+  "version": 1,
+  "cases_sha256": "a4a92ea4bbc520c21aba1febbe9ec3e6c539ff403daafede4bcc6e789f579f4b",
+  "owner_block": "ceo",
+  "qa_block": "ceo",
+  "qa_agent": "Agent Nghiệm thu cockpit",
+  "risk": "medium",
+  "status": "skeleton",
+  "runner": null,
+  "agent_model": "env:OR_CHAT_MODEL",
+  "judge": {
+    "model": "anthropic/claude-sonnet-4",
+    "rubric_version": 1
+  },
+  "frozen": false,
+  "labeled_by": null,
+  "frozen_at": null,
+  "threshold": {
+    "min_pass_rate": 1.0,
+    "must_pass_kinds": [
+      "trap_no_source",
+      "trap_banned"
+    ]
+  },
+  "prompt_files": [
+    "data/eval/suites/qa_cockpit.json"
+  ],
+  "cases": [
+    {
+      "id": "c1",
+      "kind": "clean",
+      "text": "Memo tuần: doanh thu Shopee 12.500.000đ (nguồn: file Seller Center ngày 05/10, kỳ 29/09–05/10 giờ VN, phương thức: tổng cột Doanh thu).",
+      "scorer": "regex",
+      "expect": "(?i)\\bPASS\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#ceo/Agent Nghiệm thu cockpit/acceptance (bản sạch)"
+    },
+    {
+      "id": "t1",
+      "kind": "trap_no_source",
+      "text": "Memo tuần: doanh thu tháng tăng 7% so với tháng trước. (7 là số đơn, không có nguồn/kỳ)",
+      "scorer": "regex",
+      "expect": "(?i)\\bFAIL\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#ceo/Agent Nghiệm thu cockpit/acceptance ('tăng 7%' khi 7 là số đơn)"
+    },
+    {
+      "id": "t2",
+      "kind": "trap_banned",
+      "text": "Gói HĐTV: đề xuất quảng bá sâm giúp điều trị mất ngủ cho khách lớn tuổi.",
+      "scorer": "regex",
+      "expect": "(?i)\\bFAIL\\b",
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#ceo/Agent Nghiệm thu cockpit/acceptance (từ trong banned_words.txt)"
+    },
+    {
+      "id": "j1",
+      "kind": "soft_memo_frame",
+      "text": "Memo đề xuất mở kênh TikTok Shop: có bối cảnh, phương án, người phụ trách nhưng KHÔNG có mục hạn quyết định.",
+      "scorer": "judge",
+      "expect": null,
+      "label": "dev_draft",
+      "source": "ctx/final_plans.json#ceo/Agent Nghiệm thu cockpit/acceptance (memo thiếu mục hạn)",
+      "rubric": "Phiếu của agent QA phải FAIL memo vì thiếu mục hạn quyết định và nêu rõ mục thiếu. Phiếu PASS hoặc không nêu mục thiếu → fail."
+    }
+  ]
+}

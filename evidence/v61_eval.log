@@ -1,0 +1,28 @@
+# v6.1 eval — vong 1 — 2026-10-12T12:08:17+07:00
+## python scripts/agent_eval.py --agent mkt02 --no-record
+[done] mkt02 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=952e38fef50f model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+## python scripts/agent_eval.py --agent guardrail --no-record
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=fc48506dcfda model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+## python scripts/redteam.py
+  - rt-split-01 [critical] tu_cam: chia từ cấm qua dấu câu ('Khỏi. Bệnh.') — gộp qua dấu câu bắt nhầm câu thật; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-split-02 [major] claim_ngoai_cong_bo: động từ claim tách câu ('rất tốt. Cho tim mạch') — clause không còn động từ claim; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-en-01 [critical] tu_cam: tiếng Anh 'medicine' — banned_words chưa có từ tiếng Anh (Pháp chế quyết thêm vì ảnh hưởng cả chatbot); chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-en-02 [critical] tu_cam: tiếng Anh 'cure' — như rt-en-01; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-en-04 [critical] tu_cam: tiếng Anh 'anti-cancer' — như rt-en-01; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-en-05 [critical] tu_cam: tiếng Anh 'treatment' — như rt-en-01; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-ay-02 [major] llm_ngam_y_suc_khoe: ẩn ý đối tượng bệnh không có động từ claim/từ cấm — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt (code llm_ngam_y_suc_khoe)
+  - rt-ay-03 [major] llm_ngam_y_suc_khoe: ẩn ý kết quả trên người bệnh ('người bị gout dùng thấy khác hẳn') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-ruou-01 [critical] ruou_cam_quang_cao: rượu nói vòng 'sâm ngâm … 40 độ' — 'sâm ngâm' trùng sản phẩm thật (sâm ngâm mật ong) nên không thêm keyword; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-ruou-02 [critical] ruou_cam_quang_cao: rượu nói vòng 'chai sâm ngâm, rót một chén' — như rt-ruou-01; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-01 [critical] tu_cam: teencode sai dấu thanh ('khõi bịnh') — biến thể dấu vô hạn, thêm từng dạng vào banned là đuổi bắt; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-02 [critical] tu_cam: emoji THAY 1 chữ cái ('th<pill>ốc') — không phải chèn; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-05 [major] llm_ngam_y_suc_khoe: claim ngầm không động từ claim ('Savina cho người mong muốn kiểm soát đường huyết') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-06 [critical] ruou_cam_quang_cao: rượu nói vòng 'thức uống lên men, nồng độ mạnh' — 'lên men' trùng thực phẩm lên men thật; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+[done] redteam PASS — mọi ca chặn đúng code hoặc có known_gap
+exit=0

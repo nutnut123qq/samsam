@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yêu cầu báo giá quà Tết — Sâm Sâm</title>
+<style>
+body { font-family: system-ui, sans-serif; max-width: 760px; margin: 0 auto; padding: 16px; color: #111; background: #fff; }
+label { display: block; margin-top: 10px; font-weight: 600; }
+input, select { width: 100%; box-sizing: border-box; padding: 6px; font-size: 1rem; }
+table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+td, th { border: 1px solid #ccc; padding: 4px; text-align: left; }
+td:first-child { width: 2em; }
+.consent { font-weight: 400; display: flex; gap: 8px; align-items: flex-start; }
+.consent input { width: auto; margin-top: 4px; }
+button { margin-top: 16px; padding: 10px 18px; font-size: 1rem; }
+small { color: #555; }
+</style>
+</head>
+<body>
+<!-- v8.2 KD-A3 (WP11) form yêu cầu báo giá B2B. HTML TĨNH: không script,
+     không tài nguyên ngoài. Server connectors/b2b_form.py thay placeholder OPTIONS
+     bằng đúng tập sản phẩm của catalog (agents/kd_catalog.eligible).
+     Câu đồng ý + policy_version là NHÁP chờ Pháp chế (external-dep). -->
+<h1>Yêu cầu báo giá quà Tết cho tổ chức</h1>
+<p><small>Dành cho doanh nghiệp, khách sạn, đơn vị sự kiện, hiệp hội, cơ quan. GĐ bán hàng sẽ liên hệ lại — hệ thống không tự gửi báo giá.</small></p>
+<form method="post" action="/b2b" accept-charset="utf-8">
+  <label for="org_name">Tên tổ chức</label>
+  <input id="org_name" name="org_name" required minlength="2" maxlength="200">
+  <label for="org_type">Loại tổ chức</label>
+  <select id="org_type" name="org_type" required>
+    <option value="doanh_nghiep">Doanh nghiệp</option>
+    <option value="khach_san">Khách sạn</option>
+    <option value="su_kien_hoi_nghi">Sự kiện – hội nghị</option>
+    <option value="hiep_hoi">Hiệp hội</option>
+    <option value="co_quan">Cơ quan</option>
+    <option value="khac">Khác</option>
+  </select>
+  <label for="region">Tỉnh/thành</label>
+  <input id="region" name="region" required maxlength="100">
+  <label for="contact_name">Họ tên người liên hệ</label>
+  <input id="contact_name" name="contact_name" required maxlength="200" autocomplete="name">
+  <label for="phone">Số điện thoại người liên hệ</label>
+  <input id="phone" name="phone" type="tel" required maxlength="40" autocomplete="tel">
+  <label for="email">Email người liên hệ (tùy chọn)</label>
+  <input id="email" name="email" type="email" maxlength="254" autocomplete="email">
+  <label>Sản phẩm và số lượng (tối đa 10 dòng)</label>
+  <table>
+    <tr><th>#</th><th>Sản phẩm</th><th>Số lượng</th></tr>
+      <tr>
+        <td>1</td>
+        <td><select name="sku1" required><option value="">— chọn —</option><!--OPTIONS--></select></td>
+        <td><input name="qty1" type="number" min="1" max="100000" step="1" inputmode="numeric" required></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><select name="sku2"><option value="">— chọn —</option><!--OPTIONS--></select></td>
+        <td><input name="qty2" type="number" min="1" max="100000" step="1" inputmode="numeric"></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><select name="sku3"><option value="">— chọn —</option><!--OPTIONS--></select></td>
+        <td><input name="qty3" type="number" min="1" max="100000" step="1" inputmode="numeric"></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><select name="sku4"><option value="">— chọn —</option><!--OPTIONS--></select></td>
+        <td><input name="qty4" type="number" min="1" max="100000" step="1" inputmode="numeric"></td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><select name="sku5"><option value="">— chọn —</option><!--OPTIONS--></select></td>
+        <td><input name="qty5" type="number" min="1" max="100000" step="1" inputmode="numeric"></td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td><select name="sku6"><option value="">— chọn —</option><!--OPTIONS--></select></td>
+        <td><input name="qty6" type="number" min="1" max="100000" step="1" inputmode="numeric"></td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td><select name="sku7"><option value="">— chọn —</option><!--OPTIONS--></select></td>
+        <td><input name="qty7" type="number" min="1" max="100000" step="1" inputmode="numeric"></td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td><select name="sku8"><option value="">— chọn —</option><!--OPTIONS--></select></td>
+        <td><input name="qty8" type="number" min="1" max="100000" step="1" inputmode="numeric"></td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td><select name="sku9"><option value="">— chọn —</option><!--OPTIONS--></select></td>
+        <td><input name="qty9" type="number" min="1" max="100000" step="1" inputmode="numeric"></td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td><select name="sku10"><option value="">— chọn —</option><!--OPTIONS--></select></td>
+        <td><input name="qty10" type="number" min="1" max="100000" step="1" inputmode="numeric"></td>
+      </tr>
+  </table>
+  <label for="need_by">Ngày cần hàng (tùy chọn)</label>
+  <input id="need_by" name="need_by" type="date">
+  <div hidden aria-hidden="true">
+    <label for="website">Website (để trống)</label>
+    <input id="website" name="website" tabindex="-1" autocomplete="off">
+  </div>
+  <input type="hidden" name="policy_version" value="b2b-v0-nhap">
+  <label class="consent"><input type="checkbox" name="consent" value="b2b" required>
+    <span>Tôi đồng ý để Công ty TNHH Sâm Sâm dùng họ tên, số điện thoại, email người liên hệ ở trên CHỈ để gửi báo giá và trao đổi về đơn quà tặng của tổ chức (mục đích b2b). Tôi có thể rút đồng ý bất cứ lúc nào. <small>(Bản nháp chính sách b2b-v0-nhap — chờ Pháp chế.)</small></span></label>
+  <button type="submit">Gửi yêu cầu báo giá</button>
+</form>
+</body>
+</html>

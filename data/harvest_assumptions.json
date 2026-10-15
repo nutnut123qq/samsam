@@ -1,0 +1,8 @@
+{
+  "_doc": "v11.0 VT dự báo thu hoạch (agents/vt_thuhoach.py). GIẢ ĐỊNH do dev soạn — GĐ vùng trồng chốt (external-dep): tuổi thu hoạch tối thiểu (năm tính theo năm của quý − planted_year), sản lượng củ tươi gram/cây và tỷ lệ cây sống tới thu hoạch theo 3 mức thấp/cơ sở/cao; quarters = số quý nhìn trước kể từ quý hiện tại. Kết quả là KHOẢNG, không phải cam kết.",
+  "version": "2026-10-giadinh",
+  "min_age_years": 5,
+  "yield_g_per_tree": {"low": 60, "base": 90, "high": 130},
+  "survival_rate": {"low": 0.55, "base": 0.7, "high": 0.85},
+  "quarters": 8
+}

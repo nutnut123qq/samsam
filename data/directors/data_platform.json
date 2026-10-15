@@ -1,0 +1,27 @@
+{
+  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES. approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store).",
+  "block": "data_platform",
+  "name": "Hạ tầng dữ liệu & AI (do Quản lý hạ tầng AI vận hành)",
+  "director_agent": "Agent Giám đốc Hạ tầng (Orchestrator)",
+  "approver_roles": [
+    "ha_tang",
+    "tgd"
+  ],
+  "approvers": [],
+  "object_types": {
+    "config_change": {
+      "sla_hours": 24,
+      "risk": "high"
+    },
+    "kb_reindex": {
+      "sla_hours": 48,
+      "risk": "low"
+    },
+    "hosting_fix": {
+      "sla_hours": 24,
+      "risk": "medium"
+    }
+  },
+  "digest_recipients": [],
+  "due_soon_hours": 8
+}

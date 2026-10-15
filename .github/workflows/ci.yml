@@ -1,0 +1,108 @@
+# v3.5 (WP06, F17.1) — CI nghiệm thu. Job test KHÔNG dùng secret (test
+# không gọi LLM thật); v4.5: `agent_eval.py --deterministic` validate MỌI
+# suite data/eval/suites/ + chạy suite active tất định (guardrail + co_khi
+# — v4.5i; + mkt02 + sales_director — gộp M31 đợt 4;
+# + kd_a1 — v4.5i/v5.1, DETERMINISTIC_RUNNERS; kd_a1 = runner cskh gateway
+# giả, không LLM/secret; + mkt03 — gộp v6.2, provider ảnh giả eval_stub,
+# không mạng/LLM; + mkt_seo — v6.5, seo_san.suggest thuần, 0 mạng/LLM/DB;
+# + kd_a5 — v5.3, luật giá/KM thuần, không DB/LLM; + mkt04 — v6.3, LLM giả
+# theo ca + ffmpeg của gói imageio-ffmpeg, không mạng/secret; + mkt_ads_ugc
+# — v6.4, hàm thuần ads/KOC/UGC, 0 DB/LLM; + kd_a3 — v8.2, luật báo giá
+# B2B, 0 DB/mạng/LLM)
+# và ghi
+# eval_runs vào DB service (chỉ là tín hiệu CI — bản thật n8n ghi qua
+# webhook HMAC, external-dep). Job eval (chatbot + suite có judge LLM, tốn
+# phí) chỉ chạy khi bấm tay hoặc nightly 02:00 VN + có secret.
+name: ci
+
+on:
+  push:
+    branches: [main, ai-infra]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 19 * * *"   # 02:00 giờ VN — eval LLM nightly
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: samsam_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/samsam_ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: ruff check .
+      - run: python scripts/apply_schema.py
+      - run: python -m ingest.core_store
+      - run: python -m pytest -q
+      - run: python scripts/agent_eval.py --deterministic
+      # v4.2 PC-A9: bộ red-team cố định (luật thuần, không LLM/secret)
+      - run: python scripts/redteam.py
+
+  eval:
+    needs: test
+    # context `secrets` không dùng được trong if job-level -> map secret vào
+    # env rồi kiểm ở từng bước.
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: samsam_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/samsam_ci
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - name: Kiểm secret
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "skip: chưa có secret OPENROUTER_API_KEY (external-dep)"
+          fi
+      - uses: actions/checkout@v4
+        if: env.OPENROUTER_API_KEY != ''
+      - uses: actions/setup-python@v5
+        if: env.OPENROUTER_API_KEY != ''
+        with:
+          python-version: "3.12"
+          cache: pip
+      - if: env.OPENROUTER_API_KEY != ''
+        run: pip install -r requirements.txt
+      - if: env.OPENROUTER_API_KEY != ''
+        run: python scripts/apply_schema.py
+      - if: env.OPENROUTER_API_KEY != ''
+        run: python -m ingest.embed_store
+      - if: env.OPENROUTER_API_KEY != ''
+        run: python scripts/agent_eval.py --agent chatbot

@@ -1,0 +1,97 @@
+== targeted run 1: python -m pytest tests/test_golden_store.py tests/test_core_store.py tests/test_handover_docs.py -q -rs
+.............................................................            [100%]
+61 passed in 0.73s
+[exit 0]
+== targeted run 2: python -m pytest tests/test_golden_store.py tests/test_core_store.py tests/test_handover_docs.py -q -rs
+.............................................................            [100%]
+61 passed in 0.70s
+[exit 0]
+== targeted run 3: python -m pytest tests/test_golden_store.py tests/test_core_store.py tests/test_handover_docs.py -q -rs
+.............................................................            [100%]
+61 passed in 0.78s
+[exit 0]
+
+######## VÒNG 2 (sau sửa 2 lỗi ruff SIM117/ISC004 trong tests/test_golden_store.py — vòng 1: targeted 3/3 xanh 61 passed, full 299 passed, ruff 2 lỗi) ########
+== targeted run 1: python -m pytest tests/test_golden_store.py tests/test_core_store.py tests/test_handover_docs.py -q -rs
+.............................................................            [100%]
+61 passed in 1.11s
+[exit 0]
+== targeted run 2: python -m pytest tests/test_golden_store.py tests/test_core_store.py tests/test_handover_docs.py -q -rs
+.............................................................            [100%]
+61 passed in 0.86s
+[exit 0]
+== targeted run 3: python -m pytest tests/test_golden_store.py tests/test_core_store.py tests/test_handover_docs.py -q -rs
+.............................................................            [100%]
+61 passed in 0.71s
+[exit 0]
+== full: python -m pytest -q
+........................................................................ [ 96%]
+...........                                                              [100%]
+299 passed in 31.21s
+[exit 0]
+== ruff check .
+All checks passed!
+[exit 0]
+== python -m py_compile ingest/golden_store.py ingest/core_store.py scripts/apply_schema.py tests/test_golden_store.py
+[exit 0]
+== grep -c '^create table if not exists' docs/schema.sql
+14
+== assert count tests/test_handover_docs.py (HEAD vs working)
+HEAD=18 now=18
+
+######## VÒNG VÁ NGHIỆM THU (8 MINOR) 2026-10-11T23:56:35+07:00 ########
+== mutation probe (scratchpad/mutate.py: áp đột biến -> pytest tests/test_golden_store.py -> khôi phục)
+[KILLED] readiness null-element (revert coalesce): 1 failed, 48 passed in 4.18s
+[KILLED] insert trigger off: 1 failed, 38 passed in 1.73s
+[KILLED] insert trigger not attached: 1 failed, 38 passed in 1.44s
+[KILLED] tuple immutable check removed: 1 failed, 37 passed in 1.72s
+[KILLED] branch (b) approved unchanged removed: 1 failed, 37 passed in 1.54s
+[KILLED] approve commit removed: 1 failed, 49 passed in 4.94s
+[KILLED] load commit removed: 1 failed, 49 passed in 4.45s
+[KILLED] stale delete disabled: 1 failed, 46 passed in 4.60s
+[KILLED] stale delete widened: 1 failed, 45 passed in 4.59s
+[KILLED] sku_map remap keeps approval: 1 failed, 44 passed in 3.84s
+[KILLED] swap Savigout/Sapentol receipt: 1 failed in 0.93s
+[KILLED] Savina list 159000->169000: 1 failed, 1 passed in 1.28s
+survived/anchor-miss: 0
+== targeted #1
+$ python -m pytest tests/test_golden_store.py tests/test_core_store.py tests/test_handover_docs.py -q -rs
+......................................................................   [100%]
+70 passed in 4.33s
+[exit 0]
+== targeted #2
+$ python -m pytest tests/test_golden_store.py tests/test_core_store.py tests/test_handover_docs.py -q -rs
+......................................................................   [100%]
+70 passed in 4.65s
+[exit 0]
+== targeted #3
+$ python -m pytest tests/test_golden_store.py tests/test_core_store.py tests/test_handover_docs.py -q -rs
+......................................................................   [100%]
+70 passed in 4.31s
+[exit 0]
+== full
+$ python -m pytest -q -rs
+........................................................................ [ 70%]
+........................................................................ [ 93%]
+....................                                                     [100%]
+308 passed in 39.63s
+[exit 0]
+$ ruff check .
+
+Found 2 errors.
+[*] 2 fixable with the `--fix` option.
+[exit 1]
+$ python -m py_compile ingest/golden_store.py ingest/core_store.py scripts/apply_schema.py
+[exit 0]
+== vòng 2 (ruff 2 lỗi FURB167 re.M ở test mới -> re.MULTILINE)
+$ ruff check .
+All checks passed!
+[exit 0]
+$ python -m pytest tests/test_golden_store.py -q -rs
+..................................................                       [100%]
+50 passed in 4.64s
+[exit 0]
+$ python -m pytest -q -rs
+....................                                                     [100%]
+308 passed in 40.41s
+[exit 0]

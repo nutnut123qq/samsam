@@ -1,0 +1,35 @@
+[redteam] bộ cố định 50 ca (luật thuần, không LLM)
+attack                tổng  chặn   lọt known-gap
+teencode                 6     5     1         1
+viet_tat                 4     1     3         3
+emoji                    5     3     2         2
+chen_khoang_trang        8     6     2         2
+homoglyph                5     5     0         0
+chia_cau                 4     2     2         2
+tieng_anh_xen            5     1     4         4
+an_y_ho_tro              6     3     3         3
+ruou_vong_vo             7     4     3         3
+tỷ lệ lọt: 20/50 = 40.0% (known-gap 20, lọt chưa xử lý 0)
+known-gap (20; critical 16) — chờ Pháp chế:
+  - rt-vt-01 [critical] tu_cam: viết tắt 'đ.trị' (bỏ vần) — luật từ khóa không suy ra 'điều trị'; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-vt-02 [critical] tu_cam: viết tắt 'UT' = ung thư mơ hồ (UT còn là tên riêng/viết tắt khác) — thêm vào banned gây bắt nhầm; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-vt-04 [critical] tu_cam: viết tắt 'đtrị' — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-emo-03 [critical] tu_cam: emoji 💊 THAY cả từ 'thuốc' (không chèn giữa chữ) — luật không hiểu nghĩa emoji; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-ws-03 [critical] tu_cam: khoảng trắng chèn giữa 2 cụm NHIỀU chữ ('đi ều') — gộp sẽ nối nhầm từ thật; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-ws-06 [critical] tu_cam: NHIỀU từ viết cách chữ liền nhau ('t h u ố c t r ị') bị gộp thành 1 chuỗi mất biên từ ('thuốctrị') — 1 từ cách chữ đơn lẻ đã chặn (v4.2); chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-split-01 [critical] tu_cam: chia từ cấm qua dấu câu ('Khỏi. Bệnh.') — gộp qua dấu câu bắt nhầm câu thật; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-split-02 [major] claim_ngoai_cong_bo: động từ claim tách câu ('rất tốt. Cho tim mạch') — clause không còn động từ claim; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-en-01 [critical] tu_cam: tiếng Anh 'medicine' — banned_words chưa có từ tiếng Anh (Pháp chế quyết thêm vì ảnh hưởng cả chatbot); chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-en-02 [critical] tu_cam: tiếng Anh 'cure' — như rt-en-01; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-en-04 [critical] tu_cam: tiếng Anh 'anti-cancer' — như rt-en-01; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-en-05 [critical] tu_cam: tiếng Anh 'treatment' — như rt-en-01; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-ay-02 [major] llm_ngam_y_suc_khoe: ẩn ý đối tượng bệnh không có động từ claim/từ cấm — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt (code llm_ngam_y_suc_khoe)
+  - rt-ay-03 [major] llm_ngam_y_suc_khoe: ẩn ý kết quả trên người bệnh ('người bị gout dùng thấy khác hẳn') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-ruou-01 [critical] ruou_cam_quang_cao: rượu nói vòng 'sâm ngâm … 40 độ' — 'sâm ngâm' trùng sản phẩm thật (sâm ngâm mật ong) nên không thêm keyword; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-ruou-02 [critical] ruou_cam_quang_cao: rượu nói vòng 'chai sâm ngâm, rót một chén' — như rt-ruou-01; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-01 [critical] tu_cam: teencode sai dấu thanh ('khõi bịnh') — biến thể dấu vô hạn, thêm từng dạng vào banned là đuổi bắt; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-02 [critical] tu_cam: emoji THAY 1 chữ cái ('th<pill>ốc') — không phải chèn; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-05 [major] llm_ngam_y_suc_khoe: claim ngầm không động từ claim ('Savina cho người mong muốn kiểm soát đường huyết') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-06 [critical] ruou_cam_quang_cao: rượu nói vòng 'thức uống lên men, nồng độ mạnh' — 'lên men' trùng thực phẩm lên men thật; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+[done] redteam PASS — mọi ca chặn đúng code hoặc có known_gap
+exit=0

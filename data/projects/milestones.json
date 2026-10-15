@@ -1,0 +1,16 @@
+{
+  "_doc": "Sổ mốc phòng Dự án (DA-01, agents/da_pmo.py --seed, v8.3) — BẢN DEV SOẠN từ ctx pmo.md (WP11, Đợt 3, mốc thanh toán) + final_plans projects, CHỜ GĐ dự án chốt. owner_role = vai trò (không tên người). Seed chỉ thêm mốc chưa có (on conflict do nothing) — sửa tay trên DB không bị đè; đổi hạn qua `--propose-due` → người duyệt → `--apply-due`. title/gate KHÔNG dùng chữ guardrail chặn (nhóm rượu/từ cấm) — bảng tuần vào hàng duyệt, guardrail kiểm lại khi duyệt; viết theo danh sách SKU được phép.",
+  "milestones": [
+    {"code": "DA-01", "title": "DA-01 PMO tiến độ go-live (sổ mốc + bảng tuần)", "wp": "WP11", "owner_role": "gd_du_an", "due_date": "2026-10-24", "gate": "Bảng tuần sinh từ project_milestones, mốc trễ tô TRỄ, nhắc T-7/T-2"},
+    {"code": "DA-02", "title": "DA-02 gợi ý phạm vi SOW + nháp CR go-live", "wp": "WP11", "owner_role": "gd_du_an", "due_date": "2026-10-24", "gate": "Bộ test phân loại SOW do công ty gán nhãn đạt ngưỡng (bộ MẪU dev chỉ để phát triển)"},
+    {"code": "DA-QA", "title": "DA-QA bộ chấm độc lập phòng Dự án go-live", "wp": "WP06", "owner_role": "gd_du_an", "due_date": "2026-10-24", "gate": "Suite data/eval/suites/da_qa.json có ca thật, chấm bằng agent_eval"},
+    {"code": "DA-03", "title": "DA-03 radar chương trình go-live", "wp": "WP11", "owner_role": "gd_du_an", "due_date": "2026-10-31", "gate": "Radar chỉ qua collector chung (robots, delay ≥1s, 0 request tầng C); nguồn chuong_trinh được GĐ dự án duyệt"},
+    {"code": "DA-00", "title": "DA-00 điều phối khối projects go-live", "wp": "WP11", "owner_role": "gd_du_an", "due_date": "2026-10-31", "gate": "Khối projects đủ loại việc, bản tin GĐ khối chạy được"},
+    {"code": "DA-04", "title": "DA-04 hồ sơ tham gia chương trình go-live", "wp": "WP11", "owner_role": "gd_du_an", "due_date": "2026-11-14", "gate": "Bản nộp khớp hash bản duyệt (--verify-submit); chỉ SKU được phép theo golden (food, tpbvsk đã XNQC) vào bản nộp"},
+    {"code": "KD-A3-FORM", "title": "Form B2B quà Tết mở (KD-A3)", "wp": "WP11", "owner_role": "gd_ban_hang", "due_date": "2026-11-16", "gate": "Form B2B mở trước 16/11; tài liệu chào hàng chỉ gồm SKU được phép theo golden (food, tpbvsk đã XNQC)"},
+    {"code": "DA-05", "title": "DA-05 danh sách tổ chức mua quà Tết go-live", "wp": "WP11", "owner_role": "gd_ban_hang", "due_date": "2026-11-21", "gate": "org_prospects không PII, dedup b2b:hash; không agent nào tự liên hệ tổ chức"},
+    {"code": "MOC-C", "title": "Mốc C — diễn tập khôi phục, OCR đợt 1", "wp": "WP03", "owner_role": "tgd", "due_date": "2026-11-30", "gate": "Biên bản diễn tập khôi phục + OCR đợt 1 xong"},
+    {"code": "MOC-D", "title": "Mốc D — sẵn sàng đóng băng Tết", "wp": "WP03", "owner_role": "tgd", "due_date": "2026-12-18", "gate": "Mọi agent P1-α ở Pilot/Vận hành hoặc giữ Shadow/tắt qua Tết; trần FinOps Tết đã duyệt"},
+    {"code": "TT3", "title": "TT3 — nghiệm thu Mốc D (WP11 ký)", "wp": "WP11", "owner_role": "tgd", "due_date": "2026-12-23", "gate": "GĐ dự án và GĐ bán hàng ký nghiệm thu WP11"}
+  ]
+}

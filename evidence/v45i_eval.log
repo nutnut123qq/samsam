@@ -1,0 +1,171 @@
+# v4.5i-tich-hop-qa — gate eval (2026-10-12 11:23:08 +0700, HEAD c2be1ae + working tree)
+
+## W45i.1/.2 ca chuyển nguyên văn (so git show HEAD:data/eval/*.jsonl)
+$ python C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/6e992da7-2ceb-4134-a113-c7827ba71a02/scratchpad/w40_ident.py
+guardrail: 132 identical (thứ tự giữ nguyên; chỉ thêm ['label', 'scorer'])
+co_khi: 23 identical (thứ tự giữ nguyên; chỉ thêm ['expect', 'label', 'scorer'])
+[exit 0]
+
+## hash
+$ python scripts/agent_eval.py --print-hash guardrail
+cd78db9beb390ba3fa76e8048f13289fe960787f9e815efe4d03e93f1b388a88
+[exit 0]
+
+cases_sha256 guardrail = cd78db9beb390ba3fa76e8048f13289fe960787f9e815efe4d03e93f1b388a88
+$ python scripts/agent_eval.py --print-hash co_khi
+dea102a90a2cad4d27a48259bb665d6b4b2269e99fa0719137b1c182fbed381a
+[exit 0]
+
+cases_sha256 co_khi    = dea102a90a2cad4d27a48259bb665d6b4b2269e99fa0719137b1c182fbed381a
+
+## W45i.3 validate
+$ python scripts/agent_eval.py --validate
+[ok] chatbot v1 active owner=marketing qa=data_platform risk=high 14 ca
+[ok] ck_a6 v1 skeleton owner=mechanical qa=mechanical risk=medium 3 ca
+[ok] co_khi v1 active owner=mechanical qa=data_platform risk=medium 23 ca
+[ok] da_qa v1 skeleton owner=projects qa=projects risk=medium 3 ca
+[ok] fin_qa v1 skeleton owner=finance qa=finance risk=high 3 ca
+[ok] guardrail v2 active owner=legal_hr qa=data_platform risk=high 132 ca
+[ok] intel_qa v1 skeleton owner=intel qa=intel risk=medium 3 ca
+[ok] kd_a11 v1 skeleton owner=sales qa=sales risk=high 4 ca
+[ok] mkt_13 v1 skeleton owner=marketing qa=marketing risk=high 4 ca
+[ok] pc_a9 v1 skeleton owner=legal_hr qa=legal_hr risk=high 3 ca
+[ok] qa_cockpit v1 skeleton owner=ceo qa=ceo risk=medium 4 ca
+[ok] qa_vung_trong v1 skeleton owner=farming qa=farming risk=medium 3 ca
+[ok] sx_a8 v1 skeleton owner=production qa=production risk=medium 3 ca
+[done] 13/13 suite hợp lệ
+[exit 0]
+
+## W45i.1 guardrail
+$ python scripts/agent_eval.py --agent guardrail --no-record
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail v2 PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=2b77cb13ab46 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối legal_hr: chưa cấu hình (external-dep)
+[exit 0]
+
+## W45i.2 co_khi x2 (byte-giống)
+[co_khi:ck-f01] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Nhiệt độ buồng co của máy co màng SS-EQ-03 đặt bao nhiêu?"
+[co_khi:ck-f02] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Tốc độ băng tải máy co màng SS-EQ-03 là bao nhiêu mét mỗi phút?"
+[done] co_khi v1 PASS 21/23 pass_rate=0.913 (ngưỡng 0.9) prompt_version=2a0de120b8ba model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối mechanical: chưa cấu hình (external-dep)
+[exit lần 1=0 lần 2=0]
+2 lần stdout byte-giống: OK
+
+## ck_a6 vẫn skeleton
+$ python scripts/agent_eval.py --agent ck_a6 --no-record
+[refuse] suite ck_a6 là khung (skeleton) — chờ code agent + công ty gán nhãn, chưa chạy được
+[exit 1]
+
+## W45i.3/.6 deterministic
+$ python scripts/agent_eval.py --deterministic --no-record
+[ok] chatbot v1 active owner=marketing qa=data_platform risk=high 14 ca
+[ok] ck_a6 v1 skeleton owner=mechanical qa=mechanical risk=medium 3 ca
+[ok] co_khi v1 active owner=mechanical qa=data_platform risk=medium 23 ca
+[ok] da_qa v1 skeleton owner=projects qa=projects risk=medium 3 ca
+[ok] fin_qa v1 skeleton owner=finance qa=finance risk=high 3 ca
+[ok] guardrail v2 active owner=legal_hr qa=data_platform risk=high 132 ca
+[ok] intel_qa v1 skeleton owner=intel qa=intel risk=medium 3 ca
+[ok] kd_a11 v1 skeleton owner=sales qa=sales risk=high 4 ca
+[ok] mkt_13 v1 skeleton owner=marketing qa=marketing risk=high 4 ca
+[ok] pc_a9 v1 skeleton owner=legal_hr qa=legal_hr risk=high 3 ca
+[ok] qa_cockpit v1 skeleton owner=ceo qa=ceo risk=medium 4 ca
+[ok] qa_vung_trong v1 skeleton owner=farming qa=farming risk=medium 3 ca
+[ok] sx_a8 v1 skeleton owner=production qa=production risk=medium 3 ca
+[done] 13/13 suite hợp lệ
+[co_khi:ck-f01] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Nhiệt độ buồng co của máy co màng SS-EQ-03 đặt bao nhiêu?"
+[co_khi:ck-f02] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Tốc độ băng tải máy co màng SS-EQ-03 là bao nhiêu mét mỗi phút?"
+[done] co_khi v1 PASS 21/23 pass_rate=0.913 (ngưỡng 0.9) prompt_version=2a0de120b8ba model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối mechanical: chưa cấu hình (external-dep)
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail v2 PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=2b77cb13ab46 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối legal_hr: chưa cấu hình (external-dep)
+[exit 0]
+
+## W45i.3 grep (rỗng = OK)
+$ grep -rnE '^(<<<<<<< |>>>>>>> )|^=======$' --exclude-dir=.git --exclude-dir=evidence .
+[grep exit 1 — 1 = không có]
+$ grep -n 'RULE_AGENTS\|\.jsonl\|\["agents"\]' scripts/agent_eval.py
+[grep exit 1 — 1 = không có]
+$ ls data/eval/*.jsonl
+ls: cannot access 'data/eval/*.jsonl': No such file or directory
+
+## W45i.5 config + grep jsonl
+keys ['_doc', 'approvers', 'required_agents'] required_agents ['guardrail', 'chatbot']
+$ grep -rn 'guardrail\.jsonl\|co_khi\.jsonl\|chatbot\.jsonl' --include=*.md --include=*.py --include=*.json --include=*.yml . (bỏ DONE.md)
+./data/eval/suites/chatbot.json:2:  "_doc": "Suite chatbot (v4.5, chuyển nguyên 14 ca từ data/eval/chatbot.jsonl v3.5). Bộ ca chatbot KHỞI ĐẦU do de
+./data/eval/suites/co_khi.json:2:  "_doc": "Suite co_khi (v4.5i: chuyển NGUYÊN VĂN 23 ca từ bộ jsonl v9.5 data/eval/co_khi.jsonl). Bộ ca MẪU do dev 
+./data/eval/suites/guardrail.json:2:  "_doc": "Suite guardrail v2 (v4.5i: chuyển NGUYÊN VĂN 132 ca từ bộ jsonl v4.1 data/eval/guardrail.jsonl — 39 ca 
+
+## W45i.4 đếm assert theo test (4 nhánh + WT)
+test                                                     ra-v41  ra-v45  ra-v95  -infra      WT    max  ok
+test_bad_github_sha_env_exit_2                                1       1       1       1       1      1 ok
+test_bad_sha_exit_2                                           2       2       2       2       2      2 ok
+test_case_files_parse_unique_and_unapproved                   4       6       4       4       6      6 ok
+test_chatbot_cases_match_questions_md                         6       6       6       6       6      6 ok
+test_chatbot_exception_is_case_fail                           2       2       2       2       2      2 ok
+test_chatbot_health_handoff_scored                            2       2       2       2       2      2 ok
+test_chatbot_malformed_result_is_case_fail                    2       2       2       2       2      2 ok
+test_chatbot_missing_key_no_insert                            3       3       3       3       3      3 ok
+test_chatbot_one_fact_miss_passes                             3       3       3       3       3      3 ok
+test_chatbot_threshold_parity_eval_qa                         8       8       8       8       8      8 ok
+test_chatbot_trap_guard_fail_blocks                           2       2       2       2       2      2 ok
+test_co_khi_cases_shape                                       -       -      10      10      10     10 ok
+test_co_khi_cli_no_record_twice_identical                     -       -       4       4       4      4 ok
+test_co_khi_runner_local_deterministic_and_threshold          -       -       3       3       3      3 ok
+test_co_khi_trap_fail_scored_failed                           -       -       2       2       2      2 ok
+test_config_thresholds_and_trap_kinds                         7       8       7       7       9      8 ok
+test_db_down_warns_nonzero                                    2       2       2       2       2      2 ok
+test_dirty_tree_refused_unless_allowed                        4       4       4       4       4      4 ok
+test_fail_output_masks_pii                                    1       1       1       1       1      1 ok
+test_git_dirty_and_head_real_repo                             7       7       7       7       7      7 ok
+test_git_unreadable_refused                                   3       3       3       3       3      3 ok
+test_guardrail_cases_cover_core_words_and_v30_sets            4       4       4       4       4      4 ok
+test_guardrail_cases_match_current_behavior                   3       1       1       3       4      3 ok
+test_guardrail_ctx_uses_check_publish_and_code_must_match       -       -       -       -       4      0 ok
+test_guardrail_run_records_pass                               8       7       8       8       8      8 ok
+test_no_record_skips_git_and_db                               1       1       1       1       1      1 ok
+test_prompt_version_ignores_crlf                              2       2       2       2       2      2 ok
+test_removing_dieu_tri_fails                                  3       4       3       3       4      4 ok
+test_runners_single_source_and_same_signature                 -       -       -       -       4      0 ok
+test_score_missing_kind_or_empty_fails                        2       2       2       2       2      2 ok
+test_score_trap_fail_blocks_even_above_threshold              3       3       3       3       3      3 ok
+test_sha_must_match_head                                      4       4       4       4       4      4 ok
+test_validate_co_khi_case                                     -       -       -       -       2      0 ok
+test_validate_guardrail_ctx_and_code                          -       -       -       -       1      0 ok
+totals: {'infra-v41': 89, 'infra-v45': 90, 'infra-v95': 106, 'ai-infra': 108, 'WT': 125} sum-max(branches): 112
+LOW: []
+-- tests/test_qa_harness.py
+totals: {'HEAD': 181, 'infra-v45': 181, 'infra-v41': 0, 'WT': 193} sum-max(branches): 180
+LOW: []
+-- tests/test_guardrail_v2.py
+totals: {'HEAD': 128, 'infra-v45': 0, 'infra-v41': 128, 'WT': 128} sum-max(branches): 127
+LOW: []
+-- tests/test_handover_docs.py
+totals: {'HEAD': 28, 'infra-v45': 23, 'infra-v41': 28, 'WT': 29} sum-max(branches): 26
+LOW: []
+-- tests/test_ci_workflow.py
+totals: {'HEAD': 23, 'infra-v45': 23, 'infra-v41': 20, 'WT': 27} sum-max(branches): 23
+LOW: []
+
+## ruff + py_compile
+$ ruff check .
+All checks passed!
+[exit 0]
+
+$ python -m py_compile scripts/agent_eval.py
+[exit 0]
+
+
+## (sau vòng 3) DPIA khớp map + ruff
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+[exit 0]
+$ ruff check .
+All checks passed!
+[exit 0]

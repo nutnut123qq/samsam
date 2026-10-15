@@ -1,0 +1,6 @@
+# v5.4 W54.4 A8 ghi nhận đơn + báo cáo NHÁP — 2026-10-14T19:05:30+07:00
+$ python -m pytest -q tests/test_kd_affiliate.py -k "attribute or report_period" -rs
+..                                                                       [100%]
+2 passed, 43 deselected in 7.39s
+$ grep -nE "smtplib|import httpx|import requests|urllib\.request|\.post\(" agents/kd_affiliate.py  (phải rỗng)
+grep exit=1 (1 = rỗng)

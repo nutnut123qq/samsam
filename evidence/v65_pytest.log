@@ -1,0 +1,12 @@
+## full: python -m pytest -q -rs (1 lần)
+1 failed, 3577 passed in 2483.40s (0:41:23)
+exit=1
+FULLDONE
+
+## vòng 2 (2026-10-13) — full: python -m pytest -q -rfs (1 lần)
+FAILED tests/test_garden_director.py::test_bulletin_numbers_match_reference_sql
+1 failed, 3577 passed in 2063.49s (0:34:23)
+exit=1
+## chẩn đoán: test_garden_director::test_bulletin_numbers_match_reference_sql — chạy riêng cũng đỏ (deterministic).
+## nguyên nhân: garden_media.created_at = now() (wall-clock) so với kỳ cố định until=2026-10-12 → từ 13/10 giờ VN ảnh fixture rơi ngoài kỳ. File garden KHÔNG thuộc diff v6.5 (git diff --name-only | grep garden rỗng) — date-bomb có sẵn, ngoài boundary, không sửa.
+## ruff check . → All checks passed! ; py_compile file mới/sửa → OK ; grep LLM/đường ghi rỗng ; dpia --check exit 0

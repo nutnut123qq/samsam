@@ -1,0 +1,23 @@
+== full pytest (2026-10-11)
+.....................................                                    [100%]
+253 passed in 31.38s
+== ruff
+All checks passed!
+== py_compile
+py_compile OK
+== grep 'OpenAI(' ngoai llm_gateway.py
+(rong)
+== W31.1 identity
+same object OK
+== apply_schema x2
+apply_schema run1 exit=0
+apply_schema run2 exit=0
+== dead host DATABASE_URL=10.255.255.1
+[llm-gateway] không đọc được spend (ConnectionTimeout) — cho qua
+spend None elapsed_s 7.0
+== gout gate (fake client raise neu goi)
+{'answer': 'Chưa đủ dữ liệu để trả lời.', 'sources': [], 'handoff': 'health'}
+== zalo_mock
+[done] 3/3 hội thoại đúng
+zalo_mock exit=0
+== targeted x3: xem evidence/v31_targeted.log

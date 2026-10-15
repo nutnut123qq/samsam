@@ -1,0 +1,130 @@
+=== python scripts/eval_qa.py (2026-10-12T00:45:04+07:00) — LLM thật qua gateway
+[Q1] Saphraton giá bao nhiêu?
+     -> answer="Saphraton hộp 80 viên: 1.000.000 đ; gói Saphraton 20V: 236.000 đ." | sources=9
+[Q1] PASS
+[Q2] Công ty TNHH Sâm Sâm thành lập khi nào?
+     -> answer="Công ty TNHH Sâm Sâm thành lập ngày 08/9/2015." | sources=9
+[Q2] PASS
+[Q3] Vùng trồng sâm Ngọc Linh của công ty ở đâu?
+     -> answer="Vùng trồng sâm Ngọc Linh của công ty TNHH Sâm Sâm nằm tại thôn 2, xã Trà Linh, huyện Nam Trà My, tỉnh Quảng Nam." | sources=8
+[Q3] PASS
+[Q4] Sâm Sâm có những sản phẩm nào?
+     -> answer="Danh mục sản phẩm của Công ty TNHH Sâm Sâm bao gồm: - Củ Sâm Ngọc Linh - SAVINA TUÝP 12 VIÊN - Saphraton 20V - Savigout - Saphraton - Sapentol" | sources=8
+[Q4] PASS
+[Q5] Mã số thuế của công ty?
+     -> answer="Mã số doanh nghiệp của công ty là 0402021985." | sources=6
+[Q5] FAIL — thiếu '4001036461' | answer="Mã số doanh nghiệp của công ty là 0402021985." | sources=6
+[Q6] Ai là người sáng lập/chủ tịch?
+     -> answer="Người sáng lập/chủ tịch là ông Nguyễn Đức Lực." | sources=7
+[Q6] PASS
+[Q7] Nhà máy chế biến ở đâu?
+     -> answer="Nhà máy chế biến dược liệu của Công ty TNHH Sâm Sâm nằm tại Khu Công nghiệp Tam Thăng, TP. Tam Kỳ, tỉnh Quảng Nam." | sources=9
+[Q7] PASS
+[Q8] Hotline liên hệ?
+     -> answer="Hotline: 1800577732; ĐT: 02353 699 899." | sources=6
+[Q8] PASS
+[Q9] Sapentol hỗ trợ gì?
+     -> answer="Sapentol hỗ trợ hạ đường huyết, giảm mỡ máu và giảm nguy cơ biến chứng tim mạch do bệnh tiểu đường." | sources=9
+[Q9] PASS
+[Q10] Showroom ở đâu?
+     -> answer="Showroom Sâm Sâm nằm tại địa chỉ: 425 Phan Bội Châu, phường Bàn Thạch, Thành Phố Đà Nẵng." | sources=5
+[Q10] PASS
+[Q11] Sâm Sâm có xuất khẩu sang Mỹ không?
+     -> answer="Chưa đủ dữ liệu để trả lời." | sources=0
+[Q11] PASS
+[Q12] Saphraton có chữa được ung thư không?
+     -> answer="Chưa đủ dữ liệu để trả lời." | sources=0
+[Q12] PASS
+[done] PASS 11/12
+exit=0
+
+=== Phân tích Q5 (worker v3.9, sau khi chạy)
+- MST 4001036461 trong data chỉ xuất hiện ở 3 record products.jsonl nv-RUOU-SAMSAM-No-5 / nv-RUOU-SAMSAM-No-7 / nv-ruou-sam-ngoc-linh
+  (tên SKU rượu -> W39.3 bỏ CẢ record). Sau ingest, 0 chunk public chứa "4001036461" / "mã số" / "0402".
+- Theo contract W39.7: KHÔNG nới bộ lọc rượu; ghi lại. Gate vẫn đạt: 11/12, Q11+Q12 bẫy PASS, exit 0.
+- ĐÁNG CHÚ Ý: LLM trả "0402021985" — số KHÔNG có trong bất kỳ chunk nào (bịa mã số doanh nghiệp) dù MIN_SCORE
+  qua ngưỡng nhờ chunk khác. Rủi ro bịa định danh công ty có sẵn từ trước, filter chỉ làm lộ ra.
+  Hướng xử lý (ngoài phạm vi v3.9): bổ sung MST vào nguồn công khai không-rượu (about) khi có nguồn xác nhận.
+
+##### VÒNG 3 — chạy lại sau đổi retrieve (2026-10-12T00:50:10+07:00)
+[Q1] Saphraton giá bao nhiêu?
+     -> answer="Saphraton hộp 80 viên: 1.000.000 đ; gói Saphraton 20V: 236.000 đ." | sources=9
+[Q1] PASS
+[Q2] Công ty TNHH Sâm Sâm thành lập khi nào?
+     -> answer="Công ty TNHH Sâm Sâm thành lập ngày 08/9/2015." | sources=9
+[Q2] PASS
+[Q3] Vùng trồng sâm Ngọc Linh của công ty ở đâu?
+     -> answer="Vùng trồng sâm Ngọc Linh của công ty TNHH Sâm Sâm nằm tại thôn 2, xã Trà Linh, huyện Nam Trà My, tỉnh Quảng Nam." | sources=8
+[Q3] PASS
+[Q4] Sâm Sâm có những sản phẩm nào?
+     -> answer="Danh mục sản phẩm của Công ty TNHH Sâm Sâm bao gồm: - Củ Sâm Ngọc Linh - SAVINA TUÝP 12 VIÊN - Saphraton 20V - Savigout - Saphraton - Sapentol" | sources=8
+[Q4] PASS
+[Q5] Mã số thuế của công ty?
+     -> answer="Mã số doanh nghiệp của công ty là 0402021234." | sources=6
+[Q5] FAIL — thiếu '4001036461' | answer="Mã số doanh nghiệp của công ty là 0402021234." | sources=6
+[Q6] Ai là người sáng lập/chủ tịch?
+     -> answer="Người sáng lập/chủ tịch là ông Nguyễn Đức Lực." | sources=7
+[Q6] PASS
+[Q7] Nhà máy chế biến ở đâu?
+     -> answer="Nhà máy chế biến dược liệu của Công ty TNHH Sâm Sâm nằm tại Khu Công nghiệp Tam Thăng, TP. Tam Kỳ, tỉnh Quảng Nam." | sources=9
+[Q7] PASS
+[Q8] Hotline liên hệ?
+     -> answer="Hotline: 1800577732; ĐT: 02353 699 899." | sources=6
+[Q8] PASS
+[Q9] Sapentol hỗ trợ gì?
+     -> answer="Sapentol hỗ trợ hạ đường huyết, giảm mỡ máu và giảm nguy cơ biến chứng tim mạch do bệnh tiểu đường." | sources=9
+[Q9] PASS
+[Q10] Showroom ở đâu?
+     -> answer="Showroom Sâm Sâm nằm tại địa chỉ: 425 Phan Bội Châu, phường Bàn Thạch, Thành Phố Đà Nẵng." | sources=5
+[Q10] PASS
+[Q11] Sâm Sâm có xuất khẩu sang Mỹ không?
+     -> answer="Chưa đủ dữ liệu để trả lời." | sources=0
+[Q11] PASS
+[Q12] Saphraton có chữa được ung thư không?
+     -> answer="Chưa đủ dữ liệu để trả lời." | sources=0
+[Q12] PASS
+[done] PASS 11/12
+exit=0
+
+=== Ghi chú vòng 3: Q5 lại bịa số khác ("0402021234" vs "0402021985" ở vòng 1) — xác nhận LLM bịa MST khi
+ngữ cảnh không có (MST thật chỉ nằm trong record rượu đã lọc). Gate eval vẫn đạt 11/12 + 2 bẫy PASS, exit 0.
+
+######## VÒNG SỬA nghiệm thu — eval sau keyword mới + hậu kiểm số bịa (2026-10-12T01:04:49+07:00)
+[Q1] Saphraton giá bao nhiêu?
+     -> answer="Saphraton hộp 80 viên: 1.000.000 đ; gói Saphraton 20V: 236.000 đ." | sources=9
+[Q1] PASS
+[Q2] Công ty TNHH Sâm Sâm thành lập khi nào?
+     -> answer="Công ty TNHH Sâm Sâm thành lập ngày 08/9/2015." | sources=9
+[Q2] PASS
+[Q3] Vùng trồng sâm Ngọc Linh của công ty ở đâu?
+     -> answer="Vùng trồng sâm Ngọc Linh của công ty TNHH Sâm Sâm nằm tại thôn 2, xã Trà Linh, huyện Nam Trà My, tỉnh Quảng Nam." | sources=8
+[Q3] PASS
+[Q4] Sâm Sâm có những sản phẩm nào?
+     -> answer="Danh mục sản phẩm của Công ty TNHH Sâm Sâm bao gồm: - Củ Sâm Ngọc Linh - SAVINA TUÝP 12 VIÊN - Saphraton 20V - Savigout - Saphraton - Sapentol" | sources=8
+[Q4] PASS
+[Q5] Mã số thuế của công ty?
+     -> answer="Chưa đủ dữ liệu để trả lời." | sources=0
+[Q5] FAIL — thiếu '4001036461', 'sources rỗng' | answer="Chưa đủ dữ liệu để trả lời." | sources=0
+[Q6] Ai là người sáng lập/chủ tịch?
+     -> answer="Người sáng lập/chủ tịch là ông Nguyễn Đức Lực." | sources=7
+[Q6] PASS
+[Q7] Nhà máy chế biến ở đâu?
+     -> answer="Nhà máy chế biến dược liệu của Công ty TNHH Sâm Sâm nằm tại Khu Công nghiệp Tam Thăng, TP. Tam Kỳ, tỉnh Quảng Nam." | sources=9
+[Q7] PASS
+[Q8] Hotline liên hệ?
+     -> answer="Hotline: 1800577732; ĐT: 02353 699 899." | sources=6
+[Q8] PASS
+[Q9] Sapentol hỗ trợ gì?
+     -> answer="Sapentol hỗ trợ hạ đường huyết, giảm mỡ máu và giảm nguy cơ biến chứng tim mạch do bệnh tiểu đường." | sources=9
+[Q9] PASS
+[Q10] Showroom ở đâu?
+     -> answer="Showroom Sâm Sâm nằm tại địa chỉ: 425 Phan Bội Châu, phường Bàn Thạch, Thành Phố Đà Nẵng." | sources=5
+[Q10] PASS
+[Q11] Sâm Sâm có xuất khẩu sang Mỹ không?
+     -> answer="Chưa đủ dữ liệu để trả lời." | sources=0
+[Q11] PASS
+[Q12] Saphraton có chữa được ung thư không?
+     -> answer="Chưa đủ dữ liệu để trả lời." | sources=0
+[Q12] PASS
+[done] PASS 11/12
+exit=0

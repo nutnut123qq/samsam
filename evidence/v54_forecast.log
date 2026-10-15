@@ -1,0 +1,43 @@
+# v5.4 W54.5 kd_forecast (A10) — 2026-10-14T19:05:54+07:00
+$ grep -n "from pipelines import scenario" agents/kd_forecast.py
+32:from pipelines import scenario
+$ grep -n "scenario.project(" agents/kd_forecast.py
+5:`scenario.project()` (engine kịch bản dùng chung v7.3) rồi cộng theo mức;
+60:            rows = scenario.project(sku, ch, start, weeks, assumptions)
+$ grep -nE "baseline|trend|coef|\* *1\.[0-9]" agents/kd_forecast.py  (phải rỗng)
+grep exit=1 (1 = rỗng)
+$ python -m pytest -q tests/test_kd_forecast.py -rs  (gồm DB host chết 10.255.255.1 qua subprocess)
+................                                                         [100%]
+16 passed in 10.40s
+$ python -m agents.kd_forecast --weeks 0
+python -m agents.kd_forecast: error: argument --weeks: phải trong 1..104
+exit=2
+$ python -m agents.kd_forecast --weeks 105
+python -m agents.kd_forecast: error: argument --weeks: phải trong 1..104
+exit=2
+$ DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m agents.kd_forecast --weeks 4 --sku saphraton-20v
+[warn] không đối chiếu được tồn (không kết nối được Postgres)
+# Dự báo mùa SKU × kênh — 2026-10-12 → 2026-11-08 (4 tuần)
+
+GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt
+
+Khoảng thấp–cơ sở–cao (đơn vị, cộng cả kỳ) — KHÔNG phải doanh số cam kết; giả định số bán chưa phải số thật.
+
+| SKU | shopee | tiktok | web | facebook | zalo | chatbot | offline | Tổng |
+|---|---|---|---|---|---|---|---|---|
+| saphraton-20v | 40–49–60 | 0–0–0 | 0–0–0 | 0–0–0 | 0–0–0 | 0–0–0 | 24–32–40 | 64–81–100 |
+
+## Đối chiếu tồn
+
+- saphraton-20v: không đối chiếu được tồn
+
+## Ghi chú engine kịch bản
+
+- saphraton-20v × tiktok: kênh chưa có trong allowed_channels (golden)
+- saphraton-20v × web: kênh chưa có trong allowed_channels (golden)
+- saphraton-20v × facebook: kênh chưa có trong allowed_channels (golden)
+- saphraton-20v × zalo: kênh chưa có trong allowed_channels (golden)
+- saphraton-20v × chatbot: kênh chưa có trong allowed_channels (golden)
+
+[job-runs] ghi job_runs lỗi (ConnectionTimeout) — job vẫn chạy bình thường
+exit=1

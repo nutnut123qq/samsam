@@ -1,0 +1,96 @@
+# v9.5 W95.F1 sửa phát hiện nghiệm thu — worktree D:/code/samsam-w95, DB riêng (w95.env)
+
+=== targeted run 1/3 — 2026-10-12T03:55:49+07:00
+$ python -m pytest -q -p no:cacheprovider tests/test_llm_gateway.py tests/test_ck_mat.py tests/test_doc_intake.py tests/test_kb_internal.py tests/test_kb_acl.py tests/test_cmms.py tests/test_co_khi.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py
+........................................................................ [ 94%]
+................                                                         [100%]
+304 passed in 35.60s
+exit=0
+
+=== targeted run 2/3 — 2026-10-12T03:56:31+07:00
+$ python -m pytest -q -p no:cacheprovider tests/test_llm_gateway.py tests/test_ck_mat.py tests/test_doc_intake.py tests/test_kb_internal.py tests/test_kb_acl.py tests/test_cmms.py tests/test_co_khi.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py
+........................................................................ [ 94%]
+................                                                         [100%]
+304 passed in 37.52s
+exit=0
+
+=== targeted run 3/3 — 2026-10-12T03:57:19+07:00
+$ python -m pytest -q -p no:cacheprovider tests/test_llm_gateway.py tests/test_ck_mat.py tests/test_doc_intake.py tests/test_kb_internal.py tests/test_kb_acl.py tests/test_cmms.py tests/test_co_khi.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py
+........................................................................ [ 94%]
+................                                                         [100%]
+304 passed in 36.59s
+exit=0
+
+=== mutation probe (sửa tạm source → chạy test → khôi phục nguyên byte; md5 trước/sau khớp) — chạy lúc sửa
+KILLED  agents/ck_mat.py  bỏ lọc file (mọi file)            test_machine_code_only_on_first_page_found  | 1 failed
+KILLED  agents/ck_mat.py  lọc lại theo TRANG mỗi chunk (cũ)  test_machine_code_question_no_per_chunk_page_rescan | 1 failed in 90.54s
+KILLED  agents/ck_mat.py  lọc lại theo TRANG mỗi chunk (cũ)  test_machine_code_only_on_first_page_found  | 1 failed
+KILLED  agents/ck_mat.py  high-risk phía trang `or False`     test_high_risk_reference_only  | 1 failed, 2 passed
+KILLED  agents/ck_mat.py  except ZeroDivisionError (ảnh PDF)  test_pdf_scan_images_access_error_cho_ocr  | 1 failed
+KILLED  agents/ck_mat.py  break→continue khi thiếu OCR        test_pdf_scan_ocr_engine_missing  | 1 failed
+KILLED  ingest/kb_internal.py  bỏ resolve CK_MAT_DIR          test_file_inside_ck_mat_dir_exit2  | 1 failed
+KILLED  ingest/kb_internal.py  fullmatch 'confidential: true' cũ  test_confidential_front_matter_exit2  | 1 failed, 5 passed (-x)
+KILLED  agents/cmms.py  bỏ chặn --now với op ghi              test_bad_args_exit2_before_connect  | 1 failed, 9 passed (-x)
+KILLED  agents/cmms.py  cờ kiểm định chỉ theo có hạn (cũ)     test_add_machine_cert_flags_without_date  | 1 failed
+
+=== eval MẪU co_khi — 2026-10-12T03:58:16+07:00
+$ python scripts/agent_eval.py --agent co_khi --no-record
+[co_khi:ck-f01] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Nhiệt độ buồng co của máy co màng SS-EQ-03 đặt bao nhiêu?"
+[co_khi:ck-f02] FAIL (fact) — kỳ vọng {'file': 'may-co-mang-ss-eq-03.md', 'page': 2}, nguồn đầu={'file': 'may-co-mang-ss-eq-03.md', 'page': 4}, high_risk=False | text="Tốc độ băng tải máy co màng SS-EQ-03 là bao nhiêu mét mỗi phút?"
+[done] co_khi PASS 21/23 pass_rate=0.913 (ngưỡng 0.9) prompt_version=e77fea5d472a model=rules
+[done] --no-record: không ghi eval_runs
+exit=0
+
+=== full pytest (1 lần) — 2026-10-12T03:58:25+07:00
+$ python -m pytest -q -p no:cacheprovider
+tests\test_dr_drill.py:548: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_dr_drill.py::test_zz_no_dr_container_left - AssertionError:...
+1 failed, 961 passed in 261.58s (0:04:21)
+exit=1
+
+$ ruff check .
+All checks passed!
+exit=0
+
+=== phân tích FAIL full: tests/test_dr_drill.py::test_zz_no_dr_container_left
+Test này assert `docker ps -a --filter name=samsam-dr-` == [] trên docker DÙNG CHUNG
+máy. Tới 7 worktree samsam-* chạy SONG SONG, mỗi bản chạy DR drill tạo container
+samsam-dr-<ts>. Mọi test DR của lượt này (tạo container riêng) đều PASS kể cả
+assert `rec["container"] not in _docker_names()` (container CỦA MÌNH đã gỡ) —
+chỉ test quét toàn cục fail. Ngay sau full run: `docker ps -a` thấy
+`samsam-dr-20261012_040251-d986 Up 7 seconds` (tạo SAU khi full run kết thúc →
+của worktree khác). Bản sửa này KHÔNG đụng dr_drill/backup/docker
+(diff chỉ ck_mat/cmms/kb_internal + test + MẪU + DONE.md). Không chạy lại full
+(luật 1 full/vòng); chạy riêng test toàn cục khi docker không còn container lạ:
+$ docker ps -a --filter name=samsam-dr- --format '{{.Names}}'  -> []
+$ python -m pytest -q -p no:cacheprovider tests/test_dr_drill.py::test_zz_no_dr_container_left
+.                                                                        [100%]
+1 passed in 1.31s
+exit=0
+
+# W95.F2 — MINOR _text_pages dấu trang lặp nối chuỗi quadratic (cùng cụm A04 DoS)
+fix: agents/ck_mat.py _text_pages gom body vào list theo số trang, join 1 lần (thay merged[n] + '\n\n' + body)
+test: tests/test_ck_mat.py::test_duplicate_page_marker_many_merged_in_order (60k dấu cùng số → 1 trang, thứ tự x0..x59999, độ dài khớp tổng)
+grep cụm: agents/ck_mat.py không còn nối chuỗi tích lũy trong vòng lặp (chỉ += đếm stats)
+
+=== probe scaling (input '--- trang 1 ---\nx\n' * n) — trước fix (r2): 0.36MB 0.16s, 0.72MB 0.64s, 1.44MB 2.06s, 2.88MB 13.0s
+=== sau fix — 2026-10-12T04:18:23+07:00
+dup-mark 20000 360000 pages 1 0.05 s
+dup-mark 40000 720000 pages 1 0.08 s
+dup-mark 80000 1440000 pages 1 0.2 s
+dup-mark 160000 2880000 pages 1 0.37 s
+dup-mark 1100000 19800000 pages 1 2.48 s
+
+=== targeted ×3: python -m pytest -q -p no:cacheprovider tests/test_ck_mat.py
+34 passed in 10.03s
+34 passed in 11.83s
+34 passed in 11.97s
+
+=== full pytest (1 lần)
+$ python -m pytest -q -p no:cacheprovider
+963 passed in 220.73s (0:03:40)
+exit=0
+$ ruff check .
+All checks passed!
+exit=0

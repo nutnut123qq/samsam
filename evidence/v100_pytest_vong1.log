@@ -1,0 +1,86 @@
+## targeted lần 1 — 2026-10-14T19:34:35+07:00
+........................................................................ [ 16%]
+........................................................................ [ 33%]
+........................................................................ [ 49%]
+........................................................................ [ 66%]
+........................................................................ [ 83%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+433 passed in 807.21s (0:13:27)
+exit=0
+## targeted lần 2 — 2026-10-14T19:48:37+07:00
+........................................................................ [ 16%]
+........................................................................ [ 33%]
+........................................................................ [ 49%]
+........................................................................ [ 66%]
+.E...................................................................... [ 83%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+=================================== ERRORS ====================================
+_____________ ERROR at setup of test_app_human_only_via_function ______________
+
+    @pytest.fixture
+    def db():
+        dsn = os.environ.get("DATABASE_URL")
+        if not dsn:
+            pytest.skip("kh�ng c� DATABASE_URL")
+        try:
+            conn = psycopg.connect(dsn, connect_timeout=5)
+        except psycopg.OperationalError as e:
+            pytest.skip(f"kh\xf4ng connect \u0111\u01b0\u1ee3c DB: {type(e).__name__}")
+        try:
+            conn.execute("set local lock_timeout = '10s'")
+            schema = f"t_auth_{uuid.uuid4().hex[:12]}"
+            conn.execute(f"create schema {schema}")
+            conn.execute(f"set local search_path to {schema}, pg_temp")
+            conn.execute(SCHEMA_SQL)
+            conn.execute(SCHEMA_SQL)      # idempotent �2
+>           conn.execute(ROLES_SQL)
+
+tests\test_auth_approval.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [BAD] at 0x12925b92de0>
+query = '-- v3.4 role DB t\xe1ch quy\u1ec1n (WP03). Ch\u1ea1y SAU docs/schema.sql:\\n--   python scripts/apply_schema.py --roles\\n-- Idempot...ute on function\\n  verify_action_log(),\\n  verify_plot_logs(),\\n  verify_publish(text, text, text)\\n  to bks_reader;\\n'
+params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.LockNotAvailable: canceling statement due to lock timeout
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: LockNotAvailable
+432 passed, 1 error in 901.03s (0:15:01)
+exit=1
+## targeted lần 3 — 2026-10-14T20:04:19+07:00
+........................................................................ [ 16%]
+........................................................................ [ 33%]
+........................................................................ [ 49%]
+........................................................................ [ 66%]
+........................................................................ [ 83%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+433 passed in 891.37s (0:14:51)
+exit=0
+DONE

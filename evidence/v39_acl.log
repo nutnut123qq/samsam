@@ -1,0 +1,22 @@
+=== live probe retrieve() mặc định (2 embed thật qua gateway, agent chatbot) 2026-10-12T00:38:12+07:00
+'Rượu sâm giá bao nhiêu?': 8 hits, is_alcohol hits = 0, top = [('wp-2527', 0.528), ('catalog-products', 0.526), ('wp-217', 0.508), ('nv-doanh-nhan-nguyen-duc-luc-no-luc-dua-sam-ngoc-linh-phat-trien-xung-tam-35', 0.5)]
+'Sâm Sâm có những sản phẩm nào?': 8 hits, is_alcohol hits = 0, top = [('catalog-products', 0.693), ('nv-saphraton-48', 0.646), ('wp-198', 0.644), ('nv-lam-chu-cong-nghe-nhan-giong-sam-ngoc-linh-bao-quang-nam-12', 0.635)]
+answer("Rượu sâm giá bao nhiêu?") -> {'answer': 'Chưa đủ dữ liệu để trả lời.', 'sources': [], 'handoff': 'alcohol'}
+=== grep chunks_internal in *.py
+./api/rag.py
+./ingest/kb_internal.py
+./tests/test_kb_acl.py
+./tests/test_kb_acl_db.py
+./tests/test_kb_internal.py
+=== grep collection= in connectors app scripts agents
+(rỗng nếu không có dòng trên)
+=== git diff --stat connectors/zalo.py app/streamlit_app.py
+(rỗng = không sửa)
+
+=== python -m pytest -q tests/test_kb_acl.py tests/test_kb_acl_db.py tests/test_rag.py (2026-10-12T00:39:04+07:00)
+.....................................                                    [100%]
+37 passed in 3.01s
+
+=== VÒNG 3 live probe lại (retrieve lọc theo thứ tự điểm) 2026-10-12T00:50:00+07:00
+'Rượu sâm giá bao nhiêu?': 8 hits, is_alcohol hits = 0, top = [('wp-2527', 0.528), ('catalog-products', 0.526), ('wp-217', 0.508), ('nv-doanh-nhan-nguyen-duc-luc-no-luc-dua-sam-ngoc-linh-phat-trien-xung-tam-35', 0.5)]
+'Sâm Sâm có những sản phẩm nào?': 8 hits, is_alcohol hits = 0, top = [('catalog-products', 0.693), ('nv-saphraton-48', 0.646), ('wp-198', 0.644), ('nv-lam-chu-cong-nghe-nhan-giong-sam-ngoc-linh-bao-quang-nam-12', 0.635)]

@@ -1,0 +1,9 @@
+{
+  "_doc": "MẪU — chờ hồ sơ lô/COA thật. Mỗi lô: lot_code (A-Z 0-9 -, 3..32 ký tự), sku_key (golden), mfg_date, exp_date (ISO, hạn dùng phải SAU ngày sản xuất), qty, note. Nạp: python -m pipelines.production lots --load data/sample_lots.json --source sample — kiểm nhập là việc của NGƯỜI (intake --by).",
+  "status": "MẪU — mã lô, ngày và số lượng giả định",
+  "lots": [
+    {"lot_code": "MAU-SAP20-260901", "sku_key": "saphraton-20v", "mfg_date": "2026-09-01", "exp_date": "2028-09-01", "qty": 500},
+    {"lot_code": "MAU-MO120-260915", "sku_key": "mat-ong-sam-120ml-1hu", "mfg_date": "2026-09-15", "exp_date": "2028-03-15", "qty": 300},
+    {"lot_code": "MAU-RUOU500-260820", "sku_key": "ruou-sam-chai-thuy-tinh-500ml", "mfg_date": "2026-08-20", "exp_date": "2031-08-20", "qty": 120, "note": "rượu — chỉ kênh offline"}
+  ]
+}

@@ -1,5 +1,147 @@
 # STATUS — v2.1-garden-log (2026-10-11)
 
+## v6.3-video-ai — WP08 MKT-04 video ngắn AI (contract trong DONE.md)
+
+**Có gì:** `pipelines/video_studio.py` dựng video dọc 9:16 (và 1:1) NHÁP,
+tất định, 16–44 giây: mỗi cảnh 1 khung 4 giây — khung packshot dựng bằng
+`image_studio.compose` (packshot thật, kiểm lại bytes `verify_packshot` trước
+khi ghép), khung B-roll từ ảnh công ty cấp có license, khung kết = tên SKU
+golden. Kịch bản (phụ đề) do LLM qua gateway (agent `mkt_video`, cap tháng):
+câu có số/giá bị bỏ, câu "bác sĩ khuyên dùng"/từ cấm/vi phạm guardrail → 1
+lượt sửa rồi từ chối trước khi dựng. Nhãn "Nội dung có sử dụng AI" + nhãn QC
+trên MỌI khung + caption; sau mã hóa trích 3 khung kiểm nhãn còn hiện. TTS
+mặc định `none` (video không tiếng, 0 mạng). mp4 ghép bằng ffmpeg
+(`imageio-ffmpeg`), không metadata vị trí/thiết bị/thời điểm. Bảng mới
+`video_assets` (CHECK nhãn AI vô điều kiện + 15–45 giây); output chỉ là nháp
+`content_type=video` `pending` — agent không đăng. Rượu, MỌI SKU TPBVSK
+(Sapentol "hook mới" → `maket_xnqc`), SKU chưa readiness → từ chối 0 LLM.
+CLI `python -m pipelines.video_studio`; eval `agent_eval --agent mkt04`
+(LLM giả, tất định).
+
+**Số liệu hiện tại:** golden có 0 SKU đủ điều kiện dựng video thật (8 TPBVSK
+`maket_xnqc`, 3 mật ong `readiness`, 2 rượu `ruou`) — CLI chạy thật ra toàn
+`refused`, 0 lời gọi LLM. Video mẫu evidence dùng LLM giả + packshot/B-roll
+"MẪU" + map readiness tiêm.
+
+**External-dep (chưa có người thật duyệt):** key + hợp đồng TTS tiếng Việt /
+API video AI (có phí); B-roll/clip quay thật + license; nhạc có bản quyền;
+GĐ Marketing duyệt template `video_script`/layout video; font thương hiệu;
+Pháp chế quy cách nhãn AI trên video + video là quảng cáo; `xnqc_records`
+cho TPBVSK; xác minh tự công bố mật ong; lưu trữ cloud cho mp4.
+
+## v6.2-anh-ai — WP08 MKT-03 ảnh AI (contract trong DONE.md)
+
+**Có gì:** `pipelines/image_studio.py` ghép packshot THẬT (file công ty cấp,
+`PACKSHOT_DIR`) lên nền: nền tất định gradient (provider `none`, mặc định,
+0 mạng) hoặc nền do API sinh ảnh tạo qua cổng `generate_background(prompt,
+size)` — provider chỉ nhận prompt + kích thước, không bao giờ nhận ảnh sản
+phẩm. Packshot dán SAU CÙNG, chỉ thu nhỏ; file PNG ghi xong được đọc lại và
+so MỌI pixel đặc của packshot — lệch 1 pixel là loại ảnh. Nhãn "Nội dung có
+sử dụng AI" (+ nhãn QC) luôn vẽ trên ảnh; metadata model/prompt sha+version/
+ngày/sha packshot ở sidecar JSON (mô tả file: sha pixel packshot đã thu
+nhỏ) + bảng mới `image_assets` (1 dòng/SKU × kênh × format, sha file
+packshot gốc từng dòng; CHECK DB: ảnh AI
+phải có nhãn + model + prompt); ảnh không EXIF/GPS. Rượu, MỌI SKU TPBVSK
+(cần maket XNQC), SKU chưa đủ readiness kênh, headline vi phạm guardrail,
+mô tả nền cấm ("bác sĩ áo blouse...") → từ chối trước khi gọi provider.
+Output chỉ là nháp `content_type=image` `pending` — agent không đăng. CLI
+`python -m pipelines.image_studio`; eval `agent_eval --agent mkt03` (15 ca,
+tất định).
+
+**Số liệu hiện tại:** golden có 0 SKU đủ điều kiện sinh ảnh thật — 8 TPBVSK
+→ `maket_xnqc`, 3 mật ong → `readiness` (tự công bố chưa xác minh / kênh
+ngoài allowed_channels), 2 rượu → `ruou`. Ảnh mẫu evidence dùng packshot
+"MẪU" tự sinh + map readiness tiêm, không phải ảnh thật.
+
+**External-dep (chưa có người thật duyệt):** key + hợp đồng API sinh ảnh
+(chọn sau, có phí — cắm provider phải bọc kill/cap/usage như llm_gateway);
+packshot thật từng SKU; GĐ Marketing duyệt layout/màu/template
+`image_background` + lô ảnh; font thương hiệu; Pháp chế quyết quy cách nhãn
+AI, nền tất định có cần nhãn AI không, ảnh là "quảng cáo"; `xnqc_records`
+(maket XNQC) cho TPBVSK; xác minh tự công bố mật ong; lưu trữ cloud asset.
+
+## v6.1-content-listing — WP08 MKT-02 content + listing (contract trong DONE.md)
+
+**Có gì:** `pipelines/content.py` mở rộng (không pipeline thứ hai) —
+`listing(sku, kênh)` dựng listing chuẩn theo kênh sàn (shopee/tiktok/web):
+tên/quy cách/số ĐKSP/giá list/hạn dùng do CODE render từ golden (không
+bao giờ floor/promo), phần chữ LLM chỉ ở mức TP_THUONG/QC_DAY_DU và bị lọc
+mọi câu/mục có chữ số; rượu và SKU chưa đủ readiness bị từ chối TRƯỚC LLM;
+nhãn AI/QC + câu khuyến cáo do code nối theo `check_publish`. Template
+prompt theo kênh ở `data/prompts/` (manifest version + sha256, lưu kèm
+draft). `content_drafts` thêm `content_type/sku/is_ai/prompt_version/
+prompt_sha256` + unique index listing — `store` lưu/duyệt chạy luật đúng
+loại/SKU của dòng. Batch `python -m pipelines.content --listing --sku all
+--channel shopee` idempotent. Eval `agent_eval --agent mkt02` (14 ca, tất
+định). Studio chọn SKU + loại content (gồm `listing`). Mọi output là nháp
+`pending` — agent không đăng, không sửa sàn.
+
+**Số liệu hiện tại:** golden có 7 cặp SKU × kênh đủ readiness listing (7
+TPBVSK mức MO_TA trên shopee — khung cố định, 0 lời gọi LLM); mật ong
+(tự công bố chưa xác minh), Saphraton 40 viên (allowed `[]`), mọi kênh
+tiktok/web → từ chối `readiness`; 2 SKU rượu → `ruou`.
+
+**External-dep (chưa có người thật duyệt):** giới hạn ký tự/từ khóa cấm
+thật từng sàn (`data/listing_rules.json` là GIẢ ĐỊNH); hồ sơ
+`marketplace_docs` TikTok Shop; GĐ Marketing duyệt template; Pháp chế
+quyết listing sàn là "mô tả" hay "quảng cáo" (`content_types.listing.ad`
+— đổi `true` là mọi TPBVSK chưa XNQC tự bị chặn); GĐ bán hàng duyệt giá;
+field hạn dùng/khối lượng trong golden; ảnh sản phẩm (v6.2); asset XNQC.
+
+## v4.2-guardrail-noi-llm-redteam — WP05 PC-A3 + PC-A9 (contract trong DONE.md)
+
+**Guardrail đăng bài đã nối luồng thật:** `pipelines/content.py` (sinh
+draft — nhãn AI nối tất định, prompt dùng câu khuyến cáo chuẩn đọc từ
+`data/guardrail_rules.json`, bỏ "Ngọc Linh" khỏi brand voice),
+`pipelines/store.py` (`save_draft` lưu snapshot luật đăng bài không bao giờ
+lỏng hơn caller; duyệt chạy LẠI `check_publish_llm` với kênh của draft +
+readiness đọc view `sku_readiness` — grant mới trong `docs/roles.sql`;
+`guardrail_lines()` cho UI) và Content Studio (vi phạm theo code/severity/
+span, ô check tay chọn kênh/loại/nhãn AI). Chatbot giữ `check()`.
+**Lớp LLM-check phụ** `pipelines/guardrail_llm.py` (env
+`GUARDRAIL_LLM_MODEL`, trống = tắt): chỉ CHẶN THÊM (`llm_ngam_y_suc_khoe`),
+lỗi/timeout/vượt trần/phản hồi hỏng -> `llm_check_unavailable` (block).
+Smoke thật `google/gemini-2.5-flash-lite` (evidence/v42_llm.log): bài sạch
+pass, "món quà cho người hay mệt mỏi" bị cờ, bài luật đã chặn 0 call.
+**Red-team PC-A9** `data/eval/redteam.jsonl` 50 ca (9 kiểu tấn công, 44
+critical, 6 ca từ biến thể LLM thật) + `scripts/redteam.py` (CI chạy bộ cố
+định không LLM; `--generate` ≤20 call bằng model khác họ). Lần sinh thật
+18 call `google/gemini-2.5-flash-lite` (~0.0013 USD) -> 90 biến thể, vá
+luật homoglyph/fullwidth, emoji/khoảng trắng Unicode chèn giữa chữ, chữ cái
+cách đơn, teencode không mơ hồ. Tỷ lệ lọt bộ cố định (luật thuần) 20/50 =
+40.0% — toàn bộ có `known_gap` (viết tắt, tiếng Anh, ẩn ý, rượu nói vòng,
+chia câu… — LUẬT KHÔNG bắt; danh sách ở phụ lục D mục 2c). Lớp LLM-check
+MẶC ĐỊNH TẮT (env trống) — khi tắt, 18/20 ca known-gap đi qua trọn
+(2 ca bị luật chặn bằng code khác). Đo 1 lần lớp LLM THẬT trên 20 ca này
+(`google/gemini-2.5-flash-lite`, 18 call, ~0.0012 USD, evidence/v42_llm.log
+mục "đo known-gap"): bắt 15/18, LỌT cả 2 lớp 3 ca — `rt-en-01` ('medicine',
+critical), `rt-ruou-02` (rượu nói vòng, critical), `rt-split-02` (major).
+1 lần chạy, 1 model, chưa phải tỷ lệ bắt ổn định — Pháp chế xem.
+External-dep: Pháp chế duyệt bộ red-team/known-gap/tỷ lệ lọt; công ty chốt
+model LLM-check + mode `llm_check_unavailable`, model/provider red-team và
+trần; bộ ≥100 ca nhãn người thật (A9-1). Chưa có người duyệt thật.
+
+## v4.1-guardrail-v2 — WP05/PC-A3 (nhánh M31, contract trong DONE.md)
+
+`pipelines/guardrail.py`: `check(text)` giữ signature + key cũ (mọi
+caller content/rag/zalo/streamlit/store/eval_qa không đổi), thêm chặn
+MỌI nội dung rượu (`kb_filter.is_alcohol`), chuẩn hóa NFC + casefold giữ
+độ dài, bắt từ cấm chèn ký tự (`th.uốc`, zero-width), field mới `code`/
+`severity`/`start`/`end` + `warnings`/`skus`/`required_labels`. Hàm mới
+`check_publish(text, *, channel, content_type, sku, is_ai, is_sponsored)`:
+TPBVSK chưa XNQC (readiness soi gương view `sku_readiness`, parity test
+với view thật), claim theo đúng SKU, câu khuyến cáo chuẩn (miễn từ cấm
+đúng span), nhãn AI/quảng cáo, "Ngọc Linh", kênh chưa mở (warning). Luật
+trong `data/guardrail_rules.json` (bản dev). Bộ ca (từ v4.5i: suite
+`data/eval/suites/guardrail.json` v2)
+132 ca (47 trap_critical, 11 trap_disclaimer), `agent_eval` ngưỡng 0.95 +
+3 kind bắt buộc 100%. **Lưu ý:** tới v4.2 `check_publish` chỉ chạy qua
+eval/test — CHƯA chặn luồng duyệt/đăng thật (`content.draft`,
+`store.set_status` approve, Studio vẫn gọi `check()`); phần rượu + NFC có
+hiệu lực ngay qua `check()`. External-dep: Pháp chế duyệt nhãn bộ ca,
+câu khuyến cáo, nhãn, `ngoc_linh`, severity; danh sách XNQC thật; ngưỡng
+0.95 do công ty chốt — chưa có người duyệt thật.
+
 ## v2.1 — WS3 thứ 2: agent nhật ký vùng trồng (contract trong DONE.md)
 
 **4/4 mục triển khai xong, gate xanh.** `python -m pytest -q` 159/159;
@@ -313,8 +455,12 @@ eb5fab7 M1: crawl 2 site public -> jsonl + claims whitelist        (ca truoc)
 - Approved claim là "vùng an toàn": banned span con trong claim đã công bố
   (vd "hỗ trợ hạ đường huyết" ⊃ "hạ đường huyết") không flag.
 - `SAFE_PHRASES`: disclaimer pháp lý bắt buộc TPBVSK ("không phải là
-  thuốc", "thay thế thuốc chữa bệnh") chứa từ cấm theo nghĩa phủ định →
-  miễn. Nếu không có exemption này, mọi bài hợp lệ đều bị flag.
+  thuốc", "không có tác dụng thay thế thuốc chữa bệnh") chứa từ cấm theo
+  nghĩa phủ định → miễn. Nếu không có exemption này, mọi bài hợp lệ đều
+  bị flag. Từ v3.0: chỉ cụm phủ định (mọi mục mở đầu "không "), chặn
+  phủ định kép/tu từ (`NEGATION_FLIPS` trước cụm trong cùng clause, hoặc
+  clause kết thúc bằng "?") — câu khẳng định "có thể thay thế thuốc chữa
+  bệnh" không còn được miễn.
 - Claim match theo SKU được nhắc trong text; không nhắc → pool tất cả SKU.
   Claim "cùng ý" (khác động từ dẫn hỗ trợ/giúp) match qua claim-core;
   substance phải nguyên văn → "tăng cường trí nhớ" vẫn flag.

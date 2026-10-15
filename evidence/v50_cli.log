@@ -1,0 +1,127 @@
+# W50.7 CLI unit + dry-run (DB rollback) — 2026-10-12T05:14:28+07:00
+$ python -m pytest -v tests/test_sales_director.py -k "cli or dry_run" tests/test_connect_timeout_guard.py
+
+tests/test_sales_director.py::test_dry_run_writes_nothing PASSED         [  7%]
+tests/test_sales_director.py::test_cli_job_run_only_when_not_dry PASSED  [ 15%]
+tests/test_sales_director.py::test_cli_usage_exit2_before_connect[argv0] PASSED [ 23%]
+tests/test_sales_director.py::test_cli_usage_exit2_before_connect[argv1] PASSED [ 30%]
+tests/test_sales_director.py::test_cli_usage_exit2_before_connect[argv2] PASSED [ 38%]
+tests/test_sales_director.py::test_cli_usage_exit2_before_connect[argv3] PASSED [ 46%]
+tests/test_sales_director.py::test_cli_usage_exit2_before_connect[argv4] PASSED [ 53%]
+tests/test_sales_director.py::test_cli_usage_exit2_before_connect[argv5] PASSED [ 61%]
+tests/test_sales_director.py::test_cli_usage_exit2_before_connect[argv6] PASSED [ 69%]
+tests/test_sales_director.py::test_cli_bad_config_exit1_before_connect PASSED [ 76%]
+tests/test_sales_director.py::test_cli_dry_run_bulletin_no_pii_output PASSED [ 84%]
+tests/test_sales_director.py::test_cli_db_down_exit2 PASSED              [ 92%]
+tests/test_sales_director.py::test_cli_help_exit0 PASSED                 [100%]
+
+====================== 13 passed, 44 deselected in 6.92s ======================
+exit=0
+2 passed in 1.16s
+exit=0
+
+# v5.0 W50.7 CLI — DB thật (DATABASE_URL = DB riêng của worktree, giá trị không in) 2026-10-12T05:10:56+07:00
+
+$ python -c <đếm job_runs + 3 bảng>
+job_runs agents.sales_director = 0
+approval_queue/sla_escalations/red_alerts = [0, 0, 0]
+
+$ python -m agents.sales_director --run --dry-run --bulletin
+[dry-run] sẽ đẩy: cskh_handoff 5, price_review 17 · sẽ expire 0 · sẽ leo thang 0 (cảnh báo đỏ 0) · lead quá hạn nhắc 0 — KHÔNG ghi DB
+# Bản tin GĐ Kinh doanh TMĐT — ngày 11/10/2026
+
+Agent: Agent GĐ Kinh doanh TMĐT (điều phối) · khối `sales` · ảnh chụp hàng chờ lúc 12/10/2026 05:10 (giờ VN)
+
+## 1. Hàng chờ theo SLA giờ làm việc
+
+| Trạng thái | Số |
+|---|---|
+| Quá hạn | 0 |
+| Sắp quá hạn | 0 |
+| Đúng hạn | 0 |
+| Tổng đang chờ | 0 |
+
+- (không có)
+
+### Leo thang TGĐ (lớp B quá hạn)
+
+- (không có)
+
+## 2. Kết quả trong kỳ (ngày 11/10/2026)
+
+| Kết quả | Số |
+|---|---|
+| Đã duyệt | 0 |
+| Từ chối | 0 |
+| Hết hạn tuyệt đối (expired — KHÔNG tự duyệt) | 0 |
+
+## 3. Cảnh báo sàn đang mở
+
+| Mức | Loại | Kênh | Số |
+|---|---|---|---|
+| — | — | — | 0 |
+
+Tổng: S1 0 · S2 0
+
+## 4. Lead mới trong kỳ theo vùng (tổng 0)
+
+| Vùng | Số lead |
+|---|---|
+| Quảng Nam – Đà Nẵng | 0 |
+| Miền Trung – Tây Nguyên khác | 0 |
+| Hà Nội – miền Bắc | 0 |
+| TP.HCM – miền Nam | 0 |
+| chưa rõ vùng | 0 |
+
+Lead `new` quá 8 giờ làm việc chưa xử lý: 0
+Câu chatbot chưa trả lời (72 giờ qua): 5
+
+## 5. Giá chờ duyệt
+
+- Mục giá đang chờ trong hàng duyệt: 0
+- Phiếu lệch golden (giá) đang pending: 17
+
+## Người duyệt
+
+- Vai trò duyệt: gd_ban_hang
+- Người duyệt/người nhận chưa cấu hình (external-dep)
+- Ca làm việc GIẢ ĐỊNH: 08:00–18:00, T2, T3, T4, T5, T6, 0 ngày lễ — GĐ KD chốt
+
+---
+*BẢN NHÁP — hệ thống không tự gửi. Người đọc rồi chuyển tay cho GĐ Kinh doanh.*
+
+exit=0
+
+$ python -c <đếm sau dry-run — phải không đổi>
+job_runs agents.sales_director = 0
+approval_queue/sla_escalations/red_alerts = [0, 0, 0]
+
+$ python -m agents.sales_director --bulletin --out-dir <scratchpad>/v50out
+[bulletin] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\6e992da7-2ceb-4134-a113-c7827ba71a02\scratchpad\v50out\sales-director-day-2026-10-11.md · hàng chờ 0 (quá hạn 0) · lead mới 0
+exit=0
+
+$ python -c <đếm sau --bulletin — job_runs +1>
+job_runs agents.sales_director = 1
+approval_queue/sla_escalations/red_alerts = [0, 0, 0]
+
+$ python scripts/health_bulletin.py --out-dir <scratchpad>/v50hb | grep sales_director (file bản tin sức khỏe)
+exit=0
+| agents.sales_director | 1 | 0 |
+
+$ python -m agents.sales_director --help | head -3
+usage: python -m agents.sales_director [-h] [--run] [--bulletin] [--dry-run]
+                                       [--period {day,week}]
+                                       [--out-dir OUT_DIR] [--now NOW]
+exit=0
+
+$ python -m agents.sales_director  (usage, không cờ)
+python -m agents.sales_director: error: cần --run và/hoặc --bulletin
+exit=2
+
+$ python -m agents.sales_director --run --now 2026-10-12T09:00+07:00  (usage)
+python -m agents.sales_director: error: --now chỉ dùng với --dry-run (không ghi DB theo đồng hồ giả)
+exit=2
+
+$ DATABASE_URL=postgresql://u@10.255.255.1:5432/x python -m agents.sales_director --run --dry-run  (DB down)
+[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+exit=2 elapsed=4s

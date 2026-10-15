@@ -1,0 +1,20 @@
+# v5.2 W52.6 — bản đồ luồng + DPIA/TIA (2026-10-12T04:18:57+07:00)
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+exit=0
+$ grep -c DF-16 docs/legal/DPIA-nhap.md
+9
+$ grep DF-16 docs/legal/TIA-nhap.md
+Không thuộc TIA (không chuyển ra nước ngoài theo code hiện tại): DF-01, DF-02, DF-03, DF-04, DF-05, DF-10, DF-11, DF-13, DF-14, DF-15, DF-16.
+
+## mutation: thêm 'import httpx' cuối ingest/crm.py
+$ python -m pytest -q tests/test_data_flow_map.py
+E       AssertionError: module phải KHÔNG gửi gì ra ngoài nhưng có egress: ['ingest/crm.py']
+E       assert not ['ingest/crm.py']
+FAILED tests/test_data_flow_map.py::test_new_scripts_send_nothing_out - Asser...
+1 failed, 51 passed in 3.51s
+## gỡ mutation
+$ grep -c MUTATION ingest/crm.py
+0
+$ python -m pytest -q tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_legal_docs.py
+78 passed in 2.04s

@@ -1,0 +1,21 @@
+== v9.4 W94.7 docs — 2026-10-12T11:39:34+07:00
+$ grep -c "pipelines.qr_trace" (4 file)
+docs/handover/sop.md:10
+docs/handover/playbook-vuon.md:3
+docs/handover/kien-truc.md:3
+AGENTS.md:1
+-- subcommand trong sop.md đều có trong --help
+link OK
+unlink OK
+preview OK
+sign OK
+issue OK
+revoke OK
+site OK
+planb OK
+-- spot-check sop: preview (exit 0) + planb (exit 0) — xem evidence/v94_qr.log
+preview exit=0
+planb exit=0
+$ python -m pytest -q tests/test_handover_docs.py tests/test_db_backup.py::test_cloud_readme_drift_guard tests/test_qr_trace.py::test_docs_mention_cli
+...........                                                              [100%]
+11 passed in 1.17s

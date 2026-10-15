@@ -1,0 +1,88 @@
+# v5.4 W54.7 gate chung — 2026-10-14T19:07:50+07:00
+$ [targeted lần 1] python -m pytest -q <13 file> -rs
+........................................................................ [ 88%]
+........................................................................ [ 99%]
+...                                                                      [100%]
+651 passed in 306.12s (0:05:06)
+exit=0
+$ [targeted lần 2] python -m pytest -q <13 file> -rs
+........................................................................ [ 88%]
+........................................................................ [ 99%]
+...                                                                      [100%]
+651 passed in 333.47s (0:05:33)
+exit=0
+$ [targeted lần 3] python -m pytest -q <13 file> -rs
+........................................................................ [ 88%]
+........................................................................ [ 99%]
+...                                                                      [100%]
+651 passed in 489.78s (0:08:09)
+exit=0
+$ [full] python -m pytest -q -rs
+E           psycopg.errors.LockNotAvailable: canceling statement due to lock timeout
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: LockNotAvailable
+================================== FAILURES ===================================
+________________________ test_cloud_readme_drift_guard ________________________
+
+    def test_cloud_readme_drift_guard():
+        readme = (ROOT / "deploy" / "cloud" / "README.md").read_text(
+            encoding="utf-8")
+        env = (ROOT / "deploy" / "cloud" / "env.cloud.example").read_text(
+            encoding="utf-8")
+        schema = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
+        tables = re.findall(r"^create table if not exists (\w+)", schema, re.MULTILINE)
+        assert len(tables) == N_TABLES
+        for t in tables:
+>           assert f"`{t}`" in readme, f"README thiếu bảng {t}"
+E           AssertionError: README thiếu bảng affiliate_codes
+E           assert '`affiliate_codes`' in '# Chuyển DB lên Postgres managed trong nước (v3.6, WP02 / F17.4)\n\n- **Dành cho ai:** Quản lý hạ tầng AI (hoặc đội t...\nKhôi phục ĐÈ production không có lệnh tự động: tầng 2, người làm tay, báo\nTGĐ — xem `docs/handover/sop.md` mục 6.\n'
+
+tests\test_db_backup.py:332: AssertionError
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+1 failed, 4320 passed, 3 skipped, 1 error in 5086.81s (1:24:46)
+exit_full=1
+$ [full vòng 2, sau khi thêm 2 bảng vào deploy/cloud/README.md] python -m pytest -q -rsfE
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+4322 passed, 3 skipped in 2663.65s (0:44:23)
+exit_full2=0
+# (vòng 1 full: 1 failed = test_db_backup::test_cloud_readme_drift_guard thiếu 2 bảng mới trong deploy/cloud/README.md -> đã vá; 1 error LockNotAvailable (lock_timeout fixture, DB dùng chung với các version song song) không tái hiện ở vòng 2)
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile agents/kd_affiliate.py agents/kd_forecast.py ingest/market_csv.py
+exit=0
+$ python scripts/apply_schema.py --roles x2
+[done] schema applied — 73 bảng public: [...]
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+exit=0
+[done] schema applied — 73 bảng public: [...]
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+exit=0
+$ grep -nE "smtplib|import httpx|import requests|urllib\.request|\.post\(|llm_gateway|openai|guardrail_llm" agents/kd_affiliate.py agents/kd_forecast.py  (phải rỗng)
+grep exit=1 (1 = rỗng)
+$ grep -n "import secrets" agents/kd_affiliate.py
+44:import secrets
+$ grep -nE "^import random|from random" agents/kd_affiliate.py  (phải rỗng)
+grep exit=1 (1 = rỗng)
+$ grep -n "scenario.project(" agents/kd_forecast.py
+5:`scenario.project()` (engine kịch bản dùng chung v7.3) rồi cộng theo mức;
+60:            rows = scenario.project(sku, ch, start, weeks, assumptions)
+$ git status --short
+ M DONE.md
+ M data/market_csv_map.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/schema.sql
+ M ingest/market_csv.py
+ M tests/test_data_flow_map.py
+ M tests/test_market_csv.py
+?? agents/kd_affiliate.py
+?? agents/kd_forecast.py
+?? tests/test_kd_affiliate.py
+?? tests/test_kd_forecast.py

@@ -1,0 +1,98 @@
+# v9.5-co-khi gate — worktree D:/code/samsam-w95, DB riêng (w95.env)
+
+=== targeted run 1/3 — 2026-10-12T03:11:42+07:00
+$ python -m pytest -q tests/test_llm_gateway.py tests/test_ck_mat.py tests/test_doc_intake.py tests/test_kb_internal.py tests/test_kb_acl.py tests/test_cmms.py tests/test_co_khi.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py
+........................................................................ [ 78%]
+..........................................................               [100%]
+274 passed in 47.15s
+exit=0
+
+=== targeted run 2/3 — 2026-10-12T03:12:43+07:00
+$ python -m pytest -q tests/test_llm_gateway.py tests/test_ck_mat.py tests/test_doc_intake.py tests/test_kb_internal.py tests/test_kb_acl.py tests/test_cmms.py tests/test_co_khi.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py
+........................................................................ [ 78%]
+..........................................................               [100%]
+274 passed in 47.27s
+exit=0
+
+=== targeted run 3/3 — 2026-10-12T03:13:45+07:00
+$ python -m pytest -q tests/test_llm_gateway.py tests/test_ck_mat.py tests/test_doc_intake.py tests/test_kb_internal.py tests/test_kb_acl.py tests/test_cmms.py tests/test_co_khi.py tests/test_agent_eval.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py
+........................................................................ [ 78%]
+..........................................................               [100%]
+274 passed in 47.55s
+exit=0
+
+=== full suite (1 lần) — 2026-10-12T03:14:53+07:00
+$ python -m pytest -q
+E            +  where None = <function search at 0x00000197238A9620>('(?<![\\\\w-])ck_mat(?![\\\\w-])', '# Runbook v\u1eadn h\xe0nh h\u1ea1 t\u1ea7ng AI (v3.10)\\n\\n**D\xe0nh cho ai:** ng\u01b0\u1eddi v\u1eadn h\xe0nh h\u1ea1 t\u1ea7ng AI c\u1ee7a S\xe2m S\xe2m (kh\xf4ng ph\u1ea3i dev) \u2014\\nn...a backup (**external-dep** \u2014 c\xf4ng ty c\u1ea5p)\\n- [ ] K\xfd bi\xean b\u1ea3n nh\u1eadn b\xe0n giao v\u1edbi Qu\u1ea3n l\xfd h\u1ea1 t\u1ea7ng AI (**external-dep**)\\n')
+E            +    where <function search at 0x00000197238A9620> = re.search
+
+tests\test_runbook.py:91: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_db_backup.py::test_cloud_readme_drift_guard - AssertionErro...
+FAILED tests/test_runbook.py::test_runbook_lists_real_agent_ids - AssertionEr...
+2 failed, 930 passed in 315.71s (0:05:15)
+exit=1
+# -> vòng 1 FAIL 2 drift-guard: runbook thiếu agent_id ck_mat (hằng AGENT mới) + deploy/cloud/README.md thiếu 3 bảng mới. Vá: runbook-ha-tang.md §5 + README §4 (3 dòng bảng, bỏ số đếm cứng '24'). Chỉ đổi .md — code/targeted không đổi.
+$ python -m pytest -q tests/test_runbook.py tests/test_db_backup.py -k 'drift or agent_ids or runbook'
+8 passed, 49 deselected in 0.66s
+
+=== full suite vòng 2 — 2026-10-12T03:21:42+07:00
+$ python -m pytest -q
+........................................................................ [ 84%]
+........................................................................ [ 92%]
+....................................................................     [100%]
+932 passed in 277.38s (0:04:37)
+exit=0
+
+=== lint/compile/status — 2026-10-12T03:26:35+07:00
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile agents/ck_mat.py agents/cmms.py agents/co_khi.py ingest/doc_intake.py ingest/kb_internal.py pipelines/llm_gateway.py scripts/agent_eval.py
+exit=0
+$ git check-ignore data/co_khi_mat/
+data/co_khi_mat/
+exit=0
+$ git status --short
+ M .gitignore
+ M DONE.md
+ M data/eval/config.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/runbook-ha-tang.md
+ M docs/schema.sql
+ M env.example
+ M ingest/doc_intake.py
+ M ingest/kb_internal.py
+ M pipelines/llm_gateway.py
+ M scripts/agent_eval.py
+ M tests/test_agent_eval.py
+ M tests/test_kb_internal.py
+ M tests/test_llm_gateway.py
+?? agents/ck_mat.py
+?? agents/cmms.py
+?? agents/co_khi.py
+?? data/co_khi/
+?? data/eval/co_khi.jsonl
+?? evidence/v95_checklist_da_nang.md
+?? tests/test_ck_mat.py
+?? tests/test_cmms.py
+?? tests/test_co_khi.py
+
+# -> rà OWASP/AGENTS gotcha sau full vòng 2: phát hiện ký tự BOM U+FEFF dán LITERAL (vô hình) trong agents/ck_mat.py, ingest/kb_internal.py, tests/test_kb_internal.py -> đổi sang escape \ufeff (cùng nghĩa). Chạy lại targeted x3 + ruff trên bản cuối:
+
+=== targeted run 1/3 (bản cuối) — 2026-10-12T03:27:31+07:00
+274 passed in 39.22s
+exit=0
+
+=== targeted run 2/3 (bản cuối) — 2026-10-12T03:28:17+07:00
+274 passed in 36.18s
+exit=0
+
+=== targeted run 3/3 (bản cuối) — 2026-10-12T03:29:00+07:00
+274 passed in 48.16s
+exit=0
+$ ruff check .
+All checks passed!
+exit=0
+py_compile exit=0

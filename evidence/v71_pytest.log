@@ -1,0 +1,73 @@
+=== targeted lần 1 (2026-10-12T10:45:58+07:00)
+........................................................................ [ 27%]
+........................................................................ [ 54%]
+........................................................................ [ 81%]
+................................................                         [100%]
+264 passed in 138.62s (0:02:18)
+exit=0
+=== targeted lần 2 (2026-10-12T10:48:38+07:00)
+>           raise ex.with_traceback(None)
+E           psycopg.errors.LockNotAvailable: canceling statement due to lock timeout
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: LockNotAvailable
+263 passed, 1 error in 142.79s (0:02:22)
+exit=1
+=== targeted lần 3 (2026-10-12T10:51:13+07:00)
+........................................................................ [ 27%]
+........................................................................ [ 54%]
+........................................................................ [ 81%]
+................................................                         [100%]
+264 passed in 92.22s (0:01:32)
+exit=0
+=== targeted vòng 2 lần 1 (2026-10-12T11:02:15+07:00)
+264 passed in 64.39s (0:01:04)
+exit=0
+=== targeted vòng 2 lần 2 (2026-10-12T11:21:42+07:00)
+264 passed in 118.83s (0:01:58)
+exit=0
+=== targeted vòng 2 lần 3 (2026-10-12T11:23:52+07:00)
+264 passed in 133.66s (0:02:13)
+exit=0
+=== W71.6 mutant (bản sao tạm trong scratchpad, không commit) (2026-10-12T11:26:40+07:00)
+scripts/intel_bulletin.py: goc=[] -> PASS
+scripts/intel_bulletin.py: mutant=['cấm: content_drafts', 'ghi bảng lạ: content_drafts'] -> BI BAT (test FAIL dung)
+pipelines/intel_alert.py: goc=[] -> PASS
+pipelines/intel_alert.py: mutant=['cấm: content_drafts', 'ghi bảng lạ: content_drafts'] -> BI BAT (test FAIL dung)
+exit=0
+=== ghi chú vòng 1 lần 2: 1 error LockNotAvailable (lock_timeout 10s trong fixture db — test nào không lưu được do tail -5; nghi tranh khóa 'grant agent_writer to app_human' (pg_auth_members, catalog dùng chung) với pytest full của worktree khác chạy song song cùng lúc); vòng 2 chạy lại 3 lần liên tiếp đều xanh
+=== full pytest (2026-10-12T11:29:02+07:00) — docker daemon không chạy (test docker tự skip)
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+1749 passed, 3 skipped in 429.04s (0:07:09)
+exit=0
+(3 skipped = test_dr_drill cần docker — docker daemon máy không chạy, môi trường; baseline 1682)
+=== ruff check . (2026-10-12T11:36:41+07:00)
+All checks passed!
+exit=0
+=== py_compile
+exit=0
+=== grep module intel_alert: httpx|smtplib|requests|connectors|openai
+0
+=== grep red_alert_acks trong kien-truc: 3
+=== grep intel_alert|intel_bulletin trong sop.md AGENTS.md
+docs/handover/sop.md:8
+AGENTS.md:2
+=== VÒNG SỬA NGHIỆM THU (4 MINOR) (2026-10-12T05:07:23+00:00)
+=== targeted lần 1: test_intel_alert + test_director_framework
+77 passed in 23.58s
+=== targeted lần 2/3: + test_intel + test_intel_bulletin + test_handover_docs
+221 passed in 78.13s (0:01:18)
+221 passed in 97.22s (0:01:37)
+=== mutant probe (scratchpad/w93_mut.py — sửa tạm rồi khôi phục byte gốc)
+KILLED docs/schema.sql :: tests/test_director_framework.py::test_auto_policies_decisions_snapshots_constraints -> 1 failed in 2.60s
+KILLED docs/schema.sql :: tests/test_director_framework.py::test_red_alerts_human_and_superuser_cannot_erase -> 1 failed in 3.03s
+KILLED pipelines/intel_alert.py :: tests/test_intel_alert.py -k match_neutral -> 2 failed, 8 passed, 51 deselected in 2.20s
+KILLED data/intel_alert_rules.json :: tests/test_intel_alert.py -k match_positive -> 4 failed, 8 passed, 49 deselected in 1.45s
+KILLED docs/handover/sop.md :: tests/test_intel_alert.py -k sop_alert -> 1 failed, 60 deselected in 2.18s
+ALL KILLED
+=== full pytest (1 lần)
+1758 passed, 3 skipped in 356.17s (0:05:56)
+=== ruff check .
+All checks passed!

@@ -1,0 +1,134 @@
+=== v3.3 gate pytest 2026-10-12T00:22:36+07:00 ===
+$ python -m pytest tests/test_market_csv.py tests/test_golden_store.py tests/test_handover_docs.py -q -rs   (lần 1)
+........................................................................ [ 80%]
+.................                                                        [100%]
+89 passed in 7.06s
+exit=0
+$ python -m pytest tests/test_market_csv.py tests/test_golden_store.py tests/test_handover_docs.py -q -rs   (lần 2)
+........................................................................ [ 80%]
+.................                                                        [100%]
+89 passed in 8.05s
+exit=0
+$ python -m pytest tests/test_market_csv.py tests/test_golden_store.py tests/test_handover_docs.py -q -rs   (lần 3)
+........................................................................ [ 80%]
+.................                                                        [100%]
+89 passed in 8.84s
+exit=0
+
+$ python -m pytest -q   (full)
+........................................................................ [ 21%]
+........................................................................ [ 42%]
+........................................................................ [ 63%]
+........................................................................ [ 84%]
+....................................................                     [100%]
+340 passed in 40.98s
+exit=0
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile ingest/market_csv.py ingest/golden_store.py scripts/apply_schema.py
+exit=0
+
+=== W33.6 docs + drift-guard ===
+$ python -m pytest tests/test_handover_docs.py tests/test_lead_store.py tests/test_store.py -q
+........................................                                 [100%]
+40 passed in 0.28s
+$ grep -n "ingest.market_csv" docs/handover/sop.md AGENTS.md
+docs/handover/sop.md:114:python -m ingest.market_csv --file data/raw/market/<file>.csv --c
+docs/handover/sop.md:115:python -m ingest.market_csv --file data/raw/market/<file>.xlsx --
+docs/handover/sop.md:116:python -m ingest.market_csv --file data/raw/market/<file>.csv --c
+docs/handover/sop.md:117:python -m ingest.market_csv --report
+AGENTS.md:19:| File sàn (v3.3, chỉ đọc) | `python -m ingest.market_csv --file <csv/x
+$ grep -c "chưa xác minh" docs/handover/sop.md
+1
+số assert trước (HEAD) / sau:
+  tests/test_handover_docs.py 18 / 18
+  tests/test_lead_store.py 67 / 67
+  tests/test_store.py 65 / 65
+
+######## VÒNG 2 (sau vá OWASP A09) 2026-10-12T00:26:22+07:00 ########
+$ python -m pytest tests/test_market_csv.py tests/test_golden_store.py tests/test_handover_docs.py -q -rs   (lần 1)
+........................................................................ [ 80%]
+..................                                                       [100%]
+90 passed in 7.73s
+exit=0
+$ python -m pytest tests/test_market_csv.py tests/test_golden_store.py tests/test_handover_docs.py -q -rs   (lần 2)
+........................................................................ [ 80%]
+..................                                                       [100%]
+90 passed in 7.77s
+exit=0
+$ python -m pytest tests/test_market_csv.py tests/test_golden_store.py tests/test_handover_docs.py -q -rs   (lần 3)
+........................................................................ [ 80%]
+..................                                                       [100%]
+90 passed in 6.68s
+exit=0
+$ python -m pytest -q   (full)
+........................................................................ [ 84%]
+.....................................................                    [100%]
+341 passed in 39.85s
+exit=0
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile ingest/market_csv.py ingest/golden_store.py scripts/apply_schema.py
+exit=0
+
+=== v3.3 vòng sửa nghiệm thu 2026-10-12T00:43:53+07:00 ===
+$ python -m pytest tests/test_market_csv.py tests/test_golden_store.py tests/test_handover_docs.py -q -rs   (lần 1)
+........................................................................ [ 75%]
+.......................                                                  [100%]
+95 passed in 11.40s
+exit=0
+$ python -m pytest tests/test_market_csv.py tests/test_golden_store.py tests/test_handover_docs.py -q -rs   (lần 2)
+........................................................................ [ 75%]
+.......................                                                  [100%]
+95 passed in 10.87s
+exit=0
+$ python -m pytest tests/test_market_csv.py tests/test_golden_store.py tests/test_handover_docs.py -q -rs   (lần 3)
+........................................................................ [ 75%]
+.......................                                                  [100%]
+95 passed in 11.97s
+exit=0
+
+$ python -m pytest -q   (full)
+........................................................................ [ 20%]
+........................................................................ [ 41%]
+........................................................................ [ 62%]
+........................................................................ [ 83%]
+..........................................................               [100%]
+346 passed in 46.24s
+exit=0
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile ingest/market_csv.py ingest/golden_store.py scripts/apply_schema.py
+exit=0
+
+=== mutation probe (mỗi mutation áp lên ingest/market_csv.py → test nhắm phải FAIL; file khôi phục) ===
+M1 bỏ a.channel khỏi close: KILLED (1 failed in 1.54s)
+M2 bỏ điều kiện item có mặt: KILLED (1 failed in 2.31s)
+M3 _cell float repr: KILLED (1 failed in 2.53s)
+M4 bỏ trần dòng CSV: KILLED (1 failed in 1.36s)
+M5 bỏ chặn used-range xlsx: KILLED (1 failed in 6.58s)
+M6 bỏ trần cột: KILLED (1 failed in 1.31s)
+restored: True
+(chạy lại trên bản cuối — sau đổi CSV sang TextIOWrapper + isspace)
+M1 bỏ a.channel khỏi close: KILLED (1 failed in 2.56s)
+M2 bỏ điều kiện item có mặt: KILLED (1 failed in 2.12s)
+M3 _cell float repr: KILLED (1 failed in 2.09s)
+M4 bỏ trần dòng CSV: KILLED (1 failed in 1.21s)
+M5 bỏ chặn used-range xlsx: KILLED (1 failed in 6.34s)
+M6 bỏ trần cột: KILLED (1 failed in 1.55s)
+restored: True
+
+=== v3.3 vòng sửa nghiệm thu #2 — MINOR xlsx dimension khai thiếu (ws.reset_dimensions trước iter_rows) ===
+$ python -m pytest tests/test_market_csv.py -q   (x3, test mới test_xlsx_understated_dimension_reads_all_rows)
+39 passed in 8.45s
+39 passed in 10.81s
+39 passed in 9.09s
+$ mutation: thay ws.reset_dimensions() bằng pass -> test_xlsx_understated_dimension_reads_all_rows FAILED (KILLED); restore OK
+$ python -m pytest -q
+347 passed in 54.09s
+exit=0 (346 -> 347: +1 test)
+$ ruff check .
+All checks passed!

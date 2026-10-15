@@ -1,0 +1,20 @@
+{
+  "_doc": "v6.5 (WP08 MKT-10/MKT-11) — luật rà SEO, đọc bởi agents/seo_web.py (khóa web) và agents/seo_san.py (khóa san). GIẢ ĐỊNH — ngưỡng do dev ước lượng theo thông lệ SEO phổ biến, CHƯA được MKT/Chuyên viên SEO chốt (external-dep). web.own_hosts: CHỈ website của chính công ty (khớp host chính xác hoặc đuôi '.'+host) — agent chỉ GET qua crawler.intel.Fetcher (robots.txt, ≥1s/host, ngân sách max_requests 1..200), KHÔNG có đường ghi website. title_max/desc_min/desc_max: số ký tự. san.default_seeds/sku_seeds: từ khóa gốc Google Trends (bảng trends_related, xuất tay) dùng để gợi ý từ khóa tiêu đề listing sàn; giới hạn ký tự tiêu đề/số từ khóa lấy từ data/listing_rules.json (cũng GIẢ ĐỊNH). Không gợi ý từ khóa rượu; mọi từ khóa qua guardrail.check_publish (vd 'sâm ngọc linh' bị chặn 'ngoc_linh_chua_xac_nhan' tới khi Pháp chế xác nhận).",
+  "trang_thai": "GIẢ ĐỊNH — chờ MKT/SEO chốt",
+  "web": {
+    "own_hosts": ["samsam.net.vn", "samsamngoclinh.com"],
+    "title_max": 60,
+    "desc_min": 70,
+    "desc_max": 160,
+    "max_requests": 40
+  },
+  "san": {
+    "default_seeds": ["nhân sâm", "hồng sâm", "sâm ngọc linh", "quà biếu"],
+    "sku_seeds": {
+      "mat-ong-sam-120ml-1hu": ["mật ong sâm"],
+      "mat-ong-sam-120ml-2hu": ["mật ong sâm"],
+      "mat-ong-sam-300ml": ["mật ong sâm"]
+    },
+    "title_sep": " | "
+  }
+}

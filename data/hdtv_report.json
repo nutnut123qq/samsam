@@ -1,0 +1,25 @@
+{
+  "_doc": "v10.0 W100.6 (WP16) — cấu hình gói báo cáo HĐTV (agents/hdtv_report.py) — BẢN DEV SOẠN, chờ TGĐ/HĐTV chốt. quarter_agg: cách gộp chỉ số cockpit (data/metrics.json) lên cột QUÝ: 'sum' = cộng 3 tháng (thiếu ≥1 tháng → [chưa đủ dữ liệu], KHÔNG cộng thiếu); 'last' = giá trị tháng cuối quý (số tồn cuối kỳ; thiếu tháng cuối → [chưa đủ dữ liệu]). Metric không khai (trung vị/lớn nhất/thời gian duyệt — không cộng được) → cột quý '—'.",
+  "quarter_agg": {
+    "leads.new": "sum",
+    "chatbot.questions": "sum",
+    "chatbot.unanswered": "sum",
+    "content.drafts_created": "sum",
+    "content.drafts_approved": "sum",
+    "content.drafts_rejected": "sum",
+    "content.drafts_pending_end": "last",
+    "market.alerts_open_end": "last",
+    "ai.cost_usd": "sum",
+    "jobs.failed": "sum",
+    "approvals.overdue": "sum",
+    "approvals.ceo_decided": "sum",
+    "approvals.ceo_expired": "sum",
+    "sales.gmv_vnd": "sum",
+    "sales.orders_completed": "sum",
+    "sales.orders_cancelled": "sum",
+    "sales.settlement_vnd": "sum",
+    "social.followers": "last",
+    "social.reach": "sum",
+    "social.engagement": "sum"
+  }
+}

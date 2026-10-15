@@ -1,0 +1,60 @@
+{
+  "_doc": "v6.1 (MKT-02) — template prompt theo kênh cho pipelines/content.py; v6.2 (MKT-03) image_background = prompt nền ảnh cho pipelines/image_studio.py (chỉ bối cảnh, không người/chữ/logo/bao bì). v6.3 (MKT-04) video_script = kịch bản video ngắn cho pipelines/video_studio.py (JSON cảnh; không người/y tế, không số/giá). sha256 tính trên byte UTF-8 của file SAU khi đổi CRLF->LF (checkout Windows autocrlf không làm lệch). Sửa nội dung template => PHẢI bump version (<tên>@N+1) + cập nhật sha256 — content.load_template từ chối (ValueError) template lệch sha. version lưu kèm draft (content_drafts.prompt_version/prompt_sha256). BẢN DEV — chờ GĐ Marketing duyệt, chưa có người duyệt thật. v10.1 livestream_script = lời dẫn + hỏi-đáp livestream cho agents/kd_live.py (KD-A9; giỏ + giá do CODE điền từ v_promotable); youtube_long = gói video YouTube dài + Shorts cho agents/mkt_youtube.py (MKT-12).",
+  "templates": {
+    "content_facebook": {
+      "version": "content_facebook@1",
+      "sha256": "be83e6bc6f7632b4bb647d1d962928bbc3179a989162df6de7bc162e70fb21da",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "content_zalo": {
+      "version": "content_zalo@1",
+      "sha256": "0e02dfeceb3cf43600c6c34698b4a985be0120188cad177030478601da4fff4d",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "content_tiktok": {
+      "version": "content_tiktok@1",
+      "sha256": "ad1d6269a98be1cb45f3f5f55c1907edd6472520faef14b1f30f5f2ffa3d2579",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "content_blog": {
+      "version": "content_blog@1",
+      "sha256": "e7e70342ded5c97c115547fd2f12976053068883ba2829bd7b82de458f6d3afc",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "listing_shopee": {
+      "version": "listing_shopee@1",
+      "sha256": "a577eb61f3b077592be5bbc3988e49709858e559d69fabcf0477c301287107e0",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "listing_tiktok": {
+      "version": "listing_tiktok@1",
+      "sha256": "6d7ddf0c6980aca436148e2580fc2ed71a37f2c15a272a227441a9da6bfeff0e",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "listing_web": {
+      "version": "listing_web@1",
+      "sha256": "f2858677a77e2f238311d3f22f5beb0ae064c6934fd61109c02749ed371d73d6",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "image_background": {
+      "version": "image_background@1",
+      "sha256": "fe0fd85f396724fe1616f4e3301b395c0041bc45ef3df166a26ed2faed317742",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "video_script": {
+      "version": "video_script@1",
+      "sha256": "bba8df8bd37f8e9bdb638c02a52afc0b8837d77bd6e218b63cc9b0abaa250203",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "livestream_script": {
+      "version": "livestream_script@1",
+      "sha256": "38ac96051fb5c742d8a407dbe74a39483817f8517c0b94ef0cba01fa6289d76e",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    },
+    "youtube_long": {
+      "version": "youtube_long@1",
+      "sha256": "204e78558f09c2c2bbc6d587acfe6817c72135a91407381fe8be515a236b3d51",
+      "trang_thai": "chờ GĐ Marketing duyệt"
+    }
+  }
+}

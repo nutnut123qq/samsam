@@ -1,0 +1,138 @@
+=== targeted run 1 (2026-10-12T00:39:33+07:00): python -m pytest -q -rs tests/test_kb_filter.py tests/test_embed_store.py tests/test_kb_acl.py tests/test_kb_acl_db.py tests/test_kb_internal.py tests/test_kb_gaps.py tests/test_rag.py tests/test_handover_docs.py
+........................................                                 [100%]
+112 passed in 4.99s
+=== targeted run 2 (2026-10-12T00:39:43+07:00): python -m pytest -q -rs tests/test_kb_filter.py tests/test_embed_store.py tests/test_kb_acl.py tests/test_kb_acl_db.py tests/test_kb_internal.py tests/test_kb_gaps.py tests/test_rag.py tests/test_handover_docs.py
+........................................                                 [100%]
+112 passed in 4.57s
+=== targeted run 3 (2026-10-12T00:39:52+07:00): python -m pytest -q -rs tests/test_kb_filter.py tests/test_embed_store.py tests/test_kb_acl.py tests/test_kb_acl_db.py tests/test_kb_internal.py tests/test_kb_gaps.py tests/test_rag.py tests/test_handover_docs.py
+........................................                                 [100%]
+112 passed in 5.37s
+=== full: python -m pytest -q -rs (2026-10-12T00:40:07+07:00)
+E        +      and   re.MULTILINE = re.MULTILINE
+
+tests\test_store.py:307: AssertionError
+2 failed, 405 passed in 52.63s
+exit=1
+
+##### VÒNG 2 — sau khi sửa drift-guard tests/test_store.py + tests/test_lead_store.py (14->15 bảng; cho phép ALTER dạng 'add column if not exists', vẫn cấm drop/alter khác)
+=== targeted run 1 (2026-10-12T00:43:08+07:00)
+112 passed in 6.32s
+=== targeted run 2 (2026-10-12T00:43:19+07:00)
+112 passed in 5.48s
+=== targeted run 3 (2026-10-12T00:43:30+07:00)
+112 passed in 6.11s
+=== full: python -m pytest -q -rs (2026-10-12T00:43:41+07:00)
+...............................................                          [100%]
+407 passed in 52.20s
+exit=0
+=== ruff check . (2026-10-12T00:44:47+07:00)
+All checks passed!
+exit=0
+=== py_compile
+exit=0
+=== DB thật sau mọi test
+db: samsam_v39
+llm_usage ingest rows: 14
+chunks: 871 docs: 167
+is_alcohol(content) hits: 0 | is_alcohol(title) hits: 0
+source is null: 0
+by source: [('about.jsonl', 10), ('articles.jsonl', 610), ('catalog', 1), ('news.jsonl', 215), ('products.jsonl', 35)]
+catalog has Saphraton: True | catalog has 'rượu': False
+doc_version dist: [(2, 871)]
+test rows chunks test-v39-%: 0 | chunks_internal internal:test_v39: 0
+=== git status --short
+ M AGENTS.md
+ M DONE.md
+ M api/rag.py
+ M docs/handover/kien-truc.md
+ M docs/schema.sql
+ M ingest/embed_store.py
+ M tests/test_handover_docs.py
+ M tests/test_lead_store.py
+ M tests/test_store.py
+?? data/ruou_keywords.txt
+?? ingest/kb_internal.py
+?? pipelines/kb_filter.py
+?? scripts/kb_gaps.py
+?? tests/fixtures/
+?? tests/test_embed_store.py
+?? tests/test_kb_acl.py
+?? tests/test_kb_acl_db.py
+?? tests/test_kb_filter.py
+?? tests/test_kb_gaps.py
+?? tests/test_kb_internal.py
+
+##### VÒNG 3 — sau Phần B (OWASP): retrieve lọc rượu theo thứ tự điểm tới đủ k (thay quét cả bảng ~0.4s/câu), catalog rượu không ghim; kb_gaps escape < > (HTML từ câu khách)
+=== targeted run 1 (2026-10-12T00:48:37+07:00)
+114 passed in 4.41s
+=== targeted run 2 (2026-10-12T00:48:45+07:00)
+114 passed in 4.46s
+=== targeted run 3 (2026-10-12T00:48:54+07:00)
+114 passed in 3.98s
+=== full: python -m pytest -q -rs (2026-10-12T00:49:03+07:00)
+.................................................                        [100%]
+409 passed in 41.82s
+exit=0
+=== ruff check .
+All checks passed!
+exit=0
+=== py_compile
+exit=0
+=== DB thật sau mọi test
+db: samsam_v39
+llm_usage ingest rows: 14
+chunks: 871 docs: 167
+is_alcohol(content) hits: 0 | is_alcohol(title) hits: 0
+source is null: 0
+by source: [('about.jsonl', 10), ('articles.jsonl', 610), ('catalog', 1), ('news.jsonl', 215), ('products.jsonl', 35)]
+catalog has Saphraton: True | catalog has 'rượu': False
+doc_version dist: [(2, 871)]
+test rows chunks test-v39-%: 0 | chunks_internal internal:test_v39: 0
+=== git status --short
+ M AGENTS.md
+ M DONE.md
+ M api/rag.py
+ M docs/handover/kien-truc.md
+ M docs/schema.sql
+ M ingest/embed_store.py
+ M tests/test_handover_docs.py
+ M tests/test_lead_store.py
+ M tests/test_store.py
+?? data/ruou_keywords.txt
+?? ingest/kb_internal.py
+?? pipelines/kb_filter.py
+?? scripts/kb_gaps.py
+?? tests/fixtures/
+?? tests/test_embed_store.py
+?? tests/test_kb_acl.py
+?? tests/test_kb_acl_db.py
+?? tests/test_kb_filter.py
+?? tests/test_kb_gaps.py
+?? tests/test_kb_internal.py
+
+######## VÒNG SỬA nghiệm thu (2026-10-12T01:06:01+07:00)
+=== targeted run 1
+........................................................................ [ 51%]
+...................................................................      [100%]
+139 passed in 5.62s
+=== targeted run 2
+........................................................................ [ 51%]
+...................................................................      [100%]
+139 passed in 4.99s
+=== targeted run 3
+........................................................................ [ 51%]
+...................................................................      [100%]
+139 passed in 5.22s
+=== full python -m pytest -q -rs (2026-10-12T01:06:37+07:00)
+........................................................................ [ 82%]
+........................................................................ [ 99%]
+..                                                                       [100%]
+434 passed in 47.11s
+=== ruff check .
+All checks passed!
+=== py_compile
+OK
+=== DB sau full pytest
+chunks: 868 docs: 167
+is_alcohol(content) hits: 0 | is_alcohol(title) hits: 0
+test rows chunks test-v39-%: 0 | chunks_internal internal:test_v39: 0

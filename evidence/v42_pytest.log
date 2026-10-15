@@ -1,0 +1,135 @@
+# v4.2-guardrail-noi-llm-redteam — evidence gate (output thật), 2026-10-12, worktree D:/code/samsam-w41
+# Máy chạy nhiều version song song; lệnh chạy tuần tự, full pytest đúng 1 lần.
+
+## Baseline full pytest TRƯỚC khi sửa
+937 passed in 228.25s (0:03:48)
+EXIT 0
+
+## Targeted ×3 (12 file: guardrail, guardrail_v2, guardrail_llm, redteam, content, store, auth_approval, agent_eval, handover_docs, ci_workflow, llm_gateway, kb_filter) — -rs: 0 skipped (test DB thật W42.4 + parity v4.1 chạy)
+=== targeted lần 1 (22:10:29Z)
+........................................................................ [ 66%]
+........................................................................ [ 83%]
+......................................................................   [100%]
+430 passed in 40.50s
+EXIT=0
+=== targeted lần 2 (22:11:18Z)
+........................................................................ [ 66%]
+........................................................................ [ 83%]
+......................................................................   [100%]
+430 passed in 42.80s
+EXIT=0
+=== targeted lần 3 (22:12:09Z)
+........................................................................ [ 66%]
+........................................................................ [ 83%]
+......................................................................   [100%]
+430 passed in 40.13s
+EXIT=0
+
+## Full pytest (1 lần)
+.........................................                                [100%]
+1049 passed in 283.32s (0:04:43)
+EXIT=0
+# baseline 937 -> 1049 passed (+112 test mới), 0 fail, 0 skipped
+
+## ruff / py_compile / grep / git diff chat / đếm assert
+=== ruff check .
+All checks passed!
+EXIT=0
+=== py_compile 7 file
+EXIT=0
+=== grep check_publish trong content/store/Studio
+pipelines/content.py:12:    `pipelines.guardrail_llm.check_publish_llm(text, channel=<kênh>,
+pipelines/content.py:13:    content_type="post", is_ai=True)` = luật `check_publish` (XNQC, câu
+pipelines/content.py:16:    check_publish + `llm_check`/`llm_model`. Không bao giờ trả text
+pipelines/content.py:31:from pipelines.guardrail_llm import check_publish_llm
+pipelines/content.py:125:        result = check_publish_llm(text, channel=channel,
+pipelines/store.py:18:    `guardrail_llm.check_publish_llm(text, channel=<draft.channel>,
+pipelines/store.py:143:    rules = guardrail.check_publish(text, channel=channel)
+pipelines/store.py:147:                else guardrail.check_publish(text, channel=channel,
+pipelines/store.py:149:    return guardrail_llm.check_publish_llm(text, channel=channel,
+pipelines/store.py:177:    sinh (caller); v4.2 LƯU snapshot = luật `check_publish` chạy lại trên
+pipelines/store.py:249:    chạy lại `check_publish_llm` với kênh draft trên text từ DB — chạy
+app/streamlit_app.py:304:            _ctypes = ["post"]   # file hỏng: check_publish tự báo "config"
+app/streamlit_app.py:314:            from pipelines.guardrail import check_publish
+app/streamlit_app.py:315:            _render_guardrail(check_publish(raw, channel=_chk_ch,
+=== grep guardrail_lines/check_publish Studio
+116:    """v4.2: chỉ map `store.guardrail_lines(g)` (code/severity/span) ra
+118:    from pipelines.store import guardrail_lines
+121:    for level, line in guardrail_lines(g):
+304:            _ctypes = ["post"]   # file hỏng: check_publish tự báo "config"
+314:            from pipelines.guardrail import check_publish
+315:            _render_guardrail(check_publish(raw, channel=_chk_ch,
+=== grep 'from pipelines.guardrail import check$' Studio (chỉ còn tab Chat)
+162:                from pipelines.guardrail import check
+=== grep gọi check( chat trong content.py (kỳ vọng rỗng)
+(rỗng = OK)
+=== git diff --stat -- connectors api scripts/eval_qa.py tests/test_guardrail.py (kỳ vọng rỗng)
+(rỗng = OK)
+=== đếm assert (AST) HEAD -> working tree, file test FLIP/sửa
+tests/test_guardrail_v2.py: assert 128 -> 166 (+38); test 36 -> 48 (+12)
+tests/test_content.py: assert 19 -> 44 (+25); test 6 -> 12 (+6)
+tests/test_store.py: assert 93 -> 133 (+40); test 26 -> 36 (+10)
+tests/test_auth_approval.py: assert 72 -> 79 (+7); test 15 -> 16 (+1)
+tests/test_ci_workflow.py: assert 20 -> 20 (+0); test 6 -> 6 (+0)
+tests/test_handover_docs.py: assert 28 -> 34 (+6); test 9 -> 10 (+1)
+tests/test_guardrail.py: assert 28 -> 28 (+0); test 15 -> 15 (+0)
+
+## Đối chiếu assert từng test CŨ (HEAD) — chỉ 2 assert đổi có chủ đích (FLIP trong contract), 0 assert bị xóa/giảm
+tests/test_guardrail_v2.py::test_check_signature_unchanged assert ĐỔI: assert list(sig.parameters) == ['text', 'channel', 'content_type', 'sku', 'is_ai', 'is_sponsored']
+tests/test_store.py::test_save_draft_inserts_and_commits assert ĐỔI: assert getattr(params[3], 'obj', params[3]) == g
+[per-fn] xong
+# Hằng FLIP (không phải assert): tests/test_content.py SAFE_TEXT (bỏ 'Ngọc Linh' + nhãn AI); tests/test_store.py _row text 't' -> TEXT_OK + route 'from sku_readiness' trong _save_routes; tests/test_auth_approval.py TEXT_VI + default text _draft (DRAFT_TEXT, giữ CRLF + emoji escape); tests/test_ci_workflow.py tuple lệnh thêm 'redteam.py'.
+
+## Rà caller (W42.8): grep -rn 'check(\|check_publish' --include=*.py pipelines api app connectors scripts agents ingest
+pipelines/content.py:12:    `pipelines.guardrail_llm.check_publish_llm(text, channel=<kênh>,
+pipelines/content.py:13:    content_type="post", is_ai=True)` = luật `check_publish` (XNQC, câu
+pipelines/content.py:16:    check_publish + `llm_check`/`llm_model`. Không bao giờ trả text
+pipelines/content.py:31:from pipelines.guardrail_llm import check_publish_llm
+pipelines/content.py:125:        result = check_publish_llm(text, channel=channel,
+pipelines/guardrail.py:12:  4. Chỉ ở `check_publish()` (đăng bài theo kênh/loại nội dung): TPBVSK
+pipelines/guardrail.py:20:  check(text) -> {"ok","violations","matched_claims","warnings","skus",
+pipelines/guardrail.py:22:  check_publish(text, *, channel, content_type="post", sku=None,
+pipelines/guardrail.py:671:def check_publish(text: str, *, channel: str, content_type: str = "post",
+pipelines/guardrail.py:675:    """Chế độ đăng bài: luật của `check()` + XNQC/readiness, claim theo
+pipelines/guardrail.py:677:    mở (warning). `content_type="internal_note"`: chỉ luật `check()` trừ
+pipelines/guardrail_llm.py:28:  check_publish_llm(text, *, channel, content_type="post", sku=None,
+pipelines/guardrail_llm.py:30:                    use_llm=None) -> shape `check_publish` +
+pipelines/guardrail_llm.py:124:def check_publish_llm(text, *, channel, content_type="post", sku=None,
+pipelines/guardrail_llm.py:127:    """`guardrail.check_publish` + lớp LLM-check phụ (chỉ chặn thêm).
+pipelines/guardrail_llm.py:132:    res = guardrail.check_publish(
+pipelines/store.py:18:    `guardrail_llm.check_publish_llm(text, channel=<draft.channel>,
+pipelines/store.py:143:    rules = guardrail.check_publish(text, channel=channel)
+pipelines/store.py:147:                else guardrail.check_publish(text, channel=channel,
+pipelines/store.py:149:    return guardrail_llm.check_publish_llm(text, channel=channel,
+pipelines/store.py:177:    sinh (caller); v4.2 LƯU snapshot = luật `check_publish` chạy lại trên
+pipelines/store.py:249:    chạy lại `check_publish_llm` với kênh draft trên text từ DB — chạy
+app/streamlit_app.py:161:                # guardrail.check() — giống pipeline reply của zalo.
+app/streamlit_app.py:163:                g = check(r["answer"])
+app/streamlit_app.py:304:            _ctypes = ["post"]   # file hỏng: check_publish tự báo "config"
+app/streamlit_app.py:314:            from pipelines.guardrail import check_publish
+app/streamlit_app.py:315:            _render_guardrail(check_publish(raw, channel=_chk_ch,
+connectors/zalo.py:10:trả lời async qua send API. Reply qua `pipelines.guardrail.check()`; bị flag
+connectors/zalo.py:81:# Hằng an toàn viết tay — gửi khi answer() crash; không cần qua check().
+connectors/zalo.py:86:# queue cho nhân viên follow-up. Không cần qua check() (text viết tay).
+connectors/zalo.py:92:# câm. Không qua check() (text viết tay).
+connectors/zalo.py:97:# hotline. Không qua check() (text viết tay).
+connectors/zalo.py:669:            # trước check()); False sẽ đếm nhầm crash vào "violation".
+connectors/zalo.py:681:    guardrail_ok = check(raw)["ok"]
+connectors/zalo.py:727:    Không gọi answer()/check() — text viết tay; convlog ghi
+connectors/zalo.py:767:    (hằng viết tay — không qua check()). Convlog `answered:null`:
+scripts/agent_eval.py:7:  - guardrail: `guardrail.check(text)["ok"]` (ca có `ctx` ->
+scripts/agent_eval.py:8:    `guardrail.check_publish(text, **ctx)`) so `expect`; ca block có `code`
+scripts/agent_eval.py:95:    """Ca có `ctx` -> `check_publish(text, **ctx)`, không có -> `check`.
+scripts/agent_eval.py:101:            r = (guardrail.check_publish(c["text"], **ctx) if ctx
+scripts/agent_eval.py:102:                 else guardrail.check(c["text"]))
+scripts/eval_qa.py:53:TRAP_GUARD = 12    # bẫy "chữa ung thư": answer phải qua guardrail.check()
+scripts/eval_qa.py:93:        gr = guardrail.check(a)
+scripts/redteam.py:5:    trong CI): mỗi ca chạy `guardrail.check_publish(text, **ctx)` (ctx thiếu
+scripts/redteam.py:16:    vòng theo attack), xin ≤5 biến thể, chạy check_publish với ctx/code của
+scripts/redteam.py:111:    r = guardrail.check_publish(text, **ctx)
+scripts/zalo_mock.py:4:-> guardrail.check(); chỉ `send_text` bị thay bằng print (không gọi Zalo
+agents/garden.py:17:    `guardrail.check()` (message anomaly là template viết tay).
+agents/report.py:6:    output KHÔNG cần qua `guardrail.check()` (invariant chỉ áp cho
+# Kết luận: luồng ĐĂNG (content.draft, store.save_draft/set_status approve, Studio ô check tay) dùng check_publish(_llm). Chat giữ check(): connectors/zalo.py:681, app/streamlit_app.py:163 (tab Chat), scripts/eval_qa.py:93 (api/rag không tự gọi guardrail — caller zalo/Studio gọi). scripts/agent_eval.py + scripts/redteam.py = eval. agents/report.py, agents/garden.py: text viết tay/báo cáo nội bộ, không đăng ra ngoài (ghi chú sẵn). Không còn luồng đăng ra ngoài nào khác.
+
+## Mutation probe W42.4: bỏ dòng 'grant select on sku_readiness to agent_writer' trong docs/roles.sql -> test_store_readiness_view_as_app_human_gates_approve FAIL (đã khôi phục file, diff roles.sql chỉ còn dòng grant + comment)

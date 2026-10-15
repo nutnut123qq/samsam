@@ -1,0 +1,23 @@
+# v53 W53.6 không đường ghi giá/sàn + không tự duyệt — 2026-10-12T22:12:45+07:00
+$ grep -niE 'insert into|update |delete from|truncate|alter table|decide\(|auto_approve|override\(|approve_price|approve_cogs' agents/kd_listing.py agents/kd_price.py
+[grep exit 1 — 1 = rỗng]
+
+$ grep -nE 'import (httpx|requests|socket|smtplib)|from (httpx|requests|smtplib|urllib\.request|http\.client)|llm_gateway|pipelines\.content|pipelines import content' agents/kd_listing.py agents/kd_price.py
+[grep exit 1 — 1 = rỗng]
+
+$ python -m pytest tests/test_data_flow_map.py -q -rs
+................................................................         [100%]
+64 passed in 16.20s
+[exit 0]
+
+$ python -c import sys; sys.path.insert(0, 'scripts'); import dpia_draft as d; e = d.egress_modules(); print('kd_listing egress:', 'agents/kd_listing.py' in e, '| kd_price egress:', 'agents/kd_price.py' in e)
+kd_listing egress: False | kd_price egress: False
+[exit 0]
+
+$ python -m pytest tests/test_kd_listing.py -q -rs -k agent_writer or no_write_sql
+...                                                                      [100%]
+3 passed, 17 deselected in 5.46s
+[exit 0]
+
+$ git diff --stat docs/schema.sql docs/roles.sql ingest/golden_store.py crawler/
+[rỗng ở trên = không đổi]

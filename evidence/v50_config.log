@@ -1,0 +1,50 @@
+# W50.2 cấu hình sales.json — 2026-10-12T05:12:09+07:00
+$ python -m pipelines.director --all --dry-run
+[ok] ceo — Tổng giám đốc + Hội đồng thành viên + Ban kiểm soát nội bộ · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] sales — Giám đốc bán hàng + Sales (Phòng kinh doanh TMĐT) · 10 loại việc · vai trò duyệt gd_ban_hang · người duyệt chưa cấu hình (external-dep)
+[ok] marketing — Giám đốc marketing + Chuyên viên marketing + Chuyên viên SEO · 3 loại việc · vai trò duyệt gd_marketing · người duyệt chưa cấu hình (external-dep)
+[ok] intel — Trung tâm tình báo thị trường (trực thuộc TGĐ, phục vụ Marketing/Sales) · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] finance — Giám đốc tài chính + Phòng kế toán + Phòng tài chính–kế hoạch · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] production — Giám đốc sản xuất + Nghiên cứu và sản xuất + Công nghệ sinh học · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] farming — Giám đốc vùng trồng + Nhân viên vùng trồng · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] projects — Giám đốc dự án + Chuyên viên dự án–xúc tiến đầu tư · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] legal_hr — Pháp chế nhân sự + Chuyên viên pháp chế–hành chính–nhân sự · 3 loại việc · vai trò duyệt phap_che · người duyệt chưa cấu hình (external-dep)
+[ok] mechanical — Trung tâm điện–cơ khí chế tạo máy + Kỹ sư điện–cơ khí · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] data_platform — Hạ tầng dữ liệu & AI (do Quản lý hạ tầng AI vận hành) · 2 loại việc · vai trò duyệt ha_tang,tgd · người duyệt chưa cấu hình (external-dep)
+[done] 11 khối hợp lệ (dry-run, không DB)
+exit=0
+
+$ python -m pytest -v tests/test_sales_director.py -k "config or worst or ship"
+collecting ... collected 57 items / 36 deselected / 21 selected
+
+tests/test_sales_director.py::test_ship_config_valid_and_no_real_people PASSED [  4%]
+tests/test_sales_director.py::test_worst_clock_hours PASSED              [  9%]
+tests/test_sales_director.py::test_config_mutations_rejected[path0-low] PASSED [ 14%]
+tests/test_sales_director.py::test_config_mutations_rejected[path1-medium] PASSED [ 19%]
+tests/test_sales_director.py::test_config_mutations_rejected[path2-C] PASSED [ 23%]
+tests/test_sales_director.py::test_config_mutations_rejected[path3-KeyError] PASSED [ 28%]
+tests/test_sales_director.py::test_config_mutations_rejected[path4-  ] PASSED [ 33%]
+tests/test_sales_director.py::test_config_mutations_rejected[path5-3] PASSED [ 38%]
+tests/test_sales_director.py::test_config_mutations_rejected[path6-2] PASSED [ 42%]
+tests/test_sales_director.py::test_config_mutations_rejected[path7-giam_doc] PASSED [ 47%]
+tests/test_sales_director.py::test_config_mutations_rejected[path8-giam_doc] PASSED [ 52%]
+tests/test_sales_director.py::test_config_mutations_rejected[path9-False] PASSED [ 57%]
+tests/test_sales_director.py::test_config_mutations_rejected[path10-value10] PASSED [ 61%]
+tests/test_sales_director.py::test_config_mutations_rejected[path11-24] PASSED [ 66%]
+tests/test_sales_director.py::test_config_mutations_rejected[path12-65] PASSED [ 71%]
+tests/test_sales_director.py::test_config_mutations_rejected[path13-08:00] PASSED [ 76%]
+tests/test_sales_director.py::test_config_mutations_rejected[path14-value14] PASSED [ 80%]
+tests/test_sales_director.py::test_config_mutations_rejected[path15-value15] PASSED [ 85%]
+tests/test_sales_director.py::test_config_mutations_rejected[path16-0] PASSED [ 90%]
+tests/test_sales_director.py::test_config_mutations_rejected[path17-KeyError] PASSED [ 95%]
+tests/test_sales_director.py::test_cli_bad_config_exit1_before_connect PASSED [100%]
+
+====================== 21 passed, 36 deselected in 0.89s ======================
+exit=0
+
+$ python -m pytest -q tests/test_director.py tests/test_director_framework.py
+........................................                                 [100%]
+40 passed in 31.74s
+exit=0
+
+$ git diff --stat -- tests/test_director.py tests/test_director_framework.py  (rỗng = không sửa test cũ)

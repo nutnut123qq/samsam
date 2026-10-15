@@ -1,0 +1,18 @@
+{
+  "_doc": "Cấu hình lớp kênh CSKH (v5.1, connectors/channels.py) — BẢN NHÁP do dev soạn, CHỜ PHÁP CHẾ DUYỆT mọi câu khách thấy (template rượu/sức khỏe, câu chào + đồng ý, câu fallback/handoff kênh sàn). policy_url là GIẢ ĐỊNH — chưa xác minh trang chính sách tồn tại; policy_version là mã nháp. require_consent_for_llm: false = vẫn trả lời bằng LLM trước khi khách đồng ý (GAP — Pháp chế quyết bật). Đổi chữ = sửa file này, không sửa code. Template rượu KHÔNG được nhắc từ khớp bộ lọc rượu, không mời mua/đặt online, không link; template sức khỏe không nêu công dụng, không từ cấm; template *_san + san_fallback + san_handoff KHÔNG domain/SĐT/link/Zalo/Facebook/địa chỉ cửa hàng (chính sách sàn). Không dùng cụm 'hỗ trợ' (guardrail coi là claim công dụng).",
+  "policy_url": "https://samsamngoclinh.com/chinh-sach-bao-mat",
+  "policy_version": "nhap-2026-10",
+  "require_consent_for_llm": false,
+  "templates": {
+    "alcohol": "Dạ, Sâm Sâm không tư vấn sản phẩm này qua tin nhắn tự động. Nhân viên Sâm Sâm sẽ liên hệ lại Quý khách. Quý khách cần gấp vui lòng gọi hotline 1800577732.",
+    "alcohol_san": "Dạ, Sâm Sâm không tư vấn sản phẩm này qua tin nhắn tự động. Nhân viên Sâm Sâm sẽ phản hồi Quý khách ngay trong khung chat này.",
+    "health": "Dạ, Sâm Sâm không tư vấn về tình trạng sức khỏe qua tin nhắn tự động. Quý khách vui lòng hỏi ý kiến bác sĩ về tình trạng của mình. Nhân viên Sâm Sâm sẽ phản hồi Quý khách sớm nhất; cần gấp vui lòng gọi hotline 1800577732.",
+    "health_san": "Dạ, Sâm Sâm không tư vấn về tình trạng sức khỏe qua tin nhắn tự động. Quý khách vui lòng hỏi ý kiến bác sĩ về tình trạng của mình. Nhân viên Sâm Sâm sẽ phản hồi Quý khách ngay trong khung chat này.",
+    "consent_prompt": "Chào Quý khách, Sâm Sâm dùng trợ lý tự động để trả lời tin nhắn. Chính sách xử lý dữ liệu cá nhân: {policy_url}. Nếu Quý khách đồng ý để Sâm Sâm xử lý tin nhắn nhằm tư vấn sản phẩm, vui lòng nhắn \"Đồng ý\"; nhắn \"Không đồng ý\" nếu Quý khách muốn trợ lý tự động dừng xử lý tin nhắn.",
+    "consent_ack": "Cảm ơn Quý khách đã đồng ý. Quý khách cứ nhắn câu hỏi, Sâm Sâm sẽ trả lời ngay.",
+    "consent_withdrawn_ack": "Sâm Sâm đã ghi nhận Quý khách không đồng ý. Trợ lý tự động sẽ ngừng xử lý tin nhắn của Quý khách; cần gặp nhân viên vui lòng gọi hotline 1800577732, hoặc nhắn \"Đồng ý\" nếu Quý khách đổi ý.",
+    "consent_withdrawn_fail": "Xin lỗi Quý khách, hệ thống tạm thời chưa ghi nhận được yêu cầu không đồng ý của Quý khách. Quý khách vui lòng gọi hotline 1800577732 để nhân viên Sâm Sâm ghi nhận, hoặc nhắn lại \"Không đồng ý\" sau ít phút.",
+    "san_fallback": "Dạ, Sâm Sâm xin phép kiểm tra lại thông tin và phản hồi Quý khách ngay trong khung chat này.",
+    "san_handoff": "Dạ, câu hỏi này cần nhân viên Sâm Sâm kiểm tra thêm. Nhân viên sẽ phản hồi Quý khách ngay trong khung chat này."
+  }
+}

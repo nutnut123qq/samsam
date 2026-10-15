@@ -8,6 +8,14 @@ Contract:
   - Nguồn số liệu: DB lõi v1.8 (`orders`, `leads`, `plot_logs`,
     `plots`, `products`) + convlog `data/conversations.jsonl`(+`.1`)
     — file-based nên phần kênh chat luôn có kể cả khi DB chết.
+  - v6.5 MKT-09 — mục 5 "Marketing" (thay placeholder "Social metrics"):
+    `pipelines.mkt_metrics.collect` (SAU `collect_db`, cùng conn) — tỷ lệ
+    nháp bị trả lại theo kênh × loại (`content_drafts`, quyết định trong
+    kỳ), thời gian duyệt trung vị/p90/max (nháp + hàng chờ
+    `approval_queue` khối marketing), nháp theo agent, vi phạm guardrail
+    theo CODE (không trích text), hiệu quả kênh tuần ISO đã đóng từ
+    `channel_snapshots` (manual_export; nguồn `sample:` → `(MẪU)`). Mọi
+    số do code tính — 0 LLM. Lỗi DB mục 5 → chỉ mục 5 "[chưa nạp]".
   - Output: `data/reports/report-<since>_<end>.md` — atomic tmp +
     `os.replace`, ghi BYTES utf-8 (tránh `\\n`→`\\r\\n` Windows);
     gitignored (runtime artifact). Chạy lại cùng kỳ → cùng tên file,
@@ -43,7 +51,17 @@ from pathlib import Path
 import psycopg
 from dotenv import load_dotenv
 
-from ingest.lead_store import CONV_FILES, _parse_ts, channel_of, connect, iter_convlog
+from ingest.lead_store import (
+    CONSENT_REPLY_ROUTES,
+    CONV_FILES,
+    _parse_ts,
+    channel_of,
+    connect,
+    iter_convlog,
+)
+from pipelines import mkt_metrics
+from pipelines.job_runs import job_run
+from pipelines.period import VN_TZ, rolling_bounds
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in
 # tiếng Việt có dấu. Ép UTF-8 (no-op nếu đã UTF-8).
@@ -64,18 +82,16 @@ FLAG_KEYS = ("sâu bệnh", "rệp", "bệnh", "chết", "héo", "vàng lá",
 
 
 def period_bounds(days: int, until: date | datetime | None = None):
-    """→ (since, until_excl) aware UTC. `until`:
-    None → now(); date → hết ngày đó (date+1 00:00 UTC, exclusive);
-    datetime → dùng trực tiếp (naive coi như UTC). since = until-days."""
-    if until is None:
-        until_excl = datetime.now(timezone.utc)
-    elif isinstance(until, datetime):
-        until_excl = (until if until.tzinfo
-                      else until.replace(tzinfo=timezone.utc))
-    else:
-        until_excl = datetime(until.year, until.month, until.day,
-                              tzinfo=timezone.utc) + timedelta(days=1)
-    return until_excl - timedelta(days=days), until_excl
+    """→ (since, until_excl) aware giờ VN (v4.0 — trước đó cắt 00:00 UTC,
+    lệch 7 giờ). Ủy quyền `pipelines.period.rolling_bounds`: None → now;
+    date → hết ngày đó giờ VN (00:00 VN hôm sau, exclusive); datetime
+    aware dùng trực tiếp; naive → ValueError. since = until-days."""
+    return rolling_bounds(days, until)
+
+
+def _vn_day_s(dt: datetime) -> str:
+    """Ngày VN của mốc aware (tên file/dòng in kỳ)."""
+    return dt.astimezone(VN_TZ).strftime("%Y-%m-%d")
 
 
 def _sample(sources: dict) -> bool:
@@ -85,6 +101,9 @@ def _sample(sources: dict) -> bool:
         str(s).startswith("sample:") for s in sources)
 
 
+_NOT_CANCELLED = " and status is distinct from 'cancelled'"
+
+
 def collect_db(conn, since: datetime, until: datetime) -> dict:
     """Query toàn bộ số liệu DB cho báo cáo (1 lượt). `psycopg.Error`
     (kết nối chết giữa chừng, thiếu bảng) → {"db_ok": False} — caller
@@ -92,16 +111,19 @@ def collect_db(conn, since: datetime, until: datetime) -> dict:
     p = (since, until)
     prev = (since - (until - since), since)  # kỳ trước cùng độ dài
     try:
+        # v10.1: đơn `cancelled` (kd_orders ghi từ file sàn, total_vnd vẫn
+        # = Σ giá×SL) KHÔNG tính vào Đơn hàng/Doanh thu/kênh/top — chỉ hiện
+        # ở dòng Trạng thái.
         cur_cnt, cur_rev = conn.execute(
             "select count(*), coalesce(sum(total_vnd),0) from orders "
-            "where ts >= %s and ts < %s", p).fetchone()
+            "where ts >= %s and ts < %s" + _NOT_CANCELLED, p).fetchone()
         prev_cnt, prev_rev = conn.execute(
             "select count(*), coalesce(sum(total_vnd),0) from orders "
-            "where ts >= %s and ts < %s", prev).fetchone()
+            "where ts >= %s and ts < %s" + _NOT_CANCELLED, prev).fetchone()
         order_channel = conn.execute(
             "select channel, count(*), coalesce(sum(total_vnd),0) "
-            "from orders where ts >= %s and ts < %s "
-            "group by channel order by 2 desc", p).fetchall()
+            "from orders where ts >= %s and ts < %s" + _NOT_CANCELLED
+            + " group by channel order by 2 desc", p).fetchall()
         order_status = dict(conn.execute(
             "select status, count(*) from orders "
             "where ts >= %s and ts < %s group by status",
@@ -111,7 +133,8 @@ def collect_db(conn, since: datetime, until: datetime) -> dict:
             "coalesce(sum(o.qty),0), coalesce(sum(o.total_vnd),0) "
             "from orders o left join products p "
             "on p.id = o.product_id "
-            "where o.ts >= %s and o.ts < %s "
+            "where o.ts >= %s and o.ts < %s"
+            " and o.status is distinct from 'cancelled' "
             "group by 1 order by 3 desc limit 5", p).fetchall()
         order_sources = dict(conn.execute(
             "select source, count(*) from orders "
@@ -207,11 +230,14 @@ def collect_chat(data_dir: Path, since: datetime, until: datetime
     đọc được kể cả khi DB chết (dùng lại `iter_convlog` của
     lead_store: BYTES + split `\\n`, corrupt/`_doc`/io-error đếm
     riêng). `answered` strict `is True`; ts hỏng/không phải str →
-    `bad_ts` (không rơi vào kỳ)."""
+    `bad_ts` (không rơi vào kỳ). Record trả lời đồng ý
+    (`CONSENT_REPLY_ROUTES`) bị bỏ qua — không phình chatbot.questions/
+    unanswered trong snapshot insert-only của cockpit."""
     stats = {"total": 0, "answered": 0, "in_period": 0,
              "answered_period": 0,
-             "by_channel": {"zalo": 0, "streamlit": 0},
-             "by_channel_period": {"zalo": 0, "streamlit": 0},
+             "by_channel": {"zalo": 0, "messenger": 0, "streamlit": 0},
+             "by_channel_period": {"zalo": 0, "messenger": 0,
+                                   "streamlit": 0},
              "bad_ts": 0, "skipped": 0}
     tmp = {"corrupt": 0, "doc": 0, "io_error": 0}
     for name in CONV_FILES:
@@ -219,6 +245,8 @@ def collect_chat(data_dir: Path, since: datetime, until: datetime
         if not path.exists():
             continue
         for rec in iter_convlog(path, tmp):
+            if rec.get("route") in CONSENT_REPLY_ROUTES:
+                continue  # "Đồng ý"/"Không đồng ý" không phải câu hỏi
             stats["total"] += 1
             ch = channel_of(rec)
             stats["by_channel"][ch] += 1
@@ -266,17 +294,111 @@ def _src_line(table: str, sources: dict) -> str:
             + _mark(_sample(sources)))
 
 
+def collect_marketing(conn, since: datetime, until: datetime) -> dict:
+    """Số mục 5 (`mkt_metrics.collect`). conn None / `psycopg.Error` →
+    {"ok": False, "error"} — chỉ mục 5 degraded, mục khác giữ số."""
+    if conn is None:
+        return {"ok": False, "error": "không kết nối được Postgres"}
+    try:
+        return mkt_metrics.collect(conn, since, until)
+    except psycopg.Error as e:
+        return {"ok": False, "error": str(e).strip()[:300]}
+
+
+_NO_DATA = "[chưa có dữ liệu]"
+
+
+def _pct(v) -> str:
+    return "—" if v is None else f"{v}%"
+
+
+def _rate_rows(by: dict, total: dict, head: str) -> list[str]:
+    """Bảng trả lại/đã quyết + % + còn chờ cuối kỳ (mẫu số 0 → "—")."""
+    L = [f"| {head} | Trả lại / Đã quyết | Tỷ lệ trả lại | Còn chờ cuối kỳ |",
+         "|---|---|---|---|"]
+    for key in sorted(by, key=str):
+        b = by[key]
+        name = " · ".join(key) if isinstance(key, tuple) else key
+        L.append(f"| {name} | {b['rejected']}/{b['decided']} | "
+                 f"{_pct(b['rate'])} | {b['pending_end']} |")
+    L.append(f"| **Tổng** | {total['rejected']}/{total['decided']} | "
+             f"{_pct(total['rate'])} | {total['pending_end']} |")
+    return L
+
+
+def _hours_line(label: str, h: dict) -> str:
+    if not h["n"]:
+        line = f"- {label}: {_NO_DATA}"
+    else:
+        line = (f"- {label}: trung vị {h['median_h']} giờ · p90 "
+                f"{h['p90_h']} giờ · lâu nhất {h['max_h']} giờ "
+                f"(n={h['n']})")
+    if h.get("bad_ts"):
+        line += f" — loại {h['bad_ts']} mục mốc thời gian hỏng"
+    return line
+
+
+def _counts(d: dict) -> str:
+    items = sorted(d.items(), key=lambda kv: (-kv[1], kv[0]))
+    return " · ".join(f"`{str(k).replace('`', chr(39))}` {v}"
+                      for k, v in items)
+
+
+def _cell_num(v) -> str:
+    return _NO_DATA if v is None else str(v)
+
+
+def render_marketing(m) -> list[str]:
+    """Mục 5 — mọi số lấy từ dict `m` (code tính, không LLM)."""
+    L = ["## 5. Marketing", ""]
+    if not isinstance(m, dict) or not m.get("ok"):
+        err = m.get("error") if isinstance(m, dict) else None
+        return L + [f"*[chưa nạp — {err or 'chưa thu số marketing'}]*", ""]
+    L += [("**Tỷ lệ nháp bị trả lại** (nháp nội dung có quyết định trong "
+           "kỳ; nháp còn chờ không vào mẫu số):"), ""]
+    L += _rate_rows(m["drafts"], m["drafts_total"], "Kênh · Loại") + [""]
+    L += ["**Hàng chờ khối marketing** (theo loại việc):", ""]
+    L += _rate_rows(m["queue"], m["queue_total"], "Loại việc") + [""]
+    L += [("- Hết hạn không ai duyệt (không tính trả lại): "
+           f"{m['queue_expired']}"), ""]
+    L += ["**Thời gian duyệt** (giờ, tạo → quyết định):",
+          _hours_line("Nháp nội dung", m["drafts_hours"]),
+          _hours_line("Hàng chờ khối marketing", m["queue_hours"]), ""]
+    L.append("- Nháp tạo trong kỳ theo agent/người: "
+             + (_counts(m["by_agent"]) or "không có"))
+    L.append("- Vi phạm guardrail theo code (nháp tạo trong kỳ): "
+             + (_counts(m["guardrail_codes"]) or "không có"))
+    ch = m["channels"]
+    L += ["", (f"**Hiệu quả kênh — tuần {ch['week']}** (số xuất tay "
+               "`manual_export`):"), ""]
+    if not ch["rows"]:
+        L.append(f"- {_NO_DATA} — chưa nạp số kênh tuần này "
+                 "(`python -m pipelines.cockpit --import FILE --by ...`)")
+    else:
+        L += [("| Kênh | Tiếp cận | Tương tác | Đơn hoàn thành | "
+               "Tỷ lệ tương tác |"), "|---|---|---|---|---|"]
+        for r in ch["rows"]:
+            name = r["channel"] + (" (MẪU)" if r["sample"] else "")
+            er = _NO_DATA if r["eng_rate"] is None else f"{r['eng_rate']}%"
+            L.append(f"| {name} | {_cell_num(r['reach'])} | "
+                     f"{_cell_num(r['engagement'])} | "
+                     f"{_cell_num(r['orders'])} | {er} |")
+    L += [("- Search Console/GA4, số kênh thật — chờ bàn giao "
+           "(external-dep)."), ""]
+    return L
+
+
 def render(rep: dict) -> str:
     """rep → markdown tiếng Việt. Degraded (db_ok=False) → phần DB
     in '[chưa nạp — <err>]', phần convlog vẫn đầy đủ."""
     p = rep["period"]
-    since_s = p["since"].strftime("%Y-%m-%d")
-    end_s = (p["until"] - timedelta(seconds=1)).strftime("%Y-%m-%d")
+    since_s = _vn_day_s(p["since"])
+    end_s = _vn_day_s(p["until"] - timedelta(seconds=1))
     gen_s = rep["generated_at"].strftime("%Y-%m-%dT%H:%M:%SZ")
     db = rep["db"]
     chat = rep["chat"]
     L = ["# Báo cáo định kỳ — Sâm Sâm AI", "",
-         (f"**Kỳ:** {since_s} → {end_s} ({p['days']} ngày, UTC) · "
+         (f"**Kỳ:** {since_s} → {end_s} ({p['days']} ngày, giờ VN) · "
           f"**Sinh lúc:** {gen_s} · **Nguồn:** `agents/report.py`"),
          "",
          ("> **BẢN NHÁP — người duyệt trước khi gửi lãnh đạo.** "
@@ -308,6 +430,11 @@ def render(rep: dict) -> str:
             L.append("- Top doanh thu: " + "; ".join(
                 f"{name} ({qty} sp / {_fmt_vnd(rev)})"
                 for name, qty, rev in sales["top"]))
+        if sales["by_status"].get("cancelled"):
+            L.append("- Đơn `cancelled` không tính vào Đơn hàng/Doanh thu.")
+        if any(str(s).startswith("market:") for s in sales["sources"]):
+            L.append("- Đơn sàn (nạp từ file Seller Center): ngày đơn = "
+                     "ngày nạp file (giả định — file sàn chưa map ngày đặt).")
         if sales["count"] == 0:
             L.append("- Không có đơn nào trong kỳ.")
         L.append("")
@@ -352,8 +479,9 @@ def render(rep: dict) -> str:
            f"trả lời được: {rate_p} "
            f"({chat['answered_period']}/{chat['in_period']})"),
           (f"- Toàn thời gian: {chat['total']} tin, trả lời {rate_t} "
-           f"— Zalo/Streamlit trong kỳ: "
+           f"— Zalo/Messenger/Streamlit trong kỳ: "
            f"{chat['by_channel_period']['zalo']}/"
+           f"{chat['by_channel_period']['messenger']}/"
            f"{chat['by_channel_period']['streamlit']}")]
     if chat["skipped"] or chat["bad_ts"]:
         L.append(f"- Bỏ qua {chat['skipped']} dòng "
@@ -387,12 +515,8 @@ def render(rep: dict) -> str:
             L.append("- Không có nhật ký nào trong kỳ.")
         L.append("")
 
-    # --- 5. Social metrics (external — chờ bàn giao)
-    L += ["## 5. Social metrics", "",
-          ("- *Chờ bàn giao:* creds Fanpage/TikTok/Zalo OA (Phụ lục "
-           "C — điều kiện tiên quyết phía công ty). Mục này tự điền "
-           "khi có nguồn; hệ thống KHÔNG tự lấy/gửi gì ra ngoài."),
-          ""]
+    # --- 5. Marketing (v6.5 MKT-09 — số do code tính)
+    L += render_marketing(rep.get("marketing"))
 
     # --- 6. Nguồn dữ liệu & chất lượng
     L += ["## 6. Nguồn dữ liệu", ""]
@@ -405,6 +529,10 @@ def render(rep: dict) -> str:
         L.append(f"- **DB:** không khả dụng — {_db_err(db)}")
     L.append(f"- `conversations.jsonl`: {chat['total']} record "
              f"(+{chat['skipped']} bỏ qua)")
+    L.append("- Mục Marketing: `content_drafts` (quyết định theo "
+             "`reviewed_at`), `approval_queue` khối marketing (theo "
+             "`decided_at`), `channel_snapshots` (manual_export, tuần đã "
+             "đóng)")
     L += ["", "---",
           ("*Sinh tự động bởi agent báo cáo định kỳ (`python -m "
            "agents.report`). Kiểm chứng số liệu trước khi trích dẫn "
@@ -415,8 +543,8 @@ def render(rep: dict) -> str:
 def report_name(since: datetime, until: datetime) -> str:
     """`report-<since>_<end>.md` — deterministic theo kỳ: chạy lại
     cùng kỳ → cùng tên → ghi đè (idempotent)."""
-    end = (until - timedelta(seconds=1)).date()
-    return f"report-{since.date()}_{end}.md"
+    end = _vn_day_s(until - timedelta(seconds=1))
+    return f"report-{_vn_day_s(since)}_{end}.md"
 
 
 def write_report(text: str, out_dir: Path, name: str) -> Path:
@@ -459,6 +587,7 @@ def generate(days: int = DEFAULT_DAYS, until=None,
                      {"db_ok": False,
                       "db_error": "không kết nối được Postgres "
                       "(DATABASE_URL thiếu hoặc host chết)"})
+        rep["marketing"] = collect_marketing(conn, since, until_excl)
     finally:
         if own and conn is not None:
             # Đóng conn không được giết agent sau khi số liệu đã có.
@@ -470,6 +599,15 @@ def generate(days: int = DEFAULT_DAYS, until=None,
     return path, rep
 
 
+def _tra_lai(rep: dict) -> str:
+    """Topline CLI: tra-lai=<rejected>/<decided> nháp nội dung trong kỳ."""
+    m = rep.get("marketing") or {}
+    if not m.get("ok"):
+        return "tra-lai=[chưa nạp]"
+    t = m["drafts_total"]
+    return f"tra-lai={t['rejected']}/{t['decided']}"
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         prog="python -m agents.report",
@@ -479,7 +617,7 @@ def main(argv=None) -> int:
                     help=f"số ngày trong kỳ (mặc định {DEFAULT_DAYS})")
     ap.add_argument("--until", default=None,
                     help="YYYY-MM-DD — ngày cuối kỳ (mặc định hôm "
-                         "nay UTC)")
+                         "nay giờ VN)")
     ap.add_argument("--out-dir", default=str(REPORTS_DIR),
                     help="thư mục ghi báo cáo")
     args = ap.parse_args(argv)
@@ -497,24 +635,30 @@ def main(argv=None) -> int:
     path, rep = generate(days=args.days, until=until,
                          out_dir=Path(args.out_dir))
     p = rep["period"]
-    end_s = (p["until"] - timedelta(seconds=1)).strftime("%Y-%m-%d")
-    print(f"[report] kỳ {p['since']:%Y-%m-%d} → {end_s} "
+    end_s = _vn_day_s(p["until"] - timedelta(seconds=1))
+    print(f"[report] kỳ {_vn_day_s(p['since'])} → {end_s} "
           f"({p['days']} ngày)", flush=True)
     db = rep["db"]
     if not db.get("db_ok"):
         print(f"[warn] DB không khả dụng — báo cáo degraded: "
               f"{_db_err(db)}", flush=True)
         print(f"[done] {path} — convlog trong kỳ "
-              f"{rep['chat']['in_period']}", flush=True)
+              f"{rep['chat']['in_period']} {_tra_lai(rep)}", flush=True)
         return 0
     s, leads, farm = db["sales"], db["leads"], db["farm"]
     print(f"[done] {path} — đơn={s['count']} "
           f"doanh-thu={_fmt_vnd(s['revenue'])} "
           f"leads-mới={leads['new']} "
           f"nhật-ký={farm['count']} "
-          f"convlog-kỳ={rep['chat']['in_period']}", flush=True)
+          f"convlog-kỳ={rep['chat']['in_period']} {_tra_lai(rep)}",
+          flush=True)
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    # v3.7: ghi lần chạy vào job_runs (bản tin sức khỏe F17.2) —
+    # main() giữ nguyên chữ ký/output/exit code.
+    with job_run("agents.report") as run:
+        rc = main()
+        run["ok"] = rc == 0
+    raise SystemExit(rc)

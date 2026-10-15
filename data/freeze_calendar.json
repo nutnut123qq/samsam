@@ -1,0 +1,10 @@
+{
+  "_doc": "Lịch đóng băng mùa cao điểm (v3.10) — nguồn: flows_infra.md §5 'Luật đóng băng chung', áp cho F17.1 (deploy) và F17.5 (bật lại agent). Ngày theo giờ Asia/Saigon (+07:00), GỒM CẢ 2 ĐẦU. Bản dev soạn, CHƯA được công ty duyệt (external-dep). Đây là nguồn lịch DUY NHẤT: từ v4.0 scripts/deploy_gate.py đọc file này qua pipelines/freeze.check() (key 'freeze' trong data/eval/config.json đã bỏ). Trong đóng băng chỉ cho: hotfix (tầng 2), disable (tắt/hạ cấp agent), restore (khôi phục ĐÚNG trạng thái trước kill, có RCA). break_glass_holders rỗng = công ty chưa cấp danh sách người giữ quyền (external-dep) — scripts/break_glass.py vẫn mở nhưng ghi holder_verified=false.",
+  "windows": [
+    {"name": "Tết Đinh Mùi 2027", "start": "2026-12-21", "end": "2027-02-10"}
+  ],
+  "allowed_in_freeze": ["hotfix", "disable", "restore"],
+  "known_kinds": ["hotfix", "disable", "restore", "feature", "promote", "config", "migration"],
+  "break_glass_max_hours": 4,
+  "break_glass_holders": []
+}

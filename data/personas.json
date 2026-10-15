@@ -1,0 +1,15 @@
+{
+  "_doc": "Persona TỔNG HỢP — không dữ liệu khách thật, không bản ghi đơn lẻ; nguồn = giả định nhóm chờ số liệu đã ẩn danh + DPIA. Dùng cho scripts/persona_sim.py (v7.3). Mọi persona >= 18 tuổi. Chỉ được thêm key trong allowlist: id, label, age_min, age_max, region, sku_group, youth, traits, source.",
+  "synthetic": true,
+  "set_id": "v1",
+  "personas": [
+    {"id": "p01-qua-bieu-doanh-nghiep", "label": "Nhân viên mua quà biếu doanh nghiệp", "age_min": 30, "age_max": 45, "region": "Đà Nẵng", "sku_group": "quà Tết", "youth": false, "traits": ["mua số lượng theo đợt", "quan tâm hộp quà và hóa đơn", "so giá nhiều nơi"], "source": "giả định nhóm — chờ số liệu đã ẩn danh"},
+    {"id": "p02-con-mua-bieu-cha-me", "label": "Người con đi làm xa mua quà biếu cha mẹ", "age_min": 25, "age_max": 40, "region": "TP.HCM", "sku_group": "quà Tết", "youth": false, "traits": ["mua online dịp lễ", "đọc đánh giá trên sàn", "ưu tiên giao nhanh"], "source": "giả định nhóm — chờ số liệu đã ẩn danh"},
+    {"id": "p03-noi-tro-trung-nien", "label": "Người nội trợ trung niên", "age_min": 40, "age_max": 60, "region": "Quảng Nam", "sku_group": "mật ong sâm", "youth": false, "traits": ["mua cho cả nhà", "tin người quen giới thiệu", "nhạy giá"], "source": "giả định nhóm — chờ số liệu đã ẩn danh"},
+    {"id": "p04-nguoi-lon-tuoi", "label": "Người lớn tuổi đã nghỉ hưu", "age_min": 60, "age_max": 75, "region": "Hà Nội", "sku_group": "sâm Ngọc Linh", "youth": false, "traits": ["coi trọng nguồn gốc", "mua qua đại lý quen", "ít mua online"], "source": "giả định nhóm — chờ số liệu đã ẩn danh"},
+    {"id": "p05-dan-van-phong-tre", "label": "Dân văn phòng trẻ", "age_min": 22, "age_max": 30, "region": "Hà Nội", "sku_group": "mật ong sâm", "youth": true, "traits": ["mua theo xu hướng mạng xã hội", "thích bao bì đẹp", "săn mã giảm giá 11.11"], "source": "giả định nhóm — chờ số liệu đã ẩn danh"},
+    {"id": "p06-chu-cua-hang-dai-ly", "label": "Chủ cửa hàng đặc sản / đại lý", "age_min": 35, "age_max": 55, "region": "Đà Nẵng", "sku_group": "quà Tết", "youth": false, "traits": ["nhập hàng trước Tết", "quan tâm chiết khấu", "cần hồ sơ giấy tờ đầy đủ"], "source": "giả định nhóm — chờ số liệu đã ẩn danh"},
+    {"id": "p07-khach-du-lich", "label": "Khách du lịch mua đặc sản miền Trung", "age_min": 25, "age_max": 50, "region": "Hội An", "sku_group": "đặc sản", "youth": false, "traits": ["mua một lần", "quan tâm câu chuyện vùng trồng", "cần đóng gói gọn"], "source": "giả định nhóm — chờ số liệu đã ẩn danh"},
+    {"id": "p08-nguoi-tieu-dung-can-trong", "label": "Người tiêu dùng cẩn trọng với hàng giả", "age_min": 30, "age_max": 50, "region": "TP.HCM", "sku_group": "sâm Ngọc Linh", "youth": false, "traits": ["kiểm tra tem truy xuất", "nghi ngờ quảng cáo phóng đại", "hỏi kỹ trước khi mua"], "source": "giả định nhóm — chờ số liệu đã ẩn danh"}
+  ]
+}

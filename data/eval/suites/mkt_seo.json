@@ -1,0 +1,517 @@
+{
+ "_doc": "Suite mkt_seo (v6.5 MKT-11 SEO sàn) — CHƯA ĐƯỢC CÔNG TY DUYỆT: bộ ca MẪU do dev soạn (query Trends bịa, không phải số thật), chờ MKT/Chuyên viên SEO sửa; không phải nghiệm thu WP08. Chấm agents.seo_san.suggest (tất định, luật data/seo_rules.json + data/listing_rules.json + guardrail THẬT; 0 mạng/LLM/DB). kind: keyword_in (từ khóa hợp lệ phải có), keyword_out (seed lạ/đã có trong tiêu đề không gợi ý), title_limit (tiêu đề ≤ title_max kênh — bắt buộc 100%), trap_alcohol (SKU rượu bị từ chối / query rượu hoặc cờ ruou bị loại — bắt buộc 100%), trap_ngoc_linh ('Ngọc Linh' chưa xác nhận bị loại — bắt buộc 100%), trap_banned (từ cấm bị loại — bắt buộc 100%, luật harness: mọi kind trap_* phải bắt buộc). Owner: marketing; agent QA chạy: data_platform. KHÔNG nằm trong required_agents (data/eval/config.json). frozen=false (external-dep). Sửa ca → tăng version + `python scripts/agent_eval.py --print-hash mkt_seo`.",
+ "agent": "mkt_seo",
+ "version": 1,
+ "cases_sha256": "4b6ed3d83d628668c5c229c2d8475c7c5fdf2b6cd9fdb1f52a14c14d81bcafa6",
+ "owner_block": "marketing",
+ "qa_block": "data_platform",
+ "qa_agent": "Agent Nghiệm thu (QA/Eval)",
+ "risk": "medium",
+ "status": "active",
+ "runner": "mkt_seo",
+ "agent_model": "rules",
+ "judge": null,
+ "frozen": false,
+ "labeled_by": null,
+ "frozen_at": null,
+ "threshold": {
+  "min_pass_rate": 1.0,
+  "must_pass_kinds": [
+   "trap_alcohol",
+   "trap_ngoc_linh",
+   "trap_banned",
+   "title_limit"
+  ]
+ },
+ "prompt_files": [
+  "agents/seo_san.py",
+  "data/seo_rules.json",
+  "data/listing_rules.json",
+  "data/guardrail_rules.json",
+  "data/eval/suites/mkt_seo.json"
+ ],
+ "cases": [
+  {
+   "id": "seo-k01",
+   "kind": "keyword_in",
+   "sku": "saphraton-20v",
+   "channel": "shopee",
+   "related": [
+    {
+     "seed": "hồng sâm",
+     "section": "top",
+     "query": "quà biếu sức khỏe",
+     "value": "100"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "rising",
+     "query": "nhân sâm tươi",
+     "value": "Breakout"
+    }
+   ],
+   "expect": {
+    "present": [
+     "Sâm Sâm",
+     "quà biếu sức khỏe",
+     "nhân sâm tươi"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "mkt_seo",
+   "label": "dev_draft",
+   "current_title": "Saphraton 20 viên"
+  },
+  {
+   "id": "seo-k02",
+   "kind": "keyword_in",
+   "sku": "savina-12v",
+   "channel": "shopee",
+   "related": [
+    {
+     "seed": "quà biếu",
+     "section": "top",
+     "query": "quà biếu cao cấp",
+     "value": "70"
+    },
+    {
+     "seed": "quà biếu",
+     "section": "rising",
+     "query": "hộp quà sâm",
+     "value": "+250%"
+    }
+   ],
+   "expect": {
+    "present": [
+     "quà biếu cao cấp",
+     "hộp quà sâm"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "mkt_seo",
+   "label": "dev_draft"
+  },
+  {
+   "id": "seo-k03",
+   "kind": "keyword_out",
+   "sku": "saphraton-20v",
+   "channel": "shopee",
+   "related": [
+    {
+     "seed": "trà thảo mộc",
+     "section": "top",
+     "query": "trà thảo mộc giảm cân",
+     "value": "100"
+    },
+    {
+     "seed": "hồng sâm",
+     "section": "top",
+     "query": "hồng sâm cao cấp",
+     "value": "40"
+    }
+   ],
+   "expect": {
+    "present": [
+     "hồng sâm cao cấp"
+    ],
+    "absent": [
+     "trà thảo mộc giảm cân"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "mkt_seo",
+   "label": "dev_draft",
+   "current_title": "Saphraton 20 viên"
+  },
+  {
+   "id": "seo-k04",
+   "kind": "keyword_out",
+   "sku": "saphraton-80v",
+   "channel": "shopee",
+   "related": [
+    {
+     "seed": "mật ong sâm",
+     "section": "top",
+     "query": "mật ong sâm rừng",
+     "value": "100"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi",
+     "value": "60"
+    }
+   ],
+   "expect": {
+    "present": [
+     "nhân sâm tươi"
+    ],
+    "absent": [
+     "mật ong sâm rừng"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "mkt_seo",
+   "label": "dev_draft",
+   "current_title": "Saphraton 80 viên"
+  },
+  {
+   "id": "seo-t01",
+   "kind": "title_limit",
+   "sku": "saphraton-20v",
+   "channel": "shopee",
+   "related": [
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi nguyên củ chọn lọc",
+     "value": "100"
+    },
+    {
+     "seed": "hồng sâm",
+     "section": "top",
+     "query": "hồng sâm cao cấp biếu tặng người thân",
+     "value": "90"
+    },
+    {
+     "seed": "quà biếu",
+     "section": "top",
+     "query": "quà biếu sức khỏe cho bố mẹ",
+     "value": "80"
+    },
+    {
+     "seed": "quà biếu",
+     "section": "rising",
+     "query": "hộp quà sâm sang trọng",
+     "value": "+120%"
+    }
+   ],
+   "expect": {
+    "title_limit": true
+   },
+   "source": "MẪU",
+   "scorer": "mkt_seo",
+   "label": "dev_draft",
+   "current_title": "Saphraton 20 viên hộp chính hãng công ty Sâm Sâm Quảng Nam giao nhanh toàn quốc tặng kèm túi giấy sang trọng làm quà biếu người thân"
+  },
+  {
+   "id": "seo-t02",
+   "kind": "title_limit",
+   "sku": "savina-12v",
+   "channel": "tiktok",
+   "related": [
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi loại một",
+     "value": "100"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi loại hai",
+     "value": "99"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi loại ba",
+     "value": "98"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi loại bốn",
+     "value": "97"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi loại năm",
+     "value": "96"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi loại sáu",
+     "value": "95"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi loại bảy",
+     "value": "94"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi loại tám",
+     "value": "93"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi loại chín",
+     "value": "92"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi loại mười",
+     "value": "91"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi loại mười một",
+     "value": "90"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi loại mười hai",
+     "value": "89"
+    }
+   ],
+   "expect": {
+    "title_limit": true
+   },
+   "source": "MẪU",
+   "scorer": "mkt_seo",
+   "label": "dev_draft",
+   "readiness": [
+    [
+     "savina-12v",
+     "tiktok",
+     "MO_TA"
+    ]
+   ]
+  },
+  {
+   "id": "seo-t03",
+   "kind": "title_limit",
+   "sku": "savigout-30v",
+   "channel": "shopee",
+   "related": [
+    {
+     "seed": "hồng sâm",
+     "section": "top",
+     "query": "hồng sâm thượng hạng xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "value": "100"
+    }
+   ],
+   "expect": {
+    "title_limit": true,
+    "absent": [
+     "hồng sâm thượng hạng"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "mkt_seo",
+   "label": "dev_draft",
+   "current_title": "Savigout 30 viên"
+  },
+  {
+   "id": "seo-a01",
+   "kind": "trap_alcohol",
+   "sku": "ruou-sam-chai-thuy-tinh-500ml",
+   "channel": "shopee",
+   "related": [
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "quà biếu sức khỏe",
+     "value": "100"
+    }
+   ],
+   "expect": {
+    "refused": "ruou"
+   },
+   "source": "MẪU",
+   "scorer": "mkt_seo",
+   "label": "dev_draft"
+  },
+  {
+   "id": "seo-a02",
+   "kind": "trap_alcohol",
+   "sku": "saphraton-20v",
+   "channel": "shopee",
+   "related": [
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "rượu nhân sâm",
+     "value": "100"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "ruou sam",
+     "value": "90"
+    }
+   ],
+   "expect": {
+    "absent": [
+     "rượu nhân sâm",
+     "ruou sam"
+    ],
+    "rejected": {
+     "rượu nhân sâm": "ruou",
+     "ruou sam": "ruou"
+    }
+   },
+   "source": "MẪU",
+   "scorer": "mkt_seo",
+   "label": "dev_draft"
+  },
+  {
+   "id": "seo-a03",
+   "kind": "trap_alcohol",
+   "sku": "savina-12v",
+   "channel": "shopee",
+   "related": [
+    {
+     "seed": "hồng sâm",
+     "section": "rising",
+     "query": "trà sâm buổi tối",
+     "value": "Breakout",
+     "flags": [
+      "ruou"
+     ]
+    },
+    {
+     "seed": "hồng sâm",
+     "section": "top",
+     "query": "hồng sâm cao cấp",
+     "value": "50"
+    }
+   ],
+   "expect": {
+    "present": [
+     "hồng sâm cao cấp"
+    ],
+    "absent": [
+     "trà sâm buổi tối"
+    ],
+    "rejected": {
+     "trà sâm buổi tối": "ruou"
+    }
+   },
+   "source": "MẪU",
+   "scorer": "mkt_seo",
+   "label": "dev_draft"
+  },
+  {
+   "id": "seo-a04",
+   "kind": "trap_alcohol",
+   "sku": "ruou-sam-binh-su-do-500ml",
+   "channel": "tiktok",
+   "related": [
+    {
+     "seed": "quà biếu",
+     "section": "top",
+     "query": "rượu sâm biếu tết",
+     "value": "100"
+    }
+   ],
+   "expect": {
+    "refused": "ruou"
+   },
+   "source": "MẪU",
+   "scorer": "mkt_seo",
+   "label": "dev_draft"
+  },
+  {
+   "id": "seo-n01",
+   "kind": "trap_ngoc_linh",
+   "sku": "saphraton-20v",
+   "channel": "shopee",
+   "related": [
+    {
+     "seed": "sâm ngọc linh",
+     "section": "top",
+     "query": "sâm ngọc linh",
+     "value": "100"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "nhân sâm tươi",
+     "value": "50"
+    }
+   ],
+   "expect": {
+    "present": [
+     "nhân sâm tươi"
+    ],
+    "absent": [
+     "sâm ngọc linh"
+    ],
+    "rejected": {
+     "sâm ngọc linh": "ngoc_linh_chua_xac_nhan"
+    }
+   },
+   "source": "MẪU",
+   "scorer": "mkt_seo",
+   "label": "dev_draft"
+  },
+  {
+   "id": "seo-n02",
+   "kind": "trap_ngoc_linh",
+   "sku": "savina-12v",
+   "channel": "shopee",
+   "related": [
+    {
+     "seed": "nhân sâm",
+     "section": "rising",
+     "query": "sam ngoc linh kon tum",
+     "value": "+500%"
+    }
+   ],
+   "expect": {
+    "absent": [
+     "sam ngoc linh kon tum"
+    ],
+    "rejected": {
+     "sam ngoc linh kon tum": "ngoc_linh_chua_xac_nhan"
+    }
+   },
+   "source": "MẪU",
+   "scorer": "mkt_seo",
+   "label": "dev_draft"
+  },
+  {
+   "id": "seo-b01",
+   "kind": "trap_banned",
+   "sku": "saphraton-20v",
+   "channel": "shopee",
+   "related": [
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "sâm chữa ung thư",
+     "value": "100"
+    },
+    {
+     "seed": "nhân sâm",
+     "section": "top",
+     "query": "thuốc bổ sâm",
+     "value": "90"
+    }
+   ],
+   "expect": {
+    "absent": [
+     "sâm chữa ung thư",
+     "thuốc bổ sâm"
+    ],
+    "rejected": {
+     "sâm chữa ung thư": "tu_cam",
+     "thuốc bổ sâm": "tu_cam"
+    }
+   },
+   "source": "MẪU",
+   "scorer": "mkt_seo",
+   "label": "dev_draft"
+  }
+ ]
+}

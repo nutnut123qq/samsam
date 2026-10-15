@@ -1,0 +1,22 @@
+=== E2E v7.1 Red Alert — DB riêng worktree (current_database=samsam_w71) (2026-10-12T11:27:26+07:00)
+[fixture] intel_items fx71 ids=[1, 2, 3, 4, 5]
+--- python -m pipelines.intel_alert --run
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+[done] scanned=5 alerts=1 dup=0 escalated=0 esc_dup=0 unrouted=1 alert_ids=[1] escalated_of=[]
+[warn] bộ từ khóa cảnh báo là GIẢ ĐỊNH — chờ Pháp chế/Quản lý MXH duyệt
+[RED-ALERT][warn] 1 cảnh báo đã ghi nhưng thiếu người nhận độc lập (external-dep) — fail-closed, exit 1
+exit=1
+--- --run lần 2 (không báo trùng)
+[done] scanned=4 alerts=0 dup=0 escalated=0 esc_dup=0 unrouted=0 alert_ids=[] escalated_of=[]
+[warn] bộ từ khóa cảnh báo là GIẢ ĐỊNH — chờ Pháp chế/Quản lý MXH duyệt
+exit=0
+--- --open
+[open] 1 cảnh báo đỏ intel chưa xác nhận:
+  #1 0.0h — [BÁO ĐỎ intel] Thu hồi lô sâm Sâm Sâm nghi giả mạo — CHƯA AI NHẬN (thiếu người nhận độc lập (external-dep))
+exit=0
+--- --run --open cùng lúc (usage)
+python -m pipelines.intel_alert: error: argument --open: not allowed with argument --run
+exit=2
+--- python -m pipelines.red_alert --check-routing
+[FAIL] thiếu người nhận độc lập (external-dep) — cảnh báo đỏ vẫn được ghi bảng red_alerts nhưng chưa có ai nhận; Pháp chế xác nhận người nhận rồi điền data/red_alert_routing.json
+exit=1

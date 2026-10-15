@@ -1,0 +1,47 @@
+# v5.4 fix vòng nghiệm thu (3 MINOR test-coverage) — 2026-10-14T22:48:39+07:00
+$ [targeted lần 1] python -m pytest -q tests/test_kd_affiliate.py -rs
+................................................                         [100%]
+48 passed in 27.64s
+$ [targeted lần 2] python -m pytest -q tests/test_kd_affiliate.py -rs
+................................................                         [100%]
+48 passed in 31.87s
+$ [targeted lần 3] python -m pytest -q tests/test_kd_affiliate.py -rs
+................................................                         [100%]
+48 passed in 27.01s
+# mutation (sửa tạm agents/kd_affiliate.py, khôi phục từ backup; cmp SAME sau đó)
+A: bỏ nhánh cch != ch / B: bỏ nhánh cch == 'web' / C: dùng l.vcode thay v.vcode / D: bỏ except-rollback trong issue()
+== mut A
+FAILED tests/test_kd_affiliate.py::test_db_attribute_code_channel_mismatch_and_web
+1 failed, 2 passed, 45 deselected in 22.71s
+== mut B
+FAILED tests/test_kd_affiliate.py::test_db_attribute_code_channel_mismatch_and_web
+1 failed, 2 passed, 45 deselected in 29.72s
+== mut C
+FAILED tests/test_kd_affiliate.py::test_db_attribute_voucher_from_latest_line_with_code
+2 failed, 1 passed, 45 deselected in 26.61s
+== mut D
+FAILED tests/test_kd_affiliate.py::test_db_issue_submit_error_rolls_back_code
+1 failed, 2 passed, 45 deselected in 21.49s
+
+[exited with code 0]
+$ [full] python -m pytest -q -rs -p no:cacheprovider (2026-10-14T23:35:40+07:00)
+exit=1
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.LockNotAvailable: canceling statement due to lock timeout
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: LockNotAvailable
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+4324 passed, 3 skipped, 1 error in 2212.95s (0:36:52)
+$ ruff check .
+All checks passed!
+# ghi chú: 1 error LockNotAvailable = cùng lớp vòng gate W54.7 lần 1 (lock_timeout
+# fixture trên DB samsam_infra dùng chung khi ≥3 full pytest của các version khác
+# chạy song song — đo lúc chạy: 4 tiến trình pytest đồng thời, full mất 36m52s).
+# Tên test lỗi KHÔNG giữ được (file output tạm đã xóa sau tail -12) — không chạy
+# full lần 2 theo quy định "1 full/vòng". 0 failed; test_kd_affiliate.py 48/48 ×3.

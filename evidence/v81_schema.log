@@ -1,0 +1,17 @@
+# v8.1 W81.1 schema decision_log — 2026-10-12 22:01:18 +0700
+## apply_schema lần 1
+[done] schema applied — 67 bảng public: …(danh sách bảng)
+rc=0
+## apply_schema lần 2
+[done] schema applied — 67 bảng public: …(danh sách bảng)
+rc=0
+## số bảng parse từ schema.sql
+67
+## git diff docs/schema.sql | grep -cE '^\+.*(alter table|drop table)'
+warning: in the working copy of 'docs/schema.sql', LF will be replaced by CRLF the next time Git touches it
+0
+## git diff --stat docs/roles.sql (rỗng = không đổi)
+[end]
+## pytest schema
+..                                                                       [100%]
+2 passed, 37 deselected in 3.58s

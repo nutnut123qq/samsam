@@ -1,0 +1,17 @@
+# v10.2 W102.7 full pytest (1 lần, sau vá nghiệm thu: runbook sx_tracuu, da_doitac go-live/PII)
+$ python -m pytest -q -rs
+start 2026-10-14T21:43:39+07:00
+exit=0 end 2026-10-14T22:08:14+07:00
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+4400 passed, 3 skipped in 1464.70s (0:24:24)
+skip = 3 test_dr_drill (Docker tắt — môi trường); baseline 4257 → 4400 pass
+targeted x3: evidence/v102_gate_targeted.log (527 passed ×3, 0 skipped)
+=== ruff 2026-10-14T22:08:27+07:00 ===
+All checks passed!
+ruff rc=0
+$ python -m py_compile <file mới/sửa>
+py_compile rc=0
+$ git diff --stat docs/schema.sql docs/roles.sql
+(rỗng = không đổi)

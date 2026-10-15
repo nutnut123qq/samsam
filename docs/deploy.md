@@ -79,6 +79,27 @@ internet.
   (Restart=always) — sửa 3 chỗ `<>` rồi `systemctl enable --now`.
 - Firewall chỉ mở port webhook; Postgres giữ localhost.
 
+## Streamlit UI — đăng nhập (v3.4)
+
+UI `streamlit run app/streamlit_app.py` **fail-closed**: `AUTH_MODE`
+trống/lạ = chặn mọi truy cập (chi tiết `docs/handover/sop.md` mục 9).
+
+- `AUTH_MODE=proxy` — danh tính lấy từ header
+  `Cf-Access-Authenticated-User-Email` do Cloudflare Access (reverse
+  proxy + SSO Google Workspace) đặt. **Chỉ an toàn khi Streamlit bind
+  `127.0.0.1`** và mọi truy cập đi qua proxy:
+  `streamlit run app/streamlit_app.py --server.address 127.0.0.1`.
+  Lộ cổng Streamlit ra ngoài = ai cũng tự đặt header giả mạo email bất
+  kỳ → vào với vai trò người đó. Firewall KHÔNG mở port 8501. Email phải
+  có trong `data/users.json` (chỉ cần `role`). SSO/DNS công ty =
+  external-dep (chưa dựng).
+- `AUTH_MODE=local` — user/mật khẩu scrypt trong `data/users.json`
+  (gitignored), sai 5 lần khóa 5 phút (khóa trong RAM — restart xóa).
+  Vẫn nên bind `127.0.0.1` + HTTPS qua proxy/tunnel (mật khẩu đi trên
+  kết nối).
+- `AUTH_MODE=dev` — không đăng nhập; bị ép chặn khi `DEPLOY=1`. KHÔNG
+  dùng trên máy public.
+
 ## Go-live checklist
 
 1. Cài deps: `pip install -r requirements.txt`

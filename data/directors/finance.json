@@ -1,0 +1,34 @@
+{
+  "_doc": "Cấu hình agent GĐ khối (v4.0, pipelines/director.py) — BẢN DEV SOẠN, CHƯA được TGĐ/chủ khối duyệt. approver_roles ⊂ pipelines.auth.ROLES — khối chưa có vai trò riêng, TẠM map 'tgd' (external-dep: TGĐ chốt). approvers/digest_recipients rỗng = chưa có người thật (external-dep, KHÔNG tự điền). object_types: loại việc agent nhân viên được đẩy vào hàng duyệt chung, sla_hours 1..720 (quá hạn → expired, không tự duyệt), risk low|medium|high (auto_policy chỉ áp low và chỉ khi chủ khối ký — bảng auto_policies ship rỗng). Không dùng 'content_draft' (giữ đường pipelines.store). v8.2: b2b_margin_review = tài chính rà biên báo giá B2B KD-A3 khi biên dưới ngưỡng hoặc thiếu giá vốn đã duyệt (payload nội bộ, không gửi khách).",
+  "block": "finance",
+  "name": "Giám đốc tài chính + Phòng kế toán + Phòng tài chính–kế hoạch",
+  "director_agent": "FIN-Director (CFO agent điều phối)",
+  "approver_roles": [
+    "tgd"
+  ],
+  "approvers": [],
+  "object_types": {
+    "invoice_batch": {
+      "sla_hours": 24,
+      "risk": "high"
+    },
+    "budget_change": {
+      "sla_hours": 48,
+      "risk": "high"
+    },
+    "pnl_report": {
+      "sla_hours": 72,
+      "risk": "medium"
+    },
+    "opex_over_x": {
+      "sla_hours": 72,
+      "risk": "high"
+    },
+    "b2b_margin_review": {
+      "sla_hours": 72,
+      "risk": "high"
+    }
+  },
+  "digest_recipients": [],
+  "due_soon_hours": 8
+}

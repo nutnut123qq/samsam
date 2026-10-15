@@ -1,0 +1,190 @@
+=== v7.3 W73.1/W73.2 scenario evidence — 2026-10-12 02:58:30 +07 — git b35f3eb+dirty
+
+$ python -m pytest -q tests/test_scenario.py
+.............................................                            [100%]
+45 passed in 0.94s
+
+$ grep -nE '^(import|from) (psycopg|openai|httpx|requests)|llm_gateway' pipelines/scenario.py
+(rc=1 — 1 = rỗng)
+
+$ grep -n 'time.sleep\|datetime.now\|date.today' tests/test_scenario.py
+(rc=1 — 1 = rỗng)
+
+$ python -m pipelines.scenario --sku saphraton-20v --channel shopee --weeks 13 --start 2026-10-12   (env PYTHONIOENCODING không đặt)
+GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt
+Khoảng thấp/cơ sở/cao — KHÔNG phải doanh số cam kết (đơn vị/tuần)
+SKU saphraton-20v · kênh shopee · 13 tuần
+tuần | sự kiện | thấp | cơ sở | cao | ghi chú
+2026-10-12 | - | 10 | 12 | 14 | 
+2026-10-19 | - | 10 | 12 | 14 | 
+2026-10-26 | - | 10 | 12 | 14 | 
+2026-11-02 | 11.11 | 10 | 13 | 17 | 
+2026-11-09 | 11.11 | 13 | 22 | 35 | 
+2026-11-16 | - | 10 | 12 | 14 | 
+2026-11-23 | - | 10 | 12 | 14 | 
+2026-11-30 | - | 10 | 12 | 14 | 
+2026-12-07 | 12.12 | 12 | 18 | 28 | 
+2026-12-14 | - | 10 | 12 | 14 | 
+2026-12-21 | tet_2027 | 11 | 14 | 19 | 
+2026-12-28 | tet_2027 | 12 | 17 | 23 | 
+2027-01-04 | tet_2027 | 13 | 20 | 29 | 
+exit=0
+
+$ python -m pipelines.scenario --sku ruou-sam-chai-thuy-tinh-500ml --channel shopee --weeks 13 --start 2026-10-12
+GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt
+Khoảng thấp/cơ sở/cao — KHÔNG phải doanh số cam kết (đơn vị/tuần)
+SKU ruou-sam-chai-thuy-tinh-500ml · kênh shopee · 13 tuần
+tuần | sự kiện | thấp | cơ sở | cao | ghi chú
+2026-10-12 | - | 0 | 0 | 0 | rượu: chỉ kênh offline
+2026-10-19 | - | 0 | 0 | 0 | rượu: chỉ kênh offline
+2026-10-26 | - | 0 | 0 | 0 | rượu: chỉ kênh offline
+2026-11-02 | 11.11 | 0 | 0 | 0 | rượu: chỉ kênh offline
+2026-11-09 | 11.11 | 0 | 0 | 0 | rượu: chỉ kênh offline
+2026-11-16 | - | 0 | 0 | 0 | rượu: chỉ kênh offline
+2026-11-23 | - | 0 | 0 | 0 | rượu: chỉ kênh offline
+2026-11-30 | - | 0 | 0 | 0 | rượu: chỉ kênh offline
+2026-12-07 | 12.12 | 0 | 0 | 0 | rượu: chỉ kênh offline
+2026-12-14 | - | 0 | 0 | 0 | rượu: chỉ kênh offline
+2026-12-21 | tet_2027 | 0 | 0 | 0 | rượu: chỉ kênh offline
+2026-12-28 | tet_2027 | 0 | 0 | 0 | rượu: chỉ kênh offline
+2027-01-04 | tet_2027 | 0 | 0 | 0 | rượu: chỉ kênh offline
+exit=0
+
+$ python -m pipelines.scenario --sku ruou-sam-chai-thuy-tinh-500ml --channel offline --weeks 3 --start 2027-01-25
+GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt
+Khoảng thấp/cơ sở/cao — KHÔNG phải doanh số cam kết (đơn vị/tuần)
+SKU ruou-sam-chai-thuy-tinh-500ml · kênh offline · 3 tuần
+tuần | sự kiện | thấp | cơ sở | cao | ghi chú
+2027-01-25 | tet_2027 | 7 | 11 | 17 | 
+2027-02-01 | tet_2027 | 2 | 4 | 6 | 
+2027-02-08 | tet_2027 | 3 | 4 | 6 | 
+exit=0
+
+$ python -m pipelines.scenario --sku khong-co --channel shopee
+[err] SKU 'khong-co' không có trong golden
+exit=1
+
+$ python -m pipelines.scenario --sku saphraton-20v --channel shopee --weeks abc
+python -m pipelines.scenario: error: argument --weeks: phải là số nguyên
+exit=2
+
+=== chạy lại sau Phần B (marker _VALIDATED không giả được bằng JSON, +1 test) ===
+$ python -m pytest -q tests/test_scenario.py
+46 passed in 2.08s
+$ grep -nE '^(import|from) (psycopg|openai|httpx|requests)|llm_gateway' pipelines/scenario.py
+(rc=1 — 1 = rỗng)
+
+=== Vòng sửa nghiệm thu (5 MINOR: overflow/type config, event channels, làm tròn bất đối xứng, _is_num int khổng lồ, test cổng DPIA) — 2026-10-12 03:36:36 +07 ===
+$ python -m pytest -q tests/test_scenario.py tests/test_persona_sim.py   (lần 1)
+112 passed in 18.85s
+$ python -m pytest -q tests/test_scenario.py tests/test_persona_sim.py   (lần 2)
+112 passed in 21.47s
+$ python -m pytest -q tests/test_scenario.py tests/test_persona_sim.py   (lần 3)
+112 passed in 14.92s
+
+$ python -m pipelines.scenario --sku saphraton-40v --channel offline --weeks 2 --start 2026-11-09   (offline tuần 11.11: KHÔNG nhân hệ số sàn)
+GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt
+Khoảng thấp/cơ sở/cao — KHÔNG phải doanh số cam kết (đơn vị/tuần)
+SKU saphraton-40v · kênh offline · 2 tuần
+tuần | sự kiện | thấp | cơ sở | cao | ghi chú
+2026-11-09 | - | 4 | 5 | 6 | 
+2026-11-16 | - | 4 | 5 | 6 | 
+exit=0
+
+$ python -m pipelines.scenario --sku saphraton-20v --channel shopee --weeks 13 --start 2026-10-12
+GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt
+Khoảng thấp/cơ sở/cao — KHÔNG phải doanh số cam kết (đơn vị/tuần)
+SKU saphraton-20v · kênh shopee · 13 tuần
+tuần | sự kiện | thấp | cơ sở | cao | ghi chú
+2026-10-12 | - | 10 | 12 | 14 | 
+2026-10-19 | - | 10 | 12 | 14 | 
+2026-10-26 | - | 10 | 12 | 14 | 
+2026-11-02 | 11.11 | 10 | 13 | 18 | 
+2026-11-09 | 11.11 | 13 | 22 | 35 | 
+2026-11-16 | - | 10 | 12 | 14 | 
+2026-11-23 | - | 10 | 12 | 14 | 
+2026-11-30 | - | 10 | 12 | 14 | 
+2026-12-07 | 12.12 | 12 | 18 | 28 | 
+2026-12-14 | - | 10 | 12 | 14 | 
+2026-12-21 | tet_2027 | 10 | 14 | 20 | 
+2026-12-28 | tet_2027 | 11 | 17 | 24 | 
+2027-01-04 | tet_2027 | 13 | 20 | 29 | 
+exit=0
+
+$ python -m pipelines.scenario --sku saphraton-80v --channel shopee --weeks 2 --start 2026-10-12   (baseline 3: khoảng không sập 3|3|3)
+GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt
+Khoảng thấp/cơ sở/cao — KHÔNG phải doanh số cam kết (đơn vị/tuần)
+SKU saphraton-80v · kênh shopee · 2 tuần
+tuần | sự kiện | thấp | cơ sở | cao | ghi chú
+2026-10-12 | - | 2 | 3 | 4 | 
+2026-10-19 | - | 2 | 3 | 4 | 
+exit=0
+
+$ python -m pipelines.scenario --sku ruou-sam-chai-thuy-tinh-500ml --channel shopee --weeks 3 --start 2026-10-12
+GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt
+Khoảng thấp/cơ sở/cao — KHÔNG phải doanh số cam kết (đơn vị/tuần)
+SKU ruou-sam-chai-thuy-tinh-500ml · kênh shopee · 3 tuần
+tuần | sự kiện | thấp | cơ sở | cao | ghi chú
+2026-10-12 | - | 0 | 0 | 0 | rượu: chỉ kênh offline
+2026-10-19 | - | 0 | 0 | 0 | rượu: chỉ kênh offline
+2026-10-26 | - | 0 | 0 | 0 | rượu: chỉ kênh offline
+exit=0
+
+# probe 4 biến thể config hỏng từng lọt traceback -> nay ScenarioError
+m1 ScenarioError: chưa có ngày Tết năm [2027] trong TET_DATES
+m2 ScenarioError: trend.high: số quá lớn
+m3 ScenarioError: events[0].window[0].offset: phải là int trong -104..104
+m4 ScenarioError: saphraton-20v × shopee: kết quả tràn số (giả định quá lớn)
+m5 ScenarioError: chưa có ngày Tết năm 2027.0 trong TET_DATES
+
+# số dòng SKU×kênh×tuần được phép (26 tuần từ 2026-10-12) có low==base==high>0
+0/598 dòng sập thành 1 điểm (trước sửa: 105/598)
+
+# mutation (sửa tạm từng chỗ vá -> test liên quan phải ĐỎ, file khôi phục sau mỗi mutant)
+M1 dpia bool(): rc=1 -> RED (killed) | 1 failed, 2 passed, 40 deselected in 2.66s
+M2 _is_num isfinite(int): rc=1 -> RED (killed) | 1 failed, 46 deselected in 1.90s
+M3 _num no overflow guard: rc=1 -> RED (killed) | 1 failed, 17 passed, 35 deselected in 2.21s
+M4 tet_date no int check: rc=1 -> RED (killed) | 1 failed, 32 deselected in 1.97s
+M5 offset unbounded: rc=1 -> RED (killed) | 1 failed, 20 passed, 35 deselected in 2.64s
+M6 no finite check in project: rc=1 -> RED (killed) | 1 failed, 60 deselected in 1.70s
+M7 events ignore channels: rc=1 -> RED (killed) | 1 failed, 63 deselected in 1.97s
+M8 symmetric rounding: rc=1 -> RED (killed) | 1 failed, 62 deselected in 2.50s
+M9 no round6: rc=1 -> RED (killed) | 1 failed, 64 deselected in 2.08s
+$ python -m pytest -q tests/test_scenario.py tests/test_persona_sim.py   (lần 1, sau gom dòng nối bằng ngoặc)
+112 passed in 12.44s
+$ python -m pytest -q tests/test_scenario.py tests/test_persona_sim.py   (lần 2, sau gom dòng nối bằng ngoặc)
+112 passed in 11.66s
+$ python -m pytest -q tests/test_scenario.py tests/test_persona_sim.py   (lần 3, sau gom dòng nối bằng ngoặc)
+112 passed in 11.93s
+$ ruff check .
+All checks passed!
+ruff exit=0
+
+=== v7.3 fix MINOR date-boundary (OverflowError sát biên date) — 2026-10-11 20:55:34 +07 — git b35f3eb+dirty
+$ python -m pipelines.scenario --sku saphraton-20v --channel shopee --weeks 13 --start 9999-12-20
+usage: python -m pipelines.scenario [-h] --sku SKU --channel
+                                    {shopee,tiktok,web,facebook,zalo,chatbot,offline}
+                                    [--weeks WEEKS] [--start START] [--json]
+python -m pipelines.scenario: error: argument --start: ngày phải trong 2000-01-01..2100-12-31
+exit=2
+$ probe trực tiếp: project(start=9999-12-31) / validate event 0001-01-01 offset -1 / 9999-12-31 offset +1
+9999-12-31 -> ScenarioError: start phải trong 2000-01-01..2100-12-31
+0001-01-01 -> ScenarioError: start phải trong 2000-01-01..2100-12-31
+0001-01-01 -1 -> ScenarioError: events[0].date: phải trong 2000-01-01..2100-12-31
+9999-12-31 1 -> ScenarioError: events[0].date: phải trong 2000-01-01..2100-12-31
+$ mutation check (gỡ từng guard -> test RED)
+D1 _date_arg no range: rc=1 -> RED (killed) | 1 failed, 4 passed, 63 deselected in 2.43s
+D2 project no start range: rc=1 -> RED (killed) | 1 failed, 63 deselected in 1.96s
+D3 event date no range: rc=1 -> RED (killed) | 1 failed, 1 passed, 63 deselected in 1.86s
+restored: True
+$ python -m pytest -q tests/test_scenario.py   (lần 1)
+68 passed in 2.38s
+$ python -m pytest -q tests/test_scenario.py   (lần 2)
+68 passed in 1.49s
+$ python -m pytest -q tests/test_scenario.py   (lần 3)
+68 passed in 1.99s
+$ python -m pytest -q   (full, 1 lần)
+946 passed in 227.67s (0:03:47)
+$ ruff check .
+All checks passed!
+ruff exit=0

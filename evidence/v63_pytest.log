@@ -1,0 +1,14 @@
+### v6.3 vong 3 — tong hop pytest (output day du: v63_targeted_{1,2,3}.log, v63_full.log)
+targeted 1: ### targeted run 1 vong 3 (2026-10-13T01:05:47+07:00): pytho... -> 481 passed in 675.15s (0:11:15) exit=0
+targeted 2: ### targeted run 2 vong 3 (2026-10-13T01:17:29+07:00): pytho... -> 481 passed in 454.12s (0:07:34) exit=0
+targeted 3: ### targeted run 3 vong 3 (2026-10-13T01:25:29+07:00): pytho... -> 481 passed in 473.92s (0:07:53) exit=0
+targeted -rs: evidence/v63_targeted_1.log:0 evidence/v63_targeted_2.log:0 evidence/v63_targeted_3.log:0 evidence/v63_targeted_vong1_fail.log:0  (0 skip — test DB that + ffmpeg/font chay that)
+full: 1 failed, 3620 passed in 1923.33s (0:32:03) exit=1; skip: 0
+baseline 3533 passed (contract) -> nay 3621 test (3620 pass + 1 fail)
+
+### 1 fail full = tests/test_garden_director.py::test_bulletin_numbers_match_reference_sql — NGOAI v6.3 (wall-clock time-bomb co san):
+- git diff HEAD agents/garden_director.py tests/test_garden_director.py agents/garden.py: rong; schema.sql chi them khoi video_assets
+- fixture insert garden_media created_at = default now() (thuc te 2026-10-13 02:xx +07); bulletin until 2026-10-12 -> q6 loc created_at < 2026-10-13 00:00 +07 -> [] thay vi [('KV-A01', 1)]
+- chay rieng luc 2026-10-13T02:14:58+07:00:
+FAILED tests/test_garden_director.py::test_bulletin_numbers_match_reference_sql
+1 failed, 64 passed in 116.49s (0:01:56)

@@ -1,0 +1,19 @@
+# v4.4 W44.4 evidence — 2026-10-11T20:03:52Z (UTC)
+## koc docs/legal/mau-hop-dong-koc-NHAP.md
+[ok] đủ 9 điều khoản bắt buộc (koc) theo kiểm từ khóa — KHÔNG thay rà soát của Pháp chế/luật sư.
+exit=0
+## dai_ly docs/legal/mau-hop-dong-dai-ly-NHAP.md
+[ok] đủ 9 điều khoản bắt buộc (dai_ly) theo kiểm từ khóa — KHÔNG thay rà soát của Pháp chế/luật sư.
+exit=0
+## xoa Dieu 5 (ruou) khoi mau dai_ly -> exit 1
+[thiếu] 1 điều khoản bắt buộc (dai_ly):
+  - cam_ruou: Cấm quảng cáo, khuyến mại rượu (Luật 44/2019 Đ5)
+Kiểm từ khóa — KHÔNG thay rà soát của Pháp chế/luật sư.
+exit=1
+## usage
+[err] file không tồn tại
+exit=2
+contract_check.py: error: argument --kind: invalid choice: 'ncc' (choose from 'dai_ly', 'koc')
+exit=2
+## test
+33 passed in 0.92s

@@ -1,0 +1,642 @@
+===== targeted run 1/3 2026-10-12 23:04:57 =====
+........................................................................ [  7%]
+........................................................................ [ 14%]
+........................................................................ [ 21%]
+.................................................................F...... [ 28%]
+..................................................F.................F... [ 35%]
+.............................................................F.......... [ 42%]
+........................................................................ [ 50%]
+........................................................................ [ 57%]
+.F...F.................................................F................ [ 64%]
+........................................................................ [ 71%]
+........................................................................ [ 78%]
+........................................F..FFFFFFFFFFFFFFFFF............ [ 85%]
+........................................................................ [ 92%]
+........................................................................ [100%]
+================================== FAILURES ===================================
+_______________________ test_cli_db_down_exit1_no_hang ________________________
+
+    def test_cli_db_down_exit1_no_hang():
+        env = dict(os.environ,
+                   DATABASE_URL="postgresql://u@10.255.255.1:5432/x",
+                   CONTACT_VAULT_KEY="", PYTHONIOENCODING="utf-8")
+        p = subprocess.run([sys.executable, "-m", "ingest.crm", "--report"],
+                           cwd=ROOT, env=env, capture_output=True, timeout=60,
+                           check=False)
+>       assert p.returncode == 1, p.stdout + p.stderr
+E       AssertionError: b''
+E       assert 3221225794 == 1
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'ingest.crm', '--report'], returncode=3221225794, stdout=b'', stderr=b'').returncode
+
+tests\test_crm.py:352: AssertionError
+_____________________ test_cli_module_dry_run_subprocess ______________________
+
+    def test_cli_module_dry_run_subprocess():
+        # DATABASE_URL rỗng: job_run không ghi job_runs của DB thật từ test
+        # (load_dotenv không ghi đè biến đã có).
+        env = dict(os.environ, PYTHONIOENCODING="utf-8", DATABASE_URL="")
+        r = subprocess.run([sys.executable, "-m", "pipelines.director", "--all",
+                            "--dry-run"], cwd=ROOT, env=env, capture_output=True,
+                           timeout=60, encoding="utf-8", errors="replace",
+                           check=False)
+>       assert r.returncode == 0 and "11 khối hợp lệ" in r.stdout, r.stderr
+E       AssertionError: 
+E       assert (3221225794 == 0)
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'pipelines.director', '--all', '--dry-run'], returncode=3221225794, stdout='', stderr='').returncode
+
+tests\test_director.py:198: AssertionError
+_______________________ test_cli_real_db_negative_only ________________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v82) at 0x1c0d7b99820>
+
+    def test_cli_real_db_negative_only(db):
+        r = _cli("pipelines.approval_queue", "--approve", "999999999", "--by",
+                 "X")
+>       assert r.returncode == 1 and "không tìm thấy" in r.stderr, r.stderr
+E       AssertionError: 
+E       assert (3221225794 == 1)
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'pipelines.approval_queue', '--approve', '999999999', '--by', 'X'], returncode=3221225794, stdout='', stderr='').returncode
+
+tests\test_director_framework.py:535: AssertionError
+___________________________ test_cli_db_down_exit2 ____________________________
+
+    def test_cli_db_down_exit2():
+        env = dict(os.environ, PYTHONIOENCODING="utf-8",
+                   DATABASE_URL="postgresql://u@10.255.255.1:5432/x")
+        t0 = time.monotonic()
+        r = subprocess.run([sys.executable, "-m", "agents.sales_director",
+                            "--run", "--dry-run"], cwd=ROOT, env=env,
+                           capture_output=True, timeout=120, encoding="utf-8",
+                           errors="replace", check=False)
+>       assert r.returncode == 2 and "[error]" in r.stderr, r.stderr
+E       AssertionError: 
+E       assert (3221225794 == 2)
+E        +  where 3221225794 = CompletedProcess(args=['C:\\Users\\hahuy\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', '-m', 'agents.sales_director', '--run', '--dry-run'], returncode=3221225794, stdout='', stderr='').returncode
+
+tests\test_sales_director.py:934: AssertionError
+______________________ test_git_dirty_and_head_real_repo ______________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_git_dirty_and_head_real_r0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0C5B64F50>
+
+    @pytest.mark.skipif(shutil.which("git") is None, reason="không có git")
+    def test_git_dirty_and_head_real_repo(tmp_path, monkeypatch):
+        """Chốt chống ghi PASS cho tree bẩn chạy git THẬT (không monkeypatch
+        _git_head/_git_dirty): tracked sửa -> bẩn; untracked trong input
+        harness -> bẩn; untracked ngoài input -> sạch."""
+        def git(*a):
+            subprocess.run(["git", "-C", str(tmp_path), "-c", "user.name=t",
+                            "-c", "user.email=t@example.invalid", *a],
+                           check=True, capture_output=True)
+        (tmp_path / "data" / "eval").mkdir(parents=True)
+        (tmp_path / "data" / "eval" / "x.jsonl").write_bytes(b"{}\n")
+        (tmp_path / "other.txt").write_bytes(b"a\n")
+>       git("init", "-q")
+
+tests\test_agent_eval.py:435: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_agent_eval.py:429: in git
+    subprocess.run(["git", "-C", str(tmp_path), "-c", "user.name=t",
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+input = None, capture_output = True, timeout = None, check = True
+popenargs = (['git', '-C', 'C:\\Users\\hahuy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-2203\\test_git_dirty_and_head_real_r0', '-c', 'user.name=t', '-c', ...],)
+kwargs = {'stderr': -1, 'stdout': -1}
+process = <Popen: returncode: 3221225794 args: ['git', '-C', 'C:\\Users\\hahuy\\AppDat...>
+stdout = b'', stderr = b'', retcode = 3221225794
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+    
+        If timeout is given, and the process takes too long, a TimeoutExpired
+        exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['git', '-C', 'C:\\Users\\hahuy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-2203\\test_git_dirty_and_head_real_r0', '-c', 'user.name=t', '-c', 'user.email=t@example.invalid', 'init', '-q']' returned non-zero exit status 3221225794.
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\subprocess.py:571: CalledProcessError
+__________________ test_co_khi_cli_no_record_twice_identical __________________
+
+    def test_co_khi_cli_no_record_twice_identical():
+        cmd = [sys.executable, str(ROOT / "scripts" / "agent_eval.py"), "--agent",
+               "co_khi", "--no-record"]
+        outs = [subprocess.run(cmd, cwd=ROOT, capture_output=True, timeout=120,
+                               check=False) for _ in range(2)]
+>       assert [o.returncode for o in outs] == [0, 0]
+E       assert [3221225794, 3221225794] == [0, 0]
+E         
+E         At index 0 diff: 3221225794 != 0
+E         Use -v to get more diff
+
+tests\test_agent_eval.py:511: AssertionError
+______________ test_sales_director_cli_no_record_twice_identical ______________
+
+    def test_sales_director_cli_no_record_twice_identical():
+        _, cases = _rows("sales_director")
+        cmd = [sys.executable, str(ROOT / "scripts" / "agent_eval.py"), "--agent",
+               "sales_director", "--no-record"]
+        outs = [subprocess.run(cmd, cwd=ROOT, capture_output=True, timeout=120,
+                               check=False) for _ in range(2)]
+>       assert [o.returncode for o in outs] == [0, 0]
+E       assert [3221225794, 3221225794] == [0, 0]
+E         
+E         At index 0 diff: 3221225794 != 0
+E         Use -v to get more diff
+
+tests\test_agent_eval.py:941: AssertionError
+______________________ test_backup_manifest_matches_live ______________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_backup_manifest_matches_l0/bk')
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
+
+    def test_backup_manifest_matches_live(env, live):
+        before = _counts(live)
+>       assert bk.main() == 0
+E       assert 1 == 0
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E        +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:416: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+_______________________ test_retention_and_offsite_dir ________________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_retention_and_offsite_dir0/bk')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0C5BD9520>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_retention_and_offsite_dir0')
+
+    def test_retention_and_offsite_dir(env, monkeypatch, tmp_path):
+        off = tmp_path / "off"
+        monkeypatch.setenv("BACKUP_KEEP", "3")
+        monkeypatch.setenv("BACKUP_OFFSITE", f"dir:{off}")
+        env.mkdir(parents=True)
+        (env / "notes.txt").write_text("giữ", encoding="utf-8")
+        broken = env / "samsam_v36_20200101_000000_vn.dump.manifest.json"
+        broken.write_text("{", encoding="utf-8")
+        names = []
+        for _ in range(4):
+>           assert bk.main() == 0
+E           assert 1 == 0
+E            +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E            +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:465: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+_______________________ test_encrypted_backup_and_drill _______________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_encrypted_backup_and_dril0/bk')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0C63E2C60>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_encrypted_backup_and_dril0')
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
+
+    def test_encrypted_backup_and_drill(env, monkeypatch, tmp_path, live):
+        openssl = bk.find_openssl()
+        assert openssl, "máy gate phải có openssl"
+        pf = tmp_path / "pass.txt"
+        pf.write_text("dung-passphrase-test\n", encoding="utf-8")
+        monkeypatch.setenv("BACKUP_PASSPHRASE_FILE", str(pf))
+>       assert bk.main() == 0
+E       assert 1 == 0
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E        +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:483: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+______________________ test_offsite_s3_exit3_keeps_local ______________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_offsite_s3_exit3_keeps_lo0/bk')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0C5C47620>
+
+    def test_offsite_s3_exit3_keeps_local(env, monkeypatch):
+        monkeypatch.setenv("BACKUP_OFFSITE", "s3://b/p")
+>       assert bk.main() == 3
+E       assert 1 == 3
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E        +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:525: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+__________________________ test_drill_ok_and_dropped __________________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_ok_and_dropped0/bk')
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
+capsys = <_pytest.capture.CaptureFixture object at 0x000001C0D819A780>
+
+    def test_drill_ok_and_dropped(env, live, capsys):
+>       assert bk.main() == 0
+E       assert 1 == 0
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E        +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:533: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+__________________ test_drill_refuses_current_db[samsam_v36] __________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_refuses_current_db_0/bk')
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0D81275F0>
+target = 'samsam_v36'
+
+    @pytest.mark.parametrize("target", ["samsam_v36", "postgres", "CURRENT"])
+    def test_drill_refuses_current_db(env, live, monkeypatch, target):
+>       assert bk.main() == 0
+E       assert 1 == 0
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E        +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:547: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+___________________ test_drill_refuses_current_db[postgres] ___________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_refuses_current_db_1/bk')
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0D8127530>
+target = 'postgres'
+
+    @pytest.mark.parametrize("target", ["samsam_v36", "postgres", "CURRENT"])
+    def test_drill_refuses_current_db(env, live, monkeypatch, target):
+>       assert bk.main() == 0
+E       assert 1 == 0
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E        +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:547: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+___________________ test_drill_refuses_current_db[CURRENT] ____________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_refuses_current_db_2/bk')
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0D8127D40>
+target = 'CURRENT'
+
+    @pytest.mark.parametrize("target", ["samsam_v36", "postgres", "CURRENT"])
+    def test_drill_refuses_current_db(env, live, monkeypatch, target):
+>       assert bk.main() == 0
+E       assert 1 == 0
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E        +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:547: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+____________________ test_drill_refuses_existing_drill_db _____________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_refuses_existing_dr0/bk')
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
+
+    def test_drill_refuses_existing_drill_db(env, live):
+>       assert bk.main() == 0
+E       assert 1 == 0
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E        +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:561: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+_________________ test_drill_corrupt_byte_fails_before_create _________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_corrupt_byte_fails_0/bk')
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
+
+    def test_drill_corrupt_byte_fails_before_create(env, live):
+>       assert bk.main() == 0
+E       assert 1 == 0
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E        +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:576: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+____________________ test_drill_newest_broken_no_fallback _____________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_newest_broken_no_fa0/bk')
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
+
+    def test_drill_newest_broken_no_fallback(env, live):
+>       assert bk.main() == 0
+E       assert 1 == 0
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E        +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:590: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+_______________________ test_drill_mismatch_still_drops _______________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_mismatch_still_drop0/bk')
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
+
+    def test_drill_mismatch_still_drops(env, live):
+>       assert bk.main() == 0
+E       assert 1 == 0
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E        +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:601: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+_____________ test_retention_error_does_not_block_offsite_or_log ______________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_retention_error_does_not_0/bk')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0C6389F70>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_retention_error_does_not_0')
+
+    def test_retention_error_does_not_block_offsite_or_log(env, monkeypatch,
+                                                          tmp_path):
+        """Xóa bản cũ lỗi (file bị khóa) → vẫn exit 0, offsite vẫn chạy,
+        backup_runs vẫn có dòng, lỗi ghi ở `retention_error`."""
+        off = tmp_path / "off"
+        monkeypatch.setenv("BACKUP_KEEP", "1")
+        monkeypatch.setenv("BACKUP_OFFSITE", f"dir:{off}")
+>       assert bk.main() == 0
+E       assert 1 == 0
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E        +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:621: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+________________ test_failure_after_partial_cleans_up[pg_dump] ________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_failure_after_partial_cle0/bk')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0D81271D0>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_failure_after_partial_cle0')
+stage = 'pg_dump'
+
+    @pytest.mark.parametrize("stage", ["pg_dump", "openssl"])
+    def test_failure_after_partial_cleans_up(env, monkeypatch, tmp_path, stage):
+        """Lỗi SAU khi `.partial` đã có dữ liệu (pg_dump/openssl exit≠0) → exit 1,
+        không còn `.partial` (bản rõ có PII), không dump/manifest, nhật ký fail."""
+        if stage == "openssl":
+            pf = tmp_path / "pass.txt"
+            pf.write_bytes(b"dung-passphrase-test-dai\n")
+            monkeypatch.setenv("BACKUP_PASSPHRASE_FILE", str(pf))
+        real_run = bk.subprocess.run
+        seen = []
+    
+        def fake_run(argv, *a, **k):
+            if stage == "pg_dump" and "-Fc" in argv:
+                k["stdout"].write(b"PGDMP-du-lieu-dang-do")
+                k["stdout"].flush()
+                seen.append(Path(k["stdout"].name))
+                assert seen[-1].exists() and seen[-1].stat().st_size > 0
+                return subprocess.CompletedProcess(argv, 1, b"", b"boom")
+            if stage == "openssl" and argv[1:2] == ["enc"]:
+                out = Path(argv[argv.index("-out") + 1])
+                out.write_bytes(b"Salted__dang-do")
+                plain = Path(argv[argv.index("-in") + 1])
+                assert plain.name.endswith(".partial")
+                assert plain.read_bytes()[:5] == b"PGDMP"
+                seen.extend([plain, out])
+                return subprocess.CompletedProcess(argv, 1, b"", b"bad")
+            return real_run(argv, *a, **k)
+        monkeypatch.setattr(bk.subprocess, "run", fake_run)
+        assert bk.main() == 1
+>       assert seen, "lỗi phải xảy ra SAU khi .partial đã tồn tại"
+E       AssertionError: lỗi phải xảy ra SAU khi .partial đã tồn tại
+E       assert []
+
+tests\test_db_backup.py:673: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+________________ test_failure_after_partial_cleans_up[openssl] ________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_failure_after_partial_cle1/bk')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0D81240E0>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_failure_after_partial_cle1')
+stage = 'openssl'
+
+    @pytest.mark.parametrize("stage", ["pg_dump", "openssl"])
+    def test_failure_after_partial_cleans_up(env, monkeypatch, tmp_path, stage):
+        """Lỗi SAU khi `.partial` đã có dữ liệu (pg_dump/openssl exit≠0) → exit 1,
+        không còn `.partial` (bản rõ có PII), không dump/manifest, nhật ký fail."""
+        if stage == "openssl":
+            pf = tmp_path / "pass.txt"
+            pf.write_bytes(b"dung-passphrase-test-dai\n")
+            monkeypatch.setenv("BACKUP_PASSPHRASE_FILE", str(pf))
+        real_run = bk.subprocess.run
+        seen = []
+    
+        def fake_run(argv, *a, **k):
+            if stage == "pg_dump" and "-Fc" in argv:
+                k["stdout"].write(b"PGDMP-du-lieu-dang-do")
+                k["stdout"].flush()
+                seen.append(Path(k["stdout"].name))
+                assert seen[-1].exists() and seen[-1].stat().st_size > 0
+                return subprocess.CompletedProcess(argv, 1, b"", b"boom")
+            if stage == "openssl" and argv[1:2] == ["enc"]:
+                out = Path(argv[argv.index("-out") + 1])
+                out.write_bytes(b"Salted__dang-do")
+                plain = Path(argv[argv.index("-in") + 1])
+                assert plain.name.endswith(".partial")
+                assert plain.read_bytes()[:5] == b"PGDMP"
+                seen.extend([plain, out])
+                return subprocess.CompletedProcess(argv, 1, b"", b"bad")
+            return real_run(argv, *a, **k)
+        monkeypatch.setattr(bk.subprocess, "run", fake_run)
+        assert bk.main() == 1
+>       assert seen, "lỗi phải xảy ra SAU khi .partial đã tồn tại"
+E       AssertionError: lỗi phải xảy ra SAU khi .partial đã tồn tại
+E       assert []
+
+tests\test_db_backup.py:673: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+_____________ test_offsite_dir_failure_exit3_keeps_local[oserror] _____________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_offsite_dir_failure_exit30/bk')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0D7B9B350>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_offsite_dir_failure_exit30')
+mode = 'oserror'
+
+    @pytest.mark.parametrize("mode", ["oserror", "sha_mismatch"])
+    def test_offsite_dir_failure_exit3_keeps_local(env, monkeypatch, tmp_path,
+                                                   mode):
+        off = tmp_path / "off"
+        monkeypatch.setenv("BACKUP_OFFSITE", f"dir:{off}")
+    
+        def bad_copy(src, dst):
+            Path(dst).write_bytes(b"ban-chep-hong")
+            if mode == "oserror":
+                raise OSError(28, "No space left on device")
+            return dst
+        monkeypatch.setattr(bk.shutil, "copyfile", bad_copy)
+>       assert bk.main() == 3
+E       assert 1 == 3
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E        +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:694: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+__________ test_offsite_dir_failure_exit3_keeps_local[sha_mismatch] ___________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_offsite_dir_failure_exit31/bk')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0C5BFFF80>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_offsite_dir_failure_exit31')
+mode = 'sha_mismatch'
+
+    @pytest.mark.parametrize("mode", ["oserror", "sha_mismatch"])
+    def test_offsite_dir_failure_exit3_keeps_local(env, monkeypatch, tmp_path,
+                                                   mode):
+        off = tmp_path / "off"
+        monkeypatch.setenv("BACKUP_OFFSITE", f"dir:{off}")
+    
+        def bad_copy(src, dst):
+            Path(dst).write_bytes(b"ban-chep-hong")
+            if mode == "oserror":
+                raise OSError(28, "No space left on device")
+            return dst
+        monkeypatch.setattr(bk.shutil, "copyfile", bad_copy)
+>       assert bk.main() == 3
+E       assert 1 == 3
+E        +  where 1 = <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0>()
+E        +    where <function private_umask.<locals>.wrapper at 0x000001C0C5BDEAC0> = bk.main
+
+tests\test_db_backup.py:694: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+________________ test_passphrase_without_openssl_fails_closed _________________
+
+env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_passphrase_without_openss0/bk')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0D819E510>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_passphrase_without_openss0')
+
+    def test_passphrase_without_openssl_fails_closed(env, monkeypatch, tmp_path):
+        pf = tmp_path / "pass.txt"
+        pf.write_bytes(b"dung-passphrase-test-dai\n")
+        monkeypatch.setenv("BACKUP_PASSPHRASE_FILE", str(pf))
+        monkeypatch.setattr(bk, "find_openssl", lambda: None)
+        assert bk.main() == 1
+        for p in env.iterdir():
+            assert p.read_bytes()[:5] != b"PGDMP", p.name
+        assert not list(env.glob("*.partial")) and _dumps(env) == []
+        rec = _last(env / "backup_runs.jsonl")
+>       assert rec["status"] == "fail" and "openssl" in rec["error"]
+E       AssertionError: assert ('fail' == 'fail'
+E         
+E           fail and 'openssl' in 'pg_dump --version lỗi')
+
+tests\test_db_backup.py:715: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[err] backup lỗi: pg_dump --version lỗi
+25 failed, 983 passed in 447.85s (0:07:27)
+exit=1 (run 1)
+===== targeted run 2/3 2026-10-12 23:13:17 =====
+........................................................................ [  7%]
+........................................................................ [ 14%]
+........................................................................ [ 21%]
+........................................................................ [ 28%]
+........................................................................ [ 35%]
+........................................................................ [ 42%]
+........................................................................ [ 50%]
+........................................................................ [ 57%]
+........................................................................ [ 64%]
+........................................................................ [ 71%]
+........................................................................ [ 78%]
+........................................................................ [ 85%]
+........................................................................ [ 92%]
+........................................................................ [100%]
+1008 passed in 423.37s (0:07:03)
+exit=0 (run 2)
+===== targeted run 3/3 2026-10-12 23:20:27 =====
+........................................................................ [  7%]
+........................................................................ [ 14%]
+........................................................................ [ 21%]
+........................................................................ [ 28%]
+........................................................................ [ 35%]
+........................................................................ [ 42%]
+........................................................................ [ 50%]
+........................................................................ [ 57%]
+........................................................................ [ 64%]
+........................................................................ [ 71%]
+........................................................................ [ 78%]
+........................................................................ [ 85%]
+........................................................................ [ 92%]
+........................................................................ [100%]
+1008 passed in 430.19s (0:07:10)
+exit=0 (run 3)
+ALL-DONE
+===== targeted run 4/3 (vòng resume — run 1 đỏ do môi trường: subprocess 0xC0000142 / pg_dump --version lỗi dưới tải; chuỗi xanh liên tiếp = run 2,3,4) 2026-10-13 01:06:17 =====
+........................................................................ [  7%]
+........................................................................ [ 14%]
+........................................................................ [ 21%]
+........................................................................ [ 28%]
+........................................................................ [ 35%]
+........................................................................ [ 42%]
+........................................................................ [ 50%]
+........................................................................ [ 57%]
+........................................................................ [ 64%]
+........................................................................ [ 71%]
+........................................................................ [ 78%]
+........................................................................ [ 85%]
+........................................................................ [ 92%]
+........................................................................ [100%]
+1008 passed in 1234.05s (0:20:34)
+exit=0 (run 4)

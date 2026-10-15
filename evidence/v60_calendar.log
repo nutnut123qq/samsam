@@ -1,0 +1,311 @@
+# v6.0 W60.1-W60.3 evidence — 2026-10-12T12:47:21+07:00
+$ python -m pytest -q tests/test_mkt_calendar.py -k load or event
+..........................................                               [100%]
+42 passed, 24 deselected in 0.70s
+[exit=0]
+
+$ python -m pytest -q tests/test_mkt_calendar.py
+..................................................................       [100%]
+66 passed in 0.60s
+[exit=0]
+
+$ grep -nE "2027-0?2-0?6|2027, *2, *6|\"02-06\"" pipelines/mkt_calendar.py agents/mkt_director.py data/marketing_calendar.json  (phai rong)
+[grep exit=1 (1 = rong)]
+
+$ grep -n "tet_date\|from pipelines import director, scenario" pipelines/mkt_calendar.py
+10:  - Tết lấy từ `pipelines.scenario.tet_date` (JSON ghi `lunar_new_year`) —
+37:from pipelines import director, scenario
+93:    """Ngày dương lịch của sự kiện. Tết qua `scenario.tet_date` — năm ngoài
+104:            d = scenario.tet_date(ev["lunar_new_year"])
+
+$ grep -nE "^(import|from) (psycopg|openai|httpx|requests)" pipelines/mkt_calendar.py  (phai rong)
+[grep exit=1 (1 = rong)]
+
+$ grep -n "time.sleep\|datetime.now\|date.today" tests/test_mkt_calendar.py  (phai rong)
+[grep exit=1 (1 = rong)]
+
+$ python -m pipelines.mkt_calendar --start 2026-10-12 --weeks 4
+> GIẢ ĐỊNH — chờ GĐ Marketing chốt · Lịch ĐỀ XUẤT — GĐ Marketing duyệt trước khi chạy
+
+# Lịch mùa vụ marketing 12/10/2026 → 08/11/2026 (giờ VN)
+
+## Tuần 2026-10-12
+
+| ngày | chiến dịch | kênh | định dạng | SKU | mốc |
+|---|---|---|---|---|---|
+| 17/10 | c-2010-2026 (Quà tặng 20/10 — sâm Ngọc Linh cho phái đẹp) | facebook | post | câu chuyện thương hiệu — không nêu tên SKU | brief 12/10 09:00 · nháp 14/10 09:00 · duyệt 16/10 09:00 · đăng 17/10 09:00 |
+| 17/10 | c-2010-2026 (Quà tặng 20/10 — sâm Ngọc Linh cho phái đẹp) | zalo | post | câu chuyện thương hiệu — không nêu tên SKU | brief 12/10 09:00 · nháp 14/10 09:00 · duyệt 16/10 09:00 · đăng 17/10 09:00 |
+
+## Tuần 2026-10-26
+
+- Nhắc: còn 14 ngày tới `11.11` (28/10/2026)
+
+## Tuần 2026-11-02
+
+- Nhắc: còn 7 ngày tới `11.11` (04/11/2026)
+- Nhắc: còn 3 ngày tới `11.11` (08/11/2026)
+
+## Tuần 2026-11-09
+
+| ngày | chiến dịch | kênh | định dạng | SKU | mốc |
+|---|---|---|---|---|---|
+| 11/11 | c-1111-2026 (Mùa sale 11.11 trên sàn) | shopee | listing | savina-12v, saphraton-20v, saphraton-combo-2x20v, saphraton-80v, savigout-30v, sapentol-30v, da-an-sam-30v | brief 04/11 17:00 · nháp 06/11 17:00 · duyệt 10/11 09:00 · đăng 11/11 09:00 |
+| 11/11 | c-1111-2026 (Mùa sale 11.11 trên sàn) | shopee | livestream | câu chuyện thương hiệu — không nêu tên SKU | brief 04/11 17:00 · nháp 06/11 17:00 · duyệt 10/11 09:00 · đăng 11/11 09:00 |
+| 11/11 | c-1111-2026 (Mùa sale 11.11 trên sàn) | tiktok | livestream | câu chuyện thương hiệu — không nêu tên SKU | brief 04/11 17:00 · nháp 06/11 17:00 · duyệt 10/11 09:00 · đăng 11/11 09:00 |
+
+## SKU bị chặn kênh
+
+| SKU | kênh | readiness | lý do | định dạng |
+|---|---|---|---|---|
+| da-an-sam-30v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| da-an-sam-30v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, livestream |
+| da-an-sam-30v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| da-an-sam-30v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-1hu | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-1hu | shopee | CAM | CAM: thực phẩm chưa có tự công bố (self_declaration_ok) | ads, listing, livestream |
+| mat-ong-sam-120ml-1hu | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| mat-ong-sam-120ml-1hu | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-2hu | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-2hu | shopee | CAM | CAM: thực phẩm chưa có tự công bố (self_declaration_ok) | ads, listing, livestream |
+| mat-ong-sam-120ml-2hu | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| mat-ong-sam-120ml-2hu | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-300ml | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-300ml | shopee | CAM | CAM: thực phẩm chưa có tự công bố (self_declaration_ok) | ads, listing, livestream |
+| mat-ong-sam-300ml | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| mat-ong-sam-300ml | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| ruou-sam-binh-su-do-500ml | facebook | CAM | rượu: không kênh online | post |
+| ruou-sam-binh-su-do-500ml | shopee | CAM | rượu: không kênh online | ads, listing, livestream |
+| ruou-sam-binh-su-do-500ml | tiktok | CAM | rượu: không kênh online | ads, listing, livestream |
+| ruou-sam-binh-su-do-500ml | zalo | CAM | rượu: không kênh online | post |
+| ruou-sam-chai-thuy-tinh-500ml | facebook | CAM | rượu: không kênh online | post |
+| ruou-sam-chai-thuy-tinh-500ml | shopee | CAM | rượu: không kênh online | ads, listing, livestream |
+| ruou-sam-chai-thuy-tinh-500ml | tiktok | CAM | rượu: không kênh online | ads, listing, livestream |
+| ruou-sam-chai-thuy-tinh-500ml | zalo | CAM | rượu: không kênh online | post |
+| sapentol-30v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| sapentol-30v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, livestream |
+| sapentol-30v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| sapentol-30v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-20v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-20v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, livestream |
+| saphraton-20v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| saphraton-20v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-40v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-40v | shopee | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| saphraton-40v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| saphraton-40v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-80v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-80v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, livestream |
+| saphraton-80v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| saphraton-80v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-combo-2x20v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-combo-2x20v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, livestream |
+| saphraton-combo-2x20v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| saphraton-combo-2x20v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| savigout-30v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| savigout-30v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, livestream |
+| savigout-30v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| savigout-30v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| savina-12v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| savina-12v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, livestream |
+| savina-12v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| savina-12v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+
+[exit=0]
+
+$ python -m pipelines.mkt_calendar --start 2026-10-12 --weeks 18 --ics data/reports/mkt-calendar-2026-10-12.ics
+> GIẢ ĐỊNH — chờ GĐ Marketing chốt · Lịch ĐỀ XUẤT — GĐ Marketing duyệt trước khi chạy
+
+# Lịch mùa vụ marketing 12/10/2026 → 14/02/2027 (giờ VN)
+
+## Tuần 2026-10-12
+
+| ngày | chiến dịch | kênh | định dạng | SKU | mốc |
+|---|---|---|---|---|---|
+| 17/10 | c-2010-2026 (Quà tặng 20/10 — sâm Ngọc Linh cho phái đẹp) | facebook | post | câu chuyện thương hiệu — không nêu tên SKU | brief 12/10 09:00 · nháp 14/10 09:00 · duyệt 16/10 09:00 · đăng 17/10 09:00 |
+| 17/10 | c-2010-2026 (Quà tặng 20/10 — sâm Ngọc Linh cho phái đẹp) | zalo | post | câu chuyện thương hiệu — không nêu tên SKU | brief 12/10 09:00 · nháp 14/10 09:00 · duyệt 16/10 09:00 · đăng 17/10 09:00 |
+
+## Tuần 2026-10-26
+
+- Nhắc: còn 14 ngày tới `11.11` (28/10/2026)
+
+## Tuần 2026-11-02
+
+- Nhắc: còn 7 ngày tới `11.11` (04/11/2026)
+- Nhắc: còn 3 ngày tới `11.11` (08/11/2026)
+
+## Tuần 2026-11-09
+
+| ngày | chiến dịch | kênh | định dạng | SKU | mốc |
+|---|---|---|---|---|---|
+| 11/11 | c-1111-2026 (Mùa sale 11.11 trên sàn) | shopee | listing | savina-12v, saphraton-20v, saphraton-combo-2x20v, saphraton-80v, savigout-30v, sapentol-30v, da-an-sam-30v | brief 04/11 17:00 · nháp 06/11 17:00 · duyệt 10/11 09:00 · đăng 11/11 09:00 |
+| 11/11 | c-1111-2026 (Mùa sale 11.11 trên sàn) | shopee | livestream | câu chuyện thương hiệu — không nêu tên SKU | brief 04/11 17:00 · nháp 06/11 17:00 · duyệt 10/11 09:00 · đăng 11/11 09:00 |
+| 11/11 | c-1111-2026 (Mùa sale 11.11 trên sàn) | tiktok | livestream | câu chuyện thương hiệu — không nêu tên SKU | brief 04/11 17:00 · nháp 06/11 17:00 · duyệt 10/11 09:00 · đăng 11/11 09:00 |
+
+## Tuần 2026-11-16
+
+| ngày | chiến dịch | kênh | định dạng | SKU | mốc |
+|---|---|---|---|---|---|
+| 18/11 | c-2011-2026 (Tri ân thầy cô 20/11) | facebook | post | câu chuyện thương hiệu — không nêu tên SKU | brief 11/11 17:00 · nháp 13/11 17:00 · duyệt 17/11 09:00 · đăng 18/11 09:00 |
+| 18/11 | c-2011-2026 (Tri ân thầy cô 20/11) | zalo | post | câu chuyện thương hiệu — không nêu tên SKU | brief 11/11 17:00 · nháp 13/11 17:00 · duyệt 17/11 09:00 · đăng 18/11 09:00 |
+
+## Tuần 2026-11-23
+
+| ngày | chiến dịch | kênh | định dạng | SKU | mốc |
+|---|---|---|---|---|---|
+| 25/11 | c-harvest-2026 (Câu chuyện mùa thu hoạch vùng trồng) | facebook | post | câu chuyện thương hiệu — không nêu tên SKU | brief 18/11 17:00 · nháp 20/11 17:00 · duyệt 24/11 09:00 · đăng 25/11 09:00 |
+| 25/11 | c-harvest-2026 (Câu chuyện mùa thu hoạch vùng trồng) | tiktok | post | câu chuyện thương hiệu — không nêu tên SKU | brief 18/11 17:00 · nháp 20/11 17:00 · duyệt 24/11 09:00 · đăng 25/11 09:00 |
+
+- Nhắc: còn 14 ngày tới `12.12` (28/11/2026)
+
+## Tuần 2026-11-30
+
+- Nhắc: còn 7 ngày tới `12.12` (05/12/2026)
+
+## Tuần 2026-12-07
+
+| ngày | chiến dịch | kênh | định dạng | SKU | mốc |
+|---|---|---|---|---|---|
+| 12/12 | c-1212-2026 (Mùa sale 12.12 trên sàn) | shopee | listing | savina-12v, saphraton-20v, saphraton-combo-2x20v, saphraton-80v, savigout-30v, sapentol-30v, da-an-sam-30v | brief 07/12 09:00 · nháp 09/12 09:00 · duyệt 11/12 09:00 · đăng 12/12 09:00 |
+
+- Nhắc: còn 3 ngày tới `12.12` (09/12/2026)
+
+## Tuần 2027-01-11
+
+| ngày | chiến dịch | kênh | định dạng | SKU | mốc |
+|---|---|---|---|---|---|
+| 16/01 | c-tet-2027-san (Quà Tết Đinh Mùi trên sàn + web) | shopee | listing | savina-12v, saphraton-20v, saphraton-combo-2x20v, saphraton-80v, savigout-30v, sapentol-30v, da-an-sam-30v | brief 11/01 09:00 · nháp 13/01 09:00 · duyệt 15/01 09:00 · đăng 16/01 09:00 |
+| 16/01 | c-tet-2027-san (Quà Tết Đinh Mùi trên sàn + web) | shopee | post | câu chuyện thương hiệu — không nêu tên SKU | brief 11/01 09:00 · nháp 13/01 09:00 · duyệt 15/01 09:00 · đăng 16/01 09:00 |
+| 16/01 | c-tet-2027-san (Quà Tết Đinh Mùi trên sàn + web) | web | post | câu chuyện thương hiệu — không nêu tên SKU | brief 11/01 09:00 · nháp 13/01 09:00 · duyệt 15/01 09:00 · đăng 16/01 09:00 |
+
+## Tuần 2027-01-18
+
+| ngày | chiến dịch | kênh | định dạng | SKU | mốc |
+|---|---|---|---|---|---|
+| 23/01 | c-tet-2027-qua-bieu (Quà biếu Tết cho đối tác) | facebook | post | câu chuyện thương hiệu — không nêu tên SKU | brief 18/01 09:00 · nháp 20/01 09:00 · duyệt 22/01 09:00 · đăng 23/01 09:00 |
+| 23/01 | c-tet-2027-qua-bieu (Quà biếu Tết cho đối tác) | zalo | post | câu chuyện thương hiệu — không nêu tên SKU | brief 18/01 09:00 · nháp 20/01 09:00 · duyệt 22/01 09:00 · đăng 23/01 09:00 |
+
+- Nhắc: còn 14 ngày tới `tet_2027` (23/01/2027)
+
+## Tuần 2027-01-25
+
+- Nhắc: còn 7 ngày tới `tet_2027` (30/01/2027)
+
+## Tuần 2027-02-01
+
+- Nhắc: còn 3 ngày tới `tet_2027` (03/02/2027)
+
+## SKU bị chặn kênh
+
+| SKU | kênh | readiness | lý do | định dạng |
+|---|---|---|---|---|
+| da-an-sam-30v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| da-an-sam-30v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, koc, livestream, post |
+| da-an-sam-30v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| da-an-sam-30v | web | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, post |
+| da-an-sam-30v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-1hu | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-1hu | shopee | CAM | CAM: thực phẩm chưa có tự công bố (self_declaration_ok) | ads, koc, listing, livestream, post |
+| mat-ong-sam-120ml-1hu | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| mat-ong-sam-120ml-1hu | web | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, post |
+| mat-ong-sam-120ml-1hu | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-2hu | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-120ml-2hu | shopee | CAM | CAM: thực phẩm chưa có tự công bố (self_declaration_ok) | ads, koc, listing, livestream, post |
+| mat-ong-sam-120ml-2hu | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| mat-ong-sam-120ml-2hu | web | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, post |
+| mat-ong-sam-120ml-2hu | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| mat-ong-sam-300ml | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | koc, post |
+| mat-ong-sam-300ml | shopee | CAM | CAM: thực phẩm chưa có tự công bố (self_declaration_ok) | ads, koc, listing, livestream, post |
+| mat-ong-sam-300ml | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| mat-ong-sam-300ml | web | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, post |
+| mat-ong-sam-300ml | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | koc, post |
+| ruou-sam-binh-su-do-500ml | facebook | CAM | rượu: không kênh online | koc, post |
+| ruou-sam-binh-su-do-500ml | shopee | CAM | rượu: không kênh online | ads, koc, listing, livestream, post |
+| ruou-sam-binh-su-do-500ml | tiktok | CAM | rượu: không kênh online | ads, listing, livestream |
+| ruou-sam-binh-su-do-500ml | web | CAM | rượu: không kênh online | ads, listing, post |
+| ruou-sam-binh-su-do-500ml | zalo | CAM | rượu: không kênh online | koc, post |
+| ruou-sam-chai-thuy-tinh-500ml | facebook | CAM | rượu: không kênh online | post |
+| ruou-sam-chai-thuy-tinh-500ml | shopee | CAM | rượu: không kênh online | ads, koc, listing, livestream, post |
+| ruou-sam-chai-thuy-tinh-500ml | tiktok | CAM | rượu: không kênh online | ads, listing, livestream |
+| ruou-sam-chai-thuy-tinh-500ml | web | CAM | rượu: không kênh online | ads, listing, post |
+| ruou-sam-chai-thuy-tinh-500ml | zalo | CAM | rượu: không kênh online | post |
+| sapentol-30v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| sapentol-30v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, koc, livestream, post |
+| sapentol-30v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| sapentol-30v | web | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, post |
+| sapentol-30v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-20v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | koc, post |
+| saphraton-20v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, koc, livestream, post |
+| saphraton-20v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| saphraton-20v | web | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, post |
+| saphraton-20v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | koc, post |
+| saphraton-40v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-40v | shopee | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, koc, listing, livestream, post |
+| saphraton-40v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| saphraton-40v | web | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, post |
+| saphraton-40v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-80v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-80v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, koc, livestream, post |
+| saphraton-80v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| saphraton-80v | web | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, post |
+| saphraton-80v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-combo-2x20v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| saphraton-combo-2x20v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, koc, livestream, post |
+| saphraton-combo-2x20v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| saphraton-combo-2x20v | web | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, post |
+| saphraton-combo-2x20v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| savigout-30v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| savigout-30v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, koc, livestream, post |
+| savigout-30v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| savigout-30v | web | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, post |
+| savigout-30v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| savina-12v | facebook | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+| savina-12v | shopee | MO_TA | MO_TA: TPBVSK chưa có XNQC — chỉ listing mô tả | ads, koc, livestream, post |
+| savina-12v | tiktok | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, livestream |
+| savina-12v | web | CAM | CAM: kênh chưa có trong allowed_channels (golden) | ads, listing, post |
+| savina-12v | zalo | CAM | CAM: kênh chưa có trong allowed_channels (golden) | post |
+[ok] .ics: data\reports\mkt-calendar-2026-10-12.ics
+
+[exit=0]
+
+$ head -c 600 data/reports/mkt-calendar-2026-10-12.ics
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//SamSam//MKT-01 lich mua vu//VI
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:c-2010-2026-brief@samsam
+DTSTAMP:20261012T054734Z
+DTSTART:20261012T020000Z
+SUMMARY:[MKT] brief: c-2010-2026 (20.10)
+DESCRIPTION:Quà tặng 20/10 — sâm Ngọc Linh cho phái đẹp\; GIẢ
+  ĐỊNH — chờ GĐ Marketing chốt\; lịch ĐỀ XUẤT
+END:VEVENT
+BEGIN:VEVENT
+UID:c-2010-2026-draft@samsam
+DTSTAMP:20261012T054734Z
+DTSTART:20261014T020000Z
+SUMMARY:[MKT] nháp: c-2010-2026 (20.10)
+DESCRIPTION:Quà tặng 20/10 — sâm Ngọc Linh cho phái đẹp\; GIẢ
+  
+
+$ grep -c BEGIN:VEVENT data/reports/mkt-calendar-2026-10-12.ics
+37
+
+$ git status --porcelain data/  (khong file moi; marketing_calendar.json la file boundary, directors/marketing.json sua)
+ M data/directors/marketing.json
+?? data/marketing_calendar.json
+
+$ python -m pipelines.mkt_calendar --weeks 0
+usage: python -m pipelines.mkt_calendar [-h] [--start START] [--weeks WEEKS]
+                                        [--by {week,month}] [--ics [PATH]]
+                                        [--json]
+python -m pipelines.mkt_calendar: error: argument --weeks: --weeks phải 1..26
+[exit=2]
+
+$ python -m pipelines.mkt_calendar --start 2026-02-30
+usage: python -m pipelines.mkt_calendar [-h] [--start START] [--weeks WEEKS]
+                                        [--by {week,month}] [--ics [PATH]]
+                                        [--json]
+python -m pipelines.mkt_calendar: error: argument --start: ngày không hợp lệ: '2026-02-30'
+[exit=2]
+

@@ -1,0 +1,13 @@
+## v10.1 W101.4 KD-A9 kd_live (2026-10-14T19:42:07+07:00)
+$ python -m pytest tests/test_kd_live.py -q -rs
+........                                                                 [100%]
+8 passed in 33.14s
+exit=0
+$ grep "set_status|approve|requests|httpx" agents/kd_live.py (kỳ vọng rỗng)
+grep_exit=1 (1 = không khớp)
+$ python -m agents.kd_live --channel tiktok --cart mat-ong-sam-300ml,ruou-sam-chai-thuy-tinh-500ml --day 2026-10-20 --brief "Phiên quà quê" --dry-run   # case âm DB thật: chặn TRƯỚC LLM
+[refuse] ruou: giỏ/brief có rượu — cấm quảng cáo/khuyến mại rượu (Luật 44/2019) (LLM 0 lời gọi)
+exit=1
+$ python -m agents.kd_live --channel tiktok --cart sapentol-30v --day 2026-10-20 --brief "Phiên quà quê" --dry-run   # TPBVSK chưa XNQC
+[refuse] khong_promotable: sapentol-30v chưa được quảng bá trên kênh tiktok (readiness/giá chưa duyệt) (LLM 0 lời gọi)
+exit=1

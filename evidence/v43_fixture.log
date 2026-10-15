@@ -1,0 +1,44 @@
+# v4.3 W43.4 fixture F1–F5 — dry-run thật trên tests/fixtures/ra_kenh/f1_f5.csv (2026-10-12T14:27:01+07:00); kết quả quét CHƯA được Pháp chế xác nhận (external-dep)
+
+=== $ python -m agents.ra_kenh --file tests/fixtures/ra_kenh/f1_f5.csv --by "test" --dry-run
+[dry-run] 5 bài — KHÔNG connect DB; chưa kiểm lệch bản duyệt — cần DB
+[S1] dòng 2 https://samsamngoclinh.com/ — tu_cam, claim_ngoai_cong_bo, ruou_cam_quang_cao, sku_chua_xnqc, thieu_khuyen_cao, ngoc_linh_chua_xac_nhan, thieu_ban_duyet → ticket channel_takedown (legal_hr) + red_alert
+    trích: hoa dược liệu quý hiếm từ đỉnh cao Trường Sơn, nguyên liệu thuốc bổ chất lượng cao, giúp tăng cường sức khỏe và phục hồi năn
+[S2] dòng 3 http://samsam.net.vn/ — ngoc_linh_chua_xac_nhan, thieu_ban_duyet → ticket channel_takedown (legal_hr)
+    trích: y là một đơn vị chuyên trồng, bảo tồn và nhân giống cây Sâm Ngọc Linh tại thôn 2, xã Trà Linh, huyện Nam Trà My - được công nhận
+[S1] dòng 4 https://samsamngoclinh.com/product/savigout/ — claim_ngoai_cong_bo, sku_chua_xnqc, thieu_khuyen_cao, ngoc_linh_chua_xac_nhan, thieu_ban_duyet → ticket channel_takedown (legal_hr) + red_alert
+    trích: Savigout – Thực phẩm hỗ trợ giảm axit uric, giảm triệu chứng gout và viêm khớp. Chiết xuất từ Sâm Ngọc Linh và Vối, an toàn cho người trưởng thành.
+[S1] dòng 5 http://samsam.net.vn/vi/news/cam-nang-suc-khoe/savigout-xua-tan-noi-lo-benh-gout-10.html — tu_cam, claim_ngoai_cong_bo, sku_chua_xnqc, thieu_khuyen_cao, ngoc_linh_chua_xac_nhan → ticket channel_takedown (legal_hr) + red_alert
+    trích: g bổ dưỡng cho sức khỏe Sâm Ngọc Linh còn có nhiều tác dụng chữa bệnh như tăng cường hệ miễn dịch, chống viêm, giảm đau,… Vố
+[S2] dòng 6 https://samsam.net.vn/ — trang_mac_dinh_hosting → ticket hosting_fix (data_platform)
+    trích: Default Web Page This is the default web page for this server. The site owner has not uploaded any content yet. (MẪU giả lập trang mặc định hosting — chờ bản ch
+exit=0
+
+=== $ python -m agents.ra_kenh --file tests/fixtures/ra_kenh/f4_quet_lai.csv --by "test" --dry-run
+[dry-run] 1 bài — KHÔNG connect DB; chưa kiểm lệch bản duyệt — cần DB
+[S1] dòng 2 http://samsam.net.vn/vi/news/cam-nang-suc-khoe/savigout-xua-tan-noi-lo-benh-gout-10.html — claim_ngoai_cong_bo, sku_chua_xnqc, thieu_khuyen_cao, ngoc_linh_chua_xac_nhan → ticket channel_takedown (legal_hr) + red_alert
+    trích: Bệnh GOUT là một trong những bệnh đáng sợ nhất của xã hội hiện đại. “The disease of Kings and the King Diseases”. Bệnh GOUT là một trong những bệnh đáng sợ nhất
+exit=0
+
+=== E2E DB thật (now=2026-10-12T09:00+07:00 tham số, set local timezone='UTC'; 0 skipped) — trích `python -m pytest -v tests/test_ra_kenh.py`
+tests/test_ra_kenh.py::test_dry_run_fixture_no_connect PASSED            [ 72%]
+tests/test_ra_kenh.py::test_e2e_f1_f5_p6_p8_and_report PASSED            [ 94%]
+tests/test_ra_kenh.py::test_mark_removed_then_still_exported_reopens PASSED [ 96%]
+tests/test_ra_kenh.py::test_ingest_cli_prints_masked PASSED              [ 98%]
+tests/test_ra_kenh.py::test_link_heals_after_crash PASSED                [100%]
+============================= 51 passed in 8.21s ==============================
+
+# ===== vòng sửa nghiệm thu — dry-run lại f1_f5.csv sau vá marker/excerpt (kết quả F1–F5 không đổi; F5 0 violation nên vẫn chỉ hosting) — CHƯA được Pháp chế xác nhận
+=== 2026-10-12T15:07:08+07:00 $ python -m agents.ra_kenh --file tests/fixtures/ra_kenh/f1_f5.csv --by "test" --dry-run
+[dry-run] 5 bài — KHÔNG connect DB; chưa kiểm lệch bản duyệt — cần DB
+[S1] dòng 2 https://samsamngoclinh.com/ — tu_cam, claim_ngoai_cong_bo, ruou_cam_quang_cao, sku_chua_xnqc, thieu_khuyen_cao, ngoc_linh_chua_xac_nhan, thieu_ban_duyet → ticket channel_takedown (legal_hr) + red_alert
+    trích: hoa dược liệu quý hiếm từ đỉnh cao Trường Sơn, nguyên liệu thuốc bổ chất lượng cao, giúp tăng cường sức khỏe và phục hồi năn
+[S2] dòng 3 http://samsam.net.vn/ — ngoc_linh_chua_xac_nhan, thieu_ban_duyet → ticket channel_takedown (legal_hr)
+    trích: y là một đơn vị chuyên trồng, bảo tồn và nhân giống cây Sâm Ngọc Linh tại thôn 2, xã Trà Linh, huyện Nam Trà My - được công nhận
+[S1] dòng 4 https://samsamngoclinh.com/product/savigout/ — claim_ngoai_cong_bo, sku_chua_xnqc, thieu_khuyen_cao, ngoc_linh_chua_xac_nhan, thieu_ban_duyet → ticket channel_takedown (legal_hr) + red_alert
+    trích: Savigout – Thực phẩm hỗ trợ giảm axit uric, giảm triệu chứng gout và viêm khớp. Chiết xuất từ Sâm Ngọc Linh và Vối, an toàn cho người trưởng thành.
+[S1] dòng 5 http://samsam.net.vn/vi/news/cam-nang-suc-khoe/savigout-xua-tan-noi-lo-benh-gout-10.html — tu_cam, claim_ngoai_cong_bo, sku_chua_xnqc, thieu_khuyen_cao, ngoc_linh_chua_xac_nhan → ticket channel_takedown (legal_hr) + red_alert
+    trích: g bổ dưỡng cho sức khỏe Sâm Ngọc Linh còn có nhiều tác dụng chữa bệnh như tăng cường hệ miễn dịch, chống viêm, giảm đau,… Vố
+[S2] dòng 6 https://samsam.net.vn/ — trang_mac_dinh_hosting → ticket hosting_fix (data_platform)
+    trích: Default Web Page This is the default web page for this server. The site owner has not uploaded any content yet. (MẪU giả lập trang mặc định hosting — chờ bản ch
+exit=0

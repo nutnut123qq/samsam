@@ -1,0 +1,77 @@
+## v10.1 W101.7 Gate chung (2026-10-14T19:53:39+07:00)
+$ python -m pytest tests/test_kd_orders.py tests/test_kd_care.py tests/test_kd_live.py tests/test_mkt_youtube.py -q -rs   # lần 1
+...................................                                      [100%]
+35 passed in 100.85s (0:01:40)
+exit=0
+$ python -m pytest tests/test_kd_orders.py tests/test_kd_care.py tests/test_kd_live.py tests/test_mkt_youtube.py -q -rs   # lần 2
+...................................                                      [100%]
+35 passed in 99.31s (0:01:39)
+exit=0
+$ python -m pytest tests/test_kd_orders.py tests/test_kd_care.py tests/test_kd_live.py tests/test_mkt_youtube.py -q -rs   # lần 3
+...................................                                      [100%]
+35 passed in 94.65s (0:01:34)
+exit=0
+
+## Vòng 1 full pytest: 7 failed (drift test/tài liệu: test_ci_workflow, test_db_backup README cloud, test_listing, test_qa_harness ×3, test_runbook) — đã sửa, xem DONE W101.6
+## Vòng 2: $ python -m pytest -q -rs   # full, 1 lần
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: kh�ng c� docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: kh�ng c� docker/image postgres:<major>-alpine
+4296 passed, 3 skipped in 1880.39s (0:31:20)
+exit=0
+$ ruff check .
+All checks passed!
+exit=0
+$ python -m py_compile agents/kd_orders.py agents/kd_care.py agents/kd_live.py agents/mkt_youtube.py
+exit=0
+## v10.1 W101.3/W101.7 — apply_schema --roles ×2 (2026-10-14T19:35:45+07:00)
+$ python scripts/apply_schema.py --roles  # lần 1
+[done] schema applied — 72 bảng public: ad_test_plans, agent_action_log, allocation_proposals, approval_queue, approvals, assets, auto_policies, b2b_requests, bom_combos, bom_items, care_purchases, channel_posts, channel_snapshots, chat_consents, chunks, chunks_internal, claims_approved, cogs_versions, competitor_observations, consents, contacts, content_drafts, dealer_ar, dealers, decision_log, decisions, document_fields, documents, eval_runs, garden_media, golden_discrepancies, image_assets, incidents, intel_imports, intel_items, inventory_snapshots, invoice_lines, job_runs, leads, llm_usage, lot_origins, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, opex_entries, orders, org_prospects, plot_logs, plots, price_list, production_lots, products, programs, project_milestones, qr_codes, qr_signatures, recon_results, red_alert_acks, red_alerts, settlement_rows, sim_runs, sku_map, sku_master, sla_escalations, social_mentions, social_mentions_vendor, trends_related, trends_weekly, video_assets, xnqc_dossiers
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+exit=0
+$ python scripts/apply_schema.py --roles  # lần 2
+[done] schema applied — 72 bảng public: ad_test_plans, agent_action_log, allocation_proposals, approval_queue, approvals, assets, auto_policies, b2b_requests, bom_combos, bom_items, care_purchases, channel_posts, channel_snapshots, chat_consents, chunks, chunks_internal, claims_approved, cogs_versions, competitor_observations, consents, contacts, content_drafts, dealer_ar, dealers, decision_log, decisions, document_fields, documents, eval_runs, garden_media, golden_discrepancies, image_assets, incidents, intel_imports, intel_items, inventory_snapshots, invoice_lines, job_runs, leads, llm_usage, lot_origins, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, opex_entries, orders, org_prospects, plot_logs, plots, price_list, production_lots, products, programs, project_milestones, qr_codes, qr_signatures, recon_results, red_alert_acks, red_alerts, settlement_rows, sim_runs, sku_map, sku_master, sla_escalations, social_mentions, social_mentions_vendor, trends_related, trends_weekly, video_assets, xnqc_dossiers
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+exit=0
+$ python -m pipelines.store --verify-log
+[ok] chuỗi nguyên vẹn (1 dòng)
+exit=0
+$ git status --short
+ M DONE.md
+ M data/data_flow_map.json
+ M data/directors/sales.json
+ M data/guardrail_rules.json
+ M data/llm_gateway.json
+ M data/prompts/manifest.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/prompt-library.md
+ M docs/handover/runbook-ha-tang.md
+ M docs/handover/sop.md
+ M docs/legal/DPIA-nhap.md
+ M docs/legal/TIA-nhap.md
+ M docs/schema.sql
+ M scripts/agent_eval.py
+ M tests/test_agent_eval.py
+ M tests/test_ci_workflow.py
+ M tests/test_data_flow_map.py
+ M tests/test_handover_docs.py
+ M tests/test_listing.py
+ M tests/test_qa_harness.py
+ M tests/test_sales_director.py
+?? agents/kd_care.py
+?? agents/kd_live.py
+?? agents/kd_orders.py
+?? agents/mkt_youtube.py
+?? data/care_rules.json
+?? data/eval/suites/kd_a7.json
+?? data/eval/suites/kd_a9.json
+?? data/eval/suites/mkt12.json
+?? data/livestream_rules.json
+?? data/prompts/livestream_script.md
+?? data/prompts/youtube_long.md
+?? tests/test_kd_care.py
+?? tests/test_kd_live.py
+?? tests/test_kd_orders.py
+?? tests/test_mkt_youtube.py

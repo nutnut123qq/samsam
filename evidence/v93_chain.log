@@ -1,0 +1,35 @@
+# v9.3 W93.1-W93.2 evidence — 2026-10-12T03:06:29+07:00
+## apply_schema x2 (DB riêng samsam_infra)
+$ python scripts/apply_schema.py (lần 1)
+[done] schema applied — 25 bảng public: agent_action_log, approvals, assets, chunks, chunks_internal, claims_approved, content_drafts, document_fields, documents, eval_runs, garden_media, golden_discrepancies, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+exit=0
+$ python scripts/apply_schema.py (lần 2)
+[done] schema applied — 25 bảng public: agent_action_log, approvals, assets, chunks, chunks_internal, claims_approved, content_drafts, document_fields, documents, eval_runs, garden_media, golden_discrepancies, job_runs, leads, llm_usage, market_alerts, market_rows, market_snapshots, orders, plot_logs, plots, price_list, products, sku_map, sku_master
+exit=0
+
+$ grep -c "^create table if not exists" docs/schema.sql
+25
+
+## core_store x2 (sau apply_schema)
+$ python -m ingest.core_store (lần 1)
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+[done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+exit=0
+$ python -m ingest.core_store (lần 2)
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+[done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+exit=0
+
+$ python -m agents.garden_director --verify
+[verify] OK — chuỗi nhật ký nguyên vẹn
+exit=0

@@ -2,12 +2,15 @@
 
 Bắt drift giữa docs/handover/ và code/data thật:
   - 8 file handover tồn tại + non-empty.
-  - Tab names trong playbook/kien-truc khớp `st.tabs` trong
-    app/streamlit_app.py (parse source, không hardcode).
+  - Tab names trong playbook/kien-truc khớp `TABS` trong
+    pipelines/auth.py (v3.4: nguồn duy nhất — streamlit_app tạo tab theo
+    vai trò từ đó; parse AST, không import, không hardcode).
   - phu-luc-d.md chứa đủ id câu hỏi parse từ tests/questions.md.
   - sop.md chứa các lệnh cốt vận hành.
   - kien-truc.md liệt kê đủ tên bảng parse từ docs/schema.sql + đúng
     số lượng bảng.
+  - phu-luc-d.md ghi đúng số câu bẫy/disclaimer/tổng case guardrail
+    (parse AST tests/test_guardrail.py) — v3.0.
 """
 
 import re
@@ -25,10 +28,11 @@ DOC_FILES = (
     "kien-truc.md",
     "prompt-library.md",
     "phu-luc-d.md",
+    "runbook-ha-tang.md",
 )
 
 # Tab nào thuộc vai trò nào — theo checklist W6.1. Tên phải khớp đúng
-# chuỗi trong st.tabs (assert chéo trong test_tab_names_real()).
+# chuỗi trong TABS (pipelines/auth.py — assert chéo trong test_tab_names_real()).
 PLAYBOOK_TABS = {
     "playbook-mkt.md": ("Content Studio", "Duyệt & Lịch", "Báo cáo"),
     "playbook-sales-admin.md": ("Chat Sâm Sâm", "Chưa trả lời", "Leads"),
@@ -36,7 +40,31 @@ PLAYBOOK_TABS = {
 }
 
 SOP_COMMANDS = ("streamlit run", "apply_schema", "lead_store",
-                "agents.report", "agents.garden", "pipelines.store")
+                "agents.report", "agents.garden", "pipelines.store",
+                "ingest.market_csv", "agent_eval", "deploy_gate",
+                "health_bulletin", "docker-compose.monitoring.yml",
+                "pipelines.auth",
+                "db_backup", "db_restore_drill", "dr_drill",
+                "break_glass", "pipelines.approval_queue",
+                "pipelines.director", "pipelines.red_alert", "crawler.intel",
+                "pipelines.cockpit", "agents.ceo_report",
+                "ingest.intel_import", "intel_weekly",
+                "pipelines.content --listing", "agents.sales_director",
+                # v6.3 MKT-04 video nháp
+                "pipelines.video_studio",
+                # v8.3 phòng Dự án (WP11 DA)
+                "agents.da_radar", "agents.da_hoso", "agents.da_b2b",
+                "agents.da_pmo", "agents.da_cr",
+                "pipelines.image_studio",
+                # v5.3 KD-A4/A5 catalog + giá/KM
+                "agents.kd_listing", "agents.kd_price",
+                # v8.2 KD-A3 báo giá B2B quà Tết (WP11)
+                "agents.kd_quote", "agents.kd_catalog",
+                "connectors.b2b_form",
+                # v10.1 WP16 KD-A6/A7/A9 + MKT-12
+                "agents.kd_orders --sync", "agents.kd_orders --recon",
+                "agents.kd_care --verify-send", "agents.kd_live",
+                "agents.mkt_youtube")
 
 
 def _doc(name: str) -> str:
@@ -44,11 +72,20 @@ def _doc(name: str) -> str:
 
 
 def _tab_names() -> list[str]:
-    """Parse list tên tab thật từ st.tabs([...]) trong streamlit_app."""
-    src = (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
-    m = re.search(r"st\.tabs\(\s*\[(.*?)\]", src, re.DOTALL)
-    assert m, "không parse được st.tabs trong streamlit_app.py"
-    return re.findall(r'"([^"]+)"', m.group(1))
+    """Parse tuple tên tab thật `TABS = (...)` trong pipelines/auth.py
+    (AST, không import). streamlit_app phải tạo tab từ đó."""
+    import ast
+
+    src = (ROOT / "pipelines" / "auth.py").read_text(encoding="utf-8")
+    tabs = [ast.literal_eval(n.value) for n in ast.parse(src).body
+            if isinstance(n, ast.Assign) and any(
+                isinstance(t, ast.Name) and t.id == "TABS"
+                for t in n.targets)]
+    assert len(tabs) == 1, "không parse được TABS trong pipelines/auth.py"
+    app = (ROOT / "app" / "streamlit_app.py").read_text(encoding="utf-8")
+    assert "st.tabs(" in app and "_auth.tabs_for(" in app, (
+        "streamlit_app.py không còn tạo tab từ pipelines.auth")
+    return list(tabs[0])
 
 
 def _question_ids() -> list[int]:
@@ -119,9 +156,7 @@ def test_sop_core_commands():
 def test_kien_truc_lists_all_tables():
     body = _doc("kien-truc.md")
     tables = _table_names()
-    assert len(tables) == 9, (
-        f"schema.sql có {len(tables)} bảng ({tables}) — contract "
-        "9 bảng đổi thì cập nhật kien-truc.md")
+    assert tables, "schema.sql không parse được bảng nào"
     for t in tables:
         assert t in body, f"kien-truc.md thiếu bảng '{t}'"
     # Doc tuyên bố đúng số bảng hiện có (drift-guard số lượng).
@@ -136,3 +171,147 @@ def test_guardrail_test_names_in_phu_luc_d():
     body = _doc("phu-luc-d.md")
     for n in names:
         assert n in body, f"phu-luc-d.md thiếu case '{n}'"
+
+
+def test_guardrail_case_counts_in_phu_luc_d():
+    """Số câu bẫy / disclaimer / tổng case trong phu-luc-d khớp test thật.
+
+    Pháp chế duyệt 'bộ câu bẫy' theo doc này — số sai là drift (v3.0 vòng
+    3 thêm 4 câu, doc vẫn ghi 14/35). Parse AST, không import test module.
+    """
+    import ast
+
+    tree = ast.parse((ROOT / "tests" / "test_guardrail.py").read_text(
+        encoding="utf-8"))
+    lists = {
+        t.id: len(ast.literal_eval(node.value))
+        for node in tree.body if isinstance(node, ast.Assign)
+        for t in node.targets
+        if isinstance(t, ast.Name) and isinstance(node.value, ast.List)
+    }
+    n_tests = n_cases = 0
+    for fn in tree.body:
+        if not (isinstance(fn, ast.FunctionDef)
+                and fn.name.startswith("test_")):
+            continue
+        n_tests += 1
+        size = 1
+        for d in fn.decorator_list:
+            if (isinstance(d, ast.Call) and getattr(d.func, "attr", "")
+                    == "parametrize" and isinstance(d.args[1], ast.Name)):
+                size = lists[d.args[1].id]
+        n_cases += size
+    body = _doc("phu-luc-d.md")
+    n_aff = lists["AFFIRMATIVE_THAY_THE_THUOC"]
+    n_disc = lists["DISCLAIMER_VARIANTS"]
+    assert f"`test_affirmative_thay_the_thuoc_flagged` | {n_aff} câu bẫy" \
+        in body, f"phu-luc-d.md phải ghi {n_aff} câu bẫy"
+    assert f"`test_disclaimer_variants_pass` | {n_disc} câu" in body, \
+        f"phu-luc-d.md phải ghi {n_disc} câu disclaimer"
+    assert f"{n_tests} test ({n_cases} case)" in body, \
+        f"phu-luc-d.md phải ghi '{n_tests} test ({n_cases} case)'"
+
+
+def test_guardrail_v2_tests_and_case_counts_in_phu_luc_d():
+    """v4.1: mục Guardrail v2 liệt kê đủ tên test của
+    tests/test_guardrail_v2.py + số ca theo kind của
+    suite data/eval/suites/guardrail.json (v4.5i — thay jsonl v4.1;
+    word-boundary — gotcha v2.3)."""
+    import json
+    from collections import Counter
+
+    body = _doc("phu-luc-d.md")
+    assert "Guardrail v2" in body and "chờ Pháp chế duyệt nhãn" in body
+    src = (ROOT / "tests" / "test_guardrail_v2.py").read_text(
+        encoding="utf-8")
+    names = re.findall(r"def (test_\w+)\(", src)
+    assert names
+    for n in names:
+        assert re.search(rf"(?<!\w){n}(?!\w)", body), \
+            f"phu-luc-d.md thiếu test v2 '{n}'"
+    rows = json.loads((ROOT / "data" / "eval" / "suites"
+                       / "guardrail.json").read_text(encoding="utf-8")
+                      )["cases"]
+    kinds = Counter(r["kind"] for r in rows)
+    assert "data/eval/suites/guardrail.json" in body
+    for kind, n in kinds.items():
+        assert re.search(rf"\|\s*`{kind}`\s*\|\s*{n}\s*\|", body), \
+            f"phu-luc-d.md phải ghi '| `{kind}` | {n} |'"
+    assert re.search(rf"(?<!\d){sum(kinds.values())} ca(?!\w)", body)
+
+
+def test_sop_warns_role_dsn_while_grants_partial():
+    """roles.sql chưa grant đủ bảng → SOP/kiến trúc KHÔNG được hướng dẫn
+    đổi DSN app/agent sang role (gãy tab + trần chi phí LLM tắt câm do
+    `_month_spend` lỗi = cho qua). Grant đủ rồi thì sửa docs + test này."""
+    roles = (ROOT / "docs" / "roles.sql").read_text(encoding="utf-8")
+    granted = set()
+    # v10.0: chỉ tính grant cho role DSN app/agent — `bks_reader` (chỉ đọc,
+    # kiểm soát chi phí cho HĐTV) đọc `llm_usage` không làm DSN app/agent đủ.
+    for m in re.finditer(r"grant\s+[^;]*?\bon\s+(?!function)([\w\s,]+?)"
+                         r"\s+to\s+(?:agent_writer|app_human)\b",
+                         roles, re.IGNORECASE):
+        granted |= {t.strip() for t in m.group(1).split(",")}
+    missing = set(_table_names()) - granted
+    assert "llm_usage" in missing and "chunks" in missing, granted
+    sop, kt = _doc("sop.md"), _doc("kien-truc.md")
+    assert "CHƯA đổi `DATABASE_URL`" in sop
+    assert "Rồi đổi `DATABASE_URL` của agent/app" not in sop
+    for body in (sop, kt):
+        assert "llm_usage" in body and "cho qua" in body
+    assert "CHƯA chuyển DSN Streamlit/agent" in kt
+
+
+def test_redteam_llm_check_section_in_phu_luc_d():
+    """v4.2: mục 2c liệt kê đủ tên test của test_guardrail_llm.py +
+    test_redteam.py, số ca theo attack (| `attack` | tổng | chặn | gap |) và
+    mọi id known-gap của data/eval/redteam.jsonl (word-boundary — gotcha
+    v2.3: 'rt-ws-0' không được ăn ké 'rt-ws-06')."""
+    import json
+    from collections import Counter
+
+    body = _doc("phu-luc-d.md")
+    assert "2c. Red-team PC-A9" in body and "chờ Pháp chế duyệt nhãn" in body
+    for f in ("test_guardrail_llm.py", "test_redteam.py"):
+        src = (ROOT / "tests" / f).read_text(encoding="utf-8")
+        names = re.findall(r"def (test_\w+)\(", src)
+        assert names, f
+        for n in names:
+            assert re.search(rf"(?<!\w){n}(?!\w)", body), \
+                f"phu-luc-d.md thiếu test '{n}' ({f})"
+    rows = [json.loads(line) for line in (ROOT / "data" / "eval"
+            / "redteam.jsonl").read_text(encoding="utf-8").split("\n")
+            if line.strip()]
+    cases = [r for r in rows if "_doc" not in r]
+    tot = Counter(c["attack"] for c in cases)
+    gap = Counter(c["attack"] for c in cases if "known_gap" in c)
+    for a, n in tot.items():
+        pat = (rf"\|\s*`{a}`\s*\|\s*{n}\s*\|\s*{n - gap[a]}\s*\|"
+               rf"\s*{gap[a]}\s*\|")
+        assert re.search(pat, body), f"phu-luc-d.md sai dòng attack '{a}'"
+    for c in cases:
+        if "known_gap" in c:
+            assert re.search(rf"`{re.escape(c['id'])}`", body), c["id"]
+    n, ng = len(cases), sum("known_gap" in c for c in cases)
+    assert f"{ng}/{n} = {ng / n:.1%}" in body
+    # Fix nghiệm thu: không overclaim độ phủ LLM-check — phải nói lớp LLM
+    # mặc định tắt + dẫn evidence đo thật (tỷ lệ bắt không tự suy ra).
+    sec = body[body.index("2c. Red-team PC-A9"):body.index("## 3.")]
+    assert "mặc định TẮT" in sec and "evidence/v42_llm.log" in sec
+
+
+def test_prompt_library_lists_every_template_in_manifest():
+    """v6.1: mọi tên + version template trong data/prompts/manifest.json có
+    trong prompt-library (word-boundary — gotcha v2.3: 'content_zalo@1'
+    không ăn ké 'content_zalo@10')."""
+    import json
+
+    man = json.loads((ROOT / "data" / "prompts" / "manifest.json")
+                     .read_text(encoding="utf-8"))
+    body = _doc("prompt-library.md")
+    assert man["templates"], "manifest rỗng"
+    for name, ent in man["templates"].items():
+        for token in (name, ent["version"], ent["sha256"][:12]):
+            assert re.search(rf"(?<![\w@]){re.escape(token)}(?![\w@])",
+                             body), f"prompt-library thiếu {token}"
+    assert "chờ GĐ Marketing duyệt" in body

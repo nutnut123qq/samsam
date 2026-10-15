@@ -1,0 +1,45 @@
+# v9.5 W95.2 egress evidence — 2026-10-12T03:08:45+07:00
+
+$ python -m pytest tests/test_ck_mat.py -k "egress or subprocess or banned or ocr or no_data" -v
+tests/test_ck_mat.py::test_egress_zero_connections_all_branches PASSED   [  5%]
+tests/test_ck_mat.py::test_subprocess_no_banned_modules_loaded PASSED    [ 11%]
+tests/test_ck_mat.py::test_no_banned_import_lines PASSED                 [ 17%]
+tests/test_ck_mat.py::test_no_data_matches_rag_drift_guard PASSED        [ 23%]
+tests/test_ck_mat.py::test_no_data_missing_dir PASSED                    [ 29%]
+tests/test_ck_mat.py::test_no_data_empty_dir PASSED                      [ 35%]
+tests/test_ck_mat.py::test_no_data_only_skipped_or_cho_ocr PASSED        [ 41%]
+tests/test_ck_mat.py::test_no_data_empty_punct_stopword_question[] PASSED [ 47%]
+tests/test_ck_mat.py::test_no_data_empty_punct_stopword_question[   ] PASSED [ 52%]
+tests/test_ck_mat.py::test_no_data_empty_punct_stopword_question[?!... ---] PASSED [ 58%]
+tests/test_ck_mat.py::test_no_data_empty_punct_stopword_question[l\xe0 c\u1ee7a v\xe0 cho c\xe1c] PASSED [ 64%]
+tests/test_ck_mat.py::test_no_data_low_coverage PASSED                   [ 70%]
+tests/test_ck_mat.py::test_no_data_machine_code_absent[M\xe1y chi\u1ebft r\xf3t SS-EQ-99 thay gio\u0103ng v\xf2i chi\u1ebft?] PASSED [ 76%]
+tests/test_ck_mat.py::test_no_data_machine_code_absent[M\xe1y chi\u1ebft r\xf3t SS-EQ-7 thay gio\u0103ng v\xf2i chi\u1ebft?] PASSED [ 82%]
+tests/test_ck_mat.py::test_no_data_machine_code_absent[M\xe1y chi\u1ebft r\xf3t SS-EQ-070 thay gio\u0103ng v\xf2i chi\u1ebft?] PASSED [ 88%]
+tests/test_ck_mat.py::test_ocr_engine_missing_cho_ocr PASSED             [ 94%]
+tests/test_ck_mat.py::test_real_local_ocr_under_egress_block PASSED      [100%]
+===================== 17 passed, 10 deselected in 14.19s ======================
+
+$ python -c "import agents.ck_mat, sys; print(loaded banned modules)"
+[]
+
+$ grep -nE "^\s*(import|from)\s+(openai|httpx|requests|urllib|google|pipelines\.llm_gateway|ingest\.embed_store|api\.rag)" agents/ck_mat.py | wc -l
+0
+
+$ python -m agents.ck_mat --stats --dir data/co_khi/mau
+[ck-mat] thư mục có — file=4 trang=12 indexed=12 cho_ocr=0 skipped=0
+
+$ python -m agents.ck_mat --stats   (CK_MAT_DIR mặc định data/co_khi_mat/ — chưa có tài liệu thật)
+[ck-mat] thư mục KHÔNG có — file=0 trang=0 indexed=0 cho_ocr=0 skipped=0
+
+$ python -m agents.ck_mat --ask "Máy chiết rót SS-EQ-99 bảo trì thế nào?" --dir data/co_khi/mau
+Chưa đủ dữ liệu để trả lời.
+
+$ python -m agents.ck_mat --ask "Cách đấu dây nguồn 3 pha cho tủ điện tổng xưởng?" --dir data/co_khi/mau
+Xem ban-ve-tu-dien-xuong-mau.md trang 1 — kiểm tra với Kỹ sư trưởng
+[ck-mat] chủ đề RỦI RO CAO — không trích đoạn
+[nguồn] ban-ve-tu-dien-xuong-mau.md trang 1
+
+$ git check-ignore -v data/co_khi_mat/x.pdf data/co_khi_mat/
+.gitignore:22:data/co_khi_mat/	data/co_khi_mat/x.pdf
+.gitignore:22:data/co_khi_mat/	data/co_khi_mat/

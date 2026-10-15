@@ -1,0 +1,56 @@
+== v8.0 gate vòng sửa nghiệm thu (10 finding) 2026-10-12 — chạy tuần tự, đọc tới exit
+DB TRƯỚC gate (vòng sửa): channel_snapshots=0 approval_queue=0 approvals=0 red_alerts=0 llm_usage=41
+
+== ruff check .
+All checks passed!
+rc=0
+
+== python -m py_compile pipelines/cockpit.py agents/ceo_report.py
+rc=0
+
+== targeted ×3: python -m pytest tests/test_cockpit.py tests/test_ceo_report.py tests/test_director.py tests/test_period.py tests/test_red_alert.py tests/test_report.py tests/test_llm_gateway.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_store.py tests/test_connect_timeout_guard.py -q -rs
+== targeted run 1
+........................................................................ [ 64%]
+........................................................................ [ 85%]
+.................................................                        [100%]
+337 passed in 27.58s
+rc=0
+== targeted run 2
+........................................................................ [ 64%]
+........................................................................ [ 85%]
+.................................................                        [100%]
+337 passed in 30.30s
+rc=0
+== targeted run 3
+........................................................................ [ 64%]
+........................................................................ [ 85%]
+.................................................                        [100%]
+337 passed in 29.15s
+rc=0
+
+== full python -m pytest -q (ĐÚNG 1 lần; 3 skipped có sẵn từ baseline — không thuộc test v8.0, test DB v8.0 0 skipped)
+........................................................................ [ 87%]
+........................................................................ [ 91%]
+........................................................................ [ 95%]
+........................................................................ [ 99%]
+..                                                                       [100%]
+1799 passed, 3 skipped in 488.86s (0:08:08)
+rc=0
+
+-- DB SAU gate (sau full pytest + CLI evidence/v80_cockpit.log + v80_report.log):
+channel_snapshots=0 approval_queue=0 approvals=0 red_alerts=0 llm_usage=41 (không đổi so với TRƯỚC)
+
+== v8.0 gate vòng sửa nghiệm thu #2 (1 MINOR: CSV dưới agent_writer toàn-unverified → exit 0 [done] câm) 2026-10-12T12:14:38+07:00 — tuần tự, đọc tới exit
+-- fix: pipelines/cockpit.py store(atomic=True): rollback khi conflict HOẶC unverified (bỏ điều kiện '& inserted'); _cli_import [fail] nói rõ số mới KHÔNG được nạp
+-- chứng minh test bắt lỗi: tạm trả điều kiện cũ → test_store_and_import_under_agent_writer FAIL 'assert 0 == 1' (re-import dưới agent_writer exit 0); khôi phục fix → PASS
+== ruff check .
+All checks passed!
+== test agent_writer -v
+====================== 1 passed, 73 deselected in 1.71s =======================
+== targeted ×3: tests/test_cockpit.py tests/test_ceo_report.py tests/test_handover_docs.py tests/test_director.py
+run1: 153 passed in 11.68s
+run2: 153 passed in 11.52s
+run3: 153 passed in 15.30s
+== full python -m pytest -q (ĐÚNG 1 lần)
+1799 passed, 3 skipped in 457.48s (0:07:37)
+rc=0

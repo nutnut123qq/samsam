@@ -1,0 +1,49 @@
+# v5.1-cskh-da-kenh — evidence (output thật của lệnh; worktree D:/code/samsam-w40, DB samsam_infra, 2026-10-12)
+=== W51.3 E2E handoff probe (DB samsam_infra) — 2026-10-12T14:28:16+07:00
+$ python scripts/apply_schema.py (2 lần — xem v51_consent.log)
+$ python <scratchpad>/v51_probe_handoff.py
+route: health
+[handoff] messenger: đã có mục chờ cho khách (uh=ce27f98386ae) — không nhân đôi
+record_handoff #1 -> 1; #2 (cùng khách) -> None
+pending cùng object_id = 1
+due_at - created_at = 2:00:00; risk = high; block = sales; created_by = agent:kd_a1; guardrail_ok = True
+title = Handoff suc_khoe — messenger
+payload = kênh=messenger; lý do=suc_khoe; user_hash=ce27f98386aeab417a8b400da5b4941c; msg_ref=81b27de6d2f61361; ts=2026-10-12T07:28:18Z; sla=2h
+PII/nội dung trong object_id/title/payload: KHÔNG
+[PASS] E2E handoff
+ITEM_ID=1
+exit=0
+
+
+$ python -m pipelines.approval_queue --pending --block sales
+[pending] 1 mục chờ duyệt:
+  #1 [sales/cskh_handoff] Handoff suc_khoe — messenger — rủi ro high, QA none, guardrail PASS, tạo bởi agent:kd_a1, hạn 10-12 16:28
+exit=0
+
+$ python -m pipelines.director --all --dry-run
+[ok] ceo — Tổng giám đốc + Hội đồng thành viên + Ban kiểm soát nội bộ · 6 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] sales — Giám đốc bán hàng + Sales (Phòng kinh doanh TMĐT) · 4 loại việc · vai trò duyệt gd_ban_hang · người duyệt chưa cấu hình (external-dep)
+[ok] marketing — Giám đốc marketing + Chuyên viên marketing + Chuyên viên SEO · 3 loại việc · vai trò duyệt gd_marketing · người duyệt chưa cấu hình (external-dep)
+[ok] intel — Trung tâm tình báo thị trường (trực thuộc TGĐ, phục vụ Marketing/Sales) · 3 loại việc · vai trò duyệt mxh · người duyệt chưa cấu hình (external-dep)
+[ok] finance — Giám đốc tài chính + Phòng kế toán + Phòng tài chính–kế hoạch · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] production — Giám đốc sản xuất + Nghiên cứu và sản xuất + Công nghệ sinh học · 3 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] farming — Giám đốc vùng trồng + Nhân viên vùng trồng · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] projects — Giám đốc dự án + Chuyên viên dự án–xúc tiến đầu tư · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] legal_hr — Pháp chế nhân sự + Chuyên viên pháp chế–hành chính–nhân sự · 3 loại việc · vai trò duyệt phap_che · người duyệt chưa cấu hình (external-dep)
+[ok] mechanical — Trung tâm điện–cơ khí chế tạo máy + Kỹ sư điện–cơ khí · 2 loại việc · vai trò duyệt tgd · người duyệt chưa cấu hình (external-dep)
+[ok] data_platform — Hạ tầng dữ liệu & AI (do Quản lý hạ tầng AI vận hành) · 2 loại việc · vai trò duyệt ha_tang,tgd · người duyệt chưa cấu hình (external-dep)
+[done] 11 khối hợp lệ (dry-run, không DB)
+exit=0
+
+$ python -m pipelines.approval_queue --reject 1 --by "probe v5.1" --note "probe E2E v5.1 — dọn mục thử"
+[done] mục #1 → rejected (người duyệt: probe v5.1)
+exit=0
+$ python -m pipelines.approval_queue --pending --block sales (sau dọn)
+[pending] hàng duyệt chung trống
+exit=0
+
+
+## -k handoff ×3 (vòng 3)
+$ python -m pytest -q tests/test_channels.py -k handoff  (vòng 3, lần 1): 12 passed, 83 deselected in 0.84s
+$ python -m pytest -q tests/test_channels.py -k handoff  (vòng 3, lần 2): 12 passed, 83 deselected in 0.74s
+$ python -m pytest -q tests/test_channels.py -k handoff  (vòng 3, lần 3): 12 passed, 83 deselected in 0.73s

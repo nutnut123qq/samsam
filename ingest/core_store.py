@@ -14,10 +14,16 @@ Contract:
     thật guardrail. 0 record = file cắt cụt/crawl lỗi → giữ thống nhất
     hành vi "không xóa rows đang có".
     Edge chấp nhận (ghi ở đây, someday): row `source='manual'` trỏ
-    `product_id`/`plot_id` tới row do loader quản sẽ mất link (`set
-    null`) hoặc bị cascade-xóa (plot_logs) sau mỗi reload — vá dài hạn
-    = upsert `on conflict`. Domain `multi` (assets) chỉ dọn `source`
-    có row trong lần chạy → file nguồn rút hẳn thì asset cũ tồn đọng.
+    `product_id` tới row do loader quản sẽ mất link (`set null`) sau
+    mỗi reload — vá dài hạn = upsert `on conflict`.
+    v9.3: `plots` KHÔNG còn delete+insert mù — khoảnh mẫu còn nhật ký
+    ĐÃ CHAIN (hash chain `plot_logs`, trigger chặn xóa) hoặc còn ảnh
+    `garden_media` được GIỮ và upsert tại chỗ; khoảnh trùng id nhưng
+    `source` khác (vd 'manual') KHÔNG bị đè. Sau khi GĐ vùng trồng gỡ
+    mẫu (`agent_action_log` action `garden_sample_purge`) loader bỏ hẳn
+    domain `plots`/`plot_logs` mẫu — không nạp lại.
+    Domain `multi` (assets) chỉ dọn `source` có row trong lần chạy →
+    file nguồn rút hẳn thì asset cũ tồn đọng.
   - Dòng `{"_doc": "..."}` trong jsonl là comment — skip.
   - `sample_*.jsonl` nạp với source 'sample:*' — DỮ LIỆU MẪU chờ công ty
     bàn giao (SOW §5.2); phải phân biệt rõ với data crawl thật.
@@ -63,6 +69,20 @@ DOMAIN_ORDER = ["products", "claims_approved", "plots", "plot_logs",
                 "orders", "assets"]
 
 _URL_RE = re.compile(r"https?://\S+")
+
+# v9.3 — điều kiện "khoảnh bị giữ": còn nhật ký đã chain hoặc còn ảnh.
+_PLOT_PINNED = ("exists (select 1 from plot_logs l where l.plot_id = p.id"
+                " and l.row_hash is not null) or exists (select 1 from"
+                " garden_media m where m.plot_id = p.id)")
+PLOTS_DELETE_SQL = ("delete from plots p where source = %s"
+                    f" and not ({_PLOT_PINNED})")
+# Khoảnh còn giữ (cùng source) → cập nhật tại chỗ; khoảnh trùng id khác
+# source (vd 'manual') → điều kiện where false → KHÔNG đè.
+PLOTS_UPSERT_SUFFIX = (
+    " on conflict (id) do update set "
+    + ", ".join(f"{c} = excluded.{c}" for c in COLS["plots"]
+                if c not in ("id", "source"))
+    + ", updated_at = now() where plots.source = excluded.source")
 
 
 def iter_jsonl(path: Path):
@@ -244,6 +264,10 @@ def apply_rows(conn, domains: list[tuple[str, str, list]]) -> dict:
             sources = sorted({r["source"] for r in by_table[table][1]})
             conn.execute(f"delete from {table} where source = any(%s)",
                          (sources,))
+        elif table == "plots":
+            # Khoảnh còn nhật ký đã chain (trigger chặn cascade) hoặc còn
+            # ảnh (FK no action) → giữ lại, pha 2 upsert tại chỗ.
+            conn.execute(PLOTS_DELETE_SQL, (src,))
         else:
             conn.execute(f"delete from {table} where source = %s", (src,))
     # Pha 2 — insert cha → con
@@ -256,10 +280,48 @@ def apply_rows(conn, domains: list[tuple[str, str, list]]) -> dict:
             cols = COLS[table]
             sql = (f"insert into {table} ({', '.join(cols)}) values ("
                    + ", ".join(f"%({c})s" for c in cols) + ")")
+            if table == "plots":
+                sql += PLOTS_UPSERT_SUFFIX
             with conn.cursor() as cur:
                 cur.executemany(sql, rows)
         counts[table] = len(rows)
     return counts
+
+
+def sample_garden_purged(conn) -> bool:
+    """GĐ vùng trồng đã gỡ dữ liệu mẫu vườn chưa (có log
+    `garden_sample_purge`)? Bảng `agent_action_log` chưa có → False
+    (savepoint giữ conn sống sau UndefinedTable)."""
+    try:
+        with conn.transaction():
+            return bool(conn.execute(
+                "select exists (select 1 from agent_action_log"
+                " where action = 'garden_sample_purge')").fetchone()[0])
+    except psycopg.errors.UndefinedTable:
+        return False
+
+
+def drop_sample_garden(domains: list) -> list:
+    """Bỏ domain plots/plot_logs nguồn `sample:*` (không delete, không
+    insert) — domain khác (orders mẫu...) giữ nguyên."""
+    return [d for d in domains
+            if not (d[0] in ("plots", "plot_logs")
+                    and d[1].startswith("sample:"))]
+
+
+def kept_plots(conn, domains: list) -> list[tuple[str, int, int]]:
+    """Khoảnh thuộc source plots đang nạp mà loader GIỮ lại (còn nhật ký
+    đã chain / ảnh) → [(id, số nhật ký chain, số ảnh)] theo id."""
+    srcs = [src for t, src, _ in domains if t == "plots"]
+    if not srcs:
+        return []
+    return [tuple(r) for r in conn.execute(
+        "select p.id,"
+        " (select count(*) from plot_logs l where l.plot_id = p.id"
+        "  and l.row_hash is not null),"
+        " (select count(*) from garden_media m where m.plot_id = p.id)"
+        f" from plots p where p.source = any(%s) and ({_PLOT_PINNED})"
+        " order by p.id", (srcs,)).fetchall()]
 
 
 def main() -> int:
@@ -275,10 +337,18 @@ def main() -> int:
         if table in loaded:
             print(f"[load] {table}: {loaded[table]} rows", flush=True)
 
-    present = {t for t, _, _ in domains}
     try:
-        with psycopg.connect(dsn) as conn:
+        with psycopg.connect(dsn, connect_timeout=10) as conn:
+            if sample_garden_purged(conn):
+                print("[skip] plots/plot_logs mẫu: GĐ vùng trồng đã gỡ dữ"
+                      " liệu mẫu (garden_sample_purge) — không nạp lại",
+                      flush=True)
+                domains = drop_sample_garden(domains)
             apply_rows(conn, domains)
+            for pid, n_logs, n_media in kept_plots(conn, domains):
+                print(f"[keep] plots: {pid} ({n_logs} nhật ký đã chain,"
+                      f" {n_media} ảnh) — không xóa", flush=True)
+            present = {t for t, _, _ in domains}
             totals = {t: conn.execute(f"select count(*) from {t}")
                       .fetchone()[0] for t in DOMAIN_ORDER
                       if t in present}

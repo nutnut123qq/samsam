@@ -1,0 +1,717 @@
+{
+ "_doc": "Suite kd_a5 (v5.3 — KD-A5 giám sát giá & khuyến mãi, WP07). Bộ ca MẪU do dev soạn — CHỜ GĐ bán hàng sửa/gán nhãn; không phải nghiệm thu WP07. Chấm luật THUẦN agents.kd_price.check_listing_prices / check_promos trên input inline của ca + cấu hình THẬT data/price_watch.json (GIẢ ĐỊNH: lệch niêm yết 5%, trần chiết khấu 40%, tối đa 1 KM chồng, nhìn trước 45 ngày) + fpa_config net_ratio_default + data/directors/sales.json (khóa drift cấu hình) — 0 DB/LLM/mạng/key. Ca KHÔNG có `text` (đầu vào = golden × readiness × listing/KM). expect.kinds = tập loại phát hiện S1/S2; object_types = loại việc đẩy hàng duyệt; info = nhãn chưa có giá vốn duyệt; forbid_in_payload = chuỗi KHÔNG được xuất hiện trong title/payload (giá đối thủ). Mọi payload phải qua guardrail. Bẫy bắt buộc 100%: trap_floor (dưới giá sàn đúng 1đ / bằng giá sàn), trap_banned (KM SKU rượu / TPBVSK chưa XNQC → S1, 0 đề xuất KM), trap_no_race (giá đối thủ thấp → không phát hiện mới, không lọt vào đề xuất). Owner: sales; agent QA chạy: data_platform. KHÔNG nằm trong required_agents (bộ chưa duyệt không chặn deploy). frozen=false (external-dep). Sửa ca → tăng version + `python scripts/agent_eval.py --print-hash kd_a5`.",
+ "agent": "kd_a5",
+ "version": 1,
+ "cases_sha256": "d8c0348ee7e6f17e6d9e567503917df5380242452cc4d313d024e74a85765030",
+ "owner_block": "sales",
+ "qa_block": "data_platform",
+ "qa_agent": "Agent Nghiệm thu (QA/Eval)",
+ "risk": "high",
+ "status": "active",
+ "runner": "kd_a5",
+ "agent_model": "rules",
+ "judge": null,
+ "frozen": false,
+ "labeled_by": null,
+ "frozen_at": null,
+ "threshold": {
+  "min_pass_rate": 1.0,
+  "must_pass_kinds": [
+   "trap_floor",
+   "trap_banned",
+   "trap_no_race"
+  ]
+ },
+ "prompt_files": [
+  "agents/kd_price.py",
+  "agents/kd_listing.py",
+  "data/price_watch.json",
+  "data/directors/sales.json",
+  "data/eval/suites/kd_a5.json"
+ ],
+ "cases": [
+  {
+   "id": "a5-l01",
+   "kind": "below_floor",
+   "op": "listing",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-a",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "MO_TA",
+   "cogs": null,
+   "listing": {
+    "price_vnd": 159000,
+    "sale_price": 120000
+   },
+   "expect": {
+    "kinds": [
+     "below_floor"
+    ],
+    "object_types": [
+     "market_alert_s1"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "Giá bán thực trên sàn dưới giá sàn golden"
+  },
+  {
+   "id": "a5-l02",
+   "kind": "trap_floor",
+   "op": "listing",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-a",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "MO_TA",
+   "cogs": null,
+   "listing": {
+    "price_vnd": 159000,
+    "sale_price": 127999
+   },
+   "expect": {
+    "kinds": [
+     "below_floor"
+    ],
+    "object_types": [
+     "market_alert_s1"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "Bẫy: dưới giá sàn đúng 1 đồng"
+  },
+  {
+   "id": "a5-l03",
+   "kind": "trap_floor",
+   "op": "listing",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-a",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "MO_TA",
+   "cogs": null,
+   "listing": {
+    "price_vnd": 159000,
+    "sale_price": 128000
+   },
+   "expect": {
+    "kinds": []
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "Bẫy: bằng đúng giá sàn — không cảnh báo"
+  },
+  {
+   "id": "a5-l04",
+   "kind": "negative_margin",
+   "op": "listing",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-a",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "MO_TA",
+   "cogs": 150000,
+   "listing": {
+    "price_vnd": 159000
+   },
+   "expect": {
+    "kinds": [
+     "negative_margin"
+    ],
+    "object_types": [
+     "market_alert_s1"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "Giá vốn đã duyệt cao hơn giá × tỷ lệ thực nhận → biên âm"
+  },
+  {
+   "id": "a5-l05",
+   "kind": "no_cogs",
+   "op": "listing",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-a",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "MO_TA",
+   "cogs": null,
+   "listing": {
+    "price_vnd": 159000
+   },
+   "expect": {
+    "kinds": [],
+    "info": [
+     "no_cogs"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "Chưa có giá vốn duyệt → không suy 0, chỉ ghi nhãn"
+  },
+  {
+   "id": "a5-l06",
+   "kind": "list_deviation",
+   "op": "listing",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-a",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "MO_TA",
+   "cogs": null,
+   "listing": {
+    "price_vnd": 166950
+   },
+   "expect": {
+    "kinds": []
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "Lệch niêm yết ĐÚNG ngưỡng 5% → không cảnh báo"
+  },
+  {
+   "id": "a5-l07",
+   "kind": "list_deviation",
+   "op": "listing",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-a",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "MO_TA",
+   "cogs": null,
+   "listing": {
+    "price_vnd": 166951
+   },
+   "expect": {
+    "kinds": [
+     "list_deviation"
+    ],
+    "object_types": [
+     "price_change"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "Lệch niêm yết vượt ngưỡng 1 đồng → S2"
+  },
+  {
+   "id": "a5-l08",
+   "kind": "listing_promo_over_cap",
+   "op": "listing",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-a",
+   "golden": {
+    "list": 159000,
+    "floor": 90000
+   },
+   "readiness": "MO_TA",
+   "cogs": null,
+   "listing": {
+    "price_vnd": 159000,
+    "sale_price": 95399
+   },
+   "expect": {
+    "kinds": [
+     "listing_promo_over_cap"
+    ],
+    "object_types": [
+     "price_change"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "Giá sau KM trên sàn sâu hơn trần 40%"
+  },
+  {
+   "id": "a5-l09",
+   "kind": "cam_skip",
+   "op": "listing",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-a",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "CAM",
+   "cogs": null,
+   "listing": {
+    "price_vnd": 159000,
+    "sale_price": 1000
+   },
+   "expect": {
+    "kinds": []
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "SKU nhóm CAM (rượu) — A5 không xét giá (việc A4 S1)"
+  },
+  {
+   "id": "a5-l10",
+   "kind": "trap_no_race",
+   "op": "listing",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-a",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "MO_TA",
+   "cogs": null,
+   "listing": {
+    "price_vnd": 159000
+   },
+   "expect": {
+    "kinds": [],
+    "forbid_in_payload": [
+     "70.000",
+     "70000"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "competitor": {
+    "price_vnd": 70000,
+    "promo_price_vnd": 65000
+   },
+   "note": "Bẫy: đối thủ bán 70.000 đ — giá mình đúng list → không đề xuất đua giá"
+  },
+  {
+   "id": "a5-l11",
+   "kind": "trap_no_race",
+   "op": "listing",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-a",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "MO_TA",
+   "cogs": null,
+   "listing": {
+    "price_vnd": 180000
+   },
+   "expect": {
+    "kinds": [
+     "list_deviation"
+    ],
+    "object_types": [
+     "price_change"
+    ],
+    "forbid_in_payload": [
+     "60.000",
+     "60000"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "competitor": {
+    "price_vnd": 60000
+   },
+   "note": "Bẫy: đối thủ thấp + giá mình lệch list → đề xuất chỉ dùng số golden"
+  },
+  {
+   "id": "a5-p01",
+   "kind": "trap_banned",
+   "op": "promo",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-b",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "CAM",
+   "promotable": false,
+   "cogs": null,
+   "promos": [
+    {
+     "program_id": "KM-R1",
+     "loai_km": "voucher",
+     "start": "2026-11-11",
+     "end": "2026-11-11",
+     "giam_pct": 10
+    }
+   ],
+   "expect": {
+    "kinds": [
+     "promo_banned"
+    ],
+    "object_types": [
+     "market_alert_s1"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "Bẫy: KM cho SKU rượu → S1, 0 đề xuất KM/giá"
+  },
+  {
+   "id": "a5-p02",
+   "kind": "trap_banned",
+   "op": "promo",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-b",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "MO_TA",
+   "promotable": false,
+   "cogs": null,
+   "promos": [
+    {
+     "program_id": "KM-T1",
+     "loai_km": "voucher",
+     "start": "2026-11-11",
+     "end": "2026-11-12",
+     "giam_pct": 5
+    }
+   ],
+   "expect": {
+    "kinds": [
+     "promo_banned"
+    ],
+    "object_types": [
+     "market_alert_s1"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "Bẫy: KM cho TPBVSK chưa XNQC (MO_TA) → S1"
+  },
+  {
+   "id": "a5-p03",
+   "kind": "promo_stacked",
+   "op": "promo",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-b",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "QC_DAY_DU",
+   "promotable": true,
+   "cogs": null,
+   "promos": [
+    {
+     "program_id": "KM-A",
+     "loai_km": "voucher",
+     "start": "2026-11-10",
+     "end": "2026-11-12",
+     "giam_pct": 10
+    },
+    {
+     "program_id": "KM-B",
+     "loai_km": "flash_sale",
+     "start": "2026-11-11",
+     "end": "2026-11-11",
+     "giam_pct": 10
+    }
+   ],
+   "expect": {
+    "kinds": [
+     "promo_stacked"
+    ],
+    "object_types": [
+     "promo_change"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "2 KM chồng cùng ngày (tối đa 1)"
+  },
+  {
+   "id": "a5-p04",
+   "kind": "promo_below_floor",
+   "op": "promo",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-b",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "QC_DAY_DU",
+   "promotable": true,
+   "cogs": null,
+   "promos": [
+    {
+     "program_id": "KM-C",
+     "loai_km": "voucher",
+     "start": "2026-11-11",
+     "end": "2026-11-11",
+     "giam_pct": 15
+    },
+    {
+     "program_id": "KM-D",
+     "loai_km": "voucher",
+     "start": "2026-11-11",
+     "end": "2026-11-11",
+     "giam_pct": 10
+    }
+   ],
+   "expect": {
+    "kinds": [
+     "promo_stacked",
+     "promo_below_floor"
+    ],
+    "object_types": [
+     "market_alert_s1",
+     "promo_change"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "KM chồng làm giá xuống dưới giá sàn"
+  },
+  {
+   "id": "a5-p05",
+   "kind": "promo_over_cap",
+   "op": "promo",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-b",
+   "golden": {
+    "list": 159000,
+    "floor": 80000
+   },
+   "readiness": "QC_DAY_DU",
+   "promotable": true,
+   "cogs": null,
+   "promos": [
+    {
+     "program_id": "KM-E",
+     "loai_km": "voucher",
+     "start": "2026-11-15",
+     "end": "2026-11-15",
+     "giam_pct": 45
+    }
+   ],
+   "expect": {
+    "kinds": [
+     "promo_over_cap"
+    ],
+    "object_types": [
+     "promo_change"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "1 KM giảm 45% vượt trần 40%"
+  },
+  {
+   "id": "a5-p06",
+   "kind": "promo_negative_margin",
+   "op": "promo",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-b",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "QC_DAY_DU",
+   "promotable": true,
+   "cogs": 130000,
+   "promos": [
+    {
+     "program_id": "KM-F",
+     "loai_km": "voucher",
+     "start": "2026-11-11",
+     "end": "2026-11-11",
+     "gia_km_vnd": 140000
+    }
+   ],
+   "expect": {
+    "kinds": [
+     "promo_negative_margin"
+    ],
+    "object_types": [
+     "market_alert_s1"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "KM giá cố định làm biên âm theo giá vốn đã duyệt"
+  },
+  {
+   "id": "a5-p07",
+   "kind": "promo_unverifiable",
+   "op": "promo",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-b",
+   "golden": {
+    "list": 159000
+   },
+   "readiness": "QC_DAY_DU",
+   "promotable": true,
+   "cogs": null,
+   "promos": [
+    {
+     "program_id": "KM-G",
+     "loai_km": "voucher",
+     "start": "2026-11-11",
+     "end": "2026-11-11",
+     "giam_pct": 5
+    }
+   ],
+   "expect": {
+    "kinds": [
+     "promo_unverifiable"
+    ],
+    "object_types": [
+     "promo_change"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "Thiếu giá sàn golden → không kiểm được"
+  },
+  {
+   "id": "a5-p08",
+   "kind": "window",
+   "op": "promo",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-b",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "QC_DAY_DU",
+   "promotable": true,
+   "cogs": null,
+   "promos": [
+    {
+     "program_id": "KM-H",
+     "loai_km": "voucher",
+     "start": "2026-10-01",
+     "end": "2026-10-11",
+     "giam_pct": 45
+    }
+   ],
+   "expect": {
+    "kinds": []
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "KM đã kết thúc trước ngày kiểm → bỏ qua"
+  },
+  {
+   "id": "a5-p09",
+   "kind": "window",
+   "op": "promo",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-b",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "QC_DAY_DU",
+   "promotable": true,
+   "cogs": null,
+   "promos": [
+    {
+     "program_id": "KM-I",
+     "loai_km": "voucher",
+     "start": "2026-11-27",
+     "end": "2026-11-28",
+     "giam_pct": 45
+    }
+   ],
+   "expect": {
+    "kinds": []
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "note": "KM bắt đầu ngoài cửa sổ nhìn trước 45 ngày → bỏ qua"
+  },
+  {
+   "id": "a5-p10",
+   "kind": "trap_no_race",
+   "op": "promo",
+   "today": "2026-10-12",
+   "channel": "shopee",
+   "sku": "sku-mau-b",
+   "golden": {
+    "list": 159000,
+    "floor": 128000
+   },
+   "readiness": "QC_DAY_DU",
+   "promotable": true,
+   "cogs": null,
+   "promos": [
+    {
+     "program_id": "KM-J",
+     "loai_km": "voucher",
+     "start": "2026-11-11",
+     "end": "2026-11-11",
+     "giam_pct": 5
+    }
+   ],
+   "expect": {
+    "kinds": [],
+    "forbid_in_payload": [
+     "60.000"
+    ]
+   },
+   "source": "MẪU",
+   "scorer": "kd_a5",
+   "label": "dev_draft",
+   "competitor": {
+    "price_vnd": 60000
+   },
+   "note": "Bẫy: đối thủ 60.000 đ — KM 5% hợp lệ → 0 phát hiện, không gợi ý mức giảm theo đối thủ"
+  }
+ ]
+}

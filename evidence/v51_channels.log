@@ -1,0 +1,23 @@
+# v5.1-cskh-da-kenh — evidence (output thật của lệnh; worktree D:/code/samsam-w40, DB samsam_infra, 2026-10-12)
+## W51.1 — test_channels ×3 (vòng 1 — sau sửa regex DoS, TRƯỚC sửa consent withdrawn)
+$ python -m pytest -q tests/test_channels.py   (lần 1): 95 passed in 1.85s
+$ python -m pytest -q tests/test_channels.py   (lần 2): 95 passed in 1.75s
+$ python -m pytest -q tests/test_channels.py   (lần 3): 95 passed in 2.12s
+
+## W51.1 — test_channels ×3 (vòng 3 — code cuối, sau cả 2 sửa OWASP)
+$ python -m pytest -q tests/test_channels.py   (vòng 3, lần 1): 95 passed in 1.95s
+$ python -m pytest -q tests/test_channels.py   (vòng 3, lần 2): 95 passed in 1.85s
+$ python -m pytest -q tests/test_channels.py   (vòng 3, lần 3): 95 passed in 2.02s
+
+## AST probe: connectors/channels.py không import mạng
+$ python -c "<AST probe: imports của connectors/channels.py>"
+imports: ['api.rag', 'argparse', 'connectors.zalo', 'dataclasses', 'datetime', 'dotenv', 'hashlib', 'hmac', 'ingest.lead_store', 'itertools', 'json', 'os', 'pathlib', 'pipelines', 'pipelines.kb_filter', 'pipelines.llm_gateway', 'pipelines.pii', 'psycopg', 're', 'sys', 'typing', 'unicodedata']
+module mạng bị cấm: KHÔNG
+dpia_draft._is_egress(channels.py) = False
+exit=0
+
+
+## OWASP (DoS regex) — _DOMAIN_RE cũ `\b[\w-]+\.` vs mới `(?<![\w-])`
+a-*2000 len=4000: regex CŨ 0.182s | regex MỚI 0.0002s
+a-*8000 len=16000: regex CŨ 2.650s | regex MỚI 0.0012s
+

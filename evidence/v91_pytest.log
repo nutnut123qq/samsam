@@ -1,0 +1,212 @@
+# evidence/v91_pytest.log — gate v9.1-fpa (W91.1–W91.8)
+# Chạy: 2026-10-12 14:48:19 +0700 trên worktree samsam-w70, DB riêng (w90.env, không in biến).
+# Ghi chú môi trường: Docker Desktop tắt → 3 test tests/test_dr_drill.py skip 'không có docker' là MÔI TRƯỜNG, không phải lỗi version.
+
+## W91.1 — schema chỉ THÊM (không alter/drop table)
+$ git diff docs/schema.sql | grep -nE '^\+\s*(alter|drop)\s+table' | wc -l
+0
+
+$ python scripts/apply_schema.py
+[done] schema applied — 41 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_snapshots, chunks, chunks_internal, claims_approved, cogs_versions, content_drafts, dealer_ar, decisions, document_fields, documents, eval_runs, garden_media, golden_discrepancies, incidents, intel_items, invoice_lines, job_runs, leads, llm_usage, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, opex_entries, orders, plot_logs, plots, price_list, products, recon_results, red_alerts, settlement_rows, sim_runs, sku_map, sku_master
+[exit=0]
+
+$ python scripts/apply_schema.py
+[done] schema applied — 41 bảng public: agent_action_log, approval_queue, approvals, assets, auto_policies, channel_snapshots, chunks, chunks_internal, claims_approved, cogs_versions, content_drafts, dealer_ar, decisions, document_fields, documents, eval_runs, garden_media, golden_discrepancies, incidents, intel_items, invoice_lines, job_runs, leads, llm_usage, machines, maintenance_plans, market_alerts, market_rows, market_snapshots, opex_entries, orders, plot_logs, plots, price_list, products, recon_results, red_alerts, settlement_rows, sim_runs, sku_map, sku_master
+[exit=0]
+
+$ python -m pytest -q -rs tests/test_handover_docs.py::test_kien_truc_lists_all_tables tests/test_db_backup.py::test_cloud_readme_drift_guard tests/test_director_framework.py
+..................                                                       [100%]
+18 passed in 28.71s
+[exit=0]
+
+## W91.7 — DPIA/TIA khớp map
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+[exit=0]
+
+## W91.8 — targeted ×3 (tuần tự)
+### targeted lần 1
+$ python -m pytest -q -rs tests/test_fp_pnl.py tests/test_fp_ads.py tests/test_fp_opscost.py tests/test_fp_cash.py tests/test_fin_director.py tests/test_fin_qa.py tests/test_scenario.py tests/test_settlement_csv.py tests/test_acc_ar.py tests/test_director.py tests/test_director_framework.py tests/test_approval_queue.py tests/test_auth_approval.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py
+........................................................................ [ 18%]
+........................................................................ [ 37%]
+........................................................................ [ 56%]
+........................................................................ [ 75%]
+........................................................................ [ 94%]
+...................                                                      [100%]
+379 passed in 91.57s (0:01:31)
+[exit=0]
+
+### targeted lần 2
+$ python -m pytest -q -rs tests/test_fp_pnl.py tests/test_fp_ads.py tests/test_fp_opscost.py tests/test_fp_cash.py tests/test_fin_director.py tests/test_fin_qa.py tests/test_scenario.py tests/test_settlement_csv.py tests/test_acc_ar.py tests/test_director.py tests/test_director_framework.py tests/test_approval_queue.py tests/test_auth_approval.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py
+........................................................................ [ 18%]
+........................................................................ [ 37%]
+........................................................................ [ 56%]
+........................................................................ [ 75%]
+........................................................................ [ 94%]
+...................                                                      [100%]
+379 passed in 89.58s (0:01:29)
+[exit=0]
+
+### targeted lần 3
+$ python -m pytest -q -rs tests/test_fp_pnl.py tests/test_fp_ads.py tests/test_fp_opscost.py tests/test_fp_cash.py tests/test_fin_director.py tests/test_fin_qa.py tests/test_scenario.py tests/test_settlement_csv.py tests/test_acc_ar.py tests/test_director.py tests/test_director_framework.py tests/test_approval_queue.py tests/test_auth_approval.py tests/test_data_flow_map.py tests/test_dpia_draft.py tests/test_handover_docs.py tests/test_connect_timeout_guard.py
+........................................................................ [ 18%]
+........................................................................ [ 37%]
+........................................................................ [ 56%]
+........................................................................ [ 75%]
+........................................................................ [ 94%]
+...................                                                      [100%]
+379 passed in 75.47s (0:01:15)
+[exit=0]
+
+## W91.8 — full pytest (1 lần)
+$ python -m pytest -q -rs
+........................................................................ [  3%]
+........................................................................ [  7%]
+........................................................................ [ 11%]
+........................................................................ [ 15%]
+........................................................................ [ 19%]
+........................................................................ [ 23%]
+........................................................................ [ 27%]
+........................................................................ [ 30%]
+...........................sss.......................................... [ 34%]
+........................................................................ [ 38%]
+........................................................................ [ 42%]
+........................................................................ [ 46%]
+........................................................................ [ 50%]
+........................................................................ [ 54%]
+........................................................................ [ 57%]
+........................................................................ [ 61%]
+........................................................................ [ 65%]
+........................................................................ [ 69%]
+........................................................................ [ 73%]
+........................................................................ [ 77%]
+........................................................................ [ 81%]
+........................................................................ [ 84%]
+........................................................................ [ 88%]
+........................................................................ [ 92%]
+........................................................................ [ 96%]
+................................................................         [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+1861 passed, 3 skipped in 440.04s (0:07:20)
+[exit=0]
+
+## W91.8 — ruff / py_compile / grep mạng
+$ ruff check .
+All checks passed!
+[exit=0]
+
+$ python -m py_compile agents/fp_pnl.py agents/fp_ads.py agents/fp_opscost.py agents/fp_cash.py agents/fin_director.py
+[exit=0]
+
+$ grep -nE 'smtplib|httpx|requests|urllib|llm_gateway|openai' agents/fp_pnl.py agents/fp_ads.py agents/fp_opscost.py agents/fp_cash.py agents/fin_director.py | wc -l
+0
+
+$ grep -nE 'from pipelines(\.| import )scenario|scenario\.project' agents/fp_cash.py | wc -l   (>=1)
+5
+$ grep -nE 'trend|math\.floor|math\.ceil|events' agents/fp_cash.py | wc -l   (0 = không engine thứ 2)
+0
+
+$ git status --short
+ M DONE.md
+ M data/data_flow_map.json
+ M data/directors/finance.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/legal/DPIA-nhap.md
+ M docs/legal/TIA-nhap.md
+ M docs/roles.sql
+ M docs/schema.sql
+ M tests/test_data_flow_map.py
+ M tests/test_fin_qa.py
+?? agents/fin_director.py
+?? agents/fp_ads.py
+?? agents/fp_cash.py
+?? agents/fp_opscost.py
+?? agents/fp_pnl.py
+?? data/fpa_config.json
+?? tests/fixtures/finance/opex_MAU.csv
+?? tests/fixtures/finance/order_shopee_multi_MAU.csv
+?? tests/fixtures/finance/settlement_shopee_multi_MAU.csv
+?? tests/test_fin_director.py
+?? tests/test_fp_ads.py
+?? tests/test_fp_cash.py
+?? tests/test_fp_opscost.py
+?? tests/test_fp_pnl.py
+[exit=0]
+
+[gate-done]
+
+# ==== VÁ NGHIỆM THU v9.1 — gate vòng sửa (2026-10-12 15:45:00 +0700) ====
+# 8 phát hiện (2 MAJOR/MINOR fp_opscost chữ ký TGĐ, 2 fp_pnl --channel, 4 test không phân biệt) — xem DONE.md 'Vá nghiệm thu'.
+# Đột biến (mutation probe, áp tạm rồi khôi phục — mỗi đột biến phải làm test tương ứng FAIL):
+#   [KILLED] F1 submit bỏ khac_vai_tro -> test_db_report_load_submit_status: 1 failed in 2.98s
+#   [KILLED] F3 key=id tự tăng -> test_signature_bound_to_natural_key_and_content: 1 failed in 1.54s
+#   [KILLED] F3/F4 bỏ so content_sha256 -> test_signature_bound_to_natural_key_and_content: 1 failed in 1.94s
+#   [KILLED] F3/F4 bỏ so content_sha256 (DB) -> test_db_forged_item_never_counts: 1 failed in 2.77s
+#   [KILLED] F4 bỏ lọc block -> test_signature_bound_to_natural_key_and_content: 1 failed in 2.47s
+#   [KILLED] F4 bỏ lọc created_by -> test_signature_bound_to_natural_key_and_content: 1 failed in 2.00s
+#   [KILLED] F2 pnl không lọc kênh -> test_pnl_channel_filter_counts_match_channel: 1 failed in 1.78s
+#   [KILLED] F2/F8 file kênh đè file tháng -> test_db_pnl_flow: 1 failed in 8.58s
+#   [KILLED] F2/F8 pnl không lọc kênh (DB) -> test_db_pnl_flow: 1 failed in 5.49s
+#   [KILLED] F7 bỏ CTE latest -> test_db_lines_take_newest_order_snapshot_only: 1 failed in 3.58s
+#   [KILLED] F7 đảo snapshot desc -> test_db_lines_take_newest_order_snapshot_only: 1 failed in 2.96s
+#   [KILLED] F5 bỏ lag -> test_lag_shifts_units_into_later_weeks: 1 failed in 1.77s
+#   [KILLED] F6 biên tháng naive date -> test_db_report_load_submit_status: 1 failed in 2.19s
+#   [KILLED] F6 biên tháng UTC -> test_db_report_load_submit_status: 1 failed in 3.13s
+
+$ python -m pytest -q <targeted 17 file + test_db_backup.py::test_cloud_readme_drift_guard>  # lần 1 (tuần tự)
+385 passed in 73.95s (0:01:13)
+
+$ python -m pytest -q <targeted 17 file + test_db_backup.py::test_cloud_readme_drift_guard>  # lần 2 (tuần tự)
+385 passed in 70.69s (0:01:10)
+
+$ python -m pytest -q <targeted 17 file + test_db_backup.py::test_cloud_readme_drift_guard>  # lần 3 (tuần tự)
+385 passed in 78.83s (0:01:18)
+
+$ python -m pytest -q   # full, ĐÚNG 1 lần
+1869 passed in 480.69s (0:08:00)
+# 0 skipped lần này: 3 test_dr_drill chạy được (docker có mặt) — trước đó skip do MÔI TRƯỜNG.
+
+$ ruff check .
+All checks passed!
+$ python -m py_compile agents/fp_pnl.py agents/fp_ads.py agents/fp_opscost.py agents/fp_cash.py agents/fin_director.py
+[exit=0]
+$ grep -nE "smtplib|httpx|requests|urllib|llm_gateway|openai" agents/fp_*.py agents/fin_director.py | wc -l
+0
+$ python scripts/dpia_draft.py --check
+[ok] DPIA-nhap.md, TIA-nhap.md khớp map 2026-10-12
+[exit=0]
+$ python scripts/apply_schema.py > /dev/null
+[exit=0]
+$ git status --short
+ M DONE.md
+ M data/data_flow_map.json
+ M data/directors/finance.json
+ M deploy/cloud/README.md
+ M docs/handover/kien-truc.md
+ M docs/handover/sop.md
+ M docs/legal/DPIA-nhap.md
+ M docs/legal/TIA-nhap.md
+ M docs/roles.sql
+ M docs/schema.sql
+ M tests/test_data_flow_map.py
+ M tests/test_fin_qa.py
+?? agents/fin_director.py
+?? agents/fp_ads.py
+?? agents/fp_cash.py
+?? agents/fp_opscost.py
+?? agents/fp_pnl.py
+?? data/fpa_config.json
+?? tests/fixtures/finance/opex_MAU.csv
+?? tests/fixtures/finance/order_shopee_multi_MAU.csv
+?? tests/fixtures/finance/settlement_shopee_multi_MAU.csv
+?? tests/test_fin_director.py
+?? tests/test_fp_ads.py
+?? tests/test_fp_cash.py
+?? tests/test_fp_opscost.py
+?? tests/test_fp_pnl.py
+[gate-done vá nghiệm thu]

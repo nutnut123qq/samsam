@@ -1,0 +1,65 @@
+# v8.3 W83.4–W83.5 hồ sơ tham gia — (output thật — trích từ lượt chạy gate 2026-10-12, worktree D:/code/samsam-w73)
+
+## pytest -v tests/test_da_hoso.py
+tests/test_da_hoso.py::test_real_templates_clean PASSED                  [ 16%]
+tests/test_da_hoso.py::test_eligible_skus_real_golden PASSED             [ 16%]
+tests/test_da_hoso.py::test_build_payload_real_golden[hoi_cho] PASSED    [ 17%]
+tests/test_da_hoso.py::test_build_payload_real_golden[ocop] PASSED       [ 17%]
+tests/test_da_hoso.py::test_build_payload_real_golden[xuc_tien_tmdt] PASSED [ 17%]
+tests/test_da_hoso.py::test_tpbvsk_missing_xnqc_excluded_and_approved_included PASSED [ 17%]
+tests/test_da_hoso.py::test_alcohol_excluded_everywhere_even_if_category_wrong PASSED [ 18%]
+tests/test_da_hoso.py::test_unknown_category_and_zero_products PASSED    [ 18%]
+tests/test_da_hoso.py::test_excluded_sku_name_in_payload_is_problem PASSED [ 18%]
+tests/test_da_hoso.py::test_feed_title_placeholder_not_reexpanded PASSED [ 19%]
+tests/test_da_hoso.py::test_llm_off_by_default_zero_calls PASSED         [ 19%]
+tests/test_da_hoso.py::test_llm_letter_with_alcohol_rejected_template_used PASSED [ 19%]
+tests/test_da_hoso.py::test_llm_gateway_error_no_crash PASSED            [ 20%]
+tests/test_da_hoso.py::test_llm_prompt_has_no_internal_and_clean_letter_used PASSED [ 20%]
+tests/test_da_hoso.py::test_only_da_hoso_has_egress_and_declared PASSED  [ 20%]
+tests/test_da_hoso.py::test_no_send_path_grep PASSED                     [ 20%]
+tests/test_da_hoso.py::test_cli_template_unknown_exit2_before_connect PASSED [ 21%]
+tests/test_da_hoso.py::test_cli_db_down_exit2 PASSED                     [ 21%]
+tests/test_da_hoso.py::test_cli_program_missing_exit1 PASSED             [ 21%]
+tests/test_da_hoso.py::test_cli_checklist_internal_file_only PASSED      [ 22%]
+tests/test_da_hoso.py::test_cli_submit_one_pending_no_self_approve PASSED [ 22%]
+tests/test_da_hoso.py::test_cli_ngoc_linh_template_blocks_submit PASSED  [ 22%]
+tests/test_da_hoso.py::test_export_only_approved_and_verify_submit PASSED [ 22%]
+tests/test_da_hoso.py::test_export_rejected_and_wrong_type PASSED        [ 23%]
+tests/test_da_hoso.py::test_verify_submit_oversize_rejected PASSED       [ 23%]
+tests/test_da_hoso.py::test_export_stale_approved_version_blocked PASSED [ 23%]
+
+## mutation thử: bỏ nhánh aq.verify → test đỏ (file khôi phục nguyên byte)
+== M1 verify-submit bỏ aq.verify: pytest exit=1 → mutant BỊ GIẾT (test đỏ)
+   FAILED tests/test_da_hoso.py::test_export_only_approved_and_verify_submit - A...
+   FAILED tests/test_da_hoso.py::test_export_stale_approved_version_blocked - As...
+   2 failed, 2 passed, 22 deselected in 4.83s
+== M2 export bỏ aq.verify: pytest exit=1 → mutant BỊ GIẾT (test đỏ)
+   FAILED tests/test_da_hoso.py::test_export_stale_approved_version_blocked - As...
+   1 failed, 3 passed, 22 deselected in 4.33s
+khôi phục: sha256 trước=e7c7f4705f53bba9 sau=e7c7f4705f53bba9 OK
+exit=0
+
+## grep egress / egress_modules
+grep_rc=1 (1 = không khớp)
+grep_hoso_rc=1
+grep_4mod_rc=1
+egress ∩ DA = ['agents/da_hoso.py']
+
+## CLI DB thật — ca âm (không ghi)
+$ python -m agents.da_hoso --checklist 1 --draft 1 --template ocop
+usage: python -m agents.da_hoso [-h] [--checklist PROGRAM_ID]
+                                [--draft PROGRAM_ID] [--export QUEUE_ID]
+                                [--verify-submit QUEUE_ID FILE]
+                                [--template TEMPLATE] [--llm] [--submit]
+                                [--out OUT] [--out-dir OUT_DIR]
+python -m agents.da_hoso: error: cần đúng 1 thao tác: --checklist | --draft | --export | --verify-submit
+exit=2
+$ python -m agents.da_hoso --verify-submit 999999 tests/fixtures/du_an/to_chuc_MAU.csv
+[warn] mục #999999: LỆCH bản duyệt — KHÔNG nộp (soạn lại + duyệt lại)
+exit=1
+$ python -m agents.da_hoso --export 999999 --out C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/56b06086-bb75-4953-a7cf-c3ba86446be6/scratchpad/v83_cligate/khong-duoc-tao.md
+[warn] mục #999999 không phải hồ sơ `program_application` đã duyệt — KHÔNG xuất
+exit=1
+
+## tổng lượt -v
+======================= 340 passed in 249.22s (0:04:09) =======================

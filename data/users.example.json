@@ -1,0 +1,9 @@
+{
+  "_doc": "Mẫu users cho AUTH_MODE=local/proxy (v3.4). Copy thành data/users.json (gitignored, KHÔNG commit). Key = username hoặc email (so khớp không phân biệt hoa thường). role ∈ tgd | phap_che | gd_ban_hang | gd_marketing | mxh | ha_tang. password_hash: tạo bằng `python -m pipelines.auth --hash` (chỉ cần cho AUTH_MODE=local). Giá trị scrypt$REPLACE_ME dưới đây KHÔNG hợp lệ — không ai đăng nhập được tới khi thay. Danh sách người thật + vai trò do TGĐ chốt (external-dep).",
+  "tgd@example.com": {"role": "tgd", "password_hash": "scrypt$REPLACE_ME"},
+  "phapche@example.com": {"role": "phap_che", "password_hash": "scrypt$REPLACE_ME"},
+  "banhang@example.com": {"role": "gd_ban_hang", "password_hash": "scrypt$REPLACE_ME"},
+  "marketing@example.com": {"role": "gd_marketing", "password_hash": "scrypt$REPLACE_ME"},
+  "mxh@example.com": {"role": "mxh", "password_hash": "scrypt$REPLACE_ME"},
+  "hatang@example.com": {"role": "ha_tang", "password_hash": "scrypt$REPLACE_ME"}
+}
