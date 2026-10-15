@@ -1048,6 +1048,32 @@
         "Thông báo cho nhân viên về việc lưu ghi âm/ảnh (nội quy) chưa có",
         "Host CDN Zalo của payload ảnh/ghi âm là GIẢ ĐỊNH — đối chiếu event thật"
       ]
+    },
+    {
+      "id": "DF-45",
+      "name": "Cảnh báo đỏ gửi email tới người nhận độc lập (v13.7)",
+      "modules": [
+        "pipelines/red_alert.py"
+      ],
+      "data": "Tiêu đề cảnh báo đỏ đã `_mask_pii` (vd 'SLA trễ', 'tin pháp lý mới', 'bài vi phạm'), mã cảnh báo, câu hướng dẫn xác nhận; KHÔNG gửi `detail`/nội dung khách/URL bài. Địa chỉ email người nhận (nhân sự Pháp chế/BKS) chỉ nằm trong env máy chủ (`email:$BIEN`) hoặc `data/red_alert_routing.json`",
+      "class": "vang",
+      "subjects": "Nhân sự nhận cảnh báo (Pháp chế/BKS) — tên + email công việc; gián tiếp: không có khách",
+      "purpose": "PL02 mục 3: báo động đỏ phải tới người nhận độc lập và được xác nhận trong 02 giờ kể cả cuối tuần/Tết",
+      "storage": "`red_alerts` (định tuyến, tiêu đề đã mask) + `red_alert_deliveries` (tên, vai trò, loại kênh, ok/lỗi — KHÔNG địa chỉ) + `red_alert_acks`; tất cả append-only",
+      "retention": "Theo bảng append-only (bằng chứng vận hành, lưu toàn kỳ hợp tác) — hạn lưu cụ thể chờ Pháp chế chốt",
+      "recipients": "Máy chủ SMTP do Sâm Sâm cấu hình (`SMTP_HOST`, STARTTLS kiểm chứng chỉ) → hộp thư người nhận độc lập; chỉ gửi khi `RED_ALERT_NOTIFY=email`",
+      "cross_border": false,
+      "safeguards": [
+        "Chỉ vai trò độc lập allowlist `phap_che`/`bks` (không TGĐ/ha_tang) — lọc lại cả routing truyền tay",
+        "Tiêu đề qua `_mask_pii` trước khi ghi và gửi; thư không chứa detail/URL",
+        "Địa chỉ kiểm dạng (1 '@', không khoảng trắng/dấu phân cách/xuống dòng — chống chèn người nhận/header); không in/ghi địa chỉ vào log/DB",
+        "Kênh chưa cấu hình/gửi lỗi → ghi 'chưa thông báo' + `--deliver` gửi lại; không ghi 'đã thông báo' khi chưa gửi được"
+      ],
+      "legal_basis": "Nghĩa vụ hợp đồng (PL02 mục 3) + lợi ích hợp pháp vận hành — CẦN Pháp chế xác nhận người nhận và nhà cung cấp email",
+      "gaps": [
+        "Người nhận độc lập thật + người trực ngoài giờ chưa có (`data/red_alert_routing.json` rỗng) — Pháp chế/BKS Sâm Sâm cấp",
+        "Máy chủ SMTP (tên miền Sâm Sâm) chưa cấu hình; nếu dùng dịch vụ email nước ngoài cần TIA"
+      ]
     }
   ]
 }

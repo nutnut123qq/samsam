@@ -368,16 +368,22 @@ def test_routing_valid_and_excluded(db):
     _item(db, RECALL)
     _item(db, "Cảnh báo hàng giả mạo sâm Ngọc Linh bán trên mạng")
     now = _now(db)
-    s = ia.scan(tx, now, routing={"recipients": [GOOD_RCP]})
+    # v13.7 (flip có chủ đích): `unrouted` = CHƯA thông báo được — routing
+    # hợp lệ nhưng chưa gửi được (kênh "email" thiếu địa chỉ/SMTP) vẫn đếm.
+    sent = []
+    rcp = {**GOOD_RCP, "channel": "email:pc@vi-du.test"}
+    s = ia.scan(tx, now, routing={"recipients": [rcp]},
+                sender=lambda to, subj, body: sent.append(to))
     assert s["alerts"] == 2 and s["unrouted"] == 0
+    assert sent == ["pc@vi-du.test"] * 2
     assert {(tuple(r[3]), r[4]) for r in _alerts(db)} == {
         ((GOOD_RCP["name"],), None)}
     # tgd/ha_tang trong routing truyền tay vẫn bị lọc (fail-closed v4.0).
     _item(db, "Ngộ độc sau khi dùng sản phẩm Sâm Sâm không rõ nguồn gốc")
     bad = {"excluded_roles": [], "recipients": [
         {**GOOD_RCP, "role": "tgd"}, {**GOOD_RCP, "role": "ha_tang"}]}
-    s = ia.scan(tx, now, routing=bad)
-    assert s["alerts"] == 1 and s["unrouted"] == 1
+    s = ia.scan(tx, now, routing=bad, sender=lambda *a: sent.append(a))
+    assert s["alerts"] == 1 and s["unrouted"] == 1 and len(sent) == 2
     assert _alerts(db)[-1][3:] == ([], red_alert.MISSING)
 
 
@@ -506,7 +512,11 @@ def isolation_problems(src: str) -> list[str]:
 def test_module_no_network_no_send():
     assert not re.search(r"httpx|smtplib|requests|connectors|openai", SRC)
     assert isolation_problems(SRC) == []
-    assert _WRITE_RE.findall(SRC) == ["red_alert_acks"]   # grep quét thật
+    # v13.7: ghi xác nhận chuyển sang đường CHUNG `red_alert.ack` (mọi cảnh
+    # báo đỏ) — module intel không còn câu INSERT nào; gửi SMTP chỉ nằm ở
+    # pipelines.red_alert (người nhận độc lập), không ở đây.
+    assert _WRITE_RE.findall(SRC) == []
+    assert "red_alert.ack(" in SRC
     assert "Fetcher" not in SRC
 
 

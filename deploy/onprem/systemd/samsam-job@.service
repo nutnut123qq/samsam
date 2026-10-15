@@ -1,0 +1,16 @@
+# v13.7 — unit mẫu chạy 1 job lịch qua wrapper có khóa + job_runs.
+# Cài: chép vào /etc/systemd/system/, sửa <...>, `systemctl daemon-reload`.
+# %i = tên job trong deploy/onprem/jobs.json. User là tài khoản vận hành,
+# KHÔNG root. Khóa chống chạy chồng do wrapper giữ (systemd cũng không chạy
+# 2 bản cùng instance).
+[Unit]
+Description=Sam Sam job %i
+After=network-online.target postgresql.service
+
+[Service]
+Type=oneshot
+User=<tai_khoan_van_hanh>
+WorkingDirectory=<duong_dan_repo>
+Environment=TZ=Asia/Ho_Chi_Minh
+ExecStart=<duong_dan_python> -m pipelines.job_runs --run %i
+TimeoutStartSec=4h

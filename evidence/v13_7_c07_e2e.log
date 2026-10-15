@@ -1,0 +1,175 @@
+$ python -m pipelines.red_alert --check-routing
+[FAIL] thiếu người nhận độc lập (external-dep) — cảnh báo đỏ vẫn được ghi bảng red_alerts nhưng chưa có ai nhận; Pháp chế xác nhận người nhận rồi điền data/red_alert_routing.json
+[exit 1]
+
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+raise: (False, 'cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận')
+raise (routing gửi được, sender giả): (True, 'cảnh báo đỏ #2 → đã gửi 1/1 người nhận')
+$ python -m pipelines.red_alert --deliver
+[done] pending=1 sent=0 failed=1 capped=0
+[RED-ALERT][FAIL] 1 cảnh báo chưa gửi được tới người nhận nào: #1
+[exit 1]
+
+$ python -m pipelines.red_alert --open
+[open] 2 cảnh báo đỏ gốc chưa xác nhận
+  #1 0.0h [agents.e2e_c07] CHƯA GỬI ĐƯỢC — E2E c07 cảnh báo thử
+  #2 0.0h [agents.e2e_c07] đã gửi — E2E c07 có người nhận
+[exit 0]
+
+$ python -m pipelines.red_alert --ack 1 --by agent:bot
+[warn] người xác nhận phải là người thật (không agent:/system:)
+[exit 1]
+
+$ python -m pipelines.red_alert --ack 1 --by Người Trực Thử
+[done] đã xác nhận cảnh báo #1 (người: Người Trực Thử)
+[exit 0]
+
+$ python -m pipelines.red_alert --ack 1 --by Người Trực Thử
+[warn] cảnh báo #1 đã được xác nhận trước đó
+[exit 1]
+
+$ python -m pipelines.red_alert --ack 1 --by Người Khác
+[warn] chế độ thực: chỉ người nhận độc lập trong data/red_alert_routing.json được xác nhận
+[exit 1]
+
+$ python -m pipelines.ops_incidents --open --title E2E webhook Zalo 502 --severity nghiem_trong --source uptime_kuma --ben ben_a --detected-at 2026-10-15T19:35+07:00 --occurred-at 2026-10-15T19:25+07:00 --by Người Trực Thử
+[done] đã ghi sự cố #1
+[exit 0]
+
+$ python -m pipelines.ops_incidents --event 1 --kind responded --by Người Trực Thử
+[done] sự cố #1: ghi mốc responded (#1)
+[exit 0]
+
+$ python -m pipelines.ops_incidents --event 1 --kind fixed --by agent:bot
+[warn] --by phải là tên NGƯỜI thật (1..100 ký tự, không agent:/system:) — không ghi
+[exit 1]
+
+$ python -m pipelines.ops_incidents --event 1 --kind customer_resolved --by CSKH Thử
+[done] sự cố #1: ghi mốc customer_resolved (#2)
+[exit 0]
+
+$ python -m pipelines.ops_incidents --list
+[list] 1 sự cố phát hiện trong 10/2026
+  #1 nghiem_trong (ben_a): phát hiện ok · phản hồi ok · sửa pending · xử lý khách xong
+[warn] CẢNH BÁO: lịch nghỉ lễ/Tết chưa chốt (`data/rollout_config.json` holidays rỗng) — ngày làm việc đang tính T2–T6 kể cả ngày lễ; chờ Hành chính Sâm Sâm chốt, KHÔNG tự điền.
+[exit 0]
+
+$ python scripts/ops_monthly.py --snapshot
+[ok] chat_kpi_facts: đọc 0 dữ kiện, mới 0
+[exit 0]
+
+$ python scripts/ops_monthly.py --month 2026-10 --out-dir C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/bf073c29-8533-4e6c-814d-e5fc46fbe378/scratchpad/c07_e2e_out
+[ok] C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\bf073c29-8533-4e6c-814d-e5fc46fbe378\scratchpad\c07_e2e_out\van-hanh-2026-10.md
+[exit 0]
+
+# Báo cáo vận hành tháng 10/2026
+| Báo cáo vận hành tháng 09/2026 gửi Bên B | Trước ngày 05 | chưa có xác nhận gửi (người gửi chạy `--mark-sent`) | — | Bên A | `agent_action_log` `ops_report_sent` (người gửi xác nhận) |
+- Quảng cáo trả phí/KOC/livestream ngoài kênh sở hữu: chưa có dữ liệu (chỉ rà file xuất kênh sở hữu) — hai chỉ tiêu bài đăng/quảng cáo KHÔNG được coi là đạt cho phần này.
+- Cảnh báo đỏ CHƯA gửi được tới người nhận nào (`red_alert_deliveries`): 1 — #1.
+| Phát hiện sự cố hệ thống | ≤ 15 phút | 100.0% (1/1); chưa tới hạn 0 | `ops_incidents` + `ops_incident_events` |
+| Phản hồi lỗi nghiêm trọng | ≤ 03 giờ | 100.0% (1/1); chưa tới hạn 0 | `ops_incidents` + `ops_incident_events` |
+| Phản hồi lỗi thường | ≤ 03 ngày làm việc | — (0/0); chưa tới hạn 0 | `ops_incidents` + `ops_incident_events` |
+| Sửa lỗi phát sinh | ≤ 07 ngày | — (0/0); chưa tới hạn 1 | `ops_incidents` + `ops_incident_events` |
+- Sổ sự cố: 1 sự cố; xử lý khách/đối tác xong 1 (đếm RIÊNG — không thay phản hồi/sửa kỹ thuật).
+
+$ python -m pipelines.job_runs --list
+intel: *-*-* 06:45:00 (hạn 26h) -m crawler.intel --run ; scripts/intel_bulletin.py --period day
+red_alert_sweep: *-*-* *:05:00 (hạn 2h) -m pipelines.intel_alert --run ; -m pipelines.red_alert --deliver
+ceo_weekly: Mon *-*-* 08:00:00 (hạn 192h) -m agents.ceo_report --period week --submit
+invoice_batch: *-*-* 21:00:00 (hạn 26h) -m agents.acc_invoice --batch
+content_daily: *-*-* 06:00:00 (hạn 26h) -m pipelines.content --daily
+backup: *-*-* 01:30:00 (hạn 26h) scripts/db_backup.py
+restore_drill: Sun *-*-* 03:00:00 (hạn 192h) scripts/db_restore_drill.py
+dr_drill: *-*-01 04:00:00 (hạn 768h) scripts/dr_drill.py
+kpi_snapshot: *-*-* 23:50:00 (hạn 26h) scripts/ops_monthly.py --snapshot
+health_bulletin: *-*-* 07:30:00 (hạn 26h) scripts/health_bulletin.py
+ops_monthly: *-*-01 08:00:00 (hạn 768h) scripts/ops_monthly.py --month prev
+[exit 0]
+
+$ python -m pipelines.job_runs --run health_bulletin
+# Bản tin sức khỏe hệ thống — 2026-10-15
+
+_Sinh lúc 2026-10-15 21:35 giờ VN — số liệu từ SQL, không dùng LLM. Bản tin chỉ BÁO, không tự xử lý._
+
+## 1. DB
+
+- DB: sống (connect + query OK)
+
+## 2. Job 24h
+
+_Nguồn: bảng `job_runs` (24h qua)._
+
+| Job | OK | Lỗi |
+|---|---:|---:|
+| pipelines.red_alert.deliver | 0 | 1 |
+- LỖI `pipelines.red_alert.deliver` lúc 2026-10-15 21:35: pending=1 sent=0 failed=1 capped=0
+- KHÔNG CHẠY/TRỄ `ingest.lead_store` — chưa có lần OK nào (hạn 24 giờ)
+- KHÔNG CHẠY/TRỄ `agents.report` — chưa có lần OK nào (hạn 192 giờ)
+- KHÔNG CHẠY/TRỄ `job:intel` — chưa có lần OK nào (hạn 26 giờ)
+- KHÔNG CHẠY/TRỄ `job:red_alert_sweep` — chưa có lần OK nào (hạn 2 giờ)
+- KHÔNG CHẠY/TRỄ `job:ceo_weekly` — chưa có lần OK nào (hạn 192 giờ)
+- KHÔNG CHẠY/TRỄ `job:invoice_batch` — chưa có lần OK nào (hạn 26 giờ)
+- KHÔNG CHẠY/TRỄ `job:content_daily` — chưa có lần OK nào (hạn 26 giờ)
+- KHÔNG CHẠY/TRỄ `job:backup` — chưa có lần OK nào (hạn 26 giờ)
+- KHÔNG CHẠY/TRỄ `job:restore_drill` — chưa có lần OK nào (hạn 192 giờ)
+- KHÔNG CHẠY/TRỄ `job:dr_drill` — chưa có lần OK nào (hạn 768 giờ)
+- KHÔNG CHẠY/TRỄ `job:kpi_snapshot` — chưa có lần OK nào (hạn 26 giờ)
+- KHÔNG CHẠY/TRỄ `job:health_bulletin` — chưa có lần OK nào (hạn 26 giờ)
+- KHÔNG CHẠY/TRỄ `job:ops_monthly` — chưa có lần OK nào (hạn 768 giờ)
+
+## 3. Chi phí AI tháng này theo agent
+
+_Nguồn: bảng `llm_usage` (`sum(cost_usd)` từ 00:00 ngày 1 giờ VN) + trần `data/llm_gateway.json` `monthly_cap_usd`. Ngưỡng: ≥80% cảnh báo, ≥100% gateway chặn._
+
+| Agent | Đã dùng (USD) | Trần (USD) | % | Trạng thái |
+|---|---:|---:|---:|---|
+| chatbot | 0.0000 | 20.00 | 0% | OK |
+| ci_judge | 0.0000 | 1.00 | 0% | OK |
+| cockpit | 0.0000 | 0.50 | 0% | OK |
+| content | 0.0000 | 10.00 | 0% | OK |
+| guardrail_llm | 0.0000 | 2.00 | 0% | OK |
+| ingest | 0.0000 | 5.00 | 0% | OK |
+| intel | 0.0000 | 1.00 | 0% | OK |
+| kd_livestream | 0.0000 | 2.00 | 0% | OK |
+| mkt_video | 0.0000 | 2.00 | 0% | OK |
+| mkt_youtube | 0.0000 | 2.00 | 0% | OK |
+| persona_sim | 0.0000 | 2.00 | 0% | OK |
+| redteam | 0.0000 | 0.50 | 0% | OK |
+| smoke | 0.0000 | 0.50 | 0% | OK |
+| sx_tracuu | 0.0000 | 1.00 | 0% | OK |
+
+## 4. Lời gọi LLM lỗi 24h
+
+_Nguồn: bảng `llm_usage` `ok = false` (24h qua)._
+
+- Tổng: 0
+
+## 5. Hàng chờ duyệt
+
+_Nguồn: bảng `content_drafts` `status = 'pending'`._
+
+- Draft chờ duyệt: 0
+
+## 6. Hạn lưu dữ liệu cá nhân
+
+_Nguồn: `data/retention.json` (CV / chấm công / ảnh-video / ghi âm vườn); job `scripts/retention_purge.py`._
+
+- CẢNH BÁO `hr_cv` (CV / hồ sơ ứng viên (.txt/.md trong HR_INBOX_DIR)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Chuyên viên pháp chế – nhân sự (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `hr_attendance` (File chấm công (ma_nv, ngày, giờ vào/ra)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Chuyên viên pháp chế – nhân sự (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `garden_media` (Ảnh / video vườn đã gỡ EXIF/GPS (GARDEN_MEDIA_DIR)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `garden_voice` (Ghi âm nhân viên vườn (GARDEN_MEDIA_DIR/audio)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)
+
+[done] D:\code\samsam\.claude\worktrees\wf_5e5afa70-b41-11\data\reports\health-2026-10-15.md
+[notify] bỏ qua (chưa cấu hình — cần --notify)
+[exit 0]
+
+[('job:health_bulletin', True, None)]
+--- DB chết
+$ python -m pipelines.red_alert --open
+[err] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+[exit 1]
+
+$ python scripts/ops_monthly.py --snapshot
+[err] DB không truy cập được — chưa chụp KPI chat
+[exit 1]
+

@@ -740,6 +740,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Hợp đồng lao động / nội quy ghi nhật ký vườn — CẦN LUẬT SƯ XÁC NHẬN cho ghi âm giọng nói nhân viên |
 | GAP | Hạn lưu ảnh/video/ghi âm chưa chốt (`data/retention.json` ttl null) — GĐ vùng trồng + Pháp chế chốt; Thông báo cho nhân viên về việc lưu ghi âm/ảnh (nội quy) chưa có; Host CDN Zalo của payload ảnh/ghi âm là GIẢ ĐỊNH — đối chiếu event thật |
 
+### DF-45 — Cảnh báo đỏ gửi email tới người nhận độc lập (v13.7)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-45 |
+| Module (code) | `pipelines/red_alert.py` |
+| Mục đích | PL02 mục 3: báo động đỏ phải tới người nhận độc lập và được xác nhận trong 02 giờ kể cả cuối tuần/Tết |
+| Dữ liệu | Tiêu đề cảnh báo đỏ đã `_mask_pii` (vd 'SLA trễ', 'tin pháp lý mới', 'bài vi phạm'), mã cảnh báo, câu hướng dẫn xác nhận; KHÔNG gửi `detail`/nội dung khách/URL bài. Địa chỉ email người nhận (nhân sự Pháp chế/BKS) chỉ nằm trong env máy chủ (`email:$BIEN`) hoặc `data/red_alert_routing.json` |
+| Lớp | Vàng |
+| Chủ thể | Nhân sự nhận cảnh báo (Pháp chế/BKS) — tên + email công việc; gián tiếp: không có khách |
+| Nơi lưu | `red_alerts` (định tuyến, tiêu đề đã mask) + `red_alert_deliveries` (tên, vai trò, loại kênh, ok/lỗi — KHÔNG địa chỉ) + `red_alert_acks`; tất cả append-only |
+| Thời hạn lưu | Theo bảng append-only (bằng chứng vận hành, lưu toàn kỳ hợp tác) — hạn lưu cụ thể chờ Pháp chế chốt |
+| Bên nhận | Máy chủ SMTP do Sâm Sâm cấu hình (`SMTP_HOST`, STARTTLS kiểm chứng chỉ) → hộp thư người nhận độc lập; chỉ gửi khi `RED_ALERT_NOTIFY=email` |
+| Chuyển ra nước ngoài | Không |
+| Biện pháp bảo vệ (có trong code) | Chỉ vai trò độc lập allowlist `phap_che`/`bks` (không TGĐ/ha_tang) — lọc lại cả routing truyền tay; Tiêu đề qua `_mask_pii` trước khi ghi và gửi; thư không chứa detail/URL; Địa chỉ kiểm dạng (1 '@', không khoảng trắng/dấu phân cách/xuống dòng — chống chèn người nhận/header); không in/ghi địa chỉ vào log/DB; Kênh chưa cấu hình/gửi lỗi → ghi 'chưa thông báo' + `--deliver` gửi lại; không ghi 'đã thông báo' khi chưa gửi được |
+| Căn cứ xử lý | Nghĩa vụ hợp đồng (PL02 mục 3) + lợi ích hợp pháp vận hành — CẦN Pháp chế xác nhận người nhận và nhà cung cấp email |
+| GAP | Người nhận độc lập thật + người trực ngoài giờ chưa có (`data/red_alert_routing.json` rỗng) — Pháp chế/BKS Sâm Sâm cấp; Máy chủ SMTP (tên miền Sâm Sâm) chưa cấu hình; nếu dùng dịch vụ email nước ngoài cần TIA |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -786,6 +804,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-39 | Kịch bản livestream (KD-A9) + gói video YouTube dài (MKT-12) qua LLM gateway (v10.1) | Vàng | trung bình | có | 2 |
 | DF-42 | Nhân sự: xếp hạng hồ sơ ứng viên + tổng hợp chấm công theo mã NV (PC-HR, v12.2) | Đỏ | cao | không | 3 |
 | DF-44 | Nhật ký vườn qua Zalo OA — nhân viên vườn gửi chữ/ảnh/video/ghi âm (v12.4, video v13.4) | Vàng | trung bình | không | 3 |
+| DF-45 | Cảnh báo đỏ gửi email tới người nhận độc lập (v13.7) | Vàng | trung bình | không | 2 |
 
 ## 4. Tổng hợp GAP
 
@@ -873,6 +892,8 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-44] Hạn lưu ảnh/video/ghi âm chưa chốt (`data/retention.json` ttl null) — GĐ vùng trồng + Pháp chế chốt
 - [DF-44] Thông báo cho nhân viên về việc lưu ghi âm/ảnh (nội quy) chưa có
 - [DF-44] Host CDN Zalo của payload ảnh/ghi âm là GIẢ ĐỊNH — đối chiếu event thật
+- [DF-45] Người nhận độc lập thật + người trực ngoài giờ chưa có (`data/red_alert_routing.json` rỗng) — Pháp chế/BKS Sâm Sâm cấp
+- [DF-45] Máy chủ SMTP (tên miền Sâm Sâm) chưa cấu hình; nếu dùng dịch vụ email nước ngoài cần TIA
 
 ## 5. Câu hỏi cho luật sư
 

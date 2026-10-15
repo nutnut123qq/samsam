@@ -41,10 +41,33 @@ Contract:
     cáo với các mục DB "chưa có dữ liệu", exit 1 (cron thấy lỗi). Tháng
     chưa đóng → banner "số tạm".
 
-Chạy: `python scripts/ops_monthly.py --month YYYY-MM [--out-dir DIR]`
+  - v13.7 (F06):
+      * KPI chat BỀN: `--snapshot` (job hằng ngày) chụp dữ kiện chat KHÔNG
+        PII từ convlog vào `chat_kpi_facts` (insert-only, khóa sha256 khóa
+        dedup) — convlog chỉ giữ 30 ngày nên tháng 31 ngày / chạy ngày 1–4
+        không mất đầu tháng. Báo cáo đọc bảng + convlog, gộp theo khóa.
+      * Sổ sự cố (`pipelines.ops_incidents`): phát hiện ≤15 phút, phản hồi
+        lỗi nghiêm trọng ≤3 giờ / lỗi thường ≤3 ngày làm việc, sửa ≤7 ngày;
+        "xử lý khách xong" đếm riêng. Không có sự cố trong sổ → ghi rõ "sổ
+        không có sự cố" + nguồn, KHÔNG suy "đạt" cho phát hiện 15 phút khi
+        thiếu `occurred_at`.
+      * Cảnh báo đỏ: số cảnh báo gốc CHƯA gửi được tới ai
+        (`red_alert_deliveries`) — ghi "đã định tuyến" không phải bằng chứng.
+      * Rà bài: "Đạt" chỉ trong PHẠM VI file kênh sở hữu đã rà (số lần rà ghi
+        rõ); quảng cáo trả phí/KOC/livestream chưa có nguồn → ghi rõ, không
+        suy "sạch".
+      * Bằng chứng gửi Bên B: CHỈ khi người gửi xác nhận `--mark-sent YYYY-MM
+        --file <bản đã gửi> --by "<tên>"` (1 dòng `agent_action_log`
+        `ops_report_sent` kèm sha256 file, giờ do DB đặt). Báo cáo tháng M ghi
+        trạng thái gửi bản tháng M-1 (hạn trước ngày 05 tháng M).
+      * `--month prev` = tháng trước theo giờ VN (cho job ngày 1).
+
+Chạy: `python scripts/ops_monthly.py --month YYYY-MM|prev [--out-dir DIR]` ·
+`--snapshot` · `--mark-sent YYYY-MM --file F --by "<tên>"`
 """
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -89,6 +112,7 @@ DRILL_MOCS = (date(2026, 11, 30), date(2026, 12, 18))  # sau đó mỗi quý
 UNAPPROVED = ["thieu_ban_duyet", "lech_ban_duyet"]
 NO_PAPER_AD = ["ruou_cam_quang_cao", "sku_chua_xnqc"]
 DONE_REASONS = ("da_sua", "da_go")
+SCOPE_OK = "Đạt trong phạm vi đã rà"
 CODE_DIRS = ("agents", "app", "connectors", "crawler", "ingest", "pipelines",
              "scripts")
 _MONTH_RE = re.compile(r"(\d{4})-(0[1-9]|1[0-2])")
@@ -190,8 +214,42 @@ def _q_cost(conn, start, end):
     ).fetchall()
 
 
+def _q_chat_facts(conn, start, end):
+    return conn.execute(
+        "select qkey, ts, channel, is_question, handled_by_bot, group_oid,"
+        " reply_ms from chat_kpi_facts where ts >= %s and ts < %s",
+        (start, end)).fetchall()
+
+
+def _q_incidents(conn, start, end):
+    from pipelines.ops_incidents import load
+    return load(conn, start, end)
+
+
+def _q_deliveries(conn, start, end):
+    """Cảnh báo GỐC trong tháng chưa có lần gửi ok tới ai."""
+    return [r[0] for r in conn.execute(
+        "select r.id from red_alerts r where not (r.detail ? 'escalation_of')"
+        " and r.ts >= %s and r.ts < %s and not exists (select 1 from"
+        " red_alert_deliveries d where d.alert_id = r.id and d.ok)"
+        " order by r.id", (start, end)).fetchall()]
+
+
+def _q_report_sent(conn, start, end):
+    """Xác nhận gửi bản báo cáo THÁNG TRƯỚC (hạn trước ngày 05 tháng này)."""
+    prev = (period.vn_date(start) - timedelta(days=1)).strftime("%Y-%m")
+    return conn.execute(
+        "select ts, actor, detail->>'file_sha256' from agent_action_log"
+        " where action = 'ops_report_sent' and object_type = 'ops_monthly'"
+        " and object_id = %s order by ts, id limit 1", (prev,)).fetchone() \
+        or ()
+
+
 DB_SECTIONS = (("alerts", _q_alerts), ("takedown", _q_takedown),
-               ("posts", _q_posts), ("cskh", _q_cskh), ("cost", _q_cost))
+               ("posts", _q_posts), ("cskh", _q_cskh), ("cost", _q_cost),
+               ("chat_facts", _q_chat_facts), ("incidents", _q_incidents),
+               ("undelivered", _q_deliveries),
+               ("report_sent", _q_report_sent))
 
 
 def collect_db(conn, start: datetime, end: datetime) -> dict:
@@ -209,12 +267,33 @@ def collect_db(conn, start: datetime, end: datetime) -> dict:
 
 
 # ------------------------------------------------------------------ file
-def read_convlog(data_dir: Path, start: datetime, end: datetime) -> dict:
-    """Convlog → câu hỏi + độ trễ trong tháng (không mang nội dung khách).
-    {exists, earliest, questions: [(ts, answered, group_oid)],
-     latencies: [ms]}."""
-    seen, qs, lats = set(), [], []
-    stats = {"corrupt": 0, "doc": 0, "io_error": 0}
+def chat_fact(rec: dict, ts: datetime) -> tuple | None:
+    """1 bản ghi convlog → dữ kiện KPI KHÔNG PII | None khi không liên quan:
+    (qkey sha256, ts, channel, is_question, handled_by_bot, group_oid,
+    reply_ms). Không mang câu hỏi/câu trả lời/user_hash/msg_id thô."""
+    # PL02 ≤30 giây đo `reply_ms` (nhận tin → gửi xong, v12.4);
+    # `latency_ms` chỉ đo answer() → báo thấp hơn thật, không dùng.
+    lat = rec.get("reply_ms")
+    lat = lat if isinstance(lat, int) and not isinstance(lat, bool) \
+        and lat >= 0 else None
+    ans = rec.get("answered")
+    # `None` = chào/đồng ý/không áp dụng — không phải câu hỏi.
+    is_q = (ans is True or ans is False) \
+        and rec.get("route") not in CONSENT_REPLY_ROUTES
+    if not is_q and lat is None:
+        return None
+    # Bot trả lời nhưng gửi lỗi (`sent` False) = khách chưa nhận → không
+    # tính "đã xử lý" (fail-closed).
+    ok = (ans is True and rec.get("sent") is not False) if is_q else None
+    ch = rec.get("channel")
+    qkey = hashlib.sha256(dedup_key(rec).encode("utf-8")).hexdigest()
+    return (qkey, ts, ch if isinstance(ch, str) else None, is_q, ok,
+            cskh_object_id(rec, ts) if is_q else None, lat)
+
+
+def _iter_facts(data_dir: Path, stats: dict, start=None, end=None):
+    """→ (exists, earliest, {qkey: fact}) từ convlog (dedup theo khóa)."""
+    facts: dict = {}
     exists, earliest = False, None
     for name in CONV_FILES:
         path = Path(data_dir) / name
@@ -226,28 +305,62 @@ def read_convlog(data_dir: Path, start: datetime, end: datetime) -> dict:
             if ts is None:
                 continue
             earliest = ts if earliest is None else min(earliest, ts)
-            if not start <= ts < end:
+            if start is not None and not start <= ts < end:
                 continue
-            key = dedup_key(rec)
-            if key in seen:
-                continue
-            seen.add(key)
-            # PL02 ≤30 giây đo `reply_ms` (nhận tin → gửi xong, v12.4);
-            # `latency_ms` chỉ đo answer() → báo thấp hơn thật, không dùng.
-            lat = rec.get("reply_ms")
-            if isinstance(lat, int) and not isinstance(lat, bool) \
-                    and lat >= 0:
-                lats.append(lat)
-            ans = rec.get("answered")
-            # `None` = chào/đồng ý/không áp dụng — không phải câu hỏi.
-            if (ans is True or ans is False) \
-                    and rec.get("route") not in CONSENT_REPLY_ROUTES:
-                # Bot trả lời nhưng gửi lỗi (`sent` False) = khách chưa nhận
-                # → không tính "đã xử lý" (fail-closed).
-                ok = ans is True and rec.get("sent") is not False
-                qs.append((ts, ok, cskh_object_id(rec, ts)))
+            f = chat_fact(rec, ts)
+            if f is not None and f[0] not in facts:
+                facts[f[0]] = f
+    return exists, earliest, facts
+
+
+def _derive(facts) -> tuple[list, list]:
+    """facts → (questions [(ts, ok, group_oid)], latencies [ms])."""
+    fs = sorted(facts, key=lambda f: (f[1], f[0]))
+    return ([(f[1], f[4], f[5]) for f in fs if f[3]],
+            [f[6] for f in fs if f[6] is not None])
+
+
+def read_convlog(data_dir: Path, start: datetime, end: datetime) -> dict:
+    """Convlog → câu hỏi + độ trễ trong tháng (không mang nội dung khách).
+    {exists, earliest, questions: [(ts, answered, group_oid)],
+     latencies: [ms], facts: {qkey: fact}}."""
+    stats = {"corrupt": 0, "doc": 0, "io_error": 0}
+    exists, earliest, facts = _iter_facts(data_dir, stats, start, end)
+    qs, lats = _derive(facts.values())
     return {"exists": exists, "earliest": earliest, "questions": qs,
-            "latencies": lats, "stats": stats}
+            "latencies": lats, "stats": stats, "facts": facts}
+
+
+def merge_chat(conv: dict, db_facts) -> dict:
+    """Gộp dữ kiện chat đã chụp (`chat_kpi_facts`) với convlog theo khóa —
+    convlog đã xoay vòng thì vẫn còn đầu tháng từ bảng."""
+    if not isinstance(db_facts, list) or not db_facts:
+        return {**conv, "snapshot_rows": 0}
+    facts = {f[0]: tuple(f) for f in db_facts}
+    facts.update(conv.get("facts") or {})
+    qs, lats = _derive(facts.values())
+    snap_min = min(f[1] for f in db_facts)
+    earliest = (snap_min if conv.get("earliest") is None
+                else min(conv["earliest"], snap_min))
+    return {**conv, "exists": True, "earliest": earliest, "questions": qs,
+            "latencies": lats, "facts": facts,
+            "snapshot_rows": len(db_facts)}
+
+
+def snapshot(conn, data_dir: Path = DATA_DIR) -> tuple[int, int]:
+    """Chụp MỌI dữ kiện chat trong convlog hiện có vào `chat_kpi_facts`
+    (on conflict do nothing — chạy lại không nhân bản) → (đọc, mới)."""
+    stats = {"corrupt": 0, "doc": 0, "io_error": 0}
+    _exists, _earliest, facts = _iter_facts(data_dir, stats)
+    new = 0
+    with conn.transaction():
+        for f in facts.values():
+            new += conn.execute(
+                "insert into chat_kpi_facts (qkey, ts, channel, is_question,"
+                " handled_by_bot, group_oid, reply_ms) values (%s, %s, %s,"
+                " %s, %s, %s, %s) on conflict (qkey) do nothing", f).rowcount
+    conn.commit()
+    return len(facts), new
 
 
 def _backup_dir() -> Path | None:
@@ -431,6 +544,62 @@ def _vn(ts: datetime) -> str:
     return ts.astimezone(VN_TZ).strftime("%d/%m/%Y %H:%M")
 
 
+def _sent_row(sent, start: datetime) -> tuple:
+    """KPI "Báo cáo vận hành gửi Bên B trước ngày 05": bằng chứng = người
+    gửi xác nhận (`--mark-sent`) cho bản THÁNG TRƯỚC; hạn = 00:00 ngày 05
+    tháng này (giờ VN). Không có xác nhận → không chấm."""
+    prev = period.vn_date(start) - timedelta(days=1)
+    due = start.replace(day=5)
+    label = (f"Báo cáo vận hành tháng {prev:%m/%Y} gửi Bên B")
+    src = "`agent_action_log` `ops_report_sent` (người gửi xác nhận)"
+    if (msg := _state(sent, "agent_action_log")):
+        return (label, "Trước ngày 05", msg, "—", "Bên A", src)
+    if not sent:
+        return (label, "Trước ngày 05", ("chưa có xác nhận gửi (người gửi "
+                                         "chạy `--mark-sent`)"), "—",
+                "Bên A", src)
+    ts, actor, sha = sent
+    return (label, "Trước ngày 05",
+            (f"gửi {_vn(ts)} — {_cell(actor)} xác nhận, sha256 "
+             f"{_cell(sha)[:12]}"), "Đạt" if ts < due else "KHÔNG ĐẠT",
+            "Bên A", src)
+
+
+def incident_rows(inc, shift, now: datetime) -> tuple[list, list]:
+    """Mục sổ sự cố → (dòng bảng PL02 mục 2, ghi chú)."""
+    from pipelines import ops_incidents as oi
+    src = "`ops_incidents` + `ops_incident_events`"
+    labels = (("Phát hiện sự cố hệ thống", "≤ 15 phút", "detect", None),
+              ("Phản hồi lỗi nghiêm trọng", "≤ 03 giờ", "respond",
+               "nghiem_trong"),
+              ("Phản hồi lỗi thường", "≤ 03 ngày làm việc", "respond",
+               "thuong"),
+              ("Sửa lỗi phát sinh", "≤ 07 ngày", "fix", None))
+    if (msg := _state(inc, "ops_incidents")):
+        return [(a, b, msg, src) for a, b, _k, _s in labels], []
+    if shift is None:
+        return [(a, b, f"{NO_DATA} (lịch ngày làm việc lỗi)", src)
+                for a, b, _k, _s in labels], []
+    rows = oi.evaluate(inc["incidents"], inc["events"], shift, now)
+    if not rows:
+        empty = ("sổ sự cố không có sự cố phát hiện trong tháng (không "
+                 "phải bằng chứng hệ thống không có sự cố — chỉ là sổ ghi)")
+        return [(a, b, empty, src) for a, b, _k, _s in labels], []
+    out = []
+    for a, b, key, sev in labels:
+        c = oi.summarize(rows, key, sev)
+        tot = c["ok"] + c["late"]
+        txt = (f"{_pct(c['ok'], tot)} ({c['ok']}/{tot}); chưa tới hạn "
+               f"{c['pending']}")
+        if c["unmeasured"]:
+            txt += f"; chưa đo (thiếu lúc xảy ra) {c['unmeasured']}"
+        out.append((a, b, txt, src))
+    done = sum(1 for r in rows if r["customer_resolved_at"] is not None)
+    notes = [(f"- Sổ sự cố: {len(rows)} sự cố; xử lý khách/đối tác xong "
+              f"{done} (đếm RIÊNG — không thay phản hồi/sửa kỹ thuật).")]
+    return out, notes
+
+
 def render(f: dict) -> str:
     """THUẦN từ facts → markdown. Không chép nội dung khách/URL bài."""
     start, end, now = f["start"], f["end"], f["now"]
@@ -473,7 +642,8 @@ def render(f: dict) -> str:
                      f"{k['pending']}).")
         if conv["earliest"] is not None and conv["earliest"] > start:
             notes.append(f"- Convlog chỉ còn từ {_vn(conv['earliest'])} "
-                         "(giữ 30 ngày) — câu hỏi trước mốc này không tính.")
+                         "(giữ 30 ngày; bảng `chat_kpi_facts` cũng không có "
+                         "sớm hơn) — câu hỏi trước mốc này không tính.")
 
     al = db.get("alerts") if f.get("db_ok") else None
     src = "`red_alerts` (bỏ bản leo thang) + `red_alert_acks`"
@@ -520,20 +690,36 @@ def render(f: dict) -> str:
             rows.append((label, "0", (f"{NO_DATA} (không có lần rà kênh "
                                       "nào trong tháng)"), "—", resp, src))
         else:
+            # v13.7: 0 URL vi phạm chỉ nói về các file kênh SỞ HỮU đã rà —
+            # không phải "toàn kênh/KOC/ads/livestream sạch".
             n = po[key]
-            rows.append((label, "0", f"{n} URL ({'/'.join(codes)})",
-                         "Đạt" if n == 0 else "KHÔNG ĐẠT", resp, src))
-    rows.append(("Báo cáo vận hành gửi Bên B", "Trước ngày 05",
-                 f"bản này sinh {_vn(now)}", "người gửi ghi nhận", "Bên A",
-                 "file này"))
+            rows.append((label, "0", (f"{n} URL ({'/'.join(codes)}) — phạm "
+                                      f"vi: {po['scans']} lượt rà kênh sở "
+                                      "hữu"),
+                         SCOPE_OK if n == 0 else "KHÔNG ĐẠT", resp, src))
+    rows.append(_sent_row(db.get("report_sent") if f.get("db_ok") else None,
+                          start))
     L += ["## 1. KPI vận hành hằng tháng (PL02 mục 3)", "",
           ("| Chỉ tiêu | Yêu cầu | Kết quả | Đánh giá | Bên chịu trách nhiệm"
            " | Nguồn |"), "|---|---|---|---|---|---|"]
     L += ["| " + " | ".join(r) + " |" for r in rows]
     L += [""] + notes
-    if isinstance(po, dict) and "scans" in po:
-        L.append("- Quảng cáo trả phí/KOC/livestream ngoài kênh sở hữu: "
-                 "chưa có nguồn dữ liệu (chỉ rà file xuất kênh sở hữu).")
+    L.append("- Quảng cáo trả phí/KOC/livestream ngoài kênh sở hữu: "
+             f"{NO_DATA} (chỉ rà file xuất kênh sở hữu) — hai chỉ tiêu bài "
+             "đăng/quảng cáo KHÔNG được coi là đạt cho phần này.")
+    und = db.get("undelivered") if f.get("db_ok") else None
+    if (msg := _state(und, "red_alert_deliveries")):
+        L.append(f"- Gửi cảnh báo đỏ: {msg}.")
+    elif und:
+        L.append(f"- Cảnh báo đỏ CHƯA gửi được tới người nhận nào ("
+                 f"`red_alert_deliveries`): {len(und)} — #"
+                 + ", #".join(map(str, und[:20])) + ".")
+    else:
+        L.append("- Cảnh báo đỏ gốc trong tháng: đều có lần gửi thành công "
+                 "(`red_alert_deliveries`).")
+    if conv.get("snapshot_rows"):
+        L.append(f"- Dữ kiện chat: {conv['snapshot_rows']} dòng từ "
+                 "`chat_kpi_facts` (chụp hằng ngày) gộp convlog.")
 
     # ---- (2) tiêu chí kỹ thuật
     L += ["", "## 2. Tiêu chí kỹ thuật (PL02 mục 2)", "",
@@ -578,7 +764,14 @@ def render(f: dict) -> str:
         calls = sum(n for _, n, _, _ in co)
         L.append(f"| Chi phí AI tháng | trong trần `data/llm_gateway.json` | "
                  f"{tot:.4f} USD / {calls} lời gọi | `llm_usage` |")
+    inc_rows, inc_notes = incident_rows(
+        db.get("incidents") if f.get("db_ok") else None, f.get("workdays"),
+        now)
+    L += [f"| {a} | {b} | {c} | {d} |" for a, b, c, d in inc_rows]
     L.append("")
+    L += inc_notes
+    if f.get("holiday_warning"):
+        L.append(f"- {f['holiday_warning']}")
     if bk is not None:
         b = backup_days(bk, start, end, now)
         if b["missing"]:
@@ -637,16 +830,101 @@ def gather(start, end, now, *, conn=None, data_dir: Path = DATA_DIR,
             if own:
                 conn.rollback()
                 conn.close()
+        f["conv"] = merge_chat(f["conv"], f["db"].get("chat_facts"))
+    try:
+        from pipelines.rollout import holiday_warning, load_shift
+        f["workdays"], f["holiday_warning"] = load_shift(), holiday_warning()
+    except ValueError as e:
+        f["workdays"], f["workdays_error"] = None, str(e)
     return f
+
+
+def _cli_snapshot(conn, data_dir: Path) -> int:
+    own = conn is None
+    conn = connect() if own else conn
+    if conn is None:
+        print("[err] DB không truy cập được — chưa chụp KPI chat")
+        return 1
+    try:
+        seen, new = snapshot(conn, data_dir)
+    except psycopg.Error as e:
+        conn.rollback()
+        print(f"[err] lỗi DB khi chụp KPI chat: {type(e).__name__}")
+        return 1
+    finally:
+        if own:
+            conn.close()
+    print(f"[ok] chat_kpi_facts: đọc {seen} dữ kiện, mới {new}")
+    return 0
+
+
+def _cli_mark_sent(args, conn, now: datetime) -> int:
+    """Người gửi xác nhận đã gửi bản báo cáo tháng → 1 dòng hash chain."""
+    from pipelines import auth
+    m = _MONTH_RE.fullmatch((args.mark_sent or "").strip())
+    by = " ".join(str(args.by or "").split())
+    if m is None:
+        print("[usage] --mark-sent cần YYYY-MM")
+        return 2
+    start, _end = period.period_bounds(
+        "month", date(int(m.group(1)), int(m.group(2)), 1))
+    if _end > now:
+        print("[usage] tháng chưa đóng — chưa thể gửi báo cáo tháng này")
+        return 2
+    if not by or len(by) > 100 or not auth.is_human(by):
+        print("[usage] --by phải là tên NGƯỜI đã gửi (không agent:/system:)")
+        return 2
+    want = f"van-hanh-{start:%Y-%m}.md"
+    if args.file is None or args.file.name != want or not args.file.is_file():
+        print(f"[usage] --file phải là bản đã gửi `{want}`")
+        return 2
+    sha = hashlib.sha256(args.file.read_bytes()).hexdigest()
+    own = conn is None
+    conn = connect() if own else conn
+    if conn is None:
+        print("[err] DB không truy cập được — chưa ghi xác nhận")
+        return 1
+    try:
+        conn.execute(
+            "insert into agent_action_log (actor, action, object_type,"
+            " object_id, detail) values (%s, 'ops_report_sent',"
+            " 'ops_monthly', %s, %s)",
+            (clean_detail(by), f"{start:%Y-%m}",
+             json.dumps({"file_sha256": sha, "confirmed_by_sender": True})))
+        conn.commit()
+    except psycopg.Error as e:
+        conn.rollback()
+        print(f"[err] lỗi DB: {type(e).__name__}")
+        return 1
+    finally:
+        if own:
+            conn.close()
+    print(f"[ok] đã ghi xác nhận gửi báo cáo {start:%m/%Y} (sha256 "
+          f"{sha[:12]}; giờ ghi do DB đặt)")
+    return 0
 
 
 def main(argv=None, *, now: datetime | None = None, conn=None,
          data_dir: Path = DATA_DIR) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--month", required=True, help="YYYY-MM")
+    g = ap.add_mutually_exclusive_group(required=True)
+    g.add_argument("--month", help="YYYY-MM | prev (tháng trước, giờ VN)")
+    g.add_argument("--snapshot", action="store_true",
+                   help="chụp dữ kiện chat không PII từ convlog vào DB")
+    g.add_argument("--mark-sent", metavar="YYYY-MM",
+                   help="NGƯỜI GỬI xác nhận đã gửi báo cáo tháng cho Bên B")
+    ap.add_argument("--file", type=Path, help="bản báo cáo đã gửi")
+    ap.add_argument("--by", help="tên người đã gửi")
     ap.add_argument("--out-dir", type=Path, default=REPORTS_DIR)
     args = ap.parse_args(argv)
     now = now or datetime.now(VN_TZ)
+    if args.snapshot:
+        return _cli_snapshot(conn, data_dir)
+    if args.mark_sent is not None:
+        return _cli_mark_sent(args, conn, now)
+    if args.month.strip() == "prev":
+        args.month = (period.vn_date(now).replace(day=1)
+                      - timedelta(days=1)).strftime("%Y-%m")
     try:
         start, end = month_bounds(args.month, now)
         assets = load_assets(ASSETS)

@@ -1,0 +1,11 @@
+# v13.7 — lịch job 'ceo_weekly' (nguồn: deploy/onprem/jobs.json).
+[Unit]
+Description=Sam Sam timer ceo_weekly
+
+[Timer]
+OnCalendar=Mon *-*-* 08:00:00
+Persistent=true
+Unit=samsam-job@ceo_weekly.service
+
+[Install]
+WantedBy=timers.target

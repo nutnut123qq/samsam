@@ -57,6 +57,18 @@ NOTIFY_TIMEOUT_S = 10
 TELEGRAM_MAX = 4000  # giới hạn Telegram 4096 ký tự/tin
 # Job lịch → số giờ tối đa giữa 2 lần chạy OK; quá hạn = "không chạy/trễ".
 EXPECTED_JOBS = {"ingest.lead_store": 24, "agents.report": 24 * 8}
+
+
+def expected_jobs() -> dict:
+    """v13.7: + mọi job lịch on-prem (`deploy/onprem/jobs.json`, dòng
+    `job:<tên>` do `pipelines.job_runs --run` ghi). Lịch hỏng → chỉ danh sách
+    cũ + dòng lỗi riêng ở mục Job (không im lặng)."""
+    from pipelines.job_runs import JobConfigError, load_jobs
+    try:
+        sched = {f"job:{n}": j["max_gap_hours"] for n, j in load_jobs().items()}
+    except JobConfigError:
+        sched = {}
+    return {**EXPECTED_JOBS, **sched}
 # Mốc 00:00 ngày 1 tháng này giờ VN — PHẢI giống `_SPEND_SQL` của gateway
 # (test drift-guard).
 MONTH_START_SQL = ("(date_trunc('month', now() at time zone 'Asia/Ho_Chi_Minh')"
@@ -91,11 +103,12 @@ def _jobs(conn) -> dict:
         "select job, started_at, detail from job_runs"
         " where started_at >= now() - interval '24 hours' and ok is not true"
         " order by started_at desc limit 20").fetchall()
+    exp = expected_jobs()
     last_ok = conn.execute(
         "select job, extract(epoch from now() - max(started_at)) / 3600"
         " from job_runs where ok and job = any(%s) group by job",
-        (list(EXPECTED_JOBS),)).fetchall()
-    return {"counts": counts, "failed": failed,
+        (list(exp),)).fetchall()
+    return {"counts": counts, "failed": failed, "expected": exp,
             "last_ok_hours": {j: float(h) for j, h in last_ok}}
 
 
@@ -225,7 +238,8 @@ def render(data: dict, day: date, caps: dict | None = None,
             when = ts.astimezone(VN).strftime("%Y-%m-%d %H:%M") \
                 if hasattr(ts, "astimezone") else _cell(ts)
             L.append(f"- LỖI `{_cell(j)}` lúc {when}: {_cell(detail)}")
-        for j, h, limit in late_jobs(jobs["last_ok_hours"]):
+        for j, h, limit in late_jobs(jobs["last_ok_hours"],
+                                     jobs.get("expected", EXPECTED_JOBS)):
             seen = "chưa có lần OK nào" if h is None \
                 else f"lần OK gần nhất {h:.1f} giờ trước"
             L.append(f"- KHÔNG CHẠY/TRỄ `{j}` — {seen} (hạn {limit} giờ)")

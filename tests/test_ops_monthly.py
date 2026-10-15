@@ -353,7 +353,11 @@ def test_render_values_and_verdicts():
     assert "50.0% (1/2)" in _row(md, "Báo động đỏ")
     assert "KHÔNG ĐẠT" in _row(md, "Báo động đỏ") and "#2" in md
     assert "100.0% (1/1)" in _row(md, "Lệnh gỡ bài")
-    assert "| Đạt |" in _row(md, "Bài đăng chưa được duyệt")
+    # v13.7 (flip có chủ đích): 0 URL chỉ "Đạt trong phạm vi đã rà" + số lượt
+    # rà — không suy toàn kênh/KOC/ads/livestream sạch.
+    r = _row(md, "Bài đăng chưa được duyệt")
+    assert f"| {om.SCOPE_OK} |" in r and "phạm vi: 4 lượt rà" in r
+    assert "| Đạt |" not in r
     assert "2 URL" in _row(md, "Rượu/TPBVSK") and "KHÔNG ĐẠT" in \
         _row(md, "Rượu/TPBVSK")
     assert "Convlog chỉ còn từ 03/10/2026" in md

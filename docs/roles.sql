@@ -284,3 +284,14 @@ grant usage on sequence llm_usage_id_seq to agent_writer;
 -- `approvals.db_role` + `agent_action_log.db_role` ghi login thật. Agent chạy
 -- login `in role agent_writer` (không execute decide_item/approve_draft/
 -- override_qa; không UPDATE/DELETE log — trigger append-only chặn cả owner).
+
+-- ===== v13.7 c07 cảnh báo đỏ gửi thật / sổ sự cố / KPI chat =====
+-- `red_alert.raise_alert` (gọi từ agent dưới agent_writer) gửi ngay rồi ghi
+-- 1 dòng/người nhận vào `red_alert_deliveries` — chỉ INSERT (không đọc lại,
+-- không sửa/xóa: trigger append-only). Quét gửi lại `--deliver`, sổ sự cố
+-- (`pipelines.ops_incidents`, người thật) và chụp KPI chat chạy DSN vận hành.
+grant insert (alert_id, recipient, role, channel, ok, error)
+  on red_alert_deliveries to agent_writer;
+grant select, insert on red_alert_deliveries to app_human;
+grant select, insert on ops_incidents, ops_incident_events to app_human;
+grant select on chat_kpi_facts to app_human;

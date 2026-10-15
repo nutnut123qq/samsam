@@ -132,6 +132,10 @@ bảng nào thì dừng, không bật app.
 | `channel_snapshots` | B | (v4.0) số liệu kênh nhập tay/API theo kỳ |
 | `red_alerts` | B | (v4.0) append-only (trigger) — cảnh báo đỏ không được mất |
 | `red_alert_acks` | B | (v7.1) append-only — ai xác nhận cảnh báo đỏ intel lúc nào; mất bảng = cảnh báo đã xác nhận lại hiện là "chưa xác nhận" |
+| `red_alert_deliveries` | B | (v13.7) append-only — bằng chứng đã GỬI cảnh báo đỏ tới người nhận độc lập; mất bảng = không chứng minh được đã thông báo |
+| `ops_incidents` | B | (v13.7) append-only — sổ sự cố PL02 mục 2 (phát hiện/phản hồi/sửa); nhập tay, không dựng lại được |
+| `ops_incident_events` | B | (v13.7) append-only — mốc phản hồi/sửa/xử lý khách của từng sự cố |
+| `chat_kpi_facts` | B | (v13.7) dữ kiện KPI chat không PII chụp hằng ngày; convlog chỉ giữ 30 ngày nên mất bảng = mất KPI các tháng trước |
 | `inventory_snapshots` | A (nạp lại file kho) hoặc B | tồn thành phẩm (v9.2) — repo chỉ có file MẪU, số thật theo đường B |
 | `allocation_proposals` | B | đề xuất phân bổ + quyết định GĐ SX — dựng lại sẽ mất lịch sử duyệt |
 | `bom_combos` | A (nạp lại file BOM) hoặc B | combo/hộp quà (v9.2) |

@@ -112,7 +112,7 @@ def send_text(user_key: str, text: str) -> bool:
                        json={"recipient": {"id": psid},
                              "messaging_type": "RESPONSE",
                              "message": {"text": text[:MAX_TEXT]}},
-                       timeout=15)
+                       timeout=zalo.SEND_TIMEOUT_S)  # v13.7 ngân sách 30s
     except httpx.HTTPError as e:
         print(f"[warn] messenger: send lỗi {type(e).__name__} (uh={uh})",
               flush=True)

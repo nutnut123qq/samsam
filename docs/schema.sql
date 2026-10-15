@@ -3549,3 +3549,94 @@ create unique index if not exists content_drafts_daily_key_idx
   on content_drafts ((left(brief, 21)))
   where content_type = 'post' and created_by = 'agent:mkt02'
     and status <> 'rejected' and brief like '[daily %';
+
+-- ===== v13.7 c07 cảnh báo đỏ gửi thật + sổ sự cố + KPI chat bền =====
+-- (1) `red_alert_deliveries`: mỗi lần GỬI cảnh báo đỏ tới 1 người nhận độc
+--     lập (`pipelines.red_alert.deliver`, kênh SMTP stdlib) — ok/lỗi. KHÔNG
+--     lưu địa chỉ (chỉ tên + vai trò + loại kênh). "Đã thông báo" = có dòng
+--     ok; `red_alerts.recipients` chỉ là định tuyến, không phải bằng chứng gửi.
+-- (2) `ops_incidents` + `ops_incident_events`: sổ sự cố PL02 mục 2 — phát
+--     hiện ≤15 phút (occurred_at → detected_at), phản hồi lỗi nghiêm trọng
+--     ≤3 giờ / lỗi thường ≤3 ngày làm việc (sự kiện `responded` = ack KỸ
+--     THUẬT), sửa ≤7 ngày (`fixed`). `customer_resolved` (xử lý khách xong)
+--     là sự kiện RIÊNG — không thay cho phản hồi/sửa. Append-only.
+-- (3) `chat_kpi_facts`: dữ kiện chat KHÔNG PII chụp hằng ngày từ convlog
+--     (`scripts/ops_monthly.py --snapshot`) — convlog chỉ giữ 30 ngày, báo
+--     cáo tháng 31 ngày / chạy ngày 1–4 không mất đầu tháng. Khóa = sha256
+--     của khóa dedup convlog (không msg_id/user_id thô); `group_oid` = khóa
+--     nhóm `cskh:<sha1>` như `approval_queue.object_id`. Insert-only.
+create table if not exists red_alert_deliveries (
+  id bigint generated always as identity primary key,
+  alert_id bigint not null references red_alerts (id),
+  recipient text not null check (btrim(recipient) <> ''),
+  role text not null,
+  channel text not null,
+  ok boolean not null,
+  error text,
+  attempted_at timestamptz not null default now()
+);
+create index if not exists red_alert_deliveries_alert_idx
+  on red_alert_deliveries (alert_id);
+create or replace trigger red_alert_deliveries_append_only_row
+  before update or delete on red_alert_deliveries
+  for each row execute function append_only_guard();
+create or replace trigger red_alert_deliveries_no_truncate
+  before truncate on red_alert_deliveries
+  for each statement execute function append_only_guard();
+
+create table if not exists ops_incidents (
+  id bigint generated always as identity primary key,
+  title text not null check (btrim(title) <> ''),
+  severity text not null check (severity in ('nghiem_trong', 'thuong')),
+  source text not null check (btrim(source) <> ''),
+  ben_trach_nhiem text not null
+    check (ben_trach_nhiem in ('ben_a', 'ben_b', 'chua_xac_dinh')),
+  occurred_at timestamptz,
+  detected_at timestamptz not null,
+  created_by text not null check (btrim(created_by) <> ''),
+  recorded_at timestamptz not null default now(),
+  check (occurred_at is null or occurred_at <= detected_at)
+);
+create or replace trigger ops_incidents_append_only_row
+  before update or delete on ops_incidents
+  for each row execute function append_only_guard();
+create or replace trigger ops_incidents_no_truncate
+  before truncate on ops_incidents
+  for each statement execute function append_only_guard();
+
+create table if not exists ops_incident_events (
+  id bigint generated always as identity primary key,
+  incident_id bigint not null references ops_incidents (id),
+  kind text not null
+    check (kind in ('responded', 'fixed', 'customer_resolved', 'note')),
+  at timestamptz not null,
+  by_name text not null check (btrim(by_name) <> ''),
+  note text,
+  recorded_at timestamptz not null default now()
+);
+create index if not exists ops_incident_events_inc_idx
+  on ops_incident_events (incident_id, kind, at);
+create or replace trigger ops_incident_events_append_only_row
+  before update or delete on ops_incident_events
+  for each row execute function append_only_guard();
+create or replace trigger ops_incident_events_no_truncate
+  before truncate on ops_incident_events
+  for each statement execute function append_only_guard();
+
+create table if not exists chat_kpi_facts (
+  qkey text primary key check (qkey ~ '^[0-9a-f]{64}$'),
+  ts timestamptz not null,
+  channel text,
+  is_question boolean not null,
+  handled_by_bot boolean,
+  group_oid text,
+  reply_ms integer check (reply_ms is null or reply_ms >= 0),
+  captured_at timestamptz not null default now()
+);
+create index if not exists chat_kpi_facts_ts_idx on chat_kpi_facts (ts);
+create or replace trigger chat_kpi_facts_append_only_row
+  before update or delete on chat_kpi_facts
+  for each row execute function append_only_guard();
+create or replace trigger chat_kpi_facts_no_truncate
+  before truncate on chat_kpi_facts
+  for each statement execute function append_only_guard();

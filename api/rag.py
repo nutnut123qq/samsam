@@ -13,11 +13,22 @@ NO_DATA + handoff="alcohol", không gọi LLM/embed (luật QC rượu >=15 đ�
 v10.3 (WP16): retrieve() = validate -> embed -> retrieve_by_vector();
 backend `float8` (numpy, mặc định) | `pgvector` (HNSW, cột embedding_v)
 qua env RAG_VECTOR_BACKEND — lọc rượu/ghim catalog dùng chung 1 hàm.
+v13.7 (F06, PL02 "phản hồi tự động ≤30 giây"): `answer()` nhận hạn chót
+TUYỆT ĐỐI (`time.monotonic()`) qua tham số `deadline` hoặc contextvar
+`DEADLINE` (connector đặt trong luồng trả lời). Trước MỖI bước tốn thời
+gian (rewrite, embed, đọc DB vector, chat) kiểm thời gian còn lại: < 1 giây
+→ `DeadlineExceeded(bước)`; còn đủ → truyền `timeout=<còn lại>` xuống lời
+gọi gateway (timeout client openai) và `connect_timeout` DB. Lời gọi hết
+giờ ở client (GatewayError do timeout) cũng thành `DeadlineExceeded`.
+Không có hạn chót (CLI/eval/Streamlit) → hành vi cũ.
 """
 
+import math
 import os
 import re
 import sys
+import time
+from contextvars import ContextVar
 from pathlib import Path
 
 import numpy as np
@@ -25,7 +36,12 @@ import psycopg
 from dotenv import load_dotenv
 
 from pipelines.kb_filter import is_alcohol
-from pipelines.llm_gateway import chat, embed, is_health_question
+from pipelines.llm_gateway import (
+    GatewayError,
+    chat,
+    embed,
+    is_health_question,
+)
 from pipelines.pii import scrub_user
 
 # Console Windows cp1258 — print tiếng Việt có dấu crash; ép UTF-8.
@@ -41,6 +57,48 @@ MIN_SCORE = 0.25  # cosine dưới ngưỡng -> coi như KB không có thông ti
 NO_DATA = "Chưa đủ dữ liệu để trả lời."
 AGENT = "chatbot"
 CONNECT_TIMEOUT_S = 10
+# v13.7 — PL02 mục 2: phản hồi tự động của chatbot ≤ 30 giây TÍNH TỪ LÚC
+# NHẬN TIN tới khi gửi xong. Connector chia: trả lời ≤ 30 − SEND_RESERVE_S,
+# phần còn lại cho lời gọi gửi (timeout send API = SEND_RESERVE_S).
+CHAT_BUDGET_S = 30.0
+SEND_RESERVE_S = 5.0
+MIN_CALL_S = 1.0           # còn ít hơn → không bắt đầu lời gọi mới
+DEADLINE: ContextVar[float | None] = ContextVar("rag_deadline", default=None)
+_clock = time.monotonic    # test thay bằng đồng hồ giả (không wall-clock)
+
+
+class DeadlineExceeded(TimeoutError):
+    """Hết ngân sách thời gian trả lời — connector chuyển người."""
+
+    def __init__(self, stage: str):
+        super().__init__(f"hết hạn 30 giây ở bước {stage}")
+        self.stage = stage
+
+
+def _left(deadline: float | None, stage: str) -> float | None:
+    """Giây còn lại trước `deadline` (None = không hạn chót)."""
+    if deadline is None:
+        return None
+    left = deadline - _clock()
+    if left < MIN_CALL_S:
+        raise DeadlineExceeded(stage)
+    return left
+
+
+def _timed(fn, stage: str, deadline: float | None, *a, **kw):
+    """Gọi gateway với `timeout` = thời gian còn lại; hết giờ → Deadline."""
+    left = _left(deadline, stage)
+    if left is not None:
+        kw["timeout"] = left
+    try:
+        return fn(*a, **kw)
+    except GatewayError as e:
+        cause = e.__cause__
+        if deadline is not None and (
+                _clock() >= deadline or isinstance(cause, TimeoutError)
+                or "Timeout" in type(cause).__name__):
+            raise DeadlineExceeded(stage) from e
+        raise
 _INTERNAL_RE = re.compile(r"internal:[a-z0-9_]{1,32}")
 _COLS = "title, source_url, lang, content, embedding, doc_id"
 _COLS_INTERNAL = "title, source_ref, null, content, embedding, doc_id"
@@ -209,8 +267,8 @@ def _warn_pg_missing(e: Exception) -> None:
 
 
 def retrieve_by_vector(qv, k: int = TOP_K, *, collection: str = "public",
-                       backend: str | None = None, ident: bool = False
-                       ) -> list[dict]:
+                       backend: str | None = None, ident: bool = False,
+                       deadline: float | None = None) -> list[dict]:
     """Top-k chunk cho vector đã embed. Backend `float8` (numpy, mặc định)
     | `pgvector` (HNSW, cần schema_pgvector.sql). Lọc rượu + ghim catalog
     dùng CHUNG `_select`. pgvector: DB thiếu cột/extension -> rollback +
@@ -220,8 +278,11 @@ def retrieve_by_vector(qv, k: int = TOP_K, *, collection: str = "public",
     backend = vector_backend(backend)
     public = collection == "public"
     qv = np.asarray(qv, dtype=np.float64)
+    left = _left(deadline, "db")
+    ct = (CONNECT_TIMEOUT_S if left is None
+          else max(1, min(CONNECT_TIMEOUT_S, math.floor(left))))
     with psycopg.connect(os.environ["DATABASE_URL"],
-                         connect_timeout=CONNECT_TIMEOUT_S) as conn:
+                         connect_timeout=ct) as conn:
         if backend == "pgvector":
             limit = max(PGVECTOR_CANDIDATES, k)
             try:
@@ -244,24 +305,29 @@ def retrieve_by_vector(qv, k: int = TOP_K, *, collection: str = "public",
 
 
 def retrieve(question: str, k: int = TOP_K, *,
-             collection: str = "public") -> list[dict]:
+             collection: str = "public",
+             deadline: float | None = None) -> list[dict]:
     """Top-k chunk theo cosine similarity, kèm score/url/title/content.
     `collection` + backend validate TRƯỚC khi gọi embed; public bỏ row nhắc
     rượu (lớp phòng thủ cho row nạp ngoài embed_store/legacy)."""
     _query(collection)
     backend = vector_backend()
-    qv = np.array(embed(AGENT, question).data[0].embedding)
-    return retrieve_by_vector(qv, k, collection=collection, backend=backend)
+    qv = np.array(_timed(embed, "embed", deadline, AGENT, question)
+                  .data[0].embedding)
+    return retrieve_by_vector(qv, k, collection=collection, backend=backend,
+                              deadline=deadline)
 
 
-def _standalone(question: str, history: list[dict]) -> str:
+def _standalone(question: str, history: list[dict],
+                deadline: float | None = None) -> str:
     """Rewrite câu follow-up thành câu độc lập đủ ngữ cảnh để retrieve —
     vd "còn loại rẻ hơn?" sau lượt hỏi Saphraton -> "sản phẩm nào rẻ
     hơn Saphraton?". Chỉ phục vụ retrieval; câu trả lời cuối vẫn do LLM
     sinh từ câu hỏi GỐC của user. LLM refusal trả content=None -> trả
     "" -> caller fallback dùng câu gốc (D5.2 — trước đây AttributeError
     crash xuyên qua streamlit/zalo)."""
-    resp = chat(
+    resp = _timed(
+        chat, "rewrite", deadline,
         AGENT,
         [
             {"role": "system", "content":
@@ -298,7 +364,8 @@ def _scrub_history(history: list[dict] | None) -> list[dict]:
     return out
 
 
-def answer(question: str, history: list[dict] | None = None) -> dict:
+def answer(question: str, history: list[dict] | None = None, *,
+           deadline: float | None = None) -> dict:
     """Trả lời câu hỏi kèm nguồn. Thiếu context/score thấp -> NO_DATA.
 
     `history` = các lượt Q&A trước (OpenAI-style, caller giới hạn 4 lượt
@@ -318,6 +385,8 @@ def answer(question: str, history: list[dict] | None = None) -> dict:
     câu rewrite cũng qua lọc sức khỏe. Gateway chặn (trần/kill/không đọc
     được chi tiêu) -> GatewayBlocked lan ra caller (zalo/messenger/channels
     chuyển người)."""
+    if deadline is None:
+        deadline = DEADLINE.get()
     if is_health_question(question):
         return {"answer": NO_DATA, "sources": [], "handoff": "health"}
     if is_alcohol(question):
@@ -337,12 +406,15 @@ def answer(question: str, history: list[dict] | None = None) -> dict:
     history = _scrub_history(history)
     search_q = question
     if history:
-        search_q = scrub_user(_standalone(question, history) or question)[0]
+        dl = {} if deadline is None else {"deadline": deadline}
+        search_q = scrub_user(_standalone(question, history, **dl)
+                              or question)[0]
         if is_alcohol(search_q):
             return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
         if is_health_question(search_q):
             return {"answer": NO_DATA, "sources": [], "handoff": "health"}
-    hits = retrieve(search_q)
+    hits = (retrieve(search_q) if deadline is None
+            else retrieve(search_q, deadline=deadline))
     if not hits or hits[0]["score"] < MIN_SCORE:
         return {"answer": NO_DATA, "sources": []}
 
@@ -350,7 +422,8 @@ def answer(question: str, history: list[dict] | None = None) -> dict:
         f"[{i + 1}] {h['title']} ({h['url']})\n{h['content']}"
         for i, h in enumerate(hits)
     )
-    resp = chat(
+    resp = _timed(
+        chat, "chat", deadline,
         AGENT,
         [
             {"role": "system", "content": SYSTEM},

@@ -1,0 +1,11 @@
+# v13.7 — lịch job 'invoice_batch' (nguồn: deploy/onprem/jobs.json).
+[Unit]
+Description=Sam Sam timer invoice_batch
+
+[Timer]
+OnCalendar=*-*-* 21:00:00
+Persistent=true
+Unit=samsam-job@invoice_batch.service
+
+[Install]
+WantedBy=timers.target

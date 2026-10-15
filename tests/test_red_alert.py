@@ -97,12 +97,24 @@ def test_raise_alert_no_recipients_fail_closed(capsys):
 
 
 def test_raise_alert_masks_pii_and_routes():
+    # v13.7 (F06, flip có chủ đích): True = ĐÃ GỬI tới ≥1 người — routing hợp
+    # lệ nhưng kênh "email" thiếu địa chỉ/SMTP thì KHÔNG còn là "đã thông
+    # báo" (trước v13.7 trả True dù chưa gửi gì).
+    conn = FakeConn()
+    routed, msg = ra.raise_alert(
+        conn, "agent:intel-red", "Khách 0912 345 678 báo lỗi",
+        {"lien_he": "gọi 0912 345 678", "list": ["a@b.vn"], "n": 5},
+        routing={"recipients": [GOOD]}, sender=None)
+    assert routed is False and ra.NOT_SENT in msg
+    sent = []
     conn = FakeConn()
     routed, _ = ra.raise_alert(
         conn, "agent:intel-red", "Khách 0912 345 678 báo lỗi",
         {"lien_he": "gọi 0912 345 678", "list": ["a@b.vn"], "n": 5},
-        routing={"recipients": [GOOD]})
-    assert routed is True
+        routing={"recipients": [{**GOOD, "channel": "email:pc@vi-du.test"}]},
+        sender=lambda to, subj, body: sent.append((to, subj, body)))
+    assert routed is True and sent[0][0] == "pc@vi-du.test"
+    assert "0912" not in sent[0][1] + sent[0][2]
     params = conn.calls[0][1]
     assert "0912" not in params[1] and "345 678" not in params[1]
     detail = params[2].obj
@@ -129,10 +141,24 @@ def test_check_routing_cli_real_config_exit_1():
 
 
 def test_check_routing_ok_when_valid(monkeypatch, tmp_path, capsys):
+    # v13.7 (flip có chủ đích): có người nhận nhưng CHƯA có kênh gửi (SMTP
+    # chưa bật / kênh không có địa chỉ) → exit 1 — trước đây exit 0 dù cảnh
+    # báo chỉ nằm trong DB.
+    for k in ("RED_ALERT_NOTIFY", "SMTP_HOST", "RA_MAIL_PC"):
+        monkeypatch.delenv(k, raising=False)
     p = _write(tmp_path, json.dumps({"recipients": [GOOD]}).encode())
     monkeypatch.setattr(ra, "ROUTING", p)
-    assert ra.main(["--check-routing"]) == 0
-    assert "1 người nhận" in capsys.readouterr().out
+    assert ra.main(["--check-routing"]) == 1
+    out = capsys.readouterr().out
+    assert "1 người nhận" in out and "chưa có kênh gửi" in out
+    p.write_text(json.dumps({"recipients": [
+        {**GOOD, "channel": "email:$RA_MAIL_PC"}]}), encoding="utf-8")
+    monkeypatch.setenv("RED_ALERT_NOTIFY", "email")
+    monkeypatch.setenv("SMTP_HOST", "smtp.vi-du.test")
+    assert ra.main(["--check-routing"]) == 1          # biến địa chỉ chưa đặt
+    monkeypatch.setenv("RA_MAIL_PC", "pc@vi-du.test")
+    assert ra.main(["--check-routing"]) == 0          # không mở mạng khi kiểm
+    assert "pc@vi-du.test" not in capsys.readouterr().out
 
 
 @pytest.mark.parametrize("role", [
