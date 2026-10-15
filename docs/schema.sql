@@ -3270,3 +3270,53 @@ create or replace trigger audit_runs_append_only_row
 create or replace trigger audit_runs_no_truncate
   before truncate on audit_runs
   for each statement execute function append_only_guard();
+
+-- ===== v12.1 B1 =====
+-- Sổ triển khai 3 bước theo HĐ TEDO–Sâm Sâm PL02 mục 1 (`pipelines/rollout.py`).
+--   * `feature_rollout` — trạng thái HIỆN TẠI 1 dòng / tính năng của
+--     `data/contract_features.json`: `chay_thu` → `co_nguoi_duyet` →
+--     `van_hanh` (+ `tat`). `stage_since` = lúc vào giai đoạn (mốc đếm ngày
+--     làm việc + đầu ra `agent_action_log`). Bảng trạng thái (có UPDATE) —
+--     chỉ CLI (owner) ghi, mỗi lần đổi đi kèm 1 dòng sự kiện cùng tx.
+--   * `feature_rollout_events` — APPEND-ONLY (`append_only_guard()`): seed /
+--     nâng / lỗi nghiêm trọng (tự lùi về `chay_thu`) / tắt. `by_person` =
+--     người thật ghi (CHECK chặn 'agent:'/'system:'). `note` đã che PII ở
+--     code. Đây là "nhật ký lỗi" của hồ sơ đề nghị nghiệm thu.
+-- KHÔNG PII. Quyền (`docs/roles.sql`): app_human chỉ SELECT 2 bảng.
+-- ============================================================================
+
+create table if not exists feature_rollout (
+  feature_id text primary key check (feature_id ~ '^[a-z_]+-[0-9]{2}$'),
+  stage text not null
+    check (stage in ('chay_thu', 'co_nguoi_duyet', 'van_hanh', 'tat')),
+  stage_since timestamptz not null default now(),
+  updated_by text not null check (btrim(updated_by) <> ''),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists feature_rollout_events (
+  id bigint generated always as identity primary key,
+  ts timestamptz not null default now(),
+  feature_id text not null references feature_rollout (feature_id),
+  kind text not null check (kind in ('seed', 'promote', 'severe', 'disable')),
+  from_stage text
+    check (from_stage in ('chay_thu', 'co_nguoi_duyet', 'van_hanh', 'tat')),
+  to_stage text not null
+    check (to_stage in ('chay_thu', 'co_nguoi_duyet', 'van_hanh', 'tat')),
+  severe_code text,
+  note text,
+  evidence jsonb not null default '{}',
+  by_person text not null check (btrim(by_person) <> ''
+    and lower(btrim(by_person)) not like 'agent:%'
+    and lower(btrim(by_person)) not like 'system:%'),
+  check ((kind = 'severe') = (severe_code is not null))
+);
+create index if not exists feature_rollout_events_fid_idx
+  on feature_rollout_events (feature_id, ts);
+
+create or replace trigger feature_rollout_events_append_only_row
+  before update or delete on feature_rollout_events
+  for each row execute function append_only_guard();
+create or replace trigger feature_rollout_events_no_truncate
+  before truncate on feature_rollout_events
+  for each statement execute function append_only_guard();

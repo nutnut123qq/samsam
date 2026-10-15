@@ -219,3 +219,10 @@ grant execute on function
   verify_plot_logs(),
   verify_publish(text, text, text)
   to bks_reader;
+
+-- ===== v12.1 B1 =====
+-- Sổ triển khai (`pipelines.rollout`): người (Streamlit/CLI đọc) chỉ SELECT.
+-- Ghi (seed/nâng/lỗi nghiêm trọng/tắt) CHỈ qua CLI bằng DSN owner — cổng
+-- ngày làm việc + đầu ra nằm ở code; cấp quyền sửa cho app_human sẽ cho phép
+-- nâng giai đoạn bỏ qua cổng. agent_writer KHÔNG có quyền gì (revoke đầu file).
+grant select on feature_rollout, feature_rollout_events to app_human;
