@@ -30,7 +30,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Dữ liệu | user_id Zalo thô, nội dung tin nhắn khách (có thể chứa SĐT, tên, địa chỉ, yếu tố sức khỏe), câu trả lời gửi lại |
 | Lớp | Đỏ |
 | Chủ thể | Khách hàng nhắn Zalo OA của công ty |
-| Nơi lưu | RAM `_histories` (deque 8 message = 4 lượt Q&A/user); `data/zalo_seen.db` (khóa dedup msg_id và `follow:<user_id>` thô); `data/zalo_tokens.json` (token OA — secret, không phải DLCN); bảng `chat_consents` (v5.1, append-only: `user_hash` HMAC có muối `CHANNEL_HASH_SALT` 32 hex, kênh, prompted/granted/withdrawn, `policy_version`, `evidence_ref` = sha256(msg_id)[:16] — không nội dung tin); mục `approval_queue` loại `cskh_handoff` (payload cố định: kênh, mã lý do, user_hash có muối, msg_ref, ts — không câu hỏi/câu trả lời/user_id) |
+| Nơi lưu | RAM `_histories` (deque 8 message = 4 lượt Q&A/user); `data/zalo_seen.db` (khóa dedup msg_id và `follow:<user_id>` thô); `data/zalo_tokens.json` (token OA — secret, không phải DLCN); bảng `chat_consents` (v5.1, append-only: `user_hash` HMAC có muối `CHANNEL_HASH_SALT` 32 hex, kênh, prompted/granted/withdrawn, `policy_version`, `evidence_ref` = sha256(msg_id)[:16] — không nội dung tin); mục `approval_queue` loại `cskh_handoff` (payload cố định: kênh, mã lý do, user_hash có muối, msg_ref, ts — không câu hỏi/câu trả lời/user_id); v13.3 khi chatbot CHƯA vận hành (sổ triển khai sales-01 chạy thử/có người duyệt) câu trả lời bot KHÔNG gửi khách mà thành mục `approval_queue` loại `cskh_reply` (payload = câu bot đã `_mask_pii`, object_id kênh:user_hash:msg_ref — không câu hỏi/user_id) chờ người duyệt rồi người gửi |
 | Thời hạn lưu | `_histories`: RAM, LRU 1000 user (HIST_MAX_USERS), mất khi restart; `zalo_seen.db`: TTL 1 giờ (SEEN_TTL_S) cho msg, 7 ngày (FOLLOW_TTL_S) cho khóa follow; `chat_consents`: lưu lâu dài làm bằng chứng đồng ý (append-only, chưa có hạn — GAP); mục `cskh_handoff`: theo hồ sơ duyệt `approval_queue` |
 | Bên nhận | Zalo/VNG — openapi.zalo.me (gửi tin), oauth.zaloapp.com (làm mới token) — Việt Nam |
 | Chuyển ra nước ngoài | Không |
@@ -516,7 +516,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Dữ liệu | PSID Messenger thô (trong RAM/khóa lock), nội dung tin nhắn khách (có thể chứa SĐT, tên, địa chỉ, yếu tố sức khỏe), câu trả lời gửi lại |
 | Lớp | Đỏ |
 | Chủ thể | Khách hàng nhắn Fanpage Messenger của công ty |
-| Nơi lưu | RAM `_histories` chung Zalo (khóa `messenger:<psid>`); `data/zalo_seen.db` (khóa dedup `msgr:<mid>`); convlog `data/conversations.jsonl` (`_uhash` + `_mask_pii`); `chat_consents` + mục `cskh_handoff` (user_hash có muối, chung Zalo) |
+| Nơi lưu | RAM `_histories` chung Zalo (khóa `messenger:<psid>`); `data/zalo_seen.db` (khóa dedup `msgr:<mid>`); convlog `data/conversations.jsonl` (`_uhash` + `_mask_pii`); `chat_consents` + mục `cskh_handoff`/`cskh_reply` v13.3 (user_hash có muối, chung Zalo) |
 | Thời hạn lưu | `_histories`: RAM, LRU, mất khi restart; `zalo_seen.db`: TTL 1 giờ (SEEN_TTL_S) cho mid; convlog 30 ngày (RETAIN_DAYS) |
 | Bên nhận | Meta Platforms — graph.facebook.com (Send API, header Bearer page token) — Meta nhận tin khách trực tiếp từ Messenger và câu trả lời từ hệ thống (máy chủ ngoài Việt Nam) |
 | Chuyển ra nước ngoài | CÓ — xem TIA |

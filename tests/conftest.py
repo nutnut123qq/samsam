@@ -8,7 +8,7 @@ v4.2: xóa env lớp LLM-check/red-team — test không bao giờ gọi LLM th�
 máy dev có đặt GUARDRAIL_LLM_MODEL/REDTEAM_MODEL."""
 import pytest
 
-from pipelines import llm_gateway
+from pipelines import llm_gateway, rollout
 
 
 class _ZeroSpendConn:
@@ -41,3 +41,12 @@ def _no_gateway_db(monkeypatch):
     # (chat_consents/approval_queue) dù .env máy dev có CHANNEL_HASH_SALT;
     # test cần muối tự setenv.
     monkeypatch.delenv("CHANNEL_HASH_SALT", raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _rollout_van_hanh(monkeypatch):
+    """v13.3: cưỡng chế giai đoạn (`rollout.mode`) mặc định fail-closed
+    `chay_thu` khi chưa vào sổ — test cũ giả định tính năng đang chạy thật
+    nên ép `van_hanh` (không chạm DB). Test cưỡng chế đặt lại
+    `rollout._FORCE_MODE = None` (tests/test_rollout_enforce.py)."""
+    monkeypatch.setattr(rollout, "_FORCE_MODE", "van_hanh", raising=False)

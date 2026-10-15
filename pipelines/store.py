@@ -55,6 +55,13 @@ Contract:
     MINH — trên conn chia sẻ đã-trong-tx (UI SELECT trước) block
     transaction() chỉ là savepoint, thiếu commit() → INSERT/UPDATE
     rollback ngầm (bug v2.1).
+  - v13.3 cưỡng chế giai đoạn (`pipelines.rollout.mode`, HĐ 6.7), draft
+    gắn tính năng qua `output_sources` content_drafts (created_by + loại):
+    `save_draft` của tính năng `tat` → RolloutBlocked (ValueError);
+    approve → (False, lý do) khi `tat`; `schedule` (biên DÙNG) chặn khi
+    `chay_thu`/`tat`/không thuộc danh mục, `co_nguoi_duyet` chỉ draft NGƯỜI
+    duyệt. `verify_publish` KHÔNG gắn cổng (đọc cho audit ceo_audit/
+    mkt_ads/bks_audit).
   - Lịch đăng là KẾ HOẠCH cho người đăng tay — hệ thống KHÔNG tự
     đăng/tự chuyển status (human-gate C2.4).
   - DB down: `connect()` (ingest.lead_store, connect_timeout=3) →
@@ -225,6 +232,18 @@ def _merge_snapshot(rules: dict, caller) -> dict:
     return out
 
 
+def _rollout():
+    from pipelines import rollout  # lười: rollout import module này
+    return rollout
+
+
+def _draft_feature(created_by, content_type) -> str | None:
+    """v13.3: draft → tính năng theo `output_sources` content_drafts."""
+    return _rollout().feature_for(table="content_drafts",
+                                  created_by=(created_by or "").strip(),
+                                  content_type=content_type)
+
+
 def save_draft(conn, brief: str, channel: str, text: str,
                guardrail: dict, source: str = SOURCE_STUDIO, *,
                created_by: str | None = None, content_type: str = "post",
@@ -248,6 +267,8 @@ def save_draft(conn, brief: str, channel: str, text: str,
     text = text or ""
     ch = (channel or "").strip()
     is_ai = is_ai is not False
+    _rollout().check_generate(conn, _draft_feature(by, content_type),
+                              f"nháp {content_type}")
     snap = _merge_snapshot(
         _publish_check(conn, text, ch, llm=False, content_type=content_type,
                        sku=sku, is_ai=is_ai), guardrail)
@@ -337,6 +358,12 @@ def set_status(conn, draft_id, status: str, reviewer: str,
         return False, (f"draft #{did} đã ở trạng thái "
                        f"'{cur['status']}' — chỉ duyệt từ pending")
     if status == "approved":
+        why = _rollout().decide_reason(
+            conn, _draft_feature(cur.get("created_by"),
+                                 cur.get("content_type") or "post"),
+            f"draft #{did}")
+        if why:
+            return False, why
         g = cur["guardrail"]
         if not (isinstance(g, dict) and g.get("ok") is True):
             return False, (f"draft #{did} vi phạm guardrail (ok != true) "
@@ -426,6 +453,14 @@ def schedule(conn, draft_id, day, by: str | None = None,
     if cur["status"] != "approved":
         return False, (f"draft #{did} đang '{cur['status']}' — chỉ "
                        f"xếp lịch bài đã approved")
+    ro = _rollout()
+    why = ro.use_reason(conn, _draft_feature(cur.get("created_by"),
+                                             cur.get("content_type")
+                                             or "post"),
+                        f"xếp lịch đăng draft #{did}",
+                        ro.is_human(cur.get("reviewer")))
+    if why:
+        return False, why
     try:
         with conn.transaction():
             conn.execute("select schedule_draft(%s, %s, %s)",

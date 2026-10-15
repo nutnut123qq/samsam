@@ -259,3 +259,11 @@ grant select on revenue_quarters, v_ben_a_settlement_daily,
 -- `v_settlement_khoan` (1 dòng / khoản, khử bản xuất lại). ben_a_reader vẫn
 -- CHỈ 2 view tổng hợp (view này có order_id_hash → không cấp).
 grant select on v_settlement_khoan to bks_reader;
+
+-- ===== v13.3 c03 cưỡng chế giai đoạn =====
+-- `pipelines.rollout.mode()` đọc giai đoạn hiện hành ở MỌI biên sinh/duyệt/dùng
+-- (HĐ 6.7). Agent chạy bằng agent_writer phải đọc được `feature_rollout` —
+-- không đọc được thì mode() fail-closed về chạy thử, mà chạy thử KHÔNG chặn
+-- sinh → tính năng đã TẮT vẫn sinh được. Chỉ SELECT bảng trạng thái (không
+-- PII, không `feature_rollout_events`); ghi vẫn chỉ CLI owner.
+grant select on feature_rollout to agent_writer;

@@ -94,6 +94,12 @@ ERROR_FALLBACK = ("Sâm Sâm xin lỗi, hệ thống đang gặp sự cố. Quý
 HANDOFF_TEXT = ("Sâm Sâm chưa đủ dữ liệu để trả lời câu này — nhân "
                 "viên sẽ phản hồi sớm nhất. Quý khách cần gấp vui lòng "
                 "gọi hotline 1800577732 để được hỗ trợ.")
+# v13.3 (HĐ 6.7) — chatbot chưa ở giai đoạn vận hành (chạy thử / có người
+# duyệt / tắt): KHÔNG gửi câu bot; khách nhận câu viết tay này, câu bot (nếu
+# sinh) thành gợi ý `cskh_reply` chờ người duyệt rồi người gửi.
+HOLD_TEXT = ("Sâm Sâm đã nhận câu hỏi của Quý khách — nhân viên sẽ phản "
+             "hồi sớm nhất. Quý khách cần gấp vui lòng gọi hotline "
+             "1800577732 để được hỗ trợ.")
 # Hằng viết tay theo mẫu HANDOFF_TEXT — gửi khi event user_send_* không
 # phải text (ảnh/file/sticker/..., V1.4): khách có lối thoát thay vì bị
 # câm. Không qua check() (text viết tay).
@@ -665,12 +671,17 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
     t0 = time.monotonic()  # latency_ms đo elapsed — monotonic (V7.2)
     t_recv = t0 if t_recv is None else t_recv  # v12.4 reply_ms
     route = gate = None
+    md = "van_hanh"
     try:
         inb = channels.normalize(channel, user_id, question)
         route = channels.pre_route(inb)
         if route is None:
             gate = channels.consent_gate(inb)
         if route is None and not gate.block:
+            # v13.3: giai đoạn triển khai đọc TRƯỚC answer() — tắt = 0 lời
+            # gọi AI; chạy thử/có người duyệt = sinh nhưng không gửi khách.
+            md = channels.chatbot_mode()
+        if route is None and not gate.block and md != "tat":
             with _hist_lock:
                 history = list(_history(user_id))
             # Chỉ truyền kwarg history khi đã có lượt trước — 1-turn gọi
@@ -714,6 +725,10 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
         return _reply_fixed(user_id, question, msg_id, inb,
                             "consent_required", gate.prefix, send, t0,
                             prompted=gate.prompted, t_recv=t_recv)
+    if md != "van_hanh":
+        return _reply_held(user_id, question, msg_id, inb, md,
+                           None if md == "tat" else res, gate, send, t0,
+                           t_recv)
     latency_ms = int((time.monotonic() - t0) * 1000)
     raw = res["answer"]
     # Check TRƯỚC khi append nguồn — URL là citation, slug tiếng Việt có
@@ -769,6 +784,51 @@ def _reply(user_id: str, question: str, msg_id: str = "", *,
     if gate.prompted and sent:
         channels.record_consent(inb, "prompted", msg_id)
     return {"sent": sent, "text": text, "sources": res["sources"]}
+
+
+def _reply_held(user_id: str, question: str, msg_id: str, inb, md: str,
+                res, gate, send, t0: float, t_recv: float) -> dict:
+    """v13.3 (HĐ 6.7, PL02 mục 1): chatbot `chay_thu`/`co_nguoi_duyet`/`tat`
+    → câu bot KHÔNG tới khách. Có câu bot đạt guardrail (không phải tắt) →
+    gợi ý `cskh_reply` (ghi nội bộ, người duyệt rồi người gửi). Khách nhận
+    HOLD_TEXT viết tay (rượu/sức khỏe lớp 2 → template cố định như cũ) +
+    mục handoff; không vào history (bot chưa trả lời khách)."""
+    from connectors import channels
+
+    meta, sid, text = None, None, HOLD_TEXT
+    if res is not None:
+        bot, meta = channels.format_reply(inb.channel, res)
+        if meta["handoff"] in ("alcohol", "health"):
+            text = bot                     # template cố định, không phải AI
+        elif meta["guardrail_ok"] and not meta["handoff"]:
+            sid = channels.record_suggestion(inb, bot, msg_id,
+                                             raw=res["answer"])
+    if gate.prefix:
+        text = gate.prefix + "\n\n" + text
+    print(f"[rollout] {inb.channel}: chatbot {md} — không gửi câu bot "
+          f"(uh={_uhash(user_id)})", flush=True)
+    sent = send(user_id, text)
+    _log_conversation({
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "msg_id": msg_id,
+        "user_hash": _uhash(user_id),
+        "question": _mask_pii(question),
+        "answer": text[:500],               # text ĐÃ GỬI (parity HANDOFF)
+        "sources": [],
+        "guardrail_ok": meta["guardrail_ok"] if meta else None,
+        "latency_ms": int((time.monotonic() - t0) * 1000),
+        "reply_ms": int((time.monotonic() - t_recv) * 1000),
+        "answered": False,                  # chờ người — vào unanswered()
+        "sent": sent,
+        "rollout": md,
+        "suggestion_id": sid,
+        "channel": inb.channel,
+    })
+    channels.record_handoff(inb, (meta or {}).get("handoff") or "rollout",
+                            msg_id)
+    if gate.prompted and sent:
+        channels.record_consent(inb, "prompted", msg_id)
+    return {"sent": sent, "text": text, "sources": [], "rollout": md}
 
 
 def _reply_fixed(user_id: str, question: str, msg_id: str, inb, kind: str,
