@@ -758,6 +758,24 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Nghĩa vụ hợp đồng (PL02 mục 3) + lợi ích hợp pháp vận hành — CẦN Pháp chế xác nhận người nhận và nhà cung cấp email |
 | GAP | Người nhận độc lập thật + người trực ngoài giờ chưa có (`data/red_alert_routing.json` rỗng) — Pháp chế/BKS Sâm Sâm cấp; Máy chủ SMTP (tên miền Sâm Sâm) chưa cấu hình; nếu dùng dịch vụ email nước ngoài cần TIA |
 
+### DF-47 — Neo mã xác thực chuỗi truy xuất lên blockchain — chỉ digest 32 byte (v13.8 C09)
+
+| Mục | Nội dung |
+|---|---|
+| Mã luồng | DF-47 |
+| Module (code) | `pipelines/anchor.py` |
+| Mục đích | PL01 mục 4b — neo mã xác thực chuỗi dữ liệu truy xuất định kỳ để bên thứ ba kiểm chứng |
+| Dữ liệu | sha256 của bản kê lần gom (gốc Merkle trên đầu chuỗi plot_logs + chữ ký/phát hành/thu hồi QR: mã lô, vai, sha, thời điểm) — 32 byte; KHÔNG tên người ký, KHÔNG nội dung nhật ký, KHÔNG tọa độ/khoảnh/GPS |
+| Lớp | Xanh |
+| Chủ thể | Không có chủ thể dữ liệu cá nhân (digest không đảo ngược được; bản kê ở lại hệ thống) |
+| Nơi lưu | `anchor_batches` (lá + gốc + sha bản kê, append-only), `anchor_receipts` (biên nhận .ots / lớp lỗi, append-only); bản kê + .ots xuất ra thư mục do người chọn (`--export --out`) |
+| Thời hạn lưu | Lâu dài (bằng chứng truy xuất, append-only) — chờ Pháp chế chốt cùng hồ sơ lô |
+| Bên nhận | MẶC ĐỊNH KHÔNG GỬI (provider `none`). Khi hai bên chọn `opentimestamps`: 1 calendar OpenTimestamps công khai (https, URL trong `data/anchor_config.json`) nhận digest; digest đi vào giao dịch Bitcoin công khai |
+| Chuyển ra nước ngoài | CÓ — xem TIA |
+| Biện pháp bảo vệ (có trong code) | Chỉ gửi sha256 bản kê (32 byte); bản kê và lá không rời hệ thống trừ khi người chủ động `--export`; Lá chỉ gồm bản ghi bất biến không PII; lô mẫu bị loại; tên người ký QR không vào lá; Provider mặc định `none` = không mở mạng; đổi provider là quyết định hai bên; biên DÙNG qua rollout `farming-06` (chạy thử/tắt chặn gửi); HTTP: chỉ https, không theo redirect, trần 8 KB phản hồi, timeout cấu hình; lỗi chỉ ghi lớp lỗi |
+| Căn cứ xử lý | Không xử lý dữ liệu cá nhân (digest băm của bản ghi không PII) |
+| GAP | Chưa chọn chuỗi/provider/phí — chưa neo thật (BLOCKED quyết định hai bên); Calendar OpenTimestamps đặt ở nước ngoài — dù chỉ là digest, Pháp chế xác nhận trước khi bật |
+
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -805,6 +823,7 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-42 | Nhân sự: xếp hạng hồ sơ ứng viên + tổng hợp chấm công theo mã NV (PC-HR, v12.2) | Đỏ | cao | không | 3 |
 | DF-44 | Nhật ký vườn qua Zalo OA — nhân viên vườn gửi chữ/ảnh/video/ghi âm (v12.4, video v13.4) | Vàng | trung bình | không | 3 |
 | DF-45 | Cảnh báo đỏ gửi email tới người nhận độc lập (v13.7) | Vàng | trung bình | không | 2 |
+| DF-47 | Neo mã xác thực chuỗi truy xuất lên blockchain — chỉ digest 32 byte (v13.8 C09) | Xanh | thấp | có | 2 |
 
 ## 4. Tổng hợp GAP
 
@@ -894,6 +913,8 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-44] Host CDN Zalo của payload ảnh/ghi âm là GIẢ ĐỊNH — đối chiếu event thật
 - [DF-45] Người nhận độc lập thật + người trực ngoài giờ chưa có (`data/red_alert_routing.json` rỗng) — Pháp chế/BKS Sâm Sâm cấp
 - [DF-45] Máy chủ SMTP (tên miền Sâm Sâm) chưa cấu hình; nếu dùng dịch vụ email nước ngoài cần TIA
+- [DF-47] Chưa chọn chuỗi/provider/phí — chưa neo thật (BLOCKED quyết định hai bên)
+- [DF-47] Calendar OpenTimestamps đặt ở nước ngoài — dù chỉ là digest, Pháp chế xác nhận trước khi bật
 
 ## 5. Câu hỏi cho luật sư
 

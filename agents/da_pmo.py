@@ -19,6 +19,11 @@ Contract:
     xuất → người đó không tự duyệt được, DB `decide_item` chặn);
     `--apply-due` chỉ cập nhật khi mục approved VÀ payload dựng lại khớp
     sha256 bản duyệt VÀ hạn hiện tại == old_due; chạy lại = no-op.
+  - v13.8 C10 (PL01 mục 7): mốc HĐ chưa tính được ngày (`moc_chua_co_ngay`
+    — phụ thuộc ngày ký chưa chốt / HĐ để trống) KHÔNG seed (due_date bắt
+    buộc), `--board` liệt kê riêng mục "Mốc chưa có ngày" kèm blocker — không
+    tự điền ngày. `--seed` báo [lệch] mốc đã có trên DB mà title/hạn/gate
+    khác file (DB giữ nguyên; hạn đổi qua `--propose-due`).
   - Không mạng, không LLM. Ngày "hôm nay" theo giờ VN.
 
 Chạy:
@@ -100,13 +105,48 @@ def load_milestones(path: Path = MILESTONES_FILE) -> list[dict]:
     return out
 
 
+UNDATED_KEYS = ("title", "owner_role", "han_theo_hd", "blocker")
+
+
+def load_undated(path: Path | None = None) -> list[dict]:
+    """Mốc HĐ chưa có ngày (`moc_chua_co_ngay`, tùy chọn). Sai dạng / trùng
+    mã với mốc có ngày → ValueError (bảng tuần không âm thầm bỏ mốc)."""
+    path = Path(path or MILESTONES_FILE)
+    try:
+        doc = json.loads(path.read_bytes().decode("utf-8"))
+        items = doc.get("moc_chua_co_ngay", [])
+    except (OSError, UnicodeDecodeError, ValueError, AttributeError) as e:
+        raise ValueError(f"{Path(path).name}: không đọc được "
+                         f"({type(e).__name__})") from None
+    dated = {m.get("code") for m in doc.get("milestones") or ()
+             if isinstance(m, dict)}
+    if not isinstance(items, list):      # loader chỉ ném ValueError
+        raise ValueError("moc_chua_co_ngay: phải là list")  # noqa: TRY004
+    out, seen = [], set()
+    for i, m in enumerate(items):
+        code = m.get("code") if isinstance(m, dict) else None
+        if not CODE_RE.fullmatch(str(code or "")) or code in seen \
+                or code in dated:
+            raise ValueError(f"moc_chua_co_ngay[{i}].code: thiếu/sai/trùng")
+        for k in UNDATED_KEYS:
+            if not isinstance(m.get(k), str) or not m[k].strip():
+                raise ValueError(f"{code}.{k}: thiếu")
+        seen.add(code)
+        out.append(m)
+    return out
+
+
 def seed(conn, items: list[dict], dry_run: bool = False) -> dict:
-    st = {"inserted": 0, "existing": 0}
+    st = {"inserted": 0, "existing": 0, "drift": []}
     for m in items:
+        old = conn.execute("select title, due_date, gate from"
+                           " project_milestones where code = %s",
+                           (m["code"],)).fetchone()
+        if old is not None and tuple(old) != (m["title"], m["due_date"],
+                                              m["gate"]):
+            st["drift"].append(m["code"])
         if dry_run:
-            hit = conn.execute("select 1 from project_milestones where code"
-                               " = %s", (m["code"],)).fetchone()
-            st["existing" if hit else "inserted"] += 1
+            st["existing" if old else "inserted"] += 1
             continue
         cur = conn.execute(
             "insert into project_milestones (code, title, wp, owner_role,"
@@ -132,8 +172,8 @@ def week_id(d: date) -> str:
     return f"{y}-W{w:02d}"
 
 
-def render_board(rows: list[dict], today: date) -> str:
-    """Bảng tuần markdown (thuần)."""
+def render_board(rows: list[dict], today: date, undated=()) -> str:
+    """Bảng tuần markdown (thuần). `undated` = mốc HĐ chưa có ngày."""
     rows = sorted(rows, key=lambda r: (r["due_date"], r["code"]))
     late = [r for r in rows if r["due_date"] < today and r["status"] != "xong"]
     late_codes = {r["code"] for r in late}
@@ -160,6 +200,13 @@ def render_board(rows: list[dict], today: date) -> str:
         if r["status"] != "xong" and left in (7, 2):
             rem.append(f"- T-{left}: {r['code']} — hạn {_d(r['due_date'])}")
     L += rem or ["- (không có)"]
+    if undated:
+        L += ["", "## Mốc chưa có ngày (chờ ngày ký / hai bên chốt)", "",
+              "| Mã | Việc | Owner | Hạn theo HĐ | Blocker |",
+              "|---|---|---|---|---|"]
+        L += [f"| {u['code']} | {_md(u['title'])} | {_md(u['owner_role'])} |"
+              f" {_md(u['han_theo_hd'])} | {_md(u['blocker'], 160)} |"
+              for u in undated]
     L += ["", "---", ("*BẢN NHÁP — agent không tự gửi; TGĐ chốt "
                       "trạng thái/hạn (đổi hạn qua hàng duyệt).*"), ""]
     return "\n".join(L)
@@ -222,7 +269,12 @@ def _board(conn, a) -> int:
         f"select {', '.join(COLS)} from project_milestones order by"
         " due_date, code").fetchall()]
     conn.commit()
-    text = render_board(rows, today)
+    try:
+        undated = load_undated()
+    except ValueError as e:
+        print(f"[error] {e} — không dựng bảng thiếu mốc", file=sys.stderr)
+        return 1
+    text = render_board(rows, today, undated)
     path = write_report(text, a.out_dir, f"da-pmo-board-{today:%Y-%m-%d}.md")
     print(f"[done] {len(rows)} mốc → {path}")
     if a.submit:
@@ -305,6 +357,10 @@ def main(argv=None) -> int:
             print(f"[done] {'would_insert' if a.dry_run else 'inserted'}="
                   f"{st['inserted']} existing={st['existing']}"
                   + (" (dry-run, không ghi)" if a.dry_run else ""))
+            for code in st["drift"]:
+                print(f"[lệch] {code}: DB giữ bản cũ (title/hạn/gate khác "
+                      "file) — TGĐ sửa tay; hạn đổi qua --propose-due",
+                      file=sys.stderr)
             return 0
         if a.board:
             with job_run("agents.da_pmo") as jr:
