@@ -150,12 +150,24 @@ if "Chat Sâm Sâm" in _tabs:
             with st.chat_message("assistant"):
                 with st.spinner("Đang tra knowledge base..."):
                     from api.rag import NO_DATA, answer
+                    from pipelines.llm_gateway import GatewayBlocked
+
                     # [-8:] = 4 lượt Q&A gần nhất — giống deque(maxlen=8).
                     # monotonic cho latency_ms — elapsed-time, miễn clock
                     # skew (V7.2, parity zalo.py).
                     t0 = time.monotonic()
-                    r = answer(
-                        q, history=st.session_state.history[-8:] or None)
+                    # v14.1 (p1): gateway chặn có chủ đích (trần 0/vượt
+                    # trần/kill-switch/không đọc được chi tiêu) -> câu chuyển
+                    # nhân viên, KHÔNG gọi AI, không crash tab (parity zalo).
+                    try:
+                        r = answer(
+                            q, history=st.session_state.history[-8:] or None)
+                    except GatewayBlocked as e:
+                        # ASCII (file không có UTF-8 guard — gotcha cp1258)
+                        print(f"[warn] chat streamlit: gateway blocked "
+                              f"({type(e).__name__}) -> handoff", flush=True)
+                        r = {"answer": NO_DATA, "sources": [],
+                             "handoff": "gateway"}
                     latency_ms = int((time.monotonic() - t0) * 1000)
 
                 # Invariant: mọi text AI trước khi hiển thị phải qua
@@ -188,7 +200,7 @@ if "Chat Sâm Sâm" in _tabs:
 
                 # Cập nhật history theo semantics zalo: chỉ lượt hợp lệ, lưu
                 # raw — flagged không cho LLM nhớ text vi phạm lượt sau.
-                if g["ok"]:
+                if g["ok"] and r.get("handoff") != "gateway":
                     st.session_state.history = (
                         st.session_state.history
                         + [{"role": "user", "content": q},
@@ -204,7 +216,7 @@ if "Chat Sâm Sâm" in _tabs:
                                             time.gmtime()),
                         "msg_id": "",
                         "user_hash": _z._ui_hash(st.session_state),
-                        "question": _z._mask_pii(q),
+                        "question": _z._log_question(q),
                         "answer": display[:500],
                         "sources": r["sources"],
                         "guardrail_ok": g["ok"],

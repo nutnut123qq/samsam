@@ -7,9 +7,11 @@ v13.1 (F02): thêm `mask_identity` / `scrub_user` / `identity_residual` —
 tên + địa chỉ tự do (xem mục cuối file).
 """
 
+import json
 import re
 import unicodedata
 from functools import lru_cache
+from pathlib import Path
 
 # SĐT VN hoặc email trong câu hỏi -> mask trước khi log (D5.3).
 # Alternative 1 (D5.10 + D6.11): "0" + >=9 số, sep được LẶP nhiều ký tự
@@ -301,7 +303,7 @@ _NAME_WEAK_RE = re.compile(
 # Danh xưng (xét trên text GỐC chữ thường — "có"/"cô", "bà"/"ba" bỏ dấu
 # trùng nhau nên KHÔNG dùng bản bỏ dấu ở đây).
 _HONORIFIC_RE = re.compile(
-    r"(?<!\w)(?:anh|chị|cô|chú|bác|ông|bà|em|bạn|cháu|cậu|dì|mợ|thím)"
+    r"(?<!\w)(?:anh|chị|cô|chú|bác|ông|bà|em|bạn|cháu|cậu|dì|mợ|thím|bé|cụ)"
     r"[ \t]+(?=[^\W\d_])")
 _STREET = (r"(?:duong|d\.|pho|ngo|ngach|hem|kiet)")
 _ADDR_NUM_FIRST_RE = re.compile(
@@ -361,8 +363,8 @@ _RESIDUAL_ADDR_CUE_RE = re.compile(
 # (d) Số + >=2 chữ Viết Hoa KHÔNG có từ gợi ý ("12 Ví Dụ") = địa chỉ, trừ
 #     khi chữ đầu là đơn vị/tên SP ("2 Hộp Quà", "120 Viên").
 # (e) Thôn/xóm + số hoặc tên; ấp/tổ/bản + số ("thôn 3", "xóm Bến Đò").
-# Còn lọt (cần NER, ghi ở board C01): tên 1 chữ không mẫu ("giao Bích"),
-# họ hiếm, tên gõ thường không có đệm văn/thị.
+# v14.1 (p1) khép phần "còn lọt" bằng TỪ ĐIỂN công khai `data/vn_names.json`
+# (không NER/dịch vụ ngoài) — xem mục "v14.1" dưới `_HAMLET_L_RE`.
 _SURNAMES = _set(
     "nguyen tran le pham hoang huynh phan vu vo dang bui do ho ngo duong "
     "ly dao doan vuong trinh truong lam to ha cao dinh luu ta quach chau "
@@ -379,13 +381,188 @@ _RECIPIENT_RE = re.compile(
 _HAMLET_F_RE = re.compile(r"(?<!\w)(?:thon|xom)[ \t]+(?=\w)")
 _HAMLET_L_RE = re.compile(r"(?<!\w)(?:ấp|tổ|bản)[ \t]+(?=\d)")
 
+# --- v14.1 (p1): tên KHÔNG theo mẫu — từ điển công khai ------------------
+# `data/vn_names.json` (họ / tên đệm / tên phổ biến / địa danh, GIẢ ĐỊNH) +
+# tên tỉnh/alias `vn_provinces_2025.json`. Chỉ áp cho text KHÁCH:
+#   (f) từ gợi ý trao/nhận ("giao/gửi/ship/chuyển/tặng/cho/nhận" [hàng]
+#       [cho]) + chữ Viết Hoa có trong từ điển: "giao Bích", "Cho Phương 1
+#       hộp", "Gửi Mai Anh ở Hải Châu";
+#   (g) họ hiếm (ngoài `_SURNAMES`) Viết Hoa + tên Viết Hoa trong từ điển:
+#       "Âu Bích", "Mai Anh";
+#   (h) "tên [là|:]" + tên trong từ điển (Viết Hoa hoặc gõ thường); "họ
+#       [là|:]" + họ Viết Hoa: "Họ Âu tên Hoa", "tên là lan";
+#   (i) "giao/gửi/ship cho" + tên gõ thường trong từ điển, không phải đại
+#       từ/xưng hô/từ thường (`khong_phai_ten`): "giao cho hoa";
+#   (j) họ ít nhập nhằng (`ho_ro`) gõ thường + >=1 tên/đệm: "nguyen minh
+#       anh", "huynh bich".
+# Từ có dấu so đúng dạng có dấu ("Quảng" ≠ "Quang"), không dấu so bản bỏ
+# dấu. Cụm bắt đầu bằng địa danh/cụm thường ("Bình Dương", "Hội An", "Kim
+# Long", "Phụ Nữ") không che. Che thừa (vd "Giao An toàn" -> "Giao ***
+# toàn") rẻ hơn chuyển người, nên luật nghiêng về CHE; còn residual giữ như
+# v13. Mọi luật đi tối đa 3 từ sau điểm neo (tuyến tính).
+_DATA = Path(__file__).resolve().parent.parent / "data"
+NAMES_FILE = _DATA / "vn_names.json"
+PROVINCES_FILE = _DATA / "vn_provinces_2025.json"
+_GIVE_CUE_RE = re.compile(
+    r"(?<!\w)(?:giao|gui|goi|ship|chuyen|tang|cho|nhan)(?:[ \t]+hang)?"
+    r"(?:[ \t]+cho)?(?:[ \t]*:[ \t]*|[ \t]+)")
+_TEN_CUE_RE = re.compile(r"(?<!\w)ten(?:[ \t]+la)?(?:[ \t]*:)?[ \t]+")
+_HO_CUE_RE = re.compile(r"(?<!\w)ho(?:[ \t]+la)?(?:[ \t]*:)?[ \t]+")
+_LOW_RECIPIENT_RE = re.compile(
+    r"(?<!\w)(?:giao|gui|ship|chuyen)(?:[ \t]+hang)?[ \t]+cho[ \t]+")
+
+
+def _fold_words(words) -> tuple:
+    return tuple(_WORD_RE.findall(_fold_keep(unicodedata.normalize(
+        "NFC", " ".join(words) if not isinstance(words, str) else words))))
+
+
+class _Dict:
+    """Từ điển đã chuẩn hóa: tập có dấu + tập bỏ dấu từng loại."""
+
+    def __init__(self, doc: dict, provinces: dict):
+        def pair(key):
+            acc = frozenset(unicodedata.normalize("NFC", w).lower()
+                            for w in doc[key])
+            return acc, frozenset(_fold_keep(w) for w in acc)
+        self.ho = pair("ho")
+        self.ho_ro = pair("ho_ro")
+        g_acc, g_fold = pair("ten")
+        d_acc, d_fold = pair("dem")
+        self.given = (g_acc | d_acc, g_fold | d_fold)
+        self.not_name = pair("khong_phai_ten")
+        places = [*doc["dia_danh"], *provinces.get("provinces", ()),
+                  *provinces.get("aliases", {})]
+        self.places: dict[str, list[tuple]] = {}
+        for p in places:
+            key = _fold_words(p)
+            if key and key[0] in ("tp",):
+                key = key[1:]
+            if key:
+                self.places.setdefault(key[0], []).append(key)
+        for x in _NAME_EXCEPT:
+            self.places.setdefault(x[0], []).append(x)
+
+
+@lru_cache(maxsize=1)
+def _names() -> "_Dict | None":
+    """Từ điển tên; thiếu/hỏng file -> None (scrub_user fail-closed)."""
+    try:
+        doc = json.loads(NAMES_FILE.read_text(encoding="utf-8"))
+        prov = json.loads(PROVINCES_FILE.read_text(encoding="utf-8"))
+        for k in ("ho", "ho_ro", "dem", "ten", "khong_phai_ten", "dia_danh"):
+            v = doc[k]
+            if not (isinstance(v, list) and v
+                    and all(isinstance(w, str) and w.strip() for w in v)):
+                raise ValueError(k)
+        if not isinstance(prov, dict):
+            raise TypeError("provinces")
+        return _Dict(doc, prov)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return None
+
+
+def _in(t: str, f: str, s: int, e: int, sets) -> bool:
+    """Từ t[s:e] thuộc `sets` (có dấu, bỏ dấu): gõ không dấu -> so bản bỏ
+    dấu; có dấu -> so đúng dạng có dấu."""
+    w, fw = t[s:e].lower(), f[s:e]
+    return (fw in sets[1]) if w == fw else (w in sets[0])
+
+
+def _is_place(d: _Dict, f: str, s: int, e: int) -> bool:
+    """Cụm bắt đầu tại `s` là địa danh/cụm thường — xét <=5 từ kế tiếp
+    (bất kể Viết Hoa: "Thanh toán" chỉ "Thanh" Viết Hoa). `e` giữ chữ ký
+    cũ (không dùng để cắt)."""
+    del e
+    words = tuple(_WORD_RE.findall(f, s, s + 60))[:5]
+    return bool(words) and any(words[:len(x)] == x
+                               for x in d.places.get(words[0], ()))
+
+
+def _cap_name_span(d: _Dict, t: str, f: str, p: int, first) -> int:
+    """Từ Viết Hoa tại `p` thuộc `first` (từ điển) -> vị trí kết thúc chuỗi
+    Viết Hoa (<=3 từ) nếu không phải địa danh/tên SP; ngược lại -> p."""
+    w = _WORD_RE.match(f, p)
+    if (not w or not t[p].isupper() or w.group(0) in _NOT_NAME
+            or not any(_in(t, f, p, w.end(), s) for s in first)):
+        return p
+    e = _words_after(t, f, p, cap_only=True, first_free=True, limit=3,
+                     stop=False)
+    return p if e == p or _is_place(d, f, p, e) else e
+
+
+def _low_name_end(d: _Dict, t: str, f: str, p: int,
+                  check_not: bool = True) -> int:
+    """Chuỗi <=3 từ liên tiếp (chỉ cách khoảng trắng) đều là tên/đệm trong
+    từ điển, từ đầu không phải `khong_phai_ten` (khi `check_not`) -> vị
+    trí kết thúc."""
+    end, i = p, p
+    for n in range(3):
+        j = i
+        while j < len(f) and f[j] in " \t":
+            j += 1
+        w = _WORD_RE.match(f, j)
+        if not w or (n and j == i) or not _in(t, f, j, w.end(), d.given):
+            break
+        if n == 0 and check_not and _in(t, f, j, w.end(), d.not_name):
+            break
+        end = i = w.end()
+    return p if _is_place(d, f, p, end) else end
+
+
+def _dict_spans(d: _Dict, t: str, f: str) -> list[tuple[int, int]]:
+    spans = []
+    for m in _GIVE_CUE_RE.finditer(f):                          # (f)
+        e = _cap_name_span(d, t, f, m.end(), (d.given, d.ho))
+        if e > m.end():
+            spans.append((m.end(), e))
+    for m in _WORD_RE.finditer(f):                              # (g)(j)
+        s = m.start()
+        if m.group(0) in _SURNAMES and t[s].isupper():
+            continue                       # luật họ phổ biến (a) đã xử lý
+        nxt = _WORD_RE.match(f, m.end() + 1)
+        if not nxt or f[m.end()] != " ":
+            continue
+        if t[s].isupper() and _in(t, f, s, m.end(), d.ho):
+            if _cap_name_span(d, t, f, nxt.start(), (d.given,)) > nxt.start():
+                e = _words_after(t, f, s, cap_only=True, limit=4, stop=False)
+                if not _is_place(d, f, s, e):
+                    spans.append((s, e))
+        elif not t[s].isupper() and _in(t, f, s, m.end(), d.ho_ro):
+            e = _low_name_end(d, t, f, m.end(), check_not=False)
+            if e > m.end():
+                spans.append((s, e))
+    for m in _TEN_CUE_RE.finditer(f):                           # (h)
+        e = _cap_name_span(d, t, f, m.end(), (d.given, d.ho))
+        if e == m.end() and not t[m.end():m.end() + 1].isupper():
+            e = _low_name_end(d, t, f, m.end())
+        if e > m.end():
+            spans.append((m.end(), e))
+    for m in _HO_CUE_RE.finditer(f):                            # (h)
+        e = _cap_name_span(d, t, f, m.end(), (d.ho,))
+        if e > m.end():
+            spans.append((m.end(), e))
+    for m in _LOW_RECIPIENT_RE.finditer(f):                     # (i)
+        if t[m.end():m.end() + 1].isupper():
+            continue                       # Viết Hoa: luật (c)/(f)
+        e = _low_name_end(d, t, f, m.end())
+        if e > m.end():
+            spans.append((m.end(), e))
+    return spans
+
 
 def _name_spans(t: str, f: str) -> list[tuple[int, int]]:
     spans = []
+    d = _names()
     for m in _WORD_RE.finditer(f):
         if m.group(0) not in _SURNAMES:
             continue
         s = m.start()
+        # v14.1: gõ CÓ DẤU thì phải đúng dạng họ có dấu — "Tặng Mẹ" (tặng
+        # ≠ Tăng), "Đỗ" vẫn khớp; gõ không dấu giữ như v13.
+        if (d is not None and t[s:m.end()].lower() != m.group(0)
+                and not _in(t, f, s, m.end(), d.ho)):
+            continue
         if t[s].isupper():
             # Trong chuỗi Viết Hoa sau họ, chữ trùng từ dừng vẫn là tên
             # ("Nguyễn Chí Thanh", "Lê Thị Anh") — không áp _STOP.
@@ -395,6 +572,9 @@ def _name_spans(t: str, f: str) -> list[tuple[int, int]]:
                 continue
             words = tuple(_WORD_RE.findall(f, s, e))
             if any(words[:len(x)] == x for x in _NAME_EXCEPT):
+                continue
+            # v14.1: địa danh trong từ điển ("Hà Đông", "Phan Thiết")
+            if d is not None and _is_place(d, f, s, e):
                 continue
             spans.append((s, e))
             continue
@@ -410,6 +590,9 @@ def _name_spans(t: str, f: str) -> list[tuple[int, int]]:
 
 def _user_extra_spans(t: str, f: str) -> list[tuple[int, int]]:
     spans = _name_spans(t, f)
+    d = _names()
+    if d is not None:
+        spans += _dict_spans(d, t, f)
     for m in _RECIPIENT_RE.finditer(f):
         e = _words_after(t, f, m.end(), cap_only=True, first_free=True)
         if e > m.end():
@@ -580,10 +763,14 @@ def identity_residual(text: str) -> bool:
 
 def scrub_user(text: str) -> tuple[str, bool]:
     """Text khách gõ -> (đã che SĐT/email/tên/địa chỉ, còn_dấu_hiệu).
-    còn_dấu_hiệu True -> caller KHÔNG gửi AI ngoài (chuyển người)."""
+    còn_dấu_hiệu True -> caller KHÔNG gửi AI ngoài (chuyển người).
+    v14.1: từ điển tên (`data/vn_names.json`) thiếu/hỏng -> còn_dấu_hiệu
+    True với mọi câu có chữ (fail-closed — không biết che tên)."""
     if not isinstance(text, str):
         return text, False
     t = unicodedata.normalize("NFC", text)
     t = _apply(t, _spans_identity(t, _fold_keep(t), True), ())
     t = _mask_pii(t)
+    if _names() is None and _WORD_RE.search(t):
+        return t, True
     return t, identity_residual(t)
