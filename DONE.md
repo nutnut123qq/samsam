@@ -23,10 +23,26 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Trạng thái bàn giao (16/10/2026)
+
+- `main` = `f96773a` (v13 gộp fast-forward từ `v13-hop-dong`, ĐÃ push
+  GitHub 16/10/2026 theo duyệt của user; quét secret trước push sạch).
+  Worktree/nhánh lane v13 và DB `samsam_v13_*` đã dọn. Nhánh đang làm:
+  `v14-hop-dong` (chưa merge/push).
+- Full pytest SAU SHA cuối `f96773a` (DB dựng mới, không phải DB `.env`):
+  **5229 passed, 3 skipped, 0 failed** (18:41) — 3 skipped = `test_dr_drill`
+  cần docker image postgres. Log: `evidence/v13_final_f96773a_pytest.log`.
+  (Gate C11 trong mục dưới chạy ở `35f456a` — trước vá review + vá DF-45.)
+- **C00–C11 CHƯA hoàn thành toàn bộ.** Code đã kiểm ≠ nghiệm thu: 86/86
+  mục `chua_nghiem_thu`; còn việc THIẾU CODE (giao lane v14) và việc chờ
+  dữ liệu/quyết định bên ngoài — bảng tách ở `docs/handover/v13-board.md`
+  mục "Còn mở (16/10/2026)".
+
 ## v13 đóng (C11 tích hợp + gate cuối)
 
 Nhánh `v13-hop-dong` (từ main `3622ec2`), gộp đủ lane c00–c09 qua 4 đợt;
-KHÔNG merge `main`, KHÔNG push/deploy. Hai loại kết quả báo riêng: **code
+lúc đóng C11 chưa merge `main` — SAU ĐÓ đã gộp + push 16/10/2026 (xem mục
+trên). Không deploy. Hai loại kết quả báo riêng: **code
 đã kiểm** (code + test/E2E trong repo) ≠ **nghiệm thu vận hành** (dữ liệu
 thật, chạy thử ≥5 ngày làm việc + ≥50 đầu ra/tính năng, có người duyệt ≥10
 ngày, 0 lỗi nghiêm trọng, biên bản hai bên). **Mọi mục `acceptance_status =

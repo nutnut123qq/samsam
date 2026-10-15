@@ -1,8 +1,9 @@
 # Board v13 — khép phát hiện audit hợp đồng (C00–C11)
 
 Căn cứ: Hợp đồng hợp tác TEDO–Sâm Sâm 2026 + PL01–04 (bản gốc KHÔNG nằm
-trong repo; PL05 chưa được cung cấp). Nhánh `v13-hop-dong`, không merge
-`main`, không push/deploy. Hai loại kết quả báo riêng: **CODE VERIFIED**
+trong repo; PL05 chưa được cung cấp). v13 đã gộp vào `main`
+`f96773a` và push 16/10/2026 (không deploy); việc còn lại làm ở nhánh
+`v14-hop-dong` — xem mục "Còn mở (16/10/2026)" cuối file. Hai loại kết quả báo riêng: **CODE VERIFIED**
 (code + test/E2E trong repo) ≠ **OPERATIONALLY ACCEPTED** (dữ liệu thật, chạy
 thử ≥5 ngày làm việc + ≥50 đầu ra/tính năng, có người duyệt ≥10 ngày, 0 lỗi
 nghiêm trọng, biên bản hai bên). Mọi mục dưới đây `acceptance_status =
@@ -54,3 +55,29 @@ Migration ID: 21 nhóm v12 được tách (`<nhóm>.<n>` + `nhom_goc`); dòng
 `feature_rollout`/`feature_rollout_events` của id nhóm cũ giữ nguyên; mục
 tách vào sổ với mốc mới (không kế thừa ngày), nhóm cũ đang `tat` → mục tách
 vào `tat`. `--status` và hồ sơ nghiệm thu liệt kê id nhóm cũ → mục tách.
+
+## Còn mở (16/10/2026)
+
+C00–C11 **chưa hoàn thành toàn bộ**. Hai loại việc còn lại tách riêng —
+lane chỉ khép phần THIẾU CODE; phần chờ bên ngoài giữ blocker, không đoán.
+
+### A. Thiếu code — giao lane v14 (nhánh `v14-hop-dong`)
+
+| Lane | Việc | Mục danh mục / nguồn | Trạng thái |
+|---|---|---|---|
+| v14.1 p1 | PII: tên không theo mẫu (từ điển họ/tên đệm/tên VN, không NER ngoài), convlog Zalo/Messenger che bằng `scrub_user`, tab Chat Streamlit bắt `GatewayBlocked` → fallback; sức khỏe từ đơn âm tiết theo ngữ cảnh ("bị sốt", "bệnh thận"); red-team: thử khép thêm ca known_gap bằng luật (không đổi nhãn/ngưỡng) | data_platform-04, legal_hr-01; review v13 F02/F07 | giao |
+| v14.2 p2 | Quyền dịch vụ: mọi CLI `--by` quyết định của người qua `auth.authorize` (production approve/intake, golden --approve-price, qr_trace, xnqc, rollout --promote/--severe/--disable, red_alert --ack, crm, doc_intake --verify); login dịch vụ riêng + quyền tối thiểu theo bảng (webhook, job agent, loader, backup, Bên A), app/agent không dùng DSN owner; `settlement_rows`/đơn thật append-only (HĐ 7.3 iii); `bks_audit` theo dõi `ben_a_reader`; `deny_log` không commit conn của caller | F08 code part, gate C11 | giao |
+| v14.3 p3 | Rollout phủ đủ biên: `qr_trace issue/site`, `zalo_garden`, `garden_media`, `channels --suggest` (ghi đầu ra để đếm), agent tự ghi bảng riêng (decision_log, recon_results, allocation_proposals…); bộ đếm cho nguồn report/bảng riêng; nhận mẫu bằng cột provenance thay quy ước tên | F03/F04 còn hở | giao |
+| v14.4 p4 | Kinh doanh: sales-04.1 người phụ trách khách trong ngày; sales-05 nhắc chốt đơn B2B; sales-06.1 phá giá đại lý (nạp file giá đại lý quan sát tay); sales-06.2 cảnh báo đơn trễ/hủy/hoàn bất thường (ngưỡng GIẢ ĐỊNH) | sales-04.1, 05, 06.1, 06.2 | giao |
+| v14.5 p5 | marketing-04.2 kiểm bài đăng đối tác (file xuất); ceo-04.1 so voucher đang chạy với bản đã duyệt; intel-04.2 gợi ý từ khóa an toàn pháp lý | marketing-04.2, ceo-04.1, intel-04.2 | giao |
+| v14.6 p6 | Vận hành còn sót: ngân sách 30 giây trừ cả refresh token/ghi DB `_reply_held`; leo thang 2 giờ cho MỌI cảnh báo đỏ; `jobs.json` thêm `anchor --build`, `legal_updates --submit`; `ops_monthly` in 4 cột tài sản; nhãn "Ảnh/video"; `qr_trace link` từ chối sha video; `_doc` `red_alert_routing.json` lỗi thời | gate C11, review v13 NIT | giao |
+
+### B. Thiếu dữ liệu / quyết định bên ngoài — KHÔNG code thay được
+
+| Ai cấp/quyết | Việc | Mục |
+|---|---|---|
+| Hai bên | Chốt 89 mục + P1 80/P2 9 (đề xuất 79); ngày ký; tỷ lệ phí/mức thưởng/cách cộng bậc; cột phí sàn; PL05; chuỗi/provider/phí neo blockchain | C00, finance-06, farming-06, ceo-90 |
+| Bên B | Server vật lý/UPS/NAS-offsite/monitor ngoài máy/tài khoản cao nhất; login thật + `approvers` 9 khối theo văn bản ủy quyền; SMTP + người nhận cảnh báo đỏ; lịch nghỉ/Tết; 14 hồ sơ sản phẩm gốc; bảng vùng–đại lý thật; sổ công nợ, file quyết toán/Seller Center thật; key/sandbox API sàn; domain trang QR; repo/owner website | data_platform-90, F08, intel-02, data_platform-08, production-02, sales-04.2, data_platform-05/06, farming-03.2, sales-08/09 |
+| Pháp chế | 13 ca red-team known_gap (9 critical) + chế độ LLM-check; thời hạn lưu CV/chấm công/ảnh/ghi âm; DPIA/TIA ký; mẫu đồng ý; hợp đồng mẫu KOC/đại lý; nguồn VBPL | legal_hr-01/05/06/07, intel-05 |
+| Vendor + DPA | OCR trong nước; STT; sinh nền ảnh AI; (nếu dùng) NER tên | production-03, data_platform-02, farming-01, marketing-02.1, data_platform-04 |
+| Chủ khối | Cấu hình GIẢ ĐỊNH: lịch nội dung, ngưỡng giá/KM, giả định mùa, giá vốn, trần chi phí, ca làm việc, near_expiry_days, nguồn intel | nhiều mục co_code có blocker |
