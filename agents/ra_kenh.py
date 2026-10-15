@@ -458,7 +458,9 @@ def _link(conn, post_id, dcfg: dict, stats: dict) -> None:
                          (AGENT, str(p["id"]))).fetchone()
         if r is None:
             red_alert.raise_alert(
-                conn, AGENT, f"S1 {p['channel']}: {p['url']}",
+                # Tiêu đề thành tiêu đề/thân email (v13.7) — DF-45: thư không
+                # chứa URL; URL tra trong channel_posts theo post_id.
+                conn, AGENT, f"S1 {p['channel']}: bài #{p['id']}",
                 {"post_id": p["id"], "codes": p["codes"],
                  "due_at": p["due_at"].isoformat()})
             stats["alerts"] += 1

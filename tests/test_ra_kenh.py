@@ -606,8 +606,10 @@ def test_ingest_cli_prints_masked(db, tmp_path, monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "mới 1" in out and "red_alert mới 1" in out
     assert "0912 345 678" not in out and "13/10/2026 09:00" in out
-    title = db.execute("select title from red_alerts").fetchone()[0]
-    assert title == "S1 web: https://samsam.net.vn/a"
+    title, pid = db.execute("select title, detail->>'post_id'"
+                            " from red_alerts").fetchone()
+    # v13 DF-45: tiêu đề thành email → không URL, chỉ mã bài.
+    assert title == f"S1 web: bài #{pid}" and "http" not in title
 
 
 def test_link_heals_after_crash(db, monkeypatch):
