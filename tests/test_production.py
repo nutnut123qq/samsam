@@ -56,7 +56,7 @@ def _dem(**base) -> dict:
 
 CFG = {"status": "GIẢ ĐỊNH", "cutoffs": [
     {"id": "a", "date": "2026-10-25", "covers_until": "2026-11-15"}],
-    "sla_hours": 48, "remind_hours": 24}
+    "sla_hours": 48, "remind_hours": 24, "near_expiry_days": 90}
 
 
 def test_config_repo_file():
@@ -65,6 +65,7 @@ def test_config_repo_file():
     dates = {c["date"].isoformat() for c in cfg["cutoffs"]}
     assert dates == {"2026-10-25", "2026-11-01", "2026-11-15", "2026-12-10"}
     assert (cfg["sla_hours"], cfg["remind_hours"]) == (48, 24)
+    assert cfg["near_expiry_days"] == 90
 
 
 def _cfg_variant(kind):
@@ -81,13 +82,25 @@ def _cfg_variant(kind):
         c["cutoffs"][0]["date"] = "25/10/2026"
     elif kind == "no_status":
         del c["status"]
+    elif kind == "near_missing":
+        del c["near_expiry_days"]
+    elif kind == "near_zero":
+        c["near_expiry_days"] = 0
+    elif kind == "near_bool":
+        c["near_expiry_days"] = True
+    elif kind == "near_str":
+        c["near_expiry_days"] = "90"
+    elif kind == "near_huge":
+        c["near_expiry_days"] = prod.MAX_NEAR_DAYS + 1
     return json.dumps(c)
 
 
 @pytest.mark.parametrize("kind", ["missing", "empty", "broken", "obj_empty",
                                   "only_doc", "dup_id", "until_le_date",
                                   "remind_ge_sla", "bool_sla", "bad_date",
-                                  "no_status", "nan"])
+                                  "no_status", "nan", "near_missing",
+                                  "near_zero", "near_bool", "near_str",
+                                  "near_huge"])
 def test_config_variants_rejected(tmp_path, kind):
     text = {"empty": "  \n", "broken": "{\"status\": ", "obj_empty": "{}",
             "only_doc": "{\"_doc\": \"x\"}",
@@ -444,10 +457,11 @@ def test_bulletin_empty_and_missing_tables():
              "lots_pending": [], "bom_errors": [], "pending": [],
              "sample": False, "date": TODAY}
     out = prod.render_bulletin(empty, CREATED, cfg)
-    assert out.count("không có") == 4 and "[MẪU]" not in out
+    # v12.3: thêm mục "Hàng cận hạn (FEFO)" → 5 mục rỗng
+    assert out.count("không có") == 5 and "[MẪU]" not in out
     out = prod.render_bulletin({**empty, "missing_tables":
                                 list(prod.ALLOC_TABLES)}, CREATED, cfg)
-    assert out.count("chưa có bảng — chạy apply_schema") == 4
+    assert out.count("chưa có bảng — chạy apply_schema") == 5
 
 
 def test_bulletin_strips_control_chars_and_clamps_age():
@@ -1018,3 +1032,104 @@ def test_bulletin_render_stale_stock():
     sec0 = out.split(HEADINGS[0])[1].split(HEADINGS[1])[0]
     assert ic.STALE_NOTE in sec0 and "không có" not in sec0
     assert "\x1b" not in out
+
+
+# ---------- v12.3 hàng cận hạn (FEFO) ----------
+
+NEAR = "## Hàng cận hạn (FEFO)"
+
+
+def _near(code, sku, exp, qty=10, stock=5):
+    return {"lot_code": code, "sku_key": sku, "exp_date": exp, "qty": qty,
+            "stock": stock}
+
+
+def test_bulletin_near_expiry_fefo_window_and_labels():
+    cfg = prod.load_config()
+    d = TODAY
+    data = {"missing_tables": [], "shortages": [], "no_stock": [],
+            "lots_pending": [], "bom_errors": [], "pending": [],
+            "sample": False, "date": d, "near_expiry": [
+                _near("L-B", "savina-12v", d + dt.timedelta(days=90)),
+                _near("L-OUT", "savina-12v", d + dt.timedelta(days=91)),
+                _near("L-OLD\x1b[2J", "saphraton-20v",
+                      d - dt.timedelta(days=2), stock=None),
+                _near("L-A", "savina-12v", d + dt.timedelta(days=90)),
+                _near("L-TODAY", "savina-12v", d, stock=7)]}
+    out = prod.render_bulletin(data, CREATED, cfg)
+    sec = out.split(NEAR)[1]
+    assert out.index(NEAR) > out.index(HEADINGS[3])     # mục cuối
+    lines = [ln for ln in sec.splitlines() if ln.startswith("- ")]
+    # FEFO: HSD tăng dần, hòa → mã lô; biên đúng 90 ngày vào, 91 ngày ra
+    assert [ln.split(" · ")[0] for ln in lines] == [
+        "- L-OLD?[2J", "- L-TODAY", "- L-A", "- L-B"]
+    assert "ĐÃ QUÁ HẠN 2 ngày" in lines[0] and "chưa có số tồn" in lines[0]
+    assert "còn 0 ngày" in lines[1] and "tồn SKU 7" in lines[1]
+    assert "còn 90 ngày" in lines[2] and "L-OUT" not in out
+    assert "\x1b" not in out and "không có" not in sec
+    assert out == prod.render_bulletin(data, CREATED, cfg)   # tất định
+
+
+def test_bulletin_near_expiry_empty_missing_and_old_data_shape():
+    cfg = prod.load_config()
+    base = {"missing_tables": [], "shortages": [], "no_stock": [],
+            "lots_pending": [], "bom_errors": [], "pending": [],
+            "sample": False, "date": TODAY}
+    sec = prod.render_bulletin(base, CREATED, cfg).split(NEAR)[1]
+    assert "không có" in sec          # data cũ không có key near_expiry
+    out = prod.render_bulletin({**base, "missing_tables": ["production_lots"]},
+                               CREATED, cfg)
+    assert "chưa có bảng" in out.split(NEAR)[1]
+    small = {**cfg, "near_expiry_days": 1}
+    out = prod.render_bulletin({**base, "near_expiry": [
+        _near("L-2", "savina-12v", TODAY + dt.timedelta(days=2))]},
+        CREATED, small)
+    assert "L-2" not in out and "HSD ≤ 1 ngày" in out
+
+
+def test_bulletin_near_expiry_db(db, run, capsys, tmp_path):
+    """Chỉ lô passed, HSD trong cửa sổ, SKU còn tồn (tồn 0 → bỏ; chưa có
+    số tồn → vẫn liệt kê); bulletin chỉ đọc."""
+    f = tmp_path / "inv.csv"
+    f.write_bytes(_inv_csv("savina-12v,kho-a,4,2026-10-10",
+                           "saphraton-20v,kho-a,0,2026-10-10"))
+    rows, errs, sha = ic.read_inventory(f, _golden(), TODAY)
+    assert errs == []
+    ic.load(db, rows, "manual_export", f.name, sha)
+    stock = ic.current_stock(db)
+    has, zero_sku = ["savina-12v"], "saphraton-20v"
+    nostock = next(k for k in _golden() if k not in stock)
+    soon = TODAY + dt.timedelta(days=30)
+    lots = [("NE-OK-1", has[0], soon, "passed"),
+            ("NE-ZERO-1", zero_sku, soon, "passed"),
+            ("NE-NOSTK-1", nostock, soon, "passed"),
+            ("NE-PEND-1", has[0], soon, "pending"),
+            ("NE-FAIL-1", has[0], soon, "failed"),
+            ("NE-FAR-1", has[0], TODAY + dt.timedelta(days=400), "passed"),
+            ("NE-OLD-1", has[0], TODAY - dt.timedelta(days=1), "passed")]
+    for code, sku, exp, st in lots:
+        db.execute("insert into production_lots (lot_code, sku_key, mfg_date,"
+                   " exp_date, qty, intake_status, checked_by, checked_at,"
+                   " source) values (%s, %s, %s, %s, 3, %s, %s, %s,"
+                   " 'sample')",
+                   (code, sku, TODAY - dt.timedelta(days=700), exp, st,
+                    None if st == "pending" else "QA test",
+                    None if st == "pending" else CREATED))
+    data = prod.collect(db, _golden(), None,
+                        TODAY + dt.timedelta(days=90))
+    got = {r["lot_code"]: r["stock"] for r in data["near_expiry"]}
+    assert set(got) == {"NE-OK-1", "NE-NOSTK-1", "NE-OLD-1"}
+    assert got["NE-NOSTK-1"] is None and got["NE-OK-1"] == stock[has[0]]["qty"]
+    assert prod.collect(db, _golden())["near_expiry"] == []   # không cửa sổ
+    before = _one(db, "select string_agg(lot_code || intake_status, ','"
+                  " order by lot_code) from production_lots")
+    capsys.readouterr()
+    assert run("bulletin", "--date", TODAY.isoformat()) == 0
+    out = capsys.readouterr().out
+    sec = out.split(NEAR)[1]
+    assert [ln.split(" · ")[0] for ln in sec.splitlines()
+            if ln.startswith("- ")] == ["- NE-OLD-1", "- NE-NOSTK-1",
+                                        "- NE-OK-1"]
+    assert "QA test" not in out
+    assert _one(db, "select string_agg(lot_code || intake_status, ','"
+                " order by lot_code) from production_lots") == before

@@ -1,0 +1,22 @@
+{
+  "_doc": "v12.3 SX — luật đối soát nhãn cho agents/sx_label.py. GIẢ ĐỊNH / BẢN DEV SOẠN, chờ Chuyên viên pháp chế + GĐ sản xuất chốt (căn cứ dự kiến: NĐ 43/2017 + NĐ 111/2021 ghi nhãn hàng hóa; NĐ 15/2018 câu khuyến cáo TPBVSK; Luật 44/2019 + NĐ 24/2020 cảnh báo nhóm hạn chế). So khớp SAU KHI bỏ dấu + chữ thường + coi dấu câu là khoảng trắng. required[category] = cụm BẮT BUỘC có trên nhãn: id (slug), phrase (cụm tìm trên nhãn), label (mô tả AN TOÀN in vào hàng duyệt — phải qua guardrail.check; KHÔNG chép cụm có từ cấm/từ nhóm hạn chế). markers[category] = cụm cho thấy nhãn thuộc nhóm đó (nhãn có marker mà golden khác category → lệch). registration[category] = 'dksp' (số giấy tiếp nhận ĐKSP, so với golden receipt_no) | 'tu_cong_bo' (chỉ kiểm có số trên nhãn — golden chưa có trường số tự công bố) | null (không kiểm). name_ignore = từ chung trong tên golden không bắt buộc có trên nhãn.",
+  "status": "GIẢ ĐỊNH — chờ Chuyên viên pháp chế chốt",
+  "required": {
+    "tpbvsk": [
+      {"id": "loai_sp", "phrase": "thực phẩm bảo vệ sức khỏe", "label": "dòng chữ loại sản phẩm TPBVSK"},
+      {"id": "khuyen_cao_1", "phrase": "không phải là thuốc", "label": "câu khuyến cáo TPBVSK (phần 1)"},
+      {"id": "khuyen_cao_2", "phrase": "không có tác dụng thay thế thuốc chữa bệnh", "label": "câu khuyến cáo TPBVSK (phần 2)"}
+    ],
+    "food": [],
+    "alcohol": [
+      {"id": "canh_bao_tuoi", "phrase": "không dùng cho người dưới 18 tuổi", "label": "cảnh báo độ tuổi (dưới 18 tuổi)"},
+      {"id": "nong_do", "phrase": "độ cồn", "label": "thông tin nồng độ"}
+    ]
+  },
+  "markers": {
+    "tpbvsk": ["thực phẩm bảo vệ sức khỏe"],
+    "alcohol": ["độ cồn", "rượu"]
+  },
+  "registration": {"tpbvsk": "dksp", "food": "tu_cong_bo", "alcohol": "tu_cong_bo"},
+  "name_ignore": ["combo", "hộp", "x"]
+}

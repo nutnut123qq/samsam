@@ -1,5 +1,9 @@
 """v9.2 Sản xuất P1 (WP13) — SX-A3 phân bổ tồn, SX-A4 BOM combo/hộp quà,
 SX-A5 hồ sơ lô + kiểm nhập, SX-A0 bản tin tuần cho GĐ sản xuất.
+v12.3 SX — bản tin thêm mục "Hàng cận hạn (FEFO)": lô đã kiểm nhập
+`passed` có HSD trong `near_expiry_days` (config, GIẢ ĐỊNH 90) kể cả lô
+ĐÃ QUÁ HẠN, SKU còn tồn (tồn = 0 → bỏ; chưa có số tồn → vẫn liệt kê, ghi
+rõ). Tồn theo SKU (`inventory_snapshots` không có lô) — chưa theo lô.
 
 Agent CHỈ ĐỀ XUẤT: không chuyển kho, không sửa tồn, không đặt mua, không
 lệnh sản xuất, không đổi giá/listing, không ghi golden/orders/products,
@@ -65,6 +69,7 @@ MAX_BY_LEN = golden_store.MAX_BY_LEN
 MAX_NOTE_LEN = 500
 QTY_MAX = 2 * 10**9
 MAX_SLA_HOURS = 24 * 365
+MAX_NEAR_DAYS = 3650
 MAX_FILE_BYTES = 5 * 1024 * 1024
 ONLINE = golden_store.CHANNELS
 
@@ -186,8 +191,12 @@ def validate_config(doc) -> dict:
             and 0 < remind < sla <= MAX_SLA_HOURS):
         raise ProductionError("config: cần số nguyên 0 < remind_hours < "
                               f"sla_hours <= {MAX_SLA_HOURS}")
+    near = doc.get("near_expiry_days")
+    if not (_is_int(near) and 0 < near <= MAX_NEAR_DAYS):
+        raise ProductionError("config: near_expiry_days phải là số nguyên "
+                              f"1..{MAX_NEAR_DAYS}")
     return {"status": status.strip(), "cutoffs": cutoffs, "sla_hours": sla,
-            "remind_hours": remind}
+            "remind_hours": remind, "near_expiry_days": near}
 
 
 def load_config(path=None) -> dict:
@@ -555,6 +564,30 @@ def render_bulletin(data: dict, now: dt.datetime, config: dict) -> str:
                    f"{_age_label(age, config)}")
     if not items and not missing & {"allocation_proposals", "production_lots"}:
         out.append("không có")
+    out.append("")
+
+    near = config["near_expiry_days"]
+    out += ["## Hàng cận hạn (FEFO)",
+            (f"Nguồn: `production_lots` (passed, HSD ≤ {near} ngày tới, gồm "
+             "lô đã quá hạn) × `inventory_snapshots` (tồn theo SKU — chưa "
+             "theo lô; tồn 0 → bỏ).")]
+    if "production_lots" in missing:
+        out.append(no_table)
+    else:
+        lots = sorted((r for r in data.get("near_expiry", [])
+                       if (r["exp_date"] - day).days <= near),
+                      key=lambda r: (r["exp_date"], r["lot_code"]))
+        for r in lots:
+            left = (r["exp_date"] - day).days
+            when = (f"còn {left} ngày" if left >= 0
+                    else f"ĐÃ QUÁ HẠN {-left} ngày")
+            stock = ("chưa có số tồn" if r["stock"] is None
+                     else f"tồn SKU {r['stock']}")
+            out.append(f"- {_clean(r['lot_code'])} · {_clean(r['sku_key'])} · "
+                       f"HSD {r['exp_date'].isoformat()} ({when}) · lô "
+                       f"{r['qty']} · {stock}")
+        if not lots:
+            out.append("không có")
     return "\n".join(out) + "\n"
 
 
@@ -692,23 +725,24 @@ def intake(conn, lot_code: str, result: str, by: str,
     return True, f"lô {lot_code} → {result} (approvals #{row[0]})"
 
 
-def collect(conn, golden_skus: dict | None, golden_why: str | None = None
-            ) -> dict:
-    """Chỉ SQL (0 LLM) → data cho `render_bulletin`. Không ghi gì."""
+def collect(conn, golden_skus: dict | None, golden_why: str | None = None,
+            near_until: dt.date | None = None) -> dict:
+    """Chỉ SQL (0 LLM) → data cho `render_bulletin`. Không ghi gì.
+    `near_until` (v12.3): lô passed có HSD ≤ ngày này (None → bỏ qua)."""
     missing = [t for t in ALLOC_TABLES if conn.execute(
         "select to_regclass(%s) is null", (t,)).fetchone()[0]]
     data = {"missing_tables": missing, "shortages": [], "no_stock": [],
             "stale_stock": [], "lots_pending": [], "bom_errors": [],
-            "pending": [], "sample": False}
+            "pending": [], "sample": False, "near_expiry": []}
     for t in ("inventory_snapshots", "bom_combos", "production_lots"):
         if t not in missing and conn.execute(
                 f"select exists (select 1 from {t} where source = 'sample')"
                 ).fetchone()[0]:
             data["sample"] = True
-    if "inventory_snapshots" not in missing:
-        data["stale_stock"] = sorted(
-            (sku, kho) for sku, s in inventory_csv.current_stock(conn).items()
-            for kho in s["stale"])
+    stock = ({} if "inventory_snapshots" in missing
+             else inventory_csv.current_stock(conn))
+    data["stale_stock"] = sorted((sku, kho) for sku, s in stock.items()
+                                 for kho in s["stale"])
     if "allocation_proposals" not in missing:
         for (cid, cdate, run_id, status, sku, stock, lo, ba, hi) in \
                 conn.execute(
@@ -746,6 +780,18 @@ def collect(conn, golden_skus: dict | None, golden_why: str | None = None
                 "exp_date": exp, "qty": qty, "created_at": created})
             data["pending"].append({"kind": "lô", "id": code,
                                     "created_at": created})
+        if near_until is not None:
+            for code, sku, exp, qty in conn.execute(
+                    "select lot_code, sku_key, exp_date, qty from"
+                    " production_lots where intake_status = 'passed'"
+                    " and exp_date <= %s order by exp_date, lot_code",
+                    (near_until,)):
+                total = stock[sku]["qty"] if sku in stock else None
+                if total == 0:
+                    continue          # SKU hết tồn — không còn hàng cận hạn
+                data["near_expiry"].append({
+                    "lot_code": code, "sku_key": sku, "exp_date": exp,
+                    "qty": qty, "stock": total})
     if not {"bom_combos", "bom_items"} & set(missing):
         combos = db_combos(conn)
         if combos and golden_skus is None:
@@ -1012,7 +1058,8 @@ def cmd_bulletin(args) -> int:
     day = args.date or _today_vn()
 
     def run(conn):
-        data = collect(conn, golden, why)
+        data = collect(conn, golden, why, day + dt.timedelta(
+            days=cfg["near_expiry_days"]))
         data["date"] = day
         print(render_bulletin(data, dt.datetime.now(TZ_VN), cfg), end="")
         return 0
