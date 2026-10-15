@@ -28,16 +28,151 @@ ghi detail khi nhập).
 - `main` = `f96773a` (v13 gộp fast-forward từ `v13-hop-dong`, ĐÃ push
   GitHub 16/10/2026 theo duyệt của user; quét secret trước push sạch).
   Worktree/nhánh lane v13 và DB `samsam_v13_*` đã dọn. Nhánh đang làm:
-  `v14-hop-dong` (đã gộp lane p1–p6; chưa chạy gate cuối v14; chưa merge
-  main/push).
+  `v14-hop-dong` (đã gộp lane p1–p6; **gate cuối v14 đã chạy** — mục "v14
+  đóng" dưới; CHƯA merge main, CHƯA push).
+- Full pytest SAU SHA code cuối của `v14-hop-dong` (`fead825`, DB dựng mới
+  `samsam_v14_g2`): **5644 passed, 3 skipped, 0 failed** (22:18) — 3 skipped
+  = `test_dr_drill` cần docker. Log: `evidence/v14_gate_pytest.log`. Commit
+  sau `fead825` chỉ đổi tài liệu/evidence (DONE.md, board, `evidence/`).
 - Full pytest SAU SHA cuối `f96773a` (DB dựng mới, không phải DB `.env`):
   **5229 passed, 3 skipped, 0 failed** (18:41) — 3 skipped = `test_dr_drill`
   cần docker image postgres. Log: `evidence/v13_final_f96773a_pytest.log`.
   (Gate C11 trong mục dưới chạy ở `35f456a` — trước vá review + vá DF-45.)
 - **C00–C11 CHƯA hoàn thành toàn bộ.** Code đã kiểm ≠ nghiệm thu: 86/86
-  mục `chua_nghiem_thu`; còn việc THIẾU CODE (giao lane v14) và việc chờ
-  dữ liệu/quyết định bên ngoài — bảng tách ở `docs/handover/v13-board.md`
-  mục "Còn mở (16/10/2026)".
+  mục `chua_nghiem_thu`; phần thiếu code v14 (p1–p6) đã khép ở nhánh
+  `v14-hop-dong`, phần thiếu code CÒN LẠI đã phân công lane v15 (chưa làm),
+  phần chờ dữ liệu/quyết định bên ngoài giữ blocker — bảng A / A2 / B ở
+  `docs/handover/v13-board.md` mục "Còn mở (16/10/2026)".
+
+## v14 đóng (gate cuối)
+
+Nhánh `v14-hop-dong` (từ main `f96773a`, gộp lane p1–p6 qua 3 đợt). Gate chạy
+16/10/2026 trên DB dựng mới, KHÔNG phải DB `.env`. **CHƯA merge `main`, CHƯA
+push, không deploy.** Hai loại kết quả báo riêng: **code đã kiểm** (code +
+test/E2E trong repo) ≠ **nghiệm thu vận hành** (dữ liệu thật, chạy thử ≥5 ngày
+làm việc + ≥50 đầu ra/tính năng, có người duyệt ≥10 ngày, 0 lỗi nghiêm trọng,
+biên bản hai bên). 86/86 mục danh mục vẫn `chua_nghiem_thu`. Review ở bước
+này là **integrator self-review** (đọc code thật + tái chạy probe trong E2E) —
+chưa có reviewer read-only độc lập.
+
+**Gate cuối**
+- DB mới `samsam_v14_g`: `apply_schema.py --roles` ×2 sạch (88 bảng),
+  `core_store`, `golden_store`. `ruff check .` sạch.
+- Full `python -m pytest -q -ra` lần 1 @ `70d95b6` (code sau gộp đợt 3):
+  **5642 passed, 1 failed, 3 skipped** (22:37). FAIL do tích hợp:
+  `test_connect_timeout_guard::test_all_psycopg_connect_have_timeout` quét cả
+  `.claude/worktrees/wf_67edb33c-c7a-2/pipelines/auth.py` — bản sao code lane
+  p2 CHƯA vá trong worktree công cụ (gitignored), không phải code repo. Vá:
+  guard bỏ qua `.claude/`. Chạy lại file fail + 4 file liên quan: **466
+  passed**.
+- Full `python -m pytest -q -ra` lần 2 @ `fead825` (SHA code cuối, DB mới
+  `samsam_v14_g2`): **5644 passed, 3 skipped, 0 failed (22:18)**. 3 skipped = `test_dr_drill` cần docker
+  image postgres (máy này không có) — diễn tập DR qua container chưa chạy.
+  Log: `evidence/v14_gate_pytest.log` (gồm cả lần 1 và lần chạy lại).
+- `agent_eval.py --deterministic` @ `fead825`: 22/22 suite hợp lệ, 13/13 suite
+  tất định PASS (guardrail 130/132 ≥ 0,95; 2 ca biên `v41-edge-01/02` chặn
+  thừa — như v13). Lần đầu exit 1 vì working tree bẩn (chạy trước commit vá)
+  — chạy lại sau commit.
+- `redteam.py` exit 0 nhưng **không phải chặn 100%**: lọt **6/50 = 12%**, cả
+  6 là known_gap chờ Pháp chế (**3 critical**): 3 `ruou_vong_vo` + 3
+  `an_y_ho_tro`. Trước v14 (gate v13): lọt 13/50, 9 critical. Nhãn/ngưỡng/
+  severity bộ ca không đổi (p1 chỉ gỡ cờ `known_gap` ở 7 ca nay chặn đúng
+  code).
+- `dpia_draft.py --check` khớp map.
+
+**Thử nâng cấp** (DB `samsam_v14_up`): code + schema `f96773a` (git worktree
+tạm NGOÀI repo, đã xóa) → apply, core/golden, giả lập lịch sử bằng code cũ:
+4 mục `approval_queue` (approved/rejected/pending), 1 nháp, 3 `plot_logs`
+chain, `rollout --seed` 65 mục + 1 sự cố nghiêm trọng, 1 cảnh báo đỏ, 1
+`garden_media`, 3 đơn thật `source='manual'` (1 đã đổi trạng thái), 2 dòng
+quyết toán "thật" + 16 dòng file quyết toán MẪU qua CLI cũ → apply schema/roles
+HIỆN TẠI ×2: 81 → 88 bảng (thêm `b2b_quote_events`, `dealer_price_obs`,
+`order_history`, `partner_post_scans`, `report_outputs`, `san_suggestions`,
+`san_suggestion_uses`), **571 → 571 dòng, 0 dòng mất**, đuôi chain
+`agent_action_log` #16 / `plot_logs` #12 giữ nguyên; code mới `store
+--verify-log` OK (8 dòng), `garden_director --verify` OK; nạp lại
+`core_store` giữ khoảnh có nhật ký đã chain; probe sau nâng cấp: xóa/sửa dòng
+quyết toán thật, xóa đơn thật, xóa `agent_action_log`/`plot_logs` đều bị
+trigger CHẶN; đổi trạng thái đơn thật → +1 dòng `order_history` (giá trị cũ
+còn).
+
+**E2E CLI tích hợp** (DB mới `samsam_v14_e2e`, **91/91 đạt**; lần chạy đầu
+trên `samsam_v14_g` dừng giữa chừng do lỗi SQL của chính script E2E — tên cột
+`job_runs` — nên chạy lại trọn trên DB mới). Login tạm `in role` app_human /
+svc_webhook / svc_job / svc_loader / svc_backup / ben_a_reader, không
+superuser/owner, xóa sau khi chạy; chế độ thực = `APPROVAL_ENFORCE=1` +
+`AUTH_USERS_FILE` rỗng:
+- Quyền bảng: webhook/loader/Bên A không đọc được `contacts`; Bên A không đọc
+  `orders`, đọc được `v_ben_a_orders_daily`; app_human không xóa được
+  `agent_action_log`; svc_job không sửa được `settlement_rows`.
+- v14.2: job `kpi_snapshot` chạy bằng `svc_job` exit 0; bằng owner /
+  `svc_webhook` / thiếu `JOB_DATABASE_URL` → exit 78 (không rơi về DSN owner);
+  backup bằng `svc_backup` exit 0; loader bằng owner → từ chối.
+- v14.4: `crm --owner` tên thay mã → exit 2; chế độ thực login app_human,
+  approvers rỗng → exit 1 + 1 dòng `authz_denied`, lead không bị gán;
+  `dealer_price` bằng `svc_loader`; `kd_price --dealer-watch` bằng `svc_job`
+  đẩy 1 rồi 0 (theo đợt); `kd_orders --watch`, `kd_quote --followups` bằng
+  `svc_job` exit 0.
+- v14.5: `ra_kenh --partner-file` `--by agent:` exit 2, cột tên đối tác → 0
+  dòng; nạp dev OK; **dưới login app_human → `permission denied for table
+  dealers` (fail-closed — CLI người ghi bảng trực tiếp chưa có quyền, việc
+  v15.4)**; `ceo_promo` bằng `svc_job` đẩy 4 lệch, chạy lại 0 mới;
+  `intel_import --trend` bằng `svc_loader` + `intel_weekly --suggest-keywords`
+  bằng `svc_job`.
+- v14.6: cảnh báo đỏ KHÔNG phải intel leo thang ở 2h01 (không ở 1h59), chạy
+  lại không lần 2; job `red_alert_escalate`, `legal_updates` bằng `svc_job`
+  exit 0; `anchor_build` exit 1 "chưa có nhật ký đã chain" (đúng — chưa có dữ
+  liệu vườn thật), không lỗi quyền.
+- v14.3: `channels --suggest` chạy thử → nhãn "chưa được dùng", dòng
+  `san_suggestions` không chứa SĐT/tin buyer, `--mark-sent` bị từ chối; tắt 9
+  mục → `channels --suggest`, `kd_quote --followups`, `kd_price
+  --dealer-watch`, `kd_orders --watch`, `ra_kenh --partner-file`, `ceo_promo`,
+  `intel_weekly --suggest-keywords`, `cockpit --collect` exit 2,
+  `production allocate` exit 1 không ghi đề xuất.
+- DB chết: 6 lệnh exit ≠ 0 không treo (job chế độ thực exit 78).
+- v14.1 (trong tiến trình, không gọi AI): `scrub_user` che 'chị Bích', 'Họ Âu
+  tên Hoa', 'nguyen minh anh', tên + địa chỉ; giữ 'Hà Nội', 'sâm Ngọc Linh';
+  sức khỏe 'bi tieu duong', 'bị sốt', 'bi gan' = có; 'mặc dầu', 'giao dau' =
+  không.
+
+**Integrator vá trong gate** (commit `fead825`):
+- `ingest/crm.py` `handoff_payload`: câu hỏi lead trong payload chuyển đại lý
+  chỉ qua `_mask_pii` (SĐT/email) → tên/địa chỉ khách lọt sang đại lý dù CHƯA
+  có consent `dai_ly` (lead từ convlog trước v14.1 chưa qua `scrub_user`). Nay
+  `scrub_user`. Test `test_crm::test_handoff_question_names_scrubbed_v14_gate`
+  FAIL trên code cũ (evidence trong `v14_gate_pytest.log`).
+- `tests/test_connect_timeout_guard.py`: bỏ qua `.claude/` (xem trên).
+- Board "Còn mở": thêm dòng gate, bảng A2 phân công phần thiếu code còn lại
+  cho lane v15, bổ sung bảng B các việc chờ bên ngoài phát sinh ở v14.
+  `data/contract_features.json` KHÔNG đổi ở gate (lane đã cập nhật dòng của
+  mình; không tự đổi `acceptance_status`).
+
+### Đã khép code ở v14 ↔ còn chờ bên ngoài
+
+| Lane | Đã khép code (CODE VERIFIED, chưa nghiệm thu) | Còn chờ bên ngoài (bảng B board) |
+|---|---|---|
+| v14.1 p1 PII/guardrail | tên không theo mẫu (từ điển công khai), convlog 3 kênh qua `scrub_user`, tab Chat bắt `GatewayBlocked`, sức khỏe đơn âm tiết theo ngữ cảnh, red-team 13→6 (critical 9→3); + gate: handoff đại lý qua `scrub_user` | Pháp chế: 6 known_gap + bật LLM-check (model/DPA), duyệt bộ ca + từ cấm tiếng Anh; Bên B/Pháp chế: duyệt/bổ sung `vn_names.json`, `pii_allow`; DPA/TIA OpenRouter |
+| v14.2 p2 quyền dịch vụ | 13 CLI quyết định qua `auth.cli_gate`, `deny_log` không commit tx caller, 4 role dịch vụ + `bind_service`, `settlement_rows`/đơn thật append-only + `order_history`, `bks_audit` 8 role | Bên B: login thật + biến DSN trên server, `approvers` 9 khối + `qr_signers` theo văn bản ủy quyền, login CREATEDB diễn tập; quyết cách cấp quyền ghi cho CLI người |
+| v14.3 p3 rollout | bộ đếm 29 bảng + `report_outputs`, cờ `is_sample`, `created_by` cho loại dùng chung, `channels --suggest`/`--mark-sent`, `qr_trace site` tạm ngưng, agent tự ghi bảng riêng bị chặn khi tắt | Hai bên: cơ chế người duyệt từng báo cáo; Hành chính: lịch nghỉ; Bên B: ủy quyền người MXH |
+| v14.4 p4 kinh doanh | sales-04.1 người phụ trách + hạn, sales-05 nhắc chốt B2B, sales-06.1 giá đại lý quan sát tay, sales-06.2 hủy/hoàn bất thường | Bên B: mã NV, ủy quyền, nguồn giá đại lý tự động + sổ đại lý thật, file Seller Center có ngày đặt/hạn giao; GĐ bán hàng: ngưỡng `sales_watch.json` |
+| v14.5 p5 marketing/ceo/intel | marketing-04.2 rà bài đối tác, ceo-04.1 so KM đang chạy, intel-04.2 gợi ý từ khóa an toàn | Bên B/GĐ marketing: file bài KOC/đại lý, KOC thật + hợp đồng, kit duyệt; GĐ bán hàng: kế hoạch KM; Pháp chế: bộ luật lọc + "Ngọc Linh"; Quản lý MXH: file Trends |
+| v14.6 p6 vận hành | hạn 30 giây Zalo gồm refresh/ghi DB, leo thang 2 giờ mọi cảnh báo đỏ, 3 job + timer, `ops_monthly` 8 cột tài sản, nhãn Ảnh/video, `qr_trace link` từ chối video | Pháp chế/Bên B: người nhận độc lập + SMTP thật + cấp 2; Bên B: bật timer trên server; hai bên: chuỗi/provider neo; dữ liệu vườn thật |
+
+**Thiếu code còn lại** (KHÔNG làm ở v14 — đã phân công lane v15 ở board mục
+"Còn mở" bảng A2): lịch job cho 6 bước v14 + `sales_director --run`; Messenger
+ngân sách 30 giây; bộ đếm nguồn `file`; `mkt_ads` agent id; cổng tắt
+`intel_alert`; `write_report` `sample=`; nhãn "chạy thử" trong báo cáo file;
+PII ZWSP/parity Streamlit/nạp lại từ điển; quyền ghi CLI người + xếp loại
+`--by` (cần quyết trước); `core_store` làm mất liên kết `orders.product_id`
+của đơn thật khi nạp lại.
+
+**C00–C11 CHƯA hoàn thành toàn bộ** — phần B (dữ liệu/quyết định/hạ tầng bên
+ngoài) chưa có, phần A2 (thiếu code) đã phân công chưa làm, và chưa mục nào
+nghiệm thu vận hành.
+
+Evidence: `evidence/v14_gate_pytest.log`, `v14_gate_gates.log`,
+`v14_gate_upgrade.log`, `v14_gate_e2e.log` (đã che DSN/mật khẩu/đường dẫn;
+grep DSN có mật khẩu + `sk-or` rỗng).
 
 ## Gộp v14 đợt 3 (p5 + p6)
 

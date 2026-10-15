@@ -1,0 +1,434 @@
+# v14 gate — E2E CLI (scratch g14/e2e.py), DB samsam_v14_e2e mới (apply_schema --roles + core/golden). SĐT trong input là số giả.
+# Lần chạy đầu trên samsam_v14_g dừng ở mục 4 do lỗi SQL của chính script (cột job_runs.status không có) — 0 FAIL trước đó; chạy lại trọn trên DB mới:
+# E2E gate cuối v14 — DB samsam_v14_e2e, logins tạm app_human, svc_webhook, svc_job, svc_loader, svc_backup, ben_a_reader (không superuser/owner)
+# chế độ thực = APPROVAL_ENFORCE=1 + AUTH_USERS_FILE rỗng (approvers thật trong repo rỗng)
+
+######################################################################
+# 0. Quyền bảng theo login (đọc thử bằng login thật)
+
+=== [PASS] svc_webhook: select * from contacts limit 1 CHẶN (InsufficientPrivilege)
+
+=== [PASS] svc_webhook: select * from settlement_rows limit 1 CHẶN (InsufficientPrivilege)
+
+=== [PASS] svc_backup: select count(*) from approval_queue CHO PHÉP
+
+=== [PASS] ben_a_reader: select * from orders limit 1 CHẶN (InsufficientPrivilege)
+
+=== [PASS] ben_a_reader: select * from contacts limit 1 CHẶN (InsufficientPrivilege)
+
+=== [PASS] ben_a_reader: select * from v_ben_a_orders_daily limit 1 CHO PHÉP
+
+=== [PASS] svc_loader: select * from contacts limit 1 CHẶN (InsufficientPrivilege)
+
+=== [PASS] app_human: delete from agent_action_log CHẶN (InsufficientPrivilege)
+
+=== [PASS] svc_job: update settlement_rows set payout_vnd = 0 CHẶN (InsufficientPrivilege)
+
+######################################################################
+# 1. v14.2 — login dịch vụ ở chế độ thực
+
+=== [PASS] job kpi_snapshot JOB_DATABASE_URL=svc_job
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m pipelines.job_runs --run kpi_snapshot
+   exit 0 (mong 0)
+   [ok] chat_kpi_facts: đọc 42 dữ kiện, mới 42
+
+=== [PASS] job kpi_snapshot JOB_DATABASE_URL=owner
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login owner> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m pipelines.job_runs --run kpi_snapshot
+   exit 78 (mong 78)
+   [job-runs] job 'kpi_snapshot' KHÔNG chạy — login Postgres là SUPERUSER — chế độ thực phải dùng login riêng không phải superuser/owner (docs/roles.sql)
+
+=== [PASS] job kpi_snapshot JOB_DATABASE_URL=svc_webhook
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_webhook> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m pipelines.job_runs --run kpi_snapshot
+   exit 78 (mong 78)
+   [job-runs] job 'kpi_snapshot' KHÔNG chạy — login không thuộc role 'svc_job' của dịch vụ 'job' (docs/roles.sql)
+
+=== [PASS] job thiếu JOB_DATABASE_URL (chế độ thực) → không rơi về DSN owner
+$ [DATABASE_URL=login owner] APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m pipelines.job_runs --run kpi_snapshot
+   exit 78 (mong 78)
+   [job-runs] job 'kpi_snapshot' KHÔNG chạy — chế độ thực: thiếu JOB_DATABASE_URL — dịch vụ 'job' phải chạy bằng login riêng, không rơi về DATABASE_URL
+
+=== [PASS] backup bằng svc_backup
+$ [DATABASE_URL=login owner] BACKUP_DATABASE_URL=<login svc_backup> JOB_DATABASE_URL=<login svc_job> BACKUP_DIR=<tmp>\bk APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m pipelines.job_runs --run backup
+   exit 0 (mong 0)
+   [done] samsam_v14_e2e_20261016_052318_vn.dump — 460360 bytes, sha256 6dfcd62a15ece1c0…, tool native:C:/Program Files/PostgreSQL/17/bin/pg_dump.exe, 88 bảng
+   [warn] backup CHƯA mã hóa (external-dep: khóa công ty)
+   [warn] chưa cấu hình offsite (BACKUP_OFFSITE)
+
+######################################################################
+# 2. v14.4 kinh doanh — loader/job bằng login dịch vụ
+
+=== [PASS] crm --load-dealers (dev, owner — chuẩn bị sổ đại lý MẪU)
+$ [DATABASE_URL=login owner]  python -m ingest.crm --load-dealers --by Lan KD
+   exit 0 (mong 0)
+   [ok] đại lý: mới=4 cập nhật=0 giữ nguyên=0
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+=== [PASS] crm --owner tên thay mã → chặn trước DB
+$ [DATABASE_URL=login owner]  python -m ingest.crm --owner 1 --staff Nguyen An --by Lan KD
+   exit 2 (mong 2); cần thấy ['MÃ nhân viên']
+   [err] --staff phải là MÃ nhân viên [A-Z0-9_-]{2,20} (không ghi tên) — không ghi gì.
+
+=== [PASS] crm --owner chế độ thực, login app_human, approvers rỗng → chặn
+$ [DATABASE_URL=login app_human] APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m ingest.crm --owner 1 --staff NV01 --by Lan KD
+   exit 1 (mong 1); cần thấy ['ủy quyền']
+   [warn] chưa có danh sách mã nhân viên kinh doanh (lead_owner.staff_codes rỗng — Bên B cấp) — chỉ kiểm mẫu mã
+   [err] khối sales CHƯA có người được Bên B ủy quyền (approvers rỗng trong data/directors/sales.json) — cần văn bản ủy quyền của Bên B, không tự điền — không ghi.
+
+=== [PASS] authz_denied ghi 1 dòng 
+
+=== [PASS] lead chưa bị gán 
+
+=== [PASS] sales_director --run --dry-run thấy lead_followup (lead cũ chưa gán)
+$ [DATABASE_URL=login owner]  python -m agents.sales_director --run --dry-run
+   exit 0 (mong 0); cần thấy ['lead_followup']
+   [dry-run] sẽ đẩy: lead_followup 1, price_review 17 · CSKH vượt trần chờ lần sau 0 · sẽ expire 0 · sẽ leo thang 0 (cảnh báo đỏ 0) · lead quá hạn nhắc 1 — KHÔNG ghi DB
+
+=== [PASS] ingest.dealer_price bằng LOADER svc_loader (chế độ thực)
+$ [DATABASE_URL=login owner] LOADER_DATABASE_URL=<login svc_loader> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m ingest.dealer_price --file <tmp>\gia-dai-ly.csv --by Lan KD
+   exit 0 (mong 0); cần thấy ['nạp 2']
+   [ok] nạp 2 quan sát giá đại lý — chạy `python -m agents.kd_price --dealer-watch` để so giá sàn
+
+=== [PASS] ingest.dealer_price bằng LOADER = login owner (chế độ thực) → từ chối
+$ [DATABASE_URL=login owner] LOADER_DATABASE_URL=<login owner> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m ingest.dealer_price --file <tmp>\gia-dai-ly.csv --by Lan KD
+   exit 2 (mong 2); cần thấy ['owner']
+   [err] login Postgres là SUPERUSER — chế độ thực phải dùng login riêng không phải superuser/owner (docs/roles.sql)
+
+=== [PASS] kd_price --dealer-watch bằng JOB svc_job (chế độ thực) → 1 cảnh báo
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m agents.kd_price --dealer-watch
+   exit 0 (mong 0); cần thấy ['đẩy 1 mục']
+   [dealer-watch] ngày 2026-10-16: 2 quan sát, dưới giá sàn 1 (mới 1), không kiểm được (thiếu giá sàn) 0 · đẩy 1 mục
+
+=== [PASS] kd_price --dealer-watch lần 2 → 0 (theo đợt)
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m agents.kd_price --dealer-watch
+   exit 0 (mong 0); cần thấy ['đẩy 0 mục']
+   [dealer-watch] ngày 2026-10-16: 2 quan sát, dưới giá sàn 1 (mới 0), không kiểm được (thiếu giá sàn) 0 · đẩy 0 mục
+
+=== [PASS] kd_orders --watch bằng svc_job (đơn trễ CHƯA ĐO)
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m agents.kd_orders --watch
+   exit 0 (mong 0)
+   [watch] ngày 2026-10-16: bất thường 0 (mới 0) · đẩy 0 mục
+   [info] Đơn trễ: CHƯA ĐO — file xuất Seller Center chưa có cột ngày đặt/hạn giao (không suy từ ngày nạp file).
+
+=== [PASS] kd_quote --followups bằng svc_job
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m agents.kd_quote --followups
+   exit 0 (mong 0)
+   [followups] báo giá cần nhắc 0 · đẩy 0 mục nhắc (hệ thống không tự liên hệ khách)
+
+=== [PASS] kd_quote --outcome báo giá không tồn tại → 1
+$ [DATABASE_URL=login owner]  python -m agents.kd_quote --outcome 999999 chot --by Lan KD
+   exit 1 (mong 1)
+   [warn] mục #999999 không phải báo giá B2B ĐÃ duyệt — không ghi
+
+######################################################################
+# 3. v14.5 marketing/ceo/intel
+
+=== [PASS] ra_kenh --partner-file --by agent: → từ chối
+$ [DATABASE_URL=login owner]  python -m agents.ra_kenh --partner-file <scratch>\p5e2e\doi_tac.csv --by agent:x
+   exit 2 (mong 2)
+   usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+                                   [--mark-removed URL] [--report] [--by BY]
+                                   [--now NOW] [--days DAYS] [--dry-run]
+   python -m agents.ra_kenh: error: --by phải là tên NGƯỜI — không nhận 'agent:'/'system:'
+
+=== [PASS] ra_kenh --partner-file cột tên đối tác → 0 dòng
+$ [DATABASE_URL=login owner]  python -m agents.ra_kenh --partner-file <scratch>\p5e2e\doi_tac_cot_ten.csv --by Lan MXH
+   exit 1 (mong 1)
+   [err] file bài đối tác không hợp lệ — 0 dòng nạp (1 lỗi):
+     - dòng 1: 1 cột lạ — chỉ nhận ['ma_doi_tac', 'url', 'kenh', 'text', 'ngay_dang', 'sku'] (MÃ đối tác, không tên/handle/liên hệ cá nhân)
+
+=== [PASS] ra_kenh --partner-file (dev, owner)
+$ [DATABASE_URL=login owner]  python -m agents.ra_kenh --partner-file <scratch>\p5e2e\doi_tac.csv --by Lan MXH
+   exit 0 (mong 0)
+   [ok] 2 bài đối tác — mới 2, bỏ qua 0 (trùng lần rà trước) — S1 1, S2 1, sạch 0 — mục hàng duyệt mới 2
+   [S1] dòng 2 KOC-MAU-01 tiktok tiktok.com url#c745a379e8b1 — tu_cam, thieu_bo_tai_lieu — mục #2
+   [S2] dòng 3 KOC-MAU-02 facebook blogspot.com url#287321a65d30 — thieu_bo_tai_lieu — mục #3
+
+=== [PASS] ra_kenh --partner-file login app_human → fail-closed (chưa cấp quyền ghi — blocker hạ tầng)
+$ [DATABASE_URL=login app_human] APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m agents.ra_kenh --partner-file <scratch>\p5e2e\doi_tac_la.csv --by Lan MXH
+   exit 2 (mong None)
+   [err] InsufficientPrivilege: permission denied for table dealers
+
+=== [PASS] ceo_promo bằng svc_job (chế độ thực)
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m agents.ceo_promo --plan <scratch>\p5e2e\ke_hoach_km.csv --running <scratch>\p5e2e\km_dang_chay.csv --as-of 2026-10-20
+   exit 0 (mong 0)
+   [promo] ngày 2026-10-20: 4 KM đang chạy, khớp 1, lệch 4 (mới 4), bản duyệt chưa thấy chạy 0 · đẩy 4 mục
+     - Kiểm soát KM — KM đang chạy không có bản duyệt hiệu lực — kênh shopee, SKU da-an-sam-30v
+     - Kiểm soát KM — KM chạy quá ngày kết thúc của bản duyệt — kênh shopee, SKU mat-ong-sam-300ml
+     - Kiểm soát KM — giá sau KM thấp hơn mức bản duyệt cho phép — kênh shopee, SKU mat-ong-sam-300ml
+     - Kiểm soát KM — KM đang chạy khác loại với bản duyệt — kênh shopee, SKU savina-12v
+
+=== [PASS] ceo_promo chạy lại → 0 mới
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m agents.ceo_promo --plan <scratch>\p5e2e\ke_hoach_km.csv --running <scratch>\p5e2e\km_dang_chay.csv --as-of 2026-10-20
+   exit 0 (mong 0)
+   [promo] ngày 2026-10-20: 4 KM đang chạy, khớp 1, lệch 4 (mới 0), bản duyệt chưa thấy chạy 0 · đẩy 0 mục
+     - Kiểm soát KM — KM đang chạy không có bản duyệt hiệu lực — kênh shopee, SKU da-an-sam-30v
+     - Kiểm soát KM — KM chạy quá ngày kết thúc của bản duyệt — kênh shopee, SKU mat-ong-sam-300ml
+     - Kiểm soát KM — giá sau KM thấp hơn mức bản duyệt cho phép — kênh shopee, SKU mat-ong-sam-300ml
+     - Kiểm soát KM — KM đang chạy khác loại với bản duyệt — kênh shopee, SKU savina-12v
+
+=== [PASS] ceo_promo kế hoạch hỏng → 1
+$ [DATABASE_URL=login owner]  python -m agents.ceo_promo --plan <scratch>\p5e2e\ke_hoach_hong.csv
+   exit 1 (mong 1)
+   [error] --plan không hợp lệ — 0 dòng:
+     - thiếu cột bắt buộc: sku_key, loai_km, ngay_bat_dau, ngay_ket_thuc
+     - cần cột giam_pct hoặc gia_km_vnd
+
+=== [PASS] intel_import --trend bằng svc_loader (chế độ thực)
+$ [DATABASE_URL=login owner] LOADER_DATABASE_URL=<login svc_loader> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m ingest.intel_import --trend tests/fixtures/intel_import/relatedQueries_MAU.csv --seed sâm ngọc linh
+   exit 0 (mong 0)
+   [load] trend_related #1 relatedQueries_MAU.csv: 6 dòng
+   [done]
+
+=== [PASS] intel_weekly --suggest-keywords bằng svc_job
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python scripts/intel_weekly.py --suggest-keywords
+   exit 0 (mong 0)
+   Lý do loại (theo số dòng): chỉ dẫn địa lý chưa được xác nhận 3 · nhóm sản phẩm cấm quảng cáo 1
+   - trends_related #2: chỉ dẫn địa lý chưa được xác nhận
+   - trends_related #4: chỉ dẫn địa lý chưa được xác nhận
+   - trends_related #5: nhóm sản phẩm cấm quảng cáo, chỉ dẫn địa lý chưa được xác nhận
+   
+   Việc cần làm: Quản lý Marketing duyệt trước khi dùng cho SEO/quảng cáo; luật lọc là từ khóa tất định (chưa có lớp LLM-check — Pháp chế duyệt bộ luật). Agent không chạy quảng cáo/SEO.
+   [ok] mục hàng duyệt #8 (keyword_suggest, chờ Quản lý Marketing)
+
+   hàng duyệt mới: [('dealer_price_alert', 'sales', 'agent:kd_price', 1), ('keyword_suggest', 'intel', 'agent:intel_keywords', 1), ('partner_post_review', 'marketing', 'agent:mkt_doi_tac', 2), ('promo_deviation', 'ceo', 'agent:ceo_audit', 4)]
+
+######################################################################
+# 4. v14.6 vận hành — job lịch bằng svc_job
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+[RED-ALERT][warn] cảnh báo đỏ #2 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+
+=== [PASS] leo thang 1h59 → chưa {'escalated': 0, 'dup': 0, 'unrouted': 0, 'ids': []}
+
+=== [PASS] leo thang 2h01 → có (cảnh báo không phải intel) {'escalated': 1, 'dup': 0, 'unrouted': 1, 'ids': [1]}
+
+=== [PASS] chạy lại → không lần 2 {'escalated': 0, 'dup': 0, 'unrouted': 0, 'ids': []}
+
+=== [PASS] job red_alert_escalate bằng svc_job (chế độ thực)
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m pipelines.job_runs --run red_alert_escalate
+   exit 0 (mong None)
+   [done] escalated=0 dup=0 unrouted=0 escalated_of=[]
+
+=== [PASS] job red_alert_escalate: không lỗi quyền exit 0
+
+=== [PASS] job legal_updates bằng svc_job (chế độ thực)
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m pipelines.job_runs --run legal_updates
+   exit 0 (mong 0)
+   [ok] văn bản khớp chưa vào hàng: 0 · đã đẩy: 0 [] · còn lại lần sau: 0
+
+=== [PASS] job legal_updates: không lỗi quyền exit 0
+
+=== [PASS] job anchor_build bằng svc_job (chế độ thực)
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m pipelines.job_runs --run anchor_build
+   exit 1 (mong None)
+   [err] chưa có nhật ký đã chain / hồ sơ lô nào để neo
+
+=== [PASS] job anchor_build: không lỗi quyền exit 1
+   job_runs: [('job:red_alert_escalate', True), ('job:legal_updates', True), ('job:anchor_build', False)]
+
+######################################################################
+# 5. v14.3 rollout — chạy thử / tắt ở biên mới
+
+=== [PASS] rollout --seed
+$ [DATABASE_URL=login owner]  python -m pipelines.rollout --seed --by Quản lý AI G14
+   exit 0 (mong 0)
+   [OK] vào sổ 73 · có sẵn 0 · bỏ qua (chưa co_code) 13
+
+=== [PASS] channels --suggest (chạy thử) → nhãn chưa được dùng
+$ [DATABASE_URL=login owner]  python -m connectors.channels --suggest shopee --by Lan MXH  <<< 'giá hộp 6 năm? gọi 091*******'
+   exit 0 (mong 0); cần thấy ['chưa được dùng']
+   [warn] channels: answer() lỗi GatewayError — dùng câu chuyển nhân viên
+   [CHẠY THỬ — CHỈ ĐÁNH GIÁ NỘI BỘ, chưa được dùng: KHÔNG dán gửi khách (sales-02 chưa vận hành, HĐ 6.7)]
+   [GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]
+   Dạ, câu hỏi này cần nhân viên Sâm Sâm kiểm tra thêm. Nhân viên sẽ phản hồi Quý khách ngay trong khung chat này.
+   handoff=no_data
+   [đầu ra #1] ghi nội bộ (chạy thử) — không đánh dấu đã gửi được
+
+=== [PASS] san_suggestions không chứa SĐT/tin buyer 
+
+=== [PASS] channels --mark-sent khi chạy thử → từ chối
+$ [DATABASE_URL=login owner]  python -m connectors.channels --mark-sent 1 --by Lan MXH
+   exit 1 (mong 1)
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+   [TỪ CHỐI] gợi ý soạn lúc CHẠY THỬ — chỉ đánh giá nội bộ, không đánh dấu đã gửi (HĐ 6.7)
+
+=== [PASS] rollout --disable sales-02
+$ [DATABASE_URL=login owner]  python -m pipelines.rollout --disable sales-02 --by Quản lý AI G14
+   exit 0 (mong 0)
+   [OK] sales-02: chạy thử → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+=== [PASS] rollout --disable sales-05
+$ [DATABASE_URL=login owner]  python -m pipelines.rollout --disable sales-05 --by Quản lý AI G14
+   exit 0 (mong 0)
+   [OK] sales-05: chạy thử → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+=== [PASS] rollout --disable sales-06.1
+$ [DATABASE_URL=login owner]  python -m pipelines.rollout --disable sales-06.1 --by Quản lý AI G14
+   exit 0 (mong 0)
+   [OK] sales-06.1: chạy thử → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+=== [PASS] rollout --disable sales-06.2
+$ [DATABASE_URL=login owner]  python -m pipelines.rollout --disable sales-06.2 --by Quản lý AI G14
+   exit 0 (mong 0)
+   [OK] sales-06.2: chạy thử → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+=== [PASS] rollout --disable marketing-04.2
+$ [DATABASE_URL=login owner]  python -m pipelines.rollout --disable marketing-04.2 --by Quản lý AI G14
+   exit 0 (mong 0)
+   [OK] marketing-04.2: chạy thử → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+=== [PASS] rollout --disable ceo-04.1
+$ [DATABASE_URL=login owner]  python -m pipelines.rollout --disable ceo-04.1 --by Quản lý AI G14
+   exit 0 (mong 0)
+   [OK] ceo-04.1: chạy thử → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+=== [PASS] rollout --disable intel-04.2
+$ [DATABASE_URL=login owner]  python -m pipelines.rollout --disable intel-04.2 --by Quản lý AI G14
+   exit 0 (mong 0)
+   [OK] intel-04.2: chạy thử → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+=== [PASS] rollout --disable production-01
+$ [DATABASE_URL=login owner]  python -m pipelines.rollout --disable production-01 --by Quản lý AI G14
+   exit 0 (mong 0)
+   [OK] production-01: chạy thử → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+=== [PASS] rollout --disable marketing-06.2
+$ [DATABASE_URL=login owner]  python -m pipelines.rollout --disable marketing-06.2 --by Quản lý AI G14
+   exit 0 (mong 0)
+   [OK] marketing-06.2: chạy thử → tắt
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+=== [PASS] channels --suggest tắt → exit 2 không sinh
+$ [DATABASE_URL=login owner]  python -m connectors.channels --suggest shopee --by Lan MXH  <<< 'x'
+   exit 2 (mong 2)
+   [blocked] tính năng sales-02 (gợi ý chat sàn) đang TẮT — không soạn gợi ý (HĐ 6.7)
+
+=== [PASS] kd_quote --followups tắt (svc_job) → exit 2 không sinh
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m agents.kd_quote --followups
+   exit 2 (mong 2)
+   [rollout] nhắc chốt đơn B2B: tính năng sales-05 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+
+=== [PASS] kd_price --dealer-watch tắt (svc_job) → exit 2 không sinh
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m agents.kd_price --dealer-watch
+   exit 2 (mong 2)
+   [rollout] cảnh báo giá đại lý: tính năng sales-06.1 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+
+=== [PASS] kd_orders --watch tắt (svc_job) → exit 2 không sinh
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m agents.kd_orders --watch
+   exit 2 (mong 2)
+   [rollout] cảnh báo đơn bất thường: tính năng sales-06.2 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+
+=== [PASS] ra_kenh --partner-file tắt → exit 2 không sinh
+$ [DATABASE_URL=login owner]  python -m agents.ra_kenh --partner-file <scratch>\p5e2e\doi_tac.csv --by Lan MXH
+   exit 2 (mong 2)
+   [rollout] rà bài đối tác: tính năng marketing-04.2 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+
+=== [PASS] ceo_promo tắt (svc_job) → exit 2 không sinh
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m agents.ceo_promo --running <scratch>\p5e2e\km_dang_chay.csv --as-of 2026-10-20
+   exit 2 (mong 2)
+   [rollout] so KM đang chạy: tính năng ceo-04.1 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+
+=== [PASS] intel_weekly --suggest-keywords tắt (svc_job) → exit 2 không sinh
+$ [DATABASE_URL=login owner] JOB_DATABASE_URL=<login svc_job> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python scripts/intel_weekly.py --suggest-keywords
+   exit 2 (mong 2)
+   [rollout] gợi ý từ khóa: tính năng intel-04.2 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+
+=== [PASS] cockpit --collect tắt → exit 2 không sinh
+$ [DATABASE_URL=login owner]  python -m pipelines.cockpit --collect --period week
+   exit 2 (mong 2)
+     ai.cost_usd                                     0  db:llm_usage
+     approvals.ceo_decided                           0  db:approval_queue
+     approvals.ceo_expired                           0  db:approval_queue
+     content.drafts_rejected                         0  db:content_drafts
+     chatbot.questions                              42  file:conversations.jsonl
+     chatbot.unanswered                             16  file:conversations.jsonl
+   [blocked] chụp số cockpit: tính năng marketing-06.2 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra — không ghi channel_snapshots
+
+=== [PASS] production allocate tắt → không ghi đề xuất
+$ [DATABASE_URL=login owner]  python -m pipelines.production allocate --cutoff chot_11_11
+   exit 1 (mong 1)
+   [err] đề xuất phân bổ tồn: tính năng production-01 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra — không ghi.
+
+=== [PASS] allocation_proposals không đổi 
+
+######################################################################
+# 6. DB chết
+
+=== [PASS] kd_orders --watch --dry-run — DB chết → exit ≠ 0, không treo
+$ [DATABASE_URL=login owner] DATABASE_URL=<host chết> python -m agents.kd_orders --watch --dry-run
+   exit 2 (mong None)
+   [error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+
+=== [PASS] kd_orders --watch --dry-run: exit ≠ 0 exit 2
+
+=== [PASS] kd_price --dealer-watch --dry-run — DB chết → exit ≠ 0, không treo
+$ [DATABASE_URL=login owner] DATABASE_URL=<host chết> python -m agents.kd_price --dealer-watch --dry-run
+   exit 2 (mong None)
+   [error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+
+=== [PASS] kd_price --dealer-watch --dry-run: exit ≠ 0 exit 2
+
+=== [PASS] ceo_promo --dry-run — DB chết → exit ≠ 0, không treo
+$ [DATABASE_URL=login owner] DATABASE_URL=<host chết> python -m agents.ceo_promo --dry-run --as-of 2026-10-20
+   exit 2 (mong None)
+   [job-runs] ghi job_runs lỗi (ConnectionTimeout) — job vẫn chạy bình thường
+   [error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+
+=== [PASS] ceo_promo --dry-run: exit ≠ 0 exit 2
+
+=== [PASS] channels --mark-sent — DB chết → exit ≠ 0, không treo
+$ [DATABASE_URL=login owner] DATABASE_URL=<host chết> python -m connectors.channels --mark-sent 1 --by Lan MXH
+   exit 2 (mong None)
+   [FAIL] DB không kết nối được (DATABASE_URL)
+
+=== [PASS] channels --mark-sent: exit ≠ 0 exit 2
+
+=== [PASS] red_alert --escalate — DB chết → exit ≠ 0, không treo
+$ [DATABASE_URL=login owner] DATABASE_URL=<host chết> python -m pipelines.red_alert --escalate
+   exit 1 (mong None)
+   [err] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+
+=== [PASS] red_alert --escalate: exit ≠ 0 exit 1
+
+=== [PASS] job kpi_snapshot JOB_DATABASE_URL chết (chế độ thực) — DB chết → exit ≠ 0, không treo
+$ [DATABASE_URL=login owner] DATABASE_URL=<host chết> JOB_DATABASE_URL=<host chết> APPROVAL_ENFORCE=1 AUTH_USERS_FILE=<tmp> python -m pipelines.job_runs --run kpi_snapshot
+   exit 78 (mong None)
+   [job-runs] job 'kpi_snapshot' KHÔNG chạy — không kết nối được DB dịch vụ 'job' (ConnectionTimeout)
+
+=== [PASS] job kpi_snapshot JOB_DATABASE_URL chết (chế độ thực): exit ≠ 0 exit 78
+
+######################################################################
+# 7. v14.1 PII/sức khỏe (trong tiến trình, không gọi AI)
+
+=== [PASS] scrub_user('giao cho chị Bích ở Hà Nội nhé') ('giao cho chị *** ở Hà Nội nhé', False)
+
+=== [PASS] scrub_user('Họ Âu tên Hoa, giao Hồ Chí Minh') ('Họ *** tên ***, giao Hồ Chí Minh', False)
+
+=== [PASS] scrub_user('nguyen minh anh dat 2 hop') ('*** 2 hop', False)
+
+=== [PASS] scrub_user('Tôi là Nguyễn Văn Mẫu, giao hàng đến số 12 đường Ví Dụ') ('Tôi là ***, giao hàng đến ***', False)
+
+=== [PASS] scrub_user âm tính('hộp quà Tết sâm Ngọc Linh 6 năm giá bao nhiêu') ('hộp quà Tết sâm Ngọc Linh 6 năm giá bao nhiêu', False)
+
+=== [PASS] scrub_user âm tính('giao Hà Nội được không') ('giao Hà Nội được không', False)
+
+=== [PASS] is_health_question('Ba tôi bi tieu duong, mua loại nào?') == True 
+
+=== [PASS] is_health_question('mẹ tôi bị sốt uống được không') == True 
+
+=== [PASS] is_health_question('con bi gan nhiem mo') == True 
+
+=== [PASS] is_health_question('mặc dầu giá cao vẫn mua') == False 
+
+=== [PASS] is_health_question('giao dau giờ chiều') == False 
+
+[dọn] xóa login tạm
+
+TỔNG: 91 PASS / 0 FAIL

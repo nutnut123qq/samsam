@@ -1,0 +1,65 @@
+# v14 gate — thử NÂNG CẤP từ schema/code f96773a (main) lên v14-hop-dong, DB samsam_v14_up (không phải DB .env)
+# code cũ chạy từ git worktree tạm NGOÀI repo (đã xóa sau); dữ liệu giả, không PII thật
+
+## 1. code cũ f96773a: apply_schema --roles
+[done] schema applied — 81 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, al
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+
+## 2. code cũ: core_store / golden_store
+[done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+
+## 3. code cũ: giả lập lịch sử (scratch g14/hist.py) — approval_queue approved/rejected/pending, nháp, plot_logs chain, rollout seed + sự cố nghiêm trọng, cảnh báo đỏ, garden_media, 3 đơn thật source=manual (1 đổi trạng thái), 2 dòng quyết toán thật + file quyết toán MẪU qua CLI cũ
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+enqueue [1, 2, 3, 4]
+decide1 (True, None)
+decide2 (True, None)
+draft 1 (False, 'draft #1 vi phạm guardrail (ok != true) — phải reject hoặc viết lại; không có duyệt-kèm-ghi-nhận')
+plot_log (8, [])
+plot_log (10, [])
+plot_log (12, [])
+seed {'inserted': 65, 'existing': 0, 'skipped': 21}
+severe ceo-01 {'from': 'chay_thu', 'to': 'chay_thu'}
+alert (False, 'cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận')
+settlement_csv exit 0 ['[warn] 16 dòng chưa thấy đơn sàn — nạp file đơn (`python -m ingest.market_csv --kind order`) rồi chạy `--reconcile`.', '[done]']
+done 2026-10-15T21:54:31.687886+00:00
+
+## 4. chụp trước nâng cấp
+bảng 81, tổng dòng 571; đuôi chain agent_action_log #16, plot_logs #12 (xem dưới)
+
+## 5. code HIỆN TẠI: apply_schema --roles lần 1, lần 2
+[done] schema applied — 88 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, al
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[done] schema applied — 88 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, al
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+
+## 6. so trước/sau (c11_snap.py --cmp)
+bảng trước: 81 sau: 88 mới: ['b2b_quote_events', 'dealer_price_obs', 'order_history', 'partner_post_scans', 'report_outputs', 'san_suggestion_uses', 'san_suggestions']
+tổng dòng trước: 571 sau: 571
+MẤT DÒNG: không
+tail chain giống: True
+[exit 0]
+
+## 7. code hiện tại: verify chain + nạp lại core/golden
+[ok] chuỗi nguyên vẹn (8 dòng)
+[exit 0]
+[verify] OK — chuỗi nhật ký nguyên vẹn
+[exit 0]
+[keep] plots: KV-A01 (3 nhật ký đã chain, 1 ảnh) — không xóa
+[done] totals: products=27, claims_approved=22, plots=3, plot_logs=9, orders=8, assets=219
+[exit 0]
+[disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+[exit 0]
+
+## 8. probe append-only sau nâng cấp (mỗi lệnh trong savepoint, rollback)
+agent_action_log [(8,)]
+orders thật (manual) [('HIST-ORD-0', 'done'), ('HIST-ORD-1', 'new'), ('HIST-ORD-2', 'new')]
+settlement_rows theo file [('quyet-toan-thang9.csv', 2), ('settlement_shopee_MAU.csv', 16)]
+[probe] xóa dòng quyết toán thật: CHẶN — RaiseException: settlement_rows append-only: DELETE bị chặn
+[probe] sửa payout dòng quyết toán thật: CHẶN — RaiseException: settlement_rows append-only: UPDATE bị chặn
+[probe] xóa đơn thật HIST-ORD-1: CHẶN — RaiseException: orders: đơn thật (source manual) không xóa được — HĐ 7.3
+[probe] xóa nhật ký hành động: CHẶN — RaiseException: agent_action_log append-only: DELETE bị chặn
+[probe] xóa nhật ký vườn: CHẶN — RaiseException: plot_logs #8: nhật ký đã chain — DELETE bị chặn (ghi dòng mới kèm lý do)
+order_history sau đổi trạng thái HIST-ORD-2: [('HIST-ORD-2', 'new', 'cancelled')]
+order_history + 1
