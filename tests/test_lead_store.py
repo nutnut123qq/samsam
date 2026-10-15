@@ -373,6 +373,10 @@ def test_schema_sql_has_leads_table():
     for pat in narrow:
         assert len(re.findall(pat, rest)) == 1, pat
         rest = re.sub(pat, "", rest)
+    # v13: cặp CHECK tên cố định (feature_rollout id, settlement_rows
+    # txn_type) — cùng allowlist hẹp với drift-guard test_store.
+    from tests.test_store import _V13_CHECK_OK
+    rest = _V13_CHECK_OK.sub("", rest)
     assert not re.search(r"\b(alter|drop)\s+table\b", rest)
     assert re.search(r"\b(alter|drop)\s+table\b", re.sub(
         narrow[0], "", "alter table consents drop constraint if exists"

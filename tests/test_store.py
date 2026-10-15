@@ -421,9 +421,20 @@ _CONSENT_B2B_OK = re.compile(
     r"'dai_ly',\s*'b2b'\s*\)\s*\))\s*;")
 
 
+# v13 (c00 nới CHECK id `feature_rollout`, c02 thêm CHECK `txn_type`): chỉ
+# ĐÚNG cặp drop+add CHECK theo tên cố định — cùng cách nới hẹp như consents.
+_V13_CHECK_OK = re.compile(
+    r"\balter\s+table\s+(?:feature_rollout\s+(?:drop\s+constraint\s+if\s+"
+    r"exists\s+feature_rollout_feature_id_check|add\s+constraint\s+"
+    r"feature_rollout_feature_id_check\s+check\s*\([^;]*\))|settlement_rows"
+    r"\s+(?:drop\s+constraint\s+if\s+exists\s+settlement_rows_txn_type_check"
+    r"|add\s+constraint\s+settlement_rows_txn_type_check\s+check\s*"
+    r"\([^;]*\)))\s*;")
+
+
 def _forbidden_ddl(lower: str) -> list[str]:
-    return re.findall(r"\b(?:alter|drop)\s+table\b",
-                      _CONSENT_B2B_OK.sub("", _ALTER_ADD_OK.sub("", lower)))
+    return re.findall(r"\b(?:alter|drop)\s+table\b", _V13_CHECK_OK.sub(
+        "", _CONSENT_B2B_OK.sub("", _ALTER_ADD_OK.sub("", lower))))
 
 
 def test_drift_guard_narrow_alter_only():
@@ -439,7 +450,13 @@ def test_drift_guard_narrow_alter_only():
                  "consents_purpose_check; alter table consents drop "
                  "column purpose;"),
                 ("alter table consents add constraint "
-                 "consents_purpose_check check (purpose in ('x'));")):
+                 "consents_purpose_check check (purpose in ('x'));"),
+                ("alter table settlement_rows drop constraint if exists "
+                 "settlement_rows_txn_type_check, drop column x;"),
+                ("alter table settlement_rows add constraint "
+                 "settlement_rows_txn_type_check check (x), drop column y;"),
+                ("alter table orders add constraint "
+                 "settlement_rows_txn_type_check check (x);")):
         assert _forbidden_ddl(bad), bad
     assert _forbidden_ddl(
         "alter table x add column if not exists y text;") == []

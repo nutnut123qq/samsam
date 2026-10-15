@@ -158,7 +158,11 @@ def test_schema_vendor_table_no_identity_columns():
                 "link", "user_id"):
         assert bad not in blk, bad
     tail = sql.split("v10.3 social listening nhà cung cấp")[1].lower()
-    assert not re.search(r"^\s*(alter|drop)\s+table", tail, re.MULTILINE)
+    # v13: ALTER cộng thêm theo allowlist hẹp của drift-guard test_store.
+    from tests.test_store import _forbidden_ddl
+    assert _forbidden_ddl(tail) == []
+    assert "social_mentions_vendor" not in " ".join(
+        re.findall(r"(?:alter|drop)\s+table\s+[^;]*;", tail))
 
 
 # ---------------------------------------------------------------- DB thật

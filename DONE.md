@@ -23,6 +23,94 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Checklist v13.2-c02-doi-soat-chong-ky
+
+Gộp vào `v13-hop-dong` bởi merge agent đợt 1 (nhánh lane `v13-c02`, `9c5f458`).
+
+- [x] v13.2 c02 khép F01 và F09. Khoản quyết toán bị xuất lại ở file khác
+  (khác sha256) không còn bị cộng đôi. Mọi caller số doanh thu (rev_share,
+  fp_pnl → hdtv_report, bks_recon, fp_cash, ACC-Recon `--report`, view Bên A)
+  đọc chung view `v_settlement_khoan`: mỗi khoản 1 dòng, bản trùng nguyên văn
+  tính 1 lần, dòng thô vẫn giữ. Probe 2 file cùng khoản 1.000.000, phí 50.000
+  → mọi báo cáo ra 950.000 thay vì 1.900.000. `settlement_csv.overlaps()` báo
+  nhóm trùng hoặc lệch kèm tên file (cảnh báo khi nạp, trong `--report`, P&L,
+  mã BKS `quyet_toan_chong_ky`); khi đó rev_share ghi BẤT THƯỜNG và không tính
+  phí. Cùng đơn ở 2 file mà số khác nhau → giữ cả hai, không tự chọn file mới
+  nhất. Field tùy chọn `txn_type` giữ dòng điều chỉnh hợp lệ cùng mã đơn trong
+  1 file; nạp lại cùng file vẫn idempotent.
+- [x] F09: `ngay_ky_hop_dong` (null) trong `data/rev_share.json`; `--year`
+  tính năm hợp tác từ ngày ký (HĐ Điều 3.1), `ngay_bat_dau_van_hanh` chỉ là
+  mốc phí quý; ngày vận hành trước ngày ký → lỗi cấu hình.
+- Evidence lane: `evidence/v13_2_c02_pytest.log` (371 passed),
+  `v13_2_c02_e2e.log`, `v13_2_c02_oldcode_fail.log` (15/17 fail trên code cũ).
+- BLOCKED: hai bên chốt `ngay_ky_hop_dong` thực tế (null, KHÔNG lấy ngày dự
+  kiến 12/10/2026) + `ngay_bat_dau_van_hanh` từ biên bản nghiệm thu P1 (thiếu
+  ngày ký → `--year` exit 1); hai bên chốt `ty_le_phi_van_hanh`, ngưỡng/tỷ lệ
+  `muc_thuong`, cách cộng bậc, cột phí sàn (`phi_san_cot` GIẢ ĐỊNH); kế toán
+  Bên B xuất 1 file quyết toán thật mỗi sàn để xác minh header + cột loại giao
+  dịch (`txn_type` chưa map → Shopee vẫn giả định 1 dòng/đơn, đơn ở 2 file số
+  khác nhau đều bị đánh lệch, chặn phí); người đối soát hai bên xử lý từng
+  nhóm chồng kỳ được báo.
+- Còn mở: guard `tests/test_fp_pnl.py::test_schema_no_alter_drop_table` nới
+  thành "chỉ ALTER cộng thêm" (đã ĐỎ trên tip c00 do `alter table
+  feature_rollout`) — reviewer xác nhận đúng ý v9.1;
+  `test_rev_share.py::test_roles_sql_block_narrow` giới hạn tới marker
+  `-- =====` kế tiếp; `agents/kd_orders.recon_rows` vẫn lấy settlement MỚI
+  NHẤT theo đơn cho file đối soát theo đơn (không cộng tổng, nhưng nhóm lệch
+  thì ngầm chọn bản mới nhất để hiển thị); `kd_affiliate` chỉ `exists()` —
+  không đổi.
+
+## Checklist v13.1-c01-pii-suc-khoe-finops
+
+Gộp vào `v13-hop-dong` bởi merge agent đợt 1 (nhánh lane `v13-c01`, `a80b3d6`).
+
+- [x] v13.1 c01 (F02): gateway và `api.rag` che tên theo mẫu xưng danh hoặc
+  danh xưng + chữ Viết Hoa, và che địa chỉ có số nhà, trước mọi lời gọi
+  rewrite/embed/chat. Địa chỉ showroom công khai trong `pii_allow` được giữ.
+  Câu khách còn dấu hiệu PII không che chắc → chuyển người, không gọi AI; lượt
+  history có dấu hiệu đó bị bỏ cả cặp hỏi/đáp. Lọc sức khỏe chạy theo âm tiết
+  trên toàn câu (trộn dấu, NFKC, ký tự vô hình, cụm dính liền): "Ba tôi bi
+  tieu duong, mua loại nào?" giờ chuyển người; câu bán hàng thường ("thuộc",
+  "đâu", "giá trị", "than") vẫn qua.
+- [x] FinOps: cap <= 0 bị chặn trước khi đọc DB; không đọc được chi tiêu
+  tháng → `GatewayBlocked` (fail-closed); Zalo/Messenger trả câu chuyển nhân
+  viên. Test/tài liệu từng dựa kiểu "cho qua" đã đổi; conftest trả chi tiêu 0.
+- [x] F07 red-team: luật mới bắt chèn khoảng trắng trong âm tiết, chia từ cấm
+  bằng dấu câu, chuỗi chữ cách rời, biểu tượng viên thuốc, 'đtrị'. Tỷ lệ lọt
+  20/50 → 13/50, ca 0 violation 18 → 13 (critical 14 → 9). Nhãn/severity giữ
+  nguyên; quét KB và suite eval không thấy hit mới. Regex thử input ~1MB
+  tuyến tính.
+- Evidence lane: `evidence/v13_1_c01_pytest.log`, `evidence/v13_1_c01_e2e.log`.
+- BLOCKED: Pháp chế duyệt bộ ca red-team + quyết 13 known-gap còn lại (tiếng
+  Anh medicine/cure/treatment/anti-cancer — KB có câu 'not a medicine' nên
+  thêm vào banned sẽ chặn cả chatbot; 'UT' mơ hồ; sai dấu thanh 'khõi bịnh';
+  rượu và ẩn ý nói vòng), quyết có bật lớp LLM-check (`GUARDRAIL_LLM_MODEL`) và
+  model chính thức; Pháp chế + công ty: DPA/TIA với OpenRouter và nhà cung cấp
+  trong whitelist; chọn/cấp NER hoặc dịch vụ trong nước nếu cần che tên không
+  theo mẫu (vd 'Lan đặt 2 hộp'); Bên B xác nhận danh sách địa chỉ công khai
+  được giữ khi gửi AI (`pii_allow` hiện chỉ showroom 425 Phan Bội Châu — giả
+  định dev).
+- Còn mở: che tên theo mẫu, chưa NER (tên trơ, mã đơn, địa chỉ gõ thường không
+  từ gợi ý vẫn có thể lọt — gap ghi trong data_flow_map + DPIA); câu ngắn trộn
+  dấu có từ không dấu mơ hồ ('sp này thuoc dòng nào') bị coi sức khỏe → chuyển
+  người; câu hỏi về tên người công khai bị che trước khi tìm (eval_qa thật có
+  phí chưa chạy lại); gateway che địa chỉ đại lý có số nhà trong ngữ cảnh KB;
+  convlog Zalo vẫn chỉ che SĐT/email (tên/địa chỉ nằm trong log cục bộ 30
+  ngày); tab Chat Streamlit không bắt `GatewayBlocked`; DB down hoặc role thiếu
+  SELECT `llm_usage` → mọi agent LLM bị chặn (C04/C07 lưu ý khi chuyển DSN sang
+  role); DB test `samsam_v13_c01` để lại.
+
+## Gộp v13 đợt 1 (c01 + c02)
+
+- `git merge --no-ff` v13-c01 (`e1cda56`) rồi v13-c02 (`3904ae9`) vào
+  `v13-hop-dong`. Xung đột duy nhất `docs/handover/v13-board.md` (dòng C01/C02):
+  giữ dòng C01 của c01 + dòng C02 của c02; `kien-truc.md` tự gộp (đủ cả hai
+  sửa). Counter dòng so HEAD/MERGE_HEAD: chỉ thiếu đúng các dòng phía kia sửa
+  chủ đích; JSON/.py đổi parse được; `dpia_draft.py --check` khớp.
+- DB `samsam_v13_m1`: `apply_schema --roles` ×2 sạch (75 bảng), core_store,
+  golden_store; `ruff check .` sạch.
+- Gate sau gộp (DB `samsam_v13_m1`): đợt 1 pytest 94 file lane đụng + liên quan + drift → 3916 passed, 2 failed (`test_store::test_schema_sql_has_content_drafts_table`, `test_ceo_decisions::test_schema_block_no_alter_drop` — guard 'không ALTER' đã ĐỎ từ tip c00 do `alter table feature_rollout` CHECK, c02 thêm cặp CHECK `txn_type`); vá tối thiểu: allowlist hẹp `_V13_CHECK_OK` (đúng cặp drop+add CHECK tên cố định, cùng cách nới consents v8.2) dùng chung cho test_store/test_ceo_decisions/test_lead_store/test_social_vendor (2 file sau cũng đỏ cùng lớp). Đợt 2: 32 file còn lại + 2 file vá → 1111 passed, 3 skipped (docker), 0 failed — toàn bộ 126 file test đã chạy.
+
 ## Checklist v13.0-c00-danh-muc-yeu-cau
 
 Khán giả/mục đích: bản đồ yêu cầu Hợp đồng TEDO–Sâm Sâm + PL01–04 làm

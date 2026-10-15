@@ -124,7 +124,13 @@ def test_schema_append_only_and_checks(db):
 def test_schema_block_no_alter_drop():
     sql = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
     block = sql[sql.index("v8.1 Sổ quyết định TGĐ"):]
-    assert not re.search(r"alter table|drop table", block, re.IGNORECASE)
+    # v13: sau v8.1 chỉ cho ALTER cộng thêm theo allowlist hẹp của drift-guard
+    # test_store (add column if not exists, cặp CHECK tên cố định); bảng sổ
+    # quyết định thì không ALTER/DROP nào.
+    from tests.test_store import _forbidden_ddl
+    assert _forbidden_ddl(block.lower()) == []
+    assert not re.search(r"(alter|drop)\s+table\s+(if\s+exists\s+)?"
+                         r"decision_log\b", block, re.IGNORECASE)
     assert "append_only_guard()" in block
 
 
