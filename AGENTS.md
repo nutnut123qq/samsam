@@ -67,6 +67,7 @@ chat lẫn embeddings) + Streamlit.
 | Catalog/listing KD-A4 (v5.3) | `python -m agents.kd_listing --run --dry-run` (chỉ đọc) · `--run` (lệch listing sàn ↔ bản duyệt/golden → hàng duyệt `listing_sync`/`market_alert_s1`, agent KHÔNG sửa sàn) · `--report` |
 | Giá & KM KD-A5 (v5.3) | `python -m agents.kd_price --report --plan <CSV> --as-of <ngày>` · `--run [--dry-run] [--plan CSV]` (floor/biên/lệch niêm yết/trần KM/KM chồng → NHÁP `price_change`/`promo_change`/S1; KHÔNG đổi giá, ngưỡng `data/price_watch.json` GIẢ ĐỊNH) |
 | GĐ Kinh doanh TMĐT (v5.0) | `python -m agents.sales_director --run [--dry-run] --bulletin` (dry-run CHỈ ĐỌC, in kế hoạch + bản tin) · `--run` (nguồn thật → hàng duyệt khối sales + quét SLA A 2h/B 4h giờ làm việc → `sla_escalations`/cảnh báo đỏ) · `--bulletin [--period week]` (→ `data/reports/sales-director-*.md`, không PII, không tự gửi) |
+| Sổ triển khai + nghiệm thu (v12.1) | `python -m pipelines.rollout --seed --by <tên>` · `--status` · `--promote ID --by <tên>` (cổng PL02: chạy thử ≥5 ngày làm việc + ≥50 dòng `agent_action_log` theo `agent_ids`; có người duyệt ≥10 ngày + 0 lỗi nghiêm trọng) · `--severe ID --reason <mã> --by` (tự lùi về chạy thử) · `--disable ID --by` · `--dossier --phase P1\|P2 [--out F]` (hồ sơ đề nghị nghiệm thu, chỉ đọc) — danh mục `data/contract_features.json` (nhóm PL01, chờ hai bên chốt 89 mục), lịch `data/rollout_config.json` GIẢ ĐỊNH |
 | Test/lint | `python -m pytest` · `ruff check .` |
 
 ## Structure
