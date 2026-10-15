@@ -67,6 +67,7 @@ chat lẫn embeddings) + Streamlit.
 | Catalog/listing KD-A4 (v5.3) | `python -m agents.kd_listing --run --dry-run` (chỉ đọc) · `--run` (lệch listing sàn ↔ bản duyệt/golden → hàng duyệt `listing_sync`/`market_alert_s1`, agent KHÔNG sửa sàn) · `--report` |
 | Giá & KM KD-A5 (v5.3) | `python -m agents.kd_price --report --plan <CSV> --as-of <ngày>` · `--run [--dry-run] [--plan CSV]` (floor/biên/lệch niêm yết/trần KM/KM chồng → NHÁP `price_change`/`promo_change`/S1; KHÔNG đổi giá, ngưỡng `data/price_watch.json` GIẢ ĐỊNH) |
 | GĐ Kinh doanh TMĐT (v5.0) | `python -m agents.sales_director --run [--dry-run] --bulletin` (dry-run CHỈ ĐỌC, in kế hoạch + bản tin) · `--run` (nguồn thật → hàng duyệt khối sales + quét SLA A 2h/B 4h giờ làm việc → `sla_escalations`/cảnh báo đỏ) · `--bulletin [--period week]` (→ `data/reports/sales-director-*.md`, không PII, không tự gửi) |
+| Đối soát doanh thu quý (v12.5) | `python -m agents.rev_share --quarter YYYY-Qn [--record \| --dry-run]` (→ `data/reports/doi-soat-<kỳ>.md`: gộp − phí sàn − hủy − hoàn = thuần từ `settlement_rows` + trạng thái đơn `orders`; thiếu nguồn = "chưa có dữ liệu"; ô ký 2 bên trống — số chỉ là ĐỀ XUẤT, HĐ Điều 7.6) · `--year N` (năm hợp tác so mức thưởng) — tỷ lệ phí/mức thưởng/ngày bắt đầu `data/rev_share.json` null = chưa chốt; `--record` ghi `revenue_quarters` append-only; Bên A xem qua role `ben_a_reader` |
 | Test/lint | `python -m pytest` · `ruff check .` |
 
 ## Structure
