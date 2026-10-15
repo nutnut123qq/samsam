@@ -207,7 +207,7 @@ tests\test_agent_eval.py:941: AssertionError
 ______________________ test_backup_manifest_matches_live ______________________
 
 env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_backup_manifest_matches_l0/bk')
-live = 'postgresql://postgres:123456@localhost:5432/samsam_v82'
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
 
     def test_backup_manifest_matches_live(env, live):
         before = _counts(live)
@@ -248,7 +248,7 @@ _______________________ test_encrypted_backup_and_drill _______________________
 env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_encrypted_backup_and_dril0/bk')
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0C63E2C60>
 tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_encrypted_backup_and_dril0')
-live = 'postgresql://postgres:123456@localhost:5432/samsam_v82'
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
 
     def test_encrypted_backup_and_drill(env, monkeypatch, tmp_path, live):
         openssl = bk.find_openssl()
@@ -282,7 +282,7 @@ tests\test_db_backup.py:525: AssertionError
 __________________________ test_drill_ok_and_dropped __________________________
 
 env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_ok_and_dropped0/bk')
-live = 'postgresql://postgres:123456@localhost:5432/samsam_v82'
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
 capsys = <_pytest.capture.CaptureFixture object at 0x000001C0D819A780>
 
     def test_drill_ok_and_dropped(env, live, capsys):
@@ -297,7 +297,7 @@ tests\test_db_backup.py:533: AssertionError
 __________________ test_drill_refuses_current_db[samsam_v36] __________________
 
 env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_refuses_current_db_0/bk')
-live = 'postgresql://postgres:123456@localhost:5432/samsam_v82'
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0D81275F0>
 target = 'samsam_v36'
 
@@ -314,7 +314,7 @@ tests\test_db_backup.py:547: AssertionError
 ___________________ test_drill_refuses_current_db[postgres] ___________________
 
 env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_refuses_current_db_1/bk')
-live = 'postgresql://postgres:123456@localhost:5432/samsam_v82'
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0D8127530>
 target = 'postgres'
 
@@ -331,7 +331,7 @@ tests\test_db_backup.py:547: AssertionError
 ___________________ test_drill_refuses_current_db[CURRENT] ____________________
 
 env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_refuses_current_db_2/bk')
-live = 'postgresql://postgres:123456@localhost:5432/samsam_v82'
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C0D8127D40>
 target = 'CURRENT'
 
@@ -348,7 +348,7 @@ tests\test_db_backup.py:547: AssertionError
 ____________________ test_drill_refuses_existing_drill_db _____________________
 
 env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_refuses_existing_dr0/bk')
-live = 'postgresql://postgres:123456@localhost:5432/samsam_v82'
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
 
     def test_drill_refuses_existing_drill_db(env, live):
 >       assert bk.main() == 0
@@ -362,7 +362,7 @@ tests\test_db_backup.py:561: AssertionError
 _________________ test_drill_corrupt_byte_fails_before_create _________________
 
 env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_corrupt_byte_fails_0/bk')
-live = 'postgresql://postgres:123456@localhost:5432/samsam_v82'
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
 
     def test_drill_corrupt_byte_fails_before_create(env, live):
 >       assert bk.main() == 0
@@ -376,7 +376,7 @@ tests\test_db_backup.py:576: AssertionError
 ____________________ test_drill_newest_broken_no_fallback _____________________
 
 env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_newest_broken_no_fa0/bk')
-live = 'postgresql://postgres:123456@localhost:5432/samsam_v82'
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
 
     def test_drill_newest_broken_no_fallback(env, live):
 >       assert bk.main() == 0
@@ -390,7 +390,7 @@ tests\test_db_backup.py:590: AssertionError
 _______________________ test_drill_mismatch_still_drops _______________________
 
 env = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2203/test_drill_mismatch_still_drop0/bk')
-live = 'postgresql://postgres:123456@localhost:5432/samsam_v82'
+live = 'postgresql://postgres:<PW>@localhost:5432/samsam_v82'
 
     def test_drill_mismatch_still_drops(env, live):
 >       assert bk.main() == 0
