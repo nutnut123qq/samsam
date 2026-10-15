@@ -543,8 +543,8 @@ def _side_conn(conn):
     params = dict(conn.info.get_parameters())
     if conn.info.password:
         params["password"] = conn.info.password
-    params.setdefault("connect_timeout", "5")
-    return psycopg.connect(**params, autocommit=True)
+    timeout = params.pop("connect_timeout", None) or "5"
+    return psycopg.connect(**params, connect_timeout=timeout, autocommit=True)
 
 
 def deny_log(conn, by, block, action, object_type, object_id,

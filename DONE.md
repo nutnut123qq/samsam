@@ -38,6 +38,142 @@ ghi detail khi nhập).
   dữ liệu/quyết định bên ngoài — bảng tách ở `docs/handover/v13-board.md`
   mục "Còn mở (16/10/2026)".
 
+## Checklist v14.2-p2-quyen-dich-vu
+
+Gộp vào `v14-hop-dong` bởi merge agent v14 đợt 1 (nhánh lane `v14-p2`, `c9480a2`).
+CODE VERIFIED, CHƯA nghiệm thu.
+
+- [x] v14.2 p2 (F08 phần code): 13 CLI quyết định của người (production
+  approve/reject/intake, golden `--approve-price`, qr_trace sign/issue/revoke,
+  xnqc `--set`, rollout `--promote/--severe/--disable`, red_alert `--ack` (+
+  intel_alert `--ack` giao về red_alert), crm consent/assign/handoff/
+  load-dealers, doc_intake `--verify/--reject`, fp_pnl `--cogs-approve`,
+  garden_director `--purge-sample/--adopt-plot`) đi qua `auth.cli_gate`. Chế độ
+  thực: người được ủy quyền đúng khối (qr và ack dùng danh sách riêng), có tài
+  khoản users file, `--by` khớp `db_login` của login đang dùng; bị chặn → ghi
+  `authz_denied`.
+- [x] `deny_log` không còn commit việc dở của caller: kết nối rảnh → tx riêng;
+  đang có tx → kết nối phụ (`lock_timeout` 3s), lỗi thì savepoint.
+- [x] 4 role dịch vụ `svc_webhook/svc_job/svc_loader/svc_backup` (grant theo
+  bảng code thật dùng); `auth.bind_service` chọn `<DỊCH VỤ>_DATABASE_URL`, chế
+  độ thực từ chối thiếu biến / superuser / owner / sai role (webhook exit 1,
+  job exit 78, loader exit 2).
+- [x] DB chặn xóa/sửa `settlement_rows`; đơn thật không xóa được, mọi lần đổi
+  giá trị ghi `order_history` (append-only, trigger SECURITY DEFINER);
+  `bks_audit` theo dõi `ben_a_reader` + 4 role dịch vụ.
+- [x] Test `tests/test_v14_p2_service_auth.py` 51 ca bằng login Postgres thật
+  (code cũ 50/51 FAIL); runbook mục 9.5–9.6.
+
+BLOCKED (bên ngoài):
+- Hạ tầng Bên B: tạo login thật `in role` svc_webhook/svc_job/svc_loader/
+  svc_backup/ben_a_reader và đặt `WEBHOOK_/JOB_/LOADER_/BACKUP_DATABASE_URL`
+  trên server on-prem; login riêng `in role app_human` cho từng người duyệt +
+  khai `db_login` trong `data/users.json`.
+- Bên B: văn bản ủy quyền người duyệt 9 khối → `approvers` trong
+  `data/directors/*.json`; người ký 3 vai → `data/qr_signers.json` (đang rỗng:
+  chế độ thực chặn tất cả).
+- Bên B / hạ tầng: chọn cách cấp quyền ghi cho CLI người ghi bảng trực tiếp
+  (golden `--approve-price`, xnqc `--set`, rollout, crm, doc_intake,
+  garden_director): function SECURITY DEFINER theo việc, hoặc role người theo
+  khối. Hiện dưới login `app_human` các CLI này lỗi quyền (fail-closed).
+- Hạ tầng Bên B: login quản trị có CREATEDB cho `restore_drill`/`dr_drill`.
+
+Còn mở (lane báo):
+- CLI người ghi bảng trực tiếp chưa có quyền ghi dưới `app_human`; `cli_gate`
+  cố ý không từ chối login owner ở các CLI này (hàng duyệt chung/draft thì có).
+- `core_store` nạp lại products (delete-by-source) làm FK `orders.product_id`
+  bị set null — hành vi có từ trước, nay mỗi lần mất ghi thêm 1 dòng
+  `order_history`; chưa vá.
+- `privileged_login` coi login sở hữu bảng ở BẤT KỲ schema không hệ thống là
+  owner (bảo thủ).
+- Quyền `svc_job` cho `anchor --build` và `legal_updates --submit` (lane p6
+  thêm vào jobs.json) chỉ kiểm được nhánh không có dữ liệu chain — chạy lại
+  sau khi gộp p6.
+- `break_glass` không gắn login; ops_incidents, ops_monthly `--mark-sent`, crm
+  `--add-contact/--status`, xnqc `--add`, rollout `--seed` là nhập liệu nên
+  không qua cổng (runbook 9.5).
+
+## Checklist v14.1-p1-pii-guardrail
+
+Gộp vào `v14-hop-dong` bởi merge agent v14 đợt 1 (nhánh lane `v14-p1`, `cb63b80`).
+
+- [x] v14.1 p1: `pii.scrub_user` che tên không theo mẫu bằng từ điển công khai
+  `data/vn_names.json` (họ/tên đệm/tên/địa danh, GIẢ ĐỊNH — chờ duyệt). Gõ có
+  dấu phải khớp đúng dấu; địa danh/tên SP/câu bán hàng giữ nguyên (53 ca âm
+  tính); thiếu/hỏng từ điển → không gọi AI.
+- [x] Convlog Zalo/Messenger/Streamlit ghi câu khách qua cùng `scrub_user` như
+  payload AI (format record giữ); tab Chat Streamlit bắt `GatewayBlocked` → câu
+  chuyển người, không crash, không vào history.
+- [x] Lọc sức khỏe bắt bệnh đơn âm tiết sau 'bị/mắc/chữa' (có dấu/không dấu/
+  trộn) theo bảng nhập nhằng đã rà (41 ca âm tính).
+- [x] Red-team khép bằng luật: known_gap 13/50 → 6/50 (critical 9 → 3): từ cấm
+  tiếng Anh + miễn trừ khuyến cáo tiếng Anh trong KB, lẫn hỏi/ngã, 'UT' theo
+  ngữ cảnh, claim tách câu; gỡ `known_gap` 7 ca nay chặn — nhãn/code/severity
+  không đổi.
+- [x] Test `tests/test_v14_p1_pii_guardrail.py` 202 passed (code cũ 68 FAIL);
+  81 file liên quan 3622 passed, 2 FAIL (1 test cũ đổi mẫu có lý do, 1 lỗi môi
+  trường có sẵn); evidence `evidence/v14_1_p1_*.log`.
+
+BLOCKED (bên ngoài):
+- Pháp chế: duyệt bộ ca red-team (`label_status` 'chờ Pháp chế duyệt nhãn') và
+  danh sách từ cấm tiếng Anh mới (câu trả lời chatbot tiếng Anh chứa các từ này
+  cũng sẽ fallback).
+- Pháp chế / công ty: chọn model + DPA/TIA và bật `GUARDRAIL_LLM_MODEL` (mặc
+  định tắt) cho 6 known_gap còn lại: 3 ca rượu nói vòng (rt-ruou-01/02,
+  rt-llm-06) đụng SP thật/nhiệt độ bảo quản/chén trà, và 3 ca
+  `llm_ngam_y_suc_khoe` (rt-ay-02/03, rt-llm-05) — mã dành cho lớp LLM.
+- Bên B / Pháp chế: rà và bổ sung `data/vn_names.json` (status gia_dinh); tên
+  ngoài từ điển vẫn chỉ bắt theo mẫu; muốn phủ rộng cần NER trong nước + DPA.
+- DPA/TIA cho OpenRouter và nhà cung cấp model; Bên B xác nhận địa chỉ công khai
+  nào được giữ không che (`pii_allow`).
+
+Còn mở (lane báo):
+- 'bị<ZWSP>gan' (bỏ ZWSP thành 'bịgan') chưa bắt theo ngữ cảnh.
+- 'giao đau' (có dấu) vẫn bị coi là câu sức khỏe vì 'đau' đứng riêng có trong
+  danh sách từ v3.1; lane không nới (nới sẽ để lọt câu đau). Kế hoạch ghi đây
+  là ca âm tính → integrator/user quyết.
+- Ngoài biên p1 nhưng vẫn ghi câu hỏi chỉ qua `_mask_pii`:
+  `connectors/channels.py` (record_suggestion / `--suggest` payload, biên p3)
+  và `ingest/crm.py:578` (biên p4); docstring `connectors/messenger.py` còn ghi
+  convlog dùng `_mask_pii`.
+- Lịch sử Streamlit vẫn thêm lượt sức khỏe/rượu (Zalo bỏ) — lệch parity có từ
+  trước, chưa vá.
+- `pii._names()` dùng `lru_cache`: thiếu từ điển ở lần nạp đầu thì tiến trình
+  giữ fail-closed (handoff) tới khi restart.
+
+## Gộp v14 đợt 1 (p1 + p2)
+
+- `git merge --no-ff` v14-p1 (`cb63b80`, không xung đột → `c5335a8`) rồi
+  v14-p2 (`c9480a2` → `eef6807`) vào `v14-hop-dong`. Xung đột duy nhất:
+  `docs/handover/v13-board.md` bảng "Còn mở" (dòng trạng thái p1/p2) — giữ dòng
+  p1 từ nhánh p1, dòng p2 từ nhánh p2, ghi "đã gộp `v14-hop-dong` — chưa vào
+  main". Counter dòng so 2 phía: chỉ 2 dòng trạng thái đó đổi. Tự gộp
+  `connectors/zalo.py` (p1 convlog ↔ p2 `bind_service`) và
+  `data/contract_features.json` (dòng khác nhau) — JSON parse được, 29 file .py
+  ast.parse được. DPIA/TIA sinh lại: không đổi nội dung (`--check` khớp).
+- DB `samsam_v14_m1`: `apply_schema --roles` ×2 sạch (82 bảng; role
+  svc_webhook/svc_job/svc_loader/svc_backup/ben_a_reader có; trigger
+  `settlement_rows`/`orders`/`order_history` có), core_store ×2, golden_store;
+  `ruff check .` sạch.
+- FULL pytest trên `eef6807` (DB `samsam_v14_m1`): **1 failed, 5481 passed,
+  3 skipped** (29:24). Fail do lane p2: `test_connect_timeout_guard` — kết nối
+  phụ `auth._side_conn` (deny_log) gọi `psycopg.connect` không có
+  `connect_timeout` tường minh (gotcha v1.9). Vá tối thiểu: tách
+  `connect_timeout` khỏi tham số rồi truyền tường minh. Chạy lại guard +
+  `test_v14_p2_service_auth` + `test_auth`: 76 passed, 1 failed — lỗi còn lại
+  chỉ trỏ bản sao code p2 CŨ trong worktree lane `.claude/worktrees/` (không
+  thuộc repo; hết khi dọn worktree). Log: `evidence/v14_m1_merge_pytest.log`.
+- Review diff so DoD (đọc code thật): p1 khớp các mục kế hoạch; ngoài phần lane
+  tự báo, ghi thêm: (1) p2 báo test liên quan xanh nhưng guard
+  `connect_timeout` fail trên chính code p2 (đã vá ở đây); (2) các CLI `--by`
+  chưa được xếp vào bảng runbook 9.5 (không qua cổng, không ghi là nhập liệu):
+  `da_pmo --set-status/--apply-due`, `da_b2b --handover`, `kd_care
+  --verify-send`, `ra_kenh --mark-removed`, `anchor --submit` — cần quyết là
+  quyết định hay nhập liệu; (3) docstring `connectors/messenger.py` còn ghi
+  convlog dùng `_mask_pii`.
+- **C00–C11 CHƯA hoàn thành toàn bộ.** Mới gộp p1+p2; p3–p6 chưa gộp; chưa
+  vào main, chưa push.
+
 ## v13 đóng (C11 tích hợp + gate cuối)
 
 Nhánh `v13-hop-dong` (từ main `3622ec2`), gộp đủ lane c00–c09 qua 4 đợt;
