@@ -168,7 +168,7 @@ def render_section(data: dict, today: date) -> list[str]:
     if len(od) > SHOW:
         L.append(f"- …và {len(od) - SHOW} quyết định khác")
     late = late_milestones(data.get("milestones") or [], today)
-    L += ["", "### Mốc trễ (phòng Dự án)", ""]
+    L += ["", "### Mốc trễ (sổ mốc tiến độ)", ""]
     L += [(f"- **TRỄ** {_pg(r['code'], 40)} — hạn {_d(r['due_date'])} (trễ "
            f"{(today - r['due_date']).days} ngày, owner "
            f"{_pg(r.get('owner_role'), 40)}, {r['status']})")
@@ -177,7 +177,7 @@ def render_section(data: dict, today: date) -> list[str]:
         L.append(f"- …và {len(late) - SHOW} mốc khác")
     L += ["", ("*Sổ quyết định do NGƯỜI ghi (`python -m agents.ceo_decisions "
                "--record --by`); agent chỉ đề xuất. Mốc trễ từ "
-               "`project_milestones` (cùng luật bảng tiến độ phòng Dự án).*")]
+               "`project_milestones` (cùng luật bảng tiến độ DA-01).*")]
     return L
 
 
@@ -364,7 +364,7 @@ def _print_list(data: dict, today: date) -> None:
               f" {_txt(d['decided_by'], 60)} — căn cứ {basis} — hạn"
               f" {_d(d['due_date'])}")
     late = late_milestones(data["milestones"], today)
-    print(f"[mốc trễ phòng Dự án] {len(late)}")
+    print(f"[mốc trễ] {len(late)}")
     for r in late:
         print(f"- TRỄ {_txt(r['code'], 40)} — hạn {_d(r['due_date'])} (trễ"
               f" {(today - r['due_date']).days} ngày, owner"

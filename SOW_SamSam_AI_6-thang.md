@@ -1,3 +1,5 @@
+> **ĐÃ BỊ THAY THẾ** bởi Hợp đồng hợp tác đầu tư TEDO–Sâm Sâm 2026 + PL01–05 (Điều 17.5); giữ làm lịch sử, không dùng làm căn cứ phạm vi.
+
 # PHƯƠNG ÁN TRIỂN KHAI & PHẠM VI CÔNG VIỆC (SOW — Draft để đàm phán)
 
 **Dự án:** Chuyển đổi số & Hệ sinh thái AI — Công ty TNHH Sâm Sâm

@@ -42,8 +42,9 @@ SKELETONS = {"qa_cockpit": ("ceo", "medium"), "kd_a11": ("sales", "high"),
              "mkt_13": ("marketing", "high"), "intel_qa": ("intel", "medium"),
              "fin_qa": ("finance", "high"), "sx_a8": ("production", "medium"),
              "qa_vung_trong": ("farming", "medium"),
-             "da_qa": ("projects", "medium"), "pc_a9": ("legal_hr", "high"),
-             "ck_a6": ("mechanical", "medium")}
+             "pc_a9": ("legal_hr", "high")}
+# v12.0: gỡ khung da_qa (khối projects) + ck_a6 (khối mechanical) — 2 khối
+# ngoài phạm vi HĐ TEDO–Sâm Sâm.
 
 
 def _fp(rows) -> str:
@@ -79,8 +80,8 @@ def test_migrated_cases_identical_to_v35():
 
 def test_active_suites_metadata():
     """FLIP v4.5i: ngưỡng guardrail 1.0 + trap_block (v4.5, 39 ca) →
-    0.95 + 3 kind bắt buộc (v4.1 W41.4, 132 ca). Thêm suite co_khi (CK-A1,
-    v9.5) — khác vai trò ck_a6 (khung agent QA A6)."""
+    0.95 + 3 kind bắt buộc (v4.1 W41.4, 132 ca). v12.0: suite co_khi
+    (CK-A1) + khung ck_a6 đã gỡ cùng khối cơ khí (ngoài phạm vi HĐ)."""
     g, c = ae.load_suite("guardrail"), ae.load_suite("chatbot")
     assert (g["owner_block"], g["qa_block"], g["risk"], g["runner"],
             g["agent_model"]) == ("legal_hr", "data_platform", "high",
@@ -93,16 +94,7 @@ def test_active_suites_metadata():
     for f in ("data/guardrail_rules.json", "data/golden_skus.json",
               "data/ruou_keywords.txt", "pipelines/kb_filter.py"):
         assert f in g["prompt_files"], f
-    k = ae.load_suite("co_khi")
-    assert (k["owner_block"], k["qa_block"], k["risk"], k["runner"],
-            k["agent_model"], k["status"], k["judge"]) == (
-        "mechanical", "data_platform", "medium", "co_khi", "rules",
-        "active", None)
-    assert k["threshold"] == {"min_pass_rate": 0.9,
-                              "must_pass_kinds": ["trap_no_data"]}
-    assert "agents/ck_mat.py" in k["prompt_files"]
-    assert "ck_a6" in k["_doc"] and "CK-A1" in k["_doc"]
-    assert ae.load_suite("ck_a6")["status"] == "skeleton"
+    assert not {"co_khi", "ck_a6", "da_qa"} & set(ae.suite_names())
     assert (c["owner_block"], c["qa_block"], c["risk"], c["runner"],
             c["agent_model"]) == ("marketing", "data_platform", "high",
                                   "chatbot", "env:OR_CHAT_MODEL")
@@ -234,9 +226,9 @@ def test_validate_cli_all_suites(capsys):
     # gộp v6.2: + mkt03 (Agent Ảnh AI) → 17; v6.5: + mkt_seo (MKT-11) → 18;
     # v5.3: + kd_a5 (luật giá/KM) → 19; v6.3: + mkt04 (Video) → 20;
     # v6.4: + mkt_ads_ugc → 21; v8.2: + kd_a3 (báo giá B2B, v2 20 ca) → 22
-    # v10.1: + kd_a7, kd_a9, mkt12 → 25
-    assert len(re.findall(r"^\[ok\] ", out, re.MULTILINE)) == 25
-    assert "[done] 25/25 suite hợp lệ" in out
+    # v10.1: + kd_a7, kd_a9, mkt12 → 25; v12.0: − co_khi, ck_a6, da_qa → 22
+    assert len(re.findall(r"^\[ok\] ", out, re.MULTILINE)) == 22
+    assert "[done] 22/22 suite hợp lệ" in out
     assert re.search(r"^\[ok\] mkt_seo v1 active owner=marketing .* 14 ca$",
                      out, re.MULTILINE)
     assert re.search(r"^\[ok\] mkt_ads_ugc v1 active owner=marketing .* "
@@ -251,14 +243,13 @@ def test_validate_cli_all_suites(capsys):
     assert re.search(r"^\[ok\] kd_a1 v2 active owner=sales .* 43 ca$", out,
                      re.MULTILINE)
     assert re.search(r"^\[ok\] guardrail v2 .* 132 ca$", out, re.MULTILINE)
-    assert re.search(r"^\[ok\] co_khi v1 .* 23 ca$", out, re.MULTILINE)
 
 
-# --- W45.7 khung 10 agent QA ------------------------------------------------
+# --- W45.7 khung agent QA (8 sau v12.0) ------------------------------------------------
 
 def test_skeleton_suites_cover_all_blocks():
     names = ae.suite_names()
-    assert set(names) == set(SKELETONS) | {"guardrail", "chatbot", "co_khi",
+    assert set(names) == set(SKELETONS) | {"guardrail", "chatbot",
                                            "mkt02", "mkt03", "mkt04",
                                            "sales_director", "kd_a1",
                                            "kd_a7", "kd_a9", "mkt12",
@@ -267,7 +258,7 @@ def test_skeleton_suites_cover_all_blocks():
     suites = {n: ae.load_suite(n) for n in names}
     assert {s["qa_block"] for s in suites.values()} == set(director.BLOCKS)
     owners = [suites[n]["owner_block"] for n in SKELETONS]
-    assert len(set(owners)) == 10
+    assert len(set(owners)) == 8
     for n, (blk, risk) in SKELETONS.items():
         s = suites[n]
         assert (s["owner_block"], s["qa_block"], s["risk"], s["status"],
@@ -491,14 +482,13 @@ def test_deterministic_skips_llm_runners(env, monkeypatch, capsys):
                         lambda *a, **k: pytest.fail("LLM"))
     assert ae.main(["--deterministic", "--no-record"]) == 0
     out = capsys.readouterr().out
-    assert "[done] 25/25 suite hợp lệ" in out
+    assert "[done] 22/22 suite hợp lệ" in out
     assert "mkt_seo v1 PASS 14/14" in out          # v6.5 tất định
     assert "kd_a5 v1 PASS 21/21" in out
     assert "kd_a1 v2 PASS 43/43" in out
     assert "mkt_ads_ugc v1 PASS 28/28" in out
     assert "kd_a3 v2 PASS 20/20" in out
     assert "guardrail v2 PASS 130/132" in out and "[done] chatbot" not in out
-    assert "co_khi v1 PASS 21/23" in out and "[done] ck_a6" not in out
     assert "mkt02 v1 PASS 14/14" in out
     assert "mkt03 v1 PASS 15/15" in out
     n4 = len(ae.load_suite("mkt04")["cases"])
@@ -506,7 +496,7 @@ def test_deterministic_skips_llm_runners(env, monkeypatch, capsys):
     assert "sales_director v1 PASS 26/26" in out
     assert ae.main(["--deterministic"]) == 0
     rows = _inserted(env)
-    assert [r["agent"] for r in rows] == ["co_khi", "guardrail", "kd_a1",
+    assert [r["agent"] for r in rows] == ["guardrail", "kd_a1",
                                           "kd_a3", "kd_a5", "kd_a7", "kd_a9",
                                           "mkt02", "mkt03", "mkt04",
                                           "mkt12", "mkt_ads_ugc", "mkt_seo",

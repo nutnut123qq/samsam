@@ -160,8 +160,8 @@ def _ocr(path: Path, provider: str) -> str:
 
 def pdf_page_texts(path: Path) -> list[str]:
     """Text NFC từng trang PDF (pypdf, không mạng). PDF mã hoá/hỏng →
-    DocError. Tách ra từ `extract_text` (v9.5) để luồng MẬT `agents.ck_mat`
-    tái dùng mà không đi qua provider OCR/DB."""
+    DocError. Tách ra từ `extract_text` (v9.5) để đọc PDF local mà không
+    đi qua provider OCR/DB."""
     try:
         with open(path, "rb") as f:
             reader = PdfReader(f)

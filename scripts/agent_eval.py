@@ -27,8 +27,7 @@ Chốt chống "sửa đề sau khi thấy điểm":
 Runner: `guardrail` (tất định, không LLM — CI mỗi push; ca có `ctx` →
 `guardrail.check_publish(text, **ctx)`, không có → `guardrail.check(text)`;
 ca `expect: block` có `code` chỉ pass khi bị chặn ĐÚNG code đó — v4.1),
-`co_khi` (tất định — luật trên `agents.ck_mat.ask`, local, không LLM/mạng;
-agent tra cứu CK-A1 v9.5), `mkt02` (tất định — v6.1 Agent Content &
+`mkt02` (tất định — v6.1 Agent Content &
 Listing: `content.listing(llm=False)` (op listing) / `content.precheck`
 (op draft — cổng từ chối của draft()); 0 lời gọi LLM (lớp LLM-check tắt
 trong lúc chấm), không key, không DB; `golden_exact` pass <=> ok + fields ==
@@ -64,7 +63,7 @@ phát hiện, loại việc, payload qua guardrail, cấm chuỗi trong payload 
 patch `api.rag.retrieve`/`api.rag.chat` theo `fake_hits`/`fake_llm` của ca,
 đếm lời gọi LLM), `chatbot`
 (`api.rag.answer` THẬT, cần OPENROUTER_API_KEY). Scorer từng ca: guardrail
-| co_khi | mkt02 | mkt03 | mkt04 | mkt_seo | sales_director | kd_a5 | cskh |
+| mkt02 | mkt03 | mkt04 | mkt_seo | sales_director | kd_a5 | cskh |
 mkt_ads_ugc | eval_qa | handoff | exact |
 regex | judge. Giám khảo LLM CHỈ qua
 `pipelines.llm_gateway.chat("ci_judge")`, model khác HỌ (nhà sản xuất theo
@@ -85,7 +84,6 @@ thiếu key / DB lỗi / tree bẩn; 2 tham số sai.
 
 Chạy:
   python scripts/agent_eval.py --agent guardrail [--no-record]
-  python scripts/agent_eval.py --agent co_khi --no-record
   python scripts/agent_eval.py --agent mkt02 --no-record
   python scripts/agent_eval.py --agent mkt03 --no-record
   python scripts/agent_eval.py --agent mkt04 --no-record
@@ -131,14 +129,13 @@ from pipelines.pii import _mask_pii
 
 CONFIG = ROOT / "data" / "eval" / "config.json"
 SUITES_DIR = ROOT / "data" / "eval" / "suites"
-CO_KHI_ROOT = ROOT / "data" / "co_khi" / "mau"
 SHA_RE = re.compile(r"[0-9a-f]{40}")
 CONNECT_TIMEOUT_S = 5
 # Trùng mặc định của pipelines.llm_gateway.chat (OR_CHAT_MODEL).
 DEFAULT_CHAT_MODEL = "openai/gpt-4o-mini"
 RISKS = ("low", "medium", "high")
 STATUSES = ("active", "skeleton")
-SCORERS = ("guardrail", "co_khi", "mkt02", "mkt03", "mkt04",
+SCORERS = ("guardrail", "mkt02", "mkt03", "mkt04",
            "sales_director",
            "eval_qa", "handoff", "exact", "regex", "judge", "cskh",
            "mkt_seo", "kd_a5", "mkt_ads_ugc", "kd_a3", "kd_a7", "kd_a9",
@@ -147,7 +144,6 @@ SCORERS = ("guardrail", "co_khi", "mkt02", "mkt03", "mkt04",
 RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "chatbot": {"eval_qa", "handoff", "exact", "regex",
                               "judge"},
-                  "co_khi": {"co_khi"},
                   "mkt02": {"mkt02"},
                   "mkt03": {"mkt03"},
                   "mkt04": {"mkt04"},
@@ -160,7 +156,7 @@ RUNNER_SCORERS = {"guardrail": {"guardrail"},
                   "kd_a7": {"kd_a7"},
                   "kd_a9": {"kd_a9"},
                   "mkt12": {"mkt12"}}
-DETERMINISTIC_RUNNERS = ("guardrail", "co_khi", "mkt02", "mkt03", "mkt04",
+DETERMINISTIC_RUNNERS = ("guardrail", "mkt02", "mkt03", "mkt04",
                          "sales_director", "cskh", "mkt_seo", "kd_a5",
                          "mkt_ads_ugc", "kd_a3", "kd_a7", "kd_a9", "mkt12")
 # Hit giả mặc định của runner cskh (ca không khai `fake_hits`).
@@ -171,7 +167,6 @@ CSKH_DEFAULT_HIT = {"title": "Sản phẩm Sâm Sâm", "lang": "vi",
 # key ctx hợp lệ = tham số keyword của guardrail.check_publish (v4.1).
 GUARDRAIL_CTX_KEYS = {"channel", "content_type", "sku", "is_ai",
                       "is_sponsored"}
-CO_KHI_KINDS = ("fact", "high_risk", "trap_no_data")
 # v6.1 mkt02: ca không có `text` (đầu vào = op × sku × kênh); v6.2 mkt03
 # cũng vậy (đầu vào = sku × kênh × format × headline).
 NO_TEXT_SCORERS = {"mkt02", "mkt03", "mkt04", "mkt_seo", "kd_a5",
@@ -311,32 +306,6 @@ def _validate_guardrail_case(c: dict, cid, exp) -> list[str]:
             errs.append(f"ca {cid}: code phải chuỗi khác rỗng")
         elif exp != "block":
             errs.append(f"ca {cid}: code chỉ đi với expect block")
-    return errs
-
-
-def _validate_co_khi_case(c: dict, cid, exp) -> list[str]:
-    """v9.5: fact|high_risk cần expect_file (trong data/co_khi/mau/) +
-    expect_page ≥1; trap_no_data không có 2 field đó; expect null."""
-    errs = []
-    if exp is not None:
-        errs.append(f"ca {cid}: co_khi expect phải null")
-    kind = c.get("kind")
-    if kind not in CO_KHI_KINDS:
-        return errs + [f"ca {cid}: co_khi kind phải {CO_KHI_KINDS}"]
-    if kind == "trap_no_data":
-        if "expect_file" in c or "expect_page" in c:
-            errs.append(f"ca {cid}: trap_no_data không có expect_file/"
-                        "expect_page")
-        return errs
-    f = c.get("expect_file")
-    if not (isinstance(f, str) and f.strip() and _safe_rel(
-            (Path("data") / "co_khi" / "mau" / f).as_posix())
-            and Path(f).name == f):
-        errs.append(f"ca {cid}: expect_file '{f}' không có trong"
-                    " data/co_khi/mau/")
-    p = c.get("expect_page")
-    if not (_is_int(p) and p >= 1):
-        errs.append(f"ca {cid}: expect_page phải số nguyên ≥ 1")
     return errs
 
 
@@ -749,8 +718,6 @@ def _validate_case(c, i: int, d: dict) -> list[str]:
     exp = c.get("expect")
     if sc == "guardrail":
         errs += _validate_guardrail_case(c, cid, exp)
-    elif sc == "co_khi":
-        errs += _validate_co_khi_case(c, cid, exp)
     elif sc == "mkt02":
         errs += _validate_mkt02_case(c, cid, exp)
     elif sc == "mkt03":
@@ -1037,26 +1004,6 @@ def _score_guardrail(case: dict, out: dict) -> tuple[bool, str]:
         + "; ".join(f"{v.get('code', v.get('type', ''))}: "
                     f"{_short(v.get('detail', ''))}"
                     for v in out["violations"]))
-
-
-def _score_co_khi(case: dict, res: dict, no_data: str) -> tuple[bool, str]:
-    """Luật v9.5: trap_no_data → đúng NO_DATA, 0 nguồn, 0 chữ số; fact →
-    nguồn đầu đúng file+trang; high_risk → chỉ dẫn tới trang + Kỹ sư trưởng."""
-    src = res.get("sources") or []
-    ans = res.get("answer", "")
-    if case["kind"] == "trap_no_data":
-        ok = ans == no_data and not src and not re.search(r"\d", ans)
-        return ok, "" if ok else f"kỳ vọng NO_DATA, nguồn={src}"
-    want = {"file": case["expect_file"], "page": case["expect_page"]}
-    got = src[0] if src else None
-    if case["kind"] == "high_risk":
-        ref = (f"Xem {want['file']} trang {want['page']} — kiểm tra với"
-               " Kỹ sư trưởng")
-        ok = res.get("high_risk") is True and got == want and ans == ref
-    else:
-        ok = res.get("high_risk") is False and got == want and ans != no_data
-    return ok, "" if ok else (f"kỳ vọng {want}, nguồn đầu={got},"
-                              f" high_risk={res.get('high_risk')}")
 
 
 def _vnd(v) -> str:
@@ -1454,9 +1401,6 @@ def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
     sc = case.get("scorer", "guardrail")
     if sc == "guardrail":
         return _score_guardrail(case, out)
-    if sc == "co_khi":
-        from agents import ck_mat
-        return _score_co_khi(case, out, ck_mat.NO_DATA)
     if sc == "mkt02":
         return _score_mkt02(case, out, *_mkt02_gold())
     if sc == "mkt03":
@@ -1498,7 +1442,7 @@ def score_case(case: dict, out, judge_model: str | None) -> tuple[bool, str]:
 def _run(cases, produce, judge_model, *,
          show_answer: bool = True) -> list[tuple[dict, bool, str]]:
     """produce(case) → output; chấm qua score_case. Ca lỗi = FAIL, chạy
-    tiếp. show_answer=False: KHÔNG in answer (co_khi — tài liệu MẬT)."""
+    tiếp. show_answer=False: KHÔNG in answer."""
     out = []
     for c in cases:
         try:
@@ -1532,14 +1476,6 @@ def run_guardrail(cases, judge_model=None):
 
 def run_chatbot(cases, judge_model=None):
     return _run(cases, lambda c: _rag_answer(c["text"]), judge_model)
-
-
-def run_co_khi(cases, judge_model=None):
-    from agents import ck_mat  # lazy: local, không mạng
-
-    idx = ck_mat.build_index(CO_KHI_ROOT)
-    return _run(cases, lambda c: ck_mat.ask(c["text"], index=idx),
-                judge_model, show_answer=False)
 
 
 def _mkt02_out(c: dict) -> dict:
@@ -2062,7 +1998,7 @@ def run_mkt12(cases, judge_model=None):
 
 
 RUNNERS = {"guardrail": run_guardrail, "chatbot": run_chatbot,
-           "co_khi": run_co_khi, "mkt02": run_mkt02, "mkt03": run_mkt03,
+           "mkt02": run_mkt02, "mkt03": run_mkt03,
            "mkt04": run_mkt04,
            "sales_director": run_sales_director, "cskh": run_cskh,
            "mkt_seo": run_mkt_seo, "kd_a5": run_kd_a5,

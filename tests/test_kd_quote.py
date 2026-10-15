@@ -606,10 +606,10 @@ def test_db_export_verify_send(db, keys, monkeypatch, capsys, tmp_path):
     assert _cli(db, monkeypatch, "--verify-send", str(qid), str(nu)) == 1
     assert _cli(db, monkeypatch, "--export", str(qid), "--out",
                 str(tmp_path / "x.pdf")) == 1
-    # mục khác loại đã duyệt (projects) → sai loại
+    # mục khác loại đã duyệt (khối ceo) → sai loại
     tx = TxConn(db)
-    pq = aq.enqueue(tx, object_type="program_application", object_id="p-1",
-                    block="projects", title="Hồ sơ", payload="Hồ sơ mẫu",
+    pq = aq.enqueue(tx, object_type="change_request", object_id="p-1",
+                    block="ceo", title="Hồ sơ", payload="Hồ sơ mẫu",
                     risk="high", created_by="agent:test", sla_hours=72)
     assert aq.decide(tx, pq, APPROVER, "approved")[0]
     pf = tmp_path / "p.md"

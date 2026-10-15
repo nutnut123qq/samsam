@@ -1,4 +1,8 @@
-"""v8.3 DA-05 — danh sách TỔ CHỨC tiềm năng mua quà Tết (phòng Dự án).
+"""v8.3 DA-05 — danh sách TỔ CHỨC tiềm năng mua quà Tết.
+
+v12.0: phòng Dự án đã gỡ (ngoài phạm vi HĐ TEDO–Sâm Sâm) — module này GIỮ
+và chuyển sang khối **sales**, thuộc tính năng "Báo giá B2B quà Tết"
+(cùng `agents/kd_quote.py`, `connectors/b2b_form.py`).
 
 Contract:
   - Bảng `org_prospects` chỉ giữ thông tin TỔ CHỨC công khai (tên, loại,
@@ -18,8 +22,8 @@ Contract:
     lỗi. Lỗi in số dòng + cột + lý do, KHÔNG in giá trị ô. Có lỗi → 0 dòng
     nạp, không connect.
   - KHÔNG liên hệ tự động: không có đường gửi thư/gọi/nhắn. Lô tổ chức vào
-    hàng duyệt khối `projects` (`org_prospect_batch`) cho GĐ dự án/GĐ bán
-    hàng; chỉ khi NGƯỜI duyệt và bảng dựng lại từ DB khớp sha256 bản duyệt
+    hàng duyệt khối `sales` (`org_prospect_batch`) cho GĐ bán hàng; chỉ
+    khi NGƯỜI duyệt và bảng dựng lại từ DB khớp sha256 bản duyệt
     thì dòng mới thành `chuyen_sales` (người liên hệ = GĐ bán hàng/đại lý).
     Lô bị từ chối HOẶC hết hạn SLA (`expired`) → dòng về `moi` để lập lô
     mới; lệch sha256 → 0 dòng đổi (điều tra — xem SOP).
@@ -66,7 +70,7 @@ ORG_TYPES = ("doanh_nghiep", "khach_san", "su_kien_hoi_nghi", "hiep_hoi",
 STATUSES = ("moi", "cho_duyet", "chuyen_sales")
 MAX_BYTES = 1_000_000
 MAX_URL = 500
-BLOCK = "projects"
+BLOCK = "sales"
 OBJECT_TYPE = "org_prospect_batch"
 FOOTER = ("Hệ thống KHÔNG tự liên hệ — GĐ bán hàng/đại lý liên hệ sau khi "
           "duyệt.")

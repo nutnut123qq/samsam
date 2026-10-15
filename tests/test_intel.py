@@ -708,7 +708,7 @@ def test_cli_no_approved_sources_warn_exit0(db, monkeypatch, capsys):
 
 
 def test_cli_missing_table_exit1(db, monkeypatch, capsys):
-    # cascade: v8.3 `programs.intel_item_id` FK → intel_items (schema tạm).
+    # cascade: phòng khi bảng khác có FK → intel_items (schema tạm).
     db.execute("drop table intel_items cascade")
     monkeypatch.setenv("DATABASE_URL", "postgresql://fake")
     monkeypatch.setattr(intel, "_connect", lambda _d: TxConn(db))

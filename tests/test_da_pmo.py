@@ -22,7 +22,7 @@ from tests.test_da_schema import TxConn, da_db
 
 ROOT = Path(__file__).resolve().parent.parent
 REAL = da_pmo.load_milestones()
-APPROVER = "GĐ dự án MẪU"
+APPROVER = "TGĐ MẪU"
 
 
 @pytest.fixture
@@ -43,10 +43,10 @@ def _fake_job(name, seen):
 
 def test_real_milestones_file():
     by = {m["code"]: m["due_date"] for m in REAL}
-    assert len(REAL) >= 8
-    want = {"DA-01": date(2026, 10, 24), "DA-02": date(2026, 10, 24),
-            "DA-QA": date(2026, 10, 24), "DA-03": date(2026, 10, 31),
-            "DA-00": date(2026, 10, 31), "DA-04": date(2026, 11, 14),
+    assert len(REAL) >= 6
+    # v12.0: mốc DA-00/02/03/04/QA (phòng Dự án ngoài phạm vi HĐ) đã gỡ.
+    assert not {"DA-00", "DA-02", "DA-03", "DA-04", "DA-QA"} & set(by)
+    want = {"DA-01": date(2026, 10, 24),
             "KD-A3-FORM": date(2026, 11, 16), "DA-05": date(2026, 11, 21),
             "MOC-C": date(2026, 11, 30), "MOC-D": date(2026, 12, 18),
             "TT3": date(2026, 12, 23)}
@@ -55,7 +55,8 @@ def test_real_milestones_file():
         assert m["title"] and m["wp"] and m["gate"]
         assert re.fullmatch(r"[a-z_]+", m["owner_role"]), m["code"]
     doc = json.loads(da_pmo.MILESTONES_FILE.read_bytes().decode("utf-8"))
-    assert "BẢN DEV SOẠN" in doc["_doc"] and "GĐ dự án" in doc["_doc"]
+    assert "BẢN DEV SOẠN" in doc["_doc"] and "CHỜ TGĐ chốt" in doc["_doc"]
+    assert all(m["owner_role"] != "gd_du_an" for m in REAL)
 
 
 @pytest.mark.parametrize("bad,needle", [
@@ -86,17 +87,14 @@ def _rows(status=None):
 
 
 def test_render_board_late_reminders_dates():
-    md = da_pmo.render_board(_rows({"DA-04": "xong"}), date(2026, 10, 25))
+    md = da_pmo.render_board(_rows({"DA-05": "xong"}), date(2026, 10, 25))
     late = md.split("## Mốc trễ", 1)[1].split("## Nhắc", 1)[0]
-    for code in ("DA-01", "DA-02", "DA-QA"):
-        assert re.search(rf"\*\*TRỄ\*\* {re.escape(code)} — hạn 24/10/2026",
-                         late), code
-    assert "DA-04" not in late and "DA-03" not in late
-    da04 = next(ln for ln in md.splitlines() if ln.startswith("| DA-04 |"))
-    assert "TRỄ" not in da04 and "bb-01" in da04
-    # T-7 của 31/10 = 24/10 — sang 25/10 KHÔNG nhắc lại.
+    assert re.search(r"\*\*TRỄ\*\* DA-01 — hạn 24/10/2026", late)
+    assert "DA-05" not in late and "KD-A3-FORM" not in late
+    da05 = next(ln for ln in md.splitlines() if ln.startswith("| DA-05 |"))
+    assert "TRỄ" not in da05 and "bb-01" in da05
     rem = md.split("## Nhắc hạn hôm nay", 1)[1]
-    assert "DA-03" not in rem and "DA-00" not in rem
+    assert "KD-A3-FORM" not in rem and "DA-05" not in rem
     assert not re.search(r"\d{4}-\d{2}-\d{2}", md)
     dates = re.findall(r"\b\d{1,2}/\d{1,2}/\d{4}\b", md)
     assert dates and all(re.fullmatch(r"\d{2}/\d{2}/\d{4}", d) for d in dates)
@@ -105,15 +103,17 @@ def test_render_board_late_reminders_dates():
 
 
 def test_render_board_t7_t2_on_the_day():
-    md = da_pmo.render_board(_rows(), date(2026, 10, 24))
+    md = da_pmo.render_board(_rows(), date(2026, 11, 9))
     rem = md.split("## Nhắc hạn hôm nay", 1)[1]
-    assert "T-7: DA-03 — hạn 31/10/2026" in rem
-    assert "T-7: DA-00 — hạn 31/10/2026" in rem
-    md2 = da_pmo.render_board(_rows({"DA-04": "xong"}), date(2026, 11, 12))
+    assert "T-7: KD-A3-FORM — hạn 16/11/2026" in rem
+    # T-7 của 16/11 = 09/11 — sang 10/11 KHÔNG nhắc lại.
+    md1 = da_pmo.render_board(_rows(), date(2026, 11, 10))
+    assert "KD-A3-FORM" not in md1.split("## Nhắc hạn hôm nay", 1)[1]
+    md2 = da_pmo.render_board(_rows({"DA-05": "xong"}), date(2026, 11, 19))
     rem2 = md2.split("## Nhắc hạn hôm nay", 1)[1]
-    assert "DA-04" not in rem2                       # đã xong → không nhắc
-    md3 = da_pmo.render_board(_rows(), date(2026, 11, 12))
-    assert "T-2: DA-04 — hạn 14/11/2026" in md3
+    assert "DA-05" not in rem2                       # đã xong → không nhắc
+    md3 = da_pmo.render_board(_rows(), date(2026, 11, 19))
+    assert "T-2: DA-05 — hạn 21/11/2026" in md3
 
 
 def test_real_board_passes_guardrail_any_day():
@@ -126,26 +126,26 @@ def test_real_board_passes_guardrail_any_day():
             assert g["ok"] is True, (m["code"], k, g["violations"])
     d = date(2026, 10, 1)
     while d <= date(2027, 1, 10):
-        for st in ({}, {"DA-04": "xong", "DA-05": "xong"}):
+        for st in ({}, {"DA-05": "xong", "MOC-C": "xong"}):
             g = guardrail.check(da_pmo.render_board(_rows(st), d))
             assert g["ok"] is True, (d, g["violations"])
         d += timedelta(days=3)
 
 
 def test_change_payload_roundtrip_regex():
-    p = da_pmo.change_payload("DA-04", date(2026, 11, 14), date(2026, 11, 20),
-                              "GĐ dự án MẪU")
+    p = da_pmo.change_payload("DA-05", date(2026, 11, 21), date(2026, 11, 28),
+                              "TGĐ MẪU")
     m = da_pmo._PAYLOAD_RE.fullmatch(p)
-    assert m and m["c"] == "DA-04" and m["new"] == "2026-11-20"
+    assert m and m["c"] == "DA-05" and m["new"] == "2026-11-28"
 
 
 @pytest.mark.parametrize("argv", [
-    ["--seed", "--board"], [], ["--set-status", "DA-04", "--status", "xong"],
-    ["--set-status", "DA-04", "--by", "X"], ["--board", "--dry-run"],
-    ["--seed", "--submit"], ["--propose-due", "DA-04", "--by", "X"],
-    ["--propose-due", "DA-04", "--due", "14/11/2026", "--by", "X"],
+    ["--seed", "--board"], [], ["--set-status", "DA-05", "--status", "xong"],
+    ["--set-status", "DA-05", "--by", "X"], ["--board", "--dry-run"],
+    ["--seed", "--submit"], ["--propose-due", "DA-05", "--by", "X"],
+    ["--propose-due", "DA-05", "--due", "21/11/2026", "--by", "X"],
     ["--apply-due", "1"], ["--board", "--evidence", "x"],
-    ["--set-status", "DA-04", "--status", "la", "--by", "X"]])
+    ["--set-status", "DA-05", "--status", "la", "--by", "X"]])
 def test_cli_usage_exit2_before_connect(monkeypatch, argv):
     monkeypatch.setattr(da_pmo, "connect", lambda: pytest.fail("connect"))
     with pytest.raises(SystemExit) as e:
@@ -155,9 +155,9 @@ def test_cli_usage_exit2_before_connect(monkeypatch, argv):
 
 def test_cli_xong_without_evidence_exit1_before_connect(monkeypatch):
     monkeypatch.setattr(da_pmo, "connect", lambda: pytest.fail("connect"))
-    assert da_pmo.main(["--set-status", "DA-04", "--status", "xong", "--by",
+    assert da_pmo.main(["--set-status", "DA-05", "--status", "xong", "--by",
                         "X"]) == 1
-    assert da_pmo.main(["--set-status", "DA-04", "--status", "xong", "--by",
+    assert da_pmo.main(["--set-status", "DA-05", "--status", "xong", "--by",
                         "X", "--evidence", "  "]) == 1
 
 
@@ -192,24 +192,24 @@ def test_seed_twice_keeps_manual_edit(db, monkeypatch, capsys):
                       ).fetchone()[0] == 0
     assert _cli(db, monkeypatch, "--seed") == 0
     assert f"inserted={len(REAL)} existing=0" in capsys.readouterr().out
-    db.execute("update project_milestones set due_date = '2026-11-20'"
-               " where code = 'DA-04'")
+    db.execute("update project_milestones set due_date = '2026-11-28'"
+               " where code = 'DA-05'")
     assert _cli(db, monkeypatch, "--seed") == 0
     assert f"inserted=0 existing={len(REAL)}" in capsys.readouterr().out
-    assert _due(db, "DA-04") == date(2026, 11, 20)
+    assert _due(db, "DA-05") == date(2026, 11, 28)
 
 
 def test_set_status_rules(db, monkeypatch):
     assert _cli(db, monkeypatch, "--seed") == 0
-    assert _cli(db, monkeypatch, "--set-status", "DA-04", "--status", "xong",
+    assert _cli(db, monkeypatch, "--set-status", "DA-05", "--status", "xong",
                 "--by", "X") == 1
-    assert _cli(db, monkeypatch, "--set-status", "DA-04", "--status",
+    assert _cli(db, monkeypatch, "--set-status", "DA-05", "--status",
                 "dang_lam", "--by", "X") == 0
-    assert _cli(db, monkeypatch, "--set-status", "DA-04", "--status", "xong",
-                "--by", "X", "--evidence", "evidence/bb-da04.md") == 0
+    assert _cli(db, monkeypatch, "--set-status", "DA-05", "--status", "xong",
+                "--by", "X", "--evidence", "evidence/bb-da05.md") == 0
     row = db.execute("select status, evidence, updated_by from"
-                     " project_milestones where code = 'DA-04'").fetchone()
-    assert row == ("xong", "evidence/bb-da04.md", "X")
+                     " project_milestones where code = 'DA-05'").fetchone()
+    assert row == ("xong", "evidence/bb-da05.md", "X")
     assert _cli(db, monkeypatch, "--set-status", "KHONG-CO", "--status",
                 "dang_lam", "--by", "X") == 1
 
@@ -228,7 +228,7 @@ def test_board_writes_file_and_submits(db, monkeypatch, tmp_path, capsys):
                 "--out-dir", str(tmp_path), "--submit") == 0
     q = db.execute("select block, object_type, object_id, status, payload,"
                    " id from approval_queue").fetchall()
-    assert len(q) == 1 and q[0][:4] == ("projects", "weekly_board",
+    assert len(q) == 1 and q[0][:4] == ("ceo", "weekly_board",
                                         "board:2026-W43", "pending")
     assert q[0][4] == md
     assert _cli(db, monkeypatch, "--board", "--date", "2026-10-24",
@@ -260,21 +260,21 @@ def test_board_submit_refused_when_guardrail_fails(db, monkeypatch,
 
 def test_propose_apply_due_flow(db, monkeypatch, capsys):
     assert _cli(db, monkeypatch, "--seed") == 0
-    assert _cli(db, monkeypatch, "--propose-due", "DA-04", "--due",
-                "2026-11-14", "--by", "X") == 1            # trùng hạn cũ
+    assert _cli(db, monkeypatch, "--propose-due", "DA-05", "--due",
+                "2026-11-21", "--by", "X") == 1            # trùng hạn cũ
     assert _cli(db, monkeypatch, "--propose-due", "KHONG-CO", "--due",
                 "2026-11-20", "--by", "X") == 1
-    assert _cli(db, monkeypatch, "--propose-due", "DA-04", "--due",
-                "2026-11-20", "--by", "Chuyên viên MẪU") == 0
+    assert _cli(db, monkeypatch, "--propose-due", "DA-05", "--due",
+                "2026-11-28", "--by", "Chuyên viên MẪU") == 0
     q = db.execute("select id, status, object_id from approval_queue"
                    " where object_type = 'milestone_change'").fetchall()
-    assert len(q) == 1 and q[0][1:] == ("pending", "milestone:DA-04")
+    assert len(q) == 1 and q[0][1:] == ("pending", "milestone:DA-05")
     qid = q[0][0]
-    assert _due(db, "DA-04") == date(2026, 11, 14)          # chưa đổi
-    assert _cli(db, monkeypatch, "--propose-due", "DA-04", "--due",
-                "2026-11-21", "--by", "X") == 1            # đang chờ
+    assert _due(db, "DA-05") == date(2026, 11, 21)          # chưa đổi
+    assert _cli(db, monkeypatch, "--propose-due", "DA-05", "--due",
+                "2026-11-29", "--by", "X") == 1            # đang chờ
     assert _cli(db, monkeypatch, "--apply-due", str(qid), "--by", "X") == 1
-    assert _due(db, "DA-04") == date(2026, 11, 14)
+    assert _due(db, "DA-05") == date(2026, 11, 21)
     ok, msg = aq.decide(TxConn(db), qid, APPROVER, "approved")
     assert ok, msg
     before = db.execute("select code, due_date from project_milestones"
@@ -283,12 +283,12 @@ def test_propose_apply_due_flow(db, monkeypatch, capsys):
     after = db.execute("select code, due_date from project_milestones"
                        " order by code").fetchall()
     diff = [(b, a) for b, a in zip(before, after) if b != a]
-    assert diff == [(("DA-04", date(2026, 11, 14)),
-                     ("DA-04", date(2026, 11, 20)))]
+    assert diff == [(("DA-05", date(2026, 11, 21)),
+                     ("DA-05", date(2026, 11, 28)))]
     capsys.readouterr()
     assert _cli(db, monkeypatch, "--apply-due", str(qid), "--by", "X") == 0
     assert "no-op" in capsys.readouterr().out
-    assert _due(db, "DA-04") == date(2026, 11, 20)
+    assert _due(db, "DA-05") == date(2026, 11, 28)
 
 
 def test_apply_due_stale_and_wrong_items(db, monkeypatch):
@@ -317,15 +317,15 @@ def test_propose_due_proposer_cannot_self_approve(db, monkeypatch):
     """created_by = NGƯỜI đề xuất (không phải agent) → `decide_item` chặn
     người đó tự duyệt đổi hạn mốc của mình (tách quyền A01)."""
     assert _cli(db, monkeypatch, "--seed") == 0
-    assert _cli(db, monkeypatch, "--propose-due", "DA-04", "--due",
-                "2026-11-20", "--by", "Chuyên viên MẪU") == 0
+    assert _cli(db, monkeypatch, "--propose-due", "DA-05", "--due",
+                "2026-11-28", "--by", "Chuyên viên MẪU") == 0
     qid, by = db.execute("select id, created_by from approval_queue where"
                          " object_type = 'milestone_change'").fetchone()
     assert by == "Chuyên viên MẪU"
     ok, msg = aq.decide(TxConn(db), qid, " Chuyên viên MẪU ", "approved")
     assert not ok and "người duyệt trùng người tạo" in msg
     assert _cli(db, monkeypatch, "--apply-due", str(qid), "--by", "X") == 1
-    assert _due(db, "DA-04") == date(2026, 11, 14)
+    assert _due(db, "DA-05") == date(2026, 11, 21)
     ok, msg = aq.decide(TxConn(db), qid, APPROVER, "approved")
     assert ok, msg
 
@@ -336,8 +336,8 @@ def test_apply_due_older_approval_blocked(db, monkeypatch):
     định sau của người duyệt). Bỏ nhánh verify → test đỏ."""
     assert _cli(db, monkeypatch, "--seed") == 0
     ids = []
-    for due in ("2026-11-20", "2026-11-25"):
-        assert _cli(db, monkeypatch, "--propose-due", "DA-04", "--due", due,
+    for due in ("2026-11-28", "2026-12-02"):
+        assert _cli(db, monkeypatch, "--propose-due", "DA-05", "--due", due,
                     "--by", "X") == 0
         ids.append(db.execute("select max(id) from approval_queue"
                               ).fetchone()[0])
@@ -345,6 +345,6 @@ def test_apply_due_older_approval_blocked(db, monkeypatch):
         assert ok, msg
     q1, q2 = ids
     assert _cli(db, monkeypatch, "--apply-due", str(q1), "--by", "X") == 1
-    assert _due(db, "DA-04") == date(2026, 11, 14)
+    assert _due(db, "DA-05") == date(2026, 11, 21)
     assert _cli(db, monkeypatch, "--apply-due", str(q2), "--by", "X") == 0
-    assert _due(db, "DA-04") == date(2026, 11, 25)
+    assert _due(db, "DA-05") == date(2026, 12, 2)

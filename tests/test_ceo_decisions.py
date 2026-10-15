@@ -1,6 +1,6 @@
 """v8.1 W81.1–W81.2 — sổ quyết định TGĐ `decision_log` (append-only, NGƯỜI
 ghi `--by`) + `agents.ceo_decisions` (đề xuất chỉ đọc, ghi/theo dõi, liên
-kết mốc trễ phòng Dự án).
+kết mốc trễ sổ mốc tiến độ DA-01).
 
 Schema: DB thật (schema tạm + `docs/schema.sql` + `docs/roles.sql` ×2 →
 ROLLBACK), case lỗi trong savepoint. CLI: `connect` monkeypatch → conn của

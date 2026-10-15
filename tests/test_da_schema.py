@@ -1,7 +1,8 @@
-"""v8.3 W83.1 — schema 3 bảng phòng Dự án (`programs`, `org_prospects`,
+"""v8.3 W83.1 — schema bảng phòng Dự án (`org_prospects`,
 `project_milestones`): idempotent ×2 (schema.sql + roles.sql), không cột
-PII, CHECK chặn dedup_key sai/tier C/'xong' thiếu evidence, block mới
-không ALTER/DROP bảng cũ.
+PII, CHECK chặn dedup_key sai/'xong' thiếu evidence, block mới không
+ALTER/DROP bảng cũ. v12.0: `programs` (DA-03 radar, ngoài phạm vi HĐ) đã
+gỡ khỏi schema; 2 bảng còn lại phục vụ khối sales (DA-05) và ceo (DA-01).
 
 DB thật (`DATABASE_URL`) trong schema tạm + ROLLBACK cuối test. Fixture
 `da_db` + `TxConn` dùng chung cho tests/test_da_*.py.
@@ -88,28 +89,22 @@ def _cols(conn, table):
         " table_schema = current_schema() and table_name = %s", (table,))}
 
 
-def test_block_no_alter_drop_and_three_tables():
+def test_block_no_alter_drop_and_two_tables():
     assert not re.search(r"(?im)^\s*alter table|drop table", BLOCK)
     names = re.findall(r"(?m)^create table if not exists (\w+)", BLOCK)
-    assert names == ["programs", "org_prospects", "project_milestones"]
-    assert "KHÔNG PII" in BLOCK and "insert-only" in BLOCK
+    assert names == ["org_prospects", "project_milestones"]
+    assert "KHÔNG PII" in BLOCK
+    assert not re.search(r"(?m)^create table if not exists programs\b",
+                         SCHEMA_SQL)
 
 
 def test_tables_and_no_pii_columns(db):
     cols = _cols(db, "org_prospects")
     assert cols == ORG_COLS
-    for t in ("programs", "org_prospects", "project_milestones"):
+    for t in ("org_prospects", "project_milestones"):
         c = _cols(db, t)
         assert c, t
         assert not [x for x in c if PII_COL_RE.search(x)], (t, c)
-
-
-def _intel(db):
-    return db.execute(
-        "insert into intel_items (url, domain, source, tier, title,"
-        " content_sha256, topics) values ('https://a.vn/1', 'a.vn', 'fx',"
-        " 'A', 'Hội chợ', %s, '{chuong_trinh}') returning id",
-        ("0" * 64,)).fetchone()[0]
 
 
 @pytest.mark.parametrize("sql,params", [
@@ -123,10 +118,10 @@ def _intel(db):
       " source_url, source, created_by) values (%s, 'Tổ chức', 'ca_nhan',"
       " 'Đà Nẵng', 'https://a.vn', 'manual', 'x')"), ("b2b:" + "b" * 64,)),
     (("insert into project_milestones (code, title, owner_role, due_date,"
-      " gate, status, source) values ('DA-04', 't', 'gd_du_an',"
+      " gate, status, source) values ('DA-04', 't', 'tgd',"
       " '2026-11-14', 'g', 'xong', 's')"), None),
     (("insert into project_milestones (code, title, owner_role, due_date,"
-      " gate, source) values ('da-04', 't', 'gd_du_an', '2026-11-14', 'g',"
+      " gate, source) values ('da-04', 't', 'tgd', '2026-11-14', 'g',"
       " 's')"), None),
 ])
 def test_check_violations(db, sql, params):
@@ -134,29 +129,16 @@ def test_check_violations(db, sql, params):
         db.execute(sql, params)
 
 
-def test_programs_tier_c_and_unique(db):
-    iid = _intel(db)
-    ins = ("insert into programs (intel_item_id, title, url, source, tier)"
-           " values (%s, 'Hội chợ', 'https://a.vn/1', 'fx', %s)")
-    with pytest.raises(psycopg.errors.CheckViolation), db.transaction():
-        db.execute(ins, (iid, "C"))
-    db.execute(ins, (iid, "A"))
-    with pytest.raises(psycopg.errors.UniqueViolation), db.transaction():
-        db.execute(ins, (iid, "B"))
-    org = db.execute("select organizer from programs").fetchone()[0]
-    assert org == "chưa công bố"
-
-
 def test_milestone_xong_with_evidence_ok(db):
     db.execute("insert into project_milestones (code, title, owner_role,"
                " due_date, gate, status, evidence, source) values ('DA-04',"
-               " 't', 'gd_du_an', '2026-11-14', 'g', 'xong', 'bb-01', 's')")
+               " 't', 'tgd', '2026-11-14', 'g', 'xong', 'bb-01', 's')")
     assert db.execute("select status from project_milestones").fetchone()[0] \
         == "xong"
 
 
 def test_new_tables_not_granted_to_roles(db):
     for role in ("agent_writer", "app_human"):
-        for t in ("programs", "org_prospects", "project_milestones"):
+        for t in ("org_prospects", "project_milestones"):
             assert db.execute("select has_table_privilege(%s, %s, 'select')",
                               (role, t)).fetchone()[0] is False, (role, t)

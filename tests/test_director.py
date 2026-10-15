@@ -1,4 +1,4 @@
-"""v4.0 W40.6 — `pipelines.director`: 11 cấu hình khối (không người thật),
+"""v4.0 W40.6 — `pipelines.director`: 9 cấu hình khối (không người thật),
 validate cấu hình hỏng, `digest` thuần theo ngày VN, `submit` lấy SLA/risk
 từ cấu hình, CLI dry-run không DB. Đường DB thật ở
 tests/test_director_framework.py."""
@@ -22,7 +22,7 @@ VN = timezone(timedelta(hours=7))
 
 def test_eleven_blocks_no_real_people():
     files = sorted(p.stem for p in dr.DIRECTORS_DIR.glob("*.json"))
-    assert files == sorted(dr.BLOCKS) and len(dr.BLOCKS) == 11
+    assert files == sorted(dr.BLOCKS) and len(dr.BLOCKS) == 9
     cfgs = dr.load_all()
     assert set(cfgs) == set(dr.BLOCKS)
     for b, c in cfgs.items():
@@ -159,7 +159,7 @@ def test_cli_dry_run_no_db(monkeypatch, capsys):
     monkeypatch.setattr(dr, "connect", lambda: pytest.fail("connect gọi"))
     assert dr.main(["--all", "--dry-run"]) == 0
     out = capsys.readouterr().out
-    assert out.count("[ok] ") == 11 and "external-dep" in out
+    assert out.count("[ok] ") == 9 and "external-dep" in out
 
 
 def test_cli_db_down_exit_2(monkeypatch, capsys):
@@ -195,7 +195,7 @@ def test_cli_module_dry_run_subprocess():
                         "--dry-run"], cwd=ROOT, env=env, capture_output=True,
                        timeout=60, encoding="utf-8", errors="replace",
                        check=False)
-    assert r.returncode == 0 and "11 khối hợp lệ" in r.stdout, r.stderr
+    assert r.returncode == 0 and "9 khối hợp lệ" in r.stdout, r.stderr
 
 
 def test_ceo_cockpit_object_types():
@@ -231,20 +231,22 @@ def test_digest_extra_inserted_before_approvers_default_unchanged():
 
 
 
-def test_projects_object_types_v83():
-    """v8.3 W83.8 — khối projects đủ loại việc 5 agent phòng Dự án; không
-    người thật."""
-    c = dr.load_config("projects")
-    types = c["object_types"]
-    assert {"change_request", "program_application", "org_prospect_batch",
-            "weekly_board", "milestone_change"} <= set(types)
-    assert "content_draft" not in types
-    assert all(1 <= t["sla_hours"] <= 720 for t in types.values())
-    assert types["change_request"] == {"sla_hours": 48, "risk": "high"}
-    assert types["program_application"] == {"sla_hours": 72, "risk": "high"}
-    assert types["org_prospect_batch"]["risk"] == "medium"
-    assert c["approvers"] == [] and c["digest_recipients"] == []
-    assert c["approver_roles"] == ["tgd"]
+def test_v120_blocks_follow_contract():
+    """v12.0 — 9 khối theo HĐ TEDO–Sâm Sâm; `projects`/`mechanical` đã gỡ;
+    DA-05 (`org_prospect_batch`) sang sales, DA-01 (`weekly_board`,
+    `milestone_change`) sang ceo; mọi `_doc` ghi người duyệt theo PL01."""
+    assert "projects" not in dr.BLOCKS and "mechanical" not in dr.BLOCKS
+    s = dr.load_config("sales")
+    assert s["object_types"]["org_prospect_batch"]["risk"] == "medium"
+    c = dr.load_config("ceo")["object_types"]
+    assert c["weekly_board"] == {"sla_hours": 48, "risk": "medium"}
+    assert c["milestone_change"] == {"sla_hours": 72, "risk": "medium"}
+    assert "rd_concept_brief" not in dr.load_config("production")[
+        "object_types"]
+    for b in dr.BLOCKS:
+        cfg = dr.load_config(b)
+        assert "v12.0 — người duyệt theo PL01" in cfg["_doc"], b
+        assert cfg["approvers"] == [] and cfg["digest_recipients"] == []
 
 
 @pytest.mark.parametrize("argv", [["--block", "ceo"], ["--all"]])
@@ -276,11 +278,7 @@ def test_sales_finance_object_types_v82():
 
 
 def test_p3_object_types_v110():
-    """v11.0 WP17: concept R&D SX-A6 risk high, CK-A5 medium — không low
-    (luật tự duyệt chỉ áp low)."""
-    p = dr.load_config("production")["object_types"]
-    assert p["rd_concept_brief"] == {"sla_hours": 72, "risk": "high"}
-    m = dr.load_config("mechanical")["object_types"]
-    assert m["maintenance_risk"] == {"sla_hours": 72, "risk": "medium"}
+    """v11.0 WP17: dự báo thu hoạch risk medium — không low (luật tự duyệt
+    chỉ áp low). v12.0 gỡ SX-A6/CK-A5 (ngoài phạm vi HĐ)."""
     assert dr.load_config("farming")["object_types"]["harvest_forecast"][
         "risk"] == "medium"

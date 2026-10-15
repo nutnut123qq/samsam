@@ -1,13 +1,17 @@
-"""v8.3 DA-01 — sổ mốc tiến độ phòng Dự án + bảng tuần (PMO).
+"""v8.3 DA-01 — sổ mốc tiến độ triển khai + bảng tuần (PMO).
+
+v12.0: phòng Dự án đã gỡ (ngoài phạm vi HĐ TEDO–Sâm Sâm) — module này GIỮ
+và chuyển sang khối **ceo**, thuộc tính năng "Theo dõi tiến độ, sổ quyết
+định" (cùng `agents/ceo_decisions.py` đọc `project_milestones`).
 
 Contract:
-  - `data/projects/milestones.json` (BẢN DEV SOẠN, chờ GĐ dự án chốt) →
+  - `data/projects/milestones.json` (BẢN DEV SOẠN, chờ TGĐ chốt) →
     bảng `project_milestones`. `--seed` chỉ thêm mốc chưa có (`on conflict
     (code) do nothing`) — sửa tay trên DB KHÔNG bị đè.
   - `--set-status` đổi trạng thái; `xong` bắt buộc `--evidence` (DB cũng
     CHECK). `--board`: `render_board(rows, today)` THUẦN — mốc quá hạn chưa
     xong tô **TRỄ** + mục "Mốc trễ"; nhắc T-7/T-2 đúng ngày; hạn dd/mm/yyyy.
-    `--submit` đẩy bảng vào hàng duyệt khối projects (`weekly_board`).
+    `--submit` đẩy bảng vào hàng duyệt khối ceo (`weekly_board`).
     `--submit` chạy `guardrail.check` TRƯỚC — trượt (vd gate/evidence có
     chữ nhóm rượu/từ cấm) → exit 1, KHÔNG đẩy (mục trượt không duyệt được).
   - Đổi hạn KHÔNG sửa thẳng DB: `--propose-due` đẩy mục `milestone_change`
@@ -56,7 +60,7 @@ MILESTONES_FILE = ROOT / "data" / "projects" / "milestones.json"
 SOURCE = "data/projects/milestones.json"
 STATUSES = ("chua_bat_dau", "dang_lam", "xong", "tam_dung")
 CODE_RE = re.compile(r"[A-Z][A-Z0-9_.-]{1,31}")
-BLOCK = "projects"
+BLOCK = "ceo"
 CREATED_BY = "agent:da_pmo"
 COLS = ("code", "title", "wp", "owner_role", "due_date", "gate", "evidence",
         "status")
@@ -132,7 +136,7 @@ def render_board(rows: list[dict], today: date) -> str:
     rows = sorted(rows, key=lambda r: (r["due_date"], r["code"]))
     late = [r for r in rows if r["due_date"] < today and r["status"] != "xong"]
     late_codes = {r["code"] for r in late}
-    L = [(f"# Bảng tiến độ phòng Dự án — tuần {week_id(today)} "
+    L = [(f"# Bảng tiến độ triển khai — tuần {week_id(today)} "
           f"(ngày {_d(today)})"), "",
          "| Mã | Việc | Owner | Hạn | Gate | Evidence | Trạng thái |",
          "|---|---|---|---|---|---|---|"]
@@ -155,7 +159,7 @@ def render_board(rows: list[dict], today: date) -> str:
         if r["status"] != "xong" and left in (7, 2):
             rem.append(f"- T-{left}: {r['code']} — hạn {_d(r['due_date'])}")
     L += rem or ["- (không có)"]
-    L += ["", "---", ("*BẢN NHÁP — agent không tự gửi; GĐ dự án chốt "
+    L += ["", "---", ("*BẢN NHÁP — agent không tự gửi; TGĐ chốt "
                       "trạng thái/hạn (đổi hạn qua hàng duyệt).*"), ""]
     return "\n".join(L)
 
@@ -172,7 +176,7 @@ def apply_due(conn, qid: int, by: str) -> tuple[bool, str]:
                        " object_id from approval_queue where id = %s",
                        (qid,)).fetchone()
     if row is None or row[0] != BLOCK or row[1] != "milestone_change":
-        return False, f"mục #{qid} không phải `milestone_change` khối projects"
+        return False, f"mục #{qid} không phải `milestone_change` khối ceo"
     if row[2] != "approved":
         return False, f"mục #{qid} đang '{row[2]}' — chỉ áp dụng khi đã duyệt"
     m = _PAYLOAD_RE.fullmatch(row[3] or "")
@@ -231,20 +235,20 @@ def _board(conn, a) -> int:
         try:
             qid = director.submit(conn, BLOCK, "weekly_board",
                                   object_id=f"board:{week_id(today)}",
-                                  title=f"Bảng tiến độ Dự án {week_id(today)}",
+                                  title=f"Bảng tiến độ triển khai {week_id(today)}",
                                   payload=text, created_by=CREATED_BY)
         except psycopg.errors.UniqueViolation:
             print(f"[warn] bảng {week_id(today)} đã có mục đang chờ duyệt",
                   file=sys.stderr)
             return 1
-        print(f"[done] đã đẩy mục #{qid} (PENDING) — GĐ dự án duyệt")
+        print(f"[done] đã đẩy mục #{qid} (PENDING) — TGĐ duyệt")
     return 0
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         prog="python -m agents.da_pmo",
-        description="DA-01 sổ mốc + bảng tuần phòng Dự án (không tự gửi)")
+        description="DA-01 sổ mốc + bảng tuần tiến độ (khối ceo, không tự gửi)")
     ap.add_argument("--seed", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--set-status", metavar="CODE")

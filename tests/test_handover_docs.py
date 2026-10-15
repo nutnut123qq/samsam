@@ -52,9 +52,9 @@ SOP_COMMANDS = ("streamlit run", "apply_schema", "lead_store",
                 "pipelines.content --listing", "agents.sales_director",
                 # v6.3 MKT-04 video nháp
                 "pipelines.video_studio",
-                # v8.3 phòng Dự án (WP11 DA)
-                "agents.da_radar", "agents.da_hoso", "agents.da_b2b",
-                "agents.da_pmo", "agents.da_cr",
+                # v8.3 DA-05/DA-01 (v12.0: khối sales/ceo; phần còn lại của
+                # phòng Dự án đã gỡ — ngoài phạm vi HĐ)
+                "agents.da_b2b", "agents.da_pmo",
                 "pipelines.image_studio",
                 # v5.3 KD-A4/A5 catalog + giá/KM
                 "agents.kd_listing", "agents.kd_price",

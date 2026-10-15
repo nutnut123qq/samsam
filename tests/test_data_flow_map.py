@@ -22,17 +22,16 @@ RAW = json.loads(MAP_PATH.read_bytes().decode("utf-8"))
 # v5.1: lớp kênh CSKH thuần — việc gửi là của adapter (zalo/messenger).
 NEW_SCRIPTS = {"scripts/review_load.py", "scripts/dpia_draft.py",
                "scripts/contract_check.py", "ingest/crm.py",
-               # v8.3 phòng Dự án: 4 agent KHÔNG gửi gì ra ngoài
-               "agents/da_radar.py", "agents/da_b2b.py", "agents/da_pmo.py",
-               "agents/da_cr.py", "connectors/channels.py",
+               # v8.3 DA-05/DA-01 (v12.0 chuyển khối sales/ceo): KHÔNG gửi
+               # gì ra ngoài
+               "agents/da_b2b.py", "agents/da_pmo.py",
+               "connectors/channels.py",
                # v6.5 WP08: số đo + gợi ý SEO sàn — KHÔNG gửi gì ra ngoài
                "agents/seo_san.py", "pipelines/mkt_metrics.py",
                # v5.3 KD-A4/A5: agent luật, KHÔNG gửi gì ra ngoài
                "agents/kd_listing.py", "agents/kd_price.py",
                # v10.3: cổng vendor nạp FILE — không request mạng
                "ingest/social_vendor.py",
-               # v10.2 DA-06 hồ sơ đối tác: 0 LLM, không gửi/chia sẻ
-               "agents/da_doitac.py",
                # v10.1 KD-A6/A7: luật + template, KHÔNG LLM/gửi
                "agents/kd_orders.py", "agents/kd_care.py",
                # v5.4 KD-A8/A10: affiliate + dự báo — KHÔNG gửi gì ra ngoài
@@ -40,8 +39,8 @@ NEW_SCRIPTS = {"scripts/review_load.py", "scripts/dpia_draft.py",
                # v10.0 WP16: HĐTV/BKS chỉ đọc DB, ghi file — KHÔNG gửi ra ngoài
                "agents/bks_audit.py", "agents/bks_recon.py",
                "agents/hdtv_report.py",
-               # v11.0 WP17 P3: VT dự báo + CK-A5 quy tắc — 0 LLM, không gửi
-               "agents/vt_thuhoach.py", "agents/ck_predict.py"}
+               # v11.0 WP17 P3: VT dự báo — 0 LLM, không gửi
+               "agents/vt_thuhoach.py"}
 KNOWN_EGRESS = {
     "connectors/zalo.py", "crawler/collect.py", "pipelines/llm_gateway.py",
     "scripts/health_bulletin.py", "scripts/zalo_mock.py",
@@ -73,9 +72,9 @@ REQUIRED_MODULES = [
     # v10.1 WP16: đơn sàn/đối soát, chăm sóc lại (consent), livestream +
     # YouTube qua gateway (DF-25/DF-38/DF-39)
     "agents/kd_orders.py", "agents/kd_care.py", "agents/kd_live.py",
-    "agents/mkt_youtube.py",
-    # v11.0 WP17 P3: SX-A6 concept brief R&D (LLM tùy chọn qua gateway)
-    "agents/sx_rnd.py"]
+    "agents/mkt_youtube.py"]
+# v12.0: gỡ luồng DF-28 (agents/da_hoso.py) + DF-40 (agents/sx_rnd.py) cùng
+# module — ngoài phạm vi HĐ TEDO–Sâm Sâm.
 
 
 def _declared(m):

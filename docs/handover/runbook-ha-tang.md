@@ -148,11 +148,7 @@ Mọi lời gọi LLM đi qua `pipelines/llm_gateway.py` theo `agent_id`. Agent
 hiện có: `chatbot` (trả lời khách web/Zalo), `content` (Content Studio),
 `ingest` (embedding knowledge base). Ngoài ra `smoke`: id dành riêng để
 tập kill switch (chỉ có trong cấu hình `data/llm_gateway.json`, không có
-luồng thật nào gọi). `ck_mat` (v9.5, tra cứu tài liệu kỹ thuật MẬT cơ
-khí) KHÔNG BAO GIỜ gọi LLM: gateway luôn từ chối id này (`LOCAL_ONLY_AGENTS`
-— không cần và không thể kill/bật trong config). `projects` (v8.3,
-phòng Dự án — `agents/da_hoso.py --llm` viết lại thư đăng ký chương
-trình; mặc định TẮT, cap tháng riêng; kill như agent khác). `mkt_video`
+luồng thật nào gọi). `mkt_video`
 (v6.3 MKT-04 — `pipelines/video_studio.py` viết kịch bản video nháp; cap
 tháng riêng 2.0 USD; kill `LLM_KILL=mkt_video` → CLI báo `failed: llm`,
 không dựng video). `sx_tracuu` (v10.2 SX-A7, khối SX — `agents/sx_tracuu.py`
@@ -163,10 +159,8 @@ lý do, không gọi chat). `kd_livestream` (v10.1 KD-A9 — `agents/kd_live.py`
 lời dẫn kịch bản livestream nháp) và `mkt_youtube` (v10.1 MKT-12 —
 `agents/mkt_youtube.py` gói video YouTube dài nháp): cap tháng riêng
 2.0 USD mỗi id; kill `LLM_KILL=kd_livestream` / `LLM_KILL=mkt_youtube`
-→ CLI báo `[error] llm`, không lưu nháp. `sx_rnd` (v11.0 SX-A6 —
-`agents/sx_rnd.py --llm` viết lại hương vị/nghi thức trong concept brief
-R&D nội bộ; mặc định TẮT; cap tháng 1.0 USD ƯỚC TÍNH; kill
-`LLM_KILL=sx_rnd` → brief về template kèm lý do `gateway:GatewayBlocked`). Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
+→ CLI báo `[error] llm`, không lưu nháp. (v12.0: gỡ id `projects`, `sx_rnd`
+và luồng mật cơ khí cùng module ngoài phạm vi HĐ.) Lấy danh sách mới nhất bằng tìm lời gọi `chat("...")` /
 `embed("...")` và hằng `AGENT = "..."` trong `api/`, `pipelines/`,
 `ingest/`, `agents/`, `connectors/` (nhờ dev nếu cần).
 

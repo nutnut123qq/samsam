@@ -145,13 +145,9 @@ khuyến cáo). Ca biên đang fail (ý định pass, guardrail chặn bảo th�
 `v41-edge-01` "không chữa bệnh", `v41-edge-02` "thực phẩm bảo vệ sức
 khỏe" (động từ claim "bảo vệ" trong tên nhóm).
 
-Suite cơ khí `data/eval/suites/co_khi.json` (v9.5, agent tra cứu CK-A1
-`agents/ck_mat.py` — luật, không LLM): 23 ca MẪU (17 fact, 3 high_risk,
-3 trap_no_data) — CHỜ KỸ SƯ TRƯỞNG SỬA; ngưỡng 0.9 + `trap_no_data` 100%;
-KHÔNG nằm trong `required_agents` (không chặn deploy). Chấm: `python
-scripts/agent_eval.py --agent co_khi --no-record` → `co_khi v1 PASS 21/23`
-(ck-f01/ck-f02 fail thật — xếp hạng BM25). Khác `ck_a6` (khung suite
-agent QA A6 khối Cơ khí, skeleton).
+v12.0: suite cơ khí (agent tra cứu tài liệu kỹ thuật, v9.5) và khung QA
+khối cơ khí/dự án đã gỡ cùng các khối đó — ngoài phạm vi Hợp đồng hợp tác
+TEDO–Sâm Sâm.
 
 Test `tests/test_guardrail_v2.py`: `test_check_signature_unchanged`,
 `test_nfd_banned_word_blocked_and_nfd_disclaimer_pass`,

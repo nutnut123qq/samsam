@@ -55,11 +55,13 @@ def test_test_job_postgres_and_commands(doc):
     assert "agent_eval.py --agent chatbot" not in runs
 
 
-def test_deterministic_suites_are_guardrail_and_co_khi():
+def test_deterministic_suites_are_rule_based():
     """v4.5i: --deterministic (job test, mỗi push) chạy đúng suite active
-    có runner tất định (guardrail + co_khi; gộp M31 đợt 4 thêm mkt02 +
+    có runner tất định (guardrail; v12.0 gỡ suite cơ khí — ngoài phạm vi
+    HĐ; gộp M31 đợt 4 thêm mkt02 +
     sales_director — đều luật, 0 LLM; gộp v6.2 thêm mkt03 — provider ảnh
-    giả; v6.4 thêm mkt_ads_ugc — hàm thuần); chatbot (RAG/LLM thật) + 10 khung skeleton KHÔNG chạy."""
+    giả; v6.4 thêm mkt_ads_ugc — hàm thuần); chatbot (RAG/LLM thật) + 8 khung skeleton KHÔNG chạy
+    (v12.0 gỡ khung ck_a6/da_qa của 2 khối ngoài HĐ)."""
     import sys
     sys.path.insert(0, str(ROOT / "scripts"))
     import agent_eval as ae
@@ -67,16 +69,16 @@ def test_deterministic_suites_are_guardrail_and_co_khi():
     det = {n for n in ae.suite_names() if ae._deterministic(ae.load_suite(n))}
     # v6.5: + mkt_seo (seo_san.suggest thuần — 0 mạng/LLM/DB); v6.3: + mkt04
     # v6.4: + mkt_ads_ugc; v8.2: + kd_a3; v10.1: + kd_a7, kd_a9, mkt12
-    assert det == {"guardrail", "co_khi", "mkt02", "mkt03", "mkt04",
+    assert det == {"guardrail", "mkt02", "mkt03", "mkt04",
                    "sales_director", "kd_a1", "mkt_seo", "kd_a5",
                    "mkt_ads_ugc", "kd_a3", "kd_a7", "kd_a9", "mkt12"}
     assert not ae._deterministic(ae.load_suite("chatbot"))
     skel = [n for n in ae.suite_names()
             if ae.load_suite(n)["status"] == "skeleton"]
-    assert len(skel) == 10 and not any(
+    assert len(skel) == 8 and not any(
         ae._deterministic(ae.load_suite(n)) for n in skel)
     ci = CI.read_text(encoding="utf-8")
-    assert "guardrail + co_khi" in ci and "mkt02 + sales_director" in ci \
+    assert "(guardrail — v4.5i;" in ci and "mkt02 + sales_director" in ci \
         and "+ kd_a1 — v4.5i/v5.1" in ci and "+ mkt03 — gộp v6.2" in ci \
         and "+ mkt_seo — v6.5" in ci and "+ kd_a5 — v5.3" in ci \
         and "+ mkt04 — v6.3" in ci and "+ mkt_ads_ugc" in ci \

@@ -14,9 +14,6 @@ Contract:
     allow_fallbacks=False, only=<whitelist config>. FAIL-CLOSED: whitelist
     rỗng/config hỏng/lỗi API -> raise GatewayError; client tạo với
     max_retries=0 và chỉ gọi 1 lần — không retry sang provider khác.
-  - Luồng MẬT (v9.5): agent_id trong `LOCAL_ONLY_AGENTS` (hằng, vd
-    `ck_mat` — tài liệu kỹ thuật mật CK-A1) -> GatewayBlocked NGAY sau
-    validate agent_id, TRƯỚC đọc config/DB. Không config/env nào gỡ được.
   - Kill-switch: agent_id trong config `kill` hoặc env LLM_KILL=a,b ->
     GatewayBlocked trước khi gọi client.
   - Trần chi phí tháng theo agent_id (`monthly_cap_usd`, key "default"):
@@ -59,9 +56,6 @@ CONFIG = ROOT / "data" / "llm_gateway.json"
 BASE_URL = "https://openrouter.ai/api/v1"
 WARN_RATIO = 0.8
 _AGENT_RE = re.compile(r"[a-z0-9_-]{1,64}")
-# Agent chỉ được chạy local — tài liệu mật không bao giờ rời máy. Hằng
-# trong code (không config/env) để không ai gỡ được bằng cấu hình.
-LOCAL_ONLY_AGENTS = frozenset({"ck_mat"})
 # Tháng tính theo giờ VN: mốc 00:00 ngày 1 local -> timestamptz.
 _SPEND_SQL = (
     "select coalesce(sum(cost_usd), 0) from llm_usage where agent_id = %s"
@@ -160,9 +154,6 @@ def _gate(agent_id: str) -> dict:
     """Validate agent_id + config + kill + cap. Trả config."""
     if not isinstance(agent_id, str) or not _AGENT_RE.fullmatch(agent_id):
         raise GatewayError("agent_id không hợp lệ")
-    if agent_id in LOCAL_ONLY_AGENTS:
-        raise GatewayBlocked(
-            f"agent '{agent_id}' là luồng MẬT — chỉ chạy local, cấm LLM/mạng")
     cfg = _config()
     only = cfg.get("provider_only")
     if not isinstance(only, list) or not only or not all(

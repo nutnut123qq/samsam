@@ -1534,61 +1534,6 @@ create table if not exists intel_items (
 create index if not exists intel_items_fetched_idx on intel_items (fetched_at desc);
 
 -- ============================================================================
--- ---------------------------------------------------------------------
--- v9.5 CK-A2 — CMMS nhẹ trung tâm điện–cơ khí (agents/cmms.py).
--- Sổ máy thật + biên bản kiểm kê = external-dep (Kỹ sư trưởng); KHÔNG
--- có lệnh xóa máy (thôi dùng = active false). Mô tả sự cố đã _mask_pii;
--- reported_by là MÃ nhân sự, không tên/SĐT.
-create table if not exists machines (
-  code text primary key check (code ~ '^SS-EQ-[0-9]{2,4}$'),
-  name text not null,
-  location text,
-  maker text,
-  year int check (year between 1950 and 2100),
-  thuoc_dien_kiem_dinh boolean not null default false,
-  han_kiem_dinh date,
-  la_phuong_tien_do boolean not null default false,
-  han_hieu_chuan date,
-  ho_so_gmp boolean not null default false,
-  active boolean not null default true,
-  source text not null default 'manual',
-  created_at timestamptz not null default now()
-);
-
-create table if not exists maintenance_plans (
-  id bigint generated always as identity primary key,
-  machine_code text not null references machines(code),
-  task text not null,
-  interval_days int not null check (interval_days between 1 and 3660),
-  major boolean not null default false,   -- việc lớn: cần Kỹ sư trưởng duyệt
-  start_on date not null default current_date,
-  last_done_on date,
-  last_done_by text,
-  last_approved_by text,
-  active boolean not null default true
-);
-
-create table if not exists incidents (
-  id bigint generated always as identity primary key,
-  machine_code text not null references machines(code),
-  started_at timestamptz not null,
-  ended_at timestamptz check (ended_at is null or ended_at >= started_at),
-  downtime_phut int check (downtime_phut >= 0),  -- NULL = sự cố đang mở
-  part text,
-  description text,                              -- ĐÃ _mask_pii
-  root_cause text not null default 'chờ xác nhận',
-  reported_by text check (reported_by ~ '^[A-Za-z0-9_-]{1,32}$'),
-  created_at timestamptz not null default now()
-);
-create index if not exists incidents_machine_started_idx
-  on incidents (machine_code, started_at);
-
--- Nhật ký downtime (sự cố đã đóng) cho CK-A5 dự đoán sau này.
-create or replace view downtime_log as
-  select machine_code, started_at, ended_at, downtime_phut, part, root_cause
-  from incidents where ended_at is not null;
-
--- ============================================================================
 -- v7.1 Red Alert intel (WP09, `pipelines/intel_alert.py`): luật tất định quét
 -- `intel_items` → cảnh báo đỏ qua `pipelines.red_alert.raise_alert` (người
 -- nhận độc lập v4.0) + LEO THANG 1 cấp sau 2 giờ chưa xác nhận.
@@ -2808,11 +2753,8 @@ create table if not exists opex_entries (
 create index if not exists opex_entries_month_idx on opex_entries (month);
 
 -- ============================================================================
--- v8.3 phòng Dự án (WP11 DA) — 3 bảng, KHÔNG PII, KHÔNG alter bảng cũ.
--- * `programs` — DA-03 radar chương trình: `agents/da_radar.py --scan` ghi
---   (insert-only, `on conflict (intel_item_id) do nothing`) từ `intel_items`
---   chủ đề `chuong_trinh` (thu bằng collector v7.0 — không collector thứ 2).
---   Đọc: `da_radar --list` (nhắc hạn T-7/T-2), `agents/da_hoso.py` (DA-04).
+-- v8.3 phòng Dự án (WP11 DA) — 2 bảng còn lại sau v12.0 (radar chương trình
+-- `programs` DA-03 đã gỡ: xúc tiến ngoài phạm vi HĐ), KHÔNG PII.
 -- * `org_prospects` — DA-05 tổ chức mua quà Tết: `agents/da_b2b.py --import`
 --   ghi từ CSV NHẬP TAY (chỉ thông tin TỔ CHỨC công khai — KHÔNG cột SĐT/
 --   email/tên người/địa chỉ/liên hệ). Chỉ đổi `status`/`batch_queue_id`/
@@ -2822,24 +2764,9 @@ create index if not exists opex_entries_month_idx on opex_entries (month);
 --   `data/projects/milestones.json` (`on conflict (code) do nothing` — sửa
 --   tay không bị đè); đổi hạn chỉ qua mục `milestone_change` đã duyệt.
 --   `owner_role` = vai trò, không tên người.
--- Quyền: `docs/roles.sql` KHÔNG grant 3 bảng này (agent_writer/app_human bị
+-- Quyền: `docs/roles.sql` KHÔNG grant 2 bảng này (agent_writer/app_human bị
 -- từ chối mặc định) — CLI chạy DSN chủ sở hữu; grant hẹp = someday.
 -- ============================================================================
-
-create table if not exists programs (
-  id bigint generated always as identity primary key,
-  intel_item_id bigint not null unique references intel_items(id),
-  title text not null check (char_length(title) between 1 and 300),
-  organizer text not null default 'chưa công bố'
-    check (char_length(organizer) <= 200),
-  deadline date,
-  deadline_text text check (char_length(deadline_text) <= 120),
-  url text not null check (url ~ '^https?://'),
-  source text not null,
-  tier text not null check (tier in ('A', 'B')),
-  flags text[] not null default '{}',
-  first_seen timestamptz not null default now()
-);
 
 create table if not exists org_prospects (
   id bigint generated always as identity primary key,

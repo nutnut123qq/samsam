@@ -23,6 +23,70 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Checklist v12.0-go-ngoai-pham-vi
+
+Khán giả/mục đích: căn cứ phạm vi chuyển từ SOW draft sang **Hợp đồng hợp tác
+đầu tư TEDO–Sâm Sâm 2026 + PL01–05** (bản HĐ KHÔNG vào repo — repo public).
+User quyết 15/10/2026: phần THỪA so với HĐ thì bỏ; website bán hàng + chatbot
+website làm riêng sau; phần thiếu còn lại triển khai ở v12.1–v12.6. Lane A
+(v12.0) = gỡ thừa. Căn cứ gỡ: HĐ Điều 1.3 + PL01 mục 5 loại trừ cơ khí/chế tạo
+máy/xúc tiến đầu tư; HĐ có đúng 9 phòng ban (ceo, sales, marketing, intel,
+finance, production, farming, legal_hr, data_platform).
+
+- [x] A1 Gỡ khối Điện–cơ khí (WP14 + CK-A5): xóa `agents/{co_khi,cmms,ck_mat,
+  ck_predict}.py`, `data/co_khi/`, `data/directors/mechanical.json`, suite
+  `co_khi` + khung `ck_a6`, runner/scorer/validator `co_khi` trong
+  `scripts/agent_eval.py`, `LOCAL_ONLY_AGENTS` của gateway (chỉ còn phục vụ
+  `ck_mat`), kiểm `CK_MAT_DIR` trong `ingest/kb_internal.py` (GIỮ chặn
+  front-matter `confidential`), mục `CK_MAT_DIR` trong `env.example`; bảng
+  `machines`, `maintenance_plans`, `incidents` + view `downtime_log` khỏi
+  `docs/schema.sql` (grep: không module nào khác dùng; roles.sql không grant);
+  test riêng 4 file. `.gitignore` GIỮ `data/co_khi_mat/` (phòng còn tài liệu
+  mật local). Không có vai trò auth riêng cho cơ khí.
+- [x] A2 Gỡ phòng Dự án: xóa `agents/{da_radar,da_hoso,da_doitac,da_cr}.py`,
+  `data/projects/{sow_scope,ho_so_templates,data_room,partner_facts}.json`,
+  fixture `cr_cases_MAU.json` + `feed_chuong_trinh.xml`, khung suite `da_qa`,
+  `data/directors/projects.json`, bảng `programs`, test riêng 4 file.
+  **GIỮ + chuyển khối:** `agents/da_b2b.py` → khối `sales` (`org_prospect_batch`
+  thêm vào `sales.json`, handoff B, thuộc «Báo giá B2B quà Tết»);
+  `agents/da_pmo.py` → khối `ceo` (`weekly_board` + `milestone_change` thêm vào
+  `ceo.json`, thuộc «Theo dõi tiến độ, sổ quyết định»). Sổ mốc
+  `data/projects/milestones.json` gỡ 5 mốc của phần đã bỏ (DA-00/02/03/04/QA),
+  `owner_role gd_du_an → tgd`; `agents/ceo_decisions.py` đổi nhãn "Mốc trễ
+  (sổ mốc tiến độ)". `pipelines.director.BLOCKS` còn 9 khối.
+- [x] A3 Gỡ `agents/sx_rnd.py` (SX-A6) + `data/rd_concepts.json` + loại việc
+  `rd_concept_brief` khỏi `production.json` + cap gateway `sx_rnd`/`projects`;
+  GIỮ `sx_tracuu` (kho tài liệu R&D của PL01).
+- [x] A4 Luồng dữ liệu: gỡ DF-28 (`da_hoso`) + DF-40 (`sx_rnd`) khỏi
+  `data/data_flow_map.json` (40 → 38 luồng), sinh lại `docs/legal/DPIA-nhap.md`
+  + `TIA-nhap.md` bằng `scripts/dpia_draft.py` (38 luồng, 16 ra nước ngoài).
+- [x] A5 Căn cứ = HĐ: dòng đầu `SOW_SamSam_AI_6-thang.md` "ĐÃ BỊ THAY THẾ";
+  `AGENTS.md` Overview ghi 89 tính năng / 9 phòng ban, P1 12/10/2026–11/01/2027,
+  P2 hết năm 1, lõi trên server vật lý Sâm Sâm, website làm riêng; bỏ dòng
+  Commands phòng Dự án, "11 khối" → 9.
+- [x] A6 Docs: `kien-truc.md` (71 bảng public, bỏ 4 dòng bảng + mô tả module),
+  `sop.md` (mục 5m chỉ còn DA-05/DA-01 khối mới, gỡ DA-06/SX-A6/CK-A5, suite
+  22 = 14 active + 8 khung), `runbook-ha-tang.md` (bỏ id gateway đã gỡ),
+  `phu-luc-d.md`, `deploy/cloud/README.md`, `ban-giao-M31.md` (+ mục 5 "v12.0 —
+  gỡ ngoài phạm vi HĐ", bỏ external-dep chỉ của phần đã gỡ: Kỹ sư trưởng,
+  firewall luồng mật, data room/NDA, R&D concept, GĐ dự án).
+- [x] A7 `_doc` cả 9 `data/directors/*.json` ghi người duyệt theo PL01 (ceo TGĐ;
+  sales GĐ bán hàng; marketing GĐ marketing; intel Quản lý Marketing; finance
+  GĐ tài chính; production GĐ sản xuất; farming GĐ vùng trồng; legal_hr
+  Chuyên viên pháp chế; data_platform Quản lý AI). `approver_roles` KHÔNG đổi
+  (vai trò tương ứng chưa có trong `pipelines.auth.ROLES`).
+- [x] A8 Gate: grep module đã gỡ ngoài `DONE.md`/`evidence/` chỉ còn câu ghi
+  chú việc gỡ; `ruff check .` sạch; DB mới `samsam_v12_a`: `apply_schema
+  --roles` ×2 sạch (71 bảng), `core_store` exit 0, `golden_store` exit 0;
+  pytest bộ file đã sửa + liên quan: 1394 passed / 0 failed (31 file: các file đã sửa + test_data_flow_map, test_handover_docs, test_agent_eval, test_ci_workflow, test_kb_internal, test_llm_gateway, test_qa_harness, test_ceo_decisions, test_b2b_form, test_da_b2b, test_da_pmo, test_kd_quote, test_director*, + liên quan).
+
+Không làm (ghi lại để chọn sau, không phải dây chuyền): chủ đề intel
+`chuong_trinh` + 6 nguồn hội chợ/OCOP trong `data/intel_sources.json` (từng
+phục vụ radar DA-03, nay chỉ còn là tin thị trường chung — `_doc` đã ghi);
+bảng cũ trên DB đang chạy (`machines`, `maintenance_plans`, `incidents`,
+`programs`) KHÔNG drop — người quản trị quyết sau khi backup; sổ mốc theo lịch
+P1 của HĐ chờ hai bên chốt. Commit trên `main`, KHÔNG push.
+
 ## Checklist v11.0-p3
 
 Khán giả/mục đích: M31 (worktree `D:\code\samsam-w95`) — làm 3 agent P3 của
@@ -20403,3 +20467,4 @@ Quy ước DoD cho phase connector:
 | v1.9-leads | WS2 nền SOW: bảng `leads` (dedup_key unique, insert-only — không delete-by-source vì convlog rotate/purge) + `ingest/lead_store` harvest convlog+`.1` (intent partner/order/price/contact, channel suy từ `msg_id`) + tab Leads Streamlit read-only (convlog stats luôn hiện, DB-lỗi → st.info, `connect_timeout=3`) | 2026-10-10 | `evidence/v19_schema.log` (8 bảng public ×2) · `v19_leads.log` (harvest thật ×2 dup-30; rollback-only temp-table probe chứng minh 30-new→30-dup, public 30→30) · `v19_streamlit.log` + `v19_dashboard.png` (live + DB-unavailable, console 0 lỗi) · `v19_pytest.log` (131/131, focused 13/13 ×3, ruff clean); commits `c3387a0` (contract) + `af8d314` (code/tests/evidence/board) + commit đóng. Cold-check auditor lạ: **PASS** đợt 1 (tự chạy 131/131 + ruff + harvest → 30 rows) — 2 MINOR (intent substring FP, 30 leads là mock/replay phải nhãn "dữ liệu mẫu" khi demo) + 1 NIT (`answered` truthiness) → someday. Worker chết rate-limit giữa lane → resume/absorb; DB-fallback hang → `connect_timeout=3`; UI verify qua temp venv + Python Playwright (MCP root trỏ workspace khác) |
 | v2.0-report-agent | WS3 đầu tiên: agent báo cáo định kỳ → FILE markdown `data/reports/` (package `agents/` mới; consume orders/leads/plot_logs/plots/products + convlog file-based; degraded khi DB chết; nhãn *(mẫu)* cho `source 'sample:*'`; `answered` strict `is True`; BẢN NHÁP human-gate, KHÔNG tự gửi) + tab Streamlit thứ 5 "Báo cáo" | 2026-10-10 | `evidence/v20_report.log` (CLI ×2 idempotent + `--until/--days` + dead-host `10.255.255.1` → degraded exit 0) · `v20_report.md` (report mẫu thật) · `v20_streamlit.log` + `v20_report_tab.png`/`v20_report_dead.png` (live + DB-unavailable, console 0 lỗi, warning DEGRADED) · `v20_pytest.log` (147/147, focused 16/16 ×3, ruff clean); commits `1553e81` (contract) + `6cb3da8` (impl) + `fb2f93b` (board) + commit đóng. Cold-check: reviewer subagent quota-exhausted → **PASS coordinator self-review** (precedent v0.3/v0.5 — tự chạy lại 147/147 84s + ruff + CLI live/dead-DB khớp evidence); 4 NIT → someday (collect_chat đếm record thiếu-field, verbatim data không qua guardrail, `by_channel*` hardcode 2 kênh, report_name edge-00:00 + read_text race) |
 | v2.1-garden-log | WS3 thứ 2: agent nhật ký vùng trồng — `agents/garden.py` (vocab+alias fold bỏ dấu, `add_log` insert `source='manual:garden'` FK/unique → warn friendly không raise, `anomaly_check` no-logs/gap/keyword dùng `report.FLAG_KEYS`) + CLI `add`/`--check` + tab Streamlit thứ 6 "Nhật ký vườn" (form + panel Cần chú ý + bảng recent; DB-down → st.info) — feed report v2.0 qua `plot_logs`, KHÔNG tự gửi | 2026-10-11 | `evidence/v21_garden.log` (CLI: add KV-A01→#25, plot-sai/trùng/thiếu-arg → exit 2 warn, dead-host → check exit 0/add exit 2) · `v21_streamlit.log` + `v21_garden_tab.png`/`v21_garden_submit.png`/`v21_garden_dead.png` (live submit → row verify qua DB; dead-DB info, console 0 lỗi) · `v21_pytest.log` (159/159, focused 12/12 ×3, ruff clean); commits `15dd559` (contract) + impl + commit đóng. Cold-check: **PASS coordinator self-review** đợt 1 — subagent quota cạn (precedent v0.3/v0.5); UI E2E bắt bug thật "savepoint-khi-conn-đã-trong-tx" → `conn.commit()` vá trước đóng; NIT → someday (flags_for không fold, "khác…" trống, warns-drop-khi-fail, activity không bound, chat-intake/nhắc-định-kỳ deferred). Audit bù `/cold-audit` range `1553e81..HEAD` khi quota về |
+| v12.0-go-ngoai-pham-vi | Gỡ phần ngoài phạm vi Hợp đồng hợp tác TEDO–Sâm Sâm (khối cơ khí, phòng Dự án trừ DA-01/DA-05 chuyển khối, SX-A6) — 9 khối theo HĐ | 2026-10-15 | DB `samsam_v12_a` apply ×2 (71 bảng) + core/golden exit 0; pytest 1394 passed / 0 failed (31 file: các file đã sửa + test_data_flow_map, test_handover_docs, test_agent_eval, test_ci_workflow, test_kb_internal, test_llm_gateway, test_qa_harness, test_ceo_decisions, test_b2b_form, test_da_b2b, test_da_pmo, test_kd_quote, test_director*, + liên quan); ruff sạch. Chưa push. |

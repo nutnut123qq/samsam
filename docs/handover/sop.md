@@ -172,7 +172,7 @@ python -m pipelines.content --listing --sku savina-12v --channel shopee --channe
 Mọi việc cần người duyệt của agent nhân viên (đổi giá, báo giá B2B, chiến
 dịch ads, hồ sơ XNQC...) — TRỪ bài content (vẫn mục 4) — vào một hàng
 chung `approval_queue`. SLA và mức rủi ro theo cấu hình khối
-`data/directors/<khối>.json` (11 khối; danh sách người duyệt thật đang
+`data/directors/<khối>.json` (9 khối theo 9 phòng ban của HĐ; danh sách người duyệt thật đang
 rỗng — TGĐ chốt, external-dep).
 
 ```
@@ -295,7 +295,7 @@ python -m agents.ceo_decisions --propose                # agent ĐỀ XUẤT m�
 python -m agents.ceo_decisions --record --basis approval_queue:<id> --topic "<chủ đề>" --decision "<quyết định>" --by "<tên người ghi>" [--due YYYY-MM-DD]
 python -m agents.ceo_decisions --record --basis van_ban --decided-by "<người quyết>" --note "<số/ngày văn bản ≥10 ký tự>" --topic ... --decision ... --by "<tên>"
 python -m agents.ceo_decisions --follow <id> --status dang_lam|xong|huy --by "<tên>" [--note "<bằng chứng>"]
-python -m agents.ceo_decisions --list                   # sổ + quyết định quá hạn + mốc trễ phòng Dự án
+python -m agents.ceo_decisions --list                   # sổ + quyết định quá hạn + mốc trễ (sổ mốc DA-01)
 python -m agents.ceo_risk --report                      # → data/reports/ceo-risk-<ngày>.md
 python -m agents.ceo_audit --report                     # → data/reports/ceo-audit-<ngày>.md
 python -m agents.ceo_report --bulletin                  # bản tin GĐ khối ceo + 3 mục → director-ceo-<ngày>.md
@@ -1227,40 +1227,13 @@ management key OpenRouter (`key_usage_master`) cho đối chiếu chi phí key;
 Quản lý MXH cài trần ngân sách trên nền tảng ads; GĐ tài chính ký P&L/bản
 tin/nghiệm thu WP12.
 
-## 5m. Phòng Dự án (v8.3 — WP11 DA, agent KHÔNG tự nộp/gửi/liên hệ)
+## 5m. Tổ chức mua quà Tết + sổ mốc tiến độ (v8.3; v12.0 chuyển khối — agent KHÔNG tự gửi/liên hệ)
 
-**Radar chương trình (DA-03, sáng hằng ngày):**
-1. Thu tin: `python -m crawler.intel --run` (chỉ nguồn đã duyệt; nguồn
-   `chuong_trinh` ship `cho_duyet` — GĐ dự án/BGĐ duyệt trong
-   `data/intel_sources.json`; chạy thử 1 nguồn: `--source <id>`). Radar
-   KHÔNG có collector riêng — robots/nhịp ≥1s/chặn tầng C nằm ở collector.
-2. `python -m agents.da_radar --scan` → bảng `programs` (bỏ tin rượu, bỏ
-   host tầng C; `--dry-run` chỉ đếm).
-3. `python -m agents.da_radar --list` → `data/reports/da-radar-<ngày>.md`:
-   bảng chương trình + "Nhắc hôm nay" (T-7, T-2, PHÁT HIỆN MUỘN khi còn < 7
-   ngày). Hạn chỉ nhận ngày đứng SAU từ khóa hạn ("hạn chế", "giới hạn",
-   "thời hạn", "hạn hán"... KHÔNG tính; "từ X đến Y" lấy Y); cột "Trích hạn"
-   cho thấy đoạn máy dựa vào — đối chiếu link gốc trước khi chốt; "chưa
-   công bố" thì xem link gốc.
+v12.0: phòng Dự án (radar chương trình DA-03, hồ sơ tham gia DA-04, CR
+DA-02, hồ sơ đối tác DA-06) đã GỠ — xúc tiến đầu tư nằm ngoài phạm vi
+Hợp đồng hợp tác TEDO–Sâm Sâm. Hai agent còn lại chuyển khối như dưới.
 
-**Hồ sơ tham gia (DA-04):**
-1. `python -m agents.da_hoso --checklist <program_id> --template hoi_cho|ocop|xuc_tien_tmdt`
-   → file NỘI BỘ (checklist giấy tờ + câu hỏi Pháp chế — không gửi ra ngoài).
-2. `python -m agents.da_hoso --draft <id> --template T --submit` → nháp
-   bản nộp + đẩy hàng duyệt khối `projects` (`program_application`,
-   PENDING). Nháp có "CẢNH BÁO" (guardrail/rượu/SKU chưa XNQC/0 sản phẩm)
-   → `--submit` bị từ chối exit 1. `--llm` (viết lại thư qua LLM) mặc định
-   TẮT.
-3. Người duyệt (≠ agent): `python -m pipelines.approval_queue --approve <QID> --by "<tên>"`.
-4. `python -m agents.da_hoso --export <QID> --out <file>` (chỉ mục đã duyệt
-   khớp sha256).
-5. Trước khi nộp: `python -m agents.da_hoso --verify-submit <QID> <file>`
-   → exit 0 "KHỚP bản đã duyệt — GĐ dự án tự nộp". Exit 1 **"LỆCH bản
-   duyệt"** = file đã bị sửa (kể cả 1 ký tự, xuống dòng, khoảng trắng,
-   lưu lại bằng Word/BOM) → KHÔNG nộp; soạn lại (`--draft --submit`) và
-   duyệt lại.
-
-**Tổ chức mua quà Tết (DA-05):**
+**Tổ chức mua quà Tết (DA-05 — khối sales, thuộc «Báo giá B2B quà Tết»):**
 1. CSV nhập tay đúng header `org_name,org_type,region,website,source_url,fit_reason`
    — CHỈ thông tin TỔ CHỨC công khai. CẤM nhập SĐT/email/tên người/địa chỉ
    (file bị từ chối cả file); không dùng link Facebook/Zalo/TikTok/sàn.
@@ -1271,7 +1244,7 @@ tin/nghiệm thu WP12.
 2. `python -m agents.da_b2b --import <file.csv> --by "<tên>"` (lỗi → exit
    1, 0 dòng nạp; in số dòng + cột, không in giá trị).
 3. `python -m agents.da_b2b --submit-batch` → 1 lô PENDING
-   (`org_prospect_batch`); GĐ dự án/GĐ bán hàng duyệt qua
+   (`org_prospect_batch`, khối sales); GĐ bán hàng duyệt qua
    `pipelines.approval_queue`.
 4. `python -m agents.da_b2b --handover <QID> --by "<tên>"` → dòng
    `chuyen_sales` (chỉ khi đã duyệt + khớp sha256; lô bị từ chối HOẶC hết
@@ -1283,7 +1256,7 @@ tin/nghiệm thu WP12.
    lại. Hệ thống KHÔNG tự liên hệ — GĐ bán hàng/đại lý liên hệ; kiểm tay
    20 mẫu/lô (tên người trong lý do không bắt được bằng máy).
 
-**PMO thứ Hai (DA-01):** `python -m agents.da_pmo --board --submit`
+**Sổ mốc tiến độ thứ Hai (DA-01 — khối ceo, thuộc «Theo dõi tiến độ, sổ quyết định»; TGĐ duyệt):** `python -m agents.da_pmo --board --submit`
 (bảng tuần, mốc trễ tô **TRỄ**; `--seed` lần đầu từ
 `data/projects/milestones.json`). Đổi trạng thái: `--set-status <MÃ>
 --status xong --evidence <link> --by "<tên>"` (xong thiếu evidence → exit
@@ -1292,12 +1265,6 @@ tin/nghiệm thu WP12.
 người đề xuất KHÔNG tự duyệt được — cần người khác). `--submit` từ chối
 (exit 1) khi bảng trượt guardrail (title/gate/evidence có từ cấm/nhóm rượu
 — sửa chữ rồi chạy lại).
-
-**CR (DA-02):** `python -m agents.da_cr --cr "<yêu cầu>" --submit` →
-nháp CR (GỢI Ý trong_sow/can_cr/chua_ro + trích nguyên văn SOW, không giá)
-vào hàng duyệt `change_request` cho TGĐ. Yêu cầu có từ cấm (vd "chữa lỗi",
-"thuốc") → `--submit` exit 1, diễn đạt lại (vd "sửa lỗi"). `--list` = sổ
-CR. `--eval` chạy bộ MẪU dev (không phải nghiệm thu).
 
 Exit chung: 0 ok · 1 bị từ chối (chưa duyệt / lệch hash / CSV lỗi /
 cảnh báo) · 2 tham số sai hoặc DB down.
@@ -1623,9 +1590,9 @@ gửi. Dữ liệu thật hiện chỉ còn 3 mã mật ong (mọi TPBVSK chưa 
 Exit chung: 0 ok · 1 bị chặn (problems / cổng / chưa duyệt / lệch hash /
 ma trận lỗi) · 2 tham số sai hoặc DB down.
 
-## 5t. Tri thức P2: tra cứu khoa học nội bộ, cảnh báo thời tiết, hồ sơ đối tác, theo dõi văn bản (v10.2)
+## 5t. Tri thức P2: tra cứu khoa học nội bộ, cảnh báo thời tiết, theo dõi văn bản (v10.2)
 
-4 agent P2 của WP16 — KHÔNG agent nào gửi/đăng/liên hệ ra ngoài và không tự
+3 agent P2 của WP16 (v12.0 gỡ DA-06 hồ sơ đối tác — ngoài phạm vi HĐ) — KHÔNG agent nào gửi/đăng/liên hệ ra ngoài và không tự
 duyệt. Đầu ra = file `data/reports/` (gitignored) + mục hàng duyệt `pending`
 + cảnh báo `red_alerts`.
 
@@ -1659,21 +1626,6 @@ duyệt. Đầu ra = file `data/reports/` (gitignored) + mục hàng duyệt `pe
    `fetch.enabled = true` — mặc định false vì điều khoản Open-Meteo/API có
    phí chưa xác minh (external-dep); chưa bật → exit 2, 0 request.
 
-**DA-06 hồ sơ đối tác (phòng Dự án) — shadow tới go-live 16/02/2027:**
-1. `python -m agents.da_doitac --data-room` → mục lục data room NỘI BỘ +
-   trạng thái `thieu`/`chua_xac_minh`/`da_xac_minh` (`data/projects/
-   data_room.json`; `verified_by` do NGƯỜI điền sau khi đối chiếu).
-2. `python -m agents.da_doitac --draft <PROSPECT_ID> [--date YYYY-MM-DD]` →
-   nháp hồ sơ từ `org_prospects` (chỉ thông tin tổ chức) + SKU đủ điều kiện
-   + số liệu có nguồn + ngày (`data/projects/partner_facts.json` hiện là
-   MẪU). Không dự phóng/cam kết lợi nhuận (bị chặn).
-3. Từ 16/02/2027: `--draft <ID> --submit` → mục `partner_profile` khối
-   projects (risk high). Trước go-live `--submit` bị từ chối (exit 1).
-4. `python -m agents.da_doitac --status <QID>` → chỉ "được chia sẻ (theo
-   NDA)" khi mục ĐÃ duyệt VÀ dữ liệu dựng lại khớp sha256 bản duyệt; còn lại
-   "không được chia sẻ". Hệ thống không gửi data room — người chia sẻ theo
-   NDA sau khi TGĐ/HĐTV duyệt.
-
 **PC-A8 theo dõi văn bản pháp luật (Pháp chế):**
 1. Nguồn văn bản (`chinhphu-van-ban`, `cuc-attp-van-ban`, `boyte-van-ban`
    trong `data/intel_sources.json`, tầng A) đang `cho_duyet` — Pháp chế xác
@@ -1692,8 +1644,7 @@ duyệt. Đầu ra = file `data/reports/` (gitignored) + mục hàng duyệt `pe
 
 External-dep: tài liệu khoa học thật + GĐ SX duyệt nạp; API thời tiết/điều
 khoản Open-Meteo; ngưỡng + gán khoảnh→vùng; Pháp chế duyệt nguồn văn bản +
-từ khóa; người nhận cảnh báo thật; số liệu data room thật + GĐ tài chính đối
-chiếu + TGĐ/HĐTV duyệt + NDA; người duyệt thật các khối; chủ khối ký nghiệm
+từ khóa; người nhận cảnh báo thật; người duyệt thật các khối; chủ khối ký nghiệm
 thu WP16.
 
 ## 5u. Đơn sàn + đối soát, chăm sóc lại, livestream, YouTube (v10.1 WP16 — KD-A6/A7/A9, MKT-12; hệ thống KHÔNG gửi/đăng)
@@ -1854,31 +1805,16 @@ Center/kế toán) = external-dep; báo cáo gắn `(MẪU)` khi nguồn là fil
 Exit chung: 0 ok · 1 cấu hình hỏng (biểu phí / `hdtv_report.json`) / guardrail
 chặn submit · 2 tham số sai / kỳ chưa đóng / DB down.
 
-## 5x. Agent P3: concept R&D, dự báo thu hoạch & sẵn hàng, bảo trì dự đoán (v11.0)
+## 5x. Agent P3: dự báo thu hoạch & sẵn hàng (v11.0)
 
-WP17 — 3 agent chỉ ĐỀ XUẤT; đầu ra = file `data/reports/` + mục `pending`
+WP17 — agent chỉ ĐỀ XUẤT (v12.0 gỡ SX-A6 concept R&D và CK-A5 bảo trì
+dự đoán — ngoài phạm vi HĐ); đầu ra = file `data/reports/` + mục `pending`
 qua `pipelines.director.submit` (không tự duyệt, không công bố, không tự
 vận hành máy). Giả định là BẢN DEV SOẠN — người có thẩm quyền chốt.
 
-**SX-A6 concept brief R&D** (khối production, GĐ sản xuất duyệt):
-1. `python -m agents.sx_rnd --list` — danh mục concept `data/rd_concepts.json`
-   (GIẢ ĐỊNH — GĐ SX chốt; SKU nền phải có trong golden, không SKU rượu).
-2. `python -m agents.sx_rnd --brief <concept_id> [--llm] [--submit]
-   [--date YYYY-MM-DD]` → `data/reports/rd-brief-<id>-<ngày>.md`: 5 mục
-   (Hương vị / Nguồn gốc / Nghi thức dùng / Quy cách / Giá dự kiến dạng
-   khoảng) + tín hiệu `intel_items` 90 ngày (URL + ngày; tin cờ rượu bị loại)
-   + nhãn "NỘI BỘ – concept chưa duyệt, không công bố ra ngoài" + dòng
-   "Sinh bởi" (model/seed/ngày). KHÔNG nêu công dụng: brief phải qua cổng
-   `claim_free` (guardrail + 0 động từ claim + không rượu), lỗi → exit 1,
-   không ghi file/không vào hàng. `--llm` (mặc định TẮT, agent `sx_rnd`, cap
-   1.0 USD/tháng ƯỚC TÍNH) chỉ viết lại hương vị/nghi thức; lỗi/không qua cổng
-   → về template kèm lý do. `--submit` → mục `rd_concept_brief` (risk high,
-   SLA 72h); chạy lại cùng nội dung → `skipped`. GĐ SX chọn concept thử mẫu —
-   brief KHÔNG công bố ra ngoài.
-
 **VT dự báo thu hoạch & sẵn hàng theo lô** (khối farming, GĐ vùng trồng xác
 nhận trước khi chia sẻ — không dùng làm cam kết):
-3. `python -m agents.vt_thuhoach [--date YYYY-MM-DD] [--weeks 13] [--submit]`
+1. `python -m agents.vt_thuhoach [--date YYYY-MM-DD] [--weeks 13] [--submit]`
    → `data/reports/vt-thu-hoach-<ngày>.md`: kg củ tươi theo khoảnh (quý thu
    hoạch, khoảng thấp–cơ sở–cao từ `data/harvest_assumptions.json` GIẢ ĐỊNH);
    khoảnh đã có nhật ký "thu hoạch" không dự báo lại; thiếu số cây/năm trồng →
@@ -1888,25 +1824,11 @@ nhận trước khi chia sẻ — không dùng làm cam kết):
    giả định, as_of/generated. `--submit` → mục `harvest_forecast` (risk
    medium); trùng → `skipped`.
 
-**CK-A5 bảo trì dự đoán bước 1** (khối mechanical, Kỹ sư trưởng quyết):
-4. `python -m agents.ck_predict [--date YYYY-MM-DD] [--submit]` →
-   `data/reports/ck-a5-<ngày>.md`. Điều kiện bật: view `downtime_log` (sự cố
-   đã đóng) phủ ≥ 90 ngày. Chưa đủ → "CK-A5: ĐÃ XÂY, CHƯA BẬT" + số ngày/số sự
-   cố thật, 0 danh sách máy, `--submit` exit 1 ("từ chối bật"). Đủ → máy rủi
-   ro theo quy tắc (lặp ≥ 2 sự cố/bộ phận trong 90 ngày, downtime ≥ 240 phút,
-   lần kế dự kiến ≤ 14 ngày — ngưỡng GIẢ ĐỊNH, Kỹ sư trưởng chốt) + backtest
-   precision/recall; `--submit` → mục `maintenance_risk` (risk medium). Chỉ
-   gợi ý đưa bảo trì lên sớm — agent không ra lệnh vận hành máy; không
-   PLC/cảm biến.
-
-**External-dep:** R&D thật (≈5 man-day ngoài gói), mock-up ảnh + persona,
-danh mục concept/khoảng giá và giả định năng suất do người có thẩm quyền
-chốt, khoảnh/lô/nhật ký thật (hiện MẪU), số bán thật, dữ liệu downtime thật
-≥ 3 tháng, giờ chạy máy + cảm biến (bước 2), người duyệt thật các khối,
+**External-dep:** giả định năng suất do người có thẩm quyền chốt,
+khoảnh/lô/nhật ký thật (hiện MẪU), số bán thật, người duyệt thật các khối,
 chủ khối ký nghiệm thu WP17.
 
-Exit chung: 0 ok · 1 cấu hình/giả định hỏng, brief không qua cổng, CK-A5
-chưa bật mà `--submit` · 2 tham số sai / DB down.
+Exit chung: 0 ok · 1 cấu hình/giả định hỏng · 2 tham số sai / DB down.
 
 ## 6. Backup + diễn tập khôi phục (v3.6)
 
@@ -2145,9 +2067,8 @@ python scripts/eval_qa.py   # 12 câu hỏi questions.md qua RAG thật — exit
 
 ```
 python scripts/agent_eval.py --validate          # kiểm MỌI suite data/eval/suites/*.json (không DB/LLM)
-python scripts/agent_eval.py --deterministic     # validate + suite tất định (guardrail + co_khi + kd_a1 + mkt02 + mkt03 + sales_director) — CI chạy mỗi push
+python scripts/agent_eval.py --deterministic     # validate + suite tất định (guardrail + kd_a1 + mkt02 + mkt03 + sales_director...) — CI chạy mỗi push
 python scripts/agent_eval.py --agent guardrail   # suite data/eval/suites/guardrail.json, không cần key — ghi eval_runs
-python scripts/agent_eval.py --agent co_khi --no-record   # 23 ca MẪU agent tra cứu cơ khí CK-A1 (luật, local)
 python scripts/agent_eval.py --agent chatbot     # 14 ca qua RAG thật (cần OPENROUTER_API_KEY) — tay/nightly
 python scripts/agent_eval.py --print-hash guardrail                  # cases_sha256 tính lại
 python scripts/agent_eval.py --propose-threshold guardrail --by "<tên>"   # đổi ngưỡng sau run FAIL
@@ -2156,12 +2077,10 @@ python scripts/deploy_gate.py --sha <SHA 40 hex> --approved-by "<tên>" [--hotfi
 ```
 
 - **Suite (v4.5)** `data/eval/suites/<agent>.json` = ca + ngưỡng (chốt
-  TRƯỚC khi chạy) + `owner_block` (khối nhận báo cáo) + `risk`. 13 suite:
-  `guardrail`, `chatbot`, `co_khi` (active) + 10 khung agent QA khối
-  (`skeleton` — harness từ chối chạy tới khi có code agent). `co_khi` =
-  suite chấm agent tra cứu CK-A1 (`agents/ck_mat.py`); `ck_a6` = khung
-  agent QA A6 khối Cơ khí — khác vai trò, giữ cả hai; `co_khi` không nằm
-  trong `required_agents`. Mọi suite `frozen: false`,
+  TRƯỚC khi chạy) + `owner_block` (khối nhận báo cáo) + `risk`. 22 suite:
+  14 active (gồm `guardrail`, `chatbot`) + 8 khung agent QA khối
+  (`skeleton` — harness từ chối chạy tới khi có code agent). v12.0 gỡ suite
+  cơ khí + 2 khung của khối cơ khí/dự án (ngoài phạm vi HĐ). Mọi suite `frozen: false`,
   ca nhãn `dev_draft`: công ty gán nhãn + đóng băng bộ ca thật
   (`labeled_by`/`frozen_at`) là external-dep.
 - **Sửa ca** = tăng `version` + cập nhật `cases_sha256` bằng

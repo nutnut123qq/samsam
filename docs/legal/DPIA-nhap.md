@@ -376,7 +376,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Thời hạn lưu | Không giới hạn — lịch sử nghiệm thu theo commit (kiểm toán deploy) |
 | Bên nhận | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `ci_judge`, trần 1 USD/tháng) |
 | Chuyển ra nước ngoài | CÓ — xem TIA |
-| Biện pháp bảo vệ (có trong code) | Chỉ qua `pipelines.llm_gateway` agent `ci_judge` — không gọi client LLM trực tiếp (test khóa); Model judge phải KHÁC HỌ nhà sản xuất với model agent (allowlist họ; router/alias lạ → từ chối trước mọi lời gọi); CI mỗi push (`--deterministic`) chỉ chạy suite luật (guardrail + co_khi + kd_a1 — kd_a1 gateway giả) — 0 lời gọi LLM; hiện chưa suite active nào có ca judge |
+| Biện pháp bảo vệ (có trong code) | Chỉ qua `pipelines.llm_gateway` agent `ci_judge` — không gọi client LLM trực tiếp (test khóa); Model judge phải KHÁC HỌ nhà sản xuất với model agent (allowlist họ; router/alias lạ → từ chối trước mọi lời gọi); CI mỗi push (`--deterministic`) chỉ chạy suite luật (guardrail + kd_a1 — kd_a1 gateway giả) — 0 lời gọi LLM; hiện chưa suite active nào có ca judge |
 | Căn cứ xử lý | Không xử lý dữ liệu cá nhân thật (ca kiểm thử tổng hợp) — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep) |
 
@@ -505,24 +505,6 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Biện pháp bảo vệ (có trong code) | 0 import mạng/LLM (test FIN-QA subprocess `python -I`); mọi text FP&A qua `_mask_pii` không đổi; Giá vốn: người duyệt ≠ người lập chặn ở DB (function SECURITY DEFINER), bảng append-only; Đề xuất ads + khoản vượt ngưỡng X là mục chờ NGƯỜI duyệt (risk high, auto_policy không áp); khoản > X chỉ 'được chi' khi vai trò tgd duyệt; Báo cáo chỉ sku_key/kênh/số tiền — không mã đơn/hash, không tên người lập/duyệt |
 | Căn cứ xử lý | Nghĩa vụ kế toán + lợi ích hợp pháp quản trị nội bộ — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Giá vốn thật + người lập/duyệt thật = external-dep (bảng `cogs_versions` trên DB thật để trống); Hóa đơn cloud/SaaS thật (thay `opex_MAU.csv`) = external-dep; Ngưỡng biên, hệ số ngân sách, trần chi phí, ngưỡng X, tỷ giá, chi cố định, độ trễ tiền sàn, số dư đầu kỳ (`data/fpa_config.json`) — GĐ tài chính chốt; TGĐ ký khoản vượt X + danh sách người/vai trò thật (`data/users.json`); Doanh thu đại lý/B2B từ MISA cho P&L kênh offline |
-
-### DF-28 — Hồ sơ tham gia chương trình — viết lại thư đăng ký bằng LLM (v8.3 DA-04, tùy chọn)
-
-| Mục | Nội dung |
-|---|---|
-| Mã luồng | DF-28 |
-| Module (code) | `agents/da_hoso.py` |
-| Mục đích | Soạn NHÁP thư đăng ký tham gia hội chợ/OCOP/xúc tiến cho GĐ dự án duyệt (DA-04) |
-| Dữ liệu | Tên/đơn vị tổ chức/hạn chương trình công khai (từ `programs`, gốc tin RSS tầng A/B) + tên SKU được phép (food, TPBVSK đã XNQC) — KHÔNG PII, KHÔNG file nội bộ (checklist/câu hỏi Pháp chế) |
-| Lớp | Xanh |
-| Chủ thể | Không có dữ liệu cá nhân — thông tin chương trình công khai và catalog |
-| Nơi lưu | Bản nộp (payload) trong `approval_queue` khối `projects` (`program_application`, sha256 bất biến); nháp + file nội bộ ở `data/reports/` (gitignored) |
-| Thời hạn lưu | Theo `approval_queue` (hồ sơ duyệt); file nháp `data/reports/` theo dọn báo cáo |
-| Bên nhận | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `projects`, cap tháng riêng) — CHỈ khi chạy `--llm` (mặc định TẮT) |
-| Chuyển ra nước ngoài | CÓ — xem TIA |
-| Biện pháp bảo vệ (có trong code) | Mặc định TẮT — chỉ khi `--llm`; Prompt chỉ dữ kiện công khai (không gửi checklist/câu hỏi Pháp chế); Thư LLM qua CÙNG cổng `check_publish` + lọc rượu + SKU bị loại; trượt → thư template; Agent không tự nộp/gửi — bản nộp phải khớp sha256 bản người duyệt (`--verify-submit`) |
-| Căn cứ xử lý | Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN |
-| GAP | (không) |
 
 ### DF-29 — Kênh Messenger (Facebook Page) — nhận tin và trả lời khách (v5.1)
 
@@ -722,24 +704,6 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Căn cứ xử lý | Lợi ích hợp pháp/hợp đồng lao động với nhân viên — CẦN LUẬT SƯ XÁC NHẬN |
 | GAP | Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email); Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday) |
 
-### DF-40 — Concept brief R&D SX-A6 (v11.0)
-
-| Mục | Nội dung |
-|---|---|
-| Mã luồng | DF-40 |
-| Module (code) | `agents/sx_rnd.py` |
-| Mục đích | Soạn concept brief NỘI BỘ sản phẩm phái sinh (không nêu công dụng) để GĐ sản xuất chọn concept thử mẫu |
-| Dữ liệu | Mô tả concept từ `data/rd_concepts.json` (hương vị/nghi thức dùng — GIẢ ĐỊNH, không dữ liệu cá nhân) gửi LLM khi `--llm`; tín hiệu = URL + ngày tin public trong `intel_items` (không gửi LLM, không chép tiêu đề/đoạn trích vào brief); KHÔNG dữ liệu khách/nhân viên |
-| Lớp | Xanh |
-| Chủ thể | Không có chủ thể dữ liệu cá nhân (danh mục sản phẩm + tin báo chí public) |
-| Nơi lưu | File `data/reports/rd-brief-<id>-<ngày>.md` (gitignored) + `approval_queue` mục `rd_concept_brief` khối production (pending, risk high); `llm_usage` khi `--llm` |
-| Thời hạn lưu | Không giới hạn — hồ sơ duyệt append-only; file báo cáo xóa tay |
-| Bên nhận | OpenRouter (Mỹ) → whitelist provider (Mỹ) — CHỈ khi `--llm` (mặc định TẮT), chỉ đoạn hương vị/nghi thức của concept, qua `_mask_pii` của gateway |
-| Chuyển ra nước ngoài | CÓ — xem TIA |
-| Biện pháp bảo vệ (có trong code) | `--llm` mặc định TẮT; kill-switch + trần chi phí tháng `sx_rnd` (1.0 USD ƯỚC TÍNH) ở gateway; Cổng `claim_free`: `check_publish(internal_note)` + 0 động từ claim + không rượu — lỗi thì về template hoặc không ghi/không nộp; Concept/tín hiệu nhắc rượu bị loại; brief gắn nhãn NỘI BỘ, không có đường công bố ra ngoài |
-| Căn cứ xử lý | Không xử lý dữ liệu cá nhân — không cần căn cứ NĐ 13/2023; chuyển dữ liệu sản phẩm ra nước ngoài theo hợp đồng nhà cung cấp LLM |
-| GAP | R&D thật, mock-up ảnh, xếp hạng persona = external-dep (chưa làm) |
-
 ## 3. Đánh giá rủi ro
 
 Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → cao, Vàng → trung bình, Xanh → thấp; luồng chuyển ra nước ngoài đánh giá thêm ở TIA.
@@ -773,7 +737,6 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-25 | Đối soát quyết toán sàn — ACC-Recon (v9.0) | Đỏ | cao | không | 2 |
 | DF-26 | Rà bài đăng kênh sở hữu từ file xuất tay (v4.3 PC-A4) | Xanh | thấp | không | 2 |
 | DF-27 | FP&A tài chính–kế hoạch — giá vốn, P&L, ngân sách ads, chi phí vận hành, dòng tiền (v9.1) | Vàng | trung bình | không | 5 |
-| DF-28 | Hồ sơ tham gia chương trình — viết lại thư đăng ký bằng LLM (v8.3 DA-04, tùy chọn) | Xanh | thấp | có | 0 |
 | DF-29 | Kênh Messenger (Facebook Page) — nhận tin và trả lời khách (v5.1) | Đỏ | cao | có | 4 |
 | DF-30 | Gợi ý trả lời chat sàn Shopee/TikTok — MXH dán tay (v5.1) | Đỏ | cao | có | 2 |
 | DF-31 | Rà SEO website công ty (v6.5) | Xanh | thấp | không | 0 |
@@ -785,7 +748,6 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 | DF-37 | Dự báo thời tiết VT (v10.2) | Xanh | thấp | có | 3 |
 | DF-38 | Chăm sóc lại + xin đánh giá khách kênh sở hữu → nháp tin vào hàng duyệt (KD-A7, v10.1) | Đỏ | cao | không | 4 |
 | DF-39 | Kịch bản livestream (KD-A9) + gói video YouTube dài (MKT-12) qua LLM gateway (v10.1) | Vàng | trung bình | có | 2 |
-| DF-40 | Concept brief R&D SX-A6 (v11.0) | Xanh | thấp | có | 1 |
 
 ## 4. Tổng hợp GAP
 
@@ -867,7 +829,6 @@ Mức đề xuất, Pháp chế chốt. Quy tắc cố định: lớp Đỏ → 
 - [DF-38] Chưa có job xóa lần mua/liên hệ theo thời hạn (retention)
 - [DF-39] Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email)
 - [DF-39] Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday)
-- [DF-40] R&D thật, mock-up ảnh, xếp hạng persona = external-dep (chưa làm)
 
 ## 5. Câu hỏi cho luật sư
 

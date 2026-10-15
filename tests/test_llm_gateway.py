@@ -336,38 +336,3 @@ def test_pii_allow_keeps_company_contact_only(fake):
 def test_default_config_routing_and_allow():
     cfg = gw._config()
     assert cfg["provider_only"] and gw._allow(cfg)
-
-
-def test_local_only_agent_ck_mat_blocked_before_config(fake, monkeypatch, tmp_path):
-    # v9.5: luồng MẬT CK-A1 không bao giờ ra mạng — chặn TRƯỚC config/DB/
-    # client; không config/env nào gỡ được.
-    assert "ck_mat" in gw.LOCAL_ONLY_AGENTS
-    n = {"client": 0, "connect": 0, "spend": 0, "record": 0}
-
-    def _count(key, ret=None):
-        def f(*a, **k):
-            n[key] += 1
-            return ret
-        return f
-    monkeypatch.setattr(gw, "_client", _count("client", fake))
-    monkeypatch.setattr(gw, "_connect", _count("connect"))
-    monkeypatch.setattr(gw, "_month_spend", _count("spend"))
-    monkeypatch.setattr(gw, "_record", _count("record"))
-    monkeypatch.setenv("LLM_PROVIDER_ONLY", "azure")
-    monkeypatch.setenv("LLM_CAP_DEFAULT_USD", "1000")
-    with pytest.raises(gw.GatewayBlocked):
-        gw.chat("ck_mat", [{"role": "user", "content": "tủ điện"}], model="m")
-    with pytest.raises(gw.GatewayBlocked):
-        gw.embed("ck_mat", ["trang 1"], model="m")
-    # config hỏng vẫn ra GatewayBlocked (kiểm trước _config()).
-    bad = tmp_path / "bad.json"
-    bad.write_text("{", encoding="utf-8")
-    monkeypatch.setattr(gw, "CONFIG", bad)
-    with pytest.raises(gw.GatewayBlocked):
-        gw.chat("ck_mat", [{"role": "user", "content": "x"}])
-    assert n == {"client": 0, "connect": 0, "spend": 0, "record": 0}
-    assert fake.calls == []
-    # agent khác không đổi hành vi.
-    monkeypatch.setattr(gw, "CONFIG", fake.cfg_path)
-    gw.chat("chatbot", [{"role": "user", "content": "hi"}], model="m")
-    assert len(fake.calls) == 1 and n["client"] == 1

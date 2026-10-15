@@ -107,7 +107,7 @@ grant execute on function
 --                  tiếp (TGĐ/ha_tang là người = app_human → không xóa/sửa
 --                  được cảnh báo đỏ). auto_policies: chỉ owner ghi.
 -- agent_writer CHỈ đọc metadata hàng duyệt (bản tin GĐ không cần payload);
--- payload 11 khối (pháp chế, tài chính, báo giá...) chỉ app_human đọc —
+-- payload 9 khối (pháp chế, tài chính, báo giá...) chỉ app_human đọc —
 -- mọi agent kể cả chatbot khách hàng KHÔNG đọc được (least privilege).
 grant select (id, object_type, object_id, block, title, risk, qa_status,
   status, created_by, created_at, due_at, decided_by, decided_at, lane)

@@ -754,7 +754,7 @@ def export(conn, qid: int, out: Path,
 
 def verify_send(conn, qid: int, path: Path,
                 object_types=QUOTE_TYPES) -> bool:
-    """File sắp gửi có đúng bản đã duyệt? (khuôn `da_hoso._verify_submit`).
+    """File sắp gửi có đúng bản đã duyệt? (khớp sha256 bản duyệt).
     > 2 MB / không UTF-8 / sai khối-loại / chưa duyệt / lệch → False."""
     p = Path(path)
     try:

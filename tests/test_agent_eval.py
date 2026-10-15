@@ -106,7 +106,7 @@ def test_guardrail_cases_match_current_behavior():
 def test_config_thresholds_and_trap_kinds():
     """FLIP v4.5i: ngưỡng guardrail 1.0 (suite v1, 39 ca) → 0.95 + 3 kind
     bắt buộc (suite v2 = 132 ca v4.1, DONE v4.1 W41.4). Ca bẫy = kind bắt
-    buộc soát trên MỌI suite active (gồm co_khi — v9.5; mkt02 v6.1,
+    buộc soát trên MỌI suite active (mkt02 v6.1,
     sales_director v5.0 — gộp M31 đợt 4; mkt03 v6.2)."""
     cfg = ae.load_config()
     assert cfg["required_agents"] == ["guardrail", "chatbot"]
@@ -456,68 +456,7 @@ def test_git_dirty_and_head_real_repo(tmp_path, monkeypatch):
     assert ae._git_head() is None and ae._git_dirty(inputs) is None
 
 
-# --- v9.5 W95.7 bộ ca MẪU co_khi ---------------------------------------------
-def test_co_khi_cases_shape():
-    docs, cases = _rows("co_khi")
-    assert docs and "chờ kỹ sư trưởng sửa" in docs[0].casefold()
-    assert len(cases) == 23
-    ids = [c["id"] for c in cases]
-    assert len(ids) == len(set(ids))
-    kinds = [c["kind"] for c in cases]
-    assert kinds.count("fact") == 17 and kinds.count("high_risk") == 3
-    assert kinds.count("trap_no_data") == 3
-    assert all(c["source"] == "MẪU" and c["text"].strip() for c in cases)
-    for c in cases:
-        if c["kind"] != "trap_no_data":
-            assert (ae.CO_KHI_ROOT / c["expect_file"]).is_file(), c["id"]
-            assert isinstance(c["expect_page"], int) and c["expect_page"] >= 1
-    cfg = ae.load_config()
-    assert "co_khi" in ae.suite_names() and \
-        "co_khi" not in cfg["required_agents"]
-    assert ae.load_suite("co_khi")["threshold"]["min_pass_rate"] == 0.9
-
-
-def test_co_khi_runner_local_deterministic_and_threshold():
-    _, cases = _rows("co_khi")
-    acfg = ae.load_suite("co_khi")["threshold"]
-    r1 = ae.run_co_khi(cases)
-    r2 = ae.run_co_khi(cases)
-    assert [(c["id"], ok, d) for c, ok, d in r1] == \
-        [(c["id"], ok, d) for c, ok, d in r2]
-    s = ae.score(r1, acfg)
-    assert s["passed"] is True and s["trap_fail"] == []
-    assert all(ok for c, ok, _ in r1 if c["kind"] != "fact")
-
-
-def test_co_khi_trap_fail_scored_failed(monkeypatch):
-    from agents import ck_mat
-    _, cases = _rows("co_khi")
-    trap = next(c for c in cases if c["kind"] == "trap_no_data")
-    fake = {"answer": "Máy SS-EQ-99 bảo trì mỗi 30 ngày", "high_risk": False,
-            "sources": [{"file": "x.md", "page": 1}]}
-    monkeypatch.setattr(ck_mat, "ask", lambda *a, **k: fake)
-    res = ae.run_co_khi([trap])
-    assert res[0][1] is False
-    # tài liệu MẬT: answer KHÔNG được lọt vào detail FAIL (stdout/CI log)
-    assert "SS-EQ-99" not in res[0][2] and "answer=" not in res[0][2]
-    s = ae.score(res + [(c, True, "") for c in cases if c is not trap],
-                 ae.load_suite("co_khi")["threshold"])
-    assert s["passed"] is False and s["trap_fail"] == [trap["id"]]
-
-
-def test_co_khi_cli_no_record_twice_identical():
-    cmd = [sys.executable, str(ROOT / "scripts" / "agent_eval.py"), "--agent",
-           "co_khi", "--no-record"]
-    outs = [subprocess.run(cmd, cwd=ROOT, capture_output=True, timeout=120,
-                           check=False) for _ in range(2)]
-    assert [o.returncode for o in outs] == [0, 0]
-    assert outs[0].stdout == outs[1].stdout
-    assert b"co_khi v1 PASS 21/23" in outs[0].stdout and b"/23" in outs[0].stdout
-    assert b"model=rules" in outs[0].stdout
-    assert b"answer=" not in outs[0].stdout  # 2 ca FAIL không in answer MẬT
-
-
-# --- v4.5i tích hợp: runner guardrail ctx/code + co_khi trong format suite ---
+# --- v4.5i tích hợp: runner guardrail ctx/code trong format suite ---
 
 def test_runners_single_source_and_same_signature():
     """RUNNER_SCORERS là nguồn duy nhất tên runner; mọi runner gọi được
@@ -529,7 +468,8 @@ def test_runners_single_source_and_same_signature():
     # tất định); v6.5: + mkt_seo (seo_san.suggest thuần); v5.3: + kd_a5;
     # v6.4: + mkt_ads_ugc (hàm thuần); v8.2: + kd_a3 (luật báo giá B2B);
     # v10.1: + kd_a7 (chọn chăm sóc thuần), kd_a9 + mkt12 (LLM GIẢ theo ca).
-    assert set(ae.DETERMINISTIC_RUNNERS) == {"guardrail", "co_khi", "mkt02",
+    # v12.0: gỡ runner co_khi (CK-A1 cơ khí — ngoài phạm vi HĐ).
+    assert set(ae.DETERMINISTIC_RUNNERS) == {"guardrail", "mkt02",
                                              "mkt03", "mkt04",
                                              "sales_director", "cskh",
                                              "mkt_seo", "kd_a5",
@@ -579,25 +519,6 @@ def test_guardrail_ctx_uses_check_publish_and_code_must_match(monkeypatch):
 def test_validate_guardrail_ctx_and_code(mutate, needle):
     d = ae.load_suite("guardrail")
     c = next(dict(x) for x in d["cases"] if x["expect"] == "block")
-    mutate(c)
-    errs = ae._validate_case(c, 0, d)
-    assert any(needle in e for e in errs), errs
-
-
-@pytest.mark.parametrize("mutate,needle", [
-    (lambda c: c.update(expect_file="khong-co.md"), "expect_file"),
-    (lambda c: c.update(expect_file="../mau/may-co-mang-ss-eq-03.md"),
-     "expect_file"),
-    (lambda c: c.update(expect_page=0), "expect_page"),
-    (lambda c: c.update(expect_page=True), "expect_page"),
-    (lambda c: c.update(expect="pass"), "expect phải null"),
-    (lambda c: c.update(kind="other"), "kind phải"),
-    (lambda c: c.update(kind="trap_no_data"), "trap_no_data không có"),
-])
-def test_validate_co_khi_case(mutate, needle):
-    d = ae.load_suite("co_khi")
-    c = dict(next(x for x in d["cases"] if x["kind"] == "fact"))
-    assert ae._validate_case(c, 0, d) == []
     mutate(c)
     errs = ae._validate_case(c, 0, d)
     assert any(needle in e for e in errs), errs

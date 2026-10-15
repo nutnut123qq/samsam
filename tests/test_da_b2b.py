@@ -278,7 +278,7 @@ def test_batch_pending_then_handover_after_human(db, monkeypatch, capsys):
                    " from approval_queue where id = %s", (qid,)).fetchone()
     # Gộp M31 đợt 5: created_by = người nhập (không phải agent) → hàng duyệt
     # chặn người nhập tự duyệt lô của mình.
-    assert q[:4] == ("projects", "org_prospect_batch", "pending",
+    assert q[:4] == ("sales", "org_prospect_batch", "pending",
                      "Người nhập MẪU")
     assert da_b2b.FOOTER in q[4] and "15 tổ chức" in q[4]
     assert _count_q(db) == 1
@@ -380,8 +380,10 @@ def test_expired_batch_rows_back_to_moi_and_rebatchable(db, monkeypatch,
 
 def test_handover_wrong_item_type_and_missing(db, monkeypatch):
     from pipelines import director
-    cq = director.submit(TxConn(db), "projects", "change_request",
-                         object_id="cr:mau000000002", title="CR MẪU",
-                         payload="# CR MẪU\n", created_by="agent:da_cr")
+    # v12.0: lô tổ chức thuộc khối sales — mục khác loại cùng khối bị từ chối.
+    cq = director.submit(TxConn(db), "sales", "b2b_quote",
+                         object_id="quote:mau000000002", title="Báo giá MẪU",
+                         payload="# Báo giá MẪU\n",
+                         created_by="agent:kd_quote")
     assert _cli(db, monkeypatch, "--handover", str(cq), "--by", "X") == 1
     assert _cli(db, monkeypatch, "--handover", "999999", "--by", "X") == 1

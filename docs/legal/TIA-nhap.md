@@ -123,7 +123,7 @@
 | Dữ liệu gửi đi (sau biện pháp) | Ca kiểm thử (đề + rubric do dev/công ty soạn) và output của agent bị chấm (vd câu trả lời chatbot trên KB public) — chỉ ca có scorer judge |
 | Lớp | Xanh |
 | Mục đích | Chấm ca lớp mềm khi nghiệm thu agent theo commit (cổng deploy F17.1) |
-| Biện pháp kỹ thuật | Chỉ qua `pipelines.llm_gateway` agent `ci_judge` — không gọi client LLM trực tiếp (test khóa); Model judge phải KHÁC HỌ nhà sản xuất với model agent (allowlist họ; router/alias lạ → từ chối trước mọi lời gọi); CI mỗi push (`--deterministic`) chỉ chạy suite luật (guardrail + co_khi + kd_a1 — kd_a1 gateway giả) — 0 lời gọi LLM; hiện chưa suite active nào có ca judge |
+| Biện pháp kỹ thuật | Chỉ qua `pipelines.llm_gateway` agent `ci_judge` — không gọi client LLM trực tiếp (test khóa); Model judge phải KHÁC HỌ nhà sản xuất với model agent (allowlist họ; router/alias lạ → từ chối trước mọi lời gọi); CI mỗi push (`--deterministic`) chỉ chạy suite luật (guardrail + kd_a1 — kd_a1 gateway giả) — 0 lời gọi LLM; hiện chưa suite active nào có ca judge |
 | Thời hạn lưu (theo map) | Không giới hạn — lịch sử nghiệm thu theo commit (kiểm toán deploy) |
 | Rủi ro tồn dư | Provider whitelist + ZDR cho `ci_judge` và judge LLM thật chưa cấu hình (external-dep) |
 | Căn cứ | Không xử lý dữ liệu cá nhân thật (ca kiểm thử tổng hợp) — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
@@ -151,19 +151,6 @@
 | Mục đích | Bắt claim sức khỏe ẩn ý mà luật không bắt; kiểm thử red-team guardrail |
 | Biện pháp kỹ thuật | Chỉ chặn THÊM, lỗi → `llm_check_unavailable` chặn; Mặc định TẮT (env trống); Red-team chỉ chạy tay, ≤20 lời gọi, model khác họ |
 | Thời hạn lưu (theo map) | Theo `content_drafts` (hồ sơ duyệt) |
-| Rủi ro tồn dư | (không) |
-| Căn cứ | Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
-
-### DF-28 — Hồ sơ tham gia chương trình — viết lại thư đăng ký bằng LLM (v8.3 DA-04, tùy chọn)
-
-| Mục | Nội dung |
-|---|---|
-| Bên nhận / nước | OpenRouter (Mỹ) → whitelist provider qua gateway (agent `projects`, cap tháng riêng) — CHỈ khi chạy `--llm` (mặc định TẮT) |
-| Dữ liệu gửi đi (sau biện pháp) | Tên/đơn vị tổ chức/hạn chương trình công khai (từ `programs`, gốc tin RSS tầng A/B) + tên SKU được phép (food, TPBVSK đã XNQC) — KHÔNG PII, KHÔNG file nội bộ (checklist/câu hỏi Pháp chế) |
-| Lớp | Xanh |
-| Mục đích | Soạn NHÁP thư đăng ký tham gia hội chợ/OCOP/xúc tiến cho GĐ dự án duyệt (DA-04) |
-| Biện pháp kỹ thuật | Mặc định TẮT — chỉ khi `--llm`; Prompt chỉ dữ kiện công khai (không gửi checklist/câu hỏi Pháp chế); Thư LLM qua CÙNG cổng `check_publish` + lọc rượu + SKU bị loại; trượt → thư template; Agent không tự nộp/gửi — bản nộp phải khớp sha256 bản người duyệt (`--verify-submit`) |
-| Thời hạn lưu (theo map) | Theo `approval_queue` (hồ sơ duyệt); file nháp `data/reports/` theo dọn báo cáo |
 | Rủi ro tồn dư | (không) |
 | Căn cứ | Lợi ích hợp pháp — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
@@ -231,19 +218,6 @@
 | Thời hạn lưu (theo map) | Không giới hạn — hồ sơ duyệt append-only (bằng chứng tuân thủ quảng cáo); file Shorts xem trước xóa tay |
 | Rủi ro tồn dư | Không có kiểm tra tự động chặn dữ liệu khách bị dán vào brief (ngoài mask SĐT/email); Tài khoản livestream/kênh YouTube + API là external-dep; hậu kiểm transcript live chưa có (someday) |
 | Căn cứ | Lợi ích hợp pháp/hợp đồng lao động với nhân viên — CẦN LUẬT SƯ XÁC NHẬN — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
-
-### DF-40 — Concept brief R&D SX-A6 (v11.0)
-
-| Mục | Nội dung |
-|---|---|
-| Bên nhận / nước | OpenRouter (Mỹ) → whitelist provider (Mỹ) — CHỈ khi `--llm` (mặc định TẮT), chỉ đoạn hương vị/nghi thức của concept, qua `_mask_pii` của gateway |
-| Dữ liệu gửi đi (sau biện pháp) | Mô tả concept từ `data/rd_concepts.json` (hương vị/nghi thức dùng — GIẢ ĐỊNH, không dữ liệu cá nhân) gửi LLM khi `--llm`; tín hiệu = URL + ngày tin public trong `intel_items` (không gửi LLM, không chép tiêu đề/đoạn trích vào brief); KHÔNG dữ liệu khách/nhân viên |
-| Lớp | Xanh |
-| Mục đích | Soạn concept brief NỘI BỘ sản phẩm phái sinh (không nêu công dụng) để GĐ sản xuất chọn concept thử mẫu |
-| Biện pháp kỹ thuật | `--llm` mặc định TẮT; kill-switch + trần chi phí tháng `sx_rnd` (1.0 USD ƯỚC TÍNH) ở gateway; Cổng `claim_free`: `check_publish(internal_note)` + 0 động từ claim + không rượu — lỗi thì về template hoặc không ghi/không nộp; Concept/tín hiệu nhắc rượu bị loại; brief gắn nhãn NỘI BỘ, không có đường công bố ra ngoài |
-| Thời hạn lưu (theo map) | Không giới hạn — hồ sơ duyệt append-only; file báo cáo xóa tay |
-| Rủi ro tồn dư | R&D thật, mock-up ảnh, xếp hạng persona = external-dep (chưa làm) |
-| Căn cứ | Không xử lý dữ liệu cá nhân — không cần căn cứ NĐ 13/2023; chuyển dữ liệu sản phẩm ra nước ngoài theo hợp đồng nhà cung cấp LLM — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |
 
 ## 3. Luồng không thuộc TIA
 

@@ -2,8 +2,9 @@
 viên vào hàng duyệt chung → bản tin markdown cho GĐ khối.
 
 Contract:
-  - Cấu hình `data/directors/<block>.json` cho 11 khối (`BLOCKS` — key của
-    kế hoạch final_plans): `name`, `director_agent`, `approver_roles` (⊂
+  - Cấu hình `data/directors/<block>.json` cho 9 khối (`BLOCKS` — 9 phòng
+    ban theo Hợp đồng TEDO–Sâm Sâm; v12.0 gỡ `projects` + `mechanical`
+    ngoài phạm vi HĐ): `name`, `director_agent`, `approver_roles` (⊂
     `pipelines.auth.ROLES`), `approvers` + `digest_recipients` (rỗng =
     người thật chưa cấp, external-dep), `object_types` {loại: {sla_hours
     1..720, risk low|medium|high}} (cấm `content_draft`), `due_soon_hours`.
@@ -56,7 +57,7 @@ for _s in (sys.stdout, sys.stderr):
 ROOT = Path(__file__).resolve().parent.parent
 DIRECTORS_DIR = ROOT / "data" / "directors"
 BLOCKS = ("ceo", "sales", "marketing", "intel", "finance", "production",
-          "farming", "projects", "legal_hr", "mechanical", "data_platform")
+          "farming", "legal_hr", "data_platform")
 RISKS = ("low", "medium", "high")
 _TYPE_RE = re.compile(r"[a-z][a-z0-9_]{1,39}")
 _ITEM_SQL = (

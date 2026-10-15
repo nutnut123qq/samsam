@@ -2,7 +2,15 @@
 
 ## Overview
 Pilot "chuyển đổi số + AI" cho Công ty TNHH Sâm Sâm (sâm Ngọc Linh, Quảng Nam/Đà Nẵng).
-Bản thu nhỏ của SOW (`SOW_SamSam_AI_6-thang.md`): crawl data public → knowledge base
+**Căn cứ phạm vi (v12.0): Hợp đồng hợp tác đầu tư TEDO–Sâm Sâm 2026 + PL01–05**
+(bản HĐ KHÔNG nằm trong repo — repo public): 89 tính năng / 9 phòng ban
+(ceo, sales, marketing, intel, finance, production, farming, legal_hr,
+data_platform — trùng `pipelines.director.BLOCKS`); P1 3 tháng 12/10/2026–
+11/01/2027, P2 tới hết năm hợp tác thứ 1; hệ thống lõi chạy trên server vật lý
+của Sâm Sâm. Loại trừ: cơ khí/chế tạo máy, xúc tiến đầu tư (đã gỡ ở v12.0).
+Website bán hàng + chatbot website làm riêng, không ở repo này.
+`SOW_SamSam_AI_6-thang.md` chỉ còn là lịch sử, không dùng làm căn cứ.
+Luồng: crawl data public → knowledge base
 → chatbot RAG + content studio có guardrail pháp lý TPBVSK. Python 3.12 + Postgres
 local (embedding `float8[]`, cosine bằng numpy — chưa cần pgvector) + OpenRouter
 (1 key: `openai` client trỏ base_url `https://openrouter.ai/api/v1`, dùng cho cả
@@ -44,10 +52,9 @@ chat lẫn embeddings) + Streamlit.
 | Eval theo agent | `python scripts/agent_eval.py --agent <suite>` (suite `data/eval/suites/<agent>.json` = ca + ngưỡng + owner, ghi `eval_runs`; `--no-record`/`--allow-dirty`) · `--validate` (mọi suite) · `--deterministic` (CI: validate + suite tất định) · `--print-hash <agent>` (sửa ca = bump `version` + hash mới) · `--propose-threshold|--propose-suite <agent> --by <tên>` (đổi ngưỡng/bộ ca sau run FAIL → override_qa + duyệt) |
 | Cổng deploy | `python scripts/deploy_gate.py --sha <SHA> --approved-by "<tên>" [--hotfix]` (chỉ in kế hoạch; cần PASS + người duyệt + luật đóng băng theo lịch `data/freeze_calendar.json` qua `pipelines/freeze.py` — trong 21/12–10/02 chỉ `--hotfix` hoặc break-glass còn hạn) |
 | Hàng duyệt chung (v4.0) | `python -m pipelines.approval_queue --pending [--block K]` · `--approve/--reject ID --by "<tên>"` · `--override-qa ID --by "<tên>" --reason ".."` · `--expire` (mọi loại việc trừ content_draft; quá SLA → expired, không tự duyệt) |
-| Bản tin GĐ khối (v4.0) | `python -m pipelines.director --block K` · `--all --dry-run` (cấu hình `data/directors/<khối>.json`, 11 khối; bản tin → `data/reports/director-*.md`, không tự gửi; khối finance dùng `python -m agents.acc_ar --bulletin` thay — director ghi đè mất mục nợ quá hạn) |
+| Bản tin GĐ khối (v4.0) | `python -m pipelines.director --block K` · `--all --dry-run` (cấu hình `data/directors/<khối>.json`, 9 khối; bản tin → `data/reports/director-*.md`, không tự gửi; khối finance dùng `python -m agents.acc_ar --bulletin` thay — director ghi đè mất mục nợ quá hạn) |
 | B2B báo giá (v8.2, WP11) | `python -m agents.kd_quote --check-matrix` · `--requests` · `--quote ID [--discount P] [--submit\|--dry-run]` · `--export QID --out F.md\|F.html` · `--verify-send QID F` (bản gửi khớp sha256 bản duyệt — GĐ bán hàng tự gửi) · `python -m agents.kd_catalog --build [--bom F]` · `--submit` · `--verify-send` (catalog quà Tết, không rượu/TPBVSK chưa XNQC) · `B2B_FORM_ENABLED=1 python -m connectors.b2b_form` (form :8791/b2b, mặc định TẮT) |
-| Phòng Dự án (v8.3, WP11) | `python -m agents.da_radar --scan [--dry-run]` · `--list` (radar chương trình từ `intel_items`, không ra mạng) · `python -m agents.da_hoso --checklist ID --template T` · `--draft ID --template T [--llm] [--submit]` · `--export QID --out F` · `--verify-submit QID F` (bản nộp khớp sha256 bản duyệt — GĐ dự án tự nộp) · `python -m agents.da_b2b --import F --by` · `--submit-batch` · `--handover QID --by` (tổ chức mua quà, không PII, không tự liên hệ) · `python -m agents.da_pmo --seed` · `--board [--submit]` · `--propose-due/--apply-due` · `python -m agents.da_cr --classify/--cr/--eval/--list` (GỢI Ý CR trích SOW) |
-| Bản tin GĐ khối (v4.0) | `python -m pipelines.director --block K` · `--all --dry-run` (cấu hình `data/directors/<khối>.json`, 11 khối; bản tin → `data/reports/director-*.md`, không tự gửi) |
+| Bản tin GĐ khối (v4.0) | `python -m pipelines.director --block K` · `--all --dry-run` (cấu hình `data/directors/<khối>.json`, 9 khối; bản tin → `data/reports/director-*.md`, không tự gửi) |
 | Cảnh báo đỏ (v4.0) | `python -m pipelines.red_alert --check-routing` (exit 1 = chưa có người nhận độc lập — `data/red_alert_routing.json`, external-dep) |
 | Cockpit TGĐ (v8.0) | `python -m pipelines.cockpit --metrics` · `--collect [--period week\|month] [--ref YYYY-MM-DD] [--dry-run]` (chỉ kỳ ĐÃ ĐÓNG giờ VN) · `--import FILE --by "<người xuất>" [--sample]` (CSV `manual_export`, lỗi → exit 1, 0 dòng) — ghi `channel_snapshots` insert-only |
 | Báo cáo TGĐ (v8.0) | `python -m agents.ceo_report [--period week\|month] [--ref YYYY-MM-DD] [--llm] [--submit] [--out-dir DIR]` (→ `data/reports/ceo-<kỳ>.md`; số do code điền; `--llm` mặc định tắt; `--submit` vào hàng chờ khối ceo, không tự duyệt/gửi) |
@@ -93,7 +100,8 @@ chat lẫn embeddings) + Streamlit.
 - `data/` — jsonl dump, `claims_whitelist.json`, `banned_words.txt`
 - `tests/` — pytest
 - `TASKS.md` — task board M1–M5, boundary + gate + evidence từng task
-- `SOW_SamSam_AI_6-thang.md` — hợp đồng draft là context gốc
+- `SOW_SamSam_AI_6-thang.md` — SOW draft cũ, ĐÃ BỊ THAY THẾ bởi Hợp đồng hợp tác
+  TEDO–Sâm Sâm (giữ làm lịch sử)
 
 ## Invariants
 - **Guardrail trước content**: mọi text AI sinh ra phải qua `pipelines.guardrail.check()` trước khi hiển thị/đăng.
