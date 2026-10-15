@@ -1,0 +1,61 @@
+[ok] tạo DB samsam_v13_c00_2
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+== E2E migration id nhóm v12 -> mục v13
+$ rollout --seed --by Quản lý AI MẪU -> exit 0
+[OK] vào sổ 62 · có sẵn 0 · bỏ qua (chưa co_code) 24
+$ rollout --seed --by Quản lý AI MẪU -> exit 0
+[OK] vào sổ 0 · có sẵn 62 · bỏ qua (chưa co_code) 24
+$ rollout --status -> exit 0
+data_platform-06   Kết nối API sàn chỉ đọc                  — mot_phan, chưa vào sổ
+farming-06         Neo mã xác thực lên blockchain           — thieu, chưa vào sổ
+finance-06         Doanh thu thuần trực tuyến + biên bản đ… chạy thử từ 15/10/2026 · 0 ngày LV · ? đầu ra · mới 0/5 ngày làm việc chạy thử; chưa khai agent_ids — không đếm được đầu ra trong agent_action_log
+data_platform-08   Sổ triển khai 3 bước + hồ sơ nghiệm thu… chạy thử từ 15/10/2026 · 0 ngày LV · ? đầu ra · mới 0/5 ngày làm việc chạy thử; chưa khai agent_ids — không đếm được đầu ra trong agent_action_log
+ceo-90             Nghĩa vụ hợp đồng ngoài phần mềm         — ngoai_code, chưa vào sổ
+data_platform-90   Hạ tầng độc lập trên server Bên B        — ngoai_code, chưa vào sổ
+[id nhóm cũ] marketing-02 (tắt từ 05/09/2026) → marketing-02.1, marketing-02.2 — lịch sử giữ nguyên, mục tách đếm lại từ mốc riêng
+[id nhóm cũ] sales-07 (có người duyệt từ 05/09/2026) → sales-07.1, sales-07.2, sales-07.3 — lịch sử giữ nguyên, mục tách đếm lại từ mốc riêng
+$ rollout --promote sales-07.1 --by Quản lý AI MẪU -> exit 1
+[TỪ CHỐI] sales-07.1 (chạy thử) chưa đủ cổng: mới 0/5 ngày làm việc chạy thử; mới 0/50 đầu ra
+$ rollout --dossier --phase P1 --out C:/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/bf073c29-8533-4e6c-814d-e5fc46fbe378/scratchpad/c00_dossier.md -> exit 0
+[OK] hồ sơ → C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\bf073c29-8533-4e6c-814d-e5fc46fbe378\scratchpad\c00_dossier.md
+[ok] events 0 -> 64 (2 v12 giả lập + 62 seed v13); dòng sổ 64; nhóm cũ giữ nguyên ['marketing-02', 'sales-07']
+== catalog
+Danh mục yêu cầu HĐ — BẢN ĐỀ XUẤT, chờ hai bên chốt
+ceo            HĐ  9 · đề xuất  7 · chưa xác định — chờ hai bên chốt (đề xuất 7/9)
+sales          HĐ 12 · đề xuất 12 · khớp số lượng — nội dung chờ hai bên chốt
+marketing      HĐ 14 · đề xuất 11 · chưa xác định — chờ hai bên chốt (đề xuất 11/14)
+intel          HĐ 11 · đề xuất  8 · chưa xác định — chờ hai bên chốt (đề xuất 8/11)
+finance        HĐ  9 · đề xuất  9 · khớp số lượng — nội dung chờ hai bên chốt
+production     HĐ  6 · đề xuất  6 · khớp số lượng — nội dung chờ hai bên chốt
+farming        HĐ  9 · đề xuất  7 · chưa xác định — chờ hai bên chốt (đề xuất 7/9)
+legal_hr       HĐ 10 · đề xuất 11 · chưa xác định — chờ hai bên chốt (đề xuất 11/10)
+data_platform  HĐ  9 · đề xuất  8 · chưa xác định — chờ hai bên chốt (đề xuất 8/9)
+P1             HĐ 80 · đề xuất 72 · chưa xác định — chờ hai bên chốt (đề xuất 72/80)
+P2             HĐ  9 · đề xuất  7 · chưa xác định — chờ hai bên chốt (đề xuất 7/9)
+tong           HĐ 89 · đề xuất 79 · chưa xác định — chờ hai bên chốt (đề xuất 79/89)
+ngoài 89: nen_tang_tmdt 2, truy_xuat_blockchain 1, nghia_vu_hd 4
+code_status: co_code 62, mot_phan 17, thieu 3, lam_rieng 2, ngoai_code 2
+tách ceo-02 → ceo-02.1, ceo-02.2
+tách ceo-04 → ceo-04.1, ceo-04.2
+tách sales-04 → sales-04.1, sales-04.2
+tách sales-06 → sales-06.1, sales-06.2
+tách sales-07 → sales-07.1, sales-07.2, sales-07.3
+tách marketing-02 → marketing-02.1, marketing-02.2
+tách marketing-04 → marketing-04.1, marketing-04.2
+tách marketing-06 → marketing-06.1, marketing-06.2
+tách marketing-07 → marketing-07.1, marketing-07.2
+tách intel-01 → intel-01.1, intel-01.2
+tách intel-04 → intel-04.1, intel-04.2
+tách finance-03 → finance-03.1, finance-03.2, finance-03.3
+tách finance-04 → finance-04.1, finance-04.2
+tách finance-05 → finance-05.1, finance-05.2
+tách production-04 → production-04.1, production-04.2
+tách farming-03 → farming-03.1, farming-03.2
+tách farming-05 → farming-05.1, farming-05.2
+tách legal_hr-03 → legal_hr-03.1, legal_hr-03.2
+tách legal_hr-05 → legal_hr-05.1, legal_hr-05.2
+tách legal_hr-06 → legal_hr-06.1, legal_hr-06.2, legal_hr-06.3
+tách data_platform-07 → data_platform-07.1, data_platform-07.2, data_platform-07.3

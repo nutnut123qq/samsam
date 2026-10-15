@@ -6,9 +6,16 @@ ra → chạy có người duyệt ≥10 ngày làm việc, 0 lỗi nghiêm tr�
 Một lỗi nghiêm trọng (PL02 mục 2) → tắt, quay về chạy thử.
 
 Contract:
-  - Danh mục `data/contract_features.json` (`load_features`) — 1 dòng /
-    NHÓM tính năng PL01 mục 2 (PL01 không liệt kê 89 mục chi tiết — chờ hai
-    bên chốt). Chỉ `trang_thai_code = co_code` được vào sổ.
+  - Danh mục `data/contract_features.json` (`load_features`, v13.0) — BẢN ĐỀ
+    XUẤT 1 dòng / mục yêu cầu (tách nhóm PL01 mục 2 khi chữ gốc liệt kê đầu
+    ra phân biệt: id `<nhóm>.<n>` + `nhom_goc`), chờ hai bên chốt 89 mục.
+    Loader kiểm schema (code_status, acceptance_status, output_sources,
+    blocker...), không 2 mục chung 1 agent_id / 1 nguồn đầu ra, và
+    `tong_hop` khớp `summary()` (số mục đề xuất ↔ số HĐ) — lệch → ValueError.
+    Chỉ `code_status = co_code` được vào sổ.
+  - Migration ID: dòng sổ của id NHÓM cũ (v12) giữ nguyên, không sửa/xóa;
+    mục tách vào sổ với mốc MỚI (không kế thừa ngày); nhóm cũ đang `tat` →
+    mục tách vào `tat` (không tự bật lại). `--status`/hồ sơ liệt kê id cũ.
   - Bảng `feature_rollout` (trạng thái hiện tại) + `feature_rollout_events`
     (append-only) — docs/schema.sql khối `v12.1 B1`.
   - Giai đoạn `chay_thu` → `co_nguoi_duyet` → `van_hanh`; `tat` (tắt tay)
@@ -39,6 +46,7 @@ Chạy:
   python -m pipelines.rollout --severe ID --reason CODE --by NAME [--note ..]
   python -m pipelines.rollout --disable ID --by NAME [--note ..]
   python -m pipelines.rollout --dossier --phase P1 [--out F]
+  python -m pipelines.rollout --catalog       (tổng hợp danh mục, không DB)
 Exit: 0 ok · 1 bị từ chối (chưa đủ cổng / không có trong sổ) · 2 tham số
 sai / cấu hình lỗi / DB down.
 """
@@ -73,13 +81,20 @@ CONFIG_FILE = ROOT / "data" / "rollout_config.json"
 STAGES = ("chay_thu", "co_nguoi_duyet", "van_hanh", "tat")
 STAGE_LABEL = {"chay_thu": "chạy thử", "co_nguoi_duyet": "có người duyệt",
                "van_hanh": "vận hành", "tat": "tắt"}
-CODE_STATES = ("co_code", "thieu", "lam_rieng")
+CODE_STATES = ("co_code", "mot_phan", "thieu", "lam_rieng", "ngoai_code")
+CODED = ("co_code", "mot_phan")             # có module trong repo
+ACCEPTANCE = ("chua_nghiem_thu", "da_nghiem_thu")
+PHAM_VI = ("tinh_nang_ai", "nen_tang_tmdt", "truy_xuat_blockchain",
+           "nghia_vu_hd")                   # chỉ tinh_nang_ai tính vào 89
 PHASES = ("P1", "P2")
 HD_TOTAL = 89                     # HĐ: 89 tính năng / 9 phòng ban
+SRC_KINDS = ("table", "report", "file")
+SRC_KEYS = frozenset(SRC_KINDS) | {"block", "object_type", "created_by",
+                                   "content_type", "source_agent", "rules_any"}
 TRIAL_DAYS, TRIAL_OUTPUTS, REVIEW_DAYS = 5, 50, 10    # PL02 mục 1a, 1b
 MAX_BY = 100
 MAX_NOTE = 300
-_ID_RE = re.compile(r"([a-z_]+)-([0-9]{2})")
+_ID_RE = re.compile(r"([a-z_]+)-([0-9]{2})(?:\.([0-9]{1,2}))?")
 
 # PL02 mục 2 — danh sách lỗi nghiêm trọng.
 SEVERE = {
@@ -146,11 +161,122 @@ def _str_list(v, where: str) -> list[str]:
     return v
 
 
+def _nonblank(v) -> bool:
+    return isinstance(v, str) and bool(v.strip())
+
+
+def _check_sources(fid: str, srcs) -> list[dict]:
+    if not isinstance(srcs, list):      # loader chỉ ném ValueError (fail-closed)
+        raise ValueError(f"{fid}.output_sources: phải là list")  # noqa: TRY004
+    for j, d in enumerate(srcs):
+        w = f"{fid}.output_sources[{j}]"
+        if not isinstance(d, dict) or set(d) - SRC_KEYS \
+                or sum(k in d for k in SRC_KINDS) != 1:
+            raise ValueError(f"{w}: phải là object có đúng 1 trong "
+                             f"{SRC_KINDS}, key ⊂ {sorted(SRC_KEYS)}")
+        for k, v in d.items():
+            if k == "rules_any":
+                _str_list(v, f"{w}.rules_any")
+            elif not _nonblank(v):
+                raise ValueError(f"{w}.{k}: chuỗi rỗng")
+        need = {"approval_queue": ("block", "object_type"),
+                "content_drafts": ("created_by", "content_type")}.get(
+                    d.get("table"), ())
+        if any(k not in d for k in need):
+            raise ValueError(f"{w}: bảng {d['table']} cần {need}")
+    return srcs
+
+
+def _status(hd: int, n: int) -> str:
+    if n == hd:
+        return "khớp số lượng — nội dung chờ hai bên chốt"
+    return f"chưa xác định — chờ hai bên chốt (đề xuất {n}/{hd})"
+
+
+def summary(feats: list[dict], counts: dict, phases: dict) -> dict:
+    """Số mục `tinh_nang_ai` đề xuất ↔ số HĐ theo khối/giai đoạn/tổng.
+    Khớp số lượng KHÔNG có nghĩa đã chốt."""
+    ai = [f for f in feats if f.get("pham_vi") == "tinh_nang_ai"]
+    out = {}
+    for key, hd, n in (
+            [(b, counts[b], sum(f["phong_ban"] == b for f in ai))
+             for b in BLOCKS]
+            + [(p, phases[p], sum(f["giai_doan"] == p for f in ai))
+               for p in PHASES]
+            + [("tong", sum(counts.values()), len(ai))]):
+        out[key] = {"hd": hd, "de_xuat": n, "trang_thai": _status(hd, n)}
+    out["ngoai_89"] = {p: sum(f.get("pham_vi") == p for f in feats)
+                       for p in PHAM_VI[1:]}
+    return out
+
+
+def split_map(feats: list[dict]) -> dict[str, list[str]]:
+    """id nhóm cũ (v12) → các mục đã tách (theo `nhom_goc`)."""
+    m: dict[str, list[str]] = {}
+    for f in feats:
+        if f.get("nhom_goc"):
+            m.setdefault(f["nhom_goc"], []).append(f["id"])
+    return m
+
+
+def _check_item(i: int, f) -> str:
+    fid = f.get("id") if isinstance(f, dict) else None
+    m = _ID_RE.fullmatch(fid) if isinstance(fid, str) else None
+    if not m:
+        raise ValueError(f"features[{i}].id: thiếu/sai")
+    if f.get("phong_ban") not in BLOCKS or m.group(1) != f["phong_ban"]:
+        raise ValueError(f"{fid}.phong_ban: phải ∈ {BLOCKS} và khớp "
+                         "tiền tố id")
+    base = f"{m.group(1)}-{m.group(2)}"
+    bad_goc = (f.get("nhom_goc") != base) if m.group(3) else (
+        "nhom_goc" in f)
+    if bad_goc:
+        raise ValueError(f"{fid}.nhom_goc: mục tách '<nhóm>.<n>' phải có "
+                         "nhom_goc = id nhóm; mục nguyên nhóm không có")
+    if f.get("pham_vi") not in PHAM_VI:
+        raise ValueError(f"{fid}.pham_vi: phải ∈ {PHAM_VI}")
+    for k in ("ten", "nguon", "nguoi_duyet", "owner", "dau_ra"):
+        if not _nonblank(f.get(k)):
+            raise ValueError(f"{fid}.{k}: thiếu")
+    if f.get("giai_doan") not in PHASES:
+        raise ValueError(f"{fid}.giai_doan: phải ∈ {PHASES}")
+    code = f.get("code_status")
+    if code not in CODE_STATES:
+        raise ValueError(f"{fid}.code_status: phải ∈ {CODE_STATES}")
+    if f.get("acceptance_status") not in ACCEPTANCE:
+        raise ValueError(f"{fid}.acceptance_status: phải ∈ {ACCEPTANCE}")
+    if f["acceptance_status"] == "da_nghiem_thu" and \
+            not _nonblank(f.get("bien_ban")):
+        raise ValueError(f"{fid}.bien_ban: da_nghiem_thu cần số biên bản "
+                         "đã ký")
+    for k in ("modules", "agent_ids", "phu_thuoc", "bang_chung"):
+        v = f.get(k)
+        if v or not isinstance(v, list):
+            _str_list(v, f"{fid}.{k}")
+    if code in CODED and not f["modules"]:
+        raise ValueError(f"{fid}.modules: {code} phải có ≥1 module")
+    if code in ("lam_rieng", "ngoai_code") and (f["modules"]
+                                                 or f["agent_ids"]):
+        raise ValueError(f"{fid}.modules: {code} không có module/agent_ids"
+                         " trong repo")
+    srcs = _check_sources(fid, f.get("output_sources"))
+    if code in CODED and not srcs and not _nonblank(
+            f.get("output_sources_note")):
+        raise ValueError(f"{fid}.output_sources_note: output_sources rỗng "
+                         "phải nêu lý do")
+    b = f.get("blocker")
+    if not (b is None or _nonblank(b)) or (code != "co_code" and b is None):
+        raise ValueError(f"{fid}.blocker: null hoặc chuỗi; code_status "
+                         f"{code} phải có blocker cụ thể")
+    return fid
+
+
 def load_features(path: Path = FEATURES_FILE) -> list[dict]:
     """Đọc + kiểm danh mục → list dòng. Sai → ValueError (fail-closed)."""
     try:
         doc = json.loads(Path(path).read_bytes().decode("utf-8"))
         items, counts = doc["features"], doc["so_tinh_nang_hd"]
+        phases, tong = doc["so_giai_doan_hd"], doc["tong_hop"]
     except (OSError, UnicodeDecodeError, ValueError, KeyError,
             TypeError) as e:
         raise ValueError(f"{Path(path).name}: không đọc được "
@@ -160,34 +286,32 @@ def load_features(path: Path = FEATURES_FILE) -> list[dict]:
             for n in counts.values()) or sum(counts.values()) != HD_TOTAL:
         raise ValueError(f"so_tinh_nang_hd: phải đủ {len(BLOCKS)} phòng ban,"
                          f" số nguyên ≥1, tổng {HD_TOTAL}")
+    if not isinstance(phases, dict) or set(phases) != set(PHASES) or any(
+            isinstance(n, bool) or not isinstance(n, int) or n < 0
+            for n in phases.values()) or sum(phases.values()) != HD_TOTAL:
+        raise ValueError(f"so_giai_doan_hd: phải có {PHASES}, tổng "
+                         f"{HD_TOTAL}")
     if not isinstance(items, list) or not items:
         raise ValueError("features: rỗng")
-    out, seen = [], set()
+    out, seen, aid_of, src_of = [], set(), {}, {}
     for i, f in enumerate(items):
-        fid = f.get("id") if isinstance(f, dict) else None
-        m = _ID_RE.fullmatch(fid) if isinstance(fid, str) else None
-        if not m or fid in seen:
-            raise ValueError(f"features[{i}].id: thiếu/sai/trùng")
-        if f.get("phong_ban") not in BLOCKS or m.group(1) != f["phong_ban"]:
-            raise ValueError(f"{fid}.phong_ban: phải ∈ {BLOCKS} và khớp "
-                             "tiền tố id")
-        for k in ("ten", "ho_tro", "nguon"):
-            if not isinstance(f.get(k), str) or not f[k].strip():
-                raise ValueError(f"{fid}.{k}: thiếu")
-        if f.get("giai_doan") not in PHASES:
-            raise ValueError(f"{fid}.giai_doan: phải ∈ {PHASES}")
-        if f.get("trang_thai_code") not in CODE_STATES:
-            raise ValueError(f"{fid}.trang_thai_code: phải ∈ {CODE_STATES}")
-        mods = f.get("modules", [])
-        aids = f.get("agent_ids", [])
-        if mods or not isinstance(mods, list):
-            _str_list(mods, f"{fid}.modules")
-        if aids or not isinstance(aids, list):
-            _str_list(aids, f"{fid}.agent_ids")
-        if f["trang_thai_code"] == "co_code" and not mods:
-            raise ValueError(f"{fid}.modules: co_code phải có ≥1 module")
+        fid = _check_item(i, f)
+        if fid in seen:
+            raise ValueError(f"features[{i}].id: trùng {fid}")
+        for a in f["agent_ids"]:
+            if aid_of.setdefault(a, fid) != fid:
+                raise ValueError(f"{fid}.agent_ids: '{a}' đã thuộc "
+                                 f"{aid_of[a]} — không đếm chéo")
+        for d in f["output_sources"]:
+            k = json.dumps(d, sort_keys=True, ensure_ascii=False)
+            if src_of.setdefault(k, fid) != fid:
+                raise ValueError(f"{fid}.output_sources: {k} đã thuộc "
+                                 f"{src_of[k]} — không đếm chéo")
         seen.add(fid)
         out.append(f)
+    if tong != summary(out, counts, phases):
+        raise ValueError("tong_hop: lệch số mục thực của features — chạy "
+                         "lại summary()")
     return out
 
 
@@ -330,16 +454,26 @@ def seed(conn, feats: list[dict], by: str, now=None) -> dict:
     st = {"inserted": 0, "existing": 0, "skipped": 0}
     with conn.transaction():
         for f in feats:
-            if f["trang_thai_code"] != "co_code":
+            if f["code_status"] != "co_code":
                 st["skipped"] += 1
                 continue
+            stage, ev = "chay_thu", None
+            if f.get("nhom_goc"):           # mục tách: mốc MỚI, không kế thừa
+                g = conn.execute("select stage from feature_rollout where"
+                                 " feature_id = %s", (f["nhom_goc"],)
+                                 ).fetchone()
+                ev = {"nhom_goc": f["nhom_goc"],
+                      "stage_nhom_goc": g[0] if g else None}
+                if g and g[0] == "tat":     # nhóm đã tắt → không tự bật lại
+                    stage = "tat"
             cur = conn.execute(
                 "insert into feature_rollout (feature_id, stage, stage_since,"
-                " updated_by, updated_at) values (%s, 'chay_thu', %s, %s, %s)"
+                " updated_by, updated_at) values (%s, %s, %s, %s, %s)"
                 " on conflict (feature_id) do nothing",
-                (f["id"], now, by, now))
+                (f["id"], stage, now, by, now))
             if cur.rowcount == 1:
-                _event(conn, f["id"], "seed", None, "chay_thu", by, now)
+                _event(conn, f["id"], "seed", None, stage, by, now,
+                       evidence=ev)
                 st["inserted"] += 1
             else:
                 st["existing"] += 1
@@ -352,9 +486,9 @@ def promote(conn, feats, fid: str, by: str, shift, now=None) -> dict:
     (không ghi gì)."""
     by, now = check_by(by), _now(now)
     f = _feature(feats, fid)
-    if f["trang_thai_code"] != "co_code":
-        raise RolloutError(f"{fid}: trang_thai_code={f['trang_thai_code']}"
-                           " — không triển khai trong repo này")
+    if f["code_status"] != "co_code":
+        raise RolloutError(f"{fid}: code_status={f['code_status']}"
+                           " — chưa đủ code để triển khai (chỉ co_code)")
     with conn.transaction():
         stage, since = _locked(conn, fid)
         facts = _facts(conn, f, stage, since, now, shift)
@@ -416,6 +550,17 @@ def status_rows(conn, feats, shift, now=None) -> list[dict]:
     return out
 
 
+def legacy_rows(conn, feats) -> list[dict]:
+    """Dòng sổ có id KHÔNG còn trong danh mục (id nhóm v12 đã tách) — giữ
+    nguyên lịch sử, chỉ liệt kê kèm các mục tách."""
+    ids, sm = {f["id"] for f in feats}, split_map(feats)
+    return [{"id": r[0], "stage": r[1], "since": r[2],
+             "tach_thanh": sm.get(r[0], [])}
+            for r in conn.execute("select feature_id, stage, stage_since"
+                                  " from feature_rollout order by feature_id")
+            if r[0] not in ids]
+
+
 def severe_events(conn, fids) -> list[dict]:
     cols = ("ts", "feature_id", "severe_code", "from_stage", "note",
             "by_person")
@@ -462,18 +607,26 @@ def _d(ts) -> str:
     return ts.astimezone(VN_TZ).strftime("%d/%m/%Y") if ts else "—"
 
 
+def _legacy_line(r) -> str:
+    to = ", ".join(r["tach_thanh"]) or "không còn trong danh mục"
+    return (f"{r['id']} ({STAGE_LABEL.get(r['stage'], r['stage'])} từ "
+            f"{_d(r['since'])}) → {to}")
+
+
 def render_dossier(phase: str, rows: list[dict], severe: list[dict],
                    n_reviewed: int, now: datetime,
-                   root: Path = ROOT) -> str:
+                   root: Path = ROOT, legacy=()) -> str:
     """Markdown hồ sơ đề nghị nghiệm thu — THUẦN (đầu vào đã đọc DB)."""
     L = [f"# Hồ sơ đề nghị nghiệm thu {phase} — BẢN NHÁP do hệ thống dựng",
          "",
          (f"Ngày lập: {_d(now)} (giờ VN). Căn cứ: Hợp đồng hợp tác TEDO–Sâm "
          "Sâm, PL02 mục 1d (hồ sơ) + mục 2 (tiêu chí kỹ thuật)."),
          "",
-         ("Lưu ý: PL01 mục 2 chỉ liệt kê NHÓM tính năng; mỗi dòng dưới đây = "
-         f"1 nhóm. Danh mục {HD_TOTAL} tính năng chi tiết chờ hai bên chốt."),
-         "", f"## 1. Danh sách tính năng ({len(rows)} nhóm)", "",
+         ("Lưu ý: danh mục là BẢN ĐỀ XUẤT tách từ nhóm PL01 mục 2 (mục "
+         "`<nhóm>.<n>` = tách từ nhóm), CHƯA được hai bên chốt — danh mục "
+         f"{HD_TOTAL} tính năng chính thức chờ biên bản. Không suy tỷ lệ "
+         "hoàn thành từ số dòng."),
+         "", f"## 1. Danh sách tính năng ({len(rows)} mục)", "",
          ("| Mã | Phòng ban | Tính năng | Code | Giai đoạn triển khai | "
          "Từ ngày | Ngày làm việc | Đầu ra | Lỗi NT |"),
          "|---|---|---|---|---|---|---|---|---|"]
@@ -487,10 +640,15 @@ def render_dossier(phase: str, rows: list[dict], severe: list[dict],
             tail = (f"{STAGE_LABEL[r['stage']]} | {_d(r['since'])} | "
                     f"{fx['days']} | {out} | {fx['severe']}")
         L.append(f"| {f['id']} | {f['phong_ban']} | {_cell(f['ten'])} | "
-                 f"{f['trang_thai_code']} | {tail} |")
+                 f"{f['code_status']} | {tail} |")
     L += ["", ("Nguồn: `data/contract_features.json`, bảng `feature_rollout`,"
           " `feature_rollout_events`; đầu ra = dòng `agent_action_log` theo"
-          " `agent_ids` từ lúc vào giai đoạn."), "",
+          " `agent_ids` từ lúc vào giai đoạn."), ""]
+    if legacy:
+        L += [("ID nhóm cũ (v12) còn trong sổ — lịch sử giữ nguyên, mục tách"
+               " đếm lại từ mốc riêng:"), ""]
+        L += [f"- {_legacy_line(r)}" for r in legacy] + [""]
+    L += [
           "## 2. Kết quả chạy thử (cổng PL02 mục 1a–c)", ""]
     for r in rows:
         f, fx = r["feature"], r["facts"]
@@ -552,7 +710,8 @@ def dossier(conn, feats, phase: str, shift, now=None) -> str:
     rows = [r for r in status_rows(conn, feats, shift, now)
             if r["feature"]["id"] in ids]
     return render_dossier(phase, rows, severe_events(conn, ids),
-                          reviewed_count(conn, ids), now)
+                          reviewed_count(conn, ids), now,
+                          legacy=legacy_rows(conn, feats))
 
 
 # ------------------------------------------------------------ CLI
@@ -563,7 +722,7 @@ def _print_status(rows) -> None:
         f, fx = r["feature"], r["facts"]
         head = f"{f['id']:<18} {_oneline(f['ten'], 40):<40}"
         if r["stage"] is None:
-            print(f"{head} — {f['trang_thai_code']}, chưa vào sổ")
+            print(f"{head} — {f['code_status']}, chưa vào sổ")
             continue
         out = "?" if fx["outputs"] is None else fx["outputs"]
         gate = ("vận hành" if fx["target"] is None else
@@ -571,6 +730,22 @@ def _print_status(rows) -> None:
                 else "; ".join(fx["why"]))
         print(f"{head} {STAGE_LABEL[r['stage']]} từ {_d(r['since'])} · "
               f"{fx['days']} ngày LV · {out} đầu ra · {gate}")
+
+
+def _print_catalog(feats, path: Path) -> None:
+    doc = json.loads(Path(path).read_bytes().decode("utf-8"))
+    tong = summary(feats, doc["so_tinh_nang_hd"], doc["so_giai_doan_hd"])
+    print("Danh mục yêu cầu HĐ — BẢN ĐỀ XUẤT, chờ hai bên chốt")
+    for k in (*BLOCKS, *PHASES, "tong"):
+        t = tong[k]
+        print(f"{k:<14} HĐ {t['hd']:>2} · đề xuất {t['de_xuat']:>2} · "
+              f"{t['trang_thai']}")
+    print("ngoài 89: " + ", ".join(f"{k} {v}" for k, v in
+                                    tong["ngoai_89"].items()))
+    by = {c: sum(f["code_status"] == c for f in feats) for c in CODE_STATES}
+    print("code_status: " + ", ".join(f"{k} {v}" for k, v in by.items()))
+    for g, ids in split_map(feats).items():
+        print(f"tách {g} → {', '.join(ids)}")
 
 
 def main(argv=None) -> int:
@@ -583,6 +758,7 @@ def main(argv=None) -> int:
     op.add_argument("--severe", metavar="ID")
     op.add_argument("--disable", metavar="ID")
     op.add_argument("--dossier", action="store_true")
+    op.add_argument("--catalog", action="store_true")
     ap.add_argument("--by")
     ap.add_argument("--reason", choices=sorted(SEVERE))
     ap.add_argument("--note")
@@ -610,6 +786,9 @@ def main(argv=None) -> int:
     except ValueError as e:
         print(f"[FAIL] cấu hình: {e}", file=sys.stderr)
         return 2
+    if a.catalog:
+        _print_catalog(feats, FEATURES_FILE)
+        return 0
     conn = connect()
     if conn is None:
         print("[FAIL] DB không kết nối được (DATABASE_URL)", file=sys.stderr)
@@ -618,9 +797,12 @@ def main(argv=None) -> int:
         if a.seed:
             st = seed(conn, feats, a.by)
             print(f"[OK] vào sổ {st['inserted']} · có sẵn {st['existing']} ·"
-                  f" bỏ qua (thieu/lam_rieng) {st['skipped']}")
+                  f" bỏ qua (chưa co_code) {st['skipped']}")
         elif a.status:
             _print_status(status_rows(conn, feats, shift))
+            for r in legacy_rows(conn, feats):
+                print(f"[id nhóm cũ] {_legacy_line(r)} — lịch sử giữ "
+                      "nguyên, mục tách đếm lại từ mốc riêng")
         elif a.promote:
             r = promote(conn, feats, a.promote, a.by, shift)
             print(f"[OK] {a.promote}: {STAGE_LABEL[r['from']]} → "

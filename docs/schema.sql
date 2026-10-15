@@ -3421,3 +3421,14 @@ select (ts at time zone 'Asia/Ho_Chi_Minh')::date as day, channel, status,
 from orders
 where source like 'market:%'
 group by 1, 2, 3;
+
+-- ===== v13.0 c00 danh mục yêu cầu (ID mục tách) =====
+-- `data/contract_features.json` v13.0 tách nhóm PL01 thành mục `<nhóm>.<n>`
+-- (`nhom_goc` = id nhóm v12). Nới CHECK id để nhận mục tách; dòng của id
+-- nhóm cũ GIỮ NGUYÊN (không sửa/xóa, events append-only) — mục tách vào sổ
+-- với mốc mới (`pipelines.rollout.seed`, evidence.nhom_goc). Idempotent.
+alter table feature_rollout
+  drop constraint if exists feature_rollout_feature_id_check;
+alter table feature_rollout
+  add constraint feature_rollout_feature_id_check
+  check (feature_id ~ '^[a-z_]+-[0-9]{2}([.][0-9]{1,2})?$');

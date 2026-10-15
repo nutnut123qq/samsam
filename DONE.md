@@ -23,6 +23,65 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## Checklist v13.0-c00-danh-muc-yeu-cau
+
+Khán giả/mục đích: bản đồ yêu cầu Hợp đồng TEDO–Sâm Sâm + PL01–04 làm
+contract chung cho các lane v13 (C01–C11), khép phần danh mục của F04/F10/F11
+(audit 15/10/2026). Nhánh `v13-hop-dong`, không merge `main`. Board:
+`docs/handover/v13-board.md`.
+
+- [x] v13.0 c00 — `data/contract_features.json` lên schema v13.0: mỗi mục
+  `id`, `nhom_goc` (khi tách), `phong_ban`, `pham_vi` (tinh_nang_ai |
+  nen_tang_tmdt | truy_xuat_blockchain | nghia_vu_hd), `ten`, `nguon` (PL01
+  mục 2 — khối / nhóm: 'cụm chữ gốc'), `giai_doan`, `nguoi_duyet` (theo
+  PL01), `owner`, `dau_ra`, `modules`, `agent_ids` (cổng cũ, C03 thay),
+  `output_sources` (nơi đầu ra thật được ghi, đọc từ code:
+  approval_queue khối/object_type[/created_by], content_drafts
+  created_by+content_type, bảng, tiền tố report, file nhật ký; rỗng → lý do),
+  `code_status` (co_code|mot_phan|thieu|lam_rieng|ngoai_code),
+  `acceptance_status` (luôn chua_nghiem_thu), `blocker`, `phu_thuoc`,
+  `bang_chung` (file test). Decomposition ĐỀ XUẤT: 21 nhóm v12 tách khi chữ
+  gốc liệt kê đầu ra phân biệt → 86 mục = 79 tính năng AI (72 P1 / 7 P2) + 7
+  ngoài 89 (website, API sàn, neo blockchain, đối soát quý, sổ triển khai,
+  nghĩa vụ ngoài phần mềm, hạ tầng PL01 mục 8). `tong_hop` so số HĐ: khớp
+  sales 12, finance 9, production 6 ("khớp số lượng — nội dung chờ hai bên
+  chốt"); lệch ceo 7/9, marketing 11/14, intel 8/11, farming 7/9, legal_hr
+  11/10, data_platform 8/9, P1 72/80, P2 7/9, tổng 79/89 → "chưa xác định —
+  chờ hai bên chốt" — KHÔNG ghi đạt. code_status: 62 co_code, 17 mot_phan, 3
+  thieu (kiểm bài đối tác, nháp thư nhắc nợ, neo blockchain), 2 lam_rieng
+  (website + chatbot web, kèm hợp đồng giao tiếp tối thiểu: đơn web vào
+  orders/đối soát, cùng channels/llm_gateway/cskh_handoff/rollout/reply_ms),
+  2 ngoai_code. Sửa phân loại sai v12: cập nhật văn bản pháp luật (PC-A8 đã
+  có) thieu → mot_phan; actor `agent:mkt02` hết dùng chung sales-03/marketing-01
+  (sales-03 đếm qua content_drafts listing).
+- [x] `pipelines/rollout.py`: reader mới (kiểm schema từng mục, không 2 mục
+  chung 1 agent_id/1 nguồn đầu ra, `tong_hop` phải = `summary()`, id
+  `<nhóm>.<n>` + `nhom_goc`, da_nghiem_thu cần `bien_ban`); `summary()`,
+  `split_map()`, `legacy_rows()`; `--catalog` (không DB). Migration ID: dòng
+  sổ id nhóm cũ giữ nguyên, mục tách vào sổ với mốc MỚI (evidence
+  `nhom_goc`), nhóm cũ `tat` → mục tách `tat`; `--status`/hồ sơ liệt kê id
+  nhóm cũ → mục tách. Chỉ `co_code` vào sổ/nâng (mot_phan bị từ chối).
+  `docs/schema.sql` khối `v13.0 c00`: nới CHECK `feature_rollout.feature_id`
+  nhận `<nhóm>.<n>` (drop/add idempotent).
+- [x] Test `tests/test_rollout.py` (122): manifest không trùng ID/agent_id/
+  nguồn, mọi mục có nguồn, module + test tồn tại, output_sources trỏ
+  object_type có thật trong `data/directors/*.json` và literal có trong module
+  (bảng có trong schema), tong_hop = số mục thực, board khớp số, 59 id v12 truy
+  được, mục tách mốc mới + không bật lại nhóm tắt (DB thật).
+  Evidence: `evidence/v13_0_c00_pytest.log` (DB lane `samsam_v13_c00_2`:
+  schema/roles ×2 sạch, core + golden; rollout/da_schema/db_backup/
+  handover_docs/apply_schema_pgvector/runbook/bks_audit 259 passed),
+  `evidence/v13_0_c00_e2e.log` (giả lập sổ v12 có sales-07 có người duyệt +
+  marketing-02 tắt → seed v13: 62 vào sổ, seed lần 2 = 0, nhóm cũ nguyên vẹn,
+  sales-07.1 bị từ chối nâng, marketing-02.2 vào `tat`). `ruff check .` sạch.
+  Self-review (không có reviewer độc lập trong lane).
+- [ ] Còn mở (không thuộc c00): đếm đầu ra theo `output_sources` + cưỡng chế
+  runtime (C03); 3 mục `thieu` + phần thiếu của 17 `mot_phan` chưa có lane
+  v13: kiểm bài đăng đối tác (marketing-04.2), cảnh báo đơn trễ/hủy/hoàn
+  (sales-06.2), phá giá đại lý (sales-06.1), người phụ trách lead trong ngày (sales-04.1), nhắc chốt đơn
+  B2B (sales-05), so voucher (ceo-04.1), gợi ý từ khóa an toàn (intel-04.2);
+  hai bên chốt 89 mục.
+
 ## Checklist v12.1–v12.6-bu-thieu-hop-dong
 
 Khán giả/mục đích: bù phần THIẾU so với Hợp đồng hợp tác đầu tư TEDO–Sâm Sâm

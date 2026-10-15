@@ -6,6 +6,8 @@ evidence, không tin lời.
 
 Status: `[ ]` todo · `[~]` doing · `[x]` done (kèm link evidence)
 
+Board v13 (bám Hợp đồng TEDO–Sâm Sâm, C00–C11): `docs/handover/v13-board.md`.
+
 ---
 
 ## M1 — Data pipeline (crawl → jsonl)
