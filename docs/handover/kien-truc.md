@@ -260,8 +260,9 @@ Giới hạn pilot: máy local vẫn chạy bằng DSN owner — chặn quyền 
 hiệu lực khi app/agent dùng DSN theo role. CHƯA chuyển DSN Streamlit/agent
 sang role: `roles.sql` chỉ cấp vài bảng trên → dưới role, Streamlit mất
 `chunks`/`leads`/`plot_logs`... (tab Chat/Leads/Báo cáo/Nhật ký vườn gãy)
-và agent mất `llm_usage` (trần chi phí LLM tắt câm vì `_month_spend` lỗi =
-cho qua). DSN role hiện chỉ dùng cho tiến trình duyệt/ghi draft riêng (CLI
+và agent mất `llm_usage` (v13.1: `_month_spend` lỗi = fail-closed → mọi lời
+gọi LLM bị chặn, chatbot chuyển nhân viên; trước v13.1 là "cho qua" làm trần
+chi phí tắt câm). DSN role hiện chỉ dùng cho tiến trình duyệt/ghi draft riêng (CLI
 `pipelines.store`); grant đủ bảng theo plan §5 = external-dep/someday
 (SOP mục 9). `--by` CLI vẫn free-text (tin người giữ DSN `app_human`);
 xóa dòng CUỐI log không phát hiện được bằng chuỗi thuần (cần neo ngoài).

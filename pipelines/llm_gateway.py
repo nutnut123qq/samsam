@@ -19,10 +19,19 @@ Contract:
   - Trần chi phí tháng theo agent_id (`monthly_cap_usd`, key "default"):
     tổng `llm_usage.cost_usd` từ đầu tháng THEO GIỜ Asia/Ho_Chi_Minh.
     >=100% -> GatewayBlocked (0 call); >=80% -> cảnh báo rồi vẫn gọi.
-    Cap 0 = tắt agent đó.
-  - CHÍNH SÁCH DB không đọc được khi check cap: CHO QUA + cảnh báo (nhất
-    quán với ghi usage: DB down không làm mất dịch vụ chatbot). Kill-switch
-    không phụ thuộc DB nên vẫn chặn được khi DB down.
+    Cap <= 0 = tắt agent đó — chặn TRƯỚC khi đọc DB (v13.1).
+  - CHÍNH SÁCH DB không đọc được khi check cap (v13.1, đổi từ "cho qua"):
+    FAIL-CLOSED -> GatewayBlocked, 0 lời gọi. Chatbot (connectors.zalo /
+    messenger, channels --suggest) bắt GatewayBlocked -> câu chuyển nhân
+    viên cố định, không gọi AI. Ghi usage lỗi sau khi đã gọi vẫn chỉ cảnh
+    báo. Kill-switch không phụ thuộc DB.
+  - PII (v13.1, F02): ngoài SĐT/email, `pipelines.pii.mask_identity` che
+    tên theo mẫu xưng danh ("tôi là/tên em là ...") và địa chỉ có số nhà
+    (số nhà + đường/ngõ/hẻm/thôn... hoặc số + tên đường Viết Hoa sau từ gợi
+    ý địa chỉ) trong MỌI message/input — trừ địa chỉ công khai của công ty
+    trong `pii_allow`. Text do KHÁCH gõ còn qua `pii.scrub_user` ở
+    `api.rag.answer` (danh xưng + tên Viết Hoa, dấu hiệu sót -> chuyển
+    người, không gọi AI).
   - Ghi `llm_usage` 1 dòng/lời gọi (ok và err); ghi lỗi -> cảnh báo, kết
     quả vẫn trả. cost = tokens x giá config; model không có giá -> tính theo
     giá cao nhất đã biết + cảnh báo (không để trần mất tác dụng).
@@ -43,7 +52,7 @@ import psycopg
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from pipelines.pii import _PII_RE, _mask_pii
+from pipelines.pii import _PII_RE, _mask_pii, mask_identity
 
 # Console Windows cp1258 — print tiếng Việt có dấu crash; ép UTF-8.
 for _s in (sys.stdout, sys.stderr):
@@ -118,7 +127,7 @@ def _connect():
 
 
 def _month_spend(agent_id: str) -> float | None:
-    """Tổng cost tháng này; None = không đọc được (policy: cho qua)."""
+    """Tổng cost tháng này; None = không đọc được (v13.1: `_gate` chặn)."""
     try:
         conn = _connect()
         if conn is None:
@@ -127,8 +136,8 @@ def _month_spend(agent_id: str) -> float | None:
             return float(conn.execute(_SPEND_SQL, (agent_id,)).fetchone()[0])
         finally:
             conn.close()
-    except Exception as e:  # noqa: BLE001 — DB lỗi không chặn dịch vụ
-        _warn(f"không đọc được spend ({type(e).__name__}) — cho qua")
+    except Exception as e:  # noqa: BLE001 — caller quyết (fail-closed)
+        _warn(f"không đọc được spend ({type(e).__name__}) — chặn lời gọi")
         return None
 
 
@@ -162,14 +171,26 @@ def _gate(agent_id: str) -> dict:
     if agent_id in cfg["kill"]:
         raise GatewayBlocked(f"agent '{agent_id}' đang bị kill-switch")
     caps = cfg["monthly_cap_usd"]
-    cap = float(caps.get(agent_id, caps["default"]))
+    try:
+        cap = float(caps.get(agent_id, caps["default"]))
+    except (TypeError, ValueError) as e:
+        raise GatewayError(f"trần chi phí của '{agent_id}' không phải số") from e
+    # v13.1 (FinOps): cap <= 0 = agent TẮT — chặn TRƯỚC khi đọc DB (trước
+    # đây DB down thì cap 0 vẫn cho qua câm).
+    if not cap > 0:
+        raise GatewayBlocked(f"agent '{agent_id}' có trần 0 USD — đang tắt")
     spend = _month_spend(agent_id)
-    if spend is not None:
-        if spend >= cap:
-            raise GatewayBlocked(
-                f"agent '{agent_id}' vượt trần tháng {spend:.4f}/{cap:.2f} USD")
-        if spend >= WARN_RATIO * cap:
-            _warn(f"agent '{agent_id}' đã dùng {spend:.4f}/{cap:.2f} USD (>=80%)")
+    if spend is None:
+        # v13.1: không đọc được chi tiêu = không chứng minh được còn trong
+        # trần -> FAIL-CLOSED (chatbot bắt GatewayBlocked -> chuyển người).
+        raise GatewayBlocked(
+            f"agent '{agent_id}': không đọc được chi tiêu tháng — chặn"
+            " (fail-closed)")
+    if spend >= cap:
+        raise GatewayBlocked(
+            f"agent '{agent_id}' vượt trần tháng {spend:.4f}/{cap:.2f} USD")
+    if spend >= WARN_RATIO * cap:
+        _warn(f"agent '{agent_id}' đã dùng {spend:.4f}/{cap:.2f} USD (>=80%)")
     return cfg
 
 
@@ -183,12 +204,15 @@ def _norm_contact(s: str) -> str:
     return s.casefold() if "@" in s else re.sub(r"\D", "", s)
 
 
-def _mask(text: str, allow: frozenset) -> str:
+def _mask(text: str, allow: frozenset, addr: tuple = ()) -> str:
     """_mask_pii nhưng GIỮ liên hệ công khai của công ty (`pii_allow` —
     hotline/email trên site public, vd câu eval "Hotline liên hệ?"): mask
     hết thì chatbot không trả được số công ty có trong ngữ cảnh KB. So khớp
     theo digits/email casefold; placeholder không chứa digit/sep/@ nên
-    mask không đụng và không bridge."""
+    mask không đụng và không bridge.
+    v13.1 (F02): trước đó che tên theo mẫu xưng danh + địa chỉ có số nhà
+    (`pii.mask_identity`), giữ địa chỉ công khai trong `addr`."""
+    text = mask_identity(text, addr)
     if not allow:
         return _mask_pii(text)
     text = text.replace("\x00", "")  # NUL user gõ không giả được placeholder
@@ -205,19 +229,29 @@ def _mask(text: str, allow: frozenset) -> str:
                   out)
 
 
-def _mask_content(c, allow):
+def _mask_content(c, allow, addr=()):
     if isinstance(c, str):
-        return _mask(c, allow)
+        return _mask(c, allow, addr)
     if isinstance(c, list):  # multimodal parts [{"type":"text","text":..}]
-        return [{**p, "text": _mask(p["text"], allow)}
+        return [{**p, "text": _mask(p["text"], allow, addr)}
                 if isinstance(p, dict) and isinstance(p.get("text"), str) else p
                 for p in c]
     return c
 
 
+def _is_addr(x: str) -> bool:
+    return "@" not in x and any(c.isalpha() for c in x)
+
+
 def _allow(cfg) -> frozenset:
     return frozenset(_norm_contact(x) for x in cfg.get("pii_allow") or []
-                     if isinstance(x, str) and x)
+                     if isinstance(x, str) and x and not _is_addr(x))
+
+
+def _allow_addr(cfg) -> tuple:
+    """Mục `pii_allow` có chữ (không '@') = địa chỉ công khai của công ty."""
+    return tuple(x for x in cfg.get("pii_allow") or []
+                 if isinstance(x, str) and x.strip() and _is_addr(x))
 
 
 def _cost(cfg, model, tin, tout) -> float:
@@ -254,8 +288,8 @@ def _call(agent_id, model, cfg, fn, payload):
 def chat(agent_id: str, messages: list[dict], model: str | None = None, **kw):
     cfg = _gate(agent_id)
     model = model or os.environ.get("OR_CHAT_MODEL", "openai/gpt-4o-mini")
-    allow = _allow(cfg)
-    msgs = [{**m, "content": _mask_content(m.get("content"), allow)}
+    allow, addr = _allow(cfg), _allow_addr(cfg)
+    msgs = [{**m, "content": _mask_content(m.get("content"), allow, addr)}
             for m in messages]
     return _call(agent_id, model, cfg, lambda c: c.chat.completions.create,
                  {"messages": msgs, **kw})
@@ -264,9 +298,9 @@ def chat(agent_id: str, messages: list[dict], model: str | None = None, **kw):
 def embed(agent_id: str, input, model: str | None = None, **kw):
     cfg = _gate(agent_id)
     model = model or os.environ.get("OR_EMBED_MODEL", "openai/text-embedding-3-small")
-    allow = _allow(cfg)
-    inp = ([_mask(t, allow) for t in input] if isinstance(input, list)
-           else _mask(input, allow))
+    allow, addr = _allow(cfg), _allow_addr(cfg)
+    inp = ([_mask(t, allow, addr) for t in input] if isinstance(input, list)
+           else _mask(input, allow, addr))
     return _call(agent_id, model, cfg, lambda c: c.embeddings.create,
                  {"input": inp, **kw})
 
@@ -314,10 +348,77 @@ def _strip_accents(s: str) -> str:
     return "".join(c for c in s if not unicodedata.combining(c))
 
 
+# v13.1 (F02): lọc theo ÂM TIẾT trên TOÀN câu — trước đây danh sách không
+# dấu chỉ áp khi CẢ câu không dấu, nên câu trộn dấu "Ba tôi bi tieu duong,
+# mua loại nào?" lọt tới retrieve/embed ngoài. Giờ mỗi cụm khớp theo bản
+# bỏ dấu của từng âm tiết, rồi kiểm âm tiết GỐC: (a) viết trần (không dấu)
+# — chỉ cho cụm trong danh sách không dấu đã rà (`_HEALTH_ASCII`); hoặc
+# (b) cùng bộ dấu với âm tiết của cụm có dấu (không phân biệt vị trí dấu:
+# "hoá"="hóa"). "thuộc" ≠ "thuốc", "đâu" ≠ "đau" (khác bộ dấu) -> không
+# trúng oan. Ký tự định dạng vô hình (ZWSP, soft hyphen...) bỏ trước;
+# NFKC gộp fullwidth/NFD. Cụm dính liền không cách ("tieuduong") cũng bắt.
+_SYL_RE = re.compile(r"[^\W_]+")
+
+
+def _marks(syl: str) -> tuple:
+    d = unicodedata.normalize("NFD", syl)
+    return (tuple(sorted(c for c in d if unicodedata.combining(c))),
+            "đ" in syl)
+
+
+def _health_rules() -> list[tuple[tuple, tuple | None, bool]]:
+    """[(âm tiết bỏ dấu, âm tiết có dấu|None, cho phép viết trần)]."""
+    vi = {}
+    for p in _HEALTH_VI:
+        vi.setdefault(tuple(_strip_accents(p).split()), tuple(p.split()))
+    rules = {}
+    for key, acc in vi.items():
+        rules[key] = (acc, False)
+    for p in _HEALTH_ASCII:
+        key = tuple(p.split())
+        acc = vi.get(key) or _HEALTH_ASCII_ACCENT.get(p)
+        rules[key] = (tuple(acc.split()) if isinstance(acc, str) else acc,
+                      True)
+    return [(k, a, bare) for k, (a, bare) in rules.items()]
+
+
+# Cụm không dấu chưa có dạng có dấu trong `_HEALTH_VI` (để chấp nhận câu
+# gõ dấu một phần đúng âm tiết, vd "đau dau").
+_HEALTH_ASCII_ACCENT = {
+    "chua benh": "chữa bệnh", "suy than": "suy thận", "dau dau": "đau đầu",
+    "dau bung": "đau bụng", "mang bau": "mang bầu", "co bau": "có bầu",
+    "gut": "gút",
+}
+_HEALTH_RULES = _health_rules()
+_HEALTH_BY_FIRST: dict[str, list] = {}
+for _r in _HEALTH_RULES:
+    _HEALTH_BY_FIRST.setdefault(_r[0][0], []).append(_r)
+_HEALTH_JOINED = {"".join(k) for k, _a, bare in _HEALTH_RULES
+                  if bare and len(k) > 1}
+
+
+def _syl_ok(orig: str, acc: str | None, bare: bool) -> bool:
+    if _strip_accents(orig) == orig:
+        return bare or acc == orig
+    return acc is not None and _marks(orig) == _marks(acc)
+
+
 def is_health_question(text: str) -> bool:
     if not isinstance(text, str):
         return False
-    t = unicodedata.normalize("NFC", text).casefold()
+    t = "".join(c for c in unicodedata.normalize("NFKC", text)
+                if unicodedata.category(c) != "Cf").casefold()
     if _HEALTH_VI_RE.search(t):
         return True
-    return _strip_accents(t) == t and bool(_HEALTH_ASCII_RE.search(t))
+    syls = _SYL_RE.findall(t)
+    plain = [_strip_accents(s) for s in syls]
+    for i, p in enumerate(plain):
+        if syls[i] == p and p in _HEALTH_JOINED:
+            return True
+        for key, acc, bare in _HEALTH_BY_FIRST.get(p, ()):
+            n = len(key)
+            if tuple(plain[i:i + n]) == key and all(
+                    _syl_ok(syls[i + j], acc[j] if acc else None, bare)
+                    for j in range(n)):
+                return True
+    return False

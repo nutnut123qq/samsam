@@ -26,6 +26,7 @@ from dotenv import load_dotenv
 
 from pipelines.kb_filter import is_alcohol
 from pipelines.llm_gateway import chat, embed, is_health_question
+from pipelines.pii import scrub_user
 
 # Console Windows cp1258 — print tiếng Việt có dấu crash; ép UTF-8.
 for _s in (sys.stdout, sys.stderr):
@@ -277,6 +278,26 @@ def _standalone(question: str, history: list[dict]) -> str:
     return (resp.choices[0].message.content or "").strip()
 
 
+def _scrub_history(history: list[dict] | None) -> list[dict]:
+    """v13.1: lượt user -> `scrub_user`; lượt còn dấu hiệu PII thì bỏ luôn
+    câu trả lời kế tiếp của nó (cặp hỏi/đáp)."""
+    out, skip = [], False
+    for m in history or []:
+        if not isinstance(m, dict):
+            continue
+        c = m.get("content")
+        if m.get("role") == "user" and isinstance(c, str):
+            c, skip = scrub_user(c)
+            if skip:
+                continue
+            out.append({**m, "content": c})
+        elif skip and m.get("role") == "assistant":
+            skip = False
+        else:
+            out.append(m)
+    return out
+
+
 def answer(question: str, history: list[dict] | None = None) -> dict:
     """Trả lời câu hỏi kèm nguồn. Thiếu context/score thấp -> NO_DATA.
 
@@ -291,16 +312,36 @@ def answer(question: str, history: list[dict] | None = None) -> dict:
     v3.9 (W39.4): câu hỏi về rượu (kể cả câu rewrite) -> NO_DATA +
     handoff="alcohol", không gọi LLM/embed, không mời mua. Kênh khách luôn
     retrieve corpus public — KHÔNG có tham số collection. Câu trả lời chứa
-    chuỗi >=9 chữ số không có trong ngữ cảnh (MST/SĐT bịa) -> NO_DATA."""
+    chuỗi >=9 chữ số không có trong ngữ cảnh (MST/SĐT bịa) -> NO_DATA.
+    v13.1 (F02): câu hỏi + lượt user của history qua `pii.scrub_user` trước
+    MỌI lời gọi AI; còn dấu hiệu PII -> NO_DATA + handoff="pii" (0 lời gọi);
+    câu rewrite cũng qua lọc sức khỏe. Gateway chặn (trần/kill/không đọc
+    được chi tiêu) -> GatewayBlocked lan ra caller (zalo/messenger/channels
+    chuyển người)."""
     if is_health_question(question):
         return {"answer": NO_DATA, "sources": [], "handoff": "health"}
     if is_alcohol(question):
         return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+    # v13.1 (F02): text KHÁCH gõ (câu hỏi + lượt user trong history) che
+    # tên/địa chỉ/SĐT/email TRƯỚC mọi lời gọi rewrite/embed/chat; câu hỏi
+    # còn dấu hiệu PII không che chắc -> chuyển người, 0 lời gọi AI. Lượt
+    # history còn dấu hiệu -> bỏ cả cặp hỏi/đáp khỏi ngữ cảnh gửi đi.
+    # Đối chiếu số (`_unverified_number`) vẫn dùng text GỐC — kiểm cục bộ,
+    # không gửi đi (giữ hành vi: số khách tự gõ được phép nhắc lại).
+    raw_turns = [question, *(m["content"] for m in history or []
+                             if isinstance(m, dict)
+                             and isinstance(m.get("content"), str))]
+    question, risky = scrub_user(question)
+    if risky:
+        return {"answer": NO_DATA, "sources": [], "handoff": "pii"}
+    history = _scrub_history(history)
     search_q = question
     if history:
-        search_q = _standalone(question, history) or question
+        search_q = scrub_user(_standalone(question, history) or question)[0]
         if is_alcohol(search_q):
             return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+        if is_health_question(search_q):
+            return {"answer": NO_DATA, "sources": [], "handoff": "health"}
     hits = retrieve(search_q)
     if not hits or hits[0]["score"] < MIN_SCORE:
         return {"answer": NO_DATA, "sources": []}
@@ -325,9 +366,7 @@ def answer(question: str, history: list[dict] | None = None) -> dict:
     # (D5.8): " " truthy nên `or NO_DATA` trước strip không bắt được —
     # trả "" làm zalo gửi message rỗng.
     text = (resp.choices[0].message.content or "").strip() or NO_DATA
-    grounding = "\n".join([context, question, *(
-        m["content"] for m in history or []
-        if isinstance(m, dict) and isinstance(m.get("content"), str))])
+    grounding = "\n".join([context, *raw_turns])
     if _unverified_number(text, grounding):
         return {"answer": NO_DATA, "sources": []}
     sources = sorted({h["url"] for h in hits if h["score"] >= MIN_SCORE and h["url"]})

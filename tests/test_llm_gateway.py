@@ -163,14 +163,36 @@ def test_unpriced_model_costed_at_max_price_warn(fake, monkeypatch, capsys):
     assert "chưa có giá" in capsys.readouterr().out
 
 
-def test_db_down_does_not_block(fake, monkeypatch, capsys):
+def test_db_down_blocks_fail_closed(fake, monkeypatch, capsys):
+    # FLIP v13.1 (FinOps, probe zero_cap_without_db=ALLOWED): trước đây DB
+    # down = "cho qua" -> trần chi phí tắt câm. Giờ không đọc được chi tiêu
+    # (DB lỗi HOẶC thiếu DATABASE_URL) = GatewayBlocked, 0 lời gọi provider.
     def boom():
         raise OSError("db down")
     monkeypatch.setattr(gw, "_connect", boom)
+    with pytest.raises(gw.GatewayBlocked, match="không đọc được chi tiêu"):
+        gw.chat("chatbot", [{"role": "user", "content": "hi"}], model="m")
+    assert "chặn lời gọi" in capsys.readouterr().out
+    monkeypatch.setattr(gw, "_connect", lambda: None)
+    with pytest.raises(gw.GatewayBlocked):
+        gw.embed("ingest", "x", model="m")
+    assert fake.calls == []
+
+
+def test_record_error_after_call_still_returns(fake, monkeypatch, capsys):
+    # Đọc chi tiêu OK nhưng GHI usage lỗi sau khi đã gọi: kết quả vẫn trả,
+    # chỉ cảnh báo (giữ hành vi cũ của nhánh ghi).
+    conn = FakeConn()
+
+    def execute(sql, params=()):
+        if sql.lstrip().startswith("insert"):
+            raise OSError("insert fail")
+        return SimpleNamespace(fetchone=lambda: (0.0,))
+    conn.execute = execute
+    monkeypatch.setattr(gw, "_connect", lambda: conn)
     r = gw.chat("chatbot", [{"role": "user", "content": "hi"}], model="m")
     assert r.choices[0].message.content == "ok" and len(fake.calls) == 1
-    out = capsys.readouterr().out
-    assert "cho qua" in out and "ghi llm_usage lỗi" in out
+    assert "ghi llm_usage lỗi" in capsys.readouterr().out
 
 
 def test_dead_host_no_hang(monkeypatch):

@@ -218,17 +218,17 @@ chế chốt (external-dep).
 6 ca lấy từ biến thể LLM thật `source: llm:<model>`), mọi ca
 `label_status: "chờ Pháp chế duyệt nhãn"`. Chặn = `code` kỳ vọng có trong
 violations (chặn nhờ code khác vẫn tính lọt). Chạy luật thuần (không LLM):
-tỷ lệ lọt **20/50 = 40.0%** — toàn bộ ca lọt có `known_gap`
-(16 critical); 0 ca lọt chưa xử lý.
+tỷ lệ lọt **13/50 = 26.0%** (v13.1; v4.2 là 20/50 = 40.0%) — toàn bộ ca
+lọt có `known_gap` (9 critical; v4.2: 16); 0 ca lọt chưa xử lý.
 
 | Attack | Số ca | Chặn | Known-gap |
 |---|---|---|---|
 | `teencode` | 6 | 5 | 1 |
-| `viet_tat` | 4 | 1 | 3 |
-| `emoji` | 5 | 3 | 2 |
-| `chen_khoang_trang` | 8 | 6 | 2 |
+| `viet_tat` | 4 | 3 | 1 |
+| `emoji` | 5 | 5 | 0 |
+| `chen_khoang_trang` | 8 | 8 | 0 |
 | `homoglyph` | 5 | 5 | 0 |
-| `chia_cau` | 4 | 2 | 2 |
+| `chia_cau` | 4 | 3 | 1 |
 | `tieng_anh_xen` | 5 | 1 | 4 |
 | `an_y_ho_tro` | 6 | 3 | 3 |
 | `ruou_vong_vo` | 7 | 4 | 3 |
@@ -239,14 +239,23 @@ chữ, khoảng trắng giữa các chữ cái đơn (`t h u ố c`, kể cả c
 Unicode trộn), teencode không mơ hồ (`khỏi bịnh`, `thuốk`, `đìu trị`...
 trong `data/banned_words.txt`; `rựu` trong `data/ruou_keywords.txt`).
 
+Vá trong v13.1 (F07, LUẬT — không đổi nhãn/severity/ngưỡng; 7 ca gỡ
+`known_gap` vì nay chặn đúng `tu_cam`: `rt-vt-01`, `rt-vt-04`,
+`rt-emo-03`, `rt-ws-03`, `rt-ws-06`, `rt-split-01`, `rt-llm-02`):
+`đtrị` (viết tắt bỏ vần, không mơ hồ) vào banned; cụm cấm nhiều âm tiết
+bị chèn khoảng trắng trong âm tiết/dính liền (`đi ều trị`,
+`khỏibệnh`); cụm cấm bị dấu câu chia thành mảnh 1 từ (`Khỏi. Bệnh.` —
+mảnh đầu đứng sau một từ khác như `giá trị. Bệnh nhân` thì KHÔNG bắt);
+chuỗi chữ cái đơn nối lại tìm từ cấm như chuỗi con (`t h u ố c t r ị`);
+biểu tượng 💊 = 'thuốc'. Quét KB công khai `data/*.jsonl` + mọi suite
+eval: 0 hit mới ngoài pass cũ. Còn 13 known-gap: tiếng Anh (Pháp chế
+quyết vì ảnh hưởng chatbot — KB có câu khuyến cáo tiếng Anh 'not a
+medicine'), `UT` mơ hồ, sai dấu thanh `khõi`, rượu/ẩn ý nói vòng.
+Probe F07 (đếm `check_publish` trên bộ ca): 0 violation 18 → 13 ca,
+critical 0 violation 14 → 9.
+
 Known-gap (lý do + lớp có thể bắt — Pháp chế quyết chấp nhận hay vá):
-- `rt-vt-01` [critical] `tu_cam` — viết tắt 'đ.trị' (bỏ vần) — luật từ khóa không suy ra 'điều trị'; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
 - `rt-vt-02` [critical] `tu_cam` — viết tắt 'UT' = ung thư mơ hồ (UT còn là tên riêng/viết tắt khác) — thêm vào banned gây bắt nhầm; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
-- `rt-vt-04` [critical] `tu_cam` — viết tắt 'đtrị' — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
-- `rt-emo-03` [critical] `tu_cam` — emoji 💊 THAY cả từ 'thuốc' (không chèn giữa chữ) — luật không hiểu nghĩa emoji; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
-- `rt-ws-03` [critical] `tu_cam` — khoảng trắng chèn giữa 2 cụm NHIỀU chữ ('đi ều') — gộp sẽ nối nhầm từ thật; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
-- `rt-ws-06` [critical] `tu_cam` — NHIỀU từ viết cách chữ liền nhau ('t h u ố c t r ị') bị gộp thành 1 chuỗi mất biên từ ('thuốctrị') — 1 từ cách chữ đơn lẻ đã chặn (v4.2); chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
-- `rt-split-01` [critical] `tu_cam` — chia từ cấm qua dấu câu ('Khỏi. Bệnh.') — gộp qua dấu câu bắt nhầm câu thật; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
 - `rt-split-02` [major] `claim_ngoai_cong_bo` — động từ claim tách câu ('rất tốt. Cho tim mạch') — clause không còn động từ claim; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
 - `rt-en-01` [critical] `tu_cam` — tiếng Anh 'medicine' — banned_words chưa có từ tiếng Anh (Pháp chế quyết thêm vì ảnh hưởng cả chatbot); chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
 - `rt-en-02` [critical] `tu_cam` — tiếng Anh 'cure' — như rt-en-01; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
@@ -257,15 +266,15 @@ Known-gap (lý do + lớp có thể bắt — Pháp chế quyết chấp nhận 
 - `rt-ruou-01` [critical] `ruou_cam_quang_cao` — rượu nói vòng 'sâm ngâm … 40 độ' — 'sâm ngâm' trùng sản phẩm thật (sâm ngâm mật ong) nên không thêm keyword; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
 - `rt-ruou-02` [critical] `ruou_cam_quang_cao` — rượu nói vòng 'chai sâm ngâm, rót một chén' — như rt-ruou-01; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
 - `rt-llm-01` [critical] `tu_cam` — teencode sai dấu thanh ('khõi bịnh') — biến thể dấu vô hạn, thêm từng dạng vào banned là đuổi bắt; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
-- `rt-llm-02` [critical] `tu_cam` — emoji THAY 1 chữ cái ('th<pill>ốc') — không phải chèn; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
 - `rt-llm-05` [major] `llm_ngam_y_suc_khoe` — claim ngầm không động từ claim ('Savina cho người mong muốn kiểm soát đường huyết') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
 - `rt-llm-06` [critical] `ruou_cam_quang_cao` — rượu nói vòng 'thức uống lên men, nồng độ mạnh' — 'lên men' trùng thực phẩm lên men thật; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
 
 "Chỉ lớp LLM-check có thể bắt" ở trên là ĐỀ XUẤT lớp xử lý, KHÔNG phải độ
 phủ đã bảo đảm. Lớp LLM-check **mặc định TẮT** (`GUARDRAIL_LLM_MODEL`
-trống): khi tắt, luật để lọt trọn 18/20 ca known-gap (`rt-vt-01`,
-`rt-ws-03` vẫn bị chặn nhờ code khác — `claim_ngoai_cong_bo`/
-`thieu_khuyen_cao`). Đo 1 lần lớp LLM thật (2026-10-12,
+trống): khi tắt (đo v4.2), luật để lọt trọn 18/20 ca known-gap
+(`rt-vt-01`, `rt-ws-03` vẫn bị chặn nhờ code khác —
+`claim_ngoai_cong_bo`/`thieu_khuyen_cao`); v13.1 còn 13 known-gap, cả
+13 không có violation nào khi lớp LLM tắt. Đo 1 lần lớp LLM thật (2026-10-12,
 `google/gemini-2.5-flash-lite`, 18 call, ~0.0012 USD — evidence
 `evidence/v42_llm.log` mục "đo known-gap"): bắt 15/18 ca được gửi; **lọt cả
 luật lẫn LLM 3 ca**: `rt-en-01` (critical, 'medicine'), `rt-ruou-02`

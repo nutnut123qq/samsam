@@ -2187,7 +2187,7 @@ create role <ten_nguoi> login password '<mat-khau>' in role app_human;
 | Tiến trình dưới role | Bảng thiếu quyền | Hậu quả |
 |---|---|---|
 | Streamlit dưới `app_human` | `chunks`, `leads`, `plot_logs`/`plots`, `products`/`claims_approved`, `llm_usage`... | Tab Chat, Leads, Báo cáo, Nhật ký vườn lỗi DB |
-| Agent dưới `agent_writer` (qua `pipelines/llm_gateway.py`) | `llm_usage` (SELECT + INSERT) | **Trần chi phí LLM tháng TẮT CÂM** — `_month_spend` lỗi đọc thì "cho qua"; usage không còn được ghi |
+| Agent dưới `agent_writer` (qua `pipelines/llm_gateway.py`) | `llm_usage` (SELECT + INSERT) | **MỌI lời gọi LLM bị chặn** — v13.1 `_month_spend` lỗi đọc = fail-closed (`GatewayBlocked`, chatbot chuyển nhân viên; trước v13.1 là "cho qua" làm trần chi phí tắt câm) |
 | Agent/ingest khác | `chunks`, `leads`, `plot_logs`, `sku_*`, `price_list`, `orders`... | Ghi/đọc lỗi |
 
 Hiện tại DSN role CHỈ dùng cho tiến trình duyệt/ghi draft riêng, ví dụ

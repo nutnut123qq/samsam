@@ -3,9 +3,13 @@
 payload gửi ra provider phải qua đây). Dời nguyên văn từ connectors/zalo.py
 (W31.1) — lịch sử vá D5.3..V8.3 giữ trong comment bên dưới; zalo.py import
 lại cùng tên nên test cũ không đổi.
+v13.1 (F02): thêm `mask_identity` / `scrub_user` / `identity_residual` —
+tên + địa chỉ tự do (xem mục cuối file).
 """
 
 import re
+import unicodedata
+from functools import lru_cache
 
 # SĐT VN hoặc email trong câu hỏi -> mask trước khi log (D5.3).
 # Alternative 1 (D5.10 + D6.11): "0" + >=9 số, sep được LẶP nhiều ký tự
@@ -263,3 +267,239 @@ def _paren_group_end(text: str, i: int) -> tuple[int, int]:
             return -1, j
         j += 1
     return -1, j
+
+
+# --- v13.1 (F02): tên + địa chỉ tự do ------------------------------------
+# Regex SĐT/email ở trên KHÔNG che được tên/địa chỉ. Hai tầng:
+#   - `mask_identity(text, allow_addr)` — gateway áp cho MỌI message/input:
+#     tên sau mẫu XƯNG DANH ("tên em là ...", "tôi tên ...", "họ tên:",
+#     "tôi là <Viết Hoa>") + địa chỉ có SỐ NHÀ (số nhà + đường/phố/ngõ/hẻm/
+#     kiệt...; "ngõ/hẻm/số nhà <số>"; số + >=2 chữ Viết Hoa sau từ gợi ý
+#     địa chỉ "giao/gửi/ship/địa chỉ/ở/tại/về..."). Địa chỉ công khai của
+#     công ty trong `allow_addr` giữ nguyên (KB showroom).
+#   - `scrub_user(text)` — text KHÁCH gõ (api.rag): thêm danh xưng + tên
+#     Viết Hoa ("chị Lan", "anh Nguyễn Văn A"), rồi `identity_residual`:
+#     còn dấu hiệu PII không che chắc (từ gợi ý địa chỉ + số nhà chưa che,
+#     xưng danh + từ chưa che) -> True = KHÔNG gọi AI, chuyển người.
+# Cụm khớp trên bản bỏ dấu + chữ thường GIỮ ĐỘ DÀI (`_fold_keep`) để khách
+# gõ trộn dấu/không dấu vẫn bắt; Viết Hoa xét trên text gốc. Mọi quét
+# tuyến tính: cue là alternation cố định, sau cue chỉ đi tới <=6 từ; KHÔNG
+# để 2 lượng từ khoảng trắng kề nhau (`[ 	]*,?[ 	]+` = O(n²) trên chuỗi
+# trắng dài — probe 40K space 15s) -> tách nhánh `[ 	]*,[ 	]*|[ 	]+`.
+_MASK = "***"
+_WORD_RE = re.compile(r"[^\W\d_]+")
+_NUM = r"\d{1,5}[a-z]?(?:[ \t]*[/-][ \t]*\d{1,5}[a-z]?){0,3}"
+_NAME_STRONG_RE = re.compile(
+    r"(?<!\w)(?:(?:ho[ \t]+(?:va[ \t]+)?)?ten[ \t]+(?:cua[ \t]+)?"
+    r"(?:toi|em|minh|to|chau|con|anh|chi|nguoi[ \t]+nhan)(?:[ \t]+la)?"
+    r"|(?:toi|em|minh|to|chau|con)[ \t]+ten(?:[ \t]+la)?"
+    r"|ho[ \t]+(?:va[ \t]+)?ten(?:[ \t]+la)?"
+    r"|nguoi[ \t]+nhan(?:[ \t]+la)?)(?!\w)[ \t]*[:\-]?[ \t]*")
+_NAME_WEAK_RE = re.compile(
+    r"(?<!\w)(?:toi|em|minh|to|day)[ \t]+la[ \t]+"
+    r"(?:(?:anh|chi|co|chu|bac|ong|ba|em)[ \t]+)?")
+# Danh xưng (xét trên text GỐC chữ thường — "có"/"cô", "bà"/"ba" bỏ dấu
+# trùng nhau nên KHÔNG dùng bản bỏ dấu ở đây).
+_HONORIFIC_RE = re.compile(
+    r"(?<!\w)(?:anh|chị|cô|chú|bác|ông|bà|em|bạn|cháu|cậu|dì|mợ|thím)"
+    r"[ \t]+(?=[^\W\d_])")
+_STREET = (r"(?:duong|d\.|pho|ngo|ngach|hem|kiet)")
+_ADDR_NUM_FIRST_RE = re.compile(
+    r"(?<![\w/])(?:(?:so[ \t]+nha|nha[ \t]+so|so|sn)[ \t]*(?:[:.][ \t]*)?)?"
+    + _NUM + r"(?:[ \t]*,[ \t]*|[ \t]+)" + _STREET + r"(?!\w)")
+_ADDR_PREFIXED_RE = re.compile(
+    r"(?<![\w/])(?:so[ \t]+nha|nha[ \t]+so|sn|so)[ \t]*(?:[:.][ \t]*)?"
+    + _NUM + r"(?:[ \t]*,[ \t]*|[ \t]+)(?:thon|xom|ap|to|khom|khu[ \t]+pho|kp|xa|"
+    r"phuong|p\.|quan|q\.|huyen|thi[ \t]+tran|tt)(?!\w)")
+_ADDR_KEY_FIRST_RE = re.compile(
+    r"(?<!\w)(?:so[ \t]+nha|nha[ \t]+so|sn|ngo|ngach|hem|kiet)"
+    r"[ \t]*(?:[:.][ \t]*)?" + _NUM + r"(?![\w/])")
+_ADDR_NUM_RE = re.compile(r"(?<![\w/])" + _NUM + r"(?![\w/])")
+_ADDR_CUE_RE = re.compile(
+    r"(?<!\w)(?:dia[ \t]+chi|d/c|dc|giao|gui|ship|nha|o|tai|den|toi|ve|"
+    r"so)(?!\w)")
+
+
+def _set(words: str) -> frozenset:
+    return frozenset(words.split())
+
+
+# Từ dừng khi đi tiếp sau cue tên/địa chỉ (bản bỏ dấu).
+_STOP = _set(
+    "la o nha sdt so dien thoai muon can dat mua hoi giao gui ship va sinh "
+    "nam day gi nao ai sao dang de nhe a ah khong ko k co duoc se oi ne "
+    "nhu cua tai den toi ve cho voi shop ben em anh chi minh phuong xa quan "
+    "huyen tinh tp thanh mat bao lau roi chua nhan email zalo")
+_COARSE = _set("quan q phuong p huyen tinh tp xa thi")
+_UNITS = _set(
+    "hop hu chai goi vien lo cai sp san pham ngay gio tuan thang nam tieng "
+    "phut km kg g gr ml l v k tr trieu nghin ngan d dong lan nguoi suat bo "
+    "cap set combo phan tram duoc khong ko k nhe nha a roi chua mat bao "
+    "truoc sau")
+_QUESTION = _set("gi nao ai sao la")
+_CLAUSE_END_RE = re.compile(r"[.?!;\n]")
+# Chữ Viết Hoa ngay sau danh xưng nhưng là tên SP/thương hiệu, không phải
+# tên người.
+_NOT_NAME = _set(
+    "sam saphraton sapentol savigout savina savitim samsam tet shop shopee "
+    "tiktok zalo facebook messenger cod")
+_RESIDUAL_ADDR_CUE_RE = re.compile(
+    r"(?<!\w)(?:dia[ \t]+chi|d/c|so[ \t]+nha|nha[ \t]+so|"
+    r"nha[ \t]+(?:toi|em|minh|anh|chi|con|chau)[ \t]+o|"
+    r"(?:giao|gui|ship|chuyen)(?:[ \t]+hang)?[ \t]+(?:den|toi|ve|cho|vao|o)"
+    r")(?!\w)")
+
+
+@lru_cache(maxsize=4096)
+def _fold_ch(c: str) -> str:
+    if c in "đĐ":
+        return "d"
+    base = "".join(x for x in unicodedata.normalize("NFD", c)
+                   if not unicodedata.combining(x)) or c
+    low = base[0].lower()
+    return low if len(low) == 1 else base[0]
+
+
+def _fold_keep(t: str) -> str:
+    """Bỏ dấu + chữ thường, len(_fold_keep(t)) == len(t) (offset dùng
+    chung với text gốc)."""
+    return "".join(map(_fold_ch, t))
+
+
+def _norm_addr(s: str) -> str:
+    return " ".join(re.findall(r"[a-z0-9]+", _fold_keep(s)))
+
+
+def _words_after(t: str, f: str, pos: int, *, cap_only: bool,
+                 first_free: bool = False, limit: int = 4) -> int:
+    """Đi tiếp tối đa `limit` từ (chỉ cách nhau khoảng trắng) từ `pos`;
+    dừng ở dấu câu/chữ số/từ dừng. cap_only: chỉ nhận từ Viết Hoa (theo
+    text gốc). first_free: từ đầu không xét _STOP (tên "Anh"/"Em"), chỉ
+    loại từ hỏi. Trả vị trí kết thúc (== pos nếu không lấy được từ nào)."""
+    end, i, n = pos, pos, 0
+    while n < limit:
+        j = i
+        while j < len(f) and f[j] in " \t":
+            j += 1
+        m = _WORD_RE.match(f, j)
+        if not m or (n and j == i):
+            break
+        w = m.group(0)
+        if cap_only and not t[j].isupper():
+            break
+        if n == 0 and first_free:
+            if w in _QUESTION or (cap_only and w in _NOT_NAME):
+                break
+        elif w in _STOP:
+            break
+        end = i = m.end()
+        n += 1
+    return end
+
+
+def _addr_tail(t: str, f: str, pos: int) -> int:
+    """Sau từ khóa đường/ngõ: nuốt tên đường tới dấu câu (<=6 từ), dừng ở
+    đơn vị hành chính thô (phường/quận/...) và từ dừng."""
+    return _words_after(t, f, pos, cap_only=False, limit=6)
+
+
+def _spans_identity(t: str, f: str, user: bool) -> list[tuple[int, int]]:
+    spans = []
+    for m in _NAME_STRONG_RE.finditer(f):
+        e = _words_after(t, f, m.end(), cap_only=False, first_free=True)
+        if e > m.end():
+            spans.append((m.end(), e))
+    for m in _NAME_WEAK_RE.finditer(f):
+        e = _words_after(t, f, m.end(), cap_only=True, first_free=True)
+        if e > m.end():
+            spans.append((m.end(), e))
+    if user:
+        low = t.lower() if len(t.lower()) == len(t) else f
+        for m in _HONORIFIC_RE.finditer(low):
+            e = _words_after(t, f, m.end(), cap_only=True, first_free=True)
+            if e > m.end():
+                spans.append((m.end(), e))
+    for rx in (_ADDR_NUM_FIRST_RE, _ADDR_PREFIXED_RE, _ADDR_KEY_FIRST_RE):
+        for m in rx.finditer(f):
+            spans.append((m.start(), _addr_tail(t, f, m.end())))
+    for m in _ADDR_NUM_RE.finditer(f):
+        if not _ADDR_CUE_RE.search(f, max(0, m.start() - 30), m.start()):
+            continue
+        e = _words_after(t, f, m.end(), cap_only=True)
+        # >=2 chữ Viết Hoa ("425 Phan Bội Châu") — 1 chữ dễ là "2 Hộp".
+        if len(_WORD_RE.findall(f, m.end(), e)) >= 2:
+            spans.append((m.start(), e))
+    return spans
+
+
+def _apply(t: str, spans, allow_addr) -> str:
+    """Gộp span chồng/kề nhau thành 1 '***'; span chứa địa chỉ được phép
+    (`allow_addr`, đã chuẩn hóa) giữ nguyên."""
+    merged: list[list[int]] = []
+    for s, e in sorted(spans):
+        if merged and s <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], e)
+        else:
+            merged.append([s, e])
+    out, cur = [], 0
+    for s, e in merged:
+        if allow_addr and any(a and a in _norm_addr(t[s:e])
+                              for a in allow_addr):
+            continue
+        out.append(t[cur:s])
+        out.append(_MASK)
+        cur = e
+    out.append(t[cur:])
+    return "".join(out)
+
+
+def mask_identity(text: str, allow_addr=()) -> str:
+    """Che tên theo mẫu xưng danh + địa chỉ có số nhà (xem đầu mục).
+    `allow_addr`: địa chỉ công khai đã chuẩn hóa (`_norm_addr`) — span
+    chứa nó thì giữ. Không phải str -> trả nguyên."""
+    if not isinstance(text, str) or not text:
+        return text
+    t = unicodedata.normalize("NFC", text)
+    allow = tuple(_norm_addr(a) for a in allow_addr if isinstance(a, str))
+    return _apply(t, _spans_identity(t, _fold_keep(t), False), allow)
+
+
+def identity_residual(text: str) -> bool:
+    """True = còn dấu hiệu PII chưa che chắc (sau mask): (1) xưng danh mà
+    từ kế tiếp chưa thành '***'; (2) từ gợi ý địa chỉ ('địa chỉ', 'số
+    nhà', 'nhà em ở', 'giao/gửi/ship đến|về|tới') + trong cùng vế có số
+    chưa che, không đứng sau phường/quận..., theo sau là một từ không phải
+    đơn vị/thời gian ("ship về 12 le loi")."""
+    if not isinstance(text, str) or not text:
+        return False
+    f = _fold_keep(unicodedata.normalize("NFC", text))
+    for m in _NAME_STRONG_RE.finditer(f):
+        w = _WORD_RE.match(f, m.end())
+        if w and w.group(0) not in _QUESTION:
+            return True
+    for m in _RESIDUAL_ADDR_CUE_RE.finditer(f):
+        stop = _CLAUSE_END_RE.search(f, m.end(), m.end() + 120)
+        end = stop.start() if stop else min(len(f), m.end() + 120)
+        for n in _ADDR_NUM_RE.finditer(f, m.end(), end):
+            prev = _WORD_RE.findall(f, max(m.end(), n.start() - 12),
+                                    n.start())
+            if prev and prev[-1] in _COARSE:
+                continue
+            k = n.end()
+            while k < end and f[k] in " \t,":
+                k += 1
+            nxt = _WORD_RE.match(f, k, end)
+            if nxt and nxt.group(0) not in _UNITS:
+                return True
+    return False
+
+
+def scrub_user(text: str) -> tuple[str, bool]:
+    """Text khách gõ -> (đã che SĐT/email/tên/địa chỉ, còn_dấu_hiệu).
+    còn_dấu_hiệu True -> caller KHÔNG gửi AI ngoài (chuyển người)."""
+    if not isinstance(text, str):
+        return text, False
+    t = unicodedata.normalize("NFC", text)
+    t = _apply(t, _spans_identity(t, _fold_keep(t), True), ())
+    t = _mask_pii(t)
+    return t, identity_residual(t)

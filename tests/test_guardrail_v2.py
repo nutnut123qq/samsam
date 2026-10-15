@@ -804,5 +804,6 @@ def test_redteam_whitespace_runs_and_dotted_words_not_merged():
     # Nhánh chữ-đơn KHÔNG nối các từ viết chấm liền nhau (v4.1 vẫn bắt).
     r = g.check("uống t.h.u.o.c t.h.u.o.c nhé")
     assert [v["span"] for v in r["violations"]] == ["t.h.u.o.c"] * 2
-    # Giới hạn đã ghi known-gap rt-ws-06: nhiều từ cách chữ liền nhau.
+    # Bản nén vẫn mất biên từ ("thuốctrị") — v13.1 khép rt-ws-06 bằng pass
+    # chuỗi chữ đơn riêng (`_evasion_hits` (C)), không đổi `_compress`.
     assert g._compress("t h u ố c t r ị")[0] == "thuốctrị"
