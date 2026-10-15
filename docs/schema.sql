@@ -3537,3 +3537,15 @@ create or replace trigger llm_usage_nonneg_ins
 -- Các function duyệt (approve_draft, decide_item approve, override_qa,
 -- approve_cogs) chặn người quyết dạng 'agent:'/'system:'/'auto_policy:' ngay
 -- trong định nghĩa ở trên (create or replace — nâng cấp DB cũ tự áp).
+
+-- ===== v13.6 c06 3 nháp bài/ngày =====
+-- PL01 Marketing "Soạn 3 bài mỗi ngày theo lịch mùa vụ": `python -m
+-- pipelines.content --daily [--date]` ghi nháp `post` qua store.save_draft
+-- với brief mở đầu bằng khóa slot "[daily YYYY-MM-DD #N]" (21 ký tự). Index
+-- unique trên khóa của nháp SỐNG do agent:mkt02 tạo → retry/restart/chạy
+-- song song không nhân bản; slot bị từ chối (rejected) thì soạn lại được
+-- (cùng luật content_drafts_listing_key_idx). Không thêm cột.
+create unique index if not exists content_drafts_daily_key_idx
+  on content_drafts ((left(brief, 21)))
+  where content_type = 'post' and created_by = 'agent:mkt02'
+    and status <> 'rejected' and brief like '[daily %';

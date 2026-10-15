@@ -19,6 +19,13 @@ Luật:
     từ `data/directors/marketing.json` (`campaign_brief.sla_hours`).
   - Config hỏng (thiếu/rỗng/JSON hỏng/`{}`/chỉ `_doc`/sai luật) →
     `CalendarError` — không bao giờ ra lịch rỗng câm.
+  - v13.6 `daily_candidates(cal, golden, day, sla)` (THUẦN) — ứng viên chủ
+    đề cho "3 bài/ngày" (PL01 Marketing): ô `post` của chiến dịch có mốc
+    NHÁP rơi đúng ngày VN `day` đứng trước, rồi trụ thường ngày
+    `daily_posts.evergreen` (xoay vòng theo ngày). Trụ gắn SKU mà không SKU
+    nào đủ readiness kênh (hoặc chỉ có rượu) → ứng viên mang `reason` (bị
+    từ chối, KHÔNG thay bằng SKU khác để đủ số). Thiếu `daily_posts` →
+    `CalendarError`.
 
 CLI: python -m pipelines.mkt_calendar [--start YYYY-MM-DD] [--weeks 4]
      [--by week|month] [--ics [PATH]] [--json]
@@ -56,6 +63,8 @@ NEED_SKU = ("listing", "ads", "koc")      # không SKU → bỏ ô
 BRAND_NOTE = "câu chuyện thương hiệu — không nêu tên SKU"
 REASON_ALCOHOL = "rượu: không kênh online"
 MAX_WEEKS = 26
+DAILY_MAX = 9                              # khóa slot 1 chữ số (content.py)
+DAILY_CHANNELS = ("facebook", "zalo", "tiktok", "web")   # kênh bài đăng
 _ID_RE = re.compile(r"[a-z0-9][a-z0-9._-]{0,39}")
 _ISO_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
@@ -207,7 +216,38 @@ def validate(cal) -> dict:
                                 " sku_key")
         if not isinstance(c.get("pillar"), str) or not c["pillar"].strip():
             raise CalendarError(f"{where}: thiếu 'pillar'")
+    _validate_daily(cal.get("daily_posts"))
     return cal
+
+
+def _validate_daily(dp) -> None:
+    """`daily_posts` (v13.6) tùy chọn; có thì phải đúng luật."""
+    if dp is None:
+        return
+    if not isinstance(dp, dict):
+        raise CalendarError("daily_posts phải là object")
+    _int(dp.get("per_day"), "daily_posts.per_day", 1, DAILY_MAX)
+    ev = dp.get("evergreen")
+    if not isinstance(ev, list) or not ev:
+        raise CalendarError("daily_posts.evergreen rỗng")
+    ids = set()
+    for i, e in enumerate(ev):
+        where = f"daily_posts.evergreen[{i}]"
+        if not isinstance(e, dict):
+            raise CalendarError(f"{where}: phải là object")
+        eid = _id(e.get("id"), f"{where}.id")
+        if eid in ids:
+            raise CalendarError(f"{where}: id trùng '{eid}'")
+        ids.add(eid)
+        if e.get("channel") not in DAILY_CHANNELS:
+            raise CalendarError(f"{where}: channel phải ∈ {DAILY_CHANNELS}")
+        if not isinstance(e.get("pillar"), str) or not e["pillar"].strip():
+            raise CalendarError(f"{where}: thiếu 'pillar'")
+        skus = e.get("skus")
+        if skus != "auto" and (not isinstance(skus, list) or not all(
+                isinstance(s, str) and s for s in skus)):
+            raise CalendarError(f"{where}: skus phải 'auto' hoặc list"
+                                " sku_key ([] = không gắn SKU)")
 
 
 def load_calendar(path=None) -> dict:
@@ -375,6 +415,63 @@ def build(cal: dict, golden: dict, start: date, weeks: int,
     return {"status": cal["status"], "start": start, "end": end,
             "campaigns": out, "reminders": reminders,
             "non_working_days": sorted(nw)}
+
+
+REASON_NO_SKU = ("thiếu SKU đủ điều kiện kênh {ch} cho bài đăng (cần readiness"
+                 " TP_THUONG/QC_DAY_DU; rượu không kênh online)")
+
+
+def daily_candidates(cal: dict, golden: dict, day: date,
+                     brief_sla_hours: int) -> dict:
+    """THUẦN → {"status", "per_day", "candidates": [...]}. Mỗi ứng viên:
+    {"kind": campaign|evergreen, "ref", "channel", "sku" (None = không gắn
+    SKU), "pillar", "publish_day" (date|None), "note", "reason" (None = hợp
+    lệ theo golden; chuỗi = bị từ chối)}. Thứ tự tất định: chiến dịch (ngày
+    đăng, id, kênh) rồi trụ thường ngày xoay theo `day.toordinal()`. SKU
+    chọn xoay vòng trong danh sách SKU hợp lệ — không bao giờ rượu."""
+    dp = cal.get("daily_posts")
+    if not isinstance(dp, dict):
+        raise CalendarError("thiếu 'daily_posts' trong lịch mùa vụ — chưa có"
+                            " cấu hình bài hằng ngày (GĐ Marketing chốt)")
+    golden_skus = (golden or {}).get("skus") or []
+    by_key = {s.get("sku_key"): s for s in golden_skus if isinstance(s, dict)}
+    rot = day.toordinal()
+    out = []
+    plan = build(cal, golden, day, 4, brief_sla_hours)
+    for c in plan["campaigns"]:
+        if c["milestones"]["draft"].astimezone(VN_TZ).date() != day:
+            continue
+        for cell in c["cells"]:
+            if cell["format"] != "post":
+                continue
+            ok = cell["skus"]
+            out.append({"kind": "campaign", "ref": c["id"],
+                        "channel": cell["channel"],
+                        "sku": ok[rot % len(ok)] if ok else None,
+                        "pillar": c["pillar"], "publish_day": c["publish_day"],
+                        "note": cell["note"], "reason": None})
+    ev = dp["evergreen"]
+    k = rot % len(ev)
+    for e in ev[k:] + ev[:k]:
+        ch = e["channel"]
+        keys = list(by_key) if e["skus"] == "auto" else e["skus"]
+        unknown = [s for s in keys if s not in by_key]
+        if unknown:
+            raise CalendarError(f"daily_posts {e['id']}: SKU không có trong"
+                                f" golden {unknown}")
+        sku, reason = None, None
+        if keys:
+            ok = [s for s in keys if by_key[s].get("category") != "alcohol"
+                  and _readiness_of(by_key[s], ch) in CONTENT_OK]
+            if ok:
+                sku = ok[rot % len(ok)]
+            else:
+                reason = REASON_NO_SKU.format(ch=ch)
+        out.append({"kind": "evergreen", "ref": e["id"], "channel": ch,
+                    "sku": sku, "pillar": e["pillar"], "publish_day": None,
+                    "note": "" if keys else BRAND_NOTE, "reason": reason})
+    return {"status": cal["status"], "per_day": dp["per_day"],
+            "candidates": out}
 
 
 # ---------- xuất ----------

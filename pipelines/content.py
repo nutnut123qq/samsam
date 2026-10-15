@@ -54,11 +54,21 @@ Contract:
     (caller đọc qua `store.readiness_from_db`/`store.readiness_now`) —
     None = soi gương golden file (fail-closed); map thiếu key = CAM.
 
+  - v13.6 `daily_batch` (PL01 Marketing "Soạn 3 bài mỗi ngày theo lịch
+    mùa vụ, qua kiểm duyệt trước khi trình"): chủ đề từ
+    `mkt_calendar.daily_candidates`, lọc `precheck` (readiness DB), slot i
+    = ứng viên hợp lệ thứ i, khóa `[daily YYYY-MM-DD #i]` đầu brief + index
+    unique → retry/restart không nhân bản; thiếu chủ đề hợp lệ → báo THIẾU
+    (exit 1), không soạn nội dung vi phạm cho đủ số. Người tạo cố định
+    agent:mkt02 (tính năng marketing-01; rollout `tat` → exit 2, 0 LLM).
+
 CLI:
   python -m pipelines.content --listing --sku all --channel shopee \\
       [--channel tiktok] [--by agent:mkt02] [--no-llm]
-  Exit 0 khi không có `failed`; 1 khi có `failed`; 2 khi usage sai hoặc
-  DB không kết nối được (kiểm conn TRƯỚC mọi lời gọi LLM).
+  python -m pipelines.content --daily [--date YYYY-MM-DD]
+  Exit 0 khi không có `failed` (daily: đủ per_day nháp sống); 1 khi có
+  `failed` / daily THIẾU / lịch hỏng; 2 khi usage sai, DB không kết nối
+  được (kiểm conn TRƯỚC mọi lời gọi LLM) hoặc tính năng tắt.
 """
 
 import argparse
@@ -67,12 +77,14 @@ import json
 import re
 import sys
 import unicodedata
+from datetime import datetime
 from pathlib import Path
 
 import psycopg
 from dotenv import load_dotenv
 
-from pipelines import guardrail, store
+from pipelines import guardrail, rollout, store
+from pipelines import mkt_calendar as mc
 from pipelines.guardrail_llm import check_publish_llm
 from pipelines.llm_gateway import chat
 
@@ -656,6 +668,183 @@ def listing_batch(conn, skus, channels, *, by: str,
     return out
 
 
+# ------------------------------------------------- v13.6 3 nháp bài/ngày
+
+# Khóa slot ở ĐẦU brief: "[daily YYYY-MM-DD #N]" (21 ký tự, N 1..9). Index
+# unique `content_drafts_daily_key_idx` (docs/schema.sql v13.6) trên
+# left(brief, 21) của nháp sống (≠ rejected) do DEFAULT_BY tạo → retry/
+# restart/2 tiến trình song song không nhân bản; bản bị từ chối thì slot
+# soạn lại được (cùng luật index listing).
+DAILY_KEY_LEN = 21
+DAILY_WHAT = "nháp bài hằng ngày"
+_DAILY_EXISTING_SQL = (
+    "select left(brief, 21), id from content_drafts where created_by = %s"
+    " and content_type = 'post' and status <> 'rejected' and brief like %s")
+
+
+def daily_key(day, slot: int) -> str:
+    key = f"[daily {day.isoformat()} #{int(slot)}]"
+    if len(key) != DAILY_KEY_LEN:
+        raise ValueError(f"slot phải 1..{mc.DAILY_MAX}")
+    return key
+
+
+def _daily_brief(c: dict) -> str:
+    if c["kind"] == "campaign":
+        s = (f"Chiến dịch {c['ref']} — {c['pillar']}. Bài đăng ngày "
+             f"{c['publish_day']:%d/%m/%Y}.")
+    else:
+        s = f"Bài thường ngày ({c['ref']}) — {c['pillar']}."
+    return s + (f" ({c['note']})" if c.get("note") else "")
+
+
+def daily_batch(conn, day, *, readiness: dict | None = None,
+                inputs=None) -> dict:
+    """Soạn tối đa `per_day` (HĐ: 3) nháp bài cho ngày VN `day` theo lịch
+    mùa vụ (`mkt_calendar.daily_candidates`) → {"day", "per_day", "items",
+    "refused", "overflow", "live", "missing", "reasons"}.
+
+    - Tính năng (`rollout.feature_for` content_drafts/agent:mkt02/post) đang
+      `tat` → `rollout.RolloutBlocked` TRƯỚC mọi lời gọi LLM.
+    - Ứng viên lọc bằng `precheck` (readiness DB, fail-closed) — bị từ chối
+      thì ghi `refused` với lý do, KHÔNG soạn nội dung vi phạm cho đủ số.
+      Ứng viên hợp lệ thứ i → slot i.
+    - Slot đã có nháp sống (khóa `daily_key`) → `skipped`, 0 LLM. Guardrail
+      không ok / lỗi LLM → `failed`, KHÔNG ghi (chạy lại được). Ghi qua
+      `store.save_draft` (pending, người duyệt — agent không đăng).
+    - `live` = số slot có nháp sống sau lần chạy; `missing` = per_day −
+      live (thiếu đầu vào hoặc failed) — không đếm quota duyệt làm "đã đủ"."""
+    by = DEFAULT_BY
+    fid = rollout.feature_for(table="content_drafts", created_by=by,
+                              content_type="post")
+    rollout.check_generate(conn, fid, DAILY_WHAT)
+    cal, golden, sla = inputs if inputs is not None else mc.load_inputs()
+    dc = mc.daily_candidates(cal, golden, day, sla)
+    n = dc["per_day"]
+    if readiness is None:
+        readiness = store.readiness_from_db(conn)
+    valid, refused = [], []
+    for c in dc["candidates"]:
+        ref = ({"code": "readiness", "reason": c["reason"]} if c["reason"]
+               else precheck(c["sku"], c["channel"], "post",
+                             readiness=readiness))
+        if ref:
+            refused.append({**c, **ref})
+        else:
+            valid.append(c)
+    overflow = [c for c in valid[n:] if c["kind"] == "campaign"]
+    existing = dict(conn.execute(
+        _DAILY_EXISTING_SQL, (by, f"[daily {day.isoformat()} #%")).fetchall())
+    conn.commit()   # không giữ tx mở trong lúc chờ LLM
+    items = []
+    for i in range(1, n + 1):
+        key = daily_key(day, i)
+        if key in existing:
+            items.append({"slot": i, "status": "skipped",
+                          "id": existing[key]})
+            continue
+        if i > len(valid):
+            continue
+        c = valid[i - 1]
+        it = {"slot": i, "kind": c["kind"], "ref": c["ref"],
+              "channel": c["channel"], "sku": c["sku"]}
+        brief = _daily_brief(c)
+        try:
+            r = draft(brief, c["channel"], readiness=readiness, sku=c["sku"],
+                      content_type="post")
+        except psycopg.Error:
+            raise
+        except Exception as e:  # noqa: BLE001 — gateway chặn/lỗi → failed
+            items.append({**it, "status": "failed",
+                          "codes": [f"llm:{type(e).__name__}"]})
+            continue
+        if r["meta"]["refused"]:
+            items.append({**it, "status": "refused", **r["meta"]["refused"]})
+            continue
+        if r["guardrail"].get("ok") is not True:
+            items.append({**it, "status": "failed", "codes": [
+                str(v.get("code")) for v in
+                r["guardrail"].get("violations") or []]})
+            continue
+        m = r["meta"]
+        try:
+            did = store.save_draft(
+                conn, f"{key} {brief}", c["channel"], r["text"],
+                r["guardrail"], store.SOURCE_CLI, created_by=by,
+                content_type="post", sku=c["sku"], is_ai=True,
+                prompt_version=m["prompt_version"],
+                prompt_sha256=m["prompt_sha256"])
+        except psycopg.errors.UniqueViolation:
+            row = conn.execute(_DAILY_EXISTING_SQL,
+                               (by, key[:-1] + "%")).fetchone()
+            conn.commit()
+            items.append({**it, "status": "skipped",
+                          "id": row[1] if row else None})
+            continue
+        items.append({**it, "status": "created", "id": did})
+    live = sum(it["status"] in ("created", "skipped") for it in items)
+    reasons = []
+    if len(valid) < n:
+        reasons.append(f"chỉ {len(valid)}/{n} chủ đề hợp lệ theo lịch mùa vụ"
+                       " — xem danh sách bị từ chối")
+    n_fail = sum(it["status"] in ("failed", "refused") for it in items)
+    if n_fail:
+        reasons.append(f"{n_fail} slot soạn không đạt (guardrail/LLM) —"
+                       " chạy lại để soạn lại")
+    return {"day": day, "per_day": n, "items": items, "refused": refused,
+            "overflow": overflow, "live": live, "missing": n - live,
+            "reasons": reasons if n - live else []}
+
+
+def _fmt_daily(it: dict) -> str:
+    head = f"#{it['slot']} "
+    if it["status"] == "skipped":
+        return head + f"skipped (đã có nháp #{it['id']})"
+    head += f"{it['kind']}:{it['ref']} × {it['channel']}"
+    head += f" [{it['sku']}]: " if it.get("sku") else ": "
+    if it["status"] == "created":
+        return head + f"created #{it['id']}"
+    if it["status"] == "refused":
+        return head + f"refused {it['code']}: {it['reason']}"
+    return head + "failed: " + ", ".join(it.get("codes") or ["?"])
+
+
+def _daily_main(day) -> int:
+    with store._conn_or_none() as (conn, err):
+        if conn is None:  # DB chết → exit 2, 0 lời gọi LLM
+            print(f"[error] {err} — không ghi được nháp", file=sys.stderr)
+            return 2
+        try:
+            res = daily_batch(conn, day)
+        except rollout.RolloutBlocked as e:
+            print(f"[blocked] {e}", file=sys.stderr)
+            return 2
+        except mc.CalendarError as e:
+            print(f"[error] lịch mùa vụ: {e}", file=sys.stderr)
+            return 1
+        except psycopg.Error as e:
+            print(f"[error] lỗi DB: {store._db_msg(e)}", file=sys.stderr)
+            return 2
+    print(f"# Nháp bài ngày {day:%d/%m/%Y} — cần {res['per_day']}/ngày "
+          "(PL01 Marketing)")
+    for it in res["items"]:
+        print(_fmt_daily(it))
+    for c in res["refused"]:
+        sku = f" [{c['sku']}]" if c.get("sku") else ""
+        print(f"[bị từ chối] {c['kind']}:{c['ref']} × {c['channel']}{sku}: "
+              f"{c['code']} — {c['reason']}")
+    for c in res["overflow"]:
+        print(f"[vượt {res['per_day']}/ngày] chiến dịch {c['ref']} ×"
+              f" {c['channel']} — GĐ Marketing quyết dời/thêm")
+    if res["missing"]:
+        print(f"[THIẾU] {res['missing']}/{res['per_day']} nháp: "
+              + "; ".join(res["reasons"]))
+    print(f"[done] {res['live']}/{res['per_day']} nháp sống cho ngày "
+          f"{day.isoformat()} (pending — GĐ Marketing duyệt ở tab 'Duyệt &"
+          " Lịch', người đăng tay; agent không đăng)")
+    return 1 if res["missing"] else 0
+
+
 def _fmt_item(it: dict) -> str:
     head = f"{it['sku']} × {it['channel']}: "
     if it["status"] in ("created", "skipped"):
@@ -670,20 +859,34 @@ def main(argv=None) -> int:
         prog="python -m pipelines.content",
         description="Sinh NHÁP listing theo SKU × kênh vào hàng duyệt "
                     "(pending) — agent KHÔNG đăng, KHÔNG sửa listing trên sàn")
-    ap.add_argument("--listing", action="store_true",
-                    help="chế độ sinh listing (bắt buộc — mode duy nhất)")
+    mode = ap.add_mutually_exclusive_group()
+    mode.add_argument("--listing", action="store_true",
+                      help="sinh listing SKU × kênh")
+    mode.add_argument("--daily", action="store_true",
+                      help="v13.6: soạn 3 nháp bài/ngày theo lịch mùa vụ")
+    ap.add_argument("--date", type=mc._date_arg,
+                    help="--daily: ngày YYYY-MM-DD (mặc định hôm nay VN)")
     ap.add_argument("--sku", action="append", default=[],
                     help="sku_key golden, lặp được; 'all' = mọi SKU golden")
     ap.add_argument("--channel", action="append", default=[],
                     choices=["shopee", "tiktok", "web"],
                     help="kênh listing, lặp được")
-    ap.add_argument("--by", default=DEFAULT_BY,
-                    help=f"người/agent tạo nháp (mặc định {DEFAULT_BY})")
+    ap.add_argument("--by", default=None,
+                    help=f"--listing: người/agent tạo nháp (mặc định "
+                         f"{DEFAULT_BY})")
     ap.add_argument("--no-llm", action="store_true",
-                    help="chỉ khung golden, không gọi LLM")
+                    help="--listing: chỉ khung golden, không gọi LLM")
     args = ap.parse_args(argv)
+    if args.daily:
+        if args.sku or args.channel or args.by is not None or args.no_llm:
+            ap.error("--daily không nhận --sku/--channel/--by/--no-llm "
+                     f"(người tạo cố định {DEFAULT_BY})")
+        return _daily_main(args.date or datetime.now(store.VN_TZ).date())
     if not args.listing:
-        ap.error("cần --listing (mode duy nhất)")
+        ap.error("cần --listing hoặc --daily")
+    if args.date is not None:
+        ap.error("--date chỉ dùng với --daily")
+    args.by = DEFAULT_BY if args.by is None else args.by
     if not args.sku or not args.channel:
         ap.error("cần ít nhất 1 --sku và 1 --channel")
     if not args.by.strip():

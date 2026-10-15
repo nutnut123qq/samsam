@@ -11,6 +11,20 @@
   "non_working_days": ["2027-01-01", "2027-04-30", "2027-05-01"],
   "reminder_days": [14, 7, 3],
   "review_caps": {"gd_marketing_daily": 3},
+  "daily_posts": {
+    "_doc": "v13.6 — PL01 Marketing 'Soạn 3 bài mỗi ngày theo lịch mùa vụ' (per_day = số HĐ). Chủ đề mỗi ngày: ô 'post' của chiến dịch có mốc NHÁP đúng ngày đó trước, rồi trụ thường ngày dưới đây xoay vòng (TRỤ + KÊNH là GIẢ ĐỊNH dev soạn, chờ GĐ Marketing chốt). skus 'auto' = SKU golden đủ readiness kênh (không rượu); [] = không gắn SKU (câu chuyện thương hiệu). Trụ gắn SKU mà không SKU nào hợp lệ → báo thiếu, không thay SKU khác.",
+    "per_day": 3,
+    "evergreen": [
+      {"id": "thuong-hieu", "channel": "facebook", "skus": [],
+       "pillar": "Câu chuyện thương hiệu Sâm Sâm — đặc sản quê hương Quảng Nam"},
+      {"id": "san-pham", "channel": "facebook", "skus": "auto",
+       "pillar": "Giới thiệu sản phẩm — cảm quan, nguồn gốc, cách dùng chung"},
+      {"id": "vung-trong", "channel": "zalo", "skus": [],
+       "pillar": "Hậu trường vùng trồng và người làm sâm"},
+      {"id": "qua-tang", "channel": "zalo", "skus": "auto",
+       "pillar": "Gợi ý quà tặng gia đình, đối tác"}
+    ]
+  },
   "events": [
     {"id": "20.10", "kind": "holiday", "date": "2026-10-20", "remind": false},
     {"id": "11.11", "kind": "sale", "date": "2026-11-11", "remind": true},
