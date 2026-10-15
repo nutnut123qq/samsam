@@ -62,13 +62,15 @@ C00–C11 **chưa hoàn thành toàn bộ**. Hai loại việc còn lại tách 
 lane chỉ khép phần THIẾU CODE; phần chờ bên ngoài giữ blocker, không đoán.
 
 **Gate cuối v14 (16/10/2026, integrator, nhánh `v14-hop-dong` — CHƯA vào
-main, CHƯA push):** full pytest @ `fead825` (SHA code cuối) **5644 passed, 3 skipped, 0 failed** (3 skipped = `test_dr_drill` cần docker), `ruff` sạch, `agent_eval --deterministic` 13/13 suite tất định PASS, `dpia_draft --check` khớp; thử nâng cấp từ schema/code `f96773a` (main) có
+main, CHƯA push):** full pytest @ `fead825` (trước vá review) **5644 passed, 3 skipped, 0 failed** (3 skipped = `test_dr_drill` cần docker), `ruff` sạch, `agent_eval --deterministic` 13/13 suite tất định PASS, `dpia_draft --check` khớp; thử nâng cấp từ schema/code `f96773a` (main) có
 lịch sử giả lập: 571 → 571 dòng, 0 dòng mất, đuôi chain giữ nguyên,
 `store --verify-log`/`garden_director --verify` OK; E2E CLI bằng login dịch
 vụ thật không phải owner 91/91; red-team lọt 6/50 (critical 3) — trước v14
 13/50 (critical 9). Chi tiết + evidence: DONE.md mục "v14 đóng". Bảng A dưới
 = phần v14 ĐÃ khép code (CODE VERIFIED, chưa nghiệm thu); bảng A2 = phần
 THIẾU CODE còn lại, đã phân công lane v15 (chưa làm); bảng B = chờ bên ngoài.
+
+**Sau vá review v14 (coordinator kiểm diff + bổ sung INSERT `sku_map` theo cột):** full pytest @ `f3eaea1` (SHA code cuối) **5678 passed, 3 skipped, 0 failed** (22:34, DB dựng mới, 3 skipped = `test_dr_drill` cần docker) — `evidence/v14_final_f3eaea1_pytest.log`. Nhánh `v14-hop-dong` CHƯA vào main, CHƯA push. C00–C11 CHƯA hoàn thành toàn bộ (bảng A2 + B).
 
 ### A. Thiếu code — giao lane v14 (nhánh `v14-hop-dong`)
 

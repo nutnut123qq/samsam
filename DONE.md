@@ -46,6 +46,9 @@ ghi detail khi nhập).
 
 ## v14 đóng (gate cuối)
 
+**Sau vá review v14 (coordinator kiểm diff + bổ sung INSERT `sku_map` theo cột):** full pytest @ `f3eaea1` (SHA code cuối) **5678 passed, 3 skipped, 0 failed** (22:34, DB dựng mới, 3 skipped = `test_dr_drill` cần docker) — `evidence/v14_final_f3eaea1_pytest.log`. Nhánh `v14-hop-dong` CHƯA vào main, CHƯA push. C00–C11 CHƯA hoàn thành toàn bộ (bảng A2 + B).
+
+
 Nhánh `v14-hop-dong` (từ main `f96773a`, gộp lane p1–p6 qua 3 đợt). Gate chạy
 16/10/2026 trên DB dựng mới, KHÔNG phải DB `.env`. **CHƯA merge `main`, CHƯA
 push, không deploy.** Hai loại kết quả báo riêng: **code đã kiểm** (code +
