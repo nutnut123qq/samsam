@@ -67,6 +67,7 @@ chat lẫn embeddings) + Streamlit.
 | Catalog/listing KD-A4 (v5.3) | `python -m agents.kd_listing --run --dry-run` (chỉ đọc) · `--run` (lệch listing sàn ↔ bản duyệt/golden → hàng duyệt `listing_sync`/`market_alert_s1`, agent KHÔNG sửa sàn) · `--report` |
 | Giá & KM KD-A5 (v5.3) | `python -m agents.kd_price --report --plan <CSV> --as-of <ngày>` · `--run [--dry-run] [--plan CSV]` (floor/biên/lệch niêm yết/trần KM/KM chồng → NHÁP `price_change`/`promo_change`/S1; KHÔNG đổi giá, ngưỡng `data/price_watch.json` GIẢ ĐỊNH) |
 | GĐ Kinh doanh TMĐT (v5.0) | `python -m agents.sales_director --run [--dry-run] --bulletin` (dry-run CHỈ ĐỌC, in kế hoạch + bản tin) · `--run` (nguồn thật → hàng duyệt khối sales + quét SLA A 2h/B 4h giờ làm việc → `sla_escalations`/cảnh báo đỏ) · `--bulletin [--period week]` (→ `data/reports/sales-director-*.md`, không PII, không tự gửi) |
+| Đối soát nhãn + cận hạn (v12.3) | `python -m agents.sx_label --sku <sku_key> --text <file nhãn .txt> \| --image <ảnh\|pdf> [--submit]` (trích tất định tên/ĐKSP/quy cách/NSX-HSD/mã lô/cụm bắt buộc → so golden `sku_master` + `production_lots` + listing mới nhất; `--submit` → 1 mục `label_check` khối production; SKU nhóm hạn chế chỉ ghi mã tra cứu `H-<sha8>`; ảnh cần `OCR_PROVIDER` trong nước của doc_intake, chưa có → exit 2; luật `data/label_rules.json` GIẢ ĐỊNH) · `python -m pipelines.production bulletin` có mục "Hàng cận hạn (FEFO)" (`near_expiry_days` GIẢ ĐỊNH 90) |
 | Test/lint | `python -m pytest` · `ruff check .` |
 
 ## Structure
