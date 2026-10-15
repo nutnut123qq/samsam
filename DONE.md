@@ -23,6 +23,155 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
+## v13 đóng (C11 tích hợp + gate cuối)
+
+Nhánh `v13-hop-dong` (từ main `3622ec2`), gộp đủ lane c00–c09 qua 4 đợt;
+KHÔNG merge `main`, KHÔNG push/deploy. Hai loại kết quả báo riêng: **code
+đã kiểm** (code + test/E2E trong repo) ≠ **nghiệm thu vận hành** (dữ liệu
+thật, chạy thử ≥5 ngày làm việc + ≥50 đầu ra/tính năng, có người duyệt ≥10
+ngày, 0 lỗi nghiêm trọng, biên bản hai bên). **Mọi mục `acceptance_status =
+chua_nghiem_thu`** — chưa mục nào có biên bản; không mục nào được báo là đã
+nghiệm thu. Review C11 là **integrator self-review** (không có reviewer
+read-only độc lập ở bước này).
+
+**Gate cuối** (DB mới `samsam_v13_g`, không phải DB `.env`):
+- `apply_schema.py --roles` ×2 sạch (81 bảng), `core_store`, `golden_store`.
+- `ruff check .` sạch.
+- `python -m pytest -q -ra`: **5174 passed, 3 skipped, 0 failed** (21:21).
+  3 skipped = `test_dr_drill` cần docker image postgres (máy này không có) —
+  diễn tập DR qua container chưa chạy ở gate này.
+- `agent_eval.py --deterministic`: 22/22 suite hợp lệ, 13/13 suite tất định
+  PASS (guardrail 130/132 ≥ ngưỡng 0,95; 2 ca biên `v41-edge-01/02` bị chặn
+  thừa — câu phủ định "không chữa bệnh" và "dòng thực phẩm bảo vệ sức khỏe").
+- `redteam.py` exit 0 nhưng **không phải chặn 100%**: lọt 13/50 = 26%, toàn
+  bộ là known_gap chờ Pháp chế (9 critical). So với probe gốc: chặn đúng
+  code 30→37, ca 0 violation 18→13, critical 0 violation 14→9, known_gap
+  20→13. Nhãn/ngưỡng/severity bộ ca không đổi.
+- `dpia_draft.py --check` khớp map.
+- Evidence: `evidence/v13_11_c11_pytest.log`, `v13_11_c11_gates.log`,
+  `v13_11_c11_upgrade.log`, `v13_11_c11_e2e.log` (đã che DSN/đường dẫn; grep
+  DSN có mật khẩu + `sk-or` rỗng). Tên `v13_pytest.log` ĐÃ có sẵn (evidence
+  v1.3 cũ) nên không ghi đè — dùng tiền tố `v13_11_c11_`.
+
+**Thử nâng cấp** (DB `samsam_v13_up`): code + schema `3622ec2` (git worktree
+tạm ngoài repo) → apply, core/golden, giả lập lịch sử bằng code cũ (3 mục
+`approval_queue` approved/rejected/pending, 1 nháp, 3 `plot_logs` chain,
+`rollout --seed` 55 nhóm cũ + 1 sự cố nghiêm trọng, 1 cảnh báo đỏ, 1
+`garden_media` jpg, 1 dòng quyết toán) → apply schema/roles HIỆN TẠI ×2:
+75 → 81 bảng, **514 → 514 dòng, 0 dòng mất**, đuôi hash chain
+`agent_action_log`/`plot_logs` giữ nguyên; code mới `store --verify-log` OK,
+`garden_director --verify` OK; `v_settlement_khoan` đọc dòng cũ; `rollout
+--status` truy được id nhóm cũ → mục tách; `rollout --seed` mới thêm 39 mục
+không cấp lại ngày cho 26 mục có sẵn.
+
+**E2E CLI tích hợp** (`samsam_v13_g`, 39 kiểm tra đạt; 1 kỳ vọng ban đầu viết
+sai — rev_share DB chết trả 2 theo quy ước — đã ghi rõ trong log): rollout
+chạy thử → mục đã người duyệt vẫn bị từ chối ở biên dùng; `--promote` thiếu
+cổng bị từ chối; `--disable` → enqueue + duyệt mục cũ bị chặn; chatbot Zalo
+chạy thử/tắt không gửi câu bot cho khách (tắt = 0 lời gọi `answer()`), câu
+sức khỏe trộn dấu → template, DB chết → `chay_thu`; quyền duyệt agent/
+approvers rỗng/override bị chặn, 2 thao tác 1 lệnh exit 2, DB chết exit 2,
+chain sạch; 2 file quyết toán chồng kỳ → 2 dòng nhưng 1 khoản 950.000đ, quý
+đánh BẤT THƯỜNG, `--year` exit 1 khi chưa có ngày ký; video Zalo vườn không
+ffmpeg → không lưu, có ffmpeg → lưu, file kho không còn dấu vị trí; STT/ảnh
+AI exit 2 `[blocked]`; retention không xóa khi TTL null; 3 nháp/ngày báo
+THIẾU (0 SKU đủ điều kiện, LLM key rỗng); cảnh báo đỏ chưa có người nhận →
+`--check-routing`/`--deliver` exit 1, ack agent bị từ chối; neo provider
+`none` → exit 2 "CHƯA NEO".
+
+**Integrator đổi trong C11**: `data/contract_features.json` — chỉ cập nhật
+câu `blocker` CŨ (mô tả việc lane đã làm xong) của `farming-04`,
+`data_platform-04`, `data_platform-07.1`, `ceo-90` + thêm test vào
+`bang_chung`; **giữ nguyên code_status** (đổi sang `co_code` làm mục vào sổ
+và đếm cổng rollout — để hai bên quyết). Board dòng C11. Không vá code: gate
+không có fail do tích hợp.
+
+### Ma trận yêu cầu → code → test/E2E → evidence → trạng thái
+
+| Yêu cầu (nguồn) | Code | Test / E2E | Evidence | code_status / acceptance_status |
+|---|---|---|---|---|
+| Danh mục 89 mục + đếm đầu ra (HĐ 2.1; PL01 mục 1–4, 6) | `data/contract_features.json` (86 mục: 65 co_code, 16 mot_phan, 2 lam_rieng, 2 ngoai_code, 1 thieu), `pipelines/rollout.py --catalog` | `test_rollout.py` 128 | `v13_0_c00_*`, `v13_11_c11_pytest.log` | co_code (đề xuất 79 mục AI / 89, chưa chốt) / chua_nghiem_thu |
+| Che PII + chặn sức khỏe trước mọi lời gọi AI, FinOps cap (HĐ 12.1; PL02 mục 2) | `pipelines/pii.py`, `llm_gateway.py`, `guardrail.py`, `api/rag.py`, `connectors/channels.py` | `test_v13_c01_pii_guardrail.py`; E2E câu sức khỏe trộn dấu | `v13_1_c01_*`, `v13_11_c11_e2e.log` | mot_phan (chưa NER) / chua_nghiem_thu |
+| Red-team guardrail 0 lỗi nghiêm trọng (PL02 mục 2) | `data/banned_words.txt`, `guardrail.py` | `redteam.py` 13/50 known_gap | `v13_11_c11_gates.log` | mot_phan (9 critical chờ Pháp chế/LLM-check) / chua_nghiem_thu |
+| Đối soát chồng kỳ, mốc năm hợp tác (HĐ 7.5, 8, 9.3; PL02 mục 4–5) | `ingest/settlement_csv.py`, `v_settlement_khoan`, `agents/rev_share.py`, `fp_pnl`/`bks_recon`/`fp_cash` | `test_settlement_overlap.py`; E2E 2 file chồng kỳ | `v13_2_c02_*`, `v13_11_c11_e2e.log` | co_code / chua_nghiem_thu (ngày ký, tỷ lệ phí/thưởng null) |
+| Rollout cưỡng chế + cổng đầu ra thật (HĐ 6.7; PL02 mục 1) | `rollout.mode()`, biên enqueue/decide/verify/save_draft/write_report/chatbot | `test_rollout_enforce.py`, `test_rollout.py`; E2E chạy thử/tắt | `v13_3_c03_*`, `v13_11_c11_e2e.log` | co_code (nguồn report/bảng riêng chưa có bộ đếm) / chua_nghiem_thu |
+| Ủy quyền người duyệt, least privilege, audit trail (HĐ 2.2, 6.7, 7.2–7.3, 12.3) | `pipelines/auth.py`, `approval_queue.py`, `store.py`, Streamlit, `roles.sql` | `test_v13_c04_authz.py`; E2E quyền | `v13_5_c04_*`, `v13_11_c11_e2e.log` | co_code / chua_nghiem_thu (approvers rỗng, chưa login thật) |
+| Media vườn video, OCR/STT/ảnh AI, 14 hồ sơ, retention (PL01 mục 2) | `scripts/garden_media.py`, `connectors/zalo_garden.py`, `doc_intake`, `sx_label`, `image_studio`, `retention_purge.py` | `test_v13_c05_media.py`; E2E video không/có ffmpeg | `v13_4_c05_*`, `v13_11_c11_e2e.log` | mot_phan (OCR/STT/ảnh AI BLOCKED) / chua_nghiem_thu |
+| 3 nháp bài/ngày + nháp nhắc nợ (PL01 mục 2) | `pipelines/content.py --daily`, `mkt_calendar.py`, `agents/acc_ar.py --reminders` | `test_v13_c06_daily_ar.py`; E2E | `v13_6_c06_*`, `v13_11_c11_e2e.log` | co_code / chua_nghiem_thu (0 SKU đủ điều kiện, chưa soạn bằng LLM thật) |
+| Scheduler, cảnh báo/ack, chatbot ≤30 giây, sổ sự cố/SLA, KPI bền (PL01 mục 2, 8; PL02 mục 2–3) | `red_alert.py`, `intel_alert.py`, `ops_incidents.py`, `job_runs.py`, `api/rag.py`, `ops_monthly.py`, `deploy/onprem/` | `test_red_alert*`, `test_ops_*`, `test_job_runs`, `test_zalo`; E2E | `v13_7_c07_*`, `v13_11_c11_e2e.log` | co_code / chua_nghiem_thu (chưa server/SMTP/monitor ngoài, chưa fault injection) |
+| Website + chatbot web (PL01 mục 3a, 3d; PL03 mục 1) | KHÔNG ở repo này — hợp đồng giao tiếp trong `sales-08`/`sales-09` | — | — | lam_rieng / chua_nghiem_thu |
+| P2: neo blockchain, cập nhật VBPL, API sàn, QR (PL01 mục 3b, 4, 6, 7) | `pipelines/anchor.py`, `legal_updates.py`, `ingest/market_api.py` (BLOCKED) | `test_v13_c09_anchor_legal.py`; E2E neo none exit 2 | `v13_8_c09_*`, `v13_11_c11_e2e.log` | mot_phan (chưa neo thật, API sàn chưa xác minh) / chua_nghiem_thu |
+| Mốc PL01 mục 7, tài sản hợp tác, sổ nghĩa vụ (HĐ 2.4, 4–6, 9, 12.3, 13.3) | `data/projects/milestones.json`, `agents/da_pmo.py`, `data/tai_san_hop_tac.json`, `docs/handover/so-nghia-vu-hop-dong.md` | `test_v13_c09_anchor_legal.py`, `test_da_pmo.py` | `v13_8_c09_*` | co_code / chua_nghiem_thu (PL05, ngày ký) |
+| Nâng cấp schema giữ lịch sử | `docs/schema.sql`, `docs/roles.sql` | thử nâng cấp từ `3622ec2` | `v13_11_c11_upgrade.log` | co_code / chua_nghiem_thu |
+
+### F01–F11
+
+| ID | Kết quả |
+|---|---|
+| F01 cộng trùng quyết toán chồng kỳ | **Đã vá ở code**: bản xuất lại nguyên văn tính 1 lần, lệch → BẤT THƯỜNG, không tính phí; E2E 950.000đ (không 1.900.000đ). Còn chờ file quyết toán thật + map `txn_type`. |
+| F02 PII + sức khỏe | **Vá phần lớn**: tên/địa chỉ theo mẫu được che, còn dấu hiệu PII → chuyển người; sức khỏe trộn dấu → template. Còn: tên không theo mẫu (cần NER), DPA/TIA. |
+| F03 rollout không cưỡng chế | **Đã vá ở code**: `rollout.mode()` chặn sinh/duyệt/dùng/gửi; E2E chạy thử/tắt. |
+| F04 danh mục + đếm đầu ra | **Code xong**: đếm DISTINCT theo `output_sources`, mỗi mục 1 dòng. Còn: hai bên chốt 89 mục (đề xuất 79); nguồn report/bảng riêng chưa đếm được → không nâng giai đoạn được. |
+| F05 đầu ra P1 một phần | **Một phần**: video vườn, 3 nháp/ngày, nháp nhắc nợ, 14 hồ sơ (map 13 SKU `chua_xac_nhan`) có code; OCR/STT/ảnh AI BLOCKED vendor. |
+| F06 SLA + vận hành | **Code xong, vận hành chưa**: gửi SMTP, ack, 30 giây, sổ sự cố, KPI bền, lịch job có khóa. Chưa có người nhận, SMTP, server, monitor ngoài, fault injection. |
+| F07 kiểm duyệt chưa 0 lỗi nghiêm trọng | **Một phần**: lọt 20→13/50, critical 0 violation 14→9; 13 known_gap chờ Pháp chế/LLM-check. KHÔNG đạt "0 lỗi nghiêm trọng". |
+| F08 hạ tầng + danh tính người duyệt | **Code xong, vận hành chưa**: authorize theo khối, chặn agent/tự duyệt/chéo khối, log chain. Approvers rỗng, chưa login thật, chưa server/UPS/offsite. |
+| F09 năm hợp tác lấy nhầm mốc | **Đã vá ở code**: tách ngày ký / ngày vận hành, `--year` từ ngày ký; cả hai null → exit 1. |
+| F10 website + P2 | **Một phần**: website/chatbot web làm riêng (repo/owner chưa có); neo blockchain có provider cắm được nhưng CHƯA NEO; VBPL vào hàng duyệt; API sàn/QR BLOCKED. |
+| F11 sổ mốc + hồ sơ thương mại | **Một phần**: mốc PL01 mục 7, tài sản hợp tác, sổ nghĩa vụ N01–N20 lập xong ở dạng đề xuất; ô thương mại/PL05 chờ hai bên. |
+
+### BLOCKED — cần người thật (gom một lần)
+
+| Ai | Cần cấp / quyết | Mở khóa |
+|---|---|---|
+| Hai bên | Chốt danh mục 89 mục + P1 80 / P2 9 (đề xuất 79 mục AI: 72/7) và `output_sources` | F04, cổng rollout |
+| Hai bên | Ngày ký thực tế (`ngay_ky_hop_dong`), ngày bắt đầu vận hành (biên bản nghiệm thu P1) | F09, `rev_share --year` |
+| Hai bên | Tỷ lệ phí vận hành, mức thưởng + cách cộng bậc, cột phí sàn, tiêu chuẩn + giá quy đổi củ, lịch hoàn trả | F01/F09, `rev_share` |
+| Hai bên | PL05; kho mã nguồn chung; biên bản kiểm kê tài sản thực; biên bản xóa bản sao khi chấm dứt | F11, C04 runbook |
+| Hai bên | Chọn chuỗi/provider/phí/tài khoản neo blockchain + tháng neo | F10 (farming-06) |
+| Hai bên | Bên A đọc log đầy đủ qua login vận hành kỹ thuật (ben_a_reader cố ý không đọc `agent_action_log`) — xác nhận | HĐ 7.2 |
+| Bên B | Văn bản ủy quyền người duyệt 9 khối (`approvers` đang rỗng → chế độ thực chặn mọi duyệt) | F08, cổng co_nguoi_duyet |
+| Bên B (hạ tầng) | Login Postgres riêng mỗi người/agent/Bên A; `db_login` trong `data/users.json`; người giữ quyền cao nhất; grant bảng nghiệp vụ để chuyển app/agent khỏi DSN owner | F08 |
+| Bên B (hạ tầng) | Server on-prem + UPS + mạng, bật timer systemd, monitor NGOÀI máy, NAS/offsite, SMTP tên miền công ty, người ký biên bản diễn tập | F06, F08 |
+| Bên B | Repo/owner website + chatbot web | F10 (sales-08/09) |
+| Bên B | App key + sandbox chỉ đọc Shopee/TikTok Shop; tên miền công khai trang QR | F10 |
+| Bên B (kế toán) | 1 file quyết toán thật mỗi sàn (xác minh header + cột loại giao dịch) | F01 |
+| Bên B | Danh mục 14 hồ sơ sản phẩm gốc; sổ công nợ thật + sổ đại lý; nguồn ads/KOC/livestream | F05, F06 |
+| Bên B / Pháp chế | Vendor OCR, STT, ảnh nền AI trong nước + hợp đồng/DPA/TIA + key + trần chi phí | F05 |
+| Pháp chế / công ty | DPA/TIA OpenRouter + nhà cung cấp; NER trong nước nếu cần che tên không theo mẫu; xác nhận địa chỉ công khai `pii_allow` | F02 |
+| Pháp chế | Duyệt bộ ca red-team, quyết 13 known_gap, bật LLM-check (`GUARDRAIL_LLM_MODEL`) hay không | F07 |
+| Pháp chế / BKS | Người nhận cảnh báo đỏ độc lập + người trực ngoài giờ (`red_alert_routing.json` rỗng) | F06 |
+| Pháp chế + chủ mục | TTL lưu CV/chấm công/ảnh-video vườn/ghi âm (`retention.json` null) | F05 |
+| Pháp chế | URL nguồn VBPL + bộ từ khóa `legal_doc`; nhắc nợ đại lý đã `ended` có được gửi không | F10, F05 |
+| GĐ Marketing / GĐ tài chính / GĐ bán hàng | Trụ nội dung + lịch chiến dịch; XNQC TPBVSK, tự công bố, `allowed_channels`; SLA/rủi ro `ar_reminder`; biết trước hành vi chatbot HOLD_TEXT khi chưa vận hành | F05, F03 |
+| Hành chính Sâm Sâm | Lịch nghỉ lễ/Tết (`rollout_config.json` holidays rỗng) | cổng ngày làm việc, SLA |
+| Zalo OA thật | Đối chiếu event `user_send_video` + host CDN; clip iPhone/Android thật để kiểm gỡ GPS | F05 |
+
+### Còn mở (đã biết, chưa làm — để user chọn)
+
+Xếp theo mức độ:
+1. `agents/ra_kenh.py` đưa URL bài vào `title` cảnh báo đỏ → từ v13.7 title đi vào
+   email gửi ra ngoài, trái mô tả DF-45/DPIA "thư không chứa URL".
+2. Biên khi `tat` chưa phủ agent ghi thẳng bảng riêng (`decision_log`,
+   `recon_results`, `plot_logs`, `allocation_proposals`…); `sales-02`
+   (`channels --suggest`) chưa gắn cổng.
+3. Các CLI `--by` khác chưa qua `auth.authorize` (production approve/intake,
+   golden `--approve-price`, qr_trace sign/issue/revoke, xnqc, rollout
+   `--promote`, `--ack`, crm, doc_intake `--verify`); `decide(via='ui')` tin
+   caller; approvers chưa nằm trong DB.
+4. `settlement_rows`/`orders` thật chưa có trigger append-only (HĐ 7.3(iii)).
+5. Streamlit tab Chat chưa bắt `GatewayBlocked`; convlog Zalo chỉ che SĐT/email.
+6. Ngân sách 30 giây chưa trừ refresh token Zalo + ghi DB nhánh `_reply_held`;
+   leo thang 2 giờ chỉ có cho cảnh báo intel.
+7. Nguồn đầu ra report/file/bảng riêng chưa có bộ đếm → các tính năng đó
+   không nâng giai đoạn được; mục mẫu nhận theo quy ước tên, chưa có cột cờ.
+8. `jobs.json` chưa có `anchor --build` / `legal_updates --submit`;
+   `ops_monthly` chưa in 4 cột tài sản mới; nhãn "Ảnh vườn mới" nên là
+   "Ảnh/video"; hàm link qr_trace nhận cả sha video (báo lỗi gây hiểu nhầm).
+9. 7 mục `mot_phan`/`thieu` không có lane v13 (marketing-04.2, sales-06.1/
+   06.2, sales-04.1, sales-05 nhắc chốt đơn, ceo-04.1, intel-04.2).
+10. DB tạm không drop: `samsam_v13_up`, `samsam_v13_g` (+ DB lane/merge cũ).
+
 ## Checklist v13.8-c09-p2-neo-vbpl-moc
 
 Gộp vào `v13-hop-dong` bởi merge agent đợt 4 (nhánh lane `v13-c09`, `d0748e3`).

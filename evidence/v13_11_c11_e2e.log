@@ -1,0 +1,250 @@
+# v13 C11 — E2E CLI tích hợp trên DB samsam_v13_g (nhánh v13-hop-dong @ 734cb4c). Không mạng, OPENROUTER_API_KEY rỗng, answer() chatbot giả, convlog/kho media ở scratch (<scratch>). Dữ liệu giả.
+# Kịch bản: C03 rollout chạy thử/tắt ở biên sinh/duyệt/dùng + chatbot Zalo ở biên gửi; C04 quyền duyệt; C02 2 file quyết toán chồng kỳ; C05 video Zalo vườn không/có ffmpeg; C06; C07; C09; DB chết (DATABASE_URL trỏ 10.255.255.1).
+[rollout] TỪ CHỐI DÙNG mục #1: mục ceo/weekly_report: tính năng ceo-01 đang chạy thử — HĐ 6.7/PL02 mục 1 — đầu ra chỉ ghi nội bộ, không dùng
+====================================================================== 
+# 1. C03 rollout cưỡng chế ở biên sinh/dùng/gửi
+enforce = True | quick_mode = None
+
+$ python -m pipelines.rollout --seed --by Quản lý AI MẪU (E2E C11)
+   [OK] vào sổ 65 · có sẵn 0 · bỏ qua (chưa co_code) 21
+   [exit 0] mong đợi 0 → ĐẠT
+   [check] mode(ceo-01) = chay_thu: ĐẠT
+   [check] tính năng không có trong sổ → chay_thu (fail-closed): ĐẠT
+enqueue (chạy thử, ghi nội bộ được) → id 1
+
+$ python -m pipelines.approval_queue --approve 1 --by GĐ điều hành MẪU
+   [done] mục #1 → approved (người duyệt: GĐ điều hành MẪU)
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+   [exit 0] mong đợi 0 → ĐẠT
+   [check] biên DÙNG (verify-send/export) mục đã người duyệt khi chay_thu → từ chối: ĐẠT
+
+$ python -m pipelines.rollout --promote ceo-01 --by Quản lý AI MẪU (E2E C11)
+   [TỪ CHỐI] ceo-01 (chạy thử) chưa đủ cổng: mới 0/5 ngày làm việc chạy thử; mới 2/50 đầu ra; đầu ra mới rải trên 1/5 ngày làm việc
+   [exit 1] mong đợi 1 → ĐẠT
+
+$ python -m pipelines.rollout --disable ceo-01 --by Quản lý AI MẪU (E2E C11) --note E2E tắt
+   [OK] ceo-01: chạy thử → tắt
+   [exit 0] mong đợi 0 → ĐẠT
+   [check] mode(ceo-01) sau --disable = tat: ĐẠT
+   [check] enqueue khi tat bị chặn (hàng duyệt ceo/weekly_report: tính năng ceo-01 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đ): ĐẠT
+
+$ python -m pipelines.approval_queue --approve 2 --by GĐ điều hành MẪU
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+   [warn] mục #2: tính năng ceo-01 đang tắt — HĐ 6.7/PL02 mục 1 — không duyệt mục của tính năng tắt
+   [exit 1] mong đợi 1 → ĐẠT
+
+# 1b. Chatbot Zalo ở biên GỬI (answer() giả, convlog ở scratch)
+chatbot_mode() = chay_thu
+[warn] channels: không xác định được đồng ý (zalo) — thiếu CHANNEL_HASH_SALT hoặc DB down; trả lời không tiền tố
+[rollout] zalo: chatbot chay_thu — không gửi câu bot (uh=d0b3433a3e7309bf)
+[warn] channels: thiếu CHANNEL_HASH_SALT — không tạo mục handoff (rollout)
+   [check] chatbot chay_thu: câu bot KHÔNG gửi khách, khách nhận câu giữ chỗ/handoff (answer gọi 1 lần, text gửi: 'Sâm Sâm đã nhận câu hỏi của Quý khách — nhân viên sẽ phản hồi sớm nhất'): ĐẠT
+
+$ python -m pipelines.rollout --disable sales-01 --by Quản lý AI MẪU (E2E C11) --note E2E tắt chatbot
+   [OK] sales-01: chạy thử → tắt
+   [exit 0] mong đợi 0 → ĐẠT
+[warn] channels: không xác định được đồng ý (zalo) — thiếu CHANNEL_HASH_SALT hoặc DB down; trả lời không tiền tố
+[rollout] zalo: chatbot tat — không gửi câu bot (uh=d0b3433a3e7309bf)
+[warn] channels: thiếu CHANNEL_HASH_SALT — không tạo mục handoff (rollout)
+   [check] chatbot tat: 0 lời gọi answer(), khách nhận 'Sâm Sâm đã nhận câu hỏi của Quý khách — nhân viên sẽ phản hồ': ĐẠT
+[route] zalo: health (uh=d0b3433a3e7309bf)
+[warn] channels: thiếu CHANNEL_HASH_SALT — không tạo mục handoff (health)
+   [check] câu sức khỏe trộn dấu → template/handoff, 0 lời gọi answer(): 'Dạ, Sâm Sâm không tư vấn về tình trạng sức khỏe qua tin nhắn': ĐẠT
+   [check] DB chết → chatbot_mode = 'chay_thu': ĐẠT
+====================================================================== 
+# 2. C04 quyền duyệt (happy/error/permission)
+
+$ python -m pipelines.approval_queue --approve 3 --by agent:fp_pnl
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+   [warn] mục #3: 'agent:fp_pnl' không phải người — agent/hệ thống KHÔNG được approve
+   [exit 1] mong đợi 1 → ĐẠT
+
+$ python -m pipelines.approval_queue --approve 3 --by Bất Kỳ Ai [APPROVAL_ENFORCE=1]
+   [warn] mục #3: khối finance CHƯA có người được Bên B ủy quyền (approvers rỗng trong data/directors/finance.json) — cần văn bản ủy quyền của Bên B, không tự điền
+   [exit 1] mong đợi 1 → ĐẠT
+
+$ python -m pipelines.approval_queue --override-qa 3 --by Bất Kỳ Ai --reason lý do đủ dài để thử [AUTH_MODE=local]
+   [warn] mục #3: khối finance CHƯA có người được Bên B ủy quyền (approvers rỗng trong data/directors/finance.json) — cần văn bản ủy quyền của Bên B, không tự điền
+   [exit 1] mong đợi 1 → ĐẠT
+
+$ python -m pipelines.approval_queue --approve 3 --reject 3 --by GĐ điều hành MẪU
+                                             [--reason REASON]
+   python -m pipelines.approval_queue: error: chỉ 1 thao tác mỗi lần — tách lệnh
+   [exit 2] mong đợi 2 → ĐẠT
+
+$ python -m pipelines.approval_queue --approve 3 --by X [DATABASE_URL=host chết]
+   [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+   [error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+   [exit 2] mong đợi 2 → ĐẠT
+
+$ python -m pipelines.approval_queue --pending --block finance
+   [pending] 1 mục chờ duyệt:
+     #3 [finance/ar_reminder] E2E C11 nhắc nợ — rủi ro medium, QA none, guardrail PASS, tạo bởi agent:acc_ar, hạn 10-17 22:28
+   [exit 0] mong đợi 0 → ĐẠT
+
+$ python -m pipelines.store --verify-log
+   [ok] chuỗi nguyên vẹn (6 dòng)
+   [exit 0] mong đợi 0 → ĐẠT
+====================================================================== 
+# 3. C02 nhập 2 file quyết toán chồng kỳ
+
+$ python -m ingest.settlement_csv --file <scratch>\c02_e2e\quyet_toan_T8_lan1.csv --channel shopee
+   [load] quyết toán shopee quyet_toan_T8_lan1.csv: 1 dòng; đối chiếu: khop=0, lech=0, thieu_chung_tu=1, hoan=0
+   [warn] 1 dòng chưa thấy đơn sàn — nạp file đơn (`python -m ingest.market_csv --kind order`) rồi chạy `--reconcile`.
+   [done]
+   [exit 0] mong đợi 0 → ĐẠT
+
+$ python -m ingest.settlement_csv --file <scratch>\c02_e2e\quyet_toan_T8_lan2.csv --channel shopee
+   [warn] khoản xuất lại ở ≥2 file (chồng kỳ): trùng 1, lệch 0 — quyet_toan_T8_lan1.csv, quyet_toan_T8_lan2.csv. Trùng nguyên văn tính 1 lần; lệch giữ cả hai → đối soát quý BẤT THƯỜNG, không tính phí tới khi người đối soát 
+   [warn] 1 dòng chưa thấy đơn sàn — nạp file đơn (`python -m ingest.market_csv --kind order`) rồi chạy `--reconcile`.
+   [done]
+   [exit 0] mong đợi 0 → ĐẠT
+
+$ python -m ingest.settlement_csv --file <scratch>\c02_e2e\quyet_toan_T8_lan1.csv --channel shopee
+   [skip] file quyết toán đã nạp — không ghi gì.
+   [exit 0] mong đợi 0 → ĐẠT
+
+$ python -m ingest.settlement_csv --report
+     shopee: 2 dòng — khop=0, lech=0, thieu_chung_tu=2, hoan=0
+       thực nhận theo file 950.000đ; tính lại 950.000đ; chênh 0đ; affiliate sàn khấu trừ 0đ; đơn ở ≥2 file quyết toán: 1
+       khoản xuất lại ở ≥2 file: trùng 1, lệch 0 — tổng tiền tính 1 khoản (trùng nguyên văn tính 1 lần; lệch giữ cả hai, chờ người đối soát): quyet_toan_T8_lan1.csv, quyet_toan_T8_lan2.csv
+   [exit 0] mong đợi 0 → ĐẠT
+   settlement_rows=2 dòng, v_settlement_khoan=1 khoản
+
+$ python -m agents.rev_share --quarter 2026-Q3 --dry-run --now 2026-10-15T09:00
+   | Kênh trực tuyến | shopee, tiktok · website: chưa có nguồn (website bán hàng làm riêng sau) |
+   | Ngày ký hợp đồng (mốc năm hợp tác) | chưa chốt |
+   | Ngày bắt đầu vận hành thương mại | chưa chốt |
+   | shopee | 1.000.000đ | 50.000đ | chưa có dữ liệu | 0đ | **chưa có dữ liệu** | 950.000đ | `v_settlement_khoan` (`settlement_rows`, bản xuất lại nguyên văn tính 1 lần) settled_on 2026-07-01 → 2026-09-30, 1 khoản: quyet_to
+   | **Tổng** | chưa có dữ liệu | chưa có dữ liệu | chưa có dữ liệu | chưa có dữ liệu | **chưa có dữ liệu** | chưa có dữ liệu | Σ các kênh (thiếu 1 kênh → chưa có dữ liệu) |
+   ## Phí vận hành (Điều 9.3, PL02 mục 5)
+   | Phí vận hành (quy đổi sản phẩm) | — (chưa chốt tỷ lệ phí vận hành) |
+   - shopee: 1 dòng quyết toán chưa có trạng thái đơn trong `orders` (nạp file đơn rồi chạy `python -m agents.kd_orders --sync`) → Hủy/Thuần chưa có dữ liệu
+   - shopee: BẤT THƯỜNG — khoản quyết toán xuất lại ở ≥2 file (chồng kỳ): trùng nguyên văn 1 (đã tính 1 lần), lệch số 0 (giữ cả hai, KHÔNG tự chọn file) — nguồn: quyet_toan_T8_lan1.csv, quyet_toan_T8_lan2.csv — người đối so
+   [exit 0]
+
+$ python -m agents.rev_share --year 1 --dry-run --now 2026-10-15T09:00
+   [error] chưa chốt ngay_ky_hop_dong trong rev_share.json — năm hợp tác tính từ ngày ký hợp đồng (không dùng ngày vận hành/ngày dự kiến).
+   [exit 1] mong đợi 1 → ĐẠT
+
+$ python -m agents.rev_share --quarter 2026-Q3 --dry-run [DATABASE_URL=host chết]
+   [job-runs] ghi job_runs lỗi (ConnectionTimeout) — job vẫn chạy bình thường
+   [error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+   [exit 2] mong đợi 1 → SAI
+====================================================================== 
+# 4. C05 Zalo vườn: video khi KHÔNG có ffmpeg / có ffmpeg
+[warn] garden: bỏ tệp — thiếu ffmpeg — TỪ CHỐI video vì không gỡ được metadata/GPS (external-dep: pip install -r requirements.txt [imageio-ffmpeg] hoặc env FFMPEG_BIN) (uh=23f1c81364b7bbb8)
+[garden] zalo: user_send_video -> sent (uh=23f1c81364b7bbb8)
+   [check] không ffmpeg → không lưu (garden_media +0), trả lời 'CHƯA lưu được tệp (tải lỗi hoặc tệp không hợp lệ) — vui lòng': ĐẠT
+[garden] zalo: user_send_video -> sent (uh=23f1c81364b7bbb8)
+   [check] có ffmpeg → lưu 1 video ('mov', True), file kho còn dấu vị trí: False: ĐẠT
+
+$ python -m connectors.zalo_garden --transcribe 1
+   [blocked] chưa cấu hình STT: BLOCKED — cần vendor STT trong nước + hợp đồng/DPA + key (Bên B/Pháp chế chọn), cắm vào connectors.zalo_garden.STT_PROVIDERS rồi đặt GARDEN_STT_PROVIDER; tạm thời người nghe ghi âm rồi ghi nh
+   [exit 2] mong đợi 2 → ĐẠT
+
+$ python -m pipelines.image_studio --sku mat-ong-sam-300ml --channel facebook --headline Quà Tết --scene bàn gỗ
+   [blocked] --scene cần nền AI nhưng IMAGE_PROVIDER chưa cấu hình (none = nền gradient tất định) — BLOCKED: API sinh ảnh (vendor + hợp đồng/DPA + key + trần chi phí agent `image` trong data/llm_gateway.json), cắm vào pipel
+   [exit 2] mong đợi 2 → ĐẠT
+
+$ python scripts/retention_purge.py --dry-run
+   - CẢNH BÁO `hr_attendance` (File chấm công (ma_nv, ngày, giờ vào/ra)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Chuyên viên pháp chế – nhân sự (điền số ngày trong `data/retention.json`)
+   - CẢNH BÁO `garden_media` (Ảnh / video vườn đã gỡ EXIF/GPS (GARDEN_MEDIA_DIR)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)
+   - CẢNH BÁO `garden_voice` (Ghi âm nhân viên vườn (GARDEN_MEDIA_DIR/audio)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)
+   [blocked] chưa mục nào được chốt hạn lưu — không xóa gì
+   [exit 0]
+====================================================================== 
+# 5. C06 3 nháp/ngày + nhắc nợ (LLM key rỗng)
+
+$ python -m pipelines.content --daily --date 2026-10-15
+   #1 evergreen:thuong-hieu × facebook: failed: llm:GatewayError
+   #2 evergreen:vung-trong × zalo: failed: llm:GatewayError
+   [bị từ chối] evergreen:san-pham × facebook: readiness — thiếu SKU đủ điều kiện kênh facebook cho bài đăng (cần readiness TP_THUONG/QC_DAY_DU; rượu không kênh online)
+   [bị từ chối] evergreen:qua-tang × zalo: readiness — thiếu SKU đủ điều kiện kênh zalo cho bài đăng (cần readiness TP_THUONG/QC_DAY_DU; rượu không kênh online)
+   [THIẾU] 3/3 nháp: chỉ 2/3 chủ đề hợp lệ theo lịch mùa vụ — xem danh sách bị từ chối; 2 slot soạn không đạt (guardrail/LLM) — chạy lại để soạn lại
+   [done] 0/3 nháp sống cho ngày 2026-10-15 (pending — GĐ Marketing duyệt ở tab 'Duyệt & Lịch', người đăng tay; agent không đăng)
+   [exit 1]
+
+$ python -m pipelines.content --daily --date 2026-10-15 [DATABASE_URL=host chết]
+   [error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết) — không ghi được nháp
+   [exit 2]
+
+$ python -m agents.acc_ar --reminders --as-of 2026-10-12 --dry-run
+   [reminders] tính tới 2026-10-12: 0 nháp (dry-run, không ghi), 0 bỏ qua — agent KHÔNG gửi thư
+   [exit 0]
+====================================================================== 
+# 6. C07 cảnh báo đỏ / sự cố / KPI
+
+$ python -m pipelines.red_alert --check-routing
+   [FAIL] thiếu người nhận độc lập (external-dep) — cảnh báo đỏ vẫn được ghi bảng red_alerts nhưng chưa có ai nhận; Pháp chế xác nhận người nhận rồi điền data/red_alert_routing.json
+   [exit 1] mong đợi 1 → ĐẠT
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+   raise (chưa có người nhận): (False, 'cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận')
+
+$ python -m pipelines.red_alert --deliver
+   [done] pending=1 sent=0 failed=1 capped=0
+   [RED-ALERT][FAIL] 1 cảnh báo chưa gửi được tới người nhận nào: #1
+   [exit 1] mong đợi 1 → ĐẠT
+
+$ python -m pipelines.red_alert --ack 1 --by agent:bot
+   [warn] người xác nhận phải là người thật (không agent:/system:)
+   [exit 1]
+
+$ python -m pipelines.red_alert --ack 1 --by Người Trực Thử
+   [done] đã xác nhận cảnh báo #1 (người: Người Trực Thử)
+   [exit 0] mong đợi 0 → ĐẠT
+
+$ python scripts/ops_monthly.py --snapshot
+   [ok] chat_kpi_facts: đọc 42 dữ kiện, mới 42
+   [exit 0] mong đợi 0 → ĐẠT
+
+$ python scripts/ops_monthly.py --month 2026-10 --out-dir <scratch>\c11\e2e
+   [ok] <scratch>\c11\e2e\van-hanh-2026-10.md
+   [exit 0] mong đợi 0 → ĐẠT
+
+$ python -m pipelines.red_alert --open [DATABASE_URL=host chết]
+   [err] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+   [exit 1]
+====================================================================== 
+# 7. C09 neo / VBPL
+
+$ python -m pipelines.anchor --status
+   provider: none
+     (chưa có lần gom nào)
+   [exit 0] mong đợi 0 → ĐẠT
+
+$ python -m pipelines.anchor --build --dry-run
+   [err] chưa có nhật ký đã chain / hồ sơ lô nào để neo
+   [exit 1]
+
+$ python -m pipelines.anchor --submit latest
+   [external-dep] provider 'none' — CHƯA NEO: chọn chuỗi/provider/phí là quyết định hai bên (data/anchor_config.json).
+   [exit 2] mong đợi 2 → ĐẠT
+
+$ python -m pipelines.legal_updates --submit --dry-run
+   [ok] (dry-run) văn bản khớp chưa vào hàng: 0 · đã đẩy: 0 [] · còn lại lần sau: 0
+   [exit 0]
+
+$ python -m pipelines.anchor --status [DATABASE_URL=host chết]
+   [err] DB không kết nối được
+   [exit 2]
+====================================================================== 
+# 8. DB chết ở các CLI lõi khác
+
+$ python -m pipelines.rollout --status [DATABASE_URL=host chết]
+   [FAIL] DB không kết nối được (DATABASE_URL)
+   [exit 2]
+
+$ python -m ingest.settlement_csv --report [DATABASE_URL=host chết]
+   [err] không kết nối được Postgres: ConnectionTimeout
+   [exit 1]
+
+======================================================================
+[RESULT] 38/39 kiểm tra đạt — SAI: ['c02_dead']
+
+# GHI CHÚ integrator: kiểm 'c02_dead' SAI do KỲ VỌNG viết sai (1); agents/rev_share.py trả 2 khi không connect được DB (cùng quy ước approval_queue/content). Sửa kỳ vọng → 2, chạy lại riêng lệnh đó:
+$ python -m agents.rev_share --quarter 2026-Q3 --dry-run [DATABASE_URL=host chết]
+   [error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+   [job-runs] ghi job_runs lỗi (ConnectionTimeout) — job vẫn chạy bình thường
+   [exit 2]
+# Kết quả sau sửa kỳ vọng: 39/39 kiểm tra đạt.

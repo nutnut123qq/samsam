@@ -1,0 +1,30 @@
+# v13 C11 — thử nâng cấp từ schema main 3622ec2 (DB tạm samsam_v13_up, không drop)
+# B1: code 3622ec2 (git worktree detached ngoài repo): apply_schema --roles, core_store, golden_store
+# B2: giả lập lịch sử bằng code cũ: 3 approval_queue (1 approved, 1 rejected, 1 pending), 1 content_draft,
+#     3 plot_logs (chain), rollout --seed 55 nhóm cũ + 1 sự cố nghiêm trọng, 1 red_alert, 1 garden_media jpg, 1 dòng settlement
+# B3: snapshot -> apply schema/roles HIỆN TẠI x2 -> snapshot -> so sánh
+## apply hiện tại lần 1/2:
+[done] schema applied — 81 bảng public
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[done] schema applied — 81 bảng public
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+## so sánh trước/sau:
+bảng trước: 75 sau: 81 mới: ['anchor_batches', 'anchor_receipts', 'chat_kpi_facts', 'ops_incident_events', 'ops_incidents', 'red_alert_deliveries']
+tổng dòng trước: 514 sau: 514
+MẤT DÒNG: không
+tail chain giống: True
+cmp exit 0
+## code hiện tại: python -m pipelines.store --verify-log
+[ok] chuỗi nguyên vẹn (7 dòng)
+## code hiện tại: python -m agents.garden_director --verify
+[verify] OK — chuỗi nhật ký nguyên vẹn
+## sau nâng cấp:
+select count(*) from v_settlement_khoan => [(1,)]
+select status,count(*) from approval_queue group by 1 order by 1 => [('approved', 1), ('pending', 1), ('rejected', 1)]
+select count(*) from feature_rollout => [(94,)]
+select ext,count(*) from garden_media group by 1 => [('jpg', 1)]
+## rollout --seed (code hiện tại) sau nâng cấp: [OK] vào sổ 39 · có sẵn 26 · bỏ qua (chưa co_code) 21
+## rollout --status: id nhóm cũ được truy (trích):
+[id nhóm cũ] ceo-02 (chạy thử từ 15/10/2026) → ceo-02.1, ceo-02.2 — lịch sử giữ nguyên, mục tách đếm lại từ mốc riêng
+[id nhóm cũ] ceo-04 (chạy thử từ 15/10/2026) → ceo-04.1, ceo-04.2 — lịch sử giữ nguyên, mục tách đếm lại từ mốc riêng
+[id nhóm cũ] data_platform-07 (chạy thử từ 15/10/2026) → data_platform-07.1, data_platform-07.2, data_platform-07.3 — lịch sử giữ nguyên, mục tách đếm lại từ mốc riêng
