@@ -1,0 +1,84 @@
+# v14.4 p4 E2E CLI — DB lane samsam_v14_p4_e2e (mới tạo), 2026-10-16T02:57:42+07:00
+## apply_schema --roles ×2 + core_store + golden_store
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+## sales-04.1 người phụ trách
+=== [PASS] crm --owner tên thay mã → chặn trước DB: rc=2 (cần 2)
+    [err] --staff phải là MÃ nhân viên [A-Z0-9_-]{2,20} (không ghi tên) — không ghi gì.
+=== [PASS] crm --owner chế độ thực, approvers rỗng → chặn + không gán: rc=1 (cần 1)
+    [warn] chưa có danh sách mã nhân viên kinh doanh (lead_owner.staff_codes rỗng — Bên B cấp) — chỉ kiểm mẫu mã
+    [err] khối sales CHƯA có người được Bên B ủy quyền (approvers rỗng trong data/directors/sales.json) — cần văn bản ủy quyền của Bên B, không tự điền — không ghi.
+=== [PASS] crm --owner dev → gán + hạn: rc=0 (cần 0)
+    [warn] chưa có danh sách mã nhân viên kinh doanh (lead_owner.staff_codes rỗng — Bên B cấp) — chỉ kiểm mẫu mã
+    [ok] lead #2 → người phụ trách NV01, hạn xử lý 16/10/2026 16:00 (giờ VN)
+    [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+    leads: ('NV01', 'Lan')
+=== [PASS] sales_director --run --dry-run thấy lead_followup lead cũ chưa gán: rc=0 (cần 0)
+    [dry-run] sẽ đẩy: lead_followup 1, price_review 17 · CSKH vượt trần chờ lần sau 0 · sẽ expire 0 · sẽ leo thang 0 (cảnh báo đỏ 0) · lead quá hạn nhắc 1 — KHÔNG ghi DB
+## sales-05 nhắc chốt đơn
+=== [PASS] kd_quote --followups --dry-run: rc=0 (cần 0)
+    [dry-run] báo giá cần nhắc 0 · đẩy 0 mục nhắc — KHÔNG ghi DB (hệ thống không tự liên hệ khách)
+=== [PASS] kd_quote --outcome không phải báo giá đã duyệt → 1: rc=1 (cần 1)
+    [warn] mục #999999 không phải báo giá B2B ĐÃ duyệt — không ghi
+=== [PASS] kd_quote --outcome thiếu --by → 2: rc=2 (cần 2)
+    usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+                                     [--quote REQ_ID] [--export QID]
+                                     [--verify-send QID FILE] [--outcome QID KQ]
+                                     [--followups] [--by BY] [--discount PCT]
+                                     [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+                                     [--submit] [--dry-run]
+    python -m agents.kd_quote: error: --outcome cần --by <tên người>
+## sales-06.1 giá đại lý
+=== [PASS] crm --load-dealers (MẪU): rc=0 (cần 0)
+    [ok] đại lý: mới=4 cập nhật=0 giữ nguyên=0
+    [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+=== [PASS] ingest.dealer_price --file lỗi 1 dòng → 0 dòng: rc=1 (cần 1)
+    [error] dòng 2: cột url_nguon (https://, ≤ 500 ký tự, không SĐT/email) không hợp lệ
+    [error] 1 lỗi — không connect, không nạp dòng nào.
+=== [PASS] ingest.dealer_price --file: rc=0 (cần 0)
+    [ok] nạp 2 quan sát giá đại lý — chạy `python -m agents.kd_price --dealer-watch` để so giá sàn
+=== [PASS] ingest.dealer_price --file lần 2 → skip: rc=0 (cần 0)
+    [skip] file đã nạp (sha256 f3f66e94bde9) — không ghi thêm
+=== [PASS] kd_price --dealer-watch --dry-run: rc=0 (cần 0)
+    [dry-run] ngày 2026-10-16: 2 quan sát, dưới giá sàn 1 (mới 1), không kiểm được (thiếu giá sàn) 0 · đẩy 0 mục — KHÔNG ghi DB
+=== [PASS] kd_price --dealer-watch → đẩy 1: rc=0 (cần 0)
+    [dealer-watch] ngày 2026-10-16: 2 quan sát, dưới giá sàn 1 (mới 1), không kiểm được (thiếu giá sàn) 0 · đẩy 1 mục
+=== [PASS] kd_price --dealer-watch lần 2 → 0: rc=0 (cần 0)
+    [dealer-watch] ngày 2026-10-16: 2 quan sát, dưới giá sàn 1 (mới 0), không kiểm được (thiếu giá sàn) 0 · đẩy 0 mục
+## sales-06.2 đơn hủy/hoàn
+=== [PASS] kd_orders --watch --dry-run: rc=0 (cần 0)
+    [dry-run] ngày 2026-10-16: bất thường 0 (mới 0) · đẩy 0 mục — KHÔNG ghi DB
+    [info] Đơn trễ: CHƯA ĐO — file xuất Seller Center chưa có cột ngày đặt/hạn giao (không suy từ ngày nạp file).
+=== [PASS] kd_orders --watch: rc=0 (cần 0)
+    [watch] ngày 2026-10-16: bất thường 0 (mới 0) · đẩy 0 mục
+    [info] Đơn trễ: CHƯA ĐO — file xuất Seller Center chưa có cột ngày đặt/hạn giao (không suy từ ngày nạp file).
+## rollout tắt → exit 2 ở biên sinh
+=== [PASS] rollout --seed: rc=0 (cần 0)
+    [OK] vào sổ 70 · có sẵn 0 · bỏ qua (chưa co_code) 16
+=== [PASS] rollout --disable sales-05: rc=0 (cần 0)
+    [OK] sales-05: chạy thử → tắt
+    [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+=== [PASS] rollout --disable sales-06.1: rc=0 (cần 0)
+    [OK] sales-06.1: chạy thử → tắt
+    [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+=== [PASS] rollout --disable sales-06.2: rc=0 (cần 0)
+    [OK] sales-06.2: chạy thử → tắt
+    [warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+=== [PASS] kd_quote --followups tắt → 2: rc=2 (cần 2)
+    [rollout] nhắc chốt đơn B2B: tính năng sales-05 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+=== [PASS] kd_price --dealer-watch tắt → 2: rc=2 (cần 2)
+    [rollout] cảnh báo giá đại lý: tính năng sales-06.1 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+=== [PASS] kd_orders --watch tắt → 2: rc=2 (cần 2)
+    [rollout] cảnh báo đơn bất thường: tính năng sales-06.2 đang tắt — HĐ 6.7/PL02 mục 1 — không sinh đầu ra
+## DB chết
+=== [PASS] kd_orders --watch DB chết → 2: rc=2 (cần 2)
+    [error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+=== [PASS] kd_price --dealer-watch DB chết → 2: rc=2 (cần 2)
+    [error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+=== [PASS] kd_quote --followups DB chết → 2: rc=2 (cần 2)
+    [error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+approval_queue mục mới: [('dealer_price_alert', 1)]
+TỔNG: 26 PASS / 0 FAIL
+exit=0

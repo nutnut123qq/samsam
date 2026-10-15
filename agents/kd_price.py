@@ -41,7 +41,20 @@ Luật KM dự kiến (`check_promos`, THUẦN; chỉ dòng kết thúc ≥ toda
 (`competitor_observations`) CHỈ vào mục "Tham khảo đối thủ" của báo cáo —
 không là input của luật nào, không bao giờ vào payload.
 
+v14.4 (sales-06.1, PL01 "Phát hiện lệch giá, đại lý phá giá"): giá ĐẠI LÝ
+chưa có nguồn tự động (API/crawl sàn của đại lý = blocker) → NGƯỜI quan sát
+tay nạp file qua `python -m ingest.dealer_price` → `dealer_price_obs`
+(module này KHÔNG ghi bảng đó). `--dealer-watch` (job, CHỈ đọc): quan sát
+không mẫu trong `dealer_price.lookback_days` có giá < giá sàn golden hiệu
+lực NGÀY quan sát (kênh thuộc bảng giá golden → floor cùng kênh; kênh khác,
+vd cửa hàng → floor THẤP NHẤT của SKU) → `dealer_price_alert` khối sales,
+khóa `dp:<đại lý>:<sku>:<kênh>:<ngày>` (nhiều file cùng khóa → giá thấp
+nhất). Thiếu floor → "không kiểm được" (đếm, không cảnh báo). Payload chỉ mã
+đại lý/mã SKU (nhóm rượu ẩn mã)/giá/ngày/tên miền nguồn — agent KHÔNG liên
+hệ đại lý, KHÔNG đổi giá.
+
 Chạy:
+  python -m agents.kd_price --dealer-watch [--dry-run] [--as-of NGÀY]
   python -m agents.kd_price --run --dry-run [--plan CSV] [--as-of NGÀY]
   python -m agents.kd_price --run [--plan CSV]           # đẩy (job_runs)
   python -m agents.kd_price --report [--plan CSV] [--as-of NGÀY]
@@ -60,6 +73,7 @@ from datetime import date, datetime, timedelta
 from decimal import ROUND_FLOOR, Decimal
 from fractions import Fraction
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import psycopg
 
@@ -794,6 +808,152 @@ def render_report(res: dict, watch: dict, today: date,
     return "\n".join(L)
 
 
+# ---------------------------------------------------- v14.4 giá đại lý (06.1)
+
+FEATURE_DEALER = "sales-06.1"
+OT_DEALER = "dealer_price_alert"
+_HOST_RE = re.compile(r"[a-z0-9.-]{1,100}")
+GOLDEN_CHANNELS = ("shopee", "tiktok", "web", "facebook", "zalo", "chatbot")
+
+
+def _host(url) -> str:
+    try:
+        h = (urlsplit(url).hostname or "").lower()
+    except ValueError:
+        h = ""
+    return h if _HOST_RE.fullmatch(h) else "(trang lạ)"
+
+
+def dealer_findings(conn, today: date, dp: dict) -> dict:
+    """CHỈ SELECT → {findings: [...], unverifiable: n, checked: n}."""
+    today = coerce_day(today)
+    since = today - timedelta(days=dp["lookback_days"])
+    obs = conn.execute(
+        "select o.id, o.channel, o.dealer_code, o.sku_key, o.price_vnd,"
+        " o.observed_on, o.source_url, m.category from dealer_price_obs o"
+        " join sku_master m on m.sku_key = o.sku_key where o.source <>"
+        " 'sample' and o.observed_on >= %s and o.observed_on <= %s"
+        " order by o.observed_on, o.id", (since, today)).fetchall()
+    if not obs:
+        return {"findings": [], "unverifiable": 0, "checked": 0}
+    floors: dict = {}
+    for sku, ch, price, vf, vt, by in conn.execute(
+            "select sku_key, channel, price_vnd, valid_from, valid_to,"
+            " approved_by from price_list where kind = 'floor' and"
+            " program_id is null and sku_key = any(%s) order by valid_from,"
+            " id", (sorted({o[3] for o in obs}),)).fetchall():
+        floors.setdefault(sku, []).append((ch, price, vf, vt, by is not None))
+    best: dict = {}
+    unver = 0
+    for oid, ch, dealer, sku, price, day, url, cat in obs:
+        live = [(c, pr, ok) for c, pr, vf, vt, ok in floors.get(sku, [])
+                if vf <= day and (vt is None or vt > day)]
+        if ch in GOLDEN_CHANNELS:
+            cand = [x for x in live if x[0] == ch]
+            ref = "cùng kênh"
+        else:
+            cand = live
+            ref = "thấp nhất các kênh"
+        if not cand:
+            unver += 1
+            continue
+        fl = min(cand, key=lambda x: x[1])
+        if price >= fl[1]:
+            continue
+        key = f"dp:{dealer}:{sku}:{ch}:{day.isoformat()}"
+        cur = best.get(key)
+        if cur is None or price < cur["price"]:
+            best[key] = {"object_id": key, "obs_id": oid, "channel": ch,
+                         "dealer": dealer, "sku": sku, "cam": cat ==
+                         "alcohol", "price": price, "day": day,
+                         "floor": fl[1], "floor_channel": fl[0],
+                         "floor_approved": fl[2], "ref": ref,
+                         "host": _host(url)}
+    fs = sorted(best.values(), key=lambda f: (f["day"], f["object_id"]))
+    return {"findings": fs, "unverifiable": unver, "checked": len(obs)}
+
+
+def dealer_item(f: dict, cfg: dict) -> dict:
+    sku = "nhóm hạn chế" if f["cam"] else kl.ref_code(f["sku"])
+    label = cfg["object_types"][OT_DEALER]["label"]
+    where = (f"đại lý {f['dealer']}, SKU {sku}, kênh {f['channel']}, ngày"
+             f" {f['day']:%d/%m/%Y}")
+    return {"object_type": OT_DEALER, "object_id": f["object_id"],
+            "title": f"{label} — {where}",
+            "payload": (
+                f"Giá đại lý quan sát tay dưới giá sàn (A5, NHÁP): {where}."
+                f" Số liệu: giá quan sát {vnd(f['price'])}, giá sàn golden"
+                f" {vnd(f['floor'])} ({f['ref']}, kênh {f['floor_channel']})"
+                + ("" if f["floor_approved"] else " (giá sàn CHƯA duyệt)")
+                + f". Nguồn: quan sát #{f['obs_id']}, trang {f['host']}."
+                " Việc cần làm: GĐ bán hàng xác minh lại trang nguồn và làm"
+                " việc với đại lý theo hợp đồng đại lý. Agent KHÔNG liên hệ"
+                " đại lý, KHÔNG đổi giá.")}
+
+
+def dealer_watch(conn, today: date, cfg: dict, dp: dict,
+                 dry_run: bool = False) -> dict:
+    from pipelines import rollout
+
+    rollout.check_generate(conn, FEATURE_DEALER, "cảnh báo giá đại lý")
+    res = dealer_findings(conn, today, dp)
+    items = [dealer_item(f, cfg) for f in res["findings"]]
+    seen = {(t, o) for t, o in conn.execute(
+        "select object_type, object_id from approval_queue where"
+        " object_type = %s", (OT_DEALER,)).fetchall()}
+    new = [it for it in items if (it["object_type"], it["object_id"])
+           not in seen]
+    n = 0 if dry_run else kl.enqueue_new(conn, new, cfg, seen, AGENT)
+    conn.commit()
+    return {**res, "new": len(new), "enqueued": n}
+
+
+def _dealer_main(args) -> int:
+    from agents import sales_watch
+    from pipelines import auth
+    from pipelines.rollout import RolloutBlocked
+
+    try:
+        dp = sales_watch.section("dealer_price")
+        cfg = director.load_config(BLOCK)
+        if OT_DEALER not in cfg["object_types"]:
+            raise DirectorConfigError(f"sales.json thiếu loại việc"
+                                      f" {OT_DEALER}")
+    except (ValueError, DirectorConfigError) as e:
+        print(f"[error] cấu hình lỗi: {e} — không connect", file=sys.stderr)
+        return 1
+    today = args.as_of or vn_date(datetime.now(VN_TZ))
+    if why := auth.bind_service("job"):
+        print(f"[err] {why}", flush=True)
+        return 2
+    conn = connect()
+    if conn is None:
+        print("[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc"
+              " host chết)", file=sys.stderr)
+        return 2
+    try:
+        try:
+            r = dealer_watch(conn, today, cfg, dp, args.dry_run)
+        except RolloutBlocked as e:
+            print(f"[rollout] {e}", file=sys.stderr)
+            return 2
+        tag = "dry-run" if args.dry_run else "dealer-watch"
+        print(f"[{tag}] ngày {today:%Y-%m-%d}: {r['checked']} quan sát,"
+              f" dưới giá sàn {len(r['findings'])} (mới {r['new']}), không"
+              f" kiểm được (thiếu giá sàn) {r['unverifiable']} · đẩy"
+              f" {r['enqueued']} mục" + (" — KHÔNG ghi DB" if args.dry_run
+                                          else ""))
+        return 0
+    except psycopg.Error as e:
+        with suppress(Exception):
+            conn.rollback()
+        print(f"[error] lỗi DB: {_clean(_db_msg(e), 300)}", file=sys.stderr)
+        return 2
+    finally:
+        with suppress(Exception):
+            conn.close()
+
+
 # ---------------------------------------------------------------- CLI
 
 def _main(args, ctx: dict) -> int:
@@ -892,22 +1052,31 @@ def main(argv=None) -> int:
     ap.add_argument("--as-of", help="ngày kiểm YYYY-MM-DD (giờ VN) — chỉ với"
                                     " --report hoặc --run --dry-run")
     ap.add_argument("--out-dir", type=Path, default=REPORTS_DIR)
+    ap.add_argument("--dealer-watch", action="store_true",
+                    help="so giá đại lý quan sát tay (nạp bằng"
+                         " `ingest.dealer_price`) với giá sàn golden → hàng"
+                         " duyệt (v14.4)")
     args = ap.parse_args(argv)
-    n_ops = sum([args.run, args.report])
+    n_ops = sum([args.run, args.report, args.dealer_watch])
     if n_ops > 1:
-        ap.error("chỉ được 1 thao tác mỗi lần (--run | --report)")
+        ap.error("chỉ được 1 thao tác mỗi lần (--run | --report |"
+                 " --dealer-watch)")
     if n_ops == 0:
-        ap.error("cần --run hoặc --report")
-    if args.dry_run and not args.run:
-        ap.error("--dry-run chỉ đi với --run")
+        ap.error("cần --run, --report hoặc --dealer-watch")
+    if args.dry_run and not (args.run or args.dealer_watch):
+        ap.error("--dry-run chỉ đi với --run / --dealer-watch")
+    if args.dealer_watch and args.plan is not None:
+        ap.error("--plan không dùng với --dealer-watch")
     if args.as_of is not None:
-        if args.run and not args.dry_run:
-            ap.error("--as-of chỉ dùng với --report hoặc --run --dry-run"
-                     " (không ghi hàng duyệt theo ngày giả)")
+        if (args.run or args.dealer_watch) and not args.dry_run:
+            ap.error("--as-of chỉ dùng với --report hoặc --run/--dealer-watch"
+                     " --dry-run (không ghi hàng duyệt theo ngày giả)")
         try:
             args.as_of = coerce_day(args.as_of)
         except ValueError:
             ap.error("--as-of phải dạng YYYY-MM-DD")
+    if args.dealer_watch:
+        return _dealer_main(args)
     ctx, errs = _load(args)
     if ctx is None:
         for e in errs[:MAX_PRINT_ERRS]:

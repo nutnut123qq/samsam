@@ -1,0 +1,33 @@
+{
+  "_doc": "v14.4 (p4) — cấu hình 4 tính năng Kinh doanh TMĐT (PL01 mục 2): sales-04.1 người phụ trách khách trong ngày, sales-05 nhắc chốt đơn B2B, sales-06.1 phá giá đại lý, sales-06.2 đơn trễ/hủy/hoàn bất thường. GIẢ ĐỊNH — mọi số là dev ước lượng, chờ GĐ bán hàng chốt (confirmed_by = null tới khi GĐ bán hàng ký; agent KHÔNG tự điền). Giờ làm việc lấy từ data/directors/sales.json business_hours (cũng GIẢ ĐỊNH). lead_owner: assign_within_business_hours = lead mới chưa có người phụ trách quá N giờ làm việc → mục lead_followup; handle_within_business_hours = hạn xử lý tính từ lúc gán (lead vẫn 'new' quá hạn → mục lead_followup); lookback_days = chỉ xét lead tạo trong N ngày (lead lịch sử nạp từ convlog không ngập hàng duyệt); max_per_run = trần mục mới mỗi lần chạy (phần vượt chờ lần sau); staff_codes = danh sách MÃ nhân viên kinh doanh (không tên) — rỗng = chưa có danh sách của Bên B, CLI chỉ kiểm mẫu mã [A-Z0-9_-]{2,20} và cảnh báo. quote_followup: after_business_hours = báo giá đã duyệt/đã gửi chưa có kết quả sau N giờ làm việc → nháp nhắc b2b_followup; max_reminders = số lần nhắc tối đa mỗi lần gửi (đợt). dealer_price: channels = kênh đại lý bán được ghi trong file quan sát (cua_hang = cửa hàng/offline); kênh thuộc bảng giá golden so floor CÙNG kênh, kênh khác so floor THẤP NHẤT của SKU; lookback_days = chỉ cảnh báo quan sát trong N ngày; max_rows = trần dòng mỗi file. order_watch: so tỷ lệ hủy/hoàn của TUẦN ĐÃ ĐÓNG (giờ VN) với ngưỡng tuyệt đối và với nền baseline_weeks tuần trước; min_orders = số đơn tối thiểu của tuần để xét; check_weeks = số tuần đã đóng gần nhất được xét lại (trạng thái đơn đổi muộn); spike_ratio = tỷ lệ tuần ≥ hệ số × nền → bất thường; return_status = trạng thái đơn hoàn/trả theo kênh — TÊN TRẠNG THÁI GIẢ ĐỊNH, chưa đối chiếu file Seller Center thật. Đơn TRỄ: file xuất chưa có cột ngày đặt/hạn giao → 'chưa đo', KHÔNG suy.",
+  "status": "GIẢ ĐỊNH — chờ GĐ bán hàng chốt",
+  "confirmed_by": null,
+  "lead_owner": {
+    "assign_within_business_hours": 4,
+    "handle_within_business_hours": 8,
+    "lookback_days": 14,
+    "max_per_run": 30,
+    "staff_codes": []
+  },
+  "quote_followup": {
+    "after_business_hours": 24,
+    "max_reminders": 2
+  },
+  "dealer_price": {
+    "channels": ["shopee", "tiktok", "web", "facebook", "zalo", "cua_hang"],
+    "lookback_days": 30,
+    "max_rows": 5000
+  },
+  "order_watch": {
+    "min_orders": 10,
+    "baseline_weeks": 4,
+    "check_weeks": 2,
+    "cancel_rate_max_pct": 15,
+    "return_rate_max_pct": 10,
+    "spike_ratio": 2,
+    "return_status": {
+      "shopee": ["Trả hàng/Hoàn tiền", "Đã hoàn tiền"],
+      "tiktok": ["Returned", "Refunded"]
+    }
+  }
+}

@@ -24,6 +24,16 @@ Contract:
     `finance/b2b_margin_review` — các mục trong CÙNG 1 transaction.
   - `--export` chỉ từ mục ĐÃ duyệt; `--verify-send` so `.md` (nguyên văn) /
     `.html` (`render_html` tất định) với sha256 bản duyệt. GĐ bán hàng TỰ gửi.
+  - v14.4 (sales-05, PL01 "nhắc chốt đơn"): `--verify-send` KHỚP → 1 dòng
+    `b2b_quote_events` `da_gui` (append-only); NGƯỜI ghi kết quả
+    `--outcome QID chot|khong_chot|huy --by`. `--followups` (job, CHỈ đọc
+    nguồn): báo giá ĐÃ duyệt chưa có kết quả sau `after_business_hours` giờ
+    làm việc tính từ lần gửi gần nhất (chưa gửi → từ lúc duyệt) → NHÁP nhắc
+    `b2b_followup` khối sales (mẫu lời nhắc, không tên/SĐT/email người liên
+    hệ). Theo ĐỢT: khóa `fu:<qid>:<mốc UTC>:<k>` — đang có nhắc pending →
+    không thêm; nhắc đã quyết → lần k+1 sau thêm N giờ, tối đa
+    `max_reminders`; gửi lại (mốc mới) → đợt mới. Ngưỡng
+    `data/sales_watch.json` GIẢ ĐỊNH. Hệ thống KHÔNG tự liên hệ khách.
 
 Chạy:
   python -m agents.kd_quote --check-matrix [FILE]
@@ -31,7 +41,9 @@ Chạy:
   python -m agents.kd_quote --quote REQ_ID [--discount PCT] [--date D]
                             [--out-dir DIR] [--submit | --dry-run]
   python -m agents.kd_quote --export QID --out FILE(.md|.html)
-  python -m agents.kd_quote --verify-send QID FILE
+  python -m agents.kd_quote --verify-send QID FILE [--by TÊN]
+  python -m agents.kd_quote --outcome QID chot|khong_chot|huy --by TÊN
+  python -m agents.kd_quote --followups [--dry-run]
 Exit: 0 ok · 1 bị chặn (problems / cổng / không thấy / lệch hash / chưa
 duyệt / ma trận lỗi) · 2 tham số sai / DB down / lỗi DB.
 """
@@ -43,7 +55,7 @@ import json
 import re
 import sys
 from contextlib import suppress
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
@@ -54,7 +66,7 @@ from agents.report import REPORTS_DIR, write_report
 from ingest.golden_store import CHANNELS, GOLDEN_FILE, KINDS, read_golden
 from ingest.lead_store import connect
 from pipelines import approval_queue as aq
-from pipelines import director, guardrail, kb_filter
+from pipelines import director, guardrail, kb_filter, period
 from pipelines.period import VN_TZ
 from pipelines.pii import _PII_RE, _mask_pii
 from pipelines.store import _db_msg, _oneline
@@ -778,6 +790,156 @@ def verify_send(conn, qid: int, path: Path,
     return ok
 
 
+# ------------------------------------------------------- v14.4 nhắc chốt đơn
+OT_FOLLOWUP = "b2b_followup"
+FEATURE_FOLLOWUP = "sales-05"
+OUTCOMES = ("chot", "khong_chot", "huy")
+OUTCOME_LABELS = {"chot": "đã chốt", "khong_chot": "không chốt",
+                  "huy": "hủy yêu cầu"}
+_QNO_RE = re.compile(r"BG-[0-9]{8}-[0-9]{1,18}-[0-9a-f]{8}")
+
+
+def record_event(conn, qid: int, kind: str, by=None) -> int:
+    """1 dòng `b2b_quote_events` cho báo giá ĐÃ duyệt (sales, b2b_quote*)
+    → id. Kết quả (`chot|khong_chot|huy`) cần `by` người thật và chỉ ghi 1
+    lần; `da_gui` ghi mỗi lần gửi (mốc nhắc mới). Sai → ValueError."""
+    if kind not in ("da_gui", *OUTCOMES):
+        raise ValueError(f"kết quả phải là {'|'.join(OUTCOMES)}")
+    who = by.strip() if isinstance(by, str) and by.strip() else None
+    if who is not None and (len(who) > 100 or not who.isprintable()):
+        raise ValueError("--by phải là tên người 1..100 ký tự in được")
+    if kind in OUTCOMES and (who is None or who.casefold().startswith(
+            ("agent:", "system:"))):
+        raise ValueError("ghi kết quả báo giá cần --by tên NGƯỜI")
+    row = _queue_row(conn, qid)
+    if (row is None or row[0] != BLOCK or row[1] not in QUOTE_TYPES
+            or row[2] != "approved"):
+        raise ValueError(f"mục #{qid} không phải báo giá B2B ĐÃ duyệt")
+    qno = conn.execute("select object_id from approval_queue where id = %s",
+                       (qid,)).fetchone()[0]
+    with conn.transaction():
+        if kind in OUTCOMES:
+            # 2 người ghi song song: index unique một-kết-quả/báo-giá chặn.
+            done = conn.execute(
+                "select kind from b2b_quote_events where queue_id = %s and"
+                " kind = any(%s) order by id limit 1",
+                (qid, list(OUTCOMES))).fetchone()
+            if done is not None:
+                raise ValueError(f"mục #{qid} đã ghi kết quả "
+                                 f"'{OUTCOME_LABELS[done[0]]}' — không ghi đè")
+        try:
+            with conn.transaction():
+                eid = conn.execute(
+                    "insert into b2b_quote_events (queue_id, quote_no, kind,"
+                    " recorded_by) values (%s, %s, %s, %s) returning id",
+                    (qid, qno, kind, who)).fetchone()[0]
+        except psycopg.errors.UniqueViolation:
+            raise ValueError(f"mục #{qid} đã ghi kết quả — không ghi đè")                 from None
+    return eid
+
+
+def _utc(ts) -> str:
+    return f"{ts.astimezone(timezone.utc):%Y%m%dT%H%M%S%fZ}"
+
+
+def _fmt(ts) -> str:
+    return ts.astimezone(VN_TZ).strftime("%d/%m/%Y %H:%M")
+
+
+def _safe_no(qno) -> str:
+    return qno if isinstance(qno, str) and _QNO_RE.fullmatch(qno) \
+        else "(số lạ)"
+
+
+def followup_items(conn, now: datetime, fu: dict, shift) -> list[dict]:
+    """CHỈ ĐỌC → mục nhắc chốt đơn cần đẩy (xem docstring module)."""
+    if not isinstance(now, datetime) or now.tzinfo is None:
+        raise ValueError("now phải là datetime có múi giờ (aware)")
+    quotes = conn.execute(
+        "select id, object_id, decided_at from approval_queue where block ="
+        " %s and object_type = any(%s) and status = 'approved' order by id",
+        (BLOCK, sorted(QUOTE_TYPES))).fetchall()
+    if not quotes:
+        return []
+    ev: dict = {}
+    for qid, kind, ts in conn.execute(
+            "select queue_id, kind, created_at from b2b_quote_events where"
+            " queue_id = any(%s) order by id",
+            ([q[0] for q in quotes],)).fetchall():
+        ev.setdefault(qid, []).append((kind, ts))
+    rem: dict = {}
+    for oid, st, dec in conn.execute(
+            "select object_id, status, decided_at from approval_queue where"
+            " object_type = %s and object_id like 'fu:%%'",
+            (OT_FOLLOWUP,)).fetchall():
+        rem.setdefault(oid.rsplit(":", 1)[0], []).append((st, dec))
+    out = []
+    for qid, qno, decided in quotes:
+        evs = ev.get(qid, [])
+        if any(k in OUTCOMES for k, _ in evs) or decided is None:
+            continue
+        sent = [ts for k, ts in evs if k == "da_gui"]
+        base = max([decided, *sent])
+        key = f"fu:{qid}:{_utc(base)}"
+        prev = rem.get(key, [])
+        if any(st == "pending" for st, _ in prev) or \
+                len(prev) >= fu["max_reminders"]:
+            continue
+        start = max([base, *(d for _, d in prev if d is not None)])
+        due = period.business_deadline(start, fu["after_business_hours"],
+                                       shift)
+        if now < due:
+            continue
+        k = len(prev) + 1
+        mode = (f"đã gửi lúc {_fmt(sent[-1])}" if sent else
+                f"đã duyệt lúc {_fmt(decided)}, CHƯA xác nhận gửi"
+                " (--verify-send)")
+        no = _safe_no(qno)
+        out.append({
+            "object_type": OT_FOLLOWUP, "object_id": f"{key}:{k}",
+            "title": f"Nhắc chốt báo giá {no} (lần {k})",
+            "payload": (
+                f"Nhắc chốt đơn B2B lần {k}/{fu['max_reminders']} — báo giá"
+                f" {no} (mục #{qid}) {mode}; chưa ghi kết quả sau"
+                f" {fu['after_business_hours']} giờ làm việc (GIẢ ĐỊNH). Việc"
+                " cần làm: GĐ bán hàng TỰ liên hệ tổ chức qua kênh đã gửi báo"
+                " giá, rồi ghi kết quả `python -m agents.kd_quote --outcome"
+                f" {qid} chot|khong_chot|huy --by <tên>`. Mẫu lời nhắc (người"
+                " gửi tự điền tên người nhận): 'Kính gửi Quý tổ chức, Sâm Sâm"
+                f" xin phép theo dõi báo giá số {no}. Nếu Quý tổ chức cần"
+                " điều chỉnh số lượng hoặc thông tin giao hàng, xin vui lòng"
+                " phản hồi để chúng tôi cập nhật báo giá.' Hệ thống không tự"
+                " liên hệ khách.")})
+    return out
+
+
+def run_followups(conn, now: datetime, dry_run: bool = False) -> dict:
+    """Đẩy nhắc chốt đơn (tính năng tắt → RolloutBlocked trước khi đọc)."""
+    from agents import sales_watch
+    from pipelines import rollout
+
+    fu = sales_watch.section("quote_followup")
+    cfg = director.load_config(BLOCK)
+    if OT_FOLLOWUP not in cfg["object_types"]:
+        raise ValueError(f"sales.json thiếu loại việc {OT_FOLLOWUP}")
+    rollout.check_generate(conn, FEATURE_FOLLOWUP, "nhắc chốt đơn B2B")
+    items = followup_items(conn, now, fu, cfg["business_hours"])
+    n = 0
+    if not dry_run:
+        for it in items:
+            try:
+                director.submit(conn, BLOCK, it["object_type"],
+                                it["object_id"], it["title"], it["payload"],
+                                AGENT, cfg=cfg)
+            except psycopg.errors.UniqueViolation:
+                with suppress(Exception):
+                    conn.rollback()
+                continue
+            n += 1
+    conn.commit()
+    return {"found": len(items), "enqueued": n}
+
+
 # ------------------------------------------------------------------ CLI
 def _today_vn() -> date:
     return datetime.now(VN_TZ).date()
@@ -905,6 +1067,13 @@ def main(argv=None) -> int:
     ap.add_argument("--quote", type=int, metavar="REQ_ID")
     ap.add_argument("--export", type=int, metavar="QID")
     ap.add_argument("--verify-send", nargs=2, metavar=("QID", "FILE"))
+    ap.add_argument("--outcome", nargs=2, metavar=("QID", "KQ"),
+                    help="ghi kết quả báo giá đã duyệt: "
+                         + "|".join(OUTCOMES) + " (cần --by)")
+    ap.add_argument("--followups", action="store_true",
+                    help="đẩy NHÁP nhắc chốt đơn B2B vào hàng duyệt (v14.4)")
+    ap.add_argument("--by", help="tên NGƯỜI (bắt buộc với --outcome; tùy "
+                                 "chọn với --verify-send)")
     ap.add_argument("--discount", type=_pct_arg, metavar="PCT")
     ap.add_argument("--date", type=_date_arg)
     ap.add_argument("--out-dir", type=Path, default=REPORTS_DIR)
@@ -914,13 +1083,30 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     n_ops = ((a.check_matrix is not None) + a.requests
              + (a.quote is not None) + (a.export is not None)
-             + (a.verify_send is not None))
+             + (a.verify_send is not None) + (a.outcome is not None)
+             + a.followups)
     if n_ops != 1:
         ap.error("cần đúng 1 thao tác: --check-matrix | --requests | --quote"
-                 " | --export | --verify-send")
-    if a.quote is None and (a.discount is not None or a.date or a.submit
-                            or a.dry_run):
-        ap.error("--discount/--date/--submit/--dry-run chỉ dùng với --quote")
+                 " | --export | --verify-send | --outcome | --followups")
+    if a.quote is None and (a.discount is not None or a.date or a.submit):
+        ap.error("--discount/--date/--submit chỉ dùng với --quote")
+    if a.dry_run and a.quote is None and not a.followups:
+        ap.error("--dry-run chỉ dùng với --quote hoặc --followups")
+    if a.by is not None and a.outcome is None and a.verify_send is None:
+        ap.error("--by chỉ dùng với --outcome / --verify-send")
+    oqid = None
+    if a.outcome is not None:
+        if not re.fullmatch(r"[0-9]{1,18}", a.outcome[0]) \
+                or a.outcome[1] not in OUTCOMES:
+            ap.error(f"--outcome QID KQ — QID số, KQ {'|'.join(OUTCOMES)}")
+        if not (a.by or "").strip():
+            ap.error("--outcome cần --by <tên người>")
+        oqid = int(a.outcome[0])
+    if a.followups:
+        from pipelines import auth  # lười: auth → director → ...
+        if why := auth.bind_service("job"):
+            print(f"[err] {why}", flush=True)
+            return 2
     if a.submit and a.dry_run:
         ap.error("--submit và --dry-run loại trừ nhau")
     if (a.export is not None) != (a.out is not None):
@@ -961,7 +1147,42 @@ def main(argv=None) -> int:
             print(f"[done] xuất bản ĐÃ DUYỆT mục #{a.export} → {msg} (GĐ bán"
                   " hàng tự gửi; chạy --verify-send trước khi gửi)")
             return 0
+        if a.outcome is not None:
+            try:
+                record_event(conn, oqid, a.outcome[1], a.by)
+            except ValueError as e:
+                conn.rollback()
+                print(f"[warn] {e} — không ghi", file=sys.stderr)
+                return 1
+            conn.commit()
+            print(f"[ok] mục #{oqid}: ghi kết quả "
+                  f"'{OUTCOME_LABELS[a.outcome[1]]}' — dừng nhắc chốt đơn")
+            return 0
+        if a.followups:
+            from pipelines.rollout import RolloutBlocked
+            try:
+                res = run_followups(conn, datetime.now(VN_TZ), a.dry_run)
+            except RolloutBlocked as e:
+                print(f"[rollout] {e}", file=sys.stderr)
+                return 2
+            except (ValueError, director.DirectorConfigError) as e:
+                print(f"[error] cấu hình lỗi: {e}", file=sys.stderr)
+                return 1
+            print(f"[{'dry-run' if a.dry_run else 'followups'}] báo giá cần"
+                  f" nhắc {res['found']} · đẩy {res['enqueued']} mục nhắc"
+                  + (" — KHÔNG ghi DB" if a.dry_run else "")
+                  + " (hệ thống không tự liên hệ khách)")
+            return 0
         if verify_send(conn, vqid, Path(a.verify_send[1])):
+            try:
+                record_event(conn, vqid, "da_gui", a.by)
+                conn.commit()
+            except (ValueError, psycopg.Error) as e:
+                with suppress(Exception):
+                    conn.rollback()
+                print(f"[warn] KHỚP nhưng không ghi được mốc gửi "
+                      f"({type(e).__name__}) — nhắc chốt đơn tính từ lúc "
+                      "duyệt", file=sys.stderr)
             print(f"[ok] mục #{vqid}: KHỚP bản đã duyệt — GĐ bán hàng tự gửi")
             return 0
         print(f"[warn] mục #{vqid}: LỆCH — KHÔNG gửi (chưa duyệt / sai loại "

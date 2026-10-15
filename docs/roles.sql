@@ -438,3 +438,31 @@ grant insert (suggestion_id, used_by, stage) on san_suggestion_uses
   to app_human;
 grant select on feature_rollout to svc_loader;
 grant insert (is_sample) on audit_runs to bks_reader;
+
+-- ===== v14.4 p4 kinh doanh =====
+-- Đọc theo SQL thật của module (least privilege):
+--   agent_writer — `agents.sales_director` đọc người phụ trách/hạn lead
+--     (mục `lead_followup`); job nhắc chốt B2B đọc sự kiện báo giá (không
+--     người liên hệ). KHÔNG ghi leads/sự kiện/giá đại lý.
+--   app_human    — người gán phụ trách (`ingest.crm --owner`, SELECT … FOR
+--     UPDATE cần quyền UPDATE cột) + ghi sự kiện báo giá (`kd_quote
+--     --verify-send/--outcome`, append-only).
+--   svc_loader   — nạp file giá đại lý quan sát tay (`ingest.dealer_price
+--     --file`): INSERT `dealer_price_obs`, đọc sổ đại lý/SKU.
+--   svc_job      — `kd_price --dealer-watch`, `kd_quote --followups`,
+--     `kd_orders --watch`: CHỈ đọc nguồn + đẩy hàng duyệt (kế thừa
+--     agent_writer).
+grant select (owner_code, owner_due_at, owner_assigned_at)
+  on leads to agent_writer;
+grant select (id, queue_id, quote_no, kind, created_at)
+  on b2b_quote_events to agent_writer;
+grant update (owner_code, owner_due_at, owner_assigned_by, owner_assigned_at)
+  on leads to app_human;
+grant select on b2b_quote_events to app_human;
+grant insert (queue_id, quote_no, kind, recorded_by)
+  on b2b_quote_events to app_human;
+grant usage on sequence b2b_quote_events_id_seq to app_human;
+grant select, insert on dealer_price_obs to svc_loader;
+grant usage on sequence dealer_price_obs_id_seq to svc_loader;
+grant select on dealers to svc_loader;
+grant select on dealer_price_obs, dealers, price_list to svc_job;

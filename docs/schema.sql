@@ -3898,3 +3898,71 @@ create or replace trigger san_suggestion_uses_append_only_row
 create or replace trigger san_suggestion_uses_no_truncate
   before truncate on san_suggestion_uses
   for each statement execute function append_only_guard();
+
+-- ===== v14.4 p4 kinh doanh: người phụ trách lead, nhắc chốt B2B, giá đại lý =====
+-- PL01 mục 2 — Kinh doanh TMĐT (sales-04.1, sales-05, sales-06.1). Cảnh báo
+-- đơn trễ/hủy/hoàn (sales-06.2) chỉ đọc `orders` → không cần bảng mới.
+--   * `leads` thêm người phụ trách = MÃ nhân viên (không tên) + hạn xử lý
+--     theo giờ làm việc (`ingest.crm --owner`, người gán qua `auth.cli_gate`).
+--     Quá hạn → `agents.sales_director` đẩy mục `lead_followup`.
+--   * `b2b_quote_events` — APPEND-ONLY: báo giá đã gửi (`kd_quote
+--     --verify-send` khớp bản duyệt) / kết quả chốt do NGƯỜI ghi. Nhắc chốt
+--     đơn (`kd_quote --followups`) đọc bảng này; không lưu người liên hệ.
+--   * `dealer_price_obs` — APPEND-ONLY: giá đại lý QUAN SÁT TAY (file nhập
+--     tay, kiểm toàn file; idempotent theo sha256 file + số dòng). Không PII:
+--     mã đại lý + SKU + giá + ngày + URL nguồn công khai. `source='sample'`
+--     = dữ liệu mẫu, không sinh cảnh báo.
+-- (CHECK viết không dấu phẩy: drift-guard chỉ cho `add column` 1 hành động.)
+alter table leads add column if not exists owner_code text
+  check (owner_code ~ '^[A-Z0-9_-][A-Z0-9_-]+$'
+         and char_length(owner_code) <= 20);
+alter table leads add column if not exists owner_due_at timestamptz;
+alter table leads add column if not exists owner_assigned_by text;
+alter table leads add column if not exists owner_assigned_at timestamptz;
+
+create table if not exists b2b_quote_events (
+  id bigint generated always as identity primary key,
+  queue_id bigint not null references approval_queue(id),
+  quote_no text not null check (char_length(quote_no) between 1 and 80),
+  kind text not null check (kind in ('da_gui', 'chot', 'khong_chot', 'huy')),
+  recorded_by text check (recorded_by is null or btrim(recorded_by) <> ''),
+  db_role text not null default session_user,
+  created_at timestamptz not null default now()
+);
+create index if not exists b2b_quote_events_queue_idx
+  on b2b_quote_events (queue_id, id);
+-- 1 kết quả/báo giá (2 người ghi song song → 1 thắng).
+create unique index if not exists b2b_quote_events_outcome_idx
+  on b2b_quote_events (queue_id) where kind in ('chot', 'khong_chot', 'huy');
+create or replace trigger b2b_quote_events_append_only_row
+  before update or delete on b2b_quote_events
+  for each row execute function append_only_guard();
+create or replace trigger b2b_quote_events_no_truncate
+  before truncate on b2b_quote_events
+  for each statement execute function append_only_guard();
+
+create table if not exists dealer_price_obs (
+  id bigint generated always as identity primary key,
+  file_sha256 text not null check (file_sha256 ~ '^[0-9a-f]{64}$'),
+  row_no int not null check (row_no >= 2),
+  channel text not null check (channel ~ '^[a-z0-9_]{2,20}$'),
+  dealer_code text not null references dealers(code),
+  sku_key text not null references sku_master(sku_key),
+  price_vnd bigint not null check (price_vnd > 0),
+  observed_on date not null,
+  source_url text not null check (source_url ~ '^https://[^\s]+$'
+                                  and char_length(source_url) <= 500),
+  source text not null default 'manual_export'
+    check (source in ('manual_export', 'sample')),
+  created_by text not null check (btrim(created_by) <> ''),
+  created_at timestamptz not null default now(),
+  unique (file_sha256, row_no)
+);
+create index if not exists dealer_price_obs_on_idx
+  on dealer_price_obs (observed_on);
+create or replace trigger dealer_price_obs_append_only_row
+  before update or delete on dealer_price_obs
+  for each row execute function append_only_guard();
+create or replace trigger dealer_price_obs_no_truncate
+  before truncate on dealer_price_obs
+  for each statement execute function append_only_guard();
