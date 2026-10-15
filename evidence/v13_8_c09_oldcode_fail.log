@@ -1,0 +1,23 @@
+# v13.8 c09 — test regression chạy trên code cũ (DB lane samsam_v13_c09)
+
+Lần 1 — code cũ hoàn toàn (v13-hop-dong e7e848a: data/schema/docs/da_pmo/market_api cũ, KHÔNG có pipelines/anchor.py, legal_updates.py, anchor_config.json, so-nghia-vu-hop-dong.md), giữ test mới:
+  python -m pytest tests/test_v13_c09_anchor_legal.py -q
+  → ERROR collection: ImportError: cannot import name 'anchor' from 'pipelines' — 1 error (0 test chạy được)
+
+Lần 2 — chỉ giữ 3 module code mới (pipelines/anchor.py, pipelines/legal_updates.py, agents/da_pmo.py), mọi data/schema/docs/config CŨ:
+  → 19 failed, 25 passed
+  FAIL: test_real_config_provider_none, test_cli_submit_provider_none_blocked_before_connect,
+        test_build_leaves_no_pii_and_deterministic, test_build_refuses_broken_chain_and_empty,
+        test_verify_detects_tamper_and_tables_append_only, test_verify_detects_stored_leaf_tamper,
+        test_submit_none_records_nothing, test_submit_ots_only_digest_failover_retry, test_rollout_gates
+        (bảng anchor_batches không tồn tại / thiếu anchor_config.json),
+        test_feature_mapping_legal_doc_review, test_legal_updates_queue_idempotent_and_approvable,
+        test_legal_updates_limit_dry_run_and_rollout_off (danh mục/legal_hr.json cũ),
+        test_p2_blockers_recorded_not_verified (market_api/contract_features cũ),
+        test_contract_milestones_pl01_muc7, test_undated_milestones_have_blockers,
+        test_board_lists_undated_and_passes_guardrail, test_board_cli_undated_broken_exit1 (milestones.json cũ — F11),
+        test_assets_inventory_fields_pending_confirmation (tai_san_hop_tac.json cũ),
+        test_obligation_register_complete (thiếu sổ nghĩa vụ)
+  25 pass = test thuần của module mới (Merkle, canon, .ots header, biến thể cấu hình, CLI usage, seed lệch).
+
+Lần 3 — khôi phục HEAD b8d825a: 44 passed (xem v13_8_c09_pytest.log).
