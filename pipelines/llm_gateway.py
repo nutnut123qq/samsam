@@ -319,7 +319,7 @@ _HEALTH_VI = [
     # chỉ giữ dạng cụm.
     "men gan", "bệnh gan", "xơ gan", "gan nhiễm mỡ",
     "dạ dày", "viêm", "đau", "sốt", "bị ho", "ho khan", "ho có đờm",
-    "ho ra máu", "mất ngủ", "suy nhược",
+    "ho ra máu", "mất ngủ", "suy nhược", "đường huyết",
     "mang thai", "có thai", "bầu", "cho con bú", "tác dụng phụ",
     "chống chỉ định", "liều", "kê đơn", "bác sĩ", "hóa trị", "xạ trị",
     "savigout",
@@ -332,6 +332,12 @@ _HEALTH_ASCII = [
     "mang thai", "co thai", "mang bau", "co bau", "cho con bu",
     "tac dung phu", "chong chi dinh", "ke don", "bac si", "hoa tri",
     "xa tri", "savigout",
+    # v13 vá review: bản không dấu còn thiếu của mục _HEALTH_VI — dạng CỤM
+    # (âm tiết đơn "sot"/"dau"/"than" trùng "sốt"→"sót", "đâu", "than").
+    "gan nhiem mo", "xo gan", "benh gan", "benh tim", "benh than",
+    "soi than", "duong huyet", "dau lung", "dau khop", "dau nguc",
+    "dau rang", "dau hong", "bi sot", "sot cao", "bi dau", "bi ho",
+    "ho khan", "ho ra mau", "u buou", "tai bien",
 ]
 
 
@@ -387,20 +393,44 @@ def _health_rules() -> list[tuple[tuple, tuple | None, bool]]:
 _HEALTH_ASCII_ACCENT = {
     "chua benh": "chữa bệnh", "suy than": "suy thận", "dau dau": "đau đầu",
     "dau bung": "đau bụng", "mang bau": "mang bầu", "co bau": "có bầu",
-    "gut": "gút",
+    "gut": "gút", "soi than": "sỏi thận", "dau lung": "đau lưng",
+    "dau khop": "đau khớp", "dau nguc": "đau ngực", "dau rang": "đau răng",
+    "dau hong": "đau họng", "bi sot": "bị sốt", "sot cao": "sốt cao",
+    "bi dau": "bị đau", "bi ho": "bị ho", "u buou": "u bướu",
+    "tai bien": "tai biến",
 }
 _HEALTH_RULES = _health_rules()
 _HEALTH_BY_FIRST: dict[str, list] = {}
 for _r in _HEALTH_RULES:
     _HEALTH_BY_FIRST.setdefault(_r[0][0], []).append(_r)
-_HEALTH_JOINED = {"".join(k) for k, _a, bare in _HEALTH_RULES
-                  if bare and len(k) > 1}
+# Cụm dính liền: bản bỏ dấu → bản có dấu (None nếu chỉ có dạng trần).
+# v13 vá review: trước chỉ nhận dạng TRẦN ("tieuduong") — "tiểu<ZWSP>đường"
+# (ZWSP bị bỏ → "tiểuđường") lọt dù docstring nói bắt được.
+_HEALTH_JOINED = {"".join(k): ("".join(a) if a else None, bare)
+                  for k, a, bare in _HEALTH_RULES if len(k) > 1}
 
 
-def _syl_ok(orig: str, acc: str | None, bare: bool) -> bool:
+def _marks_sub(orig: str, acc: str) -> bool:
+    """Bộ dấu của `orig` là TẬP CON bộ dấu của `acc` (gõ thiếu dấu:
+    "đuong" ⊂ "đường"). Dấu sai ("thuộc" vs "thuốc") → False."""
+    (mo, do), (ma, da) = _marks(orig), _marks(acc)
+    rest = list(ma)
+    for c in mo:
+        if c not in rest:
+            return False
+        rest.remove(c)
+    return da or not do
+
+
+def _syl_ok(orig: str, acc: str | None, bare: bool,
+            partial: bool = False) -> bool:
     if _strip_accents(orig) == orig:
         return bare or acc == orig
-    return acc is not None and _marks(orig) == _marks(acc)
+    if acc is None:
+        return False
+    # v13 vá review: cụm >=2 âm tiết chấp nhận âm tiết GÕ THIẾU dấu
+    # ("tiểu đuong"); cụm 1 âm tiết vẫn phải đúng bộ dấu ("chưa" ≠ "chữa").
+    return _marks(orig) == _marks(acc) or (partial and _marks_sub(orig, acc))
 
 
 def is_health_question(text: str) -> bool:
@@ -413,12 +443,14 @@ def is_health_question(text: str) -> bool:
     syls = _SYL_RE.findall(t)
     plain = [_strip_accents(s) for s in syls]
     for i, p in enumerate(plain):
-        if syls[i] == p and p in _HEALTH_JOINED:
+        joined = _HEALTH_JOINED.get(p)
+        if joined and _syl_ok(syls[i], joined[0], joined[1], partial=True):
             return True
         for key, acc, bare in _HEALTH_BY_FIRST.get(p, ()):
             n = len(key)
             if tuple(plain[i:i + n]) == key and all(
-                    _syl_ok(syls[i + j], acc[j] if acc else None, bare)
+                    _syl_ok(syls[i + j], acc[j] if acc else None, bare,
+                            partial=n > 1)
                     for j in range(n)):
                 return True
     return False

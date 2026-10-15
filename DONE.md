@@ -120,6 +120,74 @@ không có fail do tích hợp.
 | F10 website + P2 | **Một phần**: website/chatbot web làm riêng (repo/owner chưa có); neo blockchain có provider cắm được nhưng CHƯA NEO; VBPL vào hàng duyệt; API sàn/QR BLOCKED. |
 | F11 sổ mốc + hồ sơ thương mại | **Một phần**: mốc PL01 mục 7, tài sản hợp tác, sổ nghĩa vụ N01–N20 lập xong ở dạng đề xuất; ô thương mại/PL05 chờ hai bên. |
 
+### Vá review (sau C11)
+
+Review độc lập sau C11 nêu 4 phát hiện. Cả 4 đã kiểm lại trên code thật
+(tái hiện đúng câu/probe của review) và đều đúng. Test regression
+`tests/test_v13_review_fix.py` có 55 test: trên code cũ **22 FAIL**. 26 test
+pass ngay trên code cũ là test chống báo nhầm (câu bán hàng không bị che/chặn).
+7 test thời gian tuyến tính được thêm sau.
+- **F02 PII (MAJOR)**: `pipelines/pii.py`, chỉ áp cho text khách gõ
+  (`scrub_user`). Đã thêm các luật:
+  - Họ phổ biến đi trước ≥1 chữ Viết Hoa ("Trần Thị Bích", "TRẦN THỊ BÍCH").
+  - Họ + đệm văn/thị gõ thường ("nguyen van mau"). "Lễ vẫn", "do vận chuyển"
+    không trúng.
+  - "giao/gửi/ship cho <Tên Viết Hoa>".
+  - Số + ≥2 chữ Viết Hoa không có từ gợi ý ("12 Ví Dụ"). Không áp khi chữ đầu
+    là đơn vị/tên SP ("2 Hộp Quà", "120 Viên").
+  - Thôn/xóm + số/tên; ấp/tổ/bản + số.
+
+  Địa danh mở đầu bằng họ được giữ nguyên ("Hà Nội", "Hồ Chí Minh", "Lâm
+  Đồng", "Phan Thiết", "Cao Cấp"). Cả 7 câu của review không còn tên/địa chỉ
+  trong payload embed/chat. Probe 100.000 lần lặp chạy tuyến tính.
+  Còn lọt (cần NER):
+  - tên 1 chữ không mẫu ("giao Bích");
+  - họ hiếm;
+  - tên gõ thường không có đệm văn/thị.
+
+  Xã/phường/quận vẫn giữ (đơn vị thô, như luật cũ).
+- **F02 sức khỏe (MINOR)**: `pipelines/llm_gateway.py`. Đã thêm:
+  - Cụm ≥2 âm tiết nhận âm tiết gõ thiếu dấu ("tiểu đuong"). Cụm 1 âm tiết
+    vẫn phải đúng bộ dấu, nên "chưa" ≠ "chữa".
+  - Cụm dính liền có dấu ("tiểu<ZWSP>đường").
+  - "đường huyết" và bản không dấu dạng cụm ("dau lung", "bi sot", "gan
+    nhiem mo", "benh than"…).
+
+  Cả 7 câu của review → handoff health, 0 lời gọi AI. 14 câu bán hàng
+  (gồm "chưa nhận hàng", "đâu là", "than hoạt tính") không báo nhầm. Âm tiết
+  trần đơn lẻ ("sot", "dau", "than") vẫn không bắt, vì trùng nghĩa thường.
+- **F01 thưởng năm (MAJOR)**: `agents/rev_share.tier_rows(..., anomaly)`.
+  Khi kỳ có kênh BẤT THƯỜNG (chồng kỳ lệch số, Hoàn > Gộp, Thuần âm), không
+  xét đạt/thưởng, giống `ops_fee` của đường quý. Probe 950.000/940.000 với
+  ngưỡng thử 1.000.000/10% không còn in "đạt" và 89.000đ.
+- **F03 rollout (MINOR)**: thêm cổng `rollout` vào các biên còn thiếu:
+  - `qr_trace link` (farming-03.1) và `issue` (farming-03.2): `tat` → không
+    ghi. Ở chạy thử, `issue` chỉ ghi nội bộ, không in URL tem.
+  - `qr_trace site`: chưa vận hành → không xuất trang cho mã còn hiệu lực
+    (exit 1, không dọn media). Trang "đã thu hồi" vẫn xuất.
+  - `zalo_garden`: chữ/ghi âm theo farming-01, ảnh/video theo farming-04.
+    `tat` → trả lời "CHƯA ghi", 0 truy vấn.
+  - `scripts/garden_media.py` (farming-04): `tat` → exit 2, không ghi file.
+  - `channels --suggest` (sales-02): `tat` → exit 2, 0 lời gọi AI. Chạy thử
+    → in nhãn "CHẠY THỬ — KHÔNG dán gửi khách". Không chặn hẳn vì sales-02
+    chưa có bản ghi đầu ra; chặn hẳn thì không bao giờ chạy thử được.
+
+  Nhật ký vườn ghi tay (`agents.garden`) không gắn cổng: đó là sổ của người,
+  không phải đầu ra AI. Board C03 đã ghi thêm các biên này.
+
+Gate (DB `samsam_v13_g`):
+- `test_v13_review_fix.py`: 55 passed.
+- 34 file liên quan, gồm file mới khi còn 48 test: **1644 passed, 0 failed**.
+  Các file là c01, rag, channels, zalo, messenger, llm_gateway, redteam,
+  agent_eval, rev_share, settlement_overlap, qr_trace, zalo_garden,
+  garden_media, c05, rollout, rollout_enforce, c09, garden_*, image/video
+  studio, kd_live, mkt_ugc/ads, intel_import, dpia/data_flow,
+  hdtv/fp_pnl/bks_recon. Sau lượt này chỉ thêm 7 test tuyến tính vào file
+  mới; không đổi code nguồn. `ruff check .` sạch; `redteam.py` PASS (không
+đổi bộ ca). Chỉ 1 file test mới (<10 file), nên không chạy lại full suite.
+Evidence: `evidence/v13_review_fix_pytest.log`,
+`v13_review_fix_oldcode_fail.log`, `v13_review_fix_related.log`.
+
 ### BLOCKED — cần người thật (gom một lần)
 
 | Ai | Cần cấp / quyết | Mở khóa |
@@ -153,8 +221,8 @@ Xếp theo mức độ:
 1. `agents/ra_kenh.py` đưa URL bài vào `title` cảnh báo đỏ → từ v13.7 title đi vào
    email gửi ra ngoài, trái mô tả DF-45/DPIA "thư không chứa URL".
 2. Biên khi `tat` chưa phủ agent ghi thẳng bảng riêng (`decision_log`,
-   `recon_results`, `plot_logs`, `allocation_proposals`…); `sales-02`
-   (`channels --suggest`) chưa gắn cổng.
+   `recon_results`, `allocation_proposals`…). Vá review đã gắn cổng cho
+   qr_trace, zalo_garden, garden_media và `channels --suggest`.
 3. Các CLI `--by` khác chưa qua `auth.authorize` (production approve/intake,
    golden `--approve-price`, qr_trace sign/issue/revoke, xnqc, rollout
    `--promote`, `--ack`, crm, doc_intake `--verify`); `decide(via='ui')` tin

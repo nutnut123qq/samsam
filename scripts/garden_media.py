@@ -353,6 +353,14 @@ def main(argv=None) -> int:
               "host chết) — không ghi file", file=sys.stderr)
         return 2
     try:
+        # v13 vá review (F03): kho tư liệu vườn = farming-04; `tat` (sổ
+        # triển khai, HĐ 6.7) → không ghi file/dòng nào.
+        from pipelines import rollout
+        try:
+            rollout.check_generate(conn, "farming-04", "nạp kho ảnh vườn")
+        except rollout.RolloutBlocked as e:
+            print(f"[blocked] {e}", file=sys.stderr)
+            return 2
         if conn.execute("select 1 from plots where id = %s",
                         (plot,)).fetchone() is None:
             print(f"[err] khoảnh '{plot}' không tồn tại trong bảng plots",

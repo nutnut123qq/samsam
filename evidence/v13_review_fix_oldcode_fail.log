@@ -1,0 +1,249 @@
+# v13 vá review — test mới trên CODE CŨ (git stash 7 file nguồn), DB samsam_v13_g; 48 test lúc chạy (7 test tuyến tính thêm sau)
+FFFFFFF............FFFFFFF..............FFFFFFFF                         [100%]
+================================== FAILURES ===================================
+E   AssertionError: ('Trần Thị Bích', '"Giao cho Trần Thị Bích, ***, Hải Châu nhé"
+      NGỮ CẢNH:
+      [1] Saphraton (http://x/p)
+      Saphraton — 1.000.000 đ
+      
+      CÂU HỎI: Giao cho Trần Thị Bích, ***, Hải Châu nhé')
+    assert 'Trần Thị Bích' not in '"Giao cho T...Hải Châu nhé'
+      
+      'Trần Thị Bích' is contained here:
+        "Giao cho Trần Thị Bích, ***, Hải Châu nhé"
+      ?           +++++++++++++
+        NGỮ CẢNH:
+        [1] Saphraton (http://x/p)
+        Saphraton — 1.000.000 đ
+        
+        CÂU HỎI: Giao cho Trần Thị Bích, ***, Hải Châu nhé
+---------------------------- Captured stdout call -----------------------------
+[llm-gateway] model openai/text-embedding-3-small chưa có giá trong config — tính theo giá cao nhất
+[llm-gateway] model openai/gpt-4o-mini chưa có giá trong config — tính theo giá cao nhất
+D:\code\samsam\tests\test_v13_review_fix.py:131: AssertionError: ('Trần Thị Bích', '"Giao cho Trần Thị Bích, ***, Hải Châu nhé"
+E   AssertionError: ('Nguyễn Văn Mẫu', '"Nguyễn Văn Mẫu - 12 Ví Dụ - Đà Nẵng"
+      NGỮ CẢNH:
+      [1] Saphraton (http://x/p)
+      Saphraton — 1.000.000 đ
+      
+      CÂU HỎI: Nguyễn Văn Mẫu - 12 Ví Dụ - Đà Nẵng')
+    assert 'Nguyễn Văn Mẫu' not in '"Nguyễn Văn...Dụ - Đà Nẵng'
+      
+      'Nguyễn Văn Mẫu' is contained here:
+        "Nguyễn Văn Mẫu - 12 Ví Dụ - Đà Nẵng"
+      ?  ++++++++++++++
+        NGỮ CẢNH:
+        [1] Saphraton (http://x/p)
+        Saphraton — 1.000.000 đ
+        
+        CÂU HỎI: Nguyễn Văn Mẫu - 12 Ví Dụ - Đà Nẵng
+---------------------------- Captured stdout call -----------------------------
+[llm-gateway] model openai/text-embedding-3-small chưa có giá trong config — tính theo giá cao nhất
+[llm-gateway] model openai/gpt-4o-mini chưa có giá trong config — tính theo giá cao nhất
+D:\code\samsam\tests\test_v13_review_fix.py:131: AssertionError: ('Nguyễn Văn Mẫu', '"Nguyễn Văn Mẫu - 12 Ví Dụ - Đà Nẵng"
+E   AssertionError: ('nguyen van mau', '"toi la nguyen van mau, nha o ***"
+      NGỮ CẢNH:
+      [1] Saphraton (http://x/p)
+      Saphraton — 1.000.000 đ
+      
+      CÂU HỎI: toi la nguyen van mau, nha o ***')
+    assert 'nguyen van mau' not in '"toi la ngu...u, nha o ***'
+      
+      'nguyen van mau' is contained here:
+        "toi la nguyen van mau, nha o ***"
+      ?         ++++++++++++++
+        NGỮ CẢNH:
+        [1] Saphraton (http://x/p)
+        Saphraton — 1.000.000 đ
+        
+        CÂU HỎI: toi la nguyen van mau, nha o ***
+---------------------------- Captured stdout call -----------------------------
+[llm-gateway] model openai/text-embedding-3-small chưa có giá trong config — tính theo giá cao nhất
+[llm-gateway] model openai/gpt-4o-mini chưa có giá trong config — tính theo giá cao nhất
+D:\code\samsam\tests\test_v13_review_fix.py:131: AssertionError: ('nguyen van mau', '"toi la nguyen van mau, nha o ***"
+E   AssertionError: ('thôn 3', '"Mình tên ***, ở thôn 3 xã Trà Linh"
+      NGỮ CẢNH:
+      [1] Saphraton (http://x/p)
+      Saphraton — 1.000.000 đ
+      
+      CÂU HỎI: Mình tên ***, ở thôn 3 xã Trà Linh')
+    assert 'thôn 3' not in '"Mình tên *... xã Trà Linh'
+      
+      'thôn 3' is contained here:
+        "Mình tên ***, ở thôn 3 xã Trà Linh"
+      ?                  ++++++
+        NGỮ CẢNH:
+        [1] Saphraton (http://x/p)
+        Saphraton — 1.000.000 đ
+        
+        CÂU HỎI: Mình tên ***, ở thôn 3 xã Trà Linh
+---------------------------- Captured stdout call -----------------------------
+[llm-gateway] model openai/text-embedding-3-small chưa có giá trong config — tính theo giá cao nhất
+[llm-gateway] model openai/gpt-4o-mini chưa có giá trong config — tính theo giá cao nhất
+D:\code\samsam\tests\test_v13_review_fix.py:131: AssertionError: ('thôn 3', '"Mình tên ***, ở thôn 3 xã Trà Linh"
+E   AssertionError: ('Bích', '"giao cho Bích ở *** nhé"
+      NGỮ CẢNH:
+      [1] Saphraton (http://x/p)
+      Saphraton — 1.000.000 đ
+      
+      CÂU HỎI: giao cho Bích ở *** nhé')
+    assert 'Bích' not in '"giao cho B...ch ở *** nhé'
+      
+      'Bích' is contained here:
+        "giao cho Bích ở *** nhé"
+      ?           ++++
+        NGỮ CẢNH:
+        [1] Saphraton (http://x/p)
+        Saphraton — 1.000.000 đ
+        
+        CÂU HỎI: giao cho Bích ở *** nhé
+---------------------------- Captured stdout call -----------------------------
+[llm-gateway] model openai/text-embedding-3-small chưa có giá trong config — tính theo giá cao nhất
+[llm-gateway] model openai/gpt-4o-mini chưa có giá trong config — tính theo giá cao nhất
+D:\code\samsam\tests\test_v13_review_fix.py:131: AssertionError: ('Bích', '"giao cho Bích ở *** nhé"
+E   AssertionError: ('TRẦN THỊ BÍCH', '"TRẦN THỊ BÍCH ***"
+      NGỮ CẢNH:
+      [1] Saphraton (http://x/p)
+      Saphraton — 1.000.000 đ
+      
+      CÂU HỎI: TRẦN THỊ BÍCH ***')
+    assert 'TRẦN THỊ BÍCH' not in '"TRẦN THỊ B...THỊ BÍCH ***'
+      
+      'TRẦN THỊ BÍCH' is contained here:
+        "TRẦN THỊ BÍCH ***"
+        NGỮ CẢNH:
+        [1] Saphraton (http://x/p)
+        Saphraton — 1.000.000 đ
+        
+        CÂU HỎI: TRẦN THỊ BÍCH ***
+---------------------------- Captured stdout call -----------------------------
+[llm-gateway] model openai/text-embedding-3-small chưa có giá trong config — tính theo giá cao nhất
+[llm-gateway] model openai/gpt-4o-mini chưa có giá trong config — tính theo giá cao nhất
+D:\code\samsam\tests\test_v13_review_fix.py:131: AssertionError: ('TRẦN THỊ BÍCH', '"TRẦN THỊ BÍCH ***"
+E   AssertionError: ('Bến Đò', '"ship về xóm Bến Đò, Trà My"
+      NGỮ CẢNH:
+      [1] Saphraton (http://x/p)
+      Saphraton — 1.000.000 đ
+      
+      CÂU HỎI: ship về xóm Bến Đò, Trà My')
+    assert 'Bến Đò' not in '"ship về xó...n Đò, Trà My'
+      
+      'Bến Đò' is contained here:
+        "ship về xóm Bến Đò, Trà My"
+      ?              ++++++
+        NGỮ CẢNH:
+        [1] Saphraton (http://x/p)
+        Saphraton — 1.000.000 đ
+        
+        CÂU HỎI: ship về xóm Bến Đò, Trà My
+---------------------------- Captured stdout call -----------------------------
+[llm-gateway] model openai/text-embedding-3-small chưa có giá trong config — tính theo giá cao nhất
+[llm-gateway] model openai/gpt-4o-mini chưa có giá trong config — tính theo giá cao nhất
+D:\code\samsam\tests\test_v13_review_fix.py:131: AssertionError: ('Bến Đò', '"ship về xóm Bến Đò, Trà My"
+E   AssertionError: mẹ em bị tiểu đuong uống được ko
+    assert False
+     +  where False = <function is_health_question at 0x0000017A0276B4C0>('mẹ em bị tiểu đuong uống được ko')
+     +    where <function is_health_question at 0x0000017A0276B4C0> = gw.is_health_question
+D:\code\samsam\tests\test_v13_review_fix.py:168: AssertionError: mẹ em bị tiểu đuong uống được ko
+E   AssertionError: Ba tôi bi dau lung
+    assert False
+     +  where False = <function is_health_question at 0x0000017A0276B4C0>('Ba tôi bi dau lung')
+     +    where <function is_health_question at 0x0000017A0276B4C0> = gw.is_health_question
+D:\code\samsam\tests\test_v13_review_fix.py:168: AssertionError: Ba tôi bi dau lung
+E   AssertionError: bé bị sot có dùng được không
+    assert False
+     +  where False = <function is_health_question at 0x0000017A0276B4C0>('bé bị sot có dùng được không')
+     +    where <function is_health_question at 0x0000017A0276B4C0> = gw.is_health_question
+D:\code\samsam\tests\test_v13_review_fix.py:168: AssertionError: bé bị sot có dùng được không
+E   AssertionError: ba toi bi gan nhiem mo
+    assert False
+     +  where False = <function is_health_question at 0x0000017A0276B4C0>('ba toi bi gan nhiem mo')
+     +    where <function is_health_question at 0x0000017A0276B4C0> = gw.is_health_question
+D:\code\samsam\tests\test_v13_review_fix.py:168: AssertionError: ba toi bi gan nhiem mo
+E   AssertionError: uống sâm có hạ đường huyết không
+    assert False
+     +  where False = <function is_health_question at 0x0000017A0276B4C0>('uống sâm có hạ đường huyết không')
+     +    where <function is_health_question at 0x0000017A0276B4C0> = gw.is_health_question
+D:\code\samsam\tests\test_v13_review_fix.py:168: AssertionError: uống sâm có hạ đường huyết không
+E   AssertionError: đường huyết cao có dùng được
+    assert False
+     +  where False = <function is_health_question at 0x0000017A0276B4C0>('đường huyết cao có dùng được')
+     +    where <function is_health_question at 0x0000017A0276B4C0> = gw.is_health_question
+D:\code\samsam\tests\test_v13_review_fix.py:168: AssertionError: đường huyết cao có dùng được
+E   AssertionError: tiểu​đường
+    assert False
+     +  where False = <function is_health_question at 0x0000017A0276B4C0>('tiểu\u200bđường')
+     +    where <function is_health_question at 0x0000017A0276B4C0> = gw.is_health_question
+D:\code\samsam\tests\test_v13_review_fix.py:168: AssertionError: tiểu​đường
+E   TypeError: tier_rows() got an unexpected keyword argument 'anomaly'
+D:\code\samsam\tests\test_v13_review_fix.py:194: TypeError: tier_rows() got an unexpected keyword argument 'anomaly'
+E   AssertionError: | 1 | 1.000.000đ | 10% | đạt | 890.000đ | 89.000đ |
+    assert ('| đạt |' not in '| 1 | 1.000... | 89.000đ |'
+      
+      '| đạt |' is contained here:
+        | 1 | 1.000.000đ | 10% | đạt | 890.000đ | 89.000đ |
+      ?                        +++++++)
+D:\code\samsam\tests\test_v13_review_fix.py:225: AssertionError: | 1 | 1.000.000đ | 10% | đạt | 890.000đ | 89.000đ |
+E   AssertionError: assert ('CHƯA ghi' in 'Hệ thống gặp lỗi, chưa ghi được — vui lòng gửi lại sau ít phút.')
+---------------------------- Captured stdout call -----------------------------
+[warn] garden: lỗi AssertionError (uh=22085aa929bcd7af)
+[garden] zalo: user_send_text -> sent (uh=22085aa929bcd7af)
+D:\code\samsam\tests\test_v13_review_fix.py:266: AssertionError: assert ('CHƯA ghi' in 'Hệ thống gặp lỗi, chưa ghi được — vui lòng gửi lại sau ít phút.')
+E   AssertionError: không được truy vấn khi tính năng tắt
+D:\code\samsam\tests\test_v13_review_fix.py:248: AssertionError: không được truy vấn khi tính năng tắt
+E   Failed: không gọi AI
+D:\code\samsam\tests\test_v13_review_fix.py:296: Failed: không gọi AI
+E   AssertionError: assert 0 == 1
+     +  where 0 = <function run.<locals>.<lambda> at 0x0000017A1302E3E0>('issue', '--lot', 'LOT-MO-001', '--by', 'A')
+---------------------------- Captured stdout call -----------------------------
+[done] lô LOT-MO-001: ánh xạ nhật ký #2 (0 ảnh) — người thực hiện: GĐ SX fixture. Chữ ký cũ (nếu có) không còn tính — ký lại trên bản mới.
+[done] lô LOT-MO-001: vai GĐ Sản xuất đã ký (approvals #2) — người ký: Trần Sản Xuất
+[done] lô LOT-MO-001: vai GĐ vùng trồng đã ký (approvals #3) — người ký: Lê Vùng Trồng
+[done] lô LOT-MO-001: vai Pháp chế/QA đã ký (approvals #4) — người ký: Phạm Pháp Chế
+[done] lô LOT-MO-001: đã phát hành mã — người phát hành: A
+chưa có domain công khai (external-dep) — đường dẫn H1A2mpVL1oTIe2gyPUpF-A/
+ảnh QR: nhà in tạo từ URL (lib QR không có — external-dep). Chạy `site` để sinh trang.
+D:\code\samsam\tests\test_v13_review_fix.py:312: AssertionError: assert 0 == 1
+E   AssertionError: assert 0 == 1
+     +  where 0 = <function run.<locals>.<lambda> at 0x0000017A1302FC40>('site', '--out', 'C:\\Users\\hahuy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-2694\\test_qr_site_not_operating_wri0\\site')
+     +    where 'C:\\Users\\hahuy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-2694\\test_qr_site_not_operating_wri0\\site' = str(WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2694/test_qr_site_not_operating_wri0/site'))
+---------------------------- Captured stdout call -----------------------------
+[done] lô LOT-MO-001: ánh xạ nhật ký #2 (0 ảnh) — người thực hiện: GĐ SX fixture. Chữ ký cũ (nếu có) không còn tính — ký lại trên bản mới.
+[done] lô LOT-MO-001: vai GĐ Sản xuất đã ký (approvals #2) — người ký: Trần Sản Xuất
+[done] lô LOT-MO-001: vai GĐ vùng trồng đã ký (approvals #3) — người ký: Lê Vùng Trồng
+[done] lô LOT-MO-001: vai Pháp chế/QA đã ký (approvals #4) — người ký: Phạm Pháp Chế
+[done] lô LOT-MO-001: đã phát hành mã — người phát hành: A
+chưa có domain công khai (external-dep) — đường dẫn bggs3pkfwqw5pBwzRYZh4g/
+ảnh QR: nhà in tạo từ URL (lib QR không có — external-dep). Chạy `site` để sinh trang.
+[done] 1 trang → C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2694\test_qr_site_not_operating_wri0\site (0 lỗi)
+D:\code\samsam\tests\test_v13_review_fix.py:334: AssertionError: assert 0 == 1
+E   AssertionError: assert 0 == 1
+     +  where 0 = <function run.<locals>.<lambda> at 0x0000017A13372520>('link', '--lot', 'LOT-MO-001', '--log', '2', '--by', 'A')
+     +    where '2' = str(2)
+---------------------------- Captured stdout call -----------------------------
+[done] lô LOT-MO-001: ánh xạ nhật ký #2 (0 ảnh) — người thực hiện: A. Chữ ký cũ (nếu có) không còn tính — ký lại trên bản mới.
+D:\code\samsam\tests\test_v13_review_fix.py:354: AssertionError: assert 0 == 1
+=========================== short test summary info ===========================
+FAILED tests/test_v13_review_fix.py::test_rag_pii_variants_never_reach_provider[Giao cho Tr\u1ea7n Th\u1ecb B\xedch, 34 L\xea L\u1ee3i, H\u1ea3i Ch\xe2u nh\xe9-leaks0]
+FAILED tests/test_v13_review_fix.py::test_rag_pii_variants_never_reach_provider[Nguy\u1ec5n V\u0103n M\u1eabu - 12 V\xed D\u1ee5 - \u0110\xe0 N\u1eb5ng-leaks1]
+FAILED tests/test_v13_review_fix.py::test_rag_pii_variants_never_reach_provider[toi la nguyen van mau, nha o 12 duong vi du da nang-leaks2]
+FAILED tests/test_v13_review_fix.py::test_rag_pii_variants_never_reach_provider[M\xecnh t\xean Hoa, \u1edf th\xf4n 3 x\xe3 Tr\xe0 Linh-leaks3]
+FAILED tests/test_v13_review_fix.py::test_rag_pii_variants_never_reach_provider[giao cho B\xedch \u1edf 34/2 L\xea L\u1ee3i nh\xe9-leaks4]
+FAILED tests/test_v13_review_fix.py::test_rag_pii_variants_never_reach_provider[TR\u1ea6N TH\u1eca B\xcdCH 0901234567-leaks5]
+FAILED tests/test_v13_review_fix.py::test_rag_pii_variants_never_reach_provider[ship v\u1ec1 x\xf3m B\u1ebfn \u0110\xf2, Tr\xe0 My-leaks6]
+FAILED tests/test_v13_review_fix.py::test_health_variants_handoff_before_any_ai[m\u1eb9 em b\u1ecb ti\u1ec3u \u0111uong u\u1ed1ng \u0111\u01b0\u1ee3c ko]
+FAILED tests/test_v13_review_fix.py::test_health_variants_handoff_before_any_ai[Ba t\xf4i bi dau lung]
+FAILED tests/test_v13_review_fix.py::test_health_variants_handoff_before_any_ai[b\xe9 b\u1ecb sot c\xf3 d\xf9ng \u0111\u01b0\u1ee3c kh\xf4ng]
+FAILED tests/test_v13_review_fix.py::test_health_variants_handoff_before_any_ai[ba toi bi gan nhiem mo]
+FAILED tests/test_v13_review_fix.py::test_health_variants_handoff_before_any_ai[u\u1ed1ng s\xe2m c\xf3 h\u1ea1 \u0111\u01b0\u1eddng huy\u1ebft kh\xf4ng]
+FAILED tests/test_v13_review_fix.py::test_health_variants_handoff_before_any_ai[\u0111\u01b0\u1eddng huy\u1ebft cao c\xf3 d\xf9ng \u0111\u01b0\u1ee3c]
+FAILED tests/test_v13_review_fix.py::test_health_variants_handoff_before_any_ai[ti\u1ec3u\u200b\u0111\u01b0\u1eddng]
+FAILED tests/test_v13_review_fix.py::test_tier_rows_anomaly_no_bonus - TypeEr...
+FAILED tests/test_v13_review_fix.py::test_year_lech_overlap_no_bonus - Assert...
+FAILED tests/test_v13_review_fix.py::test_zalo_garden_text_off_not_written - ...
+FAILED tests/test_v13_review_fix.py::test_garden_media_cli_off_no_file - Asse...
+FAILED tests/test_v13_review_fix.py::test_channels_suggest_off_no_ai_and_trial_labelled
+FAILED tests/test_v13_review_fix.py::test_qr_issue_off_blocked_trial_internal
+FAILED tests/test_v13_review_fix.py::test_qr_site_not_operating_writes_no_active_page
+FAILED tests/test_v13_review_fix.py::test_qr_link_off_blocked - AssertionErro...
+22 failed, 26 passed in 4.98s

@@ -350,6 +350,88 @@ _RESIDUAL_ADDR_CUE_RE = re.compile(
     r")(?!\w)")
 
 
+# --- v13 vá review (F02 biến thể): chỉ áp cho text KHÁCH (`scrub_user`) ---
+# (a) Họ tên KHÔNG cần mẫu xưng danh: họ phổ biến + >=1 chữ Viết Hoa kề
+#     ("Giao cho Trần Thị Bích", "Nguyễn Văn Mẫu - 12 ..."), hoặc họ + đệm
+#     "văn/thị" gõ thường/không dấu ("nguyen van mau"). Đệm phải đúng
+#     "văn"/"thị" hoặc viết trần — "Lễ vẫn mở", "do vận chuyển" không trúng.
+# (b) Cụm Viết Hoa bắt đầu bằng họ nhưng là ĐỊA DANH/cụm thường gặp
+#     ("Hà Nội", "Hồ Chí Minh", "Cao Cấp") — giữ nguyên (`_NAME_EXCEPT`).
+# (c) "giao/gửi/ship cho <Tên Viết Hoa>" = người nhận.
+# (d) Số + >=2 chữ Viết Hoa KHÔNG có từ gợi ý ("12 Ví Dụ") = địa chỉ, trừ
+#     khi chữ đầu là đơn vị/tên SP ("2 Hộp Quà", "120 Viên").
+# (e) Thôn/xóm + số hoặc tên; ấp/tổ/bản + số ("thôn 3", "xóm Bến Đò").
+# Còn lọt (cần NER, ghi ở board C01): tên 1 chữ không mẫu ("giao Bích"),
+# họ hiếm, tên gõ thường không có đệm văn/thị.
+_SURNAMES = _set(
+    "nguyen tran le pham hoang huynh phan vu vo dang bui do ho ngo duong "
+    "ly dao doan vuong trinh truong lam to ha cao dinh luu ta quach chau "
+    "luong hua thai kieu lai tang thach mac giang ton khuc ung nong")
+_MIDDLE = frozenset(("văn", "thị", "van", "thi"))
+_NAME_EXCEPT = tuple(tuple(p.split()) for p in (
+    "ha noi", "ha tinh", "ha giang", "ha nam", "ha dong", "ha long",
+    "ha tien", "ho chi minh", "ho tay", "ho guom", "ho tram", "lam dong",
+    "cao bang", "cao lanh", "cao cap", "phan thiet", "phan rang", "ly son",
+    "le hoi", "mai chau", "thai binh", "thai nguyen", "do son", "dong nai",
+    "kieu bao", "lai chau"))
+_RECIPIENT_RE = re.compile(
+    r"(?<!\w)(?:giao|gui|ship|chuyen)(?:[ \t]+hang)?[ \t]+cho[ \t]+")
+_HAMLET_F_RE = re.compile(r"(?<!\w)(?:thon|xom)[ \t]+(?=\w)")
+_HAMLET_L_RE = re.compile(r"(?<!\w)(?:ấp|tổ|bản)[ \t]+(?=\d)")
+
+
+def _name_spans(t: str, f: str) -> list[tuple[int, int]]:
+    spans = []
+    for m in _WORD_RE.finditer(f):
+        if m.group(0) not in _SURNAMES:
+            continue
+        s = m.start()
+        if t[s].isupper():
+            # Trong chuỗi Viết Hoa sau họ, chữ trùng từ dừng vẫn là tên
+            # ("Nguyễn Chí Thanh", "Lê Thị Anh") — không áp _STOP.
+            e = _words_after(t, f, m.end(), cap_only=True, first_free=True,
+                             limit=3, stop=False)
+            if e == m.end():
+                continue
+            words = tuple(_WORD_RE.findall(f, s, e))
+            if any(words[:len(x)] == x for x in _NAME_EXCEPT):
+                continue
+            spans.append((s, e))
+            continue
+        nxt = _WORD_RE.match(f, m.end() + 1)
+        if (nxt and f[m.end()] == " "
+                and t[nxt.start():nxt.end()].lower() in _MIDDLE):
+            e = _words_after(t, f, nxt.end(), cap_only=False, first_free=True,
+                             limit=2)
+            if e > nxt.end():
+                spans.append((s, e))
+    return spans
+
+
+def _user_extra_spans(t: str, f: str) -> list[tuple[int, int]]:
+    spans = _name_spans(t, f)
+    for m in _RECIPIENT_RE.finditer(f):
+        e = _words_after(t, f, m.end(), cap_only=True, first_free=True)
+        if e > m.end():
+            spans.append((m.end(), e))
+    for m in _ADDR_NUM_RE.finditer(f):
+        e = _words_after(t, f, m.end(), cap_only=True, stop=False)
+        words = _WORD_RE.findall(f, m.end(), e)
+        if (len(words) >= 2 and words[0] not in _UNITS
+                and words[0] not in _NOT_NAME):
+            spans.append((m.start(), e))
+    low = t.lower() if len(t.lower()) == len(t) else ""
+    hamlets = [*_HAMLET_F_RE.finditer(f), *_HAMLET_L_RE.finditer(low)]
+    for m in hamlets:
+        num = _ADDR_NUM_RE.match(f, m.end())
+        start = num.end() if num else m.end()
+        e = _words_after(t, f, start, cap_only=False, first_free=not num,
+                         limit=6)
+        if e > m.end() or num:
+            spans.append((m.start(), max(e, start)))
+    return spans
+
+
 @lru_cache(maxsize=4096)
 def _fold_ch(c: str) -> str:
     if c in "đĐ":
@@ -371,7 +453,8 @@ def _norm_addr(s: str) -> str:
 
 
 def _words_after(t: str, f: str, pos: int, *, cap_only: bool,
-                 first_free: bool = False, limit: int = 4) -> int:
+                 first_free: bool = False, limit: int = 4,
+                 stop: bool = True) -> int:
     """Đi tiếp tối đa `limit` từ (chỉ cách nhau khoảng trắng) từ `pos`;
     dừng ở dấu câu/chữ số/từ dừng. cap_only: chỉ nhận từ Viết Hoa (theo
     text gốc). first_free: từ đầu không xét _STOP (tên "Anh"/"Em"), chỉ
@@ -390,7 +473,7 @@ def _words_after(t: str, f: str, pos: int, *, cap_only: bool,
         if n == 0 and first_free:
             if w in _QUESTION or (cap_only and w in _NOT_NAME):
                 break
-        elif w in _STOP:
+        elif stop and w in _STOP:
             break
         end = i = m.end()
         n += 1
@@ -419,6 +502,7 @@ def _spans_identity(t: str, f: str, user: bool) -> list[tuple[int, int]]:
             e = _words_after(t, f, m.end(), cap_only=True, first_free=True)
             if e > m.end():
                 spans.append((m.end(), e))
+        spans += _user_extra_spans(t, f)
     for rx in (_ADDR_NUM_FIRST_RE, _ADDR_PREFIXED_RE, _ADDR_KEY_FIRST_RE):
         for m in rx.finditer(f):
             spans.append((m.start(), _addr_tail(t, f, m.end())))

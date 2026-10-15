@@ -598,13 +598,35 @@ def score_cskh(case: dict, out: dict, *, content: bool = True
 
 # --- CLI ----------------------------------------------------------------------
 
+SUGGEST_FEATURE = "sales-02"
+
+
 def _suggest(channel: str, text: str) -> int:
+    """v13 vá review (F03): đọc giai đoạn `sales-02` (HĐ 6.7). `tat` → không
+    gọi AI, exit 2. Chưa vận hành (chạy thử / DB down = fail-closed) → vẫn
+    soạn để đánh giá nội bộ nhưng in nhãn KHÔNG dán gửi khách."""
+    from pipelines import rollout
+    md = rollout.quick_mode()
+    if md is None:
+        conn = _connect()
+        try:
+            md = rollout.mode(conn, SUGGEST_FEATURE)
+        finally:
+            if conn is not None:
+                conn.close()
+    if md == "tat":
+        print(f"[blocked] tính năng {SUGGEST_FEATURE} (gợi ý chat sàn) đang"
+              " TẮT — không soạn gợi ý (HĐ 6.7)", file=sys.stderr)
+        return 2
     try:
         out = respond(channel, "cli:mxh", text)
     except Exception as e:  # noqa: BLE001 — gateway chặn/DB lỗi: vẫn có câu dán
         _warn(f"answer() lỗi {type(e).__name__} — dùng câu chuyển nhân viên")
         out = {"answer": template("san_handoff"), "handoff": "no_data",
                "blocked": []}
+    if md not in rollout.USABLE:
+        print("[CHẠY THỬ — CHỈ ĐÁNH GIÁ NỘI BỘ, KHÔNG dán gửi khách"
+              f" ({SUGGEST_FEATURE} chưa vận hành, HĐ 6.7)]")
     print("[GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]")
     print(out["answer"])
     if out.get("handoff"):

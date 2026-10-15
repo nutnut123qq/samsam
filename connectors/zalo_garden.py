@@ -113,6 +113,12 @@ NEED_PLOT = ("Ảnh/video CHƯA lưu: chưa biết khoảnh. Ghi mã khoảnh �
              "thích hoặc gửi tin chữ có mã khoảnh trước (vd: KV-A01 kiểm tra "
              "sâu bệnh) rồi gửi ảnh/video trong 2 giờ.")
 NO_FILE = "Không đọc được tệp đính kèm — vui lòng gửi lại."
+FEATURE_OFF = ("Tính năng này đang TẮT theo sổ triển khai — CHƯA ghi; vui "
+               "lòng báo quản lý vùng trồng để ghi tay.")
+# v13 vá review (F03): nhật ký chữ/ghi âm = farming-01, ảnh/video =
+# farming-04 (output_sources plot_logs/garden_voice_drafts/garden_media).
+FEATURE_LOG = "farming-01"
+FEATURE_MEDIA = "farming-04"
 UNSUPPORTED = ("Nhật ký vườn qua Zalo nhận chữ, ảnh, video và ghi âm "
                "(chưa nhận tệp/sticker/vị trí). ") + HELP
 
@@ -310,6 +316,18 @@ def _stt_note(uh: str) -> None:
               flush=True)
 
 
+def _off(conn, fid: str, uh: str) -> bool:
+    """Tính năng `tat` (rollout, HĐ 6.7) → True: không ghi gì. Chạy thử vẫn
+    ghi (nhật ký nội bộ)."""
+    from pipelines import rollout
+    try:
+        rollout.check_generate(conn, fid, "nhật ký vườn qua Zalo")
+    except rollout.RolloutBlocked as e:
+        print(f"[blocked] garden: {e} (uh={uh})", flush=True)
+        return True
+    return False
+
+
 def _on_text(uh: str, code: str, text: str) -> str:
     parsed = parse_text(text)
     if parsed is None:
@@ -319,6 +337,8 @@ def _on_text(uh: str, code: str, text: str) -> str:
     if conn is None:
         return DB_DOWN
     try:
+        if _off(conn, FEATURE_LOG, uh):
+            return FEATURE_OFF
         plot = _find_plot(conn, raw_plot)
         if plot is None:
             return f"Không tìm thấy khoảnh '{raw_plot}' — CHƯA ghi. {HELP}"
@@ -354,6 +374,8 @@ def _on_media(uh: str, code: str, msg: dict, kind: str) -> str:
         return DB_DOWN
     ok = 0
     try:
+        if _off(conn, FEATURE_LOG if kind == "audio" else FEATURE_MEDIA, uh):
+            return FEATURE_OFF
         words = str(msg.get("text") or "").split()
         plot = _find_plot(conn, words[0]) if words else None
         plot = plot or _recent_plot(uh)

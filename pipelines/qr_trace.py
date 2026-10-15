@@ -493,6 +493,27 @@ def _write_atomic(path: Path, data: bytes) -> None:
 
 # ---------- CLI ----------
 
+# v13 vá review (F03): biên đầu ra đọc giai đoạn triển khai (HĐ 6.7) — ánh
+# xạ lô (farming-03.1) và mã/trang QR (farming-03.2). `tat` → không sinh;
+# chưa vận hành → mã chỉ ghi nội bộ, `site` không xuất trang công khai cho
+# mã còn hiệu lực (trang "đã thu hồi" vẫn xuất — hướng an toàn).
+FEATURE_LINK = "farming-03.1"
+FEATURE_QR = "farming-03.2"
+
+
+def _rollout():
+    from pipelines import rollout  # lười: rollout → director → ...
+    return rollout
+
+
+def _gen_gate(conn, fid: str, what: str) -> None:
+    ro = _rollout()
+    try:
+        ro.check_generate(conn, fid, what)
+    except ro.RolloutBlocked as e:
+        raise QrError(str(e)) from None
+
+
 def _db(fn):
     def wrapped(conn):
         try:
@@ -523,6 +544,8 @@ def cmd_link(args, unlink: bool = False) -> int:
 
     def run(conn):
         lot_state(conn, args.lot, cfg, golden)       # lô có + thuộc pilot
+        if not unlink:
+            _gen_gate(conn, FEATURE_LINK, f"ánh xạ lô {args.lot}")
         if unlink:
             row, why = _call(conn, "select unlink_lot_origin(%s, %s, %s)",
                              (args.lot, args.log, args.by))
@@ -627,6 +650,10 @@ def cmd_issue(args) -> int:
         if bad:
             raise QrError(f"lời văn trang không qua guardrail kênh qr "
                           f"({', '.join(bad)})")
+        _gen_gate(conn, FEATURE_QR, f"phát hành mã QR lô {args.lot}")
+        ro = _rollout()
+        hold = ro.use_reason(conn, FEATURE_QR, f"mã QR lô {args.lot}",
+                             ro.is_human(args.by))
         code = new_code()
         row, why = _call(conn, "select issue_qr(%s, %s, %s, %s)",
                          (args.lot, code, st["tsha"], args.by))
@@ -636,6 +663,10 @@ def cmd_issue(args) -> int:
         conn.commit()
         print(f"[done] lô {args.lot}: đã phát hành mã — người phát hành: "
               f"{args.by}")
+        if hold:
+            print(f"[chạy thử] mã chỉ ghi nội bộ — KHÔNG in tem/công khai; "
+                  f"`site` không xuất trang tới khi được dùng ({hold})")
+            return 0
         if cfg["public_base_url"]:
             print(f"URL: {cfg['public_base_url']}/{code}/")
         else:
@@ -670,10 +701,14 @@ def cmd_site(args) -> int:
     media_dir = os.environ.get("GARDEN_MEDIA_DIR")
 
     def run(conn):
+        ro = _rollout()
+        # mọi mã phát hành đã qua 3 chữ ký người (issue_qr kiểm) → duyệt
+        # từng mục bởi người.
+        hold = ro.use_reason(conn, FEATURE_QR, "trang QR công khai", True)
         rows = conn.execute(
             "select code, lot_code, snapshot_sha256, text_sha256, revoked_at"
             " from qr_codes order by issued_at, code").fetchall()
-        n_err, pages, keep = 0, [], set()
+        n_err, n_hold, pages, keep = 0, 0, [], set()
         for code, lot_code, snap, tsha, revoked in rows:
             if not CODE_RE.match(code):
                 n_err += 1
@@ -682,6 +717,9 @@ def cmd_site(args) -> int:
             if revoked is not None:
                 pages.append((code, revoked_html(
                     revoked.astimezone(TZ_VN).date()), []))
+                continue
+            if hold:
+                n_hold += 1
                 continue
             try:
                 st = lot_state(conn, lot_code, cfg, golden)
@@ -705,15 +743,19 @@ def cmd_site(args) -> int:
                 _write_atomic(out / "media" / f"{sha}.{ext}", data)
                 keep.add(f"{sha}.{ext}")
             _write_atomic(out / code / "index.html", body.encode("utf-8"))
+        if n_hold:
+            print(f"[blocked] {n_hold} mã còn hiệu lực KHÔNG xuất trang — "
+                  f"{hold}")
         mdir = out / "media"
-        if n_err == 0 and mdir.is_dir():    # gỡ ảnh không còn trang dùng
+        if n_err == 0 and n_hold == 0 and mdir.is_dir():
+            # gỡ ảnh không còn trang dùng
             for f in mdir.iterdir():
                 stem, _, ext = f.name.partition(".")
                 if (f.is_file() and HEX64_RE.match(stem)
                         and ext in MEDIA_EXT and f.name not in keep):
                     f.unlink()
         print(f"[done] {len(pages)} trang → {out} ({n_err} lỗi)")
-        return 1 if n_err else 0
+        return 1 if n_err or n_hold else 0
     return _db(run)
 
 

@@ -302,14 +302,20 @@ def ops_fee(net, rate, start, anomaly=False) -> tuple[int | None, str | None]:
     return round_half_up(Decimal(net) * rate), None
 
 
-def tier_rows(net, tiers) -> list[dict]:
-    """So doanh thu thuần năm với từng mức thưởng (PL02 mục 4)."""
+def tier_rows(net, tiers, anomaly=False) -> list[dict]:
+    """So doanh thu thuần năm với từng mức thưởng (PL02 mục 4).
+    v13 vá review (F01): `anomaly` (kênh BẤT THƯỜNG — chồng kỳ lệch số giữ
+    cả hai dòng, Hoàn > Gộp, Thuần âm) → không xét đạt/thưởng, như
+    `ops_fee` ở đường quý; trước đây năm vẫn so mức trên số gấp đôi."""
     out = []
     for t in tiers:
         r = {"muc": t["muc"], "tu_vnd": t["tu_vnd"], "ty_le": t["ty_le"],
              "dat": None, "vuot": None, "thuong": None}
         if t["tu_vnd"] is None:
             r["trang_thai"] = f"{NOT_SET} ngưỡng"
+        elif anomaly:
+            r["trang_thai"] = ("bất thường — chưa xét mức, 2 bên giải trình"
+                               " (Điều 7.5)")
         elif net is None:
             r["trang_thai"] = NO_DATA
         else:
@@ -459,7 +465,7 @@ def render_year(n: int, start: date, end: date, s: dict, undated: dict,
              _FORMULA, "", "## So mức thưởng (PL02 mục 4)", "",
              ("| Mức | Ngưỡng/năm | Tỷ lệ trên phần vượt | Trạng thái |"
               " Phần vượt | Thưởng tạm tính |"), "|---|---|---|---|---|---|"]
-    for t in tier_rows(s["total"]["net"], cfg["tiers"]):
+    for t in tier_rows(s["total"]["net"], cfg["tiers"], s["anomaly"]):
         tu = NOT_SET if t["tu_vnd"] is None else vnd(t["tu_vnd"])
         vuot = "—" if t["vuot"] is None else vnd(t["vuot"])
         thuong = "—" if t["thuong"] is None else vnd(t["thuong"])
