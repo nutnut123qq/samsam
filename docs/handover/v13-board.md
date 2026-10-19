@@ -1,6 +1,84 @@
 # Board v13 — khép phát hiện audit hợp đồng (C00–C11)
 
-## Phát hành mã nguồn v15 — 19/10/2026
+## Chốt mã nguồn đợt DOCX — 20/10/2026
+
+User đã ủy quyền sửa nhãn KPI, commit, gộp vào `main` và push. Nền phát hành
+`667f763`; phần DOCX/vòng 2 được controller kiểm lại 106/106 probe, R1/R2 bị
+DB từ chối (`evidence/docx_r2_controller_review.log`). Sửa cuối chỉ đổi nhãn
+snapshot trong báo cáo từ `chat_kpi_facts` sang `chat_kpi_live`; kiểm lại báo cáo
+thực tế + KPI + tài liệu: **61 passed**, exit 0 (`evidence/docx_label_verify.log`).
+Full suite trước sửa nhãn: **6313 passed, 0 failed, 0 skipped**, fingerprint
+`2a1edbd4…` (`evidence/docx_r2_full_pytest.log`); không chạy lại full suite cho
+một thay đổi chuỗi hiển thị. Fingerprint code sau sửa nhãn (diff trừ DONE/board):
+`fe0603a5e4c376123cf81b3719a91ee4e78725c7d777ae74234b8d887b4e4fb0`.
+
+Đây là chốt MÃ NGUỒN, chưa deploy/nghiệm thu; 86/86 mục vẫn `chua_nghiem_thu`.
+Giữ các phụ thuộc bên ngoài, 3 red-team major và ranh giới tin cậy `svc_ui`.
+Mật khẩu đã lộ trong lịch sử Git chưa có bằng chứng rotation; không đổi credential.
+Các checkpoint "chưa commit/merge/push" bên dưới là lịch sử trước đợt phát hành.
+
+## Checkpoint hiện tại — Đợt DOCX vòng 2 (19–20/10/2026, nhánh `codex/docx-code-completion`, CHƯA commit)
+
+HEAD `667f763`; đợt DOCX + vòng 2 ở working tree, **chưa commit/merge/push/deploy**, không bật timer, không dùng DB `samsam`. Fingerprint: diff (trừ DONE.md + board) `2a1edbd44bab3be74a018c5912b84dd8a85b374440bdaf863f42b10df7d6ec43`; 16 file mới `c3414aef3526f531b3794209bde91e2349e778416f7fe3742cd9e41d2c4c772d`. Chi tiết + evidence: DONE.md mục "Đợt DOCX vòng 2". 86/86 mục vẫn `chua_nghiem_thu`.
+
+**Đính chính đợt DOCX:** dòng D4 (P0c) ở bảng D bên dưới ghi CODE VERIFIED là CHƯA đủ — controller tái hiện R1/R2 (70 probe đợt DOCX không phủ). Nay:
+
+| Mã | Yêu cầu | Trước vá (tái hiện) | Sau vá | Probe | Trạng thái |
+|---|---|---|---|---|---|
+| R1 | HĐ 6.7, 7.2 — quyết định người không ghi tên agent | login sales (app_human) `record_lot_intake(lô,'passed','agent:controller')` → lô passed, `checked_by` giả (cũng `system:`) | action quyết định (kiểm nhập, phân bổ, hàng duyệt, giá vốn, nháp, QR) — mọi login không owner kể cả `svc_ui` không ghi tên agent/system/auto_policy (NFKC); login người luôn `human_actor` + khối; 0 thay đổi khi chặn; đúng người khối production hoàn tất (SQL + CLI) | `tests/test_docx_r12_quyen.py` (trước 21 fail/7 pass trên working tree đợt DOCX; sau 29/29) | CODE VERIFIED |
+| R2 | HĐ 6.7 — quyền QR | login sales `revoke_qr(mã, <tên mình>)` → mã bị thu hồi | ký đúng vai / phát hành-thu hồi có vai QR của login trong `human_qr_roles` (owner ghi, mirror `qr_signers.json`, 1 login ≤ 1 vai, log đổi); không mạo tên người khác; link/unlink = nhập liệu (danh tính) | như trên | CODE VERIFIED · dữ liệu vai = BLOCKED EXTERNAL (Bên B) |
+| M3 | PL01 Marketing "đề xuất quảng cáo nhỏ cho SP được phép" | chỉ kiểm phiếu người lập | `mkt_ads --propose`: ô FP&A DE_XUAT + creative đã duyệt + `data/ads_proposal.json` → `validate_plan`/`submit_plan` + 2 mục duyệt; ≤ 1 đề xuất agent còn hiệu lực/SKU × kênh × tháng; thiếu creative/vượt trần/tắt → chặn, 0 ghi | `tests/test_docx_mkt03.py` (trước 3/3 fail trên 667f763; sau 3/3) | CODE VERIFIED · tham số chưa chốt = BLOCKED EXTERNAL (GĐ Marketing) |
+| K1 | PL02 mục 3, HĐ 7.3 — KPI chat có nguồn | `chat_kpi_facts` (không provenance) gộp hết vào KPI | sổ append-only `chat_kpi_live` (chỉ convlog live, khóa qkey + sha nội dung); KPI chỉ đọc sổ này + convlog live; dòng cũ = UNKNOWN báo riêng, không xóa/sửa, không che dòng live; chỉ UNKNOWN → KPI "— (0/0)" | `tests/test_docx_kpi_provenance.py` (trước 4/4 fail; sau 4/4) | CODE VERIFIED · dòng cũ UNVERIFIED tới khi có convlog live cùng khóa |
+
+Kiểm chứng revision cuối: probe 106/106 (`evidence/docx_r2_probes_post.log`); nâng cấp từ snapshot trước vòng 2 có lịch sử (gồm `chat_kpi_facts` cũ) 92→94 bảng, 541→541 dòng, chuỗi giữ, R1/R2 chặn trên DB nâng cấp (`evidence/docx_r2_upgrade.log`); full pytest **6313 passed, 0 failed, 0 skipped** (`evidence/docx_r2_full_pytest.log`; lần 1 có 2 fail drift tài liệu đã vá — `…_run1.log`); gate (`evidence/docx_r2_gates.log`): ruff sạch, agent_eval 22/22 hợp lệ PASS, DPIA khớp, red-team 3/50 known_gap major, 0 critical.
+
+Chờ bên ngoài thêm ở vòng 2: Bên B điền `human_qr_roles` (vai ký QR theo văn bản ủy quyền) — thiếu thì ký/phát hành/thu hồi QR bằng login người bị chặn; GĐ Marketing chốt `data/ads_proposal.json` (tỷ lệ trần, số ngày, chỉ tiêu thành công/dừng + người chốt + căn cứ); hạ tầng chạy Streamlit bằng login `svc_ui` (DSN giữ như secret — ai có DSN này ghi được tên người tùy ý, chỉ bị chặn tên agent).
+
+## Đợt DOCX (19/10/2026) — lịch sử, đính chính D4/P0c ở checkpoint vòng 2 phía trên
+
+Nền `667f763` (= v15 đã phát hành). Thay đổi ở working tree, **chưa commit/merge/push/deploy**, không bật timer, không dùng DB `samsam`. Fingerprint: diff (trừ DONE.md + board) `349a3afc690b2c0ea835b8bf5f13211f70d3a46ed49fc764f51abdc04768ebba`; 12 file mới `8643c6ed7bde7e02b908e6273c15fa6b7c26160d835c203e5a12a5d9072795a3`. Chi tiết + evidence: DONE.md mục "Đợt DOCX". 86/86 mục vẫn `chua_nghiem_thu`.
+
+Trạng thái gộp: **CODE VERIFIED** (bảng D dưới, probe trước/sau + full pytest revision cuối (6277 passed, 0 failed, 0 skipped)) · **BLOCKED EXTERNAL** (bảng E) · **UNVERIFIED** (DR Docker, SMTP/vendor/API/OA thật) · **OPERATIONALLY ACCEPTED**: 0 mục.
+
+### D. Đối chiếu DOCX → mục → code (đợt này)
+
+| # | Yêu cầu DOCX (điều/mục — tóm tắt) | Mục danh mục | Code/caller | Thiếu gì (trước sửa, nền 667f763) | Probe | Loại | Trạng thái |
+|---|---|---|---|---|---|---|---|
+| D1 | PL02 mục 1a–c, HĐ 6.3/6.7: nâng giai đoạn khi đủ ngày/đầu ra/người duyệt — người được ủy quyền làm được | 73 co_code (16 có nguồn login người không đọc được) | `pipelines/rollout.py` `_facts`/`promote`, `rollout_recount_human` | CLI login người báo "không đếm được" → không nâng được dù DB đếm đủ | `test_docx_p0_rollout_gate.py::test_p0a_*` | A | CODE VERIFIED |
+| D2 | PL02 mục 1a (≥50 đầu ra thật/≥5 ngày) — không khai khống | sales-01 (và mọi nguồn file) | `rollout_transition_human` | DB lấy ngưỡng số lượng nguồn file TỪ số caller khai → psql vượt cổng | `test_p0b_sales01_forged_evidence_direct_sql_blocked` | A | CODE VERIFIED |
+| D3 | PL02 mục 1a (đầu ra thật) — bằng chứng chatbot không do người tự tạo | sales-01 | `file_output_evidence_chat`, `connectors/zalo._record_chat_evidence` | Không có bằng chứng DB cho câu bot đã gửi | `test_p0b_*` (webhook/dual/agent/loader/mẫu/thiếu provenance) | A | CODE VERIFIED |
+| D4 | HĐ 6.7, 7.2 (người thực hiện, không ghi thay) | mọi quyết định có trước v15 | trigger `person_login_guard` | Login người A gọi psql ghi quyết định/nhật ký tên người B, duyệt khối khác | `test_docx_p0c_person_login.py` | A | CODE VERIFIED một phần — ⚠ còn R1/R2, vá ở vòng 2 |
+| D5 | PL02 mục 2 (rượu trong nội dung công khai = lỗi nghiêm trọng) | legal_hr-01 | `guardrail._alcohol_indirect` | 3 ca critical red-team lọt | `test_docx_p1.py::test_p1_indirect_alcohol_*` + `redteam.py` | A | CODE VERIFIED (3 major còn = B/C) |
+| D6 | HĐ 12.1 (che dữ liệu cá nhân) | data_platform-04, sales-01/02 | zalo/streamlit convlog `answer`, `record_san_suggestion`, `rag._scrub_history` | Câu bot ghi/gửi AI không che tên/địa chỉ | `test_p1_convlog_bot_answer_scrubbed`, `test_p1_san_suggestion_*`, `test_p1_ai_history_*` | A | CODE VERIFIED |
+| D7 | PL02 mục 3, HĐ 7.3 (KPI/lead từ dữ liệu thật) | sales-04.1, data_platform-08, ceo-01, sales-01 | `lead_store.iter_convlog(live_only)`, report/ops_monthly/sales_director | Mock/demo/thiếu provenance thành lead/KPI/mục CSKH thật | `test_p1_leads_only_from_live`, `test_p1_*_only_live`, `test_cskh_ignores_non_live_convlog` | A | CODE VERIFIED |
+| D8 | PL02 mục 2 (chatbot ≤ 30 giây) | sales-01 | `zalo.send_text` lần gửi đầu | Timeout cố định 5 giây khi gần hết hạn | `test_p1_zalo_first_send_*` | A | CODE VERIFIED |
+| D9 | PL02 mục 1 (đầu ra đếm được) — báo cáo chỉ in stdout | intel-03, intel-04.1, production-01, production-04.2, intel-06, finance-05.2, legal_hr-05.1, data_platform-07.1 | `write_report` ở intel_weekly/production/scenario/fp_cash/contract_check/health_bulletin | Không lưu đầu ra / ghi thẳng file (không cổng tắt, không nhãn) | `test_docx_p2.py` | A | CODE VERIFIED |
+| D10 | PL01 Pháp chế "Soạn hồ sơ XNQC" | legal_hr-02 | `xnqc --draft [--submit]` | Không có đường soạn → loại `xnqc_dossier` không có mục | `test_p2_xnqc_draft_payload_and_submit` | A + B (danh mục thành phần chờ Pháp chế) | CODE VERIFIED |
+| D11 | PL01 Marketing "phân loại … nghi hàng giả" | marketing-05 | `mkt_ugc.classify` | Không có lớp nghi hàng giả | `test_p2_ugc_counterfeit_class` | A + B (từ vựng chờ duyệt) | CODE VERIFIED |
+| D12 | PL01 TGĐ "Sổ rủi ro … rủi ro rượu, chỉ dẫn địa lý" | ceo-03 | `ceo_risk._alcohol_gi_facts` | Không có 2 nhóm rủi ro | `test_p2_ceo_risk_alcohol_and_gi` | A | CODE VERIFIED |
+| D13 | PL01 Vùng trồng "báo giám đốc nếu vẫn bỏ trống" | farming-02 | `garden_director --remind --submit` | `--remind` chỉ in | `test_p2_garden_escalates_only_still_empty` | A (nhắn nhân viên qua Zalo: chưa làm) | CODE VERIFIED một phần |
+| D14 | PL01 Intel "sản phẩm mới" đối thủ | intel-03 | `intel_weekly.new_products` | Chỉ lệch giá/KM | (qua `test_intel_weekly`/E2E) | A | CODE VERIFIED |
+| D15 | PL01 Marketing "báo cáo … tỷ lệ hủy" | marketing-06.2 | `mkt_metrics.channel_week`, `report` | Không dùng số đơn hủy | `test_p2_channel_cancel_rate` | A | CODE VERIFIED |
+| D16 | PL01 Bán hàng "chuyển khách về đại lý khi khách đồng ý" — đầu ra đếm đúng | sales-04.2 | `rollout._TABLES` agent_action_log/consents filters | Đếm mọi dòng consents, không đếm lần chuyển | `test_p0a_human_cli_promotes_unreadable_source` + SQL kiểm | A | CODE VERIFIED |
+| D17 | PL01 lịch tự chạy (mỗi ngày/tuần/tháng) | intel-01.2, sales-03, sales-06.1, ceo-04.1, intel-03/04.1, production-01/04.2, farming-02 | `deploy/onprem/jobs.json` + timer | Bước chỉ chạy tay | `test_v15_p7_jobs.py` (drift job↔timer↔argparse) | A + B (giờ GIẢ ĐỊNH) | CODE VERIFIED, timer chưa bật (Bên B) |
+
+Còn thiếu code (ghi rõ, chưa làm trong đợt): ~~marketing-03 agent chưa tự đề xuất chiến dịch quảng cáo~~ (vòng 2 đã làm — M3); farming-02 chưa nhắn trực tiếp nhân viên qua Zalo OA; red-team 3 ca major `llm_ngam_y_suc_khoe` chỉ lớp LLM-check (xem E).
+
+Danh mục 89 ↔ 79: phân rã đề xuất giữ nguyên (79 mục AI + 7 mục nền tảng/blockchain/nghĩa vụ = 86); không chia vụn cho đủ 89, không tính hạ tầng là tính năng AI. Ánh xạ chắc chắn: mọi dòng PL01 mục 2 đều có ≥1 mục (kể cả website/chatbot web `lam_rieng`); cần hai bên chốt cách phân rã ở các khối lệch số (ceo 9/7, marketing 14/11, intel 11/8, farming 9/7, legal_hr 10/11, data_platform 9/8) và P1 80/P2 9. Code còn thiếu ĐỘC LẬP với chuyện chốt số: chỉ các dòng "còn thiếu code" ở trên.
+
+Website + chatbot website (sales-08/09): làm riêng theo quyết định user, không xây ở repo này; hợp đồng giao tiếp giữ ở danh mục (một bảng giá/golden, ẩn giá + giỏ rượu, câu sức khỏe chuyển người, PII che trước AI); chưa có repo/owner để kiểm chéo — UNVERIFIED.
+
+### E. Chờ bên ngoài (đợt DOCX — không tự quyết)
+
+| Ai cấp/quyết | Cần gì | Ảnh hưởng | Code đã kiểm | Kiểm thật khi có |
+|---|---|---|---|---|
+| Hai bên | Chốt 89 mục/P1 80–P2 9; ngày ký + ngày vận hành; tỷ lệ phí/mức thưởng; PL05 (mẫu biên bản); phương án/chi phí neo blockchain | C00, finance-06, ceo-90, farming-06 | catalog/`--catalog`, `rev_share` null = "chưa chốt", `anchor` provider none exit 2 | chạy `rev_share --quarter`, `anchor --submit` với provider thật |
+| Bên B | Server/UPS/offsite/monitor ngoài máy; login dịch vụ (`svc_webhook/job/loader/backup`, **`svc_ui` mới**) + login người + `human_logins` + `users.json db_login` + `approvers` theo văn bản ủy quyền; SMTP + người nhận cảnh báo; lịch nghỉ; 14 hồ sơ gốc; dữ liệu nghiệp vụ thật; API sandbox/key sàn; domain QR; repo website | F08, mọi mục cần người duyệt, data_platform-90/06/07.x, sales-08/09 | probe login thật không owner (P0/P0c), bind_service, timer drift | E2E trên server Bên B với login thật |
+| Pháp chế / chủ khối | Duyệt bộ ca red-team (3 known_gap major) + model/DPA LLM-check hoặc bộ từ vựng bệnh; DPIA/TIA/DPA; hạn lưu (`retention.json`); danh mục thành phần hồ sơ XNQC (`data/xnqc_draft.json`, mới); từ vựng nghi hàng giả (`ugc_rules.json counterfeit_terms`, mới); chính sách loader; cảnh báo tồn/cấp 2/ngoài giờ; ngưỡng + khung giờ 7 job mới | legal_hr-01/02, marketing-05, intel-*, sales-* | luật + mặc định chặn an toàn | rerun `redteam.py`, job thật |
+| Nhà cung cấp | OCR, STT, sinh nền ảnh (trong nước + DPA + key) | production-03, data_platform-02, farming-01, marketing-02.1 | registry `none` → exit 2 có lý do | gọi vendor thật trên dữ liệu mẫu được duyệt |
+| Bảo mật | Mật khẩu từng lộ trong lịch sử Git — chưa có bằng chứng rotation (không in, không tự đổi) | toàn hệ | — | Bên B đổi mật khẩu + xác nhận |
+
+## Phát hành mã nguồn v15 — 19/10/2026 (lịch sử — trước đợt DOCX)
 
 User đã ủy quyền commit, gộp fast-forward vào `main` và push v15 (nền `a05c60f`).
 Phần code được kiểm khớp fingerprint `f44bdf34…`; 21 file mới `d2ba57bb…`.

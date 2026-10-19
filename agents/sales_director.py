@@ -331,7 +331,9 @@ def _unanswered(now: datetime, cfg: dict, data_dir: Path) -> list[dict]:
         path = Path(data_dir) / name
         if not path.exists():
             continue
-        for rec in iter_convlog(path, stats):
+        # docx P1: chỉ câu khách THẬT (mock/demo/dòng thiếu provenance
+        # không sinh mục CSKH/SLA thật).
+        for rec in iter_convlog(path, stats, live_only=True):
             if rec.get("answered") is not False:
                 continue
             ts = _parse_ts(rec.get("ts"))

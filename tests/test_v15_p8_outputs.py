@@ -230,8 +230,12 @@ def test_p8_1_real_catalog_file_sources_have_counters():
              if "file" in s}
     # v15 fix P8.7c: backup (data_platform-07.2) đếm bằng chứng DB do dịch
     # vụ backup ghi (`file_output_evidence`), không còn nguồn file.
-    assert files == {"conversations.jsonl": "sales-01"}
-    assert set(files) <= set(ro._FILES)
+    # docx P0 FLIP có lý do: sales-01 (convlog) cũng đếm bằng chứng DB do
+    # webhook ghi — DB không đọc được file nên trước đây tin số caller khai;
+    # danh mục không còn nguồn file nào.
+    assert files == {}
+    s01 = next(f for f in feats if f["id"] == "sales-01")
+    assert {"table": "file_output_evidence", "source": "conversations"}         in s01["output_sources"]
     bk = next(f for f in feats if f["id"] == "data_platform-07.2")
     assert bk["output_sources"] == [{"table": "file_output_evidence",
                                      "source": "backup_runs"}]
@@ -603,6 +607,17 @@ def test_p8_7_e2e_human_login_review(live):  # noqa: F811
     rc, out = _cli(live, "farm", "pipelines.rollout", "--outputs", "ceo-03")
     assert rc == 0 and f"rp:{name}" in out and sha in out \
         and "CHƯA DUYỆT" in out, out
+    # DB tự chặn nâng vận hành khi báo cáo CHƯA có người duyệt (gọi thẳng).
+    # docx P0 FLIP có lý do: trước đây kiểm SAU khi đã duyệt và dựa việc
+    # bằng chứng caller THIẾU khóa `unreviewed`; nay DB bỏ qua số caller
+    # khai, chỉ tin số đếm lại → kiểm lúc còn 1 báo cáo chưa duyệt, kể cả
+    # khi caller khai `unreviewed: 0`.
+    ev = {"human": 1, "unapproved": 0, "unreviewed": 0}
+    with _conn(live, "farm") as c, pytest.raises(psycopg.Error) as ei:
+        c.execute("select rollout_transition_human('ceo-03', 'promote',"
+                  " 'co_nguoi_duyet', 'van_hanh', %s, null, null, %s, now())",
+                  (P_FARM, json.dumps(ev)))
+    assert "1 chưa duyệt" in str(ei.value), str(ei.value)
     # sai khối (người khối sales) / --by giả → cổng chặn + authz_denied
     before = _denied(live, "output_review")
     rc, out = _cli(live, "sales", "pipelines.rollout", "--review-output",
@@ -632,13 +647,6 @@ def test_p8_7_e2e_human_login_review(live):  # noqa: F811
     with _conn(live, "loader") as c, pytest.raises(InsufficientPrivilege):
         c.execute("select output_review_human('ceo-03', %s, %s, 'approved',"
                   " %s, null)", (f"rp:{name}", sha, P_FARM))
-    # DB tự chặn nâng vận hành khi bằng chứng thiếu `unreviewed` (gọi thẳng)
-    ev = {"human": 1, "unapproved": 0}
-    with _conn(live, "farm") as c, pytest.raises(psycopg.Error) as ei:
-        c.execute("select rollout_transition_human('ceo-03', 'promote',"
-                  " 'co_nguoi_duyet', 'van_hanh', %s, null, null, %s, now())",
-                  (P_FARM, json.dumps(ev)))
-    assert "0 chưa duyệt" in str(ei.value)
     rc, out = _cli(live, "farm", "pipelines.rollout", "--promote", "ceo-03",
                    "--by", P_FARM)
     assert rc == 0 and "vận hành" in out, out
@@ -680,7 +688,8 @@ def test_p8_7_db_recounts_outputs_not_evidence(live):  # noqa: F811
               " feature_id in ('ceo-02.1', 'ceo-02.2', 'farming-02',"
               " 'farming-98') order by 1") == [("ceo-02.1", 2, [0, 1, 2, 3, 4]),
                            ("ceo-02.2", 1, [0, 1, 2, 3, 4]),
-                           ("farming-02", 1, [0, 1, 2, 3, 4]),
+                           # docx P2: + nguồn plot_log_gap
+                           ("farming-02", 2, [0, 1, 2, 3, 4]),
                            ("farming-98", 0, [0, 1, 2, 3, 4])]
     fake = {"outputs": 999, "out_days": 9}
     # (1) chạy thử → có người duyệt: 0 đầu ra thật, bằng chứng khai 999/9 —
@@ -735,8 +744,10 @@ def test_p8_7_db_recounts_outputs_not_evidence(live):  # noqa: F811
             " feature_id = 'ceo-02.1' and kind = 'promote'")[0][0]
     rc_ = ev.pop("db_recount")
     assert rc_.pop("days") == ev["days"] >= 5, (rc_, ev)
+    # docx P0: bộ đếm lại DB có thêm số lỗi nghiêm trọng của giai đoạn.
     assert rc_ == {"outputs": 50, "out_days": 5, "human": 0,
-                   "unapproved": 0, "unreviewed": 0, "file_sources": 0}, ev
+                   "unapproved": 0, "unreviewed": 0, "file_sources": 0,
+                   "severe": 0}, ev
     assert (ev["outputs"], ev["out_days"]) == (50, 5), ev
 
 

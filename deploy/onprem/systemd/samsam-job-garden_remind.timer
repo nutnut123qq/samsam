@@ -1,0 +1,12 @@
+# docx P2 — lịch job 'garden_remind' (nguồn: deploy/onprem/jobs.json). Khung giờ GIẢ ĐỊNH —
+# chủ khối chỉnh trong jobs.json rồi sửa OnCalendar ở đây (test giữ khớp).
+[Unit]
+Description=Sam Sam timer garden_remind
+
+[Timer]
+OnCalendar=*-*-* 07:05:00
+Persistent=true
+Unit=samsam-job@garden_remind.service
+
+[Install]
+WantedBy=timers.target

@@ -31,6 +31,8 @@ FIX = ROOT / "tests" / "fixtures" / "cockpit"
 VN = timezone(timedelta(hours=7))
 UTC = timezone.utc
 NOW = datetime(2026, 10, 12, 9, 0, tzinfo=VN)
+# docx P1: chỉ dòng convlog provenance live vào số chatbot vận hành
+LIVE = {"provenance": "live"}
 HEADER = "channel,metric_id,period_kind,period_start,value\n"
 REQUIRED = {
     "leads.new", "chatbot.questions", "chatbot.unanswered",
@@ -418,11 +420,11 @@ def test_week_spanning_two_months_vn(db, tmp_path):
                "2026-10-04T17:00:00Z"):    # 00:00 05/10 VN — KHÔNG
         _lead(db, ts)
     conv = tmp_path / "conversations.jsonl"
-    recs = [{"ts": "2026-09-28T01:00:00Z", "answered": True},
-            {"ts": "2026-09-29T01:00:00Z", "answered": False},
-            {"ts": "2026-09-30T01:00:00Z", "answered": None},
-            {"ts": "2026-09-30T02:00:00Z"},
-            {"ts": "2026-09-27T16:00:00Z", "answered": False}]  # ngoài kỳ
+    recs = [{"ts": "2026-09-28T01:00:00Z", "answered": True, **LIVE},
+            {"ts": "2026-09-29T01:00:00Z", "answered": False, **LIVE},
+            {"ts": "2026-09-30T01:00:00Z", "answered": None, **LIVE},
+            {"ts": "2026-09-30T02:00:00Z", **LIVE},
+            {"ts": "2026-09-27T16:00:00Z", "answered": False, **LIVE}]  # ngoài kỳ
     conv.write_bytes("\n".join(json.dumps(r) for r in recs).encode("utf-8")
                      + b"\n")
     rows, errors = ck.collect_internal(_TxConn(db), "week", date(2026, 10, 1),
@@ -627,7 +629,8 @@ class _FailConn:
 
 def _conv(tmp_path):
     (tmp_path / "conversations.jsonl").write_bytes(
-        b'{"ts": "2026-10-06T01:00:00Z", "answered": true}\n')
+        b'{"ts": "2026-10-06T01:00:00Z", "answered": true,'
+        b' "provenance": "live"}\n')
 
 
 @pytest.mark.parametrize("kind,ref", [
@@ -649,9 +652,10 @@ def test_chatbot_snapshot_ignores_consent_replies(tmp_path):
     # v5.1 fix: snapshot insert-only không được đóng băng "Đồng ý" như
     # 1 câu hỏi chưa trả lời (trước fix: questions=2, unanswered=1).
     (tmp_path / "conversations.jsonl").write_bytes(
-        b'{"ts": "2026-10-06T01:00:00Z", "answered": true}\n'
+        b'{"ts": "2026-10-06T01:00:00Z", "answered": true,'
+        b' "provenance": "live"}\n'
         b'{"ts": "2026-10-06T01:01:00Z", "answered": null,'
-        b' "route": "consent_granted"}\n')
+        b' "route": "consent_granted", "provenance": "live"}\n')
     rows, _ = ck.collect_internal(_FailConn(), "week", date(2026, 10, 5),
                                   data_dir=tmp_path, now=NOW)
     v = _vals(rows)

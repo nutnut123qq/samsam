@@ -144,7 +144,8 @@ HD_TOTAL = 89                     # HĐ: 89 tính năng / 9 phòng ban
 SRC_KINDS = ("table", "report", "file")
 SRC_KEYS = frozenset(SRC_KINDS) | {"block", "object_type", "created_by",
                                    "content_type", "source_agent", "rules_any",
-                                   "kind", "source"}
+                                   "kind", "source", "purpose", "granted",
+                                   "action"}
 TRIAL_DAYS, TRIAL_OUTPUTS, REVIEW_DAYS = 5, 50, 10    # PL02 mục 1a, 1b
 MAX_BY = 100
 MAX_NOTE = 300
@@ -835,7 +836,21 @@ _TABLES = {
                     "jsonl|manual)"},
     "consents": {
         "ts": "t.ts", "key": "'cn:' || t.id", "human": _h("t.recorded_by"),
-        "nosample": "NGƯỜI ghi bằng chứng đồng ý (evidence_ref)"},
+        "nosample": "NGƯỜI ghi bằng chứng đồng ý (evidence_ref)",
+        # docx P2 (sales-04.2): chỉ đồng ý chuyển ĐẠI LÝ đã cấp — trước đây
+        # đếm mọi dòng (cả rút đồng ý / mục đích cskh, marketing).
+        "filters": {"purpose": "t.purpose = %s",
+                    "granted": "t.granted::text = %s"}},
+    # docx P2 (sales-04.2, PL01 "chuyển khách về đại lý gần nhất khi khách
+    # đồng ý"): lần chuyển = dòng nhật ký `crm_handoff` do NGƯỜI ghi qua
+    # `crm_handoff_human` (danh tính theo login); 1 lead × 1 đại lý = 1.
+    "agent_action_log": {
+        "ts": "t.ts",
+        "key": ("'al:' || t.action || '/' || t.object_id || '/' || "
+                "coalesce(t.detail->>'dealer', '')"),
+        "human": _h("t.actor"),
+        "nosample": "NGƯỜI chuyển lead đã đồng ý (crm_handoff_human)",
+        "filters": {"action": "t.action = %s"}},
     "image_assets": {
         "ts": "t.created_at", "key": "'cd:' || md5(d.text)",
         "join": _DRAFT_JOIN, "where": _DRAFT_OK,
@@ -964,9 +979,13 @@ _TABLES = {
     # điểm = `captured_at` (đồng hồ DB); phiên bản hiện hành = bản ghi MỚI
     # NHẤT của khóa (như báo cáo); mẫu theo `is_sample`. Không có bước người
     # riêng → cần sổ `output_reviews`.
+    # docx P0: nguồn `conversations` (sales-01) = câu bot ĐÃ gửi khách thật,
+    # webhook (svc_webhook) ghi qua `file_output_evidence_chat` — gửi không
+    # có người duyệt từng mục → dùng thiếu người (chặn co_nguoi_duyet →
+    # van_hanh), không qua sổ `output_reviews` (`_needs_review`).
     "file_output_evidence": {
         "ts": "t.captured_at", "key": "t.output_key",
-        "sample": "t.is_sample",
+        "sample": "t.is_sample", "unapp": "t.nguon = 'conversations'",
         "sha": ("(array_agg(t.content_sha256 order by t.captured_at desc,"
                 " t.id desc))[1]"),
         "filters": {"source": "t.nguon = %s"}},
@@ -1068,6 +1087,8 @@ def _needs_review(s: dict) -> bool:
         return True
     if "file" in s:
         return bool(_FILES.get(s["file"], {}).get("review"))
+    if s.get("table") == "file_output_evidence":
+        return s.get("source") != "conversations"
     spec = _TABLES.get(s.get("table"))
     return spec is not None and not spec.get("human")
 
@@ -1327,9 +1348,36 @@ def _count_severe(conn, fid: str, since) -> int:
         " and kind = 'severe' and ts >= %s", (fid, since)).fetchone()[0]
 
 
+_DB_KEYS = ("outputs", "out_days", "human", "unapproved", "unreviewed")
+
+
+def _db_recount(conn, fid: str, stage: str) -> dict | None:
+    """docx P0: số DB đếm lại (`rollout_recount_human` — cùng bộ đếm
+    `count_spec` function chuyển giai đoạn dùng) | None (function chưa có /
+    không gọi được / sổ chưa có bộ đếm / giai đoạn vừa đổi). Savepoint: lỗi
+    không làm hỏng tx của caller."""
+    try:
+        with conn.transaction():
+            row = conn.execute("select rollout_recount_human(%s)",
+                               (fid,)).fetchone()
+    except Exception:  # noqa: BLE001 — conn giả/DB cũ/thiếu quyền → None
+        return None
+    r = row[0] if row else None
+    if not (isinstance(r, dict) and r.get("has_spec")
+            and r.get("sql_sources") and r.get("stage") == stage
+            and all(isinstance(r.get(k), int) for k in _DB_KEYS)):
+        return None
+    return r
+
+
 def _facts(conn, f: dict, stage: str, since, now, shift) -> dict:
     days = business_days(since, now, shift)
     o = output_facts(conn, f, since, now, shift)
+    if o["uncounted"] and (db := _db_recount(conn, f["id"], stage)):
+        # Login NGƯỜI không SELECT được bảng nguồn → dùng số DB đếm lại (DB
+        # vẫn là bên quyết khi chuyển giai đoạn); nguồn Python không đọc
+        # được giữ ở `uncounted` để hiển thị.
+        o.update({k: db[k] for k in _DB_KEYS}, counted_by="db")
     severe = _count_severe(conn, f["id"], since)
     target, why = evaluate(stage, days, o["outputs"], severe, o["out_days"],
                            o["human"], o["unapproved"], o["unreviewed"])

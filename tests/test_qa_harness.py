@@ -231,8 +231,9 @@ def test_validate_cli_all_suites(capsys):
     assert "[done] 22/22 suite hợp lệ" in out
     assert re.search(r"^\[ok\] mkt_seo v1 active owner=marketing .* 14 ca$",
                      out, re.MULTILINE)
-    assert re.search(r"^\[ok\] mkt_ads_ugc v1 active owner=marketing .* "
-                     r"28 ca$", out, re.MULTILINE)
+    # docx P2: + ca nghi hàng giả (ugc-gia-01) → v2, 29 ca
+    assert re.search(r"^\[ok\] mkt_ads_ugc v2 active owner=marketing .* "
+                     r"29 ca$", out, re.MULTILINE)
     assert re.search(r"^\[ok\] kd_a3 v2 active owner=sales .* 20 ca$", out,
                      re.MULTILINE)
     assert re.search(r"^\[ok\] mkt03 v1 active owner=marketing .* 15 ca$",
@@ -486,7 +487,7 @@ def test_deterministic_skips_llm_runners(env, monkeypatch, capsys):
     assert "mkt_seo v1 PASS 14/14" in out          # v6.5 tất định
     assert "kd_a5 v1 PASS 21/21" in out
     assert "kd_a1 v2 PASS 43/43" in out
-    assert "mkt_ads_ugc v1 PASS 28/28" in out
+    assert "mkt_ads_ugc v2 PASS 29/29" in out
     assert "kd_a3 v2 PASS 20/20" in out
     assert "guardrail v2 PASS 130/132" in out and "[done] chatbot" not in out
     assert "mkt02 v1 PASS 14/14" in out

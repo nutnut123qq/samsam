@@ -1,0 +1,49 @@
+# Nâng cấp 667f763 → revision cuối (DB mới samsam_docx_up, tạo lại)
+# ngày (client) 2026-10-19T21:23:48+07:00
+# cwd /c/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/d7307caa-c6e1-4b72-922e-d9f5cb266f91/scratchpad
+# git HEAD 667f763b56addf3216760d5c23fe4f0fde5241fa nhánh codex/docx-code-completion
+# fingerprint diff(trừ DONE+board)=349a3afc690b2c0ea835b8bf5f13211f70d3a46ed49fc764f51abdc04768ebba · 12 file mới=8643c6ed7bde7e02b908e6273c15fa6b7c26160d835c203e5a12a5d9072795a3
+# DB samsam_docx_up @ localhost user postgres (KHÔNG phải samsam)
+# OPENROUTER_API_KEY rỗng=có
+# lệnh: python -I tools/upgrade_check.py
+
+DB samsam_docx_up: tạo mới
+[BASE] scripts/apply_schema.py --roles -> exit 0
+[BASE] -m ingest.core_store -> exit 0
+[BASE] -m ingest.golden_store -> exit 0
+[BASE] -m pipelines.rollout --seed --by Owner Triển Khai -> exit 0
+[BASE] -m agents.da_pmo --seed -> exit 0
+[BASE] -m agents.garden_director --verify -> exit 0
+   [verify] OK — chuỗi nhật ký nguyên vẹn
+trước: 92 bảng, 552 dòng, đơn↔sản phẩm 3, đuôi log [(2, 'd0f1d7fbbe1f')]
+[NEW ] scripts/apply_schema.py --roles -> exit 0
+[NEW ] scripts/apply_schema.py --roles -> exit 0
+sau : 92 bảng, 552 dòng, đơn↔sản phẩm 3, đuôi log [(2, 'd0f1d7fbbe1f')]
+bảng mất: [] | bảng mới: [] | dòng đổi: không
+approvals cũ giữ nguyên: [('Người Duyệt Cũ', 'approved')]
+bằng chứng backup cũ giữ nguyên: 1 dòng
+[NEW ] -m pipelines.store --verify-log -> exit 0
+   [ok] chuỗi nguyên vẹn (1 dòng)
+[NEW ] -m agents.garden_director --verify -> exit 0
+   [verify] OK — chuỗi nhật ký nguyên vẹn
+plot_logs: 6 dòng
+[NEW ] -m pipelines.rollout --seed --by Owner Triển Khai -> exit 0
+sales-01 count_spec file = 0 · nguồn SQL = 4
+feature_rollout có count_spec: (73, 73)
+function SECURITY DEFINER + search_path: {'file_output_evidence_chat': (True, True), 'person_login_guard': (True, True), 'rollout_recount_human': (True, True), 'rollout_transition_human': (True, True)}
+PUBLIC EXECUTE file_output_evidence_chat: False
+app_human EXECUTE file_output_evidence_chat: False · svc_webhook: True
+người ghi bằng chứng chatbot: InsufficientPrivilege
+webhook ghi bằng chứng chatbot: [(2,)]
+webhook ghi lại (idempotent): cùng id = [(2,)]
+người INSERT thẳng sổ bằng chứng: InsufficientPrivilege
+login người CHƯA ánh xạ duyệt mạo tên: InsufficientPrivilege
+login người ghi nhật ký mạo tên: InsufficientPrivilege
+login người tự đếm/khai số nâng giai đoạn sales-01: InsufficientPrivilege
+mục up-2 vẫn pending: [('pending',)]
+svc_ui tồn tại: 1
+[NEW ] -m pipelines.store --verify-log -> exit 0
+   [ok] chuỗi nguyên vẹn (1 dòng)
+UPGRADE OK
+
+EXIT 0

@@ -1,0 +1,1077 @@
+# Probe đợt DOCX trên CODE NỀN 667f763 (git archive, DB samsam_docx_pre) — kỳ vọng FAIL ở lỗi
+# ngày (client) 2026-10-19T19:54:39+07:00
+# cwd /c/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/d7307caa-c6e1-4b72-922e-d9f5cb266f91/scratchpad/base
+# git HEAD 667f763b56addf3216760d5c23fe4f0fde5241fa nhánh codex/docx-code-completion
+# fingerprint diff(trừ DONE+board)=38b39aa957d129e5c4d57fcfd4999ff7817fdd6cae73cc428528a7cd8eca9d9a · 12 file mới=8643c6ed7bde7e02b908e6273c15fa6b7c26160d835c203e5a12a5d9072795a3
+# DB samsam_docx_pre @ localhost user postgres (KHÔNG phải samsam)
+# OPENROUTER_API_KEY rỗng=có
+# lệnh: python -m pytest tests/test_docx_p0_rollout_gate.py tests/test_docx_p0c_person_login.py tests/test_docx_p1.py tests/test_docx_p2.py -q -p no:cacheprovider --no-header -rf
+
+.F......FFFFF...........FFF..FFFFFFF.......FFFFFFFFFFFFFFFFFFFFFFF.FFF   [100%]
+================================== FAILURES ===================================
+________________ test_p0a_human_cli_promotes_unreadable_source ________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_pre) at 0x1ee9d177920>, 'dirs'....}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/docxp00/launch_p0.py'), ...}
+
+    def test_p0a_human_cli_promotes_unreadable_source(live):
+        """Nguồn login người KHÔNG có SELECT (`consents` — 16 tính năng co_code
+        có nguồn kiểu này): trước sửa CLI báo "không đếm được" dù DB đếm đủ."""
+        cid = _q(live, "insert into contacts (phone_hmac, phone_enc, source, created_by) values"
+                 " (%s, 'gAAAAAp0', 'manual', 'test-p0') returning id", ("c" * 64,))[0][0]
+        _q(live, "insert into dealers (code, name, region, source) values"
+           " ('DL-P0', 'Đại lý giả p0', 'mien_trung', 'manual')")
+        for i, d in enumerate(_workdays(5) * 10):
+            _q(live, "insert into consents (contact_id, purpose, granted,"
+               " recipient_dealer, source, evidence_ref, policy_version,"
+               " recorded_by, ts) values (%s, 'dai_ly', true, 'DL-P0', 'web', %s,"
+               " 'v1', %s, %s)", (cid, f"BB-P0-{i}", P_SALES,
+                                  datetime.combine(d, time(8, i), VN_TZ)),
+               replica=True)
+        # docx P2: đồng ý mục đích khác / rút đồng ý KHÔNG là đầu ra sales-04.2
+        _q(live, "insert into consents (contact_id, purpose, granted, source,"
+           " recorded_by) values (%s, 'cskh', false, 'web', %s)", (cid, P_SALES))
+        with psycopg.connect(live["dsn"]["sales"], connect_timeout=5) as c, \
+                pytest.raises(psycopg.errors.InsufficientPrivilege):
+            c.execute("select count(*) from consents")
+        rc, out = _cli(live, "sales", "--promote", "sales-04.2", "--by", P_SALES)
+>       assert rc == 0, out
+E       AssertionError: [TỪ CHỐI] sales-04.2 (chạy thử) chưa đủ cổng: không đếm được đầu ra — output_sources không có nguồn đếm được (chỉ có file nhật ký / bảng chưa có bộ đếm / không đọc được)
+E         
+E       assert 1 == 0
+
+tests\test_docx_p0_rollout_gate.py:245: AssertionError
+_____________ test_p0b_sales01_forged_evidence_direct_sql_blocked _____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_pre) at 0x1ee9d177920>, 'dirs'....}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/docxp00/launch_p0.py'), ...}
+
+    def test_p0b_sales01_forged_evidence_direct_sql_blocked(live):
+        """Trước sửa: không có bằng chứng DB nào, khai số → DB cho nâng."""
+>       with pytest.raises(psycopg.Error):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0_rollout_gate.py:345: Failed
+__________ test_p0b_only_webhook_login_records_chat_evidence[sales] ___________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_pre) at 0x1ee9d177920>, 'dirs'....}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/docxp00/launch_p0.py'), ...}
+who = 'sales'
+
+    @pytest.mark.parametrize("who", ["sales", "agent", "loader", "dual"])
+    def test_p0b_only_webhook_login_records_chat_evidence(live, who):
+        with pytest.raises(psycopg.Error) as ei:
+            _record(live, who, _conv(f"m-deny-{who}"))
+        m = str(ei.value)
+>       assert ("permission denied" in m or "svc_webhook" in m
+                or "không tự tạo bằng chứng" in m), m
+E       AssertionError: function file_output_evidence_chat(unknown) does not exist
+E         LINE 1: select file_output_evidence_chat($1)
+E                        ^
+E         HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+E       assert ('permission denied' in 'function file_output_evidence_chat(unknown) does not exist\nLINE 1: select file_output_evidence_chat($1)\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.' or 'svc_webhook' in 'function file_output_evidence_chat(unknown) does not exist\nLINE 1: select file_output_evidence_chat($1)\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.' or 'không tự tạo bằng chứng' in 'function file_output_evidence_chat(unknown) does not exist\nLINE 1: select file_output_evidence_chat($1)\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.')
+
+tests\test_docx_p0_rollout_gate.py:356: AssertionError
+__________ test_p0b_only_webhook_login_records_chat_evidence[agent] ___________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_pre) at 0x1ee9d177920>, 'dirs'....}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/docxp00/launch_p0.py'), ...}
+who = 'agent'
+
+    @pytest.mark.parametrize("who", ["sales", "agent", "loader", "dual"])
+    def test_p0b_only_webhook_login_records_chat_evidence(live, who):
+        with pytest.raises(psycopg.Error) as ei:
+            _record(live, who, _conv(f"m-deny-{who}"))
+        m = str(ei.value)
+>       assert ("permission denied" in m or "svc_webhook" in m
+                or "không tự tạo bằng chứng" in m), m
+E       AssertionError: function file_output_evidence_chat(unknown) does not exist
+E         LINE 1: select file_output_evidence_chat($1)
+E                        ^
+E         HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+E       assert ('permission denied' in 'function file_output_evidence_chat(unknown) does not exist\nLINE 1: select file_output_evidence_chat($1)\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.' or 'svc_webhook' in 'function file_output_evidence_chat(unknown) does not exist\nLINE 1: select file_output_evidence_chat($1)\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.' or 'không tự tạo bằng chứng' in 'function file_output_evidence_chat(unknown) does not exist\nLINE 1: select file_output_evidence_chat($1)\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.')
+
+tests\test_docx_p0_rollout_gate.py:356: AssertionError
+__________ test_p0b_only_webhook_login_records_chat_evidence[loader] __________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_pre) at 0x1ee9d177920>, 'dirs'....}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/docxp00/launch_p0.py'), ...}
+who = 'loader'
+
+    @pytest.mark.parametrize("who", ["sales", "agent", "loader", "dual"])
+    def test_p0b_only_webhook_login_records_chat_evidence(live, who):
+        with pytest.raises(psycopg.Error) as ei:
+            _record(live, who, _conv(f"m-deny-{who}"))
+        m = str(ei.value)
+>       assert ("permission denied" in m or "svc_webhook" in m
+                or "không tự tạo bằng chứng" in m), m
+E       AssertionError: function file_output_evidence_chat(unknown) does not exist
+E         LINE 1: select file_output_evidence_chat($1)
+E                        ^
+E         HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+E       assert ('permission denied' in 'function file_output_evidence_chat(unknown) does not exist\nLINE 1: select file_output_evidence_chat($1)\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.' or 'svc_webhook' in 'function file_output_evidence_chat(unknown) does not exist\nLINE 1: select file_output_evidence_chat($1)\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.' or 'không tự tạo bằng chứng' in 'function file_output_evidence_chat(unknown) does not exist\nLINE 1: select file_output_evidence_chat($1)\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.')
+
+tests\test_docx_p0_rollout_gate.py:356: AssertionError
+___________ test_p0b_only_webhook_login_records_chat_evidence[dual] ___________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_pre) at 0x1ee9d177920>, 'dirs'....}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/docxp00/launch_p0.py'), ...}
+who = 'dual'
+
+    @pytest.mark.parametrize("who", ["sales", "agent", "loader", "dual"])
+    def test_p0b_only_webhook_login_records_chat_evidence(live, who):
+        with pytest.raises(psycopg.Error) as ei:
+            _record(live, who, _conv(f"m-deny-{who}"))
+        m = str(ei.value)
+>       assert ("permission denied" in m or "svc_webhook" in m
+                or "không tự tạo bằng chứng" in m), m
+E       AssertionError: function file_output_evidence_chat(unknown) does not exist
+E         LINE 1: select file_output_evidence_chat($1)
+E                        ^
+E         HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+E       assert ('permission denied' in 'function file_output_evidence_chat(unknown) does not exist\nLINE 1: select file_output_evidence_chat($1)\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.' or 'svc_webhook' in 'function file_output_evidence_chat(unknown) does not exist\nLINE 1: select file_output_evidence_chat($1)\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.' or 'không tự tạo bằng chứng' in 'function file_output_evidence_chat(unknown) does not exist\nLINE 1: select file_output_evidence_chat($1)\n               ^\nHINT:  No function matches the given name and argument types. You might need to add explicit type casts.')
+
+tests\test_docx_p0_rollout_gate.py:356: AssertionError
+_____________ test_p0b_sales01_promotes_only_on_db_chat_evidence ______________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_pre) at 0x1ee9d177920>, 'dirs'....}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/docxp00/launch_p0.py'), ...}
+
+    def test_p0b_sales01_promotes_only_on_db_chat_evidence(live):
+>       ids = {_record(live, "webhook", _conv(f"m-{i}")) for i in range(50)}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_docx_p0_rollout_gate.py:382: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_docx_p0_rollout_gate.py:339: in _record
+    return c.execute("select file_output_evidence_chat(%s)",
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [BAD] at 0x1ee9d703560>
+query = 'select file_output_evidence_chat(%s)'
+params = ('{"ts": "2026-10-15T02:00:00Z", "msg_id": "m-0", "channel": "zalo", "answered": true, "sent": true, "guardrail_ok": true, "provenance": "live"}',)
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedFunction: function file_output_evidence_chat(unknown) does not exist
+E           LINE 1: select file_output_evidence_chat($1)
+E                          ^
+E           HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedFunction
+___________ test_p0b_zalo_convlog_writes_db_evidence_only_for_live ____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_pre) at 0x1ee9d177920>, 'dirs'....}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/docxp00/launch_p0.py'), ...}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/test_p0b_zalo_convlog_writes_d0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EE9D7024B0>
+
+    def test_p0b_zalo_convlog_writes_db_evidence_only_for_live(live, tmp_path,
+                                                              monkeypatch):
+        """Đường ghi THẬT `zalo._log_conversation` dưới login webhook: dòng live
+        đủ điều kiện → 1 bằng chứng DB (chỉ khóa/cờ, không câu khách/câu bot);
+        dòng mẫu / gửi lỗi → 0; DB từ chối/down → chỉ warn, convlog vẫn ghi."""
+        from connectors import channels, zalo
+        monkeypatch.setattr(zalo, "CONV_LOG", tmp_path / "conversations.jsonl")
+        monkeypatch.setattr(channels, "_connect", lambda: psycopg.connect(
+            live["dsn"]["webhook"], connect_timeout=5))
+        base = {"ts": "2026-10-16T03:00:00Z", "user_hash": "u" * 16,
+                "question": "Hỏi giá sâm", "answer": "Giá 1.000.000đ",
+                "channel": "messenger", "answered": True, "sent": True,
+                "guardrail_ok": True}
+        zalo._log_conversation({**base, "msg_id": "m_live-1",
+                                "provenance": "live"})
+        zalo._log_conversation({**base, "msg_id": "m_mau-1"})       # thiếu → mẫu
+        zalo._log_conversation({**base, "msg_id": "m_fail-1", "sent": False,
+                                "provenance": "live"})
+        rows = _q(live, "select output_key, ban_ghi from file_output_evidence"
+                  " where nguon = 'conversations' and output_key like"
+                  " 'cv:messenger/%'")
+>       assert [r[0] for r in rows] == ["cv:messenger/m_live-1"], rows
+E       AssertionError: []
+E       assert [] == ['cv:messenger/m_live-1']
+E         
+E         Right contains one more item: 'cv:messenger/m_live-1'
+E         Use -v to get more diff
+
+tests\test_docx_p0_rollout_gate.py:426: AssertionError
+______________ test_p0c_queue_decision_bound_to_login_and_block _______________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_pre) at 0x1ee9d6eee10>, 'dirs'..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/docxp0c0/launch_p0c.py'), ...}
+
+    def test_p0c_queue_decision_bound_to_login_and_block(live):
+        qid = _item(live)
+        n0 = _q(live, "select count(*) from approvals")[0][0]
+>       m = _denied(live, "sales", "select decide_item(%s, %s, 'approved')",
+                    (qid, P_PROD))                        # mạo tên người khác
+
+tests\test_docx_p0c_person_login.py:180: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_pre) at 0x1ee9d6eee10>, 'dirs'..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/docxp0c0/launch_p0c.py'), ...}
+who = 'sales', sql = "select decide_item(%s, %s, 'approved')"
+args = (1, 'Sản Xuất Giả P0c')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:154: Failed
+___________________ test_p0c_cogs_create_and_approve_bound ____________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_pre) at 0x1ee9d6eee10>, 'dirs'..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/docxp0c0/launch_p0c.py'), ...}
+
+    def test_p0c_cogs_create_and_approve_bound(live):
+>       m = _denied(live, "sales", "insert into cogs_versions (sku_key, cost_vnd,"
+                    " valid_from, created_by) values ('p0c-sku', 1000,"
+                    " current_date, %s)", (P_FIN,))
+
+tests\test_docx_p0c_person_login.py:232: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_pre) at 0x1ee9d6eee10>, 'dirs'..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/docxp0c0/launch_p0c.py'), ...}
+who = 'sales'
+sql = "insert into cogs_versions (sku_key, cost_vnd, valid_from, created_by) values ('p0c-sku', 1000, current_date, %s)"
+args = ('Tài Chính Giả P0c',)
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:154: Failed
+_____________________ test_p0c_direct_name_columns_bound ______________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_pre) at 0x1ee9d6eee10>, 'dirs'..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/docxp0c0/launch_p0c.py'), ...}
+
+    def test_p0c_direct_name_columns_bound(live):
+        rid = _q(live, "insert into red_alerts (source_agent, title, detail) values"
+                 " ('agent:p0c', 'cảnh báo giả p0c', '{}')"
+                 " returning id")[0][0]
+>       m = _denied(live, "sales", "insert into red_alert_acks (alert_id,"
+                    " acked_by) values (%s, %s)", (rid, P_PROD))
+
+tests\test_docx_p0c_person_login.py:254: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_pre) at 0x1ee9d6eee10>, 'dirs'..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/docxp0c0/launch_p0c.py'), ...}
+who = 'sales'
+sql = 'insert into red_alert_acks (alert_id, acked_by) values (%s, %s)'
+args = (1, 'Sản Xuất Giả P0c')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:154: Failed
+_ test_p1_indirect_alcohol_blocked_on_publish[S\xe2m ng\xe2m b\xecnh s\u1ee9 40 \u0111\u1ed9, nh\xe2m nhi ng\xe0y T\u1ebft. N\u1ed9i dung c\xf3 s\u1eed d\u1ee5ng AI.] _
+
+text = 'Sâm ngâm bình sứ 40 độ, nhâm nhi ngày Tết. Nội dung có sử dụng AI.'
+
+    @pytest.mark.parametrize("text", ALC)
+    def test_p1_indirect_alcohol_blocked_on_publish(text):
+        r = guardrail.check_publish(text, channel="facebook", content_type="post")
+>       assert "ruou_cam_quang_cao" in {v["code"] for v in r["violations"]}, r
+E       AssertionError: {'matched_claims': [], 'ok': True, 'required_labels': ['Nội dung có sử dụng AI'], 'skus': [], ...}
+E       assert 'ruou_cam_quang_cao' in set()
+
+tests\test_docx_p1.py:47: AssertionError
+_ test_p1_indirect_alcohol_blocked_on_publish[Chai s\xe2m ng\xe2m 500ml, r\xf3t m\u1ed9t ch\xe9n \u0111\xe3i kh\xe1ch l\xe0 \u1ea5m b\u1ee5ng.] _
+
+text = 'Chai sâm ngâm 500ml, rót một chén đãi khách là ấm bụng.'
+
+    @pytest.mark.parametrize("text", ALC)
+    def test_p1_indirect_alcohol_blocked_on_publish(text):
+        r = guardrail.check_publish(text, channel="facebook", content_type="post")
+>       assert "ruou_cam_quang_cao" in {v["code"] for v in r["violations"]}, r
+E       AssertionError: {'matched_claims': [], 'ok': False, 'required_labels': ['Nội dung có sử dụng AI'], 'skus': [], ...}
+E       assert 'ruou_cam_quang_cao' in {'thieu_nhan_ai'}
+
+tests\test_docx_p1.py:47: AssertionError
+_ test_p1_indirect_alcohol_blocked_on_publish[Th\u1ee9c u\u1ed1ng l\xean men t\u1eeb s\xe2m, n\u1ed3ng \u0111\u1ed9 m\u1ea1nh, th\xedch h\u1ee3p cho ng\xe0y vui.] _
+
+text = 'Thức uống lên men từ sâm, nồng độ mạnh, thích hợp cho ngày vui.'
+
+    @pytest.mark.parametrize("text", ALC)
+    def test_p1_indirect_alcohol_blocked_on_publish(text):
+        r = guardrail.check_publish(text, channel="facebook", content_type="post")
+>       assert "ruou_cam_quang_cao" in {v["code"] for v in r["violations"]}, r
+E       AssertionError: {'matched_claims': [], 'ok': False, 'required_labels': ['Nội dung có sử dụng AI'], 'skus': [], ...}
+E       assert 'ruou_cam_quang_cao' in {'thieu_nhan_ai'}
+
+tests\test_docx_p1.py:47: AssertionError
+_ test_p1_indirect_alcohol_blocked_on_publish[Sam ngam binh su 40 do, nham nhi ngay Tet.] _
+
+text = 'Sam ngam binh su 40 do, nham nhi ngay Tet.'
+
+    @pytest.mark.parametrize("text", ALC)
+    def test_p1_indirect_alcohol_blocked_on_publish(text):
+        r = guardrail.check_publish(text, channel="facebook", content_type="post")
+>       assert "ruou_cam_quang_cao" in {v["code"] for v in r["violations"]}, r
+E       AssertionError: {'matched_claims': [], 'ok': False, 'required_labels': ['Nội dung có sử dụng AI'], 'skus': [], ...}
+E       assert 'ruou_cam_quang_cao' in {'thieu_nhan_ai'}
+
+tests\test_docx_p1.py:47: AssertionError
+_ test_p1_indirect_alcohol_blocked_on_publish[Chai sam ngam 500ml, rot mot chen dai khach la am bung.] _
+
+text = 'Chai sam ngam 500ml, rot mot chen dai khach la am bung.'
+
+    @pytest.mark.parametrize("text", ALC)
+    def test_p1_indirect_alcohol_blocked_on_publish(text):
+        r = guardrail.check_publish(text, channel="facebook", content_type="post")
+>       assert "ruou_cam_quang_cao" in {v["code"] for v in r["violations"]}, r
+E       AssertionError: {'matched_claims': [], 'ok': False, 'required_labels': ['Nội dung có sử dụng AI'], 'skus': [], ...}
+E       assert 'ruou_cam_quang_cao' in {'thieu_nhan_ai'}
+
+tests\test_docx_p1.py:47: AssertionError
+_____________________ test_p1_convlog_bot_answer_scrubbed _____________________
+
+zfiles = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/test_p1_convlog_bot_answer_scr0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EE9D702330>
+
+    def test_p1_convlog_bot_answer_scrubbed(zfiles, monkeypatch):
+        monkeypatch.setattr("api.rag.answer", lambda q, history=None: {
+            "answer": NAMEY, "sources": ["https://samsamngoclinh.com/x"]})
+        monkeypatch.setattr("pipelines.guardrail.check",
+                            lambda t: {"ok": False, "violations": []})
+        sent = []
+        zalo._reply("u-p1", "Saphraton giá bao nhiêu?", "mid.p1", channel="zalo",
+                    send=lambda u, t: sent.append(t) or True,
+                    t_recv=time.monotonic())
+        rec = _log(zfiles)[-1]
+        blob = (rec.get("answer") or "") + (rec.get("flagged_text") or "")
+        assert blob, rec
+        for pii in ("Hoa", "12 Lê Lợi", "0905***"):
+>           assert pii not in blob, (pii, rec)
+E           AssertionError: ('Hoa', {'answer': 'Sâm Sâm xin lỗi, câu trả lời tự động chưa đạt kiểm duyệt nội bộ. Quý khách vui lòng gọi hotline 18...: True, 'channel': 'zalo', 'flagged_text': 'Dạ chị Hoa ở 12 Lê Lợi, Saphraton giá 1.500.000đ. Gọi 0905*** ạ.', ...})
+E           assert 'Hoa' not in 'Sâm Sâm xin...905*** ạ.'
+E             
+E             'Hoa' is contained here:
+E               rợ.Dạ chị Hoa ở 12 Lê Lợi, Saphraton giá 1.500.000đ. Gọi 0905*** ạ.
+E             ?           +++
+
+tests\test_docx_p1.py:96: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[warn] zalo: reply bị guardrail chặn -> fallback (uh=9cbb3d8fa5e8176f)
+___________________ test_p1_san_suggestion_answer_scrubbed ____________________
+
+    def test_p1_san_suggestion_answer_scrubbed():
+        c = _Conn()
+        sid = channels.record_san_suggestion(
+            c, "shopee", "tin buyer", {"answer": NAMEY}, "co_nguoi_duyet",
+            "MXH Giả")
+        assert sid == 7
+        stored = c.sql[0][1][2]
+        for pii in ("Hoa", "12 Lê Lợi", "0905***"):
+>           assert pii not in stored, stored
+E           AssertionError: Dạ chị Hoa ở 12 Lê Lợi, Saphraton giá 1.500.000đ. Gọi *** ạ.
+E           assert 'Hoa' not in 'Dạ chị Hoa .... Gọi *** ạ.'
+E             
+E             'Hoa' is contained here:
+E               Dạ chị Hoa ở 12 Lê Lợi, Saphraton giá 1.500.000đ. Gọi *** ạ.
+E             ?        +++
+
+tests\test_docx_p1.py:123: AssertionError
+___________ test_p1_san_suggestion_not_stored_when_name_dict_broken ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EEABD95A60>
+
+    def test_p1_san_suggestion_not_stored_when_name_dict_broken(monkeypatch):
+        from pipelines import pii
+        monkeypatch.setattr(pii, "_names", lambda: None)
+        c = _Conn()
+>       assert channels.record_san_suggestion(
+            c, "shopee", "tin buyer", {"answer": NAMEY}, "co_nguoi_duyet",
+            "MXH Giả") is None
+E       AssertionError: assert 7 is None
+E        +  where 7 = <function record_san_suggestion at 0x000001EE9D7259E0>(<test_docx_p1._Conn object at 0x000001EEABD96510>, 'shopee', 'tin buyer', {'answer': 'Dạ chị Hoa ở 12 Lê Lợi, Saphraton giá 1.500.000đ. Gọi 0905*** ạ.'}, 'co_nguoi_duyet', 'MXH Giả')
+E        +    where <function record_san_suggestion at 0x000001EE9D7259E0> = channels.record_san_suggestion
+
+tests\test_docx_p1.py:130: AssertionError
+_________________ test_p1_ai_history_assistant_turn_scrubbed __________________
+
+    def test_p1_ai_history_assistant_turn_scrubbed():
+        from api import rag
+        out = rag._scrub_history([{"role": "user", "content": "giá sao"},
+                                  {"role": "assistant", "content": NAMEY}])
+>       assert "Hoa" not in out[1]["content"] \
+            and "0905***" not in out[1]["content"]
+E       AssertionError: assert ('Hoa' not in 'Dạ chị Hoa ...905*** ạ.'
+E         
+E         'Hoa' is contained here:
+E           Dạ chị Hoa ở 12 Lê Lợi, Saphraton giá 1.500.000đ. Gọi 0905*** ạ.
+E         ?        +++)
+
+tests\test_docx_p1.py:140: AssertionError
+________________________ test_p1_leads_only_from_live _________________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/test_p1_leads_only_from_live0')
+
+    def test_p1_leads_only_from_live(tmp_path):
+        from ingest import lead_store
+        _conv_lines(tmp_path)
+        rows, st = lead_store.harvest(tmp_path)
+>       assert [r["dedup_key"] for r in rows] == ["convlog:live-1"], rows
+E       AssertionError: [{'channel': 'zalo', 'dedup_key': 'convlog:live-1', 'intent': 'order', 'question': 'cho tôi đặt mua 2 hộp sâm', ...}, ... ...}, {'channel': 'zalo', 'dedup_key': 'convlog:demo-1', 'intent': 'order', 'question': 'cho tôi đặt mua 5 hộp', ...}]
+E       assert ['convlog:liv...nvlog:demo-1'] == ['convlog:live-1']
+E         
+E         Left contains 3 more items, first extra item: 'convlog:mock0-1'
+E         Use -v to get more diff
+
+tests\test_docx_p1.py:171: AssertionError
+____________________ test_p1_weekly_chat_counts_only_live _____________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/test_p1_weekly_chat_counts_onl0')
+
+    def test_p1_weekly_chat_counts_only_live(tmp_path):
+        from datetime import datetime, timezone
+    
+        from agents import report
+        _conv_lines(tmp_path)
+        s = report.collect_chat(tmp_path,
+                                datetime(2026, 10, 1, tzinfo=timezone.utc),
+                                datetime(2026, 11, 1, tzinfo=timezone.utc))
+>       assert s["in_period"] == 1 and s["excluded_not_live"] == 3, s
+E       AssertionError: {'answered': 0, 'answered_period': 0, 'bad_ts': 0, 'by_channel': {'messenger': 0, 'streamlit': 0, 'zalo': 4}, ...}
+E       assert (4 == 1)
+
+tests\test_docx_p1.py:183: AssertionError
+________________________ test_p1_monthly_kpi_only_live ________________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/test_p1_monthly_kpi_only_live0')
+
+    def test_p1_monthly_kpi_only_live(tmp_path):
+        import importlib
+        from datetime import datetime, timezone
+        om = importlib.import_module("scripts.ops_monthly")
+        _conv_lines(tmp_path)
+        c = om.read_convlog(tmp_path, datetime(2026, 10, 1, tzinfo=timezone.utc),
+                            datetime(2026, 11, 1, tzinfo=timezone.utc))
+>       assert len(c["questions"]) == 1, c["questions"]
+E       AssertionError: [(datetime.datetime(2026, 10, 15, 2, 0, tzinfo=datetime.timezone.utc), False, 'cskh:5d543fb6fcc8f780'), (datetime.date...43fb6fcc8f780'), (datetime.datetime(2026, 10, 15, 2, 7, tzinfo=datetime.timezone.utc), False, 'cskh:5d543fb6fcc8f780')]
+E       assert 4 == 1
+E        +  where 4 = len([(datetime.datetime(2026, 10, 15, 2, 0, tzinfo=datetime.timezone.utc), False, 'cskh:5d543fb6fcc8f780'), (datetime.date...43fb6fcc8f780'), (datetime.datetime(2026, 10, 15, 2, 7, tzinfo=datetime.timezone.utc), False, 'cskh:5d543fb6fcc8f780')])
+
+tests\test_docx_p1.py:193: AssertionError
+________________ test_p1_zalo_first_send_uses_remaining_budget ________________
+
+zsend = [5]
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EEABDE8D10>
+
+    def test_p1_zalo_first_send_uses_remaining_budget(zsend, monkeypatch):
+        clk = _Clock().install(monkeypatch)
+        ok, late = _with_deadline(clk.t + 3.0, lambda: zalo.send_text("u1", "x"))
+>       assert ok is True and late is None and zsend == [3.0]   # cũ: 5 cố định
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert (True is True and None is None and [5] == [3.0]
+E         
+E         At index 0 diff: 5 != 3.0
+E         Use -v to get more diff)
+
+tests\test_docx_p1.py:243: AssertionError
+____________ test_p1_zalo_first_send_budget_exhausted_no_call[0.5] ____________
+
+zsend = [5]
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EEABDE9940>
+left = 0.5
+
+    @pytest.mark.parametrize("left", [0.5, 0.0, -1.0])
+    def test_p1_zalo_first_send_budget_exhausted_no_call(zsend, monkeypatch,
+                                                        left):
+        clk = _Clock().install(monkeypatch)
+        ok, late = _with_deadline(clk.t + left, lambda: zalo.send_text("u1", "x"))
+>       assert ok is False and late == "gui" and zsend == []
+E       assert (True is False)
+
+tests\test_docx_p1.py:256: AssertionError
+____________ test_p1_zalo_first_send_budget_exhausted_no_call[0.0] ____________
+
+zsend = [5]
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EEABDEA690>
+left = 0.0
+
+    @pytest.mark.parametrize("left", [0.5, 0.0, -1.0])
+    def test_p1_zalo_first_send_budget_exhausted_no_call(zsend, monkeypatch,
+                                                        left):
+        clk = _Clock().install(monkeypatch)
+        ok, late = _with_deadline(clk.t + left, lambda: zalo.send_text("u1", "x"))
+>       assert ok is False and late == "gui" and zsend == []
+E       assert (True is False)
+
+tests\test_docx_p1.py:256: AssertionError
+___________ test_p1_zalo_first_send_budget_exhausted_no_call[-1.0] ____________
+
+zsend = [5]
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EEABDEBAA0>
+left = -1.0
+
+    @pytest.mark.parametrize("left", [0.5, 0.0, -1.0])
+    def test_p1_zalo_first_send_budget_exhausted_no_call(zsend, monkeypatch,
+                                                        left):
+        clk = _Clock().install(monkeypatch)
+        ok, late = _with_deadline(clk.t + left, lambda: zalo.send_text("u1", "x"))
+>       assert ok is False and late == "gui" and zsend == []
+E       assert (True is False)
+
+tests\test_docx_p1.py:256: AssertionError
+_________________ test_p2_health_off_writes_and_sends_nothing _________________
+
+quiet = ['# Bản tin sức khỏe hệ thống — 2026-10-19\n\n_Sinh lúc 2026-10-19 19:55 giờ VN — số liệu từ SQL, không dùng LLM. Bản ...T hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)\n']
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EEABDD74A0>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/test_p2_health_off_writes_and_0')
+
+    def test_p2_health_off_writes_and_sends_nothing(quiet, monkeypatch, tmp_path):
+        monkeypatch.setattr(rollout, "_FORCE_MODE", "tat")
+        rc = hb.main(["--out-dir", str(tmp_path), "--date", "2026-10-19",
+                      "--notify"])
+>       assert rc == 2 and quiet == []
+E       assert (0 == 2)
+
+tests\test_docx_p2.py:30: AssertionError
+---------------------------- Captured stdout call -----------------------------
+# Bản tin sức khỏe hệ thống — 2026-10-19
+
+_Sinh lúc 2026-10-19 19:55 giờ VN — số liệu từ SQL, không dùng LLM. Bản tin chỉ BÁO, không tự xử lý._
+
+## 1. DB
+
+- **DB không truy cập được** (test) — kiểm service Postgres / `DATABASE_URL` (SOP mục 7).
+
+## 2. Job 24h
+
+_Nguồn: bảng `job_runs` (24h qua)._
+
+- không có số liệu (DB không truy cập được)
+
+## 3. Chi phí AI tháng này theo agent
+
+_Nguồn: bảng `llm_usage` (`sum(cost_usd)` từ 00:00 ngày 1 giờ VN) + trần `data/llm_gateway.json` `monthly_cap_usd`. Ngưỡng: ≥80% cảnh báo, ≥100% gateway chặn._
+
+- không có số liệu (DB không truy cập được)
+
+## 4. Lời gọi LLM lỗi 24h
+
+_Nguồn: bảng `llm_usage` `ok = false` (24h qua)._
+
+- không có số liệu (DB không truy cập được)
+
+## 5. Hàng chờ duyệt
+
+_Nguồn: bảng `content_drafts` `status = 'pending'`._
+
+- không có số liệu (DB không truy cập được)
+
+## 6. Hạn lưu dữ liệu cá nhân
+
+_Nguồn: `data/retention.json` (CV / chấm công / ảnh-video / ghi âm vườn); job `scripts/retention_purge.py`._
+
+- CẢNH BÁO `hr_cv` (CV / hồ sơ ứng viên (.txt/.md trong HR_INBOX_DIR)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Chuyên viên pháp chế – nhân sự (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `hr_attendance` (File chấm công (ma_nv, ngày, giờ vào/ra)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Chuyên viên pháp chế – nhân sự (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `garden_media` (Ảnh / video vườn đã gỡ EXIF/GPS (GARDEN_MEDIA_DIR)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `garden_voice` (Ghi âm nhân viên vườn (GARDEN_MEDIA_DIR/audio)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)
+
+[done] C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-3052\test_p2_health_off_writes_and_0\health-2026-10-19.md
+________________ test_p2_health_trial_labeled_and_sent_labeled ________________
+
+quiet = ['# Bản tin sức khỏe hệ thống — 2026-10-19\n\n_Sinh lúc 2026-10-19 19:55 giờ VN — số liệu từ SQL, không dùng LLM. Bản ...T hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)\n']
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EEABDD5820>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/test_p2_health_trial_labeled_a0')
+
+    def test_p2_health_trial_labeled_and_sent_labeled(quiet, monkeypatch,
+                                                     tmp_path):
+        monkeypatch.setattr(rollout, "_FORCE_MODE", "chay_thu")
+        rc = hb.main(["--out-dir", str(tmp_path), "--date", "2026-10-19",
+                      "--notify"])
+        md = (tmp_path / "health-2026-10-19.md").read_text(encoding="utf-8")
+>       assert rc == 0 and md.startswith("> **CHẠY THỬ — KHÔNG GỬI.**")
+E       AssertionError: assert (0 == 0 and False)
+E        +  where False = <built-in method startswith of str object at 0x000001EE9BE61D30>('> **CHẠY THỬ — KHÔNG GỬI.**')
+E        +    where <built-in method startswith of str object at 0x000001EE9BE61D30> = '# Bản tin sức khỏe hệ thống — 2026-10-19\n\n_Sinh lúc 2026-10-19 19:55 giờ VN — số liệu từ SQL, không dùng LLM. Bản t...ỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)\n'.startswith
+
+tests\test_docx_p2.py:40: AssertionError
+---------------------------- Captured stdout call -----------------------------
+# Bản tin sức khỏe hệ thống — 2026-10-19
+
+_Sinh lúc 2026-10-19 19:55 giờ VN — số liệu từ SQL, không dùng LLM. Bản tin chỉ BÁO, không tự xử lý._
+
+## 1. DB
+
+- **DB không truy cập được** (test) — kiểm service Postgres / `DATABASE_URL` (SOP mục 7).
+
+## 2. Job 24h
+
+_Nguồn: bảng `job_runs` (24h qua)._
+
+- không có số liệu (DB không truy cập được)
+
+## 3. Chi phí AI tháng này theo agent
+
+_Nguồn: bảng `llm_usage` (`sum(cost_usd)` từ 00:00 ngày 1 giờ VN) + trần `data/llm_gateway.json` `monthly_cap_usd`. Ngưỡng: ≥80% cảnh báo, ≥100% gateway chặn._
+
+- không có số liệu (DB không truy cập được)
+
+## 4. Lời gọi LLM lỗi 24h
+
+_Nguồn: bảng `llm_usage` `ok = false` (24h qua)._
+
+- không có số liệu (DB không truy cập được)
+
+## 5. Hàng chờ duyệt
+
+_Nguồn: bảng `content_drafts` `status = 'pending'`._
+
+- không có số liệu (DB không truy cập được)
+
+## 6. Hạn lưu dữ liệu cá nhân
+
+_Nguồn: `data/retention.json` (CV / chấm công / ảnh-video / ghi âm vườn); job `scripts/retention_purge.py`._
+
+- CẢNH BÁO `hr_cv` (CV / hồ sơ ứng viên (.txt/.md trong HR_INBOX_DIR)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Chuyên viên pháp chế – nhân sự (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `hr_attendance` (File chấm công (ma_nv, ngày, giờ vào/ra)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Chuyên viên pháp chế – nhân sự (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `garden_media` (Ảnh / video vườn đã gỡ EXIF/GPS (GARDEN_MEDIA_DIR)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `garden_voice` (Ghi âm nhân viên vườn (GARDEN_MEDIA_DIR/audio)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)
+
+[done] C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-3052\test_p2_health_trial_labeled_a0\health-2026-10-19.md
+____________________ test_p2_health_records_report_output _____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EEABDD7260>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/test_p2_health_records_report_0')
+quiet = []
+
+    def test_p2_health_records_report_output(monkeypatch, tmp_path, quiet):
+        """Sổ đầu ra: `write_report` → `record_report(name, text, False)`."""
+        seen = []
+        monkeypatch.setattr(rollout, "_FORCE_MODE", None)
+        monkeypatch.setattr(rollout, "report_stage",
+                            lambda name: ("data_platform-07.1", "van_hanh"))
+        monkeypatch.setattr(rollout, "record_report",
+                            lambda name, text, sample=None: seen.append(
+                                (name, sample)) or True)
+        assert hb.main(["--out-dir", str(tmp_path), "--date", "2026-10-19"]) == 0
+>       assert seen == [("health-2026-10-19.md", False)]
+E       AssertionError: assert [] == [('health-202...9.md', False)]
+E         
+E         Right contains one more item: ('health-2026-10-19.md', False)
+E         Use -v to get more diff
+
+tests\test_docx_p2.py:54: AssertionError
+---------------------------- Captured stdout call -----------------------------
+# Bản tin sức khỏe hệ thống — 2026-10-19
+
+_Sinh lúc 2026-10-19 19:55 giờ VN — số liệu từ SQL, không dùng LLM. Bản tin chỉ BÁO, không tự xử lý._
+
+## 1. DB
+
+- **DB không truy cập được** (test) — kiểm service Postgres / `DATABASE_URL` (SOP mục 7).
+
+## 2. Job 24h
+
+_Nguồn: bảng `job_runs` (24h qua)._
+
+- không có số liệu (DB không truy cập được)
+
+## 3. Chi phí AI tháng này theo agent
+
+_Nguồn: bảng `llm_usage` (`sum(cost_usd)` từ 00:00 ngày 1 giờ VN) + trần `data/llm_gateway.json` `monthly_cap_usd`. Ngưỡng: ≥80% cảnh báo, ≥100% gateway chặn._
+
+- không có số liệu (DB không truy cập được)
+
+## 4. Lời gọi LLM lỗi 24h
+
+_Nguồn: bảng `llm_usage` `ok = false` (24h qua)._
+
+- không có số liệu (DB không truy cập được)
+
+## 5. Hàng chờ duyệt
+
+_Nguồn: bảng `content_drafts` `status = 'pending'`._
+
+- không có số liệu (DB không truy cập được)
+
+## 6. Hạn lưu dữ liệu cá nhân
+
+_Nguồn: `data/retention.json` (CV / chấm công / ảnh-video / ghi âm vườn); job `scripts/retention_purge.py`._
+
+- CẢNH BÁO `hr_cv` (CV / hồ sơ ứng viên (.txt/.md trong HR_INBOX_DIR)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Chuyên viên pháp chế – nhân sự (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `hr_attendance` (File chấm công (ma_nv, ngày, giờ vào/ra)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Chuyên viên pháp chế – nhân sự (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `garden_media` (Ảnh / video vườn đã gỡ EXIF/GPS (GARDEN_MEDIA_DIR)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)
+- CẢNH BÁO `garden_voice` (Ghi âm nhân viên vườn (GARDEN_MEDIA_DIR/audio)): CHƯA CHỐT hạn lưu — job không xóa gì; người chốt: Giám đốc vùng trồng + Pháp chế (điền số ngày trong `data/retention.json`)
+
+[done] C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-3052\test_p2_health_records_report_0\health-2026-10-19.md
+[notify] bỏ qua (chưa cấu hình — cần --notify)
+_____________________ test_p2_report_prefixes_registered ______________________
+
+    def test_p2_report_prefixes_registered():
+        want = {"intel-doithu-": "intel-03", "intel-trend-": "intel-04.1",
+                "sx-bantin-": "production-01", "sx-canhan-": "production-04.2",
+                "kich-ban-": "intel-06", "dong-tien-": "finance-05.2",
+                "hd-mau-": "legal_hr-05.1"}
+        for pre, fid in want.items():
+>           assert rollout.feature_for_report(pre + "x.md") == fid, pre
+E           AssertionError: intel-doithu-
+E           assert None == 'intel-03'
+E            +  where None = <function feature_for_report at 0x000001EE9D193B00>(('intel-doithu-' + 'x.md'))
+E            +    where <function feature_for_report at 0x000001EE9D193B00> = rollout.feature_for_report
+
+tests\test_docx_p2.py:71: AssertionError
+________________ test_p2_contract_check_writes_counted_report _________________
+
+trial = None
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/test_p2_contract_check_writes_0')
+
+    def test_p2_contract_check_writes_counted_report(trial, tmp_path):
+        cc = importlib.import_module("scripts.contract_check")
+        f = tmp_path / "hd.txt"
+        f.write_text("Hợp đồng KOC mẫu — điều khoản chung.", encoding="utf-8")
+        out = tmp_path / "rep"
+>       rc = cc.main(["--kind", "koc", "--file", str(f), "--out-dir", str(out)])
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_docx_p2.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+scripts\contract_check.py:168: in main
+    a = ap.parse_args(argv)
+        ^^^^^^^^^^^^^^^^^^^
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:1899: in parse_args
+    self.error(msg)
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:2672: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='__main__.py', usage=None, description='PC-A6 (v4.4 W44.4) — kiểm hợp đồng KOC/đại lý có đủ điều khoản bắt buộc.', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = '__main__.py: error: unrecognized arguments: --out-dir C:\\Users\\hahuy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-3052\\test_p2_contract_check_writes_0\\rep\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:2659: SystemExit
+---------------------------- Captured stderr call -----------------------------
+usage: __main__.py [-h] --kind {dai_ly,koc} --file FILE
+__main__.py: error: unrecognized arguments: --out-dir C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-3052\test_p2_contract_check_writes_0\rep
+___________________ test_p2_scenario_writes_counted_report ____________________
+
+trial = None
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/test_p2_scenario_writes_counte0')
+
+    def test_p2_scenario_writes_counted_report(trial, tmp_path):
+        from pipelines import scenario
+>       rc = scenario.main(["--sku", "savina-12v", "--channel", "shopee",
+                            "--weeks", "2", "--start", "2026-11-02",
+                            "--out-dir", str(tmp_path)])
+
+tests\test_docx_p2.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+pipelines\scenario.py:325: in main
+    args = ap.parse_args(argv)
+           ^^^^^^^^^^^^^^^^^^^
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:1899: in parse_args
+    self.error(msg)
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:2672: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='python -m pipelines.scenario', usage=None, description='Kịch bản mùa thấp/cơ sở/cao theo SKU × kênh × tuần', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = 'python -m pipelines.scenario: error: unrecognized arguments: --out-dir C:\\Users\\hahuy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-3052\\test_p2_scenario_writes_counte0\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:2659: SystemExit
+---------------------------- Captured stderr call -----------------------------
+usage: python -m pipelines.scenario [-h] --sku SKU --channel
+                                    {shopee,tiktok,web,facebook,zalo,chatbot,offline}
+                                    [--weeks WEEKS] [--start START] [--json]
+python -m pipelines.scenario: error: unrecognized arguments: --out-dir C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-3052\test_p2_scenario_writes_counte0
+_________________________ test_p2_scenario_off_blocks _________________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EE9D244890>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/test_p2_scenario_off_blocks0')
+
+    def test_p2_scenario_off_blocks(monkeypatch, tmp_path):
+        from pipelines import scenario
+        monkeypatch.setattr(rollout, "_FORCE_MODE", "tat")
+>       assert scenario.main(["--sku", "savina-12v", "--channel", "shopee",
+                              "--weeks", "2", "--out-dir", str(tmp_path)]) == 1
+
+tests\test_docx_p2.py:101: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+pipelines\scenario.py:325: in main
+    args = ap.parse_args(argv)
+           ^^^^^^^^^^^^^^^^^^^
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:1899: in parse_args
+    self.error(msg)
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:2672: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='python -m pipelines.scenario', usage=None, description='Kịch bản mùa thấp/cơ sở/cao theo SKU × kênh × tuần', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = 'python -m pipelines.scenario: error: unrecognized arguments: --out-dir C:\\Users\\hahuy\\AppData\\Local\\Temp\\pytest-of-hahuy\\pytest-3052\\test_p2_scenario_off_blocks0\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\argparse.py:2659: SystemExit
+---------------------------- Captured stderr call -----------------------------
+usage: python -m pipelines.scenario [-h] --sku SKU --channel
+                                    {shopee,tiktok,web,facebook,zalo,chatbot,offline}
+                                    [--weeks WEEKS] [--start START] [--json]
+python -m pipelines.scenario: error: unrecognized arguments: --out-dir C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-3052\test_p2_scenario_off_blocks0
+___________________ test_p2_production_bulletin_splits_fefo ___________________
+
+trial = None
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3052/test_p2_production_bulletin_sp0')
+
+    def test_p2_production_bulletin_splits_fefo(trial, tmp_path):
+        from datetime import date
+    
+        from pipelines import production as pr
+        text = ("# Bản tin Sản xuất tháng — 2026-10-01\n\nx\n\n"
+                "## Hàng cận hạn (FEFO)\n- L1 · sku · HSD\n")
+>       assert pr._write_bulletin(text, {"sample": True}, tmp_path,
+               ^^^^^^^^^^^^^^^^^^
+                                  date(2026, 10, 1), "month") == 0
+E       AttributeError: module 'pipelines.production' has no attribute '_write_bulletin'
+
+tests\test_docx_p2.py:112: AttributeError
+____________________ test_p2_xnqc_draft_payload_and_submit ____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EE9D246450>
+
+    def test_p2_xnqc_draft_payload_and_submit(monkeypatch):
+        from agents import xnqc
+        sent = []
+        monkeypatch.setattr(xnqc.director, "submit",
+                            lambda conn, blk, ot, oid, title, payload, by:
+                            sent.append((blk, ot, oid, by, payload)) or 9)
+>       payload, qid = xnqc.draft(object(), "savina-12v", "maket", "maket fb",
+                       ^^^^^^^^^^
+                                  "Savina tuýp 12 viên ngậm.", submit=True)
+E       AttributeError: module 'agents.xnqc' has no attribute 'draft'
+
+tests\test_docx_p2.py:128: AttributeError
+_ test_p2_ugc_counterfeit_class[Shop \u01a1i \u0111\xe2y c\xf3 ph\u1ea3i h\xe0ng gi\u1ea3 kh\xf4ng-3-nghi_hang_gia] _
+
+text = 'Shop ơi đây có phải hàng giả không', stars = 3, want = 'nghi_hang_gia'
+
+    @pytest.mark.parametrize(("text", "stars", "want"), [
+        ("Shop ơi đây có phải hàng giả không", 3, "nghi_hang_gia"),
+        ("nghi hang gia qua", None, "nghi_hang_gia"),
+        ("Hàng fake rồi, tem khác", 2, "nghi_hang_gia"),
+        ("Sâm ngon, cảm ơn shop", 5, "khen"),
+    ])
+    def test_p2_ugc_counterfeit_class(text, stars, want):
+        from agents import mkt_ugc
+        r = mkt_ugc.load_rules()
+        got = mkt_ugc.classify(text, stars, r)
+>       assert got == want
+E       AssertionError: assert 'khac' == 'nghi_hang_gia'
+E         
+E         - nghi_hang_gia
+E         + khac
+
+tests\test_docx_p2.py:152: AssertionError
+_____ test_p2_ugc_counterfeit_class[nghi hang gia qua-None-nghi_hang_gia] _____
+
+text = 'nghi hang gia qua', stars = None, want = 'nghi_hang_gia'
+
+    @pytest.mark.parametrize(("text", "stars", "want"), [
+        ("Shop ơi đây có phải hàng giả không", 3, "nghi_hang_gia"),
+        ("nghi hang gia qua", None, "nghi_hang_gia"),
+        ("Hàng fake rồi, tem khác", 2, "nghi_hang_gia"),
+        ("Sâm ngon, cảm ơn shop", 5, "khen"),
+    ])
+    def test_p2_ugc_counterfeit_class(text, stars, want):
+        from agents import mkt_ugc
+        r = mkt_ugc.load_rules()
+        got = mkt_ugc.classify(text, stars, r)
+>       assert got == want
+E       AssertionError: assert 'khac' == 'nghi_hang_gia'
+E         
+E         - nghi_hang_gia
+E         + khac
+
+tests\test_docx_p2.py:152: AssertionError
+_ test_p2_ugc_counterfeit_class[H\xe0ng fake r\u1ed3i, tem kh\xe1c-2-nghi_hang_gia] _
+
+text = 'Hàng fake rồi, tem khác', stars = 2, want = 'nghi_hang_gia'
+
+    @pytest.mark.parametrize(("text", "stars", "want"), [
+        ("Shop ơi đây có phải hàng giả không", 3, "nghi_hang_gia"),
+        ("nghi hang gia qua", None, "nghi_hang_gia"),
+        ("Hàng fake rồi, tem khác", 2, "nghi_hang_gia"),
+        ("Sâm ngon, cảm ơn shop", 5, "khen"),
+    ])
+    def test_p2_ugc_counterfeit_class(text, stars, want):
+        from agents import mkt_ugc
+        r = mkt_ugc.load_rules()
+        got = mkt_ugc.classify(text, stars, r)
+>       assert got == want
+E       AssertionError: assert 'che' == 'nghi_hang_gia'
+E         
+E         - nghi_hang_gia
+E         + che
+
+tests\test_docx_p2.py:152: AssertionError
+_______________________ test_p2_ceo_risk_alcohol_and_gi _______________________
+
+    def test_p2_ceo_risk_alcohol_and_gi():
+        from datetime import datetime
+    
+        from agents import ceo_risk
+        from agents.ra_kenh import page_safe
+        from pipelines.period import VN_TZ
+        f = {"tpbvsk": [], "dossiers": [], "posts": [], "alerts": [],
+             "dpia_signed": True, "gaps": 0, "recipients": 1,
+             "alcohol": [("ruou-x", ("shopee",)), ("ruou-y", ())],
+             "gi_named": ["a", "b"], "gi_confirmed": ["a"], "gi_identity": False}
+        rs = ceo_risk.rank(f, datetime(2026, 10, 19, tzinfo=VN_TZ),
+                           ceo_risk.load_config())
+        codes = [r["code"] for r in rs]
+>       assert sum(c.startswith("NHOM-HAN-CHE:H-") for c in codes) == 1
+E       assert 0 == 1
+E        +  where 0 = sum(<generator object test_p2_ceo_risk_alcohol_and_gi.<locals>.<genexpr> at 0x000001EE9D7A9630>)
+
+tests\test_docx_p2.py:172: AssertionError
+__________________ test_p2_garden_escalates_only_still_empty __________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EE9D1BD340>
+
+    def test_p2_garden_escalates_only_still_empty(monkeypatch):
+        from datetime import datetime, timezone
+    
+        from agents import garden_director as gd
+        sent = []
+        monkeypatch.setattr("pipelines.director.submit",
+                            lambda conn, blk, ot, oid, title, payload, by:
+                            sent.append((blk, ot, oid, by)) or 1)
+        t = datetime(2026, 10, 1, tzinfo=timezone.utc)
+        rems = [{"type": "no-logs", "plot": "K1", "activity": None,
+                 "last_ts": None, "days": None},
+                {"type": "gap", "plot": "K2", "activity": None, "last_ts": t,
+                 "days": 20},                       # < 2 × 14 → chỉ nhắc
+                {"type": "gap", "plot": "K3", "activity": None, "last_ts": t,
+                 "days": 30},
+                {"type": "overdue", "plot": "K4", "activity": "tưới",
+                 "last_ts": t, "days": 40}]
+>       assert gd.escalate_gaps(_Q(), rems, {"gap_days": 14}) == 2
+               ^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.garden_director' has no attribute 'escalate_gaps'
+
+tests\test_docx_p2.py:207: AttributeError
+_________________________ test_p2_channel_cancel_rate _________________________
+
+    def test_p2_channel_cancel_rate():
+        from datetime import datetime, timezone
+    
+        from pipelines import mkt_metrics as mm
+        until = datetime(2026, 10, 19, tzinfo=timezone.utc)
+        rows = [("shopee", "sales.orders_completed", 90, "x"),
+                ("shopee", "sales.orders_cancelled", 10, "x")]
+    
+        class C:
+            def execute(self, sql, args=None):
+                return type("R", (), {"fetchall": lambda s: rows})()
+>       r = mm.channel_week(C(), until)["rows"][0]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_docx_p2.py:229: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+conn = <test_docx_p2.test_p2_channel_cancel_rate.<locals>.C object at 0x000001EE9D1BC770>
+until = datetime.datetime(2026, 10, 19, 0, 0, tzinfo=datetime.timezone.utc)
+
+    def channel_week(conn, until: datetime) -> dict:
+        """Số kênh ngoài (manual_export) tuần đã đóng → {"week", "rows": [...]}.
+        Cờ `sample` khi BẤT KỲ dòng nào của kênh nguồn `sample:`."""
+        start, label = closed_week(until)
+        per: dict[str, dict] = {}
+        for ch, mid, val, ref in conn.execute(
+                "select channel, metric_id, value, source_ref from"
+                " channel_snapshots where period_kind = 'week' and period_start"
+                " = %s and channel <> %s and metric_id = any(%s)"
+                " order by channel, metric_id",
+                (start.date(), _INTERNAL_CHANNEL, list(CHANNEL_METRICS))
+        ).fetchall():
+            d = per.setdefault(ch, {"channel": ch, "reach": None,
+                                    "engagement": None, "orders": None,
+                                    "eng_rate": None, "sample": False})
+>           key = {"social.reach": "reach", "social.engagement": "engagement",
+                   "sales.orders_completed": "orders"}[mid]
+E           KeyError: 'sales.orders_cancelled'
+
+pipelines\mkt_metrics.py:215: KeyError
+=========================== short test summary info ===========================
+FAILED tests/test_docx_p0_rollout_gate.py::test_p0a_human_cli_promotes_unreadable_source
+FAILED tests/test_docx_p0_rollout_gate.py::test_p0b_sales01_forged_evidence_direct_sql_blocked
+FAILED tests/test_docx_p0_rollout_gate.py::test_p0b_only_webhook_login_records_chat_evidence[sales]
+FAILED tests/test_docx_p0_rollout_gate.py::test_p0b_only_webhook_login_records_chat_evidence[agent]
+FAILED tests/test_docx_p0_rollout_gate.py::test_p0b_only_webhook_login_records_chat_evidence[loader]
+FAILED tests/test_docx_p0_rollout_gate.py::test_p0b_only_webhook_login_records_chat_evidence[dual]
+FAILED tests/test_docx_p0_rollout_gate.py::test_p0b_sales01_promotes_only_on_db_chat_evidence
+FAILED tests/test_docx_p0_rollout_gate.py::test_p0b_zalo_convlog_writes_db_evidence_only_for_live
+FAILED tests/test_docx_p0c_person_login.py::test_p0c_queue_decision_bound_to_login_and_block
+FAILED tests/test_docx_p0c_person_login.py::test_p0c_cogs_create_and_approve_bound
+FAILED tests/test_docx_p0c_person_login.py::test_p0c_direct_name_columns_bound
+FAILED tests/test_docx_p1.py::test_p1_indirect_alcohol_blocked_on_publish[S\xe2m ng\xe2m b\xecnh s\u1ee9 40 \u0111\u1ed9, nh\xe2m nhi ng\xe0y T\u1ebft. N\u1ed9i dung c\xf3 s\u1eed d\u1ee5ng AI.]
+FAILED tests/test_docx_p1.py::test_p1_indirect_alcohol_blocked_on_publish[Chai s\xe2m ng\xe2m 500ml, r\xf3t m\u1ed9t ch\xe9n \u0111\xe3i kh\xe1ch l\xe0 \u1ea5m b\u1ee5ng.]
+FAILED tests/test_docx_p1.py::test_p1_indirect_alcohol_blocked_on_publish[Th\u1ee9c u\u1ed1ng l\xean men t\u1eeb s\xe2m, n\u1ed3ng \u0111\u1ed9 m\u1ea1nh, th\xedch h\u1ee3p cho ng\xe0y vui.]
+FAILED tests/test_docx_p1.py::test_p1_indirect_alcohol_blocked_on_publish[Sam ngam binh su 40 do, nham nhi ngay Tet.]
+FAILED tests/test_docx_p1.py::test_p1_indirect_alcohol_blocked_on_publish[Chai sam ngam 500ml, rot mot chen dai khach la am bung.]
+FAILED tests/test_docx_p1.py::test_p1_convlog_bot_answer_scrubbed - Assertion...
+FAILED tests/test_docx_p1.py::test_p1_san_suggestion_answer_scrubbed - Assert...
+FAILED tests/test_docx_p1.py::test_p1_san_suggestion_not_stored_when_name_dict_broken
+FAILED tests/test_docx_p1.py::test_p1_ai_history_assistant_turn_scrubbed - As...
+FAILED tests/test_docx_p1.py::test_p1_leads_only_from_live - AssertionError: ...
+FAILED tests/test_docx_p1.py::test_p1_weekly_chat_counts_only_live - Assertio...
+FAILED tests/test_docx_p1.py::test_p1_monthly_kpi_only_live - AssertionError:...
+FAILED tests/test_docx_p1.py::test_p1_zalo_first_send_uses_remaining_budget
+FAILED tests/test_docx_p1.py::test_p1_zalo_first_send_budget_exhausted_no_call[0.5]
+FAILED tests/test_docx_p1.py::test_p1_zalo_first_send_budget_exhausted_no_call[0.0]
+FAILED tests/test_docx_p1.py::test_p1_zalo_first_send_budget_exhausted_no_call[-1.0]
+FAILED tests/test_docx_p2.py::test_p2_health_off_writes_and_sends_nothing - a...
+FAILED tests/test_docx_p2.py::test_p2_health_trial_labeled_and_sent_labeled
+FAILED tests/test_docx_p2.py::test_p2_health_records_report_output - Assertio...
+FAILED tests/test_docx_p2.py::test_p2_report_prefixes_registered - AssertionE...
+FAILED tests/test_docx_p2.py::test_p2_contract_check_writes_counted_report - ...
+FAILED tests/test_docx_p2.py::test_p2_scenario_writes_counted_report - System...
+FAILED tests/test_docx_p2.py::test_p2_scenario_off_blocks - SystemExit: 2
+FAILED tests/test_docx_p2.py::test_p2_production_bulletin_splits_fefo - Attri...
+FAILED tests/test_docx_p2.py::test_p2_xnqc_draft_payload_and_submit - Attribu...
+FAILED tests/test_docx_p2.py::test_p2_ugc_counterfeit_class[Shop \u01a1i \u0111\xe2y c\xf3 ph\u1ea3i h\xe0ng gi\u1ea3 kh\xf4ng-3-nghi_hang_gia]
+FAILED tests/test_docx_p2.py::test_p2_ugc_counterfeit_class[nghi hang gia qua-None-nghi_hang_gia]
+FAILED tests/test_docx_p2.py::test_p2_ugc_counterfeit_class[H\xe0ng fake r\u1ed3i, tem kh\xe1c-2-nghi_hang_gia]
+FAILED tests/test_docx_p2.py::test_p2_ceo_risk_alcohol_and_gi - assert 0 == 1
+FAILED tests/test_docx_p2.py::test_p2_garden_escalates_only_still_empty - Att...
+FAILED tests/test_docx_p2.py::test_p2_channel_cancel_rate - KeyError: 'sales....
+42 failed, 28 passed in 24.29s
+
+EXIT 1

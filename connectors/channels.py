@@ -681,14 +681,22 @@ def suggestion_ref(text: str) -> str:
 def record_san_suggestion(conn, channel: str, text: str, out: dict,
                           stage: str, by: str) -> int | None:
     """1 dòng `san_suggestions` → id | None (DB down / lỗi → [warn], không
-    chặn việc in gợi ý). Không lưu tin buyer, câu gợi ý qua `_mask_pii`."""
+    chặn việc in gợi ý). Không lưu tin buyer.
+    docx P1: câu gợi ý qua `pii.scrub_user` (SĐT/email + tên + địa chỉ — như
+    `record_suggestion` P9.4; trước chỉ `_mask_pii`); còn dấu hiệu PII chưa
+    che chắc / từ điển tên hỏng → KHÔNG ghi (None + warn), gợi ý vẫn in."""
     import psycopg
 
     from pipelines import guardrail
+    from pipelines.pii import scrub_user
     if conn is None:
         _warn("DB down — gợi ý không được ghi (không đếm đầu ra)")
         return None
-    answer = _mask_pii(str(out.get("answer") or "")).strip()[:MAX_INBOUND]
+    answer, risky = scrub_user(str(out.get("answer") or ""))
+    if risky:
+        _warn("gợi ý còn dấu hiệu PII chưa che — không ghi (không đếm đầu ra)")
+        return None
+    answer = answer.strip()[:MAX_INBOUND]
     if channel not in SAN_CHANNELS or stage not in SUGGEST_STAGES \
             or not answer:
         return None

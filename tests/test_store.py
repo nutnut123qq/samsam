@@ -436,9 +436,20 @@ _V13_CHECK_OK = re.compile(
 # allowlist hẹp; chỉ dạng `check (ext in (...))`.
 
 
+# docx P0: cặp CHECK `file_output_evidence` (thêm nguồn `conversations` +
+# khóa `cv:<kênh>/<msg_id>`) — chỉ ĐÚNG 2 tên constraint cố định của đúng
+# bảng, dạng drop-if-exists / add ... check (...).
+_DOCX_CHECK_OK = re.compile(
+    r"\balter\s+table\s+file_output_evidence\s+(?:drop\s+constraint\s+if"
+    r"\s+exists\s+file_output_evidence_(?:nguon|output_key)_check|add\s+"
+    r"constraint\s+file_output_evidence_(?:nguon|output_key)_check\s+check"
+    r"\s*\([^;]*\))\s*;")
+
+
 def _forbidden_ddl(lower: str) -> list[str]:
-    return re.findall(r"\b(?:alter|drop)\s+table\b", _V13_CHECK_OK.sub(
-        "", _CONSENT_B2B_OK.sub("", _ALTER_ADD_OK.sub("", lower))))
+    return re.findall(r"\b(?:alter|drop)\s+table\b", _DOCX_CHECK_OK.sub(
+        "", _V13_CHECK_OK.sub("", _CONSENT_B2B_OK.sub(
+            "", _ALTER_ADD_OK.sub("", lower)))))
 
 
 def test_drift_guard_narrow_alter_only():
@@ -467,7 +478,14 @@ def test_drift_guard_narrow_alter_only():
                 ("alter table garden_media drop constraint if exists "
                  "garden_media_plot_id_fkey;"),
                 ("alter table plots add constraint garden_media_ext_check "
-                 "check (ext in ('x'));")):
+                 "check (ext in ('x'));"),
+                ("alter table file_output_evidence drop constraint if exists "
+                 "file_output_evidence_nguon_check, drop column nguon;"),
+                "alter table file_output_evidence drop column ban_ghi;",
+                ("alter table orders add constraint "
+                 "file_output_evidence_nguon_check check (x);"),
+                ("alter table file_output_evidence drop constraint if exists "
+                 "file_output_evidence_pkey;")):
         assert _forbidden_ddl(bad), bad
     assert _forbidden_ddl(
         "alter table x add column if not exists y text;") == []

@@ -7,6 +7,8 @@ import json
 import re
 from pathlib import Path
 
+import pytest
+
 from ingest import lead_store as ls
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -16,7 +18,8 @@ DATA = ROOT / "data"
 def _rec(**kw):
     base = {"ts": "2026-10-10T01:02:03Z", "msg_id": "m1",
             "user_hash": "abc123", "question": "Saphraton giá bao nhiêu?",
-            "answered": True, "sent": True}
+            "answered": True, "sent": True,
+            "provenance": "live"}   # docx P1: chỉ dòng live thành lead
     base.update(kw)
     return base
 
@@ -212,9 +215,14 @@ def test_harvest_splits_only_ascii_newline(tmp_path):
 
 
 def test_harvest_real_convlog_smoke():
-    """Convlog thật: harvest không raise, mọi row đủ cột + ts aware."""
-    rows, _ = ls.harvest(DATA)
-    assert rows, "convlog thật phải suy ra được lead"
+    """Convlog thật: harvest không raise, mọi row đủ cột + ts aware.
+    docx P1 FLIP có lý do: chỉ dòng `provenance: live` thành lead thật —
+    convlog trong repo là dòng cũ/mock (thiếu provenance) → 0 lead, được
+    đếm ở thu_nghiem/thieu_provenance (không âm thầm thành lead)."""
+    rows, st = ls.harvest(DATA)
+    if not (DATA / "conversations.jsonl").exists():
+        pytest.skip("không có convlog trong máy")
+    assert rows or st.get("thu_nghiem", 0) + st.get("thieu_provenance", 0)
     for r in rows:
         assert set(ls.LEAD_COLS) <= r.keys()
         assert r["ts"].tzinfo is not None
@@ -375,8 +383,10 @@ def test_schema_sql_has_leads_table():
         rest = re.sub(pat, "", rest)
     # v13: cặp CHECK tên cố định (feature_rollout id, settlement_rows
     # txn_type) — cùng allowlist hẹp với drift-guard test_store.
-    from tests.test_store import _V13_CHECK_OK
+    from tests.test_store import _DOCX_CHECK_OK, _V13_CHECK_OK
     rest = _V13_CHECK_OK.sub("", rest)
+    # docx P0: cặp CHECK `file_output_evidence` (nguồn conversations).
+    rest = _DOCX_CHECK_OK.sub("", rest)
     assert not re.search(r"\b(alter|drop)\s+table\b", rest)
     assert re.search(r"\b(alter|drop)\s+table\b", re.sub(
         narrow[0], "", "alter table consents drop constraint if exists"

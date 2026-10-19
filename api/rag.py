@@ -359,6 +359,10 @@ def _scrub_history(history: list[dict] | None) -> list[dict]:
             out.append({**m, "content": c})
         elif skip and m.get("role") == "assistant":
             skip = False
+        elif m.get("role") == "assistant" and isinstance(c, str):
+            # docx P1: câu bot cũ cũng che trước khi gửi AI (có thể nhắc
+            # lại tên/địa chỉ khách).
+            out.append({**m, "content": scrub_user(c)[0]})
         else:
             out.append(m)
     return out

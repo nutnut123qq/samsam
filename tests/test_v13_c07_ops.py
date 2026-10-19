@@ -513,7 +513,9 @@ def _jsonl(path, recs):
 
 
 def test_kpi_snapshot_survives_convlog_rotation(db, tmp_path):
-    base = {"user_hash": "h" * 16, "question": "Anh Nguyễn Văn Mẫu 0912345678"}
+    # docx P1: chỉ dòng provenance live vào KPI vận hành (chat_kpi_facts)
+    base = {"user_hash": "h" * 16, "question": "Anh Nguyễn Văn Mẫu 0912345678",
+            "provenance": "live"}
     early = [dict(base, ts="2026-10-01T01:00:00Z", msg_id="m1", answered=True,
                   reply_ms=1200, channel="zalo"),
              dict(base, ts="2026-10-01T02:00:00Z", msg_id="m2",

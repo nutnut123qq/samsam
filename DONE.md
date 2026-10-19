@@ -4,7 +4,7 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version hiện tại: **v15 — phát hành mã nguồn 19/10/2026; chưa triển khai/nghiệm thu**
+Version hiện tại: **v15 + đợt DOCX — chốt mã nguồn 20/10/2026; chưa triển khai/nghiệm thu**
 
 v2.4-polish đóng 2026-10-11 (cold-check auditor lạ profile reviewer
 — đợt 1 FIX 1 MINOR `_WHERE_INFO_RE` greedy nuốt 'ở đâu' thứ hai
@@ -22,6 +22,69 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 (đúng review chỉ dựa code Python — quyết khi bàn giao); free-text
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
+
+## Chốt mã nguồn đợt DOCX — 20/10/2026
+
+User đã ủy quyền sửa nhãn KPI, commit, gộp vào `main` và push. Nền phát hành
+`667f763`; phần DOCX/vòng 2 được controller kiểm lại 106/106 probe, R1/R2 bị
+DB từ chối (`evidence/docx_r2_controller_review.log`). Sửa cuối chỉ đổi nhãn
+snapshot trong báo cáo từ `chat_kpi_facts` sang `chat_kpi_live`; kiểm lại báo cáo
+thực tế + KPI + tài liệu: **61 passed**, exit 0 (`evidence/docx_label_verify.log`).
+Full suite trước sửa nhãn: **6313 passed, 0 failed, 0 skipped**, fingerprint
+`2a1edbd4…` (`evidence/docx_r2_full_pytest.log`); không chạy lại full suite cho
+một thay đổi chuỗi hiển thị. Fingerprint code sau sửa nhãn (diff trừ DONE/board):
+`fe0603a5e4c376123cf81b3719a91ee4e78725c7d777ae74234b8d887b4e4fb0`.
+
+Đây là chốt MÃ NGUỒN, chưa deploy/nghiệm thu; 86/86 mục vẫn `chua_nghiem_thu`.
+Giữ các phụ thuộc bên ngoài, 3 red-team major và ranh giới tin cậy `svc_ui`.
+Mật khẩu đã lộ trong lịch sử Git chưa có bằng chứng rotation; không đổi credential.
+Các checkpoint "chưa commit/merge/push" bên dưới là lịch sử trước đợt phát hành.
+
+## Đợt DOCX vòng 2 — R1/R2 quyền, marketing-03, provenance KPI cũ (19/10/2026, CHƯA commit)
+
+**Git / revision.** Nhánh `codex/docx-code-completion`, HEAD `667f763`, working tree (đợt DOCX + vòng 2) **chưa commit/merge/push/deploy**, không dùng DB `samsam`. Nền vòng 2 = working tree đợt DOCX (diff `349a3af…`, 12 file mới `8643c6e…`, controller xác nhận khớp). Revision vòng 2: diff (trừ DONE.md + board) `2a1edbd44bab3be74a018c5912b84dd8a85b374440bdaf863f42b10df7d6ec43`; 16 file mới `c3414aef3526f531b3794209bde91e2349e778416f7fe3742cd9e41d2c4c772d`.
+
+**Đính chính đợt DOCX:** claim "P0c đã khép quyền" ở mục đợt DOCX là CHƯA đúng — controller tái hiện 2 đường vượt quyền (R1, R2) mà 70 probe đợt DOCX không phủ. Đã vá ở vòng này.
+
+- **R1 — CODE VERIFIED.** Trước vá (tái hiện trên working tree, login Postgres thật `in role app_human`, `human_logins` chỉ khối sales): `select record_lot_intake(<lô>, 'passed', 'agent:controller', null)` → lô `passed`, `checked_by` tên giả (`person_login_guard` bỏ qua kiểm khi tên không phải người). Sau vá: action QUYẾT ĐỊNH của người (`lot_intake`, `alloc_*`, `queue_approve/reject/override_qa`, `cogs_approve`, `draft_*`, `qr_lot_sign/issue/revoke/link/unlink`) — mọi login không owner (gồm `svc_ui`) không ghi bằng tên `agent:`/`system:`/`auto_policy:` (so sau NFKC: ` AGENT :`, `agent：` cũng chặn); login người luôn qua `human_actor` (đúng người + khối). Bị chặn → 42501, function rollback (0 thay đổi lô/phân bổ/`approvals`). Dòng agent không phải quyết định (`queue_enqueue`, ghi chú) và `authz_denied` vẫn ghi được. Đúng người khối production hoàn tất kiểm nhập bằng SQL và CLI `production intake` (subprocess, chế độ thực).
+- **R2 — CODE VERIFIED.** Trước vá: cùng login sales gọi `revoke_qr` bằng tên chính mình → mã QR bị thu hồi. Sau vá: ký QR đòi ĐÚNG vai, phát hành/thu hồi QR đòi một vai QR của CHÍNH login trong bảng mới `human_qr_roles` (CHỈ owner ghi, mirror `data/qr_signers.json`, 1 login ≤ 1 vai hiệu lực, log `human_qr_role_change`; repo TRỐNG — Bên B điền). Login có vai vẫn không mạo tên người khác. Ánh xạ lô ↔ nhật ký (link/unlink) = nhập liệu: chỉ danh tính (như trước). `svc_ui` vẫn được tin tên NGƯỜI do UI truyền (phiên xác thực ở Python) — DB KHÔNG ràng buộc tên đó với login người; chỉ chặn tên agent.
+- **marketing-03 — CODE VERIFIED (BLOCKED EXTERNAL tham số).** `python -m agents.mkt_ads --propose` agent TỰ dựng phiếu: ô SKU × kênh FP&A `DE_XUAT` (trần `fp_ads.propose` — đã loại CAM/chưa XNQC/biên thấp/rượu), creative ads/image ĐÃ duyệt đúng SKU (≤ 3, mới nhất), ngân sách = tỷ lệ trần, ngày/chỉ tiêu theo `data/ads_proposal.json` → `validate_plan` + `submit_plan` hiện có (2 mục `marketing/ad_campaign` created_by `agent:mkt05` + `finance/budget_change` `agent:mkt05_budget`, giả thuyết ghi nguồn trần/tháng/creative/người chốt). Mỗi SKU × kênh × tháng ≤ 1 đề xuất agent còn hiệu lực (chạy lại/ngày sau không nhân bản); thiếu creative → `THIEU_CREATIVE`, vượt trần → `ADS_OVER_CAP`, tính năng tắt → RolloutBlocked trước mọi ghi. `data/ads_proposal.json` repo = null (CHƯA CHỐT — GĐ Marketing) → `--propose` exit 2 `[BLOCKED]`, không tự điền số. Không gọi nền tảng quảng cáo/không chi tiền (test AST cũ giữ). `--plan`/`--results` (kiểm phiếu người lập, đánh giá CPA giữ/tắt) không đổi.
+- **KPI chat cũ — CODE VERIFIED.** Trước: `chat_kpi_facts` không provenance, `ops_monthly` gộp mọi dòng vào KPI. Nay sổ MỚI append-only `chat_kpi_live` (chỉ từ dòng convlog `provenance: live`, khóa `qkey` + sha256 nội dung, evidence `convlog_live`); `--snapshot` chỉ ghi sổ này; KPI đọc sổ này + convlog live; `chat_kpi_facts` cũ không xóa/sửa = UNKNOWN, báo riêng "N dữ kiện chụp trước bản lọc provenance… KHÔNG tính KPI vận hành". Dòng cũ cùng khóa không che dòng live (khóa chính có sha nội dung). Tái xác minh dòng cũ chỉ khi convlog live CÒN giữ cùng khóa (lần `--snapshot` sau ghi bản live từ chính dòng convlog) — không suy từ ngày/id. Không backfill trên DB thật. Chỉ còn dòng UNKNOWN → KPI "— (0/0)", không "đạt".
+
+**Kiểm chứng (coordinator tự chạy, DB test riêng):**
+- Probe trước sửa: R1/R2 trên WORKING TREE đợt DOCX **21 failed / 7 passed** (`evidence/docx_r2_r12_pre.log`); marketing-03 + KPI trên 667f763 (mkt_ads.py không đổi trong đợt DOCX) **7/7 failed** (`evidence/docx_r2_mkt_kpi_pre.log`).
+- Probe sau sửa (R1/R2 29 + marketing-03 3 + KPI 4 + 70 DOCX): **106 passed** — `evidence/docx_r2_probes_post.log`.
+- Nâng cấp từ snapshot trước vòng 2 có lịch sử (chat_kpi_facts cũ mock + thường, duyệt cũ, lô đã kiểm nhập, QR, bằng chứng backup): schema/roles ×2 exit 0, 92→94 bảng (`chat_kpi_live`, `human_qr_roles`), 541→541 dòng, đuôi chuỗi giữ, `--verify-log` + `garden_director --verify` OK, `chat_kpi_facts` giữ 3 dòng nguyên văn, `chat_kpi_live` 0 (không tự backfill); trên DB nâng cấp R1/R2 bị chặn, app_human không ghi `human_qr_roles`/`chat_kpi_live`, svc_job ghi `chat_kpi_live` được nhưng không UPDATE — `evidence/docx_r2_upgrade.log`.
+- Full `python -m pytest -q -ra -p no:cacheprovider` trên DB mới `samsam_docx_r2_full`: **6313 passed, 0 failed, 0 skipped**, exit 0 (44:12; DB mới `samsam_docx_r2_full2`, schema/roles ×2 + core/golden trước test; Docker có sẵn → 3 test DR E2E chạy, không skip — Docker máy dev, chưa phải server Bên B). Lần 1 (`samsam_docx_r2_full`, fingerprint `47c9ff5…`) 6311 passed / **2 failed** — drift-guard tài liệu thiếu 2 bảng mới (`docs/handover/kien-truc.md`, `deploy/cloud/README.md`); đã bổ sung rồi chạy lại toàn bộ — lần 1 ở `evidence/docx_r2_full_pytest_run1.log` — `evidence/docx_r2_full_pytest.log`.
+- Gate: `ruff check . --exclude .agents --exclude founder` sạch; `agent_eval --deterministic --no-record` 22/22 suite hợp lệ, mọi suite tất định PASS (guardrail v2 130/132 ≥ ngưỡng 0,95 — 2 ca edge `v41-edge-01/02` FAIL có sẵn từ v15, không đổi); `dpia_draft --check` khớp; `redteam.py` exit 0 — lọt 3/50 known_gap, **0 critical** (3 major `llm_ngam_y_suc_khoe`) — `evidence/docx_r2_gates.log`.
+
+**Còn mở:** Bên B điền `human_logins` + `human_qr_roles` theo văn bản ủy quyền; Streamlit chạy bằng login `svc_ui` (DSN giữ như secret — ai có DSN này ghi được tên người tùy ý, chỉ không ghi được tên agent); GĐ Marketing chốt `data/ads_proposal.json`; dòng `chat_kpi_facts` cũ còn UNKNOWN tới khi có convlog live cùng khóa. Red-team còn 3 known_gap major (0 critical).
+
+## Đợt DOCX — hoàn thiện code bám HĐ + PL01–04 (19/10/2026, CHƯA commit) — lịch sử, xem đính chính ở vòng 2
+
+**Git / revision.** Nhánh `codex/docx-code-completion` tạo từ `main` = `667f763`; mọi thay đổi ở working tree, **chưa commit/merge/push/deploy, không bật timer thật, không dùng DB `samsam`**. Fingerprint: sha256(`git diff HEAD` trừ DONE.md + board) `349a3afc690b2c0ea835b8bf5f13211f70d3a46ed49fc764f51abdc04768ebba`; 12 file mới (trừ `.agents/`, `founder/`, `lv2-market-top.png` — giữ nguyên, ngoài phạm vi) `8643c6ed7bde7e02b908e6273c15fa6b7c26160d835c203e5a12a5d9072795a3`. Nguồn đối chiếu: HĐ + PL01–04 (DOCX ngoài repo, không chép toàn văn); PL05 chưa có — không suy diễn.
+
+**Kết luận:** CODE VERIFIED cho các mục dưới (code + probe + full pytest revision cuối) ≠ OPERATIONALLY ACCEPTED: 86/86 mục vẫn `chua_nghiem_thu`. Còn BLOCKED EXTERNAL (bảng chờ bên ngoài ở board) và UNVERIFIED (DR cần Docker, vendor/SMTP/API thật, Zalo OA nhắn nhân viên).
+
+**Đã sửa (A — lỗi/thiếu code):**
+- **P0a** (PL02 mục 1a–c, HĐ 6.7): `rollout --promote/--status` dưới login người không đọc được bảng nguồn (16 tính năng co_code) báo "không đếm được" → nay dùng số DB đếm lại `rollout_recount_human` (chỉ đọc); DB vẫn quyết.
+- **P0b** (PL02 mục 1a): `rollout_transition_human` tin ngưỡng ≥50/≥5 do caller khai với nguồn file (sales-01) → bỏ hẳn số caller khai; nguồn file → không nâng; sales-01 đếm sổ DB `file_output_evidence` nguồn `conversations` do webhook (`svc_webhook`, không thuộc role người/loader/job/backup/BKS/Bên A) ghi qua `file_output_evidence_chat` ngay sau khi gửi (DB tự kiểm bản ghi, chỉ lưu khóa/cờ).
+- **P0c** (HĐ 6.7, 7.2) — ⚠ ĐÍNH CHÍNH (vòng 2): CHƯA khép đủ ở đợt này — còn R1 (tên `agent:`/`system:` lọt kiểm) và R2 (thu hồi QR không kiểm quyền); vá ở mục "Đợt DOCX vòng 2". Nội dung gốc: function quyết định trước v15 + cột tên người ghi thẳng → login người A ghi được tên người B / duyệt khối khác bằng psql. Trigger `person_login_guard` buộc tên = người của login (`human_logins`, đúng khối ở quyết định hàng duyệt/phân bổ/kiểm nhập/giá vốn); role mới `svc_ui` cho Streamlit (đã xác thực phiên). `xnqc --add` nhãn log từ chối `add`.
+- **P1** (PL02 mục 2–3, HĐ 12.1): luật tổ hợp rượu nói vòng (3 ca critical red-team nay chặn, 0 khớp nhầm trên dữ liệu crawl); câu bot ở convlog/`san_suggestions`/history gửi AI qua `scrub_user`; lead/KPI tháng/cockpit/báo cáo tuần/SLA CSKH chỉ dòng convlog `provenance: live` (thử nghiệm/thiếu provenance đếm riêng); lần gửi đầu Zalo dùng ngân sách còn lại của 30 giây.
+- **P2** (PL01 mục 2 từng phòng ban, PL02 mục 1): báo cáo chỉ in stdout nay lưu qua `write_report` (intel-03, intel-04.1, production-01, production-04.2, intel-06, finance-05.2, legal_hr-05.1) + `health_bulletin` (data_platform-07.1) qua `write_report`; `xnqc --draft` (legal_hr-02 soạn hồ sơ XNQC); lớp `nghi_hang_gia` (marketing-05); sổ rủi ro TGĐ thêm nhóm hạn chế (rượu, mã H-<sha8>) + chỉ dẫn địa lý (ceo-03); `garden_director --remind --submit` báo GĐ khi khoảnh vẫn bỏ trống (farming-02); "sản phẩm đối thủ lần đầu ghi nhận" (intel-03); tỷ lệ hủy kênh (marketing-06.2); sales-04.2 đếm lần chuyển khách + đồng ý `dai_ly` đã cấp; 7 job lịch mới + `intel --suggest` (giờ GIẢ ĐỊNH).
+- Test bom giờ có sẵn ở nền: `test_sales_director::test_sweep_weekend_not_counted` (hạn cố định 19/10 17:59 so `now()` DB) — vá test cho tất định.
+
+**Kiểm chứng (coordinator tự chạy, DB test riêng):**
+- Probe mới (4 file, 70 ca) trên CODE NỀN 667f763: **42 failed / 28 passed** (28 = ca không hồi quy) — `evidence/docx_pre_probes.log`; trên revision cuối: **70 passed** — `evidence/docx_post_probes.log`.
+- Nâng cấp 667f763 → revision: schema/roles ×2 exit 0, 92→92 bảng, 552→552 dòng, đơn↔sản phẩm 3/3, đuôi `agent_action_log` giữ, `--verify-log` + `garden_director --verify` OK, approvals/bằng chứng backup cũ giữ, `rollout --seed` 73/73 có `count_spec` (sales-01 file=0), app_human không EXECUTE `file_output_evidence_chat`, SQL trực tiếp mạo tên/khai số bị chặn — `evidence/docx_upgrade.log`.
+- Full `python -m pytest -q -ra -p no:cacheprovider` trên DB mới `samsam_docx_full`: **6277 passed, 0 failed, 0 skipped**, exit 0 (39:21; DB mới `samsam_docx_full2`, schema/roles ×2 + core/golden trước test; Docker 28.4 có sẵn nên 3 test DR E2E chạy, không skip — DR trên Docker máy dev, chưa phải server Bên B). Lần 1 (`samsam_docx_full`, fingerprint `38b39aa…`) 6273 passed / **4 failed** (bộ eval UGC thiếu ca lớp mới, Phụ lục D số red-team cũ, `intel_weekly` vi phạm luật cô lập khi import `agents.report`, fixture convlog thiếu provenance) — đã sửa rồi chạy lại toàn bộ; lần 1 giữ ở `evidence/docx_full_pytest_run1.log` — `evidence/docx_full_pytest.log`.
+- Gate khác: `ruff check . --exclude .agents --exclude founder` sạch; `agent_eval --deterministic --no-record` 22/22 suite hợp lệ, mọi suite tất định PASS (mkt_ads_ugc v2 29/29); `dpia_draft --check` khớp; `redteam.py` exit 0 — lọt 3/50 known_gap, **0 critical** (3 major `llm_ngam_y_suc_khoe`) — `evidence/docx_gates.log`.
+
+**Còn mở (không che):**
+- Red-team còn 3 known_gap (major `llm_ngam_y_suc_khoe` — chỉ lớp LLM-check sinh được mã đó; Pháp chế chọn model + DPA, hoặc duyệt bộ từ vựng bệnh/đối tượng để code luật); 0 critical.
+- Code còn thiếu (ghi, chưa làm): ~~marketing-03 agent chưa TỰ đề xuất chiến dịch~~ (đã làm ở vòng 2: `mkt_ads --propose`); farming-02 chưa nhắn trực tiếp nhân viên qua Zalo OA (cần mẫu tin/OA thật); `kd_orders` CSV `doi-soat-*.csv` trùng tiền tố báo cáo finance-06 (hiện không ghi sổ nên không đếm nhầm).
+- Triển khai: Streamlit phải chạy bằng login `in role svc_ui`; mọi login người dùng CLI cần dòng `human_logins`; owner chạy lại `rollout --seed`; `chat_kpi_facts` chụp trước bản vá có thể chứa dữ kiện mẫu (bảng không có cột provenance) — đã xử lý ở vòng 2 (sổ `chat_kpi_live`, dòng cũ = UNKNOWN).
+- Bảo mật: mật khẩu từng lộ trong lịch sử Git — chưa có bằng chứng rotation; không in, không đổi.
 
 ## Phát hành mã nguồn v15 — 19/10/2026
 

@@ -290,6 +290,41 @@ def due_reminders(conn, schedule: dict, now: datetime) -> list[dict]:
     return reminders(plots, last_any, last_by, schedule, now)
 
 
+# docx P2 (farming-02, PL01 Vùng trồng "nhắc khoảnh lâu không có nhật ký;
+# báo giám đốc nếu vẫn bỏ trống"): trước đây `--remind` chỉ in. Khoảnh VẪN
+# bỏ trống — chưa từng có nhật ký, hoặc quá 2 × gap_days (đã qua 1 chu kỳ
+# nhắc) — → 1 mục hàng duyệt cho GĐ vùng trồng mỗi ĐỢT (khóa theo mốc nhật
+# ký gần nhất: có nhật ký mới rồi lại bỏ trống = đợt mới; đã đẩy ở bất kỳ
+# trạng thái = không đẩy lại). Agent không nhắn nhân viên (gửi tin Zalo OA
+# cho nhân viên = việc riêng, chưa làm).
+GAP_TYPE, GAP_AGENT = "plot_log_gap", "agent:garden_director"
+
+
+def escalate_gaps(conn, rems: list[dict], schedule: dict) -> int:
+    from pipelines import director
+    lim = 2 * schedule.get("gap_days", garden.DEFAULT_GAP_DAYS)
+    n = 0
+    for r in rems:
+        if not (r["type"] == "no-logs"
+                or (r["type"] == "gap" and r["days"] >= lim)):
+            continue
+        mark = r["last_ts"].astimezone(timezone.utc).strftime(
+            "%Y%m%dT%H%M%S") if r["last_ts"] else "none"
+        oid = f"gap:{r['plot']}:{mark}"
+        if conn.execute("select 1 from approval_queue where object_type ="
+                        " %s and object_id = %s", (GAP_TYPE, oid)).fetchone():
+            continue
+        what = ("chưa có nhật ký nào" if r["type"] == "no-logs" else
+                f"{r['days']} ngày chưa có nhật ký (ngưỡng {lim})")
+        director.submit(conn, "farming", GAP_TYPE, oid,
+                        f"Khoảnh {r['plot']} bỏ trống nhật ký",
+                        f"Khoảnh {r['plot']}: {what}. Agent đã nhắc trong "
+                        "danh sách --remind; GĐ vùng trồng chỉ đạo ghi bù hoặc"
+                        " ghi lý do. Agent không sửa nhật ký.", GAP_AGENT)
+        n += 1
+    return n
+
+
 def log_flags(detail) -> list[str]:
     """Keyword cần chú ý — CHỈ quét detail (không quét tên activity)."""
     return garden.flags_for("", detail)
@@ -495,6 +530,9 @@ def main(argv=None) -> int:
                     help="ghi bản tin tuần data/reports/garden-week-<until>.md")
     ap.add_argument("--remind", action="store_true",
                     help="in danh sách nhắc lịch/gap (không ghi gì)")
+    ap.add_argument("--submit", action="store_true",
+                    help="--remind: khoảnh VẪN bỏ trống → báo GĐ vùng trồng"
+                    " (hàng duyệt farming/plot_log_gap)")
     ap.add_argument("--verify", action="store_true",
                     help="kiểm hash chain plot_logs (exit 1 nếu có vấn đề)")
     ap.add_argument("--precheck", action="store_true",
@@ -518,6 +556,8 @@ def main(argv=None) -> int:
     if n_ops != 1:
         ap.error("chọn đúng 1 thao tác: --bulletin | --remind | --verify | "
                  "--precheck | --purge-sample | --adopt-plot")
+    if args.submit and not args.remind:
+        ap.error("--submit chỉ đi với --remind")
     if args.adopt_plot is not None and not args.adopt_plot.strip():
         ap.error("--adopt-plot cần mã khoảnh")
     if (args.purge_sample or args.adopt_plot) and not (args.by or "").strip():
@@ -582,6 +622,14 @@ def main(argv=None) -> int:
                 print(fmt_reminder(r))
             if not rems:
                 print("[remind] không có nhắc")
+            if args.submit:
+                try:
+                    n = escalate_gaps(conn, rems, schedule)
+                except ValueError as e:     # gồm RolloutBlocked (tắt)
+                    print(f"[err] {e}", file=sys.stderr)
+                    return 2
+                print(f"[remind] báo GĐ vùng trồng: {n} mục mới "
+                      "(plot_log_gap)")
             return 0
         if args.precheck:
             pre = sample_precheck(conn)

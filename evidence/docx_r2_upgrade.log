@@ -1,0 +1,40 @@
+# Nâng cấp snapshot trước vòng 2 → revision cuối (DB mới samsam_docx_r2_up, tạo lại)
+# ngày (client) 2026-10-19T23:58:42+07:00
+# cwd /c/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/d7307caa-c6e1-4b72-922e-d9f5cb266f91/scratchpad
+# git HEAD 667f763b56addf3216760d5c23fe4f0fde5241fa nhánh codex/docx-code-completion
+# fingerprint diff(trừ DONE+board)=2a1edbd44bab3be74a018c5912b84dd8a85b374440bdaf863f42b10df7d6ec43 · 16 file mới=c3414aef3526f531b3794209bde91e2349e778416f7fe3742cd9e41d2c4c772d
+# DB samsam_docx_r2_up @ localhost user postgres (KHÔNG phải samsam)
+# OPENROUTER_API_KEY rỗng=có
+# lệnh: python -I tools/upgrade_check2.py
+
+DB samsam_docx_r2_up: tạo mới
+áp schema/roles TRƯỚC vòng 2: ok
+[run] -m ingest.core_store -> exit 0
+[run] -m ingest.golden_store -> exit 0
+[run] -m pipelines.rollout --seed --by Owner Triển Khai -> exit 0
+trước: 92 bảng, 541 dòng, chat_kpi_facts 3, đuôi log [(4, '3140dd0a72b3')]
+[run] -m pipelines.store --verify-log -> exit 0
+   [ok] chuỗi nguyên vẹn (2 dòng)
+[run] scripts/apply_schema.py --roles -> exit 0
+[run] scripts/apply_schema.py --roles -> exit 0
+sau : 94 bảng, 541 dòng, đuôi log [(4, '3140dd0a72b3')]
+bảng mất: [] | bảng mới: ['chat_kpi_live', 'human_qr_roles'] | dòng đổi: không
+chat_kpi_facts cũ giữ nguyên: 3 dòng; chat_kpi_live: 0 dòng (không tự backfill)
+approvals / lô / bằng chứng backup cũ giữ nguyên
+[run] -m pipelines.store --verify-log -> exit 0
+   [ok] chuỗi nguyên vẹn (2 dòng)
+[run] -m agents.garden_director --verify -> exit 0
+   [verify] OK — chuỗi nhật ký nguyên vẹn
+[run] -m pipelines.rollout --seed --by Owner Triển Khai -> exit 0
+R1 sales gọi record_lot_intake tên agent: InsufficientPrivilege
+R2 sales thu hồi QR tên mình: InsufficientPrivilege
+lô UP2-LOT2 / QR sau thử: [('pending',)] [(True,)]
+sales INSERT/đọc human_qr_roles: InsufficientPrivilege InsufficientPrivilege
+svc_job ghi chat_kpi_live: [(1,)]
+svc_job UPDATE chat_kpi_live: InsufficientPrivilege
+app_human INSERT chat_kpi_live: InsufficientPrivilege
+[run] -m pipelines.store --verify-log -> exit 0
+   [ok] chuỗi nguyên vẹn (3 dòng)
+UPGRADE OK
+
+EXIT 0

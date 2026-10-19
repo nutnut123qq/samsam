@@ -1,0 +1,226 @@
+# Probe marketing-03 + KPI cũ trên CODE NỀN 667f763 (mkt_ads.py không đổi trong đợt DOCX; ops_monthly đợt DOCX vẫn đọc chat_kpi_facts không phân nguồn — xem diff) — DB samsam_docx_r2_pre
+# ngày (client) 2026-10-19T22:25:30+07:00
+# cwd /c/Users/hahuy/AppData/Local/Temp/claude/D--code-samsam/d7307caa-c6e1-4b72-922e-d9f5cb266f91/scratchpad/base
+# git HEAD 667f763b56addf3216760d5c23fe4f0fde5241fa nhánh codex/docx-code-completion
+# fingerprint diff(trừ DONE+board)=349a3afc690b2c0ea835b8bf5f13211f70d3a46ed49fc764f51abdc04768ebba · 12 file mới=8643c6ed7bde7e02b908e6273c15fa6b7c26160d835c203e5a12a5d9072795a3
+# DB samsam_docx_r2_pre @ localhost user postgres (KHÔNG phải samsam)
+# OPENROUTER_API_KEY rỗng=có
+# lệnh: python -m pytest tests/test_docx_mkt03.py tests/test_docx_kpi_provenance.py -q -p no:cacheprovider --no-header -rf
+
+FFFFFFF                                                                  [100%]
+================================== FAILURES ===================================
+___________________ test_mkt03_agent_proposes_from_sources ____________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_docx_r2_pre) at 0x24e7ccfdb20>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000024E7CC26D20>
+
+    def test_mkt03_agent_proposes_from_sources(db, monkeypatch):  # noqa: F811
+        env = _Env(db, monkeypatch)
+        d1 = env.draft()
+        cap = ma.cap_for(db, HONEY, "shopee", OCT, env.cfg)
+        assert cap["code"] == "DE_XUAT"
+>       rows = _propose(env)
+               ^^^^^^^^^^^^^
+
+tests\test_docx_mkt03.py:45: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+env = <tests.test_mkt_ads._Env object at 0x0000024E7C897680>
+today = datetime.date(2026, 10, 12)
+pcfg = {'bat_dau_sau_ngay': 1, 'can_cu': 'biên bản giả test', 'chot_boi': 'GĐ Marketing Giả Lập', 'so_ngay_chay': 14, ...}
+kw = {}
+
+    def _propose(env, today=TODAY, pcfg=PCFG, **kw):
+>       return ma.propose(env.tx, month=OCT, cfg=env.cfg, dcfg=env.dcfg,
+               ^^^^^^^^^^
+                          pcfg=pcfg, today=today, **kw)
+E       AttributeError: module 'agents.mkt_ads' has no attribute 'propose'
+
+tests\test_docx_mkt03.py:36: AttributeError
+---------------------------- Captured stdout call -----------------------------
+[loader-gate] market_csv: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-05 van_hanh, sales-06.2 van_hanh → nạp
+[load] snapshot #1 shopee/order order_shopee_MAU.csv: 15 dòng, map golden 15
+[alerts] export order — không đối chiếu ở P1
+[done]
+[loader-gate] market_csv: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-05 van_hanh, sales-06.2 van_hanh → nạp
+[load] snapshot #2 shopee/order order_shopee_multi_MAU.csv: 2 dòng, map golden 2
+[alerts] export order — không đối chiếu ở P1
+[done]
+[load] quyết toán shopee settlement_shopee_MAU.csv: 16 dòng; đối chiếu: khop=9, lech=3, thieu_chung_tu=2, hoan=2
+[warn] 2 dòng chưa thấy đơn sàn — nạp file đơn (`python -m ingest.market_csv --kind order`) rồi chạy `--reconcile`.
+[done]
+[load] quyết toán shopee settlement_shopee_multi_MAU.csv: 1 dòng; đối chiếu: khop=1, lech=0, thieu_chung_tu=0, hoan=0
+[done]
+[cogs-add] giá vốn #1: savina-12v 50.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[cogs-approve] giá vốn #1 đã duyệt.
+[cogs-add] giá vốn #2: saphraton-20v 90.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[cogs-approve] giá vốn #2 đã duyệt.
+[cogs-add] giá vốn #3: savigout-30v 130.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[cogs-approve] giá vốn #3 đã duyệt.
+[cogs-add] giá vốn #4: mat-ong-sam-120ml-1hu 70.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[cogs-approve] giá vốn #4 đã duyệt.
+[cogs-add] giá vốn #5: mat-ong-sam-300ml 180.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[cogs-approve] giá vốn #5 đã duyệt.
+[cogs-add] giá vốn #6: sapentol-30v 110.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[cogs-approve] giá vốn #6 đã duyệt.
+---------------------------- Captured stderr call -----------------------------
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+___________________ test_mkt03_blocked_cases_write_nothing ____________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_docx_r2_pre) at 0x24e7cf255b0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000024E7CF250D0>
+
+    def test_mkt03_blocked_cases_write_nothing(db, monkeypatch):  # noqa: F811
+        env = _Env(db, monkeypatch)
+        before = _counts(db)
+        # không creative đã duyệt
+>       rows = [r for r in _propose(env) if r["sku_key"] == HONEY]
+                           ^^^^^^^^^^^^^
+
+tests\test_docx_mkt03.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+env = <tests.test_mkt_ads._Env object at 0x0000024E7CF26D20>
+today = datetime.date(2026, 10, 12)
+pcfg = {'bat_dau_sau_ngay': 1, 'can_cu': 'biên bản giả test', 'chot_boi': 'GĐ Marketing Giả Lập', 'so_ngay_chay': 14, ...}
+kw = {}
+
+    def _propose(env, today=TODAY, pcfg=PCFG, **kw):
+>       return ma.propose(env.tx, month=OCT, cfg=env.cfg, dcfg=env.dcfg,
+               ^^^^^^^^^^
+                          pcfg=pcfg, today=today, **kw)
+E       AttributeError: module 'agents.mkt_ads' has no attribute 'propose'
+
+tests\test_docx_mkt03.py:36: AttributeError
+---------------------------- Captured stdout call -----------------------------
+[loader-gate] market_csv: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-05 van_hanh, sales-06.2 van_hanh → nạp
+[load] snapshot #1 shopee/order order_shopee_MAU.csv: 15 dòng, map golden 15
+[alerts] export order — không đối chiếu ở P1
+[done]
+[loader-gate] market_csv: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-05 van_hanh, sales-06.2 van_hanh → nạp
+[load] snapshot #2 shopee/order order_shopee_multi_MAU.csv: 2 dòng, map golden 2
+[alerts] export order — không đối chiếu ở P1
+[done]
+[load] quyết toán shopee settlement_shopee_MAU.csv: 16 dòng; đối chiếu: khop=9, lech=3, thieu_chung_tu=2, hoan=2
+[warn] 2 dòng chưa thấy đơn sàn — nạp file đơn (`python -m ingest.market_csv --kind order`) rồi chạy `--reconcile`.
+[done]
+[load] quyết toán shopee settlement_shopee_multi_MAU.csv: 1 dòng; đối chiếu: khop=1, lech=0, thieu_chung_tu=0, hoan=0
+[done]
+[cogs-add] giá vốn #1: savina-12v 50.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[cogs-approve] giá vốn #1 đã duyệt.
+[cogs-add] giá vốn #2: saphraton-20v 90.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[cogs-approve] giá vốn #2 đã duyệt.
+[cogs-add] giá vốn #3: savigout-30v 130.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[cogs-approve] giá vốn #3 đã duyệt.
+[cogs-add] giá vốn #4: mat-ong-sam-120ml-1hu 70.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[cogs-approve] giá vốn #4 đã duyệt.
+[cogs-add] giá vốn #5: mat-ong-sam-300ml 180.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[cogs-approve] giá vốn #5 đã duyệt.
+[cogs-add] giá vốn #6: sapentol-30v 110.000đ từ 2026-10-01 — CHỜ DUYỆT (người duyệt phải khác người lập).
+[cogs-approve] giá vốn #6 đã duyệt.
+---------------------------- Captured stderr call -----------------------------
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+_____________________ test_mkt03_unsettled_policy_blocked _____________________
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3091/test_mkt03_unsettled_policy_bl0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000024E7CBBF170>
+capsys = <_pytest.capture.CaptureFixture object at 0x0000024E7CBBC410>
+
+    def test_mkt03_unsettled_policy_blocked(tmp_path, monkeypatch, capsys):
+>       cfg, why = ma.load_proposal_cfg()               # file repo: chưa chốt
+                   ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'agents.mkt_ads' has no attribute 'load_proposal_cfg'
+
+tests\test_docx_mkt03.py:115: AttributeError
+____________________ test_kpi_old_unknown_rows_not_counted ____________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_docx_r2_pre) at 0x24e7cf22f30>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3091/test_kpi_old_unknown_rows_not_0')
+
+    def test_kpi_old_unknown_rows_not_counted(db, tmp_path):
+        for i in range(4):
+            _old(db, f"mock0-{i}")                      # snapshot cũ chứa mock
+        conv, dbf = _kpi(db, tmp_path)                  # không còn convlog
+>       assert conv["questions"] == [] and not conv["exists"]
+E       AssertionError: assert ([(datetime.da..., True, None)] == []
+E         
+E         Left contains 4 more items, first extra item: (datetime.datetime(2026, 10, 5, 10, 0, tzinfo=zoneinfo.ZoneInfo(key='Asia/Bangkok')), True, None)
+E         Use -v to get more diff)
+
+tests\test_docx_kpi_provenance.py:68: AssertionError
+______________ test_kpi_live_snapshot_counted_after_convlog_gone ______________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_docx_r2_pre) at 0x24e7d025ee0>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3091/test_kpi_live_snapshot_counted0')
+
+    def test_kpi_live_snapshot_counted_after_convlog_gone(db, tmp_path):
+        _conv(tmp_path, [
+            {"ts": "2026-10-06T02:00:00Z", "msg_id": "z1", "answered": True,
+             "provenance": "live"},
+            {"ts": "2026-10-06T02:05:00Z", "msg_id": "mock0-9", "answered": True,
+             "provenance": "sample", "is_sample": True},
+            {"ts": "2026-10-06T02:06:00Z", "msg_id": "demo-1", "answered": True,
+             "provenance": "demo", "is_sample": True},
+            {"ts": "2026-10-06T02:07:00Z", "msg_id": "old-1", "answered": True}])
+>       assert om.snapshot(TxConn(db), tmp_path) == (1, 1)
+E       assert (4, 4) == (1, 1)
+E         
+E         At index 0 diff: 4 != 1
+E         Use -v to get more diff
+
+tests\test_docx_kpi_provenance.py:84: AssertionError
+________________ test_kpi_same_key_live_not_shadowed_no_double ________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_docx_r2_pre) at 0x24e7cf26720>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3091/test_kpi_same_key_live_not_sha0')
+
+    def test_kpi_same_key_live_not_shadowed_no_double(db, tmp_path):
+        _old(db, "z7", handled=False)                    # dòng cũ cùng khóa
+        _conv(tmp_path, [{"ts": "2026-10-07T02:00:00Z", "msg_id": "z7",
+                          "answered": True, "provenance": "live"}])
+>       assert om.snapshot(TxConn(db), tmp_path) == (1, 1)     # không bị chặn
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert (1, 0) == (1, 1)
+E         
+E         At index 1 diff: 0 != 1
+E         Use -v to get more diff
+
+tests\test_docx_kpi_provenance.py:97: AssertionError
+__________________ test_kpi_no_trusted_data_reports_missing ___________________
+
+db = <psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_docx_r2_pre) at 0x24e7cf24c80>
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3091/test_kpi_no_trusted_data_repor0')
+
+    def test_kpi_no_trusted_data_reports_missing(db, tmp_path):
+        _old(db, "x1")
+        _conv(tmp_path, [{"ts": "2026-10-08T02:00:00Z", "msg_id": "x2",
+                          "answered": True}])                  # thiếu provenance
+        conv, dbf = _kpi(db, tmp_path)
+>       assert conv["questions"] == [] and dbf["chat_unknown"] == 1
+E       AssertionError: assert ([(datetime.da...edcfe4286bc')] == []
+E         
+E         Left contains 2 more items, first extra item: (datetime.datetime(2026, 10, 5, 10, 0, tzinfo=zoneinfo.ZoneInfo(key='Asia/Bangkok')), True, None)
+E         Use -v to get more diff)
+
+tests\test_docx_kpi_provenance.py:117: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_docx_mkt03.py::test_mkt03_agent_proposes_from_sources - Att...
+FAILED tests/test_docx_mkt03.py::test_mkt03_blocked_cases_write_nothing - Att...
+FAILED tests/test_docx_mkt03.py::test_mkt03_unsettled_policy_blocked - Attrib...
+FAILED tests/test_docx_kpi_provenance.py::test_kpi_old_unknown_rows_not_counted
+FAILED tests/test_docx_kpi_provenance.py::test_kpi_live_snapshot_counted_after_convlog_gone
+FAILED tests/test_docx_kpi_provenance.py::test_kpi_same_key_live_not_shadowed_no_double
+FAILED tests/test_docx_kpi_provenance.py::test_kpi_no_trusted_data_reports_missing
+7 failed in 14.00s
+
+EXIT 1

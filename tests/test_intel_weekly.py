@@ -183,7 +183,9 @@ def test_report_other_week_no_spike_and_empty(db, monkeypatch, capsys):
     rc, out, _e, _n = _main(db, monkeypatch, capsys, ["--week", "2026-10-14"])
     assert rc == 0 and "TĂNG ĐỘT BIẾN" not in out
     rc, out, _e, _n = _main(db, monkeypatch, capsys, ["--week", "2026-06-01"])
-    assert rc == 0 and out.count("chưa có dữ liệu tuần này") == 4
+    # docx P2 FLIP có lý do: thêm mục "Sản phẩm đối thủ lần đầu ghi nhận
+    # trong tuần" (intel-03 "sản phẩm mới") — tuần trống → 5 mục rỗng.
+    assert rc == 0 and out.count("chưa có dữ liệu tuần này") == 5
 
 
 def test_bad_week_exit2_no_connect(db, monkeypatch, capsys):

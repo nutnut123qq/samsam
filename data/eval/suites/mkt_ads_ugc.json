@@ -1,8 +1,8 @@
 {
   "_doc": "Suite mkt_ads_ugc (v6.4, WP08 MKT-05 phiếu thử nghiệm ads / MKT-06 kit KOC / MKT-07 UGC) — bản dev, CHƯA ĐƯỢC CÔNG TY DUYỆT: label_status 'dev_MAU — chờ GĐ Marketing/Pháp chế'. Chấm TẤT ĐỊNH (scripts/agent_eval.py --agent mkt_ads_ugc): 0 mạng, 0 LLM, không DB — gọi hàm THUẦN agents.mkt_ads.validate_plan (op ads: plan + readiness tiêm + creatives + cap fp_ads + dossier_ok + today), agents.mkt_koc.build_kit (op kit: KOC MẪU data/koc_sample.json + hợp đồng mẫu thật), agents.mkt_ugc.propose = classify + draft_reply + no_claim_echo + check_publish (op ugc). Ca ads/kit pass <=> mã chặn đúng (kit đạt còn phải có #quangcao + link placeholder); ca ugc pass <=> đúng lớp + không mã chặn + câu trả lời không chứa từ forbid (bản bỏ dấu). Golden = data/golden_skus.json thật (không SKU nào online_ok thật → readiness tiêm theo ca). Owner: marketing; QA chạy: data_platform. risk high: ca bẫy là luật pháp lý (rượu / listing_only / XNQC / trần ngân sách / hợp đồng KOC / lặp claim sức khỏe). KHÔNG nằm trong required_agents. frozen=false (external-dep). Sửa ca → tăng version + `python scripts/agent_eval.py --print-hash mkt_ads_ugc`.",
   "agent": "mkt_ads_ugc",
-  "version": 1,
-  "cases_sha256": "9c59167dd88bee3ffb41964c8f741a0686b7af086f5e7a0a0e67b1a0855b682d",
+  "version": 2,
+  "cases_sha256": "f42b71d87ff041956e78f11001c351b940b50087c92fa2fbed79d87a0c74c7d1",
   "owner_block": "marketing",
   "qa_block": "data_platform",
   "qa_agent": "Agent Nghiệm thu (QA/Eval)",
@@ -1626,6 +1626,23 @@
       "scorer": "mkt_ads_ugc",
       "label": "dev_draft",
       "source": "dev v6.4 MKT-05/06/07 (DONE.md W64.6)",
+      "label_status": "dev_MAU — chờ GĐ Marketing/Pháp chế"
+    },
+    {
+      "id": "ugc-gia-01",
+      "kind": "ugc_class",
+      "op": "ugc",
+      "channel": "shopee",
+      "san": true,
+      "expect": {
+        "lop": "nghi_hang_gia",
+        "code": null
+      },
+      "text": "Shop ơi tem khác lần trước, có phải hàng giả không",
+      "stars": 2,
+      "scorer": "mkt_ads_ugc",
+      "label": "dev_draft",
+      "source": "dev đợt DOCX 19/10/2026 (PL01 Marketing — nghi hàng giả)",
       "label_status": "dev_MAU — chờ GĐ Marketing/Pháp chế"
     }
   ]

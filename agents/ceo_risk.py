@@ -30,6 +30,7 @@ Exit: 0 ok · 2 tham số sai / cấu hình hỏng / DB down / lỗi DB.
 """
 
 import argparse
+import hashlib
 import json
 import sys
 from contextlib import suppress
@@ -146,7 +147,36 @@ def collect(conn, as_of: datetime, *, routing=None) -> dict:
     return {"as_of": as_of, "dossiers": dossiers,
             "tpbvsk": xnqc.tpbvsk_skus(), "posts": posts, "alerts": alerts,
             "dpia_signed": signed, "gaps": gaps,
-            "recipients": len(load_routing(routing)["recipients"])}
+            "recipients": len(load_routing(routing)["recipients"]),
+            **_alcohol_gi_facts()}
+
+
+GUARDRAIL_RULES = ROOT / "data" / "guardrail_rules.json"
+
+
+def _alcohol_gi_facts() -> dict:
+    """docx P2 (ceo-03, PL01 "Sổ rủi ro pháp lý: … rủi ro rượu, chỉ dẫn địa
+    lý"): đọc golden (SKU rượu + kênh mở bán, SKU mang tên "Ngọc Linh") và
+    `guardrail_rules.json` `ngoc_linh` (identity/confirmed_skus do Pháp chế
+    điền) — chỉ đọc file, không chính sách mới."""
+    doc, err = xnqc.read_golden(xnqc.GOLDEN_FILE)
+    if err:
+        raise ValueError(err)
+    try:
+        nl = json.loads(GUARDRAIL_RULES.read_bytes().decode("utf-8"))[
+            "ngoc_linh"]
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        raise ValueError(f"{GUARDRAIL_RULES.name} hỏng: "
+                         f"{type(e).__name__}") from None
+    skus = [s for s in doc.get("skus", []) if isinstance(s, dict)]
+    return {
+        "alcohol": sorted((s["sku_key"], tuple(s.get("allowed_channels")
+                                                or ())) for s in skus
+                          if s.get("category") == "alcohol"),
+        "gi_named": sorted(s["sku_key"] for s in skus if "ngọc linh" in str(
+            s.get("name") or "").casefold()),
+        "gi_confirmed": sorted(nl.get("confirmed_skus") or ()),
+        "gi_identity": bool(nl.get("identity"))}
 
 
 # ------------------------------------------------------------------ thuần
@@ -243,6 +273,28 @@ def rank(facts: dict, now: datetime, cfg: dict) -> list[dict]:
         out.append(_risk("DPIA", "vang",
                          (f"DPIA đã ký, còn {facts['gaps']} rủi ro tồn dư "
                           "trong bản đồ luồng dữ liệu")))
+    # docx P2 (ceo-03): rủi ro rượu + chỉ dẫn địa lý (PL01).
+    # SKU nhóm hạn chế chỉ ghi mã tra cứu H-<sha8> (như sx_label) — chữ/mã
+    # nhắc thẳng nhóm hàng làm ô trang TGĐ trượt guardrail (`page_safe`).
+    for sku, chans in facts.get("alcohol") or ():
+        if chans:
+            ref = "H-" + hashlib.sha256(sku.encode("utf-8")).hexdigest()[:8]
+            out.append(_risk(
+                f"NHOM-HAN-CHE:{ref}", "vang",
+                (f"SKU nhóm hạn chế quảng cáo (mã tra cứu {ref}) đang mở bán"
+                 f" trên {', '.join(chans)} — cấm quảng cáo/khuyến mại; web"
+                 " ẩn giá + giỏ (PL01 mục 3a); kiểm giấy phép bán")))
+    unconf = sorted(set(facts.get("gi_named") or ())
+                    - set(facts.get("gi_confirmed") or ()))
+    if "gi_confirmed" in facts and (unconf or not facts["gi_confirmed"]):
+        out.append(_risk(
+            "CDDL-NGOC-LINH", "vang",
+            (f"Chỉ dẫn địa lý 'Ngọc Linh': {len(facts.get('gi_confirmed')or())}"
+             f" SKU đã xác nhận quyền sử dụng, {len(unconf)} SKU mang tên "
+             "'Ngọc Linh' chưa xác nhận (confirmed_skus)"
+             + ("" if facts.get("gi_identity") else
+                "; chưa khai tên pháp nhân/thương hiệu được phép (identity)")
+             + " — nội dung công khai nêu 'Ngọc Linh' bị guardrail chặn")))
     if not facts.get("recipients"):
         out.append(_risk("TUYEN-CANH-BAO", "do",
                          ("Chưa có người nhận cảnh báo đỏ độc lập "

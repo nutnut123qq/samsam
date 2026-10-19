@@ -1,0 +1,24 @@
+........................................................................ [ 67%]
+..................................                                       [100%]
+106 passed in 58.46s
+
+Controller adversarial probes:
+[
+  {
+    "case": "sales_login_intake_as_agent",
+    "actor": "agent:controller",
+    "blocked": true,
+    "error_type": "InsufficientPrivilege"
+  },
+  {
+    "case": "sales_login_intake_as_agent",
+    "actor": "system:controller",
+    "blocked": true,
+    "error_type": "InsufficientPrivilege"
+  },
+  {
+    "case": "sales_login_revoke_qr_own_name",
+    "blocked": true,
+    "error_type": "InsufficientPrivilege"
+  }
+]

@@ -67,8 +67,8 @@ for _s in (sys.stdout, sys.stderr):
 ROOT = Path(__file__).resolve().parent.parent
 RULES_FILE = ROOT / "data" / "ugc_rules.json"
 CHANNELS_FILE = ROOT / "data" / "channels.json"
-CLASSES = ("ruou", "claim_suc_khoe", "khieu_nai", "che", "khen", "hoi_gia",
-           "khac")
+CLASSES = ("ruou", "claim_suc_khoe", "nghi_hang_gia", "khieu_nai", "che",
+           "khen", "hoi_gia", "khac")
 SENSITIVE = ("ruou", "claim_suc_khoe")
 TEMPLATE_KEYS = ("khen", "che", "khieu_nai", "hoi_gia", "xin_phep")
 REVIEW_FIELDS = ("ma_danh_gia", "so_sao", "noi_dung", "thoi_gian")
@@ -104,7 +104,9 @@ def load_rules(path: Path | None = None,
     except (OSError, ValueError, KeyError, TypeError) as e:
         raise UgcConfigError(f"không đọc được luật UGC ({type(e).__name__})"
                              ) from e
-    if not isinstance(raw, dict) or set(raw) != {
+    # docx P2: `counterfeit_terms` TÙY CHỌN (thiếu = không có lớp
+    # nghi_hang_gia — như trước).
+    if not isinstance(raw, dict) or set(raw) - {"counterfeit_terms"} != {
             "_doc", "templates", "health_terms", "review_columns"}:
         raise UgcConfigError(f"{p.name}: cần đúng key _doc, templates, "
                              "health_terms, review_columns")
@@ -135,8 +137,13 @@ def load_rules(path: Path | None = None,
     social, errs = load_social_rules()
     if social is None:
         raise UgcConfigError(f"social_rules.json: {errs[:2]}")
+    fake = raw.get("counterfeit_terms", [])
+    if not isinstance(fake, list) or not all(
+            isinstance(x, str) and x.strip() for x in fake):
+        raise UgcConfigError("counterfeit_terms phải là danh sách chữ")
     return {"templates": {**t, **reuse}, "health_terms": list(terms),
-            "review_columns": cols, "social": social}
+            "review_columns": cols, "social": social,
+            "counterfeit_terms": [_norm(x) for x in fake]}
 
 
 # ---------- thuần ----------
@@ -155,6 +162,11 @@ def classify(text: str | None, stars: int | None, rules: dict,
     if t and any(v.get("code") in ("tu_cam", "claim_ngoai_cong_bo")
                  for v in guardrail.check(t).get("violations", [])):
         return "claim_suc_khoe"
+    # docx P2 (PL01 Marketing "phân loại bình luận (hỏi giá, khiếu nại, nghi
+    # hàng giả…)"): khách nghi hàng giả/nhái → lớp riêng, trước khiếu nại.
+    if t and any(_has(x, _norm(t)) or _has(x, _norm(_strip_accents(t)))
+                 for x in rules.get("counterfeit_terms", ())):
+        return "nghi_hang_gia"
     if "khieu_nai" in labs:
         return "khieu_nai"
     if "che" in labs or (stars is not None and stars <= 2):
@@ -173,6 +185,8 @@ def draft_reply(cls: str, rules: dict, *, san: bool) -> str | None:
         return t["health_san" if san else "health"]
     if cls == "ruou":
         return t["alcohol_san" if san else "alcohol"]
+    if cls == "nghi_hang_gia":      # xin lỗi + mời liên hệ (như khiếu nại)
+        return t["khieu_nai"]
     return t.get(cls) if cls in TEMPLATE_KEYS else None
 
 

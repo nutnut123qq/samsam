@@ -127,7 +127,7 @@ xem `python -m pipelines.job_runs --list`, `systemctl list-timers`.
 
 | Job | Lịch (giờ VN) | Việc |
 |---|---|---|
-| `intel` | 06:45 hằng ngày | thu tin + bản tin thị trường trước 7h |
+| `intel` | 06:45 hằng ngày | thu tin + bản tin thị trường trước 7h; docx P2: kèm `--suggest` (gợi ý chủ đề → hàng duyệt intel) |
 | `red_alert_sweep` | phút 05 mỗi giờ | quét tin thị trường → cảnh báo đỏ intel + gửi lại cảnh báo chưa gửi được (48 giờ); leo thang 2 giờ của MỌI cảnh báo đỏ ở job `red_alert_escalate` (v15.1 sửa mô tả, không đổi hành vi) |
 | `red_alert_escalate` | 15 phút/lần, mọi ngày (kể cả T7/CN/Tết) | v14.6: leo thang MỌI cảnh báo đỏ gốc quá 2 giờ đồng hồ chưa `--ack` (1 lần/cảnh báo) |
 | `anchor_build` | 02:30 hằng ngày | v14.6: gom gốc Merkle nhật ký vườn + hồ sơ lô (`anchor --build`); CHƯA neo ra chuỗi — `--submit` chờ hai bên chọn provider |
@@ -147,6 +147,13 @@ xem `python -m pipelines.job_runs --list`, `systemctl list-timers`.
 | `kpi_snapshot` | 23:50 hằng ngày | chụp KPI chat không PII (`chat_kpi_facts`) |
 | `health_bulletin` | 07:30 hằng ngày | bản tin sức khỏe |
 | `ops_monthly` | 08:00 ngày 1 | báo cáo vận hành tháng trước (`--month prev`); người gửi Bên B trước ngày 05 rồi `--mark-sent` |
+| `garden_remind` | 07:05 hằng ngày (GIẢ ĐỊNH) | docx P2: `garden_director --remind --submit` — khoảnh vẫn bỏ trống nhật ký → báo GĐ vùng trồng |
+| `intel_weekly` | 07:40 thứ Hai (GIẢ ĐỊNH) | docx P2: `intel_weekly --out-dir data/reports` — báo cáo tuần đối thủ + Trends (lưu, đếm được) |
+| `listing_watch` | 08:20 hằng ngày (GIẢ ĐỊNH) | docx P2: `kd_listing --run` — lệch listing sàn → hàng duyệt sales |
+| `price_watch` | 08:25 hằng ngày (GIẢ ĐỊNH) | docx P2: `kd_price --run` — giá/KM lệch → nháp hàng duyệt sales |
+| `ceo_audit` | 09:10 hằng ngày (GIẢ ĐỊNH) | docx P2: `ceo_audit --report` — so bài đăng/listing đang chạy với bản duyệt |
+| `production_week` | 08:10 thứ Hai (GIẢ ĐỊNH) | docx P2: `production bulletin --period week --out-dir data/reports` — bản tin SX tuần + cận hạn |
+| `production_month` | 08:15 ngày 1 (GIẢ ĐỊNH) | docx P2: `production bulletin --period month --out-dir data/reports` — bản tin SX tháng |
 
 Khung giờ 6 job v15.1 (`sales_sla` … `intel_keywords`) là GIẢ ĐỊNH của đội
 triển khai — chủ khối chỉnh trong `jobs.json` rồi sửa `OnCalendar` timer cùng

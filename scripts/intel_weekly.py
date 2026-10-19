@@ -78,11 +78,26 @@ def week_bounds(day):
     return mon, sun, start, start + timedelta(days=7)
 
 
+def new_products(conn, mon) -> list[str]:
+    """docx P2 (intel-03, PL01 "giá, khuyến mãi, SẢN PHẨM MỚI"): sản phẩm
+    đối thủ LẦN ĐẦU được ghi nhận trong tuần (theo file nhập tay — có thể là
+    SP mới hoặc lần đầu được ghi; người kiểm)."""
+    rows = conn.execute(
+        "select competitor, channel, product_name, min(observed_on),"
+        " min(source_ref) from competitor_observations group by 1, 2, 3"
+        " having min(observed_on) between %s and %s order by 4, 1, 2, 3",
+        (mon, mon + timedelta(days=6))).fetchall()
+    out = ["### Sản phẩm đối thủ lần đầu ghi nhận trong tuần", ""]
+    out += [f"- {d} · {_md(c, 60)} · {ch} · {_md(p, 80)} (nguồn: "
+            f"{_md(s, 160)})" for c, ch, p, d, s in rows] or [EMPTY]
+    return out + [""]
+
+
 def section_competitor(conn, mon) -> list[str]:
     gaps = ii.competitor_gaps(conn, mon)
     out = ["## 1. Đối thủ — lệch giá/KM so giá golden (chỉ đọc)", ""]
     if not gaps:
-        return out + [EMPTY, ""]
+        return out + [EMPTY, ""] + new_products(conn, mon)
     out += [("| Ngày | Đối thủ | Kênh | Sản phẩm | SKU mình | Giá đối thủ "
              "(nguồn) | Giá KM | Golden (nguồn) | Lệch |"),
             "|---|---|---|---|---|---|---|---|---|"]
@@ -101,7 +116,8 @@ def section_competitor(conn, mon) -> list[str]:
             f"({g['obs_ref']}: {_md(g['source_ref'], 160)}) | "
             f"{_vnd(g['promo_price_vnd'])} | {gold} | {gap} |")
     return out + ["", ("Ghi chú: số liệu đối thủ do người ghi tay — agent "
-                        "không cào sàn, không đề xuất giá."), ""]
+                        "không cào sàn, không đề xuất giá."), ""] \
+        + new_products(conn, mon)
 
 
 def section_trend(conn, sun, mon, cfg) -> list[str]:
@@ -211,6 +227,50 @@ def render(conn, day, cfg) -> tuple[str, str]:
     s4 = section_news(conn, start, end)
     full = "\n".join(head + s1 + s2 + s3 + s4)
     return full, "\n".join(s1 + s2 + s4)
+
+
+# docx P2 (PL01 Tình báo thị trường; PL02 mục 1): báo cáo tuần trước đây chỉ
+# in stdout → intel-03 (đối thủ) / intel-04.1 (Trends tuần) không có đầu ra
+# lưu để đếm/duyệt. `--out-dir` ghi 2 báo cáo riêng qua `write_report`
+# (cổng tắt + nhãn giai đoạn + sổ `report_outputs`), mỗi tính năng 1 tiền tố.
+REPORTS = (("intel-doithu-", ("competitor",), "Đối thủ"),
+           ("intel-trend-", ("trend_timeline", "trend_related"), "Trend"))
+
+
+def import_sample(conn, kinds) -> bool:
+    """Provenance: có file nhập tay loại đó mang tên MẪU (quy ước v7.2 —
+    `intel_imports` chưa có cột provenance) → True (không đếm là thật)."""
+    return bool(conn.execute(
+        "select coalesce(bool_or(file_name ~* 'mau'), false) from"
+        " intel_imports where kind = any(%s)", (list(kinds),)).fetchone()[0])
+
+
+def write_report(text: str, out_dir: Path, name: str, sample: bool) -> Path:
+    """= `agents.report.write_report` (cổng tắt → RolloutBlocked, nhãn giai
+    đoạn trong nội dung, ghi atomic BYTES, sổ `report_outputs`) — module
+    intel KHÔNG import `agents.report` (cô lập v7.2, test_intel_import)."""
+    from pipelines import rollout
+    text = rollout.label_report(name, text, rollout.gate_report(name))
+    out_dir.mkdir(parents=True, exist_ok=True)
+    tmp = out_dir / (name + ".tmp")
+    tmp.write_bytes(text.encode("utf-8"))
+    os.replace(tmp, out_dir / name)
+    rollout.record_report(name, text, sample)
+    return out_dir / name
+
+
+def write_weekly(conn, day, cfg, out_dir: Path) -> list[Path]:
+    mon, sun, _s, _e = week_bounds(day)
+    secs = {"intel-doithu-": section_competitor(conn, mon),
+            "intel-trend-": section_trend(conn, sun, mon, cfg)}
+    out = []
+    for pre, kinds, title in REPORTS:
+        text = "\n".join([f"# Báo cáo tuần intel — {title} {mon} → {sun}",
+                          "", "Nguồn: file nhập tay (chỉ đọc, không gửi ai).",
+                          ""] + secs[pre])
+        out.append(write_report(text, out_dir, f"{pre}{mon}.md",
+                                sample=import_sample(conn, kinds)))
+    return out
 
 
 def summarize(payload: str) -> str | None:
@@ -551,10 +611,13 @@ def main(argv=None) -> int:
                     " nhất; chỉ với --suggest-keywords")
     ap.add_argument("--dry-run", action="store_true",
                     help="--suggest-keywords: in gợi ý, không ghi DB")
+    ap.add_argument("--out-dir", type=Path,
+                    help="docx P2: ghi intel-doithu-<thứ Hai>.md (intel-03) +"
+                    " intel-trend-<thứ Hai>.md (intel-04.1) qua write_report")
     args = ap.parse_args(argv)
     if args.suggest_keywords:
-        if args.week is not None or args.llm:
-            ap.error("--suggest-keywords không đi với --week/--llm")
+        if args.week is not None or args.llm or args.out_dir:
+            ap.error("--suggest-keywords không đi với --week/--llm/--out-dir")
         return _keywords_main(args)
     if args.import_id is not None or args.dry_run:
         ap.error("--import/--dry-run chỉ đi với --suggest-keywords")
@@ -596,12 +659,19 @@ def main(argv=None) -> int:
                   "`python scripts/apply_schema.py`", flush=True)
             return 1
         full, payload = render(conn, day, cfg)
+        paths = (write_weekly(conn, day, cfg, args.out_dir)
+                 if args.out_dir else [])
     except psycopg.Error as e:
         print(f"[err] lỗi DB: {type(e).__name__}", flush=True)
         return 1
+    except ValueError as e:     # RolloutBlocked — tính năng TẮT
+        print(f"[rollout] {e}", flush=True)
+        return 2
     finally:
         conn.close()
     print(full, flush=True)
+    for p in paths:
+        print(f"[done] {p}", flush=True)
     if use_llm:
         s = summarize(payload)
         if s:

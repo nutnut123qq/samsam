@@ -143,7 +143,24 @@ def _parse_ts(raw: str):
         return None
 
 
-def iter_convlog(path: Path, stats: dict):
+# docx P1 (PL02 mục 3, HĐ 7.3): cờ mẫu trên dòng convlog (như
+# `pipelines.rollout._CONV_SAMPLE_FLAGS`).
+SAMPLE_FLAGS = ("is_sample", "dry_run", "replay", "mock", "test")
+
+
+def conv_kind(rec: dict) -> str:
+    """'live' (câu thật gửi qua transport kênh thật — `zalo._provenance`) |
+    'thu_nghiem' (mock/replay/test/Streamlit demo/cờ mẫu) |
+    'thieu_provenance' (dòng cũ trước v15 fix P8.1 — KHÔNG suy ngược)."""
+    if "provenance" not in rec:
+        return "thieu_provenance"
+    if rec.get("provenance") != "live" or any(
+            rec.get(k) not in (None, False) for k in SAMPLE_FLAGS):
+        return "thu_nghiem"
+    return "live"
+
+
+def iter_convlog(path: Path, stats: dict, *, live_only: bool = False):
     """Yield dict record từ convlog (BYTES + split `\\n`; decode
     replace). Skip + đếm: file không đọc được, dòng corrupt JSON, rec
     không phải dict, `_doc`. Không raise."""
@@ -166,6 +183,12 @@ def iter_convlog(path: Path, stats: dict):
             continue
         if "_doc" in rec:
             stats["doc"] += 1
+            continue
+        # docx P1: `live_only` (consumer tạo dữ liệu VẬN HÀNH — lead thật,
+        # KPI tháng, cockpit, SLA CSKH) → chỉ dòng 'live'; dòng thử nghiệm /
+        # thiếu provenance đếm riêng, không âm thầm thành số thật.
+        if live_only and (k := conv_kind(rec)) != "live":
+            stats[k] = stats.get(k, 0) + 1
             continue
         yield rec
 
@@ -211,7 +234,7 @@ def harvest(data_dir: Path = DATA_DIR) -> tuple[list[dict], dict]:
         if not path.exists():
             stats["missing"].append(name)
             continue
-        for rec in iter_convlog(path, stats):
+        for rec in iter_convlog(path, stats, live_only=True):
             stats["records"] += 1
             row, why = lead_row(rec)
             if row is None:

@@ -1160,7 +1160,7 @@ def test_mkt_ads_ugc_runner_deterministic_zero_llm(env, monkeypatch, capsys):
     r2 = [(c["id"], ok) for c, ok, _ in ae.run_mkt_ads_ugc(cases)]
     assert r1 == r2 and all(ok for _, ok in r1) and calls == []
     assert ae.main(["--agent", "mkt_ads_ugc", "--no-record"]) == 0
-    assert "[done] mkt_ads_ugc v1 PASS 28/28" in capsys.readouterr().out
+    assert "[done] mkt_ads_ugc v2 PASS 29/29" in capsys.readouterr().out
 
 
 @pytest.mark.parametrize("cid, field, value", [

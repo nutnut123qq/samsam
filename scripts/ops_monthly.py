@@ -232,10 +232,23 @@ def _q_cost(conn, start, end):
 
 
 def _q_chat_facts(conn, start, end):
+    """docx vòng 2: CHỈ dữ kiện có bằng chứng live (`chat_kpi_live`); bản
+    mới nhất mỗi khóa. `chat_kpi_facts` cũ (không provenance) KHÔNG vào KPI
+    — đếm riêng ở `_q_chat_unknown`."""
     return conn.execute(
-        "select qkey, ts, channel, is_question, handled_by_bot, group_oid,"
-        " reply_ms from chat_kpi_facts where ts >= %s and ts < %s",
+        "select distinct on (qkey) qkey, ts, channel, is_question,"
+        " handled_by_bot, group_oid, reply_ms from chat_kpi_live"
+        " where ts >= %s and ts < %s order by qkey, captured_at desc",
         (start, end)).fetchall()
+
+
+def _q_chat_unknown(conn, start, end):
+    """Dòng `chat_kpi_facts` (chụp trước bản lọc provenance) chưa có bản
+    live cùng khóa = UNKNOWN/chưa xác minh — không tính KPI, chỉ báo số."""
+    return conn.execute(
+        "select count(*) from chat_kpi_facts f where f.ts >= %s and f.ts < %s"
+        " and not exists (select 1 from chat_kpi_live l where l.qkey ="
+        " f.qkey)", (start, end)).fetchone()[0]
 
 
 def _q_incidents(conn, start, end):
@@ -264,7 +277,8 @@ def _q_report_sent(conn, start, end):
 
 DB_SECTIONS = (("alerts", _q_alerts), ("takedown", _q_takedown),
                ("posts", _q_posts), ("cskh", _q_cskh), ("cost", _q_cost),
-               ("chat_facts", _q_chat_facts), ("incidents", _q_incidents),
+               ("chat_facts", _q_chat_facts), ("chat_unknown", _q_chat_unknown),
+               ("incidents", _q_incidents),
                ("undelivered", _q_deliveries),
                ("report_sent", _q_report_sent))
 
@@ -317,7 +331,9 @@ def _iter_facts(data_dir: Path, stats: dict, start=None, end=None):
         if not path.exists():
             continue
         exists = True
-        for rec in iter_convlog(path, stats):
+        # docx P1: KPI vận hành chỉ từ câu THẬT; dòng thử nghiệm/thiếu
+        # provenance đếm riêng ở `stats` (báo cáo in tách).
+        for rec in iter_convlog(path, stats, live_only=True):
             ts = _parse_ts(rec.get("ts"))
             if ts is None:
                 continue
@@ -364,18 +380,31 @@ def merge_chat(conv: dict, db_facts) -> dict:
             "snapshot_rows": len(db_facts)}
 
 
+def fact_sha(f: tuple) -> str:
+    """sha256 nội dung 1 dữ kiện (khóa + mọi trường) — bản live khác nội
+    dung dòng cũ cùng khóa vẫn được lưu riêng."""
+    doc = [f[0], f[1].isoformat(), *f[2:]]
+    return hashlib.sha256(json.dumps(doc, ensure_ascii=False).encode(
+        "utf-8")).hexdigest()
+
+
 def snapshot(conn, data_dir: Path = DATA_DIR) -> tuple[int, int]:
-    """Chụp MỌI dữ kiện chat trong convlog hiện có vào `chat_kpi_facts`
-    (on conflict do nothing — chạy lại không nhân bản) → (đọc, mới)."""
+    """Chụp dữ kiện chat CÓ bằng chứng live trong convlog hiện có (dòng
+    `provenance: live` — `_iter_facts` đọc `live_only`) vào sổ
+    `chat_kpi_live` (on conflict do nothing — chạy lại không nhân bản) →
+    (đọc, mới). docx vòng 2: KHÔNG ghi `chat_kpi_facts` nữa (bảng cũ không
+    phân biệt nguồn — giữ nguyên lịch sử, chỉ đọc để báo UNKNOWN)."""
     stats = {"corrupt": 0, "doc": 0, "io_error": 0}
     _exists, _earliest, facts = _iter_facts(data_dir, stats)
     new = 0
     with conn.transaction():
         for f in facts.values():
             new += conn.execute(
-                "insert into chat_kpi_facts (qkey, ts, channel, is_question,"
-                " handled_by_bot, group_oid, reply_ms) values (%s, %s, %s,"
-                " %s, %s, %s, %s) on conflict (qkey) do nothing", f).rowcount
+                "insert into chat_kpi_live (qkey, fact_sha256, ts, channel,"
+                " is_question, handled_by_bot, group_oid, reply_ms,"
+                " evidence) values (%s, %s, %s, %s, %s, %s, %s, %s,"
+                " 'convlog_live') on conflict do nothing",
+                (f[0], fact_sha(f), *f[1:])).rowcount
     conn.commit()
     return len(facts), new
 
@@ -659,7 +688,7 @@ def render(f: dict) -> str:
                      f"{k['pending']}).")
         if conv["earliest"] is not None and conv["earliest"] > start:
             notes.append(f"- Convlog chỉ còn từ {_vn(conv['earliest'])} "
-                         "(giữ 30 ngày; bảng `chat_kpi_facts` cũng không có "
+                         "(giữ 30 ngày; sổ `chat_kpi_live` cũng không có "
                          "sớm hơn) — câu hỏi trước mốc này không tính.")
 
     al = db.get("alerts") if f.get("db_ok") else None
@@ -736,7 +765,20 @@ def render(f: dict) -> str:
                  "(`red_alert_deliveries`).")
     if conv.get("snapshot_rows"):
         L.append(f"- Dữ kiện chat: {conv['snapshot_rows']} dòng từ "
-                 "`chat_kpi_facts` (chụp hằng ngày) gộp convlog.")
+                 "`chat_kpi_live` (chụp hằng ngày) gộp convlog.")
+    unk = db.get("chat_unknown") if f.get("db_ok") else None
+    if isinstance(unk, int) and unk:
+        # docx vòng 2: dữ kiện chụp trước bản lọc provenance — UNKNOWN.
+        L.append(f"- `chat_kpi_facts`: {unk} dữ kiện chụp trước bản lọc "
+                 "provenance, chưa có bằng chứng live cùng khóa — KHÔNG tính "
+                 "KPI vận hành (chưa xác minh).")
+    st = conv.get("stats") or {}
+    if st.get("thu_nghiem") or st.get("thieu_provenance"):
+        # docx P1: thống kê THỬ NGHIỆM tách khỏi KPI vận hành.
+        L.append(f"- Convlog không tính KPI vận hành: "
+                 f"{st.get('thu_nghiem', 0)} dòng thử nghiệm (mock/replay/"
+                 f"demo/mẫu), {st.get('thieu_provenance', 0)} dòng thiếu "
+                 "provenance (ghi trước bản vá v15 — không suy ngược).")
 
     # ---- (2) tiêu chí kỹ thuật
     L += ["", "## 2. Tiêu chí kỹ thuật (PL02 mục 2)", "",
@@ -876,7 +918,7 @@ def _cli_snapshot(conn, data_dir: Path) -> int:
     finally:
         if own:
             conn.close()
-    print(f"[ok] chat_kpi_facts: đọc {seen} dữ kiện, mới {new}")
+    print(f"[ok] chat_kpi_live: đọc {seen} dữ kiện live, mới {new}")
     return 0
 
 

@@ -165,6 +165,8 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--kind", required=True, choices=sorted(CLAUSES))
     ap.add_argument("--file", required=True, type=Path)
+    ap.add_argument("--out-dir", type=Path,
+                    help="ghi hd-mau-<loại>-<sha8>.md qua write_report")
     a = ap.parse_args(argv)
     try:
         text = _read(a.file)
@@ -174,14 +176,33 @@ def main(argv=None) -> int:
         return 2
     miss = missing_clauses(text, a.kind)
     if miss:
-        print(f"[thiếu] {len(miss)} điều khoản bắt buộc ({a.kind}):")
-        for cid in miss:
-            print(f"  - {cid}: {CLAUSES[a.kind][cid][0]}")
-        print("Kiểm từ khóa — KHÔNG thay rà soát của Pháp chế/luật sư.")
-        return 1
-    print(f"[ok] đủ {len(CLAUSES[a.kind])} điều khoản bắt buộc ({a.kind}) "
-          "theo kiểm từ khóa — KHÔNG thay rà soát của Pháp chế/luật sư.")
-    return 0
+        lines = [f"[thiếu] {len(miss)} điều khoản bắt buộc ({a.kind}):"]
+        lines += [f"  - {cid}: {CLAUSES[a.kind][cid][0]}" for cid in miss]
+        lines.append("Kiểm từ khóa — KHÔNG thay rà soát của Pháp chế/luật sư.")
+    else:
+        lines = [(f"[ok] đủ {len(CLAUSES[a.kind])} điều khoản bắt buộc "
+                  f"({a.kind}) theo kiểm từ khóa — KHÔNG thay rà soát của "
+                  "Pháp chế/luật sư.")]
+    print("\n".join(lines))
+    if a.out_dir:
+        # docx P2 (legal_hr-05.1, PL02 mục 1): trước đây chỉ in stdout —
+        # không có đầu ra lưu để đếm/duyệt. Báo cáo chỉ mang mã điều khoản +
+        # sha256 file (không chép nội dung hợp đồng), qua `write_report`.
+        import hashlib
+
+        from agents.report import write_report
+        from pipelines import rollout
+        sha = hashlib.sha256(text.encode("utf-8")).hexdigest()
+        body = (f"# Kiểm hợp đồng mẫu {a.kind}\n\nFile sha256 `{sha}`\n\n"
+                + "\n".join(lines) + "\n")
+        try:
+            p = write_report(body, a.out_dir,
+                             f"hd-mau-{a.kind}-{sha[:8]}.md", sample=False)
+        except rollout.RolloutBlocked as e:
+            print(f"[rollout] {e}", file=sys.stderr)
+            return 2
+        print(f"[done] {p}")
+    return 1 if miss else 0
 
 
 if __name__ == "__main__":

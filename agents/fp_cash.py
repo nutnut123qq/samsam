@@ -331,6 +331,8 @@ def main(argv=None) -> int:
                                     "nay VN; làm tròn về thứ Hai)")
     ap.add_argument("--opening", help="số dư tiền đầu kỳ VND (thật — nếu có)")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--out-dir",
+                    help="ghi dong-tien-<ngày>.md qua write_report")
     args = ap.parse_args(argv)
     if not args.forecast:
         ap.error("cần --forecast")
@@ -378,6 +380,21 @@ def main(argv=None) -> int:
         print(f"[err] {type(e).__name__}: {e}", file=sys.stderr)
         return 1
     print(to_json(fc) if args.json else render(fc))
+    if args.out_dir:
+        # docx P2 (finance-05.2, PL02 mục 1): trước đây chỉ in stdout — không
+        # có đầu ra lưu để đếm/duyệt. Ghi qua `write_report` (cổng tắt + nhãn
+        # giai đoạn + sổ `report_outputs`). Không đo được tỷ lệ thực nhận từ
+        # quyết toán thật (DB down/thiếu dữ liệu) → cờ mẫu (không đếm).
+        from agents.report import write_report
+        from pipelines import rollout
+        try:
+            p = write_report(render(fc), Path(args.out_dir),
+                             f"dong-tien-{start.isoformat()}.md",
+                             sample=not measured)
+        except rollout.RolloutBlocked as e:
+            print(f"[rollout] {e}", file=sys.stderr)
+            return 2
+        print(f"[done] {p}")
     return 0
 
 

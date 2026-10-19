@@ -5686,3 +5686,513 @@ begin
 end $$;
 revoke execute on function file_output_evidence_backup(text, boolean)
   from public;
+
+-- ===== docx P0 — cổng PL02 đếm lại trong DB, không tin số caller =====
+-- (PL02 mục 1a–c; HĐ 6.3, 6.7, 7.2) Trước vá (nền 667f763):
+--   (a) `rollout --promote` dưới login NGƯỜI (`in role app_human`) đếm đầu ra
+--       bằng bộ đếm Python → 16 tính năng co_code có nguồn login người không
+--       SELECT được (consents, audit_runs, recon_results, documents,
+--       file_output_evidence...) → "không đếm được" → CLI chặn trước khi tới
+--       function DB: người được ủy quyền không nâng được tính năng đủ cổng;
+--   (b) `rollout_transition_human`: tính năng có nguồn `file` (sales-01 —
+--       convlog chatbot) lấy ngưỡng ≥ 50 đầu ra / ≥ 5 ngày TỪ `p_evidence`
+--       caller truyền → gọi thẳng SQL khai số là vượt cổng chạy thử.
+-- Nay:
+--   * `rollout_db_recount` = MỘT bộ đếm lại DB (ngày làm việc, đầu ra
+--     DISTINCT, ngày có đầu ra, người duyệt, thiếu người, chưa duyệt, lỗi
+--     nghiêm trọng) dùng chung cho function chuyển giai đoạn và
+--     `rollout_recount_human` (CHỈ ĐỌC số đếm — CLI người hiển thị/kiểm cổng
+--     khi login không đọc được bảng nguồn; DB vẫn là bên quyết);
+--   * `rollout_transition_human` BỎ mọi ngưỡng dựa số caller khai — chỉ số DB
+--     đếm lại; còn nguồn `file` trong `count_spec` (DB không đọc được) →
+--     KHÔNG nâng (cần bằng chứng DB);
+--   * sales-01: câu bot ĐÃ gửi khách thật có bằng chứng DB trong
+--     `file_output_evidence` nguồn `conversations` (khóa `cv:<kênh>/<msg_id>`
+--     — như bộ đếm Python `_conv_row`), ghi CHỈ qua
+--     `file_output_evidence_chat` bởi login dịch vụ webhook (`svc_webhook`,
+--     KHÔNG thuộc role người/loader/job/backup/BKS/Bên A) ngay sau khi gửi;
+--     DB tự kiểm bản ghi (kênh zalo/messenger, đã trả lời + đã gửi +
+--     guardrail đạt, provenance `live`, không cờ mẫu, msg_id, ts có múi giờ)
+--     và chỉ lưu các trường đó (không câu khách/câu bot/user_hash).
+alter table file_output_evidence
+  drop constraint if exists file_output_evidence_nguon_check;
+alter table file_output_evidence add constraint file_output_evidence_nguon_check
+  check (nguon in ('backup_runs', 'conversations'));
+alter table file_output_evidence
+  drop constraint if exists file_output_evidence_output_key_check;
+alter table file_output_evidence
+  add constraint file_output_evidence_output_key_check
+  check (output_key ~ '^bk:[0-9a-f]{64}$'
+         or output_key ~ '^cv:(zalo|messenger)/[A-Za-z0-9._:-]{1,200}$');
+
+create or replace function file_output_evidence_chat(p_rec text)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  j jsonb;
+  v_ts timestamptz;
+  v_mid text;
+  v_min text;
+  v_key text;
+  v_sha text;
+  v_id bigint;
+  k text;
+begin
+  if not p10_owner_login() then
+    if not exists (select 1 from pg_roles r where r.rolname = 'svc_webhook'
+                    and pg_has_role(session_user, r.oid, 'MEMBER')) then
+      raise exception 'login % không phải dịch vụ webhook (svc_webhook) — chỉ tiến trình chatbot ghi bằng chứng câu bot đã gửi',
+        session_user using errcode = '42501';
+    end if;
+    if exists (select 1 from pg_roles r where r.rolname in ('app_human',
+                 'svc_loader', 'svc_job', 'svc_backup', 'bks_reader',
+                 'ben_a_reader')
+                 and pg_has_role(session_user, r.oid, 'MEMBER')) then
+      raise exception 'login % thuộc role người/loader/job/backup/BKS — không tự tạo bằng chứng đầu ra chatbot',
+        session_user using errcode = '42501';
+    end if;
+  end if;
+  if p_rec is null or char_length(p_rec) not between 2 and 4000 then
+    raise exception 'bản ghi chatbot rỗng hoặc quá dài';
+  end if;
+  begin
+    j := p_rec::jsonb;
+  exception when others then
+    raise exception 'bản ghi chatbot không phải JSON';
+  end;
+  if jsonb_typeof(j) is distinct from 'object' then
+    raise exception 'bản ghi chatbot phải là JSON object';
+  end if;
+  if j->>'channel' is null or j->>'channel' not in ('zalo', 'messenger') then
+    raise exception 'kênh phải là zalo/messenger';
+  end if;
+  if j->'answered' is distinct from 'true'::jsonb
+     or j->'sent' is distinct from 'true'::jsonb
+     or j->'guardrail_ok' is distinct from 'true'::jsonb then
+    raise exception 'chỉ câu bot đã trả lời + đã gửi + guardrail đạt là đầu ra';
+  end if;
+  if j->>'provenance' is distinct from 'live' then
+    raise exception 'chỉ provenance live (transport kênh thật) là đầu ra';
+  end if;
+  foreach k in array array['is_sample', 'dry_run', 'replay', 'mock', 'test']
+  loop
+    if j ? k and j->k not in ('null'::jsonb, 'false'::jsonb) then
+      raise exception 'bản ghi mang cờ mẫu % — không phải đầu ra thật', k;
+    end if;
+  end loop;
+  v_mid := btrim(coalesce(j->>'msg_id', ''));
+  if v_mid !~ '^[A-Za-z0-9._:-]{1,200}$' then
+    raise exception 'msg_id rỗng hoặc sai khuôn';
+  end if;
+  if coalesce(j->>'ts', '') !~ ('^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}'
+       || ':[0-9]{2}([.][0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$') then
+    raise exception 'ts bản ghi chatbot phải ISO 8601 có múi giờ';
+  end if;
+  begin
+    v_ts := (j->>'ts')::timestamptz;
+  exception when others then
+    raise exception 'ts bản ghi chatbot không hợp lệ';
+  end;
+  -- lưu TỐI THIỂU (không câu khách/câu bot/user_hash) — đủ để truy vết khóa.
+  v_min := jsonb_build_object('channel', j->>'channel', 'msg_id', v_mid,
+    'ts', j->>'ts', 'answered', true, 'sent', true, 'guardrail_ok', true,
+    'provenance', 'live')::text;
+  v_key := 'cv:' || (j->>'channel') || '/' || v_mid;
+  v_sha := encode(sha256(convert_to(v_min, 'UTF8')), 'hex');
+  insert into file_output_evidence (nguon, output_key, content_sha256,
+    ban_ghi, run_ts, is_sample)
+  values ('conversations', v_key, v_sha, v_min, v_ts, false)
+  on conflict (nguon, output_key, content_sha256) do nothing
+  returning id into v_id;
+  if v_id is null then
+    select e.id into v_id from file_output_evidence e
+     where e.nguon = 'conversations' and e.output_key = v_key
+       and e.content_sha256 = v_sha;
+  end if;
+  return v_id;
+end $$;
+revoke execute on function file_output_evidence_chat(text) from public;
+
+-- Bộ đếm lại DB của 1 tính năng trong [p_since, p_now] (cùng nguồn số với
+-- `rollout_db_facts`) — KHÔNG grant (chỉ chạy trong function SECURITY DEFINER).
+create or replace function rollout_db_recount(p_fid text, p_spec jsonb,
+  p_since timestamptz, p_now timestamptz)
+returns jsonb
+language sql stable set search_path from current as $$
+  select jsonb_build_object(
+    'days', rollout_business_days(p_since, p_now, p_spec),
+    'outputs', count(*),
+    'out_days', count(distinct p10_vn_date(f.ts)) filter (
+                  where rollout_workday(p10_vn_date(f.ts), p_spec)),
+    'human', count(*) filter (where f.human),
+    'unapproved', count(*) filter (where f.unapp),
+    'unreviewed', count(*) filter (where f.unrev),
+    'file_sources', coalesce((p_spec->>'file')::int, 0),
+    'severe', (select count(*) from feature_rollout_events e
+                where e.feature_id = p_fid and e.kind = 'severe'
+                  and e.ts >= p_since))
+    from rollout_db_facts(p_fid, p_spec, p_since, p_now) f
+$$;
+revoke execute on function rollout_db_recount(text, jsonb, timestamptz,
+  timestamptz) from public;
+
+-- CHỈ ĐỌC số đếm của giai đoạn hiện hành cho CLI người (`rollout
+-- --promote/--status` khi login không SELECT được bảng nguồn). Không ghi gì;
+-- quyết định vẫn ở `rollout_transition_human`.
+create or replace function rollout_recount_human(p_fid text)
+returns jsonb
+language plpgsql stable security definer set search_path from current as $$
+declare
+  r feature_rollout%rowtype;
+begin
+  select * into r from feature_rollout where feature_id = p_fid;
+  if not found then
+    return null;
+  end if;
+  if r.count_spec is null
+     or jsonb_typeof(r.count_spec->'sql') is distinct from 'array' then
+    return jsonb_build_object('stage', r.stage, 'has_spec', false);
+  end if;
+  return rollout_db_recount(p_fid, r.count_spec, r.stage_since, now())
+         || jsonb_build_object('stage', r.stage, 'has_spec', true,
+              'sql_sources', jsonb_array_length(r.count_spec->'sql'));
+end $$;
+revoke execute on function rollout_recount_human(text) from public;
+
+create or replace function rollout_transition_human(p_fid text, p_kind text,
+  p_from text, p_to text, p_by text, p_code text, p_note text,
+  p_evidence jsonb, p_now timestamptz)
+returns text
+language plpgsql security definer set search_path from current as $$
+declare
+  v_block text := regexp_replace(coalesce(p_fid, ''), '-.*$', '');
+  v_by text := human_actor(p_by, v_block);
+  v_now timestamptz := p10_now(p_now);
+  v_stage text;
+  v_since timestamptz;
+  v_to text;
+  v_owner boolean := p10_owner_login();
+  v_min int;
+  e jsonb := coalesce(p_evidence, '{}'::jsonb);
+  v_spec jsonb;
+  c jsonb;
+begin
+  select stage, stage_since, count_spec into v_stage, v_since, v_spec
+    from feature_rollout where feature_id = p_fid for update;
+  if not found then
+    raise exception '%: chưa vào sổ triển khai (chạy --seed)', p_fid;
+  end if;
+  if v_stage is distinct from p_from then
+    raise exception '%: giai đoạn vừa đổi (% ≠ %) — thử lại', p_fid, v_stage,
+      p_from;
+  end if;
+  if p_kind = 'promote' then
+    -- tắt → bật lại = về chạy thử (đếm lại từ đầu, không điều kiện).
+    v_to := case v_stage when 'chay_thu' then 'co_nguoi_duyet'
+                         when 'co_nguoi_duyet' then 'van_hanh'
+                         when 'tat' then 'chay_thu' end;
+    if v_to is null or v_to is distinct from p_to then
+      raise exception '%: không nâng được % → %', p_fid, v_stage, p_to;
+    end if;
+    if not v_owner and v_stage <> 'tat' then
+      -- docx P0: CHỈ số DB đếm lại; `p_evidence` của caller chỉ để lưu vết.
+      v_min := case v_stage when 'chay_thu' then 5 else 10 end;
+      if p10_vn_date(v_now) - p10_vn_date(v_since) < v_min then
+        raise exception '%: chưa đủ số ngày tối thiểu của giai đoạn %', p_fid,
+          v_stage;
+      end if;
+      if v_spec is null or jsonb_typeof(v_spec->'sql') is distinct from 'array'
+      then
+        raise exception '%: bộ đếm đầu ra chưa đồng bộ vào DB — owner chạy rollout --seed rồi thử lại',
+          p_fid;
+      end if;
+      c := rollout_db_recount(p_fid, v_spec, v_since, v_now);
+      e := e || jsonb_build_object('db_recount', c);
+      if (c->>'severe')::int > 0 then
+        raise exception '%: có lỗi nghiêm trọng từ mốc giai đoạn — không nâng',
+          p_fid;
+      end if;
+      if (c->>'file_sources')::int > 0 then
+        raise exception '%: nguồn file chưa có bằng chứng DB — không nâng (đổi nguồn sang sổ DB rồi owner chạy rollout --seed)',
+          p_fid;
+      end if;
+      if jsonb_array_length(v_spec->'sql') = 0 then
+        raise exception '%: DB đếm lại: không có nguồn đầu ra đếm được — không nâng',
+          p_fid;
+      end if;
+      if (c->>'days')::int < v_min then
+        raise exception '%: DB đếm lại: mới % / % ngày làm việc của giai đoạn %',
+          p_fid, c->>'days', v_min, v_stage;
+      end if;
+      if v_stage = 'chay_thu' and not ((c->>'outputs')::int >= 50
+          and (c->>'out_days')::int >= 5) then
+        raise exception '%: DB đếm lại chưa đạt PL02 (% đầu ra / % ngày làm việc; cần ≥ 50 / ≥ 5)',
+          p_fid, c->>'outputs', c->>'out_days';
+      end if;
+      if v_stage = 'co_nguoi_duyet' and ((c->>'unapproved')::int > 0
+          or (c->>'unreviewed')::int > 0 or (c->>'outputs')::int < 1
+          or (c->>'human')::int < 1) then
+        raise exception '%: DB đếm lại chưa đạt PL02 (% đầu ra, % người duyệt, % thiếu người, % chưa duyệt)',
+          p_fid, c->>'outputs', c->>'human', c->>'unapproved',
+          c->>'unreviewed';
+      end if;
+    end if;
+  elsif p_kind = 'severe' then
+    if p_code is null or p_code not in ('tu_cam', 'ruou_cong_khai',
+        'tpbvsk_chua_xnqc', 'thieu_khuyen_cao', 'thieu_nhan_ai', 'lo_pii',
+        'so_lieu_khong_nguon') then
+      raise exception 'mã lỗi nghiêm trọng lạ: %', p_code;
+    end if;
+    v_to := case when v_stage = 'tat' then 'tat' else 'chay_thu' end;
+  elsif p_kind = 'disable' then
+    if v_stage = 'tat' then
+      raise exception '%: đã tắt', p_fid;
+    end if;
+    v_to := 'tat';
+  else
+    raise exception 'loại thao tác lạ: %', p_kind;
+  end if;
+  if p_to is distinct from v_to then
+    raise exception '%: đích % không hợp lệ (đúng: %)', p_fid, p_to, v_to;
+  end if;
+  insert into feature_rollout_events (ts, feature_id, kind, from_stage,
+    to_stage, severe_code, note, evidence, by_person)
+  values (v_now, p_fid, p_kind, v_stage, v_to,
+          case when p_kind = 'severe' then p_code end, p_note, e, v_by);
+  if not (p_kind = 'severe' and v_stage = 'tat') then
+    update feature_rollout set stage = v_to, stage_since = v_now,
+           updated_by = v_by, updated_at = v_now
+     where feature_id = p_fid;
+  end if;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'rollout_' || p_kind, 'feature_rollout', p_fid,
+          jsonb_build_object('from', v_stage, 'to', v_to, 'code', p_code));
+  return v_to;
+end $$;
+revoke execute on function rollout_transition_human(text, text, text, text,
+  text, text, text, jsonb, timestamptz) from public;
+
+-- ===== docx P0c — danh tính NGƯỜI theo login ở mọi dòng ghi tên người =====
+-- (HĐ 6.7, 7.2, 7.6; PL01 mục 8; PL02 mục 1b) Trước vá: function quyết định
+-- có trước v15 (`decide_item`, `override_qa`, `approve_draft`/`reject_draft`/
+-- `schedule_draft`, `approve_cogs`, `decide_allocation_run`,
+-- `record_lot_intake`, `sign_qr_lot`, `issue_qr`/`revoke_qr`,
+-- `link_lot_origin`/`unlink_lot_origin`) nhận TÊN người làm tham số, và
+-- `app_human` INSERT thẳng cột tên người ở `red_alert_acks.acked_by`,
+-- `san_suggestion_uses.used_by`, `ops_incidents.created_by`,
+-- `ops_incident_events.by_name`, `cogs_versions.created_by` (+ kế thừa INSERT
+-- `agent_action_log` từ agent_writer) → login của người A gọi thẳng psql ghi
+-- được quyết định/nhật ký mang tên người B (runbook 9.7 "rủi ro còn lại").
+-- Nay trigger `person_login_guard` (BEFORE INSERT) trên các bảng đó: khi
+-- login là NGƯỜI (thành viên `app_human`, KHÔNG thuộc `svc_ui`, không owner)
+-- và cột tên là người (không `agent:`/`system:`/`auto_policy:` — dòng của
+-- luồng agent giữ nguyên) → bắt buộc `human_actor(tên, khối)`: login phải ánh
+-- xạ đúng người trong `human_logins`; quyết định hàng duyệt chung kiểm thêm
+-- khối của mục (`approval_queue.block`), phân bổ/kiểm nhập lô → production,
+-- duyệt giá vốn → finance. Sai → 42501, cả function rollback (không ghi dở).
+-- Ngoại lệ: dòng `authz_denied` (CLI ghi lần BỊ từ chối kèm tên tự khai — là
+-- bằng chứng lần thử, không phải quyết định).
+-- `svc_ui` (roles.sql): role của tiến trình Streamlit ĐÃ xác thực người dùng
+-- theo phiên (AUTH_MODE local/proxy, `auth.authorize` ở Python) — DB tin tên
+-- UI truyền (như trước). Login người KHÔNG được cấp `svc_ui`.
+create or replace function person_login() returns boolean
+language sql stable security definer set search_path from current as $$
+  select exists (select 1 from pg_roles r where r.rolname = 'app_human'
+                   and pg_has_role(session_user, r.oid, 'MEMBER'))
+     and not coalesce((select pg_has_role(session_user, r.oid, 'MEMBER')
+                         from pg_roles r where r.rolname = 'svc_ui'), false)
+     and not p10_owner_login()
+$$;
+revoke execute on function person_login() from public;
+
+create or replace function person_login_guard() returns trigger
+language plpgsql security definer set search_path from current as $$
+declare
+  v_who text := to_jsonb(new)->>tg_argv[0];
+  v_block text;
+begin
+  if not person_login() or not p10_is_person(v_who) then
+    return new;
+  end if;
+  if tg_table_name = 'agent_action_log' then
+    if new.action = 'authz_denied' then
+      return new;
+    end if;
+    v_block := case
+      when new.action in ('queue_approve', 'queue_reject', 'queue_override_qa')
+        then (select a.block from approval_queue a
+               where a.id = (new.detail->>'queue_id')::bigint)
+      when new.action in ('alloc_approve', 'alloc_reject', 'lot_intake')
+        then 'production'
+      when new.action = 'cogs_approve' then 'finance' end;
+  end if;
+  perform human_actor(v_who, v_block);
+  return new;
+end $$;
+revoke execute on function person_login_guard() from public;
+
+create or replace trigger agent_action_log_person_login
+  before insert on agent_action_log
+  for each row execute function person_login_guard('actor');
+create or replace trigger red_alert_acks_person_login
+  before insert on red_alert_acks
+  for each row execute function person_login_guard('acked_by');
+create or replace trigger san_suggestion_uses_person_login
+  before insert on san_suggestion_uses
+  for each row execute function person_login_guard('used_by');
+create or replace trigger ops_incidents_person_login
+  before insert on ops_incidents
+  for each row execute function person_login_guard('created_by');
+create or replace trigger ops_incident_events_person_login
+  before insert on ops_incident_events
+  for each row execute function person_login_guard('by_name');
+create or replace trigger cogs_versions_person_login
+  before insert on cogs_versions
+  for each row execute function person_login_guard('created_by');
+
+-- ===== docx R1/R2 — quyết định người không ghi bằng tên agent; quyền QR =====
+-- (HĐ 6.7, 7.2) Controller tái hiện trên working tree đợt DOCX:
+--   R1: login NGƯỜI (app_human, chỉ khối sales) gọi thẳng
+--       `record_lot_intake(lô, 'passed', 'agent:controller', null)` → lô
+--       passed, `checked_by` tên giả: `person_login_guard` bỏ qua kiểm khi
+--       tên không phải "người" (ngoại lệ luồng agent thành đường thoát).
+--   R2: cùng login gọi `revoke_qr` bằng tên CHÍNH mình → mã QR bị thu hồi:
+--       trigger chỉ kiểm danh tính, không kiểm quyền QR.
+-- Nay:
+--   * action QUYẾT ĐỊNH của người (DECISION — kiểm nhập lô, phân bổ, hàng duyệt
+--     chung, giá vốn, nháp nội dung, ký/phát hành/thu hồi/ánh xạ QR): MỌI
+--     login không owner (gồm `svc_ui`) không ghi bằng tên agent/hệ thống/
+--     auto_policy (so sau NFKC: 'AGENT :', 'agent：' cũng chặn); login người
+--     LUÔN qua `human_actor` (đúng người + khối) — không còn ngoại lệ;
+--   * ký QR (`qr_lot_sign`) đòi login có ĐÚNG vai ký, phát hành/thu hồi QR
+--     (`qr_issue`/`qr_revoke`) đòi login có một vai QR — sổ `human_qr_roles`
+--     (login ↔ vai, CHỈ owner ghi, mirror `data/qr_signers.json`, 1 login ≤ 1
+--     vai đang hiệu lực, mỗi lần đổi ghi `human_qr_role_change`; repo TRỐNG
+--     — Bên B điền theo văn bản ủy quyền). Ánh xạ lô ↔ nhật ký (link/unlink)
+--     = nhập liệu: danh tính theo login (như trước, không đòi vai);
+--   * dòng không phải quyết định của luồng agent (`queue_enqueue`, ghi chú…)
+--     giữ nguyên; `authz_denied` vẫn ghi được (bằng chứng lần thử, không
+--     đổi nghiệp vụ). `svc_ui` vẫn được tin tên NGƯỜI do UI truyền (phiên đã
+--     xác thực ở Python) — DB KHÔNG ràng buộc tên đó với login người.
+create table if not exists human_qr_roles (
+  db_login text not null check (db_login ~ '^[a-z_][a-z0-9_$]{0,62}$'),
+  role text not null check (role in ('gd_san_xuat', 'gd_vung_trong',
+                                     'phap_che_qa')),
+  active boolean not null default true,
+  granted_by text not null check (btrim(granted_by) <> ''),
+  note text check (char_length(note) <= 300),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (db_login, role)
+);
+create unique index if not exists human_qr_roles_one_active_uq
+  on human_qr_roles (db_login) where active;
+
+create or replace function human_qr_roles_audit() returns trigger
+language plpgsql security definer set search_path from current as $$
+begin
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (coalesce(case when tg_op = 'DELETE' then old.granted_by
+                        else new.granted_by end, session_user::text),
+          'human_qr_role_change', 'human_login',
+          case when tg_op = 'DELETE' then old.db_login else new.db_login end,
+          jsonb_build_object('op', tg_op,
+            'old', case when tg_op = 'INSERT' then null else jsonb_build_object(
+              'role', old.role, 'active', old.active) end,
+            'new', case when tg_op = 'DELETE' then null else jsonb_build_object(
+              'role', new.role, 'active', new.active) end));
+  return null;
+end $$;
+revoke execute on function human_qr_roles_audit() from public;
+create or replace trigger human_qr_roles_audit_row
+  after insert or update or delete on human_qr_roles
+  for each row execute function human_qr_roles_audit();
+
+create or replace function person_login_guard() returns trigger
+language plpgsql security definer set search_path from current as $$
+declare
+  v_who text := to_jsonb(new)->>tg_argv[0];
+  v_decision boolean := false;
+  v_block text;
+  v_role text;
+begin
+  if tg_table_name = 'agent_action_log' then
+    if new.action = 'authz_denied' then
+      return new;
+    end if;
+    v_decision := new.action = any(array['lot_intake', 'alloc_approve',
+      'alloc_reject', 'queue_approve', 'queue_reject', 'queue_override_qa',
+      'cogs_approve', 'draft_approve', 'draft_reject', 'draft_schedule',
+      'qr_lot_sign', 'qr_issue', 'qr_revoke', 'qr_lot_link',
+      'qr_lot_unlink']);
+  end if;
+  if p10_owner_login() then
+    return new;
+  end if;
+  if v_decision and (btrim(coalesce(v_who, '')) = ''
+      or normalize(v_who, NFKC) ~* '^\s*(agent|system|auto_policy)\s*:') then
+    raise exception 'quyết định của người không ghi bằng tên agent/hệ thống (%)',
+      left(coalesce(v_who, ''), 40) using errcode = '42501';
+  end if;
+  if not person_login() or (not v_decision and not p10_is_person(v_who)) then
+    return new;
+  end if;
+  if tg_table_name = 'agent_action_log' then
+    v_block := case
+      when new.action in ('queue_approve', 'queue_reject', 'queue_override_qa')
+        then (select a.block from approval_queue a
+               where a.id = (new.detail->>'queue_id')::bigint)
+      when new.action in ('alloc_approve', 'alloc_reject', 'lot_intake')
+        then 'production'
+      when new.action = 'cogs_approve' then 'finance' end;
+  end if;
+  perform human_actor(v_who, v_block);
+  if v_decision then         -- (lồng: bảng khác không có cột action)
+    if new.action in ('qr_lot_sign', 'qr_issue', 'qr_revoke') then
+      v_role := case when new.action = 'qr_lot_sign'
+                     then coalesce(new.detail->>'role', '?') end;
+      if not exists (select 1 from human_qr_roles r
+                      where r.db_login = session_user and r.active
+                        and (v_role is null or r.role = v_role)) then
+        raise exception 'login % không có vai QR % (human_qr_roles — Bên B điền theo văn bản ủy quyền)',
+          session_user, coalesce(v_role, '(bất kỳ)') using errcode = '42501';
+      end if;
+    end if;
+  end if;
+  return new;
+end $$;
+revoke execute on function person_login_guard() from public;
+
+-- ===== docx vòng 2 — provenance dữ kiện KPI chat =====
+-- (PL02 mục 3, HĐ 7.3) `chat_kpi_facts` (v13.7) chụp convlog KHÔNG kèm
+-- provenance → dòng chụp trước bản lọc live (đợt DOCX) có thể là mock/demo/
+-- dòng cũ; `ops_monthly.merge_chat` vẫn gộp vào KPI vận hành. Không sửa/xóa
+-- dòng cũ (append-only, không mặc định chúng là live): sổ MỚI append-only
+-- `chat_kpi_live` = dữ kiện CÓ bằng chứng — chỉ ghi từ dòng convlog
+-- `provenance: live` (transport kênh thật, `lead_store.conv_kind`), khóa
+-- `qkey` + sha256 nội dung dữ kiện (`fact_sha256`) nên dòng cũ cùng `qkey`
+-- không che dòng live. KPI vận hành CHỈ đọc sổ này (+ convlog live đang có);
+-- `chat_kpi_facts` cũ không có bản live tương ứng = UNKNOWN/chưa xác minh,
+-- báo riêng. Tái xác minh dòng cũ = convlog live còn giữ CÙNG khóa → lần
+-- `--snapshot` sau ghi bản live (từ chính dòng convlog, không suy từ ngày/id).
+create table if not exists chat_kpi_live (
+  qkey text not null check (qkey ~ '^[0-9a-f]{64}$'),
+  fact_sha256 text not null check (fact_sha256 ~ '^[0-9a-f]{64}$'),
+  ts timestamptz not null,
+  channel text,
+  is_question boolean not null,
+  handled_by_bot boolean,
+  group_oid text,
+  reply_ms integer check (reply_ms is null or reply_ms >= 0),
+  evidence text not null check (evidence = 'convlog_live'),
+  captured_at timestamptz not null default now(),
+  captured_by text not null default session_user,
+  primary key (qkey, fact_sha256)
+);
+create index if not exists chat_kpi_live_ts_idx on chat_kpi_live (ts);
+create or replace trigger chat_kpi_live_append_only_row
+  before update or delete on chat_kpi_live
+  for each row execute function append_only_guard();
+create or replace trigger chat_kpi_live_no_truncate
+  before truncate on chat_kpi_live
+  for each statement execute function append_only_guard();

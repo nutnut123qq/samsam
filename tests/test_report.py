@@ -26,7 +26,8 @@ PS = S - (U - S)                           # prev since = 2026-09-27
 def _conv_rec(**kw):
     base = {"ts": "2026-10-08T01:02:03Z", "msg_id": "m1",
             "user_hash": "abc123", "question": "giá bao nhiêu",
-            "answered": True}
+            "answered": True,
+            "provenance": "live"}   # docx P1: chỉ dòng live vào số vận hành
     base.update(kw)
     return base
 

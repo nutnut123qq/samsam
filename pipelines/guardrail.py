@@ -533,6 +533,47 @@ def _alcohol_span(kb, pre: _Txt) -> tuple[int, int] | None:
     return m.start(), m.end()
 
 
+# docx P1 (PL02 mục 2 "rượu xuất hiện trong nội dung công khai" = lỗi nghiêm
+# trọng; red-team rt-ruou-01/02, rt-llm-06): rượu NÓI VÒNG không có từ khóa
+# rượu — luật TỔ HỢP hẹp trên bản bỏ dấu (giữ độ dài, span dùng chung), mỗi
+# luật cần ≥ 2 tín hiệu cùng lúc để không bắt nhầm 'sâm ngâm mật ong',
+# 'nhiệt độ 18–25 độ C', 'nâng ly' ở tin sự kiện, 'nồng độ acid uric' (quét
+# data/articles|news|products.jsonl: 0 khớp). Không đổi `kb_filter` (lọc KB/
+# chat giữ nguyên).
+_ALC_DEG = re.compile(r"(?<![\d.,])(?:1[5-9]|[2-6]\d|70)\s*(?:do|°)"
+                      r"(?!\s*c(?![a-z]))(?!\s*[\d′'])(?![a-z0-9])")
+_ALC_DEG_NOT = re.compile(r"(?:nhiet do|duoi|tren|khoang|tu|den|[-–])\s*$")
+# tín hiệu đi kèm độ cồn: bản CÓ dấu (1 âm tiết như 'rót'/'chén'/'chai' trùng
+# chữ tiếng Anh khi bỏ dấu) + bản bỏ dấu chỉ cho cụm không nhập nhằng.
+_ALC_CUE = re.compile(r"(?<!\w)(?:ngâm|nhâm nhi|rót|chén|cụng ly|nâng ly"
+                      r"|lên men|chai|bình)(?!\w)")
+_ALC_CUE_ASC = re.compile(r"(?<![a-z])(?:ngam|nham nhi|cung ly|nang ly"
+                          r"|len men)(?![a-z])")
+_ALC_POUR = re.compile(r"(?<![a-z])rot(?![a-z])[^.!?;\n]{0,30}?"
+                       r"(?<![a-z])(?:chen|ly)(?![a-z])")
+_ALC_HOST = re.compile(r"(?<![a-z])(?:dai khach|moi khach|am bung|nham nhi"
+                       r"|cung ly|nang ly)(?![a-z])")
+_ALC_SOAK = re.compile(r"(?<![a-z])ngam(?![a-z])")
+_ALC_FERM = re.compile(r"(?<![a-z])len men(?![a-z])")
+_ALC_STRONG = re.compile(r"(?<![a-z])nong do\s+(?:manh|cao|nang)(?![a-z])")
+
+
+def _alcohol_indirect(pre: _Txt) -> tuple[str, int, int] | None:
+    """Rượu nói vòng → (luật, start, end) trên text gốc | None."""
+    s = pre.stripped
+    for m in _ALC_DEG.finditer(s):
+        if not _ALC_DEG_NOT.search(s[max(0, m.start() - 14):m.start()]) \
+                and (_ALC_CUE.search(pre.low) or _ALC_CUE_ASC.search(s)):
+            return "độ cồn + ngâm/rót/chén/lên men", m.start(), m.end()
+    m = _ALC_POUR.search(s)
+    if m and _ALC_SOAK.search(s) and _ALC_HOST.search(s):
+        return "ngâm + rót chén/ly + mời/đãi/nhâm nhi", m.start(), m.end()
+    m = _ALC_STRONG.search(s)
+    if m and _ALC_FERM.search(s):
+        return "lên men + nồng độ mạnh/cao", m.start(), m.end()
+    return None
+
+
 def _sev_mode(rules, code) -> tuple[str, str]:
     """(severity, mode) theo rules[code]; thiếu/hỏng -> critical + block."""
     r = rules.get(code) if isinstance(rules, dict) else None
@@ -732,6 +773,11 @@ def _run(text, ctx: dict | None) -> dict:
         except kb_filter.KbFilterError as e:
             alc, sp = False, None
             flag("config", f"bộ lọc rượu không dùng được: {e}")
+        ind = None if alc or not public else _alcohol_indirect(pre)
+        if ind:
+            flag("ruou_cam_quang_cao",
+                 f"rượu nói vòng ({ind[0]}) — cấm quảng cáo/khuyến mại rượu",
+                 text[ind[1]:ind[2]], ind[1], ind[2])
         if alc:
             flag("ruou_cam_quang_cao",
                  "nội dung nhắc rượu — cấm quảng cáo/khuyến mại rượu",

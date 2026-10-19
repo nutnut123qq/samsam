@@ -47,6 +47,7 @@ import argparse
 import re
 import sys
 from datetime import date, datetime
+from pathlib import Path
 
 import psycopg
 
@@ -118,7 +119,7 @@ def add(conn, sku_key: str, loai: str, ten: str, by: str) -> int:
         did = auth.call_human(
             conn, "select xnqc_add_human(%s, %s, %s, %s)",
             (sku_key, loai, ten, by.strip()), by=by, block=None,
-            action="set_status", object_type="xnqc_dossier",
+            action="add", object_type="xnqc_dossier",
             object_id=sku_key).fetchone()[0]
     conn.commit()
     return did
@@ -356,6 +357,93 @@ def reminders(rows: list[dict], tpbvsk_skus: list[str], cfg: dict,
     return out
 
 
+# ------------------------------------------------------- docx P2 soạn nháp
+# legal_hr-02 (PL01 Pháp chế: "Soạn hồ sơ xác nhận nội dung quảng cáo
+# TPBVSK, theo dõi kết quả"): trước đây chỉ có sổ theo dõi, không có đường
+# SOẠN hồ sơ → loại việc `xnqc_dossier` (khối legal_hr) không bao giờ có mục.
+# Nay `--draft` dựng NHÁP từ dữ liệu sẵn có (golden: tên, quy cách, số/ngày
+# tiếp nhận công bố; claims đã công bố đúng SKU; maket người đưa vào) +
+# danh mục thành phần `data/xnqc_draft.json` (GIẢ ĐỊNH chờ Pháp chế) →
+# 1 mục hàng duyệt. Agent KHÔNG nộp, KHÔNG đổi trạng thái sổ.
+DRAFT_FILE = CONFIG.parent / "xnqc_draft.json"
+DRAFT_AGENT = "agent:xnqc"
+CLAIMS_FILE = CONFIG.parent / "claims_whitelist.json"
+
+
+def load_draft_config(path=DRAFT_FILE) -> dict:
+    import json
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise ValueError(f"{path.name} không đọc được ({type(e).__name__})")
+    parts = doc.get("thanh_phan") if isinstance(doc, dict) else None
+    if not (isinstance(parts, list) and parts
+            and all(isinstance(x, str) and x.strip() for x in parts)):
+        raise ValueError(f"{path.name}: thanh_phan phải là danh sách chữ")
+    return doc
+
+
+def draft_payload(sku: dict, loai: str, ten: str, claims: list[str],
+                  cfg: dict, maket: str | None) -> str:
+    """THUẦN → nội dung nháp hồ sơ (markdown, không PII)."""
+    duyet = cfg.get("trang_thai") == "da_duyet"
+    L = [f"# NHÁP hồ sơ XNQC — {safe(sku.get('name') or sku['sku_key'])}",
+         "",
+         f"- SKU: {sku['sku_key']} · loại hồ sơ: {loai} · tên: {safe(ten)}",
+         f"- Quy cách: {safe(sku.get('pack_spec') or 'chưa có trong golden')}",
+         (f"- Số tiếp nhận bản công bố: {safe(sku.get('receipt_no'))}"
+          f" ngày {safe(sku.get('receipt_date') or '?')}"
+          if sku.get("receipt_no") else
+          "- Số tiếp nhận bản công bố: CHƯA CÓ trong golden — bổ sung"),
+         "", "## Nội dung được nêu (claims đã công bố đúng SKU)"]
+    L += [f"- {safe(c)}" for c in claims] or ["- (chưa có claim đã công bố)"]
+    L += ["", "## Thành phần hồ sơ cần chuẩn bị"
+          + ("" if duyet else " (danh mục CHƯA được Pháp chế duyệt)")]
+    L += [f"- [ ] {safe(x)}" for x in cfg["thanh_phan"]]
+    if maket:
+        L += ["", "## Maket / kịch bản đưa vào", "", maket.strip()]
+    L += ["", ("Agent chỉ soạn nháp — Pháp chế rà, hoàn thiện, nộp; ghi sổ"
+               " bằng `python -m agents.xnqc --add/--set ... --by <tên>`.")]
+    return "\n".join(L) + "\n"
+
+
+def draft(conn, sku_key: str, loai: str, ten: str, maket: str | None,
+          submit: bool) -> tuple[str, int | None]:
+    """→ (payload, id mục hàng duyệt | None khi chỉ in). SKU phải là TPBVSK
+    trong golden; maket qua guardrail đăng bài (vi phạm → vẫn soạn nháp,
+    ghi rõ để Pháp chế sửa — không phải bài đăng)."""
+    import hashlib
+    import json
+
+    from pipelines import guardrail
+    doc, err = read_golden(GOLDEN_FILE)
+    if err:
+        raise ValueError(err)
+    sku = next((s for s in doc.get("skus", []) if isinstance(s, dict)
+                and s.get("sku_key") == sku_key), None)
+    if sku is None or sku.get("category") != "tpbvsk":
+        raise ValueError(f"SKU '{sku_key}' không phải TPBVSK trong golden")
+    cl = json.loads(CLAIMS_FILE.read_text(encoding="utf-8")).get(sku_key)
+    claims = (cl or {}).get("approved_claims") or []
+    payload = draft_payload(sku, loai, ten, claims, load_draft_config(),
+                            maket)
+    if maket:
+        v = guardrail.check_publish(maket, channel="facebook",
+                                    content_type="post", sku=sku_key)
+        codes = sorted({x.get("code") or x.get("type")
+                        for x in v["violations"]})
+        payload += ("\nGuardrail maket: " + (", ".join(codes) or "đạt")
+                    + "\n")
+    if not submit:
+        return payload, None
+    oid = (f"{sku_key}:{loai}:"
+           f"{hashlib.sha256(payload.encode('utf-8')).hexdigest()[:12]}")
+    qid = director.submit(conn, "legal_hr", "xnqc_dossier", oid,
+                          f"Nháp hồ sơ XNQC {sku_key} ({loai})", payload,
+                          DRAFT_AGENT)
+    return payload, qid
+
+
 # ------------------------------------------------------------------ CLI
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
@@ -381,11 +469,47 @@ def main(argv=None) -> int:
     ap.add_argument("--doc-sha")
     ap.add_argument("--today", help="ngày YYYY-MM-DD CHỈ cho --remind/"
                     "--sync-golden (mặc định hôm nay giờ VN)")
+    ap.add_argument("--draft", action="store_true",
+                    help="soạn NHÁP hồ sơ XNQC (--sku --loai --ten "
+                    "[--maket FILE] [--submit])")
+    ap.add_argument("--maket", help="file .txt/.md maket/kịch bản (--draft)")
+    ap.add_argument("--submit", action="store_true",
+                    help="--draft: đẩy nháp vào hàng duyệt legal_hr")
     a = ap.parse_args(argv)
-    n_ops = sum([a.add, a.set is not None, a.list, a.remind, a.sync_golden])
+    n_ops = sum([a.add, a.set is not None, a.list, a.remind, a.sync_golden,
+                 a.draft])
     if n_ops != 1:
         ap.error("chọn đúng 1 thao tác: --add | --set | --list | --remind |"
-                 " --sync-golden")
+                 " --sync-golden | --draft")
+    if (a.maket or a.submit) and not a.draft:
+        ap.error("--maket/--submit chỉ đi với --draft")
+    if a.draft:
+        if not (a.sku and a.loai and a.ten):
+            ap.error("--draft cần --sku --loai --ten")
+        try:
+            maket = (Path(a.maket).read_text(encoding="utf-8")[:5000]
+                     if a.maket else None)
+        except OSError as e:
+            ap.error(f"--maket không đọc được ({type(e).__name__})")
+        conn = connect() if a.submit else None
+        if a.submit and conn is None:
+            print("[err] DB không truy cập được")
+            return 2
+        try:
+            payload, qid = draft(conn, a.sku, a.loai, a.ten, maket, a.submit)
+        except (ValueError, OSError) as e:
+            print(f"[err] {e}")
+            return 1
+        except psycopg.Error as e:
+            print(f"[err] lỗi DB: {_db_msg(e)}")
+            return 2
+        finally:
+            if conn is not None:
+                conn.close()
+        print(payload)
+        if qid is not None:
+            print(f"[ok] nháp hồ sơ → hàng duyệt legal_hr #{qid}")
+        return 0
     if a.today is not None and not (a.remind or a.sync_golden):
         # đẩy "hôm nay" tới trước = lách chặn ngày cấp/nộp tương lai
         ap.error("--today chỉ đi với --remind/--sync-golden — --set/--add"

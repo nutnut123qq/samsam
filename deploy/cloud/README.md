@@ -106,6 +106,8 @@ bảng nào thì dừng, không bật app.
 | `human_logins` | B | (v15.4) ánh xạ login ↔ người ↔ khối do Bên B điền (không có trong repo); dựng lại login trên cloud thì cập nhật `db_login` theo login mới |
 | `output_reviews` | B | (v15.2) append-only — quyết định người duyệt từng đầu ra (bằng chứng cổng PL02); không dựng lại được từ nguồn |
 | `file_output_evidence` | B | (v15 fix P8.7c) append-only — bằng chứng lần backup thành công do chính tiến trình backup (login svc_backup) ghi; mất bảng = backup cũ không còn đếm/duyệt được cho nghiệm thu (nhật ký jsonl không thay được) |
+| `human_qr_roles` | B | (docx vòng 2) vai ký QR của login do Bên B điền (không có trong repo); dựng lại login trên cloud thì cập nhật `db_login` |
+| `chat_kpi_live` | B | (docx vòng 2) append-only — dữ kiện KPI chat có bằng chứng convlog live; mất bảng = KPI tháng cũ không dựng lại được khi convlog đã xoay |
 | `product_sync_log` | B | (v15.5) append-only — sự kiện đổi/ngừng/mở lại/mơ hồ của sản phẩm khi nạp lại; không dựng lại được từ nguồn |
 | `claims_approved` | A | từ `data/claims_whitelist.json` |
 | `plots` | A | |

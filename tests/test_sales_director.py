@@ -344,9 +344,12 @@ def _convlog(tmp_path, recs):
     return tmp_path
 
 
+# docx P1: chỉ câu khách THẬT (`provenance: live`, như convlog do transport
+# kênh thật ghi từ v15 fix P8.1) sinh mục CSKH — fixture đánh dấu live; dòng
+# mẫu/thiếu provenance bị loại (test_cskh_ignores_non_live_convlog).
 def _conv(ts, answered, q, msg_id):
     return {"ts": ts, "msg_id": msg_id, "user_hash": UHASH, "question": q,
-            "answer": "", "answered": answered}
+            "answer": "", "answered": answered, "provenance": "live"}
 
 
 def _item(conn, ot, oid, created, due=None, title="mục test",
@@ -531,7 +534,7 @@ def test_market_alert_reopen_is_new_episode(db, tmp_path, outcome):
 
 def _conv_u(ts, uh, msg_id, q="[non-text:sticker]"):
     return {"ts": ts, "msg_id": msg_id, "user_hash": uh, "question": q,
-            "answer": "", "answered": False}
+            "answer": "", "answered": False, "provenance": "live"}
 
 
 def test_cskh_flood_grouped_per_user_day_and_capped(db, tmp_path):
@@ -634,8 +637,11 @@ def test_sweep_class_a_escalates_red_alert_idempotent(db):
 def test_sweep_weekend_not_counted(db):
     # due_at = created + 72h (sla_hours thật) — `now` tham số vượt quá
     # due mặc định now()+100h của fixture sẽ thành lý do 'expired'.
+    # docx: hạn cố định 19/10 17:59 so với `expire_overdue` (now() THẬT của
+    # DB) làm test fail sau mốc đó (cả trên nền 667f763) → hạn không sớm hơn
+    # giờ thật + 1 ngày; cổng SLA giờ làm việc vẫn theo `now` tham số.
     qid = _item(db, "cskh_handoff", "convlog:wk", _t(16, 17, 59),
-                due=_t(19, 17, 59))
+                due=max(_t(19, 17, 59), datetime.now(VN) + timedelta(days=1)))
     with _role(db, AW):
         for now in (_t(17, 12), _t(18, 12), _t(19, 9, 58)):
             assert sd.sweep(_TxConn(db), now, CFG)["escalated"] == 0, now
@@ -1077,3 +1083,19 @@ def test_gather_catalog_counts_a4_a5_db(db, tmp_path):
         assert d2["catalog"]["jobs"] is None
         assert d2["catalog"]["pending"] == cat["pending"]
         assert _one(db, "select count(*) from approval_queue") >= 3
+
+
+def test_cskh_ignores_non_live_convlog(db, tmp_path):
+    """docx P1: dòng convlog mẫu/mock/demo và dòng cũ THIẾU provenance không
+    sinh mục CSKH/SLA thật (trước đây mọi dòng `answered: false` đều sinh)."""
+    live = _conv_u("2026-10-12T02:00:00Z", UHASH, "q-live", "hỏi giá")
+    mock = {**_conv_u("2026-10-12T02:01:00Z", "b" * 16, "mock0-1", "hỏi"),
+            "provenance": "sample", "is_sample": True}
+    old = {k: v for k, v in _conv_u("2026-10-12T02:02:00Z", "c" * 16,
+                                    "old-1", "hỏi").items()
+           if k != "provenance"}
+    with _role(db, AW):
+        items, _ = sd._collect(_TxConn(db), _t(12, 9, 30), CFG,
+                               _convlog(tmp_path, [live, mock, old]))
+    cskh = [i for i in items if i["object_type"] == "cskh_handoff"]
+    assert len(cskh) == 1, cskh

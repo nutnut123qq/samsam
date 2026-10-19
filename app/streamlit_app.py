@@ -221,7 +221,7 @@ if "Chat Sâm Sâm" in _tabs:
                         "msg_id": "",
                         "user_hash": _z._ui_hash(st.session_state),
                         "question": _z._log_question(q),
-                        "answer": display[:500],
+                        "answer": _z._log_question(display)[:500],
                         "sources": r["sources"],
                         "guardrail_ok": g["ok"],
                         "latency_ms": latency_ms,
@@ -233,7 +233,7 @@ if "Chat Sâm Sâm" in _tabs:
                         # v15 fix P8.1: demo nội bộ — không bao giờ là
                         # đầu ra chatbot thật (bộ đếm chỉ tính "live").
                         "provenance": "demo", "is_sample": True,
-                        **({"flagged_text": r["answer"][:500]}
+                        **({"flagged_text": _z._log_question(r["answer"])[:500]}
                            if not g["ok"] else {}),
                     })
                 except Exception as e:  # noqa: BLE001 — log không được chặn UI

@@ -635,3 +635,34 @@ grant execute on function output_pending_human(text, text) to app_human;
 -- `output_pending_human` (bộ đếm `count_spec`, quyền owner).
 grant execute on function file_output_evidence_backup(text, boolean)
   to svc_backup;
+
+-- ===== docx P0 — cổng PL02 đếm lại trong DB, không tin số caller =====
+-- Bằng chứng câu bot ĐÃ gửi khách thật (sales-01): CHỈ login dịch vụ webhook
+-- ghi qua function SECURITY DEFINER (DB tự kiểm bản ghi, từ chối login thuộc
+-- role người/loader/job/backup/BKS/Bên A) — không ai INSERT thẳng sổ.
+grant execute on function file_output_evidence_chat(text) to svc_webhook;
+-- CLI người (`rollout --promote/--status`) đọc SỐ ĐẾM DB của giai đoạn hiện
+-- hành khi login không SELECT được bảng nguồn — chỉ đọc, không ghi.
+grant execute on function rollout_recount_human(text) to app_human;
+
+-- ===== docx P0c — danh tính NGƯỜI theo login ở mọi dòng ghi tên người =====
+-- `svc_ui`: tiến trình Streamlit ĐÃ xác thực người dùng theo phiên (AUTH_MODE
+-- local/proxy) dùng 1 login chung `in role svc_ui` (kế thừa app_human) — DB
+-- tin tên người UI truyền vào function duyệt (UI kiểm `auth.authorize`). Login
+-- NGƯỜI dùng CLI (`in role app_human`, KHÔNG svc_ui) bị trigger
+-- `person_login_guard` buộc tên = người của login trong `human_logins`.
+-- Hạ tầng Bên B tạo: `create role <login_ui> login password '<...>' in role
+-- svc_ui;` — KHÔNG cấp svc_ui cho login người.
+do $$
+begin
+  if not exists (select from pg_roles where rolname = 'svc_ui') then
+    create role svc_ui nologin;
+  end if;
+end $$;
+grant app_human to svc_ui;
+
+-- ===== docx vòng 2 — provenance dữ kiện KPI chat =====
+-- `chat_kpi_live` (dữ kiện có bằng chứng convlog live): job `kpi_snapshot`
+-- (svc_job) ghi + đọc; người (app_human) đọc như `chat_kpi_facts`.
+grant select, insert on chat_kpi_live to svc_job;
+grant select on chat_kpi_live to app_human;

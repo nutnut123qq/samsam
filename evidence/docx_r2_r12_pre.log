@@ -1,0 +1,669 @@
+# Probe R1/R2 TRƯỚC sửa trên working tree đợt DOCX (fingerprint 349a3af…), DB samsam_docx_r2
+# ngày (client) 2026-10-19T22:11:56+07:00
+# cwd /d/code/samsam
+# git HEAD 667f763b56addf3216760d5c23fe4f0fde5241fa nhánh codex/docx-code-completion
+# fingerprint diff(trừ DONE+board)=349a3afc690b2c0ea835b8bf5f13211f70d3a46ed49fc764f51abdc04768ebba · 12 file mới=8643c6ed7bde7e02b908e6273c15fa6b7c26160d835c203e5a12a5d9072795a3
+# DB samsam_docx_r2 @ localhost user postgres (KHÔNG phải samsam)
+# OPENROUTER_API_KEY rỗng=có
+# lệnh: python -m pytest tests/test_docx_r12_quyen.py -q -p no:cacheprovider --no-header -rf
+
+FF..F.FF..F.FFFFFFFF.FFFFFFF                                             [100%]
+================================== FAILURES ===================================
+_______ test_r1_decision_never_under_agent_name[sales-agent:controller] _______
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+actor = 'agent:controller', who = 'sales'
+
+    @pytest.mark.parametrize("actor", AGENTISH)
+    @pytest.mark.parametrize("who", ["sales", "prod", "ui"])
+    def test_r1_decision_never_under_agent_name(live, actor, who):
+        """Kể cả login ĐÚNG khối production và login UI tin cậy: kiểm nhập lô
+        bằng tên agent/hệ thống bị DB chặn, 0 thay đổi."""
+        code, n0 = _lot(live), _napprovals(live)
+>       _denied(live, who, "select record_lot_intake(%s, 'passed', %s, null)",
+                (code, actor))
+
+tests\test_docx_r12_quyen.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'sales', sql = "select record_lot_intake(%s, 'passed', %s, null)"
+args = ('R12-dab61d12', 'agent:controller')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+______ test_r1_decision_never_under_agent_name[sales-system:controller] _______
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+actor = 'system:controller', who = 'sales'
+
+    @pytest.mark.parametrize("actor", AGENTISH)
+    @pytest.mark.parametrize("who", ["sales", "prod", "ui"])
+    def test_r1_decision_never_under_agent_name(live, actor, who):
+        """Kể cả login ĐÚNG khối production và login UI tin cậy: kiểm nhập lô
+        bằng tên agent/hệ thống bị DB chặn, 0 thay đổi."""
+        code, n0 = _lot(live), _napprovals(live)
+>       _denied(live, who, "select record_lot_intake(%s, 'passed', %s, null)",
+                (code, actor))
+
+tests\test_docx_r12_quyen.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'sales', sql = "select record_lot_intake(%s, 'passed', %s, null)"
+args = ('R12-fff71e0d', 'system:controller')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+___________ test_r1_decision_never_under_agent_name[sales-Agent:x] ____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+actor = 'Agent:x', who = 'sales'
+
+    @pytest.mark.parametrize("actor", AGENTISH)
+    @pytest.mark.parametrize("who", ["sales", "prod", "ui"])
+    def test_r1_decision_never_under_agent_name(live, actor, who):
+        """Kể cả login ĐÚNG khối production và login UI tin cậy: kiểm nhập lô
+        bằng tên agent/hệ thống bị DB chặn, 0 thay đổi."""
+        code, n0 = _lot(live), _napprovals(live)
+>       _denied(live, who, "select record_lot_intake(%s, 'passed', %s, null)",
+                (code, actor))
+
+tests\test_docx_r12_quyen.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'sales', sql = "select record_lot_intake(%s, 'passed', %s, null)"
+args = ('R12-92976d4c', 'Agent:x')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+_______ test_r1_decision_never_under_agent_name[prod-agent:controller] ________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+actor = 'agent:controller', who = 'prod'
+
+    @pytest.mark.parametrize("actor", AGENTISH)
+    @pytest.mark.parametrize("who", ["sales", "prod", "ui"])
+    def test_r1_decision_never_under_agent_name(live, actor, who):
+        """Kể cả login ĐÚNG khối production và login UI tin cậy: kiểm nhập lô
+        bằng tên agent/hệ thống bị DB chặn, 0 thay đổi."""
+        code, n0 = _lot(live), _napprovals(live)
+>       _denied(live, who, "select record_lot_intake(%s, 'passed', %s, null)",
+                (code, actor))
+
+tests\test_docx_r12_quyen.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'prod', sql = "select record_lot_intake(%s, 'passed', %s, null)"
+args = ('R12-8c902882', 'agent:controller')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+_______ test_r1_decision_never_under_agent_name[prod-system:controller] _______
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+actor = 'system:controller', who = 'prod'
+
+    @pytest.mark.parametrize("actor", AGENTISH)
+    @pytest.mark.parametrize("who", ["sales", "prod", "ui"])
+    def test_r1_decision_never_under_agent_name(live, actor, who):
+        """Kể cả login ĐÚNG khối production và login UI tin cậy: kiểm nhập lô
+        bằng tên agent/hệ thống bị DB chặn, 0 thay đổi."""
+        code, n0 = _lot(live), _napprovals(live)
+>       _denied(live, who, "select record_lot_intake(%s, 'passed', %s, null)",
+                (code, actor))
+
+tests\test_docx_r12_quyen.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'prod', sql = "select record_lot_intake(%s, 'passed', %s, null)"
+args = ('R12-e71a77e8', 'system:controller')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+____________ test_r1_decision_never_under_agent_name[prod-Agent:x] ____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+actor = 'Agent:x', who = 'prod'
+
+    @pytest.mark.parametrize("actor", AGENTISH)
+    @pytest.mark.parametrize("who", ["sales", "prod", "ui"])
+    def test_r1_decision_never_under_agent_name(live, actor, who):
+        """Kể cả login ĐÚNG khối production và login UI tin cậy: kiểm nhập lô
+        bằng tên agent/hệ thống bị DB chặn, 0 thay đổi."""
+        code, n0 = _lot(live), _napprovals(live)
+>       _denied(live, who, "select record_lot_intake(%s, 'passed', %s, null)",
+                (code, actor))
+
+tests\test_docx_r12_quyen.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'prod', sql = "select record_lot_intake(%s, 'passed', %s, null)"
+args = ('R12-c295a194', 'Agent:x')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+________ test_r1_decision_never_under_agent_name[ui-agent:controller] _________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+actor = 'agent:controller', who = 'ui'
+
+    @pytest.mark.parametrize("actor", AGENTISH)
+    @pytest.mark.parametrize("who", ["sales", "prod", "ui"])
+    def test_r1_decision_never_under_agent_name(live, actor, who):
+        """Kể cả login ĐÚNG khối production và login UI tin cậy: kiểm nhập lô
+        bằng tên agent/hệ thống bị DB chặn, 0 thay đổi."""
+        code, n0 = _lot(live), _napprovals(live)
+>       _denied(live, who, "select record_lot_intake(%s, 'passed', %s, null)",
+                (code, actor))
+
+tests\test_docx_r12_quyen.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'ui', sql = "select record_lot_intake(%s, 'passed', %s, null)"
+args = ('R12-3f0340a8', 'agent:controller')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+________ test_r1_decision_never_under_agent_name[ui-system:controller] ________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+actor = 'system:controller', who = 'ui'
+
+    @pytest.mark.parametrize("actor", AGENTISH)
+    @pytest.mark.parametrize("who", ["sales", "prod", "ui"])
+    def test_r1_decision_never_under_agent_name(live, actor, who):
+        """Kể cả login ĐÚNG khối production và login UI tin cậy: kiểm nhập lô
+        bằng tên agent/hệ thống bị DB chặn, 0 thay đổi."""
+        code, n0 = _lot(live), _napprovals(live)
+>       _denied(live, who, "select record_lot_intake(%s, 'passed', %s, null)",
+                (code, actor))
+
+tests\test_docx_r12_quyen.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'ui', sql = "select record_lot_intake(%s, 'passed', %s, null)"
+args = ('R12-c35a2ae9', 'system:controller')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+__________ test_r1_decision_never_under_agent_name[ui-auto_policy:x] __________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+actor = 'auto_policy:x', who = 'ui'
+
+    @pytest.mark.parametrize("actor", AGENTISH)
+    @pytest.mark.parametrize("who", ["sales", "prod", "ui"])
+    def test_r1_decision_never_under_agent_name(live, actor, who):
+        """Kể cả login ĐÚNG khối production và login UI tin cậy: kiểm nhập lô
+        bằng tên agent/hệ thống bị DB chặn, 0 thay đổi."""
+        code, n0 = _lot(live), _napprovals(live)
+>       _denied(live, who, "select record_lot_intake(%s, 'passed', %s, null)",
+                (code, actor))
+
+tests\test_docx_r12_quyen.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'ui', sql = "select record_lot_intake(%s, 'passed', %s, null)"
+args = ('R12-4a03197e', 'auto_policy:x')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+____________ test_r1_decision_never_under_agent_name[ui- AGENT :x] ____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+actor = ' AGENT :x', who = 'ui'
+
+    @pytest.mark.parametrize("actor", AGENTISH)
+    @pytest.mark.parametrize("who", ["sales", "prod", "ui"])
+    def test_r1_decision_never_under_agent_name(live, actor, who):
+        """Kể cả login ĐÚNG khối production và login UI tin cậy: kiểm nhập lô
+        bằng tên agent/hệ thống bị DB chặn, 0 thay đổi."""
+        code, n0 = _lot(live), _napprovals(live)
+>       _denied(live, who, "select record_lot_intake(%s, 'passed', %s, null)",
+                (code, actor))
+
+tests\test_docx_r12_quyen.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'ui', sql = "select record_lot_intake(%s, 'passed', %s, null)"
+args = ('R12-cfc616d9', ' AGENT :x')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+_____________ test_r1_decision_never_under_agent_name[ui-Agent:x] _____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+actor = 'Agent:x', who = 'ui'
+
+    @pytest.mark.parametrize("actor", AGENTISH)
+    @pytest.mark.parametrize("who", ["sales", "prod", "ui"])
+    def test_r1_decision_never_under_agent_name(live, actor, who):
+        """Kể cả login ĐÚNG khối production và login UI tin cậy: kiểm nhập lô
+        bằng tên agent/hệ thống bị DB chặn, 0 thay đổi."""
+        code, n0 = _lot(live), _napprovals(live)
+>       _denied(live, who, "select record_lot_intake(%s, 'passed', %s, null)",
+                (code, actor))
+
+tests\test_docx_r12_quyen.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'ui', sql = "select record_lot_intake(%s, 'passed', %s, null)"
+args = ('R12-9d5c1b1a', 'Agent:x')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+__________ test_r1_decision_never_under_agent_name[ui-agent\uff1ax] ___________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+actor = 'agent：x', who = 'ui'
+
+    @pytest.mark.parametrize("actor", AGENTISH)
+    @pytest.mark.parametrize("who", ["sales", "prod", "ui"])
+    def test_r1_decision_never_under_agent_name(live, actor, who):
+        """Kể cả login ĐÚNG khối production và login UI tin cậy: kiểm nhập lô
+        bằng tên agent/hệ thống bị DB chặn, 0 thay đổi."""
+        code, n0 = _lot(live), _napprovals(live)
+>       _denied(live, who, "select record_lot_intake(%s, 'passed', %s, null)",
+                (code, actor))
+
+tests\test_docx_r12_quyen.py:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'ui', sql = "select record_lot_intake(%s, 'passed', %s, null)"
+args = ('R12-59b557d7', 'agent：x')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+____ test_r1_allocation_decision_never_under_agent_name[agent:controller] _____
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+actor = 'agent:controller'
+
+    @pytest.mark.parametrize("actor", AGENTISH[:2])
+    def test_r1_allocation_decision_never_under_agent_name(live, actor):
+        run = "R12RUN" + uuid.uuid4().hex[:6]
+        _q(live, "insert into allocation_proposals (run_id, cutoff_id,"
+           " cutoff_date, start_week, sku_key, channel, demand_low, demand_base,"
+           " demand_high, proposed_qty) values (%s, 'c1', current_date,"
+           " current_date, 'p0c-sku', 'shopee', 1, 2, 3, 2)", (run,))
+        for who in ("sales", "prod"):
+>           _denied(live, who, "select * from decide_allocation_run(%s,"
+                    " 'approved', %s, null)", (run, actor))
+
+tests\test_docx_r12_quyen.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'sales'
+sql = "select * from decide_allocation_run(%s, 'approved', %s, null)"
+args = ('R12RUN5ea5ee', 'agent:controller')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+____ test_r1_allocation_decision_never_under_agent_name[system:controller] ____
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+actor = 'system:controller'
+
+    @pytest.mark.parametrize("actor", AGENTISH[:2])
+    def test_r1_allocation_decision_never_under_agent_name(live, actor):
+        run = "R12RUN" + uuid.uuid4().hex[:6]
+        _q(live, "insert into allocation_proposals (run_id, cutoff_id,"
+           " cutoff_date, start_week, sku_key, channel, demand_low, demand_base,"
+           " demand_high, proposed_qty) values (%s, 'c1', current_date,"
+           " current_date, 'p0c-sku', 'shopee', 1, 2, 3, 2)", (run,))
+        for who in ("sales", "prod"):
+>           _denied(live, who, "select * from decide_allocation_run(%s,"
+                    " 'approved', %s, null)", (run, actor))
+
+tests\test_docx_r12_quyen.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'sales'
+sql = "select * from decide_allocation_run(%s, 'approved', %s, null)"
+args = ('R12RUNe6ea4f', 'system:controller')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+_________ test_r1_agent_flow_logs_and_denied_attempts_still_recorded __________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+
+    def test_r1_agent_flow_logs_and_denied_attempts_still_recorded(live):
+        # luồng agent (không phải quyết định) vẫn ghi nhật ký
+        _as(live, "agent", "insert into agent_action_log (actor, action,"
+            " object_type, object_id) values ('agent:r12', 'note', 'x', 'r12')")
+        _as(live, "sales", "insert into agent_action_log (actor, action,"
+            " object_type, object_id) values ('agent:r12', 'queue_enqueue',"
+            " 'x', 'r12b')")
+        # dòng ghi lần BỊ từ chối: vẫn ghi được (bằng chứng), không đổi nghiệp vụ
+        code = _lot(live)
+        _as(live, "sales", "insert into agent_action_log (actor, action,"
+            " object_type, object_id) values ('agent:controller', 'authz_denied',"
+            " 'lot_intake', %s)", (code,))
+        assert _state(live, code) == ("pending", None)
+        # nhật ký QUYẾT ĐỊNH mạo tên agent ghi thẳng → chặn
+        for who in ("sales", "ui", "agent"):
+>           _denied(live, who, "insert into agent_action_log (actor, action,"
+                    " object_type, object_id) values ('agent:x', 'lot_intake',"
+                    " 'lot_intake', %s)", (code,))
+
+tests\test_docx_r12_quyen.py:112: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'sales'
+sql = "insert into agent_action_log (actor, action, object_type, object_id) values ('agent:x', 'lot_intake', 'lot_intake', %s)"
+args = ('R12-bd5d7be0',)
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+_______________ test_r2_own_name_without_qr_role_cannot_revoke ________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+
+    def test_r2_own_name_without_qr_role_cannot_revoke(live):
+        code = _qr(live, _lot(live, "passed"))
+>       m = _denied(live, "sales", "select revoke_qr(%s, %s, 'thử r12')",
+                    (code, P_SALES))
+
+tests\test_docx_r12_quyen.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'sales', sql = "select revoke_qr(%s, %s, 'thử r12')"
+args = ('r12_35b1d957a2b34dda98b7071d4f676c27', 'Bán Hàng Giả P0c')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+_ test_r2_qr_decision_log_requires_qr_role[qr_lot_sign-{"role": "gd_san_xuat"}] _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+action = 'qr_lot_sign', detail = '{"role": "gd_san_xuat"}'
+
+    @pytest.mark.parametrize("action,detail", [
+        ("qr_lot_sign", '{"role": "gd_san_xuat"}'), ("qr_issue", "{}"),
+        ("qr_revoke", "{}")])
+    def test_r2_qr_decision_log_requires_qr_role(live, action, detail):
+        """Cùng cơ chế cho ký/phát hành/thu hồi: nhật ký quyết định QR của login
+        không có vai QR bị chặn (function ghi log trong cùng tx → rollback)."""
+>       m = _denied(live, "sales", "insert into agent_action_log (actor, action,"
+                    " object_type, object_id, detail) values (%s, %s, 'qr', 'x',"
+                    " %s::jsonb)", (P_SALES, action, detail))
+
+tests\test_docx_r12_quyen.py:154: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'sales'
+sql = "insert into agent_action_log (actor, action, object_type, object_id, detail) values (%s, %s, 'qr', 'x', %s::jsonb)"
+args = ('Bán Hàng Giả P0c', 'qr_lot_sign', '{"role": "gd_san_xuat"}')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+____________ test_r2_qr_decision_log_requires_qr_role[qr_issue-{}] ____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+action = 'qr_issue', detail = '{}'
+
+    @pytest.mark.parametrize("action,detail", [
+        ("qr_lot_sign", '{"role": "gd_san_xuat"}'), ("qr_issue", "{}"),
+        ("qr_revoke", "{}")])
+    def test_r2_qr_decision_log_requires_qr_role(live, action, detail):
+        """Cùng cơ chế cho ký/phát hành/thu hồi: nhật ký quyết định QR của login
+        không có vai QR bị chặn (function ghi log trong cùng tx → rollback)."""
+>       m = _denied(live, "sales", "insert into agent_action_log (actor, action,"
+                    " object_type, object_id, detail) values (%s, %s, 'qr', 'x',"
+                    " %s::jsonb)", (P_SALES, action, detail))
+
+tests\test_docx_r12_quyen.py:154: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'sales'
+sql = "insert into agent_action_log (actor, action, object_type, object_id, detail) values (%s, %s, 'qr', 'x', %s::jsonb)"
+args = ('Bán Hàng Giả P0c', 'qr_issue', '{}')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+___________ test_r2_qr_decision_log_requires_qr_role[qr_revoke-{}] ____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+action = 'qr_revoke', detail = '{}'
+
+    @pytest.mark.parametrize("action,detail", [
+        ("qr_lot_sign", '{"role": "gd_san_xuat"}'), ("qr_issue", "{}"),
+        ("qr_revoke", "{}")])
+    def test_r2_qr_decision_log_requires_qr_role(live, action, detail):
+        """Cùng cơ chế cho ký/phát hành/thu hồi: nhật ký quyết định QR của login
+        không có vai QR bị chặn (function ghi log trong cùng tx → rollback)."""
+>       m = _denied(live, "sales", "insert into agent_action_log (actor, action,"
+                    " object_type, object_id, detail) values (%s, %s, 'qr', 'x',"
+                    " %s::jsonb)", (P_SALES, action, detail))
+
+tests\test_docx_r12_quyen.py:154: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+who = 'sales'
+sql = "insert into agent_action_log (actor, action, object_type, object_id, detail) values (%s, %s, 'qr', 'x', %s::jsonb)"
+args = ('Bán Hàng Giả P0c', 'qr_revoke', '{}')
+
+    def _denied(live, who, sql, args=()):
+>       with pytest.raises(psycopg.Error) as ei:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+tests\test_docx_p0c_person_login.py:155: Failed
+__________________ test_r2_qr_role_grants_exactly_that_role ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+
+    def test_r2_qr_role_grants_exactly_that_role(live):
+>       _grant(live, "prod", "gd_san_xuat")
+
+tests\test_docx_r12_quyen.py:161: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_docx_r12_quyen.py:133: in _grant
+    _q(live, "insert into human_qr_roles (db_login, role, granted_by) values"
+tests\test_docx_p0c_person_login.py:144: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>
+query = "insert into human_qr_roles (db_login, role, granted_by) values (%s, %s, 'test-r12')"
+params = ('t_p0c_prod_c1afa08a9b', 'gd_san_xuat')
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "human_qr_roles" does not exist
+E           LINE 1: insert into human_qr_roles (db_login, role, granted_by) valu...
+E                               ^
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+___________________ test_r2_qr_roles_owner_only_and_audited ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>, 'dirs':..., 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3082/docxp0c0/launch_p0c.py'), ...}
+
+    def test_r2_qr_roles_owner_only_and_audited(live):
+        for who in ("sales", "prod", "ui", "agent"):
+            with pytest.raises(psycopg.Error):
+                _as(live, who, "insert into human_qr_roles (db_login, role,"
+                    " granted_by) values (%s, 'phap_che_qa', 'tự cấp')",
+                    (live["login"][who],))
+>       _grant(live, "fin", "phap_che_qa")
+
+tests\test_docx_r12_quyen.py:185: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_docx_r12_quyen.py:133: in _grant
+    _q(live, "insert into human_qr_roles (db_login, role, granted_by) values"
+tests\test_docx_p0c_person_login.py:144: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_docx_r2) at 0x24146d65820>
+query = "insert into human_qr_roles (db_login, role, granted_by) values (%s, %s, 'test-r12')"
+params = ('t_p0c_fin_c1afa08a9b', 'phap_che_qa')
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "human_qr_roles" does not exist
+E           LINE 1: insert into human_qr_roles (db_login, role, granted_by) valu...
+E                               ^
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+=========================== short test summary info ===========================
+FAILED tests/test_docx_r12_quyen.py::test_r1_decision_never_under_agent_name[sales-agent:controller]
+FAILED tests/test_docx_r12_quyen.py::test_r1_decision_never_under_agent_name[sales-system:controller]
+FAILED tests/test_docx_r12_quyen.py::test_r1_decision_never_under_agent_name[sales-Agent:x]
+FAILED tests/test_docx_r12_quyen.py::test_r1_decision_never_under_agent_name[prod-agent:controller]
+FAILED tests/test_docx_r12_quyen.py::test_r1_decision_never_under_agent_name[prod-system:controller]
+FAILED tests/test_docx_r12_quyen.py::test_r1_decision_never_under_agent_name[prod-Agent:x]
+FAILED tests/test_docx_r12_quyen.py::test_r1_decision_never_under_agent_name[ui-agent:controller]
+FAILED tests/test_docx_r12_quyen.py::test_r1_decision_never_under_agent_name[ui-system:controller]
+FAILED tests/test_docx_r12_quyen.py::test_r1_decision_never_under_agent_name[ui-auto_policy:x]
+FAILED tests/test_docx_r12_quyen.py::test_r1_decision_never_under_agent_name[ui- AGENT :x]
+FAILED tests/test_docx_r12_quyen.py::test_r1_decision_never_under_agent_name[ui-Agent:x]
+FAILED tests/test_docx_r12_quyen.py::test_r1_decision_never_under_agent_name[ui-agent\uff1ax]
+FAILED tests/test_docx_r12_quyen.py::test_r1_allocation_decision_never_under_agent_name[agent:controller]
+FAILED tests/test_docx_r12_quyen.py::test_r1_allocation_decision_never_under_agent_name[system:controller]
+FAILED tests/test_docx_r12_quyen.py::test_r1_agent_flow_logs_and_denied_attempts_still_recorded
+FAILED tests/test_docx_r12_quyen.py::test_r2_own_name_without_qr_role_cannot_revoke
+FAILED tests/test_docx_r12_quyen.py::test_r2_qr_decision_log_requires_qr_role[qr_lot_sign-{"role": "gd_san_xuat"}]
+FAILED tests/test_docx_r12_quyen.py::test_r2_qr_decision_log_requires_qr_role[qr_issue-{}]
+FAILED tests/test_docx_r12_quyen.py::test_r2_qr_decision_log_requires_qr_role[qr_revoke-{}]
+FAILED tests/test_docx_r12_quyen.py::test_r2_qr_role_grants_exactly_that_role
+FAILED tests/test_docx_r12_quyen.py::test_r2_qr_roles_owner_only_and_audited
+21 failed, 7 passed in 6.96s
+
+EXIT 1

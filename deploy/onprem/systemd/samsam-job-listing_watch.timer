@@ -1,0 +1,12 @@
+# docx P2 — lịch job 'listing_watch' (nguồn: deploy/onprem/jobs.json). Khung giờ GIẢ ĐỊNH —
+# chủ khối chỉnh trong jobs.json rồi sửa OnCalendar ở đây (test giữ khớp).
+[Unit]
+Description=Sam Sam timer listing_watch
+
+[Timer]
+OnCalendar=*-*-* 08:20:00
+Persistent=true
+Unit=samsam-job@listing_watch.service
+
+[Install]
+WantedBy=timers.target

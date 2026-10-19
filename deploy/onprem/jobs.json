@@ -5,8 +5,8 @@
       "on_calendar": "*-*-* 06:45:00",
       "max_gap_hours": 26,
       "steps": [["-m", "crawler.intel", "--run"],
-                ["scripts/intel_bulletin.py", "--period", "day"]],
-      "muc_dich": "Bản tin thị trường 7h sáng (PL01 Tình báo thị trường)"
+                ["scripts/intel_bulletin.py", "--period", "day", "--suggest"]],
+      "muc_dich": "Bản tin thị trường 7h sáng kèm gợi ý chủ đề cho Marketing vào hàng duyệt intel (`--suggest`, docx P2 — intel-01.2) (PL01 Tình báo thị trường)"
     },
     "red_alert_sweep": {
       "on_calendar": "*-*-* *:05:00",
@@ -122,6 +122,48 @@
       "max_gap_hours": 768,
       "steps": [["scripts/ops_monthly.py", "--month", "prev"]],
       "muc_dich": "Báo cáo vận hành tháng trước (người gửi Bên B trước ngày 05 rồi --mark-sent)"
+    },
+    "garden_remind": {
+      "on_calendar": "*-*-* 07:05:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "agents.garden_director", "--remind", "--submit"]],
+      "muc_dich": "docx P2 — khoảnh VẪN bỏ trống nhật ký (chưa có / quá 2×gap_days) → `plot_log_gap` báo GĐ vùng trồng (farming-02); đợt theo mốc nhật ký, chạy lại không nhân bản. Giờ GIẢ ĐỊNH — GĐ vùng trồng chỉnh"
+    },
+    "intel_weekly": {
+      "on_calendar": "Mon *-*-* 07:40:00",
+      "max_gap_hours": 192,
+      "steps": [["scripts/intel_weekly.py", "--out-dir", "data/reports"]],
+      "muc_dich": "docx P2 — báo cáo tuần đối thủ (`intel-doithu-`, intel-03) + Trends (`intel-trend-`, intel-04.1) lưu qua write_report. Thứ Hai 07:40 GIẢ ĐỊNH — Quản lý Marketing chỉnh"
+    },
+    "listing_watch": {
+      "on_calendar": "*-*-* 08:20:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "agents.kd_listing", "--run"]],
+      "muc_dich": "docx P2 — listing sàn lệch bản duyệt/golden → hàng duyệt khối sales (sales-03); agent không sửa sàn. Giờ GIẢ ĐỊNH — GĐ bán hàng chỉnh"
+    },
+    "price_watch": {
+      "on_calendar": "*-*-* 08:25:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "agents.kd_price", "--run"]],
+      "muc_dich": "docx P2 — giá/KM lệch floor/biên/niêm yết → nháp hàng duyệt khối sales (sales-06.1); agent không đổi giá. Giờ GIẢ ĐỊNH — GĐ bán hàng chỉnh"
+    },
+    "ceo_audit": {
+      "on_calendar": "*-*-* 09:10:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "agents.ceo_audit", "--report"]],
+      "muc_dich": "docx P2 — mỗi ngày so bài đăng/listing đang chạy với bản đã duyệt (`ceo-audit-`, ceo-04.1). Giờ GIẢ ĐỊNH — TGĐ chỉnh"
+    },
+    "production_week": {
+      "on_calendar": "Mon *-*-* 08:10:00",
+      "max_gap_hours": 192,
+      "steps": [["-m", "pipelines.production", "bulletin", "--period", "week", "--out-dir", "data/reports"]],
+      "muc_dich": "docx P2 — bản tin sản xuất tuần (`sx-bantin-`, production-01) + hàng cận hạn (`sx-canhan-`, production-04.2). Thứ Hai 08:10 GIẢ ĐỊNH — GĐ sản xuất chỉnh"
+    },
+    "production_month": {
+      "on_calendar": "*-*-01 08:15:00",
+      "max_gap_hours": 768,
+      "steps": [["-m", "pipelines.production", "bulletin", "--period", "month", "--out-dir", "data/reports"]],
+      "muc_dich": "docx P2 — bản tin sản xuất tháng (PL01 Sản xuất 'báo cáo tuần, tháng'). Ngày 1 08:15 GIẢ ĐỊNH — GĐ sản xuất chỉnh"
     }
   }
 }

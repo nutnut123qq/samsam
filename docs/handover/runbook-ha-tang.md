@@ -549,8 +549,24 @@ Hai nguồn phải khớp (lệch → bị chặn, fail-closed): `data/users.jso
   bộ đếm trong code / lịch nghỉ mà CHƯA chạy lại `--seed` → DB đếm theo bộ
   đếm cũ (owner chạy `python -m pipelines.rollout --seed --by <tên>` sau mỗi
   lần đổi; `--seed` giữ giai đoạn + mốc, chỉ đồng bộ `count_spec`); dòng sổ
-  chưa có `count_spec` → DB từ chối nâng (fail-closed). Login người không
-  đọc được nguồn nào thì nguồn đó "không đếm được" ở Python → không nâng.
+  chưa có `count_spec` → DB từ chối nâng (fail-closed). ~~Login người không
+  đọc được nguồn nào thì nguồn đó "không đếm được" ở Python → không nâng.~~
+  **Đợt docx P0 (19/10/2026, đã vá):** (a) login người không SELECT được
+  bảng nguồn (16 tính năng co_code: consents, audit_runs, recon_results,
+  documents, file_output_evidence...) → CLI đọc SỐ DB đếm lại qua
+  `rollout_recount_human` (chỉ đọc, cùng bộ đếm `count_spec`) thay vì báo
+  "không đếm được"; DB vẫn là bên quyết. (b) `rollout_transition_human` BỎ
+  mọi ngưỡng dựa số caller khai (`p_evidence` chỉ lưu vết) — nguồn `file`
+  còn trong `count_spec` → KHÔNG nâng. sales-01 (convlog) nay đếm sổ DB
+  `file_output_evidence` nguồn `conversations`: webhook (login `svc_webhook`,
+  không thuộc role người/loader/job/backup/BKS/Bên A) ghi qua
+  `file_output_evidence_chat` ngay sau khi gửi câu bot `provenance: live`;
+  DB tự kiểm bản ghi, chỉ lưu khóa/cờ (không câu khách/câu bot/user_hash).
+  Câu bot gửi trước bản vá (chỉ có trong convlog) KHÔNG có bằng chứng DB →
+  không đếm. Webhook không ghi được bằng chứng (DB down/từ chối) → chỉ cảnh
+  báo, khách vẫn nhận tin, đầu ra đó không được đếm (bảo thủ). Sau triển
+  khai bản này owner chạy lại `rollout --seed`. Test:
+  `tests/test_docx_p0_rollout_gate.py`.
 - `rollout --review-output` (v15.2 P8.7 — duyệt TỪNG đầu ra báo cáo/bảng/
   file không có bước người riêng): DB (`output_review_human`) kiểm danh tính
   theo login + khối, quyết định hợp lệ, tính năng có trong sổ, và (v15 fix
@@ -593,11 +609,45 @@ Hai nguồn phải khớp (lệch → bị chặn, fail-closed): `data/users.jso
   (file, không trong DB).
 - `rollout --seed`, nạp file golden/core vẫn chạy bằng login triển khai /
   `svc_loader` (thao tác triển khai/nạp, không phải quyết định người).
-- Function duyệt có trước v15 (`decide_item`, `approve_draft`,
+- ~~Function duyệt có trước v15 (`decide_item`, `approve_draft`,
   `approve_cogs`, `record_lot_intake`, `sign_qr_lot`…) vẫn nhận tên người
-  duyệt làm tham số — cổng CLI/UI đối chiếu login ở chế độ thực, nhưng gọi
-  thẳng psql bằng login `app_human` thì DB chỉ chặn agent/tự duyệt (chưa
-  đối chiếu `human_logins`).
+  duyệt làm tham số — gọi thẳng psql bằng login `app_human` thì DB chỉ chặn
+  agent/tự duyệt (chưa đối chiếu `human_logins`).~~ **Đợt docx P0c (đã vá):**
+  trigger `person_login_guard` (BEFORE INSERT) trên `agent_action_log`
+  (mọi function quyết định đều ghi log cùng transaction), `red_alert_acks`,
+  `san_suggestion_uses`, `ops_incidents`, `ops_incident_events`,
+  `cogs_versions`: login NGƯỜI (`in role app_human`, KHÔNG `svc_ui`, không
+  owner) ghi tên người → bắt buộc `human_actor` (tên = người của login trong
+  `human_logins`; quyết định hàng duyệt chung → đúng khối của mục; phân bổ/
+  kiểm nhập lô → production; duyệt giá vốn → finance). Sai → 42501, cả
+  function rollback. Dòng `agent:`/`system:` (luồng agent) và dòng
+  `authz_denied` (CLI ghi lần bị từ chối) không bị chặn. Hệ quả triển khai:
+  MỌI login người dùng CLI phải có dòng `human_logins` (kể cả cho
+  `approval_queue --approve`, `store --approve`, `production approve`,
+  `fp_pnl --cogs-approve`, `red_alert --ack`, `ops_incidents`).
+- **Vá vòng 2 (R1/R2, controller tái hiện sau P0c):** (R1) trước vá, trigger
+  bỏ qua kiểm khi tên truyền vào dạng `agent:`/`system:` → login người gọi
+  `record_lot_intake(lô, 'passed', 'agent:x')` vẫn ghi được. Nay action QUYẾT
+  ĐỊNH của người (`lot_intake`, `alloc_*`, `queue_approve/reject/override_qa`,
+  `cogs_approve`, `draft_*`, `qr_lot_sign`, `qr_issue`, `qr_revoke`,
+  `qr_lot_link/unlink`) — MỌI login không owner (kể cả `svc_ui`) không ghi bằng
+  tên agent/hệ thống/auto_policy (so sau NFKC); login người luôn qua
+  `human_actor`. (R2) ký/phát hành/thu hồi QR đòi vai QR của CHÍNH login trong
+  bảng `human_qr_roles` (CHỈ owner ghi, mirror `data/qr_signers.json`, 1 login
+  ≤ 1 vai đang hiệu lực, đổi → log `human_qr_role_change`; repo TRỐNG). Bên B
+  điền: `insert into human_qr_roles (db_login, role, granted_by, note) values
+  ('<login>', 'gd_san_xuat|gd_vung_trong|phap_che_qa', '<người ký văn bản>',
+  '<số văn bản>');` — thiếu thì `qr_trace sign/issue/revoke` bằng login người
+  bị DB chặn (fail-closed). Test: `tests/test_docx_r12_quyen.py`.
+- **Login UI `svc_ui` (mới, docx P0c):** Streamlit dùng 1 login chung cho
+  mọi người dùng, xác thực theo phiên ở Python (`AUTH_MODE=local|proxy`,
+  `auth.authorize`) → hạ tầng tạo `create role <login_ui> login password
+  '<...>' in role svc_ui;` (svc_ui kế thừa app_human) và đặt DSN của tiến
+  trình Streamlit bằng login này; DB tin tên người UI truyền như trước.
+  KHÔNG cấp `svc_ui` cho login người; Streamlit chạy bằng login người thường
+  (app_human) thì mọi lần duyệt trên UI bị DB chặn (fail-closed). Rủi ro còn
+  lại: ai có DSN của login UI gọi thẳng psql vẫn ghi được tên tùy ý (như
+  trước bản vá) — giữ DSN UI như secret, chỉ trên server.
 
 **Bảng xếp loại `--by` chưa xếp trước v15 (P10.2 — đội triển khai ĐỀ XUẤT,
 hai bên xác nhận):**

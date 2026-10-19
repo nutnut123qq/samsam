@@ -1,0 +1,17 @@
+# Chốt phát hành đợt DOCX — 2026-10-20 (Asia/Saigon)
+# Nền Git: 667f763; nhánh chuẩn bị: codex/docx-code-completion
+# User đã ủy quyền commit, gộp main và push; chưa deploy/nghiệm thu.
+# Fingerprint code sau sửa nhãn (diff HEAD trừ DONE.md/board):
+# fe0603a5e4c376123cf81b3719a91ee4e78725c7d777ae74234b8d887b4e4fb0
+Kiểm chứng trước phát hành:
+- Controller chạy độc lập 106/106 probe và tái hiện R1/R2: đều bị DB chặn.
+- Full pytest ở revision trước sửa nhãn: 6313 passed, 0 failed, 0 skipped.
+- Sau sửa nhãn: 61 passed (KPI, báo cáo thực tế và tài liệu), exit 0.
+- Sau cập nhật checkpoint: handover 11 passed, Ruff scripts/ops_monthly.py sạch.
+Quét secret trên toàn bộ 86 file chuẩn bị phát hành (code, tài liệu, file mới, evidence):
+- Đối chiếu giá trị key/token/DSN/password cấu hình thật; không in giá trị.
+- Không phát hiện secret mới trong phần phát hành.
+- Các khớp chuỗi mật khẩu số là số điện thoại giả hoặc mã fixture; chuỗi ví dụ trong lịch sử tài liệu đã có ở HEAD.
+- Không phát hiện key OpenRouter/GitHub, private key hay DSN mới chứa mật khẩu thật.
+- Không đưa .env, users.json, garden_staff.json, convlog, DOCX, .agents/, founder/ hoặc lv2-market-top.png vào phát hành.
+Giới hạn: lịch sử Git từng lộ mật khẩu; chưa có bằng chứng rotation, không sửa credential hay rewrite history.

@@ -1,0 +1,12 @@
+# docx P2 — lịch job 'intel_weekly' (nguồn: deploy/onprem/jobs.json). Khung giờ GIẢ ĐỊNH —
+# chủ khối chỉnh trong jobs.json rồi sửa OnCalendar ở đây (test giữ khớp).
+[Unit]
+Description=Sam Sam timer intel_weekly
+
+[Timer]
+OnCalendar=Mon *-*-* 07:40:00
+Persistent=true
+Unit=samsam-job@intel_weekly.service
+
+[Install]
+WantedBy=timers.target

@@ -360,19 +360,31 @@ def main(argv=None) -> int:
     print(text, flush=True)
 
     rc = 0
-    path = Path(args.out_dir) / f"health-{day:%Y-%m-%d}.md"
+    name = f"health-{day:%Y-%m-%d}.md"
+    # docx P2 (data_platform-07.1, HĐ 6.7, PL02 mục 1): bản tin ghi qua
+    # `write_report` như mọi báo cáo của danh mục — tính năng TẮT → không
+    # sinh; chạy thử / có người duyệt → nhãn trong nội dung; sổ
+    # `report_outputs` để đếm đầu ra + người duyệt từng bản (trước đây ghi
+    # file thẳng: không cổng, không nhãn, không bao giờ đếm được).
+    # sample=False: số đo trực tiếp DB/job lúc chạy (không có đường mẫu).
+    from agents.report import write_report
+    from pipelines import rollout
+    sent = text
     try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = path.with_suffix(".md.tmp")
-        tmp.write_bytes(text.encode("utf-8"))
-        os.replace(tmp, path)
+        path = write_report(text, Path(args.out_dir), name, sample=False)
+        sent = path.read_bytes().decode("utf-8")   # đúng bản có nhãn
         print(f"[done] {path}", flush=True)
+    except rollout.RolloutBlocked as e:
+        print(f"[rollout] {e} — không gửi", flush=True)
+        return 2
     except OSError as e:
         print(f"[err] không ghi được file bản tin ({type(e).__name__}) — "
               "nội dung đã in stdout", flush=True)
         rc = 1
     if args.notify:
-        notify(text)
+        # Thông báo NỘI BỘ vận hành (như cảnh báo đỏ — vẫn gửi khi chạy thử,
+        # chỉ dừng khi TẮT); gửi đúng bản có nhãn giai đoạn.
+        notify(sent)
     else:
         print("[notify] bỏ qua (chưa cấu hình — cần --notify)", flush=True)
     return rc

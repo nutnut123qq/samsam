@@ -601,6 +601,13 @@ def test_red_alert_ack_needs_own_login(live, cfg, enforce):
         assert not ok and "tài khoản" in msg
         cfg["users"]({"pc giả lập": {"role": "phap_che",
                                      "db_login": live["name"]["app_human"]}})
+        # docx P0c: DB bắt buộc `acked_by` = người của login (`human_logins`,
+        # Bên B điền) — login người chưa ánh xạ bị chặn ở trigger.
+        _admin_q(live, "insert into human_logins (db_login, person, blocks,"
+                 " granted_by) values (%s, 'PC Giả Lập', '{}', 'test-p2') on"
+                 " conflict (db_login) do update set person ="
+                 " excluded.person returning db_login",
+                 (live["name"]["app_human"],))
         ok, msg = ra.ack(h, aid, "PC Giả Lập", routing=routing)
         assert ok, msg
     assert _denied(live, "red_alert", aid) == 1
@@ -634,8 +641,11 @@ def test_deny_log_no_hang_when_caller_holds_chain_lock(live, enforce):
     không chờ vô hạn: hết hạn chờ → savepoint trong tx caller."""
     import time
     with _login(live, "app_human") as c:
+        # docx P0c: dòng caller ghi bằng tên agent (login người không ghi
+        # được nhật ký mang tên NGƯỜI khác — trigger `person_login_guard`);
+        # test này chỉ cần caller giữ khóa chuỗi.
         c.execute("insert into agent_action_log (actor, action, object_type,"
-                  " object_id) values ('Lan', 'p2_caller', 'p2_probe',"
+                  " object_id) values ('agent:p2', 'p2_caller', 'p2_probe',"
                   " 'giu-khoa')")
         t0 = time.monotonic()
         auth.deny_log(c, ANY, "sales", "approve", "p2_probe", "giu-khoa",

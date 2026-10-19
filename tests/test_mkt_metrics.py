@@ -260,6 +260,8 @@ def test_collect_fixture_rates_hours_boundary(db):
     assert set(rows) == {"facebook", "tiktok_shop", "youtube"}
     assert rows["facebook"] == {"channel": "facebook", "reach": 1000,
                                 "engagement": 50, "orders": None,
+                                # docx P2: thêm đơn hủy + tỷ lệ hủy
+                                "cancelled": None, "cancel_rate": None,
                                 "eng_rate": 5.0, "sample": True}
     assert rows["tiktok_shop"]["orders"] == 7
     assert rows["tiktok_shop"]["sample"] is False

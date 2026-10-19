@@ -508,6 +508,12 @@ def test_human_login_decides_only_when_authorized(live, cfg, enforce):
     cfg["users"].write_text(json.dumps({
         BH: {"role": "gd_ban_hang", "db_login": human},
         TC: {"role": "tgd", "db_login": "login_khac"}}), encoding="utf-8")
+    # docx P0c: DB bắt buộc tên người = người của login (`human_logins`,
+    # Bên B điền theo văn bản ủy quyền) — login người chưa ánh xạ bị chặn
+    # ngay trong function duyệt (trước đây DB tin tên do caller truyền).
+    _admin_q(live, "insert into human_logins (db_login, person, blocks,"
+             " granted_by) values (%s, %s, '{sales}', 'test-c04') on conflict"
+             " (db_login) do nothing returning db_login", (human, BH))
     with _login(live, "agent_writer") as c:
         sales = aq.enqueue(c, object_type="price_review", object_id="H1",
                            block="sales", title="t", payload=PAYLOAD,

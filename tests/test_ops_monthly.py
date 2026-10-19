@@ -223,7 +223,8 @@ def _write_jsonl(path: Path, recs) -> None:
 
 
 def test_read_convlog(tmp_path):
-    base = {"user_hash": "h1", "question": "q"}
+    # docx P1: chỉ dòng provenance live vào KPI vận hành
+    base = {"user_hash": "h1", "question": "q", "provenance": "live"}
     _write_jsonl(tmp_path / "conversations.jsonl", [
         {"_doc": "x"}, b"{corrupt",
         dict(base, ts="2026-10-02T02:00:00Z", msg_id="m1", answered=True,
@@ -241,7 +242,8 @@ def test_read_convlog(tmp_path):
         dict(base, ts="2026-10-03T05:00:00Z", msg_id="m5", answered=1),
         dict(base, ts="2026-10-04T05:00:00Z", msg_id="m8", answered=True,
              sent=False),                               # gửi lỗi = chưa xử lý
-        dict({"question": "q"}, ts="2026-10-04T06:00:00Z", msg_id="m9",
+        dict({"question": "q", "provenance": "live"},
+             ts="2026-10-04T06:00:00Z", msg_id="m9",
              answered=False),                           # thiếu user_hash
         dict(base, ts="2026-09-30T16:59:59Z", msg_id="m0", answered=True),
         dict(base, ts="sai", msg_id="m6", answered=True)])

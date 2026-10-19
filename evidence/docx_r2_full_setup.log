@@ -1,0 +1,17 @@
+# Dựng DB mới samsam_docx_r2_full2: schema/roles x2 + core/golden
+# ngày (client) 2026-10-19T23:11:49+07:00
+# cwd /d/code/samsam
+# git HEAD 667f763b56addf3216760d5c23fe4f0fde5241fa nhánh codex/docx-code-completion
+# fingerprint diff(trừ DONE+board)=2a1edbd44bab3be74a018c5912b84dd8a85b374440bdaf863f42b10df7d6ec43 · 16 file mới=c3414aef3526f531b3794209bde91e2349e778416f7fe3742cd9e41d2c4c772d
+# DB samsam_docx_r2_full2 @ localhost user postgres (KHÔNG phải samsam)
+# OPENROUTER_API_KEY rỗng=có
+# lệnh: bash -c python scripts/apply_schema.py --roles | tail -1 && python scripts/apply_schema.py --roles | tail -1 && python -m ingest.core_store | tail -2 && python -m ingest.golden_store | tail -2
+
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[load] assets: 219 rows
+[done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+[disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+
+EXIT 0

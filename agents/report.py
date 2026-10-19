@@ -244,7 +244,7 @@ def collect_chat(data_dir: Path, since: datetime, until: datetime
         path = data_dir / name
         if not path.exists():
             continue
-        for rec in iter_convlog(path, tmp):
+        for rec in iter_convlog(path, tmp, live_only=True):
             if rec.get("route") in CONSENT_REPLY_ROUTES:
                 continue  # "Đồng ý"/"Không đồng ý" không phải câu hỏi
             stats["total"] += 1
@@ -265,6 +265,9 @@ def collect_chat(data_dir: Path, since: datetime, until: datetime
                     stats["answered_period"] += 1
     stats["skipped"] = (tmp["corrupt"] + tmp["doc"]
                         + tmp["io_error"])
+    # docx P1: dòng thử nghiệm/mẫu/thiếu provenance không vào số vận hành.
+    stats["excluded_not_live"] = (tmp.get("thu_nghiem", 0)
+                                  + tmp.get("thieu_provenance", 0))
     return stats
 
 
@@ -376,13 +379,17 @@ def render_marketing(m) -> list[str]:
                  "(`python -m pipelines.cockpit --import FILE --by ...`)")
     else:
         L += [("| Kênh | Tiếp cận | Tương tác | Đơn hoàn thành | "
-               "Tỷ lệ tương tác |"), "|---|---|---|---|---|"]
+               "Tỷ lệ tương tác | Đơn hủy | Tỷ lệ hủy |"),
+              "|---|---|---|---|---|---|---|"]
         for r in ch["rows"]:
             name = r["channel"] + (" (MẪU)" if r["sample"] else "")
             er = _NO_DATA if r["eng_rate"] is None else f"{r['eng_rate']}%"
+            cr = (_NO_DATA if r.get("cancel_rate") is None
+                  else f"{r['cancel_rate']}%")
             L.append(f"| {name} | {_cell_num(r['reach'])} | "
                      f"{_cell_num(r['engagement'])} | "
-                     f"{_cell_num(r['orders'])} | {er} |")
+                     f"{_cell_num(r['orders'])} | {er} | "
+                     f"{_cell_num(r.get('cancelled'))} | {cr} |")
     L += [("- Search Console/GA4, số kênh thật — chờ bàn giao "
            "(external-dep)."), ""]
     return L

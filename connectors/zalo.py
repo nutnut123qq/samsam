@@ -370,7 +370,9 @@ _last_purge_attempt = float("-inf")
 
 
 def _log_question(question):
-    """v14.1 (p1): câu KHÁCH gõ ghi convlog qua CÙNG bộ che `scrub_user`
+    """docx P1: dùng cho CẢ câu bot (`answer`/`flagged_text` — câu bot có thể
+    nhắc lại tên/địa chỉ khách; trước đây ghi nguyên văn).
+    v14.1 (p1): câu KHÁCH gõ ghi convlog qua CÙNG bộ che `scrub_user`
     (SĐT/email + tên/địa chỉ, như payload gửi AI) — trước v14.1 chỉ
     `_mask_pii` (SĐT/email) nên tên/địa chỉ nằm plaintext trên đĩa. Chỉ đổi
     giá trị chuỗi `question`, không đổi format record (reader cũ vẫn đọc)."""
@@ -421,6 +423,38 @@ def _log_conversation(entry: dict) -> None:
                       flush=True)
         with CONV_LOG.open("a", encoding="utf-8") as f:
             f.write(line)
+    _record_chat_evidence(entry)
+
+
+_EVIDENCE_KEYS = ("channel", "msg_id", "ts", "answered", "sent",
+                  "guardrail_ok", "provenance")
+
+
+def _record_chat_evidence(entry: dict) -> None:
+    """docx P0 (PL02 mục 1a): câu bot ĐÃ gửi khách thật (đúng điều kiện bộ
+    đếm `rollout._conv_row`) → bằng chứng DB `file_output_evidence` nguồn
+    `conversations` qua `file_output_evidence_chat` (login webhook
+    `svc_webhook`; DB tự kiểm + chỉ lưu khóa/cờ, không câu khách/câu bot).
+    Gọi SAU khi đã gửi + ghi convlog: DB down/từ chối chỉ warn (đầu ra đó
+    không được đếm — bảo thủ), không làm câm khách."""
+    from pipelines.rollout import _conv_row
+    got = _conv_row(entry)
+    if not isinstance(got, tuple) or got[0] == "legacy":
+        return
+    from connectors import channels
+    rec = json.dumps({k: entry.get(k) for k in _EVIDENCE_KEYS},
+                     ensure_ascii=False)
+    conn = channels._connect()
+    if conn is None:
+        print("[warn] zalo: không ghi được bằng chứng đầu ra (DB down)",
+              flush=True)
+        return
+    try:
+        with conn:
+            conn.execute("select file_output_evidence_chat(%s)", (rec,))
+    except Exception as e:  # noqa: BLE001 — warn-only, khách đã nhận tin
+        print(f"[warn] zalo: bằng chứng đầu ra bị từ chối "
+              f"({type(e).__name__})", flush=True)
 
 
 def unanswered() -> list[dict]:
@@ -732,7 +766,16 @@ def send_text(user_id: str, text: str) -> bool:
               f"(ZALO_ACCESS_TOKEN/token store) — không gửi "
               f"(uh={_uhash(user_id)})", flush=True)
         return False
-    res = _send_once(user_id, text, token)
+    # docx P1 (PL02 mục 2 — 30 giây TỔNG): lần gửi ĐẦU cũng chỉ dùng phần
+    # ngân sách còn lại (trước đây timeout cố định SEND_TIMEOUT_S — gần hết
+    # hạn vẫn chờ thêm tới 5 giây); không đủ MIN_CALL_S → không gọi API,
+    # đánh dấu bước `gui` để `_reply` chuyển người lý do `deadline`.
+    left = _left()
+    if left is not None and left < MIN_CALL_S:
+        _late("gui")
+        return False
+    res = _send_once(user_id, text, token,
+                     None if left is None else min(SEND_TIMEOUT_S, left))
     if res is False and _can_refresh():
         if (time.monotonic() - _last_refresh > REFRESH_MIN_INTERVAL_S
                 # Lâu rồi không ai refresh -> thử rotate rồi retry.
@@ -956,7 +999,7 @@ def _reply_turn(user_id: str, question: str, msg_id: str = "", *,
         "msg_id": msg_id,
         "user_hash": _uhash(user_id),
         "question": _log_question(question),
-        "answer": text[:500],
+        "answer": _log_question(text)[:500],
         "sources": res["sources"],
         "guardrail_ok": guardrail_ok,
         "latency_ms": latency_ms,
@@ -969,7 +1012,7 @@ def _reply_turn(user_id: str, question: str, msg_id: str = "", *,
         **_provenance(send),   # v15 fix P8.1: chỉ transport thật = "live"
     }
     if not guardrail_ok:
-        entry["flagged_text"] = raw[:500]  # raw bị flag, debug guardrail
+        entry["flagged_text"] = _log_question(raw)[:500]  # debug guardrail
     if slate:
         # v14.6: tin không tới khách vì hết 30 giây (refresh token/gửi lại)
         # → người nhận việc, lý do `deadline`.
@@ -1017,7 +1060,7 @@ def _reply_held(user_id: str, question: str, msg_id: str, inb, md: str,
         "msg_id": msg_id,
         "user_hash": _uhash(user_id),
         "question": _log_question(question),
-        "answer": text[:500],               # text ĐÃ GỬI (parity HANDOFF)
+        "answer": _log_question(text)[:500],               # text ĐÃ GỬI (parity HANDOFF)
         "sources": [],
         "guardrail_ok": meta["guardrail_ok"] if meta else None,
         "latency_ms": int((time.monotonic() - t0) * 1000),
@@ -1063,7 +1106,7 @@ def _reply_fixed(user_id: str, question: str, msg_id: str, inb, kind: str,
         "msg_id": msg_id,
         "user_hash": _uhash(user_id),
         "question": _log_question(question),
-        "answer": text[:500],
+        "answer": _log_question(text)[:500],
         "sources": [],
         "guardrail_ok": None,
         "latency_ms": int((time.monotonic() - t0) * 1000),

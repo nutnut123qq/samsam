@@ -30,8 +30,10 @@ from pipelines.period import period_bounds
 
 MARKETING_BLOCK = "marketing"
 UNKNOWN_AGENT = "(không rõ)"
+# docx P2 (marketing-06.2, PL01 "báo cáo lượt xem, đơn, tỷ lệ hủy"): thêm
+# đơn hủy → tỷ lệ hủy = hủy / (hoàn thành + hủy).
 CHANNEL_METRICS = ("social.reach", "social.engagement",
-                   "sales.orders_completed")
+                   "sales.orders_completed", "sales.orders_cancelled")
 _INTERNAL_CHANNEL = "noi_bo"
 
 
@@ -211,15 +213,21 @@ def channel_week(conn, until: datetime) -> dict:
     ).fetchall():
         d = per.setdefault(ch, {"channel": ch, "reach": None,
                                 "engagement": None, "orders": None,
+                                "cancelled": None, "cancel_rate": None,
                                 "eng_rate": None, "sample": False})
         key = {"social.reach": "reach", "social.engagement": "engagement",
-               "sales.orders_completed": "orders"}[mid]
+               "sales.orders_completed": "orders",
+               "sales.orders_cancelled": "cancelled"}[mid]
         d[key] = _num(val)
         if isinstance(ref, str) and ref.startswith("sample:"):
             d["sample"] = True
     for d in per.values():
         if d["reach"] and d["engagement"] is not None:
             d["eng_rate"] = round(100 * d["engagement"] / d["reach"], 1)
+        if (d["cancelled"] is not None and d["orders"] is not None
+                and d["orders"] + d["cancelled"]):
+            d["cancel_rate"] = round(
+                100 * d["cancelled"] / (d["orders"] + d["cancelled"]), 1)
     return {"week": label, "rows": [per[k] for k in sorted(per)]}
 
 

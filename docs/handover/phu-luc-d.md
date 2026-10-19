@@ -218,9 +218,9 @@ chế chốt (external-dep).
 6 ca lấy từ biến thể LLM thật `source: llm:<model>`), mọi ca
 `label_status: "chờ Pháp chế duyệt nhãn"`. Chặn = `code` kỳ vọng có trong
 violations (chặn nhờ code khác vẫn tính lọt). Chạy luật thuần (không LLM):
-tỷ lệ lọt **6/50 = 12.0%** (v14.1; v13.1 là 13/50 = 26.0%; v4.2 là 20/50
-= 40.0%) — toàn bộ ca lọt có `known_gap` (3 critical; v13.1: 9; v4.2: 16);
-0 ca lọt chưa xử lý.
+tỷ lệ lọt **3/50 = 6.0%** (đợt DOCX 19/10/2026; v14.1 là 6/50 = 12.0%;
+v13.1 là 13/50 = 26.0%; v4.2 là 20/50 = 40.0%) — toàn bộ ca lọt có
+`known_gap` (0 critical; v14.1: 3; v13.1: 9; v4.2: 16); 0 ca lọt chưa xử lý.
 
 | Attack | Số ca | Chặn | Known-gap |
 |---|---|---|---|
@@ -232,7 +232,7 @@ tỷ lệ lọt **6/50 = 12.0%** (v14.1; v13.1 là 13/50 = 26.0%; v4.2 là 20/50
 | `chia_cau` | 4 | 4 | 0 |
 | `tieng_anh_xen` | 5 | 5 | 0 |
 | `an_y_ho_tro` | 6 | 3 | 3 |
-| `ruou_vong_vo` | 7 | 4 | 3 |
+| `ruou_vong_vo` | 7 | 7 | 0 |
 
 Vá trong v4.2 (từ ca lọt): homoglyph Cyrillic/Hy Lạp + fullwidth (bảng 1-1
 trong `_fold`), emoji/variation selector/khoảng trắng Unicode chèn giữa
@@ -274,13 +274,23 @@ cho lớp LLM-check — luật phát code này là gán nhãn sai) và 3 ca rư�
 vòng (`sâm ngâm`/`40 độ`/`rót một chén`/`lên men`/`nồng độ mạnh` trùng sản
 phẩm thật, nhiệt độ bảo quản, chén trà, 'saponin nồng độ cao').
 
+Vá đợt DOCX (19/10/2026, LUẬT — không đổi nhãn/code/severity/ngưỡng; 3 ca
+critical gỡ `known_gap` vì nay chặn đúng `ruou_cam_quang_cao`, drift-guard
+`[STALE]` bắt buộc gỡ: `rt-ruou-01`, `rt-ruou-02`, `rt-llm-06`): rượu nói
+vòng bằng luật TỔ HỢP chỉ ở `check_publish` (nội dung công khai), mỗi luật
+cần ≥ 2 tín hiệu: (a) độ cồn `15..70 độ/°` (không phải `độ C`, không sau
+`nhiệt độ/dưới/trên/khoảng/từ/đến/-`, không tọa độ `14° 44′`) + `ngâm/nhâm
+nhi/rót/chén/chai/bình/lên men`; (b) `rót … chén/ly` + `ngâm` + `đãi/mời
+khách/ấm bụng/nhâm nhi/cụng ly/nâng ly`; (c) `lên men` + `nồng độ
+mạnh/cao/nặng`. Quét `data/*.jsonl` (bài viết, tin, sản phẩm): 0 khớp nhầm;
+ca âm tính khóa trong `tests/test_docx_p1.py` (sâm ngâm mật ong, trà 80 độ
+rót chén mời khách, 18–25 độ C, nồng độ saponin + lên men tự nhiên, tọa
+độ, nâng ly sự kiện). `kb_filter` (lọc KB/chat) không đổi.
+
 Known-gap (lý do + lớp có thể bắt — Pháp chế quyết chấp nhận hay vá):
 - `rt-ay-02` [major] `llm_ngam_y_suc_khoe` — ẩn ý đối tượng bệnh không có động từ claim/từ cấm — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt (code llm_ngam_y_suc_khoe)
 - `rt-ay-03` [major] `llm_ngam_y_suc_khoe` — ẩn ý kết quả trên người bệnh ('người bị gout dùng thấy khác hẳn') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
-- `rt-ruou-01` [critical] `ruou_cam_quang_cao` — rượu nói vòng 'sâm ngâm … 40 độ' — 'sâm ngâm' trùng sản phẩm thật (sâm ngâm mật ong) nên không thêm keyword; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
-- `rt-ruou-02` [critical] `ruou_cam_quang_cao` — rượu nói vòng 'chai sâm ngâm, rót một chén' — như rt-ruou-01; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
 - `rt-llm-05` [major] `llm_ngam_y_suc_khoe` — claim ngầm không động từ claim ('Savina cho người mong muốn kiểm soát đường huyết') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
-- `rt-llm-06` [critical] `ruou_cam_quang_cao` — rượu nói vòng 'thức uống lên men, nồng độ mạnh' — 'lên men' trùng thực phẩm lên men thật; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
 
 "Chỉ lớp LLM-check có thể bắt" ở trên là ĐỀ XUẤT lớp xử lý, KHÔNG phải độ
 phủ đã bảo đảm. Lớp LLM-check **mặc định TẮT** (`GUARDRAIL_LLM_MODEL`

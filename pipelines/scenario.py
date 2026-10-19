@@ -322,7 +322,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--start", type=_date_arg,
                     help="ngày bắt đầu (mặc định thứ Hai tuần này, giờ VN)")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--out-dir", type=Path,
+                    help="ghi kich-ban-<sku>-<kênh>-<ngày>.md qua write_report")
     args = ap.parse_args(argv)
+    if args.json and args.out_dir:
+        ap.error("--out-dir không đi với --json")
 
     doc, why = golden_store.read_golden(GOLDEN_FILE)
     if doc is None:
@@ -349,12 +353,26 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps([{**r, "week_start": r["week_start"].isoformat()}
                           for r in rows], ensure_ascii=False))
         return 0
-    print(head)
-    print(f"SKU {args.sku} · kênh {args.channel} · {args.weeks} tuần")
-    print("tuần | sự kiện | thấp | cơ sở | cao | ghi chú")
-    for r in rows:
-        print(f"{r['week_start'].isoformat()} | {','.join(r['events']) or '-'}"
-              f" | {r['low']} | {r['base']} | {r['high']} | {r['note'] or ''}")
+    lines = [head, f"SKU {args.sku} · kênh {args.channel} · {args.weeks} tuần",
+             "tuần | sự kiện | thấp | cơ sở | cao | ghi chú"]
+    lines += [f"{r['week_start'].isoformat()} | {','.join(r['events']) or '-'}"
+              f" | {r['low']} | {r['base']} | {r['high']} | {r['note'] or ''}"
+              for r in rows]
+    print("\n".join(lines))
+    if args.out_dir:
+        # docx P2 (intel-06, PL02 mục 1): trước đây chỉ in stdout — không có
+        # đầu ra lưu để đếm/duyệt. Ghi qua `write_report` (cổng tắt + nhãn
+        # giai đoạn + sổ `report_outputs`). sample=False: golden + giả định
+        # file (trạng thái GIẢ ĐỊNH in ngay dòng đầu), không có đường mẫu.
+        from agents.report import write_report
+        from pipelines import rollout
+        name = f"kich-ban-{args.sku}-{args.channel}-{start.isoformat()}.md"
+        try:
+            p = write_report("\n".join(lines) + "\n", args.out_dir, name,
+                             sample=False)
+        except rollout.RolloutBlocked as e:
+            return _err(str(e))
+        print(f"[done] {p}")
     return 0
 
 

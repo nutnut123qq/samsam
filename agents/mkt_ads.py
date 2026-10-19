@@ -49,7 +49,7 @@ import json
 import re
 import sys
 from contextlib import suppress
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
@@ -64,6 +64,8 @@ from pipelines.mkt_calendar import CONTENT_OK
 from pipelines.period import VN_TZ
 from pipelines.pii import _mask_pii
 from pipelines.store import _db_msg, _oneline
+
+ROOT = Path(__file__).resolve().parent.parent
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in tiếng
 # Việt có dấu. Ép UTF-8 (no-op nếu đã UTF-8).
@@ -664,6 +666,126 @@ def submit_plan(conn, plan, *, by: str, month: date, cfg: dict, dcfg: dict,
             "created": created, "cap": prow["cap_vnd"]}
 
 
+# ---------- docx vòng 2: agent TỰ đề xuất (marketing-03) ----------
+# PL01 Marketing "Đề xuất quảng cáo nhỏ cho sản phẩm được phép; theo dõi chi
+# phí mỗi đơn; đề xuất giữ hay tắt": trước đây người lập phải viết sẵn cả
+# phiếu (`--plan`). `propose` dựng phiếu từ nguồn đã có: ô SKU × kênh FP&A
+# cho `DE_XUAT` (trần = `fp_ads.propose`, đã loại CAM/XNQC/biên thấp), nháp
+# creative ĐÃ duyệt đúng SKU (verify_publish + guardrail quảng cáo — chọn bởi
+# chính `validate_plan`), tham số `data/ads_proposal.json` (chủ khối chốt) →
+# `submit_plan` (cùng luật chặn + 2 mục hàng duyệt marketing/finance). Mỗi
+# SKU × kênh × tháng trần tối đa 1 đề xuất agent còn hiệu lực (chạy lại
+# không nhân bản). Không đủ điều kiện → THIẾU có lý do, không bịa số.
+PROPOSAL_FILE = ROOT / "data" / "ads_proposal.json"
+PROPOSE_AGENT = "agent:mkt05"
+FEATURE = "marketing-03"
+_PROP_KEYS = ("chot_boi", "can_cu", "ty_le_tran", "so_ngay_chay",
+              "bat_dau_sau_ngay", "success_metric", "stop_rules")
+
+
+def load_proposal_cfg(path=None) -> tuple[dict | None, str | None]:
+    """→ (cfg, None) | (None, lý do BLOCKED). Thiếu/null/sai = chưa chốt."""
+    try:
+        doc = json.loads(Path(path or PROPOSAL_FILE).read_bytes()
+                         .decode("utf-8"))
+    except (OSError, ValueError) as e:
+        return None, f"ads_proposal.json không đọc được ({type(e).__name__})"
+    if not isinstance(doc, dict) or set(doc) - {"_doc"} != set(_PROP_KEYS):
+        return None, f"ads_proposal.json cần đúng key {_PROP_KEYS}"
+    miss = [k for k in _PROP_KEYS if doc[k] is None]
+    if miss:
+        return None, ("tham số đề xuất CHƯA CHỐT (GĐ Marketing): "
+                      + ", ".join(miss))
+    if not all(isinstance(doc[k], str) and doc[k].strip()
+               and not doc[k].strip().lower().startswith(("agent:",
+                                                          "system:"))
+               for k in ("chot_boi", "can_cu")):
+        return None, "chot_boi/can_cu phải là người + căn cứ"
+    r = doc["ty_le_tran"]
+    if isinstance(r, bool) or not isinstance(r, (int, float)) \
+            or not 0 < r <= 1:
+        return None, "ty_le_tran phải trong (0, 1]"
+    if not (_is_int(doc["so_ngay_chay"]) and 1 <= doc["so_ngay_chay"]
+            <= MAX_DAYS + 1) or not (_is_int(doc["bat_dau_sau_ngay"])
+                                     and 0 <= doc["bat_dau_sau_ngay"] <= 30):
+        return None, "so_ngay_chay 1..31, bat_dau_sau_ngay 0..30"
+    return doc, None
+
+
+def _creative_ids(conn, sku: str) -> list[int]:
+    """Nháp creative ĐÃ duyệt đúng SKU (mới nhất trước, tối đa 3)."""
+    return [r[0] for r in conn.execute(
+        "select id from content_drafts where sku = %s and status ="
+        " 'approved' and content_type = any(%s) order by id desc limit %s",
+        (sku, list(CREATIVE_TYPES), MAX_CREATIVES))]
+
+
+def _agent_plan_live(conn, sku: str, ch: str, month: date) -> int | None:
+    for (pid,) in conn.execute(
+            "select id from ad_test_plans where sku_key = %s and channel = %s"
+            " and cap_ref_month = %s and created_by = %s order by id",
+            (sku, ch, month, PROPOSE_AGENT)).fetchall():
+        if plan_status(conn, pid) not in ("tu_choi", "het_han"):
+            return pid
+    return None
+
+
+def propose(conn, *, month: date, cfg: dict, dcfg: dict, pcfg: dict,
+            today: date, dry_run: bool = False) -> list[dict]:
+    """→ [{sku_key, channel, code, reason, plan_id, new_items}] — 1 dòng mỗi
+    ô FP&A `DE_XUAT` (ô khác không phải ứng viên). Tính năng TẮT →
+    RolloutBlocked trước mọi ghi."""
+    from pipelines import rollout  # lười: rollout → director → ...
+    if not dry_run:
+        rollout.check_generate(conn, FEATURE, "đề xuất phiếu thử nghiệm ads")
+    props = fp_ads.propose(fp_pnl.compute(conn, month)["cells"],
+                           fp_ads.fetch_readiness(conn, cfg["channels"]), cfg)
+    conn.commit()
+    out = []
+    for p in props:
+        if p["code"] != "DE_XUAT":
+            continue
+        sku, ch = p["sku_key"], p["channel"]
+        row = {"sku_key": sku, "channel": ch, "plan_id": None,
+               "new_items": []}
+        old = _agent_plan_live(conn, sku, ch, month)
+        if old is not None:
+            out.append({**row, "code": "DA_CO", "plan_id": old, "reason":
+                        f"đã có đề xuất #{old} còn hiệu lực tháng trần"})
+            continue
+        ids = _creative_ids(conn, sku)
+        if not ids:
+            out.append({**row, "code": "THIEU_CREATIVE", "reason":
+                        "chưa có nháp ads/image ĐÃ duyệt cho SKU"})
+            continue
+        budget = int(p["budget_vnd"] * Decimal(str(pcfg["ty_le_tran"])))
+        if budget <= 0:
+            out.append({**row, "code": "THIEU_TRAN", "reason":
+                        "trần FP&A × tỷ lệ = 0đ"})
+            continue
+        start = today + timedelta(days=pcfg["bat_dau_sau_ngay"])
+        plan = {"sku_key": sku, "channel": ch,
+                "hypothesis": (
+                    f"Đề xuất của agent ({PROPOSE_AGENT}): thử quảng cáo nhỏ "
+                    f"{sku} trên {ch}, đo chi phí mỗi đơn. Nguồn: trần FP&A "
+                    f"tháng {month:%Y-%m} {vnd(p['budget_vnd'])}, ngân sách "
+                    f"{pcfg['ty_le_tran']:.0%} trần theo ads_proposal.json "
+                    f"(chốt bởi {pcfg['chot_boi']}); creative đã duyệt "
+                    f"{', '.join(f'#{i}' for i in ids)}."),
+                "creative_draft_ids": ids, "budget_vnd": budget,
+                "start_date": start.isoformat(),
+                "end_date": (start + timedelta(days=pcfg["so_ngay_chay"]
+                                               - 1)).isoformat(),
+                "success_metric": pcfg["success_metric"],
+                "stop_rules": pcfg["stop_rules"]}
+        res = submit_plan(conn, plan, by=PROPOSE_AGENT, month=month, cfg=cfg,
+                          dcfg=dcfg, today=today, dry_run=dry_run)
+        out.append({**row, "code": res["code"] or "DE_XUAT",
+                    "reason": res["reason"], "plan_id": res.get("plan_id"),
+                    "new_items": res.get("new_items", [])})
+    return out
+
+
 def plan_status(conn, pid) -> str:
     """cho_duyet | da_duyet (CẢ 2 mục approved) | tu_choi | het_han |
     thieu_muc | lech_ban_duyet | cung_nguoi_duyet — theo mục mới nhất mỗi
@@ -796,10 +918,17 @@ def main(argv=None, today: date | None = None) -> int:
     ap.add_argument("--month", help="tháng P&L tham chiếu trần YYYY-MM "
                                     "(mặc định tháng trước, giờ VN)")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--propose", action="store_true",
+                    help="agent TỰ đề xuất phiếu từ trần FP&A + creative đã "
+                    "duyệt + data/ads_proposal.json (marketing-03)")
     a = ap.parse_args(argv)
-    n_ops = sum(x is not None for x in (a.plan, a.status, a.results))
+    n_ops = (sum(x is not None for x in (a.plan, a.status, a.results))
+             + a.propose)
     if n_ops != 1:
-        ap.error("cần đúng 1 thao tác: --plan | --status | --results")
+        ap.error("cần đúng 1 thao tác: --plan | --status | --results |"
+                 " --propose")
+    if a.propose and a.by:
+        ap.error("--propose do agent lập (agent:mkt05) — không nhận --by")
     by = (a.by or "").strip()
     if (a.plan or a.results) and not by:
         ap.error("--plan/--results cần --by <tên người lập>")
@@ -822,6 +951,12 @@ def main(argv=None, today: date | None = None) -> int:
     if why:
         print(f"[err] {why} — không connect.")
         return 1
+    pcfg = None
+    if a.propose:
+        pcfg, why = load_proposal_cfg()
+        if why:
+            print(f"[BLOCKED] {why} — agent không đề xuất, không tự điền số.")
+            return 2
     conn = connect()
     if conn is None:
         print("[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc"
@@ -830,6 +965,17 @@ def main(argv=None, today: date | None = None) -> int:
     try:
         if a.status is not None:
             return _print_status(conn, a.status)
+        if a.propose:
+            rows = propose(conn, month=month, cfg=cfg, dcfg=dcfg, pcfg=pcfg,
+                           today=today, dry_run=a.dry_run)
+            for r in rows:
+                q = ", ".join(f"#{x}" for x in r["new_items"]) or "-"
+                print(f"[{r['code']}] {r['sku_key']} × {r['channel']}: "
+                      f"{r['reason']} (phiếu {r['plan_id'] or '-'}, mục {q})")
+            if not rows:
+                print("[THIẾU] FP&A không có ô SKU × kênh DE_XUAT tháng "
+                      f"{month:%Y-%m} — không đề xuất")
+            return 0
         if a.plan:
             res = submit_plan(conn, plan, by=by, month=month, cfg=cfg,
                               dcfg=dcfg, today=today, dry_run=a.dry_run)

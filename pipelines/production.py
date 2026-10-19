@@ -488,7 +488,8 @@ def render_bulletin(data: dict, now: dt.datetime, config: dict) -> str:
     day = data.get("date") or now.astimezone(TZ_VN).date()
     missing = set(data.get("missing_tables", ()))
     no_table = "chưa có bảng — chạy apply_schema"
-    out = [f"# Bản tin Sản xuất tuần — {day.isoformat()}", "",
+    kind = "tháng" if data.get("period") == "month" else "tuần"
+    out = [f"# Bản tin Sản xuất {kind} — {day.isoformat()}", "",
            f"Cấu hình mốc/SLA: {config['status']}"]
     if data.get("sample"):
         out.append("[MẪU] Có dữ liệu mẫu (source='sample') — số liệu "
@@ -1100,10 +1101,40 @@ def cmd_bulletin(args) -> int:
     def run(conn):
         near = dt.timedelta(days=cfg["near_expiry_days"])
         data = collect(conn, golden, why, day + near, day - near)
-        data["date"] = day
-        print(render_bulletin(data, dt.datetime.now(TZ_VN), cfg), end="")
+        data["date"], data["period"] = day, args.period
+        text = render_bulletin(data, dt.datetime.now(TZ_VN), cfg)
+        print(text, end="")
+        if args.out_dir:
+            return _write_bulletin(text, data, args.out_dir, day, args.period)
         return 0
     return _db_call(run)
+
+
+FEFO_HEAD = "## Hàng cận hạn (FEFO)"
+
+
+def _write_bulletin(text, data, out_dir, day, period) -> int:
+    """docx P2 (PL01 Sản xuất: "báo cáo tuần, tháng…", "cảnh báo hàng cận
+    hạn"; PL02 mục 1): trước đây chỉ in stdout → production-01 (bản tin) và
+    production-04.2 (cận hạn) không có đầu ra lưu để đếm/duyệt. Ghi qua
+    `write_report` (cổng tắt + nhãn giai đoạn + sổ `report_outputs`):
+    `sx-bantin-<tuan|thang>-<ngày>.md` (production-01) và
+    `sx-canhan-<ngày>.md` = mục cận hạn (production-04.2). Có dữ liệu
+    `source='sample'` → cờ mẫu (không đếm)."""
+    from agents.report import write_report
+    from pipelines import rollout
+    smp = bool(data.get("sample"))
+    head, _, fefo = text.partition(FEFO_HEAD)
+    title = head.splitlines()[0] if head else "# Bản tin Sản xuất"
+    tag = "thang" if period == "month" else "tuan"
+    try:
+        for t, name in ((text, f"sx-bantin-{tag}-{day.isoformat()}.md"),
+                        (f"{title}\n\n{FEFO_HEAD}{fefo}",
+                         f"sx-canhan-{day.isoformat()}.md")):
+            print(f"[done] {write_report(t, Path(out_dir), name, sample=smp)}")
+    except rollout.RolloutBlocked as e:
+        return _err(f"{e}")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1136,8 +1167,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--by", required=True, type=_by_arg,
                    help="tên người kiểm nhập")
     p.add_argument("--note", type=_note_arg)
-    p = sub.add_parser("bulletin", help="bản tin tuần cho GĐ sản xuất")
+    p = sub.add_parser("bulletin", help="bản tin tuần/tháng cho GĐ sản xuất")
     p.add_argument("--date", type=_date_arg)
+    p.add_argument("--period", choices=("week", "month"), default="week")
+    p.add_argument("--out-dir", type=Path,
+                   help="ghi sx-bantin-*/sx-canhan-* qua write_report")
     args = ap.parse_args(argv)
     if args.cmd == "bom" and args.check and args.source != "manual":
         ap.error("--source chỉ dùng với bom --load")
