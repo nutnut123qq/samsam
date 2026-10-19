@@ -7,6 +7,8 @@ import json
 import re
 from pathlib import Path
 
+import pytest
+
 from ingest import core_store as cs
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -97,9 +99,17 @@ def test_collect_rows_missing_file_skips_domain(tmp_path):
     """MAJOR cold-check v1.8: file nguồn thiếu → domain KHÔNG được trả.
     Nếu vẫn append source cố định + rows=[] thì apply_rows chạy
     `delete where source=...` rồi insert 0 → xoá trắng bảng đang có
-    (claims_approved là nguồn sự thật guardrail — rủi ro cao)."""
-    tables = {t for t, _, _ in cs.collect_rows(tmp_path)}
-    assert not tables  # thư mục trống → không domain nào
+    (claims_approved là nguồn sự thật guardrail — rủi ro cao).
+    v15.5 (P11.3): riêng `products.jsonl` thiếu → SourceError, không trả
+    domain nào (claim map sản phẩm qua file này — nạp claim khi thiếu nó
+    = cắt `claims_approved.product_id`)."""
+    with pytest.raises(cs.SourceError):
+        cs.collect_rows(tmp_path)          # thư mục trống
+    (tmp_path / "claims_whitelist.json").write_text(
+        json.dumps({"x": {"approved_claims": ["c"], "source": "s"}}),
+        encoding="utf-8")
+    with pytest.raises(cs.SourceError):
+        cs.collect_rows(tmp_path)          # có whitelist, thiếu products
 
 
 def test_collect_rows_empty_file_skips_domain(tmp_path):
@@ -107,14 +117,25 @@ def test_collect_rows_empty_file_skips_domain(tmp_path):
     skip domain (coi như thiếu). Nếu vẫn append rows=[] thì apply_rows
     chạy `delete where source=...` rồi insert 0 → xoá trắng bảng; file
     bị cắt cụt/crawl lỗi sẽ quét sạch `claims_approved` (nguồn sự thật
-    guardrail). `_doc` không tính record."""
+    guardrail). `_doc` không tính record. v15.5: products 0 record →
+    SourceError (không nạp gì)."""
     (tmp_path / "products.jsonl").write_text("", encoding="utf-8")
     (tmp_path / "claims_whitelist.json").write_text("{}",
                                                   encoding="utf-8")
     (tmp_path / "sample_plots.jsonl").write_text(
         '{"_doc": "chỉ comment"}\n', encoding="utf-8")
+    with pytest.raises(cs.SourceError):
+        cs.collect_rows(tmp_path)
+    (tmp_path / "products.jsonl").write_text(
+        '{"_doc": "chỉ comment"}\n', encoding="utf-8")
+    with pytest.raises(cs.SourceError):
+        cs.collect_rows(tmp_path)
+    # products hợp lệ → whitelist `{}` / sample chỉ `_doc` vẫn bị skip.
+    (tmp_path / "products.jsonl").write_text(
+        json.dumps({"id": "p1", "name": "X", "url": "http://x/a"}) + "\n",
+        encoding="utf-8")
     tables = {t for t, _, _ in cs.collect_rows(tmp_path)}
-    assert not tables
+    assert tables == {"products"}
 
 
 def test_collect_rows_partial_files(tmp_path):
@@ -175,6 +196,10 @@ class _FakeConn:
 
     def execute(self, sql, params=None):
         self.ops.append(("exec", sql))
+        return self
+
+    def fetchall(self):
+        return []
 
     def cursor(self):
         return _FakeCur(self.ops)
@@ -197,17 +222,21 @@ def test_apply_rows_delete_by_source_then_insert():
     cs.apply_rows(conn, domains)
 
     ops = conn.ops
-    # Pha 1: đúng 6 delete, con trước cha sau (assets/orders/plot_logs/
-    # claims trước, products sau cùng trong delete để FK không cắt link).
-    deletes = [sql for k, sql in ops[:6] if k == "exec"]
-    assert len(deletes) == 6
-    assert deletes[-1].startswith("delete from products")
+    # Pha 1: 5 delete bảng CON, con trước cha sau. v15.5: products KHÔNG
+    # bị delete-by-source (FK set null cắt đơn thật) — upsert + retired.
+    deletes = [sql for k, sql, *_ in ops if k == "exec"
+               and sql.startswith("delete")]
+    assert len(deletes) == 5
     assert deletes[0].startswith("delete from assets")
     assert all("where source" in d for d in deletes)
-    # Pha 2: insert theo DOMAIN_ORDER, products trước claims (FK).
-    inserts = [sql for k, sql, _ in ops[6:] if k == "insert"]
+    assert not any("delete from products" in sql for _, sql, *_ in ops)
+    last_delete = max(i for i, (k, sql, *_) in enumerate(ops)
+                      if sql.startswith("delete"))
+    # Pha 2: ghi theo DOMAIN_ORDER, products (upsert) trước claims (FK).
+    inserts = [sql for k, sql, *_ in ops[last_delete + 1:] if k == "insert"]
     assert len(inserts) == 6
     assert inserts[0].startswith("insert into products")
+    assert "on conflict (id) do update" in inserts[0]
     assert inserts[1].startswith("insert into claims_approved")
     # Tuyệt đối không đụng bảng chunks của RAG.
     assert all("chunks" not in sql for _, sql, *_ in ops)

@@ -580,6 +580,8 @@ def test_cli_bulletin_without_until_uses_yesterday(monkeypatch, tmp_path):
     monkeypatch.setattr(gd, "datetime", _FixedDT)
     monkeypatch.setattr(gd, "connect", lambda *a, **kw: object())
     monkeypatch.setattr(gd, "build_bulletin", fake_build)
+    # v15.2 (P8.4): cờ mẫu của bản tin đọc DB riêng — conn giả ở đây.
+    monkeypatch.setattr(gd, "bulletin_sample", lambda *a, **k: False)
     assert gd.main(["--bulletin", "--out-dir", str(tmp_path)]) == 0
     assert seen["until"] == date(2026, 10, 11)
     assert (tmp_path / "garden-week-2026-10-11.md").exists()

@@ -555,9 +555,13 @@ def write_report(text: str, out_dir: Path, name: str,
     (`pipelines.rollout.gate_report`, HĐ 6.7) → RolloutBlocked, không ghi.
     v14.3: ghi xong → `rollout.record_report` (sổ `report_outputs` để đếm
     đầu ra của tính năng; `sample=True` = dựng trên dữ liệu MẪU, không
-    đếm)."""
+    đếm). v15.2 (P8.5): tính năng đang chạy thử / chờ người duyệt → nội dung
+    file (.md) mang nhãn "CHẠY THỬ — KHÔNG GỬI" / "CHỜ NGƯỜI DUYỆT — CHƯA
+    GỬI" ở đầu; sha trong sổ = bản có nhãn (đúng bản trên đĩa). P8.4: mọi
+    caller truyền `sample=` tường minh theo provenance (test AST)."""
     from pipelines import rollout  # lười: rollout import module này
-    rollout.gate_report(name)
+    md = rollout.gate_report(name)
+    text = rollout.label_report(name, text, md)
     out_dir.mkdir(parents=True, exist_ok=True)
     final = out_dir / name
     tmp = out_dir / (name + ".tmp")
@@ -565,6 +569,28 @@ def write_report(text: str, out_dir: Path, name: str,
     os.replace(tmp, final)
     rollout.record_report(name, text, sample)
     return final
+
+
+def queue_sample(conn, qid) -> bool:
+    """v15.2 (P8.4): provenance của báo cáo xuất từ 1 mục hàng duyệt = cờ
+    `approval_queue.is_sample` của mục đó; không đọc được / không có mục →
+    True (fail-closed: không đếm là đầu ra thật)."""
+    try:
+        row = conn.execute("select is_sample from approval_queue where"
+                           " id = %s", (qid,)).fetchone()
+    except Exception:  # noqa: BLE001 — chỉ quyết cờ đếm, không chặn xuất
+        return True
+    return True if row is None else bool(row[0])
+
+
+def rep_sample(rep: dict) -> bool:
+    """Báo cáo định kỳ có mục dựng trên nguồn `sample:` (bán hàng / lead /
+    vùng trồng) hoặc DB không khả dụng (báo cáo degraded) → True."""
+    db = rep.get("db") or {}
+    if not db.get("db_ok"):
+        return True
+    return any(bool((db.get(k) or {}).get("sample"))
+               for k in ("sales", "leads", "farm"))
 
 
 def list_reports(out_dir: Path = REPORTS_DIR) -> list[Path]:
@@ -604,7 +630,8 @@ def generate(days: int = DEFAULT_DAYS, until=None,
                 conn.close()
     rep["chat"] = collect_chat(data_dir, since, until_excl)
     path = write_report(render(rep), out_dir,
-                        report_name(since, until_excl))
+                        report_name(since, until_excl),
+                        sample=rep_sample(rep))
     return path, rep
 
 

@@ -92,6 +92,12 @@ RESULT_COLS = ("ngay", "bien_the", "hien_thi", "click", "chi_phi_vnd",
                "don_hang")
 DECISIONS = ("dung", "dat_muc_tieu", "tiep", "chua_du_lieu")
 ITEMS = (("marketing", "ad_campaign"), ("finance", "budget_change"))
+# v15.2 (P8.2): mục `finance/budget_change` của phiếu ads mang agent id RIÊNG
+# (không phải tên người lập, không trùng `agent:fp_ads` của finance-04.2) để
+# rollout quy đúng tính năng marketing-03 (đếm đầu ra + biên dùng). Người lập
+# vẫn không tự duyệt được: mục marketing giữ created_by = người lập (DB chặn)
+# + `plan_status` coi người lập duyệt mục ngân sách = `cung_nguoi_duyet`.
+BUDGET_AGENT = "agent:mkt05_budget"
 NOTE = ("ĐỀ XUẤT — agent không chi tiền, không gọi API quảng cáo; Quản lý "
         "MXH cài tay sau khi GĐ Marketing + GĐ tài chính duyệt.")
 RES_NOTE = ("ĐỀ XUẤT dừng/tiếp — người quyết; agent không chi tiền, không "
@@ -646,9 +652,10 @@ def submit_plan(conn, plan, *, by: str, month: date, cfg: dict, dcfg: dict,
         if _item_exists(conn, otype, oid):
             continue
         try:
-            new.append(director.submit(conn, block, otype, oid, title,
-                                       payload, created_by=by,
-                                       cfg=dcfg[block]))
+            new.append(director.submit(
+                conn, block, otype, oid, title, payload,
+                created_by=BUDGET_AGENT if otype == "budget_change" else by,
+                cfg=dcfg[block]))
         except psycopg.errors.UniqueViolation:
             with suppress(Exception):
                 conn.rollback()
@@ -682,9 +689,12 @@ def plan_status(conn, pid) -> str:
         return "het_han"
     if vals != {"approved"}:
         return "cho_duyet"
-    if len(set(who.values())) < len(ITEMS) or "" in who.values():
-        return "cung_nguoi_duyet"
     prow = get_plan(conn, pid)
+    author = " ".join(str((prow or {}).get("created_by") or "").split()
+                      ).casefold()
+    if len(set(who.values())) < len(ITEMS) or "" in who.values()             or any(" ".join(w.split()).casefold() == author
+                   for w in who.values()):
+        return "cung_nguoi_duyet"         # P8.2: người lập không tự duyệt
     try:
         payload = render_plan(prow) if prow else None
     except (KeyError, TypeError, ValueError, ArithmeticError):

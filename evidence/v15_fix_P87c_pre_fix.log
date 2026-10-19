@@ -1,0 +1,1006 @@
+# command: cd <scratchpad>/prefix2 && python withdb.py samsam_v15fix_p87c_pre python -m pytest tests/test_v15_fix_p87c.py -q -p no:cacheprovider -rA | revision: BẢN TRƯỚC VÁ P8.7c = worktree prefix2 (a05c60f + v15 working tree kèm vá P10.2/P8.1/P8.7/P8.7b — cmp khớp rollout.py/schema.sql/roles.sql/db_backup.py/bks_audit.py/contract_features.json với repo trước sửa), chỉ copy file test mới, KHÔNG sửa code | DB: samsam_v15fix_p87c_pre (mới, apply_schema --roles của prefix2, 91 bảng) | exit=1 | kết quả: 19 failed / 0 passed. Ca bắt buộc 'backup hợp lệ được duyệt' FAIL: backup thật chạy xong (job backup, login svc_backup, exit 0) nhưng người khối data_platform --outputs data_platform-07.2 → '0 đầu ra cần người duyệt' (không thấy khóa bk:). Ca khác FAIL vì chưa có sổ/function (UndefinedTable/UndefinedFunction) hoặc bộ đếm Python đọc file (BACKUP_DIR chưa cấu hình → không đếm được).
+FFFFFFFFFFFFFFFFFFF                                                      [100%]
+================================== FAILURES ===================================
+_________________ test_p87c_valid_backup_listed_and_reviewed __________________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2979/test_p87c_valid_backup_listed_0')
+
+    def test_p87c_valid_backup_listed_and_reviewed(p87c, tmp_path):
+        bdir = tmp_path / "bk"
+        rc, out = _run(["-m", "pipelines.job_runs", "--run", "backup"], _env(
+            p87c, {"BACKUP_DATABASE_URL": p87c["dsn"]["backup"],
+                   "BACKUP_DIR": str(bdir), "JOB_LOCK_DIR": str(tmp_path)}))
+        assert rc == 0, out
+        rec = _last(bdir / "backup_runs.jsonl")
+        assert rec["status"] == "ok", rec
+        key, sha = f"bk:{rec['sha256']}", ro._rec_sha(rec)
+        # người khối data_platform (login app_human, không owner) liệt kê được
+        rc, out = _cli(p87c, "dp", "pipelines.rollout", "--outputs", FID)
+        assert rc == 0, out
+        line = next((x for x in out.splitlines() if x.startswith(key)), None)
+>       assert line is not None and f"sha={sha}" in line, out
+E       AssertionError: [OK] data_platform-07.2: 0 đầu ra cần người duyệt từng mục, 0 chưa duyệt
+E         
+E       assert (None is not None)
+
+tests\test_v15_fix_p87c.py:248: AssertionError
+______________ test_p87c_non_service_cannot_create_evidence[dp] _______________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+who = 'dp'
+
+    @pytest.mark.parametrize("who", ["dp", "ceo", "unmapped", "dpbk", "agent",
+                                     "loader", "bks"])
+    def test_p87c_non_service_cannot_create_evidence(p87c, who):
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:271: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+______________ test_p87c_non_service_cannot_create_evidence[ceo] ______________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+who = 'ceo'
+
+    @pytest.mark.parametrize("who", ["dp", "ceo", "unmapped", "dpbk", "agent",
+                                     "loader", "bks"])
+    def test_p87c_non_service_cannot_create_evidence(p87c, who):
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:271: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+___________ test_p87c_non_service_cannot_create_evidence[unmapped] ____________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+who = 'unmapped'
+
+    @pytest.mark.parametrize("who", ["dp", "ceo", "unmapped", "dpbk", "agent",
+                                     "loader", "bks"])
+    def test_p87c_non_service_cannot_create_evidence(p87c, who):
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:271: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+_____________ test_p87c_non_service_cannot_create_evidence[dpbk] ______________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+who = 'dpbk'
+
+    @pytest.mark.parametrize("who", ["dp", "ceo", "unmapped", "dpbk", "agent",
+                                     "loader", "bks"])
+    def test_p87c_non_service_cannot_create_evidence(p87c, who):
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:271: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+_____________ test_p87c_non_service_cannot_create_evidence[agent] _____________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+who = 'agent'
+
+    @pytest.mark.parametrize("who", ["dp", "ceo", "unmapped", "dpbk", "agent",
+                                     "loader", "bks"])
+    def test_p87c_non_service_cannot_create_evidence(p87c, who):
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:271: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+____________ test_p87c_non_service_cannot_create_evidence[loader] _____________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+who = 'loader'
+
+    @pytest.mark.parametrize("who", ["dp", "ceo", "unmapped", "dpbk", "agent",
+                                     "loader", "bks"])
+    def test_p87c_non_service_cannot_create_evidence(p87c, who):
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:271: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+______________ test_p87c_non_service_cannot_create_evidence[bks] ______________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+who = 'bks'
+
+    @pytest.mark.parametrize("who", ["dp", "ceo", "unmapped", "dpbk", "agent",
+                                     "loader", "bks"])
+    def test_p87c_non_service_cannot_create_evidence(p87c, who):
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:271: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+______________ test_p87c_human_login_backup_tool_records_nothing ______________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2979/test_p87c_human_login_backup_t0')
+
+    def test_p87c_human_login_backup_tool_records_nothing(p87c, tmp_path):
+        """Login người lỡ được cấp vào svc_backup chạy CHÍNH công cụ backup →
+        dump xong nhưng DB từ chối bằng chứng (exit 4, không dòng sổ)."""
+        bdir = tmp_path / "bk"
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:286: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+_________________ test_p87c_service_bad_record_refused[fail] __________________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+bad = '{"error": null, "file": "samsam_20261017_013000_vn.dump", "offsite": null, "retention_error": null, "sha256": "222222...2222222222222222222222222222222222222222222", "size_bytes": 1234, "status": "fail", "ts": "2026-10-17T01:30:00+07:00"}'
+
+    @pytest.mark.parametrize("bad", [
+        _text(_rec("2" * 64, status="fail")),
+        _text(_rec("2" * 64, file="../samsam_20261017_013000_vn.dump")),
+        _text(_rec("2" * 64, file="samsam_20261017_013000_vn.dump.partial")),
+        _text(_rec("zz")),
+        _text(_rec("2" * 64, ts="2026-10-17T01:30:00")),
+        "không phải json", "[1, 2]"],
+        ids=["fail", "path", "partial", "sha", "ts-naive", "not-json", "array"])
+    def test_p87c_service_bad_record_refused(p87c, bad):
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:303: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+_________________ test_p87c_service_bad_record_refused[path] __________________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+bad = '{"error": null, "file": "../samsam_20261017_013000_vn.dump", "offsite": null, "retention_error": null, "sha256": "222...222222222222222222222222222222222222222222222", "size_bytes": 1234, "status": "ok", "ts": "2026-10-17T01:30:00+07:00"}'
+
+    @pytest.mark.parametrize("bad", [
+        _text(_rec("2" * 64, status="fail")),
+        _text(_rec("2" * 64, file="../samsam_20261017_013000_vn.dump")),
+        _text(_rec("2" * 64, file="samsam_20261017_013000_vn.dump.partial")),
+        _text(_rec("zz")),
+        _text(_rec("2" * 64, ts="2026-10-17T01:30:00")),
+        "không phải json", "[1, 2]"],
+        ids=["fail", "path", "partial", "sha", "ts-naive", "not-json", "array"])
+    def test_p87c_service_bad_record_refused(p87c, bad):
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:303: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+________________ test_p87c_service_bad_record_refused[partial] ________________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+bad = '{"error": null, "file": "samsam_20261017_013000_vn.dump.partial", "offsite": null, "retention_error": null, "sha256":...222222222222222222222222222222222222222222222", "size_bytes": 1234, "status": "ok", "ts": "2026-10-17T01:30:00+07:00"}'
+
+    @pytest.mark.parametrize("bad", [
+        _text(_rec("2" * 64, status="fail")),
+        _text(_rec("2" * 64, file="../samsam_20261017_013000_vn.dump")),
+        _text(_rec("2" * 64, file="samsam_20261017_013000_vn.dump.partial")),
+        _text(_rec("zz")),
+        _text(_rec("2" * 64, ts="2026-10-17T01:30:00")),
+        "không phải json", "[1, 2]"],
+        ids=["fail", "path", "partial", "sha", "ts-naive", "not-json", "array"])
+    def test_p87c_service_bad_record_refused(p87c, bad):
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:303: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+__________________ test_p87c_service_bad_record_refused[sha] __________________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+bad = '{"error": null, "file": "samsam_20261017_013000_vn.dump", "offsite": null, "retention_error": null, "sha256": "zz", "size_bytes": 1234, "status": "ok", "ts": "2026-10-17T01:30:00+07:00"}'
+
+    @pytest.mark.parametrize("bad", [
+        _text(_rec("2" * 64, status="fail")),
+        _text(_rec("2" * 64, file="../samsam_20261017_013000_vn.dump")),
+        _text(_rec("2" * 64, file="samsam_20261017_013000_vn.dump.partial")),
+        _text(_rec("zz")),
+        _text(_rec("2" * 64, ts="2026-10-17T01:30:00")),
+        "không phải json", "[1, 2]"],
+        ids=["fail", "path", "partial", "sha", "ts-naive", "not-json", "array"])
+    def test_p87c_service_bad_record_refused(p87c, bad):
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:303: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+_______________ test_p87c_service_bad_record_refused[ts-naive] ________________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+bad = '{"error": null, "file": "samsam_20261017_013000_vn.dump", "offsite": null, "retention_error": null, "sha256": "222222...222222222222222222222222222222222222222222222222222", "size_bytes": 1234, "status": "ok", "ts": "2026-10-17T01:30:00"}'
+
+    @pytest.mark.parametrize("bad", [
+        _text(_rec("2" * 64, status="fail")),
+        _text(_rec("2" * 64, file="../samsam_20261017_013000_vn.dump")),
+        _text(_rec("2" * 64, file="samsam_20261017_013000_vn.dump.partial")),
+        _text(_rec("zz")),
+        _text(_rec("2" * 64, ts="2026-10-17T01:30:00")),
+        "không phải json", "[1, 2]"],
+        ids=["fail", "path", "partial", "sha", "ts-naive", "not-json", "array"])
+    def test_p87c_service_bad_record_refused(p87c, bad):
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:303: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+_______________ test_p87c_service_bad_record_refused[not-json] ________________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+bad = 'không phải json'
+
+    @pytest.mark.parametrize("bad", [
+        _text(_rec("2" * 64, status="fail")),
+        _text(_rec("2" * 64, file="../samsam_20261017_013000_vn.dump")),
+        _text(_rec("2" * 64, file="samsam_20261017_013000_vn.dump.partial")),
+        _text(_rec("zz")),
+        _text(_rec("2" * 64, ts="2026-10-17T01:30:00")),
+        "không phải json", "[1, 2]"],
+        ids=["fail", "path", "partial", "sha", "ts-naive", "not-json", "array"])
+    def test_p87c_service_bad_record_refused(p87c, bad):
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:303: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+_________________ test_p87c_service_bad_record_refused[array] _________________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+bad = '[1, 2]'
+
+    @pytest.mark.parametrize("bad", [
+        _text(_rec("2" * 64, status="fail")),
+        _text(_rec("2" * 64, file="../samsam_20261017_013000_vn.dump")),
+        _text(_rec("2" * 64, file="samsam_20261017_013000_vn.dump.partial")),
+        _text(_rec("zz")),
+        _text(_rec("2" * 64, ts="2026-10-17T01:30:00")),
+        "không phải json", "[1, 2]"],
+        ids=["fail", "path", "partial", "sha", "ts-naive", "not-json", "array"])
+    def test_p87c_service_bad_record_refused(p87c, bad):
+>       n = _n_ev(p87c)
+            ^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:303: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:189: in _n_ev
+    return _q(live, "select count(*) from file_output_evidence")[0][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_v15_p10_human_authz.py:151: in _q
+    cur = a.execute(sql, args or None)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>
+query = 'select count(*) from file_output_evidence', params = None
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedTable: relation "file_output_evidence" does not exist
+E           LINE 1: select count(*) from file_output_evidence
+E                                        ^
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedTable
+___________________ test_p87c_fake_wrong_sample_old_blocked ___________________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+
+    def test_p87c_fake_wrong_sample_old_blocked(p87c):
+        k1 = "3" * 64
+        r1 = _rec(k1)
+>       _ev(p87c, r1)
+
+tests\test_v15_fix_p87c.py:315: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:183: in _ev
+    return c.execute(f"select {FN}(%s, %s)",
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [BAD] at 0x1ff8ce61b80>
+query = 'select file_output_evidence_backup(%s, %s)'
+params = ('{"error": null, "file": "samsam_20261017_013000_vn.dump", "offsite": null, "retention_error": null, "sha256": "33333...3333333333333333333333333333333333333", "size_bytes": 1234, "status": "ok", "ts": "2026-10-17T01:30:00+07:00"}', False)
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedFunction: function file_output_evidence_backup(unknown, boolean) does not exist
+E           LINE 1: select file_output_evidence_backup($1, $2)
+E                          ^
+E           HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedFunction
+__________________________ test_p87c_identity_blocks __________________________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+
+    def test_p87c_identity_blocks(p87c):
+        k = "6" * 64
+        r = _rec(k)
+>       _ev(p87c, r)
+
+tests\test_v15_fix_p87c.py:347: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_fix_p87c.py:183: in _ev
+    return c.execute(f"select {FN}(%s, %s)",
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [BAD] at 0x1ff8ce60d70>
+query = 'select file_output_evidence_backup(%s, %s)'
+params = ('{"error": null, "file": "samsam_20261017_013000_vn.dump", "offsite": null, "retention_error": null, "sha256": "66666...6666666666666666666666666666666666666", "size_bytes": 1234, "status": "ok", "ts": "2026-10-17T01:30:00+07:00"}', False)
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedFunction: function file_output_evidence_backup(unknown, boolean) does not exist
+E           LINE 1: select file_output_evidence_backup($1, $2)
+E                          ^
+E           HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedFunction
+___________________ test_p87c_pl02_gate_counts_db_evidence ____________________
+
+p87c = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+
+    def test_p87c_pl02_gate_counts_db_evidence(p87c):
+>       py = _parity(p87c)
+             ^^^^^^^^^^^^^
+
+tests\test_v15_fix_p87c.py:390: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87c_pre) at 0x1ff8cb8dcd0>,... 'tests/test_v15_p8_outputs.py'], 'blocker': 'Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng', ...}, ...}
+
+    def _parity(live):
+        with psycopg.connect(_owner_dsn(live), connect_timeout=5) as c:
+            m, counted, unc = ro.output_rows(c, live["feat"], SINCE,
+                                             datetime.now(VN_TZ))
+>       assert counted and not unc, unc
+E       AssertionError: ['file=backup_runs.jsonl (không đọc được: BACKUP_DIR chưa cấu hình)']
+E       assert (False)
+
+tests\test_v15_fix_p87c.py:374: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_v15_fix_p87c.py::test_p87c_valid_backup_listed_and_reviewed
+FAILED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[dp]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[ceo]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[unmapped]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[dpbk]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[agent]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[loader]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[bks]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_human_login_backup_tool_records_nothing
+FAILED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[fail]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[path]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[partial]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[sha]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[ts-naive]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[not-json]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[array]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_fake_wrong_sample_old_blocked - ...
+FAILED tests/test_v15_fix_p87c.py::test_p87c_identity_blocks - psycopg.errors...
+FAILED tests/test_v15_fix_p87c.py::test_p87c_pl02_gate_counts_db_evidence - A...
+19 failed in 5.74s

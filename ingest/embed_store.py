@@ -283,6 +283,12 @@ def main() -> int:
     if why := auth.bind_service("loader"):
         print(f"[err] {why}", flush=True)
         return 2
+    # v15 P12.1: chính sách cổng tắt loader (data/loader_gate.json) —
+    # chưa cấu hình + tính năng tắt → không nạp.
+    from pipelines import loader_gate
+    if why := loader_gate.check("embed_store"):
+        print(f"[rollout] {why}", flush=True)
+        return 2
     env = load_env()
     try:
         with psycopg.connect(env["dsn"], connect_timeout=CONNECT_TIMEOUT_S) as conn:

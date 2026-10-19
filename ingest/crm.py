@@ -178,6 +178,16 @@ def _check_by(by) -> str:
     return b
 
 
+def _fn(conn, sql, args, by, block, action, oid):
+    """v15.4 (P10.1): ghi qua function SECURITY DEFINER `crm_*_human` —
+    danh tính theo login Postgres (`human_actor`; khối sales cho quyết
+    định), log cùng transaction trong function. Từ chối nghiệp vụ →
+    ValueError; DB từ chối danh tính → `auth.HumanDenied` (ValueError)."""
+    from pipelines import auth  # lười: auth → director → ...
+    return auth.call_human(conn, sql, args, by=by, block=block, action=action,
+                           object_type="crm", object_id=oid)
+
+
 def _log(conn, by, action, otype, oid, detail: dict):
     """1 dòng agent_action_log — detail CHỈ id/mục đích/mã/tỉnh/trạng
     thái, không PII/HMAC/ciphertext."""
@@ -214,30 +224,13 @@ def add_contact(conn, rec: dict, keys, by, lead_id=None) -> tuple[int, bool]:
                                 or isinstance(lead_id, bool)):
         raise ValueError("lead_id phải là số nguyên")
     with conn.transaction():
-        row = conn.execute(
-            "insert into contacts (phone_hmac, phone_enc, name_enc, "
-            "email_enc, address_enc, province, source, created_by) values "
-            "(%s, %s, %s, %s, %s, %s, %s, %s) "
-            "on conflict (phone_hmac) do nothing returning id",
+        cid, new = _fn(
+            conn, "select * from crm_add_contact_human(%s, %s, %s, %s, %s,"
+            " %s, %s, %s, %s)",
             (phone_lookup(phone, lookup_key), seal(f, phone),
              seal(f, rec.get("name")), seal(f, rec.get("email")),
-             seal(f, rec.get("address")), province, source, by)).fetchone()
-        new = row is not None
-        cid = row[0] if new else conn.execute(
-            "select id from contacts where phone_hmac = %s",
-            (phone_lookup(phone, lookup_key),)).fetchone()[0]
-        if lead_id is not None:
-            cur = conn.execute(
-                "select contact_id from leads where id = %s for update",
-                (lead_id,)).fetchone()
-            if cur is None:
-                raise ValueError(f"không có lead #{lead_id}")
-            if cur[0] is not None and cur[0] != cid:
-                raise ValueError(f"lead #{lead_id} đã gắn contact khác")
-            conn.execute("update leads set contact_id = %s where id = %s",
-                         (cid, lead_id))
-        _log(conn, by, "crm_contact_add", "contact", cid,
-             {"new": new, "lead_id": lead_id, "province": province})
+             seal(f, rec.get("address")), province, source, lead_id, by),
+            by, None, "add_contact", "contact").fetchone()
     return cid, new
 
 
@@ -269,23 +262,10 @@ def record_consent(conn, contact_id, purpose, granted, source, by,
     if granted and (ev is None or pv is None):
         raise ValueError("ghi đồng ý cần --evidence và --policy-version")
     with conn.transaction():
-        if conn.execute("select 1 from contacts where id = %s",
-                        (contact_id,)).fetchone() is None:
-            raise ValueError(f"không có contact #{contact_id}")
-        if dealer_code and conn.execute(
-                "select 1 from dealers where code = %s",
-                (dealer_code,)).fetchone() is None:
-            raise ValueError(f"không có đại lý {dealer_code}")
-        cid = conn.execute(
-            "insert into consents (contact_id, purpose, granted, "
-            "recipient_dealer, source, evidence_ref, policy_version, "
-            "recorded_by) values (%s, %s, %s, %s, %s, %s, %s, %s) "
-            "returning id",
-            (contact_id, purpose, granted, dealer_code or None, source, ev,
-             pv, by)).fetchone()[0]
-        _log(conn, by, "crm_consent", "contact", contact_id,
-             {"consent_id": cid, "purpose": purpose, "granted": granted,
-              "dealer": dealer_code or None})
+        cid = _fn(conn, "select crm_record_consent_human(%s, %s, %s, %s, %s,"
+                  " %s, %s, %s)", (contact_id, purpose, granted,
+                                   dealer_code or None, source, ev, pv, by),
+                  by, "sales", "consent", contact_id).fetchone()[0]
     return cid
 
 
@@ -427,28 +407,15 @@ def load_dealers(conn, regions: dict, by) -> dict:
     """Upsert `dealers` theo code từ file vùng (source
     'dealer_regions.json'); dòng source='manual' KHÔNG bị đè."""
     by = _check_by(by)
-    res = {"new": 0, "updated": 0, "kept": 0}
+    rows = [{"code": d["code"], "name": d["name"].strip(),
+             "region": d["region"], "status": d.get("status", "active"),
+             "commission_default": d.get("commission_default", 0)}
+            for d in regions["dealers"]]
     with conn.transaction():
-        for d in regions["dealers"]:
-            row = conn.execute(
-                "insert into dealers (code, name, region, status, "
-                "commission_default, source) values (%s, %s, %s, %s, %s, "
-                "'dealer_regions.json') on conflict (code) do update set "
-                "name = excluded.name, region = excluded.region, "
-                "status = excluded.status, commission_default = "
-                "excluded.commission_default, updated_at = now() "
-                "where dealers.source <> 'manual' and (dealers.name, "
-                "dealers.region, dealers.status, dealers.commission_default)"
-                " is distinct from (excluded.name, excluded.region, "
-                "excluded.status, excluded.commission_default) "
-                "returning (xmax = 0)",
-                (d["code"], d["name"].strip(), d["region"],
-                 d.get("status", "active"),
-                 d.get("commission_default", 0))).fetchone()
-            res["kept" if row is None else
-                "new" if row[0] else "updated"] += 1
-        _log(conn, by, "crm_dealer_load", "dealer", "*", dict(res))
-    return res
+        res = _fn(conn, "select crm_load_dealers_human(%s, %s)",
+                  (Jsonb(rows), by), by, "sales", "load_dealers",
+                  "dealers").fetchone()[0]
+    return {k: int(res[k]) for k in ("new", "updated", "kept")}
 
 
 # ------------------------------------------------------------------ leads
@@ -461,8 +428,8 @@ def assign_lead(conn, lead_id, dealer_code, by, province=None,
     regions = regions or load_regions()
     with conn.transaction():
         lead = conn.execute(
-            "select question, dealer_code from leads where id = %s "
-            "for update", (lead_id,)).fetchone()
+            "select question, dealer_code from leads where id = %s",
+            (lead_id,)).fetchone()
         if lead is None:
             raise ValueError(f"không có lead #{lead_id}")
         if lead[1] is not None and lead[1] != dealer_code:
@@ -487,12 +454,9 @@ def assign_lead(conn, lead_id, dealer_code, by, province=None,
         if regions["province_region"].get(prov) != dealer[0]:
             raise ValueError(f"đại lý {dealer_code} (vùng {dealer[0]}) "
                              f"không phụ trách {prov}")
-        conn.execute(
-            "update leads set province = %s, dealer_code = %s, "
-            "assigned_by = %s, assigned_at = now() where id = %s",
-            (prov, dealer_code, by, lead_id))
-        _log(conn, by, "crm_assign", "lead", lead_id,
-             {"dealer": dealer_code, "province": prov})
+        # DB khóa dòng + kiểm lại (gán đại lý khác giữa chừng → từ chối)
+        _fn(conn, "select crm_assign_lead_human(%s, %s, %s, %s)",
+            (lead_id, dealer_code, prov, by), by, "sales", "assign", lead_id)
     return prov
 
 
@@ -504,8 +468,8 @@ def set_lead_status(conn, lead_id, status, by) -> str:
     if status not in LEAD_STATES:
         raise ValueError(f"trạng thái phải là {'|'.join(LEAD_STATES)}")
     with conn.transaction():
-        row = conn.execute("select status from leads where id = %s "
-                           "for update", (lead_id,)).fetchone()
+        row = conn.execute("select status from leads where id = %s",
+                           (lead_id,)).fetchone()
         if row is None:
             raise ValueError(f"không có lead #{lead_id}")
         old = row[0]
@@ -516,10 +480,10 @@ def set_lead_status(conn, lead_id, status, by) -> str:
         if status != "lost" and LEAD_FLOW.index(status) <= \
                 LEAD_FLOW.index(old):
             raise ValueError(f"không lùi/giữ trạng thái {old} → {status}")
-        conn.execute("update leads set status = %s where id = %s",
-                     (status, lead_id))
-        _log(conn, by, "crm_status", "lead", lead_id,
-             {"from": old, "to": status})
+        # DB khóa dòng + kiểm lại luồng (đổi giữa chừng → từ chối)
+        old = _fn(conn, "select crm_set_lead_status_human(%s, %s, %s)",
+                  (lead_id, status, by), by, None, "status",
+                  lead_id).fetchone()[0]
     return old
 
 
@@ -548,7 +512,7 @@ def assign_owner(conn, lead_id, staff_code, by, now=None, watch=None,
         raise ValueError("lead_id phải là số nguyên")
     with conn.transaction():
         row = conn.execute("select status, owner_code from leads where id ="
-                           " %s for update", (lead_id,)).fetchone()
+                           " %s", (lead_id,)).fetchone()
         if row is None:
             raise ValueError(f"không có lead #{lead_id}")
         if row[0] in TERMINAL:
@@ -557,12 +521,9 @@ def assign_owner(conn, lead_id, staff_code, by, now=None, watch=None,
             now = conn.execute("select now()").fetchone()[0]
         due = period.business_deadline(
             now, watch["handle_within_business_hours"], shift)
-        conn.execute(
-            "update leads set owner_code = %s, owner_due_at = %s, "
-            "owner_assigned_by = %s, owner_assigned_at = %s where id = %s",
-            (staff_code, due, by, now, lead_id))
-        _log(conn, by, "crm_owner", "lead", lead_id,
-             {"from": row[1], "to": staff_code, "due_at": due.isoformat()})
+        _fn(conn, "select crm_assign_owner_human(%s, %s, %s, %s, %s)",
+            (lead_id, staff_code, due, now, by), by, "sales", "assign",
+            lead_id)
     return due
 
 
@@ -573,13 +534,11 @@ def report(conn, regions=None) -> str:
     regions = regions or load_regions()
     q = conn.execute
     out = ["# CRM — lead & đại lý (không chứa PII)"]
-    out.append(f"Liên hệ trong vault: "
-               f"{q('select count(*) from contacts').fetchone()[0]}")
-    out.append("Đồng ý hiện hành (mục đích: đồng ý / đã rút):")
+    # v15.4: đếm qua function (login người không đọc contacts/consents)
     cons = {p: (g, w) for p, g, w in q(
-        "select purpose, count(*) filter (where granted), "
-        "count(*) filter (where not granted) from v_consent_current "
-        "group by purpose").fetchall()}
+        "select * from crm_counts()").fetchall()}
+    out.append(f"Liên hệ trong vault: {cons.pop('*', (0, 0))[0]}")
+    out.append("Đồng ý hiện hành (mục đích: đồng ý / đã rút):")
     for p in PURPOSES:
         g, w = cons.get(p, (0, 0))
         out.append(f"  {p}: {g} / {w}")
@@ -607,34 +566,27 @@ def report(conn, regions=None) -> str:
     return "\n".join(out)
 
 
-def handoff_payload(conn, lead_id, dealer_code, keys) -> dict:
+def handoff_payload(conn, lead_id, dealer_code, keys, by) -> dict:
     """Payload cho NGƯỜI chuyển lead tới đại lý (hệ thống không gửi).
     Luôn có lead_id/province/intent/question (đã mask). PII giải mã CHỈ
     khi lead có contact VÀ consent dai_ly ĐÍCH DANH đại lý này hiện hành
     — ngược lại các key PII không có mặt."""
     f, _ = keys
-    lead = conn.execute(
-        "select dealer_code, province, intent, question, contact_id "
-        "from leads where id = %s", (lead_id,)).fetchone()
-    if lead is None:
-        raise ValueError(f"không có lead #{lead_id}")
-    if lead[0] != dealer_code:
-        raise ValueError(f"lead #{lead_id} không gán cho {dealer_code}")
-    st = conn.execute("select status from dealers where code = %s",
-                      (dealer_code,)).fetchone()
-    if st is None or st[0] != "active":
-        raise ValueError(f"đại lý {dealer_code} không active")
+    # v15.4 (P10.1): function SECURITY DEFINER kiểm lead/đại lý/đồng ý dai_ly
+    # đích danh + ghi log `crm_handoff` cùng transaction; ciphertext CHỈ trả
+    # khi có đồng ý (login người không đọc `contacts`). Giải mã ở đây.
+    with conn.transaction():
+        prov, intent, question, pii, *enc = _fn(
+            conn, "select * from crm_handoff_human(%s, %s, %s)",
+            (lead_id, dealer_code, by), by, "sales", "handoff",
+            lead_id).fetchone()
     payload = {"lead_id": lead_id, "dealer": dealer_code,
-               "province": lead[1], "intent": lead[2],
+               "province": prov, "intent": intent,
                # gate v14 (F02): scrub_user che cả tên/địa chỉ — lead cũ
                # (convlog trước v14.1) chỉ đã qua _mask_pii SĐT/email.
-               "question": scrub_user(lead[3] or "")[0]}
-    if lead[4] is not None and can_contact(conn, lead[4], "dai_ly",
-                                           dealer_code):
-        c = conn.execute(
-            "select phone_enc, name_enc, email_enc, address_enc "
-            "from contacts where id = %s", (lead[4],)).fetchone()
-        for k, tok in zip(("phone", "name", "email", "address"), c):
+               "question": scrub_user(question or "")[0]}
+    if pii:
+        for k, tok in zip(("phone", "name", "email", "address"), enc):
             v = unseal(f, tok)
             if v is not None:
                 payload[k] = v
@@ -883,12 +835,8 @@ def main(argv=None) -> int:
         elif op == "report":
             print(report(conn, regions))
         elif op == "handoff":
-            payload = handoff_payload(conn, args.handoff, args.dealer, keys)
-            pii = "phone" in payload
-            with conn.transaction():
-                _log(conn, by, "crm_handoff", "lead", args.handoff,
-                     {"lead_id": args.handoff, "dealer": args.dealer,
-                      "pii_included": pii})
+            payload = handoff_payload(conn, args.handoff, args.dealer, keys,
+                                      by)
             conn.commit()
             print("[ok] payload cho NGƯỜI chuyển tới đại lý (hệ thống "
                   "không gửi):")

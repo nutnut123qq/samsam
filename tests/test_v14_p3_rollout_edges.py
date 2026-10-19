@@ -140,7 +140,11 @@ def test_report_outputs_counted_distinct_without_sample(cdb, tmp_path):
     assert o["outputs"] == 2 and o["uncounted"] == [] and o["human"] == 0
     rows = cdb.execute("select name, sha256, is_sample from report_outputs"
                        " order by id").fetchall()
-    assert rows[0][1] == hashlib.sha256("Rủi ro tuần 1".encode()).hexdigest()
+    # v15.2 (P8.5) FLIP có lý do: tính năng chưa vào sổ = chạy thử → bản trên
+    # đĩa mang nhãn "CHẠY THỬ — KHÔNG GỬI"; sha sổ = đúng bản trên đĩa.
+    assert rows[0][1] == hashlib.sha256(ro.label_report(
+        "ceo-risk-2026-10-05.md", "Rủi ro tuần 1", "chay_thu").encode()
+    ).hexdigest()
     assert [r[2] for r in rows] == [False, False, False, True, True]
     with pytest.raises(psycopg.Error), cdb.transaction():
         cdb.execute("delete from report_outputs")           # append-only

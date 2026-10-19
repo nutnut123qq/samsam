@@ -1,0 +1,16 @@
+# command: python withdb.py samsam_v15fix_p87 python -m pytest tests/test_v15_fix_p87.py -q -p no:cacheprovider -rA | revision: nền a05c60f + working tree v15 chưa commit (kèm vá P10.2, P8.1, P8.7) | DB: samsam_v15fix_p87 (DB mới, apply_schema --roles ×2) | exit=0 | kết quả: 10 passed (8 probe lỗi nay bị DB từ chối, 0 dòng output_reviews/0 log; 2 probe không-hồi-quy vẫn đạt)
+
+..........                                                               [100%]
+=================================== PASSES ====================================
+=========================== short test summary info ===========================
+PASSED tests/test_v15_fix_p87.py::test_p87_unknown_key_blocked
+PASSED tests/test_v15_fix_p87.py::test_p87_real_key_wrong_feature_or_source_blocked
+PASSED tests/test_v15_fix_p87.py::test_p87_wrong_sha_blocked
+PASSED tests/test_v15_fix_p87.py::test_p87_sample_blocked
+PASSED tests/test_v15_fix_p87.py::test_p87_valid_report_and_table_approved
+PASSED tests/test_v15_fix_p87.py::test_p87_content_change_old_review_not_applied
+PASSED tests/test_v15_fix_p87.py::test_p87_file_source_blocked_with_reason
+PASSED tests/test_v15_fix_p87.py::test_p87_missing_source_or_counter_blocked
+PASSED tests/test_v15_fix_p87.py::test_p87_own_review_step_or_bad_prefix_blocked
+PASSED tests/test_v15_fix_p87.py::test_p87_pl02_gate_still_blocks
+10 passed in 4.92s

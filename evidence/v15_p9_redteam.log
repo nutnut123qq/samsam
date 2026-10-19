@@ -1,0 +1,60 @@
+# P9.7 red-team: TRƯỚC (worktree a05c60f) và SAU (repo, working tree v15 p9). Không đổi nhãn/severity/ngưỡng/known_gap.
+
+===== TRƯỚC (code cũ a05c60f) =====
+# command: python scripts/redteam.py
+# cwd: $H/old_p9
+# nền: a05c60f + working tree chưa commit (sha256 git diff = 8b1f16d71d0ebffd5a586adcdbe1342270bd9c720fe804242a2b10fff8e5befa)
+# môi trường: DB tạm samsam_v15_p9 (DSN che), không mạng ngoài
+# exit: 0
+# tổng kết: [done] redteam PASS — mọi ca chặn đúng code hoặc có known_gap
+
+[redteam] bộ cố định 50 ca (luật thuần, không LLM)
+attack                tổng  chặn   lọt known-gap
+teencode                 6     6     0         0
+viet_tat                 4     4     0         0
+emoji                    5     5     0         0
+chen_khoang_trang        8     8     0         0
+homoglyph                5     5     0         0
+chia_cau                 4     4     0         0
+tieng_anh_xen            5     5     0         0
+an_y_ho_tro              6     3     3         3
+ruou_vong_vo             7     4     3         3
+tỷ lệ lọt: 6/50 = 12.0% (known-gap 6, lọt chưa xử lý 0)
+known-gap (6; critical 3) — chờ Pháp chế:
+  - rt-ay-02 [major] llm_ngam_y_suc_khoe: ẩn ý đối tượng bệnh không có động từ claim/từ cấm — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt (code llm_ngam_y_suc_khoe)
+  - rt-ay-03 [major] llm_ngam_y_suc_khoe: ẩn ý kết quả trên người bệnh ('người bị gout dùng thấy khác hẳn') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-ruou-01 [critical] ruou_cam_quang_cao: rượu nói vòng 'sâm ngâm … 40 độ' — 'sâm ngâm' trùng sản phẩm thật (sâm ngâm mật ong) nên không thêm keyword; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-ruou-02 [critical] ruou_cam_quang_cao: rượu nói vòng 'chai sâm ngâm, rót một chén' — như rt-ruou-01; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-05 [major] llm_ngam_y_suc_khoe: claim ngầm không động từ claim ('Savina cho người mong muốn kiểm soát đường huyết') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-06 [critical] ruou_cam_quang_cao: rượu nói vòng 'thức uống lên men, nồng độ mạnh' — 'lên men' trùng thực phẩm lên men thật; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+[done] redteam PASS — mọi ca chặn đúng code hoặc có known_gap
+
+
+===== SAU =====
+# command: python scripts/redteam.py
+# cwd: repo D:/code/samsam
+# nền: a05c60f + working tree chưa commit (sha256 git diff = 8b1f16d71d0ebffd5a586adcdbe1342270bd9c720fe804242a2b10fff8e5befa)
+# môi trường: DB tạm samsam_v15_p9 (DSN che), không mạng ngoài
+# exit: 0
+# tổng kết: [done] redteam PASS — mọi ca chặn đúng code hoặc có known_gap
+
+[redteam] bộ cố định 50 ca (luật thuần, không LLM)
+attack                tổng  chặn   lọt known-gap
+teencode                 6     6     0         0
+viet_tat                 4     4     0         0
+emoji                    5     5     0         0
+chen_khoang_trang        8     8     0         0
+homoglyph                5     5     0         0
+chia_cau                 4     4     0         0
+tieng_anh_xen            5     5     0         0
+an_y_ho_tro              6     3     3         3
+ruou_vong_vo             7     4     3         3
+tỷ lệ lọt: 6/50 = 12.0% (known-gap 6, lọt chưa xử lý 0)
+known-gap (6; critical 3) — chờ Pháp chế:
+  - rt-ay-02 [major] llm_ngam_y_suc_khoe: ẩn ý đối tượng bệnh không có động từ claim/từ cấm — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt (code llm_ngam_y_suc_khoe)
+  - rt-ay-03 [major] llm_ngam_y_suc_khoe: ẩn ý kết quả trên người bệnh ('người bị gout dùng thấy khác hẳn') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-ruou-01 [critical] ruou_cam_quang_cao: rượu nói vòng 'sâm ngâm … 40 độ' — 'sâm ngâm' trùng sản phẩm thật (sâm ngâm mật ong) nên không thêm keyword; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-ruou-02 [critical] ruou_cam_quang_cao: rượu nói vòng 'chai sâm ngâm, rót một chén' — như rt-ruou-01; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-05 [major] llm_ngam_y_suc_khoe: claim ngầm không động từ claim ('Savina cho người mong muốn kiểm soát đường huyết') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-06 [critical] ruou_cam_quang_cao: rượu nói vòng 'thức uống lên men, nồng độ mạnh' — 'lên men' trùng thực phẩm lên men thật; chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+[done] redteam PASS — mọi ca chặn đúng code hoặc có known_gap

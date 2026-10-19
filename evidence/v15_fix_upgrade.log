@@ -1,0 +1,11 @@
+# v15 fix — kiem nang cap tu schema v15 TRUOC va (coordinator)
+# Revision: nen a05c60f + working tree CHUA commit; sha256(git diff tru DONE.md+board)=df6d607a85589007729b7d2595601230e1b473202733c159ddc2f6d584aee26d; sha256(noi bytes 21 file moi, danh sach scratchpad final_untracked.txt)=d2ba57bb811a2ca417f94342131e2eb8761d9af6f9b089310f911e92207edfc6
+# DB samsam_v15fix_up2: schema/roles + core/golden + lich su bang CODE CU (rollout --seed, da_pmo --seed/--set-status, da_pmo --board --submit) -> apply schema/roles HIEN TAI x2 -> core_store + rollout --seed lai
+
+apply hien tai lan 1 exit 0; lan 2 exit 0
+truoc: bang 91 dong 547 don-san_pham 4 duoi agent_action_log [2, '17f108183ef4']
+sau  : bang 92 dong 547 don-san_pham 4 duoi agent_action_log [2, '17f108183ef4']
+bang moi: ['file_output_evidence'] | dong mat: khong
+store --verify-log: OK (chuoi nguyen ven); garden_director --verify: OK
+feature_rollout 73/73 co count_spec; data_platform-07.2 count_spec dung file_output_evidence: True
+8 function *_human + file_output_evidence_backup: SECURITY DEFINER, search_path co dinh, PUBLIC khong EXECUTE; app_human khong EXECUTE ham ghi bang chung, khong INSERT bang

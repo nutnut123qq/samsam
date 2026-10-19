@@ -47,7 +47,6 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import psycopg
-from psycopg.types.json import Jsonb
 
 from agents import garden
 from agents.report import write_report
@@ -111,25 +110,27 @@ def purge_sample(conn, by) -> dict:
     by = by.strip() if isinstance(by, str) else ""
     if not by:
         raise ValueError("thiếu --by (tên GĐ vùng trồng ký gỡ dữ liệu mẫu)")
+    from pipelines import auth  # lười: auth → director → ...
     with conn.transaction():
         pre = sample_precheck(conn)
         if pre["blockers"]:
             return {"ok": False, **pre}
-        n_logs = conn.execute("delete from plot_logs where source like %s",
-                              (SAMPLE_LIKE,)).rowcount
-        n_plots = conn.execute("delete from plots where source like %s",
-                               (SAMPLE_LIKE,)).rowcount
-        if (n_plots, n_logs) != (pre["plots"], pre["plot_logs"]):
-            raise RuntimeError(
-                f"số dòng xóa lệch precheck (plots {n_plots}/{pre['plots']},"
-                f" plot_logs {n_logs}/{pre['plot_logs']}) — rollback")
-        conn.execute(
-            "insert into agent_action_log (actor, action, object_type,"
-            " object_id, detail) values (%s, %s, 'plots', null, %s)",
-            (by, PURGE_ACTION, Jsonb({"plots": n_plots,
-                                      "plot_logs": n_logs})))
+        # v15.4 (P10.1): xóa qua function SECURITY DEFINER (khối farming
+        # theo login; DB kiểm lại blocker + số dòng khớp precheck).
+        try:
+            res = auth.call_human(
+                conn, "select garden_purge_sample_human(%s, %s, %s)",
+                (by, pre["plots"], pre["plot_logs"]), by=by, block="farming",
+                action="purge_sample", object_type="plots",
+                object_id="sample").fetchone()[0]
+        except auth.HumanDenied:
+            raise
+        except ValueError as e:
+            raise RuntimeError(str(e)) from None
+        if not res["ok"]:                  # blocker xuất hiện giữa chừng
+            return {"ok": False, **sample_precheck(conn)}
     conn.commit()
-    return {"ok": True, "plots": n_plots, "plot_logs": n_logs,
+    return {"ok": True, "plots": res["plots"], "plot_logs": res["plot_logs"],
             "blockers": []}
 
 
@@ -146,20 +147,23 @@ def adopt_plot(conn, plot_id, by) -> dict:
     if not by:
         raise ValueError("thiếu --by (tên GĐ vùng trồng ký nhận khoảnh)")
     plot_id = plot_id.strip() if isinstance(plot_id, str) else ""
+    from pipelines import auth  # lười: auth → director → ...
     with conn.transaction():
-        row = conn.execute("select source from plots where id = %s"
-                           " for update", (plot_id,)).fetchone()
+        row = conn.execute("select source from plots where id = %s",
+                           (plot_id,)).fetchone()
         if row is None:
             return {"ok": False, "reason": f"khoảnh {plot_id!r} không tồn tại"}
         if not row[0].startswith("sample:"):
             return {"ok": False,
                     "reason": f"khoảnh {plot_id} không phải khoảnh mẫu"}
-        conn.execute("update plots set source = %s, updated_at = now()"
-                     " where id = %s", (ADOPT_SOURCE, plot_id))
-        conn.execute(
-            "insert into agent_action_log (actor, action, object_type,"
-            " object_id, detail) values (%s, %s, 'plots', %s, %s)",
-            (by, ADOPT_ACTION, plot_id, Jsonb({"from_source": row[0]})))
+        # v15.4 (P10.1): function SECURITY DEFINER khóa dòng, kiểm lại mẫu,
+        # đổi source + log (khối farming theo login).
+        res = auth.call_human(
+            conn, "select garden_adopt_plot_human(%s, %s)", (plot_id, by),
+            by=by, block="farming", action="adopt_plot", object_type="plots",
+            object_id=plot_id).fetchone()[0]
+        if not res["ok"]:
+            return {"ok": False, "reason": res["reason"]}
     conn.commit()
     return {"ok": True, "plot_id": plot_id, "from_source": row[0]}
 
@@ -345,6 +349,19 @@ def _clean_detail(detail) -> str:
 def _sql_block(sqls: list[str]) -> list[str]:
     return ["", "SQL đối chứng:", "```sql",
             *[s + ";" for s in sqls], "```", ""]
+
+
+def bulletin_sample(conn, until, days: int = 7) -> bool:
+    """v15.2 (P8.4): bản tin kỳ có nhật ký nguồn MẪU (`source like
+    'sample:%'`) trong kỳ → True (báo cáo dựng một phần trên số mẫu, không
+    đếm là đầu ra thật của farming-02)."""
+    until_d = _coerce_until(until)
+    end = datetime(until_d.year, until_d.month, until_d.day,
+                   tzinfo=VN_TZ) + timedelta(days=1)
+    return bool(conn.execute(
+        "select exists (select 1 from plot_logs where source like %s and"
+        " ts >= %s and ts < %s)",
+        (SAMPLE_LIKE, end - timedelta(days=days), end)).fetchone()[0])
 
 
 def build_bulletin(conn, until, days: int = 7, schedule=None) -> str:
@@ -571,7 +588,11 @@ def main(argv=None) -> int:
             _print_precheck(pre)
             return 0
         if args.purge_sample:
-            res = purge_sample(conn, args.by)
+            try:
+                res = purge_sample(conn, args.by)
+            except auth.HumanDenied as e:
+                print(f"[err] DB từ chối: {e} — không đổi gì", file=sys.stderr)
+                return 1
             if not res["ok"]:
                 _print_precheck(res)
                 print("[err] còn blocker — KHÔNG gỡ. Xử lý theo từng "
@@ -582,7 +603,10 @@ def main(argv=None) -> int:
                   f"'{PURGE_ACTION}'")
             return 0
         if args.adopt_plot:
-            res = adopt_plot(conn, args.adopt_plot, args.by)
+            try:
+                res = adopt_plot(conn, args.adopt_plot, args.by)
+            except auth.HumanDenied as e:
+                res = {"ok": False, "reason": f"DB từ chối: {e}"}
             if not res["ok"]:
                 print(f"[err] {res['reason']} — không đổi gì",
                       file=sys.stderr)
@@ -594,7 +618,8 @@ def main(argv=None) -> int:
             return 0
         text = build_bulletin(conn, until, args.days, schedule)
         path = write_report(text, Path(args.out_dir),
-                            f"garden-week-{until.isoformat()}.md")
+                            f"garden-week-{until.isoformat()}.md",
+                            sample=bulletin_sample(conn, until, args.days))
         print(f"[done] {path}")
         return 0
     except RuntimeError as e:

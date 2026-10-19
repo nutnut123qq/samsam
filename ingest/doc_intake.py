@@ -373,17 +373,23 @@ def list_pending(conn) -> list[tuple]:
 def set_review(conn, sha: str, status: str, by: str) -> bool:
     """pending_review → verified|rejected (1 transaction). verified kéo
     `document_fields.verified=true`; rejected giữ field false. Không ở
-    pending_review → False, không update."""
-    cur = conn.execute(
-        "update documents set status = %s, verified_by = %s,"
-        " verified_at = now() where sha256 = %s and status = 'pending_review'",
-        (status, by, sha))
-    if cur.rowcount != 1:
+    pending_review → False, không update.
+    v15.4 (P10.1): qua function SECURITY DEFINER `doc_review_human` —
+    danh tính theo login Postgres (khối legal_hr), + log `doc_<status>`;
+    DB từ chối danh tính → `auth.HumanDenied`."""
+    from pipelines import auth  # lười: auth → director → ...
+    try:
+        ok = auth.call_human(
+            conn, "select doc_review_human(%s, %s, %s)", (sha, status, by),
+            by=by, block="legal_hr",
+            action="verify" if status == "verified" else "reject",
+            object_type="document", object_id=sha[:12]).fetchone()[0]
+    except BaseException:
+        conn.rollback()
+        raise
+    if not ok:
         conn.rollback()
         return False
-    if status == "verified":
-        conn.execute("update document_fields set verified = true"
-                     " where sha256 = %s", (sha,))
     conn.commit()
     return True
 
@@ -450,12 +456,23 @@ def main(argv: list[str] | None = None) -> int:
                 conn.rollback()
                 print(f"[err] {why} — không đổi gì")
                 return 1
-            if not set_review(conn, sha, status, by):
+            try:
+                done = set_review(conn, sha, status, by)
+            except auth.HumanDenied as e:
+                print(f"[err] DB từ chối: {e} — không đổi gì")
+                return 1
+            if not done:
                 print(f"[err] {sha[:12]} không tồn tại hoặc không ở"
                       " pending_review — không đổi gì")
                 return 1
             print(f"[ok] {sha[:12]} → {status} bởi {by}")
             return 0
+        # v15 P12.1: chính sách cổng tắt loader (data/loader_gate.json) —
+        # chưa cấu hình + tính năng tắt → không nhận tài liệu mới.
+        from pipelines import loader_gate
+        if why := loader_gate.check("doc_intake", conn):
+            print(f"[rollout] {why}", flush=True)
+            return 2
         counts = intake(_dir_env("DOC_INTAKE_DIR", ROOT / "data" / "intake"),
                         _dir_env("DOC_ORIGINALS_DIR",
                                  ROOT / "data" / "originals"),

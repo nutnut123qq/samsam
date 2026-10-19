@@ -1,0 +1,22 @@
+# v15 fix — FULL pytest SAU ban va cuoi (coordinator, 18/10/2026)
+# Revision: nen a05c60f + working tree CHUA commit; sha256(git diff tru DONE.md+board)=df6d607a85589007729b7d2595601230e1b473202733c159ddc2f6d584aee26d; sha256(noi bytes 21 file moi)=d2ba57bb811a2ca417f94342131e2eb8761d9af6f9b089310f911e92207edfc6; code-only (tru them AGENTS.md)=f44bdf34eeee2dc8112f9e067ccfdb7fd8969e2be8c2f0e6007cb844852e6af6
+# Lenh: python -m pytest -q -ra -p no:cacheprovider
+
+## Lan 1 — DB samsam_v15fix_full (dung moi: apply_schema --roles x2, core_store, golden_store): EXIT 1
+# 48:29 — may tai nang; 4 FAIL = 3 test do thoi gian test_v14_rules_linear_on_long_input (nguong 30s) + 1 socket test_b2b_form ConnectionAborted; file lien quan KHONG doi trong vong va (pii.py chi khac CRLF)
+FAILED tests/test_b2b_form.py::test_post_wrong_type_415_and_429 - ConnectionA...
+FAILED tests/test_v14_p1_pii_guardrail.py::test_v14_rules_linear_on_long_input[ten_cue]
+FAILED tests/test_v14_p1_pii_guardrail.py::test_v14_rules_linear_on_long_input[ut]
+FAILED tests/test_v14_p1_pii_guardrail.py::test_v14_rules_linear_on_long_input[weak_low]
+4 failed, 6199 passed, 3 skipped in 2909.59s (0:48:29)
+EXIT 1
+# Chay rieng 4 test do x3 tren cung DB: 17 passed / 17 passed / 17 passed
+
+## Lan 2 — DB samsam_v15fix_full2 (dung moi), CUNG revision: EXIT 0
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+6203 passed, 3 skipped in 2098.04s (0:34:58)
+EXIT 0
+# 3 skipped = test_dr_drill can docker image postgres -> SKIP/UNVERIFIED, KHONG coi da kiem DR

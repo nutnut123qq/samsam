@@ -370,7 +370,9 @@ ACTIONS = ("approve", "reject", "override_qa", "schedule",
            "intake", "approve_price", "sign", "issue", "revoke",
            "set_status", "promote", "severe", "disable", "ack", "verify",
            "consent", "assign", "handoff", "load_dealers", "purge_sample",
-           "adopt_plot")
+           "adopt_plot",
+           # v15.4 (p10): `ra_kenh --mark-removed` đóng đợt vi phạm kênh.
+           "close_violation")
 NON_HUMAN = ("agent:", "system:", "auto_policy:")
 DIRECTORS_DIR = ROOT / "data" / "directors"
 _APPROVAL_FORCE: bool | None = None   # test ép chế độ (tests/conftest.py)
@@ -655,6 +657,63 @@ def cli_gate(conn, by, block, action, object_type, object_id, *,
         return None
     deny_log(conn, by, block, action, object_type, object_id, why, env=env)
     return why
+
+
+def cli_identity(conn, by, object_type, object_id, *, action="record",
+                 env=None) -> str | None:
+    """v15.4 (P10.2) cổng cho NHẬP LIỆU / THỰC THI mục đã duyệt ở CLI (không
+    phải quyết định — không đối chiếu `approvers` khối) → lý do chặn | None.
+    Mọi chế độ: người rỗng / `agent:`|`system:`|`auto_policy:` → chặn. Chế độ
+    thực thêm: `--by` phải là tài khoản users file có `db_login` khớp login
+    Postgres đang dùng (không ghi thay tên người khác). Bị chặn →
+    `authz_denied`."""
+    who = by.strip() if isinstance(by, str) else ""
+    why = None
+    if not who:
+        why = "thiếu người thực hiện (--by)"
+    elif not is_human(who):
+        why = (f"'{who}' không phải người — agent/hệ thống không ghi thay "
+               f"người")
+    elif approval_enforced(env):
+        entry = load_users().get(who.casefold())
+        if entry is None:
+            why = f"'{who}' chưa có tài khoản đăng nhập/vai trò (users file)"
+        else:
+            _, why = _login_match(entry, session_login(conn), "cli")
+    if why:
+        deny_log(conn, by, None, action, object_type, object_id, why, env=env)
+    return why
+
+
+# ---------- v15.4 (P10.1) ghi qua function nghiệp vụ SECURITY DEFINER ----------
+
+class HumanDenied(ValueError):
+    """DB từ chối danh tính/ủy quyền của login đang dùng (SQLSTATE 42501 —
+    `human_actor`: login chưa ánh xạ người, `--by` khác người của login,
+    khối ngoài phạm vi, agent/system)."""
+
+
+def _db_primary(e) -> str:
+    prim = getattr(getattr(e, "diag", None), "message_primary", None)
+    return (prim or type(e).__name__).strip()[:300]
+
+
+def call_human(conn, sql, args=(), *, by, block, action, object_type,
+               object_id):
+    """Gọi function ghi `*_human` (docs/schema.sql khối v15.4) → cursor.
+    DB từ chối quyền (42501) → `authz_denied` (chế độ thực, không commit
+    việc dở của caller) + `HumanDenied`. Function từ chối nghiệp vụ (`raise
+    exception` — trạng thái đổi, không tồn tại...) → `ValueError(thông điệp)`
+    (không kèm DETAIL)."""
+    import psycopg
+    try:
+        return conn.execute(sql, args)
+    except psycopg.errors.InsufficientPrivilege as e:
+        why = _db_primary(e)
+        deny_log(conn, by, block, action, object_type, object_id, why)
+        raise HumanDenied(why) from None
+    except psycopg.errors.RaiseException as e:
+        raise ValueError(_db_primary(e)) from None
 
 
 # Dịch vụ chạy KHÔNG phải người: mỗi dịch vụ 1 login riêng `in role <role>`

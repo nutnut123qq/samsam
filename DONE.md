@@ -4,7 +4,7 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version đang mở: **(không — loop /cycle 10 tiếp)**
+Version hiện tại: **v15 — phát hành mã nguồn 19/10/2026; chưa triển khai/nghiệm thu**
 
 v2.4-polish đóng 2026-10-11 (cold-check auditor lạ profile reviewer
 — đợt 1 FIX 1 MINOR `_WHERE_INFO_RE` greedy nuốt 'ở đâu' thứ hai
@@ -23,7 +23,30 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
-## Trạng thái bàn giao (16/10/2026)
+## Phát hành mã nguồn v15 — 19/10/2026
+
+User đã ủy quyền commit, gộp fast-forward vào `main` và push v15 (nền `a05c60f`).
+Phần code được kiểm khớp fingerprint `f44bdf34…`; 21 file mới `d2ba57bb…`.
+Full pytest sau bản vá cuối: **6203 passed, 3 skipped, 0 failed**; controller
+chạy độc lập lại **60/60 probe đạt** (`evidence/v15_fix_controller_review.log`).
+Quét phần phát hành không thấy key/DSN cấu hình thật/private key; các khớp
+chuỗi mật khẩu/DSN ví dụ là dữ liệu test đã có ở baseline.
+
+Đây là phát hành MÃ NGUỒN, **chưa deploy, chưa nghiệm thu**; 86/86 mục vẫn
+`chua_nghiem_thu`. Các blocker và giới hạn trong board/runbook giữ nguyên.
+DR còn 3 skip; red-team còn 6 known_gap (3 critical); mật khẩu đã lộ trong
+lịch sử Git chưa có bằng chứng rotation. Không đổi credential hoặc xóa lịch sử.
+
+Các câu "chưa commit/merge/push" và SHA `main` trong các checkpoint bên dưới
+là lịch sử TRƯỚC lần phát hành này, không phải trạng thái Git sau phát hành.
+
+## Trạng thái trước phát hành (lịch sử kiểm chứng v15)
+
+`main` và ref `origin/main` = `a05c60f`; v14 đã gộp/push. Nhánh đang làm
+`v15-hop-dong`, thay đổi chưa commit; kết luận FIX, còn lỗi code ở A2.
+Chi tiết và evidence trong mục v15 dưới đây. Chưa triển khai/nghiệm thu.
+
+### Lịch sử bàn giao trước khi gộp v14 (giữ để đối chiếu)
 
 - `main` = `f96773a` (v13 gộp fast-forward từ `v13-hop-dong`, ĐÃ push
   GitHub 16/10/2026 theo duyệt của user; quét secret trước push sạch).
@@ -43,6 +66,181 @@ ghi detail khi nhập).
   `v14-hop-dong`, phần thiếu code CÒN LẠI đã phân công lane v15 (chưa làm),
   phần chờ dữ liệu/quyết định bên ngoài giữ blocker — bảng A / A2 / B ở
   `docs/handover/v13-board.md` mục "Còn mở (16/10/2026)".
+
+**Đính chính (ghi 16/10/2026, đầu phiên v15):** các câu "CHƯA vào main, CHƯA push" của v14 đúng tại thời điểm viết (commit `a05c60f` trên `v14-hop-dong`), NHƯNG sau đó cùng ngày v14 ĐÃ fast-forward vào `main` và ĐÃ push (`f96773a..a05c60f`, 24 commit; `main` = `origin/main` = `a05c60f`). Lane/worktree/DB tạm v14 đã dọn.
+
+## v15 fix — 3 lỗi P10.2, P8.1, P8.7 (18/10/2026, CHƯA commit)
+
+**Git.** Nhánh `v15-hop-dong`, nền `main` = `origin/main` = `a05c60f`; toàn bộ v15 + bản vá này ở working tree, **chưa commit/merge/push/deploy**. Revision đã kiểm: sha256(git diff trừ DONE.md + board) `df6d607a85589007729b7d2595601230e1b473202733c159ddc2f6d584aee26d`, sha256(nối bytes 21 file mới, trừ `.agents/`, `founder/`, `lv2-market-top.png`) `d2ba57bb811a2ca417f94342131e2eb8761d9af6f9b089310f911e92207edfc6`; phần code (trừ thêm AGENTS.md — chỉ sửa tài liệu sau full) `f44bdf34eeee2dc8112f9e067ccfdb7fd8969e2be8c2f0e6007cb844852e6af6`. Bản trước vá để chứng minh probe: worktree tạm ngoài repo = `a05c60f` + diff v15 hash `0950099…` (đã xóa sau khi xong).
+
+**Kết quả từng lỗi** (code verified ≠ triển khai ≠ nghiệm thu; `acceptance_status` không đổi):
+- **P10.2 — CODE VERIFIED.** 7 function SECURITY DEFINER (`milestone_set_status_human`, `milestone_apply_due_human`, `org_batch_rows_human`, `org_handover_human`, `channel_post_mark_removed_human`, `anchor_receipt_human`, `b2b_quote_event_human`; `search_path` cố định, REVOKE PUBLIC, EXECUTE chỉ app_human, danh tính `human_actor()` theo `session_user`); `da_pmo`/`da_b2b`/`ra_kenh`/`anchor`/`kd_quote` gọi qua `auth.call_human`; thu hồi INSERT cột `b2b_quote_events` của app_human. Probe `tests/test_v15_fix_p102.py`: đúng người (login thật không owner) exit 0 + DB đổi + chạy lại no-op; sai khối/`--by` giả/không ánh xạ/agent/SQL trực tiếp/loader → chặn, 0 thay đổi.
+- **P8.1 — CODE VERIFIED.** Convlog có `provenance` đặt TỪ NƠI GHI (`live` chỉ khi gửi qua transport thật đăng ký; mock/replay/test → `sample` + `is_sample`; `zalo_mock` đặt `CONV_SAMPLE`; Streamlit `demo`); `rollout._conv_row` chỉ tính `live`; dòng cũ thiếu provenance KHÔNG tính (liệt kê "dòng thiếu provenance"). Probe `tests/test_v15_fix_p81.py` gồm chạy đường ghi `zalo_mock` thật và 50 dòng mẫu × 5 ngày làm việc không đạt cổng.
+- **P8.7 — VẪN CHƯA XONG (giữ theo chỉ đạo user 18/10).** Đã làm: `output_review_human` tự kiểm khóa/tính năng/nguồn/sha bằng `count_spec` + `rollout_db_outputs` (P8.7); `output_pending_human` cho người liệt kê/duyệt qua CLI không cần SELECT bảng nguồn (P8.7b); sổ `file_output_evidence` append-only, CHỈ `svc_backup` ghi qua `file_output_evidence_backup` khi `db_backup` thành công, catalog data_platform-07.2 đếm từ sổ này (P8.7c). Probe `test_v15_fix_p87/p87b/p87c.py`: backup hợp lệ liệt kê + duyệt bằng CLI login không owner; khóa giả, sai sha, mẫu, phiên bản cũ, sai tính năng/nguồn, sai khối, `--by` giả → chặn, 0 `output_reviews`; app_human/agent/loader/bks không ghi được bằng chứng. Còn mở: owner chạy lại `rollout --seed` sau triển khai; backup trước bản vá không có bằng chứng DB; chưa có login `svc_backup` + người duyệt data_platform thật; ngưỡng số lượng sales-01 (convlog) vẫn ở Python.
+
+**Kiểm chứng (coordinator tự chạy, DB test riêng, KHÔNG DB `.env`):**
+- 5 file probe trên bản trước 3 vá: **51 failed / 9 passed** (9 = ca không hồi quy/vốn đã chặn); bản tích hợp: **60 passed** — `evidence/v15_fix_probes_rerun.log`.
+- Nâng cấp từ v15 trước vá có lịch sử (code cũ tạo): áp schema/roles hiện tại ×2 exit 0, 91→92 bảng (`file_output_evidence`), 547→547 dòng, 4 đơn giữ liên kết sản phẩm, đuôi `agent_action_log` không đổi, `--verify-log`/`garden_director --verify` OK, `--seed` lại → 73/73 có `count_spec`, 07.2 đếm từ sổ DB — `evidence/v15_fix_upgrade.log`.
+- Full `python -m pytest -q -ra -p no:cacheprovider` sau bản vá cuối: lần 1 (`samsam_v15fix_full`, 48:29, máy tải nặng) 6199 passed/**4 failed**/3 skipped — 3 test đo thời gian `test_v14_rules_linear_on_long_input` (ngưỡng 30 s) + 1 socket `test_b2b_form` (file liên quan không đổi trong vòng vá); chạy riêng ×3 đều 17/17 pass; lần 2 cùng revision (`samsam_v15fix_full2`): **6203 passed, 3 skipped, 0 failed**, exit 0 — `evidence/v15_fix_full_pytest.log`. 3 skipped = `test_dr_drill` cần Docker → SKIP/UNVERIFIED.
+- `ruff check . --exclude .agents --exclude founder` sạch; `agent_eval --deterministic --no-record` exit 0; `dpia_draft --check` khớp; `redteam.py` exit 0 nhưng lọt **6/50 known_gap (3 critical)** — không phải 0 lỗi nghiêm trọng — `evidence/v15_fix_gates.log`.
+- P11 hồi quy: đơn thật giữ liên kết qua 2 lần nạp lại — `evidence/v15_fix_p11_regression.log`. Log của từng lane vá: `evidence/v15_fix_P102_*`, `v15_fix_P81_*`, `v15_fix_P87_*`, `v15_fix_P87b_*`, `v15_fix_P87c_*`.
+
+**Còn mở ngoài 3 lỗi (không vá trong phạm vi này):** KPI/lead đọc convlog (`ops_monthly`, `cockpit`, `lead_store`) chưa lọc provenance; `rollout --status` không in mục "dòng thiếu provenance"; `xnqc` nhãn metadata log từ chối; các dòng dài. **Bảo mật:** mật khẩu DB trong `.env` vẫn khớp giá trị đã lộ trong lịch sử Git — chưa rotation, chưa rewrite history.
+
+## v15 (chưa commit)
+
+**Kiểm chứng lại v15 (17/10/2026): FIX — chưa khép toàn bộ A2.**
+Nhánh `v15-hop-dong`, nền `a05c60f`; chưa commit/merge/push/deploy.
+Hash diff tracked (trừ DONE.md + board) `095009906007c28260d47db86ba73f704d578fd970eb24707b9bc79480014bcd`
+và hash nối bytes 16 file mới `638a79ba7400adcccab71896022351fb097eb22d86ccac6f995694f630b6014b`
+khớp bàn giao; không sửa code trong lần kiểm này (`evidence/v15_resume_revision.log`).
+
+- Full `python -m pytest -q -ra -p no:cacheprovider` trên DB mới `samsam_v15_verify_20261016_234534`:
+  **6143 passed, 3 skipped, 0 failed**, exit 0 (1445.06s (0:24:05)); schema/roles áp 2 lần + core/golden trước test.
+  Evidence: `evidence/v15_resume_pytest.log`. Ba skip DR cần Docker vẫn UNVERIFIED.
+- P11 độc lập: baseline `a05c60f` mất liên kết sau cả 2 lần nạp; working tree v15
+  giữ liên kết/id/created_at, 0 `order_history` mới; đổi tên và retire vẫn giữ liên kết.
+  Evidence: `evidence/v15_resume_p11_authz_probes.log`.
+- Chạy lại Ruff với `--exclude .agents --exclude founder`, 13 suite tất định
+  `agent_eval --deterministic --no-record`, DPIA `--check`: đạt. Red-team luật thuần
+  còn 6/50 known_gap, 3 critical; exit 0 không có nghĩa 0 lỗi nghiêm trọng.
+- **P10.2 CHƯA XONG (code):** login giả lập không owner, được ánh xạ `human_logins`,
+  `users.json`, `approvers` khối ceo vẫn chạy `da_pmo --set-status` exit 2:
+  `permission denied for table project_milestones` (không bị từ chối ủy quyền).
+  Test hiện có kiểm qua cổng nhưng không bắt buộc thao tác nghiệp vụ thành công;
+  cần khép đường ghi tối thiểu và test ca đúng người thành công.
+- **P8.1 CHƯA XONG (code):** `_conv_row` vẫn đếm bản ghi `msg_id=mock0-...`,
+  kể cả `is_sample=True`; đây là lỗi provenance của điều kiện đầu ra thật.
+  Evidence: `evidence/v15_resume_pure_probes.log`.
+- **P8.7 CHƯA XONG (code):** login người khối ceo gọi SQL trực tiếp
+  `output_review_human` với `ar:does-not-exist` + sha bất kỳ vẫn ghi được duyệt.
+  Chưa chứng minh dòng duyệt giả này làm vượt cổng; không được ghi rằng đã vượt cổng.
+  Evidence: `evidence/v15_resume_p11_authz_probes.log`.
+- Đính chính nhận xét nhỏ về `xnqc --add`: nhánh thành công ghi đúng `xnqc_add`
+  trong function DB; nhãn `set_status` sai ở metadata log từ chối của `auth.call_human`.
+- **Bảo mật còn mở:** mật khẩu cấu hình vẫn khớp giá trị đã lộ trong lịch sử Git;
+  không rotation, không rewrite history trong phiên này. Quét đúng giá trị secret
+  cấu hình trên file v15/evidence không thấy key/DSN thật; 2 khớp chuỗi mật khẩu
+  là số điện thoại giả trong test/doc có sẵn ở baseline (không in giá trị).
+  Evidence: `evidence/v15_resume_secret_scan.log`.
+
+Các lỗi code trên giữ ở A2, không chuyển thành phụ thuộc Bên B. Quyết định/cấu hình
+thật ở bảng B vẫn chờ người có thẩm quyền; 86/86 mục vẫn `chua_nghiem_thu`.
+Chỉ cập nhật tài liệu/evidence, không vá thêm code hay dọn DB v15 của phiên khác.
+DB kiểm chứng mới của phiên này giữ lại: xem tên DB trong các log `v15_resume_*`.
+
+
+**Kiểm chứng cuối (coordinator, 17/10/2026, SAU vá review — chưa commit):** revision = nền `a05c60f` + working tree, sha256(git diff trừ DONE.md+board) `095009906007c28260d47db86ba73f704d578fd970eb24707b9bc79480014bcd`, sha256(untracked mới) `638a79ba7400adcccab71896022351fb097eb22d86ccac6f995694f630b6014b`. Full `python -m pytest -q -ra` trên DB dựng mới `samsam_v15_f2`: **6143 passed, 3 skipped, 0 failed**, exit 0 (32:27; 3 skipped = `test_dr_drill` cần docker → SKIP/UNVERIFIED) — `evidence/v15_final_pytest.log`. Probe P11 độc lập (đơn thật → `core_store` nạp lại 2 lần): code `a05c60f` MẤT liên kết, code v15 GIỮ — `evidence/v15_final_p11_probe.log`. Probe không DB P9 (ký tự vô hình, 'giao đau' giữ an toàn, câu bán hàng, input 20k ZWSP 0,54 giây, `scrub_user`, `record_suggestion`) đạt. `ruff check .` sạch khi loại 2 thư mục untracked KHÔNG thuộc v15 (`.agents/`, `founder/` — có sẵn lỗi ruff riêng). Số full trong đoạn "Trạng thái Git"/gate bên dưới (6140 passed) là TRƯỚC vá review. **Rủi ro bảo mật CHƯA xử lý:** mật khẩu DB trong `.env` trùng giá trị đã lộ trong lịch sử git (`60d9acf^:evidence/v82_pytest.log`, `…v82_pytest_vong1.log`; kiểm bằng boolean, không in giá trị) — chưa có bằng chứng rotation.
+
+**Trạng thái Git.** Nhánh `v15-hop-dong`, nền `main` `a05c60f` (= `origin/main`).
+Toàn bộ v15 nằm ở working tree CHƯA commit: 72 file tracked đổi + 16 file
+untracked mới (`pipelines/loader_gate.py`, 3 file `data/*.json` chính sách,
+6 timer `deploy/onprem/systemd/samsam-job-*.timer`, 6 file `tests/test_v15_*.py`).
+Revision gate: sha256(git diff trừ DONE.md + board) `9ec857e9a8ff243b4f0536b2094faf9a5b285e0ae442c32e365c78521de4eb68`,
+sha256(danh sách untracked mới, trừ `lv2-market-top.png`) `9bcdc973b1d9456aa7c33f2dd7185aec1d53ca49945cb9533fbc21877fdb1b18`.
+**KHÔNG commit, KHÔNG merge, KHÔNG push, KHÔNG deploy** (prompt v15 chưa
+cấp quyền). Khi commit: `evidence/v15_*.log` cần `git add -f` (`*.log` bị
+gitignore); không stage `lv2-market-top.png`.
+
+**Code verification (gate integrator 16/10/2026, DB tạm, không phải DB `.env`):**
+- Full pytest DB dựng mới `samsam_v15_g`: **6140 passed, 3 skipped, 0 failed**
+  (27 phút). 3 skipped = `tests/test_dr_drill.py` cần docker image postgres →
+  SKIP/UNVERIFIED (không có docker trên máy), không tính là PASS —
+  `evidence/v15_gate_pytest.log`.
+- `apply_schema --roles` ×2 sạch (91 bảng), `ruff check .` sạch,
+  `agent_eval --deterministic` exit 1 = từ chối ghi `eval_runs` vì tree bẩn
+  (đúng thiết kế); chạy lại `--no-record`: 13/13 suite tất định PASS;
+  `dpia_draft --check` khớp; `redteam.py` 50 ca: lọt 6/50 = known_gap 6
+  (critical 3: rt-ruou-01, rt-ruou-02, rt-llm-06), lọt chưa xử lý 0, exit 0 —
+  bằng baseline, không đổi nhãn/ngưỡng — `evidence/v15_gate_gates.log`.
+- Thử NÂNG CẤP từ `a05c60f` (worktree tạm ngoài repo, đã xóa; DB
+  `samsam_v15_up`): schema/roles + core/golden bằng code cũ, lịch sử giả lập
+  (3 đơn thật `manual` trỏ sản phẩm crawl, claim manual trỏ sản phẩm, hàng duyệt
+  duyệt/từ chối → chain `agent_action_log`, `plot_logs` chain, rollout seed +
+  sự cố nghiêm trọng, quyết toán thật + MẪU, 1 dòng `report_outputs`) → schema
+  HIỆN TẠI ×2 + core_store mới ×2 + golden_store mới: 590 → 590 dòng, 0 dòng
+  mất, 3 bảng mới (`human_logins`, `output_reviews`, `product_sync_log`);
+  đơn thật + claim manual GIỮ `product_id`, id/created_at sản phẩm không đổi,
+  0 `order_history` mới, 0 `product_sync_log` (nạp y nguyên = idempotent);
+  `store --verify-log` OK (8), `garden_director --verify` OK, đuôi chain giữ
+  (#16 / #12 cùng hash); quyền: app_human không ghi bảng nghiệp vụ, 16 function
+  `*_human` SECURITY DEFINER + search_path cố định chỉ app_human EXECUTE;
+  append-only 3 bảng mới chặn UPDATE/DELETE/TRUNCATE — `evidence/v15_gate_upgrade.log`.
+- Probe A2 ĐỘC LẬP trên kết quả tích hợp (câu/kịch bản của gate, không dùng
+  lại script lane): 20 kiểm không DB + 35 kiểm E2E bằng login Postgres THẬT
+  không owner/superuser qua subprocess chế độ thực (`APPROVAL_ENFORCE=1`) trên
+  DB `samsam_v15_gp` + test chỉ định + P7.5 chạy lặp: **0 FAIL**, không có lỗi
+  do tích hợp nên gate KHÔNG sửa code — `evidence/v15_gate_probes.log`.
+
+| Mã | Kết quả gate | Evidence | Còn mở (vì sao) |
+|---|---|---|---|
+| P11.1 | xong code — core_store mới bằng login `svc_loader` thật: đơn thật giữ `product_id`, 0 `order_history` mới; nâng cấp từ a05c60f giữ liên kết | probes E2E P11.1, upgrade log | Đơn thật đã bị null trước v15 không sửa hồi tố — vận hành/Bên B quyết khôi phục từ `order_history` |
+| P11.2 | xong code — đổi tên → `changed`; biến mất → `retired_at` + `retired`; id của nguồn `manual` → `ambiguous`, không đè; `db_role` = login loader; nạp lại 0 sự kiện mới | probes E2E P11.2 | — |
+| P11.3 | xong code — products.jsonl rỗng/chỉ `_doc`/JSON hỏng/`{}`/trùng id/thiếu → exit 1, orders/products/claims không đổi | probes E2E P11.3 (6 biến thể) | — |
+| P10.1 | xong code — golden `--approve-price`, crm `--load-dealers`, rollout `--disable/--promote` bằng login người (app_human) ghi qua function; sai khối/`--by` giả bị chặn + `authz_denied`; UPDATE thẳng bị `permission denied` | probes E2E P10.1; full pytest `test_v15_p10_*` | Bên B xác nhận phương án + tạo login người + điền `human_logins`/`db_login`/`approvers` |
+| P10.2 | **CHƯA XONG — đường ghi người hợp lệ còn lỗi quyền** — `da_pmo --set-status` agent:/sai khối, `kd_quote --outcome` `--by` người khác bị chặn + `authz_denied` | probes E2E P10.2 | Hai bên xác nhận bảng xếp loại (runbook 9.7); các lệnh này qua cổng vẫn ghi bảng trực tiếp → dưới app_human báo lỗi quyền (fail-closed) |
+| P10.3 | xong code — login `bks_reader`: tắt → không sinh, chạy thử → sinh + 1 dòng `report_outputs` đúng login; không SELECT/DELETE sổ, không đọc events | probes E2E P10.3 | — |
+| P10.4 | xong (kiểm lại) — `svc_loader` không gọi function người/`output_review_human`, không duyệt giá/phiếu lệch, không đọc `human_logins` | probes E2E P10.4 | — |
+| P9.1 | xong code — 7 câu sức khỏe gate tự chọn với WJ/BOM/soft hyphen/ZWNJ/VS16/ZWSP bị chặn, `rag.answer` 0 lời gọi AI; 5 câu bán hàng không bị chặn; 400k ký tự 0,66 s | probes P9.1 | — |
+| P9.2 | xong code | test chỉ định `test_p9_2_*` PASS | — |
+| P9.3 | xong code — từ điển thiếu lúc khởi động → fail-closed; sửa file + qua khoảng kiểm → tự phục hồi; hỏng lại → fail-closed | probes P9.3 | — |
+| P9.4 | xong code — gợi ý câu bot có tên/số nhà/SĐT không lọt vào payload | probes P9.4 | Cùng lớp chưa vá: `record_san_suggestion` + trường `answer` convlog chỉ `_mask_pii` |
+| P9.5 | xong — docstring messenger đúng thực tế | probes P9.5 | — |
+| P9.6 | xong (khóa hành vi) — 'giao đau' có dấu vẫn coi sức khỏe | probes P9.6 + test chỉ định | Pháp chế quyết có nới không |
+| P9.7 | xong (chỉ chạy) — 6/50 known_gap, critical 3, lọt chưa xử lý 0 | gates log | Pháp chế duyệt bộ ca + 6 known_gap |
+| P8.1 | **CHƯA XONG — chưa loại đủ dữ liệu mẫu** — convlog DISTINCT kênh+msg_id chỉ câu đã gửi; dòng hỏng = bad; file thiếu / BACKUP_DIR chưa cấu hình = uncounted (không phải 0) | probes P8.1 | backup chỉ lên vận hành khi có người duyệt từng bản (`--review-output`) — Bên B quyết có chấp nhận |
+| P8.2 | xong code | test chỉ định `test_p8_2_*` PASS | Ghi nhận gate: mục `budget_change` nay `created_by` = agent nên DB KHÔNG còn chặn người lập tự duyệt mục đó; chỉ `plan_status` = `cung_nguoi_duyet` chặn phiếu (và cổng `approvers` khối finance ở chế độ thực) |
+| P8.3 | xong code | test chỉ định `test_p8_3_*` PASS | — |
+| P8.4 | xong code — quét AST độc lập (agents/pipelines/scripts/ingest/connectors/app/api): 0 lời gọi `write_report` thiếu `sample=` | probes P8.4 | `scripts/health_bulletin.py` ghi báo cáo không qua `write_report` (ngoài mã) |
+| P8.5 | xong code — nhãn "CHẠY THỬ — KHÔNG GỬI" ở .md chạy thử; vận hành/csv giữ byte | probes P8.5 | — |
+| P8.6 | xong code | test chỉ định `test_p8_6_*` PASS | — |
+| P8.7 | **CHƯA XONG — SQL nhận khóa đầu ra không tồn tại** — login người khối ceo `--outputs` thấy báo cáo CHƯA DUYỆT + sha; sai khối chặn + `authz_denied`; sha cũ bị từ chối; đúng người → 1 dòng `output_reviews` (người + login + sha); INSERT thẳng bị chặn; khối khác gọi thẳng function bị từ chối | probes E2E P8.7 + test chỉ định | Bên B ủy quyền người duyệt từng khối — chưa có thì không lên vận hành |
+| P7.1 | xong code — 6 job đúng module + GIẢ ĐỊNH + timer cùng tên, không timer mồ côi | probes P7.1 | Chủ khối chỉnh khung giờ; Bên B bật timer thật |
+| P7.2 | xong — `red_alert_sweep` trỏ `red_alert_escalate` | probes P7.2 | `docs/handover/sop.md` ~dòng 734 còn câu cũ (ngoài mã) |
+| P7.3 | xong — `order_watch` qua wrapper bằng login `svc_job` thật (DSN gốc = login không tồn tại): exit 0, 0 permission denied, `job_runs` ok; JOB DSN = owner → exit 78 | probes E2E P7.3; full pytest `test_p7_3_*` (6 job) | — |
+| P7.4 | xong code — còn 3 s → timeout ≈3; 20 s → 5; 0,4 s → 0 lời gọi + bước `gui`; không hạn → 5 (transport giả) | probes P7.4 | Lần gửi đầu của Zalo vẫn timeout cố định 5 s (ngoài mã) |
+| P7.5 | xong — test chạy lặp 3/3 PASS | probes P7.5 | — |
+| P12.1 | xong code — `lead_store` bằng login `svc_loader`, tính năng TẮT + chưa cấu hình → exit 2, 0 lead | probes E2E P12.1 | Chủ khối/hai bên chọn chính sách 8 loader |
+| P12.2 | xong code — `--escalate --dry-run` (svc_job) 0 ghi; lần thật đầu ghi mốc 1 lần, 3 cảnh báo tồn GIỮ (chính sách null), chạy lại không ghi thêm | probes E2E P12.2 | Bên B quyết xử lý tồn |
+| P12.3 | xong code — `--check-routing` in CHƯA CẤU HÌNH cấp 2/ngoài giờ, không tự chọn người | probes E2E P12.3 + full pytest | Bên B/Pháp chế/BKS chọn người cấp 2/trực + giờ |
+| P12.4 | xong code — danh sách đối thủ repo chưa duyệt; agent duyệt → fail-closed | probes P12.4 | Pháp chế + QL Marketing duyệt danh sách |
+| P12.5 | xong code — chưa chọn → `tu_choi_file` + cảnh báo; chọn bởi `system:` → mặc định an toàn | probes P12.5 | GĐ Marketing chọn chính sách |
+
+**Vá review v15 (sau gate, 16/10/2026, chưa commit — 2 finding MINOR review độc lập):**
+- P10.1 `ra_kenh --partner-file`: danh tính login ↔ `--by` (`human_actor` ở DB)
+  kiểm TRƯỚC mọi ghi. Trước vá: bài vi phạm + `--by` giả → từ chối ở bước ghi
+  sổ nhưng mục `partner_post_review` đã được `director.submit` commit (0→1).
+  `docs/roles.sql`: app_human EXECUTE `human_actor` (chỉ đọc mapping của chính
+  login, không ghi).
+- P8.7/P10.1 `rollout_transition_human`: DB KHÔNG còn tin `p_evidence` — tự
+  đếm lại bằng `feature_rollout.count_spec` (cột mới, owner ghi qua
+  `rollout --seed`: CHÍNH câu SQL Python đếm từng nguồn bảng/báo cáo + cờ cần
+  duyệt + lịch ngày làm việc): ngày làm việc giai đoạn, đầu ra DISTINCT ≥ 50
+  rải ≥ 5 ngày làm việc; ≥ 10 ngày + ≥ 1 người duyệt + 0 thiếu người + 0 chưa
+  duyệt (`output_reviews`); bộ đếm chưa vào sổ / không có nguồn đếm được → từ
+  chối. Ngưỡng PL02 giữ nguyên. Kết quả ghi `evidence.db_recount`. Còn lại
+  (runbook 9.7): nguồn `file` (sales-01, data_platform-07.2) ngưỡng SỐ LƯỢNG
+  vẫn theo Python; đổi danh mục/bộ đếm/lịch nghỉ → owner chạy lại `--seed`.
+- Test hồi quy: `test_p10_1_ra_kenh_forged_by_violation_writes_nothing`,
+  `test_p8_7_db_recounts_outputs_not_evidence` — cả 2 FAIL trên bản sao
+  working tree đã tạm đảo phần vá (ngoài repo); `test_p8_7_db_recount_parity_with_python`
+  (Python ↔ DB khớp 6 số trên cùng dữ liệu 7 loại nguồn, 3 cửa sổ, có ngày lễ).
+  DB mới `samsam_v15_g3`: apply_schema --roles ×2 sạch (91 bảng) + core_store +
+  golden_store; 24 file test liên quan **1305 passed, 0 failed**; `ruff check .
+  --exclude .agents` sạch (`.agents/` untracked không thuộc repo có 115 lỗi ruff
+  sẵn). Full pytest CHƯA chạy lại sau vá (coordinator chạy) — số full pytest ở
+  trên là TRƯỚC vá review. Evidence `evidence/v15_review_fix_*.log`.
+
+**Triển khai thật: CHƯA** (không cài timer, không tạo login thật, không điền
+người ủy quyền, không bật chính sách nào). **Nghiệm thu: CHƯA** — 86/86 mục
+`acceptance_status` = `chua_nghiem_thu` (gate đã kiểm không đổi).
+
+**Đính chính sau kiểm chứng lại:** chưa khép toàn bộ phần CODE của A2.
+P10.2, P8.1 và P8.7 còn lỗi đã tái hiện; đây không chỉ là quyết định/cấu hình
+bên ngoài. Những phần khác giữ evidence và blocker riêng. **v15 chưa hoàn tất
+toàn bộ A2; C00–C11 / hợp đồng CHƯA hoàn thành**.
+DB tạm giữ lại (không drop): `samsam_v15_up`, `samsam_v15_g`, `samsam_v15_gp`
+(+ DB lane `samsam_v15_p7..p12`).
 
 ## v14 đóng (gate cuối)
 

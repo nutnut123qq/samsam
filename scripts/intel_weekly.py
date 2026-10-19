@@ -253,6 +253,14 @@ def summarize(payload: str) -> str | None:
 # `trends_related #id` (KHÔNG chép từ khóa bị loại — payload phải qua được
 # guardrail để người duyệt). Gợi ý ≠ được dùng: Quản lý Marketing duyệt;
 # agent không chạy quảng cáo/SEO. Đây là đường ghi DUY NHẤT của script.
+# v15 P12.4 — thương hiệu/xuất xứ ĐỐI THỦ theo danh sách cấu hình
+# `data/keyword_competitors.json` (khớp theo từ, không phân biệt hoa/thường/
+# dấu). Danh sách CHƯA được Pháp chế/Marketing duyệt (`trang_thai`
+# chua_duyet — mặc định repo) → từ khóa khớp vào nhóm "chờ quyết" (KHÔNG
+# vào danh sách đề xuất, không tự cho qua); đã duyệt (`duyet_boi` người +
+# `can_cu`) → theo `xu_ly`: "loai" (lý do `doi_thu`) | "cho_nguoi_quyet"
+# (vẫn nhóm chờ quyết, người quyết từng từ). File thiếu/hỏng → không đề
+# xuất gì (fail-closed). Danh sách đã duyệt đổi → đợt mới (`kw:<id>:dt-<sha>`).
 KW_FEATURE = "intel-04.2"
 KW_AGENT = "agent:intel_keywords"
 OT_KW = "keyword_suggest"
@@ -260,7 +268,10 @@ KW_REASONS = {"tu_cam": "từ cấm", "cong_dung": "công dụng ngoài công b�
               "ruou": "nhóm sản phẩm cấm quảng cáo",
               "suc_khoe": "ngữ cảnh bệnh/sức khỏe",
               "pii": "thông tin cá nhân",
-              "chi_dan_dia_ly": "chỉ dẫn địa lý chưa được xác nhận"}
+              "chi_dan_dia_ly": "chỉ dẫn địa lý chưa được xác nhận",
+              "doi_thu": "thương hiệu/xuất xứ đối thủ"}
+COMPETITORS_FILE = ROOT / "data" / "keyword_competitors.json"
+COMP_ACTIONS = ("loai", "cho_nguoi_quyet")
 
 
 class KeywordConfigError(ValueError):
@@ -303,9 +314,68 @@ def _fold_kw(q: str) -> str:
     return " ".join(unicodedata.normalize("NFC", q).casefold().split())
 
 
-def keyword_suggestions(conn, import_id: int | None = None) -> dict | None:
+def _bare(q: str) -> str:
+    """casefold + bỏ dấu (đ→d) + gộp khoảng trắng — để khớp từ đối thủ."""
+    import unicodedata
+    t = unicodedata.normalize("NFD", _fold_kw(q)).replace("\u0111", "d")
+    return "".join(c for c in t if unicodedata.category(c) != "Mn")
+
+
+def load_competitors(path: Path | None = None) -> dict:
+    """data/keyword_competitors.json → {"approved", "action", "terms",
+    "by", "ref", "sha"}. Lỗi → KeywordConfigError (fail-closed)."""
+    import hashlib
+    import json
+    import re
+    p = Path(path or COMPETITORS_FILE)
+    try:
+        doc = json.loads(p.read_bytes().decode("utf-8"))
+    except FileNotFoundError:
+        raise KeywordConfigError(f"không có file {p.name}") from None
+    except (OSError, ValueError) as e:
+        raise KeywordConfigError(f"{p.name} hỏng: {type(e).__name__}"
+                                 ) from None
+    if not isinstance(doc, dict):
+        raise KeywordConfigError(f"{p.name}: không phải object JSON")
+    terms = doc.get("danh_sach")
+    if (not isinstance(terms, list) or not terms or not all(
+            isinstance(t, str) and 2 <= len(t.strip()) <= 60 for t in terms)):
+        raise KeywordConfigError(f"{p.name}: danh_sach cần list chuỗi 2..60"
+                                 " ký tự, không rỗng")
+    st = doc.get("trang_thai")
+    if st not in ("chua_duyet", "da_duyet"):
+        raise KeywordConfigError(f"{p.name}: trang_thai chua_duyet|da_duyet")
+    by = " ".join(str(doc.get("duyet_boi") or "").split())
+    ref = " ".join(str(doc.get("can_cu") or "").split())
+    act = doc.get("xu_ly")
+    if st == "da_duyet" and (
+            not by or by.casefold().startswith(("agent:", "system:"))
+            or len(by) > 100 or not ref or act not in COMP_ACTIONS):
+        raise KeywordConfigError(
+            f"{p.name}: da_duyet cần duyet_boi (người thật) + can_cu + xu_ly "
+            + " | ".join(COMP_ACTIONS))
+    bare = sorted({_bare(t) for t in terms})
+    sha = hashlib.sha256(json.dumps([bare, act], ensure_ascii=False)
+                         .encode("utf-8")).hexdigest()
+    pats = [(t, re.compile(rf"(?<!\w){re.escape(t)}(?!\w)")) for t in bare]
+    return {"approved": st == "da_duyet", "action": act if st == "da_duyet"
+            else None, "terms": pats, "by": by or None, "ref": ref or None,
+            "sha": sha}
+
+
+def competitor_hit(q: str, comp: dict) -> str | None:
+    """THUẦN: từ khóa khớp từ đối thủ nào (dạng bỏ dấu) | None."""
+    b = _bare(q)
+    return next((t for t, rx in comp["terms"] if rx.search(b)), None)
+
+
+def keyword_suggestions(conn, import_id: int | None = None,
+                        comp: dict | None = None) -> dict | None:
     """CHỈ SELECT → {import_id, file_name, safe [(id, seed|None, section,
-    query, value)], excluded [(id, [lý do])]} | None (chưa có file)."""
+    query, value)], excluded [(id, [lý do])], cho_quyet [(id, query,
+    từ khớp)], comp} | None (chưa có file). `comp` None → đọc
+    `data/keyword_competitors.json` (lỗi → KeywordConfigError)."""
+    comp = comp if comp is not None else load_competitors()
     if import_id is None:
         r = conn.execute("select max(id) from intel_imports where kind ="
                          " 'trend_related'").fetchone()
@@ -317,7 +387,7 @@ def keyword_suggestions(conn, import_id: int | None = None) -> dict | None:
                        (import_id,)).fetchone()
     if imp is None:
         return None
-    safe, excluded, seen = [], [], set()
+    safe, excluded, pending, seen = [], [], [], set()
     for rid, seed, section, q, value in conn.execute(
             "select id, seed, section, query, value from trends_related"
             " where import_id = %s order by id", (import_id,)).fetchall():
@@ -326,13 +396,19 @@ def keyword_suggestions(conn, import_id: int | None = None) -> dict | None:
             continue
         seen.add(key)
         why = keyword_reasons(q)
+        hit = competitor_hit(q, comp)
+        if hit and comp["action"] == "loai":
+            why = [*why, "doi_thu"]
         if why:
             excluded.append((rid, why))
+        elif hit:                     # chưa duyệt / người quyết từng từ
+            pending.append((rid, q, hit))
         else:
-            safe.append((rid, None if keyword_reasons(seed) else seed,
+            safe.append((rid, None if keyword_reasons(seed)
+                         or competitor_hit(seed, comp) else seed,
                          section, q, value))
     return {"import_id": imp[0], "file_name": imp[1], "safe": safe,
-            "excluded": excluded}
+            "excluded": excluded, "cho_quyet": pending, "comp": comp}
 
 
 def render_keywords(res: dict) -> str:
@@ -356,6 +432,16 @@ def render_keywords(res: dict) -> str:
     L += [f"- trends_related #{rid}: "
           + ", ".join(KW_REASONS.get(w, w) for w in why)
           for rid, why in res["excluded"]]
+    pend, comp = res.get("cho_quyet") or [], res.get("comp") or {}
+    if pend:
+        head = ("danh sách thương hiệu/xuất xứ đối thủ CHƯA được Pháp chế/"
+                "Marketing duyệt" if not comp.get("approved") else
+                f"xử lý cho_nguoi_quyet (danh sách duyệt bởi {comp['by']})")
+        L += ["", (f"CHỜ QUYẾT — {len(pend)} từ khóa có thương hiệu/xuất xứ"
+                   f" đối thủ ({head}): KHÔNG thuộc danh sách đề xuất, chưa"
+                   " được dùng tới khi người có thẩm quyền quyết:")]
+        L += [f"- {_md(q, 120)} — trends_related #{rid} (khớp: {_md(t, 40)})"
+              for rid, q, t in pend]
     L += ["", ("Việc cần làm: Quản lý Marketing duyệt trước khi dùng cho SEO/"
                "quảng cáo; luật lọc là từ khóa tất định (chưa có lớp LLM-check"
                " — Pháp chế duyệt bộ luật). Agent không chạy quảng cáo/SEO.")]
@@ -373,6 +459,8 @@ def suggest_keywords(conn, import_id: int | None, cfg: dict,
         return {"res": None, "qid": None, "skipped": False}
     payload = render_keywords(res)
     oid = f"kw:{res['import_id']}"
+    if res["comp"]["approved"]:       # danh sách đã duyệt (đổi) = đợt mới
+        oid += f":dt-{res['comp']['sha'][:8]}"
     exists = conn.execute("select id from approval_queue where object_type"
                           " = %s and object_id = %s", (OT_KW, oid)).fetchone()
     sample = conn.execute(
@@ -427,6 +515,11 @@ def _keywords_main(args) -> int:
               " phù hợp (--import) — không có gì để gợi ý", flush=True)
         return 0
     print(r["payload"], flush=True)
+    pend = r["res"].get("cho_quyet") or []
+    if pend:
+        print(f"[cho-quyet] {len(pend)} từ khóa thương hiệu/xuất xứ đối thủ"
+              " chờ Pháp chế/Marketing quyết (data/keyword_competitors.json)"
+              " — không tự cho qua", flush=True)
     if args.dry_run:
         print(f"[dry-run] {r['object_id']} — KHÔNG ghi DB"
               + (" (đã có trong hàng duyệt)" if r["skipped"] else ""))

@@ -510,8 +510,9 @@ def main(argv=None, now=None) -> int:
     mode = "fetch" if args.fetch else "from-crawl"
     res = run(mode=mode, rules=rules, max_requests=args.max_requests,
               now=now)
+    # P8.4: rà site công khai của công ty (crawl/fetch thật).
     path = write_report(res["text"], Path(args.out_dir),
-                        f"seo-web-{res['day']}.md")
+                        f"seo-web-{res['day']}.md", sample=False)
     print(f"[done] {path} — {mode} vấn đề={len(res['issues'])} "
           f"requests={res['stats']['requests']}", flush=True)
     if not args.submit:

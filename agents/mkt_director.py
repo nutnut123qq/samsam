@@ -61,9 +61,10 @@ _EXISTING_SQL = (
     " and status in ('pending', 'approved', 'rejected') limit 1")
 # Chỉ cột metadata (agent_writer không được đọc payload — least privilege):
 # mục pending của khối + brief chiến dịch đã quyết (để biết đã có brief).
-_QUEUE_COLS = ("id", "object_type", "object_id", "title", "status", "due_at")
+_QUEUE_COLS = ("id", "object_type", "object_id", "title", "status", "due_at",
+               "is_sample")
 _QUEUE_SQL = (
-    "select id, object_type, object_id, title, status, due_at"
+    "select id, object_type, object_id, title, status, due_at, is_sample"
     " from approval_queue where block = %s and (status = 'pending' or"
     " (object_type = %s and status in ('approved', 'rejected')))"
     " order by due_at, id")
@@ -429,8 +430,11 @@ def main(argv=None) -> int:
             with suppress(Exception):
                 conn.close()
     text = bulletin(plan, fc, items, now)
+    # P8.4: hàng duyệt khối marketing + lịch — mục MẪU trong hàng → True.
     path = write_report(text, args.out_dir,
-                        f"mkt-week-{week_start(today).isoformat()}.md")
+                        f"mkt-week-{week_start(today).isoformat()}.md",
+                        sample=any(bool(i.get("is_sample"))
+                                   for i in items or ()))
     print(f"[ok] bản tin: {path}")
     return 0
 

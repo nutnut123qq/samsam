@@ -22,8 +22,9 @@ create index if not exists chunks_doc_id_idx on chunks (doc_id);
 -- 'sample:plots.jsonl', 'manual'...) — loader chỉ xóa-nạp lại rows thuộc
 -- source của mình nên không đè dữ liệu nhập tay. `created_at` audit thời điểm
 -- nạp. Chỉ `create table if not exists`: không sửa/drop `chunks`.
--- Giới hạn delete-then-insert của loader (someday: upsert on conflict):
--- child row 'manual' trỏ cha managed bị set-null/cascade theo FK sau mỗi reload.
+-- v15.5: `products` KHÔNG còn delete-then-insert — upsert theo id + đánh dấu
+-- `retired_at` (khối v15.5 p11 cuối file) → đơn thật / row 'manual' trỏ
+-- products giữ liên kết. Bảng con managed (claims/assets/mẫu) vẫn xóa-nạp lại.
 -- ============================================================================
 
 create table if not exists products (
@@ -186,12 +187,12 @@ create index if not exists llm_usage_agent_ts_idx on llm_usage (agent_id, ts);
 -- ============================================================================
 -- v3.2 golden master (WP04a, F15.2 + F14.2): nguồn sự thật DUY NHẤT cho
 -- listing / giá / trạng thái pháp lý của SKU đang bán.
--- Ownership: `products` thuộc `ingest.core_store` (crawl web, delete-by-source)
+-- Ownership: `products` thuộc `ingest.core_store` (crawl web, upsert v15.5)
 -- và chỉ là "giá web" để đối chiếu — golden nằm ở bảng RIÊNG dưới đây, nạp
 -- bởi `ingest.golden_store` từ data/golden_skus.json (upsert theo khóa,
 -- KHÔNG delete-by-source; row `source='manual'` không bị đè).
--- `sku_map.product_id` cố ý KHÔNG FK tới products: core_store xóa-nạp lại
--- products mỗi lần chạy → FK sẽ cascade/set-null xóa mapping.
+-- `sku_map.product_id` cố ý KHÔNG FK tới products (lịch sử: core_store từng
+-- xóa-nạp lại products; từ v15.5 upsert + `retired_at`, vẫn giữ không FK).
 -- `price_list` APPEND-ONLY (trigger): đổi giá = đóng `valid_to` dòng cũ +
 -- thêm dòng mới chờ duyệt; chỉ NGƯỜI (GĐ bán hàng) ghi `approved_by` qua
 -- `python -m ingest.golden_store --approve-price <id> --by <tên>`.
@@ -4067,3 +4068,1621 @@ revoke execute on function golden_disc_keep_decided() from public;
 create or replace trigger golden_disc_keep_decided_del
   before delete on golden_discrepancies
   for each row execute function golden_disc_keep_decided();
+
+-- ===== v15.5 p11 dữ liệu đơn =====
+-- HĐ 7.3 (số liệu đơn là căn cứ chia doanh thu): `ingest.core_store` KHÔNG
+-- còn xóa-nạp lại `products` (trước đây delete-by-source → FK `on delete set
+-- null` cắt `orders.product_id` của đơn THẬT, chỉ còn vết ở `order_history`).
+--   * `products` upsert theo `id` (chỉ đè dòng cùng `source`); sản phẩm biến
+--     mất khỏi nguồn → GIỮ dòng + đặt `retired_at` (đánh dấu ngừng niêm
+--     yết), xuất hiện lại → xóa `retired_at`. Loader không bao giờ DELETE
+--     `products` → mọi liên kết (đơn thật, claim/asset nhập tay) giữ nguyên.
+--   * `product_sync_log` — APPEND-ONLY: mỗi lần nạp ghi sự kiện cần người
+--     biết: `changed` (cùng id, đổi tên/giá/url/mô tả — giá trị cũ/mới),
+--     `retired`/`reactivated` (chuyển trạng thái), `ambiguous` (id trong
+--     nguồn trùng dòng của NGUỒN KHÁC, vd 'manual' — không đè, không xóa).
+--     Chỉ dữ liệu sản phẩm công khai — không PII.
+--   * `ingest.golden_store` chỉ đối chiếu sản phẩm còn niêm yết
+--     (`retired_at is null`).
+alter table products add column if not exists retired_at timestamptz;
+
+create table if not exists product_sync_log (
+  id bigint generated always as identity primary key,
+  kind text not null
+    check (kind in ('changed', 'retired', 'reactivated', 'ambiguous')),
+  product_id text not null,         -- KHÔNG FK: log giữ cả khi sản phẩm đổi
+  source text not null,             -- nguồn đang nạp (vd 'products.jsonl')
+  detail jsonb not null default '{}'::jsonb,
+  db_role text not null default session_user,
+  created_at timestamptz not null default now()
+);
+create index if not exists product_sync_log_product_idx
+  on product_sync_log (product_id, id);
+create or replace trigger product_sync_log_append_only_row
+  before update or delete on product_sync_log
+  for each row execute function append_only_guard();
+create or replace trigger product_sync_log_no_truncate
+  before truncate on product_sync_log
+  for each statement execute function append_only_guard();
+
+-- ===== v15.4 p10 quyền người =====
+-- (P10.1, F08) CLI người ghi bảng trực tiếp (golden --approve-price, xnqc,
+-- rollout --promote/--severe/--disable, crm, doc_intake --verify/--reject,
+-- garden_director --purge-sample/--adopt-plot, ra_kenh --partner-file) chạy
+-- bằng login NGƯỜI `in role app_human` qua function nghiệp vụ SECURITY
+-- DEFINER THEO VIỆC — không cấp INSERT/UPDATE/DELETE bảng cho app_human.
+--   * `human_logins` — ánh xạ login Postgres ↔ NGƯỜI ↔ khối được ủy quyền.
+--     CHỈ owner ghi (Bên B điền theo văn bản ủy quyền; repo để TRỐNG). Mỗi
+--     lần đổi ghi 1 dòng `agent_action_log` `human_login_change`.
+--   * `human_actor(by, khối)` — danh tính lấy từ `session_user` (login thật
+--     của kết nối), KHÔNG từ `--by`: login chưa ánh xạ / `--by` khác người
+--     của login / khối không thuộc phạm vi → `42501 insufficient_privilege`.
+--     `agent:`/`system:`/`auto_policy:` luôn bị chặn. Login superuser/thành
+--     viên role sở hữu bảng (owner — vốn đã ghi thẳng được mọi bảng, máy
+--     dev) → nhận `--by` như cũ, KHÔNG thêm/bớt quyền gì.
+--   * Mỗi function: `set search_path from current` (ghim schema lúc tạo),
+--     REVOKE EXECUTE FROM PUBLIC, GRANT EXECUTE cho app_human (roles.sql),
+--     tự kiểm lại bất biến nghiệp vụ (chuyển trạng thái, tồn tại, chưa duyệt)
+--     — gọi thẳng qua psql cũng không vượt được. Kiểm cần dữ liệu ngoài DB
+--     (vùng đại lý theo file, đếm đầu ra PL02 theo danh mục) vẫn ở Python —
+--     xem runbook mục 9.7 "rủi ro còn lại".
+create table if not exists human_logins (
+  db_login text primary key check (db_login ~ '^[a-z_][a-z0-9_$]{0,62}$'),
+  person text not null check (char_length(btrim(person)) between 1 and 100
+    and btrim(person) !~* '^\s*(agent|system|auto_policy)\s*:'),
+  blocks text[] not null default '{}' check (blocks <@ array['ceo', 'sales',
+    'marketing', 'intel', 'finance', 'production', 'farming', 'legal_hr',
+    'data_platform']::text[]),
+  active boolean not null default true,
+  granted_by text not null check (btrim(granted_by) <> ''),
+  note text check (char_length(note) <= 300),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create or replace function human_logins_audit() returns trigger
+language plpgsql security definer set search_path from current as $$
+begin
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (coalesce(case when tg_op = 'DELETE' then old.granted_by
+                        else new.granted_by end, session_user::text),
+          'human_login_change', 'human_login',
+          case when tg_op = 'DELETE' then old.db_login else new.db_login end,
+          jsonb_build_object('op', tg_op,
+            'old', case when tg_op = 'INSERT' then null else jsonb_build_object(
+              'person', old.person, 'blocks', old.blocks, 'active', old.active)
+              end,
+            'new', case when tg_op = 'DELETE' then null else jsonb_build_object(
+              'person', new.person, 'blocks', new.blocks, 'active', new.active)
+              end));
+  return null;
+end $$;
+revoke execute on function human_logins_audit() from public;
+create or replace trigger human_logins_audit_row
+  after insert or update or delete on human_logins
+  for each row execute function human_logins_audit();
+
+create or replace function p10_norm(p text) returns text
+language sql immutable as $$
+  select lower(regexp_replace(btrim(normalize(coalesce(p, ''), NFC)),
+                              '\s+', ' ', 'g'))
+$$;
+
+-- Login đang dùng là superuser / thành viên role sở hữu bảng (owner)?
+create or replace function p10_owner_login() returns boolean
+language sql stable security definer set search_path from current as $$
+  select coalesce((select r.rolsuper or pg_has_role(session_user,
+    (select c.relowner from pg_class c where c.oid = 'human_logins'::regclass),
+    'MEMBER') from pg_roles r where r.rolname = session_user), false)
+$$;
+revoke execute on function p10_owner_login() from public;
+
+create or replace function human_actor(p_by text, p_block text default null)
+returns text
+language plpgsql stable security definer set search_path from current as $$
+declare
+  v_by text := btrim(coalesce(p_by, ''));
+  r human_logins%rowtype;
+begin
+  if v_by = '' or v_by ~* '^\s*(agent|system|auto_policy)\s*:' then
+    raise exception 'người thực hiện không hợp lệ (%) — agent/hệ thống không ghi thay người',
+      left(v_by, 40) using errcode = '42501';
+  end if;
+  if char_length(v_by) > 100 then
+    raise exception 'tên người thực hiện quá 100 ký tự' using errcode = '42501';
+  end if;
+  if p10_owner_login() then
+    return v_by;                     -- owner: ghi thẳng được vốn sẵn (dev)
+  end if;
+  select * into r from human_logins h
+   where h.db_login = session_user and h.active;
+  if not found then
+    raise exception 'login % chưa được ánh xạ người (human_logins — Bên B điền theo văn bản ủy quyền, không tự điền)',
+      session_user using errcode = '42501';
+  end if;
+  if p10_norm(r.person) <> p10_norm(v_by) then
+    raise exception '--by "%" không phải người của login % — không ghi thay người khác',
+      left(v_by, 40), session_user using errcode = '42501';
+  end if;
+  if p_block is not null and not (p_block = any(r.blocks)) then
+    raise exception 'người "%" không được ủy quyền khối % (human_logins)',
+      r.person, p_block using errcode = '42501';
+  end if;
+  return btrim(r.person);
+end $$;
+revoke execute on function human_actor(text, text) from public;
+
+-- Giờ ghi: login không phải owner → đồng hồ DB (không nhận mốc tự khai).
+create or replace function p10_now(p_now timestamptz) returns timestamptz
+language sql stable security definer set search_path from current as $$
+  select case when p10_owner_login() then coalesce(p_now, now()) else now() end
+$$;
+revoke execute on function p10_now(timestamptz) from public;
+
+create or replace function p10_vn_date(p timestamptz) returns date
+language sql immutable as $$
+  select ((p at time zone 'UTC') + interval '7 hours')::date
+$$;
+
+-- golden --approve-price (khối sales): chỉ dòng chưa duyệt, chưa đóng.
+create or replace function approve_price_human(p_id bigint, p_by text)
+returns text
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'sales');
+  r price_list%rowtype;
+begin
+  select * into r from price_list where id = p_id for update;
+  if not found then
+    raise exception 'không có dòng giá id=%', p_id;
+  end if;
+  if r.approved_by is not null then
+    raise exception 'id=% đã được duyệt trước đó', p_id;
+  end if;
+  if r.valid_to is not null then
+    raise exception 'id=% đã đóng (valid_to=%)', p_id, r.valid_to;
+  end if;
+  update price_list set approved_by = v_by, approved_at = now()
+   where id = p_id;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'price_approve', 'price_list', p_id::text,
+          jsonb_build_object('sku_key', r.sku_key, 'channel', r.channel,
+                             'kind', r.kind, 'price_vnd', r.price_vnd));
+  return v_by;
+end $$;
+revoke execute on function approve_price_human(bigint, text) from public;
+
+-- xnqc --add (nhập liệu — chỉ danh tính).
+create or replace function xnqc_add_human(p_sku text, p_loai text,
+  p_ten text, p_by text)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, null);
+  v_id bigint;
+begin
+  insert into xnqc_dossiers (sku_key, loai_ho_so, ten_ho_so, updated_by)
+  values (p_sku, p_loai, btrim(p_ten), v_by) returning id into v_id;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'xnqc_add', 'xnqc_dossier', v_id::text,
+          jsonb_build_object('id', v_id, 'to', 'chuan_bi'));
+  return v_id;
+end $$;
+revoke execute on function xnqc_add_human(text, text, text, text) from public;
+
+-- xnqc --set (khối legal_hr): chuyển trạng thái theo bảng TRANSITIONS
+-- (agents/xnqc.py), da_cap cần scan đã `verified`; ngày nộp/cấp không ở
+-- tương lai theo ngày VN của DB (login không phải owner).
+create or replace function xnqc_set_status_human(p_id bigint, p_from text,
+  p_status text, p_by text, p_so_giay text, p_ngay_nop date, p_ngay_cap date,
+  p_het_han date, p_doc_sha text)
+returns text
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'legal_hr');
+  v_cur text;
+  v_doc text;
+  v_today date := p10_vn_date(now());
+begin
+  select status into v_cur from xnqc_dossiers where id = p_id for update;
+  if not found then
+    raise exception 'không tìm thấy hồ sơ #%', p_id;
+  end if;
+  if v_cur is distinct from p_from then
+    raise exception 'hồ sơ #% vừa đổi trạng thái — thử lại', p_id;
+  end if;
+  if not ((v_cur = 'chuan_bi' and p_status = 'da_nop')
+       or (v_cur = 'da_nop' and p_status in ('bo_sung', 'da_cap'))
+       or (v_cur = 'bo_sung' and p_status = 'da_nop')
+       or (v_cur = 'da_cap' and p_status = 'het_han')) then
+    raise exception 'không chuyển được % → %', v_cur, p_status;
+  end if;
+  if p_status = 'da_nop' and p_ngay_nop is null then
+    raise exception 'da_nop cần ngày nộp';
+  end if;
+  if p_status = 'da_cap' then
+    if btrim(coalesce(p_so_giay, '')) = '' or p_ngay_cap is null
+       or coalesce(p_doc_sha, '') !~ '^[0-9a-f]{64}$' then
+      raise exception 'da_cap cần số giấy, ngày cấp, sha256 scan giấy';
+    end if;
+    select status into v_doc from documents where sha256 = p_doc_sha;
+    if v_doc is distinct from 'verified' then
+      raise exception 'scan giấy chưa được Pháp chế đối chiếu (documents.status = %)',
+        coalesce(v_doc, 'không có');
+    end if;
+  end if;
+  if not p10_owner_login() and (p_ngay_nop > v_today or p_ngay_cap > v_today)
+  then
+    raise exception 'ngày nộp/cấp không được ở tương lai (ngày VN %)', v_today;
+  end if;
+  update xnqc_dossiers set status = p_status,
+         so_giay = coalesce(nullif(btrim(p_so_giay), ''), so_giay),
+         ngay_nop = coalesce(p_ngay_nop, ngay_nop),
+         ngay_cap = coalesce(p_ngay_cap, ngay_cap),
+         ngay_het_han = coalesce(p_het_han, ngay_het_han),
+         document_sha256 = coalesce(p_doc_sha, document_sha256),
+         updated_by = v_by, updated_at = now()
+   where id = p_id;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'xnqc_status', 'xnqc_dossier', p_id::text,
+          jsonb_build_object('id', p_id, 'from', v_cur, 'to', p_status));
+  return v_by;
+end $$;
+revoke execute on function xnqc_set_status_human(bigint, text, text, text,
+  text, date, date, date, text) from public;
+
+-- rollout --promote/--severe/--disable (khối = tiền tố mã tính năng).
+-- Login không phải owner: giờ = đồng hồ DB; nâng giai đoạn chỉ 1 bước, 0 lỗi
+-- nghiêm trọng từ mốc, đủ số NGÀY lịch tối thiểu (5 / 10 ngày làm việc ⇒ ≥
+-- 5 / 10 ngày lịch), bằng chứng đếm đầu ra đạt ngưỡng PL02. Vá review v15:
+-- DB TỰ đếm lại (ngày làm việc + đầu ra DISTINCT + người duyệt) bằng bộ đếm
+-- `count_spec` owner ghi — không tin số trong `p_evidence` (khối cuối file).
+create or replace function rollout_transition_human(p_fid text, p_kind text,
+  p_from text, p_to text, p_by text, p_code text, p_note text,
+  p_evidence jsonb, p_now timestamptz)
+returns text
+language plpgsql security definer set search_path from current as $$
+declare
+  v_block text := regexp_replace(coalesce(p_fid, ''), '-.*$', '');
+  v_by text := human_actor(p_by, v_block);
+  v_now timestamptz := p10_now(p_now);
+  v_stage text;
+  v_since timestamptz;
+  v_to text;
+  v_owner boolean := p10_owner_login();
+  v_min int;
+  e jsonb := coalesce(p_evidence, '{}'::jsonb);
+  -- vá review v15: DB tự đếm lại (không tin số đếm trong p_evidence)
+  v_spec jsonb;
+  v_file int;
+  v_bd int;
+  v_n int;
+  v_d int;
+  v_h int;
+  v_u int;
+  v_r int;
+begin
+  select stage, stage_since, count_spec into v_stage, v_since, v_spec
+    from feature_rollout where feature_id = p_fid for update;
+  if not found then
+    raise exception '%: chưa vào sổ triển khai (chạy --seed)', p_fid;
+  end if;
+  if v_stage is distinct from p_from then
+    raise exception '%: giai đoạn vừa đổi (% ≠ %) — thử lại', p_fid, v_stage,
+      p_from;
+  end if;
+  if p_kind = 'promote' then
+    -- tắt → bật lại = về chạy thử (đếm lại từ đầu, không điều kiện).
+    v_to := case v_stage when 'chay_thu' then 'co_nguoi_duyet'
+                         when 'co_nguoi_duyet' then 'van_hanh'
+                         when 'tat' then 'chay_thu' end;
+    if v_to is null or v_to is distinct from p_to then
+      raise exception '%: không nâng được % → %', p_fid, v_stage, p_to;
+    end if;
+    if not v_owner and v_stage <> 'tat' then
+      if exists (select 1 from feature_rollout_events where feature_id = p_fid
+                  and kind = 'severe' and ts >= v_since) then
+        raise exception '%: có lỗi nghiêm trọng từ mốc giai đoạn — không nâng',
+          p_fid;
+      end if;
+      v_min := case v_stage when 'chay_thu' then 5 else 10 end;
+      if p10_vn_date(v_now) - p10_vn_date(v_since) < v_min then
+        raise exception '%: chưa đủ số ngày tối thiểu của giai đoạn %', p_fid,
+          v_stage;
+      end if;
+      if v_stage = 'chay_thu' and not (coalesce((e->>'outputs')::int, 0) >= 50
+          and coalesce((e->>'out_days')::int, 0) >= 5) then
+        raise exception '%: bằng chứng đầu ra chưa đạt PL02 (≥ 50 đầu ra, ≥ 5 ngày)',
+          p_fid;
+      end if;
+      if v_stage = 'co_nguoi_duyet' and not (coalesce((e->>'human')::int, 0) >= 1
+          and coalesce((e->>'unapproved')::int, 1) = 0
+          -- v15.2 (P8.7): mọi đầu ra báo cáo/bảng/file đã có người duyệt
+          -- đúng phiên bản (thiếu khóa = chưa chứng minh → chặn)
+          and coalesce((e->>'unreviewed')::int, 1) = 0) then
+        raise exception '%: bằng chứng duyệt chưa đạt PL02 (≥ 1 đầu ra người duyệt, 0 thiếu người, 0 chưa duyệt)',
+          p_fid;
+      end if;
+      -- Vá review v15 (P8.7/P10.1): DB TỰ đếm lại bằng bộ đếm `count_spec`
+      -- (chính câu SQL Python đếm, owner ghi qua `rollout --seed` — app_human
+      -- /svc không ghi được `feature_rollout`): ngày làm việc của giai đoạn,
+      -- đầu ra DISTINCT rải trên ngày làm việc, người duyệt từng mục + sổ
+      -- `output_reviews`. Ngưỡng PL02 áp lên số DB đếm, KHÔNG lên số tự khai.
+      -- Nguồn `file` (nhật ký trên máy ứng dụng, DB không đọc được) → ngưỡng
+      -- SỐ LƯỢNG của tính năng đó vẫn theo bằng chứng Python (runbook 9.7);
+      -- phần DB đếm được vẫn phải 0 thiếu người / 0 chưa duyệt.
+      if v_spec is null or jsonb_typeof(v_spec->'sql') is distinct from 'array'
+      then
+        raise exception '%: bộ đếm đầu ra chưa đồng bộ vào DB — owner chạy rollout --seed rồi thử lại',
+          p_fid;
+      end if;
+      v_file := coalesce((v_spec->>'file')::int, 0);
+      if jsonb_array_length(v_spec->'sql') = 0 and v_file = 0 then
+        raise exception '%: DB đếm lại: không có nguồn đầu ra đếm được — không nâng',
+          p_fid;
+      end if;
+      v_bd := rollout_business_days(v_since, v_now, v_spec);
+      select count(*),
+             count(distinct p10_vn_date(f.ts)) filter (
+               where rollout_workday(p10_vn_date(f.ts), v_spec)),
+             count(*) filter (where f.human),
+             count(*) filter (where f.unapp),
+             count(*) filter (where f.unrev)
+        into v_n, v_d, v_h, v_u, v_r
+        from rollout_db_facts(p_fid, v_spec, v_since, v_now) f;
+      e := e || jsonb_build_object('db_recount', jsonb_build_object(
+        'days', v_bd, 'outputs', v_n, 'out_days', v_d, 'human', v_h,
+        'unapproved', v_u, 'unreviewed', v_r, 'file_sources', v_file));
+      if v_bd < v_min then
+        raise exception '%: DB đếm lại: mới % / % ngày làm việc của giai đoạn %',
+          p_fid, v_bd, v_min, v_stage;
+      end if;
+      if v_stage = 'chay_thu' and v_file = 0 and not (v_n >= 50 and v_d >= 5)
+      then
+        raise exception '%: DB đếm lại chưa đạt PL02 (% đầu ra / % ngày làm việc; cần ≥ 50 / ≥ 5)',
+          p_fid, v_n, v_d;
+      end if;
+      if v_stage = 'co_nguoi_duyet' and (v_u > 0 or v_r > 0
+          or (v_file = 0 and not (v_n >= 1 and v_h >= 1))) then
+        raise exception '%: DB đếm lại chưa đạt PL02 (% đầu ra, % người duyệt, % thiếu người, % chưa duyệt)',
+          p_fid, v_n, v_h, v_u, v_r;
+      end if;
+    end if;
+  elsif p_kind = 'severe' then
+    if p_code is null or p_code not in ('tu_cam', 'ruou_cong_khai',
+        'tpbvsk_chua_xnqc', 'thieu_khuyen_cao', 'thieu_nhan_ai', 'lo_pii',
+        'so_lieu_khong_nguon') then
+      raise exception 'mã lỗi nghiêm trọng lạ: %', p_code;
+    end if;
+    v_to := case when v_stage = 'tat' then 'tat' else 'chay_thu' end;
+  elsif p_kind = 'disable' then
+    if v_stage = 'tat' then
+      raise exception '%: đã tắt', p_fid;
+    end if;
+    v_to := 'tat';
+  else
+    raise exception 'loại thao tác lạ: %', p_kind;
+  end if;
+  if p_to is distinct from v_to then
+    raise exception '%: đích % không hợp lệ (đúng: %)', p_fid, p_to, v_to;
+  end if;
+  insert into feature_rollout_events (ts, feature_id, kind, from_stage,
+    to_stage, severe_code, note, evidence, by_person)
+  values (v_now, p_fid, p_kind, v_stage, v_to,
+          case when p_kind = 'severe' then p_code end, p_note, e, v_by);
+  if not (p_kind = 'severe' and v_stage = 'tat') then
+    update feature_rollout set stage = v_to, stage_since = v_now,
+           updated_by = v_by, updated_at = v_now
+     where feature_id = p_fid;
+  end if;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'rollout_' || p_kind, 'feature_rollout', p_fid,
+          jsonb_build_object('from', v_stage, 'to', v_to, 'code', p_code));
+  return v_to;
+end $$;
+revoke execute on function rollout_transition_human(text, text, text, text,
+  text, text, text, jsonb, timestamptz) from public;
+
+-- crm --add-contact (nhập liệu — danh tính). Ciphertext/HMAC do CLI tạo
+-- (khóa vault không vào DB); trùng SĐT → id cũ, KHÔNG ghi đè PII cũ.
+create or replace function crm_add_contact_human(p_phone_hmac text,
+  p_phone_enc text, p_name_enc text, p_email_enc text, p_address_enc text,
+  p_province text, p_source text, p_lead bigint, p_by text)
+returns table (contact_id bigint, is_new boolean)
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, null);
+  v_id bigint;
+  v_new boolean;
+  v_cur bigint;
+begin
+  insert into contacts (phone_hmac, phone_enc, name_enc, email_enc,
+    address_enc, province, source, created_by)
+  values (p_phone_hmac, p_phone_enc, p_name_enc, p_email_enc, p_address_enc,
+          p_province, p_source, v_by)
+  on conflict (phone_hmac) do nothing returning id into v_id;
+  v_new := v_id is not null;
+  if not v_new then
+    select c.id into v_id from contacts c where c.phone_hmac = p_phone_hmac;
+  end if;
+  if p_lead is not null then
+    select l.contact_id into v_cur from leads l where l.id = p_lead for update;
+    if not found then
+      raise exception 'không có lead #%', p_lead;
+    end if;
+    if v_cur is not null and v_cur <> v_id then
+      raise exception 'lead #% đã gắn contact khác', p_lead;
+    end if;
+    update leads set contact_id = v_id where id = p_lead;
+  end if;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'crm_contact_add', 'contact', v_id::text,
+          jsonb_build_object('new', v_new, 'lead_id', p_lead,
+                             'province', p_province));
+  return query select v_id, v_new;
+end $$;
+revoke execute on function crm_add_contact_human(text, text, text, text, text,
+  text, text, bigint, text) from public;
+
+-- crm --consent (khối sales).
+create or replace function crm_record_consent_human(p_contact bigint,
+  p_purpose text, p_granted boolean, p_dealer text, p_source text,
+  p_evidence text, p_policy text, p_by text)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'sales');
+  v_id bigint;
+begin
+  if not exists (select 1 from contacts where id = p_contact) then
+    raise exception 'không có contact #%', p_contact;
+  end if;
+  if p_dealer is not null
+     and not exists (select 1 from dealers where code = p_dealer) then
+    raise exception 'không có đại lý %', p_dealer;
+  end if;
+  insert into consents (contact_id, purpose, granted, recipient_dealer,
+    source, evidence_ref, policy_version, recorded_by)
+  values (p_contact, p_purpose, p_granted, p_dealer, p_source, p_evidence,
+          p_policy, v_by) returning id into v_id;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'crm_consent', 'contact', p_contact::text,
+          jsonb_build_object('consent_id', v_id, 'purpose', p_purpose,
+                             'granted', p_granted, 'dealer', p_dealer));
+  return v_id;
+end $$;
+revoke execute on function crm_record_consent_human(bigint, text, boolean,
+  text, text, text, text, text) from public;
+
+-- crm --load-dealers (khối sales): upsert theo code, dòng 'manual' không đè.
+create or replace function crm_load_dealers_human(p_dealers jsonb, p_by text)
+returns jsonb
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'sales');
+  d jsonb;
+  v_new boolean;
+  n_new int := 0;
+  n_upd int := 0;
+  n_keep int := 0;
+  v_res jsonb;
+begin
+  if jsonb_typeof(p_dealers) is distinct from 'array' then
+    raise exception 'danh sách đại lý phải là mảng JSON';
+  end if;
+  for d in select * from jsonb_array_elements(p_dealers) loop
+    insert into dealers (code, name, region, status, commission_default,
+      source)
+    values (d->>'code', btrim(d->>'name'), d->>'region',
+            coalesce(d->>'status', 'active'),
+            coalesce((d->>'commission_default')::numeric, 0),
+            'dealer_regions.json')
+    on conflict (code) do update set name = excluded.name,
+       region = excluded.region, status = excluded.status,
+       commission_default = excluded.commission_default, updated_at = now()
+     where dealers.source <> 'manual' and (dealers.name, dealers.region,
+       dealers.status, dealers.commission_default) is distinct from
+       (excluded.name, excluded.region, excluded.status,
+        excluded.commission_default)
+    returning (xmax = 0) into v_new;
+    if v_new is null then n_keep := n_keep + 1;
+    elsif v_new then n_new := n_new + 1;
+    else n_upd := n_upd + 1;
+    end if;
+    v_new := null;
+  end loop;
+  v_res := jsonb_build_object('new', n_new, 'updated', n_upd, 'kept', n_keep);
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'crm_dealer_load', 'dealer', '*', v_res);
+  return v_res;
+end $$;
+revoke execute on function crm_load_dealers_human(jsonb, text) from public;
+
+-- crm --assign (khối sales): lead chưa gán đại lý khác, đại lý active.
+-- Vùng ↔ tỉnh theo data/dealer_regions.json kiểm ở CLI (file, không DB).
+create or replace function crm_assign_lead_human(p_lead bigint,
+  p_dealer text, p_province text, p_by text)
+returns void
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'sales');
+  v_cur text;
+  v_st text;
+begin
+  select dealer_code into v_cur from leads where id = p_lead for update;
+  if not found then
+    raise exception 'không có lead #%', p_lead;
+  end if;
+  if v_cur is not null and v_cur <> p_dealer then
+    raise exception 'lead #% đã gán % — tranh chấp chuyển người duyệt (không gán đè)',
+      p_lead, v_cur;
+  end if;
+  select status into v_st from dealers where code = p_dealer;
+  if not found then
+    raise exception 'không có đại lý %', p_dealer;
+  end if;
+  if v_st <> 'active' then
+    raise exception 'đại lý % đang %', p_dealer, v_st;
+  end if;
+  if btrim(coalesce(p_province, '')) = '' then
+    raise exception 'thiếu tỉnh';
+  end if;
+  update leads set province = p_province, dealer_code = p_dealer,
+         assigned_by = v_by, assigned_at = now()
+   where id = p_lead;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'crm_assign', 'lead', p_lead::text,
+          jsonb_build_object('dealer', p_dealer, 'province', p_province));
+end $$;
+revoke execute on function crm_assign_lead_human(bigint, text, text, text)
+  from public;
+
+-- crm --status (nhập liệu — danh tính): chỉ tiến new → contacted →
+-- qualified → won; chưa kết thúc → lost.
+create or replace function crm_set_lead_status_human(p_lead bigint,
+  p_status text, p_by text)
+returns text
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, null);
+  v_old text;
+  flow text[] := array['new', 'contacted', 'qualified', 'won'];
+begin
+  select status into v_old from leads where id = p_lead for update;
+  if not found then
+    raise exception 'không có lead #%', p_lead;
+  end if;
+  if v_old in ('won', 'lost') then
+    raise exception 'lead #% đã kết thúc (%)', p_lead, v_old;
+  end if;
+  if not (v_old = any(flow)) or not (p_status = any(flow || 'lost'::text))
+  then
+    raise exception 'lead #% trạng thái lạ — sửa tay', p_lead;
+  end if;
+  if p_status <> 'lost' and array_position(flow, p_status)
+       <= array_position(flow, v_old) then
+    raise exception 'không lùi/giữ trạng thái % → %', v_old, p_status;
+  end if;
+  update leads set status = p_status where id = p_lead;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'crm_status', 'lead', p_lead::text,
+          jsonb_build_object('from', v_old, 'to', p_status));
+  return v_old;
+end $$;
+revoke execute on function crm_set_lead_status_human(bigint, text, text)
+  from public;
+
+-- crm --owner (khối sales): người phụ trách = MÃ nhân viên; hạn do CLI tính
+-- theo giờ làm việc (cấu hình file).
+create or replace function crm_assign_owner_human(p_lead bigint,
+  p_staff text, p_due timestamptz, p_now timestamptz, p_by text)
+returns text
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'sales');
+  v_now timestamptz := p10_now(p_now);
+  v_st text;
+  v_old text;
+begin
+  if coalesce(p_staff, '') !~ '^[A-Z0-9_-]{2,20}$' then
+    raise exception 'mã nhân viên sai mẫu';
+  end if;
+  select status, owner_code into v_st, v_old from leads where id = p_lead
+   for update;
+  if not found then
+    raise exception 'không có lead #%', p_lead;
+  end if;
+  if v_st in ('won', 'lost') then
+    raise exception 'lead #% đã kết thúc (%)', p_lead, v_st;
+  end if;
+  if p_due is null or p_due < v_now then
+    raise exception 'hạn xử lý không hợp lệ';
+  end if;
+  update leads set owner_code = p_staff, owner_due_at = p_due,
+         owner_assigned_by = v_by, owner_assigned_at = v_now
+   where id = p_lead;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'crm_owner', 'lead', p_lead::text,
+          jsonb_build_object('from', v_old, 'to', p_staff,
+                             'due_at', p_due));
+  return v_old;
+end $$;
+revoke execute on function crm_assign_owner_human(bigint, text, timestamptz,
+  timestamptz, text) from public;
+
+-- crm --handoff (khối sales): ciphertext liên hệ CHỈ trả khi đồng ý dai_ly
+-- ĐÍCH DANH đại lý còn hiệu lực (giải mã ở CLI bằng khóa vault).
+create or replace function crm_handoff_human(p_lead bigint, p_dealer text,
+  p_by text)
+returns table (province text, intent text, question text,
+               pii_included boolean, phone_enc text, name_enc text,
+               email_enc text, address_enc text)
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'sales');
+  l record;
+  v_st text;
+  v_ok boolean := false;
+  v_p text;
+  v_n text;
+  v_e text;
+  v_a text;
+begin
+  select ld.dealer_code, ld.province, ld.intent, ld.question, ld.contact_id
+    into l from leads ld where ld.id = p_lead;
+  if not found then
+    raise exception 'không có lead #%', p_lead;
+  end if;
+  if l.dealer_code is distinct from p_dealer then
+    raise exception 'lead #% không gán cho %', p_lead, p_dealer;
+  end if;
+  select d.status into v_st from dealers d where d.code = p_dealer;
+  if v_st is distinct from 'active' then
+    raise exception 'đại lý % không active', p_dealer;
+  end if;
+  if l.contact_id is not null then
+    select coalesce(v.granted, false) into v_ok from v_consent_current v
+     where v.contact_id = l.contact_id and v.purpose = 'dai_ly'
+       and coalesce(v.recipient_dealer, '') = p_dealer;
+    v_ok := coalesce(v_ok, false);
+  end if;
+  if v_ok then
+    select ct.phone_enc, ct.name_enc, ct.email_enc, ct.address_enc
+      into v_p, v_n, v_e, v_a from contacts ct where ct.id = l.contact_id;
+  end if;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'crm_handoff', 'lead', p_lead::text,
+          jsonb_build_object('lead_id', p_lead, 'dealer', p_dealer,
+                             'pii_included', v_ok));
+  return query select l.province, l.intent, l.question, v_ok, v_p, v_n, v_e,
+    v_a;
+end $$;
+revoke execute on function crm_handoff_human(bigint, text, text) from public;
+
+-- crm --report: số liên hệ + đồng ý hiện hành (đếm, không PII).
+create or replace function crm_counts()
+returns table (purpose text, n_granted bigint, n_withdrawn bigint)
+language sql stable security definer set search_path from current as $$
+  select '*'::text, count(*), 0::bigint from contacts
+  union all
+  select v.purpose, count(*) filter (where v.granted),
+         count(*) filter (where not v.granted)
+    from v_consent_current v group by v.purpose
+$$;
+revoke execute on function crm_counts() from public;
+
+-- doc_intake --verify/--reject (khối legal_hr): chỉ từ pending_review.
+create or replace function doc_review_human(p_sha text, p_status text,
+  p_by text)
+returns boolean
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'legal_hr');
+  n int;
+begin
+  if p_status not in ('verified', 'rejected') then
+    raise exception 'trạng thái phải là verified|rejected';
+  end if;
+  update documents set status = p_status, verified_by = v_by,
+         verified_at = now()
+   where sha256 = p_sha and status = 'pending_review';
+  get diagnostics n = row_count;
+  if n <> 1 then
+    return false;
+  end if;
+  if p_status = 'verified' then
+    update document_fields set verified = true where sha256 = p_sha;
+  end if;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'doc_' || p_status, 'document', left(p_sha, 12),
+          jsonb_build_object('sha256', p_sha, 'status', p_status));
+  return true;
+end $$;
+revoke execute on function doc_review_human(text, text, text) from public;
+
+-- garden_director --purge-sample (khối farming): blocker (nhật ký KHÔNG mẫu
+-- / ảnh trỏ khoảnh mẫu) → không xóa; số dòng phải khớp precheck của CLI.
+create or replace function garden_purge_sample_human(p_by text,
+  p_plots bigint, p_logs bigint)
+returns jsonb
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'farming');
+  n_block bigint;
+  n_plots bigint;
+  n_logs bigint;
+begin
+  select (select count(*) from plot_logs l join plots p on p.id = l.plot_id
+           where p.source like 'sample:%' and l.source not like 'sample:%')
+       + (select count(*) from garden_media m join plots p on p.id = m.plot_id
+           where p.source like 'sample:%')
+    into n_block;
+  if n_block > 0 then
+    return jsonb_build_object('ok', false, 'blockers', n_block);
+  end if;
+  delete from plot_logs where source like 'sample:%';
+  get diagnostics n_logs = row_count;
+  delete from plots where source like 'sample:%';
+  get diagnostics n_plots = row_count;
+  if (n_plots, n_logs) is distinct from (p_plots, p_logs) then
+    raise exception 'số dòng xóa lệch precheck (plots %/%, plot_logs %/%) — rollback',
+      n_plots, p_plots, n_logs, p_logs;
+  end if;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'garden_sample_purge', 'plots', null,
+          jsonb_build_object('plots', n_plots, 'plot_logs', n_logs));
+  return jsonb_build_object('ok', true, 'plots', n_plots, 'plot_logs', n_logs);
+end $$;
+revoke execute on function garden_purge_sample_human(text, bigint, bigint)
+  from public;
+
+-- garden_director --adopt-plot (khối farming): khoảnh mẫu → manual:adopted.
+create or replace function garden_adopt_plot_human(p_plot text, p_by text)
+returns jsonb
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'farming');
+  v_src text;
+begin
+  select source into v_src from plots where id = p_plot for update;
+  if not found then
+    return jsonb_build_object('ok', false, 'reason',
+      format('khoảnh %L không tồn tại', p_plot));
+  end if;
+  if v_src not like 'sample:%' then
+    return jsonb_build_object('ok', false, 'reason',
+      format('khoảnh %s không phải khoảnh mẫu', p_plot));
+  end if;
+  update plots set source = 'manual:adopted', updated_at = now()
+   where id = p_plot;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'garden_plot_adopt', 'plots', p_plot,
+          jsonb_build_object('from_source', v_src));
+  return jsonb_build_object('ok', true, 'from_source', v_src);
+end $$;
+revoke execute on function garden_adopt_plot_human(text, text) from public;
+
+-- ra_kenh --partner-file (nhập liệu — danh tính): 1 dòng sổ rà bài đối tác.
+create or replace function record_partner_scan_human(p_partner text,
+  p_url_sha text, p_host text, p_channel text, p_posted_on date, p_sku text,
+  p_text_sha text, p_codes text[], p_severity text, p_kit_ref text,
+  p_queue_id bigint, p_is_sample boolean, p_now timestamptz, p_by text)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, null);
+  v_id bigint;
+begin
+  insert into partner_post_scans (partner_code, url_sha256, host, channel,
+    posted_on, sku, text_sha256, codes, severity, kit_ref, queue_id,
+    is_sample, scanned_by, scanned_at)
+  values (p_partner, p_url_sha, p_host, p_channel, p_posted_on, p_sku,
+          p_text_sha, coalesce(p_codes, '{}'), p_severity, p_kit_ref,
+          p_queue_id, coalesce(p_is_sample, false), v_by, p10_now(p_now))
+  returning id into v_id;
+  return v_id;
+end $$;
+revoke execute on function record_partner_scan_human(text, text, text, text,
+  date, text, text, text[], text, text, bigint, boolean, timestamptz, text)
+  from public;
+
+-- ===== v15.2 p8 đếm đầu ra + duyệt từng đầu ra =====
+-- (P8.7, PL02 mục 1b) Đầu ra báo cáo file / bảng không có bước người duyệt
+-- riêng / file nhật ký (backup) chỉ có bằng chứng NGƯỜI duyệt qua sổ này:
+-- 1 dòng = 1 quyết định của 1 NGƯỜI (danh tính theo login — `human_actor`,
+-- khối = tiền tố mã tính năng) trên ĐÚNG 1 phiên bản nội dung (sha256) của
+-- 1 đầu ra (khóa DISTINCT của bộ đếm `pipelines.rollout`). APPEND-ONLY (sửa
+-- quyết định = dòng mới; bản mới nhất mỗi phiên bản thắng). Sinh báo cáo
+-- KHÔNG phải đã duyệt; nội dung đổi → sha đổi → duyệt cũ không áp. Ghi CHỈ
+-- qua function `output_review_human` (SECURITY DEFINER): v15 fix P8.7 — DB
+-- TỰ kiểm khóa là đầu ra hiện hành của đúng tính năng (bộ đếm `count_spec`
+-- owner ghi) cần duyệt qua sổ này + sha = phiên bản hiện hành (khối cuối).
+create table if not exists output_reviews (
+  id bigint generated always as identity primary key,
+  ts timestamptz not null default now(),
+  feature_id text not null
+    check (feature_id ~ '^[a-z_]+-[0-9]{2}([.][0-9]{1,2})?$'),
+  output_key text not null check (char_length(output_key) between 4 and 300
+    and output_key ~ '^[a-z]{2}:'),
+  content_sha256 text not null check (content_sha256 ~ '^[0-9a-f]{64}$'),
+  decision text not null check (decision in ('approved', 'rejected')),
+  reviewed_by text not null check (char_length(btrim(reviewed_by))
+    between 1 and 100 and btrim(reviewed_by)
+    !~* '^\s*(agent|system|auto_policy)\s*:'),
+  note text check (char_length(note) <= 300),
+  db_role text not null default session_user
+);
+create index if not exists output_reviews_lookup_idx
+  on output_reviews (feature_id, output_key, content_sha256, ts desc);
+create or replace trigger output_reviews_append_only_row
+  before update or delete on output_reviews
+  for each row execute function append_only_guard();
+create or replace trigger output_reviews_no_truncate
+  before truncate on output_reviews
+  for each statement execute function append_only_guard();
+
+-- Function ghi `output_review_human`: định nghĩa ở khối `v15 fix P8.7`
+-- cuối file (DB tự kiểm khóa + phiên bản bằng bộ đếm `count_spec` —
+-- cần `rollout_db_outputs` định nghĩa ở khối vá review v15).
+
+-- ===== v15 vá review (P10.1/P8.7) =====
+-- Review v15: `rollout_transition_human` trước đây tin số đếm đầu ra trong
+-- `p_evidence` do caller (login người) tự truyền → gọi thẳng bằng psql vượt
+-- cổng PL02. Nay DB TỰ đếm lại bằng bộ đếm `count_spec` mà OWNER ghi vào sổ
+-- (`rollout --seed`; app_human/svc chỉ SELECT `feature_rollout`):
+--   {"sql": [{"q": câu SQL 1 nguồn, "review": cần duyệt qua output_reviews}],
+--    "file": số nguồn file, "workdays": [0..6], "holidays": ["YYYY-MM-DD"]}
+-- `q` là CHÍNH câu `pipelines.rollout._source_sql` Python chạy (cửa sổ =
+-- $1/$2, tham số khác thành literal — `rollout._db_sql`) → Python và DB đếm
+-- cùng một câu; phần gộp khóa/sổ duyệt/ngày làm việc bám `output_rows` /
+-- `output_facts` / `business_days` (test parity
+-- `tests/test_v15_p8_outputs.py`). Đổi danh mục / bộ đếm / lịch nghỉ → owner
+-- chạy lại `--seed` (đồng bộ `count_spec`, giữ giai đoạn + mốc). Câu `q` chỉ
+-- chạy bên trong function SECURITY DEFINER với quyền owner — nguồn của nó là
+-- cột chỉ owner ghi được, KHÔNG phải tham số của caller.
+alter table feature_rollout add column if not exists count_spec jsonb;
+
+create or replace function p10_is_person(p text) returns boolean
+language sql immutable as $$
+  select btrim(coalesce(p, '')) <> ''
+     and lower(btrim(p)) not like 'agent:%'
+     and lower(btrim(p)) not like 'system:%'
+$$;
+
+-- Ngày làm việc theo lịch trong bộ đếm (0 = thứ Hai, như Python weekday()).
+create or replace function rollout_workday(p_d date, p_spec jsonb)
+returns boolean
+language sql stable as $$
+  select coalesce((extract(isodow from p_d)::int - 1) in (
+           select jsonb_array_elements_text(p_spec->'workdays')::int)
+         and not coalesce(p_spec->'holidays' ? to_char(p_d, 'YYYY-MM-DD'),
+                          false), false)
+$$;
+revoke execute on function rollout_workday(date, jsonb) from public;
+
+-- = `rollout.business_days`: số ngày làm việc d, ngày_VN(since) < d ≤
+-- ngày_VN(now).
+create or replace function rollout_business_days(p_since timestamptz,
+  p_now timestamptz, p_spec jsonb)
+returns int
+language sql stable set search_path from current as $$
+  select count(*)::int
+    from generate_series(1, p10_vn_date(p_now) - p10_vn_date(p_since)) g(n)
+   where rollout_workday(p10_vn_date(p_since) + g.n, p_spec)
+$$;
+revoke execute on function rollout_business_days(timestamptz, timestamptz,
+  jsonb) from public;
+
+-- Từng dòng đầu ra (chưa gộp) của các câu đếm trong [p_a, p_b]; `i` = thứ
+-- tự nguồn (gộp sha theo nguồn đầu tiên có sha, như Python).
+create or replace function rollout_db_outputs(p_spec jsonb, p_a timestamptz,
+  p_b timestamptz)
+returns table (i int, k text, ts timestamptz, human boolean, unapp boolean,
+               nr boolean, sha text)
+language plpgsql stable set search_path from current as $$
+declare
+  s jsonb;
+  n int := 0;
+begin
+  for s in select x from jsonb_array_elements(
+             case when jsonb_typeof(p_spec->'sql') = 'array'
+                  then p_spec->'sql' else '[]'::jsonb end) x loop
+    n := n + 1;
+    return query execute format(
+      'select %s, x.k::text, x.ts::timestamptz, coalesce(x.h, false), '
+      || 'coalesce(x.u, false), %L::boolean, x.s::text '
+      || 'from (%s) x(k, ts, h, u, s)',
+      n, coalesce(s->>'review', 'false'), s->>'q') using p_a, p_b;
+  end loop;
+end $$;
+revoke execute on function rollout_db_outputs(jsonb, timestamptz,
+  timestamptz) from public;
+
+-- Gộp khóa DISTINCT + quyết định MỚI NHẤT của sổ duyệt trên đúng phiên bản
+-- (đầu ra cần duyệt qua sổ) → human / unapp / unrev từng đầu ra.
+create or replace function rollout_db_facts(p_fid text, p_spec jsonb,
+  p_a timestamptz, p_b timestamptz)
+returns table (k text, ts timestamptz, human boolean, unapp boolean,
+               unrev boolean)
+language sql stable set search_path from current as $$
+  with o as (
+    select x.k, min(x.ts) as ts, bool_or(x.human) as human,
+           bool_or(x.unapp) as unapp, bool_and(x.nr) as nr,
+           (array_agg(x.sha order by x.i)
+              filter (where x.sha is not null))[1] as sha
+      from rollout_db_outputs(p_spec, p_a, p_b) x group by x.k),
+  r as (
+    select distinct on (v.output_key, v.content_sha256) v.output_key,
+           v.content_sha256, v.decision, v.reviewed_by
+      from output_reviews v where v.feature_id = p_fid
+     order by v.output_key, v.content_sha256, v.ts desc, v.id desc)
+  select o.k, o.ts,
+         o.human or coalesce(o.nr and r.decision = 'approved'
+                             and p10_is_person(r.reviewed_by), false),
+         o.unapp, o.nr and r.output_key is null
+    from o left join r on o.nr and r.output_key = o.k
+                      and r.content_sha256 = o.sha
+$$;
+revoke execute on function rollout_db_facts(text, jsonb, timestamptz,
+  timestamptz) from public;
+
+-- ===== v15 fix P10.2 =====
+-- (P10.2, F08) Người ĐƯỢC PHÉP phải HOÀN THÀNH được nghiệp vụ. Trước vá: login
+-- người `in role app_human` (human_logins + users file `db_login` + approvers
+-- khối) qua được cổng ủy quyền nhưng `da_pmo --set-status/--apply-due`,
+-- `da_b2b --handover`, `ra_kenh --mark-removed`, `anchor --submit --by <người>`
+-- ghi bảng TRỰC TIẾP → `permission denied`; `kd_quote --outcome/--verify-send
+-- --by` INSERT cột trực tiếp → gọi SQL thẳng ghi được tên người khác. Nay mỗi
+-- việc ghi qua 1 function nghiệp vụ SECURITY DEFINER (search_path ghim,
+-- REVOKE PUBLIC, GRANT EXECUTE CHỈ app_human — roles.sql khối cùng tên):
+--   * danh tính = `human_actor` (session_user ↔ human_logins, không tin
+--     `--by`); khối theo phân loại runbook 9.7: QUYẾT ĐỊNH (set-status → ceo,
+--     mark-removed → legal_hr, anchor --submit → farming) đòi khối trong
+--     human_logins; NHẬP LIỆU / THỰC THI mục ĐÃ duyệt (apply-due, handover,
+--     outcome, mốc đã gửi) chỉ danh tính.
+--   * bất biến nghiệp vụ tự kiểm lại (gọi thẳng psql không vượt): mục hàng
+--     duyệt đúng khối/loại, ĐÃ duyệt, nội dung khớp sha bản duyệt MỚI NHẤT
+--     (`verify_publish`); hạn cũ (stale); thành viên lô tổ chức khớp bản
+--     duyệt; biên nhận neo mang đúng digest bản kê + giai đoạn tính năng cho
+--     dùng; 1 kết quả/báo giá. Chạy lại = no-op (không ghi dòng/log mới).
+--   * login owner/superuser (máy dev) giữ hành vi cũ (`human_actor`/
+--     `p10_now` nhận `--by`/giờ truyền vào) — không thêm quyền gì.
+-- Còn ở Python (DB không đọc được — runbook 9.7 "rủi ro còn lại"): giai đoạn
+-- rollout biên DÙNG theo danh mục file (`aq.verify`/`use_reason`), so từng ô
+-- lô tổ chức dựng lại (DB kiểm bản duyệt + số dòng + mã từng tổ chức), gửi
+-- digest ra calendar (DB kiểm danh tính TRƯỚC khi gửi qua `human_actor`).
+
+-- da_pmo --set-status (QUYẾT ĐỊNH khối ceo).
+create or replace function milestone_set_status_human(p_code text,
+  p_status text, p_evidence text, p_by text)
+returns text
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'ceo');
+  v_ev text := nullif(btrim(coalesce(p_evidence, '')), '');
+  r project_milestones%rowtype;
+begin
+  if p_status is null or p_status not in ('chua_bat_dau', 'dang_lam', 'xong',
+                                          'tam_dung') then
+    raise exception 'trạng thái mốc lạ: %', p_status;
+  end if;
+  if p_status = 'xong' and v_ev is null then
+    raise exception 'status xong cần evidence (link/biên bản)';
+  end if;
+  if char_length(v_ev) > 500 then
+    raise exception 'evidence quá 500 ký tự';
+  end if;
+  select * into r from project_milestones where code = p_code for update;
+  if not found then
+    raise exception 'không có mốc %', left(coalesce(p_code, ''), 40);
+  end if;
+  if r.status = p_status
+     and r.evidence is not distinct from coalesce(v_ev, r.evidence) then
+    return 'noop';
+  end if;
+  update project_milestones set status = p_status,
+         evidence = coalesce(v_ev, evidence), updated_by = v_by,
+         updated_at = now()
+   where code = p_code;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'milestone_status', 'project_milestone', p_code,
+          jsonb_build_object('from', r.status, 'to', p_status,
+                             'evidence', v_ev is not null));
+  return 'ok';
+end $$;
+revoke execute on function milestone_set_status_human(text, text, text, text)
+  from public;
+
+-- da_pmo --apply-due (THỰC THI mục milestone_change ĐÃ duyệt — danh tính).
+-- Payload tất định (`agents.da_pmo.change_payload`) → DB tự tách code/hạn
+-- cũ/hạn mới, kiểm sha bản duyệt mới nhất + hạn hiện tại == hạn cũ.
+create or replace function milestone_apply_due_human(p_qid bigint,
+  p_by text)
+returns text
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, null);
+  q approval_queue%rowtype;
+  m text[];
+  v_old date;
+  v_new date;
+  v_cur date;
+begin
+  select * into q from approval_queue a where a.id = p_qid;
+  if not found or q.block not in ('ceo', 'projects')
+     or q.object_type <> 'milestone_change' then
+    raise exception 'mục #% không phải milestone_change khối ceo', p_qid;
+  end if;
+  if q.status <> 'approved' then
+    raise exception 'mục #% đang ''%'' — chỉ áp dụng khi đã duyệt',
+      p_qid, q.status;
+  end if;
+  m := regexp_match(coalesce(q.payload, ''),
+    '^# Đề xuất đổi hạn mốc (\S+)\n\ncode: (\S+)\nold_due: '
+    '(\d{4}-\d{2}-\d{2})\nnew_due: (\d{4}-\d{2}-\d{2})\nby: ([^\n]+)\n\n'
+    'Đổi hạn chỉ có hiệu lực sau khi người duyệt \(agent không tự đổi\)\.\n$');
+  if m is null or m[1] <> m[2] then
+    raise exception 'mục #%: payload sai định dạng — không áp dụng', p_qid;
+  end if;
+  begin
+    v_old := m[3]::date;
+    v_new := m[4]::date;
+  exception when others then
+    raise exception 'mục #%: ngày trong payload sai lịch', p_qid;
+  end;
+  if q.object_id <> 'milestone:' || m[1]
+     or not verify_publish(q.object_type, q.object_id, q.payload) then
+    raise exception 'mục #%: LỆCH bản duyệt (sha256) — không áp dụng', p_qid;
+  end if;
+  select due_date into v_cur from project_milestones where code = m[1]
+     for update;
+  if not found then
+    raise exception 'không có mốc %', m[1];
+  end if;
+  if v_cur = v_new then
+    return 'noop';
+  end if;
+  if v_cur <> v_old then
+    raise exception '%: hạn hiện tại khác old_due % (stale) — đề xuất lại',
+      m[1], to_char(v_old, 'DD/MM/YYYY');
+  end if;
+  update project_milestones set due_date = v_new, updated_by = v_by,
+         updated_at = now()
+   where code = m[1];
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'milestone_due_apply', 'project_milestone', m[1],
+          jsonb_build_object('queue_id', p_qid, 'old_due', v_old,
+                             'new_due', v_new));
+  return 'ok';
+end $$;
+revoke execute on function milestone_apply_due_human(bigint, text)
+  from public;
+
+-- da_b2b --handover (THỰC THI lô org_prospect_batch đã quyết — danh tính).
+-- Từ chối/hết hạn → dòng `cho_duyet` về `moi`; đã duyệt → `p_payload` (bảng
+-- dựng lại từ dòng hiện tại, Python) phải khớp sha bản duyệt mới nhất VÀ
+-- thành viên lô hiện tại (số dòng + mã từng tổ chức) có trong bản duyệt.
+create or replace function org_handover_human(p_qid bigint, p_payload text,
+  p_by text)
+returns int
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, null);
+  q approval_queue%rowtype;
+  v_n int;
+  v_cnt int;
+  v_bad int;
+begin
+  select * into q from approval_queue a where a.id = p_qid;
+  if not found or q.block not in ('sales', 'projects')
+     or q.object_type <> 'org_prospect_batch' then
+    raise exception 'mục #% không phải lô org_prospect_batch', p_qid;
+  end if;
+  if q.status in ('rejected', 'expired') then
+    update org_prospects set status = 'moi', batch_queue_id = null
+     where batch_queue_id = p_qid and status = 'cho_duyet';
+    get diagnostics v_n = row_count;
+    if v_n > 0 then
+      insert into agent_action_log (actor, action, object_type, object_id,
+                                    detail)
+      values (v_by, 'org_batch_return', 'approval_queue', p_qid::text,
+              jsonb_build_object('n', v_n, 'status', q.status));
+    end if;
+    return v_n;
+  end if;
+  if q.status <> 'approved' then
+    raise exception 'lô #% đang ''%'' — chỉ chuyển khi NGƯỜI đã duyệt',
+      p_qid, q.status;
+  end if;
+  if p_payload is null
+     or not verify_publish(q.object_type, q.object_id, p_payload) then
+    raise exception 'lô #%: dữ liệu LỆCH bản đã duyệt (sha256) — KHÔNG chuyển',
+      p_qid;
+  end if;
+  select count(*), count(*) filter (where position(
+           '| ' || substr(o.dedup_key, 5, 12) || ' |' in p_payload) = 0)
+    into v_cnt, v_bad
+    from org_prospects o where o.batch_queue_id = p_qid;
+  if v_cnt = 0 or v_bad > 0 or position(
+       '# Lô tổ chức tiềm năng mua quà Tết — ' || v_cnt || ' tổ chức'
+       || chr(10) in p_payload) <> 1 then
+    raise exception 'lô #%: thành viên lô LỆCH bản đã duyệt — KHÔNG chuyển',
+      p_qid;
+  end if;
+  update org_prospects set status = 'chuyen_sales', handed_at = now()
+   where batch_queue_id = p_qid and status = 'cho_duyet';
+  get diagnostics v_n = row_count;
+  if v_n > 0 then
+    insert into agent_action_log (actor, action, object_type, object_id,
+                                  detail)
+    values (v_by, 'org_batch_handover', 'approval_queue', p_qid::text,
+            jsonb_build_object('n', v_n));
+  end if;
+  return v_n;
+end $$;
+revoke execute on function org_handover_human(bigint, text, text)
+  from public;
+
+-- Dòng của ĐÚNG 1 lô (để CLI dựng lại bảng so sha bản duyệt) — app_human
+-- KHÔNG có SELECT `org_prospects` (v8.3: bảng chỉ owner đọc); đọc qua đây
+-- cần danh tính theo login + mục là lô org_prospect_batch.
+create or replace function org_batch_rows_human(p_qid bigint, p_by text)
+returns table (id bigint, dedup_key text, org_name text, org_type text,
+               region text, website text, source_url text, fit_reason text)
+language plpgsql stable security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, null);
+begin
+  if not exists (select 1 from approval_queue a where a.id = p_qid
+                   and a.block in ('sales', 'projects')
+                   and a.object_type = 'org_prospect_batch') then
+    raise exception 'mục #% không phải lô org_prospect_batch', p_qid;
+  end if;
+  return query
+    select o.id, o.dedup_key, o.org_name, o.org_type, o.region, o.website,
+           o.source_url, o.fit_reason
+      from org_prospects o where o.batch_queue_id = p_qid order by o.id;
+end $$;
+revoke execute on function org_batch_rows_human(bigint, text) from public;
+
+-- ra_kenh --mark-removed (QUYẾT ĐỊNH khối legal_hr): đóng đợt vi phạm đang
+-- mở của URL (`da_go`) + 1 dòng log; không có đợt mở → 0 (không ghi gì).
+create or replace function channel_post_mark_removed_human(p_url text,
+  p_now timestamptz, p_by text)
+returns int
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'legal_hr');
+  v_ids bigint[];
+begin
+  with u as (
+    update channel_posts set closed_at = p10_now(p_now),
+           close_reason = 'da_go', closed_by = v_by
+     where url = btrim(coalesce(p_url, '')) and closed_at is null
+       and severity is not null
+    returning id)
+  select array_agg(id order by id) into v_ids from u;
+  if v_ids is null then
+    return 0;
+  end if;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'channel_post_removed', 'channel_post', v_ids[1]::text,
+          jsonb_build_object('ids', to_jsonb(v_ids)));
+  return cardinality(v_ids);
+end $$;
+revoke execute on function channel_post_mark_removed_human(text, timestamptz,
+  text) from public;
+
+-- anchor --submit --by <người> (QUYẾT ĐỊNH khối farming, tính năng
+-- farming-06): ghi biên nhận gửi digest. Login không owner: giai đoạn phải
+-- cho dùng (co_nguoi_duyet | van_hanh); `da_gui` phải mang đúng digest bản kê
+-- (OTS header ‖ sha256 bản kê); đã có `da_gui` → no-op (trả id cũ).
+create or replace function anchor_receipt_human(p_batch bigint,
+  p_status text, p_calendar text, p_receipt bytea, p_error text, p_by text)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'farming');
+  b anchor_batches%rowtype;
+  v_stage text;
+  v_id bigint;
+begin
+  select * into b from anchor_batches where id = p_batch;
+  if not found then
+    raise exception 'không có lần gom #%', p_batch;
+  end if;
+  if not p10_owner_login() then
+    select stage into v_stage from feature_rollout
+     where feature_id = 'farming-06';
+    if v_stage is null or v_stage not in ('co_nguoi_duyet', 'van_hanh') then
+      raise exception 'farming-06 đang % — chưa cho dùng, không ghi biên nhận (HĐ 6.7/PL02)',
+        coalesce(v_stage, 'chưa vào sổ');
+    end if;
+  end if;
+  select id into v_id from anchor_receipts
+   where batch_id = p_batch and status = 'da_gui' order by id limit 1;
+  if found then
+    return v_id;
+  end if;
+  if p_status = 'da_gui' then
+    if coalesce(p_calendar, '') !~ '^https://' or p_receipt is null
+       or substring(p_receipt from 1 for 65) <> (
+         '\x004f70656e54696d657374616d7073000050726f6f6600bf89e2e884e892940108'::bytea
+         || decode(b.manifest_sha256, 'hex')) then
+      raise exception 'lần gom #%: biên nhận không mang đúng digest bản kê — không ghi',
+        p_batch;
+    end if;
+  elsif p_status = 'loi' then
+    if btrim(coalesce(p_error, '')) = '' then
+      raise exception 'biên nhận lỗi cần lớp lỗi';
+    end if;
+  else
+    raise exception 'trạng thái biên nhận lạ: %', p_status;
+  end if;
+  insert into anchor_receipts (batch_id, provider, status, calendar, receipt,
+    error, created_by)
+  values (p_batch, 'opentimestamps', p_status,
+          case when p_status = 'da_gui' then p_calendar end,
+          case when p_status = 'da_gui' then p_receipt end,
+          case when p_status = 'loi' then left(p_error, 300) end, v_by)
+  returning id into v_id;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'anchor_submit', 'anchor_batch', p_batch::text,
+          jsonb_build_object('receipt_id', v_id, 'status', p_status));
+  return v_id;
+end $$;
+revoke execute on function anchor_receipt_human(bigint, text, text, bytea,
+  text, text) from public;
+
+-- kd_quote --outcome / --verify-send (NHẬP LIỆU — danh tính): 1 dòng
+-- b2b_quote_events cho báo giá sales ĐÃ duyệt. Kết quả (chot|khong_chot|huy)
+-- cần người (login của chính họ), 1 lần/báo giá; mốc `da_gui` cần bản gửi
+-- khớp sha bản duyệt mới nhất (`p_text`), `p_by` null = mốc không ghi tên.
+create or replace function b2b_quote_event_human(p_qid bigint, p_kind text,
+  p_text text, p_by text)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text;
+  q approval_queue%rowtype;
+  v_done text;
+  v_id bigint;
+begin
+  if p_kind is null or p_kind not in ('da_gui', 'chot', 'khong_chot', 'huy')
+  then
+    raise exception 'loại sự kiện báo giá lạ: %', p_kind;
+  end if;
+  if p_by is null and p_kind = 'da_gui' then
+    v_by := null;
+  else
+    v_by := human_actor(p_by, null);
+  end if;
+  select * into q from approval_queue a where a.id = p_qid for update;
+  if not found or q.block <> 'sales'
+     or q.object_type not in ('b2b_quote', 'b2b_quote_matrix')
+     or q.status <> 'approved' then
+    raise exception 'mục #% không phải báo giá B2B ĐÃ duyệt', p_qid;
+  end if;
+  if p_kind = 'da_gui' then
+    if p_text is null
+       or not verify_publish(q.object_type, q.object_id, p_text) then
+      raise exception 'mục #%: bản gửi LỆCH bản đã duyệt — không ghi mốc gửi',
+        p_qid;
+    end if;
+  else
+    select e.kind into v_done from b2b_quote_events e
+     where e.queue_id = p_qid and e.kind in ('chot', 'khong_chot', 'huy')
+     order by e.id limit 1;
+    if found then
+      raise exception 'mục #% đã ghi kết quả ''%'' — không ghi đè',
+        p_qid, v_done;
+    end if;
+  end if;
+  insert into b2b_quote_events (queue_id, quote_no, kind, recorded_by)
+  values (p_qid, q.object_id, p_kind, v_by)
+  returning id into v_id;
+  if p_kind <> 'da_gui' then
+    insert into agent_action_log (actor, action, object_type, object_id,
+                                  detail)
+    values (v_by, 'b2b_quote_outcome', 'b2b_quote', p_qid::text,
+            jsonb_build_object('kind', p_kind, 'event_id', v_id));
+  end if;
+  return v_id;
+end $$;
+revoke execute on function b2b_quote_event_human(bigint, text, text, text)
+  from public;
+
+-- ===== v15 fix P8.7 =====
+-- (P8.7, PL02 mục 1b) Trước vá: `output_review_human` chỉ kiểm đầy đủ khóa
+-- báo cáo `rp:` — login người gọi thẳng ghi được duyệt cho khóa bảng/file
+-- KHÔNG tồn tại (`ar:does-not-exist`), khóa của tính năng khác, sha tùy ý,
+-- dòng mẫu, nguồn file... (dòng rác append-only + log `output_review`). Nay
+-- DB TỰ kiểm ở biên, không tin key/sha caller truyền (kể cả đã qua Python):
+--   * sổ triển khai phải có bộ đếm `count_spec` (owner ghi qua `rollout
+--     --seed`; app_human không ghi được `feature_rollout`) — chưa có → từ
+--     chối;
+--   * khóa phải là đầu ra của ĐÚNG tính năng trong cửa sổ giai đoạn hiện
+--     hành [stage_since, now()] theo CHÍNH câu đếm các nguồn bảng/báo cáo
+--     (`rollout_db_outputs` — cùng bộ đếm cổng PL02 `rollout_db_facts`; câu
+--     đếm đã loại mẫu, lọc nguồn/loại/khối) → khóa không tồn tại / sai tính
+--     năng / sai nguồn / mẫu / sai tiền tố / ngoài cửa sổ → từ chối;
+--   * đầu ra phải thuộc cơ chế duyệt này (mọi nguồn chứa khóa đều `review`
+--     — không có bước người riêng); có bước riêng (hàng duyệt/nháp/người
+--     ghi) → từ chối;
+--   * sha = phiên bản HIỆN HÀNH (gộp như `rollout_db_facts`: sha của nguồn
+--     đầu tiên có sha; báo cáo = bản mới nhất) → phiên bản cũ / sha tùy ý →
+--     từ chối;
+--   * nguồn FILE (convlog/backup_runs trên máy ứng dụng) DB không đọc được
+--     và CHƯA có bản chụp tin cậy trong DB → khóa file bị từ chối kèm lý do
+--     (app_human không tự tạo bằng chứng rồi tự duyệt); nguồn bảng/báo cáo
+--     của cùng tính năng vẫn duyệt được.
+-- Từ chối = `raise` → không dòng `output_reviews`, không log. Danh tính theo
+-- login (`human_actor`, khối = tiền tố mã tính năng) + append-only giữ nguyên.
+create or replace function output_review_human(p_fid text, p_key text,
+  p_sha text, p_decision text, p_by text, p_note text)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  v_block text := regexp_replace(coalesce(p_fid, ''), '-.*$', '');
+  v_by text := human_actor(p_by, v_block);
+  v_spec jsonb;
+  v_since timestamptz;
+  v_n int;
+  v_nr boolean;
+  v_cur text;
+  v_file boolean;
+  v_id bigint;
+begin
+  if p_decision is null or p_decision not in ('approved', 'rejected') then
+    raise exception 'quyết định lạ: % (approved|rejected)', p_decision;
+  end if;
+  if coalesce(p_sha, '') !~ '^[0-9a-f]{64}$' then
+    raise exception 'sha256 nội dung sai khuôn';
+  end if;
+  select count_spec, stage_since into v_spec, v_since
+    from feature_rollout where feature_id = p_fid for share;
+  if not found then
+    raise exception '%: chưa vào sổ triển khai', p_fid;
+  end if;
+  if v_spec is null or jsonb_typeof(v_spec->'sql') is distinct from 'array'
+  then
+    raise exception '%: sổ chưa có bộ đếm đầu ra (count_spec) — owner chạy rollout --seed; DB không duyệt khóa không kiểm được',
+      p_fid;
+  end if;
+  select count(*), bool_and(x.nr),
+         (array_agg(x.sha order by x.i) filter (where x.sha is not null))[1]
+    into v_n, v_nr, v_cur
+    from rollout_db_outputs(v_spec, v_since, now()) x
+   where x.k = p_key;
+  if v_n = 0 then
+    v_file := jsonb_typeof(v_spec->'file') = 'number'
+              and (v_spec->>'file')::numeric > 0;
+    raise exception '%: % không phải đầu ra nguồn bảng/báo cáo của tính năng trong giai đoạn hiện hành (khóa không tồn tại / sai tính năng hoặc nguồn / mẫu / ngoài cửa sổ)%',
+      p_fid, left(coalesce(p_key, ''), 80),
+      case when v_file then ' — nguồn file của tính năng (nhật ký máy chủ'
+        || ' ứng dụng) DB không đọc được, CHƯA có bản chụp tin cậy trong DB:'
+        || ' không duyệt nguồn file qua sổ này' else '' end;
+  end if;
+  if not v_nr then
+    raise exception '%: đầu ra % có bước duyệt riêng (hàng duyệt/nháp/người ghi) — duyệt ở đó, không qua sổ này',
+      p_fid, left(p_key, 80);
+  end if;
+  if v_cur is null or v_cur <> p_sha then
+    raise exception 'sha không phải phiên bản MỚI NHẤT (hiện hành) của đầu ra % — đọc lại bản hiện hành rồi duyệt',
+      left(p_key, 80);
+  end if;
+  insert into output_reviews (feature_id, output_key, content_sha256,
+    decision, reviewed_by, note)
+  values (p_fid, p_key, p_sha, p_decision, v_by, p_note)
+  returning id into v_id;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'output_review', 'output', p_fid || ':' || left(p_key, 200),
+          jsonb_build_object('review_id', v_id, 'sha256', p_sha,
+                             'decision', p_decision));
+  return v_id;
+end $$;
+revoke execute on function output_review_human(text, text, text, text, text,
+  text) from public;
+
+-- ===== v15 fix P8.7b =====
+-- (P8.7, PL02 mục 1b) Sau vá P8.7, người được ủy quyền (login `in role
+-- app_human`, không owner, `human_logins` đúng khối) vẫn KHÔNG duyệt được
+-- đầu ra nguồn BẢNG qua CLI: `rollout --outputs/--review-output` đọc thẳng
+-- bảng nguồn (vd `audit_runs`) mà app_human không có SELECT → "nguồn chưa
+-- đọc được". KHÔNG cấp SELECT bảng nguồn cho app_human; thay vào đó function
+-- SECURITY DEFINER này liệt kê đầu ra CẦN DUYỆT qua sổ `output_reviews` của
+-- 1 tính năng cho login người:
+--   * danh tính/khối như `output_review_human`: `human_actor` (login ↔
+--     `human_logins`, khối = tiền tố mã tính năng); `p_by` null → người của
+--     chính login; owner (dev) không kiểm (vốn đọc được mọi bảng);
+--   * CÙNG bộ đếm DB với `output_review_human`/cổng PL02: `count_spec`
+--     (owner ghi qua `--seed`) + `rollout_db_outputs` trong cửa sổ giai đoạn
+--     hiện hành [stage_since, now()] — câu đếm đã loại mẫu, lọc nguồn/loại;
+--     gộp sha như `rollout_db_facts` (sha nguồn đầu tiên có sha = phiên bản
+--     hiện hành); chỉ đầu ra mọi nguồn đều cần duyệt qua sổ (không có bước
+--     người riêng);
+--   * trả CHỈ khóa + thời điểm + sha + loại nguồn (bang|bao_cao) + quyết định
+--     mới nhất trên đúng phiên bản (người duyệt — sổ app_human vốn đọc được):
+--     không cột/nội dung bảng nguồn;
+--   * nguồn FILE không liệt kê (DB không đọc được — `output_review_human` từ
+--     chối kèm lý do). Chỉ đọc; DB vẫn là bên quyết ở `output_review_human`.
+create or replace function output_pending_human(p_fid text,
+  p_by text default null)
+returns table (o_key text, o_ts timestamptz, o_sha text, o_nguon text,
+               o_quyet_dinh text, o_nguoi_duyet text)
+language plpgsql stable security definer set search_path from current as $$
+declare
+  v_block text := regexp_replace(coalesce(p_fid, ''), '-.*$', '');
+  v_person text;
+  v_spec jsonb;
+  v_since timestamptz;
+begin
+  if not p10_owner_login() then
+    if p_by is null then
+      select h.person into v_person from human_logins h
+       where h.db_login = session_user and h.active;
+      if not found then
+        raise exception 'login % chưa được ánh xạ người (human_logins — Bên B điền theo văn bản ủy quyền, không tự điền)',
+          session_user using errcode = '42501';
+      end if;
+    end if;
+    perform human_actor(coalesce(p_by, v_person), v_block);
+  end if;
+  select f.count_spec, f.stage_since into v_spec, v_since
+    from feature_rollout f where f.feature_id = p_fid;
+  if not found then
+    raise exception '%: chưa vào sổ triển khai', p_fid;
+  end if;
+  if v_spec is null or jsonb_typeof(v_spec->'sql') is distinct from 'array'
+  then
+    raise exception '%: sổ chưa có bộ đếm đầu ra (count_spec) — owner chạy rollout --seed',
+      p_fid;
+  end if;
+  return query
+    with o as (
+      select x.k, min(x.ts) as ts, bool_and(x.nr) as nr,
+             (array_agg(x.sha order by x.i)
+                filter (where x.sha is not null))[1] as sha
+        from rollout_db_outputs(v_spec, v_since, now()) x group by x.k),
+    r as (
+      select distinct on (v.output_key, v.content_sha256) v.output_key,
+             v.content_sha256, v.decision, v.reviewed_by
+        from output_reviews v where v.feature_id = p_fid
+       order by v.output_key, v.content_sha256, v.ts desc, v.id desc)
+    select o.k, o.ts, o.sha,
+           case when o.k like 'rp:%' then 'bao_cao' else 'bang' end,
+           r.decision, r.reviewed_by
+      from o left join r on r.output_key = o.k and r.content_sha256 = o.sha
+     where o.nr
+     order by o.ts, o.k;
+end $$;
+revoke execute on function output_pending_human(text, text) from public;
+
+-- ===== v15 fix P8.7c =====
+-- (P8.7, PL02 mục 1b) Bằng chứng TIN CẬY trong DB cho đầu ra nguồn FILE cần
+-- người duyệt từng mục. Trước vá: backup hằng ngày (data_platform-07.2) chỉ
+-- có nhật ký `$BACKUP_DIR/backup_runs.jsonl` trên máy ứng dụng — DB không
+-- đọc được → `output_review_human` từ chối mọi khóa `bk:` (không duyệt được
+-- backup hợp lệ) và cổng PL02 DB bỏ ngưỡng số lượng của tính năng có nguồn
+-- file (tin bằng chứng Python). Nay:
+--   * sổ APPEND-ONLY `file_output_evidence` (`append_only_guard`): 1 dòng = 1
+--     PHIÊN BẢN bản ghi đầu ra nguồn file do ĐƯỜNG DỊCH VỤ ghi lúc tạo ra nó
+--     (backup → chính tiến trình `scripts/db_backup.py`, login `svc_backup`,
+--     ngay khi backup thành công). Khóa + sha phiên bản do DB TỰ TÍNH từ bản
+--     ghi (khóa `bk:<sha256 bản dump>` — như bộ đếm Python `_backup_row`; sha
+--     = sha256 của chính chuỗi bản ghi, = `rollout._rec_sha` dòng
+--     backup_runs.jsonl). Bộ đếm đọc sổ: thời điểm = `captured_at` (đồng hồ
+--     DB, không nhận mốc tự khai), phiên bản hiện hành = bản ghi MỚI NHẤT của
+--     khóa, `is_sample` không đếm;
+--   * ghi CHỈ qua function SECURITY DEFINER `file_output_evidence_backup`:
+--     login phải là owner (dev) hoặc thành viên `svc_backup` và KHÔNG thuộc
+--     role người/agent/loader/BKS (login người lỡ được cấp vào svc_backup vẫn
+--     không tự tạo bằng chứng rồi tự duyệt); bản ghi phải là lần backup `ok`
+--     đúng khuôn (sha256 bản dump, tên file dump không đường dẫn, ts có múi
+--     giờ); trùng khóa + phiên bản → id cũ (idempotent). GRANT EXECUTE chỉ
+--     `svc_backup` (roles.sql khối cùng tên) — app_human/agent_writer/
+--     svc_loader/bks_reader không INSERT/UPDATE/DELETE, không EXECUTE;
+--   * data_platform-07.2 đếm nguồn bảng `file_output_evidence` (source
+--     backup_runs) thay nguồn file → `count_spec` (owner `rollout --seed`)
+--     chứa câu đếm sổ: `output_pending_human`/`output_review_human`/cổng PL02
+--     dùng CÙNG bộ đếm (khóa giả / sai sha / mẫu / phiên bản cũ / sai tính
+--     năng → từ chối; ngưỡng số lượng áp lên số DB đếm). Backup trước bản vá
+--     (chỉ có dòng jsonl) KHÔNG có bằng chứng → không đếm, không duyệt.
+--   * convlog (sales-01, `cv:`) KHÔNG cần sổ này: câu bot gửi khách không
+--     duyệt qua `output_reviews` (review=False — gửi thiếu người = `unapp`,
+--     tự chặn cổng van_hanh); ngưỡng số lượng của sales-01 vẫn theo Python
+--     (runbook 9.7). Nguồn file chưa có bằng chứng DB vẫn bị từ chối rõ ràng.
+create table if not exists file_output_evidence (
+  id bigint generated always as identity primary key,
+  nguon text not null check (nguon in ('backup_runs')),
+  output_key text not null check (output_key ~ '^bk:[0-9a-f]{64}$'),
+  content_sha256 text not null check (content_sha256 ~ '^[0-9a-f]{64}$'),
+  ban_ghi text not null check (char_length(ban_ghi) between 2 and 4000),
+  run_ts timestamptz not null,
+  is_sample boolean not null default false,
+  captured_at timestamptz not null default now(),
+  captured_by text not null default session_user
+);
+create unique index if not exists file_output_evidence_version_uq
+  on file_output_evidence (nguon, output_key, content_sha256);
+create index if not exists file_output_evidence_ts_idx
+  on file_output_evidence (nguon, captured_at);
+create or replace trigger file_output_evidence_append_only_row
+  before update or delete on file_output_evidence
+  for each row execute function append_only_guard();
+create or replace trigger file_output_evidence_no_truncate
+  before truncate on file_output_evidence
+  for each statement execute function append_only_guard();
+
+create or replace function file_output_evidence_backup(p_rec text,
+  p_is_sample boolean default false)
+returns bigint
+language plpgsql security definer set search_path from current as $$
+declare
+  j jsonb;
+  v_ts timestamptz;
+  v_key text;
+  v_sha text;
+  v_id bigint;
+begin
+  if not p10_owner_login() then
+    if not exists (select 1 from pg_roles r where r.rolname = 'svc_backup'
+                    and pg_has_role(session_user, r.oid, 'MEMBER')) then
+      raise exception 'login % không phải dịch vụ backup (svc_backup) — chỉ tiến trình backup ghi bằng chứng đầu ra nguồn file',
+        session_user using errcode = '42501';
+    end if;
+    if exists (select 1 from pg_roles r where r.rolname in ('app_human',
+                 'agent_writer', 'svc_loader', 'svc_job', 'svc_webhook',
+                 'bks_reader', 'ben_a_reader')
+                 and pg_has_role(session_user, r.oid, 'MEMBER')) then
+      raise exception 'login % thuộc role người/agent/loader/BKS — không tự tạo bằng chứng đầu ra (tách login dịch vụ backup riêng)',
+        session_user using errcode = '42501';
+    end if;
+  end if;
+  if p_rec is null or char_length(p_rec) not between 2 and 4000 then
+    raise exception 'bản ghi backup rỗng hoặc quá dài';
+  end if;
+  begin
+    j := p_rec::jsonb;
+  exception when others then
+    raise exception 'bản ghi backup không phải JSON';
+  end;
+  if jsonb_typeof(j) is distinct from 'object' then
+    raise exception 'bản ghi backup phải là JSON object';
+  end if;
+  if j->>'status' is distinct from 'ok' then
+    raise exception 'chỉ lần backup thành công (status ok) là đầu ra';
+  end if;
+  if coalesce(j->>'sha256', '') !~ '^[0-9a-f]{64}$' then
+    raise exception 'sha256 bản dump sai khuôn';
+  end if;
+  if coalesce(j->>'file', '')
+       !~ '^[A-Za-z0-9_-]+_[0-9]{8}_[0-9]{6}_vn\.dump(\.enc)?$' then
+    raise exception 'tên file dump sai khuôn (không đường dẫn, không .partial)';
+  end if;
+  if coalesce(j->>'ts', '') !~ ('^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}'
+       || ':[0-9]{2}([.][0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$') then
+    raise exception 'ts bản ghi backup phải ISO 8601 có múi giờ';
+  end if;
+  begin
+    v_ts := (j->>'ts')::timestamptz;
+  exception when others then
+    raise exception 'ts bản ghi backup không hợp lệ';
+  end;
+  v_key := 'bk:' || (j->>'sha256');
+  v_sha := encode(sha256(convert_to(p_rec, 'UTF8')), 'hex');
+  insert into file_output_evidence (nguon, output_key, content_sha256,
+    ban_ghi, run_ts, is_sample)
+  values ('backup_runs', v_key, v_sha, p_rec, v_ts,
+          coalesce(p_is_sample, false))
+  on conflict (nguon, output_key, content_sha256) do nothing
+  returning id into v_id;
+  if v_id is null then
+    select e.id into v_id from file_output_evidence e
+     where e.nguon = 'backup_runs' and e.output_key = v_key
+       and e.content_sha256 = v_sha;
+  end if;
+  return v_id;
+end $$;
+revoke execute on function file_output_evidence_backup(text, boolean)
+  from public;

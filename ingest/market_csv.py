@@ -628,6 +628,12 @@ def main(argv: list[str] | None = None) -> int:
     if why := auth.bind_service("loader"):
         print(f"[err] {why}", flush=True)
         return 2
+    # v15 P12.1: chính sách cổng tắt loader (data/loader_gate.json) —
+    # chưa cấu hình + tính năng tắt → không nạp (--report chỉ đọc: không chặn).
+    from pipelines import loader_gate
+    if args.file is not None and (why := loader_gate.check("market_csv")):
+        print(f"[rollout] {why}", flush=True)
+        return 2
     load_dotenv(ROOT / ".env")
     dsn = os.environ.get("DATABASE_URL")
     if not dsn:

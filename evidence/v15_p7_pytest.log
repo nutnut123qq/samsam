@@ -1,0 +1,35 @@
+# v15 p7 — pytest file mới + file test liên quan (lịch job, login dịch vụ, Messenger/Zalo, rollout/catalog, sales/ceo/intel v14.4–14.5) sau sửa
+# command: (cwd=D:/code/samsam) python $H/withdb.py samsam_v15_p7 python -m pytest tests/test_v15_p7_jobs.py tests/test_v14_p2_service_auth.py tests/test_v13_c07_ops.py tests/test_v14_p6_ops.py tests/test_messenger.py tests/test_job_runs.py tests/test_health_bulletin.py tests/test_zalo.py tests/test_channels.py tests/test_rollout.py tests/test_rollout_enforce.py tests/test_v14_p3_rollout_edges.py tests/test_v14_p4_sales.py tests/test_v14_p5_mkt_ceo_intel.py tests/test_data_flow_map.py tests/test_report.py tests/test_v15_p8_outputs.py -q -p no:cacheprovider -rfEs
+# nền a05c60f (nhánh v15-hop-dong) + working tree chưa commit (sha256 git diff trừ v13-board.md/DONE.md = a5cd44e0c02058809deaf30aa46696162de4463e4b801d7cb90fd7bfd30de0a8); file mới chưa track: tests/test_v15_p7_jobs.py sha256=4dc4dd900225ee3d…; deploy/onprem/systemd/samsam-job-sales_sla.timer sha256=a1e6a76585479e84…; deploy/onprem/systemd/samsam-job-b2b_followups.timer sha256=a77c12453a418424…; deploy/onprem/systemd/samsam-job-order_watch.timer sha256=31fac1e2a19f8c4a…; deploy/onprem/systemd/samsam-job-dealer_price_watch.timer sha256=61fa5a75628df7a7…; deploy/onprem/systemd/samsam-job-ceo_promo.timer sha256=8b9d66d3f280ab2a…; deploy/onprem/systemd/samsam-job-intel_keywords.timer sha256=4e27a2169f317b94…
+# môi trường: DB test samsam_v15_p7 (tạo bằng $H/mkdb.py, DSN che qua withdb.py; schema tạm + login dịch vụ/người GIẢ tạo trong DB test, xóa cuối module) — KHÔNG phải DB samsam của .env
+# exit code: 0
+# tổng kết: 832 passed in 325.99s (0:05:25)
+# ----------------------------------------------------------------
+
+===== p7_related.out =====
+........................................................................ [  8%]
+
+........................................................................ [ 17%]
+
+........................................................................ [ 25%]
+
+........................................................................ [ 34%]
+
+........................................................................ [ 43%]
+
+........................................................................ [ 51%]
+
+........................................................................ [ 60%]
+
+........................................................................ [ 69%]
+
+........................................................................ [ 77%]
+
+........................................................................ [ 86%]
+
+........................................................................ [ 95%]
+
+........................................                                 [100%]
+
+832 passed in 325.99s (0:05:25)
+

@@ -278,8 +278,11 @@ def main(argv=None) -> int:
             if a.build:
                 for ext, body in (("md", built["payload"]),
                                   ("html", kq.render_html(built["payload"]))):
+                    # P8.4: dựng từ golden master đã nạp + BOM — không
+                    # có đường mẫu riêng của catalog.
                     p = write_report(body, a.out_dir,
-                                     f"catalog-tet-{day:%Y-%m-%d}.{ext}")
+                                     f"catalog-tet-{day:%Y-%m-%d}.{ext}",
+                                     sample=False)
                     print(f"[file] {p}")
                 print("[done] NHÁP — --submit để vào hàng duyệt; HTML → In →"
                       " Lưu PDF")

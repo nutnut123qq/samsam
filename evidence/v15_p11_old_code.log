@@ -1,0 +1,259 @@
+# v15 p11 — test MỚI chạy trên code CŨ a05c60f (worktree tạm $H/old_p11, schema cũ của worktree) — PHẢI FAIL
+# command: (cwd=$H/old_p11) python $H/withdb.py samsam_v15_p11 python -m pytest tests/test_v15_p11_core_store.py -q --tb=line -p no:cacheprovider
+# nền a05c60f (nhánh v15-hop-dong) + working tree chưa commit (sha256 git diff trừ v13-board.md/DONE.md = 96d60d11a3c00d80b6a482696e4dc50c9abc0f32c38339c290e8ca93dcee71ad; file mới chưa track tests/test_v15_p11_core_store.py sha256 = c481c0db660d3418546c64e198bd1c5a17ebaa1e9532e6c05f0afbdb5e00bbdf)
+# môi trường: DB test samsam_v15_p11 (tạo bằng $H/mkdb.py, DSN che qua withdb.py) — KHÔNG phải DB samsam của .env
+# exit code: 1
+# tổng kết: 33 failed in 18.82s
+# ghi chú: test_p11_3_main_exit_1_no_db FAIL trên code cũ một phần vì main cũ đọc data/ của
+#   repo (collect_rows() mặc định, bỏ qua DATA_DIR) rồi kết nối DB — bằng chứng đúng chỗ cho P11.3
+#   là test_p11_3_bad_products_source_raises (cũ: None/KeyError/JSONDecodeError/TypeError thay vì
+#   SourceError) + test_p11_3_bad_source_keeps_fk_links (cũ: case doc_only nạp claim với
+#   product_id null). test_p11_2_sync_log_append_only FAIL vì bảng product_sync_log chưa có (tính năng mới).
+# ----------------------------------------------------------------
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF                                        [100%]
+================================== FAILURES ===================================
+E   AssertionError: assert None == 'nv-p1'
+     +  where None = _pid_of(<psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v15_p11) at 0x1f90c97a450>)
+---------------------------- Captured stdout call -----------------------------
+$H\old_p11\tests\test_v15_p11_core_store.py:114: AssertionError: assert None == 'nv-p1'
+E   AssertionError: assert (None,) == ('nv-p2',)
+      At index 0 diff: None != 'nv-p2'
+      Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+$H\old_p11\tests\test_v15_p11_core_store.py:137: AssertionError: assert (None,) == ('nv-p2',)
+E   AssertionError: assert (None == 'nv-p1')
+     +  where None = _pid_of(<psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v15_p11) at 0x1f90c97edb0>)
+---------------------------- Captured stdout call -----------------------------
+$H\old_p11\tests\test_v15_p11_core_store.py:151: AssertionError: assert (None == 'nv-p1')
+E   AssertionError: assert (None == 'nv-p1')
+     +  where None = _pid_of(<psycopg.Connection [INTRANS] (host=localhost user=postgres database=samsam_v15_p11) at 0x1f90c97e5a0>)
+---------------------------- Captured stdout call -----------------------------
+$H\old_p11\tests\test_v15_p11_core_store.py:175: AssertionError: assert (None == 'nv-p1')
+E   psycopg.errors.UniqueViolation: duplicate key value violates unique constraint "products_pkey"
+    DETAIL:  Key (id)=(nv-p2) already exists.
+---------------------------- Captured stdout call -----------------------------
+$PY\Lib\site-packages\psycopg\cursor.py:148: psycopg.errors.UniqueViolation: duplicate key value violates unique constraint "products_pkey"
+E   psycopg.errors.UndefinedTable: relation "product_sync_log" does not exist
+    LINE 1: select kind, product_id, detail from product_sync_log where ...
+                                                 ^
+---------------------------- Captured stdout call -----------------------------
+$PY\Lib\site-packages\psycopg\connection.py:300: psycopg.errors.UndefinedTable: relation "product_sync_log" does not exist
+E   AssertionError: assert 'KeyError' == 'SourceError'
+      - SourceError
+      + KeyError
+$H\old_p11\tests\test_v15_p11_core_store.py:300: AssertionError: assert 'KeyError' == 'SourceError'
+E   AssertionError: assert 'JSONDecodeError' == 'SourceError'
+      - SourceError
+      + JSONDecodeError
+$H\old_p11\tests\test_v15_p11_core_store.py:300: AssertionError: assert 'JSONDecodeError' == 'SourceError'
+E   AssertionError: assert None == 'SourceError'
+     +  where None = _rejected(WindowsPath('$PYTEST_TMP/pytest-2818/test_p11_3_bad_products_source2/bad'))
+     +    where WindowsPath('$PYTEST_TMP/pytest-2818/test_p11_3_bad_products_source2/bad') = _bad_dir(WindowsPath('$PYTEST_TMP/pytest-2818/test_p11_3_bad_products_source2'), 'doc_only')
+---------------------------- Captured stdout call -----------------------------
+[warn] $PYTEST_TMP\pytest-2818\test_p11_3_bad_products_source2\bad\products.jsonl 0 record — bỏ qua như file thiếu
+$H\old_p11\tests\test_v15_p11_core_store.py:300: AssertionError: assert None == 'SourceError'
+E   AssertionError: assert None == 'SourceError'
+     +  where None = _rejected(WindowsPath('$PYTEST_TMP/pytest-2818/test_p11_3_bad_products_source3/bad'))
+     +    where WindowsPath('$PYTEST_TMP/pytest-2818/test_p11_3_bad_products_source3/bad') = _bad_dir(WindowsPath('$PYTEST_TMP/pytest-2818/test_p11_3_bad_products_source3'), 'dup_id')
+---------------------------- Captured stdout call -----------------------------
+$H\old_p11\tests\test_v15_p11_core_store.py:300: AssertionError: assert None == 'SourceError'
+E   AssertionError: assert None == 'SourceError'
+     +  where None = _rejected(WindowsPath('$PYTEST_TMP/pytest-2818/test_p11_3_bad_products_source4/bad'))
+     +    where WindowsPath('$PYTEST_TMP/pytest-2818/test_p11_3_bad_products_source4/bad') = _bad_dir(WindowsPath('$PYTEST_TMP/pytest-2818/test_p11_3_bad_products_source4'), 'empty')
+---------------------------- Captured stdout call -----------------------------
+[warn] $PYTEST_TMP\pytest-2818\test_p11_3_bad_products_source4\bad\products.jsonl 0 record — bỏ qua như file thiếu
+$H\old_p11\tests\test_v15_p11_core_store.py:300: AssertionError: assert None == 'SourceError'
+E   AssertionError: assert None == 'SourceError'
+     +  where None = _rejected(WindowsPath('$PYTEST_TMP/pytest-2818/test_p11_3_bad_products_source5/bad'))
+     +    where WindowsPath('$PYTEST_TMP/pytest-2818/test_p11_3_bad_products_source5/bad') = _bad_dir(WindowsPath('$PYTEST_TMP/pytest-2818/test_p11_3_bad_products_source5'), 'missing')
+---------------------------- Captured stdout call -----------------------------
+$H\old_p11\tests\test_v15_p11_core_store.py:300: AssertionError: assert None == 'SourceError'
+E   AssertionError: assert 'KeyError' == 'SourceError'
+      - SourceError
+      + KeyError
+$H\old_p11\tests\test_v15_p11_core_store.py:300: AssertionError: assert 'KeyError' == 'SourceError'
+E   AssertionError: assert 'TypeError' == 'SourceError'
+      - SourceError
+      + TypeError
+$H\old_p11\tests\test_v15_p11_core_store.py:300: AssertionError: assert 'TypeError' == 'SourceError'
+E   AssertionError: assert 'JSONDecodeError' == 'SourceError'
+      - SourceError
+      + JSONDecodeError
+$H\old_p11\tests\test_v15_p11_core_store.py:307: AssertionError: assert 'JSONDecodeError' == 'SourceError'
+E   AssertionError: assert 'AttributeError' == 'SourceError'
+      - SourceError
+      + AttributeError
+$H\old_p11\tests\test_v15_p11_core_store.py:307: AssertionError: assert 'AttributeError' == 'SourceError'
+E   AssertionError: assert 'KeyError' == 'SourceError'
+      - SourceError
+      + KeyError
+---------------------------- Captured stdout call -----------------------------
+$H\old_p11\tests\test_v15_p11_core_store.py:307: AssertionError: assert 'KeyError' == 'SourceError'
+E   AssertionError: assert 'JSONDecodeError' == 'SourceError'
+      - SourceError
+      + JSONDecodeError
+$H\old_p11\tests\test_v15_p11_core_store.py:307: AssertionError: assert 'JSONDecodeError' == 'SourceError'
+E   AssertionError: assert 'KeyError' == 'SourceError'
+      - SourceError
+      + KeyError
+---------------------------- Captured stdout call -----------------------------
+$H\old_p11\tests\test_v15_p11_core_store.py:307: AssertionError: assert 'KeyError' == 'SourceError'
+E   AssertionError: không được kết nối DB khi nguồn hỏng
+---------------------------- Captured stdout call -----------------------------
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+$H\old_p11\tests\test_v15_p11_core_store.py:266: AssertionError: không được kết nối DB khi nguồn hỏng
+E   AssertionError: không được kết nối DB khi nguồn hỏng
+---------------------------- Captured stdout call -----------------------------
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+$H\old_p11\tests\test_v15_p11_core_store.py:266: AssertionError: không được kết nối DB khi nguồn hỏng
+E   AssertionError: không được kết nối DB khi nguồn hỏng
+---------------------------- Captured stdout call -----------------------------
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+$H\old_p11\tests\test_v15_p11_core_store.py:266: AssertionError: không được kết nối DB khi nguồn hỏng
+E   AssertionError: không được kết nối DB khi nguồn hỏng
+---------------------------- Captured stdout call -----------------------------
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+$H\old_p11\tests\test_v15_p11_core_store.py:266: AssertionError: không được kết nối DB khi nguồn hỏng
+E   AssertionError: không được kết nối DB khi nguồn hỏng
+---------------------------- Captured stdout call -----------------------------
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+$H\old_p11\tests\test_v15_p11_core_store.py:266: AssertionError: không được kết nối DB khi nguồn hỏng
+E   AssertionError: không được kết nối DB khi nguồn hỏng
+---------------------------- Captured stdout call -----------------------------
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+$H\old_p11\tests\test_v15_p11_core_store.py:266: AssertionError: không được kết nối DB khi nguồn hỏng
+E   AssertionError: không được kết nối DB khi nguồn hỏng
+---------------------------- Captured stdout call -----------------------------
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+$H\old_p11\tests\test_v15_p11_core_store.py:266: AssertionError: không được kết nối DB khi nguồn hỏng
+E   AssertionError: không được kết nối DB khi nguồn hỏng
+---------------------------- Captured stdout call -----------------------------
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+$H\old_p11\tests\test_v15_p11_core_store.py:266: AssertionError: không được kết nối DB khi nguồn hỏng
+E   AssertionError: không được kết nối DB khi nguồn hỏng
+---------------------------- Captured stdout call -----------------------------
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+$H\old_p11\tests\test_v15_p11_core_store.py:266: AssertionError: không được kết nối DB khi nguồn hỏng
+E   AssertionError: không được kết nối DB khi nguồn hỏng
+---------------------------- Captured stdout call -----------------------------
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+$H\old_p11\tests\test_v15_p11_core_store.py:266: AssertionError: không được kết nối DB khi nguồn hỏng
+E   AssertionError: không được kết nối DB khi nguồn hỏng
+---------------------------- Captured stdout call -----------------------------
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+$H\old_p11\tests\test_v15_p11_core_store.py:266: AssertionError: không được kết nối DB khi nguồn hỏng
+E   AssertionError: không được kết nối DB khi nguồn hỏng
+---------------------------- Captured stdout call -----------------------------
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+$H\old_p11\tests\test_v15_p11_core_store.py:266: AssertionError: không được kết nối DB khi nguồn hỏng
+E   AssertionError: không được kết nối DB khi nguồn hỏng
+---------------------------- Captured stdout call -----------------------------
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+$H\old_p11\tests\test_v15_p11_core_store.py:266: AssertionError: không được kết nối DB khi nguồn hỏng
+E   AssertionError: doc_only
+    assert [[('shopee:MA...'Sâm mẫu 2')]] == [[('shopee:MA...'Sâm mẫu 2')]]
+      At index 1 diff: [('sku-p1', None)] != [('sku-p1', 'nv-p1')]
+      Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+[warn] $PYTEST_TMP\pytest-2818\test_p11_3_bad_source_keeps_fk0\doc_only\bad\products.jsonl 0 record — bỏ qua như file thiếu
+$H\old_p11\tests\test_v15_p11_core_store.py:350: AssertionError: doc_only
+=========================== short test summary info ===========================
+FAILED tests/test_v15_p11_core_store.py::test_p11_1_reload_keeps_real_order_link_and_history
+FAILED tests/test_v15_p11_core_store.py::test_p11_1_manual_children_keep_link
+FAILED tests/test_v15_p11_core_store.py::test_p11_2_changed_product_updates_in_place_and_logs
+FAILED tests/test_v15_p11_core_store.py::test_p11_2_vanished_product_retired_not_deleted
+FAILED tests/test_v15_p11_core_store.py::test_p11_2_id_owned_by_other_source_not_overwritten
+FAILED tests/test_v15_p11_core_store.py::test_p11_2_sync_log_append_only - ps...
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_bad_products_source_raises[brace]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_bad_products_source_raises[corrupt]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_bad_products_source_raises[doc_only]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_bad_products_source_raises[dup_id]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_bad_products_source_raises[empty]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_bad_products_source_raises[missing]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_bad_products_source_raises[no_name]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_bad_products_source_raises[not_object]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_other_corrupt_source_raises[claims_whitelist.json-{h\u1ecfng]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_other_corrupt_source_raises[claims_whitelist.json-[1]]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_other_corrupt_source_raises[sample_orders.jsonl-{}\n]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_other_corrupt_source_raises[sample_plots.jsonl-{"id": "KV"\n]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_other_corrupt_source_raises[news.jsonl-{}\n]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_main_exit_1_no_db[brace]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_main_exit_1_no_db[corrupt]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_main_exit_1_no_db[doc_only]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_main_exit_1_no_db[dup_id]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_main_exit_1_no_db[empty]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_main_exit_1_no_db[missing]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_main_exit_1_no_db[no_name]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_main_exit_1_no_db[not_object]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_main_exit_1_no_db[other0]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_main_exit_1_no_db[other1]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_main_exit_1_no_db[other2]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_main_exit_1_no_db[other3]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_main_exit_1_no_db[other4]
+FAILED tests/test_v15_p11_core_store.py::test_p11_3_bad_source_keeps_fk_links
+33 failed in 18.82s

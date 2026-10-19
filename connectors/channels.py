@@ -528,15 +528,25 @@ def record_suggestion(inb: Inbound, text: str, msg_id: str = "",
     sẽ gửi, đã che PII; không câu hỏi/user_id) → id | None. Người duyệt
     rồi NGƯỜI gửi. Dòng "Nguồn: <url>" làm guardrail bắt oan slug (vd
     'chua-') → lưu câu gốc `raw` (người gửi tự kèm nguồn). Sàn / thiếu
-    muối / DB down / tắt → None + warn."""
+    muối / DB down / tắt → None + warn.
+    v15 (P9.4): câu bot che bằng `pii.scrub_user` (SĐT/email + tên + địa
+    chỉ — cùng bộ che câu khách) thay vì chỉ `_mask_pii`: câu bot có thể
+    nhắc lại tên/địa chỉ khách ("Dạ chị Hoa ở 12 Lê Lợi...") — trước đây
+    nằm nguyên văn trong `approval_queue.payload`. Còn dấu hiệu PII chưa
+    che chắc (hoặc từ điển tên hỏng) → KHÔNG ghi (None + warn), khách vẫn
+    có mục handoff."""
     import psycopg
 
     from pipelines import director, guardrail
+    from pipelines.pii import scrub_user
     if inb.channel not in CHAT_CHANNELS or inb.user_hash is None:
         return None
-    payload = _mask_pii(text)
+    payload, risky = scrub_user(text)
     if raw is not None and not guardrail.check(payload)["ok"]:
-        payload = _mask_pii(raw)
+        payload, risky = scrub_user(raw)
+    if risky:
+        _warn("câu gợi ý còn dấu hiệu PII chưa che — không lưu gợi ý")
+        return None
     own = conn is None
     conn = _connect() if own else conn
     if conn is None:

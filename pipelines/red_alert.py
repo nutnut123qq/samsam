@@ -44,10 +44,34 @@ Contract:
     đợt: leo thang 1 lần, không lặp mỗi lần quét; trần `ESC_MAX_PER_RUN`/lần
     (cũ trước, dư → lần sau). Bản leo thang chưa thông báo được → exit 1.
     `intel_alert.escalate` dùng chung hàm này (lọc nguồn intel).
+  - v15 P12.2 TỒN khi bật leo thang: mốc bật = dòng `agent_action_log`
+    `red_alert_escalation_start` đầu tiên (ghi 1 lần ở lần `--escalate` thật
+    đầu tiên; giờ DB, không lùi được). Cảnh báo gốc ĐÃ quá 2 giờ TRƯỚC mốc
+    (`ts < mốc − 2 giờ`) = TỒN: KHÔNG tự leo thang khi `backlog.chinh_sach`
+    trong routing còn null (chờ Bên B) — chỉ đếm/in; "leo_thang_dan" = leo
+    thang dần, cũ trước, CHUNG trần `ESC_MAX_PER_RUN`/lần; "khong_leo_thang"
+    = không leo thang (vẫn ở `--open`). Chính sách khác null phải kèm
+    `quyet_boi` (người) + `can_cu`. Truy vấn tồn TÁCH khỏi luồng thường →
+    tồn bị giữ không chiếm chỗ trần 50 của cảnh báo mới. `--escalate
+    --dry-run [--after ID]` = xem trước KHÔNG ghi gì (kể cả mốc): luồng
+    thường + tồn phân trang theo id (keyset `id > after`, 50/trang, in id
+    trang sau) — đi hết các trang = đủ mọi id, không trùng, không sót.
+  - v15 P12.3 cấp 2 / ngoài giờ THEO CẤU HÌNH (routing): `cap2.sau_phut` +
+    `cap2.recipients` → cảnh báo gốc vẫn chưa xác nhận `sau_phut` phút sau
+    bản leo thang cấp 1 → đúng 1 bản cấp 2 (`detail.escalation_of =
+    "<id>:cap2"`, `escalation_root`, cùng unique index → idempotent).
+    `ngoai_gio.gio_lam_viec` {thu, tu, den, ngay_nghi} + `ngoai_gio.
+    nguoi_truc` → bản leo thang tạo NGOÀI giờ làm việc (giờ VN) gửi thêm người
+    trực. Người nhận cấp 2/trực cùng luật độc lập (`INDEPENDENT_ROLES`, loại
+    TGĐ/hạ tầng). Chưa cấu hình (null/rỗng) → KHÔNG leo thang cấp 2, KHÔNG
+    gửi người trực, in rõ "chưa cấu hình" — không tự chọn người (không lấy
+    người nhận cấp 1/TGĐ thay). Cấu hình dở (có giờ mà không người hợp lệ…)
+    → `problems` + coi như chưa cấu hình.
 
 Chạy: `python -m pipelines.red_alert --check-routing` (exit 0 khi có ≥1
-người nhận GỬI ĐƯỢC; 1 khi thiếu người nhận HOẶC chưa có kênh gửi) ·
-`--deliver` · `--escalate` · `--ack ID --by "Tên" [--note ..]` · `--open`.
+người nhận GỬI ĐƯỢC; 1 khi thiếu người nhận HOẶC chưa có kênh gửi; in trạng
+thái tồn/cấp 2/ngoài giờ) · `--deliver` · `--escalate [--dry-run] [--after
+ID]` · `--ack ID --by "Tên" [--note ..]` · `--open`.
 """
 
 import argparse
@@ -56,7 +80,8 @@ import os
 import smtplib
 import ssl
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
+from datetime import time as dtime
 from email.message import EmailMessage
 from pathlib import Path
 
@@ -95,6 +120,23 @@ ESCALATE_AFTER = timedelta(hours=2)
 ESC_LABEL = "CHƯA XÁC NHẬN"
 ESC_PREFIX = f"[LEO THANG — {ESC_LABEL}] "
 ESC_MAX_PER_RUN = 50
+# v15 P12.2 — tồn khi bật leo thang (Bên B quyết; null = chưa quyết).
+START_ACTION = "red_alert_escalation_start"
+BACKLOG_POLICIES = {
+    "leo_thang_dan": "leo thang dần tồn (cũ trước, chung trần 50/lần)",
+    "khong_leo_thang": "không leo thang tồn (vẫn ở --open)"}
+BACKLOG_UNSET = ("chính sách xử lý tồn CHƯA QUYẾT (Bên B — routing "
+                 "`backlog.chinh_sach`) → tồn KHÔNG tự leo thang")
+# v15 P12.3 — cấp 2 / ngoài giờ (Bên B chỉ định; rỗng = chưa cấu hình).
+CAP2_LABEL = "CẤP 2 — CHƯA XÁC NHẬN"
+CAP2_PREFIX = f"[LEO THANG {CAP2_LABEL}] "
+CAP2_SUFFIX = ":cap2"
+CAP2_MAX_MIN = 7 * 24 * 60
+CAP2_UNSET = ("leo thang cấp 2 CHƯA CẤU HÌNH (Bên B chỉ định người cấp 2 + "
+              "số phút — routing `cap2`) → không leo thang cấp 2")
+OFF_UNSET = ("người trực ngoài giờ CHƯA CẤU HÌNH (Bên B — routing "
+             "`ngoai_gio`) → ngoài giờ chỉ gửi người nhận cấp 1")
+VN = timezone(timedelta(hours=7))
 
 
 def _norm(v) -> str:
@@ -127,9 +169,143 @@ def _valid_recipients(raw, excluded) -> tuple[list[dict], list[str]]:
     return out, problems
 
 
+def _human(v) -> str:
+    s = " ".join(v.split()) if isinstance(v, str) else ""
+    ok = (s and len(s) <= BY_MAX and s.isprintable()
+          and not s.casefold().startswith(("agent:", "system:")))
+    return s if ok else ""
+
+
+def backlog_cfg(raw) -> tuple[dict, list[str]]:
+    """Chính sách tồn → ({"policy", "by", "ref"}, problems). Thiếu/lỗi →
+    policy None (không tự gửi tồn)."""
+    none = {"policy": None, "by": None, "ref": None}
+    if raw is None:
+        return none, []
+    if not isinstance(raw, dict):
+        return none, ["backlog không phải object — coi như chưa quyết"]
+    pol = raw.get("chinh_sach")
+    if pol is None:
+        return none, []
+    if pol not in BACKLOG_POLICIES:
+        return none, [f"backlog.chinh_sach '{str(pol)[:40]}' không hợp lệ ("
+                      + " | ".join(BACKLOG_POLICIES) + ") — coi như chưa quyết"]
+    by, ref = _human(raw.get("quyet_boi")), _human(raw.get("can_cu"))
+    if not by or not ref:
+        return none, [("backlog.chinh_sach đã đặt nhưng thiếu quyet_boi"
+                       " (người thật) / can_cu — coi như chưa quyết")]
+    return {"policy": pol, "by": by, "ref": ref}, []
+
+
+def cap2_cfg(raw, excluded) -> tuple[dict | None, list[str]]:
+    """Cấp 2 → ({"after": timedelta, "recipients"}, problems) | None."""
+    if raw is None or raw == {}:
+        return None, []
+    if not isinstance(raw, dict):
+        return None, ["cap2 không phải object — chưa cấu hình"]
+    m, rc = raw.get("sau_phut"), raw.get("recipients")
+    if m is None and not rc:
+        return None, []
+    probs = []
+    if (not isinstance(m, int) or isinstance(m, bool)
+            or not 1 <= m <= CAP2_MAX_MIN):
+        probs.append(f"cap2.sau_phut cần số nguyên 1..{CAP2_MAX_MIN}")
+    valid, p2 = _valid_recipients(rc, excluded)
+    probs += [f"cap2.{x}" for x in p2]
+    if not valid:
+        probs.append("cap2 không có người nhận hợp lệ")
+    if probs:
+        return None, [x + " — không leo thang cấp 2" for x in probs]
+    return {"after": timedelta(minutes=m), "recipients": valid}, []
+
+
+def _hhmm(v) -> dtime | None:
+    try:
+        h, mi = str(v).split(":")
+        return dtime(int(h), int(mi)) if len(h) == 2 and len(mi) == 2 else None
+    except ValueError:
+        return None
+
+
+def off_hours_cfg(raw, excluded) -> tuple[dict | None, list[str]]:
+    """Ngoài giờ → ({"thu", "tu", "den", "ngay_nghi", "recipients"},
+    problems) | None."""
+    if raw is None or raw == {}:
+        return None, []
+    if not isinstance(raw, dict):
+        return None, ["ngoai_gio không phải object — chưa cấu hình"]
+    g, rc = raw.get("gio_lam_viec"), raw.get("nguoi_truc")
+    if g is None and not rc:
+        return None, []
+    probs = []
+    g = g if isinstance(g, dict) else {}
+    thu = g.get("thu")
+    tu, den = _hhmm(g.get("tu")), _hhmm(g.get("den"))
+    if (not isinstance(thu, list) or not thu or not all(
+            isinstance(x, int) and not isinstance(x, bool) and 0 <= x <= 6
+            for x in thu)):
+        probs.append("ngoai_gio.gio_lam_viec.thu cần list 0..6 (0 = thứ Hai)")
+    if tu is None or den is None or not tu < den:
+        probs.append("ngoai_gio.gio_lam_viec.tu/den cần 'HH:MM', tu < den")
+    nghi = []
+    for x in g.get("ngay_nghi") or []:
+        try:
+            nghi.append(date.fromisoformat(x))
+        except (TypeError, ValueError):
+            probs.append(f"ngoai_gio.gio_lam_viec.ngay_nghi '{str(x)[:12]}'"
+                         " không phải YYYY-MM-DD")
+    valid, p2 = _valid_recipients(rc, excluded)
+    probs += [f"ngoai_gio.nguoi_truc: {x}" for x in p2]
+    if not valid:
+        probs.append("ngoai_gio không có người trực hợp lệ")
+    if probs:
+        return None, [x + " — không gửi người trực" for x in probs]
+    return {"thu": set(thu), "tu": tu, "den": den, "ngay_nghi": set(nghi),
+            "recipients": valid}, []
+
+
+def is_off_hours(cfg: dict, now: datetime) -> bool:
+    """THUẦN: `now` (aware) ngoài giờ làm việc theo giờ VN?"""
+    t = now.astimezone(VN)
+    return (t.weekday() not in cfg["thu"] or t.date() in cfg["ngay_nghi"]
+            or not cfg["tu"] <= t.time() < cfg["den"])
+
+
+def tiers(routing: dict | None) -> dict:
+    """Cấu hình tồn/cấp 2/ngoài giờ đã kiểm (cả routing truyền tay)."""
+    routing = routing if isinstance(routing, dict) else {}
+    ex = routing.get("excluded_roles") or ()
+    b, p1 = backlog_cfg(routing.get("backlog"))
+    c2, p2 = cap2_cfg(routing.get("cap2"), ex)
+    og, p3 = off_hours_cfg(routing.get("ngoai_gio"), ex)
+    return {"backlog": b, "cap2": c2, "ngoai_gio": og,
+            "problems": p1 + p2 + p3}
+
+
+def tier_lines(t: dict) -> list[str]:
+    b = t["backlog"]
+    out = [f"[tồn] {BACKLOG_UNSET}" if b["policy"] is None else
+           f"[tồn] {b['policy']} ({BACKLOG_POLICIES[b['policy']]}) — quyết "
+           f"bởi {b['by']}, căn cứ {b['ref']}"]
+    c2 = t["cap2"]
+    out.append(f"[cấp 2] {CAP2_UNSET}" if c2 is None else
+               f"[cấp 2] sau {int(c2['after'].total_seconds() // 60)} phút "
+               "kể từ leo thang cấp 1 → "
+               + ", ".join(f"{r['name']} ({r['role']})"
+                           for r in c2["recipients"]))
+    og = t["ngoai_gio"]
+    out.append(f"[ngoài giờ] {OFF_UNSET}" if og is None else
+               f"[ngoài giờ] giờ làm việc thứ {sorted(og['thu'])} "
+               f"{og['tu']:%H:%M}–{og['den']:%H:%M} (giờ VN), ngoài giờ gửi "
+               "thêm: " + ", ".join(f"{r['name']} ({r['role']})"
+                                     for r in og["recipients"]))
+    return out
+
+
 def load_routing(path=None) -> dict:
-    """→ {"recipients": [hợp lệ], "excluded_roles": [...], "problems": [...]}
-    Không raise: file hỏng → recipients [] + problems."""
+    """→ {"recipients": [hợp lệ], "excluded_roles": [...], "problems": [...],
+    "backlog", "cap2", "ngoai_gio"} (v15 P12.2/P12.3 — cấu hình thô, kiểm
+    bằng `tiers`). Không raise: file hỏng → recipients [] + problems."""
     p = Path(path) if path is not None else ROUTING
     problems: list[str] = []
     cfg = {}
@@ -147,8 +323,10 @@ def load_routing(path=None) -> dict:
                                          else []) if _norm(r)}
                       | set(ALWAYS_EXCLUDED))
     recipients, probs = _valid_recipients(cfg.get("recipients"), excluded)
-    return {"recipients": recipients, "excluded_roles": excluded,
-            "problems": problems + probs}
+    out = {"recipients": recipients, "excluded_roles": excluded,
+           "backlog": cfg.get("backlog"), "cap2": cfg.get("cap2"),
+           "ngoai_gio": cfg.get("ngoai_gio")}
+    return {**out, "problems": problems + probs + tiers(out)["problems"]}
 
 
 def _mask(o):
@@ -338,40 +516,167 @@ def deliver_pending(conn, now: datetime, routing: dict | None = None,
     return st
 
 
-_DUE_SQL = (
-    "select r.id, r.source_agent, r.title, r.detail->>'url' from red_alerts r"
-    " where not (r.detail ? 'escalation_of') and r.ts <= %s"
-    " and (%s::text is null or r.source_agent = %s)"
+# Cảnh báo GỐC tới hạn cấp 1, chưa xác nhận, chưa leo thang. `edge` = mốc
+# bật − 2 giờ: luồng thường `ts >= edge`, TỒN `ts < edge` (truy vấn tách →
+# tồn bị giữ không chiếm chỗ trần của cảnh báo mới; keyset `id > after`).
+_DUE_BASE = (
+    " from red_alerts r where not (r.detail ? 'escalation_of')"
+    " and r.ts <= %(due)s"
+    " and (%(src)s::text is null or r.source_agent = %(src)s)"
     " and not exists (select 1 from red_alert_acks a where a.alert_id = r.id)"
     " and not exists (select 1 from red_alerts e where e.detail ?"
-    " 'escalation_of' and e.detail->>'escalation_of' = r.id::text)"
-    " order by r.id limit %s")
+    " 'escalation_of' and e.detail->>'escalation_of' = r.id::text)")
+_DUE_COLS = "select r.id, r.source_agent, r.title, r.detail->>'url'"
+_DUE_SQL = (_DUE_COLS + _DUE_BASE + " and r.ts >= %(edge)s"
+            " order by r.id limit %(lim)s")
+_BACKLOG_SQL = (_DUE_COLS + _DUE_BASE + " and r.ts < %(edge)s"
+                " and r.id > %(after)s order by r.id limit %(lim)s")
+_BACKLOG_N_SQL = "select count(*)" + _DUE_BASE + " and r.ts < %(edge)s"
+# Cấp 2: gốc chưa xác nhận, bản cấp 1 đã quá `sau_phut`, chưa có cấp 2.
+_CAP2_SQL = (
+    "select r.id, r.source_agent, r.title, r.detail->>'url' from red_alerts r"
+    " where not (r.detail ? 'escalation_of')"
+    " and (%(src)s::text is null or r.source_agent = %(src)s)"
+    " and not exists (select 1 from red_alert_acks a where a.alert_id = r.id)"
+    " and exists (select 1 from red_alerts e where e.detail ? 'escalation_of'"
+    " and e.detail->>'escalation_of' = r.id::text and e.ts <= %(due2)s)"
+    " and not exists (select 1 from red_alerts e2 where e2.detail ?"
+    " 'escalation_of' and e2.detail->>'escalation_of' = r.id::text || %(sfx)s)"
+    " order by r.id limit %(lim)s")
+_START_SQL = "select min(ts) from agent_action_log where action = %s"
+
+
+def escalation_start(conn, *, create: bool) -> datetime | None:
+    """Mốc bật leo thang (giờ DB) — ghi 1 lần khi `create` và chưa có.
+    Song song: 2 dòng → `min(ts)` vẫn là 1 mốc. Không đọc được (thiếu quyền
+    SELECT agent_action_log) → lỗi DB nổi lên (fail-closed: không đoán tồn)."""
+    ts = conn.execute(_START_SQL, (START_ACTION,)).fetchone()[0]
+    if ts is not None or not create:
+        conn.commit()
+        return ts
+    with conn.transaction():
+        conn.execute(
+            "insert into agent_action_log (actor, action, object_type,"
+            " object_id, detail) values (%s, %s, %s, %s, %s)",
+            ("system:red_alert", START_ACTION, "red_alert", "escalation",
+             Jsonb({"escalate_after_h": ESCALATE_AFTER.total_seconds() / 3600,
+                    "max_per_run": ESC_MAX_PER_RUN})))
+    ts = conn.execute(_START_SQL, (START_ACTION,)).fetchone()[0]
+    conn.commit()
+    return ts
+
+
+def _merge(*groups) -> list[dict]:
+    seen, out = set(), []
+    for g in groups:
+        for r in g or ():
+            k = (r["name"].casefold(), r["channel"])
+            if k not in seen:
+                seen.add(k)
+                out.append(r)
+    return out
+
+
+def _raise_esc(conn, st, aid, src, title, url, detail, prefix, recipients,
+               routing, sender, ids_key) -> None:
+    if url:
+        detail["url"] = url
+    t = " ".join(str(title or "").split())[:200]
+    try:
+        routed, _ = raise_alert(
+            conn, src, f"{prefix}#{aid} {t}", detail=detail,
+            routing={"recipients": recipients,
+                     "excluded_roles": routing.get("excluded_roles") or ()},
+            sender=sender)
+    except UniqueViolation:            # khối transaction() đã tự rollback
+        st["dup"] += 1
+        return
+    st["escalated" if ids_key == "ids" else "cap2_escalated"] += 1
+    st["unrouted"] += not routed
+    st[ids_key].append(aid)
 
 
 def escalate(conn, now: datetime, routing: dict | None = None,
-             sender=_ENV, *, source: str | None = None) -> dict:
+             sender=_ENV, *, source: str | None = None,
+             dry_run: bool = False, after: int = 0) -> dict:
     """Cảnh báo GỐC quá 2 giờ đồng hồ chưa xác nhận → 1 bản leo thang/cảnh
     báo (mọi nguồn; `source` = chỉ 1 nguồn) → {"escalated", "dup",
-    "unrouted", "ids"}. Chạy song song: unique index → đếm `dup`."""
-    rows = conn.execute(_DUE_SQL, (now - ESCALATE_AFTER, source, source,
-                                   ESC_MAX_PER_RUN)).fetchall()
+    "unrouted", "ids", "cap2_ids", "backlog", "off_hours", ...}. Chạy song
+    song: unique index → đếm `dup`. TỒN (quá hạn trước mốc bật) theo
+    `backlog.chinh_sach`; cấp 2/ngoài giờ theo routing (v15 P12.2/P12.3).
+    `dry_run` → không ghi gì, trả danh sách sẽ làm + 1 trang tồn từ `after`."""
+    routing = routing if routing is not None else load_routing()
+    if not isinstance(routing, dict):
+        routing = {}
+    tc = tiers(routing)
+    lvl1, _ = _valid_recipients(routing.get("recipients"),
+                                routing.get("excluded_roles") or ())
+    start = escalation_start(conn, create=not dry_run)
+    edge = (start if start is not None else now) - ESCALATE_AFTER
+    off = tc["ngoai_gio"] is not None and is_off_hours(tc["ngoai_gio"], now)
+    extra = tc["ngoai_gio"]["recipients"] if off else []
+    q = {"due": now - ESCALATE_AFTER, "src": source, "edge": edge,
+         "lim": ESC_MAX_PER_RUN, "after": max(int(after or 0), 0)}
+    rows = conn.execute(_DUE_SQL, q).fetchall()
+    c2_rows = []
+    if tc["cap2"] is not None:
+        c2_rows = conn.execute(_CAP2_SQL, {
+            **q, "due2": now - tc["cap2"]["after"],
+            "sfx": CAP2_SUFFIX}).fetchall()
+    n_back = conn.execute(_BACKLOG_N_SQL, q).fetchone()[0]
+    page = conn.execute(_BACKLOG_SQL, {**q, "lim": ESC_MAX_PER_RUN + 1}
+                        ).fetchall()
     conn.commit()
-    st = {"escalated": 0, "dup": 0, "unrouted": 0, "ids": []}
-    for aid, src, title, url in rows:
-        detail = {"escalation_of": aid, "label": ESC_LABEL}
-        if url:
-            detail["url"] = url
-        t = " ".join(str(title or "").split())[:200]
-        try:
-            routed, _ = raise_alert(conn, src, f"{ESC_PREFIX}#{aid} {t}",
-                                    detail=detail, routing=routing,
-                                    sender=sender)
-        except UniqueViolation:        # khối transaction() đã tự rollback
-            st["dup"] += 1
-            continue
-        st["escalated"] += 1
-        st["unrouted"] += not routed
-        st["ids"].append(aid)
+    pol = tc["backlog"]["policy"]
+    st = {"escalated": 0, "dup": 0, "unrouted": 0, "ids": [],
+          "cap2_escalated": 0, "cap2_ids": [], "off_hours": off,
+          "start": start, "dry_run": dry_run, "after": q["after"],
+          "backlog": {"policy": pol, "total": n_back, "escalated": [],
+                      "held": n_back,
+                      "page": [r[0] for r in page[:ESC_MAX_PER_RUN]],
+                      "next_after": (page[ESC_MAX_PER_RUN - 1][0]
+                                     if len(page) > ESC_MAX_PER_RUN
+                                     else None)},
+          "problems": tc["problems"]}
+    room = ESC_MAX_PER_RUN
+    todo = rows[:room]
+    room -= len(todo)
+    c2_todo = c2_rows[:room]
+    room -= len(c2_todo)
+    back_todo = []
+    if pol == "leo_thang_dan" and room > 0:
+        back_todo = conn.execute(_BACKLOG_SQL, {**q, "after": 0, "lim": room}
+                                 ).fetchall()
+        conn.commit()
+    if dry_run:
+        st["ids"] = [r[0] for r in todo]
+        st["cap2_ids"] = [r[0] for r in c2_todo]
+        st["backlog"]["escalated"] = [r[0] for r in back_todo]
+        st["backlog"]["held"] = n_back - len(back_todo)
+        return st
+    for aid, src, title, url in todo:
+        _raise_esc(conn, st, aid, src, title, url,
+                   {"escalation_of": aid, "label": ESC_LABEL,
+                    **({"ngoai_gio": True} if off else {})},
+                   ESC_PREFIX, _merge(lvl1, extra), routing, sender, "ids")
+    for aid, src, title, url in c2_todo:
+        _raise_esc(conn, st, aid, src, title, url,
+                   {"escalation_of": f"{aid}{CAP2_SUFFIX}",
+                    "escalation_root": aid, "level": 2, "label": CAP2_LABEL,
+                    **({"ngoai_gio": True} if off else {})},
+                   CAP2_PREFIX, _merge(tc["cap2"]["recipients"], extra),
+                   routing, sender, "cap2_ids")
+    for aid, src, title, url in back_todo:
+        n0 = len(st["ids"])
+        _raise_esc(conn, st, aid, src, title, url,
+                   {"escalation_of": aid, "label": ESC_LABEL, "backlog": True,
+                    "backlog_policy": pol,
+                    "backlog_quyet_boi": tc["backlog"]["by"],
+                    **({"ngoai_gio": True} if off else {})},
+                   ESC_PREFIX, _merge(lvl1, extra), routing, sender, "ids")
+        if len(st["ids"]) > n0:
+            st["backlog"]["escalated"].append(aid)
+    st["backlog"]["held"] = n_back - len(st["backlog"]["escalated"])
     return st
 
 
@@ -418,8 +723,9 @@ def ack(conn, alert_id, by: str, note: str | None = None, *,
     detail = row[0] if isinstance(row[0], dict) else {}
     if "escalation_of" in detail:
         conn.commit()
+        root = detail.get("escalation_root", detail["escalation_of"])
         return False, (f"#{aid} là bản leo thang — xác nhận id gốc "
-                       f"#{detail['escalation_of']}")
+                       f"#{root}")
     try:
         with conn.transaction():
             conn.execute("insert into red_alert_acks (alert_id, acked_by,"
@@ -458,6 +764,8 @@ def _check_routing() -> int:
     r = load_routing()
     for prob in r["problems"]:
         print(f"[warn] {prob}")
+    for line in tier_lines(tiers(r)):
+        print(line)
     if not r["recipients"]:
         print(f"[FAIL] {MISSING} — cảnh báo đỏ vẫn được ghi bảng red_alerts "
               "nhưng chưa có ai nhận; Pháp chế xác nhận người nhận rồi điền "
@@ -477,6 +785,46 @@ def _check_routing() -> int:
     return 0
 
 
+def _print_tiers(st: dict, routing_lines: bool = False) -> None:
+    for p in st["problems"]:
+        print(f"[warn] {p}", flush=True)
+    b = st["backlog"]
+    if b["total"] and b["policy"] is None:
+        print(f"[warn] {b['total']} cảnh báo TỒN (quá hạn trước mốc bật leo "
+              f"thang) — {BACKLOG_UNSET}; xem: --escalate --dry-run",
+              flush=True)
+    elif b["total"] and b["policy"] == "khong_leo_thang":
+        print(f"[info] {b['total']} cảnh báo tồn không leo thang theo chính "
+              "sách khong_leo_thang (vẫn ở --open)", flush=True)
+    if routing_lines:
+        t = tiers(load_routing())
+        for line in tier_lines(t)[1:]:
+            if "CHƯA CẤU HÌNH" in line:
+                print(line, flush=True)
+
+
+def _print_preview(st: dict) -> None:
+    b = st["backlog"]
+    mark = (f"mốc bật leo thang {st['start']:%Y-%m-%d %H:%M %Z}"
+            if st["start"] else "CHƯA bật leo thang lần nào — nếu bật bây "
+            "giờ, mọi cảnh báo đang quá hạn là TỒN")
+    print(f"[dry-run] KHÔNG ghi/gửi gì — {mark}")
+    print(f"[dry-run] luồng thường: sẽ leo thang {len(st['ids'])} — "
+          f"{st['ids']}" + (" (ngoài giờ: gửi thêm người trực)"
+                            if st["off_hours"] else ""))
+    print(f"[dry-run] cấp 2: {len(st['cap2_ids'])} — {st['cap2_ids']}")
+    print(f"[dry-run] tồn: tổng {b['total']}, chính sách "
+          f"{b['policy'] or 'CHƯA QUYẾT'} — lần chạy tới leo thang "
+          f"{len(b['escalated'])}: {b['escalated']}")
+    print(f"[dry-run] trang tồn (id > {st.get('after', 0)}): {b['page']}")
+    if b["next_after"] is not None:
+        print(f"[dry-run] trang sau: --escalate --dry-run --after "
+              f"{b['next_after']}")
+    _print_tiers(st)
+    for line in tier_lines(tiers(load_routing())):
+        print(line)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         prog="python -m pipelines.red_alert",
@@ -494,7 +842,17 @@ def main(argv=None) -> int:
                    help="liệt kê cảnh báo gốc chưa xác nhận")
     ap.add_argument("--by", help="tên người xác nhận")
     ap.add_argument("--note", default=None)
+    ap.add_argument("--dry-run", action="store_true",
+                    help="--escalate: xem trước, KHÔNG ghi/gửi gì")
+    ap.add_argument("--after", type=int, default=0, metavar="ID",
+                    help="--escalate --dry-run: trang tồn tiếp theo (id > ID)")
     args = ap.parse_args(argv)
+    if (args.dry_run or args.after) and not args.escalate:
+        ap.error("--dry-run/--after chỉ đi với --escalate")
+    if args.after and not args.dry_run:
+        ap.error("--after chỉ đi với --escalate --dry-run")
+    if args.after < 0:
+        ap.error("--after phải ≥ 0")
     if args.ack is not None and not (args.by or "").strip():
         ap.error("--ack cần --by <tên người>")
     if args.ack is None and (args.by is not None or args.note is not None):
@@ -522,14 +880,24 @@ def main(argv=None) -> int:
                       f"{_mask_pii(d['title'] or '')[:120]}")
             return 0
         from pipelines.job_runs import job_run
+        if args.escalate and args.dry_run:
+            st = escalate(conn, now, dry_run=True, after=args.after)
+            _print_preview(st)
+            return 0
         if args.escalate:
             with job_run("pipelines.red_alert.escalate") as jr:
                 st = escalate(conn, now)
+                b = st["backlog"]
                 jr["detail"] = (f"escalated={st['escalated']} dup={st['dup']}"
-                                f" unrouted={st['unrouted']}")
+                                f" unrouted={st['unrouted']}"
+                                f" cap2={st['cap2_escalated']}"
+                                f" backlog={b['total']}"
+                                f" backlog_escalated={len(b['escalated'])}"
+                                f" backlog_held={b['held']}")
                 jr["ok"] = not st["unrouted"]
-            print(f"[done] {jr['detail']} escalated_of={st['ids']}",
-                  flush=True)
+            print(f"[done] {jr['detail']} escalated_of={st['ids']}"
+                  f" cap2_of={st['cap2_ids']}", flush=True)
+            _print_tiers(st, routing_lines=True)
             if st["unrouted"]:
                 print(f"[RED-ALERT][FAIL] {st['unrouted']} bản leo thang "
                       f"CHƯA thông báo được ({MISSING} hoặc {NOT_SENT})",

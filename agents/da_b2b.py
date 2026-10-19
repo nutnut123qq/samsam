@@ -54,7 +54,7 @@ from crawler.intel import SOURCES_FILE, is_blocked, load_sources, tier_c_hosts
 from ingest.crm import province_of
 from ingest.lead_store import connect
 from pipelines import approval_queue as aq
-from pipelines import director, guardrail, kb_filter
+from pipelines import auth, director, guardrail, kb_filter
 from pipelines.pii import _mask_pii
 from pipelines.store import _db_msg, _oneline
 
@@ -294,35 +294,61 @@ def submit_batch(conn, limit: int = 50) -> tuple[int | None, int]:
     return qid, len(rows)
 
 
-def handover(conn, qid: int) -> tuple[bool, str, int]:
-    """→ (ok, thông điệp, số dòng đổi). Chỉ đổi khi người đã quyết."""
+def handover(conn, qid: int, by: str) -> tuple[bool, str, int]:
+    """→ (ok, thông điệp, số dòng đổi). Chỉ đổi khi người đã quyết.
+
+    v15 fix P10.2: kiểm đọc ở đây (thông điệp rõ + bảng dựng lại so sha +
+    cổng rollout biên dùng `aq.verify`), GHI qua function
+    `org_handover_human` (SECURITY DEFINER — login người `app_human` không có
+    UPDATE bảng; DB tự kiểm lại mục đã quyết, sha bản duyệt, thành viên lô;
+    danh tính theo login). DB từ chối danh tính → `auth.HumanDenied`."""
     row = conn.execute("select block, object_type, status from"
                        " approval_queue where id = %s", (qid,)).fetchone()
     # v12.0: lô nộp trước v12.0 nằm ở khối `projects` (đã gỡ) — vẫn nhận để
     # dòng 'cho_duyet' của lô cũ không kẹt vĩnh viễn (trả 'moi'/chuyển sales).
     if row is None or row[0] not in (BLOCK, LEGACY_BLOCK)             or row[1] != OBJECT_TYPE:
         return False, f"mục #{qid} không phải lô `{OBJECT_TYPE}`", 0
-    if row[2] in ("rejected", "expired"):
-        # Lô kết thúc không duyệt → trả dòng về 'moi' để lập lô mới (không
-        # để kẹt 'cho_duyet' — submit_batch chỉ lấy 'moi').
-        n = conn.execute("update org_prospects set status = 'moi',"
-                         " batch_queue_id = null where batch_queue_id = %s"
-                         " and status = 'cho_duyet'", (qid,)).rowcount
-        conn.commit()
+    text = None
+    if row[2] not in ("rejected", "expired"):
+        if row[2] != "approved":
+            return False, (f"lô #{qid} đang '{row[2]}' — chỉ chuyển khi "
+                           "NGƯỜI đã duyệt"), 0
+        # Dòng của lô qua function (app_human không SELECT bảng — v8.3).
+        try:
+            with conn.transaction():
+                rows = [dict(zip(COLS, r)) for r in auth.call_human(
+                    conn, "select * from org_batch_rows_human(%s, %s)",
+                    (qid, by), by=by, block=None, action="handover",
+                    object_type="approval_queue", object_id=qid).fetchall()]
+        except auth.HumanDenied:
+            conn.rollback()
+            raise
+        except ValueError as e:
+            conn.rollback()
+            return False, str(e), 0
+        text = render_batch(rows) if rows else None
+        if text is None or not aq.verify(conn, qid, text):
+            conn.commit()
+            return False, (f"lô #{qid}: dữ liệu hiện tại LỆCH bản đã duyệt "
+                           "(sha256) — KHÔNG chuyển"), 0
+    try:
+        with conn.transaction():
+            n = auth.call_human(
+                conn, "select org_handover_human(%s, %s, %s)",
+                (qid, text, by), by=by, block=None, action="handover",
+                object_type="approval_queue", object_id=qid).fetchone()[0]
+    except auth.HumanDenied:
+        conn.rollback()
+        raise
+    except ValueError as e:              # DB từ chối nghiệp vụ
+        conn.rollback()
+        return False, str(e), 0
+    conn.commit()
+    if text is None:
+        # Lô kết thúc không duyệt → dòng về 'moi' để lập lô mới (không để
+        # kẹt 'cho_duyet' — submit_batch chỉ lấy 'moi').
         why = "bị từ chối" if row[2] == "rejected" else "hết hạn SLA"
         return True, f"lô #{qid} {why} — {n} dòng về 'moi'", n
-    if row[2] != "approved":
-        return False, (f"lô #{qid} đang '{row[2]}' — chỉ chuyển khi NGƯỜI "
-                       "đã duyệt"), 0
-    rows = _rows(conn, "where batch_queue_id = %s order by id", (qid,))
-    if not rows or not aq.verify(conn, qid, render_batch(rows)):
-        conn.commit()
-        return False, (f"lô #{qid}: dữ liệu hiện tại LỆCH bản đã duyệt "
-                       "(sha256) — KHÔNG chuyển"), 0
-    n = conn.execute("update org_prospects set status = 'chuyen_sales',"
-                     " handed_at = now() where batch_queue_id = %s and"
-                     " status = 'cho_duyet'", (qid,)).rowcount
-    conn.commit()
     return True, f"lô #{qid}: {n} tổ chức → chuyen_sales", n
 
 
@@ -377,7 +403,19 @@ def main(argv=None) -> int:
                       f"án/GĐ bán hàng duyệt). {FOOTER}")
             return 0
         if a.handover is not None:
-            ok, msg, _ = handover(conn, a.handover)
+            # v15.4 (P10.2): chuyển lô = THỰC THI mục đã duyệt (quyết định ở
+            # decide_item, sha khớp bản duyệt) — kiểm danh tính người chạy.
+            why = auth.cli_identity(conn, by, "approval_queue", a.handover,
+                                    action="handover")
+            if why:
+                conn.rollback()
+                print(f"[từ chối] {why} — không đổi gì", file=sys.stderr)
+                return 1
+            try:
+                ok, msg, _ = handover(conn, a.handover, by)
+            except auth.HumanDenied as e:
+                print(f"[từ chối] {e} — không đổi gì", file=sys.stderr)
+                return 1
             print(f"[{'done' if ok else 'warn'}] {msg} (người chạy: "
                   f"{_oneline(_mask_pii(by), 60)})",
                   file=sys.stdout if ok else sys.stderr)

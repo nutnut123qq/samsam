@@ -1,0 +1,15 @@
+# command: python withdb.py samsam_v15fix_p87b python -m pytest tests/test_v15_fix_p87b.py -q -p no:cacheprovider -rA | revision: nền a05c60f + working tree v15 chưa commit (kèm vá P10.2, P8.1, P8.7, P8.7b) | DB: samsam_v15fix_p87b (DB mới, apply_schema --roles ×2) | exit=0 | kết quả: 9 passed — đúng người/khối: --outputs liệt kê khóa ar: + sha (= bộ đếm owner), --review-output exit 0 + đúng 1 dòng output_reviews gắn người của login, chạy lại = dòng thứ 2 (append-only), cổng DB 1 đầu ra đã duyệt; sai khối/--by giả/login chưa ánh xạ/agent bị chặn, 0 dòng; function liệt kê không lộ nội dung bảng nguồn, chỉ app_human EXECUTE; nguồn file từ chối rõ
+
+.........                                                                [100%]
+=================================== PASSES ====================================
+=========================== short test summary info ===========================
+PASSED tests/test_v15_fix_p87b.py::test_p87b_human_cli_lists_table_outputs
+PASSED tests/test_v15_fix_p87b.py::test_p87b_human_cli_reviews_table_output
+PASSED tests/test_v15_fix_p87b.py::test_p87b_wrong_actor_blocked[sai-khoi]
+PASSED tests/test_v15_fix_p87b.py::test_p87b_wrong_actor_blocked[by-gia]
+PASSED tests/test_v15_fix_p87b.py::test_p87b_wrong_actor_blocked[login-chua-anh-xa]
+PASSED tests/test_v15_fix_p87b.py::test_p87b_wrong_actor_blocked[agent]
+PASSED tests/test_v15_fix_p87b.py::test_p87b_listing_function_identity
+PASSED tests/test_v15_fix_p87b.py::test_p87b_listing_function_locked_down
+PASSED tests/test_v15_fix_p87b.py::test_p87b_file_source_rejected_clearly
+9 passed in 10.80s

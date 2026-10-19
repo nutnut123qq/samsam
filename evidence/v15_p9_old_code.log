@@ -1,0 +1,5655 @@
+# PII GIẢ của test (BOT_PII trong tests/test_v15_p9_chat_safety.py) đã thay bằng <...-giả-test> trong log này.
+# GHI CHÚ: chạy trong worktree tạm NGOÀI repo `git worktree add $H/old_p9 a05c60f` (code CŨ),
+# chỉ copy thêm tests/test_v15_p9_chat_safety.py vào; dòng 'nền' bên dưới là hash diff của repo chính lúc chạy.
+# Worktree đã `git worktree remove --force` sau khi chạy.
+# command: python $H/withdb.py samsam_v15_p9 python -m pytest tests/test_v15_p9_chat_safety.py -q -p no:cacheprovider -rf
+# cwd: $H/old_p9
+# nền: a05c60f + working tree chưa commit (sha256 git diff = e7c0514ff8ef6ae5fcb6cef84358928f964a00f5f083c9f698e62ec4b711f596)
+# môi trường: DB tạm samsam_v15_p9 (DSN che), không mạng ngoài
+# exit: 1
+# tổng kết: 134 failed, 160 passed in 5.86s
+
+FFFFFFF..F.FFFFFFFF..F.FFFFFFFF..F.F.........F..FFFFFFF..F.FFFFFFFF..F.F [ 24%]
+
+FFFFFFF..F.FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF..F.FFFFFFFF..F.FFFFFFFF..F.F [ 48%]
+
+.......FFFF.FFFFFFF..F.F................................................ [ 73%]
+
+.............................................................FFFFFFFFFFF [ 97%]
+
+FFF..F                                                                   [100%]
+
+================================== FAILURES ===================================
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\u200b] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018721804CE0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018732019FA0>
+
+tpl = 'bị{Z}gan', z = '\u200b'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u200bgan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u200bgan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\u200c] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018732018B00>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873201BC20>
+
+tpl = 'bị{Z}gan', z = '\u200c'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u200cgan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u200cgan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\u200d] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873201A5D0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018732019730>
+
+tpl = 'bị{Z}gan', z = '\u200d'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u200dgan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u200dgan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\u200e] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873201ABD0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873201AF00>
+
+tpl = 'bị{Z}gan', z = '\u200e'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u200egan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u200egan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\u2060] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873201AEA0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873201BB60>
+
+tpl = 'bị{Z}gan', z = '\u2060'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u2060gan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u2060gan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\ufeff] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE06B0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE2690>
+
+tpl = 'bị{Z}gan', z = '\ufeff'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\ufeffgan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\ufeffgan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+____ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\xad] _____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE0BF0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE3020>
+
+tpl = 'bị{Z}gan', z = '\xad'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\xadgan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\xadgan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\u3164] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE1790>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE12B0>
+
+tpl = 'bị{Z}gan', z = 'ㅤ'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bịㅤgan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bịㅤgan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\U000e0020] __
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE2270>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE14C0>
+
+tpl = 'bị{Z}gan', z = '\U000e0020'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\U000e0020gan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\U000e0020gan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+______ test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\u200b] ______
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE2B40>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE2EA0>
+
+tpl = 'bi{Z}gan', z = '\u200b'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bi\u200bgan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bi\u200bgan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+______ test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\u200c] ______
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE37D0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE3C20>
+
+tpl = 'bi{Z}gan', z = '\u200c'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bi\u200cgan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bi\u200cgan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+______ test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\u200d] ______
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE3380>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE3140>
+
+tpl = 'bi{Z}gan', z = '\u200d'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bi\u200dgan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bi\u200dgan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+______ test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\u200e] ______
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE2600>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE2660>
+
+tpl = 'bi{Z}gan', z = '\u200e'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bi\u200egan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bi\u200egan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+______ test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\u2060] ______
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE1880>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE1C70>
+
+tpl = 'bi{Z}gan', z = '\u2060'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bi\u2060gan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bi\u2060gan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+______ test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\ufeff] ______
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE0770>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE1190>
+
+tpl = 'bi{Z}gan', z = '\ufeff'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bi\ufeffgan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bi\ufeffgan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_______ test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\xad] _______
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873201AAB0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE02C0>
+
+tpl = 'bi{Z}gan', z = '\xad'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bi\xadgan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bi\xadgan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+______ test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\u3164] ______
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873201BFE0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018732019CD0>
+
+tpl = 'bi{Z}gan', z = 'ㅤ'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'biㅤgan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('biㅤgan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+____ test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\U000e0020] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873201A930>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873201A660>
+
+tpl = 'bi{Z}gan', z = '\U000e0020'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bi\U000e0020gan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bi\U000e0020gan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\u200b] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873201A780>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018732019F10>
+
+tpl = 'Ba tôi bị{Z}gan, uống sâm được không', z = '\u200b'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'Ba tôi bị\u200bgan, uống sâm được không'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('Ba tôi bị\u200bgan, uống sâm được không')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\u200c] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F73D10>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F71D30>
+
+tpl = 'Ba tôi bị{Z}gan, uống sâm được không', z = '\u200c'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'Ba tôi bị\u200cgan, uống sâm được không'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('Ba tôi bị\u200cgan, uống sâm được không')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\u200d] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F71910>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F73050>
+
+tpl = 'Ba tôi bị{Z}gan, uống sâm được không', z = '\u200d'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'Ba tôi bị\u200dgan, uống sâm được không'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('Ba tôi bị\u200dgan, uống sâm được không')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\u200e] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F70620>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F70E90>
+
+tpl = 'Ba tôi bị{Z}gan, uống sâm được không', z = '\u200e'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'Ba tôi bị\u200egan, uống sâm được không'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('Ba tôi bị\u200egan, uống sâm được không')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\u2060] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F70FE0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F716D0>
+
+tpl = 'Ba tôi bị{Z}gan, uống sâm được không', z = '\u2060'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'Ba tôi bị\u2060gan, uống sâm được không'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('Ba tôi bị\u2060gan, uống sâm được không')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\ufeff] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018732019D60>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873201B5C0>
+
+tpl = 'Ba tôi bị{Z}gan, uống sâm được không', z = '\ufeff'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'Ba tôi bị\ufeffgan, uống sâm được không'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('Ba tôi bị\ufeffgan, uống sâm được không')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\xad] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873201B770>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873201B200>
+
+tpl = 'Ba tôi bị{Z}gan, uống sâm được không', z = '\xad'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'Ba tôi bị\xadgan, uống sâm được không'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('Ba tôi bị\xadgan, uống sâm được không')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\u3164] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE1190>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE32C0>
+
+tpl = 'Ba tôi bị{Z}gan, uống sâm được không', z = 'ㅤ'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'Ba tôi bịㅤgan, uống sâm được không'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('Ba tôi bịㅤgan, uống sâm được không')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\U000e0020] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE0E30>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE27E0>
+
+tpl = 'Ba tôi bị{Z}gan, uống sâm được không', z = '\U000e0020'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'Ba tôi bị\U000e0020gan, uống sâm được không'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('Ba tôi bị\U000e0020gan, uống sâm được không')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[\u0111ang b\u1ecb{Z}s\u1ed1t-\u3164] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F71850>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F72F30>
+
+tpl = 'đang bị{Z}sốt', z = 'ㅤ'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'đang bịㅤsốt'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('đang bịㅤsốt')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\u200b] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F733E0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F718B0>
+
+tpl = 'mắc{Z}phổi', z = '\u200b'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mắc\u200bphổi'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mắc\u200bphổi')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\u200c] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F71340>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F73C20>
+
+tpl = 'mắc{Z}phổi', z = '\u200c'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mắc\u200cphổi'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mắc\u200cphổi')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\u200d] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F736B0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F730B0>
+
+tpl = 'mắc{Z}phổi', z = '\u200d'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mắc\u200dphổi'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mắc\u200dphổi')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\u200e] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5C620>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5E6C0>
+
+tpl = 'mắc{Z}phổi', z = '\u200e'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mắc\u200ephổi'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mắc\u200ephổi')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\u2060] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5CDD0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5F1A0>
+
+tpl = 'mắc{Z}phổi', z = '\u2060'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mắc\u2060phổi'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mắc\u2060phổi')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\ufeff] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5D940>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5FDD0>
+
+tpl = 'mắc{Z}phổi', z = '\ufeff'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mắc\ufeffphổi'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mắc\ufeffphổi')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\xad] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5E000>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5E2A0>
+
+tpl = 'mắc{Z}phổi', z = '\xad'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mắc\xadphổi'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mắc\xadphổi')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\u3164] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F70A40>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F70C50>
+
+tpl = 'mắc{Z}phổi', z = 'ㅤ'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mắcㅤphổi'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mắcㅤphổi')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\U000e0020] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F72840>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F705F0>
+
+tpl = 'mắc{Z}phổi', z = '\U000e0020'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mắc\U000e0020phổi'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mắc\U000e0020phổi')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\u200b] ___
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE0E30>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE1190>
+
+tpl = 'chữa{Z}ho', z = '\u200b'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'chữa\u200bho'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('chữa\u200bho')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\u200c] ___
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE0410>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE03E0>
+
+tpl = 'chữa{Z}ho', z = '\u200c'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'chữa\u200cho'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('chữa\u200cho')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\u200d] ___
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018732019730>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018732019DF0>
+
+tpl = 'chữa{Z}ho', z = '\u200d'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'chữa\u200dho'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('chữa\u200dho')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\u200e] ___
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5CE60>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873201BA70>
+
+tpl = 'chữa{Z}ho', z = '\u200e'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'chữa\u200eho'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('chữa\u200eho')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\u2060] ___
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5EF60>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5FA10>
+
+tpl = 'chữa{Z}ho', z = '\u2060'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'chữa\u2060ho'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('chữa\u2060ho')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\ufeff] ___
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5E1B0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5F980>
+
+tpl = 'chữa{Z}ho', z = '\ufeff'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'chữa\ufeffho'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('chữa\ufeffho')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+____ test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\xad] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5C050>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5CA70>
+
+tpl = 'chữa{Z}ho', z = '\xad'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'chữa\xadho'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('chữa\xadho')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\u3164] ___
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873213C680>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873213C2F0>
+
+tpl = 'chữa{Z}ho', z = 'ㅤ'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'chữaㅤho'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('chữaㅤho')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\U000e0020] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873213CFE0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873213CDA0>
+
+tpl = 'chữa{Z}ho', z = '\U000e0020'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'chữa\U000e0020ho'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('chữa\U000e0020ho')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+____ test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\u200b] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873213D880>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873213FB60>
+
+tpl = 'hay bi{Z}tim', z = '\u200b'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'hay bi\u200btim'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('hay bi\u200btim')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+____ test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\u200c] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5D400>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5F2C0>
+
+tpl = 'hay bi{Z}tim', z = '\u200c'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'hay bi\u200ctim'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('hay bi\u200ctim')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+____ test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\u200d] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872FE490D0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872FE48DA0>
+
+tpl = 'hay bi{Z}tim', z = '\u200d'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'hay bi\u200dtim'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('hay bi\u200dtim')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+____ test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\u200e] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872FE4B6E0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872FE4B260>
+
+tpl = 'hay bi{Z}tim', z = '\u200e'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'hay bi\u200etim'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('hay bi\u200etim')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+____ test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\u2060] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872FE47140>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872FE47530>
+
+tpl = 'hay bi{Z}tim', z = '\u2060'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'hay bi\u2060tim'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('hay bi\u2060tim')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+____ test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\ufeff] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872FE69970>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872FE69B50>
+
+tpl = 'hay bi{Z}tim', z = '\ufeff'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'hay bi\ufefftim'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('hay bi\ufefftim')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_____ test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\xad] _____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187217CFEF0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187217CF920>
+
+tpl = 'hay bi{Z}tim', z = '\xad'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'hay bi\xadtim'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('hay bi\xadtim')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+____ test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\u3164] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872174F9E0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872174CCE0>
+
+tpl = 'hay bi{Z}tim', z = 'ㅤ'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'hay biㅤtim'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('hay biㅤtim')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+__ test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\U000e0020] __
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018721749730>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018721748950>
+
+tpl = 'hay bi{Z}tim', z = '\U000e0020'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'hay bi\U000e0020tim'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('hay bi\U000e0020tim')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+__ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u200b] __
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187217F6D80>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187217F5430>
+
+tpl = 'bị{Z}g{Z}an', z = '\u200b'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u200bg\u200ban'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u200bg\u200ban')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+__ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u200c] __
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5C350>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5EDB0>
+
+tpl = 'bị{Z}g{Z}an', z = '\u200c'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u200cg\u200can'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u200cg\u200can')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+__ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u200d] __
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5ECC0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5C9E0>
+
+tpl = 'bị{Z}g{Z}an', z = '\u200d'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u200dg\u200dan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u200dg\u200dan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+__ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u200e] __
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5FB90>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5CC20>
+
+tpl = 'bị{Z}g{Z}an', z = '\u200e'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u200eg\u200ean'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u200eg\u200ean')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+__ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u2060] __
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873201A990>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018732019EB0>
+
+tpl = 'bị{Z}g{Z}an', z = '\u2060'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u2060g\u2060an'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u2060g\u2060an')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+__ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\ufeff] __
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5D2B0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5FAD0>
+
+tpl = 'bị{Z}g{Z}an', z = '\ufeff'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\ufeffg\ufeffan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\ufeffg\ufeffan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\xad] ___
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5EF60>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5E9F0>
+
+tpl = 'bị{Z}g{Z}an', z = '\xad'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\xadg\xadan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\xadg\xadan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+__ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u034f] __
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187217F6C90>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187217F5C10>
+
+tpl = 'bị{Z}g{Z}an', z = '͏'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị͏g͏an'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị͏g͏an')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+__ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\ufe0f] __
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018721748B90>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018721749A30>
+
+tpl = 'bị{Z}g{Z}an', z = '️'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị️g️an'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị️g️an')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+__ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u3164] __
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872174FC50>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872174EF30>
+
+tpl = 'bị{Z}g{Z}an', z = 'ㅤ'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bịㅤgㅤan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bịㅤgㅤan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+__ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u180b] __
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872FE69AC0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872FE68F50>
+
+tpl = 'bị{Z}g{Z}an', z = '᠋'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị᠋g᠋an'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị᠋g᠋an')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\U000e0020] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872FE48EF0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872FE47FB0>
+
+tpl = 'bị{Z}g{Z}an', z = '\U000e0020'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\U000e0020g\U000e0020an'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\U000e0020g\U000e0020an')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u200b] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872FE4B2F0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872FE4B8C0>
+
+tpl = 'tác{Z}dụng ph{Z}ụ', z = '\u200b'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'tác\u200bdụng ph\u200bụ'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('tác\u200bdụng ph\u200bụ')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u200c] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873201BDA0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873201B980>
+
+tpl = 'tác{Z}dụng ph{Z}ụ', z = '\u200c'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'tác\u200cdụng ph\u200cụ'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('tác\u200cdụng ph\u200cụ')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u200d] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE0D40>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE2090>
+
+tpl = 'tác{Z}dụng ph{Z}ụ', z = '\u200d'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'tác\u200ddụng ph\u200dụ'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('tác\u200ddụng ph\u200dụ')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u200e] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F723F0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F714C0>
+
+tpl = 'tác{Z}dụng ph{Z}ụ', z = '\u200e'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'tác\u200edụng ph\u200eụ'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('tác\u200edụng ph\u200eụ')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u2060] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F70B60>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F72090>
+
+tpl = 'tác{Z}dụng ph{Z}ụ', z = '\u2060'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'tác\u2060dụng ph\u2060ụ'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('tác\u2060dụng ph\u2060ụ')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\ufeff] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE0050>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE2B40>
+
+tpl = 'tác{Z}dụng ph{Z}ụ', z = '\ufeff'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'tác\ufeffdụng ph\ufeffụ'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('tác\ufeffdụng ph\ufeffụ')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\xad] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872FE4B530>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873201B2C0>
+
+tpl = 'tác{Z}dụng ph{Z}ụ', z = '\xad'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'tác\xaddụng ph\xadụ'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('tác\xaddụng ph\xadụ')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u034f] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872FE48E00>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872FE49070>
+
+tpl = 'tác{Z}dụng ph{Z}ụ', z = '͏'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'tác͏dụng ph͏ụ'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('tác͏dụng ph͏ụ')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\ufe0f] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872FE68770>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872FE69490>
+
+tpl = 'tác{Z}dụng ph{Z}ụ', z = '️'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'tác️dụng ph️ụ'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('tác️dụng ph️ụ')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u3164] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872174E750>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872174FD70>
+
+tpl = 'tác{Z}dụng ph{Z}ụ', z = 'ㅤ'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'tácㅤdụng phㅤụ'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('tácㅤdụng phㅤụ')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u180b] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187217F5B80>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018721749580>
+
+tpl = 'tác{Z}dụng ph{Z}ụ', z = '᠋'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'tác᠋dụng ph᠋ụ'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('tác᠋dụng ph᠋ụ')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\U000e0020] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5D070>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5C710>
+
+tpl = 'tác{Z}dụng ph{Z}ụ', z = '\U000e0020'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'tác\U000e0020dụng ph\U000e0020ụ'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('tác\U000e0020dụng ph\U000e0020ụ')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\u200b] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5D940>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5E600>
+
+tpl = 'ba tôi bi{Z}tieu{Z}duong', z = '\u200b'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'ba tôi bi\u200btieu\u200bduong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('ba tôi bi\u200btieu\u200bduong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\u200c] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F70FE0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F70740>
+
+tpl = 'ba tôi bi{Z}tieu{Z}duong', z = '\u200c'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'ba tôi bi\u200ctieu\u200cduong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('ba tôi bi\u200ctieu\u200cduong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\u200d] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873213EFF0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873213F770>
+
+tpl = 'ba tôi bi{Z}tieu{Z}duong', z = '\u200d'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'ba tôi bi\u200dtieu\u200dduong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('ba tôi bi\u200dtieu\u200dduong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\u200e] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873213F380>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873213D580>
+
+tpl = 'ba tôi bi{Z}tieu{Z}duong', z = '\u200e'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'ba tôi bi\u200etieu\u200eduong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('ba tôi bi\u200etieu\u200eduong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\u2060] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873213D250>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873213DE80>
+
+tpl = 'ba tôi bi{Z}tieu{Z}duong', z = '\u2060'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'ba tôi bi\u2060tieu\u2060duong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('ba tôi bi\u2060tieu\u2060duong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\ufeff] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F722A0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F70140>
+
+tpl = 'ba tôi bi{Z}tieu{Z}duong', z = '\ufeff'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'ba tôi bi\ufefftieu\ufeffduong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('ba tôi bi\ufefftieu\ufeffduong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\xad] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5E690>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5D070>
+
+tpl = 'ba tôi bi{Z}tieu{Z}duong', z = '\xad'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'ba tôi bi\xadtieu\xadduong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('ba tôi bi\xadtieu\xadduong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\u3164] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018721749370>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018721749BE0>
+
+tpl = 'ba tôi bi{Z}tieu{Z}duong', z = 'ㅤ'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'ba tôi biㅤtieuㅤduong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('ba tôi biㅤtieuㅤduong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\U000e0020] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872174D940>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872174EE10>
+
+tpl = 'ba tôi bi{Z}tieu{Z}duong', z = '\U000e0020'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'ba tôi bi\U000e0020tieu\U000e0020duong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('ba tôi bi\U000e0020tieu\U000e0020duong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\u200b] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872FE48E90>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872FE49790>
+
+tpl = 'bị{Z}giang{Z}mai', z = '\u200b'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u200bgiang\u200bmai'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u200bgiang\u200bmai')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\u200c] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873201B2C0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872FE49340>
+
+tpl = 'bị{Z}giang{Z}mai', z = '\u200c'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u200cgiang\u200cmai'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u200cgiang\u200cmai')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\u200d] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE2FC0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE2660>
+
+tpl = 'bị{Z}giang{Z}mai', z = '\u200d'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u200dgiang\u200dmai'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u200dgiang\u200dmai')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\u200e] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873213C380>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873213F440>
+
+tpl = 'bị{Z}giang{Z}mai', z = '\u200e'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u200egiang\u200emai'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u200egiang\u200emai')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\u2060] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873213C740>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873213DB50>
+
+tpl = 'bị{Z}giang{Z}mai', z = '\u2060'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\u2060giang\u2060mai'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\u2060giang\u2060mai')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\ufeff] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873213FCB0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873213E960>
+
+tpl = 'bị{Z}giang{Z}mai', z = '\ufeff'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\ufeffgiang\ufeffmai'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\ufeffgiang\ufeffmai')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\xad] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187320A81A0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187320AA240>
+
+tpl = 'bị{Z}giang{Z}mai', z = '\xad'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\xadgiang\xadmai'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\xadgiang\xadmai')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\u3164] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187320A8E60>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187320A8B00>
+
+tpl = 'bị{Z}giang{Z}mai', z = 'ㅤ'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bịㅤgiangㅤmai'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bịㅤgiangㅤmai')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\U000e0020] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873213C740>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873213DBE0>
+
+tpl = 'bị{Z}giang{Z}mai', z = '\U000e0020'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bị\U000e0020giang\U000e0020mai'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bị\U000e0020giang\U000e0020mai')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\u200b] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873213F860>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873213E4E0>
+
+tpl = 'BỊ{Z}GAN', z = '\u200b'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'BỊ\u200bGAN'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('BỊ\u200bGAN')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\u200c] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE3620>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873213E1B0>
+
+tpl = 'BỊ{Z}GAN', z = '\u200c'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'BỊ\u200cGAN'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('BỊ\u200cGAN')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\u200d] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872FE492B0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872FE48DA0>
+
+tpl = 'BỊ{Z}GAN', z = '\u200d'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'BỊ\u200dGAN'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('BỊ\u200dGAN')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\u200e] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872FE69580>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872FE698B0>
+
+tpl = 'BỊ{Z}GAN', z = '\u200e'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'BỊ\u200eGAN'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('BỊ\u200eGAN')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\u2060] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187217497C0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018721749A30>
+
+tpl = 'BỊ{Z}GAN', z = '\u2060'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'BỊ\u2060GAN'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('BỊ\u2060GAN')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\ufeff] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F5E600>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F5E7B0>
+
+tpl = 'BỊ{Z}GAN', z = '\ufeff'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'BỊ\ufeffGAN'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('BỊ\ufeffGAN')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+____ test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\xad] _____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187320A86E0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F702C0>
+
+tpl = 'BỊ{Z}GAN', z = '\xad'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'BỊ\xadGAN'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('BỊ\xadGAN')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\u3164] ____
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187320A9610>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187320AA540>
+
+tpl = 'BỊ{Z}GAN', z = 'ㅤ'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'BỊㅤGAN'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('BỊㅤGAN')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\U000e0020] __
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187320A81A0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187320ABB00>
+
+tpl = 'BỊ{Z}GAN', z = '\U000e0020'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'BỊ\U000e0020GAN'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('BỊ\U000e0020GAN')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[b{Z}\u1ecb gan-\u034f] ___
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187320FC320>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187320FC200>
+
+tpl = 'b{Z}ị gan', z = '͏'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'b͏ị gan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('b͏ị gan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[b{Z}\u1ecb gan-\ufe0f] ___
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187320FE060>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187320ABF20>
+
+tpl = 'b{Z}ị gan', z = '️'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'b️ị gan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('b️ị gan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[b{Z}\u1ecb gan-\u3164] ___
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187320A8FB0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187320AAED0>
+
+tpl = 'b{Z}ị gan', z = 'ㅤ'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'bㅤị gan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('bㅤị gan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+___ test_p9_1_invisible_health_blocked_zero_ai_calls[b{Z}\u1ecb gan-\u180b] ___
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187320A9B20>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187320A8110>
+
+tpl = 'b{Z}ị gan', z = '᠋'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'b᠋ị gan'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('b᠋ị gan')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\u200b] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731F72450>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731F70170>
+
+tpl = 'mẹ em bị{Z}tiểu đuong', z = '\u200b'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mẹ em bị\u200btiểu đuong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mẹ em bị\u200btiểu đuong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\u200c] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872174AA20>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187217485F0>
+
+tpl = 'mẹ em bị{Z}tiểu đuong', z = '\u200c'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mẹ em bị\u200ctiểu đuong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mẹ em bị\u200ctiểu đuong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\u200d] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001872FE48AD0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001872174C0E0>
+
+tpl = 'mẹ em bị{Z}tiểu đuong', z = '\u200d'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mẹ em bị\u200dtiểu đuong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mẹ em bị\u200dtiểu đuong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\u200e] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018731EE05C0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018731EE1400>
+
+tpl = 'mẹ em bị{Z}tiểu đuong', z = '\u200e'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mẹ em bị\u200etiểu đuong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mẹ em bị\u200etiểu đuong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\u2060] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873213D520>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873213E4B0>
+
+tpl = 'mẹ em bị{Z}tiểu đuong', z = '\u2060'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mẹ em bị\u2060tiểu đuong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mẹ em bị\u2060tiểu đuong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\ufeff] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x000001873213F9B0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873213D700>
+
+tpl = 'mẹ em bị{Z}tiểu đuong', z = '\ufeff'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mẹ em bị\ufefftiểu đuong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mẹ em bị\ufefftiểu đuong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\xad] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187320FC3B0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187320FDC70>
+
+tpl = 'mẹ em bị{Z}tiểu đuong', z = '\xad'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mẹ em bị\xadtiểu đuong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mẹ em bị\xadtiểu đuong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\u3164] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187320FE7E0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187320FFB30>
+
+tpl = 'mẹ em bị{Z}tiểu đuong', z = 'ㅤ'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mẹ em bịㅤtiểu đuong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mẹ em bịㅤtiểu đuong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+_ test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\U000e0020] _
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187320FF0E0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187320FC770>
+
+tpl = 'mẹ em bị{Z}tiểu đuong', z = '\U000e0020'
+
+
+
+    @pytest.mark.parametrize("tpl,z", _cases(HEALTH_TPL))
+
+    def test_p9_1_invisible_health_blocked_zero_ai_calls(fake, monkeypatch, tpl,
+
+                                                         z):
+
+        """Câu sức khỏe chèn ký tự vô hình → handoff health, 0 lời gọi AI,
+
+        không retrieve."""
+
+        q = tpl.replace("{Z}", z)
+
+        monkeypatch.setattr(rag, "retrieve", lambda *a, **k: pytest.fail(q))
+
+>       assert gw.is_health_question(q), repr(q)
+
+E       AssertionError: 'mẹ em bị\U000e0020tiểu đuong'
+
+E       assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('mẹ em bị\U000e0020tiểu đuong')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:80: AssertionError
+
+________________ test_p9_1_pathological_linear[b\u200bi\u200b] ________________
+
+
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187321AA300>
+
+unit = 'b\u200bi\u200b'
+
+
+
+    @pytest.mark.parametrize("unit", [
+
+        "b\u200bi\u200b", "bi ", "g\u200ba\u200bn\u200b", "bi\u200bgi\u200bang\u200b",
+
+        "t\u200ba\u200bc\u200b", "\u200b", "xin chào "])
+
+    def test_p9_1_pathological_linear(monkeypatch, unit):
+
+        """Input dài/pathological: số bước nối mảnh tăng TUYẾN TÍNH theo độ dài
+
+        (đếm bước, không đo giờ — tránh flake)."""
+
+        if not hasattr(gw, "_virt"):
+
+>           pytest.fail("chưa có lớp nối mảnh tại ranh giới mềm")
+
+E           Failed: chưa có lớp nối mảnh tại ranh giới mềm
+
+
+
+tests\test_v15_p9_chat_safety.py:112: Failed
+
+_____________________ test_p9_1_pathological_linear[bi ] ______________________
+
+
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001873214E030>
+
+unit = 'bi '
+
+
+
+    @pytest.mark.parametrize("unit", [
+
+        "b\u200bi\u200b", "bi ", "g\u200ba\u200bn\u200b", "bi\u200bgi\u200bang\u200b",
+
+        "t\u200ba\u200bc\u200b", "\u200b", "xin chào "])
+
+    def test_p9_1_pathological_linear(monkeypatch, unit):
+
+        """Input dài/pathological: số bước nối mảnh tăng TUYẾN TÍNH theo độ dài
+
+        (đếm bước, không đo giờ — tránh flake)."""
+
+        if not hasattr(gw, "_virt"):
+
+>           pytest.fail("chưa có lớp nối mảnh tại ranh giới mềm")
+
+E           Failed: chưa có lớp nối mảnh tại ranh giới mềm
+
+
+
+tests\test_v15_p9_chat_safety.py:112: Failed
+
+____________ test_p9_1_pathological_linear[g\u200ba\u200bn\u200b] _____________
+
+
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187321A8950>
+
+unit = 'g\u200ba\u200bn\u200b'
+
+
+
+    @pytest.mark.parametrize("unit", [
+
+        "b\u200bi\u200b", "bi ", "g\u200ba\u200bn\u200b", "bi\u200bgi\u200bang\u200b",
+
+        "t\u200ba\u200bc\u200b", "\u200b", "xin chào "])
+
+    def test_p9_1_pathological_linear(monkeypatch, unit):
+
+        """Input dài/pathological: số bước nối mảnh tăng TUYẾN TÍNH theo độ dài
+
+        (đếm bước, không đo giờ — tránh flake)."""
+
+        if not hasattr(gw, "_virt"):
+
+>           pytest.fail("chưa có lớp nối mảnh tại ranh giới mềm")
+
+E           Failed: chưa có lớp nối mảnh tại ranh giới mềm
+
+
+
+tests\test_v15_p9_chat_safety.py:112: Failed
+
+__________ test_p9_1_pathological_linear[bi\u200bgi\u200bang\u200b] ___________
+
+
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187321AAE70>
+
+unit = 'bi\u200bgi\u200bang\u200b'
+
+
+
+    @pytest.mark.parametrize("unit", [
+
+        "b\u200bi\u200b", "bi ", "g\u200ba\u200bn\u200b", "bi\u200bgi\u200bang\u200b",
+
+        "t\u200ba\u200bc\u200b", "\u200b", "xin chào "])
+
+    def test_p9_1_pathological_linear(monkeypatch, unit):
+
+        """Input dài/pathological: số bước nối mảnh tăng TUYẾN TÍNH theo độ dài
+
+        (đếm bước, không đo giờ — tránh flake)."""
+
+        if not hasattr(gw, "_virt"):
+
+>           pytest.fail("chưa có lớp nối mảnh tại ranh giới mềm")
+
+E           Failed: chưa có lớp nối mảnh tại ranh giới mềm
+
+
+
+tests\test_v15_p9_chat_safety.py:112: Failed
+
+____________ test_p9_1_pathological_linear[t\u200ba\u200bc\u200b] _____________
+
+
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187321AB920>
+
+unit = 't\u200ba\u200bc\u200b'
+
+
+
+    @pytest.mark.parametrize("unit", [
+
+        "b\u200bi\u200b", "bi ", "g\u200ba\u200bn\u200b", "bi\u200bgi\u200bang\u200b",
+
+        "t\u200ba\u200bc\u200b", "\u200b", "xin chào "])
+
+    def test_p9_1_pathological_linear(monkeypatch, unit):
+
+        """Input dài/pathological: số bước nối mảnh tăng TUYẾN TÍNH theo độ dài
+
+        (đếm bước, không đo giờ — tránh flake)."""
+
+        if not hasattr(gw, "_virt"):
+
+>           pytest.fail("chưa có lớp nối mảnh tại ranh giới mềm")
+
+E           Failed: chưa có lớp nối mảnh tại ranh giới mềm
+
+
+
+tests\test_v15_p9_chat_safety.py:112: Failed
+
+____________________ test_p9_1_pathological_linear[\u200b] ____________________
+
+
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187321EC0B0>
+
+unit = '\u200b'
+
+
+
+    @pytest.mark.parametrize("unit", [
+
+        "b\u200bi\u200b", "bi ", "g\u200ba\u200bn\u200b", "bi\u200bgi\u200bang\u200b",
+
+        "t\u200ba\u200bc\u200b", "\u200b", "xin chào "])
+
+    def test_p9_1_pathological_linear(monkeypatch, unit):
+
+        """Input dài/pathological: số bước nối mảnh tăng TUYẾN TÍNH theo độ dài
+
+        (đếm bước, không đo giờ — tránh flake)."""
+
+        if not hasattr(gw, "_virt"):
+
+>           pytest.fail("chưa có lớp nối mảnh tại ranh giới mềm")
+
+E           Failed: chưa có lớp nối mảnh tại ranh giới mềm
+
+
+
+tests\test_v15_p9_chat_safety.py:112: Failed
+
+_________________ test_p9_1_pathological_linear[xin ch\xe0o ] _________________
+
+
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187321ABCB0>
+
+unit = 'xin chào '
+
+
+
+    @pytest.mark.parametrize("unit", [
+
+        "b\u200bi\u200b", "bi ", "g\u200ba\u200bn\u200b", "bi\u200bgi\u200bang\u200b",
+
+        "t\u200ba\u200bc\u200b", "\u200b", "xin chào "])
+
+    def test_p9_1_pathological_linear(monkeypatch, unit):
+
+        """Input dài/pathological: số bước nối mảnh tăng TUYẾN TÍNH theo độ dài
+
+        (đếm bước, không đo giờ — tránh flake)."""
+
+        if not hasattr(gw, "_virt"):
+
+>           pytest.fail("chưa có lớp nối mảnh tại ranh giới mềm")
+
+E           Failed: chưa có lớp nối mảnh tại ranh giới mềm
+
+
+
+tests\test_v15_p9_chat_safety.py:112: Failed
+
+______________ test_p9_2_streamlit_history_skips_health_alcohol _______________
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187321A9FA0>
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187321AAEA0>
+
+
+
+    def test_p9_2_streamlit_history_skips_health_alcohol(fake, monkeypatch):
+
+        """Lượt sức khỏe/rượu không vào history gửi AI (parity Zalo); lượt
+
+        thường vào history bằng câu trả lời GỐC, còn khung chat hiển thị câu
+
+        hiển thị — hai mô hình tách nhau."""
+
+        from pipelines import auth
+
+        shown, logged = [], []
+
+        st = _fake_streamlit("", shown)
+
+        monkeypatch.setitem(sys.modules, "streamlit", st)
+
+        monkeypatch.setattr(auth, "auth_mode", lambda: "dev")
+
+        monkeypatch.setattr(auth, "tabs_for", lambda role: ("Chat Sâm Sâm",))
+
+        monkeypatch.setattr(zalo, "_log_conversation", logged.append)
+
+    
+
+        _run_turn(st, "Ba tôi bị gan, uống sâm được không")
+
+        _run_turn(st, "Rượu sâm bao nhiêu độ")
+
+>       assert st.session_state["history"] == []
+
+E       AssertionError: assert [{'content': ... 'assistant'}] == []
+
+E         
+
+E         Left contains 4 more items, first extra item: {'content': 'Ba tôi bị gan, uống sâm được không', 'role': 'user'}
+
+E         Use -v to get more diff
+
+
+
+tests\test_v15_p9_chat_safety.py:152: AssertionError
+
+__________ test_p9_3_missing_at_start_then_recovers_without_restart ___________
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x00000187321EC2C0>
+
+names_env = (<test_v15_p9_chat_safety._Clock object at 0x00000187321EC260>, WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2844/test_p9_3_missing_at_start_the0/vn_names.json'))
+
+
+
+    def test_p9_3_missing_at_start_then_recovers_without_restart(fake, names_env):
+
+        clock, path = names_env
+
+        q = "Saphraton giá sao"
+
+        # Khởi động thiếu file → chặn AI
+
+        assert pii.scrub_user(q)[1] is True
+
+        assert rag.answer(q)["handoff"] == "pii" and fake.calls == []
+
+        # Sửa file hợp lệ → sau khoảng kiểm, tự phục hồi (không restart)
+
+        path.write_text(_valid_doc(), encoding="utf-8")
+
+        clock.t += 6
+
+>       assert pii.scrub_user(q) == (q, False)
+
+E       AssertionError: assert ('Saphraton giá sao', True) == ('Saphraton giá sao', False)
+
+E         
+
+E         At index 1 diff: True != False
+
+E         Use -v to get more diff
+
+
+
+tests\test_v15_p9_chat_safety.py:212: AssertionError
+
+____________ test_p9_3_corrupt_then_fixed_recovers_and_fail_closed ____________
+
+
+
+names_env = (<test_v15_p9_chat_safety._Clock object at 0x0000018732147E90>, WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2844/test_p9_3_corrupt_then_fixed_r0/vn_names.json'))
+
+
+
+    def test_p9_3_corrupt_then_fixed_recovers_and_fail_closed(names_env):
+
+        clock, path = names_env
+
+        q = "Saphraton giá sao"
+
+        path.write_text('{"ho": [', encoding="utf-8")            # JSON hỏng
+
+        assert pii.scrub_user(q)[1] is True
+
+        path.write_text(_valid_doc(), encoding="utf-8")
+
+        clock.t += 6
+
+>       assert pii.scrub_user(q) == (q, False)
+
+E       AssertionError: assert ('Saphraton giá sao', True) == ('Saphraton giá sao', False)
+
+E         
+
+E         At index 1 diff: True != False
+
+E         Use -v to get more diff
+
+
+
+tests\test_v15_p9_chat_safety.py:223: AssertionError
+
+_____________________ test_p9_3_not_reread_every_request ______________________
+
+
+
+names_env = (<test_v15_p9_chat_safety._Clock object at 0x0000018732147890>, WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2844/test_p9_3_not_reread_every_req0/vn_names.json'))
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018732147530>
+
+
+
+    def test_p9_3_not_reread_every_request(names_env, monkeypatch):
+
+        """Đếm số lần đọc file: nhiều request trong khoảng kiểm = 0 lần đọc
+
+        thêm; hết khoảng + file không đổi = 0 lần đọc; file đổi = 1 lần."""
+
+        clock, path = names_env
+
+        path.write_text(_valid_doc(), encoding="utf-8")
+
+        reads = [0]
+
+        real = getattr(pii, "_load_names", None)
+
+    
+
+        def counted():
+
+            reads[0] += 1
+
+            return real()
+
+        monkeypatch.setattr(pii, "_load_names", counted, raising=False)
+
+        for _ in range(200):
+
+            pii.scrub_user("giao Bích 2 hộp")
+
+>       assert reads[0] == 1
+
+E       assert 0 == 1
+
+
+
+tests\test_v15_p9_chat_safety.py:247: AssertionError
+
+________________ test_p9_4_record_suggestion_payload_scrubbed _________________
+
+
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187321EF6E0>
+
+
+
+    def test_p9_4_record_suggestion_payload_scrubbed(monkeypatch):
+
+        got = []
+
+        from pipelines import director
+
+    
+
+        def submit(conn, block, otype, **kw):
+
+            got.append(kw["payload"])
+
+            return 7
+
+        monkeypatch.setattr(director, "submit", submit)
+
+        sid = channels.record_suggestion(_inb(), BOT_PII, "m1", conn=object())
+
+        assert sid == 7
+
+        (payload,) = got
+
+        for leak in LEAKS:
+
+>           assert leak not in payload, (leak, payload)
+
+E           AssertionError: ('Nguyễn', 'Dạ chị <tên-giả-test> ơi, shop giao tới 12 Lê Lợi, Hải Châu; chị gọi *** hoặc mail *** nhé.')
+
+E           assert 'Nguyễn' not in 'Dạ chị Nguy...ail *** nhé.'
+
+E             
+
+E             'Nguyễn' is contained here:
+
+E               Dạ chị <tên-giả-test> ơi, shop giao tới 12 Lê Lợi, Hải Châu; chị gọi *** hoặc mail *** nhé.
+
+E             ?        ++++++
+
+
+
+tests\test_v15_p9_chat_safety.py:285: AssertionError
+
+__________________ test_p9_4_names_dict_broken_not_recorded ___________________
+
+
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000187321ED400>
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2844/test_p9_4_names_dict_broken_no0')
+
+
+
+    def test_p9_4_names_dict_broken_not_recorded(monkeypatch, tmp_path):
+
+        from pipelines import director
+
+        got = []
+
+        monkeypatch.setattr(director, "submit",
+
+                            lambda *a, **kw: got.append(kw) or 1)
+
+        monkeypatch.setattr(pii, "NAMES_FILE", tmp_path / "khong_co.json")
+
+        pii._names.cache_clear()
+
+        try:
+
+>           assert channels.record_suggestion(
+
+                _inb(), "Dạ hộp quà 6 năm ạ.", "m1", conn=object()) is None
+
+E               AssertionError: assert 1 is None
+
+E                +  where 1 = <function record_suggestion at 0x000001872FE34040>(Inbound(channel='zalo', user_hash='abababababababababababababababab', text='giá?', ts='2026-10-16T08:00'), 'Dạ hộp quà 6 năm ạ.', 'm1', conn=<object object at 0x000001872145AC30>)
+
+E                +    where <function record_suggestion at 0x000001872FE34040> = channels.record_suggestion
+
+E                +    and   Inbound(channel='zalo', user_hash='abababababababababababababababab', text='giá?', ts='2026-10-16T08:00') = _inb()
+
+E                +    and   <object object at 0x000001872145AC30> = object()
+
+
+
+tests\test_v15_p9_chat_safety.py:306: AssertionError
+
+_____________________ test_p9_4_record_row_has_no_pii_db ______________________
+
+
+
+db = <tests.test_da_schema.TxConn object at 0x000001873213D040>
+
+
+
+    def test_p9_4_record_row_has_no_pii_db(db):
+
+        """Ghi THẬT vào approval_queue (schema tạm): dòng không chứa PII."""
+
+        sid = channels.record_suggestion(_inb(), BOT_PII, "m1", conn=db)
+
+        assert sid is not None
+
+        (payload, title, oid) = db.execute(
+
+            "select payload, title, object_id from approval_queue where id = %s",
+
+            (sid,)).fetchone()
+
+        for leak in LEAKS:
+
+>           assert leak not in payload and leak not in title and leak not in oid
+
+E           AssertionError: assert ('Nguyễn' not in 'Dạ chị Nguy...ail *** nhé.'
+
+E             
+
+E             'Nguyễn' is contained here:
+
+E               Dạ chị <tên-giả-test> ơi, shop giao tới 12 Lê Lợi, Hải Châu; chị gọi *** hoặc mail *** nhé.
+
+E             ?        ++++++)
+
+
+
+tests\test_v15_p9_chat_safety.py:328: AssertionError
+
+________ test_p9_6_giao_dau_accented_stays_health[giao\u200b\u0111au] _________
+
+
+
+fake = <tests.test_v14_p1_pii_guardrail.Fake object at 0x0000018732144320>
+
+q = 'giao\u200bđau'
+
+
+
+    @pytest.mark.parametrize("q", ["giao đau", "Giao đau không shop",
+
+                                   "giao\u200bđau"])
+
+    def test_p9_6_giao_dau_accented_stays_health(fake, q):
+
+        """Khóa hành vi an toàn hiện tại: "giao đau" (có dấu, "đau" = đau)
+
+        vẫn coi là sức khỏe → chuyển người, 0 lời gọi AI. Nới hay không là
+
+        quyết định của Pháp chế (board P9.6) — đổi hành vi phải FLIP test."""
+
+>       assert gw.is_health_question(q)
+
+E       AssertionError: assert False
+
+E        +  where False = <function is_health_question at 0x000001872173D440>('giao\u200bđau')
+
+E        +    where <function is_health_question at 0x000001872173D440> = gw.is_health_question
+
+
+
+tests\test_v15_p9_chat_safety.py:340: AssertionError
+
+=========================== short test summary info ===========================
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\u200c]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\u200d]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\u200e]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\u2060]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\ufeff]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\xad]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\u3164]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}gan-\U000e0020]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\u200c]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\u200d]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\u200e]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\u2060]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\ufeff]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\xad]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\u3164]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[bi{Z}gan-\U000e0020]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\u200c]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\u200d]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\u200e]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\u2060]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\ufeff]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\xad]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\u3164]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[Ba t\xf4i b\u1ecb{Z}gan, u\u1ed1ng s\xe2m \u0111\u01b0\u1ee3c kh\xf4ng-\U000e0020]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[\u0111ang b\u1ecb{Z}s\u1ed1t-\u3164]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\u200c]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\u200d]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\u200e]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\u2060]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\ufeff]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\xad]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\u3164]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eafc{Z}ph\u1ed5i-\U000e0020]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\u200c]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\u200d]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\u200e]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\u2060]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\ufeff]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\xad]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\u3164]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ch\u1eefa{Z}ho-\U000e0020]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\u200c]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\u200d]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\u200e]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\u2060]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\ufeff]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\xad]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\u3164]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[hay bi{Z}tim-\U000e0020]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u200c]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u200d]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u200e]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u2060]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\ufeff]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\xad]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u034f]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\ufe0f]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u3164]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\u180b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}g{Z}an-\U000e0020]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u200c]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u200d]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u200e]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u2060]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\ufeff]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\xad]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u034f]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\ufe0f]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u3164]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\u180b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[t\xe1c{Z}d\u1ee5ng ph{Z}\u1ee5-\U000e0020]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\u200c]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\u200d]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\u200e]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\u2060]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\ufeff]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\xad]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\u3164]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[ba t\xf4i bi{Z}tieu{Z}duong-\U000e0020]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\u200c]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\u200d]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\u200e]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\u2060]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\ufeff]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\xad]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\u3164]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b\u1ecb{Z}giang{Z}mai-\U000e0020]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\u200c]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\u200d]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\u200e]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\u2060]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\ufeff]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\xad]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\u3164]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[B\u1eca{Z}GAN-\U000e0020]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b{Z}\u1ecb gan-\u034f]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b{Z}\u1ecb gan-\ufe0f]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b{Z}\u1ecb gan-\u3164]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[b{Z}\u1ecb gan-\u180b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\u200c]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\u200d]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\u200e]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\u2060]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\ufeff]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\xad]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\u3164]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_invisible_health_blocked_zero_ai_calls[m\u1eb9 em b\u1ecb{Z}ti\u1ec3u \u0111uong-\U000e0020]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_pathological_linear[b\u200bi\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_pathological_linear[bi ]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_pathological_linear[g\u200ba\u200bn\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_pathological_linear[bi\u200bgi\u200bang\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_pathological_linear[t\u200ba\u200bc\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_pathological_linear[\u200b]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_1_pathological_linear[xin ch\xe0o ]
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_2_streamlit_history_skips_health_alcohol
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_3_missing_at_start_then_recovers_without_restart
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_3_corrupt_then_fixed_recovers_and_fail_closed
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_3_not_reread_every_request
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_4_record_suggestion_payload_scrubbed
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_4_names_dict_broken_not_recorded
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_4_record_row_has_no_pii_db
+
+FAILED tests/test_v15_p9_chat_safety.py::test_p9_6_giao_dau_accented_stays_health[giao\u200b\u0111au]
+
+134 failed, 160 passed in 5.86s
+
+
+
+===== probe P9.1 trên code CŨ =====
+# command: python $H/p9_probe.py
+# cwd: $H/old_p9
+# nền: a05c60f + working tree chưa commit (sha256 git diff = 8b1f16d71d0ebffd5a586adcdbe1342270bd9c720fe804242a2b10fff8e5befa)
+# môi trường: DB tạm samsam_v15_p9 (DSN che), không mạng ngoài
+# exit: 0
+# tổng kết: (không có dòng tổng kết)
+
+SAI want=True  got=False b\u1ecb\u200bgan
+SAI want=True  got=False bi\u200bgan
+SAI want=True  got=False m\u1eafc\u2060ph\u1ed5i
+SAI want=True  got=False b\u1ecb\u200bg\u200ban
+SAI want=True  got=False t\xe1c\u200bd\u1ee5ng ph\u200b\u1ee5
+OK  want=True  got=True  b\u1ecb\u034fgan
+SAI want=True  got=False b\u034f\u1ecb gan
+SAI want=True  got=False ba t\xf4i bi\u200btieu\u200bduong
+SAI want=True  got=False giao\u200b\u0111au
+OK  want=False got=False s\xe2m\u200bng\u1ecdc\u200blinh gi\xe1 bao nhi\xeau
+OK  want=False got=False giao\u200b\u0111\xe2u
+OK  want=False got=False b\u1ecb\u200bthan\u200bphi\u1ec1n
+OK  want=False got=False h\xe0ng b\u1ecb\u200bg\u1ea7n h\u1ebft h\u1ea1n
+OK  want=False got=False macho
+[probe] 6/14 đúng kỳ vọng
+[time] unit=a                        100k=0.025s 1M=0.331s ratio=13.1
+[time] unit=bi                       100k=0.134s 1M=1.214s ratio=9.1
+[time] unit=b\u200bi\u200b           100k=0.017s 1M=0.180s ratio=10.6
+[time] unit=g\u200ba\u200bn\u200b    100k=0.017s 1M=0.183s ratio=11.1
+[time] unit=bi\u200bgi\u200bang\u200b 100k=0.017s 1M=0.209s ratio=12.0
+[time] unit=xin ch\xe0o              100k=0.051s 1M=0.535s ratio=10.5
+[time] unit=\u200b                   100k=0.009s 1M=0.101s ratio=10.6

@@ -204,8 +204,10 @@ def main(argv=None) -> int:
     print(text)
     if a.write:
         try:
+            # P8.4: tồn nạp từ file MẪU → không đếm là đầu ra thật.
             p = write_report(text, REPORTS_DIR,
-                             f"kd-forecast-{start.isoformat()}.md")
+                             f"kd-forecast-{start.isoformat()}.md",
+                             sample=any(r["sample"] for r in rows))
         except OSError as e:
             print(f"[err] không ghi được báo cáo ({type(e).__name__})",
                   file=sys.stderr)

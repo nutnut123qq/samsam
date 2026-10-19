@@ -1,0 +1,217 @@
+# command: cd <scratchpad>/prefix && python withdb.py samsam_v15fix_p87_pre python -m pytest tests/test_v15_fix_p87.py -q -p no:cacheprovider -rA | revision: BẢN TRƯỚC SỬA = a05c60f + v15 working tree trước sửa (worktree prefix, hash 0950099…) + chỉ copy file test mới | DB: samsam_v15fix_p87_pre (apply_schema --roles của prefix) | exit=1 | kết quả: 8 failed, 2 passed — 8 FAIL đúng lỗi (DB GHI output_reviews cho: ar: không tồn tại [ceo-01 đúng ca spec], khóa thật sai tính năng/sai nguồn, sai sha, dòng mẫu, phiên bản cũ của khóa bảng, nguồn file bk:, tính năng 0 nguồn, đầu ra có bước duyệt riêng dl:); 2 PASS = probe không-hồi-quy (luồng hợp lệ duyệt được; cổng PL02 DB vẫn chặn)
+
+FFFF.FFFF.                                                               [100%]
+================================== FAILURES ===================================
+________________________ test_p87_unknown_key_blocked _________________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+p87 = {'dl': 'dl:1', 'feats': {'ceo-01': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': ['agent:ceo_report'], 'bang_c...e, ...}, 'ceo-95': {'code_status': 'co_code', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}]}, ...}}
+
+    def test_p87_unknown_key_blocked(live, p87):  # noqa: F811
+        """Đúng ca lỗi: `ar:` không tồn tại, sha hợp khuôn tùy ý."""
+>       _blocked(live, "ceo-01", "ar:does-not-exist", JUNK)
+
+tests\test_v15_fix_p87.py:137: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+fid = 'ceo-01', key = 'ar:does-not-exist'
+sha = 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+frag = None
+
+    def _blocked(live, fid, key, sha, frag=None):  # noqa: F811
+        ok, msg = _call(live, fid, key, sha)
+>       assert not ok, f"{fid} {key}: DB GHI duyệt (id {msg}) — phải từ chối"
+E       AssertionError: ceo-01 ar:does-not-exist: DB GHI duyệt (id 1) — phải từ chối
+E       assert not True
+
+tests\test_v15_fix_p87.py:128: AssertionError
+______________ test_p87_real_key_wrong_feature_or_source_blocked ______________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+p87 = {'dl': 'dl:1', 'feats': {'ceo-01': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': ['agent:ceo_report'], 'bang_c...e, ...}, 'ceo-95': {'code_status': 'co_code', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}]}, ...}}
+
+    def test_p87_real_key_wrong_feature_or_source_blocked(live, p87):  # noqa: F811
+        sha = _outputs(live, p87, "ceo-04.2")[K_A]
+>       _blocked(live, "ceo-03", K_A, sha)          # khóa thật của tính năng khác
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v15_fix_p87.py:144: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+fid = 'ceo-03'
+key = 'ar:inside_out/2026-09/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+sha = '28951f912ea76c132f5ec968b340da94d730ae7ccead5d1052a472a742a55b42'
+frag = None
+
+    def _blocked(live, fid, key, sha, frag=None):  # noqa: F811
+        ok, msg = _call(live, fid, key, sha)
+>       assert not ok, f"{fid} {key}: DB GHI duyệt (id {msg}) — phải từ chối"
+E       AssertionError: ceo-03 ar:inside_out/2026-09/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: DB GHI duyệt (id 2) — phải từ chối
+E       assert not True
+
+tests\test_v15_fix_p87.py:128: AssertionError
+_________________________ test_p87_wrong_sha_blocked __________________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+p87 = {'dl': 'dl:1', 'feats': {'ceo-01': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': ['agent:ceo_report'], 'bang_c...e, ...}, 'ceo-95': {'code_status': 'co_code', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}]}, ...}}
+
+    def test_p87_wrong_sha_blocked(live, p87):  # noqa: F811
+>       _blocked(live, "ceo-04.2", K_A, JUNK)
+
+tests\test_v15_fix_p87.py:152: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+fid = 'ceo-04.2'
+key = 'ar:inside_out/2026-09/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+sha = 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+frag = None
+
+    def _blocked(live, fid, key, sha, frag=None):  # noqa: F811
+        ok, msg = _call(live, fid, key, sha)
+>       assert not ok, f"{fid} {key}: DB GHI duyệt (id {msg}) — phải từ chối"
+E       AssertionError: ceo-04.2 ar:inside_out/2026-09/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: DB GHI duyệt (id 3) — phải từ chối
+E       assert not True
+
+tests\test_v15_fix_p87.py:128: AssertionError
+___________________________ test_p87_sample_blocked ___________________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+p87 = {'dl': 'dl:1', 'feats': {'ceo-01': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': ['agent:ceo_report'], 'bang_c...e, ...}, 'ceo-95': {'code_status': 'co_code', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}]}, ...}}
+
+    def test_p87_sample_blocked(live, p87):  # noqa: F811
+        assert K_S not in _outputs(live, p87, "ceo-04.2")
+>       _blocked(live, "ceo-04.2", K_S,
+                 _row_sha(live, "audit_runs", "t.report_sha256 = %s", (S_SHA,)))
+
+tests\test_v15_fix_p87.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+fid = 'ceo-04.2'
+key = 'ar:inside_out/2026-08/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+sha = '812e8cd5b547f1ce49d7ea0b016a9811021a77b37af117a0b329e7f06d28294a'
+frag = None
+
+    def _blocked(live, fid, key, sha, frag=None):  # noqa: F811
+        ok, msg = _call(live, fid, key, sha)
+>       assert not ok, f"{fid} {key}: DB GHI duyệt (id {msg}) — phải từ chối"
+E       AssertionError: ceo-04.2 ar:inside_out/2026-08/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb: DB GHI duyệt (id 4) — phải từ chối
+E       assert not True
+
+tests\test_v15_fix_p87.py:128: AssertionError
+_______________ test_p87_content_change_old_review_not_applied ________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+p87 = {'dl': 'dl:1', 'feats': {'ceo-01': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': ['agent:ceo_report'], 'bang_c...e, ...}, 'ceo-95': {'code_status': 'co_code', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}]}, ...}}
+
+    def test_p87_content_change_old_review_not_applied(live, p87):  # noqa: F811
+        sha1 = _outputs(live, p87, "ceo-04.2")[K_V]
+        ok, rid = _call(live, "ceo-04.2", K_V, sha1)
+        assert ok, rid
+        assert _unrev(live, "ceo-04.2", K_V) == [(False, True)]
+        # nội dung đổi (thêm dòng cùng khóa) → phiên bản mới, duyệt cũ không áp
+        _q(live, "insert into audit_runs (kind, period_label, findings,"
+           " report_sha256, run_by) values ('inside_out', '2026-07', 3, %s,"
+           " 'agent:bks')", (V_SHA,))
+        sha2 = _outputs(live, p87, "ceo-04.2")[K_V]
+        assert sha2 != sha1
+        assert _unrev(live, "ceo-04.2", K_V) == [(True, False)]
+        ok, msg = _call(live, "ceo-04.2", K_V, sha1)     # phiên bản CŨ
+>       assert not ok, f"DB ghi duyệt phiên bản cũ (id {msg})"
+E       AssertionError: DB ghi duyệt phiên bản cũ (id 9)
+E       assert not True
+
+tests\test_v15_fix_p87.py:222: AssertionError
+__________________ test_p87_file_source_blocked_with_reason ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+p87 = {'dl': 'dl:1', 'feats': {'ceo-01': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': ['agent:ceo_report'], 'bang_c...e, ...}, 'ceo-95': {'code_status': 'co_code', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}]}, ...}}
+
+    def test_p87_file_source_blocked_with_reason(live, p87):  # noqa: F811
+        """Nguồn file (backup_runs/convlog trên máy ứng dụng) DB không đọc được,
+        chưa có bản chụp tin cậy trong DB → từ chối rõ ràng có lý do."""
+>       _blocked(live, "ceo-95", f"bk:{'4' * 64}", "4" * 64, frag="nguồn file")
+
+tests\test_v15_fix_p87.py:245: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+fid = 'ceo-95'
+key = 'bk:4444444444444444444444444444444444444444444444444444444444444444'
+sha = '4444444444444444444444444444444444444444444444444444444444444444'
+frag = 'nguồn file'
+
+    def _blocked(live, fid, key, sha, frag=None):  # noqa: F811
+        ok, msg = _call(live, fid, key, sha)
+>       assert not ok, f"{fid} {key}: DB GHI duyệt (id {msg}) — phải từ chối"
+E       AssertionError: ceo-95 bk:4444444444444444444444444444444444444444444444444444444444444444: DB GHI duyệt (id 10) — phải từ chối
+E       assert not True
+
+tests\test_v15_fix_p87.py:128: AssertionError
+_________________ test_p87_missing_source_or_counter_blocked __________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+p87 = {'dl': 'dl:1', 'feats': {'ceo-01': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': ['agent:ceo_report'], 'bang_c...e, ...}, 'ceo-95': {'code_status': 'co_code', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}]}, ...}}
+
+    def test_p87_missing_source_or_counter_blocked(live, p87):  # noqa: F811
+>       _blocked(live, "ceo-97", "ar:does-not-exist", JUNK)        # 0 nguồn
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_v15_fix_p87.py:250: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+fid = 'ceo-97', key = 'ar:does-not-exist'
+sha = 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+frag = None
+
+    def _blocked(live, fid, key, sha, frag=None):  # noqa: F811
+        ok, msg = _call(live, fid, key, sha)
+>       assert not ok, f"{fid} {key}: DB GHI duyệt (id {msg}) — phải từ chối"
+E       AssertionError: ceo-97 ar:does-not-exist: DB GHI duyệt (id 11) — phải từ chối
+E       assert not True
+
+tests\test_v15_fix_p87.py:128: AssertionError
+_______________ test_p87_own_review_step_or_bad_prefix_blocked ________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+p87 = {'dl': 'dl:1', 'feats': {'ceo-01': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': ['agent:ceo_report'], 'bang_c...e, ...}, 'ceo-95': {'code_status': 'co_code', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}]}, ...}}
+
+    def test_p87_own_review_step_or_bad_prefix_blocked(live, p87):  # noqa: F811
+        """Đầu ra có bước NGƯỜI duyệt riêng (decision_log — người ghi) không
+        thuộc cơ chế duyệt này; tiền tố lạ → từ chối."""
+        key = p87["dl"]
+        sha = _outputs(live, p87, "ceo-96")[key]
+>       _blocked(live, "ceo-96", key, sha, frag="bước duyệt riêng")
+
+tests\test_v15_fix_p87.py:261: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87_pre) at 0x253c1ea9bb0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2963/p10cfg0/launch_p10.py'), ...}
+fid = 'ceo-96', key = 'dl:1'
+sha = '80f1c637f7115001b41a81e4c83ed32fa64753f73482913575dd69d34368bb3a'
+frag = 'bước duyệt riêng'
+
+    def _blocked(live, fid, key, sha, frag=None):  # noqa: F811
+        ok, msg = _call(live, fid, key, sha)
+>       assert not ok, f"{fid} {key}: DB GHI duyệt (id {msg}) — phải từ chối"
+E       AssertionError: ceo-96 dl:1: DB GHI duyệt (id 12) — phải từ chối
+E       assert not True
+
+tests\test_v15_fix_p87.py:128: AssertionError
+=================================== PASSES ====================================
+=========================== short test summary info ===========================
+PASSED tests/test_v15_fix_p87.py::test_p87_valid_report_and_table_approved
+PASSED tests/test_v15_fix_p87.py::test_p87_pl02_gate_still_blocks
+FAILED tests/test_v15_fix_p87.py::test_p87_unknown_key_blocked - AssertionErr...
+FAILED tests/test_v15_fix_p87.py::test_p87_real_key_wrong_feature_or_source_blocked
+FAILED tests/test_v15_fix_p87.py::test_p87_wrong_sha_blocked - AssertionError...
+FAILED tests/test_v15_fix_p87.py::test_p87_sample_blocked - AssertionError: c...
+FAILED tests/test_v15_fix_p87.py::test_p87_content_change_old_review_not_applied
+FAILED tests/test_v15_fix_p87.py::test_p87_file_source_blocked_with_reason - ...
+FAILED tests/test_v15_fix_p87.py::test_p87_missing_source_or_counter_blocked
+FAILED tests/test_v15_fix_p87.py::test_p87_own_review_step_or_bad_prefix_blocked
+8 failed, 2 passed in 5.93s

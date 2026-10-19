@@ -47,6 +47,7 @@ không truy cập được.
 
 import argparse
 import csv
+import hashlib
 import io
 import json
 import re
@@ -62,7 +63,7 @@ from psycopg.types.json import Jsonb
 
 from agents.report import REPORTS_DIR, write_report
 from ingest.lead_store import connect
-from pipelines import director, guardrail, red_alert, store
+from pipelines import auth, director, guardrail, red_alert, store
 from pipelines.period import VN_TZ
 from pipelines.pii import _mask_pii
 
@@ -572,27 +573,33 @@ def ingest(conn, rows: list[dict], cfg: dict, *, by: str,
 
 def mark_removed(conn, url: str, by: str, now: datetime) -> tuple[bool, str]:
     """NGƯỜI ghi nhận đã gỡ/ẩn bài → đóng đợt mở của URL (`da_go`) + 1 dòng
-    `agent_action_log` (`channel_post_removed`, hash chain) cùng transaction."""
+    `agent_action_log` (`channel_post_removed`, hash chain) cùng transaction.
+
+    v15 fix P10.2: ghi qua function `channel_post_mark_removed_human`
+    (SECURITY DEFINER — login người `app_human` không có UPDATE
+    `channel_posts`; DB kiểm danh tính theo login + khối legal_hr; giờ đóng =
+    đồng hồ DB khi login không phải owner). DB từ chối danh tính →
+    `auth.HumanDenied`."""
     err = by_error(by)
     if err:
         return False, err
     now = _aware(now)
-    with conn.transaction():
-        ids = conn.execute(
-            "update channel_posts set closed_at = %s, close_reason = 'da_go',"
-            " closed_by = %s where url = %s and closed_at is null and"
-            " severity is not null returning id",
-            (now, by.strip(), (url or "").strip())).fetchall()
-        if ids:
-            conn.execute(
-                "insert into agent_action_log (actor, action, object_type,"
-                " object_id, detail) values (%s, %s, %s, %s, %s)",
-                (by.strip(), "channel_post_removed", "channel_post",
-                 str(ids[0][0]), Jsonb({"ids": [i[0] for i in ids]})))
+    try:
+        with conn.transaction():
+            n = auth.call_human(
+                conn, "select channel_post_mark_removed_human(%s, %s, %s)",
+                ((url or "").strip(), now, by.strip()), by=by,
+                block="legal_hr", action="close_violation",
+                object_type="channel_post",
+                object_id=hashlib.sha256((url or "").strip().encode())
+                .hexdigest()[:12]).fetchone()[0]
+    except BaseException:
+        conn.rollback()
+        raise
     conn.commit()
-    if not ids:
+    if not n:
         return False, "URL không có đợt vi phạm đang mở"
-    return True, f"đã ghi nhận gỡ — đóng {len(ids)} dòng (da_go)"
+    return True, f"đã ghi nhận gỡ — đóng {n} dòng (da_go)"
 
 
 # ------------------------------------------------------------------ báo cáo
@@ -718,7 +725,12 @@ def render_report(stats: dict, now: datetime) -> str:
 # `partner_post_scans`, loại việc riêng `marketing/partner_post_review`):
 #   - Kiểm TOÀN file trước khi connect; chỉ nhận MÃ đối tác (không tên/
 #     handle/SĐT — cột lạ bị từ chối); mã phải có trong sổ KOC
-#     (`data/koc_sample.json`) hoặc sổ đại lý (`dealers`) — lạ → cả file lỗi.
+#     (`data/koc_sample.json`) hoặc sổ đại lý (`dealers`) — lạ → theo
+#     chính sách `data/partner_policy.json` (v15 P12.5, GĐ Marketing chọn):
+#     "tu_choi_file" = cả file lỗi, 0 dòng (MẶC ĐỊNH an toàn khi CHƯA CHỌN /
+#     cấu hình lỗi — in rõ); "ghi_vi_pham" = bài của mã lạ vẫn rà guardrail
+#     và ghi thành vi phạm `doi_tac_chua_dang_ky` (≥ S2, không kit, không
+#     cờ mẫu) cùng các bài hợp lệ khác trong file.
 #   - Rà theo kênh: `guardrail.check_publish(content_type="koc",
 #     is_sponsored=True, is_ai=False)` (bài do đối tác viết, là quảng cáo).
 #   - Đối chiếu bộ tài liệu chuẩn ĐÃ duyệt của đúng đối tác: kit KOC
@@ -746,6 +758,9 @@ NGOAI_KIT = "ngoai_bo_tai_lieu"
 SKU_NGOAI_KIT = "sku_ngoai_bo_tai_lieu"
 _PARTNER_RE = re.compile(r"[A-Z0-9][A-Z0-9_-]{1,39}")
 _KOC_SAMPLE_RE = re.compile(r"KOC-MAU-\d{2}")
+PARTNER_POLICY_FILE = ROOT / "data" / "partner_policy.json"
+UNKNOWN_POLICIES = ("tu_choi_file", "ghi_vi_pham")
+UNKNOWN_PARTNER = "doi_tac_chua_dang_ky"
 _KIT_HEAD_RE = re.compile(r"# Kit KOC (KOC-MAU-\d{2}) — `([^`\n]+)` × ")
 _AFF_SKU_RE = re.compile(r"^### Bài #\d+ — `([^`\n]+)`$", re.MULTILINE)
 
@@ -951,6 +966,43 @@ def partner_scan(row: dict, kit: dict | None) -> dict:
     return partner_verdict(g, kit, row["sku"])
 
 
+class UnknownPartner(ValueError):
+    """Mã đối tác lạ + chính sách tu_choi_file — 0 dòng nạp."""
+
+    def __init__(self, msg: str, warn: str | None):
+        super().__init__(msg)
+        self.warn = warn
+
+
+def unknown_partner_policy(path=None) -> tuple[str, str | None]:
+    """→ (chính sách áp dụng, cảnh báo | None). CHƯA CHỌN / file thiếu-hỏng /
+    giá trị lạ / thiếu người chọn → "tu_choi_file" (hành vi an toàn v14.5)
+    kèm cảnh báo rõ — không tự chọn thay GĐ Marketing."""
+    p = Path(path or PARTNER_POLICY_FILE)
+    try:
+        doc = json.loads(p.read_bytes().decode("utf-8"))
+    except FileNotFoundError:
+        return UNKNOWN_POLICIES[0], (f"không có {p.name} — dùng mặc định an "
+                                     "toàn tu_choi_file")
+    except (OSError, ValueError) as e:
+        return UNKNOWN_POLICIES[0], (f"{p.name} hỏng ({type(e).__name__}) —"
+                                     " dùng mặc định an toàn tu_choi_file")
+    e = doc.get("ma_doi_tac_la") if isinstance(doc, dict) else None
+    pol = e.get("chinh_sach") if isinstance(e, dict) else None
+    if pol is None:
+        return UNKNOWN_POLICIES[0], ("chính sách mã đối tác lạ CHƯA CHỌN (GĐ"
+                                     f" Marketing — {p.name}) — đang dùng "
+                                     "mặc định an toàn tu_choi_file")
+    by = " ".join(str(e.get("chon_boi") or "").split())
+    ref = " ".join(str(e.get("can_cu") or "").split())
+    if (pol not in UNKNOWN_POLICIES or by_error(by) is not None
+            or not ref or len(ref) > 200):
+        return UNKNOWN_POLICIES[0], (f"{p.name}: chinh_sach lạ hoặc thiếu "
+                                     "chon_boi (người)/can_cu — dùng mặc định"
+                                     " an toàn tu_choi_file")
+    return pol, None
+
+
 def partner_registry(conn) -> dict:
     """{mã: is_sample} — KOC (sổ MẪU) + đại lý (`dealers`, nguồn
     dealer_regions.json = MẪU). Sổ KOC hỏng → ValueError (fail-closed)."""
@@ -982,29 +1034,46 @@ def _partner_payload(r: dict, v: dict, kit: dict | None) -> str:
 
 
 def ingest_partner(conn, rows: list[dict], *, by: str, now: datetime,
-                   dcfg: dict | None = None) -> dict:
-    """Nạp lần rà bài đối tác → thống kê. Mã đối tác lạ → ValueError (0
-    dòng). Tính năng tắt → RolloutBlocked (0 dòng)."""
+                   dcfg: dict | None = None, policy_path=None) -> dict:
+    """Nạp lần rà bài đối tác → thống kê. Mã đối tác lạ → theo
+    `unknown_partner_policy`: tu_choi_file (mặc định/chưa chọn) ValueError
+    (0 dòng) | ghi_vi_pham (ghi vi phạm `doi_tac_chua_dang_ky`). Tính năng
+    tắt → RolloutBlocked (0 dòng)."""
     from pipelines import rollout
     err = by_error(by)
     if err:
         raise ValueError(err)
+    # Vá review v15 (P10.1): danh tính login ↔ `--by` kiểm ở DB TRƯỚC mọi ghi
+    # — `director.submit` tự commit mục hàng duyệt, kiểm muộn (lúc ghi sổ)
+    # thì `--by` giả vẫn để lại mục `partner_post_review`.
+    auth.call_human(conn, "select human_actor(%s, null)", (by.strip(),),
+                    by=by, block=None, action="partner_scan",
+                    object_type="partner_post_scan", object_id="*")
     now = _aware(now)
     rollout.check_generate(conn, PARTNER_FEATURE, "rà bài đối tác")
     dcfg = dcfg or director.load_config("marketing")
     reg = partner_registry(conn)
     unknown = sorted({r["partner"] for r in rows} - set(reg))
-    if unknown:
+    policy, warn = unknown_partner_policy(policy_path)
+    if unknown and policy == "tu_choi_file":
         conn.rollback()
-        raise ValueError(f"{len(unknown)} mã đối tác không có trong sổ KOC/"
-                         "đại lý — không nạp")
+        raise UnknownPartner(f"{len(unknown)} mã đối tác không có trong sổ"
+                             " KOC/đại lý — không nạp (chính sách "
+                             "tu_choi_file)", warn)
     kits = partner_kits(conn)
-    verdicts = [partner_scan(r, kits.get(r["partner"])) for r in rows]
+    verdicts = []
+    for r in rows:
+        v = partner_scan(r, kits.get(r["partner"]))
+        if r["partner"] not in reg:     # ghi_vi_pham: mã chưa đăng ký
+            v = {"codes": [*v["codes"], UNKNOWN_PARTNER],
+                 "severity": v["severity"] or "S2"}
+        verdicts.append(v)
     if any("config" in v["codes"] for v in verdicts):
         raise ValueError("guardrail cấu hình hỏng — không nạp (fail-closed)")
     conn.commit()     # đóng tx đọc
     st = {"rows": len(rows), "new": 0, "skip": 0, "S1": 0, "S2": 0,
-          "clean": 0, "tickets": 0, "items": []}
+          "clean": 0, "tickets": 0, "items": [], "policy": policy,
+          "policy_warn": warn, "unknown": unknown}
     for r, v in zip(rows, verdicts):
         last = conn.execute(
             "select id, text_sha256, codes from partner_post_scans where"
@@ -1014,7 +1083,7 @@ def ingest_partner(conn, rows: list[dict], *, by: str, now: datetime,
             st["skip"] += 1
             continue
         kit = kits.get(r["partner"])
-        sample = reg[r["partner"]]
+        sample = reg.get(r["partner"], False)
         qid = None
         if v["severity"]:
             # oid xác định theo trạng thái TRƯỚC khi ghi → chạy lại sau sự
@@ -1035,17 +1104,20 @@ def ingest_partner(conn, rows: list[dict], *, by: str, now: datetime,
                     _partner_payload(r, v, kit), PARTNER_AGENT,
                     cfg=dcfg, sample=sample)
                 st["tickets"] += 1
+        # v15.4 (P10.1): ghi sổ qua function SECURITY DEFINER (danh tính
+        # theo login Postgres — nhập liệu, không khối; login người không có
+        # INSERT trực tiếp `partner_post_scans`).
         with conn.transaction():
-            sid = conn.execute(
-                "insert into partner_post_scans (partner_code, url_sha256,"
-                " host, channel, posted_on, sku, text_sha256, codes, severity,"
-                " kit_ref, queue_id, is_sample, scanned_by, scanned_at)"
-                " values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,"
-                " %s) returning id",
+            sid = auth.call_human(
+                conn, "select record_partner_scan_human(%s, %s, %s, %s, %s,"
+                " %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 (r["partner"], r["url_sha"], r["host"], r["channel"],
                  r["posted_on"], r["sku"], r["sha"], v["codes"],
                  v["severity"], ", ".join(kit["refs"])[:200] if kit else None,
-                 qid, sample, by.strip(), now)).fetchone()[0]
+                 qid, sample, now, by.strip()),
+                by=by, block=None, action="partner_scan",
+                object_type="partner_post_scan",
+                object_id=r["partner"]).fetchone()[0]
         conn.commit()
         st["new"] += 1
         if v["severity"]:
@@ -1095,6 +1167,8 @@ def _partner_main(a) -> int:
     except ValueError as e:
         conn.rollback()
         print(f"[err] {safe(_mask_pii(str(e)))[:200]}")
+        if getattr(e, "warn", None):
+            print(f"[warn] {e.warn}")
         return 1
     except psycopg.Error as e:
         conn.rollback()
@@ -1102,6 +1176,11 @@ def _partner_main(a) -> int:
         return 2
     finally:
         conn.close()
+    if st["policy_warn"]:
+        print(f"[warn] {st['policy_warn']}")
+    if st["unknown"]:
+        print(f"[warn] {len(st['unknown'])} mã đối tác chưa đăng ký — ghi vi"
+              f" phạm {UNKNOWN_PARTNER} (chính sách ghi_vi_pham)")
     print(f"[ok] {st['rows']} bài đối tác — mới {st['new']}, bỏ qua"
           f" {st['skip']} (trùng lần rà trước) — S1 {st['S1']}, S2 {st['S2']},"
           f" sạch {st['clean']} — mục hàng duyệt mới {st['tickets']}")
@@ -1207,14 +1286,30 @@ def main(argv=None) -> int:
         return 2
     try:
         if a.mark_removed is not None:
-            ok, msg = mark_removed(conn, a.mark_removed, a.by, now)
+            # v15.4 (P10.2): ghi nhận đã gỡ = đóng đợt vi phạm (dừng theo dõi
+            # SLA gỡ bài) = QUYẾT ĐỊNH của Pháp chế được Bên B ủy quyền (khối
+            # legal_hr, auth.cli_gate). object_id = sha256 URL (không lưu URL).
+            why = auth.cli_gate(
+                conn, a.by, "legal_hr", "close_violation", "channel_post",
+                hashlib.sha256(a.mark_removed.strip().encode()).hexdigest()[:12])
+            if why:
+                conn.rollback()
+                print(f"[err] {why} — không ghi")
+                return 1
+            try:
+                ok, msg = mark_removed(conn, a.mark_removed, a.by, now)
+            except auth.HumanDenied as e:
+                print(f"[err] {e} — không ghi")
+                return 1
             print(("[ok] " if ok else "[err] ") + msg)
             return 0 if ok else 1
         if a.report:
             stats = collect_report(conn, now, a.days)
             text = render_report(stats, now)
             name = f"phap-che-tuan-{now.astimezone(VN_TZ):%Y-%m-%d}.md"
-            path = write_report(text, REPORTS_DIR, name)
+            # P8.4: tổng hợp vi phạm kênh từ bài đã đăng (không đường mẫu
+            # trong báo cáo tuần — bài đối tác MẪU không vào thống kê này).
+            path = write_report(text, REPORTS_DIR, name, sample=False)
             print(text)
             print(f"[ok] đã ghi data/reports/{path.name}")
             return 0

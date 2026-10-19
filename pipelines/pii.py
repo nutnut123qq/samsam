@@ -9,6 +9,8 @@ tên + địa chỉ tự do (xem mục cuối file).
 
 import json
 import re
+import threading
+import time
 import unicodedata
 from functools import lru_cache
 from pathlib import Path
@@ -461,9 +463,8 @@ class _Dict:
             self.places.setdefault(x[0], []).append(x)
 
 
-@lru_cache(maxsize=1)
-def _names() -> "_Dict | None":
-    """Từ điển tên; thiếu/hỏng file -> None (scrub_user fail-closed)."""
+def _load_names() -> "_Dict | None":
+    """Đọc + kiểm 2 file từ điển; thiếu/hỏng -> None (fail-closed)."""
     try:
         doc = json.loads(NAMES_FILE.read_text(encoding="utf-8"))
         prov = json.loads(PROVINCES_FILE.read_text(encoding="utf-8"))
@@ -477,6 +478,58 @@ def _names() -> "_Dict | None":
         return _Dict(doc, prov)
     except (OSError, ValueError, KeyError, TypeError, AttributeError):
         return None
+
+
+# v15 (P9.3): trước đây `lru_cache` giữ kết quả ĐẦU TIÊN mãi mãi — file
+# thiếu/hỏng lúc khởi động thì chatbot chặn AI tới khi RESTART dù file đã
+# sửa (và file đổi sau khởi động không bao giờ được đọc lại). Giờ cache
+# theo dấu vết file (đường dẫn + mtime_ns + size của CẢ HAI file), kiểm
+# dấu vết tối đa 1 lần / `NAMES_CHECK_S` giây (không stat/đọc mỗi request);
+# dấu vết đổi -> đọc lại: hợp lệ -> phục hồi, hỏng/thiếu -> None
+# (fail-closed: `scrub_user` coi mọi câu có chữ là còn dấu hiệu PII).
+NAMES_CHECK_S = 5.0
+_clock = time.monotonic  # test thay đồng hồ giả
+_names_lock = threading.Lock()
+_names_state: dict = {"sig": None, "val": None, "at": None}
+
+
+def _names_sig() -> tuple:
+    sig = []
+    for f in (NAMES_FILE, PROVINCES_FILE):
+        try:
+            st = f.stat()
+            sig.append((str(f), st.st_mtime_ns, st.st_size))
+        except OSError:
+            sig.append((str(f), None, None))
+    return tuple(sig)
+
+
+def _names() -> "_Dict | None":
+    """Từ điển tên; thiếu/hỏng file -> None (scrub_user fail-closed)."""
+    st = _names_state
+    now = _clock()
+    at = st["at"]
+    if at is not None and now - at < NAMES_CHECK_S:
+        return st["val"]
+    with _names_lock:
+        if st["at"] is not None and now - st["at"] < NAMES_CHECK_S:
+            return st["val"]
+        sig = _names_sig()
+        if st["at"] is None or sig != st["sig"]:
+            st["val"] = _load_names()
+            # dấu vết lấy LẠI sau khi đọc: file bị ghi giữa chừng -> lần
+            # kiểm sau thấy khác và đọc lại (không kẹt bản đọc dở).
+            st["sig"] = sig if sig == _names_sig() else None
+        st["at"] = now
+        return st["val"]
+
+
+def _names_cache_clear() -> None:
+    with _names_lock:
+        _names_state.update(sig=None, val=None, at=None)
+
+
+_names.cache_clear = _names_cache_clear  # tương thích test/caller cũ
 
 
 def _in(t: str, f: str, s: int, e: int, sets) -> bool:

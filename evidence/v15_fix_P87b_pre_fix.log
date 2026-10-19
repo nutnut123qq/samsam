@@ -1,0 +1,192 @@
+# command: cd <scratchpad>/prefix && python withdb.py samsam_v15fix_p87b_pre python -m pytest tests/test_v15_fix_p87b.py -q -p no:cacheprovider -rf | revision: BẢN TRƯỚC KHÉP = a05c60f + v15 working tree trước 3 vá (worktree prefix, hash 0950099…) + chỉ copy file test mới, KHÔNG sửa code | DB: samsam_v15fix_p87b_pre (apply_schema --roles của prefix) | exit=1 | kết quả: 5 failed, 4 passed — 5 FAIL đúng lỗi ca ĐÚNG NGƯỜI: --outputs liệt kê 0 đầu ra; --review-output khóa ar: → '[TỪ CHỐI] ... nguồn chưa đọc được: table=audit_runs, kind=inside_out (không đọc được: InsufficientPrivilege)'; function output_pending_human chưa có (UndefinedFunction / 0 dòng pg_proc); nguồn file không báo rõ 'nguồn file'. 4 PASS = ca sai khối/--by giả/login chưa ánh xạ/agent vốn đã bị chặn (không-hồi-quy)
+
+FF....FFF                                                                [100%]
+================================== FAILURES ===================================
+___________________ test_p87b_human_cli_lists_table_outputs ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87b_pre) at 0x18e584b01a0>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2967/p10cfg0/launch_p10.py'), ...}
+p87b = {'feats': {'ceo-04.2': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': [], 'bang_chung': ['tests/test_bks_audit....e', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}, {'kind': 'inside_out', 'table': 'audit_runs'}]}}}
+
+    def test_p87b_human_cli_lists_table_outputs(live, p87b):  # noqa: F811
+        """Đúng người/khối: `--outputs` exit 0, liệt kê khóa nguồn bảng + sha
+        phiên bản hiện hành (= bộ đếm owner), không liệt kê dòng mẫu."""
+        want = _owner_pending(live, p87b, FID)
+        assert K_A in want and K_B in want and K_S not in want
+        rc, out = _cli(live, "farm", "pipelines.rollout", "--outputs", FID)
+        assert rc == 0, out
+        for k in (K_A, K_B):
+            ln = _line(out, k)
+>           assert ln is not None, out
+E           AssertionError: [OK] ceo-04.2: 0 đầu ra cần người duyệt từng mục, 0 chưa duyệt
+E             
+E           assert None is not None
+
+tests\test_v15_fix_p87b.py:123: AssertionError
+__________________ test_p87b_human_cli_reviews_table_output ___________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87b_pre) at 0x18e584b01a0>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2967/p10cfg0/launch_p10.py'), ...}
+p87b = {'feats': {'ceo-04.2': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': [], 'bang_chung': ['tests/test_bks_audit....e', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}, {'kind': 'inside_out', 'table': 'audit_runs'}]}}}
+
+    def test_p87b_human_cli_reviews_table_output(live, p87b):  # noqa: F811
+        """`--review-output` đúng khóa + sha → exit 0, đúng 1 dòng gắn người của
+        login; sha sai → chặn; chạy lại = thêm 1 quyết định (append-only, bản
+        mới nhất thắng — thiết kế sổ), cổng DB vẫn 1 đầu ra đã duyệt."""
+        sha = _owner_pending(live, p87b, FID)[K_A]
+        rc, out = _review(live, "farm", K_A, "e" * 64, P_FARM)
+>       assert rc == 1 and "sha" in out, out
+E       AssertionError: [TỪ CHỐI] ceo-04.2: 'ar:inside_out/2026-09/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' không phải đầu ra của tính năng trong giai đoạn hiện hành (nguồn chưa đọc được: table=audit_runs, kind=inside_out (không đọc được: InsufficientPrivilege))
+E         
+E       assert (1 == 1 and 'sha' in "[TỪ CHỐI] ceo-04.2: 'ar:inside_out/2026-09/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…' không phải đầu...giai đoạn hiện hành (nguồn chưa đọc được: table=audit_runs, kind=inside_out (không đọc được: InsufficientPrivilege))\n")
+
+tests\test_v15_fix_p87b.py:138: AssertionError
+_____________________ test_p87b_listing_function_identity _____________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87b_pre) at 0x18e584b01a0>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2967/p10cfg0/launch_p10.py'), ...}
+p87b = {'feats': {'ceo-04.2': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': [], 'bang_chung': ['tests/test_bks_audit....e', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}, {'kind': 'inside_out', 'table': 'audit_runs'}]}}}
+
+    def test_p87b_listing_function_identity(live, p87b):  # noqa: F811
+        """Gọi thẳng function liệt kê: người khối khác / --by giả / login chưa
+        ánh xạ / agent → 42501; CLI `--outputs` của người khối khác không liệt
+        kê gì."""
+        sql = f"select * from {FN}(%s, %s)"
+>       _db_raises(live, "sales", sql, (FID, None), "không được ủy quyền khối")
+
+tests\test_v15_fix_p87b.py:178: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_v15_p10_human_authz.py:187: in _db_raises
+    c.execute(sql, args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <psycopg.Connection [BAD] at 0x18e586af5f0>
+query = 'select * from output_pending_human(%s, %s)'
+params = ('ceo-04.2', None)
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.UndefinedFunction: function output_pending_human(unknown, unknown) does not exist
+E           LINE 1: select * from output_pending_human($1, $2)
+E                                 ^
+E           HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+..\..\..\..\..\..\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: UndefinedFunction
+___________________ test_p87b_listing_function_locked_down ____________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87b_pre) at 0x18e584b01a0>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2967/p10cfg0/launch_p10.py'), ...}
+p87b = {'feats': {'ceo-04.2': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': [], 'bang_chung': ['tests/test_bks_audit....e', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}, {'kind': 'inside_out', 'table': 'audit_runs'}]}}}
+
+    def test_p87b_listing_function_locked_down(live, p87b):  # noqa: F811
+        """SECURITY DEFINER + search_path cố định; chỉ app_human EXECUTE;
+        kết quả chỉ khóa + sha + loại nguồn + quyết định (không cột nội dung)."""
+        rows = _q(live, "select p.prosecdef, p.proconfig,"
+                  " pg_get_function_result(p.oid),"
+                  " has_function_privilege('public', p.oid, 'EXECUTE'),"
+                  " has_function_privilege('svc_loader', p.oid, 'EXECUTE'),"
+                  " has_function_privilege('agent_writer', p.oid, 'EXECUTE'),"
+                  " has_function_privilege('bks_reader', p.oid, 'EXECUTE'),"
+                  " has_function_privilege('app_human', p.oid, 'EXECUTE')"
+                  " from pg_proc p where p.pronamespace = current_schema()"
+                  "::regnamespace and p.proname = %s", (FN,))
+>       assert len(rows) == 1, rows
+E       AssertionError: []
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests\test_v15_fix_p87b.py:198: AssertionError
+___________________ test_p87b_file_source_rejected_clearly ____________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87b_pre) at 0x18e584b01a0>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2967/p10cfg0/launch_p10.py'), ...}
+p87b = {'feats': {'ceo-04.2': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': [], 'bang_chung': ['tests/test_bks_audit....e', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}, {'kind': 'inside_out', 'table': 'audit_runs'}]}}}
+
+    def test_p87b_file_source_rejected_clearly(live, p87b):  # noqa: F811
+        """Nguồn FILE vẫn bị từ chối rõ ở đường login người (DB chưa có bản chụp
+        tin cậy); nguồn bảng cùng tính năng vẫn duyệt được."""
+        feats = list(p87b["feats"].values())
+        with _conn(live, "farm") as c:
+            with pytest.raises(ro.RolloutError, match="nguồn file"):
+>               ro.review_output(c, feats, "ceo-95", f"bk:{'4' * 64}", "4" * 64,
+                                 "approved", P_FARM)
+
+tests\test_v15_fix_p87b.py:225: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+conn = <psycopg.Connection [BAD] at 0x18e58736e40>
+feats = [{'acceptance_status': 'chua_nghiem_thu', 'agent_ids': [], 'bang_chung': ['tests/test_bks_audit.py', 'tests/test_store...de', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}, {'kind': 'inside_out', 'table': 'audit_runs'}]}]
+fid = 'ceo-95'
+key = 'bk:4444444444444444444444444444444444444444444444444444444444444444'
+sha = '4444444444444444444444444444444444444444444444444444444444444444'
+decision = 'approved', by = 'Vùng Trồng Giả Lập', note = None
+now = datetime.datetime(2026, 10, 18, 16, 26, 38, 824376, tzinfo=datetime.timezone(datetime.timedelta(seconds=25200)))
+
+    def review_output(conn, feats, fid: str, key: str, sha: str, decision: str,
+                      by: str, note=None, now=None) -> int:
+        """v15.2 (P8.7): NGƯỜI duyệt 1 đầu ra trên đúng phiên bản nội dung →
+        id dòng `output_reviews`. Đọc lại bộ đếm: khóa phải là đầu ra của ĐÚNG
+        tính năng trong giai đoạn hiện hành, cần duyệt (báo cáo/bảng/file không
+        có bước người riêng) và `sha` = phiên bản hiện hành — lệch → RolloutError
+        (không ghi). Ghi qua function `output_review_human` (danh tính theo
+        login, append-only)."""
+        by, now = check_by(by), _now(now)
+        if decision not in DECISIONS:
+            raise ValueError(f"--decision phải ∈ {DECISIONS}")
+        if not isinstance(sha, str) or not _SHA_RE.fullmatch(sha):
+            raise ValueError("--sha phải là sha256 hex 64 ký tự")
+        f = _feature(feats, fid)
+        with conn.transaction():
+            _, since = _locked(conn, fid)
+            merged, _, unc = output_rows(conn, f, since, now)
+            o = merged.get(key)
+            if o is None:
+>               raise RolloutError(
+                    f"{fid}: '{_oneline(str(key), 80)}' không phải đầu ra của "
+                    "tính năng trong giai đoạn hiện hành"
+                    + (f" (nguồn chưa đọc được: {'; '.join(unc)})" if unc else ""))
+E               pipelines.rollout.RolloutError: ceo-95: 'bk:4444444444444444444444444444444444444444444444444444444444444444' không phải đầu ra của tính năng trong giai đoạn hiện hành (nguồn chưa đọc được: file=backup_runs.jsonl (không đọc được: BACKUP_DIR chưa cấu hình); table=audit_runs, kind=inside_out (không đọc được: InsufficientPrivilege))
+
+pipelines\rollout.py:1464: RolloutError
+
+During handling of the above exception, another exception occurred:
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15fix_p87b_pre) at 0x18e584b01a0>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2967/p10cfg0/launch_p10.py'), ...}
+p87b = {'feats': {'ceo-04.2': {'acceptance_status': 'chua_nghiem_thu', 'agent_ids': [], 'bang_chung': ['tests/test_bks_audit....e', 'id': 'ceo-95', 'output_sources': [{'file': 'backup_runs.jsonl'}, {'kind': 'inside_out', 'table': 'audit_runs'}]}}}
+
+    def test_p87b_file_source_rejected_clearly(live, p87b):  # noqa: F811
+        """Nguồn FILE vẫn bị từ chối rõ ở đường login người (DB chưa có bản chụp
+        tin cậy); nguồn bảng cùng tính năng vẫn duyệt được."""
+        feats = list(p87b["feats"].values())
+        with _conn(live, "farm") as c:
+>           with pytest.raises(ro.RolloutError, match="nguồn file"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'nguồn file'
+E             Actual message: "ceo-95: 'bk:4444444444444444444444444444444444444444444444444444444444444444' không phải đầu ra của tính năng trong giai đoạn hiện hành (nguồn chưa đọc được: file=backup_runs.jsonl (không đọc được: BACKUP_DIR chưa cấu hình); table=audit_runs, kind=inside_out (không đọc được: InsufficientPrivilege))"
+
+tests\test_v15_fix_p87b.py:224: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_v15_fix_p87b.py::test_p87b_human_cli_lists_table_outputs - ...
+FAILED tests/test_v15_fix_p87b.py::test_p87b_human_cli_reviews_table_output
+FAILED tests/test_v15_fix_p87b.py::test_p87b_listing_function_identity - psyc...
+FAILED tests/test_v15_fix_p87b.py::test_p87b_listing_function_locked_down - A...
+FAILED tests/test_v15_fix_p87b.py::test_p87b_file_source_rejected_clearly - A...
+5 failed, 4 passed in 8.65s

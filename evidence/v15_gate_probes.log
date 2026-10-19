@@ -1,0 +1,86 @@
+# v15 gate — probe A2 ĐỘC LẬP trên kết quả tích hợp (không dùng lại script/câu của lane) + test chỉ định
+# revision: nền a05c60f + working tree chưa commit; sha256(git diff)=d138c3cecb65722c96bf8e7afb6c6f44f73af5155c8592b50bd5d0e4edbb0665; sha256(git diff trừ DONE.md+board)=9ec857e9a8ff243b4f0536b2094faf9a5b285e0ae442c32e365c78521de4eb68; untracked mới 16 file sha256(list)=9bcdc973b1d9456aa7c33f2dd7185aec1d53ca49945cb9533fbc21877fdb1b18
+# 1) gate_inproc.py — không DB (DATABASE_URL trỏ host chết để không nạp DSN .env), fake gateway/transport, không gửi ra ngoài: python gate_inproc.py → exit 0
+[PASS] P9.1 7 câu sức khỏe chèn ký tự vô hình (WJ/BOM/SHY/ZWNJ/VS16/ZWSP) → bị coi sức khỏe
+[PASS] P9.1 5 câu bán hàng có ký tự vô hình KHÔNG bị coi sức khỏe
+[PASS] P9.1 rag.answer câu sức khỏe có ký tự vô hình → handoff health, 0 lời gọi AI/retrieve
+[PASS] P9.1 input bệnh lý 400k ký tự xử lý 0.66s (< 5s, không quadratic)
+[PASS] P9.6 'giao đau' có dấu vẫn sức khỏe; 'giao đâu'/'giao dau' không
+[PASS] P9.3 từ điển tên thiếu lúc khởi động → fail-closed; sửa file + qua khoảng kiểm → tự phục hồi (không restart)
+[PASS] P9.3 file hỏng lại → fail-closed (risky=True)
+[PASS] P9.4 record_suggestion: payload/title không còn tên/số nhà/SĐT (giá giữ hoặc không lưu)
+[PASS] P9.5 docstring messenger nói convlog câu khách qua scrub_user (không còn '_uhash+_mask_pii' sai)
+[PASS] P8.1 convlog: DISTINCT kênh+msg_id, chỉ câu ĐÃ GỬI zalo/messenger; dòng hỏng đếm bad; file thiếu = uncounted (không phải 0)
+[PASS] P8.1 backup_runs: BACKUP_DIR chưa cấu hình → uncounted
+[PASS] P8.4 mọi lời gọi write_report (agents/pipelines/scripts/ingest/connectors/app/api) truyền sample=
+[PASS] P8.5 nhãn 'CHẠY THỬ — KHÔNG GỬI' cho .md chạy thử; vận hành/csv giữ nguyên byte
+[PASS] P7.1 6 job mới có bước đúng module + GIẢ ĐỊNH + timer cùng tên; không timer mồ côi/job thiếu timer
+[PASS] P7.2 muc_dich red_alert_sweep không còn nhận leo thang 2 giờ, trỏ red_alert_escalate
+[deadline] messenger: bỏ bước gui — không đủ ngân sách 30 giây (uh=fbd6a7ccc1d6c482)
+[PASS] P7.4 messenger send_text: còn 3s → timeout≈3; còn 20s → 5; còn 0.4s → 0 lời gọi + bước gui; không hạn → 5
+[PASS] P12.4 danh sách đối thủ repo CHƯA DUYỆT (không tự loại/cho qua); 'sâm hàn quốc' khớp đối thủ
+[PASS] P12.4 agent duyệt danh sách → KeywordConfigError (fail-closed)
+[PASS] P12.5 mã đối tác lạ: repo CHƯA CHỌN → tu_choi_file + cảnh báo rõ
+[PASS] P12.5 chọn bởi system: → về mặc định an toàn tu_choi_file + cảnh báo
+[tổng] 20 kiểm, 20 PASS, 0 FAIL
+
+# 2) gate_e2e_db.py — DB tạm samsam_v15_gp (apply ×2, core, golden), login Postgres THẬT tạm không owner/superuser (app_human ×3 người giả, svc_loader, bks_reader, svc_job) qua SUBPROCESS chế độ thực (APPROVAL_ENFORCE=1); human_logins/approvers/users.json = dữ liệu GIẢ trong thư mục tạm; login đã drop sau (0 còn lại): python withdb.py samsam_v15_gp python gate_e2e_db.py → exit 0
+[PASS] P10.1 golden --approve-price: sai khối + --by giả bị chặn, +2 authz_denied
+[PASS] P10.1 golden --approve-price đúng người/khối bằng login người (app_human) → ghi qua function
+[PASS] P10.1 login người KHÔNG UPDATE thẳng price_list
+[PASS] P10.1 crm --load-dealers: legal chặn, sales qua function (không 'permission denied for table dealers')
+[PASS] P10.1 rollout --disable/--promote bằng login người: tắt → chạy thử, sự kiện ghi tên người
+[PASS] P10.1 login người KHÔNG UPDATE thẳng feature_rollout
+[PASS] P10.2 da_pmo --set-status --by agent: bị chặn (exit≠0)
+[PASS] P10.2 da_pmo --set-status sai khối (sales) bị chặn + authz_denied
+[PASS] P10.2 kd_quote --outcome --by người khác login → chặn + authz_denied
+[PASS] P10.3 bks_reader: tính năng tắt → không sinh; chạy thử → sinh + 1 dòng report_outputs db_role=login BKS
+[PASS] P10.3 bks_reader không SELECT/DELETE report_outputs, không đọc events, không đổi giai đoạn
+[PASS] P10.4 svc_loader: không gọi function người, không duyệt giá/phiếu lệch, không đọc human_logins
+[PASS] P8.7 rollout --outputs (login người ceo) liệt kê báo cáo CHƯA DUYỆT kèm sha
+[PASS] P8.7 review-output sai khối (legal) bị chặn + authz_denied
+[PASS] P8.7 review-output sha KHÔNG phải phiên bản hiện hành → từ chối
+[PASS] P8.7 review-output đúng người/khối → 1 dòng output_reviews (người + login + sha)
+[PASS] P8.7 login người KHÔNG INSERT thẳng output_reviews
+[PASS] P8.7 gọi thẳng function bằng login khối khác → 42501/từ chối
+[PASS] P7.3 job order_watch qua wrapper bằng login svc_job thật (DSN gốc = login không tồn tại): exit 0, 0 permission denied, job_runs ok
+[PASS] P7.3 wrapper từ chối JOB_DATABASE_URL = owner (exit 78)
+[PASS] P12.1 lead_store (login svc_loader, sales-04.1 TẮT, chính sách chưa cấu hình) → exit 2, 0 lead
+[PASS] P11.1 core_store bằng login svc_loader (DATA_DIR tạm) nạp lần đầu exit 0
+[PASS] P11.1 nạp lại (login svc_loader): đơn thật giữ product_id, 0 order_history mới
+[PASS] P11.2 đổi tên → changed (link giữ); biến mất → retired_at + sự kiện retired; id của nguồn manual → ambiguous, không đè; db_role = login loader
+[PASS] P11.2 nạp lại y nguyên → 0 sự kiện mới (idempotent)
+[PASS] P11.3 products.jsonl rỗng → exit 1, orders/products/claims không đổi
+[PASS] P11.3 products.jsonl chỉ _doc → exit 1, orders/products/claims không đổi
+[PASS] P11.3 products.jsonl JSON hỏng → exit 1, orders/products/claims không đổi
+[PASS] P11.3 products.jsonl dòng {} → exit 1, orders/products/claims không đổi
+[PASS] P11.3 products.jsonl trùng id → exit 1, orders/products/claims không đổi
+[PASS] P11.3 products.jsonl thiếu → exit 1, không nạp gì
+[PASS] P12.3 --check-routing in CHƯA CẤU HÌNH cấp 2/ngoài giờ (không tự chọn người)
+[PASS] P12.2 --escalate --dry-run (svc_job): không ghi gì (red_alerts, agent_action_log trước = sau)
+[PASS] P12.2 --escalate thật lần đầu: ghi mốc 1 lần, 3 cảnh báo TỒN không tự leo thang (chính sách null)
+[PASS] P12.2 chạy lại: mốc không ghi thêm, vẫn 0 leo thang
+[tổng] 35 kiểm, 35 PASS, 0 FAIL
+
+# 3) test chỉ định (mã chỉ kiểm được bằng test — P8.2/P8.3/P8.6/P8.7/P9.2/P9.6): python withdb.py samsam_v15_g python -m pytest -q -rA tests/test_v15_p8_outputs.py tests/test_v15_p9_chat_safety.py -k 'p8_2 or p8_3 or p8_6 or p9_2 or p9_6 or p8_7' → exit 0
+PASSED tests/test_v15_p8_outputs.py::test_p8_2_budget_change_own_agent_counted_and_usable
+PASSED tests/test_v15_p8_outputs.py::test_p8_3_intel_alert_disabled_feature_generates_nothing
+PASSED tests/test_v15_p8_outputs.py::test_p8_6_lead_followup_deferred_counted
+PASSED tests/test_v15_p8_outputs.py::test_p8_7_evaluate_reason_list_is_the_gate
+PASSED tests/test_v15_p8_outputs.py::test_p8_7_report_needs_human_review_per_version
+PASSED tests/test_v15_p8_outputs.py::test_p8_7_table_output_rejected_is_not_approved
+PASSED tests/test_v15_p8_outputs.py::test_p8_7_reviews_unreadable_fail_closed
+PASSED tests/test_v15_p8_outputs.py::test_p8_7_real_mode_without_approvers_blocks
+PASSED tests/test_v15_p8_outputs.py::test_p8_7_e2e_human_login_review
+PASSED tests/test_v15_p9_chat_safety.py::test_p9_2_streamlit_history_skips_health_alcohol
+PASSED tests/test_v15_p9_chat_safety.py::test_p9_6_giao_dau_accented_stays_health[giao \u0111au]
+PASSED tests/test_v15_p9_chat_safety.py::test_p9_6_giao_dau_accented_stays_health[Giao \u0111au kh\xf4ng shop]
+PASSED tests/test_v15_p9_chat_safety.py::test_p9_6_giao_dau_accented_stays_health[giao\u200b\u0111au]
+13 passed, 304 deselected in 24.52s
+
+# 4) P7.5 test từng chập chờn chạy lặp 3 lần: tests/test_v14_p2_service_auth.py::test_job_login_report_steps_match_owner
+1 passed in 25.01s
+1 passed in 20.97s
+1 passed in 22.40s
+
+# 5) P9.7 redteam + P7.3/P10.x test lane đầy đủ: xem evidence/v15_gate_gates.log và evidence/v15_gate_pytest.log (6140 passed, 3 skipped)

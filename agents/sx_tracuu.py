@@ -249,7 +249,9 @@ def main(argv=None, now: datetime | None = None) -> int:
     print(text, end="")
     if a.out:
         try:
-            p = write_report(text, REPORTS_DIR, report_name(a.ask, now))
+            # P8.4: tài liệu nội bộ trưởng phòng duyệt (chunks_internal).
+            p = write_report(text, REPORTS_DIR, report_name(a.ask, now),
+                             sample=False)
         except OSError as e:
             print(f"[warn] không ghi được file ({type(e).__name__})",
                   file=sys.stderr)

@@ -1,0 +1,2264 @@
+# P10.2 SAU SỬA | revision: nền a05c60f + working tree v15 chưa commit (kèm vá P10.2) | DB: samsam_v15fix_p102 (apply_schema --roles ×2 trước) — mỗi test tạo schema tạm riêng
+# (1) python withdb.py samsam_v15fix_p102 python -m pytest tests/test_v15_fix_p102.py tests/test_da_pmo.py tests/test_ra_kenh.py tests/test_kd_quote.py tests/test_kd_care.py tests/test_v14_p4_sales.py tests/test_v13_c09_anchor_legal.py -q -p no:cacheprovider --tb=short -rA | exit 0 | 316 passed
+# (2) ... tests/test_v15_fix_p102.py tests/test_da_schema.py tests/test_da_b2b.py tests/test_v15_p10_human_authz.py -rA | exit 0 | 102 passed
+# (3) ... tests/test_ceo_audit.py tests/test_ceo_decisions.py tests/test_bks_audit.py tests/test_v14_p2_service_auth.py tests/test_handover_docs.py tests/test_auth_approval.py tests/test_v13_c04_authz.py tests/test_rollout_enforce.py tests/test_ops_monthly.py tests/test_xnqc.py tests/test_v15_p8_outputs.py | exit 0 | 347 passed
+===== (1) =====
+........................................................................ [ 22%]
+
+........................................................................ [ 45%]
+
+........................................................................ [ 68%]
+
+........................................................................ [ 91%]
+
+............................                                             [100%]
+
+=================================== PASSES ====================================
+
+_________________ test_cli_usage_exit2_before_connect[argv0] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_pmo [-h] [--seed] [--dry-run] [--set-status CODE]
+
+                               [--status {chua_bat_dau,dang_lam,xong,tam_dung}]
+
+                               [--evidence EVIDENCE] [--board] [--date DATE]
+
+                               [--out-dir OUT_DIR] [--submit]
+
+                               [--propose-due CODE] [--due DUE]
+
+                               [--apply-due QUEUE_ID] [--by BY]
+
+python -m agents.da_pmo: error: cần đúng 1 thao tác: --seed | --set-status | --board | --propose-due | --apply-due
+
+_________________ test_cli_usage_exit2_before_connect[argv1] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_pmo [-h] [--seed] [--dry-run] [--set-status CODE]
+
+                               [--status {chua_bat_dau,dang_lam,xong,tam_dung}]
+
+                               [--evidence EVIDENCE] [--board] [--date DATE]
+
+                               [--out-dir OUT_DIR] [--submit]
+
+                               [--propose-due CODE] [--due DUE]
+
+                               [--apply-due QUEUE_ID] [--by BY]
+
+python -m agents.da_pmo: error: cần đúng 1 thao tác: --seed | --set-status | --board | --propose-due | --apply-due
+
+_________________ test_cli_usage_exit2_before_connect[argv2] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_pmo [-h] [--seed] [--dry-run] [--set-status CODE]
+
+                               [--status {chua_bat_dau,dang_lam,xong,tam_dung}]
+
+                               [--evidence EVIDENCE] [--board] [--date DATE]
+
+                               [--out-dir OUT_DIR] [--submit]
+
+                               [--propose-due CODE] [--due DUE]
+
+                               [--apply-due QUEUE_ID] [--by BY]
+
+python -m agents.da_pmo: error: --set-status/--propose-due/--apply-due cần --by <tên>
+
+_________________ test_cli_usage_exit2_before_connect[argv3] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_pmo [-h] [--seed] [--dry-run] [--set-status CODE]
+
+                               [--status {chua_bat_dau,dang_lam,xong,tam_dung}]
+
+                               [--evidence EVIDENCE] [--board] [--date DATE]
+
+                               [--out-dir OUT_DIR] [--submit]
+
+                               [--propose-due CODE] [--due DUE]
+
+                               [--apply-due QUEUE_ID] [--by BY]
+
+python -m agents.da_pmo: error: --set-status cần --status (và --status chỉ đi với --set-status)
+
+_________________ test_cli_usage_exit2_before_connect[argv4] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_pmo [-h] [--seed] [--dry-run] [--set-status CODE]
+
+                               [--status {chua_bat_dau,dang_lam,xong,tam_dung}]
+
+                               [--evidence EVIDENCE] [--board] [--date DATE]
+
+                               [--out-dir OUT_DIR] [--submit]
+
+                               [--propose-due CODE] [--due DUE]
+
+                               [--apply-due QUEUE_ID] [--by BY]
+
+python -m agents.da_pmo: error: --dry-run chỉ với --seed; --submit chỉ với --board
+
+_________________ test_cli_usage_exit2_before_connect[argv5] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_pmo [-h] [--seed] [--dry-run] [--set-status CODE]
+
+                               [--status {chua_bat_dau,dang_lam,xong,tam_dung}]
+
+                               [--evidence EVIDENCE] [--board] [--date DATE]
+
+                               [--out-dir OUT_DIR] [--submit]
+
+                               [--propose-due CODE] [--due DUE]
+
+                               [--apply-due QUEUE_ID] [--by BY]
+
+python -m agents.da_pmo: error: --dry-run chỉ với --seed; --submit chỉ với --board
+
+_________________ test_cli_usage_exit2_before_connect[argv6] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_pmo [-h] [--seed] [--dry-run] [--set-status CODE]
+
+                               [--status {chua_bat_dau,dang_lam,xong,tam_dung}]
+
+                               [--evidence EVIDENCE] [--board] [--date DATE]
+
+                               [--out-dir OUT_DIR] [--submit]
+
+                               [--propose-due CODE] [--due DUE]
+
+                               [--apply-due QUEUE_ID] [--by BY]
+
+python -m agents.da_pmo: error: --propose-due cần --due YYYY-MM-DD
+
+_________________ test_cli_usage_exit2_before_connect[argv7] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_pmo [-h] [--seed] [--dry-run] [--set-status CODE]
+
+                               [--status {chua_bat_dau,dang_lam,xong,tam_dung}]
+
+                               [--evidence EVIDENCE] [--board] [--date DATE]
+
+                               [--out-dir OUT_DIR] [--submit]
+
+                               [--propose-due CODE] [--due DUE]
+
+                               [--apply-due QUEUE_ID] [--by BY]
+
+python -m agents.da_pmo: error: argument --due: ngày phải dạng YYYY-MM-DD
+
+_________________ test_cli_usage_exit2_before_connect[argv8] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_pmo [-h] [--seed] [--dry-run] [--set-status CODE]
+
+                               [--status {chua_bat_dau,dang_lam,xong,tam_dung}]
+
+                               [--evidence EVIDENCE] [--board] [--date DATE]
+
+                               [--out-dir OUT_DIR] [--submit]
+
+                               [--propose-due CODE] [--due DUE]
+
+                               [--apply-due QUEUE_ID] [--by BY]
+
+python -m agents.da_pmo: error: --set-status/--propose-due/--apply-due cần --by <tên>
+
+_________________ test_cli_usage_exit2_before_connect[argv9] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_pmo [-h] [--seed] [--dry-run] [--set-status CODE]
+
+                               [--status {chua_bat_dau,dang_lam,xong,tam_dung}]
+
+                               [--evidence EVIDENCE] [--board] [--date DATE]
+
+                               [--out-dir OUT_DIR] [--submit]
+
+                               [--propose-due CODE] [--due DUE]
+
+                               [--apply-due QUEUE_ID] [--by BY]
+
+python -m agents.da_pmo: error: --evidence chỉ dùng với --set-status
+
+_________________ test_cli_usage_exit2_before_connect[argv10] _________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_pmo [-h] [--seed] [--dry-run] [--set-status CODE]
+
+                               [--status {chua_bat_dau,dang_lam,xong,tam_dung}]
+
+                               [--evidence EVIDENCE] [--board] [--date DATE]
+
+                               [--out-dir OUT_DIR] [--submit]
+
+                               [--propose-due CODE] [--due DUE]
+
+                               [--apply-due QUEUE_ID] [--by BY]
+
+python -m agents.da_pmo: error: argument --status: invalid choice: 'la' (choose from 'chua_bat_dau', 'dang_lam', 'xong', 'tam_dung')
+
+_____________ test_cli_xong_without_evidence_exit1_before_connect _____________
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] status 'xong' cần --evidence (link/biên bản) — không ghi
+
+[warn] status 'xong' cần --evidence (link/biên bản) — không ghi
+
+___________________________ test_cli_db_down_exit2 ____________________________
+
+---------------------------- Captured stderr call -----------------------------
+
+[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+
+____________________________ test_set_status_rules ____________________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] inserted=15 existing=0
+
+[done] DA-05 → dang_lam
+
+[done] DA-05 → xong
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] status 'xong' cần --evidence (link/biên bản) — không ghi
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] không có mốc KHONG-CO — không ghi
+
+_____________________ test_board_writes_file_and_submits ______________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] inserted=15 existing=0
+
+[done] 15 mốc → C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2951\test_board_writes_file_and_sub0\da-pmo-board-2026-10-25.md
+
+[done] 15 mốc → C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2951\test_board_writes_file_and_sub0\da-pmo-board-2026-10-25.md
+
+[done] đã đẩy mục #1 (PENDING) — TGĐ duyệt
+
+[done] 15 mốc → C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2951\test_board_writes_file_and_sub0\da-pmo-board-2026-10-24.md
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] bảng 2026-W43 đã có mục đang chờ duyệt
+
+____________________ test_apply_due_stale_and_wrong_items _____________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] inserted=15 existing=0
+
+[done] đề xuất mục #1 (PENDING) — hạn CHƯA đổi
+
+[done] đề xuất mục #2 (PENDING) — hạn CHƯA đổi
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] DA-05: hạn hiện tại khác old_due 21/11/2026 (stale) — đề xuất lại
+
+[warn] mục #2 đang 'rejected' — chỉ áp dụng khi đã duyệt
+
+[warn] mục #999999 không phải `milestone_change` khối ceo
+
+________________ test_propose_due_proposer_cannot_self_approve ________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] inserted=15 existing=0
+
+[done] đề xuất mục #1 (PENDING) — hạn CHƯA đổi
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] mục #1 đang 'pending' — chỉ áp dụng khi đã duyệt
+
+____________________ test_apply_due_older_approval_blocked ____________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] inserted=15 existing=0
+
+[done] đề xuất mục #1 (PENDING) — hạn CHƯA đổi
+
+[done] đề xuất mục #2 (PENDING) — hạn CHƯA đổi
+
+[done] DA-05: hạn 21/11/2026 → 02/12/2026 (mục #2)
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] mục #1: LỆCH bản duyệt (sha256) — không áp dụng
+
+____________________ test_apply_due_legacy_projects_block _____________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] inserted=15 existing=0
+
+[done] đề xuất mục #1 (PENDING) — hạn CHƯA đổi
+
+[done] DA-05: hạn 21/11/2026 → 28/11/2026 (mục #1)
+
+_________________ test_cli_usage_exit2_before_connect[argv0] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+
+                                [--mark-removed URL] [--report] [--by BY]
+
+                                [--now NOW] [--days DAYS] [--dry-run]
+
+python -m agents.ra_kenh: error: chọn đúng 1 thao tác: --file | --partner-file | --mark-removed | --report
+
+_________________ test_cli_usage_exit2_before_connect[argv1] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+
+                                [--mark-removed URL] [--report] [--by BY]
+
+                                [--now NOW] [--days DAYS] [--dry-run]
+
+python -m agents.ra_kenh: error: chọn đúng 1 thao tác: --file | --partner-file | --mark-removed | --report
+
+_________________ test_cli_usage_exit2_before_connect[argv2] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+
+                                [--mark-removed URL] [--report] [--by BY]
+
+                                [--now NOW] [--days DAYS] [--dry-run]
+
+python -m agents.ra_kenh: error: --days phải 1..366
+
+_________________ test_cli_usage_exit2_before_connect[argv3] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+
+                                [--mark-removed URL] [--report] [--by BY]
+
+                                [--now NOW] [--days DAYS] [--dry-run]
+
+python -m agents.ra_kenh: error: --days phải 1..366
+
+_________________ test_cli_usage_exit2_before_connect[argv4] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+
+                                [--mark-removed URL] [--report] [--by BY]
+
+                                [--now NOW] [--days DAYS] [--dry-run]
+
+python -m agents.ra_kenh: error: --now sai định dạng ISO
+
+_________________ test_cli_usage_exit2_before_connect[argv5] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+
+                                [--mark-removed URL] [--report] [--by BY]
+
+                                [--now NOW] [--days DAYS] [--dry-run]
+
+python -m agents.ra_kenh: error: --dry-run chỉ đi với --file/--partner-file
+
+_________________ test_cli_usage_exit2_before_connect[argv6] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+
+                                [--mark-removed URL] [--report] [--by BY]
+
+                                [--now NOW] [--days DAYS] [--dry-run]
+
+python -m agents.ra_kenh: error: --by phải là tên NGƯỜI — không nhận 'agent:'/'system:'
+
+_________________ test_cli_usage_exit2_before_connect[argv7] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+
+                                [--mark-removed URL] [--report] [--by BY]
+
+                                [--now NOW] [--days DAYS] [--dry-run]
+
+python -m agents.ra_kenh: error: thiếu tên người (--by)
+
+_________________ test_cli_usage_exit2_before_connect[argv8] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+
+                                [--mark-removed URL] [--report] [--by BY]
+
+                                [--now NOW] [--days DAYS] [--dry-run]
+
+python -m agents.ra_kenh: error: --by phải là tên NGƯỜI — không nhận 'agent:'/'system:'
+
+_________________ test_cli_usage_exit2_before_connect[argv9] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+
+                                [--mark-removed URL] [--report] [--by BY]
+
+                                [--now NOW] [--days DAYS] [--dry-run]
+
+python -m agents.ra_kenh: error: --now chỉ đi với --report/--dry-run — thao tác ghi dùng giờ thật
+
+_________________ test_cli_usage_exit2_before_connect[argv10] _________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+
+                                [--mark-removed URL] [--report] [--by BY]
+
+                                [--now NOW] [--days DAYS] [--dry-run]
+
+python -m agents.ra_kenh: error: --now chỉ đi với --report/--dry-run — thao tác ghi dùng giờ thật
+
+________________ test_mark_removed_then_still_exported_reopens ________________
+
+---------------------------- Captured stderr call -----------------------------
+
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+
+[RED-ALERT][warn] cảnh báo đỏ #2 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+
+[RED-ALERT][warn] cảnh báo đỏ #3 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+
+_________________________ test_link_heals_after_crash _________________________
+
+---------------------------- Captured stderr call -----------------------------
+
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+
+_______________ test_reimport_same_text_rescans_meta_and_rules ________________
+
+---------------------------- Captured stderr call -----------------------------
+
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+
+[RED-ALERT][warn] cảnh báo đỏ #2 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+
+________________ test_kind_change_opens_new_dot_in_right_block ________________
+
+---------------------------- Captured stderr call -----------------------------
+
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+
+[RED-ALERT][warn] cảnh báo đỏ #2 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+
+_____________________ test_s2_to_s1_same_dot_raises_alert _____________________
+
+---------------------------- Captured stderr call -----------------------------
+
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+
+________________________ test_url_max_bytes_fits_btree ________________________
+
+---------------------------- Captured stderr call -----------------------------
+
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+
+____________________________ test_check_matrix_cli ____________________________
+
+---------------------------- Captured stderr call -----------------------------
+
+[error] thiếu file khong-co.json
+
+________________ test_cli_bad_args_exit2_before_connect[argv0] ________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+
+                                 [--quote REQ_ID] [--export QID]
+
+                                 [--verify-send QID FILE] [--outcome QID KQ]
+
+                                 [--followups] [--by BY] [--discount PCT]
+
+                                 [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+
+                                 [--submit] [--dry-run]
+
+python -m agents.kd_quote: error: cần đúng 1 thao tác: --check-matrix | --requests | --quote | --export | --verify-send | --outcome | --followups
+
+________________ test_cli_bad_args_exit2_before_connect[argv1] ________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+
+                                 [--quote REQ_ID] [--export QID]
+
+                                 [--verify-send QID FILE] [--outcome QID KQ]
+
+                                 [--followups] [--by BY] [--discount PCT]
+
+                                 [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+
+                                 [--submit] [--dry-run]
+
+python -m agents.kd_quote: error: cần đúng 1 thao tác: --check-matrix | --requests | --quote | --export | --verify-send | --outcome | --followups
+
+________________ test_cli_bad_args_exit2_before_connect[argv2] ________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+
+                                 [--quote REQ_ID] [--export QID]
+
+                                 [--verify-send QID FILE] [--outcome QID KQ]
+
+                                 [--followups] [--by BY] [--discount PCT]
+
+                                 [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+
+                                 [--submit] [--dry-run]
+
+python -m agents.kd_quote: error: cần đúng 1 thao tác: --check-matrix | --requests | --quote | --export | --verify-send | --outcome | --followups
+
+________________ test_cli_bad_args_exit2_before_connect[argv3] ________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+
+                                 [--quote REQ_ID] [--export QID]
+
+                                 [--verify-send QID FILE] [--outcome QID KQ]
+
+                                 [--followups] [--by BY] [--discount PCT]
+
+                                 [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+
+                                 [--submit] [--dry-run]
+
+python -m agents.kd_quote: error: --submit và --dry-run loại trừ nhau
+
+________________ test_cli_bad_args_exit2_before_connect[argv4] ________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+
+                                 [--quote REQ_ID] [--export QID]
+
+                                 [--verify-send QID FILE] [--outcome QID KQ]
+
+                                 [--followups] [--by BY] [--discount PCT]
+
+                                 [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+
+                                 [--submit] [--dry-run]
+
+python -m agents.kd_quote: error: --discount/--date/--submit chỉ dùng với --quote
+
+________________ test_cli_bad_args_exit2_before_connect[argv5] ________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+
+                                 [--quote REQ_ID] [--export QID]
+
+                                 [--verify-send QID FILE] [--outcome QID KQ]
+
+                                 [--followups] [--by BY] [--discount PCT]
+
+                                 [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+
+                                 [--submit] [--dry-run]
+
+python -m agents.kd_quote: error: --export cần --out FILE (.md|.html) và ngược lại
+
+________________ test_cli_bad_args_exit2_before_connect[argv6] ________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+
+                                 [--quote REQ_ID] [--export QID]
+
+                                 [--verify-send QID FILE] [--outcome QID KQ]
+
+                                 [--followups] [--by BY] [--discount PCT]
+
+                                 [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+
+                                 [--submit] [--dry-run]
+
+python -m agents.kd_quote: error: argument --discount: CK phải số nguyên 0..50
+
+________________ test_cli_bad_args_exit2_before_connect[argv7] ________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+
+                                 [--quote REQ_ID] [--export QID]
+
+                                 [--verify-send QID FILE] [--outcome QID KQ]
+
+                                 [--followups] [--by BY] [--discount PCT]
+
+                                 [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+
+                                 [--submit] [--dry-run]
+
+python -m agents.kd_quote: error: argument --date: ngày phải dạng YYYY-MM-DD
+
+________________ test_cli_bad_args_exit2_before_connect[argv8] ________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+
+                                 [--quote REQ_ID] [--export QID]
+
+                                 [--verify-send QID FILE] [--outcome QID KQ]
+
+                                 [--followups] [--by BY] [--discount PCT]
+
+                                 [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+
+                                 [--submit] [--dry-run]
+
+python -m agents.kd_quote: error: cần đúng 1 thao tác: --check-matrix | --requests | --quote | --export | --verify-send | --outcome | --followups
+
+___________________________ test_cli_db_down_exit2 ____________________________
+
+---------------------------- Captured stderr call -----------------------------
+
+[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+
+[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+
+_____________________ test_db_qa_none_and_high_never_auto _____________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[quote] YC-1 (1 dòng hợp lệ):
+
+  mat-ong-sam-120ml-1hu ×20 · CK 10% · đơn giá 670.000đ · thành tiền 13.400.000đ
+
+  tổng 13.400.000đ · giá vốn duyệt 6.000.000đ · biên 55.2%
+
+  phân loại: per_item · reasons: chiet_khau_vuot · problems: (không)
+
+[file] C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2951\test_db_qa_none_and_high_never0\bao-gia-BG-20261012-1-83b49c2d.md
+
+[file] C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2951\test_db_qa_none_and_high_never0\bao-gia-BG-20261012-1-83b49c2d.html
+
+[file] C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2951\test_db_qa_none_and_high_never0\bao-gia-BG-20261012-1-83b49c2d-noi-bo.md
+
+[done] BG-20261012-1-83b49c2d → mục #1 b2b_quote (risk high — GĐ bán hàng duyệt). Báo giá chỉ có hiệu lực khi GĐ bán hàng ký — hệ thống không tự gửi.
+
+______________________ test_db_missing_cogs_goes_finance ______________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[quote] YC-1 (1 dòng hợp lệ):
+
+  mat-ong-sam-120ml-1hu ×20 · CK 5% · đơn giá 707.000đ · thành tiền 14.140.000đ
+
+  tổng 14.140.000đ · giá vốn duyệt — · biên chưa tính được
+
+  phân loại: per_item · reasons: thieu_gia_von_duyet · problems: (không)
+
+[file] C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2951\test_db_missing_cogs_goes_fina0\bao-gia-BG-20261012-1-db8edcaf.md
+
+[file] C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2951\test_db_missing_cogs_goes_fina0\bao-gia-BG-20261012-1-db8edcaf.html
+
+[file] C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2951\test_db_missing_cogs_goes_fina0\bao-gia-BG-20261012-1-db8edcaf-noi-bo.md
+
+[done] BG-20261012-1-db8edcaf → mục #1 b2b_quote (risk high — GĐ bán hàng duyệt); tài chính rà biên mục #2. Báo giá chỉ có hiệu lực khi GĐ bán hàng ký — hệ thống không tự gửi.
+
+_________________________ test_db_export_verify_send __________________________
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] mục #1: LỆCH — KHÔNG gửi (chưa duyệt / sai loại / file khác bản duyệt)
+
+[warn] mục #1: LỆCH — KHÔNG gửi (chưa duyệt / sai loại / file khác bản duyệt)
+
+[warn] mục #1: LỆCH — KHÔNG gửi (chưa duyệt / sai loại / file khác bản duyệt)
+
+[warn] mục #1: LỆCH — KHÔNG gửi (chưa duyệt / sai loại / file khác bản duyệt)
+
+[warn] mục #1: LỆCH — KHÔNG gửi (chưa duyệt / sai loại / file khác bản duyệt)
+
+[warn] mục #1: LỆCH — KHÔNG gửi (chưa duyệt / sai loại / file khác bản duyệt)
+
+[warn] --out phải là .md hoặc .html
+
+[warn] mục #2: LỆCH — KHÔNG gửi (chưa duyệt / sai loại / file khác bản duyệt)
+
+[warn] mục #2 không phải tài liệu ['b2b_quote', 'b2b_quote_matrix'] ĐÃ duyệt — KHÔNG xuất
+
+[warn] mục #999999999: LỆCH — KHÔNG gửi (chưa duyệt / sai loại / file khác bản duyệt)
+
+________________________ test_db_rejected_not_sendable ________________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[quote] YC-1 (1 dòng hợp lệ):
+
+  mat-ong-sam-120ml-1hu ×20 · CK 5% · đơn giá 707.000đ · thành tiền 14.140.000đ
+
+  tổng 14.140.000đ · giá vốn duyệt 6.000.000đ · biên 57.6%
+
+  phân loại: TRONG ma trận · reasons: (không) · problems: (không)
+
+[file] C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2951\test_db_rejected_not_sendable0\bao-gia-BG-20261012-1-db8edcaf.md
+
+[file] C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2951\test_db_rejected_not_sendable0\bao-gia-BG-20261012-1-db8edcaf.html
+
+[file] C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2951\test_db_rejected_not_sendable0\bao-gia-BG-20261012-1-db8edcaf-noi-bo.md
+
+[done] BG-20261012-1-db8edcaf → mục #1 b2b_quote_matrix (risk low — chỉ tự đạt khi auto_policy đã ký). Báo giá chỉ có hiệu lực khi GĐ bán hàng ký — hệ thống không tự gửi.
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] mục #1: LỆCH — KHÔNG gửi (chưa duyệt / sai loại / file khác bản duyệt)
+
+[warn] mục #1 không phải tài liệu ['b2b_quote', 'b2b_quote_matrix'] ĐÃ duyệt — KHÔNG xuất
+
+______________ test_cli_usage_errors_exit2_before_db[main-argv0] ______________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m ingest.crm [-h] [--add-contact SRC] [--lead ID]
+
+                            [--consent CONTACT_ID]
+
+                            [--purpose {cskh,marketing,dai_ly,b2b}]
+
+                            [--grant | --withdraw]
+
+                            [--source {form_giay,zalo,web,dien_thoai,email,truc_tiep}]
+
+                            [--evidence REF] [--policy-version V]
+
+                            [--dealer CODE] [--assign LEAD] [--province TÊN]
+
+                            [--owner LEAD] [--staff MA_NV]
+
+                            [--status LEAD STATE] [--report] [--handoff LEAD]
+
+                            [--load-dealers [PATH]] [--by BY]
+
+python -m ingest.crm: error: --owner LEAD cần --staff MA_NV (và --staff chỉ đi với --owner)
+
+______________ test_cli_usage_errors_exit2_before_db[main-argv1] ______________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m ingest.crm [-h] [--add-contact SRC] [--lead ID]
+
+                            [--consent CONTACT_ID]
+
+                            [--purpose {cskh,marketing,dai_ly,b2b}]
+
+                            [--grant | --withdraw]
+
+                            [--source {form_giay,zalo,web,dien_thoai,email,truc_tiep}]
+
+                            [--evidence REF] [--policy-version V]
+
+                            [--dealer CODE] [--assign LEAD] [--province TÊN]
+
+                            [--owner LEAD] [--staff MA_NV]
+
+                            [--status LEAD STATE] [--report] [--handoff LEAD]
+
+                            [--load-dealers [PATH]] [--by BY]
+
+python -m ingest.crm: error: --owner LEAD cần --staff MA_NV (và --staff chỉ đi với --owner)
+
+______________ test_cli_usage_errors_exit2_before_db[main-argv2] ______________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+
+                                 [--quote REQ_ID] [--export QID]
+
+                                 [--verify-send QID FILE] [--outcome QID KQ]
+
+                                 [--followups] [--by BY] [--discount PCT]
+
+                                 [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+
+                                 [--submit] [--dry-run]
+
+python -m agents.kd_quote: error: --outcome cần --by <tên người>
+
+______________ test_cli_usage_errors_exit2_before_db[main-argv3] ______________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+
+                                 [--quote REQ_ID] [--export QID]
+
+                                 [--verify-send QID FILE] [--outcome QID KQ]
+
+                                 [--followups] [--by BY] [--discount PCT]
+
+                                 [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+
+                                 [--submit] [--dry-run]
+
+python -m agents.kd_quote: error: --outcome QID KQ — QID số, KQ chot|khong_chot|huy
+
+______________ test_cli_usage_errors_exit2_before_db[main-argv4] ______________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_quote [-h] [--check-matrix [FILE]] [--requests]
+
+                                 [--quote REQ_ID] [--export QID]
+
+                                 [--verify-send QID FILE] [--outcome QID KQ]
+
+                                 [--followups] [--by BY] [--discount PCT]
+
+                                 [--date DATE] [--out-dir OUT_DIR] [--out OUT]
+
+                                 [--submit] [--dry-run]
+
+python -m agents.kd_quote: error: --by chỉ dùng với --outcome / --verify-send
+
+______________ test_cli_usage_errors_exit2_before_db[main-argv5] ______________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m ingest.dealer_price [-h] --file CSV --by BY [--sample]
+
+python -m ingest.dealer_price: error: the following arguments are required: --by
+
+______________ test_cli_usage_errors_exit2_before_db[main-argv6] ______________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_price [-h] [--run] [--report] [--dry-run]
+
+                                 [--plan PLAN] [--as-of AS_OF]
+
+                                 [--out-dir OUT_DIR] [--dealer-watch]
+
+python -m agents.kd_price: error: unrecognized arguments: --dealer-file x.csv --by Lan
+
+______________ test_cli_usage_errors_exit2_before_db[main-argv7] ______________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_price [-h] [--run] [--report] [--dry-run]
+
+                                 [--plan PLAN] [--as-of AS_OF]
+
+                                 [--out-dir OUT_DIR] [--dealer-watch]
+
+python -m agents.kd_price: error: unrecognized arguments: --by Lan
+
+______________ test_cli_usage_errors_exit2_before_db[main-argv8] ______________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_price [-h] [--run] [--report] [--dry-run]
+
+                                 [--plan PLAN] [--as-of AS_OF]
+
+                                 [--out-dir OUT_DIR] [--dealer-watch]
+
+python -m agents.kd_price: error: --as-of chỉ dùng với --report hoặc --run/--dealer-watch --dry-run (không ghi hàng duyệt theo ngày giả)
+
+______________ test_cli_usage_errors_exit2_before_db[main-argv9] ______________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_orders [-h] [--sync] [--snapshot SNAPSHOT]
+
+                                  [--dry-run] [--recon] [--since SINCE]
+
+                                  [--until UNTIL] [--out-dir OUT_DIR]
+
+                                  [--report] [--watch] [--as-of AS_OF]
+
+python -m agents.kd_orders: error: --as-of chỉ dùng với --watch --dry-run (không ghi hàng duyệt theo ngày giả)
+
+_____________ test_cli_usage_errors_exit2_before_db[main-argv10] ______________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_orders [-h] [--sync] [--snapshot SNAPSHOT]
+
+                                  [--dry-run] [--recon] [--since SINCE]
+
+                                  [--until UNTIL] [--out-dir OUT_DIR]
+
+                                  [--report] [--watch] [--as-of AS_OF]
+
+python -m agents.kd_orders: error: chỉ được 1 thao tác mỗi lần (--sync | --recon | --watch)
+
+_________________ test_bad_watch_config_exit1_before_connect __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+[error] cấu hình lỗi: không đọc được w.json (JSONDecodeError) — không connect
+
+[error] cấu hình lỗi: không đọc được w.json (JSONDecodeError) — không connect
+
+_______________________ test_cli_dealer_file_and_watch ________________________
+
+---------------------------- Captured stderr call -----------------------------
+
+[error] dòng 2: cột gia_vnd (số nguyên > 0) không hợp lệ
+
+[error] 1 lỗi — không connect, không nạp dòng nào.
+
+_________________________ test_cli_usage_exit2[argv0] _________________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m pipelines.anchor [-h] [--build] [--dry-run]
+
+                                  [--submit ID|latest] [--verify ID|latest]
+
+                                  [--export ID|latest] [--out OUT] [--status]
+
+                                  [--by BY]
+
+python -m pipelines.anchor: error: chọn đúng 1 trong --build/--submit/--verify/--export/--status
+
+_________________________ test_cli_usage_exit2[argv1] _________________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m pipelines.anchor [-h] [--build] [--dry-run]
+
+                                  [--submit ID|latest] [--verify ID|latest]
+
+                                  [--export ID|latest] [--out OUT] [--status]
+
+                                  [--by BY]
+
+python -m pipelines.anchor: error: chọn đúng 1 trong --build/--submit/--verify/--export/--status
+
+_________________________ test_cli_usage_exit2[argv2] _________________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m pipelines.anchor [-h] [--build] [--dry-run]
+
+                                  [--submit ID|latest] [--verify ID|latest]
+
+                                  [--export ID|latest] [--out OUT] [--status]
+
+                                  [--by BY]
+
+python -m pipelines.anchor: error: --export cần --out DIR
+
+_________________________ test_cli_usage_exit2[argv3] _________________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m pipelines.anchor [-h] [--build] [--dry-run]
+
+                                  [--submit ID|latest] [--verify ID|latest]
+
+                                  [--export ID|latest] [--out OUT] [--status]
+
+                                  [--by BY]
+
+python -m pipelines.anchor: error: chọn đúng 1 trong --build/--submit/--verify/--export/--status
+
+_________________ test_build_leaves_no_pii_and_deterministic __________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] lô LOT-MO-001: ánh xạ nhật ký #2 (0 ảnh) — người thực hiện: GĐ SX fixture. Chữ ký cũ (nếu có) không còn tính — ký lại trên bản mới.
+
+[done] lô LOT-MO-001: vai GĐ Sản xuất đã ký (approvals #2) — người ký: Trần Sản Xuất
+
+[done] lô LOT-MO-001: vai GĐ vùng trồng đã ký (approvals #3) — người ký: Lê Vùng Trồng
+
+[done] lô LOT-MO-001: vai Pháp chế/QA đã ký (approvals #4) — người ký: Phạm Pháp Chế
+
+[done] lô LOT-MO-001: đã phát hành mã — người phát hành: Người phát hành
+
+chưa có domain công khai (external-dep) — đường dẫn jGPnZIZiHU6yd4HdDsO2JA/
+
+ảnh QR: nhà in tạo từ URL (lib QR không có — external-dep). Chạy `site` để sinh trang.
+
+[done] đã thu hồi mã jGPnZIZiHU6yd4HdDsO2JA — người thu hồi: GĐ fixture. Chạy `site` để cập nhật trang 'đã thu hồi'.
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+__________________ test_build_refuses_broken_chain_and_empty __________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] lô LOT-MO-001: ánh xạ nhật ký #2 (0 ảnh) — người thực hiện: GĐ SX fixture. Chữ ký cũ (nếu có) không còn tính — ký lại trên bản mới.
+
+______________ test_verify_detects_tamper_and_tables_append_only ______________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] lô LOT-MO-001: ánh xạ nhật ký #2 (0 ảnh) — người thực hiện: GĐ SX fixture. Chữ ký cũ (nếu có) không còn tính — ký lại trên bản mới.
+
+[done] lô LOT-MO-001: vai GĐ Sản xuất đã ký (approvals #2) — người ký: Trần Sản Xuất
+
+[done] lô LOT-MO-001: vai GĐ vùng trồng đã ký (approvals #3) — người ký: Lê Vùng Trồng
+
+[done] lô LOT-MO-001: vai Pháp chế/QA đã ký (approvals #4) — người ký: Phạm Pháp Chế
+
+[done] lô LOT-MO-001: đã phát hành mã — người phát hành: Người phát hành
+
+chưa có domain công khai (external-dep) — đường dẫn qmVYsdiUVw7HwrKEowoprw/
+
+ảnh QR: nhà in tạo từ URL (lib QR không có — external-dep). Chạy `site` để sinh trang.
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+___________________ test_verify_detects_stored_leaf_tamper ____________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] lô LOT-MO-001: ánh xạ nhật ký #2 (0 ảnh) — người thực hiện: GĐ SX fixture. Chữ ký cũ (nếu có) không còn tính — ký lại trên bản mới.
+
+[done] lô LOT-MO-001: vai GĐ Sản xuất đã ký (approvals #2) — người ký: Trần Sản Xuất
+
+[done] lô LOT-MO-001: vai GĐ vùng trồng đã ký (approvals #3) — người ký: Lê Vùng Trồng
+
+[done] lô LOT-MO-001: vai Pháp chế/QA đã ký (approvals #4) — người ký: Phạm Pháp Chế
+
+[done] lô LOT-MO-001: đã phát hành mã — người phát hành: Người phát hành
+
+chưa có domain công khai (external-dep) — đường dẫn sg5DiB2XMrxsNjis-LKX0A/
+
+ảnh QR: nhà in tạo từ URL (lib QR không có — external-dep). Chạy `site` để sinh trang.
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+______________________ test_submit_none_records_nothing _______________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] lô LOT-MO-001: ánh xạ nhật ký #2 (0 ảnh) — người thực hiện: GĐ SX fixture. Chữ ký cũ (nếu có) không còn tính — ký lại trên bản mới.
+
+[done] lô LOT-MO-001: vai GĐ Sản xuất đã ký (approvals #2) — người ký: Trần Sản Xuất
+
+[done] lô LOT-MO-001: vai GĐ vùng trồng đã ký (approvals #3) — người ký: Lê Vùng Trồng
+
+[done] lô LOT-MO-001: vai Pháp chế/QA đã ký (approvals #4) — người ký: Phạm Pháp Chế
+
+[done] lô LOT-MO-001: đã phát hành mã — người phát hành: Người phát hành
+
+chưa có domain công khai (external-dep) — đường dẫn 27r-g3BLu6QmDiK05UPMUw/
+
+ảnh QR: nhà in tạo từ URL (lib QR không có — external-dep). Chạy `site` để sinh trang.
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+_________________ test_submit_ots_only_digest_failover_retry __________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] lô LOT-MO-001: ánh xạ nhật ký #2 (0 ảnh) — người thực hiện: GĐ SX fixture. Chữ ký cũ (nếu có) không còn tính — ký lại trên bản mới.
+
+[done] lô LOT-MO-001: vai GĐ Sản xuất đã ký (approvals #2) — người ký: Trần Sản Xuất
+
+[done] lô LOT-MO-001: vai GĐ vùng trồng đã ký (approvals #3) — người ký: Lê Vùng Trồng
+
+[done] lô LOT-MO-001: vai Pháp chế/QA đã ký (approvals #4) — người ký: Phạm Pháp Chế
+
+[done] lô LOT-MO-001: đã phát hành mã — người phát hành: Người phát hành
+
+chưa có domain công khai (external-dep) — đường dẫn 5mskOawDnSAqrMEDvvGbNQ/
+
+ảnh QR: nhà in tạo từ URL (lib QR không có — external-dep). Chạy `site` để sinh trang.
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+_____________________________ test_rollout_gates ______________________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] lô LOT-MO-001: ánh xạ nhật ký #2 (0 ảnh) — người thực hiện: GĐ SX fixture. Chữ ký cũ (nếu có) không còn tính — ký lại trên bản mới.
+
+[done] lô LOT-MO-001: vai GĐ Sản xuất đã ký (approvals #2) — người ký: Trần Sản Xuất
+
+[done] lô LOT-MO-001: vai GĐ vùng trồng đã ký (approvals #3) — người ký: Lê Vùng Trồng
+
+[done] lô LOT-MO-001: vai Pháp chế/QA đã ký (approvals #4) — người ký: Phạm Pháp Chế
+
+[done] lô LOT-MO-001: đã phát hành mã — người phát hành: Người phát hành
+
+chưa có domain công khai (external-dep) — đường dẫn uFNqDWO9i6SERLe0eN8CMQ/
+
+ảnh QR: nhà in tạo từ URL (lib QR không có — external-dep). Chạy `site` để sinh trang.
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+[warn] CHẾ ĐỘ DEV — người duyệt CHƯA được đối chiếu danh sách ủy quyền (đặt AUTH_MODE=local|proxy hoặc APPROVAL_ENFORCE=1 khi dùng thật)
+
+=========================== short test summary info ===========================
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_pmo-set-status]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_pmo-apply-due]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_b2b-handover]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[ra_kenh-mark-removed]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[anchor-submit-by-person]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[kd_quote-outcome]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[kd_quote-verify-send-by]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_da_pmo_set_status_authorized_human
+
+PASSED tests/test_v15_fix_p102.py::test_p102_da_pmo_apply_due_authorized_human
+
+PASSED tests/test_v15_fix_p102.py::test_p102_da_b2b_handover_authorized_human
+
+PASSED tests/test_v15_fix_p102.py::test_p102_ra_kenh_mark_removed_authorized_human
+
+PASSED tests/test_v15_fix_p102.py::test_p102_anchor_submit_authorized_human
+
+PASSED tests/test_v15_fix_p102.py::test_p102_kd_quote_verify_send_and_outcome_authorized_human
+
+PASSED tests/test_v15_fix_p102.py::test_p102_loader_agent_cannot_call_human_functions
+
+PASSED tests/test_v15_fix_p102.py::test_p102_functions_locked_down
+
+PASSED tests/test_v15_fix_p102.py::test_p102_owner_dev_path_unchanged
+
+PASSED tests/test_da_pmo.py::test_real_milestones_file
+
+PASSED tests/test_da_pmo.py::test_load_milestones_rejects[bad0-0 m\u1ed1c]
+
+PASSED tests/test_da_pmo.py::test_load_milestones_rejects[bad1-due_date]
+
+PASSED tests/test_da_pmo.py::test_load_milestones_rejects[bad2-code]
+
+PASSED tests/test_da_pmo.py::test_load_milestones_rejects[bad3-gate]
+
+PASSED tests/test_da_pmo.py::test_load_milestones_rejects[bad4-tr\xf9ng]
+
+PASSED tests/test_da_pmo.py::test_load_milestones_rejects[bad5-kh\xf4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c]
+
+PASSED tests/test_da_pmo.py::test_render_board_late_reminders_dates
+
+PASSED tests/test_da_pmo.py::test_render_board_t7_t2_on_the_day
+
+PASSED tests/test_da_pmo.py::test_real_board_passes_guardrail_any_day
+
+PASSED tests/test_da_pmo.py::test_change_payload_roundtrip_regex
+
+PASSED tests/test_da_pmo.py::test_cli_usage_exit2_before_connect[argv0]
+
+PASSED tests/test_da_pmo.py::test_cli_usage_exit2_before_connect[argv1]
+
+PASSED tests/test_da_pmo.py::test_cli_usage_exit2_before_connect[argv2]
+
+PASSED tests/test_da_pmo.py::test_cli_usage_exit2_before_connect[argv3]
+
+PASSED tests/test_da_pmo.py::test_cli_usage_exit2_before_connect[argv4]
+
+PASSED tests/test_da_pmo.py::test_cli_usage_exit2_before_connect[argv5]
+
+PASSED tests/test_da_pmo.py::test_cli_usage_exit2_before_connect[argv6]
+
+PASSED tests/test_da_pmo.py::test_cli_usage_exit2_before_connect[argv7]
+
+PASSED tests/test_da_pmo.py::test_cli_usage_exit2_before_connect[argv8]
+
+PASSED tests/test_da_pmo.py::test_cli_usage_exit2_before_connect[argv9]
+
+PASSED tests/test_da_pmo.py::test_cli_usage_exit2_before_connect[argv10]
+
+PASSED tests/test_da_pmo.py::test_cli_xong_without_evidence_exit1_before_connect
+
+PASSED tests/test_da_pmo.py::test_cli_db_down_exit2
+
+PASSED tests/test_da_pmo.py::test_no_send_path_grep
+
+PASSED tests/test_da_pmo.py::test_seed_twice_keeps_manual_edit
+
+PASSED tests/test_da_pmo.py::test_set_status_rules
+
+PASSED tests/test_da_pmo.py::test_board_writes_file_and_submits
+
+PASSED tests/test_da_pmo.py::test_board_submit_refused_when_guardrail_fails
+
+PASSED tests/test_da_pmo.py::test_propose_apply_due_flow
+
+PASSED tests/test_da_pmo.py::test_apply_due_stale_and_wrong_items
+
+PASSED tests/test_da_pmo.py::test_propose_due_proposer_cannot_self_approve
+
+PASSED tests/test_da_pmo.py::test_apply_due_older_approval_blocked
+
+PASSED tests/test_da_pmo.py::test_apply_due_legacy_projects_block
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[bad_date]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[bad_kenh]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[draft_5000_digits]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[draft_abc]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[draft_overflow]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[dup_header]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[dup_url]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[host_web]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[internal_note]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[is_ai_yes]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[no_text]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[not_utf8]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[stray_col]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[text_long]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[text_nul]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[url_ctrl]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[url_ipv6]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[url_long]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[url_long_bytes]
+
+PASSED tests/test_ra_kenh.py::test_read_export_rejects_whole_file[xlsx]
+
+PASSED tests/test_ra_kenh.py::test_read_export_draft_id_bigint_boundary
+
+PASSED tests/test_ra_kenh.py::test_read_export_url_limit_counts_bytes
+
+PASSED tests/test_ra_kenh.py::test_read_export_wide_header_capped
+
+PASSED tests/test_ra_kenh.py::test_read_export_crlf_scheme_defaults
+
+PASSED tests/test_ra_kenh.py::test_scan_row_rules
+
+PASSED tests/test_ra_kenh.py::test_excerpt_masks_phone_across_window_edge[0912345678]
+
+PASSED tests/test_ra_kenh.py::test_excerpt_masks_phone_across_window_edge[0912 345 678]
+
+PASSED tests/test_ra_kenh.py::test_excerpt_masks_phone_across_window_edge[0912.345.678]
+
+PASSED tests/test_ra_kenh.py::test_load_config_fail_closed[None]
+
+PASSED tests/test_ra_kenh.py::test_load_config_fail_closed[{h\u1ecfng]
+
+PASSED tests/test_ra_kenh.py::test_load_config_fail_closed[doc2]
+
+PASSED tests/test_ra_kenh.py::test_load_config_fail_closed[doc3]
+
+PASSED tests/test_ra_kenh.py::test_load_config_fail_closed[doc4]
+
+PASSED tests/test_ra_kenh.py::test_load_config_fail_closed[neg]
+
+PASSED tests/test_ra_kenh.py::test_load_config_fail_closed[bool]
+
+PASSED tests/test_ra_kenh.py::test_load_config_fail_closed[empty_hosts]
+
+PASSED tests/test_ra_kenh.py::test_load_config_fail_closed[bad_marker]
+
+PASSED tests/test_ra_kenh.py::test_by_rule[Qu\u1ea3n l\xfd MXH-True]
+
+PASSED tests/test_ra_kenh.py::test_by_rule[-False]
+
+PASSED tests/test_ra_kenh.py::test_by_rule[   -False]
+
+PASSED tests/test_ra_kenh.py::test_by_rule[agent:x-False]
+
+PASSED tests/test_ra_kenh.py::test_by_rule[  AGENT : x-False]
+
+PASSED tests/test_ra_kenh.py::test_by_rule[System:y-False]
+
+PASSED tests/test_ra_kenh.py::test_by_rule[Ten\x00-False]
+
+PASSED tests/test_ra_kenh.py::test_by_rule[a\u202eb-False]
+
+PASSED tests/test_ra_kenh.py::test_by_rule[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-False]
+
+PASSED tests/test_ra_kenh.py::test_grep_no_egress_no_direct_writes
+
+PASSED tests/test_ra_kenh.py::test_dry_run_fixture_no_connect
+
+PASSED tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv0]
+
+PASSED tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv1]
+
+PASSED tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv2]
+
+PASSED tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv3]
+
+PASSED tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv4]
+
+PASSED tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv5]
+
+PASSED tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv6]
+
+PASSED tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv7]
+
+PASSED tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv8]
+
+PASSED tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv9]
+
+PASSED tests/test_ra_kenh.py::test_cli_usage_exit2_before_connect[argv10]
+
+PASSED tests/test_ra_kenh.py::test_cli_help_and_db_down
+
+PASSED tests/test_ra_kenh.py::test_e2e_f1_f5_p6_p8_and_report
+
+PASSED tests/test_ra_kenh.py::test_mark_removed_then_still_exported_reopens
+
+PASSED tests/test_ra_kenh.py::test_ingest_cli_prints_masked
+
+PASSED tests/test_ra_kenh.py::test_link_heals_after_crash
+
+PASSED tests/test_ra_kenh.py::test_reimport_same_text_rescans_meta_and_rules
+
+PASSED tests/test_ra_kenh.py::test_kind_change_opens_new_dot_in_right_block
+
+PASSED tests/test_ra_kenh.py::test_s2_to_s1_same_dot_raises_alert
+
+PASSED tests/test_ra_kenh.py::test_url_max_bytes_fits_btree
+
+PASSED tests/test_kd_quote.py::test_real_matrix_valid_and_assumed
+
+PASSED tests/test_kd_quote.py::test_validate_matrix_errors[tiers-chong-<lambda>-li\u1ec1n ngay]
+
+PASSED tests/test_kd_quote.py::test_validate_matrix_errors[tiers-ho-<lambda>-li\u1ec1n ngay]
+
+PASSED tests/test_kd_quote.py::test_validate_matrix_errors[ck-60-<lambda>-discount_pct]
+
+PASSED tests/test_kd_quote.py::test_validate_matrix_errors[ck-float-<lambda>-discount_pct]
+
+PASSED tests/test_kd_quote.py::test_validate_matrix_errors[key-ruou-<lambda>-r\u01b0\u1ee3u kh\xf4ng \u0111\u01b0\u1ee3c v\xe0o ma tr\u1eadn]
+
+PASSED tests/test_kd_quote.py::test_validate_matrix_errors[key-ruou-ten-la-<lambda>-r\u01b0\u1ee3u kh\xf4ng \u0111\u01b0\u1ee3c v\xe0o ma tr\u1eadn]
+
+PASSED tests/test_kd_quote.py::test_validate_matrix_errors[finance-by-trang-<lambda>-finance_confirmed]
+
+PASSED tests/test_kd_quote.py::test_validate_matrix_errors[sales-at-sai-<lambda>-sales_confirmed]
+
+PASSED tests/test_kd_quote.py::test_validate_matrix_errors[bien-91-<lambda>-min_margin_pct]
+
+PASSED tests/test_kd_quote.py::test_validate_matrix_errors[base-kenh-la-<lambda>-base]
+
+PASSED tests/test_kd_quote.py::test_validate_matrix_errors[key-khong-slug-<lambda>-slug]
+
+PASSED tests/test_kd_quote.py::test_validate_matrix_errors[thieu-finance-<lambda>-finance_confirmed]
+
+PASSED tests/test_kd_quote.py::test_check_matrix_cli
+
+PASSED tests/test_kd_quote.py::test_gate_case_within_matrix_exact_numbers
+
+PASSED tests/test_kd_quote.py::test_margin_threshold_compares_unrounded[494900-True-margin0]
+
+PASSED tests/test_kd_quote.py::test_margin_threshold_compares_unrounded[495182-False-margin1]
+
+PASSED tests/test_kd_quote.py::test_margin_threshold_compares_unrounded[495200-False-margin2]
+
+PASSED tests/test_kd_quote.py::test_classify_reasons[bien-duoi-nguong]
+
+PASSED tests/test_kd_quote.py::test_classify_reasons[ck-20]
+
+PASSED tests/test_kd_quote.py::test_classify_reasons[ck-40-duoi-san]
+
+PASSED tests/test_kd_quote.py::test_classify_reasons[combo-thieu-bao-bi]
+
+PASSED tests/test_kd_quote.py::test_classify_reasons[gia-von-by-trang]
+
+PASSED tests/test_kd_quote.py::test_classify_reasons[gia-von-chua-duyet]
+
+PASSED tests/test_kd_quote.py::test_classify_reasons[gia-von-hieu-luc-sau]
+
+PASSED tests/test_kd_quote.py::test_classify_reasons[ma-tran-that-chua-xac-nhan]
+
+PASSED tests/test_kd_quote.py::test_classify_reasons[ngoai-ma-tran]
+
+PASSED tests/test_kd_quote.py::test_classify_reasons[qty-2000]
+
+PASSED tests/test_kd_quote.py::test_classify_reasons[qty-5]
+
+PASSED tests/test_kd_quote.py::test_classify_reasons[thieu-gia-niem-yet]
+
+PASSED tests/test_kd_quote.py::test_classify_reasons[tpbvsk-none]
+
+PASSED tests/test_kd_quote.py::test_tpbvsk_approved_and_combo_pricing_within
+
+PASSED tests/test_kd_quote.py::test_classify_problems_block[items0-ruou_khong_bao_gia]
+
+PASSED tests/test_kd_quote.py::test_classify_problems_block[items1-ruou_khong_bao_gia]
+
+PASSED tests/test_kd_quote.py::test_classify_problems_block[items2-ruou_khong_bao_gia]
+
+PASSED tests/test_kd_quote.py::test_classify_problems_block[items3-ruou_khong_bao_gia]
+
+PASSED tests/test_kd_quote.py::test_classify_problems_block[items4-ruou_khong_bao_gia]
+
+PASSED tests/test_kd_quote.py::test_classify_problems_block[items5-ma_khong_ton_tai]
+
+PASSED tests/test_kd_quote.py::test_classify_problems_block[items6-so_luong_khong_hop_le]
+
+PASSED tests/test_kd_quote.py::test_classify_problems_block[items7-so_luong_khong_hop_le]
+
+PASSED tests/test_kd_quote.py::test_classify_problems_block[items8-so_luong_khong_hop_le]
+
+PASSED tests/test_kd_quote.py::test_classify_problems_block[items9-so_luong_khong_hop_le]
+
+PASSED tests/test_kd_quote.py::test_classify_problems_block[items10-so_luong_khong_hop_le]
+
+PASSED tests/test_kd_quote.py::test_classify_problems_block[items11-so_luong_khong_hop_le]
+
+PASSED tests/test_kd_quote.py::test_classify_problems_block[items12-so_luong_khong_hop_le]
+
+PASSED tests/test_kd_quote.py::test_classify_problems_block[items13-so_luong_khong_hop_le]
+
+PASSED tests/test_kd_quote.py::test_matrix_error_is_problem
+
+PASSED tests/test_kd_quote.py::test_classify_pure_no_db_no_network
+
+PASSED tests/test_kd_quote.py::test_quote_payload_honey_only_gate_clean
+
+PASSED tests/test_kd_quote.py::test_quote_payload_tpbvsk_has_disclaimer
+
+PASSED tests/test_kd_quote.py::test_quote_no_contact_pii
+
+PASSED tests/test_kd_quote.py::test_quote_org_with_banned_word_blocked
+
+PASSED tests/test_kd_quote.py::test_gate_catches_alcohol_and_pii
+
+PASSED tests/test_kd_quote.py::test_build_quote_refuses_problems
+
+PASSED tests/test_kd_quote.py::test_render_html_deterministic_escaped
+
+PASSED tests/test_kd_quote.py::test_render_html_image_only_relative_packshot
+
+PASSED tests/test_kd_quote.py::test_no_email_path_in_modules
+
+PASSED tests/test_kd_quote.py::test_cli_bad_args_exit2_before_connect[argv0]
+
+PASSED tests/test_kd_quote.py::test_cli_bad_args_exit2_before_connect[argv1]
+
+PASSED tests/test_kd_quote.py::test_cli_bad_args_exit2_before_connect[argv2]
+
+PASSED tests/test_kd_quote.py::test_cli_bad_args_exit2_before_connect[argv3]
+
+PASSED tests/test_kd_quote.py::test_cli_bad_args_exit2_before_connect[argv4]
+
+PASSED tests/test_kd_quote.py::test_cli_bad_args_exit2_before_connect[argv5]
+
+PASSED tests/test_kd_quote.py::test_cli_bad_args_exit2_before_connect[argv6]
+
+PASSED tests/test_kd_quote.py::test_cli_bad_args_exit2_before_connect[argv7]
+
+PASSED tests/test_kd_quote.py::test_cli_bad_args_exit2_before_connect[argv8]
+
+PASSED tests/test_kd_quote.py::test_cli_db_down_exit2
+
+PASSED tests/test_kd_quote.py::test_db_within_matrix_low_lane_pending_then_auto_policy
+
+PASSED tests/test_kd_quote.py::test_db_qa_none_and_high_never_auto
+
+PASSED tests/test_kd_quote.py::test_db_margin_below_two_items_atomic
+
+PASSED tests/test_kd_quote.py::test_db_missing_cogs_goes_finance
+
+PASSED tests/test_kd_quote.py::test_db_alcohol_request_refused
+
+PASSED tests/test_kd_quote.py::test_db_quote_not_found_and_requests
+
+PASSED tests/test_kd_quote.py::test_db_export_verify_send
+
+PASSED tests/test_kd_quote.py::test_db_rejected_not_sendable
+
+PASSED tests/test_kd_quote.py::test_kb_filter_sees_no_alcohol_in_real_quote
+
+PASSED tests/test_kd_quote.py::test_kd_a3_suite_pass_and_planted_failure_exit
+
+PASSED tests/test_kd_care.py::test_rules_assumed_and_window
+
+PASSED tests/test_kd_care.py::test_bad_rules_rejected[mut0-window]
+
+PASSED tests/test_kd_care.py::test_bad_rules_rejected[mut1-HH:MM]
+
+PASSED tests/test_kd_care.py::test_bad_rules_rejected[mut2-max_marketing_per_month]
+
+PASSED tests/test_kd_care.py::test_bad_rules_rejected[mut3-channel]
+
+PASSED tests/test_kd_care.py::test_bad_rules_rejected[mut4-rebuy_window_days]
+
+PASSED tests/test_kd_care.py::test_bad_rules_rejected[mut5-review_window_days]
+
+PASSED tests/test_kd_care.py::test_bad_rules_rejected[mut6-templates.rebuy]
+
+PASSED tests/test_kd_care.py::test_select_items_pure_traps
+
+PASSED tests/test_kd_care.py::test_rebuy_only_latest_purchase_per_sku
+
+PASSED tests/test_kd_care.py::test_old_backlog_not_reminded
+
+PASSED tests/test_kd_care.py::test_cap_month_is_send_month
+
+PASSED tests/test_kd_care.py::test_module_grep_no_llm_no_send
+
+PASSED tests/test_kd_care.py::test_sales_config_has_care_types
+
+PASSED tests/test_kd_care.py::test_cli_usage_exit_2_before_connect
+
+PASSED tests/test_kd_care.py::test_db_schema_care_purchases_blocks_san_and_agent
+
+PASSED tests/test_kd_care.py::test_db_plan_run_cap_withdraw_verify
+
+PASSED tests/test_kd_care.py::test_db_cli_record_plan_run_dry
+
+PASSED tests/test_kd_care.py::test_db_cap_send_month_boundary
+
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_shipped_config_valid_and_unconfirmed
+
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-kh\xf3a l\u1ea1]
+
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-max_per_run]
+
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-staff_codes0]
+
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-staff_codes1]
+
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-after_business_hours]
+
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-quote_followup]
+
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-channels]
+
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-return_status]
+
+PASSED tests/test_v14_p4_sales.py::test_sales_watch_bad_config_fail_closed[<lambda>-confirmed_by]
+
+PASSED tests/test_v14_p4_sales.py::test_sales_json_has_new_types_lane_b_and_catalog_maps_each
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_valid
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[lazada,DL-01,sam-a,1000,2026-10-13,https://a.vn/x-kenh]
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,dl 01,sam-a,1000,2026-10-13,https://a.vn/x-ma_dai_ly]
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,S\xe2m A,1000,2026-10-13,https://a.vn/x-sku_key]
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,0,2026-10-13,https://a.vn/x-gia_vnd]
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,abc,2026-10-13,https://a.vn/x-gia_vnd]
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,1000,2026-10-15,https://a.vn/x-ngay]
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,1000,13/10/2026,https://a.vn/x-ngay]
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,1000,2026-10-13,http://a.vn/x-url_nguon]
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,1000,2026-10-13,https://a.vn/goi-0912345678-url_nguon]
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,1000,2026-10-13,https://a.vn/x y-url_nguon]
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_bad_row_rejects_whole_file[shopee,DL-01,sam-a,1000,2026-10-13,-url_nguon]
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_file_structure_errors
+
+PASSED tests/test_v14_p4_sales.py::test_anomalies_threshold_and_spike_closed_weeks_only
+
+PASSED tests/test_v14_p4_sales.py::test_anomalies_no_baseline_or_zero_bad_no_spike
+
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv0]
+
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv1]
+
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv2]
+
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv3]
+
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv4]
+
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv5]
+
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv6]
+
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv7]
+
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv8]
+
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv9]
+
+PASSED tests/test_v14_p4_sales.py::test_cli_usage_errors_exit2_before_db[main-argv10]
+
+PASSED tests/test_v14_p4_sales.py::test_crm_owner_rejects_name_as_staff_code_before_db
+
+PASSED tests/test_v14_p4_sales.py::test_bad_watch_config_exit1_before_connect
+
+PASSED tests/test_v14_p4_sales.py::test_assign_owner_sets_code_due_and_log
+
+PASSED tests/test_v14_p4_sales.py::test_assign_owner_rejects
+
+PASSED tests/test_v14_p4_sales.py::test_cli_owner_through_gate
+
+PASSED tests/test_v14_p4_sales.py::test_cli_owner_enforced_mode_blocked_empty_approvers
+
+PASSED tests/test_v14_p4_sales.py::test_lead_followup_unassigned_and_assigned_overdue
+
+PASSED tests/test_v14_p4_sales.py::test_lead_followup_enqueue_idempotent_reassign_new_wave
+
+PASSED tests/test_v14_p4_sales.py::test_lead_followup_cap_per_run
+
+PASSED tests/test_v14_p4_sales.py::test_lead_followup_overdue_escalates_like_other_sales_items
+
+PASSED tests/test_v14_p4_sales.py::test_followup_after_business_hours_then_rounds
+
+PASSED tests/test_v14_p4_sales.py::test_followup_sent_resets_base_outcome_stops
+
+PASSED tests/test_v14_p4_sales.py::test_record_event_rules
+
+PASSED tests/test_v14_p4_sales.py::test_cli_verify_send_records_sent_and_outcome
+
+PASSED tests/test_v14_p4_sales.py::test_run_followups_enqueue_and_rollout_off
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_load_whole_file_check_idempotent_append_only
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_findings_floor_rules
+
+PASSED tests/test_v14_p4_sales.py::test_dealer_watch_enqueue_idempotent_and_rollout_off
+
+PASSED tests/test_v14_p4_sales.py::test_cli_dealer_file_and_watch
+
+PASSED tests/test_v14_p4_sales.py::test_watch_counts_and_enqueue_waves
+
+PASSED tests/test_v14_p4_sales.py::test_watch_return_status_and_cli_dry_run
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_merkle_root_shape
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_leaf_hash_domain_separated_and_canonical
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_ots_file_header
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_real_config_provider_none
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_config_variants_rejected[None]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_config_variants_rejected[x]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_config_variants_rejected[doc2]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_config_variants_rejected[doc3]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_config_variants_rejected[doc4]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_config_variants_rejected[doc5]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_config_variants_rejected[doc6]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_config_variants_rejected[doc7]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_config_variants_rejected[doc8]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_config_variants_rejected[doc9]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_config_variants_rejected[doc10]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_config_ots_ok
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_http_post_refuses_plain_http
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_cli_usage_exit2[argv0]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_cli_usage_exit2[argv1]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_cli_usage_exit2[argv2]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_cli_usage_exit2[argv3]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_cli_submit_provider_none_blocked_before_connect
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_build_leaves_no_pii_and_deterministic
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_build_refuses_broken_chain_and_empty
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_verify_detects_tamper_and_tables_append_only
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_verify_detects_stored_leaf_tamper
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_submit_none_records_nothing
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_submit_ots_only_digest_failover_retry
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_rollout_gates
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_feature_mapping_legal_doc_review
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_legal_updates_queue_idempotent_and_approvable
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_legal_updates_limit_dry_run_and_rollout_off
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_p2_blockers_recorded_not_verified
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_contract_milestones_pl01_muc7
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_undated_milestones_have_blockers
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_load_undated_rejects[bad0-list]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_load_undated_rejects[bad1-tr\xf9ng]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_load_undated_rejects[bad2-blocker]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_load_undated_rejects[[]-kh\xf4ng \u0111\u1ecdc \u0111\u01b0\u1ee3c]
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_board_lists_undated_and_passes_guardrail
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_seed_reports_drift_keeps_db
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_board_cli_undated_broken_exit1
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_assets_inventory_fields_pending_confirmation
+
+PASSED tests/test_v13_c09_anchor_legal.py::test_obligation_register_complete
+
+316 passed in 263.45s (0:04:23)
+
+EXIT 0
+
+===== (2) =====
+........................................................................ [ 70%]
+
+..............................                                           [100%]
+
+=================================== PASSES ====================================
+
+_________________ test_cli_usage_exit2_before_connect[argv0] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_b2b [-h] [--import FILE] [--submit-batch]
+
+                               [--handover QUEUE_ID] [--list] [--by BY]
+
+                               [--limit LIMIT]
+
+                               [--status {moi,cho_duyet,chuyen_sales}]
+
+python -m agents.da_b2b: error: cần đúng 1 thao tác: --import | --submit-batch | --handover | --list
+
+_________________ test_cli_usage_exit2_before_connect[argv1] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_b2b [-h] [--import FILE] [--submit-batch]
+
+                               [--handover QUEUE_ID] [--list] [--by BY]
+
+                               [--limit LIMIT]
+
+                               [--status {moi,cho_duyet,chuyen_sales}]
+
+python -m agents.da_b2b: error: cần đúng 1 thao tác: --import | --submit-batch | --handover | --list
+
+_________________ test_cli_usage_exit2_before_connect[argv2] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_b2b [-h] [--import FILE] [--submit-batch]
+
+                               [--handover QUEUE_ID] [--list] [--by BY]
+
+                               [--limit LIMIT]
+
+                               [--status {moi,cho_duyet,chuyen_sales}]
+
+python -m agents.da_b2b: error: cần đúng 1 thao tác: --import | --submit-batch | --handover | --list
+
+_________________ test_cli_usage_exit2_before_connect[argv3] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_b2b [-h] [--import FILE] [--submit-batch]
+
+                               [--handover QUEUE_ID] [--list] [--by BY]
+
+                               [--limit LIMIT]
+
+                               [--status {moi,cho_duyet,chuyen_sales}]
+
+python -m agents.da_b2b: error: --import/--handover cần --by <tên người>
+
+_________________ test_cli_usage_exit2_before_connect[argv4] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_b2b [-h] [--import FILE] [--submit-batch]
+
+                               [--handover QUEUE_ID] [--list] [--by BY]
+
+                               [--limit LIMIT]
+
+                               [--status {moi,cho_duyet,chuyen_sales}]
+
+python -m agents.da_b2b: error: --import/--handover cần --by <tên người>
+
+_________________ test_cli_usage_exit2_before_connect[argv5] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_b2b [-h] [--import FILE] [--submit-batch]
+
+                               [--handover QUEUE_ID] [--list] [--by BY]
+
+                               [--limit LIMIT]
+
+                               [--status {moi,cho_duyet,chuyen_sales}]
+
+python -m agents.da_b2b: error: --import/--handover cần --by <tên người>
+
+_________________ test_cli_usage_exit2_before_connect[argv6] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_b2b [-h] [--import FILE] [--submit-batch]
+
+                               [--handover QUEUE_ID] [--list] [--by BY]
+
+                               [--limit LIMIT]
+
+                               [--status {moi,cho_duyet,chuyen_sales}]
+
+python -m agents.da_b2b: error: --limit phải trong 1..200
+
+_________________ test_cli_usage_exit2_before_connect[argv7] __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.da_b2b [-h] [--import FILE] [--submit-batch]
+
+                               [--handover QUEUE_ID] [--list] [--by BY]
+
+                               [--limit LIMIT]
+
+                               [--status {moi,cho_duyet,chuyen_sales}]
+
+python -m agents.da_b2b: error: argument --status: invalid choice: 'la' (choose from 'moi', 'cho_duyet', 'chuyen_sales')
+
+___________________________ test_cli_db_down_exit2 ____________________________
+
+---------------------------- Captured stderr call -----------------------------
+
+[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc host chết)
+
+___________________ test_importer_cannot_approve_own_batch ____________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] inserted=16 dup=0
+
+[done] lô 15 tổ chức → mục #1 (PENDING — GĐ dự án/GĐ bán hàng duyệt). Hệ thống KHÔNG tự liên hệ — GĐ bán hàng/đại lý liên hệ sau khi duyệt.
+
+______________________ test_batch_never_mixes_importers _______________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] inserted=16 dup=0
+
+[done] lô 13 tổ chức → mục #1 (PENDING — GĐ dự án/GĐ bán hàng duyệt). Hệ thống KHÔNG tự liên hệ — GĐ bán hàng/đại lý liên hệ sau khi duyệt.
+
+[done] lô 3 tổ chức → mục #2 (PENDING — GĐ dự án/GĐ bán hàng duyệt). Hệ thống KHÔNG tự liên hệ — GĐ bán hàng/đại lý liên hệ sau khi duyệt.
+
+________________ test_tampered_after_approval_blocks_handover _________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] inserted=16 dup=0
+
+[done] lô 15 tổ chức → mục #1 (PENDING — GĐ dự án/GĐ bán hàng duyệt). Hệ thống KHÔNG tự liên hệ — GĐ bán hàng/đại lý liên hệ sau khi duyệt.
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] lô #1: dữ liệu hiện tại LỆCH bản đã duyệt (sha256) — KHÔNG chuyển (người chạy: X)
+
+____________________ test_rejected_batch_rows_back_to_moi _____________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] inserted=16 dup=0
+
+[done] lô 15 tổ chức → mục #1 (PENDING — GĐ dự án/GĐ bán hàng duyệt). Hệ thống KHÔNG tự liên hệ — GĐ bán hàng/đại lý liên hệ sau khi duyệt.
+
+[done] lô #1 bị từ chối — 15 dòng về 'moi' (người chạy: X)
+
+[done] lô #1 bị từ chối — 0 dòng về 'moi' (người chạy: X)
+
+_____________ test_expired_batch_rows_back_to_moi_and_rebatchable _____________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] lô #1 hết hạn SLA — 0 dòng về 'moi' (người chạy: X)
+
+[done] lô 15 tổ chức → mục #2 (PENDING — GĐ dự án/GĐ bán hàng duyệt). Hệ thống KHÔNG tự liên hệ — GĐ bán hàng/đại lý liên hệ sau khi duyệt.
+
+[done] lô #2: 15 tổ chức → chuyen_sales (người chạy: X)
+
+__________________ test_handover_wrong_item_type_and_missing __________________
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] mục #1 không phải lô `org_prospect_batch` (người chạy: X)
+
+[warn] mục #999999 không phải lô `org_prospect_batch` (người chạy: X)
+
+_________________ test_legacy_projects_block_batch_not_stuck __________________
+
+---------------------------- Captured stdout call -----------------------------
+
+[done] inserted=16 dup=0
+
+[done] lô 15 tổ chức → mục #1 (PENDING — GĐ dự án/GĐ bán hàng duyệt). Hệ thống KHÔNG tự liên hệ — GĐ bán hàng/đại lý liên hệ sau khi duyệt.
+
+[done] lô #1: 15 tổ chức → chuyen_sales (người chạy: X)
+
+[done] lô 1 tổ chức → mục #2 (PENDING — GĐ dự án/GĐ bán hàng duyệt). Hệ thống KHÔNG tự liên hệ — GĐ bán hàng/đại lý liên hệ sau khi duyệt.
+
+[done] lô #2 bị từ chối — 1 dòng về 'moi' (người chạy: X)
+
+__________________ test_p10_2_kd_care_verify_send_has_no_by ___________________
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.kd_care [-h] [--record] [--by BY] [--plan] [--run]
+
+                                [--dry-run] [--verify-send ID FILE]
+
+python -m agents.kd_care: error: --by chỉ đi với --record
+
+=========================== short test summary info ===========================
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_pmo-set-status]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_pmo-apply-due]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_b2b-handover]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[ra_kenh-mark-removed]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[anchor-submit-by-person]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[kd_quote-outcome]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[kd_quote-verify-send-by]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_da_pmo_set_status_authorized_human
+
+PASSED tests/test_v15_fix_p102.py::test_p102_da_pmo_apply_due_authorized_human
+
+PASSED tests/test_v15_fix_p102.py::test_p102_da_b2b_handover_authorized_human
+
+PASSED tests/test_v15_fix_p102.py::test_p102_ra_kenh_mark_removed_authorized_human
+
+PASSED tests/test_v15_fix_p102.py::test_p102_anchor_submit_authorized_human
+
+PASSED tests/test_v15_fix_p102.py::test_p102_kd_quote_verify_send_and_outcome_authorized_human
+
+PASSED tests/test_v15_fix_p102.py::test_p102_loader_agent_cannot_call_human_functions
+
+PASSED tests/test_v15_fix_p102.py::test_p102_functions_locked_down
+
+PASSED tests/test_v15_fix_p102.py::test_p102_owner_dev_path_unchanged
+
+PASSED tests/test_da_schema.py::test_block_no_alter_drop_and_two_tables
+
+PASSED tests/test_da_schema.py::test_tables_and_no_pii_columns
+
+PASSED tests/test_da_schema.py::test_check_violations[insert into org_prospects (dedup_key, org_name, org_type, region, source_url, source, created_by) values ('b2b:abc', 'T\u1ed5 ch\u1ee9c', 'khac', '\u0110\xe0 N\u1eb5ng', 'https://a.vn', 'manual', 'x')-None]
+
+PASSED tests/test_da_schema.py::test_check_violations[insert into org_prospects (dedup_key, org_name, org_type, region, source_url, source, created_by) values (%s, 'T\u1ed5 ch\u1ee9c', 'khac', '\u0110\xe0 N\u1eb5ng', 'facebook.com/x', 'manual', 'x')-params1]
+
+PASSED tests/test_da_schema.py::test_check_violations[insert into org_prospects (dedup_key, org_name, org_type, region, source_url, source, created_by) values (%s, 'T\u1ed5 ch\u1ee9c', 'ca_nhan', '\u0110\xe0 N\u1eb5ng', 'https://a.vn', 'manual', 'x')-params2]
+
+PASSED tests/test_da_schema.py::test_check_violations[insert into project_milestones (code, title, owner_role, due_date, gate, status, source) values ('DA-04', 't', 'tgd', '2026-11-14', 'g', 'xong', 's')-None]
+
+PASSED tests/test_da_schema.py::test_check_violations[insert into project_milestones (code, title, owner_role, due_date, gate, source) values ('da-04', 't', 'tgd', '2026-11-14', 'g', 's')-None]
+
+PASSED tests/test_da_schema.py::test_milestone_xong_with_evidence_ok
+
+PASSED tests/test_da_schema.py::test_new_tables_not_granted_to_roles
+
+PASSED tests/test_da_b2b.py::test_dedup_key_normalization
+
+PASSED tests/test_da_b2b.py::test_read_csv_fixture_ok
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[email]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[fit-qua-dai]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[header-sai]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[org-type-la]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[ruou]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[ruou-ten]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[sdt]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[sdt-o-ten]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[source-ftp]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[source-thieu]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[source-zalo]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[ten-1-ky-tu]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[thieu-cot]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[tinh-khong-nhan-ra]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[tinh-mo-ho]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[trung-khac-hoa-dau]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[tu-cam-fit]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[tu-cam-nha-thuoc]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[tu-cam-ten-sua-chua]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[tu-cam-ung-thu]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[tu-cam-url]
+
+PASSED tests/test_da_b2b.py::test_read_csv_errors_line_no_value[website-facebook]
+
+PASSED tests/test_da_b2b.py::test_guardrail_cell_error_names_column
+
+PASSED tests/test_da_b2b.py::test_tier_c_config_broken_fails_closed
+
+PASSED tests/test_da_b2b.py::test_read_csv_bad_bytes_and_size
+
+PASSED tests/test_da_b2b.py::test_read_csv_one_bad_row_rejects_whole_file
+
+PASSED tests/test_da_b2b.py::test_loi_fixture_cli_exit1_no_connect
+
+PASSED tests/test_da_b2b.py::test_render_batch_footer_and_escape
+
+PASSED tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv0]
+
+PASSED tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv1]
+
+PASSED tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv2]
+
+PASSED tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv3]
+
+PASSED tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv4]
+
+PASSED tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv5]
+
+PASSED tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv6]
+
+PASSED tests/test_da_b2b.py::test_cli_usage_exit2_before_connect[argv7]
+
+PASSED tests/test_da_b2b.py::test_cli_db_down_exit2
+
+PASSED tests/test_da_b2b.py::test_no_contact_path_grep
+
+PASSED tests/test_da_b2b.py::test_import_twice_idempotent_no_pii
+
+PASSED tests/test_da_b2b.py::test_batch_pending_then_handover_after_human
+
+PASSED tests/test_da_b2b.py::test_importer_cannot_approve_own_batch
+
+PASSED tests/test_da_b2b.py::test_batch_never_mixes_importers
+
+PASSED tests/test_da_b2b.py::test_tampered_after_approval_blocks_handover
+
+PASSED tests/test_da_b2b.py::test_rejected_batch_rows_back_to_moi
+
+PASSED tests/test_da_b2b.py::test_expired_batch_rows_back_to_moi_and_rebatchable
+
+PASSED tests/test_da_b2b.py::test_handover_wrong_item_type_and_missing
+
+PASSED tests/test_da_b2b.py::test_legacy_projects_block_batch_not_stuck
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_golden_approve_price_human_login
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_xnqc_add_and_set_human_login
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_rollout_disable_reenable_human_login
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_crm_all_ops_human_login
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_doc_verify_human_login
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_garden_adopt_and_purge_human_login
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_ra_kenh_partner_file_human_login
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_ra_kenh_forged_by_violation_writes_nothing
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_db_identity_from_login_not_by[approve_price_human]
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_db_identity_from_login_not_by[xnqc_set_status_human]
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_db_identity_from_login_not_by[rollout_transition_human]
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_db_identity_from_login_not_by[crm_load_dealers_human]
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_db_identity_from_login_not_by[doc_review_human]
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_db_identity_from_login_not_by[garden_adopt_plot_human]
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_1_functions_locked_down
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_2_decisions_gated[da_pmo-set-status]
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_2_decisions_gated[ra_kenh-mark-removed]
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_2_decisions_gated[anchor-submit]
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_2_data_entry_identity[apply-due]
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_2_data_entry_identity[handover]
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_2_data_entry_identity[outcome]
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_2_data_entry_identity[verify-send]
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_2_kd_care_verify_send_has_no_by
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_2_classification_documented
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_3_bks_reader_report_outputs_exact
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_4_loader_cannot_approve
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_4_creator_cannot_self_approve
+
+PASSED tests/test_v15_p10_human_authz.py::test_p10_4_deny_does_not_commit_caller_work
+
+102 passed in 700.95s (0:11:40)
+
+
+===== (3) =====
+........................................................................ [ 20%]
+
+........................................................................ [ 41%]
+
+........................................................................ [ 62%]
+
+........................................................................ [ 82%]
+
+...........................................................              [100%]
+
+347 passed in 575.41s (0:09:35)
+

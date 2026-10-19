@@ -1,0 +1,41 @@
+# command: cd D:/code/samsam && python withdb.py samsam_v15fix_p81 python -m pytest tests/test_v15_fix_p81.py -q -p no:cacheprovider -rA | revision: nền a05c60f + working tree v15 chưa commit + vá P8.1 | DB: samsam_v15fix_p81 | exit=0 | kết quả: 6 passed
+
+......                                                                   [100%]
+=================================== PASSES ====================================
+______________ test_p81_zalo_mock_script_write_path_not_counted _______________
+---------------------------- Captured stdout call -----------------------------
+[mock] webhook http://127.0.0.1:50389/zalo-webhook
+
+[u1] Saphraton giá bao nhiêu?  (POST 200)
+[warn] channels: không xác định được đồng ý (zalo) — thiếu CHANNEL_HASH_SALT hoặc DB down; trả lời không tiền tố
+[u2] Sâm Sâm có showroom ở đâu?  (POST 200)
+[warn] channels: không xác định được đồng ý (zalo) — thiếu CHANNEL_HASH_SALT hoặc DB down; trả lời không tiền tố
+[u3] Saphraton chữa được ung thư không?  (POST 200)
+[route] zalo: health (uh=011e39efe22590f4)
+[warn] channels: thiếu CHANNEL_HASH_SALT — không tạo mục handoff (health)
+[u1] -> Dạ sản phẩm có giá niêm yết trên website.
+Nguồn: https://samsamngoclinh.com/a
+      ✗ kỳ vọng chứa '1.000.000'
+[u2] -> Dạ sản phẩm có giá niêm yết trên website.
+Nguồn: https://samsamngoclinh.com/a
+      ✗ kỳ vọng chứa 'Phan Bội Châu'
+[u3] -> Dạ, Sâm Sâm không tư vấn về tình trạng sức khỏe qua tin nhắn tự động. Quý khách vui lòng hỏi ý kiến bác sĩ về tình trạng của mình. Nhân viên Sâm Sâm sẽ phản hồi Quý khách sớm nhất; cần gấp vui lòng gọi hotline 1800577732.
+      ✓ kỳ vọng chứa '1800577732'
+
+[done] 1/3 hội thoại đúng
+_________________ test_p81_fake_transport_replay_not_counted __________________
+---------------------------- Captured stdout call -----------------------------
+[warn] channels: không xác định được đồng ý (zalo) — thiếu CHANNEL_HASH_SALT hoặc DB down; trả lời không tiền tố
+[warn] channels: không xác định được đồng ý (messenger) — thiếu CHANNEL_HASH_SALT hoặc DB down; trả lời không tiền tố
+_____________ test_p81_live_transport_counted_and_dedup_rotation ______________
+---------------------------- Captured stdout call -----------------------------
+[warn] channels: không xác định được đồng ý (zalo) — thiếu CHANNEL_HASH_SALT hoặc DB down; trả lời không tiền tố
+[warn] channels: không xác định được đồng ý (messenger) — thiếu CHANNEL_HASH_SALT hoặc DB down; trả lời không tiền tố
+=========================== short test summary info ===========================
+PASSED tests/test_v15_fix_p81.py::test_p81_zalo_mock_script_write_path_not_counted
+PASSED tests/test_v15_fix_p81.py::test_p81_fake_transport_replay_not_counted
+PASSED tests/test_v15_fix_p81.py::test_p81_live_transport_counted_and_dedup_rotation
+PASSED tests/test_v15_fix_p81.py::test_p81_sample_and_legacy_records_not_counted
+PASSED tests/test_v15_fix_p81.py::test_p81_live_record_counted_bad_lines_never_real
+PASSED tests/test_v15_fix_p81.py::test_p81_fifty_sample_lines_five_workdays_gate_blocked
+6 passed in 2.21s

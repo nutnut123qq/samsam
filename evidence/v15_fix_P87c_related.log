@@ -1,0 +1,15 @@
+# command: python withdb.py samsam_v15fix_p87c python -m pytest tests/test_v15_fix_p87c.py tests/test_v15_fix_p87.py tests/test_v15_fix_p87b.py tests/test_v15_p8_outputs.py tests/test_rollout.py tests/test_rollout_enforce.py tests/test_db_backup.py tests/test_v14_p2_service_auth.py tests/test_v15_p10_human_authz.py tests/test_da_schema.py tests/test_handover_docs.py tests/test_bks_audit.py tests/test_runbook.py tests/test_v14_p3_rollout_edges.py tests/test_v13_c07_ops.py -q -p no:cacheprovider | revision: nền a05c60f + working tree v15 chưa commit (kèm vá P10.2, P8.1, P8.7, P8.7b, P8.7c; sha256(git diff a05c60f trừ DONE.md+board)[:16]=df6d607a85589007 + file untracked mới gồm tests/test_v15_fix_p87c.py) | DB: samsam_v15fix_p87c | exit=0 | kết quả: 497 passed, 0 failed, 0 skipped
+# ghi chú: lần chạy trước đó (cùng bộ trừ test_v13_c07_ops) 1 failed/453 passed — test_db_backup::test_backup_manifest_matches_live so đếm dòng SAU backup == trước, nay backup ghi đúng 1 dòng file_output_evidence sau snapshot → sửa assert thành 'manifest == trước' + 'sau == trước + 1 dòng file_output_evidence' (chặt hơn, chứng minh bằng chứng được ghi); test_v15_p8_outputs::test_p8_1_real_catalog_file_sources_have_counters ghim danh mục → cập nhật theo nguồn mới của data_platform-07.2. Lần chạy lại test_db_backup sau sửa: 50 passed.
+........................................................................ [ 14%]
+........................................................................ [ 28%]
+........................................................................ [ 43%]
+........................................................................ [ 57%]
+........................................................................ [ 72%]
+........................................................................ [ 86%]
+.................................................................        [100%]
+497 passed in 393.05s (0:06:33)
+exit 0
+
+# command (sau sửa board v13-board.md dòng P8.7): python withdb.py samsam_v15fix_p87c python -m pytest tests/test_handover_docs.py tests/test_runbook.py tests/test_da_schema.py -q -p no:cacheprovider | exit=0 | kết quả: 28 passed
+............................                                             [100%]
+28 passed in 15.47s

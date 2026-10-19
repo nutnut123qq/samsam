@@ -325,8 +325,10 @@ def main(argv=None, now=None) -> int:
     finally:
         conn.close()
     day = (now or datetime.now(VN_TZ)).astimezone(VN_TZ).strftime("%Y-%m-%d")
+    # P8.4: --dry-run không ghi nháp listing → bản báo cáo không phải đầu
+    # ra thật của marketing-07.1.
     path = write_report(render(day, items, args.dry_run), Path(args.out_dir),
-                        f"seo-san-{day}.md")
+                        f"seo-san-{day}.md", sample=bool(args.dry_run))
     cnt: dict[str, int] = {}
     for it in items:
         cnt[it["status"]] = cnt.get(it["status"], 0) + 1

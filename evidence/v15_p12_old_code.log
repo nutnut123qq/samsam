@@ -1,0 +1,203 @@
+# command: git worktree add <scratchpad>/old_p12 a05c60f; copy tests/test_v15_p12_policies.py + pipelines/loader_gate.py (module cổng MỚI nhưng loader cũ CHƯA gọi) + data/loader_gate.json, keyword_competitors.json, partner_policy.json; cd old_p12; python withdb.py samsam_v15_p12 python -m pytest tests/test_v15_p12_policies.py -q -rf --tb=line; git worktree remove --force
+# nền a05c60f (main) + working tree CHƯA commit (sha256 git diff = d138c3cecb65722c96bf8e7afb6c6f44f73af5155c8592b50bd5d0e4edbb0665); DB tạm samsam_v15_p12 (withdb.py che DSN); lane p12
+# kết quả: exit 1 — 57 FAIL / 17 PASS. 17 PASS = test THUẦN của chính module cổng mới được copy sang (decide 5, cấu hình hỏng 10, đọc giai đoạn DB 1, --status 1) — không chứng minh gì về code cũ, đúng mong đợi. FAIL đúng chỗ: 16 ca loader → `Reached` (loader cũ đi thẳng tới kết nối/ghi khi tính năng TẮT); drift danh mục (sales-04.1 thiếu ingest/lead_store.py); P12.2 probe `assert [1, 2, 3, 4, 5, 6, ...] == [121, 122, 123]` (code cũ tự leo thang 50 cảnh báo TỒN cũ nhất và bỏ đói 3 cảnh báo mới); dry_run/backlog/cap2/off_hours chưa có; P12.4 probe `['hộp quà sâm...C chính hãng'] == ['hộp quà sâm biếu tết']` (từ khóa đối thủ lọt vào danh sách đề xuất); P12.5 thiếu chính sách + thông báo (`'tu_choi_file' in '[err] 1 mã đối tác không có trong sổ KOC/đại lý — không nạp'`)
+
+E   AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:545: AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+E   AssertionError: assert ['hộp quà sâm...C chính hãng'] == ['hộp quà sâm biếu tết']
+
+      
+
+      Left contains 3 more items, first extra item: 'nhân sâm hàn quốc'
+
+      Use -v to get more diff
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:558: AssertionError: assert ['hộp quà sâm...C chính hãng'] == ['hộp quà sâm biếu tết']
+
+E   AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:524: AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+E   AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:605: AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+E   AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:605: AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+E   AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:605: AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+E   AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:605: AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+E   AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:605: AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+E   AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:605: AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+E   AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:605: AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+E   AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:605: AttributeError: module 'intel_weekly_p5' has no attribute 'load_competitors'
+
+E   AttributeError: module 'agents.ra_kenh' has no attribute 'unknown_partner_policy'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:627: AttributeError: module 'agents.ra_kenh' has no attribute 'unknown_partner_policy'
+
+E   AttributeError: module 'agents.ra_kenh' has no attribute 'unknown_partner_policy'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:642: AttributeError: module 'agents.ra_kenh' has no attribute 'unknown_partner_policy'
+
+E   AttributeError: module 'agents.ra_kenh' has no attribute 'unknown_partner_policy'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:642: AttributeError: module 'agents.ra_kenh' has no attribute 'unknown_partner_policy'
+
+E   AttributeError: module 'agents.ra_kenh' has no attribute 'unknown_partner_policy'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:642: AttributeError: module 'agents.ra_kenh' has no attribute 'unknown_partner_policy'
+
+E   AttributeError: module 'agents.ra_kenh' has no attribute 'unknown_partner_policy'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:642: AttributeError: module 'agents.ra_kenh' has no attribute 'unknown_partner_policy'
+
+E   AttributeError: module 'agents.ra_kenh' has no attribute 'UnknownPartner'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:650: AttributeError: module 'agents.ra_kenh' has no attribute 'UnknownPartner'
+
+E   TypeError: ingest_partner() got an unexpected keyword argument 'policy_path'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:661: TypeError: ingest_partner() got an unexpected keyword argument 'policy_path'
+
+E   AssertionError: assert ('tu_choi_file' in '[err] 1 mã đối tác không có trong sổ KOC/đại lý — không nạp\n')
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p12\tests\test_v15_p12_policies.py:688: AssertionError: assert ('tu_choi_file' in '[err] 1 mã đối tác không có trong sổ KOC/đại lý — không nạp\n')
+
+=========================== short test summary info ===========================
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_repo_config_all_unset_and_matches_catalog
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_unset_policy_off_feature_blocks[market_csv]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_unset_policy_off_feature_blocks[golden_store]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_unset_policy_off_feature_blocks[embed_store]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_unset_policy_off_feature_blocks[kb_internal]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_unset_policy_off_feature_blocks[doc_intake]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_unset_policy_off_feature_blocks[agent_eval]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_unset_policy_off_feature_blocks[lead_store]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_unset_policy_off_feature_blocks[dealer_price]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_policies[market_csv]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_policies[golden_store]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_policies[embed_store]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_policies[kb_internal]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_policies[doc_intake]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_policies[agent_eval]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_policies[lead_store]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_1_each_loader_policies[dealer_price]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_2_first_run_holds_backlog_and_keeps_new_alerts
+
+FAILED tests/test_v15_p12_policies.py::test_p12_2_dry_run_writes_nothing_and_pages_cover_all
+
+FAILED tests/test_v15_p12_policies.py::test_p12_2_policy_leo_thang_dan_pages_50_per_run
+
+FAILED tests/test_v15_p12_policies.py::test_p12_2_other_policies_never_send_backlog[backlog0-None]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_2_other_policies_never_send_backlog[backlog1-thi\u1ebfu quyet_boi]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_2_other_policies_never_send_backlog[backlog2-thi\u1ebfu quyet_boi]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_2_other_policies_never_send_backlog[backlog3-kh\xf4ng h\u1ee3p l\u1ec7]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_2_cli_dry_run_and_usage - Sys...
+
+FAILED tests/test_v15_p12_policies.py::test_p12_3_unconfigured_reports_and_never_picks_people
+
+FAILED tests/test_v15_p12_policies.py::test_p12_3_cap2_after_configured_minutes_once
+
+FAILED tests/test_v15_p12_policies.py::test_p12_3_partial_cap2_is_problem_not_guess[cap20-kh\xf4ng c\xf3 ng\u01b0\u1eddi nh\u1eadn h\u1ee3p l\u1ec7]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_3_partial_cap2_is_problem_not_guess[cap21-sau_phut]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_3_partial_cap2_is_problem_not_guess[cap22-sau_phut]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_3_partial_cap2_is_problem_not_guess[cap23-kh\xf4ng c\xf3 ng\u01b0\u1eddi nh\u1eadn h\u1ee3p l\u1ec7]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_3_off_hours_rule[when0-False]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_3_off_hours_rule[when1-True]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_3_off_hours_rule[when2-True]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_3_off_hours_rule[when3-True]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_3_off_hours_rule[when4-True]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_3_off_hours_rule[when5-False]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_3_off_hours_adds_duty_person
+
+FAILED tests/test_v15_p12_policies.py::test_p12_4_repo_list_unapproved - Attr...
+
+FAILED tests/test_v15_p12_policies.py::test_p12_4_unapproved_list_keeps_competitor_keywords_pending
+
+FAILED tests/test_v15_p12_policies.py::test_p12_4_approved_policies - Attribu...
+
+FAILED tests/test_v15_p12_policies.py::test_p12_4_bad_list_fail_closed[None]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_4_bad_list_fail_closed[{] - A...
+
+FAILED tests/test_v15_p12_policies.py::test_p12_4_bad_list_fail_closed[[]] - ...
+
+FAILED tests/test_v15_p12_policies.py::test_p12_4_bad_list_fail_closed[body3]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_4_bad_list_fail_closed[body4]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_4_bad_list_fail_closed[body5]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_4_bad_list_fail_closed[body6]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_4_bad_list_fail_closed[body7]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_5_unset_policy_rejects_whole_file_with_clear_notice
+
+FAILED tests/test_v15_p12_policies.py::test_p12_5_bad_choice_falls_back_safe[ghi_het-G\u0110-x]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_5_bad_choice_falls_back_safe[ghi_vi_pham-agent:mkt-x]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_5_bad_choice_falls_back_safe[ghi_vi_pham--x]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_5_bad_choice_falls_back_safe[ghi_vi_pham-G\u0110-]
+
+FAILED tests/test_v15_p12_policies.py::test_p12_5_explicit_tu_choi_file - Att...
+
+FAILED tests/test_v15_p12_policies.py::test_p12_5_ghi_vi_pham_records_violation
+
+FAILED tests/test_v15_p12_policies.py::test_p12_5_cli_prints_policy_notice - ...
+
+57 failed, 17 passed in 23.06s

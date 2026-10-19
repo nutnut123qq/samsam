@@ -676,7 +676,9 @@ def main(argv=None) -> int:
     if args.ics is not None:
         p = Path(args.ics) if args.ics else \
             REPORTS_DIR / f"mkt-calendar-{start.isoformat()}.ics"
-        path = write_report(render_ics(plan, now), p.parent, p.name)
+        # P8.4: lịch .ics dựng từ kế hoạch GIẢ ĐỊNH (không phải đầu ra đếm).
+        path = write_report(render_ics(plan, now), p.parent, p.name,
+                            sample=False)
         print(f"[ok] .ics: {path}", file=sys.stderr)
     return 0
 

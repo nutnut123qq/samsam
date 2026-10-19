@@ -50,7 +50,7 @@ from pathlib import Path
 
 import psycopg
 
-from agents.report import REPORTS_DIR, write_report
+from agents.report import REPORTS_DIR, queue_sample, write_report
 from ingest.lead_store import connect
 from ingest.market_csv import MAP_FILE as MARKET_MAP_FILE
 from ingest.market_csv import MAX_FILE_BYTES, MAX_PRINT_ERRS, _nfc, _TableError
@@ -433,7 +433,10 @@ def _run_locked(conn, day, cfg, yeu_cau, out_dir, dcfg) -> dict:
                           payload, created_by=AGENT, cfg=dcfg)
     # write_report ghi str.encode("utf-8") nguyên byte (không đổi CRLF của
     # csv) → sha file == csv_sha256.
-    path = write_report(data.decode("utf-8"), out_dir, f"lo-{batch_key}.csv")
+    # P8.4: lô dựng từ đơn sàn đã nạp (file xuất thật) — sample theo cờ mục
+    # hàng duyệt vừa tạo (fail-closed khi không đọc được).
+    path = write_report(data.decode("utf-8"), out_dir, f"lo-{batch_key}.csv",
+                        sample=queue_sample(conn, qid))
     return {"status": "ok", "queue_id": qid, "batch_key": batch_key,
             "batch": batch, "path": path, "csv_sha256": csv_sha,
             "attempt": attempt}

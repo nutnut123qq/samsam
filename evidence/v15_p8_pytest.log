@@ -1,0 +1,133 @@
+# v15 p8 — pytest file mới + mọi file test liên quan (rollout/write_report/các caller/mkt_ads/intel_alert/sales_director/schema/roles/docs drift) sau sửa
+# command: (cwd=D:/code/samsam) python $H/withdb.py samsam_v15_p8 python -m pytest tests/test_acc_ar.py tests/test_acc_invoice.py tests/test_agent_eval.py tests/test_apply_schema_pgvector.py tests/test_auth_approval.py tests/test_b2b_form.py tests/test_bks_audit.py tests/test_bks_recon.py tests/test_ceo_audit.py tests/test_ceo_decisions.py tests/test_ceo_report.py tests/test_ceo_risk.py tests/test_channels.py tests/test_ci_workflow.py tests/test_cockpit.py tests/test_core_store.py tests/test_crm.py tests/test_da_b2b.py tests/test_da_pmo.py tests/test_da_schema.py tests/test_data_flow_map.py tests/test_db_backup.py tests/test_director.py tests/test_director_framework.py tests/test_dr_drill.py tests/test_fin_director.py tests/test_fin_qa.py tests/test_fp_ads.py tests/test_fp_cash.py tests/test_fp_opscost.py tests/test_fp_pnl.py tests/test_freeze.py tests/test_garden_chain.py tests/test_garden_director.py tests/test_golden_store.py tests/test_guardrail_v2.py tests/test_handover_docs.py tests/test_hdtv_report.py tests/test_health_bulletin.py tests/test_image_studio.py tests/test_intel.py tests/test_intel_alert.py tests/test_intel_bulletin.py tests/test_intel_import.py tests/test_intel_weekly.py tests/test_inventory_csv.py tests/test_job_runs.py tests/test_kd_affiliate.py tests/test_kd_care.py tests/test_kd_catalog.py tests/test_kd_forecast.py tests/test_kd_listing.py tests/test_kd_live.py tests/test_kd_orders.py tests/test_kd_price.py tests/test_kd_quote.py tests/test_lead_store.py tests/test_legal_docs.py tests/test_listing.py tests/test_market_csv.py tests/test_mkt_ads.py tests/test_mkt_calendar.py tests/test_mkt_director.py tests/test_mkt_koc.py tests/test_mkt_metrics.py tests/test_mkt_ugc.py tests/test_mkt_youtube.py tests/test_ops_monthly.py tests/test_pc_a8.py tests/test_pc_hr.py tests/test_persona_sim.py tests/test_production.py tests/test_qa_harness.py tests/test_qr_trace.py tests/test_ra_kenh.py tests/test_report.py tests/test_rev_share.py tests/test_review_load.py tests/test_rollout.py tests/test_rollout_enforce.py tests/test_runbook.py tests/test_sales_director.py tests/test_seo_san.py tests/test_seo_web.py tests/test_settlement_csv.py tests/test_settlement_overlap.py tests/test_social_vendor.py tests/test_store.py tests/test_sx_label.py tests/test_sx_tracuu.py tests/test_v13_c04_authz.py tests/test_v13_c06_daily_ar.py tests/test_v13_c07_ops.py tests/test_v13_c09_anchor_legal.py tests/test_v13_review_fix.py tests/test_v14_p2_service_auth.py tests/test_v14_p3_rollout_edges.py tests/test_v14_p4_sales.py tests/test_v14_p5_mkt_ceo_intel.py tests/test_v14_p6_ops.py tests/test_v15_p10_human_authz.py tests/test_v15_p11_core_store.py tests/test_v15_p8_outputs.py tests/test_video_studio.py tests/test_vt_thoitiet.py tests/test_vt_thuhoach.py tests/test_xnqc.py -q -p no:cacheprovider
+# nền a05c60f (nhánh v15-hop-dong) + working tree chưa commit (sha256 git diff trừ v13-board.md/DONE.md = 048a4feccaf6bfa69203b93f1002afd2aa947bb832839fcb1bbd66c5f6d6d39b; file mới chưa track tests/test_v15_p8_outputs.py sha256 = 18734f41f0443bf464c7490451670936c9719e231a5027565afe495b3b574de0)
+# môi trường: DB test samsam_v15_p8 (tạo bằng $H/mkdb.py, DSN che qua withdb.py; login người/dịch vụ GIẢ tạo tạm trong DB test, xóa cuối module) — KHÔNG phải DB samsam của .env
+# exit code: 0
+# tổng kết: 4427 passed, 3 skipped in 1482.49s (0:24:42)
+# ----------------------------------------------------------------
+........................................................................ [  1%]
+
+........................................................................ [  3%]
+
+........................................................................ [  4%]
+
+........................................................................ [  6%]
+
+........................................................................ [  8%]
+
+........................................................................ [  9%]
+
+........................................................................ [ 11%]
+
+........................................................................ [ 13%]
+
+........................................................................ [ 14%]
+
+........................................................................ [ 16%]
+
+........................................................................ [ 17%]
+
+........................................................................ [ 19%]
+
+........................................................................ [ 21%]
+
+........................................................................ [ 22%]
+
+........................................................................ [ 24%]
+
+...........................................sss.......................... [ 26%]
+
+........................................................................ [ 27%]
+
+........................................................................ [ 29%]
+
+........................................................................ [ 30%]
+
+........................................................................ [ 32%]
+
+........................................................................ [ 34%]
+
+........................................................................ [ 35%]
+
+........................................................................ [ 37%]
+
+........................................................................ [ 39%]
+
+........................................................................ [ 40%]
+
+........................................................................ [ 42%]
+
+........................................................................ [ 43%]
+
+........................................................................ [ 45%]
+
+........................................................................ [ 47%]
+
+........................................................................ [ 48%]
+
+........................................................................ [ 50%]
+
+........................................................................ [ 52%]
+
+........................................................................ [ 53%]
+
+........................................................................ [ 55%]
+
+........................................................................ [ 56%]
+
+........................................................................ [ 58%]
+
+........................................................................ [ 60%]
+
+........................................................................ [ 61%]
+
+........................................................................ [ 63%]
+
+........................................................................ [ 65%]
+
+........................................................................ [ 66%]
+
+........................................................................ [ 68%]
+
+........................................................................ [ 69%]
+
+........................................................................ [ 71%]
+
+........................................................................ [ 73%]
+
+........................................................................ [ 74%]
+
+........................................................................ [ 76%]
+
+........................................................................ [ 78%]
+
+........................................................................ [ 79%]
+
+........................................................................ [ 81%]
+
+........................................................................ [ 82%]
+
+........................................................................ [ 84%]
+
+........................................................................ [ 86%]
+
+........................................................................ [ 87%]
+
+........................................................................ [ 89%]
+
+........................................................................ [ 91%]
+
+........................................................................ [ 92%]
+
+........................................................................ [ 94%]
+
+........................................................................ [ 95%]
+
+........................................................................ [ 97%]
+
+........................................................................ [ 99%]
+
+......................................                                   [100%]
+
+4427 passed, 3 skipped in 1482.49s (0:24:42)
+

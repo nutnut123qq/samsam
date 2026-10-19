@@ -1,0 +1,32 @@
+# v15 p11 — E2E CLI cũ/mới + quyền svc_loader + apply_schema idempotent
+# command: (cwd=D:/code/samsam) python $H/withdb.py samsam_v15_p11 python $H/p11_e2e_all.py $H
+# nền a05c60f (nhánh v15-hop-dong) + working tree chưa commit (sha256 git diff trừ v13-board.md/DONE.md = 96d60d11a3c00d80b6a482696e4dc50c9abc0f32c38339c290e8ca93dcee71ad; file mới chưa track tests/test_v15_p11_core_store.py sha256 = c481c0db660d3418546c64e198bd1c5a17ebaa1e9532e6c05f0afbdb5e00bbdf)
+# môi trường: DB test samsam_v15_p11 (tạo bằng $H/mkdb.py, DSN che qua withdb.py) — KHÔNG phải DB samsam của .env
+# exit code: 0
+# tổng kết: (không có dòng pytest)
+# ----------------------------------------------------------------
+=== (1) CLI E2E code CŨ a05c60f: đơn thật → core_store ×2
+order MAU-P11-OLD-2 -> product nv-Cu-Sam-Ngoc-Linh-38
+  core_store exit=0 | [done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=9, assets=219
+  sau lần nạp 1: product_id = None | order_history = 1 | product_sync_log = 0
+  core_store exit=0 | [done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=9, assets=219
+  sau lần nạp 2: product_id = None | order_history = 1 | product_sync_log = 0
+--- exit 0
+=== (2) CLI E2E code MỚI: đơn thật → core_store ×2
+order MAU-P11-NEW-2 -> product nv-Cu-Sam-Ngoc-Linh-38
+  core_store exit=0 | [done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=10, assets=219
+  sau lần nạp 1: product_id = nv-Cu-Sam-Ngoc-Linh-38 | order_history = 0 | product_sync_log = 0
+  core_store exit=0 | [done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=10, assets=219
+  sau lần nạp 2: product_id = nv-Cu-Sam-Ngoc-Linh-38 | order_history = 0 | product_sync_log = 0
+--- exit 0
+=== (3) apply_rows dưới SET ROLE svc_loader (bỏ 1 sản phẩm → retired + log), ROLLBACK
+role: svc_loader
+reload events: 0
+events after drop 1: [('retired', 'wc-2309')]
+retired kept: ('wc-2309', True)
+log rows: [('retired', 'wc-2309')]
+--- exit 0
+=== (4) apply_schema --roles lần nữa (idempotent)
+[done] schema applied — 89 bảng public: ad_test_plans, affiliate_attributions, affiliate_c …
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+--- exit 0

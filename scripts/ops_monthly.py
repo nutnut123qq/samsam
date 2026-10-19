@@ -955,8 +955,10 @@ def main(argv=None, *, now: datetime | None = None, conn=None,
         return 2
     f = gather(start, end, now, conn=conn, data_dir=data_dir,
                backup_dir=_backup_dir(), assets=assets)
+    # P8.4: DB không khả dụng → báo cáo degraded, KHÔNG đếm là đầu ra thật.
     path = write_report(render(f), args.out_dir,
-                        f"van-hanh-{start:%Y-%m}.md")
+                        f"van-hanh-{start:%Y-%m}.md",
+                        sample=not f["db_ok"])
     print(f"[ok] {path}")
     if not f["db_ok"]:
         print("[err] DB không truy cập được — mục DB ghi 'chưa có dữ liệu'")

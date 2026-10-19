@@ -508,8 +508,11 @@ def test_db_plan_flow(db, monkeypatch, tmp_path, capsys):
     assert [(b, t, o, r, s, c, g) for _, b, t, o, r, s, c, g, _ in items] == [
         ("marketing", "ad_campaign", f"adtest-{pid}", "high", "pending",
          "mkt lap", "true"),
+        # v15.2 (P8.2) FLIP có lý do: mục ngân sách mang agent id RIÊNG để
+        # rollout quy đúng marketing-03 (trước: tên người lập → không thuộc
+        # tính năng nào, bị chặn ở biên dùng / không đếm).
         ("finance", "budget_change", f"adtest-{pid}", "high", "pending",
-         "mkt lap", "true")]
+         ma.BUDGET_AGENT, "true")]
     payload = items[0][8]
     assert "agent không chi tiền" in payload and "không gọi API" in payload
     assert not BAN.search(payload)

@@ -1,0 +1,47 @@
+# command: python withdb.py samsam_v15_g3 python -m pytest -q -p no:cacheprovider tests/test_v15_p10_human_authz.py tests/test_v15_p8_outputs.py tests/test_rollout.py tests/test_rollout_enforce.py tests/test_v14_p3_rollout_edges.py tests/test_ra_kenh.py tests/test_v15_p12_policies.py tests/test_v15_p7_jobs.py tests/test_v15_p9_chat_safety.py tests/test_v15_p11_core_store.py tests/test_ceo_audit.py tests/test_ceo_report.py tests/test_ceo_risk.py tests/test_fp_pnl.py tests/test_lead_store.py tests/test_store.py tests/test_v14_p2_service_auth.py tests/test_v14_p5_mkt_ceo_intel.py tests/test_v14_p6_ops.py tests/test_xnqc.py tests/test_kd_listing.py tests/test_kd_price.py tests/test_review_load.py tests/test_sx_label.py
+# môi trường: nền a05c60f + working tree CHƯA commit (sha256 git diff = 6b6dad61490145907765399799f81297159a0649b06a8f8c1da2c25755b59ad8), DB tạm samsam_v15_g3 (tạo mới bằng mkdb.py, không phải DB .env)
+# exit: 0 — 1305 passed in 395.07s (0:06:35) (24 file liên quan; full pytest KHÔNG chạy — coordinator chạy)
+# lần chạy trước đó cùng bộ: 1 failed / 1304 passed — lỗi ở chính test mới (assert toàn bảng feature_rollout dùng chung fixture module `live`, lẫn dòng ceo-03 của test E2E trước) → sửa lọc theo feature_id, chạy lại toàn bộ như dưới.
+# ruff check . --exclude .agents: exit 0 — All checks passed! (.agents/ untracked, không thuộc repo: 115 lỗi có sẵn)
+
+........................................................................ [  5%]
+
+........................................................................ [ 11%]
+
+........................................................................ [ 16%]
+
+........................................................................ [ 22%]
+
+........................................................................ [ 27%]
+
+........................................................................ [ 33%]
+
+........................................................................ [ 38%]
+
+........................................................................ [ 44%]
+
+........................................................................ [ 49%]
+
+........................................................................ [ 55%]
+
+........................................................................ [ 60%]
+
+........................................................................ [ 66%]
+
+........................................................................ [ 71%]
+
+........................................................................ [ 77%]
+
+........................................................................ [ 82%]
+
+........................................................................ [ 88%]
+
+........................................................................ [ 93%]
+
+........................................................................ [ 99%]
+
+.........                                                                [100%]
+
+1305 passed in 395.07s (0:06:35)
+
+exit=0

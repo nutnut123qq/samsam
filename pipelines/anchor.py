@@ -292,7 +292,8 @@ def submit(conn, ref, cfg: dict, by: str = CREATED_BY,
         raise AnchorError(f"lần gom #{bid}: bản kê dựng lại LỆCH sha đã lưu"
                           " — không gửi")
     ro = _rollout()
-    why = ro.use_reason(conn, FEATURE, f"neo lần gom #{bid}", ro.is_human(by))
+    human = ro.is_human(by)
+    why = ro.use_reason(conn, FEATURE, f"neo lần gom #{bid}", human)
     if why:
         raise AnchorError(why)
     done = conn.execute("select calendar from anchor_receipts where"
@@ -302,6 +303,12 @@ def submit(conn, ref, cfg: dict, by: str = CREATED_BY,
     if done:
         return {"id": bid, "status": "da_gui", "calendar": done[0],
                 "new": False}
+    if human:
+        # v15 fix P10.2: danh tính theo LOGIN (human_logins + khối farming)
+        # kiểm ở DB TRƯỚC khi gửi digest ra ngoài — login chưa ánh xạ / khối
+        # sai không làm phát sinh lần gửi nào (`auth.HumanDenied`).
+        _human_call(conn, "select human_actor(%s, %s)",
+                    (by, FEATURE.split("-")[0]), by, bid)
     errs = []
     for cal in cfg["calendars"]:
         try:
@@ -309,22 +316,53 @@ def submit(conn, ref, cfg: dict, by: str = CREATED_BY,
         except (OSError, ValueError, urllib.error.URLError) as e:
             errs.append(f"{cal.removeprefix('https://')}: {type(e).__name__}")
             continue
+        _receipt(conn, bid, "da_gui", cal, ots_file(digest, resp), None, by,
+                 human)
+        return {"id": bid, "status": "da_gui", "calendar": cal, "new": True}
+    _receipt(conn, bid, "loi", None, None, "; ".join(errs)[:300], by, human)
+    return {"id": bid, "status": "loi", "calendar": None, "new": True,
+            "errors": errs}
+
+
+def _human_call(conn, sql, args, by, bid):
+    from pipelines import auth  # lười: auth → director → ...
+    try:
         with conn.transaction():
+            res = auth.call_human(conn, sql, args, by=by,
+                                  block=FEATURE.split("-")[0],
+                                  action="approve",
+                                  object_type="anchor_batch",
+                                  object_id=bid).fetchone()[0]
+    except BaseException:
+        conn.rollback()
+        raise
+    conn.commit()
+    return res
+
+
+def _receipt(conn, bid, status, cal, receipt, error, by, human) -> None:
+    """1 dòng `anchor_receipts`. Người (`--by <người>`) → function
+    `anchor_receipt_human` (SECURITY DEFINER — login `app_human` không có
+    INSERT bảng; DB kiểm danh tính + khối farming + giai đoạn cho dùng +
+    biên nhận mang đúng digest bản kê; đã `da_gui` → no-op). Job
+    (`agent:anchor`, DSN owner/dịch vụ) ghi thẳng như cũ."""
+    if human:
+        _human_call(conn, "select anchor_receipt_human(%s, %s, %s, %s, %s,"
+                    " %s)", (bid, status, cal, receipt, error, by), by, bid)
+        return
+    with conn.transaction():
+        if status == "da_gui":
             conn.execute(
                 "insert into anchor_receipts (batch_id, provider, status,"
                 " calendar, receipt, created_by) values (%s,"
                 " 'opentimestamps', 'da_gui', %s, %s, %s)",
-                (bid, cal, ots_file(digest, resp), by))
-        conn.commit()
-        return {"id": bid, "status": "da_gui", "calendar": cal, "new": True}
-    with conn.transaction():
-        conn.execute(
-            "insert into anchor_receipts (batch_id, provider, status, error,"
-            " created_by) values (%s, 'opentimestamps', 'loi', %s, %s)",
-            (bid, "; ".join(errs)[:300], by))
+                (bid, cal, receipt, by))
+        else:
+            conn.execute(
+                "insert into anchor_receipts (batch_id, provider, status,"
+                " error, created_by) values (%s, 'opentimestamps', 'loi', %s,"
+                " %s)", (bid, error, by))
     conn.commit()
-    return {"id": bid, "status": "loi", "calendar": None, "new": True,
-            "errors": errs}
 
 
 def verify(conn, ref) -> tuple[int, list[str]]:
@@ -447,6 +485,17 @@ def main(argv=None) -> int:
                 print("[external-dep] provider 'none' — lần gom CHƯA NEO ra "
                       "blockchain (chỉ đối chiếu nội bộ).")
         elif a.submit:
+            # v15.4 (P10.2): `--by <người>` mở biên dùng ở giai đoạn "có người
+            # duyệt" (gửi digest ra ngoài) = QUYẾT ĐỊNH của người được Bên B
+            # ủy quyền khối của tính năng (auth.cli_gate). `--by` mặc định
+            # `agent:anchor` (job) → không phải người, rollout đòi vận hành.
+            from pipelines import auth  # lười: auth → director → ...
+            if auth.is_human(by):
+                why = auth.cli_gate(conn, by, FEATURE.split("-")[0],
+                                    "approve", "anchor_batch", a.submit)
+                if why:
+                    print(f"[từ chối] {why}", file=sys.stderr)
+                    return 1
             r = submit(conn, a.submit, cfg, by=by)
             if r["status"] == "loi":
                 print(f"[err] lần gom #{r['id']}: mọi calendar lỗi — "

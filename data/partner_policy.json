@@ -1,0 +1,4 @@
+{
+  "_doc": "v15 P12.5 — chính sách MÃ ĐỐI TÁC LẠ khi rà bài KOC/đại lý (marketing-04.2, `python -m agents.ra_kenh --partner-file`). Mã đối tác lạ = không có trong sổ KOC (data/koc_sample.json) hoặc sổ đại lý (`dealers`). `ma_doi_tac_la.chinh_sach`: null = CHƯA CHỌN → dùng mặc định AN TOÀN \"tu_choi_file\" (cả file lỗi, 0 dòng — hành vi v14.5) và in cảnh báo rõ; \"tu_choi_file\" | \"ghi_vi_pham\" (bài của mã lạ vẫn rà guardrail, ghi thành vi phạm `doi_tac_chua_dang_ky` ≥ S2 vào hàng duyệt khối marketing cùng các bài hợp lệ). Đặt khác null phải kèm `chon_boi` (NGƯỜI — không agent:/system:) + `can_cu` (văn bản). CHỈ GĐ Marketing chọn; giá trị lạ/thiếu người chọn → mặc định an toàn.",
+  "ma_doi_tac_la": {"chinh_sach": null, "chon_boi": null, "can_cu": null}
+}

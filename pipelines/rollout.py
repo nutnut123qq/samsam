@@ -35,14 +35,36 @@ Contract:
     từng mục nếu bảng có bước đó — không có thì đầu ra không đủ bằng chứng
     người duyệt cho co_nguoi_duyet → van_hanh); khóa trùng giữa 2 nguồn của
     cùng tính năng gộp 1. Khóa lọc danh mục phải có bộ lọc thật của bảng
-    (loader từ chối). Chỉ nguồn `file` còn chưa đếm → "không đếm được"
-    (fail-closed). Nguồn đọc lỗi (bảng thiếu / login thiếu quyền) → vào
-    `uncounted`, không làm hỏng tx.
+    (loader từ chối). v15.2 (P8.1): nguồn `file` đếm theo `_FILES` —
+    `conversations.jsonl` (+`.1`, sales-01: câu bot ĐÃ GỬI khách thật zalo/
+    messenger, DISTINCT kênh+msg_id, gửi không người duyệt = dùng thiếu
+    người; v15 fix P8.1: CHỈ dòng `provenance == "live"` do transport kênh
+    thật đặt lúc ghi — mock/replay/test/demo/`is_sample` không tính, bản
+    ghi cũ thiếu provenance không công nhận + báo `uncounted`) và
+    `$BACKUP_DIR/backup_runs.jsonl` (data_platform-07.2: backup
+    `ok` DISTINCT sha bản dump — v15 fix P8.7c: danh mục data_platform-07.2
+    nay đếm sổ DB `file_output_evidence`, bộ đếm file giữ cho nguồn file
+    khác/tương thích); file chính thiếu/BACKUP_DIR chưa cấu hình/
+    lỗi IO → `uncounted` (không phải 0 đầu ra), dòng hỏng bỏ qua + ghi
+    `uncounted`; file khác tên → loader từ chối. Nguồn đọc lỗi (bảng thiếu
+    / login thiếu quyền) → vào `uncounted`, không làm hỏng tx.
+    v15.2 (P8.7): đầu ra KHÔNG có bước người duyệt riêng (báo cáo file,
+    bảng không cột người quyết, backup) chỉ được tính "NGƯỜI duyệt" qua sổ
+    append-only `output_reviews` (người theo login + sha phiên bản nội dung
+    hiện hành; báo cáo = bản mới nhất trong `report_outputs`) — sinh ra ≠ đã
+    duyệt; nội dung đổi → duyệt cũ hết hiệu lực. v15 fix P8.7: function DB
+    tự kiểm khóa/phiên bản bằng `count_spec`; khóa nguồn FILE chưa có bản
+    chụp tin cậy trong DB → chưa duyệt được (runbook 9.7). v15 fix P8.7c:
+    backup (data_platform-07.2) có bằng chứng DB `file_output_evidence` do
+    chính tiến trình backup (login svc_backup) ghi → đếm/liệt kê/duyệt/cổng
+    PL02 từ sổ đó như nguồn bảng (khóa `bk:`, phiên bản = bản ghi mới nhất).
       chay_thu → co_nguoi_duyet: ≥5 ngày làm việc VÀ ≥50 đầu ra VÀ đầu ra
         rải trên ≥5 ngày làm việc khác nhau.
       co_nguoi_duyet → van_hanh: ≥10 ngày làm việc VÀ ≥1 đầu ra được NGƯỜI
         duyệt từng mục (không 'agent:'/'system:'/auto_policy) VÀ không đầu
-        ra nào được duyệt/dùng thiếu người duyệt VÀ 0 sự kiện `severe`.
+        ra nào được duyệt/dùng thiếu người duyệt VÀ (v15.2) 0 đầu ra báo
+        cáo/bảng/file chưa có người duyệt đúng phiên bản VÀ 0 sự kiện
+        `severe`. Lý do chặn = `evaluate(...)[1]`; chỉ đạt khi RỖNG.
   - Cưỡng chế runtime v13.3 (F03, HĐ 6.7): `mode(conn, feature_id)` là
     nguồn DUY NHẤT; chưa vào sổ / bảng thiếu / DB down / không thuộc tính
     năng nào → `chay_thu` (fail-closed). `rollout_config.json` `enforce:
@@ -71,6 +93,10 @@ Chạy:
   python -m pipelines.rollout --disable ID --by NAME [--note ..]
   python -m pipelines.rollout --dossier --phase P1 [--out F]
   python -m pipelines.rollout --catalog       (tổng hợp danh mục, không DB)
+  python -m pipelines.rollout --outputs ID [--by NAME]
+      (đầu ra cần người duyệt + sha; login người → bộ đếm DB)
+  python -m pipelines.rollout --review-output ID --key K --sha S
+      --decision approved|rejected --by NAME [--note ..]
 Exit: 0 ok · 1 bị từ chối (chưa đủ cổng / không có trong sổ) · 2 tham số
 sai / cấu hình lỗi / DB down.
 """
@@ -78,12 +104,14 @@ sai / cấu hình lỗi / DB down.
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
 import psycopg
+from psycopg import sql as pgsql
 from psycopg.types.json import Jsonb
 
 from agents.report import REPORTS_DIR, write_report
@@ -210,6 +238,9 @@ def _check_sources(fid: str, srcs) -> list[dict]:
                     d.get("table"), ())
         if any(k not in d for k in need):
             raise ValueError(f"{w}: bảng {d['table']} cần {need}")
+        if "file" in d and (set(d) != {"file"} or d["file"] not in _FILES):
+            raise ValueError(f"{w}: nguồn file chỉ nhận {sorted(_FILES)} "
+                             "(không khóa lọc) — file khác chưa có bộ đếm")
         spec = _TABLES.get(d.get("table"))
         if spec is not None:        # v14.3: khóa lọc phải có bộ lọc thật
             bad = set(d) - {"table"} - set(spec.get("filters", {}))
@@ -428,12 +459,16 @@ _NO_COUNT = ("không đếm được đầu ra — output_sources không có ngu
 
 
 def evaluate(stage: str, days: int, outputs: int | None, severe: int,
-             out_days: int = 0, human: int = 0, unapproved: int = 0
-             ) -> tuple[str | None, list[str]]:
+             out_days: int = 0, human: int = 0, unapproved: int = 0,
+             unreviewed: int = 0) -> tuple[str | None, list[str]]:
     """Cổng PL02 mục 1 → (giai đoạn đích, [lý do chưa đạt]). Rỗng = đạt.
     `out_days` = số ngày làm việc khác nhau có đầu ra; `human` = số đầu ra
-    NGƯỜI duyệt từng mục; `unapproved` = đầu ra duyệt/dùng thiếu người.
-    Mặc định 0 → fail-closed (không truyền bằng chứng = chưa đạt)."""
+    NGƯỜI duyệt từng mục; `unapproved` = đầu ra duyệt/dùng thiếu người;
+    `unreviewed` (v15.2 P8.7) = đầu ra báo cáo/bảng/file KHÔNG có bước duyệt
+    riêng mà chưa có NGƯỜI duyệt từng mục trên đúng sha nội dung hiện hành
+    (sổ `output_reviews`). Mặc định 0 → fail-closed (không truyền bằng chứng
+    = chưa đạt; riêng `unreviewed` mặc định 0 chỉ để caller cũ — `_facts`
+    luôn truyền số thật)."""
     why = []
     if stage == "chay_thu":
         if days < TRIAL_DAYS:
@@ -461,6 +496,10 @@ def evaluate(stage: str, days: int, outputs: int | None, severe: int,
         if unapproved:
             why.append(f"{unapproved} đầu ra được duyệt/dùng không có người "
                        "duyệt từng mục")
+        if unreviewed:
+            why.append(f"{unreviewed} đầu ra báo cáo/bảng/file chưa có NGƯỜI "
+                       "duyệt từng mục trên đúng phiên bản nội dung (sinh ra "
+                       "≠ đã duyệt — `--review-output`)")
         if severe:
             why.append(f"{severe} lỗi nghiêm trọng trong giai đoạn")
         return "van_hanh", why
@@ -604,22 +643,56 @@ def use_reason(conn, fid: str | None, what: str,
     return None
 
 
-def gate_report(name: str) -> None:
-    """Biên sinh báo cáo file: tiền tố thuộc tính năng `tat` →
-    RolloutBlocked. Không thuộc danh mục / biết giai đoạn không cần DB →
-    không mở DB."""
+def report_stage(name: str) -> tuple[str | None, str | None]:
+    """(tính năng, giai đoạn) của báo cáo file theo tiền tố — None khi không
+    thuộc danh mục. Biết giai đoạn không cần DB → không mở DB; DB down →
+    `chay_thu` (fail-closed)."""
     q = quick_mode()
-    if q is not None and q != "tat":
-        return
     fid = feature_for_report(name)
     if fid is None:
-        return
-    conn = connect() if q is None else None
+        return None, None
+    if q is not None:
+        return fid, q
+    conn = connect()
     try:
-        check_generate(conn, fid, f"báo cáo {name}")
+        return fid, mode(conn, fid)
     finally:
         if conn is not None:
             conn.close()
+
+
+def gate_report(name: str) -> str | None:
+    """Biên sinh báo cáo file: tiền tố thuộc tính năng `tat` →
+    RolloutBlocked. → giai đoạn (None = không thuộc danh mục)."""
+    fid, md = report_stage(name)
+    if md == "tat":
+        raise RolloutBlocked(_why(fid, "tat", f"báo cáo {name}")
+                             + " — không sinh đầu ra")
+    return md
+
+
+# v15.2 (P8.5): báo cáo file của tính năng chưa cho dùng mang nhãn NGAY TRONG
+# nội dung (không chỉ tên file) — bản bị chuyển tiếp vẫn đọc được trạng thái.
+REPORT_LABELS = {
+    "chay_thu": ("> **CHẠY THỬ — KHÔNG GỬI.** Tính năng {fid} đang chạy thử "
+                 "nội bộ (HĐ 6.7, PL02 mục 1): báo cáo chỉ để kiểm tra, không"
+                 " gửi/không dùng ra ngoài."),
+    "co_nguoi_duyet": ("> **CHỜ NGƯỜI DUYỆT — CHƯA GỬI.** Tính năng {fid} "
+                       "đang chạy có người duyệt: sinh ra ≠ đã duyệt; chỉ "
+                       "dùng sau khi người được ủy quyền duyệt đúng phiên bản"
+                       " này (`python -m pipelines.rollout --review-output`)."),
+}
+
+
+def label_report(name: str, text: str, md: str | None) -> str:
+    """Chèn nhãn giai đoạn vào đầu báo cáo markdown (.md) của tính năng đang
+    `chay_thu`/`co_nguoi_duyet`; file khác đuôi (csv/ics — sha phải khớp dữ
+    liệu gốc) giữ nguyên."""
+    lab = REPORT_LABELS.get(md)
+    if lab is None or not str(name).endswith(".md"):
+        return text
+    fid = feature_for_report(name) or "?"
+    return lab.format(fid=fid) + "\n\n" + (text or "")
 
 
 # Nhãn MẪU chuẩn của báo cáo dựng trên dữ liệu mẫu ("(MẪU)" / "[MẪU]") —
@@ -708,7 +781,7 @@ _COUNTERS = {
         " bool_or(status = 'approved' and lane = 'per_item' and "
         + _h("decided_by") + "),"
         " bool_or(status = 'approved' and not (lane is not distinct from"
-        " 'per_item' and " + _h("decided_by") + "))"
+        " 'per_item' and " + _h("decided_by") + ")), null::text"
         " from approval_queue where block = %s and object_type = %s"
         " and (%s::text is null or created_by = %s)"
         " and created_at >= %s and created_at <= %s"
@@ -720,8 +793,8 @@ _COUNTERS = {
     "content_drafts": (
         "select 'cd:' || md5(text), min(created_at),"
         " bool_or(status = 'approved' and " + _h("reviewer")
-        + "), bool_or(status = 'approved' and not " + _h("reviewer") + ")"
-        " from content_drafts where created_by = %s and content_type = %s"
+        + "), bool_or(status = 'approved' and not " + _h("reviewer") + "),"
+        " null::text from content_drafts where created_by = %s and content_type = %s"
         " and created_at >= %s and created_at <= %s"
         " and coalesce(guardrail->>'ok', '') = 'true'"
         " and coalesce(source, '') not ilike 'sample%%'"
@@ -737,6 +810,10 @@ _COUNTERS = {
 # bằng chứng người duyệt cho cổng co_nguoi_duyet → van_hanh), `where` lọc
 # cố định, `filters` khóa danh mục → điều kiện (giá trị = tham số).
 _SRC_SAMPLE = "coalesce(t.source, '') ilike 'sample%%'"
+# v15.2 (P8.7): sha256 nội dung các dòng của 1 khóa (phiên bản để người
+# duyệt gắn vào; dòng đổi → sha đổi → duyệt cũ hết hiệu lực).
+_ROW_SHA = ("encode(sha256(convert_to(string_agg(row_to_json(t)::text,"
+            " E'\\n' order by row_to_json(t)::text), 'UTF8')), 'hex')")
 _LOT_SAMPLE = ("exists (select 1 from production_lots l where l.lot_code ="
                " t.lot_code and l.source = 'sample')")
 _DRAFT_JOIN = "join content_drafts d on d.id = t.draft_id"
@@ -881,9 +958,25 @@ _TABLES = {
         "human": ("exists (select 1 from san_suggestion_uses u where"
                   " u.suggestion_id = t.id and " + _h("u.used_by") + ")"),
         "nosample": "tin buyer thật MXH dán qua STDIN"},
+    # v15 fix P8.7c: bằng chứng đầu ra nguồn FILE do ĐƯỜNG DỊCH VỤ ghi vào
+    # DB (backup → `scripts/db_backup.py` login svc_backup qua function
+    # `file_output_evidence_backup`; khóa + sha DB tự tính từ bản ghi). Thời
+    # điểm = `captured_at` (đồng hồ DB); phiên bản hiện hành = bản ghi MỚI
+    # NHẤT của khóa (như báo cáo); mẫu theo `is_sample`. Không có bước người
+    # riêng → cần sổ `output_reviews`.
+    "file_output_evidence": {
+        "ts": "t.captured_at", "key": "t.output_key",
+        "sample": "t.is_sample",
+        "sha": ("(array_agg(t.content_sha256 order by t.captured_at desc,"
+                " t.id desc))[1]"),
+        "filters": {"source": "t.nguon = %s"}},
 }
+# v15.2 (P8.7): cột 5 = sha256 phiên bản MỚI NHẤT của báo cáo (người duyệt
+# gắn với đúng phiên bản; ghi lại nội dung khác → duyệt cũ hết hiệu lực).
 _REPORT_SQL = (
-    "select 'rp:' || name, min(created_at), false, false from report_outputs"
+    "select 'rp:' || name, min(created_at), false, false,"
+    " (array_agg(sha256 order by created_at desc, id desc))[1]"
+    " from report_outputs"
     " where feature_id = %s and left(name, length(%s)) = %s"
     " and created_at >= %s and created_at <= %s and not is_sample"
     " group by name")
@@ -905,7 +998,8 @@ def _table_sql(src: dict, a, b) -> tuple[str, tuple] | None:
             params.append(src[k])
     sql = (f"select {spec['key']}, min({spec['ts']}),"
            f" bool_or(coalesce(({spec.get('human') or 'false'}), false)),"
-           f" bool_or(coalesce(({spec.get('unapp') or 'false'}), false))"
+           f" bool_or(coalesce(({spec.get('unapp') or 'false'}), false)),"
+           f" {spec.get('sha', _ROW_SHA)}"
            f" from {src['table']} t {spec.get('join', '')}"
            f" where {' and '.join(conds)} group by 1")
     return sql, tuple(params)
@@ -919,46 +1013,311 @@ def _source_sql(f: dict, s: dict, a, b) -> tuple[str, tuple] | None:
         return _REPORT_SQL, (f["id"], s["report"], s["report"], a, b)
     if "table" in s:
         return _table_sql(s, a, b)
-    return None                      # `file`: chưa có bộ đếm (fail-closed)
+    return None                      # `file`: đọc ở `_file_rows`
+
+
+_PH_RE = re.compile(r"%%|%s")
+_WIN_A, _WIN_B = object(), object()     # chỗ cửa sổ [since, now] → $1/$2
+
+
+def _db_sql(f: dict, s: dict) -> str | None:
+    """Vá review v15 (P8.7/P10.1): câu đếm 1 nguồn ở dạng DB tự chạy được —
+    CHÍNH câu `_source_sql` Python chạy, cửa sổ thành `$1`/`$2`, tham số khác
+    thành literal (thay đúng ngữ nghĩa placeholder psycopg: `%%` → `%`)."""
+    q = _source_sql(f, s, _WIN_A, _WIN_B)
+    if q is None:
+        return None
+    it = iter(q[1])
+
+    def sub(m):
+        if m.group() == "%%":
+            return "%"
+        p = next(it)
+        return ("$1" if p is _WIN_A else "$2" if p is _WIN_B
+                else pgsql.Literal(p).as_string())
+    out = _PH_RE.sub(sub, q[0])
+    if next(it, _WIN_A) is not _WIN_A:
+        raise ValueError(f"{f['id']}: số tham số câu đếm lệch")
+    return out
+
+
+def count_spec(f: dict, shift) -> dict:
+    """Bộ đếm đầu ra ghi vào sổ DB (`feature_rollout.count_spec`, đường
+    OWNER `--seed`) để `rollout_transition_human` TỰ đếm lại, không tin số
+    caller khai: câu SQL từng nguồn bảng/báo cáo + cờ cần duyệt qua
+    `output_reviews` + lịch ngày làm việc. Nguồn file (DB không đọc được
+    file máy chủ ứng dụng) chỉ đếm số lượng — runbook 9.7."""
+    sh = period.parse_shift(shift)
+    qs, files = [], 0
+    for s in f.get("output_sources") or []:
+        if "file" in s:
+            files += s["file"] in _FILES
+            continue
+        q = _db_sql(f, s)
+        if q is not None:
+            qs.append({"q": q, "review": _needs_review(s)})
+    return {"sql": qs, "file": files, "workdays": sorted(sh["workdays"]),
+            "holidays": sorted(d.isoformat() for d in sh["holidays"])}
+
+
+def _needs_review(s: dict) -> bool:
+    """v15.2 (P8.7): nguồn KHÔNG có bước người duyệt từng mục riêng (báo cáo
+    file, bảng `_TABLES` không có `human`, file nhật ký không gửi khách) →
+    đầu ra chỉ có bằng chứng người duyệt qua sổ `output_reviews`."""
+    if "report" in s:
+        return True
+    if "file" in s:
+        return bool(_FILES.get(s["file"], {}).get("review"))
+    spec = _TABLES.get(s.get("table"))
+    return spec is not None and not spec.get("human")
 
 
 def _src_label(s: dict) -> str:
     return ", ".join(f"{k}={v}" for k, v in s.items() if k != "rules_any")
 
 
+# ------------------------------------------------ v15.2 (P8.1) nguồn file
+
+class _Unreadable(Exception):
+    """Nguồn file không đọc được (thiếu/chưa cấu hình/lỗi IO) → uncounted."""
+
+
+def _aware(v) -> datetime | None:
+    """ISO 8601 có múi giờ ('Z' nhận) → datetime aware | None."""
+    if not isinstance(v, str):
+        return None
+    try:
+        ts = datetime.fromisoformat(v.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return ts if ts.tzinfo is not None else None
+
+
+def _rec_sha(rec: dict) -> str:
+    return hashlib.sha256(json.dumps(rec, sort_keys=True, ensure_ascii=False)
+                          .encode("utf-8")).hexdigest()
+
+
+# v15 fix P8.1: cờ mẫu trên dòng convlog — có mặt với giá trị khác
+# None/False → không bao giờ là đầu ra thật (dù provenance ghi "live").
+_CONV_SAMPLE_FLAGS = ("is_sample", "dry_run", "replay", "mock", "test")
+
+
+def _conv_row(rec: dict):
+    """convlog (sales-01) → đầu ra = câu bot ĐÃ GỬI tới khách thật (kênh
+    zalo/messenger, `answered` True, `sent` True, guardrail đạt, có msg_id
+    để DISTINCT). Streamlit (demo nội bộ), handoff/chuyển người, gợi ý giữ
+    lại do chạy thử (đã đếm ở hàng duyệt `cskh_reply`), gửi lỗi → không phải
+    đầu ra. Câu bot gửi KHÔNG có người duyệt từng mục → `una` (dùng thiếu
+    người — chặn cổng co_nguoi_duyet → van_hanh). → (key, ts) | None |
+    'bad' (đầu ra mà ts hỏng) | ('legacy', ts).
+    v15 fix P8.1 — provenance BẮT BUỘC, đặt TỪ NƠI GHI (`connectors.zalo.
+    _provenance`): chỉ `provenance == "live"` (câu gửi bằng transport kênh
+    thật đã đăng ký) và không cờ mẫu (`_CONV_SAMPLE_FLAGS`) mới là đầu ra.
+    Mock (`scripts/zalo_mock.py`), replay/test (transport giả), Streamlit
+    ("demo"), provenance lạ/khác kiểu → None. Bản ghi CŨ thiếu trường
+    provenance mà trông như đầu ra → `('legacy', ts)`: KHÔNG công nhận là
+    thật (không suy ngược từ answered/sent/guardrail hay msg_id), chỉ báo ở
+    `uncounted` để người vận hành biết; ts hỏng → None (không thành 'bad'
+    của dòng thật)."""
+    ch, mid = rec.get("channel"), rec.get("msg_id")
+    if not (ch in ("zalo", "messenger") and rec.get("answered") is True
+            and rec.get("sent") is True and rec.get("guardrail_ok") is True
+            and isinstance(mid, str) and mid.strip()):
+        return None
+    if "provenance" not in rec:
+        ts = _aware(rec.get("ts"))
+        return None if ts is None else ("legacy", ts)
+    if rec.get("provenance") != "live" or any(
+            rec.get(k) not in (None, False) for k in _CONV_SAMPLE_FLAGS):
+        return None
+    ts = _aware(rec.get("ts"))
+    return "bad" if ts is None else (f"cv:{ch}/{mid.strip()}", ts)
+
+
+_DUMP_RE = re.compile(r"[A-Za-z0-9_.-]+_\d{8}_\d{6}_vn\.dump(\.enc)?")
+
+
+def _backup_row(rec: dict):
+    """backup_runs (data_platform-07.2) → đầu ra = lần backup `ok` có file
+    dump đúng khuôn tên + sha256 (DISTINCT theo sha bản dump: ghi lại cùng
+    bản = 1). Lần fail / thiếu sha / tên lạ / `.partial` → không phải đầu
+    ra."""
+    sha, fn = rec.get("sha256"), rec.get("file")
+    if not (rec.get("status") == "ok" and isinstance(sha, str)
+            and re.fullmatch(r"[0-9a-f]{64}", sha) and isinstance(fn, str)
+            and _DUMP_RE.fullmatch(Path(fn).name)):
+        return None
+    ts = _aware(rec.get("ts"))
+    return "bad" if ts is None else (f"bk:{sha}", ts)
+
+
+def _backup_paths() -> list[Path]:
+    d = (os.environ.get("BACKUP_DIR") or "").strip()
+    if not d:
+        raise _Unreadable("BACKUP_DIR chưa cấu hình")
+    return [Path(d) / "backup_runs.jsonl"]
+
+
+DATA_DIR = ROOT / "data"
+# file → (đường dẫn [bắt buộc cuối, phụ trước], hàm dòng, `una` (dùng thiếu
+# người), `review` (cần sổ output_reviews)).
+_FILES = {
+    "conversations.jsonl": {
+        "paths": lambda: [DATA_DIR / "conversations.jsonl.1",
+                          DATA_DIR / "conversations.jsonl"],
+        "row": _conv_row, "una": True, "review": False},
+    "backup_runs.jsonl": {
+        "paths": _backup_paths, "row": _backup_row, "una": False,
+        "review": True},
+}
+
+
+def _file_rows(s: dict, a, b) -> tuple[list, int, int]:
+    """Đọc nguồn file → ([(key, ts, hum, una, sha)], số dòng hỏng, số dòng
+    cũ thiếu provenance trong cửa sổ — v15 fix P8.1, không tính). Đọc
+    BYTES + split `\\n` (không splitlines — U+2028 trong câu khách). File
+    CHÍNH thiếu / lỗi IO → `_Unreadable` (nguồn không đếm, không phải 0 đầu
+    ra); file phụ (`.1` xoay vòng) thiếu → bỏ qua. Dòng không phải JSON
+    object / đầu ra có ts hỏng → đếm `bad`, KHÔNG thành đầu ra."""
+    spec = _FILES.get(s.get("file"))
+    if spec is None:
+        raise _Unreadable("chưa có bộ đếm")
+    paths = spec["paths"]()
+    out, bad, legacy = {}, 0, 0
+    for i, p in enumerate(paths):
+        try:
+            raw = Path(p).read_bytes()
+        except FileNotFoundError:
+            if i == len(paths) - 1:
+                raise _Unreadable("không có file") from None
+            continue
+        except OSError as e:
+            raise _Unreadable(f"lỗi đọc {type(e).__name__}") from None
+        for line in raw.split(b"\n"):
+            if not line.strip():
+                continue
+            try:
+                rec = json.loads(line.decode("utf-8"))
+            except ValueError:          # gồm UnicodeDecodeError
+                bad += 1
+                continue
+            if not isinstance(rec, dict):
+                bad += 1
+                continue
+            got = spec["row"](rec)
+            if got is None:
+                continue
+            if got == "bad":
+                bad += 1
+                continue
+            if got[0] == "legacy":
+                legacy += a <= got[1] <= b
+                continue
+            key, ts = got
+            if not a <= ts <= b:
+                continue
+            sha = _rec_sha(rec)
+            o = out.get(key)
+            if o is None or ts < o[0]:   # trùng khóa (ghi lại/xoay vòng) = 1
+                out[key] = (ts, sha)
+    return ([(k, ts, False, spec["una"], sha)
+             for k, (ts, sha) in out.items()], bad, legacy)
+
+
+# ------------------------------------------- v15.2 (P8.7) duyệt từng đầu ra
+
+def _reviews(conn, fid: str) -> dict:
+    """{(output_key, sha): (quyết định, người)} — quyết định MỚI NHẤT mỗi
+    phiên bản nội dung. Bảng thiếu / không có quyền đọc → {} (fail-closed:
+    chưa ai duyệt)."""
+    try:
+        with conn.transaction():
+            rows = conn.execute(
+                "select distinct on (output_key, content_sha256) output_key,"
+                " content_sha256, decision, reviewed_by from output_reviews"
+                " where feature_id = %s order by output_key, content_sha256,"
+                " ts desc, id desc", (fid,)).fetchall()
+    except psycopg.Error:
+        return {}
+    return {(k, h): (d, by) for k, h, d, by in rows}
+
+
+def output_rows(conn, f: dict, since, now) -> tuple[dict, bool, list]:
+    """Từng đầu ra DISTINCT của tính năng trong [since, now] → ({key: {ts,
+    human, unapproved, sha, needs_review, review}}, đếm được?, uncounted).
+    Mỗi nguồn đọc trong savepoint: lỗi (bảng thiếu, login không có quyền
+    đọc) → nguồn đó vào `uncounted`, không làm hỏng tx của conn chia sẻ
+    (fail-closed: thiếu nguồn = ít đầu ra hơn, không bao giờ nhiều hơn)."""
+    merged, counted, uncounted = {}, False, []
+    for s in f.get("output_sources") or []:
+        if "file" in s:
+            try:
+                got, bad, legacy = _file_rows(s, since, now)
+            except _Unreadable as e:
+                uncounted.append(f"{_src_label(s)} (không đọc được: {e})")
+                continue
+            if bad:
+                uncounted.append(f"{_src_label(s)} ({bad} dòng hỏng — bỏ "
+                                 "qua, không đếm)")
+            if legacy:
+                uncounted.append(f"{_src_label(s)} ({legacy} dòng thiếu "
+                                 "provenance — bản ghi cũ, không công nhận "
+                                 "là đầu ra thật)")
+        else:
+            q = _source_sql(f, s, since, now)
+            if q is None:
+                uncounted.append(_src_label(s))
+                continue
+            try:
+                with conn.transaction():
+                    got = conn.execute(*q).fetchall()
+            except psycopg.Error as e:
+                uncounted.append(f"{_src_label(s)} (không đọc được: "
+                                 f"{type(e).__name__})")
+                continue
+        counted = True
+        need = _needs_review(s)
+        for key, ts, hum, una, sha in got:
+            o = merged.get(key)
+            if o is None:
+                merged[key] = {"ts": ts, "human": bool(hum),
+                               "unapproved": bool(una), "sha": sha,
+                               "needs_review": need, "review": None}
+            else:       # khóa trùng giữa 2 nguồn cùng tính năng = 1 đầu ra
+                o.update(ts=min(o["ts"], ts), human=o["human"] or bool(hum),
+                         unapproved=o["unapproved"] or bool(una),
+                         sha=o["sha"] or sha,
+                         needs_review=o["needs_review"] and need)
+    if any(o["needs_review"] for o in merged.values()):
+        rev = _reviews(conn, f["id"])
+        for key, o in merged.items():
+            if not o["needs_review"]:
+                continue
+            r = rev.get((key, o["sha"]))
+            o["review"] = r
+            if r and r[0] == "approved" and is_human(r[1]):
+                o["human"] = True
+    return merged, counted, uncounted
+
+
 def output_facts(conn, f: dict, since, now, shift) -> dict:
     """Đầu ra THẬT của đúng tính năng trong [since, now] (F04) →
     {outputs (None = không đếm được), out_days, human, unapproved,
-    uncounted: [nguồn chưa có bộ đếm / không đọc được]}. Mỗi nguồn đọc
-    trong savepoint: lỗi (bảng thiếu, login không có quyền đọc) → nguồn đó
-    vào `uncounted`, không làm hỏng tx của conn chia sẻ (fail-closed: thiếu
-    nguồn = ít đầu ra hơn, không bao giờ nhiều hơn)."""
-    merged, counted, uncounted = {}, False, []
-    for s in f.get("output_sources") or []:
-        q = _source_sql(f, s, since, now)
-        if q is None:
-            uncounted.append(_src_label(s))
-            continue
-        try:
-            with conn.transaction():
-                got = conn.execute(*q).fetchall()
-        except psycopg.Error as e:
-            uncounted.append(f"{_src_label(s)} (không đọc được: "
-                             f"{type(e).__name__})")
-            continue
-        counted = True
-        for key, ts, hum, una in got:
-            o = merged.get(key)
-            merged[key] = (ts, bool(hum), bool(una)) if o is None else (
-                min(o[0], ts), o[1] or bool(hum), o[2] or bool(una))
+    unreviewed, uncounted: [nguồn chưa có bộ đếm / không đọc được / dòng
+    hỏng]}. `unreviewed` (P8.7) = đầu ra cần duyệt qua `output_reviews` mà
+    phiên bản hiện hành chưa có quyết định NGƯỜI."""
+    merged, counted, uncounted = output_rows(conn, f, since, now)
     rows = list(merged.values())
     sh = period.parse_shift(shift)
-    days = {d for d in (period.vn_date(r[0]) for r in rows)
+    days = {d for d in (period.vn_date(r["ts"]) for r in rows)
             if d.weekday() in sh["workdays"] and d not in sh["holidays"]}
     return {"outputs": len(rows) if counted else None,
             "out_days": len(days),
-            "human": sum(1 for r in rows if r[1]),
-            "unapproved": sum(1 for r in rows if r[2]),
+            "human": sum(1 for r in rows if r["human"]),
+            "unapproved": sum(1 for r in rows if r["unapproved"]),
+            "unreviewed": sum(1 for r in rows if r["needs_review"]
+                              and r["review"] is None),
             "uncounted": uncounted}
 
 
@@ -973,7 +1332,7 @@ def _facts(conn, f: dict, stage: str, since, now, shift) -> dict:
     o = output_facts(conn, f, since, now, shift)
     severe = _count_severe(conn, f["id"], since)
     target, why = evaluate(stage, days, o["outputs"], severe, o["out_days"],
-                           o["human"], o["unapproved"])
+                           o["human"], o["unapproved"], o["unreviewed"])
     return {"days": days, **o, "severe": severe, "target": target,
             "why": why}
 
@@ -987,15 +1346,29 @@ def _event(conn, fid, kind, frm, to, by, now, *, code=None, note=None,
         (now, fid, kind, frm, to, code, note, Jsonb(evidence or {}), by))
 
 
-def _set_stage(conn, fid, stage, by, now):
-    conn.execute("update feature_rollout set stage = %s, stage_since = %s,"
-                 " updated_by = %s, updated_at = %s where feature_id = %s",
-                 (stage, now, by, now, fid))
+def _transition(conn, fid, kind, frm, to, by, now, *, code=None, note=None,
+                evidence=None):
+    """v15.4 (P10.1): nâng/lùi/tắt giai đoạn qua function SECURITY DEFINER
+    `rollout_transition_human` — DB khóa dòng, kiểm lại giai đoạn hiện hành
+    = `frm` (đổi giữa chừng → từ chối), chuyển hợp lệ, danh tính theo login
+    (khối = tiền tố mã tính năng), ghi sự kiện + log. Login người (app_human)
+    KHÔNG có UPDATE/INSERT trực tiếp sổ triển khai."""
+    from pipelines import auth  # lười: auth → director → rollout
+    try:
+        auth.call_human(
+            conn, "select rollout_transition_human(%s, %s, %s, %s, %s, %s,"
+            " %s, %s, %s)", (fid, kind, frm, to, by, code, note,
+                             Jsonb(evidence or {}), now),
+            by=by, block=fid.split("-")[0], action=kind,
+            object_type="feature_rollout", object_id=fid)
+    except ValueError as e:
+        raise RolloutError(str(e)) from None
 
 
 def _locked(conn, fid: str):
+    """Giai đoạn hiện hành (CHỈ ĐỌC — khóa dòng nằm trong function ghi)."""
     row = conn.execute("select stage, stage_since from feature_rollout"
-                       " where feature_id = %s for update", (fid,)).fetchone()
+                       " where feature_id = %s", (fid,)).fetchone()
     if row is None:
         raise RolloutError(f"{fid}: chưa vào sổ triển khai (chạy --seed)")
     return row
@@ -1005,10 +1378,17 @@ def _now(now):
     return now if now is not None else datetime.now(VN_TZ)
 
 
-def seed(conn, feats: list[dict], by: str, now=None) -> dict:
+def seed(conn, feats: list[dict], by: str, now=None, shift=None) -> dict:
     """Đưa tính năng `co_code` chưa có vào `chay_thu` (bắt đầu đếm). Có rồi
-    → giữ nguyên (không reset mốc). Idempotent."""
+    → giữ nguyên (không reset mốc). Idempotent.
+
+    Vá review v15: ghi kèm bộ đếm `count_spec` vào sổ (đường OWNER —
+    app_human/svc không ghi được `feature_rollout`) để function chuyển giai
+    đoạn TỰ đếm lại đầu ra trong DB, không tin số đếm caller truyền. Dòng có
+    sẵn: chỉ đồng bộ lại bộ đếm khi đổi (giai đoạn/mốc giữ nguyên) — đổi
+    `output_sources`/bộ đếm/lịch ngày làm việc thì owner chạy lại `--seed`."""
     by, now = check_by(by), _now(now)
+    shift = load_shift(CONFIG_FILE) if shift is None else shift
     st = {"inserted": 0, "existing": 0, "skipped": 0}
     with conn.transaction():
         for f in feats:
@@ -1024,12 +1404,16 @@ def seed(conn, feats: list[dict], by: str, now=None) -> dict:
                       "stage_nhom_goc": g[0] if g else None}
                 if g and g[0] == "tat":     # nhóm đã tắt → không tự bật lại
                     stage = "tat"
-            cur = conn.execute(
+            row = conn.execute(
                 "insert into feature_rollout (feature_id, stage, stage_since,"
-                " updated_by, updated_at) values (%s, %s, %s, %s, %s)"
-                " on conflict (feature_id) do nothing",
-                (f["id"], stage, now, by, now))
-            if cur.rowcount == 1:
+                " updated_by, updated_at, count_spec) values (%s, %s, %s,"
+                " %s, %s, %s) on conflict (feature_id) do update set"
+                " count_spec = excluded.count_spec where"
+                " feature_rollout.count_spec is distinct from"
+                " excluded.count_spec returning (xmax = 0)",
+                (f["id"], stage, now, by, now,
+                 Jsonb(count_spec(f, shift)))).fetchone()
+            if row is not None and row[0]:
                 _event(conn, f["id"], "seed", None, stage, by, now,
                        evidence=ev)
                 st["inserted"] += 1
@@ -1053,11 +1437,11 @@ def promote(conn, feats, fid: str, by: str, shift, now=None) -> dict:
         if facts["target"] is None or facts["why"]:
             raise RolloutError(f"{fid} ({STAGE_LABEL[stage]}) chưa đủ cổng: "
                                + "; ".join(facts["why"]))
-        _set_stage(conn, fid, facts["target"], by, now)
-        _event(conn, fid, "promote", stage, facts["target"], by, now,
-               evidence={k: facts[k] for k in (
-                   "days", "outputs", "out_days", "human", "unapproved",
-                   "severe")} | {"since": since.isoformat()})
+        _transition(conn, fid, "promote", stage, facts["target"], by, now,
+                    evidence={k: facts[k] for k in (
+                        "days", "outputs", "out_days", "human", "unapproved",
+                        "unreviewed", "severe")}
+                    | {"since": since.isoformat()})
     conn.commit()
     return {"from": stage, "to": facts["target"], "facts": facts}
 
@@ -1072,10 +1456,9 @@ def record_severe(conn, fid: str, code: str, by: str, note=None,
     with conn.transaction():
         stage, _ = _locked(conn, fid)
         to = "tat" if stage == "tat" else "chay_thu"
-        _event(conn, fid, "severe", stage, to, by, now, code=code,
-               note=_clean_note(note))
-        if stage != "tat":                 # về chạy thử, đếm lại từ đầu
-            _set_stage(conn, fid, to, by, now)
+        # về chạy thử, đếm lại từ đầu (đang tắt → giữ tắt)
+        _transition(conn, fid, "severe", stage, to, by, now, code=code,
+                    note=_clean_note(note))
     conn.commit()
     return {"from": stage, "to": to}
 
@@ -1086,11 +1469,150 @@ def disable(conn, fid: str, by: str, note=None, now=None) -> dict:
         stage, _ = _locked(conn, fid)
         if stage == "tat":
             raise RolloutError(f"{fid}: đã tắt")
-        _event(conn, fid, "disable", stage, "tat", by, now,
-               note=_clean_note(note))
-        _set_stage(conn, fid, "tat", by, now)
+        _transition(conn, fid, "disable", stage, "tat", by, now,
+                    note=_clean_note(note))
     conn.commit()
     return {"from": stage, "to": "tat"}
+
+
+DECISIONS = ("approved", "rejected")
+_SHA_RE = re.compile(r"[0-9a-f]{64}")
+
+
+_PENDING_FN = "output_pending_human(text, text)"
+
+
+def _db_listing(conn) -> bool:
+    """v15 fix P8.7b: login NGƯỜI (không superuser/owner, có EXECUTE
+    `output_pending_human`) → liệt kê/kiểm sớm đầu ra cần duyệt qua function
+    DB — app_human KHÔNG có SELECT bảng nguồn (đọc thẳng = "nguồn chưa đọc
+    được"). Owner/dev, login dịch vụ, schema chưa có function → bộ đếm
+    Python như cũ."""
+    from pipelines import auth  # lười: auth → director → rollout
+    if auth.privileged_login(conn) is not None:
+        return False
+    try:
+        with conn.transaction():
+            return bool(conn.execute(
+                "select has_function_privilege(%s, 'EXECUTE')",
+                (_PENDING_FN,)).fetchone()[0])
+    except psycopg.Error:
+        return False
+
+
+def _pending_db(conn, fid: str, by, action: str) -> list[dict]:
+    """Đầu ra cần duyệt qua sổ theo bộ đếm DB (`output_pending_human` — CÙNG
+    `count_spec` mà `output_review_human` kiểm; cửa sổ = giai đoạn hiện hành
+    tới đồng hồ DB; chỉ khóa/sha/quyết định, không nội dung bảng nguồn) →
+    [{key, ts, sha, review}]. DB từ chối danh tính/khối (42501) →
+    `authz_denied` + RolloutError; chưa vào sổ / chưa có bộ đếm →
+    RolloutError. `by` None = người của chính login."""
+    from pipelines import auth  # lười: auth → director → rollout
+    try:
+        with conn.transaction():
+            rows = auth.call_human(
+                conn, "select o_key, o_ts, o_sha, o_quyet_dinh,"
+                " o_nguoi_duyet from output_pending_human(%s, %s)",
+                (fid, by), by=by or "", block=fid.split("-")[0],
+                action=action, object_type="output_review",
+                object_id=fid).fetchall()
+    except ValueError as e:
+        raise RolloutError(str(e)) from None
+    return [{"key": k, "ts": ts, "sha": h,
+             "review": (d, who) if d is not None else None}
+            for k, ts, h, d, who in rows]
+
+
+def _file_note(f: dict) -> str:
+    fs = [s["file"] for s in f.get("output_sources") or []
+          if "file" in s and _needs_review(s)]
+    return (f" — nguồn file ({', '.join(fs)}) trên máy ứng dụng DB không đọc"
+            " được, CHƯA có bản chụp tin cậy trong DB: không duyệt nguồn"
+            " file qua sổ này" if fs else "")
+
+
+def pending_outputs(conn, feats, fid: str, now=None, by=None) -> list[dict]:
+    """Đầu ra trong cửa sổ giai đoạn hiện hành của tính năng cần duyệt qua
+    `output_reviews` → [{key, ts, sha, review}] (cũ trước). Chỉ đọc.
+    v15 fix P8.7b: login người → bộ đếm DB `output_pending_human` (danh
+    tính/khối theo login; `by` = người khai, None = người của login; nguồn
+    file không liệt kê — DB không duyệt được), không đọc bảng nguồn."""
+    now = _now(now)
+    f = _feature(feats, fid)
+    if _db_listing(conn):
+        rows = _pending_db(conn, fid, by, "list")
+        conn.commit()
+        return rows
+    _, since = _locked(conn, fid)
+    merged, _, _ = output_rows(conn, f, since, now)
+    conn.commit()           # đóng tx đọc (conn chia sẻ)
+    return [{"key": k, "ts": o["ts"], "sha": o["sha"], "review": o["review"]}
+            for k, o in sorted(merged.items(), key=lambda x: (x[1]["ts"],
+                                                              x[0]))
+            if o["needs_review"]]
+
+
+def review_output(conn, feats, fid: str, key: str, sha: str, decision: str,
+                  by: str, note=None, now=None) -> int:
+    """v15.2 (P8.7): NGƯỜI duyệt 1 đầu ra trên đúng phiên bản nội dung →
+    id dòng `output_reviews`. Đọc lại bộ đếm: khóa phải là đầu ra của ĐÚNG
+    tính năng trong giai đoạn hiện hành, cần duyệt (báo cáo/bảng/file không
+    có bước người riêng) và `sha` = phiên bản hiện hành — lệch → RolloutError
+    (không ghi). Ghi qua function `output_review_human` (danh tính theo
+    login, append-only). v15 fix P8.7: kiểm ở đây chỉ để báo lỗi sớm — DB TỰ
+    kiểm lại khóa/nguồn/mẫu/sha phiên bản hiện hành bằng bộ đếm `count_spec`
+    (không tin key/sha caller truyền); khóa nguồn FILE (convlog/backup_runs)
+    DB chưa có bản chụp tin cậy → DB từ chối (RolloutError kèm lý do).
+    v15 fix P8.7b: login người (app_human — không SELECT bảng nguồn) → kiểm
+    sớm bằng bộ đếm DB `output_pending_human` thay vì đọc bảng nguồn."""
+    by, now = check_by(by), _now(now)
+    if decision not in DECISIONS:
+        raise ValueError(f"--decision phải ∈ {DECISIONS}")
+    if not isinstance(sha, str) or not _SHA_RE.fullmatch(sha):
+        raise ValueError("--sha phải là sha256 hex 64 ký tự")
+    f = _feature(feats, fid)
+    act = "approve" if decision == "approved" else "reject"
+    with conn.transaction():
+        if _db_listing(conn):
+            o = next((r for r in _pending_db(conn, fid, by, act)
+                      if r["key"] == key), None)
+            if o is None:
+                raise RolloutError(
+                    f"{fid}: '{_oneline(str(key), 80)}' không phải đầu ra "
+                    "nguồn bảng/báo cáo cần duyệt qua sổ này của tính năng "
+                    "trong giai đoạn hiện hành (khóa không tồn tại / sai tính"
+                    " năng hoặc nguồn / mẫu / có bước duyệt riêng)"
+                    + _file_note(f))
+        else:
+            _, since = _locked(conn, fid)
+            merged, _, unc = output_rows(conn, f, since, now)
+            o = merged.get(key)
+            if o is None:
+                raise RolloutError(
+                    f"{fid}: '{_oneline(str(key), 80)}' không phải đầu ra của"
+                    " tính năng trong giai đoạn hiện hành"
+                    + (f" (nguồn chưa đọc được: {'; '.join(unc)})" if unc
+                       else ""))
+            if not o["needs_review"]:
+                raise RolloutError(f"{fid}: đầu ra {key} có bước duyệt riêng"
+                                   " (hàng duyệt/nháp) — duyệt ở đó")
+        if o["sha"] != sha:
+            raise RolloutError(f"{fid}: sha không khớp phiên bản hiện hành "
+                               f"của {key} — nội dung đã đổi, đọc lại "
+                               "(`--outputs`) rồi duyệt")
+        from pipelines import auth  # lười: auth → director → rollout
+        try:
+            row = auth.call_human(
+                conn, "select output_review_human(%s, %s, %s, %s, %s, %s)",
+                (fid, key, sha, decision, by, _clean_note(note)), by=by,
+                block=fid.split("-")[0],
+                action=act,
+                object_type="output_review", object_id=f"{fid}:{key}"
+            ).fetchone()
+        except ValueError as e:
+            raise RolloutError(str(e)) from None
+    conn.commit()
+    return row[0]
 
 
 def status_rows(conn, feats, shift, now=None) -> list[dict]:
@@ -1324,13 +1846,21 @@ def main(argv=None) -> int:
     op.add_argument("--disable", metavar="ID")
     op.add_argument("--dossier", action="store_true")
     op.add_argument("--catalog", action="store_true")
+    op.add_argument("--outputs", metavar="ID",
+                    help="đầu ra cần người duyệt từng mục (khóa + sha)")
+    op.add_argument("--review-output", metavar="ID",
+                    help="NGƯỜI duyệt 1 đầu ra (--key --sha --decision --by)")
+    ap.add_argument("--key")
+    ap.add_argument("--sha")
+    ap.add_argument("--decision", choices=DECISIONS)
     ap.add_argument("--by")
     ap.add_argument("--reason", choices=sorted(SEVERE))
     ap.add_argument("--note")
     ap.add_argument("--phase", choices=PHASES)
     ap.add_argument("--out")
     a = ap.parse_args(argv)
-    writes = a.seed or a.promote or a.severe or a.disable
+    writes = (a.seed or a.promote or a.severe or a.disable
+              or a.review_output)
     if writes:
         try:
             check_by(a.by)
@@ -1340,8 +1870,14 @@ def main(argv=None) -> int:
         ap.error("--severe cần --reason <mã lỗi PL02 mục 2>")
     if a.reason and not a.severe:
         ap.error("--reason chỉ dùng với --severe")
-    if a.note is not None and not (a.severe or a.disable):
-        ap.error("--note chỉ dùng với --severe/--disable")
+    if a.note is not None and not (a.severe or a.disable
+                                   or a.review_output):
+        ap.error("--note chỉ dùng với --severe/--disable/--review-output")
+    rev = (a.key, a.sha, a.decision)
+    if a.review_output and None in rev:
+        ap.error("--review-output cần --key, --sha, --decision")
+    if not a.review_output and any(v is not None for v in rev):
+        ap.error("--key/--sha/--decision chỉ dùng với --review-output")
     if a.dossier and not a.phase:
         ap.error("--dossier cần --phase P1|P2")
     if (a.phase or a.out) and not a.dossier:
@@ -1359,16 +1895,20 @@ def main(argv=None) -> int:
         print("[FAIL] DB không kết nối được (DATABASE_URL)", file=sys.stderr)
         return 2
     try:
-        fid = a.promote or a.severe or a.disable
+        fid = a.promote or a.severe or a.disable or a.review_output
         if fid:
             # v14.2: nâng/lùi/tắt giai đoạn = quyết định của người được Bên
             # B ủy quyền cho phòng ban của tính năng (auth.cli_gate).
             from pipelines import auth  # lười: auth → director → ...
             act = ("promote" if a.promote else
-                   "severe" if a.severe else "disable")
+                   "severe" if a.severe else "disable" if a.disable else
+                   "approve" if a.decision == "approved" else "reject")
             blk = next((f.get("phong_ban") for f in feats if f["id"] == fid
                         and f.get("phong_ban") in BLOCKS), "data_platform")
-            why = auth.cli_gate(conn, a.by, blk, act, "feature_rollout", fid)
+            why = (auth.cli_gate(conn, a.by, blk, act, "output_review",
+                                 f"{fid}:{a.key}") if a.review_output else
+                   auth.cli_gate(conn, a.by, blk, act, "feature_rollout",
+                                 fid))
             if why:
                 print(f"[TỪ CHỐI] {why}", file=sys.stderr)
                 return 1
@@ -1395,15 +1935,29 @@ def main(argv=None) -> int:
         elif a.disable:
             r = disable(conn, a.disable, a.by, a.note)
             print(f"[OK] {a.disable}: {STAGE_LABEL[r['from']]} → tắt")
+        elif a.outputs:
+            rows = pending_outputs(conn, feats, a.outputs, by=a.by)
+            for o in rows:
+                st = ("CHƯA DUYỆT" if o["review"] is None else
+                      f"{o['review'][0]} bởi {_mask_pii(o['review'][1])}")
+                print(f"{o['key']}	{_d(o['ts'])}	sha={o['sha']}	{st}")
+            n = sum(1 for o in rows if o["review"] is None)
+            print(f"[OK] {a.outputs}: {len(rows)} đầu ra cần người duyệt "
+                  f"từng mục, {n} chưa duyệt")
+        elif a.review_output:
+            rid = review_output(conn, feats, a.review_output, a.key, a.sha,
+                                a.decision, a.by, a.note)
+            print(f"[OK] {a.review_output}: {a.key} → {a.decision} "
+                  f"(sổ output_reviews #{rid})")
         else:
             text = dossier(conn, feats, a.phase, shift)
             if a.out:
                 p = Path(a.out)
-                path = write_report(text, p.parent, p.name)
+                path = write_report(text, p.parent, p.name, sample=False)
             else:
                 name = (f"nghiem-thu-{a.phase}-"
                         f"{datetime.now(VN_TZ):%Y-%m-%d}.md")
-                path = write_report(text, REPORTS_DIR, name)
+                path = write_report(text, REPORTS_DIR, name, sample=False)
             print(f"[OK] hồ sơ → {path}")
     except RolloutError as e:
         print(f"[TỪ CHỐI] {e}", file=sys.stderr)

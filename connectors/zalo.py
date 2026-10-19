@@ -166,6 +166,33 @@ CONV_LOG_MAX = 5 * 1024 * 1024  # 5MB -> rotate sang .1 (D5.4)
 RETAIN_DAYS = 30
 # PII mask dời sang pipelines/pii.py (W31.1) — import lại cùng tên.
 
+# v15 fix P8.1 — provenance convlog (ĐẶT TỪ NƠI GHI, không suy từ msg_id):
+# bộ đếm đầu ra sales-01 (`pipelines.rollout._conv_row`) CHỈ tính dòng
+# `provenance == "live"`. "live" chỉ khi câu được gửi bằng transport kênh
+# THẬT đã đăng ký (`zalo.send_text`, `messenger.send_text` — so ĐÚNG đối
+# tượng hàm, wrapper/lambda/monkeypatch không lọt); mọi transport khác
+# (mock `scripts/zalo_mock.py`, replay, test, gửi giả) → "sample" +
+# `is_sample: true`; Streamlit demo → "demo". `CONV_SAMPLE = True` (script
+# mock/replay đặt) ép mọi dòng thành mẫu kể cả khi dùng transport thật.
+# Bản ghi CŨ (trước v15 fix) không có trường này → KHÔNG công nhận là đầu
+# ra thật (runbook 9.7) — không suy ngược từ answered/sent/guardrail.
+CONV_SAMPLE = False
+_LIVE_TRANSPORTS: set = set()
+
+
+def live_transport(fn):
+    """Đăng ký hàm gửi ra kênh THẬT (gọi API Zalo/Meta, True chỉ khi API
+    nhận) — chỉ đúng đối tượng hàm này mới sinh provenance "live"."""
+    _LIVE_TRANSPORTS.add(fn)
+    return fn
+
+
+def _provenance(send) -> dict:
+    """Trường provenance cho 1 dòng convlog theo transport ĐÃ dùng gửi."""
+    if not CONV_SAMPLE and send in _LIVE_TRANSPORTS:
+        return {"provenance": "live"}
+    return {"provenance": "sample", "is_sample": True}
+
 _seen_lock = threading.Lock()
 _seen_conn: sqlite3.Connection | None = None  # lazy — không tạo file khi import
 _log_lock = threading.Lock()
@@ -358,6 +385,10 @@ def _log_conversation(entry: dict) -> None:
     throw (PermissionError/disk full) chỉ warn — không được giết reply
     thread sau khi send thành công (D6.9)."""
     global _last_purge, _last_purge_attempt
+    # v15 fix P8.1: dòng thiếu provenance (caller quên) hoặc đang ép mẫu →
+    # đóng dấu mẫu; KHÔNG bao giờ tự thành "live".
+    if CONV_SAMPLE or entry.get("provenance") not in ("live", "demo"):
+        entry = {**entry, **_provenance(None)}
     CONV_LOG.parent.mkdir(parents=True, exist_ok=True)
     line = json.dumps(entry, ensure_ascii=False) + "\n"
     with _log_lock:
@@ -666,6 +697,7 @@ def _send_once(user_id: str, text: str, token: str,
         return None
 
 
+@live_transport
 def send_text(user_id: str, text: str) -> bool:
     """Gửi text qua Zalo CS message API; access_token lấy mem -> store
     -> env seed (V2.3+V1.1). Chưa có token, hoặc có mà expires_at sắp
@@ -870,6 +902,7 @@ def _reply_turn(user_id: str, question: str, msg_id: str = "", *,
             "error": (f"deadline:{e.stage}" if late
                       else f"deadline:{slate}" if slate else repr(e)[:300]),
             "channel": channel,
+            **_provenance(send),
         })
         if (late or slate) and inb is not None:
             # Có người nhận việc: mục cskh_handoff (DB down chỉ warn).
@@ -933,6 +966,7 @@ def _reply_turn(user_id: str, question: str, msg_id: str = "", *,
         "answered": NO_DATA not in raw and not slate,
         "sent": sent,  # send-fail khác "đã xử lý" — giữ riêng để đối soát
         "channel": channel,
+        **_provenance(send),   # v15 fix P8.1: chỉ transport thật = "live"
     }
     if not guardrail_ok:
         entry["flagged_text"] = raw[:500]  # raw bị flag, debug guardrail
@@ -993,6 +1027,7 @@ def _reply_held(user_id: str, question: str, msg_id: str, inb, md: str,
         "rollout": md,
         "suggestion_id": sid,
         "channel": inb.channel,
+        **_provenance(send),
         **({"error": f"deadline:{slate}"} if slate else {}),
     })
     channels.record_handoff(inb, (meta or {}).get("handoff")
@@ -1039,6 +1074,7 @@ def _reply_fixed(user_id: str, question: str, msg_id: str, inb, kind: str,
         "sent": sent,
         "route": kind,
         "channel": inb.channel,
+        **_provenance(send),
         **({"error": f"deadline:{slate}"} if slate else {}),
     })
     reason = handoff or ("deadline" if slate else None)
@@ -1074,6 +1110,7 @@ def _reply_non_text(user_id: str, event: str, msg_id: str = "") -> dict:
         "latency_ms": int((time.monotonic() - t0) * 1000),
         "answered": False,
         "sent": sent,
+        **_provenance(send_text),
     })
     return {"sent": sent, "text": NON_TEXT_TEXT, "sources": []}
 
@@ -1121,6 +1158,7 @@ def _reply_follow(user_id: str) -> dict:
         "latency_ms": int((time.monotonic() - t0) * 1000),
         "answered": None,
         "sent": sent,
+        **_provenance(send_text),
     })
     return {"sent": sent, "text": WELCOME_TEXT, "sources": []}
 

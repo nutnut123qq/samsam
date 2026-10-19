@@ -1,0 +1,24 @@
+# command: python withdb.py samsam_v15fix_p87c python -m pytest tests/test_v15_fix_p87c.py -q -p no:cacheprovider -rA | revision: nền a05c60f + working tree v15 chưa commit (kèm vá P10.2, P8.1, P8.7, P8.7b, P8.7c; sha256(git diff a05c60f trừ DONE.md+board)[:16]=df6d607a85589007 + file untracked mới gồm tests/test_v15_fix_p87c.py) | DB: samsam_v15fix_p87c (DB mới, apply_schema --roles ×2) | exit=0 | kết quả: 19 passed / 0 failed
+...................                                                      [100%]
+=================================== PASSES ====================================
+=========================== short test summary info ===========================
+PASSED tests/test_v15_fix_p87c.py::test_p87c_valid_backup_listed_and_reviewed
+PASSED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[dp]
+PASSED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[ceo]
+PASSED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[unmapped]
+PASSED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[dpbk]
+PASSED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[agent]
+PASSED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[loader]
+PASSED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[bks]
+PASSED tests/test_v15_fix_p87c.py::test_p87c_human_login_backup_tool_records_nothing
+PASSED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[fail]
+PASSED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[path]
+PASSED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[partial]
+PASSED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[sha]
+PASSED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[ts-naive]
+PASSED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[not-json]
+PASSED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[array]
+PASSED tests/test_v15_fix_p87c.py::test_p87c_fake_wrong_sample_old_blocked
+PASSED tests/test_v15_fix_p87c.py::test_p87c_identity_blocks
+PASSED tests/test_v15_fix_p87c.py::test_p87c_pl02_gate_counts_db_evidence
+19 passed in 21.47s

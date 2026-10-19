@@ -1,0 +1,61 @@
+# v15 fix — chay lai doc lap 5 file probe (coordinator, 18/10/2026)
+# Revision: nen a05c60f + working tree CHUA commit; sha256(git diff tru DONE.md+board)=df6d607a85589007729b7d2595601230e1b473202733c159ddc2f6d584aee26d; sha256(noi bytes 21 file moi, danh sach scratchpad final_untracked.txt)=d2ba57bb811a2ca417f94342131e2eb8761d9af6f9b089310f911e92207edfc6
+# Truoc sua: worktree tam = a05c60f + v15 truoc 3 ban va (hash diff 0950099...), DB samsam_v15fix_wpre; Sau sua: checkout chinh, DB samsam_v15fix_wpost
+# Lenh: python -m pytest tests/test_v15_fix_p102.py tests/test_v15_fix_p81.py tests/test_v15_fix_p87.py tests/test_v15_fix_p87b.py tests/test_v15_fix_p87c.py -q -p no:cacheprovider (file test 2 ben giong het, sha256 da so)
+
+[TRUOC SUA] exit 1:
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_pmo-set-status]
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_pmo-apply-due]
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_b2b-handover]
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[ra_kenh-mark-removed]
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[anchor-submit-by-person]
+FAILED tests/test_v15_fix_p102.py::test_p102_da_pmo_set_status_authorized_human
+FAILED tests/test_v15_fix_p102.py::test_p102_da_pmo_apply_due_authorized_human
+FAILED tests/test_v15_fix_p102.py::test_p102_da_b2b_handover_authorized_human
+FAILED tests/test_v15_fix_p102.py::test_p102_ra_kenh_mark_removed_authorized_human
+FAILED tests/test_v15_fix_p102.py::test_p102_anchor_submit_authorized_human
+FAILED tests/test_v15_fix_p102.py::test_p102_kd_quote_verify_send_and_outcome_authorized_human
+FAILED tests/test_v15_fix_p102.py::test_p102_loader_agent_cannot_call_human_functions
+FAILED tests/test_v15_fix_p102.py::test_p102_functions_locked_down - Assertio...
+FAILED tests/test_v15_fix_p102.py::test_p102_owner_dev_path_unchanged - psyco...
+FAILED tests/test_v15_fix_p81.py::test_p81_zalo_mock_script_write_path_not_counted
+FAILED tests/test_v15_fix_p81.py::test_p81_fake_transport_replay_not_counted
+FAILED tests/test_v15_fix_p81.py::test_p81_sample_and_legacy_records_not_counted
+FAILED tests/test_v15_fix_p81.py::test_p81_live_record_counted_bad_lines_never_real
+FAILED tests/test_v15_fix_p81.py::test_p81_fifty_sample_lines_five_workdays_gate_blocked
+FAILED tests/test_v15_fix_p87.py::test_p87_unknown_key_blocked - AssertionErr...
+FAILED tests/test_v15_fix_p87.py::test_p87_real_key_wrong_feature_or_source_blocked
+FAILED tests/test_v15_fix_p87.py::test_p87_wrong_sha_blocked - AssertionError...
+FAILED tests/test_v15_fix_p87.py::test_p87_sample_blocked - AssertionError: c...
+FAILED tests/test_v15_fix_p87.py::test_p87_content_change_old_review_not_applied
+FAILED tests/test_v15_fix_p87.py::test_p87_file_source_blocked_with_reason - ...
+FAILED tests/test_v15_fix_p87.py::test_p87_missing_source_or_counter_blocked
+FAILED tests/test_v15_fix_p87.py::test_p87_own_review_step_or_bad_prefix_blocked
+FAILED tests/test_v15_fix_p87b.py::test_p87b_human_cli_lists_table_outputs - ...
+FAILED tests/test_v15_fix_p87b.py::test_p87b_human_cli_reviews_table_output
+FAILED tests/test_v15_fix_p87b.py::test_p87b_listing_function_identity - psyc...
+FAILED tests/test_v15_fix_p87b.py::test_p87b_listing_function_locked_down - A...
+FAILED tests/test_v15_fix_p87b.py::test_p87b_file_source_rejected_clearly - A...
+FAILED tests/test_v15_fix_p87c.py::test_p87c_valid_backup_listed_and_reviewed
+FAILED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[dp]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[ceo]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[unmapped]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[dpbk]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[agent]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[loader]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_non_service_cannot_create_evidence[bks]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_human_login_backup_tool_records_nothing
+FAILED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[fail]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[path]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[partial]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[sha]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[ts-naive]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[not-json]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_service_bad_record_refused[array]
+FAILED tests/test_v15_fix_p87c.py::test_p87c_fake_wrong_sample_old_blocked - ...
+FAILED tests/test_v15_fix_p87c.py::test_p87c_identity_blocks - psycopg.errors...
+FAILED tests/test_v15_fix_p87c.py::test_p87c_pl02_gate_counts_db_evidence - A...
+51 failed, 9 passed in 115.77s (0:01:55)
+
+[SAU SUA] exit 0:
+60 passed in 171.61s (0:02:51)

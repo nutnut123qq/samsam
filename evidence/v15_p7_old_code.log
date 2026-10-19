@@ -1,0 +1,485 @@
+# v15 p7 — chứng minh test bắt lỗi trên code cũ a05c60f (worktree tạm ngoài repo) + chứng minh test giờ:phút cũ chập chờn / mới tất định
+# command: xem mục (1)/(2) bên dưới
+# nền a05c60f (nhánh v15-hop-dong) + working tree chưa commit (sha256 git diff trừ v13-board.md/DONE.md = a5cd44e0c02058809deaf30aa46696162de4463e4b801d7cb90fd7bfd30de0a8); file mới chưa track: tests/test_v15_p7_jobs.py sha256=4dc4dd900225ee3d…; deploy/onprem/systemd/samsam-job-sales_sla.timer sha256=a1e6a76585479e84…; deploy/onprem/systemd/samsam-job-b2b_followups.timer sha256=a77c12453a418424…; deploy/onprem/systemd/samsam-job-order_watch.timer sha256=31fac1e2a19f8c4a…; deploy/onprem/systemd/samsam-job-dealer_price_watch.timer sha256=61fa5a75628df7a7…; deploy/onprem/systemd/samsam-job-ceo_promo.timer sha256=8b9d66d3f280ab2a…; deploy/onprem/systemd/samsam-job-intel_keywords.timer sha256=4e27a2169f317b94…
+# môi trường: DB test samsam_v15_p7 (tạo bằng $H/mkdb.py, DSN che qua withdb.py; schema tạm + login dịch vụ/người GIẢ tạo trong DB test, xóa cuối module) — KHÔNG phải DB samsam của .env
+# exit code: 1
+# tổng kết: code cũ: 10 failed, 1 passed (test_v15_p7_jobs.py); test P7.5 cũ FAIL khi vắt phút (S=51), test mới 3/3 PASS kể cả khi đồng hồ thật vắt phút
+# ----------------------------------------------------------------
+
+===== p7_old_note.out =====
+Chứng minh trên code cũ (worktree tạm NGOÀI repo `$H/old_p7` ở a05c60f, đã `git worktree remove --force` sau khi chạy; không stash):
+
+(1) p7_old.out — copy tests/test_v15_p7_jobs.py vào worktree cũ, chạy bằng DB lane:
+    `cd $H/old_p7 && python $H/withdb.py samsam_v15_p7 python -m pytest tests/test_v15_p7_jobs.py -q -p no:cacheprovider -rf`
+    → exit 1, 10 failed 1 passed. FAIL đúng chỗ:
+      P7.1 KeyError 'sales_sla' / JobConfigError "không có job 'sales_sla' trong lịch" (6 job chưa có lịch);
+      P7.2 muc_dich red_alert_sweep còn "+ leo thang 2 giờ";
+      P7.3 wrapper exit 2 "không có job ... trong lịch" (6 job không chạy được qua lịch/svc_job);
+      P7.4 Messenger timeout cố định 5 giây ([5] != [3.0]); hết ngân sách vẫn gọi Graph API (True is False / [5] != []).
+    PASS trên code cũ (đúng mong đợi): test_p7_1_drift_jobs_timers_and_cli_flags — 14 job cũ ↔ 14 timer cũ vốn khớp; drift của 6 job mới bị bắt ở test_p7_1_new_jobs_*.
+
+(2) P7.5 — test cũ `test_v14_p2_service_auth::test_job_login_report_steps_match_owner` (KHÔNG sửa, ở worktree cũ) chạy qua harness `$H/p7_flake.py`
+    (harness — không phải test — chờ tới giây S của phút rồi chạy pytest 1 test, để 2 lần sinh báo cáo owner/svc_job rơi hai bên mốc phút):
+    p7_flake_old.out: 5 lần (S=49,52,54,56,58) đều PASS — không trúng mốc phút (chập chờn = thường xanh).
+    p7_flake_old2.out: S=52 PASS; S=51 FAIL `AssertionError: ['-m', 'agents.ceo_report', '--period', 'week']` — hai báo cáo khác nhau ĐÚNG ở dòng "Sinh lúc 11:39" vs "11:40" (p7_flake_old_diff.out: diff + mtime 2 file 11:39:59.44 / 11:40:02.61).
+    p7_flake_new.out: test MỚI (đồng hồ ghim, main(argv, now=...) trong tiến trình con) ở checkout chính, S=51,52,50 → 3/3 PASS; lần S=52 đồng hồ thật vắt phút giữa 2 báo cáo (mtime 11:41:59.97 / 11:42:02.49) vẫn PASS, cả hai báo cáo in giờ GHIM "Sinh lúc 16/10/2026 11:34" (lệch 7 phút so với giờ máy — chứng tỏ giờ in là đồng hồ ghim, không phải giờ máy).
+
+===== p7_old.out =====
+F.FFFFFFFFF                                                              [100%]
+
+================================== FAILURES ===================================
+
+____________ test_p7_1_new_jobs_steps_service_and_assumed_schedule ____________
+
+
+
+    def test_p7_1_new_jobs_steps_service_and_assumed_schedule():
+
+        jobs = job_runs.load_jobs()
+
+        raw = json.loads((ROOT / "deploy" / "onprem" / "jobs.json")
+
+                         .read_text(encoding="utf-8"))["jobs"]
+
+        for name, (steps, _src, _ot, _by) in NEW.items():
+
+>           assert jobs[name]["steps"] == [steps], name
+
+                   ^^^^^^^^^^
+
+E           KeyError: 'sales_sla'
+
+
+
+tests\test_v15_p7_jobs.py:77: KeyError
+
+____________________ test_p7_1_lock_blocks_overlap_per_job ____________________
+
+
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2860/test_p7_1_lock_blocks_overlap_0')
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000270897FD4C0>
+
+
+
+    def test_p7_1_lock_blocks_overlap_per_job(tmp_path, monkeypatch):
+
+        """Lần trước còn giữ khóa → lần sau exit 75, 0 bước; khóa theo TÊN job
+
+        (job khác vẫn chạy); khóa nhả → chạy lại được."""
+
+        rec = []
+
+        monkeypatch.setattr(job_runs, "_record", lambda *a: rec.append(a))
+
+        monkeypatch.delenv("JOB_DATABASE_URL", raising=False)
+
+        for k in ("APPROVAL_ENFORCE", "AUTH_MODE", "DEPLOY"):
+
+            monkeypatch.delenv(k, raising=False)
+
+        jobs = job_runs.load_jobs()
+
+        ran = []
+
+    
+
+        def runner(argv, cwd, timeout):
+
+            ran.append(argv[1:])
+
+            return types.SimpleNamespace(returncode=0)
+
+        for name in NEW:
+
+            ran.clear()
+
+            with job_runs._file_lock(tmp_path / f"{name}.lock") as got:
+
+                assert got
+
+>               assert job_runs.run_scheduled(name, jobs=jobs, lock_dir=tmp_path,
+
+                                              runner=runner) == \
+
+                    job_runs.EXIT_LOCKED
+
+
+
+tests\test_v15_p7_jobs.py:138: 
+
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+
+
+name = 'sales_sla'
+
+
+
+    def run_scheduled(name: str, *, jobs: dict | None = None,
+
+                      lock_dir: Path | None = None, runner=None) -> int:
+
+        """Chạy 1 job lịch có khóa + ghi `job_runs` (`job:<tên>`) → exit code."""
+
+        import subprocess
+
+        jobs = jobs if jobs is not None else load_jobs()
+
+        if name not in jobs:
+
+>           raise JobConfigError(f"không có job '{name}' trong lịch")
+
+E           pipelines.job_runs.JobConfigError: không có job 'sales_sla' trong lịch
+
+
+
+pipelines\job_runs.py:230: JobConfigError
+
+__________ test_p7_2_red_alert_sweep_purpose_points_to_escalate_job ___________
+
+
+
+    def test_p7_2_red_alert_sweep_purpose_points_to_escalate_job():
+
+        raw = json.loads((ROOT / "deploy" / "onprem" / "jobs.json")
+
+                         .read_text(encoding="utf-8"))["jobs"]
+
+        sweep = raw["red_alert_sweep"]["muc_dich"]
+
+        # không còn tự nhận "leo thang 2 giờ" là việc của job này
+
+>       assert not re.search(r"\+\s*leo thang 2 giờ", sweep), sweep
+
+E       AssertionError: Quét cảnh báo đỏ 60 phút + leo thang 2 giờ + gửi lại cảnh báo chưa gửi được
+
+E       assert not <re.Match object; span=(25, 42), match='+ leo thang 2 giờ'>
+
+E        +  where <re.Match object; span=(25, 42), match='+ leo thang 2 giờ'> = <function search at 0x00000270F1BB9300>('\\+\\s*leo thang 2 giờ', 'Quét cảnh báo đỏ 60 phút + leo thang 2 giờ + gửi lại cảnh báo chưa gửi được')
+
+E        +    where <function search at 0x00000270F1BB9300> = re.search
+
+
+
+tests\test_v15_p7_jobs.py:160: AssertionError
+
+_______________ test_p7_3_six_jobs_run_under_real_svc_job_login _______________
+
+
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15_p7) at 0x270897ffcb0>, 'dsn': {...svc_backup': 't_p2_svc_backup_377e4072ce', 'svc_job': 't_p2_svc_job_377e4072ce', ...}, 'schema': 't_v14p2l_377e4072ce'}
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2860/test_p7_3_six_jobs_run_under_r0')
+
+
+
+    def test_p7_3_six_jobs_run_under_real_svc_job_login(live, tmp_path):
+
+        now = datetime.now(VN)
+
+        _seed(live, now)
+
+        env = _env(live, tmp_path)
+
+        login = live["name"]["svc_job"]
+
+        for name, (_steps, _src, otype, by) in NEW.items():
+
+            rc, out = _wrapper(name, env)
+
+>           assert rc == 0, (name, out)
+
+E           AssertionError: ('sales_sla', "[err] lịch job: không có job 'sales_sla' trong lịch
+
+E             ")
+
+E           assert 2 == 0
+
+
+
+tests\test_v15_p7_jobs.py:330: AssertionError
+
+______________ test_p7_3_wrapper_refuses_owner_login_and_overlap ______________
+
+
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15_p7) at 0x270897ffcb0>, 'dsn': {...svc_backup': 't_p2_svc_backup_377e4072ce', 'svc_job': 't_p2_svc_job_377e4072ce', ...}, 'schema': 't_v14p2l_377e4072ce'}
+
+tmp_path = WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2860/test_p7_3_wrapper_refuses_owne0')
+
+
+
+    def test_p7_3_wrapper_refuses_owner_login_and_overlap(live, tmp_path):
+
+        env = _env(live, tmp_path)
+
+        # JOB_DATABASE_URL = quản trị/owner → chế độ thực từ chối, 0 bước
+
+        rc, out = _wrapper("ceo_promo", dict(env,
+
+                                             JOB_DATABASE_URL=live["dsn"]["admin"]))
+
+>       assert rc == job_runs.EXIT_SERVICE, out
+
+E       AssertionError: [err] lịch job: không có job 'ceo_promo' trong lịch
+
+E         
+
+E       assert 2 == 78
+
+E        +  where 78 = job_runs.EXIT_SERVICE
+
+
+
+tests\test_v15_p7_jobs.py:359: AssertionError
+
+_________________ test_p7_4_send_timeout_is_remaining_budget __________________
+
+
+
+msend = [5]
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000027089809340>
+
+
+
+    def test_p7_4_send_timeout_is_remaining_budget(msend, monkeypatch):
+
+        clk = _Clock().install(monkeypatch)
+
+        ok, late = _with_deadline(clk.t + 3.0,
+
+                                  lambda: messenger.send_text("messenger:42", "x"))
+
+        assert ok is True and late is None
+
+>       assert msend == [3.0]                       # code cũ: 5 giây cố định
+
+        ^^^^^^^^^^^^^^^^^^^^^
+
+E       assert [5] == [3.0]
+
+E         
+
+E         At index 0 diff: 5 != 3.0
+
+E         Use -v to get more diff
+
+
+
+tests\test_v15_p7_jobs.py:418: AssertionError
+
+___________________ test_p7_4_budget_exhausted_no_call[0.5] ___________________
+
+
+
+msend = [5]
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000027089809880>
+
+capsys = <_pytest.capture.CaptureFixture object at 0x000002708980AC60>
+
+left = 0.5
+
+
+
+    @pytest.mark.parametrize("left", [0.5, 0.0, -2.0])
+
+    def test_p7_4_budget_exhausted_no_call(msend, monkeypatch, capsys, left):
+
+        clk = _Clock().install(monkeypatch)
+
+        ok, late = _with_deadline(clk.t + left,
+
+                                  lambda: messenger.send_text("messenger:42", "x"))
+
+>       assert ok is False and late == "gui"
+
+E       assert (True is False)
+
+
+
+tests\test_v15_p7_jobs.py:434: AssertionError
+
+___________________ test_p7_4_budget_exhausted_no_call[0.0] ___________________
+
+
+
+msend = [5]
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002708980AF60>
+
+capsys = <_pytest.capture.CaptureFixture object at 0x000002708980AC90>
+
+left = 0.0
+
+
+
+    @pytest.mark.parametrize("left", [0.5, 0.0, -2.0])
+
+    def test_p7_4_budget_exhausted_no_call(msend, monkeypatch, capsys, left):
+
+        clk = _Clock().install(monkeypatch)
+
+        ok, late = _with_deadline(clk.t + left,
+
+                                  lambda: messenger.send_text("messenger:42", "x"))
+
+>       assert ok is False and late == "gui"
+
+E       assert (True is False)
+
+
+
+tests\test_v15_p7_jobs.py:434: AssertionError
+
+__________________ test_p7_4_budget_exhausted_no_call[-2.0] ___________________
+
+
+
+msend = [5]
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000027089808260>
+
+capsys = <_pytest.capture.CaptureFixture object at 0x000002708980B830>
+
+left = -2.0
+
+
+
+    @pytest.mark.parametrize("left", [0.5, 0.0, -2.0])
+
+    def test_p7_4_budget_exhausted_no_call(msend, monkeypatch, capsys, left):
+
+        clk = _Clock().install(monkeypatch)
+
+        ok, late = _with_deadline(clk.t + left,
+
+                                  lambda: messenger.send_text("messenger:42", "x"))
+
+>       assert ok is False and late == "gui"
+
+E       assert (True is False)
+
+
+
+tests\test_v15_p7_jobs.py:434: AssertionError
+
+__________________ test_p7_4_reply_turn_late_send_hands_off ___________________
+
+
+
+zfiles = (WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2860/test_p7_4_reply_turn_late_send0'), [])
+
+msend = [5]
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000027089809B50>
+
+
+
+    def test_p7_4_reply_turn_late_send_hands_off(zfiles, msend, monkeypatch):
+
+        """E2E `_reply` kênh messenger: trả lời xong sát hạn (còn 0,5 giây) →
+
+        KHÔNG gọi Graph API với 5 giây cố định (tổng vượt 30 giây) mà chuyển
+
+        người lý do `deadline`, convlog `deadline:gui`."""
+
+        tmp_path, handoffs = zfiles
+
+        clk = _Clock().install(monkeypatch)
+
+        monkeypatch.setattr(rag, "SEND_RESERVE_S", 0.2)
+
+        monkeypatch.setattr("api.rag.answer",
+
+                            lambda q, history=None: {
+
+                                "answer": "Giá 1.000.000 đ",
+
+                                "sources": ["https://x"]})
+
+        monkeypatch.setattr(channels, "chatbot_mode", lambda: "van_hanh")
+
+        monkeypatch.setattr(channels, "consent_gate",
+
+                            lambda inb: channels.Gate("", False, False))
+
+        r = zalo._reply("messenger:1234567890123456", "Saphraton giá bao nhiêu?",
+
+                        "mid.p7", channel="messenger", send=messenger.send_text,
+
+                        t_recv=clk.t - 29.5)
+
+>       assert msend == []
+
+E       assert [5] == []
+
+E         
+
+E         Left contains one more item: 5
+
+E         Use -v to get more diff
+
+
+
+tests\test_v15_p7_jobs.py:458: AssertionError
+
+=========================== short test summary info ===========================
+
+FAILED tests/test_v15_p7_jobs.py::test_p7_1_new_jobs_steps_service_and_assumed_schedule
+
+FAILED tests/test_v15_p7_jobs.py::test_p7_1_lock_blocks_overlap_per_job - pip...
+
+FAILED tests/test_v15_p7_jobs.py::test_p7_2_red_alert_sweep_purpose_points_to_escalate_job
+
+FAILED tests/test_v15_p7_jobs.py::test_p7_3_six_jobs_run_under_real_svc_job_login
+
+FAILED tests/test_v15_p7_jobs.py::test_p7_3_wrapper_refuses_owner_login_and_overlap
+
+FAILED tests/test_v15_p7_jobs.py::test_p7_4_send_timeout_is_remaining_budget
+
+FAILED tests/test_v15_p7_jobs.py::test_p7_4_budget_exhausted_no_call[0.5] - a...
+
+FAILED tests/test_v15_p7_jobs.py::test_p7_4_budget_exhausted_no_call[0.0] - a...
+
+FAILED tests/test_v15_p7_jobs.py::test_p7_4_budget_exhausted_no_call[-2.0] - ...
+
+FAILED tests/test_v15_p7_jobs.py::test_p7_4_reply_turn_late_send_hands_off - ...
+
+10 failed, 1 passed in 7.31s
+
+
+===== p7_flake_old.out =====
+[old] start 11:33:49 rc=0 summary=1 passed, 54 deselected in 24.42s giờ_in_báo_cáo_trong_diff=[]
+[old] start 11:34:52 rc=0 summary=1 passed, 54 deselected in 17.64s giờ_in_báo_cáo_trong_diff=[]
+[old] start 11:35:54 rc=0 summary=1 passed, 54 deselected in 17.03s giờ_in_báo_cáo_trong_diff=[]
+[old] start 11:36:56 rc=0 summary=1 passed, 54 deselected in 19.08s giờ_in_báo_cáo_trong_diff=[]
+[old] start 11:37:58 rc=0 summary=1 passed, 54 deselected in 16.42s giờ_in_báo_cáo_trong_diff=[]
+
+===== p7_flake_old2.out =====
+[old] start 11:38:52 rc=0 summary=1 passed, 54 deselected in 16.82s giờ_in_báo_cáo_trong_diff=[]
+[old] start 11:39:51 rc=1 summary=1 failed, 54 deselected in 8.69s giờ_in_báo_cáo_trong_diff=[]
+    E           AssertionError: ['-m', 'agents.ceo_report', '--period', 'week']
+
+===== p7_flake_old_diff.out =====
+5c5
+< **Kỳ:** 05/10/2026 → 11/10/2026 (giờ VN) · **Kỳ trước:** 2026-W40 · **Sinh lúc:** 16/10/2026 11:39 giờ VN
+---
+> **Kỳ:** 05/10/2026 → 11/10/2026 (giờ VN) · **Kỳ trước:** 2026-W40 · **Sinh lúc:** 16/10/2026 11:40 giờ VN
+11:39:59.4408992000 agents.ceo_report-admin/ceo-2026-W41.md
+11:40:02.6086843000 agents.ceo_report-svc_job/ceo-2026-W41.md
+
+===== p7_flake_new.out =====
+[new] start 11:40:51 rc=0 summary=1 passed, 54 deselected in 19.67s giờ_in_báo_cáo_trong_diff=[]
+[new] start 11:41:52 rc=0 summary=1 passed, 54 deselected in 17.01s giờ_in_báo_cáo_trong_diff=[]
+[new] start 11:42:50 rc=0 summary=1 passed, 54 deselected in 20.09s giờ_in_báo_cáo_trong_diff=[]
+mtime + dòng 'Sinh lúc' của lần test MỚI S=52 (pytest-2869):
+11:41:59.9651180000 agents.ceo_report-admin/ceo-2026-W41.md
+11:42:02.4856282000 agents.ceo_report-svc_job/ceo-2026-W41.md
+11:42:03.8809263000 scripts.ops_monthly-admin/van-hanh-2026-09.md
+11:42:05.8153512000 scripts.ops_monthly-svc_job/van-hanh-2026-09.md
+Sinh lúc:** 16/10/2026 11:34 giờ VN
+Sinh lúc:** 16/10/2026 11:34 giờ VN

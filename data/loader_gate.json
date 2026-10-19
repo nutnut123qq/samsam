@@ -1,0 +1,13 @@
+{
+  "_doc": "v15 P12.1 — chính sách cổng tắt cho LOADER nạp file (HĐ 6.7), đọc bởi pipelines/loader_gate.py. Mỗi loader: `features` = mã danh mục loader cấp dữ liệu (BẢN DEV SOẠN theo `modules` của data/contract_features.json — drift-guard ở test); `chinh_sach` = null (CHƯA CẤU HÌNH — mặc định: tính năng nào trong features đang TẮT thì CHẶN nạp, còn lại nạp và in rõ chưa cấu hình) | \"chan_khi_tat\" (tắt → không nạp) | \"nap_ca_khi_tat\" (dữ liệu nguồn dùng chung — vẫn nạp khi tắt). Đặt khác null phải kèm `chot_boi` (NGƯỜI quyết, không agent:/system:) + `can_cu` (văn bản/biên bản). CHỈ chủ khối/hai bên chọn — dev/agent không điền. File thiếu/hỏng/thiếu loader/mã lạ → mọi loader bị chặn. Xem: python -m pipelines.loader_gate --status",
+  "loaders": {
+    "market_csv": {"features": ["data_platform-05", "sales-06.2"], "chinh_sach": null, "chot_boi": null, "can_cu": null},
+    "golden_store": {"features": ["data_platform-01", "legal_hr-03.2", "production-02"], "chinh_sach": null, "chot_boi": null, "can_cu": null},
+    "embed_store": {"features": ["data_platform-03"], "chinh_sach": null, "chot_boi": null, "can_cu": null},
+    "kb_internal": {"features": ["data_platform-03"], "chinh_sach": null, "chot_boi": null, "can_cu": null},
+    "doc_intake": {"features": ["data_platform-02", "legal_hr-03.1"], "chinh_sach": null, "chot_boi": null, "can_cu": null},
+    "agent_eval": {"features": ["data_platform-07.3"], "chinh_sach": null, "chot_boi": null, "can_cu": null},
+    "lead_store": {"features": ["sales-04.1"], "chinh_sach": null, "chot_boi": null, "can_cu": null},
+    "dealer_price": {"features": ["sales-06.1"], "chinh_sach": null, "chot_boi": null, "can_cu": null}
+  }
+}

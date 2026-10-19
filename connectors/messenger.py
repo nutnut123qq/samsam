@@ -1,8 +1,10 @@
 """v5.1 (WP07, KD-A1) — Messenger (Facebook Page) webhook: nhận tin → ACK
 200 nhanh → trả lời async qua CHUNG pipeline Zalo (`zalo.handle_text(...,
 channel="messenger", send=send_text)`: lock per user, history, convlog
-`_uhash`+`_mask_pii`, `channels.pre_route` rượu/sức khỏe trước LLM, handoff,
-đồng ý). Chỉ inbox reply — không đăng bài (C2.4).
+(user_id → `_uhash`; câu khách qua `zalo._log_question` = `pii.scrub_user`
+che SĐT/email + tên + địa chỉ từ v14.1; trường `answer` = text đã gửi khách,
+không che thêm), `channels.pre_route` rượu/sức khỏe
+trước LLM, handoff, đồng ý). Chỉ inbox reply — không đăng bài (C2.4).
 
 Bảo mật:
   - POST phải có `X-Hub-Signature-256` = "sha256=" + HMAC-SHA256(
@@ -93,6 +95,7 @@ def verify_signature(raw: bytes, header: str | None) -> bool:
                                expect.encode("ascii"))
 
 
+@zalo.live_transport          # v15 fix P8.1: transport THẬT → provenance live
 def send_text(user_key: str, text: str) -> bool:
     """Gửi 1 tin qua Graph API. DEPLOY tắt → không gửi gì ra Meta."""
     uh = zalo._uhash(user_key)
@@ -106,13 +109,25 @@ def send_text(user_key: str, text: str) -> bool:
         print(f"[warn] messenger: thiếu page token hoặc psid lạ — không gửi"
               f" (uh={uh})", flush=True)
         return False
+    # v15.1: trong lượt trả lời có hạn chót TỔNG 30 giây (`zalo._reply` đặt
+    # `_SEND_DEADLINE`), timeout gửi = min(SEND_TIMEOUT_S, phần còn lại) —
+    # như Zalo v14.6; còn < MIN_CALL_S → không gọi Graph API, ghi bước trễ
+    # để `_reply` chuyển người lý do `deadline`. Không có hạn chót (tin
+    # không phải chữ, gọi trực tiếp) → SEND_TIMEOUT_S như cũ.
+    left = zalo._left()
+    if left is not None and left < zalo.MIN_CALL_S:
+        zalo._SEND_LATE.set("gui")
+        print(f"[deadline] messenger: bỏ bước gui — không đủ ngân sách 30 "
+              f"giây (uh={uh})", flush=True)
+        return False
     try:
         r = httpx.post(SEND_URL,
                        headers={"Authorization": f"Bearer {token}"},
                        json={"recipient": {"id": psid},
                              "messaging_type": "RESPONSE",
                              "message": {"text": text[:MAX_TEXT]}},
-                       timeout=zalo.SEND_TIMEOUT_S)  # v13.7 ngân sách 30s
+                       timeout=zalo.SEND_TIMEOUT_S if left is None
+                       else min(zalo.SEND_TIMEOUT_S, left))
     except httpx.HTTPError as e:
         print(f"[warn] messenger: send lỗi {type(e).__name__} (uh={uh})",
               flush=True)

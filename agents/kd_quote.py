@@ -62,11 +62,11 @@ from pathlib import Path
 import psycopg
 
 from agents.fp_pnl import cogs_at, fetch_versions
-from agents.report import REPORTS_DIR, write_report
+from agents.report import REPORTS_DIR, queue_sample, write_report
 from ingest.golden_store import CHANNELS, GOLDEN_FILE, KINDS, read_golden
 from ingest.lead_store import connect
 from pipelines import approval_queue as aq
-from pipelines import director, guardrail, kb_filter, period
+from pipelines import auth, director, guardrail, kb_filter, period
 from pipelines.period import VN_TZ
 from pipelines.pii import _PII_RE, _mask_pii
 from pipelines.store import _db_msg, _oneline
@@ -760,7 +760,8 @@ def export(conn, qid: int, out: Path,
         return False, f"mục #{qid}: LỆCH bản duyệt (sha256) — KHÔNG xuất"
     conn.commit()
     body = payload if out.suffix.lower() == ".md" else render_html(payload)
-    path = write_report(body, out.parent, out.name)
+    path = write_report(body, out.parent, out.name,
+                        sample=queue_sample(conn, qid))
     return True, str(path)
 
 
@@ -799,10 +800,17 @@ OUTCOME_LABELS = {"chot": "đã chốt", "khong_chot": "không chốt",
 _QNO_RE = re.compile(r"BG-[0-9]{8}-[0-9]{1,18}-[0-9a-f]{8}")
 
 
-def record_event(conn, qid: int, kind: str, by=None) -> int:
+def record_event(conn, qid: int, kind: str, by=None, text=None) -> int:
     """1 dòng `b2b_quote_events` cho báo giá ĐÃ duyệt (sales, b2b_quote*)
     → id. Kết quả (`chot|khong_chot|huy`) cần `by` người thật và chỉ ghi 1
-    lần; `da_gui` ghi mỗi lần gửi (mốc nhắc mới). Sai → ValueError."""
+    lần; `da_gui` ghi mỗi lần gửi (mốc nhắc mới). Sai → ValueError.
+
+    v15 fix P10.2: ghi qua function `b2b_quote_event_human` (SECURITY
+    DEFINER — login người `app_human` không còn INSERT thẳng bảng): DB kiểm
+    danh tính theo login (`by` có tên), báo giá sales ĐÃ duyệt, 1 kết
+    quả/báo giá, mốc `da_gui` khớp sha bản duyệt mới nhất (`text` — mặc định
+    bản đã duyệt mà file gửi vừa khớp). DB từ chối danh tính →
+    `auth.HumanDenied` (ValueError)."""
     if kind not in ("da_gui", *OUTCOMES):
         raise ValueError(f"kết quả phải là {'|'.join(OUTCOMES)}")
     who = by.strip() if isinstance(by, str) and by.strip() else None
@@ -815,27 +823,27 @@ def record_event(conn, qid: int, kind: str, by=None) -> int:
     if (row is None or row[0] != BLOCK or row[1] not in QUOTE_TYPES
             or row[2] != "approved"):
         raise ValueError(f"mục #{qid} không phải báo giá B2B ĐÃ duyệt")
-    qno = conn.execute("select object_id from approval_queue where id = %s",
-                       (qid,)).fetchone()[0]
-    with conn.transaction():
-        if kind in OUTCOMES:
-            # 2 người ghi song song: index unique một-kết-quả/báo-giá chặn.
-            done = conn.execute(
-                "select kind from b2b_quote_events where queue_id = %s and"
-                " kind = any(%s) order by id limit 1",
-                (qid, list(OUTCOMES))).fetchone()
-            if done is not None:
-                raise ValueError(f"mục #{qid} đã ghi kết quả "
-                                 f"'{OUTCOME_LABELS[done[0]]}' — không ghi đè")
-        try:
-            with conn.transaction():
-                eid = conn.execute(
-                    "insert into b2b_quote_events (queue_id, quote_no, kind,"
-                    " recorded_by) values (%s, %s, %s, %s) returning id",
-                    (qid, qno, kind, who)).fetchone()[0]
-        except psycopg.errors.UniqueViolation:
-            raise ValueError(
-                f"mục #{qid} đã ghi kết quả — không ghi đè") from None
+    if kind in OUTCOMES:
+        done = conn.execute(
+            "select kind from b2b_quote_events where queue_id = %s and"
+            " kind = any(%s) order by id limit 1",
+            (qid, list(OUTCOMES))).fetchone()
+        if done is not None:
+            raise ValueError(f"mục #{qid} đã ghi kết quả "
+                             f"'{OUTCOME_LABELS[done[0]]}' — không ghi đè")
+    if kind == "da_gui" and text is None:
+        text = row[3]
+    try:
+        with conn.transaction():
+            eid = auth.call_human(
+                conn, "select b2b_quote_event_human(%s, %s, %s, %s)",
+                (qid, kind, text if kind == "da_gui" else None, who), by=who,
+                block=None, action="outcome" if kind in OUTCOMES
+                else "verify_send", object_type="b2b_quote",
+                object_id=qid).fetchone()[0]
+    except psycopg.errors.UniqueViolation:
+        # 2 người ghi song song: index unique một-kết-quả/báo-giá chặn.
+        raise ValueError(f"mục #{qid} đã ghi kết quả — không ghi đè")             from None
     return eid
 
 
@@ -1035,7 +1043,8 @@ def _cmd_quote(conn, a) -> int:
     for name, body in ((f"bao-gia-{qno}.md", built["payload"]),
                        (f"bao-gia-{qno}.html", render_html(built["payload"])),
                        (f"bao-gia-{qno}-noi-bo.md", built["internal"])):
-        print(f"[file] {write_report(body, a.out_dir, name)}")
+        # P8.4: nháp dựng từ yêu cầu B2B thật (b2b_requests không cột mẫu).
+        print(f"[file] {write_report(body, a.out_dir, name, sample=False)}")
     if not a.submit:
         print(f"[done] {qno} — NHÁP; thêm --submit để vào hàng duyệt")
         return 0
@@ -1103,11 +1112,9 @@ def main(argv=None) -> int:
         if not (a.by or "").strip():
             ap.error("--outcome cần --by <tên người>")
         oqid = int(a.outcome[0])
-    if a.followups:
-        from pipelines import auth  # lười: auth → director → ...
-        if why := auth.bind_service("job"):
-            print(f"[err] {why}", flush=True)
-            return 2
+    if a.followups and (why := auth.bind_service("job")):
+        print(f"[err] {why}", flush=True)
+        return 2
     if a.submit and a.dry_run:
         ap.error("--submit và --dry-run loại trừ nhau")
     if (a.export is not None) != (a.out is not None):
@@ -1149,8 +1156,20 @@ def main(argv=None) -> int:
                   " hàng tự gửi; chạy --verify-send trước khi gửi)")
             return 0
         if a.outcome is not None:
+            # v15.4 (P10.2): ghi kết quả khách báo = NHẬP LIỆU (không đổi
+            # giá/đơn) — kiểm danh tính người ghi (auth.cli_identity).
+            why = auth.cli_identity(conn, a.by, "b2b_quote", oqid,
+                                    action="outcome")
+            if why:
+                conn.rollback()
+                print(f"[từ chối] {why} — không ghi", file=sys.stderr)
+                return 1
             try:
                 record_event(conn, oqid, a.outcome[1], a.by)
+            except auth.HumanDenied as e:
+                conn.rollback()
+                print(f"[từ chối] {e} — không ghi", file=sys.stderr)
+                return 1
             except ValueError as e:
                 conn.rollback()
                 print(f"[warn] {e} — không ghi", file=sys.stderr)
@@ -1174,10 +1193,25 @@ def main(argv=None) -> int:
                   + (" — KHÔNG ghi DB" if a.dry_run else "")
                   + " (hệ thống không tự liên hệ khách)")
             return 0
+        if a.by is not None:
+            # v15.4 (P10.2): `--by` ghi mốc đã gửi = NHẬP LIỆU — kiểm danh tính.
+            why = auth.cli_identity(conn, a.by, "b2b_quote", vqid,
+                                    action="verify_send")
+            if why:
+                conn.rollback()
+                print(f"[từ chối] {why} — không ghi", file=sys.stderr)
+                return 1
         if verify_send(conn, vqid, Path(a.verify_send[1])):
             try:
                 record_event(conn, vqid, "da_gui", a.by)
                 conn.commit()
+            except auth.HumanDenied as e:
+                # v15 fix P10.2: DB từ chối danh tính người ghi mốc gửi.
+                with suppress(Exception):
+                    conn.rollback()
+                print(f"[từ chối] {e} — KHỚP bản duyệt nhưng không ghi mốc"
+                      " gửi", file=sys.stderr)
+                return 1
             except (ValueError, psycopg.Error) as e:
                 with suppress(Exception):
                     conn.rollback()

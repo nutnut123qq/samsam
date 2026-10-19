@@ -13,7 +13,7 @@
       "max_gap_hours": 2,
       "steps": [["-m", "pipelines.intel_alert", "--run"],
                 ["-m", "pipelines.red_alert", "--deliver"]],
-      "muc_dich": "Quét cảnh báo đỏ 60 phút + leo thang 2 giờ + gửi lại cảnh báo chưa gửi được"
+      "muc_dich": "Quét tin thị trường → cảnh báo đỏ intel mỗi 60 phút + gửi lại cảnh báo chưa gửi được (48 giờ). Leo thang 2 giờ cho MỌI cảnh báo đỏ nằm ở job `red_alert_escalate` (15 phút); bước `intel_alert --run` chỉ gọi lại cùng luật cho cảnh báo intel — unique index chung, không nhân bản"
     },
     "red_alert_escalate": {
       "on_calendar": "*-*-* *:00/15:00",
@@ -32,6 +32,42 @@
       "max_gap_hours": 26,
       "steps": [["-m", "pipelines.legal_updates", "--submit"]],
       "muc_dich": "Văn bản pháp luật mới (sau job intel) vào hàng duyệt Pháp chế hằng ngày (legal_hr-07)"
+    },
+    "sales_sla": {
+      "on_calendar": "*-*-* *:10/30:00",
+      "max_gap_hours": 1,
+      "steps": [["-m", "agents.sales_director", "--run"]],
+      "muc_dich": "v15.1 — GĐ Kinh doanh TMĐT: đẩy việc từ nguồn thật vào hàng duyệt khối sales (gồm nhắc lead `lead_followup`) + quét SLA handoff lớp A 2 giờ/B 4 giờ giờ làm việc → leo thang (sales-04.1). Khung 30 phút/lần GIẢ ĐỊNH — GĐ Kinh doanh chỉnh"
+    },
+    "b2b_followups": {
+      "on_calendar": "*-*-* 08:30:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "agents.kd_quote", "--followups"]],
+      "muc_dich": "v15.1 — nháp nhắc chốt đơn báo giá B2B đã duyệt chưa có kết quả → hàng duyệt khối sales (sales-05); agent không tự gửi. Giờ GIẢ ĐỊNH — GĐ bán hàng chỉnh"
+    },
+    "order_watch": {
+      "on_calendar": "*-*-* 08:40:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "agents.kd_orders", "--watch"]],
+      "muc_dich": "v15.1 — tỷ lệ hủy/hoàn tuần ĐÃ đóng bất thường → `order_anomaly` khối sales (sales-06.2); chạy hằng ngày, đợt theo tuần nên chạy lại không nhân bản. Giờ GIẢ ĐỊNH — GĐ bán hàng chỉnh"
+    },
+    "dealer_price_watch": {
+      "on_calendar": "*-*-* 08:50:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "agents.kd_price", "--dealer-watch"]],
+      "muc_dich": "v15.1 — giá đại lý quan sát tay dưới giá sàn golden → `dealer_price_alert` khối sales (sales-06.1); agent không đổi giá. Giờ GIẢ ĐỊNH — GĐ bán hàng chỉnh"
+    },
+    "ceo_promo": {
+      "on_calendar": "*-*-* 09:00:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "agents.ceo_promo"]],
+      "muc_dich": "v15.1 — KM/voucher đang chạy (listing sàn) lệch bản đã duyệt → `promo_deviation` khối ceo hằng ngày (ceo-04.1); agent không đổi KM. Giờ GIẢ ĐỊNH — TGĐ chỉnh"
+    },
+    "intel_keywords": {
+      "on_calendar": "Mon *-*-* 07:45:00",
+      "max_gap_hours": 192,
+      "steps": [["scripts/intel_weekly.py", "--suggest-keywords"]],
+      "muc_dich": "v15.1 — gợi ý từ khóa an toàn pháp lý từ file Trends related mới nhất → `keyword_suggest` khối intel hằng tuần (intel-04.2). Thứ Hai 07:45 GIẢ ĐỊNH (sau job intel) — Quản lý Marketing chỉnh"
     },
     "ceo_weekly": {
       "on_calendar": "Mon *-*-* 08:00:00",

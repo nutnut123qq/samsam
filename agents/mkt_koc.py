@@ -45,7 +45,7 @@ from pathlib import Path
 
 import psycopg
 
-from agents.report import REPORTS_DIR, write_report
+from agents.report import REPORTS_DIR, queue_sample, write_report
 from ingest.lead_store import connect
 from pipelines import approval_queue as aq
 from pipelines import director, guardrail, store
@@ -346,8 +346,12 @@ def release(conn, qid, *, out_dir: Path | None = None) -> dict:
     if miss:
         return {"code": "KIT_CONTRACT_CHANGED",
                 "reason": f"hợp đồng thiếu điều khoản: {', '.join(miss)}"}
+    # P8.4: sổ KOC hiện là MẪU (`KOC-MAU-xx`) → luôn mẫu; ngoài ra theo cờ
+    # mục hàng duyệt.
     path = write_report(payload, out_dir or REPORTS_DIR,
-                        f"koc-kit-{m.group(1)}-{qid}.md")
+                        f"koc-kit-{m.group(1)}-{qid}.md",
+                        sample=bool(re.search(r"KOC-MAU-\d{2}", oid or ""))
+                        or queue_sample(conn, qid))
     return {"code": None, "reason": "đạt", "path": path}
 
 

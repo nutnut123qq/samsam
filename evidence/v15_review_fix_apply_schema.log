@@ -1,0 +1,40 @@
+# command: python withdb.py samsam_v15_g3 python scripts/apply_schema.py --roles (×2) ; python -m ingest.core_store ; python -m ingest.golden_store
+# môi trường: nền a05c60f + working tree CHƯA commit (sha256 git diff = 6b6dad61490145907765399799f81297159a0649b06a8f8c1da2c25755b59ad8), DB tạm samsam_v15_g3 (tạo mới bằng mkdb.py, không phải DB .env)
+# exit: apply#1=0 apply#2=0 core_store=0 golden_store=0 — lần 2 không lỗi/cảnh báo (0 dòng error/warn/notice)
+
+== apply 1 (tail)
+lm_usage, lot_origins, market_alerts, market_rows, market_snapshots, opex_entries, ops_incident_events, ops_incidents, order_history, orders, org_prospects, output_reviews, partner_post_scans, plot_logs, plots, price_list, product_sync_log, production_lots, products, project_milestones, qr_codes, qr_signatures, recon_results, red_alert_acks, red_alert_deliveries, red_alerts, report_outputs, revenue_quarters, san_suggestion_uses, san_suggestions, settlement_rows, sim_runs, sku_map, sku_master, sla_escalations, social_mentions, social_mentions_vendor, trends_related, trends_weekly, video_assets, xnqc_dossiers
+
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+
+
+== apply 2 (tail)
+lm_usage, lot_origins, market_alerts, market_rows, market_snapshots, opex_entries, ops_incident_events, ops_incidents, order_history, orders, org_prospects, output_reviews, partner_post_scans, plot_logs, plots, price_list, product_sync_log, production_lots, products, project_milestones, qr_codes, qr_signatures, recon_results, red_alert_acks, red_alert_deliveries, red_alerts, report_outputs, revenue_quarters, san_suggestion_uses, san_suggestions, settlement_rows, sim_runs, sku_map, sku_master, sla_escalations, social_mentions, social_mentions_vendor, trends_related, trends_weekly, video_assets, xnqc_dossiers
+
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+
+
+== core_store
+[load] products: 27 rows
+
+[load] claims_approved: 22 rows
+
+[load] plots: 3 rows
+
+[load] plot_logs: 6 rows
+
+[load] orders: 5 rows
+
+[load] assets: 219 rows
+
+[done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+
+
+== golden_store
+[loader-gate] golden_store: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-01 chay_thu, legal_hr-03.2 chay_thu, production-02 chay_thu → nạp
+
+[load] sku_changed=13, map_changed=15, price_inserted=34, price_closed=0, price_same=0
+
+[disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39

@@ -471,7 +471,10 @@ def main(argv=None, now: datetime | None = None, *, transport=None,
             return 1
         vn_day = now.astimezone(VN_TZ).date().isoformat()
         try:
-            p = write_report(text, REPORTS_DIR, f"vt-canh-bao-{vn_day}.md")
+            # P8.4: cảnh báo thời tiết theo vùng (dữ liệu dự báo thật) — báo
+            # cáo không thuộc tính năng có sổ đếm.
+            p = write_report(text, REPORTS_DIR, f"vt-canh-bao-{vn_day}.md",
+                             sample=False)
         except OSError as e:
             print(f"[err] không ghi được digest ({type(e).__name__})",
                   flush=True)

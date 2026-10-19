@@ -1,0 +1,18 @@
+# v15 p11 — pytest file đụng + liên quan (code mới)
+# command: (cwd=D:/code/samsam) python $H/withdb.py samsam_v15_p11 python -m pytest tests/test_v15_p11_core_store.py tests/test_core_store.py tests/test_garden_chain.py tests/test_garden_director.py tests/test_kd_orders.py tests/test_v14_p2_service_auth.py tests/test_golden_store.py tests/test_handover_docs.py tests/test_db_backup.py tests/test_dr_drill.py tests/test_report.py tests/test_bks_audit.py -q -rs -p no:cacheprovider
+# nền a05c60f (nhánh v15-hop-dong) + working tree chưa commit (sha256 git diff trừ v13-board.md/DONE.md = 96d60d11a3c00d80b6a482696e4dc50c9abc0f32c38339c290e8ca93dcee71ad; file mới chưa track tests/test_v15_p11_core_store.py sha256 = c481c0db660d3418546c64e198bd1c5a17ebaa1e9532e6c05f0afbdb5e00bbdf)
+# môi trường: DB test samsam_v15_p11 (tạo bằng $H/mkdb.py, DSN che qua withdb.py) — KHÔNG phải DB samsam của .env
+# exit code: 0
+# tổng kết: 408 passed, 3 skipped in 367.58s (0:06:07)
+# ----------------------------------------------------------------
+........................................................................ [ 17%]
+........................................................................ [ 35%]
+........................................................................ [ 52%]
+........................................................................ [ 70%]
+...........................................sss.......................... [ 87%]
+...................................................                      [100%]
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:504: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:528: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:546: không có docker/image postgres:<major>-alpine
+408 passed, 3 skipped in 367.58s (0:06:07)

@@ -390,8 +390,10 @@ def main(argv=None, now: datetime | None = None) -> int:
                   "định)", flush=True)
     text = render(data, start, end, summaries, args.period)
     try:
+        # P8.4: tin thu thật (intel_items, không đường mẫu).
         path = write_report(text, REPORTS_DIR, f"intel-bulletin-{args.period}"
-                                               f"-{start:%Y-%m-%d}.md")
+                                               f"-{start:%Y-%m-%d}.md",
+                            sample=False)
     except OSError as e:
         print(f"[err] không ghi được bản tin ({type(e).__name__})",
               flush=True)

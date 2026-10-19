@@ -1,0 +1,76 @@
+# command: python withdb.py samsam_v15_p12 python -m pipelines.loader_gate --status
+# nền a05c60f (main) + working tree CHƯA commit (sha256 git diff = d138c3cecb65722c96bf8e7afb6c6f44f73af5155c8592b50bd5d0e4edbb0665); DB tạm samsam_v15_p12 (withdb.py che DSN); lane p12
+# kết quả: exit 0
+[market_csv] nạp — chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-05 chay_thu, sales-06.2 chay_thu → nạp
+
+[golden_store] nạp — chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-01 chay_thu, legal_hr-03.2 chay_thu, production-02 chay_thu → nạp
+
+[embed_store] nạp — chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-03 chay_thu → nạp
+
+[kb_internal] nạp — chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-03 chay_thu → nạp
+
+[doc_intake] nạp — chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-02 chay_thu, legal_hr-03.1 chay_thu → nạp
+
+[agent_eval] nạp — chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-07.3 chay_thu → nạp
+
+[lead_store] nạp — chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: sales-04.1 chay_thu → nạp
+
+[dealer_price] nạp — chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: sales-06.1 chay_thu → nạp
+
+[done] 8 loader, 8 chưa cấu hình chính sách
+
+# command: python withdb.py samsam_v15_p12 python -m pipelines.red_alert --check-routing (routing repo: chưa có người nhận)
+# nền a05c60f (main) + working tree CHƯA commit (sha256 git diff = d138c3cecb65722c96bf8e7afb6c6f44f73af5155c8592b50bd5d0e4edbb0665); DB tạm samsam_v15_p12 (withdb.py che DSN); lane p12
+# kết quả: exit 1 (đúng: thiếu người nhận độc lập)
+[tồn] chính sách xử lý tồn CHƯA QUYẾT (Bên B — routing `backlog.chinh_sach`) → tồn KHÔNG tự leo thang
+
+[cấp 2] leo thang cấp 2 CHƯA CẤU HÌNH (Bên B chỉ định người cấp 2 + số phút — routing `cap2`) → không leo thang cấp 2
+
+[ngoài giờ] người trực ngoài giờ CHƯA CẤU HÌNH (Bên B — routing `ngoai_gio`) → ngoài giờ chỉ gửi người nhận cấp 1
+
+[FAIL] thiếu người nhận độc lập (external-dep) — cảnh báo đỏ vẫn được ghi bảng red_alerts nhưng chưa có ai nhận; Pháp chế xác nhận người nhận rồi điền data/red_alert_routing.json
+
+# command: python withdb.py samsam_v15_p12 python <scratchpad>/p12_e2e.py (subprocess CLI thật, DB test: lead_store khi sales-04.1 tat/van_hanh; red_alert --escalate --dry-run đếm dòng trước/sau)
+# nền a05c60f (main) + working tree CHƯA commit (sha256 git diff = d138c3cecb65722c96bf8e7afb6c6f44f73af5155c8592b50bd5d0e4edbb0665); DB tạm samsam_v15_p12 (withdb.py che DSN); lane p12
+# kết quả: exit 0
+== P12.1 loader lead_store: sales-04.1 TẮT + chính sách chưa cấu hình
+
+$ python -m ingest.lead_store  → exit 2
+
+    [loader-gate] lead_store: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng TẮT: sales-04.1 → KHÔNG nạp (HĐ 6.7)
+
+    [rollout] loader lead_store: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng TẮT: sales-04.1 → KHÔNG nạp (HĐ 6.7)
+
+   leads trước/sau: 0/0
+
+$ python -m ingest.lead_store  → exit 0
+
+    [loader-gate] lead_store: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: sales-04.1 van_hanh → nạp
+
+    [scan] convlog: 45 record — lead=30, intent-miss=13, fields-miss=0, ts-bad=0, corrupt=0, _doc=0, io-error=0, dup-in-file=2 — thiếu ['conversations.jsonl.1']
+
+    [done] mới=30 trùng=0 — total leads=30 (streamlit=6, zalo=24)
+
+== P12.2 red_alert --escalate --dry-run (không ghi)
+
+$ python -m pipelines.red_alert --escalate --dry-run  → exit 0
+
+    [dry-run] KHÔNG ghi/gửi gì — CHƯA bật leo thang lần nào — nếu bật bây giờ, mọi cảnh báo đang quá hạn là TỒN
+
+    [dry-run] luồng thường: sẽ leo thang 0 — []
+
+    [dry-run] cấp 2: 0 — []
+
+    [dry-run] tồn: tổng 0, chính sách CHƯA QUYẾT — lần chạy tới leo thang 0: []
+
+    [dry-run] trang tồn (id > 0): []
+
+    [tồn] chính sách xử lý tồn CHƯA QUYẾT (Bên B — routing `backlog.chinh_sach`) → tồn KHÔNG tự leo thang
+
+    [cấp 2] leo thang cấp 2 CHƯA CẤU HÌNH (Bên B chỉ định người cấp 2 + số phút — routing `cap2`) → không leo thang cấp 2
+
+    [ngoài giờ] người trực ngoài giờ CHƯA CẤU HÌNH (Bên B — routing `ngoai_gio`) → ngoài giờ chỉ gửi người nhận cấp 1
+
+   (red_alerts, agent_action_log) trước/sau: (0, 0)/(0, 0)
+
+[PASS] E2E P12

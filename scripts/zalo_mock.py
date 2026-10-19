@@ -48,6 +48,11 @@ def _sign(raw: bytes) -> str:
 
 def main() -> int:
     zalo.APP_ID, zalo.OA_SECRET = APP_ID, SECRET  # V1.2: signature dùng OA_SECRET
+    # v15 fix P8.1: mọi dòng convlog của mock = MẪU (provenance "sample",
+    # is_sample) — không thành đầu ra chatbot thật ở bộ đếm rollout. Transport
+    # thay bằng lambda dưới cũng tự ra "sample"; cờ này chặn cả khi ai đó
+    # bỏ dòng thay send_text.
+    zalo.CONV_SAMPLE = True
     zalo.ACCESS_TOKEN = ""  # send_text gốc sẽ skip — thay bằng mock dưới
     zalo.send_text = lambda uid, text: SENT.update({uid: text}) or True
 

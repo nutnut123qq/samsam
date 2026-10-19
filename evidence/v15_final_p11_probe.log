@@ -1,0 +1,13 @@
+# Probe P11 doc lap (coordinator): don THAT tham chieu san pham -> core_store nap lai 2 lan
+# Revision moi: nhu evidence/v15_final_pytest.log; DB samsam_v15_pr. Revision cu: a05c60f (worktree tam ngoai repo, da xoa); DB samsam_v15_pr0
+# Script: scratchpad probe15_p11.py (insert orders PROBE-REAL-1 source market:probe; chay python -m ingest.core_store 2 lan)
+
+[code a05c60f]
+core_store lan 1: exit 0
+core_store lan 2: exit 0
+P11 lien ket don that giu nguyen: False | san pham con: True
+
+[code v15]
+core_store lan 1: exit 0
+core_store lan 2: exit 0
+P11 lien ket don that giu nguyen: True | san pham con: True

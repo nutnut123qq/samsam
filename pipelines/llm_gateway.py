@@ -361,7 +361,8 @@ def _strip_accents(s: str) -> str:
 # — chỉ cho cụm trong danh sách không dấu đã rà (`_HEALTH_ASCII`); hoặc
 # (b) cùng bộ dấu với âm tiết của cụm có dấu (không phân biệt vị trí dấu:
 # "hoá"="hóa"). "thuộc" ≠ "thuốc", "đâu" ≠ "đau" (khác bộ dấu) -> không
-# trúng oan. Ký tự định dạng vô hình (ZWSP, soft hyphen...) bỏ trước;
+# trúng oan. Ký tự định dạng vô hình (ZWSP, soft hyphen...) bỏ trước
+# (v15 P9.1: chỗ bỏ là ranh giới mềm — xem `_clean`/`_virt` cuối file);
 # NFKC gộp fullwidth/NFD. Cụm dính liền không cách ("tieuduong") cũng bắt.
 _SYL_RE = re.compile(r"[^\W_]+")
 
@@ -472,62 +473,180 @@ _CTX_NEXT_STOP = {
 }
 
 
-def _health_ctx(syls: list[str], plain: list[str]) -> bool:
-    n = len(plain)
-    for i in range(n - 1):
-        trig = _CTX_TRIG.get(plain[i])
+# v15 (P9.1): ký tự VÔ HÌNH chèn GIỮA hai từ ("bị<ZWSP>gan") — bản cũ bỏ
+# ký tự rồi DÍNH hai từ thành một âm tiết "bịgan", luật ngữ cảnh (cần 2 âm
+# tiết "bị" + "gan") không bắt được -> câu sức khỏe lọt tới AI. Giờ chỗ bỏ
+# ký tự vô hình là RANH GIỚI MỀM: mỗi âm tiết được cắt thành các mảnh tại
+# ranh giới mềm, và khi so luật một "âm tiết ảo" = 1 hoặc nhiều mảnh liền
+# nhau nối qua ranh giới mềm. Vậy ký tự vô hình vừa có thể là khoảng trắng
+# ("bị|gan") vừa có thể là chỗ chèn trong từ ("g|an" -> "gan"), cả hai
+# cách hiểu cùng được thử — trộn cả hai ("bị<Z>g<Z>an", "tác<Z>dụng ph<Z>ụ")
+# cũng bắt. Không có ký tự vô hình -> mỗi âm tiết là 1 mảnh, y hệt v14.
+# Ký tự vô hình = Cf (ZWSP/ZWJ/soft hyphen/BOM/bidi/tag...) + nhóm
+# Default_Ignorable không phải Cf (CGJ, chọn biến thể, Hangul filler...).
+# Tuyến tính: mỗi lần nối mảnh dừng ngay khi chuỗi không còn là tiền tố
+# của khóa nào (độ dài khóa <= vài chục ký tự).
+def _ign_class() -> str:
+    cps = [c for c in (*range(0x20000), *range(0xE0000, 0xE1000))
+           if unicodedata.category(chr(c)) == "Cf"]
+    cps += [0x034F, 0x115F, 0x1160, 0x17B4, 0x17B5, 0x2065, 0x3164,
+            0xFFA0, *range(0x180B, 0x1810), *range(0xFE00, 0xFE10),
+            *range(0xFFF0, 0xFFF9), *range(0xE0000, 0xE1000)]
+    cps = sorted(set(cps))
+    out, i = [], 0
+    while i < len(cps):
+        j = i
+        while j + 1 < len(cps) and cps[j + 1] == cps[j] + 1:
+            j += 1
+        a, b = cps[i], cps[j]
+        out.append(f"\\U{a:08x}" if a == b else f"\\U{a:08x}-\\U{b:08x}")
+        i = j + 1
+    return "[" + "".join(out) + "]+"
+
+
+_IGN_RE = re.compile(_ign_class())
+
+
+def _clean(text: str) -> tuple[str, list[int]]:
+    """NFKC + casefold, bỏ ký tự vô hình -> (text, vị trí ranh giới mềm)."""
+    t = unicodedata.normalize("NFKC", text).casefold()
+    parts = _IGN_RE.split(t)
+    if len(parts) == 1:
+        return t, []
+    out, soft, n = [], [], 0
+    for p in parts:
+        if p:
+            if out:
+                soft.append(n)
+            out.append(p)
+            n += len(p)
+    return "".join(out), soft
+
+
+def _atoms(t: str, soft: list[int]) -> list[tuple[str, str, bool]]:
+    """[(mảnh gốc, mảnh bỏ dấu, nối MỀM với mảnh trước)]."""
+    atoms, k, ns = [], 0, len(soft)
+    for m in _SYL_RE.finditer(t):
+        s, e = m.span()
+        while k < ns and soft[k] <= s:
+            k += 1
+        prev, link = s, False
+        while k < ns and soft[k] < e:
+            o = t[prev:soft[k]]
+            atoms.append((o, _strip_accents(o), link))
+            prev, link = soft[k], True
+            k += 1
+        o = t[prev:e]
+        atoms.append((o, _strip_accents(o), link))
+    return atoms
+
+
+def _prefixes(words) -> frozenset:
+    return frozenset(w[:i] for w in words for i in range(1, len(w) + 1))
+
+
+def _virt(atoms, i: int, pre):
+    """Âm tiết ảo bắt đầu ở mảnh i: (gốc, bỏ dấu, mảnh kế) — nối thêm mảnh
+    chỉ qua ranh giới mềm; dừng khi bản bỏ dấu không còn trong `pre`
+    (tiền tố khóa) -> mỗi lần gọi tối đa len(khóa dài nhất) bước."""
+    o, p, j, n = "", "", i, len(atoms)
+    while j < n and (j == i or atoms[j][2]):
+        o += atoms[j][0]
+        p += atoms[j][1]
+        j += 1
+        if p not in pre:
+            return
+        yield o, p, j
+
+
+_TRIG_PRE = _prefixes(_CTX_TRIG)
+_DIS_PRE = _prefixes(w for k in _CTX_DIS for w in k.split())
+_DIS2_FIRST = {k.split()[0] for k in _CTX_DIS if " " in k}
+_STOP_PRE = {d: _prefixes(v) for d, v in _CTX_NEXT_STOP.items()}
+
+
+def _ctx_dis_ok(parts, dis: str, d: str, trig_plain: str,
+                trig_bare: bool) -> bool:
+    for o2, acc in zip(parts, dis.split()):
+        if _strip_accents(o2) != o2:
+            ok = _marks_sub(o2, acc)
+        elif _strip_accents(acc) == acc:
+            ok = not trig_bare or d in _CTX_BARE[trig_plain]
+        else:
+            ok = d in _CTX_BARE[trig_plain]
+        if not ok:
+            return False
+    return True
+
+
+def _health_ctx(atoms, i: int) -> bool:
+    for o, p, j in _virt(atoms, i, _TRIG_PRE):
+        trig = _CTX_TRIG.get(p)
         if trig is None:
             continue
-        o = syls[i]
         trig_bare = _strip_accents(o) == o
         if not trig_bare and _marks(o) != _marks(trig):
             continue
-        d = plain[i + 1]
-        two = f"{d} {plain[i + 2]}" if i + 2 < n else ""
-        dis = _CTX_DIS.get(two)
-        width = 2 if dis else 1
-        dis = dis or _CTX_DIS.get(d)
-        if dis is None:
-            continue
-        if i + 1 + width < n and plain[i + 1 + width] in _CTX_NEXT_STOP.get(
-                d, ()):
-            continue
-        parts = syls[i + 1:i + 1 + width]
-        ok = True
-        for o2, acc in zip(parts, dis.split()):
-            if _strip_accents(o2) != o2:
-                ok = _marks_sub(o2, acc)
-            elif _strip_accents(acc) == acc:
-                ok = not trig_bare or d in _CTX_BARE[plain[i]]
-            else:
-                ok = d in _CTX_BARE[plain[i]]
-            if not ok:
-                break
-        if ok:
-            return True
+        for o1, d, k in _virt(atoms, j, _DIS_PRE):
+            cands = []
+            if d in _DIS2_FIRST:
+                for o2, d2, m in _virt(atoms, k, _DIS_PRE):
+                    dis2 = _CTX_DIS.get(f"{d} {d2}")
+                    if dis2:
+                        cands.append(((o1, o2), dis2, m))
+            if d in _CTX_DIS:
+                cands.append(((o1,), _CTX_DIS[d], k))
+            for parts, dis, nxt in cands:
+                stop = _CTX_NEXT_STOP.get(d)
+                if stop and any(sp in stop for _o, sp, _j in _virt(
+                        atoms, nxt, _STOP_PRE[d])):
+                    continue
+                if _ctx_dis_ok(parts, dis, d, p, trig_bare):
+                    return True
     return False
+
+
+_RULE_PRE = _prefixes([*(k[0] for k, _a, _b in _HEALTH_RULES),
+                       *_HEALTH_JOINED])
+_PART_PRE = {w: _prefixes((w,)) for k, _a, _b in _HEALTH_RULES for w in k}
+
+
+def _rule_rest(atoms, j: int, key, acc, bare) -> bool:
+    """Âm tiết 2..n của luật khớp liên tiếp từ mảnh j."""
+    n = len(key)
+    for x in range(1, n):
+        for o, p, nj in _virt(atoms, j, _PART_PRE[key[x]]):
+            if p == key[x]:
+                break
+        else:
+            return False
+        if not _syl_ok(o, acc[x] if acc else None, bare, partial=True):
+            return False
+        j = nj
+    return True
 
 
 def is_health_question(text: str) -> bool:
     if not isinstance(text, str):
         return False
-    t = "".join(c for c in unicodedata.normalize("NFKC", text)
-                if unicodedata.category(c) != "Cf").casefold()
+    t, soft = _clean(text)
     if _HEALTH_VI_RE.search(t):
         return True
-    syls = _SYL_RE.findall(t)
-    plain = [_strip_accents(s) for s in syls]
-    if _health_ctx(syls, plain):
-        return True
-    for i, p in enumerate(plain):
-        joined = _HEALTH_JOINED.get(p)
-        if joined and _syl_ok(syls[i], joined[0], joined[1], partial=True):
+    atoms = _atoms(t, soft)
+    for i, a in enumerate(atoms):
+        # Lọc nhanh (tương đương): mảnh đầu phải là tiền tố của một khóa.
+        if a[1] in _TRIG_PRE and _health_ctx(atoms, i):
             return True
-        for key, acc, bare in _HEALTH_BY_FIRST.get(p, ()):
-            n = len(key)
-            if tuple(plain[i:i + n]) == key and all(
-                    _syl_ok(syls[i + j], acc[j] if acc else None, bare,
-                            partial=n > 1)
-                    for j in range(n)):
+        if a[1] not in _RULE_PRE:
+            continue
+        for o, p, j in _virt(atoms, i, _RULE_PRE):
+            joined = _HEALTH_JOINED.get(p)
+            if joined and _syl_ok(o, joined[0], joined[1], partial=True):
                 return True
+            for key, acc, bare in _HEALTH_BY_FIRST.get(p, ()):
+                n = len(key)
+                if _syl_ok(o, acc[0] if acc else None, bare,
+                           partial=n > 1) and _rule_rest(atoms, j, key,
+                                                         acc, bare):
+                    return True
     return False

@@ -105,6 +105,18 @@ class FakeConn:
                 if k[0] == params[0]:
                     v[2] = True
                     rc += 1
+        elif s.startswith("select doc_review_human"):
+            # v15.4 (P10.1): mô phỏng function SECURITY DEFINER — chỉ từ
+            # pending_review; verified kéo field verified.
+            sha, status, _by = params
+            ok = self.docs.get(sha) == "pending_review"
+            if ok:
+                self.docs[sha] = status
+                if status == "verified":
+                    for k, v in self.fields.items():
+                        if k[0] == sha:
+                            v[2] = True
+            rows = [(ok,)]
         elif s.startswith("select d.sha256"):
             rows = [(k, "giay_tiep_nhan", v, True, "so_giay=1/2024/DKSP")
                     for k, v in self.docs.items()
@@ -470,12 +482,15 @@ def test_cli_verify_pending_review(cli, capsys):
     conn = cli["conn"] = FakeConn({SHA: "pending_review"})
     conn.fields[(SHA, "so_giay")] = ["1/2024/DKSP", 1.0, False]
     assert di.main(["--verify", SHA.upper(), "--by", "Pháp chế A"]) == 0
-    upd = [(s, p) for s, p, _ in conn.sql if s.startswith("update documents")]
+    # v15.4 (P10.1): ghi qua function SECURITY DEFINER (danh tính theo login,
+    # điều kiện pending_review nằm trong function) — không UPDATE thẳng.
+    upd = [(s, p) for s, p, _ in conn.sql
+           if s.startswith("select doc_review_human")]
     assert len(upd) == 1
-    assert "status = %s" in upd[0][0]
-    assert "and status = 'pending_review'" in upd[0][0]
-    assert upd[0][1] == ("verified", "Pháp chế A", SHA)
-    assert conn.count("update document_fields") == 1
+    assert upd[0][0] == "select doc_review_human(%s, %s, %s)"
+    assert upd[0][1] == (SHA, "verified", "Pháp chế A")
+    assert conn.count("update documents") == 0
+    assert conn.count("update document_fields") == 0
     assert conn.commits == 1 and conn.closed == 1
     assert conn.docs[SHA] == "verified" and conn.fields[(SHA, "so_giay")][2]
     out = capsys.readouterr().out
@@ -488,6 +503,7 @@ def test_cli_reject_keeps_fields_unverified(cli):
     assert di.main(["--reject", SHA, "--by", "B"]) == 0
     assert conn.docs[SHA] == "rejected"
     assert conn.count("update document_fields") == 0
+    assert conn.count("select doc_review_human") == 1
     assert conn.fields[(SHA, "so_giay")][2] is False
 
 

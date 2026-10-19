@@ -548,7 +548,10 @@ def main(argv=None, now=None) -> int:
         if a.dry_run:
             print(text)
             return 0
-        path = write_report(text, a.out_dir, f"doi-soat-{label}.md")
+        # P8.4: quyết toán thật (rev_share không nhận file mẫu; bảng
+        # settlement_rows không có đường mẫu).
+        path = write_report(text, a.out_dir, f"doi-soat-{label}.md",
+                            sample=False)
         if a.record:
             rid = record(conn, label, start, end, s, cfg["rate"], fee, text,
                          cfg)

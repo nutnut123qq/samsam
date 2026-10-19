@@ -470,9 +470,11 @@ def _main(args, mapping: dict, cfg: dict) -> int:
         print(f"[A4] {len(res['findings'])} phát hiện (S1 {n_s1}) · dòng"
               f" chưa map {res['unmapped']}")
         if args.report:
+            # P8.4: listing sàn từ file xuất Seller Center (không cột mẫu).
             path = write_report(render_report(res, today, plan),
                                 args.out_dir,
-                                f"catalog-sync-{today:%Y-%m-%d}.md")
+                                f"catalog-sync-{today:%Y-%m-%d}.md",
+                                sample=False)
             print(f"[report] {path}")
         elif args.dry_run:
             for f in res["findings"]:

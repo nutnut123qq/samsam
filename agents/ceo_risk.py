@@ -370,7 +370,9 @@ def main(argv=None) -> int:
     text = "\n".join([f"# Sổ rủi ro pháp lý mở — {vn:%d/%m/%Y %H:%M} (giờ VN)",
                       "", *render_section(cur, tr, now, limit=None), "",
                       "---", "*BẢN NHÁP — agent chỉ đọc, không tự gửi.*", ""])
-    path = write_report(text, a.out_dir, f"ceo-risk-{vn:%Y-%m-%d}.md")
+    # P8.4: hồ sơ XNQC + cảnh báo đỏ + bài đã đăng — không có đường mẫu.
+    path = write_report(text, a.out_dir, f"ceo-risk-{vn:%Y-%m-%d}.md",
+                        sample=False)
     cnt = {k: sum(1 for r in cur if r["level"] == k) for k in LEVELS}
     print(f"[done] {path} — đỏ {cnt['do']}, vàng {cnt['vang']}, xanh"
           f" {cnt['xanh']}")

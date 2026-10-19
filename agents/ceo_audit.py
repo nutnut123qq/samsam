@@ -315,7 +315,9 @@ def main(argv=None) -> int:
         + [f"- {ch}: {safe(_mask_pii(f))}" for ch, f in sorted(data["snapshots"].items())]
         + (["- (chưa có file listing sàn)"] if not data["snapshots"] else [])
         + ["", "---", "*BẢN NHÁP — agent chỉ đọc, không tự gửi.*", ""])
-    path = write_report(text, a.out_dir, name)
+    # P8.4: listing sàn + bài đã đăng (file xuất tay) + nháp đã duyệt — các
+    # bảng nguồn không có đường ghi mẫu.
+    path = write_report(text, a.out_dir, name, sample=False)
     fs = findings(data["items"])
     print(f"[done] {path} — {len(data['items'])} mục trong mẫu số,"
           f" {len(fs)} phát hiện")

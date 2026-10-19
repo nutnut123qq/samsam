@@ -13,9 +13,17 @@ Contract:
     insert 0 = xóa trắng bảng đang có — `claims_approved` là nguồn sự
     thật guardrail. 0 record = file cắt cụt/crawl lỗi → giữ thống nhất
     hành vi "không xóa rows đang có".
-    Edge chấp nhận (ghi ở đây, someday): row `source='manual'` trỏ
-    `product_id` tới row do loader quản sẽ mất link (`set null`) sau
-    mỗi reload — vá dài hạn = upsert `on conflict`.
+    v15.5 (HĐ 7.3): `products` KHÔNG còn delete-by-source — trước đó
+    mỗi lần nạp lại FK `on delete set null` cắt `orders.product_id` của
+    đơn THẬT. Nay upsert theo `id` (chỉ đè dòng cùng `source`), sản phẩm
+    biến mất khỏi nguồn → GIỮ + `retired_at` (claim trỏ trang sản phẩm đó
+    vẫn link về id cũ), xuất hiện lại → bỏ `retired_at`; id trùng dòng
+    NGUỒN KHÁC (vd 'manual') → không đè. Mọi sự kiện đổi/ngừng/mở lại/mơ
+    hồ ghi `product_sync_log` (append-only) + in `[changed]`/`[retired]`/
+    `[reactivated]`/`[ambiguous]`. Loader không bao giờ DELETE products.
+    `products.jsonl` thiếu / 0 record / hỏng (JSON lỗi, `{}`, thiếu
+    `id`/`name`, trùng `id`) và MỌI file nguồn hỏng → exit 1, KHÔNG ghi
+    gì (thiếu products thì claim mất map sản phẩm → không nạp domain nào).
     v9.3: `plots` KHÔNG còn delete+insert mù — khoảnh mẫu còn nhật ký
     ĐÃ CHAIN (hash chain `plot_logs`, trigger chặn xóa) hoặc còn ảnh
     `garden_media` được GIỮ và upsert tại chỗ; khoảnh trùng id nhưng
@@ -40,6 +48,7 @@ from pathlib import Path
 
 import psycopg
 from dotenv import load_dotenv
+from psycopg.types.json import Jsonb
 
 # Console Windows mặc định cp1258 — crash UnicodeEncodeError khi in tiếng
 # Việt có dấu. Ép UTF-8 cho stdout/stderr (no-op nếu đã là UTF-8).
@@ -84,15 +93,49 @@ PLOTS_UPSERT_SUFFIX = (
                 if c not in ("id", "source"))
     + ", updated_at = now() where plots.source = excluded.source")
 
+# v15.5 — products upsert theo id: chỉ đè dòng CÙNG source, chỉ ghi khi dữ
+# liệu đổi hoặc đang `retired_at` (nạp lại y nguyên = 0 UPDATE).
+_PRODUCT_FIELDS = tuple(c for c in COLS["products"] if c not in ("id",
+                                                                 "source"))
+PRODUCTS_UPSERT_SQL = (
+    f"insert into products ({', '.join(COLS['products'])}) values ("
+    + ", ".join(f"%({c})s" for c in COLS["products"]) + ")"
+    " on conflict (id) do update set "
+    + ", ".join(f"{c} = excluded.{c}" for c in _PRODUCT_FIELDS)
+    + ", retired_at = null, updated_at = now()"
+    " where products.source = excluded.source and ("
+    + ", ".join(f"products.{c}" for c in _PRODUCT_FIELDS)
+    + ", products.retired_at) is distinct from ("
+    + ", ".join(f"excluded.{c}" for c in _PRODUCT_FIELDS) + ", null)")
+# Sản phẩm của nguồn không còn trong file → đánh dấu, KHÔNG xóa; đếm đơn
+# thật đang trỏ tới để báo.
+PRODUCTS_RETIRE_SQL = (
+    "update products p set retired_at = now(), updated_at = now()"
+    " where p.source = %s and p.retired_at is null and p.id <> all(%s)"
+    " returning p.id, p.name, p.url, (select count(*) from orders o"
+    " where o.product_id = p.id and o.source <> 'sample'"
+    " and o.source not like 'sample:%%')")
+
+
+class SourceError(ValueError):
+    """File nguồn hỏng (JSON lỗi, record thiếu khóa, trùng id...) — main
+    exit 1 TRƯỚC khi kết nối DB, không ghi gì."""
+
 
 def iter_jsonl(path: Path):
     """Yield record dict từ file jsonl; skip dòng `{"_doc": ...}` (comment
-    theo convention repo) và dòng trống."""
-    for line in path.open(encoding="utf-8"):
+    theo convention repo) và dòng trống. Dòng không phải JSON object →
+    `SourceError` (file hỏng, không nạp nửa vời)."""
+    for no, line in enumerate(path.open(encoding="utf-8"), 1):
         line = line.strip()
         if not line:
             continue
-        rec = json.loads(line)
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError as e:
+            raise SourceError(f"{path.name}:{no} JSON hỏng ({e.msg})") from e
+        if not isinstance(rec, dict):
+            raise SourceError(f"{path.name}:{no} không phải JSON object")
         if "_doc" in rec:
             continue
         yield rec
@@ -174,38 +217,73 @@ def order_row(rec: dict, source: str) -> dict:
             "source": source}
 
 
+def _rows(path: Path, fn, *args) -> list[dict]:
+    """Map record jsonl → row; record thiếu khóa bắt buộc (vd dòng `{}`)
+    → `SourceError` thay vì KeyError giữa chừng."""
+    out = []
+    for rec in iter_jsonl(path):
+        try:
+            out.append(fn(rec, *args))
+        except (KeyError, TypeError, AttributeError) as e:
+            raise SourceError(f"{path.name}: record thiếu/sai khóa {e}"
+                              f" — file hỏng") from e
+    return out
+
+
+def product_rows(path: Path) -> list[dict]:
+    """products.jsonl → rows; `id`/`name` rỗng hoặc trùng `id` → file hỏng
+    (trùng id = ánh xạ không rõ dòng nào đúng — không tự chọn)."""
+    rows = _rows(path, product_row)
+    seen: set = set()
+    for r in rows:
+        if not (isinstance(r["id"], str) and r["id"].strip()
+                and isinstance(r["name"], str) and r["name"].strip()):
+            raise SourceError(f"{path.name}: record thiếu id/name — file"
+                              " hỏng")
+        if r["id"] in seen:
+            raise SourceError(f"{path.name}: trùng id {r['id']!r} — ánh xạ"
+                              " không rõ, file hỏng")
+        seen.add(r["id"])
+    return rows
+
+
 def collect_rows(data_dir: Path = DATA_DIR) -> list[tuple[str, str, list]]:
     """Đọc data dir → [(table, source, rows)] theo DOMAIN_ORDER (cha
     trước). File thiếu HOẶC 0 record → domain bị skip (warn), KHÔNG
-    xóa rows đang có — giữ invariant "không xoá trắng bảng"."""
+    xóa rows đang có — giữ invariant "không xoá trắng bảng". Ngoại lệ
+    v15.5: `products.jsonl` thiếu/0 record và file hỏng (bất kỳ) →
+    `SourceError` (caller không ghi gì)."""
     domains: list[tuple[str, str, list]] = []
 
     products = (data_dir / "products.jsonl")
-    prod_rows, seg_to_pid = [], {}
-    if products.exists():
-        for rec in iter_jsonl(products):
-            prod_rows.append(product_row(rec))
-            # Chỉ map URL kiểu net.vn '<slug>.html' — whitelist.source trỏ
-            # trang net.vn; url wc (không .html) cùng slug sẽ chen nhầm.
-            url = rec.get("url") or ""
-            if url.rstrip("/").endswith(".html"):
-                seg_to_pid[url_segment(url)] = rec["id"]
-        if prod_rows:
-            domains.append(("products", "products.jsonl", prod_rows))
-        else:
-            print(f"[warn] {products} 0 record — bỏ qua như file thiếu",
-                  flush=True)
-    else:
-        print(f"[warn] thiếu {products} — bỏ qua", flush=True)
+    seg_to_pid: dict = {}
+    # v15.5: products.jsonl thiếu / 0 record → SourceError (không nạp domain
+    # nào): claim map sản phẩm qua file này — nạp claim khi thiếu nó = cắt
+    # `claims_approved.product_id` hàng loạt.
+    if not products.exists():
+        raise SourceError(f"thiếu {products.name}")
+    prod_rows = product_rows(products)
+    if not prod_rows:
+        raise SourceError(f"{products.name} 0 record (rỗng/chỉ _doc)")
+    for r in prod_rows:
+        # Chỉ map URL kiểu net.vn '<slug>.html' — whitelist.source trỏ
+        # trang net.vn; url wc (không .html) cùng slug sẽ chen nhầm.
+        url = r["url"] or ""
+        if url.rstrip("/").endswith(".html"):
+            seg_to_pid[url_segment(url)] = r["id"]
+    domains.append(("products", "products.jsonl", prod_rows))
 
     wl_path = data_dir / "claims_whitelist.json"
     if wl_path.exists():
-        wl = json.loads(wl_path.read_text(encoding="utf-8"))
-        claim_rows_all = []
-        for key, entry in wl.items():
-            if key.startswith("_"):
-                continue
-            claim_rows_all.extend(claim_rows(key, entry, seg_to_pid))
+        try:
+            wl = json.loads(wl_path.read_text(encoding="utf-8"))
+            claim_rows_all = []
+            for key, entry in wl.items():
+                if key.startswith("_"):
+                    continue
+                claim_rows_all.extend(claim_rows(key, entry, seg_to_pid))
+        except (json.JSONDecodeError, AttributeError, TypeError) as e:
+            raise SourceError(f"{wl_path.name} hỏng ({e})") from e
         if claim_rows_all:
             domains.append(("claims_approved", "claims_whitelist.json",
                             claim_rows_all))
@@ -223,7 +301,7 @@ def collect_rows(data_dir: Path = DATA_DIR) -> list[tuple[str, str, list]]:
         row_fn = {"plots": plot_row, "plot_logs": plot_log_row,
                   "orders": order_row}[table]
         if path.exists():
-            rows = [row_fn(r, src) for r in iter_jsonl(path)]
+            rows = _rows(path, row_fn, src)
             if rows:
                 domains.append((table, src, rows))
             else:
@@ -233,15 +311,12 @@ def collect_rows(data_dir: Path = DATA_DIR) -> list[tuple[str, str, list]]:
             print(f"[warn] thiếu {path} — bỏ qua domain {table}",
                   flush=True)
 
-    asset_rows = []
-    if prod_rows:
-        for rec in iter_jsonl(products):
-            asset_rows.extend(image_asset_rows(rec))
+    asset_rows = [a for rows in _rows(products, image_asset_rows)
+                  for a in rows]
     for fname in ("articles.jsonl", "news.jsonl"):
         path = data_dir / fname
         if path.exists():
-            asset_rows.extend(article_asset_row(r, fname)
-                              for r in iter_jsonl(path))
+            asset_rows.extend(_rows(path, article_asset_row, fname))
         else:
             print(f"[warn] thiếu {path} — bỏ qua", flush=True)
     if asset_rows:
@@ -250,14 +325,85 @@ def collect_rows(data_dir: Path = DATA_DIR) -> list[tuple[str, str, list]]:
     return domains
 
 
+def sync_products(conn, src: str, rows: list[dict]) -> list[tuple]:
+    """v15.5 — đồng bộ `products` của nguồn `src` GIỮ định danh: upsert theo
+    id (không DELETE → FK `on delete set null` không cắt đơn thật), sản
+    phẩm vắng khỏi nguồn → `retired_at`. Trả [(kind, product_id, detail)]
+    đã ghi `product_sync_log` (append-only):
+      changed     — cùng id, đổi trường (giá trị cũ/mới; mô tả chỉ báo đổi)
+      retired     — vừa biến mất khỏi nguồn (số đơn thật đang trỏ + id mới
+                    trùng url/tên làm ỨNG VIÊN — KHÔNG tự chuyển liên kết)
+      reactivated — đang retired, xuất hiện lại
+      ambiguous   — id trong nguồn đã thuộc NGUỒN KHÁC (vd 'manual') →
+                    không đè, không xóa (ghi 1 lần cho cùng tình trạng)."""
+    ids = [r["id"] for r in rows]
+    existing = {r[0]: r[1:] for r in conn.execute(
+        "select id, source, retired_at, " + ", ".join(_PRODUCT_FIELDS)
+        + " from products where id = any(%s)", (ids,)).fetchall()}
+    events: list[tuple] = []
+    upsert = []
+    for r in rows:
+        old = existing.get(r["id"])
+        if old is None:
+            upsert.append(r)
+            continue
+        source, retired_at, *vals = old
+        if source != src:
+            events.append(("ambiguous", r["id"], {
+                "ly_do": "id_thuoc_nguon_khac", "nguon_hien_tai": source}))
+            continue
+        diff = {c: ({"doi": True} if c == "description"
+                    else {"cu": v, "moi": r[c]})
+                for c, v in zip(_PRODUCT_FIELDS, vals) if v != r[c]}
+        if diff:
+            events.append(("changed", r["id"], diff))
+        if retired_at is not None:
+            events.append(("reactivated", r["id"],
+                           {"retired_at": retired_at.isoformat()}))
+        upsert.append(r)
+    if upsert:
+        with conn.cursor() as cur:
+            cur.executemany(PRODUCTS_UPSERT_SQL, upsert)
+    for pid, name, url, n_real in conn.execute(
+            PRODUCTS_RETIRE_SQL, (src, ids)).fetchall():
+        cands = sorted(r["id"] for r in rows if r["id"] not in existing
+                       and ((url and r["url"] == url) or r["name"] == name))
+        events.append(("retired", pid, {"don_that": n_real,
+                                        "ung_vien_thay_the": cands}))
+    for kind, pid, detail in events:
+        conn.execute(
+            "insert into product_sync_log (kind, product_id, source, detail)"
+            " select %(k)s, %(p)s, %(s)s, %(d)s where %(k)s <> 'ambiguous'"
+            " or not exists (select 1 from product_sync_log l where"
+            " l.kind = %(k)s and l.product_id = %(p)s and l.source = %(s)s"
+            " and l.detail = %(d)s)",
+            {"k": kind, "p": pid, "s": src, "d": Jsonb(detail)})
+    return events
+
+
+def relink_retired_claims(conn, src: str, rows: list[dict]) -> None:
+    """Claim trỏ trang sản phẩm đã `retired` (vắng khỏi file hiện tại nên
+    `collect_rows` không map được) → giữ link về id cũ thay vì null."""
+    seg = {url_segment(u): pid for pid, u in conn.execute(
+        "select id, url from products where source = %s and retired_at is"
+        " not null and url is not null", (src,)).fetchall()
+        if u.rstrip("/").endswith(".html")}
+    for r in rows:
+        m = _URL_RE.search(r["source_ref"] or "")
+        if r["product_id"] is None and m:
+            r["product_id"] = seg.get(url_segment(m.group(0)))
+
+
 def apply_rows(conn, domains: list[tuple[str, str, list]]) -> dict:
-    """2 pha: delete by-source (con trước cha sau) → insert (cha trước).
-    Domain có source='multi' (assets gom nhiều file) xóa theo tập source
-    thành phần để không sót row của file đã nạp trước đó."""
-    # Pha 1 — delete con → cha
+    """2 pha: delete by-source bảng CON (con trước cha sau) → ghi (cha
+    trước). `products` KHÔNG xóa — `sync_products` upsert + retired (v15.5);
+    sự kiện ở `counts["product_events"]`. Domain có source='multi' (assets
+    gom nhiều file) xóa theo tập source thành phần để không sót row của
+    file đã nạp trước đó."""
+    # Pha 1 — delete con → cha (trừ products)
     by_table = {t: (src, rows) for t, src, rows in domains}
     for table in reversed(DOMAIN_ORDER):
-        if table not in by_table:
+        if table not in by_table or table == "products":
             continue
         src, _ = by_table[table]
         if src == "multi":
@@ -270,12 +416,18 @@ def apply_rows(conn, domains: list[tuple[str, str, list]]) -> dict:
             conn.execute(PLOTS_DELETE_SQL, (src,))
         else:
             conn.execute(f"delete from {table} where source = %s", (src,))
-    # Pha 2 — insert cha → con
-    counts = {}
+    # Pha 2 — ghi cha → con
+    counts: dict = {}
     for table in DOMAIN_ORDER:
         if table not in by_table:
             continue
-        _, rows = by_table[table]
+        src, rows = by_table[table]
+        if table == "products":
+            counts["product_events"] = sync_products(conn, src, rows)
+            counts[table] = len(rows)
+            continue
+        if table == "claims_approved" and "products" in by_table:
+            relink_retired_claims(conn, by_table["products"][0], rows)
         if rows:
             cols = COLS[table]
             sql = (f"insert into {table} ({', '.join(cols)}) values ("
@@ -337,7 +489,11 @@ def main() -> int:
         print("[err] thiếu DATABASE_URL trong .env")
         return 1
 
-    domains = collect_rows()
+    try:
+        domains = collect_rows(DATA_DIR)
+    except SourceError as e:
+        print(f"[err] file nguồn hỏng — không nạp gì: {e}", flush=True)
+        return 1
     loaded = {t: len(r) for t, _, r in domains}
     for table in DOMAIN_ORDER:
         if table in loaded:
@@ -350,7 +506,13 @@ def main() -> int:
                       " liệu mẫu (garden_sample_purge) — không nạp lại",
                       flush=True)
                 domains = drop_sample_garden(domains)
-            apply_rows(conn, domains)
+            counts = apply_rows(conn, domains)
+            for kind, pid, detail in counts.get("product_events", []):
+                print(f"[{kind}] products: {pid} "
+                      + json.dumps(detail, ensure_ascii=False,
+                                   sort_keys=True, default=str)
+                      + (" — giữ, không xóa" if kind == "retired" else ""),
+                      flush=True)
             for pid, n_logs, n_media in kept_plots(conn, domains):
                 print(f"[keep] plots: {pid} ({n_logs} nhật ký đã chain,"
                       f" {n_media} ảnh) — không xóa", flush=True)
@@ -358,7 +520,8 @@ def main() -> int:
             totals = {t: conn.execute(f"select count(*) from {t}")
                       .fetchone()[0] for t in DOMAIN_ORDER
                       if t in present}
-    except psycopg.errors.UndefinedTable as e:
+    except (psycopg.errors.UndefinedTable,
+            psycopg.errors.UndefinedColumn) as e:
         print(f"[err] thiếu bảng lõi — chạy `python "
               f"scripts/apply_schema.py` trước: {e}")
         return 1

@@ -184,6 +184,12 @@ def main(argv=None) -> int:
     if why := auth.bind_service("loader"):
         print(f"[err] {why}", flush=True)
         return 2
+    # v15 P12.1: chính sách cổng tắt loader (data/loader_gate.json) —
+    # chưa cấu hình + tính năng tắt → không nạp.
+    from pipelines import loader_gate
+    if why := loader_gate.check("kb_internal"):
+        print(f"[rollout] {why}", flush=True)
+        return 2
     conn = connect()
     try:
         r = ingest_doc(conn, collection=a.collection, doc_id=a.doc_id,

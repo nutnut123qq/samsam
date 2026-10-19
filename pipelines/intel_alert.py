@@ -22,6 +22,15 @@ Contract:
     `unrouted` = cảnh báo CHƯA THÔNG BÁO được (thiếu người nhận HOẶC chưa
     gửi được qua SMTP) → `--run` exit 1. Unique index
     partial chặn báo trùng khi chạy song song → đếm `dup`.
+  - v15.2 (P8.3, HĐ 6.7): luật thuộc tính năng (danh mục `output_sources`
+    `red_alerts` + `source_agent` + `rules_any`: intel-02 = brand_negative/
+    regulation/competitor_penalty, legal_hr-07 = legal_doc) đang TẮT → luật
+    đó không sinh cảnh báo (bỏ khỏi `rules` của tin; tin chỉ khớp luật tính
+    năng tắt → không ghi dòng, không gửi, đếm `off`). Giai đoạn đọc qua
+    `rollout.mode` (DB down/chưa vào sổ = chạy thử → vẫn sinh, cảnh báo
+    nội bộ). Tin bị bỏ khi tắt KHÔNG bị đánh dấu — bật lại trong cửa sổ
+    `lookback_hours` thì lần quét sau báo. Leo thang cảnh báo ĐÃ có vẫn chạy
+    (an toàn: cảnh báo đỏ chưa ai xác nhận không được im).
   - `escalate`: cảnh báo gốc quá `ESCALATE_AFTER` (2 giờ, hằng code) chưa
     có dòng `red_alert_acks` và chưa leo thang → 1 cảnh báo leo thang (1 cấp,
     không lặp), cùng routing độc lập v4.0. v14.6: gọi `red_alert.escalate`
@@ -178,19 +187,40 @@ def _iso(ts):
     return ts.isoformat() if ts is not None else None
 
 
+def off_rules(conn) -> set[str]:
+    """Luật của tính năng đang TẮT (rollout, HĐ 6.7) → không sinh cảnh báo.
+    Luật không thuộc tính năng nào trong danh mục → không chặn (như
+    `rollout.check_generate`)."""
+    from pipelines import rollout  # lười: rollout → director → ...
+    owner: dict[str, set] = {}
+    for f in rollout._catalog() or []:
+        for s in f["output_sources"]:
+            if s.get("table") == "red_alerts" and                     s.get("source_agent") == SOURCE_AGENT:
+                for r in s.get("rules_any") or RULES:
+                    owner.setdefault(r, set()).add(f["id"])
+    off = {fid for fids in owner.values() for fid in fids
+           if rollout.mode(conn, fid) == "tat"}
+    return {r for r, fids in owner.items() if fids & off}
+
+
 def scan(conn, now: datetime, rules: dict | None = None,
          routing: dict | None = None, sender=red_alert._ENV) -> dict:
     """Quét tin mới → cảnh báo đỏ. → {"scanned","alerts","dup","unrouted",
-    "ids"}."""
+    "ids","off"} (`off` = tin chỉ khớp luật của tính năng TẮT — không ghi)."""
     rules = rules if rules is not None else load_rules()
     since = now - timedelta(hours=rules["lookback_hours"])
     rows = conn.execute(_NEW_SQL, (since, SOURCE_AGENT)).fetchall()
+    off = off_rules(conn) if rows else set()
     conn.commit()   # đóng tx đọc (conn chia sẻ)
     st = {"scanned": len(rows), "alerts": 0, "dup": 0, "unrouted": 0,
-          "ids": []}
+          "ids": [], "off": 0}
     for iid, title, snip, topics, flags, url, src, pub, fetched in rows:
         hits = match({"title": title, "snippet": snip, "topics": topics,
                       "flags": flags, "source": src}, rules)
+        if hits and off and not [h for h in hits if h not in off]:
+            st["off"] += 1          # P8.3: tính năng tắt → không sinh
+            continue
+        hits = [h for h in hits if h not in off]
         if not hits:
             continue
         try:
@@ -253,7 +283,7 @@ def ack(conn, alert_id, by: str, note: str | None = None
     if "escalation_of" in detail:
         conn.commit()
         return False, (f"#{aid} là bản leo thang — xác nhận id gốc "
-                       f"#{detail['escalation_of']}")
+                       f"#{detail.get('escalation_root', detail['escalation_of'])}")
     if "intel_item_id" not in detail:
         conn.commit()
         return False, f"cảnh báo #{aid} không phải cảnh báo gốc intel"
@@ -290,6 +320,7 @@ def _run(conn, rules: dict, now: datetime) -> tuple[int, str]:
     s = scan(conn, now, rules)
     e = escalate(conn, now)
     summary = (f"scanned={s['scanned']} alerts={s['alerts']} dup={s['dup']}"
+               f" off={s.get('off', 0)}"
                f" escalated={e['escalated']} esc_dup={e['dup']}"
                f" unrouted={s['unrouted'] + e['unrouted']}")
     print(f"[done] {summary} alert_ids={s['ids']} escalated_of={e['ids']}",

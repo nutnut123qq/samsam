@@ -1,0 +1,166 @@
+# command: (cwd = BẢN SAO working tree ngoài repo scratchpad/rv2_old, đã TẠM ĐẢO 2 phần vá bằng rv2_revert.py: bỏ khối kiểm human_actor đầu ingest_partner + bỏ khối 'DB TỰ đếm lại' trong rollout_transition_human; test = bản cuối) python withdb.py samsam_v15_g3 python -m pytest -q tests/test_v15_p10_human_authz.py::test_p10_1_ra_kenh_forged_by_violation_writes_nothing tests/test_v15_p8_outputs.py::test_p8_7_db_recounts_outputs_not_evidence
+# môi trường: nền a05c60f + working tree CHƯA commit (sha256 git diff = 6b6dad61490145907765399799f81297159a0649b06a8f8c1da2c25755b59ad8), DB tạm samsam_v15_g3 (tạo mới bằng mkdb.py, không phải DB .env)
+# exit: 1 — 2 failed (đúng chỗ: approval_queue 0→1 dù --by bị từ chối; gọi thẳng function với evidence {outputs:999,out_days:9} DID NOT RAISE). Trên code đã vá: cả 2 PASS (xem v15_review_fix_pytest.log).
+# test_p8_7_db_recount_parity_with_python PASS cả trên bản đảo (bộ đếm DB vẫn còn ở bản sao — test parity kiểm khớp số, không phải lỗ cổng).
+
+FF                                                                       [100%]
+
+================================== FAILURES ===================================
+
+____________ test_p10_1_ra_kenh_forged_by_violation_writes_nothing ____________
+
+
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15_g3) at 0x18c104d39e0>, 'dirs': ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2927/p10cfg0/launch_p10.py'), ...}
+
+
+
+    def test_p10_1_ra_kenh_forged_by_violation_writes_nothing(live):
+
+        """Review v15 (MINOR): bài VI PHẠM (tạo mục hàng duyệt) + `--by` giả →
+
+        danh tính bị DB chặn TRƯỚC mọi ghi: 0 dòng sổ, 0 mục `approval_queue`
+
+        mới (trước vá: `director.submit` đã commit mục rồi mới kiểm danh tính)."""
+
+        url = "https://www.tiktok.com/@p10.gia/video/7300000000000000011"
+
+        f = live["tmp"] / "doi_tac_p10_vi_pham.csv"
+
+        f.write_bytes(("ma_doi_tac,url,kenh,text,ngay_dang,sku\n"
+
+                       f"KOC-MAU-01,{url},tiktok,\"Sâm chữa khỏi bệnh ung thư"
+
+                       " #quangcao\",2026-10-13,\n").encode())
+
+    
+
+        def counts():
+
+            return (_q(live, "select count(*) from approval_queue where"
+
+                       " object_type = 'partner_post_review'")[0][0],
+
+                    _q(live, "select count(*) from partner_post_scans")[0][0])
+
+    
+
+        q0, s0 = counts()
+
+        d0 = _denied(live, "partner_post_scan")
+
+        rc, out = _cli(live, "legal", "agents.ra_kenh", "--partner-file", f,
+
+                       "--by", P_SALES)
+
+        assert rc != 0 and "không phải người của login" in out, out
+
+>       assert counts() == (q0, s0), out
+
+E       AssertionError: [err] --by "Bán Hàng Giả Lập" không phải người của login t_p10_legal_76abd0e709 — không ghi thay người khác
+
+E         
+
+E       assert (1, 0) == (0, 0)
+
+E         
+
+E         At index 0 diff: 1 != 0
+
+E         Use -v to get more diff
+
+
+
+tests\test_v15_p10_human_authz.py:409: AssertionError
+
+_________________ test_p8_7_db_recounts_outputs_not_evidence __________________
+
+
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15_g3) at 0x18c10c6dd90>, 'dirs': ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2927/p10cfg1/launch_p10.py'), ...}
+
+
+
+    def test_p8_7_db_recounts_outputs_not_evidence(live):  # noqa: F811
+
+        """Review v15 (MINOR): `rollout_transition_human` TỰ đếm lại đầu ra bằng
+
+        bộ đếm `count_spec` owner ghi (chính câu SQL Python) — gọi thẳng bằng
+
+        login người với bằng chứng tự khai KHÔNG vượt cổng PL02 (mọi loại nguồn
+
+        DB: hàng duyệt, báo cáo + sổ duyệt, bảng riêng; không nguồn = chặn)."""
+
+        feats = {f["id"]: f for f in ro.load_features()}
+
+        since = datetime.now(VN_TZ) - timedelta(days=20)
+
+        nosrc = {"id": "farming-98", "code_status": "co_code",
+
+                 "output_sources": []}
+
+        _owner_seed(live, [feats["ceo-02.1"], feats["farming-02"],
+
+                           feats["ceo-02.2"], nosrc], since)
+
+        assert _q(live, "select feature_id, jsonb_array_length(count_spec->"
+
+                  "'sql'), count_spec->'workdays' from feature_rollout where"
+
+                  " feature_id in ('ceo-02.1', 'ceo-02.2', 'farming-02',"
+
+                  " 'farming-98') order by 1") == [("ceo-02.1", 2, [0, 1, 2, 3, 4]),
+
+                               ("ceo-02.2", 1, [0, 1, 2, 3, 4]),
+
+                               ("farming-02", 1, [0, 1, 2, 3, 4]),
+
+                               ("farming-98", 0, [0, 1, 2, 3, 4])]
+
+        fake = {"outputs": 999, "out_days": 9}
+
+        # (1) chạy thử → có người duyệt: 0 đầu ra thật, bằng chứng khai 999/9 —
+
+        # hàng duyệt (ceo-02.1), bảng riêng (ceo-02.2), không nguồn (farming-98)
+
+        for fid in ("ceo-02.1", "ceo-02.2", "farming-98"):
+
+>           msg = _call_transition(live, fid, "chay_thu", "co_nguoi_duyet", fake)
+
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+tests\test_v15_p8_outputs.py:682: 
+
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15_g3) at 0x18c10c6dd90>, 'dirs': ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2927/p10cfg1/launch_p10.py'), ...}
+
+fid = 'ceo-02.1', frm = 'chay_thu', to = 'co_nguoi_duyet'
+
+ev = {'out_days': 9, 'outputs': 999}
+
+
+
+    def _call_transition(live, fid, frm, to, ev):  # noqa: F811
+
+>       with _conn(live, "farm") as c, pytest.raises(psycopg.Error) as ei:
+
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+E       Failed: DID NOT RAISE <class 'psycopg.Error'>
+
+
+
+tests\test_v15_p8_outputs.py:653: Failed
+
+=========================== short test summary info ===========================
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_ra_kenh_forged_by_violation_writes_nothing
+
+FAILED tests/test_v15_p8_outputs.py::test_p8_7_db_recounts_outputs_not_evidence
+
+2 failed in 7.11s

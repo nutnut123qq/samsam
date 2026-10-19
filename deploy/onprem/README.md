@@ -128,10 +128,16 @@ xem `python -m pipelines.job_runs --list`, `systemctl list-timers`.
 | Job | Lịch (giờ VN) | Việc |
 |---|---|---|
 | `intel` | 06:45 hằng ngày | thu tin + bản tin thị trường trước 7h |
-| `red_alert_sweep` | phút 05 mỗi giờ | quét cảnh báo đỏ intel + leo thang 2 giờ + gửi lại cảnh báo chưa gửi được |
+| `red_alert_sweep` | phút 05 mỗi giờ | quét tin thị trường → cảnh báo đỏ intel + gửi lại cảnh báo chưa gửi được (48 giờ); leo thang 2 giờ của MỌI cảnh báo đỏ ở job `red_alert_escalate` (v15.1 sửa mô tả, không đổi hành vi) |
 | `red_alert_escalate` | 15 phút/lần, mọi ngày (kể cả T7/CN/Tết) | v14.6: leo thang MỌI cảnh báo đỏ gốc quá 2 giờ đồng hồ chưa `--ack` (1 lần/cảnh báo) |
 | `anchor_build` | 02:30 hằng ngày | v14.6: gom gốc Merkle nhật ký vườn + hồ sơ lô (`anchor --build`); CHƯA neo ra chuỗi — `--submit` chờ hai bên chọn provider |
 | `legal_updates` | 07:15 hằng ngày | v14.6: văn bản pháp luật mới → hàng duyệt Pháp chế (`legal_updates --submit`) |
+| `sales_sla` | phút 10 và 40 mỗi giờ (GIẢ ĐỊNH) | v15.1: `sales_director --run` — đẩy việc khối sales (gồm nhắc lead `lead_followup`) + quét SLA handoff A 2 giờ/B 4 giờ giờ làm việc → leo thang |
+| `b2b_followups` | 08:30 hằng ngày (GIẢ ĐỊNH) | v15.1: `kd_quote --followups` — nháp nhắc chốt báo giá B2B đã duyệt chưa có kết quả |
+| `order_watch` | 08:40 hằng ngày (GIẢ ĐỊNH) | v15.1: `kd_orders --watch` — tỷ lệ hủy/hoàn tuần đã đóng bất thường (đợt theo tuần, chạy lại không nhân bản) |
+| `dealer_price_watch` | 08:50 hằng ngày (GIẢ ĐỊNH) | v15.1: `kd_price --dealer-watch` — giá đại lý quan sát tay dưới giá sàn golden |
+| `ceo_promo` | 09:00 hằng ngày (GIẢ ĐỊNH) | v15.1: `agents.ceo_promo` — KM/voucher đang chạy lệch bản đã duyệt → hàng duyệt khối ceo |
+| `intel_keywords` | 07:45 thứ Hai (GIẢ ĐỊNH) | v15.1: `intel_weekly --suggest-keywords` — gợi ý từ khóa an toàn pháp lý từ file Trends mới nhất |
 | `ceo_weekly` | 08:00 thứ Hai | báo cáo TGĐ tuần → hàng duyệt khối ceo |
 | `invoice_batch` | 21:00 hằng ngày | lô hóa đơn nháp → hàng duyệt khối finance |
 | `content_daily` | 06:00 hằng ngày | 3 nháp bài/ngày |
@@ -141,6 +147,11 @@ xem `python -m pipelines.job_runs --list`, `systemctl list-timers`.
 | `kpi_snapshot` | 23:50 hằng ngày | chụp KPI chat không PII (`chat_kpi_facts`) |
 | `health_bulletin` | 07:30 hằng ngày | bản tin sức khỏe |
 | `ops_monthly` | 08:00 ngày 1 | báo cáo vận hành tháng trước (`--month prev`); người gửi Bên B trước ngày 05 rồi `--mark-sent` |
+
+Khung giờ 6 job v15.1 (`sales_sla` … `intel_keywords`) là GIẢ ĐỊNH của đội
+triển khai — chủ khối chỉnh trong `jobs.json` rồi sửa `OnCalendar` timer cùng
+tên (test `tests/test_v15_p7_jobs.py` giữ khớp). Cả 6 chạy bằng login
+`svc_job` (`JOB_DATABASE_URL`), đã chạy thử qua wrapper trong DB test.
 
 Chưa xác minh trên server thật (external-dep): timer chạy, giờ hệ thống
 Asia/Ho_Chi_Minh, monitor ngoài máy báo khi cả server/timer chết.

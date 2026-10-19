@@ -1,0 +1,25 @@
+{
+  "record_type": "session_observation_summary",
+  "note": "Commands run during this verification; summary of tool stdout, not a second execution or a raw transcript.",
+  "checks": [
+    {
+      "command": "ruff check . --exclude .agents --exclude founder",
+      "exit": 0
+    },
+    {
+      "command": "python scripts/agent_eval.py --deterministic --no-record",
+      "exit": 0,
+      "deterministic_suites_pass": 13
+    },
+    {
+      "command": "python scripts/dpia_draft.py --check",
+      "exit": 0
+    },
+    {
+      "command": "python scripts/redteam.py",
+      "exit": 0,
+      "known_gaps": 6,
+      "critical_known_gaps": 3
+    }
+  ]
+}

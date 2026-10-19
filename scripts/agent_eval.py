@@ -2276,6 +2276,12 @@ def run_agent(agent: str, *, no_record: bool = False,
     try:
         if not no_record:
             conn = _connect()
+            # v15 P12.1: chính sách cổng tắt loader (data/loader_gate.json)
+            # — chưa cấu hình + tính năng tắt → không ghi eval_runs.
+            from pipelines import loader_gate
+            if why := loader_gate.check("agent_eval", conn):
+                print(f"[rollout] {why}", flush=True)
+                return 2
             preflight_db(conn, suite)
         return _score_and_record(suite, model, judge_model, sha, conn)
     except Refuse as e:

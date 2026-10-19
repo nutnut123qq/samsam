@@ -42,10 +42,21 @@ Output: `<db>_<YYYYmmdd_HHMMSS>_vn.dump[.enc]` (giờ VN +07:00) +
 pg_dump_version, tool, file, size_bytes, sha256, encrypted, cipher,
 row_counts) — không host/user/mật khẩu.
 
+Bằng chứng đầu ra trong DB (v15 fix P8.7c, PL02 mục 1b): backup thành
+công (local + offsite nếu có) → ghi NGAY bản ghi `backup_runs` (JSON sort
+key — đúng chuỗi dòng nhật ký) vào sổ append-only `file_output_evidence` qua
+function `file_output_evidence_backup` bằng CHÍNH login của tiến trình
+(`svc_backup` qua BACKUP_DATABASE_URL — job `backup`; owner ở dev). DB tự
+tính khóa `bk:<sha256 bản dump>` + sha phiên bản; người duyệt từng đầu ra
+(`rollout --outputs/--review-output data_platform-07.2`) và cổng PL02 đếm
+từ sổ này — không đọc file nhật ký. Ghi không được → `[warn]`, exit 4.
+
 Exit: 0 OK; 1 lỗi (thiếu DSN, connect lỗi, không có công cụ, pg_dump lỗi,
 tên đích tồn tại — xóa `.partial`, không để manifest); 2 usage (kiểm TRƯỚC
 khi connect); 3 local OK nhưng offsite chưa xong (giám sát phân biệt với
-lỗi dump).
+lỗi dump); 4 backup OK nhưng CHƯA ghi được bằng chứng DB (login không phải
+dịch vụ backup / schema cũ chưa `apply_schema --roles`) — bản backup giữ
+nguyên, lần này không thành đầu ra đếm được.
 """
 
 import hashlib
@@ -395,6 +406,33 @@ def _offsite_copy(cfg: dict, files: list[Path], sha: str,
     return "dir", errors
 
 
+def record_evidence(dsn: str, rec: dict) -> str | None:
+    """v15 fix P8.7c: ghi bằng chứng lần backup `ok` vào DB (function
+    `file_output_evidence_backup`, kết nối ghi riêng — kết nối dump là read
+    only) → None | lý do lỗi (đã che DSN). Chuỗi gửi = JSON sort key của
+    đúng bản ghi nhật ký (sha = `rollout._rec_sha` dòng backup_runs)."""
+    text = json.dumps(rec, sort_keys=True, ensure_ascii=False)
+    try:
+        with psycopg.connect(dsn, connect_timeout=CONNECT_TIMEOUT,
+                             autocommit=True) as c:
+            c.execute("select file_output_evidence_backup(%s, false)",
+                      (text,))
+    except psycopg.Error as e:
+        prim = getattr(getattr(e, "diag", None), "message_primary", None)
+        return scrub(prim or type(e).__name__, dsn)
+    return None
+
+
+def _with_evidence(code: int, rec: dict, dsn: str) -> tuple[int, dict]:
+    why = record_evidence(dsn, rec)
+    if why is None:
+        print("[evidence] đã ghi bằng chứng đầu ra vào DB "
+              "(file_output_evidence)")
+        return code, rec
+    print(f"[warn] backup xong nhưng CHƯA ghi được bằng chứng DB: {why}")
+    return 4, rec
+
+
 def run_backup(cfg: dict, dsn: str) -> tuple[int, dict]:
     """Thực hiện backup; trả (exit_code, bản ghi backup_runs)."""
     bdir = cfg["dir"]
@@ -502,7 +540,7 @@ def run_backup(cfg: dict, dsn: str) -> tuple[int, dict]:
         print(f"[retention] giữ {cfg['keep']} bản, xóa: {', '.join(removed)}")
     if cfg["offsite"] is None:
         print("[warn] chưa cấu hình offsite (BACKUP_OFFSITE)")
-        return 0, rec
+        return _with_evidence(0, rec, dsn)
     try:
         rec["offsite"], errors = _offsite_copy(cfg, [dest, mpath], sha, db)
     except (RuntimeError, OSError) as e:
@@ -512,7 +550,7 @@ def run_backup(cfg: dict, dsn: str) -> tuple[int, dict]:
         return 3, rec
     note_retention("offsite", errors)
     print("[offsite] đã chép + kiểm sha256")
-    return 0, rec
+    return _with_evidence(0, rec, dsn)
 
 
 def private_umask(fn):

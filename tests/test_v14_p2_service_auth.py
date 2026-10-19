@@ -29,6 +29,7 @@ import shutil
 import subprocess
 import sys
 import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import psycopg
@@ -48,6 +49,7 @@ ROLES_SQL = (ROOT / "docs" / "roles.sql").read_text(encoding="utf-8")
 PERSON = "gd.sx@test.vn"           # người GIẢ của test (không phải người thật)
 ANY = "Bất Kỳ Ai"
 SERVICE_GROUPS = ("svc_webhook", "svc_job", "svc_loader", "svc_backup")
+VN_TZ = timezone(timedelta(hours=7))
 
 
 # ------------------------------------------------------------ cấu hình giả
@@ -749,30 +751,55 @@ def _run(argv, dsn, tmp_path, **env):
     return r.returncode, r.stdout + r.stderr
 
 
+# Chạy `main(argv, now=<ghim>)` của module trong tiến trình con (giữ cách ly
+# env/login như `_run`) — đồng hồ tất định, không sleep.
+_PINNED = ("import sys; from datetime import datetime; "
+           "m = __import__(sys.argv[1], fromlist=['main']); "
+           "raise SystemExit(m.main(sys.argv[3:],"
+           " now=datetime.fromisoformat(sys.argv[2])))")
+
+
+def _pinned_argv(mod, now, argv):
+    return ["-c", _PINNED, mod, now.isoformat(), *argv]
+
+
 def test_job_login_report_steps_match_owner(live, tmp_path):
     """Bước lịch đọc nhiều bảng (báo cáo TGĐ, báo cáo vận hành tháng) chạy
     dưới login svc_job cho ĐÚNG kết quả như owner — không có mục âm thầm
     'lỗi đọc … InsufficientPrivilege'."""
+    # v15.1 (P7.5): hai lần chạy (owner, svc_job) dùng CHUNG một đồng hồ
+    # ghim — báo cáo in "lập lúc dd/mm/yyyy HH:MM"; đồng hồ thật làm hai lần
+    # chạy vắt phút → so khác nhau (chập chờn) dù quyền đúng. Tuần dữ liệu
+    # mẫu cũng tính từ đồng hồ ghim (không từ now() của DB).
+    # lệch 7 phút so với giờ máy → kiểm được báo cáo in giờ GHIM.
+    pinned = (datetime.now(VN_TZ).replace(second=0, microsecond=0)
+              - timedelta(minutes=7))
+    last_week = (pinned - timedelta(days=7)).date()
+    last_monday = last_week - timedelta(days=last_week.weekday())
     a = live["admin"]
     with a.transaction():
         a.execute(f"set local search_path to {live['schema']}")
         a.execute("insert into channel_snapshots (channel, metric_id,"
                   " period_kind, period_start, value, source, source_ref,"
-                  " captured_by) values ('shopee', 'gmv', 'week',"
-                  " date_trunc('week', now() - interval '7 days')::date,"
-                  " 1000000, 'manual_export', 'f.csv', 'Lan')")
-    for argv in (["-m", "agents.ceo_report", "--period", "week"],
-                 ["scripts/ops_monthly.py", "--month", "prev"]):
+                  " captured_by) values ('shopee', 'gmv', 'week', %s,"
+                  " 1000000, 'manual_export', 'f.csv', 'Lan')",
+                  (last_monday,))
+    for mod, argv in (("agents.ceo_report", ["--period", "week"]),
+                      ("scripts.ops_monthly", ["--month", "prev"])):
         outs = {}
         for who in ("admin", "svc_job"):
-            d = tmp_path / f"{argv[1]}-{who}"
-            rc, text = _run([*argv, "--out-dir", str(d)], live["dsn"][who],
-                            tmp_path)
+            d = tmp_path / f"{mod}-{who}"
+            rc, text = _run(_pinned_argv(mod, pinned,
+                                         [*argv, "--out-dir", str(d)]),
+                            live["dsn"][who], tmp_path)
             assert rc == 0, (argv, who, text)
             assert "InsufficientPrivilege" not in text, text
             outs[who] = {p.name: p.read_text(encoding="utf-8")
                          for p in d.iterdir()}
-        assert outs["svc_job"] == outs["admin"], argv
+        assert outs["svc_job"] == outs["admin"], mod
+        # đồng hồ ghim thật sự là giờ in trong báo cáo (không phải giờ máy)
+        assert any(f"{pinned:%d/%m/%Y %H:%M}" in t
+                   for t in outs["admin"].values()), mod
         assert "InsufficientPrivilege" not in json.dumps(outs, ensure_ascii=False)
     for argv in (["-m", "pipelines.intel_alert", "--run"],
                  ["-m", "pipelines.red_alert", "--deliver"],

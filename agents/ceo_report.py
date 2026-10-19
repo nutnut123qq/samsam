@@ -423,6 +423,12 @@ def llm_commentary(rep) -> tuple[str | None, str | None]:
 
 # ---------------------------------------------------------------- render
 
+def rep_sample(rep: dict) -> bool:
+    """P8.4: có số chụp nguồn `sample:` (cockpit --import --sample)."""
+    return any(s and str(s.get("source_ref") or "").startswith("sample:")
+               for r in rep.get("rows") or () for s in (r["cur"], r["prev"]))
+
+
 def _table(rows: list[dict]) -> list[str]:
     L = ["| Chỉ số | Kênh | Kỳ này | Kỳ trước | Δ | Đánh giá | Nguồn |",
          "|---|---|---|---|---|---|---|"]
@@ -611,7 +617,8 @@ def main(argv=None, now=None) -> int:
             print(f"[error] lỗi DB: {_db_msg(e)[:300]}", file=sys.stderr)
             return 2
         text, ok = finalize(rep)
-        path = write_report(text, Path(args.out_dir), report_name(rep))
+        path = write_report(text, Path(args.out_dir), report_name(rep),
+                            sample=rep_sample(rep))
         n_data = sum(1 for r in rep["rows"] if r["cur"] is not None)
         print(f"[done] {path} — kỳ {rep['label']}, {n_data}/"
               f"{len(rep['rows'])} chỉ số có số kỳ này"

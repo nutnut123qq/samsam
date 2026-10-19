@@ -628,26 +628,26 @@ def test_handoff_acceptance_1(dealers, keys):
     lid = _lead(db, "đặt mua 3 hộp giao Đà Nẵng, sđt 0905 123 456", "order")
     cid, _ = crm.add_contact(db, dict(PERSON), keys, "Lan", lead_id=lid)
     crm.assign_lead(db, lid, "DLM01", "Lan")
-    p = crm.handoff_payload(db, lid, "DLM01", keys)
+    p = crm.handoff_payload(db, lid, "DLM01", keys, "Lan")
     assert not {"phone", "name", "email", "address"} & set(p)
     assert PHONE not in json.dumps(p) and "0905 123 456" not in json.dumps(p)
     assert p["province"] == "Đà Nẵng" and p["intent"] == "order"
     crm.record_consent(db, cid, "dai_ly", True, "form_giay", "Lan",
                        "BB-1", "v0", "DLM01")
-    p = crm.handoff_payload(db, lid, "DLM01", keys)
+    p = crm.handoff_payload(db, lid, "DLM01", keys, "Lan")
     assert p["phone"] == PHONE and p["name"] == "Nguyễn Văn Mẫu"
     assert p["email"] == "mau@example.com" and p["address"] == "12 Lê Duẩn"
     with pytest.raises(ValueError):
-        crm.handoff_payload(db, lid, "DLM02", keys)       # DL02 cùng vùng
+        crm.handoff_payload(db, lid, "DLM02", keys, "Lan")       # DL02 cùng vùng
     db.execute("update dealers set status = 'paused' where code = 'DLM01'")
     with pytest.raises(ValueError, match="không active") as e:
-        crm.handoff_payload(db, lid, "DLM01", keys)
+        crm.handoff_payload(db, lid, "DLM01", keys, "Lan")
     for needle in PII_NEEDLES:
         assert needle not in str(e.value)
     db.execute("update dealers set status = 'active' where code = 'DLM01'")
     crm.record_consent(db, cid, "dai_ly", False, "dien_thoai", "Lan",
                        dealer_code="DLM01")
-    p = crm.handoff_payload(db, lid, "DLM01", keys)
+    p = crm.handoff_payload(db, lid, "DLM01", keys, "Lan")
     assert "phone" not in p and PHONE not in json.dumps(p)
 
 
@@ -737,7 +737,7 @@ def test_handoff_question_names_scrubbed_v14_gate(dealers, keys):
     lid = _lead(db, "Tôi là Nguyễn Văn Mẫu, giao cho chị Bích số 12 đường Ví Dụ"
                     " Đà Nẵng, sđt 0905 123 456", "order")
     crm.assign_lead(db, lid, "DLM01", "Lan")
-    p = crm.handoff_payload(db, lid, "DLM01", keys)
+    p = crm.handoff_payload(db, lid, "DLM01", keys, "Lan")
     blob = json.dumps(p, ensure_ascii=False)
     for needle in ("Nguyễn Văn Mẫu", "Bích", "Ví Dụ", "0905 123 456"):
         assert needle not in blob

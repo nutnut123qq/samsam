@@ -1,0 +1,12 @@
+# command: python withdb.py samsam_v15fix_p87b python -m pytest tests/test_v15_fix_p87b.py tests/test_v15_fix_p87.py tests/test_v15_p8_outputs.py tests/test_rollout.py tests/test_rollout_enforce.py tests/test_v15_p10_human_authz.py tests/test_da_schema.py tests/test_handover_docs.py tests/test_v14_p2_service_auth.py tests/test_bks_audit.py -q -p no:cacheprovider -rf | revision: nền a05c60f + working tree v15 chưa commit (kèm vá P10.2, P8.1, P8.7, P8.7b) (trước sửa chữ runbook/board) | DB: samsam_v15fix_p87b | exit=0 | kết quả: 357 passed (KHÔNG phải full suite)
+........................................................................ [ 20%]
+........................................................................ [ 40%]
+........................................................................ [ 60%]
+........................................................................ [ 80%]
+.....................................................................    [100%]
+357 passed in 201.89s (0:03:21)
+exit 0
+
+# command (sau sửa runbook 9.7 + board): python withdb.py samsam_v15fix_p87b python -m pytest tests/test_handover_docs.py tests/test_da_schema.py -q -p no:cacheprovider | exit=0 | kết quả: 20 passed
+....................                                                     [100%]
+20 passed in 9.33s

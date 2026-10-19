@@ -58,7 +58,7 @@ DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/samsam?sslmode=require
 | Role | Quyền | Dùng cho |
 |---|---|---|
 | `app` | đọc/ghi bảng ứng dụng | chatbot, Streamlit, Zalo, agents |
-| `backup` | CHỈ ĐỌC mọi bảng | `scripts/db_backup.py` |
+| `backup` | CHỈ ĐỌC mọi bảng (+ v15 fix P8.7c: EXECUTE `file_output_evidence_backup` — ghi bằng chứng lần backup thành công, không ghi bảng trực tiếp) | `scripts/db_backup.py` |
 | `loader` | ghi bảng golden (`sku_master`, `sku_map`, `price_list`, `golden_discrepancies`) | `ingest.golden_store` |
 
 v14.2: bản on-prem dùng role nhóm `svc_webhook` / `svc_job` / `svc_loader` /
@@ -102,7 +102,11 @@ bảng nào thì dừng, không bật app.
 | Bảng | Đường đề xuất | Ghi chú |
 |---|---|---|
 | `chunks` | A (embed lại) hoặc B | B tránh phí embed |
-| `products` | A | crawl web, `core_store` sở hữu |
+| `products` | A | crawl web, `core_store` sở hữu — v15.5 dòng `retired_at` (biến mất khỏi nguồn, còn đơn thật trỏ) KHÔNG dựng lại được từ file: đơn thật trỏ tới thì dùng B |
+| `human_logins` | B | (v15.4) ánh xạ login ↔ người ↔ khối do Bên B điền (không có trong repo); dựng lại login trên cloud thì cập nhật `db_login` theo login mới |
+| `output_reviews` | B | (v15.2) append-only — quyết định người duyệt từng đầu ra (bằng chứng cổng PL02); không dựng lại được từ nguồn |
+| `file_output_evidence` | B | (v15 fix P8.7c) append-only — bằng chứng lần backup thành công do chính tiến trình backup (login svc_backup) ghi; mất bảng = backup cũ không còn đếm/duyệt được cho nghiệm thu (nhật ký jsonl không thay được) |
+| `product_sync_log` | B | (v15.5) append-only — sự kiện đổi/ngừng/mở lại/mơ hồ của sản phẩm khi nạp lại; không dựng lại được từ nguồn |
 | `claims_approved` | A | từ `data/claims_whitelist.json` |
 | `plots` | A | |
 | `plot_logs` | B | nhật ký vườn thật không có trong repo; hash chain v9.3 — chỉ B giữ nguyên `prev_hash`/`row_hash` (restore xong chạy `python -m agents.garden_director --verify`) |

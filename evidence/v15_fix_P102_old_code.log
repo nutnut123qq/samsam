@@ -1,0 +1,165 @@
+# P10.2 probe TRƯỚC SỬA | command: cd <scratchpad>/prefix && python withdb.py samsam_v15fix_p102_pre python -m pytest tests/test_v15_fix_p102.py -q -p no:cacheprovider --tb=line -rA
+# revision: worktree prefix = a05c60f + diff v15 TRƯỚC sửa (hash 0950099…), file test mới copy vào | DB: samsam_v15fix_p102_pre (schema tạm trong test) | exit 1 | kết quả: 14 failed, 2 passed (2 passed = kd_quote đúng người vốn ghi được — lỗi kd_quote trước sửa là SQL thẳng/không kiểm danh tính DB, xem ca full)
+FFFFF..FFFFFFFFF                                                         [100%]
+
+================================== FAILURES ===================================
+
+E   AssertionError: [error] lỗi DB: permission denied for table project_milestones
+
+      
+
+    assert 2 == 0
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\prefix\tests\test_v15_fix_p102.py:378: AssertionError: [error] lỗi DB: permission denied for table project_milestones
+
+E   AssertionError: [error] lỗi DB: permission denied for table project_milestones
+
+      
+
+    assert 2 == 0
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\prefix\tests\test_v15_fix_p102.py:378: AssertionError: [error] lỗi DB: permission denied for table project_milestones
+
+E   AssertionError: [error] lỗi DB: permission denied for table org_prospects
+
+      
+
+    assert 2 == 0
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\prefix\tests\test_v15_fix_p102.py:378: AssertionError: [error] lỗi DB: permission denied for table org_prospects
+
+E   AssertionError: [err] InsufficientPrivilege: permission denied for table channel_posts
+
+      
+
+    assert 2 == 0
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\prefix\tests\test_v15_fix_p102.py:378: AssertionError: [err] InsufficientPrivilege: permission denied for table channel_posts
+
+E   AssertionError: [err] DB: permission denied for table anchor_batches
+
+      
+
+    assert 2 == 0
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\prefix\tests\test_v15_fix_p102.py:378: AssertionError: [err] DB: permission denied for table anchor_batches
+
+E   AssertionError: ('nomap', 'Chưa Ánh Xạ P102', '[error] lỗi DB: permission denied for table project_milestones
+
+      ')
+
+    assert 2 == 1
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\prefix\tests\test_v15_fix_p102.py:416: AssertionError: ('nomap', 'Chưa Ánh Xạ P102', '[error] lỗi DB: permission denied for table project_milestones
+
+E   AssertionError: ('nomap', 'Chưa Ánh Xạ P102', '[error] lỗi DB: permission denied for table project_milestones
+
+      ')
+
+    assert 2 == 1
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\prefix\tests\test_v15_fix_p102.py:481: AssertionError: ('nomap', 'Chưa Ánh Xạ P102', '[error] lỗi DB: permission denied for table project_milestones
+
+E   AssertionError: ('nomap', 'Chưa Ánh Xạ P102', '[error] lỗi DB: permission denied for table org_prospects
+
+      ')
+
+    assert 2 == 1
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\prefix\tests\test_v15_fix_p102.py:555: AssertionError: ('nomap', 'Chưa Ánh Xạ P102', '[error] lỗi DB: permission denied for table org_prospects
+
+E   AssertionError: ('legalnb', 'Pháp Chế Sai Khối P102', '[err] InsufficientPrivilege: permission denied for table channel_posts
+
+      ')
+
+    assert 2 == 1
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\prefix\tests\test_v15_fix_p102.py:628: AssertionError: ('legalnb', 'Pháp Chế Sai Khối P102', '[err] InsufficientPrivilege: permission denied for table channel_posts
+
+E   AssertionError: [err] DB: permission denied for table anchor_batches
+
+      
+
+    assert (2 == 1)
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\prefix\tests\test_v15_fix_p102.py:695: AssertionError: [err] DB: permission denied for table anchor_batches
+
+E   AssertionError: ('nomap', 'Chưa Ánh Xạ P102', '[ok] mục #7: KHỚP bản đã duyệt — GĐ bán hàng tự gửi
+
+      ')
+
+    assert 0 == 1
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\prefix\tests\test_v15_fix_p102.py:773: AssertionError: ('nomap', 'Chưa Ánh Xạ P102', '[ok] mục #7: KHỚP bản đã duyệt — GĐ bán hàng tự gửi
+
+E   psycopg.errors.UndefinedFunction: function milestone_set_status_human(unknown, unknown, unknown, unknown) does not exist
+
+    LINE 1: select milestone_set_status_human('M-X', 'xong', 'e', $1)
+
+                   ^
+
+    HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: psycopg.errors.UndefinedFunction: function milestone_set_status_human(unknown, unknown, unknown, unknown) does not exist
+
+E   AssertionError: []
+
+    assert [] == ['anchor_rece...t,text)', ...]
+
+      
+
+      Right contains 7 more items, first extra item: 'anchor_receipt_human(bigint,text,text,bytea,text,text)'
+
+      Use -v to get more diff
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\prefix\tests\test_v15_fix_p102.py:860: AssertionError: []
+
+E   psycopg.errors.UndefinedFunction: function milestone_set_status_human(unknown, unknown, unknown, unknown) does not exist
+
+    LINE 1: select milestone_set_status_human('M-P102O', 'dang_lam', nul...
+
+                   ^
+
+    HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: psycopg.errors.UndefinedFunction: function milestone_set_status_human(unknown, unknown, unknown, unknown) does not exist
+
+=================================== PASSES ====================================
+
+=========================== short test summary info ===========================
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[kd_quote-outcome]
+
+PASSED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[kd_quote-verify-send-by]
+
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_pmo-set-status]
+
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_pmo-apply-due]
+
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[da_b2b-handover]
+
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[ra_kenh-mark-removed]
+
+FAILED tests/test_v15_fix_p102.py::test_p102_authorized_person_completes[anchor-submit-by-person]
+
+FAILED tests/test_v15_fix_p102.py::test_p102_da_pmo_set_status_authorized_human
+
+FAILED tests/test_v15_fix_p102.py::test_p102_da_pmo_apply_due_authorized_human
+
+FAILED tests/test_v15_fix_p102.py::test_p102_da_b2b_handover_authorized_human
+
+FAILED tests/test_v15_fix_p102.py::test_p102_ra_kenh_mark_removed_authorized_human
+
+FAILED tests/test_v15_fix_p102.py::test_p102_anchor_submit_authorized_human
+
+FAILED tests/test_v15_fix_p102.py::test_p102_kd_quote_verify_send_and_outcome_authorized_human
+
+FAILED tests/test_v15_fix_p102.py::test_p102_loader_agent_cannot_call_human_functions
+
+FAILED tests/test_v15_fix_p102.py::test_p102_functions_locked_down - Assertio...
+
+FAILED tests/test_v15_fix_p102.py::test_p102_owner_dev_path_unchanged - psyco...
+
+14 failed, 2 passed in 128.27s (0:02:08)
+
+EXIT 1

@@ -200,7 +200,11 @@ if "Chat Sâm Sâm" in _tabs:
 
                 # Cập nhật history theo semantics zalo: chỉ lượt hợp lệ, lưu
                 # raw — flagged không cho LLM nhớ text vi phạm lượt sau.
-                if g["ok"] and r.get("handoff") != "gateway":
+                # v15 (P9.2): lượt rượu/sức khỏe cũng KHÔNG vào (parity
+                # zalo `_reply_turn`/`_reply_fixed`) — trước đây câu bệnh
+                # của khách theo history tới AI ở lượt sau.
+                if g["ok"] and r.get("handoff") not in (
+                        "gateway", "alcohol", "health"):
                     st.session_state.history = (
                         st.session_state.history
                         + [{"role": "user", "content": q},
@@ -226,6 +230,9 @@ if "Chat Sâm Sâm" in _tabs:
                         # API; sent:false = send-FAIL, đếm nhầm khi đối
                         # soát (D6.8, semantics D4.4).
                         "sent": None,
+                        # v15 fix P8.1: demo nội bộ — không bao giờ là
+                        # đầu ra chatbot thật (bộ đếm chỉ tính "live").
+                        "provenance": "demo", "is_sample": True,
                         **({"flagged_text": r["answer"][:500]}
                            if not g["ok"] else {}),
                     })

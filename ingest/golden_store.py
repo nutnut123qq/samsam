@@ -382,7 +382,10 @@ def apply_discrepancies(conn) -> dict:
     maps = dict(conn.execute("select product_id, sku_key from sku_map"))
     products = [{"id": r[0], "name": r[1], "price_vnd": r[2]}
                 for r in conn.execute(
-                    "select id, name, price_vnd from products order by id")]
+                    # v15.5: sản phẩm ngừng niêm yết (retired_at) không
+                    # còn là "giá web" để đối chiếu.
+                    "select id, name, price_vnd from products"
+                    " where retired_at is null order by id")]
     tickets = build_discrepancies(skus, prices, maps, products)
     for t in tickets:
         conn.execute(
@@ -423,11 +426,17 @@ def approve_price(conn, price_id: int, by: str) -> tuple[bool, str]:
         return False, f"id={price_id} đã được duyệt trước đó"
     if valid_to is not None:
         return False, f"id={price_id} đã đóng (valid_to={valid_to})"
-    n = conn.execute(
-        "update price_list set approved_by = %s, approved_at = now()"
-        " where id = %s and approved_by is null and valid_to is null",
-        (by, price_id)).rowcount
-    if n != 1:
+    # v15.4 (P10.1): ghi qua function SECURITY DEFINER — danh tính theo
+    # login (`human_actor`, khối sales), không UPDATE thẳng price_list.
+    from pipelines import auth  # lười: auth → director → ...
+    try:          # function nguyên tử; lỗi → caller rollback (không commit)
+        auth.call_human(conn, "select approve_price_human(%s, %s)",
+                        (price_id, by), by=by, block="sales",
+                        action="approve_price", object_type="price_list",
+                        object_id=price_id)
+    except auth.HumanDenied as e:
+        return False, f"DB từ chối: {e}"
+    except ValueError:
         return False, f"id={price_id} vừa đổi trạng thái — thử lại"
     return True, (f"đã duyệt id={price_id} {sku_key} {channel} {kind} "
                   f"{price} VND")
@@ -503,6 +512,12 @@ def main(argv: list[str] | None = None) -> int:
         from pipelines import auth  # lười: auth → director → ...
         if why := auth.bind_service("loader"):
             print(f"[err] {why}", flush=True)
+            return 2
+        # v15 P12.1: chính sách cổng tắt loader (data/loader_gate.json) —
+        # chưa cấu hình + tính năng tắt → không nạp.
+        from pipelines import loader_gate
+        if why := loader_gate.check("golden_store"):
+            print(f"[rollout] {why}", flush=True)
             return 2
 
     load_dotenv(ROOT / ".env")

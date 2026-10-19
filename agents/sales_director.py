@@ -29,7 +29,8 @@ Contract:
     mà CHƯA có người phụ trách quá `assign_within_business_hours`, hoặc đã
     gán nhưng quá `owner_due_at` → `lead_followup` theo ĐỢT
     (`lead:<id>:chua_gan` / `lead:<id>:<owner_assigned_at UTC>` — gán lại =
-    đợt mới); trần `max_per_run` mục mới/lần (phần vượt chờ lần sau). Payload
+    đợt mới); trần `max_per_run` mục mới/lần (phần vượt chờ lần sau — v15.2
+    đếm `lead_deferred` trong kết quả chạy/bản tin như CSKH). Payload
     chỉ mã lead/kênh/ý định/mã nhân viên/hạn — không câu hỏi khách.
     `payload`/`title` dựng từ TEMPLATE (mã/loại/kênh/giờ VN) — KHÔNG câu hỏi
     khách, tiêu đề listing, sku_key, detail (guardrail ok, người duyệt được).
@@ -386,9 +387,11 @@ def _ma_object_id(aid: int, opened: datetime) -> str:
     return f"ma:{aid}:{opened.astimezone(timezone.utc):%Y%m%dT%H%M%S%fZ}"
 
 
-def _collect(conn, now: datetime, cfg: dict,
-             data_dir: Path = DATA_DIR) -> tuple[list[dict], int]:
-    """→ (mục sẽ đẩy, số nhóm CSKH mới vượt trần `max_cskh_per_run`)."""
+def _collect(conn, now: datetime, cfg: dict, data_dir: Path = DATA_DIR,
+             stats: dict | None = None) -> tuple[list[dict], int]:
+    """→ (mục sẽ đẩy, số nhóm CSKH mới vượt trần `max_cskh_per_run`).
+    v15.2 (P8.6): `stats["deferred"]` ← số `lead_followup` đến hạn vượt
+    trần (chờ lần sau)."""
     _check_now(now)
     seen = {(t, o) for t, o in conn.execute(
         "select object_type, object_id from approval_queue"
@@ -425,7 +428,7 @@ def _collect(conn, now: datetime, cfg: dict,
             f"{_fmt_vn(created)} (giờ VN). Việc cần làm: GĐ bán hàng đối"
             " chiếu giá theo từng nguồn trong phiếu và quyết giá đúng;"
             " agent không chọn giá.")
-    for it in lead_items(conn, now, cfg):
+    for it in lead_items(conn, now, cfg, stats=stats):
         add(it["object_type"], it["object_id"], it["title"], it["payload"])
     cap, n_cskh, deferred = cfg["sources"]["max_cskh_per_run"], 0, 0
     cskh = _cskh_state(conn)
@@ -462,11 +465,16 @@ _INTENT_LABELS = {"partner": "hợp tác/đại lý", "order": "đặt hàng",
                   "price": "hỏi giá", "contact": "liên hệ"}
 
 
-def lead_items(conn, now: datetime, cfg: dict) -> list[dict]:
+def lead_items(conn, now: datetime, cfg: dict,
+               stats: dict | None = None) -> list[dict]:
     """v14.4 sales-04.1 (CHỈ ĐỌC) → mục `lead_followup` chưa có trong hàng
     duyệt (mọi status), tối đa `max_per_run`. Thiếu cấu hình `lead_owner`
-    (cfg dựng tay ở test cũ) → []."""
+    (cfg dựng tay ở test cũ) → []. v15.2 (P8.6): `stats["deferred"]` = số
+    mục ĐÃ ĐẾN HẠN vượt trần lần này (chờ lần sau) — trước đây dừng vòng ở
+    trần nên phần vượt không được đếm/báo."""
     _check_now(now)
+    if stats is not None:
+        stats["deferred"] = 0
     lo = cfg.get("lead_owner")
     if not lo:
         return []
@@ -497,9 +505,11 @@ def lead_items(conn, now: datetime, cfg: dict) -> list[dict]:
                     " hệ")
         if now < due or oid in seen:
             continue
-        if len(out) >= lo["max_per_run"]:
-            break
         seen.add(oid)
+        if len(out) >= lo["max_per_run"]:
+            if stats is not None:
+                stats["deferred"] += 1      # chờ lần sau (đếm, không đẩy)
+            continue
         out.append({
             "object_type": "lead_followup", "object_id": oid,
             "title": f"lead #{lid}",
@@ -650,7 +660,8 @@ def sweep(conn, now: datetime, cfg: dict) -> dict:
 def plan(conn, now: datetime, cfg: dict, data_dir: Path = DATA_DIR) -> dict:
     """Dry-run: CHỈ ĐỌC — số mục sẽ đẩy/expire/leo thang (cùng ứng viên +
     cùng cách gom lô với `sweep`)."""
-    items, deferred = _collect(conn, now, cfg, data_dir)
+    st: dict = {}
+    items, deferred = _collect(conn, now, cfg, data_dir, stats=st)
     n_exp = conn.execute("select count(*) from approval_queue where status ="
                          " 'pending' and due_at <= %s", (now,)).fetchone()[0]
     over = _overdue(conn, now, cfg)
@@ -658,6 +669,7 @@ def plan(conn, now: datetime, cfg: dict, data_dir: Path = DATA_DIR) -> dict:
             "enqueue": dict(sorted(Counter(i["object_type"]
                                            for i in items).items())),
             "cskh_deferred": deferred,
+            "lead_deferred": st.get("deferred", 0),
             "expire": n_exp, "escalate": len(over),
             "red_alerts": sum(b[0][1]["red_alert"] for b in _batches(over)),
             "stale_leads": len(stale_leads(conn, now, cfg))}
@@ -668,10 +680,12 @@ def run(conn, now: datetime, cfg: dict, data_dir: Path = DATA_DIR,
     """collect → enqueue → sweep (dry_run: chỉ `plan`)."""
     if dry_run:
         return plan(conn, now, cfg, data_dir)
-    items, deferred = _collect(conn, now, cfg, data_dir)
+    st: dict = {}
+    items, deferred = _collect(conn, now, cfg, data_dir, stats=st)
     n = enqueue_new(conn, items, cfg)
     res = sweep(conn, now, cfg)
     res.update(dry_run=False, enqueued=n, cskh_deferred=deferred,
+               lead_deferred=st.get("deferred", 0),
                stale_leads=len(stale_leads(conn, now, cfg)))
     conn.commit()   # đóng tx đọc (conn chia sẻ)
     return res
@@ -733,6 +747,7 @@ def gather(conn, now: datetime, cfg: dict, period_kind: str = "day",
            data_dir: Path = DATA_DIR) -> dict:
     """CHỈ SELECT → số liệu bản tin (không câu hỏi/tên/payload)."""
     start, end = period_of(period_kind, now)
+    st: dict = {}
     pend = [p for p in _pending(conn)
             if p["object_type"] in cfg["object_types"]]
     esc = _escalated(conn, [p["id"] for p in pend])
@@ -765,7 +780,9 @@ def gather(conn, now: datetime, cfg: dict, period_kind: str = "day",
             "golden_pending": golden,
             "unanswered": sum(u["n"] for u in _unanswered(now, cfg,
                                                            data_dir)),
-            "cskh_deferred": _collect(conn, now, cfg, data_dir)[1],
+            "cskh_deferred": _collect(conn, now, cfg, data_dir,
+                                      stats=st)[1],
+            "lead_deferred": st.get("deferred", 0),
             "catalog": catalog_stats(conn)}
 
 
@@ -842,7 +859,10 @@ def render_bulletin(cfg: dict, data: dict, now: datetime,
            f"{data['unanswered']}"),
           (f"Nhóm khách chưa trả lời vượt trần "
            f"{cfg['sources']['max_cskh_per_run']} mục/lần chạy (chờ lần "
-           f"sau): {data.get('cskh_deferred', 0)}"), "",
+           f"sau): {data.get('cskh_deferred', 0)}"),
+          (f"Nhắc lead (`lead_followup`) đến hạn vượt trần "
+           f"{(cfg.get('lead_owner') or {}).get('max_per_run', '?')} mục/lần "
+           f"chạy (chờ lần sau): {data.get('lead_deferred', 0)}"), "",
           "## 5. Giá chờ duyệt", ""]
     price = [q for q in queue if q["object_type"] in (
         "price_review", "price_change", "promo_change")]
@@ -906,13 +926,15 @@ def _print_run(res: dict) -> None:
         enq = ", ".join(f"{k} {v}" for k, v in res["enqueue"].items()) \
             or "0"
         print(f"[dry-run] sẽ đẩy: {enq} · CSKH vượt trần chờ lần sau "
-              f"{res['cskh_deferred']} · sẽ expire {res['expire']} · sẽ "
+              f"{res['cskh_deferred']} · nhắc lead chờ lần sau "
+              f"{res.get('lead_deferred', 0)} · sẽ expire {res['expire']} · sẽ "
               f"leo thang {res['escalate']} (cảnh báo đỏ "
               f"{res['red_alerts']}) · lead quá hạn nhắc "
               f"{res['stale_leads']} — KHÔNG ghi DB")
         return
     print(f"[run] đẩy {res['enqueued']} mục mới (CSKH vượt trần chờ lần "
-          f"sau {res['cskh_deferred']}) · expired "
+          f"sau {res['cskh_deferred']}, nhắc lead chờ lần sau "
+          f"{res.get('lead_deferred', 0)}) · expired "
           f"{res['expired']} · leo thang {res['escalated']} (cảnh báo đỏ "
           f"{res['red_alerts']}) · lead quá hạn nhắc {res['stale_leads']}"
           + (f" · LỖI leo thang {res['errors']}" if res["errors"] else ""))
@@ -943,8 +965,11 @@ def _main(args, now: datetime | None) -> int:
             if args.dry_run:
                 print(text)
             else:
+                # P8.4: hàng duyệt/lead/cảnh báo sàn thật (bản tin không
+                # có đường dữ liệu mẫu riêng).
                 path = write_report(text, args.out_dir,
-                                    bulletin_name(args.period, data["start"]))
+                                    bulletin_name(args.period, data["start"]),
+                                    sample=False)
                 n_over = sum(q["state"] == "overdue" for q in data["queue"])
                 print(f"[bulletin] {path} · hàng chờ {len(data['queue'])}"
                       f" (quá hạn {n_over}) · lead mới {data['n_leads']}")

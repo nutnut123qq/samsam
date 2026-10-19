@@ -465,7 +465,10 @@ def main(argv=None, now: dt.datetime | None = None,
                   f"({len(g.get('violations') or [])} vi phạm)",
                   file=sys.stderr)
             return 1
-        path = write_report(text, REPORTS_DIR, f"vt-thu-hoach-{as_of}.md")
+        # P8.4: khoảnh/nhật ký/lô MẪU (nhãn (MẪU)) → không đếm.
+        path = write_report(text, REPORTS_DIR, f"vt-thu-hoach-{as_of}.md",
+                            sample=any(r["sample"] for r in (*harvest,
+                                                            *avail)))
         print(text)
         print(f"[write] {path}")
         if a.submit:

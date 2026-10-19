@@ -50,7 +50,7 @@ from pathlib import Path
 import psycopg
 
 from agents.mkt_koc import KIT_TYPES, MAX_DRAFTS, load_drafts
-from agents.report import REPORTS_DIR, write_report
+from agents.report import REPORTS_DIR, queue_sample, write_report
 from ingest import crm
 from ingest.lead_store import connect
 from ingest.market_csv import load_mapping
@@ -322,7 +322,8 @@ def release(conn, qid, *, by: str, out_dir: Path | None = None) -> dict:
                  " and status = 'pending'", (by, qid, cid))
     conn.commit()
     path = write_report(payload, out_dir or REPORTS_DIR,
-                        f"affiliate-kit-{dealer_code}-{qid}.md")
+                        f"affiliate-kit-{dealer_code}-{qid}.md",
+                        sample=queue_sample(conn, qid))
     return {"code": None, "reason": "đạt", "path": path, "aff_code": code}
 
 

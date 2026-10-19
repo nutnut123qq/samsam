@@ -1,0 +1,12 @@
+# v15.1 — lịch job 'b2b_followups' (nguồn: deploy/onprem/jobs.json). Khung giờ GIẢ ĐỊNH —
+# chủ khối chỉnh trong jobs.json rồi sửa OnCalendar ở đây (test giữ khớp).
+[Unit]
+Description=Sam Sam timer b2b_followups
+
+[Timer]
+OnCalendar=*-*-* 08:30:00
+Persistent=true
+Unit=samsam-job@b2b_followups.service
+
+[Install]
+WantedBy=timers.target

@@ -481,7 +481,10 @@ def main(argv=None) -> int:
         text = render(res)
         # Lọc kênh → file riêng: KHÔNG đè bản P&L toàn kênh GĐ tài chính ký.
         suffix = f"-{args.channel}" if args.channel else ""
-        path = write_report(text, REPORTS_DIR, f"pnl-{month:%Y-%m}{suffix}.md")
+        # P8.4: quyết toán/đơn sàn từ file xuất + giá vốn người duyệt — bảng
+        # nguồn không có cột mẫu (settlement_rows/market_rows).
+        path = write_report(text, REPORTS_DIR,
+                            f"pnl-{month:%Y-%m}{suffix}.md", sample=False)
         print(text)
         print(f"[pnl] → {path.name} (BẢN NHÁP, không tự gửi)")
         return 0

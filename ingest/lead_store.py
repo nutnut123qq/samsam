@@ -313,6 +313,12 @@ def main() -> int:
     if why := auth.bind_service("loader"):
         print(f"[err] {why}", flush=True)
         return 2
+    # v15 P12.1: chính sách cổng tắt loader (data/loader_gate.json) —
+    # chưa cấu hình + tính năng tắt → không nạp.
+    from pipelines import loader_gate
+    if why := loader_gate.check("lead_store"):
+        print(f"[rollout] {why}", flush=True)
+        return 2
     rows, stats = harvest()
     print(f"[scan] convlog: {stats['records']} record — "
           f"lead={len(rows)}, intent-miss={stats['intent']}, "

@@ -980,8 +980,10 @@ def _main(args, ctx: dict) -> int:
         if args.report:
             text = render_report(res, ctx["watch"], today, ctx["plan"],
                                  ctx["calendar"], plan)
+            # P8.4: listing sàn file xuất + golden đã duyệt (không cột mẫu).
             path = write_report(text, args.out_dir,
-                                f"price-watch-{today:%Y-%m-%d}.md")
+                                f"price-watch-{today:%Y-%m-%d}.md",
+                                sample=False)
             print(f"[report] {path}")
         elif args.dry_run:
             for f in fs:

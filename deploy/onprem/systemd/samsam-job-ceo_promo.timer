@@ -1,0 +1,12 @@
+# v15.1 — lịch job 'ceo_promo' (nguồn: deploy/onprem/jobs.json). Khung giờ GIẢ ĐỊNH —
+# chủ khối chỉnh trong jobs.json rồi sửa OnCalendar ở đây (test giữ khớp).
+[Unit]
+Description=Sam Sam timer ceo_promo
+
+[Timer]
+OnCalendar=*-*-* 09:00:00
+Persistent=true
+Unit=samsam-job@ceo_promo.service
+
+[Install]
+WantedBy=timers.target

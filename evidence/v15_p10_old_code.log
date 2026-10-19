@@ -1,0 +1,387 @@
+# v15 p10 — test MỚI chạy trên code CŨ a05c60f (worktree tạm $H/old_p10, schema/roles cũ của worktree) — PHẢI FAIL
+# command: (cwd=$H/old_p10) python $H/withdb.py samsam_v15_p10 python -m pytest tests/test_v15_p10_human_authz.py -q --tb=line -p no:cacheprovider
+# nền a05c60f (nhánh v15-hop-dong) + working tree chưa commit (sha256 git diff trừ v13-board.md/DONE.md = c363246878391621e73a72748778efe71a9f8f4431eee4a1bd3382951e38e53d; file mới chưa track tests/test_v15_p10_human_authz.py sha256 = 319593b53c30436d47b9b6faf97e2ece7ef377af4186ead947aab6e28bda80cf)
+# môi trường: DB test samsam_v15_p10 (tạo bằng $H/mkdb.py, DSN che qua withdb.py; login người/dịch vụ GIẢ tạo tạm trong DB test, xóa cuối module) — KHÔNG phải DB samsam của .env
+# exit code: 1
+# tổng kết: 25 failed, 2 passed in 36.74s
+# ghi chú: 2 test PASS trên code cũ là ĐÚNG mong đợi (không phải hành vi lane sửa):
+#   test_p10_4_creator_cannot_self_approve (P10.4 = KIỂM LẠI chặn tự duyệt đã có ở DB từ v13.5/v9.1)
+#   test_p10_2_kd_care_verify_send_has_no_by (khóa xếp loại: kd_care --verify-send vốn không nhận --by)
+#   test_p10_4_loader_cannot_approve FAIL trên code cũ chỉ vì function approve_price_human chưa có (UndefinedFunction).
+# ----------------------------------------------------------------
+FFFFFFFFFFFFFFFFFFFFF.FFF.F                                              [100%]
+
+================================== FAILURES ===================================
+
+E   AssertionError: [err] lỗi DB, đã rollback: permission denied for table price_list
+
+      
+
+    assert 1 == 0
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:210: AssertionError: [err] lỗi DB, đã rollback: permission denied for table price_list
+
+E   AssertionError: [err] InsufficientPrivilege: permission denied for table sku_master
+
+      
+
+    assert 2 == 0
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:224: AssertionError: [err] InsufficientPrivilege: permission denied for table sku_master
+
+E   AssertionError: [FAIL] lỗi DB: permission denied for table feature_rollout
+
+      
+
+    assert 2 == 0
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:252: AssertionError: [FAIL] lỗi DB: permission denied for table feature_rollout
+
+E   AssertionError: [err] lỗi DB — InsufficientPrivilege: permission denied for table dealers
+
+      
+
+    assert (1 == 0)
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:277: AssertionError: [err] lỗi DB — InsufficientPrivilege: permission denied for table dealers
+
+E   AssertionError: Traceback (most recent call last):
+
+        File "C:\Users\hahuy\AppData\Local\Temp\pytest-of-hahuy\pytest-2835\p10cfg0\launch_p10.py", line 8, in <module>
+
+          runpy.run_module(mod, run_name="__main__", alter_sys=True)
+
+        File "<frozen runpy>", line 226, in run_module
+
+        File "<frozen runpy>", line 98, in _run_module_code
+
+        File "<frozen runpy>", line 88, in _run_code
+
+        File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\ingest\doc_intake.py", line 477, in <module>
+
+          raise SystemExit(main())
+
+                           ^^^^^^
+
+        File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\ingest\doc_intake.py", line 453, in main
+
+          if not set_review(conn, sha, status, by):
+
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        File "C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\ingest\doc_intake.py", line 377, in set_review
+
+          cur = conn.execute(
+
+                ^^^^^^^^^^^^^
+
+        File "C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py", line 300, in execute
+
+          raise ex.with_traceback(None)
+
+      psycopg.errors.InsufficientPrivilege: permission denied for table documents
+
+      
+
+    assert 1 == 0
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:343: AssertionError: Traceback (most recent call last):
+
+E   AssertionError: [err] lỗi DB InsufficientPrivilege: permission denied for table plots — đã chạy `python scripts/apply_schema.py`?
+
+      
+
+    assert 2 == 0
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:358: AssertionError: [err] lỗi DB InsufficientPrivilege: permission denied for table plots — đã chạy `python scripts/apply_schema.py`?
+
+E   AssertionError: [err] InsufficientPrivilege: permission denied for table dealers
+
+      
+
+    assert (2 != 0 and 'không phải người của login' in '[err] InsufficientPrivilege: permission denied for table dealers\n')
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:376: AssertionError: [err] InsufficientPrivilege: permission denied for table dealers
+
+E   psycopg.errors.UndefinedFunction: function approve_price_human(integer, unknown) does not exist
+
+    LINE 1: select approve_price_human(1, $1)
+
+                   ^
+
+    HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: psycopg.errors.UndefinedFunction: function approve_price_human(integer, unknown) does not exist
+
+E   psycopg.errors.UndefinedFunction: function xnqc_set_status_human(integer, unknown, unknown, unknown, unknown, date, unknown, unknown, unknown) does not exist
+
+    LINE 1: select xnqc_set_status_human(1, 'chuan_bi', 'da_nop', $1, nu...
+
+                   ^
+
+    HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: psycopg.errors.UndefinedFunction: function xnqc_set_status_human(integer, unknown, unknown, unknown, unknown, date, unknown, unknown, unknown) does not exist
+
+E   psycopg.errors.UndefinedFunction: function rollout_transition_human(unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, timestamp with time zone) does not exist
+
+    LINE 1: select rollout_transition_human('sales-01', 'disable', 'chay...
+
+                   ^
+
+    HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: psycopg.errors.UndefinedFunction: function rollout_transition_human(unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, timestamp with time zone) does not exist
+
+E   psycopg.errors.UndefinedFunction: function crm_load_dealers_human(unknown, unknown) does not exist
+
+    LINE 1: select crm_load_dealers_human('[]', $1)
+
+                   ^
+
+    HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: psycopg.errors.UndefinedFunction: function crm_load_dealers_human(unknown, unknown) does not exist
+
+E   psycopg.errors.UndefinedFunction: function doc_review_human(unknown, unknown, unknown) does not exist
+
+    LINE 1: select doc_review_human('ddddddddddddddddddddddddddddddddddd...
+
+                   ^
+
+    HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: psycopg.errors.UndefinedFunction: function doc_review_human(unknown, unknown, unknown) does not exist
+
+E   psycopg.errors.UndefinedFunction: function garden_adopt_plot_human(unknown, unknown) does not exist
+
+    LINE 1: select garden_adopt_plot_human('K-X', $1)
+
+                   ^
+
+    HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: psycopg.errors.UndefinedFunction: function garden_adopt_plot_human(unknown, unknown) does not exist
+
+E   AssertionError: []
+
+    assert 0 >= 19
+
+     +  where 0 = len([])
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:429: AssertionError: []
+
+E   AssertionError: da_pmo --set-status
+
+    assert 2 == 1
+
+     +  where 2 = _rc(<function main at 0x000001CCB012DC60>, ['--set-status', 'M-P10', '--status', 'xong', '--evidence', 'BB-1', ...])
+
+     +    where ['--set-status', 'M-P10', '--status', 'xong', '--evidence', 'BB-1', ...] = <function _decision.<locals>.<lambda> at 0x000001CCB00CB740>('Bán Hàng Giả Lập')
+
+---------------------------- Captured stderr call -----------------------------
+
+[error] lỗi DB: permission denied for table project_milestones
+
+[error] lỗi DB: permission denied for table project_milestones
+
+[error] lỗi DB: permission denied for table project_milestones
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:502: AssertionError: da_pmo --set-status
+
+E   AssertionError: ra_kenh --mark-removed
+
+    assert 2 == 1
+
+     +  where 2 = _rc(<function main at 0x000001CCB00CB420>, ['--mark-removed', 'https://www.tiktok.com/@p10.gia/video/7300000000000000010', '--by', 'Bán Hàng Giả Lập'])
+
+     +    where ['--mark-removed', 'https://www.tiktok.com/@p10.gia/video/7300000000000000010', '--by', 'Bán Hàng Giả Lập'] = <function _decision.<locals>.<lambda> at 0x000001CCAFFBCA40>('Bán Hàng Giả Lập')
+
+---------------------------- Captured stdout call -----------------------------
+
+[err] InsufficientPrivilege: permission denied for table channel_posts
+
+---------------------------- Captured stderr call -----------------------------
+
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+
+                                [--mark-removed URL] [--report] [--by BY]
+
+                                [--now NOW] [--days DAYS] [--dry-run]
+
+python -m agents.ra_kenh: error: --by phải là tên NGƯỜI — không nhận 'agent:'/'system:'
+
+usage: python -m agents.ra_kenh [-h] [--file FILE] [--partner-file CSV]
+
+                                [--mark-removed URL] [--report] [--by BY]
+
+                                [--now NOW] [--days DAYS] [--dry-run]
+
+python -m agents.ra_kenh: error: --by phải là tên NGƯỜI — không nhận 'agent:'/'system:'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:502: AssertionError: ra_kenh --mark-removed
+
+E   AssertionError: anchor --submit
+
+    assert 2 == 1
+
+     +  where 2 = _rc(<function main at 0x000001CCAFFBC7C0>, ['--submit', '1', '--by', 'Bán Hàng Giả Lập'])
+
+     +    where ['--submit', '1', '--by', 'Bán Hàng Giả Lập'] = <function _decision.<locals>.<lambda> at 0x000001CCAFFBD800>('Bán Hàng Giả Lập')
+
+---------------------------- Captured stderr call -----------------------------
+
+[err] DB: permission denied for table anchor_batches
+
+[err] DB: permission denied for table anchor_batches
+
+[err] DB: permission denied for table anchor_batches
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:502: AssertionError: anchor --submit
+
+E   AssertionError: da_pmo --apply-due
+
+    assert 0 == (0 + 3)
+
+     +  where 0 = _denied({'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15_p10) at 0x1ccafaf62a0>, 'dirs':...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2835/p10cfg0/launch_p10.py'), ...}, 'approval_queue', '990001')
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] mục #990001 không phải `milestone_change` khối ceo
+
+[warn] mục #990001 không phải `milestone_change` khối ceo
+
+[warn] mục #990001 không phải `milestone_change` khối ceo
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:551: AssertionError: da_pmo --apply-due
+
+E   AssertionError: da_b2b --handover
+
+    assert 0 == (0 + 3)
+
+     +  where 0 = _denied({'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15_p10) at 0x1ccafaf62a0>, 'dirs':...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2835/p10cfg0/launch_p10.py'), ...}, 'approval_queue', '990001')
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] mục #990001 không phải lô `org_prospect_batch` (người chạy: agent:p10)
+
+[warn] mục #990001 không phải lô `org_prospect_batch` (người chạy: system:cron)
+
+[warn] mục #990001 không phải lô `org_prospect_batch` (người chạy: Pháp Chế Giả Lập)
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:551: AssertionError: da_b2b --handover
+
+E   AssertionError: kd_quote --outcome
+
+    assert 0 == (0 + 3)
+
+     +  where 0 = _denied({'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15_p10) at 0x1ccafaf62a0>, 'dirs':...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2835/p10cfg0/launch_p10.py'), ...}, 'b2b_quote', '990001')
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] ghi kết quả báo giá cần --by tên NGƯỜI — không ghi
+
+[warn] ghi kết quả báo giá cần --by tên NGƯỜI — không ghi
+
+[warn] mục #990001 không phải báo giá B2B ĐÃ duyệt — không ghi
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:551: AssertionError: kd_quote --outcome
+
+E   AssertionError: kd_quote --verify-send --by
+
+    assert 0 == (0 + 3)
+
+     +  where 0 = _denied({'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_v15_p10) at 0x1ccafaf62a0>, 'dirs':...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-2835/p10cfg0/launch_p10.py'), ...}, 'b2b_quote', '990001')
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] mục #990001: LỆCH — KHÔNG gửi (chưa duyệt / sai loại / file khác bản duyệt)
+
+[warn] mục #990001: LỆCH — KHÔNG gửi (chưa duyệt / sai loại / file khác bản duyệt)
+
+[warn] mục #990001: LỆCH — KHÔNG gửi (chưa duyệt / sai loại / file khác bản duyệt)
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:551: AssertionError: kd_quote --verify-send --by
+
+E   AssertionError: da_pmo --set-status
+
+    assert 'da_pmo --set-status' in '# Runbook vận hành hạ tầng AI (v3.10)\n\n**Dành cho ai:** người vận hành hạ tầng AI của Sâm Sâm (không phải dev) —\nn...thon scripts/apply_schema.py --roles` mỗi bản phát hành (grant\n  theo bảng mới; `svc_backup` đọc MỌI bảng hiện có).\n'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:573: AssertionError: da_pmo --set-status
+
+E   Failed: DID NOT RAISE <class 'pipelines.rollout.RolloutBlocked'>
+
+---------------------------- Captured stderr call -----------------------------
+
+[warn] báo cáo bks-audit-2026-09.md: không ghi được sổ đầu ra (InsufficientPrivilege) — không được đếm
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:599: Failed: DID NOT RAISE <class 'pipelines.rollout.RolloutBlocked'>
+
+E   psycopg.errors.UndefinedFunction: function approve_price_human(smallint, unknown) does not exist
+
+    LINE 1: select approve_price_human($1, $2)
+
+                   ^
+
+    HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+
+C:\Users\hahuy\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg\connection.py:300: psycopg.errors.UndefinedFunction: function approve_price_human(smallint, unknown) does not exist
+
+E   AttributeError: module 'pipelines.auth' has no attribute 'HumanDenied'
+
+C:\Users\hahuy\AppData\Local\Temp\claude\D--code-samsam\d3336e1c-6d7f-43b0-ae93-7be47f671ecc\scratchpad\old_p10\tests\test_v15_p10_human_authz.py:665: AttributeError: module 'pipelines.auth' has no attribute 'HumanDenied'
+
+=========================== short test summary info ===========================
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_golden_approve_price_human_login
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_xnqc_add_and_set_human_login
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_rollout_disable_reenable_human_login
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_crm_all_ops_human_login
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_doc_verify_human_login
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_garden_adopt_and_purge_human_login
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_ra_kenh_partner_file_human_login
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_db_identity_from_login_not_by[approve_price_human]
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_db_identity_from_login_not_by[xnqc_set_status_human]
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_db_identity_from_login_not_by[rollout_transition_human]
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_db_identity_from_login_not_by[crm_load_dealers_human]
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_db_identity_from_login_not_by[doc_review_human]
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_db_identity_from_login_not_by[garden_adopt_plot_human]
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_1_functions_locked_down - ...
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_2_decisions_gated[da_pmo-set-status]
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_2_decisions_gated[ra_kenh-mark-removed]
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_2_decisions_gated[anchor-submit]
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_2_data_entry_identity[apply-due]
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_2_data_entry_identity[handover]
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_2_data_entry_identity[outcome]
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_2_data_entry_identity[verify-send]
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_2_classification_documented
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_3_bks_reader_report_outputs_exact
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_4_loader_cannot_approve - ...
+
+FAILED tests/test_v15_p10_human_authz.py::test_p10_4_deny_does_not_commit_caller_work
+
+25 failed, 2 passed in 36.74s
+

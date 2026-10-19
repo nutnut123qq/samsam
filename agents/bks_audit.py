@@ -37,14 +37,18 @@ không? (outside-in P1 — bài/listing đang chạy — là `agents.ceo_audit`.
   - `check_privileges(conn)` — catalog `has_*_privilege`: agent_writer/
     app_human/bks_reader có UPDATE/DELETE/TRUNCATE bảng append-only hoặc
     INSERT `approvals`; bks_reader có bất kỳ quyền ghi nào ngoài INSERT
-    `audit_runs` hoặc EXECUTE function ghi → `quyen_vuot`. Quyền kế thừa từ
+    `audit_runs` / `report_outputs` (v15.4: sổ đầu ra báo cáo BKS) hoặc
+    EXECUTE function ghi → `quyen_vuot`. Quyền kế thừa từ
     role khác cùng danh sách chỉ báo ở role gốc. Function ghi lấy từ
     CATALOG (mọi SECURITY DEFINER trong schema trừ `READ_FUNCS`) — không
     danh sách cứng (thêm function mới không lọt). v14.2: theo dõi thêm
     `ben_a_reader` (+ SELECT ngoài số tổng hợp `BEN_A_READS` = vượt) và 4
     login dịch vụ `svc_*` (svc_backup chỉ đọc); mọi role (trừ backup) đọc
     `contacts`/`consents` = vượt; `settlement_rows`/`order_history` vào
-    danh sách append-only.
+    danh sách append-only. v15 fix P8.7c: svc_backup được EXECUTE ĐÚNG
+    `file_output_evidence_backup` (bằng chứng đầu ra backup —
+    `ROLE_FUNCS`); sổ `file_output_evidence` append-only, INSERT trực tiếp
+    của role theo dõi = vượt (chỉ ghi qua function).
 CHỈ ĐỌC mọi bảng nghiệp vụ; đường ghi DUY NHẤT `insert into audit_runs`
 (`--record`). Báo cáo chỉ `#id`/bảng/khối — không text/payload; tên người +
 lý do override qua `_mask_pii` + `_oneline`. Không LLM, không mạng.
@@ -98,7 +102,13 @@ APPROVAL_ACTIONS = ("draft_approve", "draft_reject", "queue_approve",
 APPEND_ONLY = ("approvals", "agent_action_log", "decisions", "decision_log",
                "audit_runs", "plot_logs", "settlement_rows", "order_history",
                # v14.3: sổ đầu ra báo cáo + gợi ý chat sàn / lần dùng.
-               "report_outputs", "san_suggestions", "san_suggestion_uses")
+               "report_outputs", "san_suggestions", "san_suggestion_uses",
+               # v15.2 (P8.7): sổ người duyệt từng đầu ra.
+               "output_reviews",
+               # v15 fix P8.7c: bằng chứng đầu ra nguồn file (chỉ function).
+               "file_output_evidence")
+# Sổ chỉ ghi qua function SECURITY DEFINER — INSERT trực tiếp = vượt.
+FUNC_ONLY_INSERT = ("approvals", "file_output_evidence")
 # v14.2: + Bên A (chỉ đọc số tổng hợp) + 4 login dịch vụ (docs/roles.sql).
 WATCH_ROLES = ("agent_writer", "app_human", "bks_reader", "ben_a_reader",
                "svc_webhook", "svc_job", "svc_loader", "svc_backup")
@@ -114,6 +124,9 @@ PII_TABLES = ("contacts", "consents")
 # khác trong schema chạy được → quyen_vuot (function INVOKER chạy bằng
 # quyền của chính role — đã kiểm qua quyền bảng).
 READ_FUNCS = ("verify_action_log", "verify_plot_logs", "verify_publish")
+# v15 fix P8.7c: function ghi DUY NHẤT role chỉ đọc được chạy — dịch vụ backup
+# ghi bằng chứng đầu ra (DB tự tính khóa/sha, từ chối login người/agent).
+ROLE_FUNCS = {"svc_backup": ("file_output_evidence_backup",)}
 CODES = ("chuoi_bi_sua", "mat_duoi_chuoi", "khong_kiem_duoc",
          "noi_dung_lech_ban_duyet", "duyet_ngoai_function", "tu_duyet",
          "qa_fail_khong_override", "override_tu_trinh", "tu_ep_tu_duyet",
@@ -362,7 +375,9 @@ _SEL_SQL = (
 
 def _excess(role: str, table: str, priv: str) -> bool:
     if role == "bks_reader":
-        return not (table == "audit_runs" and priv == "INSERT")
+        # v15.4 (P10.3): + INSERT sổ đầu ra báo cáo BKS (append-only).
+        return not ((table, priv) in (("audit_runs", "INSERT"),
+                                      ("report_outputs", "INSERT")))
     if role in READ_ONLY_ROLES:
         return True
     if (role, table, priv) == ("svc_loader", "plot_logs", "DELETE"):
@@ -370,7 +385,7 @@ def _excess(role: str, table: str, priv: str) -> bool:
         # `plot_logs_guard` chặn xóa dòng đã chain kể cả owner.
         return False
     return ((table in APPEND_ONLY and priv != "INSERT")
-            or (table == "approvals" and priv == "INSERT"))
+            or (table in FUNC_ONLY_INSERT and priv == "INSERT"))
 
 
 def _excess_read(role: str, table: str) -> bool:
@@ -398,7 +413,8 @@ def check_privileges(conn) -> list[dict]:
                     if _excess_read(role, t)}
             if role == "bks_reader" or role in READ_ONLY_ROLES:
                 raw |= {(role, f"function {f}", "EXECUTE") for (f,) in _rows(
-                    conn, _FUNC_SQL, (list(READ_FUNCS), role))}
+                    conn, _FUNC_SQL,
+                    ([*READ_FUNCS, *ROLE_FUNCS.get(role, ())], role))}
     except psycopg.Error as e:
         return [{"code": "khong_kiem_duoc", "table": "pg_catalog",
                  "detail": _why(e)}]
@@ -593,7 +609,10 @@ def main(argv=None, now=None) -> int:
         if a.dry_run:
             print(text)
             return 0
-        path = write_report(text, a.out_dir, f"bks-audit-{label}.md")
+        # P8.4: kiểm toán trên DB thật (chuỗi hash/duyệt/quyền) — không có
+        # đường dữ liệu mẫu; cùng cờ với `record_run` (mặc định False).
+        path = write_report(text, a.out_dir, f"bks-audit-{label}.md",
+                            sample=False)
         rid = None
         if a.record:
             rid = record_run(conn, KIND, label,

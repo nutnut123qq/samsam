@@ -6,7 +6,10 @@ theo `TRANSITIONS`; `da_cap` CHỈ do NGƯỜI (Pháp chế) xác nhận: `--by`
 tên người + số giấy + ngày cấp (≤ hôm nay) + scan giấy trong `documents`
 đã được Pháp chế đối chiếu bản gốc (`status = 'verified'`, qua `python -m
 ingest.doc_intake --verify <sha> --by`). DB tự chặn thêm bằng CHECK (kể cả
-INSERT/UPDATE thẳng). Mỗi lần đổi trạng thái: UPDATE + 1 dòng
+INSERT/UPDATE thẳng). v15.4: ghi qua function SECURITY DEFINER
+`xnqc_add_human`/`xnqc_set_status_human` (danh tính theo login Postgres —
+`--by` phải là người của login; `--set` khối legal_hr; DB kiểm lại chuyển
+trạng thái + scan). Mỗi lần đổi trạng thái: UPDATE + 1 dòng
 `agent_action_log` (`xnqc_status`, detail chỉ {id, from, to}) cùng
 transaction.
 
@@ -46,7 +49,6 @@ import sys
 from datetime import date, datetime
 
 import psycopg
-from psycopg.types.json import Jsonb
 
 from agents.ra_kenh import CONFIG, _iso_date, by_error, load_config, safe
 from ingest.golden_store import GOLDEN_FILE, read_golden
@@ -84,12 +86,6 @@ def _date(v, what: str) -> date | None:
         raise ValueError(f"{what}: cần ngày YYYY-MM-DD hợp lệ") from None
 
 
-def _log(conn, by: str, action: str, oid, detail: dict) -> None:
-    conn.execute("insert into agent_action_log (actor, action, object_type,"
-                 " object_id, detail) values (%s, %s, %s, %s, %s)",
-                 (by, action, "xnqc_dossier", str(oid), Jsonb(detail)))
-
-
 def list_dossiers(conn) -> list[dict]:
     return [dict(zip(COLS, r)) for r in conn.execute(
         f"select {', '.join(COLS)} from xnqc_dossiers"
@@ -116,19 +112,16 @@ def add(conn, sku_key: str, loai: str, ten: str, by: str) -> int:
     if conn.execute("select 1 from sku_master where sku_key = %s",
                     (sku_key,)).fetchone() is None:
         raise ValueError("SKU không có trong sku_master")
+    # v15.4 (P10.1): ghi qua function SECURITY DEFINER (danh tính theo
+    # login — nhập liệu, không khối) + log cùng transaction trong function.
     with conn.transaction():
-        did = conn.execute(
-            "insert into xnqc_dossiers (sku_key, loai_ho_so, ten_ho_so,"
-            " updated_by) values (%s, %s, %s, %s) returning id",
-            (sku_key, loai, ten, by.strip())).fetchone()[0]
-        _log(conn, by.strip(), "xnqc_add", did,
-             {"id": did, "to": "chuan_bi"})
+        did = auth.call_human(
+            conn, "select xnqc_add_human(%s, %s, %s, %s)",
+            (sku_key, loai, ten, by.strip()), by=by, block=None,
+            action="set_status", object_type="xnqc_dossier",
+            object_id=sku_key).fetchone()[0]
     conn.commit()
     return did
-
-
-class _Raced(Exception):
-    pass
 
 
 def set_status(conn, dossier_id, status: str, by: str, *, so_giay=None,
@@ -181,25 +174,22 @@ def set_status(conn, dossier_id, status: str, by: str, *, so_giay=None,
             return False, (f"scan giấy đang '{d[0]}' — Pháp chế phải đối chiếu"
                            " bản gốc (doc_intake --verify) trước")
     try:
+        # v15.4 (P10.1): ghi qua function SECURITY DEFINER — khối legal_hr
+        # theo login (`human_actor`), DB kiểm lại chuyển trạng thái/scan.
         with conn.transaction():
-            n = conn.execute(
-                "update xnqc_dossiers set status = %s,"
-                " so_giay = coalesce(%s, so_giay),"
-                " ngay_nop = coalesce(%s, ngay_nop),"
-                " ngay_cap = coalesce(%s, ngay_cap),"
-                " ngay_het_han = coalesce(%s, ngay_het_han),"
-                " document_sha256 = coalesce(%s, document_sha256),"
-                " updated_by = %s, updated_at = now()"
-                " where id = %s and status = %s",
-                (status, so, nop, cap, het, sha, by.strip(), did, cur)
-            ).rowcount
-            if n != 1:
-                raise _Raced
-            _log(conn, by.strip(), "xnqc_status", did,
-                 {"id": did, "from": cur, "to": status})
+            auth.call_human(
+                conn, "select xnqc_set_status_human(%s, %s, %s, %s, %s, %s,"
+                " %s, %s, %s)", (did, cur, status, by.strip(), so, nop, cap,
+                                 het, sha or None),
+                by=by, block="legal_hr", action="set_status",
+                object_type="xnqc_dossier", object_id=did)
         conn.commit()
-    except _Raced:
-        return False, f"hồ sơ #{did} vừa đổi trạng thái — thử lại"
+    except auth.HumanDenied as e:
+        return False, f"DB từ chối: {e}"
+    except ValueError as e:
+        if "vừa đổi trạng thái" in str(e):
+            return False, f"hồ sơ #{did} vừa đổi trạng thái — thử lại"
+        return False, f"DB từ chối: {_mask_pii(str(e))[:200]}"
     except psycopg.Error as e:
         return False, f"DB từ chối: {_db_msg(e)}"
     msg = f"hồ sơ #{did}: {cur} → {status}"

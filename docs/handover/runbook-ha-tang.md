@@ -387,12 +387,10 @@ KHÔNG qua cổng (nhập liệu/ghi sổ, người chịu trách nhiệm ghi `-
 `agent_eval --propose-*` (đề xuất → hàng duyệt), `break_glass` (không có kết
 nối DB — danh sách `break_glass_holders`).
 
-Còn hở (quyết định hạ tầng Bên B): các CLI trên ghi bảng TRỰC TIẾP (giá,
-hồ sơ XNQC, sổ triển khai, CRM, tài liệu, khoảnh) — login `in role
-app_human` chưa có quyền ghi các bảng đó (production/qr/giá vốn/ack đi qua
-function hoặc bảng đã cấp nên chạy được). Bên B chọn: function SECURITY
-DEFINER theo việc, hoặc role người theo khối — chưa cấp thì CLI đó báo lỗi
-quyền (fail-closed), không chạy bằng DSN owner chung.
+v15.4: hở "CLI người ghi bảng TRỰC TIẾP, login `in role app_human` không
+có quyền" (giá, hồ sơ XNQC, sổ triển khai, CRM, tài liệu, khoảnh, bài đối
+tác) đã đóng bằng function nghiệp vụ SECURITY DEFINER — xem 9.7. Các `--by`
+chưa xếp loại trước v15 nay đã xếp ở 9.7 (bảng P10.2).
 
 ### 9.6 Login dịch vụ (v14.2)
 
@@ -404,7 +402,7 @@ git) trong role nhóm của `docs/roles.sql` khối v14.2, trỏ biến DSN riê
 | Webhook Zalo OA / Messenger | `svc_webhook` | `WEBHOOK_DATABASE_URL` | `connectors.zalo`, `connectors.messenger` |
 | Job lịch (agent) | `svc_job` | `JOB_DATABASE_URL` | `pipelines.job_runs --run <job>` (mọi job trừ dưới) |
 | Nạp file | `svc_loader` | `LOADER_DATABASE_URL` | `ingest.core_store\|golden_store (nạp)\|market_csv\|settlement_csv\|inventory_csv\|intel_import\|embed_store\|kb_internal\|lead_store`, `agents.kd_orders` — golden: KHÔNG duyệt giá/map, KHÔNG quyết/xóa phiếu lệch đã quyết (UPDATE chỉ cột `valid_to`/`sku_key,note`/`detail,updated_at`; v14 vá review) |
-| Backup | `svc_backup` (CHỈ ĐỌC) | `BACKUP_DATABASE_URL` | job `backup` (`scripts/db_backup.py`) |
+| Backup | `svc_backup` (CHỈ ĐỌC bảng; v15 fix P8.7c: + EXECUTE `file_output_evidence_backup`) | `BACKUP_DATABASE_URL` | job `backup` (`scripts/db_backup.py`) — ghi bằng chứng đầu ra backup vào DB |
 | Bên A | `ben_a_reader` | (công cụ của Bên A) | không có tiến trình trong repo |
 
 ```sql
@@ -427,3 +425,242 @@ create role backup_svc  login password '<...>' in role svc_backup;
   Test login thật: `tests/test_v14_p2_service_auth.py`.
 - Chạy lại `python scripts/apply_schema.py --roles` mỗi bản phát hành (grant
   theo bảng mới; `svc_backup` đọc MỌI bảng hiện có).
+- (v15 fix P8.7c) Bằng chứng đầu ra backup TRONG DB: mỗi lần backup thành
+  công, CHÍNH `scripts/db_backup.py` (login `svc_backup` của job `backup`) gọi
+  function SECURITY DEFINER `file_output_evidence_backup(<bản ghi
+  backup_runs>, false)` → 1 dòng sổ APPEND-ONLY `file_output_evidence` (DB tự
+  tính khóa `bk:<sha256 bản dump>` + sha phiên bản = sha256 bản ghi; thời
+  điểm = đồng hồ DB; login ghi = `captured_by`). AI ĐƯỢC GHI: chỉ login thành
+  viên `svc_backup` (hoặc owner ở dev) và KHÔNG thuộc `app_human`/
+  `agent_writer`/`svc_loader`/`svc_job`/`svc_webhook`/`bks_reader`/
+  `ben_a_reader` — login người lỡ được cấp vào svc_backup vẫn bị từ chối
+  (`42501`); không role nào có INSERT/UPDATE/DELETE trên sổ. Bản ghi phải là
+  lần backup `ok` đúng khuôn (sha bản dump, tên dump không đường dẫn, ts có
+  múi giờ). Ghi không được (login sai / schema cũ) → backup vẫn giữ, exit 4 +
+  `[warn]` (job ghi lỗi) — lần đó KHÔNG thành đầu ra đếm được. Backup chạy
+  trước bản vá (chỉ có dòng `backup_runs.jsonl`) không có bằng chứng → không
+  đếm/không duyệt (không ghi bù tay — app_human/owner không tạo bằng chứng
+  thay dịch vụ ở chế độ thực). `agents.bks_audit` cho phép đúng function này
+  với svc_backup; function ghi khác = `quyen_vuot`.
+
+### 9.7 Login NGƯỜI ghi qua function nghiệp vụ (v15.4 — P10.1…P10.4)
+
+**Phương án đội triển khai chọn (ĐỀ XUẤT — Bên B/hạ tầng xác nhận):**
+function nghiệp vụ SECURITY DEFINER THEO VIỆC, KHÔNG dùng "role người theo
+khối". Lý do:
+
+- Quyền tối thiểu: login `in role app_human` chỉ có EXECUTE đúng các
+  function dưới — KHÔNG INSERT/UPDATE/DELETE bảng nghiệp vụ (giá, hồ sơ
+  XNQC, sổ triển khai, CRM, tài liệu, khoảnh, bài đối tác). Role theo khối
+  (vd `human_sales` có UPDATE `price_list`) cho mọi người trong khối sửa
+  thẳng bảng bằng psql, vượt mọi kiểm ở code, và `--by` vẫn là chữ tự khai
+  → loại.
+- Danh tính trong DB, không tin `--by`: mọi function gọi `human_actor(by,
+  khối)` — lấy `session_user` (login thật của kết nối) tra bảng
+  `human_logins` (login ↔ người ↔ khối). Login chưa ánh xạ / `--by` khác
+  người của login / khối ngoài phạm vi / `agent:`/`system:` → lỗi `42501`
+  (CLI ghi `authz_denied`, chế độ thực). Gọi thẳng function qua psql cũng
+  bị chặn như vậy.
+- Bất biến nghiệp vụ kiểm lại TRONG function (khóa dòng, chuyển trạng thái
+  hợp lệ, chưa duyệt/chưa đóng, scan đã đối chiếu, ngày không ở tương lai,
+  không đè nguồn `manual`); log `agent_action_log` cùng transaction
+  (`db_role` = login thật).
+- Khóa function: `set search_path from current` (ghim schema lúc tạo —
+  chống chèn bảng giả qua search_path), `REVOKE EXECUTE … FROM PUBLIC`,
+  `GRANT EXECUTE` chỉ cho `app_human`; `svc_*`/`bks_reader`/`agent_writer`
+  không gọi được (test `test_p10_1_functions_locked_down`; `agents.bks_audit`
+  báo `quyen_vuot` nếu role chỉ đọc chạy được function SECURITY DEFINER).
+
+| CLI | Function | Khối (`human_logins.blocks`) |
+|---|---|---|
+| `ingest.golden_store --approve-price` | `approve_price_human` | sales |
+| `agents.xnqc --add` · `--set` | `xnqc_add_human` · `xnqc_set_status_human` | (nhập liệu) · legal_hr |
+| `pipelines.rollout --promote\|--severe\|--disable` | `rollout_transition_human` | tiền tố mã tính năng |
+| `ingest.crm --add-contact` · `--status` | `crm_add_contact_human` · `crm_set_lead_status_human` | (nhập liệu) |
+| `ingest.crm --consent` · `--assign` · `--owner` · `--handoff` · `--load-dealers` | `crm_record_consent_human` · `crm_assign_lead_human` · `crm_assign_owner_human` · `crm_handoff_human` · `crm_load_dealers_human` | sales |
+| `ingest.crm --report` | `crm_counts` (chỉ đếm) | — |
+| `ingest.doc_intake --verify\|--reject` | `doc_review_human` | legal_hr |
+| `agents.garden_director --purge-sample` · `--adopt-plot` | `garden_purge_sample_human` · `garden_adopt_plot_human` | farming |
+| `agents.ra_kenh --partner-file` | `record_partner_scan_human` | (nhập liệu) |
+| `agents.da_pmo --set-status` (v15 fix P10.2) | `milestone_set_status_human` | ceo |
+| `agents.da_pmo --apply-due` (v15 fix P10.2) | `milestone_apply_due_human` | (thực thi mục đã duyệt) |
+| `agents.da_b2b --handover` (v15 fix P10.2) | `org_batch_rows_human` (đọc lô) + `org_handover_human` | (thực thi mục đã duyệt) |
+| `agents.ra_kenh --mark-removed` (v15 fix P10.2) | `channel_post_mark_removed_human` | legal_hr |
+| `pipelines.anchor --submit --by <người>` (v15 fix P10.2) | `human_actor` (TRƯỚC khi gửi) + `anchor_receipt_human` | farming |
+| `agents.kd_quote --outcome` · `--verify-send [--by]` (v15 fix P10.2) | `b2b_quote_event_human` | (nhập liệu) |
+
+Đọc cấp thêm cho `app_human` (để CLI kiểm trước khi gọi function; không PII):
+`price_list`, `golden_discrepancies`, `xnqc_dossiers`, `leads`, `dealers`,
+`partner_post_scans`, `sku_master(sku_key)`, `documents` (cột trạng thái —
+không `filename`), `document_fields`, `plots(id, source)`, `plot_logs(id,
+plot_id, ts, source)`, `garden_media(id, plot_id)`, `affiliate_codes(id,
+dealer_code, queue_id, status)``, `anchor_batches`,
+`anchor_receipts` (v15 fix P10.2 — hash + thời điểm); `org_prospects` KHÔNG
+grant (v8.3) — `da_b2b --handover` đọc dòng của đúng 1 lô qua
+`org_batch_rows_human` (danh tính theo login). v15 fix P10.2 THU HỒI INSERT cột `b2b_quote_events`
+(v14.4) — ghi qua `b2b_quote_event_human`. KHÔNG `contacts`/`consents`: ciphertext liên
+hệ chỉ trả qua `crm_handoff_human` khi có đồng ý `dai_ly` đích danh; quyền
+UPDATE cột người phụ trách `leads` (v14.4) đã THU HỒI — đi qua
+`crm_assign_owner_human`.
+
+**Bên B làm (external-dep — dev KHÔNG tự điền, repo để trống):**
+
+```sql
+create role <login_nguoi> login password '<...>' in role app_human;
+insert into human_logins (db_login, person, blocks, granted_by, note)
+values ('<login_nguoi>', '<tên đúng như users.json/approvers>',
+        array['sales'], '<người ký văn bản ủy quyền>', '<số văn bản>');
+-- thu hồi: update human_logins set active = false where db_login = '...';
+```
+
+Hai nguồn phải khớp (lệch → bị chặn, fail-closed): `data/users.json`
+(`db_login` — cổng `auth.cli_gate` ở CLI) và `human_logins` (DB). Mỗi lần đổi
+`human_logins` ghi `agent_action_log` `human_login_change` (trigger). Chỉ owner
+đọc/ghi `human_logins`.
+
+**Rủi ro còn lại (ghi rõ, không che):**
+
+- Login owner/superuser: `human_actor` nhận `--by` như cũ (owner vốn ghi thẳng
+  được mọi bảng) — chế độ thực KHÔNG cấp DSN owner cho người.
+- `rollout --promote` (vá review v15): DB KHÔNG tin số đếm caller truyền —
+  `rollout_transition_human` tự đếm lại bằng bộ đếm `feature_rollout.
+  count_spec` (chính câu SQL Python đếm, OWNER ghi qua `rollout --seed`;
+  app_human/svc chỉ SELECT sổ): ngày làm việc của giai đoạn theo lịch
+  `rollout_config.json`, đầu ra DISTINCT rải trên ngày làm việc (≥ 50 / ≥ 5),
+  ≥ 1 đầu ra NGƯỜI duyệt + 0 thiếu người + 0 chưa duyệt qua `output_reviews`
+  (≥ 10 ngày), 0 lỗi nghiêm trọng — gọi thẳng psql với bằng chứng khai khống
+  bị từ chối; tính năng không có nguồn đếm được → không nâng. Kết quả DB đếm
+  ghi `feature_rollout_events.evidence.db_recount`. Còn lại: (a) nguồn `file`
+  (`conversations.jsonl` của sales-01, `backup_runs.jsonl` của
+  data_platform-07.2 — nhật ký trên máy ứng dụng, DB không đọc được): NGƯỠNG
+  SỐ LƯỢNG của 2 tính năng này vẫn theo bằng chứng Python (phần DB đếm được
+  vẫn phải 0 thiếu người / 0 chưa duyệt). v15 fix P8.7c: data_platform-07.2
+  KHÔNG còn nguồn file — đếm sổ DB `file_output_evidence` (bằng chứng do
+  dịch vụ backup ghi, mục 9.6) → DB áp đủ ngưỡng PL02 lên số DB đếm; còn
+  sales-01 (convlog) theo Python. v15 fix P8.1: convlog CHỈ tính dòng
+  `provenance: "live"` do transport kênh thật (`zalo.send_text`/
+  `messenger.send_text`) đặt lúc ghi; mock (`scripts/zalo_mock.py`), replay/
+  test (transport giả), Streamlit demo, dòng có `is_sample`/`dry_run`/
+  `replay`/`mock`/`test` → không tính. Bản ghi CŨ (trước bản vá) thiếu
+  provenance KHÔNG được công nhận là đầu ra thật — bộ đếm (`rollout.
+  output_facts`) ghi "dòng thiếu provenance" vào `uncounted` (CLI `--status`
+  chưa in mục này); KHÔNG sửa tay convlog để thêm provenance
+  (đầu ra sales-01 tính lại từ dòng ghi sau bản vá); (b) đổi danh mục `output_sources` /
+  bộ đếm trong code / lịch nghỉ mà CHƯA chạy lại `--seed` → DB đếm theo bộ
+  đếm cũ (owner chạy `python -m pipelines.rollout --seed --by <tên>` sau mỗi
+  lần đổi; `--seed` giữ giai đoạn + mốc, chỉ đồng bộ `count_spec`); dòng sổ
+  chưa có `count_spec` → DB từ chối nâng (fail-closed). Login người không
+  đọc được nguồn nào thì nguồn đó "không đếm được" ở Python → không nâng.
+- `rollout --review-output` (v15.2 P8.7 — duyệt TỪNG đầu ra báo cáo/bảng/
+  file không có bước người riêng): DB (`output_review_human`) kiểm danh tính
+  theo login + khối, quyết định hợp lệ, tính năng có trong sổ, và (v15 fix
+  P8.7) TỰ kiểm khóa + phiên bản bằng bộ đếm `count_spec` của sổ (owner ghi
+  qua `--seed`; chính câu đếm của cổng PL02): khóa phải là đầu ra nguồn
+  bảng/báo cáo của ĐÚNG tính năng trong cửa sổ giai đoạn hiện hành (không
+  mẫu, đúng nguồn/loại), không có bước người duyệt riêng, sha = phiên bản
+  hiện hành (báo cáo = bản mới nhất). Khóa không tồn tại / sai tính năng /
+  sai sha / phiên bản cũ / mẫu / sổ chưa có `count_spec` → DB từ chối, 0 dòng
+  sổ, 0 log — gọi thẳng psql không ghi được dòng rác. Nguồn FILE chưa có bản
+  chụp tin cậy trong DB (nguồn `{"file": ...}` của danh mục — convlog `cv:`)
+  → DB từ chối duyệt khóa file kèm lý do. (v15 fix P8.7c) Backup (`bk:`,
+  data_platform-07.2) CÓ bằng chứng tin cậy trong DB: sổ `file_output_evidence`
+  chỉ dịch vụ backup ghi (mục 9.6 — app_human/agent/loader/BKS không tạo được
+  bằng chứng rồi tự duyệt); danh mục 07.2 đổi nguồn sang `{"table":
+  "file_output_evidence", "source": "backup_runs"}` → `count_spec` chứa câu
+  đếm sổ → `--outputs`/`--review-output`/cổng PL02 cùng bộ đếm DB: khóa phải
+  có trong sổ, không mẫu, trong cửa sổ giai đoạn, sha = bản ghi MỚI NHẤT của
+  khóa; khóa giả / sai sha / mẫu / phiên bản cũ / sai tính năng → từ chối.
+  SAU KHI CẬP NHẬT bản này owner PHẢI chạy lại `python -m pipelines.rollout
+  --seed --by <tên>` (đồng bộ `count_spec` của 07.2 — chưa chạy thì DB còn
+  đếm theo nguồn file cũ và từ chối khóa `bk:`). convlog (sales-01) KHÔNG cần
+  sổ: câu bot gửi khách không duyệt qua `output_reviews` (gửi thiếu người =
+  `unapp`, tự chặn cổng van_hanh). (v15 fix P8.7b) Login người KHÔNG có SELECT bảng nguồn (vd
+  `audit_runs` — không cấp thêm): `--outputs [--by]`/`--review-output` chạy
+  bằng login người (không superuser/owner, có EXECUTE) liệt kê + kiểm sớm
+  qua function SECURITY DEFINER `output_pending_human(fid, by)` — danh
+  tính/khối như `output_review_human` (`by` trống = người của login), CÙNG
+  bộ đếm `count_spec`/`rollout_db_outputs` trong cửa sổ giai đoạn hiện hành
+  (loại mẫu), trả CHỈ khóa + sha phiên bản hiện hành + loại nguồn
+  (bang/bao_cao) + quyết định mới nhất, không nội dung bảng nguồn; nguồn file
+  không liệt kê và `--review-output` khóa file báo rõ "nguồn file … không
+  duyệt qua sổ này". DB vẫn quyết ở `output_review_human`; chỉ app_human
+  EXECUTE (svc_*/agent_writer/bks_reader/PUBLIC không). Owner/dev giữ bộ
+  đếm Python. Duyệt lại cùng khóa + sha = thêm 1 dòng (append-only, bản mới
+  nhất thắng; cổng đếm DISTINCT khóa). Khối chưa có `approvers` (Bên B chưa
+  ủy quyền) → chế độ thực không duyệt được → tính năng không lên vận
+  hành.
+- `crm --assign`: vùng đại lý ↔ tỉnh kiểm ở CLI theo `data/dealer_regions.json`
+  (file, không trong DB).
+- `rollout --seed`, nạp file golden/core vẫn chạy bằng login triển khai /
+  `svc_loader` (thao tác triển khai/nạp, không phải quyết định người).
+- Function duyệt có trước v15 (`decide_item`, `approve_draft`,
+  `approve_cogs`, `record_lot_intake`, `sign_qr_lot`…) vẫn nhận tên người
+  duyệt làm tham số — cổng CLI/UI đối chiếu login ở chế độ thực, nhưng gọi
+  thẳng psql bằng login `app_human` thì DB chỉ chặn agent/tự duyệt (chưa
+  đối chiếu `human_logins`).
+
+**Bảng xếp loại `--by` chưa xếp trước v15 (P10.2 — đội triển khai ĐỀ XUẤT,
+hai bên xác nhận):**
+
+| Lệnh | Loại | Lý do | Cổng |
+|---|---|---|---|
+| `da_pmo --set-status` | quyết định | đổi trạng thái mốc tiến độ (`xong` = nghiệm thu mốc, căn cứ báo cáo HĐTV/PL01 mục 7) | `auth.cli_gate` khối ceo `set_status` |
+| `da_pmo --apply-due` | thực thi mục đã duyệt | quyết định đổi hạn nằm ở `decide_item` (đã qua cổng); lệnh chỉ áp mục approved + sha khớp + hạn cũ khớp, chạy lại = no-op | `auth.cli_identity` (người của chính login) |
+| `da_b2b --handover` | thực thi mục đã duyệt | chỉ chuyển lô approved + sha khớp; rejected/expired trả về `moi` | `auth.cli_identity` |
+| `kd_care --verify-send` | kiểm (chỉ đọc) | không có `--by`, không ghi — người gửi tự kiểm trước khi gửi | — (`--by` bị từ chối) |
+| `ra_kenh --mark-removed` | quyết định | đóng đợt vi phạm S1/S2 = dừng theo dõi SLA gỡ bài; khai sai = bài vi phạm còn trên kênh mà sổ báo đã gỡ | `auth.cli_gate` khối legal_hr `close_violation` |
+| `anchor --submit --by <người>` | quyết định (khi `--by` là người) | ở giai đoạn "có người duyệt", người duyệt cho dùng đầu ra = gửi digest ra ngoài; `--by` mặc định `agent:anchor` = đường job (rollout đòi vận hành) | `auth.cli_gate` khối farming `approve` |
+| `kd_quote --outcome` | nhập liệu | ghi kết quả khách báo (chốt/không chốt/hủy) — dừng nhắc, không đổi giá/đơn | `auth.cli_identity` |
+| `kd_quote --verify-send --by` | nhập liệu | ghi mốc đã gửi sau khi máy kiểm sha khớp bản duyệt | `auth.cli_identity` |
+
+`auth.cli_identity` (nhập liệu/thực thi): mọi chế độ chặn `agent:`/`system:`;
+chế độ thực thêm `--by` phải là tài khoản users file có `db_login` = login
+đang dùng (không ghi thay tên người khác) — bị chặn → `authz_denied`.
+
+**v15 fix P10.2 — người được phép HOÀN THÀNH được việc:** trước vá, các lệnh
+trên qua cổng xong vẫn ghi bảng trực tiếp → dưới login `app_human` báo
+`permission denied` (người được ủy quyền không làm được việc); `kd_quote`
+INSERT cột thẳng → psql ghi được `recorded_by` là tên người khác. Nay mỗi
+lệnh ghi qua function ở bảng function phía trên (cổng Python giữ nguyên làm
+lớp 1; DB là lớp 2 không vượt được bằng psql):
+
+- QUYẾT ĐỊNH (`set-status` ceo, `mark-removed` legal_hr, `anchor --submit
+  --by <người>` farming): `human_actor(by, khối)` — login phải ánh xạ người
+  có khối đó trong `human_logins` (users file + approvers đúng mà
+  `human_logins` thiếu khối/thiếu login → DB chặn, `authz_denied`).
+- NHẬP LIỆU / THỰC THI (`apply-due`, `handover`, `outcome`, mốc gửi):
+  `human_actor(by, null)` + DB tự kiểm mục hàng duyệt đúng khối/loại, ĐÃ
+  duyệt, nội dung khớp sha bản duyệt MỚI NHẤT (`verify_publish`), hạn cũ
+  (apply-due), số dòng + mã từng tổ chức của lô (handover), 1 kết quả/báo
+  giá (outcome).
+- Chạy lại: set-status/apply-due/handover/anchor = no-op (exit 0, không ghi
+  dòng/log mới); mark-removed/outcome đã ghi → exit 1, DB không đổi; mốc
+  `da_gui` ghi MỖI lần gửi (thiết kế v14.4 — mốc nhắc mới).
+- `anchor --submit --by <người>`: DB kiểm danh tính TRƯỚC khi gửi digest ra
+  calendar (login sai không làm phát sinh lần gửi); biên nhận phải mang đúng
+  digest bản kê; login không owner còn đòi giai đoạn `farming-06` là
+  `co_nguoi_duyet|van_hanh` trong sổ. Job `agent:anchor` (DSN owner/dịch vụ)
+  ghi thẳng như cũ, vẫn qua cổng rollout ở Python.
+
+Rủi ro còn lại P10.2 (ghi rõ): (a) cổng rollout biên DÙNG (`aq.verify` →
+`use_reason`, theo danh mục `data/contract_features.json`) của apply-due/
+handover/verify-send vẫn ở Python — gọi thẳng function bằng psql áp được mục
+đã duyệt dù tính năng đang chạy thử (DB vẫn đòi người + mục approved + sha);
+(b) `anchor_receipt_human` đọc giai đoạn trong sổ DB, KHÔNG đọc
+`rollout_config.json` — đặt `"enforce": false` thì Python cho dùng nhưng DB
+vẫn đòi sổ ở `co_nguoi_duyet|van_hanh`; (c) handover: DB kiểm bản duyệt +
+thành viên lô (số dòng + mã), so từng ô tổ chức dựng lại ở Python (login
+người không sửa được `org_prospects`); (d) mốc `da_gui` không `--by` ghi
+không tên (như trước) — DB chỉ đòi báo giá đã duyệt + bản gửi khớp sha; so
+file gửi với bản duyệt ở Python. Test: `tests/test_v15_fix_p102.py`.
+
+**BKS (P10.3):** login `in role bks_reader` thêm đúng 2 quyền: SELECT
+`feature_rollout` (biên sinh báo cáo đọc giai đoạn — trước đây đọc lỗi → coi
+như chạy thử → tính năng TẮT vẫn sinh) và INSERT 4 cột `report_outputs` (sổ
+đầu ra để báo cáo `bks-audit-*`/`bks-recon-*` được đếm). Không SELECT/UPDATE/
+DELETE `report_outputs`, không `feature_rollout_events`.
+
+**Kiểm lại (P10.4, login thật):** `svc_loader` không gọi được function người,
+không UPDATE duyệt giá/map/phiếu lệch, không đọc `human_logins`; người tạo
+mục hàng duyệt / người lập giá vốn không tự duyệt (DB chặn); log từ chối
+không commit việc dở của caller. Test: `tests/test_v15_p10_human_authz.py`.

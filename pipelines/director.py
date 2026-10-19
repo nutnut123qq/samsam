@@ -286,8 +286,16 @@ def run(conn, block: str, now: datetime | None = None,
         qa_runs = None
     conn.commit()   # đóng tx đọc (conn chia sẻ)
     text = digest(cfg, items, now, overrides, qa_runs, extra)
+    # P8.4: bản tin có mục hàng duyệt MẪU (`is_sample`) trong phạm vi → True
+    # (không đếm là đầu ra thật của tính năng bản tin khối).
+    sample = conn.execute(
+        "select exists (select 1 from approval_queue where block = %s and"
+        " is_sample and (status = 'pending' or decided_at >= %s or"
+        " created_at >= %s))", (block, start, start)).fetchone()[0]
+    conn.commit()
     path = write_report(text, out_dir,
-                        f"director-{block}-{start.date():%Y-%m-%d}.md")
+                        f"director-{block}-{start.date():%Y-%m-%d}.md",
+                        sample=bool(sample))
     return path, text
 
 

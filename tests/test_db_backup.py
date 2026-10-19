@@ -424,7 +424,11 @@ def test_backup_manifest_matches_live(env, live):
     assert m["size_bytes"] == dump.stat().st_size
     assert dump.read_bytes()[:5] == b"PGDMP"
     assert len(m["row_counts"]) == N_TABLES
-    assert m["row_counts"] == before == _counts(live)
+    # v15 fix P8.7c: backup ghi ĐÚNG 1 dòng bằng chứng đầu ra SAU snapshot
+    # (manifest khớp trạng thái lúc dump; ngoài sổ bằng chứng không đổi gì).
+    ev = "file_output_evidence"
+    assert m["row_counts"] == before
+    assert _counts(live) == {**before, ev: before[ev] + 1}
     assert m["encrypted"] is False and m["cipher"] is None
     pw = psycopg.conninfo.conninfo_to_dict(live).get("password")
     for f in (mp, env / "backup_runs.jsonl"):

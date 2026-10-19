@@ -1,0 +1,152 @@
+# v15 gate — thử NÂNG CẤP từ schema/code a05c60f (main) lên working tree v15 (nhánh v15-hop-dong, CHƯA commit)
+# revision: nền a05c60f + working tree chưa commit; sha256(git diff)=d138c3cecb65722c96bf8e7afb6c6f44f73af5155c8592b50bd5d0e4edbb0665; sha256(git diff trừ DONE.md+board)=9ec857e9a8ff243b4f0536b2094faf9a5b285e0ae442c32e365c78521de4eb68; untracked mới 16 file sha256(list)=9bcdc973b1d9456aa7c33f2dd7185aec1d53ca49945cb9533fbc21877fdb1b18
+# DB tạm samsam_v15_up (KHÔNG phải DB .env); code cũ chạy từ git worktree tạm NGOÀI repo (scratchpad/old_up, đã xóa sau); dữ liệu giả, không PII thật; DSN che qua withdb.py
+# lệnh: (cwd worktree cũ) withdb samsam_v15_up python scripts/apply_schema.py --roles; python -m ingest.core_store; python -m ingest.golden_store; python hist15.py; snap15.py before
+#       (cwd repo) apply_schema --roles x2; snap15 --cmp; python -m ingest.core_store x2; python -m ingest.golden_store; snap15 --cmp; pipelines.store --verify-log; agents.garden_director --verify; up_probe15.py
+
+## 1. code cũ a05c60f: apply_schema --roles + core_store + golden_store
+[done] schema applied — 88 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, 
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[exit 0]
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+[done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+[exit 0]
+[load] sku_changed=13, map_changed=15, price_inserted=34, price_closed=0, price_same=0
+[disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+[exit 0]
+
+## 2. code cũ: giả lập lịch sử (hist15.py) — seed rollout, approval_queue duyệt/từ chối (chain agent_action_log), nháp, plot_logs chain, sự cố nghiêm trọng, cảnh báo đỏ, garden_media, 3 đơn THẬT source=manual THAM CHIẾU sản phẩm crawl (1 đổi trạng thái → order_history), claim manual trỏ sản phẩm, 2 dòng quyết toán thật + file MẪU qua CLI cũ, 1 dòng report_outputs qua record_report cũ
+seed {'inserted': 73, 'existing': 0, 'skipped': 13}
+[RED-ALERT][warn] cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+enqueue [1, 2, 3, 4]
+decide1 (True, None)
+decide2 (True, None)
+draft 1 (False, 'draft #1 vi phạm guardrail (ok != true) — phải reject hoặc viết lại; không có duyệt-kèm-ghi-nhận')
+plot_log (8, [])
+plot_log (10, [])
+plot_log (12, [])
+severe ceo-01 {'from': 'chay_thu', 'to': 'chay_thu'}
+alert (False, 'cảnh báo đỏ #1 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận')
+orders product link [('HIST15-ORD-0', 'nv-Cu-Sam-Ngoc-Linh-38'), ('HIST15-ORD-1', 'nv-ruou-sam-ngoc-linh'), ('HIST15-ORD-2', 'nv-RUOU-SAMSAM-No-5')]
+record_report ('ceo-risk-', 'ceo-03') True
+settlement_csv exit 0 ['[warn] 16 dòng chưa thấy đơn sàn — nạp file đơn (`python -m ingest.market_csv --kind order`) rồi chạy `--reconcile`.', '[done]']
+done 2026-10-16T05:39:04.085997+00:00
+
+## 3. chụp trước nâng cấp (snap15.py)
+bảng 88, tổng dòng 590; đuôi chain agent_action_log #16, plot_logs #12; 3 đơn manual + 1 claim manual có product_id (xem links dưới)
+
+## 4. code HIỆN TẠI: apply_schema --roles lần 1, lần 2
+## apply_schema --roles lần 1
+[done] schema applied — 91 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, 
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[exit 0]
+## apply_schema --roles lần 2
+[done] schema applied — 91 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, 
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[exit 0]
+
+## 5. so trước/sau apply, nạp lại core_store MỚI ×2 + golden_store MỚI, so lại, verify chain
+links {'orders': [['HIST15-ORD-0', 'nv-Cu-Sam-Ngoc-Linh-38'], ['HIST15-ORD-1', 'nv-ruou-sam-ngoc-linh'], ['HIST15-ORD-2', 'nv-RUOU-SAMSAM-No-5']], 'claims_manual': [['hist15-sku', 'nv-Cu-Sam-Ngoc-Linh-38']], 'products_ids': ['27', '8415f8e1bb09e149ddecc5f8f8911083']}
+bảng 91 tổng dòng 590 tails {'agent_action_log': ['16', '361e2d5af64186eea5a9d763a594561086a944ad433bd2d2b569edf2e500e894'], 'plot_logs': ['12', '1c9b5042af594739bc6201d8041d00ab0495923d86c982cee576a4cc0be86f4d']}
+## so trước ↔ sau apply
+bảng trước: 88 sau: 91 mới: ['human_logins', 'output_reviews', 'product_sync_log']
+tổng dòng trước: 590 sau: 590
+MẤT DÒNG: không
+tail chain giống: True
+liên kết đơn/claim manual giống: True [['HIST15-ORD-0', 'nv-Cu-Sam-Ngoc-Linh-38'], ['HIST15-ORD-1', 'nv-ruou-sam-ngoc-linh'], ['HIST15-ORD-2', 'nv-RUOU-SAMSAM-No-5']]
+products id+created_at giống: True
+[exit 0]
+## core_store MỚI lần 1
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+[keep] plots: KV-A01 (3 nhật ký đã chain, 1 ảnh) — không xóa
+[done] totals: products=27, claims_approved=23, plots=3, plot_logs=9, orders=8, assets=219
+[exit 0]
+## core_store MỚI lần 2
+[load] products: 27 rows
+[load] claims_approved: 22 rows
+[load] plots: 3 rows
+[load] plot_logs: 6 rows
+[load] orders: 5 rows
+[load] assets: 219 rows
+[keep] plots: KV-A01 (3 nhật ký đã chain, 1 ảnh) — không xóa
+[done] totals: products=27, claims_approved=23, plots=3, plot_logs=9, orders=8, assets=219
+[exit 0]
+## golden_store MỚI
+[loader-gate] golden_store: chính sách CHƯA CẤU HÌNH (chờ chủ khối/hai bên chọn — data/loader_gate.json) — tính năng: data_platform-01 chay_thu, legal_hr-03.2 chay_thu, production-02 chay_thu → nạp
+[load] sku_changed=0, map_changed=0, price_inserted=0, price_closed=0, price_same=34
+[disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+[exit 0]
+links {'orders': [['HIST15-ORD-0', 'nv-Cu-Sam-Ngoc-Linh-38'], ['HIST15-ORD-1', 'nv-ruou-sam-ngoc-linh'], ['HIST15-ORD-2', 'nv-RUOU-SAMSAM-No-5']], 'claims_manual': [['hist15-sku', 'nv-Cu-Sam-Ngoc-Linh-38']], 'products_ids': ['27', '8415f8e1bb09e149ddecc5f8f8911083']}
+bảng 91 tổng dòng 590 tails {'agent_action_log': ['16', '361e2d5af64186eea5a9d763a594561086a944ad433bd2d2b569edf2e500e894'], 'plot_logs': ['24', 'None']}
+## so trước ↔ sau nạp lại
+bảng trước: 88 sau: 91 mới: ['human_logins', 'output_reviews', 'product_sync_log']
+tổng dòng trước: 590 sau: 590
+MẤT DÒNG: không
+tail chain giống: False
+liên kết đơn/claim manual giống: True [['HIST15-ORD-0', 'nv-Cu-Sam-Ngoc-Linh-38'], ['HIST15-ORD-1', 'nv-ruou-sam-ngoc-linh'], ['HIST15-ORD-2', 'nv-RUOU-SAMSAM-No-5']]
+products id+created_at giống: True
+[exit 0]
+## verify chain
+[ok] chuỗi nguyên vẹn (8 dòng)
+[exit 0]
+[verify] OK — chuỗi nhật ký nguyên vẹn
+[exit 0]
+
+## 6. probe sau nâng cấp (up_probe15.py): đuôi chain có hash, order_history, product_sync_log, quyền role nhóm, append-only
+đuôi chain plot_logs (dòng có hash) [(12, '1c9b5042af594739bc6201d8041d00ab0495923d86c982cee576a4cc0be86f4d')]
+đuôi chain agent_action_log [(16, '361e2d5af64186eea5a9d763a594561086a944ad433bd2d2b569edf2e500e894')]
+order_history (số dòng) [(1,)]
+product_sync_log (số dòng) [(0,)]
+products retired [(0,)]
+orders manual [('HIST15-ORD-0', 'nv-Cu-Sam-Ngoc-Linh-38', 'done'), ('HIST15-ORD-1', 'nv-ruou-sam-ngoc-linh', 'new'), ('HIST15-ORD-2', 'nv-RUOU-SAMSAM-No-5', 'new')]
+report_outputs [('ceo-03', 'ceo-risk-2026-09-lich-su.md', False)]
+feature_rollout theo stage [('chay_thu', 73)]
+human_logins (repo phải trống) [(0,)]
+
+## quyền (has_*_privilege) — role nhóm
+  app_human   UPDATE price_list               -> False
+  app_human   INSERT dealers                  -> False
+  app_human   UPDATE feature_rollout          -> False
+  app_human   INSERT output_reviews           -> False
+  app_human   SELECT human_logins             -> False
+  app_human   SELECT contacts                 -> False
+  app_human   SELECT output_reviews           -> True
+  svc_loader  INSERT product_sync_log         -> True
+  svc_loader  UPDATE product_sync_log         -> False
+  svc_loader  SELECT human_logins             -> False
+  svc_loader  INSERT output_reviews           -> False
+  bks_reader  SELECT feature_rollout          -> True
+  bks_reader  SELECT report_outputs           -> False
+  bks_reader  UPDATE report_outputs           -> False
+  bks_reader  SELECT feature_rollout_events   -> False
+  svc_job     SELECT human_logins             -> False
+  function *_human: tổng 16, app_human EXECUTE 16, svc_loader 0, agent_writer 0, PUBLIC 0, SECURITY DEFINER 16, thiếu search_path cố định 0
+
+## append-only (owner, rollback)
+[probe] xóa dòng quyết toán thật: CHẶN — RaiseException: settlement_rows append-only: DELETE bị chặn
+[probe] xóa đơn thật HIST15-ORD-1: CHẶN — RaiseException: orders: đơn thật (source manual) không xóa được — HĐ 7.3
+[probe] xóa nhật ký hành động: CHẶN — RaiseException: agent_action_log append-only: DELETE bị chặn
+[probe] xóa nhật ký vườn (dòng chain): CHẶN — RaiseException: plot_logs #8: nhật ký đã chain — DELETE bị chặn (ghi dòng mới kèm lý do)
+[probe] sửa dòng product_sync_log (có 1 dòng thử): CHẶN — RaiseException: product_sync_log append-only: UPDATE bị chặn
+[probe] xóa dòng output_reviews (có 1 dòng thử): CHẶN — RaiseException: output_reviews append-only: DELETE bị chặn
+[probe] truncate output_reviews: CHẶN — RaiseException: output_reviews append-only: TRUNCATE bị chặn
+[probe] truncate product_sync_log: CHẶN — RaiseException: product_sync_log append-only: TRUNCATE bị chặn
+[probe] xóa report_outputs: CHẶN — RaiseException: report_outputs append-only: DELETE bị chặn
+
+## kết luận
+- 590 → 590 dòng, 0 dòng mất; 3 bảng mới (human_logins, output_reviews, product_sync_log); apply ×2 sạch (exit 0).
+- đơn thật + claim manual GIỮ product_id sau 2 lần core_store mới; products id/created_at không đổi; order_history không thêm dòng (1 dòng = đổi trạng thái lúc giả lập); product_sync_log 0 dòng (nạp y nguyên = idempotent).
+- 'tail chain giống: False' ở so sánh sau nạp lại = do snap lấy dòng plot_logs CUỐI (dòng mẫu nạp lại #24 không hash); đuôi CHAIN thật (dòng có hash) vẫn #12 cùng hash — mục 6. store --verify-log OK (8 dòng), garden_director --verify OK.
+- quyền: app_human không ghi bảng nghiệp vụ/không đọc human_logins/contacts; 16 function *_human SECURITY DEFINER, search_path cố định, chỉ app_human EXECUTE (PUBLIC/svc_loader/agent_writer 0); svc_loader INSERT product_sync_log (không UPDATE), bks_reader SELECT feature_rollout + không SELECT/UPDATE report_outputs.

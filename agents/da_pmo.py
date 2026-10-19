@@ -49,7 +49,7 @@ import psycopg
 from agents.report import REPORTS_DIR, write_report
 from ingest.lead_store import connect
 from pipelines import approval_queue as aq
-from pipelines import director, guardrail
+from pipelines import auth, director, guardrail
 from pipelines.job_runs import job_run
 from pipelines.period import VN_TZ
 from pipelines.pii import _mask_pii
@@ -220,6 +220,13 @@ def change_payload(code: str, old_due: date, new_due: date, by: str) -> str:
 
 
 def apply_due(conn, qid: int, by: str) -> tuple[bool, str]:
+    """Áp hạn của mục `milestone_change` ĐÃ duyệt → (ok, thông điệp).
+
+    v15 fix P10.2: kiểm đọc ở đây (thông điệp rõ + cổng rollout biên dùng
+    `aq.verify`), GHI qua function `milestone_apply_due_human` (SECURITY
+    DEFINER — login người `app_human` không có UPDATE bảng; DB tự kiểm lại
+    mục đã duyệt, sha bản duyệt, hạn cũ; danh tính theo login). DB từ chối
+    danh tính → `auth.HumanDenied` (caller in [từ chối])."""
     row = conn.execute("select block, object_type, status, payload,"
                        " object_id from approval_queue where id = %s",
                        (qid,)).fetchone()
@@ -241,19 +248,22 @@ def apply_due(conn, qid: int, by: str) -> tuple[bool, str]:
     if row[4] != f"milestone:{code}" or not aq.verify(conn, qid, rebuilt):
         conn.commit()
         return False, f"mục #{qid}: LỆCH bản duyệt (sha256) — không áp dụng"
-    n = conn.execute("update project_milestones set due_date = %s,"
-                     " updated_by = %s, updated_at = now() where code = %s"
-                     " and due_date = %s", (new, by, code, old)).rowcount
-    if n == 1:
-        conn.commit()
-        return True, f"{code}: hạn {_d(old)} → {_d(new)} (mục #{qid})"
-    cur = conn.execute("select due_date from project_milestones where code"
-                       " = %s", (code,)).fetchone()
+    try:
+        with conn.transaction():
+            res = auth.call_human(
+                conn, "select milestone_apply_due_human(%s, %s)", (qid, by),
+                by=by, block=None, action="apply_due",
+                object_type="approval_queue", object_id=qid).fetchone()[0]
+    except auth.HumanDenied:
+        conn.rollback()
+        raise
+    except ValueError as e:              # DB từ chối nghiệp vụ (stale...)
+        conn.rollback()
+        return False, str(e)
     conn.commit()
-    if cur is not None and cur[0] == new:
+    if res == "noop":
         return True, f"{code}: hạn đã là {_d(new)} — không đổi (no-op)"
-    return False, (f"{code}: hạn hiện tại khác old_due {_d(old)} (stale) — "
-                   "đề xuất lại")
+    return True, f"{code}: hạn {_d(old)} → {_d(new)} (mục #{qid})"
 
 
 def _date_arg(s: str) -> date:
@@ -275,7 +285,9 @@ def _board(conn, a) -> int:
         print(f"[error] {e} — không dựng bảng thiếu mốc", file=sys.stderr)
         return 1
     text = render_board(rows, today, undated)
-    path = write_report(text, a.out_dir, f"da-pmo-board-{today:%Y-%m-%d}.md")
+    # P8.4: sổ mốc dự án (người ghi) — không có đường mẫu.
+    path = write_report(text, a.out_dir,
+                        f"da-pmo-board-{today:%Y-%m-%d}.md", sample=False)
     print(f"[done] {len(rows)} mốc → {path}")
     if a.submit:
         # Mục trượt guardrail không duyệt được (decide kiểm lại) — chặn sớm.
@@ -368,16 +380,41 @@ def main(argv=None) -> int:
                 jr["ok"] = rc == 0
             return rc
         if a.set_status is not None:
+            # v15.4 (P10.2): đổi trạng thái mốc (kể cả `xong` = nghiệm thu mốc,
+            # căn cứ báo cáo HĐTV) = QUYẾT ĐỊNH của người được Bên B ủy quyền
+            # khối ceo (auth.cli_gate).
+            why = auth.cli_gate(conn, by, BLOCK, "set_status",
+                                "project_milestone", a.set_status)
+            if why:
+                conn.rollback()
+                print(f"[từ chối] {why} — không ghi", file=sys.stderr)
+                return 1
             ev = _mask_pii(a.evidence.strip())[:500] if a.evidence else None
-            n = conn.execute(
-                "update project_milestones set status = %s, evidence ="
-                " coalesce(%s, evidence), updated_by = %s, updated_at = now()"
-                " where code = %s", (a.status, ev, by, a.set_status)).rowcount
-            conn.commit()
-            if n != 1:
-                print(f"[warn] không có mốc {_oneline(a.set_status, 40)}",
+            # v15 fix P10.2: ghi qua function SECURITY DEFINER (login người
+            # app_human không có UPDATE bảng mốc; DB kiểm lại danh tính theo
+            # login + khối ceo + tồn tại + `xong` cần evidence; trùng = no-op).
+            try:
+                with conn.transaction():
+                    res = auth.call_human(
+                        conn, "select milestone_set_status_human(%s, %s, %s,"
+                        " %s)", (a.set_status, a.status, ev, by), by=by,
+                        block=BLOCK, action="set_status",
+                        object_type="project_milestone",
+                        object_id=a.set_status).fetchone()[0]
+            except auth.HumanDenied as e:
+                conn.rollback()
+                print(f"[từ chối] {e} — không ghi", file=sys.stderr)
+                return 1
+            except ValueError as e:
+                conn.rollback()
+                print(f"[warn] {_oneline(str(e), 200)} — không ghi",
                       file=sys.stderr)
                 return 1
+            conn.commit()
+            if res == "noop":
+                print(f"[done] {a.set_status} đã ở {a.status} — không đổi"
+                      " (no-op)")
+                return 0
             print(f"[done] {a.set_status} → {a.status}")
             return 0
         if a.propose_due is not None:
@@ -408,7 +445,19 @@ def main(argv=None) -> int:
                 return 1
             print(f"[done] đề xuất mục #{qid} (PENDING) — hạn CHƯA đổi")
             return 0
-        ok, msg = apply_due(conn, a.apply_due, by)
+        # v15.4 (P10.2): áp hạn = THỰC THI mục đã duyệt (quyết định nằm ở
+        # decide_item); chỉ kiểm danh tính người chạy (auth.cli_identity).
+        why = auth.cli_identity(conn, by, "approval_queue", a.apply_due,
+                                action="apply_due")
+        if why:
+            conn.rollback()
+            print(f"[từ chối] {why} — không ghi", file=sys.stderr)
+            return 1
+        try:
+            ok, msg = apply_due(conn, a.apply_due, by)
+        except auth.HumanDenied as e:
+            print(f"[từ chối] {e} — không ghi", file=sys.stderr)
+            return 1
         print(f"[{'done' if ok else 'warn'}] {msg}",
               file=sys.stdout if ok else sys.stderr)
         return 0 if ok else 1

@@ -320,7 +320,8 @@ grant select on chat_kpi_facts to app_human;
 --     v14.2 chặn cả khi có quyền).
 --   svc_backup — `scripts/db_backup.py` (pg_dump): CHỈ SELECT mọi bảng +
 --     sequence của schema (bản sao đầy đủ; `contacts` vốn là ciphertext).
---     KHÔNG ghi gì.
+--     KHÔNG ghi bảng nào (v15 fix P8.7c: + EXECUTE function ghi bằng chứng
+--     đầu ra backup `file_output_evidence_backup` — khối cuối file).
 -- `restore_drill`/`dr_drill` tạo DB tạm → cần login quản trị hạ tầng
 -- (CREATEDB) — ngoài phạm vi login dịch vụ, ghi rõ ở runbook mục 9.
 -- Bên A: `ben_a_reader` (khối v12.5 B5) — login của Bên A `in role
@@ -489,3 +490,148 @@ grant select on dealer_price_obs, dealers, price_list to svc_job;
 -- * svc_job đọc nguồn của `intel_weekly --suggest-keywords` (intel-04.2)
 --   và `agents.ceo_promo` (ceo-04.1: listing sàn, giá golden đã có).
 grant select on trends_related, intel_imports to svc_job;
+
+-- ===== v15.5 p11 dữ liệu đơn =====
+-- `ingest.core_store` (svc_loader) ghi sổ sự kiện đồng bộ sản phẩm — chỉ
+-- INSERT (append-only); `products` đã có quyền (upsert + `retired_at`).
+grant select, insert on product_sync_log to svc_loader;
+grant usage on sequence product_sync_log_id_seq to svc_loader;
+
+-- ===== v15.4 p10 quyền người =====
+-- (P10.1) CLI người chạy bằng login NGƯỜI `in role app_human`: GHI chỉ qua
+-- function nghiệp vụ SECURITY DEFINER theo việc (docs/schema.sql khối
+-- v15.4 — danh tính theo `session_user` ↔ `human_logins`, không tin
+-- `--by`). KHÔNG cấp INSERT/UPDATE/DELETE bảng nghiệp vụ cho app_human.
+-- `human_logins`: chỉ owner ghi/đọc (Bên B điền) — không grant role nào.
+-- v14.4 cột người phụ trách lead (`crm --owner`) chuyển sang function →
+-- thu hồi quyền UPDATE cột (khối v14.4 ở trên vẫn grant, revoke ở đây).
+revoke update (owner_code, owner_due_at, owner_assigned_by, owner_assigned_at)
+  on leads from app_human;
+grant execute on function
+  approve_price_human(bigint, text),
+  xnqc_add_human(text, text, text, text),
+  xnqc_set_status_human(bigint, text, text, text, text, date, date, date,
+                        text),
+  rollout_transition_human(text, text, text, text, text, text, text, jsonb,
+                           timestamptz),
+  crm_add_contact_human(text, text, text, text, text, text, text, bigint,
+                        text),
+  crm_record_consent_human(bigint, text, boolean, text, text, text, text,
+                           text),
+  crm_load_dealers_human(jsonb, text),
+  crm_assign_lead_human(bigint, text, text, text),
+  crm_set_lead_status_human(bigint, text, text),
+  crm_assign_owner_human(bigint, text, timestamptz, timestamptz, text),
+  crm_handoff_human(bigint, text, text),
+  crm_counts(),
+  doc_review_human(text, text, text),
+  garden_purge_sample_human(text, bigint, bigint),
+  garden_adopt_plot_human(text, text),
+  record_partner_scan_human(text, text, text, text, date, text, text, text[],
+                            text, text, bigint, boolean, timestamptz, text)
+  to app_human;
+-- ĐỌC cần thiết để CLI kiểm trước khi gọi function (không PII; KHÔNG
+-- `contacts`/`consents` — đếm qua `crm_counts()`, ciphertext chỉ qua
+-- `crm_handoff_human` khi có đồng ý đích danh):
+--   golden --approve-price/--report: price_list, golden_discrepancies;
+--   xnqc: xnqc_dossiers, sku_master (sku_key), documents (cột trạng thái,
+--     không filename) + document_fields (doc_intake --pending);
+--   crm: leads, dealers; garden --precheck: plots/plot_logs/garden_media
+--     theo CỘT (không detail/author/vị trí); ra_kenh --partner-file:
+--     partner_post_scans (sha256, không URL/text) + affiliate_codes (cột
+--     mã đại lý/mục duyệt — kit đại lý đã duyệt).
+grant select on price_list, golden_discrepancies, xnqc_dossiers, leads,
+  dealers, partner_post_scans to app_human;
+grant select (sku_key) on sku_master to app_human;
+grant select (sha256, doc_type, status, pii_flag, created_at)
+  on documents to app_human;
+grant select (sha256, field, value, verified) on document_fields
+  to app_human;
+grant select (id, source) on plots to app_human;
+grant select (id, plot_id, ts, source) on plot_logs to app_human;
+grant select (id, plot_id) on garden_media to app_human;
+-- ra_kenh --partner-file đối chiếu kit đại lý ĐÃ duyệt (mã đại lý ↔ mục duyệt).
+grant select (id, dealer_code, queue_id, status) on affiliate_codes
+  to app_human;
+
+-- (P10.3) BKS: báo cáo file `bks-audit-*`/`bks-recon-*` (tính năng ceo-04.x)
+-- chạy bằng login `in role bks_reader` → `write_report` (a) đọc giai đoạn
+-- tính năng (`feature_rollout`, biên sinh HĐ 6.7 — không đọc được thì tính
+-- năng TẮT vẫn sinh) và (b) ghi 1 dòng sổ đầu ra để được ĐẾM. Chỉ đúng vậy:
+-- SELECT feature_rollout (không `feature_rollout_events`), INSERT 4 cột
+-- `report_outputs` (id/created_at/db_role do DB đặt; append-only — không
+-- SELECT/UPDATE/DELETE, không đọc sổ của tính năng khác).
+grant select on feature_rollout to bks_reader;
+grant insert (feature_id, name, sha256, is_sample) on report_outputs
+  to bks_reader;
+
+-- ===== v15.2 p8 đếm đầu ra + duyệt từng đầu ra =====
+-- (P8.7) `output_reviews`: ghi CHỈ qua `output_review_human` (người —
+-- app_human; danh tính theo login trong function). Đọc sổ duyệt để đếm cổng
+-- PL02: app_human (`--promote`/`--outputs`) + agent_writer (`--status`/hồ
+-- sơ chạy bằng login dịch vụ/agent). Không ai UPDATE/DELETE (append-only).
+grant execute on function
+  output_review_human(text, text, text, text, text, text)
+  to app_human;
+grant select on output_reviews to app_human, agent_writer;
+-- (P8.4) báo cáo/bản tin agent đọc cờ provenance `is_sample` của hàng duyệt
+-- (metadata, không payload) để truyền `sample=` cho sổ đầu ra.
+grant select (is_sample) on approval_queue to agent_writer;
+
+-- ===== v15 vá review (P10.1/P8.7) =====
+-- `ra_kenh --partner-file` kiểm danh tính login ↔ `--by` TRƯỚC khi đẩy mục
+-- hàng duyệt (đẩy mục tự commit — kiểm muộn thì `--by` giả vẫn để lại mục):
+-- app_human gọi `human_actor` (chỉ đọc `human_logins` của CHÍNH login đang
+-- dùng qua SECURITY DEFINER, trả tên người hoặc 42501 — không ghi gì).
+-- Bộ đếm lại trong DB (`rollout_db_outputs`/`rollout_db_facts`/
+-- `rollout_business_days`/`rollout_workday`) KHÔNG grant cho ai — chỉ chạy
+-- bên trong `rollout_transition_human` (quyền owner); `count_spec` của
+-- `feature_rollout` vẫn chỉ owner ghi (app_human/svc chỉ SELECT).
+grant execute on function human_actor(text, text) to app_human;
+
+-- ===== v15 fix P10.2 =====
+-- (P10.2) Người được phép hoàn thành nghiệp vụ qua function nghiệp vụ
+-- SECURITY DEFINER (docs/schema.sql khối cùng tên — danh tính theo login,
+-- khối theo phân loại runbook 9.7, bất biến tự kiểm). KHÔNG cấp
+-- UPDATE/INSERT bảng cho app_human; svc_*/agent_writer/bks_reader không gọi.
+grant execute on function
+  milestone_set_status_human(text, text, text, text),
+  milestone_apply_due_human(bigint, text),
+  org_handover_human(bigint, text, text),
+  org_batch_rows_human(bigint, text),
+  channel_post_mark_removed_human(text, timestamptz, text),
+  anchor_receipt_human(bigint, text, text, bytea, text, text),
+  b2b_quote_event_human(bigint, text, text, text)
+  to app_human;
+-- ĐỌC cần để CLI kiểm trước khi gọi function (không PII): lần gom + biên
+-- nhận neo (`anchor --submit` dựng lại bản kê, no-op khi đã gửi — chỉ
+-- hash/thời điểm). `org_prospects` KHÔNG grant (v8.3 — chỉ owner đọc):
+-- `da_b2b --handover` đọc dòng của ĐÚNG lô qua `org_batch_rows_human`.
+grant select on anchor_batches, anchor_receipts to app_human;
+-- `kd_quote --outcome/--verify-send`: thu hồi INSERT cột trực tiếp (v14.4) —
+-- ghi chỉ qua `b2b_quote_event_human` (trước vá: login người INSERT thẳng
+-- được dòng với `recorded_by` là tên người khác / báo giá chưa duyệt).
+revoke insert (queue_id, quote_no, kind, recorded_by)
+  on b2b_quote_events from app_human;
+revoke usage on sequence b2b_quote_events_id_seq from app_human;
+
+-- ===== v15 fix P8.7b =====
+-- (P8.7) Người được ủy quyền duyệt đầu ra nguồn BẢNG qua CLI
+-- (`rollout --outputs/--review-output`) mà KHÔNG cấp SELECT bảng nguồn:
+-- liệt kê đầu ra cần duyệt (khóa + sha + loại nguồn + quyết định) qua
+-- function SECURITY DEFINER `output_pending_human` (danh tính/khối theo
+-- login như `output_review_human`). svc_*/agent_writer/bks_reader/PUBLIC
+-- không gọi.
+grant execute on function output_pending_human(text, text) to app_human;
+
+-- ===== v15 fix P8.7c =====
+-- (P8.7) Bằng chứng đầu ra nguồn FILE trong DB: CHỈ đường dịch vụ backup
+-- (`scripts/db_backup.py`, login `in role svc_backup` qua BACKUP_DATABASE_URL)
+-- ghi sổ `file_output_evidence` qua function SECURITY DEFINER (DB tự tính
+-- khóa + sha từ bản ghi, từ chối login thuộc role người/agent/loader/BKS).
+-- svc_backup vẫn KHÔNG INSERT/UPDATE/DELETE bảng nào (SELECT mọi bảng ở khối
+-- v14.2 — gồm sổ này). app_human/agent_writer/svc_loader/bks_reader/PUBLIC:
+-- không quyền trên sổ, không EXECUTE — người duyệt đọc khóa/sha qua
+-- `output_pending_human` (bộ đếm `count_spec`, quyền owner).
+grant execute on function file_output_evidence_backup(text, boolean)
+  to svc_backup;
