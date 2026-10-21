@@ -482,6 +482,44 @@ def _age_label(age: dt.timedelta, config: dict) -> str:
     return "trong hạn"
 
 
+PROGRESS_KEEP_DAYS = 31     # kế hoạch đã xong lâu hơn → không lặp lại
+
+
+def _progress_lines(plans, day: dt.date, no_table: str) -> list[str]:
+    """Đợt hợp đồng C10 — tiến độ = Σ số lượng lô đã GẮN kế hoạch (đạt kiểm
+    nhập / chờ / không đạt) so với số lượng kế hoạch. Không có kế hoạch →
+    THIẾU DỮ LIỆU (không suy từ số lô)."""
+    out = ["## Tiến độ sản xuất",
+           ("Nguồn: `production_plans` (NGƯỜI khối sản xuất ghi) × "
+            "`production_plan_lots` (lô gắn tường minh) × `production_lots`. "
+            "% = số lượng lô ĐẠT kiểm nhập / kế hoạch.")]
+    if plans is None:
+        return out + [no_table]
+    shown = 0
+    for code, sku, qty, start, due, smp, ok, wait, bad, lot_smp in plans:
+        if ok >= qty and (day - due).days > PROGRESS_KEEP_DAYS:
+            continue
+        if ok >= qty:
+            st = "XONG"
+        elif day > due:
+            st = f"CHẬM — quá hạn {(day - due).days} ngày"
+        elif day < start:
+            st = "chưa tới khung"
+        else:
+            st = "đang làm"
+        out.append(f"- {_clean(code)} · {_clean(sku)} · kế hoạch {qty} "
+                   f"({start.isoformat()}→{due.isoformat()}) · đạt {ok} "
+                   f"({ok * 100 // qty}%) · chờ kiểm {wait} · không đạt {bad}"
+                   f" · {st}" + (" [MẪU]" if smp or lot_smp else ""))
+        shown += 1
+    if not plans:
+        out.append("THIẾU DỮ LIỆU — chưa có kế hoạch sản xuất được ghi "
+                   "(`production plan-add`)")
+    elif not shown:
+        out.append("không có")
+    return out
+
+
 def render_bulletin(data: dict, now: dt.datetime, config: dict) -> str:
     """Tất định: cùng data + now → cùng chuỗi. Chỉ chữ — không đổi trạng
     thái, không gửi đi."""
@@ -588,6 +626,27 @@ def render_bulletin(data: dict, now: dt.datetime, config: dict) -> str:
                        f"HSD {r['exp_date'].isoformat()} ({when}) · lô "
                        f"{r['qty']} · {stock}")
         if not lots:
+            out.append("không có")
+    out.append("")
+
+    # Đợt hợp đồng C10/C03 — mục mới đặt CUỐI bản tin (không xáo mục cũ);
+    # `collect` luôn đặt khóa `plans`/`certs` (None = chưa có bảng).
+    if "plans" in data:
+        out += _progress_lines(data["plans"], day, no_table) + [""]
+    if "certs" not in data:
+        return "\n".join(out[:-1]) + "\n"
+    out += ["## Phiếu kiểm nghiệm lô",
+            ("Nguồn: `lot_test_certificates` (phiên bản mới nhất) × "
+             "`production_lots` chờ/đạt. Lô chưa có dòng phiếu = THIẾU phiếu "
+             "— kiểm tệp/hash: `production cert-verify`.")]
+    certs = data["certs"]
+    if certs is None:
+        out.append(no_table)
+    else:
+        for code, st, ver, no, _sha, _ext in certs:
+            out.append(f"- {_clean(code)} ({st}) · " + (
+                f"phiếu {_clean(no)} (v{ver})" if ver else "THIẾU phiếu"))
+        if not certs:
             out.append("không có")
     return "\n".join(out) + "\n"
 
@@ -744,7 +803,8 @@ def collect(conn, golden_skus: dict | None, golden_why: str | None = None,
         "select to_regclass(%s) is null", (t,)).fetchone()[0]]
     data = {"missing_tables": missing, "shortages": [], "no_stock": [],
             "stale_stock": [], "lots_pending": [], "bom_errors": [],
-            "pending": [], "sample": False, "near_expiry": []}
+            "pending": [], "sample": False, "near_expiry": [],
+            "certs": None, "plans": None}
     for t in ("inventory_snapshots", "bom_combos", "production_lots"):
         if t not in missing and conn.execute(
                 f"select exists (select 1 from {t} where source = 'sample')"
@@ -804,6 +864,30 @@ def collect(conn, golden_skus: dict | None, golden_why: str | None = None,
                 data["near_expiry"].append({
                     "lot_code": code, "sku_key": sku, "exp_date": exp,
                     "qty": qty, "stock": total})
+    if "production_lots" not in missing and conn.execute(
+            "select to_regclass('production_plans') is not null"
+            ).fetchone()[0]:
+        data["plans"] = conn.execute(
+            "select p.plan_code, p.sku_key, p.qty_plan, p.start_date,"
+            " p.due_date, p.is_sample,"
+            " coalesce(sum(l.qty) filter (where l.intake_status = 'passed'),"
+            " 0), coalesce(sum(l.qty) filter (where l.intake_status ="
+            " 'pending'), 0), coalesce(sum(l.qty) filter (where"
+            " l.intake_status = 'failed'), 0),"
+            " coalesce(bool_or(l.source = 'sample'), false)"
+            " from production_plans p left join production_plan_lots pl"
+            " on pl.plan_code = p.plan_code left join production_lots l"
+            " on l.lot_code = pl.lot_code group by p.plan_code"
+            " order by p.due_date, p.plan_code").fetchall()
+        if any(r[5] or r[9] for r in data["plans"]):
+            data["sample"] = True
+    # Đợt hợp đồng C03: phiếu kiểm nghiệm mới nhất mỗi lô chờ/đạt (chỉ DB —
+    # bản tin không đọc kho tệp; kiểm tệp/hash = `cert-verify`).
+    if "production_lots" not in missing and conn.execute(
+            "select to_regclass('lot_test_certificates') is not null"
+            ).fetchone()[0]:
+        from pipelines import lot_certs
+        data["certs"] = lot_certs.latest(conn)
     if not {"bom_combos", "bom_items"} & set(missing):
         combos = db_combos(conn)
         if combos and golden_skus is None:
@@ -1090,6 +1174,88 @@ def cmd_intake(args) -> int:
     return _db_call(run)
 
 
+def cmd_cert(args) -> int:
+    from pipelines import lot_certs
+    try:
+        lot_certs.cert_dir()
+        lot_certs.sniff(args.file)
+    except lot_certs.CertError as e:
+        return _err(f"{e} — không ghi.")
+
+    def run(conn):
+        from pipelines import auth  # lười: auth → director → ...
+        why = auth.cli_identity(conn, args.by, "production_lot", args.lot,
+                                action="lot_cert_record")
+        if why:
+            conn.rollback()
+            return _err(f"{why} — không ghi.")
+        try:
+            ver = lot_certs.record(conn, args.lot, args.file, args.cert_no,
+                                   args.by, lab=args.lab, issued=args.issued,
+                                   note=args.note)
+        except (lot_certs.CertError, auth.HumanDenied, ValueError) as e:
+            conn.rollback()
+            return _err(f"{e} — không ghi.")
+        conn.commit()
+        print(f"[done] lô {args.lot}: phiếu {args.cert_no.strip()} phiên bản "
+              f"{ver} — người ghi: {args.by}")
+        return 0
+    return _db_call(run)
+
+
+def cmd_plan(args) -> int:
+    if args.cmd == "plan-add" and (args.qty <= 0 or args.due < args.start):
+        return _err("--qty phải > 0 và --due ≥ --start — không ghi.")
+
+    def run(conn):
+        from pipelines import auth  # lười: auth → director → ...
+        oid = args.code if args.cmd == "plan-add" else args.plan
+        why = auth.cli_identity(conn, args.by, "production_plan", oid,
+                                action=args.cmd.replace("-", "_"))
+        if why:
+            conn.rollback()
+            return _err(f"{why} — không ghi.")
+        if args.cmd == "plan-add":
+            sql = ("select production_plan_add_human(%s, %s, %s, %s, %s, %s,"
+                   " %s, %s)")
+            prm = (args.code, args.sku, args.qty, args.start, args.due,
+                   args.note, args.sample, args.by)
+        else:
+            sql = "select production_plan_link_human(%s, %s, %s)"
+            prm = (args.plan, args.lot, args.by)
+        try:
+            auth.call_human(conn, sql, prm, by=args.by, block="production",
+                            action=args.cmd.replace("-", "_"),
+                            object_type="production_plan", object_id=oid)
+        except (auth.HumanDenied, ValueError, psycopg.Error) as e:
+            conn.rollback()
+            return _err(f"{type(e).__name__}: {str(e)[:200]} — không ghi.")
+        conn.commit()
+        print(f"[done] {args.cmd} {oid} — người ghi: {args.by}")
+        return 0
+    return _db_call(run)
+
+
+def cmd_cert_verify(args) -> int:
+    from pipelines import lot_certs
+    try:
+        lot_certs.cert_dir()
+    except lot_certs.CertError as e:
+        return _err(str(e))
+
+    def run(conn):
+        rows = lot_certs.verify(conn, lot=args.lot)
+        bad = 0
+        for r in rows:
+            bad += r["state"] != "ok"
+            print(f"[{r['state']}] {r['lot']} ({r['intake']})"
+                  + (f" · {r['cert_no']} v{r['version']}" if r["version"]
+                     else ""))
+        print(f"[done] {len(rows)} lô, {bad} lô thiếu/lỗi phiếu")
+        return 1 if bad else 0
+    return _db_call(run)
+
+
 def cmd_bulletin(args) -> int:
     try:
         cfg = load_config()
@@ -1167,6 +1333,33 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--by", required=True, type=_by_arg,
                    help="tên người kiểm nhập")
     p.add_argument("--note", type=_note_arg)
+    p = sub.add_parser("cert", help="NGƯỜI ghi phiếu kiểm nghiệm 1 lô "
+                       "(tệp PDF/JPG/PNG → kho LOT_CERT_DIR ngoài repo)")
+    p.add_argument("--lot", required=True, type=_lot_arg)
+    p.add_argument("--file", required=True, type=Path)
+    p.add_argument("--cert-no", required=True)
+    p.add_argument("--lab")
+    p.add_argument("--issued", type=_date_arg)
+    p.add_argument("--note", type=_note_arg)
+    p.add_argument("--by", required=True, type=_by_arg,
+                   help="tên người ghi phiếu (khối sản xuất)")
+    p = sub.add_parser("plan-add", help="NGƯỜI ghi 1 kế hoạch sản xuất "
+                       "(nguồn mục Tiến độ của bản tin)")
+    p.add_argument("--code", required=True, type=_lot_arg)
+    p.add_argument("--sku", required=True)
+    p.add_argument("--qty", required=True, type=int)
+    p.add_argument("--start", required=True, type=_date_arg)
+    p.add_argument("--due", required=True, type=_date_arg)
+    p.add_argument("--note", type=_note_arg)
+    p.add_argument("--sample", action="store_true")
+    p.add_argument("--by", required=True, type=_by_arg)
+    p = sub.add_parser("plan-link", help="NGƯỜI gắn 1 lô vào kế hoạch")
+    p.add_argument("--plan", required=True, type=_lot_arg)
+    p.add_argument("--lot", required=True, type=_lot_arg)
+    p.add_argument("--by", required=True, type=_by_arg)
+    p = sub.add_parser("cert-verify", help="kiểm phiếu từng lô: thiếu phiếu /"
+                       " thiếu tệp / lệch hash (exit 1 nếu có)")
+    p.add_argument("--lot", type=_lot_arg)
     p = sub.add_parser("bulletin", help="bản tin tuần/tháng cho GĐ sản xuất")
     p.add_argument("--date", type=_date_arg)
     p.add_argument("--period", choices=("week", "month"), default="week")
@@ -1187,6 +1380,12 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_lots(args)
     if args.cmd == "intake":
         return cmd_intake(args)
+    if args.cmd == "cert":
+        return cmd_cert(args)
+    if args.cmd == "cert-verify":
+        return cmd_cert_verify(args)
+    if args.cmd in ("plan-add", "plan-link"):
+        return cmd_plan(args)
     return cmd_bulletin(args)
 
 

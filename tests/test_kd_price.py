@@ -336,7 +336,11 @@ def test_check_promos_mau_as_of_2026_10_12():
         ("promo_over_cap", ("KM1111-A", "KM1111-B")),   # tổng 40,5% > 40
         ("promo_over_cap", ("KM1111-C",)),          # 45% > 40
         ("promo_below_floor", ("KM1111-C",)),
-        ("promo_negative_margin", ("KM1111-C",))])  # 55000×0.85 − 90000
+        ("promo_negative_margin", ("KM1111-C",)),   # 55000×0.85 − 90000
+        # Đợt hợp đồng C08 FLIP có lý do: sam-a KHÔNG có giá vốn đã duyệt →
+        # "không tính được biên" thay vì im lặng (không kết luận không lỗ).
+        ("promo_margin_unknown", ("KM1111-A",)),
+        ("promo_margin_unknown", ("KM1111-A", "KM1111-B"))])
     # KM-OLD đã kết thúc; KM1212-A/KMTET-A ngoài 45 ngày → bỏ qua.
     assert not [f for f in fs if set(f["program_ids"]) & {
         "KM-OLD", "KM1212-A", "KMTET-A"}]
@@ -353,12 +357,15 @@ def test_check_promos_mau_as_of_2026_10_12():
 
 
 def test_check_promos_labels_shift_with_as_of_str():
+    # C08: bỏ promo_margin_unknown (test này chỉ khóa nhãn cửa sổ)
     a = {(f["kind"], tuple(f["program_ids"])): f["label"]
-         for f in kp.check_promos(*_promo_args("2026-10-12"))}
+         for f in kp.check_promos(*_promo_args("2026-10-12"))
+         if f["kind"] != "promo_margin_unknown"}
     assert a[("promo_below_floor", ("KM1111-A",))] == "dự kiến T-29"
     assert a[("promo_stacked", ("KM1111-A", "KM1111-B"))] == "dự kiến T-30"
     b = {(f["kind"], tuple(f["program_ids"])): f["label"]
-         for f in kp.check_promos(*_promo_args("2026-11-12"))}
+         for f in kp.check_promos(*_promo_args("2026-11-12"))
+         if f["kind"] != "promo_margin_unknown"}
     assert b == {("promo_below_floor", ("KM1111-A",)): "đang chạy",
                  ("promo_over_cap", ("KM1212-A",)): "dự kiến T-30"}
 
@@ -395,7 +402,9 @@ def test_check_promos_window_inclusive_edges(start_off, end_off, expect,
     if not expect:
         assert fs == []
         return
-    assert {f["kind"] for f in fs} == {"promo_below_floor", "promo_over_cap"}
+    # C08: sam-a không có giá vốn đã duyệt → thêm "không tính được biên"
+    assert {f["kind"] for f in fs} == {"promo_below_floor", "promo_over_cap",
+                                       "promo_margin_unknown"}
     assert {f["label"] for f in fs} == {label}
 
 
@@ -484,6 +493,7 @@ def test_db_analyze_enqueue_idempotent_no_auto(db):
                (imp,))
     items = kp.to_items(res["listing"] + res["promo"], CFG)
     n = kl.enqueue_new(tx, items, CFG, kl.seen_ids(tx, "a5"), kp.AGENT)
+    # C08: "không tính được biên" = INFO → không vào hàng sales (chỉ finance)
     assert n == len(items) == 4 + 9
     q = _q(db)
     assert len(q) == 13
@@ -541,7 +551,7 @@ def test_cli_report_as_of_str_labels_and_sections(db, cli_price, monkeypatch,
     assert "dự kiến T-29" in a and "đang chạy" not in a
     assert "đang chạy" in b and "dự kiến T-30" in b and "T-29" not in b
     assert a.index("## S1") < a.index("## S2")
-    assert "| 11.11 | 11/11/2026 | 5 | 9 |" in a
+    assert "| 11.11 | 11/11/2026 | 5 | 11 |" in a      # C08: +2 biên
     assert "Tham khảo đối thủ (KHÔNG dùng để đề xuất giá)" in a
     assert "77.777 đ" in a                       # chỉ ở mục tham khảo
     s12 = a.split("## Tham khảo đối thủ")[0]

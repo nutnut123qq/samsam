@@ -1,0 +1,22 @@
+# Đợt hợp đồng C01 — DANH SÁCH BIẾN cho /etc/samsam/webhook.env (file thật
+# NGOÀI repo, chmod 600). Không điền giá trị vào file này. Tên không có dấu
+# chấm đầu vì policy chặn ghi `.env*` (AGENTS.md).
+# Chế độ thực (gửi khách): DEPLOY=1 — thiếu secret/token → dịch vụ từ chối chạy.
+DEPLOY=
+AUTH_MODE=
+WEBHOOK_DATABASE_URL=
+CHANNEL_HASH_SALT=
+# Zalo OA
+ZALO_WEBHOOK_PORT=8788
+ZALO_OA_SECRET=
+ZALO_APP_ID=
+ZALO_APP_SECRET=
+ZALO_ACCESS_TOKEN=
+ZALO_REFRESH_TOKEN=
+# Messenger
+MESSENGER_WEBHOOK_PORT=8789
+MESSENGER_APP_SECRET=
+MESSENGER_PAGE_TOKEN=
+MESSENGER_VERIFY_TOKEN=
+# LLM gateway
+OPENROUTER_API_KEY=

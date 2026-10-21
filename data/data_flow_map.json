@@ -288,7 +288,8 @@
       "id": "DF-12",
       "name": "Bản tin sức khỏe hệ thống",
       "modules": [
-        "scripts/health_bulletin.py"
+        "scripts/health_bulletin.py",
+        "scripts/webhook_probe.py"
       ],
       "data": "Chỉ số tổng hợp vận hành (job, eval, chi phí, số mục) — không có dữ liệu cá nhân",
       "class": "xanh",
@@ -300,7 +301,8 @@
       "cross_border": true,
       "safeguards": [
         "Mặc định KHÔNG gửi — cần `--notify` + env kênh",
-        "Chỉ số tổng hợp, không nội dung chat"
+        "Chỉ số tổng hợp, không nội dung chat",
+        "webhook_probe: chỉ GET `/readyz` của chính webhook on-prem (mặc định 127.0.0.1), không theo redirect, không gửi dữ liệu"
       ],
       "legal_basis": "Không xử lý dữ liệu cá nhân",
       "gaps": []

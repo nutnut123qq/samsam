@@ -46,6 +46,7 @@ def _isolated_files(monkeypatch, tmp_path):
     không động vào data/ thật, mỗi test bắt đầu với dedup/log/token
     store rỗng. Xoá cả _histories — state multi-turn in-memory không
     được rò sang test sau."""
+    monkeypatch.setenv("DEPLOY", "1")  # G5: send_text dry-run khi DEPLOY tắt — test startup tự đặt lại
     monkeypatch.setattr(zalo, "SEEN_DB", tmp_path / "zalo_seen.db")
     monkeypatch.setattr(zalo, "CONV_LOG", tmp_path / "conversations.jsonl")
     monkeypatch.setattr(zalo, "TOKEN_STORE", tmp_path / "zalo_tokens.json")
@@ -2047,3 +2048,21 @@ def test_reply_ms_on_crash(monkeypatch, tmp_path):
     zalo.handle_text("u1", "giá?", "c1")
     rec = _wait_log_lines(tmp_path / "conversations.jsonl", 1)[0]
     assert rec["answered"] is False and isinstance(rec["reply_ms"], int)
+
+
+@pytest.mark.parametrize("val", [None, "", "0", "false", "no"])
+def test_send_text_dry_run_when_deploy_off(monkeypatch, capsys, val):
+    """Đợt hợp đồng G5: dev/staging (DEPLOY tắt) không gửi ra Zalo dù có
+    token thật — 0 lời gọi httpx, trả False, log chỉ có uh băm."""
+    if val is None:
+        monkeypatch.delenv("DEPLOY", raising=False)
+    else:
+        monkeypatch.setenv("DEPLOY", val)
+    monkeypatch.setenv("ZALO_ACCESS_TOKEN", "tok-that")
+    calls = []
+    monkeypatch.setattr(zalo.httpx, "post",
+                        lambda *a, **k: calls.append(1))
+    assert zalo.send_text("user-raw-123", "xin chào") is False
+    assert calls == []
+    out = capsys.readouterr().out
+    assert "[dry-run] zalo" in out and "user-raw-123" not in out

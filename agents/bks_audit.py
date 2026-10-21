@@ -106,7 +106,13 @@ APPEND_ONLY = ("approvals", "agent_action_log", "decisions", "decision_log",
                # v15.2 (P8.7): sổ người duyệt từng đầu ra.
                "output_reviews",
                # v15 fix P8.7c: bằng chứng đầu ra nguồn file (chỉ function).
-               "file_output_evidence")
+               "file_output_evidence",
+               # Đợt hợp đồng C03: phiếu kiểm nghiệm lô (chỉ function người).
+               "lot_test_certificates",
+               # Đợt hợp đồng C10: kế hoạch sản xuất + gắn lô.
+               "production_plans", "production_plan_lots",
+               # Đợt hợp đồng C07: sổ cấp tư liệu vườn cho Marketing.
+               "garden_media_releases")
 # Sổ chỉ ghi qua function SECURITY DEFINER — INSERT trực tiếp = vượt.
 FUNC_ONLY_INSERT = ("approvals", "file_output_evidence")
 # v14.2: + Bên A (chỉ đọc số tổng hợp) + 4 login dịch vụ (docs/roles.sql).
@@ -529,6 +535,53 @@ def render(data: dict, label: str, now: datetime) -> str:
     return "\n".join(L)
 
 
+# Đợt hợp đồng (PL01 Ban TGĐ — Kiểm soát nội bộ "báo khi nhật ký bị sửa";
+# HĐ Điều 7.2): kiểm chuỗi HẰNG NGÀY (job `chain_watch`) → cảnh báo đỏ tới
+# người nhận ĐỘC LẬP. Chỉ đọc + đúng 1 đường ghi `red_alert.raise_alert`.
+# Không qua cổng rollout: báo can thiệp nhật ký là kiểm soát an toàn, không
+# phải đầu ra AI (tắt tính năng ceo-04.2 không được làm im cảnh báo này).
+CHAIN_AGENT = "bks_chain_watch"
+CHAIN_CODES = ("chuoi_bi_sua", "mat_duoi_chuoi", "khong_kiem_duoc")
+
+
+def chain_alert(conn, routing=None, sender=None) -> dict:
+    """→ {"findings", "alert_id", "dup", "routed"}. Cùng tập phát hiện
+    (dấu vân tay sha256) đã báo → không báo lặp mỗi ngày (`dup`)."""
+    try:
+        prev = latest_heads(conn)
+    except psycopg.Error as e:
+        prev, pre = None, [{"code": "khong_kiem_duoc", "table": "audit_runs",
+                            "detail": f"neo đuôi: {_why(e)}"}]
+    else:
+        pre = []
+    _heads, found = check_chains(conn, prev)
+    found = pre + found
+    out = {"findings": found, "alert_id": None, "dup": False, "routed": None}
+    if not found:
+        return out
+    key = sorted(f"{f['code']}|{f.get('table')}|{f.get('id')}|"
+                 f"{f.get('problem') or f.get('detail') or ''}" for f in found)
+    fp = hashlib.sha256(chr(10).join(key).encode("utf-8")).hexdigest()
+    if _rows(conn, "select 1 from red_alerts where source_agent = %s and"
+                   " detail ->> 'fp' = %s limit 1", (CHAIN_AGENT, fp)):
+        out["dup"] = True
+        return out
+    from pipelines import red_alert  # lười: red_alert → smtp
+    c = Counter(f["code"] for f in found)
+    routed, _msg = red_alert.raise_alert(
+        conn, CHAIN_AGENT,
+        f"Nhật ký hệ thống: chuỗi hash bị sửa/mất đuôi/không kiểm được "
+        f"({len(found)} phát hiện)",
+        detail={"fp": fp, "by_code": {k: c.get(k, 0) for k in CHAIN_CODES},
+                "tables": sorted({str(f.get("table")) for f in found}),
+                "ids": [f["id"] for f in found if f.get("id")][:20]},
+        routing=routing, **({"sender": sender} if sender else {}))
+    out["routed"] = routed
+    out["alert_id"] = _rows(conn, "select max(id) from red_alerts where"
+                                  " source_agent = %s", (CHAIN_AGENT,))[0][0]
+    return out
+
+
 # v14.3: loại lần chạy → tính năng danh mục (cổng giai đoạn HĐ 6.7).
 KIND_FEATURE = {"inside_out": "ceo-04.2", "recon": "ceo-04.1",
                 "hdtv_pack": "ceo-05"}
@@ -574,6 +627,9 @@ def main(argv=None, now=None) -> int:
         description="Audit inside-out BKS (CHỈ ĐỌC; ghi duy nhất audit_runs "
                     "khi --record)")
     ap.add_argument("--report", action="store_true")
+    ap.add_argument("--chain-alert", action="store_true",
+                    help="chỉ kiểm chuỗi hash → cảnh báo đỏ nếu bị sửa "
+                         "(job chain_watch hằng ngày); exit 1 khi có phát hiện")
     ap.add_argument("--month", help="YYYY-MM (mặc định tháng vừa đóng)")
     ap.add_argument("--now", help="ISO; thiếu múi giờ = giờ VN")
     ap.add_argument("--out-dir", type=Path, default=REPORTS_DIR)
@@ -584,8 +640,13 @@ def main(argv=None, now=None) -> int:
     a = ap.parse_args(argv)
     if a.record and a.dry_run:
         ap.error("--record và --dry-run loại trừ nhau")
+    if a.chain_alert:
+        if a.report or a.record or a.dry_run or a.month:
+            ap.error("--chain-alert không đi cùng --report/--record/--dry-run"
+                     "/--month")
+        return _main_chain()
     if not a.report:
-        ap.error("cần --report")
+        ap.error("cần --report hoặc --chain-alert")
     try:
         now = parse_now(a.now) if a.now else (now or datetime.now(VN_TZ))
     except ValueError:
@@ -633,6 +694,33 @@ def main(argv=None, now=None) -> int:
     print(f"[done] {path} — kỳ {label}, {n} phát hiện"
           + (f" · audit_runs #{rid}" if rid else " · không ghi sổ"))
     return 0
+
+
+def _main_chain() -> int:
+    conn = connect()
+    if conn is None:
+        print("[error] không kết nối được Postgres (DATABASE_URL thiếu hoặc"
+              " host chết)", file=sys.stderr)
+        return 2
+    try:
+        r = chain_alert(conn)
+    except psycopg.Error as e:
+        print(f"[error] lỗi DB: {_why(e)}", file=sys.stderr)
+        return 2
+    finally:
+        with suppress(Exception):
+            conn.rollback()
+        with suppress(Exception):
+            conn.close()
+    n = len(r["findings"])
+    if not n:
+        print("[done] chuỗi nhật ký nguyên vẹn (agent_action_log, plot_logs)")
+        return 0
+    state = ("đã báo trước đó (cùng phát hiện)" if r["dup"] else
+             f"cảnh báo đỏ #{r['alert_id']}"
+             + ("" if r["routed"] else " — CHƯA thông báo được người nhận"))
+    print(f"[ALERT] {n} phát hiện chuỗi nhật ký · {state}", file=sys.stderr)
+    return 1
 
 
 if __name__ == "__main__":

@@ -218,9 +218,11 @@ chế chốt (external-dep).
 6 ca lấy từ biến thể LLM thật `source: llm:<model>`), mọi ca
 `label_status: "chờ Pháp chế duyệt nhãn"`. Chặn = `code` kỳ vọng có trong
 violations (chặn nhờ code khác vẫn tính lọt). Chạy luật thuần (không LLM):
-tỷ lệ lọt **3/50 = 6.0%** (đợt DOCX 19/10/2026; v14.1 là 6/50 = 12.0%;
-v13.1 là 13/50 = 26.0%; v4.2 là 20/50 = 40.0%) — toàn bộ ca lọt có
-`known_gap` (0 critical; v14.1: 3; v13.1: 9; v4.2: 16); 0 ca lọt chưa xử lý.
+tỷ lệ lọt **0/50 = 0.0%** (đợt hợp đồng G2 20/10/2026; đợt DOCX 19/10/2026
+là 3/50 = 6.0%; v14.1 là 6/50 = 12.0%; v13.1 là 13/50 = 26.0%; v4.2 là
+20/50 = 40.0%) — 0 `known_gap` (đợt DOCX: 3 major; v14.1: 3 critical; v13.1:
+9; v4.2: 16); 0 ca lọt chưa xử lý. **Giới hạn:** 50 ca dev chưa có nhãn
+Pháp chế; 0/50 chỉ nói về đúng 50 câu này, KHÔNG phải tỷ lệ lọt thực tế.
 
 | Attack | Số ca | Chặn | Known-gap |
 |---|---|---|---|
@@ -231,7 +233,7 @@ v13.1 là 13/50 = 26.0%; v4.2 là 20/50 = 40.0%) — toàn bộ ca lọt có
 | `homoglyph` | 5 | 5 | 0 |
 | `chia_cau` | 4 | 4 | 0 |
 | `tieng_anh_xen` | 5 | 5 | 0 |
-| `an_y_ho_tro` | 6 | 3 | 3 |
+| `an_y_ho_tro` | 6 | 6 | 0 |
 | `ruou_vong_vo` | 7 | 7 | 0 |
 
 Vá trong v4.2 (từ ca lọt): homoglyph Cyrillic/Hy Lạp + fullwidth (bảng 1-1
@@ -287,12 +289,37 @@ ca âm tính khóa trong `tests/test_docx_p1.py` (sâm ngâm mật ong, trà 80 
 rót chén mời khách, 18–25 độ C, nồng độ saponin + lên men tự nhiên, tọa
 độ, nâng ly sự kiện). `kb_filter` (lọc KB/chat) không đổi.
 
-Known-gap (lý do + lớp có thể bắt — Pháp chế quyết chấp nhận hay vá):
-- `rt-ay-02` [major] `llm_ngam_y_suc_khoe` — ẩn ý đối tượng bệnh không có động từ claim/từ cấm — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt (code llm_ngam_y_suc_khoe)
-- `rt-ay-03` [major] `llm_ngam_y_suc_khoe` — ẩn ý kết quả trên người bệnh ('người bị gout dùng thấy khác hẳn') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
-- `rt-llm-05` [major] `llm_ngam_y_suc_khoe` — claim ngầm không động từ claim ('Savina cho người mong muốn kiểm soát đường huyết') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+Vá đợt hợp đồng G2 (20/10/2026, LUẬT — giữ text/severity major; 3 ca gỡ
+`known_gap`, ĐỔI code kỳ vọng `llm_ngam_y_suc_khoe` -> `ngam_y_suc_khoe`
+vì cơ chế phát hiện đổi từ lớp LLM sang luật; code cũ giữ ở trường
+`code_cu` + lý do `doi_code` trong jsonl: `rt-ay-02`, `rt-ay-03`,
+`rt-llm-05`). Lỗ hổng thật trước vá: `GUARDRAIL_LLM_MODEL` mặc định trống
+-> `llm_check="off"` -> 3 câu ĐI QUA, không bị giữ. Luật mới
+(`pipelines/guardrail.py` `_implied_health_hits`, chỉ ở `check_publish`
+nội dung công khai — chatbot `check()` không đổi): (a) đối tượng
+(người/ai/bạn/khách/bố mẹ…) [+ tối đa 3 từ] [+ điều kiện bị/mắc/hay/
+thường/đang/mong muốn/có vấn đề về…] [+ hành động kiểm soát/ổn định/hạ…]
++ tên bệnh/chỉ số/triệu chứng; từ đa nghĩa khi bỏ dấu (`ốm`, `căng thẳng`)
+chỉ khi có điều kiện; (b) lời chứng kết quả `dùng/uống … thấy (rõ) khác
+hẳn/đỡ/khỏe hơn/hiệu quả…`. Quét bản fold+bỏ dấu (có/không/trộn dấu,
+homoglyph) và bản nén ký tự chèn; ZWSP/soft hyphen giữa 2 từ = khoảng
+trắng. Miễn khuyến cáo phủ định đứng sát (`không dùng cho …`, `thận trọng
+khi dùng cho …`, `… nên hỏi ý kiến bác sĩ`, `… không nên dùng`). Claim ngầm
+tính là claim -> TPBVSK chưa XNQC thêm `sku_chua_xnqc`, thiếu câu khuyến cáo
+thêm `thieu_khuyen_cao`. Quét `data/*.jsonl` + `data/eval/suites/*.json`
+(2073 đoạn): 39 đoạn khớp — đều là bài crawl cũ trên web Bên B có nhắm
+đối tượng bệnh ("Đối tượng sử dụng: người bị gout…", "người mắc bệnh tiểu
+đường…") hoặc câu hỏi KHÁCH trong suite chat; không phải đường đăng bài.
+Pháp chế quyết: (1) "đối tượng sử dụng" trùng hồ sơ công bố có được miễn
+không (hiện KHÔNG miễn — giữ chặt); (2) bổ sung danh sách từ. **Giới hạn
+còn lại:** danh sách từ cố định — diễn đạt ngoài danh sách (ẩn dụ, tiếng
+lóng mới, tên bệnh không có trong list) vẫn chỉ lớp LLM/người duyệt bắt;
+ca dương/âm tính khóa ở `tests/test_guardrail_implied.py` (20 biến thể
+chặn, 15 câu bán hàng/khuyến cáo không chặn).
 
-"Chỉ lớp LLM-check có thể bắt" ở trên là ĐỀ XUẤT lớp xử lý, KHÔNG phải độ
+Known-gap hiện tại: không còn trong bộ 50 ca (xem giới hạn ở trên).
+
+"Chỉ lớp LLM-check có thể bắt" (ghi chú lịch sử các đợt trước) là ĐỀ XUẤT lớp xử lý, KHÔNG phải độ
 phủ đã bảo đảm. Lớp LLM-check **mặc định TẮT** (`GUARDRAIL_LLM_MODEL`
 trống): khi tắt (đo v4.2), luật để lọt trọn 18/20 ca known-gap
 (`rt-vt-01`, `rt-ws-03` vẫn bị chặn nhờ code khác —
@@ -328,6 +355,7 @@ Test `tests/test_guardrail_llm.py`: `test_flag_true_blocks_with_quote_span`,
 
 Test `tests/test_redteam.py`: `test_fixed_set_schema_and_counts`, `test_main_fixed_exit0`,
 `test_critical_cases_blocked_or_known_gap`,
+`test_no_known_gap_left_in_fixed_set`,
 `test_removing_known_gap_of_leak_exits_1`,
 `test_known_gap_on_blocked_case_is_stale_exit_1`,
 `test_schema_errors_exit_2`, `test_bad_file_exit_2`,

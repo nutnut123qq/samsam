@@ -193,6 +193,15 @@ POSITIVE = [
     # v10.2 PC-A8: nguồn văn bản pháp luật (legal_sources) + chủ đề tpbvsk
     ("Thông tư hướng dẫn ghi nhãn thực phẩm chức năng", (),
      ("phap_ly", "tpbvsk"), (), "legal_doc", "cuc-attp-van-ban"),
+    # đợt hợp đồng (PL01 Tình báo "sâm giả, mạo danh Ngọc Linh"): không cần
+    # nhắc tên Sâm Sâm/brand
+    ("Sâm giả tràn lan chợ Tết", (), ("sam",), (), "counterfeit"),
+    ("Cảnh báo sâm trôi nổi gắn mác Ngọc Linh", (), ("sam",), (),
+     "counterfeit"),
+    ("Mạo danh sâm Ngọc Linh để bán hàng online", (), ("sam",), (),
+     "counterfeit"),
+    ("Sâm Sâm bị mạo danh trên mạng xã hội", (), ("sam",), (),
+     "brand_negative"),
 ]
 NEUTRAL = [
     ("Sâm Sâm ra mắt hộp quà Tết", ("sam",), ()),
@@ -228,8 +237,9 @@ def test_match_neutral(title, topics, flags):
 
 
 def test_match_rules_cover_all_four():
+    # tên giữ để lịch sử test ổn định; đợt hợp đồng thêm luật counterfeit -> 5
     assert {p[4] for p in POSITIVE} == set(ia.RULES)
-    assert len(ia.RULES) == 4
+    assert len(ia.RULES) == 5
     assert len(POSITIVE) >= 6 and len(NEUTRAL) >= 6
 
 

@@ -229,7 +229,7 @@ def test_match_legal_doc_pure():
     # nguồn báo + tpbvsk → không legal_doc
     assert "legal_doc" not in _m("vnexpress-suc-khoe", ["tpbvsk"])
     assert "legal_doc" not in _m(None, ["tpbvsk"])
-    assert ia.RULES[-1] == "legal_doc" and len(ia.RULES) == 4
+    assert ia.RULES[-1] == "legal_doc" and len(ia.RULES) == 5  # đợt hợp đồng: + counterfeit
 
 
 # ---------------------------------------------------------------- collector

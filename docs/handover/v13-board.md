@@ -1,5 +1,70 @@
 # Board v13 — khép phát hiện audit hợp đồng (C00–C11)
 
+## Checkpoint hiện tại — Vá cổng DB test (bản phát hành mã nguồn 21/10/2026)
+
+Fingerprint (trừ DONE.md + board, 34 file mới): `688ec3a2e79176f7b5f8ff075965b94a3396b2058f43f4cc12ce76a022afd91b`. **Đính chính:** dòng P0 ở
+checkpoint vòng 2 dưới đây ("test không thể kết nối `samsam`") SAI ở 3 đường —
+controller tái hiện, đã vá.
+
+| Mã | Lỗ | Trước (snapshot vòng 2) | Sau | Bằng chứng | Trạng thái |
+|---|---|---|---|---|---|
+| G1 | subprocess `env` kế thừa/`env=None` không kiểm | con nhận DSN samsam, rc 0 | từ chối trước spawn, Popen gốc 0 lần | `evidence/contract_g3_probe_{before,after}.log` | CODE_VERIFIED |
+| G2 | thiếu dbname → suy từ user/`PGUSER` | `connect("")` tới driver | từ chối, driver 0 lần; DB test tường minh 1 lần | như trên | CODE_VERIFIED |
+| G3 | preflight nuốt lỗi | DB rỗng thật → `None` (đi tiếp) | exit 4 (rỗng / chưa golden / host chết) | `evidence/contract_g3_preflight.log` | CODE_VERIFIED |
+| GATE | — | — | full 6485 passed/0 failed/3 skipped (DR Docker UNVERIFIED); 106 + 168 probe; ruff/eval/DPIA/red-team 0/50 | `evidence/contract_g3_*.log` | CODE_VERIFIED (máy dev) |
+
+Giữ nguyên: sự cố DB `samsam` vòng 1 UNVERIFIED; `intel_weekly` chưa vá; 86/86
+`chua_nghiem_thu`.
+
+## Đợt hợp đồng VÒNG 2 — lịch sử (P0 đính chính ở checkpoint phía trên) (20/10/2026, nhánh `codex/contract-completion` từ `main` = `dda0089`, CHƯA commit)
+
+Working tree, **chưa commit/merge/push/deploy**, không bật timer/dịch vụ, không gửi gì ra ngoài; vòng 2 KHÔNG kết nối DB `samsam` (DB kiểm `samsam_contract_g`/`_full2`/`_up2a`/`_up2b`). Fingerprint diff (trừ DONE.md + board) so với `dda0089`: `113d6bf6dda3d0f8cf867453fdf007de98b0e15c3519b2bd484f2d8adf0bbf5d` (index tạm, 34 file mới, trừ `.agents/` `founder/` `lv2-market-top.png`). Bảng 12 mục: `docs/handover/doi-chieu-docx.md` mục 1.3; cổng DB + sự cố vòng 1: mục 2b. 86/86 mục vẫn `chua_nghiem_thu`; 0 READY_FOR_TRIAL.
+
+| Mã | Mục | Hành vi | Probe / bằng chứng | Trạng thái |
+|---|---|---|---|---|
+| P0 | test toàn repo | (ĐÍNH CHÍNH 21/10: còn lỗ G1–G3 — xem checkpoint trên) test không thể kết nối `samsam`/DB trong `.env` (psycopg/psycopg2/subprocess/load_dotenv), DB chưa dựng → dừng | `tests/test_db_guard.py` 22 ca | CODE_VERIFIED |
+| P1 | legal_hr-01 | livestream: bỏ ngoại lệ `Hỏi: …?`; câu hỏi sức khỏe của khách → dòng trung tính trước guardrail | probe trước/sau `evidence/contract_g2_probes.log`; kd_a9 8/8 | CODE_VERIFIED · BLOCKED_DECISION (nhãn Pháp chế) |
+| C01 | sales-01 | unit webhook 24/7 + `/readyz` + job `webhook_health` | `test_contract_c01_webhook.py` (khởi động thật) | CODE_VERIFIED · UNVERIFIED_LIVE |
+| C02 | farming-02 | nhắc người phụ trách khoảnh trước GĐ | `test_contract_c02_*`; svc_job thật tạo nhắc | CODE_VERIFIED · BLOCKED_DECISION (kênh nhắc) |
+| C03 | production-04.1 | sổ phiếu kiểm nghiệm lô có phiên bản/hash | `test_contract_c03_*`; login người production thật | CODE_VERIFIED · BLOCKED_INFRA_OR_DATA |
+| C04 | sales-03 | mô tả chuẩn đã duyệt → CSV/manifest theo sàn | `test_contract_c04_*` | CODE_VERIFIED · UNVERIFIED_LIVE (mẫu mass upload) |
+| C05 | ceo-02.x | việc chờ TGĐ quyết / chờ ký | `test_contract_c05_*` | CODE_VERIFIED |
+| C06 | ceo-04.1 | so giá/mô tả listing ↔ bản duyệt | `test_contract_c06_*` | CODE_VERIFIED · BLOCKED_INFRA_OR_DATA (cột mô tả) |
+| C07 | farming-04 | cấp tư liệu vườn cho Marketing | `test_contract_c07_*` | CODE_VERIFIED · UNVERIFIED_LIVE |
+| C08 | finance-04.2 | KM lỗ / không tính được biên → finance | `test_contract_c08_*`; job price_watch svc_job thật | CODE_VERIFIED · BLOCKED_DECISION (giá vốn) |
+| C09 | intel-05 | phương án giá combo (nháp) | `test_contract_c09_*` | CODE_VERIFIED · BLOCKED_DECISION (mức chiết khấu) |
+| C10 | production-01 | tiến độ sản xuất kế hoạch ↔ lô | `test_contract_c10_*`; login người production thật | CODE_VERIFIED · BLOCKED_INFRA_OR_DATA |
+| C11 | ceo-05, farming-05.x | job P2 `hdtv_month`/`vt_weather`/`vt_harvest` | `test_contract_c11_*`; svc_job thật | CODE_VERIFIED · BLOCKED_DECISION (nguồn thời tiết) |
+| C12 | legal_hr-04 | quét kênh tự động web + listing, job `channel_scan` | `test_contract_c12_*` | CODE_VERIFIED · BLOCKED_VENDOR (Fanpage) |
+| UPG | — | nâng cấp dda0089 + snapshot vòng 1 → ×2; mọi job bằng login svc_job thật | `evidence/contract_g2_upgrade.log` | CODE_VERIFIED (4 job thiếu quyền đọc có từ dda0089 đã vá; `intel_weekly` CHƯA vá) |
+| GATE | — | full pytest 6466 passed/0 failed/3 skipped (DR Docker UNVERIFIED), lượt khám phá 5 failed đã vá; 106/106 probe hồi quy; 149 test vòng 2; ruff/eval/DPIA/red-team 0/50 exit 0 | `evidence/contract_g2_*.log` | CODE_VERIFIED (máy dev, không sandbox/production) |
+
+Còn mở: `intel_weekly` lỗi quyền dưới svc_job (ngoài 12 mục); mọi mục còn chờ quyết định/hạ tầng/vendor theo gói quyết định; giới hạn vòng 1 giữ nguyên (svc_ui tin danh tính UI, mật khẩu DB từng lộ chưa có bằng chứng rotation, website repo riêng, bộ lọc câu sức khỏe là danh sách từ).
+
+## Đợt hợp đồng VÒNG 1 — lịch sử (20/10/2026, cùng nhánh; MISSING_CODE dưới đây đã xử lý ở vòng 2 phía trên)
+
+Working tree, **chưa commit/merge/push/deploy**, không bật timer, không gửi gì ra ngoài, DB kiểm = `samsam_contract_*` (không `samsam`). Fingerprint diff (trừ DONE.md + board) so với `dda0089`: `8198996f98554a7718407347fd711129416c9803e2e852bd8c663c36d825d503`. Đối chiếu DOCX: `docs/handover/doi-chieu-docx.md`; gói quyết định: `docs/handover/dau-vao-va-quyet-dinh.md`; staging/diễn tập: runbook mục 10. 86/86 mục vẫn `chua_nghiem_thu`; **79/89 mục AI chưa chốt cách phân rã** (D-HB-01/02).
+
+| Mã | DOCX | Mục | Hành vi | Code / caller / config | Probe / bằng chứng | Người phụ trách | Phụ thuộc → mở khóa | Trạng thái |
+|---|---|---|---|---|---|---|---|---|
+| G1 | HĐ 2.1; PL01 mục 1, 2, 6; PL03 mục 1 | toàn catalog | bảng đối chiếu 51 dòng PL01 ↔ 79 mục AI, ứng viên phân rã, hai chiều thiếu/trùng | `docs/handover/doi-chieu-docx.md` | đọc tay; 3 agent rà code độc lập | Hai bên | biên bản PL01 mục 9 | BLOCKED_DECISION |
+| G2a | PL02 mục 2 (lỗi nghiêm trọng); NĐ 15/2018 | legal_hr-01 | claim ngầm (đối tượng bệnh, lời chứng) bị giữ ở mọi đường đăng `check_publish`; livestream: dòng `Hỏi: …?` chỉ miễn luật đối tượng | `pipelines/guardrail.py` `_implied_health_hits`, `data/guardrail_rules.json` `ngam_y_suc_khoe`, `data/eval/redteam.jsonl` 3 ca | redteam 3/50 known_gap → 0/50; `tests/test_guardrail_implied.py` (biến thể + âm tính); `kd_a9` 8/8 | Bên A / Pháp chế duyệt từ | D-PC-01 | CODE_VERIFIED · BLOCKED_DECISION (nhãn Pháp chế) |
+| G2b | PL02 mục 2 (lộ dữ liệu/gửi nhầm); G5 | sales-01 | dev/staging (`DEPLOY` tắt) không gửi Zalo dù có token | `connectors/zalo.py` `send_text` | `tests/test_zalo.py::test_send_text_dry_run_when_deploy_off` (trước: gửi thật qua httpx giả; sau: 0 lời gọi) | Bên A | — | CODE_VERIFIED |
+| G1a | PL01 Tình báo (báo động đỏ 60 phút: sâm giả, mạo danh) | intel-02 | luật `counterfeit` đứng một mình; job giờ thu RSS trước | `pipelines/intel_alert.py`, `data/intel_alert_rules.json`, `deploy/onprem/jobs.json` `red_alert_sweep` | `tests/test_intel_alert.py` (trước: "Sâm giả tràn lan chợ Tết" → 0 luật; sau `counterfeit`) | Bên A / Pháp chế từ khóa | D-PC-09, D-UQ-05 | CODE_VERIFIED · BLOCKED_DECISION |
+| G1b | PL01 Tình báo (K5, TRIMICO, KGC) | intel-03 | báo độ phủ từng đối thủ mỗi tuần | `scripts/intel_weekly.py` `coverage` | `tests/test_intel_weekly.py::test_pl01_competitor_coverage` | Bên A / người nhập file | D-DL-04 | CODE_VERIFIED · BLOCKED_INFRA_OR_DATA |
+| G1c | PL01 Ban TGĐ (báo khi nhật ký bị sửa); HĐ 7.2 | ceo-04.2 | kiểm chuỗi hằng ngày → cảnh báo đỏ, không báo lặp | `agents/bks_audit.py --chain-alert`, job `chain_watch` + timer, `docs/roles.sql` (svc_job) | `tests/test_bks_audit.py` (role svc_job) + nâng cấp: login svc_job thật qua CLI → exit 0 sạch / exit 1 + 1 cảnh báo khi sửa / chạy lại dup | Bên A / BKS nhận cảnh báo | D-UQ-05 | CODE_VERIFIED · UNVERIFIED_LIVE |
+| G1d | PL01 Ban TGĐ (báo cáo tuần có số) | ceo-01 | chụp số nội bộ tuần trước khi lập báo cáo | `jobs.json` `ceo_weekly` | `tests/test_v13_c07_ops.py`, `test_v15_p7_jobs.py` | Bên A | D-KH-10 | CODE_VERIFIED |
+| G3a | PL01 Hạ tầng (số hóa giấy tờ); G3 | data_platform-02 | OCR lại `cho_ocr` khi có provider trong nước; vẫn chờ người xác nhận | `ingest/doc_intake.py --reprocess-pending` | `tests/test_doc_intake.py::test_reprocess_pending_after_provider` (DB thật) | Bên A / Bên B chọn vendor | D-VD OCR | CODE_VERIFIED · BLOCKED_VENDOR |
+| G3 | PL01 mục 3–4, 8d | tích hợp | ma trận mock/sandbox/live 10 dịch vụ | doi-chieu mục 3 | — | Bên B / nhà cung cấp | mục V gói quyết định | UNVERIFIED_LIVE |
+| G4 | HĐ, PL02–04 | — | gói quyết định tập trung | `dau-vao-va-quyet-dinh.md` | — | theo từng dòng | — | BLOCKED_DECISION |
+| G5 | PL01 mục 8; PL02 mục 2 | data_platform-07.x, -90 | checklist staging/migration/rollback/diễn tập | runbook mục 10 | nâng cấp `dda0089` → revision ×2: `evidence/contract_g_upgrade.log` | Bên B hạ tầng | D-HT-* | BLOCKED_INFRA_OR_DATA |
+| GATE | — | — | full pytest 6366 passed/0 failed/3 skipped (DR Docker UNVERIFIED); 106/106 probe hồi quy; 437 test đợt; ruff/eval/DPIA/red-team exit 0 | `evidence/contract_g_*.log` | như cột trái | Bên A | — | CODE_VERIFIED (máy dev, không sandbox/production) |
+| G6 | PL02 mục 1, 3 | toàn catalog | theo dõi chạy thử/duyệt/giao nhận | `rollout --status/--outputs/--dossier`, so-nghia-vu mục 6 | không có (chưa chạy trên server Bên B) | Hai bên | G4 + G5 | chưa bắt đầu (0 mục READY_FOR_TRIAL) |
+
+Còn MISSING_CODE chưa làm (doi-chieu mục 1.3): unit dịch vụ webhook 24/7; nhắc nhân viên vườn; số/tệp phiếu kiểm nghiệm lô; mô tả chuẩn + file xuất sàn; danh sách việc chờ ký; so giá/mô tả listing ở ceo-04.1; tư liệu vườn cho Marketing; chặn KM lỗ theo lịch; giá combo ở giả lập; tiến độ sản xuất; lịch P2 (HĐTV, thời tiết/sản lượng); quét kênh tự động.
+
+Giới hạn giữ nguyên: `svc_ui` tin danh tính UI (DSN UI ghi được tên người tùy ý); mật khẩu DB từng lộ chưa có bằng chứng rotation; website/chatbot website ở repo riêng chưa có owner; bộ lọc câu sức khỏe chatbot là danh sách từ (D-PC-03).
+
 ## Chốt mã nguồn đợt DOCX — 20/10/2026
 
 User đã ủy quyền sửa nhãn KPI, commit, gộp vào `main` và push. Nền phát hành
@@ -17,7 +82,7 @@ Giữ các phụ thuộc bên ngoài, 3 red-team major và ranh giới tin cậy
 Mật khẩu đã lộ trong lịch sử Git chưa có bằng chứng rotation; không đổi credential.
 Các checkpoint "chưa commit/merge/push" bên dưới là lịch sử trước đợt phát hành.
 
-## Checkpoint hiện tại — Đợt DOCX vòng 2 (19–20/10/2026, nhánh `codex/docx-code-completion`, CHƯA commit)
+## Đợt DOCX vòng 2 — lịch sử (19–20/10/2026, nhánh `codex/docx-code-completion`, nay đã ở `main` = `dda0089`)
 
 HEAD `667f763`; đợt DOCX + vòng 2 ở working tree, **chưa commit/merge/push/deploy**, không bật timer, không dùng DB `samsam`. Fingerprint: diff (trừ DONE.md + board) `2a1edbd44bab3be74a018c5912b84dd8a85b374440bdaf863f42b10df7d6ec43`; 16 file mới `c3414aef3526f531b3794209bde91e2349e778416f7fe3742cd9e41d2c4c772d`. Chi tiết + evidence: DONE.md mục "Đợt DOCX vòng 2". 86/86 mục vẫn `chua_nghiem_thu`.
 

@@ -1,0 +1,21 @@
+# Probe hồi quy (106 — 7 file đợt DOCX) + probe đợt hợp đồng, revision cuối
+# ngày (client) 2026-10-20T12:31:20+07:00 · HEAD dda008969feef0fcbec8b0ba6f5fab363c813806 nhánh codex/contract-completion
+# fingerprint diff(trừ DONE+board) vs dda0089 = 8198996f98554a7718407347fd711129416c9803e2e852bd8c663c36d825d503
+# DB samsam_contract_full (KHÔNG phải samsam) · môi trường: máy dev, DB test cục bộ
+
+## 106 probe: python -m pytest tests/test_docx_r12_quyen.py tests/test_docx_mkt03.py tests/test_docx_kpi_provenance.py tests/test_docx_p0_rollout_gate.py tests/test_docx_p0c_person_login.py tests/test_docx_p1.py tests/test_docx_p2.py -q -p no:cacheprovider -rf
+........................................................................ [ 67%]
+..................................                                       [100%]
+106 passed in 91.63s (0:01:31)
+EXIT 0
+
+## probe đợt hợp đồng: python -m pytest tests/test_guardrail_implied.py tests/test_redteam.py tests/test_intel_alert.py tests/test_pc_a8.py tests/test_intel_weekly.py tests/test_bks_audit.py tests/test_doc_intake.py tests/test_zalo.py tests/test_kd_live.py tests/test_v13_c07_ops.py tests/test_v15_p7_jobs.py -q -p no:cacheprovider -rf
+........................................................................ [ 16%]
+........................................................................ [ 32%]
+........................................................................ [ 49%]
+........................................................................ [ 65%]
+........................................................................ [ 82%]
+........................................................................ [ 98%]
+.....                                                                    [100%]
+437 passed in 333.43s (0:05:33)
+EXIT 0

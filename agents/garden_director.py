@@ -291,25 +291,121 @@ def due_reminders(conn, schedule: dict, now: datetime) -> list[dict]:
 
 
 # docx P2 (farming-02, PL01 Vùng trồng "nhắc khoảnh lâu không có nhật ký;
-# báo giám đốc nếu vẫn bỏ trống"): trước đây `--remind` chỉ in. Khoảnh VẪN
-# bỏ trống — chưa từng có nhật ký, hoặc quá 2 × gap_days (đã qua 1 chu kỳ
-# nhắc) — → 1 mục hàng duyệt cho GĐ vùng trồng mỗi ĐỢT (khóa theo mốc nhật
-# ký gần nhất: có nhật ký mới rồi lại bỏ trống = đợt mới; đã đẩy ở bất kỳ
-# trạng thái = không đẩy lại). Agent không nhắn nhân viên (gửi tin Zalo OA
-# cho nhân viên = việc riêng, chưa làm).
+# báo giám đốc nếu vẫn bỏ trống"). Đợt hợp đồng C02: NHẮC NGƯỜI PHỤ TRÁCH
+# KHOẢNH trước, rồi mới báo GĐ. Mỗi khoảnh bỏ trống (chưa có nhật ký / quá
+# gap_days) → 1 dòng `garden_reminders` / ĐỢT (`dot_key` = mốc nhật ký gần
+# nhất): người phụ trách = mã NV có `khoanh` chứa khoảnh trong
+# data/garden_staff.json; kênh theo data/garden_remind.json (null = CHƯA
+# CHỌN → BLOCKED, `cho_kenh`; "thu_cong" = người nhắc theo `--reminders` rồi
+# `--mark-reminded`). Agent KHÔNG gửi tin và KHÔNG bao giờ ghi "đã nhắc".
+# Có nhật ký mới → đợt cũ đóng (`closed_at`). Báo GĐ (farming/plot_log_gap,
+# 1 mục/đợt) khi khoảnh VẪN bỏ trống (chưa có nhật ký / ≥ 2×gap_days) VÀ:
+# không nhắc được (chưa gán người / chưa chọn kênh) — báo ngay kèm lý do;
+# hoặc đã nhắc mà quá `leo_thang_sau_ngay` (null = gap_days, GIẢ ĐỊNH) vẫn
+# trống; hoặc kênh thủ công mà quá hạn đó chưa ai nhắc.
 GAP_TYPE, GAP_AGENT = "plot_log_gap", "agent:garden_director"
+REMIND_PATH = ROOT / "data" / "garden_remind.json"
+KENH = (None, "thu_cong")
+WHY = {"khong_nguoi_nhan": "khoảnh CHƯA gán người phụ trách — không nhắc "
+       "được", "cho_kenh": "CHƯA chọn kênh nhắc nhân viên (data/garden_remind"
+       ".json) — không nhắc được", "chua_nhac": "kênh thủ công: quá hạn mà "
+       "chưa ai đánh dấu đã nhắc", "da_nhac": "đã nhắc người phụ trách mà "
+       "vẫn bỏ trống"}
 
 
-def escalate_gaps(conn, rems: list[dict], schedule: dict) -> int:
+def load_remind_cfg(path=REMIND_PATH) -> dict:
+    """→ {kenh, leo_thang_sau_ngay}. Thiếu file → mặc định an toàn (chưa
+    chọn kênh); hỏng / giá trị lạ → ValueError (CLI exit 1)."""
+    try:
+        doc = json.loads(Path(path).read_bytes().decode("utf-8"))
+    except FileNotFoundError:
+        return {"kenh": None, "leo_thang_sau_ngay": None}
+    except (OSError, ValueError) as e:
+        raise ValueError(f"{Path(path).name} hỏng ({type(e).__name__})"
+                         ) from None
+    k, d = doc.get("kenh"), doc.get("leo_thang_sau_ngay")
+    if k not in KENH:
+        raise ValueError(f"kenh phải null|thu_cong (Zalo/ZNS chưa có — cần "
+                         f"quyết định lưu user_id), có {k!r}")
+    if d is not None and not (isinstance(d, int) and not isinstance(d, bool)
+                              and 1 <= d <= 90):
+        raise ValueError("leo_thang_sau_ngay phải null hoặc 1..90")
+    return {"kenh": k, "leo_thang_sau_ngay": d}
+
+
+def _mark(r) -> str:
+    return (r["last_ts"].astimezone(timezone.utc).strftime("%Y%m%dT%H%M%S")
+            if r["last_ts"] else "none")
+
+
+def _empty(rems: list[dict]) -> list[dict]:
+    return [r for r in rems if r["type"] in ("no-logs", "gap")]
+
+
+def sync_reminders(conn, rems: list[dict], owners: dict, cfg: dict) -> dict:
+    """Chèn 1 dòng nhắc / khoảnh / đợt (idempotent) + đóng đợt cũ khi khoảnh
+    đã có nhật ký mới. Commit. → {"new", "closed"}."""
+    from pipelines import rollout
+    rollout.check_generate(conn, "farming-02", "sổ nhắc nhật ký vườn")
+    sample = {p for (p,) in conn.execute(
+        "select id from plots where source like %s", (SAMPLE_LIKE,))}
+    live = set()
+    new = 0
+    for r in _empty(rems):
+        dot = _mark(r)
+        live.add((r["plot"], dot))
+        who = (owners.get(r["plot"]) or [None])[0]
+        st = ("khong_nguoi_nhan" if who is None else
+              "cho_kenh" if cfg["kenh"] is None else "cho_gui")
+        cur = conn.execute(
+            "insert into garden_reminders (plot_id, dot_key, kind, ma_nv,"
+            " status, kenh, is_sample) values (%s, %s, %s, %s, %s, %s, %s)"
+            " on conflict (plot_id, dot_key) do nothing",
+            (r["plot"], dot, r["type"], who, st, cfg["kenh"],
+             r["plot"] in sample))
+        new += cur.rowcount
+    closed = 0
+    for rid, plot, dot in conn.execute(
+            "select id, plot_id, dot_key from garden_reminders where"
+            " closed_at is null").fetchall():
+        if (plot, dot) not in live:
+            closed += conn.execute(
+                "update garden_reminders set closed_at = now() where id = %s"
+                " and closed_at is null", (rid,)).rowcount
+    conn.commit()
+    return {"new": new, "closed": closed}
+
+
+def escalate_gaps(conn, rems: list[dict], schedule: dict, owners=None,
+                  cfg=None) -> int:
     from pipelines import director
-    lim = 2 * schedule.get("gap_days", garden.DEFAULT_GAP_DAYS)
+    owners = {} if owners is None else owners
+    cfg = load_remind_cfg() if cfg is None else cfg
+    sync_reminders(conn, rems, owners, cfg)
+    gap = schedule.get("gap_days", garden.DEFAULT_GAP_DAYS)
+    lim, wait = 2 * gap, timedelta(days=cfg["leo_thang_sau_ngay"] or gap)
     n = 0
     for r in rems:
         if not (r["type"] == "no-logs"
                 or (r["type"] == "gap" and r["days"] >= lim)):
             continue
-        mark = r["last_ts"].astimezone(timezone.utc).strftime(
-            "%Y%m%dT%H%M%S") if r["last_ts"] else "none"
+        mark = _mark(r)
+        # Tuổi đợt/lần nhắc tính bằng đồng hồ DB (cùng nguồn với created_at).
+        row = conn.execute(
+            "select status, ma_nv, now() - created_at, now() - reminded_at"
+            " from garden_reminders where plot_id = %s and dot_key = %s",
+            (r["plot"], mark)).fetchone()
+        if row is None:
+            continue
+        st, who, age, since_rem = row
+        if st in ("khong_nguoi_nhan", "cho_kenh"):
+            why = st
+        elif since_rem is not None and since_rem >= wait:
+            why = "da_nhac"
+        elif since_rem is None and age >= wait:
+            why = "chua_nhac"
+        else:
+            continue            # đang trong hạn nhắc — chưa báo GĐ
         oid = f"gap:{r['plot']}:{mark}"
         if conn.execute("select 1 from approval_queue where object_type ="
                         " %s and object_id = %s", (GAP_TYPE, oid)).fetchone():
@@ -318,11 +414,19 @@ def escalate_gaps(conn, rems: list[dict], schedule: dict) -> int:
                 f"{r['days']} ngày chưa có nhật ký (ngưỡng {lim})")
         director.submit(conn, "farming", GAP_TYPE, oid,
                         f"Khoảnh {r['plot']} bỏ trống nhật ký",
-                        f"Khoảnh {r['plot']}: {what}. Agent đã nhắc trong "
-                        "danh sách --remind; GĐ vùng trồng chỉ đạo ghi bù hoặc"
-                        " ghi lý do. Agent không sửa nhật ký.", GAP_AGENT)
+                        f"Khoảnh {r['plot']}: {what}. Nhắc người phụ trách"
+                        f" ({who or 'chưa gán'}): {WHY[why]}. GĐ vùng trồng "
+                        "chỉ đạo ghi bù hoặc ghi lý do. Agent không sửa nhật "
+                        "ký, không gửi tin.", GAP_AGENT)
         n += 1
     return n
+
+
+def open_reminders(conn) -> list[tuple]:
+    return conn.execute(
+        "select id, plot_id, dot_key, ma_nv, status, kenh, created_at,"
+        " reminded_at from garden_reminders where closed_at is null"
+        " order by created_at, id").fetchall()
 
 
 def log_flags(detail) -> list[str]:
@@ -518,7 +622,7 @@ def build_bulletin(conn, until, days: int = 7, schedule=None) -> str:
 # ---------------------------------------------------------------------- CLI
 
 OPS = ("bulletin", "remind", "verify", "precheck", "purge_sample",
-       "adopt_plot")
+       "adopt_plot", "reminders", "mark_reminded")
 
 
 def main(argv=None) -> int:
@@ -542,6 +646,12 @@ def main(argv=None) -> int:
     ap.add_argument("--adopt-plot", default=None, metavar="ID",
                     help="GĐ vùng trồng ký nhận khoảnh mẫu thành khoảnh "
                          "thật (gỡ blocker nhật ký đã chain) — cần --by")
+    ap.add_argument("--reminders", action="store_true",
+                    help="đợt nhắc đang mở (người phụ trách = mã NV, trạng "
+                         "thái, kênh) — chỉ đọc")
+    ap.add_argument("--mark-reminded", type=int, default=None, metavar="ID",
+                    help="NGƯỜI đánh dấu đã nhắc nhân viên (kênh thủ công) —"
+                         " cần --by, login người khối farming")
     ap.add_argument("--by", default=None,
                     help="tên GĐ vùng trồng ký (gỡ mẫu / nhận khoảnh)")
     ap.add_argument("--until", default=None,
@@ -555,7 +665,10 @@ def main(argv=None) -> int:
     n_ops = sum(bool(getattr(args, o)) for o in OPS)
     if n_ops != 1:
         ap.error("chọn đúng 1 thao tác: --bulletin | --remind | --verify | "
-                 "--precheck | --purge-sample | --adopt-plot")
+                 "--precheck | --purge-sample | --adopt-plot | --reminders |"
+                 " --mark-reminded")
+    if args.mark_reminded is not None and not (args.by or "").strip():
+        ap.error('--mark-reminded cần --by "<tên người đã nhắc>"')
     if args.submit and not args.remind:
         ap.error("--submit chỉ đi với --remind")
     if args.adopt_plot is not None and not args.adopt_plot.strip():
@@ -623,13 +736,56 @@ def main(argv=None) -> int:
             if not rems:
                 print("[remind] không có nhắc")
             if args.submit:
+                from connectors import zalo_garden
                 try:
-                    n = escalate_gaps(conn, rems, schedule)
+                    cfg = load_remind_cfg()
+                    n = escalate_gaps(conn, rems, schedule,
+                                      zalo_garden.plot_owners(), cfg)
                 except ValueError as e:     # gồm RolloutBlocked (tắt)
                     print(f"[err] {e}", file=sys.stderr)
                     return 2
+                if cfg["kenh"] is None:
+                    print("[blocked] chưa chọn kênh nhắc nhân viên "
+                          "(data/garden_remind.json kenh=null — D-KH-09): "
+                          "KHÔNG ai được nhắc; khoảnh bỏ trống báo thẳng GĐ")
                 print(f"[remind] báo GĐ vùng trồng: {n} mục mới "
                       "(plot_log_gap)")
+            return 0
+        if args.reminders:
+            rows = open_reminders(conn)
+            for rid, plot, dot, who, st, kenh, created, rem in rows:
+                state = "đã nhắc" if rem else st
+                print(f"#{rid} khoảnh {plot} đợt {dot} · người phụ trách "
+                      f"{who or '—'} · {state} · kênh {kenh or 'chưa chọn'}")
+            print(f"[reminders] {len(rows)} đợt đang mở")
+            return 0
+        if args.mark_reminded is not None:
+            from pipelines import auth  # lười: auth → director → ...
+            if why := auth.cli_identity(conn, args.by, "garden_reminder",
+                                        str(args.mark_reminded),
+                                        action="mark_reminded"):
+                conn.rollback()
+                print(f"[err] {why} — không đổi gì", file=sys.stderr)
+                return 1
+            try:
+                ok = auth.call_human(
+                    conn, "select garden_reminder_done_human(%s, %s)",
+                    (args.mark_reminded, args.by.strip()), by=args.by,
+                    block="farming", action="mark_reminded",
+                    object_type="garden_reminder",
+                    object_id=str(args.mark_reminded)).fetchone()[0]
+            except auth.HumanDenied as e:
+                print(f"[err] DB từ chối: {e} — không đổi gì",
+                      file=sys.stderr)
+                return 1
+            if not ok:
+                conn.rollback()
+                print(f"[err] #{args.mark_reminded} không ở trạng thái chờ "
+                      "nhắc thủ công (đã nhắc / đã đóng / chưa có kênh / "
+                      "chưa gán người) — không đổi gì", file=sys.stderr)
+                return 1
+            conn.commit()
+            print(f"[ok] #{args.mark_reminded} đã nhắc — {args.by.strip()}")
             return 0
         if args.precheck:
             pre = sample_precheck(conn)

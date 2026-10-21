@@ -57,6 +57,7 @@ ANSWER = {"answer": "Giá 1.000.000 đ", "sources": ["https://x"]}
 @pytest.fixture
 def ztok(zfiles, monkeypatch, tmp_path):
     """Token store/throttle cô lập + bộ refresh đủ credential."""
+    monkeypatch.setenv("DEPLOY", "1")  # G5: send_text dry-run khi DEPLOY tắt
     monkeypatch.setattr(zalo, "TOKEN_STORE", tmp_path / "zalo_tokens.json")
     monkeypatch.setattr(zalo, "_last_refresh", float("-inf"))
     monkeypatch.setattr(zalo, "_last_refresh_ok", float("-inf"))

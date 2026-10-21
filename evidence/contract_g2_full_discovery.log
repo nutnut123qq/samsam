@@ -1,0 +1,278 @@
+# LƯỢT KHÁM PHÁ (KHÔNG tính làm kết quả): revision TRƯỚC khi vá 5 lỗi; EXIT 1 lấy từ tiến trình. 5 failed đều do vòng 2 và đã vá trước lượt chính thức (evidence/contract_g2_full_pytest.log).
+# Full pytest VÒNG 2 revision đợt hợp đồng (DB mới samsam_contract_full2, dựng lại)
+# ngày (client) 2026-10-20T22:03:21+07:00
+# git HEAD dda008969feef0fcbec8b0ba6f5fab363c813806 nhánh codex/contract-completion
+# fingerprint diff(trừ DONE+board) vs dda0089 = b0bce49e5af3aa45c60bacf4d7e7996285860292bf353f872af388618799c18f
+# DB samsam_contract_full2 @ localhost (KHÔNG phải samsam)
+# OPENROUTER_API_KEY rỗng=có · Docker: 
+không chạy → DR skip = UNVERIFIED
+## dựng DB: apply_schema --roles ×2 + core_store + golden_store
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+  rc=0
+[done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+  rc=0
+[done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+  rc=0
+[done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+  rc=0
+## lệnh: python -m pytest -q -ra -p no:cacheprovider
+........................................................................ [  1%]
+........................................................................ [  2%]
+........................................................................ [  3%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+........................................................................ [  6%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 12%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 15%]
+........................................................................ [ 16%]
+...............................F........................................ [ 17%]
+............................................................F........... [ 18%]
+........................................................................ [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+.............................sss........................................ [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+.....................................................................F.. [ 33%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 45%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+........................................................................ [ 56%]
+........................................................................ [ 57%]
+........................................................................ [ 58%]
+..................................F..................................... [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 63%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+........................................................................ [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 69%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 72%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 89%]
+.................F...................................................... [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 95%]
+........................................................................ [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 99%]
+.............................................................            [100%]
+================================== FAILURES ===================================
+______________________ test_every_egress_module_declared ______________________
+
+    def test_every_egress_module_declared():
+        egress = dpia_draft.egress_modules(ROOT)
+        assert KNOWN_EGRESS <= egress, KNOWN_EGRESS - egress   # chống scanner rỗng
+        undeclared = sorted(egress - _declared(dpia_draft.load_map(MAP_PATH)))
+>       assert not undeclared, (
+            "module gửi dữ liệu ra ngoài CHƯA khai báo trong "
+            f"data/data_flow_map.json: {undeclared}")
+E       AssertionError: module gửi dữ liệu ra ngoài CHƯA khai báo trong data/data_flow_map.json: ['scripts/webhook_probe.py']
+E       assert not ['scripts/webhook_probe.py']
+
+tests\test_data_flow_map.py:95: AssertionError
+________________________ test_cloud_readme_drift_guard ________________________
+
+    def test_cloud_readme_drift_guard():
+        readme = (ROOT / "deploy" / "cloud" / "README.md").read_text(
+            encoding="utf-8")
+        env = (ROOT / "deploy" / "cloud" / "env.cloud.example").read_text(
+            encoding="utf-8")
+        schema = (ROOT / "docs" / "schema.sql").read_text(encoding="utf-8")
+        tables = re.findall(r"^create table if not exists (\w+)", schema, re.MULTILINE)
+        assert len(tables) == N_TABLES
+        for t in tables:
+>           assert f"`{t}`" in readme, f"README thiếu bảng {t}"
+E           AssertionError: README thiếu bảng garden_reminders
+E           assert '`garden_reminders`' in '# Chuyển DB lên Postgres managed trong nước (v3.6, WP02 / F17.4)\n\n> **v12.6 — KHÔNG phải phương án chính theo Hợp đ...\nKhôi phục ĐÈ production không có lệnh tự động: tầng 2, người làm tay, báo\nTGĐ — xem `docs/handover/sop.md` mục 6.\n'
+
+tests\test_db_backup.py:331: AssertionError
+_______________________ test_kien_truc_lists_all_tables _______________________
+
+    def test_kien_truc_lists_all_tables():
+        body = _doc("kien-truc.md")
+        tables = _table_names()
+        assert tables, "schema.sql không parse được bảng nào"
+        for t in tables:
+>           assert t in body, f"kien-truc.md thiếu bảng '{t}'"
+E           AssertionError: kien-truc.md thiếu bảng 'garden_reminders'
+E           assert 'garden_reminders' in '# Kiến trúc hệ thống — Sâm Sâm AI (bản pilot)\n\n**Dành cho ai:** người vận hành kỹ thuật, đội dự án bàn giao, kỹ thu...g thấp hơn float8 (`scripts/vector_eval.py`); chưa bật\n  vì Postgres local/cloud chưa cài extension (external-dep).\n'
+
+tests\test_handover_docs.py:161: AssertionError
+____________________ test_deterministic_skips_llm_runners _____________________
+
+env = []
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001A7E6756C90>
+capsys = <_pytest.capture.CaptureFixture object at 0x000001A7E6756EA0>
+
+    def test_deterministic_skips_llm_runners(env, monkeypatch, capsys):
+        monkeypatch.setattr(ae, "_rag_answer",
+                            lambda q: pytest.fail("chatbot không được chạy"))
+        monkeypatch.setattr(llm_gateway, "chat",
+                            lambda *a, **k: pytest.fail("LLM"))
+>       assert ae.main(["--deterministic", "--no-record"]) == 0
+E       AssertionError: assert 1 == 0
+E        +  where 1 = <function main at 0x000001A7CE24BEC0>(['--deterministic', '--no-record'])
+E        +    where <function main at 0x000001A7CE24BEC0> = ae.main
+
+tests\test_qa_harness.py:484: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[ok] chatbot v1 active owner=marketing qa=data_platform risk=high 14 ca
+[ok] fin_qa v1 skeleton owner=finance qa=finance risk=high 3 ca
+[ok] guardrail v2 active owner=legal_hr qa=data_platform risk=high 132 ca
+[ok] intel_qa v1 skeleton owner=intel qa=intel risk=medium 3 ca
+[ok] kd_a1 v2 active owner=sales qa=sales risk=high 43 ca
+[ok] kd_a11 v1 skeleton owner=sales qa=sales risk=high 4 ca
+[ok] kd_a3 v2 active owner=sales qa=sales risk=high 20 ca
+[ok] kd_a5 v1 active owner=sales qa=data_platform risk=high 21 ca
+[ok] kd_a7 v1 active owner=sales qa=sales risk=high 10 ca
+[ok] kd_a9 v1 active owner=sales qa=sales risk=high 8 ca
+[ok] mkt02 v1 active owner=marketing qa=data_platform risk=high 14 ca
+[ok] mkt03 v1 active owner=marketing qa=data_platform risk=high 15 ca
+[ok] mkt04 v1 active owner=marketing qa=data_platform risk=high 17 ca
+[ok] mkt12 v1 active owner=marketing qa=marketing risk=high 6 ca
+[ok] mkt_13 v1 skeleton owner=marketing qa=marketing risk=high 4 ca
+[ok] mkt_ads_ugc v2 active owner=marketing qa=data_platform risk=high 29 ca
+[ok] mkt_seo v1 active owner=marketing qa=data_platform risk=medium 14 ca
+[ok] pc_a9 v1 skeleton owner=legal_hr qa=legal_hr risk=high 3 ca
+[ok] qa_cockpit v1 skeleton owner=ceo qa=ceo risk=medium 4 ca
+[ok] qa_vung_trong v1 skeleton owner=farming qa=farming risk=medium 3 ca
+[ok] sales_director v1 active owner=sales qa=data_platform risk=medium 26 ca
+[ok] sx_a8 v1 skeleton owner=production qa=production risk=medium 3 ca
+[done] 22/22 suite hợp lệ
+[guardrail:v41-edge-01] FAIL (edge) — kỳ vọng pass, guardrail block tu_cam: từ/cụm cấm: "chữa" | text="Sản phẩm không chữa bệnh, chỉ hỗ trợ bồi bổ sức khỏe."
+[guardrail:v41-edge-02] FAIL (edge) — kỳ vọng pass, guardrail block claim_ngoai_cong_bo: claim công dụng không nằm trong whitelist đã công bố | text="Sản phẩm thuộc dòng thực phẩm bảo vệ sức khỏe của Sâm Sâm."
+[done] guardrail v2 PASS 130/132 pass_rate=0.9848 (ngưỡng 0.95) prompt_version=b530c2083697 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối legal_hr: chưa cấu hình (external-dep)
+[done] kd_a1 v2 PASS 43/43 pass_rate=1.0 (ngưỡng 0.86) prompt_version=e944c6c3cbd8 model=fake_gateway judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a3 v2 PASS 20/20 pass_rate=1.0 (ngưỡng 1.0) prompt_version=ebf6dca4eaa9 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[kd_a5:a5-p03] FAIL (promo_stacked) — kỳ vọng ['promo_stacked'], có ['promo_margin_unknown', 'promo_stacked'] | text="sku-mau-b × shopee"
+[kd_a5:a5-p04] FAIL (promo_below_floor) — kỳ vọng ['promo_below_floor', 'promo_stacked'], có ['promo_below_floor', 'promo_margin_unknown', 'promo_stacked'] | text="sku-mau-b × shopee"
+[kd_a5:a5-p05] FAIL (promo_over_cap) — kỳ vọng ['promo_over_cap'], có ['promo_margin_unknown', 'promo_over_cap'] | text="sku-mau-b × shopee"
+[kd_a5:a5-p10] FAIL (trap_no_race) — kỳ vọng [], có ['promo_margin_unknown'] | text="sku-mau-b × shopee"
+[done] kd_a5 v1 FAIL 17/21 pass_rate=0.8095 (ngưỡng 1.0) prompt_version=b666686c0d78 model=rules judge=None
+[done] ca bắt buộc FAIL: a5-p10
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] red_alert — người nhận độc lập (BKS/Pháp chế): chưa cấu hình (external-dep); bản sao chủ khối sales: chưa cấu hình (external-dep)
+[done] kd_a7 v1 PASS 10/10 pass_rate=1.0 (ngưỡng 1.0) prompt_version=868cc021fc15 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] kd_a9 v1 PASS 8/8 pass_rate=1.0 (ngưỡng 1.0) prompt_version=55c726db9335 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+[done] mkt02 v1 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=1f6805be47f8 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt03 v1 PASS 15/15 pass_rate=1.0 (ngưỡng 1.0) prompt_version=d1fc8962531c model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt04 v1 PASS 17/17 pass_rate=1.0 (ngưỡng 1.0) prompt_version=e94d09399464 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt12 v1 PASS 6/6 pass_rate=1.0 (ngưỡng 1.0) prompt_version=b89822551ebb model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt_ads_ugc v2 PASS 29/29 pass_rate=1.0 (ngưỡng 1.0) prompt_version=cdf362538588 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] mkt_seo v1 PASS 14/14 pass_rate=1.0 (ngưỡng 1.0) prompt_version=defbc0e5c3ab model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối marketing: chưa cấu hình (external-dep)
+[done] sales_director v1 PASS 26/26 pass_rate=1.0 (ngưỡng 1.0) prompt_version=f5fbd27fdd20 model=rules judge=None
+[done] --no-record: không ghi eval_runs, không ghi cảnh báo
+[report] director_digest — bản tin GĐ khối sales: chưa cấu hình (external-dep)
+_________________ test_p8_7_db_recounts_outputs_not_evidence __________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_full2) at 0x1a7e897e9c0>, ...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3183/p10cfg3/launch_p10.py'), ...}
+
+    def test_p8_7_db_recounts_outputs_not_evidence(live):  # noqa: F811
+        """Review v15 (MINOR): `rollout_transition_human` TỰ đếm lại đầu ra bằng
+        bộ đếm `count_spec` owner ghi (chính câu SQL Python) — gọi thẳng bằng
+        login người với bằng chứng tự khai KHÔNG vượt cổng PL02 (mọi loại nguồn
+        DB: hàng duyệt, báo cáo + sổ duyệt, bảng riêng; không nguồn = chặn)."""
+        feats = {f["id"]: f for f in ro.load_features()}
+        since = datetime.now(VN_TZ) - timedelta(days=20)
+        nosrc = {"id": "farming-98", "code_status": "co_code",
+                 "output_sources": []}
+        _owner_seed(live, [feats["ceo-02.1"], feats["farming-02"],
+                           feats["ceo-02.2"], nosrc], since)
+>       assert _q(live, "select feature_id, jsonb_array_length(count_spec->"
+                  "'sql'), count_spec->'workdays' from feature_rollout where"
+                  " feature_id in ('ceo-02.1', 'ceo-02.2', 'farming-02',"
+                  " 'farming-98') order by 1") == [("ceo-02.1", 2, [0, 1, 2, 3, 4]),
+                               ("ceo-02.2", 1, [0, 1, 2, 3, 4]),
+                               # docx P2: + nguồn plot_log_gap
+                               ("farming-02", 2, [0, 1, 2, 3, 4]),
+                               ("farming-98", 0, [0, 1, 2, 3, 4])]
+E       AssertionError: assert [('ceo-02.1',... 1, 2, 3, 4])] == [('ceo-02.1',... 1, 2, 3, 4])]
+E         
+E         At index 2 diff: ('farming-02', 3, [0, 1, 2, 3, 4]) != ('farming-02', 2, [0, 1, 2, 3, 4])
+E         Use -v to get more diff
+
+tests\test_v15_p8_outputs.py:686: AssertionError
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_dr_drill.py:503: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:527: không có docker/image postgres:<major>-alpine
+SKIPPED [1] tests\test_dr_drill.py:545: không có docker/image postgres:<major>-alpine
+FAILED tests/test_data_flow_map.py::test_every_egress_module_declared - Asser...
+FAILED tests/test_db_backup.py::test_cloud_readme_drift_guard - AssertionErro...
+FAILED tests/test_handover_docs.py::test_kien_truc_lists_all_tables - Asserti...
+FAILED tests/test_qa_harness.py::test_deterministic_skips_llm_runners - Asser...
+FAILED tests/test_v15_p8_outputs.py::test_p8_7_db_recounts_outputs_not_evidence
+5 failed, 6461 passed, 3 skipped in 3773.54s (1:02:53)
+
+EXIT 1

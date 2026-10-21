@@ -277,3 +277,26 @@ def test_default_week_is_last_full_week(monkeypatch):
 def test_weekly_connect_read_only_source():
     src = (ROOT / "scripts" / "intel_weekly.py").read_text(encoding="utf-8")
     assert "read_only = True" in src and "connect_timeout=10" in src
+
+
+def test_pl01_competitor_coverage(db, monkeypatch, capsys, tmp_path):
+    """Đợt hợp đồng (PL01 Tình báo — K5, TRIMICO, KGC theo tuần): mục đối
+    thủ báo độ phủ từng đối thủ hợp đồng nêu tên; thiếu → THIẾU (không im)."""
+    _seed(db)
+    p = tmp_path / "competitor_pl01_MAU.csv"
+    p.write_text(
+        "doi_thu,kenh,ten_san_pham,sku_tuong_duong,gia_vnd,gia_km_vnd,"
+        "khuyen_mai,rating,so_danh_gia,ngay_ghi,nguon,ghi_chu\n"
+        "Trimico,shopee,Viên sâm MẪU A,savina-12v,150000,140000,KM,,,"
+        "2026-10-06,https://shopee.vn/product/t/1,MẪU\n"
+        "KGC Cheong Kwan Jang,web,Hồng sâm MẪU B,,500000,,,,,"
+        "2026-10-07,https://kgc.example.com/b,MẪU\n", encoding="utf-8")
+    rows, errs, sha = ii.read_competitor(p)
+    assert not errs
+    assert ii.load_competitor(db, rows, p.name, sha)[1] == []
+    rc, out, _e, _n = _main(db, monkeypatch, capsys, ["--week", WEEK])
+    comp = out.split("## 2.")[0]
+    assert rc == 0 and "Độ phủ đối thủ theo PL01" in comp
+    assert "- K5: **THIẾU dữ liệu tuần này**" in comp
+    assert "- TRIMICO: 1 quan sát giá, 1 có giá KM" in comp
+    assert "- KGC: 1 quan sát giá, 0 có giá KM" in comp

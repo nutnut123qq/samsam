@@ -1,0 +1,26 @@
+# Contract completion release secret scan — 2026-10-21
+Baseline: dda008969feef0fcbec8b0ba6f5fab363c813806
+Verified code fingerprint (excluding DONE.md and board):
+688ec3a2e79176f7b5f8ff075965b94a3396b2058f43f4cc12ce76a022afd91b
+
+Scope: 57 tracked changes, 34 new project files, 17 new contract evidence logs.
+Also scanned all 536 existing evidence files for known local credential bytes
+and strong token / private-key / credential-URI patterns.
+Compared matches to HEAD; reviewed credential URI and password candidates.
+No real API key, private key, or live credential-bearing DSN found in release changes.
+Known local DB-password occurrences in newly added tracked lines: 2,
+both substrings of a synthetic phone number in tests/test_doc_intake.py.
+New evidence logs: 0 known local credential matches.
+Other credential examples are synthetic test values or documented placeholders.
+No .env, actual user/staff registry, conversation log, private key, or DOCX included.
+This scan does not clear or repair historical credential exposure in Git history.
+
+Validation already reviewed on this code fingerprint:
+Full pytest: 6485 passed, 0 failed, 3 skipped (Docker DR UNVERIFIED), EXIT 0.
+Independent controller: 14/14 probes and 41/41 DB-guard tests passed.
+Release lint rerun: ruff check . --exclude .agents --exclude founder — PASS.
+Only current release labels in DONE.md and board changed after the review;
+code/schema/roles unchanged. No full pytest rerun for these label changes.
+No deploy, service/timer activation, or credential rotation performed.
+Unresolved samsam incident and intel_weekly service-role issue remain open.
+All 86 catalog items remain operationally unaccepted.

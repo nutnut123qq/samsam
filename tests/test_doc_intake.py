@@ -641,3 +641,72 @@ def test_insert_race_rowcount0_dup_no_fields(dirs):
     assert (c["dup"], c["new"], c["error"]) == (1, 0, 0)
     assert conn.count("insert into document_fields") == 0
     assert (conn.rollbacks, conn.commits) == (1, 0)
+
+
+# --- đợt hợp đồng G3: OCR lại tài liệu cho_ocr (DB thật, schema tạm) -------
+@pytest.fixture
+def realdb():
+    from tests.test_ceo_audit import ceo_db
+    yield from ceo_db()
+
+
+def test_reprocess_pending_after_provider(dirs, realdb, monkeypatch,
+                                          no_network, capsys):
+    from tests.test_ceo_audit import TxConn
+    intake, orig = dirs
+    _put(intake, "giay_tiep_nhan/scan.pdf", make_pdf(None))
+    _put(intake, "nhan/b.png", b"\x89PNG\r\n\x1a\nother")
+    conn = TxConn(realdb)
+    assert di.intake(intake, orig, conn)["cho_ocr"] == 2
+    # provider none → chặn trước mọi truy vấn
+    with pytest.raises(ValueError, match="BLOCKED"):
+        di.reprocess_pending(conn, orig, "none")
+    monkeypatch.setitem(di.PROVIDERS, "fake_us", (lambda p: "x", False))
+    with pytest.raises(ValueError, match="nước ngoài"):
+        di.reprocess_pending(conn, orig, "fake_us")
+    calls = []
+
+    def fake(path):     # PDF scan ra chữ; ảnh PNG giả không ra chữ
+        calls.append(path)
+        return ("So 77/2025/ĐKSP ngày 2 tháng 1 năm 2025 LH 0912345678"
+                if Path(path).read_bytes()[:4] == b"%PDF" else "")
+    monkeypatch.setitem(di.PROVIDERS, "fake_vn", (fake, True))
+    c = di.reprocess_pending(conn, orig, "fake_vn")
+    assert c == {"done": 1, "still": 1, "error": 0}
+    st = dict(realdb.execute("select status, count(*) from documents"
+                             " group by 1").fetchall())
+    assert st == {"pending_review": 1, "cho_ocr": 1}
+    # Không bao giờ tự verified; PII được quét; field là nháp chưa xác minh.
+    row = realdb.execute("select sha256, text_source, pii_flag from documents"
+                         " where status = 'pending_review'").fetchone()
+    assert row[1:] == ("ocr", True)
+    assert realdb.execute("select bool_or(verified) from document_fields"
+                          " where sha256 = %s", (row[0],)).fetchone()[0] \
+        is False
+    out = capsys.readouterr().out
+    assert "0912345678" not in out and "77/2025" not in out
+    # Chạy lại: chỉ tài liệu còn cho_ocr được thử, không nhân đôi field.
+    calls.clear()
+    assert di.reprocess_pending(conn, orig, "fake_vn") == {
+        "done": 0, "still": 1, "error": 0} and len(calls) == 1
+    n = realdb.execute("select count(*) from document_fields where sha256 = %s",
+                       (row[0],)).fetchone()[0]
+    assert n == 2
+    # Bản gốc bị sửa → error, không đụng DB.
+    left = realdb.execute("select sha256 from documents where status ="
+                          " 'cho_ocr'").fetchone()
+    if left:
+        (orig / left[0]).write_bytes(b"tampered")
+        c = di.reprocess_pending(conn, orig, "fake_vn")
+        assert c["error"] == 1
+        assert realdb.execute("select status from documents where sha256 ="
+                              " %s", (left[0],)).fetchone()[0] == "cho_ocr"
+
+
+def test_reprocess_cli_blocked_without_provider(monkeypatch, capsys):
+    monkeypatch.delenv("OCR_PROVIDER", raising=False)
+    monkeypatch.setattr(di, "load_dotenv", lambda *a, **k: None)
+    monkeypatch.setattr(di.lead_store, "connect",
+                        lambda: pytest.fail("không được connect"))
+    assert di.main(["--reprocess-pending"]) == 2
+    assert "[blocked]" in capsys.readouterr().out

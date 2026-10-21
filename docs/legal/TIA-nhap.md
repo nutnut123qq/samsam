@@ -71,7 +71,7 @@
 | Dữ liệu gửi đi (sau biện pháp) | Chỉ số tổng hợp vận hành (job, eval, chi phí, số mục) — không có dữ liệu cá nhân |
 | Lớp | Xanh |
 | Mục đích | Giám sát vận hành |
-| Biện pháp kỹ thuật | Mặc định KHÔNG gửi — cần `--notify` + env kênh; Chỉ số tổng hợp, không nội dung chat |
+| Biện pháp kỹ thuật | Mặc định KHÔNG gửi — cần `--notify` + env kênh; Chỉ số tổng hợp, không nội dung chat; webhook_probe: chỉ GET `/readyz` của chính webhook on-prem (mặc định 127.0.0.1), không theo redirect, không gửi dữ liệu |
 | Thời hạn lưu (theo map) | Không giới hạn (file báo cáo) |
 | Rủi ro tồn dư | (không) |
 | Căn cứ | Không xử lý dữ liệu cá nhân — Luật 91/2025: CẦN LUẬT SƯ XÁC NHẬN |

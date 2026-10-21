@@ -211,6 +211,7 @@ class _Clock:
 
 @pytest.fixture
 def zsend(monkeypatch):
+    monkeypatch.setenv("DEPLOY", "1")  # G5: send_text dry-run khi DEPLOY tắt
     calls = []
 
     class R:

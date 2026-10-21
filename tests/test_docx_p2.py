@@ -178,23 +178,19 @@ def test_p2_ceo_risk_alcohol_and_gi():
 
 # ---------------------------------------------- vườn: báo GĐ khi vẫn bỏ trống
 
-class _Q:
-    def __init__(self, seen=()):
-        self.seen = set(seen)
-
-    def execute(self, sql, args=None):
-        hit = bool(args) and args[1] in self.seen
-        return type("R", (), {"fetchone": lambda s: (1,) if hit else None})()
-
-
 def test_p2_garden_escalates_only_still_empty(monkeypatch):
+    """Đợt hợp đồng C02 FLIP có lý do: escalate_gaps nay đồng bộ sổ nhắc
+    `garden_reminders` trước (DB thật, schema tạm + rollback) — chưa chọn
+    kênh nhắc → không nhắc được → khoảnh VẪN bỏ trống báo GĐ ngay như cũ
+    (K1, K3); K2 (< 2×gap) chỉ có dòng nhắc; overdue hoạt động không vào sổ."""
     from datetime import datetime, timezone
 
     from agents import garden_director as gd
+    from tests.test_ceo_audit import TxConn, ceo_db
     sent = []
     monkeypatch.setattr("pipelines.director.submit",
                         lambda conn, blk, ot, oid, title, payload, by:
-                        sent.append((blk, ot, oid, by)) or 1)
+                        sent.append((blk, ot, oid, by, payload)) or 1)
     t = datetime(2026, 10, 1, tzinfo=timezone.utc)
     rems = [{"type": "no-logs", "plot": "K1", "activity": None,
              "last_ts": None, "days": None},
@@ -204,13 +200,22 @@ def test_p2_garden_escalates_only_still_empty(monkeypatch):
              "days": 30},
             {"type": "overdue", "plot": "K4", "activity": "tưới",
              "last_ts": t, "days": 40}]
-    assert gd.escalate_gaps(_Q(), rems, {"gap_days": 14}) == 2
-    assert [s[2] for s in sent] == ["gap:K1:none", "gap:K3:20261001T000000"]
-    assert all(s[:2] == ("farming", "plot_log_gap") for s in sent)
-    sent.clear()                                  # đã đẩy (mọi trạng thái)
-    assert gd.escalate_gaps(_Q({"gap:K1:none"}), rems[:1],
-                            {"gap_days": 14}) == 0
-    assert sent == []
+    cfg = {"kenh": None, "leo_thang_sau_ngay": None}
+    gen = ceo_db()
+    db = next(gen)
+    try:
+        c = TxConn(db)
+        owners = {"K1": ["VT-1"], "K2": ["VT-1"], "K3": ["VT-2"]}
+        assert gd.escalate_gaps(c, rems, {"gap_days": 14}, owners, cfg) == 2
+        assert [x[2] for x in sent] == ["gap:K1:none",
+                                        "gap:K3:20261001T000000"]
+        assert all(x[:2] == ("farming", "plot_log_gap") for x in sent)
+        assert all("CHƯA chọn kênh" in x[4] for x in sent)
+        assert db.execute("select plot_id, status from garden_reminders"
+                          " order by 1").fetchall() == [
+            ("K1", "cho_kenh"), ("K2", "cho_kenh"), ("K3", "cho_kenh")]
+    finally:
+        gen.close()
 
 
 # ---------------------------------------------- tỷ lệ hủy kênh

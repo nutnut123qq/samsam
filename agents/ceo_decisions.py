@@ -69,7 +69,14 @@ SHOW = 5
 COLS = ("id", "entry_kind", "parent_id", "decided_on", "topic", "decision",
         "decided_by", "basis_kind", "basis_id", "due_date", "follow_status",
         "note", "recorded_by", "recorded_at")
-MS_COLS = ("code", "title", "owner_role", "due_date", "status")
+MS_COLS = ("code", "title", "owner_role", "due_date", "status",
+           "sign_required")
+# Đợt hợp đồng C05 (PL01 Ban TGĐ "việc nào chờ ký"): 3 nguồn có cấu trúc.
+_WAIT_Q_SQL = ("select id, object_type, title, due_at from approval_queue"
+               " where block = 'ceo' and status = 'pending'"
+               " order by due_at nulls last, id")
+_WAIT_REV_SQL = ("select quarter, max(recorded_at) from revenue_quarters"
+                 " group by quarter order by quarter")
 _BASIS_SQL = {
     "approval_queue": ("select status, decided_by, decided_at from"
                        " approval_queue where id = %s"),
@@ -148,6 +155,48 @@ def late_milestones(rows: list[dict], today: date) -> list[dict]:
             if r["due_date"] < today and r["status"] != "xong"]
 
 
+def wait_lines(data: dict, today: date) -> list[str]:
+    """Đợt hợp đồng C05 — việc chờ TGĐ QUYẾT (hàng duyệt khối ceo pending)
+    tách với CHỜ KÝ (mốc `sign_required` chưa xong; đối soát quý đã ghi số
+    đề xuất — sổ không lưu chữ ký nên luôn là "chưa có bằng chứng ký").
+    None = không đọc được (thiếu quyền/bảng) — ghi rõ, không im."""
+    L = ["", "### Việc chờ TGĐ quyết định / chờ ký", ""]
+    q = data.get("waiting_queue")
+    L.append("Chờ quyết định (hàng duyệt khối ceo — nguồn `approval_queue`):")
+    if q is None:
+        L.append("- (không đọc được — thiếu quyền/bảng)")
+    else:
+        for i, ot, title, due in q[:SHOW]:
+            dd = _vn_date(due)
+            late = (f", QUÁ HẠN {(today - dd).days} ngày"
+                    if dd and dd < today else "")
+            L.append(f"- #{i} {_pg(ot, 40)} · {_pg(title, 80)} — hạn "
+                     f"{_d(dd) if dd else '—'}{late}")
+        if len(q) > SHOW:
+            L.append(f"- …và {len(q) - SHOW} mục khác")
+        if not q:
+            L.append("- (không có)")
+    ms = [r for r in data.get("milestones") or []
+          if r.get("sign_required") and r["status"] != "xong"]
+    L.append("Chờ ký (mốc cần văn bản ký, chưa xong kèm bằng chứng — nguồn "
+             "`project_milestones`):")
+    L += [(f"- {_pg(r['code'], 40)} · {_pg(r['title'], 80)} — hạn "
+           f"{_d(r['due_date'])}"
+           + (f" (TRỄ {(today - r['due_date']).days} ngày)"
+              if r["due_date"] < today else "")
+           + f", phụ trách {_pg(r.get('owner_role'), 40)}, {r['status']}")
+          for r in ms[:SHOW]] or ["- (không có)"]
+    rev = data.get("waiting_rev")
+    L.append("Chờ ký biên bản đối soát quý (số đề xuất đã ghi; sổ KHÔNG lưu "
+             "chữ ký — nguồn `revenue_quarters`):")
+    if rev is None:
+        L.append("- (không đọc được — thiếu quyền/bảng)")
+    else:
+        L += [f"- {_pg(qq, 10)} — ghi số {_d(_vn_date(ts))}, chưa có bằng "
+              "chứng ký (mẫu PL05 chưa có)" for qq, ts in rev]             or ["- (không có)"]
+    return L
+
+
 def render_section(data: dict, today: date) -> list[str]:
     """data {"decisions": `chains(...)`, "milestones": dòng project_milestones}
     → dòng markdown "## Tiến độ & Sổ quyết định". Mọi số do code đếm."""
@@ -179,6 +228,8 @@ def render_section(data: dict, today: date) -> list[str]:
           for r in late[:SHOW]] or ["- (không có)"]
     if len(late) > SHOW:
         L.append(f"- …và {len(late) - SHOW} mốc khác")
+    if "waiting_queue" in data:            # `read` luôn đặt (C05)
+        L += wait_lines(data, today)
     L += ["", ("*Sổ quyết định do NGƯỜI ghi (`python -m agents.ceo_decisions "
                "--record --by`); agent chỉ đề xuất. Mốc trễ từ "
                "`project_milestones` (cùng luật bảng tiến độ DA-01).*")]
@@ -193,7 +244,18 @@ def read(conn) -> dict:
     ms = [dict(zip(MS_COLS, r)) for r in conn.execute(
         f"select {', '.join(MS_COLS)} from project_milestones"
         " order by due_date, code").fetchall()]
-    return {"decisions": chains(rows), "milestones": ms}
+    return {"decisions": chains(rows), "milestones": ms,
+            "waiting_queue": _try(conn, _WAIT_Q_SQL),
+            "waiting_rev": _try(conn, _WAIT_REV_SQL)}
+
+
+def _try(conn, sql):
+    """Đọc trong savepoint; thiếu quyền/bảng → None (ghi rõ trên trang)."""
+    try:
+        with conn.transaction():
+            return conn.execute(sql).fetchall()
+    except psycopg.Error:
+        return None
 
 
 def section(conn, today: date) -> list[str]:

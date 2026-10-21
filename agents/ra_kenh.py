@@ -385,7 +385,8 @@ def scan_row(row: dict, cfg: dict) -> dict:
                 "excerpt": _excerpt(text, None)}
     codes = list(dict.fromkeys(v["code"] for v in viols))
     posted = row.get("posted_on")
-    if row.get("draft_id") is None and (posted is None
+    if row.get("require_draft", True) and row.get("draft_id") is None and (
+            posted is None
                                         or posted >= cfg["quy_trinh_duyet_tu"]):
         codes.append(THIEU)    # không rõ ngày = coi như bài mới (fail-closed)
     if marker:
@@ -477,11 +478,15 @@ def _link(conn, post_id, dcfg: dict, stats: dict) -> None:
 
 
 def ingest(conn, rows: list[dict], cfg: dict, *, by: str,
-           now: datetime) -> dict:
+           now: datetime, auto: bool = False) -> dict:
     """Nạp snapshot + mở/kế thừa/đóng đợt vi phạm → thống kê. Mỗi bài:
     snapshot trong 1 transaction + commit, rồi gắn mục hàng duyệt/cảnh báo
-    (2 module đó tự commit)."""
-    err = by_error(by)
+    (2 module đó tự commit). `auto` (C12): nguồn tự thu — người nạp là
+    `AUTO_BY` (agent), không giả tên người."""
+    if auto:
+        err = None if by == AUTO_BY else "auto chỉ với AUTO_BY"
+    else:
+        err = by_error(by)
     if err:
         raise ValueError(err)
     now = _aware(now)
@@ -569,6 +574,87 @@ def ingest(conn, rows: list[dict], cfg: dict, *, by: str,
                             "due_at": due, "excerpt": s["excerpt"],
                             "closed": reason == "da_sua"})
     return st
+
+
+# ------------------------------------------------- C12 nguồn tự thu
+# Đợt hợp đồng C12 (legal_hr-04, PL01 Pháp chế "quét web, Fanpage, listing;
+# mở yêu cầu gỡ bài vi phạm trong 24 giờ"):
+#   - web: tệp crawl `data/{articles,news,products}.jsonl` do `crawler.collect`
+#     thu từ trang CÔNG KHAI của Bên B (robots + ≥1s/host). Tệp cũ hơn
+#     `WEB_MAX_AGE_DAYS` (GIẢ ĐỊNH 7) → KHÔNG quét nguồn đó (dữ liệu cũ không
+#     được "đóng" vi phạm), ghi chú rõ;
+#   - listing: snapshot `listing` MỚI NHẤT mỗi sàn đã nạp (`market_rows`):
+#     tiêu đề + mô tả nếu file có; KHÔNG cộng `thieu_ban_duyet` (đối chiếu
+#     bản duyệt listing là việc của ceo_audit — tránh mở trùng);
+#   - Fanpage: cần Graph API + page token Bên B cấp — CHƯA có adapter (không
+#     đoán endpoint/quyền); dùng `--file` CSV xuất tay.
+AUTO_BY = AGENT
+WEB_FILES = ("articles", "news", "products")
+WEB_MAX_AGE_DAYS = 7
+
+
+def web_rows(now: datetime, data_dir=None) -> tuple[list[dict], list[str]]:
+    d = Path(data_dir) if data_dir is not None else ROOT / "data"
+    rows, notes = [], []
+    for name in WEB_FILES:
+        f = d / f"{name}.jsonl"
+        if not f.is_file():
+            notes.append(f"web/{name}: chưa có tệp crawl — chưa quét")
+            continue
+        age = now - datetime.fromtimestamp(f.stat().st_mtime, VN_TZ)
+        if age > timedelta(days=WEB_MAX_AGE_DAYS):
+            notes.append(f"web/{name}: dữ liệu crawl cũ {age.days} ngày "
+                         f"(> {WEB_MAX_AGE_DAYS}) — KHÔNG quét, chạy "
+                         "crawler.collect")
+            continue
+        for n, ln in enumerate(f.read_bytes().split(b"\n"), 1):
+            if not ln.strip():
+                continue
+            try:
+                o = json.loads(ln.decode("utf-8", errors="replace"))
+            except ValueError:
+                notes.append(f"web/{name}: dòng {n} hỏng — bỏ")
+                continue
+            if not isinstance(o, dict):
+                continue
+            url = str(o.get("url") or "")
+            text = " ".join(str(o.get(k) or "") for k in
+                            ("title", "name", "body", "description")).strip()
+            if (not url.startswith(("http://", "https://")) or not text
+                    or len(url.encode()) > MAX_URL):
+                continue
+            pub = str(o.get("published_at") or "")[:10]
+            text = text[:MAX_TEXT]
+            rows.append({"line": n, "url": url, "channel": "web",
+                         "content_type": "post",
+                         "posted_on": (date.fromisoformat(pub)
+                                       if _DATE_RE.fullmatch(pub) else None),
+                         "is_ai": False, "is_sponsored": False, "sku": None,
+                         "draft_id": None, "text": text,
+                         "sha": store.content_sha256(text)})
+    return rows, notes
+
+
+def listing_rows(conn) -> list[dict]:
+    rows = []
+    for ch, iid, ssku, title, desc in conn.execute(
+            "select r.channel, r.item_id, r.seller_sku, r.title,"
+            " r.raw ->> 'description' from market_rows r join (select"
+            " distinct on (channel) id from market_snapshots where"
+            " export_kind = 'listing' order by channel, imported_at desc,"
+            " id desc) s on s.id = r.snapshot_id order by r.channel,"
+            " r.row_no").fetchall():
+        key = iid or ssku
+        text = "\n".join(x for x in (title, desc) if x)[:MAX_TEXT]
+        if not key or not text:
+            continue
+        rows.append({"line": None, "url": f"{ch}:listing:{key}",
+                     "channel": ch, "content_type": "listing",
+                     "posted_on": None, "is_ai": False,
+                     "is_sponsored": False, "sku": None, "draft_id": None,
+                     "require_draft": False, "text": text,
+                     "sha": store.content_sha256(text)})
+    return rows
 
 
 def mark_removed(conn, url: str, by: str, now: datetime) -> tuple[bool, str]:
@@ -1206,6 +1292,44 @@ def _print_plan(rows, scans) -> None:
         print(f"    trích: {s['excerpt']}")
 
 
+def _scan_auto_main(dry_run: bool) -> int:
+    try:
+        cfg = load_config()
+    except ValueError as e:
+        print(f"[err] cấu hình phap_che.json: {e}")
+        return 2
+    now = _now()
+    rows, notes = web_rows(now)
+    conn = None if dry_run else connect()
+    if not dry_run and conn is None:
+        print("[err] DB không truy cập được")
+        return 2
+    try:
+        if conn is not None:
+            rows += listing_rows(conn)
+        for n in notes:
+            print(f"[note] {n}")
+        if dry_run:
+            scans = [scan_row(r, cfg) for r in rows]
+            print(f"[dry-run] {len(rows)} bài web (listing cần DB) — KHÔNG"
+                  " ghi")
+            _print_plan(rows, scans)
+            return 0
+        st = ingest(conn, rows, cfg, by=AUTO_BY, now=now, auto=True)
+    except (psycopg.Error, ValueError) as e:
+        if conn is not None:
+            conn.rollback()
+        print(f"[err] {type(e).__name__}: {safe(_mask_pii(str(e)))[:200]}")
+        return 2
+    finally:
+        if conn is not None:
+            conn.close()
+    print(f"[scan-auto] {st['rows']} mục: mới {st['new']}, trùng {st['skip']},"
+          f" S1 {st['S1']}, S2 {st['S2']}, đóng {st['closed']}, ticket "
+          f"{st['tickets']} — Fanpage: chưa có nguồn tự thu (CSV --file)")
+    return 1 if any("cũ" in n for n in notes) else 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         prog="python -m agents.ra_kenh",
@@ -1221,6 +1345,9 @@ def main(argv=None) -> int:
                     help="NGƯỜI ghi nhận đã gỡ/ẩn bài → đóng đợt (da_go)")
     ap.add_argument("--report", action="store_true",
                     help="báo cáo Pháp chế tuần → data/reports/")
+    ap.add_argument("--scan-auto", action="store_true",
+                    help="C12: quét nguồn TỰ THU (web từ crawl công khai, "
+                         "listing từ snapshot sàn) → ticket 24h (job)")
     ap.add_argument("--by", help="tên NGƯỜI thực hiện (không agent:/system:)")
     ap.add_argument("--now", help="thời điểm ISO CHỈ cho --report/--dry-run"
                     " (thao tác ghi dùng giờ thật); thiếu múi giờ = giờ VN"
@@ -1230,10 +1357,15 @@ def main(argv=None) -> int:
                     help="chỉ đọc file + rà, KHÔNG connect DB")
     a = ap.parse_args(argv)
     n_ops = sum([a.file is not None, a.mark_removed is not None, a.report,
-                 a.partner_file is not None])
+                 a.partner_file is not None, a.scan_auto])
     if n_ops != 1:
         ap.error("chọn đúng 1 thao tác: --file | --partner-file |"
-                 " --mark-removed | --report")
+                 " --mark-removed | --report | --scan-auto")
+    if a.scan_auto:
+        if a.by is not None or a.now is not None:
+            ap.error("--scan-auto không nhận --by/--now (người nạp = agent,"
+                     " giờ thật)")
+        return _scan_auto_main(a.dry_run)
     if a.dry_run and a.file is None and a.partner_file is None:
         ap.error("--dry-run chỉ đi với --file/--partner-file")
     if a.partner_file is not None and a.now is not None:

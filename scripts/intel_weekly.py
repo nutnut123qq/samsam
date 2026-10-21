@@ -28,6 +28,7 @@ Contract:
 
 import argparse
 import os
+import re
 import sys
 from datetime import datetime, time, timedelta
 from pathlib import Path
@@ -93,9 +94,32 @@ def new_products(conn, mon) -> list[str]:
     return out + [""]
 
 
+# Đợt hợp đồng (PL01 Tình báo "giá, khuyến mãi, sản phẩm mới của K5,
+# TRIMICO, KGC theo tuần"): 3 đối thủ do HỢP ĐỒNG nêu tên — đổi qua phụ lục,
+# không phải cấu hình. Mỗi tuần báo rõ đối thủ nào THIẾU quan sát.
+PL01_COMPETITORS = ("K5", "TRIMICO", "KGC")
+
+
+def coverage(conn, mon) -> list[str]:
+    rows = conn.execute(
+        "select competitor, count(*), count(promo_price_vnd)"
+        " from competitor_observations where observed_on between %s and %s"
+        " group by 1 order by 1", (mon, mon + timedelta(days=6))).fetchall()
+    out = ["### Độ phủ đối thủ theo PL01 (K5, TRIMICO, KGC)", ""]
+    for name in PL01_COMPETITORS:
+        pat = re.compile(rf"(?<!\w){re.escape(name.casefold())}(?!\w)")
+        n = sum(c for comp, c, _ in rows if pat.search(str(comp).casefold()))
+        k = sum(p for comp, _, p in rows if pat.search(str(comp).casefold()))
+        out.append(f"- {name}: {n} quan sát giá, {k} có giá KM" if n else
+                   f"- {name}: **THIẾU dữ liệu tuần này** — chưa có dòng "
+                   "trong file đối thủ nhập tay")
+    return out + [""]
+
+
 def section_competitor(conn, mon) -> list[str]:
     gaps = ii.competitor_gaps(conn, mon)
     out = ["## 1. Đối thủ — lệch giá/KM so giá golden (chỉ đọc)", ""]
+    out += coverage(conn, mon)
     if not gaps:
         return out + [EMPTY, ""] + new_products(conn, mon)
     out += [("| Ngày | Đối thủ | Kênh | Sản phẩm | SKU mình | Giá đối thủ "

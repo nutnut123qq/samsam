@@ -2,12 +2,16 @@
 → cảnh báo đỏ + leo thang 2 giờ chưa xác nhận.
 
 Contract:
-  - Luật: 4 luật CỨNG trong code (`RULES`), từ khóa trong
+  - Luật: 5 luật CỨNG trong code (`RULES`), từ khóa trong
     `data/intel_alert_rules.json` (GIẢ ĐỊNH — chờ Pháp chế/Quản lý MXH):
       brand_negative     = nhóm brand ∧ nhóm negative
       regulation         = nhóm regulation ∧ (chủ đề tpbvsk|quang_cao hoặc
                            cờ ruou)
       competitor_penalty = chủ đề doi_thu ∧ nhóm penalty
+      counterfeit        = (đợt hợp đồng, PL01 Tình báo "sâm giả, mạo danh
+                           Ngọc Linh") nhóm counterfeit ĐỨNG MỘT MÌNH —
+                           tin sâm giả/mạo danh chỉ dẫn Ngọc Linh không nhắc
+                           tên Sâm Sâm vẫn báo
       legal_doc          = (v10.2 PC-A8 Theo dõi văn bản pháp luật) nguồn
                            tin ∈ `legal_sources` (id nguồn văn bản tầng A
                            trong data/intel_sources.json) ∧ (chủ đề
@@ -78,8 +82,9 @@ for _s in (sys.stdout, sys.stderr):
 
 ROOT = Path(__file__).resolve().parent.parent
 RULES_FILE = ROOT / "data" / "intel_alert_rules.json"
-GROUPS = ("brand", "negative", "regulation", "penalty")
-RULES = ("brand_negative", "regulation", "competitor_penalty", "legal_doc")
+GROUPS = ("brand", "negative", "regulation", "penalty", "counterfeit")
+RULES = ("brand_negative", "regulation", "competitor_penalty", "counterfeit",
+         "legal_doc")
 REG_TOPICS = ("tpbvsk", "quang_cao")
 _SRC_ID_RE = re.compile(r"[a-z0-9_-]+")
 SOURCE_AGENT = "intel_red_alert"
@@ -177,6 +182,8 @@ def match(item: dict, rules: dict) -> list[str]:
         out.append("regulation")
     if "doi_thu" in topics and "penalty" in hit:
         out.append("competitor_penalty")
+    if "counterfeit" in hit:
+        out.append("counterfeit")
     if (item.get("source") in rules.get("legal_sources", ())
             and (topics & set(REG_TOPICS) or "ruou" in flags)):
         out.append("legal_doc")

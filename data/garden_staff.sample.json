@@ -1,6 +1,12 @@
 {
-  "_doc": "v12.4 MẪU allowlist nhân viên vườn gửi nhật ký qua Zalo OA (connectors/zalo_garden.py). BẢN DEV SOẠN — GĐ vùng trồng chốt danh sách thật. File thật: chép thành data/garden_staff.json (gitignored). `user_hash` = 16 hex đầu sha256(user_id Zalo), lấy bằng `python -m connectors.zalo_garden --hash` (user_id qua STDIN) — KHÔNG ghi user_id thô, KHÔNG ghi tên/SĐT. `ma_nv` = mã nhân viên nội bộ (≤32 ký tự), thành author `zalo:<ma_nv>` của nhật ký. Một dòng sai dạng → cả file bị bỏ (không ai được nhận là nhân viên, tin đi chatbot khách). Dòng dưới là hash của user_id giả 0000000000000000000.",
+  "_doc": "v12.4 MẪU allowlist nhân viên vườn gửi nhật ký qua Zalo OA (connectors/zalo_garden.py). BẢN DEV SOẠN — GĐ vùng trồng chốt danh sách thật. File thật: chép thành data/garden_staff.json (gitignored). `user_hash` = 16 hex đầu sha256(user_id Zalo), lấy bằng `python -m connectors.zalo_garden --hash` (user_id qua STDIN) — KHÔNG ghi user_id thô, KHÔNG ghi tên/SĐT. `ma_nv` = mã nhân viên nội bộ (≤32 ký tự), thành author `zalo:<ma_nv>` của nhật ký. Một dòng sai dạng → cả file bị bỏ (không ai được nhận là nhân viên, tin đi chatbot khách). Dòng dưới là hash của user_id giả 0000000000000000000. Đợt hợp đồng C02: `khoanh` (tùy chọn) = danh sách mã khoảnh người này PHỤ TRÁCH — dùng để nhắc ghi nhật ký trước khi báo GĐ; sai dạng → không khoảnh nào có người phụ trách (báo GĐ).",
   "staff": [
-    {"user_hash": "2616b5d75f586c05", "ma_nv": "VT-MAU-01"}
+    {
+      "user_hash": "2616b5d75f586c05",
+      "ma_nv": "VT-MAU-01",
+      "khoanh": [
+        "KV-MAU-01"
+      ]
+    }
   ]
 }

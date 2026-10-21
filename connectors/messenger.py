@@ -208,6 +208,10 @@ class Handler(BaseHTTPRequestHandler):
         u = urlsplit(self.path)
         if u.path == "/healthz":
             return self._json(200, {"status": "up"})
+        if u.path == "/readyz":       # đợt hợp đồng C01
+            ok, checks = zalo.readiness(_startup_error())
+            return self._json(200 if ok else 503,
+                              {"ready": ok, "checks": checks})
         if u.path != PATH:
             return self._json(404, {"error": "not found"})
         q = parse_qs(u.query)

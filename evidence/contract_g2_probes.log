@@ -1,0 +1,101 @@
+# Probe VÒNG 2 — revision cuối
+# ngày (client) 2026-10-21T00:29:33+07:00 · HEAD dda008969feef0fcbec8b0ba6f5fab363c813806 nhánh codex/contract-completion
+# fingerprint diff(trừ DONE+board) vs dda0089 = 113d6bf6dda3d0f8cf867453fdf007de98b0e15c3519b2bd484f2d8adf0bbf5d
+# DB samsam_contract_full2 (KHÔNG phải samsam) · OPENROUTER_API_KEY rỗng · máy dev, DB test cục bộ
+
+## python -m pytest tests/test_docx_r12_quyen.py tests/test_docx_mkt03.py tests/test_docx_kpi_provenance.py tests/test_docx_p0_rollout_gate.py tests/test_docx_p0c_person_login.py tests/test_docx_p1.py tests/test_docx_p2.py -q -p no:cacheprovider -rf
+........................................................................ [ 67%]
+..................................                                       [100%]
+106 passed in 97.59s (0:01:37)
+EXIT 0
+
+## python -m pytest tests/test_db_guard.py tests/test_guardrail_implied.py tests/test_kd_live.py tests/test_contract_c01_webhook.py tests/test_contract_c02_garden_remind.py tests/test_contract_c03_lot_certs.py tests/test_contract_c04_listing_export.py tests/test_contract_c05_ceo_waiting.py tests/test_contract_c06_ceo_audit_price.py tests/test_contract_c07_media_marketing.py tests/test_contract_c08_promo_loss.py tests/test_contract_c09_combo_price.py tests/test_contract_c10_production_progress.py tests/test_contract_c11_p2_jobs.py tests/test_contract_c12_channel_scan.py -q -p no:cacheprovider -rf
+........................................................................ [ 48%]
+........................................................................ [ 96%]
+.....                                                                    [100%]
+149 passed in 178.19s (0:02:58)
+EXIT 0
+
+## P1 livestream trước/sau (không DB/mạng)
+### TRƯỚC = snapshot vòng 1 (scratchpad snap_g)
+controller: ok=True codes=[]
+khong_dau: ok=True codes=[]
+hoa: ok=True codes=[]
+zwsp: ok=True codes=[]
+claim_trong_dap: ok=False codes=['ngam_y_suc_khoe', 'ngam_y_suc_khoe', 'claim_khong_ro_sku', 'thieu_khuyen_cao']
+EXIT 0
+### SAU = working tree
+controller: ok=False codes=['ngam_y_suc_khoe', 'claim_khong_ro_sku', 'thieu_khuyen_cao']
+khong_dau: ok=False codes=['ngam_y_suc_khoe', 'claim_khong_ro_sku', 'thieu_khuyen_cao']
+hoa: ok=False codes=['ngam_y_suc_khoe', 'claim_khong_ro_sku', 'thieu_khuyen_cao']
+zwsp: ok=False codes=['ngam_y_suc_khoe', 'claim_khong_ro_sku', 'thieu_khuyen_cao']
+claim_trong_dap: ok=False codes=['ngam_y_suc_khoe', 'ngam_y_suc_khoe', 'claim_khong_ro_sku', 'thieu_khuyen_cao']
+EXIT 0
+
+## C11 chạy THẬT qua wrapper pipelines.job_runs --run trên DB test samsam_contract_g (lượt 1 + lượt 2 chạy lại; login owner DB test — lượt bằng login svc_job thật ở evidence/contract_g2_upgrade.log)
+### job_vt_harvest
+# Dự báo thu hoạch & sẵn hàng theo lô — 2026-10-20
+
+## Metadata
+
+- model: vt_thuhoach-rule-v1 + pipelines.scenario.project
+- seed: 0 (tất định — không lấy mẫu ngẫu nhiên)
+- harvest_assumptions_sha256: 61fd4e8e3aaedb2786bca9fb83937c6f136f78159f19335e61ecf06caa4982ab
+- scenario_assumptions_sha256: 32f987305faf59f23f70070cb6386f944823fb760ce0e501c0263cdfaa8fada2
+- as_of: 2026-10-20
+- generated: 2026-10-20
+- dữ liệu dùng: 3 khoảnh · 0 nhật ký thu hoạch · 0 lô
+- giả định: GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt
+
+## Dự báo thu hoạch theo khoảnh (kg củ tươi, thấp–cơ sở–cao)
+
+- KV-A01 (MẪU): 2026-Q4 — 99–189–332 kg
+- KV-A02 (MẪU): 2028-Q1 — 59–113–199 kg
+- KV-B01 (MẪU): chưa đủ 5 năm tuổi trong 8 quý tới — không ước lượng
+
+## Sẵn hàng theo lô (13 tuần từ 2026-10-19)
+
+- (không có lô)
+
+---
+Khoảng thấp–cơ sở–cao — KHÔNG phải cam kết với khách/đại lý; GĐ vùng trồng xác nhận trước khi chia sẻ.
+
+[write] D:\code\samsam\data\reports\vt-thu-hoach-2026-10-20.md
+[submit] pending #1 (farming/harvest_forecast)
+### job_hdtv_month
+[done] D:\code\samsam\data\reports\hdtv-2026-09.md — kỳ 2026-09, 34 fact có nguồn, 0 mục không đọc được
+[submit] mục #2 vào hàng chờ khối ceo (pending — TGĐ duyệt; hệ thống KHÔNG tự duyệt, KHÔNG tự gửi HĐTV)
+### job_vt_weather
+[warn] --fetch chưa bật — điều khoản nhà cung cấp dự báo chưa xác minh (dùng --from-csv)
+### job2_vt_harvest
+# Dự báo thu hoạch & sẵn hàng theo lô — 2026-10-20
+
+## Metadata
+
+- model: vt_thuhoach-rule-v1 + pipelines.scenario.project
+- seed: 0 (tất định — không lấy mẫu ngẫu nhiên)
+- harvest_assumptions_sha256: 61fd4e8e3aaedb2786bca9fb83937c6f136f78159f19335e61ecf06caa4982ab
+- scenario_assumptions_sha256: 32f987305faf59f23f70070cb6386f944823fb760ce0e501c0263cdfaa8fada2
+- as_of: 2026-10-20
+- generated: 2026-10-20
+- dữ liệu dùng: 3 khoảnh · 0 nhật ký thu hoạch · 0 lô
+- giả định: GIẢ ĐỊNH — chờ GĐ KD/Tài chính chốt
+
+## Dự báo thu hoạch theo khoảnh (kg củ tươi, thấp–cơ sở–cao)
+
+- KV-A01 (MẪU): 2026-Q4 — 99–189–332 kg
+- KV-A02 (MẪU): 2028-Q1 — 59–113–199 kg
+- KV-B01 (MẪU): chưa đủ 5 năm tuổi trong 8 quý tới — không ước lượng
+
+## Sẵn hàng theo lô (13 tuần từ 2026-10-19)
+
+- (không có lô)
+
+---
+Khoảng thấp–cơ sở–cao — KHÔNG phải cam kết với khách/đại lý; GĐ vùng trồng xác nhận trước khi chia sẻ.
+
+[write] D:\code\samsam\data\reports\vt-thu-hoach-2026-10-20.md
+[submit] skipped #1 (farming/harvest_forecast)
+### job2_hdtv_month
+[done] D:\code\samsam\data\reports\hdtv-2026-09.md — kỳ 2026-09, 34 fact có nguồn, 0 mục không đọc được
+[skipped] kỳ 2026-09 đã có mục #2 (pending) — không nộp lại

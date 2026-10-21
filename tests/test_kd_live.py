@@ -223,6 +223,8 @@ def test_db_script_prices_drops_health_disclaimer(db, llm):
     assert "Không thuộc giỏ" not in text
     # (e) câu hỏi sức khỏe → câu đáp = template health NGUYÊN VĂN
     assert f"Đáp: {HEALTH}" in text and "thoải mái" not in text
+    # vá controller 20/10: nguyên văn câu hỏi sức khỏe KHÔNG vào kịch bản
+    assert "tiểu đường" not in text and f"Hỏi: {kl.HEALTH_Q}" in text
     assert "Dạ Sâm Sâm giao toàn quốc ạ." in text
     # (f) TPBVSK → khuyến cáo nguyên văn + nhãn AI/QC; 0 từ cấm
     assert CANON in text and AI in text and AD in text

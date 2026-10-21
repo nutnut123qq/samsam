@@ -73,3 +73,21 @@ liệt kê cả mốc chưa có ngày); nghĩa vụ không có mốc riêng ch�
   (`data/anchor_config.json` `provider: none`).
 - Kho mã nguồn chung, người giữ quyền cao nhất Bên B, văn bản ủy quyền người
   duyệt, lịch trực, đào tạo.
+
+## 6. Nhật ký giao nhận giai đoạn (PL02 mục 1đ–e; HĐ 6.4–6.5) — đợt hợp đồng 20/10/2026
+
+Ghi tay khi có sự kiện thật; để trống = chưa xảy ra. Đồng hồ 30 ngày chỉ
+tính từ ngày Bên B THỰC nhận hồ sơ có bằng chứng nhận (biên bản/email xác
+nhận). "Coi là đã nghiệm thu" (HĐ 6.4) chỉ ghi khi có đủ: bằng chứng giao
+nhận + hết 30 ngày + bằng chứng không có danh sách lỗi — và vẫn cần người có
+thẩm quyền xác nhận ghi nhận; repo/agent không tự tuyên bố hiệu lực pháp lý,
+không đổi `acceptance_status`.
+
+| Giai đoạn | Hồ sơ đề nghị (file + sha256) | Ngày Bên B nhận | Bằng chứng nhận | Hạn 30 ngày | Danh sách lỗi (ngày nhận) | Hạn sửa 7 ngày | Đề nghị nghiệm thu lại | Kết quả (biên bản số/ngày) |
+|---|---|---|---|---|---|---|---|---|
+| P1 | | | | | | | | |
+| P2 | | | | | | | | |
+
+Gói quyết định tập trung (gồm mục 5 ở trên, chi tiết từng dòng):
+`docs/handover/dau-vao-va-quyet-dinh.md`. Đối chiếu DOCX ↔ code:
+`docs/handover/doi-chieu-docx.md`.

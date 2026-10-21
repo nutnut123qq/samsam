@@ -123,6 +123,11 @@ bảng nào thì dừng, không bật app.
 | `b2b_quote_events` | B | (v14.4) append-only — mốc gửi/kết quả báo giá B2B do người ghi; không dựng lại được từ nguồn |
 | `dealer_price_obs` | B | (v14.4) append-only — giá đại lý quan sát tay (file nhập tay có thể không còn); không PII |
 | `partner_post_scans` | B | (v14.5) append-only — sổ rà bài KOC/đại lý đã đăng (chỉ mã đối tác + sha256 URL/text, không text/handle); bằng chứng marketing-04.2 |
+| `garden_reminders` | B | (hợp đồng vòng 2) sổ nhắc người phụ trách khoảnh theo đợt; mất bảng = nhắc lại đợt cũ + mất mốc 'đã nhắc' do người ghi |
+| `lot_test_certificates` | B | (hợp đồng vòng 2) append-only — số + hash phiếu kiểm nghiệm lô, có phiên bản; tệp phiếu ở `LOT_CERT_DIR` ngoài repo — sao lưu thư mục đó riêng |
+| `production_plans` | B | (hợp đồng vòng 2) append-only — kế hoạch sản xuất do người khối production ghi; không dựng lại được từ nguồn |
+| `production_plan_lots` | B | (hợp đồng vòng 2) append-only — gắn lô ↔ kế hoạch (tiến độ sản xuất) |
+| `garden_media_releases` | B | (hợp đồng vòng 2) append-only — cấp/thu hồi tư liệu vườn cho Marketing do người khối farming ghi |
 | `contacts` | B | (v5.2) PII đã mã hóa Fernet — vô dụng nếu thiếu `CONTACT_VAULT_KEY`; mang khóa theo đường RIÊNG, không cùng file backup |
 | `consents` | B | (v5.2) append-only — bằng chứng đồng ý, dựng lại = mất |
 | `chat_consents` | B | (v5.1) append-only — bằng chứng đồng ý tư vấn chat Zalo/Messenger (user_hash có muối — mang `CHANNEL_HASH_SALT` theo đường riêng, đổi muối = mất liên kết), dựng lại = mất |

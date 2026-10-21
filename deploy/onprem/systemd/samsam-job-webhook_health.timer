@@ -1,0 +1,12 @@
+# Đợt hợp đồng C01 — lịch job 'webhook_health' (nguồn: deploy/onprem/jobs.json). Khung giờ GIẢ ĐỊNH —
+# chủ khối chỉnh trong jobs.json rồi sửa OnCalendar ở đây (test giữ khớp).
+[Unit]
+Description=Sam Sam timer webhook_health
+
+[Timer]
+OnCalendar=*-*-* *:00/5:00
+Persistent=true
+Unit=samsam-job@webhook_health.service
+
+[Install]
+WantedBy=timers.target

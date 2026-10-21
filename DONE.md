@@ -4,7 +4,7 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version hiện tại: **v15 + đợt DOCX — chốt mã nguồn 20/10/2026; chưa triển khai/nghiệm thu**
+Version hiện tại: **v15 + đợt DOCX + đợt hợp đồng vòng 1–3 (bản phát hành mã nguồn 21/10/2026); chưa triển khai/nghiệm thu**
 
 v2.4-polish đóng 2026-10-11 (cold-check auditor lạ profile reviewer
 — đợt 1 FIX 1 MINOR `_WHERE_INFO_RE` greedy nuốt 'ở đâu' thứ hai
@@ -22,6 +22,148 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 (đúng review chỉ dựa code Python — quyết khi bàn giao); free-text
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
+
+## Vá cổng DB test (21/10/2026) — 3 lỗ controller tái hiện, CHƯA commit/merge/push/deploy
+
+**Đính chính checkpoint vòng 2:** claim "P0 cổng DB test — test không thể kết nối
+`samsam`" là SAI ở 3 đường (controller, driver giả / tiến trình con chỉ in tên DB,
+không kết nối samsam). Fingerprint revision sau vá (index tạm, 34 file mới, trừ
+DONE.md + board, so `dda0089`): `688ec3a2e79176f7b5f8ff075965b94a3396b2058f43f4cc12ce76a022afd91b` (89 file, +5882/−162). Chỉ sửa test
+harness (`tests/_db_guard.py`, `tests/test_db_guard.py`) + tài liệu — không đụng
+schema/roles/runtime code, không cần migration.
+
+- **G1** `subprocess` không truyền `env`/`env=None` không được kiểm → đổi
+  `os.environ["DATABASE_URL"]` sang samsam sau `install()` rồi spawn → con nhận
+  DSN samsam, rc 0. Vá: `_GuardedPopen` kiểm môi trường HIỆU LỰC tại mỗi lần
+  spawn (env truyền tay hoặc bản sao `os.environ`), từ chối TRƯỚC khi tạo tiến
+  trình, con nhận bản sao đã kiểm (DSN thiếu → ""); `os.environ`/dict caller
+  không đổi.
+- **G2** thiếu dbname tường minh → suy từ user/`PGUSER`/user OS →
+  `psycopg.connect("")` tới driver (psycopg2 `database=` cũng lọt). Vá: chỉ
+  dbname/`PGDATABASE` tường minh; thiếu → `TestDbRefused` trước driver; denylist
+  từ `.env` vẫn cấm RỘNG (DSN thiếu dbname → cấm tên user).
+- **G3** `preflight()` nuốt mọi `psycopg.Error` → `None` (kể cả
+  `UndefinedTable` khi DB rỗng thật). Vá: kiểm tồn tại bảng/role trước khi đọc;
+  lỗi kết nối/truy vấn/quyền, thiếu bảng/role/golden → thông điệp → exit 4;
+  chỉ SELECT trên phiên read-only. Hai chế độ: **unit** = không đặt
+  `DATABASE_URL` (test cần DB tự skip, KHÔNG phải gate); **integration/full** =
+  `DATABASE_URL` tới DB test đã dựng (AGENTS, runbook mục 10.5).
+
+Bằng chứng (`evidence/contract_g3_*.log`, `git add -f` khi commit):
+- Probe trước/sau (`probe_before/after`): bản trước (snapshot working tree vòng 2)
+  **14 FAIL / 25 ca** — đủ 3 lỗi; bản sau **25/25 PASS**.
+- Preflight thật (`preflight`): DB test MỚI rỗng → exit 4; có schema chưa golden
+  → exit 4; đủ → 41 passed exit 0; host chết → exit 4; gọi `preflight()` bản
+  trước trên cùng DB rỗng → `None`, bản sau → thông điệp chặn.
+- `tests/test_db_guard.py` 22 → 41 ca; 45 file test dùng subprocess/CLI
+  (`affected`): **1582 passed, 3 skipped**, exit 0.
+- Full pytest DB mới `samsam_contract_full3` (apply_schema --roles ×2 + core +
+  golden, preflight đạt): **6485 passed, 0 failed, 3 skipped** (DR Docker
+  UNVERIFIED), EXIT 0 (`full_pytest`).
+- Gate (`gates`): ruff sạch; `agent_eval --deterministic` exit 0; `dpia_draft
+  --check` exit 0; red-team 0/50. Probe (`probes`): 106/106 hồi quy DOCX;
+  168 test vòng 2 + cổng DB.
+- Giới hạn: guard bọc `subprocess.Popen` (+ `run`/`call`/`check_output`),
+  `psycopg`/`psycopg2`; `os.system`/`exec`/`multiprocessing`/asyncio
+  subprocess không qua cổng (repo không dùng). Sự cố DB `samsam` vòng 1 vẫn
+  UNVERIFIED (doi-chieu mục 2b) — vòng này không kết nối `samsam`. Không đổi
+  trạng thái nghiệm thu; `intel_weekly` vẫn chưa vá (ngoài phạm vi).
+
+## Đợt hợp đồng VÒNG 2 (20/10/2026) — nhánh `codex/contract-completion` từ `main` = `dda0089`, CHƯA commit/merge/push/deploy
+
+Fingerprint diff (trừ DONE.md + board) so với `dda0089`: `113d6bf6dda3d0f8cf867453fdf007de98b0e15c3519b2bd484f2d8adf0bbf5d` — tính
+bằng INDEX TẠM (bản sao `.git/index` + `GIT_INDEX_FILE`, `git add -N` 34 file
+mới trừ `.agents/`, `founder/`, `lv2-market-top.png`) rồi
+`git diff dda0089 -- . ':(exclude)DONE.md' ':(exclude)docs/handover/v13-board.md' | sha256sum`;
+index thật không đổi. 89 file, +5673/−162 dòng. DB kiểm: `samsam_contract_g`
+(chọn lọc), `samsam_contract_full2` (full, dựng mới), `samsam_contract_up2a`/
+`up2b` (nâng cấp) — **vòng 2 không kết nối DB `samsam`**.
+
+1. **P0 cổng DB test** (ĐÍNH CHÍNH 21/10: còn 3 lỗ G1–G3, đã vá ở mục phía trên) — `tests/_db_guard.py` cài ở dòng đầu
+   `tests/conftest.py`: bọc `psycopg.connect`/`Connection.connect`/
+   `psycopg2.connect` + `subprocess.Popen` (env + argv) + `load_dotenv` (không
+   nạp DSN/`PG*`); tên DB `samsam` + mọi dbname trong `.env` `*DATABASE_URL`
+   → `TestDbRefused` TRƯỚC driver; `service`/DSN hỏng → từ chối; preflight
+   DB chưa dựng → exit 4. Không có cờ bypass. `tests/test_db_guard.py` 22 ca
+   (driver giả / host chết). Phạm vi sự cố vòng 1: doi-chieu mục 2b.
+2. **P1 livestream** — bỏ ngoại lệ `Hỏi: …?` ở `_implied_health`;
+   `kd_live` thay câu hỏi sức khỏe của khách bằng dòng trung tính trước
+   guardrail. Probe trước/sau: ca controller + không dấu/HOA/ZWSP `ok=True` →
+   chặn; kd_a9 8/8.
+3. **C01–C12** — bảng tiêu chí/probe/trạng thái: doi-chieu mục 1.3 (vòng 2).
+   Tất cả CODE_VERIFIED trên DB test; KHÔNG mục nào vận hành thật.
+4. **Phép thử nâng cấp bằng login THẬT** (`evidence/contract_g2_upgrade.log`):
+   nền dda0089 + snapshot vòng 1 → schema/roles ×2: 0 bảng mất, 0 dòng đổi,
+   đuôi chuỗi giữ, 0 quyền bớt; approvals/lô/QR/KPI cũ+live/backup/rollout/
+   mốc giữ; `rollout --seed` lại không đổi giai đoạn/ngày. Chạy mọi bước
+   `jobs.json` bằng login svc_job thật lộ 4 job thiếu quyền ĐỌC có từ
+   dda0089 (garden_remind, vt_harvest, production_week/_month, price_watch)
+   → cấp quyền đọc tối thiểu + test. **`intel_weekly` vẫn lỗi quyền dưới
+   svc_job — ngoài 12 mục, CHƯA vá.**
+
+Gate revision cuối (`evidence/contract_g2_*.log`, `*.log` gitignore —
+`git add -f` khi commit):
+- Full pytest (DB mới `samsam_contract_full2`, apply_schema --roles ×2 +
+  core + golden): **6466 passed, 0 failed, 3 skipped** (3 skip = `tests/test_dr_drill.py` cần Docker — Docker không chạy → DR Docker **UNVERIFIED**), EXIT 0 lấy từ tiến trình (`evidence/contract_g2_full_pytest.log`). Lượt KHÁM PHÁ trước đó KHÔNG tính (`evidence/contract_g2_full_discovery.log`, EXIT 1): 5 failed đều do vòng 2 — `webhook_probe` chưa khai `data/data_flow_map.json` (thêm DF-12 + sinh lại DPIA/TIA); README cloud + `kien-truc.md` thiếu 5 bảng mới; C08 để `promo_margin_unknown` mức S2 làm hỏng suite đóng băng `kd_a5` (→ INFO, chỉ mục finance, hàng sales như dda0089); farming-02 thêm nguồn đếm `garden_reminders` (flip có lý do). Đã vá cả 5 rồi mới chạy lượt chính thức.
+- Probe: 106 probe hồi quy đợt DOCX **106 passed**; 15 file vòng 2 (cổng DB, guardrail, kd_live, C01–C12) **149 passed**; P1 trước/sau: 4 ca `ok=True` → chặn, ca claim trong câu đáp chặn cả hai bên; C11 job thật qua wrapper ×2 (`evidence/contract_g2_probes.log`).
+- Gate nhẹ: ruff sạch (trừ `.agents/`, `founder/` không thuộc đợt); `agent_eval --deterministic` exit 0 (guardrail 130/132 như baseline, kd_a5 21/21, kd_a9 8/8); `dpia_draft --check` exit 0; red-team **0/50** lọt, 0 known_gap (`evidence/contract_g2_gates.log`).
+- Secret scan diff + file mới + evidence: 0 DSN có mật khẩu / khóa API; số điện thoại/DSN trong diff chỉ là giá trị giả trong test (che PII, cổng DB); 0 tên người ký/giá trị HĐ/mã số thuế.
+- Sau khi cập nhật DONE/board (chỉ tài liệu, ngoài fingerprint): 4 file test đọc tài liệu **218 passed**.
+- Mức bằng chứng: máy dev + DB test cục bộ; **0 sandbox, 0 production**.
+
+Chưa làm / chờ: C01–C12 có code nhưng còn chờ quyết định/hạ tầng/vendor
+(doi-chieu mục 1.3); `intel_weekly` quyền svc_job; 86/86 `chua_nghiem_thu`,
+0 mục READY_FOR_TRIAL.
+
+## Đợt hợp đồng VÒNG 1 (20/10/2026) — lịch sử, xem vòng 2 phía trên — nhánh `codex/contract-completion` từ `main` = `dda0089`, CHƯA commit/merge/push/deploy
+
+Căn cứ: HĐ + PL01–PL04 (DOCX, trích ngoài repo; PL05 chưa có). Fingerprint
+diff (trừ DONE.md + board) so với `dda0089`: `8198996f98554a7718407347fd711129416c9803e2e852bd8c663c36d825d503`. Tái lập fingerprint: `git add -N` 4 file mới (timer chain_watch, doi-chieu-docx.md, dau-vao-va-quyet-dinh.md, tests/test_guardrail_implied.py) rồi `git diff dda0089 -- . ':(exclude)DONE.md' ':(exclude)docs/handover/v13-board.md' | sha256sum`; đã gỡ `-N` sau khi tính. Băm nối 4 file mới (thứ tự trên): `a5a6d3093f4c93a1e3c5e68bf88411bbb217a8090a6ace9860441abaf99fa8a6`. DB kiểm:
+`samsam_contract_g` (test chọn lọc), `samsam_contract_full` (full),
+`samsam_contract_up` (nâng cấp) — không phải `samsam`.
+
+**Đính chính trong đợt (báo thật):** các lượt pytest chọn lọc ĐẦU đợt (guardrail,
+Zalo, intel, rollout) chạy khi shell chưa đặt `DATABASE_URL` → conftest/import
+nạp `.env` → fixture kết nối DB `samsam` (schema tạm + ROLLBACK, fixture không
+commit). Đã kiểm `samsam` còn 0 schema `t_*` sót lại; từ đó mọi lượt dùng DSN DB
+riêng đặt tường minh. Gotcha ghi vào AGENTS.md.
+
+Thay đổi code (mỗi thay đổi có probe trước/sau + test hành vi):
+1. **G2 guardrail** `ngam_y_suc_khoe` (`pipelines/guardrail.py`,
+   `data/guardrail_rules.json`): claim ngầm — đối tượng bệnh/triệu chứng + lời
+   chứng kết quả — chỉ `check_publish` công khai; livestream: dòng `Hỏi: …?`
+   chỉ miễn luật đối tượng. Trước: 3 known_gap ĐI QUA (LLM-check tắt mặc
+   định). Sau: redteam 0/50 known_gap, 0 lọt; 3 ca đổi code kỳ vọng
+   (`code_cu` giữ code cũ, severity giữ). Lần đầu gate bắt hồi quy `kd_a9`
+   4/8 (câu hỏi khách mô phỏng trong kịch bản) → vá hẹp, 8/8.
+2. **Zalo** `send_text` dry-run khi `DEPLOY` tắt (trước: dev/staging có token
+   gửi thật). Test transport bật DEPLOY trong fixture riêng từng file.
+3. **intel-02** luật `counterfeit` + "mạo danh"; job `red_alert_sweep` thu RSS
+   trước khi quét mỗi giờ; catalog `rules_any` thêm `counterfeit` (owner chạy
+   lại `rollout --seed`).
+4. **intel-03** độ phủ K5/TRIMICO/KGC trong báo cáo tuần.
+5. **ceo-04.2** `bks_audit --chain-alert` + job `chain_watch` 06:20 + timer;
+   roles: svc_job EXECUTE `verify_action_log`, SELECT `audit_runs(id,kind,params)`.
+6. **ceo-01** job `ceo_weekly` chạy `cockpit --collect` trước báo cáo.
+7. **data_platform-02** `doc_intake --reprocess-pending`.
+
+Tài liệu: `docs/handover/doi-chieu-docx.md` (G0/G1/G2/G3/G6),
+`docs/handover/dau-vao-va-quyet-dinh.md` (G4), runbook mục 10 (G5), sổ nghĩa
+vụ mục 6 (nhật ký giao nhận), phụ lục D mục 2c, catalog 7 mục, AGENTS.md.
+
+Gate revision cuối (evidence/contract_g_*.log, `*.log` gitignore — `git add -f` khi commit):
+- Full pytest (DB mới `samsam_contract_full` dựng bằng `apply_schema --roles` ×2 + core/golden như đợt trước): **6366 passed, 0 failed, 3 skipped** — 3 skip = `tests/test_dr_drill.py` cần Docker (Docker Desktop không chạy) → DR Docker **UNVERIFIED** ở revision này (`evidence/contract_g_full_pytest.log`).
+  Lượt full trước đó KHÔNG tính: lượt 1 dừng giữa chừng vì code còn đổi; lượt 2 trên DB trống (quên dựng schema) → 27 failed/15 errors, trong đó 2 fail thật do đợt này (test khóa số luật `intel_alert`; quy ước dòng `health_bulletin` ở runbook) — đã vá; log lượt 2 ghi nhầm `EXIT 0` (runner lấy `$?` của `echo`) — runner đã sửa.
+- 106 probe hồi quy (7 file đợt DOCX): **106 passed**; test đợt hợp đồng (11 file): **437 passed** (`evidence/contract_g_probes.log`).
+- Gate nhẹ (`evidence/contract_g_gates.log`): ruff sạch; agent_eval 22/22 suite hợp lệ, exit 0 (guardrail 130/132 — 2 ca edge fail GIỐNG baseline; `kd_a9` 8/8 sau vá hồi quy); `dpia_draft --check` exit 0; red-team **0/50** lọt, 0 known_gap.
+- Trước/sau (`evidence/contract_g_pre_post.log`, trước = bản xuất `dda0089`): 3 ca + biến thể không dấu `ok=True` → `ok=False ngam_y_suc_khoe`; intel 'Sâm giả tràn lan chợ Tết' `[]` → `['counterfeit']`; Zalo `DEPLOY` tắt 1 lời gọi HTTP (trả True) → 0 lời gọi; red-team 3/50 → 0/50.
+- Nâng cấp `dda0089` → revision ×2 (`evidence/contract_g_upgrade.log`, DB `samsam_contract_up`): 94 bảng, 542 dòng, đuôi chuỗi giữ; quyền thêm đúng 4 dòng svc_job, bớt 0; `rollout --seed` lại không đổi giai đoạn/ngày; R1/R2 chặn; login svc_job thật qua CLI: sạch exit 0, sửa log → exit 1 + 1 cảnh báo, chạy lại không báo lặp.
+- Secret scan diff + file mới + evidence: 0 DSN có mật khẩu / khóa API; 0 mã số thuế/tên người ký/giá trị HĐ trong tài liệu mới.
+- Sau khi cập nhật board/DONE (chỉ tài liệu, ngoài fingerprint): 10 file test đọc tài liệu 630 passed; `tests/test_db_backup.py` 50 passed trên DB đã dựng schema (trên DB chưa dựng thì fail — môi trường, như lượt 2).
+- Mức bằng chứng: tất cả là máy dev + DB test cục bộ (mock/giả lập); **0 sandbox, 0 production**.
+
+Chưa làm / chờ: xem doi-chieu mục 1.3 (MISSING_CODE) và gói quyết định. Không
+mục nào READY_FOR_TRIAL; 86/86 `chua_nghiem_thu`; 79/89 mục AI chờ hai bên chốt.
 
 ## Chốt mã nguồn đợt DOCX — 20/10/2026
 

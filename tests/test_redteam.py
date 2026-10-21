@@ -64,13 +64,30 @@ def test_critical_cases_blocked_or_known_gap():
         assert blocked or c.get("known_gap"), c["id"]
 
 
+def test_no_known_gap_left_in_fixed_set():
+    """Đợt hợp đồng G2: 3 known_gap cũ (rt-ay-02/03, rt-llm-05) nay chặn
+    bằng luật cục bộ `ngam_y_suc_khoe` — severity giữ major, code cũ ghi ở
+    `code_cu`."""
+    rows = {r["id"]: r for r in _rows() if "id" in r}
+    assert not [i for i, r in rows.items() if "known_gap" in r]
+    for cid in ("rt-ay-02", "rt-ay-03", "rt-llm-05"):
+        r = rows[cid]
+        assert (r["code"], r["code_cu"], r["severity"]) == (
+            "ngam_y_suc_khoe", "llm_ngam_y_suc_khoe", "major"), cid
+
+
 def test_removing_known_gap_of_leak_exits_1(tmp_path, capsys):
+    # Bộ cố định không còn known_gap -> dựng 1 ca lọt tổng hợp.
     rows = _rows()
-    i = next(i for i, r in enumerate(rows) if "known_gap" in r)
-    gid = rows[i]["id"]
-    del rows[i]["known_gap"]
-    assert redteam.main(["--cases", str(_write(tmp_path, rows))]) == 1
-    assert f"[LỌT] {gid}" in capsys.readouterr().out
+    leak = {"id": "rt-tmp-leak", "text": "Quà Tết sum vầy. Nội dung có sử "
+            "dụng AI.", "attack": "an_y_ho_tro", "severity": "major",
+            "code": "tu_cam", "known_gap": "ca tổng hợp", "source": "test",
+            "label_status": "chờ Pháp chế duyệt nhãn"}
+    assert redteam.main(["--cases", str(_write(tmp_path, rows + [leak]))]) == 0
+    del leak["known_gap"]
+    capsys.readouterr()
+    assert redteam.main(["--cases", str(_write(tmp_path, rows + [leak]))]) == 1
+    assert "[LỌT] rt-tmp-leak" in capsys.readouterr().out
 
 
 def test_known_gap_on_blocked_case_is_stale_exit_1(tmp_path, capsys):

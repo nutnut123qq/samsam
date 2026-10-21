@@ -167,6 +167,41 @@ def _load_staff() -> dict:
     return m
 
 
+def plot_owners(path=None) -> dict:
+    """Đợt hợp đồng C02 — {mã khoảnh: [mã NV]} từ `khoanh` của từng dòng
+    staff (tùy chọn). File thiếu → {}; hỏng/1 dòng sai dạng → {} + cảnh báo
+    (khoảnh thành "chưa có người phụ trách" → leo thang GĐ, không đoán)."""
+    p = STAFF_FILE if path is None else Path(path)
+    try:
+        obj = json.loads(p.read_bytes())
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError) as e:
+        print(f"[warn] garden: {p.name} hỏng ({type(e).__name__}) — không"
+              " khoảnh nào có người phụ trách", flush=True)
+        return {}
+    out: dict = {}
+    try:
+        rows = obj.get("staff") if isinstance(obj, dict) else None
+        if not isinstance(rows, list):
+            raise ValueError("thiếu mảng 'staff'")  # noqa: TRY004
+        for i, r in enumerate(rows):
+            code = r.get("ma_nv") if isinstance(r, dict) else None
+            ks = r.get("khoanh", []) if isinstance(r, dict) else None
+            if not (isinstance(code, str) and code.strip()
+                    and len(code.strip()) <= 32 and isinstance(ks, list)
+                    and all(isinstance(k, str) and _PLOT_RE.fullmatch(k)
+                            for k in ks)):
+                raise ValueError(f"staff[{i}] sai dạng")
+            for k in ks:
+                out.setdefault(k, []).append(code.strip())
+    except ValueError as e:
+        print(f"[warn] garden: {p.name} ({e}) — không khoảnh nào có người"
+              " phụ trách", flush=True)
+        return {}
+    return {k: sorted(set(v)) for k, v in out.items()}
+
+
 def staff_code(user_id: str) -> str | None:
     """Mã nhân viên vườn của user Zalo, None = không phải nhân viên."""
     return _load_staff().get(uhash(user_id)) if user_id else None

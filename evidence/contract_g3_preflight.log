@@ -1,0 +1,26 @@
+# Preflight thật VÒNG 3 (vá cổng DB) — 2026-10-21T07:55:38+07:00 · HEAD dda008969feef0fcbec8b0ba6f5fab363c813806 nhánh codex/contract-completion
+# DB test riêng samsam_contract_g3empty/_g3half (tạo mới, KHÔNG samsam); lệnh: python -m pytest -q -p no:cacheprovider tests/test_db_guard.py
+### 1) DB test MỚI rỗng (chưa schema) — kỳ vọng exit 4
+Exit: [db-guard] DB test 'samsam_contract_g3empty' chưa dựng (thiếu public.chunks, public.agent_action_log, public.sku_master): chạy `python scripts/apply_schema.py --roles` ×2 + `python -m ingest.core_store` + `python -m ingest.golden_store` với DATABASE_URL này rồi chạy lại
+! _pytest.outcomes.Exit: [db-guard] DB test 'samsam_contract_g3empty' chưa dựng (thiếu public.chunks, public.agent_action_log, public.sku_master): chạy `python scripts/apply_schema.py --roles` ×2 + `python -m ingest.core_store` + `python -m ingest.golden_store` với DATABASE_URL này rồi chạy lại !
+EXIT 4
+(apply_schema --roles rc=0)
+### 2) DB có schema + role, CHƯA golden — kỳ vọng exit 4
+Exit: [db-guard] DB test 'samsam_contract_g3half' chưa nạp golden (sku_master rỗng): chạy `python scripts/apply_schema.py --roles` ×2 + `python -m ingest.core_store` + `python -m ingest.golden_store` với DATABASE_URL này rồi chạy lại
+! _pytest.outcomes.Exit: [db-guard] DB test 'samsam_contract_g3half' chưa nạp golden (sku_master rỗng): chạy `python scripts/apply_schema.py --roles` ×2 + `python -m ingest.core_store` + `python -m ingest.golden_store` với DATABASE_URL này rồi chạy lại !
+EXIT 4
+(core_store rc=0)
+(golden_store rc=0)
+### 3) cùng DB sau core + golden — kỳ vọng chạy tiếp, exit 0
+.........................................                                [100%]
+41 passed in 1.00s
+EXIT 0
+### 4) host không kết nối được (DSN test, host chết) — kỳ vọng exit 4
+Exit: [db-guard] DB test 'samsam_contract_dead' không sẵn sàng (ConnectionTimeout) — kiểm DATABASE_URL/quyền/schema; chạy `python scripts/apply_schema.py --roles` ×2 + `python -m ingest.core_store` + `python -m ingest.golden_store` với DATABASE_URL này rồi chạy lại
+! _pytest.outcomes.Exit: [db-guard] DB test 'samsam_contract_dead' không sẵn sàng (ConnectionTimeout) — kiểm DATABASE_URL/quyền/schema; chạy `python scripts/apply_schema.py --roles` ×2 + `python -m ingest.core_store` + `python -m ingest.golden_store` với DATABASE_URL này rồi chạy lại !
+EXIT 4
+### 5) gọi preflight() TRỰC TIẾP trên cùng DB rỗng thật samsam_contract_g3empty — bản trước (snapshot) vs bản sau
+before None
+EXIT 0
+after "DB test 'samsam_contract_g3empty' chưa dựng (thiếu public.chunks, public.agent_action_log, public.sku_master): chạy `python scripts/apply_schema.py --roles` ×2 + `python -m ingest.core_store` + `python -m 
+EXIT 0

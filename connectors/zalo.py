@@ -264,6 +264,26 @@ def _startup_error() -> str | None:
     return None
 
 
+def readiness(config_error: str | None) -> tuple[bool, dict]:
+    """Đợt hợp đồng C01 — `/readyz` cho dịch vụ 24/7 (khác `/healthz` chỉ
+    báo tiến trình sống): cấu hình (startup error) + DB của login dịch vụ
+    (`DATABASE_URL` do `auth.bind_service("webhook")` đặt) trả `select 1`
+    trong 2 giây. Không lộ DSN/secret/lỗi chi tiết — chỉ mã trạng thái."""
+    checks = {"config": "ok" if config_error is None else "loi"}
+    dsn = os.environ.get("DATABASE_URL", "").strip()
+    if not dsn:
+        checks["db"] = "chua_cau_hinh"
+    else:
+        try:
+            import psycopg
+            with psycopg.connect(dsn, connect_timeout=2) as c:
+                c.execute("select 1").fetchone()
+            checks["db"] = "ok"
+        except Exception:  # noqa: BLE001 — readiness không bao giờ raise
+            checks["db"] = "loi"
+    return all(v == "ok" for v in checks.values()), checks
+
+
 def verify_signature(raw: bytes, header: str) -> bool:
     """mac = sha256(app_id + raw_body + timestamp + OA_secret_key). Chưa
     cấu hình OA secret (dev local) -> bỏ qua; có secret mà sai/thiếu
@@ -733,7 +753,8 @@ def _send_once(user_id: str, text: str, token: str,
 
 @live_transport
 def send_text(user_id: str, text: str) -> bool:
-    """Gửi text qua Zalo CS message API; access_token lấy mem -> store
+    """DEPLOY tắt -> dry-run, không chạm mạng, trả False (đợt hợp đồng G5).
+    Gửi text qua Zalo CS message API; access_token lấy mem -> store
     -> env seed (V2.3+V1.1). Chưa có token, hoặc có mà expires_at sắp
     tới (V2.1 — refresh chủ động, khách không ăn lượt reply chậm/fail
     khi token vừa chết), mà đủ credential -> refresh trước rồi mới gửi;
@@ -747,6 +768,12 @@ def send_text(user_id: str, text: str) -> bool:
     refresh/gửi lại chỉ dùng phần ngân sách còn lại (`_refresh_in_budget`,
     `_wait_refresh_in_flight`); bước bị bỏ vì hết giờ ghi `_SEND_LATE` để
     `_reply` chuyển người lý do `deadline` nếu tin không tới khách."""
+    if os.environ.get("DEPLOY", "").strip().lower() not in _DEPLOY_ON:
+        # Đợt hợp đồng G5: dev/staging (DEPLOY tắt) KHÔNG gửi ra Zalo kể cả
+        # khi lỡ có token thật — cùng luật với messenger.send_text.
+        print(f"[dry-run] zalo: DEPLOY tắt — không gửi (uh={_uhash(user_id)})",
+              flush=True)
+        return False
     token = _current_access_token()
     if _can_refresh() and (not token or _token_expiring_soon()):
         # Gộp bootstrap (chưa có token — nhánh _startup_error cho phép
@@ -1236,6 +1263,10 @@ class Handler(BaseHTTPRequestHandler):
                 self.close_connection = True
         if self.path == "/healthz":
             return self._json(200, {"status": "up"})
+        if self.path == "/readyz":
+            ok, checks = readiness(_startup_error())
+            return self._json(200 if ok else 503,
+                              {"ready": ok, "checks": checks})
         self._json(404, {"error": "not found"})
 
     def do_POST(self) -> None:

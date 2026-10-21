@@ -98,6 +98,8 @@ def load_milestones(path: Path = MILESTONES_FILE) -> list[dict]:
         except ValueError:
             raise ValueError(f"{m['code']}.due_date: cần YYYY-MM-DD") \
                 from None
+        if not isinstance(m.get("can_ky", False), bool):
+            raise ValueError(f"{m['code']}.can_ky: phải true/false")  # noqa: TRY004
         seen.add(m["code"])
         out.append({**m, "due_date": due})
     if not out:
@@ -150,11 +152,19 @@ def seed(conn, items: list[dict], dry_run: bool = False) -> dict:
             continue
         cur = conn.execute(
             "insert into project_milestones (code, title, wp, owner_role,"
-            " due_date, gate, source, updated_by) values (%s, %s, %s, %s,"
-            " %s, %s, %s, 'seed') on conflict (code) do nothing",
+            " due_date, gate, source, updated_by, sign_required) values (%s,"
+            " %s, %s, %s, %s, %s, %s, 'seed', %s) on conflict (code) do"
+            " nothing",
             (m["code"], m["title"], m.get("wp"), m["owner_role"],
-             m["due_date"], m["gate"], SOURCE))
+             m["due_date"], m["gate"], SOURCE, bool(m.get("can_ky"))))
         st["inserted" if cur.rowcount == 1 else "existing"] += 1
+        if cur.rowcount != 1:
+            # Đợt hợp đồng C05: cờ "mốc cần văn bản ký" theo file (chỉ cờ
+            # này — không đè trạng thái/bằng chứng người đã ghi).
+            conn.execute("update project_milestones set sign_required = %s"
+                         " where code = %s and sign_required <> %s",
+                         (bool(m.get("can_ky")), m["code"],
+                          bool(m.get("can_ky"))))
     conn.commit()
     return st
 

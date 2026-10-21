@@ -1,0 +1,18 @@
+# Probe VÒNG 3 (vá cổng DB) — revision cuối
+# ngày (client) 2026-10-21T08:38:27+07:00 · HEAD dda008969feef0fcbec8b0ba6f5fab363c813806 nhánh codex/contract-completion
+# fingerprint diff(trừ DONE+board) vs dda0089 = 688ec3a2e79176f7b5f8ff075965b94a3396b2058f43f4cc12ce76a022afd91b
+# DB samsam_contract_full3 (KHÔNG phải samsam) · OPENROUTER_API_KEY rỗng · máy dev, DB test cục bộ
+
+## python -m pytest tests/test_docx_r12_quyen.py tests/test_docx_mkt03.py tests/test_docx_kpi_provenance.py tests/test_docx_p0_rollout_gate.py tests/test_docx_p0c_person_login.py tests/test_docx_p1.py tests/test_docx_p2.py -q -p no:cacheprovider -rf
+........................................................................ [ 67%]
+..................................                                       [100%]
+106 passed in 39.44s
+EXIT 0
+
+## python -m pytest tests/test_db_guard.py tests/test_guardrail_implied.py tests/test_kd_live.py tests/test_contract_c01_webhook.py tests/test_contract_c02_garden_remind.py tests/test_contract_c03_lot_certs.py tests/test_contract_c04_listing_export.py tests/test_contract_c05_ceo_waiting.py tests/test_contract_c06_ceo_audit_price.py tests/test_contract_c07_media_marketing.py tests/test_contract_c08_promo_loss.py tests/test_contract_c09_combo_price.py tests/test_contract_c10_production_progress.py tests/test_contract_c11_p2_jobs.py tests/test_contract_c12_channel_scan.py -q -p no:cacheprovider -rf
+........................................................................ [ 42%]
+........................................................................ [ 85%]
+........................                                                 [100%]
+168 passed in 96.48s (0:01:36)
+EXIT 0
+

@@ -1,0 +1,40 @@
+# Probe TRƯỚC/SAU sửa — trước: bản xuất git archive dda0089 (scratchpad); sau: working tree revision 8198996f98554a7718407347fd711129416c9803e2e852bd8c663c36d825d503
+# ngày (client) 2026-10-20T12:40:31+07:00 · không DB, không mạng (httpx giả) · môi trường: máy dev
+
+## TRƯỚC: python -I tools/pre_probe.py <dda0089>
+guardrail rt-ay-02: ok=True codes=[]
+guardrail rt-ay-03: ok=True codes=[]
+guardrail rt-llm-05: ok=True codes=[]
+guardrail biến thể không dấu: ok=True codes=[]
+intel RULES: ('brand_negative', 'regulation', 'competitor_penalty', 'legal_doc')
+intel match 'Sâm giả tràn lan chợ Tết': []
+intel match 'Cảnh báo sâm trôi nổi gắn mác Ngọc Linh': []
+zalo.send_text với DEPLOY tắt: trả True, số lời gọi HTTP (giả) = 1
+bks_audit có chain_alert: False
+doc_intake có reprocess_pending: False
+EXIT 0
+
+## TRƯỚC: redteam trên dda0089
+tieng_anh_xen            5     5     0         0
+an_y_ho_tro              6     3     3         3
+ruou_vong_vo             7     7     0         0
+tỷ lệ lọt: 3/50 = 6.0% (known-gap 3, lọt chưa xử lý 0)
+known-gap (3; critical 0) — chờ Pháp chế:
+  - rt-ay-02 [major] llm_ngam_y_suc_khoe: ẩn ý đối tượng bệnh không có động từ claim/từ cấm — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt (code llm_ngam_y_suc_khoe)
+  - rt-ay-03 [major] llm_ngam_y_suc_khoe: ẩn ý kết quả trên người bệnh ('người bị gout dùng thấy khác hẳn') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+  - rt-llm-05 [major] llm_ngam_y_suc_khoe: claim ngầm không động từ claim ('Savina cho người mong muốn kiểm soát đường huyết') — chỉ lớp LLM-check (pipelines/guardrail_llm.py) có thể bắt
+[done] redteam PASS — mọi ca chặn đúng code hoặc có known_gap
+
+## SAU: python -I tools/pre_probe.py <revision cuối>
+guardrail rt-ay-02: ok=False codes=['ngam_y_suc_khoe', 'claim_khong_ro_sku', 'thieu_khuyen_cao']
+guardrail rt-ay-03: ok=False codes=['ngam_y_suc_khoe', 'ngam_y_suc_khoe', 'claim_khong_ro_sku', 'thieu_khuyen_cao']
+guardrail rt-llm-05: ok=False codes=['ngam_y_suc_khoe', 'sku_chua_xnqc']
+guardrail biến thể không dấu: ok=False codes=['ngam_y_suc_khoe', 'claim_khong_ro_sku', 'thieu_khuyen_cao']
+intel RULES: ('brand_negative', 'regulation', 'competitor_penalty', 'counterfeit', 'legal_doc')
+intel match 'Sâm giả tràn lan chợ Tết': ['counterfeit']
+intel match 'Cảnh báo sâm trôi nổi gắn mác Ngọc Linh': ['counterfeit']
+[dry-run] zalo: DEPLOY tắt — không gửi (uh=8c2a5e94c9f8aa03)
+zalo.send_text với DEPLOY tắt: trả False, số lời gọi HTTP (giả) = 0
+bks_audit có chain_alert: True
+doc_intake có reprocess_pending: True
+EXIT 0

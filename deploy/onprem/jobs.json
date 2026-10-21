@@ -11,9 +11,40 @@
     "red_alert_sweep": {
       "on_calendar": "*-*-* *:05:00",
       "max_gap_hours": 2,
-      "steps": [["-m", "pipelines.intel_alert", "--run"],
+      "steps": [["-m", "crawler.intel", "--run"],
+                ["-m", "pipelines.intel_alert", "--run"],
                 ["-m", "pipelines.red_alert", "--deliver"]],
-      "muc_dich": "Quét tin thị trường → cảnh báo đỏ intel mỗi 60 phút + gửi lại cảnh báo chưa gửi được (48 giờ). Leo thang 2 giờ cho MỌI cảnh báo đỏ nằm ở job `red_alert_escalate` (15 phút); bước `intel_alert --run` chỉ gọi lại cùng luật cho cảnh báo intel — unique index chung, không nhân bản"
+      "muc_dich": "Thu tin RSS/Atom MỚI (crawler.intel: robots + ≥1s/host; đợt hợp đồng — trước chỉ thu 06:45 nên quét giờ đọc lại tin cũ) rồi quét → cảnh báo đỏ intel mỗi 60 phút (PL01 Tình báo: sâm giả, mạo danh Ngọc Linh, quy định mới, tin xấu) + gửi lại cảnh báo chưa gửi được (48 giờ). Leo thang 2 giờ cho MỌI cảnh báo đỏ nằm ở job `red_alert_escalate` (15 phút); bước `intel_alert --run` chỉ gọi lại cùng luật cho cảnh báo intel — unique index chung, không nhân bản"
+    },
+    "channel_scan": {
+      "on_calendar": "*-*-* 07:00:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "crawler.collect"], ["-m", "agents.ra_kenh", "--scan-auto"]],
+      "muc_dich": "Đợt hợp đồng C12 (legal_hr-04, PL01 Pháp chế 'quét web, Fanpage, listing; mở yêu cầu gỡ bài vi phạm trong 24 giờ'): thu trang CÔNG KHAI của Bên B (robots + ≥1s/host) rồi quét web + listing sàn đã nạp → ticket 24h khối legal_hr/S1 cảnh báo đỏ. Fanpage CHƯA có nguồn tự thu (Graph API + page token Bên B) — vẫn CSV --file. 07:00 GIẢ ĐỊNH"
+    },
+    "hdtv_month": {
+      "on_calendar": "*-*-03 08:30:00",
+      "max_gap_hours": 768,
+      "steps": [["-m", "agents.hdtv_report", "--month", "prev", "--submit"]],
+      "muc_dich": "Đợt hợp đồng C11 (ceo-05, P2 — PL01 Ban TGĐ 'Báo cáo HĐTV hằng tháng'): gói tháng vừa đóng vào hàng duyệt khối ceo (TGĐ duyệt, không tự gửi HĐTV); kỳ đã có mục → bỏ qua. Ngày 03 08:30 GIẢ ĐỊNH. P2 — không tự chuyển vận hành"
+    },
+    "vt_weather": {
+      "on_calendar": "*-*-* 06:30:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "agents.vt_thoitiet", "--digest", "--fetch", "--submit"]],
+      "muc_dich": "Đợt hợp đồng C11 (farming-05.1, P2): cảnh báo thời tiết/sâu bệnh hằng ngày → hàng duyệt farming. Nguồn dự báo `fetch.enabled` mặc định false → job exit 2 BLOCKED (chọn nguồn/API là quyết định của GĐ vùng trồng). 06:30 GIẢ ĐỊNH"
+    },
+    "vt_harvest": {
+      "on_calendar": "Mon *-*-* 08:20:00",
+      "max_gap_hours": 192,
+      "steps": [["-m", "agents.vt_thuhoach", "--submit"]],
+      "muc_dich": "Đợt hợp đồng C11 (farming-05.2, P2): dự báo sản lượng thu hoạch tuần → hàng duyệt farming (đã có mục pending cùng kỳ → không thêm). Thứ Hai 08:20 GIẢ ĐỊNH"
+    },
+    "webhook_health": {
+      "on_calendar": "*-*-* *:00/5:00",
+      "max_gap_hours": 1,
+      "steps": [["scripts/webhook_probe.py"]],
+      "muc_dich": "Đợt hợp đồng C01 — dò /readyz webhook Zalo/Messenger mỗi 5 phút (PL02 mục 2 phát hiện ≤15 phút; PL01 chatbot 24/7): không sẵn sàng → 1 cảnh báo đỏ/đợt (24 giờ chưa xác nhận không lặp) + exit 1. Chỉ có ý nghĩa khi 2 unit samsam-webhook-*.service đã bật trên server"
     },
     "red_alert_escalate": {
       "on_calendar": "*-*-* *:00/15:00",
@@ -72,8 +103,9 @@
     "ceo_weekly": {
       "on_calendar": "Mon *-*-* 08:00:00",
       "max_gap_hours": 192,
-      "steps": [["-m", "agents.ceo_report", "--period", "week", "--submit"]],
-      "muc_dich": "Báo cáo TGĐ thứ Hai (vào hàng duyệt khối ceo, không tự gửi)"
+      "steps": [["-m", "pipelines.cockpit", "--collect", "--period", "week"],
+                ["-m", "agents.ceo_report", "--period", "week", "--submit"]],
+      "muc_dich": "Báo cáo TGĐ thứ Hai (vào hàng duyệt khối ceo, không tự gửi). Đợt hợp đồng: chụp số nội bộ tuần ĐÃ ĐÓNG (`cockpit --collect`, insert-only, không ghi đè) TRƯỚC khi lập báo cáo — trước đây báo cáo đọc channel_snapshots mà không bước nào điền số nội bộ"
     },
     "invoice_batch": {
       "on_calendar": "*-*-* 21:00:00",
@@ -152,6 +184,12 @@
       "max_gap_hours": 26,
       "steps": [["-m", "agents.ceo_audit", "--report"]],
       "muc_dich": "docx P2 — mỗi ngày so bài đăng/listing đang chạy với bản đã duyệt (`ceo-audit-`, ceo-04.1). Giờ GIẢ ĐỊNH — TGĐ chỉnh"
+    },
+    "chain_watch": {
+      "on_calendar": "*-*-* 06:20:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "agents.bks_audit", "--chain-alert"]],
+      "muc_dich": "Đợt hợp đồng — PL01 Ban TGĐ 'báo khi nhật ký bị sửa' (HĐ Điều 7.2): mỗi ngày kiểm chuỗi hash agent_action_log + plot_logs + neo đuôi → cảnh báo đỏ tới người nhận độc lập (không báo lặp cùng phát hiện); có phát hiện → exit 1. Giờ GIẢ ĐỊNH — BKS/TGĐ chỉnh"
     },
     "production_week": {
       "on_calendar": "Mon *-*-* 08:10:00",

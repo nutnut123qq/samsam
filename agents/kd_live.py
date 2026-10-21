@@ -187,6 +187,10 @@ def _lines(v) -> list[str]:
         if isinstance(v, list) else []
 
 
+HEALTH_Q = ("(Câu hỏi về sức khỏe của khách — không tư vấn trên live,"
+            " chuyển chuyên gia)")
+
+
 def _keep(s, dropped: list) -> str | None:
     """Câu LLM sau khi làm sạch → giữ | None (đã ghi `dropped`). Không phải
     chuỗi → bỏ; bỏ ký tự điều khiển/vô hình Cc/Cf (escape terminal khi CLI
@@ -235,7 +239,11 @@ def build_text(obj: dict, channel, cart, session_day, ctx,
         if not q:
             continue
         if is_health_question(q):
-            a = health
+            # Vá controller 20/10: KHÔNG đưa nguyên văn câu hỏi sức khỏe của
+            # khách (đối tượng bệnh/triệu chứng) vào kịch bản công khai —
+            # quyết bằng luồng đã kiểm (`is_health_question`), không nhờ
+            # guardrail miễn theo hình thức dòng "Hỏi:".
+            q, a = HEALTH_Q, health
         else:
             a = _keep(x.get("dap") or "", dropped)
             if not a:

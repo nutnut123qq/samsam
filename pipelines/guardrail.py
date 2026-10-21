@@ -471,6 +471,118 @@ _HEALTH_TARGET_RE = re.compile(
     r"(?<!\w)(?:" + "|".join(map(re.escape, _HEALTH_TARGETS)) + r")(?!\w)")
 
 
+# Đợt hợp đồng (G2, red-team rt-ay-02/03, rt-llm-05): claim NGẦM không động
+# từ claim/từ cấm — (a) nhắm ĐỐI TƯỢNG bệnh/triệu chứng ("dành cho người hay
+# mệt mỏi", "người bị gout", "người mong muốn kiểm soát đường huyết"); (b) lời
+# chứng KẾT QUẢ trên người dùng ("dùng ... thấy khác hẳn"). Trước đây chỉ lớp
+# LLM (tắt mặc định) có thể bắt -> nay luật cục bộ, code `ngam_y_suc_khoe`.
+# Quét bản fold+bỏ dấu (có dấu/không dấu/trộn dấu/homoglyph cùng 1 nhánh) và
+# bản nén ký tự chèn (`_compress`); ZWSP/soft hyphen giữa 2 TỪ = khoảng trắng.
+# Chỉ áp ở đăng bài công khai (check_publish). Miễn: câu khuyến cáo phủ định
+# ("không dùng cho người bị gout", "người bị gout nên hỏi ý kiến bác sĩ").
+# ponytail: danh sách từ cố định — Pháp chế bổ sung; diễn đạt ngoài danh sách
+# vẫn chỉ lớp LLM/người duyệt bắt (giới hạn ghi ở docs/handover/doi-chieu-docx.md).
+_ISEP = r"[\s\u00ad\u200b-\u200d\u2060\ufeff]"
+
+
+def _alt(words, sep):
+    return "(?:" + "|".join(sorted((sep.join(map(re.escape, w.split()))
+                                    for w in words), key=len, reverse=True)) + ")"
+
+
+_AUD_W = ("nguoi", "nguoi dung", "ai", "ban", "cac ban", "khach", "khach hang",
+          "quy khach", "benh nhan", "ong ba", "bo me", "cha me", "anh chi",
+          "chi em", "nhung ai", "moi nguoi", "dan van phong")
+_COND_W = ("bi", "mac", "hay", "hay bi", "thuong", "thuong bi", "thuong xuyen",
+           "thuong xuyen bi", "dang", "dang bi", "dang mac", "co", "co benh",
+           "gap", "dang gap", "gap van de ve", "dang gap van de ve",
+           "co van de ve", "mong muon", "muon", "can", "dang can", "lo",
+           "lo lang ve", "lo ngai ve", "kho")
+_ACT_W = ("kiem soat", "on dinh", "duy tri", "dieu chinh", "ha", "het",
+          "thoat khoi", "vuot qua", "cai thien", "giam", "chong", "ngua",
+          "phong ngua")
+# Từ mạnh: tên bệnh/chỉ số/triệu chứng rõ nghĩa sau khi bỏ dấu.
+_HEALTH_W = ("tieu duong", "dai thao duong", "duong huyet", "duong trong mau",
+             "huyet ap", "cao huyet ap", "huyet ap cao", "mo mau", "cholesterol",
+             "gout", "gut", "axit uric", "acid uric", "ung thu", "khoi u",
+             "u buou", "tim mach", "benh tim", "suy tim", "dot quy", "tai bien",
+             "xuong khop", "dau khop", "viem khop", "thoai hoa", "gan nhiem mo",
+             "men gan", "benh gan", "suy than", "soi than", "benh than",
+             "da day", "trao nguoc", "mat ngu", "kho ngu", "ngu khong sau",
+             "ngu khong ngon", "met moi", "suy nhuoc", "suy giam tri nho",
+             "suy giam mien dich", "hen suyen", "benh tri", "yeu sinh ly",
+             "roi loan cuong", "xuat tinh som", "vo sinh", "hiem muon",
+             "tram cam", "roi loan lo au", "dau dau", "dau nua dau",
+             "chong mat", "hoa mat", "thieu mau", "beo phi", "thua can",
+             "tao bon", "roi loan tieu hoa", "benh man tinh", "benh nen",
+             "parkinson", "alzheimer", "sa sut tri tue", "benh", "hoa tri",
+             "xa tri", "sau phau thuat")
+# Từ yếu (1 âm tiết/đa nghĩa khi bỏ dấu: ốm/ôm) — chỉ khi có điều kiện ("bị").
+_WEAK_W = ("om", "om yeu", "cang thang", "stress", "suy yeu")
+_USE_W = ("dung", "uong", "su dung", "an", "xai")
+_RESULT_W = ("khac han", "khac ro", "khac biet ro", "thay doi ro", "do han",
+             "do nhieu", "het", "het han", "giam han", "giam ro", "cai thien",
+             "on dinh", "hieu qua", "khoe", "khoe hon", "khoe han", "ngu ngon",
+             "nhe nguoi", "tinh tao", "bot han", "tien trien", "ro ret")
+
+
+@lru_cache(maxsize=2)
+def _implied_res(s: str):
+    """s = phân cách giữa token: `_ISEP+` (bản gốc) | `_ISEP*` (bản nén —
+    ký tự chèn giữa 2 từ đã bị bỏ, từ có thể dính liền)."""
+    aud, cond = _alt(_AUD_W, s), _alt(_COND_W, s)
+    act, hl, weak = _alt(_ACT_W, s), _alt(_HEALTH_W, s), _alt(_WEAK_W, s)
+    gap = rf"(?:{_ISEP}+\w+){{0,3}}?"
+    aud_re = re.compile(
+        rf"(?<!\w){aud}(?:{gap}{s}{cond})?(?:{s}{act})?{s}{hl}(?!\w)"
+        rf"|(?<!\w){aud}{gap}{s}{cond}(?:{s}{act})?{s}{weak}(?!\w)")
+    res_re = re.compile(
+        rf"(?<!\w){_alt(_USE_W, s)}(?!\w)[^.!?;\n]{{0,60}}?(?<!\w)"
+        rf"(?:cam{s}thay|nhan{s}thay|thay)(?:{s}ro)?{s}{_alt(_RESULT_W, s)}"
+        rf"(?!\w)")
+    return aud_re, res_re
+
+
+_CAUTION_BEFORE = re.compile(
+    r"(?:(?:khong|chua|tranh)\s+(?:nen\s+)?(?:dung|su\s+dung|uong|danh|phu\s+hop"
+    r"|khuyen\s+dung)(?:\s+(?:cho|voi))?|chong\s+chi\s+dinh(?:\s+(?:cho|voi))?"
+    r"|than\s+trong(?:\s+khi\s+dung)?(?:\s+(?:cho|voi))?)\s*:?\s*$")
+_CAUTION_AFTER = re.compile(
+    r"^\s*,?\s*(?:(?:nen|can|phai|vui\s+long)\s+(?:hoi|tham\s+khao|xin)\s+y\s+kien"
+    r"|(?:khong|chua)\s+(?:nen\s+)?(?:dung|su\s+dung|uong))")
+
+
+def _implied_health(low_stripped: str, sep: str
+                    ) -> list[tuple[int, int, str]]:
+    """Không miễn theo HÌNH THỨC (vd dòng `Hỏi: …?`): nhãn/định dạng do
+    caller viết không phải bằng chứng câu đó an toàn (vá controller 20/10).
+    Câu hỏi sức khỏe của khách trong kịch bản livestream được `kd_live` thay
+    bằng dòng trung tính TRƯỚC khi gọi guardrail."""
+    aud_re, res_re = _implied_res(sep)
+    out = []
+    for m in aud_re.finditer(low_stripped):
+        cs = max(low_stripped.rfind(c, 0, m.start()) for c in ".!?;\n,") + 1
+        ce = min([i for i in (low_stripped.find(c, m.end()) for c in ".!?;\n")
+                  if i >= 0] or [len(low_stripped)])
+        before = re.sub(_ISEP + "+", " ", low_stripped[cs:m.start()])
+        after = re.sub(_ISEP + "+", " ", low_stripped[m.end():ce])
+        if _CAUTION_BEFORE.search(before) or _CAUTION_AFTER.search(after):
+            continue
+        out.append((m.start(), m.end(), "đối tượng bệnh/triệu chứng"))
+    out += [(m.start(), m.end(), "lời chứng kết quả trên người dùng")
+            for m in res_re.finditer(low_stripped)]
+    return out
+
+
+def _implied_health_hits(pre: "_Txt", packed) -> list[tuple[int, int, str]]:
+    hits = _implied_health(pre.stripped, _ISEP + "+")
+    comp, cmap = packed
+    if comp is not None:
+        for s, e, why in _implied_health(_Txt(comp).stripped, _ISEP + "*"):
+            hits.append((cmap[s], cmap[e - 1] + 1, why))
+    return sorted(set(hits))
+
+
 def _cover(spans):
     """inside(s, e): [s,e) nằm trọn trong 1 span nào đó — bisect trên
     prefix-max end, O(log n)/lần (vòng `any(...)` lồng cũ là O(n²))."""
@@ -750,7 +862,14 @@ def _run(text, ctx: dict | None) -> dict:
              text[m.start():e1].rstrip(), m.start(),
              m.start() + len(text[m.start():e1].rstrip()),
              type_="unverified_claim")
-    has_claim = bool(claim_hits) or bool(claim_clauses) or split_claim
+    implied = _implied_health_hits(pre, packed) if public else []
+    for s, e, why in implied:
+        flag("ngam_y_suc_khoe",
+             f"claim sức khỏe ngầm ({why}) — không có trong hồ sơ công bố; "
+             "người duyệt/Pháp chế phải xem", text[s:e], s, e,
+             type_="unverified_claim")
+    has_claim = (bool(claim_hits) or bool(claim_clauses) or split_claim
+                 or bool(implied))
 
     # --- Rượu: mọi chế độ trừ ghi chú nội bộ (A3-2).
     if ctx is None or public:

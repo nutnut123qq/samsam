@@ -909,6 +909,18 @@ _TABLES = {
     "plot_logs": {
         "ts": "t.created_at", "key": "'lg:' || t.id", "sample": _SRC_SAMPLE,
         "human": _h("t.author"), "filters": {"source": "t.source = %s"}},
+    # Đợt hợp đồng C02 (farming-02): 1 khoảnh × 1 đợt bỏ trống = 1 lần nhắc;
+    # NGƯỜI = người đánh dấu đã nhắc (garden_reminder_done_human).
+    "garden_reminders": {
+        "ts": "t.created_at", "key": "'gr:' || t.plot_id || '/' || t.dot_key",
+        "sample": "t.is_sample",
+        "human": "t.reminded_at is not null and " + _h("t.reminded_by")},
+    # Đợt hợp đồng C07 (farming-04): 1 tư liệu × 1 lần NGƯỜI cấp cho Marketing.
+    "garden_media_releases": {
+        "ts": "t.at", "key": "'gmr:' || t.sha256 || '/' || t.id",
+        "human": "t.action = 'cap' and " + _h("t.by_person"),
+        "nosample": "người khối farming cấp tư liệu đã gỡ GPS cho Marketing",
+        "filters": {"action": "t.action = %s"}},
     "garden_voice_drafts": {
         "ts": "t.received_at", "key": "'gv:' || t.sha256",
         "human": "t.status = 'da_chep_loi' and " + _h("t.closed_by"),

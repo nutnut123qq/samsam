@@ -223,7 +223,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Mục | Nội dung |
 |---|---|
 | Mã luồng | DF-12 |
-| Module (code) | `scripts/health_bulletin.py` |
+| Module (code) | `scripts/health_bulletin.py`; `scripts/webhook_probe.py` |
 | Mục đích | Giám sát vận hành |
 | Dữ liệu | Chỉ số tổng hợp vận hành (job, eval, chi phí, số mục) — không có dữ liệu cá nhân |
 | Lớp | Xanh |
@@ -232,7 +232,7 @@ Phân lớp dữ liệu (plan_data_platform §2):
 | Thời hạn lưu | Không giới hạn (file báo cáo) |
 | Bên nhận | Khi `--notify`: máy chủ SMTP cấu hình (email) hoặc Telegram (api.telegram.org — nước ngoài) |
 | Chuyển ra nước ngoài | CÓ — xem TIA |
-| Biện pháp bảo vệ (có trong code) | Mặc định KHÔNG gửi — cần `--notify` + env kênh; Chỉ số tổng hợp, không nội dung chat |
+| Biện pháp bảo vệ (có trong code) | Mặc định KHÔNG gửi — cần `--notify` + env kênh; Chỉ số tổng hợp, không nội dung chat; webhook_probe: chỉ GET `/readyz` của chính webhook on-prem (mặc định 127.0.0.1), không theo redirect, không gửi dữ liệu |
 | Căn cứ xử lý | Không xử lý dữ liệu cá nhân |
 | GAP | (không) |
 

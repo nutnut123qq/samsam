@@ -42,12 +42,17 @@ Contract:
     BLOCKED: vendor OCR trong nước + hợp đồng/DPA + key (Bên B/Pháp chế).
   - Không lưu full text vào DB, không in filename/nội dung ra stdout —
     chỉ `sha256[:12]`, `doc_type`, `status`, số đếm.
-  - Someday: tài liệu `cho_ocr` khi đã có provider thật cần lệnh OCR
-    lại (hiện re-intake là `dup`).
+  - Đợt hợp đồng (G3): `--reprocess-pending` — khi đã cắm provider TRONG
+    NƯỚC (`OCR_PROVIDER` ≠ none), OCR lại tài liệu `cho_ocr` từ BẢN GỐC
+    (kiểm lại sha256 trước khi đọc; lệch → error, không đụng) → có chữ thì
+    `cho_ocr → pending_review` (UPDATE có điều kiện status, chạy lại/song
+    song không nhân đôi) + quét PII + field nháp; vẫn chờ Pháp chế
+    `--verify`, KHÔNG bao giờ tự `verified`. Provider none → `[blocked]`
+    exit 2, 0 truy vấn ghi. Chạy cùng login với intake.
 
 Chạy: `python -m ingest.doc_intake` (intake, cấu hình `DOC_INTAKE_DIR`,
 `DOC_ORIGINALS_DIR`, `OCR_PROVIDER`) · `--pending` · `--verify <sha256>
---by "<tên>"` · `--reject <sha256> --by "<tên>"`.
+--by "<tên>"` · `--reject <sha256> --by "<tên>"` · `--reprocess-pending`.
 """
 
 import argparse
@@ -359,6 +364,60 @@ def intake(intake_dir: Path, originals_dir: Path, conn,
     return counts
 
 
+def reprocess_pending(conn, originals_dir: Path, provider: str) -> dict:
+    """OCR lại tài liệu `cho_ocr` (đợt hợp đồng G3) → {done, still, error}.
+    Provider none/nước ngoài/lạ → ValueError TRƯỚC mọi truy vấn."""
+    if provider not in PROVIDERS or provider == "none":
+        raise ValueError(OCR_BLOCKED)
+    if not PROVIDERS[provider][1]:
+        raise ValueError(f"OCR provider nước ngoài bị từ chối: {provider}")
+    counts = dict.fromkeys(("done", "still", "error"), 0)
+    rows = conn.execute("select sha256, filename, doc_type from documents"
+                        " where status = 'cho_ocr' order by created_at,"
+                        " sha256").fetchall()
+    conn.commit()
+    for sha, filename, dtype in rows:
+        orig = Path(originals_dir) / sha
+        try:
+            if not orig.is_file() or sha256_file(orig) != sha:
+                raise DocError("bản gốc thiếu/lệch hash — không OCR")
+            text, pages, source = extract_text(orig, provider,
+                                               Path(filename).suffix)
+            if source == "none":
+                counts["still"] += 1
+                print(f"[still] {sha[:12]} OCR không ra chữ — giữ cho_ocr")
+                continue
+            fields = extract_fields(text) if dtype == "giay_tiep_nhan" else {}
+            cur = conn.execute(
+                "update documents set text_source = %s, pii_flag = %s,"
+                " pages = %s, status = 'pending_review' where sha256 = %s"
+                " and status = 'cho_ocr'",
+                (source, has_pii(text), pages, sha))
+            if cur.rowcount != 1:      # process khác vừa xử lý
+                conn.rollback()
+                continue
+            for field, (value, conf) in fields.items():
+                conn.execute(
+                    "insert into document_fields (sha256, field, value,"
+                    " confidence, verified) values (%s, %s, %s, %s, false)"
+                    " on conflict (sha256, field) do nothing",
+                    (sha, field, value, conf))
+            conn.commit()
+        except (DocError, OSError, psycopg.Error) as e:
+            if isinstance(e, psycopg.Error):
+                try:
+                    conn.rollback()
+                except psycopg.Error:
+                    pass
+            counts["error"] += 1
+            reason = str(e) if isinstance(e, DocError) else type(e).__name__
+            print(f"[err] {sha[:12]} {reason}")
+            continue
+        counts["done"] += 1
+        print(f"[ocr] {sha[:12]} {dtype} → pending_review fields={len(fields)}")
+    return counts
+
+
 # --- CLI xác nhận (Pháp chế) ----------------------------------------------
 def list_pending(conn) -> list[tuple]:
     return conn.execute(
@@ -406,10 +465,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--verify", metavar="SHA256")
     ap.add_argument("--reject", metavar="SHA256")
     ap.add_argument("--by", help="tên người Pháp chế xác nhận")
+    ap.add_argument("--reprocess-pending", action="store_true",
+                    help="OCR lại tài liệu cho_ocr khi đã có provider trong "
+                         "nước (kết quả vẫn chờ Pháp chế --verify)")
     args = ap.parse_args(argv)
-    n_ops = args.pending + (args.verify is not None) + (args.reject is not None)
+    n_ops = (args.pending + (args.verify is not None)
+             + (args.reject is not None) + args.reprocess_pending)
     if n_ops > 1:
-        ap.error("chỉ 1 thao tác mỗi lần (--pending | --verify | --reject)")
+        ap.error("chỉ 1 thao tác mỗi lần (--pending | --verify | --reject |"
+                 " --reprocess-pending)")
     sha = args.verify if args.verify is not None else args.reject
     by = (args.by or "").strip()
     if sha is not None:
@@ -432,11 +496,22 @@ def main(argv: list[str] | None = None) -> int:
         ap.error(f"OCR_PROVIDER={provider} là dịch vụ nước ngoài — bị từ chối "
                  "(tài liệu chưa OCR coi như có PII)")
 
+    if args.reprocess_pending and (provider == "none"
+                                   or provider not in PROVIDERS
+                                   or not PROVIDERS[provider][1]):
+        print(f"[blocked] {OCR_BLOCKED}")
+        return 2
     conn = lead_store.connect()
     if conn is None:
         print("[err] không kết nối được Postgres (DATABASE_URL)")
         return 1
     try:
+        if args.reprocess_pending:
+            counts = reprocess_pending(
+                conn, _dir_env("DOC_ORIGINALS_DIR",
+                               ROOT / "data" / "originals"), provider)
+            print("[done] " + " ".join(f"{k}={v}" for k, v in counts.items()))
+            return 1 if counts["error"] else 0
         if args.pending:
             rows = list_pending(conn)
             for s, dtype, status, pii, fields in rows:

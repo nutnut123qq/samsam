@@ -26,7 +26,6 @@ N_TABLES = len(re.findall(
     r"^create table if not exists (\w+)",
     (Path(__file__).resolve().parent.parent / "docs" / "schema.sql")
     .read_text(encoding="utf-8"), re.MULTILINE))
-from dotenv import dotenv_values
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -385,8 +384,8 @@ def _docker_names(prefix="samsam-dr-") -> list[str]:
 
 @pytest.fixture(scope="module")
 def live():
-    dsn = (os.environ.get("DATABASE_URL")
-           or dotenv_values(ROOT / ".env").get("DATABASE_URL"))
+    # Đợt hợp đồng P0: chỉ DSN test TƯỜNG MINH — không fallback .env.
+    dsn = os.environ.get("DATABASE_URL")
     if not dsn:
         pytest.skip("thiếu DATABASE_URL")
     try:

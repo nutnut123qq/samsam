@@ -6196,3 +6196,270 @@ create or replace trigger chat_kpi_live_append_only_row
 create or replace trigger chat_kpi_live_no_truncate
   before truncate on chat_kpi_live
   for each statement execute function append_only_guard();
+
+-- Đợt hợp đồng C02 (farming-02, PL01 Vùng trồng "nhắc khoảnh lâu không có
+-- nhật ký; báo giám đốc nếu vẫn bỏ trống"): sổ NHẮC theo đợt — 1 dòng /
+-- khoảnh / đợt (`dot_key` = mốc nhật ký gần nhất UTC | 'none'). Người phụ
+-- trách = MÃ nhân viên (không tên). `status` lúc tạo: khong_nguoi_nhan (khoảnh
+-- chưa gán người) | cho_kenh (chưa chọn kênh nhắc — data/garden_remind.json)
+-- | cho_gui (kênh thủ công: người nhắc theo danh sách). "Đã nhắc" CHỈ ghi qua
+-- `garden_reminder_done_human` (người thật, khối farming) — agent không bao
+-- giờ ghi đã nhắc; job chỉ chèn + đóng đợt (`closed_at`) khi có nhật ký mới.
+create table if not exists garden_reminders (
+  id bigint generated always as identity primary key,
+  plot_id text not null,
+  dot_key text not null check (dot_key ~ '^(none|[0-9]{8}T[0-9]{6})$'),
+  kind text not null check (kind in ('no-logs', 'gap')),
+  ma_nv text check (ma_nv is null or ma_nv ~ '^[A-Za-z0-9._-]{1,32}$'),
+  status text not null
+    check (status in ('khong_nguoi_nhan', 'cho_kenh', 'cho_gui')),
+  kenh text,
+  is_sample boolean not null default false,
+  created_at timestamptz not null default now(),
+  reminded_at timestamptz,
+  reminded_by text,
+  closed_at timestamptz,
+  unique (plot_id, dot_key),
+  check ((status = 'khong_nguoi_nhan') = (ma_nv is null)),
+  check ((reminded_at is null) = (reminded_by is null))
+);
+
+create or replace function garden_reminder_done_human(p_id bigint,
+  p_by text)
+returns boolean
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'farming');
+  n int;
+begin
+  update garden_reminders set reminded_at = now(), reminded_by = v_by
+   where id = p_id and status = 'cho_gui' and reminded_at is null
+     and closed_at is null;
+  get diagnostics n = row_count;
+  if n <> 1 then
+    return false;
+  end if;
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'garden_reminder_done', 'garden_reminder', p_id::text,
+          jsonb_build_object('reminder_id', p_id));
+  return true;
+end $$;
+revoke execute on function garden_reminder_done_human(bigint, text)
+  from public;
+
+-- Đợt hợp đồng C03 (production-04.1, PL01 Sản xuất "hồ sơ lô: mã lô, hạn
+-- dùng, PHIẾU KIỂM NGHIỆM"): sổ phiếu kiểm nghiệm gắn ĐÚNG lô — số phiếu,
+-- nơi cấp, ngày cấp, sha256 + đuôi tệp (tệp ở kho LOT_CERT_DIR NGOÀI repo,
+-- lưu theo hash, không ghi đè). Append-only; đổi phiếu = PHIÊN BẢN mới (bản
+-- cũ giữ). Ghi CHỈ qua `lot_cert_record_human` (người khối production, danh
+-- tính theo login). Lô cũ không có dòng = THIẾU phiếu (không tự tạo).
+create table if not exists lot_test_certificates (
+  id bigint generated always as identity primary key,
+  lot_code text not null references production_lots (lot_code),
+  version int not null check (version >= 1),
+  cert_no text not null check (btrim(cert_no) <> '' and length(cert_no) <= 64),
+  lab text check (lab is null or length(lab) <= 120),
+  issued_on date,
+  file_sha256 text not null check (file_sha256 ~ '^[0-9a-f]{64}$'),
+  file_ext text not null check (file_ext in ('pdf', 'jpg', 'png')),
+  recorded_by text not null check (btrim(recorded_by) <> ''),
+  recorded_at timestamptz not null default now(),
+  is_sample boolean not null default false,
+  note text check (note is null or length(note) <= 500),
+  unique (lot_code, version),
+  unique (lot_code, file_sha256)
+);
+create or replace trigger lot_test_certificates_append_only_row
+  before update or delete on lot_test_certificates
+  for each row execute function append_only_guard();
+create or replace trigger lot_test_certificates_no_truncate
+  before truncate on lot_test_certificates
+  for each statement execute function append_only_guard();
+
+create or replace function lot_cert_record_human(p_lot text, p_cert_no text,
+  p_lab text, p_issued date, p_sha text, p_ext text, p_note text, p_by text)
+returns integer
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'production');
+  v_src text;
+  v_ver int;
+begin
+  select source into v_src from production_lots where lot_code = p_lot
+    for update;
+  if not found then
+    raise exception 'lô % không tồn tại', p_lot;
+  end if;
+  if exists (select 1 from lot_test_certificates where lot_code = p_lot
+              and file_sha256 = p_sha) then
+    raise exception 'tệp phiếu này đã ghi cho lô %', p_lot;
+  end if;
+  select coalesce(max(version), 0) + 1 into v_ver
+    from lot_test_certificates where lot_code = p_lot;
+  insert into lot_test_certificates (lot_code, version, cert_no, lab,
+    issued_on, file_sha256, file_ext, recorded_by, is_sample, note)
+  values (p_lot, v_ver, btrim(p_cert_no), nullif(btrim(p_lab), ''), p_issued,
+          p_sha, p_ext, v_by, v_src = 'sample', p_note);
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'lot_cert_record', 'production_lot', p_lot,
+          jsonb_build_object('version', v_ver, 'file_sha256', p_sha));
+  return v_ver;
+end $$;
+revoke execute on function lot_cert_record_human(text, text, text, date,
+  text, text, text, text) from public;
+
+-- Đợt hợp đồng C10 (production-01, PL01 Sản xuất "báo cáo tuần, tháng về
+-- tồn kho, lô, TIẾN ĐỘ"): nguồn tiến độ trước đây không có. Kế hoạch sản
+-- xuất (SKU, số lượng, khung ngày) do NGƯỜI khối production ghi; lô gắn vào
+-- kế hoạch TƯỜNG MINH (1 lô ≤ 1 kế hoạch). Tiến độ = Σ số lượng lô đã gắn
+-- (đạt kiểm nhập / chờ) so với kế hoạch — không suy từ số lô/pass-fail khi
+-- chưa có kế hoạch. Append-only; sửa kế hoạch = mã mới + ghi chú.
+create table if not exists production_plans (
+  plan_code text primary key check (plan_code ~ '^[A-Za-z0-9._-]{1,40}$'),
+  sku_key text not null,
+  qty_plan int not null check (qty_plan > 0),
+  start_date date not null,
+  due_date date not null,
+  note text check (note is null or length(note) <= 500),
+  recorded_by text not null check (btrim(recorded_by) <> ''),
+  recorded_at timestamptz not null default now(),
+  is_sample boolean not null default false,
+  check (due_date >= start_date)
+);
+create table if not exists production_plan_lots (
+  lot_code text primary key references production_lots (lot_code),
+  plan_code text not null references production_plans (plan_code),
+  linked_by text not null check (btrim(linked_by) <> ''),
+  linked_at timestamptz not null default now()
+);
+create or replace trigger production_plans_append_only_row
+  before update or delete on production_plans
+  for each row execute function append_only_guard();
+create or replace trigger production_plans_no_truncate
+  before truncate on production_plans
+  for each statement execute function append_only_guard();
+create or replace trigger production_plan_lots_append_only_row
+  before update or delete on production_plan_lots
+  for each row execute function append_only_guard();
+create or replace trigger production_plan_lots_no_truncate
+  before truncate on production_plan_lots
+  for each statement execute function append_only_guard();
+
+create or replace function production_plan_add_human(p_code text,
+  p_sku text, p_qty int, p_start date, p_due date, p_note text,
+  p_sample boolean, p_by text)
+returns boolean
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'production');
+begin
+  insert into production_plans (plan_code, sku_key, qty_plan, start_date,
+    due_date, note, recorded_by, is_sample)
+  values (p_code, p_sku, p_qty, p_start, p_due, p_note, v_by,
+          coalesce(p_sample, false));
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'production_plan_add', 'production_plan', p_code,
+          jsonb_build_object('sku', p_sku, 'qty', p_qty));
+  return true;
+end $$;
+revoke execute on function production_plan_add_human(text, text, int, date,
+  date, text, boolean, text) from public;
+
+create or replace function production_plan_link_human(p_plan text,
+  p_lot text, p_by text)
+returns boolean
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'production');
+  v_plan_sku text;
+  v_lot_sku text;
+begin
+  select sku_key into v_plan_sku from production_plans where plan_code = p_plan;
+  if not found then
+    raise exception 'kế hoạch % không tồn tại', p_plan;
+  end if;
+  select sku_key into v_lot_sku from production_lots where lot_code = p_lot;
+  if not found then
+    raise exception 'lô % không tồn tại', p_lot;
+  end if;
+  if v_lot_sku <> v_plan_sku then
+    raise exception 'lô % (%) khác SKU kế hoạch % (%)', p_lot, v_lot_sku,
+      p_plan, v_plan_sku;
+  end if;
+  insert into production_plan_lots (lot_code, plan_code, linked_by)
+  values (p_lot, p_plan, v_by);
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'production_plan_link', 'production_plan', p_plan,
+          jsonb_build_object('lot', p_lot));
+  return true;
+end $$;
+revoke execute on function production_plan_link_human(text, text, text)
+  from public;
+
+-- Đợt hợp đồng C05 (ceo-02, PL01 Ban TGĐ "việc nào chờ ký"): mốc cần VĂN
+-- BẢN có chữ ký (từ data/projects/milestones.json `can_ky`). Chưa `xong`
+-- (xong đòi `evidence` — CHECK sẵn có) = chờ ký; không suy "đã ký".
+alter table project_milestones
+  add column if not exists sign_required boolean not null default false;
+
+-- Đợt hợp đồng C07 (farming-04, PL01 Vùng trồng "kho tư liệu vườn: ảnh,
+-- video thật đã xóa GPS, CẤP CHO MARKETING"): NGƯỜI khối farming cấp/thu hồi
+-- từng tư liệu cho Marketing (append-only; trạng thái = sự kiện mới nhất).
+-- Marketing chỉ đọc view `v_garden_media_marketing` (sha, loại, kích thước,
+-- ngày chụp, ngày cấp) — KHÔNG khoảnh/tác giả/nguồn; tệp lấy qua CLI kiểm
+-- hash + kiểm lại không EXIF/GPS (scripts/garden_media_mkt.py).
+create table if not exists garden_media_releases (
+  id bigint generated always as identity primary key,
+  sha256 text not null references garden_media (sha256),
+  action text not null check (action in ('cap', 'thu_hoi')),
+  purpose text not null default 'marketing' check (purpose = 'marketing'),
+  by_person text not null check (btrim(by_person) <> ''),
+  at timestamptz not null default now(),
+  note text check (note is null or length(note) <= 300)
+);
+create index if not exists garden_media_releases_sha_idx
+  on garden_media_releases (sha256, id);
+create or replace trigger garden_media_releases_append_only_row
+  before update or delete on garden_media_releases
+  for each row execute function append_only_guard();
+create or replace trigger garden_media_releases_no_truncate
+  before truncate on garden_media_releases
+  for each statement execute function append_only_guard();
+
+create or replace function garden_media_release_human(p_sha text,
+  p_action text, p_by text, p_note text)
+returns boolean
+language plpgsql security definer set search_path from current as $$
+declare
+  v_by text := human_actor(p_by, 'farming');
+  v_cur text;
+begin
+  if p_action not in ('cap', 'thu_hoi') then
+    raise exception 'action phải cap|thu_hoi';
+  end if;
+  if not exists (select 1 from garden_media where sha256 = p_sha) then
+    raise exception 'tư liệu % không có trong kho', left(p_sha, 12);
+  end if;
+  select action into v_cur from garden_media_releases where sha256 = p_sha
+    order by id desc limit 1;
+  if coalesce(v_cur, 'thu_hoi') = p_action then
+    return false;            -- đã ở trạng thái đó — không ghi lặp
+  end if;
+  insert into garden_media_releases (sha256, action, by_person, note)
+  values (p_sha, p_action, v_by, p_note);
+  insert into agent_action_log (actor, action, object_type, object_id, detail)
+  values (v_by, 'garden_media_' || p_action, 'garden_media', left(p_sha, 12),
+          jsonb_build_object('sha256', p_sha));
+  return true;
+end $$;
+revoke execute on function garden_media_release_human(text, text, text, text)
+  from public;
+
+create or replace view v_garden_media_marketing as
+  select m.sha256, m.ext, m.bytes, m.width, m.height, m.taken_on,
+         r.at as released_at
+    from garden_media m
+    join lateral (select action, at from garden_media_releases g
+                   where g.sha256 = m.sha256 order by g.id desc limit 1) r
+      on r.action = 'cap'
+   where m.source not like 'sample:%';

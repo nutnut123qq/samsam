@@ -714,3 +714,86 @@ DELETE `report_outputs`, không `feature_rollout_events`.
 không UPDATE duyệt giá/map/phiếu lệch, không đọc `human_logins`; người tạo
 mục hàng duyệt / người lập giá vốn không tự duyệt (DB chặn); log từ chối
 không commit việc dở của caller. Test: `tests/test_v15_p10_human_authz.py`.
+
+## 10. Staging tách production + diễn tập (đợt hợp đồng 20/10/2026, G5)
+
+Mục tiêu: cài lặp lại được, thử nâng cấp/khôi phục/sự cố mà KHÔNG chạm DB,
+kênh hay khách thật. Chưa có quyền deploy production/bật lịch thật — mục này
+là gói chuẩn bị để review; người có quyền thực hiện trên server Bên B.
+
+**10.1 Tách môi trường (bắt buộc trước mọi diễn tập)**
+
+| Thành phần | Staging | Kiểm |
+|---|---|---|
+| DB | database tên riêng (vd `samsam_staging`), KHÔNG phải `samsam`; login riêng | in `current_database()` trước khi chạy; mọi lệnh có `DATABASE_URL` tường minh — `.env` chỉ là fallback (`load_dotenv` không ghi đè biến đã đặt) |
+| Credential | không dùng token Zalo OA/Meta/SMTP/sàn production | `DEPLOY` tắt → Zalo **và** Messenger dry-run (Zalo từ đợt này, `tests/test_zalo.py::test_send_text_dry_run_when_deploy_off`) |
+| Cảnh báo | `RED_ALERT_NOTIFY` trống hoặc hộp thư thử | `red_alert --check-routing` |
+| Lưu trữ | `BACKUP_DIR`, `GARDEN_MEDIA_DIR`, `DOC_ORIGINALS_DIR`, `HR_INBOX_DIR` riêng | không trỏ thư mục production |
+| Webhook / tên miền | URL staging; `B2B_FORM_ENABLED` trống; không triển khai `qr_trace site` lên tên miền thật | — |
+| Lịch | KHÔNG bật timer staging trên máy production | `systemctl list-timers` |
+
+**10.2 Nâng cấp (checklist migration)** — đã diễn tập trên DB thử
+`samsam_contract_up` từ baseline `dda0089` (evidence
+`evidence/contract_g_upgrade.log`):
+1. `python scripts/db_backup.py` (backup trước thay đổi) — ghi sha256 bản dump.
+2. `python scripts/apply_schema.py --roles` hai lần (idempotent).
+3. So bảng/số dòng/đuôi chuỗi `agent_action_log` trước–sau; diff quyền chỉ
+   được có phần ghi trong DONE (đợt này: `svc_job` EXECUTE
+   `verify_action_log` + SELECT `audit_runs(id, kind, params)`).
+4. `python -m pipelines.store --verify-log`, `python -m agents.garden_director
+   --verify`.
+5. Owner: `python -m pipelines.rollout --seed --by "<owner>"` (catalog đổi →
+   `count_spec` mới; giai đoạn/ngày cũ giữ nguyên, không tự công nhận).
+6. Probe quyền bằng login thật không owner (R1/R2 + quyền mới).
+7. Rollback: dừng dịch vụ → khôi phục bản dump bước 1 theo mục 3 →
+   `--verify-log` → mở lại. Quyền mới chỉ là GRANT — gỡ bằng REVOKE tương ứng.
+
+**10.3 Diễn tập và bằng chứng PL02 mục 2** (staging chứng minh CƠ CHẾ; số
+đạt/không đạt chỉ tính trên hạ tầng Bên B):
+
+| Chỉ tiêu PL02 | Cơ chế trong repo | Diễn tập staging | Bằng chứng vận hành cần |
+|---|---|---|---|
+| Backup 100% số ngày | job `backup` 01:30 + `file_output_evidence` | chạy `db_backup.py`, kiểm dòng bằng chứng | log 100% ngày trong tháng trên server |
+| Khôi phục 30/11, 18/12, mỗi quý | `db_restore_drill.py`, `dr_drill.py` | restore vào DB tạm, đối chiếu dòng/FK/chuỗi | log diễn tập trên server Bên B đúng ngày |
+| Phát hiện sự cố ≤15 phút | bản tin sức khỏe (mục 7), `job_runs` `max_gap_hours`, `red_alert_escalate` 15 phút | dừng 1 job, DB down (DSN host chết) | sổ `ops_incidents` `detected_at` thật |
+| Phản hồi nghiêm trọng ≤3 giờ / thường ≤3 ngày LV / sửa ≤7 ngày | `ops_incidents --event responded/fixed` | mở 1 sự cố thử, ghi sự kiện | sổ sự cố tháng + `ops_monthly` |
+| Chatbot ≤30 giây | `api.rag.DEADLINE`, `zalo._SEND_DEADLINE` | đồng hồ giả trong test | `chat_kpi_live` reply_ms từ convlog live |
+| Cảnh báo đỏ xác nhận ≤2 giờ (KPI mục 3) | `red_alert --escalate` | cảnh báo thử chưa ack | `red_alert_acks` trên server |
+| Nhật ký bị sửa → báo (PL01 Ban TGĐ) | job `chain_watch` 06:20 (`bks_audit --chain-alert`) | sửa 1 dòng trên DB thử → 1 cảnh báo, chạy lại không lặp | không cảnh báo giả trên server |
+
+Đồng hồ giả trong test chỉ chứng minh cơ chế; không thay bằng chứng vận hành.
+Lệnh nặng (>10 giây) có thể bị đẩy nền — đọc output tới khi process thoát
+trước lệnh kế tiếp; không chạy nhiều suite ghi cùng một DB.
+
+**10.4 Bật lịch thật** — chỉ người có quyền triển khai trên server Bên B:
+copy `deploy/onprem/systemd/` → `systemctl enable --now` từng timer; job mới
+đợt này: `chain_watch`. Job `red_alert_sweep` nay thu RSS mỗi giờ (robots +
+≥1s/host vẫn giữ).
+
+**10.5 Vòng 2 (20/10/2026) — thêm cho người vận hành**
+- Webhook 24/7 (C01): chép `deploy/onprem/systemd/samsam-webhook-zalo.service`
+  + `samsam-webhook-messenger.service`, tạo `/etc/samsam/webhook.env` (chmod
+  600, biến theo `deploy/onprem/webhook-env.example`, DB = login `svc_webhook`),
+  `systemctl enable --now`; kiểm `curl http://127.0.0.1:8788/readyz` (200 +
+  `ready: true`; 503 = cấu hình/DB lỗi). Timer `webhook_health` (5 phút) dò
+  `/readyz` → 1 cảnh báo đỏ/đợt.
+- Job mới (giờ GIẢ ĐỊNH, người có quyền bật): `channel_scan` 07:00 (crawl
+  công khai + `ra_kenh --scan-auto`), `hdtv_month` ngày 03 08:30, `vt_weather`
+  06:30 (exit 2 BLOCKED tới khi chọn nguồn dự báo), `vt_harvest` thứ Hai
+  08:20, `webhook_health` 5 phút. Cùng wrapper `job_runs` (khóa chống chạy
+  chồng; chạy lại không nhân bản — đã chạy thử 2 lần trên DB test).
+- Kho phiếu kiểm nghiệm (C03): `LOT_CERT_DIR` NGOÀI repo (trong repo → từ
+  chối), backup cùng lịch với kho ảnh vườn; `python -m pipelines.production
+  cert-verify` (exit 1 khi thiếu phiếu/thiếu tệp/lệch hash).
+- Test trên máy dev/staging: `tests/_db_guard.py` chặn mọi kết nối tới DB
+  `samsam` (và dbname trong `.env`); đặt `DATABASE_URL` tới DB test đã dựng
+  (`apply_schema --roles` ×2 + `core_store` + `golden_store`), thiếu dựng →
+  phiên pytest dừng với hướng dẫn.
+  - Hai chế độ (vá 21/10): **unit** — KHÔNG đặt `DATABASE_URL`: test thuần
+    chạy, test cần DB tự skip; KHÔNG dùng làm gate. **integration/full** —
+    `DATABASE_URL` tới DB test đã dựng: preflight bắt buộc; DB không kết nối
+    được, lỗi truy vấn/quyền, thiếu bảng/role/golden → phiên dừng exit 4
+    (không thành loạt skip). Preflight chỉ SELECT trên phiên read-only.
+  - DSN test phải ghi rõ tên DB (`.../samsam_contract_x` hoặc `PGDATABASE`);
+    DSN thiếu tên DB bị chặn (libpq sẽ lấy tên user). `postgres` chỉ dùng khi
+    ghi tường minh cho thao tác quản trị tạo/xóa DB test.

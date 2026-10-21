@@ -374,6 +374,11 @@ grant select, insert on invoice_lines, chat_kpi_facts, anchor_batches
   to svc_job;
 grant execute on function qr_lot_snapshot_sha(text), verify_plot_logs()
   to svc_job;
+-- Đợt hợp đồng (PL01 Ban TGĐ "báo khi nhật ký bị sửa"): job `chain_watch`
+-- (`agents.bks_audit --chain-alert`) kiểm cả chuỗi agent_action_log + đọc neo
+-- đuôi của audit inside-out (chỉ 3 cột, không báo cáo/sha).
+grant execute on function verify_action_log() to svc_job;
+grant select (id, kind, params) on audit_runs to svc_job;
 
 -- svc_loader theo loader: market_csv, settlement_csv (+ đối soát
 -- recon_results), inventory_csv, intel_import, core_store (delete-by-source
@@ -666,3 +671,67 @@ grant app_human to svc_ui;
 -- (svc_job) ghi + đọc; người (app_human) đọc như `chat_kpi_facts`.
 grant select, insert on chat_kpi_live to svc_job;
 grant select on chat_kpi_live to app_human;
+
+-- Đợt hợp đồng C02: sổ nhắc vườn — agent (job garden_remind) chèn + đóng
+-- đợt; người (khối farming) đánh dấu đã nhắc CHỈ qua function.
+grant select on garden_reminders to agent_writer, app_human;
+grant insert (plot_id, dot_key, kind, ma_nv, status, kenh, is_sample)
+  on garden_reminders to agent_writer;
+grant update (closed_at) on garden_reminders to agent_writer;
+-- Job `garden_remind` chạy bằng svc_job: đọc danh sách khoảnh (vá vòng 2 —
+-- từ dda0089 job này thiếu quyền `plots` dưới login dịch vụ, chỉ lộ khi chạy
+-- bằng login thật). Chỉ 3 cột cần, không tọa độ/diện tích.
+grant select (id, status, source) on plots to svc_job;
+-- Job `vt_harvest` (C11, vt_thuhoach): thêm số cây + năm trồng (dự báo
+-- thu hoạch), vẫn không tọa độ/diện tích.
+grant select (tree_count, planted_year) on plots to svc_job;
+grant execute on function garden_reminder_done_human(bigint, text)
+  to app_human;
+
+-- Đợt hợp đồng C03: phiếu kiểm nghiệm lô — đọc (bản tin sản xuất/QR), ghi
+-- CHỈ qua function người khối production.
+grant select on lot_test_certificates to agent_writer, app_human;
+-- `production cert-verify` bằng login người: chỉ mã lô + trạng thái nhập.
+grant select (lot_code, intake_status) on production_lots to app_human;
+grant execute on function lot_cert_record_human(text, text, text, date, text,
+  text, text, text) to app_human;
+
+-- Đợt hợp đồng vòng 2 — job dưới login dịch vụ (svc_job) thiếu quyền đọc, có
+-- từ trước (dda0089), chỉ lộ khi chạy job bằng login THẬT (phép thử nâng cấp):
+-- * `production_week/_month` render bản tin sản xuất (mục phiếu C03 + tiến
+--   độ C10): đề xuất phân bổ/BOM/tồn kho.
+-- * `price_watch` (kd_price --run: KM lỗ C08) + combo_price (C09): SKU×kênh
+--   được quảng bá + giá vốn đã duyệt + giá đối thủ quan sát.
+grant select on allocation_proposals, bom_combos, bom_items,
+  inventory_snapshots, v_promotable, cogs_versions, competitor_observations
+  to svc_job;
+
+-- Đợt hợp đồng C10: kế hoạch + gắn lô (tiến độ sản xuất) — đọc cho bản tin,
+-- ghi CHỈ qua function người khối production.
+grant select on production_plans, production_plan_lots to agent_writer,
+  app_human;
+grant execute on function production_plan_add_human(text, text, int, date,
+  date, text, boolean, text), production_plan_link_human(text, text, text)
+  to app_human;
+
+-- Đợt hợp đồng C05: báo cáo TGĐ (job svc_job) liệt kê đối soát quý đã ghi
+-- số chờ ký — chỉ 3 cột định danh, không số tiền.
+grant select (id, quarter, recorded_at) on revenue_quarters to svc_job,
+  bks_reader;
+
+-- Đợt hợp đồng C07: Marketing (người, app_human) chỉ đọc VIEW tư liệu đã cấp
+-- — không bảng garden_media đủ cột; cấp/thu hồi CHỈ qua function farming.
+grant select on v_garden_media_marketing to app_human;
+grant select on garden_media_releases to app_human;
+grant execute on function garden_media_release_human(text, text, text, text)
+  to app_human;
+
+-- Đợt hợp đồng C12: job `channel_scan` (`ra_kenh --scan-auto`, svc_job) ghi
+-- snapshot bài/listing + mở/đóng đợt vi phạm (không xóa, không đổi nội dung
+-- snapshot cũ — chỉ cột đóng đợt / liên kết hàng duyệt-cảnh báo).
+grant insert (url, channel, content_type, posted_on, is_ai, is_sponsored, sku,
+  draft_id, text, text_sha256, guardrail, codes, severity, first_detected_at,
+  due_at, queue_id, alert_id, imported_by, scanned_at) on channel_posts
+  to svc_job;
+grant update (closed_at, close_reason, closed_by, queue_id, alert_id)
+  on channel_posts to svc_job;

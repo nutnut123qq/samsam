@@ -1,0 +1,792 @@
+# Phép thử nâng cấp VÒNG 2 (20/10/2026) — DB riêng samsam_contract_up2a (nền dda0089) / up2b (nền snapshot vòng 1); KHÔNG phải samsam
+# script: scratchpad/tools/upgrade_g2.py (login thật in role svc_job/app_human, mật khẩu ngẫu nhiên, xóa role sau lượt)
+# exit code lấy từ tiến trình: up2a rc=0, up2b rc=0 (lượt cuối sau khi cấp quyền đọc svc_job)
+# Các lượt TRƯỚC (không lưu raw, ghi lại ở đây): dưới login svc_job thật lộ InsufficientPrivilege ở garden_remind (plots), production bulletin (allocation_proposals/bom/inventory), production cert-verify bằng login người (production_lots), combo_price + price_watch (v_promotable, cogs_versions, competitor_observations), vt_harvest (plots tree_count/planted_year) — đã cấp quyền đọc tối thiểu ở docs/roles.sql; intel_weekly vẫn lỗi quyền (ngoài 12 mục, CHƯA vá).
+
+=== NỀN dda0089
+DB samsam_contract_up2a: tạo mới (KHÔNG phải samsam) · nền: dda0089
+áp schema/roles nền dda0089: ok
+[run] -m ingest.core_store -> exit 0
+    [load] assets: 219 rows
+    [done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+[run] -m ingest.golden_store -> exit 0
+    [disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+    [done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+[run] -m pipelines.rollout --seed --by Owner Triển Khai -> exit 0
+    [OK] vào sổ 74 · có sẵn 0 · bỏ qua (chưa co_code) 12
+trước: 94 bảng, 545 dòng, đuôi log [(4, 'f03732b6c6c3')], 3649 quyền, 74 mục rollout
+[run] -m pipelines.store --verify-log -> exit 0
+    [ok] chuỗi nguyên vẹn (2 dòng)
+[run] scripts/apply_schema.py --roles -> exit 0
+    [done] schema applied — 99 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, assets, audit_runs, auto
+    [done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[run] scripts/apply_schema.py --roles -> exit 0
+    [done] schema applied — 99 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, assets, audit_runs, auto
+    [done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+sau ×2: 99 bảng, 545 dòng, đuôi log [(4, 'f03732b6c6c3')]
+bảng mất: [] | bảng mới: ['garden_media_releases', 'garden_reminders', 'lot_test_certificates', 'production_plan_lots', 'production_plans'] | dòng đổi: không
+quyền THÊM (285):
+    ('agent_writer', 'garden_reminders', 'SELECT')
+    ('agent_writer', 'garden_reminders(closed_at)', 'SELECT')
+    ('agent_writer', 'garden_reminders(closed_at)', 'UPDATE')
+    ('agent_writer', 'garden_reminders(created_at)', 'SELECT')
+    ('agent_writer', 'garden_reminders(dot_key)', 'INSERT')
+    ('agent_writer', 'garden_reminders(dot_key)', 'SELECT')
+    ('agent_writer', 'garden_reminders(id)', 'SELECT')
+    ('agent_writer', 'garden_reminders(is_sample)', 'INSERT')
+    ('agent_writer', 'garden_reminders(is_sample)', 'SELECT')
+    ('agent_writer', 'garden_reminders(kenh)', 'INSERT')
+    ('agent_writer', 'garden_reminders(kenh)', 'SELECT')
+    ('agent_writer', 'garden_reminders(kind)', 'INSERT')
+    ('agent_writer', 'garden_reminders(kind)', 'SELECT')
+    ('agent_writer', 'garden_reminders(ma_nv)', 'INSERT')
+    ('agent_writer', 'garden_reminders(ma_nv)', 'SELECT')
+    ('agent_writer', 'garden_reminders(plot_id)', 'INSERT')
+    ('agent_writer', 'garden_reminders(plot_id)', 'SELECT')
+    ('agent_writer', 'garden_reminders(reminded_at)', 'SELECT')
+    ('agent_writer', 'garden_reminders(reminded_by)', 'SELECT')
+    ('agent_writer', 'garden_reminders(status)', 'INSERT')
+    ('agent_writer', 'garden_reminders(status)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(cert_no)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(file_ext)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(file_sha256)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(id)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(is_sample)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(issued_on)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(lab)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(lot_code)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(note)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(recorded_at)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(recorded_by)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(version)', 'SELECT')
+    ('agent_writer', 'production_plan_lots', 'SELECT')
+    ('agent_writer', 'production_plan_lots(linked_at)', 'SELECT')
+    ('agent_writer', 'production_plan_lots(linked_by)', 'SELECT')
+    ('agent_writer', 'production_plan_lots(lot_code)', 'SELECT')
+    ('agent_writer', 'production_plan_lots(plan_code)', 'SELECT')
+    ('agent_writer', 'production_plans', 'SELECT')
+    ('agent_writer', 'production_plans(due_date)', 'SELECT')
+    ('agent_writer', 'production_plans(is_sample)', 'SELECT')
+    ('agent_writer', 'production_plans(note)', 'SELECT')
+    ('agent_writer', 'production_plans(plan_code)', 'SELECT')
+    ('agent_writer', 'production_plans(qty_plan)', 'SELECT')
+    ('agent_writer', 'production_plans(recorded_at)', 'SELECT')
+    ('agent_writer', 'production_plans(recorded_by)', 'SELECT')
+    ('agent_writer', 'production_plans(sku_key)', 'SELECT')
+    ('agent_writer', 'production_plans(start_date)', 'SELECT')
+    ('app_human', 'function garden_media_release_human', 'EXECUTE')
+    ('app_human', 'function garden_reminder_done_human', 'EXECUTE')
+    ('app_human', 'function lot_cert_record_human', 'EXECUTE')
+    ('app_human', 'function production_plan_add_human', 'EXECUTE')
+    ('app_human', 'function production_plan_link_human', 'EXECUTE')
+    ('app_human', 'garden_media_releases', 'SELECT')
+    ('app_human', 'garden_media_releases(action)', 'SELECT')
+    ('app_human', 'garden_media_releases(at)', 'SELECT')
+    ('app_human', 'garden_media_releases(by_person)', 'SELECT')
+    ('app_human', 'garden_media_releases(id)', 'SELECT')
+    ('app_human', 'garden_media_releases(note)', 'SELECT')
+    ('app_human', 'garden_media_releases(purpose)', 'SELECT')
+    ('app_human', 'garden_media_releases(sha256)', 'SELECT')
+    ('app_human', 'garden_reminders', 'SELECT')
+    ('app_human', 'garden_reminders(closed_at)', 'SELECT')
+    ('app_human', 'garden_reminders(created_at)', 'SELECT')
+    ('app_human', 'garden_reminders(dot_key)', 'SELECT')
+    ('app_human', 'garden_reminders(id)', 'SELECT')
+    ('app_human', 'garden_reminders(is_sample)', 'SELECT')
+    ('app_human', 'garden_reminders(kenh)', 'SELECT')
+    ('app_human', 'garden_reminders(kind)', 'SELECT')
+    ('app_human', 'garden_reminders(ma_nv)', 'SELECT')
+    ('app_human', 'garden_reminders(plot_id)', 'SELECT')
+    ('app_human', 'garden_reminders(reminded_at)', 'SELECT')
+    ('app_human', 'garden_reminders(reminded_by)', 'SELECT')
+    ('app_human', 'garden_reminders(status)', 'SELECT')
+    ('app_human', 'lot_test_certificates', 'SELECT')
+    ('app_human', 'lot_test_certificates(cert_no)', 'SELECT')
+    ('app_human', 'lot_test_certificates(file_ext)', 'SELECT')
+    ('app_human', 'lot_test_certificates(file_sha256)', 'SELECT')
+    ('app_human', 'lot_test_certificates(id)', 'SELECT')
+    ('app_human', 'lot_test_certificates(is_sample)', 'SELECT')
+    ('app_human', 'lot_test_certificates(issued_on)', 'SELECT')
+    ('app_human', 'lot_test_certificates(lab)', 'SELECT')
+    ('app_human', 'lot_test_certificates(lot_code)', 'SELECT')
+    ('app_human', 'lot_test_certificates(note)', 'SELECT')
+    ('app_human', 'lot_test_certificates(recorded_at)', 'SELECT')
+    ('app_human', 'lot_test_certificates(recorded_by)', 'SELECT')
+    ('app_human', 'lot_test_certificates(version)', 'SELECT')
+    ('app_human', 'production_lots(intake_status)', 'SELECT')
+    ('app_human', 'production_lots(lot_code)', 'SELECT')
+    ('app_human', 'production_plan_lots', 'SELECT')
+    ('app_human', 'production_plan_lots(linked_at)', 'SELECT')
+    ('app_human', 'production_plan_lots(linked_by)', 'SELECT')
+    ('app_human', 'production_plan_lots(lot_code)', 'SELECT')
+    ('app_human', 'production_plan_lots(plan_code)', 'SELECT')
+    ('app_human', 'production_plans', 'SELECT')
+    ('app_human', 'production_plans(due_date)', 'SELECT')
+    ('app_human', 'production_plans(is_sample)', 'SELECT')
+    ('app_human', 'production_plans(note)', 'SELECT')
+    ('app_human', 'production_plans(plan_code)', 'SELECT')
+    ('app_human', 'production_plans(qty_plan)', 'SELECT')
+    ('app_human', 'production_plans(recorded_at)', 'SELECT')
+    ('app_human', 'production_plans(recorded_by)', 'SELECT')
+    ('app_human', 'production_plans(sku_key)', 'SELECT')
+    ('app_human', 'production_plans(start_date)', 'SELECT')
+    ('app_human', 'v_garden_media_marketing', 'SELECT')
+    ('app_human', 'v_garden_media_marketing(bytes)', 'SELECT')
+    ('app_human', 'v_garden_media_marketing(ext)', 'SELECT')
+    ('app_human', 'v_garden_media_marketing(height)', 'SELECT')
+    ('app_human', 'v_garden_media_marketing(released_at)', 'SELECT')
+    ('app_human', 'v_garden_media_marketing(sha256)', 'SELECT')
+    ('app_human', 'v_garden_media_marketing(taken_on)', 'SELECT')
+    ('app_human', 'v_garden_media_marketing(width)', 'SELECT')
+    ('bks_reader', 'project_milestones(sign_required)', 'SELECT')
+    ('bks_reader', 'revenue_quarters(id)', 'SELECT')
+    ('bks_reader', 'revenue_quarters(quarter)', 'SELECT')
+    ('bks_reader', 'revenue_quarters(recorded_at)', 'SELECT')
+    ('svc_backup', 'garden_media_releases', 'SELECT')
+    ('svc_backup', 'garden_media_releases(action)', 'SELECT')
+    ('svc_backup', 'garden_media_releases(at)', 'SELECT')
+    ('svc_backup', 'garden_media_releases(by_person)', 'SELECT')
+    ('svc_backup', 'garden_media_releases(id)', 'SELECT')
+    ('svc_backup', 'garden_media_releases(note)', 'SELECT')
+    ('svc_backup', 'garden_media_releases(purpose)', 'SELECT')
+    ('svc_backup', 'garden_media_releases(sha256)', 'SELECT')
+    ('svc_backup', 'garden_reminders', 'SELECT')
+    ('svc_backup', 'garden_reminders(closed_at)', 'SELECT')
+    ('svc_backup', 'garden_reminders(created_at)', 'SELECT')
+    ('svc_backup', 'garden_reminders(dot_key)', 'SELECT')
+    ('svc_backup', 'garden_reminders(id)', 'SELECT')
+    ('svc_backup', 'garden_reminders(is_sample)', 'SELECT')
+    ('svc_backup', 'garden_reminders(kenh)', 'SELECT')
+    ('svc_backup', 'garden_reminders(kind)', 'SELECT')
+    ('svc_backup', 'garden_reminders(ma_nv)', 'SELECT')
+    ('svc_backup', 'garden_reminders(plot_id)', 'SELECT')
+    ('svc_backup', 'garden_reminders(reminded_at)', 'SELECT')
+    ('svc_backup', 'garden_reminders(reminded_by)', 'SELECT')
+    ('svc_backup', 'garden_reminders(status)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(cert_no)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(file_ext)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(file_sha256)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(id)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(is_sample)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(issued_on)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(lab)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(lot_code)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(note)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(recorded_at)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(recorded_by)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(version)', 'SELECT')
+    ('svc_backup', 'production_plan_lots', 'SELECT')
+    ('svc_backup', 'production_plan_lots(linked_at)', 'SELECT')
+    ('svc_backup', 'production_plan_lots(linked_by)', 'SELECT')
+    ('svc_backup', 'production_plan_lots(lot_code)', 'SELECT')
+    ('svc_backup', 'production_plan_lots(plan_code)', 'SELECT')
+    ('svc_backup', 'production_plans', 'SELECT')
+    ('svc_backup', 'production_plans(due_date)', 'SELECT')
+    ('svc_backup', 'production_plans(is_sample)', 'SELECT')
+    ('svc_backup', 'production_plans(note)', 'SELECT')
+    ('svc_backup', 'production_plans(plan_code)', 'SELECT')
+    ('svc_backup', 'production_plans(qty_plan)', 'SELECT')
+    ('svc_backup', 'production_plans(recorded_at)', 'SELECT')
+    ('svc_backup', 'production_plans(recorded_by)', 'SELECT')
+    ('svc_backup', 'production_plans(sku_key)', 'SELECT')
+    ('svc_backup', 'production_plans(start_date)', 'SELECT')
+    ('svc_backup', 'project_milestones(sign_required)', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing(bytes)', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing(ext)', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing(height)', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing(released_at)', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing(sha256)', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing(taken_on)', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing(width)', 'SELECT')
+    ('svc_job', 'allocation_proposals', 'SELECT')
+    ('svc_job', 'allocation_proposals(channel)', 'SELECT')
+    ('svc_job', 'allocation_proposals(created_at)', 'SELECT')
+    ('svc_job', 'allocation_proposals(cutoff_date)', 'SELECT')
+    ('svc_job', 'allocation_proposals(cutoff_id)', 'SELECT')
+    ('svc_job', 'allocation_proposals(decided_at)', 'SELECT')
+    ('svc_job', 'allocation_proposals(decided_by)', 'SELECT')
+    ('svc_job', 'allocation_proposals(demand_base)', 'SELECT')
+    ('svc_job', 'allocation_proposals(demand_high)', 'SELECT')
+    ('svc_job', 'allocation_proposals(demand_low)', 'SELECT')
+    ('svc_job', 'allocation_proposals(id)', 'SELECT')
+    ('svc_job', 'allocation_proposals(is_sample)', 'SELECT')
+    ('svc_job', 'allocation_proposals(note)', 'SELECT')
+    ('svc_job', 'allocation_proposals(proposed_qty)', 'SELECT')
+    ('svc_job', 'allocation_proposals(run_id)', 'SELECT')
+    ('svc_job', 'allocation_proposals(sku_key)', 'SELECT')
+    ('svc_job', 'allocation_proposals(start_week)', 'SELECT')
+    ('svc_job', 'allocation_proposals(status)', 'SELECT')
+    ('svc_job', 'allocation_proposals(stock_total)', 'SELECT')
+    ('svc_job', 'audit_runs(id)', 'SELECT')
+    ('svc_job', 'audit_runs(kind)', 'SELECT')
+    ('svc_job', 'audit_runs(params)', 'SELECT')
+    ('svc_job', 'bom_combos', 'SELECT')
+    ('svc_job', 'bom_combos(channels)', 'SELECT')
+    ('svc_job', 'bom_combos(combo_key)', 'SELECT')
+    ('svc_job', 'bom_combos(name)', 'SELECT')
+    ('svc_job', 'bom_combos(note)', 'SELECT')
+    ('svc_job', 'bom_combos(source)', 'SELECT')
+    ('svc_job', 'bom_combos(updated_at)', 'SELECT')
+    ('svc_job', 'bom_items', 'SELECT')
+    ('svc_job', 'bom_items(combo_key)', 'SELECT')
+    ('svc_job', 'bom_items(qty)', 'SELECT')
+    ('svc_job', 'bom_items(sku_key)', 'SELECT')
+    ('svc_job', 'channel_posts(alert_id)', 'INSERT')
+    ('svc_job', 'channel_posts(alert_id)', 'UPDATE')
+    ('svc_job', 'channel_posts(channel)', 'INSERT')
+    ('svc_job', 'channel_posts(close_reason)', 'UPDATE')
+    ('svc_job', 'channel_posts(closed_at)', 'UPDATE')
+    ('svc_job', 'channel_posts(closed_by)', 'UPDATE')
+    ('svc_job', 'channel_posts(codes)', 'INSERT')
+    ('svc_job', 'channel_posts(content_type)', 'INSERT')
+    ('svc_job', 'channel_posts(draft_id)', 'INSERT')
+    ('svc_job', 'channel_posts(due_at)', 'INSERT')
+    ('svc_job', 'channel_posts(first_detected_at)', 'INSERT')
+    ('svc_job', 'channel_posts(guardrail)', 'INSERT')
+    ('svc_job', 'channel_posts(imported_by)', 'INSERT')
+    ('svc_job', 'channel_posts(is_ai)', 'INSERT')
+    ('svc_job', 'channel_posts(is_sponsored)', 'INSERT')
+    ('svc_job', 'channel_posts(posted_on)', 'INSERT')
+    ('svc_job', 'channel_posts(queue_id)', 'INSERT')
+    ('svc_job', 'channel_posts(queue_id)', 'UPDATE')
+    ('svc_job', 'channel_posts(scanned_at)', 'INSERT')
+    ('svc_job', 'channel_posts(severity)', 'INSERT')
+    ('svc_job', 'channel_posts(sku)', 'INSERT')
+    ('svc_job', 'channel_posts(text)', 'INSERT')
+    ('svc_job', 'channel_posts(text_sha256)', 'INSERT')
+    ('svc_job', 'channel_posts(url)', 'INSERT')
+    ('svc_job', 'cogs_versions', 'SELECT')
+    ('svc_job', 'cogs_versions(approved_at)', 'SELECT')
+    ('svc_job', 'cogs_versions(approved_by)', 'SELECT')
+    ('svc_job', 'cogs_versions(cost_vnd)', 'SELECT')
+    ('svc_job', 'cogs_versions(created_at)', 'SELECT')
+    ('svc_job', 'cogs_versions(created_by)', 'SELECT')
+    ('svc_job', 'cogs_versions(id)', 'SELECT')
+    ('svc_job', 'cogs_versions(note)', 'SELECT')
+    ('svc_job', 'cogs_versions(sku_key)', 'SELECT')
+    ('svc_job', 'cogs_versions(valid_from)', 'SELECT')
+    ('svc_job', 'competitor_observations', 'SELECT')
+    ('svc_job', 'competitor_observations(channel)', 'SELECT')
+    ('svc_job', 'competitor_observations(competitor)', 'SELECT')
+    ('svc_job', 'competitor_observations(id)', 'SELECT')
+    ('svc_job', 'competitor_observations(import_id)', 'SELECT')
+    ('svc_job', 'competitor_observations(observed_on)', 'SELECT')
+    ('svc_job', 'competitor_observations(price_vnd)', 'SELECT')
+    ('svc_job', 'competitor_observations(product_name)', 'SELECT')
+    ('svc_job', 'competitor_observations(promo_price_vnd)', 'SELECT')
+    ('svc_job', 'competitor_observations(promo_text)', 'SELECT')
+    ('svc_job', 'competitor_observations(rating)', 'SELECT')
+    ('svc_job', 'competitor_observations(review_count)', 'SELECT')
+    ('svc_job', 'competitor_observations(row_no)', 'SELECT')
+    ('svc_job', 'competitor_observations(sku_key)', 'SELECT')
+    ('svc_job', 'competitor_observations(source_ref)', 'SELECT')
+    ('svc_job', 'function verify_action_log', 'EXECUTE')
+    ('svc_job', 'inventory_snapshots', 'SELECT')
+    ('svc_job', 'inventory_snapshots(captured_at)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(file_name)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(file_sha256)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(id)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(imported_at)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(kho)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(qty)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(row_no)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(sku_key)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(source)', 'SELECT')
+    ('svc_job', 'plots(id)', 'SELECT')
+    ('svc_job', 'plots(planted_year)', 'SELECT')
+    ('svc_job', 'plots(source)', 'SELECT')
+    ('svc_job', 'plots(status)', 'SELECT')
+    ('svc_job', 'plots(tree_count)', 'SELECT')
+    ('svc_job', 'project_milestones(sign_required)', 'SELECT')
+    ('svc_job', 'revenue_quarters(id)', 'SELECT')
+    ('svc_job', 'revenue_quarters(quarter)', 'SELECT')
+    ('svc_job', 'revenue_quarters(recorded_at)', 'SELECT')
+    ('svc_job', 'v_promotable', 'SELECT')
+    ('svc_job', 'v_promotable(approved_by)', 'SELECT')
+    ('svc_job', 'v_promotable(channel)', 'SELECT')
+    ('svc_job', 'v_promotable(price_id)', 'SELECT')
+    ('svc_job', 'v_promotable(price_vnd)', 'SELECT')
+    ('svc_job', 'v_promotable(readiness)', 'SELECT')
+    ('svc_job', 'v_promotable(sku_key)', 'SELECT')
+quyền BỚT: []
+approvals / lô / QR / KPI cũ+live / backup / rollout / mốc giữ nguyên
+[run] -m pipelines.store --verify-log -> exit 0
+    [ok] chuỗi nguyên vẹn (2 dòng)
+[run] -m agents.garden_director --verify -> exit 0
+    [verify] OK — chuỗi nhật ký nguyên vẹn
+[run] -m pipelines.rollout --seed --by Owner Triển Khai -> exit 0
+    [OK] vào sổ 0 · có sẵn 74 · bỏ qua (chưa co_code) 12
+rollout --seed lại: giai đoạn + stage_since KHÔNG đổi (không kế thừa ngày, không tự công nhận)
+count_spec có nguồn mới: {'farming-02': True, 'farming-04': True, 'finance-04.2': True, 'intel-05': True}
+[run] -m agents.da_pmo --seed -> exit 0
+DUYET-1111 sign_required sau seed mốc: [(True, 'xong')]
+R1 sales gọi record_lot_intake tên agent: InsufficientPrivilege
+R2 sales thu hồi QR tên mình: InsufficientPrivilege
+[run] -m agents.garden_director --remind --submit -> exit 0
+    [blocked] chưa chọn kênh nhắc nhân viên (data/garden_remind.json kenh=null — D-KH-09): KHÔNG ai được nhắc; khoảnh bỏ trống báo thẳng GĐ
+    [remind] báo GĐ vùng trồng: 1 mục mới (plot_log_gap)
+C02 svc_job tạo nhắc: (1, True)
+C02 svc_job ghi 'đã nhắc' trực tiếp: InsufficientPrivilege
+C02 người SALES đánh dấu (sai khối): InsufficientPrivilege
+[run] -m pipelines.production cert --lot UPG-LOT --file C:\Users\hahuy\AppData\Local\Temp\tmpk4i05ckg\phieu.pdf --cert-no KN-UPG-1 --by GĐ Sản Xuất Upg -> exit 0
+    [done] lô UPG-LOT: phiếu KN-UPG-1 phiên bản 1 — người ghi: GĐ Sản Xuất Upg
+[run] -m pipelines.production cert --lot UPG-LOT --file C:\Users\hahuy\AppData\Local\Temp\tmpk4i05ckg\phieu.pdf --cert-no KN-UPG-1 --by Bán Hàng Upg -> exit 1
+    [err] người "Bán Hàng Upg" không được ủy quyền khối production (human_logins) — không ghi.
+[run] -m pipelines.production cert-verify -> exit 1
+    [thieu_phieu] UPG-LOT2 (pending)
+    [done] 2 lô, 1 lô thiếu/lỗi phiếu
+[run] -m pipelines.production plan-add --code KH-UPG --sku upg-sku --qty 10 --start 2026-10-01 --due 2026-10-31 --by GĐ Sản Xuất Upg -> exit 0
+    [done] plan-add KH-UPG — người ghi: GĐ Sản Xuất Upg
+[run] -m pipelines.production plan-link --plan KH-UPG --lot UPG-LOT --by GĐ Sản Xuất Upg -> exit 0
+    [done] plan-link KH-UPG — người ghi: GĐ Sản Xuất Upg
+[run] -m pipelines.production plan-add --code KH-SALES --sku upg-sku --qty 1 --start 2026-10-01 --due 2026-10-31 --by Bán Hàng Upg -> exit 1
+    [err] HumanDenied: người "Bán Hàng Upg" không được ủy quyền khối production (human_logins) — không ghi.
+C03/C10 sổ: (1,) ('KH-UPG',)
+C03 production ghi thẳng sổ phiếu: InsufficientPrivilege
+[run] -m pipelines.production bulletin -> exit 0
+    - UPG-LOT (passed) · phiếu KN-UPG-1 (v1)
+    - UPG-LOT2 (pending) · THIẾU phiếu
+C07 marketing đọc view: [(0,)]
+C07 marketing đọc author: InsufficientPrivilege
+[run] -m agents.ceo_decisions --list -> exit 0
+    [sổ quyết định] 0 mục — ngày 20/10/2026 (giờ VN)
+    [mốc trễ] 0
+[run] -m agents.combo_price -> exit 0
+    [done] 0 mục combo_price_option mới (khối intel)
+[run] -m pipelines.job_runs --run price_watch -> exit 0
+    [A5] ngày 2026-10-20: S1 0 · S2 0 · kênh có file listing: chưa có
+    [run] đẩy 0 mục mới vào hàng duyệt khối sales · 0 mục KM lỗ/không tính được biên khối finance
+[run] -m agents.ra_kenh --scan-auto -> exit 1
+    [note] web/products: dữ liệu crawl cũ 17 ngày (> 7) — KHÔNG quét, chạy crawler.collect
+    [scan-auto] 0 mục: mới 0, trùng 0, S1 0, S2 0, đóng 0, ticket 0 — Fanpage: chưa có nguồn tự thu (CSV --file)
+[run] scripts/webhook_probe.py --url http://127.0.0.1:9/readyz -> exit 1
+    [RED-ALERT][warn] cảnh báo đỏ #2 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+    [ALERT] cảnh báo đỏ #2
+C01 cảnh báo đỏ webhook_probe: (1,)
+[run] -m pipelines.job_runs --run vt_harvest -> exit 0
+    [write] D:\code\samsam\data\reports\vt-thu-hoach-2026-10-20.md
+    [submit] pending #3 (farming/harvest_forecast)
+[run] -m pipelines.job_runs --run hdtv_month -> exit 0
+    [done] D:\code\samsam\data\reports\hdtv-2026-09.md — kỳ 2026-09, 17 fact có nguồn, 3 mục không đọc được
+    [submit] mục #4 vào hàng chờ khối ceo (pending — TGĐ duyệt; hệ thống KHÔNG tự duyệt, KHÔNG tự gửi HĐTV)
+[run] -m agents.bks_audit --chain-alert -> exit 0
+    [done] chuỗi nhật ký nguyên vẹn (agent_action_log, plot_logs)
+[run] -m pipelines.store --verify-log -> exit 0
+    [ok] chuỗi nguyên vẹn (13 dòng)
+UPGRADE OK
+
+=== NỀN snapshot vòng 1
+DB samsam_contract_up2b: tạo mới (KHÔNG phải samsam) · nền: snapshot vòng 1
+áp schema/roles nền snapshot vòng 1: ok
+[run] -m ingest.core_store -> exit 0
+    [load] assets: 219 rows
+    [done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+[run] -m ingest.golden_store -> exit 0
+    [disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+    [done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+[run] -m pipelines.rollout --seed --by Owner Triển Khai -> exit 0
+    [OK] vào sổ 74 · có sẵn 0 · bỏ qua (chưa co_code) 12
+trước: 94 bảng, 545 dòng, đuôi log [(4, '3fc530047ce8')], 3653 quyền, 74 mục rollout
+[run] -m pipelines.store --verify-log -> exit 0
+    [ok] chuỗi nguyên vẹn (2 dòng)
+[run] scripts/apply_schema.py --roles -> exit 0
+    [done] schema applied — 99 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, assets, audit_runs, auto
+    [done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[run] scripts/apply_schema.py --roles -> exit 0
+    [done] schema applied — 99 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, assets, audit_runs, auto
+    [done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+sau ×2: 99 bảng, 545 dòng, đuôi log [(4, '3fc530047ce8')]
+bảng mất: [] | bảng mới: ['garden_media_releases', 'garden_reminders', 'lot_test_certificates', 'production_plan_lots', 'production_plans'] | dòng đổi: không
+quyền THÊM (281):
+    ('agent_writer', 'garden_reminders', 'SELECT')
+    ('agent_writer', 'garden_reminders(closed_at)', 'SELECT')
+    ('agent_writer', 'garden_reminders(closed_at)', 'UPDATE')
+    ('agent_writer', 'garden_reminders(created_at)', 'SELECT')
+    ('agent_writer', 'garden_reminders(dot_key)', 'INSERT')
+    ('agent_writer', 'garden_reminders(dot_key)', 'SELECT')
+    ('agent_writer', 'garden_reminders(id)', 'SELECT')
+    ('agent_writer', 'garden_reminders(is_sample)', 'INSERT')
+    ('agent_writer', 'garden_reminders(is_sample)', 'SELECT')
+    ('agent_writer', 'garden_reminders(kenh)', 'INSERT')
+    ('agent_writer', 'garden_reminders(kenh)', 'SELECT')
+    ('agent_writer', 'garden_reminders(kind)', 'INSERT')
+    ('agent_writer', 'garden_reminders(kind)', 'SELECT')
+    ('agent_writer', 'garden_reminders(ma_nv)', 'INSERT')
+    ('agent_writer', 'garden_reminders(ma_nv)', 'SELECT')
+    ('agent_writer', 'garden_reminders(plot_id)', 'INSERT')
+    ('agent_writer', 'garden_reminders(plot_id)', 'SELECT')
+    ('agent_writer', 'garden_reminders(reminded_at)', 'SELECT')
+    ('agent_writer', 'garden_reminders(reminded_by)', 'SELECT')
+    ('agent_writer', 'garden_reminders(status)', 'INSERT')
+    ('agent_writer', 'garden_reminders(status)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(cert_no)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(file_ext)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(file_sha256)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(id)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(is_sample)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(issued_on)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(lab)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(lot_code)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(note)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(recorded_at)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(recorded_by)', 'SELECT')
+    ('agent_writer', 'lot_test_certificates(version)', 'SELECT')
+    ('agent_writer', 'production_plan_lots', 'SELECT')
+    ('agent_writer', 'production_plan_lots(linked_at)', 'SELECT')
+    ('agent_writer', 'production_plan_lots(linked_by)', 'SELECT')
+    ('agent_writer', 'production_plan_lots(lot_code)', 'SELECT')
+    ('agent_writer', 'production_plan_lots(plan_code)', 'SELECT')
+    ('agent_writer', 'production_plans', 'SELECT')
+    ('agent_writer', 'production_plans(due_date)', 'SELECT')
+    ('agent_writer', 'production_plans(is_sample)', 'SELECT')
+    ('agent_writer', 'production_plans(note)', 'SELECT')
+    ('agent_writer', 'production_plans(plan_code)', 'SELECT')
+    ('agent_writer', 'production_plans(qty_plan)', 'SELECT')
+    ('agent_writer', 'production_plans(recorded_at)', 'SELECT')
+    ('agent_writer', 'production_plans(recorded_by)', 'SELECT')
+    ('agent_writer', 'production_plans(sku_key)', 'SELECT')
+    ('agent_writer', 'production_plans(start_date)', 'SELECT')
+    ('app_human', 'function garden_media_release_human', 'EXECUTE')
+    ('app_human', 'function garden_reminder_done_human', 'EXECUTE')
+    ('app_human', 'function lot_cert_record_human', 'EXECUTE')
+    ('app_human', 'function production_plan_add_human', 'EXECUTE')
+    ('app_human', 'function production_plan_link_human', 'EXECUTE')
+    ('app_human', 'garden_media_releases', 'SELECT')
+    ('app_human', 'garden_media_releases(action)', 'SELECT')
+    ('app_human', 'garden_media_releases(at)', 'SELECT')
+    ('app_human', 'garden_media_releases(by_person)', 'SELECT')
+    ('app_human', 'garden_media_releases(id)', 'SELECT')
+    ('app_human', 'garden_media_releases(note)', 'SELECT')
+    ('app_human', 'garden_media_releases(purpose)', 'SELECT')
+    ('app_human', 'garden_media_releases(sha256)', 'SELECT')
+    ('app_human', 'garden_reminders', 'SELECT')
+    ('app_human', 'garden_reminders(closed_at)', 'SELECT')
+    ('app_human', 'garden_reminders(created_at)', 'SELECT')
+    ('app_human', 'garden_reminders(dot_key)', 'SELECT')
+    ('app_human', 'garden_reminders(id)', 'SELECT')
+    ('app_human', 'garden_reminders(is_sample)', 'SELECT')
+    ('app_human', 'garden_reminders(kenh)', 'SELECT')
+    ('app_human', 'garden_reminders(kind)', 'SELECT')
+    ('app_human', 'garden_reminders(ma_nv)', 'SELECT')
+    ('app_human', 'garden_reminders(plot_id)', 'SELECT')
+    ('app_human', 'garden_reminders(reminded_at)', 'SELECT')
+    ('app_human', 'garden_reminders(reminded_by)', 'SELECT')
+    ('app_human', 'garden_reminders(status)', 'SELECT')
+    ('app_human', 'lot_test_certificates', 'SELECT')
+    ('app_human', 'lot_test_certificates(cert_no)', 'SELECT')
+    ('app_human', 'lot_test_certificates(file_ext)', 'SELECT')
+    ('app_human', 'lot_test_certificates(file_sha256)', 'SELECT')
+    ('app_human', 'lot_test_certificates(id)', 'SELECT')
+    ('app_human', 'lot_test_certificates(is_sample)', 'SELECT')
+    ('app_human', 'lot_test_certificates(issued_on)', 'SELECT')
+    ('app_human', 'lot_test_certificates(lab)', 'SELECT')
+    ('app_human', 'lot_test_certificates(lot_code)', 'SELECT')
+    ('app_human', 'lot_test_certificates(note)', 'SELECT')
+    ('app_human', 'lot_test_certificates(recorded_at)', 'SELECT')
+    ('app_human', 'lot_test_certificates(recorded_by)', 'SELECT')
+    ('app_human', 'lot_test_certificates(version)', 'SELECT')
+    ('app_human', 'production_lots(intake_status)', 'SELECT')
+    ('app_human', 'production_lots(lot_code)', 'SELECT')
+    ('app_human', 'production_plan_lots', 'SELECT')
+    ('app_human', 'production_plan_lots(linked_at)', 'SELECT')
+    ('app_human', 'production_plan_lots(linked_by)', 'SELECT')
+    ('app_human', 'production_plan_lots(lot_code)', 'SELECT')
+    ('app_human', 'production_plan_lots(plan_code)', 'SELECT')
+    ('app_human', 'production_plans', 'SELECT')
+    ('app_human', 'production_plans(due_date)', 'SELECT')
+    ('app_human', 'production_plans(is_sample)', 'SELECT')
+    ('app_human', 'production_plans(note)', 'SELECT')
+    ('app_human', 'production_plans(plan_code)', 'SELECT')
+    ('app_human', 'production_plans(qty_plan)', 'SELECT')
+    ('app_human', 'production_plans(recorded_at)', 'SELECT')
+    ('app_human', 'production_plans(recorded_by)', 'SELECT')
+    ('app_human', 'production_plans(sku_key)', 'SELECT')
+    ('app_human', 'production_plans(start_date)', 'SELECT')
+    ('app_human', 'v_garden_media_marketing', 'SELECT')
+    ('app_human', 'v_garden_media_marketing(bytes)', 'SELECT')
+    ('app_human', 'v_garden_media_marketing(ext)', 'SELECT')
+    ('app_human', 'v_garden_media_marketing(height)', 'SELECT')
+    ('app_human', 'v_garden_media_marketing(released_at)', 'SELECT')
+    ('app_human', 'v_garden_media_marketing(sha256)', 'SELECT')
+    ('app_human', 'v_garden_media_marketing(taken_on)', 'SELECT')
+    ('app_human', 'v_garden_media_marketing(width)', 'SELECT')
+    ('bks_reader', 'project_milestones(sign_required)', 'SELECT')
+    ('bks_reader', 'revenue_quarters(id)', 'SELECT')
+    ('bks_reader', 'revenue_quarters(quarter)', 'SELECT')
+    ('bks_reader', 'revenue_quarters(recorded_at)', 'SELECT')
+    ('svc_backup', 'garden_media_releases', 'SELECT')
+    ('svc_backup', 'garden_media_releases(action)', 'SELECT')
+    ('svc_backup', 'garden_media_releases(at)', 'SELECT')
+    ('svc_backup', 'garden_media_releases(by_person)', 'SELECT')
+    ('svc_backup', 'garden_media_releases(id)', 'SELECT')
+    ('svc_backup', 'garden_media_releases(note)', 'SELECT')
+    ('svc_backup', 'garden_media_releases(purpose)', 'SELECT')
+    ('svc_backup', 'garden_media_releases(sha256)', 'SELECT')
+    ('svc_backup', 'garden_reminders', 'SELECT')
+    ('svc_backup', 'garden_reminders(closed_at)', 'SELECT')
+    ('svc_backup', 'garden_reminders(created_at)', 'SELECT')
+    ('svc_backup', 'garden_reminders(dot_key)', 'SELECT')
+    ('svc_backup', 'garden_reminders(id)', 'SELECT')
+    ('svc_backup', 'garden_reminders(is_sample)', 'SELECT')
+    ('svc_backup', 'garden_reminders(kenh)', 'SELECT')
+    ('svc_backup', 'garden_reminders(kind)', 'SELECT')
+    ('svc_backup', 'garden_reminders(ma_nv)', 'SELECT')
+    ('svc_backup', 'garden_reminders(plot_id)', 'SELECT')
+    ('svc_backup', 'garden_reminders(reminded_at)', 'SELECT')
+    ('svc_backup', 'garden_reminders(reminded_by)', 'SELECT')
+    ('svc_backup', 'garden_reminders(status)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(cert_no)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(file_ext)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(file_sha256)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(id)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(is_sample)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(issued_on)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(lab)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(lot_code)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(note)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(recorded_at)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(recorded_by)', 'SELECT')
+    ('svc_backup', 'lot_test_certificates(version)', 'SELECT')
+    ('svc_backup', 'production_plan_lots', 'SELECT')
+    ('svc_backup', 'production_plan_lots(linked_at)', 'SELECT')
+    ('svc_backup', 'production_plan_lots(linked_by)', 'SELECT')
+    ('svc_backup', 'production_plan_lots(lot_code)', 'SELECT')
+    ('svc_backup', 'production_plan_lots(plan_code)', 'SELECT')
+    ('svc_backup', 'production_plans', 'SELECT')
+    ('svc_backup', 'production_plans(due_date)', 'SELECT')
+    ('svc_backup', 'production_plans(is_sample)', 'SELECT')
+    ('svc_backup', 'production_plans(note)', 'SELECT')
+    ('svc_backup', 'production_plans(plan_code)', 'SELECT')
+    ('svc_backup', 'production_plans(qty_plan)', 'SELECT')
+    ('svc_backup', 'production_plans(recorded_at)', 'SELECT')
+    ('svc_backup', 'production_plans(recorded_by)', 'SELECT')
+    ('svc_backup', 'production_plans(sku_key)', 'SELECT')
+    ('svc_backup', 'production_plans(start_date)', 'SELECT')
+    ('svc_backup', 'project_milestones(sign_required)', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing(bytes)', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing(ext)', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing(height)', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing(released_at)', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing(sha256)', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing(taken_on)', 'SELECT')
+    ('svc_backup', 'v_garden_media_marketing(width)', 'SELECT')
+    ('svc_job', 'allocation_proposals', 'SELECT')
+    ('svc_job', 'allocation_proposals(channel)', 'SELECT')
+    ('svc_job', 'allocation_proposals(created_at)', 'SELECT')
+    ('svc_job', 'allocation_proposals(cutoff_date)', 'SELECT')
+    ('svc_job', 'allocation_proposals(cutoff_id)', 'SELECT')
+    ('svc_job', 'allocation_proposals(decided_at)', 'SELECT')
+    ('svc_job', 'allocation_proposals(decided_by)', 'SELECT')
+    ('svc_job', 'allocation_proposals(demand_base)', 'SELECT')
+    ('svc_job', 'allocation_proposals(demand_high)', 'SELECT')
+    ('svc_job', 'allocation_proposals(demand_low)', 'SELECT')
+    ('svc_job', 'allocation_proposals(id)', 'SELECT')
+    ('svc_job', 'allocation_proposals(is_sample)', 'SELECT')
+    ('svc_job', 'allocation_proposals(note)', 'SELECT')
+    ('svc_job', 'allocation_proposals(proposed_qty)', 'SELECT')
+    ('svc_job', 'allocation_proposals(run_id)', 'SELECT')
+    ('svc_job', 'allocation_proposals(sku_key)', 'SELECT')
+    ('svc_job', 'allocation_proposals(start_week)', 'SELECT')
+    ('svc_job', 'allocation_proposals(status)', 'SELECT')
+    ('svc_job', 'allocation_proposals(stock_total)', 'SELECT')
+    ('svc_job', 'bom_combos', 'SELECT')
+    ('svc_job', 'bom_combos(channels)', 'SELECT')
+    ('svc_job', 'bom_combos(combo_key)', 'SELECT')
+    ('svc_job', 'bom_combos(name)', 'SELECT')
+    ('svc_job', 'bom_combos(note)', 'SELECT')
+    ('svc_job', 'bom_combos(source)', 'SELECT')
+    ('svc_job', 'bom_combos(updated_at)', 'SELECT')
+    ('svc_job', 'bom_items', 'SELECT')
+    ('svc_job', 'bom_items(combo_key)', 'SELECT')
+    ('svc_job', 'bom_items(qty)', 'SELECT')
+    ('svc_job', 'bom_items(sku_key)', 'SELECT')
+    ('svc_job', 'channel_posts(alert_id)', 'INSERT')
+    ('svc_job', 'channel_posts(alert_id)', 'UPDATE')
+    ('svc_job', 'channel_posts(channel)', 'INSERT')
+    ('svc_job', 'channel_posts(close_reason)', 'UPDATE')
+    ('svc_job', 'channel_posts(closed_at)', 'UPDATE')
+    ('svc_job', 'channel_posts(closed_by)', 'UPDATE')
+    ('svc_job', 'channel_posts(codes)', 'INSERT')
+    ('svc_job', 'channel_posts(content_type)', 'INSERT')
+    ('svc_job', 'channel_posts(draft_id)', 'INSERT')
+    ('svc_job', 'channel_posts(due_at)', 'INSERT')
+    ('svc_job', 'channel_posts(first_detected_at)', 'INSERT')
+    ('svc_job', 'channel_posts(guardrail)', 'INSERT')
+    ('svc_job', 'channel_posts(imported_by)', 'INSERT')
+    ('svc_job', 'channel_posts(is_ai)', 'INSERT')
+    ('svc_job', 'channel_posts(is_sponsored)', 'INSERT')
+    ('svc_job', 'channel_posts(posted_on)', 'INSERT')
+    ('svc_job', 'channel_posts(queue_id)', 'INSERT')
+    ('svc_job', 'channel_posts(queue_id)', 'UPDATE')
+    ('svc_job', 'channel_posts(scanned_at)', 'INSERT')
+    ('svc_job', 'channel_posts(severity)', 'INSERT')
+    ('svc_job', 'channel_posts(sku)', 'INSERT')
+    ('svc_job', 'channel_posts(text)', 'INSERT')
+    ('svc_job', 'channel_posts(text_sha256)', 'INSERT')
+    ('svc_job', 'channel_posts(url)', 'INSERT')
+    ('svc_job', 'cogs_versions', 'SELECT')
+    ('svc_job', 'cogs_versions(approved_at)', 'SELECT')
+    ('svc_job', 'cogs_versions(approved_by)', 'SELECT')
+    ('svc_job', 'cogs_versions(cost_vnd)', 'SELECT')
+    ('svc_job', 'cogs_versions(created_at)', 'SELECT')
+    ('svc_job', 'cogs_versions(created_by)', 'SELECT')
+    ('svc_job', 'cogs_versions(id)', 'SELECT')
+    ('svc_job', 'cogs_versions(note)', 'SELECT')
+    ('svc_job', 'cogs_versions(sku_key)', 'SELECT')
+    ('svc_job', 'cogs_versions(valid_from)', 'SELECT')
+    ('svc_job', 'competitor_observations', 'SELECT')
+    ('svc_job', 'competitor_observations(channel)', 'SELECT')
+    ('svc_job', 'competitor_observations(competitor)', 'SELECT')
+    ('svc_job', 'competitor_observations(id)', 'SELECT')
+    ('svc_job', 'competitor_observations(import_id)', 'SELECT')
+    ('svc_job', 'competitor_observations(observed_on)', 'SELECT')
+    ('svc_job', 'competitor_observations(price_vnd)', 'SELECT')
+    ('svc_job', 'competitor_observations(product_name)', 'SELECT')
+    ('svc_job', 'competitor_observations(promo_price_vnd)', 'SELECT')
+    ('svc_job', 'competitor_observations(promo_text)', 'SELECT')
+    ('svc_job', 'competitor_observations(rating)', 'SELECT')
+    ('svc_job', 'competitor_observations(review_count)', 'SELECT')
+    ('svc_job', 'competitor_observations(row_no)', 'SELECT')
+    ('svc_job', 'competitor_observations(sku_key)', 'SELECT')
+    ('svc_job', 'competitor_observations(source_ref)', 'SELECT')
+    ('svc_job', 'inventory_snapshots', 'SELECT')
+    ('svc_job', 'inventory_snapshots(captured_at)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(file_name)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(file_sha256)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(id)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(imported_at)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(kho)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(qty)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(row_no)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(sku_key)', 'SELECT')
+    ('svc_job', 'inventory_snapshots(source)', 'SELECT')
+    ('svc_job', 'plots(id)', 'SELECT')
+    ('svc_job', 'plots(planted_year)', 'SELECT')
+    ('svc_job', 'plots(source)', 'SELECT')
+    ('svc_job', 'plots(status)', 'SELECT')
+    ('svc_job', 'plots(tree_count)', 'SELECT')
+    ('svc_job', 'project_milestones(sign_required)', 'SELECT')
+    ('svc_job', 'revenue_quarters(id)', 'SELECT')
+    ('svc_job', 'revenue_quarters(quarter)', 'SELECT')
+    ('svc_job', 'revenue_quarters(recorded_at)', 'SELECT')
+    ('svc_job', 'v_promotable', 'SELECT')
+    ('svc_job', 'v_promotable(approved_by)', 'SELECT')
+    ('svc_job', 'v_promotable(channel)', 'SELECT')
+    ('svc_job', 'v_promotable(price_id)', 'SELECT')
+    ('svc_job', 'v_promotable(price_vnd)', 'SELECT')
+    ('svc_job', 'v_promotable(readiness)', 'SELECT')
+    ('svc_job', 'v_promotable(sku_key)', 'SELECT')
+quyền BỚT: []
+approvals / lô / QR / KPI cũ+live / backup / rollout / mốc giữ nguyên
+[run] -m pipelines.store --verify-log -> exit 0
+    [ok] chuỗi nguyên vẹn (2 dòng)
+[run] -m agents.garden_director --verify -> exit 0
+    [verify] OK — chuỗi nhật ký nguyên vẹn
+[run] -m pipelines.rollout --seed --by Owner Triển Khai -> exit 0
+    [OK] vào sổ 0 · có sẵn 74 · bỏ qua (chưa co_code) 12
+rollout --seed lại: giai đoạn + stage_since KHÔNG đổi (không kế thừa ngày, không tự công nhận)
+count_spec có nguồn mới: {'farming-02': True, 'farming-04': True, 'finance-04.2': True, 'intel-05': True}
+[run] -m agents.da_pmo --seed -> exit 0
+DUYET-1111 sign_required sau seed mốc: [(True, 'xong')]
+R1 sales gọi record_lot_intake tên agent: InsufficientPrivilege
+R2 sales thu hồi QR tên mình: InsufficientPrivilege
+[run] -m agents.garden_director --remind --submit -> exit 0
+    [blocked] chưa chọn kênh nhắc nhân viên (data/garden_remind.json kenh=null — D-KH-09): KHÔNG ai được nhắc; khoảnh bỏ trống báo thẳng GĐ
+    [remind] báo GĐ vùng trồng: 1 mục mới (plot_log_gap)
+C02 svc_job tạo nhắc: (1, True)
+C02 svc_job ghi 'đã nhắc' trực tiếp: InsufficientPrivilege
+C02 người SALES đánh dấu (sai khối): InsufficientPrivilege
+[run] -m pipelines.production cert --lot UPG-LOT --file C:\Users\hahuy\AppData\Local\Temp\tmp0e3138g8\phieu.pdf --cert-no KN-UPG-1 --by GĐ Sản Xuất Upg -> exit 0
+    [done] lô UPG-LOT: phiếu KN-UPG-1 phiên bản 1 — người ghi: GĐ Sản Xuất Upg
+[run] -m pipelines.production cert --lot UPG-LOT --file C:\Users\hahuy\AppData\Local\Temp\tmp0e3138g8\phieu.pdf --cert-no KN-UPG-1 --by Bán Hàng Upg -> exit 1
+    [err] người "Bán Hàng Upg" không được ủy quyền khối production (human_logins) — không ghi.
+[run] -m pipelines.production cert-verify -> exit 1
+    [thieu_phieu] UPG-LOT2 (pending)
+    [done] 2 lô, 1 lô thiếu/lỗi phiếu
+[run] -m pipelines.production plan-add --code KH-UPG --sku upg-sku --qty 10 --start 2026-10-01 --due 2026-10-31 --by GĐ Sản Xuất Upg -> exit 0
+    [done] plan-add KH-UPG — người ghi: GĐ Sản Xuất Upg
+[run] -m pipelines.production plan-link --plan KH-UPG --lot UPG-LOT --by GĐ Sản Xuất Upg -> exit 0
+    [done] plan-link KH-UPG — người ghi: GĐ Sản Xuất Upg
+[run] -m pipelines.production plan-add --code KH-SALES --sku upg-sku --qty 1 --start 2026-10-01 --due 2026-10-31 --by Bán Hàng Upg -> exit 1
+    [err] HumanDenied: người "Bán Hàng Upg" không được ủy quyền khối production (human_logins) — không ghi.
+C03/C10 sổ: (1,) ('KH-UPG',)
+C03 production ghi thẳng sổ phiếu: InsufficientPrivilege
+[run] -m pipelines.production bulletin -> exit 0
+    - UPG-LOT (passed) · phiếu KN-UPG-1 (v1)
+    - UPG-LOT2 (pending) · THIẾU phiếu
+C07 marketing đọc view: [(0,)]
+C07 marketing đọc author: InsufficientPrivilege
+[run] -m agents.ceo_decisions --list -> exit 0
+    [sổ quyết định] 0 mục — ngày 20/10/2026 (giờ VN)
+    [mốc trễ] 0
+[run] -m agents.combo_price -> exit 0
+    [done] 0 mục combo_price_option mới (khối intel)
+[run] -m pipelines.job_runs --run price_watch -> exit 0
+    [A5] ngày 2026-10-20: S1 0 · S2 0 · kênh có file listing: chưa có
+    [run] đẩy 0 mục mới vào hàng duyệt khối sales · 0 mục KM lỗ/không tính được biên khối finance
+[run] -m agents.ra_kenh --scan-auto -> exit 1
+    [note] web/products: dữ liệu crawl cũ 17 ngày (> 7) — KHÔNG quét, chạy crawler.collect
+    [scan-auto] 0 mục: mới 0, trùng 0, S1 0, S2 0, đóng 0, ticket 0 — Fanpage: chưa có nguồn tự thu (CSV --file)
+[run] scripts/webhook_probe.py --url http://127.0.0.1:9/readyz -> exit 1
+    [RED-ALERT][warn] cảnh báo đỏ #2 đã ghi nhưng thiếu người nhận độc lập (external-dep) — chưa ai nhận
+    [ALERT] cảnh báo đỏ #2
+C01 cảnh báo đỏ webhook_probe: (1,)
+[run] -m pipelines.job_runs --run vt_harvest -> exit 0
+    [write] D:\code\samsam\data\reports\vt-thu-hoach-2026-10-20.md
+    [submit] pending #3 (farming/harvest_forecast)
+[run] -m pipelines.job_runs --run hdtv_month -> exit 0
+    [done] D:\code\samsam\data\reports\hdtv-2026-09.md — kỳ 2026-09, 17 fact có nguồn, 3 mục không đọc được
+    [submit] mục #4 vào hàng chờ khối ceo (pending — TGĐ duyệt; hệ thống KHÔNG tự duyệt, KHÔNG tự gửi HĐTV)
+[run] -m agents.bks_audit --chain-alert -> exit 0
+    [done] chuỗi nhật ký nguyên vẹn (agent_action_log, plot_logs)
+[run] -m pipelines.store --verify-log -> exit 0
+    [ok] chuỗi nguyên vẹn (13 dòng)
+UPGRADE OK
+
+=== MỌI bước jobs.json bằng login svc_job THẬT (DB up2a sau nâng cấp; bỏ crawl/backup/drill) — tools/jobs_svc.py rc=0
+SKIP intel: -m crawler.intel --run
+     rc=0 intel: scripts/intel_bulletin.py --period day --suggest  
+SKIP red_alert_sweep: -m crawler.intel --run
+     rc=0 red_alert_sweep: -m pipelines.intel_alert --run  
+     rc=1 red_alert_sweep: -m pipelines.red_alert --deliver  
+SKIP channel_scan: -m crawler.collect
+     rc=1 channel_scan: -m agents.ra_kenh --scan-auto  
+     rc=0 hdtv_month: -m agents.hdtv_report --month prev --submit  
+     rc=2 vt_weather: -m agents.vt_thoitiet --digest --fetch --submit  
+     rc=0 vt_harvest: -m agents.vt_thuhoach --submit  
+     rc=1 webhook_health: scripts/webhook_probe.py  
+     rc=0 red_alert_escalate: -m pipelines.red_alert --escalate  
+     rc=1 anchor_build: -m pipelines.anchor --build  
+     rc=0 legal_updates: -m pipelines.legal_updates --submit  
+     rc=0 sales_sla: -m agents.sales_director --run  
+     rc=0 b2b_followups: -m agents.kd_quote --followups  
+     rc=0 order_watch: -m agents.kd_orders --watch  
+     rc=0 dealer_price_watch: -m agents.kd_price --dealer-watch  
+     rc=0 ceo_promo: -m agents.ceo_promo  
+     rc=0 intel_keywords: scripts/intel_weekly.py --suggest-keywords  
+     rc=0 ceo_weekly: -m pipelines.cockpit --collect --period week  
+     rc=0 ceo_weekly: -m agents.ceo_report --period week --submit  
+     rc=0 invoice_batch: -m agents.acc_invoice --batch  
+     rc=1 content_daily: -m pipelines.content --daily  
+SKIP backup: scripts/db_backup.py
+SKIP restore_drill: scripts/db_restore_drill.py
+SKIP dr_drill: scripts/dr_drill.py
+     rc=0 kpi_snapshot: scripts/ops_monthly.py --snapshot  
+     rc=0 health_bulletin: scripts/health_bulletin.py  
+     rc=0 ops_monthly: scripts/ops_monthly.py --month prev  
+     rc=0 garden_remind: -m agents.garden_director --remind --submit  
+PRIV rc=1 intel_weekly: scripts/intel_weekly.py --out-dir data/reports  
+        [err] lỗi DB: InsufficientPrivilege
+     rc=0 listing_watch: -m agents.kd_listing --run  
+     rc=0 price_watch: -m agents.kd_price --run  
+     rc=0 ceo_audit: -m agents.ceo_audit --report  
+     rc=0 chain_watch: -m agents.bks_audit --chain-alert  
+     rc=0 production_week: -m pipelines.production bulletin --period week --out-dir data/reports  
+     rc=0 production_month: -m pipelines.production bulletin --period month --out-dir data/reports  
+dọn report sinh trong lượt: ['ceo-2026-W42.md', 'ceo-audit-2026-10-20.md', 'health-2026-10-20.md', 'intel-bulletin-day-2026-10-20.md', 'sx-bantin-thang-2026-10-20.md', 'sx-bantin-tuan-2026-10-20.md', 'sx-canhan-2026-10-20.md', 'van-hanh-2026-09.md']

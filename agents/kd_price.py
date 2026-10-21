@@ -107,7 +107,11 @@ SEVERITY = {"below_floor": "S1", "negative_margin": "S1",
             "list_deviation": "S2", "listing_promo_over_cap": "S2",
             "promo_banned": "S1", "promo_below_floor": "S1",
             "promo_negative_margin": "S1", "promo_stacked": "S2",
-            "promo_over_cap": "S2", "promo_unverifiable": "S2"}
+            "promo_over_cap": "S2", "promo_unverifiable": "S2",
+            # C08: INFO như `no_cogs` — KHÔNG đẩy hàng sales (suite kd_a5
+            # đóng băng: thiếu giá vốn không phải phát hiện), CHỈ mục
+            # finance `promo_loss` (finance_items đọc mọi mức).
+            "promo_margin_unknown": "INFO"}
 KIND_LABELS = {
     "below_floor": "giá bán thực trên sàn dưới giá sàn golden",
     "negative_margin": "biên ước tính âm theo giá vốn đã duyệt",
@@ -118,7 +122,16 @@ KIND_LABELS = {
     "promo_negative_margin": "khuyến mãi dự kiến làm biên ước tính âm",
     "promo_stacked": "khuyến mãi chồng nhau vượt số cho phép",
     "promo_over_cap": "khuyến mãi dự kiến vượt trần chiết khấu",
-    "promo_unverifiable": "khuyến mãi không kiểm được (thiếu giá golden)"}
+    "promo_unverifiable": "khuyến mãi không kiểm được (thiếu giá golden)",
+    "promo_margin_unknown": ("khuyến mãi KHÔNG tính được biên (thiếu giá vốn "
+                             "đã duyệt/tỷ lệ thực nhận) — không kết luận "
+                             "không lỗ")}
+# Đợt hợp đồng C08 (finance-04.2, PL01 Tài chính "chặn khuyến mãi bị lỗ",
+# người duyệt GĐ tài chính): KM lỗ / không tính được biên → THÊM 1 mục khối
+# finance (`promo_loss`) ngoài mục khối sales hiện có (KM do GĐ bán hàng
+# quyết — phối hợp). Agent không đổi giá/KM.
+FINANCE_KINDS = ("promo_negative_margin", "promo_margin_unknown")
+FIN_BLOCK, FIN_OT = "finance", "promo_loss"
 PROMO_FINDINGS = frozenset(k for k in SEVERITY if k.startswith("promo_"))
 V33_DUP = {"list_deviation": "price_mismatch"}
 NO_AUTO = ("Agent KHÔNG tự đổi giá/khuyến mãi — GĐ bán hàng duyệt, MXH"
@@ -560,7 +573,11 @@ def check_promos(rows: list[dict], golden_prices: dict, readiness: dict,
             if price < floor:
                 add("promo_below_floor", {
                     "floor_approved": g["floor"]["approved"]})
-            if cost is not None and _margin(after, net_ratio[ch], cost) < 0:
+            if cost is None or ch not in net_ratio:
+                add("promo_margin_unknown", {
+                    "has_cogs": cost is not None,
+                    "has_net_ratio": ch in net_ratio})
+            elif _margin(after, net_ratio[ch], cost) < 0:
                 add("promo_negative_margin", {
                     "cogs": cost, "net_ratio": str(net_ratio[ch]),
                     "margin": _margin(after, net_ratio[ch], cost)})
@@ -689,6 +706,49 @@ def to_items(findings: list[dict], cfg: dict) -> list[dict]:
 
 # ---------------------------------------------------------------- đọc DB (SELECT)
 
+def internal_promos(conn, today: date, horizon_days: int) -> list[dict]:
+    """KM NỘI BỘ đã duyệt (`price_list` kind promo, approved_by có) còn hiệu
+    lực trong cửa sổ — kiểm KỂ CẢ khi không có CSV `--plan` (C08: không âm
+    thầm bỏ kiểm khi đã có dữ liệu nội bộ)."""
+    horizon = today + timedelta(days=horizon_days)
+    out = []
+    for pid, sku, ch, price, vf, vt, rid in conn.execute(
+            "select program_id, sku_key, channel, price_vnd, valid_from,"
+            " valid_to, id from price_list where kind = 'promo' and"
+            " approved_by is not null and valid_from <= %s and (valid_to is"
+            " null or valid_to > %s) order by id", (horizon, today)):
+        out.append({"row_no": None, "program_id": pid or f"PL-{rid}",
+                    "channel": ch, "sku_key": sku, "kind": "giam_gia",
+                    "start": vf, "end": (vt - timedelta(days=1)) if vt
+                    else horizon, "pct": None, "price": int(price),
+                    "event": None, "event_date": None, "source": "price_list"})
+    return out
+
+
+def merge_plan(plan_rows, internal: list[dict]) -> list[dict]:
+    """CSV kế hoạch + KM nội bộ đã duyệt; trùng (program_id, kênh, SKU) →
+    giữ dòng CSV."""
+    rows = list(plan_rows or [])
+    have = {(r["program_id"], r["channel"], r["sku_key"]) for r in rows}
+    return rows + [r for r in internal if (r["program_id"], r["channel"],
+                                           r["sku_key"]) not in have]
+
+
+def finance_items(findings: list[dict]) -> list[dict]:
+    """Mục khối finance (`promo_loss`) cho KM lỗ / không tính được biên."""
+    out = []
+    for f in findings:
+        if f["kind"] not in FINANCE_KINDS:
+            continue
+        title, payload = payload_of(f)
+        out.append({"object_type": FIN_OT,
+                    "object_id": "fin:" + f["object_id"],
+                    "title": f"Khuyến mãi lỗ/không tính được biên — {title}",
+                    "payload": payload + " GĐ tài chính xem biên; quyết định "
+                    "KM vẫn thuộc GĐ bán hàng (mục khối sales cùng mã)."})
+    return out
+
+
 def promotable_set(conn) -> set:
     return {(k, ch) for k, ch in conn.execute(
         "select sku_key, channel from v_promotable")}
@@ -712,7 +772,9 @@ def analyze(conn, mapping: dict, watch: dict, net_ratio: dict, today: date,
     cogs = fetch_versions(conn)
     fl = check_listing_prices(rows, prices, cogs, net_ratio, watch, today,
                               readiness)
-    fp = check_promos(plan_rows or [], prices, readiness,
+    rows = merge_plan(plan_rows, internal_promos(conn, today,
+                                                 watch["lookahead_days"]))
+    fp = check_promos(rows, prices, readiness,
                       promotable_set(conn), cogs, net_ratio, watch, today)
     v33 = kl.open_v33_alerts(conn, tuple(V33_DUP.values()))
     mark_dups(fl, v33)
@@ -995,8 +1057,10 @@ def _main(args, ctx: dict) -> int:
                   " — KHÔNG ghi DB")
         else:
             n = kl.enqueue_new(conn, items, ctx["cfg"], seen, AGENT)
+            nf = enqueue_finance(conn, fs)
             conn.commit()     # đóng tx đọc (conn chia sẻ)
-            print(f"[run] đẩy {n} mục mới vào hàng duyệt khối {BLOCK}")
+            print(f"[run] đẩy {n} mục mới vào hàng duyệt khối {BLOCK}"
+                  f" · {nf} mục KM lỗ/không tính được biên khối {FIN_BLOCK}")
     except psycopg.Error as e:
         print(f"[error] lỗi DB: {_clean(_db_msg(e), 300)}", file=sys.stderr)
         return 2
@@ -1004,6 +1068,25 @@ def _main(args, ctx: dict) -> int:
         with suppress(Exception):
             conn.close()
     return 0
+
+
+def enqueue_finance(conn, findings: list[dict]) -> int:
+    seen = {(t, o) for t, o in conn.execute(
+        "select object_type, object_id from approval_queue where"
+        " object_type = %s", (FIN_OT,)).fetchall()}
+    n = 0
+    for it in finance_items(findings):
+        if (it["object_type"], it["object_id"]) in seen:
+            continue
+        try:
+            director.submit(conn, FIN_BLOCK, it["object_type"],
+                            it["object_id"], it["title"], it["payload"],
+                            AGENT)
+        except psycopg.errors.UniqueViolation:
+            continue
+        seen.add((it["object_type"], it["object_id"]))
+        n += 1
+    return n
 
 
 def _load(args) -> tuple[dict | None, list[str]]:

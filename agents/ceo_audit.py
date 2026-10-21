@@ -72,16 +72,40 @@ _DECISION_SQL = (
     "select decision from approvals where object_type = %s and object_id ="
     " %s order by id desc limit 1")
 _SNAP_SQL = (
-    "select distinct on (channel) id, channel, file_name from"
+    "select distinct on (channel) id, channel, file_name, imported_at from"
     " market_snapshots where export_kind = 'listing' order by channel,"
     " imported_at desc, id desc")
 _ROWS_SQL = (
     "select r.id, r.snapshot_id, r.row_no, r.channel, r.item_id,"
-    " r.seller_sku, r.sku_key, r.title from market_rows r where"
+    " r.seller_sku, r.sku_key, r.title, r.price_vnd,"
+    " r.raw ->> 'description' from market_rows r where"
     " r.snapshot_id = any(%s) order by r.channel, r.row_no, r.id")
 _LISTING_SQL = (
     "select id, text from content_drafts where content_type = 'listing' and"
     " sku = %s and channel = %s order by id")
+
+
+# Đợt hợp đồng C06 (ceo-04.1, PL01 Ban TGĐ "so ... GIÁ ... đang chạy với bản
+# đã duyệt"): giá `list` ĐÃ DUYỆT còn hiệu lực TẠI NGÀY chụp file (giờ VN)
+# — bản duyệt đã hết hiệu lực không dùng. Không có → không so được (không
+# kết luận khớp). Mô tả: chỉ khi file xuất có cột mô tả (`raw.description`);
+# file hiện tại chưa có cột → không so được (nguồn chưa cấp).
+_PRICE_SQL = (
+    "select price_vnd, id from price_list where sku_key = %s and channel ="
+    " %s and kind = 'list' and program_id is null and approved_by is not"
+    " null and valid_from <= %s and (valid_to is null or valid_to > %s)"
+    " order by valid_from desc, id desc limit 1")
+NOCMP = "khong_so_duoc"
+CHECK_CODES = (KHOP, LECH, NOCMP, THIEU)
+
+
+def _body(text: str) -> str:
+    """Thân bản duyệt (bỏ dòng tiêu đề đầu) — so mô tả."""
+    lines = (text or "").splitlines()
+    for i, ln in enumerate(lines):
+        if ln.strip():
+            return "\n".join(lines[i + 1:])
+    return ""
 
 
 def norm_title(s) -> str:
@@ -130,10 +154,13 @@ def collect(conn, cfg: dict | None = None) -> dict:
         else:
             items.append(dict(ref, code=_post_code(conn, p)))
     snaps = conn.execute(_SNAP_SQL).fetchall()
+    snap_day = {s[0]: s[3].astimezone(VN_TZ).date() for s in snaps}
     approved: dict[tuple, set | None] = {}
+    bodies: dict[tuple, set | None] = {}
+    checks = []
     if snaps:
         rcols = ("id", "snapshot_id", "row_no", "channel", "item_id",
-                 "seller_sku", "sku_key", "title")
+                 "seller_sku", "sku_key", "title", "price_vnd", "desc")
         for r in conn.execute(_ROWS_SQL, ([s[0] for s in snaps],)).fetchall():
             m = dict(zip(rcols, r))
             ref = " · ".join(x for x in (m["item_id"], m["seller_sku"]) if x)
@@ -153,12 +180,57 @@ def collect(conn, cfg: dict | None = None) -> dict:
             code = (THIEU if titles is None
                     else KHOP if norm_title(m["title"]) in titles else LECH)
             items.append(dict(it, code=code))
+            day = snap_day[m["snapshot_id"]]
+            pr = conn.execute(_PRICE_SQL, (*key, day, day)).fetchone()
+            if m["price_vnd"] is None or pr is None:
+                pc, why = NOCMP, ("file không có giá" if m["price_vnd"] is None
+                                  else "chưa có giá list ĐÃ DUYỆT hiệu lực")
+            else:
+                pc = KHOP if int(m["price_vnd"]) == int(pr[0]) else LECH
+                why = f"file {m['price_vnd']} / duyệt {pr[0]} (price_list #{pr[1]})"
+            if key not in bodies:
+                bodies[key] = {norm_title(_body(t)) for did, t in
+                               conn.execute(_LISTING_SQL, key).fetchall()
+                               if store.verify_publish(conn, did, t)} or None
+            if m["desc"] is None:
+                dc, dwhy = NOCMP, "file xuất chưa có cột mô tả (nguồn chưa cấp)"
+            elif bodies[key] is None:
+                dc, dwhy = THIEU, "không có bản duyệt còn hiệu lực"
+            else:
+                dc = KHOP if norm_title(m["desc"]) in bodies[key] else LECH
+                dwhy = ""
+            checks.append({"channel": m["channel"], "row_id": m["id"],
+                           "observed": day.isoformat(), "price": pc,
+                           "price_why": why, "desc": dc, "desc_why": dwhy})
     price = conn.execute(
         "select count(*) from market_alerts where kind = 'price_mismatch'"
         " and status = 'open'").fetchone()[0]
     return {"items": items, "removed": removed, "before": before,
             "snapshots": {s[1]: s[2] for s in snaps},
-            "price_alerts_open": price}
+            "price_alerts_open": price, "checks": checks}
+
+
+def check_lines(checks: list[dict], limit: int | None = SHOW) -> list[str]:
+    """C06 — giá & mô tả listing đang chạy so bản duyệt (THUẦN, tất định)."""
+    L = ["", "### Giá & mô tả listing đang chạy so bản đã duyệt", ""]
+    if not checks:
+        return L + ["- chưa có dữ liệu quan sát (file listing sàn chưa nạp)"]
+    for ch in sorted({c["channel"] for c in checks}):
+        mine = [c for c in checks if c["channel"] == ch]
+        cnt = {k: (sum(c["price"] == k for c in mine),
+                   sum(c["desc"] == k for c in mine)) for k in CHECK_CODES}
+        L.append(f"- {ch} (quan sát {max(c['observed'] for c in mine)}): giá "
+                 + " · ".join(f"{k} {cnt[k][0]}" for k in CHECK_CODES)
+                 + " | mô tả " + " · ".join(f"{k} {cnt[k][1]}"
+                                            for k in CHECK_CODES))
+    bad = sorted((c for c in checks if LECH in (c["price"], c["desc"])),
+                 key=lambda c: (c["channel"], c["row_id"]))
+    for c in bad if limit is None else bad[:limit]:
+        L.append(f"- [{c['channel']}] market_rows #{c['row_id']} — giá "
+                 f"{c['price']} ({c['price_why']}) · mô tả {c['desc']}")
+    nodesc = {c["desc_why"] for c in checks if c["desc"] == NOCMP}
+    L += [f"- Mô tả không so được: {w}" for w in sorted(nodesc)]
+    return L
 
 
 # ------------------------------------------------------------------ thuần
@@ -247,12 +319,15 @@ def render_section(data: dict, limit: int | None = SHOW,
           for f in shown] or ["- (không có phát hiện)"]
     if len(fs) > len(shown):
         L.append(f"- …và {len(fs) - len(shown)} (xem {report_name})")
+    if "checks" in data:                   # `collect` luôn đặt (C06)
+        L += check_lines(data["checks"], limit)
     L += ["", ("*Tính lại tại lúc audit từ bài đang đăng (file xuất tay) + "
                "listing sàn (file Seller Center) so với bản duyệt (sha256 "
-               "`approvals` / dòng đầu listing đã duyệt). GIỚI HẠN P1: chỉ so"
-               " tiêu đề listing — mô tả chưa có trong file xuất sàn; giá đối"
-               " chiếu ở cảnh báo price_mismatch. Agent chỉ báo — không "
-               "sửa/gỡ bài, không đổi listing.*")]
+               "`approvals` / dòng đầu listing đã duyệt); giá so giá list ĐÃ "
+               "DUYỆT còn hiệu lực ngày chụp file. GIỚI HẠN P1: mô tả chỉ so "
+               "khi file xuất có cột mô tả (chưa có → không so được). Agent "
+               "chỉ báo — không "
+               "sửa/gỡ bài, không đổi listing/giá/voucher.*")]
     return L
 
 

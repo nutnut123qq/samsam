@@ -740,3 +740,51 @@ def test_override_line_masks_pii_and_markdown():
     assert "0905123456" not in line
     for bad in ("](", "<b>", "`", "|"):
         assert bad not in line, bad
+
+
+# ------------------------------------------------ đợt hợp đồng: chain_watch
+
+def test_chain_alert_clean_tampered_dup_and_svc_job(db):
+    """PL01 Ban TGĐ 'báo khi nhật ký bị sửa': sạch → không cảnh báo; sửa 1
+    dòng → đúng 1 cảnh báo đỏ (thiếu người nhận → route_error, không im);
+    chạy lại cùng phát hiện → dup, không báo lặp; chạy bằng role svc_job
+    (login job lịch, không owner) vẫn kiểm + báo được."""
+    ids = _log(db, 4)
+    _plot_logs(db, 2)
+    c = TxConn(db)
+    r = ba.chain_alert(c, routing={})
+    assert r["findings"] == [] and r["alert_id"] is None
+    with db.transaction(force_rollback=True):
+        db.execute("set local session_replication_role = replica")
+        db.execute("update agent_action_log set detail = '{\"x\":1}' where"
+                   " id = %s", (ids[1],))
+        db.execute("set local session_replication_role = origin")
+        r = ba.chain_alert(c, routing={})
+        assert [f["code"] for f in r["findings"]] == ["chuoi_bi_sua"]
+        assert r["alert_id"] and r["routed"] is False and not r["dup"]
+        row = db.execute("select source_agent, route_error, detail from"
+                         " red_alerts where id = %s",
+                         (r["alert_id"],)).fetchone()
+        assert row[0] == ba.CHAIN_AGENT and row[1]
+        assert row[2]["by_code"]["chuoi_bi_sua"] == 1
+        assert ids[1] in row[2]["ids"]
+        r2 = ba.chain_alert(c, routing={})
+        assert r2["dup"] and r2["alert_id"] is None
+        n = db.execute("select count(*) from red_alerts where source_agent"
+                       " = %s", (ba.CHAIN_AGENT,)).fetchone()[0]
+        assert n == 1
+    with db.transaction(force_rollback=True):
+        db.execute("set local session_replication_role = replica")
+        db.execute("update agent_action_log set detail = '{\"y\":2}' where"
+                   " id = %s", (ids[2],))
+        db.execute("set local session_replication_role = origin")
+        db.execute("set local role svc_job")
+        r = ba.chain_alert(c, routing={})
+        assert r["alert_id"] and [f["code"] for f in r["findings"]] == [
+            "chuoi_bi_sua"]
+
+
+def test_chain_alert_cli_flags_exclusive():
+    with pytest.raises(SystemExit) as e:
+        ba.main(["--chain-alert", "--report"])
+    assert e.value.code == 2

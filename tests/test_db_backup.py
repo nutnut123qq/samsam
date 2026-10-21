@@ -26,7 +26,6 @@ N_TABLES = len(re.findall(
     r"^create table if not exists (\w+)",
     (Path(__file__).resolve().parent.parent / "docs" / "schema.sql")
     .read_text(encoding="utf-8"), re.MULTILINE))
-from dotenv import dotenv_values
 from psycopg import sql
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -355,8 +354,8 @@ def test_cloud_readme_drift_guard():
 def live():
     # dotenv_values (không load_dotenv): không nạp BACKUP_* của .env vào
     # os.environ cho cả phiên; env fixture setenv DATABASE_URL có teardown.
-    dsn = (os.environ.get("DATABASE_URL")
-           or dotenv_values(ROOT / ".env").get("DATABASE_URL"))
+    # Đợt hợp đồng P0: chỉ DSN test TƯỜNG MINH — không fallback .env.
+    dsn = os.environ.get("DATABASE_URL")
     if not dsn:
         pytest.skip("thiếu DATABASE_URL")
     try:

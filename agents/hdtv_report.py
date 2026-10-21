@@ -503,6 +503,11 @@ def main(argv=None, now=None) -> int:
     except ValueError:
         ap.error("--now sai định dạng ISO")
     period = a.month if a.month is not None else a.quarter
+    if period == "prev":
+        # Đợt hợp đồng C11: job tháng (deploy/onprem/jobs.json `hdtv_month`)
+        # = tháng vừa ĐÓNG theo giờ VN.
+        first = now.astimezone(VN_TZ).date().replace(day=1)
+        period = f"{(first - timedelta(days=1)):%Y-%m}"
     try:
         parse_period(period, now)
     except ValueError as e:
@@ -556,6 +561,13 @@ def main(argv=None, now=None) -> int:
                   file=sys.stderr)
             return 1
         kind_vi = "tháng" if pack["kind"] == "month" else "quý"
+        old = conn.execute("select id, status from approval_queue where"
+                           " object_type = %s and object_id = %s order by id"
+                           " desc limit 1", (OBJECT_TYPE, period)).fetchone()
+        if old is not None:      # C11: chạy lại lịch không nhân bản/không lỗi
+            print(f"[skipped] kỳ {period} đã có mục #{old[0]} ({old[1]}) — "
+                  "không nộp lại")
+            return 0
         try:
             qid = director.submit(
                 conn, "ceo", OBJECT_TYPE, object_id=period,

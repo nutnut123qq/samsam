@@ -5,10 +5,23 @@ v13.1: gateway FAIL-CLOSED khi không đọc được chi tiêu (trước đây 
 giữ hành vi "trong trần". Test cần DB down/trần tự monkeypatch `_connect`/
 `_month_spend`.
 v4.2: xóa env lớp LLM-check/red-team — test không bao giờ gọi LLM thật dù
-máy dev có đặt GUARDRAIL_LLM_MODEL/REDTEAM_MODEL."""
+máy dev có đặt GUARDRAIL_LLM_MODEL/REDTEAM_MODEL.
+Đợt hợp đồng P0: cổng DB test (`tests/_db_guard.py`) cài TRƯỚC mọi import dự
+án — không test nào kết nối DB production `samsam` (kể cả dotenv fallback,
+tiến trình con); DATABASE_URL tường minh → preflight DB đã dựng schema."""
+from tests import _db_guard
+
+_db_guard.install()
+
 import pytest
 
 from pipelines import auth, llm_gateway, rollout
+
+
+def pytest_sessionstart(session):
+    msg = _db_guard.preflight()
+    if msg:
+        pytest.exit(f"[db-guard] {msg}", returncode=4)
 
 
 class _ZeroSpendConn:

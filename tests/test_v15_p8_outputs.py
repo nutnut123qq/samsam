@@ -688,8 +688,9 @@ def test_p8_7_db_recounts_outputs_not_evidence(live):  # noqa: F811
               " feature_id in ('ceo-02.1', 'ceo-02.2', 'farming-02',"
               " 'farming-98') order by 1") == [("ceo-02.1", 2, [0, 1, 2, 3, 4]),
                            ("ceo-02.2", 1, [0, 1, 2, 3, 4]),
-                           # docx P2: + nguồn plot_log_gap
-                           ("farming-02", 2, [0, 1, 2, 3, 4]),
+                           # docx P2: + nguồn plot_log_gap; hợp đồng C02:
+                           # + sổ nhắc `garden_reminders` (FLIP có lý do)
+                           ("farming-02", 3, [0, 1, 2, 3, 4]),
                            ("farming-98", 0, [0, 1, 2, 3, 4])]
     fake = {"outputs": 999, "out_days": 9}
     # (1) chạy thử → có người duyệt: 0 đầu ra thật, bằng chứng khai 999/9 —

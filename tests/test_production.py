@@ -1129,7 +1129,8 @@ def test_bulletin_near_expiry_db(db, run, capsys, tmp_path):
     capsys.readouterr()
     assert run("bulletin", "--date", TODAY.isoformat()) == 0
     out = capsys.readouterr().out
-    sec = out.split(NEAR)[1]
+    # đợt hợp đồng C03: bản tin có thêm mục phiếu kiểm nghiệm SAU FEFO
+    sec = out.split(NEAR)[1].split("## Phiếu kiểm nghiệm lô")[0]
     assert [ln.split(" · ")[0] for ln in sec.splitlines()
             if ln.startswith("- ")] == ["- NE-OLD-1", "- NE-NOSTK-1",
                                         "- NE-OK-1"]

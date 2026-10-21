@@ -1,0 +1,30 @@
+# Probe cổng DB test — bản TRƯỚC sửa = snapshot working tree vòng 2 (fingerprint 113d6bf6…, scratchpad snap_g3, sha256 _db_guard.py 455cf99b…)
+# HEAD dda008969feef0fcbec8b0ba6f5fab363c813806 nhánh codex/contract-completion · fingerprint revision sau vá (34 file mới, trừ DONE+board) = 688ec3a2e79176f7b5f8ff075965b94a3396b2058f43f4cc12ce76a022afd91b
+# lệnh: env -u DATABASE_URL PYTHONPATH=D:/code/samsam python -I scratchpad/tools/g3_probe.py <_db_guard.py> · driver psycopg GIẢ, tiến trình con chỉ in tên DB, host 10.255.255.1 — KHÔNG kết nối DB nào (trừ 2 ca psycopg2 bản trước tới driver thật với host chết, không định tuyến)
+# exit code tiến trình probe: 0 (probe luôn exit 0; kết quả ở cột result) · PASS = hành vi an toàn, FAIL = lọt
+{"group": "G2", "case": "connect_empty", "result": "FAIL", "blocked": false, "fake_driver_calls": 1, "pw_in_msg": false}
+{"group": "G2", "case": "only_host", "result": "FAIL", "blocked": false, "fake_driver_calls": 1, "pw_in_msg": false}
+{"group": "G2", "case": "only_user", "result": "FAIL", "blocked": false, "fake_driver_calls": 1, "pw_in_msg": false}
+{"group": "G2", "case": "pguser_no_dbname", "result": "FAIL", "blocked": false, "fake_driver_calls": 1, "pw_in_msg": false}
+{"group": "G2", "case": "uri_samsam", "result": "PASS", "blocked": true, "fake_driver_calls": 0, "pw_in_msg": false}
+{"group": "G2", "case": "keyword_samsam", "result": "PASS", "blocked": true, "fake_driver_calls": 0, "pw_in_msg": false}
+{"group": "G2", "case": "kwargs_override_samsam", "result": "PASS", "blocked": true, "fake_driver_calls": 0, "pw_in_msg": false}
+{"group": "G2", "case": "pgdatabase_samsam", "result": "PASS", "blocked": true, "fake_driver_calls": 0, "pw_in_msg": false}
+{"group": "G2", "case": "explicit_test_db_ok", "result": "PASS", "blocked": false, "fake_driver_calls": 1, "pw_in_msg": false}
+{"group": "G2", "case": "pgdatabase_test_db_ok", "result": "PASS", "blocked": false, "fake_driver_calls": 1, "pw_in_msg": false}
+{"group": "G2", "case": "psycopg2_empty", "result": "FAIL", "blocked": false, "reached_driver": true}
+{"group": "G2", "case": "psycopg2_database_kw_samsam", "result": "FAIL", "blocked": false, "reached_driver": true}
+{"group": "G1", "case": "no_env_parent_changed_to_samsam", "result": "FAIL", "blocked": false, "child_spawned": 1, "child_out": "'samsam' False", "returncode": 0, "os_environ_unchanged": true, "caller_env_unchanged": true}
+{"group": "G1", "case": "env_None_parent_changed_to_samsam", "result": "FAIL", "blocked": false, "child_spawned": 1, "child_out": "'samsam' False", "returncode": 0, "os_environ_unchanged": true, "caller_env_unchanged": true}
+{"group": "G1", "case": "inherited_JOB_DSN_samsam", "result": "FAIL", "blocked": false, "child_spawned": 1, "child_out": "'samsam_contract_probe' True", "returncode": 0, "os_environ_unchanged": true, "caller_env_unchanged": true}
+{"group": "G1", "case": "inherited_PGDATABASE_samsam", "result": "FAIL", "blocked": false, "child_spawned": 1, "child_out": "'samsam_contract_probe' False", "returncode": 0, "os_environ_unchanged": true, "caller_env_unchanged": true}
+{"group": "G1", "case": "env_empty_dict_dsn_vars_blank", "result": "PASS", "blocked": false, "child_spawned": 1, "child_out": "", "returncode": 1, "os_environ_unchanged": true, "caller_env_unchanged": true}
+{"group": "G1", "case": "env_missing_dsn_no_dotenv_fallback", "result": "PASS", "blocked": false, "child_spawned": 1, "child_out": "'' True", "returncode": 0, "os_environ_unchanged": true, "caller_env_unchanged": true}
+{"group": "G1", "case": "valid_test_env_runs", "result": "PASS", "blocked": false, "child_spawned": 1, "child_out": "'samsam_contract_probe' False", "returncode": 0, "os_environ_unchanged": true, "caller_env_unchanged": true}
+{"group": "G3", "case": "undefined_table", "result": "FAIL", "returned": null, "non_select_sql": []}
+{"group": "G3", "case": "insufficient_privilege", "result": "FAIL", "returned": null, "non_select_sql": []}
+{"group": "G3", "case": "query_error", "result": "FAIL", "returned": null, "non_select_sql": []}
+{"group": "G3", "case": "connect_failed", "result": "FAIL", "returned": null, "non_select_sql": []}
+{"group": "G3", "case": "objects_missing", "result": "PASS", "returned": "DB test 'samsam_contract_probe' chưa dựng: chạy `python scripts/apply_schema.py --roles` ×2 + `python -m ingest.core_store` + `python -m ingest.golden_store` với DATABASE_URL này rồi chạy lại", "non_select_sql": []}
+{"group": "G3", "case": "ready_db_ok", "result": "PASS", "returned": null, "non_select_sql": []}
+SUMMARY pass=11 fail=14 guard=snap_g3

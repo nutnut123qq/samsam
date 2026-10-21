@@ -1,0 +1,41 @@
+# Nâng cấp dda0089 → revision cuối 8198996f98554a7718407347fd711129416c9803e2e852bd8c663c36d825d503 ×2 (DB mới samsam_contract_up, tạo lại)
+# ngày (client) 2026-10-20T12:42:15+07:00 · lệnh: python -I tools/upgrade_g.py · môi trường: máy dev, Postgres cục bộ
+
+DB samsam_contract_up: tạo mới (KHÔNG phải samsam)
+áp schema/roles baseline dda0089: ok
+[run] -m ingest.core_store -> exit 0
+[run] -m ingest.golden_store -> exit 0
+[run] -m pipelines.rollout --seed --by Owner Triển Khai -> exit 0
+trước: 94 bảng, 542 dòng, đuôi log [(4, '2ef03ab84e97')], 3649 quyền, 73 mục rollout
+[run] -m pipelines.store --verify-log -> exit 0
+   [ok] chuỗi nguyên vẹn (2 dòng)
+[run] scripts/apply_schema.py --roles -> exit 0
+[run] scripts/apply_schema.py --roles -> exit 0
+sau ×2: 94 bảng, 542 dòng, đuôi log [(4, '2ef03ab84e97')]
+bảng mất: [] | bảng mới: [] | dòng đổi: không
+quyền THÊM: [('svc_job', 'audit_runs(id)', 'SELECT'), ('svc_job', 'audit_runs(kind)', 'SELECT'), ('svc_job', 'audit_runs(params)', 'SELECT'), ('svc_job', 'function verify_action_log', 'EXECUTE')]
+quyền BỚT: []
+approvals / lô / QR / backup / KPI cũ+live giữ nguyên
+[run] -m pipelines.store --verify-log -> exit 0
+   [ok] chuỗi nguyên vẹn (2 dòng)
+[run] -m agents.garden_director --verify -> exit 0
+   [verify] OK — chuỗi nhật ký nguyên vẹn
+[run] -m pipelines.rollout --seed --by Owner Triển Khai -> exit 0
+rollout --seed lại: 73 mục, giai đoạn không đổi (không tự công nhận): ['chay_thu']
+intel-02 count_spec có luật counterfeit: True
+R1 sales gọi record_lot_intake tên agent: InsufficientPrivilege
+R2 sales thu hồi QR tên mình: InsufficientPrivilege
+svc_job verify_action_log: 0 vấn đề
+svc_job đọc audit_runs.report_sha256: InsufficientPrivilege
+svc_job UPDATE audit_runs: InsufficientPrivilege
+svc_job UPDATE red_alerts: InsufficientPrivilege
+[run] -m agents.bks_audit --chain-alert -> exit 0
+    [done] chuỗi nhật ký nguyên vẹn (agent_action_log, plot_logs)
+[run] -m agents.bks_audit --chain-alert -> exit 1
+    ['[ALERT] 1 phát hiện chuỗi nhật ký · cảnh báo đỏ #2 — CHƯA thông báo được người nhận']
+[run] -m agents.bks_audit --chain-alert -> exit 1
+    ['[ALERT] 1 phát hiện chuỗi nhật ký · đã báo trước đó (cùng phát hiện)']
+cảnh báo bks_chain_watch: 1 (chạy 2 lần, không báo lặp)
+UPGRADE OK (chuỗi log đã bị sửa có chủ đích ở bước probe — DB thử bỏ)
+
+EXIT 0
