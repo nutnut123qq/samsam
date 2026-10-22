@@ -1,4 +1,4 @@
-# Gói đầu vào và quyết định (đợt hợp đồng 20/10/2026)
+# Gói đầu vào và quyết định (đợt hợp đồng 20/10/2026; cập nhật đợt hoàn thiện 22/10/2026)
 
 Một bảng tập trung cho mọi việc cần NGƯỜI có thẩm quyền hoặc nhà cung cấp.
 Mỗi dòng: ai quyết/cấp → cần chính xác gì → phương án → khuyến nghị (lý do)
@@ -7,7 +7,7 @@ sau khi áp dụng. **Chưa trả lời ≠ đồng ý**: thiếu quyết địn
 mặc định an toàn (đã có trong code) và báo rõ. Agent/dev không điền tên người
 duyệt, số tiền, tỷ lệ, ngày ký hay chữ ký.
 
-Trạng thái chi tiết từng tính năng: `docs/handover/doi-chieu-docx.md` mục 4.
+Trạng thái chi tiết từng tính năng: `docs/handover/doi-chieu-docx.md` mục A (đợt hoàn thiện) + mục 4.
 Nghĩa vụ ngoài code: `docs/handover/so-nghia-vu-hop-dong.md`.
 
 ## A. Hai bên (đại diện hợp pháp TEDO + Sâm Sâm)
@@ -15,6 +15,8 @@ Nghĩa vụ ngoài code: `docs/handover/so-nghia-vu-hop-dong.md`.
 | Mã | Cần chính xác gì | Phương án | Khuyến nghị | Ảnh hưởng nếu chưa có | Nơi cấu hình | Bằng chứng | Kiểm sau áp dụng |
 |---|---|---|---|---|---|---|---|
 | D-HB-01 | Danh mục 89 mục (mỗi khối đủ số HĐ) | (1) chấp nhận ứng viên tách ở doi-chieu mục 1.2; (2) phân rã khác; (3) phụ lục điều chỉnh số | (1) — mỗi ứng viên có căn cứ chữ PL01, không thêm chức năng mới | Hồ sơ nghiệm thu không khớp số HĐ; không thể đề nghị nghiệm thu P1 "80 tính năng" | `data/contract_features.json` (thêm mục `<nhóm>.<n>`, giữ id cũ) → owner `rollout --seed` | Biên bản/phụ lục (PL01 mục 9) | `python -m pipelines.rollout --catalog` = 89 AI; `tong_hop` khớp từng khối |
+| D-HB-01 (cập nhật 22/10/2026) | **ĐÃ QUYẾT phạm vi: THEO DOCX** (user chốt) — danh mục chuẩn hóa 89 AI, đúng số từng khối | — | — | Không còn là blocker tổng phạm vi; ranh giới NỘI DUNG từng mục (cách tách dòng PL01) vẫn là đề xuất Bên A | `data/contract_features.json` (`da_thay_the` giữ truy vết id cũ) | Biên bản PL01 mục 9 cho nội dung từng mục | `rollout --catalog`: 89 AI, 9 khối khớp |
+| D-HB-02 (cập nhật 22/10/2026) | **ĐÃ QUYẾT: P1 80 / P2 9 theo chữ PL01** — 9 mục P2 = HĐTV, SEO sàn, YouTube dài, tra cứu R&D, tóm tắt R&D, cảnh báo thời tiết, cảnh báo sâu bệnh, dự báo sản lượng, cập nhật VBPL (không chuyển việc P1 sang P2) | — | — | — | như trên | như trên | `--catalog`: P1 80 / P2 9 |
 | D-HB-02 | Phân P1 80 / P2 9 (2 mục P2 chưa xác định) | tách dòng P2 sẵn có (farming-05 → 3; marketing-07 theo sàn) hoặc chuyển 2 mục khác sang P2 | tách dòng đã ghi "(P2)" — không chuyển việc P1 sang P2 để đóng đợt | Không chốt được phạm vi P1 | như D-HB-01 (`giai_doan`) | như D-HB-01 | `--catalog`: P1 80 / P2 9 |
 | D-HB-03 | Ngày ký HĐ, ngày bắt đầu vận hành thương mại (biên bản P1) | — | điền đúng văn bản | `rev_share` không tính năm hợp tác/phí; mốc PL01 mục 7 "chưa có ngày" | `data/rev_share.json` `ngay_ky_hop_dong`, `ngay_bat_dau_van_hanh` | HĐ đã ký; biên bản P1 | `python -m agents.rev_share --quarter <kỳ> --dry-run` có năm hợp tác |
 | D-HB-04 | Tỷ lệ phí vận hành, mức thưởng 3 bậc + cách cộng bậc, thời hạn xác định thưởng/quyết toán (PL02 mục 4–5) | — | điền đúng văn bản; ghi rõ "% phần vượt" từng bậc | Đối soát quý chỉ ra số đề xuất, không tính phí/thưởng | `data/rev_share.json` | PL02 đã ký | `rev_share --quarter … --dry-run` |
@@ -40,6 +42,8 @@ Nghĩa vụ ngoài code: `docs/handover/so-nghia-vu-hop-dong.md`.
 | D-KH-11 | GĐ bán hàng + Marketing | (C09) mức chiết khấu thử cho giá combo, kênh | `data/combo_price.json` | GIẢ ĐỊNH 5/10/15% → chỉ là nháp phương án | `python -m agents.combo_price --dry-run` |
 | D-KH-12 | GĐ sản xuất | (C10) kế hoạch sản xuất (SKU, số lượng, khung ngày) + gắn lô; (C03) phiếu kiểm nghiệm từng lô + thư mục kho `LOT_CERT_DIR` NGOÀI repo | `production plan-add/plan-link/cert` (người khối production) | bản tin hiện "THIẾU DỮ LIỆU" / "THIẾU phiếu" | `production bulletin`, `production cert-verify` |
 | D-KH-13 | GĐ vùng trồng | (C11) nguồn dự báo thời tiết (điều khoản nhà cung cấp) → `fetch.enabled` | cấu hình `agents/vt_thoitiet` | job `vt_weather` exit 2 BLOCKED | `python -m agents.vt_thoitiet --digest --fetch --submit` |
+| D-KH-14 | Quản lý AI (Bên B) | trần chi phí AI USD/tháng TỪNG TÍNH NĂNG (PL01 Cổng AI an toàn) + danh sách tắt khẩn | `data/llm_gateway.json` `feature_caps_usd`, `kill_features` (env `LLM_KILL_FEATURES`) | GIẢ ĐỊNH = trần agent mặc định 5 USD; vượt/trần 0/không đọc được chi tiêu → chặn | `tests/test_contract_finalize.py::test_feature_cap_*` + `llm_usage.feature_id` |
+| D-KH-15 | Quản lý MXH | từ khóa nhãn `nghi_hang_gia` (khách nghi hàng giả/nhái) | `data/social_rules.json` | từ khóa ĐỀ XUẤT dev soạn | nạp file comment thật → nhãn đúng |
 
 ## C. Bên B — ủy quyền và tài khoản (theo văn bản ủy quyền)
 
@@ -61,6 +65,7 @@ Nghĩa vụ ngoài code: `docs/handover/so-nghia-vu-hop-dong.md`.
 | D-PC-01 | Duyệt nhãn 50 ca red-team + danh sách từ `ngam_y_suc_khoe`; "đối tượng sử dụng" trùng hồ sơ công bố có được miễn không | `data/eval/redteam.jsonl`, `pipelines/guardrail.py` `_HEALTH_W`… | chặt, không miễn | `python scripts/redteam.py`, `tests/test_guardrail_implied.py` |
 | D-PC-02 | Severity/mode từng code guardrail | `data/guardrail_rules.json` | "chờ Pháp chế duyệt" | `tests/test_guardrail_v2.py` |
 | D-PC-03 | (a) OpenRouter có là "dịch vụ AI ở nước ngoài" theo HĐ Điều 12.1; (b) mở rộng bộ lọc câu hỏi sức khỏe chatbot (mệt mỏi, dị ứng, tên thuốc…) | `pipelines/llm_gateway.py` `_HEALTH_VI/_HEALTH_ASCII` | danh sách hiện tại | eval `kd_a1` + câu sức khỏe mới phải chuyển người |
+| D-PC-03 (cập nhật 22/10/2026) | (b) bộ lọc đã MỞ RỘNG trong code: triệu chứng/thể trạng/thuốc (mệt mỏi, dị ứng, kháng sinh, paracetamol, aspirin, metformin…) → chuyển người trước khi gọi AI; Pháp chế RÀ danh sách (thêm/bớt) — vẫn là danh sách từ, không bắt mọi diễn đạt. (a) vẫn chờ | `pipelines/llm_gateway.py` `_HEALTH_VI`/`_HEALTH_ASCII` | chặn rộng (lệch về chuyển người) | `tests/test_contract_finalize.py` (câu sức khỏe + đối chứng bán hàng) |
 | D-PC-04 | DPIA/TIA/DPA ký; bật giả lập persona | `data/sim_config.json` `dpia_signed`, `scripts/dpia_draft.py` | false → dry-run | `dpia_draft.py --check` |
 | D-PC-05 | Thời hạn lưu (retention) từng loại dữ liệu | `data/retention.json` | TTL null → không xóa, cảnh báo | `retention_purge.py --dry-run` |
 | D-PC-06 | Chính sách loader khi tính năng tắt (8 loader) | `data/loader_gate.json` | null + tắt → loader exit 2 | `pipelines.loader_gate --status` |
@@ -81,6 +86,9 @@ Nghĩa vụ ngoài code: `docs/handover/so-nghia-vu-hop-dong.md`.
 | D-DL-05 | Nhật ký/ảnh vườn thật, danh sách nhân viên vườn | `connectors.zalo_garden`, `garden_media` | gỡ EXIF/GPS |
 | D-DL-06 | (C04) mẫu tải lên hàng loạt (mass upload) THẬT của Shopee/TikTok Shop | `data/listing_export_map.json` (người sửa tiêu đề cột + `xac_minh_boi`) | so tiêu đề cột với mẫu; `listing_export --verify` |
 | D-DL-07 | (C06) file xuất listing Seller Center CÓ cột mô tả | `data/market_csv_map.json` + `market_csv` | `ceo_audit` mục giá & mô tả hết "không so được" |
+| D-DL-08 | Bên B (GĐ sản xuất) — danh mục 14 HỒ SƠ GỐC: mã, tên, thành phần, quy cách, số công bố, SKU golden ứng với hồ sơ, người xác nhận + căn cứ | `data/product_dossiers.json` `danh_muc_ho_so_goc`, `sku[].ho_so_goc` | `python -m ingest.product_dossiers --check` exit 2 (BLOCKED 0/14) |
+| D-DL-09 | GĐ bán hàng — giá `list` kênh `web` trong `price_list` ĐÃ duyệt (`golden_store --approve-price`) còn hiệu lực + `allowed_channels` gồm web trong golden; mô tả chuẩn listing kênh web được người duyệt (vá controller 22/10 F2: giá JSON không còn được dùng) | `price_list` (nạp từ `data/golden_skus.json` rồi người duyệt), hàng duyệt nội dung | `listing_export --website-feed`: hiện 0 SKU bán được (ghi ly_do) |
+| D-DL-10 | Bên B / owner website — định dạng xuất ĐƠN website (cột, trạng thái, mã đơn, không PII) để nhập về `orders`/đối soát | (chưa có adapter — không đoán) | nhập đơn web BLOCKED |
 
 ## F. Hạ tầng (Bên B — PL01 mục 8, PL02 mục 2)
 
@@ -92,6 +100,8 @@ Nghĩa vụ ngoài code: `docs/handover/so-nghia-vu-hop-dong.md`.
 | D-HT-04 | Lịch nghỉ/Tết, múi giờ VN | `data/rollout_config.json` `holidays`, `directors/sales.json` |
 | D-HT-05 | Rotation mật khẩu DB từng lộ trong lịch sử Git — **chưa có bằng chứng rotation**. Kế hoạch: tạo mật khẩu mới → cập nhật `.env`/biến dịch vụ trên server → kiểm kết nối từng dịch vụ → thu hồi mật khẩu cũ; rollback = giữ mật khẩu cũ tới khi mọi dịch vụ xanh. Không rewrite lịch sử Git như việc tiện tay | người quản trị DB Bên B thực hiện; ghi ngày + ai làm (không ghi secret) |
 | D-HT-06 | Diễn tập khôi phục 30/11/2026, 18/12/2026, sau đó mỗi quý — trên hạ tầng Bên B | `db_restore_drill.py` log trên server (Docker máy dev KHÔNG thay được) |
+| D-HT-07 | Máy giám sát NGOÀI server + kênh báo của máy đó (PL01 giám sát lỗi; server sập thì cảnh báo trong server không gửi được) | máy chạy `webhook_probe.py --url … --dry-run` theo lịch (runbook 10.6); thử tắt webhook → nhận báo |
+| D-HT-05 (cập nhật 22/10/2026) | Kiểm boolean: mật khẩu DB trong `.env` máy dev VẪN TRÙNG giá trị đã lộ trong lịch sử Git repo public — checklist rotation runbook 10.7 (quản trị viên làm, agent không đổi credential) | đăng nhập mật khẩu cũ bị từ chối; biên bản đổi (không ghi giá trị) |
 
 ## V. Lựa chọn nhà cung cấp — tiêu chí kỹ thuật cho người có thẩm quyền
 

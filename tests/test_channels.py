@@ -730,7 +730,9 @@ def _cli(monkeypatch, capsys, stdin: str, argv: list[str]):
 ])
 def test_suggest_san_output_clean(monkeypatch, capsys, bad):
     calls = []
-    monkeypatch.setattr("api.rag.answer", lambda q: calls.append(q) or {
+    # vá controller 22/10 (F1): gợi ý sàn gọi answer với mã sales-02
+    monkeypatch.setattr("api.rag.answer", lambda q, feature: calls.append(
+        (q, feature)) or {
         "answer": bad, "sources": ["https://samsamngoclinh.com/x"]})
     for channel in ch.SAN_CHANNELS:
         rc, out = _cli(monkeypatch, capsys, "shop có Zalo không",
@@ -744,7 +746,7 @@ def test_suggest_san_output_clean(monkeypatch, capsys, bad):
         assert "[GỢI Ý — NHÁP" in out
         assert ch.template("san_fallback") in out or \
             ch.template("san_handoff") in out
-    assert len(calls) == 2
+    assert len(calls) == 2 and {f for _q, f in calls} == {"sales-02"}
 
 
 def test_suggest_alcohol_template_no_answer_call(monkeypatch, capsys):
@@ -756,7 +758,7 @@ def test_suggest_alcohol_template_no_answer_call(monkeypatch, capsys):
 
 
 def test_suggest_buyer_phone_not_echoed(monkeypatch, capsys):
-    monkeypatch.setattr("api.rag.answer", lambda q: {
+    monkeypatch.setattr("api.rag.answer", lambda q, feature: {
         "answer": "Savina tuýp 12 viên: 159.000 đ.", "sources": []})
     rc, out = _cli(monkeypatch, capsys,
                    "Savina giá? gọi tôi 0905 123 456, an@gmail.com",
@@ -766,7 +768,7 @@ def test_suggest_buyer_phone_not_echoed(monkeypatch, capsys):
 
 
 def test_suggest_answer_raises_prints_san_handoff(monkeypatch, capsys):
-    def boom(q):
+    def boom(q, feature):
         raise RuntimeError("gateway chặn 0905123456")
     monkeypatch.setattr("api.rag.answer", boom)
     rc, out = _cli(monkeypatch, capsys, "giá Savina?",

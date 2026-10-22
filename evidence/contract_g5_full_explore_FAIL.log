@@ -1,0 +1,862 @@
+# Vá F1/F2 — LƯỢT KHÁM PHÁ THẤT BẠI (KHÔNG phải gate; revision 2fae3a8a…, DB samsam_contract_r5full): full đầu tiên 9 failed ở tests/test_kb_acl.py — test giả retrieve chưa nhận feature=; sau đó sửa test giả + chạy lại full
+# baseline commit 939aac9 · nhánh codex/contract-finalization · CHƯA commit
+# fingerprint TRƯỚC SỬA (snapshot scratchpad r5/before, 3 file mới, trừ DONE+board) = da55b0acb2f89f119bc6920accc3d3e481efc8051a1f37053a3d516126e0750b
+# fingerprint REVISION CUỐI (gate full/gates, 4 file mới, trừ DONE+board) = 9b2498af27a7006a13abdd9217c6048f8eeddefa4bcd925cc3abfd2dda16b9bd
+# lưu ý: probe/test 'sau sửa' + test bị ảnh hưởng chạy ở revision 2fae3a8a…337a5 — mã nguồn api/rag.py, connectors/channels.py, agents/listing_export.py GIỐNG revision cuối; sau đó chỉ đổi test giả tests/test_kb_acl.py (+feature=), thứ tự import tests/test_fix_san_feature.py
+# DB test riêng: samsam_contract_r5probe (KHÔNG samsam) · client AI GIẢ · OPENROUTER_API_KEY rỗng
+
+# Full pytest vá F1/F2 controller — ngày (client) 2026-10-22T14:34:45+07:00
+# HEAD 939aac992cf972198f231c11890ddfeb7d5bbca3 nhánh codex/contract-finalization · baseline 939aac9
+# fingerprint (index tạm, 4 file mới, trừ DONE+board, so 939aac9) = 2fae3a8aa2fd51021b877cbb7b0b294c9311572012bd5f364249e24d5f0337a5
+# Docker: 28.4.0
+## dựng DB mới samsam_contract_r5full: apply_schema --roles ×2 + core_store + golden_store
+  scripts/apply_schema.py --roles rc=0
+  scripts/apply_schema.py --roles rc=0
+  -m ingest.core_store rc=0
+  -m ingest.golden_store rc=0
+  mkdb rc=0
+# DB samsam_contract_r5full @ localhost (KHÔNG phải samsam)
+## lệnh: python -m pytest -q -ra -p no:cacheprovider
+........................................................................ [  1%]
+........................................................................ [  2%]
+........................................................................ [  3%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+........................................................................ [  6%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 12%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 15%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 33%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+.....F.FFFFFFFF......................................................... [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 45%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+........................................................................ [ 56%]
+........................................................................ [ 57%]
+........................................................................ [ 59%]
+........................................................................ [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 63%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+........................................................................ [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 72%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 78%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 88%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+........................................................................ [ 94%]
+........................................................................ [ 95%]
+........................................................................ [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+........................................................................ [ 99%]
+..............................                                           [100%]
+================================== FAILURES ===================================
+____________________ test_normal_question_still_retrieves _____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D8D43A78C0>
+
+    def test_normal_question_still_retrieves(monkeypatch):
+        seen = []
+        monkeypatch.setattr(rag, "retrieve", lambda q: seen.append(q) or [])
+>       r = rag.answer("Saphraton giá bao nhiêu?")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_kb_acl.py:143: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+question = 'Saphraton giá bao nhiêu?', history = []
+
+    def answer(question: str, history: list[dict] | None = None, *,
+               deadline: float | None = None, feature: str = FEATURE) -> dict:
+        """Trả lời câu hỏi kèm nguồn. Thiếu context/score thấp -> NO_DATA.
+    
+        `history` = các lượt Q&A trước (OpenAI-style, caller giới hạn 4 lượt
+        gần nhất). Có history -> rewrite câu hỏi thành standalone trước khi
+        retrieve (câu trần follow-up retrieve về score thấp -> NO_DATA giả),
+        còn prompt trả lời vẫn giữ câu hỏi gốc + history. Không truyền ->
+        y hệt 1-turn, không tốn thêm LLM call.
+    
+        v3.1 (W31.5): câu hỏi sức khỏe -> KHÔNG gọi LLM/embedding, trả NO_DATA
+        + handoff="health" (zalo nhánh NO_DATA gửi HANDOFF_TEXT chuyển người).
+        v3.9 (W39.4): câu hỏi về rượu (kể cả câu rewrite) -> NO_DATA +
+        handoff="alcohol", không gọi LLM/embed, không mời mua. Kênh khách luôn
+        retrieve corpus public — KHÔNG có tham số collection. Câu trả lời chứa
+        chuỗi >=9 chữ số không có trong ngữ cảnh (MST/SĐT bịa) -> NO_DATA.
+        v13.1 (F02): câu hỏi + lượt user của history qua `pii.scrub_user` trước
+        MỌI lời gọi AI; còn dấu hiệu PII -> NO_DATA + handoff="pii" (0 lời gọi);
+        câu rewrite cũng qua lọc sức khỏe. Gateway chặn (trần/kill/không đọc
+        được chi tiêu) -> GatewayBlocked lan ra caller (zalo/messenger/channels
+        chuyển người).
+        Vá controller 22/10 (F1): `feature` = mã tính năng nội bộ cho MỌI lời
+        gọi rewrite/embed/chat của lượt (mặc định sales-01 chatbot; gợi ý chat
+        sàn truyền sales-02) — ngoài `FEATURES` -> ValueError, 0 lời gọi."""
+        feature = _feature(feature)
+        if deadline is None:
+            deadline = DEADLINE.get()
+        if is_health_question(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+        if is_alcohol(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+        # v13.1 (F02): text KHÁCH gõ (câu hỏi + lượt user trong history) che
+        # tên/địa chỉ/SĐT/email TRƯỚC mọi lời gọi rewrite/embed/chat; câu hỏi
+        # còn dấu hiệu PII không che chắc -> chuyển người, 0 lời gọi AI. Lượt
+        # history còn dấu hiệu -> bỏ cả cặp hỏi/đáp khỏi ngữ cảnh gửi đi.
+        # Đối chiếu số (`_unverified_number`) vẫn dùng text GỐC — kiểm cục bộ,
+        # không gửi đi (giữ hành vi: số khách tự gõ được phép nhắc lại).
+        raw_turns = [question, *(m["content"] for m in history or []
+                                 if isinstance(m, dict)
+                                 and isinstance(m.get("content"), str))]
+        question, risky = scrub_user(question)
+        if risky:
+            return {"answer": NO_DATA, "sources": [], "handoff": "pii"}
+        history = _scrub_history(history)
+        search_q = question
+        if history:
+            dl = {} if deadline is None else {"deadline": deadline}
+            search_q = scrub_user(_standalone(question, history, **dl,
+                                              feature=feature)
+                                  or question)[0]
+            if is_alcohol(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+            if is_health_question(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+>       hits = (retrieve(search_q, feature=feature) if deadline is None
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                else retrieve(search_q, deadline=deadline, feature=feature))
+E       TypeError: test_normal_question_still_retrieves.<locals>.<lambda>() got an unexpected keyword argument 'feature'
+
+api\rag.py:442: TypeError
+_ test_fabricated_long_number_returns_no_data[M\xe3 s\u1ed1 doanh nghi\u1ec7p c\u1ee7a c\xf4ng ty l\xe0 0402021985.] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D8D43E5310>
+llm_text = 'Mã số doanh nghiệp của công ty là 0402021985.'
+
+    @pytest.mark.parametrize("llm_text", [
+        "Mã số doanh nghiệp của công ty là 0402021985.",
+        "MST: 0402021234",
+        "Hotline 0905123456 hoặc 0911222333.",  # 1 số thật + 1 số bịa
+    ])
+    def test_fabricated_long_number_returns_no_data(monkeypatch, llm_text):
+>       r = _answer_with(monkeypatch, llm_text)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_kb_acl.py:176: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_kb_acl.py:167: in _answer_with
+    return rag.answer(question, history=history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+question = 'Mã số thuế công ty?', history = []
+
+    def answer(question: str, history: list[dict] | None = None, *,
+               deadline: float | None = None, feature: str = FEATURE) -> dict:
+        """Trả lời câu hỏi kèm nguồn. Thiếu context/score thấp -> NO_DATA.
+    
+        `history` = các lượt Q&A trước (OpenAI-style, caller giới hạn 4 lượt
+        gần nhất). Có history -> rewrite câu hỏi thành standalone trước khi
+        retrieve (câu trần follow-up retrieve về score thấp -> NO_DATA giả),
+        còn prompt trả lời vẫn giữ câu hỏi gốc + history. Không truyền ->
+        y hệt 1-turn, không tốn thêm LLM call.
+    
+        v3.1 (W31.5): câu hỏi sức khỏe -> KHÔNG gọi LLM/embedding, trả NO_DATA
+        + handoff="health" (zalo nhánh NO_DATA gửi HANDOFF_TEXT chuyển người).
+        v3.9 (W39.4): câu hỏi về rượu (kể cả câu rewrite) -> NO_DATA +
+        handoff="alcohol", không gọi LLM/embed, không mời mua. Kênh khách luôn
+        retrieve corpus public — KHÔNG có tham số collection. Câu trả lời chứa
+        chuỗi >=9 chữ số không có trong ngữ cảnh (MST/SĐT bịa) -> NO_DATA.
+        v13.1 (F02): câu hỏi + lượt user của history qua `pii.scrub_user` trước
+        MỌI lời gọi AI; còn dấu hiệu PII -> NO_DATA + handoff="pii" (0 lời gọi);
+        câu rewrite cũng qua lọc sức khỏe. Gateway chặn (trần/kill/không đọc
+        được chi tiêu) -> GatewayBlocked lan ra caller (zalo/messenger/channels
+        chuyển người).
+        Vá controller 22/10 (F1): `feature` = mã tính năng nội bộ cho MỌI lời
+        gọi rewrite/embed/chat của lượt (mặc định sales-01 chatbot; gợi ý chat
+        sàn truyền sales-02) — ngoài `FEATURES` -> ValueError, 0 lời gọi."""
+        feature = _feature(feature)
+        if deadline is None:
+            deadline = DEADLINE.get()
+        if is_health_question(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+        if is_alcohol(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+        # v13.1 (F02): text KHÁCH gõ (câu hỏi + lượt user trong history) che
+        # tên/địa chỉ/SĐT/email TRƯỚC mọi lời gọi rewrite/embed/chat; câu hỏi
+        # còn dấu hiệu PII không che chắc -> chuyển người, 0 lời gọi AI. Lượt
+        # history còn dấu hiệu -> bỏ cả cặp hỏi/đáp khỏi ngữ cảnh gửi đi.
+        # Đối chiếu số (`_unverified_number`) vẫn dùng text GỐC — kiểm cục bộ,
+        # không gửi đi (giữ hành vi: số khách tự gõ được phép nhắc lại).
+        raw_turns = [question, *(m["content"] for m in history or []
+                                 if isinstance(m, dict)
+                                 and isinstance(m.get("content"), str))]
+        question, risky = scrub_user(question)
+        if risky:
+            return {"answer": NO_DATA, "sources": [], "handoff": "pii"}
+        history = _scrub_history(history)
+        search_q = question
+        if history:
+            dl = {} if deadline is None else {"deadline": deadline}
+            search_q = scrub_user(_standalone(question, history, **dl,
+                                              feature=feature)
+                                  or question)[0]
+            if is_alcohol(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+            if is_health_question(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+>       hits = (retrieve(search_q, feature=feature) if deadline is None
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                else retrieve(search_q, deadline=deadline, feature=feature))
+E       TypeError: _answer_with.<locals>.<lambda>() got an unexpected keyword argument 'feature'
+
+api\rag.py:442: TypeError
+________ test_fabricated_long_number_returns_no_data[MST: 0402021234] _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D8D4362BD0>
+llm_text = 'MST: 0402021234'
+
+    @pytest.mark.parametrize("llm_text", [
+        "Mã số doanh nghiệp của công ty là 0402021985.",
+        "MST: 0402021234",
+        "Hotline 0905123456 hoặc 0911222333.",  # 1 số thật + 1 số bịa
+    ])
+    def test_fabricated_long_number_returns_no_data(monkeypatch, llm_text):
+>       r = _answer_with(monkeypatch, llm_text)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_kb_acl.py:176: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_kb_acl.py:167: in _answer_with
+    return rag.answer(question, history=history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+question = 'Mã số thuế công ty?', history = []
+
+    def answer(question: str, history: list[dict] | None = None, *,
+               deadline: float | None = None, feature: str = FEATURE) -> dict:
+        """Trả lời câu hỏi kèm nguồn. Thiếu context/score thấp -> NO_DATA.
+    
+        `history` = các lượt Q&A trước (OpenAI-style, caller giới hạn 4 lượt
+        gần nhất). Có history -> rewrite câu hỏi thành standalone trước khi
+        retrieve (câu trần follow-up retrieve về score thấp -> NO_DATA giả),
+        còn prompt trả lời vẫn giữ câu hỏi gốc + history. Không truyền ->
+        y hệt 1-turn, không tốn thêm LLM call.
+    
+        v3.1 (W31.5): câu hỏi sức khỏe -> KHÔNG gọi LLM/embedding, trả NO_DATA
+        + handoff="health" (zalo nhánh NO_DATA gửi HANDOFF_TEXT chuyển người).
+        v3.9 (W39.4): câu hỏi về rượu (kể cả câu rewrite) -> NO_DATA +
+        handoff="alcohol", không gọi LLM/embed, không mời mua. Kênh khách luôn
+        retrieve corpus public — KHÔNG có tham số collection. Câu trả lời chứa
+        chuỗi >=9 chữ số không có trong ngữ cảnh (MST/SĐT bịa) -> NO_DATA.
+        v13.1 (F02): câu hỏi + lượt user của history qua `pii.scrub_user` trước
+        MỌI lời gọi AI; còn dấu hiệu PII -> NO_DATA + handoff="pii" (0 lời gọi);
+        câu rewrite cũng qua lọc sức khỏe. Gateway chặn (trần/kill/không đọc
+        được chi tiêu) -> GatewayBlocked lan ra caller (zalo/messenger/channels
+        chuyển người).
+        Vá controller 22/10 (F1): `feature` = mã tính năng nội bộ cho MỌI lời
+        gọi rewrite/embed/chat của lượt (mặc định sales-01 chatbot; gợi ý chat
+        sàn truyền sales-02) — ngoài `FEATURES` -> ValueError, 0 lời gọi."""
+        feature = _feature(feature)
+        if deadline is None:
+            deadline = DEADLINE.get()
+        if is_health_question(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+        if is_alcohol(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+        # v13.1 (F02): text KHÁCH gõ (câu hỏi + lượt user trong history) che
+        # tên/địa chỉ/SĐT/email TRƯỚC mọi lời gọi rewrite/embed/chat; câu hỏi
+        # còn dấu hiệu PII không che chắc -> chuyển người, 0 lời gọi AI. Lượt
+        # history còn dấu hiệu -> bỏ cả cặp hỏi/đáp khỏi ngữ cảnh gửi đi.
+        # Đối chiếu số (`_unverified_number`) vẫn dùng text GỐC — kiểm cục bộ,
+        # không gửi đi (giữ hành vi: số khách tự gõ được phép nhắc lại).
+        raw_turns = [question, *(m["content"] for m in history or []
+                                 if isinstance(m, dict)
+                                 and isinstance(m.get("content"), str))]
+        question, risky = scrub_user(question)
+        if risky:
+            return {"answer": NO_DATA, "sources": [], "handoff": "pii"}
+        history = _scrub_history(history)
+        search_q = question
+        if history:
+            dl = {} if deadline is None else {"deadline": deadline}
+            search_q = scrub_user(_standalone(question, history, **dl,
+                                              feature=feature)
+                                  or question)[0]
+            if is_alcohol(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+            if is_health_question(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+>       hits = (retrieve(search_q, feature=feature) if deadline is None
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                else retrieve(search_q, deadline=deadline, feature=feature))
+E       TypeError: _answer_with.<locals>.<lambda>() got an unexpected keyword argument 'feature'
+
+api\rag.py:442: TypeError
+_ test_fabricated_long_number_returns_no_data[Hotline 0905123456 ho\u1eb7c 0911222333.] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D8D7B75160>
+llm_text = 'Hotline 0905123456 hoặc 0911222333.'
+
+    @pytest.mark.parametrize("llm_text", [
+        "Mã số doanh nghiệp của công ty là 0402021985.",
+        "MST: 0402021234",
+        "Hotline 0905123456 hoặc 0911222333.",  # 1 số thật + 1 số bịa
+    ])
+    def test_fabricated_long_number_returns_no_data(monkeypatch, llm_text):
+>       r = _answer_with(monkeypatch, llm_text)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_kb_acl.py:176: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_kb_acl.py:167: in _answer_with
+    return rag.answer(question, history=history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+question = 'Mã số thuế công ty?', history = []
+
+    def answer(question: str, history: list[dict] | None = None, *,
+               deadline: float | None = None, feature: str = FEATURE) -> dict:
+        """Trả lời câu hỏi kèm nguồn. Thiếu context/score thấp -> NO_DATA.
+    
+        `history` = các lượt Q&A trước (OpenAI-style, caller giới hạn 4 lượt
+        gần nhất). Có history -> rewrite câu hỏi thành standalone trước khi
+        retrieve (câu trần follow-up retrieve về score thấp -> NO_DATA giả),
+        còn prompt trả lời vẫn giữ câu hỏi gốc + history. Không truyền ->
+        y hệt 1-turn, không tốn thêm LLM call.
+    
+        v3.1 (W31.5): câu hỏi sức khỏe -> KHÔNG gọi LLM/embedding, trả NO_DATA
+        + handoff="health" (zalo nhánh NO_DATA gửi HANDOFF_TEXT chuyển người).
+        v3.9 (W39.4): câu hỏi về rượu (kể cả câu rewrite) -> NO_DATA +
+        handoff="alcohol", không gọi LLM/embed, không mời mua. Kênh khách luôn
+        retrieve corpus public — KHÔNG có tham số collection. Câu trả lời chứa
+        chuỗi >=9 chữ số không có trong ngữ cảnh (MST/SĐT bịa) -> NO_DATA.
+        v13.1 (F02): câu hỏi + lượt user của history qua `pii.scrub_user` trước
+        MỌI lời gọi AI; còn dấu hiệu PII -> NO_DATA + handoff="pii" (0 lời gọi);
+        câu rewrite cũng qua lọc sức khỏe. Gateway chặn (trần/kill/không đọc
+        được chi tiêu) -> GatewayBlocked lan ra caller (zalo/messenger/channels
+        chuyển người).
+        Vá controller 22/10 (F1): `feature` = mã tính năng nội bộ cho MỌI lời
+        gọi rewrite/embed/chat của lượt (mặc định sales-01 chatbot; gợi ý chat
+        sàn truyền sales-02) — ngoài `FEATURES` -> ValueError, 0 lời gọi."""
+        feature = _feature(feature)
+        if deadline is None:
+            deadline = DEADLINE.get()
+        if is_health_question(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+        if is_alcohol(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+        # v13.1 (F02): text KHÁCH gõ (câu hỏi + lượt user trong history) che
+        # tên/địa chỉ/SĐT/email TRƯỚC mọi lời gọi rewrite/embed/chat; câu hỏi
+        # còn dấu hiệu PII không che chắc -> chuyển người, 0 lời gọi AI. Lượt
+        # history còn dấu hiệu -> bỏ cả cặp hỏi/đáp khỏi ngữ cảnh gửi đi.
+        # Đối chiếu số (`_unverified_number`) vẫn dùng text GỐC — kiểm cục bộ,
+        # không gửi đi (giữ hành vi: số khách tự gõ được phép nhắc lại).
+        raw_turns = [question, *(m["content"] for m in history or []
+                                 if isinstance(m, dict)
+                                 and isinstance(m.get("content"), str))]
+        question, risky = scrub_user(question)
+        if risky:
+            return {"answer": NO_DATA, "sources": [], "handoff": "pii"}
+        history = _scrub_history(history)
+        search_q = question
+        if history:
+            dl = {} if deadline is None else {"deadline": deadline}
+            search_q = scrub_user(_standalone(question, history, **dl,
+                                              feature=feature)
+                                  or question)[0]
+            if is_alcohol(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+            if is_health_question(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+>       hits = (retrieve(search_q, feature=feature) if deadline is None
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                else retrieve(search_q, deadline=deadline, feature=feature))
+E       TypeError: _answer_with.<locals>.<lambda>() got an unexpected keyword argument 'feature'
+
+api\rag.py:442: TypeError
+__________ test_grounded_numbers_pass_through[Hotline: 0905.123.456] __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D8D7B75040>
+llm_text = 'Hotline: 0905.123.456'
+
+    @pytest.mark.parametrize("llm_text", [
+        "Hotline: 0905.123.456",
+        "Hotline: 0905123456",  # ngữ cảnh viết có chấm -> vẫn có nguồn
+        "Saphraton hộp 80 viên: 1.000.000 đ; gói Saphraton 20V: 236.000 đ",
+        "Công ty TNHH Sâm Sâm.",
+    ])
+    def test_grounded_numbers_pass_through(monkeypatch, llm_text):
+>       r = _answer_with(monkeypatch, llm_text)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_kb_acl.py:187: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_kb_acl.py:167: in _answer_with
+    return rag.answer(question, history=history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+question = 'Mã số thuế công ty?', history = []
+
+    def answer(question: str, history: list[dict] | None = None, *,
+               deadline: float | None = None, feature: str = FEATURE) -> dict:
+        """Trả lời câu hỏi kèm nguồn. Thiếu context/score thấp -> NO_DATA.
+    
+        `history` = các lượt Q&A trước (OpenAI-style, caller giới hạn 4 lượt
+        gần nhất). Có history -> rewrite câu hỏi thành standalone trước khi
+        retrieve (câu trần follow-up retrieve về score thấp -> NO_DATA giả),
+        còn prompt trả lời vẫn giữ câu hỏi gốc + history. Không truyền ->
+        y hệt 1-turn, không tốn thêm LLM call.
+    
+        v3.1 (W31.5): câu hỏi sức khỏe -> KHÔNG gọi LLM/embedding, trả NO_DATA
+        + handoff="health" (zalo nhánh NO_DATA gửi HANDOFF_TEXT chuyển người).
+        v3.9 (W39.4): câu hỏi về rượu (kể cả câu rewrite) -> NO_DATA +
+        handoff="alcohol", không gọi LLM/embed, không mời mua. Kênh khách luôn
+        retrieve corpus public — KHÔNG có tham số collection. Câu trả lời chứa
+        chuỗi >=9 chữ số không có trong ngữ cảnh (MST/SĐT bịa) -> NO_DATA.
+        v13.1 (F02): câu hỏi + lượt user của history qua `pii.scrub_user` trước
+        MỌI lời gọi AI; còn dấu hiệu PII -> NO_DATA + handoff="pii" (0 lời gọi);
+        câu rewrite cũng qua lọc sức khỏe. Gateway chặn (trần/kill/không đọc
+        được chi tiêu) -> GatewayBlocked lan ra caller (zalo/messenger/channels
+        chuyển người).
+        Vá controller 22/10 (F1): `feature` = mã tính năng nội bộ cho MỌI lời
+        gọi rewrite/embed/chat của lượt (mặc định sales-01 chatbot; gợi ý chat
+        sàn truyền sales-02) — ngoài `FEATURES` -> ValueError, 0 lời gọi."""
+        feature = _feature(feature)
+        if deadline is None:
+            deadline = DEADLINE.get()
+        if is_health_question(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+        if is_alcohol(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+        # v13.1 (F02): text KHÁCH gõ (câu hỏi + lượt user trong history) che
+        # tên/địa chỉ/SĐT/email TRƯỚC mọi lời gọi rewrite/embed/chat; câu hỏi
+        # còn dấu hiệu PII không che chắc -> chuyển người, 0 lời gọi AI. Lượt
+        # history còn dấu hiệu -> bỏ cả cặp hỏi/đáp khỏi ngữ cảnh gửi đi.
+        # Đối chiếu số (`_unverified_number`) vẫn dùng text GỐC — kiểm cục bộ,
+        # không gửi đi (giữ hành vi: số khách tự gõ được phép nhắc lại).
+        raw_turns = [question, *(m["content"] for m in history or []
+                                 if isinstance(m, dict)
+                                 and isinstance(m.get("content"), str))]
+        question, risky = scrub_user(question)
+        if risky:
+            return {"answer": NO_DATA, "sources": [], "handoff": "pii"}
+        history = _scrub_history(history)
+        search_q = question
+        if history:
+            dl = {} if deadline is None else {"deadline": deadline}
+            search_q = scrub_user(_standalone(question, history, **dl,
+                                              feature=feature)
+                                  or question)[0]
+            if is_alcohol(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+            if is_health_question(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+>       hits = (retrieve(search_q, feature=feature) if deadline is None
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                else retrieve(search_q, deadline=deadline, feature=feature))
+E       TypeError: _answer_with.<locals>.<lambda>() got an unexpected keyword argument 'feature'
+
+api\rag.py:442: TypeError
+___________ test_grounded_numbers_pass_through[Hotline: 0905123456] ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D8D7B75940>
+llm_text = 'Hotline: 0905123456'
+
+    @pytest.mark.parametrize("llm_text", [
+        "Hotline: 0905.123.456",
+        "Hotline: 0905123456",  # ngữ cảnh viết có chấm -> vẫn có nguồn
+        "Saphraton hộp 80 viên: 1.000.000 đ; gói Saphraton 20V: 236.000 đ",
+        "Công ty TNHH Sâm Sâm.",
+    ])
+    def test_grounded_numbers_pass_through(monkeypatch, llm_text):
+>       r = _answer_with(monkeypatch, llm_text)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_kb_acl.py:187: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_kb_acl.py:167: in _answer_with
+    return rag.answer(question, history=history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+question = 'Mã số thuế công ty?', history = []
+
+    def answer(question: str, history: list[dict] | None = None, *,
+               deadline: float | None = None, feature: str = FEATURE) -> dict:
+        """Trả lời câu hỏi kèm nguồn. Thiếu context/score thấp -> NO_DATA.
+    
+        `history` = các lượt Q&A trước (OpenAI-style, caller giới hạn 4 lượt
+        gần nhất). Có history -> rewrite câu hỏi thành standalone trước khi
+        retrieve (câu trần follow-up retrieve về score thấp -> NO_DATA giả),
+        còn prompt trả lời vẫn giữ câu hỏi gốc + history. Không truyền ->
+        y hệt 1-turn, không tốn thêm LLM call.
+    
+        v3.1 (W31.5): câu hỏi sức khỏe -> KHÔNG gọi LLM/embedding, trả NO_DATA
+        + handoff="health" (zalo nhánh NO_DATA gửi HANDOFF_TEXT chuyển người).
+        v3.9 (W39.4): câu hỏi về rượu (kể cả câu rewrite) -> NO_DATA +
+        handoff="alcohol", không gọi LLM/embed, không mời mua. Kênh khách luôn
+        retrieve corpus public — KHÔNG có tham số collection. Câu trả lời chứa
+        chuỗi >=9 chữ số không có trong ngữ cảnh (MST/SĐT bịa) -> NO_DATA.
+        v13.1 (F02): câu hỏi + lượt user của history qua `pii.scrub_user` trước
+        MỌI lời gọi AI; còn dấu hiệu PII -> NO_DATA + handoff="pii" (0 lời gọi);
+        câu rewrite cũng qua lọc sức khỏe. Gateway chặn (trần/kill/không đọc
+        được chi tiêu) -> GatewayBlocked lan ra caller (zalo/messenger/channels
+        chuyển người).
+        Vá controller 22/10 (F1): `feature` = mã tính năng nội bộ cho MỌI lời
+        gọi rewrite/embed/chat của lượt (mặc định sales-01 chatbot; gợi ý chat
+        sàn truyền sales-02) — ngoài `FEATURES` -> ValueError, 0 lời gọi."""
+        feature = _feature(feature)
+        if deadline is None:
+            deadline = DEADLINE.get()
+        if is_health_question(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+        if is_alcohol(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+        # v13.1 (F02): text KHÁCH gõ (câu hỏi + lượt user trong history) che
+        # tên/địa chỉ/SĐT/email TRƯỚC mọi lời gọi rewrite/embed/chat; câu hỏi
+        # còn dấu hiệu PII không che chắc -> chuyển người, 0 lời gọi AI. Lượt
+        # history còn dấu hiệu -> bỏ cả cặp hỏi/đáp khỏi ngữ cảnh gửi đi.
+        # Đối chiếu số (`_unverified_number`) vẫn dùng text GỐC — kiểm cục bộ,
+        # không gửi đi (giữ hành vi: số khách tự gõ được phép nhắc lại).
+        raw_turns = [question, *(m["content"] for m in history or []
+                                 if isinstance(m, dict)
+                                 and isinstance(m.get("content"), str))]
+        question, risky = scrub_user(question)
+        if risky:
+            return {"answer": NO_DATA, "sources": [], "handoff": "pii"}
+        history = _scrub_history(history)
+        search_q = question
+        if history:
+            dl = {} if deadline is None else {"deadline": deadline}
+            search_q = scrub_user(_standalone(question, history, **dl,
+                                              feature=feature)
+                                  or question)[0]
+            if is_alcohol(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+            if is_health_question(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+>       hits = (retrieve(search_q, feature=feature) if deadline is None
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                else retrieve(search_q, deadline=deadline, feature=feature))
+E       TypeError: _answer_with.<locals>.<lambda>() got an unexpected keyword argument 'feature'
+
+api\rag.py:442: TypeError
+_ test_grounded_numbers_pass_through[Saphraton h\u1ed9p 80 vi\xean: 1.000.000 \u0111; g\xf3i Saphraton 20V: 236.000 \u0111] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D8D42477D0>
+llm_text = 'Saphraton hộp 80 viên: 1.000.000 đ; gói Saphraton 20V: 236.000 đ'
+
+    @pytest.mark.parametrize("llm_text", [
+        "Hotline: 0905.123.456",
+        "Hotline: 0905123456",  # ngữ cảnh viết có chấm -> vẫn có nguồn
+        "Saphraton hộp 80 viên: 1.000.000 đ; gói Saphraton 20V: 236.000 đ",
+        "Công ty TNHH Sâm Sâm.",
+    ])
+    def test_grounded_numbers_pass_through(monkeypatch, llm_text):
+>       r = _answer_with(monkeypatch, llm_text)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_kb_acl.py:187: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_kb_acl.py:167: in _answer_with
+    return rag.answer(question, history=history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+question = 'Mã số thuế công ty?', history = []
+
+    def answer(question: str, history: list[dict] | None = None, *,
+               deadline: float | None = None, feature: str = FEATURE) -> dict:
+        """Trả lời câu hỏi kèm nguồn. Thiếu context/score thấp -> NO_DATA.
+    
+        `history` = các lượt Q&A trước (OpenAI-style, caller giới hạn 4 lượt
+        gần nhất). Có history -> rewrite câu hỏi thành standalone trước khi
+        retrieve (câu trần follow-up retrieve về score thấp -> NO_DATA giả),
+        còn prompt trả lời vẫn giữ câu hỏi gốc + history. Không truyền ->
+        y hệt 1-turn, không tốn thêm LLM call.
+    
+        v3.1 (W31.5): câu hỏi sức khỏe -> KHÔNG gọi LLM/embedding, trả NO_DATA
+        + handoff="health" (zalo nhánh NO_DATA gửi HANDOFF_TEXT chuyển người).
+        v3.9 (W39.4): câu hỏi về rượu (kể cả câu rewrite) -> NO_DATA +
+        handoff="alcohol", không gọi LLM/embed, không mời mua. Kênh khách luôn
+        retrieve corpus public — KHÔNG có tham số collection. Câu trả lời chứa
+        chuỗi >=9 chữ số không có trong ngữ cảnh (MST/SĐT bịa) -> NO_DATA.
+        v13.1 (F02): câu hỏi + lượt user của history qua `pii.scrub_user` trước
+        MỌI lời gọi AI; còn dấu hiệu PII -> NO_DATA + handoff="pii" (0 lời gọi);
+        câu rewrite cũng qua lọc sức khỏe. Gateway chặn (trần/kill/không đọc
+        được chi tiêu) -> GatewayBlocked lan ra caller (zalo/messenger/channels
+        chuyển người).
+        Vá controller 22/10 (F1): `feature` = mã tính năng nội bộ cho MỌI lời
+        gọi rewrite/embed/chat của lượt (mặc định sales-01 chatbot; gợi ý chat
+        sàn truyền sales-02) — ngoài `FEATURES` -> ValueError, 0 lời gọi."""
+        feature = _feature(feature)
+        if deadline is None:
+            deadline = DEADLINE.get()
+        if is_health_question(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+        if is_alcohol(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+        # v13.1 (F02): text KHÁCH gõ (câu hỏi + lượt user trong history) che
+        # tên/địa chỉ/SĐT/email TRƯỚC mọi lời gọi rewrite/embed/chat; câu hỏi
+        # còn dấu hiệu PII không che chắc -> chuyển người, 0 lời gọi AI. Lượt
+        # history còn dấu hiệu -> bỏ cả cặp hỏi/đáp khỏi ngữ cảnh gửi đi.
+        # Đối chiếu số (`_unverified_number`) vẫn dùng text GỐC — kiểm cục bộ,
+        # không gửi đi (giữ hành vi: số khách tự gõ được phép nhắc lại).
+        raw_turns = [question, *(m["content"] for m in history or []
+                                 if isinstance(m, dict)
+                                 and isinstance(m.get("content"), str))]
+        question, risky = scrub_user(question)
+        if risky:
+            return {"answer": NO_DATA, "sources": [], "handoff": "pii"}
+        history = _scrub_history(history)
+        search_q = question
+        if history:
+            dl = {} if deadline is None else {"deadline": deadline}
+            search_q = scrub_user(_standalone(question, history, **dl,
+                                              feature=feature)
+                                  or question)[0]
+            if is_alcohol(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+            if is_health_question(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+>       hits = (retrieve(search_q, feature=feature) if deadline is None
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                else retrieve(search_q, deadline=deadline, feature=feature))
+E       TypeError: _answer_with.<locals>.<lambda>() got an unexpected keyword argument 'feature'
+
+api\rag.py:442: TypeError
+_____ test_grounded_numbers_pass_through[C\xf4ng ty TNHH S\xe2m S\xe2m.] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D8D43A7410>
+llm_text = 'Công ty TNHH Sâm Sâm.'
+
+    @pytest.mark.parametrize("llm_text", [
+        "Hotline: 0905.123.456",
+        "Hotline: 0905123456",  # ngữ cảnh viết có chấm -> vẫn có nguồn
+        "Saphraton hộp 80 viên: 1.000.000 đ; gói Saphraton 20V: 236.000 đ",
+        "Công ty TNHH Sâm Sâm.",
+    ])
+    def test_grounded_numbers_pass_through(monkeypatch, llm_text):
+>       r = _answer_with(monkeypatch, llm_text)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_kb_acl.py:187: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_kb_acl.py:167: in _answer_with
+    return rag.answer(question, history=history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+question = 'Mã số thuế công ty?', history = []
+
+    def answer(question: str, history: list[dict] | None = None, *,
+               deadline: float | None = None, feature: str = FEATURE) -> dict:
+        """Trả lời câu hỏi kèm nguồn. Thiếu context/score thấp -> NO_DATA.
+    
+        `history` = các lượt Q&A trước (OpenAI-style, caller giới hạn 4 lượt
+        gần nhất). Có history -> rewrite câu hỏi thành standalone trước khi
+        retrieve (câu trần follow-up retrieve về score thấp -> NO_DATA giả),
+        còn prompt trả lời vẫn giữ câu hỏi gốc + history. Không truyền ->
+        y hệt 1-turn, không tốn thêm LLM call.
+    
+        v3.1 (W31.5): câu hỏi sức khỏe -> KHÔNG gọi LLM/embedding, trả NO_DATA
+        + handoff="health" (zalo nhánh NO_DATA gửi HANDOFF_TEXT chuyển người).
+        v3.9 (W39.4): câu hỏi về rượu (kể cả câu rewrite) -> NO_DATA +
+        handoff="alcohol", không gọi LLM/embed, không mời mua. Kênh khách luôn
+        retrieve corpus public — KHÔNG có tham số collection. Câu trả lời chứa
+        chuỗi >=9 chữ số không có trong ngữ cảnh (MST/SĐT bịa) -> NO_DATA.
+        v13.1 (F02): câu hỏi + lượt user của history qua `pii.scrub_user` trước
+        MỌI lời gọi AI; còn dấu hiệu PII -> NO_DATA + handoff="pii" (0 lời gọi);
+        câu rewrite cũng qua lọc sức khỏe. Gateway chặn (trần/kill/không đọc
+        được chi tiêu) -> GatewayBlocked lan ra caller (zalo/messenger/channels
+        chuyển người).
+        Vá controller 22/10 (F1): `feature` = mã tính năng nội bộ cho MỌI lời
+        gọi rewrite/embed/chat của lượt (mặc định sales-01 chatbot; gợi ý chat
+        sàn truyền sales-02) — ngoài `FEATURES` -> ValueError, 0 lời gọi."""
+        feature = _feature(feature)
+        if deadline is None:
+            deadline = DEADLINE.get()
+        if is_health_question(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+        if is_alcohol(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+        # v13.1 (F02): text KHÁCH gõ (câu hỏi + lượt user trong history) che
+        # tên/địa chỉ/SĐT/email TRƯỚC mọi lời gọi rewrite/embed/chat; câu hỏi
+        # còn dấu hiệu PII không che chắc -> chuyển người, 0 lời gọi AI. Lượt
+        # history còn dấu hiệu -> bỏ cả cặp hỏi/đáp khỏi ngữ cảnh gửi đi.
+        # Đối chiếu số (`_unverified_number`) vẫn dùng text GỐC — kiểm cục bộ,
+        # không gửi đi (giữ hành vi: số khách tự gõ được phép nhắc lại).
+        raw_turns = [question, *(m["content"] for m in history or []
+                                 if isinstance(m, dict)
+                                 and isinstance(m.get("content"), str))]
+        question, risky = scrub_user(question)
+        if risky:
+            return {"answer": NO_DATA, "sources": [], "handoff": "pii"}
+        history = _scrub_history(history)
+        search_q = question
+        if history:
+            dl = {} if deadline is None else {"deadline": deadline}
+            search_q = scrub_user(_standalone(question, history, **dl,
+                                              feature=feature)
+                                  or question)[0]
+            if is_alcohol(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+            if is_health_question(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+>       hits = (retrieve(search_q, feature=feature) if deadline is None
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                else retrieve(search_q, deadline=deadline, feature=feature))
+E       TypeError: _answer_with.<locals>.<lambda>() got an unexpected keyword argument 'feature'
+
+api\rag.py:442: TypeError
+______________ test_number_from_question_or_history_is_grounded _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001D8D7B75D60>
+
+    def test_number_from_question_or_history_is_grounded(monkeypatch):
+>       r = _answer_with(monkeypatch, "Đơn 123456789 đã ghi nhận.",
+                         question="Đơn 123456789 của tôi sao rồi?")
+
+tests\test_kb_acl.py:192: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_kb_acl.py:167: in _answer_with
+    return rag.answer(question, history=history)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+question = 'Đơn 123456789 của tôi sao rồi?', history = []
+
+    def answer(question: str, history: list[dict] | None = None, *,
+               deadline: float | None = None, feature: str = FEATURE) -> dict:
+        """Trả lời câu hỏi kèm nguồn. Thiếu context/score thấp -> NO_DATA.
+    
+        `history` = các lượt Q&A trước (OpenAI-style, caller giới hạn 4 lượt
+        gần nhất). Có history -> rewrite câu hỏi thành standalone trước khi
+        retrieve (câu trần follow-up retrieve về score thấp -> NO_DATA giả),
+        còn prompt trả lời vẫn giữ câu hỏi gốc + history. Không truyền ->
+        y hệt 1-turn, không tốn thêm LLM call.
+    
+        v3.1 (W31.5): câu hỏi sức khỏe -> KHÔNG gọi LLM/embedding, trả NO_DATA
+        + handoff="health" (zalo nhánh NO_DATA gửi HANDOFF_TEXT chuyển người).
+        v3.9 (W39.4): câu hỏi về rượu (kể cả câu rewrite) -> NO_DATA +
+        handoff="alcohol", không gọi LLM/embed, không mời mua. Kênh khách luôn
+        retrieve corpus public — KHÔNG có tham số collection. Câu trả lời chứa
+        chuỗi >=9 chữ số không có trong ngữ cảnh (MST/SĐT bịa) -> NO_DATA.
+        v13.1 (F02): câu hỏi + lượt user của history qua `pii.scrub_user` trước
+        MỌI lời gọi AI; còn dấu hiệu PII -> NO_DATA + handoff="pii" (0 lời gọi);
+        câu rewrite cũng qua lọc sức khỏe. Gateway chặn (trần/kill/không đọc
+        được chi tiêu) -> GatewayBlocked lan ra caller (zalo/messenger/channels
+        chuyển người).
+        Vá controller 22/10 (F1): `feature` = mã tính năng nội bộ cho MỌI lời
+        gọi rewrite/embed/chat của lượt (mặc định sales-01 chatbot; gợi ý chat
+        sàn truyền sales-02) — ngoài `FEATURES` -> ValueError, 0 lời gọi."""
+        feature = _feature(feature)
+        if deadline is None:
+            deadline = DEADLINE.get()
+        if is_health_question(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+        if is_alcohol(question):
+            return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+        # v13.1 (F02): text KHÁCH gõ (câu hỏi + lượt user trong history) che
+        # tên/địa chỉ/SĐT/email TRƯỚC mọi lời gọi rewrite/embed/chat; câu hỏi
+        # còn dấu hiệu PII không che chắc -> chuyển người, 0 lời gọi AI. Lượt
+        # history còn dấu hiệu -> bỏ cả cặp hỏi/đáp khỏi ngữ cảnh gửi đi.
+        # Đối chiếu số (`_unverified_number`) vẫn dùng text GỐC — kiểm cục bộ,
+        # không gửi đi (giữ hành vi: số khách tự gõ được phép nhắc lại).
+        raw_turns = [question, *(m["content"] for m in history or []
+                                 if isinstance(m, dict)
+                                 and isinstance(m.get("content"), str))]
+        question, risky = scrub_user(question)
+        if risky:
+            return {"answer": NO_DATA, "sources": [], "handoff": "pii"}
+        history = _scrub_history(history)
+        search_q = question
+        if history:
+            dl = {} if deadline is None else {"deadline": deadline}
+            search_q = scrub_user(_standalone(question, history, **dl,
+                                              feature=feature)
+                                  or question)[0]
+            if is_alcohol(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
+            if is_health_question(search_q):
+                return {"answer": NO_DATA, "sources": [], "handoff": "health"}
+>       hits = (retrieve(search_q, feature=feature) if deadline is None
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                else retrieve(search_q, deadline=deadline, feature=feature))
+E       TypeError: _answer_with.<locals>.<lambda>() got an unexpected keyword argument 'feature'
+
+api\rag.py:442: TypeError
+=========================== short test summary info ===========================
+FAILED tests/test_kb_acl.py::test_normal_question_still_retrieves - TypeError...
+FAILED tests/test_kb_acl.py::test_fabricated_long_number_returns_no_data[M\xe3 s\u1ed1 doanh nghi\u1ec7p c\u1ee7a c\xf4ng ty l\xe0 0402021985.]
+FAILED tests/test_kb_acl.py::test_fabricated_long_number_returns_no_data[MST: 0402021234]
+FAILED tests/test_kb_acl.py::test_fabricated_long_number_returns_no_data[Hotline 0905123456 ho\u1eb7c 0911222333.]
+FAILED tests/test_kb_acl.py::test_grounded_numbers_pass_through[Hotline: 0905.123.456]
+FAILED tests/test_kb_acl.py::test_grounded_numbers_pass_through[Hotline: 0905123456]
+FAILED tests/test_kb_acl.py::test_grounded_numbers_pass_through[Saphraton h\u1ed9p 80 vi\xean: 1.000.000 \u0111; g\xf3i Saphraton 20V: 236.000 \u0111]
+FAILED tests/test_kb_acl.py::test_grounded_numbers_pass_through[C\xf4ng ty TNHH S\xe2m S\xe2m.]
+FAILED tests/test_kb_acl.py::test_number_from_question_or_history_is_grounded
+9 failed, 6573 passed in 2349.19s (0:39:09)
+
+EXIT 1

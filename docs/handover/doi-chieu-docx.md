@@ -1,12 +1,12 @@
 # Đối chiếu Hợp đồng TEDO–Sâm Sâm (HĐ + PL01–PL04) ↔ repo
 
-**Checkpoint hiện tại: đợt hợp đồng 20/10/2026 — VÒNG 2 (P0 cổng DB test, P1 vá
-guardrail livestream, C01–C12), nhánh `codex/contract-completion` từ `main` =
-`dda0089`. CHƯA commit/merge/push/deploy.** Vòng 1 giữ dưới đây như lịch sử
-(đánh dấu "vòng 1"). Bảng trạng thái
-duy nhất của từng mục vẫn là `data/contract_features.json` + sổ rollout trong
-DB; tài liệu này là bảng đối chiếu nguồn ↔ mục ↔ bằng chứng, gói quyết định ở
-`docs/handover/dau-vao-va-quyet-dinh.md`.
+**Checkpoint hiện hành: ĐỢT HOÀN THIỆN 22/10/2026 — nhánh
+`codex/contract-finalization` từ `main` = `939aac9`, working tree CHƯA
+commit/merge/push/deploy** (mục A ngay dưới). Các mục 0–4 phía sau là LỊCH SỬ
+của đợt hợp đồng vòng 1–2 (20–21/10/2026, nay đã ở `939aac9`) — giữ nguyên để
+truy vết, số/nhãn trong đó là trạng thái lúc đó. Bảng trạng thái duy nhất của
+từng mục là `data/contract_features.json` + sổ rollout trong DB; gói quyết
+định ở `docs/handover/dau-vao-va-quyet-dinh.md`.
 
 Quy ước nguồn: chỉ ghi số điều/mục và tóm tắt kỹ thuật. Không chép toàn văn
 HĐ/phụ lục, thông tin người ký, mã số, giá trị thương mại vào repo (repo
@@ -14,6 +14,242 @@ public). Bản trích đầy đủ nằm ngoài repo. **PL05 (mẫu biên bản 
 giao nhận, đối soát) CHƯA được cung cấp** — mọi mẫu do dev soạn
 (`--dossier`, `rev_share`, `ops_monthly`) chỉ là dự thảo, không phải PL05 đã
 được hai bên chấp nhận.
+
+## A. Đợt hoàn thiện 22/10/2026 — phạm vi THEO DOCX
+
+**Phạm vi (user chốt):** HĐ + PL01–PL04 (PL05 chưa được cung cấp). PL01 mục 1:
+89 tính năng AI / 9 khối — ceo 9, sales 12, marketing 14, intel 11, finance
+9, production 6, farming 9, legal_hr 10, data_platform 9; PL01 mục 2 + mục 6:
+P1 80, P2 9. Nền tảng TMĐT (PL01 mục 3), truy xuất blockchain (mục 4) và
+nghĩa vụ ngoài code theo dõi RIÊNG, không bù số AI. Danh mục 79 mục cũ (v13.0)
+không còn là phạm vi chuẩn; "79 hay 89" không còn là blocker của tổng phạm vi.
+Quyết định này KHÔNG thay đầu vào thương mại, người duyệt, vendor, chữ ký.
+
+**Cách ánh xạ:** mỗi mục = 1 ĐẦU RA kiểm được có căn cứ chữ PL01 và nguồn đếm
+riêng trong code. Dòng PL01 gom nhiều đầu ra → mục `<nhóm>.<n>` (cách ánh xạ
+kỹ thuật — nội dung từng mục là ĐỀ XUẤT của Bên A, chờ hai bên chốt bằng biên
+bản PL01 mục 9). Không chia theo file/agent/CLI cho đủ số. Kết quả khớp đúng
+từng khối và P1/P2 với DOCX; cách khớp DUY NHẤT với P2 = 9 theo chữ PL01:
+HĐTV · SEO sàn · YouTube dài · tra cứu R&D · tóm tắt R&D · cảnh báo thời tiết
+· cảnh báo sâu bệnh · dự báo sản lượng · cập nhật văn bản pháp luật.
+Mâu thuẫn còn lại: không có (khối/giai đoạn/tổng khớp); ranh giới từng mục vẫn
+chờ hai bên chốt.
+
+### A1. Ánh xạ dòng PL01 → mục (89 tính năng AI)
+
+| Khối | Dòng PL01 | GĐ | ID | Đầu ra kiểm được | Nguồn đếm | Người duyệt | Module | Test | Trạng thái |
+|---|---|---|---|---|---|---|---|---|---|
+| ceo | Báo cáo tuần tự động | P1 | ceo-01 | Báo cáo tuần tự động | hàng duyệt `ceo/weekly_report` | Tổng giám đốc | `ceo_report.py`, `cockpit.py` | test_ceo_report.py, test_cockpit.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| ceo | Theo dõi tiến độ, sổ quyết định | P1 | ceo-02.1 | Theo dõi tiến độ (sổ mốc) | hàng duyệt `ceo/weekly_board`; hàng duyệt `ceo/milestone_change` | Tổng giám đốc | `da_pmo.py`, `ceo_decisions.py` | test_da_pmo.py, test_contract_c05_ceo_waiting.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| ceo | Theo dõi tiến độ, sổ quyết định | P1 | ceo-02.2 | Sổ quyết định TGĐ | bảng `decision_log` | Tổng giám đốc | `ceo_decisions.py` | test_ceo_decisions.py, test_contract_c05_ceo_waiting.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| ceo | Sổ rủi ro pháp lý | P1 | ceo-03 | Sổ rủi ro pháp lý | báo cáo `ceo-risk-` | Tổng giám đốc | `ceo_risk.py` | test_ceo_risk.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| ceo | Kiểm soát nội bộ | P1 | ceo-04.3 | So bài đăng/listing đang chạy với bản đã duyệt | báo cáo `ceo-audit-` | Tổng giám đốc | `ceo_audit.py` | test_ceo_audit.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| ceo | Kiểm soát nội bộ | P1 | ceo-04.4 | So giá (và mô tả) listing đang chạy với bản đã duyệt | báo cáo `ceo-gia-` | Tổng giám đốc | `ceo_audit.py` | test_contract_c06_ceo_audit_price.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| ceo | Kiểm soát nội bộ | P1 | ceo-04.5 | So voucher/khuyến mãi đang chạy với bản đã duyệt | hàng duyệt `ceo/promo_deviation` | Tổng giám đốc | `ceo_promo.py` | test_v14_p5_mkt_ceo_intel.py, test_v15_p7_jobs.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| ceo | Kiểm soát nội bộ | P1 | ceo-04.6 | Báo khi nhật ký bị sửa + đối soát độc lập BKS | bảng `audit_runs`; báo cáo `bks-audit-`; báo cáo `bks-recon-` | Tổng giám đốc | `bks_audit.py`, `store.py` | test_bks_audit.py, test_store.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| ceo | Báo cáo HĐTV (P2) | P2 | ceo-05 | Báo cáo HĐTV | hàng duyệt `ceo/hdtv_pack` | Tổng giám đốc | `hdtv_report.py` | test_hdtv_report.py, test_contract_c11_p2_jobs.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| sales | Chatbot chăm sóc khách | P1 | sales-01 | Chatbot chăm sóc khách (Zalo, Messenger) | bảng `file_output_evidence`; hàng duyệt `sales/cskh_handoff`; hàng duyệt `sales/cskh_reply`; hàng duyệt `sales/cskh_handoff` | Giám đốc bán hàng | `zalo.py`, `messenger.py` | test_zalo.py, test_messenger.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| sales | Chatbot chăm sóc khách | P1 | sales-09 | Chatbot trên website | — | Giám đốc bán hàng | — | — | BLOCKED_DECISION, UNVERIFIED_LIVE |
+| sales | Gợi ý trả lời chat sàn | P1 | sales-02 | Gợi ý trả lời chat sàn | bảng `san_suggestions` | Giám đốc bán hàng | `channels.py` | test_channels.py, test_v14_p3_rollout_edges.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| sales | Listing đa sàn | P1 | sales-03 | Listing đa sàn | nháp `listing`; hàng duyệt `sales/listing_sync`; hàng duyệt `sales/market_alert_s1` | Giám đốc bán hàng | `kd_listing.py`, `content.py` | test_kd_listing.py, test_content.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| sales | Quản lý khách và đại lý | P1 | sales-04.1 | Người phụ trách khách trong ngày | bảng `leads`; hàng duyệt `sales/lead_followup` | Giám đốc bán hàng | `crm.py`, `sales_director.py` | test_crm.py, test_v14_p4_sales.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| sales | Quản lý khách và đại lý | P1 | sales-04.2 | Chuyển khách về đại lý gần nhất | bảng `agent_action_log`; bảng `consents` | Giám đốc bán hàng | `crm.py` | test_crm.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| sales | Báo giá B2B quà Tết | P1 | sales-05 | Báo giá B2B quà Tết | hàng duyệt `sales/b2b_quote`; hàng duyệt `sales/b2b_quote_matrix`; hàng duyệt `sales/b2b_catalog`; hàng duyệt `sales/org_prospect_batch`; hàng duyệt `finance/b2b_margin_review`; hàng duyệt `sales/b2b_followup` | Giám đốc bán hàng | `kd_quote.py`, `kd_catalog.py` | test_kd_quote.py, test_kd_catalog.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| sales | Giám sát giá và đơn hàng | P1 | sales-06.1 | Giám sát giá và phá giá | hàng duyệt `sales/price_change`; hàng duyệt `sales/price_review`; hàng duyệt `sales/market_alert_s1`; hàng duyệt `sales/market_alert_s1`; hàng duyệt `sales/market_alert_s2`; hàng duyệt `sales/dealer_price_alert` | Giám đốc bán hàng | `kd_price.py`, `sales_director.py` | test_kd_price.py, test_sales_director.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| sales | Giám sát giá và đơn hàng | P1 | sales-06.2 | Cảnh báo đơn trễ, hủy, hoàn bất thường | hàng duyệt `sales/order_anomaly` | Giám đốc bán hàng | `market_csv.py`, `kd_orders.py` | test_market_csv.py, test_kd_orders.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| sales | Livestream, sau bán, dự báo | P1 | sales-07.1 | Kịch bản và giỏ hàng livestream | nháp `livestream_script` | Giám đốc bán hàng | `kd_live.py` | test_kd_live.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| sales | Livestream, sau bán, dự báo | P1 | sales-07.2 | Sau bán: xin đánh giá | hàng duyệt `sales/care_review`; hàng duyệt `sales/care_rebuy` | Giám đốc bán hàng | `kd_care.py` | test_kd_care.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| sales | Livestream, sau bán, dự báo | P1 | sales-07.3 | Kịch bản bán mùa 11.11, 12.12, Tết | báo cáo `kd-forecast-` | Giám đốc bán hàng | `kd_forecast.py`, `scenario.py` | test_kd_forecast.py, test_scenario.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| marketing | Nội dung hằng ngày | P1 | marketing-01.1 | Soạn 3 bài mỗi ngày | nháp `post` | Giám đốc marketing | `content.py`, `mkt_calendar.py` | test_v13_c06_daily_ar.py, test_content.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| marketing | Nội dung hằng ngày | P1 | marketing-01.2 | Lịch mùa vụ (brief chiến dịch) | hàng duyệt `marketing/campaign_brief` | Giám đốc marketing | `mkt_director.py`, `mkt_calendar.py` | test_mkt_calendar.py, test_mkt_director.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| marketing | Ảnh và video AI | P1 | marketing-02.1 | Ảnh bối cảnh AI quanh ảnh sản phẩm thật | nháp `image`; bảng `image_assets` | Giám đốc marketing | `image_studio.py` | test_image_studio.py | CODE_PARTIAL, BLOCKED_VENDOR, UNVERIFIED_LIVE |
+| marketing | Ảnh và video AI | P1 | marketing-02.2 | Video 15–45 giây từ tư liệu thật | nháp `video`; bảng `video_assets` | Giám đốc marketing | `video_studio.py` | test_video_studio.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| marketing | Quảng cáo thử nghiệm | P1 | marketing-03.1 | Đề xuất quảng cáo thử nghiệm | hàng duyệt `marketing/ad_campaign`; hàng duyệt `finance/budget_change` | Giám đốc marketing | `mkt_ads.py` | test_docx_mkt03.py, test_mkt_ads.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| marketing | Quảng cáo thử nghiệm | P1 | marketing-03.2 | Theo dõi chi phí mỗi đơn, đề xuất giữ hay tắt | hàng duyệt `marketing/ad_result` | Giám đốc marketing | `mkt_ads.py` | test_mkt_ads.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| marketing | KOC và đại lý affiliate | P1 | marketing-04.1 | Bộ tài liệu chuẩn cho KOC/đại lý affiliate | hàng duyệt `marketing/koc_brief`; hàng duyệt `sales/affiliate_program` | Giám đốc marketing | `mkt_koc.py`, `kd_affiliate.py` | test_mkt_koc.py, test_kd_affiliate.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| marketing | KOC và đại lý affiliate | P1 | marketing-04.2 | Kiểm tra bài đăng của đối tác | hàng duyệt `marketing/partner_post_review` | Giám đốc marketing | `ra_kenh.py` | test_v14_p5_mkt_ceo_intel.py, test_ra_kenh.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| marketing | Bình luận, đánh giá | P1 | marketing-05.1 | Phân loại bình luận | bảng `social_mentions` | Giám đốc marketing | `intel_import.py` | test_intel_import.py | CODE_VERIFIED, BLOCKED_VENDOR, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| marketing | Bình luận, đánh giá | P1 | marketing-05.2 | Soạn nháp trả lời bình luận, đánh giá | hàng duyệt `marketing/ugc_reply`; hàng duyệt `marketing/ugc_reuse` | Giám đốc marketing | `mkt_ugc.py` | test_mkt_ugc.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| marketing | SEO và báo cáo kênh | P1 | marketing-06.1 | Chuẩn hóa trang sản phẩm trên web | hàng duyệt `marketing/seo_web_fix` | Giám đốc marketing | `seo_web.py` | test_seo_web.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| marketing | SEO và báo cáo kênh | P1 | marketing-06.2 | Báo cáo kênh | bảng `channel_snapshots` | Giám đốc marketing | `mkt_metrics.py`, `cockpit.py` | test_mkt_metrics.py, test_cockpit.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| marketing | SEO và báo cáo kênh | P2 | marketing-07.1 | SEO sàn | nháp `listing`; báo cáo `seo-san-` | Giám đốc marketing | `seo_san.py` | test_seo_san.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| marketing | SEO và báo cáo kênh | P2 | marketing-07.2 | YouTube dài | nháp `video` | Giám đốc marketing | `mkt_youtube.py` | test_mkt_youtube.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| intel | Bản tin thị trường | P1 | intel-01.1 | Bản tin thị trường 7h | báo cáo `intel-bulletin-` | Quản lý Marketing | `intel.py`, `intel_bulletin.py` | test_intel.py, test_intel_bulletin.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| intel | Bản tin thị trường | P1 | intel-01.2 | Gợi ý chủ đề cho Marketing | hàng duyệt `intel/intel_topic` | Quản lý Marketing | `intel_bulletin.py` | test_intel_bulletin.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| intel | Báo động đỏ | P1 | intel-02.1 | Báo động sâm giả, mạo danh Ngọc Linh | cảnh báo đỏ counterfeit | Quản lý Marketing | `intel_alert.py`, `red_alert.py` | test_intel_alert.py, test_red_alert.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| intel | Báo động đỏ | P1 | intel-02.2 | Báo động quy định mới | cảnh báo đỏ regulation/competitor_penalty | Quản lý Marketing | `intel_alert.py`, `red_alert.py` | test_intel_alert.py, test_red_alert.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| intel | Báo động đỏ | P1 | intel-02.3 | Báo động tin xấu về Sâm Sâm | cảnh báo đỏ brand_negative | Quản lý Marketing | `intel_alert.py`, `red_alert.py` | test_intel_alert.py, test_red_alert.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| intel | Theo dõi đối thủ | P1 | intel-03 | Theo dõi đối thủ | báo cáo `intel-doithu-` | Quản lý Marketing | `intel_import.py`, `intel_weekly.py` | test_intel_import.py, test_intel_weekly.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| intel | Xu hướng và từ khóa | P1 | intel-04.1 | Xu hướng Google Trends theo tuần | báo cáo `intel-trend-` | Quản lý Marketing | `intel_import.py`, `intel_weekly.py` | test_intel_import.py, test_intel_weekly.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| intel | Xu hướng và từ khóa | P1 | intel-04.2 | Gợi ý từ khóa an toàn pháp lý | hàng duyệt `intel/keyword_suggest` | Quản lý Marketing | `intel_weekly.py`, `intel_import.py` | test_intel_weekly.py, test_v14_p5_mkt_ceo_intel.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| intel | Giả lập khách hàng | P1 | intel-05.1 | Thử thông điệp trên khách hàng giả lập | bảng `sim_runs` | Quản lý Marketing | `persona_sim.py` | test_persona_sim.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| intel | Giả lập khách hàng | P1 | intel-05.2 | Thử giá combo | hàng duyệt `intel/combo_price_option` | Quản lý Marketing | `combo_price.py` | test_contract_c09_combo_price.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| intel | Kịch bản mùa | P1 | intel-06 | Kịch bản mùa | báo cáo `kich-ban-` | Quản lý Marketing | `scenario.py` | test_scenario.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| finance | Đối soát tiền sàn | P1 | finance-01 | Đối soát tiền sàn | bảng `recon_results` | Giám đốc tài chính | `settlement_csv.py`, `kd_orders.py` | test_settlement_csv.py, test_kd_orders.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| finance | Hóa đơn điện tử | P1 | finance-02 | Hóa đơn điện tử | hàng duyệt `finance/invoice_batch` | Giám đốc tài chính | `acc_invoice.py` | test_acc_invoice.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| finance | Công nợ, hoa hồng | P1 | finance-03.1 | Bảng tuổi nợ đại lý | báo cáo `director-finance-` | Giám đốc tài chính | `acc_ar.py` | test_acc_ar.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| finance | Công nợ, hoa hồng | P1 | finance-03.2 | Hoa hồng affiliate | bảng `affiliate_attributions` | Giám đốc tài chính | `kd_affiliate.py` | test_kd_affiliate.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| finance | Công nợ, hoa hồng | P1 | finance-03.3 | Nháp thư nhắc nợ | hàng duyệt `finance/ar_reminder` | Giám đốc tài chính | `acc_ar.py` | test_v13_c06_daily_ar.py, test_acc_ar.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| finance | Lãi lỗ theo kênh | P1 | finance-04.1 | Biên lợi nhuận từng sản phẩm, từng kênh | báo cáo `pnl-` | Giám đốc tài chính | `fp_pnl.py` | test_fp_pnl.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| finance | Lãi lỗ theo kênh | P1 | finance-04.2 | Chặn khuyến mãi bị lỗ | hàng duyệt `sales/promo_change`; hàng duyệt `finance/budget_change`; hàng duyệt `finance/promo_loss` | Giám đốc tài chính | `kd_price.py`, `fp_ads.py` | test_kd_price.py, test_fp_ads.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| finance | Chi phí và dòng tiền | P1 | finance-05.1 | So chi phí AI, quảng cáo với ngân sách | hàng duyệt `finance/opex_over_x` | Giám đốc tài chính | `fp_opscost.py`, `fin_director.py` | test_fp_opscost.py, test_fin_director.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| finance | Chi phí và dòng tiền | P1 | finance-05.2 | Dự báo dòng tiền 13 tuần | báo cáo `dong-tien-` | Giám đốc tài chính | `fp_cash.py` | test_fp_cash.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| production | Báo cáo sản xuất | P1 | production-01 | Báo cáo sản xuất | bảng `allocation_proposals`; báo cáo `sx-bantin-` | Giám đốc sản xuất | `production.py`, `inventory_csv.py` | test_production.py, test_inventory_csv.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| production | Hồ sơ sản phẩm | P1 | production-02 | Hồ sơ sản phẩm | bảng `golden_discrepancies` | Giám đốc sản xuất | `golden_store.py`, `core_store.py` | test_golden_store.py, test_core_store.py | CODE_PARTIAL, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| production | Đối soát nhãn | P1 | production-03 | Đối soát nhãn | hàng duyệt `production/label_check` | Giám đốc sản xuất | `sx_label.py` | test_sx_label.py | CODE_PARTIAL, BLOCKED_VENDOR, UNVERIFIED_LIVE |
+| production | Hồ sơ lô | P1 | production-04.3 | Hồ sơ lô, cảnh báo cận hạn | bảng `production_lots`; báo cáo `sx-canhan-` | Giám đốc sản xuất | `production.py`, `lot_certs.py` | test_production.py, test_contract_c03_lot_certs.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| production | Kho tài liệu R&D (P2) | P2 | production-05.1 | Tra cứu tài liệu R&D | báo cáo `sx-tracuu-` | Giám đốc sản xuất | `sx_tracuu.py` | test_sx_tracuu.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| production | Kho tài liệu R&D (P2) | P2 | production-05.2 | Tóm tắt tài liệu R&D | báo cáo `sx-tomtat-` | Giám đốc sản xuất | `sx_tracuu.py` | test_sx_tracuu.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| farming | Nhật ký vườn qua Zalo | P1 | farming-01 | Nhật ký vườn qua Zalo | bảng `plot_logs`; bảng `garden_voice_drafts` | Giám đốc vùng trồng | `garden.py`, `zalo_garden.py` | test_garden.py, test_zalo_garden.py | CODE_PARTIAL, BLOCKED_VENDOR, UNVERIFIED_LIVE |
+| farming | Nhắc ghi nhật ký | P1 | farming-02.1 | Nhắc người phụ trách khoảnh | bảng `garden_reminders` | Giám đốc vùng trồng | `garden_director.py`, `zalo_garden.py` | test_contract_c02_garden_remind.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| farming | Nhắc ghi nhật ký | P1 | farming-02.2 | Báo giám đốc khi vẫn bỏ trống | báo cáo `garden-week-`; hàng duyệt `farming/plot_log_gap` | Giám đốc vùng trồng | `garden_director.py`, `zalo_garden.py` | test_garden_director.py, test_contract_c02_garden_remind.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| farming | Truy xuất QR | P1 | farming-03.1 | Nối lô thu hoạch với lô sản xuất | bảng `lot_origins` | Giám đốc vùng trồng | `qr_trace.py` | test_qr_trace.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| farming | Truy xuất QR | P1 | farming-03.2 | Trang và tem QR cho khách quét | bảng `qr_codes` | Giám đốc vùng trồng | `qr_trace.py` | test_qr_trace.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| farming | Kho tư liệu vườn | P1 | farming-04 | Kho tư liệu vườn | bảng `garden_media`; bảng `garden_media_releases` | Giám đốc vùng trồng | `garden_media.py`, `garden_media_mkt.py` | test_garden_media.py, test_v13_c05_media.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| farming | Cảnh báo, dự báo (P2) | P2 | farming-05.3 | Cảnh báo thời tiết | hàng duyệt `farming/weather_digest` | Giám đốc vùng trồng | `vt_thoitiet.py` | test_vt_thoitiet.py, test_contract_c11_p2_jobs.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| farming | Cảnh báo, dự báo (P2) | P2 | farming-05.4 | Cảnh báo sâu bệnh | hàng duyệt `farming/pest_alert` | Giám đốc vùng trồng | `vt_thoitiet.py` | test_vt_thoitiet.py, test_contract_c11_p2_jobs.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| farming | Cảnh báo, dự báo (P2) | P2 | farming-05.2 | Dự báo sản lượng thu hoạch | hàng duyệt `farming/harvest_forecast` | Giám đốc vùng trồng | `vt_thuhoach.py` | test_vt_thuhoach.py, test_contract_c11_p2_jobs.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| legal_hr | Kiểm duyệt nội dung tự động | P1 | legal_hr-01 | Kiểm duyệt nội dung tự động | — | Chuyên viên pháp chế | `guardrail.py`, `guardrail_llm.py` | test_guardrail.py, test_guardrail_llm.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| legal_hr | Hồ sơ xác nhận quảng cáo | P1 | legal_hr-02 | Hồ sơ xác nhận quảng cáo | hàng duyệt `legal_hr/xnqc_dossier` | Chuyên viên pháp chế | `xnqc.py` | test_xnqc.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| legal_hr | Kho giấy tờ sản phẩm | P1 | legal_hr-03.2 | Xếp mức được phép quảng bá | hàng duyệt `legal_hr/golden_xnqc_sync` | Chuyên viên pháp chế | `xnqc.py`, `golden_store.py` | test_xnqc.py, test_golden_store.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| legal_hr | Quét kênh, gỡ bài | P1 | legal_hr-04 | Quét kênh, gỡ bài | hàng duyệt `legal_hr/channel_takedown`; hàng duyệt `data_platform/hosting_fix` | Chuyên viên pháp chế | `ra_kenh.py` | test_ra_kenh.py, test_contract_c12_channel_scan.py | CODE_VERIFIED, BLOCKED_VENDOR, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| legal_hr | Hợp đồng, dữ liệu cá nhân | P1 | legal_hr-05.1 | Hợp đồng mẫu KOC, đại lý | báo cáo `hd-mau-` | Chuyên viên pháp chế | `contract_check.py` | test_contract_check.py, test_legal_docs.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| legal_hr | Hợp đồng, dữ liệu cá nhân | P1 | legal_hr-05.2 | Mẫu xin đồng ý của khách | — | Chuyên viên pháp chế | `crm.py`, `dpia_draft.py` | test_crm.py, test_dpia_draft.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| legal_hr | Nhân sự | P1 | legal_hr-06.1 | Mô tả công việc | hàng duyệt `legal_hr/hr_jd` | Chuyên viên pháp chế | `pc_hr.py` | test_pc_hr.py | CODE_VERIFIED, UNVERIFIED_LIVE |
+| legal_hr | Nhân sự | P1 | legal_hr-06.2 | Sàng lọc hồ sơ | hàng duyệt `legal_hr/hr_screening` | Chuyên viên pháp chế | `pc_hr.py` | test_pc_hr.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| legal_hr | Nhân sự | P1 | legal_hr-06.3 | Chấm công | hàng duyệt `legal_hr/hr_attendance` | Chuyên viên pháp chế | `pc_hr.py` | test_pc_hr.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| legal_hr | Nhân sự | P2 | legal_hr-07 | Cập nhật văn bản pháp luật mới | cảnh báo đỏ legal_doc; hàng duyệt `legal_hr/legal_doc_review` | Chuyên viên pháp chế | `intel.py`, `intel_alert.py` | test_intel.py, test_intel_alert.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| data_platform | Kho dữ liệu chung | P1 | data_platform-01 | Kho dữ liệu chung | — | Quản lý AI | `schema.sql`, `roles.sql` | test_core_store.py, test_golden_store.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| data_platform | Số hóa giấy tờ | P1 | data_platform-02.1 | Đọc chữ tự động từ giấy tờ | bảng `document_fields` | Quản lý AI | `doc_intake.py` | test_doc_intake.py, test_v15_p12_policies.py | CODE_PARTIAL, BLOCKED_VENDOR, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| data_platform | Số hóa giấy tờ | P1 | data_platform-02.2 | Lưu bản gốc kèm mã kiểm tra | bảng `documents` | Quản lý AI | `doc_intake.py` | test_doc_intake.py, test_v15_p12_policies.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| data_platform | Kho tri thức cho chatbot | P1 | data_platform-03 | Kho tri thức cho chatbot | bảng `chunks`; bảng `chunks_internal` | Quản lý AI | `embed_store.py`, `kb_internal.py` | test_embed_store.py, test_kb_internal.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| data_platform | Cổng AI an toàn | P1 | data_platform-04 | Cổng AI an toàn | — | Quản lý AI | `llm_gateway.py`, `pii.py` | test_llm_gateway.py, test_v13_c01_pii_guardrail.py | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| data_platform | Kết nối dữ liệu sàn | P1 | data_platform-05 | Kết nối dữ liệu sàn (nhập file) | bảng `market_snapshots` | Quản lý AI | `market_csv.py` | test_market_csv.py, test_v15_p12_policies.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| data_platform | Vận hành hệ thống | P1 | data_platform-07.1 | Giám sát lỗi | báo cáo `health-` | Quản lý AI | `health_bulletin.py`, `job_runs.py` | test_health_bulletin.py, test_job_runs.py | CODE_PARTIAL, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| data_platform | Vận hành hệ thống | P1 | data_platform-07.2 | Backup hằng ngày | bảng `file_output_evidence` | Quản lý AI | `db_backup.py`, `db_restore_drill.py` | test_db_backup.py, test_dr_drill.py | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| data_platform | Vận hành hệ thống | P1 | data_platform-07.3 | Kiểm thử trước khi đưa thay đổi lên | bảng `eval_runs` | Quản lý AI | `deploy_gate.py`, `agent_eval.py` | test_deploy_gate.py, test_agent_eval.py | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+
+### A2. Ngoài 89 (nền tảng TMĐT, blockchain, nghĩa vụ HĐ)
+
+| ID | Phạm vi | GĐ | Tên | code_status | Trạng thái |
+|---|---|---|---|---|---|
+| sales-08 | nen_tang_tmdt | P1 | Website bán hàng | lam_rieng | BLOCKED_DECISION, UNVERIFIED_LIVE |
+| data_platform-06 | nen_tang_tmdt | P2 | Kết nối API sàn chỉ đọc | mot_phan | CODE_PARTIAL, BLOCKED_VENDOR, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| farming-06 | truy_xuat_blockchain | P2 | Neo mã xác thực lên blockchain | mot_phan | CODE_PARTIAL, BLOCKED_VENDOR, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE |
+| finance-06 | nghia_vu_hd | P1 | Doanh thu thuần trực tuyến + biên bản đối soát quý | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| data_platform-08 | nghia_vu_hd | P1 | Sổ triển khai 3 bước + hồ sơ nghiệm thu + báo cáo vận hành tháng | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE |
+| ceo-90 | nghia_vu_hd | P1 | Nghĩa vụ hợp đồng ngoài phần mềm | ngoai_code | BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA |
+| data_platform-90 | nghia_vu_hd | P1 | Hạ tầng độc lập trên server Bên B | ngoai_code | BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA |
+
+Website bán hàng + chatbot website: thuộc HĐ, làm ở REPO RIÊNG (quyết định
+15/10/2026). Repo lõi: `python -m agents.listing_export --website-feed --out
+DIR` xuất nguồn dữ liệu (một bản mô tả đã duyệt + giá list kênh web ĐÃ duyệt
+còn hiệu lực trong `price_list` — vá controller 22/10 F2: không fallback giá
+golden JSON/kênh khác/floor/promo, đọc bảng giá lỗi → từ chối không ghi tệp;
+rượu ẩn giá + không giỏ; manifest sha). Nhập ĐƠN web về `orders`/đối soát:
+BLOCKED tới khi website có định dạng xuất đơn thật — không đoán định dạng.
+
+### A3. ID cũ → ID mới (lịch sử giữ nguyên)
+
+| ID cũ | Thay bằng | Lý do (căn cứ PL01) |
+|---|---|---|
+| ceo-04.1 | ceo-04.3, ceo-04.4, ceo-04.5, ceo-04.6 | PL01 Kiểm soát nội bộ liệt kê riêng bài đăng / giá / voucher — tách 3 đầu ra (giá: báo cáo riêng ceo-gia-); bks-recon về mục BKS |
+| ceo-04.2 | ceo-04.6 | gộp đối soát độc lập BKS (trước ở ceo-04.1) vào mục BKS |
+| marketing-01 | marketing-01.1, marketing-01.2 | tách 3 bài/ngày ↔ lịch mùa vụ (brief chiến dịch) — 2 đầu ra |
+| marketing-03 | marketing-03.1, marketing-03.2 | tách đề xuất ↔ theo dõi chi phí mỗi đơn + giữ/tắt (ad_result) |
+| marketing-05 | marketing-05.1, marketing-05.2 | tách phân loại (social_mentions) ↔ soạn nháp trả lời |
+| intel-02 | intel-02.1, intel-02.2, intel-02.3 | tách theo nhóm tin PL01 (sâm giả/mạo danh; quy định mới; tin xấu) — đếm theo luật đầu của cảnh báo |
+| intel-05 | intel-05.1, intel-05.2 | tách thử thông điệp ↔ giá combo |
+| production-04.1 | production-04.3 | PL01 1 dòng 'Hồ sơ lô' — gộp với cận hạn (khối SX = 6) |
+| production-04.2 | production-04.3 | gộp vào hồ sơ lô (production-04.3) |
+| production-05 | production-05.1, production-05.2 | PL01 (P2) 'Tra cứu, tóm tắt' — 2 đầu ra (sx-tracuu-/sx-tomtat-) |
+| farming-02 | farming-02.1, farming-02.2 | tách nhắc người phụ trách ↔ báo giám đốc |
+| farming-05.1 | farming-05.3, farming-05.4 | tách thời tiết ↔ sâu bệnh (sâu bệnh không chờ nguồn dự báo) |
+| legal_hr-03.1 | data_platform-02.2 | trùng đầu ra 'lưu bản gốc kèm mã kiểm tra' (Hạ tầng) — chuyển sang data_platform-02.2 |
+| data_platform-02 | data_platform-02.1, data_platform-02.2 | tách đọc chữ ↔ lưu bản gốc kèm mã kiểm tra |
+
+Dòng `feature_rollout`/`feature_rollout_events`/`output_reviews`/log của id cũ
+GIỮ NGUYÊN trong DB (không sinh mới vì không còn trong danh mục). Mục mới vào
+sổ bằng `rollout --seed` với mốc MỚI; chỉ kế thừa trạng thái TẮT của id cũ/nhóm
+(`thay_the`), không kế thừa ngày chạy thử, duyệt hay nghiệm thu. Đếm cảnh báo
+đỏ theo LUẬT ĐẦU của cảnh báo (1 cảnh báo ↔ 1 mục; trước đây `?|` đếm 1 cảnh
+báo vào cả intel-02 lẫn legal_hr-07). Phép thử nâng cấp từ DB `939aac9` có lịch
+sử: `evidence/contract_g4_upgrade.log`.
+
+### A4. Thiếu sót code đã xử lý (probe trước/sau `evidence/contract_g4_probes_*.log`)
+
+| Mục DOCX | Lỗi/thiếu (bản trước 939aac9) | Sau |
+|---|---|---|
+| Hạ tầng / Cổng AI an toàn "giới hạn chi phí từng tính năng, nút tắt khẩn" (data_platform-04) | trần + nút tắt chỉ theo agent gateway (1 agent dùng chung nhiều tính năng); feature vượt trần vẫn gọi, `feature` còn lọt vào payload provider | `chat/embed(feature=)` + `feature_caps_usd`/`kill_features`/`LLM_KILL_FEATURES` + `llm_usage.feature_id`; vượt trần/trần 0/không đọc được chi tiêu → chặn, 0 lời gọi; mọi lời gọi trong repo gắn tính năng (test AST). Mức trần GIẢ ĐỊNH — Quản lý AI chốt |
+| KD / Chatbot "câu hỏi sức khỏe chuyển cho người thật" (sales-01) | 0/7 câu triệu chứng/dị ứng/tên thuốc bị chặn → tới dịch vụ AI ngoài | 7/7 chặn trước embed/chat; 4/4 câu bán hàng không bị chặn; vẫn là danh sách từ (D-PC-03) |
+| Vùng trồng / Cảnh báo (P2) "sâu bệnh" (farming-05.4) | `--fetch` tắt → exit 2 TRƯỚC khi đọc nhật ký: cảnh báo sâu bệnh bị chặn bởi quyết định nguồn thời tiết | `vt_thoitiet --pests` (job `vt_pests`) → `farming/pest_alert`; DB down → exit 2 (không coi là "không có cờ") |
+| Marketing / Bình luận "nghi hàng giả…" (marketing-05.1) | phân loại social không có nhãn nghi hàng giả | nhãn `nghi_hang_gia` (từ khóa ĐỀ XUẤT) + mkt_ugc nhận nhãn khi mention không có text |
+| Marketing / Quảng cáo "theo dõi chi phí mỗi đơn; đề xuất giữ hay tắt" (marketing-03.2) | kết quả chung loại việc `ad_campaign` với đề xuất (không đếm/duyệt riêng) | loại việc `ad_result`; mục cũ cùng mã không nộp lại |
+| Ban TGĐ / Kiểm soát nội bộ "so ... giá" (ceo-04.4) | kiểm giá là 1 đoạn trong báo cáo bài đăng | báo cáo riêng `ceo-gia-<ngày>.md` cùng lần chạy |
+| SX / Kho tài liệu R&D (P2) "tra cứu, tóm tắt" (production-05.x) | 1 đầu ra cho cả hai | `sx-tracuu-` (trích nguyên văn) / `sx-tomtat-` (LLM đạt guardrail; lỗi → rơi về tra cứu) |
+| SX / Hồ sơ sản phẩm "14 hồ sơ gốc (thành phần, quy cách, số công bố)" (production-02) | không có kiểm cấu trúc/đủ số; không trường thành phần | `python -m ingest.product_dossiers --check` (cấu trúc, người xác nhận, khớp số công bố golden, đủ 14) → hiện exit 2 BLOCKED 0/14 — không bịa dữ liệu |
+| Nền tảng TMĐT 3a/3c "một bản mô tả, một bảng giá" (sales-08 làm riêng) | repo lõi không xuất nguồn dữ liệu website | `listing_export --website-feed` (rượu ẩn giá + không giỏ) |
+| Tình báo / Bản tin tuần (job `intel_weekly`) | job lỗi quyền dưới login svc_job thật | quyền đọc CỘT tối thiểu `trends_weekly`/`social_mentions` (không `msg_hash`/`excerpt`); probe âm 6/6 vẫn chặn — `evidence/contract_g4_intel_weekly.log` |
+| Hạ tầng / Vận hành "giám sát lỗi" (data_platform-07.1) | không có hướng dẫn giám sát ngoài máy | runbook mục 10.6 (probe độc lập chỉ stdlib từ máy riêng); máy giám sát thật = BLOCKED_INFRA |
+
+### A5. Tích hợp ngoài — trạng thái thực tế (`evidence/contract_g4_integrations.log`)
+
+| Tích hợp | Hiện trạng code | Thiếu gì · ai cung cấp | Mức bằng chứng |
+|---|---|---|---|
+| OCR (số hóa giấy tờ, đọc nhãn) | registry `none` → exit 2 BLOCKED | vendor trong nước + DPA + key · Bên B/Pháp chế | chỉ fail-closed |
+| STT (ghi âm nhật ký vườn) | registry `none` → exit 2 | vendor + DPA + key · Bên B | chỉ fail-closed |
+| Ảnh AI (bối cảnh) | `IMAGE_PROVIDER=none` → exit 2 | vendor + hợp đồng · Bên B | chỉ fail-closed |
+| API Shopee/TikTok (P2) | adapter chỉ đọc theo tài liệu công khai, chưa sandbox | app key + sandbox · Bên B | unit giả lập (KHÔNG phải sandbox) |
+| Fanpage Graph API (quét kênh) | không có adapter | page token + quyền · Bên B | — |
+| Blockchain neo | provider `none` → CHƯA NEO; `--verify` chỉ đối chiếu NỘI BỘ | chọn chuỗi/phí/tài khoản · hai bên | không có biên nhận neo |
+| Nhắc nhân viên vườn tự động | `kenh=null` → BLOCKED, báo GĐ | chọn kênh (D-KH-09) · GĐ vùng trồng | DB test |
+| Nguồn thời tiết | `fetch.enabled=false` → exit 2 | duyệt nguồn/điều khoản · GĐ vùng trồng | chỉ fail-closed |
+| SMTP cảnh báo đỏ | `--check-routing` exit 1 (thiếu người nhận + kênh) | người nhận độc lập + SMTP_* · Pháp chế/Bên B | — |
+| Website riêng | nguồn dữ liệu `--website-feed` có; nhập đơn BLOCKED | repo/owner website + định dạng xuất đơn · Bên B | DB test |
+
+Không chọn vendor, không ký DPA, không gọi endpoint chưa được phép; unit test
+transport giả KHÔNG phải bằng chứng sandbox.
+
+### A6. DR bằng Docker (máy dev) — `evidence/contract_g4_dr.log`
+
+Docker 28.4.0 + `postgres:17-alpine` (khớp server 17.6), `pg_dump` 17: 3 ca
+`test_dr_drill_real_ok`, `test_dr_drill_real_mismatch_still_cleans`,
+`test_zz_no_dr_container_left` PASSED (0 skip; cùng `test_db_backup.py`: 77
+passed). Restore vào container riêng (cổng `docker port`), manifest sai → phát
+hiện LỆCH + vẫn dọn; DB nguồn chỉ thêm dòng sổ bằng chứng backup
+(`file_output_evidence`, thiết kế) — không dòng nào do restore; không còn
+container/volume do lượt này tạo. CLI thật: RTO 5,23 giây (gồm dựng server;
+restore 2,28 giây), RPO 0,00 giờ, 99/99 bảng khớp — DB test ~620 KB, backup
+CHƯA mã hóa, chưa offsite: số đo KHÔNG đại diện server Bên B; diễn tập Mốc C/D
+trên server Bên B vẫn là nghĩa vụ chưa làm (VERIFIED_DEV_DR ≠ đã diễn tập).
+
+### A7. Sự cố test chạm DB `samsam` + credential lịch sử
+
+**Chứng minh được (từ evidence ngoài production):** vòng 1 (20/10/2026) các
+lượt pytest chọn lọc chạy khi shell chưa đặt `DATABASE_URL` → fixture kết nối
+DB `samsam` (danh sách 22 file ở mục 2b); fixture tạo schema tạm + ROLLBACK;
+lần kiểm duy nhất lúc đó: 0 schema `t_*` sót lại. Từ vòng 2 có cổng
+`tests/_db_guard.py` (vá thêm G1–G3 ngày 21/10); đợt này không kết nối
+`samsam`. **Không chứng minh được:** tiến trình con CLI (kế thừa DSN) có COMMIT
+dòng vào `public` của `samsam` hay không (`job_runs`, `red_alerts`,
+`agent_action_log`…), quyền có bị đổi hay không — không có baseline/audit log
+trước sự cố trong repo. Trạng thái: UNVERIFIED. Quản trị viên cần cung cấp:
+bản backup `samsam` trước 20/10/2026 hoặc log Postgres (`log_statement`/
+pgaudit) phiên 20/10, rồi chạy kiểm chỉ đọc ở mục 2b; xóa/sửa nếu có chỉ do DBA
+Bên B quyết.
+
+**Credential:** mật khẩu DB trong `.env` HIỆN VẪN TRÙNG giá trị đã lộ trong
+lịch sử Git của repo public (`60d9acf^:evidence/v82_pytest.log`,
+`…v82_pytest_vong1.log`; kiểm boolean 22/10/2026, không in giá trị). Release
+sạch không xóa được rủi ro lịch sử. Checklist rotation (quản trị viên làm —
+agent không đổi credential, không rewrite Git): runbook mục 10.7.
+
+### A8. Trạng thái + giới hạn
+
+Không mục nào `da_nghiem_thu` (96/96 `chua_nghiem_thu`); 0 mục có sổ rollout
+trên server Bên B; không có chạy thử/người duyệt thật. Docker dev, DB test và
+probe không thay server Bên B, thời gian chạy thử, người duyệt hay biên bản.
+Bảng trạng thái từng mục: mục 4 (sinh lại từ danh mục đợt này).
 
 ## 0. Baseline và tiêu chí xong (G0)
 
@@ -325,100 +561,110 @@ pháp lý và **không đổi `acceptance_status`**.
 KPI tháng (PL02 mục 3) ↔ `scripts/ops_monthly.py`: thiếu mẫu số → "chưa có
 dữ liệu", không ghi "đạt".
 
-Bảng dưới sinh từ catalog (code_status + blocker) + rà tay; **mọi mục
+Bảng dưới SINH LẠI từ danh mục đợt hoàn thiện 22/10/2026 (code_status + blocker); **mọi mục
 `acceptance_status = chua_nghiem_thu`; không mục nào có sổ rollout trên server
 Bên B** (thiếu bằng chứng: server, người duyệt được ủy quyền, dữ liệu thật, đủ
 ngày làm việc).
 
-| Mục | Phạm vi | GĐ | Tên | code_status | Trạng thái đợt này | Rà tay PL01 / đợt này | Blocker trong catalog (rút gọn) |
+| Mục | Phạm vi | GĐ | Tên | code_status | Trạng thái | Ghi chú | Blocker (rút gọn) |
 |---|---|---|---|---|---|---|---|
-| ceo-01 | tinh nang ai | P1 | Báo cáo tuần tự động | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | vòng 1: job thứ Hai chụp số nội bộ trước báo cáo; doanh số/đơn kênh ngoài vẫn CSV tay | — |
-| ceo-02.1 | tinh nang ai | P1 | Theo dõi tiến độ (sổ mốc) | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | C05 xong: mục 'chờ quyết định / chờ ký' (hàng duyệt ceo, mốc sign_required, đối soát quý) | — |
-| ceo-02.2 | tinh nang ai | P1 | Sổ quyết định TGĐ | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | C05 xong (như ceo-02.1) | — |
+| ceo-01 | tinh nang ai | P1 | Báo cáo tuần tự động | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
+| ceo-02.1 | tinh nang ai | P1 | Theo dõi tiến độ (sổ mốc) | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
+| ceo-02.2 | tinh nang ai | P1 | Sổ quyết định TGĐ | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
 | ceo-03 | tinh nang ai | P1 | Sổ rủi ro pháp lý | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
-| ceo-04.1 | tinh nang ai | P1 | So đầu ra đang chạy với bản đã duyệt | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | C06 xong: so giá với giá list ĐÃ DUYỆT hiệu lực; mô tả so khi file có cột (hiện chưa có cột → không so được) | GĐ bán hàng cung cấp kế hoạch KM ĐÃ chốt (CSV định dạng kd_price --plan) hoặc duyệt giá KM golden (price_list kind promo); Quản lý MXH xuất … |
-| ceo-04.2 | tinh nang ai | P1 | Báo khi nhật ký bị sửa | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | vòng 1: job chain_watch + cảnh báo đỏ | — |
-| ceo-05 | tinh nang ai | P2 | Báo cáo HĐTV | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | C11 xong: job hdtv_month (--month prev, chạy lại không nhân bản) | — |
-| sales-01 | tinh nang ai | P1 | Chatbot chăm sóc khách (Zalo, Messenger) | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | C01 xong (cấu hình): unit 24/7 + /readyz + job webhook_health; CHƯA vận hành 24/7 trên server | C01: có CẤU HÌNH chạy 24/7 nhưng CHƯA vận hành 24/7 — cần server Bên B bật 2 unit + secret OA/Meta + người nhận cảnh báo |
-| sales-09 | tinh nang ai | P1 | Chatbot trên website | lam_rieng | BLOCKED_DECISION | — | Repo/owner website + chatbot website chưa xác định — không xây ở repo này (quyết định user 15/10/2026) |
+| ceo-04.3 | tinh nang ai | P1 | So bài đăng/listing đang chạy với bản đã duyệt | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | File bài đã đăng + listing Seller Center xuất tay thật (Quản lý MXH); approvers khối ceo (Bên B ủy quyền); lịch job `ceo_audit` có sẵn — Bên… |
+| ceo-04.4 | tinh nang ai | P1 | So giá (và mô tả) listing đang chạy với bản đã duyệt | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | đợt hoàn thiện: báo cáo giá riêng ceo-gia- | Listing Seller Center thật (mapping cột giá/sale_price chưa xác minh với file thật); file xuất listing chưa có cột mô tả → mô tả 'không so đ… |
+| ceo-04.5 | tinh nang ai | P1 | So voucher/khuyến mãi đang chạy với bản đã duyệt | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | GĐ bán hàng cung cấp kế hoạch KM ĐÃ chốt (CSV định dạng kd_price --plan) hoặc duyệt giá KM golden (price_list kind promo); Quản lý MXH xuất … |
+| ceo-04.6 | tinh nang ai | P1 | Báo khi nhật ký bị sửa + đối soát độc lập BKS | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
+| ceo-05 | tinh nang ai | P2 | Báo cáo HĐTV | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
+| sales-01 | tinh nang ai | P1 | Chatbot chăm sóc khách (Zalo, Messenger) | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | đợt hoàn thiện: lọc câu sức khỏe thêm triệu chứng/thuốc | C01: có CẤU HÌNH chạy 24/7 nhưng CHƯA vận hành 24/7 — cần server Bên B bật 2 unit + secret OA/Meta + người nhận cảnh báo |
+| sales-09 | tinh nang ai | P1 | Chatbot trên website | lam_rieng | BLOCKED_DECISION, UNVERIFIED_LIVE | — | Repo/owner website + chatbot website chưa xác định — không xây ở repo này (quyết định user 15/10/2026) |
 | sales-02 | tinh nang ai | P1 | Gợi ý trả lời chat sàn | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Bên B ủy quyền người MXH được đánh dấu đã dán (`approvers` khối sales trong data/directors/sales.json + login `db_login`) — rỗng thì chế độ … |
-| sales-03 | tinh nang ai | P1 | Listing đa sàn | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | C04 xong: mô tả chuẩn đã duyệt + xuất CSV/manifest theo sàn; mapping cột chưa xác minh với mẫu thật | C04: mô tả chuẩn = listing web ĐÃ duyệt; xuất CSV + manifest sha cho shopee/tiktok — tiêu đề cột data/listing_export_map.json CHƯA XÁC MINH … |
+| sales-03 | tinh nang ai | P1 | Listing đa sàn | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | C04: mô tả chuẩn = listing web ĐÃ duyệt; xuất CSV + manifest sha cho shopee/tiktok — tiêu đề cột data/listing_export_map.json CHƯA XÁC MINH … |
 | sales-04.1 | tinh nang ai | P1 | Người phụ trách khách trong ngày | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Bên B cấp danh sách MÃ nhân viên kinh doanh (data/sales_watch.json lead_owner.staff_codes rỗng — CLI chỉ kiểm mẫu mã); GĐ bán hàng chốt giờ … |
 | sales-04.2 | tinh nang ai | P1 | Chuyển khách về đại lý gần nhất | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Bảng vùng–đại lý thật (data/dealer_regions.json là MẪU) — Bên B cung cấp |
-| sales-05 | tinh nang ai | P1 | Báo giá B2B quà Tết | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Form B2B mặc định TẮT (B2B_FORM_ENABLED — Bên B quyết bật khi có tên miền/hạ tầng); GĐ bán hàng chốt ngưỡng nhắc chốt đơn (sales_watch.json … |
+| sales-05 | tinh nang ai | P1 | Báo giá B2B quà Tết | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Form B2B mặc định TẮT (B2B_FORM_ENABLED — Bên B quyết bật khi có tên miền/hạ tầng); GĐ bán hàng chốt ngưỡng nhắc chốt đơn (sales_watch.json … |
 | sales-06.1 | tinh nang ai | P1 | Giám sát giá và phá giá | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Nguồn giá đại lý TỰ ĐỘNG (API/crawl gian hàng đại lý) chưa có — Bên B cấp nguồn/quyền; hiện chỉ file quan sát tay (python -m ingest.dealer_p… |
-| sales-06.2 | tinh nang ai | P1 | Cảnh báo đơn trễ, hủy, hoàn bất thường | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | BLOCKED dữ liệu: đơn TRỄ 'chưa đo' (file thiếu cột ngày đặt) | Bên B xuất file Seller Center thật có cột ngày đặt/hạn giao (đơn TRỄ hiện 'chưa đo', không suy) + tên trạng thái hoàn/trả thật (sales_watch.… |
+| sales-06.2 | tinh nang ai | P1 | Cảnh báo đơn trễ, hủy, hoàn bất thường | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Bên B xuất file Seller Center thật có cột ngày đặt/hạn giao (đơn TRỄ hiện 'chưa đo', không suy) + tên trạng thái hoàn/trả thật (sales_watch.… |
 | sales-07.1 | tinh nang ai | P1 | Kịch bản và giỏ hàng livestream | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | Tài khoản live sàn = external-dep (module không lên sóng) |
-| sales-07.2 | tinh nang ai | P1 | Sau bán: xin đánh giá | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | giới hạn: chỉ kênh sở hữu | Gửi Zalo OA/ZNS do người làm tay (external-dep) |
+| sales-07.2 | tinh nang ai | P1 | Sau bán: xin đánh giá | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | Gửi Zalo OA/ZNS do người làm tay (external-dep) |
 | sales-07.3 | tinh nang ai | P1 | Kịch bản bán mùa 11.11, 12.12, Tết | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Giả định số bán data/scenario_assumptions.json chờ GĐ KD/TC chốt |
-| marketing-01 | tinh nang ai | P1 | Nội dung hằng ngày | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Trụ nội dung thường ngày + lịch chiến dịch GIẢ ĐỊNH (data/marketing_calendar.json — GĐ Marketing chốt); hiện 0 SKU đủ readiness bài đăng (TP… |
-| marketing-02.1 | tinh nang ai | P1 | Ảnh bối cảnh AI quanh ảnh sản phẩm thật | mot_phan | MISSING_CODE, BLOCKED_VENDOR, UNVERIFIED_LIVE | — | Provider sinh nền ảnh AI chỉ có 'none' (nền gradient) — cần vendor + hợp đồng/DPA + key (C05 ghi BLOCKED) |
-| marketing-02.2 | tinh nang ai | P1 | Video 15–45 giây từ tư liệu thật | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | chưa có tư liệu video thật được cấp | — |
-| marketing-03 | tinh nang ai | P1 | Quảng cáo thử nghiệm | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Tham số đề xuất `data/ads_proposal.json` (tỷ lệ trần, số ngày, chỉ tiêu thành công/dừng) CHƯA CHỐT — GĐ Marketing chốt (chot_boi + can_cu); … |
-| marketing-04.1 | tinh nang ai | P1 | Bộ tài liệu chuẩn cho KOC/đại lý affiliate | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | KOC thật + hợp đồng ký = external-dep (danh sách KOC đang MẪU) |
+| marketing-01.1 | tinh nang ai | P1 | Soạn 3 bài mỗi ngày | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Trụ nội dung thường ngày + lịch chiến dịch GIẢ ĐỊNH (data/marketing_calendar.json — GĐ Marketing chốt); hiện 0 SKU đủ readiness bài đăng (TP… |
+| marketing-01.2 | tinh nang ai | P1 | Lịch mùa vụ (brief chiến dịch) | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Lịch chiến dịch GIẢ ĐỊNH (data/marketing_calendar.json — GĐ Marketing chốt); approvers khối marketing rỗng |
+| marketing-02.1 | tinh nang ai | P1 | Ảnh bối cảnh AI quanh ảnh sản phẩm thật | mot_phan | CODE_PARTIAL, BLOCKED_VENDOR, UNVERIFIED_LIVE | ảnh AI: provider none | Provider sinh nền ảnh AI chỉ có 'none' (nền gradient) — cần vendor + hợp đồng/DPA + key (C05 ghi BLOCKED) |
+| marketing-02.2 | tinh nang ai | P1 | Video 15–45 giây từ tư liệu thật | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
+| marketing-03.1 | tinh nang ai | P1 | Đề xuất quảng cáo thử nghiệm | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Tham số đề xuất `data/ads_proposal.json` (tỷ lệ trần, số ngày, chỉ tiêu thành công/dừng) CHƯA CHỐT — GĐ Marketing chốt (chot_boi + can_cu); … |
+| marketing-03.2 | tinh nang ai | P1 | Theo dõi chi phí mỗi đơn, đề xuất giữ hay tắt | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | đợt hoàn thiện: loại việc riêng ad_result | Số kết quả quảng cáo nhập file xuất tay (API nền tảng quảng cáo ngoài phạm vi, agent không chi tiền); cần phiếu đã duyệt đủ 2 mục |
+| marketing-04.1 | tinh nang ai | P1 | Bộ tài liệu chuẩn cho KOC/đại lý affiliate | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | KOC thật + hợp đồng ký = external-dep (danh sách KOC đang MẪU) |
 | marketing-04.2 | tinh nang ai | P1 | Kiểm tra bài đăng của đối tác | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Bên B/GĐ marketing cung cấp file xuất bài KOC/đại lý ĐÃ đăng (chưa có nguồn tự động — API/crawl MXH của đối tác ngoài phạm vi); KOC thật + h… |
-| marketing-05 | tinh nang ai | P1 | Bình luận, đánh giá | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | đầu vào CSV xuất tay; chưa lịch | — |
+| marketing-05.1 | tinh nang ai | P1 | Phân loại bình luận | co_code | CODE_VERIFIED, BLOCKED_VENDOR, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | đợt hoàn thiện: nhãn nghi_hang_gia | File export comment/inbox kênh sở hữu do Quản lý MXH xuất tay (chưa có nguồn tự động — Fanpage Graph API chờ Bên B cấp); từ khóa nhãn data/s… |
+| marketing-05.2 | tinh nang ai | P1 | Soạn nháp trả lời bình luận, đánh giá | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
 | marketing-06.1 | tinh nang ai | P1 | Chuẩn hóa trang sản phẩm trên web | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
 | marketing-06.2 | tinh nang ai | P1 | Báo cáo kênh | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Số lượt xem kênh chỉ có từ file xuất tay (manual_export) — chưa có API kênh |
 | marketing-07.1 | tinh nang ai | P2 | SEO sàn | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
 | marketing-07.2 | tinh nang ai | P2 | YouTube dài | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
-| intel-01.1 | tinh nang ai | P1 | Bản tin thị trường 7h | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | bản tin chỉ ghi file, không bước giao 7h | Danh sách nguồn data/intel_sources.json chờ duyệt |
+| intel-01.1 | tinh nang ai | P1 | Bản tin thị trường 7h | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | Danh sách nguồn data/intel_sources.json chờ duyệt |
 | intel-01.2 | tinh nang ai | P1 | Gợi ý chủ đề cho Marketing | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
-| intel-02 | tinh nang ai | P1 | Báo động đỏ | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | vòng 1: luật counterfeit + thu RSS mỗi giờ | Người nhận cảnh báo đỏ rỗng (data/red_alert_routing.json) — Pháp chế/Bên B cử người nhận độc lập + địa chỉ email + SMTP_* (v14.6 đã có leo t… |
-| intel-03 | tinh nang ai | P1 | Theo dõi đối thủ | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | vòng 1: độ phủ K5/TRIMICO/KGC; dữ liệu nhập tay | Dữ liệu đối thủ nhập tay (file) — chưa có nguồn tự động hợp lệ |
+| intel-02.1 | tinh nang ai | P1 | Báo động sâm giả, mạo danh Ngọc Linh | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | đếm theo luật đầu của cảnh báo | Người nhận cảnh báo đỏ rỗng (data/red_alert_routing.json) — Pháp chế/Bên B cử người nhận độc lập + địa chỉ email + SMTP_* (v14.6 đã có leo t… |
+| intel-02.2 | tinh nang ai | P1 | Báo động quy định mới | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | đếm theo luật đầu của cảnh báo | Người nhận cảnh báo đỏ rỗng (data/red_alert_routing.json) — Pháp chế/Bên B cử người nhận độc lập + địa chỉ email + SMTP_* (v14.6 đã có leo t… |
+| intel-02.3 | tinh nang ai | P1 | Báo động tin xấu về Sâm Sâm | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | đếm theo luật đầu của cảnh báo | Người nhận cảnh báo đỏ rỗng (data/red_alert_routing.json) — Pháp chế/Bên B cử người nhận độc lập + địa chỉ email + SMTP_* (v14.6 đã có leo t… |
+| intel-03 | tinh nang ai | P1 | Theo dõi đối thủ | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Dữ liệu đối thủ nhập tay (file) — chưa có nguồn tự động hợp lệ |
 | intel-04.1 | tinh nang ai | P1 | Xu hướng Google Trends theo tuần | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | File Google Trends xuất tay |
 | intel-04.2 | tinh nang ai | P1 | Gợi ý từ khóa an toàn pháp lý | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | File Google Trends related xuất tay (Quản lý MXH); Pháp chế duyệt bộ luật lọc (từ cấm/claim/sức khỏe/ rượu) — chưa có lớp LLM-check cho ẩn ý… |
-| intel-05 | tinh nang ai | P1 | Giả lập khách hàng | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | C09 xong: phương án nháp giá combo; thử trên khách giả lập vẫn chờ DPIA | DPIA chưa ký (data/sim_config.json dpia_signed=false) → chỉ chạy --dry-run; CHỈ người thật đổi cờ; C09: phương án nháp giá combo đã có (BOM … |
+| intel-05.1 | tinh nang ai | P1 | Thử thông điệp trên khách hàng giả lập | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | DPIA chưa ký (data/sim_config.json dpia_signed=false) → chỉ --dry-run; CHỈ người thật đổi cờ |
+| intel-05.2 | tinh nang ai | P1 | Thử giá combo | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Mức chiết khấu data/combo_price.json GIẢ ĐỊNH (chủ khối chốt); thử phương án trên khách giả lập vẫn chờ DPIA ký |
 | intel-06 | tinh nang ai | P1 | Kịch bản mùa | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Giả định data/scenario_assumptions.json chờ GĐ KD/TC chốt |
 | finance-01 | tinh nang ai | P1 | Đối soát tiền sàn | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
 | finance-02 | tinh nang ai | P1 | Hóa đơn điện tử | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | Phát hành trên hệ thống HĐĐT do kế toán làm tay (external-dep) |
 | finance-03.1 | tinh nang ai | P1 | Bảng tuổi nợ đại lý | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Sổ công nợ nạp tay (file) — dữ liệu thật Bên B cung cấp |
 | finance-03.2 | tinh nang ai | P1 | Hoa hồng affiliate | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Tỷ lệ hoa hồng cấu hình MẪU — GĐ tài chính chốt |
 | finance-03.3 | tinh nang ai | P1 | Nháp thư nhắc nợ | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Sổ công nợ thật (dealer_ar nạp tay) + sổ đại lý `dealers` do Bên B cung cấp; người duyệt GĐ tài chính (approvers rỗng — C04); kế toán gửi th… |
-| finance-04.1 | tinh nang ai | P1 | Biên lợi nhuận từng sản phẩm, từng kênh | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Giá vốn cần người duyệt (cogs_versions) — GĐ tài chính |
-| finance-04.2 | tinh nang ai | P1 | Chặn khuyến mãi bị lỗ | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | C08 xong: KM nội bộ đã duyệt + không tính được biên + mục finance/promo_loss | giá vốn đã duyệt (cogs_versions) + tỷ lệ thực nhận fpa_config GIẢ ĐỊNH |
+| finance-04.1 | tinh nang ai | P1 | Biên lợi nhuận từng sản phẩm, từng kênh | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | Giá vốn cần người duyệt (cogs_versions) — GĐ tài chính |
+| finance-04.2 | tinh nang ai | P1 | Chặn khuyến mãi bị lỗ | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | giá vốn đã duyệt (cogs_versions) + tỷ lệ thực nhận fpa_config GIẢ ĐỊNH |
 | finance-05.1 | tinh nang ai | P1 | So chi phí AI, quảng cáo với ngân sách | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Trần ngân sách cấu hình GIẢ ĐỊNH — GĐ tài chính chốt |
-| finance-05.2 | tinh nang ai | P1 | Dự báo dòng tiền 13 tuần | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | Số dư đầu kỳ thật + giả định data/fpa_config.json chờ GĐ tài chính |
-| production-01 | tinh nang ai | P1 | Báo cáo sản xuất | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, MISSING_CODE, UNVERIFIED_LIVE | C10 xong: mục Tiến độ (kế hoạch + lô gắn); chưa có kế hoạch thật → THIẾU DỮ LIỆU | Mốc data/production_config.json GIẢ ĐỊNH; tồn kho nạp tay; chưa có kế hoạch sản xuất thật được ghi → bản tin hiện THIẾU DỮ LIỆU |
-| production-02 | tinh nang ai | P1 | Hồ sơ sản phẩm | mot_phan | MISSING_CODE, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | 13 SKU golden vs 14 hồ sơ gốc; chưa có trường thành phần | Golden có 13 SKU (gồm combo) — chưa đối chiếu 14 hồ sơ gốc PL01; Bên B cung cấp danh mục 14 hồ sơ gốc; chính sách cổng tắt loader nạp file C… |
-| production-03 | tinh nang ai | P1 | Đối soát nhãn | mot_phan | MISSING_CODE, BLOCKED_VENDOR, UNVERIFIED_LIVE | — | Đọc ẢNH nhãn cần OCR trong nước — registry chỉ có 'none' (exit 2); cần vendor + hợp đồng/DPA + key |
-| production-04.1 | tinh nang ai | P1 | Hồ sơ lô | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | C03 xong: sổ phiếu kiểm nghiệm (phiên bản, hash, tệp ngoài repo) | kho LOT_CERT_DIR trên server + phiếu kiểm nghiệm thật do Bên B cung cấp |
-| production-04.2 | tinh nang ai | P1 | Cảnh báo hàng cận hạn | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | near_expiry_days GIẢ ĐỊNH 90 — GĐ sản xuất chốt |
-| production-05 | tinh nang ai | P2 | Kho tài liệu R&D | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Tài liệu nội bộ do GĐ SX duyệt nạp (chưa có) |
-| farming-01 | tinh nang ai | P1 | Nhật ký vườn qua Zalo | mot_phan | MISSING_CODE, BLOCKED_VENDOR, UNVERIFIED_LIVE | STT chưa có vendor | Giọng nói chưa có STT (giữ nháp chờ người chép) — cần vendor STT trong nước + DPA |
-| farming-02 | tinh nang ai | P1 | Nhắc ghi nhật ký | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | C02 xong (cơ chế): nhắc người phụ trách trước GĐ; kênh tự động BLOCKED_DECISION | C02: cơ chế nhắc người phụ trách khoảnh đã có (sổ garden_reminders, --reminders/--mark-reminded); THIẾU QUYẾT ĐỊNH kênh nhắc tự động (data/g… |
+| finance-05.2 | tinh nang ai | P1 | Dự báo dòng tiền 13 tuần | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Số dư đầu kỳ thật + giả định data/fpa_config.json chờ GĐ tài chính |
+| production-01 | tinh nang ai | P1 | Báo cáo sản xuất | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Mốc data/production_config.json GIẢ ĐỊNH; tồn kho nạp tay; chưa có kế hoạch sản xuất thật được ghi → bản tin hiện THIẾU DỮ LIỆU |
+| production-02 | tinh nang ai | P1 | Hồ sơ sản phẩm | mot_phan | CODE_PARTIAL, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | đợt hoàn thiện: kiểm sổ hồ sơ gốc (BLOCKED 0/14) | Bên B cung cấp danh mục 14 hồ sơ gốc (tên, thành phần, quy cách, số công bố + căn cứ) vào data/product_dossiers.json `danh_muc_ho_so_goc` — … |
+| production-03 | tinh nang ai | P1 | Đối soát nhãn | mot_phan | CODE_PARTIAL, BLOCKED_VENDOR, UNVERIFIED_LIVE | đọc ảnh nhãn cần OCR | Đọc ẢNH nhãn cần OCR trong nước — registry chỉ có 'none' (exit 2); cần vendor + hợp đồng/DPA + key |
+| production-04.3 | tinh nang ai | P1 | Hồ sơ lô, cảnh báo cận hạn | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Kho LOT_CERT_DIR trên server + phiếu kiểm nghiệm thật (Bên B); near_expiry_days GIẢ ĐỊNH 90 — GĐ sản xuất chốt |
+| production-05.1 | tinh nang ai | P2 | Tra cứu tài liệu R&D | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | Tài liệu nội bộ do GĐ SX duyệt nạp (chưa có) |
+| production-05.2 | tinh nang ai | P2 | Tóm tắt tài liệu R&D | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | đợt hoàn thiện: báo cáo tóm tắt riêng sx-tomtat- | Tài liệu nội bộ do GĐ SX duyệt nạp (chưa có); tóm tắt cần OpenRouter qua cổng AI (mặc định tắt `--llm`) — dữ liệu R&D nội bộ gửi dịch vụ AI … |
+| farming-01 | tinh nang ai | P1 | Nhật ký vườn qua Zalo | mot_phan | CODE_PARTIAL, BLOCKED_VENDOR, UNVERIFIED_LIVE | STT chưa có vendor | Giọng nói chưa có STT (giữ nháp chờ người chép) — cần vendor STT trong nước + DPA |
+| farming-02.1 | tinh nang ai | P1 | Nhắc người phụ trách khoảnh | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Kênh nhắc tự động chưa chọn (data/garden_remind.json kenh=null, D-KH-09 — Zalo/ZNS cần lưu user_id + chi phí); danh sách khoảnh phụ trách (`… |
+| farming-02.2 | tinh nang ai | P1 | Báo giám đốc khi vẫn bỏ trống | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
 | farming-03.1 | tinh nang ai | P1 | Nối lô thu hoạch với lô sản xuất | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
-| farming-03.2 | tinh nang ai | P1 | Trang và tem QR cho khách quét | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Domain công khai cho trang QR chưa có; danh sách người ký data/qr_signers.json rỗng; nhà in tạo ảnh QR |
-| farming-04 | tinh nang ai | P1 | Kho tư liệu vườn | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | C07 xong: cấp/thu hồi cho Marketing + view tối thiểu + lấy tệp kiểm hash/EXIF | Video đã nhận ở code (C05 v13.4: magic bytes + remux ffmpeg gỡ metadata/GPS, thiếu ffmpeg → từ chối). Còn: event video Zalo OA + host CDN GI… |
-| farming-05.1 | tinh nang ai | P2 | Cảnh báo thời tiết, sâu bệnh | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | C11 xong: job vt_weather (BLOCKED tới khi bật nguồn dự báo) | nguồn dự báo thời tiết fetch.enabled=false (điều khoản nhà cung cấp chưa xác minh) → job exit 2 BLOCKED |
-| farming-05.2 | tinh nang ai | P2 | Dự báo sản lượng thu hoạch | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | C11 xong: job vt_harvest | — |
-| legal_hr-01 | tinh nang ai | P1 | Kiểm duyệt nội dung tự động | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | vòng 1 + P1 vòng 2: bỏ ngoại lệ hình thức 'Hỏi: …?' (controller tái hiện lọt) | Pháp chế chốt bộ ca red-team (label_status 'chờ Pháp chế duyệt nhãn') + danh sách từ cấm tiếng Anh v14.1; đợt hợp đồng 20/10/2026: 3 known_g… |
+| farming-03.2 | tinh nang ai | P1 | Trang và tem QR cho khách quét | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | Domain công khai cho trang QR chưa có; danh sách người ký data/qr_signers.json rỗng; nhà in tạo ảnh QR |
+| farming-04 | tinh nang ai | P1 | Kho tư liệu vườn | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Video đã nhận ở code (C05 v13.4: magic bytes + remux ffmpeg gỡ metadata/GPS, thiếu ffmpeg → từ chối). Còn: event video Zalo OA + host CDN GI… |
+| farming-05.3 | tinh nang ai | P2 | Cảnh báo thời tiết | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | nguồn dự báo thời tiết fetch.enabled=false (điều khoản nhà cung cấp chưa xác minh) → job exit 2 BLOCKED |
+| farming-05.4 | tinh nang ai | P2 | Cảnh báo sâu bệnh | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | đợt hoàn thiện: không chờ nguồn dự báo (job vt_pests) | Nhật ký vườn thật (nhân viên ghi qua Zalo/nhập tay); từ khóa cờ sâu bệnh = luật nhật ký hiện có (GĐ vùng trồng rà); bật timer vt_pests trên … |
+| farming-05.2 | tinh nang ai | P2 | Dự báo sản lượng thu hoạch | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
+| legal_hr-01 | tinh nang ai | P1 | Kiểm duyệt nội dung tự động | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | P1 vòng 2: bỏ ngoại lệ livestream | Pháp chế chốt bộ ca red-team (label_status 'chờ Pháp chế duyệt nhãn') + danh sách từ cấm tiếng Anh v14.1; đợt hợp đồng 20/10/2026: 3 known_g… |
 | legal_hr-02 | tinh nang ai | P1 | Hồ sơ xác nhận quảng cáo | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | — |
-| legal_hr-03.1 | tinh nang ai | P1 | Lưu giấy tờ sản phẩm | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | CHỒNG LẤN với data_platform-02 (ứng viên gộp) | chính sách cổng tắt loader nạp file CHƯA CẤU HÌNH (data/loader_gate.json — chủ khối/hai bên chọn chan_khi_tat/nap_ca_khi_tat; hiện: tính năn… |
 | legal_hr-03.2 | tinh nang ai | P1 | Xếp mức được phép quảng bá | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | chính sách cổng tắt loader nạp file CHƯA CẤU HÌNH (data/loader_gate.json — chủ khối/hai bên chọn chan_khi_tat/nap_ca_khi_tat; hiện: tính năn… |
-| legal_hr-04 | tinh nang ai | P1 | Quét kênh, gỡ bài | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | C12 xong: web (crawl công khai) + listing tự thu + job channel_scan; Fanpage cần Graph API (BLOCKED) | Fanpage: cần Graph API + page token do Bên B cấp — CHƯA có adapter (không đoán endpoint), vẫn CSV --file; web/listing đã tự thu — chưa chạy … |
+| legal_hr-04 | tinh nang ai | P1 | Quét kênh, gỡ bài | co_code | CODE_VERIFIED, BLOCKED_VENDOR, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | C12: Fanpage cần Graph API (BLOCKED_VENDOR) | Fanpage: cần Graph API + page token do Bên B cấp — CHƯA có adapter (không đoán endpoint), vẫn CSV --file; web/listing đã tự thu — chưa chạy … |
 | legal_hr-05.1 | tinh nang ai | P1 | Hợp đồng mẫu KOC, đại lý | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | Hợp đồng mẫu là NHÁP — luật sư/Pháp chế rà |
 | legal_hr-05.2 | tinh nang ai | P1 | Mẫu xin đồng ý của khách | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | DPIA chưa ký; mẫu văn bản đồng ý chờ Pháp chế |
 | legal_hr-06.1 | tinh nang ai | P1 | Mô tả công việc | co_code | CODE_VERIFIED, UNVERIFIED_LIVE | — | Mẫu data/hr/jd_templates.json BẢN DEV SOẠN |
 | legal_hr-06.2 | tinh nang ai | P1 | Sàng lọc hồ sơ | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Thời hạn lưu CV chưa chốt (C05 retention TTL null) |
 | legal_hr-06.3 | tinh nang ai | P1 | Chấm công | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Luật ca data/hr/attendance_rules.json GIẢ ĐỊNH; thời hạn lưu chưa chốt |
-| legal_hr-07 | tinh nang ai | P2 | Cập nhật văn bản pháp luật mới | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | URL nguồn văn bản tầng A chưa xác minh (Pháp chế duyệt data/intel_sources.json); bộ từ khóa legal_doc GIẢ ĐỊNH (data/intel_alert_rules.json … |
+| legal_hr-07 | tinh nang ai | P2 | Cập nhật văn bản pháp luật mới | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | URL nguồn văn bản tầng A chưa xác minh (Pháp chế duyệt data/intel_sources.json); bộ từ khóa legal_doc GIẢ ĐỊNH (data/intel_alert_rules.json … |
 | data_platform-01 | tinh nang ai | P1 | Kho dữ liệu chung | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Server nội bộ Bên B chưa có bằng chứng (data_platform-90); Hạ tầng Bên B tạo login thật `in role svc_webhook/svc_job/svc_loader/svc_backup/b… |
-| data_platform-02 | tinh nang ai | P1 | Số hóa giấy tờ | mot_phan | MISSING_CODE, BLOCKED_VENDOR, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | vòng 1: --reprocess-pending; OCR chưa có vendor | OCR registry chỉ có 'none' — cần vendor OCR trong nước + hợp đồng/DPA + key; chính sách cổng tắt loader nạp file CHƯA CẤU HÌNH (data/loader_… |
+| data_platform-02.1 | tinh nang ai | P1 | Đọc chữ tự động từ giấy tờ | mot_phan | CODE_PARTIAL, BLOCKED_VENDOR, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | OCR chưa có vendor | OCR registry chỉ có 'none' — cần vendor OCR trong nước + hợp đồng/DPA + key; chính sách cổng tắt loader nạp file CHƯA CẤU HÌNH (data/loader_… |
+| data_platform-02.2 | tinh nang ai | P1 | Lưu bản gốc kèm mã kiểm tra | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | chính sách cổng tắt loader nạp file CHƯA CẤU HÌNH (data/loader_gate.json — chủ khối/hai bên chọn) |
 | data_platform-03 | tinh nang ai | P1 | Kho tri thức cho chatbot | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Bên B ủy quyền người duyệt tài liệu nội bộ (approvers khối data_platform đang rỗng) + login Postgres riêng của người đó (db_login trong user… |
-| data_platform-04 | tinh nang ai | P1 | Cổng AI an toàn | co_code | CODE_VERIFIED, BLOCKED_VENDOR, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | trần chi phí theo agent, chưa theo từng mục catalog | v13.1 che tên/địa chỉ theo mẫu + FinOps fail-closed; v14.1 che tên KHÔNG theo mẫu bằng từ điển công khai data/vn_names.json (họ/đệm/tên/địa … |
+| data_platform-04 | tinh nang ai | P1 | Cổng AI an toàn | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | đợt hoàn thiện: trần + nút tắt theo TÍNH NĂNG | Mức trần chi phí theo TÍNH NĂNG data/llm_gateway.json feature_caps_usd GIẢ ĐỊNH (= trần agent mặc định) — Quản lý AI (Bên B) chốt từng tính … |
 | data_platform-05 | tinh nang ai | P1 | Kết nối dữ liệu sàn (nhập file) | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Mapping cột data/market_csv_map.json chưa xác minh với file thật; chính sách cổng tắt loader nạp file CHƯA CẤU HÌNH (data/loader_gate.json —… |
-| data_platform-07.1 | tinh nang ai | P1 | Giám sát lỗi | mot_phan | MISSING_CODE, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | THIẾU: giám sát ngoài máy chủ (hạ tầng Bên B) | C07 v13.7 đã có sổ sự cố ops_incidents + SLA 15 phút/3 giờ/3 ngày làm việc/7 ngày trong ops_monthly. Đợt docx P2: bản tin health ghi qua wri… |
+| data_platform-07.1 | tinh nang ai | P1 | Giám sát lỗi | mot_phan | CODE_PARTIAL, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | đợt hoàn thiện: runbook giám sát ngoài máy; máy giám sát chưa có | Máy giám sát NGOÀI server Bên B chưa có (BLOCKED_INFRA): cài trên máy riêng `python scripts/webhook_probe.py --url https://<server>/readyz -… |
 | data_platform-07.2 | tinh nang ai | P1 | Backup hằng ngày | co_code | CODE_VERIFIED, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Offsite/NAS + lịch chạy trên server Bên B chưa có bằng chứng |
 | data_platform-07.3 | tinh nang ai | P1 | Kiểm thử trước khi đưa thay đổi lên | co_code | CODE_VERIFIED, BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | approvers cổng deploy rỗng — Bên B cử người duyệt; 22 suite chưa frozen; chính sách cổng tắt loader nạp file CHƯA CẤU HÌNH (data/loader_gate… |
-| sales-08 | nen tang tmdt | P1 | Website bán hàng | lam_rieng | BLOCKED_DECISION | — | Repo/owner website chưa xác định — không xây ở repo này (quyết định user 15/10/2026) |
-| data_platform-06 | nen tang tmdt | P2 | Kết nối API sàn chỉ đọc | mot_phan | MISSING_CODE, BLOCKED_VENDOR, UNVERIFIED_LIVE | — | BLOCKED — chưa có app key/sandbox Shopee Open Platform/TikTok Shop (Bên B cấp): chữ ký/endpoint/field/phân trang/rate limit CHƯA VERIFIED, c… |
-| farming-06 | truy xuat blockchain | P2 | Neo mã xác thực lên blockchain | mot_phan | MISSING_CODE, BLOCKED_VENDOR, UNVERIFIED_LIVE | provider none — CHƯA NEO | Hai bên chọn chuỗi/provider/phí/tài khoản neo (data/anchor_config.json provider 'none' = CHƯA NEO); chưa có biên nhận neo thật nào — adapter… |
+| sales-08 | nen tang tmdt | P1 | Website bán hàng | lam_rieng | BLOCKED_DECISION, UNVERIFIED_LIVE | — | Repo/owner website chưa xác định — không xây ở repo này (quyết định user 15/10/2026) |
+| data_platform-06 | nen tang tmdt | P2 | Kết nối API sàn chỉ đọc | mot_phan | CODE_PARTIAL, BLOCKED_VENDOR, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | BLOCKED — chưa có app key/sandbox Shopee Open Platform/TikTok Shop (Bên B cấp): chữ ký/endpoint/field/phân trang/rate limit CHƯA VERIFIED, c… |
+| farming-06 | truy xuat blockchain | P2 | Neo mã xác thực lên blockchain | mot_phan | CODE_PARTIAL, BLOCKED_VENDOR, BLOCKED_INFRA_OR_DATA, UNVERIFIED_LIVE | — | Hai bên chọn chuỗi/provider/phí/tài khoản neo (data/anchor_config.json provider 'none' = CHƯA NEO); chưa có biên nhận neo thật nào — adapter… |
 | finance-06 | nghia vu hd | P1 | Doanh thu thuần trực tuyến + biên bản đối soát quý | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Tỷ lệ phí/mức thưởng/ngày ký/ngày vận hành null = chưa chốt (data/rev_share.json) |
 | data_platform-08 | nghia vu hd | P1 | Sổ triển khai 3 bước + hồ sơ nghiệm thu + báo cáo vận hành tháng | co_code | CODE_VERIFIED, BLOCKED_DECISION, UNVERIFIED_LIVE | — | Lịch nghỉ data/rollout_config.json chưa chốt; danh mục 89 mục chưa chốt |
 | ceo-90 | nghia vu hd | P1 | Nghĩa vụ hợp đồng ngoài phần mềm | ngoai_code | BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA | — | Sổ nghĩa vụ đã lập (docs/handover/so-nghia-vu-hop-dong.md, N01–N20 trạng thái de_xuat) — các nghĩa vụ chờ hai bên thực hiện/xác nhận; PL05 c… |
 | data_platform-90 | nghia vu hd | P1 | Hạ tầng độc lập trên server Bên B | ngoai_code | BLOCKED_DECISION, BLOCKED_INFRA_OR_DATA | — | Chưa có bằng chứng server vật lý/UPS/NAS-offsite/monitor độc lập/người giữ tài khoản cao nhất (F08) |
 
-Đếm nhãn (một mục có thể nhiều nhãn): BLOCKED_DECISION 42, BLOCKED_INFRA_OR_DATA 31, BLOCKED_VENDOR 7, CODE_VERIFIED 74, MISSING_CODE 9, UNVERIFIED_LIVE 82
+Đếm nhãn (một mục có thể nhiều nhãn): BLOCKED_DECISION 43, BLOCKED_INFRA_OR_DATA 45, BLOCKED_VENDOR 8, CODE_PARTIAL 8, CODE_VERIFIED 84, UNVERIFIED_LIVE 94. acceptance_status: chua_nghiem_thu 96.
 
-Nhãn `MISSING_CODE` còn lại trong bảng = mục `code_status: mot_phan` (adapter OCR/STT/ảnh AI/API sàn/neo chưa viết vì CHƯA chọn nhà cung cấp — không viết adapter đoán) + giám sát ngoài máy (hạ tầng); 12 mục MISSING_CODE của vòng 1 đã có mã ở vòng 2.
+Nhãn `CODE_PARTIAL` (đợt hoàn thiện; trước gọi MISSING_CODE) = mục `code_status: mot_phan` — adapter OCR/STT/ảnh AI/API sàn/neo chưa viết vì CHƯA chọn nhà cung cấp (không viết adapter đoán), kiểm hồ sơ gốc chờ dữ liệu Bên B, giám sát ngoài máy chờ máy giám sát (hạ tầng).

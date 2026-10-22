@@ -264,7 +264,8 @@ def write_package(brief, *, readiness=None) -> dict:
     for calls in (1, 2):
         sha = _msgs_sha(messages)
         try:
-            resp = chat(AGENT, messages, temperature=0.4, max_tokens=2500)
+            resp = chat(AGENT, messages, temperature=0.4, max_tokens=2500,
+                        feature="marketing-07.2")
             raw = resp.choices[0].message.content
         except Exception as e:  # noqa: BLE001 — gateway fail-closed
             return {**out, "llm_calls": calls,

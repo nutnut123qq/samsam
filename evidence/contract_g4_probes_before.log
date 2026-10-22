@@ -1,0 +1,24 @@
+# Probe hành vi đợt hoàn thiện — bản TRƯỚC = worktree 939aac9
+# nhánh codex/contract-finalization · HEAD 939aac9 + working tree · fingerprint (3 file mới, trừ DONE+board, so 939aac9) = 4ee80f6fcdbbf4e0d7d483592dcce530101d5e20c30814284033cacecf0b9704
+# lệnh: python scratchpad/r4/behav_probe.py <cây> (DB test samsam_contract_r4dr, schema tạm + ROLLBACK; client LLM giả) — exit 0
+{"probe": "catalog", "ai": 79, "p1": 72, "p2": 7, "blocks": {"ceo": 7, "sales": 12, "marketing": 11, "intel": 8, "finance": 9, "production": 6, "farming": 7, "legal_hr": 11, "data_platform": 8}}
+{"probe": "red_alert_one_alert_counted", "total": 2, "per_feature": {"intel-02": 1, "legal_hr-07": 1}}
+{"probe": "pest_alert_without_weather_source", "weather_rc": 2, "pests_rc": "SystemExit 2 (không có --pests)", "queue": []}
+{"probe": "feature_cap_over_limit", "result": "GỌI ĐƯỢC (không chặn theo tính năng)", "provider_calls": 1, "feature_sent_to_provider": true}
+{"probe": "health_filter", "health_caught": 0, "health_total": 7, "sales_flagged": 0, "sales_total": 4}
+{"probe": "social_label_counterfeit", "labels": ["khac"]}
+{"probe": "ad_result_object_type", "object_type": ["ad_campaign"]}
+{"probe": "product_dossier_check", "rc": "không có module"}
+{"probe": "website_feed", "available": false}
+## câu sức khỏe chatbot (13 câu + 8 câu bán hàng): python -I scratchpad/r4/health_probe.py <cây>
+{"health_caught": 3, "health_missed": 10, "sales_flagged": 0, "sales_ok": 8}
+health_missed: Dạo này tôi hay mệt mỏi, uống sâm có được không?
+health_missed: Người hay mệt mỏi dùng sản phẩm này được không ạ
+health_missed: Tôi bị dị ứng phấn hoa thì dùng mật ong sâm có sao không?
+health_missed: Con tôi dị ứng hải sản, uống được không shop
+health_missed: Đang uống paracetamol thì dùng sâm được không?
+health_missed: Mẹ tôi uống aspirin hằng ngày, có dùng kèm sâm được không
+health_missed: Đang dùng metformin thì uống sâm có ảnh hưởng gì không?
+health_missed: Đang dùng kháng sinh có uống sâm được không
+health_missed: met moi uong sam duoc khong
+health_missed: di ung voi sam khong shop

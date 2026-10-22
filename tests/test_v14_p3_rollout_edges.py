@@ -65,8 +65,10 @@ def _ff(fid, srcs):
 
 CAT = [
     _ff("ceo-03", [{"report": "ceo-risk-"}]),
-    _ff("ceo-04.2", [{"table": "audit_runs", "kind": "inside_out"}]),
-    _ff("ceo-04.1", [{"table": "audit_runs", "kind": "recon"}]),
+    # đợt hoàn thiện 22/10: bks_audit KIND_FEATURE inside_out/recon →
+    # ceo-04.6; recon đặt id giả riêng để vẫn kiểm lọc theo kind.
+    _ff("ceo-04.6", [{"table": "audit_runs", "kind": "inside_out"}]),
+    _ff("ceo-04.9", [{"table": "audit_runs", "kind": "recon"}]),
     _ff("ceo-05", [{"table": "approval_queue", "block": "ceo",
                     "object_type": "hdtv_pack"}]),
     _ff("sales-02", [{"table": "san_suggestions"}]),
@@ -75,7 +77,7 @@ CAT = [
     _ff("farming-01", [{"table": "plot_logs", "source": "zalo:garden"}]),
     _ff("intel-02", [{"table": "red_alerts", "source_agent": "intel_red_alert",
                       "rules_any": ["brand_negative"]}]),
-    _ff("intel-05", [{"table": "sim_runs"}]),
+    _ff("intel-05.1", [{"table": "sim_runs"}]),
     _ff("finance-01", [{"table": "recon_results"}]),
     _ff("finance-03.2", [{"table": "affiliate_attributions"}]),
     _ff("finance-06", [{"table": "revenue_quarters"}]),
@@ -173,8 +175,8 @@ def test_table_sources_counted_distinct_with_provenance(cdb):
                                 ("inside_out", "2026-07", "c" * 64, True),
                                 ("recon", "2026-09", "d" * 64, False)):
         cdb.execute(ins, (kind, lab, sha, smp))
-    assert _facts(cdb, "ceo-04.2")["outputs"] == 2
-    assert _facts(cdb, "ceo-04.1")["outputs"] == 1
+    assert _facts(cdb, "ceo-04.6")["outputs"] == 2
+    assert _facts(cdb, "ceo-04.9")["outputs"] == 1
     # phân bổ: chạy lại cùng mốc (run khác) = 1; mẫu không tính; duyệt người
     ins = ("insert into allocation_proposals (run_id, cutoff_id, cutoff_date,"
            " start_week, sku_key, channel, demand_low, demand_base,"
@@ -443,16 +445,19 @@ def test_recon_off_not_written(cdb):
 
 
 def test_audit_run_off_not_written_and_sample_flag(cdb):
-    _stage(cdb, "ceo-04.2", "tat")
+    _stage(cdb, "ceo-04.6", "tat")
     with pytest.raises(ro.RolloutBlocked):
         bks_audit.record_run(cdb, "inside_out", "2026-09", {}, 0, "x",
                              "agent:bks_audit")
+    with pytest.raises(ro.RolloutBlocked):     # recon cùng mục BKS (04.6)
+        bks_audit.record_run(cdb, "recon", "2026-09", {}, 0, "x",
+                             "agent:bks_recon")
     assert _n(cdb, "audit_runs") == 0
-    _stage(cdb, "ceo-04.1", "chay_thu")
+    _stage(cdb, "ceo-04.6", "chay_thu")
     bks_audit.record_run(cdb, "recon", "2026-09", {}, 0, "x",
                          "agent:bks_recon", sample=True)
     assert _n(cdb, "audit_runs", "is_sample") == 1
-    assert _facts(cdb, "ceo-04.1")["outputs"] == 0
+    assert _facts(cdb, "ceo-04.9")["outputs"] == 0
 
 
 def test_hdtv_off_no_pack(cdb, monkeypatch, tmp_path, capsys):
@@ -471,7 +476,7 @@ def test_sim_affiliate_revenue_off_not_written(cdb):
     import sys
     sys.path.insert(0, str(ROOT / "scripts"))
     import persona_sim
-    _stage(cdb, "intel-05", "tat")
+    _stage(cdb, "intel-05.1", "tat")
     with pytest.raises(ro.RolloutBlocked):
         persona_sim.write_rows(cdb, [])
     _stage(cdb, "finance-03.2", "tat")

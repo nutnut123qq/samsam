@@ -38,8 +38,9 @@ def _patch(monkeypatch):
     fake = _FakeChat()
     queries = []
     monkeypatch.setattr(llm_gateway, "_client", lambda: fake)
+    # + feature= (vá controller 22/10 F1: answer truyền mã tính năng)
     monkeypatch.setattr(rag, "retrieve",
-                        lambda q: queries.append(q) or HITS)
+                        lambda q, feature=None: queries.append(q) or HITS)
     return fake, queries
 
 

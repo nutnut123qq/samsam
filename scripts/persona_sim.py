@@ -347,6 +347,7 @@ def parse_scores(text, ids: list) -> dict | None:
 def gateway_chat(model: str, messages: list, temperature: float, seed: int):
     """Lời gọi THẬT — chỉ qua llm_gateway (kill/cap/mask PII)."""
     resp = llm_gateway.chat(AGENT_ID, messages, model=model,
+                            feature=FEATURE,
                             temperature=temperature, seed=seed)
     try:
         text = resp.choices[0].message.content or ""
@@ -504,7 +505,7 @@ def _connect():
     return psycopg.connect(dsn, connect_timeout=CONNECT_TIMEOUT_S)
 
 
-FEATURE = "intel-05"
+FEATURE = "intel-05.1"
 
 
 def write_rows(conn, rows: list, commit: bool = True) -> int:

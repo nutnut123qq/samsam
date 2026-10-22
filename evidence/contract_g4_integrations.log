@@ -1,0 +1,39 @@
+# Tích hợp ngoài — trạng thái fail-closed thực tế (DB test samsam_contract_r4dr; không gọi mạng/vendor)
+# nhánh codex/contract-finalization · HEAD 939aac9 + working tree · fingerprint (3 file mới, trừ DONE+board, so 939aac9) = 4ee80f6fcdbbf4e0d7d483592dcce530101d5e20c30814284033cacecf0b9704
+### python -m agents.vt_thoitiet --digest --fetch
+[warn] --fetch chưa bật — điều khoản nhà cung cấp dự báo chưa xác minh (dùng --from-csv)
+EXIT 2
+### python -m pipelines.anchor --status
+provider: none
+  (chưa có lần gom nào)
+EXIT 0
+### python -m pipelines.red_alert --check-routing
+[ngoài giờ] người trực ngoài giờ CHƯA CẤU HÌNH (Bên B — routing `ngoai_gio`) → ngoài giờ chỉ gửi người nhận cấp 1
+[FAIL] thiếu người nhận độc lập (external-dep) — cảnh báo đỏ vẫn được ghi bảng red_alerts nhưng chưa có ai nhận; Pháp chế xác nhận người nhận rồi điền data/red_alert_routi
+EXIT 1
+### python -m ingest.market_api --help
+  --kind {listing,order,ads}
+  --days DAYS           order: số ngày gần nhất 1..15 (mặc định 7)
+EXIT 0
+### python -m pipelines.image_studio --help
+  --scene SCENE         mô tả bối cảnh nền (chỉ dùng khi có provider AI)
+  --by BY               người/agent tạo nháp (mặc định agent:mkt03)
+EXIT 0
+### python -m connectors.zalo_garden --transcribe 1
+[blocked] chưa cấu hình STT: BLOCKED — cần vendor STT trong nước + hợp đồng/DPA + key (Bên B/Pháp chế chọn), cắm vào connectors.zalo_garden.STT_PROVIDERS rồi đặt GARDEN_STT_PROVIDER; tạm t
+EXIT 2
+### python -m ingest.doc_intake --reprocess-pending
+[blocked] OCR_PROVIDER chưa cấu hình — BLOCKED: vendor OCR trong nước + hợp đồng/DPA + key (Bên B/Pháp chế chọn), cắm vào ingest.doc_intake.PROVIDERS; tạm thời người đọc bản gốc rồi
+EXIT 2
+### python -m agents.ra_kenh --scan-auto --dry-run
+[note] web/products: dữ liệu crawl cũ 18 ngày (> 7) — KHÔNG quét, chạy crawler.collect
+[dry-run] 0 bài web (listing cần DB) — KHÔNG ghi
+EXIT 0
+### python -m agents.garden_director --remind
+[overdue] KV-B01: 'làm cỏ' trễ lịch (gần nhất chưa từng)
+[overdue] KV-B01: 'tưới' trễ lịch (gần nhất chưa từng)
+EXIT 0
+### python -m ingest.product_dossiers --check
+[blocked] SKU golden đã gắn hồ sơ gốc: 0/13
+[done] hồ sơ 0 · SKU golden 13 · đã gắn 0 · lỗi 0
+EXIT 2

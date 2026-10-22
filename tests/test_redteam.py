@@ -142,9 +142,9 @@ def gen(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
     real_gate = llm_gateway._gate
 
-    def spy(agent_id):
+    def spy(agent_id, feature=None):        # + feature (đợt hoàn thiện)
         agents.append(agent_id)
-        return real_gate(agent_id)
+        return real_gate(agent_id, feature)
     monkeypatch.setattr(llm_gateway, "_gate", spy)
 
     def set_replies(*replies):

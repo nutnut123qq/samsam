@@ -64,7 +64,8 @@ def test_chunks_has_incremental_columns(conn):
 
 
 def test_retrieve_default_hides_internal_and_alcohol(conn, monkeypatch):
-    monkeypatch.setattr(embed_store, "embed", lambda agent, batch, model=None:
+    monkeypatch.setattr(embed_store, "embed",
+                        lambda agent, batch, model=None, feature=None:
                         SimpleNamespace(data=[SimpleNamespace(embedding=Q)
                                               for _ in batch]))
     monkeypatch.setattr(rag, "embed", lambda agent, text, **kw:

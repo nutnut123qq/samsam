@@ -37,7 +37,7 @@ from tests.test_v15_p10_human_authz import (  # noqa: F401 — fixture live
 
 SINCE = datetime.now(VN_TZ) - timedelta(days=25)
 A_SHA, V_SHA, S_SHA, R_SHA = "a" * 64, "7" * 64, "b" * 64, "c" * 64
-K_A = f"ar:inside_out/2026-09/{A_SHA}"        # đầu ra thật ceo-04.2
+K_A = f"ar:inside_out/2026-09/{A_SHA}"        # đầu ra thật ceo-04.6 (đợt hoàn thiện: thay ceo-04.2)
 K_V = f"ar:inside_out/2026-07/{V_SHA}"        # đầu ra thật — đổi phiên bản
 K_S = f"ar:inside_out/2026-08/{S_SHA}"        # dòng MẪU (is_sample)
 K_R = f"ar:recon/2026-09/{R_SHA}"             # có thật nhưng nguồn khác (recon)
@@ -56,7 +56,7 @@ def _owner_dsn(live):  # noqa: F811
 @pytest.fixture(scope="module")
 def p87(live):  # noqa: F811
     cat = {f["id"]: f for f in ro.load_features()}
-    feats = {fid: cat[fid] for fid in ("ceo-01", "ceo-03", "ceo-04.2")}
+    feats = {fid: cat[fid] for fid in ("ceo-01", "ceo-03", "ceo-04.6")}
     feats.update({
         "ceo-95": _custom("ceo-95", [{"file": "backup_runs.jsonl"}]),
         "ceo-96": _custom("ceo-96", [{"table": "decision_log"}]),
@@ -66,7 +66,7 @@ def p87(live):  # noqa: F811
     with psycopg.connect(_owner_dsn(live), connect_timeout=5) as c:
         ro.seed(c, list(feats.values()), "test-p87", now=SINCE)
     _q(live, "update feature_rollout set stage = 'co_nguoi_duyet' where"
-       " feature_id in ('ceo-03', 'ceo-04.2')")
+       " feature_id in ('ceo-03', 'ceo-04.6')")
     _q(live, "update feature_rollout set count_spec = null where feature_id"
        " = 'ceo-98'")
     for kind, per, sha, smp in (("inside_out", "2026-09", A_SHA, False),
@@ -135,27 +135,27 @@ def _blocked(live, fid, key, sha, frag=None):  # noqa: F811
 def test_p87_unknown_key_blocked(live, p87):  # noqa: F811
     """Đúng ca lỗi: `ar:` không tồn tại, sha hợp khuôn tùy ý."""
     _blocked(live, "ceo-01", "ar:does-not-exist", JUNK)
-    _blocked(live, "ceo-04.2", "ar:does-not-exist", JUNK)
-    _blocked(live, "ceo-04.2", f"ar:inside_out/2026-01/{JUNK}", JUNK)
+    _blocked(live, "ceo-04.6", "ar:does-not-exist", JUNK)
+    _blocked(live, "ceo-04.6", f"ar:inside_out/2026-01/{JUNK}", JUNK)
 
 
 def test_p87_real_key_wrong_feature_or_source_blocked(live, p87):  # noqa: F811
-    sha = _outputs(live, p87, "ceo-04.2")[K_A]
+    sha = _outputs(live, p87, "ceo-04.6")[K_A]
     _blocked(live, "ceo-03", K_A, sha)          # khóa thật của tính năng khác
     _blocked(live, "ceo-01", K_A, sha)
     # dòng có thật nhưng không thuộc nguồn của tính năng (kind=recon)
-    _blocked(live, "ceo-04.2", K_R,
+    _blocked(live, "ceo-04.6", K_R,
              _row_sha(live, "audit_runs", "t.report_sha256 = %s", (R_SHA,)))
 
 
 def test_p87_wrong_sha_blocked(live, p87):  # noqa: F811
-    _blocked(live, "ceo-04.2", K_A, JUNK)
-    _blocked(live, "ceo-04.2", K_A, _outputs(live, p87, "ceo-04.2")[K_V])
+    _blocked(live, "ceo-04.6", K_A, JUNK)
+    _blocked(live, "ceo-04.6", K_A, _outputs(live, p87, "ceo-04.6")[K_V])
 
 
 def test_p87_sample_blocked(live, p87):  # noqa: F811
-    assert K_S not in _outputs(live, p87, "ceo-04.2")
-    _blocked(live, "ceo-04.2", K_S,
+    assert K_S not in _outputs(live, p87, "ceo-04.6")
+    _blocked(live, "ceo-04.6", K_S,
              _row_sha(live, "audit_runs", "t.report_sha256 = %s", (S_SHA,)))
     _blocked(live, "ceo-03", "rp:ceo-risk-mau.md", "5" * 64)
 
@@ -180,8 +180,8 @@ def test_p87_valid_report_and_table_approved(live, p87):  # noqa: F811
               " from output_reviews where id = %s", (rid,)) == [
         (P_FARM, live["name"]["farm"], "1" * 64, "approved")]
     assert _written(live, "ceo-03", f"rp:{name}") == (1, 1)
-    sha = _outputs(live, p87, "ceo-04.2")[K_A]
-    ok, rid = _call(live, "ceo-04.2", K_A, sha)
+    sha = _outputs(live, p87, "ceo-04.6")[K_A]
+    ok, rid = _call(live, "ceo-04.6", K_A, sha)
     assert ok, rid
     assert _q(live, "select reviewed_by, db_role, content_sha256 from"
               " output_reviews where id = %s", (rid,)) == [
@@ -207,25 +207,25 @@ def _unrev(live, fid, key):  # noqa: F811
 
 
 def test_p87_content_change_old_review_not_applied(live, p87):  # noqa: F811
-    sha1 = _outputs(live, p87, "ceo-04.2")[K_V]
-    ok, rid = _call(live, "ceo-04.2", K_V, sha1)
+    sha1 = _outputs(live, p87, "ceo-04.6")[K_V]
+    ok, rid = _call(live, "ceo-04.6", K_V, sha1)
     assert ok, rid
-    assert _unrev(live, "ceo-04.2", K_V) == [(False, True)]
+    assert _unrev(live, "ceo-04.6", K_V) == [(False, True)]
     # nội dung đổi (thêm dòng cùng khóa) → phiên bản mới, duyệt cũ không áp
     _q(live, "insert into audit_runs (kind, period_label, findings,"
        " report_sha256, run_by) values ('inside_out', '2026-07', 3, %s,"
        " 'agent:bks')", (V_SHA,))
-    sha2 = _outputs(live, p87, "ceo-04.2")[K_V]
+    sha2 = _outputs(live, p87, "ceo-04.6")[K_V]
     assert sha2 != sha1
-    assert _unrev(live, "ceo-04.2", K_V) == [(True, False)]
-    ok, msg = _call(live, "ceo-04.2", K_V, sha1)     # phiên bản CŨ
+    assert _unrev(live, "ceo-04.6", K_V) == [(True, False)]
+    ok, msg = _call(live, "ceo-04.6", K_V, sha1)     # phiên bản CŨ
     assert not ok, f"DB ghi duyệt phiên bản cũ (id {msg})"
     assert "MỚI NHẤT" in msg, msg
     assert _q(live, "select count(*) from output_reviews where output_key ="
               " %s", (K_V,)) == [(1,)]
-    ok, rid2 = _call(live, "ceo-04.2", K_V, sha2)
+    ok, rid2 = _call(live, "ceo-04.6", K_V, sha2)
     assert ok, rid2
-    assert _unrev(live, "ceo-04.2", K_V) == [(False, True)]
+    assert _unrev(live, "ceo-04.6", K_V) == [(False, True)]
     # báo cáo: ghi lại nội dung khác → sha cũ bị chặn, bản mới chưa duyệt
     name = "ceo-risk-2026-10-12.md"
     _q(live, "insert into report_outputs (feature_id, name, sha256) values"
@@ -259,8 +259,8 @@ def test_p87_own_review_step_or_bad_prefix_blocked(live, p87):  # noqa: F811
     key = p87["dl"]
     sha = _outputs(live, p87, "ceo-96")[key]
     _blocked(live, "ceo-96", key, sha, frag="bước duyệt riêng")
-    _blocked(live, "ceo-04.2", "zz:abc", JUNK)
-    _blocked(live, "ceo-04.2", f"rp:{K_A[3:]}", JUNK)
+    _blocked(live, "ceo-04.6", "zz:abc", JUNK)
+    _blocked(live, "ceo-04.6", f"rp:{K_A[3:]}", JUNK)
 
 
 def _promote(live, fid):  # noqa: F811
@@ -283,14 +283,14 @@ def test_p87_pl02_gate_still_blocks(live, p87):  # noqa: F811
        " report_sha256, run_by) values ('inside_out', '2026-06', 1, %s,"
        " 'agent:bks')", ("6" * 64,))
     key = f"ar:inside_out/2026-06/{'6' * 64}"
-    outs = _outputs(live, p87, "ceo-04.2")
+    outs = _outputs(live, p87, "ceo-04.6")
     sha = outs.pop(key)
     for k, s in outs.items():   # đầu ra khác: duyệt đúng phiên bản hiện hành
-        _call(live, "ceo-04.2", k, s)
+        _call(live, "ceo-04.6", k, s)
     for k, s in ((key, JUNK), ("ar:does-not-exist", sha)):
-        _call(live, "ceo-04.2", k, s)           # duyệt rác (đã bị chặn)
-    assert _unrev(live, "ceo-04.2", key) == [(True, False)]
-    ok, msg = _promote(live, "ceo-04.2")
+        _call(live, "ceo-04.6", k, s)           # duyệt rác (đã bị chặn)
+    assert _unrev(live, "ceo-04.6", key) == [(True, False)]
+    ok, msg = _promote(live, "ceo-04.6")
     assert not ok and "DB đếm lại" in msg and "1 chưa duyệt" in msg, msg
     # lỗi nghiêm trọng từ mốc giai đoạn (ghi bằng owner) → chặn
     _q(live, "insert into feature_rollout_events (ts, feature_id, kind,"
@@ -300,6 +300,6 @@ def test_p87_pl02_gate_still_blocks(live, p87):  # noqa: F811
     ok, msg = _promote(live, "ceo-03")
     assert not ok and "lỗi nghiêm trọng" in msg, msg
     # duyệt đúng phiên bản hiện hành → cổng DB đạt
-    assert _call(live, "ceo-04.2", key, sha)[0]
-    ok, to = _promote(live, "ceo-04.2")
+    assert _call(live, "ceo-04.6", key, sha)[0]
+    ok, to = _promote(live, "ceo-04.6")
     assert ok and to == "van_hanh", to

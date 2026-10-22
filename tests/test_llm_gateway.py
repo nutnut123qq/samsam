@@ -147,8 +147,10 @@ def test_usage_row_ok(fake, monkeypatch):
     rows = []
     monkeypatch.setattr(gw, "_connect", lambda: FakeConn(rows=rows))
     gw.chat("content", [{"role": "user", "content": "hi"}], model="m")
-    agent, model, tin, tout, cost, ok, err = rows[0]
-    assert (agent, model, tin, tout, ok, err) == ("content", "m", 10, 5, True, None)
+    # đợt hoàn thiện 22/10: + feature_id (None = lời gọi không gắn tính năng)
+    agent, model, tin, tout, cost, ok, err, feature = rows[0]
+    assert (agent, model, tin, tout, ok, err, feature) == (
+        "content", "m", 10, 5, True, None, None)
     assert cost == pytest.approx((10 * 1.0 + 5 * 2.0) / 1e6)
 
 

@@ -335,6 +335,15 @@ def _feedback(result: dict) -> str:
             "whitelist nguyên văn, câu trang trí không chứa động từ claim.")
 
 
+def _feature(content_type: str) -> str:
+    """Mã tính năng sở hữu nháp loại này (trần/nút tắt chi phí theo tính
+    năng — PL01 Cổng AI an toàn): theo nguồn đầu ra content_drafts của danh
+    mục; loại chưa có mục riêng → nội dung hằng ngày (marketing-01.1)."""
+    from pipelines import rollout  # lười: rollout → director → ...
+    return rollout.feature_for(table="content_drafts", created_by="agent:mkt02",
+                               content_type=content_type) or "marketing-01.1"
+
+
 def draft(brief: str, channel: str = "facebook", *,
           readiness: dict | None = None, sku: str | None = None,
           content_type: str = "post") -> dict:
@@ -375,7 +384,8 @@ def draft(brief: str, channel: str = "facebook", *,
     ctx = {"channel": channel, "content_type": content_type, "sku": sku,
            "readiness": readiness}
     for _ in range(2):  # draft -> check; vi phạm -> 1 lượt sửa có feedback
-        resp = chat("content", messages, temperature=0.3, max_tokens=600)
+        resp = chat("content", messages, temperature=0.3, max_tokens=600,
+                    feature=_feature(content_type))
         text = _with_required(
             (resp.choices[0].message.content or "").strip(), **ctx)
         result = check_publish_llm(text, is_ai=True, **ctx)
@@ -583,7 +593,7 @@ def listing(sku: str, channel: str, *, readiness: dict | None = None,
         for _ in range(2):  # 1 lượt sửa có feedback
             try:
                 resp = chat("content", messages, temperature=0.3,
-                            max_tokens=700)
+                            max_tokens=700, feature="sales-03")
                 content = resp.choices[0].message.content
             except Exception as e:  # noqa: BLE001 — lỗi LLM -> khung thuần
                 meta["llm_part"] = f"dropped:{type(e).__name__}"

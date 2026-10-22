@@ -302,7 +302,8 @@ def summarize(payload: str) -> str | None:
     msgs = [{"role": "system", "content": LLM_PROMPT},
             {"role": "user", "content": payload}]
     try:
-        resp = llm_gateway.chat("intel", msgs, max_tokens=400)
+        resp = llm_gateway.chat("intel", msgs, max_tokens=400,
+                                feature="intel-03")
         text = resp.choices[0].message.content
     except llm_gateway.GatewayError as e:
         _warn(f"LLM lỗi ({type(e).__name__}) — bỏ tóm tắt")

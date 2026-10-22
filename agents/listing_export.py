@@ -18,9 +18,22 @@ sản phẩm, xuất ra mọi sàn đúng giá đã duyệt".
     lên thật của sàn (UNVERIFIED_LIVE); chỉ đổi tiêu đề cột khi có mẫu thật.
   - `--verify MANIFEST`: tính lại từ DB + golden + tệp → khớp/lệch (exit 1).
 
+  - Đợt hoàn thiện 22/10 (PL01 mục 3a/3c — website bán hàng làm ở repo
+    riêng; "một bản mô tả, một bảng giá cho mọi kênh"): `--website-feed`
+    xuất NGUỒN DỮ LIỆU cho website (JSON + manifest sha): mỗi SKU golden 1
+    dòng; chỉ bán được (`gio_hang` true) khi kênh `web` qua precheck +
+    guardrail, có mô tả chuẩn ĐÃ duyệt và giá `list` kênh web ĐÃ duyệt còn
+    hiệu lực trong `price_list` (vá controller 22/10 F2: trước đây lấy giá
+    từ golden JSON → DB chưa có giá duyệt vẫn bật giỏ; nay KHÔNG fallback
+    JSON/kênh khác/floor/promo; đọc bảng giá lỗi → từ chối, không ghi tệp);
+    RƯỢU luôn ẩn giá + không giỏ hàng ở MỌI trường hợp. Dòng không bán được
+    ghi `ly_do` cụ thể (không bịa giá/mô tả). Không đẩy lên website: bên
+    website đọc tệp/manifest (hợp đồng dữ liệu docs/handover/doi-chieu-docx.md).
+
 Chạy:
   python -m agents.listing_export --sku K --channel shopee|tiktok --out DIR
   python -m agents.listing_export --verify DIR/listing-...manifest.json
+  python -m agents.listing_export --website-feed --out DIR
 """
 
 import argparse
@@ -31,6 +44,8 @@ import json
 import os
 import sys
 from pathlib import Path
+
+import psycopg
 
 from ingest.lead_store import connect
 from pipelines import content, guardrail, store
@@ -188,15 +203,125 @@ def verify(conn, manifest_path, readiness=None,
     return bad
 
 
+WEB = "web"
+FEED_VERSION = 1
+
+
+def web_prices(conn, today) -> dict:
+    """{sku: {price, id, approved}} giá `list` kênh web thường trực hiệu lực
+    ngày `today` (giờ VN) — CÙNG quy tắc `kd_listing.golden_prices` (dòng
+    mở mới nhất; `approved` = đã có người duyệt). Không đọc được bảng giá
+    (thiếu bảng/quyền/DB lỗi) → ExportError: không bán bằng giá đoán."""
+    from agents import kd_listing
+    try:
+        prices = kd_listing.golden_prices(conn, today)
+    except psycopg.Error as e:
+        raise ExportError("không đọc được bảng giá đã duyệt (price_list: "
+                          f"{type(e).__name__}) — không xuất") from None
+    return {sku: kinds["list"] for (sku, ch), kinds in prices.items()
+            if ch == WEB and "list" in kinds}
+
+
+def website_row(conn, sku: str, gold: dict, readiness, prices=None,
+                today=None) -> dict:
+    """1 dòng nguồn dữ liệu website — golden (tên/quy cách) + mô tả ĐÃ duyệt
+    + giá web ĐÃ duyệt từ DB (`prices` của `web_prices`; None → tự đọc ngày
+    `today`, mặc định hôm nay giờ VN)."""
+    if prices is None:
+        from datetime import datetime, timezone
+
+        from pipelines.period import vn_date
+        prices = web_prices(conn, today or vn_date(datetime.now(timezone.utc)))
+    alcohol = gold.get("category") == "alcohol"
+    row = {"sku_key": sku, "ten_san_pham": gold.get("name"),
+           "quy_cach": gold.get("pack_spec"), "so_dksp": gold.get("receipt_no"),
+           "mo_ta": None, "draft_id": None, "approved_sha256": None,
+           "gia_vnd": None, "gia_id": None, "an_gia": alcohol,
+           "gio_hang": False, "ly_do": []}
+    if ref := content.precheck(sku, WEB, "listing", readiness=readiness):
+        row["ly_do"].append(f"kênh web: {ref['reason']}")
+    try:
+        did, text = master(conn, sku)
+    except ExportError as e:
+        row["ly_do"].append(str(e))
+    else:
+        desc = describe(text)
+        g = guardrail.check_publish(desc, channel=WEB, content_type="listing",
+                                    sku=sku, readiness=readiness)
+        if g.get("ok") is True:
+            row.update(mo_ta=desc, draft_id=did, approved_sha256=_sha(text))
+        else:
+            row["ly_do"].append("guardrail không đạt " + ",".join(
+                str(v.get("code")) for v in g.get("violations") or []))
+    lp = prices.get(sku)
+    ok_price = bool(lp and lp["approved"])
+    if alcohol:
+        row["ly_do"].append("rượu: ẩn giá + không giỏ hàng (PL01 mục 3a)")
+    elif lp is None:
+        row["ly_do"].append("chưa có giá list kênh web còn hiệu lực trong "
+                            "price_list")
+    elif not ok_price:
+        row["ly_do"].append(f"giá list kênh web #{lp['id']} đang CHỜ người "
+                            "duyệt — chưa dùng")
+    else:
+        row.update(gia_vnd=lp["price"], gia_id=lp["id"])
+    row["gio_hang"] = (not alcohol and ok_price and row["mo_ta"] is not None
+                       and not row["ly_do"])
+    return row
+
+
+def website_feed(conn, out_dir, readiness=None, now=None) -> Path:
+    """Ghi website-feed-<ngày>.json + .manifest.json → đường manifest."""
+    from datetime import datetime, timedelta, timezone
+
+    from pipelines import rollout
+    if why := rollout.use_reason(conn, FEATURE, "xuất nguồn dữ liệu website",
+                                 human_reviewed=True):
+        raise ExportError(why)
+    if readiness is None:
+        readiness = store.readiness_from_db(conn)
+    golden = content._cfg()[0]["golden"]
+    vn = (now or datetime.now(timezone.utc)).astimezone(
+        timezone(timedelta(hours=7)))
+    prices = web_prices(conn, vn.date())
+    rows = [website_row(conn, k, golden[k], readiness, prices)
+            for k in sorted(golden)]
+    stem = f"website-feed-{vn:%Y-%m-%d}"
+    data = (json.dumps({"version": FEED_VERSION, "rows": rows},
+                       ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    _atomic(out / f"{stem}.json", data)
+    man = {"file": f"{stem}.json", "file_sha256": hashlib.sha256(
+        data).hexdigest(), "version": FEED_VERSION, "so_sku": len(rows),
+        "ban_duoc": sum(r["gio_hang"] for r in rows),
+        "gia_nguon": "price_list kênh web loại list ĐÃ duyệt, hiệu lực theo"
+                     " ngày giờ VN (không fallback golden JSON/kênh khác/"
+                     "floor/promo)",
+        "gia_ngay_hieu_luc": vn.date().isoformat(),
+        "gia_phien_ban": {r["sku_key"]: r["gia_id"] for r in rows
+                          if r["gia_id"] is not None},
+        "mo_ta_nguon": "content_drafts listing kênh web ĐÃ duyệt (sha)"}
+    mp = out / f"{stem}.manifest.json"
+    _atomic(mp, (json.dumps(man, ensure_ascii=False, indent=2) + "\n")
+            .encode("utf-8"))
+    return mp
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m agents.listing_export")
+    ap.add_argument("--website-feed", action="store_true")
     ap.add_argument("--sku")
     ap.add_argument("--channel", choices=CHANNELS)
     ap.add_argument("--out", type=Path)
     ap.add_argument("--verify", type=Path, metavar="MANIFEST")
     a = ap.parse_args(argv)
-    if a.verify is None and not (a.sku and a.channel and a.out):
-        ap.error("cần --sku --channel --out, hoặc --verify MANIFEST")
+    if a.website_feed and not a.out:
+        ap.error("--website-feed cần --out DIR")
+    if not a.website_feed and a.verify is None and not (
+            a.sku and a.channel and a.out):
+        ap.error("cần --sku --channel --out, --verify MANIFEST hoặc "
+                 "--website-feed --out DIR")
     conn = connect()
     if conn is None:
         print("[error] không kết nối được Postgres", file=sys.stderr)
@@ -209,6 +334,17 @@ def main(argv=None) -> int:
             print("[done] khớp bản đã duyệt" if not bad else
                   f"[done] {len(bad)} điểm lệch")
             return 1 if bad else 0
+        if a.website_feed:
+            try:
+                mp = website_feed(conn, a.out)
+            except ExportError as e:
+                print(f"[từ chối] {e} — không ghi tệp", file=sys.stderr)
+                return 1
+            man = json.loads(mp.read_bytes().decode("utf-8"))
+            print(f"[done] {mp.name} — {man['ban_duoc']}/{man['so_sku']} SKU"
+                  " bán được trên web (còn lại ghi ly_do); agent không đẩy "
+                  "lên website")
+            return 0
         try:
             mp = export(conn, a.sku, a.channel, a.out)
         except ExportError as e:

@@ -1,0 +1,393 @@
+# LƯỢT FULL KHÁM PHÁ (KHÔNG tính làm gate) — 19 ERROR do 2 file test (tests/test_v15_fix_p87.py, p87b) còn tra id cũ ceo-04.2 trong danh mục thật → đã flip sang ceo-04.6 (19 passed); code không đổi. EXIT 1 lấy từ tiến trình.
+# Full pytest đợt hoàn thiện theo DOCX — ngày (client) 2026-10-22T10:19:20+07:00
+# HEAD 939aac992cf972198f231c11890ddfeb7d5bbca3 nhánh codex/contract-finalization · baseline 939aac9
+# fingerprint (index tạm, 3 file mới, trừ DONE+board, so 939aac9) = 4ee80f6fcdbbf4e0d7d483592dcce530101d5e20c30814284033cacecf0b9704
+# Docker: 28.4.0
+## dựng DB mới samsam_contract_r4full: apply_schema --roles ×2 + core_store + golden_store
+  scripts/apply_schema.py --roles rc=0
+  scripts/apply_schema.py --roles rc=0
+  -m ingest.core_store rc=0
+  -m ingest.golden_store rc=0
+  mkdb rc=0
+# DB user=postgres password=*** dbname=samsam_contract_r4full host=localhost port=5432 @ None (KHÔNG phải samsam)
+## lệnh: python -m pytest -q -ra -p no:cacheprovider
+........................................................................ [  1%]
+........................................................................ [  2%]
+........................................................................ [  3%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+........................................................................ [  6%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 12%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 15%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 45%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 56%]
+........................................................................ [ 57%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+........................................................................ [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 63%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 69%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 72%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 78%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 85%]
+.......................................EEEEEEEEEEEEEEEEEEE.............. [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 88%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 95%]
+........................................................................ [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+=================================== ERRORS ====================================
+_______________ ERROR at setup of test_p87_unknown_key_blocked ________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f6a95280>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg0/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {fid: cat[fid] for fid in ("ceo-01", "ceo-03", "ceo-04.2")}
+                      ^^^^^^^^
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87.py:59: KeyError
+_____ ERROR at setup of test_p87_real_key_wrong_feature_or_source_blocked _____
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f6a95280>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg0/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {fid: cat[fid] for fid in ("ceo-01", "ceo-03", "ceo-04.2")}
+                      ^^^^^^^^
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87.py:59: KeyError
+________________ ERROR at setup of test_p87_wrong_sha_blocked _________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f6a95280>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg0/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {fid: cat[fid] for fid in ("ceo-01", "ceo-03", "ceo-04.2")}
+                      ^^^^^^^^
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87.py:59: KeyError
+__________________ ERROR at setup of test_p87_sample_blocked __________________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f6a95280>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg0/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {fid: cat[fid] for fid in ("ceo-01", "ceo-03", "ceo-04.2")}
+                      ^^^^^^^^
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87.py:59: KeyError
+_________ ERROR at setup of test_p87_valid_report_and_table_approved __________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f6a95280>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg0/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {fid: cat[fid] for fid in ("ceo-01", "ceo-03", "ceo-04.2")}
+                      ^^^^^^^^
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87.py:59: KeyError
+______ ERROR at setup of test_p87_content_change_old_review_not_applied _______
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f6a95280>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg0/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {fid: cat[fid] for fid in ("ceo-01", "ceo-03", "ceo-04.2")}
+                      ^^^^^^^^
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87.py:59: KeyError
+_________ ERROR at setup of test_p87_file_source_blocked_with_reason __________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f6a95280>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg0/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {fid: cat[fid] for fid in ("ceo-01", "ceo-03", "ceo-04.2")}
+                      ^^^^^^^^
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87.py:59: KeyError
+________ ERROR at setup of test_p87_missing_source_or_counter_blocked _________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f6a95280>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg0/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {fid: cat[fid] for fid in ("ceo-01", "ceo-03", "ceo-04.2")}
+                      ^^^^^^^^
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87.py:59: KeyError
+______ ERROR at setup of test_p87_own_review_step_or_bad_prefix_blocked _______
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f6a95280>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg0/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {fid: cat[fid] for fid in ("ceo-01", "ceo-03", "ceo-04.2")}
+                      ^^^^^^^^
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87.py:59: KeyError
+______________ ERROR at setup of test_p87_pl02_gate_still_blocks ______________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f6a95280>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg0/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {fid: cat[fid] for fid in ("ceo-01", "ceo-03", "ceo-04.2")}
+                      ^^^^^^^^
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87.py:59: KeyError
+__________ ERROR at setup of test_p87b_human_cli_lists_table_outputs __________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f5fda360>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg1/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87b(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {FID: cat[FID],
+                      ^^^^^^^^
+                 "ceo-94": _custom("ceo-94", [{"table": "decision_log"}]),
+                 "ceo-95": _custom("ceo-95", [{"file": "backup_runs.jsonl"},
+                                              {"table": "audit_runs",
+                                               "kind": "inside_out"}])}
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87b.py:65: KeyError
+_________ ERROR at setup of test_p87b_human_cli_reviews_table_output __________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f5fda360>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg1/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87b(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {FID: cat[FID],
+                      ^^^^^^^^
+                 "ceo-94": _custom("ceo-94", [{"table": "decision_log"}]),
+                 "ceo-95": _custom("ceo-95", [{"file": "backup_runs.jsonl"},
+                                              {"table": "audit_runs",
+                                               "kind": "inside_out"}])}
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87b.py:65: KeyError
+__________ ERROR at setup of test_p87b_wrong_actor_blocked[sai-khoi] __________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f5fda360>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg1/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87b(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {FID: cat[FID],
+                      ^^^^^^^^
+                 "ceo-94": _custom("ceo-94", [{"table": "decision_log"}]),
+                 "ceo-95": _custom("ceo-95", [{"file": "backup_runs.jsonl"},
+                                              {"table": "audit_runs",
+                                               "kind": "inside_out"}])}
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87b.py:65: KeyError
+___________ ERROR at setup of test_p87b_wrong_actor_blocked[by-gia] ___________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f5fda360>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg1/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87b(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {FID: cat[FID],
+                      ^^^^^^^^
+                 "ceo-94": _custom("ceo-94", [{"table": "decision_log"}]),
+                 "ceo-95": _custom("ceo-95", [{"file": "backup_runs.jsonl"},
+                                              {"table": "audit_runs",
+                                               "kind": "inside_out"}])}
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87b.py:65: KeyError
+_____ ERROR at setup of test_p87b_wrong_actor_blocked[login-chua-anh-xa] ______
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f5fda360>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg1/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87b(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {FID: cat[FID],
+                      ^^^^^^^^
+                 "ceo-94": _custom("ceo-94", [{"table": "decision_log"}]),
+                 "ceo-95": _custom("ceo-95", [{"file": "backup_runs.jsonl"},
+                                              {"table": "audit_runs",
+                                               "kind": "inside_out"}])}
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87b.py:65: KeyError
+___________ ERROR at setup of test_p87b_wrong_actor_blocked[agent] ____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f5fda360>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg1/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87b(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {FID: cat[FID],
+                      ^^^^^^^^
+                 "ceo-94": _custom("ceo-94", [{"table": "decision_log"}]),
+                 "ceo-95": _custom("ceo-95", [{"file": "backup_runs.jsonl"},
+                                              {"table": "audit_runs",
+                                               "kind": "inside_out"}])}
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87b.py:65: KeyError
+____________ ERROR at setup of test_p87b_listing_function_identity ____________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f5fda360>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg1/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87b(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {FID: cat[FID],
+                      ^^^^^^^^
+                 "ceo-94": _custom("ceo-94", [{"table": "decision_log"}]),
+                 "ceo-95": _custom("ceo-95", [{"file": "backup_runs.jsonl"},
+                                              {"table": "audit_runs",
+                                               "kind": "inside_out"}])}
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87b.py:65: KeyError
+__________ ERROR at setup of test_p87b_listing_function_locked_down ___________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f5fda360>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg1/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87b(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {FID: cat[FID],
+                      ^^^^^^^^
+                 "ceo-94": _custom("ceo-94", [{"table": "decision_log"}]),
+                 "ceo-95": _custom("ceo-95", [{"file": "backup_runs.jsonl"},
+                                              {"table": "audit_runs",
+                                               "kind": "inside_out"}])}
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87b.py:65: KeyError
+__________ ERROR at setup of test_p87b_file_source_rejected_clearly ___________
+
+live = {'admin': <psycopg.Connection [IDLE] (host=localhost user=postgres database=samsam_contract_r4full) at 0x220f5fda360>,...}, 'launcher': WindowsPath('C:/Users/hahuy/AppData/Local/Temp/pytest-of-hahuy/pytest-3229/p10cfg1/launch_p10.py'), ...}
+
+    @pytest.fixture(scope="module")
+    def p87b(live):  # noqa: F811
+        cat = {f["id"]: f for f in ro.load_features()}
+>       feats = {FID: cat[FID],
+                      ^^^^^^^^
+                 "ceo-94": _custom("ceo-94", [{"table": "decision_log"}]),
+                 "ceo-95": _custom("ceo-95", [{"file": "backup_runs.jsonl"},
+                                              {"table": "audit_runs",
+                                               "kind": "inside_out"}])}
+E       KeyError: 'ceo-04.2'
+
+tests\test_v15_fix_p87b.py:65: KeyError
+=========================== short test summary info ===========================
+ERROR tests/test_v15_fix_p87.py::test_p87_unknown_key_blocked - KeyError: 'ce...
+ERROR tests/test_v15_fix_p87.py::test_p87_real_key_wrong_feature_or_source_blocked
+ERROR tests/test_v15_fix_p87.py::test_p87_wrong_sha_blocked - KeyError: 'ceo-...
+ERROR tests/test_v15_fix_p87.py::test_p87_sample_blocked - KeyError: 'ceo-04.2'
+ERROR tests/test_v15_fix_p87.py::test_p87_valid_report_and_table_approved - K...
+ERROR tests/test_v15_fix_p87.py::test_p87_content_change_old_review_not_applied
+ERROR tests/test_v15_fix_p87.py::test_p87_file_source_blocked_with_reason - K...
+ERROR tests/test_v15_fix_p87.py::test_p87_missing_source_or_counter_blocked
+ERROR tests/test_v15_fix_p87.py::test_p87_own_review_step_or_bad_prefix_blocked
+ERROR tests/test_v15_fix_p87.py::test_p87_pl02_gate_still_blocks - KeyError: ...
+ERROR tests/test_v15_fix_p87b.py::test_p87b_human_cli_lists_table_outputs - K...
+ERROR tests/test_v15_fix_p87b.py::test_p87b_human_cli_reviews_table_output - ...
+ERROR tests/test_v15_fix_p87b.py::test_p87b_wrong_actor_blocked[sai-khoi] - K...
+ERROR tests/test_v15_fix_p87b.py::test_p87b_wrong_actor_blocked[by-gia] - Key...
+ERROR tests/test_v15_fix_p87b.py::test_p87b_wrong_actor_blocked[login-chua-anh-xa]
+ERROR tests/test_v15_fix_p87b.py::test_p87b_wrong_actor_blocked[agent] - KeyE...
+ERROR tests/test_v15_fix_p87b.py::test_p87b_listing_function_identity - KeyEr...
+ERROR tests/test_v15_fix_p87b.py::test_p87b_listing_function_locked_down - Ke...
+ERROR tests/test_v15_fix_p87b.py::test_p87b_file_source_rejected_clearly - Ke...
+6534 passed, 19 errors in 2473.49s (0:41:13)
+
+EXIT 1

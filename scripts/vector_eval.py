@@ -214,7 +214,8 @@ def embed_questions() -> tuple[dict, str | None]:
             if n not in qs:
                 return {}, f"questions.md thiếu Q{n}"
             out[n] = (qs[n], np.array(
-                embed("chatbot", qs[n]).data[0].embedding, dtype=np.float64))
+                embed("chatbot", qs[n], feature="data_platform-07.3"
+                      ).data[0].embedding, dtype=np.float64))
         return out, None
     except Exception as e:  # noqa: BLE001 — thiếu key/gateway chặn/mạng
         return {}, f"không embed được câu hỏi ({type(e).__name__})"

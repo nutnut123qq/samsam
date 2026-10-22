@@ -21,7 +21,7 @@ class _Embed:
     def __init__(self):
         self.calls = self.texts = 0
 
-    def __call__(self, agent_id, batch, model=None):
+    def __call__(self, agent_id, batch, model=None, feature=None):
         assert agent_id == "ingest"
         self.calls += 1
         self.texts += len(batch)

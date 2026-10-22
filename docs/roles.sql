@@ -274,9 +274,9 @@ grant select on feature_rollout to agent_writer;
 -- `agent_writer` MỌI lời gọi LLM bị chặn (v13.1 fail-closed khi không đọc được
 -- chi tiêu) — tức không chuyển được agent sang login riêng. KHÔNG UPDATE/DELETE
 -- (agent không tự xóa/sửa chi tiêu để lách trần). app_human kế thừa.
-grant select (agent_id, ts, cost_usd) on llm_usage to agent_writer;
-grant insert (agent_id, model, tokens_in, tokens_out, cost_usd, ok, error)
-  on llm_usage to agent_writer;
+grant select (agent_id, ts, cost_usd, feature_id) on llm_usage to agent_writer;
+grant insert (agent_id, model, tokens_in, tokens_out, cost_usd, ok, error,
+  feature_id) on llm_usage to agent_writer;
 grant usage on sequence llm_usage_id_seq to agent_writer;
 -- Danh tính người duyệt: mỗi người duyệt 1 login Postgres riêng `in role
 -- app_human` (hạ tầng tạo NGOÀI git), khai `db_login` trong users file — CLI
@@ -416,9 +416,9 @@ grant select, insert, delete on plot_logs to svc_loader;
 grant delete on orders to svc_loader;
 grant select on v_settlement_khoan, garden_media, agent_action_log
   to svc_loader;
-grant select (agent_id, ts, cost_usd) on llm_usage to svc_loader;
-grant insert (agent_id, model, tokens_in, tokens_out, cost_usd, ok, error)
-  on llm_usage to svc_loader;
+grant select (agent_id, ts, cost_usd, feature_id) on llm_usage to svc_loader;
+grant insert (agent_id, model, tokens_in, tokens_out, cost_usd, ok, error,
+  feature_id) on llm_usage to svc_loader;
 grant usage on sequence llm_usage_id_seq to svc_loader;
 grant insert on job_runs to svc_loader;
 grant usage on sequence job_runs_id_seq to svc_loader;
@@ -704,6 +704,15 @@ grant execute on function lot_cert_record_human(text, text, text, date, text,
 --   được quảng bá + giá vốn đã duyệt + giá đối thủ quan sát.
 grant select on allocation_proposals, bom_combos, bom_items,
   inventory_snapshots, v_promotable, cogs_versions, competitor_observations
+  to svc_job;
+-- Đợt hoàn thiện 22/10: job `intel_weekly` (báo cáo tuần đối thủ/Trends/
+-- social) dưới svc_job thiếu quyền đọc Trends + social (InsufficientPrivilege,
+-- tái hiện bằng login thật qua wrapper). Chỉ CỘT báo cáo đếm: KHÔNG
+-- `social_mentions.msg_hash` (băm có muối) / `excerpt` (trích nội dung, cổng
+-- DPIA), KHÔNG `trends_weekly.anchor`; chỉ SELECT.
+grant select (import_id, query_id, keyword, geo, week, value)
+  on trends_weekly to svc_job;
+grant select (channel, labels, sensitive, posted_at) on social_mentions
   to svc_job;
 
 -- Đợt hợp đồng C10: kế hoạch + gắn lô (tiến độ sản xuất) — đọc cho bản tin,

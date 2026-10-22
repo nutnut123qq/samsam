@@ -94,6 +94,7 @@ RESULT_COLS = ("ngay", "bien_the", "hien_thi", "click", "chi_phi_vnd",
                "don_hang")
 DECISIONS = ("dung", "dat_muc_tieu", "tiep", "chua_du_lieu")
 ITEMS = (("marketing", "ad_campaign"), ("finance", "budget_change"))
+RESULT_OT = "ad_result"           # marketing-03.2 (kết quả + giữ/tắt)
 # v15.2 (P8.2): mục `finance/budget_change` của phiếu ads mang agent id RIÊNG
 # (không phải tên người lập, không trùng `agent:fp_ads` của finance-04.2) để
 # rollout quy đúng tính năng marketing-03 (đếm đầu ra + biên dùng). Người lập
@@ -678,7 +679,7 @@ def submit_plan(conn, plan, *, by: str, month: date, cfg: dict, dcfg: dict,
 # không nhân bản). Không đủ điều kiện → THIẾU có lý do, không bịa số.
 PROPOSAL_FILE = ROOT / "data" / "ads_proposal.json"
 PROPOSE_AGENT = "agent:mkt05"
-FEATURE = "marketing-03"
+FEATURE = "marketing-03.1"        # đề xuất phiếu (03.2 = ad_result)
 _PROP_KEYS = ("chot_boi", "can_cu", "ty_le_tran", "so_ngay_chay",
               "bat_dau_sau_ngay", "success_metric", "stop_rules")
 
@@ -847,7 +848,12 @@ def submit_results(conn, pid, path, *, by: str, dcfg: dict,
         return {"code": "ADS_RESULTS_FILE", "errors": errs}
     ev = evaluate(prow, rows)
     oid = f"adres-{pid}-{sha[:12]}"
-    if _item_exists(conn, "ad_campaign", oid):
+    # Đợt hoàn thiện 22/10 (marketing-03.2, PL01 "theo dõi chi phí mỗi đơn;
+    # đề xuất giữ hay tắt"): kết quả là ĐẦU RA RIÊNG `ad_result` (trước đây
+    # chung object_type ad_campaign với đề xuất phiếu). Mục cũ cùng oid ở
+    # ad_campaign vẫn tính là đã có → không nộp lại.
+    if _item_exists(conn, RESULT_OT, oid) or _item_exists(conn, "ad_campaign",
+                                                          oid):
         conn.commit()
         return {"code": None, "ev": ev, "qid": None, "skipped": True}
     if dry_run:
@@ -856,7 +862,7 @@ def submit_results(conn, pid, path, *, by: str, dcfg: dict,
     payload = render_result(prow, ev, sha, len(rows))
     title = f"Kết quả ads phiếu #{pid} — đề xuất {ev['de_xuat']}"
     try:
-        qid = director.submit(conn, "marketing", "ad_campaign", oid, title,
+        qid = director.submit(conn, "marketing", RESULT_OT, oid, title,
                               payload, created_by=by, cfg=dcfg["marketing"])
     except psycopg.errors.UniqueViolation:
         with suppress(Exception):

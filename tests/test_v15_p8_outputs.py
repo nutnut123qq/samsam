@@ -271,10 +271,11 @@ def test_p8_2_budget_change_own_agent_counted_and_usable(adb, monkeypatch,
     assert who == {"ad_campaign": "mkt lap",
                    "budget_change": ma.BUDGET_AGENT}
     assert ma.BUDGET_AGENT.startswith("agent:")
-    # đúng tính năng marketing-03 (danh mục thật) — cả 2 mục
+    # đúng tính năng marketing-03.1 (danh mục thật; đợt hoàn thiện tách
+    # 03.1 đề xuất / 03.2 kết quả) — cả 2 mục
     assert {aq._feature_of((b, t, c)) for _, b, t, c in rows} == {
-        "marketing-03"}
-    m3 = next(f for f in ro.load_features() if f["id"] == "marketing-03")
+        "marketing-03.1"}
+    m3 = next(f for f in ro.load_features() if f["id"] == "marketing-03.1")
     assert ma.BUDGET_AGENT in m3["agent_ids"]
     o = ro.output_facts(adb, m3, NOW - timedelta(days=1),
                         NOW + timedelta(days=1), SHIFT)
@@ -283,7 +284,7 @@ def test_p8_2_budget_change_own_agent_counted_and_usable(adb, monkeypatch,
     monkeypatch.setattr(ro, "_FORCE_MODE", None)
     monkeypatch.setattr(ro, "CONFIG_FILE", _cfg(tmp_path))
     adb.execute("insert into feature_rollout (feature_id, stage, stage_since,"
-                " updated_by, updated_at) values ('marketing-03', 'van_hanh',"
+                " updated_by, updated_at) values ('marketing-03.1', 'van_hanh',"
                 " now(), %s, now())", (BY,))
     meta = ("finance", "budget_change", ma.BUDGET_AGENT, "approved",
             "per_item", "GD Tai Chinh")
@@ -681,16 +682,16 @@ def test_p8_7_db_recounts_outputs_not_evidence(live):  # noqa: F811
     since = datetime.now(VN_TZ) - timedelta(days=20)
     nosrc = {"id": "farming-98", "code_status": "co_code",
              "output_sources": []}
-    _owner_seed(live, [feats["ceo-02.1"], feats["farming-02"],
+    _owner_seed(live, [feats["ceo-02.1"], feats["farming-02.2"],
                        feats["ceo-02.2"], nosrc], since)
     assert _q(live, "select feature_id, jsonb_array_length(count_spec->"
               "'sql'), count_spec->'workdays' from feature_rollout where"
-              " feature_id in ('ceo-02.1', 'ceo-02.2', 'farming-02',"
+              " feature_id in ('ceo-02.1', 'ceo-02.2', 'farming-02.2',"
               " 'farming-98') order by 1") == [("ceo-02.1", 2, [0, 1, 2, 3, 4]),
                            ("ceo-02.2", 1, [0, 1, 2, 3, 4]),
-                           # docx P2: + nguồn plot_log_gap; hợp đồng C02:
-                           # + sổ nhắc `garden_reminders` (FLIP có lý do)
-                           ("farming-02", 3, [0, 1, 2, 3, 4]),
+                           # đợt hoàn thiện: farming-02 tách — 02.2 = bản
+                           # tin tuần + plot_log_gap (02.1 = garden_reminders)
+                           ("farming-02.2", 2, [0, 1, 2, 3, 4]),
                            ("farming-98", 0, [0, 1, 2, 3, 4])]
     fake = {"outputs": 999, "out_days": 9}
     # (1) chạy thử → có người duyệt: 0 đầu ra thật, bằng chứng khai 999/9 —
@@ -700,17 +701,17 @@ def test_p8_7_db_recounts_outputs_not_evidence(live):  # noqa: F811
         assert "DB đếm lại" in msg, (fid, msg)
     # (2) có người duyệt → vận hành: 1 báo cáo CHƯA duyệt, khai unreviewed=0
     _q(live, "update feature_rollout set stage = 'co_nguoi_duyet' where"
-       " feature_id = 'farming-02'")
+       " feature_id = 'farming-02.2'")
     _q(live, "insert into report_outputs (feature_id, name, sha256) values"
-       " ('farming-02', 'garden-week-2026-W41.md', %s)", ("e" * 64,))
-    msg = _call_transition(live, "farming-02", "co_nguoi_duyet", "van_hanh",
+       " ('farming-02.2', 'garden-week-2026-W41.md', %s)", ("e" * 64,))
+    msg = _call_transition(live, "farming-02.2", "co_nguoi_duyet", "van_hanh",
                            {"human": 1, "unapproved": 0, "unreviewed": 0})
     assert "DB đếm lại" in msg and "1 chưa duyệt" in msg, msg
     assert _q(live, "select feature_id, stage from feature_rollout where"
-              " feature_id in ('ceo-02.1', 'ceo-02.2', 'farming-02',"
+              " feature_id in ('ceo-02.1', 'ceo-02.2', 'farming-02.2',"
               " 'farming-98') order by 1") == [
         ("ceo-02.1", "chay_thu"), ("ceo-02.2", "chay_thu"),
-        ("farming-02", "co_nguoi_duyet"), ("farming-98", "chay_thu")]
+        ("farming-02.2", "co_nguoi_duyet"), ("farming-98", "chay_thu")]
     # (3) bộ đếm chưa vào sổ DB (dòng cũ trước vá) → fail-closed
     _q(live, "insert into feature_rollout (feature_id, stage, stage_since,"
        " updated_by) values ('ceo-05', 'chay_thu', now() - interval"

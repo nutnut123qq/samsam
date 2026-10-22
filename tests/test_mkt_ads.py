@@ -386,7 +386,10 @@ def test_director_marketing_types():
                       "seo_web_fix",  # + v6.5 MKT-10
                       # v14.5 (marketing-04.2): bài đối tác — loại mới, chỉ
                       # thêm; các loại cũ + SLA/risk giữ nguyên.
-                      "partner_post_review"}
+                      "partner_post_review",
+                      # đợt hoàn thiện 22/10 (marketing-03.2): kết quả +
+                      # đề xuất giữ/tắt là loại việc riêng
+                      "ad_result"}
     assert t["ugc_reply"] == {"sla_hours": 24, "risk": "medium"}
     assert t["ugc_reuse"] == {"sla_hours": 72, "risk": "high"}
     assert t["ad_campaign"]["risk"] == "high" and cfg["approvers"] == []
@@ -556,7 +559,7 @@ def test_db_plan_flow(db, monkeypatch, tmp_path, capsys):
                      " from approval_queue where object_id like 'adres-%'"
                      ).fetchall()
     assert len(res) == 1 and res[0][:4] == (
-        "ad_campaign", res[0][1], "high", "pending")
+        "ad_result", res[0][1], "high", "pending")
     assert res[0][1].startswith(f"adres-{pid}-")
     assert "tăng ngân sách" not in res[0][4].lower()
     assert ma.main(rargs, today=TODAY) == 0

@@ -183,6 +183,11 @@ create table if not exists llm_usage (
 );
 
 create index if not exists llm_usage_agent_ts_idx on llm_usage (agent_id, ts);
+-- Đợt hoàn thiện 22/10 (data_platform-04, PL01 "giới hạn chi phí từng tính
+-- năng"): mã tính năng danh mục của lời gọi (null = dòng cũ / lời gọi không
+-- gắn tính năng). Additive — dòng cũ giữ nguyên.
+alter table llm_usage add column if not exists feature_id text;
+create index if not exists llm_usage_feature_ts_idx on llm_usage (feature_id, ts);
 
 -- ============================================================================
 -- v3.2 golden master (WP04a, F15.2 + F14.2): nguồn sự thật DUY NHẤT cho

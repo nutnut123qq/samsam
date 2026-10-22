@@ -706,7 +706,8 @@ class _Llm:
         msgs = [{"role": "system", "content": _LLM_PROMPT},
                 {"role": "user", "content": f"{it['title']}\n{it['snippet'] or ''}"}]
         try:
-            resp = llm_gateway.chat("intel", msgs, max_tokens=200)
+            resp = llm_gateway.chat("intel", msgs, max_tokens=200,
+                                    feature="intel-01.1")
             text = resp.choices[0].message.content
         except llm_gateway.GatewayError as e:
             print(f"[warn] LLM tắt phần còn lại của lượt ({type(e).__name__})",

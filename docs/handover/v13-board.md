@@ -1,6 +1,50 @@
 # Board v13 — khép phát hiện audit hợp đồng (C00–C11)
 
-## Checkpoint hiện tại — Vá cổng DB test (bản phát hành mã nguồn 21/10/2026)
+Bản phát hành mã nguồn 22/10/2026 gồm đợt hoàn thiện DOCX và vá F1/F2. Các checkpoint dưới ghi trạng thái lúc kiểm trước commit; chưa triển khai/nghiệm thu. Biên bản quét: `evidence/contract_g45_release_scan.log`.
+
+## Checkpoint mới — Vá 2 lỗi controller đợt hoàn thiện (22/10/2026) — tiêu chí ghi TRƯỚC khi code, kết quả bên dưới
+
+Nền: working tree fingerprint `da55b0acb2f89f119bc6920accc3d3e481efc8051a1f37053a3d516126e0750b` (snapshot ngoài repo). CHƯA commit.
+
+| Mã | Lỗi (controller tái hiện) | Tiêu chí xong (kiểm được) |
+|---|---|---|
+| F1 | Gợi ý chat sàn (sales-02) gọi `api.rag.answer` → mọi lời gọi rewrite/embed/chat gắn cứng `sales-01` → kill/trần sales-02 không chặn, chi phí ghi nhầm sales-01 | Shopee/TikTok: rewrite + embed + chat đều `sales-02`; Zalo/Messenger giữ `sales-01`; mã tính năng chọn theo KÊNH nội bộ (allowlist), không từ tin khách; kill hoặc trần 0/hết của sales-02 → 0 lời gọi client (chặn trước client); trần agent + trần tính năng vẫn áp; mã không lọt payload provider; usage ghi đúng feature_id; đối chứng sales-01 ↔ sales-02 độc lập |
+| F2 | `website_row` lấy giá từ JSON `prices.web.list` → DB không có giá web duyệt vẫn bật giỏ (99000, gio_hang true) | Giá web chỉ từ `price_list` kind list kênh web ĐÃ duyệt, còn hiệu lực theo quy tắc ngày hiện có (`kd_listing.golden_prices`); pending/hết hạn/chưa tới hạn/không có → không giá, không giỏ, lý do rõ; giá DB khác JSON → dùng DB; không fallback kênh/floor/promo/JSON; manifest ghi nguồn DB + id phiên bản giá; mô tả chưa duyệt/sửa sau duyệt vẫn chặn; rượu luôn ẩn giá + không giỏ (cả khi có giá duyệt/readiness sai); lỗi đọc giá → từ chối, không thành công giả |
+
+Kết quả (revision cuối `9b2498af27a7006a13abdd9217c6048f8eeddefa4bcd925cc3abfd2dda16b9bd`, CHƯA commit):
+
+| Mã | Trước sửa (probe entrypoint) | Sau sửa | Bằng chứng | Trạng thái |
+|---|---|---|---|---|
+| F1 | 17/28 FAIL — Shopee/TikTok ghi `sales-01`; kill/trần 0/hết trần sales-02 vẫn 2 lời gọi client; kill sales-01 chặn cả sàn | 28/28 PASS — sàn rewrite/embed/chat `sales-02`, Zalo/Messenger `sales-01`; chặn → 0 lời gọi; mã lạ → ValueError; payload không chứa mã | `evidence/contract_g5_f1.log`, `tests/test_fix_san_feature.py` | CODE_VERIFIED (client giả) |
+| F2 | 10/12 FAIL — 99000 JSON + giỏ true khi DB không có/chờ/hết hạn/chưa tới hạn; bảng giá không đọc được vẫn ghi tệp | 12/12 PASS — chỉ giá DB ĐÃ duyệt hiệu lực; manifest nguồn price_list + id; lỗi đọc → từ chối, 0 tệp | `evidence/contract_g5_f2.log`, `tests/test_contract_c04_listing_export.py` | CODE_VERIFIED · BLOCKED_INFRA_OR_DATA (chưa có giá web duyệt thật) |
+| GATE | full khám phá 9 failed (test giả kb_acl) — không tính | full 6582 passed/0 failed/0 skipped (DR 3 PASSED); ruff/eval/DPIA/red-team 0/50 | `contract_g5_full_pytest.log`, `contract_g5_gates.log` | CODE_VERIFIED (máy dev) |
+
+Đính chính dòng E1 dưới: trước vá F1, gợi ý chat sàn (sales-02) KHÔNG gắn đúng tính năng (ghi sales-01).
+
+## Checkpoint hiện tại — Đợt hoàn thiện theo DOCX (22/10/2026, nhánh `codex/contract-finalization` từ `main` = `939aac9`, CHƯA commit)
+
+Fingerprint (trừ DONE.md + board, 3 file mới, so `939aac9`): `da55b0acb2f89f119bc6920accc3d3e481efc8051a1f37053a3d516126e0750b`. Phạm vi THEO
+DOCX (user chốt); danh mục 89 AI khớp từng khối + P1 80 / P2 9 (bảng ánh xạ:
+`docs/handover/doi-chieu-docx.md` mục A). ⚠ Mật khẩu DB `.env` vẫn trùng giá trị
+từng lộ trong lịch sử Git public — runbook 10.7 (quản trị viên).
+
+| Mã | Việc | Trước (939aac9) | Sau | Bằng chứng | Trạng thái |
+|---|---|---|---|---|---|
+| A | Cổng DB test G1–G3 | — | vẫn chặn (25/25, 41/41) | `evidence/contract_g4_guard.log` | CODE_VERIFIED |
+| B | DR Docker 3 ca | SKIP (Docker tắt) | 3 PASSED, RTO 5,23 s / RPO 0 h (DB test) | `contract_g4_dr.log` | VERIFIED_DEV_DR (server Bên B chưa diễn tập) |
+| C | intel_weekly svc_job | exit 1 InsufficientPrivilege | exit 0 ×2, probe âm 6/6 | `contract_g4_intel_weekly.log` | CODE_VERIFIED |
+| D | Danh mục theo DOCX | 79 AI, P1 72 / P2 7 | 89, khớp 9 khối, P1 80 / P2 9; 14 id cũ → da_thay_the | `contract_g4_probes_*`, `contract_g4_upgrade.log` | CODE_VERIFIED · nội dung mục chờ biên bản PL01 mục 9 |
+| E1 | Trần/nút tắt chi phí theo tính năng | không có | có, mọi lời gọi gắn tính năng | `contract_g4_probes_*` | CODE_VERIFIED · BLOCKED_DECISION (mức trần) |
+| E2 | Câu sức khỏe chatbot | 0/7 chặn | 7/7, bán hàng 0/4 | như trên | CODE_VERIFIED · BLOCKED_DECISION (Pháp chế rà danh sách) |
+| E3 | Sổ 14 hồ sơ gốc | không kiểm | kiểm cấu trúc/đủ số, BLOCKED 0/14 | `tests/test_contract_finalize.py` | BLOCKED_INFRA_OR_DATA |
+| E4 | Nguồn dữ liệu website | không có | `--website-feed` (0 SKU bán được — thiếu giá web) | `tests/test_contract_c04_listing_export.py` | CODE_VERIFIED · BLOCKED_INFRA_OR_DATA |
+| E5 | Giám sát ngoài máy | không hướng dẫn | runbook 10.6 | — | BLOCKED_INFRA (máy giám sát) |
+| GATE | — | — | full 6553 passed/0 failed/0 skipped (gồm DR); 106 + 225 probe; ruff/eval/DPIA/red-team 0/50 | `contract_g4_full_pytest.log`, `contract_g4_gates.log` | CODE_VERIFIED (máy dev) |
+
+Không đổi: 96/96 `chua_nghiem_thu`; 0 sổ rollout trên server Bên B; sự cố
+`samsam` vòng 1 UNVERIFIED.
+
+## Vá cổng DB test — LỊCH SỬ (bản phát hành mã nguồn 21/10/2026, nay ở `939aac9`)
 
 Fingerprint (trừ DONE.md + board, 34 file mới): `688ec3a2e79176f7b5f8ff075965b94a3396b2058f43f4cc12ce76a022afd91b`. **Đính chính:** dòng P0 ở
 checkpoint vòng 2 dưới đây ("test không thể kết nối `samsam`") SAI ở 3 đường —
@@ -195,20 +239,21 @@ Nguồn số: `python -m pipelines.rollout --catalog` (đọc
 `data/contract_features.json`, không cần DB). Luật tách nhóm PL01 mục 2 (ĐỀ
 XUẤT): chỉ tách khi chữ gốc liệt kê các đầu ra phân biệt; không chia vụn cho
 đủ số.
+**Đợt hoàn thiện 22/10/2026:** phạm vi THEO DOCX (user chốt) — danh mục chuẩn hóa khớp đúng 89 AI / từng khối / P1 80–P2 9; id cũ → `da_thay_the` (bảng ánh xạ + old→new: `docs/handover/doi-chieu-docx.md` mục A). "Khớp số lượng" = tổng/khối theo DOCX; NỘI DUNG từng mục vẫn chờ biên bản PL01 mục 9.
 
 | Khối | HĐ | Đề xuất | Trạng thái |
 |---|---|---|---|
-| ceo | 9 | 7 | chưa xác định — chờ hai bên chốt |
+| ceo | 9 | 9 | khớp số lượng — nội dung chờ hai bên chốt |
 | sales | 12 | 12 | khớp số lượng — nội dung chờ hai bên chốt |
-| marketing | 14 | 11 | chưa xác định — chờ hai bên chốt |
-| intel | 11 | 8 | chưa xác định — chờ hai bên chốt |
+| marketing | 14 | 14 | khớp số lượng — nội dung chờ hai bên chốt |
+| intel | 11 | 11 | khớp số lượng — nội dung chờ hai bên chốt |
 | finance | 9 | 9 | khớp số lượng — nội dung chờ hai bên chốt |
 | production | 6 | 6 | khớp số lượng — nội dung chờ hai bên chốt |
-| farming | 9 | 7 | chưa xác định — chờ hai bên chốt |
-| legal_hr | 10 | 11 | chưa xác định — chờ hai bên chốt |
-| data_platform | 9 | 8 | chưa xác định — chờ hai bên chốt |
-| P1 / P2 | 80 / 9 | 72 / 7 | chưa xác định — chờ hai bên chốt |
-| Tổng | 89 | 79 | chưa xác định — chờ hai bên chốt |
+| farming | 9 | 9 | khớp số lượng — nội dung chờ hai bên chốt |
+| legal_hr | 10 | 10 | khớp số lượng — nội dung chờ hai bên chốt |
+| data_platform | 9 | 9 | khớp số lượng — nội dung chờ hai bên chốt |
+| P1 / P2 | 80 / 9 | 80 / 9 | khớp số lượng — nội dung chờ hai bên chốt |
+| Tổng | 89 | 89 | khớp số lượng — nội dung chờ hai bên chốt |
 
 Ngoài 89: nền tảng TMĐT 2 (`sales-08` website — làm riêng, `data_platform-06`
 API sàn), truy xuất blockchain 1 (`farming-06`), nghĩa vụ HĐ 4 (`finance-06`,

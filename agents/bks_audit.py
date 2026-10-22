@@ -583,7 +583,7 @@ def chain_alert(conn, routing=None, sender=None) -> dict:
 
 
 # v14.3: loại lần chạy → tính năng danh mục (cổng giai đoạn HĐ 6.7).
-KIND_FEATURE = {"inside_out": "ceo-04.2", "recon": "ceo-04.1",
+KIND_FEATURE = {"inside_out": "ceo-04.6", "recon": "ceo-04.6",
                 "hdtv_pack": "ceo-05"}
 
 

@@ -139,7 +139,8 @@ def test_alcohol_standalone_rewrite_handoff(monkeypatch):
 
 def test_normal_question_still_retrieves(monkeypatch):
     seen = []
-    monkeypatch.setattr(rag, "retrieve", lambda q: seen.append(q) or [])
+    monkeypatch.setattr(rag, "retrieve",   # + feature= (vá F1 22/10)
+                        lambda q, feature=None: seen.append(q) or [])
     r = rag.answer("Saphraton giá bao nhiêu?")
     assert seen == ["Saphraton giá bao nhiêu?"]
     assert r == {"answer": rag.NO_DATA, "sources": []}
@@ -158,7 +159,7 @@ _CTX = ("Công ty TNHH Sâm Sâm. Hotline: 0905.123.456. "
 
 def _answer_with(monkeypatch, llm_text, question="Mã số thuế công ty?",
                  history=None, ctx=_CTX):
-    monkeypatch.setattr(rag, "retrieve", lambda q: [{
+    monkeypatch.setattr(rag, "retrieve", lambda q, feature=None: [{  # vá F1
         "title": "about", "url": "https://samsam.net.vn/x", "lang": "vi",
         "content": ctx, "score": 0.9, "doc_id": "about-1"}])
     monkeypatch.setattr(rag, "chat", lambda agent, messages, **kw:

@@ -40,6 +40,12 @@
       "steps": [["-m", "agents.vt_thuhoach", "--submit"]],
       "muc_dich": "Đợt hợp đồng C11 (farming-05.2, P2): dự báo sản lượng thu hoạch tuần → hàng duyệt farming (đã có mục pending cùng kỳ → không thêm). Thứ Hai 08:20 GIẢ ĐỊNH"
     },
+    "vt_pests": {
+      "on_calendar": "*-*-* 06:35:00",
+      "max_gap_hours": 26,
+      "steps": [["-m", "agents.vt_thoitiet", "--pests", "--submit"]],
+      "muc_dich": "Đợt hoàn thiện 22/10 (farming-05.4, P2): cảnh báo sâu bệnh từ nhật ký vườn nội bộ → hàng duyệt farming/pest_alert, không phụ thuộc nguồn dự báo thời tiết (vt_weather vẫn BLOCKED tới khi chọn nguồn). 06:35 GIẢ ĐỊNH — GĐ vùng trồng chỉnh"
+    },
     "webhook_health": {
       "on_calendar": "*-*-* *:00/5:00",
       "max_gap_hours": 1,

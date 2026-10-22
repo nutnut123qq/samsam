@@ -1,0 +1,284 @@
+# Vá controller F1 — probe entrypoint trước/sau (22/10/2026)
+# baseline commit 939aac9 · nhánh codex/contract-finalization · CHƯA commit
+# fingerprint TRƯỚC SỬA (snapshot scratchpad r5/before, 3 file mới, trừ DONE+board) = da55b0acb2f89f119bc6920accc3d3e481efc8051a1f37053a3d516126e0750b
+# fingerprint REVISION CUỐI (gate full/gates, 4 file mới, trừ DONE+board) = 9b2498af27a7006a13abdd9217c6048f8eeddefa4bcd925cc3abfd2dda16b9bd
+# lưu ý: probe/test 'sau sửa' + test bị ảnh hưởng chạy ở revision 2fae3a8a…337a5 — mã nguồn api/rag.py, connectors/channels.py, agents/listing_export.py GIỐNG revision cuối; sau đó chỉ đổi test giả tests/test_kb_acl.py (+feature=), thứ tự import tests/test_fix_san_feature.py
+# DB test riêng: samsam_contract_r5probe (KHÔNG samsam) · client AI GIẢ · OPENROUTER_API_KEY rỗng
+
+## lệnh: python -I scratchpad/r5/probe_f1.py <ROOT> <out.json> <dsn_file>  (ROOT = r5/before | D:/code/samsam)
+
+## TRƯỚC SỬA (ROOT = snapshot r5/before) — mong đợi FAIL
+[GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]
+ok
+[GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]
+ok
+[GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]
+ok
+[GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]
+ok
+FAIL  shopee respond, mở → embed+chat gắn sales-02  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+FAIL  shopee _suggest (CLI), mở → sales-02  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | 0
+FAIL  shopee respond, kill sales-02 → 0 lời gọi  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+FAIL  shopee _suggest, kill sales-02 → 0 lời gọi  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | 0
+FAIL  shopee respond, trần sales-02 = 0 → 0 lời gọi  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+FAIL  shopee respond, sales-02 hết trần (chi 5/5) → 0 lời gọi  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+FAIL  shopee respond, ĐỐI CHỨNG kill sales-01 → sales-02 vẫn chạy  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: tính năng 'sales-01' đang bị nút tắt khẩn
+PASS  shopee respond, trần AGENT chatbot hết → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: agent 'chatbot' vượt trần tháng 1.0000/1.00 USD
+FAIL  tiktok respond, mở → embed+chat gắn sales-02  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+FAIL  tiktok _suggest (CLI), mở → sales-02  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | 0
+FAIL  tiktok respond, kill sales-02 → 0 lời gọi  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+FAIL  tiktok _suggest, kill sales-02 → 0 lời gọi  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | 0
+FAIL  tiktok respond, trần sales-02 = 0 → 0 lời gọi  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+FAIL  tiktok respond, sales-02 hết trần (chi 5/5) → 0 lời gọi  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+FAIL  tiktok respond, ĐỐI CHỨNG kill sales-01 → sales-02 vẫn chạy  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: tính năng 'sales-01' đang bị nút tắt khẩn
+PASS  tiktok respond, trần AGENT chatbot hết → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: agent 'chatbot' vượt trần tháng 1.0000/1.00 USD
+PASS  zalo respond, mở → sales-01  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+PASS  zalo respond, ĐỐI CHỨNG kill sales-02 → sales-01 vẫn chạy  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+PASS  zalo respond, kill sales-01 → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: tính năng 'sales-01' đang bị nút tắt khẩn
+PASS  messenger respond, mở → sales-01  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+PASS  messenger respond, ĐỐI CHỨNG kill sales-02 → sales-01 vẫn chạy  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+PASS  messenger respond, kill sales-01 → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: tính năng 'sales-01' đang bị nút tắt khẩn
+PASS  zalo có history (rewrite) → rewrite+embed+chat sales-01  | calls=['chat', 'embed', 'chat'] feature_id=['sales-01', 'sales-01', 'sales-01'] payload_has_feature=False | ok
+PASS  zalo có history, ĐỐI CHỨNG kill sales-02 → vẫn sales-01  | calls=['chat', 'embed', 'chat'] feature_id=['sales-01', 'sales-01', 'sales-01'] payload_has_feature=False | ok
+FAIL  rag.answer có history, feature=sales-02 → rewrite+embed+chat sales-02  | calls=[] feature_id=[] payload_has_feature=False | EXC TypeError: answer() got an unexpected keyword argument 'feature'
+FAIL  rag.answer có history, feature=sales-02, kill sales-02 → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC TypeError: answer() got an unexpected keyword argument 'feature'
+FAIL  rag.answer mã lạ 'sales-99' → từ chối, 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC TypeError: answer() got an unexpected keyword argument 'feature'
+PASS  rag.answer mặc định (không truyền) → sales-01  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | ok
+TỔNG 28 ca, FAIL 17
+EXIT 1
+
+(đã gom 40 dòng cảnh báo '[llm-gateway] model … chưa có giá' — client giả, không tính phí thật)
+
+## SAU SỬA (ROOT = D:/code/samsam)
+[GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]
+ok
+[warn] channels: answer() lỗi GatewayBlocked — dùng câu chuyển nhân viên
+[GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]
+Dạ, câu hỏi này cần nhân viên Sâm Sâm kiểm tra thêm. Nhân viên sẽ phản hồi Quý khách ngay trong khung chat này.
+handoff=no_data
+[GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]
+ok
+[warn] channels: answer() lỗi GatewayBlocked — dùng câu chuyển nhân viên
+[GỢI Ý — NHÁP, MXH đọc/sửa trước khi DÁN TAY trên Seller Center]
+Dạ, câu hỏi này cần nhân viên Sâm Sâm kiểm tra thêm. Nhân viên sẽ phản hồi Quý khách ngay trong khung chat này.
+handoff=no_data
+PASS  shopee respond, mở → embed+chat gắn sales-02  | calls=['embed', 'chat'] feature_id=['sales-02', 'sales-02'] payload_has_feature=False | None
+PASS  shopee _suggest (CLI), mở → sales-02  | calls=['embed', 'chat'] feature_id=['sales-02', 'sales-02'] payload_has_feature=False | 0
+PASS  shopee respond, kill sales-02 → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: tính năng 'sales-02' đang bị nút tắt khẩn
+PASS  shopee _suggest, kill sales-02 → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | 0
+PASS  shopee respond, trần sales-02 = 0 → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: tính năng 'sales-02' có trần 0 USD — đang tắt
+PASS  shopee respond, sales-02 hết trần (chi 5/5) → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: tính năng 'sales-02' vượt trần tháng 5.0000/5.00 U
+PASS  shopee respond, ĐỐI CHỨNG kill sales-01 → sales-02 vẫn chạy  | calls=['embed', 'chat'] feature_id=['sales-02', 'sales-02'] payload_has_feature=False | None
+PASS  shopee respond, trần AGENT chatbot hết → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: agent 'chatbot' vượt trần tháng 1.0000/1.00 USD
+PASS  tiktok respond, mở → embed+chat gắn sales-02  | calls=['embed', 'chat'] feature_id=['sales-02', 'sales-02'] payload_has_feature=False | None
+PASS  tiktok _suggest (CLI), mở → sales-02  | calls=['embed', 'chat'] feature_id=['sales-02', 'sales-02'] payload_has_feature=False | 0
+PASS  tiktok respond, kill sales-02 → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: tính năng 'sales-02' đang bị nút tắt khẩn
+PASS  tiktok _suggest, kill sales-02 → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | 0
+PASS  tiktok respond, trần sales-02 = 0 → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: tính năng 'sales-02' có trần 0 USD — đang tắt
+PASS  tiktok respond, sales-02 hết trần (chi 5/5) → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: tính năng 'sales-02' vượt trần tháng 5.0000/5.00 U
+PASS  tiktok respond, ĐỐI CHỨNG kill sales-01 → sales-02 vẫn chạy  | calls=['embed', 'chat'] feature_id=['sales-02', 'sales-02'] payload_has_feature=False | None
+PASS  tiktok respond, trần AGENT chatbot hết → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: agent 'chatbot' vượt trần tháng 1.0000/1.00 USD
+PASS  zalo respond, mở → sales-01  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+PASS  zalo respond, ĐỐI CHỨNG kill sales-02 → sales-01 vẫn chạy  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+PASS  zalo respond, kill sales-01 → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: tính năng 'sales-01' đang bị nút tắt khẩn
+PASS  messenger respond, mở → sales-01  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+PASS  messenger respond, ĐỐI CHỨNG kill sales-02 → sales-01 vẫn chạy  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | None
+PASS  messenger respond, kill sales-01 → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: tính năng 'sales-01' đang bị nút tắt khẩn
+PASS  zalo có history (rewrite) → rewrite+embed+chat sales-01  | calls=['chat', 'embed', 'chat'] feature_id=['sales-01', 'sales-01', 'sales-01'] payload_has_feature=False | ok
+PASS  zalo có history, ĐỐI CHỨNG kill sales-02 → vẫn sales-01  | calls=['chat', 'embed', 'chat'] feature_id=['sales-01', 'sales-01', 'sales-01'] payload_has_feature=False | ok
+PASS  rag.answer có history, feature=sales-02 → rewrite+embed+chat sales-02  | calls=['chat', 'embed', 'chat'] feature_id=['sales-02', 'sales-02', 'sales-02'] payload_has_feature=False | ok
+PASS  rag.answer có history, feature=sales-02, kill sales-02 → 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC GatewayBlocked: tính năng 'sales-02' đang bị nút tắt khẩn
+PASS  rag.answer mã lạ 'sales-99' → từ chối, 0 lời gọi  | calls=[] feature_id=[] payload_has_feature=False | EXC ValueError: feature RAG không thuộc danh sách nội bộ ['sales-01', 
+PASS  rag.answer mặc định (không truyền) → sales-01  | calls=['embed', 'chat'] feature_id=['sales-01', 'sales-01'] payload_has_feature=False | ok
+TỔNG 28 ca, FAIL 0
+EXIT 0
+
+(đã gom 31 dòng cảnh báo '[llm-gateway] model … chưa có giá' — client giả, không tính phí thật)
+
+## Test hồi quy mới chạy trên BẢN SAO snapshot trước sửa (chỉ chép file test) — mong đợi FAIL
+## lệnh: python -m pytest tests/test_fix_san_feature.py tests/test_contract_c04_listing_export.py -q
+FAILED tests/test_fix_san_feature.py::test_san_respond_uses_sales02_for_embed_and_chat[shopee]
+FAILED tests/test_fix_san_feature.py::test_san_respond_uses_sales02_for_embed_and_chat[tiktok]
+FAILED tests/test_fix_san_feature.py::test_sales02_blocked_zero_client_calls[shopee-cap0]
+FAILED tests/test_fix_san_feature.py::test_sales02_blocked_zero_client_calls[shopee-het_tran]
+FAILED tests/test_fix_san_feature.py::test_sales02_blocked_zero_client_calls[shopee-kill]
+FAILED tests/test_fix_san_feature.py::test_sales02_blocked_zero_client_calls[tiktok-cap0]
+FAILED tests/test_fix_san_feature.py::test_sales02_blocked_zero_client_calls[tiktok-het_tran]
+FAILED tests/test_fix_san_feature.py::test_sales02_blocked_zero_client_calls[tiktok-kill]
+FAILED tests/test_fix_san_feature.py::test_sales01_blocked_san_unaffected - p...
+FAILED tests/test_fix_san_feature.py::test_history_rewrite_path_carries_feature
+FAILED tests/test_fix_san_feature.py::test_unknown_feature_rejected_before_any_call[sales-99]
+FAILED tests/test_fix_san_feature.py::test_unknown_feature_rejected_before_any_call[marketing-01]
+FAILED tests/test_fix_san_feature.py::test_unknown_feature_rejected_before_any_call[]
+FAILED tests/test_fix_san_feature.py::test_unknown_feature_rejected_before_any_call[None]
+FAILED tests/test_fix_san_feature.py::test_unknown_feature_rejected_before_any_call[bad4]
+FAILED tests/test_fix_san_feature.py::test_unknown_feature_rejected_before_any_call[Sales-02]
+FAILED tests/test_fix_san_feature.py::test_feature_follows_channel_not_customer_text
+FAILED tests/test_contract_c04_listing_export.py::test_website_feed_sellable_and_alcohol_always_hidden
+FAILED tests/test_contract_c04_listing_export.py::test_website_json_price_without_db_price_not_sellable
+FAILED tests/test_contract_c04_listing_export.py::test_website_pending_db_price_not_used
+FAILED tests/test_contract_c04_listing_export.py::test_website_expired_and_future_price_not_used
+FAILED tests/test_contract_c04_listing_export.py::test_website_no_fallback_floor_promo_other_channel
+FAILED tests/test_contract_c04_listing_export.py::test_website_price_unreadable_refuses_no_file[mat_bang]
+FAILED tests/test_contract_c04_listing_export.py::test_website_price_unreadable_refuses_no_file[khong_quyen]
+24 failed, 13 passed in 26.79s
+EXIT 1
+
+
+## mã probe
+"""Probe F1 — gợi ý chat sàn (sales-02) phải gắn đúng mã tính năng qua RAG/gateway.
+
+Chạy: python -I probe_f1.py <ROOT> <OUT.json>   (ROOT = snapshot trước sửa hoặc repo)
+Client GIẢ (FakeClient), kho chi tiêu GIẢ (theo agent/tính năng), không HTTP,
+không DB (retrieve_by_vector giả trả hit; channels._connect None). Entry thật:
+channels.respond / channels._suggest / zalo._answer_within / rag.answer.
+"""
+import json
+import os
+import sys
+import time
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+
+ROOT = Path(sys.argv[1]).resolve()
+OUT = Path(sys.argv[2])
+sys.stdout.reconfigure(encoding="utf-8")
+for k in list(os.environ):
+    if k.endswith("DATABASE_URL") or k.startswith("PG"):
+        os.environ[k] = ""
+os.environ["DATABASE_URL"] = Path(sys.argv[3]).read_text().split("'")[1]
+os.environ.update(OPENROUTER_API_KEY="", DEPLOY="0", LLM_KILL_FEATURES="")
+os.chdir(ROOT)
+sys.path.insert(0, str(ROOT))
+
+from tests import _db_guard  # noqa: E402
+
+_db_guard.install()
+from api import rag  # noqa: E402
+from connectors import channels, zalo  # noqa: E402
+from pipelines import llm_gateway as gw, rollout  # noqa: E402
+from tests.test_llm_gateway import FakeClient  # noqa: E402
+
+TMP = OUT.parent / "f1_cfg.json"
+HITS = [{"score": 1.0, "title": "Shop", "url": "https://example.test/p",
+         "content": "Shop có giao hàng toàn quốc."}]
+Q = "Shop giao hàng không?"
+HIST = [{"role": "user", "content": "Shop bán sâm gì?"},
+        {"role": "assistant", "content": "Shop bán sâm Ngọc Linh."}]
+
+
+class SpendConn:
+    """Kho chi tiêu giả: select spend theo tham số (agent hoặc tính năng)."""
+
+    def __init__(self, spends, rows):
+        self.spends, self.rows = spends, rows
+
+    def execute(self, sql, params=()):
+        if sql.lstrip().startswith("insert"):
+            self.rows.append(params)
+            return None
+        return SimpleNamespace(fetchone=lambda: (self.spends.get(params[0], 0.0),))
+
+    def commit(self):
+        pass
+
+    def close(self):
+        pass
+
+
+def run(name, fn, *, kill=(), fcaps=None, caps=None, spends=None, expect):
+    cfg = {"provider_only": ["azure"],
+           "monthly_cap_usd": caps or {"default": 10},
+           "feature_caps_usd": fcaps or {"default": 10},
+           "kill_features": list(kill), "kill": []}
+    TMP.write_text(json.dumps(cfg), encoding="utf-8")
+    client, rows = FakeClient(), []
+    res = {"case": name}
+    with patch.object(gw, "CONFIG", TMP), \
+            patch.object(gw, "_client", return_value=client), \
+            patch.object(gw, "_connect", side_effect=lambda: SpendConn(spends or {}, rows)), \
+            patch.object(rag, "retrieve_by_vector", return_value=HITS), \
+            patch.object(channels, "_connect", return_value=None), \
+            patch.object(rollout, "_FORCE_MODE", "van_hanh"):
+        try:
+            res["result"] = fn()
+        except Exception as e:  # noqa: BLE001
+            res["result"] = f"EXC {type(e).__name__}: {str(e)[:120]}"
+    res["client_calls"] = [k for k, _ in client.calls]
+    res["usage_feature_id"] = [r[-1] for r in rows]
+    dump = json.dumps([kw for _, kw in client.calls], ensure_ascii=False, default=str)
+    res["feature_in_payload"] = ("sales-0" in dump) or ("feature" in dump)
+    ok = expect(res)
+    res["verdict"] = "PASS" if ok else "FAIL"
+    return res
+
+
+def resp(ch):
+    return lambda: channels.respond(ch, "probe-user", Q).get("handoff")
+
+
+def suggest(ch):
+    return lambda: channels._suggest(ch, Q, by=None)
+
+
+def ans(feature=None, history=None):
+    kw = {} if feature is None else {"feature": feature}
+    return lambda: rag.answer(Q, history, **kw)["answer"]
+
+
+def zalo_hist():
+    return lambda: zalo._answer_within(rag.answer, Q, HIST, time.monotonic() + 30)["answer"]
+
+
+def uses(feat, n):
+    return lambda r: (r["usage_feature_id"] == [feat] * n
+                      and len(r["client_calls"]) == n and not r["feature_in_payload"])
+
+
+def zero(r):
+    return r["client_calls"] == [] and r["usage_feature_id"] == []
+
+
+S02, S01 = "sales-02", "sales-01"
+R = []
+for ch in ("shopee", "tiktok"):
+    R.append(run(f"{ch} respond, mở → embed+chat gắn sales-02", resp(ch), expect=uses(S02, 2)))
+    R.append(run(f"{ch} _suggest (CLI), mở → sales-02", suggest(ch), expect=uses(S02, 2)))
+    R.append(run(f"{ch} respond, kill sales-02 → 0 lời gọi", resp(ch), kill=[S02], expect=zero))
+    R.append(run(f"{ch} _suggest, kill sales-02 → 0 lời gọi", suggest(ch), kill=[S02], expect=zero))
+    R.append(run(f"{ch} respond, trần sales-02 = 0 → 0 lời gọi", resp(ch),
+                 fcaps={"default": 10, S02: 0}, expect=zero))
+    R.append(run(f"{ch} respond, sales-02 hết trần (chi 5/5) → 0 lời gọi", resp(ch),
+                 fcaps={"default": 10, S02: 5}, spends={S02: 5.0}, expect=zero))
+    R.append(run(f"{ch} respond, ĐỐI CHỨNG kill sales-01 → sales-02 vẫn chạy", resp(ch),
+                 kill=[S01], expect=uses(S02, 2)))
+    R.append(run(f"{ch} respond, trần AGENT chatbot hết → 0 lời gọi", resp(ch),
+                 caps={"default": 10, "chatbot": 1}, spends={"chatbot": 1.0}, expect=zero))
+for ch in ("zalo", "messenger"):
+    R.append(run(f"{ch} respond, mở → sales-01", resp(ch), expect=uses(S01, 2)))
+    R.append(run(f"{ch} respond, ĐỐI CHỨNG kill sales-02 → sales-01 vẫn chạy", resp(ch),
+                 kill=[S02], expect=uses(S01, 2)))
+    R.append(run(f"{ch} respond, kill sales-01 → 0 lời gọi", resp(ch), kill=[S01], expect=zero))
+R.append(run("zalo có history (rewrite) → rewrite+embed+chat sales-01", zalo_hist(),
+             expect=uses(S01, 3)))
+R.append(run("zalo có history, ĐỐI CHỨNG kill sales-02 → vẫn sales-01", zalo_hist(),
+             kill=[S02], expect=uses(S01, 3)))
+R.append(run("rag.answer có history, feature=sales-02 → rewrite+embed+chat sales-02",
+             ans(S02, HIST), expect=uses(S02, 3)))
+R.append(run("rag.answer có history, feature=sales-02, kill sales-02 → 0 lời gọi",
+             ans(S02, HIST), kill=[S02],
+             expect=lambda r: zero(r) and "GatewayBlocked" in str(r["result"])))
+R.append(run("rag.answer mã lạ 'sales-99' → từ chối, 0 lời gọi", ans("sales-99"),
+             expect=lambda r: zero(r) and ("ValueError" in str(r["result"])
+                                           or "GatewayError" in str(r["result"]))))
+R.append(run("rag.answer mặc định (không truyền) → sales-01", ans(), expect=uses(S01, 2)))
+
+OUT.write_text(json.dumps(R, ensure_ascii=False, indent=1), encoding="utf-8")
+for r in R:
+    print(f"{r['verdict']}  {r['case']}  | calls={r['client_calls']} "
+          f"feature_id={r['usage_feature_id']} payload_has_feature={r['feature_in_payload']}"
+          f" | {str(r['result'])[:70]}")
+n_fail = sum(r["verdict"] == "FAIL" for r in R)
+print(f"TỔNG {len(R)} ca, FAIL {n_fail}")
+sys.exit(1 if n_fail else 0)

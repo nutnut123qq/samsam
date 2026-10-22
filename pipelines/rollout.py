@@ -356,6 +356,7 @@ def load_features(path: Path = FEATURES_FILE) -> list[dict]:
         doc = json.loads(Path(path).read_bytes().decode("utf-8"))
         items, counts = doc["features"], doc["so_tinh_nang_hd"]
         phases, tong = doc["so_giai_doan_hd"], doc["tong_hop"]
+        gone = doc.get("da_thay_the", [])
     except (OSError, UnicodeDecodeError, ValueError, KeyError,
             TypeError) as e:
         raise ValueError(f"{Path(path).name}: không đọc được "
@@ -398,7 +399,47 @@ def load_features(path: Path = FEATURES_FILE) -> list[dict]:
     if tong != summary(out, counts, phases):
         raise ValueError("tong_hop: lệch số mục thực của features — chạy "
                          "lại summary()")
+    _check_superseded(gone, out)
     return out
+
+
+def _check_superseded(gone, feats: list[dict]) -> None:
+    """Sổ `da_thay_the` = [{id, thay_bang: [id mới], ly_do}] — id cũ KHÔNG
+    còn trong features (dòng feature_rollout/output_reviews/log của id cũ giữ
+    nguyên trong DB, chỉ không sinh mới); mỗi id trong `thay_the` của mục mới
+    phải có trong sổ và ngược lại (truy vết 2 chiều)."""
+    ids = {f["id"] for f in feats}
+    if not isinstance(gone, list):
+        raise ValueError("da_thay_the: phải là list")  # noqa: TRY004 — hợp đồng load_features = ValueError
+    reg: dict[str, set] = {}
+    for i, g in enumerate(gone):
+        oid = g.get("id") if isinstance(g, dict) else None
+        if not isinstance(oid, str) or not _ID_RE.fullmatch(oid):
+            raise ValueError(f"da_thay_the[{i}].id: thiếu/sai")
+        if oid in ids or oid in reg:
+            raise ValueError(f"da_thay_the[{i}].id: {oid} còn trong features"
+                             " hoặc trùng")
+        new = g.get("thay_bang")
+        if not isinstance(new, list) or not new or not set(new) <= ids:
+            raise ValueError(f"da_thay_the[{i}].thay_bang: id mới phải có "
+                             "trong features")
+        if not _nonblank(g.get("ly_do")):
+            raise ValueError(f"da_thay_the[{i}].ly_do: thiếu")
+        reg[oid] = set(new)
+    for f in feats:
+        old = f.get("thay_the", [])
+        if not isinstance(old, list):
+            raise ValueError(f"{f['id']}.thay_the: phải là list")  # noqa: TRY004
+        for o in old:
+            if f["id"] not in reg.get(o, ()):
+                raise ValueError(f"{f['id']}.thay_the: '{o}' không có trong "
+                                 "da_thay_the với thay_bang chứa mục này")
+    for o, new in reg.items():
+        for n in new:
+            if o not in next(f for f in feats if f["id"] == n).get(
+                    "thay_the", []):
+                raise ValueError(f"da_thay_the: {o} → {n} nhưng {n}.thay_the"
+                                 " thiếu id cũ")
 
 
 def load_shift(path: Path = CONFIG_FILE) -> dict:
@@ -877,7 +918,18 @@ _TABLES = {
                   " = t.id and " + _h("k.acked_by") + ")"),
         "nosample": "cảnh báo sinh từ tin thật đã thu",
         "filters": {"source_agent": "t.source_agent = %s",
-                    "rules_any": "t.detail->'rules' ?| %s::text[]"}},
+                    # Đợt hoàn thiện 22/10: 1 cảnh báo khớp nhiều luật
+                    # (intel_alert ghi `rules` theo thứ tự luật) chỉ thuộc
+                    # MỤC của luật ĐẦU — trước đây `?|` (bất kỳ) đếm 1 cảnh
+                    # báo vào ≥2 mục (intel-02 ↔ legal_hr-07, nay intel-02.x).
+                    "rules_any": "t.detail->'rules'->>0 = any(%s::text[])"}},
+    # Đợt hoàn thiện 22/10 (marketing-05.1 "Phân loại bình luận"): 1 bình
+    # luận/tin kênh sở hữu đã gắn nhãn luật = 1 đầu ra (không đọc msg_hash/
+    # excerpt — khóa theo id dòng).
+    "social_mentions": {
+        "ts": "i.imported_at", "key": "'sm:' || t.id",
+        "join": "join intel_imports i on i.id = t.import_id",
+        "nosample": "file comment/inbox kênh sở hữu do người xuất tay"},
     "sim_runs": {
         "ts": "t.created_at", "key": "'sr:' || t.run_id",
         "sample": "t.dry_run"},
@@ -1463,6 +1515,14 @@ def seed(conn, feats: list[dict], by: str, now=None, shift=None) -> dict:
                 ev = {"nhom_goc": f["nhom_goc"],
                       "stage_nhom_goc": g[0] if g else None}
                 if g and g[0] == "tat":     # nhóm đã tắt → không tự bật lại
+                    stage = "tat"
+            if f.get("thay_the"):           # id cũ bị thay: chỉ kế thừa TẮT
+                old = dict(conn.execute(
+                    "select feature_id, stage from feature_rollout where"
+                    " feature_id = any(%s)", (f["thay_the"],)).fetchall())
+                ev = {**(ev or {}), "thay_the": {
+                    o: old.get(o) for o in f["thay_the"]}}
+                if "tat" in old.values():
                     stage = "tat"
             row = conn.execute(
                 "insert into feature_rollout (feature_id, stage, stage_since,"

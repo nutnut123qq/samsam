@@ -152,6 +152,7 @@ def check_publish_llm(text, *, channel, content_type="post", sku=None,
     ]
     try:
         resp = llm_gateway.chat(AGENT_ID, messages, model=model,
+                                feature="legal_hr-01",
                                 temperature=0, max_tokens=300,
                                 timeout=_timeout())
         content = resp.choices[0].message.content

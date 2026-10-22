@@ -1,4 +1,4 @@
-"""v14.5 ceo-04.1 — Kiểm soát nội bộ: so KM/voucher ĐANG CHẠY với bản đã duyệt.
+"""v14.5 ceo-04.1 → đợt hoàn thiện 22/10: ceo-04.5 — Kiểm soát nội bộ: so KM/voucher ĐANG CHẠY với bản đã duyệt.
 
 PL01 mục 2 (Ban TGĐ/HĐTV/BKS — Kiểm soát nội bộ): "mỗi ngày so bài đăng,
 giá, voucher đang chạy với bản đã duyệt". Bài đăng/listing = `agents.
@@ -53,7 +53,7 @@ for _s in (sys.stdout, sys.stderr):
     if hasattr(_s, "reconfigure"):
         _s.reconfigure(encoding="utf-8", errors="replace")
 
-FEATURE_PROMO = "ceo-04.1"
+FEATURE_PROMO = "ceo-04.5"
 OT_PROMO = "promo_deviation"
 PROMO_AGENT = "agent:ceo_audit"
 KM_NGOAI, KM_LOAI = "km_ngoai_ke_hoach", "km_khac_loai"
@@ -211,7 +211,7 @@ def promo_item(f: dict, lists: dict, alcohol: set, plan_sha: str | None
             "object_id": f"km:{base}:{f['evidence']}",
             "title": f"Kiểm soát KM — {PROMO_LABELS[f['code']]} — {where}"[:300],
             "payload": (
-                f"Kiểm soát nội bộ ceo-04.1 (NHÁP): {where} — mã {f['code']}"
+                f"Kiểm soát nội bộ ceo-04.5 (NHÁP): {where} — mã {f['code']}"
                 f" ({PROMO_LABELS[f['code']]}). Đang chạy ({f['src']}"
                 f" {f['ref']}): {_desc(f['run'], lst)}. Bản duyệt hiệu lực:"
                 f" {allowed}. Giá list golden: {_vnd(lst)}.{plan} Việc cần"
@@ -345,7 +345,7 @@ def _day(s: str):
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         prog="python -m agents.ceo_promo",
-        description="ceo-04.1: so KM/voucher đang chạy với bản đã duyệt →"
+        description="ceo-04.5: so KM/voucher đang chạy với bản đã duyệt →"
                     " mục ceo/promo_deviation (agent KHÔNG đổi KM/giá)")
     ap.add_argument("--plan", type=Path, help="kế hoạch KM ĐÃ duyệt (CSV"
                     " định dạng kd_price --plan)")

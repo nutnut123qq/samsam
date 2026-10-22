@@ -380,7 +380,8 @@ def write_script(sku, channel, brief, *, fmt="9:16", readiness=None) -> dict:
     for calls in (1, 2):   # bản nháp + 1 lượt sửa có feedback
         meta["prompt_sha256"] = _msgs_sha(messages)
         try:
-            resp = chat(AGENT, messages, temperature=0.3, max_tokens=700)
+            resp = chat(AGENT, messages, temperature=0.3, max_tokens=700,
+                        feature="marketing-02.2")
             text = resp.choices[0].message.content
         except Exception as e:  # noqa: BLE001 — gateway fail-closed
             return {**out, **meta, "llm_calls": calls,

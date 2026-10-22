@@ -164,8 +164,9 @@ def classify(text: str | None, stars: int | None, rules: dict,
         return "claim_suc_khoe"
     # docx P2 (PL01 Marketing "phân loại bình luận (hỏi giá, khiếu nại, nghi
     # hàng giả…)"): khách nghi hàng giả/nhái → lớp riêng, trước khiếu nại.
-    if t and any(_has(x, _norm(t)) or _has(x, _norm(_strip_accents(t)))
-                 for x in rules.get("counterfeit_terms", ())):
+    if "nghi_hang_gia" in labs or (t and any(
+            _has(x, _norm(t)) or _has(x, _norm(_strip_accents(t)))
+            for x in rules.get("counterfeit_terms", ()))):
         return "nghi_hang_gia"
     if "khieu_nai" in labs:
         return "khieu_nai"

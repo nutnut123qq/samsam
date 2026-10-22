@@ -97,6 +97,7 @@ _PRICE_SQL = (
     " order by valid_from desc, id desc limit 1")
 NOCMP = "khong_so_duoc"
 CHECK_CODES = (KHOP, LECH, NOCMP, THIEU)
+PRICE_PREFIX = "ceo-gia-"
 
 
 def _body(text: str) -> str:
@@ -288,7 +289,8 @@ def _id_ref(i: dict) -> str:
 
 def render_section(data: dict, limit: int | None = SHOW,
                    report_name: str = "ceo-audit-<ngày>.md",
-                   full_ref: bool = False) -> list[str]:
+                   full_ref: bool = False,
+                   price_report: str | None = None) -> list[str]:
     """→ dòng markdown "## Audit outside-in (P1)". CHỈ số + kênh/mã/id —
     không text bài, không tiêu đề listing. `full_ref` (CHỈ file
     ceo-audit-<ngày>.md, không qua finalize) → URL/item_id đã che PII;
@@ -319,7 +321,9 @@ def render_section(data: dict, limit: int | None = SHOW,
           for f in shown] or ["- (không có phát hiện)"]
     if len(fs) > len(shown):
         L.append(f"- …và {len(fs) - len(shown)} (xem {report_name})")
-    if "checks" in data:                   # `collect` luôn đặt (C06)
+    if price_report:                       # CLI: giá ở báo cáo riêng
+        L += ["", f"Giá & mô tả listing so bản đã duyệt: xem {price_report}"]
+    elif "checks" in data:                 # `collect` luôn đặt (C06)
         L += check_lines(data["checks"], limit)
     L += ["", ("*Tính lại tại lúc audit từ bài đang đăng (file xuất tay) + "
                "listing sàn (file Seller Center) so với bản duyệt (sha256 "
@@ -382,10 +386,11 @@ def main(argv=None) -> int:
             conn.close()
     vn = now.astimezone(VN_TZ)
     name = f"ceo-audit-{vn:%Y-%m-%d}.md"
+    pname = f"{PRICE_PREFIX}{vn:%Y-%m-%d}.md"
     text = "\n".join([
         f"# Audit outside-in P1 — {vn:%d/%m/%Y %H:%M} (giờ VN)", "",
         *render_section(data, limit=None, report_name=name,
-                        full_ref=True), "",
+                        full_ref=True, price_report=pname), "",
         "## File listing đã đối chiếu", ""]
         + [f"- {ch}: {safe(_mask_pii(f))}" for ch, f in sorted(data["snapshots"].items())]
         + (["- (chưa có file listing sàn)"] if not data["snapshots"] else [])
@@ -393,9 +398,20 @@ def main(argv=None) -> int:
     # P8.4: listing sàn + bài đã đăng (file xuất tay) + nháp đã duyệt — các
     # bảng nguồn không có đường ghi mẫu.
     path = write_report(text, a.out_dir, name, sample=False)
+    # Đợt hoàn thiện 22/10 (ceo-04.4, PL01 "so ... giá ... đang chạy với bản
+    # đã duyệt"): kiểm giá (C06) là ĐẦU RA RIÊNG — người duyệt xem riêng với
+    # bài đăng → báo cáo `ceo-gia-<ngày>.md`, cùng nguồn đọc, cùng lần chạy.
+    ptext = "\n".join([
+        (f"# Giá & mô tả listing đang chạy so bản đã duyệt — "
+         f"{vn:%d/%m/%Y %H:%M} (giờ VN)"), *check_lines(data["checks"], None),
+        "", ("*Giá so giá list ĐÃ DUYỆT còn hiệu lực ngày chụp file listing;"
+             " giá chưa duyệt/hết hiệu lực hoặc thiếu cột mô tả → không so "
+             "được. Agent chỉ báo — không đổi giá/listing.*"), "", "---",
+        "*BẢN NHÁP — agent chỉ đọc, không tự gửi.*", ""])
+    ppath = write_report(ptext, a.out_dir, pname, sample=False)
     fs = findings(data["items"])
     print(f"[done] {path} — {len(data['items'])} mục trong mẫu số,"
-          f" {len(fs)} phát hiện")
+          f" {len(fs)} phát hiện · giá: {ppath}")
     return 0
 
 

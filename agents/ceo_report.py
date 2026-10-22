@@ -408,7 +408,8 @@ def llm_commentary(rep) -> tuple[str | None, str | None]:
     from pipelines import llm_gateway  # lười: --llm tắt → không chạm gateway
 
     try:
-        resp = llm_gateway.chat(LLM_AGENT, llm_prompt(rep), temperature=0)
+        resp = llm_gateway.chat(LLM_AGENT, llm_prompt(rep), temperature=0,
+                                feature="ceo-01")
         content = resp.choices[0].message.content
     except llm_gateway.GatewayError as e:
         return None, f"gateway lỗi ({type(e).__name__})"

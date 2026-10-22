@@ -47,9 +47,9 @@ def fake(monkeypatch):
     monkeypatch.setenv("GUARDRAIL_LLM_MODEL", MODEL)
     real_gate = llm_gateway._gate
 
-    def spy_gate(agent_id):
+    def spy_gate(agent_id, feature=None):   # + feature (đợt hoàn thiện)
         agents.append(agent_id)
-        return real_gate(agent_id)
+        return real_gate(agent_id, feature)
     monkeypatch.setattr(llm_gateway, "_gate", spy_gate)
 
     def set_reply(reply):

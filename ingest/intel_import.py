@@ -107,7 +107,11 @@ S_OPTIONAL = ("loai", "ma_tin", "id_nguoi_dung")
 S_IDENTITY_DROP = ("ten_nguoi_dung", "sdt", "email", "link_profile", "avatar")
 S_CHANNELS = ("fanpage", "zalo_oa", "tiktok")
 S_KINDS = ("comment", "inbox", "review")
-S_RULE_LABELS = ("khen", "che", "hoi_gia", "khieu_nai")
+# Đợt hoàn thiện 22/10 (marketing-05.1, PL01 "Phân loại bình luận (hỏi
+# giá, khiếu nại, nghi hàng giả…)"): thêm nhãn nghi_hang_gia (từ khóa ĐỀ
+# XUẤT trong data/social_rules.json — Quản lý MXH chốt). Nhãn vắng trong
+# config = không gắn (như các nhãn khác).
+S_RULE_LABELS = ("khen", "che", "hoi_gia", "khieu_nai", "nghi_hang_gia")
 
 TREND_GROUPS = ("qua_tang", "sam", "gioi_tre")
 
@@ -853,6 +857,17 @@ def main(argv: list[str] | None = None) -> int:
         elif kind == "trend_related":
             iid = load_trend_related(conn, rows, _kw(args.seed), fname, sha)
         else:
+            # Đợt hoàn thiện 22/10: nhãn phân loại = đầu ra marketing-05.1 —
+            # tính năng TẮT (HĐ 6.7) → không sinh (không ghi gì).
+            from pipelines import rollout  # lười: rollout → director → ...
+            try:
+                rollout.check_generate(
+                    conn, rollout.feature_for(table="social_mentions"),
+                    "phân loại bình luận kênh sở hữu")
+            except rollout.RolloutBlocked as e:
+                conn.rollback()
+                print(f"[blocked] {e}", flush=True)
+                return 2
             iid, new, dup = load_social(conn, rows, args.channel, salt, fname,
                                         sha)
             extra = f" new={new} dup={dup}"

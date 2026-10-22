@@ -237,6 +237,7 @@ def run_generate(cases: list[dict], n: int, model: str,
                 f"Câu mẫu: {seed['text']}"}]
         try:
             resp = llm_gateway.chat(AGENT_ID, messages, model=model,
+                                    feature="data_platform-07.3",
                                     temperature=0.9, max_tokens=800)
             variants = parse_variants(resp.choices[0].message.content)
         except llm_gateway.GatewayBlocked as e:

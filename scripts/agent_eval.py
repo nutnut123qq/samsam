@@ -964,6 +964,7 @@ def judge_case(case: dict, output: str, judge_model: str) -> tuple[bool, str]:
                         f"<output>\n{output}\n</output>"}]
     try:
         resp = llm_gateway.chat(JUDGE_AGENT_ID, msgs, model=judge_model,
+                                feature="data_platform-07.3",
                                 temperature=0,
                                 response_format={"type": "json_object"})
     except llm_gateway.GatewayError as e:

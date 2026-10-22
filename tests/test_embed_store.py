@@ -78,7 +78,7 @@ class _Embed:
     def __init__(self, fail_at=None):
         self.calls, self.texts, self.fail_at = 0, 0, fail_at
 
-    def __call__(self, agent_id, batch, model=None):
+    def __call__(self, agent_id, batch, model=None, feature=None):
         assert agent_id == "ingest"
         self.calls += 1
         if self.fail_at == self.calls:

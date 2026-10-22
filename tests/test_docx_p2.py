@@ -64,7 +64,9 @@ def trial(monkeypatch):
 
 def test_p2_report_prefixes_registered():
     want = {"intel-doithu-": "intel-03", "intel-trend-": "intel-04.1",
-            "sx-bantin-": "production-01", "sx-canhan-": "production-04.2",
+            "sx-bantin-": "production-01",
+            # đợt hoàn thiện 22/10: hồ sơ lô + cận hạn gộp (PL01 1 dòng)
+            "sx-canhan-": "production-04.3",
             "kich-ban-": "intel-06", "dong-tien-": "finance-05.2",
             "hd-mau-": "legal_hr-05.1"}
     for pre, fid in want.items():

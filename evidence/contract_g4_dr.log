@@ -1,0 +1,27 @@
+# B. DR bằng Docker THẬT (máy dev) — 22/10/2026
+# nhánh codex/contract-finalization · HEAD 939aac9 + working tree · fingerprint (3 file mới, trừ DONE+board, so 939aac9) = 4ee80f6fcdbbf4e0d7d483592dcce530101d5e20c30814284033cacecf0b9704
+# Docker server 28.4.0 linux · image postgres:17-alpine (server nguồn 17.6) · pg_dump C:/Program Files/PostgreSQL/17/bin · DB nguồn samsam_contract_r4dr (KHÔNG samsam)
+## 1) python -m pytest -rA tests/test_dr_drill.py tests/test_db_backup.py — exit 0
+PASSED tests/test_dr_drill.py::test_cleanup_failed_alert
+PASSED tests/test_dr_drill.py::test_dr_drill_real_ok
+PASSED tests/test_dr_drill.py::test_dr_drill_real_mismatch_still_cleans
+PASSED tests/test_dr_drill.py::test_zz_no_dr_container_left
+============================= 77 passed in 52.63s =============================
+## 2) 3 ca thật chạy lại + đếm từng bảng DB nguồn trước/sau — exit 0
+============================= 3 passed in 24.13s ==============================
+diff số dòng DB nguồn (trước → sau):
+41c41
+< file_output_evidence 23
+---
+> file_output_evidence 25
+(chỉ file_output_evidence +2 = sổ bằng chứng backup của 2 ca có bước db_backup — thiết kế; restore không ghi DB nguồn)
+## 3) CLI thật: scripts/db_backup.py rồi scripts/dr_drill.py (BACKUP_DIR trong scratchpad, ngoài repo) — backup exit 0, dr exit 0
+[warn] backup CHƯA mã hóa (external-dep: khóa công ty)
+[warn] chưa cấu hình offsite (BACKUP_OFFSITE)
+[evidence] đã ghi bằng chứng đầu ra vào DB (file_output_evidence)
+[dr] server mới postgres:17-alpine sẵn sàng sau 2.9s — khôi phục samsam_contract_r4dr_20261022_085526_vn.dump
+[drill] samsam_contract_r4dr_20261022_085526_vn.dump → samsam_drill_20261022_085531_a788: 99/99 bảng khớp, RTO 2.28s
+[dr] RTO 5.23s (gồm dựng server; restore 2.28s) — mục tiêu ≤ 4h: đạt
+[dr] RPO 0.00h (tuổi bản backup) — mục tiêu ≤ 24h: đạt
+## 4) container/volume: so danh sách trước lượt (7 container, 169 volume không phải lượt này) — không đổi
+# GIỚI HẠN: DB test ~620 KB, backup CHƯA mã hóa + chưa offsite; số RTO/RPO chỉ chứng minh cơ chế máy dev — không phải diễn tập Mốc C/D trên server Bên B.

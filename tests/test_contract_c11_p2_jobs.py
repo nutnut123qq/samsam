@@ -62,7 +62,10 @@ def test_weather_job_blocked_without_source(monkeypatch, capsys):
     ("allocation_proposals", None), ("bom_combos", None),        # bản tin SX
     ("bom_items", None), ("inventory_snapshots", None),
     ("v_promotable", None), ("cogs_versions", None),             # price_watch
-    ("competitor_observations", None)])
+    ("competitor_observations", None),
+    # đợt hoàn thiện 22/10: job intel_weekly (chỉ cột báo cáo đếm)
+    ("trends_weekly", "import_id, query_id, keyword, geo, week, value"),
+    ("social_mentions", "channel, labels, sensitive, posted_at")])
 def test_svc_job_can_read_job_sources(db, table, cols):
     if cols:
         for c in cols.split(", "):
@@ -74,3 +77,15 @@ def test_svc_job_can_read_job_sources(db, table, cols):
     else:
         assert db.execute("select has_table_privilege('svc_job', %s,"
                           " 'select')", (table,)).fetchone()[0]
+
+
+@pytest.mark.parametrize("table,col", [
+    ("social_mentions", "msg_hash"), ("social_mentions", "excerpt"),
+    ("trends_weekly", "anchor")])
+def test_svc_job_no_private_intel_columns(db, table, col):
+    # băm có muối / trích nội dung (cổng DPIA) không thuộc báo cáo đếm
+    assert not db.execute("select has_column_privilege('svc_job', %s, %s,"
+                          " 'select')", (table, col)).fetchone()[0]
+    for priv in ("insert", "update", "delete"):
+        assert not db.execute("select has_table_privilege('svc_job', %s, %s)",
+                              (table, priv)).fetchone()[0]

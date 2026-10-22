@@ -64,6 +64,10 @@ ROOT = Path(__file__).resolve().parent.parent
 CONFIG_FILE = ROOT / "data" / "weather_config.json"
 BLOCK = "farming"
 OBJECT_TYPE = "weather_digest"
+# Đợt hoàn thiện 22/10 (farming-05.4, PL01 "Cảnh báo thời tiết, sâu bệnh"):
+# cảnh báo SÂU BỆNH là đầu ra riêng, chỉ từ nhật ký vườn nội bộ — không chờ
+# quyết định nguồn dự báo thời tiết (farming-05.3).
+PEST_OBJECT_TYPE = "pest_alert"
 CREATED_BY = "agent:VT"
 FETCH_SOURCE = "vt_thoitiet"
 CSV_HEADER = ["area_code", "day", "rain_mm", "tmin_c", "tmax_c"]
@@ -383,6 +387,66 @@ def build_digest(alerts, flags, plots_by_area, now: datetime, *,
     return "\n".join(L)
 
 
+def build_pest_digest(flags, now: datetime) -> str:
+    """THUẦN — cảnh báo sâu bệnh từ cờ nhật ký (không tọa độ/người ghi)."""
+    day = now.astimezone(VN_TZ).date().isoformat()
+    L = [f"# Cảnh báo sâu bệnh — {day}", "",
+         ("NỘI BỘ khối Vùng trồng — từ nhật ký vườn đã ghi; chỉ gợi ý \"cần "
+          "đi kiểm tra\", không chẩn đoán, không khuyến nghị xử lý. GĐ vùng "
+          "trồng duyệt mục này = đã xem."), ""]
+    L += [f"- khoảnh {_md(f['plot'])}: ghi nhận '{f['flag']}' ngày "
+          f"{f['day'].isoformat()} — cần đi kiểm tra" for f in flags]
+    L += ["", ("*Agent không gửi/đăng gì; GĐ vùng trồng quyết định việc "
+               "đi kiểm tra.*"), ""]
+    return "\n".join(L)
+
+
+def run_pests(now: datetime, submit: bool, days: int) -> int:
+    """→ exit: 0 xong/không có cờ · 1 lỗi ghi/guardrail · 2 không đọc được
+    nhật ký (DB) — không coi là 'không có cờ'."""
+    conn = connect()
+    if conn is None:
+        print("[err] không kết nối được Postgres — không đọc được nhật ký",
+              flush=True)
+        return 2
+    try:
+        try:
+            flags = pest_flags(conn, now, days)
+            conn.commit()
+        except psycopg.Error as e:
+            print(f"[err] lỗi DB khi đọc nhật ký ({type(e).__name__})",
+                  flush=True)
+            return 2
+        vn_day = now.astimezone(VN_TZ).date().isoformat()
+        print(f"[pests] {vn_day}: {len(flags)} ghi nhận cần chú ý", flush=True)
+        if not flags or not submit:
+            return 0
+        text = build_pest_digest(flags, now)
+        if guardrail.check(text).get("ok") is not True:
+            print("[err] cảnh báo sâu bệnh vi phạm guardrail — không ghi",
+                  flush=True)
+            return 1
+        try:
+            qid = director.submit(
+                conn, BLOCK, PEST_OBJECT_TYPE, object_id=f"vt-pest:{vn_day}",
+                title=f"Cảnh báo sâu bệnh {vn_day}", payload=text,
+                created_by=CREATED_BY)
+        except psycopg.errors.UniqueViolation:
+            print(f"[skipped] cảnh báo sâu bệnh {vn_day} đã có mục",
+                  flush=True)
+            return 0
+        except (psycopg.Error, director.DirectorConfigError, ValueError) as e:
+            print(f"[err] không đẩy được hàng duyệt ({type(e).__name__})",
+                  flush=True)
+            return 1
+        print(f"[done] mục #{qid} PENDING khối farming ({PEST_OBJECT_TYPE})",
+              flush=True)
+        return 0
+    finally:
+        with suppress(Exception):
+            conn.close()
+
+
 def _day_end(d: date) -> datetime:
     return datetime.combine(d + timedelta(days=1), dtime(0, 0), VN_TZ) \
         - timedelta(microseconds=1)
@@ -394,8 +458,11 @@ def main(argv=None, now: datetime | None = None, *, transport=None,
         prog="python -m agents.vt_thoitiet",
         description="VT cảnh báo thời tiết & sâu bệnh — digest nội bộ, "
                     "không gửi/đăng gì")
-    ap.add_argument("--digest", action="store_true", required=True)
+    ap.add_argument("--digest", action="store_true")
     src = ap.add_mutually_exclusive_group(required=True)
+    src.add_argument("--pests", action="store_true",
+                     help="CHỈ cảnh báo sâu bệnh từ nhật ký nội bộ "
+                          "(farming-05.4) — không cần nguồn dự báo")
     src.add_argument("--from-csv", type=Path, metavar="FILE")
     src.add_argument("--fetch", action="store_true",
                      help="dự báo qua collector (chỉ khi fetch.enabled)")
@@ -404,6 +471,8 @@ def main(argv=None, now: datetime | None = None, *, transport=None,
                     help="đẩy digest vào hàng duyệt khối farming")
     ap.add_argument("--date", default=None, help="YYYY-MM-DD (ngày VN)")
     a = ap.parse_args(argv)
+    if not a.pests and not a.digest:
+        ap.error("cần --digest (thời tiết) hoặc --pests (sâu bệnh)")
     if not 1 <= a.max_requests <= 60:
         ap.error("--max-requests phải trong 1..60")
     try:
@@ -418,6 +487,8 @@ def main(argv=None, now: datetime | None = None, *, transport=None,
     except ConfigError as e:
         print(f"[err] weather_config.json: {e}", flush=True)
         return 1
+    if a.pests:
+        return run_pests(now, a.submit, cfg["flag_days"])
     codes = {x["code"] for x in cfg["areas"]}
     missing: list[str] = []
     if a.from_csv is not None:

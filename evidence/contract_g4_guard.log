@@ -1,0 +1,6 @@
+# A. Cổng DB test trước mọi kiểm DB (22/10/2026)
+# nhánh codex/contract-finalization · HEAD 939aac9 + working tree · fingerprint (3 file mới, trừ DONE+board, so 939aac9) = 4ee80f6fcdbbf4e0d7d483592dcce530101d5e20c30814284033cacecf0b9704
+## probe G1–G3 (driver giả/spawn spy): env -u DATABASE_URL python -I scratchpad/tools/g3_probe.py tests/_db_guard.py — exit 0
+SUMMARY pass=25 fail=0 guard=samsam
+## python -m pytest tests/test_db_guard.py (unit, không DSN) — exit 0
+41 passed in 1.34s

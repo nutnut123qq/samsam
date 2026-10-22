@@ -118,7 +118,8 @@ def embed_all(client, model: str, texts: list[str]) -> list[list[float]]:
     out = []
     for i in range(0, len(texts), EMBED_BATCH):
         batch = texts[i:i + EMBED_BATCH]
-        resp = embed("ingest", batch, model=model)
+        resp = embed("ingest", batch, model=model,
+                     feature="data_platform-03")
         out.extend(d.embedding for d in resp.data)
         print(f"[embed] batch {i // EMBED_BATCH + 1}: {len(batch)} texts", flush=True)
     if len(out) != len(texts):

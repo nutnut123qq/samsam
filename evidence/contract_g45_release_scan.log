@@ -1,0 +1,29 @@
+# Contract finalization + F1/F2 release secret scan — 2026-10-22
+Baseline: 939aac992cf972198f231c11890ddfeb7d5bbca3
+Verified fingerprint (code/tests/docs except DONE.md and board; 4 new files):
+9b2498af27a7006a13abdd9217c6048f8eeddefa4bcd925cc3abfd2dda16b9bd
+
+Scope before this record: 64 tracked changes, 4 new project files,
+17 new contract_g4/contract_g5 evidence logs. Also scanned all 554 existing
+evidence files for known credential bytes and token/private-key/URI patterns.
+Compared credential candidates against HEAD and reviewed masked contexts.
+Result: no real API token/private key/live credential-bearing DSN found
+in release changes. No known local DB-password occurrence in added tracked
+lines. New evidence matches the short DB-password substring only inside
+synthetic test phone/order numbers (16 matches in discovery failure log).
+Other matches are unchanged synthetic fixtures, code identifiers, generated
+password variables or redacted placeholders. No private .env, user/staff
+registry, conversation log, private key or DOCX included.
+Historical credential exposure is not cleared or repaired by this scan.
+
+Validation already reviewed on this fingerprint:
+Full pytest: 6582 passed, 0 failed, 0 skipped, EXIT 0 (includes Docker DR).
+Controller rerun: 206 related tests and 9 independent probes passed.
+Release lint rerun: ruff check . --exclude .agents --exclude founder — PASS.
+Only current release labels in DONE.md and board changed after review;
+no runtime/schema/roles/test changes; no full pytest rerun for these labels.
+Evidence distinguishes failed discovery runs from the final full gate.
+Known issue outside this release fix: marketplace listing export still uses
+JSON prices; website feed now uses approved effective database prices.
+No deployment, real service activation or credential rotation performed.
+Operational acceptance and external blockers remain unchanged.

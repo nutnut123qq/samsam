@@ -1,0 +1,58 @@
+# Nâng cấp từ baseline 939aac9 (DB CÓ LỊCH SỬ) → revision hiện tại ×2 — DB samsam_contract_r4up (KHÔNG samsam)
+# nhánh codex/contract-finalization · HEAD 939aac9 + working tree · fingerprint (3 file mới, trừ DONE+board, so 939aac9) = 4ee80f6fcdbbf4e0d7d483592dcce530101d5e20c30814284033cacecf0b9704
+# lệnh: python -I scratchpad/r4/upgrade_r4.py <worktree 939aac9> <repo> — exit 0
+DB samsam_contract_r4up tạo mới (KHÔNG samsam) · nền base939
+[run:base939] -m ingest.core_store -> exit 0
+    [load] assets: 219 rows
+    [done] totals: products=27, claims_approved=22, plots=3, plot_logs=6, orders=5, assets=219
+[run:base939] -m ingest.golden_store -> exit 0
+    [disc] alcohol_online_listing=2, missing_price=2, price_mismatch=15, product_unmapped=12, sku_no_product=8
+    [done] totals: sku_master=13, sku_map=15, price_list=34, golden_discrepancies=39
+[run:base939] -m pipelines.rollout --seed --by Owner Nền -> exit 0
+    [OK] vào sổ 74 · có sẵn 0 · bỏ qua (chưa co_code) 12
+trước: 99 bảng, 537 dòng, 74 mục rollout, đuôi log [(2, '83f697ce9723')]
+[run:samsam] scripts/apply_schema.py --roles -> exit 0
+    [done] schema applied — 99 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, asse
+    [done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+[run:samsam] scripts/apply_schema.py --roles -> exit 0
+    [done] schema applied — 99 bảng public: ad_test_plans, affiliate_attributions, affiliate_codes, agent_action_log, allocation_proposals, anchor_batches, anchor_receipts, approval_queue, approvals, asse
+    [done] roles applied — 2 role: agent_writer (login=False), app_human (login=False)
+sau ×2: 99 bảng, dòng đổi: không, đuôi log [(2, '83f697ce9723')]
+rollout (id cũ) / sự kiện / output_reviews / approvals / llm_usage giữ nguyên
+quyền THÊM (17):
+    ('agent_writer', 'llm_usage(feature_id)', 'INSERT')
+    ('agent_writer', 'llm_usage(feature_id)', 'SELECT')
+    ('bks_reader', 'llm_usage(feature_id)', 'SELECT')
+    ('svc_backup', 'llm_usage(feature_id)', 'SELECT')
+    ('svc_job', 'llm_usage(feature_id)', 'SELECT')
+    ('svc_job', 'social_mentions(channel)', 'SELECT')
+    ('svc_job', 'social_mentions(labels)', 'SELECT')
+    ('svc_job', 'social_mentions(posted_at)', 'SELECT')
+    ('svc_job', 'social_mentions(sensitive)', 'SELECT')
+    ('svc_job', 'trends_weekly(geo)', 'SELECT')
+    ('svc_job', 'trends_weekly(import_id)', 'SELECT')
+    ('svc_job', 'trends_weekly(keyword)', 'SELECT')
+    ('svc_job', 'trends_weekly(query_id)', 'SELECT')
+    ('svc_job', 'trends_weekly(value)', 'SELECT')
+    ('svc_job', 'trends_weekly(week)', 'SELECT')
+    ('svc_loader', 'llm_usage(feature_id)', 'INSERT')
+    ('svc_loader', 'llm_usage(feature_id)', 'SELECT')
+quyền BỚT: []
+[run:samsam] -m pipelines.store --verify-log -> exit 0
+    [ok] chuỗi nguyên vẹn (1 dòng)
+[run:samsam] -m pipelines.rollout --seed --by Owner Nâng Cấp -> exit 0
+    [OK] vào sổ 23 · có sẵn 61 · bỏ qua (chưa co_code) 12
+  marketing-03.1: chay_thu (mốc mới=True)
+  marketing-03.2: chay_thu (mốc mới=True)
+  intel-02.1: chay_thu (mốc mới=True)
+  data_platform-02.2: tat (mốc mới=True)
+  farming-02.1: chay_thu (mốc mới=True)
+  ceo-04.3: tat (mốc mới=True)
+  ceo-04.5: tat (mốc mới=True)
+  ceo-04.6: tat (mốc mới=True)
+  sự kiện seed data_platform-02.2: {"nhom_goc": "data_platform-02", "thay_the": {"legal_hr-03.1": "tat", "data_platform-02": null}, "stage_nhom_goc": null}
+  count_spec intel-02.1 đếm theo luật đầu: có
+[run:samsam] -m pipelines.job_runs --run intel_weekly -> exit 0
+    [done] data\reports\intel-doithu-2026-10-12.md
+    [done] data\reports\intel-trend-2026-10-12.md
+UPGRADE OK

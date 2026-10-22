@@ -100,6 +100,19 @@ def _timed(fn, stage: str, deadline: float | None, *a, **kw):
             raise DeadlineExceeded(stage) from e
         raise
 _INTERNAL_RE = re.compile(r"internal:[a-z0-9_]{1,32}")
+FEATURE = "sales-01"      # chatbot CSKH — trần/nút tắt theo tính năng (PL01)
+# Vá controller 22/10 (F1): gợi ý chat sàn (sales-02) dùng chung RAG nhưng
+# phải chịu trần/nút tắt/ghi chi phí của CHÍNH nó. Caller chọn mã theo KÊNH
+# (hằng nội bộ, `connectors.channels`), không bao giờ từ text khách — chỉ
+# nhận mã trong danh sách này, mã khác -> ValueError trước mọi lời gọi.
+FEATURES = frozenset({FEATURE, "sales-02"})
+
+
+def _feature(feature) -> str:
+    if not isinstance(feature, str) or feature not in FEATURES:
+        raise ValueError("feature RAG không thuộc danh sách nội bộ "
+                         f"{sorted(FEATURES)}")
+    return feature
 _COLS = "title, source_url, lang, content, embedding, doc_id"
 _COLS_INTERNAL = "title, source_ref, null, content, embedding, doc_id"
 # v10.3 (WP16): backend vector chọn qua env RAG_VECTOR_BACKEND.
@@ -306,20 +319,23 @@ def retrieve_by_vector(qv, k: int = TOP_K, *, collection: str = "public",
 
 def retrieve(question: str, k: int = TOP_K, *,
              collection: str = "public",
-             deadline: float | None = None) -> list[dict]:
+             deadline: float | None = None,
+             feature: str = FEATURE) -> list[dict]:
     """Top-k chunk theo cosine similarity, kèm score/url/title/content.
     `collection` + backend validate TRƯỚC khi gọi embed; public bỏ row nhắc
     rượu (lớp phòng thủ cho row nạp ngoài embed_store/legacy)."""
     _query(collection)
+    feature = _feature(feature)
     backend = vector_backend()
-    qv = np.array(_timed(embed, "embed", deadline, AGENT, question)
-                  .data[0].embedding)
+    qv = np.array(_timed(embed, "embed", deadline, AGENT, question,
+                         feature=feature).data[0].embedding)
     return retrieve_by_vector(qv, k, collection=collection, backend=backend,
                               deadline=deadline)
 
 
 def _standalone(question: str, history: list[dict],
-                deadline: float | None = None) -> str:
+                deadline: float | None = None, *,
+                feature: str = FEATURE) -> str:
     """Rewrite câu follow-up thành câu độc lập đủ ngữ cảnh để retrieve —
     vd "còn loại rẻ hơn?" sau lượt hỏi Saphraton -> "sản phẩm nào rẻ
     hơn Saphraton?". Chỉ phục vụ retrieval; câu trả lời cuối vẫn do LLM
@@ -340,6 +356,7 @@ def _standalone(question: str, history: list[dict],
         ],
         temperature=0.0,
         max_tokens=100,
+        feature=_feature(feature),
     )
     return (resp.choices[0].message.content or "").strip()
 
@@ -369,7 +386,7 @@ def _scrub_history(history: list[dict] | None) -> list[dict]:
 
 
 def answer(question: str, history: list[dict] | None = None, *,
-           deadline: float | None = None) -> dict:
+           deadline: float | None = None, feature: str = FEATURE) -> dict:
     """Trả lời câu hỏi kèm nguồn. Thiếu context/score thấp -> NO_DATA.
 
     `history` = các lượt Q&A trước (OpenAI-style, caller giới hạn 4 lượt
@@ -388,7 +405,11 @@ def answer(question: str, history: list[dict] | None = None, *,
     MỌI lời gọi AI; còn dấu hiệu PII -> NO_DATA + handoff="pii" (0 lời gọi);
     câu rewrite cũng qua lọc sức khỏe. Gateway chặn (trần/kill/không đọc
     được chi tiêu) -> GatewayBlocked lan ra caller (zalo/messenger/channels
-    chuyển người)."""
+    chuyển người).
+    Vá controller 22/10 (F1): `feature` = mã tính năng nội bộ cho MỌI lời
+    gọi rewrite/embed/chat của lượt (mặc định sales-01 chatbot; gợi ý chat
+    sàn truyền sales-02) — ngoài `FEATURES` -> ValueError, 0 lời gọi."""
+    feature = _feature(feature)
     if deadline is None:
         deadline = DEADLINE.get()
     if is_health_question(question):
@@ -411,14 +432,15 @@ def answer(question: str, history: list[dict] | None = None, *,
     search_q = question
     if history:
         dl = {} if deadline is None else {"deadline": deadline}
-        search_q = scrub_user(_standalone(question, history, **dl)
+        search_q = scrub_user(_standalone(question, history, **dl,
+                                          feature=feature)
                               or question)[0]
         if is_alcohol(search_q):
             return {"answer": NO_DATA, "sources": [], "handoff": "alcohol"}
         if is_health_question(search_q):
             return {"answer": NO_DATA, "sources": [], "handoff": "health"}
-    hits = (retrieve(search_q) if deadline is None
-            else retrieve(search_q, deadline=deadline))
+    hits = (retrieve(search_q, feature=feature) if deadline is None
+            else retrieve(search_q, deadline=deadline, feature=feature))
     if not hits or hits[0]["score"] < MIN_SCORE:
         return {"answer": NO_DATA, "sources": []}
 
@@ -437,6 +459,7 @@ def answer(question: str, history: list[dict] | None = None, *,
         ],
         temperature=0.0,
         max_tokens=500,
+        feature=feature,
     )
     # content=None (refusal) -> NO_DATA, không bịa — D5.2, cùng lớp lỗi
     # với _standalone ở trên. Whitespace-only (" ") cũng -> NO_DATA

@@ -114,10 +114,14 @@ def test_real_catalog_matches_contract():
     # Agent không tự đổi trạng thái nghiệm thu.
     assert {f["acceptance_status"] for f in REAL} == {"chua_nghiem_thu"}
     # P2 theo PL01 mục 2 có trong danh mục với đúng giai đoạn.
-    p2 = {f["ten"] for f in REAL if f["giai_doan"] == "P2"}
-    assert {"Báo cáo HĐTV", "Kho tài liệu R&D",
-            "Cảnh báo thời tiết, sâu bệnh", "Dự báo sản lượng thu hoạch",
-            "SEO sàn", "YouTube dài", "Cập nhật văn bản pháp luật mới"} <= p2
+    p2 = {f["ten"] for f in REAL if f["giai_doan"] == "P2"
+          and f["pham_vi"] == "tinh_nang_ai"}
+    # đợt hoàn thiện 22/10: 9 mục P2 theo DOCX (R&D tra cứu/tóm tắt, cảnh
+    # báo thời tiết/sâu bệnh tách riêng)
+    assert {"Báo cáo HĐTV", "Tra cứu tài liệu R&D", "Tóm tắt tài liệu R&D",
+            "Cảnh báo thời tiết", "Cảnh báo sâu bệnh",
+            "Dự báo sản lượng thu hoạch", "SEO sàn", "YouTube dài",
+            "Cập nhật văn bản pháp luật mới"} == p2
     # Phủ nền tảng TMĐT (PL01 mục 3), blockchain (mục 4), nghĩa vụ ngoài code.
     pv = {f["pham_vi"] for f in REAL}
     assert pv == set(ro.PHAM_VI)
@@ -167,8 +171,12 @@ def test_real_catalog_old_group_ids_traceable():
     assert len(OLD_IDS) == 59
     for old in OLD_IDS:
         assert (old in ids) != (old in sm), old
+    # đợt hoàn thiện 22/10: nhóm còn 1 mục khi mục kia GỘP/CHUYỂN (id cũ
+    # nằm trong da_thay_the) — vẫn truy được (mục còn + id cũ bị thay).
+    gone = {g["id"] for g in _real_doc().get("da_thay_the", [])}
     for g, kids in sm.items():
-        assert g in OLD_IDS and len(kids) >= 2, g
+        former = {o for o in gone if o.startswith(g + ".")}
+        assert g in OLD_IDS and len(kids) + len(former) >= 2, g
 
 
 def test_real_catalog_every_item_has_source_and_blocker_rule():
@@ -207,7 +215,7 @@ def test_real_catalog_website_contract():
 def test_real_catalog_no_shared_actor_mkt02():
     """F04: actor mkt02 từng dùng chung sales-03 + marketing-01 → đếm chéo."""
     owners = [f["id"] for f in REAL if "agent:mkt02" in f["agent_ids"]]
-    assert owners == ["marketing-01"]
+    assert owners == ["marketing-01.1"]   # đợt hoàn thiện: tách 01.1/01.2
     by = {f["id"]: f for f in REAL}
     assert {"table": "content_drafts", "created_by": "agent:mkt02",
             "content_type": "listing"} in by["sales-03"]["output_sources"]

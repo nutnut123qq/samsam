@@ -40,7 +40,7 @@ from tests.test_v15_p10_human_authz import (  # noqa: F401 — fixture live
 )
 
 SINCE = datetime.now(VN_TZ) - timedelta(days=25)
-FID = "ceo-04.2"                         # nguồn audit_runs inside_out + báo cáo
+FID = "ceo-04.6"     # (thay ceo-04.2) nguồn audit_runs inside_out + báo cáo
 A_SHA, B_SHA, S_SHA = "a" * 64, "b" * 64, "5" * 64
 K_A = f"ar:inside_out/2026-09/{A_SHA}"
 K_B = f"ar:inside_out/2026-08/{B_SHA}"

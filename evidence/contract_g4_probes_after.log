@@ -1,0 +1,14 @@
+# Probe hành vi đợt hoàn thiện — bản SAU = working tree
+# nhánh codex/contract-finalization · HEAD 939aac9 + working tree · fingerprint (3 file mới, trừ DONE+board, so 939aac9) = 4ee80f6fcdbbf4e0d7d483592dcce530101d5e20c30814284033cacecf0b9704
+# lệnh: python scratchpad/r4/behav_probe.py <cây> (DB test samsam_contract_r4dr, schema tạm + ROLLBACK; client LLM giả) — exit 0
+{"probe": "catalog", "ai": 89, "p1": 80, "p2": 9, "blocks": {"ceo": 9, "sales": 12, "marketing": 14, "intel": 11, "finance": 9, "production": 6, "farming": 9, "legal_hr": 10, "data_platform": 9}}
+{"probe": "red_alert_one_alert_counted", "total": 1, "per_feature": {"intel-02.1": 1, "intel-02.2": 0, "intel-02.3": 0, "legal_hr-07": 0}}
+{"probe": "pest_alert_without_weather_source", "weather_rc": 2, "pests_rc": 0, "queue": ["pest_alert"]}
+{"probe": "feature_cap_over_limit", "result": "CHẶN: tính năng 'intel-01.1' vượt trần tháng 1.0000/1.00 USD", "provider_calls": 0, "feature_sent_to_provider": false}
+{"probe": "health_filter", "health_caught": 7, "health_total": 7, "sales_flagged": 0, "sales_total": 4}
+{"probe": "social_label_counterfeit", "labels": ["nghi_hang_gia"]}
+{"probe": "ad_result_object_type", "object_type": ["ad_result"]}
+{"probe": "product_dossier_check", "rc": 2}
+{"probe": "website_feed", "available": true}
+## câu sức khỏe chatbot (13 câu + 8 câu bán hàng): python -I scratchpad/r4/health_probe.py <cây>
+{"health_caught": 13, "health_missed": 0, "sales_flagged": 0, "sales_ok": 8}

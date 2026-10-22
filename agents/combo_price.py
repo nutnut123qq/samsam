@@ -1,4 +1,4 @@
-"""Đợt hợp đồng C09 — intel-05 phương án NHÁP giá combo (PL01 Tình báo
+"""Đợt hợp đồng C09 — intel-05.2 (trước intel-05) phương án NHÁP giá combo (PL01 Tình báo
 "thử thông điệp, giá combo ... để loại phương án yếu trước khi chi tiền").
 
 Nguồn (chỉ đọc): `bom_combos`/`bom_items` (thành phần + số lượng), giá
@@ -18,7 +18,7 @@ Mỗi (combo, kênh):
     | `dat`. Nội dung mục qua `guardrail.check`.
 → 1 mục `intel/combo_price_option` (Quản lý Marketing duyệt) / combo × kênh
 × dữ liệu đầu vào (khóa sha — chạy lại không nhân bản; đầu vào đổi → đợt
-mới). Agent KHÔNG áp giá, KHÔNG đổi KM. Rollout intel-05 tắt → không sinh.
+mới). Agent KHÔNG áp giá, KHÔNG đổi KM. Rollout intel-05.2 tắt → không sinh.
 Chạy thử thông điệp/giá trên khách giả lập vẫn chờ DPIA (`persona_sim`).
 
 Chạy: python -m agents.combo_price [--as-of YYYY-MM-DD] [--dry-run]
@@ -45,7 +45,7 @@ for _s in (sys.stdout, sys.stderr):
 
 ROOT = Path(__file__).resolve().parent.parent
 CFG_FILE = ROOT / "data" / "combo_price.json"
-FEATURE, BLOCK, OT, AGENT = ("intel-05", "intel", "combo_price_option",
+FEATURE, BLOCK, OT, AGENT = ("intel-05.2", "intel", "combo_price_option",
                              "agent:combo_price")
 
 

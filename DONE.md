@@ -4,7 +4,7 @@ Khán giả/mục đích: **bác Lực / Sâm Sâm trong buổi gặp sắp tớ
 "team làm được", làm đà đàm phán hợp đồng số hóa + AI 1 tỷ. *(giả định từ context —
 sửa nếu sai)*
 
-Version hiện tại: **v15 + đợt DOCX + đợt hợp đồng vòng 1–3 (bản phát hành mã nguồn 21/10/2026); chưa triển khai/nghiệm thu**
+Version hiện tại: **v15 + đợt DOCX + đợt hợp đồng vòng 1–3 + hoàn thiện DOCX và vá F1/F2 (bản phát hành mã nguồn 22/10/2026); chưa triển khai/nghiệm thu**
 
 v2.4-polish đóng 2026-10-11 (cold-check auditor lạ profile reviewer
 — đợt 1 FIX 1 MINOR `_WHERE_INFO_RE` greedy nuốt 'ở đâu' thứ hai
@@ -23,7 +23,129 @@ Someday mới: `content_drafts.status` thiếu CHECK constraint ở DB
 activity chứa triệu chứng không flag (flags quét chỉ detail —
 ghi detail khi nhập).
 
-## Vá cổng DB test (21/10/2026) — 3 lỗ controller tái hiện, CHƯA commit/merge/push/deploy
+## Vá 2 lỗi controller đợt hoàn thiện (22/10/2026) — F1 sales-02, F2 giá website — CHƯA commit/merge/push/deploy
+
+Nền: fingerprint trước sửa `da55b0acb2f89f119bc6920accc3d3e481efc8051a1f37053a3d516126e0750b` (snapshot ngoài repo).
+Revision cuối (index tạm, 4 file mới, trừ DONE.md + board, so `939aac9`):
+`9b2498af27a7006a13abdd9217c6048f8eeddefa4bcd925cc3abfd2dda16b9bd`. DB test riêng `samsam_contract_r5probe` (probe/test),
+`samsam_contract_r5full` (full KHÁM PHÁ — fail), `samsam_contract_r5full2` (gate) —
+KHÔNG kết nối `samsam`. Rủi ro mật khẩu DB lịch sử + blocker vận hành: GIỮ NGUYÊN
+như mục dưới, không thuộc đợt vá này.
+
+1. **F1 — gợi ý chat sàn tính tiền nhầm sales-01**: `api.rag.answer/retrieve/
+   _standalone` nhận `feature=` (mặc định sales-01), chỉ chấp nhận
+   `rag.FEATURES` = {sales-01, sales-02} (khác → ValueError, 0 lời gọi);
+   `channels.respond` chọn mã theo KÊNH (shopee/tiktok → sales-02, zalo/
+   messenger → sales-01), không từ text khách. Gateway giữ nguyên (trần agent
+   + trần/nút tắt tính năng, chặn trước client; mã không vào payload provider).
+   Probe entrypoint: trước 17/28 FAIL (usage ghi sales-01; kill/trần 0/hết trần
+   sales-02 vẫn 2 lời gọi; history không truyền được mã) → sau 28/28 PASS —
+   `evidence/contract_g5_f1.log`. Test `tests/test_fix_san_feature.py`.
+2. **F2 — website bật giỏ bằng giá JSON**: `listing_export.web_prices` đọc
+   `price_list` list kênh web theo ĐÚNG `kd_listing.golden_prices` (giờ VN);
+   chỉ dòng đã duyệt mới có giá/giỏ; không có/chờ duyệt/hết hạn/chưa tới hạn →
+   không giá, không giỏ, ly_do rõ; không fallback JSON/kênh khác/floor/promo;
+   đọc bảng giá lỗi (mất bảng/thiếu quyền) → ExportError, không ghi tệp;
+   manifest `gia_nguon` = price_list + `gia_ngay_hieu_luc` + `gia_phien_ban`
+   (id dòng giá), dòng có `gia_id`. Probe: trước 10/12 FAIL (99000 JSON, giỏ
+   true) → sau 12/12 PASS — `evidence/contract_g5_f2.log`. Test C04 website lật
+   từ giá JSON sang giá DB ĐÃ duyệt (lý do: chính test cũ khóa hành vi lỗi) +
+   7 test mới.
+3. Test hồi quy mới chạy trên bản sao code TRƯỚC sửa: 24 FAIL (13 đối chứng
+   PASS cả hai bản) → sau sửa PASS. Test giả nhận thêm `feature=`:
+   `test_rag.py`, `test_channels.py` (gợi ý sàn assert sales-02),
+   `test_kb_acl.py` (sót ở lượt full đầu → 9 failed, lượt KHÁM PHÁ, giữ riêng
+   `evidence/contract_g5_full_explore_FAIL.log`).
+4. **Gate revision cuối**: full tuần tự DB mới + Docker **6582 passed, 0 failed,
+   0 skipped** (41:05) — `evidence/contract_g5_full_pytest.log`; DR 3/3 PASSED;
+   ruff sạch; eval 22/22 suite PASS (guardrail 130/132, 2 ca edge như đợt
+   trước); DPIA exit 0; red-team 0/50 lọt — `evidence/contract_g5_gates.log`.
+5. Đính chính: board E1 "mọi lời gọi gắn tính năng" trước vá là SAI cho
+   sales-02 (ghi sales-01); doi-chieu/dau-vao D-DL-09/AGENTS.md: giá website =
+   price_list đã duyệt. Không đổi `acceptance_status`, không tuyên bố hoàn
+   thành hợp đồng.
+6. Còn thấy (KHÔNG vá — ngoài 2 lỗi được giao): xuất tệp SÀN `listing_export
+   --sku --channel shopee|tiktok` (`build`) vẫn lấy giá `prices.<kênh>.list`
+   từ golden JSON (cùng lớp F2); test giả `retrieve` dạng `lambda q:
+   pytest.fail` (không được gọi) chưa nhận `feature=`.
+
+## Đợt hoàn thiện theo DOCX (22/10/2026) — nhánh `codex/contract-finalization` từ `main` = `939aac9`, CHƯA commit/merge/push/deploy
+
+Fingerprint (index tạm, 3 file mới, trừ DONE.md + board, so `939aac9`):
+`da55b0acb2f89f119bc6920accc3d3e481efc8051a1f37053a3d516126e0750b`. Phạm vi = HĐ + PL01–PL04 (user chốt THEO DOCX; PL05 chưa có). DB
+kiểm: `samsam_contract_r4dr` (DR/probe), `samsam_contract_r4up` (nâng cấp có
+lịch sử), `samsam_contract_r4full2` (full) — KHÔNG kết nối `samsam`.
+
+**⚠ Rủi ro đang mở (nói to):** mật khẩu DB trong `.env` máy dev VẪN TRÙNG giá
+trị đã lộ trong lịch sử Git của repo public (kiểm boolean, không in giá trị) —
+checklist rotation runbook mục 10.7, quản trị viên làm (agent không đổi
+credential, không rewrite Git). Ảnh hưởng sự cố test chạm `samsam` vòng 1 vẫn
+UNVERIFIED (doi-chieu mục A7).
+
+1. **Cổng DB test** G1–G3 vẫn chặn (probe 25/25, 41/41) trước mọi kiểm DB —
+   `evidence/contract_g4_guard.log`.
+2. **DR Docker THẬT** (Docker 28.4.0, `postgres:17-alpine`, server 17.6): 3 ca
+   `test_dr_drill_real_ok` / `_real_mismatch_still_cleans` /
+   `test_zz_no_dr_container_left` PASSED (kèm `test_db_backup.py`: 77 passed,
+   0 skip); restore vào container riêng; DB nguồn chỉ thêm 2 dòng sổ bằng
+   chứng backup (thiết kế); không còn container/volume; CLI thật RTO 5,23 giây
+   (restore 2,28), RPO 0,00 giờ, 99/99 bảng — DB test nhỏ, backup chưa mã hóa/
+   offsite → chỉ VERIFIED_DEV_DR, diễn tập Mốc C/D trên server Bên B chưa làm
+   (`evidence/contract_g4_dr.log`). Nguyên nhân skip cũ: Docker daemon tắt
+   (pg_dump tìm thấy ở C:/Program Files/PostgreSQL/17/bin).
+3. **intel_weekly bằng login svc_job THẬT** qua wrapper: trước exit 1
+   InsufficientPrivilege (×2) → quyền đọc CỘT tối thiểu `trends_weekly`
+   (6 cột) + `social_mentions` (channel, labels, sensitive, posted_at; KHÔNG
+   msg_hash/excerpt) → exit 0 ×2 (bộ đếm gộp theo tên báo cáo, không nhân
+   bản); probe âm 6/6 vẫn chặn; roles ×2 idempotent
+   (`evidence/contract_g4_intel_weekly.log`).
+4. **Danh mục theo DOCX**: 79 → 89 AI, đúng từng khối (ceo 9, sales 12,
+   marketing 14, intel 11, finance 9, production 6, farming 9, legal_hr 10,
+   data_platform 9), P1 80 / P2 9; ngoài 89 giữ riêng (TMĐT 2, blockchain 1,
+   nghĩa vụ 4). 14 id cũ → `da_thay_the` (bảng doi-chieu A3), 24 mục mới có
+   `thay_the` + căn cứ chữ PL01; `rollout --seed` mốc MỚI, chỉ kế thừa TẮT;
+   cảnh báo đỏ đếm theo luật đầu (1 cảnh báo ↔ 1 mục). Đầu ra tách riêng có
+   căn cứ: `ceo-gia-` (giá), `ad_result` (kết quả ads), `sx-tomtat-` (tóm tắt
+   R&D), `pest_alert` (sâu bệnh, không chờ nguồn thời tiết), nhãn
+   `nghi_hang_gia`. Bảng ánh xạ 89 dòng: doi-chieu mục A1.
+5. **Thiếu code sau ánh xạ** (probe trước 939aac9 / sau, `evidence/contract_g4_probes_{before,after}.log`):
+   trần + nút tắt chi phí AI theo TÍNH NĂNG (trước: vượt trần vẫn gọi, `feature`
+   lọt vào payload → sau: chặn, 0 lời gọi; mọi lời gọi gắn tính năng — test
+   AST); câu sức khỏe chatbot (trước 0/7 chặn → 7/7, đối chứng bán hàng 0/4
+   bị chặn); kiểm sổ 14 hồ sơ gốc (`ingest/product_dossiers.py`, exit 2
+   BLOCKED 0/14 — không bịa); nguồn dữ liệu website (`listing_export
+   --website-feed`, rượu ẩn giá + không giỏ); runbook giám sát ngoài máy.
+6. **Nâng cấp từ DB 939aac9 có lịch sử** (`evidence/contract_g4_upgrade.log`):
+   schema/roles ×2 — 0 bảng mất, 0 dòng đổi, đuôi chuỗi giữ; rollout id cũ/sự
+   kiện/output_reviews/approvals/llm_usage giữ nguyên; quyền thêm 17 (đều
+   SELECT/INSERT cột: llm_usage.feature_id + đọc cột intel_weekly), bớt 0;
+   seed: 23 mục mới mốc mới, kế thừa TẮT đúng (data_platform-02.2 ←
+   legal_hr-03.1; ceo-04.3/5/6 ← ceo-04.1), không kế thừa duyệt; intel_weekly
+   svc_job exit 0.
+7. **Tích hợp ngoài**: bảng thực tế doi-chieu A5 — OCR/STT/ảnh AI/neo/thời
+   tiết/nhắc vườn đều fail-closed; API sàn chỉ unit giả lập (không sandbox);
+   Fanpage chưa có adapter; SMTP/routing exit 1 (thiếu người nhận) —
+   `evidence/contract_g4_integrations.log`.
+
+Gate revision cuối (`evidence/contract_g4_*.log`, `git add -f` khi commit):
+- Full pytest DB MỚI `samsam_contract_r4full2` (apply_schema --roles ×2 +
+  core + golden): **6553 passed, 0 failed, 0 skipped** — gồm 3 ca DR Docker
+  thật, EXIT 0 (`contract_g4_full_pytest.log`). Lượt full KHÁM PHÁ trước đó
+  KHÔNG tính: 6534 passed + 19 ERROR (2 file test còn tra id cũ `ceo-04.2`
+  trong danh mục thật → flip sang `ceo-04.6`, code không đổi) —
+  `contract_g4_full_discovery.log`. Lượt tiền-full 30 failed (test double
+  chưa nhận `feature=`, 2 flip id) đã vá trước full.
+- Gate (`contract_g4_gates.log`): ruff sạch; `agent_eval --deterministic`
+  exit 0 (kd_a1 43/43, kd_a5 21/21); `dpia_draft --check` exit 0; red-team
+  0/50. Probe (`contract_g4_probes_gate.log`): 106/106 hồi quy DOCX; 225 test
+  cổng DB + đợt hoàn thiện + C01–C12; 3 ca DR PASSED.
+- Mức bằng chứng: máy dev + DB test + Docker dev; **0 sandbox, 0 production,
+  0 server Bên B**. Không mục nào `da_nghiem_thu` (96/96 chua_nghiem_thu).
+
+Chưa làm / chờ: bảng việc chờ ở báo cáo cuối + `docs/handover/dau-vao-va-quyet-dinh.md`
+(D-HB-01/02 đã quyết; mới: D-KH-14/15, D-DL-08/09/10, D-HT-07, D-HT-05 cập nhật).
+
+## Vá cổng DB test (21/10/2026) — LỊCH SỬ (đã ở `939aac9`): 3 lỗ controller tái hiện
 
 **Đính chính checkpoint vòng 2:** claim "P0 cổng DB test — test không thể kết nối
 `samsam`" là SAI ở 3 đường (controller, driver giả / tiến trình con chỉ in tên DB,

@@ -305,7 +305,8 @@ def generate(channel, cart, session_day: date, brief, ctx: dict,
     for calls in (1, 2):    # bản nháp + 1 lượt sửa có feedback
         sha = _msgs_sha(messages)
         try:
-            resp = chat(AGENT, messages, temperature=0.3, max_tokens=1200)
+            resp = chat(AGENT, messages, temperature=0.3, max_tokens=1200,
+                        feature="sales-07.1")
             raw = resp.choices[0].message.content
         except Exception as e:  # noqa: BLE001 — gateway fail-closed
             return {**out, "llm_calls": calls,

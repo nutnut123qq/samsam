@@ -797,3 +797,48 @@ copy `deploy/onprem/systemd/` → `systemctl enable --now` từng timer; job m�
   - DSN test phải ghi rõ tên DB (`.../samsam_contract_x` hoặc `PGDATABASE`);
     DSN thiếu tên DB bị chặn (libpq sẽ lấy tên user). `postgres` chỉ dùng khi
     ghi tường minh cho thao tác quản trị tạo/xóa DB test.
+
+**10.6 Đợt hoàn thiện 22/10/2026 — giám sát ngoài máy, lịch mới, DR dev**
+
+- Giám sát NGOÀI server (PL01 Hạ tầng "giám sát lỗi"; data_platform-07.1):
+  máy riêng (không phải server Bên B, không cần DSN/khóa) chạy theo lịch
+  `python scripts/webhook_probe.py --url <địa chỉ công khai /readyz webhook
+  Zalo> --url <địa chỉ /readyz webhook Messenger> --dry-run` (chỉ stdlib, không theo
+  redirect, timeout 5 giây; exit ≠ 0 = server/DB/webhook không sẵn sàng) và
+  báo qua kênh của CHÍNH máy đó (email/nhắn tin) — server sập thì cảnh báo đỏ
+  trong server không gửi được. Thiếu máy giám sát + người nhận = BLOCKED_INFRA
+  (Bên B chọn máy/kênh). Job `webhook_health` trong server vẫn giữ.
+- Lịch mới `vt_pests` 06:35 (GIẢ ĐỊNH): cảnh báo sâu bệnh từ nhật ký nội bộ
+  (`python -m agents.vt_thoitiet --pests --submit`) — không chờ nguồn dự báo
+  thời tiết (`vt_weather` vẫn BLOCKED tới khi chọn nguồn).
+- Trần chi phí AI theo TÍNH NĂNG: `data/llm_gateway.json` `feature_caps_usd`
+  (GIẢ ĐỊNH = trần agent mặc định) + `kill_features`; nút tắt khẩn nhanh:
+  biến môi trường `LLM_KILL_FEATURES=<mã>,<mã>` cho tiến trình/timer cần tắt.
+- DR trên máy dev đã chạy THẬT bằng Docker (3 ca + CLI, `evidence/contract_g4_dr.log`)
+  — chỉ chứng minh CƠ CHẾ trên DB test nhỏ, backup chưa mã hóa/offsite; diễn tập
+  Mốc C/D trên server Bên B vẫn phải làm (người có quyền + backup thật + đo
+  RTO/RPO thật, ghi `ops_incidents`/sổ nghĩa vụ).
+
+**10.7 Checklist rotation credential từng lộ (quản trị viên — agent KHÔNG làm)**
+
+Hiện trạng (kiểm boolean 22/10/2026, không in giá trị): mật khẩu DB trong
+`.env` máy dev TRÙNG giá trị đã lộ trong lịch sử Git của repo public
+(`60d9acf^:evidence/v82_pytest.log`, `…_vong1.log`). Release sạch không xóa rủi
+ro lịch sử. Thứ tự đề xuất:
+
+1. Liệt kê mọi nơi dùng mật khẩu đó: role Postgres tương ứng trên MỌI máy (dev,
+   staging, server Bên B nếu cùng giá trị), `.env`, `/etc/samsam/*.env`, biến
+   môi trường timer/systemd, máy CI, máy cá nhân, backup script.
+2. Tạo mật khẩu mới (trình quản lý mật khẩu của Bên B), `ALTER ROLE <role>
+   PASSWORD '<mới>'` bằng tài khoản quản trị, cập nhật nơi dùng ở bước 1, khởi
+   động lại dịch vụ/timer.
+3. Thu hồi: kiểm đăng nhập bằng mật khẩu CŨ bị từ chối (từ máy khác); rà
+   `pg_hba.conf` (chỉ mạng nội bộ, không mở 0.0.0.0/0); xem log đăng nhập
+   Postgres khoảng thời gian từ lần lộ tới lúc đổi (đăng nhập lạ → xử lý sự cố).
+4. `OPENROUTER_API_KEY` và token kênh (Zalo/Meta) — nếu từng xuất hiện trong
+   log/evidence: thu hồi + cấp mới ở trang nhà cung cấp.
+5. Lịch sử Git: quyết định có viết lại lịch sử repo public hay không là của
+   chủ repo (ảnh hưởng mọi bản clone; bản đã bị sao chép không thu hồi được) —
+   rotation (bước 2–3) là bắt buộc dù có viết lại hay không.
+6. Ghi bằng chứng: ngày đổi, role, người đổi, kết quả kiểm bước 3 (không ghi
+   giá trị mật khẩu) vào sổ nghĩa vụ/biên bản vận hành.

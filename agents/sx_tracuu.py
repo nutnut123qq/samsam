@@ -125,7 +125,8 @@ def _llm_answer(question: str, hits: list[dict], idx: dict
             {"role": "user", "content": f"NGỮ CẢNH:\n{ctx}\n\n"
                                         f"CÂU HỎI: {question}"}]
     try:
-        resp = llm_gateway.chat(AGENT_ID, msgs, temperature=0.0,
+        resp = llm_gateway.chat(AGENT_ID, msgs, feature="production-05.2",
+                                temperature=0.0,
                                 max_tokens=600)
         text = resp.choices[0].message.content
     except llm_gateway.GatewayError as e:
@@ -156,7 +157,8 @@ def ask(question, *, k: int = DEFAULT_K, llm: bool = False, now=None,
         return _no_data("không tra cứu đồ uống có cồn")
     k = max(1, min(int(k), MAX_K))
     try:
-        qv = llm_gateway.embed(AGENT_ID, q).data[0].embedding
+        qv = llm_gateway.embed(AGENT_ID, q, feature="production-05.1"
+                               ).data[0].embedding
     except llm_gateway.GatewayError as e:
         return _no_data(f"embed lỗi ({type(e).__name__})")
     hits = rag.retrieve_by_vector(qv, k, collection=COLLECTION)
@@ -210,9 +212,18 @@ def render(res: dict, question: str) -> str:
     return "\n".join(L) + "\n"
 
 
-def report_name(question: str, now: datetime) -> str:
+# Đợt hoàn thiện 22/10 (PL01 Kho tài liệu R&D (P2) "Tra cứu, tóm tắt tài
+# liệu"): TRA CỨU (trích nguyên văn — production-05.1) và TÓM TẮT (LLM tổng
+# hợp ĐÃ qua guardrail — production-05.2) là 2 đầu ra riêng. Tóm tắt bị loại
+# (LLM lỗi/guardrail) → bản rơi về trích đoạn = đầu ra TRA CỨU, không tính là
+# tóm tắt.
+PREFIX_LOOKUP, PREFIX_SUMMARY = "sx-tracuu-", "sx-tomtat-"
+
+
+def report_name(question: str, now: datetime, mode: str = "extract") -> str:
     sha = hashlib.sha256(_norm_q(question).encode("utf-8")).hexdigest()[:8]
-    return f"sx-tracuu-{now.astimezone(VN_TZ):%Y-%m-%d}-{sha}.md"
+    pre = PREFIX_SUMMARY if mode == "llm" else PREFIX_LOOKUP
+    return f"{pre}{now.astimezone(VN_TZ):%Y-%m-%d}-{sha}.md"
 
 
 def main(argv=None, now: datetime | None = None) -> int:
@@ -225,7 +236,8 @@ def main(argv=None, now: datetime | None = None) -> int:
     ap.add_argument("--llm", action="store_true",
                     help="tổng hợp qua LLM (mặc định TẮT — trích đoạn)")
     ap.add_argument("--out", action="store_true",
-                    help="ghi file data/reports/sx-tracuu-<ngày>-<sha8>.md")
+                    help="ghi file data/reports/sx-tracuu-<ngày>-<sha8>.md "
+                         "(tóm tắt LLM đạt guardrail → sx-tomtat-…)")
     a = ap.parse_args(argv)
     if len(_norm_q(a.ask)) > MAX_Q:
         ap.error(f"--ask dài quá {MAX_Q} ký tự")
@@ -250,7 +262,8 @@ def main(argv=None, now: datetime | None = None) -> int:
     if a.out:
         try:
             # P8.4: tài liệu nội bộ trưởng phòng duyệt (chunks_internal).
-            p = write_report(text, REPORTS_DIR, report_name(a.ask, now),
+            p = write_report(text, REPORTS_DIR,
+                             report_name(a.ask, now, res["mode"]),
                              sample=False)
         except OSError as e:
             print(f"[warn] không ghi được file ({type(e).__name__})",

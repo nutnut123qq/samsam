@@ -52,7 +52,7 @@ _spec.loader.exec_module(iw)
 @pytest.mark.parametrize("block, ot, fid, by", [
     ("marketing", "partner_post_review", "marketing-04.2",
      "agent:mkt_doi_tac"),
-    ("ceo", "promo_deviation", "ceo-04.1", "agent:ceo_audit"),
+    ("ceo", "promo_deviation", "ceo-04.5", "agent:ceo_audit"),
     ("intel", "keyword_suggest", "intel-04.2", "agent:intel_keywords"),
 ])
 def test_block_type_and_catalog_map_each_feature(block, ot, fid, by):

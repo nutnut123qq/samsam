@@ -575,7 +575,9 @@ def record_suggestion(inb: Inbound, text: str, msg_id: str = "",
 def respond(channel: str, user_id: str, text: str, *,
             persist: bool = False) -> dict:
     """pre_route → answer() → format_reply, KHÔNG gửi, KHÔNG history.
-    persist=True → tạo mục handoff (chỉ kênh chat)."""
+    persist=True → tạo mục handoff (chỉ kênh chat).
+    Vá controller 22/10 (F1): mã tính năng theo KÊNH (đã kiểm ở normalize) —
+    sàn → `SUGGEST_FEATURE` (sales-02), chat → chatbot sales-01."""
     inb = normalize(channel, user_id, text)
     route = pre_route(inb)
     if route is not None:
@@ -583,7 +585,9 @@ def respond(channel: str, user_id: str, text: str, *,
                "handoff": route.handoff, "blocked": []}
     else:
         from api.rag import answer
-        txt, meta = format_reply(channel, answer(inb.text))
+        feature = (SUGGEST_FEATURE if inb.channel in SAN_CHANNELS
+                   else CHAT_FEATURE)
+        txt, meta = format_reply(channel, answer(inb.text, feature=feature))
         out = {"answer": txt, "route": None, "handoff": meta["handoff"],
                "blocked": meta["blocked"]}
     if persist and out["handoff"]:
@@ -621,6 +625,7 @@ def score_cskh(case: dict, out: dict, *, content: bool = True
 # --- CLI ----------------------------------------------------------------------
 
 SUGGEST_FEATURE = "sales-02"
+CHAT_FEATURE = "sales-01"
 
 
 def _suggest(channel: str, text: str, by: str | None = None) -> int:

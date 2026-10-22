@@ -1,0 +1,35 @@
+# C. Job intel_weekly bằng login Postgres THẬT in role svc_job qua wrapper pipelines.job_runs — 22/10/2026
+# nhánh codex/contract-finalization · HEAD 939aac9 + working tree · fingerprint (3 file mới, trừ DONE+board, so 939aac9) = 4ee80f6fcdbbf4e0d7d483592dcce530101d5e20c30814284033cacecf0b9704
+## TRƯỚC (roles 939aac9) — probe exit 0
+# intel_weekly probe [TRƯỚC sửa (roles 939aac9)] DB=samsam_contract_r4dr login in role svc_job (không owner/superuser)
+lần 1: exit 1 · InsufficientPrivilege=True  · job_runs +1 · report_outputs +0
+    [err] lỗi DB: InsufficientPrivilege
+lần 2: exit 1 · InsufficientPrivilege=True  · job_runs +1 · report_outputs +0
+    [err] lỗi DB: InsufficientPrivilege
+âm đọc social_mentions.excerpt: chặn (InsufficientPrivilege)
+âm đọc social_mentions.msg_hash: chặn (InsufficientPrivilege)
+âm ghi trends_weekly: chặn (InsufficientPrivilege)
+âm tự duyệt approvals: chặn (InsufficientPrivilege)
+âm giả danh người (decide_item): chặn (InsufficientPrivilege)
+âm function người garden_reminder_done_human: chặn (InsufficientPrivilege)
+dọn report sinh trong lượt: []
+
+## SAU (roles working tree, apply_schema --roles ×2 rc 0/0) — probe exit 0
+# intel_weekly probe [SAU sửa (roles working tree, áp ×2)] DB=samsam_contract_r4dr login in role svc_job (không owner/superuser)
+lần 1: exit 0 · InsufficientPrivilege=False  · job_runs +1 · report_outputs +2
+    _chưa có dữ liệu tuần này_
+    [done] data\reports\intel-doithu-2026-10-12.md
+    [done] data\reports\intel-trend-2026-10-12.md
+lần 2: exit 0 · InsufficientPrivilege=False  · job_runs +1 · report_outputs +2
+    _chưa có dữ liệu tuần này_
+    [done] data\reports\intel-doithu-2026-10-12.md
+    [done] data\reports\intel-trend-2026-10-12.md
+âm đọc social_mentions.excerpt: chặn (InsufficientPrivilege)
+âm đọc social_mentions.msg_hash: chặn (InsufficientPrivilege)
+âm ghi trends_weekly: chặn (InsufficientPrivilege)
+âm tự duyệt approvals: chặn (InsufficientPrivilege)
+âm giả danh người (decide_item): chặn (InsufficientPrivilege)
+âm function người garden_reminder_done_human: chặn (InsufficientPrivilege)
+dọn report sinh trong lượt: ['intel-doithu-2026-10-12.md', 'intel-trend-2026-10-12.md']
+
+# report_outputs +2/lần = sổ append-only; bộ đếm rollout gộp theo tên báo cáo (DISTINCT name) → chạy lại không nhân bản đầu ra.

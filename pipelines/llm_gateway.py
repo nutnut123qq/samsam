@@ -16,6 +16,14 @@ Contract:
     max_retries=0 và chỉ gọi 1 lần — không retry sang provider khác.
   - Kill-switch: agent_id trong config `kill` hoặc env LLM_KILL=a,b ->
     GatewayBlocked trước khi gọi client.
+  - Đợt hoàn thiện 22/10 (PL01 Hạ tầng "Cổng AI an toàn: ... giới hạn chi
+    phí từng tính năng, nút tắt khẩn"): `chat/embed(..., feature=<mã danh
+    mục>)` — nút tắt theo tính năng (`kill_features` / env
+    LLM_KILL_FEATURES) + trần tháng theo tính năng (`feature_caps_usd`, key
+    "default"; tổng `llm_usage.cost_usd` cùng `feature_id`) kiểm THÊM vào
+    trần theo agent. Mã sai định dạng → GatewayError; trần ≤ 0 / không đọc
+    được chi tiêu → chặn (fail-closed). Mọi lời gọi trong repo truyền
+    feature (test AST).
   - Trần chi phí tháng theo agent_id (`monthly_cap_usd`, key "default"):
     tổng `llm_usage.cost_usd` từ đầu tháng THEO GIỜ Asia/Ho_Chi_Minh.
     >=100% -> GatewayBlocked (0 call); >=80% -> cảnh báo rồi vẫn gọi.
@@ -65,11 +73,14 @@ CONFIG = ROOT / "data" / "llm_gateway.json"
 BASE_URL = "https://openrouter.ai/api/v1"
 WARN_RATIO = 0.8
 _AGENT_RE = re.compile(r"[a-z0-9_-]{1,64}")
+_FEATURE_RE = re.compile(r"[a-z_]+-[0-9]{2}(?:\.[0-9]{1,2})?")
 # Tháng tính theo giờ VN: mốc 00:00 ngày 1 local -> timestamptz.
 _SPEND_SQL = (
     "select coalesce(sum(cost_usd), 0) from llm_usage where agent_id = %s"
     " and ts >= (date_trunc('month', now() at time zone 'Asia/Ho_Chi_Minh')"
     " at time zone 'Asia/Ho_Chi_Minh')")
+_FEATURE_SPEND_SQL = _SPEND_SQL.replace("where agent_id = %s",
+                                        "where feature_id = %s")
 
 
 class GatewayError(RuntimeError):
@@ -107,6 +118,13 @@ def _config() -> dict:
             raise GatewayError("LLM_CAP_DEFAULT_USD không phải số") from e
     caps.setdefault("default", 5.0)
     cfg["monthly_cap_usd"] = caps
+    kf = set(cfg.get("kill_features") or [])
+    kf |= {a.strip() for a in os.environ.get("LLM_KILL_FEATURES",
+                                             "").split(",") if a.strip()}
+    cfg["kill_features"] = kf
+    fcaps = dict(cfg.get("feature_caps_usd") or {})
+    fcaps.setdefault("default", caps["default"])
+    cfg["feature_caps_usd"] = fcaps
     return cfg
 
 
@@ -126,14 +144,14 @@ def _connect():
     return psycopg.connect(dsn, connect_timeout=5)
 
 
-def _month_spend(agent_id: str) -> float | None:
+def _month_spend(agent_id: str, sql: str = _SPEND_SQL) -> float | None:
     """Tổng cost tháng này; None = không đọc được (v13.1: `_gate` chặn)."""
     try:
         conn = _connect()
         if conn is None:
             return None
         try:
-            return float(conn.execute(_SPEND_SQL, (agent_id,)).fetchone()[0])
+            return float(conn.execute(sql, (agent_id,)).fetchone()[0])
         finally:
             conn.close()
     except Exception as e:  # noqa: BLE001 — caller quyết (fail-closed)
@@ -141,7 +159,8 @@ def _month_spend(agent_id: str) -> float | None:
         return None
 
 
-def _record(agent_id, model, tin, tout, cost, ok, error=None) -> None:
+def _record(agent_id, model, tin, tout, cost, ok, error=None,
+            feature=None) -> None:
     try:
         conn = _connect()
         if conn is None:
@@ -150,8 +169,9 @@ def _record(agent_id, model, tin, tout, cost, ok, error=None) -> None:
         try:
             conn.execute(
                 "insert into llm_usage (agent_id, model, tokens_in, tokens_out,"
-                " cost_usd, ok, error) values (%s,%s,%s,%s,%s,%s,%s)",
-                (agent_id, model, tin, tout, cost, ok, error))
+                " cost_usd, ok, error, feature_id) values"
+                " (%s,%s,%s,%s,%s,%s,%s,%s)",
+                (agent_id, model, tin, tout, cost, ok, error, feature))
             conn.commit()
         finally:
             conn.close()
@@ -159,10 +179,13 @@ def _record(agent_id, model, tin, tout, cost, ok, error=None) -> None:
         _warn(f"ghi llm_usage lỗi ({type(e).__name__}) — lời gọi vẫn trả kết quả")
 
 
-def _gate(agent_id: str) -> dict:
-    """Validate agent_id + config + kill + cap. Trả config."""
+def _gate(agent_id: str, feature: str | None = None) -> dict:
+    """Validate agent_id (+ feature) + config + kill + cap. Trả config."""
     if not isinstance(agent_id, str) or not _AGENT_RE.fullmatch(agent_id):
         raise GatewayError("agent_id không hợp lệ")
+    if feature is not None and (not isinstance(feature, str)
+                                or not _FEATURE_RE.fullmatch(feature)):
+        raise GatewayError("feature (mã tính năng danh mục) không hợp lệ")
     cfg = _config()
     only = cfg.get("provider_only")
     if not isinstance(only, list) or not only or not all(
@@ -191,7 +214,33 @@ def _gate(agent_id: str) -> dict:
             f"agent '{agent_id}' vượt trần tháng {spend:.4f}/{cap:.2f} USD")
     if spend >= WARN_RATIO * cap:
         _warn(f"agent '{agent_id}' đã dùng {spend:.4f}/{cap:.2f} USD (>=80%)")
+    if feature is not None:
+        _gate_feature(cfg, feature)
     return cfg
+
+
+def _gate_feature(cfg: dict, feature: str) -> None:
+    """Nút tắt + trần tháng theo TÍNH NĂNG (PL01 Cổng AI an toàn)."""
+    if feature in cfg["kill_features"]:
+        raise GatewayBlocked(f"tính năng '{feature}' đang bị nút tắt khẩn")
+    fcaps = cfg["feature_caps_usd"]
+    try:
+        cap = float(fcaps.get(feature, fcaps["default"]))
+    except (TypeError, ValueError) as e:
+        raise GatewayError(f"trần chi phí tính năng '{feature}' không phải"
+                           " số") from e
+    if not cap > 0:
+        raise GatewayBlocked(f"tính năng '{feature}' có trần 0 USD — đang tắt")
+    spend = _month_spend(feature, _FEATURE_SPEND_SQL)
+    if spend is None:
+        raise GatewayBlocked(f"tính năng '{feature}': không đọc được chi tiêu"
+                             " tháng — chặn (fail-closed)")
+    if spend >= cap:
+        raise GatewayBlocked(f"tính năng '{feature}' vượt trần tháng "
+                             f"{spend:.4f}/{cap:.2f} USD")
+    if spend >= WARN_RATIO * cap:
+        _warn(f"tính năng '{feature}' đã dùng {spend:.4f}/{cap:.2f} USD "
+              "(>=80%)")
 
 
 def _provider(cfg: dict) -> dict:
@@ -267,7 +316,7 @@ def _cost(cfg, model, tin, tout) -> float:
     return (tin * float(price.get("in", 0)) + tout * float(price.get("out", 0))) / 1e6
 
 
-def _call(agent_id, model, cfg, fn, payload):
+def _call(agent_id, model, cfg, fn, payload, feature=None):
     """Gọi đúng 1 lần; lỗi -> ghi usage err + GatewayError."""
     try:
         client = _client()
@@ -276,33 +325,36 @@ def _call(agent_id, model, cfg, fn, payload):
         raise
     except Exception as e:  # mọi lỗi provider -> fail-closed
         err = _mask_pii(f"{type(e).__name__}: {e}")[:300]
-        _record(agent_id, model, 0, 0, 0.0, False, err)
+        _record(agent_id, model, 0, 0, 0.0, False, err, feature)
         raise GatewayError(f"LLM provider lỗi ({type(e).__name__}) — fail-closed") from e
     usage = getattr(resp, "usage", None)
     tin = int(getattr(usage, "prompt_tokens", 0) or 0)
     tout = int(getattr(usage, "completion_tokens", 0) or 0)
-    _record(agent_id, model, tin, tout, _cost(cfg, model, tin, tout), True)
+    _record(agent_id, model, tin, tout, _cost(cfg, model, tin, tout), True,
+            feature=feature)
     return resp
 
 
-def chat(agent_id: str, messages: list[dict], model: str | None = None, **kw):
-    cfg = _gate(agent_id)
+def chat(agent_id: str, messages: list[dict], model: str | None = None, *,
+         feature: str | None = None, **kw):
+    cfg = _gate(agent_id, feature)
     model = model or os.environ.get("OR_CHAT_MODEL", "openai/gpt-4o-mini")
     allow, addr = _allow(cfg), _allow_addr(cfg)
     msgs = [{**m, "content": _mask_content(m.get("content"), allow, addr)}
             for m in messages]
     return _call(agent_id, model, cfg, lambda c: c.chat.completions.create,
-                 {"messages": msgs, **kw})
+                 {"messages": msgs, **kw}, feature)
 
 
-def embed(agent_id: str, input, model: str | None = None, **kw):
-    cfg = _gate(agent_id)
+def embed(agent_id: str, input, model: str | None = None, *,
+          feature: str | None = None, **kw):
+    cfg = _gate(agent_id, feature)
     model = model or os.environ.get("OR_EMBED_MODEL", "openai/text-embedding-3-small")
     allow, addr = _allow(cfg), _allow_addr(cfg)
     inp = ([_mask(t, allow, addr) for t in input] if isinstance(input, list)
            else _mask(input, allow, addr))
     return _call(agent_id, model, cfg, lambda c: c.embeddings.create,
-                 {"input": inp, **kw})
+                 {"input": inp, **kw}, feature)
 
 
 # --- Bộ lọc câu hỏi sức khỏe (W31.5) ------------------------------------
@@ -323,6 +375,13 @@ _HEALTH_VI = [
     "mang thai", "có thai", "bầu", "cho con bú", "tác dụng phụ",
     "chống chỉ định", "liều", "kê đơn", "bác sĩ", "hóa trị", "xạ trị",
     "savigout",
+    # Đợt hoàn thiện 22/10 (PL01 chatbot "câu hỏi sức khỏe chuyển cho người
+    # thật"; rủi ro đã ghi D-PC-03): triệu chứng/thể trạng + thuốc đang dùng
+    # trước đây LỌT tới dịch vụ AI ngoài. Vẫn là DANH SÁCH TỪ — không bắt
+    # được mọi cách diễn đạt; lệch về phía chuyển người.
+    "mệt mỏi", "dị ứng", "kháng sinh", "thuốc tây", "đang uống thuốc",
+    "paracetamol", "panadol", "efferalgan", "aspirin", "ibuprofen",
+    "metformin", "insulin", "warfarin", "corticoid",
 ]
 _HEALTH_ASCII = [
     "benh", "thuoc", "trieu chung", "chua benh", "dieu tri", "tri benh",
@@ -338,6 +397,10 @@ _HEALTH_ASCII = [
     "soi than", "duong huyet", "dau lung", "dau khop", "dau nguc",
     "dau rang", "dau hong", "bi sot", "sot cao", "bi dau", "bi ho",
     "ho khan", "ho ra mau", "u buou", "tai bien",
+    # đợt hoàn thiện 22/10 — bản không dấu (dạng cụm / tên thuốc)
+    "met moi", "di ung", "khang sinh", "thuoc tay",
+    "paracetamol", "panadol", "efferalgan", "aspirin", "ibuprofen",
+    "metformin", "insulin", "warfarin", "corticoid",
 ]
 
 

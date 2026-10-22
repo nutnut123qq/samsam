@@ -273,7 +273,8 @@ def summarize(groups: dict) -> tuple[dict, int]:
                 {"role": "user", "content": f"Chủ đề: {TOPIC_LABELS[t]}\n"
                                             f"{body}"}]
         try:
-            resp = llm_gateway.chat("intel", msgs, max_tokens=300)
+            resp = llm_gateway.chat("intel", msgs, max_tokens=300,
+                                    feature="intel-01.1")
             text = resp.choices[0].message.content
         except llm_gateway.GatewayError as e:
             print(f"[warn] LLM tắt phần còn lại ({type(e).__name__}) — bản "

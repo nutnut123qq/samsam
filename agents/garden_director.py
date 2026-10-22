@@ -346,7 +346,7 @@ def sync_reminders(conn, rems: list[dict], owners: dict, cfg: dict) -> dict:
     """Chèn 1 dòng nhắc / khoảnh / đợt (idempotent) + đóng đợt cũ khi khoảnh
     đã có nhật ký mới. Commit. → {"new", "closed"}."""
     from pipelines import rollout
-    rollout.check_generate(conn, "farming-02", "sổ nhắc nhật ký vườn")
+    rollout.check_generate(conn, "farming-02.1", "sổ nhắc nhật ký vườn")
     sample = {p for (p,) in conn.execute(
         "select id from plots where source like %s", (SAMPLE_LIKE,))}
     live = set()

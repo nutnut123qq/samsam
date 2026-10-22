@@ -171,7 +171,7 @@ def test_daily_key_fixed_width():
 def test_feature_mapping_marketing_01_and_finance_03_3():
     assert rollout.feature_for(table="content_drafts",
                                created_by=content.DEFAULT_BY,
-                               content_type="post") == "marketing-01"
+                               content_type="post") == "marketing-01.1"
     assert rollout.feature_for(table="approval_queue", block="finance",
                                object_type="ar_reminder",
                                created_by=ar.AGENT) == "finance-03.3"
